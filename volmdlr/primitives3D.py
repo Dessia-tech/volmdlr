@@ -136,10 +136,10 @@ class ExtrudedProfile(Primitive3D):
                 dist=r/math.tan(alpha)
 #                vect1x=(pt1x-ptix)/dist1
 #                vect1y=(pt1y-ptiy)/dist1
-                vec1=pt1-pti/dist1
+                vec1=(pt1-pti)/dist1
 #                vect2x=(pt2x-ptix)/dist2
 #                vect2y=(pt2y-ptiy)/dist2
-                vec2=pt2-pti/dist2
+                vec2=(pt2-pti)/dist2
                 indice=-vec1[1]*vec2[0]+vec1[0]*vec2[1]
 #                indice=npy.dot(vec1,vec2)
                 indice=indice/abs(indice)
@@ -149,8 +149,8 @@ class ExtrudedProfile(Primitive3D):
 #                pt4x=ptix+vect2x*dist
 #                pt4y=ptiy+vect2y*dist
                 p4=pti+vec2*dist
-                ptcx=p3[0]-indice*vec1[0]*r
-                ptcy=p3[1]+indice*vec1[1]*r
+                ptcx=p3[0]-indice*vec1[1]*r
+                ptcy=p3[1]+indice*vec1[0]*r
                 pc=npy.array((ptcx,ptcy))
 #                print(p3)
                 theta1=math.atan((p3[1]-pc[1])/(p3[0]-pc[0]))
@@ -167,7 +167,7 @@ class ExtrudedProfile(Primitive3D):
     #            theta2=theta[1]
 #                return pt3x,pt3y,pt4x,pt4y,ptcx,ptcy,theta1,theta2
                 points_l[i]=(Point2D(p3),Point2D(p4))                           
-                arcs.append(Arc2D(Point2D(pc),r,theta1,theta2))
+                arcs.append(Arc2D(Point2D(pc),r,theta1*0.5/math.pi*360,theta2*0.5/math.pi*360))
             except KeyError:
                 pass
 
@@ -191,9 +191,11 @@ class ExtrudedProfile(Primitive3D):
         for element in lines+arcs:
             ps.extend(element.PltPlot())
 #        p = PatchCollection(ps)
+#        print(arcs)
         for p in ps:
             ax.add_patch(p)
         ax.set_aspect('equal')
+        ax.margins(0.1)
         plt.show() 
         
     def FreeCADExport(self,ip):

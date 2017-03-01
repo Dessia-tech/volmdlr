@@ -54,7 +54,6 @@ class Line2D(Primitive2D):
         p1,p2=self.points
         x1=p1.point
         x2=p2.point
-#        print(x1[0],x1[1],x2)
         plt.plot([x1[0],x2[0]],[x1[1],x2[1]],'black')        
         return []
     
@@ -69,5 +68,6 @@ class Arc2D(Primitive2D):
     def PltPlot(self):
         pc=self.center.point
         print(pc,self.radius,self.angle1,self.angle2)
-#        return [Arc(pc,self.radius,self.radius,angle=0,theta1=self.angle1,theta2=self.angle2,color='r')]
-        return[Arc((0,0),0.1,0.1,angle=0,theta1=90,theta2=235,color='red')]
+        return [Arc(pc,self.radius,self.radius,angle=0,theta1=self.angle1,theta2=self.angle2,color='r')]
+#        plt.plot(pc[0],pc[1],'ob')
+#        return[Arc((0,0),0.1,0.1,angle=0,theta1=90,theta2=235,color='red')]
