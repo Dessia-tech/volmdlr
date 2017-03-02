@@ -8,6 +8,7 @@ Created on Wed Mar  1 14:10:59 2017
 import numpy as npy
 import math
 import matplotlib.pyplot as plt
+from scipy.linalg import norm
 
 from matplotlib.patches import Arc
 
@@ -50,6 +51,11 @@ class Point2D(Vector2D):
 class Primitive2D:
     def __init__(self,name=''):
         self.name=name
+        
+class Profile2D(Primitive2D):
+    def __init__(self,primitives,name=''):
+        Primitive2D.__init__(self,name)        
+        self.primitives=primitives
 
 class Line2D(Primitive2D):
     def __init__(self,point1,point2,name=''):
@@ -74,3 +80,67 @@ class Arc2D(Primitive2D):
     def MPLPlot(self):
         pc=self.center.vector
         return [Arc(pc,2*self.radius,2*self.radius,angle=0,theta1=self.angle1*0.5/math.pi*360,theta2=self.angle2*0.5/math.pi*360,color='black')]
+
+
+class RoundedLines2D(Profile2D):
+    def __init__(self,points,radius,name=''):        
+        
+        # Construncting Arcs and lines of profile
+        p1s=[points[-1]]+points[:-1]
+        pis=points
+        p2s=points[1:]+[points[0]]
+        points_l=points[:]
+#        primitives=[]
+        arcs=[]
+        for i in range(len(points)):
+            try:
+                r=self.radius[i]
+                pt1=p1s[i].vector
+                pti=pis[i].vector
+                pt2=p2s[i].vector
+
+                dist1=norm(pt1-pti)
+                dist2=norm(pt2-pti)
+                dist3=norm(pt1-pt2)
+                alpha=math.acos(-(dist3**2-dist1**2-dist2**2)/(2*dist1*dist2))/2
+                dist=r/math.tan(alpha)
+
+                vec1=(pt1-pti)/dist1
+                vec2=(pt2-pti)/dist2
+
+                indice=-vec1[1]*vec2[0]+vec1[0]*vec2[1]
+
+                indice=indice/abs(indice)
+
+                p3=pti+vec1*dist
+                p4=pti+vec2*dist
+
+                ptcx=p3[0]-indice*vec1[1]*r
+                ptcy=p3[1]+indice*vec1[0]*r
+                pc=npy.array((ptcx,ptcy))
+
+                p3c=(p3-pc)
+                p4c=(p4-pc)
+                theta1=npy.arctan2(p3c[1],p3c[0])
+                theta2=npy.arctan2(p4c[1],p4c[0])
+#                theta1,theta2=sorted([theta1,theta2])
+                points_l[i]=(Point2D(p3),Point2D(p4))                           
+                arcs.append(Arc2D(Point2D(pc),r,theta1,theta2))
+            except KeyError:
+                pass
+
+        lines=[]
+        try:
+            last_point=points_l[0][1]
+        except IndexError:
+            last_point=points_l[0]
+        for p in points_l[1:]+[points_l[0]]:
+            if type(p)==tuple:
+                lines.append(Line2D(last_point,p[0]))
+                last_point=p[1]
+            else:
+                lines.append(Line2D(last_point,p))
+                last_point=p
+        primitives=lines+arcs
+        
+        Profile2D.__init__(self,primitives,name)        

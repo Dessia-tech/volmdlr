@@ -128,81 +128,79 @@ class ExtrudedProfile(Primitive3D):
     :param points: a list of 3D numpy arrays
     :param radius: a dict containing link between index of rounded angles (keys) and radius (values)
     """
-    def __init__(self,plane_origin,x1,x2,points2D,radius,extrusion_vector,name=''):
+    def __init__(self,plane_origin,x1,x2,primitives,radius,extrusion_vector,name=''):
         Primitive3D.__init__(self,name)
         self.plane_origin=Point3D(plane_origin)
         self.x1=Vector3D(x1)
         self.x2=Vector3D(x2)
-        self.points2D=[Point2D(p) for p in points2D]
-        self.points3D=[Point3D(self.plane_origin.vector+p.vector[0]*self.x1.vector+p.vector[1]*self.x2.vector) for p in self.points2D]
-        self.radius=radius
+        self.primitives=primitives
         self.extrusion_vector=extrusion_vector
         
-    def Export2D(self,point,x1,x2):
-        """
-        export in plane defined by point,x1,x2
-        """
-        point=Point3D(point)
-        x1=Point3D(x1)
-        x2=Point3D(x2)
-
-        points2D=[geometry.PointLocalProjectionPlane(p,point,x1,x2) for p in self.points3D]
-        p1s=[points2D[-1]]+points2D[:-1]
-        pis=points2D
-        p2s=points2D[1:]+[points2D[0]]
-        points_l=points2D[:]
-        arcs=[]
-        for i in range(len(points2D)):
-            try:
-                r=self.radius[i]
-                pt1=p1s[i].vector
-                pti=pis[i].vector
-                pt2=p2s[i].vector
-
-                dist1=norm(pt1-pti)
-                dist2=norm(pt2-pti)
-                dist3=norm(pt1-pt2)
-                alpha=math.acos(-(dist3**2-dist1**2-dist2**2)/(2*dist1*dist2))/2
-                dist=r/math.tan(alpha)
-
-                vec1=(pt1-pti)/dist1
-                vec2=(pt2-pti)/dist2
-
-                indice=-vec1[1]*vec2[0]+vec1[0]*vec2[1]
-
-                indice=indice/abs(indice)
-
-                p3=pti+vec1*dist
-                p4=pti+vec2*dist
-
-                ptcx=p3[0]-indice*vec1[1]*r
-                ptcy=p3[1]+indice*vec1[0]*r
-                pc=npy.array((ptcx,ptcy))
-
-                p3c=(p3-pc)
-                p4c=(p4-pc)
-                theta1=npy.arctan2(p3c[1],p3c[0])
-                theta2=npy.arctan2(p4c[1],p4c[0])
-#                theta1,theta2=sorted([theta1,theta2])
-                points_l[i]=(Point2D(p3),Point2D(p4))                           
-                arcs.append(Arc2D(Point2D(pc),r,theta1,theta2))
-            except KeyError:
-                pass
-
-        lines=[]
-        try:
-            last_point=points_l[0][1]
-        except IndexError:
-            last_point=points_l[0]
-        for p in points_l[1:]+[points_l[0]]:
-            if type(p)==tuple:
-                lines.append(Line2D(last_point,p[0]))
-                last_point=p[1]
-            else:
-                lines.append(Line2D(last_point,p))
-                last_point=p
-                
-        return lines,arcs
+#    def Export2D(self,point,x1,x2):
+#        """
+#        export in plane defined by point,x1,x2
+#        """
+#        point=Point3D(point)
+#        x1=Point3D(x1)
+#        x2=Point3D(x2)
+#
+#        points2D=[geometry.PointLocalProjectionPlane(p,point,x1,x2) for p in self.points3D]
+#        p1s=[points2D[-1]]+points2D[:-1]
+#        pis=points2D
+#        p2s=points2D[1:]+[points2D[0]]
+#        points_l=points2D[:]
+#        arcs=[]
+#        for i in range(len(points2D)):
+#            try:
+#                r=self.radius[i]
+#                pt1=p1s[i].vector
+#                pti=pis[i].vector
+#                pt2=p2s[i].vector
+#
+#                dist1=norm(pt1-pti)
+#                dist2=norm(pt2-pti)
+#                dist3=norm(pt1-pt2)
+#                alpha=math.acos(-(dist3**2-dist1**2-dist2**2)/(2*dist1*dist2))/2
+#                dist=r/math.tan(alpha)
+#
+#                vec1=(pt1-pti)/dist1
+#                vec2=(pt2-pti)/dist2
+#
+#                indice=-vec1[1]*vec2[0]+vec1[0]*vec2[1]
+#
+#                indice=indice/abs(indice)
+#
+#                p3=pti+vec1*dist
+#                p4=pti+vec2*dist
+#
+#                ptcx=p3[0]-indice*vec1[1]*r
+#                ptcy=p3[1]+indice*vec1[0]*r
+#                pc=npy.array((ptcx,ptcy))
+#
+#                p3c=(p3-pc)
+#                p4c=(p4-pc)
+#                theta1=npy.arctan2(p3c[1],p3c[0])
+#                theta2=npy.arctan2(p4c[1],p4c[0])
+##                theta1,theta2=sorted([theta1,theta2])
+#                points_l[i]=(Point2D(p3),Point2D(p4))                           
+#                arcs.append(Arc2D(Point2D(pc),r,theta1,theta2))
+#            except KeyError:
+#                pass
+#
+#        lines=[]
+#        try:
+#            last_point=points_l[0][1]
+#        except IndexError:
+#            last_point=points_l[0]
+#        for p in points_l[1:]+[points_l[0]]:
+#            if type(p)==tuple:
+#                lines.append(Line2D(last_point,p[0]))
+#                last_point=p[1]
+#            else:
+#                lines.append(Line2D(last_point,p))
+#                last_point=p
+#                
+#        return lines,arcs
     
     def MPLPlot(self,point,x1,x2):
         lines,arcs=self.Export2D(point,x1,x2)
