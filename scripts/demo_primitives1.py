@@ -11,11 +11,10 @@ import volmdlr.primitives3D as primitives3D
 
 cylinder1=primitives3D.Cylinder((0,0,0),(1,0,0),0.05,0.02)
 cylinder2=primitives3D.HollowCylinder((0,0.1,0),(1,0,0),0.02,0.06,0.03)
-profile=primitives3D.ExtrudedProfile([(0,0,0),(0.1,0.,0),(0.1,0.3,0),(0.,0.3,0)],{0:0.05,2:0.01},(0,0,0.2))
+profile=primitives3D.ExtrudedProfile((0,0,0),(1,0,0),(0,1,0),[(0,0),(0.1,0.),(0.15,0.4),(0.,0.3)],{0:0.05,2:0.01},(0,0,0.2))
 
 model=vm.VolumeModel([cylinder1,cylinder2,profile])
 
-#l,a=profile.Export2D((0,0,0),(1,0,0),(0,1,0))
-profile.PltPlot((0,0,0),(1,0,0),(0,1,0))
+profile.MPLPlot((0,0,0),(1,0,0),(0,1,0))
 
 #model.FreeCADExport('python','cylinders','/usr/lib/freecad-daily/lib/')
