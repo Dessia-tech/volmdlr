@@ -6,10 +6,263 @@ Created on Tue Feb 28 14:07:37 2017
 @author: steven
 """
 
+import math
+import numpy as npy
+import matplotlib.pyplot as plt
+from matplotlib.patches import Arc
+from mpl_toolkits.mplot3d import Axes3D
+
+from scipy.linalg import norm
+
+class Vector2D:
+    def __init__(self,vector):
+        self.vector=npy.array(vector)
+        
+    def To3D(self,plane_origin,x1,x2):
+        x,y=self.vector
+        return Point3D(plane_origin.vector+x1.vector*x+x2.vector*y)
+    
+    def __add__(self,point2d):
+        return Vector2D(self.vector+point2d)
+    
+    def __radd__(self,point2d):
+        return self+point2d
+
+    def __sub__(self,point2d):
+        return Vector2D(self.vector-point2d.vector)
+    
+    def __rsub__(self,point2d):
+        return self-point2d    
+    
+    def __mul__(self,value):
+        return Vector2D(self.vector*value)
+    
+    def __rmul__(self,value):
+        return self*value
+
+    def __div__(self,value):
+        return Vector2D(self.vector/value)
+    
+    def __rdiv__(self,value):
+        return self/value
+        
+
+class Point2D(Vector2D):
+    def __init__(self,vector,name=''):
+        Vector2D.__init__(self,vector)
+        self.name=name
+
+
+class Primitive2D:
+    def __init__(self,name=''):
+        self.name=name
+        
+class CompositePrimitive2D(Primitive2D):
+    """
+    A collection of simple primitives
+    """
+    def __init__(self,primitives,name=''):
+        Primitive2D.__init__(self,name)        
+        self.primitives=primitives
+        
+    def MPLPlot(self):
+#        lines,arcs=self.Export2D(point,x1,x2)
+        fig, ax = plt.subplots()
+        ps=[]
+        for element in self.primitives:
+            ps.extend(element.MPLPlot())
+#        p = PatchCollection(ps)
+#        print(arcs)
+        for p in ps:
+            ax.add_patch(p)
+        ax.set_aspect('equal')
+        ax.margins(0.1)
+        plt.show() 
+        
+class Contour2D(CompositePrimitive2D):
+    """
+    A collection of primitives intended to be closed
+    """
+    def __init__(self,primitives,name=''):
+        
+        primitives2=[]
+        for primitive in primitives:
+            try:
+                primitives2.extend(primitive.primitives)
+            except AttributeError:
+                primitives2.append(primitive)
+
+        CompositePrimitive2D.__init__(self,primitives2,name)
+        
+    def To3D(self,plane_origin,x,y):
+        return [primitive.To3D(plane_origin,x,y) for primitive in self.primitives]
+
+class Line2D(Primitive2D):
+    def __init__(self,point1,point2,name=''):
+        Primitive2D.__init__(self,name)        
+        self.points=[point1,point2]
+
+    def MPLPlot(self):
+        p1,p2=self.points
+        x1=p1.vector
+        x2=p2.vector
+        plt.plot([x1[0],x2[0]],[x1[1],x2[1]],'black')        
+        return []
+    
+    def To3D(self,plane_origin,x1,x2):
+        p3D=[p.To3D(plane_origin,x1,x2) for p in self.points]
+        return Line3D(*p3D,self.name)
+    
+class Arc2D(Primitive2D):
+    def __init__(self,center,radius,angle1,angle2,name=''):        
+        Primitive2D.__init__(self,name)        
+        self.center=center
+        self.radius=radius
+        self.angle1=angle1
+        self.angle2=angle2
+        
+    def MPLPlot(self):
+        pc=self.center.vector
+        return [Arc(pc,2*self.radius,2*self.radius,angle=0,theta1=self.angle1*0.5/math.pi*360,theta2=self.angle2*0.5/math.pi*360,color='black')]
+
+    def To3D(self,plane_origin,x,y):
+        pc=self.center.To3D(plane_origin,x,y)
+        pe=self.center+self.radius*npy.array((math.cos(self.angle1),math.sin(self.angle1)))
+        pe3=pe.To3D(plane_origin,x,y)
+        ps=self.center+self.radius*npy.array((math.cos(self.angle2),math.sin(self.angle2)))
+        ps3=ps.To3D(plane_origin,x,y)
+        return Arc3D(pe3,pc,ps3,self.name)
+
+class Circle2D(Primitive2D):
+    def __init__(self,center,radius,name=''):        
+        Primitive2D.__init__(self,name)        
+        self.center=center
+        self.radius=radius
+        
+    def MPLPlot(self):
+        pc=self.center.vector
+        return [Arc(pc,2*self.radius,2*self.radius,angle=0,theta1=0,theta2=360,color='black')]
+
+    def To3D(self,plane_origin,x,y):
+        normal=Vector3D(npy.cross(x.vector,y.vector))
+        pc=self.center.To3D(plane_origin,x,y)
+        print(normal,pc)
+        return Circle3D(pc,self.radius,normal,self.name)
+
+
+class Primitive3D:
+    def __init__(self,name=''):
+        self.name=name        
+
+        
+class Vector3D:
+    def __init__(self,vector):
+        self.vector=npy.array(vector)
+
+    
+    def __add__(self,point2d):
+        return Vector3D(self.vector+point2d.vector)
+    
+    def __radd__(self,point2d):
+        return self+point2d
+
+    def __sub__(self,point2d):
+        return Vector3D(self.vector-point2d.vector)
+    
+    def __rsub__(self,point2d):
+        return self-point2d    
+    
+    def __mul__(self,value):
+        return Vector3D(self.vector*value)
+    
+    def __rmul__(self,value):
+        return self*value
+
+    def __div__(self,value):
+        return Vector3D(self.vector/value)
+    
+    def __rdiv__(self,value):
+        return self/value
+        
+
+class Point3D(Vector3D):
+    def __init__(self,vector,name=''):
+        Vector3D.__init__(self,vector)
+        self.name=name
+        
+class Line3D(Primitive3D):
+    def __init__(self,point1,point2,name=''):
+        Primitive3D.__init__(self,name)        
+        self.points=[point1,point2]
+        
+    def MPLPlot(self,ax):
+        x=[p.vector[0] for p in self.points]
+        y=[p.vector[1] for p in self.points]
+        z=[p.vector[2] for p in self.points]
+        ax.plot(x,y,z)
+        
+        
+    def FreeCADExport(self,name):
+        x1,y1,z1=self.points[0].vector
+        x2,y2,z2=self.points[1].vector
+        return '{}=Part.Line(fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,x1,y1,z1,x2,y2,z2)
+
+
+class Circle3D(Primitive3D):
+    def __init__(self,center,radius,normal,name):        
+        Primitive2D.__init__(self,name)        
+        self.center=center
+        self.radius=radius
+        self.normal=normal
+
+    def FreeCADExport(self,name):
+        xc,yc,zc=self.center.vector
+        xn,yn,zn=self.normal.vector
+        return '{}=Part.Circle(fc.Vector({},{},{}),fc.Vector({},{},{}),{})\n'.format(name,xc,yc,zc,xn,yn,zn,self.radius)
+        
+
+class Arc3D(Primitive3D):
+    def __init__(self,start,center,end,name):        
+        Primitive2D.__init__(self,name)        
+        self.center=center
+        self.start=start
+        self.end=end
+        r=norm(start.vector-center.vector)
+        n=(start.vector-2*center.vector+end.vector)
+        n=n/norm(n)
+        self.middle=Point3D(r*n+center.vector)
+
+    def MPLPlot(self,ax):
+        ax.scatter(*self.center.vector,c='b')
+        ax.scatter(*self.start.vector,c='r')
+        ax.scatter(*self.end.vector,c='r')
+        ax.scatter(*self.middle.vector,c='g')
+        
+        
+    
+    def FreeCADExport(self,name):
+        xs,ys,zs=self.start.vector
+        xm,ym,zm=self.middle.vector
+        xe,ye,ze=self.end.vector
+        return '{}=Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,xs,ys,zs,xm,ym,zm,xe,ye,ze)
+
+        
+
 class VolumeModel:
     def __init__(self,primitives):
         self.primitives=primitives
-        
+    
+    def MPLPlot(self):
+        """
+        Matplotlib plot of model.
+        To use for debug.
+        """
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+#        ax.set_aspect('equal')
+        for primitive in self.primitives:
+            primitive.MPLPlot(ax)
+    
     def FreeCADScript(self,fcstd_filepath,path_lib_freecad='',py_filepath=''):
         """
         Generate python a FreeCAD definition of model 
@@ -22,22 +275,23 @@ class VolumeModel:
         if path_lib_freecad!='':
             s+="import sys\nsys.path.append('"+path_lib_freecad+"')\n"
 
-        s+="import FreeCAD as fc\nimport Part\n\ndoc_bv=fc.newDocument('bv')\n\n"
+        s+="import FreeCAD as fc\nimport Part\n\ndoc=fc.newDocument('doc')\n\n"
         
         for ip,primitive in enumerate(self.primitives):
             print(ip)
             s+=(primitive.FreeCADExport(ip)+'\n')
-            s+=('shapeobj = doc_bv.addObject("Part::Feature","primitive'+str(ip)+': '+primitive.name+'")\n')
+            s+=('shapeobj = doc.addObject("Part::Feature","primitive'+str(ip)+' '+primitive.name+'")\n')
             s+=("shapeobj.Shape = primitive"+str(ip)+'\n\n')
-            
-        s+='doc_bv.recompute()\n'
-        s+="doc_bv.saveAs('"+fcstd_filepath+".fcstd')"
+        s+='doc.recompute()\n'
+        s+="doc.saveAs('"+fcstd_filepath+".fcstd')"
 
         if py_filepath!='':
             with open(py_filepath,'w') as fichier:
                 fichier.write(s)
         return s
             
+    
+    
     def FreeCADExport(self,python_path,fcstd_filepath,path_lib_freecad=''):
         """
         Export model to .fcstd FreeCAD standard

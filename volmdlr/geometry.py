@@ -6,7 +6,7 @@ Created on Wed Mar  1 11:14:32 2017
 @author: steven
 """
 from numpy import dot,cross
-from volmdlr.primitives2D import Point2D
+from volmdlr import Point2D
 
 def PointProjectionPlane(point,plane_origin,plane_normal):
     """

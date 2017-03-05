@@ -17,4 +17,4 @@ model=vm.VolumeModel([cylinder1,cylinder2,profile])
 
 profile.MPLPlot((0,0,0),(1,0,0),(0,1,0))
 
-#model.FreeCADExport('python','cylinders','/usr/lib/freecad-daily/lib/')
+model.FreeCADExport('python','cylinders','/usr/lib/freecad-daily/lib/')

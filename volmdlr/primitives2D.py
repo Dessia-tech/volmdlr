@@ -7,88 +7,28 @@ Created on Wed Mar  1 14:10:59 2017
 """
 import numpy as npy
 import math
-import matplotlib.pyplot as plt
+
 from scipy.linalg import norm
 
-from matplotlib.patches import Arc
+
+import volmdlr
 
 
-class Vector2D:
-    def __init__(self,vector):
-        self.vector=npy.array(vector)
-    
-    def __add__(self,point2d):
-        return Vector2D(self.point+point2d.point)
-    
-    def __radd__(self,point2d):
-        return self+point2d
 
-    def __sub__(self,point2d):
-        return Vector2D(self.point-point2d.point)
-    
-    def __rsub__(self,point2d):
-        return self-point2d    
-    
-    def __mul__(self,value):
-        return Vector2D(self.point*value)
-    
-    def __rmul__(self,value):
-        return self*value
-
-    def __div__(self,value):
-        return Vector2D(self.point/value)
-    
-    def __rdiv__(self,value):
-        return self/value
-        
-
-class Point2D(Vector2D):
-    def __init__(self,vector,name=''):
-        Vector2D.__init__(self,vector)
-        self.name=name
-
-
-class Primitive2D:
-    def __init__(self,name=''):
-        self.name=name
-        
-class Profile2D(Primitive2D):
-    def __init__(self,primitives,name=''):
-        Primitive2D.__init__(self,name)        
-        self.primitives=primitives
-
-class Line2D(Primitive2D):
-    def __init__(self,point1,point2,name=''):
-        Primitive2D.__init__(self,name)        
-        self.points=[point1,point2]
-
-    def MPLPlot(self):
-        p1,p2=self.points
-        x1=p1.vector
-        x2=p2.vector
-        plt.plot([x1[0],x2[0]],[x1[1],x2[1]],'black')        
-        return []
-    
-class Arc2D(Primitive2D):
-    def __init__(self,center,radius,angle1,angle2,name=''):        
-        Primitive2D.__init__(self,name)        
-        self.center=center
+class RoundedLines2D(volmdlr.CompositePrimitive2D):
+    def __init__(self,points,radius,closed=False,name=''):        
+        self.points=points
         self.radius=radius
-        self.angle1=angle1
-        self.angle2=angle2
-        
-    def MPLPlot(self):
-        pc=self.center.vector
-        return [Arc(pc,2*self.radius,2*self.radius,angle=0,theta1=self.angle1*0.5/math.pi*360,theta2=self.angle2*0.5/math.pi*360,color='black')]
-
-
-class RoundedLines2D(Profile2D):
-    def __init__(self,points,radius,name=''):        
-        
         # Construncting Arcs and lines of profile
-        p1s=[points[-1]]+points[:-1]
-        pis=points
-        p2s=points[1:]+[points[0]]
+        if closed:
+            p1s=[points[-1]]+points[:-1]
+            pis=points
+            p2s=points[1:]+[points[0]]
+        else:
+            p1s=[points[-1]]+points[:-2]
+            pis=points[:-1]
+            p2s=points[1:]
+    
         points_l=points[:]
 #        primitives=[]
         arcs=[]
@@ -124,23 +64,24 @@ class RoundedLines2D(Profile2D):
                 theta1=npy.arctan2(p3c[1],p3c[0])
                 theta2=npy.arctan2(p4c[1],p4c[0])
 #                theta1,theta2=sorted([theta1,theta2])
-                points_l[i]=(Point2D(p3),Point2D(p4))                           
-                arcs.append(Arc2D(Point2D(pc),r,theta1,theta2))
+                points_l[i]=(volmdlr.Point2D(p3),volmdlr.Point2D(p4))                           
+                arcs.append(volmdlr.Arc2D(volmdlr.Point2D(pc),r,theta1,theta2))
             except KeyError:
                 pass
 
         lines=[]
         try:
             last_point=points_l[0][1]
-        except IndexError:
+#            print(points_l)
+        except TypeError:
             last_point=points_l[0]
         for p in points_l[1:]+[points_l[0]]:
             if type(p)==tuple:
-                lines.append(Line2D(last_point,p[0]))
+                lines.append(volmdlr.Line2D(last_point,p[0]))
                 last_point=p[1]
             else:
-                lines.append(Line2D(last_point,p))
+                lines.append(volmdlr.Line2D(last_point,p))
                 last_point=p
         primitives=lines+arcs
         
-        Profile2D.__init__(self,primitives,name)        
+        volmdlr.CompositePrimitive2D.__init__(self,primitives,name)        
