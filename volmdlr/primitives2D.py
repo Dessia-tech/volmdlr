@@ -70,6 +70,8 @@ class RoundedLines2D(volmdlr.CompositePrimitive2D):
                 pass
 
         lines=[]
+#        if not closed:
+#            del points_l[-1]
         try:
             last_point=points_l[0][1]
 #            print(points_l)
@@ -82,6 +84,9 @@ class RoundedLines2D(volmdlr.CompositePrimitive2D):
             else:
                 lines.append(volmdlr.Line2D(last_point,p))
                 last_point=p
+        if not closed:
+            del lines[-1]
         primitives=lines+arcs
+        
         
         volmdlr.CompositePrimitive2D.__init__(self,primitives,name)        

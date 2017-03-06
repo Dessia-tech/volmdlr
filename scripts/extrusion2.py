@@ -4,6 +4,8 @@
 Created on Sun Mar  5 22:01:35 2017
 
 @author: steven
+
+
 """
 
 import numpy as npy
@@ -16,12 +18,12 @@ p1=vm.Point2D((0,0))
 p2=vm.Point2D((0.1,0.))
 p3=vm.Point2D((0.1,0.2))
 p4=vm.Point2D((0,0.1))
-p5=vm.Point2D((0.05,0))
+p5=vm.Point2D((0,0.05))
 
 #p6=vm.Point2D((0.1,0.3))
 
 l1=primitives2D.RoundedLines2D([p1,p2,p3,p4],{2:0.01},False)
-l2=vm.Arc2D(p5,0.05,math.pi,0)
+l2=vm.Arc2D(p5,0.05,math.pi/2,3*math.pi/2)
 c1=vm.Contour2D([l1,l2])
 
 po=vm.Point3D((0,0,0))
