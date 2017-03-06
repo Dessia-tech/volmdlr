@@ -128,9 +128,19 @@ class Arc2D(Primitive2D):
         self.center=Point2D(solve(A,b))
         r1=self.start.vector-self.center.vector
         r2=self.end.vector-self.center.vector
+        rc=self.middle.vector-self.center.vector
+        
         self.radius=norm(r1)
-        self.angle1=npy.arctan2(r1[1],r1[0])
-        self.angle2=npy.arctan2(r2[1],r2[0])
+        angle1=npy.arctan2(r1[1],r1[0])
+        angle2=npy.arctan2(r2[1],r2[0])
+        anglem=npy.arctan2(rc[1],rc[0])
+        if (anglem-angle1)>0:                    
+            self.angle1=angle1
+            self.angle2=angle2
+        else:
+            self.angle1=angle2
+            self.angle2=angle1
+            
         
     def MPLPlot(self):
         pc=self.center.vector
