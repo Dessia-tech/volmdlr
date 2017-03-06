@@ -19,6 +19,7 @@ class RoundedLines2D(volmdlr.CompositePrimitive2D):
     def __init__(self,points,radius,closed=False,name=''):        
         self.points=points
         self.radius=radius
+        self.closed=closed
         # Construncting Arcs and lines of profile
         if closed:
             p1s=[points[-1]]+points[:-1]
@@ -94,3 +95,17 @@ class RoundedLines2D(volmdlr.CompositePrimitive2D):
         
         
         volmdlr.CompositePrimitive2D.__init__(self,primitives,name)        
+        
+        
+    def Rotation(self,center,angle,copy=True):
+        if copy:
+            return RoundedLines2D([p.Rotation(center,angle,copy=True) for p in self.points],self.radius,self.closed,self.name)
+        else:
+            self.__init__([p.Rotation(center,angle,copy=True) for p in self.points],self.radius,self.closed,self.name)
+            
+    def Translation(self,offset,copy=True):
+        if copy:
+            return RoundedLines2D([p.Translation(offset,copy=True) for p in self.points],self.radius,self.closed,self.name)
+        else:
+            self.__init__([p.Translation(offset,copy=True) for p in self.points],self.radius,self.closed,self.name)
+

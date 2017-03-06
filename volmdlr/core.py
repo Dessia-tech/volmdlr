@@ -45,12 +45,27 @@ class Vector2D:
     
     def __rdiv__(self,value):
         return self/value
+    
+    def Rotation(self,center,angle,copy=True):
+        vector2=npy.dot(npy.array([[math.cos(angle),-math.sin(angle)],[math.sin(angle),math.cos(angle)]]),(self.vector-center.vector))+center.vector
+        if copy:
+            return Point2D(vector2)
+        else:
+            self.vector=vector2
+
+    def Translation(self,offset,copy=True):
+        vector2=self.vector+offset
+        if copy:
+            return Point2D(vector2)
+        else:
+            self.vector=vector2
         
 
 class Point2D(Vector2D):
     def __init__(self,vector,name=''):
         Vector2D.__init__(self,vector)
         self.name=name
+
 
 
 class Primitive2D:
@@ -113,6 +128,18 @@ class Line2D(Primitive2D):
         p3D=[p.To3D(plane_origin,x1,x2) for p in self.points]
         return Line3D(*p3D,self.name)
     
+    def Rotation(self,center,angle,copy=True):
+        if copy:
+            return Line2D(*[p.vector.Rotation(center,angle,copy=True) for p in self.points])
+        else:
+            self.points=[p.vector.Rotation(center,angle,copy=True) for p in self.points]
+            
+    def Translation(self,offset,copy=True):
+        if copy:
+            return Line2D(*[p.vector.Translation(offset,copy=True) for p in self.points])
+        else:
+            self.points=[p.vector.Translation(offset,copy=True) for p in self.points]
+    
 class Arc2D(Primitive2D):
     def __init__(self,start,middle,end,name=''):        
         Primitive2D.__init__(self,name)        
@@ -133,8 +160,13 @@ class Arc2D(Primitive2D):
         self.radius=norm(r1)
         angle1=npy.arctan2(r1[1],r1[0])
         angle2=npy.arctan2(r2[1],r2[0])
+#        angle_min=min(angle1,angle2)
+#        angle_max=max(angle1,angle2)
         anglem=npy.arctan2(rc[1],rc[0])
-        if (anglem-angle1)>0:                    
+        order=[y for x,y in sorted(zip([angle1,anglem,angle2],[0,1,2]))]
+        order=order*2
+        i=order.index(0)
+        if order[i+1]==1:
             self.angle1=angle1
             self.angle2=angle2
         else:
@@ -153,6 +185,18 @@ class Arc2D(Primitive2D):
         ps=self.center+self.radius*npy.array((math.cos(self.angle2),math.sin(self.angle2)))
         ps3=ps.To3D(plane_origin,x,y)
         return Arc3D(pe3,pc,ps3,self.name)
+    
+    def Rotation(self,center,angle,copy=True):
+        if copy:
+            return Arc2D(*[p.Rotation(center,angle,copy=True) for p in [self.start,self.middle,self.end]])
+        else:
+            self.__init__(*[p.Rotation(center,angle,copy=True) for p in [self.start,self.middle,self.end]])
+            
+    def Translation(self,offset,copy=True):
+        if copy:
+            return Arc2D(*[p.Translation(offset,copy=True) for p in [self.start,self.middle,self.end]])
+        else:
+            self.__init__(*[p.Translation(offset,copy=True) for p in [self.start,self.middle,self.end]])
 
 class Circle2D(Primitive2D):
     def __init__(self,center,radius,name=''):        
@@ -169,6 +213,18 @@ class Circle2D(Primitive2D):
         pc=self.center.To3D(plane_origin,x,y)
         print(normal,pc)
         return Circle3D(pc,self.radius,normal,self.name)
+
+    def Rotation(self,center,angle,copy=True):
+        if copy:
+            return Circle2D(self.center.vector.Rotation(center,angle,copy=True),self.radius)
+        else:
+            self.center.Rotation(center,angle,copy=False) 
+            
+    def Translation(self,offset,copy=True):
+        if copy:
+            return Circle2D(self.center.vector.Translation(offset,copy=True),self.radius)
+        else:
+            self.center.Translation(offset,copy=False)
 
 
 class Primitive3D:
