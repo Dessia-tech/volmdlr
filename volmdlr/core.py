@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Arc
 from mpl_toolkits.mplot3d import Axes3D
 
-from scipy.linalg import norm
+from scipy.linalg import norm,solve
 
 class Vector2D:
     def __init__(self,vector):
@@ -114,12 +114,23 @@ class Line2D(Primitive2D):
         return Line3D(*p3D,self.name)
     
 class Arc2D(Primitive2D):
-    def __init__(self,center,radius,angle1,angle2,name=''):        
+    def __init__(self,start,middle,end,name=''):        
         Primitive2D.__init__(self,name)        
-        self.center=center
-        self.radius=radius
-        self.angle1=angle1
-        self.angle2=angle2
+        self.middle=middle
+        self.start=start
+        self.end=end
+        xm,ym=middle.vector
+        xe,ye=end.vector
+        xs,ys=start.vector
+        A=npy.array([[2*(xs-xm),2*(ys-ym)],
+                   [2*(xs-xe),2*(ys-ye)]])
+        b=-npy.array([xm**2+ym**2-xs**2-ys**2,xe**2+ye**2-xs**2-ys**2])
+        self.center=Point2D(solve(A,b))
+        r1=self.start.vector-self.center.vector
+        r2=self.end.vector-self.center.vector
+        self.radius=norm(r1)
+        self.angle1=npy.arctan2(r1[1],r1[0])
+        self.angle2=npy.arctan2(r2[1],r2[0])
         
     def MPLPlot(self):
         pc=self.center.vector

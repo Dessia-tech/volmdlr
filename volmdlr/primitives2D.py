@@ -58,14 +58,18 @@ class RoundedLines2D(volmdlr.CompositePrimitive2D):
                 ptcx=p3[0]-indice*vec1[1]*r
                 ptcy=p3[1]+indice*vec1[0]*r
                 pc=npy.array((ptcx,ptcy))
+                
+                d=p3-2*pc+p4
+                d=d/norm(d)
+                pm=pc+r*d
 
-                p3c=(p3-pc)
-                p4c=(p4-pc)
-                theta1=npy.arctan2(p3c[1],p3c[0])
-                theta2=npy.arctan2(p4c[1],p4c[0])
+#                p3c=(p3-pc)
+#                p4c=(p4-pc)
+#                theta1=npy.arctan2(p3c[1],p3c[0])
+#                theta2=npy.arctan2(p4c[1],p4c[0])
 #                theta1,theta2=sorted([theta1,theta2])
                 points_l[i]=(volmdlr.Point2D(p3),volmdlr.Point2D(p4))                           
-                arcs.append(volmdlr.Arc2D(volmdlr.Point2D(pc),r,theta1,theta2))
+                arcs.append(volmdlr.Arc2D(volmdlr.Point2D(p3),volmdlr.Point2D(pm),volmdlr.Point2D(p4)))
             except KeyError:
                 pass
 
