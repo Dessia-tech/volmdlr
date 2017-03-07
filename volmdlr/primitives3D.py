@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 
 #from volmdlr.primitives2D import Line2D,Arc2D,Point2D
 import volmdlr
+import volmdlr.geometry as geometry
         
 class Cylinder(volmdlr.Primitive3D):
     def __init__(self,position,axis,radius,width,name=''):
@@ -88,11 +89,12 @@ class ExtrudedProfile(volmdlr.Primitive3D):
     :param points: a list of 3D numpy arrays
     :param radius: a dict containing link between index of rounded angles (keys) and radius (values)
     """
-    def __init__(self,plane_origin,x,y,contours2D,extrusion_vector,name=''):
+    def __init__(self,plane_origin,x,y,contours2D,extrusion_vector,screw_thread=0.,name=''):
         volmdlr.Primitive3D.__init__(self,name)
         self.contours2D=contours2D
         self.extrusion_vector=extrusion_vector
         self.contours3D=[]
+        self.screw_thread=screw_thread
         for contour in contours2D:
 #            print(contour)
             self.contours3D.append(contour.To3D(plane_origin,x,y))
@@ -113,6 +115,16 @@ class ExtrudedProfile(volmdlr.Primitive3D):
             s+='C=Part.Wire(S.Edges)\n'
             s+='F=Part.Face(C)\n'
         e1,e2,e3=self.extrusion_vector
-        s+=name+'=F.extrude(fc.Vector({},{},{}))\n'.format(e1,e2,e3)
-
+        if self.screw_thread==0:            
+            s+=name+'=F.extrude(fc.Vector({},{},{}))\n'.format(e1,e2,e3)
+        else:
+            # Helix creation
+            side=self.screw_thread/abs(self.screw_thread)
+            thread=abs(self.screw_thread)
+            
+            s+='h=Part.MakeLongHelix()'
+            e1,e2,e3=geometry.Direction2Euler(self.extrusion_vector)
+            l=norm(self.extrusion_vector)
+            s+='Sweep = Part.Wire(traj).makePipeShell([section],makeSolid,isFrenet)'
+#            myObject.Shape = Sweep
         return s
