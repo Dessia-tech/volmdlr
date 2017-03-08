@@ -71,6 +71,9 @@ class Point2D(Vector2D):
         x1=self.vector
         plt.plot([x1[0]],[x1[1]],'ob')        
         return []
+    
+    def Distance(self,point2):
+        return norm(self.vector-point2.vector)
 
     @classmethod
     def LinesIntersection(cls,line1,line2):
