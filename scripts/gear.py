@@ -22,6 +22,7 @@ theta2=0.4*theta
 theta3=theta-theta1-theta2
 r3=0.001
 e=0.030
+r4=0.015
 
 pc=vm.Point2D((0,0))
 
@@ -43,14 +44,18 @@ for i in range(Z-1):
     thetar=(i+1)*theta
     L.append(a1.Rotation(pc,thetar))
     L.append(l1.Rotation(pc,thetar))
+#p7=vm.Point2D((0,r4))
+l2=vm.Circle2D(pc,r4)
+
 c1=vm.Contour2D(L)
+c2=vm.Contour2D([l2])
 
 po=vm.Point3D((0,0,0))
 xp=vm.Vector3D((1,0,0))
 yp=vm.Vector3D((0,1,0))
 c1.MPLPlot()
 
-profile=primitives3D.ExtrudedProfile(po,xp,yp,[c1],(0,0,e))
+profile=primitives3D.ExtrudedProfile(po,xp,yp,[c1,c2],(0,0,e))
 
 model=vm.VolumeModel([profile])
 

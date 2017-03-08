@@ -106,16 +106,18 @@ class ExtrudedProfile(volmdlr.Primitive3D):
         
     def FreeCADExport(self,ip):
         name='primitive'+str(ip)
-        for ic,contour in enumerate(self.contours3D):
-            s='L=[]\n'
+        s='W=[]\n'
+        for ic,contour in enumerate(self.contours3D): 
+            s+='L=[]\n'
             for ip,primitive in enumerate(contour):
-                s+=primitive.FreeCADExport('L'+str(ip))
-                s+='L.append(L{})\n'.format(ip)
+                s+=primitive.FreeCADExport('L{}_{}'.format(ic,ip))
+                s+='L.append(L{}_{})\n'.format(ic,ip)
             s+='S = Part.Shape(L)\n' 
-            s+='C=Part.Wire(S.Edges)\n'
-            s+='F=Part.Face(C)\n'
+            s+='W.append(Part.Wire(S.Edges))\n'
+        s+='F=Part.Face(W)\n'
         e1,e2,e3=self.extrusion_vector
-        if self.screw_thread==0:            
+        if self.screw_thread==0:     
+#            s+=name+'=S'
             s+=name+'=F.extrude(fc.Vector({},{},{}))\n'.format(e1,e2,e3)
         else:
             # Helix creation
