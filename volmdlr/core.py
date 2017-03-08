@@ -66,7 +66,6 @@ class Point2D(Vector2D):
         Vector2D.__init__(self,vector)
         self.name=name
 
-
     def MPLPlot(self):
         x1=self.vector
         plt.plot([x1[0]],[x1[1]],'ob')        

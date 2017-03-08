@@ -8,8 +8,8 @@ Created on Wed Mar  8 10:58:19 2017
 
 import volmdlr as vm
 
-p1=vm.Point2D((1,2))
-p2=vm.Point2D((0.4,0))
+p1=vm.Point2D((1,1.45))
+p2=vm.Point2D((0.4,0.1))
 l1=vm.Line2D(p1,p2)
 
 p3=vm.Point2D((-1,0))
