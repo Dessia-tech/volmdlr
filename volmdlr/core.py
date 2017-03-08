@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Arc
 from mpl_toolkits.mplot3d import Axes3D
 
-from scipy.linalg import norm,solve
+from scipy.linalg import norm,solve,LinAlgError
 
 class Vector2D:
     def __init__(self,vector):
@@ -67,7 +67,31 @@ class Point2D(Vector2D):
         self.name=name
 
 
+    def MPLPlot(self):
+        x1=self.vector
+        plt.plot([x1[0]],[x1[1]],'ob')        
+        return []
 
+    @classmethod
+    def LinesIntersection(cls,line1,line2):
+        p11=line1.points[0].vector
+        p12=line1.points[1].vector
+        p21=line2.points[0].vector
+        p22=line2.points[1].vector
+        A=npy.array([[p11[0]-p12[0],p22[0]-p21[0]],[p11[1]-p12[1],p22[1]-p21[1]]])
+        x=npy.array([p21[0]-p11[0],p21[1]-p11[1]])
+        try:
+            t=solve(A,x)
+            return cls(p11-t[0]*(p12-p11))
+        except LinAlgError:
+            return None
+        
+    @classmethod
+    def MiddlePoint(cls,point1,point2):
+        p1=point1.vector
+        p2=point2.vector
+        return cls((p1+p2)*0.5)
+        
 class Primitive2D:
     def __init__(self,name=''):
         self.name=name
