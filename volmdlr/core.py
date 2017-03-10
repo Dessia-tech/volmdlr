@@ -14,6 +14,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 from scipy.linalg import norm,solve,LinAlgError
 
+
 class Vector2D:
     def __init__(self,vector):
         self.vector=npy.array(vector)
@@ -137,6 +138,26 @@ class Contour2D(CompositePrimitive2D):
         
     def To3D(self,plane_origin,x,y):
         return [primitive.To3D(plane_origin,x,y) for primitive in self.primitives]
+    
+    def Area(self):
+        arcs=[]
+        points_polygon=[]
+        for primitive in self.primitives:
+            if primitive.__class__.__name__=='Line2D':
+                points_polygon.extend(primitive.points)
+            elif primitive.__class__.__name__=='Arc2D':
+                points_polygon.append(primitive.center)
+#                arcs.append(primitive)
+        polygon=Polygon2D(points_polygon)
+        A=polygon.Area()
+        for arc in arcs:
+            if polygon.BelongsTo(arc.center):
+                A-=arc.Area()
+            else:
+                A+=arc.Area()
+                
+        return A 
+
 
 class Line2D(Primitive2D):
     def __init__(self,point1,point2,name=''):
@@ -199,6 +220,13 @@ class Arc2D(Primitive2D):
             self.angle1=angle2
             self.angle2=angle1
             
+    def Area(self):
+        if self.angle2<self.angle1:
+            angle=self.angle2+2*math.pi-self.angle1
+        else:
+            angle=self.angle2-self.angle1
+        return self.radius**2*angle/2
+            
         
     def MPLPlot(self):
         pc=self.center.vector
@@ -252,6 +280,48 @@ class Circle2D(Primitive2D):
         else:
             self.center.Translation(offset,copy=False)
 
+
+class Polygon2D(CompositePrimitive2D):
+    def __init__(self,points,name=''):     
+        self.points=points
+        primitives=[]
+        for p1,p2 in zip(points,points[1:]+[points[0]]):
+            primitives.append(Line2D(p1,p2))
+            
+            
+        CompositePrimitive2D.__init__(self,primitives,name)
+        
+        
+    def Area(self):
+        
+        x=[point.vector[0]for point in self.points]
+        y=[point.vector[1]for point in self.points]
+
+        return  (0.5*npy.abs(npy.dot(x,npy.roll(y,1))-npy.dot(y,npy.roll(x,1))))
+        
+    
+    def PointBelongs(self,point):
+        """
+        Ray casting algorithm copied from internet...
+        """
+        n = len(self.points)
+        inside = False
+        x,y=point.vector
+    
+        p1x,p1y = self.points[0].vector
+        
+        for i in range(n+1):
+            p2x,p2y = self.points[i % n].vector
+            if y > min(p1y,p2y):
+                if y <= max(p1y,p2y):
+                    if x <= max(p1x,p2x):
+                        if p1y != p2y:
+                            xints = (y-p1y)*(p2x-p1x)/(p2y-p1y)+p1x
+                        if p1x == p2x or x <= xints:
+                            inside = not inside
+            p1x,p1y = p2x,p2y
+    
+        return inside
 
 class Primitive3D:
     def __init__(self,name=''):
