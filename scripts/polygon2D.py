@@ -19,4 +19,5 @@ p=primitives2D.RoundedLines2D([p1,p2,p3,p4,p5],{2:0.1},True)
 
 c=vm.Contour2D([p])
 print(c.Area())
+print(c.SecondMomentArea(p1))
 p.MPLPlot()

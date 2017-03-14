@@ -14,6 +14,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 from scipy.linalg import norm,solve,LinAlgError
 
+import volmdlr.geometry as geometry
 
 class Vector2D:
     def __init__(self,vector):
@@ -159,6 +160,25 @@ class Contour2D(CompositePrimitive2D):
         return A 
 
 
+    def SecondMomentArea(self,point):
+        arcs=[]
+        points_polygon=[]
+        for primitive in self.primitives:
+            if primitive.__class__.__name__=='Line2D':
+                points_polygon.extend(primitive.points)
+            elif primitive.__class__.__name__=='Arc2D':
+                points_polygon.append(primitive.center)
+#                arcs.append(primitive)
+        polygon=Polygon2D(points_polygon)
+        A=polygon.SecondMomentArea(point)
+        for arc in arcs:
+            if polygon.BelongsTo(arc.center):
+                A-=arc.SecondMomentArea(point)
+            else:
+                A+=arc.SecondMomentArea(point)
+#        A2=geometry.Huygens2D(A,self.Area(),point,)
+        return A
+
 class Line2D(Primitive2D):
     def __init__(self,point1,point2,name=''):
         Primitive2D.__init__(self,name)        
@@ -252,6 +272,25 @@ class Arc2D(Primitive2D):
         else:
             self.__init__(*[p.Translation(offset,copy=True) for p in [self.start,self.middle,self.end]])
 
+    def SecondMomentArea(self,point):
+        """ 
+        Second moment area of part of disk
+        """
+        if self.angle2<self.angle1:
+            angle2=self.angle2+2*math.pi
+            
+        else:
+            angle2=self.angle2
+        angle1=self.angle1
+
+        Ix=self.radius**4/8*(angle2-angle1+0.5*(math.sin(2*angle1)-math.sin(2*angle2)))
+        Iy=self.radius**4/8*(angle2-angle1+0.5*(math.sin(2*angle2)-math.sin(2*angle1)))
+        Ixy=self.radius**4/8*(math.cos(angle1)**2-math.cos(angle2)**2)
+        Ic=npy.array([[Ix,Ixy],[Ixy,Iy]])
+        return geometry.Huygens2D(Ic,self.Area(),self.center,point)
+
+
+
 class Circle2D(Primitive2D):
     def __init__(self,center,radius,name=''):        
         Primitive2D.__init__(self,name)        
@@ -280,6 +319,16 @@ class Circle2D(Primitive2D):
         else:
             self.center.Translation(offset,copy=False)
 
+    def Area(self):
+        return math.pi*self.radius**2
+
+    def SecondMomentArea(self,point):
+        """ 
+        Second moment area of part of disk
+        """
+        I=math.pi*self.radius**4/4
+        Ic=npy.array([[I,0],[0,I]])
+        return geometry.Huygens2D(Ic,self.Area(),self.center,point)
 
 class Polygon2D(CompositePrimitive2D):
     def __init__(self,points,name=''):     
@@ -297,7 +346,7 @@ class Polygon2D(CompositePrimitive2D):
         x=[point.vector[0]for point in self.points]
         y=[point.vector[1]for point in self.points]
 
-        return  (0.5*npy.abs(npy.dot(x,npy.roll(y,1))-npy.dot(y,npy.roll(x,1))))
+        return abs(0.5*npy.abs(npy.dot(x,npy.roll(y,1))-npy.dot(y,npy.roll(x,1))))
         
     
     def PointBelongs(self,point):
@@ -322,6 +371,20 @@ class Polygon2D(CompositePrimitive2D):
             p1x,p1y = p2x,p2y
     
         return inside
+
+    def SecondMomentArea(self,point):
+        Ix,Iy,Ixy=0,0,0
+        for pi,pj in zip(self.points,self.points[1:]+[self.points[0]]):
+            xi,yi=pi.vector-point.vector
+            xj,yj=pj.vector-point.vector
+            Ix+=(yi**2+yi*yj+yj**2)*(xi*yj-xj*yi)
+            Iy+=(xi**2+xi*xj+xj**2)*(xi*yj-xj*yi)
+            Ixy+=(xi*yj+2*xi*yi+2*xj*yj+xj*yi)*(xi*yj-xj*yi)
+        if Ix<0:
+            Ix=-Ix
+            Iy=-Iy
+            Ixy=-Ixy
+        return npy.array([[Ix,Ixy],[Ixy,Iy]])
 
 class Primitive3D:
     def __init__(self,name=''):

@@ -21,4 +21,3 @@ p6=vm.Point2D.MiddlePoint(p1,p3)
 
 c=vm.CompositePrimitive2D([l1,l2,p5,p6])
 c.MPLPlot()
-
