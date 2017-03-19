@@ -115,7 +115,7 @@ class ExtrudedProfile(volmdlr.Primitive3D):
             s+='S = Part.Shape(L)\n' 
             s+='W.append(Part.Wire(S.Edges))\n'
         s+='F=Part.Face(W)\n'
-        e1,e2,e3=self.extrusion_vector
+        e1,e2,e3=self.extrusion_vector.vector
         if self.screw_thread==0:     
 #            s+=name+'=S'
             s+=name+'=F.extrude(fc.Vector({},{},{}))\n'.format(e1,e2,e3)

@@ -108,6 +108,21 @@ class CompositePrimitive2D(Primitive2D):
         Primitive2D.__init__(self,name)        
         self.primitives=primitives
         
+    def Rotation(self,center,angle,copy=False):
+        if copy:
+            return self.__class__([p.Rotation(center,angle,copy=True) for p in self.primitives])
+        else:
+            for p in self.primitives:
+                p.Rotation(center,angle,copy=False)
+            
+    def Translation(self,offset,copy=False):
+        if copy:
+            return self.__class__([p.Translation(offset,copy=True) for p in self.primitives])
+        else:
+            for p in self.primitives:
+                p.Translation(offset,copy=False)
+    
+        
     def MPLPlot(self):
 #        lines,arcs=self.Export2D(point,x1,x2)
         fig, ax = plt.subplots()
@@ -195,18 +210,21 @@ class Line2D(Primitive2D):
         p3D=[p.To3D(plane_origin,x1,x2) for p in self.points]
         return Line3D(*p3D,self.name)
     
-    def Rotation(self,center,angle,copy=True):
+    def Rotation(self,center,angle,copy=False):
         if copy:
-            return Line2D(*[p.vector.Rotation(center,angle,copy=True) for p in self.points])
+            return Line2D(*[p.Rotation(center,angle,copy=True) for p in self.points])
         else:
-            self.points=[p.vector.Rotation(center,angle,copy=True) for p in self.points]
+            for p in self.points:
+                p.Rotation(center,angle,copy=False)
             
-    def Translation(self,offset,copy=True):
+    def Translation(self,offset,copy=False):
         if copy:
-            return Line2D(*[p.vector.Translation(offset,copy=True) for p in self.points])
+            return Line2D(*[p.Translation(offset,copy=True) for p in self.points])
         else:
-            self.points=[p.vector.Translation(offset,copy=True) for p in self.points]
-    
+            for p in self.points:
+                p.Translation(offset,copy=False)
+                
+                
 class Arc2D(Primitive2D):
     def __init__(self,start,middle,end,name=''):        
         Primitive2D.__init__(self,name)        
@@ -260,13 +278,13 @@ class Arc2D(Primitive2D):
         ps3=ps.To3D(plane_origin,x,y)
         return Arc3D(pe3,pc,ps3,self.name)
     
-    def Rotation(self,center,angle,copy=True):
+    def Rotation(self,center,angle,copy=False):
         if copy:
             return Arc2D(*[p.Rotation(center,angle,copy=True) for p in [self.start,self.middle,self.end]])
         else:
             self.__init__(*[p.Rotation(center,angle,copy=True) for p in [self.start,self.middle,self.end]])
             
-    def Translation(self,offset,copy=True):
+    def Translation(self,offset,copy=False):
         if copy:
             return Arc2D(*[p.Translation(offset,copy=True) for p in [self.start,self.middle,self.end]])
         else:
@@ -307,13 +325,13 @@ class Circle2D(Primitive2D):
         print(normal,pc)
         return Circle3D(pc,self.radius,normal,self.name)
 
-    def Rotation(self,center,angle,copy=True):
+    def Rotation(self,center,angle,copy=False):
         if copy:
             return Circle2D(self.center.vector.Rotation(center,angle,copy=True),self.radius)
         else:
             self.center.Rotation(center,angle,copy=False) 
             
-    def Translation(self,offset,copy=True):
+    def Translation(self,offset,copy=False):
         if copy:
             return Circle2D(self.center.vector.Translation(offset,copy=True),self.radius)
         else:
