@@ -16,8 +16,9 @@ p3=vm.Point2D((-1,0))
 p4=vm.Point2D((1,-0.5))
 l2=vm.Line2D(p3,p4)
 
-p5=vm.Point2D.LinesIntersection(l1,l2)
+p5,bl1,bl2=vm.Point2D.LinesIntersection(l1,l2,True)
 p6=vm.Point2D.MiddlePoint(p1,p3)
 
 c=vm.CompositePrimitive2D([l1,l2,p5,p6])
 c.MPLPlot()
+

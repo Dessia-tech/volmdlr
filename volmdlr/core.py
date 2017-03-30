@@ -77,16 +77,19 @@ class Point2D(Vector2D):
         return norm(self.vector-point2.vector)
 
     @classmethod
-    def LinesIntersection(cls,line1,line2):
+    def LinesIntersection(cls,line1,line2,belongs_to_lines=False):
         p11=line1.points[0].vector
         p12=line1.points[1].vector
         p21=line2.points[0].vector
         p22=line2.points[1].vector
-        A=npy.array([[p11[0]-p12[0],p22[0]-p21[0]],[p11[1]-p12[1],p22[1]-p21[1]]])
+        A=npy.array([[p12[0]-p11[0],p21[0]-p22[0]],[p12[1]-p11[1],p21[1]-p22[1]]])
         x=npy.array([p21[0]-p11[0],p21[1]-p11[1]])
         try:
             t=solve(A,x)
-            return cls(p11-t[0]*(p12-p11))
+            if not belongs_to_lines:
+                return cls(p11+t[0]*(p12-p11))
+            else:
+                return (cls(p11+t[0]*(p12-p11)),(t[0]>=0)&(t[0]<=1),(t[1]>=0)&(t[1]<=1))
         except LinAlgError:
             return None
         
@@ -438,11 +441,15 @@ class Vector3D:
     def __rdiv__(self,value):
         return self/value
         
-
+        
 class Point3D(Vector3D):
     def __init__(self,vector,name=''):
         Vector3D.__init__(self,vector)
         self.name=name
+        
+    def MPLPlot(self,ax):
+        ax.scatter(*self.vector)
+        
         
 class Line3D(Primitive3D):
     def __init__(self,point1,point2,name=''):
@@ -512,10 +519,11 @@ class VolumeModel:
         To use for debug.
         """
         fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
+        ax = fig.add_subplot(111, projection='3d',adjustable='box')
 #        ax.set_aspect('equal')
         for primitive in self.primitives:
             primitive.MPLPlot(ax)
+#        ax.set_aspect('equal')
     
     def FreeCADScript(self,fcstd_filepath,path_lib_freecad='',py_filepath=''):
         """
