@@ -77,7 +77,7 @@ class Point2D(Vector2D):
         return norm(self.vector-point2.vector)
 
     @classmethod
-    def LinesIntersection(cls,line1,line2,belongs_to_lines=False):
+    def LinesIntersection(cls,line1,line2,curvilinear_abscissa=False):
         p11=line1.points[0].vector
         p12=line1.points[1].vector
         p21=line2.points[0].vector
@@ -86,10 +86,10 @@ class Point2D(Vector2D):
         x=npy.array([p21[0]-p11[0],p21[1]-p11[1]])
         try:
             t=solve(A,x)
-            if not belongs_to_lines:
+            if not curvilinear_abscissa:
                 return cls(p11+t[0]*(p12-p11))
             else:
-                return (cls(p11+t[0]*(p12-p11)),(t[0]>=0)&(t[0]<=1),(t[1]>=0)&(t[1]<=1))
+                return (cls(p11+t[0]*(p12-p11)),t[0],t[1])
         except LinAlgError:
             return None
         
