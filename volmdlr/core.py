@@ -42,10 +42,10 @@ class Vector2D:
     def __rmul__(self,value):
         return self*value
 
-    def __div__(self,value):
+    def __truediv__(self,value):
         return Vector2D(self.vector/value)
     
-    def __rdiv__(self,value):
+    def __rtruediv__(self,value):
         return self/value
     
     def Rotation(self,center,angle,copy=True):
@@ -73,7 +73,10 @@ class Point2D(Vector2D):
         plt.plot([x1[0]],[x1[1]],'ob')        
         return []
     
-    def Distance(self,point2):
+    def PointDistance(self,point2):
+        return norm(self.vector-point2.vector)
+
+    def LineDistance(self,point2):
         return norm(self.vector-point2.vector)
 
     @classmethod
@@ -98,6 +101,15 @@ class Point2D(Vector2D):
         p1=point1.vector
         p2=point2.vector
         return cls((p1+p2)*0.5)
+
+    @classmethod
+    def LineProjection(cls,point,line):
+        p1,p2=line.points
+        d=(p2-p1)/p2.PointDistance(p1)
+        n=d.Rotation(Point2D(0,0),math.pi/2).vector
+        pp1=point.vector-p1.vector
+        p=pp1-npy.dot(pp1,n)*n+p1.vector
+        return Point2D(p)
         
 class Primitive2D:
     def __init__(self,name=''):
@@ -406,6 +418,12 @@ class Polygon2D(CompositePrimitive2D):
             Iy=-Iy
             Ixy=-Ixy
         return npy.array([[Ix,Ixy],[Ixy,Iy]])
+
+    def Lines(self):
+        lines=[]
+        for p1,p2 in zip(self.points,self.points[1:]+[self.points[0]]):
+            lines.append(Line2D(p1,p2))
+        return lines
 
 class Primitive3D:
     def __init__(self,name=''):
