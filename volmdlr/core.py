@@ -18,7 +18,8 @@ import volmdlr.geometry as geometry
 
 class Vector2D:
     def __init__(self,vector):
-        self.vector=npy.array(vector)
+#        print(vector,npy.array(vector))
+        self.vector=npy.array([vector[0],vector[1]])
         
     def To3D(self,plane_origin,x1,x2):
         x,y=self.vector
@@ -106,7 +107,7 @@ class Point2D(Vector2D):
     def LineProjection(cls,point,line):
         p1,p2=line.points
         d=(p2-p1)/p2.PointDistance(p1)
-        n=d.Rotation(Point2D(0,0),math.pi/2).vector
+        n=d.Rotation(Point2D((0,0)),math.pi/2).vector
         pp1=point.vector-p1.vector
         p=pp1-npy.dot(pp1,n)*n+p1.vector
         return Point2D(p)
