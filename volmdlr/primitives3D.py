@@ -28,14 +28,15 @@ class Cylinder(volmdlr.Primitive3D):
         
     def FreeCADExport(self,ip):
         name='primitive'+str(ip)
-        e=str(self.width)
-        r=str(self.radius)
-        position=(self.position-self.axis*self.width/2)
+        e=str(1000*self.width)
+        r=str(1000*self.radius)
+        position=1000*(self.position-self.axis*self.width/2)
         x,y,z=position
-        ax,ay,az=self.axis
         x=str(x)
         y=str(y)
         z=str(z)
+
+        ax,ay,az=self.axis
         ax=str(ax)
         ay=str(ay)
         az=str(az)
@@ -52,10 +53,10 @@ class HollowCylinder(volmdlr.Primitive3D):
 
     def FreeCADExport(self,ip):
         name='primitive'+str(ip)
-        re=str(self.outer_radius)
-        ri=str(self.inner_radius)        
+        re=str(1000*self.outer_radius)
+        ri=str(1000*self.inner_radius)        
         position=self.position-self.axis*self.width/2
-        x,y,z=position
+        x,y,z=1000*position
         ax,ay,az=self.axis
         x=str(x)
         y=str(y)
@@ -115,7 +116,7 @@ class ExtrudedProfile(volmdlr.Primitive3D):
             s+='S = Part.Shape(L)\n' 
             s+='W.append(Part.Wire(S.Edges))\n'
         s+='F=Part.Face(W)\n'
-        e1,e2,e3=self.extrusion_vector.vector
+        e1,e2,e3=1000*self.extrusion_vector.vector
         if self.screw_thread==0:     
 #            s+=name+'=S'
             s+=name+'=F.extrude(fc.Vector({},{},{}))\n'.format(e1,e2,e3)

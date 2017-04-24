@@ -483,8 +483,8 @@ class Line3D(Primitive3D):
         
         
     def FreeCADExport(self,name):
-        x1,y1,z1=self.points[0].vector
-        x2,y2,z2=self.points[1].vector
+        x1,y1,z1=1000*self.points[0].vector
+        x2,y2,z2=1000*self.points[1].vector
         return '{}=Part.Line(fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,x1,y1,z1,x2,y2,z2)
 
 
@@ -496,9 +496,9 @@ class Circle3D(Primitive3D):
         self.normal=normal
 
     def FreeCADExport(self,name):
-        xc,yc,zc=self.center.vector
+        xc,yc,zc=1000*self.center.vector
         xn,yn,zn=self.normal.vector
-        return '{}=Part.Circle(fc.Vector({},{},{}),fc.Vector({},{},{}),{})\n'.format(name,xc,yc,zc,xn,yn,zn,self.radius)
+        return '{}=Part.Circle(fc.Vector({},{},{}),fc.Vector({},{},{}),{})\n'.format(name,xc,yc,zc,xn,yn,zn,1000*self.radius)
         
 
 class Arc3D(Primitive3D):
@@ -521,9 +521,9 @@ class Arc3D(Primitive3D):
         
     
     def FreeCADExport(self,name):
-        xs,ys,zs=self.start.vector
-        xm,ym,zm=self.middle.vector
-        xe,ye,ze=self.end.vector
+        xs,ys,zs=1000*self.start.vector
+        xm,ym,zm=1000*self.middle.vector
+        xe,ye,ze=1000*self.end.vector
         return '{}=Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,xs,ys,zs,xm,ym,zm,xe,ye,ze)
 
         
@@ -559,9 +559,8 @@ class VolumeModel:
         s+="import FreeCAD as fc\nimport Part\n\ndoc=fc.newDocument('doc')\n\n"
         
         for ip,primitive in enumerate(self.primitives):
-            print(ip)
             s+=(primitive.FreeCADExport(ip)+'\n')
-            s+=('shapeobj = doc.addObject("Part::Feature","primitive'+str(ip)+' '+primitive.name+'")\n')
+            s+=('shapeobj = doc.addObject("Part::Feature","p'+str(ip)+' '+primitive.name+'")\n')
             s+=("shapeobj.Shape = primitive"+str(ip)+'\n\n')
         s+='doc.recompute()\n'
         s+="doc.saveAs('"+fcstd_filepath+".fcstd')"
