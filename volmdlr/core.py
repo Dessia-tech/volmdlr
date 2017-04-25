@@ -19,7 +19,10 @@ import volmdlr.geometry as geometry
 class Vector2D:
     def __init__(self,vector):
 #        print(vector,npy.array(vector))
-        self.vector=npy.array([vector[0],vector[1]])
+#        self.vector=npy.array([vector[0],vector[1]])
+        self.vector=npy.zeros(2)
+        self.vector[0]=vector[0]        
+        self.vector[1]=vector[1]
         
     def To3D(self,plane_origin,x1,x2):
         x,y=self.vector
@@ -433,8 +436,11 @@ class Primitive3D:
         
 class Vector3D:
     def __init__(self,vector):
-        self.vector=npy.array(vector)
-
+#        self.vector=npy.array(vector)
+        self.vector=npy.zeros(3)
+        self.vector[0]=vector[0]        
+        self.vector[1]=vector[1]
+        self.vector[2]=vector[2]
     
     def __add__(self,point2d):
         return Vector3D(self.vector+point2d.vector)
