@@ -341,7 +341,7 @@ class Circle2D(Primitive2D):
     def To3D(self,plane_origin,x,y):
         normal=Vector3D(npy.cross(x.vector,y.vector))
         pc=self.center.To3D(plane_origin,x,y)
-        print(normal,pc)
+#        print(normal,pc)
         return Circle3D(pc,self.radius,normal,self.name)
 
     def Rotation(self,center,angle,copy=False):
@@ -466,6 +466,23 @@ class Vector3D:
     def __rdiv__(self,value):
         return self/value
         
+    def Rotation(self,center,axis,angle,copy=True):
+        u=axis.vector
+        ux=npy.array([[0,-u[2],u[1]],[u[2],0,-u[0]],[-u[1],u[0],0]])
+        R=math.cos(angle)*npy.eye(3)+math.sin(angle)*ux+(1-math.cos(angle))*npy.tensordot(u,u,axes=0)
+        vector2=npy.dot(R,(self.vector-center.vector))+center.vector
+        if copy:
+            return Point3D(vector2)
+        else:
+            self.vector=vector2
+
+    def Translation(self,offset,copy=True):
+        vector2=self.vector+offset
+        if copy:
+            return Point3D(vector2)
+        else:
+            self.vector=vector2    
+
         
 class Point3D(Vector3D):
     def __init__(self,vector,name=''):
