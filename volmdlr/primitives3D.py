@@ -76,7 +76,7 @@ class HollowCylinder(volmdlr.Primitive3D):
             s+='F1=Part.Face(W1)\n'        
             s+='F2=F2.cut(F1)\n'        
 
-        vx,vy,vz=self.axis*self.width
+        vx,vy,vz=self.axis*self.width*1000
         vx=str(vx)
         vy=str(vy)
         vz=str(vz)
