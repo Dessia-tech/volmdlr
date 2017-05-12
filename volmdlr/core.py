@@ -29,7 +29,7 @@ class Vector2D:
         return Point3D(plane_origin.vector+x1.vector*x+x2.vector*y)
     
     def __add__(self,point2d):
-        return Vector2D(self.vector+point2d)
+        return Vector2D(self.vector+point2d.vector)
     
     def __radd__(self,point2d):
         return self+point2d
@@ -71,6 +71,19 @@ class Point2D(Vector2D):
     def __init__(self,vector,name=''):
         Vector2D.__init__(self,vector)
         self.name=name
+        
+    def __add__(self,point2d):
+        return Point2D(self.vector+point2d.vector)
+    
+    def __sub__(self,point2d):
+        return Point2D(self.vector-point2d.vector)
+        
+    def __mul__(self,value):
+        return Point2D(self.vector*value)
+    
+    def __truediv__(self,value):
+        return Point2D(self.vector/value)
+    
 
     def MPLPlot(self):
         x1=self.vector
@@ -213,10 +226,58 @@ class Contour2D(CompositePrimitive2D):
 #        A2=geometry.Huygens2D(A,self.Area(),point,)
         return A
 
+class Mesh2D:
+    def __init__(self,contours,points_densities,default_density):
+        self.contours=contours
+        self.points_densities=points_densities
+        self.default_density=default_density
+        
+    def GeoScript(self,filepath=''):
+        s=''
+        ipt=1# point index
+        ipr=1# primitive index 
+        points_index={}
+        #assigning an index to point    
+        for contour in self.contours:
+            for primitive in contour.primitives:
+                for point in primitive.geo_points:
+                    try:
+                        points_index[point]
+                    except KeyError:
+                        points_index[point]=ipt
+                        try:
+                            d=self.points_densities[point]
+                        except KeyError:
+                            d=self.default_density
+                        s+='Point({})={{{},{},0.,{}}};\n'.format(ipt,*point.vector,d)
+                        ipt+=1
+        contours_indices=[]
+        for contour in self.contours:
+            contour_iprs=[]
+            for primitive in contour.primitives:
+                spr,ipr2=primitive.GeoScript(ipr,[points_index[p] for p in primitive.geo_points])
+                s+=spr
+                contour_iprs.extend(range(ipr,ipr2))
+                ipr=ipr2
+            s+='Line Loop({}) = {{{}}};\n'.format(ipr,str(contour_iprs)[1:-1])
+            contours_indices.append(ipr)
+            ipr+=1
+        s+='Plane Surface({}) = {{{}}};\n'.format(ipr,str(contours_indices)[1:-1])
+        # Saving to file if required
+        if filepath!='':
+            with open(filepath,'w') as file:
+                file.write(s)
+        return s
+
 class Line2D(Primitive2D):
     def __init__(self,point1,point2,name=''):
         Primitive2D.__init__(self,name)        
         self.points=[point1,point2]
+        
+    def _get_geo_points(self):
+        return self.points
+
+    geo_points=property(_get_geo_points)      
 
     def MPLPlot(self):
         p1,p2=self.points
@@ -242,6 +303,10 @@ class Line2D(Primitive2D):
         else:
             for p in self.points:
                 p.Translation(offset,copy=False)
+                
+    def GeoScript(self,primitive_index,points_indices):
+        s='Line({}) = {{{}, {}}};\n'.format(primitive_index,*points_indices)
+        return s,primitive_index+1
                 
                 
 class Arc2D(Primitive2D):
@@ -276,6 +341,16 @@ class Arc2D(Primitive2D):
         else:
             self.angle1=angle2
             self.angle2=angle1
+            
+        
+    def _get_geo_points(self):
+        return [self.start,self.center,self.end]
+
+    geo_points=property(_get_geo_points)        
+    
+    def GeoScript(self,primitive_index,points_indices):
+        s='Circle({}) = {{{}, {}, {}}};\n'.format(primitive_index,*points_indices)
+        return s,primitive_index+1
             
     def Area(self):
         if self.angle2<self.angle1:
@@ -333,7 +408,20 @@ class Circle2D(Primitive2D):
         Primitive2D.__init__(self,name)        
         self.center=center
         self.radius=radius
+        self.utd_geo_points=False
         
+    def _get_geo_points(self):
+        if not self.utd_geo_points:
+            self._geo_start=self.center+self.radius*Point2D((1,0))
+            self.utd_geo_points=True
+        return [self._geo_start,self.center,self._geo_start]
+
+    geo_points=property(_get_geo_points)        
+            
+    def GeoScript(self,primitive_index,points_indices):
+        s='Circle({}) = {{{}, {}, {}}};\n'.format(primitive_index,*points_indices)
+        return s,primitive_index+1
+    
     def MPLPlot(self):
         pc=self.center.vector
         return [Arc(pc,2*self.radius,2*self.radius,angle=0,theta1=0,theta2=360,color='black')]
@@ -341,7 +429,6 @@ class Circle2D(Primitive2D):
     def To3D(self,plane_origin,x,y):
         normal=Vector3D(npy.cross(x.vector,y.vector))
         pc=self.center.To3D(plane_origin,x,y)
-        print(normal,pc)
         return Circle3D(pc,self.radius,normal,self.name)
 
     def Rotation(self,center,angle,copy=False):
@@ -349,12 +436,14 @@ class Circle2D(Primitive2D):
             return Circle2D(self.center.vector.Rotation(center,angle,copy=True),self.radius)
         else:
             self.center.Rotation(center,angle,copy=False) 
+            self.utd_geo_points=False
             
     def Translation(self,offset,copy=False):
         if copy:
             return Circle2D(self.center.vector.Translation(offset,copy=True),self.radius)
         else:
             self.center.Translation(offset,copy=False)
+            self.utd_geo_points=False
 
     def Area(self):
         return math.pi*self.radius**2
