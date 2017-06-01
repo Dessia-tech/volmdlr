@@ -696,7 +696,7 @@ class VolumeModel:
 
         """
         s=self.FreeCADScript(fcstd_filepath,path_lib_freecad)
-        print(s)
+#        print(s)
         import subprocess
         arg='-c\n'+s
         rep=subprocess.call([python_path,arg])
