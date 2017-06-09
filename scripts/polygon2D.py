@@ -15,9 +15,24 @@ p3=vm.Point2D((2,1))
 p4=vm.Point2D((1,0.5))
 p5=vm.Point2D((-1,0.1))
 
-p=primitives2D.RoundedLines2D([p1,p2,p3,p4,p5],{2:0.1},True)
+p=vm.Polygon2D([p1,p2,p3,p4,p5])
 
-c=vm.Contour2D([p])
-print(c.Area())
-print(c.SecondMomentArea(p1))
-p.MPLPlot()
+#print(c.Area())
+#print(c.SecondMomentArea(p1))
+
+import numpy as npy
+
+points_inside=[]
+points_outside=[]
+for i in range(150):
+    pt=vm.Point2D(2*npy.random.random(2)-0.3)
+    if p.PointBelongs(pt):
+        points_inside.append(pt)
+    else:
+        points_outside.append(pt)
+        
+c1=vm.CompositePrimitive2D([p,*points_inside])
+c1.MPLPlot()
+
+c2=vm.CompositePrimitive2D([p,*points_outside])
+c2.MPLPlot()

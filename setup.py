@@ -5,6 +5,10 @@ Setup install script for volmdlr
 """
 
 from setuptools import setup
+#from distutils.core import setup
+from Cython.Build import cythonize
+
+
 
 def readme():
     with open('README.rst') as f:
@@ -23,4 +27,5 @@ setup(name='volmdlr',
       packages=['volmdlr'],#,'volmdlr.primitives2D','volmdlr.primitives3D','volmdlr.geometry'],
       package_dir={},
       install_requires=['numpy','matplotlib'],
-      classifiers=['Topic :: Scientific/Engineering','Development Status :: 3 - Alpha'])
+      classifiers=['Topic :: Scientific/Engineering','Development Status :: 3 - Alpha'],
+      ext_modules = cythonize("volmdlr/vmcy.pyx"))

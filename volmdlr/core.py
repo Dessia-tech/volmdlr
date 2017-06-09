@@ -11,6 +11,8 @@ import numpy as npy
 import matplotlib.pyplot as plt
 from matplotlib.patches import Arc
 from mpl_toolkits.mplot3d import Axes3D
+#import vmcy
+from .vmcy import PolygonPointBelongs
 
 from scipy.linalg import norm,solve,LinAlgError
 
@@ -479,24 +481,7 @@ class Polygon2D(CompositePrimitive2D):
         """
         Ray casting algorithm copied from internet...
         """
-        n = len(self.points)
-        inside = False
-        x,y=point.vector
-    
-        p1x,p1y = self.points[0].vector
-        
-        for i in range(n+1):
-            p2x,p2y = self.points[i % n].vector
-            if y > min(p1y,p2y):
-                if y <= max(p1y,p2y):
-                    if x <= max(p1x,p2x):
-                        if p1y != p2y:
-                            xints = (y-p1y)*(p2x-p1x)/(p2y-p1y)+p1x
-                        if p1x == p2x or x <= xints:
-                            inside = not inside
-            p1x,p1y = p2x,p2y
-    
-        return inside
+        return PolygonPointBelongs(point.vector,[p.vector for p in self.points])
 
     def SecondMomentArea(self,point):
         Ix,Iy,Ixy=0,0,0
@@ -517,6 +502,11 @@ class Polygon2D(CompositePrimitive2D):
         for p1,p2 in zip(self.points,self.points[1:]+[self.points[0]]):
             lines.append(Line2D(p1,p2))
         return lines
+    
+    def MPLPlot(self):
+        for line in self.Lines():
+            line.MPLPlot()
+        return []
 
 class Primitive3D:
     def __init__(self,name=''):

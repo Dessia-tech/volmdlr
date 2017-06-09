@@ -24,4 +24,3 @@ p8=vm.Point2D.LineProjection(p6,l2)
 
 c=vm.CompositePrimitive2D([l1,l2,p5,p6,p7,p8])
 c.MPLPlot()
-
