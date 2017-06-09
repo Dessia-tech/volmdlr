@@ -14,9 +14,8 @@ def readme():
     with open('README.rst') as f:
         return f.read()
 
-import volmdlr
 setup(name='volmdlr',
-      version=volmdlr.__version__,#
+      version='0.0.1',#
       description=' A volume modeler computation-oriented. Include rendering bindings. ',
       long_description=readme(),
       keywords='volume, modeler',
