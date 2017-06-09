@@ -24,7 +24,7 @@ import numpy as npy
 
 points_inside=[]
 points_outside=[]
-for i in range(150):
+for i in range(1500):
     pt=vm.Point2D(2*npy.random.random(2)-0.3)
     if p.PointBelongs(pt):
         points_inside.append(pt)

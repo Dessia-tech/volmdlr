@@ -11,7 +11,7 @@ def PolygonPointBelongs(point,points):
     
     cdef int n = len(points)
     inside = False
-    cdef float x,y,p1x,p1y
+    cdef float x,y,p1x,p1y,p2x,p2y
     x,y=point
     p1x,p1y = points[0]
     
