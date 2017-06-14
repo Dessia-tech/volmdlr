@@ -2,6 +2,6 @@
 
 from pkg_resources import get_distribution
 
-__version__ = get_distribution('foobar').version
+__version__ = get_distribution('volmdlr').version
 
 from .core import *
