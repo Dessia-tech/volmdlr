@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Arc
 from mpl_toolkits.mplot3d import Axes3D
 #import vmcy
-#from .vmcy import PolygonPointBelongs
+from .vmcy import PolygonPointBelongs
 
 from scipy.linalg import norm,solve,LinAlgError
 
