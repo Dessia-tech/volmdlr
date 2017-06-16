@@ -22,7 +22,7 @@ class Cylinder(volmdlr.Primitive3D):
     def __init__(self,position,axis,radius,width,name=''):
         volmdlr.Primitive3D.__init__(self,name)
         self.position=position
-        self.axis=axis/norm(axis)
+        self.axis=npy.array(axis)/norm(axis)
         self.radius=radius
         self.width=width
         
@@ -42,11 +42,17 @@ class Cylinder(volmdlr.Primitive3D):
         az=str(az)
         return name+'=Part.makeCylinder('+r+','+e+',fc.Vector('+x+','+y+','+z+'),fc.Vector('+ax+','+ay+','+az+'),360)'
   
+    
+    def Babylon(self):
+        s='var cylinder = BABYLON.Mesh.CreateCylinder("{}", {}, {}, {}, 20, 3, scene,false, BABYLON.Mesh.DEFAULTSIDE);'.format(self.name,self.width,2*self.radius,2*self.radius)
+        s+='cylinder.position = new BABYLON.Vector3({},{},{});'.format(*self.position)
+        return s
+    
 class HollowCylinder(volmdlr.Primitive3D):
     def __init__(self,position,axis,inner_radius,outer_radius,width,name=''):
         volmdlr.Primitive3D.__init__(self,name)
         self.position=position
-        self.axis=axis/norm(axis)
+        self.axis=npy.array(axis)/norm(axis)
         self.inner_radius=inner_radius
         self.outer_radius=outer_radius
         self.width=width
@@ -84,6 +90,15 @@ class HollowCylinder(volmdlr.Primitive3D):
         s+=name+'=F2.extrude(fc.Vector('+vx+','+vy+','+vz+'))\n'
         return s
     
+    def Babylon(self):
+        x,y,z=self.axis
+        theta=math.acos(z/self.width)
+        phi=math.atan(y/x)
+        s='var cylinder = BABYLON.Mesh.CreateCylinder("{}", {}, {}, {}, 20, 3, scene,false, BABYLON.Mesh.DEFAULTSIDE);'.format(self.name,self.width,2*self.outer_radius,2*self.outer_radius)
+        s+='cylinder.position = new BABYLON.Vector3({},{},{});\n;'.format(*self.position)
+        s+='cylinder.rotation.x={}\n;'.format(theta)
+        s+='cylinder.rotation.z={}\n;'.format(phi)
+        return s
     
 class ExtrudedProfile(volmdlr.Primitive3D):
     """

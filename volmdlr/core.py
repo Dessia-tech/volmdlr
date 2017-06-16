@@ -18,6 +18,11 @@ from scipy.linalg import norm,solve,LinAlgError
 
 import volmdlr.geometry as geometry
 
+from jinja2 import Environment, PackageLoader, select_autoescape
+
+import webbrowser
+import os
+
 class Vector2D:
     def __init__(self,vector):
 #        print(vector,npy.array(vector))
@@ -691,3 +696,51 @@ class VolumeModel:
         arg='-c\n'+s
         rep=subprocess.call([python_path,arg])
         print(rep)
+        
+    def BabylonScript(self):
+
+        env = Environment(loader=PackageLoader('volmdlr', 'templates'),
+                          autoescape=select_autoescape(['html', 'xml']))
+        
+        template = env.get_template('babylon.html')
+        
+        center,max_length=self.ModelCaracteristicLengths()
+        
+        primitives_strings=[]
+        for primitive in self.primitives:
+            primitives_strings.append(primitive.Babylon())
+        
+        return template.render(center=tuple(center),length=2*max_length,primitives_strings=primitives_strings)
+    
+    def BabylonShow(self,page='vm_babylonjs'):
+        page+='.html'
+        print(self.BabylonScript())
+        with open(page,'w') as file:
+            file.write(self.BabylonScript())
+        
+        webbrowser.open('file://' + os.path.realpath(page))
+        
+    def ModelCaracteristicLengths(self):
+        min_vect=npy.array(self.primitives[0].position)
+        max_vect=npy.array(self.primitives[0].position)
+        center=npy.array(self.primitives[0].position)
+        n=1
+        for primitive in self.primitives[1:]:
+            for i,(xmin,xmax,xi) in enumerate(zip(min_vect,max_vect,primitive.position)):
+#                print(i,xmin,xmax,xi)
+                if xi<xmin:
+                    min_vect[i]=xi
+#                    print('min',min_vect)
+                if xi>xmax:
+                    max_vect[i]=xi
+#                    print('max',max_vect)
+#            print(linkage,linkage.position)
+            center+=primitive.position
+            n+=1
+        
+        center=center/n
+#        print(min_vect,max_vect)
+        max_length=norm(min_vect-max_vect)
+#        print(center,max_length)
+        return center,max_length
+

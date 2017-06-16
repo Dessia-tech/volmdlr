@@ -1,0 +1,78 @@
+<!doctype html>
+<html>
+<head>
+   <meta charset="utf-8">
+   <title>Babylon - Basic scene</title>
+   <style>
+      html, body {
+         overflow: hidden;
+         width: 100%;
+         height: 100%;
+         margin: 0;
+         padding: 0;
+      }
+      #renderCanvas {
+         width: 100%;
+         height: 100%;
+         touch-action: none;
+      }
+   </style>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/babylonjs/2.5.0/babylon.js"></script>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/handjs/1.3.11/hand.js"></script>
+   <script src="https://cdnjs.com/libraries/cannon.js"></script> <!-- optional physics engine -->
+</head>
+<body>
+   <canvas id="renderCanvas"></canvas>
+   <script type="text/javascript">
+      // Get the canvas element from our HTML below
+      var canvas = document.querySelector("#renderCanvas");
+      // Load the BABYLON 3D engine
+      var engine = new BABYLON.Engine(canvas, true);
+      // -------------------------------------------------------------
+      // Here begins a function that we will 'call' just after it's built
+
+var createScene = function () {
+    // This creates a basic Babylon Scene object (non-mesh)
+        var scene = new BABYLON.Scene(engine);
+	var cam = new BABYLON.ArcRotateCamera("ArcRotateCamera", 0, 0, {{length}}, new BABYLON.Vector3{{center}}, scene);
+	cam.wheelPrecision=20./{{length}}
+	cam.attachControl(canvas);
+        
+
+	var light1 = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
+	light1.intensity=0.6;
+
+	var light2 = new BABYLON.SpotLight("Spot0", new BABYLON.Vector3(0, 30, -10), new BABYLON.Vector3(0, -1, 0), 0.8, 2, scene);
+	light2.diffuse = new BABYLON.Color3(1, 1, 1);
+	light2.specular = new BABYLON.Color3(1, 1, 1);
+
+         
+	//var roadmaterial = new BABYLON.StandardMaterial("sol", scene);
+	//roadtexture=new BABYLON.Texture("road.jpg", scene);
+	//roadmaterial.specularTexture = roadtexture;
+	//roadmaterial.diffuseTexture = roadtexture;
+	//ground.material=roadmaterial;
+
+	{% for s in primitives_strings %}
+		{{s|safe}}
+  	{% endfor %}	
+	
+	
+	return scene;	  };
+
+      var scene = createScene();
+
+      // Register a render loop to repeatedly render the scene
+      engine.runRenderLoop(function () {
+         scene.render();
+      });
+      // Watch for browser/canvas resize events
+      window.addEventListener("resize", function () {
+         engine.resize();
+      });
+      scene.debugLayer.show();
+
+   </script>
+</body>
+
+</html>
