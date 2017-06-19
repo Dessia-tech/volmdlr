@@ -636,8 +636,9 @@ class Arc3D(Primitive3D):
         
 
 class VolumeModel:
-    def __init__(self,primitives):
+    def __init__(self,primitives,name=''):
         self.primitives=primitives
+        self.name=name
     
     def MPLPlot(self):
         """
@@ -708,9 +709,12 @@ class VolumeModel:
         
         primitives_strings=[]
         for primitive in self.primitives:
-            primitives_strings.append(primitive.Babylon())
-        
-        return template.render(center=tuple(center),length=2*max_length,primitives_strings=primitives_strings)
+            try:
+                primitives_strings.append(primitive.Babylon())
+            except AttributeError:
+                pass
+        return template.render(name=self.name,center=tuple(center),length=2*max_length,
+                               primitives_strings=primitives_strings)
     
     def BabylonShow(self,page='vm_babylonjs'):
         page+='.html'
@@ -726,18 +730,21 @@ class VolumeModel:
         center=npy.array(self.primitives[0].position)
         n=1
         for primitive in self.primitives[1:]:
-            for i,(xmin,xmax,xi) in enumerate(zip(min_vect,max_vect,primitive.position)):
-#                print(i,xmin,xmax,xi)
-                if xi<xmin:
-                    min_vect[i]=xi
-#                    print('min',min_vect)
-                if xi>xmax:
-                    max_vect[i]=xi
-#                    print('max',max_vect)
-#            print(linkage,linkage.position)
-            center+=primitive.position
-            n+=1
-        
+            try:
+                for i,(xmin,xmax,xi) in enumerate(zip(min_vect,max_vect,primitive.position)):
+    #                print(i,xmin,xmax,xi)
+                    if xi<xmin:
+                        min_vect[i]=xi
+    #                    print('min',min_vect)
+                    if xi>xmax:
+                        max_vect[i]=xi
+    #                    print('max',max_vect)
+    #            print(linkage,linkage.position)
+                center+=primitive.position
+                n+=1
+            except AttributeError:
+                pass
+                
         center=center/n
 #        print(min_vect,max_vect)
         max_length=norm(min_vect-max_vect)

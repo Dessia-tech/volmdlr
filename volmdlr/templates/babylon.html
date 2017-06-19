@@ -2,7 +2,7 @@
 <html>
 <head>
    <meta charset="utf-8">
-   <title>Babylon - Basic scene</title>
+   <title>{{name}}</title>
    <style>
       html, body {
          overflow: hidden;
@@ -34,7 +34,7 @@
 var createScene = function () {
     // This creates a basic Babylon Scene object (non-mesh)
         var scene = new BABYLON.Scene(engine);
-	var cam = new BABYLON.ArcRotateCamera("ArcRotateCamera", 0, 0, {{length}}, new BABYLON.Vector3{{center}}, scene);
+	var cam = new BABYLON.ArcRotateCamera("ArcRotateCamera", 0, 0, 2*{{length}}, new BABYLON.Vector3{{center}}, scene);
 	cam.wheelPrecision=20./{{length}}
 	cam.attachControl(canvas);
         
@@ -46,7 +46,19 @@ var createScene = function () {
 	light2.diffuse = new BABYLON.Color3(1, 1, 1);
 	light2.specular = new BABYLON.Color3(1, 1, 1);
 
-         
+	var lineX = BABYLON.Mesh.CreateLines("X", [
+	    new BABYLON.Vector3(0, 0, 0),
+	    new BABYLON.Vector3(1, 0, 0)
+	], scene);
+      
+
+ 
+	var lineY = BABYLON.Mesh.CreateLines("Y", [
+	    new BABYLON.Vector3(0, 0, 0),
+	    new BABYLON.Vector3(0, 1, 0)
+	], scene);
+        
+  
 	//var roadmaterial = new BABYLON.StandardMaterial("sol", scene);
 	//roadtexture=new BABYLON.Texture("road.jpg", scene);
 	//roadmaterial.specularTexture = roadtexture;
