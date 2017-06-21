@@ -165,6 +165,7 @@ class CompositePrimitive2D(Primitive2D):
     def MPLPlot(self):
 #        lines,arcs=self.Export2D(point,x1,x2)
         fig, ax = plt.subplots()
+        ax.set_aspect('equal')
         ps=[]
         for element in self.primitives:
             ps.extend(element.MPLPlot())
@@ -172,7 +173,7 @@ class CompositePrimitive2D(Primitive2D):
 #        print(arcs)
         for p in ps:
             ax.add_patch(p)
-        ax.set_aspect('equal')
+        
         ax.margins(0.1)
         plt.show() 
         
@@ -285,6 +286,22 @@ class Line2D(Primitive2D):
         return self.points
 
     geo_points=property(_get_geo_points)      
+    
+    
+    def PointSegmentDistance(self,point):
+        """
+        Computes the distance of a point to segment of line 
+        """
+        p1,p2=self.points
+        v=p1.vector
+        w=p2.vector
+        p=point.vector
+        t = max(0, min(1, npy.dot(p - v, w - v) / norm(w-v)))
+#        print('t', t)
+        projection = v + t * (w - v);# Projection falls on the segment
+#        print(p,projection)
+        return norm(p-projection);
+
 
     def MPLPlot(self):
         p1,p2=self.points
@@ -509,9 +526,28 @@ class Polygon2D(CompositePrimitive2D):
         return lines
     
     def MPLPlot(self):
-        for line in self.Lines():
-            line.MPLPlot()
+        x=[]
+        y=[]
+        for p in self.points+[self.points[0]]:
+            x.append(p.vector[0])
+            y.append(p.vector[1])
+        plt.plot(x,y,label=self.name)
+            
+#        for line in self.Lines():
+#            line.MPLPlot()
         return []
+
+    def PointDistance(self,point):
+        lines=self.Lines()
+        d_min=lines[0].PointSegmentDistance(point)
+#        print('d: ',d_min,0)
+        for line in lines[1:]:
+            d=line.PointSegmentDistance(point)
+#            print('d: ',d)
+            if d<d_min:
+                d_min=d
+        return d_min
+                
 
 class Primitive3D:
     def __init__(self,name=''):
@@ -647,7 +683,7 @@ class VolumeModel:
         """
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d',adjustable='box')
-#        ax.set_aspect('equal')
+        ax.set_aspect('equal')
         for primitive in self.primitives:
             primitive.MPLPlot(ax)
 #        ax.set_aspect('equal')
