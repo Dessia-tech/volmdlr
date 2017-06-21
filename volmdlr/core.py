@@ -287,6 +287,17 @@ class Line2D(Primitive2D):
 
     geo_points=property(_get_geo_points)      
     
+    def PointProjection(self,point,curvilinear_abscissa=False):
+        p1,p2=self.points
+        v=p1.vector
+        w=p2.vector
+        p=point.vector
+        t = npy.dot(p - v, w - v) / norm(w-v)**2
+#        print('t', t)
+        projection = Point2D(v + t * (w - v))# Projection falls on the segment
+        if curvilinear_abscissa:
+            return projection,t
+        return projection
     
     def PointSegmentDistance(self,point):
         """
@@ -296,11 +307,11 @@ class Line2D(Primitive2D):
         v=p1.vector
         w=p2.vector
         p=point.vector
-        print('point vector',point.vector)
-        t = max(0, min(1, npy.dot(p - v, w - v) / norm(w-v)))
-        print('t', t)
-        projection = v + t * (w - v);# Projection falls on the segment
-        print(p,projection)
+#        print('point vector',point.vector)
+        t = max(0, min(1, npy.dot(p - v, w - v) / norm(w-v)**2))
+#        print('t', t)
+        projection = v + t * (w - v)# Projection falls on the segment
+#        print(p,projection)
         return norm(p-projection);
 
 
@@ -541,10 +552,10 @@ class Polygon2D(CompositePrimitive2D):
     def PointDistance(self,point):
         lines=self.Lines()
         d_min=lines[0].PointSegmentDistance(point)
-        print('d: ',d_min,0)
+#        print('d: ',d_min,0)
         for line in lines[1:]:
             d=line.PointSegmentDistance(point)
-            print('d: ',d)
+#            print('d: ',d)
             if d<d_min:
                 d_min=d
         return d_min
