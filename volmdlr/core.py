@@ -100,8 +100,8 @@ class Point2D(Vector2D):
     def PointDistance(self,point2):
         return norm(self.vector-point2.vector)
 
-    def LineDistance(self,point2):
-        return norm(self.vector-point2.vector)
+    #def Distance(self,point2):
+    #    return norm(self.vector-point2.vector)
 
     @classmethod
     def LinesIntersection(cls,line1,line2,curvilinear_abscissa=False):
@@ -296,10 +296,11 @@ class Line2D(Primitive2D):
         v=p1.vector
         w=p2.vector
         p=point.vector
+        print('point vector',point.vector)
         t = max(0, min(1, npy.dot(p - v, w - v) / norm(w-v)))
-#        print('t', t)
+        print('t', t)
         projection = v + t * (w - v);# Projection falls on the segment
-#        print(p,projection)
+        print(p,projection)
         return norm(p-projection);
 
 
@@ -540,10 +541,10 @@ class Polygon2D(CompositePrimitive2D):
     def PointDistance(self,point):
         lines=self.Lines()
         d_min=lines[0].PointSegmentDistance(point)
-#        print('d: ',d_min,0)
+        print('d: ',d_min,0)
         for line in lines[1:]:
             d=line.PointSegmentDistance(point)
-#            print('d: ',d)
+            print('d: ',d)
             if d<d_min:
                 d_min=d
         return d_min
