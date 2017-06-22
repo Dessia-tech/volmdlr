@@ -35,7 +35,8 @@ var createScene = function () {
     // This creates a basic Babylon Scene object (non-mesh)
         var scene = new BABYLON.Scene(engine);
 	var cam = new BABYLON.ArcRotateCamera("ArcRotateCamera", 0, 0, 2*{{length}}, new BABYLON.Vector3{{center}}, scene);
-	cam.wheelPrecision=20./{{length}}
+	cam.wheelPrecision=50./{{length}}
+	cam.pinchPrecision=50./{{length}}
 	cam.attachControl(canvas);
         
 
@@ -46,19 +47,27 @@ var createScene = function () {
 	light2.diffuse = new BABYLON.Color3(1, 1, 1);
 	light2.specular = new BABYLON.Color3(1, 1, 1);
 
+
 	var lineX = BABYLON.Mesh.CreateLines("X", [
 	    new BABYLON.Vector3(0, 0, 0),
 	    new BABYLON.Vector3(1, 0, 0)
 	], scene);
-      
-
- 
+	lineX.color = new BABYLON.Color3(1, 0, 0);
+       
 	var lineY = BABYLON.Mesh.CreateLines("Y", [
+	    new BABYLON.Vector3(0, 0, 0),
+	    new BABYLON.Vector3(0, 0, 1)
+	], scene);
+       	lineY.color = new BABYLON.Color3(0, 1, 0);
+
+  	var lineZ = BABYLON.Mesh.CreateLines("Z", [
 	    new BABYLON.Vector3(0, 0, 0),
 	    new BABYLON.Vector3(0, 1, 0)
 	], scene);
-        
-  
+       	lineZ.color = new BABYLON.Color3(0, 0, 1);
+       
+ 
+
 	//var roadmaterial = new BABYLON.StandardMaterial("sol", scene);
 	//roadtexture=new BABYLON.Texture("road.jpg", scene);
 	//roadmaterial.specularTexture = roadtexture;
