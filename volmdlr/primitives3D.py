@@ -44,11 +44,12 @@ class Cylinder(volmdlr.Primitive3D):
   
     
     def Babylon(self):
-        y,z,x=self.axis
-        theta=math.acos(z/self.width)
-        phi=math.atan(y/x)
-        s='var cylinder = BABYLON.Mesh.CreateCylinder("{}", {}, {}, {}, 20, 3, scene,false, BABYLON.Mesh.DEFAULTSIDE);'.format(self.name,self.width,2*self.radius,2*self.radius)
-        s+='cylinder.position = new BABYLON.Vector3({},{},{});\n;'.format(*self.position)
+        ya,xa,za=self.axis
+        theta=math.acos(za/self.width)
+        phi=math.atan(ya/xa)
+        x,z,y=self.position
+        s='var cylinder = BABYLON.Mesh.CreateCylinder("{}", {}, {}, {}, 30, 1, scene,false, BABYLON.Mesh.DEFAULTSIDE);'.format(self.name,self.width,2*self.radius,2*self.radius)
+        s+='cylinder.position = new BABYLON.Vector3({},{},{});\n;'.format(x,y,z)
         s+='cylinder.rotation.x={}\n;'.format(-theta*math.sin(phi))
         s+='cylinder.rotation.y={}\n;'.format(theta*math.cos(phi))
         s+='cylinder.rotation.z={}\n;'.format(phi)
@@ -97,11 +98,12 @@ class HollowCylinder(volmdlr.Primitive3D):
         return s
     
     def Babylon(self):
-        y,z,x=self.axis# to counter y definition in babylon
-        theta=math.acos(z/self.width)
-        phi=math.atan(y/x)
-        s='var cylinder = BABYLON.Mesh.CreateCylinder("{}", {}, {}, {}, 20, 3, scene,false, BABYLON.Mesh.DEFAULTSIDE);'.format(self.name,self.width,2*self.outer_radius,2*self.outer_radius)
-        s+='cylinder.position = new BABYLON.Vector3({},{},{});\n;'.format(*self.position)
+        ya,xa,za=self.axis# to counter y definition in babylon
+        theta=math.acos(za/self.width)
+        phi=math.atan(ya/xa)
+        x,z,y=self.position
+        s='var cylinder = BABYLON.Mesh.CreateCylinder("{}", {}, {}, {}, 30, 1, scene,false, BABYLON.Mesh.DEFAULTSIDE);'.format(self.name,self.width,2*self.outer_radius,2*self.outer_radius)
+        s+='cylinder.position = new BABYLON.Vector3({},{},{});\n;'.format(x,y,z)
         s+='cylinder.rotation.x={}\n;'.format(-theta*math.sin(phi))
         s+='cylinder.rotation.y={}\n;'.format(theta*math.cos(phi))
         s+='cylinder.rotation.z={}\n;'.format(phi)

@@ -37,6 +37,8 @@ var createScene = function () {
 	var cam = new BABYLON.ArcRotateCamera("ArcRotateCamera", 0, 0, 2*{{length}}, new BABYLON.Vector3{{center}}, scene);
 	cam.wheelPrecision=50./{{length}}
 	cam.pinchPrecision=50./{{length}}
+	cam.panningSensibility=250./{{length}};
+	cam.minZ=0.01*{{length}};
 	cam.attachControl(canvas);
         
 

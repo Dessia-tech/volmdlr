@@ -766,7 +766,7 @@ class VolumeModel:
     
     def BabylonShow(self,page='vm_babylonjs'):
         page+='.html'
-        print(self.BabylonScript())
+#        print(self.BabylonScript())
         with open(page,'w') as file:
             file.write(self.BabylonScript())
         
