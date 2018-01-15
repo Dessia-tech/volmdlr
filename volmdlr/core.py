@@ -402,9 +402,9 @@ class Arc2D(Primitive2D):
 
     def To3D(self,plane_origin,x,y):
         pc=self.center.To3D(plane_origin,x,y)
-        pe=self.center+self.radius*npy.array((math.cos(self.angle1),math.sin(self.angle1)))
+        pe=Point2D(self.center.vector+self.radius*npy.array((math.cos(self.angle1),math.sin(self.angle1))))
         pe3=pe.To3D(plane_origin,x,y)
-        ps=self.center+self.radius*npy.array((math.cos(self.angle2),math.sin(self.angle2)))
+        ps=Point2D(self.center.vector+self.radius*npy.array((math.cos(self.angle2),math.sin(self.angle2))))
         ps3=ps.To3D(plane_origin,x,y)
         return Arc3D(pe3,pc,ps3,self.name)
     
