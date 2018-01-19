@@ -23,6 +23,10 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 import webbrowser
 import os
 
+import tempfile
+import subprocess
+
+
 class Vector2D:
     def __init__(self,vector):
 #        print(vector,npy.array(vector))
@@ -740,11 +744,13 @@ class VolumeModel:
 
         """
         s=self.FreeCADScript(fcstd_filepath,path_lib_freecad)
+        f=tempfile.NamedTemporaryFile()
+#        with open(f,'w') as fw:
+        f.write(bytes(s,'utf8'))
 #        print(s)
-        import subprocess
-        arg='-c\n'+s
+        arg=f.name
         rep=subprocess.call([python_path,arg])
-        print(rep)
+        return rep
         
     def BabylonScript(self):
 
