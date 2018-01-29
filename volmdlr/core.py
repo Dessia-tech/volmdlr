@@ -23,6 +23,10 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 import webbrowser
 import os
 
+import tempfile
+import subprocess
+
+
 class Vector2D:
     def __init__(self,vector):
 #        print(vector,npy.array(vector))
@@ -700,7 +704,7 @@ class VolumeModel:
             primitive.MPLPlot(ax)
 #        ax.set_aspect('equal')
     
-    def FreeCADScript(self,fcstd_filepath,path_lib_freecad='',py_filepath=''):
+    def FreeCADScript(self,fcstd_filepath,path_lib_freecad='',py_filepath='',export_types=['fcstd']):
         """
         Generate python a FreeCAD definition of model 
         :param fcstd_filename: a filename without extension to give the name at the fcstd part written in python code
@@ -708,6 +712,7 @@ class VolumeModel:
         :type fcstd_filename:str
         :type py_filepath:str
         """
+        fcstd_filepath=os.path.abspath(fcstd_filepath)
         s=''
         if path_lib_freecad!='':
             s+="import sys\nsys.path.append('"+path_lib_freecad+"')\n"
@@ -716,10 +721,15 @@ class VolumeModel:
         
         for ip,primitive in enumerate(self.primitives):
             s+=(primitive.FreeCADExport(ip)+'\n')
-            s+=('shapeobj = doc.addObject("Part::Feature","p'+str(ip)+' '+primitive.name+'")\n')
-            s+=("shapeobj.Shape = primitive"+str(ip)+'\n\n')
+            s+='shapeobj = doc.addObject("Part::Feature","p{} {}")\n'.format(ip,primitive.name)
+            s+="shapeobj.Shape = primitive{}\n".format(ip)
         s+='doc.recompute()\n'
-        s+="doc.saveAs('"+fcstd_filepath+".fcstd')"
+        if 'fcstd' in export_types:
+            s+="doc.saveAs('"+fcstd_filepath+".fcstd')\n\n"
+        if 'stl' in export_types:
+#            p_list=str(['primitive{}'.format(i) for i in range(len(self.primitives))]).replace("'","")
+            s+="import Mesh\nMesh.export(doc.Objects,'{}.stl')\n".format(fcstd_filepath)
+                
 
         if py_filepath!='':
             with open(py_filepath,'w') as fichier:
@@ -728,7 +738,7 @@ class VolumeModel:
             
     
     
-    def FreeCADExport(self,python_path,fcstd_filepath,path_lib_freecad=''):
+    def FreeCADExport(self,python_path,fcstd_filepath,path_lib_freecad='',export_types=['fcstd']):
         """
         Export model to .fcstd FreeCAD standard
         
@@ -739,12 +749,15 @@ class VolumeModel:
         :param path_lib_freecad: FreeCAD.so lib path (/usr/lib/freecad/lib in general)
 
         """
-        s=self.FreeCADScript(fcstd_filepath,path_lib_freecad)
-#        print(s)
-        import subprocess
-        arg='-c\n'+s
+        fcstd_filepath=os.path.abspath(fcstd_filepath)
+        s=self.FreeCADScript(fcstd_filepath,path_lib_freecad,'',export_types)
+        f=tempfile.NamedTemporaryFile()
+#        with open(f,'w') as fw:
+        f.write(bytes(s,'utf8'))
+        print(s)
+        arg=f.name
         rep=subprocess.call([python_path,arg])
-        print(rep)
+        return rep
         
     def BabylonScript(self):
 

@@ -61,4 +61,5 @@ profile=primitives3D.ExtrudedProfile(po,xp,yp,[c1,c2],(0,0,e))
 model=vm.VolumeModel([profile])
 
 
-model.FreeCADExport('python','gear','/usr/lib/freecad/lib/')
+resp=model.FreeCADExport('python','gear','/usr/lib/freecad/lib/',['stl','fcstd'])
+print(resp)
