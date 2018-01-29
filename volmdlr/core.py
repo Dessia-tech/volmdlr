@@ -754,7 +754,7 @@ class VolumeModel:
         f=tempfile.NamedTemporaryFile()
 #        with open(f,'w') as fw:
         f.write(bytes(s,'utf8'))
-        print(s)
+#        print(s)
         arg=f.name
         rep=subprocess.call([python_path,arg])
         return rep
