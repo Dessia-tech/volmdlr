@@ -34,7 +34,7 @@ class RoundedLines2D(volmdlr.CompositePrimitive2D):
 #        primitives=[]
         arcs=[]
         for i in range(len(points)):
-            try:
+            if i in radius:
                 r=self.radius[i]
                 pt1=p1s[i].vector
                 pti=pis[i].vector
@@ -71,8 +71,7 @@ class RoundedLines2D(volmdlr.CompositePrimitive2D):
 #                theta1,theta2=sorted([theta1,theta2])
                 points_l[i]=(volmdlr.Point2D(p3),volmdlr.Point2D(p4))                           
                 arcs.append(volmdlr.Arc2D(volmdlr.Point2D(p3),volmdlr.Point2D(pm),volmdlr.Point2D(p4)))
-            except KeyError:
-                pass
+
 
         lines=[]
 #        if not closed:
@@ -91,8 +90,15 @@ class RoundedLines2D(volmdlr.CompositePrimitive2D):
                 last_point=p
         if not closed:
             del lines[-1]
-        primitives=lines+arcs
-        
+            
+        primitives=lines[:]
+        nlines=len(lines)
+        narcs=len(arcs)
+        for ii,i in enumerate(sorted(radius.keys(),reverse=True)):
+            if i>nlines:
+                primitives.append(arcs[narcs-ii-1])
+            else:
+                primitives.insert(i,arcs[narcs-ii-1])
         
         volmdlr.CompositePrimitive2D.__init__(self,primitives,name)        
         

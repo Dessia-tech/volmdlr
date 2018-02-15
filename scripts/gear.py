@@ -54,12 +54,23 @@ c2=vm.Contour2D([l2])
 po=vm.Point3D((0,0,0))
 xp=vm.Vector3D((1,0,0))
 yp=vm.Vector3D((0,1,0))
+
+
+
 #c1.MPLPlot()
+#extr_vect=vm.Vector3D((0,0,e))
 
-profile=primitives3D.ExtrudedProfile(po,xp,yp,[c1,c2],(0,0,e))
+profile_straight=primitives3D.ExtrudedProfile(po,xp,yp,[c1,c2],(0,0,e))
+#
+#model_straight=vm.VolumeModel([profile_straight])
 
-model=vm.VolumeModel([profile])
+profile_helical=primitives3D.HelicalExtrudedProfile(po,xp,yp,c1,(0,0,0),(0,0,e),28*3.14/180)
 
+model=vm.VolumeModel([profile_helical,profile_straight])
+
+
+#resp=model_straight.FreeCADExport('python','gear-straight','/usr/lib/freecad/lib/',['stl','fcstd'])
+#print(resp)
 
 resp=model.FreeCADExport('python','gear','/usr/lib/freecad/lib/',['stl','fcstd'])
 print(resp)

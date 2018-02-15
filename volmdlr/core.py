@@ -641,9 +641,9 @@ class Line3D(Primitive3D):
         ax.plot(x,y,z)
         
         
-    def FreeCADExport(self,name):
-        x1,y1,z1=1000*self.points[0].vector
-        x2,y2,z2=1000*self.points[1].vector
+    def FreeCADExport(self,name,ndigits=3):
+        x1,y1,z1=npy.round(1000*self.points[0].vector,ndigits)
+        x2,y2,z2=npy.round(1000*self.points[1].vector,ndigits)
         return '{}=Part.Line(fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,x1,y1,z1,x2,y2,z2)
 
 
@@ -654,9 +654,9 @@ class Circle3D(Primitive3D):
         self.radius=radius
         self.normal=normal
 
-    def FreeCADExport(self,name):
-        xc,yc,zc=1000*self.center.vector
-        xn,yn,zn=self.normal.vector
+    def FreeCADExport(self,name,ndigits=3):
+        xc,yc,zc=npy.round(1000*self.center.vector,ndigits)
+        xn,yn,zn=npy.round(self.normal.vector,ndigits)
         return '{}=Part.Circle(fc.Vector({},{},{}),fc.Vector({},{},{}),{})\n'.format(name,xc,yc,zc,xn,yn,zn,1000*self.radius)
         
 
@@ -679,10 +679,10 @@ class Arc3D(Primitive3D):
         
         
     
-    def FreeCADExport(self,name):
-        xs,ys,zs=1000*self.start.vector
-        xm,ym,zm=1000*self.middle.vector
-        xe,ye,ze=1000*self.end.vector
+    def FreeCADExport(self,name,ndigits=3):
+        xs,ys,zs=npy.round(1000*self.start.vector,ndigits)
+        xm,ym,zm=npy.round(1000*self.middle.vector,ndigits)
+        xe,ye,ze=npy.round(1000*self.end.vector,ndigits)
         return '{}=Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,xs,ys,zs,xm,ym,zm,xe,ye,ze)
 
         
@@ -717,7 +717,7 @@ class VolumeModel:
         if path_lib_freecad!='':
             s+="import sys\nsys.path.append('"+path_lib_freecad+"')\n"
 
-        s+="import FreeCAD as fc\nimport Part\n\ndoc=fc.newDocument('doc')\n\n"
+        s+="import math\nimport FreeCAD as fc\nimport Part\n\ndoc=fc.newDocument('doc')\n\n"
         
         for ip,primitive in enumerate(self.primitives):
             s+=(primitive.FreeCADExport(ip)+'\n')

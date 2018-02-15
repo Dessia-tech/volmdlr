@@ -113,12 +113,11 @@ class ExtrudedProfile(volmdlr.Primitive3D):
     """
 
     """
-    def __init__(self,plane_origin,x,y,contours2D,extrusion_vector,screw_thread=0.,name=''):
+    def __init__(self,plane_origin,x,y,contours2D,extrusion_vector,name=''):
         volmdlr.Primitive3D.__init__(self,name)
         self.contours2D=contours2D
         self.extrusion_vector=extrusion_vector
         self.contours3D=[]
-        self.screw_thread=screw_thread
         for contour in contours2D:
 #            print(contour)
             self.contours3D.append(contour.To3D(plane_origin,x,y))
@@ -132,30 +131,19 @@ class ExtrudedProfile(volmdlr.Primitive3D):
         name='primitive'+str(ip)
         s='W=[]\n'
         for ic,contour in enumerate(self.contours3D): 
-            s+='L=[]\n'
+            s+='E=[]\n'
             for ip,primitive in enumerate(contour):
                 s+=primitive.FreeCADExport('L{}_{}'.format(ic,ip))
-                s+='L.append(L{}_{})\n'.format(ic,ip)
-            s+='S = Part.Shape(L)\n' 
-            s+='W.append(Part.Wire(S.Edges))\n'
+                s+='E.append(Part.Edge(L{}_{}))\n'.format(ic,ip)
+#            s+='S = Part.Shape(L)\n' 
+            s+='W.append(Part.Wire(E[:]))\n'
         s+='F=Part.Face(W)\n'
         e1,e2,e3=self.extrusion_vector
         e1=e1*1000
         e2=e2*1000
         e3=e3*1000
-        if self.screw_thread==0:     
-#            s+=name+'=S'
-            s+=name+'=F.extrude(fc.Vector({},{},{}))\n'.format(e1,e2,e3)
-        else:
-            # Helix creation
-            side=self.screw_thread/abs(self.screw_thread)
-            thread=abs(self.screw_thread)
-            
-            s+='h=Part.MakeLongHelix()'
-            e1,e2,e3=geometry.Direction2Euler(self.extrusion_vector)
-            l=norm(self.extrusion_vector)
-            s+='Sweep = Part.Wire(traj).makePipeShell([section],makeSolid,isFrenet)'
-#            myObject.Shape = Sweep
+        
+        s+='{}=F.extrude(fc.Vector({},{},{}))\n'.format(name,e1,e2,e3)
         return s
 
 
@@ -185,7 +173,6 @@ class RevolvedProfile(volmdlr.Primitive3D):
         self.angle=angle
         self.contours3D=[]
         for contour in contours2D:
-#            print(contour)
             self.contours3D.append(contour.To3D(plane_origin,x,y))
         
     def MPLPlot(self,ax):
@@ -211,6 +198,50 @@ class RevolvedProfile(volmdlr.Primitive3D):
         ap3=ap3*1000
         angle=self.angle/math.pi*180
         s+='{}=F.revolve(fc.Vector({},{},{}),fc.Vector({},{},{}),{})\n'.format(name,ap1,ap2,ap3,a1,a2,a3,angle)
+
+#            myObject.Shape = Sweep
+        return s
+        
+class HelicalExtrudedProfile(volmdlr.Primitive3D):
+    """
+
+    """
+    def __init__(self,plane_origin,x,y,contour2D,axis_point,axis,pitch,name=''):
+        volmdlr.Primitive3D.__init__(self,name)
+        self.contour2D=contour2D
+        self.axis_point=axis_point
+        self.axis=axis
+        self.pitch=pitch
+       
+        self.contour3D=contour2D.To3D(plane_origin,x,y)
+            
+            
+    def FreeCADExport(self,ip):
+        name='primitive{}'.format(ip)
+        s="E=[]\n"
+        
+        for ip,primitive in enumerate(self.contour3D):
+            s+=primitive.FreeCADExport('L_{}'.format(ip))
+            s+='E.append(Part.Edge(L_{}))\n'.format(ip)
+#        s+='S = Part.Shape(L)\n' 
+        s+='W=Part.Wire(E[:])\n'
+
+        a1,a2,a3=self.axis
+        ap1,ap2,ap3=self.axis_point
+        ap1=ap1*1000
+        ap2=ap2*1000
+        ap3=ap3*1000
+#        angle=self.helix_angle/math.pi*180
+        
+        
+        width=norm(self.axis)*1000
+        direction=bool(self.pitch < 0)
+        pitch=abs(self.pitch)*1000
+#        print('pitch',pitch)
+        s+="helix = Part.makeHelix({}, {}, 500., 0, {})\n".format(pitch,width,direction)
+        s+="helix.translate(fc.Vector({},{},{}))\n".format(ap1,ap2,ap3)
+
+        s+='{}=helix.makePipeShell([W],True,True)\n'.format(name)
 
 #            myObject.Shape = Sweep
         return s
