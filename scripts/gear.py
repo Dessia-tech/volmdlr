@@ -64,7 +64,7 @@ profile_straight=primitives3D.ExtrudedProfile(po,xp,yp,[c1,c2],(0,0,e))
 #
 #model_straight=vm.VolumeModel([profile_straight])
 
-profile_helical=primitives3D.HelicalExtrudedProfile(po,xp,yp,c1,(0,0,0),(0,0,e),28*3.14/180)
+profile_helical=primitives3D.HelicalExtrudedProfile(po,xp,yp,(0,0,0),(0,0,e),28*3.14/180,c1,[c2])
 
 model=vm.VolumeModel([profile_helical,profile_straight])
 

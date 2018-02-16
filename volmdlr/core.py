@@ -751,14 +751,24 @@ class VolumeModel:
         """
         fcstd_filepath=os.path.abspath(fcstd_filepath)
         s=self.FreeCADScript(fcstd_filepath,path_lib_freecad,'',export_types)
-        f=tempfile.NamedTemporaryFile()
-#        with open(f,'w') as fw:
-        f.write(bytes(s,'utf8'))
 #        print(s)
-        arg=f.name
-        rep=subprocess.call([python_path,arg])
-        return rep
+        with tempfile.NamedTemporaryFile() as f:
+#        with open(f,'w') as fw:
+            f.write(bytes(s,'utf8'))
+
+            arg=f.name
+            f.read()
+#            print(python_path,arg)
+            output=subprocess.call([python_path,arg])
+#        p = subprocess.Popen('{} {}'.format(python_path,arg), shell=True, stdin=subprocess.PIPE, 
+#                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+#        output = p.stdout.read()
+#        output += p.stderr.read()
+        return output
         
+
+    
+    
     def BabylonScript(self):
 
         env = Environment(loader=PackageLoader('volmdlr', 'templates'),

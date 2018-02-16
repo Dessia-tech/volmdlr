@@ -115,3 +115,4 @@ class RoundedLines2D(volmdlr.CompositePrimitive2D):
         else:
             self.__init__([p.Translation(offset,copy=True) for p in self.points],self.radius,self.closed,self.name)
 
+

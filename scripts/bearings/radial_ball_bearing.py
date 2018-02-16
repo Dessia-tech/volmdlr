@@ -33,7 +33,7 @@ for i in range(n_balls):
     angle=i*2*math.pi/n_balls
     center_ball=center_ball1.Rotation(center,x,angle,True)
 #    print(center_ball.vector)
-    primitives.append(primitives3D.Sphere(center_ball,D_balls/2,'Ball n°{}'.format(i+1)))
+    primitives.append(primitives3D.Sphere(center_ball,D_balls/2,'Ball{}'.format(i+1)))
 
 # inner
 pi1=vm.Point2D((-B/2,d/2))
@@ -52,7 +52,7 @@ li5=vm.Line2D(pi6,pi7)
 li6=vm.Line2D(pi7,pi1)
 
 ci=vm.Contour2D([li1,li2,ci3,li4,li5,li6])
-inner=primitives3D.RevolvedProfile(center,x,y,[ci],center,x,math.pi*2,'inner ring')
+inner=primitives3D.RevolvedProfile(center,x,y,[ci],center,x,math.pi*2,'innerring')
 primitives.append(inner)
 
 # outter
@@ -72,9 +72,11 @@ lo5=vm.Line2D(po6,po7)
 lo6=vm.Line2D(po7,po1)
 
 co=vm.Contour2D([lo1,lo2,co3,lo4,lo5,lo6])
-outter=primitives3D.RevolvedProfile(center,x,y,[co],center,x,math.pi*2,'outter ring')
+outter=primitives3D.RevolvedProfile(center,x,y,[co],center,x,math.pi*2)
+
 primitives.append(outter)
 
-model=vm.VolumeModel(primitives)
 
-model.FreeCADExport('python','radial_ball_bearing','/usr/lib/freecad/lib/')
+model=vm.VolumeModel(primitives)
+resp=model.FreeCADExport('/usr/bin/python','bearing','/usr/lib/freecad/lib/',['stl','fcstd'])
+print(resp)
