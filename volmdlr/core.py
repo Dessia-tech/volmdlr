@@ -752,18 +752,25 @@ class VolumeModel:
         fcstd_filepath=os.path.abspath(fcstd_filepath)
         s=self.FreeCADScript(fcstd_filepath,path_lib_freecad,'',export_types)
 #        print(s)
-        with tempfile.NamedTemporaryFile() as f:
+        with tempfile.NamedTemporaryFile(suffix=".py",delete=False) as f:
 #        with open(f,'w') as fw:
             f.write(bytes(s,'utf8'))
+#            print(f.name)
+#            import time
+#            time.sleep(20)
 
-            arg=f.name
-            f.read()
+
+#            f.read()
 #            print(python_path,arg)
-            output=subprocess.call([python_path,arg])
+        arg=f.name
+        output=subprocess.call([python_path,arg])
+#        print(f.name)
+        f.close()
 #        p = subprocess.Popen('{} {}'.format(python_path,arg), shell=True, stdin=subprocess.PIPE, 
 #                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
 #        output = p.stdout.read()
 #        output += p.stderr.read()
+        os.remove(f.name)
         return output
         
 
