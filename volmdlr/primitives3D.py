@@ -40,7 +40,7 @@ class Cylinder(volmdlr.Primitive3D):
         ax=str(ax)
         ay=str(ay)
         az=str(az)
-        return name+'=Part.makeCylinder('+r+','+e+',fc.Vector('+x+','+y+','+z+'),fc.Vector('+ax+','+ay+','+az+'),360)'
+        return name+'=Part.makeCylinder('+r+','+e+',fc.Vector('+x+','+y+','+z+'),fc.Vector('+ax+','+ay+','+az+'),360)\n'
   
     
     def Babylon(self):
@@ -158,7 +158,7 @@ class Sphere(volmdlr.Primitive3D):
         name='primitive'+str(ip)
         r=1000*self.radius
         x,y,z=npy.round(1000*self.center.vector,ndigits)
-        return '{}=Part.makeSphere({},fc.Vector({},{},{}))'.format(name,r,x,y,z)
+        return '{}=Part.makeSphere({},fc.Vector({},{},{}))\n'.format(name,r,x,y,z)
 
 
 class RevolvedProfile(volmdlr.Primitive3D):
@@ -252,3 +252,24 @@ class HelicalExtrudedProfile(volmdlr.Primitive3D):
             s+="{}={}.cut(helix2.makePipeShell([Wi],True,True))\n".format(name,name)
 
         return s
+    
+class Cut(volmdlr.Primitive3D):
+    """
+
+    """
+    def __init__(self,primitive,cut_primitive,name=''):
+        volmdlr.Primitive3D.__init__(self,name)
+        self.primitive=primitive
+        self.cut_primitive=cut_primitive
+        
+        
+    def FreeCADExport(self,ip):
+        name='primitive{}'.format(ip)
+        
+        s=self.primitive.FreeCADExport('{}_0'.format(ip))
+        s+=self.cut_primitive.FreeCADExport('{}_1'.format(ip))
+        
+        s+="{}={}_0.cut({}_1)\n".format(name,name,name)
+
+        return s
+        
