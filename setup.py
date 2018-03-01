@@ -9,13 +9,19 @@ from setuptools import setup
 from Cython.Build import cythonize
 
 
-
 def readme():
     with open('README.rst') as f:
         return f.read()
+    
+def version_scheme(version):
+    return '.'.join([str(i) for i in version.tag._key[1]])
+
+def local_scheme(version):
+    return ''
 
 setup(name='volmdlr',
-      version='0.0.1',#
+      use_scm_version={'version_scheme':version_scheme,'local_scheme':local_scheme},
+      setup_requires=['setuptools_scm'],
       description=' A volume modeler computation-oriented. Include rendering bindings. ',
       long_description=readme(),
       keywords='volume, modeler',
