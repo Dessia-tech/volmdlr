@@ -200,6 +200,8 @@ class Contour2D(CompositePrimitive2D):
         return [primitive.To3D(plane_origin,x,y) for primitive in self.primitives]
     
     def Area(self):
+        if len(self.primitives)==1:
+            return self.primitives[0].Area()
         arcs=[]
         points_polygon=[]
         for primitive in self.primitives:
