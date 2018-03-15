@@ -96,9 +96,9 @@ class Point2D(Vector2D):
         return Point2D(self.vector/value)
     
 
-    def MPLPlot(self):
+    def MPLPlot(self,style='ob'):
         x1=self.vector
-        plt.plot([x1[0]],[x1[1]],'ob')        
+        plt.plot([x1[0]],[x1[1]],style)        
         return []
     
     def PointDistance(self,point2):
@@ -205,23 +205,29 @@ class Contour2D(CompositePrimitive2D):
         arcs=[]
         points_polygon=[]
         for primitive in self.primitives:
+#            print(primitive.__class__.__name__)
             if primitive.__class__.__name__=='Line2D':
                 points_polygon.extend(primitive.points)
             elif primitive.__class__.__name__=='Arc2D':
                 points_polygon.append(primitive.center)
-#                arcs.append(primitive)
+                arcs.append(primitive)
         polygon=Polygon2D(points_polygon)
         A=polygon.Area()
+#        print('A',A)
+#        print('arcs',arcs)
         for arc in arcs:
-            if polygon.BelongsTo(arc.center):
+#            print(arc,arc.Area())
+            if polygon.PointBelongs(arc.middle):
                 A-=arc.Area()
             else:
                 A+=arc.Area()
                 
-        return A 
+        return A
+    
+    def CenterOfMass(self):
+        if len(self.primitives)==1:
+            return self.primitives[0].CenterOfMass()
 
-
-    def SecondMomentArea(self,point):
         arcs=[]
         points_polygon=[]
         for primitive in self.primitives:
@@ -229,15 +235,43 @@ class Contour2D(CompositePrimitive2D):
                 points_polygon.extend(primitive.points)
             elif primitive.__class__.__name__=='Arc2D':
                 points_polygon.append(primitive.center)
-#                arcs.append(primitive)
+                arcs.append(primitive)
+        polygon=Polygon2D(points_polygon)
+        
+        area=polygon.Area()
+        c=area*polygon.CenterOfMass()
+        
+        for arc in arcs:
+            arc_area=arc.Area()
+            if polygon.PointBelongs(arc.middle):
+                c-=arc_area*arc.CenterOfMass()
+                area-=arc_area
+            else:
+                c+=arc_area*arc.CenterOfMass()
+                area+=arc_area
+        return c/area
+
+
+
+    def SecondMomentArea(self,point):
+        if len(self.primitives)==1:
+            return self.primitives[0].SecondMomentArea(point)
+
+        arcs=[]
+        points_polygon=[]
+        for primitive in self.primitives:
+            if primitive.__class__.__name__=='Line2D':
+                points_polygon.extend(primitive.points)
+            elif primitive.__class__.__name__=='Arc2D':
+                points_polygon.append(primitive.center)
+                arcs.append(primitive)
         polygon=Polygon2D(points_polygon)
         A=polygon.SecondMomentArea(point)
         for arc in arcs:
-            if polygon.BelongsTo(arc.center):
+            if polygon.BelongsTo(arc.middle):
                 A-=arc.SecondMomentArea(point)
             else:
                 A+=arc.SecondMomentArea(point)
-#        A2=geometry.Huygens2D(A,self.Area(),point,)
         return A
 
 class Mesh2D:
@@ -315,6 +349,21 @@ class Line2D(Primitive2D):
         p=point.vector
 #        print('point vector',point.vector)
         t = max(0, min(1, npy.dot(p - v, w - v) / norm(w-v)**2))
+#        print('t', t)
+        projection = v + t * (w - v)# Projection falls on the segment
+#        print(p,projection)
+        return norm(p-projection);
+    
+    def PointDistance(self,point):
+        """
+        Computes the distance of a point to line 
+        """
+        p1,p2=self.points
+        v=p1.vector
+        w=p2.vector
+        p=point.vector
+#        print('point vector',point.vector)
+        t = npy.dot(p - v, w - v) / norm(w-v)**2
 #        print('t', t)
         projection = v + t * (w - v)# Projection falls on the segment
 #        print(p,projection)
@@ -401,6 +450,11 @@ class Arc2D(Primitive2D):
             angle=self.angle2-self.angle1
         return self.radius**2*angle/2
             
+    def CenterOfMass(self):
+        u=self.middle.vector-self.center.vector
+        u/=norm(u)
+        alpha=abs(self.angle1-self.angle2)
+        return Point2D(self.center.vector+4/(3*alpha)*self.radius*math.sin(alpha*0.5)*u)
         
     def MPLPlot(self):
         pc=self.center.vector
@@ -497,6 +551,9 @@ class Circle2D(Primitive2D):
         I=math.pi*self.radius**4/4
         Ic=npy.array([[I,0],[0,I]])
         return geometry.Huygens2D(Ic,self.Area(),self.center,point)
+    
+    def CenterOfMass(self):
+        return self.center
 
 class Polygon2D(CompositePrimitive2D):
     def __init__(self,points,name=''):     
@@ -514,8 +571,26 @@ class Polygon2D(CompositePrimitive2D):
         x=[point.vector[0]for point in self.points]
         y=[point.vector[1]for point in self.points]
 
-        return abs(0.5*npy.abs(npy.dot(x,npy.roll(y,1))-npy.dot(y,npy.roll(x,1))))
+        return 0.5*npy.abs(npy.dot(x,npy.roll(y,1))-npy.dot(y,npy.roll(x,1)))
+    
+    def CenterOfMass(self):
         
+        x=[point.vector[0] for point in self.points]
+        y=[point.vector[1] for point in self.points]
+
+        
+        xi_xi1=x+npy.roll(x,-1)
+        yi_yi1=y+npy.roll(y,-1)
+        xi_yi1=npy.multiply(x,npy.roll(y,-1))
+        xi1_yi=npy.multiply(npy.roll(x,-1),y)
+        
+        a=0.5*npy.sum(xi_yi1-xi1_yi)# signed area!
+#        a=self.Area()
+        
+        cx=npy.sum(npy.multiply(xi_xi1,(xi_yi1-xi1_yi)))/6./a  
+        cy=npy.sum(npy.multiply(yi_yi1,(xi_yi1-xi1_yi)))/6./a  
+
+        return Point2D((cx,cy)) 
     
     def PointBelongs(self,point):
         """
@@ -581,7 +656,7 @@ class Vector3D:
         self.vector[2]=vector[2]
     
     def __add__(self,point2d):
-        return Vector3D(self.vector+point2d.vector)
+        return self.__class__(self.vector+point2d.vector)
     
     def __radd__(self,point2d):
         return self+point2d
@@ -630,6 +705,20 @@ class Point3D(Vector3D):
     def MPLPlot(self,ax):
         ax.scatter(*self.vector)
         
+    def PlaneProjection(self,plane_origin,x,y):
+        z=npy.cross(x.vector,y.vector)
+        z/=norm(z)
+        return Point3D(self.vector-npy.dot(self.vector-plane_origin.vector,z)*z)
+        
+    def To2D(self,plane_origin,x,y):
+        if npy.dot(x.vector,y.vector)!=0:
+            raise NotImplemented
+        x2d=npy.dot(self.vector,x.vector)-npy.dot(plane_origin.vector,x.vector)
+        y2d=npy.dot(self.vector,y.vector)-npy.dot(plane_origin.vector,y.vector)
+        return Point2D((x2d,y2d))
+    
+    def PointDistance(self,point2):
+        return norm(self.vector-point2.vector)
         
 class Line3D(Primitive3D):
     def __init__(self,point1,point2,name=''):
@@ -693,6 +782,12 @@ class VolumeModel:
     def __init__(self,primitives,name=''):
         self.primitives=primitives
         self.name=name
+        
+    def Volume(self):
+        volume=0
+        for primitive in self.primitives:
+            volume+=primitive.Volume()
+        return volume
     
     def MPLPlot(self):
         """

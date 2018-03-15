@@ -26,14 +26,19 @@ points_inside=[]
 points_outside=[]
 for i in range(100):
     pt=vm.Point2D(2*npy.random.random(2)-0.3)
-    print(p.PointDistance(pt))
+#    print(p.PointDistance(pt))
     if p.PointBelongs(pt):
         points_inside.append(pt)
     else:
         points_outside.append(pt)
         
+p.MPLPlot()
+#points_inside.MPLPlot()
 c1=vm.CompositePrimitive2D([p,*points_inside])
 c1.MPLPlot()
 
 c2=vm.CompositePrimitive2D([p,*points_outside])
 c2.MPLPlot()
+
+cog_p=p.CenterOfMass()
+cog_p.MPLPlot('ro')

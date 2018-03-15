@@ -26,6 +26,9 @@ class Cylinder(volmdlr.Primitive3D):
         self.radius=radius
         self.width=width
         
+    def Volume(self):
+        return math.pi*self.radius**2*self.width
+        
     def FreeCADExport(self,ip):
         name='primitive'+str(ip)
         e=str(1000*self.width)
@@ -63,6 +66,10 @@ class HollowCylinder(volmdlr.Primitive3D):
         self.inner_radius=inner_radius
         self.outer_radius=outer_radius
         self.width=width
+        
+    def Volume(self):
+        return math.pi*(self.outer_radius**2-self.inner_radius**2)*self.width
+
 
     def FreeCADExport(self,ip):
         name='primitive'+str(ip)
@@ -118,6 +125,8 @@ class ExtrudedProfile(volmdlr.Primitive3D):
         self.contours2D=contours2D
         self.extrusion_vector=extrusion_vector
         self.contours3D=[]
+        self.x=x
+        self.y=y
         for contour in contours2D:
 #            print(contour)
             self.contours3D.append(contour.To3D(plane_origin,x,y))
@@ -145,7 +154,25 @@ class ExtrudedProfile(volmdlr.Primitive3D):
         
         s+='{}=F.extrude(fc.Vector({},{},{}))\n'.format(name,e1,e2,e3)
         return s
-
+    
+    def Area(self):
+        areas=[c.Area() for c in self.contours2D]
+        sic=list(npy.argsort(areas))[::-1]# sorted indices of contours
+        area=areas[sic[0]]
+        
+        for i in sic[1:]:
+            area-=self.contours2D[i].Area()
+        return area
+    
+    def Volume(self):
+#        e=extrusion_vector/norm(extrusion_vector)
+        z=npy.cross(self.x.vector,self.y.vector)
+        z/=norm(z)
+        coeff=npy.dot(self.extrusion_vector,z)
+        
+        return self.Area()*coeff
+        
+        
 
 class Sphere(volmdlr.Primitive3D):
     def __init__(self,center,radius,name=''):
@@ -153,6 +180,9 @@ class Sphere(volmdlr.Primitive3D):
         self.center=center
         self.radius=radius
         self.position=center
+    
+    def Volume(self):
+        return 4/3*math.pi*self.radius**3
     
     def FreeCADExport(self,ip,ndigits=3):
         name='primitive'+str(ip)
@@ -171,6 +201,10 @@ class RevolvedProfile(volmdlr.Primitive3D):
         self.axis_point=axis_point
         self.axis=axis
         self.angle=angle
+        self.plane_origin=plane_origin
+        self.x=x
+        self.y=y
+        
         self.contours3D=[]
         for contour in contours2D:
             self.contours3D.append(contour.To3D(plane_origin,x,y))
@@ -201,6 +235,34 @@ class RevolvedProfile(volmdlr.Primitive3D):
 
 #            myObject.Shape = Sweep
         return s
+    
+    def Volume(self):
+        areas=[c.Area() for c in self.contours2D]
+        # Maximum area is main surface, others cut into it
+        sic=list(npy.argsort(areas))[::-1]# sorted indices of contours
+        p1=self.axis_point.PlaneProjection(self.plane_origin,self.x,self.y)
+        if self.axis_point.PointDistance(p1)!=0:
+            raise NotImplemented
+        p1_2D=p1.To2D(self.axis_point,self.x,self.y)
+        p2_3D=self.axis_point+volmdlr.Point3D(self.axis.vector)
+        p2=p2_3D.PlaneProjection(self.plane_origin,self.x,self.y)
+        if p2_3D.PointDistance(p2)!=0:
+            raise NotImplemented
+        p2_2D=p2_3D.To2D(self.plane_origin,self.x,self.y)
+        axis_2D=volmdlr.Line2D(p1_2D,p2_2D)
+        
+        com=self.contours2D[sic[0]].CenterOfMass()
+        rg=axis_2D.PointDistance(com)
+        volume=areas[sic[0]]*rg
+        
+        for i in sic[1:]:
+            com=self.contours2D[i].CenterOfMass()
+            rg=axis_2D.PointDistance(com)
+            volume-=areas[i]*rg
+            
+        return self.angle*volume
+                
+        
         
 class HelicalExtrudedProfile(volmdlr.Primitive3D):
     """
@@ -262,6 +324,9 @@ class Cut(volmdlr.Primitive3D):
         self.primitive=primitive
         self.cut_primitive=cut_primitive
         
+    def Volume(self):
+        return self.primitive.Volume()-self.cut_primitive.Volume()
+
         
     def FreeCADExport(self,ip):
         name='primitive{}'.format(ip)

@@ -43,3 +43,5 @@ for line in border.Lines():
 
 ctest=vm.CompositePrimitive2D([border,ptest]+projs)
 ctest.MPLPlot()
+cog_p=border.CenterOfMass()
+cog_p.MPLPlot('ro')
