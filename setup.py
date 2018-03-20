@@ -14,8 +14,10 @@ def readme():
         return f.read()
     
 def version_scheme(version):
-    return '.'.join([str(i) for i in version.tag._key[1]])
-
+    try:
+        return '.'.join([str(i) for i in version.tag._key[1]])
+    except AttributeError:
+        return version.tag
 def local_scheme(version):
     return ''
 
