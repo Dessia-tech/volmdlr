@@ -13,7 +13,7 @@ import volmdlr.primitives2D as primitives2D
 
 import math
 
-r1=0.032
+r1=0.038
 r2=0.04
 Z=12
 theta=2*math.pi/Z

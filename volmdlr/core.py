@@ -610,7 +610,7 @@ class Polygon2D(CompositePrimitive2D):
             Ix=-Ix
             Iy=-Iy
             Ixy=-Ixy
-        return npy.array([[Ix,Ixy],[Ixy,Iy]])
+        return npy.array([[Ix/12.,Ixy/24.],[Ixy/24.,Iy/12.]])
 
     def Lines(self):
         lines=[]
