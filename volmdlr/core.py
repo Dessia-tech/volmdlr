@@ -268,7 +268,7 @@ class Contour2D(CompositePrimitive2D):
         polygon=Polygon2D(points_polygon)
         A=polygon.SecondMomentArea(point)
         for arc in arcs:
-            if polygon.BelongsTo(arc.middle):
+            if polygon.PointBelongs(arc.middle):
                 A-=arc.SecondMomentArea(point)
             else:
                 A+=arc.SecondMomentArea(point)
