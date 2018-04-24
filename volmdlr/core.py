@@ -735,7 +735,7 @@ class Line3D(Primitive3D):
     def FreeCADExport(self,name,ndigits=3):
         x1,y1,z1=npy.round(1000*self.points[0].vector,ndigits)
         x2,y2,z2=npy.round(1000*self.points[1].vector,ndigits)
-        return '{}=Part.Line(fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,x1,y1,z1,x2,y2,z2)
+        return '{}=Part.LineSegment(fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,x1,y1,z1,x2,y2,z2)
 
 
 class Circle3D(Primitive3D):
