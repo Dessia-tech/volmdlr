@@ -214,7 +214,7 @@ class RevolvedProfile(volmdlr.Primitive3D):
             for primitive in contour:
                 primitive.MPLPlot(ax)
         
-    def FreeCADExport(self,ip):
+    def FreeCADExport(self,ip,ndigits=3):
         name='primitive'+str(ip)
         s='W=[]\n'
         for ic,contour in enumerate(self.contours3D): 
@@ -227,9 +227,9 @@ class RevolvedProfile(volmdlr.Primitive3D):
         s+='F=Part.Face(W)\n'
         a1,a2,a3=self.axis.vector
         ap1,ap2,ap3=self.axis_point.vector
-        ap1=ap1*1000
-        ap2=ap2*1000
-        ap3=ap3*1000
+        ap1=round(ap1*1000,ndigits)
+        ap2=round(ap2*1000,ndigits)
+        ap3=round(ap3*1000,ndigits)
         angle=self.angle/math.pi*180
         s+='{}=F.revolve(fc.Vector({},{},{}),fc.Vector({},{},{}),{})\n'.format(name,ap1,ap2,ap3,a1,a2,a3,angle)
 
@@ -280,7 +280,7 @@ class HelicalExtrudedProfile(volmdlr.Primitive3D):
         self.outer_contour3D=outer_contour2D.To3D(plane_origin,x,y)
             
             
-    def FreeCADExport(self,ip):
+    def FreeCADExport(self,ip,ndigits=3):
         name='primitive{}'.format(ip)
         s="E=[]\n"   
         for ip,primitive in enumerate(self.outer_contour3D):
@@ -291,13 +291,13 @@ class HelicalExtrudedProfile(volmdlr.Primitive3D):
 
         a1,a2,a3=self.axis
         ap1,ap2,ap3=self.axis_point
-        ap1=ap1*1000
-        ap2=ap2*1000
-        ap3=ap3*1000
+        ap1=round(ap1*1000,ndigits)
+        ap2=round(ap2*1000,ndigits)
+        ap3=round(ap3*1000,ndigits)
         
         width=norm(self.axis)*1000
         direction=bool(self.pitch < 0)
-        pitch=round(abs(self.pitch)*1000,3)
+        pitch=round(abs(self.pitch)*1000,ndigits)
 #        print('pitch',pitch)
         s+="helix = Part.makeHelix({}, {}, 50., 0, {})\n".format(pitch,width,direction)
         s+="helix.translate(fc.Vector({},{},{}))\n".format(ap1,ap2,ap3)
