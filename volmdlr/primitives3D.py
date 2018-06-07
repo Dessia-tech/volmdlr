@@ -30,20 +30,21 @@ class Cylinder(volmdlr.Primitive3D):
         return math.pi*self.radius**2*self.width
         
     def FreeCADExport(self,ip):
-        name='primitive'+str(ip)
-        e=str(1000*self.width)
-        r=str(1000*self.radius)
-        position=1000*(self.position-self.axis*self.width/2)
-        x,y,z=position
-        x=str(x)
-        y=str(y)
-        z=str(z)
-
-        ax,ay,az=self.axis
-        ax=str(ax)
-        ay=str(ay)
-        az=str(az)
-        return name+'=Part.makeCylinder('+r+','+e+',fc.Vector('+x+','+y+','+z+'),fc.Vector('+ax+','+ay+','+az+'),360)\n'
+        if self.radius>0:
+            name='primitive'+str(ip)
+            e=str(1000*self.width)
+            r=str(1000*self.radius)
+            position=1000*(self.position-self.axis*self.width/2)
+            x,y,z=position
+            x=str(x)
+            y=str(y)
+            z=str(z)
+    
+            ax,ay,az=self.axis
+            ax=str(ax)
+            ay=str(ay)
+            az=str(az)
+            return name+'=Part.makeCylinder('+r+','+e+',fc.Vector('+x+','+y+','+z+'),fc.Vector('+ax+','+ay+','+az+'),360)\n'
   
     
     def Babylon(self):
@@ -72,37 +73,38 @@ class HollowCylinder(volmdlr.Primitive3D):
 
 
     def FreeCADExport(self,ip):
-        name='primitive'+str(ip)
-        re=str(1000*self.outer_radius)
-        ri=str(1000*self.inner_radius)        
-        position=self.position-self.axis*self.width/2
-        x,y,z=1000*position
-        ax,ay,az=self.axis
-        x=str(x)
-        y=str(y)
-        z=str(z)
-        ax=str(ax)
-        ay=str(ay)
-        az=str(az)
-#        return 'Part.makeCylinder('+r+','+e+',fc.Vector('+x+','+y+','+z+'),fc.Vector('+ox+','+oy+','+oz+'),360)'
-
-        s='C2= Part.makeCircle('+re+',fc.Vector('+x+','+y+','+z+'),fc.Vector('+ax+','+ay+','+az+'))\n'
-        s+='W2=Part.Wire(C2.Edges)\n'
-        s+='F2=Part.Face(W2)\n'
-        
-        if self.inner_radius!=0.:
-            s+='C1= Part.makeCircle('+ri+',fc.Vector('+x+','+y+','+z+'),fc.Vector('+ax+','+ay+','+az+'))\n'        
-            s+='W1=Part.Wire(C1.Edges)\n'
-            s+='F1=Part.Face(W1)\n'        
-            s+='F2=F2.cut(F1)\n'        
-
-        vx,vy,vz=self.axis*self.width*1000
-        vx=str(vx)
-        vy=str(vy)
-        vz=str(vz)
-        
-        s+=name+'=F2.extrude(fc.Vector('+vx+','+vy+','+vz+'))\n'
-        return s
+        if self.outer_radius>0.:
+            name='primitive'+str(ip)
+            re=str(1000*self.outer_radius)
+            ri=str(1000*self.inner_radius)        
+            position=self.position-self.axis*self.width/2
+            x,y,z=1000*position
+            ax,ay,az=self.axis
+            x=str(x)
+            y=str(y)
+            z=str(z)
+            ax=str(ax)
+            ay=str(ay)
+            az=str(az)
+    #        return 'Part.makeCylinder('+r+','+e+',fc.Vector('+x+','+y+','+z+'),fc.Vector('+ox+','+oy+','+oz+'),360)'
+    
+            s='C2= Part.makeCircle('+re+',fc.Vector('+x+','+y+','+z+'),fc.Vector('+ax+','+ay+','+az+'))\n'
+            s+='W2=Part.Wire(C2.Edges)\n'
+            s+='F2=Part.Face(W2)\n'
+            
+            if self.inner_radius!=0.:
+                s+='C1= Part.makeCircle('+ri+',fc.Vector('+x+','+y+','+z+'),fc.Vector('+ax+','+ay+','+az+'))\n'        
+                s+='W1=Part.Wire(C1.Edges)\n'
+                s+='F1=Part.Face(W1)\n'        
+                s+='F2=F2.cut(F1)\n'        
+    
+            vx,vy,vz=self.axis*self.width*1000
+            vx=str(vx)
+            vy=str(vy)
+            vz=str(vz)
+            
+            s+=name+'=F2.extrude(fc.Vector('+vx+','+vy+','+vz+'))\n'
+            return s
     
     def Babylon(self):
         ya,xa,za=self.axis# to counter y definition in babylon

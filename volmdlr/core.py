@@ -348,11 +348,13 @@ class Line2D(Primitive2D):
         w=p2.vector
         p=point.vector
 #        print('point vector',point.vector)
-        t = max(0, min(1, npy.dot(p - v, w - v) / norm(w-v)**2))
+        nwv2=(w[1]-v[1])**2+(w[0]-v[0])**2# replace norm(w-v)**2
+        t = max(0, min(1, npy.dot(p - v, w - v) / nwv2))
 #        print('t', t)
         projection = v + t * (w - v)# Projection falls on the segment
 #        print(p,projection)
-        return norm(p-projection);
+#        return norm(p-projection);
+        return ((p[1]-projection[1])**2+(p[0]-projection[0])**2)**0.5
     
     def PointDistance(self,point):
         """
