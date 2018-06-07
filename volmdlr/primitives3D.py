@@ -45,7 +45,8 @@ class Cylinder(volmdlr.Primitive3D):
             ay=str(ay)
             az=str(az)
             return name+'=Part.makeCylinder('+r+','+e+',fc.Vector('+x+','+y+','+z+'),fc.Vector('+ax+','+ay+','+az+'),360)\n'
-  
+        else:
+            return ''
     
     def Babylon(self):
         ya,xa,za=self.axis
@@ -105,6 +106,9 @@ class HollowCylinder(volmdlr.Primitive3D):
             
             s+=name+'=F2.extrude(fc.Vector('+vx+','+vy+','+vz+'))\n'
             return s
+        
+        else:
+            return ''
     
     def Babylon(self):
         ya,xa,za=self.axis# to counter y definition in babylon
