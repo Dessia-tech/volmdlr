@@ -369,7 +369,8 @@ class Line2D(Primitive2D):
 #        print('t', t)
         projection = v + t * (w - v)# Projection falls on the segment
 #        print(p,projection)
-        return norm(p-projection);
+#        return norm(p-projection);
+        return ((p[1]-projection[1])**2+(p[0]-projection[0])**2)**0.5
 
 
     def MPLPlot(self):
@@ -819,9 +820,11 @@ class VolumeModel:
         s+="import math\nimport FreeCAD as fc\nimport Part\n\ndoc=fc.newDocument('doc')\n\n"
         
         for ip,primitive in enumerate(self.primitives):
-            s+=(primitive.FreeCADExport(ip)+'\n')
-            s+='shapeobj = doc.addObject("Part::Feature","p{} {}")\n'.format(ip,primitive.name)
-            s+="shapeobj.Shape = primitive{}\n".format(ip)
+            sp=primitive.FreeCADExport(ip)
+            if sp!='':
+                s+=(sp+'\n')
+                s+='shapeobj = doc.addObject("Part::Feature","p{} {}")\n'.format(ip,primitive.name)
+                s+="shapeobj.Shape = primitive{}\n".format(ip)
         s+='doc.recompute()\n'
         if 'fcstd' in export_types:
             s+="doc.saveAs('"+fcstd_filepath+".fcstd')\n\n"
