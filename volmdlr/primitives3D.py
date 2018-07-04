@@ -220,13 +220,13 @@ class RevolvedProfile(volmdlr.Primitive3D):
             for primitive in contour:
                 primitive.MPLPlot(ax)
         
-    def FreeCADExport(self,ip,ndigits=6):
+    def FreeCADExport(self,ip,ndigits=3):
         name='primitive'+str(ip)
         s='W=[]\n'
         for ic,contour in enumerate(self.contours3D): 
             s+='L=[]\n'
             for ip,primitive in enumerate(contour):
-                s+=primitive.FreeCADExport('L{}_{}'.format(ic,ip),ndigits)
+                s+=primitive.FreeCADExport('L{}_{}'.format(ic,ip),8)
                 s+='L.append(L{}_{})\n'.format(ic,ip)
             s+='S = Part.Shape(L)\n' 
             s+='W.append(Part.Wire(S.Edges))\n'

@@ -709,7 +709,7 @@ class Vector3D:
         """
         v=npy.random.random(3)
         
-        v=Vector3D(v-npy.dot(v,self.vector)*self.vector/self.Norm())
+        v=Vector3D(v-npy.dot(v,self.vector)*self.vector/(self.Norm()**2))
         v.vector=v.vector/v.Norm()
         return v
 
