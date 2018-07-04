@@ -681,6 +681,10 @@ class Vector3D:
     
     def __rdiv__(self,value):
         return self/value
+    
+    def Norm(self):
+        x,y,z = self.vector
+        return (x**2+y**2+z**2)**0.5
         
     def Rotation(self,center,axis,angle,copy=True):
         u=axis.vector
@@ -698,6 +702,16 @@ class Vector3D:
             return Point3D(vector2)
         else:
             self.vector=vector2    
+            
+    def RandomUnitNormalVector(self):
+        """
+        Returns a random normal vector
+        """
+        v=npy.random.random(3)
+        
+        v=Vector3D(v-npy.dot(v,self.vector)*self.vector/self.Norm())
+        v.vector=v.vector/v.Norm()
+        return v
 
         
 class Point3D(Vector3D):
