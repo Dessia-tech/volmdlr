@@ -18,11 +18,13 @@ def version_scheme(version):
         return '.'.join([str(i) for i in version.tag._key[1]])
     except AttributeError:
         return version.tag
-def local_scheme(version):
-    return ''
+    
+#def local_scheme(version):
+#    return ''
 
 setup(name='volmdlr',
-      use_scm_version={'version_scheme':version_scheme,'local_scheme':local_scheme},
+#      use_scm_version={'version_scheme':version_scheme,'local_scheme':local_scheme},
+      use_scm_version = {'write_to':'volmdlr/version.py'},
       setup_requires=['setuptools_scm'],
       description=' A volume modeler computation-oriented. Include rendering bindings. ',
       long_description=readme(),

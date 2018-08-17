@@ -8,7 +8,7 @@ Created on Fri Mar 10 17:02:36 2017
 
 import volmdlr as vm
 import volmdlr.primitives2D as primitives2D
-
+import time
 p1=vm.Point2D((0,0))
 p2=vm.Point2D((1,0))
 p3=vm.Point2D((2,1))
@@ -24,6 +24,7 @@ import numpy as npy
 
 points_inside=[]
 points_outside=[]
+
 for i in range(100):
     pt=vm.Point2D(2*npy.random.random(2)-0.3)
 #    print(p.PointDistance(pt))
@@ -31,7 +32,8 @@ for i in range(100):
         points_inside.append(pt)
     else:
         points_outside.append(pt)
-        
+ 
+    
 p.MPLPlot()
 #points_inside.MPLPlot()
 c1=vm.CompositePrimitive2D([p,*points_inside])
@@ -42,3 +44,15 @@ c2.MPLPlot()
 
 cog_p=p.CenterOfMass()
 cog_p.MPLPlot('ro')
+
+
+
+# Speed test
+t = time.time()
+n = 100000
+for i in range(n):
+    pt=vm.Point2D(2*npy.random.random(2)-0.3)
+#    print(p.PointDistance(pt))
+    p.PointBelongs(pt)
+t= time.time() - t 
+print('time spent: {}s, {}s/eval'.format(t, t/n))   
