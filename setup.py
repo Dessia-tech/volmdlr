@@ -24,7 +24,7 @@ def version_scheme(version):
 
 setup(name='volmdlr',
 #      use_scm_version={'version_scheme':version_scheme,'local_scheme':local_scheme},
-      use_scm_version = {'write_to':'volmdlr/version.py'},
+      use_scm_version = True,
       setup_requires=['setuptools_scm'],
       description=' A volume modeler computation-oriented. Include rendering bindings. ',
       long_description=readme(),
