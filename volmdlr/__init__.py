@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-#from pkg_resources import get_distribution
-from version import version
 
-__version__ = version
+import pkg_resources
+
+__version__ = pkg_resources.require("genmechanics")[0].version
 
 from .core import *
