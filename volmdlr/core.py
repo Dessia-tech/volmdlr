@@ -969,14 +969,19 @@ class Contour3D(Wire3D):
         
 
 class VolumeModel:
-    def __init__(self, primitives, name=''):
-        self.primitives=primitives
+    """
+    :param groups: A list of two element tuple. The first element is a string naming the group
+    and the second element is a list of primitives of the group
+    """
+    def __init__(self, groups, name=''):
+        self.groups = groups
         self.name=name
         
     def Volume(self):
         volume=0
-        for primitive in self.primitives:
-            volume+=primitive.Volume()
+        for group_name, primitives_group in self.groups:
+            for primitive in primitives_group:
+                volume+=primitive.Volume()
         return volume
     
     def MPLPlot(self):
@@ -987,8 +992,9 @@ class VolumeModel:
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d', adjustable='box')
 #        ax.set_aspect('equal')
-        for primitive in self.primitives:
-            primitive.MPLPlot(ax)
+        for name, primitive_group in self.groups:
+            for primitive in primitive_group:
+                primitive.MPLPlot(ax)
         ax.set_aspect('equal')
     
     def FreeCADScript(self, fcstd_filepath,
@@ -1010,17 +1016,20 @@ class VolumeModel:
 
         s+="import math\nimport FreeCAD as fc\nimport Part\n\ndoc=fc.newDocument('doc')\n\n"
         
-        for ip,primitive in enumerate(self.primitives):
-            sp=primitive.FreeCADExport(ip)
-            if sp!='':
-                s+=(sp+'\n')
-                s+='shapeobj = doc.addObject("Part::Feature","p{} {}")\n'.format(ip,primitive.name)
-                s+="shapeobj.Shape = primitive{}\n".format(ip)
+        for ig, (group_name, primitives_group) in enumerate(self.groups):
+            s += "part = doc.addObject('App::Part','Part{}_{}')\n".format(ig, group_name)
+            for ip, primitive in enumerate(primitives_group):
+                sp = primitive.FreeCADExport(ip)
+                if sp != '':
+                    s += (sp+'\n')
+                    s += 'shapeobj = doc.addObject("Part::Feature","p{}_{}")\n'.format(ip, primitive.name)
+                    s += "shapeobj.Shape = primitive{}\n".format(ip)
+                    s += 'part.addObject(shapeobj)\n'.format(ip, primitive.name)
+#                    
         s+='doc.recompute()\n'
         if 'fcstd' in export_types:
             s+="doc.saveAs('"+fcstd_filepath+".fcstd')\n\n"
         if 'stl' in export_types:
-#            p_list=str(['primitive{}'.format(i) for i in range(len(self.primitives))]).replace("'","")
             s+="import Mesh\nMesh.export(doc.Objects,'{}.stl')\n".format(fcstd_filepath)
                 
 

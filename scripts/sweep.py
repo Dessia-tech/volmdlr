@@ -33,9 +33,9 @@ c = vm.Circle3D(p1, 0.008, p2-p1)
 rl = primitives3D.RoundedLineSegments3D(points, radius, closed=False, name='wire')
 contour = vm.Contour3D([c])
 
-sweep = primitives3D.Sweep(contour, rl, name = 'sweep')
+sweep = primitives3D.Sweep(contour, rl, name = 'Random pipe')
 
-m = vm.VolumeModel([sweep])
+m = vm.VolumeModel([('Random Pipe', [sweep])])
 
 
 

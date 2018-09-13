@@ -34,7 +34,7 @@ c2.MPLPlot()
 
 profile=primitives3D.ExtrudedProfile(po, xp, yp, c1, [c2], (0,0, 0.2), name = 'extrusion')
 
-model=vm.VolumeModel([profile])
+model=vm.VolumeModel([('profile', [profile])])
 
 #profile.MPLPlot((0,0,0),(1,0,0),(0,1,0))
 

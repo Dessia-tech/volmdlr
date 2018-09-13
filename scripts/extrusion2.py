@@ -34,7 +34,7 @@ yp = vm.Vector3D((0, 1, 0))
 
 profile = primitives3D.ExtrudedProfile(po, xp, yp, c1, [], vm.Vector3D((0, 0.1, 0.2)))
 
-model = vm.VolumeModel([profile])
+model = vm.VolumeModel([('', [profile])])
 
 #profile.MPLPlot((0,0,0),(1,0,0),(0,1,0))
 

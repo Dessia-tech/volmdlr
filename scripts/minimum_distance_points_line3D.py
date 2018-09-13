@@ -23,5 +23,5 @@ w = pmd2 - pmd1
 
 print(u.Dot(w), v.Dot(w))
 
-m = vm.VolumeModel([l1, l2, pmd1, pmd2])
+m = vm.VolumeModel([('', [l1, l2, pmd1, pmd2])])
 m.MPLPlot()
