@@ -17,10 +17,10 @@ p4=vm.Point2D((0,l))
 
 
 
-l1=vm.Line2D(p1,p2)
-l2=vm.Line2D(p2,p3)
-l3=vm.Line2D(p3,p4)
-l4=vm.Line2D(p4,p1)
+l1=vm.LineSegment2D(p1,p2)
+l2=vm.LineSegment2D(p2,p3)
+l3=vm.LineSegment2D(p3,p4)
+l4=vm.LineSegment2D(p4,p1)
 
 p5=vm.Point2D((l/2,l/2))
 c1=vm.Circle2D(p5,l/5)

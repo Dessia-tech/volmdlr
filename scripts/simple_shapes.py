@@ -15,8 +15,8 @@ triangle=vm.Polygon2D(triangle_points)
 
 
 cog_triangle=triangle.CenterOfMass()
-triangle.MPLPlot()
-cog_triangle.MPLPlot('ro')
+c1 = vm.CompositePrimitive2D([triangle, cog_triangle])
+c1.MPLPlot()
 
 print(triangle.Area())
 
@@ -25,9 +25,10 @@ p1=vm.Point2D((0,0.5))
 p2=vm.Point2D((0.5,0))
 
 a=vm.Arc2D(p0,p1,p2)
-l=vm.Line2D(p2,p0)
+l=vm.LineSegment2D(p2,p0)
 
 c=vm.Contour2D([a,l])
 
-c.MPLPlot()
+c2 = vm.CompositePrimitive2D([c])
+c2.MPLPlot()
 print(c.Area())
