@@ -169,7 +169,7 @@ class HollowCylinder(volmdlr.Primitive3D):
             name = 'primitive'+str(ip)
             re=str(1000*self.outer_radius)
             ri=str(1000*self.inner_radius)        
-            position=self.position-self.axis*self.width/2
+            position = self.position-self.axis*self.width/2
             x,y,z=1000*position
             ax,ay,az=self.axis
             x=str(x)
@@ -305,10 +305,10 @@ class RevolvedProfile(volmdlr.Primitive3D):
     """
     
     """
-    def __init__(self, plane_origin, x, y, contours2D, axis_point, 
+    def __init__(self, plane_origin, x, y, contours2d, axis_point, 
                  axis,angle=2*math.pi, name=''):
         volmdlr.Primitive3D.__init__(self, name)
-        self.contours2D = contours2D
+        self.contours2d = contours2d
         self.axis_point = axis_point
         self.axis = axis
         self.angle = angle
@@ -316,9 +316,9 @@ class RevolvedProfile(volmdlr.Primitive3D):
         self.x = x
         self.y = y
         
-        self.contours3D = []
-        for contour in contours2D:
-            self.contours3D.append(contour.To3D(plane_origin, x, y))
+        self.contours3d = []
+        for contour in contours2d:
+            self.contours3d.append(contour.To3D(plane_origin, x, y))
         
     def MPLPlot(self, ax):
         for contour in self.contours3D:
@@ -328,9 +328,9 @@ class RevolvedProfile(volmdlr.Primitive3D):
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive'+str(ip)
         s = 'W=[]\n'
-        for ic, contour in enumerate(self.contours3D): 
+        for ic, contour in enumerate(self.contours3d): 
             s += 'L=[]\n'
-            for ip, primitive in enumerate(contour):
+            for ip, primitive in enumerate(contour.basis_primitives):
                 s += primitive.FreeCADExport('L{}_{}'.format(ic,ip),8)
                 s += 'L.append(L{}_{})\n'.format(ic,ip)
             s += 'S = Part.Shape(L)\n' 

@@ -74,8 +74,6 @@ class Vector:
 
 class Vector2D(Vector):
     def __init__(self, vector):
-#        print(vector,npy.array(vector))
-#        self.vector=npy.array([vector[0],vector[1]])
         self.vector=npy.zeros(2)
         self.vector[0]=vector[0]        
         self.vector[1]=vector[1]
@@ -214,14 +212,12 @@ class CompositePrimitive2D(Primitive2D):
         return CompositePrimitive3D(primitives3D, name)
         
     def MPLPlot(self):
-#        lines,arcs=self.Export2D(point,x1,x2)
         fig, ax = plt.subplots()
         ax.set_aspect('equal')
         ps=[]
         for element in self.basis_primitives:
             ps.extend(element.MPLPlot(ax))
-#        p = PatchCollection(ps)
-#        print(arcs)
+
         for p in ps:
             ax.add_patch(p)
         
@@ -257,7 +253,6 @@ class Contour2D(Wire2D):
         arcs=[]
         points_polygon=[]
         for primitive in self.primitives:
-#            print(primitive.__class__.__name__)
             if primitive.__class__.__name__=='LineSegment2D':
                 points_polygon.extend(primitive.points)
             elif primitive.__class__.__name__=='Arc2D':
@@ -265,10 +260,8 @@ class Contour2D(Wire2D):
                 arcs.append(primitive)
         polygon=Polygon2D(points_polygon)
         A=polygon.Area()
-#        print('A',A)
-#        print('arcs',arcs)
+
         for arc in arcs:
-#            print(arc,arc.Area())
             if polygon.PointBelongs(arc.interior):
                 A-=arc.Area()
             else:
@@ -427,13 +420,10 @@ class LineSegment2D(Line2D):
         v=p1.vector
         w=p2.vector
         p=point.vector
-#        print('point vector',point.vector)
         nwv2=(w[1]-v[1])**2+(w[0]-v[0])**2# replace norm(w-v)**2
         t = max(0, min(1, npy.dot(p - v, w - v) / nwv2))
-#        print('t', t)
+
         projection = v + t * (w - v)# Projection falls on the segment
-#        print(p,projection)
-#        return norm(p-projection);
         return ((p[1]-projection[1])**2+(p[0]-projection[0])**2)**0.5
 
     def PointProjection(self, point, curvilinear_abscissa=False):
@@ -649,8 +639,9 @@ class Polygon2D(CompositePrimitive2D):
         for p1,p2 in zip(points,points[1:]+[points[0]]):
             primitives.append(LineSegment2D(p1,p2))
             
-            
-        CompositePrimitive2D.__init__(self,primitives,name)
+        self.line_segments = self._LineSegments()
+
+        CompositePrimitive2D.__init__(self, primitives, name)
         
         
     def Area(self):
@@ -699,7 +690,7 @@ class Polygon2D(CompositePrimitive2D):
             Ixy =- Ixy
         return npy.array([[Ix/12., Ixy/24.], [Ixy/24., Iy/12.]])
 
-    def LineSegments(self):
+    def _LineSegments(self):
         lines=[]
         for p1,p2 in zip(self.points,self.points[1:]+[self.points[0]]):
             lines.append(LineSegment2D(p1,p2))
@@ -711,19 +702,20 @@ class Polygon2D(CompositePrimitive2D):
         for p in self.points+[self.points[0]]:
             x.append(p.vector[0])
             y.append(p.vector[1])
-        ax.plot(x,y,label=self.name)
+        ax.plot(x, y, label=self.name)
             
 #        for line in self.Lines():
 #            line.MPLPlot()
         return []
 
-    def PointDistance(self, point):
-        lines=self.Lines()
-        d_min=lines[0].PointSegmentDistance(point)
-#        print('d: ',d_min,0)
-        for line in lines[1:]:
-            d=line.PointSegmentDistance(point)
-#            print('d: ',d)
+    def PointBorderDistance(self, point):
+        """
+        Compute the distance to the border distance of polygon
+        Output is always positive, even if the point belongs to the polygon
+        """
+        d_min = self.line_segments[0].PointDistance(point)
+        for line in self.line_segments[1:]:
+            d=line.PointDistance(point)
             if d<d_min:
                 d_min=d
         return d_min
@@ -909,7 +901,6 @@ class Arc3D(Primitive3D):
         l2 = Line3D(p21, p22)
         
         c1, c2 = l1.MinimumDistancePoints(l2)
-#        print(c1- c2)
         self.center = c1
         
     def MPLPlot(self, ax):
@@ -1017,12 +1008,20 @@ class VolumeModel:
         s+="import math\nimport FreeCAD as fc\nimport Part\n\ndoc=fc.newDocument('doc')\n\n"
         
         for ig, (group_name, primitives_group) in enumerate(self.groups):
-            s += "part = doc.addObject('App::Part','Part{}_{}')\n".format(ig, group_name)
+            if group_name == '':
+                group_name = 'Group_{}'.format(ig)
+            else:
+                group_name = 'Group_{}_{}'.format(ig, group_name)
+            s += "part = doc.addObject('App::Part','{}')\n".format(group_name)
             for ip, primitive in enumerate(primitives_group):
                 sp = primitive.FreeCADExport(ip)
                 if sp != '':
                     s += (sp+'\n')
-                    s += 'shapeobj = doc.addObject("Part::Feature","p{}_{}")\n'.format(ip, primitive.name)
+                    if primitive.name != '':
+                        primitive_name = 'primitive_{}_{}_{}'.format(ig, ip, primitive.name)
+                    else:
+                        primitive_name = 'primitive_{}_{}'.format(ig, ip)
+                    s += 'shapeobj = doc.addObject("Part::Feature","{}")\n'.format(primitive_name)
                     s += "shapeobj.Shape = primitive{}\n".format(ip)
                     s += 'part.addObject(shapeobj)\n'.format(ip, primitive.name)
 #                    
@@ -1058,25 +1057,13 @@ class VolumeModel:
         s=self.FreeCADScript(fcstd_filepath,
                              path_lib_freecad = path_lib_freecad,
                              export_types = export_types)
-#        print(s)
         with tempfile.NamedTemporaryFile(suffix=".py",delete=False) as f:
-#        with open(f,'w') as fw:
             f.write(bytes(s,'utf8'))
-#            print(f.name)
-#            import time
-#            time.sleep(20)
 
-
-#            f.read()
-#            print(python_path,arg)
         arg=f.name
         output=subprocess.call([python_path,arg])
-#        print(f.name)
+
         f.close()
-#        p = subprocess.Popen('{} {}'.format(python_path,arg), shell=True, stdin=subprocess.PIPE, 
-#                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
-#        output = p.stdout.read()
-#        output += p.stderr.read()
         os.remove(f.name)
         return output
         
@@ -1103,7 +1090,6 @@ class VolumeModel:
     
     def BabylonShow(self,page='vm_babylonjs'):
         page+='.html'
-#        print(self.BabylonScript())
         with open(page,'w') as file:
             file.write(self.BabylonScript())
         
@@ -1117,22 +1103,20 @@ class VolumeModel:
         for primitive in self.primitives[1:]:
             try:
                 for i,(xmin,xmax,xi) in enumerate(zip(min_vect, max_vect, primitive.position)):
-    #                print(i,xmin,xmax,xi)
+
                     if xi<xmin:
                         min_vect[i]=xi
-    #                    print('min',min_vect)
+
                     if xi>xmax:
                         max_vect[i]=xi
-    #                    print('max',max_vect)
-    #            print(linkage,linkage.position)
                 center += primitive.position
                 n+=1
             except AttributeError:
                 pass
                 
         center=center/n
-#        print(min_vect,max_vect)
+
         max_length = (min_vect-max_vect).Norm()
-#        print(center,max_length)
+
         return center,max_length
 
