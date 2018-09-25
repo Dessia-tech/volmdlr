@@ -10,7 +10,7 @@ import math
 import numpy as npy
 import matplotlib.pyplot as plt
 from matplotlib.patches import Arc
-from mpl_toolkits.mplot3d import Axes3D
+#from mpl_toolkits.mplot3d import Axes3D
 #import vmcy
 from .vmcy import PolygonPointBelongs
 
@@ -74,9 +74,9 @@ class Vector:
 
 class Vector2D(Vector):
     def __init__(self, vector):
-        self.vector=npy.zeros(2)
-        self.vector[0]=vector[0]        
-        self.vector[1]=vector[1]
+        self.vector = npy.zeros(2)
+        self.vector[0] = vector[0]        
+        self.vector[1] = vector[1]
         
     def Norm(self):
         x, y = self.vector
@@ -87,23 +87,26 @@ class Vector2D(Vector):
         v1, v2 = other_vector.vector
         return u1*v1 + u2*v2
     
-    def Rotation(self,center,angle,copy=True):
-        vector2=npy.dot(npy.array([[math.cos(angle),-math.sin(angle)],[math.sin(angle),math.cos(angle)]]),(self.vector-center.vector))+center.vector
+    def Rotation(self,center, angle, copy=True):
+        vector2 = (npy.dot(npy.array([[math.cos(angle),-math.sin(angle)], 
+                                       [math.sin(angle),math.cos(angle)]]),
+                          (self.vector-center.vector))
+                   + center.vector)
         if copy:
             return Point2D(vector2)
         else:
             self.vector=vector2
 
-    def Translation(self,offset,copy=True):
-        vector2=self.vector+offset
+    def Translation(self, offset, copy=True):
+        vector2 = self.vector + offset
         if copy:
             return Point2D(vector2)
         else:
             self.vector=vector2
         
-    def To3D(self,plane_origin,x1,x2):
-        x,y=self.vector
-        return Point3D(plane_origin.vector+x1.vector*x+x2.vector*y)
+    def To3D(self,plane_origin, x1, x2):
+        x, y = self.vector
+        return Point3D(plane_origin.vector + x1.vector*x + x2.vector*y)
     
     def NormalVector(self):
         return Point2D((-self.vector[1], self.vector[0]))
@@ -111,20 +114,20 @@ class Vector2D(Vector):
     
 class Point2D(Vector2D):
     def __init__(self, vector, name=''):
-        Vector2D.__init__(self,vector)
-        self.name=name
+        Vector2D.__init__(self, vector)
+        self.name = name
         
     def __add__(self,point2d):
-        return Point2D(self.vector+point2d.vector)
+        return Point2D(self.vector + point2d.vector)
     
     def __sub__(self,point2d):
-        return Point2D(self.vector-point2d.vector)
+        return Point2D(self.vector - point2d.vector)
         
     def __mul__(self,value):
-        return Point2D(self.vector*value)
+        return Point2D(self.vector * value)
     
     def __truediv__(self,value):
-        return Point2D(self.vector/value)
+        return Point2D(self.vector / value)
     
 
     def MPLPlot(self, ax):
@@ -132,7 +135,7 @@ class Point2D(Vector2D):
         ax.plot([x1[0]], [x1[1]], 'ob')        
         return []
     
-    def PointDistance(self,point2):
+    def PointDistance(self, point2):
         return (self-point2).Norm()
 
     #def Distance(self,point2):
@@ -169,6 +172,12 @@ class Point2D(Vector2D):
         pp1=point.vector-p1.vector
         p=pp1-npy.dot(pp1,n)*n+p1.vector
         return Point2D(p)
+    
+class Frame2D:
+    def __init__(self, origin, x, y):
+        self.origin = origin
+        self.x = x
+        self.y = y
         
 class Primitive2D:
     def __init__(self, name=''):
@@ -234,6 +243,11 @@ class Wire2D(CompositePrimitive2D):
     
     # TODO: method to check if it is a wire
         
+    def Length(self):
+        length = 0.
+        for primitive in self.basis_primitives:
+            length += primitive.Length()
+            
 class Contour2D(Wire2D):
     """
     A collection of 3D primitives forming a closed wire3D
@@ -372,6 +386,24 @@ class Line2D(Primitive2D):
     def __init__(self, point1, point2, name=''):
         Primitive2D.__init__(self, name)        
         self.points=[point1, point2]
+
+    def To3D(self, plane_origin, x1, x2):
+        p3D = [p.To3D(plane_origin, x1, x2) for p in self.points]
+        return Line2D(*p3D, self.name)
+    
+    def Rotation(self, center, angle, copy=False):
+        if copy:
+            return Line2D(*[p.Rotation(center, angle, copy=True) for p in self.points])
+        else:
+            for p in self.points:
+                p.Rotation(center, angle, copy=False)
+            
+    def Translation(self, offset, copy=False):
+        if copy:
+            return Line2D(*[p.Translation(offset, copy=True) for p in self.points])
+        else:
+            for p in self.points:
+                p.Translation(offset, copy=False)
     
     def PointDistance(self, point):
         """
@@ -399,6 +431,7 @@ class Line2D(Primitive2D):
         ax.plot([p3[0], p4[0]], [p3[1], p4[1]], '-k', linestyle = '-.')        
         return []
 
+
 class LineSegment2D(Line2D):
     """
     Define a line segment limited by two points
@@ -411,6 +444,8 @@ class LineSegment2D(Line2D):
 
     geo_points=property(_get_geo_points)      
     
+    def Length(self):
+        return (self.points[1] - self.points[0]).Norm()
     
     def PointDistance(self, point):
         """
@@ -489,24 +524,28 @@ class Arc2D(Primitive2D):
         rc = self.interior-self.center
         
         self.radius = r1.Norm()
-        angle1=npy.arctan2(r1.vector[1], r1.vector[0])
-        angle2=npy.arctan2(r2.vector[1], r2.vector[0])
-        anglem=npy.arctan2(rc.vector[1], rc.vector[0])
-        order=[y for x, y in sorted(zip([angle1, anglem, angle2], [0, 1, 2]))]
-        order=order*2
-        i=order.index(0)
+        angle1 = npy.arctan2(r1.vector[1], r1.vector[0])
+        angle2 = npy.arctan2(r2.vector[1], r2.vector[0])
+        anglem = npy.arctan2(rc.vector[1], rc.vector[0])
+        order = [y for x, y in sorted(zip([angle1, anglem, angle2], [0, 1, 2]))]
+        order = order*2
+        i = order.index(0)
         if order[i+1] == 1:
-            self.angle1=angle1
-            self.angle2=angle2
+            self.angle1 = angle1
+            self.angle2 = angle2
         else:
-            self.angle1=angle2
-            self.angle2=angle1
+            self.angle1 = angle2
+            self.angle2 = angle1
             
         
     def _get_geo_points(self):
         return [self.start,self.center,self.end]
 
     geo_points=property(_get_geo_points)        
+    
+    def Length(self):
+        return self.radius * abs(self.angle2- self.angle1)
+
     
     def GeoScript(self, primitive_index, points_indices):
         s='Circle({}) = {{{}, {}, {}}};\n'.format(primitive_index,*points_indices)
@@ -590,7 +629,10 @@ class Circle2D(Primitive2D):
         return [self._geo_start,self.center,self._geo_start]
 
     geo_points = property(_get_geo_points)        
-            
+        
+    def Length(self):
+        return 2* math.pi * self.radius
+    
     def GeoScript(self, primitive_index, points_indices):
         s = 'Circle({}) = {{{}, {}, {}}};\n'.format(primitive_index,*points_indices)
         return s, primitive_index+1
@@ -802,6 +844,14 @@ class Point3D(Vector3D):
     def PointDistance(self, point2):
         return (self-point2).Norm()
         
+class Frame3D:
+    def __init__(self, origin, x, y, z):
+        self.origin = origin
+        self.x = x
+        self.y = y
+        self.z = z
+
+    
 class Line3D(Primitive3D):
     """
     Define an infinite line passing through the 2 points
@@ -850,6 +900,10 @@ class LineSegment3D(Line3D):
     def __init__(self, point1, point2, name=''):
         Line3D.__init__(self, point1, point2, name)
         
+    def Length(self):
+        return (self.points[1] - self.points[0]).Norm()
+
+        
     def MPLPlot(self, ax):
         x=[p.vector[0] for p in self.points]
         y=[p.vector[1] for p in self.points]
@@ -857,23 +911,27 @@ class LineSegment3D(Line3D):
         ax.plot(x,y,z, 'o-k')
         
         
-    def FreeCADExport(self,name,ndigits=3):
-        x1, y1, z1=npy.round(1000*self.points[0].vector, ndigits)
-        x2, y2, z2=npy.round(1000*self.points[1].vector, ndigits)
+    def FreeCADExport(self, name, ndigits=3):
+        x1, y1, z1 = npy.round(1000*self.points[0].vector, ndigits)
+        x2, y2, z2 = npy.round(1000*self.points[1].vector, ndigits)
         return '{} = Part.LineSegment(fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,x1,y1,z1,x2,y2,z2)
 
 
 class Circle3D(Primitive3D):
-    def __init__(self, center, radius,normal, name=''):        
-        Primitive2D.__init__(self,name)        
-        self.center=center
-        self.radius=radius
-        self.normal=normal
+    def __init__(self, center, radius, normal, name=''):        
+        Primitive2D.__init__(self, name)        
+        self.center = center
+        self.radius = radius
+        self.normal = normal
+        
+    def Length(self):
+        return 2* math.pi * self.radius
+        
 
     def FreeCADExport(self,name,ndigits=3):
-        xc,yc,zc=npy.round(1000*self.center.vector,ndigits)
-        xn,yn,zn=npy.round(self.normal.vector,ndigits)
-        return '{}=Part.Circle(fc.Vector({},{},{}),fc.Vector({},{},{}),{})\n'.format(name,xc,yc,zc,xn,yn,zn,1000*self.radius)
+        xc,yc,zc = npy.round(1000*self.center.vector,ndigits)
+        xn,yn,zn = npy.round(self.normal.vector,ndigits)
+        return '{} = Part.Circle(fc.Vector({},{},{}),fc.Vector({},{},{}),{})\n'.format(name,xc,yc,zc,xn,yn,zn,1000*self.radius)
         
 
 class Arc3D(Primitive3D):
@@ -881,7 +939,7 @@ class Arc3D(Primitive3D):
     An arc is defined by a starting point, an end point and an interior point
     """
     def __init__(self, start, interior, end, name=''):        
-        Primitive2D.__init__(self,name)        
+        Primitive2D.__init__(self, name)        
         self.start = start
         self.interior = interior
         self.end = end
@@ -902,6 +960,12 @@ class Arc3D(Primitive3D):
         
         c1, c2 = l1.MinimumDistancePoints(l2)
         self.center = c1
+        self.radius = (self.center - self.start).Norm()
+        self.angle = math.atan((self.center - self.start).Norm() / self.radius)
+        
+    def Length(self):
+        return self.radius * self.angle
+
         
     def MPLPlot(self, ax):
         ax.scatter(*self.center.vector,c='b')
@@ -912,11 +976,11 @@ class Arc3D(Primitive3D):
                 [self.start.vector[1], self.interior.vector[1], self.end.vector[1]],
                 [self.start.vector[2], self.interior.vector[2], self.end.vector[2]], 'k')
     
-    def FreeCADExport(self,name,ndigits=3):
-        xs, ys, zs=npy.round(1000*self.start.vector,ndigits)
-        xm, ym, zm=npy.round(1000*self.interior.vector,ndigits)
-        xe, ye, ze=npy.round(1000*self.end.vector,ndigits)
-        return '{}=Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,xs,ys,zs,xm,ym,zm,xe,ye,ze)
+    def FreeCADExport(self, name, ndigits=3):
+        xs, ys, zs = npy.round(1000*self.start.vector, ndigits)
+        xm, ym, zm = npy.round(1000*self.interior.vector, ndigits)
+        xe, ye, ze = npy.round(1000*self.end.vector, ndigits)
+        return '{} = Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,xs,ys,zs,xm,ym,zm,xe,ye,ze)
 
 
 class CompositePrimitive3D(Primitive3D):
@@ -942,6 +1006,12 @@ class Wire3D(CompositePrimitive3D):
     def __init__(self, primitives, name=''):
         CompositePrimitive2D.__init__(self, primitives, name)        
     
+    def Length(self):
+        length = 0.
+        for primitive in self.basis_primitives:
+            length += primitive.Length()
+        return length
+
     # TODO: method to check if it is a wire
         
 class Contour3D(Wire3D):
@@ -1030,6 +1100,8 @@ class VolumeModel:
             s+="doc.saveAs('"+fcstd_filepath+".fcstd')\n\n"
         if 'stl' in export_types:
             s+="import Mesh\nMesh.export(doc.Objects,'{}.stl')\n".format(fcstd_filepath)
+        if 'step' in export_types:
+            s+="Part.export(doc.Objects,'{}.step')\n".format(fcstd_filepath)
                 
 
         if save_to != '':

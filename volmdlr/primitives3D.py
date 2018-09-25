@@ -106,6 +106,7 @@ class RoundedLineSegments3D(volmdlr.Wire3D):
     def MPLPlot(self, ax):
         for primitive in self.basis_primitives:
             primitive.MPLPlot(ax)
+
         
 class Cylinder(volmdlr.Primitive3D):
     def __init__(self, position, axis, radius, width, name=''):
