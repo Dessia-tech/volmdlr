@@ -80,6 +80,8 @@ class Vector:
         Normalize the vector modifying it's coordinate
         """
         self.vector /= self.Norm()
+        
+
 
 class Vector2D(Vector):
     def __init__(self, vector):
@@ -117,9 +119,11 @@ class Vector2D(Vector):
         x, y = self.vector
         return Point3D(plane_origin.vector + x1.vector*x + x2.vector*y)
     
-    def NormalVector(self):
-        return Point2D((-self.vector[1], self.vector[0]))
-    
+    def NormalVector(self, unit=False):
+        n = Vector2D((-self.vector[1], self.vector[0]))
+        if unit:
+            n.Normalize()
+        return n
     
 class Point2D(Vector2D):
     def __init__(self, vector, name=''):
@@ -151,7 +155,7 @@ class Point2D(Vector2D):
     #    return norm(self.vector-point2.vector)
 
     @classmethod
-    def LinesIntersection(cls,line1,line2,curvilinear_abscissa=False):
+    def LinesIntersection(cls, line1,line2, curvilinear_abscissa=False):
         p11=line1.points[0].vector
         p12=line1.points[1].vector
         p21=line2.points[0].vector
@@ -229,9 +233,12 @@ class CompositePrimitive2D(Primitive2D):
         primitives3D = [p.To3D(plane_origin, x, y) for p in self.primitives]
         return CompositePrimitive3D(primitives3D, name)
         
-    def MPLPlot(self):
-        fig, ax = plt.subplots()
-        ax.set_aspect('equal')
+    def MPLPlot(self, ax = None):
+        if ax is None:
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
+        else:
+            fig = None
         ps=[]
         for element in self.basis_primitives:
             ps.extend(element.MPLPlot(ax))
@@ -241,6 +248,8 @@ class CompositePrimitive2D(Primitive2D):
         
         ax.margins(0.1)
         plt.show() 
+        
+        return fig, ax
         
         
 class Wire2D(CompositePrimitive2D):
@@ -257,7 +266,17 @@ class Wire2D(CompositePrimitive2D):
         for primitive in self.basis_primitives:
             length += primitive.Length()
         return length
-            
+    
+    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
+        length = 0.
+        for primitive in self.basis_primitives:
+            primitive_length = primitive.Length()
+            if length + primitive_length > curvilinear_abscissa:
+                return primitive.PointAtCurvilinearAbscissa(curvilinear_abscissa - length)
+            length += primitive_length
+        return ValueError
+    
+    
 class Contour2D(Wire2D):
     """
     A collection of 3D primitives forming a closed wire3D
@@ -389,7 +408,17 @@ class Mesh2D:
                 file.write(s)
         return s
 
-class Line2D(Primitive2D):
+class Line:
+    def DirectionVector(self, unit=False):
+        u = self.points[1] - self.points[0]
+        if unit:
+            u.Normalize()
+        return u
+    
+    def NormalVector(self, unit=False):
+        return self.DirectionVector(unit).NormalVector()
+
+class Line2D(Primitive2D, Line):
     """
     Define an infinte line given by two points.
     """
@@ -441,7 +470,6 @@ class Line2D(Primitive2D):
         ax.plot([p3[0], p4[0]], [p3[1], p4[1]], '-k', linestyle = '-.')        
         return []
 
-
 class LineSegment2D(Line2D):
     """
     Define a line segment limited by two points
@@ -456,6 +484,9 @@ class LineSegment2D(Line2D):
     
     def Length(self):
         return (self.points[1] - self.points[0]).Norm()
+    
+    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
+        return self.points[0] + self.DirectionVector(unit=True) * curvilinear_abscissa
     
     def PointDistance(self, point):
         """
@@ -521,32 +552,54 @@ class Arc2D(Primitive2D):
         self.start = start
         self.end = end
         
-        xm, ym = interior.vector
+        xi, yi = interior.vector
         xe, ye = end.vector
         xs, ys = start.vector
-        A = npy.array([[2*(xs-xm), 2*(ys-ym)],
+        A = npy.array([[2*(xs-xi), 2*(ys-yi)],
                        [2*(xs-xe), 2*(ys-ye)]])
-        b = - npy.array([xm**2 + ym**2 - xs**2 - ys**2,
+        b = - npy.array([xi**2 + yi**2 - xs**2 - ys**2,
                          xe**2 + ye**2 - xs**2 - ys**2])
         self.center = Point2D(solve(A,b))
-        r1 = self.start-self.center
-        r2 = self.end-self.center
-        rc = self.interior-self.center
+        r1 = self.start - self.center
+        r2 = self.end - self.center
+        ri = self.interior - self.center
         
         self.radius = r1.Norm()
         angle1 = npy.arctan2(r1.vector[1], r1.vector[0])
         angle2 = npy.arctan2(r2.vector[1], r2.vector[0])
-        anglem = npy.arctan2(rc.vector[1], rc.vector[0])
-        order = [y for x, y in sorted(zip([angle1, anglem, angle2], [0, 1, 2]))]
+        
+        anglei = npy.arctan2(ri.vector[1], ri.vector[0])
+        order = [y for x, y in sorted(zip([angle1, anglei, angle2], [0, 1, 2]))]
         order = order*2
         i = order.index(0)
         if order[i+1] == 1:
+            # Trigo wise angle should be plus
             self.angle1 = angle1
             self.angle2 = angle2
+            if angle1 > angle2:
+                self.angle = angle2 - angle1 + 2 * math.pi
+            else:
+                self.angle = angle2 - angle1
+#            self.angle = abs(self.angle2 - self.angle1)
         else:
+            # Clock wise
             self.angle1 = angle2
             self.angle2 = angle1
-            
+#            self.angle = -abs(self.angle2 - self.angle1)
+            if angle1 < angle2:
+                self.angle = angle2 - angle1 + 2 * math.pi
+            else:
+                self.angle = angle2 - angle1 
+
+#        if self.angle1 < 0:
+#            a1 = self.angle1 + 2* math.pi
+#        else:
+#            a1 = self.angle1
+#        if self.angle2 < 0:
+#            a2 = self.angle2 + 2* math.pi
+#        else:
+#            a2 = self.angle2
+        
         
     def _get_geo_points(self):
         return [self.start,self.center,self.end]
@@ -554,9 +607,14 @@ class Arc2D(Primitive2D):
     geo_points=property(_get_geo_points)        
     
     def Length(self):
-        return self.radius * abs(self.angle2- self.angle1)
-
-    
+        return self.radius * abs(self.angle)
+        
+    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
+        if self.angle>0:
+            return self.start.Rotation(self.center, curvilinear_abscissa/self.radius)
+        else:
+            return self.start.Rotation(self.center, -curvilinear_abscissa/self.radius)
+            
     def GeoScript(self, primitive_index, points_indices):
         s='Circle({}) = {{{}, {}, {}}};\n'.format(primitive_index,*points_indices)
         return s,primitive_index+1
@@ -781,11 +839,9 @@ class Primitive3D:
 class Vector3D(Vector):
     def __init__(self, vector):
         self.vector=npy.zeros(3)
-        self.vector[0] = vector[0]        
+        self.vector[0] = vector[0]
         self.vector[1] = vector[1]
         self.vector[2] = vector[2]
-        
-
     
     def Dot(self, other_vector):
         u1, u2, u3 = self.vector
@@ -862,13 +918,16 @@ class Frame3D:
         self.z = z
 
     
-class Line3D(Primitive3D):
+class Line3D(Primitive3D, Line):
     """
     Define an infinite line passing through the 2 points
     """
     def __init__(self, point1, point2, name=''):
         Primitive3D.__init__(self, name)        
         self.points = [point1, point2]    
+        
+    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
+        return self.points[0] + (self.points[1]-self.points[0]) * curvilinear_abscissa
         
     def MPLPlot(self, ax):
         # Line segment
@@ -1021,6 +1080,16 @@ class Wire3D(CompositePrimitive3D):
         for primitive in self.basis_primitives:
             length += primitive.Length()
         return length
+    
+    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
+        length = 0.
+        for primitive in self.basis_primitives:
+            primitive_length = primitive.Length()
+            if length + primitive_length > curvilinear_abscissa:
+                return primitive.PointAtCurvilinearAbscissa(curvilinear_abscissa - length)
+            length += primitive_length
+        # Outside of length
+        raise ValueError
 
     # TODO: method to check if it is a wire
         
@@ -1067,6 +1136,7 @@ class VolumeModel:
             for primitive in primitive_group:
                 primitive.MPLPlot(ax)
         ax.set_aspect('equal')
+        return fig, ax
     
     def FreeCADScript(self, fcstd_filepath,
                       path_lib_freecad='/usr/lib/freecad/lib',
