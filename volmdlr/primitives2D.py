@@ -106,4 +106,37 @@ class RoundedLineSegments2D(volmdlr.CompositePrimitive2D):
             self.__init__([p.Translation(offset,copy=True) for p in self.points],
                            self.radius, self.closed, self.name)
 
-
+    def Expand(self, offset):
+        '''
+        Expand a RoundedLineSegments2D profil of the value offset (with the sign of offset)
+        '''        
+        node_list = []
+        dict_radius = {}
+        for ind_pt,pt in enumerate(self.points[0:-1]):
+            ind_ptp = ind_pt + 1
+            if ind_pt == len(self.points)-1:
+                ind_ptp = 0
+            li = volmdlr.Line2D(pt,self.points[ind_ptp])
+            vect_dir = li.points[1].vector - li.points[0].vector
+            vect_normal = npy.cross(1/npy.linalg.norm(vect_dir)*vect_dir,(0,0,1))
+            li_trans = li.Translation(offset*vect_normal[0:2],True)
+            if ind_pt > 0:
+                r1 = lm.points[1] - lm.points[0]
+                angle1 = npy.arctan2(r1.vector[1], r1.vector[0])
+                r2 = li_trans.points[1] - li_trans.points[0]
+                angle2 = npy.arctan2(r2.vector[1], r2.vector[0])
+                if angle1 != angle2:
+                    ptp = volmdlr.Point2D.LinesIntersection(lm, li_trans)
+                else:
+                    ptp = li_trans.points[0]
+                node_list.append(ptp)
+            else:
+                node_list.append(li_trans.points[0])
+            lm = li_trans
+        node_list.append(node_list[0])
+        
+        dict_radius = {}
+        for num_node, radius in self.radius.items():
+            dict_radius[num_node] = radius - offset
+        
+        return RoundedLineSegments2D(node_list, dict_radius, False)
