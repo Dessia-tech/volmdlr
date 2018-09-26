@@ -18,13 +18,21 @@ p4=vm.Point2D((0.05, 0.1))
 p5=vm.Point2D((0.,0.21))
 p6=vm.Point2D((0.05, 0.05))
 
+p7 = vm.Point2D((0.06, 0.05))
+p8 = vm.Point2D((0.04, 0.07))
 
 radius = {0: 0.01, 2: 0.01, 3: 0.015}
 
 outer_profile = primitives2D.RoundedLineSegments2D([p1, p2, p3, p4, p5], radius, closed = True)
-hole = vm.Circle2D(p6, 0.01)
+#hole = vm.Circle2D(p6, 0.01)
+#inner_profile = primitives2D.RoundedLineSegments2D([p6, p7, p8], {0: }, closed = True)
+l1 = vm.LineSegment2D(p6, p7)
+l2 = vm.LineSegment2D(p7, p8)
+l3 = vm.LineSegment2D(p8, p6)
+c2 = vm.Contour2D([l1,l2,l3])
+
 c1 = vm.Contour2D([outer_profile])
-c2 = vm.Contour2D([hole])
+#c2 = vm.Contour2D([inner_profile])
 
 po=vm.Point3D((0, 0, 0))
 xp=vm.Vector3D((1, 0, 0))

@@ -66,6 +66,15 @@ class Vector:
     def __rtruediv__(self, value):
         return self / value
     
+    def __lt__(self, other_vector):
+        return self.Norm() < other_vector.Norm()
+
+    def __le__(self, other_vector):
+        return self.Norm() <= other_vector.Norm()
+    
+#    def __eq__(self, other_vector):
+#        return npy.allclose(self.vector, other_vector.vector)
+    
     def Normalize(self):
         """
         Normalize the vector modifying it's coordinate
