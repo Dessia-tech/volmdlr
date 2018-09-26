@@ -256,6 +256,7 @@ class Wire2D(CompositePrimitive2D):
         length = 0.
         for primitive in self.basis_primitives:
             length += primitive.Length()
+        return length
             
 class Contour2D(Wire2D):
     """
