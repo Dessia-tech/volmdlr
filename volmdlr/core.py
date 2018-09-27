@@ -125,6 +125,10 @@ class Vector2D(Vector):
             n.Normalize()
         return n
     
+o2D = Vector2D((0, 0))
+x2D = Vector2D((1, 0))
+y2D = Vector2D((0, 1))
+    
 class Point2D(Vector2D):
     def __init__(self, vector, name=''):
         Vector2D.__init__(self, vector)
@@ -884,6 +888,11 @@ class Vector3D(Vector):
         v = Vector3D(v-npy.dot(v,self.vector)*self.vector/(self.Norm()**2))
         v.vector = v.vector/v.Norm()
         return v
+
+o3D = Vector3D((0, 0, 0))
+x3D = Vector3D((1, 0, 0))
+y3D = Vector3D((0, 1, 0))
+z3D = Vector3D((0, 0, 1))
 
         
 class Point3D(Vector3D):

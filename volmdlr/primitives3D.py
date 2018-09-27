@@ -481,4 +481,23 @@ class Cut(volmdlr.Primitive3D):
         s+="{} = {}_0.cut({}_1)\n".format(name,name,name)
 
         return s
+
+class Fuse(volmdlr.Primitive3D):
+    """
+    Fuse primitives
+    """
+    def __init__(self, primitives, name=''):
+        volmdlr.Primitive3D.__init__(self, name)
+        self.primitives = primitives
         
+        
+    def FreeCADExport(self,ip):
+        name = 'primitive{}'.format(ip)
+        
+        
+        s = self.primitives[0].FreeCADExport(ip)
+        for primitive in self.primitives[1:]:
+            s += primitive.FreeCADExport('{}_0'.format(ip))
+            s += "{} = {}.fuse({}_0)\n".format(name,name,name)
+
+        return s        
