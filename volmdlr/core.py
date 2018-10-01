@@ -223,6 +223,8 @@ class Frame2D(Basis2D):
     def __repr__(self):
         return '{}: O= {} X={}, Y={}'.format(self.__class__.__name__, self.origin, self.x, self.y)
 
+    def Basis(self):
+        return Basis3D(self.x, self.y)
         
     def NewCoordinates(self, vector):
         return Basis2D.NewCoordinates(self, vector - self.origin)
@@ -998,6 +1000,9 @@ class Frame3D(Basis3D):
     def __repr__(self):
         return '{}: O= {} X={}, Y={}, Z={}'.format(self.__class__.__name__, self.origin, self.x, self.y, self.z)
         
+    def Basis(self):
+        return Basis3D(self.x, self.y, self.z)
+    
     def NewCoordinates(self, vector):
         return Basis3D.NewCoordinates(self, vector - self.origin)
 
@@ -1069,7 +1074,7 @@ class LineSegment3D(Line3D):
         ax.plot(x,y,z, 'o-k')
         
         
-    def FreeCADExport(self, name, ndigits=3):
+    def FreeCADExport(self, name, ndigits=6):
         x1, y1, z1 = npy.round(1000*self.points[0].vector, ndigits)
         x2, y2, z2 = npy.round(1000*self.points[1].vector, ndigits)
         return '{} = Part.LineSegment(fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,x1,y1,z1,x2,y2,z2)
