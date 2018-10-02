@@ -727,7 +727,7 @@ class Circle2D(Primitive2D):
             
     def Translation(self,offset,copy=False):
         if copy:
-            return Circle2D(self.center.vector.Translation(offset,copy=True),self.radius)
+            return Circle2D(self.center.Translation(offset,copy=True),self.radius)
         else:
             self.center.Translation(offset,copy=False)
             self.utd_geo_points=False
