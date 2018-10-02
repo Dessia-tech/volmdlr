@@ -14,7 +14,7 @@ from matplotlib.patches import Arc
 #import vmcy
 from .vmcy import PolygonPointBelongs
 
-from scipy.linalg import solve,LinAlgError
+from scipy.linalg import solve,LinAlgError, inv
 
 import volmdlr.geometry as geometry
 
@@ -80,7 +80,6 @@ class Vector:
         Normalize the vector modifying it's coordinate
         """
         self.vector /= self.Norm()
-        
 
 
 class Vector2D(Vector):
@@ -189,13 +188,53 @@ class Point2D(Vector2D):
         pp1=point.vector-p1.vector
         p=pp1-npy.dot(pp1,n)*n+p1.vector
         return Point2D(p)
-    
-class Frame2D:
-    def __init__(self, origin, x, y):
-        self.origin = origin
+
+
+class Basis2D:
+    def __init__(self, x, y):
         self.x = x
         self.y = y
         
+    def __repr__(self):
+        return '{}: X={}, Y={}'.format(self.__class__.__name__, self.x, self.y)
+    
+   
+    def TransfertMatrix(self):
+        return npy.array([[self.x[0], self.y[0]],
+                          [self.x[1], self.y[1]]])
+    
+    def InverseTransfertMatrix(self):
+        # Todo: cache for performance
+        return inv(self.TransfertMatrix())
+        
+    def NewCoordinates(self, vector):
+        return Vector2D(npy.dot(self.InverseTransfertMatrix(), vector))
+
+    def OldCoordinates(self, vector):
+        return Vector2D(npy.dot(self.TransfertMatrix(), vector))
+    
+xy = Basis2D(x2D, y2D)
+     
+class Frame2D(Basis2D):
+    def __init__(self, origin, x, y):
+        self.origin = origin
+        Basis2D.__init__(self, x, y)
+
+    def __repr__(self):
+        return '{}: O= {} X={}, Y={}'.format(self.__class__.__name__, self.origin, self.x, self.y)
+
+    def Basis(self):
+        return Basis3D(self.x, self.y)
+        
+    def NewCoordinates(self, vector):
+        return Basis2D.NewCoordinates(self, vector - self.origin)
+
+    def OldCoordinates(self, vector):
+        return Basis2D.OldCoordinates(self, vector + self.origin)
+
+        
+oxy = Frame2D(o2D, x2D, y2D)    
+    
 class Primitive2D:
     def __init__(self, name=''):
         self.name=name
@@ -207,9 +246,11 @@ class CompositePrimitive2D(Primitive2D):
     def __init__(self,primitives, name=''):
         Primitive2D.__init__(self, name)        
         self.primitives=primitives
+        self.UpdateBasisPrimitives()
         
+    def UpdateBasisPrimitives(self):
         basis_primitives=[]
-        for primitive in primitives:
+        for primitive in self.primitives:
             if hasattr(primitive, 'basis_primitives'):
                 basis_primitives.extend(primitive.basis_primitives)
             else:
@@ -217,12 +258,14 @@ class CompositePrimitive2D(Primitive2D):
                 
         self.basis_primitives = basis_primitives
         
+        
     def Rotation(self,center,angle,copy=False):
         if copy:
             return self.__class__([p.Rotation(center,angle,copy=True) for p in self.primitives])
         else:
             for p in self.primitives:
                 p.Rotation(center,angle,copy=False)
+            self.UpdateBasisPrimitives()
             
     def Translation(self,offset,copy=False):
         if copy:
@@ -230,6 +273,7 @@ class CompositePrimitive2D(Primitive2D):
         else:
             for p in self.primitives:
                 p.Translation(offset,copy=False)
+            self.UpdateBasisPrimitives()
     
     def To3D(self, plane_origin, x, y, name = None):
         if name is None:
@@ -919,14 +963,55 @@ class Point3D(Vector3D):
     def PointDistance(self, point2):
         return (self-point2).Norm()
         
-class Frame3D:
-    def __init__(self, origin, x, y, z):
-        self.origin = origin
+class Basis3D:
+    # TODO: create a Basis and Frame class to mutualize between 2D and 2D
+    def __init__(self, x, y, z):
         self.x = x
         self.y = y
         self.z = z
+        
+    def __repr__(self):
+        return '{}: X={}, Y={}, Z={}'.format(self.__class__.__name__, self.x, self.y, self.z)
 
+        
+    def TransfertMatrix(self):
+        return npy.array([[self.x[0], self.y[0], self.z[0]],
+                          [self.x[1], self.y[1], self.z[1]],
+                          [self.x[2], self.y[2], self.z[2]]])
     
+    def InverseTransfertMatrix(self):
+        # Todo: cache for performance
+        return inv(self.TransfertMatrix())
+
+    def NewCoordinates(self, vector):
+        return Vector3D(npy.dot(self.InverseTransfertMatrix(), vector.vector))
+
+    def OldCoordinates(self, vector):
+        return Vector3D(npy.dot(self.TransfertMatrix(), vector.vector))
+
+        
+xyz = Basis3D(x3D, y3D, z3D)
+
+class Frame3D(Basis3D):
+    def __init__(self, origin, x, y, z):
+        self.origin = origin
+        Basis3D.__init__(self, x, y, z)
+        
+    def __repr__(self):
+        return '{}: O= {} X={}, Y={}, Z={}'.format(self.__class__.__name__, self.origin, self.x, self.y, self.z)
+        
+    def Basis(self):
+        return Basis3D(self.x, self.y, self.z)
+    
+    def NewCoordinates(self, vector):
+        return Basis3D.NewCoordinates(self, vector - self.origin)
+
+    def OldCoordinates(self, vector):
+        return Basis3D.OldCoordinates(self, vector + self.origin)
+
+        
+oxyz = Frame3D(o3D, x3D, y3D, z3D)    
+  
 class Line3D(Primitive3D, Line):
     """
     Define an infinite line passing through the 2 points
@@ -989,7 +1074,7 @@ class LineSegment3D(Line3D):
         ax.plot(x,y,z, 'o-k')
         
         
-    def FreeCADExport(self, name, ndigits=3):
+    def FreeCADExport(self, name, ndigits=6):
         x1, y1, z1 = npy.round(1000*self.points[0].vector, ndigits)
         x2, y2, z2 = npy.round(1000*self.points[1].vector, ndigits)
         return '{} = Part.LineSegment(fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,x1,y1,z1,x2,y2,z2)

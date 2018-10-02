@@ -258,10 +258,7 @@ class ExtrudedProfile(volmdlr.Primitive3D):
             
         if len(self.inner_contours3d) != 0:
             s += 'Fo = Fo.cut(Fi)\n'
-        e1, e2, e3 = self.extrusion_vector
-        e1=e1*1000
-        e2=e2*1000
-        e3=e3*1000
+        e1, e2, e3 = npy.round(1000*self.extrusion_vector.vector, 6)
         
         s+='{} = Fo.extrude(fc.Vector({}, {}, {}))\n'.format(name,e1,e2,e3)
         return s
