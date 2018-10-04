@@ -191,17 +191,17 @@ class Point2D(Vector2D):
 
 
 class Basis2D:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
+    def __init__(self, u, v):
+        self.u = u
+        self.v = v
         
     def __repr__(self):
-        return '{}: X={}, Y={}'.format(self.__class__.__name__, self.x, self.y)
+        return '{}: U={}, V={}'.format(self.__class__.__name__, self.u, self.v)
     
    
     def TransfertMatrix(self):
-        return npy.array([[self.x[0], self.y[0]],
-                          [self.x[1], self.y[1]]])
+        return npy.array([[self.u[0], self.v[0]],
+                          [self.u[1], self.v[1]]])
     
     def InverseTransfertMatrix(self):
         # Todo: cache for performance
@@ -216,15 +216,15 @@ class Basis2D:
 xy = Basis2D(x2D, y2D)
      
 class Frame2D(Basis2D):
-    def __init__(self, origin, x, y):
+    def __init__(self, origin, u, v):
         self.origin = origin
-        Basis2D.__init__(self, x, y)
+        Basis2D.__init__(self, u, v)
 
     def __repr__(self):
-        return '{}: O= {} X={}, Y={}'.format(self.__class__.__name__, self.origin, self.x, self.y)
+        return '{}: O= {} U={}, V={}'.format(self.__class__.__name__, self.origin, self.u, self.v)
 
     def Basis(self):
-        return Basis3D(self.x, self.y)
+        return Basis3D(self.u, self.v)
         
     def NewCoordinates(self, vector):
         return Basis2D.NewCoordinates(self, vector - self.origin)
@@ -965,19 +965,19 @@ class Point3D(Vector3D):
         
 class Basis3D:
     # TODO: create a Basis and Frame class to mutualize between 2D and 2D
-    def __init__(self, x, y, z):
-        self.x = x
-        self.y = y
-        self.z = z
+    def __init__(self, u, v, w):
+        self.u = u
+        self.v = v
+        self.w = w
         
     def __repr__(self):
-        return '{}: X={}, Y={}, Z={}'.format(self.__class__.__name__, self.x, self.y, self.z)
+        return '{}: U={}, V={}, W={}'.format(self.__class__.__name__, self.u, self.v, self.w)
 
         
     def TransfertMatrix(self):
-        return npy.array([[self.x[0], self.y[0], self.z[0]],
-                          [self.x[1], self.y[1], self.z[1]],
-                          [self.x[2], self.y[2], self.z[2]]])
+        return npy.array([[self.u[0], self.v[0], self.w[0]],
+                          [self.u[1], self.v[1], self.w[1]],
+                          [self.u[2], self.v[2], self.w[2]]])
     
     def InverseTransfertMatrix(self):
         # Todo: cache for performance
@@ -993,15 +993,15 @@ class Basis3D:
 xyz = Basis3D(x3D, y3D, z3D)
 
 class Frame3D(Basis3D):
-    def __init__(self, origin, x, y, z):
+    def __init__(self, origin, u, v, w):
         self.origin = origin
-        Basis3D.__init__(self, x, y, z)
+        Basis3D.__init__(self, u, v, w)
         
     def __repr__(self):
-        return '{}: O= {} X={}, Y={}, Z={}'.format(self.__class__.__name__, self.origin, self.x, self.y, self.z)
+        return '{}: O= {} U={}, V={}, W={}'.format(self.__class__.__name__, self.origin, self.u, self.v, self.w)
         
     def Basis(self):
-        return Basis3D(self.x, self.y, self.z)
+        return Basis3D(self.u, self.v, self.w)
     
     def NewCoordinates(self, vector):
         return Basis3D.NewCoordinates(self, vector - self.origin)
@@ -1139,7 +1139,7 @@ class Arc3D(Primitive3D):
                 [self.start.vector[1], self.interior.vector[1], self.end.vector[1]],
                 [self.start.vector[2], self.interior.vector[2], self.end.vector[2]], 'k')
     
-    def FreeCADExport(self, name, ndigits=3):
+    def FreeCADExport(self, name, ndigits=6):
         xs, ys, zs = npy.round(1000*self.start.vector, ndigits)
         xm, ym, zm = npy.round(1000*self.interior.vector, ndigits)
         xe, ye, ze = npy.round(1000*self.end.vector, ndigits)

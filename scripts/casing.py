@@ -23,7 +23,7 @@ p4 = vm.Point2D((0.25, 0.08))
 p5 = vm.Point2D((0.05, 0.20))
 
 inner_contour = primitives2D.RoundedLineSegments2D([p1, p2, p3, p4, p5], {0: 0.01, 1: 0.01, 2: 0.015, 3: 0.010, 4:0.008}, True)
-outer_contour = inner_contour.Offset(-0.004)
+outer_contour = inner_contour.Offset(-thickness)
 f, a = inner_contour.MPLPlot()
 outer_contour.MPLPlot(a)
 
