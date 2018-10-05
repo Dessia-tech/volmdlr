@@ -72,8 +72,14 @@ class Vector:
     def __le__(self, other_vector):
         return self.Norm() <= other_vector.Norm()
     
-#    def __eq__(self, other_vector):
-#        return npy.allclose(self.vector, other_vector.vector)
+    def __ne__(self, other_vector):
+        return not npy.allclose(self.vector, other_vector.vector)
+
+    def __eq__(self, other_vector):
+        return npy.allclose(self.vector, other_vector.vector)
+
+    def __hash__(self):
+        return int(1000*npy.sum(npy.round(self.vector,3)))
     
     def Normalize(self):
         """
@@ -103,20 +109,20 @@ class Vector2D(Vector):
                           (self.vector-center.vector))
                    + center.vector)
         if copy:
-            return Point2D(vector2)
+            return self.__class__(vector2)
         else:
             self.vector=vector2
 
     def Translation(self, offset, copy=True):
         vector2 = self.vector + offset
         if copy:
-            return Point2D(vector2)
+            return self.__class__(vector2)
         else:
             self.vector=vector2
         
     def To3D(self,plane_origin, x1, x2):
         x, y = self.vector
-        return Point3D(plane_origin.vector + x1.vector*x + x2.vector*y)
+        return Vector3D(plane_origin.vector + x1.vector*x + x2.vector*y)
     
     def NormalVector(self, unit=False):
         n = Vector2D((-self.vector[1], self.vector[0]))
@@ -145,6 +151,9 @@ class Point2D(Vector2D):
     def __truediv__(self,value):
         return Point2D(self.vector / value)
     
+    def To3D(self,plane_origin, x1, x2):
+        x, y = self.vector
+        return Point3D(plane_origin.vector + x1.vector*x + x2.vector*y)
 
     def MPLPlot(self, ax):
         x1=self.vector
