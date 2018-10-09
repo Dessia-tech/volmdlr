@@ -42,4 +42,5 @@ m = vm.VolumeModel([('Random Pipe', [sweep])])
 #with open('sweep_script.py', 'w') as f:
 #    f.write(m.FreeCADScript('sweep'))
 
-m.FreeCADExport('sweep')
+m.FreeCADExport('sweep',python_path = '/Applications/FreeCAD.app/Contents/MacOS/FreeCADCmd',
+            path_lib_freecad = '/Applications/FreeCAD.app/Contents/lib')
