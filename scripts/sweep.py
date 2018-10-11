@@ -25,21 +25,15 @@ current_point = p5.vector
 for i in range(14):
     current_point += 0.300 * (npy.random.random(3) -0.5)
     points.append(vm.Point3D(current_point))
-    radius[4+i] = 0.008 + 0.004 * random.random()
-    
+    radius[4+i] = 0.01 + 0.03 * random.random()
 #print(radius)
 c = vm.Circle3D(p1, 0.008, p2-p1)
 
-rl = primitives3D.RoundedLineSegments3D(points, radius, closed=False, name='wire')
+rl = primitives3D.RoundedLineSegments3D(points, radius, closed=False, adapt_radius=True, name='wire')
 contour = vm.Contour3D([c])
 
 sweep = primitives3D.Sweep(contour, rl, name = 'Random pipe')
 
 m = vm.VolumeModel([('Random Pipe', [sweep])])
-
-
-
-#with open('sweep_script.py', 'w') as f:
-#    f.write(m.FreeCADScript('sweep'))
 
 m.FreeCADExport('sweep')

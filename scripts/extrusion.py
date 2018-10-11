@@ -37,10 +37,10 @@ c1 = vm.Contour2D([outer_profile])
 po=vm.Point3D((0, 0, 0))
 xp=vm.Vector3D((1, 0, 0))
 yp=vm.Vector3D((0, 1, 0))
-c1.MPLPlot()
-c2.MPLPlot()
+f, a = c1.MPLPlot()
+c2.MPLPlot(a)
 
-profile=primitives3D.ExtrudedProfile(po, xp, yp, c1, [c2], (0,0, 0.2), name = 'extrusion')
+profile=primitives3D.ExtrudedProfile(po, xp, yp, c1, [c2], vm.Vector3D((0,0, 0.2)), name = 'extrusion')
 
 model=vm.VolumeModel([('profile', [profile])])
 

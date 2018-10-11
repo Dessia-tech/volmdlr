@@ -10,8 +10,8 @@ import math
 import numpy as npy
 import matplotlib.pyplot as plt
 from matplotlib.patches import Arc
-#from mpl_toolkits.mplot3d import Axes3D
-#import vmcy
+from mpl_toolkits.mplot3d import axes3d, Axes3D 
+
 from .vmcy import PolygonPointBelongs
 
 from scipy.linalg import solve,LinAlgError, inv
@@ -540,7 +540,7 @@ class LineSegment2D(Line2D):
     geo_points=property(_get_geo_points)      
     
     def Length(self):
-        return (self.points[1] - self.points[0]).Norm()
+        return self.points[1].PointDistance(self.points[0])
     
     def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
         return self.points[0] + self.DirectionVector(unit=True) * curvilinear_abscissa
@@ -608,7 +608,6 @@ class Arc2D(Primitive2D):
         self.interior = interior
         self.start = start
         self.end = end
-        
         xi, yi = interior.vector
         xe, ye = end.vector
         xs, ys = start.vector
@@ -910,7 +909,6 @@ class Vector3D(Vector):
         v1, v2, v3 = other_vector.vector
         return Vector3D((u2*v3 - u3*v2, u3*v1 - u1*v3, u1*v2 - u2*v1))
     
-    
     def Norm(self):
         x,y,z = self.vector
         return (x**2 + y**2 + z**2)**0.5
@@ -1073,7 +1071,7 @@ class LineSegment3D(Line3D):
         Line3D.__init__(self, point1, point2, name)
         
     def Length(self):
-        return (self.points[1] - self.points[0]).Norm()
+        return self.points[1].PointDistance(self.points[0])
 
         
     def MPLPlot(self, ax):
@@ -1138,15 +1136,29 @@ class Arc3D(Primitive3D):
     def Length(self):
         return self.radius * self.angle
 
+    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
+        u = self.start - self.center
+        v = self.end - self.center
+        w = u.Cross(v)
+        w.Normalize()
+        return self.start.Rotation(self.center, w, curvilinear_abscissa/self.radius)
         
     def MPLPlot(self, ax):
         ax.scatter(*self.center.vector,c='b')
         ax.scatter(*self.start.vector,c='r')
         ax.scatter(*self.end.vector,c='r')
         ax.scatter(*self.interior.vector,c='g')
-        ax.plot([self.start.vector[0], self.interior.vector[0], self.end.vector[0]],
-                [self.start.vector[1], self.interior.vector[1], self.end.vector[1]],
-                [self.start.vector[2], self.interior.vector[2], self.end.vector[2]], 'k')
+        x = []
+        y = []
+        z = []
+        l = self.Length()
+        for i in range(31):
+            p = self.PointAtCurvilinearAbscissa(l*(i)/30)
+            x.append(p[0])
+            y.append(p[1])
+            z.append(p[2])
+            
+        ax.plot(x, y, z, 'k')
     
     def FreeCADExport(self, name, ndigits=6):
         xs, ys, zs = npy.round(1000*self.start.vector, ndigits)
@@ -1160,7 +1172,7 @@ class CompositePrimitive3D(Primitive3D):
     A collection of simple primitives3D
     """
     def __init__(self, primitives, name=''):
-        Primitive2D.__init__(self, name)        
+        Primitive3D.__init__(self, name)        
         
         basis_primitives=[]
         for primitive in primitives:
@@ -1171,6 +1183,32 @@ class CompositePrimitive3D(Primitive3D):
                 
         self.basis_primitives = basis_primitives
         
+    def UpdateBasisPrimitives(self):
+        # TODO: This is a copy/paste from CompositePrimitive2D, in the future make a Common abstract class
+        basis_primitives=[]
+        for primitive in self.primitives:
+            if hasattr(primitive, 'basis_primitives'):
+                basis_primitives.extend(primitive.basis_primitives)
+            else:
+                basis_primitives.append(primitive)
+                
+        self.basis_primitives = basis_primitives
+            
+    def MPLPlot(self, ax = None):
+        if ax is None:
+            fig = plt.figure()
+#            ax = fig.add_subplot(111, projection='3d', adjustable='box')
+            ax = Axes3D(fig)
+        else:
+            fig = None
+
+        for primitive in self.basis_primitives:
+            primitive.MPLPlot(ax)
+        
+        ax.set_aspect('equal')
+        
+        return fig, ax
+    
 class Wire3D(CompositePrimitive3D):
     """
     A collection of simple primitives, following each other making a wire
@@ -1195,6 +1233,18 @@ class Wire3D(CompositePrimitive3D):
         raise ValueError
 
     # TODO: method to check if it is a wire
+    
+    
+    def FreeCADExport(self, ip):
+        name='primitive'+str(ip)
+        
+        s = 'E = []\n'
+        for ip, primitive in enumerate(self.basis_primitives):
+            s += primitive.FreeCADExport('L{}'.format(ip))
+            s += 'E.append(Part.Edge(L{}))\n'.format(ip)
+        s += '{} = Part.Wire(E[:])\n'.format(name)
+
+        return s
         
 class Contour3D(Wire3D):
     """

@@ -8,88 +8,62 @@ Created on Tue Feb 28 14:08:23 2017
 import numpy as npy
 
 import volmdlr
+from volmdlr.primitives import RoundedLineSegments
 import math
 
 
-class RoundedLineSegments3D(volmdlr.Wire3D):
-    def __init__(self, points, radius, closed=False, name=''):        
-        self.points=points
-        self.radius=radius
-        self.closed=closed
-        # Construncting Arcs and lines of profile
-        if closed:
-            p1s=[points[-1]]+points[:-1]
-            pis=points
-            p2s=points[1:]+[points[0]]
+
+class RoundedLineSegments3D(volmdlr.Wire3D, RoundedLineSegments):
+    def __init__(self, points, radius, closed=False, adapt_radius=False, name=''):        
+        primitives = RoundedLineSegments.__init__(self, points, radius,
+                                     volmdlr.LineSegment3D, volmdlr.Arc3D,
+                                     closed, adapt_radius, name='')
+        volmdlr.Wire3D.__init__(self, primitives, name)
+                
+    def ArcFeatures(self, ipoint):        
+        radius = self.radius[ipoint]
+        if self.closed:
+            if ipoint == 0:
+                pt1 = self.points[-1]
+            else:
+                pt1 = self.points[ipoint -1]
+            pti = self.points[ipoint]
+            if ipoint < self.npoints-1:                
+                pt2 = self.points[ipoint+1]
+            else:
+                pt2 = self.points[0]
         else:
-            p1s=[points[-1]]+points[:-2]
-            pis=points[:-1]
-            p2s=points[1:]
-    
-        points_l=points[:]
-#        primitives=[]
-        arcs=[]
-        for i in range(len(points)):
-            if i in radius:
-                r=self.radius[i]
-                p1=p1s[i]
-                pi=pis[i]
-                p2=p2s[i]
+            pt1 = self.points[ipoint - 1]
+            pti = self.points[ipoint]
+            pt2 = self.points[ipoint + 1]
 
-                dist1 = (p1 - pi).Norm()
-                dist2 = (p2 - pi).Norm()
-                dist3 = (p1 - p2).Norm()
-                alpha = math.acos(-(dist3**2-dist1**2-dist2**2)/(2*dist1*dist2))/2.
-                dist = r/math.tan(alpha)
+        dist1 = (pt1 - pti).Norm()
+        dist2 = (pt2 - pti).Norm()
+        dist3 = (pt1 - pt2).Norm()
+        alpha = math.acos(-(dist3**2-dist1**2-dist2**2)/(2*dist1*dist2))/2.
+        dist = radius/math.tan(alpha)
 
-                u1 = (p1 - pi) / dist1
-                u2 = (p2 - pi) / dist2
-                
-                p3 = pi + u1*dist
-                p4 = pi + u2*dist
-
-                n = u1.Cross(u2)
-                n /= n.Norm()
-                v1 = u1.Cross(n)
-                v2 = u2.Cross(n)
-                
-                l1 = volmdlr.Line3D(p3, p3+v1)
-                l2 = volmdlr.Line3D(p4, p4+v2)
-                c, _ = l1.MinimumDistancePoints(l2)
-                
-                u3 = u1 + u2# mean of v1 and v2
-                u3 /= u3.Norm()
-
-                interior = c - u3 * r 
-    
-                points_l[i] = (p3, p4)                           
-                arcs.append(volmdlr.Arc3D(p3, interior, p4))
-
-
-        lines=[]
-
-        last_point=points_l[0]
-        for p in points_l[1:]+[points_l[0]]:
-            if type(p)==tuple:
-                lines.append(volmdlr.LineSegment3D(last_point,p[0]))
-                last_point=p[1]
-            else:
-                lines.append(volmdlr.LineSegment3D(last_point,p))
-                last_point=p
-        if not closed:
-            del lines[-1]
-            
-        primitives=lines[:]
-        nlines=len(lines)
-        narcs=len(arcs)
-        for ii,i in enumerate(sorted(radius.keys(),reverse=True)):
-            if i>nlines:
-                primitives.append(arcs[narcs-ii-1])
-            else:
-                primitives.insert(i,arcs[narcs-ii-1])
+        u1 = (pt1 - pti) / dist1
+        u2 = (pt2 - pti) / dist2
         
-        volmdlr.CompositePrimitive3D.__init__(self, primitives, name)        
+        p3 = pti + u1*dist
+        p4 = pti + u2*dist
+
+        n = u1.Cross(u2)
+        n /= n.Norm()
+        v1 = u1.Cross(n)
+        v2 = u2.Cross(n)
         
+        l1 = volmdlr.Line3D(p3, p3+v1)
+        l2 = volmdlr.Line3D(p4, p4+v2)
+        c, _ = l1.MinimumDistancePoints(l2)
+        
+        u3 = u1 + u2# mean of v1 and v2
+        u3 /= u3.Norm()
+
+        interior = c - u3 * radius     
+        return p3, interior, p4, dist, alpha
+
         
     def Rotation(self, center, angle, copy=True):
         if copy:
@@ -102,10 +76,6 @@ class RoundedLineSegments3D(volmdlr.Wire3D):
             return RoundedLineSegments3D([p.Translation(offset,copy=True) for p in self.points],self.radius,self.closed,self.name)
         else:
             self.__init__([p.Translation(offset,copy=True) for p in self.points],self.radius,self.closed,self.name)
-
-    def MPLPlot(self, ax):
-        for primitive in self.basis_primitives:
-            primitive.MPLPlot(ax)
 
         
 class Cylinder(volmdlr.Primitive3D):

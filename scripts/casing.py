@@ -11,7 +11,7 @@ import volmdlr.primitives2D as primitives2D
 import volmdlr.primitives3D as primitives3D
 
 thickness = 0.005
-height = 0.110
+height = 0.080
 screw_holes_diameter = 0.006
 screw_holes_clearance = 0.003
 n_screws = 25
@@ -19,10 +19,11 @@ n_screws = 25
 p1 = vm.Point2D((0, 0))
 p2 = vm.Point2D((0.3, 0))
 p3 = vm.Point2D((0.33, 0.22))
-p4 = vm.Point2D((0.25, 0.08))
-p5 = vm.Point2D((0.05, 0.20))
+p4 = vm.Point2D((0.2, 0.08))
+p5 = vm.Point2D((0.16, 0.18))
+p6 = vm.Point2D((0.05, 0.20))
 
-inner_contour = primitives2D.RoundedLineSegments2D([p1, p2, p3, p4, p5], {0: 0.01, 1: 0.01, 2: 0.015, 3: 0.010, 4:0.008}, True)
+inner_contour = primitives2D.RoundedLineSegments2D([p1, p2, p3, p4, p5, p6], {0: 0.01, 1: 0.01, 2: 0.015, 3: 0.010, 4: 0.012, 5:0.008}, True)
 outer_contour = inner_contour.Offset(-thickness)
 f, a = inner_contour.MPLPlot()
 outer_contour.MPLPlot(a)
