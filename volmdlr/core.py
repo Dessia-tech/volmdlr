@@ -155,9 +155,9 @@ class Point2D(Vector2D):
         x, y = self.vector
         return Point3D(plane_origin.vector + x1.vector*x + x2.vector*y)
 
-    def MPLPlot(self, ax):
+    def MPLPlot(self, ax, style='ob'):
         x1=self.vector
-        ax.plot([x1[0]], [x1[1]], 'ob')        
+        ax.plot([x1[0]], [x1[1]], style)        
         return []
     
     def PointDistance(self, point2):
@@ -272,7 +272,7 @@ class CompositePrimitive2D(Primitive2D):
         if copy:
             return self.__class__([p.Rotation(center,angle,copy=True) for p in self.primitives])
         else:
-            for p in self.primitives:
+            for p in self.basis_primitives:
                 p.Rotation(center,angle,copy=False)
             self.UpdateBasisPrimitives()
             
@@ -280,7 +280,7 @@ class CompositePrimitive2D(Primitive2D):
         if copy:
             return self.__class__([p.Translation(offset,copy=True) for p in self.primitives])
         else:
-            for p in self.primitives:
+            for p in self.basis_primitives:
                 p.Translation(offset,copy=False)
             self.UpdateBasisPrimitives()
     
@@ -290,7 +290,7 @@ class CompositePrimitive2D(Primitive2D):
         primitives3D = [p.To3D(plane_origin, x, y) for p in self.primitives]
         return CompositePrimitive3D(primitives3D, name)
         
-    def MPLPlot(self, ax = None):
+    def MPLPlot(self, ax = None, style='-k'):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -298,7 +298,7 @@ class CompositePrimitive2D(Primitive2D):
             fig = None
         ps=[]
         for element in self.basis_primitives:
-            ps.extend(element.MPLPlot(ax))
+            ps.extend(element.MPLPlot(ax, style))
 
         for p in ps:
             ax.add_patch(p)
@@ -573,9 +573,9 @@ class LineSegment2D(Line2D):
         else:
             return point
         
-    def MPLPlot(self, ax):
+    def MPLPlot(self, ax, style='-k'):
         p1, p2 = self.points
-        ax.plot([p1[0], p2[0]], [p1[1], p2[1]], 'o-k')        
+        ax.plot([p1[0], p2[0]], [p1[1], p2[1]], style)        
         return []
     
     def To3D(self, plane_origin, x1, x2):
@@ -688,14 +688,14 @@ class Arc2D(Primitive2D):
         alpha=abs(self.angle1-self.angle2)
         return Point2D(self.center.vector+4/(3*alpha)*self.radius*math.sin(alpha*0.5)*u)
         
-    def MPLPlot(self, ax):
+    def MPLPlot(self, ax, style='-k'):
         pc = self.center.vector
 #        ax.plot([pc[0]], [pc[1]], 'or')
 #        ax.plot([self.interior[0]], [self.interior[1]], 'ob')
         return [Arc(pc, 2*self.radius, 2*self.radius, angle=0, 
                     theta1=self.angle1*0.5/math.pi*360,
                     theta2=self.angle2*0.5/math.pi*360,
-                    color='black')]
+                    color='k')]
 
     def To3D(self,plane_origin, x, y):
         ps = self.start.To3D(plane_origin, x, y)
@@ -761,9 +761,9 @@ class Circle2D(Primitive2D):
         s = 'Circle({}) = {{{}, {}, {}}};\n'.format(primitive_index,*points_indices)
         return s, primitive_index+1
     
-    def MPLPlot(self, ax):
+    def MPLPlot(self, ax, style='-k'):
         pc = self.center.vector
-        return [Arc(pc,2*self.radius,2*self.radius,angle=0,theta1=0,theta2=360,color='black')]
+        return [Arc(pc,2*self.radius,2*self.radius,angle=0,theta1=0,theta2=360,color='k')]
 
     def To3D(self, plane_origin, x, y):
         normal = Vector3D(npy.cross(x.vector, y.vector))
@@ -772,14 +772,14 @@ class Circle2D(Primitive2D):
 
     def Rotation(self, center, angle, copy=False):
         if copy:
-            return Circle2D(self.center.vector.Rotation(center,angle,copy=True),self.radius)
+            return Circle2D(self.center.Rotation(center,angle,copy=True),self.radius)
         else:
             self.center.Rotation(center,angle,copy=False) 
             self.utd_geo_points=False
             
     def Translation(self,offset,copy=False):
         if copy:
-            return Circle2D(self.center.vector.Translation(offset,copy=True),self.radius)
+            return Circle2D(self.center.Translation(offset,copy=True),self.radius)
         else:
             self.center.Translation(offset,copy=False)
             self.utd_geo_points=False
@@ -862,7 +862,21 @@ class Polygon2D(CompositePrimitive2D):
             lines.append(LineSegment2D(p1,p2))
         return lines
     
-    def MPLPlot(self, ax):
+    def Rotation(self, center, angle, copy=False):
+        if copy:
+            return Polygon2D([p.Rotation(center,angle,copy=True) for p in self.points])
+        else:
+            for p in self.points:
+                p.Rotation(center,angle,copy=False)
+            
+    def Translation(self, offset, copy=False):
+        if copy:
+            return Polygon2D([p.Translation(offset,copy=True) for p in self.points])
+        else:
+            for p in self.points:
+                p.Translation(offset,copy=False)
+    
+    def MPLPlot(self, ax, style='-k'):
         x=[]
         y=[]
         for p in self.points+[self.points[0]]:
@@ -870,8 +884,8 @@ class Polygon2D(CompositePrimitive2D):
             y.append(p.vector[1])
         ax.plot(x, y, label=self.name)
             
-#        for line in self.Lines():
-#            line.MPLPlot()
+        for line in self.line_segments:
+            line.MPLPlot(ax, style = style)
         return []
 
     def PointBorderDistance(self, point):

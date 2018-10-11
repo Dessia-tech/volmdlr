@@ -37,3 +37,4 @@ sweep = primitives3D.Sweep(contour, rl, name = 'Random pipe')
 m = vm.VolumeModel([('Random Pipe', [sweep])])
 
 m.FreeCADExport('sweep')
+
