@@ -290,7 +290,7 @@ class CompositePrimitive2D(Primitive2D):
         primitives3D = [p.To3D(plane_origin, x, y) for p in self.primitives]
         return CompositePrimitive3D(primitives3D, name)
         
-    def MPLPlot(self, ax = None, style='-k'):
+    def MPLPlot(self, ax = None):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -298,7 +298,7 @@ class CompositePrimitive2D(Primitive2D):
             fig = None
         ps=[]
         for element in self.basis_primitives:
-            ps.extend(element.MPLPlot(ax, style))
+            element.MPLPlot(ax)
 
         for p in ps:
             ax.add_patch(p)
