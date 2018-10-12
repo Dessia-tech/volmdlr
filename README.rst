@@ -9,6 +9,7 @@ Installing
 ----------
 
 .. code::
+
   pip(3) install volmdlr
 
 Documentation
