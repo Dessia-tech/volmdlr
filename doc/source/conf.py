@@ -23,11 +23,13 @@ project = 'Volmdlr'
 copyright = '2018, DessIA Technologies'
 author = 'DessIA Technologies'
 
-import volmdlr
+import pkg_resources
+v = pkg_resources.require("volmdlr")[0].version
+
 # The short X.Y version
-version = ''.join(volmdlr.__version__.split('.')[:2])
+version = ''.join(v.split('.')[:2])
 # The full version, including alpha/beta/rc tags
-release = volmdlr.__version__
+release = v
 
 
 # -- General configuration ---------------------------------------------------
