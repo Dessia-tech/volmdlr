@@ -14,4 +14,4 @@ Installing
 
 Documentation
 -------------
-https://pythonhosted.org/volmdlr/
+https://volmdlr.readthedocs.io/en/latest/
