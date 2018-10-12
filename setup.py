@@ -19,12 +19,6 @@ def readme():
     with open('README.rst') as f:
         return f.read()
     
-def version_scheme(version):
-    try:
-        return '.'.join([str(i) for i in version.tag._key[1]])
-    except AttributeError:
-        return version.tag
-    
 def get_version():
     # Return the version if it has been injected into the file by git-archive
     version = tag_re.search('$Format:%D$')
@@ -62,8 +56,6 @@ def get_version():
 
 
 setup(name='volmdlr',
-#      use_scm_version={'version_scheme':version_scheme,'local_scheme':local_scheme},
-#      use_scm_version = True,
       version = get_version(),
 #      setup_requires=['setuptools_scm'],
       description=' A volume modeler computation-oriented. Include rendering bindings. ',
