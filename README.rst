@@ -1,1 +1,1 @@
-A volume Modeler computations-oriented
+Volmdlr: A python VOLume MoDeLeR computations-oriented including FreeCAD exports
