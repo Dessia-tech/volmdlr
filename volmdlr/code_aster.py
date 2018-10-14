@@ -1,0 +1,343 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Feb 28 14:08:23 2017
+
+@author: steven
+"""
+import numpy as npy
+import os
+
+import volmdlr
+import math
+import subprocess
+
+class NodeGroupCylinder:
+    def __init__(self, name, mesh, point, normal, radius, inside=True):
+        self.point = point
+        self.normal = normal
+        self.name = name
+        self.mesh = mesh
+        if inside:
+            self.radius = 0
+            self.precision = radius
+        else:
+            self.radius = radius
+            self.precision = radius/100.
+    def ExportCodeAster(self, a=None):
+        char = '''DEFI_GROUP( reuse  = {}, MAILLAGE = {},
+            CREA_GROUP_NO = _F(NOM ='{}', OPTION = 'ENV_CYLINDRE',
+            POINT = {}, VECT_NORMALE = {}, RAYON = {}, PRECISION = {},),); \n \n''' \
+            .format(self.mesh.name, self.mesh.name, self.name, self.point, 
+                    self.normal, self.radius, self.precision)
+        if a is not None:
+            a.write(char)
+        else:
+            return char
+    
+class NodeGroupPlan:
+    def __init__(self, name, mesh, point, normal):
+        self.point = point
+        self.normal = normal
+        self.name = name
+        self.mesh = mesh
+        self.precision = 0.0001
+    def ExportCodeAster(self, a=None):
+        char = '''DEFI_GROUP( reuse  = {}, MAILLAGE = {},
+            CREA_GROUP_NO = _F(NOM = '{}', OPTION = 'PLAN',
+            POINT = {}, VECT_NORMALE = {}, PRECISION = {},),); \n \n''' \
+            .format(self.mesh.name, self.mesh.name, self.name, self.point, 
+                    self.normal, self.precision)
+        if a is not None:
+            a.write(char)
+        else:
+            return char
+        
+class NodeGroupAssembly:
+    def __init__(self, name, mesh, typ, list_node_group):
+        self.name = name
+        self.mesh = mesh
+        self.typ = typ
+        self.list_node_group = list_node_group
+    def ExportCodeAster(self, a=None):
+        if self.typ == 'diff':
+            char = '''DEFI_GROUP( reuse  = {}, MAILLAGE = {},
+                CREA_GROUP_NO = _F(NOM = '{}', DIFFE = {},),); \n \n''' \
+                .format(self.mesh.name, self.mesh.name, self.name, 
+                        [n.name for n in self.list_node_group])
+        elif self.typ == 'union':
+            char = '''DEFI_GROUP( reuse  = {}, MAILLAGE = {}, 
+                CREA_GROUP_NO = _F(NOM = '{}', UNION = {},),); \n \n''' \
+                .format(self.mesh.name, self.mesh.name, self.name, 
+                        [n.name for n in self.list_node_group])
+        elif self.typ == 'intersec':
+            char = '''DEFI_GROUP( reuse  = {}, MAILLAGE = {}, 
+                CREA_GROUP_NO = _F(NOM = '{}', INTERSEC = {},),); \n \n''' \
+                .format(self.mesh.name, self.mesh.name, self.name, 
+                        [n.name for n in self.list_node_group])
+        if a is not None:
+            a.write(char)
+        else:
+            return char
+        
+class NodeGroupLimitPlan:
+    def __init__(self, name, mesh, point, normal, list_dir, list_length):
+        self.point = point
+        self.normal = normal
+        self.name = name
+        self.mesh = mesh
+        self.precision = 0.0001
+        self.list_node_group = []
+        list_intersec = []
+        self.list_node_group.append(NodeGroupPlan(name = self.name + '_0', mesh = self.mesh,
+                                                  point = self.point, normal = self.normal))
+        list_intersec.append(self.list_node_group[-1])
+        compt = 1
+        for i, li in enumerate(list_dir):
+            list_union = []
+            normal1 = tuple(npy.cross(normal, list_dir[i]))
+            radius1 = abs(list_length[i][1]/2.)
+            point1 = tuple(point + npy.array(list_dir[i])*list_length[i][1]/2.)
+            self.list_node_group.append(NodeGroupCylinder(name = self.name + '_' + str(compt),
+                                                          mesh = self.mesh, point = point1, 
+                                                          normal = normal1, radius = radius1))
+            compt += 1
+            list_union.append(self.list_node_group[-1])
+            normal2 = tuple(npy.cross(normal, list_dir[i]))
+            radius2 = abs(list_length[i][0]/2.)
+            point2 = tuple(point + npy.array(list_dir[i])*list_length[i][0]/2.)
+            self.list_node_group.append(NodeGroupCylinder(name = self.name + '_' + str(compt),
+                                                          mesh = self.mesh, point = point2, 
+                                                          normal = normal2, radius = radius2))
+            compt += 1
+            list_union.append(self.list_node_group[-1])
+            self.list_node_group.append(NodeGroupAssembly(name = self.name + '_' + str(compt),
+                                                          mesh = self.mesh, typ = 'union', 
+                                                          list_node_group = list_union))
+            compt += 1
+            list_intersec.append(self.list_node_group[-1])
+        self.list_node_group.append(NodeGroupAssembly(name = self.name,
+                                                      mesh = self.mesh, typ = 'intersec', 
+                                                      list_node_group = list_intersec))
+        
+    def ExportCodeAster(self, a=None):
+        if a is None:
+            export = []
+            for nd_group in self.list_node_group:
+                export.append(nd_group.ExportCodeAster())
+            return export
+        else:
+            for nd_group in self.list_node_group:
+                nd_group.ExportCodeAster(a)
+                
+class Mesh:
+    def __init__(self, name, file_name_CAD, file_name_mesh=None, 
+                 gmsh_path='/Users/Pierrem/DessIA/PowerPack/scripts/Gmsh.app/Contents/MacOS/./gmsh'):
+        if file_name_mesh is None:
+            self.file_name_mesh = name + '.msh'
+        else:
+            self.file_name_mesh = file_name_mesh
+        self.name = name
+        self.file_name_CAD = file_name_CAD
+        self.gmsh_path = gmsh_path
+        self.GenereMesh()
+        
+    def ExportCodeAster(self, a=None):
+        char = '''PRE_GMSH(); \n
+{} = LIRE_MAILLAGE(FORMAT = "ASTER",); \n \n'''.format(self.name)
+        if a is None:
+            return char
+        else:
+            a.write(char)
+            
+    def GenereMesh(self):
+        a = open(self.name + '.geo', 'w')
+        
+        a.write('Merge "{}"; \n'.format(self.file_name_CAD))
+        a.write('bb() = BoundingBox Volume {1}; \n')
+        a.write('BoundingBox {bb(0), bb(3), bb(1), bb(4), bb(2), bb(5)}; \n')
+        a.write('Mesh.CharacteristicLengthFactor = 0.1; \n')
+        a.write('Mesh.ScalingFactor=0.001; \n')
+        a.write('Characteristic Length {:} = 0.15; \n')
+        a.write('Save "{}"; \n'.format(self.file_name_mesh))
+        
+        a.close()
+        
+        arg = '{} -3 -o {}'.format(self.name + '.geo', self.file_name_mesh)
+#        output=subprocess.call([self.gmsh_path, arg])
+        os.system('{} {}'.format(self.gmsh_path, arg))
+        
+
+                
+class Material:
+    def __init__(self, name, E, nu, rho, mesh):
+        self.name = name
+        self.mesh = mesh
+        self.E = E
+        self.nu = nu
+        self.rho = rho
+        
+    def ExportCodeAster(self, a=None):
+        char = '''{} = DEFI_MATERIAU(ELAS = _F(E = {},
+                          NU = {},
+                          RHO = {},),); \n
+{} = AFFE_MATERIAU(MAILLAGE = {},
+                    AFFE = _F(TOUT = 'OUI',
+                            MATER = {},),); \n \n'''.format(
+                self.name + '_1', self.E, self.nu, self.rho, self.name, 
+                self.mesh.name, self.name + '_1')
+        if a is None:
+            return char
+        else:
+            a.write(char)
+        
+class Model:
+    def __init__(self, name, mesh):
+        self.name = name
+        self.mesh = mesh
+    def ExportCodeAster(self, a=None):
+        char = '''{} = AFFE_MODELE(MAILLAGE = {},
+                   AFFE = _F(TOUT = 'OUI',
+                           PHENOMENE = 'MECANIQUE',
+                           MODELISATION = '3D',),); \n \n'''.format(
+                           self.name, self.mesh.name)
+        if a is None:
+            return char
+        else:
+            a.write(char)
+    
+                
+class BoundaryCondition:
+    def __init__(self, name, group, modele, displacement=None, load=None):
+        self.name = name
+        self.group = group
+        self.displacement = displacement
+        self.modele = modele
+        
+    def ExportCodeAster(self, a=None):
+        char_ddl = ''
+        for D, val in self.displacement.items():
+            if val is not None:
+                char_ddl += D + ' = ' + str(val) + ', '
+        char = '''{} = AFFE_CHAR_MECA(MODELE = {},
+                       DDL_IMPO = _F(GROUP_NO = '{}',
+                                   {}),); \n \n'''.format(
+                   self.name, self.modele.name, self.group.name, char_ddl)
+        if a is None:
+            return char
+        else:
+            a.write(char)
+            
+class MecaStat:
+    def __init__(self, name, modele, material, boundary):
+        self.name = name
+        self.modele = modele
+        self.material = material
+        self.boundary = boundary
+        
+    def ExportCodeAster(self, a=None):
+        char_bound = ''
+        for bound in self.boundary:
+            char_bound += '_F(CHARGE = {},), '.format(bound.name)
+        char = '''{} = MECA_STATIQUE(MODELE = {}, CHAM_MATER = {},
+                EXCIT = ({}),); \n \n'''.format(self.name, self.modele.name, 
+                self.material.name, char_bound)
+        if a is None:
+            return char
+        else:
+            a.write(char)
+            
+class ResultAnalysis:
+    def __init__(self, simulation, typ, group_no):
+        self.simulation = simulation
+        self.typ = typ
+        self.group_no = group_no
+    
+    def ExportCodeAster(self, a=None):
+        char = '''{} = CALC_CHAMP(reuse = {},
+                       RESULTAT = {},
+                       FORCE = '{}',);
+    
+{} = POST_RELEVE_T(ACTION = _F(OPERATION = 'EXTRACTION',
+                                 INTITULE = 'FORCE',
+                                 RESULTAT = {},
+                                 NOM_CHAM = '{}',
+                                 GROUP_NO = '{}',
+                                 RESULTANTE = ('DX', 'DY', 'DZ'),),);
+
+IMPR_TABLE(TABLE = {}, UNITE = 4); \n \n'''.format(self.simulation.name,
+        self.simulation.name, self.simulation.name, self.typ, self.simulation.name + '_1',
+        self.simulation.name, self.typ, self.group_no.name, self.simulation.name + '_1')
+        if a is None:
+            return char
+        else:
+            a.write(char)
+
+#IMPR_RESU(FORMAT='GMSH',
+#          RESU=_F(MAILLAGE=MAIL,
+#                  RESULTAT=RESU,
+#                  NOM_CHAM='DEPL',),);
+                
+class CodeAster:
+    def __init__(self, name, file_name, mesh, node_group, modele, material, 
+                 boundary, simulation, analysis):
+        
+        self.name = name
+        self.file_name = file_name
+        self.mesh = mesh
+        self.node_group = node_group
+        self.modele = modele
+        self.material = material
+        self.boundary = boundary
+        self.simulation = simulation
+        self.analysis = analysis
+        
+    def GenerateCodeAsterFiles(self):
+        a = open(self.file_name + '.export', 'w')
+        actual_path = os.getcwd()
+        
+        a.write('P time_limit 140 \n')
+        a.write('P memory_limit 512 \n')
+        a.write('P ncpus 1 \n')
+        a.write('P mpi_nbcpu 1 \n')
+        a.write('P mpi_nbnoeud 1 \n')
+        a.write('P testlist verification sequential \n')
+        a.write('\n')
+        a.write('F msh {}/{} D 19 \n'.format(actual_path, self.mesh.file_name_mesh))
+        a.write('F comm {}/{}.comm D 1 \n'.format(actual_path, self.file_name))
+        a.write('F resu {}/{}.resu R 8 \n'.format(actual_path, self.file_name))
+        a.write('F pos {}/{}.pos R 37 \n'.format(actual_path, self.file_name))
+        a.write('F mess {}/{}.mess R 6 \n'.format(actual_path, self.file_name))
+        a.write('F pos {}/{}.pos R 4 \n'.format(actual_path, self.file_name))
+        
+        a.close()
+        
+    def ExportCodeAster(self):
+        
+        a = open(self.file_name + '.comm', 'w')
+        a.write('DEBUT() \n \n')
+        self.mesh.ExportCodeAster(a)
+        for ng in self.node_group:
+            ng.ExportCodeAster(a)
+        self.modele.ExportCodeAster(a)
+        self.material.ExportCodeAster(a)
+        for bd in self.boundary:
+            bd.ExportCodeAster(a)
+        self.simulation.ExportCodeAster(a)
+        for analyze in self.analysis:
+            analyze.ExportCodeAster(a)
+            
+        char = '''IMPR_RESU(FORMAT='GMSH',
+          {}=_F(MAILLAGE={},
+                  RESULTAT={},
+                  NOM_CHAM='DEPL',),); \n \n'''.format(self.simulation.name,
+          self.mesh.name, self.simulation.name)
+        a.write(char)
+        a.write('FIN(); \n')
+        a.close()
+        
+    def Run(self):
+        self.ExportCodeAster()
+        self.GenerateCodeAsterFiles()
+        
+        
