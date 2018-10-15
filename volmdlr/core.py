@@ -312,10 +312,7 @@ class CompositePrimitive2D(Primitive2D):
             fig = None
             
         for element in self.basis_primitives:
-            ps.extend(element.MPLPlot(ax, style))
-
-        for p in ps:
-            ax.add_patch(p)
+            element.MPLPlot(ax, style)
 
         ax.margins(0.1)
         plt.show() 
@@ -777,7 +774,7 @@ class Circle2D(Primitive2D):
     
     def MPLPlot(self, ax, style='-k'):
         pc = self.center.vector
-        return [Arc(pc,2*self.radius,2*self.radius,angle=0,theta1=0,theta2=360,color='k')]
+        ax.add_patch(Arc(pc,2*self.radius,2*self.radius,angle=0,theta1=0,theta2=360,color='black'))
 
     def To3D(self, plane_origin, x, y):
         normal = Vector3D(npy.cross(x.vector, y.vector))
