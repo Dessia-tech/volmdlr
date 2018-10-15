@@ -163,7 +163,7 @@ class Mesh:
         
         a.close()
         
-        arg = '{} -3 -o {}'.format(self.name + '.geo', self.file_name_mesh)
+        arg = '{} -3 -o {} -order 2'.format(self.name + '.geo', self.file_name_mesh)
 #        output=subprocess.call([self.gmsh_path, arg])
         os.system('{} {}'.format(self.gmsh_path, arg))
         
@@ -272,6 +272,7 @@ IMPR_TABLE(TABLE = {}, UNITE = 4); \n \n'''.format(self.simulation.name,
             return char
         else:
             a.write(char)
+        
 
 #IMPR_RESU(FORMAT='GMSH',
 #          RESU=_F(MAILLAGE=MAIL,
@@ -292,23 +293,41 @@ class CodeAster:
         self.simulation = simulation
         self.analysis = analysis
         
-    def GenerateCodeAsterFiles(self):
+    def GenerateCodeAsterFiles(self, path_code_aster):
         a = open(self.file_name + '.export', 'w')
         actual_path = os.getcwd()
         
-        a.write('P time_limit 140 \n')
-        a.write('P memory_limit 512 \n')
-        a.write('P ncpus 1 \n')
-        a.write('P mpi_nbcpu 1 \n')
-        a.write('P mpi_nbnoeud 1 \n')
-        a.write('P testlist verification sequential \n')
-        a.write('\n')
-        a.write('F msh {}/{} D 19 \n'.format(actual_path, self.mesh.file_name_mesh))
-        a.write('F comm {}/{}.comm D 1 \n'.format(actual_path, self.file_name))
-        a.write('F resu {}/{}.resu R 8 \n'.format(actual_path, self.file_name))
-        a.write('F pos {}/{}.pos R 37 \n'.format(actual_path, self.file_name))
-        a.write('F mess {}/{}.mess R 6 \n'.format(actual_path, self.file_name))
-        a.write('F pos {}/{}.pos R 4 \n'.format(actual_path, self.file_name))
+        a.write('P actions make_etude\n')
+        a.write('P aster_root {} \n'.format(path_code_aster))
+        a.write('P consbtc oui\n')
+        a.write('P corefilesize unlimited\n')
+        a.write('P cpresok RESNOOK\n')
+        a.write('P debug nodebug\n')
+        a.write('P facmtps 1\n')
+        a.write('P lang en\n')
+        a.write('P memjob 524288\n')
+        a.write('P memory_limit 1024.0\n')
+        a.write('P mode interactif\n')
+        a.write('P mpi_nbcpu 1\n')
+        a.write('P mpi_nbnoeud 1\n')
+        a.write('P nbmaxnook 5\n')
+        a.write('P protocol_copyfrom asrun.plugins.server.SCPServer\n')
+        a.write('P protocol_copyto asrun.plugins.server.SCPServer\n')
+        a.write('P protocol_exec asrun.plugins.server.SSHServer\n')
+        a.write('P soumbtc oui\n')
+        a.write('P time_limit 900.0\n')
+        a.write('P tpsjob 16\n')
+        a.write('P version stable\n')
+        a.write('A args\n')
+        a.write('A memjeveux 64.0\n')
+        a.write('A tpmax 900.0\n')
+        
+        a.write('F msh {}/{} D 19\n'.format(actual_path, self.mesh.file_name_mesh))
+        a.write('F comm {}/{}.comm D 1\n'.format(actual_path, self.file_name))
+        a.write('F resu {}/{}.resu R 8\n'.format(actual_path, self.file_name))
+        a.write('F pos {}/{}.pos R 37\n'.format(actual_path, self.file_name))
+        a.write('F mess {}/{}.mess R 6\n'.format(actual_path, self.file_name))
+        a.write('F pos {}/{}_R.pos R 4\n'.format(actual_path, self.file_name))
         
         a.close()
         
@@ -327,17 +346,42 @@ class CodeAster:
         for analyze in self.analysis:
             analyze.ExportCodeAster(a)
             
-        char = '''IMPR_RESU(FORMAT='GMSH',
-          {}=_F(MAILLAGE={},
-                  RESULTAT={},
-                  NOM_CHAM='DEPL',),); \n \n'''.format(self.simulation.name,
-          self.mesh.name, self.simulation.name)
-        a.write(char)
+#        char = '''IMPR_RESU(FORMAT='GMSH',
+#          {}=_F(MAILLAGE={},
+#                  RESULTAT={},
+#                  NOM_CHAM='DEPL',),); \n \n'''.format(self.simulation.name,
+#          self.mesh.name, self.simulation.name)
+#        a.write(char)
         a.write('FIN(); \n')
         a.close()
         
-    def Run(self):
+    def Run(self, path_code_aster='/opt/aster', version_code_aster='13.4'):
         self.ExportCodeAster()
-        self.GenerateCodeAsterFiles()
+        self.GenerateCodeAsterFiles(path_code_aster)
+        
+        actual_path = os.getcwd()
+        os.system('cp {}/{}/share/aster/config.txt {}/.'.format(
+                path_code_aster, version_code_aster, actual_path))
+        
+        os.system('{}/bin/./as_run {}.export'.format(path_code_aster, self.file_name))
+        
+    def Read(self, analysis, axis):
+        actual_path = os.getcwd()
+        a = open(actual_path + '/' + self.file_name + '_R.pos', 'r')
+        lines = a.readlines()
+        a.close()
+        for line in lines:
+            sp = line.split()
+            if sp[0] == 'INTITULE':
+                liste_var = sp
+            elif sp[0] == 'FORCE':
+                if axis == 'x':
+                    pos = liste_var.index('DX')
+                elif axis == 'y':
+                    pos = liste_var.index('DY')
+                elif axis == 'y':
+                    pos = liste_var.index('DZ')
+                return float(sp[pos])
+        
         
         
