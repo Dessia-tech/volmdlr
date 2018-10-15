@@ -36,15 +36,20 @@ for i in range(100):
     
 #polygon.MPLPlot()
 #points_inside.MPLPlot()
-c1=vm.CompositePrimitive2D([polygon, *points_inside])
-c1.MPLPlot()
-
-c2=vm.CompositePrimitive2D([polygon, *points_outside])
-c2.MPLPlot()
-
-cog_p = polygon.CenterOfMass()
-c3 = vm.CompositePrimitive2D([polygon, cog_p])
-c3.MPLPlot()
+#c1=vm.CompositePrimitive2D([polygon, *points_inside])
+#c1.MPLPlot()
+f, a = polygon.MPLPlot()
+for point in points_inside:
+    point.MPLPlot(a, style = 'ob')
+for point in points_outside:
+    point.MPLPlot(a, style = 'or')
+#
+#c2=vm.CompositePrimitive2D([polygon, *points_outside])
+#c2.MPLPlot()
+#
+#cog_p = polygon.CenterOfMass()
+#c3 = vm.CompositePrimitive2D([polygon, cog_p])
+#c3.MPLPlot()
 
 # Speed test
 t = time.time()
