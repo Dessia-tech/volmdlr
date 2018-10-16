@@ -95,6 +95,9 @@ class Vector2D(Vector):
         self.vector[1] = vector[1]
         
     def Norm(self):
+        """
+        :returns: norm of vector
+        """
         x, y = self.vector
         return (x**2 + y**2)**0.5
 
@@ -200,6 +203,11 @@ class Point2D(Vector2D):
 
 
 class Basis2D:
+    """
+    Defines a 2D basis
+    :param u: first vector of the basis
+    :param v: second vector of the basis
+    """
     def __init__(self, u, v):
         self.u = u
         self.v = v
@@ -225,12 +233,18 @@ class Basis2D:
 xy = Basis2D(x2D, y2D)
      
 class Frame2D(Basis2D):
+    """
+    Defines a 2D basis
+    :param origin: origin of the basis
+    :param u: first vector of the basis
+    :param v: second vector of the basis
+    """
     def __init__(self, origin, u, v):
         self.origin = origin
         Basis2D.__init__(self, u, v)
 
     def __repr__(self):
-        return '{}: O= {} U={}, V={}'.format(self.__class__.__name__, self.origin, self.u, self.v)
+        return '{}: O={} U={}, V={}'.format(self.__class__.__name__, self.origin, self.u, self.v)
 
     def Basis(self):
         return Basis3D(self.u, self.v)
@@ -239,7 +253,7 @@ class Frame2D(Basis2D):
         return Basis2D.NewCoordinates(self, vector - self.origin)
 
     def OldCoordinates(self, vector):
-        return Basis2D.OldCoordinates(self, vector + self.origin)
+        return Basis2D.OldCoordinates(self, vector) + self.origin
 
         
 oxy = Frame2D(o2D, x2D, y2D)    
@@ -296,12 +310,9 @@ class CompositePrimitive2D(Primitive2D):
             ax.set_aspect('equal')
         else:
             fig = None
-        ps=[]
+            
         for element in self.basis_primitives:
             element.MPLPlot(ax)
-
-        for p in ps:
-            ax.add_patch(p)
         
         ax.margins(0.1)
         plt.show() 
@@ -692,10 +703,10 @@ class Arc2D(Primitive2D):
         pc = self.center.vector
 #        ax.plot([pc[0]], [pc[1]], 'or')
 #        ax.plot([self.interior[0]], [self.interior[1]], 'ob')
-        return [Arc(pc, 2*self.radius, 2*self.radius, angle=0, 
+        ax.add_patch(Arc(pc, 2*self.radius, 2*self.radius, angle=0, 
                     theta1=self.angle1*0.5/math.pi*360,
                     theta2=self.angle2*0.5/math.pi*360,
-                    color='k')]
+                    color='k'))
 
     def To3D(self,plane_origin, x, y):
         ps = self.start.To3D(plane_origin, x, y)
@@ -799,6 +810,7 @@ class Circle2D(Primitive2D):
         return self.center
 
 class Polygon2D(CompositePrimitive2D):
+    # TODO: inherit from contour?
     def __init__(self,points,name=''):     
         self.points=points
         primitives=[]
@@ -875,18 +887,6 @@ class Polygon2D(CompositePrimitive2D):
         else:
             for p in self.points:
                 p.Translation(offset,copy=False)
-    
-    def MPLPlot(self, ax, style='-k'):
-        x=[]
-        y=[]
-        for p in self.points+[self.points[0]]:
-            x.append(p.vector[0])
-            y.append(p.vector[1])
-        ax.plot(x, y, label=self.name)
-            
-        for line in self.line_segments:
-            line.MPLPlot(ax, style = style)
-        return []
 
     def PointBorderDistance(self, point):
         """
@@ -995,6 +995,13 @@ class Point3D(Vector3D):
         return (self-point2).Norm()
         
 class Basis3D:
+    """
+    Defines a 3D basis
+    :param origin: origin of the basis
+    :param u: first vector of the basis
+    :param v: second vector of the basis
+    :param w: third vector of the basis
+    """
     # TODO: create a Basis and Frame class to mutualize between 2D and 2D
     def __init__(self, u, v, w):
         self.u = u
@@ -1024,6 +1031,13 @@ class Basis3D:
 xyz = Basis3D(x3D, y3D, z3D)
 
 class Frame3D(Basis3D):
+    """
+    Defines a 3D frame
+    :param origin: origin of the basis
+    :param u: first vector of the basis
+    :param v: second vector of the basis
+    :param w: third vector of the basis
+    """
     def __init__(self, origin, u, v, w):
         self.origin = origin
         Basis3D.__init__(self, u, v, w)
@@ -1038,7 +1052,7 @@ class Frame3D(Basis3D):
         return Basis3D.NewCoordinates(self, vector - self.origin)
 
     def OldCoordinates(self, vector):
-        return Basis3D.OldCoordinates(self, vector + self.origin)
+        return Basis3D.OldCoordinates(self, vector) + self.origin
 
         
 oxyz = Frame3D(o3D, x3D, y3D, z3D)    
@@ -1171,6 +1185,7 @@ class Arc3D(Primitive3D):
         return self.start.Rotation(self.center, w, curvilinear_abscissa/self.radius)
         
     def MPLPlot(self, ax):
+        # TODO: there's a bug. Maybe in rotation?
         ax.scatter(*self.center.vector,c='b')
         ax.scatter(*self.start.vector,c='r')
         ax.scatter(*self.end.vector,c='r')
@@ -1290,8 +1305,7 @@ class Contour3D(Wire3D):
 
 class VolumeModel:
     """
-    :param groups: A list of two element tuple. The first element is a string naming the group
-    and the second element is a list of primitives of the group
+    :param groups: A list of two element tuple. The first element is a string naming the group and the second element is a list of primitives of the group
     """
     def __init__(self, groups, name=''):
         self.groups = groups
@@ -1379,8 +1393,9 @@ class VolumeModel:
         Export model to .fcstd FreeCAD standard
         
         :param python_path: path of python binded to freecad
-             - on windows: 'something like C:\Program Files\FreeCAD X.XX\bin\python'
-             - on linux: python (in general)
+        
+            * on windows: something like C:\\\\Program Files\\\\FreeCAD X.XX\\\\bin\\\\python
+            * on linux: python if installed by a dstribution package
         :param filepath: path of fcstd file (without extension)
         :param path_lib_freecad: FreeCAD.so lib path (/usr/lib/freecad/lib in general)
 
