@@ -10,7 +10,7 @@ import math
 import numpy as npy
 import matplotlib.pyplot as plt
 from matplotlib.patches import Arc
-from mpl_toolkits.mplot3d import axes3d, Axes3D 
+from mpl_toolkits.mplot3d import Axes3D 
 
 from .vmcy import PolygonPointBelongs
 
@@ -968,11 +968,21 @@ class Point3D(Vector3D):
     def MPLPlot(self, ax):
         ax.scatter(*self.vector)
         
-    def PlaneProjection(self, plane_origin, x, y):
-        z=npy.cross(x.vector,y.vector)
+    def PlaneProjection3D(self, plane_origin, x, y):
+        z = npy.cross(x.vector,y.vector)
         z = x.Cross(y)
         z /= z.Norm()
         return Point3D(self.vector-npy.dot(self.vector-plane_origin.vector,z)*z)
+
+    def PlaneProjection2D(self, x, y):
+        z = npy.cross(x.vector,y.vector)
+        z = x.Cross(y)
+        z.Normalize()
+        p3d = self - self.Dot(z)*z
+        u1 = p3d.Dot(x)
+        u2 = p3d.Dot(y)
+        return Point2D((u1, u2))
+
         
     def To2D(self, plane_origin, x, y):
         if npy.dot(x.vector, y.vector) != 0:
@@ -1087,6 +1097,9 @@ class LineSegment3D(Line3D):
     def Length(self):
         return self.points[1].PointDistance(self.points[0])
 
+    def PlaneProjection2D(self, x, y):
+        return LineSegment2D(self.points[0].PlaneProjection2D(x, y),
+                             self.points[1].PlaneProjection2D(x, y))
         
     def MPLPlot(self, ax):
         x=[p.vector[0] for p in self.points]
