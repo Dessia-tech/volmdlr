@@ -76,7 +76,10 @@ class Vector:
         return not npy.allclose(self.vector, other_vector.vector)
 
     def __eq__(self, other_vector):
-        return npy.allclose(self.vector, other_vector.vector)
+        try:
+            return npy.allclose(self.vector, other_vector.vector)
+        except AttributeError:
+            return False
 
     def __hash__(self):
         return int(1000*npy.sum(npy.round(self.vector,3)))
@@ -117,11 +120,14 @@ class Vector2D(Vector):
             self.vector=vector2
 
     def Translation(self, offset, copy=True):
-        vector2 = self.vector + offset
+        """
+        :param offset: an other Vector2D
+        """
+        vector2 = self.vector + offset.vector
         if copy:
             return self.__class__(vector2)
         else:
-            self.vector=vector2
+            self.vector = vector2
         
     def To3D(self,plane_origin, x1, x2):
         x, y = self.vector
@@ -290,12 +296,12 @@ class CompositePrimitive2D(Primitive2D):
                 p.Rotation(center,angle,copy=False)
             self.UpdateBasisPrimitives()
             
-    def Translation(self,offset,copy=False):
+    def Translation(self, offset, copy=False):
         if copy:
-            return self.__class__([p.Translation(offset,copy=True) for p in self.primitives])
+            return self.__class__([p.Translation(offset, copy=True) for p in self.primitives])
         else:
             for p in self.basis_primitives:
-                p.Translation(offset,copy=False)
+                p.Translation(offset, copy=False)
             self.UpdateBasisPrimitives()
     
     def To3D(self, plane_origin, x, y, name = None):
@@ -1120,6 +1126,10 @@ class LineSegment3D(Line3D):
         y=[p.vector[1] for p in self.points]
         z=[p.vector[2] for p in self.points]
         ax.plot(x,y,z, 'o-k')
+        
+    def MPLPlot2D(self, x3D, y3D, ax):
+        edge2D =  self.PlaneProjection2D()
+        edge2D.MPLPlot(x3D, y3D, ax)
         
         
     def FreeCADExport(self, name, ndigits=6):

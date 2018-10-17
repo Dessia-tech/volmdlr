@@ -130,7 +130,7 @@ class Block(volmdlr.Primitive3D):
                 volmdlr.LineSegment3D(p3, p7),
                 volmdlr.LineSegment3D(p4, p8)]
         
-    def MPLPlot(self, x, y, ax=None):
+    def MPLPlot2D(self, x3D, y3D, ax=None):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -138,8 +138,8 @@ class Block(volmdlr.Primitive3D):
             fig = None
         
         for edge3D in self.Edges():
-            edge2D = edge3D.PlaneProjection2D(x, y)
-            edge2D.MPLPlot(ax)
+#            edge2D = edge3D.PlaneProjection2D()
+            edge3D.MPLPlot(x3D, y3D, ax)
         
         return fig, ax
         
