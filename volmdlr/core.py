@@ -94,6 +94,10 @@ class Vector2D(Vector):
         self.vector[0] = vector[0]        
         self.vector[1] = vector[1]
         
+    def __round__(self, ndigits):
+        return self.__class__((round(self.vector[0], ndigits),
+                               round(self.vector[1], ndigits)))
+        
     def Norm(self):
         """
         :returns: norm of vector
@@ -912,6 +916,11 @@ class Vector3D(Vector):
         self.vector[0] = vector[0]
         self.vector[1] = vector[1]
         self.vector[2] = vector[2]
+    
+    def __round__(self, ndigits):
+        return self.__class__((round(self.vector[0], ndigits),
+                               round(self.vector[1], ndigits),
+                               round(self.vector[2], ndigits)))
     
     def Dot(self, other_vector):
         u1, u2, u3 = self.vector

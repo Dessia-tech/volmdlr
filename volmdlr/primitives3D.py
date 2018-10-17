@@ -138,34 +138,24 @@ class HollowCylinder(volmdlr.Primitive3D):
     def FreeCADExport(self, ip):
         if self.outer_radius > 0.:
             name = 'primitive'+str(ip)
-            re=str(1000*self.outer_radius)
-            ri=str(1000*self.inner_radius)        
-            position = self.position-self.axis*self.width/2
-            x,y,z=1000*position
-            ax,ay,az=self.axis
-            x=str(x)
-            y=str(y)
-            z=str(z)
-            ax=str(ax)
-            ay=str(ay)
-            az=str(az)
-    
-            s='C2= Part.makeCircle('+re+',fc.Vector('+x+','+y+','+z+'),fc.Vector('+ax+','+ay+','+az+'))\n'
-            s+='W2=Part.Wire(C2.Edges)\n'
-            s+='F2=Part.Face(W2)\n'
+            re = round(1000*self.outer_radius, 6)
+            ri = round(1000*self.inner_radius, 6)        
+            x, y, z = round((1000*(self.position - self.axis*self.width/2)), 6)
+            ax, ay, az = npy.round(self.axis.vector, 6)
+            
+            s='C2 = Part.makeCircle({}, fc.Vector({}, {}, {}),fc.Vector({}, {}, {}))\n'.format(re, x, y, z, ax, ay, az)
+            s+='W2 = Part.Wire(C2.Edges)\n'
+            s+='F2 = Part.Face(W2)\n'
             
             if self.inner_radius!=0.:
-                s+='C1= Part.makeCircle('+ri+',fc.Vector('+x+','+y+','+z+'),fc.Vector('+ax+','+ay+','+az+'))\n'        
-                s+='W1=Part.Wire(C1.Edges)\n'
-                s+='F1=Part.Face(W1)\n'        
-                s+='F2=F2.cut(F1)\n'        
+                s+='C1 = Part.makeCircle({}, fc.Vector({}, {}, {}),fc.Vector({}, {}, {}))\n'.format(ri, x, y, z, ax, ay, az)
+                s+='W1 = Part.Wire(C1.Edges)\n'
+                s+='F1 = Part.Face(W1)\n'        
+                s+='F2 = F2.cut(F1)\n'
     
-            vx,vy,vz=self.axis*self.width*1000
-            vx=str(vx)
-            vy=str(vy)
-            vz=str(vz)
+            vx, vy, vz = round(self.axis*self.width*1000, 6)
             
-            s+=name+'=F2.extrude(fc.Vector('+vx+','+vy+','+vz+'))\n'
+            s += '{} = F2.extrude(fc.Vector({}, {}, {}))\n'.format(name, vx, vy, vz)
             return s
         
         else:
@@ -207,7 +197,6 @@ class ExtrudedProfile(volmdlr.Primitive3D):
         
     def FreeCADExport(self, ip):
         name='primitive'+str(ip)
-        
         s = 'Wo = []\n'
         s += 'Eo = []\n'
         for ip, primitive in enumerate(self.outer_contour3d.basis_primitives):
@@ -228,7 +217,7 @@ class ExtrudedProfile(volmdlr.Primitive3D):
             
         if len(self.inner_contours3d) != 0:
             s += 'Fo = Fo.cut(Fi)\n'
-        e1, e2, e3 = npy.round(1000*self.extrusion_vector.vector, 6)
+        e1, e2, e3 = round(1000*self.extrusion_vector, 6)
         
         s+='{} = Fo.extrude(fc.Vector({}, {}, {}))\n'.format(name,e1,e2,e3)
         return s
@@ -265,7 +254,7 @@ class Sphere(volmdlr.Primitive3D):
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive'+str(ip)
         r = 1000*self.radius
-        x, y, z = npy.round(1000*self.center.vector,ndigits)
+        x, y, z = round(1000*self.center, ndigits)
         return '{}=Part.makeSphere({},fc.Vector({},{},{}))\n'.format(name,r,x,y,z)
 
 
