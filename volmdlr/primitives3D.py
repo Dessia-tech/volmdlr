@@ -139,7 +139,7 @@ class Block(volmdlr.Primitive3D):
         
         for edge3D in self.Edges():
 #            edge2D = edge3D.PlaneProjection2D()
-            edge3D.MPLPlot(x3D, y3D, ax)
+            edge3D.MPLPlot2D(x3D, y3D, ax)
         
         return fig, ax
         

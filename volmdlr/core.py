@@ -1128,8 +1128,8 @@ class LineSegment3D(Line3D):
         ax.plot(x,y,z, 'o-k')
         
     def MPLPlot2D(self, x3D, y3D, ax):
-        edge2D =  self.PlaneProjection2D()
-        edge2D.MPLPlot(x3D, y3D, ax)
+        edge2D =  self.PlaneProjection2D(x3D, y3D)
+        edge2D.MPLPlot(ax)
         
         
     def FreeCADExport(self, name, ndigits=6):
