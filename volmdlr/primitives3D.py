@@ -11,7 +11,7 @@ import volmdlr
 from volmdlr.primitives import RoundedLineSegments
 import math
 
-
+import matplotlib.pyplot as plt
 
 class RoundedLineSegments3D(volmdlr.Wire3D, RoundedLineSegments):
     def __init__(self, points, radius, closed=False, adapt_radius=False, name=''):        
@@ -77,6 +77,71 @@ class RoundedLineSegments3D(volmdlr.Wire3D, RoundedLineSegments):
         else:
             self.__init__([p.Translation(offset,copy=True) for p in self.points],self.radius,self.closed,self.name)
 
+class Sphere(volmdlr.Primitive3D):
+    def __init__(self,center,radius,name=''):
+        volmdlr.Primitive3D.__init__(self, name)
+        self.center = center
+        self.radius = radius
+        self.position = center
+    
+    def Volume(self):
+        return 4/3*math.pi*self.radius**3
+    
+    def FreeCADExport(self, ip, ndigits=3):
+        name = 'primitive'+str(ip)
+        r = 1000*self.radius
+        x, y, z = npy.round(1000*self.center.vector, ndigits)
+        return '{} = Part.makeSphere({}, fc.Vector({}, {}, {}))\n'.format(name,r,x,y,z)
+    
+class Block(volmdlr.Primitive3D):
+    """
+    Creates a block
+    :param frame: a frame 3D. The origin of the frame is the center of the block,
+     the 3 vectors are defining the edges. The frame has not to be orthogonal
+    """
+    def __init__(self, frame, name=''):
+        self.frame = frame
+        self.size = (self.frame.u.Norm(), self.frame.v.Norm(), self.frame.w.Norm())
+        volmdlr.Primitive3D.__init__(self, name)
+    
+    def Vertices(self):
+        return [self.frame.origin - 0.5*self.frame.u - 0.5*self.frame.v - 0.5*self.frame.w,
+                self.frame.origin - 0.5*self.frame.u + 0.5*self.frame.v - 0.5*self.frame.w,
+                self.frame.origin + 0.5*self.frame.u + 0.5*self.frame.v - 0.5*self.frame.w,
+                self.frame.origin + 0.5*self.frame.u - 0.5*self.frame.v - 0.5*self.frame.w,
+                self.frame.origin - 0.5*self.frame.u - 0.5*self.frame.v + 0.5*self.frame.w,
+                self.frame.origin - 0.5*self.frame.u + 0.5*self.frame.v + 0.5*self.frame.w,
+                self.frame.origin + 0.5*self.frame.u + 0.5*self.frame.v + 0.5*self.frame.w,
+                self.frame.origin + 0.5*self.frame.u - 0.5*self.frame.v + 0.5*self.frame.w]
+                
+    
+    def Edges(self):
+        p1, p2, p3, p4, p5, p6, p7, p8 = self.Vertices()
+        return [volmdlr.LineSegment3D(p1, p2),
+                volmdlr.LineSegment3D(p2, p3),
+                volmdlr.LineSegment3D(p3, p4),
+                volmdlr.LineSegment3D(p4, p1),
+                volmdlr.LineSegment3D(p5, p6),
+                volmdlr.LineSegment3D(p6, p7),
+                volmdlr.LineSegment3D(p7, p8),
+                volmdlr.LineSegment3D(p8, p5),
+                volmdlr.LineSegment3D(p1, p5),
+                volmdlr.LineSegment3D(p2, p6),
+                volmdlr.LineSegment3D(p3, p7),
+                volmdlr.LineSegment3D(p4, p8)]
+        
+    def MPLPlot2D(self, x3D, y3D, ax=None):
+        if ax is None:
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
+        else:
+            fig = None
+        
+        for edge3D in self.Edges():
+#            edge2D = edge3D.PlaneProjection2D()
+            edge3D.MPLPlot2D(x3D, y3D, ax)
+        
+        return fig, ax
         
 class Cylinder(volmdlr.Primitive3D):
     def __init__(self, position, axis, radius, width, name=''):
@@ -238,24 +303,6 @@ class ExtrudedProfile(volmdlr.Primitive3D):
         coeff = npy.dot(self.extrusion_vector, z)
         
         return self.Area()*coeff
-        
-        
-
-class Sphere(volmdlr.Primitive3D):
-    def __init__(self,center,radius,name=''):
-        volmdlr.Primitive3D.__init__(self,name)
-        self.center = center
-        self.radius = radius
-        self.position = center
-    
-    def Volume(self):
-        return 4/3*math.pi*self.radius**3
-    
-    def FreeCADExport(self, ip, ndigits=3):
-        name = 'primitive'+str(ip)
-        r = 1000*self.radius
-        x, y, z = round(1000*self.center, ndigits)
-        return '{}=Part.makeSphere({},fc.Vector({},{},{}))\n'.format(name,r,x,y,z)
 
 
 class RevolvedProfile(volmdlr.Primitive3D):

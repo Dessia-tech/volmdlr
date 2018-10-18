@@ -10,7 +10,7 @@ import math
 import numpy as npy
 import matplotlib.pyplot as plt
 from matplotlib.patches import Arc
-from mpl_toolkits.mplot3d import axes3d, Axes3D 
+from mpl_toolkits.mplot3d import Axes3D 
 
 from .vmcy import PolygonPointBelongs
 
@@ -76,7 +76,10 @@ class Vector:
         return not npy.allclose(self.vector, other_vector.vector)
 
     def __eq__(self, other_vector):
-        return npy.allclose(self.vector, other_vector.vector)
+        try:
+            return npy.allclose(self.vector, other_vector.vector)
+        except AttributeError:
+            return False
 
     def __hash__(self):
         return int(1000*npy.sum(npy.round(self.vector,3)))
@@ -121,11 +124,14 @@ class Vector2D(Vector):
             self.vector=vector2
 
     def Translation(self, offset, copy=True):
-        vector2 = self.vector + offset
+        """
+        :param offset: an other Vector2D
+        """
+        vector2 = self.vector + offset.vector
         if copy:
             return self.__class__(vector2)
         else:
-            self.vector=vector2
+            self.vector = vector2
         
     def To3D(self,plane_origin, x1, x2):
         x, y = self.vector
@@ -294,12 +300,12 @@ class CompositePrimitive2D(Primitive2D):
                 p.Rotation(center,angle,copy=False)
             self.UpdateBasisPrimitives()
             
-    def Translation(self,offset,copy=False):
+    def Translation(self, offset, copy=False):
         if copy:
-            return self.__class__([p.Translation(offset,copy=True) for p in self.primitives])
+            return self.__class__([p.Translation(offset, copy=True) for p in self.primitives])
         else:
             for p in self.basis_primitives:
-                p.Translation(offset,copy=False)
+                p.Translation(offset, copy=False)
             self.UpdateBasisPrimitives()
     
     def To3D(self, plane_origin, x, y, name = None):
@@ -977,11 +983,21 @@ class Point3D(Vector3D):
     def MPLPlot(self, ax):
         ax.scatter(*self.vector)
         
-    def PlaneProjection(self, plane_origin, x, y):
-        z=npy.cross(x.vector,y.vector)
+    def PlaneProjection3D(self, plane_origin, x, y):
+        z = npy.cross(x.vector,y.vector)
         z = x.Cross(y)
         z /= z.Norm()
         return Point3D(self.vector-npy.dot(self.vector-plane_origin.vector,z)*z)
+
+    def PlaneProjection2D(self, x, y):
+        z = npy.cross(x.vector,y.vector)
+        z = x.Cross(y)
+        z.Normalize()
+        p3d = self - self.Dot(z)*z
+        u1 = p3d.Dot(x)
+        u2 = p3d.Dot(y)
+        return Point2D((u1, u2))
+
         
     def To2D(self, plane_origin, x, y):
         if npy.dot(x.vector, y.vector) != 0:
@@ -1110,12 +1126,19 @@ class LineSegment3D(Line3D):
     def Length(self):
         return self.points[1].PointDistance(self.points[0])
 
+    def PlaneProjection2D(self, x, y):
+        return LineSegment2D(self.points[0].PlaneProjection2D(x, y),
+                             self.points[1].PlaneProjection2D(x, y))
         
     def MPLPlot(self, ax):
         x=[p.vector[0] for p in self.points]
         y=[p.vector[1] for p in self.points]
         z=[p.vector[2] for p in self.points]
         ax.plot(x,y,z, 'o-k')
+        
+    def MPLPlot2D(self, x3D, y3D, ax):
+        edge2D =  self.PlaneProjection2D(x3D, y3D)
+        edge2D.MPLPlot(ax)
         
         
     def FreeCADExport(self, name, ndigits=6):
