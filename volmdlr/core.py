@@ -235,10 +235,10 @@ class Basis2D:
         return inv(self.TransfertMatrix())
         
     def NewCoordinates(self, vector):
-        return Vector2D(npy.dot(self.InverseTransfertMatrix(), vector))
+        return Vector2D(npy.dot(self.InverseTransfertMatrix(), vector.vector))
 
     def OldCoordinates(self, vector):
-        return Vector2D(npy.dot(self.TransfertMatrix(), vector))
+        return Vector2D(npy.dot(self.TransfertMatrix(), vector.vector))
     
 xy = Basis2D(x2D, y2D)
      
