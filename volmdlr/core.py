@@ -1012,7 +1012,6 @@ class Point3D(Vector3D):
 class Basis3D:
     """
     Defines a 3D basis
-    :param origin: origin of the basis
     :param u: first vector of the basis
     :param v: second vector of the basis
     :param w: third vector of the basis
@@ -1026,6 +1025,37 @@ class Basis3D:
     def __repr__(self):
         return '{}: U={}, V={}, W={}'.format(self.__class__.__name__, self.u, self.v, self.w)
 
+    def __contains__(self, vector):
+        return vector == self.u or vector == self.v or vector == self.w
+
+    def __eq__(self, other):
+        return self.u == other.u and self.v == other.v and self.w == other.w
+
+    def __hash__(self):
+        return hash((self.u, self.v, self.w))
+
+    def Rotation(self, axis, angle, copy=True):
+        center = Point3D((0, 0, 0))
+        if axis == self.u:
+            new_u = self.u
+            new_v = self.v.Rotation(center, axis, angle)
+            new_w = self.w.Rotation(center, axis, angle)
+        elif axis == self.v:
+            new_u = self.u.Rotation(center, axis, angle)
+            new_v = self.v
+            new_w = self.w.Rotation(center, axis, angle)
+        elif axis == self.w:
+            new_u = self.u.Rotation(center, axis, angle)
+            new_v = self.v.Rotation(center, axis, angle)
+            new_w = self.w
+        else:
+            raise NotImplementedError
+
+        if copy:
+            return Basis3D(new_u, new_v, new_w)
+        self.u = new_u
+        self.v = new_v
+        self.w = new_w
         
     def TransfertMatrix(self):
         return npy.array([[self.u[0], self.v[0], self.w[0]],
@@ -1037,10 +1067,10 @@ class Basis3D:
         return inv(self.TransfertMatrix())
 
     def NewCoordinates(self, vector):
-        return Vector3D(npy.dot(self.InverseTransfertMatrix(), vector.vector))
+        return vector.__class__(npy.dot(self.InverseTransfertMatrix(), vector.vector))
 
     def OldCoordinates(self, vector):
-        return Vector3D(npy.dot(self.TransfertMatrix(), vector.vector))
+        return vector.__class__(npy.dot(self.TransfertMatrix(), vector.vector))
 
         
 xyz = Basis3D(x3D, y3D, z3D)
