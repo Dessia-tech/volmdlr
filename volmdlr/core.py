@@ -194,6 +194,7 @@ class Point2D(Vector2D):
             else:
                 return (cls(p11+t[0]*(p12-p11)),t[0],t[1])
         except LinAlgError:
+            # Parallel lines            
             return None
         
     @classmethod
@@ -487,6 +488,9 @@ class Mesh2D:
         return s
 
 class Line:
+    def __neg__(self):
+        return self.__class__(self.points[::-1])
+    
     def DirectionVector(self, unit=False):
         u = self.points[1] - self.points[0]
         if unit:
@@ -539,13 +543,13 @@ class Line2D(Primitive2D, Line):
             return projection,t
         return projection
     
-    def MPLPlot(self, ax):
+    def MPLPlot(self, ax, style='-k', linestyle = '-.'):
         p1, p2 = self.points
         u = p2 - p1
-        plt.plot([p1[0], p2[0]], [p1[1], p2[1]], 'ok')        
+        plt.plot([p1[0], p2[0]], [p1[1], p2[1]], style)        
         p3 = p1 - 3* u
         p4 = p2 + 4*u
-        ax.plot([p3[0], p4[0]], [p3[1], p4[1]], '-k', linestyle = '-.')        
+        ax.plot([p3[0], p4[0]], [p3[1], p4[1]], style, linestyle = linestyle)        
         return []
 
 class LineSegment2D(Line2D):
