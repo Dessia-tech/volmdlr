@@ -672,20 +672,17 @@ class Arc2D(Primitive2D):
             else:
                 self.angle = angle2 - angle1 
 
-#        if self.angle1 < 0:
-#            a1 = self.angle1 + 2* math.pi
-#        else:
-#            a1 = self.angle1
-#        if self.angle2 < 0:
-#            a2 = self.angle2 + 2* math.pi
-#        else:
-#            a2 = self.angle2
+    def _get_points(self):
+        return [self.start,self.interior,self.end]
+
+    points=property(_get_points)      
         
         
     def _get_geo_points(self):
-        return [self.start,self.center,self.end]
+        return [self.start,self.interior,self.end]
 
-    geo_points=property(_get_geo_points)        
+    geo_points=property(_get_geo_points)    
+
     
     def Length(self):
         return self.radius * abs(self.angle)
@@ -1004,7 +1001,7 @@ class Point3D(Vector3D):
 
         
     def To2D(self, plane_origin, x, y):
-        if npy.dot(x.vector, y.vector) != 0:
+        if x.Dot(y) > 1e-8:
             raise NotImplementedError
         x2d = npy.dot(self.vector, x.vector) - npy.dot(plane_origin.vector, x.vector)
         y2d = npy.dot(self.vector, y.vector) - npy.dot(plane_origin.vector, y.vector)
@@ -1210,9 +1207,14 @@ class Arc3D(Primitive3D):
        
         u1 = (self.interior - self.start)
         u2 = (self.interior - self.end)
-        n = u1.Cross(u2)
-        v1 = u1.Cross(n)
-        v2 = u2.Cross(n)
+        u1.Normalize()
+        u2.Normalize()
+
+        n = u2.Cross(u1)
+        n.Normalize()
+        self.normal = n
+        v1 = n.Cross(u1)# v1 is normal
+        v2 = n.Cross(u2)
 
         p11 = 0.5 * (start + interior)# Mid point of segment s,m
         p12 = p11 + v1
@@ -1225,20 +1227,56 @@ class Arc3D(Primitive3D):
         c1, c2 = l1.MinimumDistancePoints(l2)
         self.center = c1
         self.radius = (self.center - self.start).Norm()
-        self.angle = math.atan((self.center - self.start).Norm() / self.radius)
+        
+        # Determining angle
+
+        r1 = (self.start).To2D(self.center, u1, v1)
+        r2 = (self.end).To2D(self.center, u1, v1)
+        ri = (self.interior).To2D(self.center, u1, v1)
+        
+        angle1 = npy.arctan2(r1.vector[1], r1.vector[0])
+        angle2 = npy.arctan2(r2.vector[1], r2.vector[0])
+        
+        anglei = npy.arctan2(ri.vector[1], ri.vector[0])
+        order = [y for x, y in sorted(zip([angle1, anglei, angle2], [0, 1, 2]))]
+        order = order*2
+        i = order.index(0)
+        if order[i+1] == 1:
+            # Trigo wise angle should be plus
+            self.angle1 = angle1
+            self.angle2 = angle2
+            if angle1 > angle2:
+                self.angle = angle2 - angle1 + 2 * math.pi
+            else:
+                self.angle = angle2 - angle1
+#            self.angle = abs(self.angle2 - self.angle1)
+        else:
+            # Clock wise
+            self.angle1 = angle2
+            self.angle2 = angle1
+            if angle1 < angle2:
+                self.angle = -(angle2 - angle1 + 2 * math.pi)
+            else:
+                self.angle = -(angle2 - angle1) 
+        
+    def _get_points(self):
+        return [self.start,self.interior,self.end]
+
+    points=property(_get_points) 
         
     def Length(self):
-        return self.radius * self.angle
+        return self.radius * abs(self.angle)
 
     def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
-        u = self.start - self.center
-        v = self.end - self.center
-        w = u.Cross(v)
-        w.Normalize()
-        return self.start.Rotation(self.center, w, curvilinear_abscissa/self.radius)
+        return self.start.Rotation(self.center, self.normal, curvilinear_abscissa/self.radius)
         
-    def MPLPlot(self, ax):
-        # TODO: there's a bug. Maybe in rotation?
+    def MPLPlot(self, ax=None):
+        if ax is None:
+            fig = plt.figure()
+            ax = Axes3D(fig)
+        else:
+            fig = None
+
         ax.scatter(*self.center.vector,c='b')
         ax.scatter(*self.start.vector,c='r')
         ax.scatter(*self.end.vector,c='r')
@@ -1254,7 +1292,19 @@ class Arc3D(Primitive3D):
             z.append(p[2])
             
         ax.plot(x, y, z, 'k')
-    
+        
+    def MPLPlot2D(self, x3d, y3D, ax, style='-k'):
+        # TODO: Enhance this plot
+        l = self.Length()
+        x = []
+        y = []
+        for i in range(30):
+            p = self.PointAtCurvilinearAbscissa(i/(29.)*l)
+            xi, yi = p.PlaneProjection2D(x3D, y3D)
+            x.append(xi)
+            y.append(yi)
+        ax.plot(x, y, style)
+        
     def FreeCADExport(self, name, ndigits=6):
         xs, ys, zs = npy.round(1000*self.start.vector, ndigits)
         xm, ym, zm = npy.round(1000*self.interior.vector, ndigits)
