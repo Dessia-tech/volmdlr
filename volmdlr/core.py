@@ -89,6 +89,14 @@ class Vector:
         Normalize the vector modifying it's coordinate
         """
         self.vector /= self.Norm()
+        
+    def Dict(self):
+        d = {'vector': [i for i in self.vector]}
+        return d
+
+    @classmethod
+    def DictToObject(cls, dict_):
+        return cls(dict_['vector'])
 
 
 class Vector2D(Vector):
@@ -138,6 +146,7 @@ class Vector2D(Vector):
         if unit:
             n.Normalize()
         return n
+    
     
 o2D = Vector2D((0, 0))
 x2D = Vector2D((1, 0))
@@ -905,6 +914,15 @@ class Polygon2D(CompositePrimitive2D):
             if d<d_min:
                 d_min=d
         return d_min
+    
+    def Dict(self):
+        d = {'points': [point.Dict() for point in self.points], 'name':self.name}
+        return d
+
+    @classmethod
+    def DictToObject(cls, dict_):
+        return cls([Point2D.DictToObject(p) for p in dict_['points']], name=dict_['name'])
+
                 
 
 class Primitive3D:
@@ -1028,10 +1046,10 @@ class Basis3D:
         return inv(self.TransfertMatrix())
 
     def NewCoordinates(self, vector):
-        return Vector3D(npy.dot(self.InverseTransfertMatrix(), vector.vector))
+        return Point3D(npy.dot(self.InverseTransfertMatrix(), vector.vector))
 
     def OldCoordinates(self, vector):
-        return Vector3D(npy.dot(self.TransfertMatrix(), vector.vector))
+        return Point3D(npy.dot(self.TransfertMatrix(), vector.vector))
 
         
 xyz = Basis3D(x3D, y3D, z3D)
