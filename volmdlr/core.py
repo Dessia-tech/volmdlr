@@ -304,7 +304,7 @@ class CompositePrimitive2D(Primitive2D):
         primitives3D = [p.To3D(plane_origin, x, y) for p in self.primitives]
         return CompositePrimitive3D(primitives3D, name)
         
-    def MPLPlot(self, ax = None, style='-k'):
+    def MPLPlot(self, ax = None, style='-k', arrow=False, width=None):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -312,7 +312,10 @@ class CompositePrimitive2D(Primitive2D):
             fig = None
             
         for element in self.basis_primitives:
-            element.MPLPlot(ax, style)
+            if element.__class__.__name__=='LineSegment2D':
+                element.MPLPlot(ax, style, arrow, width)
+            else:
+                element.MPLPlot(ax, style)
 
         ax.margins(0.1)
         plt.show() 
@@ -584,9 +587,24 @@ class LineSegment2D(Line2D):
         else:
             return point
         
-    def MPLPlot(self, ax, style='-k'):
+    def MPLPlot(self, ax, style='-k', arrow=False, width=None):
         p1, p2 = self.points
-        ax.plot([p1[0], p2[0]], [p1[1], p2[1]], style)        
+        if arrow:
+            ax.plot([p1[0], p2[0]], [p1[1], p2[1]], style)
+            length = ((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)**0.5
+            if width is None:
+                width = length / 1000.
+                head_length = length/20.
+                head_width = head_length/2.
+            else:
+                head_width = 2*width
+                head_length = head_width
+            ax.arrow(p1[0], p1[1], (p2[0] - p1[0])/length*(length - head_length), 
+                     (p2[1] - p1[1])/length*(length - head_length), 
+                     head_width = head_width, fc = 'b', linewidth = 0,
+                     head_length = head_length, width = width, alpha = 0.3)
+        else:
+            ax.plot([p1[0], p2[0]], [p1[1], p2[1]], style)
         return []
     
     def To3D(self, plane_origin, x1, x2):
