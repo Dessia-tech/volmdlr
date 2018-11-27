@@ -433,7 +433,42 @@ class Contour2D(Wire2D):
                 A+=arc.SecondMomentArea(point)
         return A
     
-    
+    def PlotData(self):
+        plot_data = []
+        for item in self.basis_primitives:
+            if 'LineSegment2D' in str(item.__class__):
+                plot_data.append({'type' : 'line',
+                            'data' : [item.points[0].vector[0], item.points[0].vector[1], 
+                                      item.points[1].vector[0], item.points[1].vector[1]],
+                            'color' : (0,0,0),
+                            'marker' : None,
+                            'stroke_width' : 1 })
+            if 'Arc2D' in str(item.__class__):
+                list_node = item.DiscretArc2D()
+                data = []
+                for nd in list_node:
+                    data.append({'x': nd.vector[0], 'y': nd.vector[1]})
+                plot_data.append({'type' : 'arc',
+                            'cx' : item.center.vector[0],
+                            'cy' : item.center.vector[1],
+                            'data' : data,
+                            'r' : item.radius,
+                            'color' : [0, 0, 0],
+                            'size' : 1,
+                            'group' : 3,
+                            'dash' : 'none',
+                            'angle1' : item.angle1,
+                            'angle2' : item.angle2, })
+            if 'Circle2D' in str(item.__class__):
+                plot_data.append({'type' : 'circle',
+                                  'cx' : item.center.vector[0],
+                                  'cy' : item.center.vector[1],
+                                  'r' : item.radius,
+                                  'color' : [0, 0, 0],
+                                  'size' : 1,
+                                  'group' : 3,
+                                  'dash' : 'none',})
+        return plot_data
 
 
 class Mesh2D:
@@ -766,7 +801,18 @@ class Arc2D(Primitive2D):
         Ic=npy.array([[Ix,Ixy],[Ixy,Iy]])
         return geometry.Huygens2D(Ic, self.Area(), self.center, point)
 
-
+    def DiscretArc2D(self, num=4):
+        list_node = []
+        
+        delta_angle = abs(self.angle) % (2*npy.pi)
+        print(self.angle, self.angle1, self.angle1, self.angle1 + delta_angle + 1e-10, delta_angle/(num*1.))
+        for angle in npy.arange(self.angle1, self.angle1 + delta_angle + 1e-10, delta_angle/(num*1.)):
+            list_node.append(Point2D(self.center + self.radius*Vector2D((npy.cos(angle), npy.sin(angle)))))
+        if self.angle < 0:
+            list_node.append(self.start)
+        else:
+            list_node.append(self.end)
+        return list_node
 
 class Circle2D(Primitive2D):
     def __init__(self,center,radius,name=''):        
