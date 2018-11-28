@@ -448,41 +448,14 @@ class Contour2D(Wire2D):
                 A+=arc.SecondMomentArea(point)
         return A
     
-    def PlotData(self):
-        plot_data = []
+    def PlotData(self, name, fill=None, color=(0, 0, 0), stroke_width=0.2):
+        plot_data = {}
+        plot_data['fill'] = fill
+        plot_data['name'] = name
+        plot_data['type'] = 'contour'
+        plot_data['plot_data'] = []
         for item in self.basis_primitives:
-            if 'LineSegment2D' in str(item.__class__):
-                plot_data.append({'type' : 'line',
-                            'data' : [item.points[0].vector[0], item.points[0].vector[1], 
-                                      item.points[1].vector[0], item.points[1].vector[1]],
-                            'color' : (0,0,0),
-                            'marker' : None,
-                            'stroke_width' : 1 })
-            if 'Arc2D' in str(item.__class__):
-                list_node = item.DiscretArc2D()
-                data = []
-                for nd in list_node:
-                    data.append({'x': nd.vector[0], 'y': nd.vector[1]})
-                plot_data.append({'type' : 'arc',
-                            'cx' : item.center.vector[0],
-                            'cy' : item.center.vector[1],
-                            'data' : data,
-                            'r' : item.radius,
-                            'color' : [0, 0, 0],
-                            'size' : 1,
-                            'group' : 3,
-                            'dash' : 'none',
-                            'angle1' : item.angle1,
-                            'angle2' : item.angle2, })
-            if 'Circle2D' in str(item.__class__):
-                plot_data.append({'type' : 'circle',
-                                  'cx' : item.center.vector[0],
-                                  'cy' : item.center.vector[1],
-                                  'r' : item.radius,
-                                  'color' : [0, 0, 0],
-                                  'size' : 1,
-                                  'group' : 3,
-                                  'dash' : 'none',})
+            plot_data['plot_data'].append(item.PlotData(color = color, stroke_width = stroke_width))
         return plot_data
 
 
@@ -679,6 +652,13 @@ class LineSegment2D(Line2D):
         s='Line({}) = {{{}, {}}};\n'.format(primitive_index,*points_indices)
         return s,primitive_index+1
                 
+    def PlotData(self, marker=None, color=(0,0,0), stroke_width=1):
+        return {'type' : 'line',
+                'data' : [self.points[0].vector[0], self.points[0].vector[1], 
+                          self.points[1].vector[0], self.points[1].vector[1]],
+                'color' : color,
+                'marker' : marker,
+                'stroke_width' : stroke_width }
 
                 
 class Arc2D(Primitive2D):
@@ -816,18 +796,38 @@ class Arc2D(Primitive2D):
         Ic=npy.array([[Ix,Ixy],[Ixy,Iy]])
         return geometry.Huygens2D(Ic, self.Area(), self.center, point)
 
-    def DiscretArc2D(self, num=4):
+    def Discret(self, num=10):
         list_node = []
-        
-        delta_angle = abs(self.angle) % (2*npy.pi)
-        print(self.angle, self.angle1, self.angle1, self.angle1 + delta_angle + 1e-10, delta_angle/(num*1.))
-        for angle in npy.arange(self.angle1, self.angle1 + delta_angle + 1e-10, delta_angle/(num*1.)):
-            list_node.append(Point2D(self.center + self.radius*Vector2D((npy.cos(angle), npy.sin(angle)))))
-        if self.angle < 0:
-            list_node.append(self.start)
+        if (self.angle1 < 0) and (self.angle2 > 0):
+            delta_angle = -self.angle1 + self.angle2
+        elif (self.angle1 > 0) and (self.angle2 < 0):
+            delta_angle =  (2*npy.pi + self.angle2) - self.angle1
         else:
-            list_node.append(self.end)
-        return list_node
+            delta_angle = self.angle2 - self.angle1
+        for angle in npy.arange(self.angle1, self.angle1 + delta_angle, delta_angle/(num*1.)):
+            list_node.append(Point2D(self.center + self.radius*Vector2D((npy.cos(angle), npy.sin(angle)))))
+        list_node.append(Point2D(self.center + self.radius*Vector2D((npy.cos(self.angle1 + delta_angle), npy.sin(self.angle1 + delta_angle)))))
+        if list_node[0] == self.start:
+            return list_node
+        else:
+            return list_node[::-1]
+    
+    def PlotData(self, marker=None, color=(0,0,0), stroke_width=1):
+        list_node = self.Discret()
+        data = []
+        for nd in list_node:
+            data.append({'x': nd.vector[0], 'y': nd.vector[1]})
+        return {'type' : 'arc',
+                    'cx' : self.center.vector[0],
+                    'cy' : self.center.vector[1],
+                    'data' : data,
+                    'r' : self.radius,
+                    'color' : color,
+                    'size' : stroke_width,
+                    'dash' : None,
+                    'marker' : marker,
+                    'angle1' : self.angle1,
+                    'angle2' : self.angle2, }
 
 class Circle2D(Primitive2D):
     def __init__(self,center,radius,name=''):        
@@ -887,6 +887,15 @@ class Circle2D(Primitive2D):
     
     def CenterOfMass(self):
         return self.center
+    
+    def PlotData(self, marker=None, color=(0,0,0), stroke_width=1):
+        return {'type' : 'circle',
+                  'cx' : self.center.vector[0],
+                  'cy' : self.center.vector[1],
+                  'r' : self.radius,
+                  'color' : color,
+                  'size' : stroke_width,
+                  'dash' : None,}
 
 class Polygon2D(CompositePrimitive2D):
     # TODO: inherit from contour?
@@ -987,7 +996,16 @@ class Polygon2D(CompositePrimitive2D):
     def DictToObject(cls, dict_):
         return cls([Point2D.DictToObject(p) for p in dict_['points']], name=dict_['name'])
 
-                
+    def PlotData(self, marker=None, color=(0,0,0), stroke_width=1):
+        data = []
+        for nd in self.points:
+            data.append({'x': nd.vector[0], 'y': nd.vector[1]})
+        return {'type' : 'path',
+                    'data' : data,
+                    'color' : color,
+                    'size' : stroke_width,
+                    'dash' : None,
+                    'marker' : marker,}
 
 class Primitive3D:
     def __init__(self, name=''):
