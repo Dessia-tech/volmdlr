@@ -796,7 +796,7 @@ class Arc2D(Primitive2D):
         Ic=npy.array([[Ix,Ixy],[Ixy,Iy]])
         return geometry.Huygens2D(Ic, self.Area(), self.center, point)
 
-    def Discret(self, num=10):
+    def Discretise(self, num=10):
         list_node = []
         if (self.angle1 < 0) and (self.angle2 > 0):
             delta_angle = -self.angle1 + self.angle2
@@ -813,7 +813,7 @@ class Arc2D(Primitive2D):
             return list_node[::-1]
     
     def PlotData(self, marker=None, color=(0,0,0), stroke_width=1):
-        list_node = self.Discret()
+        list_node = self.Discretise()
         data = []
         for nd in list_node:
             data.append({'x': nd.vector[0], 'y': nd.vector[1]})

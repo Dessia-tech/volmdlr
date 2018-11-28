@@ -66,18 +66,18 @@ class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
     def Rotation(self, center, angle, copy=True):
         if copy:
             return RoundedLineSegments2D([p.Rotation(center,angle,copy=True) for p in self.points],
-                                          self.radius, self.closed, adapt_radius =True, name = self.name)
+                                          self.radius, self.closed, adapt_radius =self.adapt_radius, name = self.name)
         else:
             self.__init__([p.Rotation(center,angle,copy=True) for p in self.points],
-                           self.radius, self.closed, adapt_radius =True, name = self.name)
+                           self.radius, self.closed, adapt_radius=self.adapt_radius, name = self.name)
             
     def Translation(self, offset, copy=True):
         if copy:
             return RoundedLineSegments2D([p.Translation(offset, copy=True) for p in self.points],
-                                          self.radius, self.closed, adapt_radius =True, name = self.name)
+                                          self.radius, self.closed, adapt_radius=self.adapt_radius, name = self.name)
         else:
             self.__init__([p.Translation(offset,copy=True) for p in self.points],
-                           self.radius, self.closed, adapt_radius =True, name = self.name)
+                           self.radius, self.closed, adapt_radius =self.adapt_radius, name = self.name)
 
 #    def Offset(self, offset):
 #        '''
