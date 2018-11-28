@@ -8,11 +8,8 @@ Created on Tue Feb 28 14:08:23 2017
 import numpy as npy
 import os
 
-import volmdlr
-import math
-import subprocess
 
-class NodeGroupCylinder:
+class CylinderNodeGroup:
     def __init__(self, name, mesh, point, normal, radius, inside=True):
         self.point = point
         self.normal = normal
@@ -24,7 +21,8 @@ class NodeGroupCylinder:
         else:
             self.radius = radius
             self.precision = radius/100.
-    def ExportCodeAster(self, a=None):
+            
+    def CodeAsterExport(self, a=None):
         char = '''DEFI_GROUP( reuse  = {}, MAILLAGE = {},
             CREA_GROUP_NO = _F(NOM ='{}', OPTION = 'ENV_CYLINDRE',
             POINT = {}, VECT_NORMALE = {}, RAYON = {}, PRECISION = {},),); \n \n''' \
@@ -35,14 +33,15 @@ class NodeGroupCylinder:
         else:
             return char
     
-class NodeGroupPlan:
+class PlanarNodeGroup:
     def __init__(self, name, mesh, point, normal):
         self.point = point
         self.normal = normal
         self.name = name
         self.mesh = mesh
         self.precision = 0.0001
-    def ExportCodeAster(self, a=None):
+        
+    def CodeAsterExport(self, a=None):
         char = '''DEFI_GROUP( reuse  = {}, MAILLAGE = {},
             CREA_GROUP_NO = _F(NOM = '{}', OPTION = 'PLAN',
             POINT = {}, VECT_NORMALE = {}, PRECISION = {},),); \n \n''' \
@@ -59,7 +58,8 @@ class NodeGroupAssembly:
         self.mesh = mesh
         self.typ = typ
         self.list_node_group = list_node_group
-    def ExportCodeAster(self, a=None):
+        
+    def CodeAsterExport(self, a=None):
         if self.typ == 'diff':
             char = '''DEFI_GROUP( reuse  = {}, MAILLAGE = {},
                 CREA_GROUP_NO = _F(NOM = '{}', DIFFE = {},),); \n \n''' \
@@ -80,7 +80,7 @@ class NodeGroupAssembly:
         else:
             return char
         
-class NodeGroupLimitPlan:
+class LimitedPlaneNodeGroup:
     def __init__(self, name, mesh, point, normal, list_dir, list_length):
         self.point = point
         self.normal = normal
@@ -89,7 +89,7 @@ class NodeGroupLimitPlan:
         self.precision = 0.0001
         self.list_node_group = []
         list_intersec = []
-        self.list_node_group.append(NodeGroupPlan(name = self.name + '_0', mesh = self.mesh,
+        self.list_node_group.append(PlanarNodeGroup(name = self.name + '_0', mesh = self.mesh,
                                                   point = self.point, normal = self.normal))
         list_intersec.append(self.list_node_group[-1])
         compt = 1
@@ -98,7 +98,7 @@ class NodeGroupLimitPlan:
             normal1 = tuple(npy.cross(normal, list_dir[i]))
             radius1 = abs(list_length[i][1]/2.)
             point1 = tuple(point + npy.array(list_dir[i])*list_length[i][1]/2.)
-            self.list_node_group.append(NodeGroupCylinder(name = self.name + '_' + str(compt),
+            self.list_node_group.append(CylinderNodeGroup(name = self.name + '_' + str(compt),
                                                           mesh = self.mesh, point = point1, 
                                                           normal = normal1, radius = radius1))
             compt += 1
@@ -106,7 +106,7 @@ class NodeGroupLimitPlan:
             normal2 = tuple(npy.cross(normal, list_dir[i]))
             radius2 = abs(list_length[i][0]/2.)
             point2 = tuple(point + npy.array(list_dir[i])*list_length[i][0]/2.)
-            self.list_node_group.append(NodeGroupCylinder(name = self.name + '_' + str(compt),
+            self.list_node_group.append(CylinderNodeGroup(name = self.name + '_' + str(compt),
                                                           mesh = self.mesh, point = point2, 
                                                           normal = normal2, radius = radius2))
             compt += 1
@@ -120,15 +120,15 @@ class NodeGroupLimitPlan:
                                                       mesh = self.mesh, typ = 'intersec', 
                                                       list_node_group = list_intersec))
         
-    def ExportCodeAster(self, a=None):
+    def CodeAsterExport(self, a=None):
         if a is None:
             export = []
             for nd_group in self.list_node_group:
-                export.append(nd_group.ExportCodeAster())
+                export.append(nd_group.CodeAsterExport())
             return export
         else:
             for nd_group in self.list_node_group:
-                nd_group.ExportCodeAster(a)
+                nd_group.CodeAsterExport(a)
                 
 class Mesh:
     def __init__(self, name, file_name_CAD, file_name_mesh=None, 
@@ -142,7 +142,7 @@ class Mesh:
         self.gmsh_path = gmsh_path
         self.GenereMesh()
         
-    def ExportCodeAster(self, a=None):
+    def CodeAsterExport(self, a=None):
         char = '''PRE_GMSH(); \n
 {} = LIRE_MAILLAGE(FORMAT = "ASTER",); \n \n'''.format(self.name)
         if a is None:
@@ -177,7 +177,7 @@ class Material:
         self.nu = nu
         self.rho = rho
         
-    def ExportCodeAster(self, a=None):
+    def CodeAsterExport(self, a=None):
         char = '''{} = DEFI_MATERIAU(ELAS = _F(E = {},
                           NU = {},
                           RHO = {},),); \n
@@ -195,7 +195,7 @@ class Model:
     def __init__(self, name, mesh):
         self.name = name
         self.mesh = mesh
-    def ExportCodeAster(self, a=None):
+    def CodeAsterExport(self, a=None):
         char = '''{} = AFFE_MODELE(MAILLAGE = {},
                    AFFE = _F(TOUT = 'OUI',
                            PHENOMENE = 'MECANIQUE',
@@ -214,7 +214,7 @@ class BoundaryCondition:
         self.displacement = displacement
         self.modele = modele
         
-    def ExportCodeAster(self, a=None):
+    def CodeAsterExport(self, a=None):
         char_ddl = ''
         for D, val in self.displacement.items():
             if val is not None:
@@ -235,7 +235,7 @@ class MecaStat:
         self.material = material
         self.boundary = boundary
         
-    def ExportCodeAster(self, a=None):
+    def CodeAsterExport(self, a=None):
         char_bound = ''
         for bound in self.boundary:
             char_bound += '_F(CHARGE = {},), '.format(bound.name)
@@ -253,7 +253,7 @@ class ResultAnalysis:
         self.typ = typ
         self.group_no = group_no
     
-    def ExportCodeAster(self, a=None):
+    def CodeAsterExport(self, a=None):
         char = '''{} = CALC_CHAMP(reuse = {},
                        RESULTAT = {},
                        FORCE = '{}',);
@@ -294,69 +294,69 @@ class CodeAster:
         self.analysis = analysis
         
     def GenerateCodeAsterFiles(self, path_code_aster):
-        a = open(self.file_name + '.export', 'w')
-        actual_path = os.getcwd()
-        
-        a.write('P actions make_etude\n')
-        a.write('P aster_root {} \n'.format(path_code_aster))
-        a.write('P consbtc oui\n')
-        a.write('P corefilesize unlimited\n')
-        a.write('P cpresok RESNOOK\n')
-        a.write('P debug nodebug\n')
-        a.write('P facmtps 1\n')
-        a.write('P lang en\n')
-        a.write('P memjob 524288\n')
-        a.write('P memory_limit 1024.0\n')
-        a.write('P mode interactif\n')
-        a.write('P mpi_nbcpu 1\n')
-        a.write('P mpi_nbnoeud 1\n')
-        a.write('P nbmaxnook 5\n')
-        a.write('P protocol_copyfrom asrun.plugins.server.SCPServer\n')
-        a.write('P protocol_copyto asrun.plugins.server.SCPServer\n')
-        a.write('P protocol_exec asrun.plugins.server.SSHServer\n')
-        a.write('P soumbtc oui\n')
-        a.write('P time_limit 900.0\n')
-        a.write('P tpsjob 16\n')
-        a.write('P version stable\n')
-        a.write('A args\n')
-        a.write('A memjeveux 64.0\n')
-        a.write('A tpmax 900.0\n')
-        
-        a.write('F msh {}/{} D 19\n'.format(actual_path, self.mesh.file_name_mesh))
-        a.write('F comm {}/{}.comm D 1\n'.format(actual_path, self.file_name))
-        a.write('F resu {}/{}.resu R 8\n'.format(actual_path, self.file_name))
-        a.write('F pos {}/{}.pos R 37\n'.format(actual_path, self.file_name))
-        a.write('F mess {}/{}.mess R 6\n'.format(actual_path, self.file_name))
-        a.write('F pos {}/{}_R.pos R 4\n'.format(actual_path, self.file_name))
-        
-        a.close()
-        
-    def ExportCodeAster(self):
-        
-        a = open(self.file_name + '.comm', 'w')
-        a.write('DEBUT() \n \n')
-        self.mesh.ExportCodeAster(a)
-        for ng in self.node_group:
-            ng.ExportCodeAster(a)
-        self.modele.ExportCodeAster(a)
-        self.material.ExportCodeAster(a)
-        for bd in self.boundary:
-            bd.ExportCodeAster(a)
-        self.simulation.ExportCodeAster(a)
-        for analyze in self.analysis:
-            analyze.ExportCodeAster(a)
+        with open(self.file_name + '.export', 'w') as a:
+            actual_path = os.getcwd()
             
-#        char = '''IMPR_RESU(FORMAT='GMSH',
-#          {}=_F(MAILLAGE={},
-#                  RESULTAT={},
-#                  NOM_CHAM='DEPL',),); \n \n'''.format(self.simulation.name,
-#          self.mesh.name, self.simulation.name)
-#        a.write(char)
-        a.write('FIN(); \n')
-        a.close()
+            a.write('P actions make_etude\n')
+            a.write('P aster_root {} \n'.format(path_code_aster))
+            a.write('P consbtc oui\n')
+            a.write('P corefilesize unlimited\n')
+            a.write('P cpresok RESNOOK\n')
+            a.write('P debug nodebug\n')
+            a.write('P facmtps 1\n')
+            a.write('P lang en\n')
+            a.write('P memjob 524288\n')
+            a.write('P memory_limit 1024.0\n')
+            a.write('P mode interactif\n')
+            a.write('P mpi_nbcpu 1\n')
+            a.write('P mpi_nbnoeud 1\n')
+            a.write('P nbmaxnook 5\n')
+            a.write('P protocol_copyfrom asrun.plugins.server.SCPServer\n')
+            a.write('P protocol_copyto asrun.plugins.server.SCPServer\n')
+            a.write('P protocol_exec asrun.plugins.server.SSHServer\n')
+            a.write('P soumbtc oui\n')
+            a.write('P time_limit 900.0\n')
+            a.write('P tpsjob 16\n')
+            a.write('P version stable\n')
+            a.write('A args\n')
+            a.write('A memjeveux 64.0\n')
+            a.write('A tpmax 900.0\n')
+            
+            a.write('F msh {}/{} D 19\n'.format(actual_path, self.mesh.file_name_mesh))
+            a.write('F comm {}/{}.comm D 1\n'.format(actual_path, self.file_name))
+            a.write('F resu {}/{}.resu R 8\n'.format(actual_path, self.file_name))
+            a.write('F pos {}/{}.pos R 37\n'.format(actual_path, self.file_name))
+            a.write('F mess {}/{}.mess R 6\n'.format(actual_path, self.file_name))
+            a.write('F pos {}/{}_R.pos R 4\n'.format(actual_path, self.file_name))
+            
+            a.close()
+        
+    def CodeAsterExport(self):
+        
+        with open(self.file_name + '.comm', 'w') as a:
+            a.write('DEBUT() \n \n')
+            self.mesh.CodeAsterExport(a)
+            for ng in self.node_group:
+                ng.CodeAsterExport(a)
+            self.modele.CodeAsterExport(a)
+            self.material.CodeAsterExport(a)
+            for bd in self.boundary:
+                bd.CodeAsterExport(a)
+            self.simulation.CodeAsterExport(a)
+            for analyze in self.analysis:
+                analyze.CodeAsterExport(a)
+                
+    #        char = '''IMPR_RESU(FORMAT='GMSH',
+    #          {}=_F(MAILLAGE={},
+    #                  RESULTAT={},
+    #                  NOM_CHAM='DEPL',),); \n \n'''.format(self.simulation.name,
+    #          self.mesh.name, self.simulation.name)
+    #        a.write(char)
+            a.write('FIN(); \n')
+            a.close()
         
     def Run(self, path_code_aster='/opt/aster', version_code_aster='13.4'):
-        self.ExportCodeAster()
+        self.CodeAsterExport()
         self.GenerateCodeAsterFiles(path_code_aster)
         
         actual_path = os.getcwd()
@@ -367,21 +367,21 @@ class CodeAster:
         
     def Read(self, analysis, axis):
         actual_path = os.getcwd()
-        a = open(actual_path + '/' + self.file_name + '_R.pos', 'r')
-        lines = a.readlines()
-        a.close()
-        for line in lines:
-            sp = line.split()
-            if sp[0] == 'INTITULE':
-                liste_var = sp
-            elif sp[0] == 'FORCE':
-                if axis == 'x':
-                    pos = liste_var.index('DX')
-                elif axis == 'y':
-                    pos = liste_var.index('DY')
-                elif axis == 'y':
-                    pos = liste_var.index('DZ')
-                return float(sp[pos])
+        with open(actual_path + '/' + self.file_name + '_R.pos', 'r') as a:
+            lines = a.readlines()
+            a.close()
+            for line in lines:
+                sp = line.split()
+                if sp[0] == 'INTITULE':
+                    liste_var = sp
+                elif sp[0] == 'FORCE':
+                    if axis == 'x':
+                        pos = liste_var.index('DX')
+                    elif axis == 'y':
+                        pos = liste_var.index('DY')
+                    elif axis == 'y':
+                        pos = liste_var.index('DZ')
+                    return float(sp[pos])
         
         
         
