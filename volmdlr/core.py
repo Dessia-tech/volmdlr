@@ -800,7 +800,7 @@ class Arc2D(Primitive2D):
         Ic=npy.array([[Ix,Ixy],[Ixy,Iy]])
         return geometry.Huygens2D(Ic, self.Area(), self.center, point)
 
-    def Discret(self, num=10):
+    def Discretise(self, num=10):
         list_node = []
         if (self.angle1 < 0) and (self.angle2 > 0):
             delta_angle = -self.angle1 + self.angle2
@@ -815,9 +815,9 @@ class Arc2D(Primitive2D):
             return list_node
         else:
             return list_node[::-1]
-    
-    def PlotData(self, marker=None, color='black', stroke_width=1, opacity=1):
-        list_node = self.Discret()
+
+    def PlotData(self, marker=None, color=(0,0,0), stroke_width=1, opacity=1):
+        list_node = self.Discretise()
         data = []
         for nd in list_node:
             data.append({'x': nd.vector[0], 'y': nd.vector[1]})
@@ -1450,7 +1450,7 @@ class VolumeModel:
         return fig, ax
     
     def FreeCADScript(self, fcstd_filepath,
-                      path_lib_freecad='/usr/lib/freecad/lib',
+                      freecad_lib_path='/usr/lib/freecad/lib',
                       export_types=['fcstd'],
                       save_to = ''):
         """
@@ -1460,11 +1460,11 @@ class VolumeModel:
         """
         fcstd_filepath = os.path.abspath(fcstd_filepath)
         fcstd_filepath = fcstd_filepath.replace('\\','\\\\')
-        path_lib_freecad = path_lib_freecad.replace('\\','\\\\')
+        freecad_lib_path = freecad_lib_path.replace('\\','\\\\')
         
         s=''
-        if path_lib_freecad != '':
-            s+="import sys\nsys.path.append('"+path_lib_freecad+"')\n"
+        if freecad_lib_path != '':
+            s+="import sys\nsys.path.append('"+freecad_lib_path+"')\n"
 
         s+="import math\nimport FreeCAD as fc\nimport Part\n\ndoc=fc.newDocument('doc')\n\n"
         
@@ -1504,7 +1504,7 @@ class VolumeModel:
     
     def FreeCADExport(self,fcstd_filepath,
                       python_path='python',
-                      path_lib_freecad='/usr/lib/freecad/lib', 
+                      freecad_lib_path='/usr/lib/freecad/lib', 
                       export_types=['fcstd']):
         """
         Export model to .fcstd FreeCAD standard
@@ -1514,18 +1514,19 @@ class VolumeModel:
             * on windows: something like C:\\\\Program Files\\\\FreeCAD X.XX\\\\bin\\\\python
             * on linux: python if installed by a dstribution package
         :param filepath: path of fcstd file (without extension)
-        :param path_lib_freecad: FreeCAD.so lib path (/usr/lib/freecad/lib in general)
+        :param freecad_lib_path: FreeCAD.so lib path (/usr/lib/freecad/lib in general)
 
         """
+        print(fcstd_filepath, python_path,freecad_lib_path,export_types)
         fcstd_filepath=os.path.abspath(fcstd_filepath)
         s=self.FreeCADScript(fcstd_filepath,
-                             path_lib_freecad = path_lib_freecad,
+                             freecad_lib_path = freecad_lib_path,
                              export_types = export_types)
         with tempfile.NamedTemporaryFile(suffix=".py",delete=False) as f:
             f.write(bytes(s,'utf8'))
 
         arg=f.name
-        output=subprocess.call([python_path,arg])
+        output=subprocess.call([python_path, arg])
 
         f.close()
         os.remove(f.name)
