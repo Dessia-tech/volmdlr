@@ -448,14 +448,14 @@ class Contour2D(Wire2D):
                 A+=arc.SecondMomentArea(point)
         return A
     
-    def PlotData(self, name, fill=None, color=(0, 0, 0), stroke_width=0.2):
+    def PlotData(self, name, fill=None, color='black', stroke_width=0.2, opacity=1):
         plot_data = {}
         plot_data['fill'] = fill
         plot_data['name'] = name
         plot_data['type'] = 'contour'
         plot_data['plot_data'] = []
         for item in self.basis_primitives:
-            plot_data['plot_data'].append(item.PlotData(color = color, stroke_width = stroke_width))
+            plot_data['plot_data'].append(item.PlotData(color = color, stroke_width = stroke_width, opacity = opacity))
         return plot_data
 
 
@@ -652,13 +652,17 @@ class LineSegment2D(Line2D):
         s='Line({}) = {{{}, {}}};\n'.format(primitive_index,*points_indices)
         return s,primitive_index+1
                 
-    def PlotData(self, marker=None, color=(0,0,0), stroke_width=1):
+    def PlotData(self, marker=None, color='black', stroke_width=1, dash=False, opacity=1, width=None):
         return {'type' : 'line',
                 'data' : [self.points[0].vector[0], self.points[0].vector[1], 
                           self.points[1].vector[0], self.points[1].vector[1]],
                 'color' : color,
                 'marker' : marker,
-                'stroke_width' : stroke_width }
+                'stroke_width' : stroke_width,
+                'dash' : dash,
+                'opacity' : opacity,
+                'width': width
+                }
 
                 
 class Arc2D(Primitive2D):
@@ -812,7 +816,7 @@ class Arc2D(Primitive2D):
         else:
             return list_node[::-1]
     
-    def PlotData(self, marker=None, color=(0,0,0), stroke_width=1):
+    def PlotData(self, marker=None, color='black', stroke_width=1, opacity=1):
         list_node = self.Discret()
         data = []
         for nd in list_node:
@@ -823,6 +827,7 @@ class Arc2D(Primitive2D):
                     'data' : data,
                     'r' : self.radius,
                     'color' : color,
+                    'opacity' : opacity,
                     'size' : stroke_width,
                     'dash' : None,
                     'marker' : marker,
@@ -888,12 +893,13 @@ class Circle2D(Primitive2D):
     def CenterOfMass(self):
         return self.center
     
-    def PlotData(self, marker=None, color=(0,0,0), stroke_width=1):
+    def PlotData(self, marker=None, color='black', stroke_width=1, opacity=1):
         return {'type' : 'circle',
                   'cx' : self.center.vector[0],
                   'cy' : self.center.vector[1],
                   'r' : self.radius,
                   'color' : color,
+                  'opacity' : opacity,
                   'size' : stroke_width,
                   'dash' : None,}
 
@@ -996,7 +1002,7 @@ class Polygon2D(CompositePrimitive2D):
     def DictToObject(cls, dict_):
         return cls([Point2D.DictToObject(p) for p in dict_['points']], name=dict_['name'])
 
-    def PlotData(self, marker=None, color=(0,0,0), stroke_width=1):
+    def PlotData(self, marker=None, color='black', stroke_width=1, opacity=1):
         data = []
         for nd in self.points:
             data.append({'x': nd.vector[0], 'y': nd.vector[1]})
@@ -1005,7 +1011,8 @@ class Polygon2D(CompositePrimitive2D):
                     'color' : color,
                     'size' : stroke_width,
                     'dash' : None,
-                    'marker' : marker,}
+                    'marker' : marker,
+                    'opacity' : opacity}
 
 class Primitive3D:
     def __init__(self, name=''):
