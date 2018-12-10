@@ -89,6 +89,14 @@ class Vector:
         Normalize the vector modifying it's coordinate
         """
         self.vector /= self.Norm()
+        
+    def Dict(self):
+        d = {'vector': [i for i in self.vector]}
+        return d
+
+    @classmethod
+    def DictToObject(cls, dict_):
+        return cls(dict_['vector'])
 
 
 class Vector2D(Vector):
@@ -142,6 +150,7 @@ class Vector2D(Vector):
         if unit:
             n.Normalize()
         return n
+    
     
 o2D = Vector2D((0, 0))
 x2D = Vector2D((1, 0))
@@ -315,7 +324,7 @@ class CompositePrimitive2D(Primitive2D):
         primitives3D = [p.To3D(plane_origin, x, y) for p in self.primitives]
         return CompositePrimitive3D(primitives3D, name)
         
-    def MPLPlot(self, ax = None):
+    def MPLPlot(self, ax = None, style='-k', arrow=False, width=None):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -323,8 +332,11 @@ class CompositePrimitive2D(Primitive2D):
             fig = None
             
         for element in self.basis_primitives:
-            element.MPLPlot(ax)
-        
+            if element.__class__.__name__=='LineSegment2D':
+                element.MPLPlot(ax, style, arrow, width)
+            else:
+                element.MPLPlot(ax, style)
+
         ax.margins(0.1)
         plt.show() 
         
@@ -441,7 +453,15 @@ class Contour2D(Wire2D):
                 A+=arc.SecondMomentArea(point)
         return A
     
-    
+    def PlotData(self, name, fill=None, color='black', stroke_width=0.2, opacity=1):
+        plot_data = {}
+        plot_data['fill'] = fill
+        plot_data['name'] = name
+        plot_data['type'] = 'contour'
+        plot_data['plot_data'] = []
+        for item in self.basis_primitives:
+            plot_data['plot_data'].append(item.PlotData(color = color, stroke_width = stroke_width, opacity = opacity))
+        return plot_data
 
 
 class Mesh2D:
@@ -598,9 +618,24 @@ class LineSegment2D(Line2D):
         else:
             return point
         
-    def MPLPlot(self, ax, style='-k'):
+    def MPLPlot(self, ax, style='-k', arrow=False, width=None):
         p1, p2 = self.points
-        ax.plot([p1[0], p2[0]], [p1[1], p2[1]], style)        
+        if arrow:
+            ax.plot([p1[0], p2[0]], [p1[1], p2[1]], style)
+            length = ((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)**0.5
+            if width is None:
+                width = length / 1000.
+                head_length = length/20.
+                head_width = head_length/2.
+            else:
+                head_width = 2*width
+                head_length = head_width
+            ax.arrow(p1[0], p1[1], (p2[0] - p1[0])/length*(length - head_length), 
+                     (p2[1] - p1[1])/length*(length - head_length), 
+                     head_width = head_width, fc = 'b', linewidth = 0,
+                     head_length = head_length, width = width, alpha = 0.3)
+        else:
+            ax.plot([p1[0], p2[0]], [p1[1], p2[1]], style)
         return []
     
     def To3D(self, plane_origin, x1, x2):
@@ -625,6 +660,17 @@ class LineSegment2D(Line2D):
         s='Line({}) = {{{}, {}}};\n'.format(primitive_index,*points_indices)
         return s,primitive_index+1
                 
+    def PlotData(self, marker=None, color='black', stroke_width=1, dash=False, opacity=1, width=None):
+        return {'type' : 'line',
+                'data' : [self.points[0].vector[0], self.points[0].vector[1], 
+                          self.points[1].vector[0], self.points[1].vector[1]],
+                'color' : color,
+                'marker' : marker,
+                'stroke_width' : stroke_width,
+                'dash' : dash,
+                'opacity' : opacity,
+                'width': width
+                }
 
                 
 class Arc2D(Primitive2D):
@@ -759,7 +805,39 @@ class Arc2D(Primitive2D):
         Ic=npy.array([[Ix,Ixy],[Ixy,Iy]])
         return geometry.Huygens2D(Ic, self.Area(), self.center, point)
 
+    def Discretise(self, num=10):
+        list_node = []
+        if (self.angle1 < 0) and (self.angle2 > 0):
+            delta_angle = -self.angle1 + self.angle2
+        elif (self.angle1 > 0) and (self.angle2 < 0):
+            delta_angle =  (2*npy.pi + self.angle2) - self.angle1
+        else:
+            delta_angle = self.angle2 - self.angle1
+        for angle in npy.arange(self.angle1, self.angle1 + delta_angle, delta_angle/(num*1.)):
+            list_node.append(Point2D(self.center + self.radius*Vector2D((npy.cos(angle), npy.sin(angle)))))
+        list_node.append(Point2D(self.center + self.radius*Vector2D((npy.cos(self.angle1 + delta_angle), npy.sin(self.angle1 + delta_angle)))))
+        if list_node[0] == self.start:
+            return list_node
+        else:
+            return list_node[::-1]
 
+    def PlotData(self, marker=None, color=(0,0,0), stroke_width=1, opacity=1):
+        list_node = self.Discretise()
+        data = []
+        for nd in list_node:
+            data.append({'x': nd.vector[0], 'y': nd.vector[1]})
+        return {'type' : 'arc',
+                    'cx' : self.center.vector[0],
+                    'cy' : self.center.vector[1],
+                    'data' : data,
+                    'r' : self.radius,
+                    'color' : color,
+                    'opacity' : opacity,
+                    'size' : stroke_width,
+                    'dash' : None,
+                    'marker' : marker,
+                    'angle1' : self.angle1,
+                    'angle2' : self.angle2, }
 
 class Circle2D(Primitive2D):
     def __init__(self,center,radius,name=''):        
@@ -785,7 +863,7 @@ class Circle2D(Primitive2D):
     
     def MPLPlot(self, ax, style='-k'):
         pc = self.center.vector
-        return [Arc(pc,2*self.radius,2*self.radius,angle=0,theta1=0,theta2=360,color='k')]
+        ax.add_patch(Arc(pc,2*self.radius,2*self.radius,angle=0,theta1=0,theta2=360,color='black'))
 
     def To3D(self, plane_origin, x, y):
         normal = Vector3D(npy.cross(x.vector, y.vector))
@@ -819,6 +897,16 @@ class Circle2D(Primitive2D):
     
     def CenterOfMass(self):
         return self.center
+    
+    def PlotData(self, marker=None, color='black', stroke_width=1, opacity=1):
+        return {'type' : 'circle',
+                  'cx' : self.center.vector[0],
+                  'cy' : self.center.vector[1],
+                  'r' : self.radius,
+                  'color' : color,
+                  'opacity' : opacity,
+                  'size' : stroke_width,
+                  'dash' : None,}
 
 class Polygon2D(CompositePrimitive2D):
     # TODO: inherit from contour?
@@ -910,7 +998,26 @@ class Polygon2D(CompositePrimitive2D):
             if d<d_min:
                 d_min=d
         return d_min
-                
+    
+    def Dict(self):
+        d = {'points': [point.Dict() for point in self.points], 'name':self.name}
+        return d
+
+    @classmethod
+    def DictToObject(cls, dict_):
+        return cls([Point2D.DictToObject(p) for p in dict_['points']], name=dict_['name'])
+
+    def PlotData(self, marker=None, color='black', stroke_width=1, opacity=1):
+        data = []
+        for nd in self.points:
+            data.append({'x': nd.vector[0], 'y': nd.vector[1]})
+        return {'type' : 'path',
+                    'data' : data,
+                    'color' : color,
+                    'size' : stroke_width,
+                    'dash' : None,
+                    'marker' : marker,
+                    'opacity' : opacity}
 
 class Primitive3D:
     def __init__(self, name=''):
@@ -1072,6 +1179,7 @@ class Basis3D:
 
     def OldCoordinates(self, vector):
         return vector.__class__(npy.dot(self.TransfertMatrix(), vector.vector))
+
 
         
 xyz = Basis3D(x3D, y3D, z3D)
@@ -1436,7 +1544,7 @@ class VolumeModel:
         return fig, ax
     
     def FreeCADScript(self, fcstd_filepath,
-                      path_lib_freecad='/usr/lib/freecad/lib',
+                      freecad_lib_path='/usr/lib/freecad/lib',
                       export_types=['fcstd'],
                       save_to = ''):
         """
@@ -1446,11 +1554,11 @@ class VolumeModel:
         """
         fcstd_filepath = os.path.abspath(fcstd_filepath)
         fcstd_filepath = fcstd_filepath.replace('\\','\\\\')
-        path_lib_freecad = path_lib_freecad.replace('\\','\\\\')
+        freecad_lib_path = freecad_lib_path.replace('\\','\\\\')
         
         s=''
-        if path_lib_freecad != '':
-            s+="import sys\nsys.path.append('"+path_lib_freecad+"')\n"
+        if freecad_lib_path != '':
+            s+="import sys\nsys.path.append('"+freecad_lib_path+"')\n"
 
         s+="import math\nimport FreeCAD as fc\nimport Part\n\ndoc=fc.newDocument('doc')\n\n"
         
@@ -1490,7 +1598,7 @@ class VolumeModel:
     
     def FreeCADExport(self,fcstd_filepath,
                       python_path='python',
-                      path_lib_freecad='/usr/lib/freecad/lib', 
+                      freecad_lib_path='/usr/lib/freecad/lib', 
                       export_types=['fcstd']):
         """
         Export model to .fcstd FreeCAD standard
@@ -1500,18 +1608,19 @@ class VolumeModel:
             * on windows: something like C:\\\\Program Files\\\\FreeCAD X.XX\\\\bin\\\\python
             * on linux: python if installed by a dstribution package
         :param filepath: path of fcstd file (without extension)
-        :param path_lib_freecad: FreeCAD.so lib path (/usr/lib/freecad/lib in general)
+        :param freecad_lib_path: FreeCAD.so lib path (/usr/lib/freecad/lib in general)
 
         """
+        print(fcstd_filepath, python_path,freecad_lib_path,export_types)
         fcstd_filepath=os.path.abspath(fcstd_filepath)
         s=self.FreeCADScript(fcstd_filepath,
-                             path_lib_freecad = path_lib_freecad,
+                             freecad_lib_path = freecad_lib_path,
                              export_types = export_types)
         with tempfile.NamedTemporaryFile(suffix=".py",delete=False) as f:
             f.write(bytes(s,'utf8'))
 
         arg=f.name
-        output=subprocess.call([python_path,arg])
+        output=subprocess.call([python_path, arg])
 
         f.close()
         os.remove(f.name)
