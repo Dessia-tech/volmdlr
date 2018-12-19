@@ -20,15 +20,16 @@ c1.MPLPlot()
 
 print(triangle.Area())
 
-p0=vm.Point2D((-0.5,0))
-p1=vm.Point2D((0,0.5))
-p2=vm.Point2D((0.5,0))
+p0=vm.Point2D((-1,0))
+p1=vm.Point2D((-npy.cos(npy.pi/4),npy.sin(npy.pi/4)))
+p2=vm.Point2D((0,1))
 
-a=vm.Arc2D(p0,p1,p2)
-l=vm.LineSegment2D(p2,p0)
+a=vm.Arc2D(p2,p1,p0)
+l=vm.LineSegment2D(p2,a.center)
+list_node = a.DiscretArc2D()
 
-c=vm.Contour2D([a,l])
+c=vm.Contour2D([a,l] + list_node)
 
 c2 = vm.CompositePrimitive2D([c])
-c2.MPLPlot()
+c2.MPLPlot(style='ob')
 print(c.Area())
