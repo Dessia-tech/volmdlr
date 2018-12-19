@@ -1611,7 +1611,6 @@ class VolumeModel:
         :param freecad_lib_path: FreeCAD.so lib path (/usr/lib/freecad/lib in general)
 
         """
-        print(fcstd_filepath, python_path,freecad_lib_path,export_types)
         fcstd_filepath=os.path.abspath(fcstd_filepath)
         s=self.FreeCADScript(fcstd_filepath,
                              freecad_lib_path = freecad_lib_path,
