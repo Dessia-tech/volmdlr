@@ -149,13 +149,12 @@ class Vector2D(Vector):
         n = Vector2D((-self.vector[1], self.vector[0]))
         if unit:
             n.Normalize()
-        return n
-    
-    
-o2D = Vector2D((0, 0))
+        return n   
+
 x2D = Vector2D((1, 0))
 y2D = Vector2D((0, 1))
-    
+
+   
 class Point2D(Vector2D):
     def __init__(self, vector, name=''):
         Vector2D.__init__(self, vector)
@@ -220,6 +219,8 @@ class Point2D(Vector2D):
         pp1=point.vector-p1.vector
         p=pp1-npy.dot(pp1,n)*n+p1.vector
         return Point2D(p)
+
+o2D = Point2D((0, 0))
 
 
 class Basis2D:
@@ -382,11 +383,11 @@ class Contour2D(Wire2D):
         return Contour3D(primitives3D, name)
     
     def Area(self):
-        if len(self.primitives)==1:
-            return self.primitives[0].Area()
+        if len(self.basis_primitives)==1:
+            return self.basis_primitives[0].Area()
         arcs=[]
         points_polygon=[]
-        for primitive in self.primitives:
+        for primitive in self.basis_primitives:
             if primitive.__class__.__name__=='LineSegment2D':
                 points_polygon.extend(primitive.points)
             elif primitive.__class__.__name__=='Arc2D':
@@ -1077,7 +1078,6 @@ class Vector3D(Vector):
         v.vector = v.vector/v.Norm()
         return v
 
-o3D = Vector3D((0, 0, 0))
 x3D = Vector3D((1, 0, 0))
 y3D = Vector3D((0, 1, 0))
 z3D = Vector3D((0, 0, 1))
@@ -1116,7 +1116,10 @@ class Point3D(Vector3D):
     
     def PointDistance(self, point2):
         return (self-point2).Norm()
-        
+
+o3D = Point3D((0, 0, 0))
+
+
 class Basis3D:
     """
     Defines a 3D basis
