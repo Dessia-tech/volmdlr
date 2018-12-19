@@ -252,8 +252,16 @@ class ExtrudedProfile(volmdlr.Primitive3D):
         self.inner_contours3d = []
         self.x = x
         self.y = y
+        
+        bool_areas = []
         for contour in inner_contours2d:
             self.inner_contours3d.append(contour.To3D(plane_origin, x, y))
+            if contour.Area() > outer_contour2d.Area():
+                bool_areas.append(True)
+            else:
+                bool_areas.append(False)
+        if any(bool_areas):
+            raise ValueError('At least one inner contour is not contained in outer_contour.')
         
     def MPLPlot(self, ax):
         for contour in self.contours3D:

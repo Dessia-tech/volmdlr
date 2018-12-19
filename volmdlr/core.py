@@ -370,11 +370,11 @@ class Contour2D(Wire2D):
         return Contour3D(primitives3D, name)
     
     def Area(self):
-        if len(self.primitives)==1:
-            return self.primitives[0].Area()
+        if len(self.basis_primitives)==1:
+            return self.basis_primitives[0].Area()
         arcs=[]
         points_polygon=[]
-        for primitive in self.primitives:
+        for primitive in self.basis_primitives:
             if primitive.__class__.__name__=='LineSegment2D':
                 points_polygon.extend(primitive.points)
             elif primitive.__class__.__name__=='Arc2D':
