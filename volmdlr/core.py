@@ -121,6 +121,12 @@ class Vector2D(Vector):
         v1, v2 = other_vector.vector
         return u1*v1 + u2*v2
     
+    def Cross(self, other_vector):
+        u1, u2 = self.vector
+        v1, v2 = other_vector.vector
+        return u1*v2 - u2*v1
+
+    
     def Rotation(self,center, angle, copy=True):
         vector2 = (npy.dot(npy.array([[math.cos(angle),-math.sin(angle)], 
                                        [math.sin(angle),math.cos(angle)]]),
