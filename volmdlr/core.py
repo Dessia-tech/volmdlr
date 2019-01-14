@@ -257,6 +257,9 @@ class Basis2D:
     def OldCoordinates(self, vector):
         return Vector2D(npy.dot(self.TransfertMatrix(), vector.vector))
     
+    def Copy(self):
+        return Basis2D(self.u, self.v)
+    
 xy = Basis2D(x2D, y2D)
      
 class Frame2D(Basis2D):
@@ -282,6 +285,8 @@ class Frame2D(Basis2D):
     def OldCoordinates(self, vector):
         return Basis2D.OldCoordinates(self, vector) + self.origin
 
+    def Copy(self):
+        return Frame2D(self.origin, self.u, self.v)
         
 oxy = Frame2D(o2D, x2D, y2D)    
     
@@ -1189,7 +1194,8 @@ class Basis3D:
     def OldCoordinates(self, vector):
         return vector.__class__(npy.dot(self.TransfertMatrix(), vector.vector))
 
-
+    def Copy(self):
+        return Basis3D(self.u, self.v, self.w)
         
 xyz = Basis3D(x3D, y3D, z3D)
 
@@ -1217,6 +1223,8 @@ class Frame3D(Basis3D):
     def OldCoordinates(self, vector):
         return Basis3D.OldCoordinates(self, vector) + self.origin
 
+    def Copy(self):
+        return Frame3D(self.origin, self.u, self.v, self.w)
         
 oxyz = Frame3D(o3D, x3D, y3D, z3D)    
   
