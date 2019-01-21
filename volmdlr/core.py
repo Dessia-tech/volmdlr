@@ -121,6 +121,12 @@ class Vector2D(Vector):
         v1, v2 = other_vector.vector
         return u1*v1 + u2*v2
     
+    def Cross(self, other_vector):
+        u1, u2 = self.vector
+        v1, v2 = other_vector.vector
+        return u1*v2 - u2*v1
+
+    
     def Rotation(self,center, angle, copy=True):
         vector2 = (npy.dot(npy.array([[math.cos(angle),-math.sin(angle)], 
                                        [math.sin(angle),math.cos(angle)]]),
@@ -251,6 +257,9 @@ class Basis2D:
     def OldCoordinates(self, vector):
         return Vector2D(npy.dot(self.TransfertMatrix(), vector.vector))
     
+    def Copy(self):
+        return Basis2D(self.u, self.v)
+    
 xy = Basis2D(x2D, y2D)
      
 class Frame2D(Basis2D):
@@ -276,6 +285,8 @@ class Frame2D(Basis2D):
     def OldCoordinates(self, vector):
         return Basis2D.OldCoordinates(self, vector) + self.origin
 
+    def Copy(self):
+        return Frame2D(self.origin, self.u, self.v)
         
 oxy = Frame2D(o2D, x2D, y2D)    
     
@@ -1183,7 +1194,8 @@ class Basis3D:
     def OldCoordinates(self, vector):
         return vector.__class__(npy.dot(self.TransfertMatrix(), vector.vector))
 
-
+    def Copy(self):
+        return Basis3D(self.u, self.v, self.w)
         
 xyz = Basis3D(x3D, y3D, z3D)
 
@@ -1220,6 +1232,8 @@ class Frame3D(Basis3D):
         self.v = new_base.v
         self.w = new_base.w
 
+    def Copy(self):
+        return Frame3D(self.origin, self.u, self.v, self.w)
         
 oxyz = Frame3D(o3D, x3D, y3D, z3D)    
   
@@ -1623,7 +1637,6 @@ class VolumeModel:
         :param freecad_lib_path: FreeCAD.so lib path (/usr/lib/freecad/lib in general)
 
         """
-        print(fcstd_filepath, python_path,freecad_lib_path,export_types)
         fcstd_filepath=os.path.abspath(fcstd_filepath)
         s=self.FreeCADScript(fcstd_filepath,
                              freecad_lib_path = freecad_lib_path,
