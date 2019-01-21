@@ -1146,7 +1146,7 @@ class Basis3D:
         return hash((self.u, self.v, self.w))
 
     def Rotation(self, axis, angle, copy=True):
-        center = Point3D((0, 0, 0))
+        center = o3D
         if axis == self.u:
             new_u = self.u
             new_v = self.v.Rotation(center, axis, angle)
@@ -1210,6 +1210,15 @@ class Frame3D(Basis3D):
 
     def OldCoordinates(self, vector):
         return Basis3D.OldCoordinates(self, vector) + self.origin
+
+    def Rotation(self, axis, angle, copy=True):
+        new_base = Basis3D.Rotation(self, axis, angle, True)
+        if copy:
+            new_frame = Frame3D(self.origin, new_base.u, new_base.v, new_base.w)
+            return new_frame
+        self.u = new_base.u
+        self.v = new_base.v
+        self.w = new_base.w
 
         
 oxyz = Frame3D(o3D, x3D, y3D, z3D)    
