@@ -9,7 +9,7 @@ Created on Tue Feb 28 14:07:37 2017
 import math
 import numpy as npy
 import matplotlib.pyplot as plt
-from matplotlib.patches import Arc
+from matplotlib.patches import Arc, FancyArrow
 from mpl_toolkits.mplot3d import Axes3D 
 
 from .vmcy import PolygonPointBelongs
@@ -156,6 +156,18 @@ class Vector2D(Vector):
         if unit:
             n.Normalize()
         return n   
+    
+    def Draw(self, origin=(0, 0), ax=None, color='k'):
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        ax.add_patch(FancyArrow(origin[0], origin[1],
+                                self.vector[0]/10, self.vector[1]/10,
+                                width=0.001,
+                                head_width=0.01,
+                                length_includes_head=True,
+                                color=color))
+        
 
 x2D = Vector2D((1, 0))
 y2D = Vector2D((0, 1))
@@ -256,6 +268,16 @@ class Basis2D:
 
     def OldCoordinates(self, vector):
         return Vector2D(npy.dot(self.TransfertMatrix(), vector.vector))
+
+    def Rotation(self, angle, copy=True):
+        center = o2D
+        new_u = self.u.Rotation(center, angle, True)
+        new_v = self.v.Rotation(center, angle, True)
+
+        if copy:
+            return Basis2D(new_u, new_v)
+        self.u = new_u
+        self.v = new_v
     
     def Copy(self):
         return Basis2D(self.u, self.v)
@@ -284,6 +306,30 @@ class Frame2D(Basis2D):
 
     def OldCoordinates(self, vector):
         return Basis2D.OldCoordinates(self, vector) + self.origin
+
+    def Translation(self, vector, copy=True):
+        new_origin = self.origin.Translation(vector, True)
+        if copy:
+            return Frame2D(new_origin, self.u, self.v)
+        self.origin = new_origin
+            
+
+    def Rotation(self, angle, copy=True):
+        new_base = Basis2D.Rotation(self, angle, True)
+        if copy:
+            new_frame = Frame2D(self.origin, new_base.u, new_base.v)
+            return new_frame
+        self.u = new_base.u
+        self.v = new_base.v
+
+    def Draw(self, ax=None, style='ok'):
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        ax.plot(*self.origin.vector, style)
+        self.u.Draw(self.origin, ax, 'r')
+        self.v.Draw(self.origin, ax, 'g')
+        ax.axis('equal')
 
     def Copy(self):
         return Frame2D(self.origin, self.u, self.v)
@@ -1157,7 +1203,7 @@ class Basis3D:
         return hash((self.u, self.v, self.w))
 
     def Rotation(self, axis, angle, copy=True):
-        center = Point3D((0, 0, 0))
+        center = o3D
         if axis == self.u:
             new_u = self.u
             new_v = self.v.Rotation(center, axis, angle)
@@ -1222,6 +1268,15 @@ class Frame3D(Basis3D):
 
     def OldCoordinates(self, vector):
         return Basis3D.OldCoordinates(self, vector) + self.origin
+
+    def Rotation(self, axis, angle, copy=True):
+        new_base = Basis3D.Rotation(self, axis, angle, True)
+        if copy:
+            new_frame = Frame3D(self.origin, new_base.u, new_base.v, new_base.w)
+            return new_frame
+        self.u = new_base.u
+        self.v = new_base.v
+        self.w = new_base.w
 
     def Copy(self):
         return Frame3D(self.origin, self.u, self.v, self.w)
