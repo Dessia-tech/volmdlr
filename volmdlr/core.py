@@ -416,12 +416,12 @@ class Contour2D(Wire2D):
         return A
     
     def CenterOfMass(self):
-        if len(self.primitives)==1:
-            return self.primitives[0].CenterOfMass()
+        if len(self.basis_primitives)==1:
+            return self.basis_primitives[0].CenterOfMass()
 
         arcs=[]
         points_polygon=[]
-        for primitive in self.primitives:
+        for primitive in self.basis_primitives:
             if primitive.__class__.__name__=='LineSegment2D':
                 points_polygon.extend(primitive.points)
             elif primitive.__class__.__name__=='Arc2D':
@@ -434,7 +434,7 @@ class Contour2D(Wire2D):
         
         for arc in arcs:
             arc_area=arc.Area()
-            if polygon.PointBelongs(arc.middle):
+            if polygon.PointBelongs(arc.interior):
                 c-=arc_area*arc.CenterOfMass()
                 area-=arc_area
             else:
@@ -763,10 +763,11 @@ class Arc2D(Primitive2D):
         return self.radius**2*angle/2
             
     def CenterOfMass(self):
-        u=self.middle.vector-self.center.vector
+#        u=self.middle.vector-self.center.vector
+        u = self.start - 2*self.center + self.end
         u.Normalize()
-        alpha=abs(self.angle1-self.angle2)
-        return Point2D(self.center.vector+4/(3*alpha)*self.radius*math.sin(alpha*0.5)*u)
+        alpha=abs(self.angle)
+        return self.center+4/(3*alpha)*self.radius*math.sin(alpha*0.5)*u
         
     def MPLPlot(self, ax, style='-k'):
         pc = self.center.vector
@@ -1103,10 +1104,9 @@ class Point3D(Vector3D):
         ax.scatter(*self.vector)
         
     def PlaneProjection3D(self, plane_origin, x, y):
-        z = npy.cross(x.vector,y.vector)
         z = x.Cross(y)
         z /= z.Norm()
-        return Point3D(self.vector-npy.dot(self.vector-plane_origin.vector,z)*z)
+        return self - z.Dot(self-plane_origin)*z
 
     def PlaneProjection2D(self, x, y):
         z = npy.cross(x.vector,y.vector)

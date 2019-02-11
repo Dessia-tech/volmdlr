@@ -317,10 +317,10 @@ class RevolvedProfile(volmdlr.Primitive3D):
     """
     
     """
-    def __init__(self, plane_origin, x, y, contours2d, axis_point, 
+    def __init__(self, plane_origin, x, y, contours2D, axis_point, 
                  axis,angle=2*math.pi, name=''):
         volmdlr.Primitive3D.__init__(self, name)
-        self.contours2d = contours2d
+        self.contours2D = contours2D
         self.axis_point = axis_point
         self.axis = axis
         self.angle = angle
@@ -328,9 +328,9 @@ class RevolvedProfile(volmdlr.Primitive3D):
         self.x = x
         self.y = y
         
-        self.contours3d = []
-        for contour in contours2d:
-            self.contours3d.append(contour.To3D(plane_origin, x, y))
+        self.contours3D = []
+        for contour in contours2D:
+            self.contours3D.append(contour.To3D(plane_origin, x, y))
         
     def MPLPlot(self, ax):
         for contour in self.contours3D:
@@ -363,12 +363,12 @@ class RevolvedProfile(volmdlr.Primitive3D):
         areas=[c.Area() for c in self.contours2D]
         # Maximum area is main surface, others cut into it
         sic=list(npy.argsort(areas))[::-1]# sorted indices of contours
-        p1=self.axis_point.PlaneProjection(self.plane_origin,self.x,self.y)
+        p1=self.axis_point.PlaneProjection3D(self.plane_origin,self.x,self.y)
         if self.axis_point.PointDistance(p1)!=0:
             raise NotImplementedError
         p1_2D=p1.To2D(self.axis_point,self.x,self.y)
         p2_3D=self.axis_point+volmdlr.Point3D(self.axis.vector)
-        p2=p2_3D.PlaneProjection(self.plane_origin,self.x,self.y)
+        p2=p2_3D.PlaneProjection3D(self.plane_origin,self.x,self.y)
         if p2_3D.PointDistance(p2)!=0:
             raise NotImplementedError
         p2_2D=p2_3D.To2D(self.plane_origin,self.x,self.y)
