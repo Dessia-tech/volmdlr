@@ -822,7 +822,6 @@ class Arc2D(Primitive2D):
         u = self.MiddlePoint() - self.center
         u.Normalize()
         alpha = abs(self.angle)
-        print(u)
         return self.center + 4/(3*alpha)*self.radius*math.sin(alpha*0.5)*u
         
     def MPLPlot(self, ax, style='-k'):
