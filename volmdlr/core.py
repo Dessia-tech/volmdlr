@@ -8,6 +8,8 @@ Created on Tue Feb 28 14:07:37 2017
 
 import math
 import numpy as npy
+npy.seterr(divide='raise')
+
 import matplotlib.pyplot as plt
 from matplotlib.patches import Arc, FancyArrow
 from mpl_toolkits.mplot3d import Axes3D 
@@ -476,16 +478,19 @@ class Contour2D(Wire2D):
         polygon=Polygon2D(points_polygon)
         
         area=polygon.Area()
-        c=area*polygon.CenterOfMass()
+        if area > 0.:
+            c = area*polygon.CenterOfMass()
+        else:
+            c = o2D
         
         for arc in arcs:
-            arc_area=arc.Area()
+            arc_area = arc.Area()
             if polygon.PointBelongs(arc.interior):
-                c-=arc_area*arc.CenterOfMass()
-                area-=arc_area
+                c -= arc_area*arc.CenterOfMass()
+                area -= arc_area
             else:
-                c+=arc_area*arc.CenterOfMass()
-                area+=arc_area
+                c += arc_area*arc.CenterOfMass()
+                area += arc_area
         return c/area
 
 
@@ -796,6 +801,10 @@ class Arc2D(Primitive2D):
             return self.start.Rotation(self.center, curvilinear_abscissa/self.radius)
         else:
             return self.start.Rotation(self.center, -curvilinear_abscissa/self.radius)
+        
+    def MiddlePoint(self):
+        l = self.Length()
+        return self.PointAtCurvilinearAbscissa(0.5*l)
             
     def GeoScript(self, primitive_index, points_indices):
         s='Circle({}) = {{{}, {}, {}}};\n'.format(primitive_index,*points_indices)
@@ -810,10 +819,11 @@ class Arc2D(Primitive2D):
             
     def CenterOfMass(self):
 #        u=self.middle.vector-self.center.vector
-        u = self.start - 2*self.center + self.end
+        u = self.MiddlePoint() - self.center
         u.Normalize()
-        alpha=abs(self.angle)
-        return self.center+4/(3*alpha)*self.radius*math.sin(alpha*0.5)*u
+        alpha = abs(self.angle)
+        print(u)
+        return self.center + 4/(3*alpha)*self.radius*math.sin(alpha*0.5)*u
         
     def MPLPlot(self, ax, style='-k'):
         pc = self.center.vector
@@ -969,9 +979,9 @@ class Circle2D(Primitive2D):
 
 class Polygon2D(CompositePrimitive2D):
     # TODO: inherit from contour?
-    def __init__(self,points,name=''):     
-        self.points=points
-        primitives=[]
+    def __init__(self,points, name=''):     
+        self.points = points
+        primitives = []
         for p1,p2 in zip(points,points[1:]+[points[0]]):
             primitives.append(LineSegment2D(p1,p2))
             
@@ -998,13 +1008,15 @@ class Polygon2D(CompositePrimitive2D):
         xi_yi1 = npy.multiply(x,npy.roll(y,-1))
         xi1_yi = npy.multiply(npy.roll(x,-1),y)
         
-        a=0.5*npy.sum(xi_yi1-xi1_yi)# signed area!
+        a = 0.5*npy.sum(xi_yi1-xi1_yi)# signed area!
 #        a=self.Area()
-        
-        cx=npy.sum(npy.multiply(xi_xi1,(xi_yi1-xi1_yi)))/6./a  
-        cy=npy.sum(npy.multiply(yi_yi1,(xi_yi1-xi1_yi)))/6./a  
+        if not math.isclose(a, 0):
+            cx = npy.sum(npy.multiply(xi_xi1,(xi_yi1-xi1_yi)))/6./a  
+            cy = npy.sum(npy.multiply(yi_yi1,(xi_yi1-xi1_yi)))/6./a  
+            return Point2D((cx, cy)) 
 
-        return Point2D((cx, cy)) 
+        else:
+            raise NotImplementedError
     
     def PointBelongs(self, point):
         """
@@ -1457,10 +1469,10 @@ class Arc3D(Primitive3D):
         else:
             fig = None
 
-        ax.scatter(*self.center.vector,c='b')
-        ax.scatter(*self.start.vector,c='r')
-        ax.scatter(*self.end.vector,c='r')
-        ax.scatter(*self.interior.vector,c='g')
+        ax.plot(*self.center.vector,c='b')
+        ax.plot(*self.start.vector,c='r')
+        ax.plot(*self.end.vector,c='r')
+        ax.plot(*self.interior.vector,c='g')
         x = []
         y = []
         z = []

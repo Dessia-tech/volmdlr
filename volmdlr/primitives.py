@@ -118,29 +118,30 @@ class RoundedLineSegments:
                 
                 # Constructing simplex problem
                 # Concstructing C
-                C = zeros(ndof)
-                for j, i in dof.items():
-                    C[i] = -math.tan(alpha[j])
+                if ndof > 0:
+                    C = zeros(ndof)
+                    for j, i in dof.items():
+                        C[i] = -math.tan(alpha[j])
+                        
+                    A_ub = zeros((neq_ub, ndof))
+                    b_ub = zeros(neq_ub)
+                    ieq_ub = 0
+            
+                    for group in groups2:                    
+                        for ip1, ip2 in zip(group[:-1], group[1:]):
+                            A_ub[ieq_ub, dof[ip1]] = 1
+                            A_ub[ieq_ub, dof[ip2]] = 1
+                            b_ub[ieq_ub] = lines_length[ip1]
+                            ieq_ub += 1
                     
-                A_ub = zeros((neq_ub, ndof))
-                b_ub = zeros(neq_ub)
-                ieq_ub = 0
-        
-                for group in groups2:                    
-                    for ip1, ip2 in zip(group[:-1], group[1:]):
-                        A_ub[ieq_ub, dof[ip1]] = 1
-                        A_ub[ieq_ub, dof[ip2]] = 1
-                        b_ub[ieq_ub] = lines_length[ip1]
-                        ieq_ub += 1
-        
-                d = linprog(C, A_ub, b_ub, bounds = bounds)
-        
-                for ipoint, dof_point in dof.items():
-                    r = d.x[dof_point]*math.tan(alpha[ipoint])
-                    if r > 1e-10:
-                        self.radius[ipoint] = r
-                    else:
-                        del self.radius[ipoint]
+                    d = linprog(C, A_ub, b_ub, bounds = bounds)
+            
+                    for ipoint, dof_point in dof.items():
+                        r = d.x[dof_point]*math.tan(alpha[ipoint])
+                        if r > 1e-10:
+                            self.radius[ipoint] = r
+                        else:
+                            del self.radius[ipoint]
     
             # Creating geometry
             # Creating arcs

@@ -6,6 +6,7 @@ Created on Tue Feb 28 14:08:23 2017
 @author: steven
 """
 import numpy as npy
+npy.seterr(divide='raise')
 
 import volmdlr
 from volmdlr.primitives import RoundedLineSegments
@@ -332,10 +333,12 @@ class RevolvedProfile(volmdlr.Primitive3D):
         for contour in contours2D:
             self.contours3D.append(contour.To3D(plane_origin, x, y))
         
-    def MPLPlot(self, ax):
+    def MPLPlot(self, ax=None):
+        if ax is None:
+            fig, ax = plt.subplots()
         for contour in self.contours3D:
-            for primitive in contour:
-                primitive.MPLPlot(ax)
+#            for primitive in contour:
+            contour.MPLPlot(ax)
         
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive'+str(ip)
@@ -362,7 +365,7 @@ class RevolvedProfile(volmdlr.Primitive3D):
     def Volume(self):
         areas=[c.Area() for c in self.contours2D]
         # Maximum area is main surface, others cut into it
-        sic=list(npy.argsort(areas))[::-1]# sorted indices of contours
+        sic = list(npy.argsort(areas))[::-1]# sorted indices of contours
         p1=self.axis_point.PlaneProjection3D(self.plane_origin,self.x,self.y)
         if self.axis_point.PointDistance(p1)!=0:
             raise NotImplementedError
@@ -373,9 +376,8 @@ class RevolvedProfile(volmdlr.Primitive3D):
             raise NotImplementedError
         p2_2D=p2_3D.To2D(self.plane_origin,self.x,self.y)
         axis_2D=volmdlr.Line2D(p1_2D,p2_2D)
-        
-        com=self.contours2D[sic[0]].CenterOfMass()
-        rg=axis_2D.PointDistance(com)
+        com = self.contours2D[sic[0]].CenterOfMass()
+        rg = axis_2D.PointDistance(com)
         volume=areas[sic[0]]*rg
         
         for i in sic[1:]:

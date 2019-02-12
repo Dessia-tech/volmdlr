@@ -40,7 +40,10 @@ for line in border.basis_primitives:
 
 
 #print('test: ',border.PointDistance(ptest)+(ptest.vector[1]-p2.vector[1]))
+cog_p = border.CenterOfMass()
 
 ctest=vm.CompositePrimitive2D([border,ptest]+projections)
-ctest.MPLPlot()
-cog_p=border.CenterOfMass()
+f, a = ctest.MPLPlot()
+cog_p.MPLPlot(a, style = 'ob')
+
+
