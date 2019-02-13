@@ -1135,6 +1135,10 @@ class Vector3D(Vector):
         v.vector = v.vector/v.Norm()
         return v
 
+    def Copy(self):
+        return Vector3D(self.vector)
+
+
 x3D = Vector3D((1, 0, 0))
 y3D = Vector3D((0, 1, 0))
 z3D = Vector3D((0, 0, 1))
@@ -1204,26 +1208,54 @@ class Basis3D:
 
     def Rotation(self, axis, angle, copy=True):
         center = o3D
-        if axis == self.u:
-            new_u = self.u
-            new_v = self.v.Rotation(center, axis, angle)
-            new_w = self.w.Rotation(center, axis, angle)
-        elif axis == self.v:
-            new_u = self.u.Rotation(center, axis, angle)
-            new_v = self.v
-            new_w = self.w.Rotation(center, axis, angle)
-        elif axis == self.w:
-            new_u = self.u.Rotation(center, axis, angle)
-            new_v = self.v.Rotation(center, axis, angle)
-            new_w = self.w
-        else:
-            raise NotImplementedError
+#        if axis == self.u:
+        new_u = self.u.Rotation(center, axis, angle, True)
+        new_v = self.v.Rotation(center, axis, angle, True)
+        new_w = self.w.Rotation(center, axis, angle, True)
+#        elif axis == self.v:
+#            new_u = self.u.Rotation(center, axis, angle)
+#            new_v = self.v
+#            new_w = self.w.Rotation(center, axis, angle)
+#        elif axis == self.w:
+#            new_u = self.u.Rotation(center, axis, angle)
+#            new_v = self.v.Rotation(center, axis, angle)
+#            new_w = self.w
+#        else:
+#            raise NotImplementedError
 
         if copy:
             return Basis3D(new_u, new_v, new_w)
         self.u = new_u
         self.v = new_v
         self.w = new_w
+
+    def EulerRotation(self, angles, copy=True):
+        psi, theta, phi = angles
+        center = o3D
+
+        vect_u = self.u.Copy()
+        vect_v = self.v.Copy()
+        vect_w = self.w.Copy()
+
+        # Rotation around w
+        vect_u.Rotation(center, vect_w, psi, False)
+        vect_v.Rotation(center, vect_w, psi, False)
+        
+        # Rotation around v
+        vect_v.Rotation(center, vect_u, theta, False)
+        vect_w.Rotation(center, vect_u, theta, False)
+        
+        # Rotation around w
+        vect_u.Rotation(center, vect_w, phi, False)
+        vect_v.Rotation(center, vect_w, phi, False)
+
+        if copy:
+            return Basis3D(vect_u, vect_v, vect_w)
+        self.u = vect_u
+        self.v = vect_v
+        self.w = vect_w
+
+
         
     def TransfertMatrix(self):
         return npy.array([[self.u[0], self.v[0], self.w[0]],
