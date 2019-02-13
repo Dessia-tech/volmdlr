@@ -6,6 +6,7 @@ Created on Tue Feb 28 14:08:23 2017
 @author: steven
 """
 import numpy as npy
+npy.seterr(divide='raise')
 
 import volmdlr
 from volmdlr.primitives import RoundedLineSegments
@@ -317,10 +318,10 @@ class RevolvedProfile(volmdlr.Primitive3D):
     """
     
     """
-    def __init__(self, plane_origin, x, y, contours2d, axis_point, 
+    def __init__(self, plane_origin, x, y, contours2D, axis_point, 
                  axis,angle=2*math.pi, name=''):
         volmdlr.Primitive3D.__init__(self, name)
-        self.contours2d = contours2d
+        self.contours2D = contours2D
         self.axis_point = axis_point
         self.axis = axis
         self.angle = angle
@@ -328,14 +329,16 @@ class RevolvedProfile(volmdlr.Primitive3D):
         self.x = x
         self.y = y
         
-        self.contours3d = []
-        for contour in contours2d:
-            self.contours3d.append(contour.To3D(plane_origin, x, y))
+        self.contours3D = []
+        for contour in contours2D:
+            self.contours3D.append(contour.To3D(plane_origin, x, y))
         
-    def MPLPlot(self, ax):
+    def MPLPlot(self, ax=None):
+        if ax is None:
+            fig, ax = plt.subplots()
         for contour in self.contours3D:
-            for primitive in contour:
-                primitive.MPLPlot(ax)
+#            for primitive in contour:
+            contour.MPLPlot(ax)
         
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive'+str(ip)
@@ -362,20 +365,19 @@ class RevolvedProfile(volmdlr.Primitive3D):
     def Volume(self):
         areas=[c.Area() for c in self.contours2D]
         # Maximum area is main surface, others cut into it
-        sic=list(npy.argsort(areas))[::-1]# sorted indices of contours
-        p1=self.axis_point.PlaneProjection(self.plane_origin,self.x,self.y)
+        sic = list(npy.argsort(areas))[::-1]# sorted indices of contours
+        p1=self.axis_point.PlaneProjection3D(self.plane_origin,self.x,self.y)
         if self.axis_point.PointDistance(p1)!=0:
             raise NotImplementedError
         p1_2D=p1.To2D(self.axis_point,self.x,self.y)
         p2_3D=self.axis_point+volmdlr.Point3D(self.axis.vector)
-        p2=p2_3D.PlaneProjection(self.plane_origin,self.x,self.y)
+        p2=p2_3D.PlaneProjection3D(self.plane_origin,self.x,self.y)
         if p2_3D.PointDistance(p2)!=0:
             raise NotImplementedError
         p2_2D=p2_3D.To2D(self.plane_origin,self.x,self.y)
         axis_2D=volmdlr.Line2D(p1_2D,p2_2D)
-        
-        com=self.contours2D[sic[0]].CenterOfMass()
-        rg=axis_2D.PointDistance(com)
+        com = self.contours2D[sic[0]].CenterOfMass()
+        rg = axis_2D.PointDistance(com)
         volume=areas[sic[0]]*rg
         
         for i in sic[1:]:
