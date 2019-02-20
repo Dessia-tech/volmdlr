@@ -93,12 +93,8 @@ class Vector:
         self.vector /= self.Norm()
         
     def Dict(self):
-        d = {'vector': [i for i in self.vector]}
+        d = {'vector': [float(i) for i in self.vector]}
         return d
-
-    @classmethod
-    def DictToObject(cls, dict_):
-        return cls(dict_['vector'])
 
 
 class Vector2D(Vector):
@@ -169,6 +165,10 @@ class Vector2D(Vector):
                                 head_width=0.01,
                                 length_includes_head=True,
                                 color=color))
+
+    @classmethod
+    def DictToObject(cls, dict_):
+        return cls(dict_['vector'])
         
 
 x2D = Vector2D((1, 0))
@@ -242,8 +242,33 @@ class Point2D(Vector2D):
 
 o2D = Point2D((0, 0))
 
+class Basis:
+    """
+    Abstract class of a basis
+    """
+    def __getitem__(self, key):
+        return self.vectors[key]
+    
+    def __setitem__(self, key, item):
+        self.vectors[key] = item
+    
+    def __contains__(self, vector):
+        return vector in self.vectors
 
-class Basis2D:
+    def __eq__(self, other_basis):
+        all_equal = all([other_vector == vector\
+                         for other_vector, vector\
+                         in zip(other_basis.vectors, self.vectors)])
+        return all_equal
+
+    def __hash__(self):
+        return hash(self.vectors)
+
+    def Dict(self):
+        d = {'vectors' : [vector.Dict() for vector in self.vectors]}
+        return d
+
+class Basis2D(Basis):
     """
     Defines a 2D basis
     :param u: first vector of the basis
@@ -252,10 +277,16 @@ class Basis2D:
     def __init__(self, u, v):
         self.u = u
         self.v = v
-        
+
     def __repr__(self):
-        return '{}: U={}, V={}'.format(self.__class__.__name__, self.u, self.v)
+        return '{}: U={}, V={}'.format(self.__class__.__name__, *self.vectors)
     
+    def _get_vectors(self):
+        return (self.u, self.v)
+    
+#    def _set_vectors(self, vectors):
+#        return vectors
+    vectors = property(_get_vectors)
    
     def TransfertMatrix(self):
         return npy.array([[self.u[0], self.v[0]],
@@ -283,6 +314,11 @@ class Basis2D:
     
     def Copy(self):
         return Basis2D(self.u, self.v)
+
+    @classmethod
+    def DictToObject(cls, dict_):
+        vectors = [Vector2D.DictToObject(vector_dict) for vector_dict in dict_['vectors']]
+        return cls(*vectors)
     
 xy = Basis2D(x2D, y2D)
      
@@ -1150,6 +1186,9 @@ class Vector3D(Vector):
     def Copy(self):
         return Vector3D(self.vector)
 
+    @classmethod
+    def DictToObject(cls, dict_):
+        return cls(dict_['vector'])
 
 x3D = Vector3D((1, 0, 0))
 y3D = Vector3D((0, 1, 0))
@@ -1192,7 +1231,7 @@ class Point3D(Vector3D):
 o3D = Point3D((0, 0, 0))
 
 
-class Basis3D:
+class Basis3D(Basis):
     """
     Defines a 3D basis
     :param u: first vector of the basis
@@ -1206,33 +1245,19 @@ class Basis3D:
         self.w = w
         
     def __repr__(self):
-        return '{}: U={}, V={}, W={}'.format(self.__class__.__name__, self.u, self.v, self.w)
-
-    def __contains__(self, vector):
-        return vector == self.u or vector == self.v or vector == self.w
-
-    def __eq__(self, other):
-        return self.u == other.u and self.v == other.v and self.w == other.w
-
-    def __hash__(self):
-        return hash((self.u, self.v, self.w))
+        return '{}: U={}, V={}, W={}'.format(self.__class__.__name__, *self.vectors)
+    def _get_vectors(self):
+        return (self.u, self.v, self.w)
+    
+#    def _set_vectors(self, vectors):
+#        return vectors
+    vectors = property(_get_vectors)
 
     def Rotation(self, axis, angle, copy=True):
         center = o3D
-#        if axis == self.u:
         new_u = self.u.Rotation(center, axis, angle, True)
         new_v = self.v.Rotation(center, axis, angle, True)
         new_w = self.w.Rotation(center, axis, angle, True)
-#        elif axis == self.v:
-#            new_u = self.u.Rotation(center, axis, angle)
-#            new_v = self.v
-#            new_w = self.w.Rotation(center, axis, angle)
-#        elif axis == self.w:
-#            new_u = self.u.Rotation(center, axis, angle)
-#            new_v = self.v.Rotation(center, axis, angle)
-#            new_w = self.w
-#        else:
-#            raise NotImplementedError
 
         if copy:
             return Basis3D(new_u, new_v, new_w)
@@ -1266,8 +1291,6 @@ class Basis3D:
         self.v = vect_v
         self.w = vect_w
 
-
-        
     def TransfertMatrix(self):
         return npy.array([[self.u[0], self.v[0], self.w[0]],
                           [self.u[1], self.v[1], self.w[1]],
@@ -1285,7 +1308,13 @@ class Basis3D:
 
     def Copy(self):
         return Basis3D(self.u, self.v, self.w)
-        
+
+    @classmethod
+    def DictToObject(cls, dict_):
+        vectors = [Vector3D.DictToObject(vector_dict) for vector_dict in dict_['vectors']]
+        return cls(*vectors)
+
+
 xyz = Basis3D(x3D, y3D, z3D)
 
 class Frame3D(Basis3D):
