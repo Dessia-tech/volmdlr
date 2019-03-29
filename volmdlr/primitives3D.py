@@ -143,7 +143,7 @@ class Block(volmdlr.Primitive3D):
             edge3D.MPLPlot2D(x3D, y3D, ax)
         
         return fig, ax
-        
+            
 class Cylinder(volmdlr.Primitive3D):
     def __init__(self, position, axis, radius, width, name=''):
         volmdlr.Primitive3D.__init__(self, name)
@@ -475,23 +475,19 @@ class Cut(volmdlr.Primitive3D):
     """
     Cut primitive 1 by primitive 2
     """
-    def __init__(self,primitive,cut_primitive,name=''):
+    def __init__(self,primitive,cut_primitives,name=''):
         volmdlr.Primitive3D.__init__(self,name)
         self.primitive=primitive
-        self.cut_primitive=cut_primitive
+        self.cut_primitives = cut_primitives
         
-    # TODO: this one is oubviously false
-#    def Volume(self):
-#        return self.primitive.Volume() - self.cut_primitive.Volume()
-
         
     def FreeCADExport(self,ip):
         name = 'primitive{}'.format(ip)
         
-        s = self.primitive.FreeCADExport('{}_0'.format(ip))
-        s += self.cut_primitive.FreeCADExport('{}_1'.format(ip))
-        
-        s+="{} = {}_0.cut({}_1)\n".format(name,name,name)
+        s = self.primitive.FreeCADExport('{}'.format(ip))
+        for icp, cut_primitive in enumerate(self.cut_primitives):
+            s += cut_primitive.FreeCADExport('{}_{}'.format(ip, icp))      
+            s += "{} = {}.cut({}_{})\n".format(name, name, name, icp)
 
         return s
 
