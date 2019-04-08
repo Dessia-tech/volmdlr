@@ -139,14 +139,32 @@ class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
         new_radii = {}
         for ipoint, (line1, line2) in enumerate(zip_offset_lines):
             offset_points.append(volmdlr.Point2D.LinesIntersection(line1, line2))
-            if ipoint in self.radius:
+            ipoint2 = ipoint+(not self.closed)
+            if ipoint2 in self.radius:
+#                print('i', ipoint)
                 n1 = line1.NormalVector()
                 u2 = line2.DirectionVector()
-                if n1.Dot(u2)*offset > 0.:
-                    new_radius = self.radius[ipoint] - abs(offset)
-                    if new_radius > 0:
-                        new_radii[ipoint] = new_radius
+
+                if n1.Dot(u2)*offset < 0.:
+                    new_radius = self.radius[ipoint2] + abs(offset)
                 else:
-                    new_radii[ipoint] = self.radius[ipoint] + abs(offset)
+                    new_radius = self.radius[ipoint+(not self.closed)] - abs(offset)
+
+                if new_radius > 0:
+                    new_radii[ipoint2] = new_radius
+                else:
+                    if self.adapt_radius:
+                        new_radii[ipoint2] = 1e-6
+                    
+        # If not closed, end points should be offset also
+        if not self.closed:
+            vs = (self.points[1]-self.points[0]).NormalVector(unit=True)
+            ps = self.points[0] + vs*offset
+            
+            ve = (self.points[-1]-self.points[-2]).NormalVector(unit=True)
+            pe = self.points[-1] + ve*offset
+            offset_points.insert(0, ps)
+            offset_points.append(pe)
         
-        return RoundedLineSegments2D(offset_points, new_radii, self.closed)
+        return RoundedLineSegments2D(offset_points, new_radii, self.closed,
+                                     adapt_radius=self.adapt_radius)
