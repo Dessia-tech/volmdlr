@@ -420,6 +420,7 @@ class CompositePrimitive2D(Primitive2D):
         primitives3D = [p.To3D(plane_origin, x, y) for p in self.primitives]
         return CompositePrimitive3D(primitives3D, name)
         
+    # TODO: change style to color!
     def MPLPlot(self, ax = None, style='-k', arrow=False, width=None):
         if ax is None:
             fig, ax = plt.subplots()
@@ -1537,7 +1538,8 @@ class Arc3D(Primitive3D):
         else:
             fig = None
 
-        ax.plot(*self.center.vector,c='b')
+        print(self.center.vector)
+        ax.plot(*self.center.vector,color='b')
         ax.plot(*self.start.vector,c='r')
         ax.plot(*self.end.vector,c='r')
         ax.plot(*self.interior.vector,c='g')
@@ -1698,7 +1700,8 @@ class VolumeModel:
     def FreeCADScript(self, fcstd_filepath,
                       freecad_lib_path='/usr/lib/freecad/lib',
                       export_types=['fcstd'],
-                      save_to = ''):
+                      save_to = '',
+                      tolerance=0.0001):
         """
         Generate python a FreeCAD definition of model 
         :param fcstd_filename: a filename without extension to give the name at the fcstd part written in python code
@@ -1736,7 +1739,7 @@ class VolumeModel:
         if 'fcstd' in export_types:
             s+="doc.saveAs('"+fcstd_filepath+".fcstd')\n\n"
         if 'stl' in export_types:
-            s+="import Mesh\nMesh.export(doc.Objects,'{}.stl')\n".format(fcstd_filepath)
+            s+="import Mesh\nMesh.export(doc.Objects,'{}.stl', tolerance={})\n".format(fcstd_filepath, tolerance)
         if 'step' in export_types:
             s+="Part.export(doc.Objects,'{}.step')\n".format(fcstd_filepath)
                 
@@ -1751,7 +1754,8 @@ class VolumeModel:
     def FreeCADExport(self,fcstd_filepath,
                       python_path='python',
                       freecad_lib_path='/usr/lib/freecad/lib', 
-                      export_types=['fcstd']):
+                      export_types=['fcstd'],
+                      tolerance=0.0001):
         """
         Export model to .fcstd FreeCAD standard
         
@@ -1761,12 +1765,14 @@ class VolumeModel:
             * on linux: python if installed by a dstribution package
         :param filepath: path of fcstd file (without extension)
         :param freecad_lib_path: FreeCAD.so lib path (/usr/lib/freecad/lib in general)
+        :param tolerance: the tolerance of tesselation for mesh exports
 
         """
         fcstd_filepath=os.path.abspath(fcstd_filepath)
         s=self.FreeCADScript(fcstd_filepath,
                              freecad_lib_path = freecad_lib_path,
-                             export_types = export_types)
+                             export_types = export_types,
+                             tolerance=tolerance)
         with tempfile.NamedTemporaryFile(suffix=".py",delete=False) as f:
             f.write(bytes(s,'utf8'))
 
