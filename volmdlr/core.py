@@ -965,9 +965,17 @@ class Circle2D(Primitive2D):
         s = 'Circle({}) = {{{}, {}, {}}};\n'.format(primitive_index,*points_indices)
         return s, primitive_index+1
     
-    def MPLPlot(self, ax, style='-k'):
+    def MPLPlot(self, ax, linestyle='-', color='k', linewidth=1):
         pc = self.center.vector
-        ax.add_patch(Arc(pc,2*self.radius,2*self.radius,angle=0,theta1=0,theta2=360,color='black'))
+        ax.add_patch(Arc(pc,
+                         2*self.radius,
+                         2*self.radius,
+                         angle=0,
+                         theta1=0,
+                         theta2=360,
+                         color=color,
+                         linestyle=linestyle,
+                         linewidth=linewidth))
 
     def To3D(self, plane_origin, x, y):
         normal = Vector3D(npy.cross(x.vector, y.vector))
