@@ -1145,12 +1145,9 @@ class Vector3D(Vector):
                    "type": "object",
                    "title": "powerpack.mechanical.Vector3D Base Schema",
                    "required": ["vector"],
-                   "properties": {'vector' : {"type" : "object",
-                                              "Vector3D" : {"type" : "array",
-                                                            "items" : {"type" : "number"},
-                                                            "editable" : "true",
-                                                            "description" : "Vector array"},
-                                              "editable" : "true",
+                   "properties": {'vector' : {"type" : "array",
+                                              "items" : {"type" : "number"},
+                                              "editable" : True,
                                               "description" : "Vector array"}}}
     def __init__(self, vector):
         self.vector=npy.zeros(3)
@@ -1223,11 +1220,13 @@ class Point3D(Vector3D):
                    "title": "powerpack.mechanical.Point3D Base Schema",
                    "required": ["vector"],
                    "properties": {'vector' : {"type" : "object",
-                                              "Vector3D" : {"type" : "array",
-                                                            "items" : {"type" : "number"},
-                                                            "editable" : "true",
-                                                            "description" : "Vector array"},
-                                              "editable" : "true",
+                                              "classes" : ["volmdlr.Vector3D"],
+                                              "embedded" : True,
+#                                              "Vector3D" : {"type" : "array",
+#                                                            "items" : {"type" : "number"},
+#                                                            "editable" : True,
+#                                                            "description" : "Vector array"},
+                                              "editable" : True,
                                               "description" : "Vector array"}}}
     def __init__(self, vector, name=''):
         Vector3D.__init__(self, vector)
@@ -1279,17 +1278,20 @@ class Basis3D(Basis):
                    "properties": {'u' : {"type" : "object",
                                          "order" : 1,
                                          "classes" : ["volmdlr.Vector3D"],
-                                         "editable" : "true",
+                                         "embedded" : True,
+                                         "editable" : True,
                                          "description" : "Vector u"},
                                   'v' : {"type" : "object",
                                          "order" : 2,
                                          "classes" : ["volmdlr.Vector3D"],
-                                         "editable" : "true",
+                                         "embedded" : True,
+                                         "editable" : True,
                                          "description" : "Vector v"},
                                   'w' : {"type" : "object",
                                          "order" : 3,
                                          "classes" : ["volmdlr.Vector3D"],
-                                         "editable" : "true",
+                                         "embedded" : True,
+                                         "editable" : True,
                                          "description" : "Vector w"}}}
     # TODO: create a Basis and Frame class to mutualize between 2D and 2D
     def __init__(self, u, v, w):
