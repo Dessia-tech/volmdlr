@@ -348,7 +348,7 @@ class Frame2D(Basis2D):
         return '{}: O={} U={}, V={}'.format(self.__class__.__name__, self.origin, self.u, self.v)
 
     def Basis(self):
-        return Basis3D(self.u, self.v)
+        return Basis2D(self.u, self.v)
         
     def NewCoordinates(self, vector):
         return Basis2D.NewCoordinates(self, vector - self.origin)
@@ -977,9 +977,17 @@ class Circle2D(Primitive2D):
         s = 'Circle({}) = {{{}, {}, {}}};\n'.format(primitive_index,*points_indices)
         return s, primitive_index+1
     
-    def MPLPlot(self, ax, style='-k'):
+    def MPLPlot(self, ax, linestyle='-', color='k', linewidth=1):
         pc = self.center.vector
-        ax.add_patch(Arc(pc,2*self.radius,2*self.radius,angle=0,theta1=0,theta2=360,color='black'))
+        ax.add_patch(Arc(pc,
+                         2*self.radius,
+                         2*self.radius,
+                         angle=0,
+                         theta1=0,
+                         theta2=360,
+                         color=color,
+                         linestyle=linestyle,
+                         linewidth=linewidth))
 
     def To3D(self, plane_origin, x, y):
         normal = Vector3D(npy.cross(x.vector, y.vector))
@@ -1204,6 +1212,20 @@ class Primitive3D:
 
         
 class Vector3D(Vector):
+    _jsonschema = {"definitions": {},
+                   "$schema": "http://json-schema.org/draft-07/schema#",
+                   "type": "object",
+                   "title": "powerpack.mechanical.Vector3D Base Schema",
+                   "required": ["vector"],
+                   "properties": {'vector' : {"type" : "object",
+                                              "Vector3D" : {"type" : "array",
+                                                            "items" : {"type" : "number"},
+                                                            "editable" : "true",
+                                                            "description" : "Vector array"},
+                                              "editable" : "true",
+                                              "description" : "Vector array"}
+                                  }
+                   }
     def __init__(self, vector):
         self.vector=npy.zeros(3)
         self.vector[0] = vector[0]
@@ -1311,6 +1333,20 @@ class Basis3D(Basis):
     :param v: second vector of the basis
     :param w: third vector of the basis
     """
+    _jsonschema = {"definitions": {},
+                   "$schema": "http://json-schema.org/draft-07/schema#",
+                   "type": "object",
+                   "title": "powerpack.mechanical.Basis3D Base Schema",
+                   "required": ['u', 'v', 'w'],
+                   "properties": {'u' : {"allOf" : [Vector3D._jsonschema,
+                                                    {"editable" : "true",
+                                                     "description" : "Vector u"}]},
+                                  'v' : {"allOf" : [Vector3D._jsonschema,
+                                                    {"editable" : "true",
+                                                     "description" : "Vector v"}]},
+                                  'w' : {"allOf" : [Vector3D._jsonschema,
+                                                    {"editable" : "true",
+                                                     "description" : "Vector w"}]}}}
     # TODO: create a Basis and Frame class to mutualize between 2D and 2D
     def __init__(self, u, v, w):
         self.u = u
