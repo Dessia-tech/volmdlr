@@ -9,6 +9,7 @@ import math
 #from scipy.linalg import norm
 import volmdlr
 from volmdlr.primitives import RoundedLineSegments
+import numpy as npy
 
 
 class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
@@ -51,7 +52,8 @@ class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
         p4 = pti + u2 * dist
 
         w = (u1+u2)
-        w.Normalize()
+        if w != volmdlr.Vector2D((0,0)):
+            w.Normalize()
 
         v1 = u1.NormalVector()
         if v1.Dot(w) < 0:
@@ -114,57 +116,163 @@ class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
 #        
 #        return RoundedLineSegments2D(node_list, dict_radius, False)
             
+#    def Offset(self, offset):
+#        offset_lines = []
+#        if self.closed:
+#            lines = zip(self.points, self.points[1:]+[self.points[0]])
+#        else:
+#            lines = zip(self.points[:-1], self.points[1:])
+#
+#        # Offseting lines
+#        for point1, point2 in lines:
+#            n = (point2 - point1).NormalVector()
+#            n.Normalize()
+#            point1_offset = point1 + offset*n
+#            point2_offset = point2 + offset*n
+#            offset_lines.append(volmdlr.Line2D(point1_offset, point2_offset))
+#            
+#        # Computing
+#        if self.closed:
+#            zip_offset_lines = zip([offset_lines[-1]]+offset_lines[:-1], offset_lines)
+#        else:
+#            zip_offset_lines = zip(offset_lines[:-1], offset_lines[1:])
+#            
+#        offset_points = []
+#        new_radii = {}
+#        for ipoint, (line1, line2) in enumerate(zip_offset_lines):
+#            if volmdlr.Point2D.LinesIntersection(line1, line2) is not None:
+#                offset_points.append(volmdlr.Point2D.LinesIntersection(line1, line2))
+#            #######################
+#            # VERIFIER CES LIGNES #
+#            #######################
+#            ipoint2 = ipoint+(not self.closed)
+#            if ipoint2 in self.radius:
+#                n1 = line1.NormalVector()
+#                u2 = line2.DirectionVector()
+#
+#                if n1.Dot(u2)*offset < 0.:
+#                    new_radius = self.radius[ipoint2] + abs(offset)
+#                else:
+#                    new_radius = self.radius[ipoint+(not self.closed)] - abs(offset)
+#
+#                if new_radius > 0:
+#                    new_radii[ipoint2] = new_radius
+#                else:
+#                    if self.adapt_radius:
+#                        new_radii[ipoint2] = 1e-6
+#                    
+#        # If not closed, end points should be offset also
+#        if not self.closed:
+#            vs = (self.points[1]-self.points[0]).NormalVector(unit=True)
+#            ps = self.points[0] + vs*offset
+#            
+#            ve = (self.points[-1]-self.points[-2]).NormalVector(unit=True)
+#            pe = self.points[-1] + ve*offset
+#            offset_points.insert(0, ps)
+#            offset_points.append(pe)
+#                
+#        return RoundedLineSegments2D(offset_points, new_radii, self.closed,
+#                                     adapt_radius=self.adapt_radius)
+        
     def Offset(self, offset):
-        offset_lines = []
-        if self.closed:
-            lines = zip(self.points, self.points[1:]+[self.points[0]])
-        else:
-            lines = zip(self.points[:-1], self.points[1:])
+        nb = len(self.points)
+        vectors = []
+        for i in range(nb-1):
+            v1 = volmdlr.Vector2D((self.points[i+1] - self.points[i]))
+            v2 = volmdlr.Vector2D((self.points[i] - self.points[i+1]))
+            v1.Normalize()
+            v2.Normalize()
+            vectors.append(v1)
+            vectors.append(v2)
 
-        # Offseting lines
-        for point1, point2 in lines:
-            n = (point2 - point1).NormalVector()
-            n.Normalize()
-            point1_offset = point1 + offset*n
-            point2_offset = point2 + offset*n
-            offset_lines.append(volmdlr.Line2D(point1_offset, point2_offset))
-            
-        # Computing
         if self.closed:
-            zip_offset_lines = zip([offset_lines[-1]]+offset_lines[:-1], offset_lines)
-        else:
-            zip_offset_lines = zip(offset_lines[:-1], offset_lines[1:])
+            v1 = volmdlr.Vector2D((self.points[0] - self.points[-1]))
+            v2 = volmdlr.Vector2D((self.points[-1] - self.points[0]))
+            v1.Normalize()
+            v2.Normalize()
+            vectors.append(v1)
+            vectors.append(v2)
             
-        offset_points = []
+            
+        offset_vectors = []
         new_radii = {}
-        for ipoint, (line1, line2) in enumerate(zip_offset_lines):
-            offset_points.append(volmdlr.Point2D.LinesIntersection(line1, line2))
-            ipoint2 = ipoint+(not self.closed)
-            if ipoint2 in self.radius:
-#                print('i', ipoint)
-                n1 = line1.NormalVector()
-                u2 = line2.DirectionVector()
-
-                if n1.Dot(u2)*offset < 0.:
-                    new_radius = self.radius[ipoint2] + abs(offset)
+        offset_points = []
+        
+        for i in range((not self.closed),nb-(not self.closed)):
+            
+            check = False
+            ni = vectors[2*i-1] + vectors[2*i]
+            if ni == volmdlr.Vector2D((0,0)):
+                ni = vectors[2*i]
+                ni = ni.NormalVector()
+                offset_vectors.append(ni)
+            else:
+                ni.Normalize()
+                if ni.Dot(vectors[2*i-1].NormalVector()) > 0:
+                    ni = - ni
+                    check = True
+                offset_vectors.append(ni)
+            
+            if i in self.radius:
+                if (check and offset > 0) or (not check and offset < 0):
+                    new_radius = self.radius[i] + abs(offset)
                 else:
-                    new_radius = self.radius[ipoint+(not self.closed)] - abs(offset)
-
+                    new_radius = self.radius[i] - abs(offset)
                 if new_radius > 0:
-                    new_radii[ipoint2] = new_radius
+                    new_radii[i] = new_radius
                 else:
                     if self.adapt_radius:
-                        new_radii[ipoint2] = 1e-6
-                    
-        # If not closed, end points should be offset also
-        if not self.closed:
-            vs = (self.points[1]-self.points[0]).NormalVector(unit=True)
-            ps = self.points[0] + vs*offset
+                        new_radii[i] = 1e-6
             
-            ve = (self.points[-1]-self.points[-2]).NormalVector(unit=True)
-            pe = self.points[-1] + ve*offset
-            offset_points.insert(0, ps)
-            offset_points.append(pe)
+            normal_vector1 = - vectors[2*i-1].NormalVector()
+            normal_vector2 =   vectors[ 2*i ].NormalVector()
+            normal_vector1.Normalize()
+            normal_vector2.Normalize()
+            alpha = math.acos(normal_vector1.Dot(normal_vector2))
+            
+            offset_point = self.points[i] + offset/math.cos(alpha/2)*offset_vectors[i-(not self.closed)]
+            offset_points.append(offset_point)
+            
+            
+        if not self.closed:
+            n1 = vectors[0].NormalVector(unit=True)
+            offset_vectors.insert(0, n1)
+            offset_points.insert(0, self.points[0] + offset*offset_vectors[0])    
+            
+            n_last = vectors[-1].NormalVector(unit=True)
+            n_last = - n_last
+            offset_vectors.append(n_last)
+            offset_points.append(self.points[-1] + offset*offset_vectors[-1])
         
+                
         return RoundedLineSegments2D(offset_points, new_radii, self.closed,
-                                     adapt_radius=self.adapt_radius)
+                                         adapt_radius=self.adapt_radius)
+        
+        
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
