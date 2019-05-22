@@ -1140,6 +1140,7 @@ class Primitive3D:
 
         
 class Vector3D(Vector):
+    _standalone_in_db = False
     _jsonschema = {"definitions": {},
                    "$schema": "http://json-schema.org/draft-07/schema#",
                    "type": "object",
@@ -1214,6 +1215,7 @@ z3D = Vector3D((0, 0, 1))
 
         
 class Point3D(Vector3D):
+    _standalone_in_db = False
     _jsonschema = {"definitions": {},
                    "$schema": "http://json-schema.org/draft-07/schema#",
                    "type": "object",
@@ -1221,11 +1223,6 @@ class Point3D(Vector3D):
                    "required": ["vector"],
                    "properties": {'vector' : {"type" : "object",
                                               "classes" : ["volmdlr.Vector3D"],
-                                              "embedded" : True,
-#                                              "Vector3D" : {"type" : "array",
-#                                                            "items" : {"type" : "number"},
-#                                                            "editable" : True,
-#                                                            "description" : "Vector array"},
                                               "editable" : True,
                                               "description" : "Vector array"}}}
     def __init__(self, vector, name=''):
@@ -1270,6 +1267,7 @@ class Basis3D(Basis):
     :param v: second vector of the basis
     :param w: third vector of the basis
     """
+    _standalone_in_db = False
     _jsonschema = {"definitions": {},
                    "$schema": "http://json-schema.org/draft-07/schema#",
                    "type": "object",
@@ -1278,19 +1276,16 @@ class Basis3D(Basis):
                    "properties": {'u' : {"type" : "object",
                                          "order" : 1,
                                          "classes" : ["volmdlr.Vector3D"],
-                                         "embedded" : True,
                                          "editable" : True,
                                          "description" : "Vector u"},
                                   'v' : {"type" : "object",
                                          "order" : 2,
                                          "classes" : ["volmdlr.Vector3D"],
-                                         "embedded" : True,
                                          "editable" : True,
                                          "description" : "Vector v"},
                                   'w' : {"type" : "object",
                                          "order" : 3,
                                          "classes" : ["volmdlr.Vector3D"],
-                                         "embedded" : True,
                                          "editable" : True,
                                          "description" : "Vector w"}}}
     # TODO: create a Basis and Frame class to mutualize between 2D and 2D
