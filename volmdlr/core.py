@@ -9,6 +9,7 @@ Created on Tue Feb 28 14:07:37 2017
 import math
 import numpy as npy
 npy.seterr(divide='raise')
+from itertools import permutations
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Arc, FancyArrow
@@ -63,6 +64,8 @@ class Vector:
         return self * value
 
     def __truediv__(self, value):
+        if value == 0:
+            raise ZeroDivisionError
         return self.__class__(self.vector / value)
 
     def __rtruediv__(self, value):
@@ -90,8 +93,12 @@ class Vector:
         """
         Normalize the vector modifying it's coordinate
         """
-        self.vector /= self.Norm()
-
+        n = self.Norm()
+        if n == 0:
+            raise ZeroDivisionError
+        
+        self.vector /= n
+        
     def Dict(self):
         d = {'vector': [float(i) for i in self.vector]}
         return d
@@ -222,9 +229,12 @@ class Point2D(Vector2D):
             else:
                 return (cls(p11+t[0]*(p12-p11)),t[0],t[1])
         except LinAlgError:
-            # Parallel lines
-            return None
-
+            # Parallel lines            
+            if not curvilinear_abscissa:
+                return None
+            else:
+                return None, None, None
+            
     @classmethod
     def MiddlePoint(cls,point1,point2):
         p1=point1.vector
@@ -1115,6 +1125,68 @@ class Polygon2D(CompositePrimitive2D):
             if d<d_min:
                 d_min=d
         return d_min
+    
+    def SelfIntersect(self):
+        epsilon = 0
+        # BENTLEY-OTTMANN ALGORITHM
+        # Sort the points along ascending x for the Sweep Line method
+        sorted_index = sorted(range(len(self.points)), key=lambda p: (self.points[p][0], self.points[p][1]))
+        nb = len(sorted_index)
+        segments = []
+        deleted = []
+        
+        while len(sorted_index) != 0: # While all the points haven't been swept
+            # Stock the segments between 2 consecutive edges 
+            # Ex: for the ABCDE polygon, if Sweep Line is on C, the segments
+            #   will be (C,B) and (C,D)
+            if sorted_index[0]-1 < 0:
+                segments.append((sorted_index[0], nb-1))
+            else:
+                segments.append((sorted_index[0], sorted_index[0]-1))
+            if sorted_index[0] >= len(self.points)-1:
+                segments.append((sorted_index[0], 0))
+            else:
+                segments.append((sorted_index[0], sorted_index[0]+1))
+
+            
+            # Once two edges linked by a segment have been swept, delete the 
+            # segment from the list 
+            to_del = []
+            for index in deleted:
+                if abs(index-sorted_index[0]) == 1 or abs(index-sorted_index[0]) == nb-1:
+                    to_del.append((index, sorted_index[0]))
+                    to_del.append((sorted_index[0], index))
+            
+            # Keep track of which edges have been swept
+            deleted.append(sorted_index[0])
+            sorted_index.pop(0)
+            
+            # Delete the segments that have just been swept
+            index_to_del = []
+            for i, segment in enumerate(segments):
+                for seg_to_del in to_del:
+                    if segment == seg_to_del:
+                        index_to_del.append(i)
+            for index in index_to_del[::-1]:
+                segments.pop(index)
+      
+            # Checks if two segments are intersecting each other, returns True 
+            # if yes, otherwise the algorithm continues at WHILE
+            for segment1 in segments:
+                for segment2 in segments:
+                    if segment1[0] != segment2[0] and segment1[1] != segment2[1] and segment1[0] != segment2[1] and segment1[1] != segment2[0]:
+                        
+                        line1 = LineSegment2D(Point2D(self.points[segment1[0]]), Point2D(self.points[segment1[1]]))
+                        line2 = LineSegment2D(Point2D(self.points[segment2[0]]), Point2D(self.points[segment2[1]]))
+                        
+                        p, a, b = Point2D.LinesIntersection(line1, line2, True)
+                                                
+                        if p is not None:
+                            if a >= 0+epsilon and a <= 1-epsilon and b >= 0+epsilon and b <= 1-epsilon:
+                                return True, line1, line2                     
+                        
+        return False, None, None
+    
 
     def Dict(self):
         d = {'points': [point.Dict() for point in self.points], 'name':self.name}

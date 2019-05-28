@@ -13,10 +13,11 @@ p1=vm.Point2D((0, 0))
 p2=vm.Point2D((1, 0))
 p3=vm.Point2D((2, 1))
 p4=vm.Point2D((1, 0.5))
-p5=vm.Point2D((-1, 0.1))
+p5=vm.Point2D((-0.5, 1))
 
 polygon = vm.Polygon2D([p1, p2, p3, p4, p5])
-
+a = polygon.SelfIntersect()
+print(a)
 #print(c.Area())
 #print(c.SecondMomentArea(p1))
 
