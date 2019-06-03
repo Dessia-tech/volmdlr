@@ -1146,10 +1146,20 @@ class Vector3D(Vector):
                    "type": "object",
                    "title": "powerpack.mechanical.Vector3D Base Schema",
                    "required": ["vector"],
-                   "properties": {'vector' : {"type" : "array",
-                                              "items" : {"type" : "number"},
-                                              "editable" : True,
-                                              "description" : "Vector array"}}}
+                   "properties": {
+                       'vector' : {
+                           "type" : "array",
+                           "items" : {
+                               "type" : "number",
+                               "step" : 1,
+                               "minimum" : -1,
+                               "maximum" : 1
+                               },
+                           "editable" : True,
+                           "description" : "Vector array"
+                           }
+                       }
+                    }
     def __init__(self, vector):
         self.vector=npy.zeros(3)
         self.vector[0] = vector[0]
@@ -1216,15 +1226,22 @@ z3D = Vector3D((0, 0, 1))
         
 class Point3D(Vector3D):
     _standalone_in_db = False
-    _jsonschema = {"definitions": {},
-                   "$schema": "http://json-schema.org/draft-07/schema#",
-                   "type": "object",
-                   "title": "powerpack.mechanical.Point3D Base Schema",
-                   "required": ["vector"],
-                   "properties": {'vector' : {"type" : "object",
-                                              "classes" : ["volmdlr.core.Vector3D"],
-                                              "editable" : True,
-                                              "description" : "Vector array"}}}
+    _jsonschema = {
+        "definitions": {},
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "title": "powerpack.mechanical.Point3D Base Schema",
+        "required": ["vector"],
+        "properties": {
+            'vector' : {
+                "type" : "object",
+                "classes" : ["volmdlr.core.Vector3D"],
+                "editable" : True,
+                "description" : "Vector array"
+                }
+            }
+        }
+
     def __init__(self, vector, name=''):
         Vector3D.__init__(self, vector)
         self.name=name
