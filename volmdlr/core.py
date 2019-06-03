@@ -9,7 +9,7 @@ Created on Tue Feb 28 14:07:37 2017
 import math
 import numpy as npy
 npy.seterr(divide='raise')
-from itertools import permutations
+#from itertools import permutations
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Arc, FancyArrow
@@ -87,7 +87,7 @@ class Vector:
             return False
 
     def __hash__(self):
-        return int(1000*npy.sum(npy.round(self.vector, 3)))
+        return int(1000*npy.sum(self.vector, 3))
 
     def Normalize(self):
         """
@@ -96,9 +96,9 @@ class Vector:
         n = self.Norm()
         if n == 0:
             raise ZeroDivisionError
-        
+
         self.vector /= n
-        
+
     def Dict(self):
         d = {'vector': [float(i) for i in self.vector]}
         return d
@@ -132,15 +132,15 @@ class Vector2D(Vector):
         return u1*v2 - u2*v1
 
 
-    def Rotation(self,center, angle, copy=True):
-        vector2 = (npy.dot(npy.array([[math.cos(angle),-math.sin(angle)],
-                                       [math.sin(angle),math.cos(angle)]]),
-                          (self.vector-center.vector))
+    def Rotation(self, center, angle, copy=True):
+        vector2 = (npy.dot(npy.array([[math.cos(angle), -math.sin(angle)],
+                                      [math.sin(angle), math.cos(angle)]]),
+                           (self.vector-center.vector))
                    + center.vector)
         if copy:
             return self.__class__(vector2)
         else:
-            self.vector=vector2
+            self.vector = vector2
 
     def Translation(self, offset, copy=True):
         """
@@ -152,7 +152,7 @@ class Vector2D(Vector):
         else:
             self.vector = vector2
 
-    def To3D(self,plane_origin, x1, x2):
+    def To3D(self, plane_origin, x1, x2):
         x, y = self.vector
         return Vector3D(plane_origin.vector + x1.vector*x + x2.vector*y)
 
@@ -187,24 +187,24 @@ class Point2D(Vector2D):
         Vector2D.__init__(self, vector)
         self.name = name
 
-    def __add__(self,point2d):
+    def __add__(self, point2d):
         return Point2D(self.vector + point2d.vector)
 
-    def __sub__(self,point2d):
+    def __sub__(self, point2d):
         return Point2D(self.vector - point2d.vector)
 
-    def __mul__(self,value):
+    def __mul__(self, value):
         return Point2D(self.vector * value)
 
-    def __truediv__(self,value):
+    def __truediv__(self, value):
         return Point2D(self.vector / value)
 
-    def To3D(self,plane_origin, x1, x2):
+    def To3D(self, plane_origin, x1, x2):
         x, y = self.vector
         return Point3D(plane_origin.vector + x1.vector*x + x2.vector*y)
 
     def MPLPlot(self, ax, style='ob'):
-        x1=self.vector
+        x1 = self.vector
         ax.plot([x1[0]], [x1[1]], style)
         return []
 
@@ -215,40 +215,41 @@ class Point2D(Vector2D):
     #    return norm(self.vector-point2.vector)
 
     @classmethod
-    def LinesIntersection(cls, line1,line2, curvilinear_abscissa=False):
-        p11=line1.points[0].vector
-        p12=line1.points[1].vector
-        p21=line2.points[0].vector
-        p22=line2.points[1].vector
-        A=npy.array([[p12[0]-p11[0],p21[0]-p22[0]],[p12[1]-p11[1],p21[1]-p22[1]]])
-        x=npy.array([p21[0]-p11[0],p21[1]-p11[1]])
+    def LinesIntersection(cls, line1, line2, curvilinear_abscissa=False):
+        p11 = line1.points[0].vector
+        p12 = line1.points[1].vector
+        p21 = line2.points[0].vector
+        p22 = line2.points[1].vector
+        A = npy.array([[p12[0]-p11[0], p21[0]-p22[0]],
+                       [p12[1]-p11[1], p21[1]-p22[1]]])
+        x = npy.array([p21[0]-p11[0], p21[1]-p11[1]])
         try:
-            t=solve(A,x)
+            t = solve(A, x)
             if not curvilinear_abscissa:
                 return cls(p11+t[0]*(p12-p11))
             else:
-                return (cls(p11+t[0]*(p12-p11)),t[0],t[1])
+                return (cls(p11+t[0]*(p12-p11)), t[0], t[1])
         except LinAlgError:
-            # Parallel lines            
+            # Parallel lines
             if not curvilinear_abscissa:
                 return None
             else:
                 return None, None, None
-            
+
     @classmethod
-    def MiddlePoint(cls,point1,point2):
-        p1=point1.vector
-        p2=point2.vector
+    def MiddlePoint(cls, point1, point2):
+        p1 = point1.vector
+        p2 = point2.vector
         return cls((p1+p2)*0.5)
 
     @classmethod
-    def LineProjection(cls,point,line):
-        p1,p2=line.points
-        d=(p2-p1)/p2.PointDistance(p1)
-        n=d.Rotation(Point2D((0,0)),math.pi/2).vector
-        pp1=point.vector-p1.vector
-        p=pp1-npy.dot(pp1,n)*n+p1.vector
-        return Point2D(p)
+    def LineProjection(cls, point, line):
+        p1, p2 = line.points
+#        d = (p2-p1) / p2.PointDistance(p1)
+#        n = d.Rotation(Point2D((0, 0)), math.pi/2).vector
+        n = line.NormalVector(unit=True)
+        pp1 = point - p1
+        return  pp1 - pp1.Dot(n)*n + p1
 
 o2D = Point2D((0, 0))
 
@@ -386,19 +387,19 @@ oxy = Frame2D(o2D, x2D, y2D)
 
 class Primitive2D:
     def __init__(self, name=''):
-        self.name=name
+        self.name = name
 
 class CompositePrimitive2D(Primitive2D):
     """
     A collection of simple primitives
     """
-    def __init__(self,primitives, name=''):
+    def __init__(self, primitives, name=''):
         Primitive2D.__init__(self, name)
-        self.primitives=primitives
+        self.primitives = primitives
         self.UpdateBasisPrimitives()
 
     def UpdateBasisPrimitives(self):
-        basis_primitives=[]
+        basis_primitives = []
         for primitive in self.primitives:
             if hasattr(primitive, 'basis_primitives'):
                 basis_primitives.extend(primitive.basis_primitives)
@@ -408,30 +409,32 @@ class CompositePrimitive2D(Primitive2D):
         self.basis_primitives = basis_primitives
 
 
-    def Rotation(self,center,angle,copy=False):
+    def Rotation(self, center, angle, copy=False):
         if copy:
-            return self.__class__([p.Rotation(center,angle,copy=True) for p in self.primitives])
+            return self.__class__([p.Rotation(center, angle, copy=True)\
+                                   for p in self.primitives])
         else:
             for p in self.basis_primitives:
-                p.Rotation(center,angle,copy=False)
+                p.Rotation(center, angle, copy=False)
             self.UpdateBasisPrimitives()
 
     def Translation(self, offset, copy=False):
         if copy:
-            return self.__class__([p.Translation(offset, copy=True) for p in self.primitives])
+            return self.__class__([p.Translation(offset, copy=True)\
+                                   for p in self.primitives])
         else:
             for p in self.basis_primitives:
                 p.Translation(offset, copy=False)
             self.UpdateBasisPrimitives()
 
-    def To3D(self, plane_origin, x, y, name = None):
+    def To3D(self, plane_origin, x, y, name=None):
         if name is None:
             name = '3D of {}'.format(self.name)
         primitives3D = [p.To3D(plane_origin, x, y) for p in self.primitives]
         return CompositePrimitive3D(primitives3D, name)
 
     # TODO: change style to color!
-    def MPLPlot(self, ax = None, style='-k', arrow=False, width=None):
+    def MPLPlot(self, ax=None, style='-k', arrow=False, width=None):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -439,7 +442,7 @@ class CompositePrimitive2D(Primitive2D):
             fig = None
 
         for element in self.basis_primitives:
-            if element.__class__.__name__=='LineSegment2D':
+            if element.__class__.__name__ == 'LineSegment2D':
                 element.MPLPlot(ax, style, arrow, width)
             else:
                 element.MPLPlot(ax, style)
@@ -482,36 +485,36 @@ class Contour2D(Wire2D):
     def __init__(self, primitives, name=''):
         Wire2D.__init__(self, primitives, name)
 
-    def To3D(self, plane_origin, x, y, name = None):
+    def To3D(self, plane_origin, x, y, name=None):
         if name is None:
             name = '3D of {}'.format(self.name)
         primitives3D = [p.To3D(plane_origin, x, y) for p in self.primitives]
         return Contour3D(primitives3D, name)
 
     def Area(self):
-        if len(self.basis_primitives)==1:
+        if len(self.basis_primitives) == 1:
             return self.basis_primitives[0].Area()
-        arcs=[]
-        points_polygon=[]
+        arcs = []
+        points_polygon = []
         for primitive in self.basis_primitives:
-            if primitive.__class__.__name__=='LineSegment2D':
+            if primitive.__class__.__name__ == 'LineSegment2D':
                 points_polygon.extend(primitive.points)
-            elif primitive.__class__.__name__=='Arc2D':
+            elif primitive.__class__.__name__ == 'Arc2D':
                 points_polygon.append(primitive.center)
                 arcs.append(primitive)
-        polygon=Polygon2D(points_polygon)
-        A=polygon.Area()
+        polygon = Polygon2D(points_polygon)
+        A = polygon.Area()
 
         for arc in arcs:
             if polygon.PointBelongs(arc.interior):
-                A-=arc.Area()
+                A -= arc.Area()
             else:
-                A+=arc.Area()
+                A += arc.Area()
 
         return A
 
     def CenterOfMass(self):
-        if len(self.basis_primitives)==1:
+        if len(self.basis_primitives) == 1:
             return self.basis_primitives[0].CenterOfMass()
 
         arcs=[]
@@ -673,14 +676,20 @@ class Line2D(Primitive2D, Line):
             return projection,t
         return projection
 
-    def MPLPlot(self, ax, style='-k', linestyle = '-.'):
+    def MPLPlot(self, ax=None, style='-k', linestyle = '-.'):
+        if ax is None:
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
+        else:
+            fig = None
+            
         p1, p2 = self.points
         u = p2 - p1
         plt.plot([p1[0], p2[0]], [p1[1], p2[1]], style)
         p3 = p1 - 3* u
         p4 = p2 + 4*u
         ax.plot([p3[0], p4[0]], [p3[1], p4[1]], style, linestyle = linestyle)
-        return []
+        return fig, ax
 
 class LineSegment2D(Line2D):
     """
@@ -727,7 +736,13 @@ class LineSegment2D(Line2D):
         else:
             return point
 
-    def MPLPlot(self, ax, style='-k', arrow=False, width=None):
+    def MPLPlot(self, ax=None, style='-k', arrow=False, width=None):
+        if ax is None:
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
+        else:
+            fig = None
+            
         p1, p2 = self.points
         if arrow:
             ax.plot([p1[0], p2[0]], [p1[1], p2[1]], style)
@@ -745,7 +760,7 @@ class LineSegment2D(Line2D):
                      head_length = head_length, width = width, alpha = 0.3)
         else:
             ax.plot([p1[0], p2[0]], [p1[1], p2[1]], style)
-        return []
+        return fig, ax
 
     def To3D(self, plane_origin, x1, x2):
         p3D=[p.To3D(plane_origin,x1,x2) for p in self.points]
@@ -772,7 +787,8 @@ class LineSegment2D(Line2D):
         s='Line({}) = {{{}, {}}};\n'.format(primitive_index,*points_indices)
         return s,primitive_index+1
 
-    def PlotData(self, marker=None, color='black', stroke_width=1, dash=False, opacity=1, width=None):
+    def PlotData(self, marker=None, color='black', stroke_width=1,
+                 dash=False, opacity=1, width=None):
         return {'type' : 'line',
                 'data' : [self.points[0].vector[0], self.points[0].vector[1],
                           self.points[1].vector[0], self.points[1].vector[1]],
@@ -887,10 +903,6 @@ class Arc2D(Primitive2D):
         pi = self.interior.To3D(plane_origin, x, y)
         pe = self.end.To3D(plane_origin, x, y)
 
-#        pe = Point2D(self.center.vector + self.radius*npy.array((math.cos(self.angle1),math.sin(self.angle1))))
-#        pe3 = pe.To3D(plane_origin, x, y)
-#        ps = Point2D(self.center.vector+self.radius*npy.array((math.cos(self.angle2),math.sin(self.angle2))))
-#        ps3 = ps.To3D(plane_origin, x, y)
         return Arc3D(ps, pi, pe, self.name)
 
     def Rotation(self, center, angle, copy=False):
@@ -910,16 +922,16 @@ class Arc2D(Primitive2D):
         Second moment area of part of disk
         """
         if self.angle2<self.angle1:
-            angle2=self.angle2+2*math.pi
+            angle2 = self.angle2+2*math.pi
 
         else:
-            angle2=self.angle2
-        angle1=self.angle1
+            angle2 = self.angle2
+        angle1 = self.angle1
 
-        Ix=self.radius**4/8*(angle2-angle1+0.5*(math.sin(2*angle1)-math.sin(2*angle2)))
-        Iy=self.radius**4/8*(angle2-angle1+0.5*(math.sin(2*angle2)-math.sin(2*angle1)))
-        Ixy=self.radius**4/8*(math.cos(angle1)**2-math.cos(angle2)**2)
-        Ic=npy.array([[Ix,Ixy],[Ixy,Iy]])
+        Ix = self.radius**4/8*(angle2-angle1+0.5*(math.sin(2*angle1)-math.sin(2*angle2)))
+        Iy = self.radius**4/8*(angle2-angle1+0.5*(math.sin(2*angle2)-math.sin(2*angle1)))
+        Ixy = self.radius**4/8*(math.cos(angle1)**2-math.cos(angle2)**2)
+        Ic = npy.array([[Ix, Ixy], [Ixy, Iy]])
         return geometry.Huygens2D(Ic, self.Area(), self.center, point)
 
     def Discretise(self, num=10):
@@ -959,15 +971,15 @@ class Arc2D(Primitive2D):
 class Circle2D(Primitive2D):
     def __init__(self,center,radius,name=''):
         Primitive2D.__init__(self,name)
-        self.center=center
-        self.radius=radius
-        self.utd_geo_points=False
+        self.center = center
+        self.radius = radius
+        self.utd_geo_points = False
 
     def _get_geo_points(self):
         if not self.utd_geo_points:
-            self._geo_start=self.center+self.radius*Point2D((1,0))
-            self.utd_geo_points=True
-        return [self._geo_start,self.center,self._geo_start]
+            self._geo_start = self.center+self.radius*Point2D((1,0))
+            self.utd_geo_points = True
+        return [self._geo_start, self.center, self._geo_start]
 
     geo_points = property(_get_geo_points)
 
@@ -1025,13 +1037,13 @@ class Circle2D(Primitive2D):
 
     def PlotData(self, marker=None, color='black', stroke_width=1, opacity=1):
         return {'type' : 'circle',
-                  'cx' : self.center.vector[0],
-                  'cy' : self.center.vector[1],
-                  'r' : self.radius,
-                  'color' : color,
-                  'opacity' : opacity,
-                  'size' : stroke_width,
-                  'dash' : None,}
+                'cx' : self.center.vector[0],
+                'cy' : self.center.vector[1],
+                'r' : self.radius,
+                'color' : color,
+                'opacity' : opacity,
+                'size' : stroke_width,
+                'dash' : None,}
 
 class Polygon2D(CompositePrimitive2D):
     # TODO: inherit from contour?
@@ -1121,11 +1133,11 @@ class Polygon2D(CompositePrimitive2D):
         """
         d_min = self.line_segments[0].PointDistance(point)
         for line in self.line_segments[1:]:
-            d=line.PointDistance(point)
-            if d<d_min:
-                d_min=d
+            d = line.PointDistance(point)
+            if d < d_min:
+                d_min = d
         return d_min
-    
+
     def SelfIntersect(self):
         epsilon = 0
         # BENTLEY-OTTMANN ALGORITHM
@@ -1134,9 +1146,9 @@ class Polygon2D(CompositePrimitive2D):
         nb = len(sorted_index)
         segments = []
         deleted = []
-        
+
         while len(sorted_index) != 0: # While all the points haven't been swept
-            # Stock the segments between 2 consecutive edges 
+            # Stock the segments between 2 consecutive edges
             # Ex: for the ABCDE polygon, if Sweep Line is on C, the segments
             #   will be (C,B) and (C,D)
             if sorted_index[0]-1 < 0:
@@ -1148,19 +1160,19 @@ class Polygon2D(CompositePrimitive2D):
             else:
                 segments.append((sorted_index[0], sorted_index[0]+1))
 
-            
-            # Once two edges linked by a segment have been swept, delete the 
-            # segment from the list 
+
+            # Once two edges linked by a segment have been swept, delete the
+            # segment from the list
             to_del = []
             for index in deleted:
                 if abs(index-sorted_index[0]) == 1 or abs(index-sorted_index[0]) == nb-1:
                     to_del.append((index, sorted_index[0]))
                     to_del.append((sorted_index[0], index))
-            
+
             # Keep track of which edges have been swept
             deleted.append(sorted_index[0])
             sorted_index.pop(0)
-            
+
             # Delete the segments that have just been swept
             index_to_del = []
             for i, segment in enumerate(segments):
@@ -1169,24 +1181,24 @@ class Polygon2D(CompositePrimitive2D):
                         index_to_del.append(i)
             for index in index_to_del[::-1]:
                 segments.pop(index)
-      
-            # Checks if two segments are intersecting each other, returns True 
+
+            # Checks if two segments are intersecting each other, returns True
             # if yes, otherwise the algorithm continues at WHILE
             for segment1 in segments:
                 for segment2 in segments:
                     if segment1[0] != segment2[0] and segment1[1] != segment2[1] and segment1[0] != segment2[1] and segment1[1] != segment2[0]:
-                        
+
                         line1 = LineSegment2D(Point2D(self.points[segment1[0]]), Point2D(self.points[segment1[1]]))
                         line2 = LineSegment2D(Point2D(self.points[segment2[0]]), Point2D(self.points[segment2[1]]))
-                        
+
                         p, a, b = Point2D.LinesIntersection(line1, line2, True)
-                                                
+
                         if p is not None:
                             if a >= 0+epsilon and a <= 1-epsilon and b >= 0+epsilon and b <= 1-epsilon:
-                                return True, line1, line2                     
-                        
+                                return True, line1, line2
+
         return False, None, None
-    
+
 
     def Dict(self):
         d = {'points': [point.Dict() for point in self.points], 'name':self.name}
@@ -1276,7 +1288,7 @@ class Vector3D(Vector):
         """
         v = npy.random.random(3)
 
-        v = Vector3D(v-npy.dot(v,self.vector)*self.vector/(self.Norm()**2))
+        v = Vector3D(v-v.Dot(self)*self*(self.Norm()**2))
         v.vector = v.vector/v.Norm()
         return v
 
@@ -1318,8 +1330,10 @@ class Point3D(Vector3D):
     def To2D(self, plane_origin, x, y):
         if x.Dot(y) > 1e-8:
             raise NotImplementedError
-        x2d = npy.dot(self.vector, x.vector) - npy.dot(plane_origin.vector, x.vector)
-        y2d = npy.dot(self.vector, y.vector) - npy.dot(plane_origin.vector, y.vector)
+        x2d = self.Dot(x) - plane_origin.Dot(x)
+        y2d = self.Dot(y) - plane_origin.Dot(y)
+#        x2d = npy.dot(self.vector, x.vector) - npy.dot(plane_origin.vector, x.vector)
+#        y2d = npy.dot(self.vector, y.vector) - npy.dot(plane_origin.vector, y.vector)
         return Point2D((x2d,y2d))
 
     def PointDistance(self, point2):
@@ -1530,8 +1544,8 @@ class LineSegment3D(Line3D):
         z=[p.vector[2] for p in self.points]
         ax.plot(x,y,z, 'o-k')
 
-    def MPLPlot2D(self, x3D, y3D, ax):
-        edge2D =  self.PlaneProjection2D(x3D, y3D)
+    def MPLPlot2D(self, x_3D, y_3D, ax):
+        edge2D =  self.PlaneProjection2D(x_3D, y_3D)
         edge2D.MPLPlot(ax)
 
 
@@ -1546,7 +1560,7 @@ class LineSegment3D(Line3D):
 
 class Circle3D(Primitive3D):
     def __init__(self, center, radius, normal, name=''):
-        Primitive2D.__init__(self, name)
+        Primitive3D.__init__(self, name)
         self.center = center
         self.radius = radius
         self.normal = normal
@@ -1566,7 +1580,7 @@ class Arc3D(Primitive3D):
     An arc is defined by a starting point, an end point and an interior point
     """
     def __init__(self, start, interior, end, name=''):
-        Primitive2D.__init__(self, name)
+        Primitive3D.__init__(self, name)
         self.start = start
         self.interior = interior
         self.end = end
@@ -1590,7 +1604,7 @@ class Arc3D(Primitive3D):
         l1 = Line3D(p11, p12)
         l2 = Line3D(p21, p22)
 
-        c1, c2 = l1.MinimumDistancePoints(l2)
+        c1, _ = l1.MinimumDistancePoints(l2)
         self.center = c1
         self.radius = (self.center - self.start).Norm()
 
@@ -1726,7 +1740,7 @@ class Wire3D(CompositePrimitive3D):
     A collection of simple primitives, following each other making a wire
     """
     def __init__(self, primitives, name=''):
-        CompositePrimitive2D.__init__(self, primitives, name)
+        CompositePrimitive3D.__init__(self, primitives, name)
 
     def Length(self):
         length = 0.
@@ -1804,7 +1818,7 @@ class VolumeModel:
 
     def FreeCADScript(self, fcstd_filepath,
                       freecad_lib_path='/usr/lib/freecad/lib',
-                      export_types=['fcstd'],
+                      export_types=('fcstd',),
                       save_to = '',
                       tolerance=0.0001):
         """
@@ -1859,7 +1873,7 @@ class VolumeModel:
     def FreeCADExport(self,fcstd_filepath,
                       python_path='python',
                       freecad_lib_path='/usr/lib/freecad/lib',
-                      export_types=['fcstd'],
+                      export_types=('fcstd',),
                       tolerance=0.0001):
         """
         Export model to .fcstd FreeCAD standard

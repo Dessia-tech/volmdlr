@@ -1,27 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Mar  1 14:10:59 2017
 
-@author: steven
 """
+
 import math
-#from scipy.linalg import norm
 import volmdlr
 from volmdlr.primitives import RoundedLineSegments
-import numpy as npy
 
 
 class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
-    def __init__(self, points, radius, closed=False, adapt_radius=False, name=''):        
+    def __init__(self, points, radius, closed=False, adapt_radius=False, name=''):
         primitives = RoundedLineSegments.__init__(self, points, radius,
-                                     volmdlr.LineSegment2D, volmdlr.Arc2D,
-                                     closed, adapt_radius, name='')
-        
+                                                  volmdlr.LineSegment2D, volmdlr.Arc2D,
+                                                  closed, adapt_radius, name='')
+
         volmdlr.Wire2D.__init__(self, primitives, name)
 
-        
-    def ArcFeatures(self, ipoint):        
+
+    def ArcFeatures(self, ipoint):
         radius = self.radius[ipoint]
         if self.closed:
             if ipoint == 0:
@@ -29,7 +26,7 @@ class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
             else:
                 pt1 = self.points[ipoint -1]
             pti = self.points[ipoint]
-            if ipoint < self.npoints-1:                
+            if ipoint < self.npoints-1:
                 pt2 = self.points[ipoint+1]
             else:
                 pt2 = self.points[0]
@@ -52,7 +49,7 @@ class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
         p4 = pti + u2 * dist
 
         w = (u1+u2)
-        if w != volmdlr.Vector2D((0,0)):
+        if w != volmdlr.Vector2D((0, 0)):
             w.Normalize()
 
         v1 = u1.NormalVector()
@@ -61,18 +58,22 @@ class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
 
         pc = p3 + v1 * radius
         pm = pc - radius*w
-        
+
         return p3, pm, p4, dist, alpha
 
-        
+
     def Rotation(self, center, angle, copy=True):
         if copy:
-            return RoundedLineSegments2D([p.Rotation(center,angle,copy=True) for p in self.points],
-                                          self.radius, self.closed, adapt_radius =self.adapt_radius, name = self.name)
+            return RoundedLineSegments2D([p.Rotation(center, angle, copy=True)\
+                                          for p in self.points],
+                                          self.radius, self.closed,
+                                          adapt_radius =self.adapt_radius,
+                                          name = self.name)
         else:
-            self.__init__([p.Rotation(center,angle,copy=True) for p in self.points],
-                           self.radius, self.closed, adapt_radius=self.adapt_radius, name = self.name)
-            
+            self.__init__([p.Rotation(center, angle, copy=True) for p in self.points],
+                           self.radius, self.closed,
+                           adapt_radius=self.adapt_radius, name = self.name)
+
     def Translation(self, offset, copy=True):
         if copy:
             return RoundedLineSegments2D([p.Translation(offset, copy=True) for p in self.points],
@@ -84,7 +85,7 @@ class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
 #    def Offset(self, offset):
 #        '''
 #        Offset a RoundedLineSegments2D profil of the value offset (with the sign of offset)
-#        '''        
+#        '''
 #        node_list = []
 #        dict_radius = {}
 #        for ind_pt, pt in enumerate(self.points[:-1]):
@@ -109,13 +110,13 @@ class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
 #                node_list.append(li_trans.points[0])
 #            lm = li_trans
 #        node_list.append(node_list[0])
-#        
+#
 #        dict_radius = {}
 #        for num_node, radius in self.radius.items():
 #            dict_radius[num_node] = radius - offset
-#        
+#
 #        return RoundedLineSegments2D(node_list, dict_radius, False)
-            
+
 #    def Offset(self, offset):
 #        offset_lines = []
 #        if self.closed:
@@ -130,13 +131,13 @@ class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
 #            point1_offset = point1 + offset*n
 #            point2_offset = point2 + offset*n
 #            offset_lines.append(volmdlr.Line2D(point1_offset, point2_offset))
-#            
+#
 #        # Computing
 #        if self.closed:
 #            zip_offset_lines = zip([offset_lines[-1]]+offset_lines[:-1], offset_lines)
 #        else:
 #            zip_offset_lines = zip(offset_lines[:-1], offset_lines[1:])
-#            
+#
 #        offset_points = []
 #        new_radii = {}
 #        for ipoint, (line1, line2) in enumerate(zip_offset_lines):
@@ -160,20 +161,20 @@ class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
 #                else:
 #                    if self.adapt_radius:
 #                        new_radii[ipoint2] = 1e-6
-#                    
+#
 #        # If not closed, end points should be offset also
 #        if not self.closed:
 #            vs = (self.points[1]-self.points[0]).NormalVector(unit=True)
 #            ps = self.points[0] + vs*offset
-#            
+#
 #            ve = (self.points[-1]-self.points[-2]).NormalVector(unit=True)
 #            pe = self.points[-1] + ve*offset
 #            offset_points.insert(0, ps)
 #            offset_points.append(pe)
-#                
+#
 #        return RoundedLineSegments2D(offset_points, new_radii, self.closed,
 #                                     adapt_radius=self.adapt_radius)
-        
+
     def Offset(self, offset):
         nb = len(self.points)
         vectors = []
@@ -192,14 +193,14 @@ class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
             v2.Normalize()
             vectors.append(v1)
             vectors.append(v2)
-            
-            
+
+
         offset_vectors = []
         new_radii = {}
         offset_points = []
-        
+
         for i in range((not self.closed),nb-(not self.closed)):
-            
+
             check = False
             ni = vectors[2*i-1] + vectors[2*i]
             if ni == volmdlr.Vector2D((0,0)):
@@ -212,7 +213,7 @@ class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
                     ni = - ni
                     check = True
                 offset_vectors.append(ni)
-            
+
             if i in self.radius:
                 if (check and offset > 0) or (not check and offset < 0):
                     new_radius = self.radius[i] + abs(offset)
@@ -223,56 +224,55 @@ class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
                 else:
                     if self.adapt_radius:
                         new_radii[i] = 1e-6
-            
+
             normal_vector1 = - vectors[2*i-1].NormalVector()
             normal_vector2 =   vectors[ 2*i ].NormalVector()
             normal_vector1.Normalize()
             normal_vector2.Normalize()
             alpha = math.acos(normal_vector1.Dot(normal_vector2))
-            
+
             offset_point = self.points[i] + offset/math.cos(alpha/2)*offset_vectors[i-(not self.closed)]
             offset_points.append(offset_point)
-            
-            
+
+
         if not self.closed:
             n1 = vectors[0].NormalVector(unit=True)
             offset_vectors.insert(0, n1)
-            offset_points.insert(0, self.points[0] + offset*offset_vectors[0])    
-            
+            offset_points.insert(0, self.points[0] + offset*offset_vectors[0])
+
             n_last = vectors[-1].NormalVector(unit=True)
             n_last = - n_last
             offset_vectors.append(n_last)
             offset_points.append(self.points[-1] + offset*offset_vectors[-1])
-        
-                
+
+
         return RoundedLineSegments2D(offset_points, new_radii, self.closed,
                                          adapt_radius=self.adapt_radius)
-        
-        
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -4,7 +4,6 @@
 Common abstract primitives
 """
 
-#from volmdlr.core import CompositePrimitive3D
 from scipy.optimize import linprog
 import math
 from numpy import zeros
