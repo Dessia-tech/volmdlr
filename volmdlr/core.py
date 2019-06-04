@@ -42,31 +42,14 @@ class Vector:
     def __repr__(self):
         return '{}: {}'.format(self.__class__.__name__, self.vector)
 
-    def __add__(self, other_vector):
-        return self.__class__(self.vector + other_vector.vector)
-
     def __radd__(self, other_vector):
         return self + other_vector
-
-    def __sub__(self, other_vector):
-        return self.__class__(self.vector - other_vector.vector)
 
     def __rsub__(self, other_vector):
         return self - other_vector
 
-    def __neg__(self):
-        return self.__class__(-self.vector)
-
-    def __mul__(self, value):
-        return self.__class__(self.vector * value)
-
     def __rmul__(self, value):
         return self * value
-
-    def __truediv__(self, value):
-        if value == 0:
-            raise ZeroDivisionError
-        return self.__class__(self.vector / value)
 
     def __rtruediv__(self, value):
         return self / value
@@ -98,6 +81,9 @@ class Vector:
             raise ZeroDivisionError
 
         self.vector /= n
+        
+    def copy(self):
+        return self.__class__(self.vector)
 
     def Dict(self):
         d = {'vector': [float(i) for i in self.vector]}
@@ -109,6 +95,27 @@ class Vector2D(Vector):
         self.vector = npy.zeros(2)
         self.vector[0] = vector[0]
         self.vector[1] = vector[1]
+
+    def __add__(self, other_vector):
+        return Vector2D((self.vector[0] + other_vector.vector[0],
+                               self.vector[1] + other_vector.vector[1]))
+
+    def __neg__(self):
+        return Vector2D((-self.vector[0], -self.vector[1]))
+
+    def __sub__(self, other_vector):
+        return Vector2D((self.vector[0] - other_vector.vector[0],
+                               self.vector[1] - other_vector.vector[1]))
+
+    def __mul__(self, value):
+        return Vector2D((self.vector[0] * value,
+                               self.vector[1] * value))
+
+    def __truediv__(self, value):
+        if value == 0:
+            raise ZeroDivisionError
+        return Vector2D((self.vector[0] / value,
+                               self.vector[1] / value))
 
     def __round__(self, ndigits):
         return self.__class__((round(self.vector[0], ndigits),
@@ -187,17 +194,26 @@ class Point2D(Vector2D):
         Vector2D.__init__(self, vector)
         self.name = name
 
-    def __add__(self, point2d):
-        return Point2D(self.vector + point2d.vector)
+    def __add__(self, other_vector):
+        return Point2D((self.vector[0] + other_vector.vector[0],
+                        self.vector[1] + other_vector.vector[1]))
 
-    def __sub__(self, point2d):
-        return Point2D(self.vector - point2d.vector)
+    def __neg__(self):
+        return Point2D((-self.vector[0], -self.vector[1]))
+
+    def __sub__(self, other_vector):
+        return Point2D((self.vector[0] - other_vector.vector[0],
+                        self.vector[1] - other_vector.vector[1]))
 
     def __mul__(self, value):
-        return Point2D(self.vector * value)
+        return Point2D((self.vector[0] * value,
+                               self.vector[1] * value))
 
     def __truediv__(self, value):
-        return Point2D(self.vector / value)
+        if value == 0:
+            raise ZeroDivisionError
+        return Point2D((self.vector[0] / value,
+                        self.vector[1] / value))
 
     def To3D(self, plane_origin, x1, x2):
         x, y = self.vector
@@ -517,17 +533,17 @@ class Contour2D(Wire2D):
         if len(self.basis_primitives) == 1:
             return self.basis_primitives[0].CenterOfMass()
 
-        arcs=[]
-        points_polygon=[]
+        arcs = []
+        points_polygon = []
         for primitive in self.basis_primitives:
-            if primitive.__class__.__name__=='LineSegment2D':
+            if primitive.__class__.__name__ == 'LineSegment2D':
                 points_polygon.extend(primitive.points)
-            elif primitive.__class__.__name__=='Arc2D':
+            elif primitive.__class__.__name__ == 'Arc2D':
                 points_polygon.append(primitive.center)
                 arcs.append(primitive)
-        polygon=Polygon2D(points_polygon)
+        polygon = Polygon2D(points_polygon)
 
-        area=polygon.Area()
+        area = polygon.Area()
         if area > 0.:
             c = area*polygon.CenterOfMass()
         else:
@@ -545,25 +561,25 @@ class Contour2D(Wire2D):
 
 
 
-    def SecondMomentArea(self,point):
-        if len(self.primitives)==1:
+    def SecondMomentArea(self, point):
+        if len(self.primitives) == 1:
             return self.primitives[0].SecondMomentArea(point)
 
-        arcs=[]
-        points_polygon=[]
+        arcs = []
+        points_polygon = []
         for primitive in self.primitives:
-            if primitive.__class__.__name__=='Line2D':
+            if primitive.__class__.__name__ == 'Line2D':
                 points_polygon.extend(primitive.points)
-            elif primitive.__class__.__name__=='Arc2D':
+            elif primitive.__class__.__name__ == 'Arc2D':
                 points_polygon.append(primitive.center)
                 arcs.append(primitive)
-        polygon=Polygon2D(points_polygon)
-        A=polygon.SecondMomentArea(point)
+        polygon = Polygon2D(points_polygon)
+        A = polygon.SecondMomentArea(point)
         for arc in arcs:
             if polygon.PointBelongs(arc.middle):
-                A-=arc.SecondMomentArea(point)
+                A -= arc.SecondMomentArea(point)
             else:
-                A+=arc.SecondMomentArea(point)
+                A += arc.SecondMomentArea(point)
         return A
 
     def PlotData(self, name, fill=None, color='black', stroke_width=0.2, opacity=1):
@@ -573,7 +589,9 @@ class Contour2D(Wire2D):
         plot_data['type'] = 'contour'
         plot_data['plot_data'] = []
         for item in self.basis_primitives:
-            plot_data['plot_data'].append(item.PlotData(color = color, stroke_width = stroke_width, opacity = opacity))
+            plot_data['plot_data'].append(item.PlotData(color=color,
+                                                        stroke_width=stroke_width,
+                                                        opacity=opacity))
         return plot_data
 
 
@@ -584,10 +602,10 @@ class Mesh2D:
         self.default_density = default_density
 
     def GeoScript(self, filepath=''):
-        s=''
-        ipt=1# point index
-        ipr=1# primitive index
-        points_index={}
+        s = ''
+        ipt = 1# point index
+        ipr = 1# primitive index
+        points_index = {}
         #assigning an index to point
         for contour in self.contours:
             for primitive in contour.primitives:
@@ -600,11 +618,11 @@ class Mesh2D:
                             d=self.points_densities[point]
                         except KeyError:
                             d=self.default_density
-                        s+='Point({})={{{},{},0.,{}}};\n'.format(ipt,*point.vector,d)
-                        ipt+=1
-        contours_indices=[]
+                        s += 'Point({})={{{},{},0.,{}}};\n'.format(ipt,*point.vector,d)
+                        ipt += 1
+        contours_indices = []
         for contour in self.contours:
-            contour_iprs=[]
+            contour_iprs = []
             for primitive in contour.primitives:
                 spr,ipr2=primitive.GeoScript(ipr,[points_index[p] for p in primitive.geo_points])
                 s+=spr
@@ -616,7 +634,7 @@ class Mesh2D:
         s+='Plane Surface({}) = {{{}}};\n'.format(ipr,str(contours_indices)[1:-1])
         # Saving to file if required
         if filepath!='':
-            with open(filepath,'w') as file:
+            with open(filepath, 'w') as file:
                 file.write(s)
         return s
 
@@ -1245,6 +1263,32 @@ class Vector3D(Vector):
         self.vector[0] = vector[0]
         self.vector[1] = vector[1]
         self.vector[2] = vector[2]
+        
+        
+    def __add__(self, other_vector):
+        return Vector3D((self.vector[0] + other_vector.vector[0],
+                               self.vector[1] + other_vector.vector[1],
+                               self.vector[2] + other_vector.vector[2]))
+
+    def __neg__(self):
+        return Vector3D((-self.vector[0], -self.vector[1], -self.vector[2]))
+
+    def __sub__(self, other_vector):
+        return Vector3D((self.vector[0] - other_vector.vector[0],
+                               self.vector[1] - other_vector.vector[1],
+                               self.vector[2] - other_vector.vector[2]))
+
+    def __mul__(self, value):
+        return Vector3D((self.vector[0] * value,
+                               self.vector[1] * value,
+                               self.vector[2] * value))
+
+    def __truediv__(self, value):
+        if value == 0:
+            raise ZeroDivisionError
+        return Vector3D((self.vector[0] / value,
+                               self.vector[1] / value,
+                               self.vector[2] / value))
 
     def __round__(self, ndigits):
         return self.__class__((round(self.vector[0], ndigits),
@@ -1262,12 +1306,14 @@ class Vector3D(Vector):
         return Vector3D((u2*v3 - u3*v2, u3*v1 - u1*v3, u1*v2 - u2*v1))
 
     def Norm(self):
-        x,y,z = self.vector
+        x, y, z = self.vector
         return (x**2 + y**2 + z**2)**0.5
 
     def Rotation(self, center, axis, angle, copy=True):
         u = axis.vector
-        ux = npy.array([[0,-u[2],u[1]],[u[2],0,-u[0]],[-u[1],u[0],0]])
+        ux = npy.array([[0,-u[2],u[1]],
+                        [u[2],0,-u[0]],
+                        [-u[1],u[0],0]])
         R = math.cos(angle)*npy.eye(3)+math.sin(angle)*ux+(1-math.cos(angle))*npy.tensordot(u,u,axes=0)
         vector2 = npy.dot(R,(self.vector-center.vector))+center.vector
         if copy:
@@ -1286,10 +1332,10 @@ class Vector3D(Vector):
         """
         Returns a random normal vector
         """
-        v = npy.random.random(3)
+        v = Vector3D(npy.random.random(3))
 
-        v = Vector3D(v-v.Dot(self)*self*(self.Norm()**2))
-        v.vector = v.vector/v.Norm()
+        v = v - v.Dot(self)*self/(self.Norm()**2)
+        v.Normalize()
         return v
 
     def Copy(self):
@@ -1308,6 +1354,31 @@ class Point3D(Vector3D):
     def __init__(self, vector, name=''):
         Vector3D.__init__(self, vector)
         self.name=name
+        
+    def __add__(self, other_vector):
+        return Point3D((self.vector[0] + other_vector.vector[0],
+                               self.vector[1] + other_vector.vector[1],
+                               self.vector[2] + other_vector.vector[2]))
+
+    def __neg__(self):
+        return Point3D((-self.vector[0], -self.vector[1], -self.vector[2]))
+
+    def __sub__(self, other_vector):
+        return Point3D((self.vector[0] - other_vector.vector[0],
+                               self.vector[1] - other_vector.vector[1],
+                               self.vector[2] - other_vector.vector[2]))
+
+    def __mul__(self, value):
+        return Point3D((self.vector[0] * value,
+                               self.vector[1] * value,
+                               self.vector[2] * value))
+
+    def __truediv__(self, value):
+        if value == 0:
+            raise ZeroDivisionError
+        return Point3D((self.vector[0] / value,
+                               self.vector[1] / value,
+                               self.vector[2] / value))
 
     def MPLPlot(self, ax):
         ax.scatter(*self.vector)
