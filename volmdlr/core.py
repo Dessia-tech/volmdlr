@@ -2187,7 +2187,7 @@ class VolumeModel:
         output=subprocess.call([python_path, arg])
 
         f.close()
-#        os.remove(f.name)
+        os.remove(f.name)
         return output
 
 
