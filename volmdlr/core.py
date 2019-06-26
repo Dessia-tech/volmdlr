@@ -330,15 +330,29 @@ class Basis2D(Basis):
         return npy.array([[self.u[0], self.v[0]],
                           [self.u[1], self.v[1]]])
 
+#    def InverseTransfertMatrix(self):
+#        # Todo: cache for performance
+#        return inv(self.TransfertMatrix())
+    
     def InverseTransfertMatrix(self):
-        # Todo: cache for performance
-        return inv(self.TransfertMatrix())
+        det = self.u[0]*self.v[1] - self.v[0]*self.u[1]
+        if not math.isclose(det, 0, abs_tol=1e-10):
+            return 1/det * npy.array([[self.v[1], -self.v[0]],
+                                     [-self.u[1], self.u[0]]])
+        else:
+            raise ZeroDivisionError
 
     def NewCoordinates(self, vector):
-        return Vector2D(npy.dot(self.InverseTransfertMatrix(), vector.vector))
+        matrix = self.InverseTransfertMatrix()
+        return Vector2D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1],
+                         matrix[1][0]*vector[0] + matrix[1][1]*vector[1]))
+#        return Vector2D(npy.dot(self.InverseTransfertMatrix(), vector.vector))
 
     def OldCoordinates(self, vector):
-        return Vector2D(npy.dot(self.TransfertMatrix(), vector.vector))
+        matrix = self.TransfertMatrix()
+        return Vector2D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1],
+                         matrix[1][0]*vector[0] + matrix[1][1]*vector[1]))
+#        return Vector2D(npy.dot(self.TransfertMatrix(), vector.vector))
 
     def Rotation(self, angle, copy=True):
         center = o2D
@@ -692,10 +706,12 @@ class Line2D(Primitive2D, Line):
         """
         Computes the distance of a point to line
         """
-        p1, p2=self.points
-        t = (point-p1).Dot(p2-p1)/ (p2-p1).Norm()**2
-        projection = p1 + t * (p2-p1)# Projection falls on the segment
+        p1, p2 = self.points
+        u = p2 - p1
+        t = (point-p1).Dot(u) / u.Norm()**2
+        projection = p1 + t * u # Projection falls on the segment
         return (point-projection).Norm()
+#        return abs(u[1]*point[0] - u[0]*point[1] + p2[0]*p1[1] - p2[1]*p1[0]) / u.Norm()
 
     def PointProjection(self, point, curvilinear_abscissa=False):
         p1, p2 = self.points
@@ -881,9 +897,7 @@ class LineSegment2D(Line2D):
         p1, p2 = self.points
         u = p2-p1
         t = max(0, min(1, (point-p1).Dot(u) / u.Norm()**2))
-
-        projection = p1 + t * (p2 - p1)# Projection falls on the segment
-
+        projection = p1 + t * u # Projection falls on the segment
         return (projection-point).Norm()
 
     def PointProjection(self, point, curvilinear_abscissa=False):
@@ -1687,15 +1701,38 @@ class Basis3D(Basis):
                           [self.u[1], self.v[1], self.w[1]],
                           [self.u[2], self.v[2], self.w[2]]])
 
+#    def InverseTransfertMatrix(self):
+#        # Todo: cache for performance
+#        return inv(self.TransfertMatrix())
+            
     def InverseTransfertMatrix(self):
-        # Todo: cache for performance
-        return inv(self.TransfertMatrix())
+        det = self.u[0]*self.v[1]*self.w[2] + self.v[0]*self.w[1]*self.u[2] \
+            + self.w[0]*self.u[1]*self.v[2] - self.w[0]*self.v[1]*self.u[2] \
+            - self.w[1]*self.v[2]*self.u[0] - self.w[2]*self.v[0]*self.u[1]
+        if not math.isclose(det, 0, abs_tol=1e-10):
+            return 1/det * npy.array([[self.v[1]*self.w[2] - self.w[1]*self.v[2],
+                                       self.w[0]*self.v[2] - self.v[0]*self.w[2],
+                                       self.v[0]*self.w[1] - self.w[0]*self.v[1]],
+                                      [self.w[1]*self.u[2] - self.u[1]*self.w[2],
+                                       self.u[0]*self.w[2] - self.w[0]*self.u[2],
+                                       self.w[0]*self.u[1] - self.u[0]*self.w[1]],
+                                      [self.u[1]*self.v[2] - self.v[1]*self.u[2],
+                                       self.v[0]*self.u[2] - self.u[0]*self.v[2],
+                                       self.u[0]*self.v[1] - self.v[0]*self.u[1]]])
 
     def NewCoordinates(self, vector):
-        return vector.__class__(npy.dot(self.InverseTransfertMatrix(), vector.vector))
+        matrix = self.InverseTransfertMatrix()
+        return Vector3D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1] + matrix[0][2]*vector[2],
+                         matrix[1][0]*vector[0] + matrix[1][1]*vector[1] + matrix[1][2]*vector[2],
+                         matrix[2][0]*vector[0] + matrix[2][1]*vector[1] + matrix[2][2]*vector[2]))
+#        return vector.__class__(npy.dot(self.InverseTransfertMatrix(), vector.vector))
 
     def OldCoordinates(self, vector):
-        return vector.__class__(npy.dot(self.TransfertMatrix(), vector.vector))
+        matrix = self.TransfertMatrix()
+        return Vector3D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1] + matrix[0][2]*vector[2],
+                         matrix[1][0]*vector[0] + matrix[1][1]*vector[1] + matrix[1][2]*vector[2],
+                         matrix[2][0]*vector[0] + matrix[2][1]*vector[1] + matrix[2][2]*vector[2]))
+#        return vector.__class__(npy.dot(self.TransfertMatrix(), vector.vector))
 
     def Copy(self):
         return Basis3D(self.u, self.v, self.w)
@@ -2101,7 +2138,6 @@ class VolumeModel:
             s+="import sys\nsys.path.append('"+freecad_lib_path+"')\n"
 
         s+="import math\nimport FreeCAD as fc\nimport Part\n\ndoc=fc.newDocument('doc')\n\n"
-
         for ig, (group_name, primitives_group) in enumerate(self.groups):
             if group_name == '':
                 group_name = 'Group_{}'.format(ig)
@@ -2165,7 +2201,7 @@ class VolumeModel:
         output=subprocess.call([python_path, arg])
 
         f.close()
-        os.remove(f.name)
+#        os.remove(f.name)
         return output
 
 
