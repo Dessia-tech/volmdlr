@@ -167,9 +167,9 @@ class Vector2D(Vector):
         n = Vector2D((-self.vector[1], self.vector[0]))
         if unit:
             n.Normalize()
-        return n
+        return n   
 
-    def Draw(self, origin=(0, 0), ax=None, color='k'):
+    def Draw(self, origin=(0, 0), ax=None, color='k', line=False):
         if ax is None:
             fig, ax = plt.subplots()
 
@@ -179,6 +179,17 @@ class Vector2D(Vector):
                                 head_width=0.01,
                                 length_includes_head=True,
                                 color=color))
+        if line:
+            style='-'+color
+            linestyle = '-.'
+            origin = Point2D(origin)
+            p1, p2 = origin, origin+self
+            u = p2 - p1
+#            plt.plot([p1[0], p2[0]], [p1[1], p2[1]], style)
+            p3 = p1 - 3*u
+            p4 = p2 + 4*u
+            ax.plot([p3[0], p4[0]], [p3[1], p4[1]], style, linestyle=linestyle)
+        
 
     @classmethod
     def DictToObject(cls, dict_):
@@ -319,15 +330,29 @@ class Basis2D(Basis):
         return npy.array([[self.u[0], self.v[0]],
                           [self.u[1], self.v[1]]])
 
+#    def InverseTransfertMatrix(self):
+#        # Todo: cache for performance
+#        return inv(self.TransfertMatrix())
+    
     def InverseTransfertMatrix(self):
-        # Todo: cache for performance
-        return inv(self.TransfertMatrix())
+        det = self.u[0]*self.v[1] - self.v[0]*self.u[1]
+        if not math.isclose(det, 0, abs_tol=1e-10):
+            return 1/det * npy.array([[self.v[1], -self.v[0]],
+                                     [-self.u[1], self.u[0]]])
+        else:
+            raise ZeroDivisionError
 
     def NewCoordinates(self, vector):
-        return Vector2D(npy.dot(self.InverseTransfertMatrix(), vector.vector))
+        matrix = self.InverseTransfertMatrix()
+        return Vector2D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1],
+                         matrix[1][0]*vector[0] + matrix[1][1]*vector[1]))
+#        return Vector2D(npy.dot(self.InverseTransfertMatrix(), vector.vector))
 
     def OldCoordinates(self, vector):
-        return Vector2D(npy.dot(self.TransfertMatrix(), vector.vector))
+        matrix = self.TransfertMatrix()
+        return Vector2D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1],
+                         matrix[1][0]*vector[0] + matrix[1][1]*vector[1]))
+#        return Vector2D(npy.dot(self.TransfertMatrix(), vector.vector))
 
     def Rotation(self, angle, copy=True):
         center = o2D
@@ -681,10 +706,12 @@ class Line2D(Primitive2D, Line):
         """
         Computes the distance of a point to line
         """
-        p1, p2=self.points
-        t = (point-p1).Dot(p2-p1)/ (p2-p1).Norm()**2
-        projection = p1 + t * (p2-p1)# Projection falls on the segment
+        p1, p2 = self.points
+        u = p2 - p1
+        t = (point-p1).Dot(u) / u.Norm()**2
+        projection = p1 + t * u # Projection falls on the segment
         return (point-projection).Norm()
+#        return abs(u[1]*point[0] - u[0]*point[1] + p2[0]*p1[1] - p2[1]*p1[0]) / u.Norm()
 
     def PointProjection(self, point, curvilinear_abscissa=False):
         p1, p2 = self.points
@@ -703,11 +730,146 @@ class Line2D(Primitive2D, Line):
             
         p1, p2 = self.points
         u = p2 - p1
-        plt.plot([p1[0], p2[0]], [p1[1], p2[1]], style)
-        p3 = p1 - 3* u
+        plt.plot([p1[0], p2[0]], [p1[1], p2[1]], style)        
+        p3 = p1 - 3*u
         p4 = p2 + 4*u
-        ax.plot([p3[0], p4[0]], [p3[1], p4[1]], style, linestyle = linestyle)
-        return fig, ax
+        ax.plot([p3[0], p4[0]], [p3[1], p4[1]], style, linestyle = linestyle)        
+        return []
+
+    def CreateTangentCircle(self, point, other_line):
+        """
+        Computes the two circles that are tangent to 2 lines and intersect 
+        a point located on one of the two lines.
+        """
+        
+        # point will be called I(x_I, y_I)
+        # self will be (AB)
+        # line will be (CD)
+        
+        if math.isclose(self.PointDistance(point), 0, abs_tol=1e-10):
+            I = Vector2D((point[0], point[1]))
+            A = Vector2D((self.points[0][0], self.points[0][1]))
+            B = Vector2D((self.points[1][0], self.points[1][1]))
+            C = Vector2D((other_line.points[0][0], other_line.points[0][1]))
+            D = Vector2D((other_line.points[1][0], other_line.points[1][1]))
+        
+        elif math.isclose(other_line.PointDistance(point), 0, abs_tol=1e-10):
+            I = Vector2D((point[0], point[1]))
+            C = Vector2D((self.points[0][0], self.points[0][1]))
+            D = Vector2D((self.points[1][0], self.points[1][1]))
+            A = Vector2D((other_line.points[0][0], other_line.points[0][1]))
+            B = Vector2D((other_line.points[1][0], other_line.points[1][1]))
+        else:
+            raise AttributeError("The point isn't on any of the two lines")
+        
+        # CHANGEMENT DE REPAIRE
+        new_u = Vector2D((B-A))
+        new_u.Normalize()
+        new_v = new_u.NormalVector(unit=True)
+        new_basis = Frame2D(I, new_u, new_v)
+        
+        new_A = new_basis.NewCoordinates(A)
+        new_B = new_basis.NewCoordinates(B)
+        new_C = new_basis.NewCoordinates(C)
+        new_D = new_basis.NewCoordinates(D)
+        
+# =============================================================================
+# LES SEGMENTS DECRIVENT UNE SEULE ET MEME DROITE
+#   => AUCUNE SOLUTION   
+# =============================================================================
+        if new_C[1] == 0 and new_D[1] == 0:
+    
+            return None, None
+        
+# =============================================================================
+# LES SEGMENTS SONT PARALLELES
+#   => 1 SOLUTION
+# =============================================================================
+        elif math.isclose(self.DirectionVector(unit=True).Dot(other_line.NormalVector(unit=True)), 0, abs_tol=1e-06):
+    
+            segments_distance = abs(new_C[1] - new_A[1])
+            r = segments_distance / 2
+            new_circle_center = Point2D((0, npy.sign(new_C[1] - new_A[1])*r))
+            circle_center = new_basis.OldCoordinates(new_circle_center)
+            circle = Circle2D(circle_center, r)
+            
+            return circle, None
+# =============================================================================
+# LES SEGMENTS SONT PERPENDICULAIRES
+#   => 2 SOLUTIONS
+# =============================================================================
+        elif math.isclose(self.DirectionVector(unit=True).Dot(other_line.DirectionVector(unit=True)), 0, abs_tol=1e-06):
+    
+            line_AB = Line2D(Point2D(new_A), Point2D(new_B))
+            line_CD = Line2D(Point2D(new_C), Point2D(new_D))
+            new_pt_K = Point2D.LinesIntersection(line_AB ,line_CD)
+            
+            r = abs(new_pt_K[0])
+            new_circle_center1 = Point2D((0, r))
+            new_circle_center2 = Point2D((0, -r))
+            circle_center1 = new_basis.OldCoordinates(new_circle_center1)
+            circle_center2 = new_basis.OldCoordinates(new_circle_center2)
+            circle1 = Circle2D(circle_center1, r)
+            circle2 = Circle2D(circle_center2, r)
+            
+            return circle1, circle2
+        
+# =============================================================================
+# LES SEGMENTS SONT QUELCONQUES
+#   => 2 SOLUTIONS
+# =============================================================================
+        else:
+    
+            line_AB = Line2D(Point2D(new_A), Point2D(new_B))
+            line_CD = Line2D(Point2D(new_C), Point2D(new_D))
+            new_pt_K = Point2D.LinesIntersection(line_AB ,line_CD)
+            pt_K = Point2D(new_basis.OldCoordinates(new_pt_K))
+    
+            # CHANGEMENT DE REPERE:
+            new_u2 = Vector2D(pt_K-I)
+            new_u2.Normalize()
+            new_v2 = new_u2.NormalVector(unit=True)
+            new_basis2 = Frame2D(I, new_u2, new_v2)
+            
+            new_A = new_basis2.NewCoordinates(A)
+            new_B = new_basis2.NewCoordinates(B)
+            new_C = new_basis2.NewCoordinates(C)
+            new_D = new_basis2.NewCoordinates(D)
+            new_pt_K = new_basis2.NewCoordinates(pt_K)
+    
+            teta1 = math.atan2(new_C[1], new_C[0] - new_pt_K[0])
+            teta2 = math.atan2(new_D[1], new_D[0] - new_pt_K[0])
+            
+            if teta1 < 0:
+                teta1 += math.pi
+            if teta2 < 0:
+                teta2 += math.pi
+                
+            if not math.isclose(teta1, teta2, abs_tol=1e-08):
+                if math.isclose(teta1, math.pi, abs_tol=1e-08) or math.isclose(teta1, 0., abs_tol=1e-08):
+                    teta = teta2 
+                elif math.isclose(teta2, math.pi, abs_tol=1e-08) or math.isclose(teta2, 0., abs_tol=1e-08):
+                    teta = teta1
+            else:
+                teta = teta1
+                
+            r1 = new_pt_K[0] * math.sin(teta) / (1 + math.cos(teta))
+            r2 = new_pt_K[0] * math.sin(teta) / (1 - math.cos(teta))
+            
+            new_circle_center1 = Point2D((0, -r1))
+            new_circle_center2 = Point2D((0, r2))
+            
+            circle_center1 = new_basis2.OldCoordinates(new_circle_center1)
+            circle_center2 = new_basis2.OldCoordinates(new_circle_center2)
+            
+            if new_basis.NewCoordinates(circle_center1)[1] > 0:
+                circle1 = Circle2D(circle_center1, r1)
+                circle2 = Circle2D(circle_center2, r2)
+            else:
+                circle1 = Circle2D(circle_center2, r2)
+                circle2 = Circle2D(circle_center1, r1)
+            
+            return circle1, circle2
 
 class LineSegment2D(Line2D):
     """
@@ -735,9 +897,7 @@ class LineSegment2D(Line2D):
         p1, p2 = self.points
         u = p2-p1
         t = max(0, min(1, (point-p1).Dot(u) / u.Norm()**2))
-
-        projection = p1 + t * (p2 - p1)# Projection falls on the segment
-
+        projection = p1 + t * u # Projection falls on the segment
         return (projection-point).Norm()
 
     def PointProjection(self, point, curvilinear_abscissa=False):
@@ -818,6 +978,17 @@ class LineSegment2D(Line2D):
                 'width': width
                 }
 
+    def CreateTangentCircle(self, point, other_line):
+        circle1, circle2 = Line2D.CreateTangentCircle(other_line, point, self)
+        if circle1 is not None:
+            point_J1, curv_abs1 = Line2D.PointProjection(self, circle1.center, True)
+            if curv_abs1 < 0. or curv_abs1 > 1.:
+                circle1 = None
+        if circle2 is not None:
+            point_J2, curv_abs2 = Line2D.PointProjection(self, circle2.center, True)
+            if curv_abs2 < 0. or curv_abs2 > 1.:
+                circle2 = None
+        return circle1, circle2
 
 class Arc2D(Primitive2D):
     def __init__(self, start, interior, end, name=''):
@@ -1010,15 +1181,16 @@ class Circle2D(Primitive2D):
 
     def MPLPlot(self, ax, linestyle='-', color='k', linewidth=1):
         pc = self.center.vector
-        ax.add_patch(Arc(pc,
-                         2*self.radius,
-                         2*self.radius,
-                         angle=0,
-                         theta1=0,
-                         theta2=360,
-                         color=color,
-                         linestyle=linestyle,
-                         linewidth=linewidth))
+        if self.radius > 0:
+            ax.add_patch(Arc(pc,
+                             2*self.radius,
+                             2*self.radius,
+                             angle=0,
+                             theta1=0,
+                             theta2=360,
+                             color=color,
+                             linestyle=linestyle,
+                             linewidth=linewidth))
 
     def To3D(self, plane_origin, x, y):
         normal = Vector3D(npy.cross(x.vector, y.vector))
@@ -1515,15 +1687,38 @@ class Basis3D(Basis):
                           [self.u[1], self.v[1], self.w[1]],
                           [self.u[2], self.v[2], self.w[2]]])
 
+#    def InverseTransfertMatrix(self):
+#        # Todo: cache for performance
+#        return inv(self.TransfertMatrix())
+            
     def InverseTransfertMatrix(self):
-        # Todo: cache for performance
-        return inv(self.TransfertMatrix())
+        det = self.u[0]*self.v[1]*self.w[2] + self.v[0]*self.w[1]*self.u[2] \
+            + self.w[0]*self.u[1]*self.v[2] - self.w[0]*self.v[1]*self.u[2] \
+            - self.w[1]*self.v[2]*self.u[0] - self.w[2]*self.v[0]*self.u[1]
+        if not math.isclose(det, 0, abs_tol=1e-10):
+            return 1/det * npy.array([[self.v[1]*self.w[2] - self.w[1]*self.v[2],
+                                       self.w[0]*self.v[2] - self.v[0]*self.w[2],
+                                       self.v[0]*self.w[1] - self.w[0]*self.v[1]],
+                                      [self.w[1]*self.u[2] - self.u[1]*self.w[2],
+                                       self.u[0]*self.w[2] - self.w[0]*self.u[2],
+                                       self.w[0]*self.u[1] - self.u[0]*self.w[1]],
+                                      [self.u[1]*self.v[2] - self.v[1]*self.u[2],
+                                       self.v[0]*self.u[2] - self.u[0]*self.v[2],
+                                       self.u[0]*self.v[1] - self.v[0]*self.u[1]]])
 
     def NewCoordinates(self, vector):
-        return vector.__class__(npy.dot(self.InverseTransfertMatrix(), vector.vector))
+        matrix = self.InverseTransfertMatrix()
+        return Vector3D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1] + matrix[0][2]*vector[2],
+                         matrix[1][0]*vector[0] + matrix[1][1]*vector[1] + matrix[1][2]*vector[2],
+                         matrix[2][0]*vector[0] + matrix[2][1]*vector[1] + matrix[2][2]*vector[2]))
+#        return vector.__class__(npy.dot(self.InverseTransfertMatrix(), vector.vector))
 
     def OldCoordinates(self, vector):
-        return vector.__class__(npy.dot(self.TransfertMatrix(), vector.vector))
+        matrix = self.TransfertMatrix()
+        return Vector3D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1] + matrix[0][2]*vector[2],
+                         matrix[1][0]*vector[0] + matrix[1][1]*vector[1] + matrix[1][2]*vector[2],
+                         matrix[2][0]*vector[0] + matrix[2][1]*vector[1] + matrix[2][2]*vector[2]))
+#        return vector.__class__(npy.dot(self.TransfertMatrix(), vector.vector))
 
     def Copy(self):
         return Basis3D(self.u, self.v, self.w)
@@ -1929,7 +2124,6 @@ class VolumeModel:
             s+="import sys\nsys.path.append('"+freecad_lib_path+"')\n"
 
         s+="import math\nimport FreeCAD as fc\nimport Part\n\ndoc=fc.newDocument('doc')\n\n"
-
         for ig, (group_name, primitives_group) in enumerate(self.groups):
             if group_name == '':
                 group_name = 'Group_{}'.format(ig)
@@ -1993,7 +2187,7 @@ class VolumeModel:
         output=subprocess.call([python_path, arg])
 
         f.close()
-        os.remove(f.name)
+#        os.remove(f.name)
         return output
 
 
