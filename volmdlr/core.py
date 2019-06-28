@@ -1260,8 +1260,10 @@ class Vector3D(Vector):
                     "minimum" : -1,
                     "maximum" : 1
                     },
-                    "editable" : True,
-                    "description" : "Vector array"
+                "minItems": 3,
+                "maxItems": 3,
+                "editable" : True,
+                "description" : "Vector array"
                     }
                 }
             }
@@ -1454,9 +1456,17 @@ class Basis3D(Basis):
         "properties": {
             'vectors' : {
                 'type' : 'array',
-                'items' : {'type' : 'object', 'classes' : ['volmdlr.core.Vector3D']},
+                'items' : {
+                    'type' : 'object',
+                    'classes' : ['volmdlr.core.Vector3D']
+                    },
                 'order' : 0,
-                'editable' : True}}}
+                "minItems": 3,
+                "maxItems": 3,
+                'editable' : True
+                }
+            }
+        }
     # TODO: create a Basis and Frame class to mutualize between 2D and 2D
     def __init__(self, u, v, w):
         self.u = u
