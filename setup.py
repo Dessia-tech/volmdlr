@@ -28,20 +28,21 @@ def get_version():
     d = dirname(__file__)
     
     if isdir(join(d, '.git')):
-        cmd = 'git describe --tags  --dirty'
+        cmd = 'git describe --tags'
         try:
             version = check_output(cmd.split()).decode().strip()[:]
         except CalledProcessError:
             raise RuntimeError('Unable to get version number from git tags')
         if version[0]=='v':
             version = version[1:]
-#        print(version)
         # PEP 440 compatibility
         if '-' in version:
-            if version.endswith('-dirty'):
-                version = '.dev'.join(version.split('-')[:-1][:2])+'-dirty'
-        else:
-            version = '.dev'.join(version.split('-')[:2])
+            future_version = version.split('-')[0].split('.')
+            future_version[-1] = str(int(future_version[-1])+1)
+            future_version = '.'.join(future_version)
+            number_commits = version.split('-')[1]
+            version = '{}.dev{}'.format(future_version, number_commits)
+            return version
 
     else:
         # Extract the version from the PKG-INFO file.
