@@ -1255,6 +1255,7 @@ class Vector3D(Vector):
                            "type" : "array",
                            "items" : {
                                "type" : "number",
+                               "editable" : True,
                                "step" : 1,
                                "minimum" : -1,
                                "maximum" : 1
@@ -1453,24 +1454,16 @@ class Basis3D(Basis):
         "properties": {
             'vectors' : {
                 'type' : 'array',
-                'items' : {'type' : 'object', 'classes' : ['volmdlr.core.Vector3D']},
+                'items' : {
+                    'type' : 'object',
+                    "editable" : True,
+                    'classes' : ['volmdlr.core.Vector3D']
+                    },
                 'order' : 0,
-                'editable' : True}}}
-#            'u' : {"type" : "object",
-#                                         "order" : 1,
-#                                         "classes" : ["volmdlr.core.Vector3D"],
-#                                         "editable" : True,
-#                                         "description" : "Vector u"},
-#                                  'v' : {"type" : "object",
-#                                         "order" : 2,
-#                                         "classes" : ["volmdlr.core.Vector3D"],
-#                                         "editable" : True,
-#                                         "description" : "Vector v"},
-#                                  'w' : {"type" : "object",
-#                                         "order" : 3,
-#                                         "classes" : ["volmdlr.core.Vector3D"],
-#                                         "editable" : True,
-#                                         "description" : "Vector w"}}}
+                'editable' : True
+                }
+            }
+        }
     # TODO: create a Basis and Frame class to mutualize between 2D and 2D
     def __init__(self, u, v, w):
         self.u = u
