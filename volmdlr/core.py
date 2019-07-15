@@ -1262,6 +1262,7 @@ class Vector3D(Vector):
                     },
                 "minItems": 3,
                 "maxItems": 3,
+                "examples": [[1, 0, 0]],
                 "editable" : True,
                 "description" : "Vector array"
                     }
@@ -1452,7 +1453,7 @@ class Basis3D(Basis):
         "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "title": "powerpack.mechanical.Basis3D Base Schema",
-        "required": ['u', 'v', 'w'],
+        "required": ['vectors'],
         "properties": {
             'vectors' : {
                 'type' : 'array',
