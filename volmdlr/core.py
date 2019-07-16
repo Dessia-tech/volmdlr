@@ -794,6 +794,7 @@ class Line2D(Primitive2D, Line):
             circle = Circle2D(circle_center, r)
             
             return circle, None
+        
 # =============================================================================
 # LES SEGMENTS SONT PERPENDICULAIRES
 #   => 2 SOLUTIONS
@@ -819,12 +820,15 @@ class Line2D(Primitive2D, Line):
 #   => 2 SOLUTIONS
 # =============================================================================
         else:
-    
+            
             line_AB = Line2D(Point2D(new_A), Point2D(new_B))
             line_CD = Line2D(Point2D(new_C), Point2D(new_D))
             new_pt_K = Point2D.LinesIntersection(line_AB ,line_CD)
             pt_K = Point2D(new_basis.OldCoordinates(new_pt_K))
-    
+            
+            if pt_K == I:
+                return None, None
+            
             # CHANGEMENT DE REPERE:
             new_u2 = Vector2D(pt_K-I)
             new_u2.Normalize()
