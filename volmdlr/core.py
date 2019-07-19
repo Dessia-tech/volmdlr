@@ -1426,25 +1426,29 @@ class Primitive3D:
 
 class Vector3D(Vector):
     _standalone_in_db = False
-    _jsonschema = {"definitions": {},
-                   "$schema": "http://json-schema.org/draft-07/schema#",
-                   "type": "object",
-                   "title": "powerpack.mechanical.Vector3D Base Schema",
-                   "required": ["vector"],
-                   "properties": {
-                       'vector' : {
-                           "type" : "array",
-                           "items" : {
-                               "type" : "number",
-                               "step" : 1,
-                               "minimum" : -1,
-                               "maximum" : 1
-                               },
-                           "editable" : True,
-                           "description" : "Vector array"
-                           }
-                       }
+    _jsonschema = {
+        "definitions": {},
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "title": "powerpack.mechanical.Vector3D Base Schema",
+        "required": ["vector"],
+        "properties": {
+            'vector' : {
+                "type" : "array",
+                "items" : {
+                    "type" : "number",
+                    "step" : 1,
+                    "minimum" : -1,
+                    "maximum" : 1
+                    },
+                "minItems": 3,
+                "maxItems": 3,
+                "examples": [[1, 0, 0]],
+                "editable" : True,
+                "description" : "Vector array"
                     }
+                }
+            }
     def __init__(self, vector):
         self.vector=npy.zeros(3)
         self.vector[0] = vector[0]
@@ -1630,28 +1634,21 @@ class Basis3D(Basis):
         "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "title": "powerpack.mechanical.Basis3D Base Schema",
-        "required": ['u', 'v', 'w'],
+        "required": ['vectors'],
         "properties": {
             'vectors' : {
                 'type' : 'array',
-                'items' : {'type' : 'object', 'classes' : ['volmdlr.core.Vector3D']},
+                'items' : {
+                    'type' : 'object',
+                    'classes' : ['volmdlr.core.Vector3D']
+                    },
                 'order' : 0,
-                'editable' : True}}}
-#            'u' : {"type" : "object",
-#                                         "order" : 1,
-#                                         "classes" : ["volmdlr.core.Vector3D"],
-#                                         "editable" : True,
-#                                         "description" : "Vector u"},
-#                                  'v' : {"type" : "object",
-#                                         "order" : 2,
-#                                         "classes" : ["volmdlr.core.Vector3D"],
-#                                         "editable" : True,
-#                                         "description" : "Vector v"},
-#                                  'w' : {"type" : "object",
-#                                         "order" : 3,
-#                                         "classes" : ["volmdlr.core.Vector3D"],
-#                                         "editable" : True,
-#                                         "description" : "Vector w"}}}
+                "minItems": 3,
+                "maxItems": 3,
+                'editable' : True
+                }
+            }
+        }
     # TODO: create a Basis and Frame class to mutualize between 2D and 2D
     def __init__(self, u, v, w):
         self.u = u
