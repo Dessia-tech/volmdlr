@@ -6,6 +6,9 @@ Created on Tue Feb 28 14:07:37 2017
 @author: steven
 """
 
+step_to_volmdlr_primitive = {}
+
+
 import math
 import numpy as npy
 npy.seterr(divide='raise')
@@ -14,6 +17,8 @@ npy.seterr(divide='raise')
 import matplotlib.pyplot as plt
 from matplotlib.patches import Arc, FancyArrow
 from mpl_toolkits.mplot3d import Axes3D
+
+import networkx as nx
 
 from .vmcy import PolygonPointBelongs
 
@@ -2261,3 +2266,64 @@ class VolumeModel:
 
         return center,max_length
 
+    def FromSTEP(self, file_name):
+        
+        f = open(file_name, "r")
+        
+        G = nx.Graph()
+        
+        all_connections = []
+        labels = {}
+        previous_line = ""
+        
+        for line in f:
+            
+            line = line.replace(" ", "")
+            line = line.replace("\n", "")
+            line = previous_line + line 
+            
+            # ASSEMBLE LINES IF THEY ARE SEPARATED
+            if line[-1] != ';':
+                previous_line = previous_line + line
+                continue
+
+            # SKIP HEADER
+            if line[0] != "#":
+                previous_line = str()
+                continue
+
+            function = line.split("=")
+            function_id = function[0]
+            function_name_arg = function[1].split("(", 1)
+            function_name = function_name_arg[0]
+            function_arg = function_name_arg[1].split("#")
+            function_connections = []
+            for connec in function_arg[1:]:
+                function_connection = "#"
+                connec = connec.split(",")
+                connec = connec[0].split(")")
+                function_connection += connec[0]
+                if function_connection[-1] != "'":
+                    function_connections.append((function_id, function_connection))
+
+            all_connections.extend(function_connections)
+            
+            labels[function_id] = function_id+' '+function_name
+            
+            previous_line = str() 
+            
+            G.add_node(function_id)
+            
+        G.add_edges_from(all_connections)
+        
+        # ----------------PLOT----------------
+        pos = nx.kamada_kawai_layout(G)
+        plt.figure()
+        nx.draw_networkx_nodes(G, pos)
+        nx.draw_networkx_edges(G, pos)
+        nx.draw_networkx_labels(G, pos, labels)
+        # ------------------------------------
+        
+        f.close()
+        
+        return
