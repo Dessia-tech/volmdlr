@@ -142,6 +142,15 @@ class Block(volmdlr.Primitive3D):
                 volmdlr.LineSegment3D(p2, p6),
                 volmdlr.LineSegment3D(p3, p7),
                 volmdlr.LineSegment3D(p4, p8)]
+        
+    def plot_data(self, x3D, y3D, marker=None, color='black', stroke_width=1,
+                  dash=False, opacity=1, arrow=False):
+        lines = []
+        for edge3D in self.Edges():
+            lines.append(edge3D.plot_data(x3D, y3D, marker, color, stroke_width,
+                         dash, opacity, arrow))
+
+        return lines
 
     def MPLPlot2D(self, x3D, y3D, ax=None):
         if ax is None:

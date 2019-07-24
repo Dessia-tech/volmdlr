@@ -20,6 +20,7 @@ from .vmcy import PolygonPointBelongs
 from scipy.linalg import solve, LinAlgError, inv
 
 import volmdlr.geometry as geometry
+from volmdlr import plot_data
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 
@@ -251,6 +252,16 @@ class Point2D(Vector2D):
                 return None
             else:
                 return None, None, None
+            
+    def plot_data(self, marker=None, color='black', size=1,
+                  opacity=1, arrow=False, stroke_width=None):
+        return {'type' : 'point',
+                'data' : [self.vector[0], self.vector[1]],
+                'color' : color,
+                'marker' : marker,
+                'size' : size,
+                'opacity' : opacity
+                }
 
     @classmethod
     def MiddlePoint(cls, point1, point2):
@@ -467,6 +478,18 @@ class CompositePrimitive2D(Primitive2D):
         plt.show()
 
         return fig, ax
+    
+    def plot_data(self, name, fill=None, color='black', stroke_width=0.2, opacity=1):
+        plot_data = {}
+        plot_data['fill'] = fill
+        plot_data['name'] = name
+        plot_data['type'] = 'contour'
+        plot_data['plot_data'] = []
+        for item in self.basis_primitives:
+            plot_data['plot_data'].append(item.plot_data(color=color,
+                                                        stroke_width=stroke_width,
+                                                        opacity=opacity))
+        return plot_data
 
 
 class Wire2D(CompositePrimitive2D):
@@ -492,6 +515,17 @@ class Wire2D(CompositePrimitive2D):
                 return primitive.PointAtCurvilinearAbscissa(curvilinear_abscissa - length)
             length += primitive_length
         return ValueError
+    
+    def plot_data(self, name='', color='black', stroke_width=1, opacity=1):
+        plot_data = {}
+        plot_data['name'] = name
+        plot_data['type'] = 'wire'
+        plot_data['plot_data'] = []
+        for item in self.basis_primitives:
+            plot_data['plot_data'].append(item.plot_data(color=color,
+                                                        stroke_width=stroke_width,
+                                                        opacity=opacity))
+        return plot_data
 
 
 class Contour2D(Wire2D):
@@ -559,8 +593,6 @@ class Contour2D(Wire2D):
                 area += arc_area
         return c/area
 
-
-
     def SecondMomentArea(self, point):
         if len(self.primitives) == 1:
             return self.primitives[0].SecondMomentArea(point)
@@ -582,18 +614,18 @@ class Contour2D(Wire2D):
                 A += arc.SecondMomentArea(point)
         return A
 
-    def PlotData(self, name, fill=None, color='black', stroke_width=0.2, opacity=1):
+    def plot_data(self, name='', fill=None, color='black', stroke_width=1, opacity=1):
         plot_data = {}
         plot_data['fill'] = fill
         plot_data['name'] = name
         plot_data['type'] = 'contour'
         plot_data['plot_data'] = []
         for item in self.basis_primitives:
-            plot_data['plot_data'].append(item.PlotData(color=color,
+            print(item)
+            plot_data['plot_data'].append(item.plot_data(color=color,
                                                         stroke_width=stroke_width,
                                                         opacity=opacity))
         return plot_data
-
 
 class Mesh2D:
     def __init__(self, contours, points_densities, default_density):
@@ -805,17 +837,17 @@ class LineSegment2D(Line2D):
         s='Line({}) = {{{}, {}}};\n'.format(primitive_index,*points_indices)
         return s,primitive_index+1
 
-    def PlotData(self, marker=None, color='black', stroke_width=1,
-                 dash=False, opacity=1, width=None):
+    def plot_data(self, marker=None, color='black', stroke_width=1,
+                 dash=False, opacity=1, arrow=False):
         return {'type' : 'line',
                 'data' : [self.points[0].vector[0], self.points[0].vector[1],
                           self.points[1].vector[0], self.points[1].vector[1]],
                 'color' : color,
                 'marker' : marker,
-                'stroke_width' : stroke_width,
+                'size' : stroke_width,
                 'dash' : dash,
                 'opacity' : opacity,
-                'width': width
+                'arrow': arrow
                 }
 
 
@@ -968,7 +1000,7 @@ class Arc2D(Primitive2D):
         else:
             return list_node[::-1]
 
-    def PlotData(self, marker=None, color=(0,0,0), stroke_width=1, opacity=1):
+    def plot_data(self, marker=None, color='black', stroke_width=1, opacity=1):
         list_node = self.Discretise()
         data = []
         for nd in list_node:
@@ -1053,7 +1085,7 @@ class Circle2D(Primitive2D):
     def CenterOfMass(self):
         return self.center
 
-    def PlotData(self, marker=None, color='black', stroke_width=1, opacity=1):
+    def plot_data(self, marker=None, color='black', stroke_width=1, opacity=1):
         return {'type' : 'circle',
                 'cx' : self.center.vector[0],
                 'cy' : self.center.vector[1],
@@ -1226,7 +1258,7 @@ class Polygon2D(CompositePrimitive2D):
     def DictToObject(cls, dict_):
         return cls([Point2D.DictToObject(p) for p in dict_['points']], name=dict_['name'])
 
-    def PlotData(self, marker=None, color='black', stroke_width=1, opacity=1):
+    def plot_data(self, marker=None, color='black', stroke_width=1, opacity=1):
         data = []
         for nd in self.points:
             data.append({'x': nd.vector[0], 'y': nd.vector[1]})
@@ -1653,6 +1685,11 @@ class LineSegment3D(Line3D):
         edge2D =  self.PlaneProjection2D(x_3D, y_3D)
         edge2D.MPLPlot(ax)
 
+    def plot_data(self, x_3D, y_3D, marker=None, color='black', stroke_width=1,
+                  dash=False, opacity=1, arrow=False):
+        edge2D =  self.PlaneProjection2D(x_3D, y_3D)
+        return edge2D.plot_data(marker, color, stroke_width,
+                         dash, opacity, arrow)
 
     def FreeCADExport(self, name, ndigits=6):
         x1, y1, z1 = npy.round(1000*self.points[0].vector, ndigits)
@@ -2060,3 +2097,20 @@ class VolumeModel:
 
         return center,max_length
 
+class ViewIso:
+    def __init__(self, component, frame, size):
+        self.component = component
+        self.frame = frame
+        self.size = size
+        self.plot_datas = self.plot_data()
+        
+    def plot_data(self):
+        wide = min(self.size)/2
+        plot_datas = []
+        plot_datas.extend(self.component.plot_data(self.frame, side=True))
+        plot_datas.extend(self.component.plot_data(Frame3D(self.frame.origin + Point3D((0, self.size[1]/2 + self.size[2]/2 + wide, 0)), self.frame.u, self.frame.w, self.frame.v), side = True))   
+        plot_datas.extend(self.component.plot_data(Frame3D(self.frame.origin + Point3D((self.size[0]/2 + self.size[2]/2 + wide, 0, 0)), self.frame.w, self.frame.v, self.frame.u), side = True))
+        return plot_datas
+        
+    def plot(self):
+        plot_data.plot(self.plot_datas)

@@ -26,10 +26,10 @@ p2=vm.Point2D((0,1))
 
 a=vm.Arc2D(p2,p1,p0)
 l=vm.LineSegment2D(p2,a.center)
-list_node = a.DiscretArc2D()
+list_node = a.Discretise()
 
 c=vm.Contour2D([a,l] + list_node)
-
+print(c.plot_data())
 c2 = vm.CompositePrimitive2D([c])
 c2.MPLPlot(style='ob')
 print(c.Area())
