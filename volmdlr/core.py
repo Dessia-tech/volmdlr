@@ -2104,12 +2104,12 @@ class ViewIso:
         self.size = size
         self.plot_datas = self.plot_data()
         
-    def plot_data(self):
+    def plot_data(self, detail=True):
         wide = min(self.size)/2
         plot_datas = []
-        plot_datas.extend(self.component.plot_data(self.frame, side=True))
-        plot_datas.extend(self.component.plot_data(Frame3D(self.frame.origin + Point3D((0, self.size[1]/2 + self.size[2]/2 + wide, 0)), self.frame.u, self.frame.w, self.frame.v), side = True))   
-        plot_datas.extend(self.component.plot_data(Frame3D(self.frame.origin + Point3D((self.size[0]/2 + self.size[2]/2 + wide, 0, 0)), self.frame.w, self.frame.v, self.frame.u), side = True))
+        plot_datas.extend(self.component.plot_data(self.frame, detail=detail))
+        plot_datas.extend(self.component.plot_data(Frame3D(self.frame.origin + Point3D((0, self.size[1]/2 + self.size[2]/2 + wide, 0)), self.frame.u, self.frame.w, self.frame.v), detail = detail))   
+        plot_datas.extend(self.component.plot_data(Frame3D(self.frame.origin + Point3D((self.size[0]/2 + self.size[2]/2 + wide, 0, 0)), self.frame.w, self.frame.v, self.frame.u), detail = detail))
         return plot_datas
         
     def plot(self):

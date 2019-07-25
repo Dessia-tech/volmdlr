@@ -12,10 +12,16 @@ npy.seterr(divide='raise')
 import volmdlr as vm
 #from itertools import permutations
 import jsonschema
+import json
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Arc, FancyArrow
 from mpl_toolkits.mplot3d import Axes3D
+import pkg_resources
+import tempfile
+import webbrowser
+
+from jinja2 import Environment, PackageLoader, select_autoescape
 
 _jsonschema = {
     "definitions": {},
@@ -96,6 +102,25 @@ color = {'black': 'k', 'blue': 'b', 'red': 'r'}
 
 def validate(plot_datas):
     return jsonschema.validate(instance=plot_datas, schema=_jsonschema)
+
+def plot_d3(plot_datas):
+    env = Environment(loader=PackageLoader('volmdlr', 'templates'),
+                          autoescape=select_autoescape(['html', 'xml']))
+    template = env.get_template('plot_data.html')
+    
+    volmdlr_path = pkg_resources.resource_filename(pkg_resources.Requirement('volmdlr'),
+                                              'volmdlr/templates')
+            
+    s = template.render(
+                        volmdlr_path=volmdlr_path,
+                        D3Data=json.dumps(plot_datas))
+
+    temp_file = tempfile.mkstemp(suffix='.html')[1]
+    
+    with open(temp_file, 'wb') as file:
+        file.write(s.encode('utf-8'))
+
+    webbrowser.open('file://' + temp_file)
 
 def plot(plot_datas, ax=None):
     if ax is None:
