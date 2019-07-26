@@ -1085,7 +1085,7 @@ class Circle2D(Primitive2D):
     def CenterOfMass(self):
         return self.center
 
-    def plot_data(self, marker=None, color='black', stroke_width=1, opacity=1):
+    def plot_data(self, marker=None, color='black', stroke_width=1, opacity=1, fill=None):
         return {'type' : 'circle',
                 'cx' : self.center.vector[0],
                 'cy' : self.center.vector[1],
@@ -1093,7 +1093,8 @@ class Circle2D(Primitive2D):
                 'color' : color,
                 'opacity' : opacity,
                 'size' : stroke_width,
-                'dash' : None,}
+                'dash' : None,
+                'fill' : fill}
 
 class Polygon2D(CompositePrimitive2D):
     # TODO: inherit from contour?

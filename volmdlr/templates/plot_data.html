@@ -171,28 +171,72 @@
         .attr("id", 'name');
 
     // Zoom callback
+
+
     function zoomed(){
       scale_factor = d3.event.transform.k;
       var stroke_width = 1
 
       data_container.attr("transform", "translate(" + [d3.event.transform.x, d3.event.transform.y].join(",") + ")scale(" + scale_factor + ")");
 
-      data_container.selectAll("#circle_geom")
-        .attr("stroke-width", stroke_width/scale_factor);
-      data_container.selectAll("#rect_geom")
-        .attr("stroke-width",  stroke_width/scale_factor)
-      data_container.selectAll("#line_geom")
-        .attr("stroke-width",  stroke_width/scale_factor)
-      data_container.selectAll("#path_geom")
-        .attr("stroke-width",  stroke_width/scale_factor)
-      data_container.selectAll("text")
-        .attr("width-size", stroke_width/scale_factor)
-      data_container.selectAll("#line_quote")
-        .attr("stroke-width",  stroke_width/(2*scale_factor))
-      data_container.selectAll("#line_constructor")
-        .attr("stroke-width",  stroke_width/(4*scale_factor))
-      data_container.selectAll("#texte_quote")
-        .attr("font-size",  font_size/scale_factor)
+      d3.selectAll('#circle_geom')
+        .each(function(d) {
+          selection = d3.select(this)
+          stroke_width = this.getAttribute("stroke-width-init")
+          selection.attr("stroke-width",  stroke_width/(scale_factor))
+        })
+      d3.selectAll("#rect_geom")
+        .each(function(d) {
+          selection = d3.select(this)
+          stroke_width = this.getAttribute("stroke-width-init")
+          selection.attr("stroke-width",  stroke_width/(scale_factor))
+        })
+      d3.selectAll("#line_geom")
+        .each(function(d) {
+          selection = d3.select(this)
+          stroke_width = this.getAttribute("stroke-width-init")
+          selection.attr("stroke-width",  stroke_width/(scale_factor))
+        })
+
+      d3.selectAll("#path_geom")
+        .each(function(d) {
+          selection = d3.select(this)
+          stroke_width = this.getAttribute("stroke-width-init")
+          selection.attr("stroke-width",  stroke_width/(scale_factor))
+        })
+
+      // selection = data_container.selectAll("#line_geom")
+      // selection.forEach(function(d){
+      //   console.log(d)
+      //   // stroke_width = d.stroke_width
+      //   // d.attr("stroke-width",  stroke_width/(10*scale_factor))
+      // })
+
+      // selection = data_container.selectAll("#path_geom")
+      // selection.forEach(function(d){
+      //   stroke_width = d.stroke_width
+      //   d.attr("stroke-width",  stroke_width/scale_factor)})
+      //
+      // selection = data_container.selectAll("text")
+      // selection.forEach(function(d){
+      //   stroke_width = d.stroke_width
+      //   d.attr("width-size", stroke_width/scale_factor)})
+      //
+      // selection = data_container.selectAll("#line_quote")
+      // selection.forEach(function(d){
+      //   stroke_width = d.stroke_width
+      //   d.attr("stroke-width",  stroke_width/(2*scale_factor))})
+      //
+      // selection = data_container.selectAll("#line_constructor")
+      // selection.forEach(function(d){
+      //   stroke_width = d.stroke_width
+      //   d.attr("stroke-width",  stroke_width/(4*scale_factor))})
+      //
+      // selection = data_container.selectAll("#texte_quote")
+      // selection.forEach(function(d){
+      //   font_size = d.font_size
+      //   d.attr("font-size",  font_size/(10*scale_factor))})
+
       data_container.selectAll("#triangle_quote_start, #triangle_quote_end")
         .attr("markerWidth",  1/scale_factor)
         .attr("markerHeight",  2/scale_factor)

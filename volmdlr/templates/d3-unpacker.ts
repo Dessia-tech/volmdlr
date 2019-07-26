@@ -76,7 +76,8 @@ export class D3Unpacker {
             .attr("x2", 1000*d.data[2])
             .attr("y2", 1000*d.data[3])
             .attr("stroke-width", d.size)
-            .attr("stroke", d.color);
+            .attr("stroke", d.color)
+            .attr("stroke-width-init", d.size)
         })
       }
       else if (dict_component.type == "path"){
@@ -94,7 +95,25 @@ export class D3Unpacker {
               .attr('id', 'path_geom')
               .attr("stroke-width", d.size)
               .attr("stroke", d.color)
-              .attr("fill", "none");
+              .attr("fill", "none")
+              .attr("stroke-width-init", d.size)
+        })
+      }
+      else if (dict_component.type == "circle"){
+        var circles_data = [];
+        circles_data.push(dict_component);
+        circles_data.forEach(function(d){
+          data_container.append("circle")
+              .attr('r', 1000*d.r)
+              .attr('cx', 1000*d.cx)
+              .attr('cy', 1000*d.cy)
+              .attr('id', 'circle_geom')
+              // .attr("stroke-width", d.size)
+              // .attr("stroke", 'black'')
+              .attr("fill", d.color)
+              .attr("pointer-events", 'all')
+              //.on("mouseover", highlight)
+              //.on("mouseout", deemphasize);
         })
       }
       if (dict_component.type == 'quote') {
@@ -107,10 +126,11 @@ export class D3Unpacker {
                 .attr("y1", 1000*d.data[1])
                 .attr("x2", 1000*d.data[2])
                 .attr("y2", 1000*d.data[3])
-                .attr("stroke-width", d.stroke_width)
+                .attr("stroke-width", d.size)
                 .attr("stroke", 'black')
                 .attr("fill", "none")
-                .attr("stroke-linecap", "round");
+                .attr("stroke-linecap", "round")
+                .attr("stroke-width-init", d.size)
               }
             else {
               data_container.append("line")
@@ -119,10 +139,11 @@ export class D3Unpacker {
                 .attr("y1", 1000*d.data[1])
                 .attr("x2", 1000*d.data[2])
                 .attr("y2", 1000*d.data[3])
-                .attr("stroke-width", d.stroke_width)
+                .attr("stroke-width", d.size)
                 .attr("stroke", 'black')
                 .attr("marker-end", "url(#triangle_quote_end)")
                 .attr("marker-start", "url(#triangle_quote_start)")
+                .attr("stroke-width-init", d.size)
               }
         })
         data_container.append("text")
@@ -219,7 +240,8 @@ export class D3Unpacker {
               .attr('id', 'path_geom')
               .attr("stroke-width", d.size)
               .attr("stroke", d.color)
-              .attr("fill", "none");
+              .attr("fill", "none")
+              .attr("stroke-width-init", d.size)
         })
 
         paths_data.forEach(function(d){
@@ -234,7 +256,8 @@ export class D3Unpacker {
               .attr('id', 'path_geom')
               .attr("stroke-width", d.size)
               .attr("stroke", d.color)
-              .attr("fill", "none");
+              .attr("fill", "none")
+              .attr("stroke-width-init", d.size)
         })
 
         circles_data.forEach(function(d){
@@ -244,6 +267,7 @@ export class D3Unpacker {
               .attr('cy', 1000*d.cy)
               .attr('id', 'circle_geom')
               .attr("stroke-width", d.size)
+              .attr("stroke-width-init", d.size)
               .attr("stroke", 'black')
               .attr("fill", "none")
               .attr("pointer-events", 'all')
@@ -259,11 +283,12 @@ export class D3Unpacker {
             .attr("y1", 1000*d.data[1])
             .attr("x2", 1000*d.data[2])
             .attr("y2", 1000*d.data[3])
-            .attr("stroke-width", d['stroke-width'])
-            .attr("stroke", stroke_color.toString())
-            .attr("opacity", d.opacity)
+            .attr("stroke-width", d.size)
+            .attr("stroke", d.color)
+            // .attr("opacity", d.opacity)
             .attr("fill", "none")
-            .attr("stroke-linecap", "round");
+            .attr("stroke-width-init", d.size)
+            // .attr("stroke-linecap", "round");
         })
 
         rectangles_data.forEach(function(d){
@@ -275,7 +300,8 @@ export class D3Unpacker {
           .attr("width", d.width*1000)
           .attr("height", d.height*1000)
           .attr("stroke", stroke_color.toString())
-          .attr("stroke-width", d['stroke-width'])
+          .attr("stroke-width", d.size)
+          .attr("stroke-width-init", d.size)
           .attr("fill", "none")
           .attr("pointer-events", "all")
           .attr("data", d);
