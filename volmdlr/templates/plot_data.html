@@ -181,27 +181,27 @@
 
       d3.selectAll('#circle_geom')
         .each(function(d) {
-          selection = d3.select(this)
-          stroke_width = this.getAttribute("stroke-width-init")
+          var selection = d3.select(this)
+          var stroke_width = this.getAttribute("stroke-width-init")
           selection.attr("stroke-width",  stroke_width/(scale_factor))
         })
       d3.selectAll("#rect_geom")
         .each(function(d) {
-          selection = d3.select(this)
-          stroke_width = this.getAttribute("stroke-width-init")
+          var selection = d3.select(this)
+          var stroke_width = this.getAttribute("stroke-width-init")
           selection.attr("stroke-width",  stroke_width/(scale_factor))
         })
       d3.selectAll("#line_geom")
         .each(function(d) {
-          selection = d3.select(this)
-          stroke_width = this.getAttribute("stroke-width-init")
+          var selection = d3.select(this)
+          var stroke_width = this.getAttribute("stroke-width-init")
           selection.attr("stroke-width",  stroke_width/(scale_factor))
         })
 
       d3.selectAll("#path_geom")
         .each(function(d) {
-          selection = d3.select(this)
-          stroke_width = this.getAttribute("stroke-width-init")
+          var selection = d3.select(this)
+          var stroke_width = this.getAttribute("stroke-width-init")
           selection.attr("stroke-width",  stroke_width/(scale_factor))
         })
 
