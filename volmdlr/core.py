@@ -516,7 +516,7 @@ class Wire2D(CompositePrimitive2D):
             length += primitive_length
         return ValueError
     
-    def plot_data(self, name='', color='black', stroke_width=1, opacity=1):
+    def plot_data(self, name='', fill=None, color='black', stroke_width=1, opacity=1):
         plot_data = {}
         plot_data['name'] = name
         plot_data['type'] = 'wire'

@@ -98,7 +98,7 @@ _jsonschema = {
          }
      
          
-color = {'black': 'k', 'blue': 'b', 'red': 'r'}
+color = {'black': 'k', 'blue': 'b', 'red': 'r', 'green': 'g'}
 
 def validate(plot_datas):
     return jsonschema.validate(instance=plot_datas, schema=_jsonschema)

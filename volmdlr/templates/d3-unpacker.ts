@@ -116,6 +116,23 @@ export class D3Unpacker {
               //.on("mouseout", deemphasize);
         })
       }
+      else if (dict_component.type == "text"){
+        var text_data = [];
+        text_data.push(dict_component);
+        text_data.forEach(function(d){
+          data_container.append("text")
+            .attr("id", 'texte_quote')
+            .attr("transform", "translate(" + 1000*(d.x_label) + ","
+                + 1000*d.y_label + ") rotate("+d.rot_label+")")
+            .attr("font-size", d.font_size+'px')
+            .attr('text-anchor', "middle")
+            .attr('baseline-shift', d.baseline_shift+"ex")
+            .attr("font-weight", 0.1)
+            .attr("font-family", 'sans-serif')
+            .attr("fill", 'black')
+            .text(d.label);
+        })
+      }
       if (dict_component.type == 'quote') {
         var explore = dict_component['plot_data'];
         explore.forEach(function(d){
