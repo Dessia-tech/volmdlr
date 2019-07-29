@@ -1254,6 +1254,7 @@ class Vector3D(Vector):
         "properties": {
             'vector' : {
                 "type" : "array",
+                "order" : 0,
                 "items" : {
                     "type" : "number",
                     "step" : 1,
@@ -1371,6 +1372,7 @@ class Point3D(Vector3D):
         "properties": {
             'vector' : {
                 "type" : "object",
+                "order" : 0,
                 "classes" : ["volmdlr.core.Vector3D"],
                 "editable" : True,
                 "description" : "Vector array"
