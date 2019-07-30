@@ -121,6 +121,7 @@ def plot_d3(plot_datas):
         file.write(s.encode('utf-8'))
 
     webbrowser.open('file://' + temp_file)
+    print('file://' + temp_file)
 
 def plot(plot_datas, ax=None):
     if ax is None:

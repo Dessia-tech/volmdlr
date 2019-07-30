@@ -121,10 +121,11 @@ export class D3Unpacker {
         text_data.push(dict_component);
         text_data.forEach(function(d){
           data_container.append("text")
-            .attr("id", 'texte_quote')
+            .attr("id", 'text_geom')
             .attr("transform", "translate(" + 1000*(d.x_label) + ","
                 + 1000*d.y_label + ") rotate("+d.rot_label+")")
             .attr("font-size", d.font_size+'px')
+            .attr("font-size-init", d.font_size)
             .attr('text-anchor', "middle")
             .attr('baseline-shift', d.baseline_shift+"ex")
             .attr("font-weight", 0.1)
