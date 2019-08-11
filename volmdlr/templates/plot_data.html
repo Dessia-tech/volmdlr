@@ -1,5 +1,4 @@
-<div id='svg_container'>
-</div>
+<div #svg_container id='svg_container'></div>
 
 <script type="text/javascript" src="{{volmdlr_path}}/d3/d3-v4.js"></script>
 
@@ -134,12 +133,14 @@
       var svg_width = svg_width_new
     }
 
-    var trace = d3.selectAll('#svg_container').select("div").remove();
-    console.log(trace)
+    // var trace = d3.selectAll('#svg_container').select("div").remove();
+    // console.log(trace)
+
+    var svg_name = 'svg_container1'
 
     var svg = d3.select('#svg_container').append('div')
         .classed('svg-container', true)
-        .attr("id", "svg_container_"+this.svg_name)
+        .attr("id", svg_name)
         .style("padding-bottom", 100*alpha + '%')
         .append('svg')
         .attr("xmlns", "http://www.w3.org/2000/svg")
@@ -150,6 +151,8 @@
         .classed('svg-content-responsive', true) // Make the svg responsive to user screen
         .call(zoom) // Add zoom behavior
         .on("dblclick.zoom", null); // Disable double-click zoom
+
+
 
 
 
@@ -179,38 +182,39 @@
 
       data_container.attr("transform", "translate(" + [d3.event.transform.x, d3.event.transform.y].join(",") + ")scale(" + scale_factor + ")");
 
-      d3.selectAll('#circle_geom')
+      d3.selectAll('#' + svg_name).selectAll('#circle_geom')
         .each(function(d) {
           var selection = d3.select(this);
           var stroke_width = selection.attr("stroke-width-init");
           selection.attr("stroke-width", Number(stroke_width)/scale_factor);
         })
-      d3.selectAll("#rect_geom")
+      d3.selectAll('#' + svg_name).selectAll("#rect_geom")
         .each(function(d) {
           var selection = d3.select(this);
           var stroke_width = selection.attr("stroke-width-init");
           selection.attr("stroke-width", Number(stroke_width)/scale_factor);
         })
-      d3.selectAll("#line_geom")
-        .each(function(d) {
-          var selection = d3.select(this);
-          var stroke_width = selection.attr("stroke-width-init");
-          selection.attr("stroke-width", Number(stroke_width)/scale_factor);
-        })
-
-      d3.selectAll("#path_geom")
+      d3.selectAll('#' + svg_name).selectAll("#line_geom")
         .each(function(d) {
           var selection = d3.select(this);
           var stroke_width = selection.attr("stroke-width-init");
           selection.attr("stroke-width", Number(stroke_width)/scale_factor);
         })
 
-			d3.selectAll("#text_geom")
+      d3.selectAll('#' + svg_name).selectAll("#path_geom")
+        .each(function(d) {
+          console.log(d)
+          var selection = d3.select(this);
+          var stroke_width = selection.attr("stroke-width-init");
+          selection.attr("stroke-width", Number(stroke_width)/scale_factor);
+        })
+
+      d3.selectAll('#' + svg_name).selectAll("#text_geom")
         .each(function(d) {
           var selection = d3.select(this);
           var font_size = selection.attr("font-size-init");
-					var font_size_new = Math.min(Number(font_size)/scale_factor, font_size)
-          selection.attr("font-size", String(font_size_new + 'px');
+					var font_size_new = Math.min(Number(font_size)/scale_factor, Number(font_size))
+          selection.attr("font-size", String(font_size_new + 'px'))
         })
 
       // selection = data_container.selectAll("#line_geom")
