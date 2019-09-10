@@ -6,8 +6,9 @@ Created on Tue Feb 28 14:07:37 2017
 @author: steven
 """
 
-step_to_volmdlr_primitive = {}
 
+#import bezier
+from geomdl import NURBS
 
 import math
 import numpy as npy
@@ -34,49 +35,125 @@ import os
 import tempfile
 import subprocess
 
+
+
+def standardize_knot_vector(knot_vector):
+    u0 = knot_vector[0]
+    u1 = knot_vector[-1]
+    standard_u_knots = []
+    if u0 != 0 or u1 != 1:
+        x = 1/(u1-u0)
+        y = u0/(u0-u1)
+        for u in knot_vector:
+            standard_u_knots.append(u*x+y)
+        return standard_u_knots
+    else:
+        return knot_vector
+    
+
+def find_and_replace(string, find, replace):
+    """
+    Finds a string in a string and replace it
+    """
+#    print('find and replace', string, find, replace)
+    index = string.find(find)
+    if index != -1:
+        try:
+            # verifie si il reste pas des chiffre apres
+            int(string[index+len(find)])
+        except (ValueError, IndexError):
+            # on remplace
+            return string[:index]+replace+string[index+len(find):]
+        else:
+            return string[:index]+find_and_replace(string[index+len(find)], find, replace)
+    return string
+
+def step_split_arguments(function_arg):
+    """
+    Split the arguments of a function that doesn't start with '(' but end with ')'
+    ex: IN: '#123,#124,#125)'
+       OUT: ['#123', '#124', '#125']
+    """
+#        print('IN', function_arg)
+#        function_arg = function_arg[:-1]
+    if len(function_arg) > 0 and function_arg[-1] != ')':
+            function_arg += ')'
+    arguments = []
+    argument = ""
+    parenthesis = 1
+    for char in function_arg:
+        if char == "(":
+            parenthesis += 1
+        
+        if char != "," or parenthesis > 1:
+            argument += char
+        else:
+            arguments.append(argument)
+            argument = ""
+        
+        if char == ")":
+            parenthesis -= 1
+            if parenthesis == 0:
+                arguments.append(argument[:-1])
+                argument = ""
+                break
+            
+#        if len(argument) != 0:
+#            arguments.append(argument[:])
+        
+#        print('OUT', arguments)
+    return arguments
+
+def set_to_list(step_set):
+    char_list = step_set.split(',')
+    char_list[0] = char_list[0][1:]
+    char_list[-1] = char_list[-1][:-1]
+    return [elem for elem in char_list]
+
+        
 class Vector:
     """
     Abstract class of vector
     """
     def __setitem__(self, key, item):
         self.vector[key] = item
-
+    
     def __getitem__(self, key):
         return self.vector[key]
-
+    
     def __repr__(self):
         return '{}: {}'.format(self.__class__.__name__, self.vector)
-
+    
     def __radd__(self, other_vector):
         return self + other_vector
-
+    
     def __rsub__(self, other_vector):
         return self - other_vector
-
+    
     def __rmul__(self, value):
         return self * value
-
+    
     def __rtruediv__(self, value):
         return self / value
-
+    
     def __lt__(self, other_vector):
         return self.Norm() < other_vector.Norm()
-
+    
     def __le__(self, other_vector):
         return self.Norm() <= other_vector.Norm()
-
+    
     def __ne__(self, other_vector):
         return not npy.allclose(self.vector, other_vector.vector)
-
+    
     def __eq__(self, other_vector):
         try:
             return npy.allclose(self.vector, other_vector.vector)
         except AttributeError:
             return False
-
+    
     def __hash__(self):
         return int(1000*npy.sum(self.vector, 3))
-
+    
     def Normalize(self):
         """
         Normalize the vector modifying it's coordinate
@@ -84,22 +161,23 @@ class Vector:
         n = self.Norm()
         if n == 0:
             raise ZeroDivisionError
-
+    
         self.vector /= n
         
     def copy(self):
         return self.__class__(self.vector)
-
+    
     def Dict(self):
         d = {'vector': [float(i) for i in self.vector]}
         return d
 
 
 class Vector2D(Vector):
-    def __init__(self, vector):
+    def __init__(self, vector, name=''):
         self.vector = npy.zeros(2)
         self.vector[0] = vector[0]
         self.vector[1] = vector[1]
+        self.name = name
 
     def __add__(self, other_vector):
         return Vector2D((self.vector[0] + other_vector.vector[0],
@@ -1449,12 +1527,12 @@ class Vector3D(Vector):
                     }
                 }
             }
-    def __init__(self, vector):
+    def __init__(self, vector, name=''):
         self.vector=npy.zeros(3)
         self.vector[0] = vector[0]
         self.vector[1] = vector[1]
         self.vector[2] = vector[2]
-        
+        self.name = name
         
     def __add__(self, other_vector):
         return Vector3D((self.vector[0] + other_vector.vector[0],
@@ -1528,13 +1606,27 @@ class Vector3D(Vector):
         v = v - v.Dot(self)*self/(self.Norm()**2)
         v.Normalize()
         return v
-
+    
     def Copy(self):
         return Vector3D(self.vector)
 
     @classmethod
     def DictToObject(cls, dict_):
         return cls(dict_['vector'])
+    
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+
+#        if arguments[1][0] == "#":
+        if type(arguments[1]) is int:
+        # VECTOR
+            return cls(object_dict[arguments[1]], arguments[0][1:-1])
+        else:
+        # DIRECTION
+            return cls([float(i) for i in arguments[1][1:-1].split(",")],
+                        arguments[0][1:-1])
+        
+
 
 x3D = Vector3D((1, 0, 0))
 y3D = Vector3D((0, 1, 0))
@@ -1617,8 +1709,33 @@ class Point3D(Vector3D):
 
     def PointDistance(self, point2):
         return (self-point2).Norm()
+    
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        return cls([float(i) for i in arguments[1][1:-1].split(",")],
+                    arguments[0][1:-1])
 
 o3D = Point3D((0, 0, 0))
+
+
+class Plane3D:
+    def __init__(self, origin, vector1, vector2, name=''):
+        self.origin = origin
+        self.vectors = [vector1, vector2]
+        self.name = name
+        
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        frame3d = object_dict[arguments[1]]
+        origin = frame3d.origin
+        vector1 = frame3d.u
+        vector2 = frame3d.v
+        
+        # TRANSFORMER EN 3D TOUS LES OBJETS LIES AU PLAN
+        
+        return cls(origin, vector1, vector2, arguments[0][1:-1])
+        
+        
 
 
 class Basis3D(Basis):
@@ -1650,10 +1767,11 @@ class Basis3D(Basis):
             }
         }
     # TODO: create a Basis and Frame class to mutualize between 2D and 2D
-    def __init__(self, u, v, w):
+    def __init__(self, u, v, w, name=''):
         self.u = u
         self.v = v
         self.w = w
+        self.name = name
 
     def __repr__(self):
         return '{}: U={}, V={}, W={}'.format(self.__class__.__name__, *self.vectors)
@@ -1759,9 +1877,10 @@ class Frame3D(Basis3D):
     :param v: second vector of the basis
     :param w: third vector of the basis
     """
-    def __init__(self, origin, u, v, w):
+    def __init__(self, origin, u, v, w, name=''):
         self.origin = origin
         Basis3D.__init__(self, u, v, w)
+        self.name = name
 
     def __repr__(self):
         return '{}: O= {} U={}, V={}, W={}'.format(self.__class__.__name__, self.origin, self.u, self.v, self.w)
@@ -1786,6 +1905,24 @@ class Frame3D(Basis3D):
 
     def Copy(self):
         return Frame3D(self.origin, self.u, self.v, self.w)
+    
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        origin = object_dict[arguments[1]]
+        if arguments[2] == '$':
+            u = None
+        else:
+            u = object_dict[arguments[2]]
+        if arguments[3] == '$':
+            v = None
+        else:
+            v = object_dict[arguments[3]]
+        if u is None or v is None:
+            w = None
+        else:
+            w = u.Cross(v)
+        return cls(origin, u, v, w, arguments[0][1:-1])
+
 
 oxyz = Frame3D(o3D, x3D, y3D, z3D)
 
@@ -1832,6 +1969,14 @@ class Line3D(Primitive3D, Line):
         p1 = self.points[0] + s*u
         p2 = other_line.points[0] + t*v
         return p1, p2
+    
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        point1 = object_dict[arguments[1]]
+        direction = object_dict[arguments[2]]
+        point2 = point1 + direction
+        return cls(point1, point2, arguments[0][1:-1])
+    
 
 class LineSegment3D(Line3D):
     """
@@ -1865,8 +2010,89 @@ class LineSegment3D(Line3D):
 
     def to_line(self):
         return Line3D(*self.points)
+           
 
+class BSpline3D(Primitive3D):
+    def __init__(self, degree, control_points, knot_multiplicities, knots, weights=None, periodic=False, name=''):
+        Primitive3D.__init__(self, name)
+        self.control_points = control_points
+        self.degree = degree
+        knots = standardize_knot_vector(knots)
+        self.knots = knots
+        self.knot_multiplicities = knot_multiplicities
+        self.weights = weights
+        self.periodic = periodic
 
+        curve = NURBS.Curve()
+        curve.degree = degree
+        if weights is None:
+            P = [(control_points[i][0], control_points[i][1], control_points[i][2]) for i in range(len(control_points))]
+            curve.ctrlpts = P
+        else:
+            Pw = [(control_points[i][0]*weights[i], control_points[i][1]*weights[i], control_points[i][2]*weights[i], weights[i]) for i in range(len(control_points))]
+            curve.ctrlptsw = Pw
+        knot_vector = []
+        for i, knot in enumerate(knots):
+            knot_vector.extend([knot]*knot_multiplicities[i])
+        curve.knotvector = knot_vector
+        curve.delta = 0.01
+        curve_points = curve.evalpts
+        
+        self.curve = curve
+        self.points = curve_points
+        
+    def FreeCADExport(self, ip, ndigits=3):
+        name = 'primitive{}'.format(ip)
+        points = '['
+        for i in range(len(self.control_points)):
+            point = 'fc.Vector({},{},{}),'.format(self.control_points[i][0],self.control_points[i][1],self.control_points[i][2])
+            points += point
+        points = points[:-1]
+        points += ']'
+        # !!! : A QUOI SERT LE DERNIER ARG DE BSplineCurve (False)?
+        # LA MULTIPLICITE EN 3e ARG ET LES KNOTS EN 2e ARG ?
+        return '{} = Part.BSplineCurve({},{},{},{},{},{},{})\n'.format(name,points,self.knot_multiplicities,self.knots,self.periodic,self.degree,self.weights,False)
+        
+            
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        name = arguments[0][1:-1]
+        degree = int(arguments[1])
+        points = [object_dict[int(i[1:])] for i in arguments[2][1:-1].split(",")]
+        curve_form = arguments[3]
+        if arguments[4] == '.F.':
+            closed_curve = False
+        elif arguments[4] == '.T.':
+            closed_curve = True
+        else:
+            raise ValueError
+        self_intersect = arguments[5]
+        knot_multiplicities = [int(i) for i in arguments[6][1:-1].split(",")]
+        knots = [float(i) for i in arguments[7][1:-1].split(",")]
+        knot_spec = arguments[8]
+        knot_vector = []
+        for i, knot in enumerate(knots):
+            knot_vector.extend([knot]*knot_multiplicities[i])
+        
+        if 9 in range(len(arguments)):
+            weight_data = [float(i) for i in arguments[9][1:-1].split(",")]
+        else:
+            weight_data = None
+        
+        
+        # FORCING CLOSED_CURVE = FALSE:
+        closed_curve = False
+        
+        return cls(degree, points, knot_multiplicities, knots, weight_data, closed_curve, name)
+
+    def point_distance(self, pt1):
+        distances = []
+        for point in self.points:
+            vmpt = Point3D((point[1], point[2], point[3]))
+            distances.append(pt1.PointDistance(vmpt))
+        return min(distances)
+            
+        
 class Circle3D(Primitive3D):
     def __init__(self, center, radius, normal, name=''):
         Primitive3D.__init__(self, name)
@@ -1877,12 +2103,48 @@ class Circle3D(Primitive3D):
     def Length(self):
         return 2* math.pi * self.radius
 
-
-    def FreeCADExport(self,name,ndigits=3):
+    def FreeCADExport(self,ip,ndigits=3):
+        name = 'primitive{}'.format(ip)
         xc,yc,zc = npy.round(1000*self.center.vector,ndigits)
         xn,yn,zn = npy.round(self.normal.vector,ndigits)
         return '{} = Part.Circle(fc.Vector({},{},{}),fc.Vector({},{},{}),{})\n'.format(name,xc,yc,zc,xn,yn,zn,1000*self.radius)
 
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        center = object_dict[arguments[1]].origin
+        radius = float(arguments[2])
+        normal = object_dict[arguments[1]].w
+        return cls(center, radius, normal, arguments[0][1:-1])
+
+
+class Ellipse3D(Primitive3D):
+    def __init__(self, major_axis, minor_axis, center, normal, major_dir, name=''):
+        Primitive3D.__init__(self, name)
+        self.major_axis = major_axis
+        self.minor_axis = minor_axis
+        self.center = center
+        self.normal = normal
+        major_dir.Normalize()
+        self.major_dir = major_dir
+        
+    def FreeCADExport(self, ip, ndigits=3):
+        name = 'primitive{}'.format(ip)
+        xc, yc, zc = npy.round(1000*self.center.vector, ndigits)
+        major_vector = self.center + self.major_axis/2 * self.major_dir
+        xmaj, ymaj, zmaj = npy.round(1000*major_vector.vector, ndigits)
+        minor_vector = self.center + self.minor_axis/2 * self.normal.Cross(self.major_dir)
+        xmin, ymin, zmin = npy.round(1000*minor_vector.vector, ndigits)
+        return '{} = Part.Ellipse(fc.Vector({},{},{}), fc.Vector({},{},{}), fc.Vector({},{},{}))\n'.format(name,xmaj,ymaj,zmaj,xmin,ymin,zmin,xc,yc,zc)
+        
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        center = object_dict[arguments[1]].origin
+        normal = object_dict[arguments[1]].w
+        major_dir = object_dict[arguments[1]].u
+        major_axis = float(arguments[2])
+        minor_axis = float(arguments[3])
+        return cls(major_axis, minor_axis, center, normal, major_dir, arguments[0][1:-1])
+    
 
 class Arc3D(Primitive3D):
     """
@@ -2002,6 +2264,124 @@ class Arc3D(Primitive3D):
         return '{} = Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,xs,ys,zs,xm,ym,zm,xe,ye,ze)
 
 
+class BSpline_Surface3D(Primitive3D):
+    def __init__(self, degree_u, degree_v, control_points, nb_u, nb_v, u_multiplicities, v_multiplicities, u_knots, v_knots, weights=None, name=''):
+        Primitive3D.__init__(self, name)
+        self.control_points = control_points
+        self.degree_u = degree_u
+        self.degree_v = degree_v
+        self.nb_u = nb_u
+        self.nb_v = nb_v
+        u_knots = standardize_knot_vector(u_knots)
+        v_knots = standardize_knot_vector(v_knots)
+        self.u_knots = u_knots
+        self.v_knots = v_knots
+        self.u_multiplicities = u_multiplicities
+        self.v_multiplicities = v_multiplicities
+        self.weights = weights
+        
+        
+        self.control_points_table = []
+        points_row = []
+        i = 1
+        for pt in control_points:
+            points_row.append(pt)
+            if i == nb_v:
+                self.control_points_table.append(points_row)
+                points_row = []
+                i = 1
+            else:
+                i += 1
+        # TRANSPOSE THE LIST OF LISTS
+#        self.control_points_table = list(map(list, zip(*self.control_points_table)))
+        
+        surface = NURBS.Surface()
+        surface.degree_u = degree_u
+        surface.degree_v = degree_v
+        if weights is None:
+            P = [(control_points[i][0], control_points[i][1], control_points[i][2]) for i in range(len(control_points))]
+            surface.set_ctrlpts(P, nb_u, nb_v)
+        else:
+            Pw = [(control_points[i][0]*weights[i], control_points[i][1]*weights[i], control_points[i][2]*weights[i], weights[i]) for i in range(len(control_points))]
+            surface.set_ctrlpts(Pw, nb_u, nb_v)
+        knot_vector_u = []
+        for i, u_knot in enumerate(u_knots):
+            knot_vector_u.extend([u_knot]*u_multiplicities[i])
+        knot_vector_v = []
+        for i, v_knot in enumerate(v_knots):
+            knot_vector_v.extend([v_knot]*v_multiplicities[i])
+        surface.knotvector_u = knot_vector_u
+        surface.knotvector_v = knot_vector_v
+        surface.delta = 0.01
+        surface_points = surface.evalpts
+        
+        self.surface = surface
+        self.points = surface_points
+    
+        
+    def FreeCADExport(self, ip, ndigits=3):
+        name = 'primitive{}'.format(ip)
+        script = ""
+        points = '['
+        for i, pts_row in enumerate(self.control_points_table):
+            pts = '['
+            for j, pt in enumerate(pts_row):
+                point = 'fc.Vector({},{},{}),'.format(pt[0],pt[1],pt[2])
+                pts += point
+            pts = pts[:-1] + '],'
+            points += pts
+        points = points[:-1] + ']'                
+        
+        script += '{} = Part.BSplineSurface()\n'.format(name)
+        if self.weights is None:
+            script += '{}.buildFromPolesMultsKnots({},{},{},udegree={},vdegree={},uknots={},vknots={})\n'.format(name,points,self.u_multiplicities,self.v_multiplicities,self.degree_u,self.degree_v,self.u_knots,self.v_knots)
+        else:
+            script += '{}.buildFromPolesMultsKnots({},{},{},udegree={},vdegree={},uknots={},vknots={},weights={})\n'.format(name,points,self.u_multiplicities,self.v_multiplicities,self.degree_u,self.degree_v,self.u_knots,self.v_knots,self.weights)
+            
+        return script
+    
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        name = arguments[0][1:-1]
+        degree_u = int(arguments[1])
+        degree_v = int(arguments[2])
+        points_sets = arguments[3][1:-1].split("),")
+        points_sets = [elem+")" for elem in points_sets[:-1]]+[points_sets[-1]]
+        control_points = []
+        for points_set in points_sets:
+            points = [object_dict[int(i[1:])] for i in points_set[1:-1].split(",")]
+            nb_v = len(points)
+            control_points.extend(points)
+        nb_u = int(len(control_points) / nb_v)
+        surface_form = arguments[4]
+        if arguments[5] == '.F.':
+            u_closed = False
+        elif arguments[5] == '.T.':
+            u_closed = True
+        else:
+            raise ValueError
+        if arguments[6] == '.F.':
+            v_closed = False
+        elif arguments[6] == '.T.':
+            v_closed = True
+        else:
+            raise ValueError
+        self_intersect = arguments[7]
+        u_multiplicities = [int(i) for i in arguments[8][1:-1].split(",")]
+        v_multiplicities = [int(i) for i in arguments[9][1:-1].split(",")]
+        u_knots = [float(i) for i in arguments[10][1:-1].split(",")]
+        v_knots = [float(i) for i in arguments[11][1:-1].split(",")]
+        knot_spec = arguments[12]
+        
+        if 13 in range(len(arguments)):
+            weight_data = [float(i) for i in arguments[13][1:-1].replace("(", "").replace(")", "").split(",")]
+        else:
+            weight_data = None
+        
+        return cls(degree_u, degree_v, control_points, nb_u, nb_v, u_multiplicities, v_multiplicities, u_knots, v_knots, weight_data, name)
+        
+            
+
 class CompositePrimitive3D(Primitive3D):
     """
     A collection of simple primitives3D
@@ -2068,8 +2448,6 @@ class Wire3D(CompositePrimitive3D):
         raise ValueError
 
     # TODO: method to check if it is a wire
-
-
     def FreeCADExport(self, ip):
         name='primitive'+str(ip)
 
@@ -2080,12 +2458,43 @@ class Wire3D(CompositePrimitive3D):
         s += '{} = Part.Wire(E[:])\n'.format(name)
 
         return s
+    
+    
+class Vertex3D(Primitive3D):
+    def __init__(self, primitives, name=''):
+        Primitive3D.__init__(self, primitives, name)
+        
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        cartesian_point = object_dict[arguments[1]]
+        return (cls, cartesian_point, arguments[0][1:-1])
 
+
+class Edge3D(Primitive3D):
+    def __init__(self, primitives, edge_start, edge_end, name=''):
+        Primitive3D.__init__(self, primitives, name)
+        self.edge_start = edge_start
+        self.edge_end = edge_end
+        
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        vertex_start = object_dict[arguments[1]][0]
+        vertex_end = object_dict[arguments[2]][0]
+        edge_geom = object_dict[arguments[3]]
+        if arguments[4] == '.T.':
+            orientation = True
+        elif arguments[4] == '.F.':
+            orientation = False
+        else:
+            raise ValueError
+        return (cls, [edge_geom], vertex_start, vertex_end, arguments[0][1:-1])
+    
+    
 class Contour3D(Wire3D):
     """
     A collection of 3D primitives forming a closed wire3D
     """
-    def __init__(self, primitives, name=''):
+    def __init__(self, primitives, edges, name=''):
         primitives2=[]
         for primitive in primitives:
             try:
@@ -2094,21 +2503,442 @@ class Contour3D(Wire3D):
                 primitives2.append(primitive)
 
         CompositePrimitive3D.__init__(self,primitives2, name)
+        self.edges = edges
+        
+        
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        edges = []
+        for edge in arguments[1]:
+            edges.append(object_dict[int(edge[1:])][0])
+        return (cls, None, edges, arguments[0][1:-1])
+    
+        
+class Face3D(CompositePrimitive3D):
+    def __init__(self, primitives, contour, name=''):
+        CompositePrimitive3D.__init__(self, primitives, name)
+        self.contour = contour
+        
+        
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        contour = []
+        for elem in arguments[1]:
+            contour.append(object_dict[int(elem[1:])][0])
+        face_geom = object_dict[arguments[2]]
+        if arguments[3] == '.T.':
+            orientation = True
+        elif arguments[3] == '.F.':
+            orientation = False
+        else:
+            raise ValueError
+        return (cls, [face_geom], contour, arguments[0][1:-1])
+    
+    def distance_to_face(self, face):
+        for elem in self.contour:
+            
+            pass
+     
+        
+class Shell3D(CompositePrimitive3D):
+    def __init__(self, primitives, faces, name=''):
+        CompositePrimitive3D.__init__(self, primitives, name)
+        self.faces = faces
 
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        faces = []
+        for face in arguments[1]:
+            faces.append(object_dict[int(face[1:])][0])
+        return (cls, None, faces, arguments[0][1:-1])
+    
+    
+class Group:
+    def __init__(self, primitives, name):
+        self.primitives = primitives
+        self.name = name
+
+
+class StepFunction:
+    def __init__(self, function_id, function_name, function_arg):
+        self.id = function_id
+        self.name = function_name
+        self.arg = function_arg
+        
+        if self.name == "":
+            if self.arg[1][0] == 'B_SPLINE_SURFACE':
+                self.simplify('B_SPLINE_SURFACE')
+            if self.arg[1][0] == 'B_SPLINE_CURVE':
+                self.simplify('B_SPLINE_CURVE')
+        
+    def simplify(self, new_name):
+        # ITERATE ON SUBFUNCTIONS
+        args = [subfun[1] for (i, subfun) in enumerate(self.arg) if (len(subfun[1]) != 0 or i == 0)]
+        arguments = []
+        for arg in args:
+            if arg == []:
+                arguments.append('')
+            else:
+                arguments.extend(arg)
+        arguments.pop() # DELETE REPRESENTATION_ITEM('')
+        
+        self.name = new_name
+        self.arg = arguments
+
+
+class Step:
+    def __init__(self, stepfile):
+        self.stepfile = stepfile
+        
+        self.functions, self.all_connections = self.read_functions()
+        self.graph = self.create_graph()
+        #### FUNCTION TO DELETE ####
+        # faire une fonction : si None dans step_to_volmdlr_primitive alors delete_function
+        self.delete_function('FACE_OUTER_BOUND')
+        self.delete_function('ORIENTED_EDGE')
+        ############################
+        
+    def function(self, int_id):
+        return [f for f in self.functions if f.id == int_id][0]
+        
+    def read_functions(self):
+        f = open(self.stepfile, "r", encoding = "ISO-8859-1")
+        
+        all_connections = []
+        
+        previous_line = ""
+        functions = {}
+        
+        for line in f:
+            
+            line = line.replace(" ", "")
+            line = line.replace("\n", "")
+            
+            # SKIP EMPTY LINE
+            if not line:
+                continue
+            
+            # ASSEMBLE LINES IF THEY ARE SEPARATED
+            if line[-1] != ';':
+                previous_line = previous_line + line
+                continue
+            
+            line = previous_line + line 
+            
+            # SKIP HEADER
+            if line[0] != "#":
+                previous_line = str()
+                continue
+
+            function = line.split("=")
+            function_id = int(function[0][1:])
+            function_name_arg = function[1].split("(", 1)
+            function_name = function_name_arg[0]
+            function_arg = function_name_arg[1].split("#")
+            function_connections = []
+            for connec in function_arg[1:]:
+                connec = connec.split(",")
+                connec = connec[0].split(")")
+                function_connection = int(connec[0])
+#                if function_connection[-1] != "'":
+                function_connections.append((function_connection, function_id))
+            
+            all_connections.extend(function_connections)
+            
+            previous_line = str() 
+            
+            # FUNCTION ARGUMENTS
+            function_arg = function_name_arg[1]
+            arguments = step_split_arguments(function_arg)
+            if function_name == "":
+                arguments = self.step_subfunctions(arguments)
+                
+            for i, argument in enumerate(arguments):
+                if argument[:2] == '(#' and argument[-1] == ')':
+                    arg_list = set_to_list(argument)
+                    arguments[i] = arg_list
+                    
+            function = StepFunction(function_id, function_name, arguments)
+            functions[function_id] = function
+            
+        f.close()
+        
+        return functions, all_connections
+    
+    def create_graph(self, draw=False, html=False):
+        
+        G = nx.Graph()
+        F = nx.DiGraph()
+        labels = {}
+        
+        for function in self.functions:
+            if function.name in step_to_volmdlr_primitive:
+                G.add_node(function.id)
+                F.add_node(function.id)
+                labels[function.id] = str(function.id)+' '+function.name
+            
+
+        node_list = list(F.nodes())
+        delete_connection = []
+        for connection in self.all_connections:
+            if connection[0] not in node_list or connection[1] not in node_list:
+                delete_connection.append(connection)
+        for delete in delete_connection:
+            self.all_connections.remove(delete)
+
+        
+        G.add_edges_from(self.all_connections)
+        F.add_edges_from(self.all_connections)
+        
+        delete_nodes = []
+        for node in F.nodes:
+            if F.degree(node) == 0:
+                delete_nodes.append(node)
+        for node in delete_nodes:    
+            F.remove_node(node)
+            G.remove_node(node)
+        
+        
+        if draw:
+            # ----------------PLOT----------------
+            pos = nx.kamada_kawai_layout(G)
+            plt.figure()
+            nx.draw_networkx_nodes(F, pos)
+            nx.draw_networkx_edges(F, pos)
+            nx.draw_networkx_labels(F, pos, labels)
+            # ------------------------------------
+        
+        if html:
+                
+            env = Environment(loader=PackageLoader('powertransmission', 'templates'),
+                              autoescape=select_autoescape(['html', 'xml']))
+            template = env.get_template('graph_visJS.html')
+            
+            nodes = []
+            edges = []
+            for label in list(labels.values()):
+                nodes.append({'name': label, 'shape': 'circular'})
+            
+            for edge in G.edges:
+                edge_dict = {}
+                edge_dict['inode1'] = int(edge[0])-1
+                edge_dict['inode2'] = int(edge[1])-1
+                edges.append(edge_dict)
+            
+            options = {}
+            s = template.render(
+                name=self.stepfile,
+                nodes=nodes,
+                edges=edges,
+                options=options)
+    
+            with open('graph_visJS.html', 'wb') as file:
+                file.write(s.encode('utf-8'))
+    
+            webbrowser.open('file://' + os.path.realpath('graph_visJS.html'))
+            
+        
+        
+        return F
+    
+    
+    def draw_graph(self):
+        labels = {}
+        for function in self.functions:
+            labels[function.id] = str(function.id)+' '+function.name
+        pos = nx.kamada_kawai_layout(self.graph)
+        plt.figure()
+        nx.draw_networkx_nodes(self.graph, pos)
+        nx.draw_networkx_edges(self.graph, pos)
+        nx.draw_networkx_labels(self.graph, pos, labels)
+    
+    
+    def step_subfunctions(self, subfunctions):
+#        print('IN', subfunctions)
+        subfunctions = subfunctions[0]
+        parenthesis_count = 0
+        subfunction_names = []
+        subfunction_args = []
+        subfunction_name = ""
+        subfunction_arg = ""
+        for char in subfunctions:
+                            
+            if char == "(":
+                parenthesis_count += 1
+                if parenthesis_count == 1: 
+                    subfunction_names.append(subfunction_name)
+                    subfunction_name = ""
+                else:
+                    subfunction_arg += char
+                continue
+            if char == ")":
+                parenthesis_count -= 1
+                if parenthesis_count == 0:
+                    subfunction_args.append(subfunction_arg)
+                    subfunction_arg = ""
+                else:
+                    subfunction_arg += char
+                continue
+            
+            if parenthesis_count == 0:
+                subfunction_name += char
+            else:
+                subfunction_arg += char
+        
+#        print('OUT', subfunction_args)
+        return [(subfunction_names[i], step_split_arguments(subfunction_args[i])) for i in range(len(subfunction_names))]
+
+
+    def delete_function(self, function_name):
+        
+        delete_functions = []
+        for function in self.functions:
+            if function.name == function_name:
+                
+                #### Delete from self.functions ####
+                delete_functions.append(function)
+                
+                #### Modify the functions pointing on the deleted function ####
+                modify_function_id = list(self.graph.out_edges(function.id))[0][1]
+                # TROUVER '#'+str(function.id) dans les arguments
+                # VERIFIER que le char d'apres n'est pas un entier
+                # REMPLACER la selection par list(self.graph.in_edges)[0]
+                modify_function = self.function(modify_function_id)
+                for i, argument in enumerate(modify_function.arg):
+                    if type(argument) is list:
+                        for j, elem in enumerate(argument):
+                            res = find_and_replace(elem, '#'+str(function.id), '#'+str(list(self.graph.in_edges(function.id))[0][0]))
+                            if res != elem:
+                                modify_function.arg[i][j] = res
+                    else:
+                        res = find_and_replace(argument, '#'+str(function.id), '#'+str(list(self.graph.in_edges(function.id))[0][0]))
+                        if res != argument:
+                            modify_function.arg[i] = res
+                
+                #### Delete from self.graph ####
+                node_edges = list(self.graph.in_edges(function.id))+list(self.graph.out_edges(function.id))
+                if len(node_edges) != 2:
+                    print(node_edges)
+                    raise ValueError
+                self.graph.remove_node(function.id)
+                self.graph.add_edge(node_edges[0][0], node_edges[1][1])
+                
+                #### Delete from self.all_connections ####
+                self.all_connections = list(self.graph.edges)
+        
+        for delete_f in delete_functions:
+            self.functions.remove(delete_f)
+    
+    def instanciate(self, instanciate_id, object_dict, volmdlr_objects, primitives):
+        """
+        Returns None if the object was instanciate
+        """
+        
+        name = self.function(instanciate_id).name
+        arguments = self.function(instanciate_id).arg[:]
+        
+        for i, arg in enumerate(arguments):
+            if type(arg) == str and arg[0] == '#':
+                arguments[i] = int(arg[1:])
+        
+        if name in step_to_volmdlr_primitive and hasattr(step_to_volmdlr_primitive[name], "from_step"):
+
+            try:
+                volmdlr_object = step_to_volmdlr_primitive[name].from_step(arguments, object_dict)
+            except KeyError:
+                return instanciate_id, object_dict, volmdlr_objects, primitives
+                
+            object_dict[instanciate_id] = volmdlr_object
+            volmdlr_objects.append(volmdlr_object)
+            if hasattr(volmdlr_object, "primitive"):
+                primitives.append(volmdlr_object.primitive)
+        
+        return None, object_dict, volmdlr_objects, primitives
+        
+    def to_volume_model(self, name):
+        
+        object_dict = {}
+        volmdlr_objects = []
+        primitives = []
+        not_instanciated_id = []
+        closed_shell_ids = []
+        
+        
+        self.graph.add_node("#0")
+        for function in self.functions:
+            if function.name == "CARTESIAN_POINT" or function.name == "DIRECTION":
+#                source_nodes.append(function_id)
+                self.graph.add_edge("#0", function.id)
+                                    
+        for node in self.graph.nodes:
+            if 
+        
+        edges = list(nx.algorithms.traversal.breadth_first_search.bfs_edges(self.graph, "#0"))
+                                                                            
+        for edge_nb, edge in enumerate(edges):
+            instanciate_id = edge[1]
+            res, object_dict, volmdlr_objects, primitives = self.instanciate(instanciate_id, object_dict, volmdlr_objects, primitives)
+            if res is not None:
+                not_instanciated_id.append(res)
+                
+        print('Nombre non instanciés', len(not_instanciated_id))
+            
+        i = 0
+        still_not_instanciated_id = []
+        while not_instanciated_id:
+            if i > len(not_instanciated_id)-1:
+                not_instanciated_id = still_not_instanciated_id
+                still_not_instanciated_id = []
+                i = 0
+                continue 
+            res, object_dict, volmdlr_objects, primitives = self.instanciate(not_instanciated_id[i], object_dict, volmdlr_objects, primitives)
+            if res is not None:
+                still_not_instanciated_id.append(res)
+            i += 1
+        
+        # A FAIRE 
+#        shells = [shell for shell in volmdlr_objects if isinstance(shell, Shell3D)]
+#        print(shells)
+        
+#        shells = []
+#        
+#        for vm_obj in volmdlr_objects:
+#            try vm_obj[0]:
+#                if isinstance(vm_obj[0], Shell3D):
+#                    shells.append(vm_obj[0])
+#            except IndexError:
+#                continue
+#                    
+#        print(shells)
+        
+#        print(self.graph.degree())
+        
+        for node in list(self.graph.nodes):
+            if not list(self.graph.out_edges(node)):
+                print(node)
+                print(list(self.graph.in_edges(node)))
+            if self.graph.degree(node) == 0:
+                print('tout seul', node)
+        
+        volume_model = VolumeModel(shells, primitives, name)
+        return volume_model
+    
+    
 
 class VolumeModel:
     """
     :param groups: A list of two element tuple. The first element is a string naming the group and the second element is a list of primitives of the group
     """
-    def __init__(self, groups, name=''):
-        self.groups = groups
+    def __init__(self, shells, primitives, name=''):
+        self.shells = shells
+        self.primitives = primitives
         self.name=name
 
     def Volume(self):
         volume=0
-        for group_name, primitives_group in self.groups:
-            for primitive in primitives_group:
-                volume+=primitive.Volume()
+        for primitive in self.primitives:
+#            for primitive in primitives_group:
+            volume+=primitive.Volume()
         return volume
 
     def MPLPlot(self):
@@ -2119,9 +2949,8 @@ class VolumeModel:
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d', adjustable='box')
 #        ax.set_aspect('equal')
-        for name, primitive_group in self.groups:
-            for primitive in primitive_group:
-                primitive.MPLPlot(ax)
+        for primitive in self.primitives:
+            primitive.MPLPlot(ax)
         ax.set_aspect('equal')
         return fig, ax
 
@@ -2139,29 +2968,39 @@ class VolumeModel:
         fcstd_filepath = fcstd_filepath.replace('\\','\\\\')
         freecad_lib_path = freecad_lib_path.replace('\\','\\\\')
 
-        s=''
+        s='# -*- coding: utf-8 -*-\n'
         if freecad_lib_path != '':
             s+="import sys\nsys.path.append('"+freecad_lib_path+"')\n"
 
         s+="import math\nimport FreeCAD as fc\nimport Part\n\ndoc=fc.newDocument('doc')\n\n"
-        for ig, (group_name, primitives_group) in enumerate(self.groups):
-            if group_name == '':
-                group_name = 'Group_{}'.format(ig)
+        for ip, primitive in enumerate(self.primitives):
+            if primitive.name == '':
+                primitive_name = 'Primitive_{}'.format(ip)
             else:
-                group_name = 'Group_{}_{}'.format(ig, group_name)
-            s += "part = doc.addObject('App::Part','{}')\n".format(group_name)
-            for ip, primitive in enumerate(primitives_group):
+                primitive_name = 'Primitive_{}_{}'.format(ip, primitive_name)
+            s += "part = doc.addObject('App::Part','{}')\n".format(primitive_name)
+            if hasattr(primitive, 'FreeCADExport'):
                 sp = primitive.FreeCADExport(ip)
                 if sp != '':
-                    s += (sp+'\n')
-                    if primitive.name != '':
-                        primitive_name = 'primitive_{}_{}_{}'.format(ig, ip, primitive.name)
-                    else:
-                        primitive_name = 'primitive_{}_{}'.format(ig, ip)
+#                        s += (sp+'\n')
+                    s += (sp)
                     s += 'shapeobj = doc.addObject("Part::Feature","{}")\n'.format(primitive_name)
-                    s += "shapeobj.Shape = primitive{}\n".format(ip)
-                    s += 'part.addObject(shapeobj)\n'.format(ip, primitive.name)
-#
+                    if isinstance(primitive, BSpline3D) \
+                    or isinstance(primitive, BSpline_Surface3D) \
+                    or isinstance(primitive, Circle3D) \
+                    or isinstance(primitive, Ellipse3D):
+#                            print(primitive)
+#                            s += 'S = Part.Shape([primitive{}])\n'.format(ip)
+#                            s += 'shapeobj.Shape = S\n'
+                        s += 'shapeobj.Shape = primitive{}.toShape()\n'.format(ip)
+                    else:
+                        s += "shapeobj.Shape = primitive{}\n".format(ip)
+                    s += 'part.addObject(shapeobj)\n\n'.format(ip, primitive.name)
+            # --------------------DEBUG-------------------
+#                else:
+#                    raise NotImplementedError
+            # ---------------------------------------------
+                
         s+='doc.recompute()\n'
         if 'fcstd' in export_types:
             s+="doc.saveAs('"+fcstd_filepath+".fcstd')\n\n"
@@ -2263,64 +3102,84 @@ class VolumeModel:
 
         return center,max_length
 
-    def FromSTEP(self, file_name):
+    
+    
+    
+step_to_volmdlr_primitive = {
+        # GEOMETRICAL ENTITIES
+        'CARTESIAN_POINT': Point3D,
+        'DIRECTION': Vector3D,
+        'VECTOR': Vector3D,
         
-        f = open(file_name, "r")
+        'AXIS1_PLACEMENT': None,
+        'AXIS2_PLACEMENT_2D': None,
+        'AXIS2_PLACEMENT_3D': Frame3D,
         
-        G = nx.Graph()
+        'LINE': Line3D,
+        'CIRCLE': Circle3D,
+        'ELLIPSE': Ellipse3D,
+        'PARABOLA': None,
+        'HYPERBOLA': None,
+        'PCURVE': None,
+        'CURVE_REPLICA': None,
+        'OFFSET_CURVE_3D': None,
+        'TRIMMED_CURVE': None, # BSpline3D cannot be trimmed on FreeCAD
+        'B_SPLINE_CURVE': BSpline3D,
+        'B_SPLINE_CURVE_WITH_KNOTS': BSpline3D,
+        'BEZIER_CURVE': BSpline3D,
+        'RATIONAL_B_SPLINE_CURVE': BSpline3D,
+        'UNIFORM_CURVE': BSpline3D,
+        'QUASI_UNIFORM_CURVE': BSpline3D,
+        'SURFACE_CURVE': Edge3D, # TOPOLOGICAL EDGE
+        'SEAM_CURVE': Edge3D, # TOPOLOGICAL EDGE
+        'COMPOSITE_CURVE_SEGMENT': None, # TOPOLOGICAL EDGE
+        'COMPOSITE_CURVE': Wire3D, # TOPOLOGICAL WIRE
+        'COMPOSITE_CURVE_ON_SURFACE': Wire3D, # TOPOLOGICAL WIRE
+        'BOUNDARY_CURVE': Wire3D, # TOPOLOGICAL WIRE
         
-        all_connections = []
-        labels = {}
-        previous_line = ""
+        'PLANE': Plane3D,
+        'CYLINDRICAL_SURFACE': None,
+        'CONICAL_SURFACE': None,
+        'SPHERICAL_SURFACE': None,
+        'TOROIDAL_SURFACE': None,
+        'DEGENERATE_TOROIDAL_SURFACE': None,
+        'B_SPLINE_SURFACE_WITH_KNOTS': BSpline_Surface3D,
+        'B_SPLINE_SURFACE': BSpline_Surface3D,
+        'BEZIER_SURFACE': BSpline_Surface3D,
+        'OFFSET_SURFACE': None,
+        'SURFACE_REPLICA': None,
+        'RATIONAL_B_SPLINE_SURFACE': BSpline_Surface3D,
+        'RECTANGULAR_TRIMMED_SURFACE': None,
+        'SURFACE_OF_LINEAR_EXTRSUION': None,
+        'SURFACE_OF_REVOLUTION': None,
+        'UNIFORM_SURFACE': BSpline_Surface3D,
+        'QUASI_UNIFORM_SURFACE': BSpline_Surface3D,
+        'RECTANGULAR_COMPOSITE_SURFACE': Face3D, # TOPOLOGICAL FACES
+        'CURVE_BOUNDED_SURFACE': Face3D, # TOPOLOGICAL FACE
         
-        for line in f:
-            
-            line = line.replace(" ", "")
-            line = line.replace("\n", "")
-            line = previous_line + line 
-            
-            # ASSEMBLE LINES IF THEY ARE SEPARATED
-            if line[-1] != ';':
-                previous_line = previous_line + line
-                continue
-
-            # SKIP HEADER
-            if line[0] != "#":
-                previous_line = str()
-                continue
-
-            function = line.split("=")
-            function_id = function[0]
-            function_name_arg = function[1].split("(", 1)
-            function_name = function_name_arg[0]
-            function_arg = function_name_arg[1].split("#")
-            function_connections = []
-            for connec in function_arg[1:]:
-                function_connection = "#"
-                connec = connec.split(",")
-                connec = connec[0].split(")")
-                function_connection += connec[0]
-                if function_connection[-1] != "'":
-                    function_connections.append((function_id, function_connection))
-
-            all_connections.extend(function_connections)
-            
-            labels[function_id] = function_id+' '+function_name
-            
-            previous_line = str() 
-            
-            G.add_node(function_id)
-            
-        G.add_edges_from(all_connections)
         
-        # ----------------PLOT----------------
-        pos = nx.kamada_kawai_layout(G)
-        plt.figure()
-        nx.draw_networkx_nodes(G, pos)
-        nx.draw_networkx_edges(G, pos)
-        nx.draw_networkx_labels(G, pos, labels)
-        # ------------------------------------
+        # TOPOLOGICAL ENTITIES
+        'VERTEX_POINT': Vertex3D,
         
-        f.close()
+        'EDGE_CURVE': Edge3D, # TOPOLOGICAL EDGE
+        'ORIENTED_EDGE': None, # TOPOLOGICAL EDGE
+        # The one above can influence the direction with their last argument
+        # TODO : maybe take them into consideration
         
-        return
+        'FACE_BOUND': None, # TOPOLOGICAL WIRE
+        'FACE_OUTER_BOUND': None, # TOPOLOGICAL WIRE
+        # Both above can influence the direction with their last argument
+        # TODO : maybe take them into consideration
+        'EDGE_LOOP': Contour3D, # TOPOLOGICAL WIRE
+        'POLY_LOOP': Contour3D, # TOPOLOGICAL WIRE
+        'VERTEX_LOOP': Contour3D, # TOPOLOGICAL WIRE
+        
+        'ADVANCED_FACE': Face3D,
+        'FACE_SURFACE': Face3D,
+        
+        'CLOSED_SHELL': Shell3D,
+        'OPEN_SHELL': Shell3D,
+        'ORIENTED_CLOSED_SHELL': Shell3D,
+        'CONNECTED_FACE_SET': Shell3D,
+                            
+        }
