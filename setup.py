@@ -68,6 +68,6 @@ setup(name='volmdlr',
       license='Creative Commons Attribution-Share Alike license',
       packages=['volmdlr'],#,'volmdlr.primitives2D','volmdlr.primitives3D','volmdlr.geometry'],
       package_dir={},
-      install_requires=['numpy', 'matplotlib', 'Cython', 'scipy', 'jinja2'],
+      install_requires=['numpy', 'matplotlib', 'Cython', 'scipy', 'jinja2', 'geomdl'],
       classifiers=['Topic :: Scientific/Engineering','Development Status :: 3 - Alpha'],
       ext_modules = cythonize("volmdlr/vmcy.pyx"))

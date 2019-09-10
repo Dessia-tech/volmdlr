@@ -2467,6 +2467,9 @@ class Vertex3D(Primitive3D):
     @classmethod
     def from_step(cls, arguments, object_dict):
         cartesian_point = object_dict[arguments[1]]
+        
+        cls.point = cartesian_point
+        
         return (cls, cartesian_point, arguments[0][1:-1])
 
 
@@ -2487,6 +2490,10 @@ class Edge3D(Primitive3D):
             orientation = False
         else:
             raise ValueError
+        
+        cls.edge_start = vertex_start
+        cls.edge_end = vertex_end
+        
         return (cls, [edge_geom], vertex_start, vertex_end, arguments[0][1:-1])
     
     
@@ -2495,6 +2502,7 @@ class Contour3D(Wire3D):
     A collection of 3D primitives forming a closed wire3D
     """
     def __init__(self, primitives, edges, name=''):
+        self.edges = edges
         primitives2=[]
         for primitive in primitives:
             try:
@@ -2503,7 +2511,7 @@ class Contour3D(Wire3D):
                 primitives2.append(primitive)
 
         CompositePrimitive3D.__init__(self,primitives2, name)
-        self.edges = edges
+        
         
         
     @classmethod
@@ -2511,6 +2519,10 @@ class Contour3D(Wire3D):
         edges = []
         for edge in arguments[1]:
             edges.append(object_dict[int(edge[1:])][0])
+        print(edges[0].edge_start)
+        
+        cls.edges = edges
+        
         return (cls, None, edges, arguments[0][1:-1])
     
         
@@ -2532,12 +2544,18 @@ class Face3D(CompositePrimitive3D):
             orientation = False
         else:
             raise ValueError
+        
+        cls.contour = contour
+        
         return (cls, [face_geom], contour, arguments[0][1:-1])
     
-    def distance_to_face(self, face):
-        for elem in self.contour:
-            
-            pass
+    def distance_to_point(self, point):
+        distances = []
+        for contour in self.contour:
+            for edge in contour.edges:
+                for vertex in edge.edge_start:
+                    distances.append(vertex.point.PointDistance(point))
+        return min(distances)
      
         
 class Shell3D(CompositePrimitive3D):
@@ -2550,6 +2568,9 @@ class Shell3D(CompositePrimitive3D):
         faces = []
         for face in arguments[1]:
             faces.append(object_dict[int(face[1:])][0])
+        
+        cls.faces = faces
+        
         return (cls, None, faces, arguments[0][1:-1])
     
     
@@ -2598,8 +2619,6 @@ class Step:
         self.delete_function('ORIENTED_EDGE')
         ############################
         
-    def function(self, int_id):
-        return [f for f in self.functions if f.id == int_id][0]
         
     def read_functions(self):
         f = open(self.stepfile, "r", encoding = "ISO-8859-1")
@@ -2671,7 +2690,7 @@ class Step:
         F = nx.DiGraph()
         labels = {}
         
-        for function in self.functions:
+        for function in self.functions.values():
             if function.name in step_to_volmdlr_primitive:
                 G.add_node(function.id)
                 F.add_node(function.id)
@@ -2792,18 +2811,18 @@ class Step:
     def delete_function(self, function_name):
         
         delete_functions = []
-        for function in self.functions:
+        for function_id, function in self.functions.items():
             if function.name == function_name:
                 
                 #### Delete from self.functions ####
-                delete_functions.append(function)
+                delete_functions.append(function_id)
                 
                 #### Modify the functions pointing on the deleted function ####
                 modify_function_id = list(self.graph.out_edges(function.id))[0][1]
                 # TROUVER '#'+str(function.id) dans les arguments
                 # VERIFIER que le char d'apres n'est pas un entier
                 # REMPLACER la selection par list(self.graph.in_edges)[0]
-                modify_function = self.function(modify_function_id)
+                modify_function = self.functions[modify_function_id]
                 for i, argument in enumerate(modify_function.arg):
                     if type(argument) is list:
                         for j, elem in enumerate(argument):
@@ -2826,16 +2845,17 @@ class Step:
                 #### Delete from self.all_connections ####
                 self.all_connections = list(self.graph.edges)
         
+
         for delete_f in delete_functions:
-            self.functions.remove(delete_f)
+            del self.functions[delete_f]
     
     def instanciate(self, instanciate_id, object_dict, volmdlr_objects, primitives):
         """
         Returns None if the object was instanciate
         """
         
-        name = self.function(instanciate_id).name
-        arguments = self.function(instanciate_id).arg[:]
+        name = self.functions[instanciate_id].name
+        arguments = self.functions[instanciate_id].arg[:]
         
         for i, arg in enumerate(arguments):
             if type(arg) == str and arg[0] == '#':
@@ -2865,13 +2885,14 @@ class Step:
         
         
         self.graph.add_node("#0")
-        for function in self.functions:
-            if function.name == "CARTESIAN_POINT" or function.name == "DIRECTION":
-#                source_nodes.append(function_id)
-                self.graph.add_edge("#0", function.id)
+#        for function in self.functions.values():
+#            if function.name == "CARTESIAN_POINT" or function.name == "DIRECTION":
+##                source_nodes.append(function_id)
+#                self.graph.add_edge("#0", function.id)
                                     
         for node in self.graph.nodes:
-            if 
+            if node != '#0' and (self.functions[node].name == "CARTESIAN_POINT" or self.functions[node].name == "DIRECTION"):
+                self.graph.add_edge("#0", node)
         
         edges = list(nx.algorithms.traversal.breadth_first_search.bfs_edges(self.graph, "#0"))
                                                                             
@@ -2920,6 +2941,11 @@ class Step:
             if self.graph.degree(node) == 0:
                 print('tout seul', node)
         
+        
+        # TRICHE
+        shells = [volmdlr_objects[-1][0]]
+        print(shells)
+            
         volume_model = VolumeModel(shells, primitives, name)
         return volume_model
     
