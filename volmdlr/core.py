@@ -2461,28 +2461,30 @@ class Wire3D(CompositePrimitive3D):
     
     
 class Vertex3D(Primitive3D):
-    def __init__(self, primitives, name=''):
-        Primitive3D.__init__(self, primitives, name)
+    def __init__(self, primitive, name=''):
+        Primitive3D.__init__(primitive, name)
+        self.primitive = primitive
         
     @classmethod
     def from_step(cls, arguments, object_dict):
         cartesian_point = object_dict[arguments[1]]
         
-        cls.point = cartesian_point
+#        cls.point = cartesian_point
         
-        return (cls, cartesian_point, arguments[0][1:-1])
+        return cls(cartesian_point, arguments[0][1:-1])
 
 
 class Edge3D(Primitive3D):
     def __init__(self, primitives, edge_start, edge_end, name=''):
-        Primitive3D.__init__(self, primitives, name)
+        Primitive3D.__init__(primitives, name)
         self.edge_start = edge_start
         self.edge_end = edge_end
+        self.primitives = primitives
         
     @classmethod
     def from_step(cls, arguments, object_dict):
-        vertex_start = object_dict[arguments[1]][0]
-        vertex_end = object_dict[arguments[2]][0]
+        vertex_start = object_dict[arguments[1]]
+        vertex_end = object_dict[arguments[2]]
         edge_geom = object_dict[arguments[3]]
         if arguments[4] == '.T.':
             orientation = True
@@ -2491,10 +2493,10 @@ class Edge3D(Primitive3D):
         else:
             raise ValueError
         
-        cls.edge_start = vertex_start
-        cls.edge_end = vertex_end
+#        cls.edge_start = vertex_start
+#        cls.edge_end = vertex_end
         
-        return (cls, [edge_geom], vertex_start, vertex_end, arguments[0][1:-1])
+        return cls(edge_geom, vertex_start, vertex_end, arguments[0][1:-1])
     
     
 class Contour3D(Wire3D):
@@ -2517,26 +2519,29 @@ class Contour3D(Wire3D):
     @classmethod
     def from_step(cls, arguments, object_dict):
         edges = []
+        edge_geoms = []
         for edge in arguments[1]:
-            edges.append(object_dict[int(edge[1:])][0])
-        print(edges[0].edge_start)
+            edges.append(object_dict[int(edge[1:])])
+            edge_geoms.append(object_dict[int(edge[1:])].primitives)
+#        print(edges[0].edge_start)
         
-        cls.edges = edges
+#        cls.edges = edges
         
-        return (cls, None, edges, arguments[0][1:-1])
+        return cls(edge_geoms, edges, arguments[0][1:-1])
     
         
 class Face3D(CompositePrimitive3D):
     def __init__(self, primitives, contour, name=''):
         CompositePrimitive3D.__init__(self, primitives, name)
         self.contour = contour
+        self.primitives = primitives
         
         
     @classmethod
     def from_step(cls, arguments, object_dict):
         contour = []
         for elem in arguments[1]:
-            contour.append(object_dict[int(elem[1:])][0])
+            contour.append(object_dict[int(elem[1:])])
         face_geom = object_dict[arguments[2]]
         if arguments[3] == '.T.':
             orientation = True
@@ -2545,16 +2550,18 @@ class Face3D(CompositePrimitive3D):
         else:
             raise ValueError
         
-        cls.contour = contour
+#        cls.contour = contour
         
-        return (cls, [face_geom], contour, arguments[0][1:-1])
+        return cls([face_geom], contour, arguments[0][1:-1])
     
     def distance_to_point(self, point):
         distances = []
         for contour in self.contour:
             for edge in contour.edges:
-                for vertex in edge.edge_start:
-                    distances.append(vertex.point.PointDistance(point))
+                
+                distances.append(edge.edge_start.primitive.PointDistance(point))
+                distances.append(edge.edge_end.primitive.PointDistance(point))
+
         return min(distances)
      
         
@@ -2566,12 +2573,13 @@ class Shell3D(CompositePrimitive3D):
     @classmethod
     def from_step(cls, arguments, object_dict):
         faces = []
+        primitives = []
         for face in arguments[1]:
-            faces.append(object_dict[int(face[1:])][0])
+            faces.append(object_dict[int(face[1:])])
+            primitives.append(object_dict[int(face[1:])].primitives)
+#        cls.faces = faces
         
-        cls.faces = faces
-        
-        return (cls, None, faces, arguments[0][1:-1])
+        return cls(primitives, faces, arguments[0][1:-1])
     
     
 class Group:
@@ -2943,7 +2951,7 @@ class Step:
         
         
         # TRICHE
-        shells = [volmdlr_objects[-1][0]]
+        shells = [volmdlr_objects[-1]]
         print(shells)
             
         volume_model = VolumeModel(shells, primitives, name)
