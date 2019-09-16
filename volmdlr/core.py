@@ -26,6 +26,7 @@ from .vmcy import PolygonPointBelongs
 from scipy.linalg import solve, LinAlgError, inv
 
 import volmdlr.geometry as geometry
+import volmdlr.primitives3D as primitive3D
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 
@@ -109,6 +110,14 @@ def set_to_list(step_set):
     char_list[0] = char_list[0][1:]
     char_list[-1] = char_list[-1][:-1]
     return [elem for elem in char_list]
+
+def delete_node_and_predecessors(graph, node):
+    predecessors = list(graph.predecessors(node))
+    graph.remove_node(node)
+#    print('node removed', node)
+    for predecessor in predecessors:
+        delete_node_and_predecessors(graph, predecessor)
+    
 
         
 class Vector:
@@ -1735,7 +1744,14 @@ class Plane3D:
         
         return cls(origin, vector1, vector2, arguments[0][1:-1])
         
+    def point_on_plane(self, point):
         
+        projected_pt = point.PlaneProjection3D(self.origin, self.vectors[0], self.vectors[1])
+        if npy.isclose(point[0], projected_pt[0], atol=1e-8) \
+        and npy.isclose(point[1], projected_pt[1], atol=1e-8) \
+        and npy.isclose(point[2], projected_pt[2], atol=1e-8):
+            return True
+        return False
 
 
 class Basis3D(Basis):
@@ -2012,7 +2028,7 @@ class LineSegment3D(Line3D):
         return Line3D(*self.points)
            
 
-class BSpline3D(Primitive3D):
+class BSplineCurve3D(Primitive3D):
     def __init__(self, degree, control_points, knot_multiplicities, knots, weights=None, periodic=False, name=''):
         Primitive3D.__init__(self, name)
         self.control_points = control_points
@@ -2264,7 +2280,7 @@ class Arc3D(Primitive3D):
         return '{} = Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,xs,ys,zs,xm,ym,zm,xe,ye,ze)
 
 
-class BSpline_Surface3D(Primitive3D):
+class BSplineSurface3D(Primitive3D):
     def __init__(self, degree_u, degree_v, control_points, nb_u, nb_v, u_multiplicities, v_multiplicities, u_knots, v_knots, weights=None, name=''):
         Primitive3D.__init__(self, name)
         self.control_points = control_points
@@ -2549,21 +2565,79 @@ class Face3D(CompositePrimitive3D):
             orientation = False
         else:
             raise ValueError
-        
-#        cls.contour = contour
-        
         return cls([face_geom], contour, arguments[0][1:-1])
     
     def distance_to_point(self, point):
-        distances = []
-        for contour in self.contour:
+        """
+        Only works if the surface is planar
+        """
+        # On projette le point sur la surface plane
+        # Si le point est à l'intérieur de la face, on retourne la distance de projection
+        # Si le point est à l'extérieur, on projette le point sur le plan 
+        # On calcule en 2D la distance entre la projection et le polygone contour
+        # On utilise le theroeme de Pytagore pour calculer la distance minimale entre le point et le contour
+        print(self.primitives[0].__class__)
+        print(Plane3D)
+        print('essai', self.primitives[0].__class__ == Plane3D)
+        if isinstance(self.primitives[0], Plane3D):
+            plane = self.primitives[0]
+            projected_pt = point.PlaneProjection3D(plane.origin, plane.vectors[0], plane.vectors[1])
+            projection_distance = point.PointDistance(projected_pt)
+            
+            if self.point_on_face(projected_pt):
+                return projection_distance
+            
+            contour = self.contour[0]
+            polygon_points_3D = []
             for edge in contour.edges:
-                
-                distances.append(edge.edge_start.primitive.PointDistance(point))
-                distances.append(edge.edge_end.primitive.PointDistance(point))
+                polygon_points_3D.append(edge.edge_start)
+                polygon_points_3D.append(edge.edge_end)
+            polygon_points_3D = list(set(polygon_points_3D))
+            polygon_points_2D = []
+            for pt in polygon_points_3D:
+                polygon_points_2D.append(pt.To2D(plane.origin, plane.vectors[0], plane.vectors[1]))
+            point_2D = point.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
+            polygon = Polygon2D(polygon_points_2D)
+            
+            border_distance = polygon.PointBorderDistance(point_2D)
+            return (projection_distance**2 + border_distance**2)**0.5
+        
+        raise NotImplementedError
 
-        return min(distances)
-     
+    
+    def point_on_face(self, point):
+        """
+        Only works if the surface is planar
+        """
+        
+        print(self.primitives[0])
+        print('1. Plane ?', isinstance(self.primitives[0], Plane3D))
+        if isinstance(self.primitives[0], Plane3D):
+            plane = self.primitives[0]
+            point_on_plane = plane.point_on_plane(point)
+            
+            # The point is not in the same plane
+            if not point_on_plane:
+                return False
+            
+            contour = self.contour[0]
+            # transformer le contour en polygone2D pour utiliser la méthode PointBelongs
+            polygon_points_3D = []
+            for edge in contour.edges:
+                polygon_points_3D.append(edge.edge_start)
+                polygon_points_3D.append(edge.edge_end)
+            polygon_points_3D = list(set(polygon_points_3D))
+            polygon_points_2D = []
+            for pt in polygon_points_3D:
+                polygon_points_2D.append(pt.primitive.To2D(plane.origin, plane.vectors[0], plane.vectors[1]))
+            point_2D = point.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
+            polygon = Polygon2D(polygon_points_2D)
+            
+            if not polygon.PointBelongs(point_2D):
+                return False
+            return True
+        return False        
+
         
 class Shell3D(CompositePrimitive3D):
     def __init__(self, primitives, faces, name=''):
@@ -2626,6 +2700,8 @@ class Step:
         self.delete_function('FACE_OUTER_BOUND')
         self.delete_function('ORIENTED_EDGE')
         ############################
+
+        
         
         
     def read_functions(self):
@@ -2704,7 +2780,7 @@ class Step:
                 F.add_node(function.id)
                 labels[function.id] = str(function.id)+' '+function.name
             
-
+        # Delete connection if node not found
         node_list = list(F.nodes())
         delete_connection = []
         for connection in self.all_connections:
@@ -2713,10 +2789,11 @@ class Step:
         for delete in delete_connection:
             self.all_connections.remove(delete)
 
-        
+        # Create graph connections
         G.add_edges_from(self.all_connections)
         F.add_edges_from(self.all_connections)
         
+        # Remove single nodes
         delete_nodes = []
         for node in F.nodes:
             if F.degree(node) == 0:
@@ -2724,6 +2801,20 @@ class Step:
         for node in delete_nodes:    
             F.remove_node(node)
             G.remove_node(node)
+            
+        # Remove single branches
+        nodes_to_delete = []
+        for node in list(F.nodes):
+            if not list(F.out_edges(node)):
+                if self.functions[node].name != 'CLOSED_SHELL' \
+                and self.functions[node].name != 'ORIENTED_CLOSED_SHELL':
+                    nodes_to_delete.append(node)
+        for node in nodes_to_delete:
+            print('node to delete', node, self.functions[node].name)
+            delete_node_and_predecessors(F, node)
+            
+                
+                    
         
         
         if draw:
@@ -2857,7 +2948,7 @@ class Step:
         for delete_f in delete_functions:
             del self.functions[delete_f]
     
-    def instanciate(self, instanciate_id, object_dict, volmdlr_objects, primitives):
+    def instanciate(self, instanciate_id, object_dict, primitives):
         """
         Returns None if the object was instanciate
         """
@@ -2874,30 +2965,22 @@ class Step:
             try:
                 volmdlr_object = step_to_volmdlr_primitive[name].from_step(arguments, object_dict)
             except KeyError:
-                return instanciate_id, object_dict, volmdlr_objects, primitives
+                return instanciate_id, object_dict, primitives
                 
             object_dict[instanciate_id] = volmdlr_object
-            volmdlr_objects.append(volmdlr_object)
             if hasattr(volmdlr_object, "primitive"):
                 primitives.append(volmdlr_object.primitive)
         
-        return None, object_dict, volmdlr_objects, primitives
+        return None, object_dict, primitives
         
     def to_volume_model(self, name):
         
         object_dict = {}
-        volmdlr_objects = []
         primitives = []
         not_instanciated_id = []
-        closed_shell_ids = []
         
         
-        self.graph.add_node("#0")
-#        for function in self.functions.values():
-#            if function.name == "CARTESIAN_POINT" or function.name == "DIRECTION":
-##                source_nodes.append(function_id)
-#                self.graph.add_edge("#0", function.id)
-                                    
+        self.graph.add_node("#0")                                    
         for node in self.graph.nodes:
             if node != '#0' and (self.functions[node].name == "CARTESIAN_POINT" or self.functions[node].name == "DIRECTION"):
                 self.graph.add_edge("#0", node)
@@ -2906,7 +2989,7 @@ class Step:
                                                                             
         for edge_nb, edge in enumerate(edges):
             instanciate_id = edge[1]
-            res, object_dict, volmdlr_objects, primitives = self.instanciate(instanciate_id, object_dict, volmdlr_objects, primitives)
+            res, object_dict, primitives = self.instanciate(instanciate_id, object_dict, primitives)
             if res is not None:
                 not_instanciated_id.append(res)
                 
@@ -2920,7 +3003,7 @@ class Step:
                 still_not_instanciated_id = []
                 i = 0
                 continue 
-            res, object_dict, volmdlr_objects, primitives = self.instanciate(not_instanciated_id[i], object_dict, volmdlr_objects, primitives)
+            res, object_dict, primitives = self.instanciate(not_instanciated_id[i], object_dict, primitives)
             if res is not None:
                 still_not_instanciated_id.append(res)
             i += 1
@@ -2942,6 +3025,7 @@ class Step:
         
 #        print(self.graph.degree())
         
+        # C'est just un check
         for node in list(self.graph.nodes):
             if not list(self.graph.out_edges(node)):
                 print(node)
@@ -3019,8 +3103,8 @@ class VolumeModel:
 #                        s += (sp+'\n')
                     s += (sp)
                     s += 'shapeobj = doc.addObject("Part::Feature","{}")\n'.format(primitive_name)
-                    if isinstance(primitive, BSpline3D) \
-                    or isinstance(primitive, BSpline_Surface3D) \
+                    if isinstance(primitive, BSplineCurve3D) \
+                    or isinstance(primitive, BSplineSurface3D) \
                     or isinstance(primitive, Circle3D) \
                     or isinstance(primitive, Ellipse3D):
 #                            print(primitive)
@@ -3157,13 +3241,13 @@ step_to_volmdlr_primitive = {
         'PCURVE': None,
         'CURVE_REPLICA': None,
         'OFFSET_CURVE_3D': None,
-        'TRIMMED_CURVE': None, # BSpline3D cannot be trimmed on FreeCAD
-        'B_SPLINE_CURVE': BSpline3D,
-        'B_SPLINE_CURVE_WITH_KNOTS': BSpline3D,
-        'BEZIER_CURVE': BSpline3D,
-        'RATIONAL_B_SPLINE_CURVE': BSpline3D,
-        'UNIFORM_CURVE': BSpline3D,
-        'QUASI_UNIFORM_CURVE': BSpline3D,
+        'TRIMMED_CURVE': None, # BSplineCurve3D cannot be trimmed on FreeCAD
+        'B_SPLINE_CURVE': BSplineCurve3D,
+        'B_SPLINE_CURVE_WITH_KNOTS': BSplineCurve3D,
+        'BEZIER_CURVE': BSplineCurve3D,
+        'RATIONAL_B_SPLINE_CURVE': BSplineCurve3D,
+        'UNIFORM_CURVE': BSplineCurve3D,
+        'QUASI_UNIFORM_CURVE': BSplineCurve3D,
         'SURFACE_CURVE': Edge3D, # TOPOLOGICAL EDGE
         'SEAM_CURVE': Edge3D, # TOPOLOGICAL EDGE
         'COMPOSITE_CURVE_SEGMENT': None, # TOPOLOGICAL EDGE
@@ -3177,17 +3261,17 @@ step_to_volmdlr_primitive = {
         'SPHERICAL_SURFACE': None,
         'TOROIDAL_SURFACE': None,
         'DEGENERATE_TOROIDAL_SURFACE': None,
-        'B_SPLINE_SURFACE_WITH_KNOTS': BSpline_Surface3D,
-        'B_SPLINE_SURFACE': BSpline_Surface3D,
-        'BEZIER_SURFACE': BSpline_Surface3D,
+        'B_SPLINE_SURFACE_WITH_KNOTS': BSplineSurface3D,
+        'B_SPLINE_SURFACE': BSplineSurface3D,
+        'BEZIER_SURFACE': BSplineSurface3D,
         'OFFSET_SURFACE': None,
         'SURFACE_REPLICA': None,
-        'RATIONAL_B_SPLINE_SURFACE': BSpline_Surface3D,
+        'RATIONAL_B_SPLINE_SURFACE': BSplineSurface3D,
         'RECTANGULAR_TRIMMED_SURFACE': None,
-        'SURFACE_OF_LINEAR_EXTRSUION': None,
+        'SURFACE_OF_LINEAR_EXTRSUION': primitive3D.ExtrudedCurve, # CAN BE A BSplineSurface3D
         'SURFACE_OF_REVOLUTION': None,
-        'UNIFORM_SURFACE': BSpline_Surface3D,
-        'QUASI_UNIFORM_SURFACE': BSpline_Surface3D,
+        'UNIFORM_SURFACE': BSplineSurface3D,
+        'QUASI_UNIFORM_SURFACE': BSplineSurface3D,
         'RECTANGULAR_COMPOSITE_SURFACE': Face3D, # TOPOLOGICAL FACES
         'CURVE_BOUNDED_SURFACE': Face3D, # TOPOLOGICAL FACE
         

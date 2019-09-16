@@ -250,6 +250,21 @@ class HollowCylinder(volmdlr.Primitive3D):
         s+='cylinder.rotation.y={}\n;'.format(theta*math.cos(phi))
         s+='cylinder.rotation.z={}\n;'.format(phi)
         return s
+    
+class ExtrudedCurve(volmdlr.Primitive3D):
+    """
+    
+    """
+    def __init__(self, curve_3d, extrusion_vector, name=''):
+        volmdlr.Primitive3D(self, name)
+        self.curve_3d = curve_3d
+        self.extrusion_vector = extrusion_vector
+        
+    def from_step(self, arguments, object_dict):
+        curve_3d = object_dict[arguments[1]]
+        extrusion_vector = object_dict[arguments[2]]
+        
+        
 
 class ExtrudedProfile(volmdlr.Primitive3D):
     """
