@@ -26,7 +26,6 @@ from .vmcy import PolygonPointBelongs
 from scipy.linalg import solve, LinAlgError, inv
 
 import volmdlr.geometry as geometry
-import volmdlr.primitives3D as primitive3D
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 
@@ -2050,6 +2049,7 @@ class BSplineCurve3D(Primitive3D):
         knot_vector = []
         for i, knot in enumerate(knots):
             knot_vector.extend([knot]*knot_multiplicities[i])
+        print(knot_vector)
         curve.knotvector = knot_vector
         curve.delta = 0.01
         curve_points = curve.evalpts
@@ -2074,7 +2074,7 @@ class BSplineCurve3D(Primitive3D):
     def from_step(cls, arguments, object_dict):
         name = arguments[0][1:-1]
         degree = int(arguments[1])
-        points = [object_dict[int(i[1:])] for i in arguments[2][1:-1].split(",")]
+        points = [object_dict[int(i[1:])] for i in arguments[2][1:-1]]
         curve_form = arguments[3]
         if arguments[4] == '.F.':
             closed_curve = False
@@ -2098,7 +2098,7 @@ class BSplineCurve3D(Primitive3D):
         
         # FORCING CLOSED_CURVE = FALSE:
         closed_curve = False
-        
+        print(degree, points, knot_multiplicities, knots, weight_data, closed_curve, name)
         return cls(degree, points, knot_multiplicities, knots, weight_data, closed_curve, name)
 
     def point_distance(self, pt1):
@@ -2544,6 +2544,19 @@ class Contour3D(Wire3D):
 #        cls.edges = edges
         
         return cls(edge_geoms, edges, arguments[0][1:-1])
+
+
+class ExtrudedCurve(CompositePrimitive3D):
+    def __init__(self, curve_3d, extrusion_vector, name=''):
+        CompositePrimitive3D(self, name)
+        self.curve_3d = curve_3d
+        self.extrusion_vector = extrusion_vector
+    
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        curve_3d = object_dict[arguments[1]]
+        extrusion_vector = object_dict[arguments[2]]
+        return cls(curve_3d, extrusion_vector, arguments[0][1:-1])
     
         
 class Face3D(CompositePrimitive3D):
@@ -2576,67 +2589,104 @@ class Face3D(CompositePrimitive3D):
         # Si le point est à l'extérieur, on projette le point sur le plan 
         # On calcule en 2D la distance entre la projection et le polygone contour
         # On utilise le theroeme de Pytagore pour calculer la distance minimale entre le point et le contour
-        print(self.primitives[0].__class__)
-        print(Plane3D)
-        print('essai', self.primitives[0].__class__ == Plane3D)
-        if isinstance(self.primitives[0], Plane3D):
-            plane = self.primitives[0]
-            projected_pt = point.PlaneProjection3D(plane.origin, plane.vectors[0], plane.vectors[1])
-            projection_distance = point.PointDistance(projected_pt)
-            
-            if self.point_on_face(projected_pt):
-                return projection_distance
-            
-            contour = self.contour[0]
-            polygon_points_3D = []
-            for edge in contour.edges:
-                polygon_points_3D.append(edge.edge_start)
-                polygon_points_3D.append(edge.edge_end)
-            polygon_points_3D = list(set(polygon_points_3D))
-            polygon_points_2D = []
-            for pt in polygon_points_3D:
-                polygon_points_2D.append(pt.To2D(plane.origin, plane.vectors[0], plane.vectors[1]))
-            point_2D = point.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
-            polygon = Polygon2D(polygon_points_2D)
-            
-            border_distance = polygon.PointBorderDistance(point_2D)
-            return (projection_distance**2 + border_distance**2)**0.5
         
-        raise NotImplementedError
+#        print(self.primitives[0].__class__)
+#        print(Plane3D)
+#        print('essai', self.primitives[0].__class__ == Plane3D)
+#        if isinstance(self.primitives[0], Plane3D):
+        plane = self.primitives[0]
+        projected_pt = point.primitive.PlaneProjection3D(plane.origin, plane.vectors[0], plane.vectors[1])
+        projection_distance = point.primitive.PointDistance(projected_pt)
+        
+        if self.point_on_face(projected_pt):
+            return projection_distance
+        
+        contour = self.contour[0]
+        polygon_points_3D = []
+        for edge in contour.edges:
+            polygon_points_3D.append(edge.edge_start)
+            polygon_points_3D.append(edge.edge_end)
+        polygon_points_3D = list(set(polygon_points_3D))
+        polygon_points_2D = []
+        for pt in polygon_points_3D:
+            polygon_points_2D.append(pt.primitive.To2D(plane.origin, plane.vectors[0], plane.vectors[1]))
+        point_2D = point.primitive.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
+        polygon = Polygon2D(polygon_points_2D)
+        
+        border_distance = polygon.PointBorderDistance(point_2D)
+        return (projection_distance**2 + border_distance**2)**0.5
+        
+#        raise NotImplementedError
+        
+        
+    def distance_to_face(self, face2):
+        """
+        Only works if the surface is planar
+        """
+        # On calcule la distance entre la face 1 et chaque point de la face 2
+        # On calcule la distance entre la face 2 et chaque point de la face 1
+        # TRAITER LE CAS OU LA DISTANCE LA PLUS COURTE N'EST PAS D'UN SOMMET
+        
+#        if isinstance(self.primitives[0], Plane3D):
+#        plane1 = self.primitives[0]
+        
+        polygon1_points_3D = []
+        for edge in self.contour[0].edges:
+            polygon1_points_3D.append(edge.edge_start)
+            polygon1_points_3D.append(edge.edge_end)
+        polygon1_points_3D = list(set(polygon1_points_3D))
+        
+        polygon2_points_3D = []
+        for edge in face2.contour[0].edges:
+            polygon2_points_3D.append(edge.edge_start)
+            polygon2_points_3D.append(edge.edge_end)
+        polygon2_points_3D = list(set(polygon2_points_3D))
+        
+        distances = []
+        for point1 in polygon1_points_3D:
+            distances.append(face2.distance_to_point(point1))
+        for point2 in polygon2_points_3D:
+            distances.append(self.distance_to_point(point2))
+            
+        return min(distances)
+        
+#        raise NotImplementedError
+            
 
-    
     def point_on_face(self, point):
         """
         Only works if the surface is planar
         """
         
-        print(self.primitives[0])
-        print('1. Plane ?', isinstance(self.primitives[0], Plane3D))
-        if isinstance(self.primitives[0], Plane3D):
-            plane = self.primitives[0]
-            point_on_plane = plane.point_on_plane(point)
-            
-            # The point is not in the same plane
-            if not point_on_plane:
-                return False
-            
-            contour = self.contour[0]
-            # transformer le contour en polygone2D pour utiliser la méthode PointBelongs
-            polygon_points_3D = []
-            for edge in contour.edges:
-                polygon_points_3D.append(edge.edge_start)
-                polygon_points_3D.append(edge.edge_end)
-            polygon_points_3D = list(set(polygon_points_3D))
-            polygon_points_2D = []
-            for pt in polygon_points_3D:
-                polygon_points_2D.append(pt.primitive.To2D(plane.origin, plane.vectors[0], plane.vectors[1]))
-            point_2D = point.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
-            polygon = Polygon2D(polygon_points_2D)
-            
-            if not polygon.PointBelongs(point_2D):
-                return False
-            return True
-        return False        
+#        print(self.primitives[0])
+#        print('1. Plane ?', isinstance(self.primitives[0], Plane3D))
+#        if isinstance(self.primitives[0], Plane3D):
+        
+        plane = self.primitives[0]
+        point_on_plane = plane.point_on_plane(point)
+        
+        # The point is not in the same plane
+        if not point_on_plane:
+            return False
+        
+        contour = self.contour[0]
+        # transformer le contour en polygone2D pour utiliser la méthode PointBelongs
+        polygon_points_3D = []
+        for edge in contour.edges:
+            polygon_points_3D.append(edge.edge_start)
+            polygon_points_3D.append(edge.edge_end)
+        polygon_points_3D = list(set(polygon_points_3D))
+        polygon_points_2D = []
+        for pt in polygon_points_3D:
+            polygon_points_2D.append(pt.primitive.To2D(plane.origin, plane.vectors[0], plane.vectors[1]))
+        point_2D = point.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
+        polygon = Polygon2D(polygon_points_2D)
+        
+        if not polygon.PointBelongs(point_2D):
+            return False
+        return True
+    
+#        return False        
 
         
 class Shell3D(CompositePrimitive3D):
@@ -3025,17 +3075,13 @@ class Step:
         
 #        print(self.graph.degree())
         
+        shells = []
         # C'est just un check
         for node in list(self.graph.nodes):
             if not list(self.graph.out_edges(node)):
-                print(node)
-                print(list(self.graph.in_edges(node)))
-            if self.graph.degree(node) == 0:
-                print('tout seul', node)
-        
-        
-        # TRICHE
-        shells = [volmdlr_objects[-1]]
+#                print(node)
+#                print(list(self.graph.in_edges(node)))
+                shells.append(object_dict[node])
         print(shells)
             
         volume_model = VolumeModel(shells, primitives, name)
@@ -3268,7 +3314,7 @@ step_to_volmdlr_primitive = {
         'SURFACE_REPLICA': None,
         'RATIONAL_B_SPLINE_SURFACE': BSplineSurface3D,
         'RECTANGULAR_TRIMMED_SURFACE': None,
-        'SURFACE_OF_LINEAR_EXTRSUION': primitive3D.ExtrudedCurve, # CAN BE A BSplineSurface3D
+        'SURFACE_OF_LINEAR_EXTRUSION': ExtrudedCurve, # CAN BE A BSplineSurface3D
         'SURFACE_OF_REVOLUTION': None,
         'UNIFORM_SURFACE': BSplineSurface3D,
         'QUASI_UNIFORM_SURFACE': BSplineSurface3D,
