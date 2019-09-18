@@ -1754,6 +1754,24 @@ class Plane3D:
             return True
         return False
     
+    def line_intersection(self, line):
+        normal = self.vectors[0].Cross(self.vectors[1])
+        normal.Normalize()
+        u = line.points[1] - line.points[0]
+        w = line.points[0] - self.origin
+        intersection_abscissea = - normal.Dot(w) / normal.Dot(u)
+        return line.points[0] + intersection_abscissea * u
+    
+    def linesegment_intersection(self, linesegment):
+        normal = self.vectors[0].Cross(self.vectors[1])
+        normal.Normalize()
+        u = linesegment.points[1] - linesegment.points[0]
+        w = linesegment.points[0] - self.origin
+        intersection_abscissea = - normal.Dot(w) / normal.Dot(u)
+        if intersection_abscissea < 0 or intersection_abscissea > 1:
+            return None
+        return linesegment.points[0] + intersection_abscissea * u
+    
     def Rotation(self, center, axis, angle, copy=True):
         new_origin = self.origin.Rotation(center, axis, angle, True)
         new_vector1 = self.vectors[0].Rotation(center, axis, angle, True)
@@ -2865,6 +2883,8 @@ class Face3D(CompositePrimitive3D):
     def point_on_face(self, point):
         """
         Only works if the surface is planar
+        
+        Tells you if a point is on the 3D face and inside its contour
         """
         
 #        print(self.primitives[0])
@@ -2895,9 +2915,41 @@ class Face3D(CompositePrimitive3D):
             return False
         return True
     
-#        return False        
-
+#        return False
         
+    def edge_intersection(self, edge):
+        plane = self.primitives[0]
+        
+        linesegment = LineSegment3D(edge.edge_start.primitive, edge.edge_end.primitive)
+        intersection_point = plane.linesegment_intersection(linesegment)
+        
+        if intersection_point is None:
+            return None
+        
+        point_on_face_boo = self.point_on_face(intersection_point)
+        if not point_on_face_boo:
+            return None
+        
+        return intersection_point
+    
+    def face_intersection(self, face2):
+        intersection_points = []
+        
+        for edge2 in face2.contour[0].edges:
+            intersection_point = self.edge_intersection(edge2)
+            if intersection_point is not None:
+                intersection_points.append(intersection_point)
+            
+        for edge1 in self.contour[0].edges:
+            intersection_point = face2.edge_intersection(edge1)
+            if intersection_point is not None:
+                intersection_points.append(intersection_point)
+                
+        if intersection_points:
+            return None
+        
+        return intersection_points
+
 class Shell3D(CompositePrimitive3D):
     def __init__(self, primitives, faces, name=''):
         CompositePrimitive3D.__init__(self, primitives, name)
