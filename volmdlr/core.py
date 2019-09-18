@@ -1543,6 +1543,8 @@ class Vector3D(Vector):
         self.name = name
         
     def __add__(self, other_vector):
+        print(self)
+        print(other_vector)
         return Vector3D((self.vector[0] + other_vector.vector[0],
                                self.vector[1] + other_vector.vector[1],
                                self.vector[2] + other_vector.vector[2]))
@@ -1751,6 +1753,26 @@ class Plane3D:
         and npy.isclose(point[2], projected_pt[2], atol=1e-8):
             return True
         return False
+    
+    def Rotation(self, center, axis, angle, copy=True):
+        new_origin = self.origin.Rotation(center, axis, angle, True)
+        new_vector1 = self.vectors[0].Rotation(center, axis, angle, True)
+        new_vector2 = self.vectors[1].Rotation(center, axis, angle, True)
+        if copy:
+            return Plane3D(new_origin, new_vector1, new_vector2, self.name)
+        else:
+            self.origin = new_origin
+            self.vectors = (new_vector1, new_vector2)
+
+    def Translation(self, offset, copy=True):
+        new_origin = self.origin.Translation(offset, True)
+        new_vector1 = self.vectors[0].Translation(offset, True)
+        new_vector2 = self.vectors[1].Translation(offset, True)
+        if copy:
+            return Plane3D(new_origin, new_vector1, new_vector2, self.name)
+        else:
+            self.origin = new_origin
+            self.vectors = (new_vector1, new_vector2)
 
 
 class Basis3D(Basis):
@@ -1804,10 +1826,21 @@ class Basis3D(Basis):
         new_w = self.w.Rotation(center, axis, angle, True)
 
         if copy:
-            return Basis3D(new_u, new_v, new_w)
+            return Basis3D(new_u, new_v, new_w, self.name)
         self.u = new_u
         self.v = new_v
         self.w = new_w
+
+    def Translation(self, offset, copy=True):
+        new_u = self.u.Translation(offset, True)
+        new_v = self.v.Translation(offset, True)
+        new_w = self.w.Translation(offset, True)
+        if copy:
+            return Basis3D(new_u, new_v, new_w, self.name)
+        else:
+            self.u = new_u
+            self.v = new_v
+            self.w = new_w
 
     def EulerRotation(self, angles, copy=True):
         psi, theta, phi = angles
@@ -1912,7 +1945,16 @@ class Frame3D(Basis3D):
     def Rotation(self, axis, angle, copy=True):
         new_base = Basis3D.Rotation(self, axis, angle, True)
         if copy:
-            new_frame = Frame3D(self.origin, new_base.u, new_base.v, new_base.w)
+            new_frame = Frame3D(self.origin, new_base.u, new_base.v, new_base.w, self.name)
+            return new_frame
+        self.u = new_base.u
+        self.v = new_base.v
+        self.w = new_base.w
+
+    def Translation(self, offset, copy=True):
+        new_base = Basis3D.Translation(self, offset, True)
+        if copy:
+            new_frame = Frame3D(self.origin, new_base.u, new_base.v, new_base.w, self.name)
             return new_frame
         self.u = new_base.u
         self.v = new_base.v
@@ -1985,6 +2027,20 @@ class Line3D(Primitive3D, Line):
         p2 = other_line.points[0] + t*v
         return p1, p2
     
+    def Rotation(self, center, axis, angle, copy=False):
+        if copy:
+            return Line3D(*[p.Rotation(center, axis, angle, copy=True) for p in self.points])
+        else:
+            for p in self.points:
+                p.Rotation(center, axis, angle, copy=False)
+
+    def Translation(self, offset, copy=False):
+        if copy:
+            return Line3D(*[p.Translation(offset, copy=True) for p in self.points])
+        else:
+            for p in self.points:
+                p.Translation(offset, copy=False)
+    
     @classmethod
     def from_step(cls, arguments, object_dict):
         point1 = object_dict[arguments[1]]
@@ -2006,6 +2062,20 @@ class LineSegment3D(Line3D):
     def PlaneProjection2D(self, x, y):
         return LineSegment2D(self.points[0].PlaneProjection2D(x, y),
                              self.points[1].PlaneProjection2D(x, y))
+        
+    def Rotation(self, center, axis, angle, copy=False):
+        if copy:
+            return LineSegment3D(*[p.Rotation(center, axis, angle, copy=True) for p in self.points])
+        else:
+            for p in self.points:
+                p.Rotation(center, axis, angle, copy=False)
+
+    def Translation(self, offset, copy=False):
+        if copy:
+            return LineSegment3D(*[p.Translation(offset, copy=True) for p in self.points])
+        else:
+            for p in self.points:
+                p.Translation(offset, copy=False)
 
     def MPLPlot(self, ax):
         x=[p.vector[0] for p in self.points]
@@ -2037,7 +2107,8 @@ class BSplineCurve3D(Primitive3D):
         self.knot_multiplicities = knot_multiplicities
         self.weights = weights
         self.periodic = periodic
-
+        self.name = name
+        
         curve = NURBS.Curve()
         curve.degree = degree
         if weights is None:
@@ -2055,7 +2126,7 @@ class BSplineCurve3D(Primitive3D):
         curve_points = curve.evalpts
         
         self.curve = curve
-        self.points = curve_points
+        self.points = [Point3D((p[0], p[1], p[2])) for p in curve_points]
         
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive{}'.format(ip)
@@ -2069,7 +2140,6 @@ class BSplineCurve3D(Primitive3D):
         # LA MULTIPLICITE EN 3e ARG ET LES KNOTS EN 2e ARG ?
         return '{} = Part.BSplineCurve({},{},{},{},{},{},{})\n'.format(name,points,self.knot_multiplicities,self.knots,self.periodic,self.degree,self.weights,False)
         
-            
     @classmethod
     def from_step(cls, arguments, object_dict):
         name = arguments[0][1:-1]
@@ -2104,10 +2174,29 @@ class BSplineCurve3D(Primitive3D):
     def point_distance(self, pt1):
         distances = []
         for point in self.points:
-            vmpt = Point3D((point[1], point[2], point[3]))
-            distances.append(pt1.PointDistance(vmpt))
+#            vmpt = Point3D((point[1], point[2], point[3]))
+            distances.append(pt1.PointDistance(point))
         return min(distances)
-            
+    
+    def Rotation(self, center, axis, angle, copy=False):
+        new_control_points = [p.Rotation(center, axis, angle, True) for p in self.control_points]
+        new_BSplineCurve3D = BSplineCurve3D(self.degree, new_control_points, self.knot_multiplicities, self.knots, self.weights, self.periodic, self.name)
+        if copy:
+            return new_BSplineCurve3D
+        else:
+            self.control_points = new_control_points
+            self.curve = new_BSplineCurve3D.curve
+            self.points = new_BSplineCurve3D.points
+
+    def Translation(self, offset, copy=False):
+        new_control_points = [p.Translation(offset, True) for p in self.control_points]
+        new_BSplineCurve3D = BSplineCurve3D(self.degree, new_control_points, self.knot_multiplicities, self.knots, self.weights, self.periodic, self.name)
+        if copy:
+            return new_BSplineCurve3D
+        else:
+            self.control_points = new_control_points
+            self.curve = new_BSplineCurve3D.curve
+            self.points = new_BSplineCurve3D.points
         
 class Circle3D(Primitive3D):
     def __init__(self, center, radius, normal, name=''):
@@ -2124,6 +2213,24 @@ class Circle3D(Primitive3D):
         xc,yc,zc = npy.round(1000*self.center.vector,ndigits)
         xn,yn,zn = npy.round(self.normal.vector,ndigits)
         return '{} = Part.Circle(fc.Vector({},{},{}),fc.Vector({},{},{}),{})\n'.format(name,xc,yc,zc,xn,yn,zn,1000*self.radius)
+    
+    def Rotation(self, rot_center, axis, angle, copy=False):
+        new_center = self.center.Rotation(rot_center, axis, angle, True)
+        new_normal = self.normal.Rotation(rot_center, axis, angle, True)
+        if copy:
+            return Circle3D(new_center, self.radius, new_normal, self.name)
+        else:
+            self.center = new_center
+            self.normal = new_normal
+
+    def Translation(self, offset, copy=False):
+        new_center = self.center.Translation(offset, True)
+        new_normal = self.normal.Translation(offset, True)
+        if copy:
+            return Circle3D(new_center, self.radius, new_normal, self.name)
+        else:
+            self.center = new_center
+            self.normal = new_normal
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -2151,7 +2258,29 @@ class Ellipse3D(Primitive3D):
         minor_vector = self.center + self.minor_axis/2 * self.normal.Cross(self.major_dir)
         xmin, ymin, zmin = npy.round(1000*minor_vector.vector, ndigits)
         return '{} = Part.Ellipse(fc.Vector({},{},{}), fc.Vector({},{},{}), fc.Vector({},{},{}))\n'.format(name,xmaj,ymaj,zmaj,xmin,ymin,zmin,xc,yc,zc)
-        
+    
+    def Rotation(self, rot_center, axis, angle, copy=False):
+        new_center = self.center.Rotation(rot_center, axis, angle, True)
+        new_normal = self.normal.Rotation(rot_center, axis, angle, True)
+        new_major_dir = self.major_dir.Rotation(rot_center, axis, angle, True)
+        if copy:
+            return Ellipse3D(self.major_axis, self.minor_axis, new_center, new_normal, new_major_dir, self.name)
+        else:
+            self.center = new_center
+            self.normal = new_normal
+            self.major_dir = new_major_dir
+
+    def Translation(self, offset, copy=False):
+        new_center = self.center.Translation(offset, True)
+        new_normal = self.normal.Translation(offset, True)
+        new_major_dir = self.major_dir.Translation(offset, True)
+        if copy:
+            return Ellipse3D(self.major_axis, self.minor_axis, new_center, new_normal, new_major_dir, self.name)
+        else:
+            self.center = new_center
+            self.normal = new_normal
+            self.major_dir = new_major_dir
+
     @classmethod
     def from_step(cls, arguments, object_dict):
         center = object_dict[arguments[1]].origin
@@ -2332,7 +2461,7 @@ class BSplineSurface3D(Primitive3D):
         surface_points = surface.evalpts
         
         self.surface = surface
-        self.points = surface_points
+        self.points = [Point3D((p[0], p[1], p[2])) for p in surface_points]
     
         
     def FreeCADExport(self, ip, ndigits=3):
@@ -2396,7 +2525,25 @@ class BSplineSurface3D(Primitive3D):
         
         return cls(degree_u, degree_v, control_points, nb_u, nb_v, u_multiplicities, v_multiplicities, u_knots, v_knots, weight_data, name)
         
-            
+    def Rotation(self, center, axis, angle, copy=False):
+        new_control_points = [p.Rotation(center, axis, angle, True) for p in self.control_points]
+        new_BSplineSurface3D = BSplineSurface3D(self.degree_u, self.degree_v, new_control_points, self.nb_u, self.nb_v, self.u_multiplicities, self.v_multiplicities, self.u_knots, self.v_knots, self.weights, self.name)
+        if copy:
+            return new_BSplineSurface3D
+        else:
+            self.control_points = new_control_points
+            self.curve = new_BSplineSurface3D.curve
+            self.points = new_BSplineSurface3D.points
+
+    def Translation(self, offset, copy=False):
+        new_control_points = [p.Translation(offset, True) for p in self.control_points]
+        new_BSplineSurface3D = BSplineSurface3D(self.degree_u, self.degree_v, new_control_points, self.nb_u, self.nb_v, self.u_multiplicities, self.v_multiplicities, self.u_knots, self.v_knots, self.weights, self.name)
+        if copy:
+            return new_BSplineSurface3D
+        else:
+            self.control_points = new_control_points
+            self.curve = new_BSplineSurface3D.curve
+            self.points = new_BSplineSurface3D.points
 
 class CompositePrimitive3D(Primitive3D):
     """
@@ -2480,15 +2627,25 @@ class Vertex3D(Primitive3D):
     def __init__(self, primitive, name=''):
         Primitive3D.__init__(primitive, name)
         self.primitive = primitive
+        self.name = name
         
     @classmethod
     def from_step(cls, arguments, object_dict):
-        cartesian_point = object_dict[arguments[1]]
-        
-#        cls.point = cartesian_point
-        
-        return cls(cartesian_point, arguments[0][1:-1])
+        return cls(object_dict[arguments[1]], arguments[0][1:-1])
 
+    def Rotation(self, center, axis, angle, copy=False):
+        new_primitive = self.primitive.Rotation(center, axis, angle, True)
+        if copy:
+            return Vertex3D(new_primitive, self.name)
+        else:
+            self.primitive = new_primitive
+
+    def Translation(self, offset, copy=False):
+        new_primitive = self.primitive.Translation(offset, True)
+        if copy:
+            return Vertex3D(new_primitive, self.name)
+        else:
+            self.primitive = new_primitive
 
 class Edge3D(Primitive3D):
     def __init__(self, primitives, edge_start, edge_end, name=''):
@@ -2508,11 +2665,31 @@ class Edge3D(Primitive3D):
             orientation = False
         else:
             raise ValueError
-        
-#        cls.edge_start = vertex_start
-#        cls.edge_end = vertex_end
-        
         return cls(edge_geom, vertex_start, vertex_end, arguments[0][1:-1])
+    
+    def Rotation(self, center, axis, angle, copy=False):
+        new_edge_start = self.edge_start.Rotation(center, axis, angle, True)
+        new_edge_end = self.edge_end.Rotation(center, axis, angle, True)
+        new_primitives = self.primitives.Rotation(center, axis, angle, True)
+        if copy:
+            return Edge3D(new_primitives, new_edge_start, new_edge_end)
+#            return Edge3D(new_primitives, self.edge_start, self.edge_end)
+        else:
+            self.primitives = new_primitives
+            self.edge_start = new_edge_start
+            self.edge_end = new_edge_end
+
+    def Translation(self, offset, copy=False):
+        new_edge_start = self.edge_start.Translation(offset, True)
+        new_edge_end = self.edge_end.Translation(offset, True)
+        new_primitives = self.primitives.Translation(offset, True)
+        if copy:
+            return Edge3D(new_primitives, new_edge_start, new_edge_end)
+#            return Edge3D(new_primitives, self.edge_start, self.edge_end)
+        else:
+            self.primitives = new_primitives
+            self.edge_start = new_edge_start
+            self.edge_end = new_edge_end
     
     
 class Contour3D(Wire3D):
@@ -2529,8 +2706,7 @@ class Contour3D(Wire3D):
                 primitives2.append(primitive)
 
         CompositePrimitive3D.__init__(self,primitives2, name)
-        
-        
+        self.primitives = primitives
         
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -2539,11 +2715,27 @@ class Contour3D(Wire3D):
         for edge in arguments[1]:
             edges.append(object_dict[int(edge[1:])])
             edge_geoms.append(object_dict[int(edge[1:])].primitives)
-#        print(edges[0].edge_start)
-        
-#        cls.edges = edges
-        
         return cls(edge_geoms, edges, arguments[0][1:-1])
+    
+    def Rotation(self, center, axis, angle, copy=False):
+        new_edges = [edge.Rotation(center, axis, angle, True) for edge in self.edges]
+        new_primitives = [p.Rotation(center, axis, angle, True) for p in self.primitives]
+        if copy:
+            return Contour3D(new_primitives, new_edges, self.name)
+#            return Contour3D(new_primitives, self.edges, self.name)
+        else:
+            self.primitives = new_primitives
+            self.edges = new_edges
+
+    def Translation(self, offset, copy=False):
+        new_edges = [edge.Translation(offset, True) for edge in self.edges]
+        new_primitives = [p.Translation(offset, True) for p in self.primitives]
+        if copy:
+            return Contour3D(new_primitives, new_edges, self.name)
+#            return Contour3D(new_primitives, self.edges, self.name)
+        else:
+            self.primitives = new_primitives
+            self.edges = new_edges
 
 
 class ExtrudedCurve(CompositePrimitive3D):
@@ -2565,7 +2757,6 @@ class Face3D(CompositePrimitive3D):
         self.contour = contour
         self.primitives = primitives
         
-        
     @classmethod
     def from_step(cls, arguments, object_dict):
         contour = []
@@ -2579,6 +2770,24 @@ class Face3D(CompositePrimitive3D):
         else:
             raise ValueError
         return cls([face_geom], contour, arguments[0][1:-1])
+    
+    def Rotation(self, center, axis, angle, copy=False):
+        new_contour = [subcontour.Rotation(center, axis, angle, True) for subcontour in self.contour]
+        new_primitives = [plane.Rotation(center, axis, angle, True) for plane in self.primitives]
+        if copy:
+            return Face3D(new_primitives, new_contour, self.name)
+        else:
+            self.primitives = new_primitives
+            self.contour = new_contour
+
+    def Translation(self, offset, copy=False):
+        new_contour = [subcontour.Translation(offset, True) for subcontour in self.contour]
+        new_primitives = [plane.Translation(offset, True) for plane in self.primitives]
+        if copy:
+            return Face3D(new_primitives, new_contour, self.name)
+        else:
+            self.primitives = new_primitives
+            self.contour = new_contour
     
     def distance_to_point(self, point):
         """
@@ -2693,7 +2902,8 @@ class Shell3D(CompositePrimitive3D):
     def __init__(self, primitives, faces, name=''):
         CompositePrimitive3D.__init__(self, primitives, name)
         self.faces = faces
-
+        self.primitives = primitives
+        
     @classmethod
     def from_step(cls, arguments, object_dict):
         faces = []
@@ -2701,9 +2911,29 @@ class Shell3D(CompositePrimitive3D):
         for face in arguments[1]:
             faces.append(object_dict[int(face[1:])])
             primitives.append(object_dict[int(face[1:])].primitives)
-#        cls.faces = faces
-        
         return cls(primitives, faces, arguments[0][1:-1])
+    
+    def Rotation(self, center, axis, angle, copy=False):
+        new_faces = [face.Rotation(center, axis, angle, True) for face in self.faces]
+        new_primitives = []
+        for primitive in self.primitives:
+            new_primitives.append([subprimitive.Rotation(center, axis, angle, True) for subprimitive in primitive])
+        if copy:
+            return Shell3D(new_primitives, new_faces, self.name)
+        else:
+            self.primitives = new_primitives
+            self.faces = new_faces
+
+    def Translation(self, offset, copy=False):
+        new_faces = [face.Translation(offset, True) for face in self.faces]
+        new_primitives = []
+        for primitive in self.primitives:
+            new_primitives.append([subprimitive.Translation(offset, True) for subprimitive in primitive])
+        if copy:
+            return Shell3D(new_primitives, new_faces, self.name)
+        else:
+            self.primitives = new_primitives
+            self.faces = new_faces
     
     
 class Group:
@@ -3104,6 +3334,24 @@ class VolumeModel:
 #            for primitive in primitives_group:
             volume+=primitive.Volume()
         return volume
+    
+    def Rotation(self, center, axis, angle, copy=False):
+        new_shells = [shell.Rotation(center, axis, angle, True) for shell in self.shells]
+        new_primitives = [primitive.Rotation(center, axis, angle, True) for primitive in self.primitives]
+        if copy:
+            return Shell3D(new_shells, new_primitives, self.name)
+        else:
+            self.primitives = new_primitives
+            self.shells = new_shells
+
+    def Translation(self, offset, copy=False):
+        new_shells = [shell.Translation(offset, True) for shell in self.shells]
+        new_primitives = [primitive.Translation(offset, True) for primitive in self.primitives]
+        if copy:
+            return Shell3D(new_shells, new_primitives, self.name)
+        else:
+            self.primitives = new_primitives
+            self.shells = new_shells
 
     def MPLPlot(self):
         """
