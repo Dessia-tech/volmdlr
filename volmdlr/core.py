@@ -3061,6 +3061,8 @@ class Shell3D(CompositePrimitive3D):
     def is_inside_shell(self, shell2):
         """
         Returns True if all the points of self are inside shell2
+        NOTE : A IMPLEMENTER
+        >> itérer sur toutes les faces pour vérifier Face3D.face_intersection
         """
         points = []
         for face in self.faces:
@@ -3070,8 +3072,17 @@ class Shell3D(CompositePrimitive3D):
         points = list(set(points))
         
         for point in points:
-            if not shell2.point_belong(point):
+            if not shell2.point_belongs(point):
                 return False
+            
+        # Check if any faces are intersecting
+        for face1 in self.faces:
+            for face2 in shell2.faces:
+                intersection_points = face1.face_intersection(face2)
+                if intersection_points is not None:
+                    print('Two faces are intersecting :', face1, face2)
+                    return False
+                
         return True
 
 
