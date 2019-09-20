@@ -49,7 +49,7 @@ def standardize_knot_vector(knot_vector):
         return standard_u_knots
     else:
         return knot_vector
-    
+
 
 def find_and_replace(string, find, replace):
     """
@@ -84,23 +84,23 @@ def step_split_arguments(function_arg):
     for char in function_arg:
         if char == "(":
             parenthesis += 1
-        
+
         if char != "," or parenthesis > 1:
             argument += char
         else:
             arguments.append(argument)
             argument = ""
-        
+
         if char == ")":
             parenthesis -= 1
             if parenthesis == 0:
                 arguments.append(argument[:-1])
                 argument = ""
                 break
-            
+
 #        if len(argument) != 0:
 #            arguments.append(argument[:])
-        
+
 #        print('OUT', arguments)
     return arguments
 
@@ -116,52 +116,53 @@ def delete_node_and_predecessors(graph, node):
 #    print('node removed', node)
     for predecessor in predecessors:
         delete_node_and_predecessors(graph, predecessor)
-    
 
-        
+
+
 class Vector:
     """
     Abstract class of vector
     """
     def __setitem__(self, key, item):
         self.vector[key] = item
-    
+
     def __getitem__(self, key):
         return self.vector[key]
-    
+
     def __repr__(self):
         return '{}: {}'.format(self.__class__.__name__, self.vector)
-    
+
     def __radd__(self, other_vector):
         return self + other_vector
-    
+
     def __rsub__(self, other_vector):
         return self - other_vector
-    
+
     def __rmul__(self, value):
         return self * value
-    
+
     def __rtruediv__(self, value):
         return self / value
-    
+
     def __lt__(self, other_vector):
         return self.Norm() < other_vector.Norm()
-    
+
     def __le__(self, other_vector):
         return self.Norm() <= other_vector.Norm()
-    
+
     def __ne__(self, other_vector):
         return not npy.allclose(self.vector, other_vector.vector)
-    
+
     def __eq__(self, other_vector):
         try:
             return npy.allclose(self.vector, other_vector.vector)
         except AttributeError:
             return False
-    
+
     def __hash__(self):
-        return int(1000*npy.sum(self.vector, 3))
-    
+#        return int(1000*npy.sum(self.vector, 3))
+        return int(1000*npy.sum(self.vector, 0))
+
     def Normalize(self):
         """
         Normalize the vector modifying it's coordinate
@@ -169,12 +170,12 @@ class Vector:
         n = self.Norm()
         if n == 0:
             raise ZeroDivisionError
-    
+
         self.vector /= n
-        
+
     def copy(self):
         return self.__class__(self.vector)
-    
+
     def Dict(self):
         d = {'vector': [float(i) for i in self.vector]}
         return d
@@ -258,7 +259,7 @@ class Vector2D(Vector):
         n = Vector2D((-self.vector[1], self.vector[0]))
         if unit:
             n.Normalize()
-        return n   
+        return n
 
     def Draw(self, origin=(0, 0), ax=None, color='k', line=False):
         if ax is None:
@@ -280,7 +281,7 @@ class Vector2D(Vector):
             p3 = p1 - 3*u
             p4 = p2 + 4*u
             ax.plot([p3[0], p4[0]], [p3[1], p4[1]], style, linestyle=linestyle)
-        
+
 
     @classmethod
     def DictToObject(cls, dict_):
@@ -424,7 +425,7 @@ class Basis2D(Basis):
 #    def InverseTransfertMatrix(self):
 #        # Todo: cache for performance
 #        return inv(self.TransfertMatrix())
-    
+
     def InverseTransfertMatrix(self):
         det = self.u[0]*self.v[1] - self.v[0]*self.u[1]
         if not math.isclose(det, 0, abs_tol=1e-10):
@@ -818,32 +819,32 @@ class Line2D(Primitive2D, Line):
             ax.set_aspect('equal')
         else:
             fig = None
-            
+
         p1, p2 = self.points
         u = p2 - p1
-        plt.plot([p1[0], p2[0]], [p1[1], p2[1]], style)        
+        plt.plot([p1[0], p2[0]], [p1[1], p2[1]], style)
         p3 = p1 - 3*u
         p4 = p2 + 4*u
-        ax.plot([p3[0], p4[0]], [p3[1], p4[1]], style, linestyle = linestyle)        
+        ax.plot([p3[0], p4[0]], [p3[1], p4[1]], style, linestyle = linestyle)
         return []
 
     def CreateTangentCircle(self, point, other_line):
         """
-        Computes the two circles that are tangent to 2 lines and intersect 
+        Computes the two circles that are tangent to 2 lines and intersect
         a point located on one of the two lines.
         """
-        
+
         # point will be called I(x_I, y_I)
         # self will be (AB)
         # line will be (CD)
-        
+
         if math.isclose(self.PointDistance(point), 0, abs_tol=1e-10):
             I = Vector2D((point[0], point[1]))
             A = Vector2D((self.points[0][0], self.points[0][1]))
             B = Vector2D((self.points[1][0], self.points[1][1]))
             C = Vector2D((other_line.points[0][0], other_line.points[0][1]))
             D = Vector2D((other_line.points[1][0], other_line.points[1][1]))
-        
+
         elif math.isclose(other_line.PointDistance(point), 0, abs_tol=1e-10):
             I = Vector2D((point[0], point[1]))
             C = Vector2D((self.points[0][0], self.points[0][1]))
@@ -852,50 +853,50 @@ class Line2D(Primitive2D, Line):
             B = Vector2D((other_line.points[1][0], other_line.points[1][1]))
         else:
             raise AttributeError("The point isn't on any of the two lines")
-        
+
         # CHANGEMENT DE REPAIRE
         new_u = Vector2D((B-A))
         new_u.Normalize()
         new_v = new_u.NormalVector(unit=True)
         new_basis = Frame2D(I, new_u, new_v)
-        
+
         new_A = new_basis.NewCoordinates(A)
         new_B = new_basis.NewCoordinates(B)
         new_C = new_basis.NewCoordinates(C)
         new_D = new_basis.NewCoordinates(D)
-        
+
 # =============================================================================
 # LES SEGMENTS DECRIVENT UNE SEULE ET MEME DROITE
-#   => AUCUNE SOLUTION   
+#   => AUCUNE SOLUTION
 # =============================================================================
         if new_C[1] == 0 and new_D[1] == 0:
-    
+
             return None, None
-        
+
 # =============================================================================
 # LES SEGMENTS SONT PARALLELES
 #   => 1 SOLUTION
 # =============================================================================
         elif math.isclose(self.DirectionVector(unit=True).Dot(other_line.NormalVector(unit=True)), 0, abs_tol=1e-06):
-    
+
             segments_distance = abs(new_C[1] - new_A[1])
             r = segments_distance / 2
             new_circle_center = Point2D((0, npy.sign(new_C[1] - new_A[1])*r))
             circle_center = new_basis.OldCoordinates(new_circle_center)
             circle = Circle2D(circle_center, r)
-            
+
             return circle, None
-        
+
 # =============================================================================
 # LES SEGMENTS SONT PERPENDICULAIRES
 #   => 2 SOLUTIONS
 # =============================================================================
         elif math.isclose(self.DirectionVector(unit=True).Dot(other_line.DirectionVector(unit=True)), 0, abs_tol=1e-06):
-    
+
             line_AB = Line2D(Point2D(new_A), Point2D(new_B))
             line_CD = Line2D(Point2D(new_C), Point2D(new_D))
             new_pt_K = Point2D.LinesIntersection(line_AB ,line_CD)
-            
+
             r = abs(new_pt_K[0])
             new_circle_center1 = Point2D((0, r))
             new_circle_center2 = Point2D((0, -r))
@@ -903,67 +904,67 @@ class Line2D(Primitive2D, Line):
             circle_center2 = new_basis.OldCoordinates(new_circle_center2)
             circle1 = Circle2D(circle_center1, r)
             circle2 = Circle2D(circle_center2, r)
-            
+
             return circle1, circle2
-        
+
 # =============================================================================
 # LES SEGMENTS SONT QUELCONQUES
 #   => 2 SOLUTIONS
 # =============================================================================
         else:
-            
+
             line_AB = Line2D(Point2D(new_A), Point2D(new_B))
             line_CD = Line2D(Point2D(new_C), Point2D(new_D))
             new_pt_K = Point2D.LinesIntersection(line_AB ,line_CD)
             pt_K = Point2D(new_basis.OldCoordinates(new_pt_K))
-            
+
             if pt_K == I:
                 return None, None
-            
+
             # CHANGEMENT DE REPERE:
             new_u2 = Vector2D(pt_K-I)
             new_u2.Normalize()
             new_v2 = new_u2.NormalVector(unit=True)
             new_basis2 = Frame2D(I, new_u2, new_v2)
-            
+
             new_A = new_basis2.NewCoordinates(A)
             new_B = new_basis2.NewCoordinates(B)
             new_C = new_basis2.NewCoordinates(C)
             new_D = new_basis2.NewCoordinates(D)
             new_pt_K = new_basis2.NewCoordinates(pt_K)
-    
+
             teta1 = math.atan2(new_C[1], new_C[0] - new_pt_K[0])
             teta2 = math.atan2(new_D[1], new_D[0] - new_pt_K[0])
-            
+
             if teta1 < 0:
                 teta1 += math.pi
             if teta2 < 0:
                 teta2 += math.pi
-                
+
             if not math.isclose(teta1, teta2, abs_tol=1e-08):
                 if math.isclose(teta1, math.pi, abs_tol=1e-08) or math.isclose(teta1, 0., abs_tol=1e-08):
-                    teta = teta2 
+                    teta = teta2
                 elif math.isclose(teta2, math.pi, abs_tol=1e-08) or math.isclose(teta2, 0., abs_tol=1e-08):
                     teta = teta1
             else:
                 teta = teta1
-                
+
             r1 = new_pt_K[0] * math.sin(teta) / (1 + math.cos(teta))
             r2 = new_pt_K[0] * math.sin(teta) / (1 - math.cos(teta))
-            
+
             new_circle_center1 = Point2D((0, -r1))
             new_circle_center2 = Point2D((0, r2))
-            
+
             circle_center1 = new_basis2.OldCoordinates(new_circle_center1)
             circle_center2 = new_basis2.OldCoordinates(new_circle_center2)
-            
+
             if new_basis.NewCoordinates(circle_center1)[1] > 0:
                 circle1 = Circle2D(circle_center1, r1)
                 circle2 = Circle2D(circle_center2, r2)
             else:
                 circle1 = Circle2D(circle_center2, r2)
                 circle2 = Circle2D(circle_center1, r1)
-            
+
             return circle1, circle2
 
 class LineSegment2D(Line2D):
@@ -1015,7 +1016,7 @@ class LineSegment2D(Line2D):
             ax.set_aspect('equal')
         else:
             fig = None
-            
+
         p1, p2 = self.points
         if arrow:
             ax.plot([p1[0], p2[0]], [p1[1], p2[1]], style)
@@ -1541,7 +1542,7 @@ class Vector3D(Vector):
         self.vector[1] = vector[1]
         self.vector[2] = vector[2]
         self.name = name
-        
+
     def __add__(self, other_vector):
         print(self)
         print(other_vector)
@@ -1616,14 +1617,14 @@ class Vector3D(Vector):
         v = v - v.Dot(self)*self/(self.Norm()**2)
         v.Normalize()
         return v
-    
+
     def Copy(self):
         return Vector3D(self.vector)
 
     @classmethod
     def DictToObject(cls, dict_):
         return cls(dict_['vector'])
-    
+
     @classmethod
     def from_step(cls, arguments, object_dict):
 
@@ -1635,7 +1636,7 @@ class Vector3D(Vector):
         # DIRECTION
             return cls([float(i) for i in arguments[1][1:-1].split(",")],
                         arguments[0][1:-1])
-        
+
 
 
 x3D = Vector3D((1, 0, 0))
@@ -1664,7 +1665,7 @@ class Point3D(Vector3D):
     def __init__(self, vector, name=''):
         Vector3D.__init__(self, vector)
         self.name=name
-        
+
     def __add__(self, other_vector):
         return Point3D((self.vector[0] + other_vector.vector[0],
                                self.vector[1] + other_vector.vector[1],
@@ -1719,7 +1720,7 @@ class Point3D(Vector3D):
 
     def PointDistance(self, point2):
         return (self-point2).Norm()
-    
+
     @classmethod
     def from_step(cls, arguments, object_dict):
         return cls([float(i) for i in arguments[1][1:-1].split(",")],
@@ -1733,45 +1734,49 @@ class Plane3D:
         self.origin = origin
         self.vectors = [vector1, vector2]
         self.name = name
-        
+
     @classmethod
     def from_step(cls, arguments, object_dict):
         frame3d = object_dict[arguments[1]]
         origin = frame3d.origin
         vector1 = frame3d.u
         vector2 = frame3d.v
-        
+
         # TRANSFORMER EN 3D TOUS LES OBJETS LIES AU PLAN
-        
+
         return cls(origin, vector1, vector2, arguments[0][1:-1])
-        
+
     def point_on_plane(self, point):
-        
+
         projected_pt = point.PlaneProjection3D(self.origin, self.vectors[0], self.vectors[1])
         if npy.isclose(point[0], projected_pt[0], atol=1e-8) \
         and npy.isclose(point[1], projected_pt[1], atol=1e-8) \
         and npy.isclose(point[2], projected_pt[2], atol=1e-8):
             return True
         return False
-    
+
     def line_intersection(self, line):
         normal = self.vectors[0].Cross(self.vectors[1])
         normal.Normalize()
         u = line.points[1] - line.points[0]
         w = line.points[0] - self.origin
+        if npy.isclose(normal.Dot(u), 0):
+            return None
         intersection_abscissea = - normal.Dot(w) / normal.Dot(u)
         return line.points[0] + intersection_abscissea * u
-    
+
     def linesegment_intersection(self, linesegment):
         normal = self.vectors[0].Cross(self.vectors[1])
         normal.Normalize()
         u = linesegment.points[1] - linesegment.points[0]
         w = linesegment.points[0] - self.origin
+        if npy.isclose(normal.Dot(u), 0):
+            return None
         intersection_abscissea = - normal.Dot(w) / normal.Dot(u)
         if intersection_abscissea < 0 or intersection_abscissea > 1:
             return None
         return linesegment.points[0] + intersection_abscissea * u
-    
+
     def Rotation(self, center, axis, angle, copy=True):
         new_origin = self.origin.Rotation(center, axis, angle, True)
         new_vector1 = self.vectors[0].Rotation(center, axis, angle, True)
@@ -1894,7 +1899,7 @@ class Basis3D(Basis):
 #    def InverseTransfertMatrix(self):
 #        # Todo: cache for performance
 #        return inv(self.TransfertMatrix())
-            
+
     def InverseTransfertMatrix(self):
         det = self.u[0]*self.v[1]*self.w[2] + self.v[0]*self.w[1]*self.u[2] \
             + self.w[0]*self.u[1]*self.v[2] - self.w[0]*self.v[1]*self.u[2] \
@@ -1980,7 +1985,7 @@ class Frame3D(Basis3D):
 
     def Copy(self):
         return Frame3D(self.origin, self.u, self.v, self.w)
-    
+
     @classmethod
     def from_step(cls, arguments, object_dict):
         origin = object_dict[arguments[1]]
@@ -2044,7 +2049,7 @@ class Line3D(Primitive3D, Line):
         p1 = self.points[0] + s*u
         p2 = other_line.points[0] + t*v
         return p1, p2
-    
+
     def Rotation(self, center, axis, angle, copy=False):
         if copy:
             return Line3D(*[p.Rotation(center, axis, angle, copy=True) for p in self.points])
@@ -2058,14 +2063,14 @@ class Line3D(Primitive3D, Line):
         else:
             for p in self.points:
                 p.Translation(offset, copy=False)
-    
+
     @classmethod
     def from_step(cls, arguments, object_dict):
         point1 = object_dict[arguments[1]]
         direction = object_dict[arguments[2]]
         point2 = point1 + direction
         return cls(point1, point2, arguments[0][1:-1])
-    
+
 
 class LineSegment3D(Line3D):
     """
@@ -2080,7 +2085,7 @@ class LineSegment3D(Line3D):
     def PlaneProjection2D(self, x, y):
         return LineSegment2D(self.points[0].PlaneProjection2D(x, y),
                              self.points[1].PlaneProjection2D(x, y))
-        
+
     def Rotation(self, center, axis, angle, copy=False):
         if copy:
             return LineSegment3D(*[p.Rotation(center, axis, angle, copy=True) for p in self.points])
@@ -2113,7 +2118,7 @@ class LineSegment3D(Line3D):
 
     def to_line(self):
         return Line3D(*self.points)
-           
+
 
 class BSplineCurve3D(Primitive3D):
     def __init__(self, degree, control_points, knot_multiplicities, knots, weights=None, periodic=False, name=''):
@@ -2126,7 +2131,7 @@ class BSplineCurve3D(Primitive3D):
         self.weights = weights
         self.periodic = periodic
         self.name = name
-        
+
         curve = NURBS.Curve()
         curve.degree = degree
         if weights is None:
@@ -2142,10 +2147,10 @@ class BSplineCurve3D(Primitive3D):
         curve.knotvector = knot_vector
         curve.delta = 0.01
         curve_points = curve.evalpts
-        
+
         self.curve = curve
         self.points = [Point3D((p[0], p[1], p[2])) for p in curve_points]
-        
+
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive{}'.format(ip)
         points = '['
@@ -2157,7 +2162,7 @@ class BSplineCurve3D(Primitive3D):
         # !!! : A QUOI SERT LE DERNIER ARG DE BSplineCurve (False)?
         # LA MULTIPLICITE EN 3e ARG ET LES KNOTS EN 2e ARG ?
         return '{} = Part.BSplineCurve({},{},{},{},{},{},{})\n'.format(name,points,self.knot_multiplicities,self.knots,self.periodic,self.degree,self.weights,False)
-        
+
     @classmethod
     def from_step(cls, arguments, object_dict):
         name = arguments[0][1:-1]
@@ -2177,13 +2182,13 @@ class BSplineCurve3D(Primitive3D):
         knot_vector = []
         for i, knot in enumerate(knots):
             knot_vector.extend([knot]*knot_multiplicities[i])
-        
+
         if 9 in range(len(arguments)):
             weight_data = [float(i) for i in arguments[9][1:-1].split(",")]
         else:
             weight_data = None
-        
-        
+
+
         # FORCING CLOSED_CURVE = FALSE:
         closed_curve = False
         print(degree, points, knot_multiplicities, knots, weight_data, closed_curve, name)
@@ -2195,7 +2200,7 @@ class BSplineCurve3D(Primitive3D):
 #            vmpt = Point3D((point[1], point[2], point[3]))
             distances.append(pt1.PointDistance(point))
         return min(distances)
-    
+
     def Rotation(self, center, axis, angle, copy=False):
         new_control_points = [p.Rotation(center, axis, angle, True) for p in self.control_points]
         new_BSplineCurve3D = BSplineCurve3D(self.degree, new_control_points, self.knot_multiplicities, self.knots, self.weights, self.periodic, self.name)
@@ -2215,7 +2220,7 @@ class BSplineCurve3D(Primitive3D):
             self.control_points = new_control_points
             self.curve = new_BSplineCurve3D.curve
             self.points = new_BSplineCurve3D.points
-        
+
 class Circle3D(Primitive3D):
     def __init__(self, center, radius, normal, name=''):
         Primitive3D.__init__(self, name)
@@ -2231,7 +2236,7 @@ class Circle3D(Primitive3D):
         xc,yc,zc = npy.round(1000*self.center.vector,ndigits)
         xn,yn,zn = npy.round(self.normal.vector,ndigits)
         return '{} = Part.Circle(fc.Vector({},{},{}),fc.Vector({},{},{}),{})\n'.format(name,xc,yc,zc,xn,yn,zn,1000*self.radius)
-    
+
     def Rotation(self, rot_center, axis, angle, copy=False):
         new_center = self.center.Rotation(rot_center, axis, angle, True)
         new_normal = self.normal.Rotation(rot_center, axis, angle, True)
@@ -2267,7 +2272,7 @@ class Ellipse3D(Primitive3D):
         self.normal = normal
         major_dir.Normalize()
         self.major_dir = major_dir
-        
+
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive{}'.format(ip)
         xc, yc, zc = npy.round(1000*self.center.vector, ndigits)
@@ -2276,7 +2281,7 @@ class Ellipse3D(Primitive3D):
         minor_vector = self.center + self.minor_axis/2 * self.normal.Cross(self.major_dir)
         xmin, ymin, zmin = npy.round(1000*minor_vector.vector, ndigits)
         return '{} = Part.Ellipse(fc.Vector({},{},{}), fc.Vector({},{},{}), fc.Vector({},{},{}))\n'.format(name,xmaj,ymaj,zmaj,xmin,ymin,zmin,xc,yc,zc)
-    
+
     def Rotation(self, rot_center, axis, angle, copy=False):
         new_center = self.center.Rotation(rot_center, axis, angle, True)
         new_normal = self.normal.Rotation(rot_center, axis, angle, True)
@@ -2307,7 +2312,7 @@ class Ellipse3D(Primitive3D):
         major_axis = float(arguments[2])
         minor_axis = float(arguments[3])
         return cls(major_axis, minor_axis, center, normal, major_dir, arguments[0][1:-1])
-    
+
 
 class Arc3D(Primitive3D):
     """
@@ -2442,8 +2447,8 @@ class BSplineSurface3D(Primitive3D):
         self.u_multiplicities = u_multiplicities
         self.v_multiplicities = v_multiplicities
         self.weights = weights
-        
-        
+
+
         self.control_points_table = []
         points_row = []
         i = 1
@@ -2457,7 +2462,7 @@ class BSplineSurface3D(Primitive3D):
                 i += 1
         # TRANSPOSE THE LIST OF LISTS
 #        self.control_points_table = list(map(list, zip(*self.control_points_table)))
-        
+
         surface = NURBS.Surface()
         surface.degree_u = degree_u
         surface.degree_v = degree_v
@@ -2477,11 +2482,11 @@ class BSplineSurface3D(Primitive3D):
         surface.knotvector_v = knot_vector_v
         surface.delta = 0.01
         surface_points = surface.evalpts
-        
+
         self.surface = surface
         self.points = [Point3D((p[0], p[1], p[2])) for p in surface_points]
-    
-        
+
+
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive{}'.format(ip)
         script = ""
@@ -2493,16 +2498,16 @@ class BSplineSurface3D(Primitive3D):
                 pts += point
             pts = pts[:-1] + '],'
             points += pts
-        points = points[:-1] + ']'                
-        
+        points = points[:-1] + ']'
+
         script += '{} = Part.BSplineSurface()\n'.format(name)
         if self.weights is None:
             script += '{}.buildFromPolesMultsKnots({},{},{},udegree={},vdegree={},uknots={},vknots={})\n'.format(name,points,self.u_multiplicities,self.v_multiplicities,self.degree_u,self.degree_v,self.u_knots,self.v_knots)
         else:
             script += '{}.buildFromPolesMultsKnots({},{},{},udegree={},vdegree={},uknots={},vknots={},weights={})\n'.format(name,points,self.u_multiplicities,self.v_multiplicities,self.degree_u,self.degree_v,self.u_knots,self.v_knots,self.weights)
-            
+
         return script
-    
+
     @classmethod
     def from_step(cls, arguments, object_dict):
         name = arguments[0][1:-1]
@@ -2535,14 +2540,14 @@ class BSplineSurface3D(Primitive3D):
         u_knots = [float(i) for i in arguments[10][1:-1].split(",")]
         v_knots = [float(i) for i in arguments[11][1:-1].split(",")]
         knot_spec = arguments[12]
-        
+
         if 13 in range(len(arguments)):
             weight_data = [float(i) for i in arguments[13][1:-1].replace("(", "").replace(")", "").split(",")]
         else:
             weight_data = None
-        
+
         return cls(degree_u, degree_v, control_points, nb_u, nb_v, u_multiplicities, v_multiplicities, u_knots, v_knots, weight_data, name)
-        
+
     def Rotation(self, center, axis, angle, copy=False):
         new_control_points = [p.Rotation(center, axis, angle, True) for p in self.control_points]
         new_BSplineSurface3D = BSplineSurface3D(self.degree_u, self.degree_v, new_control_points, self.nb_u, self.nb_v, self.u_multiplicities, self.v_multiplicities, self.u_knots, self.v_knots, self.weights, self.name)
@@ -2639,14 +2644,14 @@ class Wire3D(CompositePrimitive3D):
         s += '{} = Part.Wire(E[:])\n'.format(name)
 
         return s
-    
-    
+
+
 class Vertex3D(Primitive3D):
     def __init__(self, primitive, name=''):
         Primitive3D.__init__(primitive, name)
         self.primitive = primitive
         self.name = name
-        
+
     @classmethod
     def from_step(cls, arguments, object_dict):
         return cls(object_dict[arguments[1]], arguments[0][1:-1])
@@ -2671,7 +2676,7 @@ class Edge3D(Primitive3D):
         self.edge_start = edge_start
         self.edge_end = edge_end
         self.primitives = primitives
-        
+
     @classmethod
     def from_step(cls, arguments, object_dict):
         vertex_start = object_dict[arguments[1]]
@@ -2684,7 +2689,7 @@ class Edge3D(Primitive3D):
         else:
             raise ValueError
         return cls(edge_geom, vertex_start, vertex_end, arguments[0][1:-1])
-    
+
     def Rotation(self, center, axis, angle, copy=False):
         new_edge_start = self.edge_start.Rotation(center, axis, angle, True)
         new_edge_end = self.edge_end.Rotation(center, axis, angle, True)
@@ -2708,8 +2713,8 @@ class Edge3D(Primitive3D):
             self.primitives = new_primitives
             self.edge_start = new_edge_start
             self.edge_end = new_edge_end
-    
-    
+
+
 class Contour3D(Wire3D):
     """
     A collection of 3D primitives forming a closed wire3D
@@ -2725,7 +2730,7 @@ class Contour3D(Wire3D):
 
         CompositePrimitive3D.__init__(self,primitives2, name)
         self.primitives = primitives
-        
+
     @classmethod
     def from_step(cls, arguments, object_dict):
         edges = []
@@ -2734,7 +2739,7 @@ class Contour3D(Wire3D):
             edges.append(object_dict[int(edge[1:])])
             edge_geoms.append(object_dict[int(edge[1:])].primitives)
         return cls(edge_geoms, edges, arguments[0][1:-1])
-    
+
     def Rotation(self, center, axis, angle, copy=False):
         new_edges = [edge.Rotation(center, axis, angle, True) for edge in self.edges]
         new_primitives = [p.Rotation(center, axis, angle, True) for p in self.primitives]
@@ -2761,20 +2766,20 @@ class ExtrudedCurve(CompositePrimitive3D):
         CompositePrimitive3D(self, name)
         self.curve_3d = curve_3d
         self.extrusion_vector = extrusion_vector
-    
+
     @classmethod
     def from_step(cls, arguments, object_dict):
         curve_3d = object_dict[arguments[1]]
         extrusion_vector = object_dict[arguments[2]]
         return cls(curve_3d, extrusion_vector, arguments[0][1:-1])
-    
-        
+
+
 class Face3D(CompositePrimitive3D):
     def __init__(self, primitives, contour, name=''):
         CompositePrimitive3D.__init__(self, primitives, name)
         self.contour = contour
         self.primitives = primitives
-        
+
     @classmethod
     def from_step(cls, arguments, object_dict):
         contour = []
@@ -2788,7 +2793,7 @@ class Face3D(CompositePrimitive3D):
         else:
             raise ValueError
         return cls([face_geom], contour, arguments[0][1:-1])
-    
+
     def Rotation(self, center, axis, angle, copy=False):
         new_contour = [subcontour.Rotation(center, axis, angle, True) for subcontour in self.contour]
         new_primitives = [plane.Rotation(center, axis, angle, True) for plane in self.primitives]
@@ -2806,17 +2811,17 @@ class Face3D(CompositePrimitive3D):
         else:
             self.primitives = new_primitives
             self.contour = new_contour
-    
+
     def distance_to_point(self, point):
         """
         Only works if the surface is planar
         """
         # On projette le point sur la surface plane
         # Si le point est à l'intérieur de la face, on retourne la distance de projection
-        # Si le point est à l'extérieur, on projette le point sur le plan 
+        # Si le point est à l'extérieur, on projette le point sur le plan
         # On calcule en 2D la distance entre la projection et le polygone contour
         # On utilise le theroeme de Pytagore pour calculer la distance minimale entre le point et le contour
-        
+
 #        print(self.primitives[0].__class__)
 #        print(Plane3D)
 #        print('essai', self.primitives[0].__class__ == Plane3D)
@@ -2824,10 +2829,10 @@ class Face3D(CompositePrimitive3D):
         plane = self.primitives[0]
         projected_pt = point.primitive.PlaneProjection3D(plane.origin, plane.vectors[0], plane.vectors[1])
         projection_distance = point.primitive.PointDistance(projected_pt)
-        
+
         if self.point_on_face(projected_pt):
             return projection_distance
-        
+
         contour = self.contour[0]
         polygon_points_3D = []
         for edge in contour.edges:
@@ -2839,13 +2844,13 @@ class Face3D(CompositePrimitive3D):
             polygon_points_2D.append(pt.primitive.To2D(plane.origin, plane.vectors[0], plane.vectors[1]))
         point_2D = point.primitive.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
         polygon = Polygon2D(polygon_points_2D)
-        
+
         border_distance = polygon.PointBorderDistance(point_2D)
         return (projection_distance**2 + border_distance**2)**0.5
-        
+
 #        raise NotImplementedError
-        
-        
+
+
     def distance_to_face(self, face2):
         """
         Only works if the surface is planar
@@ -2853,109 +2858,121 @@ class Face3D(CompositePrimitive3D):
         # On calcule la distance entre la face 1 et chaque point de la face 2
         # On calcule la distance entre la face 2 et chaque point de la face 1
         # TRAITER LE CAS OU LA DISTANCE LA PLUS COURTE N'EST PAS D'UN SOMMET
-        
+
 #        if isinstance(self.primitives[0], Plane3D):
 #        plane1 = self.primitives[0]
-        
+
         polygon1_points_3D = []
         for edge in self.contour[0].edges:
             polygon1_points_3D.append(edge.edge_start)
             polygon1_points_3D.append(edge.edge_end)
         polygon1_points_3D = list(set(polygon1_points_3D))
-        
+
         polygon2_points_3D = []
         for edge in face2.contour[0].edges:
             polygon2_points_3D.append(edge.edge_start)
             polygon2_points_3D.append(edge.edge_end)
         polygon2_points_3D = list(set(polygon2_points_3D))
-        
+
         distances = []
         for point1 in polygon1_points_3D:
             distances.append(face2.distance_to_point(point1))
         for point2 in polygon2_points_3D:
             distances.append(self.distance_to_point(point2))
-            
+
         return min(distances)
-        
+
 #        raise NotImplementedError
-            
+
 
     def point_on_face(self, point):
         """
         Only works if the surface is planar
-        
+
         Tells you if a point is on the 3D face and inside its contour
         """
-        
+
 #        print(self.primitives[0])
 #        print('1. Plane ?', isinstance(self.primitives[0], Plane3D))
 #        if isinstance(self.primitives[0], Plane3D):
-        
+
         plane = self.primitives[0]
         point_on_plane = plane.point_on_plane(point)
-        
+
         # The point is not in the same plane
         if not point_on_plane:
             return False
-        
+
         contour = self.contour[0]
         # transformer le contour en polygone2D pour utiliser la méthode PointBelongs
         polygon_points_3D = []
         for edge in contour.edges:
             polygon_points_3D.append(edge.edge_start)
             polygon_points_3D.append(edge.edge_end)
+        # TODO : le list(set()) est sans doute inutile sur les objets Vertex3D
         polygon_points_3D = list(set(polygon_points_3D))
         polygon_points_2D = []
         for pt in polygon_points_3D:
             polygon_points_2D.append(pt.primitive.To2D(plane.origin, plane.vectors[0], plane.vectors[1]))
         point_2D = point.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
         polygon = Polygon2D(polygon_points_2D)
-        
+
         if not polygon.PointBelongs(point_2D):
             return False
         return True
-    
+
 #        return False
-        
+
     def edge_intersection(self, edge):
         plane = self.primitives[0]
-        
+
         linesegment = LineSegment3D(edge.edge_start.primitive, edge.edge_end.primitive)
         intersection_point = plane.linesegment_intersection(linesegment)
-        
+
         if intersection_point is None:
             return None
-        
+
         point_on_face_boo = self.point_on_face(intersection_point)
         if not point_on_face_boo:
             return None
-        
+
         return intersection_point
-    
+
+    def linesegment_intersection(self, linesegment):
+        plane = self.primitives[0]
+        intersection_point = plane.linesegment_intersection(linesegment)
+        if intersection_point is None:
+            return None
+        point_on_face_boo = self.point_on_face(intersection_point)
+        if not point_on_face_boo:
+            return None
+        return intersection_point
+
     def face_intersection(self, face2):
         intersection_points = []
-        
+
         for edge2 in face2.contour[0].edges:
             intersection_point = self.edge_intersection(edge2)
             if intersection_point is not None:
                 intersection_points.append(intersection_point)
-            
+
         for edge1 in self.contour[0].edges:
             intersection_point = face2.edge_intersection(edge1)
             if intersection_point is not None:
                 intersection_points.append(intersection_point)
-                
+
         if intersection_points:
             return None
-        
+
         return intersection_points
+    
 
 class Shell3D(CompositePrimitive3D):
     def __init__(self, primitives, faces, name=''):
         CompositePrimitive3D.__init__(self, primitives, name)
         self.faces = faces
         self.primitives = primitives
-        
+
     @classmethod
     def from_step(cls, arguments, object_dict):
         faces = []
@@ -2964,7 +2981,7 @@ class Shell3D(CompositePrimitive3D):
             faces.append(object_dict[int(face[1:])])
             primitives.append(object_dict[int(face[1:])].primitives)
         return cls(primitives, faces, arguments[0][1:-1])
-    
+
     def Rotation(self, center, axis, angle, copy=False):
         new_faces = [face.Rotation(center, axis, angle, True) for face in self.faces]
         new_primitives = []
@@ -2986,8 +3003,79 @@ class Shell3D(CompositePrimitive3D):
         else:
             self.primitives = new_primitives
             self.faces = new_faces
+
+    def bbox(self):
+        """
+        Returns the boundary box
+        """
+        points = []
+        for face in self.faces:
+            for edge in face.contour[0].edges:
+                points.append(edge.edge_start.primitive)
+                points.append(edge.edge_end.primitive)
+        points = list(set(points))
+
+        xmin, xmax, ymin, ymax, zmin, zmax = points[0][0], points[0][0], points[0][1], points[0][1], points[0][2], points[0][2]
+        for point in points[1:]:
+            if point[0] < xmin:
+                xmin = point[0]
+            if point[0] > xmax:
+                xmax = point[0]
+            if point[1] < ymin:
+                ymin = point[1]
+            if point[1] > ymax:
+                ymax = point[1]
+            if point[2] < zmin:
+                zmin = point[2]
+            if point[2] > zmax:
+                zmax = point[2]
+
+        return (xmin, xmax, ymin, ymax, zmin, zmax)
+
+    def point_belongs(self, point):
+        """
+        Ray Casting algorithm
+        Returns True if the point is inside the Shell, False otherwise
+        """
+        epsilon = 1e-08
+        count = 0
+
+        xmin, xmax, ymin, ymax, zmin, zmax = self.bbox()
+        if point[0] < xmin or point[0] > xmax:
+            return False
+        if point[1] < ymin or point[1] > ymax:
+            return False
+        if point[2] < zmin or point[2] > zmax:
+            return False
+
+        ray = LineSegment3D(point, Point3D((xmax+epsilon, point[1], point[2])))
+        for face in self.faces:
+            intersection_points = face.linesegment_intersection(ray)
+            if not intersection_points:
+                count += 1
+        if count%2 == 0:
+            return False
+
+        return True
     
-    
+    def is_inside_shell(self, shell2):
+        """
+        Returns True if all the points of self are inside shell2
+        """
+        points = []
+        for face in self.faces:
+            for edge in face.contour[0].edges:
+                points.append(edge.edge_start.primitive)
+                points.append(edge.edge_end.primitive)
+        points = list(set(points))
+        
+        for point in points:
+            if not shell2.point_belong(point):
+                return False
+        return True
+
+
+
 class Group:
     def __init__(self, primitives, name):
         self.primitives = primitives
@@ -2999,13 +3087,13 @@ class StepFunction:
         self.id = function_id
         self.name = function_name
         self.arg = function_arg
-        
+
         if self.name == "":
             if self.arg[1][0] == 'B_SPLINE_SURFACE':
                 self.simplify('B_SPLINE_SURFACE')
             if self.arg[1][0] == 'B_SPLINE_CURVE':
                 self.simplify('B_SPLINE_CURVE')
-        
+
     def simplify(self, new_name):
         # ITERATE ON SUBFUNCTIONS
         args = [subfun[1] for (i, subfun) in enumerate(self.arg) if (len(subfun[1]) != 0 or i == 0)]
@@ -3016,7 +3104,7 @@ class StepFunction:
             else:
                 arguments.extend(arg)
         arguments.pop() # DELETE REPRESENTATION_ITEM('')
-        
+
         self.name = new_name
         self.arg = arguments
 
@@ -3024,7 +3112,7 @@ class StepFunction:
 class Step:
     def __init__(self, stepfile):
         self.stepfile = stepfile
-        
+
         self.functions, self.all_connections = self.read_functions()
         self.graph = self.create_graph()
         #### FUNCTION TO DELETE ####
@@ -3033,33 +3121,30 @@ class Step:
         self.delete_function('ORIENTED_EDGE')
         ############################
 
-        
-        
-        
     def read_functions(self):
         f = open(self.stepfile, "r", encoding = "ISO-8859-1")
-        
+
         all_connections = []
-        
+
         previous_line = ""
         functions = {}
-        
+
         for line in f:
-            
+
             line = line.replace(" ", "")
             line = line.replace("\n", "")
-            
+
             # SKIP EMPTY LINE
             if not line:
                 continue
-            
+
             # ASSEMBLE LINES IF THEY ARE SEPARATED
             if line[-1] != ';':
                 previous_line = previous_line + line
                 continue
-            
-            line = previous_line + line 
-            
+
+            line = previous_line + line
+
             # SKIP HEADER
             if line[0] != "#":
                 previous_line = str()
@@ -3077,41 +3162,41 @@ class Step:
                 function_connection = int(connec[0])
 #                if function_connection[-1] != "'":
                 function_connections.append((function_connection, function_id))
-            
+
             all_connections.extend(function_connections)
-            
-            previous_line = str() 
-            
+
+            previous_line = str()
+
             # FUNCTION ARGUMENTS
             function_arg = function_name_arg[1]
             arguments = step_split_arguments(function_arg)
             if function_name == "":
                 arguments = self.step_subfunctions(arguments)
-                
+
             for i, argument in enumerate(arguments):
                 if argument[:2] == '(#' and argument[-1] == ')':
                     arg_list = set_to_list(argument)
                     arguments[i] = arg_list
-                    
+
             function = StepFunction(function_id, function_name, arguments)
             functions[function_id] = function
-            
+
         f.close()
-        
+
         return functions, all_connections
-    
+
     def create_graph(self, draw=False, html=False):
-        
+
         G = nx.Graph()
         F = nx.DiGraph()
         labels = {}
-        
+
         for function in self.functions.values():
             if function.name in step_to_volmdlr_primitive:
                 G.add_node(function.id)
                 F.add_node(function.id)
                 labels[function.id] = str(function.id)+' '+function.name
-            
+
         # Delete connection if node not found
         node_list = list(F.nodes())
         delete_connection = []
@@ -3124,16 +3209,16 @@ class Step:
         # Create graph connections
         G.add_edges_from(self.all_connections)
         F.add_edges_from(self.all_connections)
-        
+
         # Remove single nodes
         delete_nodes = []
         for node in F.nodes:
             if F.degree(node) == 0:
                 delete_nodes.append(node)
-        for node in delete_nodes:    
+        for node in delete_nodes:
             F.remove_node(node)
             G.remove_node(node)
-            
+
         # Remove single branches
         nodes_to_delete = []
         for node in list(F.nodes):
@@ -3144,11 +3229,7 @@ class Step:
         for node in nodes_to_delete:
             print('node to delete', node, self.functions[node].name)
             delete_node_and_predecessors(F, node)
-            
-                
-                    
-        
-        
+
         if draw:
             # ----------------PLOT----------------
             pos = nx.kamada_kawai_layout(G)
@@ -3157,41 +3238,38 @@ class Step:
             nx.draw_networkx_edges(F, pos)
             nx.draw_networkx_labels(F, pos, labels)
             # ------------------------------------
-        
+
         if html:
-                
+
             env = Environment(loader=PackageLoader('powertransmission', 'templates'),
                               autoescape=select_autoescape(['html', 'xml']))
             template = env.get_template('graph_visJS.html')
-            
+
             nodes = []
             edges = []
             for label in list(labels.values()):
                 nodes.append({'name': label, 'shape': 'circular'})
-            
+
             for edge in G.edges:
                 edge_dict = {}
                 edge_dict['inode1'] = int(edge[0])-1
                 edge_dict['inode2'] = int(edge[1])-1
                 edges.append(edge_dict)
-            
+
             options = {}
             s = template.render(
                 name=self.stepfile,
                 nodes=nodes,
                 edges=edges,
                 options=options)
-    
+
             with open('graph_visJS.html', 'wb') as file:
                 file.write(s.encode('utf-8'))
-    
+
             webbrowser.open('file://' + os.path.realpath('graph_visJS.html'))
-            
-        
-        
+
         return F
-    
-    
+
     def draw_graph(self):
         labels = {}
         for function in self.functions:
@@ -3201,10 +3279,8 @@ class Step:
         nx.draw_networkx_nodes(self.graph, pos)
         nx.draw_networkx_edges(self.graph, pos)
         nx.draw_networkx_labels(self.graph, pos, labels)
-    
-    
+
     def step_subfunctions(self, subfunctions):
-#        print('IN', subfunctions)
         subfunctions = subfunctions[0]
         parenthesis_count = 0
         subfunction_names = []
@@ -3212,10 +3288,10 @@ class Step:
         subfunction_name = ""
         subfunction_arg = ""
         for char in subfunctions:
-                            
+
             if char == "(":
                 parenthesis_count += 1
-                if parenthesis_count == 1: 
+                if parenthesis_count == 1:
                     subfunction_names.append(subfunction_name)
                     subfunction_name = ""
                 else:
@@ -3229,25 +3305,23 @@ class Step:
                 else:
                     subfunction_arg += char
                 continue
-            
+
             if parenthesis_count == 0:
                 subfunction_name += char
             else:
                 subfunction_arg += char
-        
-#        print('OUT', subfunction_args)
+
         return [(subfunction_names[i], step_split_arguments(subfunction_args[i])) for i in range(len(subfunction_names))]
 
-
     def delete_function(self, function_name):
-        
+
         delete_functions = []
         for function_id, function in self.functions.items():
             if function.name == function_name:
-                
+
                 #### Delete from self.functions ####
                 delete_functions.append(function_id)
-                
+
                 #### Modify the functions pointing on the deleted function ####
                 modify_function_id = list(self.graph.out_edges(function.id))[0][1]
                 # TROUVER '#'+str(function.id) dans les arguments
@@ -3264,7 +3338,7 @@ class Step:
                         res = find_and_replace(argument, '#'+str(function.id), '#'+str(list(self.graph.in_edges(function.id))[0][0]))
                         if res != argument:
                             modify_function.arg[i] = res
-                
+
                 #### Delete from self.graph ####
                 node_edges = list(self.graph.in_edges(function.id))+list(self.graph.out_edges(function.id))
                 if len(node_edges) != 2:
@@ -3272,61 +3346,60 @@ class Step:
                     raise ValueError
                 self.graph.remove_node(function.id)
                 self.graph.add_edge(node_edges[0][0], node_edges[1][1])
-                
+
                 #### Delete from self.all_connections ####
                 self.all_connections = list(self.graph.edges)
-        
+
 
         for delete_f in delete_functions:
             del self.functions[delete_f]
-    
+
     def instanciate(self, instanciate_id, object_dict, primitives):
         """
         Returns None if the object was instanciate
         """
-        
+
         name = self.functions[instanciate_id].name
         arguments = self.functions[instanciate_id].arg[:]
-        
+
         for i, arg in enumerate(arguments):
             if type(arg) == str and arg[0] == '#':
                 arguments[i] = int(arg[1:])
-        
+
         if name in step_to_volmdlr_primitive and hasattr(step_to_volmdlr_primitive[name], "from_step"):
 
             try:
                 volmdlr_object = step_to_volmdlr_primitive[name].from_step(arguments, object_dict)
             except KeyError:
                 return instanciate_id, object_dict, primitives
-                
+
             object_dict[instanciate_id] = volmdlr_object
             if hasattr(volmdlr_object, "primitive"):
                 primitives.append(volmdlr_object.primitive)
-        
+
         return None, object_dict, primitives
-        
-    def to_volume_model(self, name):
-        
+
+    def to_volume_model(self, name, add_to_volume_model=None):
+
         object_dict = {}
         primitives = []
         not_instanciated_id = []
-        
-        
-        self.graph.add_node("#0")                                    
+
+        self.graph.add_node("#0")
         for node in self.graph.nodes:
             if node != '#0' and (self.functions[node].name == "CARTESIAN_POINT" or self.functions[node].name == "DIRECTION"):
                 self.graph.add_edge("#0", node)
-        
+
         edges = list(nx.algorithms.traversal.breadth_first_search.bfs_edges(self.graph, "#0"))
-                                                                            
+
         for edge_nb, edge in enumerate(edges):
             instanciate_id = edge[1]
             res, object_dict, primitives = self.instanciate(instanciate_id, object_dict, primitives)
             if res is not None:
                 not_instanciated_id.append(res)
-                
+
         print('Nombre non instanciés', len(not_instanciated_id))
-            
+
         i = 0
         still_not_instanciated_id = []
         while not_instanciated_id:
@@ -3334,42 +3407,26 @@ class Step:
                 not_instanciated_id = still_not_instanciated_id
                 still_not_instanciated_id = []
                 i = 0
-                continue 
+                continue
             res, object_dict, primitives = self.instanciate(not_instanciated_id[i], object_dict, primitives)
             if res is not None:
                 still_not_instanciated_id.append(res)
             i += 1
-        
-        # A FAIRE 
-#        shells = [shell for shell in volmdlr_objects if isinstance(shell, Shell3D)]
-#        print(shells)
-        
-#        shells = []
-#        
-#        for vm_obj in volmdlr_objects:
-#            try vm_obj[0]:
-#                if isinstance(vm_obj[0], Shell3D):
-#                    shells.append(vm_obj[0])
-#            except IndexError:
-#                continue
-#                    
-#        print(shells)
-        
-#        print(self.graph.degree())
-        
+
         shells = []
-        # C'est just un check
         for node in list(self.graph.nodes):
             if not list(self.graph.out_edges(node)):
-#                print(node)
-#                print(list(self.graph.in_edges(node)))
                 shells.append(object_dict[node])
         print(shells)
-            
-        volume_model = VolumeModel(shells, primitives, name)
-        return volume_model
-    
-    
+        
+        if add_to_volume_model is None:
+            volume_model = VolumeModel(shells, primitives, name)
+            return volume_model
+        else:
+            add_to_volume_model.shells.extend(shells)
+            add_to_volume_model.primitives.extend(primitives)
+            return add_to_volume_model
+
 
 class VolumeModel:
     """
@@ -3386,7 +3443,7 @@ class VolumeModel:
 #            for primitive in primitives_group:
             volume+=primitive.Volume()
         return volume
-    
+
     def Rotation(self, center, axis, angle, copy=False):
         new_shells = [shell.Rotation(center, axis, angle, True) for shell in self.shells]
         new_primitives = [primitive.Rotation(center, axis, angle, True) for primitive in self.primitives]
@@ -3464,7 +3521,7 @@ class VolumeModel:
 #                else:
 #                    raise NotImplementedError
             # ---------------------------------------------
-                
+
         s+='doc.recompute()\n'
         if 'fcstd' in export_types:
             s+="doc.saveAs('"+fcstd_filepath+".fcstd')\n\n"
@@ -3566,19 +3623,19 @@ class VolumeModel:
 
         return center,max_length
 
-    
-    
-    
+
+
+
 step_to_volmdlr_primitive = {
         # GEOMETRICAL ENTITIES
         'CARTESIAN_POINT': Point3D,
         'DIRECTION': Vector3D,
         'VECTOR': Vector3D,
-        
+
         'AXIS1_PLACEMENT': None,
         'AXIS2_PLACEMENT_2D': None,
         'AXIS2_PLACEMENT_3D': Frame3D,
-        
+
         'LINE': Line3D,
         'CIRCLE': Circle3D,
         'ELLIPSE': Ellipse3D,
@@ -3600,7 +3657,7 @@ step_to_volmdlr_primitive = {
         'COMPOSITE_CURVE': Wire3D, # TOPOLOGICAL WIRE
         'COMPOSITE_CURVE_ON_SURFACE': Wire3D, # TOPOLOGICAL WIRE
         'BOUNDARY_CURVE': Wire3D, # TOPOLOGICAL WIRE
-        
+
         'PLANE': Plane3D,
         'CYLINDRICAL_SURFACE': None,
         'CONICAL_SURFACE': None,
@@ -3620,16 +3677,16 @@ step_to_volmdlr_primitive = {
         'QUASI_UNIFORM_SURFACE': BSplineSurface3D,
         'RECTANGULAR_COMPOSITE_SURFACE': Face3D, # TOPOLOGICAL FACES
         'CURVE_BOUNDED_SURFACE': Face3D, # TOPOLOGICAL FACE
-        
-        
+
+
         # TOPOLOGICAL ENTITIES
         'VERTEX_POINT': Vertex3D,
-        
+
         'EDGE_CURVE': Edge3D, # TOPOLOGICAL EDGE
         'ORIENTED_EDGE': None, # TOPOLOGICAL EDGE
         # The one above can influence the direction with their last argument
         # TODO : maybe take them into consideration
-        
+
         'FACE_BOUND': None, # TOPOLOGICAL WIRE
         'FACE_OUTER_BOUND': None, # TOPOLOGICAL WIRE
         # Both above can influence the direction with their last argument
@@ -3637,13 +3694,13 @@ step_to_volmdlr_primitive = {
         'EDGE_LOOP': Contour3D, # TOPOLOGICAL WIRE
         'POLY_LOOP': Contour3D, # TOPOLOGICAL WIRE
         'VERTEX_LOOP': Contour3D, # TOPOLOGICAL WIRE
-        
+
         'ADVANCED_FACE': Face3D,
         'FACE_SURFACE': Face3D,
-        
+
         'CLOSED_SHELL': Shell3D,
         'OPEN_SHELL': Shell3D,
         'ORIENTED_CLOSED_SHELL': Shell3D,
         'CONNECTED_FACE_SET': Shell3D,
-                            
+
         }
