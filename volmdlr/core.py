@@ -3055,15 +3055,15 @@ class Shell3D(CompositePrimitive3D):
         epsilon = 1e-08
         count = 0
 
-        xmin, xmax, ymin, ymax, zmin, zmax = self.bbox()
-        if point[0] < xmin or point[0] > xmax:
+        bbox = self.bbox()
+        if point[0] < bbox.xmin or point[0] > bbox.xmax:
             return False
-        if point[1] < ymin or point[1] > ymax:
+        if point[1] < bbox.ymin or point[1] > bbox.ymax:
             return False
-        if point[2] < zmin or point[2] > zmax:
+        if point[2] < bbox.zmin or point[2] > bbox.zmax:
             return False
 
-        ray = LineSegment3D(point, Point3D((xmax+epsilon, point[1], point[2])))
+        ray = LineSegment3D(point, Point3D((bbox.xmax+epsilon, point[1], point[2])))
         for face in self.faces:
             intersection_points = face.linesegment_intersection(ray)
             if not intersection_points:
