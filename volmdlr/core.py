@@ -2143,7 +2143,6 @@ class BSplineCurve3D(Primitive3D):
         knot_vector = []
         for i, knot in enumerate(knots):
             knot_vector.extend([knot]*knot_multiplicities[i])
-        print(knot_vector)
         curve.knotvector = knot_vector
         curve.delta = 0.01
         curve_points = curve.evalpts
@@ -2167,7 +2166,7 @@ class BSplineCurve3D(Primitive3D):
     def from_step(cls, arguments, object_dict):
         name = arguments[0][1:-1]
         degree = int(arguments[1])
-        points = [object_dict[int(i[1:])] for i in arguments[2][1:-1]]
+        points = [object_dict[int(i[1:])] for i in arguments[2]]
         curve_form = arguments[3]
         if arguments[4] == '.F.':
             closed_curve = False
@@ -2188,10 +2187,8 @@ class BSplineCurve3D(Primitive3D):
         else:
             weight_data = None
 
-
         # FORCING CLOSED_CURVE = FALSE:
         closed_curve = False
-        print(degree, points, knot_multiplicities, knots, weight_data, closed_curve, name)
         return cls(degree, points, knot_multiplicities, knots, weight_data, closed_curve, name)
 
     def point_distance(self, pt1):
@@ -2763,9 +2760,10 @@ class Contour3D(Wire3D):
 
 class ExtrudedCurve(CompositePrimitive3D):
     def __init__(self, curve_3d, extrusion_vector, name=''):
-        CompositePrimitive3D(self, name)
         self.curve_3d = curve_3d
         self.extrusion_vector = extrusion_vector
+        self.primitives = [curve_3d, extrusion_vector]
+        CompositePrimitive3D(self.primitives, name)
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -2815,6 +2813,7 @@ class Face3D(CompositePrimitive3D):
     def distance_to_point(self, point):
         """
         Only works if the surface is planar
+        TODO : this function does not take into account if Face has holes
         """
         # On projette le point sur la surface plane
         # Si le point est à l'intérieur de la face, on retourne la distance de projection
@@ -2854,10 +2853,12 @@ class Face3D(CompositePrimitive3D):
     def distance_to_face(self, face2):
         """
         Only works if the surface is planar
+        TODO : this function does not take into account if Face has holes
+        TODO : TRAITER LE CAS OU LA DISTANCE LA PLUS COURTE N'EST PAS D'UN SOMMET
+        TODO : traiter à part le cas ou les deux faces sont parallèles 
         """
         # On calcule la distance entre la face 1 et chaque point de la face 2
         # On calcule la distance entre la face 2 et chaque point de la face 1
-        # TRAITER LE CAS OU LA DISTANCE LA PLUS COURTE N'EST PAS D'UN SOMMET
 
 #        if isinstance(self.primitives[0], Plane3D):
 #        plane1 = self.primitives[0]
@@ -2888,6 +2889,7 @@ class Face3D(CompositePrimitive3D):
     def point_on_face(self, point):
         """
         Only works if the surface is planar
+        TODO : this function does not take into account if Face has holes
 
         Tells you if a point is on the 3D face and inside its contour
         """
@@ -2949,6 +2951,10 @@ class Face3D(CompositePrimitive3D):
         return intersection_point
 
     def face_intersection(self, face2):
+        """
+        Only works if the surface is planar
+        TODO : this function does not take into account if Face has holes
+        """
         intersection_points = []
 
         for edge2 in face2.contour[0].edges:
@@ -2977,6 +2983,7 @@ class Shell3D(CompositePrimitive3D):
     def from_step(cls, arguments, object_dict):
         faces = []
         primitives = []
+#        print(arguments[1])
         for face in arguments[1]:
             faces.append(object_dict[int(face[1:])])
             primitives.append(object_dict[int(face[1:])].primitives)
@@ -3061,8 +3068,6 @@ class Shell3D(CompositePrimitive3D):
     def is_inside_shell(self, shell2):
         """
         Returns True if all the points of self are inside shell2
-        NOTE : A IMPLEMENTER
-        >> itérer sur toutes les faces pour vérifier Face3D.face_intersection
         """
         points = []
         for face in self.faces:
@@ -3130,6 +3135,7 @@ class Step:
         # faire une fonction : si None dans step_to_volmdlr_primitive alors delete_function
         self.delete_function('FACE_OUTER_BOUND')
         self.delete_function('ORIENTED_EDGE')
+#        self.delete_function('ORIENTED_CLOSED_SHELL')
         ############################
 
     def read_functions(self):
@@ -3711,7 +3717,7 @@ step_to_volmdlr_primitive = {
 
         'CLOSED_SHELL': Shell3D,
         'OPEN_SHELL': Shell3D,
-        'ORIENTED_CLOSED_SHELL': Shell3D,
+        'ORIENTED_CLOSED_SHELL': None,
         'CONNECTED_FACE_SET': Shell3D,
 
         }
