@@ -3150,14 +3150,99 @@ class BBox:
         self.ymax = ymax
         self.zmin = zmin
         self.zmax = zmax
+        self.points = (Point3D((self.xmin, self.ymin, self.zmin)), \
+                       Point3D((self.xmax, self.ymin, self.zmin)), \
+                       Point3D((self.xmax, self.ymax, self.zmin)), \
+                       Point3D((self.xmin, self.ymax, self.zmin)), \
+                       Point3D((self.xmin, self.ymin, self.zmax)), \
+                       Point3D((self.xmax, self.ymin, self.zmax)), \
+                       Point3D((self.xmax, self.ymax, self.zmax)), \
+                       Point3D((self.xmin, self.ymax, self.zmax)))
+    
+    def Rotation(self, center, axis, angle, copy=False):
+        """
+        A ne pas utiliser car les BBox sont axis aligned et une rotation peut mettre à mal cette hypothèse
+        Faire un rotation du shell et ensuite recalculer la BBox
+        """
+        raise NotImplementedError
+#        new_xmin = self.xmin.Rotation(center, axis, angle, copy=True)
+#        new_xmax = self.xmax.Rotation(center, axis, angle, copy=True)
+#        new_ymin = self.ymin.Rotation(center, axis, angle, copy=True)
+#        new_ymax = self.ymax.Rotation(center, axis, angle, copy=True)
+#        new_zmin = self.zmin.Rotation(center, axis, angle, copy=True)
+#        new_zmax = self.zmax.Rotation(center, axis, angle, copy=True)
+#        if copy:
+#            return BBox(new_xmin, new_xmax, new_ymin, new_ymax, new_zmin, new_zmax)
+#        else:
+#            self.xmin = new_xmin
+#            self.xmax = new_xmax
+#            self.ymin = new_ymin
+#            self.ymax = new_ymax
+#            self.zmin = new_zmin
+#            self.zmax = new_zmax
+
+    def Translation(self, offset, copy=False):
+        new_xmin = self.xmin+offset[0]
+        new_xmax = self.xmax+offset[0]
+        new_ymin = self.ymin+offset[1]
+        new_ymax = self.ymax+offset[1]
+        new_zmin = self.zmin+offset[2]
+        new_zmax = self.zmax+offset[2]
+        if copy:
+            return BBox(new_xmin, new_xmax, new_ymin, new_ymax, new_zmin, new_zmax)
+        else:
+            self.xmin = new_xmin
+            self.xmax = new_xmax
+            self.ymin = new_ymin
+            self.ymax = new_ymax
+            self.zmin = new_zmin
+            self.zmax = new_zmax
+            self.points = (Point3D((new_xmin, new_ymin, new_zmin)), \
+                           Point3D((new_xmax, new_ymin, new_zmin)), \
+                           Point3D((new_xmax, new_ymax, new_zmin)), \
+                           Point3D((new_xmin, new_ymax, new_zmin)), \
+                           Point3D((new_xmin, new_ymin, new_zmax)), \
+                           Point3D((new_xmax, new_ymin, new_zmax)), \
+                           Point3D((new_xmax, new_ymax, new_zmax)), \
+                           Point3D((new_xmin, new_ymax, new_zmax)))
     
     def bbox_intersection(self, bbox2):
         return (self.xmin < bbox2.xmax and self.xmax > bbox2.xmin \
                 and self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
                 and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin)
     
-#    def distance_to_bbox(self, bbox2):
-#        return 
+    def distance_to_bbox(self, bbox2):
+        if self.bbox_intersection(bbox2):
+            return 0
+        
+        permute_bbox1 = self
+        permute_bbox2 = bbox2
+        
+        if permute_bbox2.xmin < permute_bbox1.xmin:
+            permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
+        dx = permute_bbox2.xmin - permute_bbox1.xmax
+        print(dx)
+        
+        if permute_bbox2.ymin < permute_bbox1.ymin:
+            permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
+        dy = permute_bbox2.ymin - permute_bbox1.ymax
+        print(dy)
+        
+        if permute_bbox2.zmin < permute_bbox1.zmin:
+            permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
+        dz = permute_bbox2.zmin - permute_bbox1.zmax
+        print(dz)
+        
+        if dx < 0:
+            dx = 0
+        if dy < 0:
+            dy = 0
+        if dz < 0:
+            dz = 0
+        
+        return (dx**2 + dy**2 + dz**2)**0.5
+
+            
         
 
 class Group:
