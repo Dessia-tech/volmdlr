@@ -1734,6 +1734,8 @@ class Plane3D:
         self.origin = origin
         self.vectors = [vector1, vector2]
         self.name = name
+        self.normal = self.vectors[0].Cross(self.vectors[1])
+        self.normal.Normalize()
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -1747,7 +1749,6 @@ class Plane3D:
         return cls(origin, vector1, vector2, arguments[0][1:-1])
 
     def point_on_plane(self, point):
-
         projected_pt = point.PlaneProjection3D(self.origin, self.vectors[0], self.vectors[1])
         if npy.isclose(point[0], projected_pt[0], atol=1e-8) \
         and npy.isclose(point[1], projected_pt[1], atol=1e-8) \
@@ -1756,23 +1757,19 @@ class Plane3D:
         return False
 
     def line_intersection(self, line):
-        normal = self.vectors[0].Cross(self.vectors[1])
-        normal.Normalize()
         u = line.points[1] - line.points[0]
         w = line.points[0] - self.origin
-        if npy.isclose(normal.Dot(u), 0):
+        if npy.isclose(self.normal.Dot(u), 0):
             return None
-        intersection_abscissea = - normal.Dot(w) / normal.Dot(u)
+        intersection_abscissea = - self.normal.Dot(w) / self.normal.Dot(u)
         return line.points[0] + intersection_abscissea * u
 
     def linesegment_intersection(self, linesegment):
-        normal = self.vectors[0].Cross(self.vectors[1])
-        normal.Normalize()
         u = linesegment.points[1] - linesegment.points[0]
         w = linesegment.points[0] - self.origin
-        if npy.isclose(normal.Dot(u), 0):
+        if npy.isclose(self.normal.Dot(u), 0):
             return None
-        intersection_abscissea = - normal.Dot(w) / normal.Dot(u)
+        intersection_abscissea = - self.normal.Dot(w) / self.normal.Dot(u)
         if intersection_abscissea < 0 or intersection_abscissea > 1:
             return None
         return linesegment.points[0] + intersection_abscissea * u
@@ -2676,6 +2673,7 @@ class Edge3D(Primitive3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        print(arguments)
         vertex_start = object_dict[arguments[1]]
         vertex_end = object_dict[arguments[2]]
         edge_geom = object_dict[arguments[3]]
@@ -2809,6 +2807,23 @@ class Face3D(CompositePrimitive3D):
         else:
             self.primitives = new_primitives
             self.contour = new_contour
+            
+    def bbox(self):
+        contour = self.contour[0]
+        points = []
+        for edge in contour.edges:
+            points.append(edge.edge_start.primitive)
+            points.append(edge.edge_end.primitive)
+        points = list(set(points))
+        
+        xmin = min([pt[0] for pt in points])
+        xmax = max([pt[0] for pt in points])
+        ymin = min([pt[1] for pt in points])
+        ymax = max([pt[1] for pt in points])
+        zmin = min([pt[2] for pt in points])
+        zmax = max([pt[2] for pt in points])
+        
+        return BBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def distance_to_point(self, point):
         """
@@ -2835,12 +2850,12 @@ class Face3D(CompositePrimitive3D):
         contour = self.contour[0]
         polygon_points_3D = []
         for edge in contour.edges:
-            polygon_points_3D.append(edge.edge_start)
-            polygon_points_3D.append(edge.edge_end)
+            polygon_points_3D.append(edge.edge_start.primitive)
+            polygon_points_3D.append(edge.edge_end.primitive)
         polygon_points_3D = list(set(polygon_points_3D))
         polygon_points_2D = []
         for pt in polygon_points_3D:
-            polygon_points_2D.append(pt.primitive.To2D(plane.origin, plane.vectors[0], plane.vectors[1]))
+            polygon_points_2D.append(pt.To2D(plane.origin, plane.vectors[0], plane.vectors[1]))
         point_2D = point.primitive.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
         polygon = Polygon2D(polygon_points_2D)
 
@@ -2855,14 +2870,16 @@ class Face3D(CompositePrimitive3D):
         Only works if the surface is planar
         TODO : this function does not take into account if Face has holes
         TODO : TRAITER LE CAS OU LA DISTANCE LA PLUS COURTE N'EST PAS D'UN SOMMET
-        TODO : traiter à part le cas ou les deux faces sont parallèles 
         """
         # On calcule la distance entre la face 1 et chaque point de la face 2
         # On calcule la distance entre la face 2 et chaque point de la face 1
 
 #        if isinstance(self.primitives[0], Plane3D):
 #        plane1 = self.primitives[0]
-
+        
+        if self.face_intersection(face2) is not None:
+            return 0
+            
         polygon1_points_3D = []
         for edge in self.contour[0].edges:
             polygon1_points_3D.append(edge.edge_start)
@@ -2909,13 +2926,13 @@ class Face3D(CompositePrimitive3D):
         # transformer le contour en polygone2D pour utiliser la méthode PointBelongs
         polygon_points_3D = []
         for edge in contour.edges:
-            polygon_points_3D.append(edge.edge_start)
-            polygon_points_3D.append(edge.edge_end)
-        # TODO : le list(set()) est sans doute inutile sur les objets Vertex3D
+            polygon_points_3D.append(edge.edge_start.primitive)
+            polygon_points_3D.append(edge.edge_end.primitive)
         polygon_points_3D = list(set(polygon_points_3D))
+        
         polygon_points_2D = []
         for pt in polygon_points_3D:
-            polygon_points_2D.append(pt.primitive.To2D(plane.origin, plane.vectors[0], plane.vectors[1]))
+            polygon_points_2D.append(pt.To2D(plane.origin, plane.vectors[0], plane.vectors[1]))
         point_2D = point.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
         polygon = Polygon2D(polygon_points_2D)
 
@@ -3021,23 +3038,15 @@ class Shell3D(CompositePrimitive3D):
                 points.append(edge.edge_start.primitive)
                 points.append(edge.edge_end.primitive)
         points = list(set(points))
+                
+        xmin = min([pt[0] for pt in points])
+        xmax = max([pt[0] for pt in points])
+        ymin = min([pt[1] for pt in points])
+        ymax = max([pt[1] for pt in points])
+        zmin = min([pt[2] for pt in points])
+        zmax = max([pt[2] for pt in points])
 
-        xmin, xmax, ymin, ymax, zmin, zmax = points[0][0], points[0][0], points[0][1], points[0][1], points[0][2], points[0][2]
-        for point in points[1:]:
-            if point[0] < xmin:
-                xmin = point[0]
-            if point[0] > xmax:
-                xmax = point[0]
-            if point[1] < ymin:
-                ymin = point[1]
-            if point[1] > ymax:
-                ymax = point[1]
-            if point[2] < zmin:
-                zmin = point[2]
-            if point[2] > zmax:
-                zmax = point[2]
-
-        return (xmin, xmax, ymin, ymax, zmin, zmax)
+        return BBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def point_belongs(self, point):
         """
@@ -3089,8 +3098,64 @@ class Shell3D(CompositePrimitive3D):
                     return False
                 
         return True
+    
+    def intersect_shell(self, shell2):
+        """
+        Returns True if the two Shells intersect each other
+        """
+#        (xmin1, xmax1, ymin1, ymax1, zmin1, zmax1) = self.bbox
+#        (xmin2, xmax2, ymin2, ymax2, zmin2, zmax2) = shell2.bbox
+        
+        
+        points1 = []
+        for face in self.faces:
+            for edge in face.contour[0].edges:
+                points1.append(edge.edge_start.primitive)
+                points1.append(edge.edge_end.primitive)
+        points1 = list(set(points1))
+        
+        points2 = []
+        for face in shell2.faces:
+            for edge in face.contour[0].edges:
+                points2.append(edge.edge_start.primitive)
+                points2.append(edge.edge_end.primitive)
+        points2 = list(set(points2))
+        
+        for point1 in points1:
+            if shell2.point_belongs(point1):
+                return True
+            
+        for point2 in points2:
+            if self.point_belongs(point2):
+                return True
+            
+        # Check if any faces are intersecting
+        for face1 in self.faces:
+            for face2 in shell2.faces:
+                intersection_points = face1.face_intersection(face2)
+                if intersection_points is not None:
+                    print('Two faces are intersecting :', face1, face2)
+                    return True
+        return False
 
-
+class BBox:
+    """
+    An axis aligned boundary box
+    """
+    def __init__(self, xmin, xmax, ymin, ymax, zmin, zmax):
+        self.xmin = xmin
+        self.xmax = xmax
+        self.ymin = ymin
+        self.ymax = ymax
+        self.zmin = zmin
+        self.zmax = zmax
+    
+#    def bbox_intersection(self, bbox2):
+#        if 
+#    
+#    def distance_to_bbox(self, bbox2):
+#        for 
+        
 
 class Group:
     def __init__(self, primitives, name):
@@ -3130,13 +3195,15 @@ class Step:
         self.stepfile = stepfile
 
         self.functions, self.all_connections = self.read_functions()
-        self.graph = self.create_graph()
+        
         #### FUNCTION TO DELETE ####
         # faire une fonction : si None dans step_to_volmdlr_primitive alors delete_function
         self.delete_function('FACE_OUTER_BOUND')
         self.delete_function('ORIENTED_EDGE')
 #        self.delete_function('ORIENTED_CLOSED_SHELL')
         ############################
+        
+        self.graph = self.create_graph()
 
     def read_functions(self):
         f = open(self.stepfile, "r", encoding = "ISO-8859-1")
@@ -3289,9 +3356,12 @@ class Step:
 
     def draw_graph(self):
         labels = {}
-        for function in self.functions:
-            labels[function.id] = str(function.id)+' '+function.name
+        for id_nb, function in self.functions.items():
+            labels[id_nb] = str(id_nb)+' '+function.name
+        print(labels)
+        print()
         pos = nx.kamada_kawai_layout(self.graph)
+        print(pos)
         plt.figure()
         nx.draw_networkx_nodes(self.graph, pos)
         nx.draw_networkx_edges(self.graph, pos)
