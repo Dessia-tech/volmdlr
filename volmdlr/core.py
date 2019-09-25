@@ -2673,7 +2673,6 @@ class Edge3D(Primitive3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
-        print(arguments)
         vertex_start = object_dict[arguments[1]]
         vertex_end = object_dict[arguments[2]]
         edge_geom = object_dict[arguments[3]]
@@ -3103,8 +3102,10 @@ class Shell3D(CompositePrimitive3D):
         """
         Returns True if the two Shells intersect each other
         """
-#        (xmin1, xmax1, ymin1, ymax1, zmin1, zmax1) = self.bbox
-#        (xmin2, xmax2, ymin2, ymax2, zmin2, zmax2) = shell2.bbox
+#        bbox1 = self.bbox()
+#        bbox2 = shell2.bbox()
+#        if not bbox1.bbox_intersection(bbox2):
+#            return False
         
         
         points1 = []
@@ -3150,11 +3151,13 @@ class BBox:
         self.zmin = zmin
         self.zmax = zmax
     
-#    def bbox_intersection(self, bbox2):
-#        if 
-#    
+    def bbox_intersection(self, bbox2):
+        return (self.xmin < bbox2.xmax and self.xmax > bbox2.xmin \
+                and self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
+                and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin)
+    
 #    def distance_to_bbox(self, bbox2):
-#        for 
+#        return 
         
 
 class Group:
@@ -3195,7 +3198,7 @@ class Step:
         self.stepfile = stepfile
 
         self.functions, self.all_connections = self.read_functions()
-        
+        self.graph = self.create_graph()
         #### FUNCTION TO DELETE ####
         # faire une fonction : si None dans step_to_volmdlr_primitive alors delete_function
         self.delete_function('FACE_OUTER_BOUND')
@@ -3203,7 +3206,7 @@ class Step:
 #        self.delete_function('ORIENTED_CLOSED_SHELL')
         ############################
         
-        self.graph = self.create_graph()
+        
 
     def read_functions(self):
         f = open(self.stepfile, "r", encoding = "ISO-8859-1")
@@ -3522,7 +3525,7 @@ class VolumeModel:
     def __init__(self, shells, primitives, name=''):
         self.shells = shells
         self.primitives = primitives
-        self.name=name
+        self.name = name
 
     def Volume(self):
         volume=0
