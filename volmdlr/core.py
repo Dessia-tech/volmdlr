@@ -1736,6 +1736,11 @@ class Plane3D:
         self.name = name
         self.normal = self.vectors[0].Cross(self.vectors[1])
         self.normal.Normalize()
+        
+#        # TEST D'ORTHOGONALITE
+#        if self.vectors[0].Dot(self.vectors[1]) > 1e-8:
+#            print(self.vectors[0].Dot(self.vectors[1]))
+#            print('pas orthogonal')
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -1786,13 +1791,13 @@ class Plane3D:
 
     def Translation(self, offset, copy=True):
         new_origin = self.origin.Translation(offset, True)
-        new_vector1 = self.vectors[0].Translation(offset, True)
-        new_vector2 = self.vectors[1].Translation(offset, True)
+#        new_vector1 = self.vectors[0].Translation(offset, True)
+#        new_vector2 = self.vectors[1].Translation(offset, True)
         if copy:
-            return Plane3D(new_origin, new_vector1, new_vector2, self.name)
+            return Plane3D(new_origin, self.vectors[0], self.vectors[1], self.name)
         else:
             self.origin = new_origin
-            self.vectors = (new_vector1, new_vector2)
+#            self.vectors = (new_vector1, new_vector2)
 
 
 class Basis3D(Basis):
@@ -2670,6 +2675,7 @@ class Edge3D(Primitive3D):
         self.edge_start = edge_start
         self.edge_end = edge_end
         self.primitives = primitives
+        self.points = [self.edge_start.primitive, self.edge_end.primitive]
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -2983,11 +2989,27 @@ class Face3D(CompositePrimitive3D):
             if intersection_point is not None:
                 intersection_points.append(intersection_point)
 
-        if intersection_points:
+        if not intersection_points:
             return None
-
+        
         return intersection_points
     
+    def plot(self, ax=None):
+        fig = plt.figure()
+        if ax is None:
+            ax = fig.add_subplot(111, projection='3d')
+
+        x = [p[0] for edge in self.contour[0].edges for p in edge.points]
+        y = [p[1] for edge in self.contour[0].edges for p in edge.points]
+        z = [p[2] for edge in self.contour[0].edges for p in edge.points]
+        ax.scatter(x, y, z)
+        ax.set_xlabel('X Label')
+        ax.set_ylabel('Y Label')
+        ax.set_zlabel('Z Label')
+
+        plt.show()
+        
+        return ax
 
 class Shell3D(CompositePrimitive3D):
     def __init__(self, primitives, faces, name=''):
@@ -3098,7 +3120,7 @@ class Shell3D(CompositePrimitive3D):
                 
         return True
     
-    def intersect_shell(self, shell2):
+    def shell_intersection(self, shell2):
         """
         Returns True if the two Shells intersect each other
         """
@@ -3107,7 +3129,13 @@ class Shell3D(CompositePrimitive3D):
 #        if not bbox1.bbox_intersection(bbox2):
 #            return False
         
+        # Check if boundary boxes intersect
+        bbox1 = self.bbox()
+        bbox2 = shell2.bbox()
+        if not bbox1.bbox_intersection(bbox2):
+            return False
         
+        # Check if any point of the first shell is in the second shell
         points1 = []
         for face in self.faces:
             for edge in face.contour[0].edges:
@@ -3136,6 +3164,10 @@ class Shell3D(CompositePrimitive3D):
                 intersection_points = face1.face_intersection(face2)
                 if intersection_points is not None:
                     print('Two faces are intersecting :', face1, face2)
+#                    print('face1', [p for edge in face1.contour[0].edges for p in edge.points])
+#                    print('face2', [p for edge in face2.contour[0].edges for p in edge.points])
+                    ax = face1.plot()
+                    face2.plot(ax)
                     return True
         return False
 
@@ -3197,14 +3229,15 @@ class BBox:
             self.ymax = new_ymax
             self.zmin = new_zmin
             self.zmax = new_zmax
-            self.points = (Point3D((new_xmin, new_ymin, new_zmin)), \
-                           Point3D((new_xmax, new_ymin, new_zmin)), \
-                           Point3D((new_xmax, new_ymax, new_zmin)), \
-                           Point3D((new_xmin, new_ymax, new_zmin)), \
-                           Point3D((new_xmin, new_ymin, new_zmax)), \
-                           Point3D((new_xmax, new_ymin, new_zmax)), \
-                           Point3D((new_xmax, new_ymax, new_zmax)), \
-                           Point3D((new_xmin, new_ymax, new_zmax)))
+#            self.points = (Point3D((new_xmin, new_ymin, new_zmin)), \
+#                           Point3D((new_xmax, new_ymin, new_zmin)), \
+#                           Point3D((new_xmax, new_ymax, new_zmin)), \
+#                           Point3D((new_xmin, new_ymax, new_zmin)), \
+#                           Point3D((new_xmin, new_ymin, new_zmax)), \
+#                           Point3D((new_xmax, new_ymin, new_zmax)), \
+#                           Point3D((new_xmax, new_ymax, new_zmax)), \
+#                           Point3D((new_xmin, new_ymax, new_zmax)))
+            self.points=(p.Translate(offset, False) for p in self.points)
     
     def bbox_intersection(self, bbox2):
         return (self.xmin < bbox2.xmax and self.xmax > bbox2.xmin \
@@ -3258,8 +3291,6 @@ class BBox:
             dz = 0
         
         return (dx**2 + dy**2 + dz**2)**0.5
-
-            
         
 
 class Group:
@@ -3640,7 +3671,7 @@ class VolumeModel:
         new_shells = [shell.Rotation(center, axis, angle, True) for shell in self.shells]
         new_primitives = [primitive.Rotation(center, axis, angle, True) for primitive in self.primitives]
         if copy:
-            return Shell3D(new_shells, new_primitives, self.name)
+            return VolumeModel(new_shells, new_primitives, self.name)
         else:
             self.primitives = new_primitives
             self.shells = new_shells
@@ -3649,7 +3680,7 @@ class VolumeModel:
         new_shells = [shell.Translation(offset, True) for shell in self.shells]
         new_primitives = [primitive.Translation(offset, True) for primitive in self.primitives]
         if copy:
-            return Shell3D(new_shells, new_primitives, self.name)
+            return VolumeModel(new_shells, new_primitives, self.name)
         else:
             self.primitives = new_primitives
             self.shells = new_shells
