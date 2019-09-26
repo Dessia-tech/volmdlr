@@ -3088,7 +3088,8 @@ class Shell3D(CompositePrimitive3D):
         ray = LineSegment3D(point, Point3D((bbox.xmax+epsilon, point[1], point[2])))
         for face in self.faces:
             intersection_points = face.linesegment_intersection(ray)
-            if not intersection_points:
+            if intersection_points is not None:
+                print(intersection_points)
                 count += 1
         if count%2 == 0:
             return False
@@ -3133,6 +3134,7 @@ class Shell3D(CompositePrimitive3D):
         bbox1 = self.bbox()
         bbox2 = shell2.bbox()
         if not bbox1.bbox_intersection(bbox2):
+            print('intersection of shell BBox')
             return False
         
         # Check if any point of the first shell is in the second shell
@@ -3152,10 +3154,12 @@ class Shell3D(CompositePrimitive3D):
         
         for point1 in points1:
             if shell2.point_belongs(point1):
+                print('point inside shell')
                 return True
             
         for point2 in points2:
             if self.point_belongs(point2):
+                print('point inside shell')
                 return True
             
         # Check if any faces are intersecting
@@ -3170,7 +3174,40 @@ class Shell3D(CompositePrimitive3D):
                     face2.plot(ax)
                     return True
         return False
-
+    
+    def distance_to_shell(self, shell2):
+        
+        if self.shell_intersection(shell2):
+            return 0
+        
+        # Bounding box
+        nb_faces = 1000
+        close_faces = []
+        for face1 in self.faces:
+            for face2 in shell2.faces:
+                bbox1 = face1.bbox()
+                bbox2 = face2.bbox()
+                bbox_distance = bbox1.distance_to_bbox(bbox2)
+                if npy.isclose(bbox_distance, 0):
+                    close_faces.append((face1, face2, bbox_distance))
+                    nb_faces += 1
+                else:
+                    if len(close_faces) < nb_faces:
+                        close_faces.append((face1, face2, bbox_distance))
+                    else:
+                        max_distance = max([d[2] for d in close_faces])
+                        if bbox_distance < max_distance:
+                            index = [d[2] for d in close_faces].index(max_distance)
+                            close_faces[index] = (face1, face2, bbox_distance)
+        
+        distances = []
+        for face1, face2 in [(f[0], f[1]) for f in close_faces]:
+            distance = face1.distance_to_face(face2)
+            distances.append(distance)
+            
+        return min(distances)
+    
+        
 class BBox:
     """
     An axis aligned boundary box
