@@ -3210,7 +3210,28 @@ class BBox:
         return (self.xmin < bbox2.xmax and self.xmax > bbox2.xmin \
                 and self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
                 and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin)
-    
+        
+    def intersection_volume(self, bbox2):
+        if not self.bbox_intersection(bbox2):
+            return 0
+        
+        permute_bbox1 = self
+        permute_bbox2 = bbox2
+        
+        if permute_bbox2.xmin < permute_bbox1.xmin:
+            permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
+        lx = permute_bbox1.xmax - permute_bbox2.xmin
+            
+        if permute_bbox2.ymin < permute_bbox1.ymin:
+            permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
+        ly = permute_bbox1.ymax - permute_bbox2.ymin
+        
+        if permute_bbox2.zmin < permute_bbox1.zmin:
+            permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
+        lz = permute_bbox1.zmax - permute_bbox2.zmin
+        
+        return lx*ly*lz
+        
     def distance_to_bbox(self, bbox2):
         if self.bbox_intersection(bbox2):
             return 0
@@ -3221,22 +3242,18 @@ class BBox:
         if permute_bbox2.xmin < permute_bbox1.xmin:
             permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
         dx = permute_bbox2.xmin - permute_bbox1.xmax
-        print(dx)
+        if dx < 0:
+            dx = 0
         
         if permute_bbox2.ymin < permute_bbox1.ymin:
             permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
         dy = permute_bbox2.ymin - permute_bbox1.ymax
-        print(dy)
+        if dy < 0:
+            dy = 0
         
         if permute_bbox2.zmin < permute_bbox1.zmin:
             permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
         dz = permute_bbox2.zmin - permute_bbox1.zmax
-        print(dz)
-        
-        if dx < 0:
-            dx = 0
-        if dy < 0:
-            dy = 0
         if dz < 0:
             dz = 0
         
