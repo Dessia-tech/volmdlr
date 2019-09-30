@@ -254,9 +254,6 @@ class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
         if not, last line_index can be len(self.points)-2
         """  
         new_linesegment2D_points = []
-        print(self.closed)
-        print(line_indexes)
-        print(len(self.points))
         
 # =============================================================================
 # COMPUTES THE DIRECTIVE VECTORS BETWEEN WHICH THE OFFSET WILL BE DRAWN 
@@ -277,9 +274,6 @@ class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
         elif self.closed and line_indexes[-1] == len(self.points)-2:
             dir_vec_2 = volmdlr.Vector2D((self.points[line_indexes[-1]+1] - self.points[0]))
         else:
-#            if self.closed:
-#                dir_vec_2 = volmdlr.Vector2D((self.points[line_indexes[-1]+1] - self.points[0]))
-#            else:
             dir_vec_2 = volmdlr.Vector2D((self.points[line_indexes[-1]+1] - self.points[line_indexes[-1]+2]))
 
         if dir_vec_1 is None:
@@ -337,7 +331,6 @@ class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
             if dir_vec_2.Dot(normal_vectors[nb+1]) < 0:
                 coeff_vec_2 = - coeff_vec_2
             index_dir_vector = coeff_vec_1 * vec1 + coeff_vec_2 * vec2
-#            index_dir_vector.Normalize()
             index_dot = index_dir_vector.Dot(normal_vectors[nb+1])
             index_distance_dir = offset / index_dot
             new_points[index] = self.points[index] + index_distance_dir * index_dir_vector
@@ -347,7 +340,6 @@ class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
         else:
             new_points[line_indexes[-1]+1] = self.points[line_indexes[-1]+1] + distance_dir2 * dir_vec_2
         
-        print(new_points)
 # =============================================================================
 # CREATE THE NEW POINTS' LIST 
 # ============================================================================= 

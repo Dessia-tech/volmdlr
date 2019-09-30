@@ -6,6 +6,10 @@ Created on Tue Feb 28 14:07:37 2017
 @author: steven
 """
 
+
+#import bezier
+from geomdl import NURBS
+
 import math
 import numpy as npy
 npy.seterr(divide='raise')
@@ -14,6 +18,8 @@ npy.seterr(divide='raise')
 import matplotlib.pyplot as plt
 from matplotlib.patches import Arc, FancyArrow
 from mpl_toolkits.mplot3d import Axes3D
+
+import networkx as nx
 
 from .vmcy import PolygonPointBelongs
 
@@ -29,6 +35,90 @@ import os
 
 import tempfile
 import subprocess
+
+
+
+def standardize_knot_vector(knot_vector):
+    u0 = knot_vector[0]
+    u1 = knot_vector[-1]
+    standard_u_knots = []
+    if u0 != 0 or u1 != 1:
+        x = 1/(u1-u0)
+        y = u0/(u0-u1)
+        for u in knot_vector:
+            standard_u_knots.append(u*x+y)
+        return standard_u_knots
+    else:
+        return knot_vector
+
+
+def find_and_replace(string, find, replace):
+    """
+    Finds a string in a string and replace it
+    """
+#    print('find and replace', string, find, replace)
+    index = string.find(find)
+    if index != -1:
+        try:
+            # verifie si il reste pas des chiffre apres
+            int(string[index+len(find)])
+        except (ValueError, IndexError):
+            # on remplace
+            return string[:index]+replace+string[index+len(find):]
+        else:
+            return string[:index]+find_and_replace(string[index+len(find)], find, replace)
+    return string
+
+def step_split_arguments(function_arg):
+    """
+    Split the arguments of a function that doesn't start with '(' but end with ')'
+    ex: IN: '#123,#124,#125)'
+       OUT: ['#123', '#124', '#125']
+    """
+#        print('IN', function_arg)
+#        function_arg = function_arg[:-1]
+    if len(function_arg) > 0 and function_arg[-1] != ')':
+            function_arg += ')'
+    arguments = []
+    argument = ""
+    parenthesis = 1
+    for char in function_arg:
+        if char == "(":
+            parenthesis += 1
+
+        if char != "," or parenthesis > 1:
+            argument += char
+        else:
+            arguments.append(argument)
+            argument = ""
+
+        if char == ")":
+            parenthesis -= 1
+            if parenthesis == 0:
+                arguments.append(argument[:-1])
+                argument = ""
+                break
+
+#        if len(argument) != 0:
+#            arguments.append(argument[:])
+
+#        print('OUT', arguments)
+    return arguments
+
+def set_to_list(step_set):
+    char_list = step_set.split(',')
+    char_list[0] = char_list[0][1:]
+    char_list[-1] = char_list[-1][:-1]
+    return [elem for elem in char_list]
+
+def delete_node_and_predecessors(graph, node):
+    predecessors = list(graph.predecessors(node))
+    graph.remove_node(node)
+#    print('node removed', node)
+    for predecessor in predecessors:
+        delete_node_and_predecessors(graph, predecessor)
+
+
 
 class Vector:
     """
@@ -71,7 +161,8 @@ class Vector:
             return False
 
     def __hash__(self):
-        return int(1000*npy.sum(self.vector, 3))
+#        return int(1000*npy.sum(self.vector, 3))
+        return int(1000*npy.sum(self.vector, 0))
 
     def Normalize(self):
         """
@@ -82,7 +173,7 @@ class Vector:
             raise ZeroDivisionError
 
         self.vector /= n
-        
+
     def copy(self):
         return self.__class__(self.vector)
 
@@ -92,10 +183,11 @@ class Vector:
 
 
 class Vector2D(Vector):
-    def __init__(self, vector):
+    def __init__(self, vector, name=''):
         self.vector = npy.zeros(2)
         self.vector[0] = vector[0]
         self.vector[1] = vector[1]
+        self.name = name
 
     def __add__(self, other_vector):
         return Vector2D((self.vector[0] + other_vector.vector[0],
@@ -168,7 +260,7 @@ class Vector2D(Vector):
         n = Vector2D((-self.vector[1], self.vector[0]))
         if unit:
             n.Normalize()
-        return n   
+        return n
 
     def Draw(self, origin=(0, 0), ax=None, color='k', line=False):
         if ax is None:
@@ -190,7 +282,7 @@ class Vector2D(Vector):
             p3 = p1 - 3*u
             p4 = p2 + 4*u
             ax.plot([p3[0], p4[0]], [p3[1], p4[1]], style, linestyle=linestyle)
-        
+
 
     @classmethod
     def DictToObject(cls, dict_):
@@ -344,7 +436,7 @@ class Basis2D(Basis):
 #    def InverseTransfertMatrix(self):
 #        # Todo: cache for performance
 #        return inv(self.TransfertMatrix())
-    
+
     def InverseTransfertMatrix(self):
         det = self.u[0]*self.v[1] - self.v[0]*self.u[1]
         if not math.isclose(det, 0, abs_tol=1e-10):
@@ -759,32 +851,32 @@ class Line2D(Primitive2D, Line):
             ax.set_aspect('equal')
         else:
             fig = None
-            
+
         p1, p2 = self.points
         u = p2 - p1
-        plt.plot([p1[0], p2[0]], [p1[1], p2[1]], style)        
+        plt.plot([p1[0], p2[0]], [p1[1], p2[1]], style)
         p3 = p1 - 3*u
         p4 = p2 + 4*u
-        ax.plot([p3[0], p4[0]], [p3[1], p4[1]], style, linestyle = linestyle)        
+        ax.plot([p3[0], p4[0]], [p3[1], p4[1]], style, linestyle = linestyle)
         return []
 
     def CreateTangentCircle(self, point, other_line):
         """
-        Computes the two circles that are tangent to 2 lines and intersect 
+        Computes the two circles that are tangent to 2 lines and intersect
         a point located on one of the two lines.
         """
-        
+
         # point will be called I(x_I, y_I)
         # self will be (AB)
         # line will be (CD)
-        
+
         if math.isclose(self.PointDistance(point), 0, abs_tol=1e-10):
             I = Vector2D((point[0], point[1]))
             A = Vector2D((self.points[0][0], self.points[0][1]))
             B = Vector2D((self.points[1][0], self.points[1][1]))
             C = Vector2D((other_line.points[0][0], other_line.points[0][1]))
             D = Vector2D((other_line.points[1][0], other_line.points[1][1]))
-        
+
         elif math.isclose(other_line.PointDistance(point), 0, abs_tol=1e-10):
             I = Vector2D((point[0], point[1]))
             C = Vector2D((self.points[0][0], self.points[0][1]))
@@ -793,49 +885,50 @@ class Line2D(Primitive2D, Line):
             B = Vector2D((other_line.points[1][0], other_line.points[1][1]))
         else:
             raise AttributeError("The point isn't on any of the two lines")
-        
+
         # CHANGEMENT DE REPAIRE
         new_u = Vector2D((B-A))
         new_u.Normalize()
         new_v = new_u.NormalVector(unit=True)
         new_basis = Frame2D(I, new_u, new_v)
-        
+
         new_A = new_basis.NewCoordinates(A)
         new_B = new_basis.NewCoordinates(B)
         new_C = new_basis.NewCoordinates(C)
         new_D = new_basis.NewCoordinates(D)
-        
+
 # =============================================================================
 # LES SEGMENTS DECRIVENT UNE SEULE ET MEME DROITE
-#   => AUCUNE SOLUTION   
+#   => AUCUNE SOLUTION
 # =============================================================================
         if new_C[1] == 0 and new_D[1] == 0:
-    
+
             return None, None
-        
+
 # =============================================================================
 # LES SEGMENTS SONT PARALLELES
 #   => 1 SOLUTION
 # =============================================================================
         elif math.isclose(self.DirectionVector(unit=True).Dot(other_line.NormalVector(unit=True)), 0, abs_tol=1e-06):
-    
+
             segments_distance = abs(new_C[1] - new_A[1])
             r = segments_distance / 2
             new_circle_center = Point2D((0, npy.sign(new_C[1] - new_A[1])*r))
             circle_center = new_basis.OldCoordinates(new_circle_center)
             circle = Circle2D(circle_center, r)
-            
+
             return circle, None
+
 # =============================================================================
 # LES SEGMENTS SONT PERPENDICULAIRES
 #   => 2 SOLUTIONS
 # =============================================================================
         elif math.isclose(self.DirectionVector(unit=True).Dot(other_line.DirectionVector(unit=True)), 0, abs_tol=1e-06):
-    
+
             line_AB = Line2D(Point2D(new_A), Point2D(new_B))
             line_CD = Line2D(Point2D(new_C), Point2D(new_D))
             new_pt_K = Point2D.LinesIntersection(line_AB ,line_CD)
-            
+
             r = abs(new_pt_K[0])
             new_circle_center1 = Point2D((0, r))
             new_circle_center2 = Point2D((0, -r))
@@ -843,64 +936,67 @@ class Line2D(Primitive2D, Line):
             circle_center2 = new_basis.OldCoordinates(new_circle_center2)
             circle1 = Circle2D(circle_center1, r)
             circle2 = Circle2D(circle_center2, r)
-            
+
             return circle1, circle2
-        
+
 # =============================================================================
 # LES SEGMENTS SONT QUELCONQUES
 #   => 2 SOLUTIONS
 # =============================================================================
         else:
-    
+
             line_AB = Line2D(Point2D(new_A), Point2D(new_B))
             line_CD = Line2D(Point2D(new_C), Point2D(new_D))
             new_pt_K = Point2D.LinesIntersection(line_AB ,line_CD)
             pt_K = Point2D(new_basis.OldCoordinates(new_pt_K))
-    
+
+            if pt_K == I:
+                return None, None
+
             # CHANGEMENT DE REPERE:
             new_u2 = Vector2D(pt_K-I)
             new_u2.Normalize()
             new_v2 = new_u2.NormalVector(unit=True)
             new_basis2 = Frame2D(I, new_u2, new_v2)
-            
+
             new_A = new_basis2.NewCoordinates(A)
             new_B = new_basis2.NewCoordinates(B)
             new_C = new_basis2.NewCoordinates(C)
             new_D = new_basis2.NewCoordinates(D)
             new_pt_K = new_basis2.NewCoordinates(pt_K)
-    
+
             teta1 = math.atan2(new_C[1], new_C[0] - new_pt_K[0])
             teta2 = math.atan2(new_D[1], new_D[0] - new_pt_K[0])
-            
+
             if teta1 < 0:
                 teta1 += math.pi
             if teta2 < 0:
                 teta2 += math.pi
-                
+
             if not math.isclose(teta1, teta2, abs_tol=1e-08):
                 if math.isclose(teta1, math.pi, abs_tol=1e-08) or math.isclose(teta1, 0., abs_tol=1e-08):
-                    teta = teta2 
+                    teta = teta2
                 elif math.isclose(teta2, math.pi, abs_tol=1e-08) or math.isclose(teta2, 0., abs_tol=1e-08):
                     teta = teta1
             else:
                 teta = teta1
-                
+
             r1 = new_pt_K[0] * math.sin(teta) / (1 + math.cos(teta))
             r2 = new_pt_K[0] * math.sin(teta) / (1 - math.cos(teta))
-            
+
             new_circle_center1 = Point2D((0, -r1))
             new_circle_center2 = Point2D((0, r2))
-            
+
             circle_center1 = new_basis2.OldCoordinates(new_circle_center1)
             circle_center2 = new_basis2.OldCoordinates(new_circle_center2)
-            
+
             if new_basis.NewCoordinates(circle_center1)[1] > 0:
                 circle1 = Circle2D(circle_center1, r1)
                 circle2 = Circle2D(circle_center2, r2)
             else:
                 circle1 = Circle2D(circle_center2, r2)
                 circle2 = Circle2D(circle_center1, r1)
-            
+
             return circle1, circle2
 
 class LineSegment2D(Line2D):
@@ -952,7 +1048,7 @@ class LineSegment2D(Line2D):
             ax.set_aspect('equal')
         else:
             fig = None
-            
+
         p1, p2 = self.points
         if arrow:
             ax.plot([p1[0], p2[0]], [p1[1], p2[1]], style)
@@ -1474,16 +1570,19 @@ class Vector3D(Vector):
                 "description" : "Vector array"
                 }
             }
-        }
-                
-    def __init__(self, vector):
-        self.vector=npy.zeros(3)
+        }    
+
+    def __init__(self, vector, name=''):
+
+        self.vector = npy.zeros(3)
         self.vector[0] = vector[0]
         self.vector[1] = vector[1]
         self.vector[2] = vector[2]
-        
-        
+        self.name = name
+
     def __add__(self, other_vector):
+        print(self)
+        print(other_vector)
         return Vector3D((self.vector[0] + other_vector.vector[0],
                                self.vector[1] + other_vector.vector[1],
                                self.vector[2] + other_vector.vector[2]))
@@ -1563,6 +1662,20 @@ class Vector3D(Vector):
     def DictToObject(cls, dict_):
         return cls(dict_['vector'])
 
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+
+#        if arguments[1][0] == "#":
+        if type(arguments[1]) is int:
+        # VECTOR
+            return cls(object_dict[arguments[1]], arguments[0][1:-1])
+        else:
+        # DIRECTION
+            return cls([float(i) for i in arguments[1][1:-1].split(",")],
+                        arguments[0][1:-1])
+
+
+
 x3D = Vector3D((1, 0, 0))
 y3D = Vector3D((0, 1, 0))
 z3D = Vector3D((0, 0, 1))
@@ -1590,7 +1703,7 @@ class Point3D(Vector3D):
     def __init__(self, vector, name=''):
         Vector3D.__init__(self, vector)
         self.name=name
-        
+
     def __add__(self, other_vector):
         return Point3D((self.vector[0] + other_vector.vector[0],
                                self.vector[1] + other_vector.vector[1],
@@ -1646,7 +1759,83 @@ class Point3D(Vector3D):
     def PointDistance(self, point2):
         return (self-point2).Norm()
 
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        return cls([float(i) for i in arguments[1][1:-1].split(",")],
+                    arguments[0][1:-1])
+
 o3D = Point3D((0, 0, 0))
+
+
+class Plane3D:
+    def __init__(self, origin, vector1, vector2, name=''):
+        self.origin = origin
+        self.vectors = [vector1, vector2]
+        self.name = name
+        self.normal = self.vectors[0].Cross(self.vectors[1])
+        self.normal.Normalize()
+        
+#        # TEST D'ORTHOGONALITE
+#        if self.vectors[0].Dot(self.vectors[1]) > 1e-8:
+#            print(self.vectors[0].Dot(self.vectors[1]))
+#            print('pas orthogonal')
+
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        frame3d = object_dict[arguments[1]]
+        origin = frame3d.origin
+        vector1 = frame3d.u
+        vector2 = frame3d.v
+
+        # TRANSFORMER EN 3D TOUS LES OBJETS LIES AU PLAN
+
+        return cls(origin, vector1, vector2, arguments[0][1:-1])
+
+    def point_on_plane(self, point):
+        projected_pt = point.PlaneProjection3D(self.origin, self.vectors[0], self.vectors[1])
+        if npy.isclose(point[0], projected_pt[0], atol=1e-8) \
+        and npy.isclose(point[1], projected_pt[1], atol=1e-8) \
+        and npy.isclose(point[2], projected_pt[2], atol=1e-8):
+            return True
+        return False
+
+    def line_intersection(self, line):
+        u = line.points[1] - line.points[0]
+        w = line.points[0] - self.origin
+        if npy.isclose(self.normal.Dot(u), 0):
+            return None
+        intersection_abscissea = - self.normal.Dot(w) / self.normal.Dot(u)
+        return line.points[0] + intersection_abscissea * u
+
+    def linesegment_intersection(self, linesegment):
+        u = linesegment.points[1] - linesegment.points[0]
+        w = linesegment.points[0] - self.origin
+        if npy.isclose(self.normal.Dot(u), 0):
+            return None
+        intersection_abscissea = - self.normal.Dot(w) / self.normal.Dot(u)
+        if intersection_abscissea < 0 or intersection_abscissea > 1:
+            return None
+        return linesegment.points[0] + intersection_abscissea * u
+
+    def Rotation(self, center, axis, angle, copy=True):
+        new_origin = self.origin.Rotation(center, axis, angle, True)
+        new_vector1 = self.vectors[0].Rotation(center, axis, angle, True)
+        new_vector2 = self.vectors[1].Rotation(center, axis, angle, True)
+        if copy:
+            return Plane3D(new_origin, new_vector1, new_vector2, self.name)
+        else:
+            self.origin = new_origin
+            self.vectors = (new_vector1, new_vector2)
+
+    def Translation(self, offset, copy=True):
+        new_origin = self.origin.Translation(offset, True)
+#        new_vector1 = self.vectors[0].Translation(offset, True)
+#        new_vector2 = self.vectors[1].Translation(offset, True)
+        if copy:
+            return Plane3D(new_origin, self.vectors[0], self.vectors[1], self.name)
+        else:
+            self.origin = new_origin
+#            self.vectors = (new_vector1, new_vector2)
 
 
 class Basis3D(Basis):
@@ -1678,10 +1867,11 @@ class Basis3D(Basis):
         }
 
     # TODO: create a Basis and Frame class to mutualize between 2D and 2D
-    def __init__(self, u, v, w):
+    def __init__(self, u, v, w, name=''):
         self.u = u
         self.v = v
         self.w = w
+        self.name = name
 
     def __repr__(self):
         return '{}: U={}, V={}, W={}'.format(self.__class__.__name__, *self.vectors)
@@ -1699,10 +1889,21 @@ class Basis3D(Basis):
         new_w = self.w.Rotation(center, axis, angle, True)
 
         if copy:
-            return Basis3D(new_u, new_v, new_w)
+            return Basis3D(new_u, new_v, new_w, self.name)
         self.u = new_u
         self.v = new_v
         self.w = new_w
+
+    def Translation(self, offset, copy=True):
+        new_u = self.u.Translation(offset, True)
+        new_v = self.v.Translation(offset, True)
+        new_w = self.w.Translation(offset, True)
+        if copy:
+            return Basis3D(new_u, new_v, new_w, self.name)
+        else:
+            self.u = new_u
+            self.v = new_v
+            self.w = new_w
 
     def EulerRotation(self, angles, copy=True):
         psi, theta, phi = angles
@@ -1738,7 +1939,7 @@ class Basis3D(Basis):
 #    def InverseTransfertMatrix(self):
 #        # Todo: cache for performance
 #        return inv(self.TransfertMatrix())
-            
+
     def InverseTransfertMatrix(self):
         det = self.u[0]*self.v[1]*self.w[2] + self.v[0]*self.w[1]*self.u[2] \
             + self.w[0]*self.u[1]*self.v[2] - self.w[0]*self.v[1]*self.u[2] \
@@ -1787,9 +1988,10 @@ class Frame3D(Basis3D):
     :param v: second vector of the basis
     :param w: third vector of the basis
     """
-    def __init__(self, origin, u, v, w):
+    def __init__(self, origin, u, v, w, name=''):
         self.origin = origin
         Basis3D.__init__(self, u, v, w)
+        self.name = name
 
     def __repr__(self):
         return '{}: O= {} U={}, V={}, W={}'.format(self.__class__.__name__, self.origin, self.u, self.v, self.w)
@@ -1806,7 +2008,16 @@ class Frame3D(Basis3D):
     def Rotation(self, axis, angle, copy=True):
         new_base = Basis3D.Rotation(self, axis, angle, True)
         if copy:
-            new_frame = Frame3D(self.origin, new_base.u, new_base.v, new_base.w)
+            new_frame = Frame3D(self.origin, new_base.u, new_base.v, new_base.w, self.name)
+            return new_frame
+        self.u = new_base.u
+        self.v = new_base.v
+        self.w = new_base.w
+
+    def Translation(self, offset, copy=True):
+        new_base = Basis3D.Translation(self, offset, True)
+        if copy:
+            new_frame = Frame3D(self.origin, new_base.u, new_base.v, new_base.w, self.name)
             return new_frame
         self.u = new_base.u
         self.v = new_base.v
@@ -1814,6 +2025,24 @@ class Frame3D(Basis3D):
 
     def Copy(self):
         return Frame3D(self.origin, self.u, self.v, self.w)
+
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        origin = object_dict[arguments[1]]
+        if arguments[2] == '$':
+            u = None
+        else:
+            u = object_dict[arguments[2]]
+        if arguments[3] == '$':
+            v = None
+        else:
+            v = object_dict[arguments[3]]
+        if u is None or v is None:
+            w = None
+        else:
+            w = u.Cross(v)
+        return cls(origin, u, v, w, arguments[0][1:-1])
+
 
 oxyz = Frame3D(o3D, x3D, y3D, z3D)
 
@@ -1861,6 +2090,28 @@ class Line3D(Primitive3D, Line):
         p2 = other_line.points[0] + t*v
         return p1, p2
 
+    def Rotation(self, center, axis, angle, copy=False):
+        if copy:
+            return Line3D(*[p.Rotation(center, axis, angle, copy=True) for p in self.points])
+        else:
+            for p in self.points:
+                p.Rotation(center, axis, angle, copy=False)
+
+    def Translation(self, offset, copy=False):
+        if copy:
+            return Line3D(*[p.Translation(offset, copy=True) for p in self.points])
+        else:
+            for p in self.points:
+                p.Translation(offset, copy=False)
+
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        point1 = object_dict[arguments[1]]
+        direction = object_dict[arguments[2]]
+        point2 = point1 + direction
+        return cls(point1, point2, arguments[0][1:-1])
+
+
 class LineSegment3D(Line3D):
     """
     Define a line segment limited by two points
@@ -1874,6 +2125,20 @@ class LineSegment3D(Line3D):
     def PlaneProjection2D(self, x, y):
         return LineSegment2D(self.points[0].PlaneProjection2D(x, y),
                              self.points[1].PlaneProjection2D(x, y))
+
+    def Rotation(self, center, axis, angle, copy=False):
+        if copy:
+            return LineSegment3D(*[p.Rotation(center, axis, angle, copy=True) for p in self.points])
+        else:
+            for p in self.points:
+                p.Rotation(center, axis, angle, copy=False)
+
+    def Translation(self, offset, copy=False):
+        if copy:
+            return LineSegment3D(*[p.Translation(offset, copy=True) for p in self.points])
+        else:
+            for p in self.points:
+                p.Translation(offset, copy=False)
 
     def MPLPlot(self, ax):
         x=[p.vector[0] for p in self.points]
@@ -1900,6 +2165,104 @@ class LineSegment3D(Line3D):
         return Line3D(*self.points)
 
 
+class BSplineCurve3D(Primitive3D):
+    def __init__(self, degree, control_points, knot_multiplicities, knots, weights=None, periodic=False, name=''):
+        Primitive3D.__init__(self, name)
+        self.control_points = control_points
+        self.degree = degree
+        knots = standardize_knot_vector(knots)
+        self.knots = knots
+        self.knot_multiplicities = knot_multiplicities
+        self.weights = weights
+        self.periodic = periodic
+        self.name = name
+
+        curve = NURBS.Curve()
+        curve.degree = degree
+        if weights is None:
+            P = [(control_points[i][0], control_points[i][1], control_points[i][2]) for i in range(len(control_points))]
+            curve.ctrlpts = P
+        else:
+            Pw = [(control_points[i][0]*weights[i], control_points[i][1]*weights[i], control_points[i][2]*weights[i], weights[i]) for i in range(len(control_points))]
+            curve.ctrlptsw = Pw
+        knot_vector = []
+        for i, knot in enumerate(knots):
+            knot_vector.extend([knot]*knot_multiplicities[i])
+        curve.knotvector = knot_vector
+        curve.delta = 0.01
+        curve_points = curve.evalpts
+
+        self.curve = curve
+        self.points = [Point3D((p[0], p[1], p[2])) for p in curve_points]
+
+    def FreeCADExport(self, ip, ndigits=3):
+        name = 'primitive{}'.format(ip)
+        points = '['
+        for i in range(len(self.control_points)):
+            point = 'fc.Vector({},{},{}),'.format(self.control_points[i][0],self.control_points[i][1],self.control_points[i][2])
+            points += point
+        points = points[:-1]
+        points += ']'
+        # !!! : A QUOI SERT LE DERNIER ARG DE BSplineCurve (False)?
+        # LA MULTIPLICITE EN 3e ARG ET LES KNOTS EN 2e ARG ?
+        return '{} = Part.BSplineCurve({},{},{},{},{},{},{})\n'.format(name,points,self.knot_multiplicities,self.knots,self.periodic,self.degree,self.weights,False)
+
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        name = arguments[0][1:-1]
+        degree = int(arguments[1])
+        points = [object_dict[int(i[1:])] for i in arguments[2]]
+        curve_form = arguments[3]
+        if arguments[4] == '.F.':
+            closed_curve = False
+        elif arguments[4] == '.T.':
+            closed_curve = True
+        else:
+            raise ValueError
+        self_intersect = arguments[5]
+        knot_multiplicities = [int(i) for i in arguments[6][1:-1].split(",")]
+        knots = [float(i) for i in arguments[7][1:-1].split(",")]
+        knot_spec = arguments[8]
+        knot_vector = []
+        for i, knot in enumerate(knots):
+            knot_vector.extend([knot]*knot_multiplicities[i])
+
+        if 9 in range(len(arguments)):
+            weight_data = [float(i) for i in arguments[9][1:-1].split(",")]
+        else:
+            weight_data = None
+
+        # FORCING CLOSED_CURVE = FALSE:
+        closed_curve = False
+        return cls(degree, points, knot_multiplicities, knots, weight_data, closed_curve, name)
+
+    def point_distance(self, pt1):
+        distances = []
+        for point in self.points:
+#            vmpt = Point3D((point[1], point[2], point[3]))
+            distances.append(pt1.PointDistance(point))
+        return min(distances)
+
+    def Rotation(self, center, axis, angle, copy=False):
+        new_control_points = [p.Rotation(center, axis, angle, True) for p in self.control_points]
+        new_BSplineCurve3D = BSplineCurve3D(self.degree, new_control_points, self.knot_multiplicities, self.knots, self.weights, self.periodic, self.name)
+        if copy:
+            return new_BSplineCurve3D
+        else:
+            self.control_points = new_control_points
+            self.curve = new_BSplineCurve3D.curve
+            self.points = new_BSplineCurve3D.points
+
+    def Translation(self, offset, copy=False):
+        new_control_points = [p.Translation(offset, True) for p in self.control_points]
+        new_BSplineCurve3D = BSplineCurve3D(self.degree, new_control_points, self.knot_multiplicities, self.knots, self.weights, self.periodic, self.name)
+        if copy:
+            return new_BSplineCurve3D
+        else:
+            self.control_points = new_control_points
+            self.curve = new_BSplineCurve3D.curve
+            self.points = new_BSplineCurve3D.points
+
 class Circle3D(Primitive3D):
     def __init__(self, center, radius, normal, name=''):
         Primitive3D.__init__(self, name)
@@ -1910,11 +2273,87 @@ class Circle3D(Primitive3D):
     def Length(self):
         return 2* math.pi * self.radius
 
-
-    def FreeCADExport(self,name,ndigits=3):
+    def FreeCADExport(self,ip,ndigits=3):
+        name = 'primitive{}'.format(ip)
         xc,yc,zc = npy.round(1000*self.center.vector,ndigits)
         xn,yn,zn = npy.round(self.normal.vector,ndigits)
         return '{} = Part.Circle(fc.Vector({},{},{}),fc.Vector({},{},{}),{})\n'.format(name,xc,yc,zc,xn,yn,zn,1000*self.radius)
+
+    def Rotation(self, rot_center, axis, angle, copy=False):
+        new_center = self.center.Rotation(rot_center, axis, angle, True)
+        new_normal = self.normal.Rotation(rot_center, axis, angle, True)
+        if copy:
+            return Circle3D(new_center, self.radius, new_normal, self.name)
+        else:
+            self.center = new_center
+            self.normal = new_normal
+
+    def Translation(self, offset, copy=False):
+        new_center = self.center.Translation(offset, True)
+        new_normal = self.normal.Translation(offset, True)
+        if copy:
+            return Circle3D(new_center, self.radius, new_normal, self.name)
+        else:
+            self.center = new_center
+            self.normal = new_normal
+
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        center = object_dict[arguments[1]].origin
+        radius = float(arguments[2])
+        normal = object_dict[arguments[1]].w
+        return cls(center, radius, normal, arguments[0][1:-1])
+
+
+class Ellipse3D(Primitive3D):
+    def __init__(self, major_axis, minor_axis, center, normal, major_dir, name=''):
+        Primitive3D.__init__(self, name)
+        self.major_axis = major_axis
+        self.minor_axis = minor_axis
+        self.center = center
+        self.normal = normal
+        major_dir.Normalize()
+        self.major_dir = major_dir
+
+    def FreeCADExport(self, ip, ndigits=3):
+        name = 'primitive{}'.format(ip)
+        xc, yc, zc = npy.round(1000*self.center.vector, ndigits)
+        major_vector = self.center + self.major_axis/2 * self.major_dir
+        xmaj, ymaj, zmaj = npy.round(1000*major_vector.vector, ndigits)
+        minor_vector = self.center + self.minor_axis/2 * self.normal.Cross(self.major_dir)
+        xmin, ymin, zmin = npy.round(1000*minor_vector.vector, ndigits)
+        return '{} = Part.Ellipse(fc.Vector({},{},{}), fc.Vector({},{},{}), fc.Vector({},{},{}))\n'.format(name,xmaj,ymaj,zmaj,xmin,ymin,zmin,xc,yc,zc)
+
+    def Rotation(self, rot_center, axis, angle, copy=False):
+        new_center = self.center.Rotation(rot_center, axis, angle, True)
+        new_normal = self.normal.Rotation(rot_center, axis, angle, True)
+        new_major_dir = self.major_dir.Rotation(rot_center, axis, angle, True)
+        if copy:
+            return Ellipse3D(self.major_axis, self.minor_axis, new_center, new_normal, new_major_dir, self.name)
+        else:
+            self.center = new_center
+            self.normal = new_normal
+            self.major_dir = new_major_dir
+
+    def Translation(self, offset, copy=False):
+        new_center = self.center.Translation(offset, True)
+        new_normal = self.normal.Translation(offset, True)
+        new_major_dir = self.major_dir.Translation(offset, True)
+        if copy:
+            return Ellipse3D(self.major_axis, self.minor_axis, new_center, new_normal, new_major_dir, self.name)
+        else:
+            self.center = new_center
+            self.normal = new_normal
+            self.major_dir = new_major_dir
+
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        center = object_dict[arguments[1]].origin
+        normal = object_dict[arguments[1]].w
+        major_dir = object_dict[arguments[1]].u
+        major_axis = float(arguments[2])
+        minor_axis = float(arguments[3])
+        return cls(major_axis, minor_axis, center, normal, major_dir, arguments[0][1:-1])
 
 
 class Arc3D(Primitive3D):
@@ -2035,6 +2474,142 @@ class Arc3D(Primitive3D):
         return '{} = Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,xs,ys,zs,xm,ym,zm,xe,ye,ze)
 
 
+class BSplineSurface3D(Primitive3D):
+    def __init__(self, degree_u, degree_v, control_points, nb_u, nb_v, u_multiplicities, v_multiplicities, u_knots, v_knots, weights=None, name=''):
+        Primitive3D.__init__(self, name)
+        self.control_points = control_points
+        self.degree_u = degree_u
+        self.degree_v = degree_v
+        self.nb_u = nb_u
+        self.nb_v = nb_v
+        u_knots = standardize_knot_vector(u_knots)
+        v_knots = standardize_knot_vector(v_knots)
+        self.u_knots = u_knots
+        self.v_knots = v_knots
+        self.u_multiplicities = u_multiplicities
+        self.v_multiplicities = v_multiplicities
+        self.weights = weights
+
+
+        self.control_points_table = []
+        points_row = []
+        i = 1
+        for pt in control_points:
+            points_row.append(pt)
+            if i == nb_v:
+                self.control_points_table.append(points_row)
+                points_row = []
+                i = 1
+            else:
+                i += 1
+        # TRANSPOSE THE LIST OF LISTS
+#        self.control_points_table = list(map(list, zip(*self.control_points_table)))
+
+        surface = NURBS.Surface()
+        surface.degree_u = degree_u
+        surface.degree_v = degree_v
+        if weights is None:
+            P = [(control_points[i][0], control_points[i][1], control_points[i][2]) for i in range(len(control_points))]
+            surface.set_ctrlpts(P, nb_u, nb_v)
+        else:
+            Pw = [(control_points[i][0]*weights[i], control_points[i][1]*weights[i], control_points[i][2]*weights[i], weights[i]) for i in range(len(control_points))]
+            surface.set_ctrlpts(Pw, nb_u, nb_v)
+        knot_vector_u = []
+        for i, u_knot in enumerate(u_knots):
+            knot_vector_u.extend([u_knot]*u_multiplicities[i])
+        knot_vector_v = []
+        for i, v_knot in enumerate(v_knots):
+            knot_vector_v.extend([v_knot]*v_multiplicities[i])
+        surface.knotvector_u = knot_vector_u
+        surface.knotvector_v = knot_vector_v
+        surface.delta = 0.01
+        surface_points = surface.evalpts
+
+        self.surface = surface
+        self.points = [Point3D((p[0], p[1], p[2])) for p in surface_points]
+
+
+    def FreeCADExport(self, ip, ndigits=3):
+        name = 'primitive{}'.format(ip)
+        script = ""
+        points = '['
+        for i, pts_row in enumerate(self.control_points_table):
+            pts = '['
+            for j, pt in enumerate(pts_row):
+                point = 'fc.Vector({},{},{}),'.format(pt[0],pt[1],pt[2])
+                pts += point
+            pts = pts[:-1] + '],'
+            points += pts
+        points = points[:-1] + ']'
+
+        script += '{} = Part.BSplineSurface()\n'.format(name)
+        if self.weights is None:
+            script += '{}.buildFromPolesMultsKnots({},{},{},udegree={},vdegree={},uknots={},vknots={})\n'.format(name,points,self.u_multiplicities,self.v_multiplicities,self.degree_u,self.degree_v,self.u_knots,self.v_knots)
+        else:
+            script += '{}.buildFromPolesMultsKnots({},{},{},udegree={},vdegree={},uknots={},vknots={},weights={})\n'.format(name,points,self.u_multiplicities,self.v_multiplicities,self.degree_u,self.degree_v,self.u_knots,self.v_knots,self.weights)
+
+        return script
+
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        name = arguments[0][1:-1]
+        degree_u = int(arguments[1])
+        degree_v = int(arguments[2])
+        points_sets = arguments[3][1:-1].split("),")
+        points_sets = [elem+")" for elem in points_sets[:-1]]+[points_sets[-1]]
+        control_points = []
+        for points_set in points_sets:
+            points = [object_dict[int(i[1:])] for i in points_set[1:-1].split(",")]
+            nb_v = len(points)
+            control_points.extend(points)
+        nb_u = int(len(control_points) / nb_v)
+        surface_form = arguments[4]
+        if arguments[5] == '.F.':
+            u_closed = False
+        elif arguments[5] == '.T.':
+            u_closed = True
+        else:
+            raise ValueError
+        if arguments[6] == '.F.':
+            v_closed = False
+        elif arguments[6] == '.T.':
+            v_closed = True
+        else:
+            raise ValueError
+        self_intersect = arguments[7]
+        u_multiplicities = [int(i) for i in arguments[8][1:-1].split(",")]
+        v_multiplicities = [int(i) for i in arguments[9][1:-1].split(",")]
+        u_knots = [float(i) for i in arguments[10][1:-1].split(",")]
+        v_knots = [float(i) for i in arguments[11][1:-1].split(",")]
+        knot_spec = arguments[12]
+
+        if 13 in range(len(arguments)):
+            weight_data = [float(i) for i in arguments[13][1:-1].replace("(", "").replace(")", "").split(",")]
+        else:
+            weight_data = None
+
+        return cls(degree_u, degree_v, control_points, nb_u, nb_v, u_multiplicities, v_multiplicities, u_knots, v_knots, weight_data, name)
+
+    def Rotation(self, center, axis, angle, copy=False):
+        new_control_points = [p.Rotation(center, axis, angle, True) for p in self.control_points]
+        new_BSplineSurface3D = BSplineSurface3D(self.degree_u, self.degree_v, new_control_points, self.nb_u, self.nb_v, self.u_multiplicities, self.v_multiplicities, self.u_knots, self.v_knots, self.weights, self.name)
+        if copy:
+            return new_BSplineSurface3D
+        else:
+            self.control_points = new_control_points
+            self.curve = new_BSplineSurface3D.curve
+            self.points = new_BSplineSurface3D.points
+
+    def Translation(self, offset, copy=False):
+        new_control_points = [p.Translation(offset, True) for p in self.control_points]
+        new_BSplineSurface3D = BSplineSurface3D(self.degree_u, self.degree_v, new_control_points, self.nb_u, self.nb_v, self.u_multiplicities, self.v_multiplicities, self.u_knots, self.v_knots, self.weights, self.name)
+        if copy:
+            return new_BSplineSurface3D
+        else:
+            self.control_points = new_control_points
+            self.curve = new_BSplineSurface3D.curve
+            self.points = new_BSplineSurface3D.points
+
 class CompositePrimitive3D(Primitive3D):
     """
     A collection of simple primitives3D
@@ -2101,8 +2676,6 @@ class Wire3D(CompositePrimitive3D):
         raise ValueError
 
     # TODO: method to check if it is a wire
-
-
     def FreeCADExport(self, ip):
         name='primitive'+str(ip)
 
@@ -2114,11 +2687,83 @@ class Wire3D(CompositePrimitive3D):
 
         return s
 
+
+class Vertex3D(Primitive3D):
+    def __init__(self, primitive, name=''):
+        Primitive3D.__init__(primitive, name)
+        self.primitive = primitive
+        self.name = name
+
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        return cls(object_dict[arguments[1]], arguments[0][1:-1])
+
+    def Rotation(self, center, axis, angle, copy=False):
+        new_primitive = self.primitive.Rotation(center, axis, angle, True)
+        if copy:
+            return Vertex3D(new_primitive, self.name)
+        else:
+            self.primitive = new_primitive
+
+    def Translation(self, offset, copy=False):
+        new_primitive = self.primitive.Translation(offset, True)
+        if copy:
+            return Vertex3D(new_primitive, self.name)
+        else:
+            self.primitive = new_primitive
+
+class Edge3D(Primitive3D):
+    def __init__(self, primitives, edge_start, edge_end, name=''):
+        Primitive3D.__init__(primitives, name)
+        self.edge_start = edge_start
+        self.edge_end = edge_end
+        self.primitives = primitives
+        self.points = [self.edge_start.primitive, self.edge_end.primitive]
+
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        vertex_start = object_dict[arguments[1]]
+        vertex_end = object_dict[arguments[2]]
+        edge_geom = object_dict[arguments[3]]
+        if arguments[4] == '.T.':
+            orientation = True
+        elif arguments[4] == '.F.':
+            orientation = False
+        else:
+            raise ValueError
+        return cls(edge_geom, vertex_start, vertex_end, arguments[0][1:-1])
+
+    def Rotation(self, center, axis, angle, copy=False):
+        new_edge_start = self.edge_start.Rotation(center, axis, angle, True)
+        new_edge_end = self.edge_end.Rotation(center, axis, angle, True)
+        new_primitives = self.primitives.Rotation(center, axis, angle, True)
+        if copy:
+            return Edge3D(new_primitives, new_edge_start, new_edge_end)
+#            return Edge3D(new_primitives, self.edge_start, self.edge_end)
+        else:
+            self.primitives = new_primitives
+            self.edge_start = new_edge_start
+            self.edge_end = new_edge_end
+
+    def Translation(self, offset, copy=False):
+        new_edge_start = self.edge_start.Translation(offset, True)
+        new_edge_end = self.edge_end.Translation(offset, True)
+        new_primitives = self.primitives.Translation(offset, True)
+        if copy:
+            return Edge3D(new_primitives, new_edge_start, new_edge_end)
+#            return Edge3D(new_primitives, self.edge_start, self.edge_end)
+        else:
+            self.primitives = new_primitives
+            self.edge_start = new_edge_start
+            self.edge_end = new_edge_end
+
+
 class Contour3D(Wire3D):
     """
     A collection of 3D primitives forming a closed wire3D
     """
-    def __init__(self, primitives, name=''):
+    def __init__(self, primitives, edges, name=''):
+        self.edges = edges
         primitives2=[]
         for primitive in primitives:
             try:
@@ -2127,22 +2772,998 @@ class Contour3D(Wire3D):
                 primitives2.append(primitive)
 
         CompositePrimitive3D.__init__(self,primitives2, name)
+        self.primitives = primitives
+
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        edges = []
+        edge_geoms = []
+        for edge in arguments[1]:
+            edges.append(object_dict[int(edge[1:])])
+            edge_geoms.append(object_dict[int(edge[1:])].primitives)
+        return cls(edge_geoms, edges, arguments[0][1:-1])
+
+    def Rotation(self, center, axis, angle, copy=False):
+        new_edges = [edge.Rotation(center, axis, angle, True) for edge in self.edges]
+        new_primitives = [p.Rotation(center, axis, angle, True) for p in self.primitives]
+        if copy:
+            return Contour3D(new_primitives, new_edges, self.name)
+#            return Contour3D(new_primitives, self.edges, self.name)
+        else:
+            self.primitives = new_primitives
+            self.edges = new_edges
+
+    def Translation(self, offset, copy=False):
+        new_edges = [edge.Translation(offset, True) for edge in self.edges]
+        new_primitives = [p.Translation(offset, True) for p in self.primitives]
+        if copy:
+            return Contour3D(new_primitives, new_edges, self.name)
+#            return Contour3D(new_primitives, self.edges, self.name)
+        else:
+            self.primitives = new_primitives
+            self.edges = new_edges
+
+
+class ExtrudedCurve(CompositePrimitive3D):
+    def __init__(self, curve_3d, extrusion_vector, name=''):
+        self.curve_3d = curve_3d
+        self.extrusion_vector = extrusion_vector
+        self.primitives = [curve_3d, extrusion_vector]
+        CompositePrimitive3D(self.primitives, name)
+
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        curve_3d = object_dict[arguments[1]]
+        extrusion_vector = object_dict[arguments[2]]
+        return cls(curve_3d, extrusion_vector, arguments[0][1:-1])
+
+
+class Face3D(CompositePrimitive3D):
+    def __init__(self, primitives, contour, name=''):
+        CompositePrimitive3D.__init__(self, primitives, name)
+        self.contour = contour
+        self.primitives = primitives
+
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        contour = []
+        for elem in arguments[1]:
+            contour.append(object_dict[int(elem[1:])])
+        face_geom = object_dict[arguments[2]]
+        if arguments[3] == '.T.':
+            orientation = True
+        elif arguments[3] == '.F.':
+            orientation = False
+        else:
+            raise ValueError
+        return cls([face_geom], contour, arguments[0][1:-1])
+
+    def Rotation(self, center, axis, angle, copy=False):
+        new_contour = [subcontour.Rotation(center, axis, angle, True) for subcontour in self.contour]
+        new_primitives = [plane.Rotation(center, axis, angle, True) for plane in self.primitives]
+        if copy:
+            return Face3D(new_primitives, new_contour, self.name)
+        else:
+            self.primitives = new_primitives
+            self.contour = new_contour
+
+    def Translation(self, offset, copy=False):
+        new_contour = [subcontour.Translation(offset, True) for subcontour in self.contour]
+        new_primitives = [plane.Translation(offset, True) for plane in self.primitives]
+        if copy:
+            return Face3D(new_primitives, new_contour, self.name)
+        else:
+            self.primitives = new_primitives
+            self.contour = new_contour
+            
+    def bbox(self):
+        contour = self.contour[0]
+        points = []
+        for edge in contour.edges:
+            points.append(edge.edge_start.primitive)
+            points.append(edge.edge_end.primitive)
+        points = list(set(points))
+        
+        xmin = min([pt[0] for pt in points])
+        xmax = max([pt[0] for pt in points])
+        ymin = min([pt[1] for pt in points])
+        ymax = max([pt[1] for pt in points])
+        zmin = min([pt[2] for pt in points])
+        zmax = max([pt[2] for pt in points])
+        
+        return BBox(xmin, xmax, ymin, ymax, zmin, zmax)
+
+    def distance_to_point(self, point):
+        """
+        Only works if the surface is planar
+        TODO : this function does not take into account if Face has holes
+        """
+        # On projette le point sur la surface plane
+        # Si le point est à l'intérieur de la face, on retourne la distance de projection
+        # Si le point est à l'extérieur, on projette le point sur le plan
+        # On calcule en 2D la distance entre la projection et le polygone contour
+        # On utilise le theroeme de Pytagore pour calculer la distance minimale entre le point et le contour
+
+#        print(self.primitives[0].__class__)
+#        print(Plane3D)
+#        print('essai', self.primitives[0].__class__ == Plane3D)
+#        if isinstance(self.primitives[0], Plane3D):
+        plane = self.primitives[0]
+        projected_pt = point.primitive.PlaneProjection3D(plane.origin, plane.vectors[0], plane.vectors[1])
+        projection_distance = point.primitive.PointDistance(projected_pt)
+
+        if self.point_on_face(projected_pt):
+            return projection_distance
+
+        contour = self.contour[0]
+        polygon_points_3D = []
+        for edge in contour.edges:
+            polygon_points_3D.append(edge.edge_start.primitive)
+            polygon_points_3D.append(edge.edge_end.primitive)
+        polygon_points_3D = list(set(polygon_points_3D))
+        polygon_points_2D = []
+        for pt in polygon_points_3D:
+            polygon_points_2D.append(pt.To2D(plane.origin, plane.vectors[0], plane.vectors[1]))
+        point_2D = point.primitive.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
+        polygon = Polygon2D(polygon_points_2D)
+
+        border_distance = polygon.PointBorderDistance(point_2D)
+        return (projection_distance**2 + border_distance**2)**0.5
+
+#        raise NotImplementedError
+
+
+    def distance_to_face(self, face2):
+        """
+        Only works if the surface is planar
+        TODO : this function does not take into account if Face has holes
+        TODO : TRAITER LE CAS OU LA DISTANCE LA PLUS COURTE N'EST PAS D'UN SOMMET
+        """
+        # On calcule la distance entre la face 1 et chaque point de la face 2
+        # On calcule la distance entre la face 2 et chaque point de la face 1
+
+#        if isinstance(self.primitives[0], Plane3D):
+#        plane1 = self.primitives[0]
+        
+        if self.face_intersection(face2) is not None:
+            return 0
+            
+        polygon1_points_3D = []
+        for edge in self.contour[0].edges:
+            polygon1_points_3D.append(edge.edge_start)
+            polygon1_points_3D.append(edge.edge_end)
+        polygon1_points_3D = list(set(polygon1_points_3D))
+
+        polygon2_points_3D = []
+        for edge in face2.contour[0].edges:
+            polygon2_points_3D.append(edge.edge_start)
+            polygon2_points_3D.append(edge.edge_end)
+        polygon2_points_3D = list(set(polygon2_points_3D))
+
+        distances = []
+        for point1 in polygon1_points_3D:
+            distances.append(face2.distance_to_point(point1))
+        for point2 in polygon2_points_3D:
+            distances.append(self.distance_to_point(point2))
+
+        return min(distances)
+
+#        raise NotImplementedError
+
+
+    def point_on_face(self, point):
+        """
+        Only works if the surface is planar
+        TODO : this function does not take into account if Face has holes
+
+        Tells you if a point is on the 3D face and inside its contour
+        """
+
+#        print(self.primitives[0])
+#        print('1. Plane ?', isinstance(self.primitives[0], Plane3D))
+#        if isinstance(self.primitives[0], Plane3D):
+
+        plane = self.primitives[0]
+        point_on_plane = plane.point_on_plane(point)
+
+        # The point is not in the same plane
+        if not point_on_plane:
+            return False
+
+        contour = self.contour[0]
+        # transformer le contour en polygone2D pour utiliser la méthode PointBelongs
+        polygon_points_3D = []
+        for edge in contour.edges:
+            polygon_points_3D.append(edge.edge_start.primitive)
+            polygon_points_3D.append(edge.edge_end.primitive)
+        polygon_points_3D = list(set(polygon_points_3D))
+        
+        polygon_points_2D = []
+        for pt in polygon_points_3D:
+            polygon_points_2D.append(pt.To2D(plane.origin, plane.vectors[0], plane.vectors[1]))
+        point_2D = point.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
+        polygon = Polygon2D(polygon_points_2D)
+
+        if not polygon.PointBelongs(point_2D):
+            return False
+        return True
+
+#        return False
+
+    def edge_intersection(self, edge):
+        plane = self.primitives[0]
+
+        linesegment = LineSegment3D(edge.edge_start.primitive, edge.edge_end.primitive)
+        intersection_point = plane.linesegment_intersection(linesegment)
+
+        if intersection_point is None:
+            return None
+
+        point_on_face_boo = self.point_on_face(intersection_point)
+        if not point_on_face_boo:
+            return None
+
+        return intersection_point
+
+    def linesegment_intersection(self, linesegment):
+        plane = self.primitives[0]
+        intersection_point = plane.linesegment_intersection(linesegment)
+        if intersection_point is None:
+            return None
+        point_on_face_boo = self.point_on_face(intersection_point)
+        if not point_on_face_boo:
+            return None
+        return intersection_point
+
+    def face_intersection(self, face2):
+        """
+        Only works if the surface is planar
+        TODO : this function does not take into account if Face has holes
+        """
+        intersection_points = []
+
+        for edge2 in face2.contour[0].edges:
+            intersection_point = self.edge_intersection(edge2)
+            if intersection_point is not None:
+                intersection_points.append(intersection_point)
+
+        for edge1 in self.contour[0].edges:
+            intersection_point = face2.edge_intersection(edge1)
+            if intersection_point is not None:
+                intersection_points.append(intersection_point)
+
+        if not intersection_points:
+            return None
+        
+        return intersection_points
+    
+    def plot(self, ax=None):
+        fig = plt.figure()
+        if ax is None:
+            ax = fig.add_subplot(111, projection='3d')
+
+        x = [p[0] for edge in self.contour[0].edges for p in edge.points]
+        y = [p[1] for edge in self.contour[0].edges for p in edge.points]
+        z = [p[2] for edge in self.contour[0].edges for p in edge.points]
+        ax.scatter(x, y, z)
+        ax.set_xlabel('X Label')
+        ax.set_ylabel('Y Label')
+        ax.set_zlabel('Z Label')
+
+        plt.show()
+        
+        return ax
+
+class Shell3D(CompositePrimitive3D):
+    def __init__(self, primitives, faces, name=''):
+        CompositePrimitive3D.__init__(self, primitives, name)
+        self.faces = faces
+        self.primitives = primitives
+
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        faces = []
+        primitives = []
+#        print(arguments[1])
+        for face in arguments[1]:
+            faces.append(object_dict[int(face[1:])])
+            primitives.append(object_dict[int(face[1:])].primitives)
+        return cls(primitives, faces, arguments[0][1:-1])
+
+    def Rotation(self, center, axis, angle, copy=False):
+        new_faces = [face.Rotation(center, axis, angle, True) for face in self.faces]
+        new_primitives = []
+        for primitive in self.primitives:
+            new_primitives.append([subprimitive.Rotation(center, axis, angle, True) for subprimitive in primitive])
+        if copy:
+            return Shell3D(new_primitives, new_faces, self.name)
+        else:
+            self.primitives = new_primitives
+            self.faces = new_faces
+
+    def Translation(self, offset, copy=False):
+        new_faces = [face.Translation(offset, True) for face in self.faces]
+        new_primitives = []
+        for primitive in self.primitives:
+            new_primitives.append([subprimitive.Translation(offset, True) for subprimitive in primitive])
+        if copy:
+            return Shell3D(new_primitives, new_faces, self.name)
+        else:
+            self.primitives = new_primitives
+            self.faces = new_faces
+
+    def bbox(self):
+        """
+        Returns the boundary box
+        """
+        points = []
+        for face in self.faces:
+            for edge in face.contour[0].edges:
+                points.append(edge.edge_start.primitive)
+                points.append(edge.edge_end.primitive)
+        points = list(set(points))
+                
+        xmin = min([pt[0] for pt in points])
+        xmax = max([pt[0] for pt in points])
+        ymin = min([pt[1] for pt in points])
+        ymax = max([pt[1] for pt in points])
+        zmin = min([pt[2] for pt in points])
+        zmax = max([pt[2] for pt in points])
+
+        return BBox(xmin, xmax, ymin, ymax, zmin, zmax)
+
+    def point_belongs(self, point):
+        """
+        Ray Casting algorithm
+        Returns True if the point is inside the Shell, False otherwise
+        """
+        epsilon = 1e-08
+        count = 0
+
+        bbox = self.bbox()
+        if point[0] < bbox.xmin or point[0] > bbox.xmax:
+            return False
+        if point[1] < bbox.ymin or point[1] > bbox.ymax:
+            return False
+        if point[2] < bbox.zmin or point[2] > bbox.zmax:
+            return False
+
+        ray = LineSegment3D(point, Point3D((bbox.xmax+epsilon, point[1], point[2])))
+        for face in self.faces:
+            intersection_points = face.linesegment_intersection(ray)
+            if intersection_points is not None:
+                print(intersection_points)
+                count += 1
+        if count%2 == 0:
+            return False
+
+        return True
+    
+    def is_inside_shell(self, shell2):
+        """
+        Returns True if all the points of self are inside shell2
+        """
+        points = []
+        for face in self.faces:
+            for edge in face.contour[0].edges:
+                points.append(edge.edge_start.primitive)
+                points.append(edge.edge_end.primitive)
+        points = list(set(points))
+        
+        for point in points:
+            if not shell2.point_belongs(point):
+                return False
+            
+        # Check if any faces are intersecting
+        for face1 in self.faces:
+            for face2 in shell2.faces:
+                intersection_points = face1.face_intersection(face2)
+                if intersection_points is not None:
+                    print('Two faces are intersecting :', face1, face2)
+                    return False
+                
+        return True
+    
+    def shell_intersection(self, shell2):
+        """
+        Returns True if the two Shells intersect each other
+        """
+#        bbox1 = self.bbox()
+#        bbox2 = shell2.bbox()
+#        if not bbox1.bbox_intersection(bbox2):
+#            return False
+        
+        # Check if boundary boxes intersect
+        bbox1 = self.bbox()
+        bbox2 = shell2.bbox()
+        if not bbox1.bbox_intersection(bbox2):
+            print('intersection of shell BBox')
+            return False
+        
+        # Check if any point of the first shell is in the second shell
+        points1 = []
+        for face in self.faces:
+            for edge in face.contour[0].edges:
+                points1.append(edge.edge_start.primitive)
+                points1.append(edge.edge_end.primitive)
+        points1 = list(set(points1))
+        
+        points2 = []
+        for face in shell2.faces:
+            for edge in face.contour[0].edges:
+                points2.append(edge.edge_start.primitive)
+                points2.append(edge.edge_end.primitive)
+        points2 = list(set(points2))
+        
+        for point1 in points1:
+            if shell2.point_belongs(point1):
+                print('point inside shell')
+                return True
+            
+        for point2 in points2:
+            if self.point_belongs(point2):
+                print('point inside shell')
+                return True
+            
+        # Check if any faces are intersecting
+        for face1 in self.faces:
+            for face2 in shell2.faces:
+                intersection_points = face1.face_intersection(face2)
+                if intersection_points is not None:
+                    print('Two faces are intersecting :', face1, face2)
+#                    print('face1', [p for edge in face1.contour[0].edges for p in edge.points])
+#                    print('face2', [p for edge in face2.contour[0].edges for p in edge.points])
+                    ax = face1.plot()
+                    face2.plot(ax)
+                    return True
+        return False
+    
+    def distance_to_shell(self, shell2):
+        
+        if self.shell_intersection(shell2):
+            return 0
+        
+        # Bounding box
+        nb_faces = 1000
+        close_faces = []
+        for face1 in self.faces:
+            for face2 in shell2.faces:
+                bbox1 = face1.bbox()
+                bbox2 = face2.bbox()
+                bbox_distance = bbox1.distance_to_bbox(bbox2)
+                if npy.isclose(bbox_distance, 0):
+                    close_faces.append((face1, face2, bbox_distance))
+                    nb_faces += 1
+                else:
+                    if len(close_faces) < nb_faces:
+                        close_faces.append((face1, face2, bbox_distance))
+                    else:
+                        max_distance = max([d[2] for d in close_faces])
+                        if bbox_distance < max_distance:
+                            index = [d[2] for d in close_faces].index(max_distance)
+                            close_faces[index] = (face1, face2, bbox_distance)
+        
+        distances = []
+        for face1, face2 in [(f[0], f[1]) for f in close_faces]:
+            distance = face1.distance_to_face(face2)
+            distances.append(distance)
+            
+        return min(distances)
+    
+        
+class BBox:
+    """
+    An axis aligned boundary box
+    """
+    def __init__(self, xmin, xmax, ymin, ymax, zmin, zmax):
+        self.xmin = xmin
+        self.xmax = xmax
+        self.ymin = ymin
+        self.ymax = ymax
+        self.zmin = zmin
+        self.zmax = zmax
+        self.points = (Point3D((self.xmin, self.ymin, self.zmin)), \
+                       Point3D((self.xmax, self.ymin, self.zmin)), \
+                       Point3D((self.xmax, self.ymax, self.zmin)), \
+                       Point3D((self.xmin, self.ymax, self.zmin)), \
+                       Point3D((self.xmin, self.ymin, self.zmax)), \
+                       Point3D((self.xmax, self.ymin, self.zmax)), \
+                       Point3D((self.xmax, self.ymax, self.zmax)), \
+                       Point3D((self.xmin, self.ymax, self.zmax)))
+    
+    def Rotation(self, center, axis, angle, copy=False):
+        """
+        A ne pas utiliser car les BBox sont axis aligned et une rotation peut mettre à mal cette hypothèse
+        Faire un rotation du shell et ensuite recalculer la BBox
+        """
+        raise NotImplementedError
+#        new_xmin = self.xmin.Rotation(center, axis, angle, copy=True)
+#        new_xmax = self.xmax.Rotation(center, axis, angle, copy=True)
+#        new_ymin = self.ymin.Rotation(center, axis, angle, copy=True)
+#        new_ymax = self.ymax.Rotation(center, axis, angle, copy=True)
+#        new_zmin = self.zmin.Rotation(center, axis, angle, copy=True)
+#        new_zmax = self.zmax.Rotation(center, axis, angle, copy=True)
+#        if copy:
+#            return BBox(new_xmin, new_xmax, new_ymin, new_ymax, new_zmin, new_zmax)
+#        else:
+#            self.xmin = new_xmin
+#            self.xmax = new_xmax
+#            self.ymin = new_ymin
+#            self.ymax = new_ymax
+#            self.zmin = new_zmin
+#            self.zmax = new_zmax
+
+    def Translation(self, offset, copy=False):
+        new_xmin = self.xmin+offset[0]
+        new_xmax = self.xmax+offset[0]
+        new_ymin = self.ymin+offset[1]
+        new_ymax = self.ymax+offset[1]
+        new_zmin = self.zmin+offset[2]
+        new_zmax = self.zmax+offset[2]
+        if copy:
+            return BBox(new_xmin, new_xmax, new_ymin, new_ymax, new_zmin, new_zmax)
+        else:
+            self.xmin = new_xmin
+            self.xmax = new_xmax
+            self.ymin = new_ymin
+            self.ymax = new_ymax
+            self.zmin = new_zmin
+            self.zmax = new_zmax
+#            self.points = (Point3D((new_xmin, new_ymin, new_zmin)), \
+#                           Point3D((new_xmax, new_ymin, new_zmin)), \
+#                           Point3D((new_xmax, new_ymax, new_zmin)), \
+#                           Point3D((new_xmin, new_ymax, new_zmin)), \
+#                           Point3D((new_xmin, new_ymin, new_zmax)), \
+#                           Point3D((new_xmax, new_ymin, new_zmax)), \
+#                           Point3D((new_xmax, new_ymax, new_zmax)), \
+#                           Point3D((new_xmin, new_ymax, new_zmax)))
+            self.points=(p.Translate(offset, False) for p in self.points)
+    
+    def bbox_intersection(self, bbox2):
+        return (self.xmin < bbox2.xmax and self.xmax > bbox2.xmin \
+                and self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
+                and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin)
+        
+    def intersection_volume(self, bbox2):
+        if not self.bbox_intersection(bbox2):
+            return 0
+        
+        permute_bbox1 = self
+        permute_bbox2 = bbox2
+        
+        if permute_bbox2.xmin < permute_bbox1.xmin:
+            permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
+        lx = permute_bbox1.xmax - permute_bbox2.xmin
+            
+        if permute_bbox2.ymin < permute_bbox1.ymin:
+            permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
+        ly = permute_bbox1.ymax - permute_bbox2.ymin
+        
+        if permute_bbox2.zmin < permute_bbox1.zmin:
+            permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
+        lz = permute_bbox1.zmax - permute_bbox2.zmin
+        
+        return lx*ly*lz
+        
+    def distance_to_bbox(self, bbox2):
+        if self.bbox_intersection(bbox2):
+            return 0
+        
+        permute_bbox1 = self
+        permute_bbox2 = bbox2
+        
+        if permute_bbox2.xmin < permute_bbox1.xmin:
+            permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
+        dx = permute_bbox2.xmin - permute_bbox1.xmax
+        if dx < 0:
+            dx = 0
+        
+        if permute_bbox2.ymin < permute_bbox1.ymin:
+            permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
+        dy = permute_bbox2.ymin - permute_bbox1.ymax
+        if dy < 0:
+            dy = 0
+        
+        if permute_bbox2.zmin < permute_bbox1.zmin:
+            permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
+        dz = permute_bbox2.zmin - permute_bbox1.zmax
+        if dz < 0:
+            dz = 0
+        
+        return (dx**2 + dy**2 + dz**2)**0.5
+        
+
+class Group:
+    def __init__(self, primitives, name):
+        self.primitives = primitives
+        self.name = name
+
+
+class StepFunction:
+    def __init__(self, function_id, function_name, function_arg):
+        self.id = function_id
+        self.name = function_name
+        self.arg = function_arg
+
+        if self.name == "":
+            if self.arg[1][0] == 'B_SPLINE_SURFACE':
+                self.simplify('B_SPLINE_SURFACE')
+            if self.arg[1][0] == 'B_SPLINE_CURVE':
+                self.simplify('B_SPLINE_CURVE')
+
+    def simplify(self, new_name):
+        # ITERATE ON SUBFUNCTIONS
+        args = [subfun[1] for (i, subfun) in enumerate(self.arg) if (len(subfun[1]) != 0 or i == 0)]
+        arguments = []
+        for arg in args:
+            if arg == []:
+                arguments.append('')
+            else:
+                arguments.extend(arg)
+        arguments.pop() # DELETE REPRESENTATION_ITEM('')
+
+        self.name = new_name
+        self.arg = arguments
+
+
+class Step:
+    def __init__(self, stepfile):
+        self.stepfile = stepfile
+
+        self.functions, self.all_connections = self.read_functions()
+        self.graph = self.create_graph()
+        #### FUNCTION TO DELETE ####
+        # faire une fonction : si None dans step_to_volmdlr_primitive alors delete_function
+        self.delete_function('FACE_OUTER_BOUND')
+        self.delete_function('ORIENTED_EDGE')
+#        self.delete_function('ORIENTED_CLOSED_SHELL')
+        ############################
+        
+        
+
+    def read_functions(self):
+        f = open(self.stepfile, "r", encoding = "ISO-8859-1")
+
+        all_connections = []
+
+        previous_line = ""
+        functions = {}
+
+        for line in f:
+
+            line = line.replace(" ", "")
+            line = line.replace("\n", "")
+
+            # SKIP EMPTY LINE
+            if not line:
+                continue
+
+            # ASSEMBLE LINES IF THEY ARE SEPARATED
+            if line[-1] != ';':
+                previous_line = previous_line + line
+                continue
+
+            line = previous_line + line
+
+            # SKIP HEADER
+            if line[0] != "#":
+                previous_line = str()
+                continue
+
+            function = line.split("=")
+            function_id = int(function[0][1:])
+            function_name_arg = function[1].split("(", 1)
+            function_name = function_name_arg[0]
+            function_arg = function_name_arg[1].split("#")
+            function_connections = []
+            for connec in function_arg[1:]:
+                connec = connec.split(",")
+                connec = connec[0].split(")")
+                function_connection = int(connec[0])
+#                if function_connection[-1] != "'":
+                function_connections.append((function_connection, function_id))
+
+            all_connections.extend(function_connections)
+
+            previous_line = str()
+
+            # FUNCTION ARGUMENTS
+            function_arg = function_name_arg[1]
+            arguments = step_split_arguments(function_arg)
+            if function_name == "":
+                arguments = self.step_subfunctions(arguments)
+
+            for i, argument in enumerate(arguments):
+                if argument[:2] == '(#' and argument[-1] == ')':
+                    arg_list = set_to_list(argument)
+                    arguments[i] = arg_list
+
+            function = StepFunction(function_id, function_name, arguments)
+            functions[function_id] = function
+
+        f.close()
+
+        return functions, all_connections
+
+    def create_graph(self, draw=False, html=False):
+
+        G = nx.Graph()
+        F = nx.DiGraph()
+        labels = {}
+
+        for function in self.functions.values():
+            if function.name in step_to_volmdlr_primitive:
+                G.add_node(function.id)
+                F.add_node(function.id)
+                labels[function.id] = str(function.id)+' '+function.name
+
+        # Delete connection if node not found
+        node_list = list(F.nodes())
+        delete_connection = []
+        for connection in self.all_connections:
+            if connection[0] not in node_list or connection[1] not in node_list:
+                delete_connection.append(connection)
+        for delete in delete_connection:
+            self.all_connections.remove(delete)
+
+        # Create graph connections
+        G.add_edges_from(self.all_connections)
+        F.add_edges_from(self.all_connections)
+
+        # Remove single nodes
+        delete_nodes = []
+        for node in F.nodes:
+            if F.degree(node) == 0:
+                delete_nodes.append(node)
+        for node in delete_nodes:
+            F.remove_node(node)
+            G.remove_node(node)
+
+        # Remove single branches
+        nodes_to_delete = []
+        for node in list(F.nodes):
+            if not list(F.out_edges(node)):
+                if self.functions[node].name != 'CLOSED_SHELL' \
+                and self.functions[node].name != 'ORIENTED_CLOSED_SHELL':
+                    nodes_to_delete.append(node)
+        for node in nodes_to_delete:
+            print('node to delete', node, self.functions[node].name)
+            delete_node_and_predecessors(F, node)
+
+        if draw:
+            # ----------------PLOT----------------
+            pos = nx.kamada_kawai_layout(G)
+            plt.figure()
+            nx.draw_networkx_nodes(F, pos)
+            nx.draw_networkx_edges(F, pos)
+            nx.draw_networkx_labels(F, pos, labels)
+            # ------------------------------------
+
+        if html:
+
+            env = Environment(loader=PackageLoader('powertransmission', 'templates'),
+                              autoescape=select_autoescape(['html', 'xml']))
+            template = env.get_template('graph_visJS.html')
+
+            nodes = []
+            edges = []
+            for label in list(labels.values()):
+                nodes.append({'name': label, 'shape': 'circular'})
+
+            for edge in G.edges:
+                edge_dict = {}
+                edge_dict['inode1'] = int(edge[0])-1
+                edge_dict['inode2'] = int(edge[1])-1
+                edges.append(edge_dict)
+
+            options = {}
+            s = template.render(
+                name=self.stepfile,
+                nodes=nodes,
+                edges=edges,
+                options=options)
+
+            with open('graph_visJS.html', 'wb') as file:
+                file.write(s.encode('utf-8'))
+
+            webbrowser.open('file://' + os.path.realpath('graph_visJS.html'))
+
+        return F
+
+    def draw_graph(self):
+        labels = {}
+        for id_nb, function in self.functions.items():
+            labels[id_nb] = str(id_nb)+' '+function.name
+        print(labels)
+        print()
+        pos = nx.kamada_kawai_layout(self.graph)
+        print(pos)
+        plt.figure()
+        nx.draw_networkx_nodes(self.graph, pos)
+        nx.draw_networkx_edges(self.graph, pos)
+        nx.draw_networkx_labels(self.graph, pos, labels)
+
+    def step_subfunctions(self, subfunctions):
+        subfunctions = subfunctions[0]
+        parenthesis_count = 0
+        subfunction_names = []
+        subfunction_args = []
+        subfunction_name = ""
+        subfunction_arg = ""
+        for char in subfunctions:
+
+            if char == "(":
+                parenthesis_count += 1
+                if parenthesis_count == 1:
+                    subfunction_names.append(subfunction_name)
+                    subfunction_name = ""
+                else:
+                    subfunction_arg += char
+                continue
+            if char == ")":
+                parenthesis_count -= 1
+                if parenthesis_count == 0:
+                    subfunction_args.append(subfunction_arg)
+                    subfunction_arg = ""
+                else:
+                    subfunction_arg += char
+                continue
+
+            if parenthesis_count == 0:
+                subfunction_name += char
+            else:
+                subfunction_arg += char
+
+        return [(subfunction_names[i], step_split_arguments(subfunction_args[i])) for i in range(len(subfunction_names))]
+
+    def delete_function(self, function_name):
+
+        delete_functions = []
+        for function_id, function in self.functions.items():
+            if function.name == function_name:
+
+                #### Delete from self.functions ####
+                delete_functions.append(function_id)
+
+                #### Modify the functions pointing on the deleted function ####
+                modify_function_id = list(self.graph.out_edges(function.id))[0][1]
+                # TROUVER '#'+str(function.id) dans les arguments
+                # VERIFIER que le char d'apres n'est pas un entier
+                # REMPLACER la selection par list(self.graph.in_edges)[0]
+                modify_function = self.functions[modify_function_id]
+                for i, argument in enumerate(modify_function.arg):
+                    if type(argument) is list:
+                        for j, elem in enumerate(argument):
+                            res = find_and_replace(elem, '#'+str(function.id), '#'+str(list(self.graph.in_edges(function.id))[0][0]))
+                            if res != elem:
+                                modify_function.arg[i][j] = res
+                    else:
+                        res = find_and_replace(argument, '#'+str(function.id), '#'+str(list(self.graph.in_edges(function.id))[0][0]))
+                        if res != argument:
+                            modify_function.arg[i] = res
+
+                #### Delete from self.graph ####
+                node_edges = list(self.graph.in_edges(function.id))+list(self.graph.out_edges(function.id))
+                if len(node_edges) != 2:
+                    print(node_edges)
+                    raise ValueError
+                self.graph.remove_node(function.id)
+                self.graph.add_edge(node_edges[0][0], node_edges[1][1])
+
+                #### Delete from self.all_connections ####
+                self.all_connections = list(self.graph.edges)
+
+
+        for delete_f in delete_functions:
+            del self.functions[delete_f]
+
+    def instanciate(self, instanciate_id, object_dict, primitives):
+        """
+        Returns None if the object was instanciate
+        """
+
+        name = self.functions[instanciate_id].name
+        arguments = self.functions[instanciate_id].arg[:]
+
+        for i, arg in enumerate(arguments):
+            if type(arg) == str and arg[0] == '#':
+                arguments[i] = int(arg[1:])
+
+        if name in step_to_volmdlr_primitive and hasattr(step_to_volmdlr_primitive[name], "from_step"):
+
+            try:
+                volmdlr_object = step_to_volmdlr_primitive[name].from_step(arguments, object_dict)
+            except KeyError:
+                return instanciate_id, object_dict, primitives
+
+            object_dict[instanciate_id] = volmdlr_object
+            if hasattr(volmdlr_object, "primitive"):
+                primitives.append(volmdlr_object.primitive)
+
+        return None, object_dict, primitives
+
+    def to_volume_model(self, name, add_to_volume_model=None):
+
+        object_dict = {}
+        primitives = []
+        not_instanciated_id = []
+
+        self.graph.add_node("#0")
+        for node in self.graph.nodes:
+            if node != '#0' and (self.functions[node].name == "CARTESIAN_POINT" or self.functions[node].name == "DIRECTION"):
+                self.graph.add_edge("#0", node)
+
+        edges = list(nx.algorithms.traversal.breadth_first_search.bfs_edges(self.graph, "#0"))
+
+        for edge_nb, edge in enumerate(edges):
+            instanciate_id = edge[1]
+            res, object_dict, primitives = self.instanciate(instanciate_id, object_dict, primitives)
+            if res is not None:
+                not_instanciated_id.append(res)
+
+        print('Nombre non instanciés', len(not_instanciated_id))
+
+        i = 0
+        still_not_instanciated_id = []
+        while not_instanciated_id:
+            if i > len(not_instanciated_id)-1:
+                not_instanciated_id = still_not_instanciated_id
+                still_not_instanciated_id = []
+                i = 0
+                continue
+            res, object_dict, primitives = self.instanciate(not_instanciated_id[i], object_dict, primitives)
+            if res is not None:
+                still_not_instanciated_id.append(res)
+            i += 1
+
+        shells = []
+        for node in list(self.graph.nodes):
+            if not list(self.graph.out_edges(node)):
+                shells.append(object_dict[node])
+        print(shells)
+        
+        if add_to_volume_model is None:
+            volume_model = VolumeModel(shells, primitives, name)
+            return volume_model
+        else:
+            add_to_volume_model.shells.extend(shells)
+            add_to_volume_model.primitives.extend(primitives)
+            return add_to_volume_model
 
 
 class VolumeModel:
     """
     :param groups: A list of two element tuple. The first element is a string naming the group and the second element is a list of primitives of the group
     """
-    def __init__(self, groups, name=''):
-        self.groups = groups
-        self.name=name
+    def __init__(self, shells, primitives, name=''):
+        self.shells = shells
+        self.primitives = primitives
+        self.name = name
 
     def Volume(self):
         volume=0
-        for group_name, primitives_group in self.groups:
-            for primitive in primitives_group:
-                volume+=primitive.Volume()
+        for primitive in self.primitives:
+#            for primitive in primitives_group:
+            volume+=primitive.Volume()
         return volume
+
+    def Rotation(self, center, axis, angle, copy=False):
+        new_shells = [shell.Rotation(center, axis, angle, True) for shell in self.shells]
+        new_primitives = [primitive.Rotation(center, axis, angle, True) for primitive in self.primitives]
+        if copy:
+            return VolumeModel(new_shells, new_primitives, self.name)
+        else:
+            self.primitives = new_primitives
+            self.shells = new_shells
+
+    def Translation(self, offset, copy=False):
+        new_shells = [shell.Translation(offset, True) for shell in self.shells]
+        new_primitives = [primitive.Translation(offset, True) for primitive in self.primitives]
+        if copy:
+            return VolumeModel(new_shells, new_primitives, self.name)
+        else:
+            self.primitives = new_primitives
+            self.shells = new_shells
 
     def MPLPlot(self):
         """
@@ -2152,9 +3773,8 @@ class VolumeModel:
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d', adjustable='box')
 #        ax.set_aspect('equal')
-        for name, primitive_group in self.groups:
-            for primitive in primitive_group:
-                primitive.MPLPlot(ax)
+        for primitive in self.primitives:
+            primitive.MPLPlot(ax)
         ax.set_aspect('equal')
         return fig, ax
 
@@ -2172,29 +3792,39 @@ class VolumeModel:
         fcstd_filepath = fcstd_filepath.replace('\\','\\\\')
         freecad_lib_path = freecad_lib_path.replace('\\','\\\\')
 
-        s=''
+        s='# -*- coding: utf-8 -*-\n'
         if freecad_lib_path != '':
             s+="import sys\nsys.path.append('"+freecad_lib_path+"')\n"
 
         s+="import math\nimport FreeCAD as fc\nimport Part\n\ndoc=fc.newDocument('doc')\n\n"
-        for ig, (group_name, primitives_group) in enumerate(self.groups):
-            if group_name == '':
-                group_name = 'Group_{}'.format(ig)
+        for ip, primitive in enumerate(self.primitives):
+            if primitive.name == '':
+                primitive_name = 'Primitive_{}'.format(ip)
             else:
-                group_name = 'Group_{}_{}'.format(ig, group_name)
-            s += "part = doc.addObject('App::Part','{}')\n".format(group_name)
-            for ip, primitive in enumerate(primitives_group):
+                primitive_name = 'Primitive_{}_{}'.format(ip, primitive_name)
+            s += "part = doc.addObject('App::Part','{}')\n".format(primitive_name)
+            if hasattr(primitive, 'FreeCADExport'):
                 sp = primitive.FreeCADExport(ip)
                 if sp != '':
-                    s += (sp+'\n')
-                    if primitive.name != '':
-                        primitive_name = 'primitive_{}_{}_{}'.format(ig, ip, primitive.name)
-                    else:
-                        primitive_name = 'primitive_{}_{}'.format(ig, ip)
+#                        s += (sp+'\n')
+                    s += (sp)
                     s += 'shapeobj = doc.addObject("Part::Feature","{}")\n'.format(primitive_name)
-                    s += "shapeobj.Shape = primitive{}\n".format(ip)
-                    s += 'part.addObject(shapeobj)\n'.format(ip, primitive.name)
-#
+                    if isinstance(primitive, BSplineCurve3D) \
+                    or isinstance(primitive, BSplineSurface3D) \
+                    or isinstance(primitive, Circle3D) \
+                    or isinstance(primitive, Ellipse3D):
+#                            print(primitive)
+#                            s += 'S = Part.Shape([primitive{}])\n'.format(ip)
+#                            s += 'shapeobj.Shape = S\n'
+                        s += 'shapeobj.Shape = primitive{}.toShape()\n'.format(ip)
+                    else:
+                        s += "shapeobj.Shape = primitive{}\n".format(ip)
+                    s += 'part.addObject(shapeobj)\n\n'.format(ip, primitive.name)
+            # --------------------DEBUG-------------------
+#                else:
+#                    raise NotImplementedError
+            # ---------------------------------------------
+
         s+='doc.recompute()\n'
         if 'fcstd' in export_types:
             s+="doc.saveAs('"+fcstd_filepath+".fcstd')\n\n"
@@ -2296,6 +3926,7 @@ class VolumeModel:
 
         return center,max_length
 
+
 class ViewIso:
     def __init__(self, component, frame, size):
         self.component = component
@@ -2313,3 +3944,84 @@ class ViewIso:
         
     def plot(self):
         plot_data.plot(self.plot_datas)
+
+
+
+step_to_volmdlr_primitive = {
+        # GEOMETRICAL ENTITIES
+        'CARTESIAN_POINT': Point3D,
+        'DIRECTION': Vector3D,
+        'VECTOR': Vector3D,
+
+        'AXIS1_PLACEMENT': None,
+        'AXIS2_PLACEMENT_2D': None,
+        'AXIS2_PLACEMENT_3D': Frame3D,
+
+        'LINE': Line3D,
+        'CIRCLE': Circle3D,
+        'ELLIPSE': Ellipse3D,
+        'PARABOLA': None,
+        'HYPERBOLA': None,
+        'PCURVE': None,
+        'CURVE_REPLICA': None,
+        'OFFSET_CURVE_3D': None,
+        'TRIMMED_CURVE': None, # BSplineCurve3D cannot be trimmed on FreeCAD
+        'B_SPLINE_CURVE': BSplineCurve3D,
+        'B_SPLINE_CURVE_WITH_KNOTS': BSplineCurve3D,
+        'BEZIER_CURVE': BSplineCurve3D,
+        'RATIONAL_B_SPLINE_CURVE': BSplineCurve3D,
+        'UNIFORM_CURVE': BSplineCurve3D,
+        'QUASI_UNIFORM_CURVE': BSplineCurve3D,
+        'SURFACE_CURVE': Edge3D, # TOPOLOGICAL EDGE
+        'SEAM_CURVE': Edge3D, # TOPOLOGICAL EDGE
+        'COMPOSITE_CURVE_SEGMENT': None, # TOPOLOGICAL EDGE
+        'COMPOSITE_CURVE': Wire3D, # TOPOLOGICAL WIRE
+        'COMPOSITE_CURVE_ON_SURFACE': Wire3D, # TOPOLOGICAL WIRE
+        'BOUNDARY_CURVE': Wire3D, # TOPOLOGICAL WIRE
+
+        'PLANE': Plane3D,
+        'CYLINDRICAL_SURFACE': None,
+        'CONICAL_SURFACE': None,
+        'SPHERICAL_SURFACE': None,
+        'TOROIDAL_SURFACE': None,
+        'DEGENERATE_TOROIDAL_SURFACE': None,
+        'B_SPLINE_SURFACE_WITH_KNOTS': BSplineSurface3D,
+        'B_SPLINE_SURFACE': BSplineSurface3D,
+        'BEZIER_SURFACE': BSplineSurface3D,
+        'OFFSET_SURFACE': None,
+        'SURFACE_REPLICA': None,
+        'RATIONAL_B_SPLINE_SURFACE': BSplineSurface3D,
+        'RECTANGULAR_TRIMMED_SURFACE': None,
+        'SURFACE_OF_LINEAR_EXTRUSION': ExtrudedCurve, # CAN BE A BSplineSurface3D
+        'SURFACE_OF_REVOLUTION': None,
+        'UNIFORM_SURFACE': BSplineSurface3D,
+        'QUASI_UNIFORM_SURFACE': BSplineSurface3D,
+        'RECTANGULAR_COMPOSITE_SURFACE': Face3D, # TOPOLOGICAL FACES
+        'CURVE_BOUNDED_SURFACE': Face3D, # TOPOLOGICAL FACE
+
+
+        # TOPOLOGICAL ENTITIES
+        'VERTEX_POINT': Vertex3D,
+
+        'EDGE_CURVE': Edge3D, # TOPOLOGICAL EDGE
+        'ORIENTED_EDGE': None, # TOPOLOGICAL EDGE
+        # The one above can influence the direction with their last argument
+        # TODO : maybe take them into consideration
+
+        'FACE_BOUND': None, # TOPOLOGICAL WIRE
+        'FACE_OUTER_BOUND': None, # TOPOLOGICAL WIRE
+        # Both above can influence the direction with their last argument
+        # TODO : maybe take them into consideration
+        'EDGE_LOOP': Contour3D, # TOPOLOGICAL WIRE
+        'POLY_LOOP': Contour3D, # TOPOLOGICAL WIRE
+        'VERTEX_LOOP': Contour3D, # TOPOLOGICAL WIRE
+
+        'ADVANCED_FACE': Face3D,
+        'FACE_SURFACE': Face3D,
+
+        'CLOSED_SHELL': Shell3D,
+        'OPEN_SHELL': Shell3D,
+        'ORIENTED_CLOSED_SHELL': None,
+        'CONNECTED_FACE_SET': Shell3D,
+
+        }

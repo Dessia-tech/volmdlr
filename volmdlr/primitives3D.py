@@ -258,7 +258,7 @@ class HollowCylinder(volmdlr.Primitive3D):
         s+='cylinder.rotation.x={}\n;'.format(-theta*math.sin(phi))
         s+='cylinder.rotation.y={}\n;'.format(theta*math.cos(phi))
         s+='cylinder.rotation.z={}\n;'.format(phi)
-        return s
+        return s        
 
 class ExtrudedProfile(volmdlr.Primitive3D):
     """
