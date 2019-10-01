@@ -2813,18 +2813,15 @@ class Contour3D(Wire3D):
         CompositePrimitive3D.__init__(self,primitives2, name)
         self.primitives = primitives
         
-        points = self.edges[0].points
+        points = self.edges[0].points[:]
         for i, edge in enumerate(self.edges[1:-1]):
-            print('points', points)
-            print('edge', edge.points)
             if edge.points[0] in points[-2:]:
                 points.append(edge.points[1])
             elif edge.points[1] in points[-2:]:
                 points.append(edge.points[0])
             else:
                 raise NotImplementedError
-        self.points = points
-        print()
+        self.points = points[:]
         
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -3212,7 +3209,6 @@ class Shell3D(CompositePrimitive3D):
         for face in self.faces:
             intersection_points = face.linesegment_intersection(ray)
             if intersection_points is not None:
-                print('Shell3D point_belongs', intersection_points)
                 count += 1
         if count%2 == 0:
             return False
@@ -3271,12 +3267,12 @@ class Shell3D(CompositePrimitive3D):
         
         for point1 in points1:
             if shell2.point_belongs(point1):
-                print('point inside shell')
+                print('point inside shell', point1)
                 return True
             
         for point2 in points2:
             if self.point_belongs(point2):
-                print('point inside shell')
+                print('point inside shell', point2)
                 return True
             
         # Check if any faces are intersecting
@@ -3296,7 +3292,7 @@ class Shell3D(CompositePrimitive3D):
         
         if self.shell_intersection(shell2):
             return 0
-        print('distance to shell : no intersection')
+        
         # Bounding box
         nb_faces = 100
         close_faces = []
