@@ -1,0 +1,266 @@
+<div #svg_container id='svg_container'></div>
+
+<script type="text/javascript" src="{{volmdlr_path}}/d3/d3-v4.js"></script>
+
+	<!-- Sets the basepath for the library if not in same directory -->
+	<script type="text/typescript">
+    module Unpacker {
+      {% include 'd3-unpacker.ts' %}
+    }
+	</script>
+
+  <script type="text/typescript">
+    var D3Data = {{ D3Data | safe }};
+
+    var alpha = 0.5;
+    var show_border = true;
+
+    var scale_factor = 1;
+    var font_size = 1.5;
+
+    // Get client width and height that preserve the right aspect ratio
+    var margin = {'top' : 4,
+                  'bottom' : 4,
+                  'left' : 4,
+                  'right' : 4};
+
+    var minX = 0;
+    var maxX = 0;
+    var minY = 0;
+    var maxY = 0;
+
+    var compteur = 0;
+
+    D3Data.forEach(function(dict_component){
+      console.log(dict_component)
+      var texts_data = [];
+      if (dict_component['type'] == 'line'){
+        if(dict_component['data'][0]*1000 < minX){
+          minX = dict_component['data'][0]*1000;
+        }
+        if(dict_component['data'][1]*1000 < minY){
+          minY = dict_component['data'][1]*1000;
+        }
+        if(dict_component['data'][2]*1000 > maxX){
+          maxX = dict_component['data'][2]*1000;
+        }
+        if(dict_component['data'][3]*1000 > maxY){
+          maxY = dict_component['data'][3]*1000;
+        }
+      }
+      if (dict_component['type'] == 'contour'){
+      var explore = dict_component['plot_data'];
+      explore.forEach(function(d){
+        if(d['type'] == "circle" || d['type'] == "arc"){
+          if((d['cx'] - d['r'])*1000 < minX){
+            minX = (d['cx'] - d['r'])*1000;
+          }
+          if((d['cx'] + d['r'])*1000 > maxX){
+            maxX = (d['cx'] + d['r'])*1000;
+          }
+          if((d['cy'] - d['r'])*1000 < minY){
+            minY = (d['cy'] - d['r'])*1000;
+          }
+          if((d['cy'] + d['r'])*1000 > maxY){
+            maxY = (d['cy'] + d['r'])*1000;
+          }
+        }
+
+        else if(d['type'] == "rect"){
+          if(d['x']*1000 < minX){
+            minX = d['x']*1000;
+          }
+          if((d['x'] + d['width'])*1000 > maxX){
+            maxX = (d['x'] + d['width'])*1000;
+          }
+          if(d['y']*1000 < minY){
+            minY = d['y']*1000;
+          }
+          if((d['y'] + d['height'])*1000 > maxY){
+            maxY = (d['y'] + d['height'])*1000;
+          }
+        }
+
+        else if(d['type'] == "line" || d['type'] == "quote"){
+          // var annotation = {type : "text",
+          //                   x : d['data'][2],
+          //                   y : d['data'][3],
+          //                   text : d['label'],
+          //                   id : "shaft_line_"+d['label']
+          //                 };
+          //
+          // texts_data.push(annotation);
+          if(d['data'][0]*1000 < minX){
+            minX = d['data'][0]*1000;
+          }
+          if(d['data'][1]*1000 < minY){
+            minY = d['data'][1]*1000;
+          }
+          if(d['data'][2]*1000 > maxX){
+            maxX = d['data'][2]*1000;
+          }
+          if(d['data'][3]*1000 > maxY){
+            maxY = d['data'][3]*1000;
+          }
+        }
+        else if (d['type'] == "text"){
+          d['text'] = d['text'].split(" ").join("_");
+          d['id'] = "text"+compteur;
+          texts_data.push(d);
+          compteur += 1;
+        }
+    })}
+    })
+
+
+
+    // Zoom behavior
+    var zoom = d3.zoom()
+        .scaleExtent([0.5, 100])
+        .on("zoom", zoomed);
+
+    var svg_width = maxX - minX + margin['left'] + margin['right']
+    var svg_height = maxY - minY + margin['top'] + margin['bottom']
+    if (svg_height/svg_width < alpha) {
+      var svg_height_new = svg_width*alpha
+      var svg_minY = minY - margin['top'] + svg_height/2 - svg_height_new/2
+      var svg_minX = minX - margin['left']
+      svg_height = svg_height_new
+    } else {
+      var svg_width_new = svg_height/alpha
+      var svg_minY = minY - margin['top']
+      var svg_minX = minX - margin['left'] + svg_width/(2) - svg_width_new/2.
+      var svg_width = svg_width_new
+    }
+
+    // var trace = d3.selectAll('#svg_container').select("div").remove();
+    // console.log(trace)
+
+    var svg_name = 'svg_container1'
+
+    var svg = d3.select('#svg_container').append('div')
+        .classed('svg-container', true)
+        .attr("id", svg_name)
+        .style("padding-bottom", 100*alpha + '%')
+        .append('svg')
+        .attr("xmlns", "http://www.w3.org/2000/svg")
+        .attr("version", "1.1")
+        .attr("preserveAspectRatio", "xMidYMid meet")
+        //.attr("viewBox", ""+ [-margin['left'], margin['bottom'], viewBox_width, viewBox_height].join(" "))
+        .attr("viewBox", ""+ [svg_minX, svg_minY, svg_width, svg_height].join(" "))
+        .classed('svg-content-responsive', true) // Make the svg responsive to user screen
+        .call(zoom) // Add zoom behavior
+        .on("dblclick.zoom", null); // Disable double-click zoom
+
+
+
+
+
+    var container = svg.append('g')
+        .attr("id", "container_"+'name');
+
+    if (show_border){
+      var border = container.append("rect")
+        .attr("x", svg_minX)
+        .attr("y", svg_minY)
+        .attr("width", svg_width)
+        .attr("height", svg_height)
+        .attr("fill", "none")
+        .attr("stroke-width", 0.5)
+        .attr("stroke", "black");
+      }
+
+    var data_container = container.append('g')
+        .attr("id", 'name');
+
+    // Zoom callback
+
+
+    function zoomed(){
+      scale_factor = d3.event.transform.k;
+      var stroke_width = 1
+
+      data_container.attr("transform", "translate(" + [d3.event.transform.x, d3.event.transform.y].join(",") + ")scale(" + scale_factor + ")");
+
+      d3.selectAll('#' + svg_name).selectAll('#circle_geom')
+        .each(function(d) {
+          var selection = d3.select(this);
+          var stroke_width = selection.attr("stroke-width-init");
+          selection.attr("stroke-width", Number(stroke_width)/scale_factor);
+        })
+      d3.selectAll('#' + svg_name).selectAll("#rect_geom")
+        .each(function(d) {
+          var selection = d3.select(this);
+          var stroke_width = selection.attr("stroke-width-init");
+          selection.attr("stroke-width", Number(stroke_width)/scale_factor);
+        })
+      d3.selectAll('#' + svg_name).selectAll("#line_geom")
+        .each(function(d) {
+          var selection = d3.select(this);
+          var stroke_width = selection.attr("stroke-width-init");
+          selection.attr("stroke-width", Number(stroke_width)/scale_factor);
+        })
+
+      d3.selectAll('#' + svg_name).selectAll("#path_geom")
+        .each(function(d) {
+          console.log(d)
+          var selection = d3.select(this);
+          var stroke_width = selection.attr("stroke-width-init");
+          selection.attr("stroke-width", Number(stroke_width)/scale_factor);
+        })
+
+      d3.selectAll('#' + svg_name).selectAll("#text_geom")
+        .each(function(d) {
+          var selection = d3.select(this);
+          var font_size = selection.attr("font-size-init");
+					var font_size_new = Math.min(Number(font_size)/scale_factor, Number(font_size))
+          selection.attr("font-size", String(font_size_new + 'px'))
+        })
+
+      // selection = data_container.selectAll("#line_geom")
+      // selection.forEach(function(d){
+      //   console.log(d)
+      //   // stroke_width = d.stroke_width
+      //   // d.attr("stroke-width",  stroke_width/(10*scale_factor))
+      // })
+
+      // selection = data_container.selectAll("#path_geom")
+      // selection.forEach(function(d){
+      //   stroke_width = d.stroke_width
+      //   d.attr("stroke-width",  stroke_width/scale_factor)})
+      //
+      // selection = data_container.selectAll("text")
+      // selection.forEach(function(d){
+      //   stroke_width = d.stroke_width
+      //   d.attr("width-size", stroke_width/scale_factor)})
+      //
+      // selection = data_container.selectAll("#line_quote")
+      // selection.forEach(function(d){
+      //   stroke_width = d.stroke_width
+      //   d.attr("stroke-width",  stroke_width/(2*scale_factor))})
+      //
+      // selection = data_container.selectAll("#line_constructor")
+      // selection.forEach(function(d){
+      //   stroke_width = d.stroke_width
+      //   d.attr("stroke-width",  stroke_width/(4*scale_factor))})
+      //
+      // selection = data_container.selectAll("#texte_quote")
+      // selection.forEach(function(d){
+      //   font_size = d.font_size
+      //   d.attr("font-size",  font_size/(10*scale_factor))})
+
+      data_container.selectAll("#triangle_quote_start, #triangle_quote_end")
+        .attr("markerWidth",  1/scale_factor)
+        .attr("markerHeight",  2/scale_factor)
+    }
+
+      // var trace = d3.selectAll('#dataviz_area');
+      // console.log(trace)
+
+      var greeter = new Unpacker.D3Unpacker(D3Data, data_container);
+
+  </script>
+
+
+  <script type="text/javascript" src="{{volmdlr_path}}/js/typescript.min.js"></script>
+  <script type="text/javascript" src="{{volmdlr_path}}/js/typescript.compile.min.js"></script>
