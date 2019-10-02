@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Jun  9 16:26:30 2017
 
-@author: steven
+Cython functions
+
 """
-#from libcpp cimport bool
+
 
 def PolygonPointBelongs(point,points):
     
+    cdef int i
     cdef int n = len(points)
     cdef bint inside = False
     cdef float x, y, p1x, p1y, p2x, p2y, xints

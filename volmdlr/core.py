@@ -409,6 +409,8 @@ class Basis:
         d = {'vectors' : [vector.Dict() for vector in self.vectors]}
         return d
 
+        
+
 class Basis2D(Basis):
     """
     Defines a 2D basis
@@ -1581,8 +1583,6 @@ class Vector3D(Vector):
         self.name = name
 
     def __add__(self, other_vector):
-        print(self)
-        print(other_vector)
         return Vector3D((self.vector[0] + other_vector.vector[0],
                                self.vector[1] + other_vector.vector[1],
                                self.vector[2] + other_vector.vector[2]))
@@ -1873,13 +1873,13 @@ class Basis3D(Basis):
         self.w = w
         self.name = name
 
+
     def __repr__(self):
         return '{}: U={}, V={}, W={}'.format(self.__class__.__name__, *self.vectors)
+    
     def _get_vectors(self):
         return (self.u, self.v, self.w)
 
-#    def _set_vectors(self, vectors):
-#        return vectors
     vectors = property(_get_vectors)
 
     def Rotation(self, axis, angle, copy=True):
@@ -1962,11 +1962,11 @@ class Basis3D(Basis):
                          matrix[2][0]*vector[0] + matrix[2][1]*vector[1] + matrix[2][2]*vector[2]))
 #        return vector.__class__(npy.dot(self.InverseTransfertMatrix(), vector.vector))
 
-    def OldCoordinates(self, vector):
+    def OldCoordinates(self, point):
         matrix = self.TransfertMatrix()
-        return Vector3D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1] + matrix[0][2]*vector[2],
-                         matrix[1][0]*vector[0] + matrix[1][1]*vector[1] + matrix[1][2]*vector[2],
-                         matrix[2][0]*vector[0] + matrix[2][1]*vector[1] + matrix[2][2]*vector[2]))
+        return Point3D((matrix[0][0]*point[0] + matrix[0][1]*point[1] + matrix[0][2]*point[2],
+                         matrix[1][0]*point[0] + matrix[1][1]*point[1] + matrix[1][2]*point[2],
+                         matrix[2][0]*point[0] + matrix[2][1]*point[1] + matrix[2][2]*point[2]))
 #        return vector.__class__(npy.dot(self.TransfertMatrix(), vector.vector))
 
     def Copy(self):
@@ -1994,7 +1994,48 @@ class Frame3D(Basis3D):
         self.name = name
 
     def __repr__(self):
-        return '{}: O= {} U={}, V={}, W={}'.format(self.__class__.__name__, self.origin, self.u, self.v, self.w)
+        return '{}: O={} U={}, V={}, W={}'.format(self.__class__.__name__,
+                                                  self.origin,
+                                                  self.u, self.v, self.w)
+
+#    def __add__(self, other_frame):
+#        return Frame3D(self.origin+other_frame.origin,
+#                       self.u+other_frame.u,
+#                       self.v+other_frame.v,
+#                       self.w+other_frame.w
+#                       )
+
+    def __neg__(self):
+        Pinv = self.InverseTransfertMatrix()
+        new_origin = Point3D(npy.dot(Pinv, self.origin.vector))
+        return Frame3D(new_origin,
+                       Vector3D(Pinv[:, 0]),
+                       Vector3D(Pinv[:, 1]),
+                       Vector3D(Pinv[:, 2]))
+
+
+    def __add__(self, other_frame):
+        P1 = self.TransfertMatrix()
+        OOp = other_frame.origin - self.origin
+        new_origin = Point3D(npy.dot(P1, OOp.vector) + OOp.vector)
+#        print('no', new_origin, M1, OOp.vector)
+        M = npy.dot(P1, other_frame.TransfertMatrix())
+        return Frame3D(new_origin,
+                       Vector3D(M[:, 0]),
+                       Vector3D(M[:, 1]),
+                       Vector3D(M[:, 2]))
+
+
+    def __sub__(self, other_frame):
+        P1inv = other_frame.InverseTransfertMatrix()
+        P2 = self.TransfertMatrix()
+        new_origin = Point3D(npy.dot(P1inv, (self.origin - other_frame.origin).vector))
+        M = npy.dot(P1inv, P2)
+        return Frame3D(new_origin,
+                       Vector3D(M[:, 0]),
+                       Vector3D(M[:, 1]),
+                       Vector3D(M[:, 2]))
+
 
     def Basis(self):
         return Basis3D(self.u, self.v, self.w)
@@ -2438,7 +2479,7 @@ class Arc3D(Primitive3D):
         else:
             fig = None
 
-        print(self.center.vector)
+#        print(self.center.vector)
         ax.plot(*self.center.vector,color='b')
         ax.plot(*self.start.vector,c='r')
         ax.plot(*self.end.vector,c='r')
