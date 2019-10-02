@@ -1029,15 +1029,16 @@ class LineSegment2D(Line2D):
     def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
         return self.points[0] + self.DirectionVector(unit=True) * curvilinear_abscissa
 
-    def PointDistance(self, point):
+    def PointDistance(self, point, return_other_point=False):
         """
         Computes the distance of a point to segment of line
         """
-
         p1, p2 = self.points
         u = p2-p1
         t = max(0, min(1, (point-p1).Dot(u) / u.Norm()**2))
         projection = p1 + t * u # Projection falls on the segment
+        if return_other_point:
+            return (projection-point).Norm(), projection
         return (projection-point).Norm()
 
     def PointProjection(self, point, curvilinear_abscissa=False):
@@ -1457,16 +1458,19 @@ class Polygon2D(CompositePrimitive2D):
             for p in self.points:
                 p.Translation(offset,copy=False)
 
-    def PointBorderDistance(self, point):
+    def PointBorderDistance(self, point, return_other_point=False):
         """
         Compute the distance to the border distance of polygon
         Output is always positive, even if the point belongs to the polygon
         """
-        d_min = self.line_segments[0].PointDistance(point)
+        d_min, other_point_min = self.line_segments[0].PointDistance(point, return_other_point=True)
         for line in self.line_segments[1:]:
-            d = line.PointDistance(point)
+            d, other_point = line.PointDistance(point, return_other_point=True)
             if d < d_min:
                 d_min = d
+                other_point_min = other_point
+        if return_other_point:
+            return d_min, other_point_min
         return d_min
 
     def SelfIntersect(self):
@@ -2198,6 +2202,15 @@ class LineSegment3D(Line3D):
 
     def to_line(self):
         return Line3D(*self.points)
+    
+    def Babylon(self):
+        s = 'var myPoints = [];\n'
+        s += 'var point1 = new BABYLON.Vector3({},{},{});\n'.format(self.points[0][1],self.points[0][0],self.points[0][2])
+        s += 'myPoints.push(point1);\n'
+        s += 'var point2 = new BABYLON.Vector3({},{},{});\n'.format(self.points[1][1],self.points[1][0],self.points[1][2])
+        s += 'myPoints.push(point2);\n'
+        s += 'var line = BABYLON.MeshBuilder.CreateLines("lines", {points: myPoints}, scene);\n'
+        return s 
 
 
 class BSplineCurve3D(Primitive3D):
@@ -2801,17 +2814,19 @@ class Contour3D(Wire3D):
     """
     A collection of 3D primitives forming a closed wire3D
     """
-    def __init__(self, primitives, edges, name=''):
+    def __init__(self, edges, name=''):
         self.edges = edges
-        primitives2=[]
-        for primitive in primitives:
-            try:
-                primitives2.extend(primitive.primitives)
-            except AttributeError:
-                primitives2.append(primitive)
-
-        CompositePrimitive3D.__init__(self,primitives2, name)
-        self.primitives = primitives
+        
+#        primitives2=[]
+#        for primitive in primitives:
+#            try:
+#                primitives2.extend(primitive.primitives)
+#            except AttributeError:
+#                primitives2.append(primitive)
+#
+#        CompositePrimitive3D.__init__(self,primitives2, name)
+#        self.primitives = primitives
+        self.name = name
         
         points = self.edges[0].points[:]
         for i, edge in enumerate(self.edges[1:-1]):
@@ -2826,30 +2841,30 @@ class Contour3D(Wire3D):
     @classmethod
     def from_step(cls, arguments, object_dict):
         edges = []
-        edge_geoms = []
+#        edge_geoms = []
         for edge in arguments[1]:
             edges.append(object_dict[int(edge[1:])])
-            edge_geoms.append(object_dict[int(edge[1:])].primitives)
-        return cls(edge_geoms, edges, arguments[0][1:-1])
+#            edge_geoms.append(object_dict[int(edge[1:])].primitives)
+        return cls(edges, arguments[0][1:-1])
 
     def Rotation(self, center, axis, angle, copy=False):
         new_edges = [edge.Rotation(center, axis, angle, True) for edge in self.edges]
-        new_primitives = [p.Rotation(center, axis, angle, True) for p in self.primitives]
+#        new_primitives = [p.Rotation(center, axis, angle, True) for p in self.primitives]
         if copy:
-            return Contour3D(new_primitives, new_edges, self.name)
+            return Contour3D(new_edges, self.name)
 #            return Contour3D(new_primitives, self.edges, self.name)
         else:
-            self.primitives = new_primitives
+#            self.primitives = new_primitives
             self.edges = new_edges
 
     def Translation(self, offset, copy=False):
         new_edges = [edge.Translation(offset, True) for edge in self.edges]
-        new_primitives = [p.Translation(offset, True) for p in self.primitives]
+#        new_primitives = [p.Translation(offset, True) for p in self.primitives]
         if copy:
-            return Contour3D(new_primitives, new_edges, self.name)
+            return Contour3D(new_edges, self.name)
 #            return Contour3D(new_primitives, self.edges, self.name)
         else:
-            self.primitives = new_primitives
+#            self.primitives = new_primitives
             self.edges = new_edges
 
 
@@ -2892,6 +2907,8 @@ class Face3D(CompositePrimitive3D):
             self.contour[0].points = repaired_points
 #            new_polygon = Polygon2D(repaired_points)
 #            new_polygon.MPLPlot()
+            
+        self.bounding_box = self._bounding_box()
         
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -2940,7 +2957,7 @@ class Face3D(CompositePrimitive3D):
         z = npy.sum([p[2] for p in points]) / nb
         return Point3D((x,y,z))
         
-    def bbox(self):
+    def _bounding_box(self):
         points = self.contour[0].points
         
         xmin = min([pt[0] for pt in points])
@@ -2950,9 +2967,9 @@ class Face3D(CompositePrimitive3D):
         zmin = min([pt[2] for pt in points])
         zmax = max([pt[2] for pt in points])
         
-        return BBox(xmin, xmax, ymin, ymax, zmin, zmax)
+        return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
-    def distance_to_point(self, point):
+    def distance_to_point(self, point, return_other_point=False):
         """
         Only works if the surface is planar
         TODO : this function does not take into account if Face has holes
@@ -2972,27 +2989,30 @@ class Face3D(CompositePrimitive3D):
         projection_distance = point.PointDistance(projected_pt)
 
         if self.point_on_face(projected_pt):
+            if return_other_point:
+                return projection_distance, projected_pt
             return projection_distance
 
-        contour = self.contour[0]
-#        polygon_points_3D = []
-#        for edge in contour.edges:
-#            polygon_points_3D.append(edge.edge_start.primitive)
-#            polygon_points_3D.append(edge.edge_end.primitive)
-        polygon_points_3D = contour.points
+        polygon_points_3D = self.contour[0].points
         polygon_points_2D = []
         for pt in polygon_points_3D:
             polygon_points_2D.append(pt.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]))
         point_2D = point.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
         polygon = Polygon2D(polygon_points_2D)
 
-        border_distance = polygon.PointBorderDistance(point_2D)
+        border_distance, other_point = polygon.PointBorderDistance(point_2D, return_other_point=True)
+        
+        other_point = other_point.To3D(self.plane.origin , self.plane.vectors[0], self.plane.vectors[1])
+#        other_point = self.plane.origin + other_point[0]*self.plane.vectors[0] + other_point[1]*self.plane.vectors[1]
+        
+        if return_other_point:
+            return (projection_distance**2 + border_distance**2)**0.5, other_point
         return (projection_distance**2 + border_distance**2)**0.5
 
 #        raise NotImplementedError
 
 
-    def distance_to_face(self, face2):
+    def distance_to_face(self, face2, return_points=False):
         """
         Only works if the surface is planar
         TODO : this function does not take into account if Face has holes
@@ -3007,25 +3027,33 @@ class Face3D(CompositePrimitive3D):
         if self.face_intersection(face2) is not None:
             return 0
             
-#        polygon1_points_3D = []
-#        for edge in self.contour[0].edges:
-#            polygon1_points_3D.append(edge.edge_start)
-#            polygon1_points_3D.append(edge.edge_end)
         polygon1_points_3D = self.contour[0].points
-
-#        polygon2_points_3D = []
-#        for edge in face2.contour[0].edges:
-#            polygon2_points_3D.append(edge.edge_start)
-#            polygon2_points_3D.append(edge.edge_end)
         polygon2_points_3D = face2.contour[0].points
 
         distances = []
-        for point1 in polygon1_points_3D:
-            distances.append(face2.distance_to_point(point1))
-        for point2 in polygon2_points_3D:
-            distances.append(self.distance_to_point(point2))
-
-        return min(distances)
+        if not return_points:
+            for point1 in polygon1_points_3D:
+                distances.append(face2.distance_to_point(point1))
+            for point2 in polygon2_points_3D:
+                distances.append(self.distance_to_point(point2))
+            return min(distances)
+        
+        else:
+            for point1 in polygon1_points_3D:
+                d, other_point = face2.distance_to_point(point1, return_other_point=True)
+                distances.append((d, point1, other_point))
+            for point2 in polygon2_points_3D:
+                d, other_point = self.distance_to_point(point2, return_other_point=True)
+                distances.append((d, point2, other_point))
+            
+        d_min, point_min, other_point_min = distances[0]
+        for distance in distances[1:]:
+            if distance[0] < d_min:
+                d_min = distance[0]
+                point_min = distance[1]
+                other_point_min = distance[2]
+        
+        return d_min, point_min, other_point_min
 
 #        raise NotImplementedError
 
@@ -3130,44 +3158,45 @@ class Face3D(CompositePrimitive3D):
         return ax
 
 class Shell3D(CompositePrimitive3D):
-    def __init__(self, primitives, faces, name=''):
-        CompositePrimitive3D.__init__(self, primitives, name)
+    def __init__(self, faces, name=''):
+#        CompositePrimitive3D.__init__(self, primitives, name)
         self.faces = faces
-        self.primitives = primitives
+#        self.primitives = primitives
+        self.bounding_box = self.bounding_box()
 
     @classmethod
     def from_step(cls, arguments, object_dict):
         faces = []
-        primitives = []
+#        primitives = []
 #        print(arguments[1])
         for face in arguments[1]:
             faces.append(object_dict[int(face[1:])])
-            primitives.append(object_dict[int(face[1:])].primitives)
-        return cls(primitives, faces, arguments[0][1:-1])
+#            primitives.append(object_dict[int(face[1:])].primitives)
+        return cls(faces, arguments[0][1:-1])
 
     def Rotation(self, center, axis, angle, copy=False):
         new_faces = [face.Rotation(center, axis, angle, True) for face in self.faces]
-        new_primitives = []
-        for primitive in self.primitives:
-            new_primitives.append([subprimitive.Rotation(center, axis, angle, True) for subprimitive in primitive])
+#        new_primitives = []
+#        for primitive in self.primitives:
+#            new_primitives.append([subprimitive.Rotation(center, axis, angle, True) for subprimitive in primitive])
         if copy:
-            return Shell3D(new_primitives, new_faces, self.name)
+            return Shell3D(new_faces, self.name)
         else:
-            self.primitives = new_primitives
+#            self.primitives = new_primitives
             self.faces = new_faces
 
     def Translation(self, offset, copy=False):
         new_faces = [face.Translation(offset, True) for face in self.faces]
-        new_primitives = []
-        for primitive in self.primitives:
-            new_primitives.append([subprimitive.Translation(offset, True) for subprimitive in primitive])
+#        new_primitives = []
+#        for primitive in self.primitives:
+#            new_primitives.append([subprimitive.Translation(offset, True) for subprimitive in primitive])
         if copy:
-            return Shell3D(new_primitives, new_faces, self.name)
+            return Shell3D(new_faces, self.name)
         else:
-            self.primitives = new_primitives
+#            self.primitives = new_primitives
             self.faces = new_faces
 
-    def bbox(self):
+    def bounding_box(self):
         """
         Returns the boundary box
         """
@@ -3178,7 +3207,7 @@ class Shell3D(CompositePrimitive3D):
         
         points = []
         for face in self.faces:
-            points.extend(face.bbox().points)
+            points.extend(face.bounding_box.points)
                 
         xmin = min([pt[0] for pt in points])
         xmax = max([pt[0] for pt in points])
@@ -3187,7 +3216,7 @@ class Shell3D(CompositePrimitive3D):
         zmin = min([pt[2] for pt in points])
         zmax = max([pt[2] for pt in points])
         
-        return BBox(xmin, xmax, ymin, ymax, zmin, zmax)
+        return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def point_belongs(self, point):
         """
@@ -3197,14 +3226,14 @@ class Shell3D(CompositePrimitive3D):
         epsilon = 1e-08
         count = 0
 
-        bbox = self.bbox()
+        bbox = self.bounding_box
         if point[0] < bbox.xmin or point[0] > bbox.xmax:
             return False
         if point[1] < bbox.ymin or point[1] > bbox.ymax:
             return False
         if point[2] < bbox.zmin or point[2] > bbox.zmax:
             return False
-
+        
         ray = LineSegment3D(point, Point3D((bbox.xmax+epsilon, point[1], point[2])))
         for face in self.faces:
             intersection_points = face.linesegment_intersection(ray)
@@ -3212,7 +3241,20 @@ class Shell3D(CompositePrimitive3D):
                 count += 1
         if count%2 == 0:
             return False
-
+                
+        # Second test
+        count = 0
+        ray = LineSegment3D(point, Point3D((point[0], bbox.ymax, point[2])))
+        for face in self.faces:
+            intersection_points = face.linesegment_intersection(ray)
+            if intersection_points is not None:
+                count += 1
+        if count%2 == 0:
+            print('failed second test.......')
+            return False
+        
+        print('succeded second test : indeed point is inside')
+        
         return True
     
     def is_inside_shell(self, shell2):
@@ -3248,8 +3290,8 @@ class Shell3D(CompositePrimitive3D):
 #            return False
         
         # Check if boundary boxes intersect
-        bbox1 = self.bbox()
-        bbox2 = shell2.bbox()
+        bbox1 = self.bounding_box
+        bbox2 = shell2.bounding_box
         if not bbox1.bbox_intersection(bbox2):
             print("No intersection of shells' BBox")
             return False
@@ -3288,37 +3330,82 @@ class Shell3D(CompositePrimitive3D):
                     return True
         return False
     
-    def distance_to_shell(self, shell2):
+#    def distance_to_shell(self, shell2, return_points=False):
+#        NB_FACES = 100
+#        
+#        if self.shell_intersection(shell2):
+#            return 0
+#        
+#        # Bounding box
+#        close_faces = []
+#        for face1 in self.faces:
+#            bbox1 = face1.bounding_box
+#            for face2 in shell2.faces:               
+#                bbox2 = face2.bounding_box
+#                bbox_distance = bbox1.distance_to_bbox(bbox2)
+#                if npy.isclose(bbox_distance, 0):
+#                    close_faces.append((face1, face2, bbox_distance))
+#                    NB_FACES += 1
+#                else:
+#                    if len(close_faces) < NB_FACES:
+#                        close_faces.append((face1, face2, bbox_distance))
+#                    else:
+#                        max_distance = max([d[2] for d in close_faces])
+#                        if bbox_distance < max_distance:
+#                            index = [d[2] for d in close_faces].index(max_distance)
+#                            close_faces[index] = (face1, face2, bbox_distance)
+#
+#        distances = []
+#        if not return_points:
+#            for face1, face2 in [(f[0], f[1]) for f in close_faces]:
+#                distance = face1.distance_to_face(face2)
+#                distances.append(distance)
+#            return min(distances)
+#        else:
+#            for face1, face2 in [(f[0], f[1]) for f in close_faces]:
+#                distance = face1.distance_to_face(face2, return_points=True)
+#                distances.append(distance)
+#            d_min, point1_min, point2_min = distances[0]
+#            for distance in distances:
+#                if distance[0] < d_min:
+#                    d_min = distance[0]
+#                    point1_min = distance[1]
+#                    point2_min = distance[2]
+#            return d_min, point1_min, point2_min
+        
+    def distance_to_shell(self, shell2, return_points=False):
         
         if self.shell_intersection(shell2):
             return 0
         
-        # Bounding box
-        nb_faces = 100
-        close_faces = []
-        for face1 in self.faces:
-            for face2 in shell2.faces:
-                bbox1 = face1.bbox()
-                bbox2 = face2.bbox()
-                bbox_distance = bbox1.distance_to_bbox(bbox2)
-                if npy.isclose(bbox_distance, 0):
-                    close_faces.append((face1, face2, bbox_distance))
-                    nb_faces += 1
-                else:
-                    if len(close_faces) < nb_faces:
-                        close_faces.append((face1, face2, bbox_distance))
-                    else:
-                        max_distance = max([d[2] for d in close_faces])
-                        if bbox_distance < max_distance:
-                            index = [d[2] for d in close_faces].index(max_distance)
-                            close_faces[index] = (face1, face2, bbox_distance)
-
-        distances = []
-        for face1, face2 in [(f[0], f[1]) for f in close_faces]:
-            distance = face1.distance_to_face(face2)
-            distances.append(distance)
-            
-        return min(distances)
+        if not return_points:
+            # initialisation
+            distance_min = self.faces[0].distance_to_face(shell2.faces[0])
+            for face1 in self.faces:
+                bbox1 = face1.bounding_box
+                for face2 in shell2.faces:
+                    bbox2 = face2.bounding_box
+                    bbox_distance = bbox1.distance_to_bbox(bbox2)
+                    if bbox_distance < distance_min:
+                        distance = face1.distance_to_face(face2)
+                        if distance < distance_min:
+                            distance_min = distance
+            return distance_min
+        
+        else:
+            # initialisation
+            distance_min, point1_min, point2_min = self.faces[0].distance_to_face(shell2.faces[0], return_points=True)
+            for face1 in self.faces:
+                bbox1 = face1.bounding_box
+                for face2 in shell2.faces:
+                    bbox2 = face2.bounding_box
+                    bbox_distance = bbox1.distance_to_bbox(bbox2)
+                    if bbox_distance < distance_min:
+                        distance, point1, point2 = face1.distance_to_face(face2, return_points=True)
+                        if distance < distance_min:
+                            distance_min, point1_min, point2_min = distance, point1, point2
+            return distance_min, point1_min, point2_min
+                
     
     def Babylon(self):
 #        ya, xa, za = self.axis# to counter y definition in babylon
@@ -3418,7 +3505,7 @@ class Shell3D(CompositePrimitive3D):
         
         return s
         
-class BBox:
+class BoundingBox:
     """
     An axis aligned boundary box
     """
@@ -3462,29 +3549,6 @@ class BBox:
         plt.show()
         
         return ax
-        
-    
-    def Rotation(self, center, axis, angle, copy=False):
-        """
-        A ne pas utiliser car les BBox sont axis aligned et une rotation peut mettre à mal cette hypothèse
-        Faire un rotation du shell et ensuite recalculer la BBox
-        """
-        raise NotImplementedError
-#        new_xmin = self.xmin.Rotation(center, axis, angle, copy=True)
-#        new_xmax = self.xmax.Rotation(center, axis, angle, copy=True)
-#        new_ymin = self.ymin.Rotation(center, axis, angle, copy=True)
-#        new_ymax = self.ymax.Rotation(center, axis, angle, copy=True)
-#        new_zmin = self.zmin.Rotation(center, axis, angle, copy=True)
-#        new_zmax = self.zmax.Rotation(center, axis, angle, copy=True)
-#        if copy:
-#            return BBox(new_xmin, new_xmax, new_ymin, new_ymax, new_zmin, new_zmax)
-#        else:
-#            self.xmin = new_xmin
-#            self.xmax = new_xmax
-#            self.ymin = new_ymin
-#            self.ymax = new_ymax
-#            self.zmin = new_zmin
-#            self.zmax = new_zmax
 
     def Translation(self, offset, copy=False):
         new_xmin = self.xmin+offset[0]
@@ -3494,7 +3558,7 @@ class BBox:
         new_zmin = self.zmin+offset[2]
         new_zmax = self.zmax+offset[2]
         if copy:
-            return BBox(new_xmin, new_xmax, new_ymin, new_ymax, new_zmin, new_zmax)
+            return BoundingBox(new_xmin, new_xmax, new_ymin, new_ymax, new_zmin, new_zmax)
         else:
             self.xmin = new_xmin
             self.xmax = new_xmax
@@ -3502,14 +3566,6 @@ class BBox:
             self.ymax = new_ymax
             self.zmin = new_zmin
             self.zmax = new_zmax
-#            self.points = (Point3D((new_xmin, new_ymin, new_zmin)), \
-#                           Point3D((new_xmax, new_ymin, new_zmin)), \
-#                           Point3D((new_xmax, new_ymax, new_zmin)), \
-#                           Point3D((new_xmin, new_ymax, new_zmin)), \
-#                           Point3D((new_xmin, new_ymin, new_zmax)), \
-#                           Point3D((new_xmax, new_ymin, new_zmax)), \
-#                           Point3D((new_xmax, new_ymax, new_zmax)), \
-#                           Point3D((new_xmin, new_ymax, new_zmax)))
             self.points=(p.Translate(offset, False) for p in self.points)
     
     def bbox_intersection(self, bbox2):
@@ -3957,11 +4013,39 @@ class VolumeModel:
         else:
             self.primitives = new_primitives
             self.shells = new_shells
+        
+    def frame_mapping(self, frame, side):
+        """
+        side = 'old' or 'new'
+        """
+        if side == 'new':
+            for shell in self.shells:
+                for face in shell.faces:
+                    for contour in face.contour:
+                        for edge in contour:
+                            frame.NewCoordinates(edge.edge_start.primitive)
+                            frame.NewCoordinates(edge.edge_end.primitive)
+                            frame.NewCoordinates(edge.primitives.points[0])
+                            frame.NewCoordinates(edge.primitives.points[1])
+                    for primitive in face.primitives:
+                        frame.NewCoordinates(primitive.origin)
+                        
+        if side == 'old':
+            for shell in self.shells:
+                for face in shell.faces:
+                    for contour in face.contour:
+                        for edge in contour:
+                            frame.OldCoordinates(edge.edge_start.primitive)
+                            frame.OldCoordinates(edge.edge_end.primitive)
+                            frame.OldCoordinates(edge.primitives.points[0])
+                            frame.OldCoordinates(edge.primitives.points[1])
+                    for primitive in face.primitives:
+                        frame.OldCoordinates(primitive.origin)
             
-    def bbox(self):
+    def bounding_box(self):
         bboxes = []
         for shell in self.shells:
-            bboxes.append(shell.bbox())
+            bboxes.append(shell.bounding_box())
         
         xmin = min([box.xmin for box in bboxes])
         xmax = max([box.xmax for box in bboxes])
@@ -3970,7 +4054,7 @@ class VolumeModel:
         zmin = min([box.zmin for box in bboxes])
         zmax = max([box.zmax for box in bboxes])
         
-        return BBox(xmin, xmax, ymin, ymax, zmin, zmax)
+        return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
             
     def plot(self, ax=None, color=None):
         fig = plt.figure()
