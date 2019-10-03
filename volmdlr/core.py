@@ -21,7 +21,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 import networkx as nx
 
-from .vmcy import PolygonPointBelongs
+from .vmcy import PolygonPointBelongs, Vector3DDot
 
 from scipy.linalg import solve, LinAlgError, inv
 
@@ -1410,7 +1410,7 @@ class Polygon2D(CompositePrimitive2D):
 
         a = 0.5*npy.sum(xi_yi1-xi1_yi)# signed area!
 #        a=self.Area()
-        if not math.isclose(a, 0):
+        if not math.isclose(a, 0, abs_tol=1e-08):
             cx = npy.sum(npy.multiply(xi_xi1,(xi_yi1-xi1_yi)))/6./a
             cy = npy.sum(npy.multiply(yi_yi1,(xi_yi1-xi1_yi)))/6./a
             return Point2D((cx, cy))
@@ -1636,10 +1636,13 @@ class Vector3D(Vector):
                                round(self.vector[1], ndigits),
                                round(self.vector[2], ndigits)))
 
+#    def Dot(self, other_vector):
+#        u1, u2, u3 = self.vector
+#        v1, v2, v3 = other_vector.vector
+#        return u1*v1 + u2*v2 + u3*v3
+    
     def Dot(self, other_vector):
-        u1, u2, u3 = self.vector
-        v1, v2, v3 = other_vector.vector
-        return u1*v1 + u2*v2 + u3*v3
+        return Vector3DDot(self.vector, other_vector.vector)
 
     def Cross(self, other_vector):
         u1, u2, u3 = self.vector
@@ -1772,8 +1775,11 @@ class Point3D(Vector3D):
 
 
     def To2D(self, plane_origin, x, y):
-        if x.Dot(y) > 1e-8:
-            raise NotImplementedError
+#        print(x)
+#        print(y)
+#        print(x.Dot(y))
+#        if x.Dot(y) > 1e-8:
+#            raise NotImplementedError
         x2d = self.Dot(x) - plane_origin.Dot(x)
         y2d = self.Dot(y) - plane_origin.Dot(y)
 #        x2d = npy.dot(self.vector, x.vector) - npy.dot(plane_origin.vector, x.vector)
@@ -1832,16 +1838,16 @@ class Plane3D:
 
     def point_on_plane(self, point):
         projected_pt = point.PlaneProjection3D(self.origin, self.vectors[0], self.vectors[1])
-        if npy.isclose(point[0], projected_pt[0], atol=1e-8) \
-        and npy.isclose(point[1], projected_pt[1], atol=1e-8) \
-        and npy.isclose(point[2], projected_pt[2], atol=1e-8):
+        if math.isclose(point[0], projected_pt[0], abs_tol=1e-8) \
+        and math.isclose(point[1], projected_pt[1], abs_tol=1e-8) \
+        and math.isclose(point[2], projected_pt[2], abs_tol=1e-8):
             return True
         return False
 
     def line_intersection(self, line):
         u = line.points[1] - line.points[0]
         w = line.points[0] - self.origin
-        if npy.isclose(self.normal.Dot(u), 0):
+        if math.isclose(self.normal.Dot(u), 0, abs_tol=1e-08):
             return None
         intersection_abscissea = - self.normal.Dot(w) / self.normal.Dot(u)
         return line.points[0] + intersection_abscissea * u
@@ -1849,9 +1855,10 @@ class Plane3D:
     def linesegment_intersection(self, linesegment):
         u = linesegment.points[1] - linesegment.points[0]
         w = linesegment.points[0] - self.origin
-        if npy.isclose(self.normal.Dot(u), 0):
+        normalDotu = self.normal.Dot(u)
+        if math.isclose(normalDotu, 0, abs_tol=1e-08):
             return None
-        intersection_abscissea = - self.normal.Dot(w) / self.normal.Dot(u)
+        intersection_abscissea = - self.normal.Dot(w) / normalDotu
         if intersection_abscissea < 0 or intersection_abscissea > 1:
             return None
         return linesegment.points[0] + intersection_abscissea * u
@@ -3929,7 +3936,8 @@ class Step:
 
             try:
                 volmdlr_object = step_to_volmdlr_primitive[name].from_step(arguments, object_dict)
-            except KeyError:
+            except KeyError as e: 
+                print('keyerror', e)
                 return instanciate_id, object_dict, primitives
 
             object_dict[instanciate_id] = volmdlr_object
@@ -3962,6 +3970,7 @@ class Step:
         i = 0
         still_not_instanciated_id = []
         while not_instanciated_id:
+            print(not_instanciated_id)
             if i > len(not_instanciated_id)-1:
                 not_instanciated_id = still_not_instanciated_id
                 still_not_instanciated_id = []
@@ -4028,8 +4037,8 @@ class VolumeModel:
         if side == 'new':
             for shell in self.shells:
                 for face in shell.faces:
-                    for contour in face.contour:
-                        for edge in contour:
+                    for cont in face.contour:
+                        for edge in cont.edges:
                             frame.NewCoordinates(edge.edge_start.primitive)
                             frame.NewCoordinates(edge.edge_end.primitive)
                             frame.NewCoordinates(edge.primitives.points[0])
