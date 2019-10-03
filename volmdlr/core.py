@@ -3373,39 +3373,31 @@ class Shell3D(CompositePrimitive3D):
 #                    point2_min = distance[2]
 #            return d_min, point1_min, point2_min
         
-    def distance_to_shell(self, shell2, return_points=False):
+    def distance_to_shell(self, shell2, add_to_volumemodel=None):
+        """
+        Returns a Mesure object if the distance is not zero, otherwise returns None
+        """
         
         if self.shell_intersection(shell2):
-            return 0
-        
-        if not return_points:
-            # initialisation
-            distance_min = self.faces[0].distance_to_face(shell2.faces[0])
-            for face1 in self.faces:
-                bbox1 = face1.bounding_box
-                for face2 in shell2.faces:
-                    bbox2 = face2.bounding_box
-                    bbox_distance = bbox1.distance_to_bbox(bbox2)
-                    if bbox_distance < distance_min:
-                        distance = face1.distance_to_face(face2)
-                        if distance < distance_min:
-                            distance_min = distance
-            return distance_min
-        
-        else:
-            # initialisation
-            distance_min, point1_min, point2_min = self.faces[0].distance_to_face(shell2.faces[0], return_points=True)
-            for face1 in self.faces:
-                bbox1 = face1.bounding_box
-                for face2 in shell2.faces:
-                    bbox2 = face2.bounding_box
-                    bbox_distance = bbox1.distance_to_bbox(bbox2)
-                    if bbox_distance < distance_min:
-                        distance, point1, point2 = face1.distance_to_face(face2, return_points=True)
-                        if distance < distance_min:
-                            distance_min, point1_min, point2_min = distance, point1, point2
-            return distance_min, point1_min, point2_min
-                
+            return None
+
+        distance_min, point1_min, point2_min = self.faces[0].distance_to_face(shell2.faces[0], return_points=True)
+        for face1 in self.faces:
+            bbox1 = face1.bounding_box
+            for face2 in shell2.faces:
+                bbox2 = face2.bounding_box
+                bbox_distance = bbox1.distance_to_bbox(bbox2)
+                if bbox_distance < distance_min:
+                    distance, point1, point2 = face1.distance_to_face(face2, return_points=True)
+                    if distance < distance_min:
+                        distance_min, point1_min, point2_min = distance, point1, point2
+                        
+        mesure = Mesure(point1_min, point2_min)
+                        
+        if add_to_volumemodel is not None:
+            add_to_volumemodel.shells.append(mesure)
+                            
+        return mesure                
     
     def Babylon(self):
 #        ya, xa, za = self.axis# to counter y definition in babylon
@@ -3621,6 +3613,21 @@ class BoundingBox:
         
         return (dx**2 + dy**2 + dz**2)**0.5
         
+    
+class Mesure:
+    def __init__(self, point1, point2):
+        self.points = [point1, point2]
+        self.distance = Vector3D(point1-point2).Norm()
+        
+    def Babylon(self):
+        s = 'var myPoints = [];\n'
+        s += 'var point1 = new BABYLON.Vector3({},{},{});\n'.format(self.points[0][1],self.points[0][0],self.points[0][2])
+        s += 'myPoints.push(point1);\n'
+        s += 'var point2 = new BABYLON.Vector3({},{},{});\n'.format(self.points[1][1],self.points[1][0],self.points[1][2])
+        s += 'myPoints.push(point2);\n'
+        s += 'var line = BABYLON.MeshBuilder.CreateLines("lines", {points: myPoints}, scene);\n'
+        s += 'line.color = new BABYLON.Color3(1, 0, 0);\n'
+        return s 
 
 class Group:
     def __init__(self, primitives, name):
