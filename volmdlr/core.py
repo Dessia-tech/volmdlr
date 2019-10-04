@@ -10,6 +10,7 @@ Created on Tue Feb 28 14:07:37 2017
 #import bezier
 from geomdl import NURBS
 
+import warnings
 import math
 import numpy as npy
 npy.seterr(divide='raise')
@@ -23,7 +24,7 @@ import networkx as nx
 
 from .vmcy import PolygonPointBelongs
 
-from scipy.linalg import solve, LinAlgError, inv
+from scipy.linalg import solve, LinAlgError
 
 import volmdlr.geometry as geometry
 from volmdlr import plot_data
@@ -261,13 +262,24 @@ class Vector2D(Vector):
         if unit:
             n.Normalize()
         return n
+    
+    def Draw(self):
+        warnings.warn(
+            "Draw is deprecated and will be removed in next versions, use plot() instead",
+            DeprecationWarning
+        )
+        self.plot()
 
-    def Draw(self, origin=(0, 0), ax=None, color='k', line=False):
+    def plot(self, amplitude=0.1, origin=None, ax=None, color='k', line=False, label=None):
+        if origin is None:
+            origin = Vector2D((0., 0.))
+        
         if ax is None:
             fig, ax = plt.subplots()
-
+        else:
+            fig = ax.figure
         ax.add_patch(FancyArrow(origin[0], origin[1],
-                                self.vector[0]/10, self.vector[1]/10,
+                                self.vector[0]*amplitude, self.vector[1]*amplitude,
                                 width=0.001,
                                 head_width=0.01,
                                 length_includes_head=True,
@@ -283,6 +295,11 @@ class Vector2D(Vector):
             p4 = p2 + 4*u
             ax.plot([p3[0], p4[0]], [p3[1], p4[1]], style, linestyle=linestyle)
 
+#        print(origin, self, origin+self)
+        if label is not None:
+            ax.text(*(origin+self*amplitude).vector, label)
+
+        return fig, ax
 
     @classmethod
     def DictToObject(cls, dict_):
@@ -852,7 +869,7 @@ class Line2D(Primitive2D, Line):
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
         else:
-            fig = None
+            fig = ax.figure
 
         p1, p2 = self.points
         u = p2 - p1
@@ -860,7 +877,7 @@ class Line2D(Primitive2D, Line):
         p3 = p1 - 3*u
         p4 = p2 + 4*u
         ax.plot([p3[0], p4[0]], [p3[1], p4[1]], style, linestyle = linestyle)
-        return []
+        return fig ,ax
 
     def CreateTangentCircle(self, point, other_line):
         """
@@ -1645,6 +1662,13 @@ class Vector3D(Vector):
         else:
             self.vector = vector2
 
+    def To2D(self, plane_origin, x, y):
+        x2d = self.Dot(x) - plane_origin.Dot(x)
+        y2d = self.Dot(y) - plane_origin.Dot(y)
+#        x2d = npy.dot(self.vector, x.vector) - npy.dot(plane_origin.vector, x.vector)
+#        y2d = npy.dot(self.vector, y.vector) - npy.dot(plane_origin.vector, y.vector)
+        return Point2D((x2d,y2d))
+
     def RandomUnitNormalVector(self):
         """
         Returns a random normal vector
@@ -1746,15 +1770,6 @@ class Point3D(Vector3D):
         u2 = p3d.Dot(y)
         return Point2D((u1, u2))
 
-
-    def To2D(self, plane_origin, x, y):
-        if x.Dot(y) > 1e-8:
-            raise NotImplementedError
-        x2d = self.Dot(x) - plane_origin.Dot(x)
-        y2d = self.Dot(y) - plane_origin.Dot(y)
-#        x2d = npy.dot(self.vector, x.vector) - npy.dot(plane_origin.vector, x.vector)
-#        y2d = npy.dot(self.vector, y.vector) - npy.dot(plane_origin.vector, y.vector)
-        return Point2D((x2d,y2d))
 
     def PointDistance(self, point2):
         return (self-point2).Norm()
@@ -1873,6 +1888,11 @@ class Basis3D(Basis):
         self.w = w
         self.name = name
 
+    def __neg__(self):
+        Pinv = self.InverseTransfertMatrix()
+        return Basis3D(Vector3D(Pinv[:, 0]),
+                       Vector3D(Pinv[:, 1]),
+                       Vector3D(Pinv[:, 2]))
 
     def __repr__(self):
         return '{}: U={}, V={}, W={}'.format(self.__class__.__name__, *self.vectors)
@@ -2016,9 +2036,8 @@ class Frame3D(Basis3D):
 
     def __add__(self, other_frame):
         P1 = self.TransfertMatrix()
-        OOp = other_frame.origin - self.origin
-        new_origin = Point3D(npy.dot(P1, OOp.vector) + OOp.vector)
-#        print('no', new_origin, M1, OOp.vector)
+        new_origin = Point3D(npy.dot(P1, other_frame.origin.vector) + self.origin.vector)
+        
         M = npy.dot(P1, other_frame.TransfertMatrix())
         return Frame3D(new_origin,
                        Vector3D(M[:, 0]),
@@ -2067,6 +2086,20 @@ class Frame3D(Basis3D):
     def Copy(self):
         return Frame3D(self.origin, self.u, self.v, self.w)
 
+    def plot2d(self, x=x3D, y=y3D, ax=None, color='k'):
+        if ax is None:
+            fig, ax = plt.subplots()
+        else:
+            fig = ax.figure
+            
+        origin2d = self.origin.To2D(o3D, x, y)
+        
+        for iv, vector in enumerate(self.vectors):
+            vector2D = vector.To2D(o3D, x, y)
+            if vector2D.Norm() > 1e-8:
+                vector2D.plot(origin=origin2d, ax=ax, color=color, label=str(iv+1))
+        
+        return fig, ax
     @classmethod
     def from_step(cls, arguments, object_dict):
         origin = object_dict[arguments[1]]
