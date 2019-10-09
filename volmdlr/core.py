@@ -1933,6 +1933,14 @@ class Basis3D(Basis):
                        Vector3D(Pinv[:, 1]),
                        Vector3D(Pinv[:, 2]))
 
+    def __sub__(self, other_frame):
+        P1inv = other_frame.InverseTransfertMatrix()
+        P2 = self.TransfertMatrix()
+        M = npy.dot(P1inv, P2)
+        return Basis3D(Vector3D(M[:, 0]),
+                       Vector3D(M[:, 1]),
+                       Vector3D(M[:, 2]))
+
     def __repr__(self):
         return '{}: U={}, V={}, W={}'.format(self.__class__.__name__, *self.vectors)
     
