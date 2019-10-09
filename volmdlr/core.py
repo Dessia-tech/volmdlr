@@ -10,6 +10,7 @@ Created on Tue Feb 28 14:07:37 2017
 #import bezier
 from geomdl import NURBS
 
+import warnings
 import math
 import numpy as npy
 npy.seterr(divide='raise')
@@ -26,7 +27,7 @@ import networkx as nx
 
 from .vmcy import PolygonPointBelongs, Vector3DDot
 
-from scipy.linalg import solve, LinAlgError, inv
+from scipy.linalg import solve, LinAlgError
 
 import volmdlr.geometry as geometry
 from volmdlr import plot_data
@@ -274,13 +275,24 @@ class Vector2D(Vector):
         if unit:
             n.Normalize()
         return n
+    
+    def Draw(self):
+        warnings.warn(
+            "Draw is deprecated and will be removed in next versions, use plot() instead",
+            DeprecationWarning
+        )
+        self.plot()
 
-    def Draw(self, origin=(0, 0), ax=None, color='k', line=False):
+    def plot(self, amplitude=0.1, origin=None, ax=None, color='k', line=False, label=None):
+        if origin is None:
+            origin = Vector2D((0., 0.))
+        
         if ax is None:
             fig, ax = plt.subplots()
-
+        else:
+            fig = ax.figure
         ax.add_patch(FancyArrow(origin[0], origin[1],
-                                self.vector[0]/10, self.vector[1]/10,
+                                self.vector[0]*amplitude, self.vector[1]*amplitude,
                                 width=0.001,
                                 head_width=0.01,
                                 length_includes_head=True,
@@ -296,6 +308,11 @@ class Vector2D(Vector):
             p4 = p2 + 4*u
             ax.plot([p3[0], p4[0]], [p3[1], p4[1]], style, linestyle=linestyle)
 
+#        print(origin, self, origin+self)
+        if label is not None:
+            ax.text(*(origin+self*amplitude).vector, label)
+
+        return fig, ax
 
     @classmethod
     def DictToObject(cls, dict_):
@@ -421,6 +438,8 @@ class Basis:
     def Dict(self):
         d = {'vectors' : [vector.Dict() for vector in self.vectors]}
         return d
+
+        
 
 class Basis2D(Basis):
     """
@@ -863,7 +882,7 @@ class Line2D(Primitive2D, Line):
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
         else:
-            fig = None
+            fig = ax.figure
 
         p1, p2 = self.points
         u = p2 - p1
@@ -871,7 +890,7 @@ class Line2D(Primitive2D, Line):
         p3 = p1 - 3*u
         p4 = p2 + 4*u
         ax.plot([p3[0], p4[0]], [p3[1], p4[1]], style, linestyle = linestyle)
-        return []
+        return fig ,ax
 
     def CreateTangentCircle(self, point, other_line):
         """
@@ -1608,8 +1627,6 @@ class Vector3D(Vector):
         self.name = name
 
     def __add__(self, other_vector):
-        print(self)
-        print(other_vector)
         return Vector3D((self.vector[0] + other_vector.vector[0],
                          self.vector[1] + other_vector.vector[1],
                          self.vector[2] + other_vector.vector[2]))
@@ -1695,6 +1712,13 @@ class Vector3D(Vector):
                 
                 
         
+
+    def To2D(self, plane_origin, x, y):
+        x2d = self.Dot(x) - plane_origin.Dot(x)
+        y2d = self.Dot(y) - plane_origin.Dot(y)
+#        x2d = npy.dot(self.vector, x.vector) - npy.dot(plane_origin.vector, x.vector)
+#        y2d = npy.dot(self.vector, y.vector) - npy.dot(plane_origin.vector, y.vector)
+        return Point2D((x2d,y2d))
 
     def RandomUnitNormalVector(self):
         """
@@ -1973,13 +1997,18 @@ class Basis3D(Basis):
         self.w = w
         self.name = name
 
+    def __neg__(self):
+        Pinv = self.InverseTransfertMatrix()
+        return Basis3D(Vector3D(Pinv[:, 0]),
+                       Vector3D(Pinv[:, 1]),
+                       Vector3D(Pinv[:, 2]))
+
     def __repr__(self):
         return '{}: U={}, V={}, W={}'.format(self.__class__.__name__, *self.vectors)
+    
     def _get_vectors(self):
         return (self.u, self.v, self.w)
 
-#    def _set_vectors(self, vectors):
-#        return vectors
     vectors = property(_get_vectors)
 
     def Rotation(self, axis, angle, copy=True):
@@ -2062,11 +2091,11 @@ class Basis3D(Basis):
                          matrix[2][0]*vector[0] + matrix[2][1]*vector[1] + matrix[2][2]*vector[2]))
 #        return vector.__class__(npy.dot(self.InverseTransfertMatrix(), vector.vector))
 
-    def OldCoordinates(self, vector):
+    def OldCoordinates(self, point):
         matrix = self.TransfertMatrix()
-        return Vector3D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1] + matrix[0][2]*vector[2],
-                         matrix[1][0]*vector[0] + matrix[1][1]*vector[1] + matrix[1][2]*vector[2],
-                         matrix[2][0]*vector[0] + matrix[2][1]*vector[1] + matrix[2][2]*vector[2]))
+        return Point3D((matrix[0][0]*point[0] + matrix[0][1]*point[1] + matrix[0][2]*point[2],
+                         matrix[1][0]*point[0] + matrix[1][1]*point[1] + matrix[1][2]*point[2],
+                         matrix[2][0]*point[0] + matrix[2][1]*point[1] + matrix[2][2]*point[2]))
 #        return vector.__class__(npy.dot(self.TransfertMatrix(), vector.vector))
 
     def Copy(self):
@@ -2094,7 +2123,47 @@ class Frame3D(Basis3D):
         self.name = name
 
     def __repr__(self):
-        return '{}: O= {} U={}, V={}, W={}'.format(self.__class__.__name__, self.origin, self.u, self.v, self.w)
+        return '{}: O={} U={}, V={}, W={}'.format(self.__class__.__name__,
+                                                  self.origin,
+                                                  self.u, self.v, self.w)
+
+#    def __add__(self, other_frame):
+#        return Frame3D(self.origin+other_frame.origin,
+#                       self.u+other_frame.u,
+#                       self.v+other_frame.v,
+#                       self.w+other_frame.w
+#                       )
+
+    def __neg__(self):
+        Pinv = self.InverseTransfertMatrix()
+        new_origin = Point3D(npy.dot(Pinv, self.origin.vector))
+        return Frame3D(new_origin,
+                       Vector3D(Pinv[:, 0]),
+                       Vector3D(Pinv[:, 1]),
+                       Vector3D(Pinv[:, 2]))
+
+
+    def __add__(self, other_frame):
+        P1 = self.TransfertMatrix()
+        new_origin = Point3D(npy.dot(P1, other_frame.origin.vector) + self.origin.vector)
+        
+        M = npy.dot(P1, other_frame.TransfertMatrix())
+        return Frame3D(new_origin,
+                       Vector3D(M[:, 0]),
+                       Vector3D(M[:, 1]),
+                       Vector3D(M[:, 2]))
+
+
+    def __sub__(self, other_frame):
+        P1inv = other_frame.InverseTransfertMatrix()
+        P2 = self.TransfertMatrix()
+        new_origin = Point3D(npy.dot(P1inv, (self.origin - other_frame.origin).vector))
+        M = npy.dot(P1inv, P2)
+        return Frame3D(new_origin,
+                       Vector3D(M[:, 0]),
+                       Vector3D(M[:, 1]),
+                       Vector3D(M[:, 2]))
+
 
     def Basis(self):
         return Basis3D(self.u, self.v, self.w)
@@ -2126,6 +2195,20 @@ class Frame3D(Basis3D):
     def Copy(self):
         return Frame3D(self.origin, self.u, self.v, self.w)
 
+    def plot2d(self, x=x3D, y=y3D, ax=None, color='k'):
+        if ax is None:
+            fig, ax = plt.subplots()
+        else:
+            fig = ax.figure
+            
+        origin2d = self.origin.To2D(o3D, x, y)
+        
+        for iv, vector in enumerate(self.vectors):
+            vector2D = vector.To2D(o3D, x, y)
+            if vector2D.Norm() > 1e-8:
+                vector2D.plot(origin=origin2d, ax=ax, color=color, label=str(iv+1))
+        
+        return fig, ax
     @classmethod
     def from_step(cls, arguments, object_dict):
         origin = object_dict[arguments[1]]
@@ -2547,7 +2630,7 @@ class Arc3D(Primitive3D):
         else:
             fig = None
 
-        print(self.center.vector)
+#        print(self.center.vector)
         ax.plot(*self.center.vector,color='b')
         ax.plot(*self.start.vector,c='r')
         ax.plot(*self.end.vector,c='r')
@@ -4058,12 +4141,12 @@ class Step:
                 parenthesis_count -= 1
                 if parenthesis_count == 0:
                     subfunction_args.append(subfunction_arg)
+            if parenthesis_count == 0:
                     subfunction_arg = ""
                 else:
                     subfunction_arg += char
                 continue
 
-            if parenthesis_count == 0:
                 subfunction_name += char
             else:
                 subfunction_arg += char
