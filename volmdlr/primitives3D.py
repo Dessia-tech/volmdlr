@@ -106,7 +106,7 @@ class Sphere(volmdlr.Primitive3D):
         x, y, z = npy.round(1000*self.center.vector, ndigits)
         return '{} = Part.makeSphere({}, fc.Vector({}, {}, {}))\n'.format(name,r,x,y,z)
 
-class Block(volmdlr.Primitive3D):
+class Block(volmdlr.Shell3D):
     """
     Creates a block
     :param frame: a frame 3D. The origin of the frame is the center of the block,
@@ -115,7 +115,9 @@ class Block(volmdlr.Primitive3D):
     def __init__(self, frame, name=''):
         self.frame = frame
         self.size = (self.frame.u.Norm(), self.frame.v.Norm(), self.frame.w.Norm())
-        volmdlr.Primitive3D.__init__(self, name)
+        
+        faces = self.shell_faces()
+        volmdlr.Shell3D.__init__(self, faces, name)
 
     def Vertices(self):
         return [self.frame.origin - 0.5*self.frame.u - 0.5*self.frame.v - 0.5*self.frame.w,
@@ -126,7 +128,6 @@ class Block(volmdlr.Primitive3D):
                 self.frame.origin - 0.5*self.frame.u + 0.5*self.frame.v + 0.5*self.frame.w,
                 self.frame.origin + 0.5*self.frame.u + 0.5*self.frame.v + 0.5*self.frame.w,
                 self.frame.origin + 0.5*self.frame.u - 0.5*self.frame.v + 0.5*self.frame.w]
-
 
     def Edges(self):
         p1, p2, p3, p4, p5, p6, p7, p8 = self.Vertices()
@@ -142,6 +143,45 @@ class Block(volmdlr.Primitive3D):
                 volmdlr.LineSegment3D(p2, p6),
                 volmdlr.LineSegment3D(p3, p7),
                 volmdlr.LineSegment3D(p4, p8)]
+    
+    def edge_vertices(self):
+        return [volmdlr.Vertex3D(primitive) for primitive in self.Vertices()]
+    
+    def contour_edges(self):
+        p1, p2, p3, p4, p5, p6, p7, p8 = self.Vertices()
+        v1, v2, v3, v4, v5, v6, v7, v8 = self.edge_vertices()
+        return [volmdlr.Edge3D(volmdlr.Line3D(p1, p2), v1, v2),
+                volmdlr.Edge3D(volmdlr.Line3D(p2, p3), v2, v3),
+                volmdlr.Edge3D(volmdlr.Line3D(p3, p4), v3, v4),
+                volmdlr.Edge3D(volmdlr.Line3D(p4, p1), v4, v1),
+                volmdlr.Edge3D(volmdlr.Line3D(p5, p6), v5, v6),
+                volmdlr.Edge3D(volmdlr.Line3D(p6, p7), v6, v7),
+                volmdlr.Edge3D(volmdlr.Line3D(p7, p8), v7, v8),
+                volmdlr.Edge3D(volmdlr.Line3D(p8, p5), v8, v5),
+                volmdlr.Edge3D(volmdlr.Line3D(p1, p5), v1, v5),
+                volmdlr.Edge3D(volmdlr.Line3D(p2, p6), v2, v6),
+                volmdlr.Edge3D(volmdlr.Line3D(p3, p7), v3, v7),
+                volmdlr.Edge3D(volmdlr.Line3D(p4, p8), v4, v8)]
+        
+    def face_contours(self):
+        e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11, e12 = self.contour_edges()
+        return [volmdlr.Contour3D([e1, e2, e3, e4]),
+                volmdlr.Contour3D([e5, e6, e7, e8]),
+                volmdlr.Contour3D([e1, e9, e5, e10]),
+                volmdlr.Contour3D([e2, e10, e6, e11]),
+                volmdlr.Contour3D([e3, e11, e7, e12]),
+                volmdlr.Contour3D([e4, e12, e8, e9])]
+        
+    def shell_faces(self):
+        c1, c2, c3, c4, c5, c6 = self.face_contours()
+        p1, p2, p3, p4, p5, p6 = [volmdlr.Plane3D.from_3_points(c.points[0], c.points[1], c.points[-1]) for c in self.face_contours()]
+        return [volmdlr.Face3D([p1], [c1]),
+                volmdlr.Face3D([p2], [c2]),
+                volmdlr.Face3D([p3], [c3]),
+                volmdlr.Face3D([p4], [c4]),
+                volmdlr.Face3D([p5], [c5]),
+                volmdlr.Face3D([p6], [c6])]
+                
         
     def plot_data(self, x3D, y3D, marker=None, color='black', stroke_width=1,
                   dash=False, opacity=1, arrow=False):
