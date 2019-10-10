@@ -3112,10 +3112,17 @@ class Face3D(CompositePrimitive3D):
                 raise ValueError
         
     @classmethod
-    def from_step(cls, arguments, object_dict):
+    def from_step(cls, arguments, object_dict):        
+#        contour = []
+#        for elem in arguments[1]:
+#            contour.append(object_dict[int(elem[1:])])
+            
         contour = []
-        for elem in arguments[1]:
-            contour.append(object_dict[int(elem[1:])])
+        if len(arguments[1]) > 1:
+            contour.append(object_dict[int(arguments[1][0][1:])])
+        else:
+            contour.append(object_dict[int(arguments[1][0][1:])])
+            
         face_geom = object_dict[arguments[2]]
         if arguments[3] == '.T.':
             orientation = True
@@ -3123,6 +3130,7 @@ class Face3D(CompositePrimitive3D):
             orientation = False
         else:
             raise ValueError
+        
         return cls([face_geom], contour, arguments[0][1:-1])
     
     def create_plane(self, points):
@@ -3523,8 +3531,9 @@ class Shell3D(CompositePrimitive3D):
             return tests[0]
         else: 
             print('PROBLEME')
-#            print(point)
+            print(point)
 #            raise NotImplementedError
+            ### BABYLON ###
 #            print('------------------------')
 #            print(point.Babylon())
 #            for ray in rays[:3]:
@@ -3533,6 +3542,7 @@ class Shell3D(CompositePrimitive3D):
 #                for point in ray:
 #                    print(point.Babylon())
 #            print('------------------------')
+            ###############
             
             return sum(tests) > 1
             
@@ -3990,7 +4000,6 @@ class Step:
         # faire une fonction : si None dans step_to_volmdlr_primitive alors delete_function
         self.delete_function('FACE_OUTER_BOUND')
         self.delete_function('ORIENTED_EDGE')
-#        self.delete_function('ORIENTED_CLOSED_SHELL')
         ############################
         
         
@@ -4034,7 +4043,6 @@ class Step:
                 connec = connec.split(",")
                 connec = connec[0].split(")")
                 function_connection = int(connec[0])
-#                if function_connection[-1] != "'":
                 function_connections.append((function_connection, function_id))
 
             all_connections.extend(function_connections)
@@ -4459,8 +4467,6 @@ class VolumeModel:
                 file.write(s)
         return s
 
-
-
     def FreeCADExport(self,fcstd_filepath,
                       python_path='python',
                       freecad_lib_path='/usr/lib/freecad/lib',
@@ -4493,9 +4499,6 @@ class VolumeModel:
         os.remove(f.name)
         return output
 
-
-
-
     def BabylonScript(self):
 
         env = Environment(loader=PackageLoader('volmdlr', 'templates'),
@@ -4521,32 +4524,6 @@ class VolumeModel:
             file.write(self.BabylonScript())
 
         webbrowser.open('file://' + os.path.realpath(page))
-
-#    def ModelCaracteristicLengths(self):
-#        min_vect = self.primitives[0].position
-#        max_vect = self.primitives[0].position
-#        center = self.primitives[0].position
-#        n=1
-#        for primitive in self.primitives[1:]:
-#            try:
-#                for i,(xmin,xmax,xi) in enumerate(zip(min_vect, max_vect, primitive.position)):
-#
-#                    if xi<xmin:
-#                        min_vect[i]=xi
-#
-#                    if xi>xmax:
-#                        max_vect[i]=xi
-#                center += primitive.position
-#                n+=1
-#            except AttributeError:
-#                pass
-#
-#        center=center/n
-#
-#        max_length = (min_vect-max_vect).Norm()
-#
-#        return center,max_length
-#        return (0,0,0),0.2
 
 class ViewIso:
     def __init__(self, component, frame, size):
@@ -4642,7 +4619,7 @@ step_to_volmdlr_primitive = {
 
         'CLOSED_SHELL': Shell3D,
         'OPEN_SHELL': Shell3D,
-        'ORIENTED_CLOSED_SHELL': None,
+#        'ORIENTED_CLOSED_SHELL': None,
         'CONNECTED_FACE_SET': Shell3D,
 
         }
