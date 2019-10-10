@@ -1871,16 +1871,7 @@ class Plane3D:
         self.name = name
         self.normal = self.vectors[0].Cross(self.vectors[1])
         self.normal.Normalize()
-        
-#        print(origin)
-#        print(self.vectors)
-#        print()
-        
-#        # TEST D'ORTHOGONALITE
-#        if self.vectors[0].Dot(self.vectors[1]) > 1e-8:
-#            print(self.vectors[0].Dot(self.vectors[1]))
-#            print('pas orthogonal')
-
+                
     @classmethod
     def from_step(cls, arguments, object_dict):
         frame3d = object_dict[arguments[1]]
@@ -1900,17 +1891,9 @@ class Plane3D:
         normal.Normalize()
         vector = vector1.Cross(normal)
         return cls(point1, vector1, vector)
-
-#    def point_on_plane(self, point):
-#        projected_pt = point.PlaneProjection3D(self.origin, self.vectors[0], self.vectors[1])
-#        if math.isclose(point[0], projected_pt[0], abs_tol=1e-6) \
-#        and math.isclose(point[1], projected_pt[1], abs_tol=1e-6) \
-#        and math.isclose(point[2], projected_pt[2], abs_tol=1e-6):
-#            return True
-#        return False
     
     def point_on_plane(self, point):
-        if math.isclose(self.normal.Dot(point-self.origin), 0, abs_tol=1e-7):
+        if math.isclose(self.normal.Dot(point-self.origin), 0, abs_tol=1e-6):
             return True
         return False
 
@@ -1945,13 +1928,10 @@ class Plane3D:
 
     def Translation(self, offset, copy=True):
         new_origin = self.origin.Translation(offset, True)
-#        new_vector1 = self.vectors[0].Translation(offset, True)
-#        new_vector2 = self.vectors[1].Translation(offset, True)
         if copy:
             return Plane3D(new_origin, self.vectors[0], self.vectors[1], self.name)
         else:
             self.origin = new_origin
-#            self.vectors = (new_vector1, new_vector2)
     
     def frame_mapping(self, frame, side, copy=False):
         """
@@ -1975,7 +1955,13 @@ class Plane3D:
             else:
                 self.origin = new_origin
                 self.vectors[new_vector1, new_vector2]
-            
+                
+    def copy(self):
+        new_origin = self.origin.Copy()
+        new_vector1 = self.vectors[0].Copy()
+        new_vector2 = self.vectors[1].Copy()
+        return Plane3D(new_origin, new_vector1, new_vector2, self.name)
+        
     def MPLPlot(self, ax=None):
         if ax is None:
             fig = plt.figure()
@@ -1984,6 +1970,7 @@ class Plane3D:
         self.vectors[0].MPLPlot(ax, starting_point=self.origin, color='r')
         self.vectors[1].MPLPlot(ax, starting_point=self.origin, color='b')
         return ax
+
 
 class Basis3D(Basis):
     """
@@ -2252,6 +2239,7 @@ class Frame3D(Basis3D):
 
 oxyz = Frame3D(o3D, x3D, y3D, z3D)
 
+
 class Line3D(Primitive3D, Line):
     """
     Define an infinite line passing through the 2 points
@@ -2326,6 +2314,9 @@ class Line3D(Primitive3D, Line):
             else:
                 for p in self.points:
                     self.points = [frame.NewCoordinates(p) for p in self.points]
+                    
+    def copy(self):
+        return Line3D(*[p.Copy() for p in self.points])
         
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -2954,6 +2945,10 @@ class Vertex3D(Primitive3D):
         else:
             self.primitive = new_primitive
             
+    def copy(self):
+        new_primitive = self.primitive.copy()
+        return Vertex3D(new_primitive, self.name)
+            
 
 class Edge3D(Primitive3D):
     def __init__(self, primitives, edge_start, edge_end, name=''):
@@ -2974,10 +2969,8 @@ class Edge3D(Primitive3D):
             orientation = False
         else:
             raise ValueError
-        
 #        if not orientation:
 #            vertex_start, vertex_end = vertex_end, vertex_start
-        
         return cls(edge_geom, vertex_start, vertex_end, arguments[0][1:-1])
 
     def Rotation(self, center, axis, angle, copy=False):
@@ -2986,7 +2979,6 @@ class Edge3D(Primitive3D):
         new_primitives = self.primitives.Rotation(center, axis, angle, True)
         if copy:
             return Edge3D(new_primitives, new_edge_start, new_edge_end)
-#            return Edge3D(new_primitives, self.edge_start, self.edge_end)
         else:
             self.primitives = new_primitives
             self.edge_start = new_edge_start
@@ -2998,7 +2990,6 @@ class Edge3D(Primitive3D):
         new_primitives = self.primitives.Translation(offset, True)
         if copy:
             return Edge3D(new_primitives, new_edge_start, new_edge_end)
-#            return Edge3D(new_primitives, self.edge_start, self.edge_end)
         else:
             self.primitives = new_primitives
             self.edge_start = new_edge_start
@@ -3017,6 +3008,12 @@ class Edge3D(Primitive3D):
             self.primitives = new_primitives
             self.edge_start = new_edge_start
             self.edge_end = new_edge_end
+            
+    def copy(self):
+        new_edge_start = self.edge_start.copy()
+        new_edge_end = self.edge_end.copy()
+        new_primitives = self.primitives.copy()
+        return Edge3D(new_primitives, new_edge_start, new_edge_end)
 
 
 class Contour3D(Wire3D):
@@ -3025,16 +3022,6 @@ class Contour3D(Wire3D):
     """
     def __init__(self, edges, name=''):
         self.edges = edges
-        
-#        primitives2=[]
-#        for primitive in primitives:
-#            try:
-#                primitives2.extend(primitive.primitives)
-#            except AttributeError:
-#                primitives2.append(primitive)
-#
-#        CompositePrimitive3D.__init__(self,primitives2, name)
-#        self.primitives = primitives
         self.name = name
         
         points = self.edges[0].points[:]
@@ -3059,22 +3046,16 @@ class Contour3D(Wire3D):
 
     def Rotation(self, center, axis, angle, copy=False):
         new_edges = [edge.Rotation(center, axis, angle, True) for edge in self.edges]
-#        new_primitives = [p.Rotation(center, axis, angle, True) for p in self.primitives]
         if copy:
             return Contour3D(new_edges, self.name)
-#            return Contour3D(new_primitives, self.edges, self.name)
         else:
-#            self.primitives = new_primitives
             self.edges = new_edges
 
     def Translation(self, offset, copy=False):
         new_edges = [edge.Translation(offset, True) for edge in self.edges]
-#        new_primitives = [p.Translation(offset, True) for p in self.primitives]
         if copy:
             return Contour3D(new_edges, self.name)
-#            return Contour3D(new_primitives, self.edges, self.name)
         else:
-#            self.primitives = new_primitives
             self.edges = new_edges
 
     def frame_mapping(self, frame, side, copy=False):
@@ -3086,6 +3067,10 @@ class Contour3D(Wire3D):
             return Contour3D(new_edges, self.name)
         else:
             self.edges = new_edges
+            
+    def copy(self):
+        new_edges = [edge.copy() for edge in self.edges]
+        return Contour3D(new_edges, self.name)
 
 class ExtrudedCurve(CompositePrimitive3D):
     def __init__(self, curve_3d, extrusion_vector, name=''):
@@ -3195,6 +3180,11 @@ class Face3D(CompositePrimitive3D):
             new_points = new_contour[0].points
             self.plane = Plane3D.from_3_points(new_points[0], new_points[1], new_points[2])
             
+    def copy(self):
+        new_contour = [subcontour.copy() for subcontour in self.contour]
+        new_primitives = [plane.copy() for plane in self.primitives]
+        return Face3D(new_primitives, new_contour, self.name)
+        
     def average_center_point(self):
         """
         excluding holes
@@ -3475,6 +3465,10 @@ class Shell3D(CompositePrimitive3D):
             return Shell3D(new_faces, self.name)
         else: 
             self.faces = new_faces
+            
+    def copy(self):
+        new_faces = [face.copy() for face in self.faces]
+        return Shell3D(new_faces, self.name)
 
     def _bounding_box(self):
         """
@@ -4359,6 +4353,11 @@ class VolumeModel:
         else: 
             self.primitives = new_primitives
             self.shells = new_shells
+            
+    def copy(self):
+        new_shells = [shell.copy() for shell in self.shells]
+        new_primitives = [primitive.copy() for primitive in self.primitives]
+        return VolumeModel(new_shells, new_primitives, self.name)
             
     def _bounding_box(self):
         bboxes = []
