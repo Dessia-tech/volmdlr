@@ -3418,9 +3418,7 @@ class Face3D(CompositePrimitive3D):
 
 class Shell3D(CompositePrimitive3D):
     def __init__(self, faces, name=''):
-#        CompositePrimitive3D.__init__(self, primitives, name)
         self.faces = faces
-#        self.primitives = primitives
         self.bounding_box = self._bounding_box()
         self.name = name
 
@@ -3428,7 +3426,6 @@ class Shell3D(CompositePrimitive3D):
     def from_step(cls, arguments, object_dict):
         faces = []
 #        primitives = []
-#        print(arguments[1])
         for face in arguments[1]:
             faces.append(object_dict[int(face[1:])])
 #            primitives.append(object_dict[int(face[1:])].primitives)
@@ -3436,24 +3433,16 @@ class Shell3D(CompositePrimitive3D):
 
     def Rotation(self, center, axis, angle, copy=False):
         new_faces = [face.Rotation(center, axis, angle, True) for face in self.faces]
-#        new_primitives = []
-#        for primitive in self.primitives:
-#            new_primitives.append([subprimitive.Rotation(center, axis, angle, True) for subprimitive in primitive])
         if copy:
             return Shell3D(new_faces, self.name)
         else:
-#            self.primitives = new_primitives
             self.faces = new_faces
 
     def Translation(self, offset, copy=False):
         new_faces = [face.Translation(offset, True) for face in self.faces]
-#        new_primitives = []
-#        for primitive in self.primitives:
-#            new_primitives.append([subprimitive.Translation(offset, True) for subprimitive in primitive])
         if copy:
             return Shell3D(new_faces, self.name)
         else:
-#            self.primitives = new_primitives
             self.faces = new_faces
     
     def frame_mapping(self, frame, side, copy=False):
@@ -3493,7 +3482,6 @@ class Shell3D(CompositePrimitive3D):
         Returns True if the point is inside the Shell, False otherwise
         """
         epsilon = 1e-06
-        count = 0
 
         bbox = self.bounding_box
         if point[0] < bbox.xmin or point[0] > bbox.xmax:
@@ -3515,24 +3503,37 @@ class Shell3D(CompositePrimitive3D):
         
         sorted(rays, key=lambda ray: ray.Length())
         
+        rays_intersections = []
         tests = []
         for ray in rays[:3]:
+            count = 0
+            ray_intersection = []
             test = True
             for face in self.faces:
                 intersection_point = face.linesegment_intersection(ray)
                 if intersection_point is not None:
+                    ray_intersection.append(intersection_point)
                     count += 1
             if count%2 == 0:
                 test = False
-            
             tests.append(test)
+            rays_intersections.append(ray_intersection)
             
         if sum(tests) == 0 or sum(tests) == 3:
             return tests[0]
         else: 
             print('PROBLEME')
-            print(point)
+#            print(point)
 #            raise NotImplementedError
+#            print('------------------------')
+#            print(point.Babylon())
+#            for ray in rays[:3]:
+#                print(ray.Babylon())
+#            for ray in rays_intersections:
+#                for point in ray:
+#                    print(point.Babylon())
+#            print('------------------------')
+            
             return sum(tests) > 1
             
             
