@@ -1952,6 +1952,29 @@ class Plane3D:
         else:
             self.origin = new_origin
 #            self.vectors = (new_vector1, new_vector2)
+    
+    def frame_mapping(self, frame, side, copy=False):
+        """
+        side = 'old' or 'new'
+        """
+        if side == 'old':
+            new_origin = frame.OldCoordinates(self.origin)
+            new_vector1 = frame.Basis().OldCoordinates(self.vectors[0])
+            new_vector2 = frame.Basis().OldCoordinates(self.vectors[1])
+            if copy:
+                return Plane3D(new_origin, new_vector1, new_vector2, self.name)
+            else:
+                self.origin = new_origin
+                self.vectors[new_vector1, new_vector2]
+        if side == 'new':
+            new_origin = frame.NewCoordinates(self.origin)
+            new_vector1 = frame.Basis().NewCoordinates(self.vectors[0])
+            new_vector2 = frame.Basis().NewCoordinates(self.vectors[1])
+            if copy:
+                return Plane3D(new_origin, new_vector1, new_vector2, self.name)
+            else:
+                self.origin = new_origin
+                self.vectors[new_vector1, new_vector2]
             
     def MPLPlot(self, ax=None):
         if ax is None:
@@ -2286,7 +2309,24 @@ class Line3D(Primitive3D, Line):
         else:
             for p in self.points:
                 p.Translation(offset, copy=False)
-
+                
+    def frame_mapping(self, frame, side, copy=False):
+        """
+        side = 'old' or 'new'
+        """
+        if side == 'old':
+            if copy:
+                return Line3D(*[frame.OldCoordinates(p) for p in self.points])
+            else:
+                for p in self.points:
+                    self.points = [frame.OldCoordinates(p) for p in self.points]
+        if side == 'new':
+            if copy:
+                return Line3D(*[frame.NewCoordinates(p) for p in self.points])
+            else:
+                for p in self.points:
+                    self.points = [frame.NewCoordinates(p) for p in self.points]
+        
     @classmethod
     def from_step(cls, arguments, object_dict):
         point1 = object_dict[arguments[1]]
@@ -3384,6 +3424,7 @@ class Face3D(CompositePrimitive3D):
         plt.show()
         
         return ax
+    
 
 class Shell3D(CompositePrimitive3D):
     def __init__(self, faces, name=''):
@@ -3391,6 +3432,7 @@ class Shell3D(CompositePrimitive3D):
         self.faces = faces
 #        self.primitives = primitives
         self.bounding_box = self._bounding_box()
+        self.name = name
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -4141,7 +4183,6 @@ class Step:
                 parenthesis_count -= 1
                 if parenthesis_count == 0:
                     subfunction_args.append(subfunction_arg)
-            if parenthesis_count == 0:
                     subfunction_arg = ""
                 else:
                     subfunction_arg += char
@@ -4239,7 +4280,7 @@ class Step:
             if res is not None:
                 not_instanciated_id.append(res)
 
-        print('Nombre non instanciés', len(not_instanciated_id))
+        print('Nombre restant à instanciés', len(not_instanciated_id))
 
         i = 0
         still_not_instanciated_id = []

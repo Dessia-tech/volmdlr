@@ -17,8 +17,8 @@ boite.to_volume_model('boite', volumemodel)
 shell0 = volumemodel.shells[0]
 shell1 = volumemodel.shells[1]
 
-pc = shell0.shell_intersection(shell1)
-print('intersection à', pc*100, '%')
+#pc = shell0.shell_intersection(shell1)
+#print('intersection à', pc*100, '%')
 
 #shell0.Translation((600,100,0))
 #shell0.distance_to_shell(shell1, volumemodel)
