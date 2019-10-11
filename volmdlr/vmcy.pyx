@@ -7,7 +7,7 @@ Cython functions
 """
 
 
-def PolygonPointBelongs(point,points):
+def PolygonPointBelongs(point, points):
     
     cdef int i
     cdef int n = len(points)
@@ -29,10 +29,38 @@ def PolygonPointBelongs(point,points):
     
     return inside
 
-def Vector3DDot(vector1, vector2):
+
+#cdef float CVector3DDot(float u1, float u2, float u3,
+#                        float v1, float v2, float v3):
+#    return u1*v1 + u2*v2 + u3*v3
+#
+#def Vector3DDot(vector1, vector2):
+#    return CVector3DDot(vector1[0], vector1[1], vector1[2],
+#                        vector2[0], vector2[1], vector2[2])
+#    
+#
+#cdef (float, float, float) Csub(float u1, float u2, float u3,
+#                                float v1, float v2, float v3):
+#    return (u1-v1, u2-v2, u3-v3)
+#
+#def sub(vector1, vector2):
+#    return Csub(vector1[0], vector1[1], vector1[2],
+#                vector2[0], vector2[1], vector2[2])
     
-    cdef float u1, u2, u3, v1, v2, v3
-    
-    u1, u2, u3 = vector1
-    v1, v2, v3 = vector2
+
+cdef double CVector3DDot(double u1, double u2, double u3,
+                        double v1, double v2, double v3):
     return u1*v1 + u2*v2 + u3*v3
+
+def Vector3DDot(vector1, vector2):
+    return CVector3DDot(vector1[0], vector1[1], vector1[2],
+                        vector2[0], vector2[1], vector2[2])
+    
+
+cdef (double, double, double) Csub(double u1, double u2, double u3,
+                                double v1, double v2, double v3):
+    return (u1-v1, u2-v2, u3-v3)
+
+def sub(vector1, vector2):
+    return Csub(vector1[0], vector1[1], vector1[2],
+                vector2[0], vector2[1], vector2[2])
