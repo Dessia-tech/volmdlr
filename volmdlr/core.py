@@ -2033,17 +2033,6 @@ class Basis3D(Basis):
         self.v = new_v
         self.w = new_w
 
-    def Translation(self, offset, copy=True):
-        new_u = self.u.Translation(offset, True)
-        new_v = self.v.Translation(offset, True)
-        new_w = self.w.Translation(offset, True)
-        if copy:
-            return Basis3D(new_u, new_v, new_w, self.name)
-        else:
-            self.u = new_u
-            self.v = new_v
-            self.w = new_w
-
     def EulerRotation(self, angles, copy=True):
         psi, theta, phi = angles
         center = o3D
@@ -2194,13 +2183,10 @@ class Frame3D(Basis3D):
         self.w = new_base.w
 
     def Translation(self, offset, copy=True):
-        new_base = Basis3D.Translation(self, offset, True)
         if copy:
-            new_frame = Frame3D(self.origin, new_base.u, new_base.v, new_base.w, self.name)
+            new_frame = Frame3D(self.origin.Translation(offset), self.u, self.v, self.w, self.name)
             return new_frame
-        self.u = new_base.u
-        self.v = new_base.v
-        self.w = new_base.w
+        self.origin.Translation(offset)
 
     def Copy(self):
         return Frame3D(self.origin, self.u, self.v, self.w)
@@ -2247,6 +2233,19 @@ class Line3D(Primitive3D, Line):
     def __init__(self, point1, point2, name=''):
         Primitive3D.__init__(self, name)
         self.points = [point1, point2]
+        self.bounding_box = self._bounding_box()
+        
+    def _bounding_box(self):
+        points = self.points
+        
+        xmin = min([pt[0] for pt in points])
+        xmax = max([pt[0] for pt in points])
+        ymin = min([pt[1] for pt in points])
+        ymax = max([pt[1] for pt in points])
+        zmin = min([pt[2] for pt in points])
+        zmax = max([pt[2] for pt in points])
+        
+        return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
         return self.points[0] + (self.points[1]-self.points[0]) * curvilinear_abscissa
@@ -3942,10 +3941,11 @@ class BoundingBox:
         return (dx**2 + dy**2 + dz**2)**0.5
         
     
-class Mesure:
+class Mesure(Line3D):
     def __init__(self, point1, point2):
         self.points = [point1, point2]
         self.distance = Vector3D(point1-point2).Norm()
+        self.bounding_box = self._bounding_box()
         
     def Babylon(self):
         s = 'var myPoints = [];\n'
