@@ -194,6 +194,15 @@ class Vector:
         d = {'vector': [float(i) for i in self.vector]}
         return d
 
+    @classmethod
+    def mean_point(cls, points):
+        n = 1
+        point = points[0].copy()
+        for point2 in points[1:]:
+            point += point2
+            n += 1
+        point /= n
+        return point
 
 class Vector2D(Vector):
     def __init__(self, vector, name=''):
@@ -478,13 +487,13 @@ class Basis2D(Basis):
 
     def NewCoordinates(self, vector):
         matrix = self.InverseTransfertMatrix()
-        return Vector2D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1],
+        return Point2D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1],
                          matrix[1][0]*vector[0] + matrix[1][1]*vector[1]))
 #        return Vector2D(npy.dot(self.InverseTransfertMatrix(), vector.vector))
 
     def OldCoordinates(self, vector):
         matrix = self.TransfertMatrix()
-        return Vector2D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1],
+        return Point2D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1],
                          matrix[1][0]*vector[0] + matrix[1][1]*vector[1]))
 #        return Vector2D(npy.dot(self.TransfertMatrix(), vector.vector))
 
@@ -2040,7 +2049,7 @@ class Basis3D(Basis):
 
     def NewCoordinates(self, vector):
         matrix = self.InverseTransfertMatrix()
-        return Vector3D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1] + matrix[0][2]*vector[2],
+        return Point3D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1] + matrix[0][2]*vector[2],
                          matrix[1][0]*vector[0] + matrix[1][1]*vector[1] + matrix[1][2]*vector[2],
                          matrix[2][0]*vector[0] + matrix[2][1]*vector[1] + matrix[2][2]*vector[2]))
 #        return vector.__class__(npy.dot(self.InverseTransfertMatrix(), vector.vector))
@@ -2301,14 +2310,18 @@ class LineSegment3D(Line3D):
     def to_line(self):
         return Line3D(*self.points)
     
-    def Babylon(self):
+    def Babylon(self, color=(1, 1, 1)):
         s = 'var myPoints = [];\n'
-        s += 'var point1 = new BABYLON.Vector3({},{},{});\n'.format(self.points[0][1],self.points[0][0],self.points[0][2])
+        s += 'var point1 = new BABYLON.Vector3({},{},{});\n'.format(self.points[0][0],self.points[0][2],self.points[0][1])
         s += 'myPoints.push(point1);\n'
-        s += 'var point2 = new BABYLON.Vector3({},{},{});\n'.format(self.points[1][1],self.points[1][0],self.points[1][2])
+        s += 'var point2 = new BABYLON.Vector3({},{},{});\n'.format(self.points[1][0],self.points[1][2],self.points[1][1])
         s += 'myPoints.push(point2);\n'
         s += 'var line = BABYLON.MeshBuilder.CreateLines("lines", {points: myPoints}, scene);\n'
+        s += 'line.color = new BABYLON.Color3{};'.format(tuple(color))
         return s 
+    
+#    def babylonjs_mesh(self):
+        
 
 
 class BSplineCurve3D(Primitive3D):
@@ -2820,6 +2833,7 @@ class Wire3D(CompositePrimitive3D):
             length += primitive_length
         # Outside of length
         raise ValueError
+
 
     # TODO: method to check if it is a wire
     def FreeCADExport(self, ip):
@@ -3954,19 +3968,19 @@ class Step:
                 else:
                     subfunction_arg += char
                 continue
-            if char == ")":
-                parenthesis_count -= 1
-                if parenthesis_count == 0:
-                    subfunction_args.append(subfunction_arg)
-            if parenthesis_count == 0:
-                    subfunction_arg = ""
-                else:
-                    subfunction_arg += char
-                continue
-
-                subfunction_name += char
-            else:
-                subfunction_arg += char
+#            if char == ")":
+#                parenthesis_count -= 1
+#                if parenthesis_count == 0:
+#                    subfunction_args.append(subfunction_arg)
+#                if parenthesis_count == 0:
+#                    subfunction_arg = ""
+#                else:
+#                    subfunction_arg += char
+#                continue
+#
+#                subfunction_name += char
+#            else:
+#                subfunction_arg += char
 
         return [(subfunction_names[i], step_split_arguments(subfunction_args[i])) for i in range(len(subfunction_names))]
 
