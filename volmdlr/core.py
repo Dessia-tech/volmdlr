@@ -25,7 +25,7 @@ from matplotlib.patches import FancyArrowPatch
 
 import networkx as nx
 
-from .vmcy import PolygonPointBelongs, Vector3DDot
+from .vmcy import PolygonPointBelongs, Vector3DDot, sub
 
 from scipy.linalg import solve, LinAlgError
 
@@ -1635,9 +1635,10 @@ class Vector3D(Vector):
         return Vector3D((-self.vector[0], -self.vector[1], -self.vector[2]))
 
     def __sub__(self, other_vector):
-        return Vector3D((self.vector[0] - other_vector.vector[0],
-                         self.vector[1] - other_vector.vector[1],
-                         self.vector[2] - other_vector.vector[2]))
+#        return Vector3D((self.vector[0] - other_vector.vector[0],
+#                         self.vector[1] - other_vector.vector[1],
+#                         self.vector[2] - other_vector.vector[2]))
+        return Vector3D(sub(self.vector, other_vector.vector))
 
     def __mul__(self, value):
         return Vector3D((self.vector[0] * value,
@@ -1794,28 +1795,29 @@ class Point3D(Vector3D):
 
     def __add__(self, other_vector):
         return Point3D((self.vector[0] + other_vector.vector[0],
-                               self.vector[1] + other_vector.vector[1],
-                               self.vector[2] + other_vector.vector[2]))
+                        self.vector[1] + other_vector.vector[1],
+                        self.vector[2] + other_vector.vector[2]))
 
     def __neg__(self):
         return Point3D((-self.vector[0], -self.vector[1], -self.vector[2]))
 
     def __sub__(self, other_vector):
-        return Point3D((self.vector[0] - other_vector.vector[0],
-                               self.vector[1] - other_vector.vector[1],
-                               self.vector[2] - other_vector.vector[2]))
+#        return Point3D((self.vector[0] - other_vector.vector[0],
+#                        self.vector[1] - other_vector.vector[1],
+#                        self.vector[2] - other_vector.vector[2]))
+        return Point3D(sub(self.vector, other_vector.vector))
 
     def __mul__(self, value):
         return Point3D((self.vector[0] * value,
-                               self.vector[1] * value,
-                               self.vector[2] * value))
+                        self.vector[1] * value,
+                        self.vector[2] * value))
 
     def __truediv__(self, value):
         if value == 0:
             raise ZeroDivisionError
         return Point3D((self.vector[0] / value,
-                               self.vector[1] / value,
-                               self.vector[2] / value))
+                        self.vector[1] / value,
+                        self.vector[2] / value))
 
     def MPLPlot(self, ax):
         ax.scatter(*self.vector)
@@ -3095,11 +3097,11 @@ class Face3D(CompositePrimitive3D):
         points = self.contour[0].points[:]
         self.plane = self.create_plane(points)        
             
-        # 2D PLOT OF FACE #
         polygon_points = [p.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]) for p in points]
-        polygon = Polygon2D(polygon_points)
-        if polygon.SelfIntersect()[0]:            
+        self.polygon2D = Polygon2D(polygon_points)
+        if self.polygon2D.SelfIntersect()[0]:            
             repaired_points = [points[1]]+[points[0]]+points[2:]
+            self.polygon2D = Polygon2D([polygon_points[1]]+[polygon_points[0]]+polygon_points[2:])
             self.contour[0].points = repaired_points
             
         self.bounding_box = self._bounding_box()
@@ -3240,14 +3242,15 @@ class Face3D(CompositePrimitive3D):
                 return projection_distance, projected_pt
             return projection_distance
 
-        polygon_points_3D = self.contour[0].points
-        polygon_points_2D = []
-        for pt in polygon_points_3D:
-            polygon_points_2D.append(pt.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]))
+#        polygon_points_3D = self.contour[0].points
+#        polygon_points_2D = []
+#        for pt in polygon_points_3D:
+#            polygon_points_2D.append(pt.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]))
+            
         point_2D = point.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
-        polygon = Polygon2D(polygon_points_2D)
+#        polygon = Polygon2D(polygon_points_2D)
 
-        border_distance, other_point = polygon.PointBorderDistance(point_2D, return_other_point=True)
+        border_distance, other_point = self.polygon2D.PointBorderDistance(point_2D, return_other_point=True)
         
         other_point = other_point.To3D(self.plane.origin , self.plane.vectors[0], self.plane.vectors[1])
 #        other_point = self.plane.origin + other_point[0]*self.plane.vectors[0] + other_point[1]*self.plane.vectors[1]
@@ -3272,18 +3275,28 @@ class Face3D(CompositePrimitive3D):
 #        plane1 = self.primitives[0]
         
         if self.face_intersection(face2) is not None:
-            return 0
+            return 0, None, None
             
         polygon1_points_3D = self.contour[0].points
         polygon2_points_3D = face2.contour[0].points
 
         distances = []
         if not return_points:
-            for point1 in polygon1_points_3D:
-                distances.append(face2.distance_to_point(point1))
+#            for point1 in polygon1_points_3D:
+#                distances.append(face2.distance_to_point(point1))
+#            for point2 in polygon2_points_3D:
+#                distances.append(self.distance_to_point(point2))
+#            return min(distances)
+            d_min = face2.distance_to_point(polygon1_points_3D[0])
+            for point1 in polygon1_points_3D[1:]:
+                d = face2.distance_to_point(point1)
+                if d < d_min:
+                    d_min = d
             for point2 in polygon2_points_3D:
-                distances.append(self.distance_to_point(point2))
-            return min(distances)
+                d = self.distance_to_point(point2)
+                if d < d_min:
+                    d_min = d
+            return d_min
         
         else:
             for point1 in polygon1_points_3D:
@@ -3324,22 +3337,22 @@ class Face3D(CompositePrimitive3D):
             print('point not on plane so not on face')
             return False
 
-        contour = self.contour[0]
+#        contour = self.contour[0]
         # transformer le contour en polygone2D pour utiliser la méthode PointBelongs
-        polygon_points_3D = contour.points
+#        polygon_points_3D = contour.points
         
-        polygon_points_2D = []
-        for pt in polygon_points_3D:
-            polygon_points_2D.append(pt.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]))
+#        polygon_points_2D = []
+#        for pt in polygon_points_3D:
+#            polygon_points_2D.append(pt.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]))
         point_2D = point.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
-        polygon = Polygon2D(polygon_points_2D)
+#        polygon = Polygon2D(polygon_points_2D)
         
         ### PLOT ###
 #        ax = polygon.MPLPlot()
 #        point_2D.MPLPlot(ax)
         ############
 
-        if not polygon.PointBelongs(point_2D):
+        if not self.polygon2D.PointBelongs(point_2D):
             return False
         return True
 
@@ -3348,7 +3361,8 @@ class Face3D(CompositePrimitive3D):
     def edge_intersection(self, edge):
 #        plane = self.primitives[0]
 
-        linesegment = LineSegment3D(edge.edge_start.primitive, edge.edge_end.primitive)
+#        linesegment = LineSegment3D(edge.edge_start.primitive, edge.edge_end.primitive)
+        linesegment = LineSegment3D(*edge.points)
         intersection_point = self.plane.linesegment_intersection(linesegment)
 
         if intersection_point is None:
@@ -3545,82 +3559,7 @@ class Shell3D(CompositePrimitive3D):
             ###############
             
             return sum(tests) > 1
-            
-            
-            
-#        test1 = True
-##        ray = LineSegment3D(point, Point3D((bbox.xmax+epsilon, point[1], point[2])))
-#        ray = LineSegment3D(point, Point3D((point[0], bbox.ymax+epsilon, bbox.zmax+epsilon)))
-#        print()
-#        print('var redMat = new BABYLON.StandardMaterial("redMat", scene);')
-#        print("redMat.diffuseColor = new BABYLON.Color3(1, 0, 0);")
-#        print("var myPoints = [];")
-#        print("var point1 = new BABYLON.Vector3({},{},{});".format(ray.points[0][1],ray.points[0][0],ray.points[0][2]))
-#        print("myPoints.push(point1);")
-#        print("var point2 = new BABYLON.Vector3({},{},{});".format(ray.points[1][1],ray.points[1][0],ray.points[1][2]))
-#        print("myPoints.push(point2);")
-#        print('var lines = BABYLON.MeshBuilder.CreateLines("lines", {points: myPoints}, scene);')
-#        print('var sphere0 = BABYLON.MeshBuilder.CreateSphere("point", {diameter: 0.005}, scene);')
-#        print("sphere0.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));".format(point[1],point[0],point[2]))
-#        for face in self.faces:
-#            intersection_point = face.linesegment_intersection(ray)
-#            if intersection_point is not None:
-#                print('var sphere = BABYLON.MeshBuilder.CreateSphere("point", {diameter: 0.005}, scene);')
-#                print("sphere.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));".format(intersection_point[1],intersection_point[0],intersection_point[2]))
-#                print("sphere.material = redMat;")
-#                count += 1
-#        print()
-#        if count%2 == 0:
-#            test1 = False
-##            return False
-#                
-#        # Second test
-#        test2 = True
-#        count = 0
-#        ray = LineSegment3D(point, Point3D((point[0], bbox.ymax+epsilon, point[2])))
-##        ray = LineSegment3D(point, Point3D((point[0], bbox.ymax+epsilon, bbox.zmax+epsilon)))
-#        print()
-#        print('var redMat = new BABYLON.StandardMaterial("redMat", scene);')
-#        print("redMat.diffuseColor = new BABYLON.Color3(1, 0, 0);")
-#        print("var myPoints = [];")
-#        print("var point1 = new BABYLON.Vector3({},{},{});".format(ray.points[0][1],ray.points[0][0],ray.points[0][2]))
-#        print("myPoints.push(point1);")
-#        print("var point2 = new BABYLON.Vector3({},{},{});".format(ray.points[1][1],ray.points[1][0],ray.points[1][2]))
-#        print("myPoints.push(point2);")
-#        print('var lines = BABYLON.MeshBuilder.CreateLines("lines", {points: myPoints}, scene);')
-#        print('var sphere0 = BABYLON.MeshBuilder.CreateSphere("point", {diameter: 0.005}, scene);')
-#        print("sphere0.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));".format(point[1],point[0],point[2]))
-#        for nb, face in enumerate(self.faces):
-#            intersection_point = face.linesegment_intersection(ray)
-#            ### PLOT ###
-##            if nb == 332:
-##                ax = face.plot()
-##                ray.MPLPlot(ax)
-##                if intersection_point is not None:
-##                    intersection_point.MPLPlot(ax)
-##                face.plane.MPLPlot(ax)
-#            ############
-#            if intersection_point is not None:
-#                print('var sphere = BABYLON.MeshBuilder.CreateSphere("point", {diameter: 0.005}, scene);')
-#                print("sphere.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));".format(intersection_point[1],intersection_point[0],intersection_point[2]))
-#                print("sphere.material = redMat;")
-#                count += 1
-#        print()
-#        if count%2 == 0:
-#            test2 = False
-##            return False
-#        
-##        print('succeded second test : indeed point is inside')
-##        print()
-#        
-#        if test1 is test2:
-#            return test1
-#        else:
-#            print('PROBLEME')
-#            print(point)
-#            raise NotImplementedError
-#        return True
-    
+                
     def is_inside_shell(self, shell2):
         """
         Returns True if all the points of self are inside shell2
@@ -3628,7 +3567,6 @@ class Shell3D(CompositePrimitive3D):
         points = []
         for face in self.faces:
             points.extend(face.contour[0].points)
-#        points = ordered_set(points)
         
         for point in points:
             if not shell2.point_belongs(point):
@@ -3643,57 +3581,7 @@ class Shell3D(CompositePrimitive3D):
                     return False
                 
         return True
-    
-#    def shell_intersection(self, shell2):
-#        """
-#        Returns True if the two Shells intersect each other
-#        """
-##        bbox1 = self.bbox()
-##        bbox2 = shell2.bbox()
-##        if not bbox1.bbox_intersection(bbox2):
-##            return False
-#        
-#        # Check if boundary boxes intersect
-#        bbox1 = self.bounding_box
-#        bbox2 = shell2.bounding_box
-#        if not bbox1.bbox_intersection(bbox2):
-#            print("No intersection of shells' BBox")
-#            return False
-#        
-#        # Check if any point of the first shell is in the second shell
-#        points1 = []
-#        for face in self.faces:
-#            points1.extend(face.contour[0].points)
-##        points1 = ordered_set(points1)
-#        
-#        points2 = []
-#        for face in shell2.faces:
-#            points2.extend(face.contour[0].points)
-##        points2 = ordered_set(points2)
-#        
-#        for point1 in points1:
-#            if shell2.point_belongs(point1):
-#                print('point inside shell', point1)
-#                return True
-#            
-#        for point2 in points2:
-#            if self.point_belongs(point2):
-#                print('point inside shell', point2)
-#                return True
-#            
-#        # Check if any faces are intersecting
-#        for face1 in self.faces:
-#            for face2 in shell2.faces:
-#                intersection_points = face1.face_intersection(face2)
-#                if intersection_points is not None:
-#                    print('Two faces are intersecting :', face1, face2)
-##                    print('face1', [p for edge in face1.contour[0].edges for p in edge.points])
-##                    print('face2', [p for edge in face2.contour[0].edges for p in edge.points])
-#                    ax = face1.plot()
-#                    face2.plot(ax)
-#                    return True
-#        return False
-    
+        
     def shell_intersection(self, shell2):
         """
         Returns None if no intersection
@@ -3729,7 +3617,7 @@ class Shell3D(CompositePrimitive3D):
         
         print('les compteurs', compteur1, compteur2)
         if (compteur1, compteur2) != (0, 0):
-            return (compteur1/nb_pts1 + compteur2/nb_pts2)/2
+            return compteur1/nb_pts1, compteur2/nb_pts2
         else:
             for face1 in self.faces:
                 for face2 in shell2.faces:
@@ -3740,15 +3628,13 @@ class Shell3D(CompositePrimitive3D):
                         face2.plot(ax)
                         return 0
             return None
-        
-        
-        
+
     def distance_to_shell(self, shell2, add_to_volumemodel=None):
         """
         Returns a Mesure object if the distance is not zero, otherwise returns None
         """
         
-        if self.shell_intersection(shell2) is None:
+        if self.shell_intersection(shell2) is not None:
             return None
 
         distance_min, point1_min, point2_min = self.faces[0].distance_to_face(shell2.faces[0], return_points=True)
@@ -3759,7 +3645,10 @@ class Shell3D(CompositePrimitive3D):
                 bbox_distance = bbox1.distance_to_bbox(bbox2)
                 if bbox_distance < distance_min:
                     distance, point1, point2 = face1.distance_to_face(face2, return_points=True)
-                    if distance < distance_min:
+                    print('dist', distance)
+                    if distance == 0:
+                        return None
+                    elif distance < distance_min:
                         distance_min, point1_min, point2_min = distance, point1, point2
                         
         mesure = Mesure(point1_min, point2_min)
