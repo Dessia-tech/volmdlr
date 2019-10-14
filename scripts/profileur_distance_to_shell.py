@@ -25,14 +25,22 @@ shell1 = volumemodel.shells[1] # LA BOITE
 #del volumemodel.shells[4]
 #del volumemodel.shells[3]
 
+#%%
+
 #pc = shell0.shell_intersection(shell1)
 #print('intersection à', pc*100, '%')
+origin = vm.Point3D((1,0.1,0.6))
+u = vm.y3D
+v = vm.z3D
+w = vm.x3D
+frame = vm.Frame3D(origin, u, v, w)
 
-shell0 = shell0.Translation((0.05,0.1,0.6), True)
-shell1 = shell1.Translation((-0.1,-0.1,-0.1), True)
-volumemodel.shells[0] = shell0
-volumemodel.shells[1] = shell1
+volumemodel.shells[0] = shell0.frame_mapping(frame, 'new', True)
+volumemodel.shells[1] = shell1.Translation((1,0.1,0.6), True)
+
 mesure = shell0.distance_to_shell(shell1, volumemodel)
 volumemodel.shells.append(mesure)
-#print(mesure.distance)
+print(mesure.distance)
 volumemodel.BabylonShow()
+
+#%%

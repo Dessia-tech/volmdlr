@@ -3445,10 +3445,10 @@ class Face3D(CompositePrimitive3D):
         Only works if the surface is planar
         TODO : this function does not take into account if Face has holes
         """
-        bbox1 = self.bounding_box
-        bbox2 = face2.bounding_box
-        if not bbox1.bbox_intersection(bbox2):
-            return None
+#        bbox1 = self.bounding_box
+#        bbox2 = face2.bounding_box
+#        if not bbox1.bbox_intersection(bbox2):
+#            return None
         
         intersection_points = []
 
@@ -3514,6 +3514,7 @@ class Shell3D(CompositePrimitive3D):
         else:
             for face in self.faces:
                 face.Rotation(center, axis, angle, False)
+            self.bounding_box = self._bounding_box()
 
     def Translation(self, offset, copy=True):
         if copy:
@@ -3534,6 +3535,7 @@ class Shell3D(CompositePrimitive3D):
         else:
             for face in self.faces:
                 face.frame_mapping(frame, side, False)
+            self.bounding_box = self._bounding_box()
             
     def copy(self):
         new_faces = [face.copy() for face in self.faces]
@@ -3648,11 +3650,11 @@ class Shell3D(CompositePrimitive3D):
         included in the other shell (based on counting the points included in the other shell)
         """
         # Check if boundary boxes intersect
-        bbox1 = self.bounding_box
-        bbox2 = shell2.bounding_box
-        if not bbox1.bbox_intersection(bbox2):
-            print("No intersection of shells' BBox")
-            return None
+#        bbox1 = self.bounding_box
+#        bbox2 = shell2.bounding_box
+#        if not bbox1.bbox_intersection(bbox2):
+#            print("No intersection of shells' BBox")
+#            return None
         
         # Check if any point of the first shell is in the second shell
         points1 = []
@@ -4291,6 +4293,7 @@ class VolumeModel:
                 shell.Translation(center, axis, angle, False)
             for primitives in self.primitives:
                 primitives.Translation(center, axis, angle, False)
+            self.bounding_box = self._bounding_box()
 
     def Translation(self, offset, copy=True):
         if copy:
@@ -4318,6 +4321,7 @@ class VolumeModel:
                 shell.frame_mapping(frame, side, False)
             for primitives in self.primitives:
                 primitives.frame_mapping(frame, side, False)
+            self.bounding_box = self._bounding_box()
             
     def copy(self):
         new_shells = [shell.copy() for shell in self.shells]
