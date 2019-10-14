@@ -28,8 +28,11 @@ shell1 = volumemodel.shells[1] # LA BOITE
 #pc = shell0.shell_intersection(shell1)
 #print('intersection à', pc*100, '%')
 
-shell0.Translation((0.05,0.1,0.6), False)
-#shell1.Translation((-0.1,-0.1,-0.1))
-#mesure = shell0.distance_to_shell(shell1, volumemodel)
+shell0 = shell0.Translation((0.05,0.1,0.6), True)
+shell1 = shell1.Translation((-0.1,-0.1,-0.1), True)
+volumemodel.shells[0] = shell0
+volumemodel.shells[1] = shell1
+mesure = shell0.distance_to_shell(shell1, volumemodel)
+volumemodel.shells.append(mesure)
 #print(mesure.distance)
-#volumemodel.BabylonShow()
+volumemodel.BabylonShow()

@@ -3277,9 +3277,10 @@ class Face3D(CompositePrimitive3D):
 #        print('essai', self.primitives[0].__class__ == Plane3D)
 #        if isinstance(self.primitives[0], Plane3D):
 #        plane = self.primitives[0]
-        print()
-        print('distance_to_point point', point)
-        print('distance_to_point plane', self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
+        
+#        print()
+#        print('distance_to_point point', point)
+#        print('distance_to_point plane', self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
         projected_pt = point.PlaneProjection3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
         projection_distance = point.PointDistance(projected_pt)
 
@@ -3302,7 +3303,7 @@ class Face3D(CompositePrimitive3D):
 #        other_point = self.plane.origin + other_point[0]*self.plane.vectors[0] + other_point[1]*self.plane.vectors[1]
         
         
-        print('distance_to_point', projection_distance, border_distance)
+#        print('distance_to_point', projection_distance, border_distance)
         if return_other_point:
             return (projection_distance**2 + border_distance**2)**0.5, other_point
         return (projection_distance**2 + border_distance**2)**0.5
@@ -3834,10 +3835,7 @@ class BoundingBox:
             self.zmin = new_zmin
             self.zmax = new_zmax
             [p.Translation(offset, False) for p in self.points]
-            print('points', self.points)
-#            self.center = (self.points[0]+self.points[-2])/2
             self.center.Translation(offset, False)
-            print('center', self.center)
     
     def bbox_intersection(self, bbox2):
         return (self.xmin < bbox2.xmax and self.xmax > bbox2.xmin \
