@@ -583,7 +583,7 @@ class CompositePrimitive2D(Primitive2D):
         self.basis_primitives = basis_primitives
 
 
-    def Rotation(self, center, angle, copy=False):
+    def Rotation(self, center, angle, copy=True):
         if copy:
             return self.__class__([p.Rotation(center, angle, copy=True)\
                                    for p in self.primitives])
@@ -592,7 +592,7 @@ class CompositePrimitive2D(Primitive2D):
                 p.Rotation(center, angle, copy=False)
             self.UpdateBasisPrimitives()
 
-    def Translation(self, offset, copy=False):
+    def Translation(self, offset, copy=True):
         if copy:
             return self.__class__([p.Translation(offset, copy=True)\
                                    for p in self.primitives])
@@ -842,14 +842,14 @@ class Line2D(Primitive2D, Line):
         p3D = [p.To3D(plane_origin, x1, x2) for p in self.points]
         return Line2D(*p3D, self.name)
 
-    def Rotation(self, center, angle, copy=False):
+    def Rotation(self, center, angle, copy=True):
         if copy:
             return Line2D(*[p.Rotation(center, angle, copy=True) for p in self.points])
         else:
             for p in self.points:
                 p.Rotation(center, angle, copy=False)
 
-    def Translation(self, offset, copy=False):
+    def Translation(self, offset, copy=True):
         if copy:
             return Line2D(*[p.Translation(offset, copy=True) for p in self.points])
         else:
@@ -1106,14 +1106,14 @@ class LineSegment2D(Line2D):
     def to_line(self):
         return Line2D(*self.points)
 
-    def Rotation(self, center, angle, copy=False):
+    def Rotation(self, center, angle, copy=True):
         if copy:
             return LineSegment2D(*[p.Rotation(center,angle,copy=True) for p in self.points])
         else:
             for p in self.points:
                 p.Rotation(center,angle,copy=False)
 
-    def Translation(self, offset, copy=False):
+    def Translation(self, offset, copy=True):
         if copy:
             return LineSegment2D(*[p.Translation(offset,copy=True) for p in self.points])
         else:
@@ -1253,13 +1253,13 @@ class Arc2D(Primitive2D):
 
         return Arc3D(ps, pi, pe, self.name)
 
-    def Rotation(self, center, angle, copy=False):
+    def Rotation(self, center, angle, copy=True):
         if copy:
             return Arc2D(*[p.Rotation(center,angle,copy=True) for p in [self.start,self.interior,self.end]])
         else:
             self.__init__(*[p.Rotation(center,angle,copy=True) for p in [self.start,self.interior,self.end]])
 
-    def Translation(self, offset, copy=False):
+    def Translation(self, offset, copy=True):
         if copy:
             return Arc2D(*[p.Translation(offset,copy=True) for p in [self.start,self.interior,self.end]])
         else:
@@ -1356,14 +1356,14 @@ class Circle2D(Primitive2D):
         pc=self.center.To3D(plane_origin, x, y)
         return Circle3D(pc,self.radius,normal, self.name)
 
-    def Rotation(self, center, angle, copy=False):
+    def Rotation(self, center, angle, copy=True):
         if copy:
             return Circle2D(self.center.Rotation(center,angle,copy=True),self.radius)
         else:
             self.center.Rotation(center,angle,copy=False)
             self.utd_geo_points=False
 
-    def Translation(self,offset,copy=False):
+    def Translation(self,offset,copy=True):
         if copy:
             return Circle2D(self.center.Translation(offset,copy=True),self.radius)
         else:
@@ -1462,14 +1462,14 @@ class Polygon2D(CompositePrimitive2D):
             lines.append(LineSegment2D(p1,p2))
         return lines
 
-    def Rotation(self, center, angle, copy=False):
+    def Rotation(self, center, angle, copy=True):
         if copy:
             return Polygon2D([p.Rotation(center,angle,copy=True) for p in self.points])
         else:
             for p in self.points:
                 p.Rotation(center,angle,copy=False)
 
-    def Translation(self, offset, copy=False):
+    def Translation(self, offset, copy=True):
         if copy:
             return Polygon2D([p.Translation(offset,copy=True) for p in self.points])
         else:
@@ -2191,9 +2191,9 @@ class Frame3D(Basis3D):
         self.w = new_base.w
 
     def Translation(self, offset, copy=True):
+        print('Frame3D.Translation fait belek')
         if copy:
-            new_frame = Frame3D(self.origin.Translation(offset), self.u, self.v, self.w, self.name)
-            return new_frame
+            return Frame3D(self.origin.Translation(offset), self.u, self.v, self.w, self.name)
         self.origin.Translation(offset, copy=False)
 
     def Copy(self):
@@ -2490,7 +2490,7 @@ class BSplineCurve3D(Primitive3D):
             distances.append(pt1.PointDistance(point))
         return min(distances)
 
-    def Rotation(self, center, axis, angle, copy=False):
+    def Rotation(self, center, axis, angle, copy=True):
         new_control_points = [p.Rotation(center, axis, angle, True) for p in self.control_points]
         new_BSplineCurve3D = BSplineCurve3D(self.degree, new_control_points, self.knot_multiplicities, self.knots, self.weights, self.periodic, self.name)
         if copy:
@@ -2500,7 +2500,7 @@ class BSplineCurve3D(Primitive3D):
             self.curve = new_BSplineCurve3D.curve
             self.points = new_BSplineCurve3D.points
 
-    def Translation(self, offset, copy=False):
+    def Translation(self, offset, copy=True):
         new_control_points = [p.Translation(offset, True) for p in self.control_points]
         new_BSplineCurve3D = BSplineCurve3D(self.degree, new_control_points, self.knot_multiplicities, self.knots, self.weights, self.periodic, self.name)
         if copy:
@@ -2526,7 +2526,7 @@ class Circle3D(Primitive3D):
         xn,yn,zn = npy.round(self.normal.vector,ndigits)
         return '{} = Part.Circle(fc.Vector({},{},{}),fc.Vector({},{},{}),{})\n'.format(name,xc,yc,zc,xn,yn,zn,1000*self.radius)
 
-    def Rotation(self, rot_center, axis, angle, copy=False):
+    def Rotation(self, rot_center, axis, angle, copy=True):
         new_center = self.center.Rotation(rot_center, axis, angle, True)
         new_normal = self.normal.Rotation(rot_center, axis, angle, True)
         if copy:
@@ -2535,7 +2535,7 @@ class Circle3D(Primitive3D):
             self.center = new_center
             self.normal = new_normal
 
-    def Translation(self, offset, copy=False):
+    def Translation(self, offset, copy=True):
         new_center = self.center.Translation(offset, True)
         new_normal = self.normal.Translation(offset, True)
         if copy:
@@ -2571,7 +2571,7 @@ class Ellipse3D(Primitive3D):
         xmin, ymin, zmin = npy.round(1000*minor_vector.vector, ndigits)
         return '{} = Part.Ellipse(fc.Vector({},{},{}), fc.Vector({},{},{}), fc.Vector({},{},{}))\n'.format(name,xmaj,ymaj,zmaj,xmin,ymin,zmin,xc,yc,zc)
 
-    def Rotation(self, rot_center, axis, angle, copy=False):
+    def Rotation(self, rot_center, axis, angle, copy=True):
         new_center = self.center.Rotation(rot_center, axis, angle, True)
         new_normal = self.normal.Rotation(rot_center, axis, angle, True)
         new_major_dir = self.major_dir.Rotation(rot_center, axis, angle, True)
@@ -2582,7 +2582,7 @@ class Ellipse3D(Primitive3D):
             self.normal = new_normal
             self.major_dir = new_major_dir
 
-    def Translation(self, offset, copy=False):
+    def Translation(self, offset, copy=True):
         new_center = self.center.Translation(offset, True)
         new_normal = self.normal.Translation(offset, True)
         new_major_dir = self.major_dir.Translation(offset, True)
@@ -2837,7 +2837,7 @@ class BSplineSurface3D(Primitive3D):
 
         return cls(degree_u, degree_v, control_points, nb_u, nb_v, u_multiplicities, v_multiplicities, u_knots, v_knots, weight_data, name)
 
-    def Rotation(self, center, axis, angle, copy=False):
+    def Rotation(self, center, axis, angle, copy=True):
         new_control_points = [p.Rotation(center, axis, angle, True) for p in self.control_points]
         new_BSplineSurface3D = BSplineSurface3D(self.degree_u, self.degree_v, new_control_points, self.nb_u, self.nb_v, self.u_multiplicities, self.v_multiplicities, self.u_knots, self.v_knots, self.weights, self.name)
         if copy:
@@ -2847,7 +2847,7 @@ class BSplineSurface3D(Primitive3D):
             self.curve = new_BSplineSurface3D.curve
             self.points = new_BSplineSurface3D.points
 
-    def Translation(self, offset, copy=False):
+    def Translation(self, offset, copy=True):
         new_control_points = [p.Translation(offset, True) for p in self.control_points]
         new_BSplineSurface3D = BSplineSurface3D(self.degree_u, self.degree_v, new_control_points, self.nb_u, self.nb_v, self.u_multiplicities, self.v_multiplicities, self.u_knots, self.v_knots, self.weights, self.name)
         if copy:
@@ -3047,30 +3047,16 @@ class Contour3D(Wire3D):
     def __init__(self, edges, name=''):
         self.edges = edges
         self.name = name
-        
-        print()
-        for edge in self.edges:
-            print(edge.points)
-        
-        print('--------------------------')
+                
         points = self.edges[0].points[:]
         for i, edge in enumerate(self.edges[1:-1]):
-            print('POINTS', i, ':', points)
             if edge.points[0] in points[-2:]:
-                print(edge.points[0], 'in', points[-2:], '?')
-                print(edge.points[0] in points[-2:])
                 points.append(edge.points[1])
             elif edge.points[1] in points[-2:]:
-                print(edge.points[1], 'in', points[-2:], '?')
-                print(edge.points[1] in points[-2:])
                 points.append(edge.points[0])
             else:
-                print('les edges ne se suivent pas')
                 raise NotImplementedError
-        print('--------------------------')
         self.points = points[:]
-        if self.points[0] == self.points[2]:
-            print('contour3D', self.points)
         
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -3139,25 +3125,22 @@ class Face3D(CompositePrimitive3D):
         self.primitives = primitives
         
         points = self.contour[0].points[:]
-        if points[0] == points[2]:
-            print('face3D', points)
         self.plane = self.create_plane(points)
-            
-        polygon_points = [p.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]) for p in points]
-        self.polygon2D = Polygon2D(polygon_points)
-        if self.polygon2D.SelfIntersect()[0]:            
-            repaired_points = [points[1]]+[points[0]]+points[2:]
-            self.polygon2D = Polygon2D([polygon_points[1]]+[polygon_points[0]]+polygon_points[2:])
-            self.contour[0].points = repaired_points
+
+        self.contour[0].points, self.polygon2D = self._repair_points_and_polygon2d(points)
             
         self.bounding_box = self._bounding_box()
         
+#        print('Face3D.points', points)
+#        print('Face3D.polygon2D', self.polygon2D.points)
+#        print('Face3D.bounding_box', self.bounding_box.points)
+        
         # CHECK #
-#        for pt in points:
-#            if not self.plane.point_on_plane(pt):
-#                print('WARNING', pt, 'not on', self.plane)
-#                print(self.plane.normal.Dot(pt-self.plane.origin))
-#                raise ValueError
+        for pt in points:
+            if not self.plane.point_on_plane(pt):
+                print('WARNING', pt, 'not on', self.plane)
+                print(self.plane.normal.Dot(pt-self.plane.origin))
+                raise ValueError
         
     @classmethod
     def from_step(cls, arguments, object_dict):        
@@ -3198,7 +3181,17 @@ class Face3D(CompositePrimitive3D):
                 if dot < dot_min:
                     vector2_min = vector2
                     dot_min = dot
-            return Plane3D.from_3_points(origin, vector1+origin, vector2_min+origin)            
+            return Plane3D.from_3_points(origin, vector1+origin, vector2_min+origin)
+    
+    def _repair_points_and_polygon2d(self, points):
+        polygon_points = [p.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]) for p in points]
+        repaired_points = self.contour[0].points
+        polygon2D = Polygon2D(polygon_points)
+        if polygon2D.SelfIntersect()[0]:            
+            repaired_points = [points[1]]+[points[0]]+points[2:]
+            polygon2D = Polygon2D([polygon_points[1]]+[polygon_points[0]]+polygon_points[2:])
+#            self.contour[0].points = repaired_points
+        return repaired_points, polygon2D
 
     def Rotation(self, center, axis, angle, copy=True):
         if copy:
@@ -3223,6 +3216,7 @@ class Face3D(CompositePrimitive3D):
             for primitive in self.primitives:
                 primitive.Translation(offset, False)
             self.plane.Translation(offset, False)
+            self.bounding_box.Translation(offset, False)
             
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -3283,6 +3277,9 @@ class Face3D(CompositePrimitive3D):
 #        print('essai', self.primitives[0].__class__ == Plane3D)
 #        if isinstance(self.primitives[0], Plane3D):
 #        plane = self.primitives[0]
+        print()
+        print('distance_to_point point', point)
+        print('distance_to_point plane', self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
         projected_pt = point.PlaneProjection3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
         projection_distance = point.PointDistance(projected_pt)
 
@@ -3304,6 +3301,8 @@ class Face3D(CompositePrimitive3D):
         other_point = other_point.To3D(self.plane.origin , self.plane.vectors[0], self.plane.vectors[1])
 #        other_point = self.plane.origin + other_point[0]*self.plane.vectors[0] + other_point[1]*self.plane.vectors[1]
         
+        
+        print('distance_to_point', projection_distance, border_distance)
         if return_other_point:
             return (projection_distance**2 + border_distance**2)**0.5, other_point
         return (projection_distance**2 + border_distance**2)**0.5
@@ -3445,6 +3444,11 @@ class Face3D(CompositePrimitive3D):
         Only works if the surface is planar
         TODO : this function does not take into account if Face has holes
         """
+        bbox1 = self.bounding_box
+        bbox2 = face2.bounding_box
+        if not bbox1.bbox_intersection(bbox2):
+            return None
+        
         intersection_points = []
 
         for edge2 in face2.contour[0].edges:
@@ -3502,7 +3506,7 @@ class Shell3D(CompositePrimitive3D):
 #            primitives.append(object_dict[int(face[1:])].primitives)
         return cls(faces, arguments[0][1:-1])
 
-    def Rotation(self, center, axis, angle, copy=False):
+    def Rotation(self, center, axis, angle, copy=True):
         if copy:
             new_faces = [face.Rotation(center, axis, angle, True) for face in self.faces]
             return Shell3D(new_faces, self.name)
@@ -3510,15 +3514,16 @@ class Shell3D(CompositePrimitive3D):
             for face in self.faces:
                 face.Rotation(center, axis, angle, False)
 
-    def Translation(self, offset, copy=False):
+    def Translation(self, offset, copy=True):
         if copy:
             new_faces = [face.Translation(offset, True) for face in self.faces]
             return Shell3D(new_faces, self.name)
         else:
             for face in self.faces:
                 face.Translation(offset, False)
+            self.bounding_box.Translation(offset, False)
     
-    def frame_mapping(self, frame, side, copy=False):
+    def frame_mapping(self, frame, side, copy=True):
         """
         side = 'old' or 'new'
         """
@@ -3695,8 +3700,10 @@ class Shell3D(CompositePrimitive3D):
             for face2 in shell2.faces:
                 bbox2 = face2.bounding_box
                 bbox_distance = bbox1.distance_to_bbox(bbox2)
+#                print(bbox_distance,'<', distance_min, '?')
                 if bbox_distance < distance_min:
                     distance, point1, point2 = face1.distance_to_face(face2, return_points=True)
+#                    print('vraie distance', distance)
                     if distance == 0:
                         return None
                     elif distance < distance_min:
@@ -3826,8 +3833,11 @@ class BoundingBox:
             self.ymax = new_ymax
             self.zmin = new_zmin
             self.zmax = new_zmax
-            self.points = (p.Translate(offset, False) for p in self.points)
-            self.center = (self.points[0]+self.points[-2])/2
+            [p.Translation(offset, False) for p in self.points]
+            print('points', self.points)
+#            self.center = (self.points[0]+self.points[-2])/2
+            self.center.Translation(offset, False)
+            print('center', self.center)
     
     def bbox_intersection(self, bbox2):
         return (self.xmin < bbox2.xmax and self.xmax > bbox2.xmin \
@@ -4294,6 +4304,8 @@ class VolumeModel:
                 shell.Translation(offset, False)
             for primitives in self.primitives:
                 primitives.Translation(offset, False)
+            self.bounding_box.Translation(offset, False)
+            
         
     def frame_mapping(self, frame, side, copy=True):
         """
