@@ -2194,7 +2194,7 @@ class Frame3D(Basis3D):
         if copy:
             new_frame = Frame3D(self.origin.Translation(offset), self.u, self.v, self.w, self.name)
             return new_frame
-        self.origin.Translation(offset)
+        self.origin.Translation(offset, copy=False)
 
     def Copy(self):
         return Frame3D(self.origin, self.u, self.v, self.w)
