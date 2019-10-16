@@ -143,28 +143,9 @@ class Block(volmdlr.Shell3D):
                 volmdlr.LineSegment3D(p2, p6),
                 volmdlr.LineSegment3D(p3, p7),
                 volmdlr.LineSegment3D(p4, p8)]
-    
-    def edge_vertices(self):
-        return [volmdlr.Vertex3D(primitive) for primitive in self.Vertices()]
-    
-    def contour_edges(self):
-        p1, p2, p3, p4, p5, p6, p7, p8 = self.Vertices()
-        v1, v2, v3, v4, v5, v6, v7, v8 = self.edge_vertices()
-        return [volmdlr.Edge3D(volmdlr.Line3D(p1, p2), v1, v2),
-                volmdlr.Edge3D(volmdlr.Line3D(p2, p3), v2, v3),
-                volmdlr.Edge3D(volmdlr.Line3D(p3, p4), v3, v4),
-                volmdlr.Edge3D(volmdlr.Line3D(p4, p1), v4, v1),
-                volmdlr.Edge3D(volmdlr.Line3D(p5, p6), v5, v6),
-                volmdlr.Edge3D(volmdlr.Line3D(p6, p7), v6, v7),
-                volmdlr.Edge3D(volmdlr.Line3D(p7, p8), v7, v8),
-                volmdlr.Edge3D(volmdlr.Line3D(p8, p5), v8, v5),
-                volmdlr.Edge3D(volmdlr.Line3D(p1, p5), v1, v5),
-                volmdlr.Edge3D(volmdlr.Line3D(p2, p6), v2, v6),
-                volmdlr.Edge3D(volmdlr.Line3D(p3, p7), v3, v7),
-                volmdlr.Edge3D(volmdlr.Line3D(p4, p8), v4, v8)]
         
     def face_contours(self):
-        e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11, e12 = self.contour_edges()
+        e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11, e12 = self.Edges()
         return [volmdlr.Contour3D([e1, e2, e3, e4]),
                 volmdlr.Contour3D([e5, e6, e7, e8]),
                 volmdlr.Contour3D([e1, e9, e5, e10]),
@@ -174,13 +155,12 @@ class Block(volmdlr.Shell3D):
         
     def shell_faces(self):
         c1, c2, c3, c4, c5, c6 = self.face_contours()
-        p1, p2, p3, p4, p5, p6 = [volmdlr.Plane3D.from_3_points(c.points[0], c.points[1], c.points[-1]) for c in self.face_contours()]
-        return [volmdlr.Face3D([p1], [c1]),
-                volmdlr.Face3D([p2], [c2]),
-                volmdlr.Face3D([p3], [c3]),
-                volmdlr.Face3D([p4], [c4]),
-                volmdlr.Face3D([p5], [c5]),
-                volmdlr.Face3D([p6], [c6])]
+        return [volmdlr.Face3D([c1]),
+                volmdlr.Face3D([c2]),
+                volmdlr.Face3D([c3]),
+                volmdlr.Face3D([c4]),
+                volmdlr.Face3D([c5]),
+                volmdlr.Face3D([c6])]
                 
         
     def plot_data(self, x3D, y3D, marker=None, color='black', stroke_width=1,
