@@ -232,7 +232,7 @@ class Vector2D(Vector):
         return Vector2D((self.vector[0] / value,
                                self.vector[1] / value))
 
-    def __round__(self, ndigits):
+    def __round__(self, ndigits=6):
         return self.__class__((round(self.vector[0], ndigits),
                                round(self.vector[1], ndigits)))
 
@@ -1083,7 +1083,7 @@ class LineSegment2D(Line2D):
         else:
             return point
 
-    def MPLPlot(self, ax=None, style='-k', arrow=False, width=None):
+    def MPLPlot(self, ax=None, color='k', arrow=False, width=None):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -1092,7 +1092,7 @@ class LineSegment2D(Line2D):
 
         p1, p2 = self.points
         if arrow:
-            ax.plot([p1[0], p2[0]], [p1[1], p2[1]], style)
+            ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color)
             length = ((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)**0.5
             if width is None:
                 width = length / 1000.
@@ -1106,7 +1106,7 @@ class LineSegment2D(Line2D):
                      head_width = head_width, fc = 'b', linewidth = 0,
                      head_length = head_length, width = width, alpha = 0.3)
         else:
-            ax.plot([p1[0], p2[0]], [p1[1], p2[1]], style)
+            ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color)
         return fig, ax
 
     def To3D(self, plane_origin, x1, x2):
@@ -1657,7 +1657,7 @@ class Vector3D(Vector):
                                self.vector[1] / value,
                                self.vector[2] / value))
 
-    def __round__(self, ndigits):
+    def __round__(self, ndigits=6):
         return self.__class__((round(self.vector[0], ndigits),
                                round(self.vector[1], ndigits),
                                round(self.vector[2], ndigits)))
@@ -1966,6 +1966,11 @@ class Basis3D(Basis):
                        Vector3D(M[:, 1]),
                        Vector3D(M[:, 2]))
 
+    def __round__(self, ndigits=6):
+        return self.__class__((round(self.u, ndigits),
+                               round(self.v, ndigits),
+                               round(self.w, ndigits)))
+
     def __repr__(self):
         return '{}: U={}, V={}, W={}'.format(self.__class__.__name__, *self.vectors)
     
@@ -2127,6 +2132,11 @@ class Frame3D(Basis3D):
                        Vector3D(M[:, 1]),
                        Vector3D(M[:, 2]))
 
+    def __round__(self, ndigits=6):
+        return self.__class__(round(self.origin, ndigits),
+                              round(self.u, ndigits),
+                              round(self.v, ndigits),
+                              round(self.w, ndigits))
 
     def Basis(self):
         return Basis3D(self.u, self.v, self.w)
@@ -2172,6 +2182,8 @@ class Frame3D(Basis3D):
                 vector2D.plot(origin=origin2d, ax=ax, color=color, label=str(iv+1))
         
         return fig, ax
+    
+    
     @classmethod
     def from_step(cls, arguments, object_dict):
         origin = object_dict[arguments[1]]
@@ -2189,6 +2201,18 @@ class Frame3D(Basis3D):
             w = u.Cross(v)
         return cls(origin, u, v, w, arguments[0][1:-1])
 
+    def babylonjs(self, size=0.1):
+        s = 'var origin = new BABYLON.Vector3({},{},{});\n'.format(*self.origin)
+        s += 'var o_u = new BABYLON.Vector3({}, {}, {});\n'.format(*(size*self.u+self.origin))
+        s += 'var o_v = new BABYLON.Vector3({}, {}, {});\n'.format(*(size*self.v+self.origin))
+        s += 'var o_w = new BABYLON.Vector3({}, {}, {});\n'.format(*(size*self.w+self.origin))
+        s += 'var line1 = BABYLON.MeshBuilder.CreateTube("frame_U", {{path: [origin, o_u], radius: {}}}, scene);'.format(0.03*size)
+        s += 'line1.material = red_material;\n'
+        s += 'var line2 = BABYLON.MeshBuilder.CreateTube("frame_V", {{path: [origin, o_v], radius: {}}}, scene);'.format(0.03*size)
+        s += 'line2.material = green_material;\n'
+        s += 'var line3 = BABYLON.MeshBuilder.CreateTube("frame_W", {{path: [origin, o_w], radius: {}}}, scene);'.format(0.03*size)
+        s += 'line3.material = blue_material;\n'
+        return s 
 
 oxyz = Frame3D(o3D, x3D, y3D, z3D)
 
@@ -2287,14 +2311,14 @@ class LineSegment3D(Line3D):
                 p.Translation(offset, copy=False)
 
     def MPLPlot(self, ax):
-        x=[p.vector[0] for p in self.points]
-        y=[p.vector[1] for p in self.points]
-        z=[p.vector[2] for p in self.points]
-        ax.plot(x,y,z, 'o-k')
+        x = [p.vector[0] for p in self.points]
+        y = [p.vector[1] for p in self.points]
+        z = [p.vector[2] for p in self.points]
+        ax.plot(x, y, z, 'o-k')
 
-    def MPLPlot2D(self, x_3D, y_3D, ax):
+    def MPLPlot2D(self, x_3D, y_3D, ax, color='k'):
         edge2D =  self.PlaneProjection2D(x_3D, y_3D)
-        edge2D.MPLPlot(ax)
+        edge2D.MPLPlot(ax=ax, color=color)
 
     def plot_data(self, x_3D, y_3D, marker=None, color='black', stroke_width=1,
                   dash=False, opacity=1, arrow=False):
@@ -2310,15 +2334,23 @@ class LineSegment3D(Line3D):
     def to_line(self):
         return Line3D(*self.points)
     
-    def Babylon(self, color=(1, 1, 1)):
-        s = 'var myPoints = [];\n'
-        s += 'var point1 = new BABYLON.Vector3({},{},{});\n'.format(self.points[0][0],self.points[0][2],self.points[0][1])
-        s += 'myPoints.push(point1);\n'
-        s += 'var point2 = new BABYLON.Vector3({},{},{});\n'.format(self.points[1][0],self.points[1][2],self.points[1][1])
-        s += 'myPoints.push(point2);\n'
-        s += 'var line = BABYLON.MeshBuilder.CreateLines("lines", {points: myPoints}, scene);\n'
-        s += 'line.color = new BABYLON.Color3{};'.format(tuple(color))
+    def Babylon(self, color=(1, 1, 1), type_='line'):
+        if type_ == 'line':
+            s = 'var myPoints = [];\n'
+            s += 'var point1 = new BABYLON.Vector3({},{},{});\n'.format(*self.points[0])
+            s += 'myPoints.push(point1);\n'
+            s += 'var point2 = new BABYLON.Vector3({},{},{});\n'.format(*self.points[1])
+            s += 'myPoints.push(point2);\n'
+            s += 'var line = BABYLON.MeshBuilder.CreateLines("lines", {points: myPoints}, scene);\n'
+            s += 'line.color = new BABYLON.Color3{};'.format(tuple(color))
+        elif type_ == 'tube':
+            radius = 0.03*self.points[0].PointDistance(self.points[1])
+            s = 'var points = [new BABYLON.Vector3({},{},{}), new BABYLON.Vector3({},{},{})];\n'.format(*self.points[0], *self.points[1])
+            s += 'var line = BABYLON.MeshBuilder.CreateTube("frame_U", {{path: points, radius: {}}}, scene);'.format(radius)
+#            s += 'line.material = red_material;\n'
+
         return s 
+
     
 #    def babylonjs_mesh(self):
         
