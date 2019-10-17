@@ -53,8 +53,8 @@ shell1.Translation((0.5,0,0), False)
 volumemodel.shells[0] = shell0.frame_mapping(frame, 'new', True)
 volumemodel.shells[1] = shell1.Translation((0.5,0,0), True)
 
-volumemodel.shells.append(volumemodel.shells[0].bounding_box)
-volumemodel.shells.append(volumemodel.shells[1].bounding_box)
+#volumemodel.shells.append(volumemodel.shells[0].bounding_box)
+#volumemodel.shells.append(volumemodel.shells[1].bounding_box)
 
 #for face in volumemodel.shells[0].faces+volumemodel.shells[1].faces:
 #    volumemodel.shells.append(face.bounding_box)

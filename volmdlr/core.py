@@ -25,7 +25,9 @@ from matplotlib.patches import FancyArrowPatch
 
 import networkx as nx
 
-from .vmcy import PolygonPointBelongs, Vector3DDot, sub
+from .vmcy import (sub2D, add2D, mul2D, Vector2DNorm, Vector2DDot, 
+                   sub3D, add3D, mul3D, Vector3DNorm, Vector3DDot, 
+                   LineSegment2DPointDistance, PolygonPointBelongs)
 
 from scipy.linalg import solve, LinAlgError
 
@@ -204,19 +206,16 @@ class Vector2D(Vector):
         self.name = name
 
     def __add__(self, other_vector):
-        return Vector2D((self.vector[0] + other_vector.vector[0],
-                         self.vector[1] + other_vector.vector[1]))
+        return Vector2D(add2D(self.vector, other_vector.vector))
 
     def __neg__(self):
         return Vector2D((-self.vector[0], -self.vector[1]))
 
     def __sub__(self, other_vector):
-        return Vector2D((self.vector[0] - other_vector.vector[0],
-                         self.vector[1] - other_vector.vector[1]))
-
+        return Vector2D(sub2D(self.vector, other_vector.vector))
+        
     def __mul__(self, value):
-        return Vector2D((self.vector[0] * value,
-                         self.vector[1] * value))
+        return Vector2D(mul2D(self.vector, value))
 
     def __truediv__(self, value):
         if value == 0:
@@ -236,13 +235,15 @@ class Vector2D(Vector):
         """
         :returns: norm of vector
         """
-        x, y = self.vector
-        return (x**2 + y**2)**0.5
+#        x, y = self.vector
+#        return (x**2 + y**2)**0.5
+        return Vector2DNorm(self.vector)
 
     def Dot(self, other_vector):
-        u1, u2 = self.vector
-        v1, v2 = other_vector.vector
-        return u1*v1 + u2*v2
+#        u1, u2 = self.vector
+#        v1, v2 = other_vector.vector
+#        return u1*v1 + u2*v2
+        return Vector2DDot(self.vector, other_vector.vector)
 
     def Cross(self, other_vector):
         u1, u2 = self.vector
@@ -333,19 +334,16 @@ class Point2D(Vector2D):
         self.name = name
 
     def __add__(self, other_vector):
-        return Point2D((self.vector[0] + other_vector.vector[0],
-                        self.vector[1] + other_vector.vector[1]))
+        return Point2D(add2D(self.vector, other_vector.vector))
 
     def __neg__(self):
         return Point2D((-self.vector[0], -self.vector[1]))
 
     def __sub__(self, other_vector):
-        return Point2D((self.vector[0] - other_vector.vector[0],
-                        self.vector[1] - other_vector.vector[1]))
+        return Point2D(sub2D(self.vector, other_vector.vector))
 
     def __mul__(self, value):
-        return Point2D((self.vector[0] * value,
-                               self.vector[1] * value))
+        return Point2D(mul2D(self.vector, value))
 
     def __truediv__(self, value):
         if value == 0:
@@ -364,9 +362,6 @@ class Point2D(Vector2D):
 
     def PointDistance(self, point2):
         return (self-point2).Norm()
-
-    #def Distance(self,point2):
-    #    return norm(self.vector-point2.vector)
 
     @classmethod
     def LinesIntersection(cls, line1, line2, curvilinear_abscissa=False):
@@ -1057,13 +1052,17 @@ class LineSegment2D(Line2D):
         """
         Computes the distance of a point to segment of line
         """
-        p1, p2 = self.points
-        u = p2-p1
-        t = max(0, min(1, (point-p1).Dot(u) / u.Norm()**2))
-        projection = p1 + t * u # Projection falls on the segment
+#        p1, p2 = self.points
+#        u = p2-p1
+#        t = max(0, min(1, (point-p1).Dot(u) / u.Norm()**2))
+#        projection = p1 + t * u # Projection falls on the segment
+#        if return_other_point:
+#            return (projection-point).Norm(), projection
+#        return (projection-point).Norm()
+        distance, point = LineSegment2DPointDistance([p.vector for p in self.points], point.vector)
         if return_other_point:
-            return (projection-point).Norm(), projection
-        return (projection-point).Norm()
+            return distance, Point2D(point)
+        return distance
 
     def PointProjection(self, point, curvilinear_abscissa=False):
         point, curv_abs = Line2D.PointProjection(self, point, True)
@@ -1631,23 +1630,16 @@ class Vector3D(Vector):
         self.name = name
 
     def __add__(self, other_vector):
-        return Vector3D((self.vector[0] + other_vector.vector[0],
-                         self.vector[1] + other_vector.vector[1],
-                         self.vector[2] + other_vector.vector[2]))
+        return Vector3D(add3D(self.vector, other_vector.vector))
 
     def __neg__(self):
         return Vector3D((-self.vector[0], -self.vector[1], -self.vector[2]))
 
     def __sub__(self, other_vector):
-#        return Vector3D((self.vector[0] - other_vector.vector[0],
-#                         self.vector[1] - other_vector.vector[1],
-#                         self.vector[2] - other_vector.vector[2]))
-        return Vector3D(sub(self.vector, other_vector.vector))
+        return Vector3D(sub3D(self.vector, other_vector.vector))
 
     def __mul__(self, value):
-        return Vector3D((self.vector[0] * value,
-                         self.vector[1] * value,
-                         self.vector[2] * value))
+        return Vector3D(mul3D(self.vector, value))
 
     def __truediv__(self, value):
         if value == 0:
@@ -1665,11 +1657,6 @@ class Vector3D(Vector):
         return math.isclose(self.vector[0], other_vector.vector[0], abs_tol=1e-08) \
         and math.isclose(self.vector[1], other_vector.vector[1], abs_tol=1e-08) \
         and math.isclose(self.vector[2], other_vector.vector[2], abs_tol=1e-08) 
-
-#    def Dot(self, other_vector):
-#        u1, u2, u3 = self.vector
-#        v1, v2, v3 = other_vector.vector
-#        return u1*v1 + u2*v2 + u3*v3
     
     def Dot(self, other_vector):
         return Vector3DDot(self.vector, other_vector.vector)
@@ -1680,8 +1667,7 @@ class Vector3D(Vector):
         return Vector3D((u2*v3 - u3*v2, u3*v1 - u1*v3, u1*v2 - u2*v1))
 
     def Norm(self):
-        x, y, z = self.vector
-        return (x**2 + y**2 + z**2)**0.5
+        return Vector3DNorm(self.vector)
 
     def Rotation(self, center, axis, angle, copy=True):
         u = axis.vector
@@ -1803,23 +1789,16 @@ class Point3D(Vector3D):
         self.name=name
 
     def __add__(self, other_vector):
-        return Point3D((self.vector[0] + other_vector.vector[0],
-                        self.vector[1] + other_vector.vector[1],
-                        self.vector[2] + other_vector.vector[2]))
+        return Point3D(add3D(self.vector, other_vector.vector))
 
     def __neg__(self):
         return Point3D((-self.vector[0], -self.vector[1], -self.vector[2]))
 
     def __sub__(self, other_vector):
-#        return Point3D((self.vector[0] - other_vector.vector[0],
-#                        self.vector[1] - other_vector.vector[1],
-#                        self.vector[2] - other_vector.vector[2]))
-        return Point3D(sub(self.vector, other_vector.vector))
+        return Point3D(sub3D(self.vector, other_vector.vector))
 
     def __mul__(self, value):
-        return Point3D((self.vector[0] * value,
-                        self.vector[1] * value,
-                        self.vector[2] * value))
+        return Point3D(mul3D(self.vector, value))
 
     def __truediv__(self, value):
         if value == 0:
@@ -2917,6 +2896,19 @@ class LineSegment3D(Edge3D):
     """
     def __init__(self, point1, point2, name=''):
         Edge3D.__init__(self, point1, point2, name='')
+        self.bounding_box = self._bounding_box()
+        
+    def _bounding_box(self):
+        points = self.points
+        
+        xmin = min([pt[0] for pt in points])
+        xmax = max([pt[0] for pt in points])
+        ymin = min([pt[1] for pt in points])
+        ymax = max([pt[1] for pt in points])
+        zmin = min([pt[2] for pt in points])
+        zmax = max([pt[2] for pt in points])
+        
+        return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def Length(self):
         return self.points[1].PointDistance(self.points[0])
@@ -2978,7 +2970,7 @@ class LineSegment3D(Edge3D):
         return '{} = Part.LineSegment(fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,x1,y1,z1,x2,y2,z2)
 
     def to_line(self):
-        return Line3D(*self.points)
+        return Line3D(*self.points)        
     
     def Babylon(self):
         s = 'var myPoints = [];\n'
@@ -3080,10 +3072,12 @@ class Face3D(Primitive3D):
     @classmethod
     def from_step(cls, arguments, object_dict):                    
         contours = []
-        if len(arguments[1]) > 1:
-            contours.append(object_dict[int(arguments[1][0][1:])])
-        else:
-            contours.append(object_dict[int(arguments[1][0][1:])])        
+#        if len(arguments[1]) > 1:
+#            contours.append(object_dict[int(arguments[1][0][1:])])
+#        else:
+#            contours.append(object_dict[int(arguments[1][0][1:])])
+        contours.append(object_dict[int(arguments[1][0][1:])])
+
         return cls(contours, arguments[0][1:-1])
     
     def create_plane(self, points):
@@ -3205,7 +3199,7 @@ class Face3D(Primitive3D):
         point_2D = point.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
 
         border_distance, other_point = self.polygon2D.PointBorderDistance(point_2D, return_other_point=True)
-        
+
         other_point = other_point.To3D(self.plane.origin , self.plane.vectors[0], self.plane.vectors[1])        
         
         if return_other_point:
