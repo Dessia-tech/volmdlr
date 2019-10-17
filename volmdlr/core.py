@@ -3077,7 +3077,7 @@ class Face3D(Primitive3D):
 #        else:
 #            contours.append(object_dict[int(arguments[1][0][1:])])
         contours.append(object_dict[int(arguments[1][0][1:])])
-
+        contours[0].points = 
         return cls(contours, arguments[0][1:-1])
     
     def create_plane(self, points):
@@ -3509,7 +3509,7 @@ class Shell3D(CompositePrimitive3D):
             for face2 in shell2.faces:
                 intersection_points = face1.face_intersection(face2)
                 if intersection_points is not None:
-                    print('Two faces are intersecting :', face1, face2)
+#                    print('Two faces are intersecting :', face1, face2)
                     return False
                 
         return True
@@ -3530,7 +3530,7 @@ class Shell3D(CompositePrimitive3D):
         bbox1 = self.bounding_box
         bbox2 = shell2.bounding_box
         if not bbox1.bbox_intersection(bbox2):
-            print("No intersection of shells' BBox")
+#            print("No intersection of shells' BBox")
             return None
         
         # Check if any point of the first shell is in the second shell
@@ -3554,17 +3554,17 @@ class Shell3D(CompositePrimitive3D):
                 
         inter1 = compteur1/nb_pts1
         inter2 = compteur2/nb_pts2
-        print('shell intersection')
-        print('shell1 intersecte shell2 à', inter1*100, '%')
-        print('shell2 intersecte shell1 à', inter2*100, '%')
+#        print('shell intersection')
+#        print('shell1 intersecte shell2 à', inter1*100, '%')
+#        print('shell2 intersecte shell1 à', inter2*100, '%')
         
         for face1 in self.faces:
             for face2 in shell2.faces:
                 intersection_points = face1.face_intersection(face2)
                 if intersection_points is not None:
-                    print('Two faces are intersecting :', face1, face2)
-                    ax = face1.plot()
-                    face2.plot(ax)
+#                    print('Two faces are intersecting :', face1, face2)
+#                    ax = face1.plot()
+#                    face2.plot(ax)
                     return inter1, inter2
         
         return None
@@ -3600,7 +3600,24 @@ class Shell3D(CompositePrimitive3D):
         if add_to_volumemodel is not None:
             add_to_volumemodel.shells.append(mesure)
                             
-        return mesure                
+        return mesure
+
+    def distance_to_point(self, point, add_to_volumemodel=None):
+        """
+        Can be optimized with bounding boxes
+        """
+        distance_min, point1_min, point2_min = self.faces[0].distance_to_point(point, return_other_point=True)
+        for face in self.faces[1:]:
+            distance, point1, point2 = face.distance_to_point(point, return_other_point=True)
+            if distance < distance_min:
+                distance_min, point1_min, point2_min = distance, point1, point2
+                
+        mesure = Mesure(point1_min, point2_min)
+                        
+        if add_to_volumemodel is not None:
+            add_to_volumemodel.shells.append(mesure)
+                            
+        return mesure
     
     def Babylon(self):
         s = 'var customMesh = new BABYLON.Mesh("custom", scene);\n'
@@ -3779,6 +3796,14 @@ class BoundingBox:
             dz = 0
         
         return (dx**2 + dy**2 + dz**2)**0.5
+    
+#    def distance_to_point(self, point):
+#        
+#        permute_point 
+#        
+#        if point[0] < self.xmin:
+#            d
+        
     
     def Babylon(self):
         s = 'var box = BABYLON.MeshBuilder.CreateBox("box", {{height: {}, width: {}, depth: {}}}, scene);\n'.format(self.ymax-self.ymin, self.xmax-self.xmin, self.zmax-self.zmin)
