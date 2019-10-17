@@ -9,12 +9,12 @@ Created on Thu Oct  3 10:57:51 2019
 import volmdlr as  vm
 import volmdlr.primitives3D as p3d
 
-moteur = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/MOTEUR HRevoUNIFY.stp')
-boite = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/BOITE E-TECHg2.stp')
+#moteur = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/MOTEUR HRevoUNIFY.stp')
+#boite = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/BOITE E-TECHg2.stp')
 #cmo = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/CMO2.stp')
 
-volumemodel = moteur.to_volume_model('moteur')
-boite.to_volume_model('boite', volumemodel)
+#volumemodel = moteur.to_volume_model('moteur')
+#boite.to_volume_model('boite', volumemodel)
 #cmo.to_volume_model('cmo', volumemodel)
 
 #origin = vm.Point3D((0,0,0))
@@ -25,9 +25,19 @@ boite.to_volume_model('boite', volumemodel)
 #block = p3d.Block(frame)
 #volumemodel.shells.append(block)
 
+volumemodel = vm.VolumeModel([],[])
+position = vm.Point3D((1,2,3))
+axis = vm.Vector3D((1,0.5,0.2))
+radius = 0.5
+length = 2
+primitive3d = p3d.Cone(position, axis, radius, length)
+#primitive3d = p3d.Cylinder(position, axis, radius, length)
+volumemodel.shells.append(primitive3d)
+volumemodel.shells.append(primitive3d.bounding_box)
+volumemodel.BabylonShow()
 
-shell0 = volumemodel.shells[0] # LE MOTEUR
-shell1 = volumemodel.shells[1] # LA BOITE
+#shell0 = volumemodel.shells[0] # LE MOTEUR
+#shell1 = volumemodel.shells[1] # LA BOITE
 #shell2 = volumemodel.shells[2] # LE BLOCK
 #shell2 = volumemodel.shells[2] # LE CMO
 #shell3 = volumemodel.shells[3] # UN PETIT BOUT SE TROUVANT A L'INTERIEUR DU CMO

@@ -2176,7 +2176,6 @@ class Frame3D(Basis3D):
         self.w = new_base.w
 
     def Translation(self, offset, copy=True):
-        print('Frame3D.Translation fait belek')
         if copy:
             return Frame3D(self.origin.Translation(offset), self.u, self.v, self.w, self.name)
         self.origin.Translation(offset, copy=False)
@@ -3077,7 +3076,7 @@ class Face3D(Primitive3D):
 #        else:
 #            contours.append(object_dict[int(arguments[1][0][1:])])
         contours.append(object_dict[int(arguments[1][0][1:])])
-        contours[0].points = 
+#        contours[0].points = 
         return cls(contours, arguments[0][1:-1])
     
     def create_plane(self, points):
@@ -3484,7 +3483,7 @@ class Shell3D(CompositePrimitive3D):
 #            print('------------------------')
             ###############
             
-            return sum(tests) > 1
+        return sum(tests) > 1
                 
     def is_inside_shell(self, shell2):
         """
@@ -3604,13 +3603,15 @@ class Shell3D(CompositePrimitive3D):
 
     def distance_to_point(self, point, add_to_volumemodel=None):
         """
-        Can be optimized with bounding boxes
+        Computes the distance of a point to a Shell3D, whether it is inside or outside the Shell3D
         """
         distance_min, point1_min, point2_min = self.faces[0].distance_to_point(point, return_other_point=True)
         for face in self.faces[1:]:
-            distance, point1, point2 = face.distance_to_point(point, return_other_point=True)
-            if distance < distance_min:
-                distance_min, point1_min, point2_min = distance, point1, point2
+            bbox_distance = self.bounding_box.distance_to_point(point)
+            if bbox_distance < distance_min:
+                distance, point1, point2 = face.distance_to_point(point, return_other_point=True)
+                if distance < distance_min:
+                    distance_min, point1_min, point2_min = distance, point1, point2
                 
         mesure = Mesure(point1_min, point2_min)
                         
@@ -3797,19 +3798,46 @@ class BoundingBox:
         
         return (dx**2 + dy**2 + dz**2)**0.5
     
-#    def distance_to_point(self, point):
-#        
-#        permute_point 
-#        
-#        if point[0] < self.xmin:
-#            d
-        
+    def point_belongs(self, point):
+        return self.xmin < point[0] and point[0] < self.xmax \
+        and self.ymin < point[1] and point[1] < self.ymax \
+        and self.zmin < point[2] and point[2] < self.zmax 
     
+    def distance_to_point(self, point):
+        if self.point_belongs(point):
+            return min([self.xmax-point[0], point[0]-self.xmin,
+                        self.ymax-point[1], point[1]-self.ymin,
+                        self.zmax-point[2], point[2]-self.zmin])
+        else:
+            if point[0] < self.xmin:
+                dx = self.xmin - point[0]
+            elif self.xmax < point[0]:
+                dx = point[0] - self.xmax
+            else:
+                dx = 0
+                
+            if point[1] < self.ymin:
+                dy = self.ymin - point[1]
+            elif self.ymax < point[1]:
+                dy = point[1] - self.ymax
+            else:
+                dy = 0
+                
+            if point[2] < self.zmin:
+                dz = self.zmin - point[2]
+            elif self.zmax < point[2]:
+                dz = point[2] - self.zmax
+            else:
+                dz = 0
+        return (dx**2 + dy**2 + dz**2)**0.5
+
     def Babylon(self):
         s = 'var box = BABYLON.MeshBuilder.CreateBox("box", {{height: {}, width: {}, depth: {}}}, scene);\n'.format(self.ymax-self.ymin, self.xmax-self.xmin, self.zmax-self.zmin)
         s += 'box.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));\n'.format(self.center[0], self.center[1], self.center[2])
+        s += 'box.material = bboxmat;\n'
         return s
-    
+
+
 class Mesure(Line3D):
     def __init__(self, point1, point2):
         self.points = [point1, point2]
@@ -3825,6 +3853,7 @@ class Mesure(Line3D):
         s += 'var line = BABYLON.MeshBuilder.CreateLines("lines", {points: myPoints}, scene);\n'
         s += 'line.color = new BABYLON.Color3(1, 0, 0);\n'
         return s 
+    
 
 class Group:
     def __init__(self, primitives, name):
@@ -4171,7 +4200,8 @@ class VolumeModel:
         self.shells = shells
         self.primitives = primitives
         self.name = name
-        self.bounding_box = self._bounding_box()
+        if self.shells:
+            self.bounding_box = self._bounding_box()
 
     def Volume(self):
         volume=0
@@ -4229,7 +4259,8 @@ class VolumeModel:
     def _bounding_box(self):
         bboxes = []
         for shell in self.shells:
-            bboxes.append(shell.bounding_box)
+            if hasattr(shell, '_bounding_box'):
+                bboxes.append(shell.bounding_box)
         
         xmin = min([box.xmin for box in bboxes])
         xmax = max([box.xmax for box in bboxes])
@@ -4363,11 +4394,12 @@ class VolumeModel:
                           autoescape=select_autoescape(['html', 'xml']))
 
         template = env.get_template('babylon.html')
-
-        center = self.bounding_box.center
-        max_length = max([self.bounding_box.xmax - self.bounding_box.xmin,
-                          self.bounding_box.ymax - self.bounding_box.ymin,
-                          self.bounding_box.zmax - self.bounding_box.zmin])
+        
+        bbox = self._bounding_box()
+        center = bbox.center
+        max_length = max([bbox.xmax - bbox.xmin,
+                          bbox.ymax - bbox.ymin,
+                          bbox.zmax - bbox.zmin])
 
         primitives_strings=[]
         for primitive in self.shells:

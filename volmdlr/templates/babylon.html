@@ -109,6 +109,10 @@ var createScene = function () {
         zChar.position = new BABYLON.Vector3(0, 0.05 * size, 0.9 * size);
     };
     showAxis(1);
+    
+    // Material for bounding box
+    var bboxmat = new BABYLON.StandardMaterial("bboxmat", scene);
+    bboxmat.alpha = 0.4;
 
 	{% for s in primitives_strings %}
 		{{s|safe}}

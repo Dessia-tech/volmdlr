@@ -186,23 +186,53 @@ class Block(volmdlr.Shell3D):
         return fig, ax
 
 class Cylinder(volmdlr.Primitive3D):
-    def __init__(self, position, axis, radius, width, name=''):
+    def __init__(self, position, axis, radius, length, name=''):
         volmdlr.Primitive3D.__init__(self, name)
         self.position = position
         axis.Normalize()
         self.axis = axis
         self.radius = radius
-        self.width = width
+        self.length = length
+        self.bounding_box = self._bounding_box()
+        
+    def _bounding_box(self):
+        pointA = self.position - self.length/2 * self.axis
+        pointB = self.position + self.length/2 * self.axis
+        
+        dx2 = (pointA[0]-pointB[0])**2
+        dy2 = (pointA[1]-pointB[1])**2
+        dz2 = (pointA[2]-pointB[2])**2
+        
+        kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
+        ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
+        kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
+        
+        if pointA[0] > pointB[0]:
+            pointA, pointB = pointB, pointA
+        xmin = pointA[0] - kx * self.radius
+        xmax = pointB[0] + kx * self.radius
+        
+        if pointA[1] > pointB[1]:
+            pointA, pointB = pointB, pointA
+        ymin = pointA[1] - ky * self.radius
+        ymax = pointB[1] + ky * self.radius
+        
+        if pointA[2] > pointB[2]:
+            pointA, pointB = pointB, pointA
+        zmin = pointA[2] - kz * self.radius
+        zmax = pointB[2] + kz * self.radius
+        
+        return volmdlr.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def Volume(self):
-        return self.width * math.pi * self.radius**2
+        return self.length * math.pi * self.radius**2
 
     def FreeCADExport(self, ip):
         if self.radius > 0:
             name = 'primitive'+str(ip)
-            e = str(1000*self.width)
+            e = str(1000*self.length)
             r = str(1000*self.radius)
-            position = 1000*(self.position - self.axis*self.width/2.)
+            position = 1000*(self.position - self.axis*self.length/2.)
             x, y, z = position
             x = str(x)
             y = str(y)
@@ -217,15 +247,16 @@ class Cylinder(volmdlr.Primitive3D):
             return ''
 
     def Babylon(self):
-        ya, xa, za=self.axis
-        theta = math.acos(za/self.width)
-        phi = math.atan(ya/xa)
-        x, z, y = self.position
-        s='var cylinder = BABYLON.Mesh.CreateCylinder("{}", {}, {}, {}, 30, 1, scene,false, BABYLON.Mesh.DEFAULTSIDE);'.format(self.name,self.width,2*self.radius,2*self.radius)
+        new_axis = volmdlr.Vector3D((self.axis[0], self.axis[1], self.axis[2]))
+        normal_vector1 = new_axis.RandomUnitNormalVector()
+        normal_vector2 = new_axis.Cross(normal_vector1)
+        x, y, z = self.position
+        s='var cylinder = BABYLON.Mesh.CreateCylinder("{}", {}, {}, {}, 30, 1, scene,false, BABYLON.Mesh.DEFAULTSIDE);'.format(self.name,self.length,2*self.radius,2*self.radius)
         s+='cylinder.position = new BABYLON.Vector3({},{},{});\n;'.format(x,y,z)
-        s+='cylinder.rotation.x={}\n;'.format(-theta*math.sin(phi))
-        s+='cylinder.rotation.y={}\n;'.format(theta*math.cos(phi))
-        s+='cylinder.rotation.z={}\n;'.format(phi)
+        s += 'var axis1 = new BABYLON.Vector3({},{},{});\n'.format(new_axis[0], new_axis[1], new_axis[2])
+        s += 'var axis2 = new BABYLON.Vector3({},{},{});\n'.format(normal_vector1[0], normal_vector1[1], normal_vector1[2])
+        s += 'var axis3 = new BABYLON.Vector3({},{},{});\n'.format(normal_vector2[0], normal_vector2[1], normal_vector2[2])
+        s += 'cylinder.rotation = BABYLON.Vector3.RotationFromAxis(axis3, axis1, axis2);\n'
         return s
 
 class HollowCylinder(volmdlr.Primitive3D):
@@ -278,7 +309,75 @@ class HollowCylinder(volmdlr.Primitive3D):
         s+='cylinder.rotation.x={}\n;'.format(-theta*math.sin(phi))
         s+='cylinder.rotation.y={}\n;'.format(theta*math.cos(phi))
         s+='cylinder.rotation.z={}\n;'.format(phi)
-        return s        
+        return s
+    
+
+class Cone(volmdlr.Primitive3D):
+    def __init__(self, position, axis, radius, length, name=''):
+        volmdlr.Primitive3D.__init__(self, name)
+        self.position = position
+        axis.Normalize()
+        self.axis = axis
+        self.radius = radius
+        self.length = length
+        self.bounding_box = self._bounding_box()
+        
+    def _bounding_box(self):
+        """
+        A is the point at the basis
+        B is the top
+        """
+        pointA = self.position - self.length/2 * self.axis
+        pointB = self.position + self.length/2 * self.axis
+        
+        dx2 = (pointA[0]-pointB[0])**2
+        dy2 = (pointA[1]-pointB[1])**2
+        dz2 = (pointA[2]-pointB[2])**2
+        
+        kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
+        ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
+        kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
+        
+#        if pointA[0] > pointB[0]:
+#            pointA, pointB = pointB, pointA
+#        xmin = pointA[0] - kx * self.radius
+#        xmax = pointB[0]
+        x_bound = (pointA[0] - kx * self.radius, pointA[0] + kx * self.radius, pointB[0])
+        xmin = min(x_bound)
+        xmax = max(x_bound)
+        
+#        if pointA[1] > pointB[1]:
+#            pointA, pointB = pointB, pointA
+        y_bound = (pointA[1] - ky * self.radius, pointA[1] + ky * self.radius, pointB[1])
+#        ymax = pointB[1]
+        ymin = min(y_bound)
+        ymax = max(y_bound)
+        
+#        if pointA[2] > pointB[2]:
+#            pointA, pointB = pointB, pointA
+        z_bound = (pointA[2] - kz * self.radius, pointA[2] + kz * self.radius, pointB[2])
+#        zmax = pointB[2]
+        zmin = min(z_bound)
+        zmax = max(z_bound)
+        
+        return volmdlr.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+
+    def Volume(self):
+        return self.length * math.pi * self.radius**2 / 3
+
+    def Babylon(self):
+        new_axis = volmdlr.Vector3D((self.axis[0], self.axis[1], self.axis[2]))
+        normal_vector1 = new_axis.RandomUnitNormalVector()
+        normal_vector2 = new_axis.Cross(normal_vector1)
+        x, y, z = self.position
+        s = 'var cone = BABYLON.MeshBuilder.CreateCylinder("cone", {{diameterTop:0, diameterBottom:{}, height: {}, tessellation: 100}}, scene);\n'.format(2*self.radius, self.length)
+        s += 'cone.position = new BABYLON.Vector3({},{},{});\n;'.format(x,y,z)
+        s += 'var axis1 = new BABYLON.Vector3({},{},{});\n'.format(new_axis[0], new_axis[1], new_axis[2])
+        s += 'var axis2 = new BABYLON.Vector3({},{},{});\n'.format(normal_vector1[0], normal_vector1[1], normal_vector1[2])
+        s += 'var axis3 = new BABYLON.Vector3({},{},{});\n'.format(normal_vector2[0], normal_vector2[1], normal_vector2[2])
+        s += 'cone.rotation = BABYLON.Vector3.RotationFromAxis(axis3, axis1, axis2);\n'
+        return s
+
 
 class ExtrudedProfile(volmdlr.Primitive3D):
     """
