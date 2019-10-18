@@ -110,9 +110,6 @@ var createScene = function () {
     };
     showAxis(1);
     
-    // Material for bounding box
-    var bboxmat = new BABYLON.StandardMaterial("bboxmat", scene);
-    bboxmat.alpha = 0.4;
 
 	{% for s in primitives_strings %}
 		{{s|safe}}

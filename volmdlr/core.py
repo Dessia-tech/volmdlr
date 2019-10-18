@@ -3357,9 +3357,9 @@ class Face3D(Primitive3D):
 class Shell3D(CompositePrimitive3D):
     def __init__(self, faces, name='', color=None):
         self.faces = faces
-        self.bounding_box = self._bounding_box()
         self.name = name
         self.color = color
+        self.bounding_box = self._bounding_box()
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -3418,7 +3418,7 @@ class Shell3D(CompositePrimitive3D):
         zmin = min([pt[2] for pt in points])
         zmax = max([pt[2] for pt in points])
         
-        return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+        return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax, self.name)
 
     def point_belongs(self, point):
         """
@@ -3661,13 +3661,6 @@ class Shell3D(CompositePrimitive3D):
         s += 'customMesh.edgesWidth = 0.1;\n'
         s += 'customMesh.edgesColor = new BABYLON.Color4(0, 0, 0, 0.6);\n'
         s += 'var mat = new BABYLON.StandardMaterial("mat", scene);\n'
-    
-        s += 'var textureResolution = 512;\n'
-        s += 'var textureShell = new BABYLON.DynamicTexture("dynamic texture", {width:51, height:25}, scene);\n'
-        s += 'var textureContext = textureShell.getContext();\n'
-        s += 'mat.diffuseTexture = textureShell;\n'
-        s += 'var font = "bold 44px monospace";\n'
-        s += 'textureShell.drawText("{}", 8, 14, font, "black", "white", true, true);\n'.format(self.name)
         
         s += 'mat.backFaceCulling = false;\n'
         s += 'customMesh.material = mat;\n'
@@ -3681,7 +3674,7 @@ class BoundingBox:
     """
     An axis aligned boundary box
     """
-    def __init__(self, xmin, xmax, ymin, ymax, zmin, zmax):
+    def __init__(self, xmin, xmax, ymin, ymax, zmin, zmax, name=''):
         self.xmin = xmin
         self.xmax = xmax
         self.ymin = ymin
@@ -3697,6 +3690,7 @@ class BoundingBox:
                        Point3D((self.xmax, self.ymax, self.zmax)), \
                        Point3D((self.xmin, self.ymax, self.zmax))]
         self.center = (self.points[0]+self.points[-2])/2
+        self.name = name
     
     def plot(self, ax=None, color=''):
         fig = plt.figure()
@@ -3722,25 +3716,6 @@ class BoundingBox:
         plt.show()
         
         return ax
-
-#    def Translation(self, offset, copy=True):
-#        new_xmin = self.xmin+offset[0]
-#        new_xmax = self.xmax+offset[0]
-#        new_ymin = self.ymin+offset[1]
-#        new_ymax = self.ymax+offset[1]
-#        new_zmin = self.zmin+offset[2]
-#        new_zmax = self.zmax+offset[2]
-#        if copy:
-#            return BoundingBox(new_xmin, new_xmax, new_ymin, new_ymax, new_zmin, new_zmax)
-#        else:
-#            self.xmin = new_xmin
-#            self.xmax = new_xmax
-#            self.ymin = new_ymin
-#            self.ymax = new_ymax
-#            self.zmin = new_zmin
-#            self.zmax = new_zmax
-#            [p.Translation(offset, False) for p in self.points]
-#            self.center.Translation(offset, False)
     
     def bbox_intersection(self, bbox2):
         return (self.xmin < bbox2.xmax and self.xmax > bbox2.xmin \
@@ -3834,9 +3809,47 @@ class BoundingBox:
         return (dx**2 + dy**2 + dz**2)**0.5
 
     def Babylon(self):
-        s = 'var box = BABYLON.MeshBuilder.CreateBox("box", {{height: {}, width: {}, depth: {}}}, scene);\n'.format(self.ymax-self.ymin, self.xmax-self.xmin, self.zmax-self.zmin)
+        height = self.ymax-self.ymin
+        width = self.xmax-self.xmin
+        depth = self.zmax-self.zmin
+        s = 'var box = BABYLON.MeshBuilder.CreateBox("box", {{height: {}, width: {}, depth: {}}}, scene);\n'.format(height, width, depth)
         s += 'box.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));\n'.format(self.center[0], self.center[1], self.center[2])
+        
+        s += 'var bboxmat = new BABYLON.StandardMaterial("bboxmat", scene);\n'
+        s += 'bboxmat.alpha = 0.4;\n'
+        
+        
+#        s += 'var textureResolution = 512;\n'
+#        s += 'var textureBbox = new BABYLON.DynamicTexture("dynamic texture", {width:{}, height:{}}, scene);\n'.format(width*60, height*60)
+#        s += 'var textureContext = textureBbox.getContext();\n'
+#        s += 'mat.diffuseTexture = textureBbox;\n'
+#        s += 'var font = "bold 44px monospace";\n'
+#        s += 'textureBbox.drawText("{}", 8, 14, font, "black", "white", true, true);\n'.format(self.name)
+        
+        s += 'var DTWidth = {};\n'.format(width*60)
+        s += 'var DTHeight = {};\n'.format(height*60)
+        
+        s += 'var font_type = "Arial";\n'
+        s += 'var text = "{}";\n'.format(self.name)
+        
+        s += 'var dynamicTexture = new BABYLON.DynamicTexture("DynamicTexture", {width:DTWidth, height:DTHeight}, scene);\n'
+    
+        s += 'var ctx = dynamicTexture.getContext();\n'
+        s += 'var size = 0.8;\n'
+        s += 'ctx.font = size + "px " + font_type;\n'
+        s += 'var textWidth = ctx.measureText(text).width;\n'
+        
+        s += 'var ratio = textWidth/size;\n'
+    	
+        s += 'var font_size = Math.floor(DTWidth / ratio);\n'
+        s += 'var font = font_size + "px " + font_type;\n'
+    	
+        s += 'dynamicTexture.drawText(text, null, null, font, "#000000", "#ffffff", false);\n'
+        
+        s += 'bboxmat.diffuseTexture = dynamicTexture;\n'
+        
         s += 'box.material = bboxmat;\n'
+        
         return s
 
 
