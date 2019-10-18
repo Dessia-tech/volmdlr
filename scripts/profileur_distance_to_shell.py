@@ -17,20 +17,20 @@ import volmdlr.primitives3D as p3d
 #boite.to_volume_model('boite', volumemodel)
 #cmo.to_volume_model('cmo', volumemodel)
 
-#origin = vm.Point3D((0,0,0))
-#u = vm.Vector3D((2,1,0))
-#v = vm.Vector3D((0,1,0))
-#w = vm.Vector3D((0.5,0,1))
-#frame = vm.Frame3D(origin, u, v, w)
-#block = p3d.Block(frame)
+origin = vm.Point3D((0,0,0))
+u = vm.Vector3D((2,1,0))
+v = vm.Vector3D((0,1,0))
+w = vm.Vector3D((0.5,0,1))
+frame = vm.Frame3D(origin, u, v, w)
+primitive3d = p3d.Block(frame, 'test', (1,0,1))
 #volumemodel.shells.append(block)
 
 volumemodel = vm.VolumeModel([],[])
-position = vm.Point3D((1,2,3))
-axis = vm.Vector3D((1,0.5,0.2))
-radius = 0.5
-length = 2
-primitive3d = p3d.Cone(position, axis, radius, length)
+#position = vm.Point3D((1,2,3))
+#axis = vm.Vector3D((1,0.5,0.2))
+#radius = 0.5
+#length = 2
+#primitive3d = p3d.Cone(position, axis, radius, length)
 #primitive3d = p3d.Cylinder(position, axis, radius, length)
 volumemodel.shells.append(primitive3d)
 volumemodel.shells.append(primitive3d.bounding_box)

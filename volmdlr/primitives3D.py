@@ -112,12 +112,12 @@ class Block(volmdlr.Shell3D):
     :param frame: a frame 3D. The origin of the frame is the center of the block,
      the 3 vectors are defining the edges. The frame has not to be orthogonal
     """
-    def __init__(self, frame, name=''):
+    def __init__(self, frame, name='', color=None):
         self.frame = frame
         self.size = (self.frame.u.Norm(), self.frame.v.Norm(), self.frame.w.Norm())
         
         faces = self.shell_faces()
-        volmdlr.Shell3D.__init__(self, faces, name)
+        volmdlr.Shell3D.__init__(self, faces, name, color)
 
     def Vertices(self):
         return [self.frame.origin - 0.5*self.frame.u - 0.5*self.frame.v - 0.5*self.frame.w,
@@ -338,25 +338,15 @@ class Cone(volmdlr.Primitive3D):
         ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
         kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
         
-#        if pointA[0] > pointB[0]:
-#            pointA, pointB = pointB, pointA
-#        xmin = pointA[0] - kx * self.radius
-#        xmax = pointB[0]
         x_bound = (pointA[0] - kx * self.radius, pointA[0] + kx * self.radius, pointB[0])
         xmin = min(x_bound)
         xmax = max(x_bound)
         
-#        if pointA[1] > pointB[1]:
-#            pointA, pointB = pointB, pointA
         y_bound = (pointA[1] - ky * self.radius, pointA[1] + ky * self.radius, pointB[1])
-#        ymax = pointB[1]
         ymin = min(y_bound)
         ymax = max(y_bound)
         
-#        if pointA[2] > pointB[2]:
-#            pointA, pointB = pointB, pointA
         z_bound = (pointA[2] - kz * self.radius, pointA[2] + kz * self.radius, pointB[2])
-#        zmax = pointB[2]
         zmin = min(z_bound)
         zmax = max(z_bound)
         

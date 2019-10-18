@@ -3355,10 +3355,11 @@ class Face3D(Primitive3D):
     
 
 class Shell3D(CompositePrimitive3D):
-    def __init__(self, faces, name=''):
+    def __init__(self, faces, name='', color=None):
         self.faces = faces
         self.bounding_box = self._bounding_box()
         self.name = name
+        self.color = color
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -3569,7 +3570,7 @@ class Shell3D(CompositePrimitive3D):
         Returns a Mesure object if the distance is not zero, otherwise returns None
         """
         
-        if self.shell_intersection(shell2) is not None:
+        if self.shell_intersection(shell2) is not None and self.shell_intersection(shell2) != 1:
             return None
 
         distance_min, point1_min, point2_min = self.faces[0].distance_to_face(shell2.faces[0], return_points=True)
@@ -3660,8 +3661,19 @@ class Shell3D(CompositePrimitive3D):
         s += 'customMesh.edgesWidth = 0.1;\n'
         s += 'customMesh.edgesColor = new BABYLON.Color4(0, 0, 0, 0.6);\n'
         s += 'var mat = new BABYLON.StandardMaterial("mat", scene);\n'
+    
+        s += 'var textureResolution = 512;\n'
+        s += 'var textureShell = new BABYLON.DynamicTexture("dynamic texture", {width:512, height:256}, scene);\n'
+        s += 'var textureContext = textureShell.getContext();\n'
+        s += 'mat.diffuseTexture = textureShell;\n'
+        s += 'var font = "bold 44px monospace";\n'
+        s += 'textureShell.drawText("{}", 75, 135, font, "black", "white", true, true);\n'.format(self.name)
+        
         s += 'mat.backFaceCulling = false;\n'
         s += 'customMesh.material = mat;\n'
+        s += 'mat.diffuseColor = new BABYLON.Color3({}, {}, {});\n'.format(self.color[0], self.color[1], self.color[2])
+        
+        
         
         return s
 
