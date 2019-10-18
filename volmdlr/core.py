@@ -447,7 +447,8 @@ class Basis:
         d = {'vectors' : [vector.Dict() for vector in self.vectors]}
         return d
 
-        
+    def copy(self):
+        return self.__class__(*self.vectors)
 
 class Basis2D(Basis):
     """
@@ -2066,7 +2067,7 @@ class Basis3D(Basis):
                          matrix[2][0]*point[0] + matrix[2][1]*point[1] + matrix[2][2]*point[2]))
 #        return vector.__class__(npy.dot(self.TransfertMatrix(), vector.vector))
 
-    def Copy(self):
+    def copy(self):
         return Basis3D(self.u, self.v, self.w)
 
     @classmethod
@@ -2165,7 +2166,7 @@ class Frame3D(Basis3D):
         self.v = new_base.v
         self.w = new_base.w
 
-    def Copy(self):
+    def copy(self):
         return Frame3D(self.origin, self.u, self.v, self.w)
 
     def plot2d(self, x=x3D, y=y3D, ax=None, color='k'):
