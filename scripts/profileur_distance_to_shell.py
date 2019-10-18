@@ -22,7 +22,7 @@ u = vm.Vector3D((2,1,0))
 v = vm.Vector3D((0,1,0))
 w = vm.Vector3D((0.5,0,1))
 frame = vm.Frame3D(origin, u, v, w)
-primitive3d = p3d.Block(frame, 'test', (1,0,1))
+primitive3d = p3d.Block(frame, 'test') #, 'test', (1,0,1))
 #volumemodel.shells.append(block)
 
 volumemodel = vm.VolumeModel([],[])

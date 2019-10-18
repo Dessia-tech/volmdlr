@@ -3663,18 +3663,17 @@ class Shell3D(CompositePrimitive3D):
         s += 'var mat = new BABYLON.StandardMaterial("mat", scene);\n'
     
         s += 'var textureResolution = 512;\n'
-        s += 'var textureShell = new BABYLON.DynamicTexture("dynamic texture", {width:512, height:256}, scene);\n'
+        s += 'var textureShell = new BABYLON.DynamicTexture("dynamic texture", {width:51, height:25}, scene);\n'
         s += 'var textureContext = textureShell.getContext();\n'
         s += 'mat.diffuseTexture = textureShell;\n'
         s += 'var font = "bold 44px monospace";\n'
-        s += 'textureShell.drawText("{}", 75, 135, font, "black", "white", true, true);\n'.format(self.name)
+        s += 'textureShell.drawText("{}", 8, 14, font, "black", "white", true, true);\n'.format(self.name)
         
         s += 'mat.backFaceCulling = false;\n'
         s += 'customMesh.material = mat;\n'
-        s += 'mat.diffuseColor = new BABYLON.Color3({}, {}, {});\n'.format(self.color[0], self.color[1], self.color[2])
-        
-        
-        
+        if self.color is not None:
+            s += 'mat.diffuseColor = new BABYLON.Color3({}, {}, {});\n'.format(self.color[0], self.color[1], self.color[2])
+
         return s
 
 
