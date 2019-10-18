@@ -2856,7 +2856,6 @@ class Edge3D(Primitive3D):
             new_edge_end = self.points[1].Rotation(center, axis, angle, copy=True)
             return Edge3D(new_edge_start, new_edge_end)
         else:
-            self.primitives.Rotation(center, axis, angle, copy=False)
             self.points[0].Rotation(center, axis, angle, copy=False)
             self.points[1].Rotation(center, axis, angle, copy=False)
 
@@ -2866,7 +2865,6 @@ class Edge3D(Primitive3D):
             new_edge_end = self.points[1].Translation(offset, copy=True)
             return self.__class__(new_edge_start, new_edge_end)
         else:
-            self.primitives.Translation(offset, copy=False)
             self.points[0].Translation(offset, copy=False)
             self.points[1].Translation(offset, copy=False)
             
@@ -2879,7 +2877,6 @@ class Edge3D(Primitive3D):
             new_edge_end = self.points[1].frame_mapping(frame, side, copy=True)
             return Edge3D(new_edge_start, new_edge_end)
         else:
-            self.primitives.frame_mapping(frame, side, copy=False)
             self.points[0].frame_mapping(frame, side, copy=False)
             self.points[1].frame_mapping(frame, side, copy=False)
             
@@ -3523,7 +3520,7 @@ class Shell3D(CompositePrimitive3D):
             (n1, n2) with face intersection             => (n1, n2)
             (0, 0) with face intersection               => (0, 0)
             (0, 0) with no face intersection            => None
-            (1, 0) or (0, 1) with no face intersection  => None
+            (1, 0) or (0, 1) with no face intersection  => 1
         """
         # Check if boundary boxes intersect
         bbox1 = self.bounding_box
@@ -3565,14 +3562,8 @@ class Shell3D(CompositePrimitive3D):
 #                    ax = face1.plot()
 #                    face2.plot(ax)
                     return inter1, inter2
+        return 1
         
-        return None
-        
-#        if (inter1, inter2) == (0, 0):
-#            return None
-#        else:
-#            return inter1, inter2
-
     def distance_to_shell(self, shell2, add_to_volumemodel=None):
         """
         Returns a Mesure object if the distance is not zero, otherwise returns None
