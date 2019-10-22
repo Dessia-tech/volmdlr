@@ -3600,36 +3600,47 @@ class Shell3D(CompositePrimitive3D):
                             
         return mesure
     
-#    def interpenetration_distance_to_shell(self, shell2):
-#        """
-# 
-#        """
-#        shell1_points = self.contours[0].points
-#        shell2_points = shell2.contours[0].points
-#        
-#        points1_inside = []
-#        for point1 in shell1_points:
-#            if self.point_belongs(point1):
-#                points1_inside.append(point1)
-#        
-#        points2_inside = []
-#        for point2 in shell2_points:
-#            if self.point_belongs(point2):
-#                points2_inside.append(point2)
-#                
-#        for face
-#        
-#        distance_max, point1_max, point2_max = math.inf, None, None
-#        for face1 in self.faces:
-#            for 
-#            if not shell2.point_belongs(point1):
-#                continue
-#            for point2 in shell2_points:
-#                if not self.point_belongs(point2):
-#                    continue
-#                
-#                if 
-        
+    def intersection_internal_aabb_volume(self, shell2):
+        """
+        aabb made of the intersection points and the points of self internal to shell2
+        """
+        intersections_points = []
+        for face1 in self.faces:
+            for face2 in shell2.faces:
+                intersection_points = face1.face_intersection(face2)
+                if intersection_points is not None:
+                    intersections_points.extend(intersection_points)
+       
+        shell1_points_inside_shell2 = []
+        for face in self.faces:
+            for point in face.points:
+                if shell2.point_belongs(point):
+                    shell1_points_inside_shell2.append(point)
+
+        bbox = BoundingBox.from_points(intersections_points+shell1_points_inside_shell2)
+#        return bbox.volume()
+        return bbox
+    
+    def intersection_external_aabb_volume(self, shell2):
+        """
+        aabb made of the intersection points and the points of self external to shell2
+        """
+        intersections_points = []
+        for face1 in self.faces:
+            for face2 in shell2.faces:
+                intersection_points = face1.face_intersection(face2)
+                if intersection_points is not None:
+                    intersections_points.extend(intersection_points)
+       
+        shell1_points_outside_shell2 = []
+        for face in self.faces:
+            for point in face.points:
+                if not shell2.point_belongs(point):
+                    shell1_points_outside_shell2.append(point)
+
+        bbox = BoundingBox.from_points(intersections_points+shell1_points_outside_shell2)
+#        return bbox.volume()
+        return bbox
         
     
     def Babylon(self):
@@ -3736,6 +3747,19 @@ class BoundingBox:
         plt.show()
         
         return ax
+    
+    @classmethod
+    def from_points(cls, points):
+        xmin = min([pt[0] for pt in points])
+        xmax = max([pt[0] for pt in points])
+        ymin = min([pt[1] for pt in points])
+        ymax = max([pt[1] for pt in points])
+        zmin = min([pt[2] for pt in points])
+        zmax = max([pt[2] for pt in points])
+        return cls(xmin, xmax, ymin, ymax, zmin, zmax)
+        
+    def volume(self):
+        return (self.xmax-self.xmin)*(self.ymax-self.ymin)*(self.zmax-self.zmin)
     
     def bbox_intersection(self, bbox2):
         return (self.xmin < bbox2.xmax and self.xmax > bbox2.xmin \

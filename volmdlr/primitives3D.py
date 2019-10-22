@@ -161,8 +161,7 @@ class Block(volmdlr.Shell3D):
                 volmdlr.Face3D([c4]),
                 volmdlr.Face3D([c5]),
                 volmdlr.Face3D([c6])]
-                
-        
+
     def plot_data(self, x3D, y3D, marker=None, color='black', stroke_width=1,
                   dash=False, opacity=1, arrow=False):
         lines = []

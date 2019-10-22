@@ -10,12 +10,23 @@ import volmdlr as  vm
 import volmdlr.primitives3D as p3d
 
 moteur = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/MOTEUR HRevoUNIFY.stp')
-boite = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/BOITE E-TECHg2.stp')
+#boite = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/BOITE E-TECHg2.stp')
 #cmo = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/CMO2.stp')
 
-volumemodel = moteur.to_volume_model('moteur')
-boite.to_volume_model('boite', volumemodel)
+
+volumemodel = vm.VolumeModel([],[])
+
+moteur.to_volume_model('moteur', volumemodel)
+#boite.to_volume_model('boite', volumemodel)
 #cmo.to_volume_model('cmo', volumemodel)
+
+origin = vm.Point3D((0,0,0))
+u = vm.Vector3D((0.2,0,0))
+v = vm.Vector3D((0,0.2,0))
+w = vm.Vector3D((0,0,0.2))
+frame = vm.Frame3D(origin, u, v, w)
+primitive3d = p3d.Block(frame, 'test', (1,0,1))
+volumemodel.shells.append(primitive3d)
 
 #origin = vm.Point3D((0,0,0))
 #u = vm.Vector3D((2,1,0))
@@ -23,7 +34,7 @@ boite.to_volume_model('boite', volumemodel)
 #w = vm.Vector3D((0.5,0,1))
 #frame = vm.Frame3D(origin, u, v, w)
 #primitive3d = p3d.Block(frame, 'test') #, 'test', (1,0,1))
-#volumemodel.shells.append(block)
+#volumemodel.shells.append(primitive3d)
 
 #volumemodel = vm.VolumeModel([],[])
 #position = vm.Point3D((1,2,3))
@@ -62,19 +73,19 @@ w = vm.x3D
 frame = vm.Frame3D(origin, u, v, w)
 
 
-print('fram_mapping copy=False')
-shell0.frame_mapping(frame, 'new', False)
-print('Success')
-print('Transaliton copy=False')
-shell1.Translation(vm.Vector3D((1,0.5,0)), False)
-print('Success')
-
-print('frame_mapping copy=True')
-volumemodel.shells[1] = shell1.frame_mapping(frame, 'new', True)
-print('Success')
-print('Translation copy=True')
-volumemodel.shells[0] = shell0.Translation(vm.Vector3D((-1,0.5,0)), True)
-print('Success')
+#print('fram_mapping copy=False')
+#shell0.frame_mapping(frame, 'new', False)
+#print('Success')
+#print('Transaliton copy=False')
+#shell1.Translation(vm.Vector3D((1,0.5,0)), False)
+#print('Success')
+#
+#print('frame_mapping copy=True')
+#volumemodel.shells[1] = shell1.frame_mapping(frame, 'new', True)
+#print('Success')
+#print('Translation copy=True')
+#volumemodel.shells[0] = shell0.Translation(vm.Vector3D((-1,0.5,0)), True)
+#print('Success')
 
 #volumemodel.shells.append(volumemodel.shells[0].bounding_box)
 #volumemodel.shells.append(volumemodel.shells[1].bounding_box)
@@ -82,12 +93,24 @@ print('Success')
 #for face in volumemodel.shells[0].faces+volumemodel.shells[1].faces:
 #    volumemodel.shells.append(face.bounding_box)
 
+shell1.Translation(vm.Vector3D((0,0,0.4)), False)
 
+
+boo = volumemodel.shells[1].is_inside_shell(volumemodel.shells[0])
+print('is inside shell', boo)
 
 mesure = volumemodel.shells[0].distance_to_shell(volumemodel.shells[1], volumemodel)
 if mesure is not None:
     volumemodel.shells.append(mesure)
-    print(mesure.distance)
+    print('distance =', mesure.distance)
+    
+internal = shell1.intersection_internal_aabb_volume(shell0)
+#print('internal volume', internal)
+external = shell1.intersection_external_aabb_volume(shell0)
+#print('external volume', external)
+volumemodel.shells.append(internal)
+volumemodel.shells.append(external)
+
 
 #pc = shell0.shell_intersection(shell1)
 #print('intersection à', pc*100, '%')
