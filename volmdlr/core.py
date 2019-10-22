@@ -3618,8 +3618,7 @@ class Shell3D(CompositePrimitive3D):
                     shell1_points_inside_shell2.append(point)
 
         bbox = BoundingBox.from_points(intersections_points+shell1_points_inside_shell2)
-#        return bbox.volume()
-        return bbox
+        return bbox.volume()
     
     def intersection_external_aabb_volume(self, shell2):
         """
@@ -3639,9 +3638,7 @@ class Shell3D(CompositePrimitive3D):
                     shell1_points_outside_shell2.append(point)
 
         bbox = BoundingBox.from_points(intersections_points+shell1_points_outside_shell2)
-#        return bbox.volume()
-        return bbox
-        
+        return bbox.volume()
     
     def Babylon(self):
         s = 'var customMesh = new BABYLON.Mesh("custom", scene);\n'
