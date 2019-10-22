@@ -3022,11 +3022,11 @@ class Face3D(Primitive3D):
         self.polygon2D = polygon2D
         
         if plane is None:
-            print('face3D recalcule self.plane')
+#            print('face3D recalcule self.plane')
             self.plane = self.create_plane(self.contours[0].points)
         
         if points is None or polygon2D is None:
-            print('face3D recalcule self.points et self.polygon2D')
+#            print('face3D recalcule self.points et self.polygon2D')
             points = [p.copy() for p in self.contours[0].points[:]]
             self.points, self.polygon2D = self._repair_points_and_polygon2d(points, self.plane)
             self.contours[0].points = [p.copy() for p in self.points]
@@ -3509,7 +3509,7 @@ class Shell3D(CompositePrimitive3D):
             (0, 0) with no face intersection            => None
             (1, 0) or (0, 1) with no face intersection  => 1
         """
-        # Check if boundary boxes intersect
+        # Check if boundary boxes don't intersect
         bbox1 = self.bounding_box
         bbox2 = shell2.bounding_box
         if not bbox1.bbox_intersection(bbox2):
@@ -3549,6 +3549,8 @@ class Shell3D(CompositePrimitive3D):
 #                    ax = face1.plot()
 #                    face2.plot(ax)
                     return inter1, inter2
+        if (inter1, inter2) == (0, 0):
+            return None
         return 1
         
     def distance_to_shell(self, shell2, add_to_volumemodel=None):
@@ -3597,6 +3599,38 @@ class Shell3D(CompositePrimitive3D):
             add_to_volumemodel.shells.append(mesure)
                             
         return mesure
+    
+#    def interpenetration_distance_to_shell(self, shell2):
+#        """
+# 
+#        """
+#        shell1_points = self.contours[0].points
+#        shell2_points = shell2.contours[0].points
+#        
+#        points1_inside = []
+#        for point1 in shell1_points:
+#            if self.point_belongs(point1):
+#                points1_inside.append(point1)
+#        
+#        points2_inside = []
+#        for point2 in shell2_points:
+#            if self.point_belongs(point2):
+#                points2_inside.append(point2)
+#                
+#        for face
+#        
+#        distance_max, point1_max, point2_max = math.inf, None, None
+#        for face1 in self.faces:
+#            for 
+#            if not shell2.point_belongs(point1):
+#                continue
+#            for point2 in shell2_points:
+#                if not self.point_belongs(point2):
+#                    continue
+#                
+#                if 
+        
+        
     
     def Babylon(self):
         s = 'var customMesh = new BABYLON.Mesh("custom", scene);\n'
