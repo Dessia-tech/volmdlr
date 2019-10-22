@@ -63,7 +63,6 @@ def find_and_replace(string, find, replace):
     """
     Finds a string in a string and replace it
     """
-#    print('find and replace', string, find, replace)
     index = string.find(find)
     if index != -1:
         try:
@@ -82,8 +81,6 @@ def step_split_arguments(function_arg):
     ex: IN: '#123,#124,#125)'
        OUT: ['#123', '#124', '#125']
     """
-#        print('IN', function_arg)
-#        function_arg = function_arg[:-1]
     if len(function_arg) > 0 and function_arg[-1] != ')':
             function_arg += ')'
     arguments = []
@@ -105,11 +102,6 @@ def step_split_arguments(function_arg):
                 arguments.append(argument[:-1])
                 argument = ""
                 break
-
-#        if len(argument) != 0:
-#            arguments.append(argument[:])
-
-#        print('OUT', arguments)
     return arguments
 
 def set_to_list(step_set):
@@ -121,7 +113,6 @@ def set_to_list(step_set):
 def delete_node_and_predecessors(graph, node):
     predecessors = list(graph.predecessors(node))
     graph.remove_node(node)
-#    print('node removed', node)
     for predecessor in predecessors:
         delete_node_and_predecessors(graph, predecessor)
         
@@ -235,14 +226,9 @@ class Vector2D(Vector):
         """
         :returns: norm of vector
         """
-#        x, y = self.vector
-#        return (x**2 + y**2)**0.5
         return Vector2DNorm(self.vector)
 
     def Dot(self, other_vector):
-#        u1, u2 = self.vector
-#        v1, v2 = other_vector.vector
-#        return u1*v1 + u2*v2
         return Vector2DDot(self.vector, other_vector.vector)
 
     def Cross(self, other_vector):
@@ -362,28 +348,38 @@ class Point2D(Vector2D):
 
     def PointDistance(self, point2):
         return (self-point2).Norm()
-
+            
     @classmethod
     def LinesIntersection(cls, line1, line2, curvilinear_abscissa=False):
-        p11 = line1.points[0].vector
-        p12 = line1.points[1].vector
-        p21 = line2.points[0].vector
-        p22 = line2.points[1].vector
-        A = npy.array([[p12[0]-p11[0], p21[0]-p22[0]],
-                       [p12[1]-p11[1], p21[1]-p22[1]]])
-        x = npy.array([p21[0]-p11[0], p21[1]-p11[1]])
-        try:
-            t = solve(A, x)
-            if not curvilinear_abscissa:
-                return cls(p11+t[0]*(p12-p11))
-            else:
-                return (cls(p11+t[0]*(p12-p11)), t[0], t[1])
-        except LinAlgError:
-            # Parallel lines
+        x1 = line1.points[0].vector[0]
+        y1 = line1.points[0].vector[1]
+        x2 = line1.points[1].vector[0]
+        y2 = line1.points[1].vector[1]
+        x3 = line2.points[0].vector[0]
+        y3 = line2.points[0].vector[1]
+        x4 = line2.points[1].vector[0]
+        y4 = line2.points[1].vector[1]
+        
+        denominateur = (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4)
+        if math.isclose(denominateur, 0, abs_tol=1e-6):
             if not curvilinear_abscissa:
                 return None
             else:
                 return None, None, None
+        else:
+            x = (x1*y2-y1*x2)*(x3-x4)-(x1-x2)*(x3*y4-y3*x4)
+            x = x / denominateur
+            y = (x1*y2-y1*x2)*(y3-y4)-(y1-y2)*(x3*y4-y3*x4)
+            y = y / denominateur
+            if not curvilinear_abscissa:
+                return cls((x,y))
+            else:
+                t = (x1-x3)*(y3-y4)-(y1-y3)*(x3-x4)
+                t = t / denominateur
+                u = (x1-x2)*(y1-y3)-(y1-y2)*(x1-x3)
+                u = -u / denominateur
+                return (cls((x,y)), t, u)
+        
             
     def plot_data(self, marker=None, color='black', size=1,
                   opacity=1, arrow=False, stroke_width=None):
@@ -456,17 +452,11 @@ class Basis2D(Basis):
     def _get_vectors(self):
         return (self.u, self.v)
 
-#    def _set_vectors(self, vectors):
-#        return vectors
     vectors = property(_get_vectors)
 
     def TransfertMatrix(self):
         return npy.array([[self.u[0], self.v[0]],
                           [self.u[1], self.v[1]]])
-
-#    def InverseTransfertMatrix(self):
-#        # Todo: cache for performance
-#        return inv(self.TransfertMatrix())
 
     def InverseTransfertMatrix(self):
         det = self.u[0]*self.v[1] - self.v[0]*self.u[1]
@@ -480,13 +470,11 @@ class Basis2D(Basis):
         matrix = self.InverseTransfertMatrix()
         return Vector2D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1],
                          matrix[1][0]*vector[0] + matrix[1][1]*vector[1]))
-#        return Vector2D(npy.dot(self.InverseTransfertMatrix(), vector.vector))
 
     def OldCoordinates(self, vector):
         matrix = self.TransfertMatrix()
         return Vector2D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1],
                          matrix[1][0]*vector[0] + matrix[1][1]*vector[1]))
-#        return Vector2D(npy.dot(self.TransfertMatrix(), vector.vector))
 
     def Rotation(self, angle, copy=True):
         center = o2D
@@ -866,7 +854,6 @@ class Line2D(Primitive2D, Line):
         t = (point-p1).Dot(u) / u.Norm()**2
         projection = p1 + t * u # Projection falls on the segment
         return (point-projection).Norm()
-#        return abs(u[1]*point[0] - u[0]*point[1] + p2[0]*p1[1] - p2[1]*p1[0]) / u.Norm()
 
     def PointProjection(self, point, curvilinear_abscissa=False):
         p1, p2 = self.points
@@ -1052,13 +1039,6 @@ class LineSegment2D(Line2D):
         """
         Computes the distance of a point to segment of line
         """
-#        p1, p2 = self.points
-#        u = p2-p1
-#        t = max(0, min(1, (point-p1).Dot(u) / u.Norm()**2))
-#        projection = p1 + t * u # Projection falls on the segment
-#        if return_other_point:
-#            return (projection-point).Norm(), projection
-#        return (projection-point).Norm()
         distance, point = LineSegment2DPointDistance([p.vector for p in self.points], point.vector)
         if return_other_point:
             return distance, Point2D(point)
@@ -1682,11 +1662,10 @@ class Vector3D(Vector):
             self.vector = vector2
 
     def Translation(self, offset, copy=True):
-        vector2 = self.vector+offset
         if copy:
-            return Point3D(vector2)
+            return self+offset
         else:
-            self.vector = vector2
+            self.vector = self.vector+offset.vector
             
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -1705,15 +1684,10 @@ class Vector3D(Vector):
                 return new_vector
             else:
                 self.vector = new_vector
-                
-                
-        
 
     def To2D(self, plane_origin, x, y):
         x2d = self.Dot(x) - plane_origin.Dot(x)
         y2d = self.Dot(y) - plane_origin.Dot(y)
-#        x2d = npy.dot(self.vector, x.vector) - npy.dot(plane_origin.vector, x.vector)
-#        y2d = npy.dot(self.vector, y.vector) - npy.dot(plane_origin.vector, y.vector)
         return Point2D((x2d,y2d))
 
     def RandomUnitNormalVector(self):
@@ -1826,15 +1800,8 @@ class Point3D(Vector3D):
 
 
     def To2D(self, plane_origin, x, y):
-#        print(x)
-#        print(y)
-#        print(x.Dot(y))
-#        if x.Dot(y) > 1e-8:
-#            raise NotImplementedError
         x2d = self.Dot(x) - plane_origin.Dot(x)
         y2d = self.Dot(y) - plane_origin.Dot(y)
-#        x2d = npy.dot(self.vector, x.vector) - npy.dot(plane_origin.vector, x.vector)
-#        y2d = npy.dot(self.vector, y.vector) - npy.dot(plane_origin.vector, y.vector)
         return Point2D((x2d,y2d))
 
     def PointDistance(self, point2):
@@ -1880,7 +1847,7 @@ class Plane3D:
         normal = vector1.Cross(vector2)
         normal.Normalize()
         vector = vector1.Cross(normal)
-        return cls(point1, vector1, vector)
+        return cls(point1.copy(), vector1.copy(), vector.copy())
     
     def point_on_plane(self, point):
         if math.isclose(self.normal.Dot(point-self.origin), 0, abs_tol=1e-6):
@@ -2057,10 +2024,6 @@ class Basis3D(Basis):
                           [self.u[1], self.v[1], self.w[1]],
                           [self.u[2], self.v[2], self.w[2]]])
 
-#    def InverseTransfertMatrix(self):
-#        # Todo: cache for performance
-#        return inv(self.TransfertMatrix())
-
     def InverseTransfertMatrix(self):
         det = self.u[0]*self.v[1]*self.w[2] + self.v[0]*self.w[1]*self.u[2] \
             + self.w[0]*self.u[1]*self.v[2] - self.w[0]*self.v[1]*self.u[2] \
@@ -2081,14 +2044,12 @@ class Basis3D(Basis):
         return Vector3D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1] + matrix[0][2]*vector[2],
                          matrix[1][0]*vector[0] + matrix[1][1]*vector[1] + matrix[1][2]*vector[2],
                          matrix[2][0]*vector[0] + matrix[2][1]*vector[1] + matrix[2][2]*vector[2]))
-#        return vector.__class__(npy.dot(self.InverseTransfertMatrix(), vector.vector))
 
     def OldCoordinates(self, point):
         matrix = self.TransfertMatrix()
         return Point3D((matrix[0][0]*point[0] + matrix[0][1]*point[1] + matrix[0][2]*point[2],
                          matrix[1][0]*point[0] + matrix[1][1]*point[1] + matrix[1][2]*point[2],
                          matrix[2][0]*point[0] + matrix[2][1]*point[1] + matrix[2][2]*point[2]))
-#        return vector.__class__(npy.dot(self.TransfertMatrix(), vector.vector))
 
     def Copy(self):
         return Basis3D(self.u, self.v, self.w)
@@ -2119,12 +2080,6 @@ class Frame3D(Basis3D):
                                                   self.origin,
                                                   self.u, self.v, self.w)
 
-#    def __add__(self, other_frame):
-#        return Frame3D(self.origin+other_frame.origin,
-#                       self.u+other_frame.u,
-#                       self.v+other_frame.v,
-#                       self.w+other_frame.w
-#                       )
 
     def __neg__(self):
         Pinv = self.InverseTransfertMatrix()
@@ -2978,37 +2933,49 @@ class LineSegment3D(Edge3D):
         return s 
 
 
-
-
 class Contour3D(Wire3D):
     """
     A collection of 3D primitives forming a closed wire3D
     """
-    def __init__(self, edges, name=''):
+    def __init__(self, edges, points=None, name=''):
         self.edges = edges
         self.name = name
-                
-        points = self.edges[0].points[:]                
-        for i, edge in enumerate(self.edges[1:-1]):
+        self.points = points
+        
+        if points is None:
+            points = self.edges[0].points[:]                
+            for i, edge in enumerate(self.edges[1:-1]):
+                if edge.points[0] in points[-2:]:
+                    points.append(edge.points[1])
+                elif edge.points[1] in points[-2:]:
+                    points.append(edge.points[0])
+                else:
+                    raise NotImplementedError
+            self.points = [p.copy() for p in points]
+        
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        edges = []
+        for edge in arguments[1]:
+            edges.append(object_dict[int(edge[1:])])
+
+        points = edges[0].points[:]                
+        for i, edge in enumerate(edges[1:-1]):
             if edge.points[0] in points[-2:]:
                 points.append(edge.points[1])
             elif edge.points[1] in points[-2:]:
                 points.append(edge.points[0])
             else:
                 raise NotImplementedError
-        self.points = [p.copy() for p in points]
-        
-    @classmethod
-    def from_step(cls, arguments, object_dict):
-        edges = []
-        for edge in arguments[1]:
-            edges.append(object_dict[int(edge[1:])])     
-        return cls(edges, arguments[0][1:-1])
+        contour_points = [p.copy() for p in points]
+
+        return cls(edges, points=contour_points, name=arguments[0][1:-1])
 
     def Rotation(self, center, axis, angle, copy=True):
         if copy:
             new_edges = [edge.Rotation(center, axis, angle, copy=True) for edge in self.edges]
-            return Contour3D(new_edges, self.name)
+            new_points = [p.Rotation(center, axis, copy=True) for p in self.points]
+            return Contour3D(new_edges, new_points, self.name)
         else:
             for edge in self.edges:
                 edge.Rotation(center, axis, angle, copy=False)
@@ -3018,7 +2985,8 @@ class Contour3D(Wire3D):
     def Translation(self, offset, copy=True):
         if copy:
             new_edges = [edge.Translation(offset, copy=True) for edge in self.edges]
-            return Contour3D(new_edges, self.name)
+            new_points = [p.Translation(offset, copy=True) for p in self.points]
+            return Contour3D(new_edges, new_points, self.name)
         else:
             for edge in self.edges:
                 edge.Translation(offset, copy=False)
@@ -3031,7 +2999,8 @@ class Contour3D(Wire3D):
         """
         if copy:
             new_edges = [edge.frame_mapping(frame, side, copy=True) for edge in self.edges]
-            return Contour3D(new_edges, self.name)
+            new_points = [p.frame_mapping(frame, side, copy=True) for p in self.points]
+            return Contour3D(new_edges, new_points, self.name)
         else:
             for edge in self.edges:
                 edge.frame_mapping(frame, side, copy=False)
@@ -3040,43 +3009,50 @@ class Contour3D(Wire3D):
             
     def copy(self):
         new_edges = [edge.copy() for edge in self.edges]
-        return Contour3D(new_edges, self.name)
+        new_points = [p.copy() for p in self.points]
+        return Contour3D(new_edges, new_points, self.name)
 
 
 class Face3D(Primitive3D):
-    def __init__(self, contours, name=''):
+    def __init__(self, contours, plane=None, points=None, polygon2D=None, name=''):
         Primitive3D.__init__(self, name)
         self.contours = contours
+        self.plane = plane
+        self.points = points
+        self.polygon2D = polygon2D
         
-#        points = self.contours[0].points[:]
-        self.points = [p.copy() for p in self.contours[0].points[:]]
-        self.plane = self.create_plane(self.points)
+        if plane is None:
+            print('face3D recalcule self.plane')
+            self.plane = self.create_plane(self.contours[0].points)
         
-        repaired_points, self.polygon2D = self._repair_points_and_polygon2d(self.points)
-        self.contours[0].points = [p.copy() for p in repaired_points]
-        self.points = [p.copy() for p in self.contours[0].points[:]]
-            
+        if points is None or polygon2D is None:
+            print('face3D recalcule self.points et self.polygon2D')
+            points = [p.copy() for p in self.contours[0].points[:]]
+            self.points, self.polygon2D = self._repair_points_and_polygon2d(points, self.plane)
+            self.contours[0].points = [p.copy() for p in self.points]
+                        
         self.bounding_box = self._bounding_box()
         
         # CHECK #
         for pt in self.points:
             if not self.plane.point_on_plane(pt):
                 print('WARNING', pt, 'not on', self.plane)
-                print(self.plane.normal.Dot(pt-self.plane.origin))
+                print('dot =', self.plane.normal.Dot(pt-self.plane.origin))
                 raise ValueError
         
     @classmethod
     def from_step(cls, arguments, object_dict):                    
         contours = []
-#        if len(arguments[1]) > 1:
-#            contours.append(object_dict[int(arguments[1][0][1:])])
-#        else:
-#            contours.append(object_dict[int(arguments[1][0][1:])])
         contours.append(object_dict[int(arguments[1][0][1:])])
-#        contours[0].points = 
-        return cls(contours, arguments[0][1:-1])
+        
+        plane = cls.create_plane(contours[0].points)
+        contours[0].points, polygon2D = cls._repair_points_and_polygon2d(contours[0].points, plane)
+        points = [p.copy() for p in contours[0].points[:]]
+        
+        return cls(contours, plane=plane, points=points, polygon2D=polygon2D, name=arguments[0][1:-1])
     
-    def create_plane(self, points):
+    @classmethod
+    def create_plane(cls, points):
         if len(points) == 3:
             return Plane3D.from_3_points(Point3D(points[0].vector), Vector3D(points[1]), Vector3D(points[2]))
         else:
@@ -3095,39 +3071,42 @@ class Face3D(Primitive3D):
                     dot_min = dot
             return Plane3D.from_3_points(origin, vector1+origin, vector2_min+origin)
     
-    def _repair_points_and_polygon2d(self, points):
-        polygon_points = [p.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]) for p in points]
-        repaired_points = points
+    @classmethod
+    def _repair_points_and_polygon2d(cls, points, plane):
+        polygon_points = [p.To2D(plane.origin, plane.vectors[0], plane.vectors[1]) for p in points]
+        repaired_points = [p.copy() for p in points]
         polygon2D = Polygon2D(polygon_points)
         if polygon2D.SelfIntersect()[0]:            
-            repaired_points = [points[1]]+[points[0]]+points[2:]
+            repaired_points = [repaired_points[1]]+[repaired_points[0]]+repaired_points[2:]
             polygon2D = Polygon2D([polygon_points[1]]+[polygon_points[0]]+polygon_points[2:])
         return repaired_points, polygon2D
 
     def Rotation(self, center, axis, angle, copy=True):
         if copy:
             new_contour = [subcontour.Rotation(center, axis, angle, copy=True) for subcontour in self.contour]
-            return Face3D(new_contour, self.name)
+            new_plane = self.plane.Rotation(center, axis, angle, copy=True)
+            new_points = [p.Rotation(center, axis, angle, copy=True) for p in self.points]
+            return Face3D(new_contour, new_plane, new_points, self.polygon2D, self.name)
         else:
             for subcontour in self.contours:
                 subcontour.Rotation(center, axis, angle, copy=False)
             for point in self.points:
                 point.Rotation(center, axis, angle, copy=False)
-            self.plane = self.create_plane(self.points)
-            _, self.polygon2D = self._repair_points_and_polygon2d(self.points)
+            self.plane.Rotation(center, axis, angle, copy=False)
             self.bounding_box = self._bounding_box()
 
     def Translation(self, offset, copy=True):
         if copy:
             new_contour = [subcontour.Translation(offset, copy=True) for subcontour in self.contours]
-            return Face3D(new_contour, self.name)
+            new_plane = self.plane.Translation(offset, copy=True)
+            new_points = [p.Translation(offset, copy=True) for p in self.points]
+            return Face3D(new_contour, new_plane, new_points, self.polygon2D, self.name)
         else:
             for subcontour in self.contours:
                 subcontour.Translation(offset, copy=False)
             for point in self.points:
                 point.Translation(offset, copy=False)
-            self.plane = self.create_plane(self.points)
-            _, self.polygon2D = self._repair_points_and_polygon2d(self.points)
+            self.plane.Translation(offset, copy=False)
             self.bounding_box = self._bounding_box()
             
     def frame_mapping(self, frame, side, copy=True):
@@ -3136,19 +3115,22 @@ class Face3D(Primitive3D):
         """
         if copy:
             new_contour = [subcontour.frame_mapping(frame, side, copy=True) for subcontour in self.contours]
-            return Face3D(new_contour, self.name)
+            new_plane = self.plane.frame_mapping(frame, side, copy=True)
+            new_points = [p.frame_mapping(frame, side, copy=True) for p in self.points]
+            return Face3D(new_contour, new_plane, new_points, self.polygon2D, self.name)
         else:
             for subcontour in self.contours:
                 subcontour.frame_mapping(frame, side, copy=False)
             for point in self.points:
                 point.frame_mapping(frame, side, copy=False)
-            self.plane = self.create_plane(self.points)
-            _, self.polygon2D = self._repair_points_and_polygon2d(self.points)
+            self.plane.frame_mapping(frame, side, copy=False)
             self.bounding_box = self._bounding_box()
             
     def copy(self):
         new_contour = [subcontour.copy() for subcontour in self.contours]
-        return Face3D(new_contour, self.name)
+        new_plane = self.plane.copy()
+        new_points = [p.copy() for p in self.points]
+        return Face3D(new_contour, new_plane, new_points, self.polygon2D, self.name)
         
     def average_center_point(self):
         """
@@ -3350,7 +3332,6 @@ class Face3D(Primitive3D):
                 ax.add_line(line)
 
         plt.show()
-        
         return ax
     
 
@@ -3384,7 +3365,6 @@ class Shell3D(CompositePrimitive3D):
         else:
             for face in self.faces:
                 face.Translation(offset, copy=False)
-#            self.bounding_box.Translation(offset, copy=False)
             self.bounding_box = self._bounding_box()
     
     def frame_mapping(self, frame, side, copy=True):
@@ -3402,6 +3382,12 @@ class Shell3D(CompositePrimitive3D):
     def copy(self):
         new_faces = [face.copy() for face in self.faces]
         return Shell3D(new_faces, self.name)
+    
+    def union(self, shell2):
+        new_faces = [face for face in self.faces+shell2.faces] 
+        new_name = self.name+' union '+shell2.name
+        new_color = self.color
+        return Shell3D(new_faces, new_name, new_color)
 
     def _bounding_box(self):
         """
@@ -3814,42 +3800,23 @@ class BoundingBox:
         depth = self.zmax-self.zmin
         s = 'var box = BABYLON.MeshBuilder.CreateBox("box", {{height: {}, width: {}, depth: {}}}, scene);\n'.format(height, width, depth)
         s += 'box.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));\n'.format(self.center[0], self.center[1], self.center[2])
-        
         s += 'var bboxmat = new BABYLON.StandardMaterial("bboxmat", scene);\n'
         s += 'bboxmat.alpha = 0.4;\n'
-        
-        
-#        s += 'var textureResolution = 512;\n'
-#        s += 'var textureBbox = new BABYLON.DynamicTexture("dynamic texture", {width:{}, height:{}}, scene);\n'.format(width*60, height*60)
-#        s += 'var textureContext = textureBbox.getContext();\n'
-#        s += 'mat.diffuseTexture = textureBbox;\n'
-#        s += 'var font = "bold 44px monospace";\n'
-#        s += 'textureBbox.drawText("{}", 8, 14, font, "black", "white", true, true);\n'.format(self.name)
-        
         s += 'var DTWidth = {};\n'.format(width*60)
         s += 'var DTHeight = {};\n'.format(height*60)
-        
         s += 'var font_type = "Arial";\n'
         s += 'var text = "{}";\n'.format(self.name)
-        
         s += 'var dynamicTexture = new BABYLON.DynamicTexture("DynamicTexture", {width:DTWidth, height:DTHeight}, scene);\n'
-    
         s += 'var ctx = dynamicTexture.getContext();\n'
         s += 'var size = 0.8;\n'
         s += 'ctx.font = size + "px " + font_type;\n'
         s += 'var textWidth = ctx.measureText(text).width;\n'
-        
         s += 'var ratio = textWidth/size;\n'
-    	
         s += 'var font_size = Math.floor(DTWidth / ratio);\n'
         s += 'var font = font_size + "px " + font_type;\n'
-    	
         s += 'dynamicTexture.drawText(text, null, null, font, "#000000", "#ffffff", false);\n'
-        
         s += 'bboxmat.diffuseTexture = dynamicTexture;\n'
-        
         s += 'box.material = bboxmat;\n'
-        
         return s
 
 
@@ -3949,7 +3916,6 @@ class Step:
                 connec = connec.split(",")
                 connec = connec[0].split(")")
                 function_connection = int(connec[0])
-#                function_connections.append((function_connection, function_id))
                 function_connections.append((function_id, function_connection))
                 
             all_connections.extend(function_connections)
@@ -4093,52 +4059,6 @@ class Step:
 
         return [(subfunction_names[i], step_split_arguments(subfunction_args[i])) for i in range(len(subfunction_names))]
 
-#    def delete_function(self, function_name):
-#
-#        delete_functions = []
-#        for function_id, function in self.functions.items():
-#            if function.name == function_name:
-#
-#                #### Delete from self.functions ####
-#                delete_functions.append(function_id)
-#
-#                #### Modify the functions pointing on the deleted function ####
-#                modify_function_id = list(self.graph.out_edges(function.id))[0][1]
-#                # TROUVER '#'+str(function.id) dans les arguments
-#                # VERIFIER que le char d'apres n'est pas un entier
-#                # REMPLACER la selection par list(self.graph.in_edges)[0]
-#                modify_function = self.functions[modify_function_id]
-#                for i, argument in enumerate(modify_function.arg):
-#                    if type(argument) is list:
-#                        for j, elem in enumerate(argument):
-#                            res = find_and_replace(elem, '#'+str(function.id), '#'+str(list(self.graph.in_edges(function.id))[0][0]))
-#                            if res != elem:
-#                                modify_function.arg[i][j] = res
-#                    else:
-#                        res = find_and_replace(argument, '#'+str(function.id), '#'+str(list(self.graph.in_edges(function.id))[0][0]))
-#                        if res != argument:
-#                            modify_function.arg[i] = res
-#
-#                #### Delete from self.graph ####
-#                in_edges = list(self.graph.in_edges(function.id))
-#                out_edges = list(self.graph.out_edges(function.id))
-#                self.graph.remove_node(function.id)
-#                if len(in_edges) > 1 and len(out_edges) > 1:
-#                    raise ValueError
-#                if len(in_edges) == 1:
-#                    for out_edge in out_edges:
-#                        self.graph.add_edge(in_edges[0][0], out_edge[1])
-#                else:
-#                    for in_edge in in_edges:
-#                        self.graph.add_edge(in_edge[0], out_edges[0][1])
-#
-#                #### Delete from self.all_connections ####
-#                self.all_connections = list(self.graph.edges)
-#
-#
-#        for delete_f in delete_functions:
-#            del self.functions[delete_f]
-
     def instanciate(self, instanciate_id, object_dict, primitives):
         """
         Returns None if the object was instanciate
@@ -4184,7 +4104,6 @@ class Step:
                 self.graph.add_edge("#0", node)
         
         edges = list(nx.algorithms.traversal.breadth_first_search.bfs_edges(self.graph, "#0"))[::-1]        
-        
 
         for edge_nb, edge in enumerate(edges):
             instanciate_id = edge[1]
@@ -4247,7 +4166,6 @@ class VolumeModel:
                 shell.Translation(offset, copy=False)
             for primitives in self.primitives:
                 primitives.Translation(offset, copy=False)
-#            self.bounding_box.Translation(offset, copy=False)
             self.bounding_box = self._bounding_box()
             
         

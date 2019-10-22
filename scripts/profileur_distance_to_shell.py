@@ -9,35 +9,41 @@ Created on Thu Oct  3 10:57:51 2019
 import volmdlr as  vm
 import volmdlr.primitives3D as p3d
 
-#moteur = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/MOTEUR HRevoUNIFY.stp')
-#boite = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/BOITE E-TECHg2.stp')
+moteur = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/MOTEUR HRevoUNIFY.stp')
+boite = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/BOITE E-TECHg2.stp')
 #cmo = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/CMO2.stp')
 
-#volumemodel = moteur.to_volume_model('moteur')
-#boite.to_volume_model('boite', volumemodel)
+volumemodel = moteur.to_volume_model('moteur')
+boite.to_volume_model('boite', volumemodel)
 #cmo.to_volume_model('cmo', volumemodel)
 
-origin = vm.Point3D((0,0,0))
-u = vm.Vector3D((2,1,0))
-v = vm.Vector3D((0,1,0))
-w = vm.Vector3D((0.5,0,1))
-frame = vm.Frame3D(origin, u, v, w)
-primitive3d = p3d.Block(frame, 'test') #, 'test', (1,0,1))
+#origin = vm.Point3D((0,0,0))
+#u = vm.Vector3D((2,1,0))
+#v = vm.Vector3D((0,1,0))
+#w = vm.Vector3D((0.5,0,1))
+#frame = vm.Frame3D(origin, u, v, w)
+#primitive3d = p3d.Block(frame, 'test') #, 'test', (1,0,1))
 #volumemodel.shells.append(block)
 
-volumemodel = vm.VolumeModel([],[])
+#volumemodel = vm.VolumeModel([],[])
 #position = vm.Point3D((1,2,3))
 #axis = vm.Vector3D((1,0.5,0.2))
 #radius = 0.5
 #length = 2
 #primitive3d = p3d.Cone(position, axis, radius, length)
 #primitive3d = p3d.Cylinder(position, axis, radius, length)
-volumemodel.shells.append(primitive3d)
-volumemodel.shells.append(primitive3d.bounding_box)
-volumemodel.BabylonShow()
+#volumemodel.shells.append(primitive3d)
+#volumemodel.shells.append(primitive3d.bounding_box)
+#volumemodel.BabylonShow()
 
-#shell0 = volumemodel.shells[0] # LE MOTEUR
-#shell1 = volumemodel.shells[1] # LA BOITE
+#union = volumemodel.shells[0].union(primitive3d)
+#volumemodel.shells[0] = union
+#volumemodel.shells.append(union.bounding_box)
+#union.Translation((1,2,-0.5), False)
+#volumemodel.BabylonShow()
+
+shell0 = volumemodel.shells[0] # LE MOTEUR
+shell1 = volumemodel.shells[1] # LA BOITE
 #shell2 = volumemodel.shells[2] # LE BLOCK
 #shell2 = volumemodel.shells[2] # LE CMO
 #shell3 = volumemodel.shells[3] # UN PETIT BOUT SE TROUVANT A L'INTERIEUR DU CMO
@@ -56,12 +62,19 @@ w = vm.x3D
 frame = vm.Frame3D(origin, u, v, w)
 
 
-
+print('fram_mapping copy=False')
 shell0.frame_mapping(frame, 'new', False)
-shell1.Translation((0.5,0,0), False)
+print('Success')
+print('Transaliton copy=False')
+shell1.Translation(vm.Vector3D((1,0.5,0)), False)
+print('Success')
 
-volumemodel.shells[0] = shell0.frame_mapping(frame, 'new', True)
-volumemodel.shells[1] = shell1.Translation((0.5,0,0), True)
+print('frame_mapping copy=True')
+volumemodel.shells[1] = shell1.frame_mapping(frame, 'new', True)
+print('Success')
+print('Translation copy=True')
+volumemodel.shells[0] = shell0.Translation(vm.Vector3D((-1,0.5,0)), True)
+print('Success')
 
 #volumemodel.shells.append(volumemodel.shells[0].bounding_box)
 #volumemodel.shells.append(volumemodel.shells[1].bounding_box)
