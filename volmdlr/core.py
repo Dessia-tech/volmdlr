@@ -3765,7 +3765,10 @@ class Shell3D(CompositePrimitive3D):
         s += 'customMesh.edgesWidth = 0.1;\n'
         s += 'customMesh.edgesColor = new BABYLON.Color4(0, 0, 0, 0.6);\n'
         s += 'var mat = new BABYLON.StandardMaterial("mat", scene);\n'
-        s += 'mat.diffuseColor = BABYLON.Color3.Gray();\n'
+#        s += 'mat.diffuseColor = BABYLON.Color3.Green();\n'
+#        s += 'mat.specularColor = new BABYLON.Color3(0.5, 0.6, 0.87);\n'
+#        s += 'mat.emissiveColor = new BABYLON.Color3(1, 1, 1);\n'
+#        s += 'mat.ambientColor = new BABYLON.Color3(0.23, 0.98, 0.53);\n'
         s += 'mat.backFaceCulling = false;\n'
         s += 'customMesh.material = mat;\n'
         if self.color is not None:
@@ -4213,6 +4216,12 @@ class Step:
             
         elif name == 'FACE_OUTER_BOUND':
             object_dict[instanciate_id] = object_dict[arguments[1]]
+            
+        elif name == 'FACE_BOUND':
+            object_dict[instanciate_id] = object_dict[arguments[1]]
+            
+        elif name == 'SURFACE_CURVE':
+            pass
         
         
         elif name in step_to_volmdlr_primitive and hasattr(step_to_volmdlr_primitive[name], "from_step"):
@@ -4524,7 +4533,7 @@ step_to_volmdlr_primitive = {
         'RATIONAL_B_SPLINE_CURVE': BSplineCurve3D,
         'UNIFORM_CURVE': BSplineCurve3D,
         'QUASI_UNIFORM_CURVE': BSplineCurve3D,
-        'SURFACE_CURVE': LineSegment3D, # TOPOLOGICAL EDGE
+        'SURFACE_CURVE': None, # TOPOLOGICAL EDGE
         'SEAM_CURVE': LineSegment3D, # TOPOLOGICAL EDGE
         'COMPOSITE_CURVE_SEGMENT': None, # TOPOLOGICAL EDGE
         'COMPOSITE_CURVE': Wire3D, # TOPOLOGICAL WIRE

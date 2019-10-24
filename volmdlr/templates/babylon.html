@@ -48,13 +48,16 @@ var createScene = function () {
 	var cam = new BABYLON.ArcRotateCamera("ArcRotateCamera", 0, 0, 2*{{length}}, new BABYLON.Vector3{{center}}, scene);
 	cam.wheelPrecision=50./{{length}}
 	cam.pinchPrecision=50./{{length}}
-	cam.panningSensibility=250./{{length}};
+	cam.panningSensibility=800./{{length}};
 	cam.minZ=0.01*{{length}};
 	cam.attachControl(canvas);
 	cam.inertia = 0;
 	cam.panningInertia = 0;
 	// cam.mode = BABYLON.Camera.ORTHOGRAPHIC_CAMERA;
 	cam.upVector = new BABYLON.Vector3(0, 0, 1);
+	cam.lowerBetaLimit = null;
+    cam.upperBetaLimit = null;
+    cam.checkCollisions = false;
 
 
 	var light1 = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(-1, -1, -1), scene);
