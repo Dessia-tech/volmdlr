@@ -10,6 +10,8 @@ Created on Tue Feb 28 14:07:37 2017
 #import bezier
 from geomdl import NURBS
 
+
+
 import warnings
 import math
 import numpy as npy
@@ -33,6 +35,7 @@ from scipy.linalg import solve, LinAlgError
 
 import volmdlr.geometry as geometry
 from volmdlr import plot_data
+from volmdlr import triangulation as tri
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 
@@ -43,6 +46,7 @@ import tempfile
 import subprocess
 
 import time
+import random
 
 
 def standardize_knot_vector(knot_vector):
@@ -337,9 +341,9 @@ class Point2D(Vector2D):
         return Point2D((self.vector[0] / value,
                         self.vector[1] / value))
 
-    def To3D(self, plane_origin, x1, x2):
+    def To3D(self, plane_origin, vx, vy):
         x, y = self.vector
-        return Point3D(plane_origin.vector + x1.vector*x + x2.vector*y)
+        return Point3D(plane_origin.vector + vx.vector*x + vy.vector*y)
 
     def MPLPlot(self, ax, style='ob'):
         x1 = self.vector
@@ -1813,8 +1817,11 @@ class Point3D(Vector3D):
                     arguments[0][1:-1])
         
     def Babylon(self):
-        s = 'var sphere = BABYLON.MeshBuilder.CreateSphere("point", {diameter: 0.005}, scene);\n'
+        s = 'var sphere = BABYLON.MeshBuilder.CreateSphere("point", {diameter: 0.05}, scene);\n'
         s += "sphere.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));\n".format(self.vector[0],self.vector[1],self.vector[2])
+        s += 'var mat = new BABYLON.StandardMaterial("mat", scene);\n'
+        s += 'mat.diffuseColor = new BABYLON.Color3(1, 0, 0);\n'
+        s += 'sphere.material = mat;\n'
         return s
         
 
@@ -1823,7 +1830,11 @@ o3D = Point3D((0, 0, 0))
 
 class Plane3D:
     def __init__(self, origin, vector1, vector2, name=''):
-        self.origin = origin
+        self.origin = Point3D(origin.vector)
+        vector1 = Vector3D(vector1.vector)
+        vector1.Normalize()
+        vector2 = Vector3D(vector2.vector)
+        vector2.Normalize()
         self.vectors = [vector1, vector2]
         self.name = name
         self.normal = self.vectors[0].Cross(self.vectors[1])
@@ -3117,7 +3128,7 @@ class Face3D(Primitive3D):
             new_contour = [subcontour.frame_mapping(frame, side, copy=True) for subcontour in self.contours]
             new_plane = self.plane.frame_mapping(frame, side, copy=True)
             new_points = [p.frame_mapping(frame, side, copy=True) for p in self.points]
-            return Face3D(new_contour, new_plane, new_points, self.polygon2D, self.name)
+            return Face3D(new_contour, new_plane, new_points, None, self.name)
         else:
             for subcontour in self.contours:
                 subcontour.frame_mapping(frame, side, copy=False)
@@ -3142,6 +3153,24 @@ class Face3D(Primitive3D):
         y = npy.sum([p[1] for p in points]) / nb    
         z = npy.sum([p[2] for p in points]) / nb
         return Point3D((x,y,z))
+    
+    def triangulation(self):
+#        normal = self.plane.normal
+        points = [tuple(p.vector) for p in self.polygon2D.points]
+        points_dict = {p: i for i, p in enumerate(points)}
+        points_3D = [Point2D(p).To3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]) for p in points]
+#        print()
+#        print('points', points_dict)
+        triangles = tri.earclip(points)
+#        print('triangles', triangles)
+        triangles_indexes = []
+        for triangle in triangles:
+            triangle_indexes = []
+            for point in triangle:
+                triangle_indexes.append(points_dict[point])
+            triangles_indexes.append(triangle_indexes)
+            
+        return points_3D, triangles_indexes
         
     def _bounding_box(self):
         points = self.points
@@ -3236,22 +3265,34 @@ class Face3D(Primitive3D):
 
         Tells you if a point is on the 3D face and inside its contour
         """
+        
         point_on_plane = self.plane.point_on_plane(point)
-
         # The point is not in the same plane
         if not point_on_plane:
             print('point not on plane so not on face')
             return False
-
+        
         point_2D = point.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
         
         ### PLOT ###
-#        ax = polygon.MPLPlot()
+#        ax = self.polygon2D.MPLPlot()
 #        point_2D.MPLPlot(ax)
         ############
 
         if not self.polygon2D.PointBelongs(point_2D):
+            ### PLOT ###
+#            ax = self.polygon2D.MPLPlot()
+#            point_2D.MPLPlot(ax)
+#            ax.set_title('DEHORS')
+#            ax.set_aspect('equal')
+            ############
             return False
+        ### PLOT ###
+#        ax = self.polygon2D.MPLPlot()
+#        point_2D.MPLPlot(ax)
+#        ax.set_title('DEDANS')
+#        ax.set_aspect('equal')
+        ############
         return True
 
     def edge_intersection(self, edge):
@@ -3273,12 +3314,15 @@ class Face3D(Primitive3D):
             return None
         point_on_face_boo = self.point_on_face(intersection_point)
         ### PLOT ###
-#        ax = self.plot()
-#        linesegment.MPLPlot(ax)
-#        intersection_point.MPLPlot(ax)
-#        self.plane.MPLPlot(ax)
-#        print('=>', self.plane.normal.Dot(intersection_point-self.plane.origin))
-#        print('point_on_face_boo', point_on_face_boo)
+#        if not point_on_face_boo:
+#            ax = self.plot()
+#            linesegment.MPLPlot(ax)
+#            Point3D(intersection_point.vector).MPLPlot(ax)
+#            self.plane.MPLPlot(ax)
+#            ax.set_aspect('equal')
+        
+#            print('=>', self.plane.normal.Dot(intersection_point-self.plane.origin))
+#            print('point_on_face_boo', point_on_face_boo)
         ############
         if not point_on_face_boo:
             return None
@@ -3316,9 +3360,14 @@ class Face3D(Primitive3D):
         if ax is None:
             ax = fig.add_subplot(111, projection='3d')
 
-        x = [p[0] for edge in self.contours[0].edges for p in edge.points]
-        y = [p[1] for edge in self.contours[0].edges for p in edge.points]
-        z = [p[2] for edge in self.contours[0].edges for p in edge.points]
+#        x = [p[0] for edge in self.contours[0].edges for p in edge.points]
+#        y = [p[1] for edge in self.contours[0].edges for p in edge.points]
+#        z = [p[2] for edge in self.contours[0].edges for p in edge.points]
+#        print(x,y,z)
+        x = [p[0] for p in self.contours[0].points]
+        y = [p[1] for p in self.contours[0].points]
+        z = [p[2] for p in self.contours[0].points]
+        
         ax.scatter(x, y, z)
         ax.set_xlabel('X Label')
         ax.set_ylabel('Y Label')
@@ -3411,7 +3460,7 @@ class Shell3D(CompositePrimitive3D):
         Ray Casting algorithm
         Returns True if the point is inside the Shell, False otherwise
         """
-        epsilon = 1e-06
+        epsilon = 1
 
         bbox = self.bounding_box
         if point[0] < bbox.xmin or point[0] > bbox.xmax:
@@ -3422,14 +3471,14 @@ class Shell3D(CompositePrimitive3D):
             return False
         
         rays = []
-        rays.append(LineSegment3D(point, Point3D((bbox.xmin-epsilon, bbox.ymin-epsilon, bbox.zmin-epsilon))))
-        rays.append(LineSegment3D(point, Point3D((bbox.xmax+epsilon, bbox.ymin-epsilon, bbox.zmin-epsilon))))
-        rays.append(LineSegment3D(point, Point3D((bbox.xmin-epsilon, bbox.ymax+epsilon, bbox.zmin-epsilon))))
-        rays.append(LineSegment3D(point, Point3D((bbox.xmin-epsilon, bbox.ymin-epsilon, bbox.zmax+epsilon))))
-        rays.append(LineSegment3D(point, Point3D((bbox.xmax+epsilon, bbox.ymax+epsilon, bbox.zmax+epsilon))))
-        rays.append(LineSegment3D(point, Point3D((bbox.xmax+epsilon, bbox.ymax+epsilon, bbox.zmin-epsilon))))
-        rays.append(LineSegment3D(point, Point3D((bbox.xmax+epsilon, bbox.ymin-epsilon, bbox.zmax+epsilon))))
-        rays.append(LineSegment3D(point, Point3D((bbox.xmin-epsilon, bbox.ymax+epsilon, bbox.zmax+epsilon))))
+        rays.append(LineSegment3D(point, Point3D((bbox.xmin-random.uniform(0, 1)*epsilon, bbox.ymin-random.uniform(0, 1)*epsilon, bbox.zmin-random.uniform(0, 1)*epsilon))))
+        rays.append(LineSegment3D(point, Point3D((bbox.xmax+random.uniform(0, 1)*epsilon, bbox.ymin-random.uniform(0, 1)*epsilon, bbox.zmin-random.uniform(0, 1)*epsilon))))
+        rays.append(LineSegment3D(point, Point3D((bbox.xmin-random.uniform(0, 1)*epsilon, bbox.ymax+random.uniform(0, 1)*epsilon, bbox.zmin-random.uniform(0, 1)*epsilon))))
+        rays.append(LineSegment3D(point, Point3D((bbox.xmin-random.uniform(0, 1)*epsilon, bbox.ymin-random.uniform(0, 1)*epsilon, bbox.zmax+random.uniform(0, 1)*epsilon))))
+        rays.append(LineSegment3D(point, Point3D((bbox.xmax+random.uniform(0, 1)*epsilon, bbox.ymax+random.uniform(0, 1)*epsilon, bbox.zmax+random.uniform(0, 1)*epsilon))))
+        rays.append(LineSegment3D(point, Point3D((bbox.xmax+random.uniform(0, 1)*epsilon, bbox.ymax+random.uniform(0, 1)*epsilon, bbox.zmin-random.uniform(0, 1)*epsilon))))
+        rays.append(LineSegment3D(point, Point3D((bbox.xmax+random.uniform(0, 1)*epsilon, bbox.ymin-random.uniform(0, 1)*epsilon, bbox.zmax+random.uniform(0, 1)*epsilon))))
+        rays.append(LineSegment3D(point, Point3D((bbox.xmin-random.uniform(0, 1)*epsilon, bbox.ymax+random.uniform(0, 1)*epsilon, bbox.zmax+random.uniform(0, 1)*epsilon))))
         
         sorted(rays, key=lambda ray: ray.Length())
         
@@ -3451,20 +3500,22 @@ class Shell3D(CompositePrimitive3D):
             
         if sum(tests) == 0 or sum(tests) == 3:
             return tests[0]
-#        else:
-#            print('PROBLEME')
+        else:
+            print('PROBLEME')
 #            print(point)
 #            raise NotImplementedError
-            
+#            if tuple(point.vector) == (-0.3, 0.25, -0.25):
             ### BABYLON ###
-#            print('------------------------')
-#            print(point.Babylon())
-#            for ray in rays[:3]:
-#                print(ray.Babylon())
-#            for ray in rays_intersections:
-#                for point in ray:
-#                    print(point.Babylon())
-#            print('------------------------')
+#                print('------------------------')
+#                point = Point3D(point.vector)
+#                print(point.Babylon())
+#                for ray in rays[:3]:
+#                    print(ray.Babylon())
+#                for ray in rays_intersections:
+#                    for point in ray:
+#                        point = Point3D(point.vector)
+#                        print(point.Babylon())
+#                print('------------------------')
             ###############
             
         return sum(tests) > 1
@@ -3482,9 +3533,10 @@ class Shell3D(CompositePrimitive3D):
         points = []
         for face in self.faces:
             points.extend(face.contours[0].points)
-        
+                    
         for point in points:
             if not shell2.point_belongs(point):
+                print('point belongs', point)
                 return False
             
         # Check if any faces are intersecting
@@ -3616,7 +3668,9 @@ class Shell3D(CompositePrimitive3D):
             for point in face.points:
                 if shell2.point_belongs(point):
                     shell1_points_inside_shell2.append(point)
-
+        
+        if len(intersections_points+shell1_points_inside_shell2) == 0:
+            return 0
         bbox = BoundingBox.from_points(intersections_points+shell1_points_inside_shell2)
         return bbox.volume()
     
@@ -3636,46 +3690,68 @@ class Shell3D(CompositePrimitive3D):
             for point in face.points:
                 if not shell2.point_belongs(point):
                     shell1_points_outside_shell2.append(point)
-
+        
+        if len(intersections_points+shell1_points_outside_shell2) == 0:
+            return 0
         bbox = BoundingBox.from_points(intersections_points+shell1_points_outside_shell2)
         return bbox.volume()
     
     def Babylon(self):
         s = 'var customMesh = new BABYLON.Mesh("custom", scene);\n'
         
+#        positions = ''
+#        indices = ''
+#        ij = 0
+#        for j, face in enumerate(self.faces):
+#            if len(face.contours[0].points) < 3:
+#                return NotImplementedError
+#            
+#            elif len(face.contours[0].points) == 3:
+#                pts = face.contours[0].points
+#                for pt in pts:
+#                    positions += '{},{},{},'.format(round(pt[0],3),round(pt[1],3),round(pt[2],3))
+#                
+#                indices += '{},{},{},'.format(ij, ij+1, ij+2)
+#                
+#                ij += len(pts)
+#            
+#            else: 
+#                mid_point = face.average_center_point()
+#                
+#                positions += '{},{},{},'.format(round(mid_point[0],3),round(mid_point[1],3),round(mid_point[2],3))
+#                pts = face.contours[0].points
+#                for pt in pts:
+#                    positions += '{},{},{},'.format(round(pt[0],3),round(pt[1],3),round(pt[2],3))
+#                    
+#                for i in range(len(pts)-1):
+#                    indices += '{},{},{},'.format(ij, ij+i+1, ij+i+2)
+#                indices += '{},{},{},'.format(ij, ij+len(pts), ij+1)
+#                
+#                ij += len(pts)+1
+#            
+#        positions = positions[:-1]
+#        indices = indices[:-1]
+        
         positions = ''
         indices = ''
-        ij = 0
-        for j, face in enumerate(self.faces):
-            if len(face.contours[0].points) < 3:
-                return NotImplementedError
+        
+        nb_points = 0
+        for i, face in enumerate(self.faces):
+            points_3D, triangles_indexes = face.triangulation()
             
-            elif len(face.contours[0].points) == 3:
-                pts = face.contours[0].points
-                for pt in pts:
-                    positions += '{},{},{},'.format(round(pt[0],3),round(pt[1],3),round(pt[2],3))
-                
-                indices += '{},{},{},'.format(ij, ij+1, ij+2)
-                
-                ij += len(pts)
+            for point in points_3D:
+                positions += '{},{},{},'.format(round(point[0],6), round(point[1],6), round(point[2],6))
             
-            else: 
-                mid_point = face.average_center_point()
-                
-                positions += '{},{},{},'.format(round(mid_point[0],3),round(mid_point[1],3),round(mid_point[2],3))
-                pts = face.contours[0].points
-                for pt in pts:
-                    positions += '{},{},{},'.format(round(pt[0],3),round(pt[1],3),round(pt[2],3))
+            for j, indexes in enumerate(triangles_indexes):                    
+                indices += '{},{},{},'.format(indexes[0]+nb_points, indexes[1]+nb_points, indexes[2]+nb_points)
+            nb_points += len(points_3D)
                     
-                for i in range(len(pts)-1):
-                    indices += '{},{},{},'.format(ij, ij+i+1, ij+i+2)
-                indices += '{},{},{},'.format(ij, ij+len(pts), ij+1)
-                
-                ij += len(pts)+1
-            
         positions = positions[:-1]
         indices = indices[:-1]
-            
+#        print()
+#        print('position', positions)
+#        print('indices', indices)
+        
         s += 'var positions = [{}];\n'.format(positions)
         s += 'var indices = [{}];\n'.format(indices)
         s += 'var normals = [];\n'
@@ -3685,11 +3761,11 @@ class Shell3D(CompositePrimitive3D):
         s += 'vertexData.indices = indices;\n'
         s += 'vertexData.normals = normals;\n'
         s += 'vertexData.applyToMesh(customMesh);\n'
-        s += 'customMesh.enableEdgesRendering(0.9);\n'
+        s += 'customMesh.enableEdgesRendering(0.95);\n'
         s += 'customMesh.edgesWidth = 0.1;\n'
         s += 'customMesh.edgesColor = new BABYLON.Color4(0, 0, 0, 0.6);\n'
         s += 'var mat = new BABYLON.StandardMaterial("mat", scene);\n'
-        
+        s += 'mat.diffuseColor = BABYLON.Color3.Gray();\n'
         s += 'mat.backFaceCulling = false;\n'
         s += 'customMesh.material = mat;\n'
         if self.color is not None:
