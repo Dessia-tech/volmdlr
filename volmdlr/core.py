@@ -37,7 +37,7 @@ import os
 import tempfile
 import subprocess
 
-import time
+#import time
 
 
 def standardize_knot_vector(knot_vector):
@@ -330,6 +330,8 @@ class Vector2D(Vector):
 x2D = Vector2D((1, 0))
 y2D = Vector2D((0, 1))
 
+X2D = Vector2D((1, 0))
+Y2D = Vector2D((0, 1))
 
 class Point2D(Vector2D):
     def __init__(self, vector, name=''):
@@ -420,6 +422,7 @@ class Point2D(Vector2D):
         return  pp1 - pp1.Dot(n)*n + p1
 
 o2D = Point2D((0, 0))
+O2D = Point2D((0, 0))
 
 class Basis:
     """
@@ -466,9 +469,12 @@ class Basis2D(Basis):
     def _get_vectors(self):
         return (self.u, self.v)
 
-#    def _set_vectors(self, vectors):
-#        return vectors
     vectors = property(_get_vectors)
+    
+
+    def to_frame(self, origin):
+        return Frame2D(origin, self.u, self.v)
+
 
     def TransfertMatrix(self):
         return npy.array([[self.u[0], self.v[0]],
@@ -1741,6 +1747,10 @@ x3D = Vector3D((1, 0, 0))
 y3D = Vector3D((0, 1, 0))
 z3D = Vector3D((0, 0, 1))
 
+X3D = Vector3D((1, 0, 0))
+Y3D = Vector3D((0, 1, 0))
+Z3D = Vector3D((0, 0, 1))
+
 
 class Point3D(Vector3D):
     _standalone_in_db = False
@@ -1829,6 +1839,7 @@ class Point3D(Vector3D):
                     arguments[0][1:-1])
 
 o3D = Point3D((0, 0, 0))
+O3D = Point3D((0, 0, 0))
 
 
 class Plane3D:
@@ -1952,6 +1963,14 @@ class Basis3D(Basis):
         self.v = v
         self.w = w
         self.name = name
+        
+        
+    def __add__(self, other_basis):
+        P = npy.dot(self.TransfertMatrix(), other_basis.TransfertMatrix())
+        return Basis3D(Vector3D(P[:, 0]),
+                       Vector3D(P[:, 1]),
+                       Vector3D(P[:, 2]))
+
 
     def __neg__(self):
         Pinv = self.InverseTransfertMatrix()
@@ -1979,6 +1998,23 @@ class Basis3D(Basis):
         return (self.u, self.v, self.w)
 
     vectors = property(_get_vectors)
+
+    @classmethod
+    def from_two_vectors(cls, vector1, vector2):
+        """
+        Create a basis with first vector1 adimensionned, as u, v is the vector2 substracted of u component,
+        w is the cross product of u and v
+        """
+        u = vector1.copy()
+        u.Normalize()
+        v = vector2 - vector2.Dot(vector1)*vector1
+        v.Normalize()
+        w = u.Cross(v)
+        
+        return Basis3D(u, v, w)
+    
+    def to_frame(self, origin):
+        return Frame3D(origin, self.u, self.v, self.w)
 
     def Rotation(self, axis, angle, copy=True):
         center = o3D
@@ -2077,6 +2113,9 @@ class Basis3D(Basis):
 
 
 xyz = Basis3D(x3D, y3D, z3D)
+XYZ = Basis3D(x3D, y3D, z3D)
+YZX = Basis3D(y3D, z3D, x3D)
+ZXY = Basis3D(z3D, x3D, y3D)
 
 class Frame3D(Basis3D):
     """
@@ -2138,6 +2177,7 @@ class Frame3D(Basis3D):
                               round(self.u, ndigits),
                               round(self.v, ndigits),
                               round(self.w, ndigits))
+        
 
     def Basis(self):
         return Basis3D(self.u, self.v, self.w)
