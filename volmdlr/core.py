@@ -2242,7 +2242,7 @@ class Frame3D(Basis3D):
             w = u.Cross(v)
         return cls(origin, u, v, w, arguments[0][1:-1])
 
-    def babylonjs(self, size=0.1):
+    def babylonjs(self, size=0.1, parent=None):
         s = 'var origin = new BABYLON.Vector3({},{},{});\n'.format(*self.origin)
         s += 'var o_u = new BABYLON.Vector3({}, {}, {});\n'.format(*(size*self.u+self.origin))
         s += 'var o_v = new BABYLON.Vector3({}, {}, {});\n'.format(*(size*self.v+self.origin))
@@ -2253,6 +2253,11 @@ class Frame3D(Basis3D):
         s += 'line2.material = green_material;\n'
         s += 'var line3 = BABYLON.MeshBuilder.CreateTube("frame_W", {{path: [origin, o_w], radius: {}}}, scene);'.format(0.03*size)
         s += 'line3.material = blue_material;\n'
+        if parent is not None:
+            s += 'line1.parent = {};\n'.format(parent)
+            s += 'line2.parent = {};\n'.format(parent)
+            s += 'line3.parent = {};\n'.format(parent)
+        
         return s 
 
 oxyz = Frame3D(o3D, x3D, y3D, z3D)
@@ -2375,20 +2380,26 @@ class LineSegment3D(Line3D):
     def to_line(self):
         return Line3D(*self.points)
     
-    def Babylon(self, color=(1, 1, 1), type_='line'):
+    def Babylon(self, color=(1, 1, 1), name='line',  type_='line', parent=None):
         if type_ == 'line':
             s = 'var myPoints = [];\n'
             s += 'var point1 = new BABYLON.Vector3({},{},{});\n'.format(*self.points[0])
             s += 'myPoints.push(point1);\n'
             s += 'var point2 = new BABYLON.Vector3({},{},{});\n'.format(*self.points[1])
             s += 'myPoints.push(point2);\n'
-            s += 'var line = BABYLON.MeshBuilder.CreateLines("lines", {points: myPoints}, scene);\n'
-            s += 'line.color = new BABYLON.Color3{};'.format(tuple(color))
+            s += 'var {} = BABYLON.MeshBuilder.CreateLines("lines", {{points: myPoints}}, scene);\n'.format(name)
+            s += '{}.color = new BABYLON.Color3{};\n'.format(name, tuple(color))
         elif type_ == 'tube':
             radius = 0.03*self.points[0].PointDistance(self.points[1])
             s = 'var points = [new BABYLON.Vector3({},{},{}), new BABYLON.Vector3({},{},{})];\n'.format(*self.points[0], *self.points[1])
-            s += 'var line = BABYLON.MeshBuilder.CreateTube("frame_U", {{path: points, radius: {}}}, scene);'.format(radius)
+            s += 'var {} = BABYLON.MeshBuilder.CreateTube("frame_U", {{path: points, radius: {}}}, {});'.format(name, radius, parent)
 #            s += 'line.material = red_material;\n'
+
+        else:
+            raise NotImplementedError
+
+        if parent is not None:
+            s += '{}.parent = {};\n'.format(name, parent)
 
         return s 
 
