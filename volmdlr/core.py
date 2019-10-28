@@ -1873,7 +1873,7 @@ class Plane3D:
         intersection_abscissea = - self.normal.Dot(w) / self.normal.Dot(u)
         return line.points[0] + intersection_abscissea * u
 
-    def linesegment_intersection(self, linesegment):
+    def linesegment_intersection(self, linesegment, abscissea=False):
         u = linesegment.points[1] - linesegment.points[0]
         w = linesegment.points[0] - self.origin
         normalDotu = self.normal.Dot(u)
@@ -1882,6 +1882,8 @@ class Plane3D:
         intersection_abscissea = - self.normal.Dot(w) / normalDotu
         if intersection_abscissea < 0 or intersection_abscissea > 1:
             return None
+        if abscissea:
+            return linesegment.points[0] + intersection_abscissea * u, intersection_abscissea
         return linesegment.points[0] + intersection_abscissea * u
 
     def Rotation(self, center, axis, angle, copy=True):
@@ -3308,8 +3310,12 @@ class Face3D(Primitive3D):
 
         return intersection_point
 
-    def linesegment_intersection(self, linesegment):
-        intersection_point = self.plane.linesegment_intersection(linesegment)
+    def linesegment_intersection(self, linesegment, abscissea=False):
+        if abscissea:
+            intersection_point, intersection_abscissea = self.plane.linesegment_intersection(linesegment, True)
+        else:
+            intersection_point = self.plane.linesegment_intersection(linesegment)
+            
         if intersection_point is None:
             return None
         point_on_face_boo = self.point_on_face(intersection_point)
@@ -3326,6 +3332,9 @@ class Face3D(Primitive3D):
         ############
         if not point_on_face_boo:
             return None
+        
+        if abscissea:
+            return intersection_point, intersection_abscissea
         return intersection_point
 
     def face_intersection(self, face2):
@@ -3927,7 +3936,45 @@ class BoundingBox:
             else:
                 dz = 0
         return (dx**2 + dy**2 + dz**2)**0.5
-
+    
+#    def distance_between_two_points_on_bbox(self, point1, point2):
+#        
+#        if math.isclose(point1[0], self.xmin, abs_tol=1e-8):
+#            face_point1 = 5
+#        elif math.isclose(point1[0], self.xmax, abs_tol=1e-8):
+#            face_point1 = 3
+#        elif math.isclose(point1[0], self.ymin, abs_tol=1e-8):
+#            face_point1 = 4
+#        elif math.isclose(point1[0], self.ymax, abs_tol=1e-8):
+#            face_point1 = 2
+#        elif math.isclose(point1[0], self.zmin, abs_tol=1e-8):
+#            face_point1 = 6
+#        elif math.isclose(point1[0], self.zmax, abs_tol=1e-8):
+#            face_point1 = 1
+#        else:
+#            raise NotImplementedError
+#            
+#        if math.isclose(point2[0], self.xmin, abs_tol=1e-8):
+#            face_point2 = 5
+#        elif math.isclose(point2[0], self.xmax, abs_tol=1e-8):
+#            face_point2 = 3
+#        elif math.isclose(point2[0], self.ymin, abs_tol=1e-8):
+#            face_point2 = 4
+#        elif math.isclose(point2[0], self.ymax, abs_tol=1e-8):
+#            face_point2 = 2
+#        elif math.isclose(point2[0], self.zmin, abs_tol=1e-8):
+#            face_point2 = 6
+#        elif math.isclose(point2[0], self.zmax, abs_tol=1e-8):
+#            face_point2 = 1
+#        else:
+#            raise NotImplementedError
+#            
+#        
+#        # Create graph
+        
+        
+        
+            
     def Babylon(self):
         height = self.ymax-self.ymin
         width = self.xmax-self.xmin
@@ -4487,6 +4534,55 @@ class VolumeModel:
             file.write(self.BabylonScript())
 
         webbrowser.open('file://' + os.path.realpath(page))
+        
+        
+
+class Routing:
+    def __init__(self, point1, point2, volumemodel):
+#        self.shells = [shell1, shell2]
+        self.points = [point1, point2]
+        self.volumemodel = volumemodel
+        
+    def straight_line(self):
+        line = LineSegment3D(self.points[0], self.points[1])
+        
+        intersection_points = []
+        for shell in self.volumemodel.shells:
+            for face in shell.faces:
+                intersection_point, intersection_abscissea = face.linesegment_intersection(line, abscissea=True)
+                if intersection_point is not None:
+                    intersection_points.append((intersection_point, intersection_abscissea))
+                    
+        sorted(intersection_points, key=lambda abscissea: abscissea[1])
+        
+        # verifier le premier et le dernier point de intersection_points
+        
+        if len(intersection_points)%2 != 0:
+            raise NotImplementedError
+            
+        intersection_distance = 0
+        for pt1, pt2 in (intersection_points[::2], intersection_points[1::2]):
+            intersection_distance += pt1.PointDistance(pt2)
+            
+        return line.Length()-intersection_distance, intersection_distance
+    
+#    def straight_line2(self):
+#        line = LineSegment3D(self.points[0], self.points[1])
+#        
+#        intersection_points = []
+#        for shell in self.volumemodel.shells:
+#            shell_intersection_points = []
+#            bbox = shell.bounding_box
+#            for face in shell.faces:
+#                intersection_point, intersection_abscissea = face.linesegment_intersection(line, abscissea=True)
+#                if intersection_point is not None:
+#                    intersection_points.append((intersection_point, intersection_abscissea))
+#                    shell_intersection_points.append((intersection_point, intersection_abscissea))
+#            
+#            if shell_intersection_points 
+        
+
+
 
 class ViewIso:
     def __init__(self, component, frame, size):
