@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+<<<<<<< HEAD
 Created on Wed Oct 23 10:55:23 2019
+=======
+Created on Fri Oct 25 14:53:57 2019
+>>>>>>> 45a9a2643a660a78f83893310fdfd943ab74b0a7
 
 @author: ringhausen
 """
@@ -59,7 +63,10 @@ def earclip(polygon):
         polygon.remove(ear)
         point_count -= 1
         triangles.append(((prev_point.x, prev_point.y), (ear.x, ear.y), (next_point.x, next_point.y)))
+<<<<<<< HEAD
 
+=======
+>>>>>>> 45a9a2643a660a78f83893310fdfd943ab74b0a7
         if point_count > 3:
             prev_prev_point = polygon[prev_index - 1]
             next_next_index = (i + 1) % point_count
@@ -76,7 +83,10 @@ def earclip(polygon):
                         ear_vertex.append(p)
                 elif p in ear_vertex:
                     ear_vertex.remove(p)
+<<<<<<< HEAD
                     
+=======
+>>>>>>> 45a9a2643a660a78f83893310fdfd943ab74b0a7
     return triangles
 
 
