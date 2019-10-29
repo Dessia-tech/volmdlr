@@ -278,7 +278,7 @@ class Vector2D(Vector):
         )
         self.plot()
 
-    def plot(self, amplitude=0.1, origin=None, ax=None, color='k', line=False, label=None):
+    def plot(self, amplitude=0.5, origin=None, ax=None, color='k', line=False, label=None):
         if origin is None:
             origin = Vector2D((0., 0.))
         
@@ -345,10 +345,12 @@ class Point2D(Vector2D):
         x, y = self.vector
         return Point3D(plane_origin.vector + vx.vector*x + vy.vector*y)
 
-    def MPLPlot(self, ax, style='ob'):
+    def MPLPlot(self, ax=None, style='ob'):
+        if ax is None:
+            fig, ax = plt.subplots()
         x1 = self.vector
         ax.plot([x1[0]], [x1[1]], style)
-        return []
+        return ax
 
     def PointDistance(self, point2):
         return (self-point2).Norm()
@@ -449,6 +451,11 @@ class Basis2D(Basis):
     def __init__(self, u, v):
         self.u = u
         self.v = v
+    
+    def __neg__(self):
+        Pinv = self.InverseTransfertMatrix()
+        return Basis2D(Vector3D(Pinv[:, 0]),
+                       Vector3D(Pinv[:, 1]))
 
     def __repr__(self):
         return '{}: U={}, V={}'.format(self.__class__.__name__, *self.vectors)
@@ -513,6 +520,32 @@ class Frame2D(Basis2D):
 
     def __repr__(self):
         return '{}: O={} U={}, V={}'.format(self.__class__.__name__, self.origin, self.u, self.v)
+    
+    def __neg__(self):
+        Pinv = self.InverseTransfertMatrix()
+        new_origin = Point2D(npy.dot(Pinv, self.origin.vector))
+        return Frame2D(new_origin,
+                       Vector2D(Pinv[:, 0]),
+                       Vector2D(Pinv[:, 1]))
+
+
+    def __add__(self, other_frame):
+        P1 = self.TransfertMatrix()
+        new_origin = Point2D(npy.dot(P1, other_frame.origin.vector) + self.origin.vector)
+        M = npy.dot(P1, other_frame.TransfertMatrix())
+        return Frame2D(new_origin,
+                       Vector2D(M[:, 0]),
+                       Vector2D(M[:, 1]))
+
+
+    def __sub__(self, other_frame):
+        P1inv = other_frame.InverseTransfertMatrix()
+        P2 = self.TransfertMatrix()
+        new_origin = Point2D(npy.dot(P1inv, (self.origin - other_frame.origin).vector))
+        M = npy.dot(P1inv, P2)
+        return Frame2D(new_origin,
+                       Vector2D(M[:, 0]),
+                       Vector2D(M[:, 1]))
 
     def Basis(self):
         return Basis2D(self.u, self.v)
@@ -543,8 +576,8 @@ class Frame2D(Basis2D):
             fig, ax = plt.subplots()
 
         ax.plot(*self.origin.vector, style)
-        self.u.Draw(self.origin, ax, 'r')
-        self.v.Draw(self.origin, ax, 'g')
+        self.u.plot(origin=self.origin, ax=ax, color='r')
+        self.v.plot(origin=self.origin, ax=ax, color='g')
         ax.axis('equal')
 
     def Copy(self):
@@ -3824,13 +3857,15 @@ class BoundingBox:
         y = [p[1] for p in self.points]
         z = [p[2] for p in self.points]
         ax.scatter(x, y, z)
-        ax.plot(bbox_edges[0], color=color)
+        for edge in bbox_edges:
+            ax.plot3D([edge[0][0], edge[1][0]],
+                      [edge[0][1], edge[1][1]],
+                      [edge[0][2], edge[1][2]],
+                      'gray')
         ax.set_xlabel('X Label')
         ax.set_ylabel('Y Label')
         ax.set_zlabel('Z Label')
-
         plt.show()
-        
         return ax
     
     @classmethod
@@ -3937,44 +3972,121 @@ class BoundingBox:
                 dz = 0
         return (dx**2 + dy**2 + dz**2)**0.5
     
-#    def distance_between_two_points_on_bbox(self, point1, point2):
-#        
-#        if math.isclose(point1[0], self.xmin, abs_tol=1e-8):
-#            face_point1 = 5
-#        elif math.isclose(point1[0], self.xmax, abs_tol=1e-8):
-#            face_point1 = 3
-#        elif math.isclose(point1[0], self.ymin, abs_tol=1e-8):
-#            face_point1 = 4
-#        elif math.isclose(point1[0], self.ymax, abs_tol=1e-8):
-#            face_point1 = 2
-#        elif math.isclose(point1[0], self.zmin, abs_tol=1e-8):
-#            face_point1 = 6
-#        elif math.isclose(point1[0], self.zmax, abs_tol=1e-8):
-#            face_point1 = 1
-#        else:
-#            raise NotImplementedError
-#            
-#        if math.isclose(point2[0], self.xmin, abs_tol=1e-8):
-#            face_point2 = 5
-#        elif math.isclose(point2[0], self.xmax, abs_tol=1e-8):
-#            face_point2 = 3
-#        elif math.isclose(point2[0], self.ymin, abs_tol=1e-8):
-#            face_point2 = 4
-#        elif math.isclose(point2[0], self.ymax, abs_tol=1e-8):
-#            face_point2 = 2
-#        elif math.isclose(point2[0], self.zmin, abs_tol=1e-8):
-#            face_point2 = 6
-#        elif math.isclose(point2[0], self.zmax, abs_tol=1e-8):
-#            face_point2 = 1
-#        else:
-#            raise NotImplementedError
-#            
-#        
-#        # Create graph
+    def distance_between_two_points_on_bbox(self, point1, point2):
         
-        
-        
+        if   math.isclose(point1[0], self.xmin, abs_tol=1e-8):
+            face_point1 = 5
+        elif math.isclose(point1[0], self.xmax, abs_tol=1e-8):
+            face_point1 = 3
+        elif math.isclose(point1[1], self.ymin, abs_tol=1e-8):
+            face_point1 = 4
+        elif math.isclose(point1[1], self.ymax, abs_tol=1e-8):
+            face_point1 = 2
+        elif math.isclose(point1[2], self.zmin, abs_tol=1e-8):
+            face_point1 = 6
+        elif math.isclose(point1[2], self.zmax, abs_tol=1e-8):
+            face_point1 = 1
+        else:
+            raise NotImplementedError
             
+        if   math.isclose(point2[0], self.xmin, abs_tol=1e-8):
+            face_point2 = 5
+        elif math.isclose(point2[0], self.xmax, abs_tol=1e-8):
+            face_point2 = 3
+        elif math.isclose(point2[1], self.ymin, abs_tol=1e-8):
+            face_point2 = 4
+        elif math.isclose(point2[1], self.ymax, abs_tol=1e-8):
+            face_point2 = 2
+        elif math.isclose(point2[2], self.zmin, abs_tol=1e-8):
+            face_point2 = 6
+        elif math.isclose(point2[2], self.zmax, abs_tol=1e-8):
+            face_point2 = 1
+        else:
+            raise NotImplementedError
+            
+        if face_point1 > face_point2:
+            point1, point2 = point2, point1
+            face_point1, face_point2 = face_point2, face_point1
+            
+        # The points are on the same face
+        if face_point1 == face_point2:
+            return point1.PointDistance(point2)
+
+        deltax = self.xmax - self.xmin
+        deltay = self.ymax - self.ymin
+        deltaz = self.zmax - self.zmin
+        
+        point1_2d_coordinate_dict = {1: Point2D((point1[0]-self.xmin-deltax/2, point1[1]-self.ymin-deltay/2)),
+                                     2: Point2D((point1[2]-self.zmin-deltaz/2, point1[0]-self.xmin-deltax/2)),
+                                     3: Point2D((point1[1]-self.ymin-deltay/2, point1[2]-self.zmin-deltaz/2)),
+                                     4: Point2D((point1[0]-self.xmin-deltax/2, point1[2]-self.zmin-deltaz/2)),
+                                     5: Point2D((point1[2]-self.zmin-deltaz/2, point1[1]-self.ymin-deltay/2)),
+                                     6: Point2D((point1[1]-self.ymin-deltay/2, point1[0]-self.xmin-deltax/2))}
+        
+        point2_2d_coordinate_dict = {1: Point2D((point2[0]-self.xmin-deltax/2, point2[1]-self.ymin-deltay/2)),
+                                     2: Point2D((point2[2]-self.zmin-deltaz/2, point2[0]-self.xmin-deltax/2)),
+                                     3: Point2D((point2[1]-self.ymin-deltay/2, point2[2]-self.zmin-deltaz/2)),
+                                     4: Point2D((point2[0]-self.xmin-deltax/2, point2[2]-self.zmin-deltaz/2)),
+                                     5: Point2D((point2[2]-self.zmin-deltaz/2, point2[1]-self.ymin-deltay/2)),
+                                     6: Point2D((point2[1]-self.ymin-deltay/2, point2[0]-self.xmin-deltax/2))}
+        
+        opposite_face_dict = {1: 6, 2: 4, 3: 5, 4: 2, 5: 3, 6: 1}
+        
+        combination_dict = {(1, 2): Frame2D(Point2D((0,  deltay/2+deltaz/2)), Vector2D((0,-1)), Vector2D(( 1, 0))),
+                            (2, 1): Frame2D(Point2D(( deltay/2+deltaz/2, 0)), Vector2D((0, 1)), Vector2D((-1, 0))),
+                            (1, 3): Frame2D(Point2D(( deltax/2+deltaz/2, 0)), Vector2D((0, 1)), Vector2D((-1, 0))),
+                            (3, 1): Frame2D(Point2D((0,  deltax/2+deltaz/2)), Vector2D((0,-1)), Vector2D(( 1, 0))),
+                            (1, 4): Frame2D(Point2D((0, -deltay/2-deltaz/2)), Vector2D((1, 0)), Vector2D(( 0, 1))),
+                            (4, 1): Frame2D(Point2D((-deltay/2-deltaz/2, 0)), Vector2D((1, 0)), Vector2D(( 0, 1))),
+                            (1, 5): Frame2D(Point2D((-deltax/2-deltaz/2, 0)), Vector2D((1, 0)), Vector2D(( 0, 1))),
+                            (5, 1): Frame2D(Point2D((0, -deltax/2-deltaz/2)), Vector2D((1, 0)), Vector2D(( 0, 1))),
+                            (2, 3): Frame2D(Point2D((0,  deltax/2+deltay/2)), Vector2D((0,-1)), Vector2D(( 1, 0))),
+                            (3, 2): Frame2D(Point2D(( deltax/2+deltay/2, 0)), Vector2D((0, 1)), Vector2D((-1, 0))),
+                            (2, 5): Frame2D(Point2D((0, -deltax/2-deltay/2)), Vector2D((1, 0)), Vector2D(( 0, 1))),
+                            (5, 2): Frame2D(Point2D((-deltax/2-deltay/2, 0)), Vector2D((1, 0)), Vector2D(( 0, 1))),
+                            (2, 6): Frame2D(Point2D((-deltaz/2-deltay/2, 0)), Vector2D((1, 0)), Vector2D(( 0, 1))),
+                            (6, 2): Frame2D(Point2D((0, -deltaz/2-deltay/2)), Vector2D((1, 0)), Vector2D(( 0, 1))),
+                            (3, 4): Frame2D(Point2D((-deltay/2-deltax/2, 0)), Vector2D((1, 0)), Vector2D(( 0, 1))),
+                            (4, 3): Frame2D(Point2D((0, -deltay/2-deltax/2)), Vector2D((1, 0)), Vector2D(( 0, 1))),
+                            (3, 6): Frame2D(Point2D((0, -deltaz/2-deltax/2)), Vector2D((1, 0)), Vector2D(( 0, 1))),
+                            (6, 3): Frame2D(Point2D((-deltaz/2-deltax/2, 0)), Vector2D((1, 0)), Vector2D(( 0, 1))),
+                            (4, 5): Frame2D(Point2D((-deltax/2-deltay/2, 0)), Vector2D((0, 1)), Vector2D((-1, 0))),
+                            (5, 4): Frame2D(Point2D((0, -deltax/2-deltay/2)), Vector2D((0,-1)), Vector2D(( 1, 0))),
+                            (4, 6): Frame2D(Point2D((0, -deltaz/2-deltay/2)), Vector2D((0,-1)), Vector2D(( 1, 0))),
+                            (6, 4): Frame2D(Point2D((-deltaz/2-deltay/2, 0)), Vector2D((0, 1)), Vector2D((-1, 0))),
+                            (5, 6): Frame2D(Point2D((-deltaz/2-deltax/2, 0)), Vector2D((0, 1)), Vector2D((-1, 0))),
+                            (6, 5): Frame2D(Point2D((0, -deltaz/2-deltax/2)), Vector2D((0,-1)), Vector2D(( 1, 0)))}
+        
+        point1_2d = point1_2d_coordinate_dict[face_point1]
+        point2_2d = point2_2d_coordinate_dict[face_point2]
+        
+        # The points are on adjacent faces
+        if opposite_face_dict[face_point1] != face_point2:
+            frame =  combination_dict[(face_point1, face_point2)]
+            net_point2 = frame.OldCoordinates(point2_2d)
+            return point1_2d.PointDistance(net_point2)
+        
+        # The points are on opposite faces
+        else:
+            net_points2 = []
+            
+            faces_number = [1, 2, 3, 4, 5, 6]
+            faces_number.remove(face_point1)
+            faces_number.remove(face_point2)
+            pathes = []
+            for face_nb in faces_number:
+                path = [(face_point1, face_nb), (face_nb, face_point2)]
+                pathes.append(path)
+            for path in pathes:
+                frame1 = combination_dict[(path[0][0], path[0][1])]
+                frame2 = combination_dict[(path[1][0], path[1][1])]
+                frame = frame1 + frame2
+                
+                net_point2 = frame.OldCoordinates(point2_2d)
+                net_points2.append(net_point2)
+
+            return min([point1_2d.PointDistance(p) for p in net_points2])
+
     def Babylon(self):
         height = self.ymax-self.ymin
         width = self.xmax-self.xmin
@@ -4539,11 +4651,15 @@ class VolumeModel:
 
 class Routing:
     def __init__(self, point1, point2, volumemodel):
-#        self.shells = [shell1, shell2]
         self.points = [point1, point2]
         self.volumemodel = volumemodel
         
     def straight_line(self):
+        """
+        Returns 2 distances : 
+            - no collision distance
+            - collision distance
+        """
         line = LineSegment3D(self.points[0], self.points[1])
         
         intersection_points = []
@@ -4566,22 +4682,35 @@ class Routing:
             
         return line.Length()-intersection_distance, intersection_distance
     
-#    def straight_line2(self):
-#        line = LineSegment3D(self.points[0], self.points[1])
-#        
-#        intersection_points = []
-#        for shell in self.volumemodel.shells:
-#            shell_intersection_points = []
-#            bbox = shell.bounding_box
-#            for face in shell.faces:
-#                intersection_point, intersection_abscissea = face.linesegment_intersection(line, abscissea=True)
-#                if intersection_point is not None:
-#                    intersection_points.append((intersection_point, intersection_abscissea))
-#                    shell_intersection_points.append((intersection_point, intersection_abscissea))
-#            
-#            if shell_intersection_points 
+    def straight_line2(self):
+        """
+        Returns the distance of the line going around each shell's bbox encountered along the path
+        """
         
-
+        line = LineSegment3D(self.points[0], self.points[1])
+        
+        around_bbox_distances = []
+        intersection_points = []
+        for shell in self.volumemodel.shells:
+            shell_intersection_points = []
+            bbox = shell.bounding_box
+            for face in shell.faces:
+                intersection_point, intersection_abscissea = face.linesegment_intersection(line, abscissea=True)
+                if intersection_point is not None:
+                    intersection_points.append((intersection_point, intersection_abscissea))
+                    shell_intersection_points.append(intersection_point)
+            
+            if len(shell_intersection_points) == 2:
+                around_bbox_distance = bbox.distance_between_two_points_on_bbox(shell_intersection_points[0], shell_intersection_points[1])
+                around_bbox_distances.append(around_bbox_distance)
+            elif len(shell_intersection_points) > 2 or len(shell_intersection_points) == 1:
+                raise NotImplementedError
+                            
+        intersection_distance = 0
+        for pt1, pt2 in (intersection_points[::2], intersection_points[1::2]):
+            intersection_distance += pt1.PointDistance(pt2)
+            
+        return line.Length() - intersection_distance + sum(around_bbox_distances)
 
 
 class ViewIso:
