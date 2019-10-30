@@ -4668,14 +4668,13 @@ class Routing:
                 intersection_point, intersection_abscissea = face.linesegment_intersection(line, abscissea=True)
                 if intersection_point is not None:
                     intersection_points.append((intersection_point, intersection_abscissea))
-                    
-        sorted(intersection_points, key=lambda abscissea: abscissea[1])
-        
+
         # verifier le premier et le dernier point de intersection_points
         
         if len(intersection_points)%2 != 0:
             raise NotImplementedError
-            
+        
+        sorted(intersection_points, key=lambda abscissea: abscissea[1])
         intersection_distance = 0
         for pt1, pt2 in (intersection_points[::2], intersection_points[1::2]):
             intersection_distance += pt1.PointDistance(pt2)
@@ -4686,7 +4685,6 @@ class Routing:
         """
         Returns the distance of the line going around each shell's bbox encountered along the path
         """
-        
         line = LineSegment3D(self.points[0], self.points[1])
         
         around_bbox_distances = []
@@ -4705,7 +4703,8 @@ class Routing:
                 around_bbox_distances.append(around_bbox_distance)
             elif len(shell_intersection_points) > 2 or len(shell_intersection_points) == 1:
                 raise NotImplementedError
-                            
+        
+        sorted(intersection_points, key=lambda abscissea: abscissea[1])
         intersection_distance = 0
         for pt1, pt2 in (intersection_points[::2], intersection_points[1::2]):
             intersection_distance += pt1.PointDistance(pt2)
