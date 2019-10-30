@@ -1911,9 +1911,13 @@ class Plane3D:
         w = linesegment.points[0] - self.origin
         normalDotu = self.normal.Dot(u)
         if math.isclose(normalDotu, 0, abs_tol=1e-08):
+            if abscissea:
+                return None, None
             return None
         intersection_abscissea = - self.normal.Dot(w) / normalDotu
         if intersection_abscissea < 0 or intersection_abscissea > 1:
+            if abscissea:
+                return None, None
             return None
         if abscissea:
             return linesegment.points[0] + intersection_abscissea * u, intersection_abscissea
@@ -1950,6 +1954,7 @@ class Plane3D:
             else:
                 self.origin = new_origin
                 self.vectors = [new_vector1, new_vector2]
+                self.normal = frame.Basis().OldCoordinates(self.normal)
                 self.normal.Normalize()
         if side == 'new':
             new_origin = frame.NewCoordinates(self.origin)
@@ -1960,6 +1965,7 @@ class Plane3D:
             else:
                 self.origin = new_origin
                 self.vectors = [new_vector1, new_vector2]
+                self.normal = frame.Basis().NewCoordinates(self.normal)
                 self.normal.Normalize()
                 
     def copy(self):
@@ -1974,8 +1980,26 @@ class Plane3D:
             ax = fig.add_subplot(111, projection='3d')
         self.origin.MPLPlot(ax)
         self.vectors[0].MPLPlot(ax, starting_point=self.origin, color='r')
-        self.vectors[1].MPLPlot(ax, starting_point=self.origin, color='b')
+        self.vectors[1].MPLPlot(ax, starting_point=self.origin, color='g')
         return ax
+    
+    def Babylon(self):
+        s = 'var myPlane = BABYLON.MeshBuilder.CreatePlane("myPlane", {width: 0.5, height: 0.5, sideOrientation: BABYLON.Mesh.DOUBLESIDE}, scene);\n'
+        s += 'myPlane.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));\n'.format(self.origin[0], self.origin[1], self.origin[2])
+
+        s += 'var axis1 = new BABYLON.Vector3({}, {}, {});\n'.format(self.vectors[0][0], self.vectors[0][1], self.vectors[0][2])
+        s += 'var axis2 = new BABYLON.Vector3({}, {}, {});\n'.format(self.vectors[1][0], self.vectors[1][1], self.vectors[1][2])
+        s += 'var axis3 = new BABYLON.Vector3({}, {}, {});\n'.format(self.normal[0], self.normal[1], self.normal[2])
+        s += 'var orientation = BABYLON.Vector3.RotationFromAxis(axis1, axis2, axis3);\n'
+        s += 'myPlane.rotation = orientation;\n'
+
+        s += 'var planemat = new BABYLON.StandardMaterial("planemat", scene);\n'
+        s += 'planemat.alpha = 0.4;\n'
+        s += 'myPlane.material = planemat;\n'
+        
+#        print(self.__dict__)
+        
+        return s
 
 
 class Basis3D(Basis):
@@ -3350,6 +3374,8 @@ class Face3D(Primitive3D):
             intersection_point = self.plane.linesegment_intersection(linesegment)
             
         if intersection_point is None:
+            if abscissea:
+                return None, None
             return None
         point_on_face_boo = self.point_on_face(intersection_point)
         ### PLOT ###
@@ -3364,6 +3390,8 @@ class Face3D(Primitive3D):
 #            print('point_on_face_boo', point_on_face_boo)
         ############
         if not point_on_face_boo:
+            if abscissea:
+                return None, None
             return None
         
         if abscissea:
@@ -3671,7 +3699,7 @@ class Shell3D(CompositePrimitive3D):
         mesure = Mesure(point1_min, point2_min)
                         
         if add_to_volumemodel is not None:
-            add_to_volumemodel.shells.append(mesure)
+            add_to_volumemodel.primitives.append(mesure)
                             
         return mesure
 
@@ -3690,7 +3718,7 @@ class Shell3D(CompositePrimitive3D):
         mesure = Mesure(point1_min, point2_min)
                         
         if add_to_volumemodel is not None:
-            add_to_volumemodel.shells.append(mesure)
+            add_to_volumemodel.primitives.append(mesure)
                             
         return mesure
     
@@ -3741,39 +3769,6 @@ class Shell3D(CompositePrimitive3D):
     def Babylon(self):
         s = 'var customMesh = new BABYLON.Mesh("custom", scene);\n'
         
-#        positions = ''
-#        indices = ''
-#        ij = 0
-#        for j, face in enumerate(self.faces):
-#            if len(face.contours[0].points) < 3:
-#                return NotImplementedError
-#            
-#            elif len(face.contours[0].points) == 3:
-#                pts = face.contours[0].points
-#                for pt in pts:
-#                    positions += '{},{},{},'.format(round(pt[0],3),round(pt[1],3),round(pt[2],3))
-#                
-#                indices += '{},{},{},'.format(ij, ij+1, ij+2)
-#                
-#                ij += len(pts)
-#            
-#            else: 
-#                mid_point = face.average_center_point()
-#                
-#                positions += '{},{},{},'.format(round(mid_point[0],3),round(mid_point[1],3),round(mid_point[2],3))
-#                pts = face.contours[0].points
-#                for pt in pts:
-#                    positions += '{},{},{},'.format(round(pt[0],3),round(pt[1],3),round(pt[2],3))
-#                    
-#                for i in range(len(pts)-1):
-#                    indices += '{},{},{},'.format(ij, ij+i+1, ij+i+2)
-#                indices += '{},{},{},'.format(ij, ij+len(pts), ij+1)
-#                
-#                ij += len(pts)+1
-#            
-#        positions = positions[:-1]
-#        indices = indices[:-1]
-        
         positions = ''
         indices = ''
         
@@ -3787,12 +3782,11 @@ class Shell3D(CompositePrimitive3D):
             for j, indexes in enumerate(triangles_indexes):                    
                 indices += '{},{},{},'.format(indexes[0]+nb_points, indexes[1]+nb_points, indexes[2]+nb_points)
             nb_points += len(points_3D)
+            
+#            s += face.plane.Babylon()
                     
         positions = positions[:-1]
         indices = indices[:-1]
-#        print()
-#        print('position', positions)
-#        print('indices', indices)
         
         s += 'var positions = [{}];\n'.format(positions)
         s += 'var indices = [{}];\n'.format(indices)
@@ -4114,8 +4108,9 @@ class BoundingBox:
 
 
 class Mesure(Line3D):
-    def __init__(self, point1, point2):
+    def __init__(self, point1, point2, color=(1,0,0)):
         self.points = [point1, point2]
+        self.color = color
         self.distance = Vector3D(self.points[0]-self.points[1]).Norm()
         self.bounding_box = self._bounding_box()
         
@@ -4126,7 +4121,7 @@ class Mesure(Line3D):
         s += 'var point2 = new BABYLON.Vector3({},{},{});\n'.format(self.points[1][0],self.points[1][1],self.points[1][2])
         s += 'myPoints.push(point2);\n'
         s += 'var line = BABYLON.MeshBuilder.CreateLines("lines", {points: myPoints}, scene);\n'
-        s += 'line.color = new BABYLON.Color3(1, 0, 0);\n'
+        s += 'line.color = new BABYLON.Color3({}, {}, {});\n'.format(self.color[0], self.color[1], self.color[2])
         return s 
     
 
@@ -4391,9 +4386,8 @@ class Step:
                 primitives.append(volmdlr_object.primitive)
         
         return None, object_dict, primitives
-
-    def to_volume_model(self, name, add_to_volume_model=None):
-
+    
+    def to_shell3d(self, name):
         object_dict = {}
         primitives = []
                                     
@@ -4415,26 +4409,67 @@ class Step:
             if node != '#0' and self.functions[node].name == 'CLOSED_SHELL':
                 shells.append(object_dict[node])
         print(shells)
+        return shells
         
-        if add_to_volume_model is None:
-            volume_model = VolumeModel(shells, primitives, name)
-            return volume_model
-        else:
-            add_to_volume_model.shells.extend(shells)
-            add_to_volume_model.primitives.extend(primitives)
-            return add_to_volume_model
+
+#    def to_volume_model(self, name, add_to_volume_model=None):
+#
+#        object_dict = {}
+#        primitives = []
+#                                    
+#        self.graph.add_node("#0")
+#        for node in self.graph.nodes:
+#            if node != '#0' and self.functions[node].name == "CLOSED_SHELL":
+#                self.graph.add_edge("#0", node)
+#        
+#        edges = list(nx.algorithms.traversal.breadth_first_search.bfs_edges(self.graph, "#0"))[::-1]        
+#
+#        for edge_nb, edge in enumerate(edges):
+#            instanciate_id = edge[1]
+#            res, object_dict, primitives = self.instanciate(instanciate_id, object_dict, primitives)
+#            if res is not None:
+#                raise NotImplementedError
+#
+#        shells = []
+#        for node in list(self.graph.nodes):
+#            if node != '#0' and self.functions[node].name == 'CLOSED_SHELL':
+#                shells.append(object_dict[node])
+#        print(shells)
+#        
+#        if add_to_volume_model is None:
+#            volume_model = VolumeModel(shells, primitives, name)
+#            return volume_model
+#        else:
+#            add_to_volume_model.shells.extend(shells)
+#            add_to_volume_model.primitives.extend(primitives)
+#            return add_to_volume_model
 
 
 class VolumeModel:
     """
     :param groups: A list of two element tuple. The first element is a string naming the group and the second element is a list of primitives of the group
     """
-    def __init__(self, shells, primitives, name=''):
-        self.shells = shells
+#    def __init__(self, shells, primitives, name=''):
+#        self.shells = shells
+#        self.primitives = primitives
+#        self.name = name
+#        if self.shells:
+#            self.bounding_box = self._bounding_box()
+    
+    def __init__(self, primitives, name=''):
         self.primitives = primitives
         self.name = name
+        if self.primitives:
+            self.shells = self._extract_shells()
         if self.shells:
             self.bounding_box = self._bounding_box()
+            
+    def _extract_shells(self):
+        shells = []
+        for primitive in self.primitives:
+            if isinstance(primitive, Shell3D):
+                shells.append(primitive)
+        return shells
 
     def Volume(self):
         volume=0
@@ -4445,24 +4480,24 @@ class VolumeModel:
 
     def Rotation(self, center, axis, angle, copy=True):
         if copy:
-            new_shells = [shell.Rotation(center, axis, angle, copy=True) for shell in self.shells]
+#            new_shells = [shell.Rotation(center, axis, angle, copy=True) for shell in self.shells]
             new_primitives = [primitive.Rotation(center, axis, angle, copy=True) for primitive in self.primitives]
-            return VolumeModel(new_shells, new_primitives, self.name)
+            return VolumeModel(new_primitives, self.name)
         else:
-            for shell in self.shells:
-                shell.Translation(center, axis, angle, copy=False)
+#            for shell in self.shells:
+#                shell.Translation(center, axis, angle, copy=False)
             for primitives in self.primitives:
                 primitives.Translation(center, axis, angle, copy=False)
             self.bounding_box = self._bounding_box()
 
     def Translation(self, offset, copy=True):
         if copy:
-            new_shells = [shell.Translation(offset, copy=True) for shell in self.shells]
+#            new_shells = [shell.Translation(offset, copy=True) for shell in self.shells]
             new_primitives = [primitive.Translation(offset, copy=True) for primitive in self.primitives]
-            return VolumeModel(new_shells, new_primitives, self.name)
+            return VolumeModel(new_primitives, self.name)
         else:
-            for shell in self.shells:
-                shell.Translation(offset, copy=False)
+#            for shell in self.shells:
+#                shell.Translation(offset, copy=False)
             for primitives in self.primitives:
                 primitives.Translation(offset, copy=False)
             self.bounding_box = self._bounding_box()
@@ -4473,26 +4508,26 @@ class VolumeModel:
         side = 'old' or 'new'
         """
         if copy:
-            new_shells = [shell.frame_mapping(frame, side, copy=True) for shell in self.shells]
+#            new_shells = [shell.frame_mapping(frame, side, copy=True) for shell in self.shells]
             new_primitives = [primitive.frame_mapping(frame, side, copy=True) for primitive in self.primitives]
-            return VolumeModel(new_shells, new_primitives, self.name)
+            return VolumeModel(new_primitives, self.name)
         else:
-            for shell in self.shells:
-                shell.frame_mapping(frame, side, copy=False)
+#            for shell in self.shells:
+#                shell.frame_mapping(frame, side, copy=False)
             for primitives in self.primitives:
                 primitives.frame_mapping(frame, side, copy=False)
             self.bounding_box = self._bounding_box()
             
     def copy(self):
-        new_shells = [shell.copy() for shell in self.shells]
+#        new_shells = [shell.copy() for shell in self.shells]
         new_primitives = [primitive.copy() for primitive in self.primitives]
-        return VolumeModel(new_shells, new_primitives, self.name)
+        return VolumeModel(new_primitives, self.name)
             
     def _bounding_box(self):
         bboxes = []
-        for shell in self.shells:
-            if hasattr(shell, '_bounding_box'):
-                bboxes.append(shell.bounding_box)
+        for primitive in self.primitives:
+            if hasattr(primitive, '_bounding_box'):
+                bboxes.append(primitive.bounding_box)
         
         xmin = min([box.xmin for box in bboxes])
         xmax = max([box.xmax for box in bboxes])
@@ -4634,7 +4669,7 @@ class VolumeModel:
                           bbox.zmax - bbox.zmin])
 
         primitives_strings=[]
-        for primitive in self.shells:
+        for primitive in self.primitives:
             if hasattr(primitive, 'Babylon'):
                 primitives_strings.append(primitive.Babylon())
         return template.render(name=self.name,center=tuple(center),length=2*max_length,
@@ -4666,20 +4701,27 @@ class Routing:
         for shell in self.volumemodel.shells:
             for face in shell.faces:
                 intersection_point, intersection_abscissea = face.linesegment_intersection(line, abscissea=True)
-                if intersection_point is not None:
+                if intersection_point is not None and intersection_abscissea != 0 and intersection_abscissea != 1:
                     intersection_points.append((intersection_point, intersection_abscissea))
-
-        # verifier le premier et le dernier point de intersection_points
         
         if len(intersection_points)%2 != 0:
             raise NotImplementedError
-        
+
         sorted(intersection_points, key=lambda abscissea: abscissea[1])
-        intersection_distance = 0
-        for pt1, pt2 in (intersection_points[::2], intersection_points[1::2]):
-            intersection_distance += pt1.PointDistance(pt2)
+        all_points_abscissea = [(self.points[0], 0)] + intersection_points[:] + [(self.points[1], 1)]
+        all_points = [p[0] for p in all_points_abscissea]
+        
+        no_collision_mesures = []
+        collision_mesures = []
+        i = 0
+        for pt1, pt2 in zip(all_points[:-1], all_points[1:]):
+            if i%2 == 0:
+                no_collision_mesures.append(Mesure(pt1, pt2, color=(0,0,1)))
+            else:
+                collision_mesures.append(Mesure(pt1, pt2, color=(1,0,0)))
+            i += 1
             
-        return line.Length()-intersection_distance, intersection_distance
+        return no_collision_mesures, collision_mesures
     
     def straight_line2(self):
         """
@@ -4694,7 +4736,7 @@ class Routing:
             bbox = shell.bounding_box
             for face in shell.faces:
                 intersection_point, intersection_abscissea = face.linesegment_intersection(line, abscissea=True)
-                if intersection_point is not None:
+                if intersection_point is not None and intersection_abscissea != 0 and intersection_abscissea != 1:
                     intersection_points.append((intersection_point, intersection_abscissea))
                     shell_intersection_points.append(intersection_point)
             
@@ -4705,8 +4747,10 @@ class Routing:
                 raise NotImplementedError
         
         sorted(intersection_points, key=lambda abscissea: abscissea[1])
+        all_points = [p[0] for p in intersection_points]
+        
         intersection_distance = 0
-        for pt1, pt2 in (intersection_points[::2], intersection_points[1::2]):
+        for pt1, pt2 in zip(all_points[::2], all_points[1::2]):
             intersection_distance += pt1.PointDistance(pt2)
             
         return line.Length() - intersection_distance + sum(around_bbox_distances)
