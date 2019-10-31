@@ -45,8 +45,8 @@ import os
 import tempfile
 import subprocess
 
-import time
 import random
+
 
 
 def standardize_knot_vector(knot_vector):
@@ -192,6 +192,15 @@ class Vector:
         d = {'vector': [float(i) for i in self.vector]}
         return d
 
+    @classmethod
+    def mean_point(cls, points):
+        n = 1
+        point = points[0].copy()
+        for point2 in points[1:]:
+            point += point2
+            n += 1
+        point /= n
+        return point
 
 class Vector2D(Vector):
     def __init__(self, vector, name=''):
@@ -218,7 +227,7 @@ class Vector2D(Vector):
         return Vector2D((self.vector[0] / value,
                          self.vector[1] / value))
 
-    def __round__(self, ndigits):
+    def __round__(self, ndigits=6):
         return self.__class__((round(self.vector[0], ndigits),
                                round(self.vector[1], ndigits)))
     
@@ -317,6 +326,8 @@ class Vector2D(Vector):
 x2D = Vector2D((1, 0))
 y2D = Vector2D((0, 1))
 
+X2D = Vector2D((1, 0))
+Y2D = Vector2D((0, 1))
 
 class Point2D(Vector2D):
     def __init__(self, vector, name=''):
@@ -413,6 +424,7 @@ class Point2D(Vector2D):
         return  pp1 - pp1.Dot(n)*n + p1
 
 o2D = Point2D((0, 0))
+O2D = Point2D((0, 0))
 
 class Basis:
     """
@@ -440,7 +452,8 @@ class Basis:
         d = {'vectors' : [vector.Dict() for vector in self.vectors]}
         return d
 
-        
+    def copy(self):
+        return self.__class__(*self.vectors)
 
 class Basis2D(Basis):
     """
@@ -464,6 +477,11 @@ class Basis2D(Basis):
         return (self.u, self.v)
 
     vectors = property(_get_vectors)
+    
+
+    def to_frame(self, origin):
+        return Frame2D(origin, self.u, self.v)
+
 
     def TransfertMatrix(self):
         return npy.array([[self.u[0], self.v[0]],
@@ -479,12 +497,12 @@ class Basis2D(Basis):
 
     def NewCoordinates(self, vector):
         matrix = self.InverseTransfertMatrix()
-        return Vector2D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1],
+        return Point2D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1],
                          matrix[1][0]*vector[0] + matrix[1][1]*vector[1]))
 
     def OldCoordinates(self, vector):
         matrix = self.TransfertMatrix()
-        return Vector2D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1],
+        return Point2D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1],
                          matrix[1][0]*vector[0] + matrix[1][1]*vector[1]))
 
     def Rotation(self, angle, copy=True):
@@ -1095,7 +1113,7 @@ class LineSegment2D(Line2D):
         else:
             return point
 
-    def MPLPlot(self, ax=None, style='-k', arrow=False, width=None):
+    def MPLPlot(self, ax=None, color='k', arrow=False, width=None):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -1104,7 +1122,7 @@ class LineSegment2D(Line2D):
 
         p1, p2 = self.points
         if arrow:
-            ax.plot([p1[0], p2[0]], [p1[1], p2[1]], style)
+            ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color)
             length = ((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)**0.5
             if width is None:
                 width = length / 1000.
@@ -1118,7 +1136,7 @@ class LineSegment2D(Line2D):
                      head_width = head_width, fc = 'b', linewidth = 0,
                      head_length = head_length, width = width, alpha = 0.3)
         else:
-            ax.plot([p1[0], p2[0]], [p1[1], p2[1]], style)
+            ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color)
         return fig, ax
 
     def To3D(self, plane_origin, x1, x2):
@@ -1665,7 +1683,7 @@ class Vector3D(Vector):
                          self.vector[1] / value,
                          self.vector[2] / value))
 
-    def __round__(self, ndigits):
+    def __round__(self, ndigits=6):
         return self.__class__((round(self.vector[0], ndigits),
                                round(self.vector[1], ndigits),
                                round(self.vector[2], ndigits)))
@@ -1775,6 +1793,10 @@ x3D = Vector3D((1, 0, 0))
 y3D = Vector3D((0, 1, 0))
 z3D = Vector3D((0, 0, 1))
 
+X3D = Vector3D((1, 0, 0))
+Y3D = Vector3D((0, 1, 0))
+Z3D = Vector3D((0, 0, 1))
+
 
 class Point3D(Vector3D):
     _standalone_in_db = False
@@ -1859,6 +1881,7 @@ class Point3D(Vector3D):
         
 
 o3D = Point3D((0, 0, 0))
+O3D = Point3D((0, 0, 0))
 
 
 class Plane3D:
@@ -2036,12 +2059,33 @@ class Basis3D(Basis):
         self.v = v
         self.w = w
         self.name = name
+        
+        
+    def __add__(self, other_basis):
+        P = npy.dot(self.TransfertMatrix(), other_basis.TransfertMatrix())
+        return Basis3D(Vector3D(P[:, 0]),
+                       Vector3D(P[:, 1]),
+                       Vector3D(P[:, 2]))
+
 
     def __neg__(self):
         Pinv = self.InverseTransfertMatrix()
         return Basis3D(Vector3D(Pinv[:, 0]),
                        Vector3D(Pinv[:, 1]),
                        Vector3D(Pinv[:, 2]))
+
+    def __sub__(self, other_frame):
+        P1inv = other_frame.InverseTransfertMatrix()
+        P2 = self.TransfertMatrix()
+        M = npy.dot(P1inv, P2)
+        return Basis3D(Vector3D(M[:, 0]),
+                       Vector3D(M[:, 1]),
+                       Vector3D(M[:, 2]))
+
+    def __round__(self, ndigits=6):
+        return self.__class__((round(self.u, ndigits),
+                               round(self.v, ndigits),
+                               round(self.w, ndigits)))
 
     def __repr__(self):
         return '{}: U={}, V={}, W={}'.format(self.__class__.__name__, *self.vectors)
@@ -2050,6 +2094,23 @@ class Basis3D(Basis):
         return (self.u, self.v, self.w)
 
     vectors = property(_get_vectors)
+
+    @classmethod
+    def from_two_vectors(cls, vector1, vector2):
+        """
+        Create a basis with first vector1 adimensionned, as u, v is the vector2 substracted of u component,
+        w is the cross product of u and v
+        """
+        u = vector1.copy()
+        u.Normalize()
+        v = vector2 - vector2.Dot(vector1)*vector1
+        v.Normalize()
+        w = u.Cross(v)
+        
+        return Basis3D(u, v, w)
+    
+    def to_frame(self, origin):
+        return Frame3D(origin, self.u, self.v, self.w)
 
     def Rotation(self, axis, angle, copy=True):
         center = o3D
@@ -2111,7 +2172,7 @@ class Basis3D(Basis):
 
     def NewCoordinates(self, vector):
         matrix = self.InverseTransfertMatrix()
-        return Vector3D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1] + matrix[0][2]*vector[2],
+        return Point3D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1] + matrix[0][2]*vector[2],
                          matrix[1][0]*vector[0] + matrix[1][1]*vector[1] + matrix[1][2]*vector[2],
                          matrix[2][0]*vector[0] + matrix[2][1]*vector[1] + matrix[2][2]*vector[2]))
 
@@ -2121,7 +2182,7 @@ class Basis3D(Basis):
                          matrix[1][0]*point[0] + matrix[1][1]*point[1] + matrix[1][2]*point[2],
                          matrix[2][0]*point[0] + matrix[2][1]*point[1] + matrix[2][2]*point[2]))
 
-    def Copy(self):
+    def copy(self):
         return Basis3D(self.u, self.v, self.w)
 
     @classmethod
@@ -2131,6 +2192,9 @@ class Basis3D(Basis):
 
 
 xyz = Basis3D(x3D, y3D, z3D)
+XYZ = Basis3D(x3D, y3D, z3D)
+YZX = Basis3D(y3D, z3D, x3D)
+ZXY = Basis3D(z3D, x3D, y3D)
 
 class Frame3D(Basis3D):
     """
@@ -2181,6 +2245,12 @@ class Frame3D(Basis3D):
                        Vector3D(M[:, 1]),
                        Vector3D(M[:, 2]))
 
+    def __round__(self, ndigits=6):
+        return self.__class__(round(self.origin, ndigits),
+                              round(self.u, ndigits),
+                              round(self.v, ndigits),
+                              round(self.w, ndigits))
+        
 
     def Basis(self):
         return Basis3D(self.u, self.v, self.w)
@@ -2205,7 +2275,7 @@ class Frame3D(Basis3D):
             return Frame3D(self.origin.Translation(offset), self.u, self.v, self.w, self.name)
         self.origin.Translation(offset, copy=False)
 
-    def Copy(self):
+    def copy(self):
         return Frame3D(self.origin, self.u, self.v, self.w)
 
     def plot2d(self, x=x3D, y=y3D, ax=None, color='k'):
@@ -2222,6 +2292,8 @@ class Frame3D(Basis3D):
                 vector2D.plot(origin=origin2d, ax=ax, color=color, label=str(iv+1))
         
         return fig, ax
+    
+    
     @classmethod
     def from_step(cls, arguments, object_dict):
         origin = object_dict[arguments[1]]
@@ -2239,6 +2311,23 @@ class Frame3D(Basis3D):
             w = u.Cross(v)
         return cls(origin, u, v, w, arguments[0][1:-1])
 
+    def babylonjs(self, size=0.1, parent=None):
+        s = 'var origin = new BABYLON.Vector3({},{},{});\n'.format(*self.origin)
+        s += 'var o_u = new BABYLON.Vector3({}, {}, {});\n'.format(*(size*self.u+self.origin))
+        s += 'var o_v = new BABYLON.Vector3({}, {}, {});\n'.format(*(size*self.v+self.origin))
+        s += 'var o_w = new BABYLON.Vector3({}, {}, {});\n'.format(*(size*self.w+self.origin))
+        s += 'var line1 = BABYLON.MeshBuilder.CreateTube("frame_U", {{path: [origin, o_u], radius: {}}}, scene);'.format(0.03*size)
+        s += 'line1.material = red_material;\n'
+        s += 'var line2 = BABYLON.MeshBuilder.CreateTube("frame_V", {{path: [origin, o_v], radius: {}}}, scene);'.format(0.03*size)
+        s += 'line2.material = green_material;\n'
+        s += 'var line3 = BABYLON.MeshBuilder.CreateTube("frame_W", {{path: [origin, o_w], radius: {}}}, scene);'.format(0.03*size)
+        s += 'line3.material = blue_material;\n'
+        if parent is not None:
+            s += 'line1.parent = {};\n'.format(parent)
+            s += 'line2.parent = {};\n'.format(parent)
+            s += 'line3.parent = {};\n'.format(parent)
+        
+        return s 
 
 oxyz = Frame3D(o3D, x3D, y3D, z3D)
 
@@ -2852,6 +2941,7 @@ class Wire3D(CompositePrimitive3D):
             length += primitive_length
         # Outside of length
         raise ValueError
+
 
     # TODO: method to check if it is a wire
     def FreeCADExport(self, ip):
@@ -4429,7 +4519,6 @@ class Step:
                 subfunction_name += char
             else:
                 subfunction_arg += char
-
         return [(subfunction_names[i], step_split_arguments(subfunction_args[i])) for i in range(len(subfunction_names))]
 
     def instanciate(self, instanciate_id, object_dict, primitives):
