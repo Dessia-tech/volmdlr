@@ -1,0 +1,4 @@
+recursive-include volmdlr/templates *.html
+prune .git
+
+
