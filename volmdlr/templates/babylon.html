@@ -18,12 +18,18 @@
       }
    </style>
     <!-- Link to the last version of BabylonJS -->
-    <script src="https://preview.babylonjs.com/babylon.js"></script>
+    <!-- <script src="https://preview.babylonjs.com/babylon.js"></script> -->
     <!-- Link to the last version of BabylonJS loaders to enable loading filetypes such as .gltf -->
-    <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+    <!-- <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.min.js"></script> -->
     <!-- Link to pep.js to ensure pointer events work consistently in all browsers -->
-    <script src="https://code.jquery.com/pep/0.4.1/pep.js"></script>
-    <script src="https://unpkg.com/earcut@2.1.1/dist/earcut.min.js"></script>
+    <!-- <script src="https://code.jquery.com/pep/0.4.1/pep.js"></script> -->
+    <!-- <script src="https://unpkg.com/earcut@2.1.1/dist/earcut.min.js"></script> -->
+
+    <script type="text/javascript" >{% include 'babylon.js' %}</script>
+    <script type="text/javascript" >{% include 'babylonjs.loaders.min.js' %}</script>
+    <script type="text/javascript" >{% include 'earcut.min.js' %}</script>
+    <script type="text/javascript" >{% include 'pep.js' %}</script>
+
 </head>
 <body>
    <canvas id="renderCanvas"></canvas>
@@ -37,22 +43,27 @@
 
 var createScene = function () {
     // This creates a basic Babylon Scene object (non-mesh)
-        var scene = new BABYLON.Scene(engine);
+    var scene = new BABYLON.Scene(engine);
+    scene.useRightHandedSystem = true;
 	var cam = new BABYLON.ArcRotateCamera("ArcRotateCamera", 0, 0, 2*{{length}}, new BABYLON.Vector3{{center}}, scene);
 	cam.wheelPrecision=50./{{length}}
 	cam.pinchPrecision=50./{{length}}
-	cam.panningSensibility=250./{{length}};
+	cam.panningSensibility=800./{{length}};
 	cam.minZ=0.01*{{length}};
 	cam.attachControl(canvas);
 	cam.inertia = 0;
 	cam.panningInertia = 0;
 	// cam.mode = BABYLON.Camera.ORTHOGRAPHIC_CAMERA;
-        
+	cam.upVector = new BABYLON.Vector3(0, 0, 1);
+	cam.lowerBetaLimit = null;
+    cam.upperBetaLimit = null;
+    cam.checkCollisions = false;
+
 
 	var light1 = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(-1, -1, -1), scene);
 	light1.intensity=0.5;
 	light1.specular = new BABYLON.Color3(0, 0, 0);
-	
+
 	// var light2 = new BABYLON.SpotLight("Spot0", new BABYLON.Vector3(0, 30, -10), new BABYLON.Vector3(0, -1, 0), 0.8, 2, scene);
 	// light2.diffuse = new BABYLON.Color3(1, 1, 1);
 	// light2.specular = new BABYLON.Color3(1, 1, 1);
@@ -60,43 +71,55 @@ var createScene = function () {
     light2.specular = new BABYLON.Color3(0, 0, 0);
     light2.intensity = 0.3;
     light2.parent = cam;
-    
+
     var light3 = new BABYLON.HemisphericLight("light3", new BABYLON.Vector3(1, 1, 1), scene);
     light3.specular = new BABYLON.Color3(0, 0, 0);
     light3.intensity = 0.50;
+
+
+    var showAxis = function (size) {
+        var makeTextPlane = function (text, color, size) {
+            var dynamicTexture = new BABYLON.DynamicTexture("DynamicTexture", 50, scene, true);
+            dynamicTexture.hasAlpha = true;
+            dynamicTexture.drawText(text, 5, 40, "bold 36px Arial", color, "transparent", true);
+            var plane = new BABYLON.Mesh.CreatePlane("TextPlane", size, scene, true);
+            plane.material = new BABYLON.StandardMaterial("TextPlaneMaterial", scene);
+            plane.material.backFaceCulling = false;
+            plane.material.specularColor = new BABYLON.Color3(0, 0, 0);
+            plane.material.diffuseTexture = dynamicTexture;
+            return plane;
+        };
+        var axisX = BABYLON.Mesh.CreateLines("axisX", [
+            new BABYLON.Vector3.Zero(), new BABYLON.Vector3(size, 0, 0), new BABYLON.Vector3(size * 0.95, 0.05 * size, 0),
+            new BABYLON.Vector3(size, 0, 0), new BABYLON.Vector3(size * 0.95, -0.05 * size, 0)
+        ], scene);
+        axisX.color = new BABYLON.Color3(1, 0, 0);
+        var xChar = makeTextPlane("X", "red", size / 10);
+        xChar.position = new BABYLON.Vector3(0.9 * size, -0.05 * size, 0);
+        var axisY = BABYLON.Mesh.CreateLines("axisY", [
+            new BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, size, 0), new BABYLON.Vector3(-0.05 * size, size * 0.95, 0),
+            new BABYLON.Vector3(0, size, 0), new BABYLON.Vector3(0.05 * size, size * 0.95, 0)
+        ], scene);
+        axisY.color = new BABYLON.Color3(0, 1, 0);
+        var yChar = makeTextPlane("Y", "green", size / 10);
+        yChar.position = new BABYLON.Vector3(0, 0.9 * size, -0.05 * size);
+        var axisZ = BABYLON.Mesh.CreateLines("axisZ", [
+            new BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, 0, size), new BABYLON.Vector3(0, -0.05 * size, size * 0.95),
+            new BABYLON.Vector3(0, 0, size), new BABYLON.Vector3(0, 0.05 * size, size * 0.95)
+        ], scene);
+        axisZ.color = new BABYLON.Color3(0, 0, 1);
+        var zChar = makeTextPlane("Z", "blue", size / 10);
+        zChar.position = new BABYLON.Vector3(0, 0.05 * size, 0.9 * size);
+    };
+    showAxis(1);
     
-
-	var lineX = BABYLON.Mesh.CreateLines("X", [
-	    new BABYLON.Vector3(0, 0, 0),
-	    new BABYLON.Vector3(1, 0, 0)
-	], scene);
-	lineX.color = new BABYLON.Color3(1, 0, 0);
-       
-	var lineY = BABYLON.Mesh.CreateLines("Y", [
-	    new BABYLON.Vector3(0, 0, 0),
-	    new BABYLON.Vector3(0, 0, 1)
-	], scene);
-       	lineY.color = new BABYLON.Color3(0, 1, 0);
-
-  	var lineZ = BABYLON.Mesh.CreateLines("Z", [
-	    new BABYLON.Vector3(0, 0, 0),
-	    new BABYLON.Vector3(0, 1, 0)
-	], scene);
-       	lineZ.color = new BABYLON.Color3(0, 0, 1);
-       
- 
-
-	//var roadmaterial = new BABYLON.StandardMaterial("sol", scene);
-	//roadtexture=new BABYLON.Texture("road.jpg", scene);
-	//roadmaterial.specularTexture = roadtexture;
-	//roadmaterial.diffuseTexture = roadtexture;
-	//ground.material=roadmaterial;
+                
 
 	{% for s in primitives_strings %}
 		{{s|safe}}
-  	{% endfor %}	
-	
-	
+  	{% endfor %}
+
+
 	return scene;	  };
 
       var scene = createScene();

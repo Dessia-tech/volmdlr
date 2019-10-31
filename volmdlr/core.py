@@ -10,6 +10,8 @@ Created on Tue Feb 28 14:07:37 2017
 #import bezier
 from geomdl import NURBS
 
+
+
 import warnings
 import math
 import numpy as npy
@@ -17,17 +19,23 @@ npy.seterr(divide='raise')
 #from itertools import permutations
 
 import matplotlib.pyplot as plt
+import mpl_toolkits.mplot3d as plt3d
 from matplotlib.patches import Arc, FancyArrow
 from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d import proj3d
+from matplotlib.patches import FancyArrowPatch
 
 import networkx as nx
 
-from .vmcy import PolygonPointBelongs, Vector3DDot
+from .vmcy import (sub2D, add2D, mul2D, Vector2DNorm, Vector2DDot, 
+                   sub3D, add3D, mul3D, Vector3DNorm, Vector3DDot, 
+                   LineSegment2DPointDistance, PolygonPointBelongs)
 
 from scipy.linalg import solve, LinAlgError
 
 import volmdlr.geometry as geometry
 from volmdlr import plot_data
+from volmdlr import triangulation as tri
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 
@@ -37,7 +45,8 @@ import os
 import tempfile
 import subprocess
 
-#import time
+import random
+
 
 
 def standardize_knot_vector(knot_vector):
@@ -58,7 +67,6 @@ def find_and_replace(string, find, replace):
     """
     Finds a string in a string and replace it
     """
-#    print('find and replace', string, find, replace)
     index = string.find(find)
     if index != -1:
         try:
@@ -77,8 +85,6 @@ def step_split_arguments(function_arg):
     ex: IN: '#123,#124,#125)'
        OUT: ['#123', '#124', '#125']
     """
-#        print('IN', function_arg)
-#        function_arg = function_arg[:-1]
     if len(function_arg) > 0 and function_arg[-1] != ')':
             function_arg += ')'
     arguments = []
@@ -100,11 +106,6 @@ def step_split_arguments(function_arg):
                 arguments.append(argument[:-1])
                 argument = ""
                 break
-
-#        if len(argument) != 0:
-#            arguments.append(argument[:])
-
-#        print('OUT', arguments)
     return arguments
 
 def set_to_list(step_set):
@@ -116,22 +117,25 @@ def set_to_list(step_set):
 def delete_node_and_predecessors(graph, node):
     predecessors = list(graph.predecessors(node))
     graph.remove_node(node)
-#    print('node removed', node)
     for predecessor in predecessors:
         delete_node_and_predecessors(graph, predecessor)
         
-#def ordered_set(a_list):
-#    #####################
-#    seconds = time.time()
-#    #####################
-#    ordered_set = []
-#    for elem in a_list:
-#        if not elem in ordered_set:
-#            ordered_set.append(elem)
-#    ##############################################
-#    print('ordered set', time.time()-seconds, 's')
-#    ##############################################
-#    return ordered_set
+def delete_node_and_successors(graph, node):
+    successors = list(graph.successors(node))
+    graph.remove_node(node)
+    for successor in successors:
+        delete_node_and_successors(graph, successor)
+
+class Arrow3D(FancyArrowPatch):
+    def __init__(self, xs, ys, zs, *args, **kwargs):
+        FancyArrowPatch.__init__(self, (0,0), (0,0), *args, **kwargs)
+        self._verts3d = xs, ys, zs
+
+    def draw(self, renderer):
+        xs3d, ys3d, zs3d = self._verts3d
+        xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, renderer.M)
+        self.set_positions((xs[0],ys[0]),(xs[1],ys[1]))
+        FancyArrowPatch.draw(self, renderer)
 
 
 class Vector:
@@ -167,12 +171,6 @@ class Vector:
 
     def __ne__(self, other_vector):
         return not npy.allclose(self.vector, other_vector.vector)
-
-    def __eq__(self, other_vector):
-        try:
-            return npy.allclose(self.vector, other_vector.vector)
-        except AttributeError:
-            return False
 
     def __hash__(self):
         return int(1000*npy.sum(self.vector, 0))
@@ -212,41 +210,39 @@ class Vector2D(Vector):
         self.name = name
 
     def __add__(self, other_vector):
-        return Vector2D((self.vector[0] + other_vector.vector[0],
-                               self.vector[1] + other_vector.vector[1]))
+        return Vector2D(add2D(self.vector, other_vector.vector))
 
     def __neg__(self):
         return Vector2D((-self.vector[0], -self.vector[1]))
 
     def __sub__(self, other_vector):
-        return Vector2D((self.vector[0] - other_vector.vector[0],
-                               self.vector[1] - other_vector.vector[1]))
-
+        return Vector2D(sub2D(self.vector, other_vector.vector))
+        
     def __mul__(self, value):
-        return Vector2D((self.vector[0] * value,
-                               self.vector[1] * value))
+        return Vector2D(mul2D(self.vector, value))
 
     def __truediv__(self, value):
         if value == 0:
             raise ZeroDivisionError
         return Vector2D((self.vector[0] / value,
-                               self.vector[1] / value))
+                         self.vector[1] / value))
 
     def __round__(self, ndigits=6):
         return self.__class__((round(self.vector[0], ndigits),
                                round(self.vector[1], ndigits)))
+    
+    def __eq__(self, other_vector):
+        return math.isclose(self.vector[0], other_vector.vector[0], abs_tol=1e-08) \
+        and math.isclose(self.vector[1], other_vector.vector[1], abs_tol=1e-08)
 
     def Norm(self):
         """
         :returns: norm of vector
         """
-        x, y = self.vector
-        return (x**2 + y**2)**0.5
+        return Vector2DNorm(self.vector)
 
     def Dot(self, other_vector):
-        u1, u2 = self.vector
-        v1, v2 = other_vector.vector
-        return u1*v1 + u2*v2
+        return Vector2DDot(self.vector, other_vector.vector)
 
     def Cross(self, other_vector):
         u1, u2 = self.vector
@@ -291,7 +287,7 @@ class Vector2D(Vector):
         )
         self.plot()
 
-    def plot(self, amplitude=0.1, origin=None, ax=None, color='k', line=False, label=None):
+    def plot(self, amplitude=0.5, origin=None, ax=None, color='k', line=False, label=None):
         if origin is None:
             origin = Vector2D((0., 0.))
         
@@ -339,19 +335,16 @@ class Point2D(Vector2D):
         self.name = name
 
     def __add__(self, other_vector):
-        return Point2D((self.vector[0] + other_vector.vector[0],
-                        self.vector[1] + other_vector.vector[1]))
+        return Point2D(add2D(self.vector, other_vector.vector))
 
     def __neg__(self):
         return Point2D((-self.vector[0], -self.vector[1]))
 
     def __sub__(self, other_vector):
-        return Point2D((self.vector[0] - other_vector.vector[0],
-                        self.vector[1] - other_vector.vector[1]))
+        return Point2D(sub2D(self.vector, other_vector.vector))
 
     def __mul__(self, value):
-        return Point2D((self.vector[0] * value,
-                               self.vector[1] * value))
+        return Point2D(mul2D(self.vector, value))
 
     def __truediv__(self, value):
         if value == 0:
@@ -359,42 +352,51 @@ class Point2D(Vector2D):
         return Point2D((self.vector[0] / value,
                         self.vector[1] / value))
 
-    def To3D(self, plane_origin, x1, x2):
+    def To3D(self, plane_origin, vx, vy):
         x, y = self.vector
-        return Point3D(plane_origin.vector + x1.vector*x + x2.vector*y)
+        return Point3D(plane_origin.vector + vx.vector*x + vy.vector*y)
 
-    def MPLPlot(self, ax, style='ob'):
+    def MPLPlot(self, ax=None, style='ob'):
+        if ax is None:
+            fig, ax = plt.subplots()
         x1 = self.vector
         ax.plot([x1[0]], [x1[1]], style)
-        return []
+        return ax
 
     def PointDistance(self, point2):
         return (self-point2).Norm()
-
-    #def Distance(self,point2):
-    #    return norm(self.vector-point2.vector)
-
+            
     @classmethod
     def LinesIntersection(cls, line1, line2, curvilinear_abscissa=False):
-        p11 = line1.points[0].vector
-        p12 = line1.points[1].vector
-        p21 = line2.points[0].vector
-        p22 = line2.points[1].vector
-        A = npy.array([[p12[0]-p11[0], p21[0]-p22[0]],
-                       [p12[1]-p11[1], p21[1]-p22[1]]])
-        x = npy.array([p21[0]-p11[0], p21[1]-p11[1]])
-        try:
-            t = solve(A, x)
-            if not curvilinear_abscissa:
-                return cls(p11+t[0]*(p12-p11))
-            else:
-                return (cls(p11+t[0]*(p12-p11)), t[0], t[1])
-        except LinAlgError:
-            # Parallel lines
+        x1 = line1.points[0].vector[0]
+        y1 = line1.points[0].vector[1]
+        x2 = line1.points[1].vector[0]
+        y2 = line1.points[1].vector[1]
+        x3 = line2.points[0].vector[0]
+        y3 = line2.points[0].vector[1]
+        x4 = line2.points[1].vector[0]
+        y4 = line2.points[1].vector[1]
+        
+        denominateur = (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4)
+        if math.isclose(denominateur, 0, abs_tol=1e-6):
             if not curvilinear_abscissa:
                 return None
             else:
                 return None, None, None
+        else:
+            x = (x1*y2-y1*x2)*(x3-x4)-(x1-x2)*(x3*y4-y3*x4)
+            x = x / denominateur
+            y = (x1*y2-y1*x2)*(y3-y4)-(y1-y2)*(x3*y4-y3*x4)
+            y = y / denominateur
+            if not curvilinear_abscissa:
+                return cls((x,y))
+            else:
+                t = (x1-x3)*(y3-y4)-(y1-y3)*(x3-x4)
+                t = t / denominateur
+                u = (x1-x2)*(y1-y3)-(y1-y2)*(x1-x3)
+                u = -u / denominateur
+                return (cls((x,y)), t, u)
+        
             
     def plot_data(self, marker=None, color='black', size=1,
                   opacity=1, arrow=False, stroke_width=None):
@@ -462,6 +464,11 @@ class Basis2D(Basis):
     def __init__(self, u, v):
         self.u = u
         self.v = v
+    
+    def __neg__(self):
+        Pinv = self.InverseTransfertMatrix()
+        return Basis2D(Vector3D(Pinv[:, 0]),
+                       Vector3D(Pinv[:, 1]))
 
     def __repr__(self):
         return '{}: U={}, V={}'.format(self.__class__.__name__, *self.vectors)
@@ -480,10 +487,6 @@ class Basis2D(Basis):
         return npy.array([[self.u[0], self.v[0]],
                           [self.u[1], self.v[1]]])
 
-#    def InverseTransfertMatrix(self):
-#        # Todo: cache for performance
-#        return inv(self.TransfertMatrix())
-
     def InverseTransfertMatrix(self):
         det = self.u[0]*self.v[1] - self.v[0]*self.u[1]
         if not math.isclose(det, 0, abs_tol=1e-10):
@@ -496,13 +499,11 @@ class Basis2D(Basis):
         matrix = self.InverseTransfertMatrix()
         return Point2D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1],
                          matrix[1][0]*vector[0] + matrix[1][1]*vector[1]))
-#        return Vector2D(npy.dot(self.InverseTransfertMatrix(), vector.vector))
 
     def OldCoordinates(self, vector):
         matrix = self.TransfertMatrix()
         return Point2D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1],
                          matrix[1][0]*vector[0] + matrix[1][1]*vector[1]))
-#        return Vector2D(npy.dot(self.TransfertMatrix(), vector.vector))
 
     def Rotation(self, angle, copy=True):
         center = o2D
@@ -537,6 +538,32 @@ class Frame2D(Basis2D):
 
     def __repr__(self):
         return '{}: O={} U={}, V={}'.format(self.__class__.__name__, self.origin, self.u, self.v)
+    
+    def __neg__(self):
+        Pinv = self.InverseTransfertMatrix()
+        new_origin = Point2D(npy.dot(Pinv, self.origin.vector))
+        return Frame2D(new_origin,
+                       Vector2D(Pinv[:, 0]),
+                       Vector2D(Pinv[:, 1]))
+
+
+    def __add__(self, other_frame):
+        P1 = self.TransfertMatrix()
+        new_origin = Point2D(npy.dot(P1, other_frame.origin.vector) + self.origin.vector)
+        M = npy.dot(P1, other_frame.TransfertMatrix())
+        return Frame2D(new_origin,
+                       Vector2D(M[:, 0]),
+                       Vector2D(M[:, 1]))
+
+
+    def __sub__(self, other_frame):
+        P1inv = other_frame.InverseTransfertMatrix()
+        P2 = self.TransfertMatrix()
+        new_origin = Point2D(npy.dot(P1inv, (self.origin - other_frame.origin).vector))
+        M = npy.dot(P1inv, P2)
+        return Frame2D(new_origin,
+                       Vector2D(M[:, 0]),
+                       Vector2D(M[:, 1]))
 
     def Basis(self):
         return Basis2D(self.u, self.v)
@@ -567,8 +594,8 @@ class Frame2D(Basis2D):
             fig, ax = plt.subplots()
 
         ax.plot(*self.origin.vector, style)
-        self.u.Draw(self.origin, ax, 'r')
-        self.v.Draw(self.origin, ax, 'g')
+        self.u.plot(origin=self.origin, ax=ax, color='r')
+        self.v.plot(origin=self.origin, ax=ax, color='g')
         ax.axis('equal')
 
     def Copy(self):
@@ -600,7 +627,7 @@ class CompositePrimitive2D(Primitive2D):
         self.basis_primitives = basis_primitives
 
 
-    def Rotation(self, center, angle, copy=False):
+    def Rotation(self, center, angle, copy=True):
         if copy:
             return self.__class__([p.Rotation(center, angle, copy=True)\
                                    for p in self.primitives])
@@ -609,7 +636,7 @@ class CompositePrimitive2D(Primitive2D):
                 p.Rotation(center, angle, copy=False)
             self.UpdateBasisPrimitives()
 
-    def Translation(self, offset, copy=False):
+    def Translation(self, offset, copy=True):
         if copy:
             return self.__class__([p.Translation(offset, copy=True)\
                                    for p in self.primitives])
@@ -859,14 +886,14 @@ class Line2D(Primitive2D, Line):
         p3D = [p.To3D(plane_origin, x1, x2) for p in self.points]
         return Line2D(*p3D, self.name)
 
-    def Rotation(self, center, angle, copy=False):
+    def Rotation(self, center, angle, copy=True):
         if copy:
             return Line2D(*[p.Rotation(center, angle, copy=True) for p in self.points])
         else:
             for p in self.points:
                 p.Rotation(center, angle, copy=False)
 
-    def Translation(self, offset, copy=False):
+    def Translation(self, offset, copy=True):
         if copy:
             return Line2D(*[p.Translation(offset, copy=True) for p in self.points])
         else:
@@ -882,7 +909,6 @@ class Line2D(Primitive2D, Line):
         t = (point-p1).Dot(u) / u.Norm()**2
         projection = p1 + t * u # Projection falls on the segment
         return (point-projection).Norm()
-#        return abs(u[1]*point[0] - u[0]*point[1] + p2[0]*p1[1] - p2[1]*p1[0]) / u.Norm()
 
     def PointProjection(self, point, curvilinear_abscissa=False):
         p1, p2 = self.points
@@ -1068,13 +1094,10 @@ class LineSegment2D(Line2D):
         """
         Computes the distance of a point to segment of line
         """
-        p1, p2 = self.points
-        u = p2-p1
-        t = max(0, min(1, (point-p1).Dot(u) / u.Norm()**2))
-        projection = p1 + t * u # Projection falls on the segment
+        distance, point = LineSegment2DPointDistance([p.vector for p in self.points], point.vector)
         if return_other_point:
-            return (projection-point).Norm(), projection
-        return (projection-point).Norm()
+            return distance, Point2D(point)
+        return distance
 
     def PointProjection(self, point, curvilinear_abscissa=False):
         point, curv_abs = Line2D.PointProjection(self, point, True)
@@ -1123,14 +1146,14 @@ class LineSegment2D(Line2D):
     def to_line(self):
         return Line2D(*self.points)
 
-    def Rotation(self, center, angle, copy=False):
+    def Rotation(self, center, angle, copy=True):
         if copy:
             return LineSegment2D(*[p.Rotation(center,angle,copy=True) for p in self.points])
         else:
             for p in self.points:
                 p.Rotation(center,angle,copy=False)
 
-    def Translation(self, offset, copy=False):
+    def Translation(self, offset, copy=True):
         if copy:
             return LineSegment2D(*[p.Translation(offset,copy=True) for p in self.points])
         else:
@@ -1270,13 +1293,13 @@ class Arc2D(Primitive2D):
 
         return Arc3D(ps, pi, pe, self.name)
 
-    def Rotation(self, center, angle, copy=False):
+    def Rotation(self, center, angle, copy=True):
         if copy:
             return Arc2D(*[p.Rotation(center,angle,copy=True) for p in [self.start,self.interior,self.end]])
         else:
             self.__init__(*[p.Rotation(center,angle,copy=True) for p in [self.start,self.interior,self.end]])
 
-    def Translation(self, offset, copy=False):
+    def Translation(self, offset, copy=True):
         if copy:
             return Arc2D(*[p.Translation(offset,copy=True) for p in [self.start,self.interior,self.end]])
         else:
@@ -1373,14 +1396,14 @@ class Circle2D(Primitive2D):
         pc=self.center.To3D(plane_origin, x, y)
         return Circle3D(pc,self.radius,normal, self.name)
 
-    def Rotation(self, center, angle, copy=False):
+    def Rotation(self, center, angle, copy=True):
         if copy:
             return Circle2D(self.center.Rotation(center,angle,copy=True),self.radius)
         else:
             self.center.Rotation(center,angle,copy=False)
             self.utd_geo_points=False
 
-    def Translation(self,offset,copy=False):
+    def Translation(self,offset,copy=True):
         if copy:
             return Circle2D(self.center.Translation(offset,copy=True),self.radius)
         else:
@@ -1479,14 +1502,14 @@ class Polygon2D(CompositePrimitive2D):
             lines.append(LineSegment2D(p1,p2))
         return lines
 
-    def Rotation(self, center, angle, copy=False):
+    def Rotation(self, center, angle, copy=True):
         if copy:
             return Polygon2D([p.Rotation(center,angle,copy=True) for p in self.points])
         else:
             for p in self.points:
                 p.Rotation(center,angle,copy=False)
 
-    def Translation(self, offset, copy=False):
+    def Translation(self, offset, copy=True):
         if copy:
             return Polygon2D([p.Translation(offset,copy=True) for p in self.points])
         else:
@@ -1599,9 +1622,11 @@ class Polygon2D(CompositePrimitive2D):
         return ax
 
 class Primitive3D:
-    def __init__(self, name=''):
+    def __init__(self, basis_primitives=None, name=''):
         self.name = name
-
+        self.basis_primitives = basis_primitives # une liste
+        if basis_primitives is None:
+            self.basis_primitives = []
 
 class Vector3D(Vector):
     _standalone_in_db = False
@@ -1640,39 +1665,33 @@ class Vector3D(Vector):
         self.name = name
 
     def __add__(self, other_vector):
-        return Vector3D((self.vector[0] + other_vector.vector[0],
-                               self.vector[1] + other_vector.vector[1],
-                               self.vector[2] + other_vector.vector[2]))
+        return Vector3D(add3D(self.vector, other_vector.vector))
 
     def __neg__(self):
         return Vector3D((-self.vector[0], -self.vector[1], -self.vector[2]))
 
     def __sub__(self, other_vector):
-        return Vector3D((self.vector[0] - other_vector.vector[0],
-                               self.vector[1] - other_vector.vector[1],
-                               self.vector[2] - other_vector.vector[2]))
+        return Vector3D(sub3D(self.vector, other_vector.vector))
 
     def __mul__(self, value):
-        return Vector3D((self.vector[0] * value,
-                               self.vector[1] * value,
-                               self.vector[2] * value))
+        return Vector3D(mul3D(self.vector, value))
 
     def __truediv__(self, value):
         if value == 0:
             raise ZeroDivisionError
         return Vector3D((self.vector[0] / value,
-                               self.vector[1] / value,
-                               self.vector[2] / value))
+                         self.vector[1] / value,
+                         self.vector[2] / value))
 
     def __round__(self, ndigits=6):
         return self.__class__((round(self.vector[0], ndigits),
                                round(self.vector[1], ndigits),
                                round(self.vector[2], ndigits)))
-
-#    def Dot(self, other_vector):
-#        u1, u2, u3 = self.vector
-#        v1, v2, v3 = other_vector.vector
-#        return u1*v1 + u2*v2 + u3*v3
+        
+    def __eq__(self, other_vector):
+        return math.isclose(self.vector[0], other_vector.vector[0], abs_tol=1e-08) \
+        and math.isclose(self.vector[1], other_vector.vector[1], abs_tol=1e-08) \
+        and math.isclose(self.vector[2], other_vector.vector[2], abs_tol=1e-08) 
     
     def Dot(self, other_vector):
         return Vector3DDot(self.vector, other_vector.vector)
@@ -1683,8 +1702,7 @@ class Vector3D(Vector):
         return Vector3D((u2*v3 - u3*v2, u3*v1 - u1*v3, u1*v2 - u2*v1))
 
     def Norm(self):
-        x, y, z = self.vector
-        return (x**2 + y**2 + z**2)**0.5
+        return Vector3DNorm(self.vector)
 
     def Rotation(self, center, axis, angle, copy=True):
         u = axis.vector
@@ -1699,17 +1717,32 @@ class Vector3D(Vector):
             self.vector = vector2
 
     def Translation(self, offset, copy=True):
-        vector2 = self.vector+offset
         if copy:
-            return Point3D(vector2)
+            return self+offset
         else:
-            self.vector = vector2
+            self.vector = self.vector+offset.vector
+            
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        if side == 'old':
+            new_vector = frame.OldCoordinates(self)
+            if copy:
+                return new_vector
+            else:
+                self.vector = new_vector
+                
+        if side == 'new':
+            new_vector = frame.NewCoordinates(self)
+            if copy:
+                return new_vector
+            else:
+                self.vector = new_vector
 
     def To2D(self, plane_origin, x, y):
         x2d = self.Dot(x) - plane_origin.Dot(x)
         y2d = self.Dot(y) - plane_origin.Dot(y)
-#        x2d = npy.dot(self.vector, x.vector) - npy.dot(plane_origin.vector, x.vector)
-#        y2d = npy.dot(self.vector, y.vector) - npy.dot(plane_origin.vector, y.vector)
         return Point2D((x2d,y2d))
 
     def RandomUnitNormalVector(self):
@@ -1731,16 +1764,29 @@ class Vector3D(Vector):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
-
-#        if arguments[1][0] == "#":
         if type(arguments[1]) is int:
         # VECTOR
             return cls(object_dict[arguments[1]], arguments[0][1:-1])
         else:
         # DIRECTION
-            return cls([float(i) for i in arguments[1][1:-1].split(",")],
+            return cls([float(i)/1000 for i in arguments[1][1:-1].split(",")],
                         arguments[0][1:-1])
-
+    
+    def MPLPlot(self, ax=None, starting_point=None, color=''):
+        if starting_point is None:
+            starting_point = Point3D((0,0,0))
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+        xs = [starting_point[0], self.vector[0]+starting_point[0]]
+        ys = [starting_point[1], self.vector[1]+starting_point[1]]
+        zs = [starting_point[2], self.vector[2]+starting_point[2]]
+        if color:
+            a = Arrow3D(xs, ys, zs, mutation_scale=10, lw=3, arrowstyle="-|>", color=color)
+        else:
+            a = Arrow3D(xs, ys, zs, mutation_scale=10, lw=3, arrowstyle="-|>")
+        ax.add_artist(a)
+        return ax
 
 
 x3D = Vector3D((1, 0, 0))
@@ -1776,29 +1822,23 @@ class Point3D(Vector3D):
         self.name=name
 
     def __add__(self, other_vector):
-        return Point3D((self.vector[0] + other_vector.vector[0],
-                               self.vector[1] + other_vector.vector[1],
-                               self.vector[2] + other_vector.vector[2]))
+        return Point3D(add3D(self.vector, other_vector.vector))
 
     def __neg__(self):
         return Point3D((-self.vector[0], -self.vector[1], -self.vector[2]))
 
     def __sub__(self, other_vector):
-        return Point3D((self.vector[0] - other_vector.vector[0],
-                               self.vector[1] - other_vector.vector[1],
-                               self.vector[2] - other_vector.vector[2]))
+        return Point3D(sub3D(self.vector, other_vector.vector))
 
     def __mul__(self, value):
-        return Point3D((self.vector[0] * value,
-                               self.vector[1] * value,
-                               self.vector[2] * value))
+        return Point3D(mul3D(self.vector, value))
 
     def __truediv__(self, value):
         if value == 0:
             raise ZeroDivisionError
         return Point3D((self.vector[0] / value,
-                               self.vector[1] / value,
-                               self.vector[2] / value))
+                        self.vector[1] / value,
+                        self.vector[2] / value))
 
     def MPLPlot(self, ax):
         ax.scatter(*self.vector)
@@ -1819,15 +1859,8 @@ class Point3D(Vector3D):
 
 
     def To2D(self, plane_origin, x, y):
-#        print(x)
-#        print(y)
-#        print(x.Dot(y))
-#        if x.Dot(y) > 1e-8:
-#            raise NotImplementedError
         x2d = self.Dot(x) - plane_origin.Dot(x)
         y2d = self.Dot(y) - plane_origin.Dot(y)
-#        x2d = npy.dot(self.vector, x.vector) - npy.dot(plane_origin.vector, x.vector)
-#        y2d = npy.dot(self.vector, y.vector) - npy.dot(plane_origin.vector, y.vector)
         return Point2D((x2d,y2d))
 
     def PointDistance(self, point2):
@@ -1835,8 +1868,17 @@ class Point3D(Vector3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
-        return cls([float(i) for i in arguments[1][1:-1].split(",")],
+        return cls([float(i)/1000 for i in arguments[1][1:-1].split(",")],
                     arguments[0][1:-1])
+        
+    def Babylon(self):
+        s = 'var sphere = BABYLON.MeshBuilder.CreateSphere("point", {diameter: 0.05}, scene);\n'
+        s += "sphere.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));\n".format(self.vector[0],self.vector[1],self.vector[2])
+        s += 'var mat = new BABYLON.StandardMaterial("mat", scene);\n'
+        s += 'mat.diffuseColor = new BABYLON.Color3(1, 0, 0);\n'
+        s += 'sphere.material = mat;\n'
+        return s
+        
 
 o3D = Point3D((0, 0, 0))
 O3D = Point3D((0, 0, 0))
@@ -1844,30 +1886,23 @@ O3D = Point3D((0, 0, 0))
 
 class Plane3D:
     def __init__(self, origin, vector1, vector2, name=''):
-        self.origin = origin
+        self.origin = Point3D(origin.vector)
+        vector1 = Vector3D(vector1.vector)
+        vector1.Normalize()
+        vector2 = Vector3D(vector2.vector)
+        vector2.Normalize()
         self.vectors = [vector1, vector2]
         self.name = name
         self.normal = self.vectors[0].Cross(self.vectors[1])
         self.normal.Normalize()
-        
-#        print(origin)
-#        print(self.vectors)
-#        print()
-        
-#        # TEST D'ORTHOGONALITE
-#        if self.vectors[0].Dot(self.vectors[1]) > 1e-8:
-#            print(self.vectors[0].Dot(self.vectors[1]))
-#            print('pas orthogonal')
-
+                
     @classmethod
     def from_step(cls, arguments, object_dict):
         frame3d = object_dict[arguments[1]]
         origin = frame3d.origin
         vector1 = frame3d.u
         vector2 = frame3d.v
-
         # TRANSFORMER EN 3D TOUS LES OBJETS LIES AU PLAN
-
         return cls(origin, vector1, vector2, arguments[0][1:-1])
     
     @classmethod
@@ -1879,13 +1914,10 @@ class Plane3D:
         normal = vector1.Cross(vector2)
         normal.Normalize()
         vector = vector1.Cross(normal)
-        return cls(point1, vector1, vector)
-
+        return cls(point1.copy(), vector1.copy(), vector.copy())
+    
     def point_on_plane(self, point):
-        projected_pt = point.PlaneProjection3D(self.origin, self.vectors[0], self.vectors[1])
-        if math.isclose(point[0], projected_pt[0], abs_tol=1e-8) \
-        and math.isclose(point[1], projected_pt[1], abs_tol=1e-8) \
-        and math.isclose(point[2], projected_pt[2], abs_tol=1e-8):
+        if math.isclose(self.normal.Dot(point-self.origin), 0, abs_tol=1e-6):
             return True
         return False
 
@@ -1897,36 +1929,100 @@ class Plane3D:
         intersection_abscissea = - self.normal.Dot(w) / self.normal.Dot(u)
         return line.points[0] + intersection_abscissea * u
 
-    def linesegment_intersection(self, linesegment):
+    def linesegment_intersection(self, linesegment, abscissea=False):
         u = linesegment.points[1] - linesegment.points[0]
         w = linesegment.points[0] - self.origin
         normalDotu = self.normal.Dot(u)
         if math.isclose(normalDotu, 0, abs_tol=1e-08):
+            if abscissea:
+                return None, None
             return None
         intersection_abscissea = - self.normal.Dot(w) / normalDotu
         if intersection_abscissea < 0 or intersection_abscissea > 1:
+            if abscissea:
+                return None, None
             return None
+        if abscissea:
+            return linesegment.points[0] + intersection_abscissea * u, intersection_abscissea
         return linesegment.points[0] + intersection_abscissea * u
 
     def Rotation(self, center, axis, angle, copy=True):
-        new_origin = self.origin.Rotation(center, axis, angle, True)
-        new_vector1 = self.vectors[0].Rotation(center, axis, angle, True)
-        new_vector2 = self.vectors[1].Rotation(center, axis, angle, True)
         if copy:
+            new_origin = self.origin.Rotation(center, axis, angle, True)
+            new_vector1 = self.vectors[0].Rotation(center, axis, angle, True)
+            new_vector2 = self.vectors[1].Rotation(center, axis, angle, True)
             return Plane3D(new_origin, new_vector1, new_vector2, self.name)
         else:
-            self.origin = new_origin
-            self.vectors = (new_vector1, new_vector2)
+            self.origin.Rotation(center, axis, angle, True)
+            self.vectors[0].Rotation(center, axis, angle, True)
+            self.vectors[1].Rotation(center, axis, angle, True)
 
     def Translation(self, offset, copy=True):
-        new_origin = self.origin.Translation(offset, True)
-#        new_vector1 = self.vectors[0].Translation(offset, True)
-#        new_vector2 = self.vectors[1].Translation(offset, True)
         if copy:
+            new_origin = self.origin.Translation(offset, True)
             return Plane3D(new_origin, self.vectors[0], self.vectors[1], self.name)
         else:
-            self.origin = new_origin
-#            self.vectors = (new_vector1, new_vector2)
+            self.origin.Translation(offset, False)
+    
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        if side == 'old':
+            new_origin = frame.OldCoordinates(self.origin)
+            new_vector1 = frame.Basis().OldCoordinates(self.vectors[0])
+            new_vector2 = frame.Basis().OldCoordinates(self.vectors[1])
+            if copy:
+                return Plane3D(new_origin, new_vector1, new_vector2, self.name)
+            else:
+                self.origin = new_origin
+                self.vectors = [new_vector1, new_vector2]
+                self.normal = frame.Basis().OldCoordinates(self.normal)
+                self.normal.Normalize()
+        if side == 'new':
+            new_origin = frame.NewCoordinates(self.origin)
+            new_vector1 = frame.Basis().NewCoordinates(self.vectors[0])
+            new_vector2 = frame.Basis().NewCoordinates(self.vectors[1])
+            if copy:
+                return Plane3D(new_origin, new_vector1, new_vector2, self.name)
+            else:
+                self.origin = new_origin
+                self.vectors = [new_vector1, new_vector2]
+                self.normal = frame.Basis().NewCoordinates(self.normal)
+                self.normal.Normalize()
+                
+    def copy(self):
+        new_origin = self.origin.Copy()
+        new_vector1 = self.vectors[0].Copy()
+        new_vector2 = self.vectors[1].Copy()
+        return Plane3D(new_origin, new_vector1, new_vector2, self.name)
+        
+    def MPLPlot(self, ax=None):
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+        self.origin.MPLPlot(ax)
+        self.vectors[0].MPLPlot(ax, starting_point=self.origin, color='r')
+        self.vectors[1].MPLPlot(ax, starting_point=self.origin, color='g')
+        return ax
+    
+    def Babylon(self):
+        s = 'var myPlane = BABYLON.MeshBuilder.CreatePlane("myPlane", {width: 0.5, height: 0.5, sideOrientation: BABYLON.Mesh.DOUBLESIDE}, scene);\n'
+        s += 'myPlane.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));\n'.format(self.origin[0], self.origin[1], self.origin[2])
+
+        s += 'var axis1 = new BABYLON.Vector3({}, {}, {});\n'.format(self.vectors[0][0], self.vectors[0][1], self.vectors[0][2])
+        s += 'var axis2 = new BABYLON.Vector3({}, {}, {});\n'.format(self.vectors[1][0], self.vectors[1][1], self.vectors[1][2])
+        s += 'var axis3 = new BABYLON.Vector3({}, {}, {});\n'.format(self.normal[0], self.normal[1], self.normal[2])
+        s += 'var orientation = BABYLON.Vector3.RotationFromAxis(axis1, axis2, axis3);\n'
+        s += 'myPlane.rotation = orientation;\n'
+
+        s += 'var planemat = new BABYLON.StandardMaterial("planemat", scene);\n'
+        s += 'planemat.alpha = 0.4;\n'
+        s += 'myPlane.material = planemat;\n'
+        
+#        print(self.__dict__)
+        
+        return s
 
 
 class Basis3D(Basis):
@@ -2028,17 +2124,6 @@ class Basis3D(Basis):
         self.v = new_v
         self.w = new_w
 
-    def Translation(self, offset, copy=True):
-        new_u = self.u.Translation(offset, True)
-        new_v = self.v.Translation(offset, True)
-        new_w = self.w.Translation(offset, True)
-        if copy:
-            return Basis3D(new_u, new_v, new_w, self.name)
-        else:
-            self.u = new_u
-            self.v = new_v
-            self.w = new_w
-
     def EulerRotation(self, angles, copy=True):
         psi, theta, phi = angles
         center = o3D
@@ -2070,10 +2155,6 @@ class Basis3D(Basis):
                           [self.u[1], self.v[1], self.w[1]],
                           [self.u[2], self.v[2], self.w[2]]])
 
-#    def InverseTransfertMatrix(self):
-#        # Todo: cache for performance
-#        return inv(self.TransfertMatrix())
-
     def InverseTransfertMatrix(self):
         det = self.u[0]*self.v[1]*self.w[2] + self.v[0]*self.w[1]*self.u[2] \
             + self.w[0]*self.u[1]*self.v[2] - self.w[0]*self.v[1]*self.u[2] \
@@ -2094,14 +2175,12 @@ class Basis3D(Basis):
         return Point3D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1] + matrix[0][2]*vector[2],
                          matrix[1][0]*vector[0] + matrix[1][1]*vector[1] + matrix[1][2]*vector[2],
                          matrix[2][0]*vector[0] + matrix[2][1]*vector[1] + matrix[2][2]*vector[2]))
-#        return vector.__class__(npy.dot(self.InverseTransfertMatrix(), vector.vector))
 
     def OldCoordinates(self, point):
         matrix = self.TransfertMatrix()
         return Point3D((matrix[0][0]*point[0] + matrix[0][1]*point[1] + matrix[0][2]*point[2],
                          matrix[1][0]*point[0] + matrix[1][1]*point[1] + matrix[1][2]*point[2],
                          matrix[2][0]*point[0] + matrix[2][1]*point[1] + matrix[2][2]*point[2]))
-#        return vector.__class__(npy.dot(self.TransfertMatrix(), vector.vector))
 
     def copy(self):
         return Basis3D(self.u, self.v, self.w)
@@ -2135,12 +2214,6 @@ class Frame3D(Basis3D):
                                                   self.origin,
                                                   self.u, self.v, self.w)
 
-#    def __add__(self, other_frame):
-#        return Frame3D(self.origin+other_frame.origin,
-#                       self.u+other_frame.u,
-#                       self.v+other_frame.v,
-#                       self.w+other_frame.w
-#                       )
 
     def __neg__(self):
         Pinv = self.InverseTransfertMatrix()
@@ -2198,13 +2271,9 @@ class Frame3D(Basis3D):
         self.w = new_base.w
 
     def Translation(self, offset, copy=True):
-        new_base = Basis3D.Translation(self, offset, True)
         if copy:
-            new_frame = Frame3D(self.origin, new_base.u, new_base.v, new_base.w, self.name)
-            return new_frame
-        self.u = new_base.u
-        self.v = new_base.v
-        self.w = new_base.w
+            return Frame3D(self.origin.Translation(offset), self.u, self.v, self.w, self.name)
+        self.origin.Translation(offset, copy=False)
 
     def copy(self):
         return Frame3D(self.origin, self.u, self.v, self.w)
@@ -2262,6 +2331,7 @@ class Frame3D(Basis3D):
 
 oxyz = Frame3D(o3D, x3D, y3D, z3D)
 
+
 class Line3D(Primitive3D, Line):
     """
     Define an infinite line passing through the 2 points
@@ -2269,6 +2339,19 @@ class Line3D(Primitive3D, Line):
     def __init__(self, point1, point2, name=''):
         Primitive3D.__init__(self, name)
         self.points = [point1, point2]
+        self.bounding_box = self._bounding_box()
+        
+    def _bounding_box(self):
+        points = self.points
+        
+        xmin = min([pt[0] for pt in points])
+        xmax = max([pt[0] for pt in points])
+        ymin = min([pt[1] for pt in points])
+        ymax = max([pt[1] for pt in points])
+        zmin = min([pt[2] for pt in points])
+        zmax = max([pt[2] for pt in points])
+        
+        return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
         return self.points[0] + (self.points[1]-self.points[0]) * curvilinear_abscissa
@@ -2306,106 +2389,46 @@ class Line3D(Primitive3D, Line):
         p2 = other_line.points[0] + t*v
         return p1, p2
 
-    def Rotation(self, center, axis, angle, copy=False):
+    def Rotation(self, center, axis, angle, copy=True):
         if copy:
             return Line3D(*[p.Rotation(center, axis, angle, copy=True) for p in self.points])
         else:
             for p in self.points:
                 p.Rotation(center, axis, angle, copy=False)
 
-    def Translation(self, offset, copy=False):
+    def Translation(self, offset, copy=True):
         if copy:
             return Line3D(*[p.Translation(offset, copy=True) for p in self.points])
         else:
             for p in self.points:
                 p.Translation(offset, copy=False)
-
+                
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        if side == 'old':
+            if copy:
+                return Line3D(*[frame.OldCoordinates(p) for p in self.points])
+            else:
+                for p in self.points:
+                    self.points = [frame.OldCoordinates(p) for p in self.points]
+        if side == 'new':
+            if copy:
+                return Line3D(*[frame.NewCoordinates(p) for p in self.points])
+            else:
+                for p in self.points:
+                    self.points = [frame.NewCoordinates(p) for p in self.points]
+                    
+    def copy(self):
+        return Line3D(*[p.Copy() for p in self.points])
+        
     @classmethod
     def from_step(cls, arguments, object_dict):
         point1 = object_dict[arguments[1]]
         direction = object_dict[arguments[2]]
         point2 = point1 + direction
         return cls(point1, point2, arguments[0][1:-1])
-
-
-class LineSegment3D(Line3D):
-    """
-    Define a line segment limited by two points
-    """
-    def __init__(self, point1, point2, name=''):
-        Line3D.__init__(self, point1, point2, name)
-
-    def Length(self):
-        return self.points[1].PointDistance(self.points[0])
-
-    def PlaneProjection2D(self, x, y):
-        return LineSegment2D(self.points[0].PlaneProjection2D(x, y),
-                             self.points[1].PlaneProjection2D(x, y))
-
-    def Rotation(self, center, axis, angle, copy=False):
-        if copy:
-            return LineSegment3D(*[p.Rotation(center, axis, angle, copy=True) for p in self.points])
-        else:
-            for p in self.points:
-                p.Rotation(center, axis, angle, copy=False)
-
-    def Translation(self, offset, copy=False):
-        if copy:
-            return LineSegment3D(*[p.Translation(offset, copy=True) for p in self.points])
-        else:
-            for p in self.points:
-                p.Translation(offset, copy=False)
-
-    def MPLPlot(self, ax):
-        x = [p.vector[0] for p in self.points]
-        y = [p.vector[1] for p in self.points]
-        z = [p.vector[2] for p in self.points]
-        ax.plot(x, y, z, 'o-k')
-
-    def MPLPlot2D(self, x_3D, y_3D, ax, color='k'):
-        edge2D =  self.PlaneProjection2D(x_3D, y_3D)
-        edge2D.MPLPlot(ax=ax, color=color)
-
-    def plot_data(self, x_3D, y_3D, marker=None, color='black', stroke_width=1,
-                  dash=False, opacity=1, arrow=False):
-        edge2D =  self.PlaneProjection2D(x_3D, y_3D)
-        return edge2D.plot_data(marker, color, stroke_width,
-                         dash, opacity, arrow)
-
-    def FreeCADExport(self, name, ndigits=6):
-        x1, y1, z1 = npy.round(1000*self.points[0].vector, ndigits)
-        x2, y2, z2 = npy.round(1000*self.points[1].vector, ndigits)
-        return '{} = Part.LineSegment(fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,x1,y1,z1,x2,y2,z2)
-
-    def to_line(self):
-        return Line3D(*self.points)
-    
-    def Babylon(self, color=(1, 1, 1), name='line',  type_='line', parent=None):
-        if type_ == 'line':
-            s = 'var myPoints = [];\n'
-            s += 'var point1 = new BABYLON.Vector3({},{},{});\n'.format(*self.points[0])
-            s += 'myPoints.push(point1);\n'
-            s += 'var point2 = new BABYLON.Vector3({},{},{});\n'.format(*self.points[1])
-            s += 'myPoints.push(point2);\n'
-            s += 'var {} = BABYLON.MeshBuilder.CreateLines("lines", {{points: myPoints}}, scene);\n'.format(name)
-            s += '{}.color = new BABYLON.Color3{};\n'.format(name, tuple(color))
-        elif type_ == 'tube':
-            radius = 0.03*self.points[0].PointDistance(self.points[1])
-            s = 'var points = [new BABYLON.Vector3({},{},{}), new BABYLON.Vector3({},{},{})];\n'.format(*self.points[0], *self.points[1])
-            s += 'var {} = BABYLON.MeshBuilder.CreateTube("frame_U", {{path: points, radius: {}}}, {});'.format(name, radius, parent)
-#            s += 'line.material = red_material;\n'
-
-        else:
-            raise NotImplementedError
-
-        if parent is not None:
-            s += '{}.parent = {};\n'.format(name, parent)
-
-        return s 
-
-    
-#    def babylonjs_mesh(self):
-        
 
 
 class BSplineCurve3D(Primitive3D):
@@ -2486,7 +2509,7 @@ class BSplineCurve3D(Primitive3D):
             distances.append(pt1.PointDistance(point))
         return min(distances)
 
-    def Rotation(self, center, axis, angle, copy=False):
+    def Rotation(self, center, axis, angle, copy=True):
         new_control_points = [p.Rotation(center, axis, angle, True) for p in self.control_points]
         new_BSplineCurve3D = BSplineCurve3D(self.degree, new_control_points, self.knot_multiplicities, self.knots, self.weights, self.periodic, self.name)
         if copy:
@@ -2496,7 +2519,7 @@ class BSplineCurve3D(Primitive3D):
             self.curve = new_BSplineCurve3D.curve
             self.points = new_BSplineCurve3D.points
 
-    def Translation(self, offset, copy=False):
+    def Translation(self, offset, copy=True):
         new_control_points = [p.Translation(offset, True) for p in self.control_points]
         new_BSplineCurve3D = BSplineCurve3D(self.degree, new_control_points, self.knot_multiplicities, self.knots, self.weights, self.periodic, self.name)
         if copy:
@@ -2522,7 +2545,7 @@ class Circle3D(Primitive3D):
         xn,yn,zn = npy.round(self.normal.vector,ndigits)
         return '{} = Part.Circle(fc.Vector({},{},{}),fc.Vector({},{},{}),{})\n'.format(name,xc,yc,zc,xn,yn,zn,1000*self.radius)
 
-    def Rotation(self, rot_center, axis, angle, copy=False):
+    def Rotation(self, rot_center, axis, angle, copy=True):
         new_center = self.center.Rotation(rot_center, axis, angle, True)
         new_normal = self.normal.Rotation(rot_center, axis, angle, True)
         if copy:
@@ -2531,7 +2554,7 @@ class Circle3D(Primitive3D):
             self.center = new_center
             self.normal = new_normal
 
-    def Translation(self, offset, copy=False):
+    def Translation(self, offset, copy=True):
         new_center = self.center.Translation(offset, True)
         new_normal = self.normal.Translation(offset, True)
         if copy:
@@ -2543,7 +2566,7 @@ class Circle3D(Primitive3D):
     @classmethod
     def from_step(cls, arguments, object_dict):
         center = object_dict[arguments[1]].origin
-        radius = float(arguments[2])
+        radius = float(arguments[2])/1000
         normal = object_dict[arguments[1]].w
         return cls(center, radius, normal, arguments[0][1:-1])
 
@@ -2567,7 +2590,7 @@ class Ellipse3D(Primitive3D):
         xmin, ymin, zmin = npy.round(1000*minor_vector.vector, ndigits)
         return '{} = Part.Ellipse(fc.Vector({},{},{}), fc.Vector({},{},{}), fc.Vector({},{},{}))\n'.format(name,xmaj,ymaj,zmaj,xmin,ymin,zmin,xc,yc,zc)
 
-    def Rotation(self, rot_center, axis, angle, copy=False):
+    def Rotation(self, rot_center, axis, angle, copy=True):
         new_center = self.center.Rotation(rot_center, axis, angle, True)
         new_normal = self.normal.Rotation(rot_center, axis, angle, True)
         new_major_dir = self.major_dir.Rotation(rot_center, axis, angle, True)
@@ -2578,7 +2601,7 @@ class Ellipse3D(Primitive3D):
             self.normal = new_normal
             self.major_dir = new_major_dir
 
-    def Translation(self, offset, copy=False):
+    def Translation(self, offset, copy=True):
         new_center = self.center.Translation(offset, True)
         new_normal = self.normal.Translation(offset, True)
         new_major_dir = self.major_dir.Translation(offset, True)
@@ -2594,8 +2617,8 @@ class Ellipse3D(Primitive3D):
         center = object_dict[arguments[1]].origin
         normal = object_dict[arguments[1]].w
         major_dir = object_dict[arguments[1]].u
-        major_axis = float(arguments[2])
-        minor_axis = float(arguments[3])
+        major_axis = float(arguments[2])/1000
+        minor_axis = float(arguments[3])/1000
         return cls(major_axis, minor_axis, center, normal, major_dir, arguments[0][1:-1])
 
 
@@ -2833,7 +2856,7 @@ class BSplineSurface3D(Primitive3D):
 
         return cls(degree_u, degree_v, control_points, nb_u, nb_v, u_multiplicities, v_multiplicities, u_knots, v_knots, weight_data, name)
 
-    def Rotation(self, center, axis, angle, copy=False):
+    def Rotation(self, center, axis, angle, copy=True):
         new_control_points = [p.Rotation(center, axis, angle, True) for p in self.control_points]
         new_BSplineSurface3D = BSplineSurface3D(self.degree_u, self.degree_v, new_control_points, self.nb_u, self.nb_v, self.u_multiplicities, self.v_multiplicities, self.u_knots, self.v_knots, self.weights, self.name)
         if copy:
@@ -2843,7 +2866,7 @@ class BSplineSurface3D(Primitive3D):
             self.curve = new_BSplineSurface3D.curve
             self.points = new_BSplineSurface3D.points
 
-    def Translation(self, offset, copy=False):
+    def Translation(self, offset, copy=True):
         new_control_points = [p.Translation(offset, True) for p in self.control_points]
         new_BSplineSurface3D = BSplineSurface3D(self.degree_u, self.degree_v, new_control_points, self.nb_u, self.nb_v, self.u_multiplicities, self.v_multiplicities, self.u_knots, self.v_knots, self.weights, self.name)
         if copy:
@@ -2895,6 +2918,7 @@ class CompositePrimitive3D(Primitive3D):
 
         return fig, ax
 
+
 class Wire3D(CompositePrimitive3D):
     """
     A collection of simple primitives, following each other making a wire
@@ -2930,231 +2954,63 @@ class Wire3D(CompositePrimitive3D):
         s += '{} = Part.Wire(E[:])\n'.format(name)
 
         return s
-
-
-class Vertex3D(Primitive3D):
-    def __init__(self, primitive, name=''):
-        Primitive3D.__init__(primitive, name)
-        self.primitive = primitive
-        self.name = name
-
-    @classmethod
-    def from_step(cls, arguments, object_dict):
-        return cls(object_dict[arguments[1]], arguments[0][1:-1])
-
-    def Rotation(self, center, axis, angle, copy=False):
-        new_primitive = self.primitive.Rotation(center, axis, angle, True)
-        if copy:
-            return Vertex3D(new_primitive, self.name)
-        else:
-            self.primitive = new_primitive
-
-    def Translation(self, offset, copy=False):
-        new_primitive = self.primitive.Translation(offset, True)
-        if copy:
-            return Vertex3D(new_primitive, self.name)
-        else:
-            self.primitive = new_primitive
+            
 
 class Edge3D(Primitive3D):
-    def __init__(self, primitives, edge_start, edge_end, name=''):
-        Primitive3D.__init__(primitives, name)
-        self.edge_start = edge_start
-        self.edge_end = edge_end
-        self.primitives = primitives
-        self.points = [self.edge_start.primitive, self.edge_end.primitive]
+    def __init__(self, edge_start, edge_end, name=''):
+        Primitive3D.__init__(self, name=name)
+        self.points = [edge_start, edge_end]        
 
     @classmethod
     def from_step(cls, arguments, object_dict):
-        vertex_start = object_dict[arguments[1]]
-        vertex_end = object_dict[arguments[2]]
-        edge_geom = object_dict[arguments[3]]
-        if arguments[4] == '.T.':
-            orientation = True
-        elif arguments[4] == '.F.':
-            orientation = False
-        else:
-            raise ValueError
-        
-#        if not orientation:
-#            vertex_start, vertex_end = vertex_end, vertex_start
-        
-        return cls(edge_geom, vertex_start, vertex_end, arguments[0][1:-1])
+        return LineSegment3D(object_dict[arguments[1]], object_dict[arguments[2]], arguments[0][1:-1])
 
-    def Rotation(self, center, axis, angle, copy=False):
-        new_edge_start = self.edge_start.Rotation(center, axis, angle, True)
-        new_edge_end = self.edge_end.Rotation(center, axis, angle, True)
-        new_primitives = self.primitives.Rotation(center, axis, angle, True)
+    def Rotation(self, center, axis, angle, copy=True):
         if copy:
-            return Edge3D(new_primitives, new_edge_start, new_edge_end)
-#            return Edge3D(new_primitives, self.edge_start, self.edge_end)
+            new_edge_start = self.points[0].Rotation(center, axis, angle, copy=True)
+            new_edge_end = self.points[1].Rotation(center, axis, angle, copy=True)
+            return Edge3D(new_edge_start, new_edge_end)
         else:
-            self.primitives = new_primitives
-            self.edge_start = new_edge_start
-            self.edge_end = new_edge_end
+            self.points[0].Rotation(center, axis, angle, copy=False)
+            self.points[1].Rotation(center, axis, angle, copy=False)
 
-    def Translation(self, offset, copy=False):
-        new_edge_start = self.edge_start.Translation(offset, True)
-        new_edge_end = self.edge_end.Translation(offset, True)
-        new_primitives = self.primitives.Translation(offset, True)
+    def Translation(self, offset, copy=True):
         if copy:
-            return Edge3D(new_primitives, new_edge_start, new_edge_end)
-#            return Edge3D(new_primitives, self.edge_start, self.edge_end)
+            new_edge_start = self.points[0].Translation(offset, copy=True)
+            new_edge_end = self.points[1].Translation(offset, copy=True)
+            return self.__class__(new_edge_start, new_edge_end)
         else:
-            self.primitives = new_primitives
-            self.edge_start = new_edge_start
-            self.edge_end = new_edge_end
-
-
-class Contour3D(Wire3D):
-    """
-    A collection of 3D primitives forming a closed wire3D
-    """
-    def __init__(self, edges, name=''):
-        self.edges = edges
-        
-#        primitives2=[]
-#        for primitive in primitives:
-#            try:
-#                primitives2.extend(primitive.primitives)
-#            except AttributeError:
-#                primitives2.append(primitive)
-#
-#        CompositePrimitive3D.__init__(self,primitives2, name)
-#        self.primitives = primitives
-        self.name = name
-        
-        points = self.edges[0].points[:]
-        for i, edge in enumerate(self.edges[1:-1]):
-            if edge.points[0] in points[-2:]:
-                points.append(edge.points[1])
-            elif edge.points[1] in points[-2:]:
-                points.append(edge.points[0])
-            else:
-                raise NotImplementedError
-        self.points = points[:]
-        
-    @classmethod
-    def from_step(cls, arguments, object_dict):
-        edges = []
-#        edge_geoms = []
-        for edge in arguments[1]:
-            edges.append(object_dict[int(edge[1:])])
-#            edge_geoms.append(object_dict[int(edge[1:])].primitives)
-        return cls(edges, arguments[0][1:-1])
-
-    def Rotation(self, center, axis, angle, copy=False):
-        new_edges = [edge.Rotation(center, axis, angle, True) for edge in self.edges]
-#        new_primitives = [p.Rotation(center, axis, angle, True) for p in self.primitives]
-        if copy:
-            return Contour3D(new_edges, self.name)
-#            return Contour3D(new_primitives, self.edges, self.name)
-        else:
-#            self.primitives = new_primitives
-            self.edges = new_edges
-
-    def Translation(self, offset, copy=False):
-        new_edges = [edge.Translation(offset, True) for edge in self.edges]
-#        new_primitives = [p.Translation(offset, True) for p in self.primitives]
-        if copy:
-            return Contour3D(new_edges, self.name)
-#            return Contour3D(new_primitives, self.edges, self.name)
-        else:
-#            self.primitives = new_primitives
-            self.edges = new_edges
-
-
-class ExtrudedCurve(CompositePrimitive3D):
-    def __init__(self, curve_3d, extrusion_vector, name=''):
-        self.curve_3d = curve_3d
-        self.extrusion_vector = extrusion_vector
-        self.primitives = [curve_3d, extrusion_vector]
-        CompositePrimitive3D(self.primitives, name)
-
-    @classmethod
-    def from_step(cls, arguments, object_dict):
-        curve_3d = object_dict[arguments[1]]
-        extrusion_vector = object_dict[arguments[2]]
-        return cls(curve_3d, extrusion_vector, arguments[0][1:-1])
-
-
-class Face3D(CompositePrimitive3D):
-    def __init__(self, primitives, contour, name=''):
-        CompositePrimitive3D.__init__(self, primitives, name)
-        self.contour = contour
-        self.primitives = primitives
-        
-        points = self.contour[0].points
-        self.plane = None
-        i = 2
-        while self.plane is None:
-            try:
-                self.plane = Plane3D.from_3_points(points[0], points[1], points[i])
-            except ZeroDivisionError:
-                i += 1
-                pass
+            self.points[0].Translation(offset, copy=False)
+            self.points[1].Translation(offset, copy=False)
             
-        # 2D PLOT OF FACE #
-        polygon_points = [p.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]) for p in points]
-        polygon = Polygon2D(polygon_points)
-        if polygon.SelfIntersect()[0]:            
-#            repaired_polygon_points = [polygon_points[1]]+[polygon_points[0]]+polygon_points[2:]
-            repaired_points = [points[1]]+[points[0]]+points[2:]
-            self.contour[0].points = repaired_points
-#            new_polygon = Polygon2D(repaired_points)
-#            new_polygon.MPLPlot()
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        if copy:
+            new_edge_start = self.points[0].frame_mapping(frame, side, copy=True)
+            new_edge_end = self.points[1].frame_mapping(frame, side, copy=True)
+            return Edge3D(new_edge_start, new_edge_end)
+        else:
+            self.points[0].frame_mapping(frame, side, copy=False)
+            self.points[1].frame_mapping(frame, side, copy=False)
             
+    def copy(self):
+        new_edge_start = self.points[0].copy()
+        new_edge_end = self.points[1].copy()
+        return Edge3D(new_edge_start, new_edge_end)
+
+
+class LineSegment3D(Edge3D):
+    """
+    Define a line segment limited by two points
+    """
+    def __init__(self, point1, point2, name=''):
+        Edge3D.__init__(self, point1, point2, name='')
         self.bounding_box = self._bounding_box()
         
-    @classmethod
-    def from_step(cls, arguments, object_dict):
-        contour = []
-        for elem in arguments[1]:
-            contour.append(object_dict[int(elem[1:])])
-        face_geom = object_dict[arguments[2]]
-        if arguments[3] == '.T.':
-            orientation = True
-        elif arguments[3] == '.F.':
-            orientation = False
-        else:
-            raise ValueError
-        return cls([face_geom], contour, arguments[0][1:-1])
-
-    def Rotation(self, center, axis, angle, copy=False):
-        new_contour = [subcontour.Rotation(center, axis, angle, True) for subcontour in self.contour]
-        new_primitives = [plane.Rotation(center, axis, angle, True) for plane in self.primitives]
-        if copy:
-            return Face3D(new_primitives, new_contour, self.name)
-        else:
-            self.primitives = new_primitives
-            self.contour = new_contour
-            new_points = new_contour[0].points
-            self.plane = Plane3D.from_3_points(new_points[0], new_points[1], new_points[2])
-
-    def Translation(self, offset, copy=False):
-        new_contour = [subcontour.Translation(offset, True) for subcontour in self.contour]
-        new_primitives = [plane.Translation(offset, True) for plane in self.primitives]
-        if copy:
-            return Face3D(new_primitives, new_contour, self.name)
-        else:
-            self.primitives = new_primitives
-            self.contour = new_contour
-            new_points = new_contour[0].points
-            self.plane = Plane3D.from_3_points(new_points[0], new_points[1], new_points[2])
-            
-    def average_center_point(self):
-        """
-        excluding holes
-        """
-        points = self.contour[0].points
-        nb = len(points)
-        x = npy.sum([p[0] for p in points]) / nb
-        y = npy.sum([p[1] for p in points]) / nb    
-        z = npy.sum([p[2] for p in points]) / nb
-        return Point3D((x,y,z))
-        
     def _bounding_box(self):
-        points = self.contour[0].points
+        points = self.points
         
         xmin = min([pt[0] for pt in points])
         xmax = max([pt[0] for pt in points])
@@ -3163,6 +3019,318 @@ class Face3D(CompositePrimitive3D):
         zmin = min([pt[2] for pt in points])
         zmax = max([pt[2] for pt in points])
         
+        return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+
+    def Length(self):
+        return self.points[1].PointDistance(self.points[0])
+
+    def PlaneProjection2D(self, x, y):
+        return LineSegment2D(self.points[0].PlaneProjection2D(x, y),
+                             self.points[1].PlaneProjection2D(x, y))
+
+    def Rotation(self, center, axis, angle, copy=True):
+        if copy:
+            return LineSegment3D(*[p.Rotation(center, axis, angle, copy=True) for p in self.points])
+        else:
+            for p in self.points:
+                p.Rotation(center, axis, angle, copy=False)
+
+    def Translation(self, offset, copy=True):
+        if copy:
+            return LineSegment3D(*[p.Translation(offset, copy=True) for p in self.points])
+        else:
+            for p in self.points:
+                p.Translation(offset, copy=False)
+        
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        if side == 'old':
+            if copy:
+                return LineSegment3D(*[frame.OldCoordinates(p) for p in self.points])
+            else:
+                for p in self.points:
+                    p = frame.OldCoordinates(p)
+        if side == 'new':
+            if copy:
+                return LineSegment3D(*[frame.NewCoordinates(p) for p in self.points])
+            else:
+                for p in self.points:
+                    p = frame.NewCoordinates(p)
+
+    def MPLPlot(self, ax):
+        x=[p.vector[0] for p in self.points]
+        y=[p.vector[1] for p in self.points]
+        z=[p.vector[2] for p in self.points]
+        ax.plot(x,y,z, 'o-k')
+
+    def MPLPlot2D(self, x_3D, y_3D, ax):
+        edge2D =  self.PlaneProjection2D(x_3D, y_3D)
+        edge2D.MPLPlot(ax)
+
+    def plot_data(self, x_3D, y_3D, marker=None, color='black', stroke_width=1,
+                  dash=False, opacity=1, arrow=False):
+        edge2D =  self.PlaneProjection2D(x_3D, y_3D)
+        return edge2D.plot_data(marker, color, stroke_width,
+                         dash, opacity, arrow)
+
+    def FreeCADExport(self, name, ndigits=6):
+        x1, y1, z1 = npy.round(1000*self.points[0].vector, ndigits)
+        x2, y2, z2 = npy.round(1000*self.points[1].vector, ndigits)
+        return '{} = Part.LineSegment(fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,x1,y1,z1,x2,y2,z2)
+
+    def to_line(self):
+        return Line3D(*self.points)        
+    
+    def Babylon(self):
+        s = 'var myPoints = [];\n'
+        s += 'var point1 = new BABYLON.Vector3({},{},{});\n'.format(self.points[0][0],self.points[0][1],self.points[0][2])
+        s += 'myPoints.push(point1);\n'
+        s += 'var point2 = new BABYLON.Vector3({},{},{});\n'.format(self.points[1][0],self.points[1][1],self.points[1][2])
+        s += 'myPoints.push(point2);\n'
+        s += 'var line = BABYLON.MeshBuilder.CreateLines("lines", {points: myPoints}, scene);\n'
+        return s 
+
+
+class Contour3D(Wire3D):
+    """
+    A collection of 3D primitives forming a closed wire3D
+    """
+    def __init__(self, edges, points=None, name=''):
+        self.edges = edges
+        self.name = name
+        self.points = points
+        
+        if points is None:
+            points = self.edges[0].points[:]                
+            for i, edge in enumerate(self.edges[1:-1]):
+                if edge.points[0] in points[-2:]:
+                    points.append(edge.points[1])
+                elif edge.points[1] in points[-2:]:
+                    points.append(edge.points[0])
+                else:
+                    raise NotImplementedError
+            self.points = [p.copy() for p in points]
+        
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        edges = []
+        for edge in arguments[1]:
+            edges.append(object_dict[int(edge[1:])])
+
+        points = edges[0].points[:]                
+        for i, edge in enumerate(edges[1:-1]):
+            if edge.points[0] in points[-2:]:
+                points.append(edge.points[1])
+            elif edge.points[1] in points[-2:]:
+                points.append(edge.points[0])
+            else:
+                raise NotImplementedError
+        contour_points = [p.copy() for p in points]
+
+        return cls(edges, points=contour_points, name=arguments[0][1:-1])
+
+    def Rotation(self, center, axis, angle, copy=True):
+        if copy:
+            new_edges = [edge.Rotation(center, axis, angle, copy=True) for edge in self.edges]
+            new_points = [p.Rotation(center, axis, copy=True) for p in self.points]
+            return Contour3D(new_edges, new_points, self.name)
+        else:
+            for edge in self.edges:
+                edge.Rotation(center, axis, angle, copy=False)
+            for point in self.points:
+                point.Rotation(center, axis, angle, copy=False)
+
+    def Translation(self, offset, copy=True):
+        if copy:
+            new_edges = [edge.Translation(offset, copy=True) for edge in self.edges]
+            new_points = [p.Translation(offset, copy=True) for p in self.points]
+            return Contour3D(new_edges, new_points, self.name)
+        else:
+            for edge in self.edges:
+                edge.Translation(offset, copy=False)
+            for point in self.points:
+                point.Translation(offset, copy=False)
+
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        if copy:
+            new_edges = [edge.frame_mapping(frame, side, copy=True) for edge in self.edges]
+            new_points = [p.frame_mapping(frame, side, copy=True) for p in self.points]
+            return Contour3D(new_edges, new_points, self.name)
+        else:
+            for edge in self.edges:
+                edge.frame_mapping(frame, side, copy=False)
+            for point in self.points:
+                point.frame_mapping(frame, side, copy=False)
+            
+    def copy(self):
+        new_edges = [edge.copy() for edge in self.edges]
+        new_points = [p.copy() for p in self.points]
+        return Contour3D(new_edges, new_points, self.name)
+
+
+class Face3D(Primitive3D):
+    def __init__(self, contours, plane=None, points=None, polygon2D=None, name=''):
+        Primitive3D.__init__(self, name)
+        self.contours = contours
+        self.plane = plane
+        self.points = points
+        self.polygon2D = polygon2D
+        
+        if plane is None:
+#            print('face3D recalcule self.plane')
+            self.plane = self.create_plane(self.contours[0].points)
+        
+        if points is None or polygon2D is None:
+#            print('face3D recalcule self.points et self.polygon2D')
+            points = [p.copy() for p in self.contours[0].points[:]]
+            self.points, self.polygon2D = self._repair_points_and_polygon2d(points, self.plane)
+            self.contours[0].points = [p.copy() for p in self.points]
+                        
+        self.bounding_box = self._bounding_box()
+        
+        # CHECK #
+        for pt in self.points:
+            if not self.plane.point_on_plane(pt):
+                print('WARNING', pt, 'not on', self.plane)
+                print('dot =', self.plane.normal.Dot(pt-self.plane.origin))
+                raise ValueError
+        
+    @classmethod
+    def from_step(cls, arguments, object_dict):                    
+        contours = []
+        contours.append(object_dict[int(arguments[1][0][1:])])
+        
+        plane = cls.create_plane(contours[0].points)
+        contours[0].points, polygon2D = cls._repair_points_and_polygon2d(contours[0].points, plane)
+        points = [p.copy() for p in contours[0].points[:]]
+        
+        return cls(contours, plane=plane, points=points, polygon2D=polygon2D, name=arguments[0][1:-1])
+    
+    @classmethod
+    def create_plane(cls, points):
+        if len(points) == 3:
+            return Plane3D.from_3_points(Point3D(points[0].vector), Vector3D(points[1]), Vector3D(points[2]))
+        else:
+            origin = Point3D(points[0].vector)
+            vector1 = Vector3D(points[1]-origin)
+            vector1.Normalize()
+            vector2_min = Vector3D(points[2]-origin)
+            vector2_min.Normalize()
+            dot_min = abs(vector1.Dot(vector2_min))
+            for point in points[3:]:
+                vector2 = Vector3D(point-origin)
+                vector2.Normalize()
+                dot = abs(vector1.Dot(vector2))
+                if dot < dot_min:
+                    vector2_min = vector2
+                    dot_min = dot
+            return Plane3D.from_3_points(origin, vector1+origin, vector2_min+origin)
+    
+    @classmethod
+    def _repair_points_and_polygon2d(cls, points, plane):
+        polygon_points = [p.To2D(plane.origin, plane.vectors[0], plane.vectors[1]) for p in points]
+        repaired_points = [p.copy() for p in points]
+        polygon2D = Polygon2D(polygon_points)
+        if polygon2D.SelfIntersect()[0]:            
+            repaired_points = [repaired_points[1]]+[repaired_points[0]]+repaired_points[2:]
+            polygon2D = Polygon2D([polygon_points[1]]+[polygon_points[0]]+polygon_points[2:])
+        return repaired_points, polygon2D
+
+    def Rotation(self, center, axis, angle, copy=True):
+        if copy:
+            new_contour = [subcontour.Rotation(center, axis, angle, copy=True) for subcontour in self.contour]
+            new_plane = self.plane.Rotation(center, axis, angle, copy=True)
+            new_points = [p.Rotation(center, axis, angle, copy=True) for p in self.points]
+            return Face3D(new_contour, new_plane, new_points, self.polygon2D, self.name)
+        else:
+            for subcontour in self.contours:
+                subcontour.Rotation(center, axis, angle, copy=False)
+            for point in self.points:
+                point.Rotation(center, axis, angle, copy=False)
+            self.plane.Rotation(center, axis, angle, copy=False)
+            self.bounding_box = self._bounding_box()
+
+    def Translation(self, offset, copy=True):
+        if copy:
+            new_contour = [subcontour.Translation(offset, copy=True) for subcontour in self.contours]
+            new_plane = self.plane.Translation(offset, copy=True)
+            new_points = [p.Translation(offset, copy=True) for p in self.points]
+            return Face3D(new_contour, new_plane, new_points, self.polygon2D, self.name)
+        else:
+            for subcontour in self.contours:
+                subcontour.Translation(offset, copy=False)
+            for point in self.points:
+                point.Translation(offset, copy=False)
+            self.plane.Translation(offset, copy=False)
+            self.bounding_box = self._bounding_box()
+            
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        if copy:
+            new_contour = [subcontour.frame_mapping(frame, side, copy=True) for subcontour in self.contours]
+            new_plane = self.plane.frame_mapping(frame, side, copy=True)
+            new_points = [p.frame_mapping(frame, side, copy=True) for p in self.points]
+            return Face3D(new_contour, new_plane, new_points, None, self.name)
+        else:
+            for subcontour in self.contours:
+                subcontour.frame_mapping(frame, side, copy=False)
+            for point in self.points:
+                point.frame_mapping(frame, side, copy=False)
+            self.plane.frame_mapping(frame, side, copy=False)
+            self.bounding_box = self._bounding_box()
+            
+    def copy(self):
+        new_contour = [subcontour.copy() for subcontour in self.contours]
+        new_plane = self.plane.copy()
+        new_points = [p.copy() for p in self.points]
+        return Face3D(new_contour, new_plane, new_points, self.polygon2D, self.name)
+        
+    def average_center_point(self):
+        """
+        excluding holes
+        """
+        points = self.points
+        nb = len(points)
+        x = npy.sum([p[0] for p in points]) / nb
+        y = npy.sum([p[1] for p in points]) / nb    
+        z = npy.sum([p[2] for p in points]) / nb
+        return Point3D((x,y,z))
+    
+    def triangulation(self):
+#        normal = self.plane.normal
+        points = [tuple(p.vector) for p in self.polygon2D.points]
+        points_dict = {p: i for i, p in enumerate(points)}
+        points_3D = [Point2D(p).To3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]) for p in points]
+#        print()
+#        print('points', points_dict)
+        triangles = tri.earclip(points)
+#        print('triangles', triangles)
+        triangles_indexes = []
+        for triangle in triangles:
+            triangle_indexes = []
+            for point in triangle:
+                triangle_indexes.append(points_dict[point])
+            triangles_indexes.append(triangle_indexes)
+            
+        return points_3D, triangles_indexes
+        
+    def _bounding_box(self):
+        points = self.points
+        
+        xmin = min([pt[0] for pt in points])
+        xmax = max([pt[0] for pt in points])
+        ymin = min([pt[1] for pt in points])
+        ymax = max([pt[1] for pt in points])
+        zmin = min([pt[2] for pt in points])
+        zmax = max([pt[2] for pt in points])
+                
         return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def distance_to_point(self, point, return_other_point=False):
@@ -3176,11 +3344,6 @@ class Face3D(CompositePrimitive3D):
         # On calcule en 2D la distance entre la projection et le polygone contour
         # On utilise le theroeme de Pytagore pour calculer la distance minimale entre le point et le contour
 
-#        print(self.primitives[0].__class__)
-#        print(Plane3D)
-#        print('essai', self.primitives[0].__class__ == Plane3D)
-#        if isinstance(self.primitives[0], Plane3D):
-#        plane = self.primitives[0]
         projected_pt = point.PlaneProjection3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
         projection_distance = point.PointDistance(projected_pt)
 
@@ -3188,25 +3351,16 @@ class Face3D(CompositePrimitive3D):
             if return_other_point:
                 return projection_distance, projected_pt
             return projection_distance
-
-        polygon_points_3D = self.contour[0].points
-        polygon_points_2D = []
-        for pt in polygon_points_3D:
-            polygon_points_2D.append(pt.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]))
+            
         point_2D = point.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
-        polygon = Polygon2D(polygon_points_2D)
 
-        border_distance, other_point = polygon.PointBorderDistance(point_2D, return_other_point=True)
-        
-        other_point = other_point.To3D(self.plane.origin , self.plane.vectors[0], self.plane.vectors[1])
-#        other_point = self.plane.origin + other_point[0]*self.plane.vectors[0] + other_point[1]*self.plane.vectors[1]
+        border_distance, other_point = self.polygon2D.PointBorderDistance(point_2D, return_other_point=True)
+
+        other_point = other_point.To3D(self.plane.origin , self.plane.vectors[0], self.plane.vectors[1])        
         
         if return_other_point:
             return (projection_distance**2 + border_distance**2)**0.5, other_point
         return (projection_distance**2 + border_distance**2)**0.5
-
-#        raise NotImplementedError
-
 
     def distance_to_face(self, face2, return_points=False):
         """
@@ -3216,23 +3370,25 @@ class Face3D(CompositePrimitive3D):
         """
         # On calcule la distance entre la face 1 et chaque point de la face 2
         # On calcule la distance entre la face 2 et chaque point de la face 1
-
-#        if isinstance(self.primitives[0], Plane3D):
-#        plane1 = self.primitives[0]
         
         if self.face_intersection(face2) is not None:
-            return 0
+            return 0, None, None
             
-        polygon1_points_3D = self.contour[0].points
-        polygon2_points_3D = face2.contour[0].points
+        polygon1_points_3D = [Point3D(p.vector) for p in self.points]
+        polygon2_points_3D = [Point3D(p.vector) for p in face2.points]
 
         distances = []
         if not return_points:
-            for point1 in polygon1_points_3D:
-                distances.append(face2.distance_to_point(point1))
+            d_min = face2.distance_to_point(polygon1_points_3D[0])
+            for point1 in polygon1_points_3D[1:]:
+                d = face2.distance_to_point(point1)
+                if d < d_min:
+                    d_min = d
             for point2 in polygon2_points_3D:
-                distances.append(self.distance_to_point(point2))
-            return min(distances)
+                d = self.distance_to_point(point2)
+                if d < d_min:
+                    d_min = d
+            return d_min
         
         else:
             for point1 in polygon1_points_3D:
@@ -3251,9 +3407,6 @@ class Face3D(CompositePrimitive3D):
         
         return d_min, point_min, other_point_min
 
-#        raise NotImplementedError
-
-
     def point_on_face(self, point):
         """
         Only works if the surface is planar
@@ -3261,38 +3414,38 @@ class Face3D(CompositePrimitive3D):
 
         Tells you if a point is on the 3D face and inside its contour
         """
-
-#        print(self.primitives[0])
-#        print('1. Plane ?', isinstance(self.primitives[0], Plane3D))
-#        if isinstance(self.primitives[0], Plane3D):
-
-#        plane = self.primitives[0]
+        
         point_on_plane = self.plane.point_on_plane(point)
-
         # The point is not in the same plane
         if not point_on_plane:
+            print('point not on plane so not on face')
             return False
-
-        contour = self.contour[0]
-        # transformer le contour en polygone2D pour utiliser la méthode PointBelongs
-        polygon_points_3D = contour.points
         
-        polygon_points_2D = []
-        for pt in polygon_points_3D:
-            polygon_points_2D.append(pt.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]))
         point_2D = point.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
-        polygon = Polygon2D(polygon_points_2D)
+        
+        ### PLOT ###
+#        ax = self.polygon2D.MPLPlot()
+#        point_2D.MPLPlot(ax)
+        ############
 
-        if not polygon.PointBelongs(point_2D):
+        if not self.polygon2D.PointBelongs(point_2D):
+            ### PLOT ###
+#            ax = self.polygon2D.MPLPlot()
+#            point_2D.MPLPlot(ax)
+#            ax.set_title('DEHORS')
+#            ax.set_aspect('equal')
+            ############
             return False
+        ### PLOT ###
+#        ax = self.polygon2D.MPLPlot()
+#        point_2D.MPLPlot(ax)
+#        ax.set_title('DEDANS')
+#        ax.set_aspect('equal')
+        ############
         return True
 
-#        return False
-
     def edge_intersection(self, edge):
-#        plane = self.primitives[0]
-
-        linesegment = LineSegment3D(edge.edge_start.primitive, edge.edge_end.primitive)
+        linesegment = LineSegment3D(*edge.points)
         intersection_point = self.plane.linesegment_intersection(linesegment)
 
         if intersection_point is None:
@@ -3304,14 +3457,35 @@ class Face3D(CompositePrimitive3D):
 
         return intersection_point
 
-    def linesegment_intersection(self, linesegment):
-#        plane = self.primitives[0]
-        intersection_point = self.plane.linesegment_intersection(linesegment)
+    def linesegment_intersection(self, linesegment, abscissea=False):
+        if abscissea:
+            intersection_point, intersection_abscissea = self.plane.linesegment_intersection(linesegment, True)
+        else:
+            intersection_point = self.plane.linesegment_intersection(linesegment)
+            
         if intersection_point is None:
+            if abscissea:
+                return None, None
             return None
         point_on_face_boo = self.point_on_face(intersection_point)
+        ### PLOT ###
+#        if not point_on_face_boo:
+#            ax = self.plot()
+#            linesegment.MPLPlot(ax)
+#            Point3D(intersection_point.vector).MPLPlot(ax)
+#            self.plane.MPLPlot(ax)
+#            ax.set_aspect('equal')
+        
+#            print('=>', self.plane.normal.Dot(intersection_point-self.plane.origin))
+#            print('point_on_face_boo', point_on_face_boo)
+        ############
         if not point_on_face_boo:
+            if abscissea:
+                return None, None
             return None
+        
+        if abscissea:
+            return intersection_point, intersection_abscissea
         return intersection_point
 
     def face_intersection(self, face2):
@@ -3319,14 +3493,19 @@ class Face3D(CompositePrimitive3D):
         Only works if the surface is planar
         TODO : this function does not take into account if Face has holes
         """
+        bbox1 = self.bounding_box
+        bbox2 = face2.bounding_box
+        if not bbox1.bbox_intersection(bbox2):
+            return None
+        
         intersection_points = []
 
-        for edge2 in face2.contour[0].edges:
+        for edge2 in face2.contours[0].edges:
             intersection_point = self.edge_intersection(edge2)
             if intersection_point is not None:
                 intersection_points.append(intersection_point)
 
-        for edge1 in self.contour[0].edges:
+        for edge1 in self.contours[0].edges:
             intersection_point = face2.edge_intersection(edge1)
             if intersection_point is not None:
                 intersection_points.append(intersection_point)
@@ -3341,66 +3520,88 @@ class Face3D(CompositePrimitive3D):
         if ax is None:
             ax = fig.add_subplot(111, projection='3d')
 
-        x = [p[0] for edge in self.contour[0].edges for p in edge.points]
-        y = [p[1] for edge in self.contour[0].edges for p in edge.points]
-        z = [p[2] for edge in self.contour[0].edges for p in edge.points]
+#        x = [p[0] for edge in self.contours[0].edges for p in edge.points]
+#        y = [p[1] for edge in self.contours[0].edges for p in edge.points]
+#        z = [p[2] for edge in self.contours[0].edges for p in edge.points]
+#        print(x,y,z)
+        x = [p[0] for p in self.contours[0].points]
+        y = [p[1] for p in self.contours[0].points]
+        z = [p[2] for p in self.contours[0].points]
+        
         ax.scatter(x, y, z)
         ax.set_xlabel('X Label')
         ax.set_ylabel('Y Label')
         ax.set_zlabel('Z Label')
+        for edge in self.contours[0].edges:
+            for point1, point2 in (edge.points, edge.points[1:]+[edge.points[0]]):
+                xs = [point1[0], point2[0]]
+                ys = [point1[1], point2[1]]
+                zs = [point1[2], point2[2]]
+                line = plt3d.art3d.Line3D(xs, ys, zs)
+                ax.add_line(line)
 
         plt.show()
-        
         return ax
+    
 
 class Shell3D(CompositePrimitive3D):
-    def __init__(self, faces, name=''):
-#        CompositePrimitive3D.__init__(self, primitives, name)
+    def __init__(self, faces, name='', color=None):
         self.faces = faces
-#        self.primitives = primitives
-        self.bounding_box = self.bounding_box()
+        self.name = name
+        self.color = color
+        self.bounding_box = self._bounding_box()
 
     @classmethod
     def from_step(cls, arguments, object_dict):
         faces = []
-#        primitives = []
-#        print(arguments[1])
         for face in arguments[1]:
             faces.append(object_dict[int(face[1:])])
-#            primitives.append(object_dict[int(face[1:])].primitives)
         return cls(faces, arguments[0][1:-1])
 
-    def Rotation(self, center, axis, angle, copy=False):
-        new_faces = [face.Rotation(center, axis, angle, True) for face in self.faces]
-#        new_primitives = []
-#        for primitive in self.primitives:
-#            new_primitives.append([subprimitive.Rotation(center, axis, angle, True) for subprimitive in primitive])
+    def Rotation(self, center, axis, angle, copy=True):
         if copy:
+            new_faces = [face.Rotation(center, axis, angle, copy=True) for face in self.faces]
             return Shell3D(new_faces, self.name)
         else:
-#            self.primitives = new_primitives
-            self.faces = new_faces
+            for face in self.faces:
+                face.Rotation(center, axis, angle, copy=False)
+            self.bounding_box = self._bounding_box()
 
-    def Translation(self, offset, copy=False):
-        new_faces = [face.Translation(offset, True) for face in self.faces]
-#        new_primitives = []
-#        for primitive in self.primitives:
-#            new_primitives.append([subprimitive.Translation(offset, True) for subprimitive in primitive])
+    def Translation(self, offset, copy=True):
         if copy:
+            new_faces = [face.Translation(offset, copy=True) for face in self.faces]
             return Shell3D(new_faces, self.name)
         else:
-#            self.primitives = new_primitives
-            self.faces = new_faces
+            for face in self.faces:
+                face.Translation(offset, copy=False)
+            self.bounding_box = self._bounding_box()
+    
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        if copy:
+            new_faces = [face.frame_mapping(frame, side, copy=True) for face in self.faces]
+            return Shell3D(new_faces, self.name)
+        else:
+            for face in self.faces:
+                face.frame_mapping(frame, side, copy=False)
+            self.bounding_box = self._bounding_box()
+            
+    def copy(self):
+        new_faces = [face.copy() for face in self.faces]
+        return Shell3D(new_faces, self.name)
+    
+    def union(self, shell2):
+        new_faces = [face for face in self.faces+shell2.faces] 
+        new_name = self.name+' union '+shell2.name
+        new_color = self.color
+        return Shell3D(new_faces, new_name, new_color)
 
-    def bounding_box(self):
+    def _bounding_box(self):
         """
         Returns the boundary box
         """
-#        points = []
-#        for face in self.faces:
-#            points.extend(face.contour[0].points)
-#        points = ordered_set(points)
-        
         points = []
         for face in self.faces:
             points.extend(face.bounding_box.points)
@@ -3412,15 +3613,14 @@ class Shell3D(CompositePrimitive3D):
         zmin = min([pt[2] for pt in points])
         zmax = max([pt[2] for pt in points])
         
-        return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+        return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax, self.name)
 
     def point_belongs(self, point):
         """
         Ray Casting algorithm
         Returns True if the point is inside the Shell, False otherwise
         """
-        epsilon = 1e-08
-        count = 0
+        epsilon = 1
 
         bbox = self.bounding_box
         if point[0] < bbox.xmin or point[0] > bbox.xmax:
@@ -3430,40 +3630,73 @@ class Shell3D(CompositePrimitive3D):
         if point[2] < bbox.zmin or point[2] > bbox.zmax:
             return False
         
-        ray = LineSegment3D(point, Point3D((bbox.xmax+epsilon, point[1], point[2])))
-        for face in self.faces:
-            intersection_points = face.linesegment_intersection(ray)
-            if intersection_points is not None:
-                count += 1
-        if count%2 == 0:
-            return False
+        rays = []
+        rays.append(LineSegment3D(point, Point3D((bbox.xmin-random.uniform(0, 1)*epsilon, bbox.ymin-random.uniform(0, 1)*epsilon, bbox.zmin-random.uniform(0, 1)*epsilon))))
+        rays.append(LineSegment3D(point, Point3D((bbox.xmax+random.uniform(0, 1)*epsilon, bbox.ymin-random.uniform(0, 1)*epsilon, bbox.zmin-random.uniform(0, 1)*epsilon))))
+        rays.append(LineSegment3D(point, Point3D((bbox.xmin-random.uniform(0, 1)*epsilon, bbox.ymax+random.uniform(0, 1)*epsilon, bbox.zmin-random.uniform(0, 1)*epsilon))))
+        rays.append(LineSegment3D(point, Point3D((bbox.xmin-random.uniform(0, 1)*epsilon, bbox.ymin-random.uniform(0, 1)*epsilon, bbox.zmax+random.uniform(0, 1)*epsilon))))
+        rays.append(LineSegment3D(point, Point3D((bbox.xmax+random.uniform(0, 1)*epsilon, bbox.ymax+random.uniform(0, 1)*epsilon, bbox.zmax+random.uniform(0, 1)*epsilon))))
+        rays.append(LineSegment3D(point, Point3D((bbox.xmax+random.uniform(0, 1)*epsilon, bbox.ymax+random.uniform(0, 1)*epsilon, bbox.zmin-random.uniform(0, 1)*epsilon))))
+        rays.append(LineSegment3D(point, Point3D((bbox.xmax+random.uniform(0, 1)*epsilon, bbox.ymin-random.uniform(0, 1)*epsilon, bbox.zmax+random.uniform(0, 1)*epsilon))))
+        rays.append(LineSegment3D(point, Point3D((bbox.xmin-random.uniform(0, 1)*epsilon, bbox.ymax+random.uniform(0, 1)*epsilon, bbox.zmax+random.uniform(0, 1)*epsilon))))
+        
+        rays = sorted(rays, key=lambda ray: ray.Length())
+        
+        rays_intersections = []
+        tests = []
+        for ray in rays[:3]:
+            count = 0
+            ray_intersection = []
+            test = True
+            for face in self.faces:
+                intersection_point = face.linesegment_intersection(ray)
+                if intersection_point is not None:
+                    ray_intersection.append(intersection_point)
+                    count += 1
+            if count%2 == 0:
+                test = False
+            tests.append(test)
+            rays_intersections.append(ray_intersection)
+            
+        if sum(tests) == 0 or sum(tests) == 3:
+            return tests[0]
+        else:
+            print('PROBLEME')
+#            print(point)
+#            raise NotImplementedError
+#            if tuple(point.vector) == (-0.3, 0.25, -0.25):
+            ### BABYLON ###
+#                print('------------------------')
+#                point = Point3D(point.vector)
+#                print(point.Babylon())
+#                for ray in rays[:3]:
+#                    print(ray.Babylon())
+#                for ray in rays_intersections:
+#                    for point in ray:
+#                        point = Point3D(point.vector)
+#                        print(point.Babylon())
+#                print('------------------------')
+            ###############
+            
+        return sum(tests) > 1
                 
-        # Second test
-        count = 0
-        ray = LineSegment3D(point, Point3D((point[0], bbox.ymax, point[2])))
-        for face in self.faces:
-            intersection_points = face.linesegment_intersection(ray)
-            if intersection_points is not None:
-                count += 1
-        if count%2 == 0:
-            print('failed second test.......')
-            return False
-        
-        print('succeded second test : indeed point is inside')
-        
-        return True
-    
     def is_inside_shell(self, shell2):
         """
-        Returns True if all the points of self are inside shell2
+        Returns True if all the points of self are inside shell2 and no face \
+        are intersecting
         """
+        bbox1 = self.bounding_box
+        bbox2 = shell2.bounding_box
+        if not bbox1.is_inside_bbox(bbox2):
+            return False
+
         points = []
         for face in self.faces:
-            points.extend(face.contour[0].points)
-#        points = ordered_set(points)
-        
+            points.extend(face.contours[0].points)
+                    
         for point in points:
             if not shell2.point_belongs(point):
+                print('point belongs', point)
                 return False
             
         # Check if any faces are intersecting
@@ -3471,110 +3704,73 @@ class Shell3D(CompositePrimitive3D):
             for face2 in shell2.faces:
                 intersection_points = face1.face_intersection(face2)
                 if intersection_points is not None:
-                    print('Two faces are intersecting :', face1, face2)
+#                    print('Two faces are intersecting :', face1, face2)
                     return False
                 
         return True
-    
+        
     def shell_intersection(self, shell2):
         """
-        Returns True if the two Shells intersect each other
-        """
-#        bbox1 = self.bbox()
-#        bbox2 = shell2.bbox()
-#        if not bbox1.bbox_intersection(bbox2):
-#            return False
+        Return None if disjointed
+        Return (1, 0) or (0, 1) if one is inside the other
+        Return (n1, n2) if intersection
         
-        # Check if boundary boxes intersect
+        4 cases :
+            (n1, n2) with face intersection             => (n1, n2)
+            (0, 0) with face intersection               => (0, 0)
+            (0, 0) with no face intersection            => None
+            (1, 0) or (0, 1) with no face intersection  => 1
+        """
+        # Check if boundary boxes don't intersect
         bbox1 = self.bounding_box
         bbox2 = shell2.bounding_box
         if not bbox1.bbox_intersection(bbox2):
-            print("No intersection of shells' BBox")
-            return False
+#            print("No intersection of shells' BBox")
+            return None
         
         # Check if any point of the first shell is in the second shell
         points1 = []
         for face in self.faces:
-            points1.extend(face.contour[0].points)
-#        points1 = ordered_set(points1)
-        
+            points1.extend(face.contours[0].points)
         points2 = []
         for face in shell2.faces:
-            points2.extend(face.contour[0].points)
-#        points2 = ordered_set(points2)
+            points2.extend(face.contours[0].points)
         
+        nb_pts1 = len(points1)
+        nb_pts2 = len(points2)
+        compteur1 = 0
+        compteur2 = 0
         for point1 in points1:
             if shell2.point_belongs(point1):
-                print('point inside shell', point1)
-                return True
-            
+                compteur1 += 1
         for point2 in points2:
             if self.point_belongs(point2):
-                print('point inside shell', point2)
-                return True
-            
-        # Check if any faces are intersecting
+                compteur2 += 1
+                
+        inter1 = compteur1/nb_pts1
+        inter2 = compteur2/nb_pts2
+#        print('shell intersection')
+#        print('shell1 intersecte shell2 à', inter1*100, '%')
+#        print('shell2 intersecte shell1 à', inter2*100, '%')
+        
         for face1 in self.faces:
             for face2 in shell2.faces:
                 intersection_points = face1.face_intersection(face2)
                 if intersection_points is not None:
-                    print('Two faces are intersecting :', face1, face2)
-#                    print('face1', [p for edge in face1.contour[0].edges for p in edge.points])
-#                    print('face2', [p for edge in face2.contour[0].edges for p in edge.points])
-                    ax = face1.plot()
-                    face2.plot(ax)
-                    return True
-        return False
-    
-#    def distance_to_shell(self, shell2, return_points=False):
-#        NB_FACES = 100
-#        
-#        if self.shell_intersection(shell2):
-#            return 0
-#        
-#        # Bounding box
-#        close_faces = []
-#        for face1 in self.faces:
-#            bbox1 = face1.bounding_box
-#            for face2 in shell2.faces:               
-#                bbox2 = face2.bounding_box
-#                bbox_distance = bbox1.distance_to_bbox(bbox2)
-#                if npy.isclose(bbox_distance, 0):
-#                    close_faces.append((face1, face2, bbox_distance))
-#                    NB_FACES += 1
-#                else:
-#                    if len(close_faces) < NB_FACES:
-#                        close_faces.append((face1, face2, bbox_distance))
-#                    else:
-#                        max_distance = max([d[2] for d in close_faces])
-#                        if bbox_distance < max_distance:
-#                            index = [d[2] for d in close_faces].index(max_distance)
-#                            close_faces[index] = (face1, face2, bbox_distance)
-#
-#        distances = []
-#        if not return_points:
-#            for face1, face2 in [(f[0], f[1]) for f in close_faces]:
-#                distance = face1.distance_to_face(face2)
-#                distances.append(distance)
-#            return min(distances)
-#        else:
-#            for face1, face2 in [(f[0], f[1]) for f in close_faces]:
-#                distance = face1.distance_to_face(face2, return_points=True)
-#                distances.append(distance)
-#            d_min, point1_min, point2_min = distances[0]
-#            for distance in distances:
-#                if distance[0] < d_min:
-#                    d_min = distance[0]
-#                    point1_min = distance[1]
-#                    point2_min = distance[2]
-#            return d_min, point1_min, point2_min
+#                    print('Two faces are intersecting :', face1, face2)
+#                    ax = face1.plot()
+#                    face2.plot(ax)
+                    return inter1, inter2
+        if (inter1, inter2) == (0, 0):
+            return None
+        return 1
         
     def distance_to_shell(self, shell2, add_to_volumemodel=None):
         """
         Returns a Mesure object if the distance is not zero, otherwise returns None
         """
         
-        if self.shell_intersection(shell2):
+        if self.shell_intersection(shell2) is not None and self.shell_intersection(shell2) != 1:
             return None
 
         distance_min, point1_min, point2_min = self.faces[0].distance_to_face(shell2.faces[0], return_points=True)
@@ -3585,95 +3781,103 @@ class Shell3D(CompositePrimitive3D):
                 bbox_distance = bbox1.distance_to_bbox(bbox2)
                 if bbox_distance < distance_min:
                     distance, point1, point2 = face1.distance_to_face(face2, return_points=True)
-                    if distance < distance_min:
+                    if distance == 0:
+                        return None
+                    elif distance < distance_min:
                         distance_min, point1_min, point2_min = distance, point1, point2
                         
         mesure = Mesure(point1_min, point2_min)
                         
         if add_to_volumemodel is not None:
-            add_to_volumemodel.shells.append(mesure)
+            add_to_volumemodel.primitives.append(mesure)
                             
-        return mesure                
+        return mesure
+
+    def distance_to_point(self, point, add_to_volumemodel=None):
+        """
+        Computes the distance of a point to a Shell3D, whether it is inside or outside the Shell3D
+        """
+        distance_min, point1_min, point2_min = self.faces[0].distance_to_point(point, return_other_point=True)
+        for face in self.faces[1:]:
+            bbox_distance = self.bounding_box.distance_to_point(point)
+            if bbox_distance < distance_min:
+                distance, point1, point2 = face.distance_to_point(point, return_other_point=True)
+                if distance < distance_min:
+                    distance_min, point1_min, point2_min = distance, point1, point2
+                
+        mesure = Mesure(point1_min, point2_min)
+                        
+        if add_to_volumemodel is not None:
+            add_to_volumemodel.primitives.append(mesure)
+                            
+        return mesure
+    
+    def intersection_internal_aabb_volume(self, shell2):
+        """
+        aabb made of the intersection points and the points of self internal to shell2
+        """
+        intersections_points = []
+        for face1 in self.faces:
+            for face2 in shell2.faces:
+                intersection_points = face1.face_intersection(face2)
+                if intersection_points is not None:
+                    intersections_points.extend(intersection_points)
+       
+        shell1_points_inside_shell2 = []
+        for face in self.faces:
+            for point in face.points:
+                if shell2.point_belongs(point):
+                    shell1_points_inside_shell2.append(point)
+        
+        if len(intersections_points+shell1_points_inside_shell2) == 0:
+            return 0
+        bbox = BoundingBox.from_points(intersections_points+shell1_points_inside_shell2)
+        return bbox.volume()
+    
+    def intersection_external_aabb_volume(self, shell2):
+        """
+        aabb made of the intersection points and the points of self external to shell2
+        """
+        intersections_points = []
+        for face1 in self.faces:
+            for face2 in shell2.faces:
+                intersection_points = face1.face_intersection(face2)
+                if intersection_points is not None:
+                    intersections_points.extend(intersection_points)
+       
+        shell1_points_outside_shell2 = []
+        for face in self.faces:
+            for point in face.points:
+                if not shell2.point_belongs(point):
+                    shell1_points_outside_shell2.append(point)
+        
+        if len(intersections_points+shell1_points_outside_shell2) == 0:
+            return 0
+        bbox = BoundingBox.from_points(intersections_points+shell1_points_outside_shell2)
+        return bbox.volume()
     
     def Babylon(self):
-#        ya, xa, za = self.axis# to counter y definition in babylon
-#        theta=math.acos(za/self.width)
-#        phi=math.atan(ya/xa)
-#        x,z,y=self.position
-#        s='var box1 = BABYLON.Mesh.CreateBox("Box1", 10.0, scene);\n'
-#        s+= "box1.position.x = -20;"
-#        s='var cylinder = BABYLON.Mesh.CreateCylinder("{}", {}, {}, {}, 30, 1, scene,false, BABYLON.Mesh.DEFAULTSIDE);'.format(self.name,self.width,2*self.outer_radius,2*self.outer_radius)
-#        s+='cylinder.position = new BABYLON.Vector3({},{},{});\n;'.format(x,y,z)
-#        s+='cylinder.rotation.x={}\n;'.format(-theta*math.sin(phi))
-#        s+='cylinder.rotation.y={}\n;'.format(theta*math.cos(phi))
-#        s+='cylinder.rotation.z={}\n;'.format(phi)
-#        s = ''
-#        for face in self.faces:
-#            
-#            pts = []
-#            shape = ''
-#            for edge in face.contour[0].edges:
-#                pts.extend(edge.points)
-#            pts = list(set(pts))
-#            for point in pts:
-#                shape += 'new BABYLON.Vector3({},{},{}),'.format(point[1], point[0], point[2])
-#            shape = shape[:-1]
-#            s += 'var shape = [{}];\n'.format(shape)
-#            
-#            s += 'var holes = [];\n'
-#            if len(face.contour) > 1:
-#                for i, cont in enumerate(face.contour[1:]):
-#                    pts = []
-#                    holes = ''
-#                    for edge in face.cont.edges:
-#                        pts.extend(edge.points)
-#                    pts = list(set(pts))
-#                    for point in pts:
-#                        holes += 'new BABYLON.Vector3({},{},{}),'.format(point[1], point[0], point[2])
-#                    holes = holes[:-1]
-#                    s += 'var holes[{}] = [{}];\n'.format(i, holes)
-#
-#            s += 'var polygon = BABYLON.MeshBuilder.CreatePolygon("{}", {{shape:shape, holes:holes, sideOrientation: BABYLON.Mesh.DOUBLESIDE }}, scene);\n'.format(self.name)
         s = 'var customMesh = new BABYLON.Mesh("custom", scene);\n'
         
         positions = ''
         indices = ''
-        ij = 0
-        for j, face in enumerate(self.faces):
-            if len(face.contour[0].points) < 3:
-                return NotImplementedError
+        
+        nb_points = 0
+        for i, face in enumerate(self.faces):
+            points_3D, triangles_indexes = face.triangulation()
             
-            elif len(face.contour[0].points) == 3:
-#                positions = ''
-                pts = face.contour[0].points
-                for pt in pts:
-                    positions += '{},{},{},'.format(round(pt[1],3),round(pt[0],3),round(pt[2],3))
-#                positions = positions[:-1]                
-                
-                indices += '{},{},{},'.format(ij, ij+1, ij+2)
-                
-                ij += len(pts)
+            for point in points_3D:
+                positions += '{},{},{},'.format(round(point[0],6), round(point[1],6), round(point[2],6))
             
-            else: 
-                mid_point = face.average_center_point()
-                
-                positions += '{},{},{},'.format(round(mid_point[1],3),round(mid_point[0],3),round(mid_point[2],3))
-                pts = face.contour[0].points
-                for pt in pts:
-                    positions += '{},{},{},'.format(round(pt[1],3),round(pt[0],3),round(pt[2],3))
-#                positions = positions[:-1]
-                
-#                indices = ''
-                for i in range(len(pts)-1):
-                    indices += '{},{},{},'.format(ij, ij+i+1, ij+i+2)
-                indices += '{},{},{},'.format(ij, ij+len(pts), ij+1)
-                
-                ij += len(pts)+1
+            for j, indexes in enumerate(triangles_indexes):                    
+                indices += '{},{},{},'.format(indexes[0]+nb_points, indexes[1]+nb_points, indexes[2]+nb_points)
+            nb_points += len(points_3D)
             
+#            s += face.plane.Babylon()
+                    
         positions = positions[:-1]
         indices = indices[:-1]
-            
-            
+        
         s += 'var positions = [{}];\n'.format(positions)
         s += 'var indices = [{}];\n'.format(indices)
         s += 'var normals = [];\n'
@@ -3683,35 +3887,43 @@ class Shell3D(CompositePrimitive3D):
         s += 'vertexData.indices = indices;\n'
         s += 'vertexData.normals = normals;\n'
         s += 'vertexData.applyToMesh(customMesh);\n'
-        s += 'customMesh.enableEdgesRendering(0.9);\n'
-        s += 'customMesh.edgesWidth = 60.0;\n'
+        s += 'customMesh.enableEdgesRendering(0.95);\n'
+        s += 'customMesh.edgesWidth = 0.1;\n'
         s += 'customMesh.edgesColor = new BABYLON.Color4(0, 0, 0, 0.6);\n'
-                
         s += 'var mat = new BABYLON.StandardMaterial("mat", scene);\n'
+#        s += 'mat.diffuseColor = BABYLON.Color3.Green();\n'
+#        s += 'mat.specularColor = new BABYLON.Color3(0.5, 0.6, 0.87);\n'
+#        s += 'mat.emissiveColor = new BABYLON.Color3(1, 1, 1);\n'
+#        s += 'mat.ambientColor = new BABYLON.Color3(0.23, 0.98, 0.53);\n'
         s += 'mat.backFaceCulling = false;\n'
         s += 'customMesh.material = mat;\n'
-        
+        if self.color is not None:
+            s += 'mat.diffuseColor = new BABYLON.Color3({}, {}, {});\n'.format(self.color[0], self.color[1], self.color[2])
+
         return s
-        
+
+
 class BoundingBox:
     """
     An axis aligned boundary box
     """
-    def __init__(self, xmin, xmax, ymin, ymax, zmin, zmax):
+    def __init__(self, xmin, xmax, ymin, ymax, zmin, zmax, name=''):
         self.xmin = xmin
         self.xmax = xmax
         self.ymin = ymin
         self.ymax = ymax
         self.zmin = zmin
         self.zmax = zmax
-        self.points = (Point3D((self.xmin, self.ymin, self.zmin)), \
+        self.points = [Point3D((self.xmin, self.ymin, self.zmin)), \
                        Point3D((self.xmax, self.ymin, self.zmin)), \
                        Point3D((self.xmax, self.ymax, self.zmin)), \
                        Point3D((self.xmin, self.ymax, self.zmin)), \
                        Point3D((self.xmin, self.ymin, self.zmax)), \
                        Point3D((self.xmax, self.ymin, self.zmax)), \
                        Point3D((self.xmax, self.ymax, self.zmax)), \
-                       Point3D((self.xmin, self.ymax, self.zmax)))
+                       Point3D((self.xmin, self.ymax, self.zmax))]
+        self.center = (self.points[0]+self.points[-2])/2
+        self.name = name
     
     def plot(self, ax=None, color=''):
         fig = plt.figure()
@@ -3729,37 +3941,39 @@ class BoundingBox:
         y = [p[1] for p in self.points]
         z = [p[2] for p in self.points]
         ax.scatter(x, y, z)
-        ax.plot(bbox_edges[0], color=color)
+        for edge in bbox_edges:
+            ax.plot3D([edge[0][0], edge[1][0]],
+                      [edge[0][1], edge[1][1]],
+                      [edge[0][2], edge[1][2]],
+                      'gray')
         ax.set_xlabel('X Label')
         ax.set_ylabel('Y Label')
         ax.set_zlabel('Z Label')
-
         plt.show()
-        
         return ax
-
-    def Translation(self, offset, copy=False):
-        new_xmin = self.xmin+offset[0]
-        new_xmax = self.xmax+offset[0]
-        new_ymin = self.ymin+offset[1]
-        new_ymax = self.ymax+offset[1]
-        new_zmin = self.zmin+offset[2]
-        new_zmax = self.zmax+offset[2]
-        if copy:
-            return BoundingBox(new_xmin, new_xmax, new_ymin, new_ymax, new_zmin, new_zmax)
-        else:
-            self.xmin = new_xmin
-            self.xmax = new_xmax
-            self.ymin = new_ymin
-            self.ymax = new_ymax
-            self.zmin = new_zmin
-            self.zmax = new_zmax
-            self.points=(p.Translate(offset, False) for p in self.points)
+    
+    @classmethod
+    def from_points(cls, points):
+        xmin = min([pt[0] for pt in points])
+        xmax = max([pt[0] for pt in points])
+        ymin = min([pt[1] for pt in points])
+        ymax = max([pt[1] for pt in points])
+        zmin = min([pt[2] for pt in points])
+        zmax = max([pt[2] for pt in points])
+        return cls(xmin, xmax, ymin, ymax, zmin, zmax)
+        
+    def volume(self):
+        return (self.xmax-self.xmin)*(self.ymax-self.ymin)*(self.zmax-self.zmin)
     
     def bbox_intersection(self, bbox2):
         return (self.xmin < bbox2.xmax and self.xmax > bbox2.xmin \
                 and self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
                 and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin)
+        
+    def is_inside_bbox(self, bbox2):
+        return (self.xmin > bbox2.xmin and self.xmax < bbox2.xmax \
+                and self.ymin > bbox2.ymin and self.ymax < bbox2.ymax \
+                and self.zmin > bbox2.zmin and self.zmax < bbox2.zmax)
         
     def intersection_volume(self, bbox2):
         if not self.bbox_intersection(bbox2):
@@ -3808,22 +4022,283 @@ class BoundingBox:
             dz = 0
         
         return (dx**2 + dy**2 + dz**2)**0.5
-        
     
-class Mesure:
-    def __init__(self, point1, point2):
+    def point_belongs(self, point):
+        return self.xmin < point[0] and point[0] < self.xmax \
+        and self.ymin < point[1] and point[1] < self.ymax \
+        and self.zmin < point[2] and point[2] < self.zmax 
+    
+    def distance_to_point(self, point):
+        if self.point_belongs(point):
+            return min([self.xmax-point[0], point[0]-self.xmin,
+                        self.ymax-point[1], point[1]-self.ymin,
+                        self.zmax-point[2], point[2]-self.zmin])
+        else:
+            if point[0] < self.xmin:
+                dx = self.xmin - point[0]
+            elif self.xmax < point[0]:
+                dx = point[0] - self.xmax
+            else:
+                dx = 0
+                
+            if point[1] < self.ymin:
+                dy = self.ymin - point[1]
+            elif self.ymax < point[1]:
+                dy = point[1] - self.ymax
+            else:
+                dy = 0
+                
+            if point[2] < self.zmin:
+                dz = self.zmin - point[2]
+            elif self.zmax < point[2]:
+                dz = point[2] - self.zmax
+            else:
+                dz = 0
+        return (dx**2 + dy**2 + dz**2)**0.5
+    
+    def distance_between_two_points_on_bbox(self, point1, point2):
+        
+        if   math.isclose(point1[0], self.xmin, abs_tol=1e-8):
+            face_point1 = 5
+        elif math.isclose(point1[0], self.xmax, abs_tol=1e-8):
+            face_point1 = 3
+        elif math.isclose(point1[1], self.ymin, abs_tol=1e-8):
+            face_point1 = 4
+        elif math.isclose(point1[1], self.ymax, abs_tol=1e-8):
+            face_point1 = 2
+        elif math.isclose(point1[2], self.zmin, abs_tol=1e-8):
+            face_point1 = 6
+        elif math.isclose(point1[2], self.zmax, abs_tol=1e-8):
+            face_point1 = 1
+        else:
+            raise NotImplementedError
+            
+        if   math.isclose(point2[0], self.xmin, abs_tol=1e-8):
+            face_point2 = 5
+        elif math.isclose(point2[0], self.xmax, abs_tol=1e-8):
+            face_point2 = 3
+        elif math.isclose(point2[1], self.ymin, abs_tol=1e-8):
+            face_point2 = 4
+        elif math.isclose(point2[1], self.ymax, abs_tol=1e-8):
+            face_point2 = 2
+        elif math.isclose(point2[2], self.zmin, abs_tol=1e-8):
+            face_point2 = 6
+        elif math.isclose(point2[2], self.zmax, abs_tol=1e-8):
+            face_point2 = 1
+        else:
+            raise NotImplementedError
+        
+        point1_copy = point1.copy()
+        point2_copy = point2.copy()
+        print(face_point1, face_point2)
+        if face_point1 > face_point2:
+            print('inversion')
+            point1, point2 = point2, point1
+            face_point1, face_point2 = face_point2, face_point1
+            
+        # The points are on the same face
+        if face_point1 == face_point2:
+            return point1.PointDistance(point2)
+
+        deltax = self.xmax - self.xmin
+        deltay = self.ymax - self.ymin
+        deltaz = self.zmax - self.zmin
+        
+        point1_2d_coordinate_dict = {1: Point2D((point1[0]-self.xmin-deltax/2, point1[1]-self.ymin-deltay/2)),
+                                     2: Point2D((point1[2]-self.zmin-deltaz/2, point1[0]-self.xmin-deltax/2)),
+                                     3: Point2D((point1[1]-self.ymin-deltay/2, point1[2]-self.zmin-deltaz/2)),
+                                     4: Point2D((point1[0]-self.xmin-deltax/2, point1[2]-self.zmin-deltaz/2)),
+                                     5: Point2D((point1[2]-self.zmin-deltaz/2, point1[1]-self.ymin-deltay/2)),
+                                     6: Point2D((point1[1]-self.ymin-deltay/2, point1[0]-self.xmin-deltax/2))}
+        
+        point2_2d_coordinate_dict = {1: Point2D((point2[0]-self.xmin-deltax/2, point2[1]-self.ymin-deltay/2)),
+                                     2: Point2D((point2[2]-self.zmin-deltaz/2, point2[0]-self.xmin-deltax/2)),
+                                     3: Point2D((point2[1]-self.ymin-deltay/2, point2[2]-self.zmin-deltaz/2)),
+                                     4: Point2D((point2[0]-self.xmin-deltax/2, point2[2]-self.zmin-deltaz/2)),
+                                     5: Point2D((point2[2]-self.zmin-deltaz/2, point2[1]-self.ymin-deltay/2)),
+                                     6: Point2D((point2[1]-self.ymin-deltay/2, point2[0]-self.xmin-deltax/2))}
+        
+        vertex_2d_coordinate_dict = {1: [Point2D((self.xmin-self.xmin-deltax/2, self.ymin-self.ymin-deltay/2)), Point2D((self.xmin-self.xmin-deltax/2, self.ymax-self.ymin-deltay/2)), Point2D((self.xmax-self.xmin-deltax/2, self.ymax-self.ymin-deltay/2)), Point2D((self.xmax-self.xmin-deltax/2, self.ymin-self.ymin-deltay/2))],
+                                     2: [Point2D((self.zmin-self.zmin-deltaz/2, self.xmin-self.xmin-deltax/2)), Point2D((self.zmin-self.zmin-deltaz/2, self.xmax-self.xmin-deltax/2)), Point2D((self.zmax-self.zmin-deltaz/2, self.xmax-self.xmin-deltax/2)), Point2D((self.zmax-self.zmin-deltaz/2, self.xmin-self.xmin-deltax/2))],
+                                     3: [Point2D((self.ymin-self.ymin-deltay/2, self.zmin-self.zmin-deltaz/2)), Point2D((self.ymin-self.ymin-deltay/2, self.zmax-self.zmin-deltaz/2)), Point2D((self.ymax-self.ymin-deltay/2, self.zmax-self.zmin-deltaz/2)), Point2D((self.ymax-self.ymin-deltay/2, self.zmin-self.zmin-deltaz/2))],
+                                     4: [Point2D((self.xmin-self.xmin-deltax/2, self.zmin-self.zmin-deltaz/2)), Point2D((self.xmin-self.xmin-deltax/2, self.zmax-self.zmin-deltaz/2)), Point2D((self.xmax-self.xmin-deltax/2, self.zmax-self.zmin-deltaz/2)), Point2D((self.xmax-self.xmin-deltax/2, self.zmin-self.zmin-deltaz/2))],
+                                     5: [Point2D((self.zmin-self.zmin-deltaz/2, self.ymin-self.ymin-deltay/2)), Point2D((self.zmin-self.zmin-deltaz/2, self.ymax-self.ymin-deltay/2)), Point2D((self.zmax-self.zmin-deltaz/2, self.ymax-self.ymin-deltay/2)), Point2D((self.zmax-self.zmin-deltaz/2, self.ymin-self.ymin-deltay/2))],
+                                     6: [Point2D((self.ymin-self.ymin-deltay/2, self.xmin-self.xmin-deltax/2)), Point2D((self.ymin-self.ymin-deltay/2, self.xmax-self.xmin-deltax/2)), Point2D((self.ymax-self.ymin-deltay/2, self.xmax-self.xmin-deltax/2)), Point2D((self.ymax-self.ymin-deltay/2, self.xmin-self.xmin-deltax/2))],}
+        
+        vertex_2d_coordinate_dict2 = {1: [Point2D((self.xmin, self.ymin)), Point2D((self.xmin, self.ymax)), Point2D((self.xmax, self.ymax)), Point2D((self.xmax, self.ymin))],
+                                    2: [Point2D((self.zmin, self.xmin)), Point2D((self.zmin, self.xmax)), Point2D((self.zmax, self.xmax)), Point2D((self.zmax, self.xmin))],
+                                     3: [Point2D((self.ymin, self.zmin)), Point2D((self.ymin, self.zmax)), Point2D((self.ymax, self.zmax)), Point2D((self.ymax, self.zmin))],
+                                     4: [Point2D((self.xmin, self.zmin)), Point2D((self.xmin, self.zmax)), Point2D((self.xmax, self.zmax)), Point2D((self.xmax, self.zmin))],
+                                     5: [Point2D((self.zmin, self.ymin)), Point2D((self.zmin, self.ymax)), Point2D((self.zmax, self.ymax)), Point2D((self.zmax, self.ymin))],
+                                     6: [Point2D((self.ymin, self.xmin)), Point2D((self.ymin, self.xmax)), Point2D((self.ymax, self.xmax)), Point2D((self.ymax, self.xmin))],}
+        
+        
+        vertex_to_3d_dict = {1: (2, self.zmax, 0, 1),
+                             2: (1, self.ymax, 2, 0),
+                             3: (0, self.xmax, 1, 2),
+                             4: (1, self.ymin, 0, 2),
+                             5: (0, self.xmin, 2, 1),
+                             6: (2, self.zmin, 1, 0)}
+        
+        offset_dict = {0: self.xmin+deltax/2,
+                       1: self.ymin+deltay/2,
+                       2: self.zmin+deltaz/2}
+        
+        opposite_face_dict = {1: 6, 2: 4, 3: 5, 4: 2, 5: 3, 6: 1}
+        
+        combination_dict = {(1, 2): Frame2D(Point2D((0,  deltay/2+deltaz/2)), Vector2D((0,-1)), Vector2D(( 1, 0))),
+                            (2, 1): Frame2D(Point2D(( deltay/2+deltaz/2, 0)), Vector2D((0, 1)), Vector2D((-1, 0))),
+                            (1, 3): Frame2D(Point2D(( deltax/2+deltaz/2, 0)), Vector2D((0, 1)), Vector2D((-1, 0))),
+                            (3, 1): Frame2D(Point2D((0,  deltax/2+deltaz/2)), Vector2D((0,-1)), Vector2D(( 1, 0))),
+                            (1, 4): Frame2D(Point2D((0, -deltay/2-deltaz/2)), Vector2D((1, 0)), Vector2D(( 0, 1))),
+                            (4, 1): Frame2D(Point2D((-deltay/2-deltaz/2, 0)), Vector2D((1, 0)), Vector2D(( 0, 1))),
+                            (1, 5): Frame2D(Point2D((-deltax/2-deltaz/2, 0)), Vector2D((1, 0)), Vector2D(( 0, 1))),
+                            (5, 1): Frame2D(Point2D((0, -deltax/2-deltaz/2)), Vector2D((1, 0)), Vector2D(( 0, 1))),
+                            (2, 3): Frame2D(Point2D((0,  deltax/2+deltay/2)), Vector2D((0,-1)), Vector2D(( 1, 0))),
+                            (3, 2): Frame2D(Point2D(( deltax/2+deltay/2, 0)), Vector2D((0, 1)), Vector2D((-1, 0))),
+                            (2, 5): Frame2D(Point2D((0, -deltax/2-deltay/2)), Vector2D((1, 0)), Vector2D(( 0, 1))),
+                            (5, 2): Frame2D(Point2D((-deltax/2-deltay/2, 0)), Vector2D((1, 0)), Vector2D(( 0, 1))),
+                            (2, 6): Frame2D(Point2D((-deltaz/2-deltay/2, 0)), Vector2D((1, 0)), Vector2D(( 0, 1))),
+                            (6, 2): Frame2D(Point2D((0, -deltaz/2-deltay/2)), Vector2D((1, 0)), Vector2D(( 0, 1))),
+                            (3, 4): Frame2D(Point2D((-deltay/2-deltax/2, 0)), Vector2D((1, 0)), Vector2D(( 0, 1))),
+                            (4, 3): Frame2D(Point2D((0, -deltay/2-deltax/2)), Vector2D((1, 0)), Vector2D(( 0, 1))),
+                            (3, 6): Frame2D(Point2D((0, -deltaz/2-deltax/2)), Vector2D((1, 0)), Vector2D(( 0, 1))),
+                            (6, 3): Frame2D(Point2D((-deltaz/2-deltax/2, 0)), Vector2D((1, 0)), Vector2D(( 0, 1))),
+                            (4, 5): Frame2D(Point2D((-deltax/2-deltay/2, 0)), Vector2D((0, 1)), Vector2D((-1, 0))),
+                            (5, 4): Frame2D(Point2D((0, -deltax/2-deltay/2)), Vector2D((0,-1)), Vector2D(( 1, 0))),
+                            (4, 6): Frame2D(Point2D((0, -deltaz/2-deltay/2)), Vector2D((0,-1)), Vector2D(( 1, 0))),
+                            (6, 4): Frame2D(Point2D((-deltaz/2-deltay/2, 0)), Vector2D((0, 1)), Vector2D((-1, 0))),
+                            (5, 6): Frame2D(Point2D((-deltaz/2-deltax/2, 0)), Vector2D((0, 1)), Vector2D((-1, 0))),
+                            (6, 5): Frame2D(Point2D((0, -deltaz/2-deltax/2)), Vector2D((0,-1)), Vector2D(( 1, 0)))}
+        
+        point1_2d = point1_2d_coordinate_dict[face_point1]
+        point2_2d = point2_2d_coordinate_dict[face_point2]
+        
+        # The points are on adjacent faces
+        if opposite_face_dict[face_point1] != face_point2:
+            frame =  combination_dict[(face_point1, face_point2)]
+            net_point2 = frame.OldCoordinates(point2_2d)
+            
+            # Computes the 3D intersection between the net_line and the edges of the face_point1
+            net_line = LineSegment2D(point1_2d, net_point2)
+            vertex_points = vertex_2d_coordinate_dict[face_point1]
+            edge_lines = [LineSegment2D(p1, p2) for p1, p2 in zip(vertex_points, vertex_points[1:]+[vertex_points[0]])]
+            for line in edge_lines:
+                edge_intersection_point, a, b = Point2D.LinesIntersection(net_line, line, curvilinear_abscissa=True)
+                if edge_intersection_point is not None \
+                and a > 0 and a < 1 and b > 0 and b < 1:
+                    break
+            offset_indice, offset, indice1, indice2 = vertex_to_3d_dict[face_point1]
+            disordered_coordinate = [(indice1, edge_intersection_point[0]+offset_dict[indice1]),
+                                     (indice2, edge_intersection_point[1]+offset_dict[indice2]),
+                                     (offset_indice, offset)]
+            disordered_coordinate = sorted(disordered_coordinate, key=lambda a: a[0])
+            intersection_point_3d = Point3D(tuple([p[1] for p in disordered_coordinate]))
+            
+            mesures = [Mesure(point1_copy, intersection_point_3d), Mesure(intersection_point_3d, point2_copy)]
+            
+            return mesures
+        
+        # The points are on opposite faces
+        else:
+            net_points2_and_frame = []
+            
+            faces_number = [1, 2, 3, 4, 5, 6]
+            faces_number.remove(face_point1)
+            faces_number.remove(face_point2)
+            pathes = []
+            for face_nb in faces_number:
+                path = [(face_point1, face_nb), (face_nb, face_point2)]
+                pathes.append(path)
+
+            for path in pathes:
+                frame1 = combination_dict[(path[0][0], path[0][1])]
+                frame2 = combination_dict[(path[1][0], path[1][1])]
+                frame = frame1 + frame2
+                net_points2_and_frame.append((Point2D(frame.OldCoordinates(point2_2d).vector), frame))
+            net_point2, frame = min(net_points2_and_frame, key=lambda pt: pt[0].PointDistance(point1_2d))
+            net_line = LineSegment2D(point1_2d, net_point2)
+
+            # Computes the 3D intersection between the net_line and the edges of the face_point1
+            vertex_points = vertex_2d_coordinate_dict[face_point1]
+            edge_lines = [LineSegment2D(p1, p2) for p1, p2 in zip(vertex_points, vertex_points[1:]+[vertex_points[0]])]
+            for line in edge_lines:
+                edge_intersection_point1, a, b = Point2D.LinesIntersection(net_line, line, curvilinear_abscissa=True)                
+                if edge_intersection_point1 is not None \
+                and a > 0 and a < 1 and b > 0 and b < 1:
+                    break
+            offset_indice, offset, indice1, indice2 = vertex_to_3d_dict[face_point1]
+            disordered_coordinate = [(indice1, edge_intersection_point1[0]+offset_dict[indice1]), 
+                                     (indice2, edge_intersection_point1[1]+offset_dict[indice2]),
+                                     (offset_indice, offset)]
+            disordered_coordinate = sorted(disordered_coordinate, key=lambda a: a[0])
+            intersection_point1_3d = Point3D(tuple([p[1] for p in disordered_coordinate]))
+
+            # Computes the 3D intersection between the net_line and the edges of the face_point2            
+            vertex_points = [frame.OldCoordinates(p) for p in vertex_2d_coordinate_dict[face_point2]]
+            edge_lines = [LineSegment2D(p1, p2) for p1, p2 in zip(vertex_points, vertex_points[1:]+[vertex_points[0]])]
+            for line in edge_lines:
+                edge_intersection_point2, a, b = Point2D.LinesIntersection(net_line, line, curvilinear_abscissa=True)
+                if edge_intersection_point2 is not None \
+                and a > 0 and a < 1 and b > 0 and b < 1:
+                    break
+            edge_intersection_point2 = Point2D(frame.NewCoordinates(edge_intersection_point2))
+            offset_indice, offset, indice1, indice2 = vertex_to_3d_dict[face_point2]
+            disordered_coordinate = [(indice1, edge_intersection_point2[0]+offset_dict[indice1]),
+                                     (indice2, edge_intersection_point2[1]+offset_dict[indice2]),
+                                     (offset_indice, offset)]
+            disordered_coordinate = sorted(disordered_coordinate, key=lambda a: a[0])
+            intersection_point2_3d = Point3D(tuple([p[1] for p in disordered_coordinate]))
+            
+            if point1 == point1_copy:
+                mesures = [Mesure(point1, intersection_point1_3d), Mesure(intersection_point1_3d, intersection_point2_3d), Mesure(intersection_point2_3d, point2)]
+            else:
+                mesures = [Mesure(point2, intersection_point2_3d), Mesure(intersection_point2_3d, intersection_point1_3d), Mesure(intersection_point1_3d, point1)]
+            return mesures
+
+    def Babylon(self):
+        height = self.ymax-self.ymin
+        width = self.xmax-self.xmin
+        depth = self.zmax-self.zmin
+        s = 'var box = BABYLON.MeshBuilder.CreateBox("box", {{height: {}, width: {}, depth: {}}}, scene);\n'.format(height, width, depth)
+        s += 'box.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));\n'.format(self.center[0], self.center[1], self.center[2])
+        s += 'var bboxmat = new BABYLON.StandardMaterial("bboxmat", scene);\n'
+        s += 'bboxmat.alpha = 0.4;\n'
+        s += 'var DTWidth = {};\n'.format(width*60)
+        s += 'var DTHeight = {};\n'.format(height*60)
+        s += 'var font_type = "Arial";\n'
+        s += 'var text = "{}";\n'.format(self.name)
+        s += 'var dynamicTexture = new BABYLON.DynamicTexture("DynamicTexture", {width:DTWidth, height:DTHeight}, scene);\n'
+        s += 'var ctx = dynamicTexture.getContext();\n'
+        s += 'var size = 0.8;\n'
+        s += 'ctx.font = size + "px " + font_type;\n'
+        s += 'var textWidth = ctx.measureText(text).width;\n'
+        s += 'var ratio = textWidth/size;\n'
+        s += 'var font_size = Math.floor(DTWidth / ratio);\n'
+        s += 'var font = font_size + "px " + font_type;\n'
+        s += 'dynamicTexture.drawText(text, null, null, font, "#000000", "#ffffff", false);\n'
+        s += 'bboxmat.diffuseTexture = dynamicTexture;\n'
+        s += 'box.material = bboxmat;\n'
+        return s
+
+
+class Mesure(Line3D):
+    def __init__(self, point1, point2, color=(1,0,0)):
         self.points = [point1, point2]
-        self.distance = Vector3D(point1-point2).Norm()
+        self.color = color
+        self.distance = Vector3D(self.points[0]-self.points[1]).Norm()
+        self.bounding_box = self._bounding_box()
         
     def Babylon(self):
         s = 'var myPoints = [];\n'
-        s += 'var point1 = new BABYLON.Vector3({},{},{});\n'.format(self.points[0][1],self.points[0][0],self.points[0][2])
+        s += 'var point1 = new BABYLON.Vector3({},{},{});\n'.format(self.points[0][0],self.points[0][1],self.points[0][2])
         s += 'myPoints.push(point1);\n'
-        s += 'var point2 = new BABYLON.Vector3({},{},{});\n'.format(self.points[1][1],self.points[1][0],self.points[1][2])
+        s += 'var point2 = new BABYLON.Vector3({},{},{});\n'.format(self.points[1][0],self.points[1][1],self.points[1][2])
         s += 'myPoints.push(point2);\n'
         s += 'var line = BABYLON.MeshBuilder.CreateLines("lines", {points: myPoints}, scene);\n'
-        s += 'line.color = new BABYLON.Color3(1, 0, 0);\n'
+        s += 'line.color = new BABYLON.Color3({}, {}, {});\n'.format(self.color[0], self.color[1], self.color[2])
         return s 
+    
 
 class Group:
     def __init__(self, primitives, name):
@@ -3856,7 +4331,7 @@ class StepFunction:
 
         self.name = new_name
         self.arg = arguments
-
+        
 
 class Step:
     def __init__(self, stepfile):
@@ -3864,14 +4339,6 @@ class Step:
 
         self.functions, self.all_connections = self.read_functions()
         self.graph = self.create_graph()
-        #### FUNCTION TO DELETE ####
-        # faire une fonction : si None dans step_to_volmdlr_primitive alors delete_function
-        self.delete_function('FACE_OUTER_BOUND')
-        self.delete_function('ORIENTED_EDGE')
-#        self.delete_function('ORIENTED_CLOSED_SHELL')
-        ############################
-        
-        
 
     def read_functions(self):
         f = open(self.stepfile, "r", encoding = "ISO-8859-1")
@@ -3912,9 +4379,8 @@ class Step:
                 connec = connec.split(",")
                 connec = connec[0].split(")")
                 function_connection = int(connec[0])
-#                if function_connection[-1] != "'":
-                function_connections.append((function_connection, function_id))
-
+                function_connections.append((function_id, function_connection))
+                
             all_connections.extend(function_connections)
 
             previous_line = str()
@@ -3970,17 +4436,6 @@ class Step:
         for node in delete_nodes:
             F.remove_node(node)
             G.remove_node(node)
-
-        # Remove single branches
-        nodes_to_delete = []
-        for node in list(F.nodes):
-            if not list(F.out_edges(node)):
-                if self.functions[node].name != 'CLOSED_SHELL' \
-                and self.functions[node].name != 'ORIENTED_CLOSED_SHELL':
-                    nodes_to_delete.append(node)
-        for node in nodes_to_delete:
-            print('node to delete', node, self.functions[node].name)
-            delete_node_and_predecessors(F, node)
 
         if draw:
             # ----------------PLOT----------------
@@ -4052,62 +4507,19 @@ class Step:
                 else:
                     subfunction_arg += char
                 continue
-#            if char == ")":
-#                parenthesis_count -= 1
-#                if parenthesis_count == 0:
-#                    subfunction_args.append(subfunction_arg)
-#                if parenthesis_count == 0:
-#                    subfunction_arg = ""
-#                else:
-#                    subfunction_arg += char
-#                continue
-#
-#                subfunction_name += char
-#            else:
-#                subfunction_arg += char
+            if char == ")":
+                parenthesis_count -= 1
+                if parenthesis_count == 0:
+                    subfunction_args.append(subfunction_arg)
+                    subfunction_arg = ""
+                else:
+                    subfunction_arg += char
+                continue
 
+                subfunction_name += char
+            else:
+                subfunction_arg += char
         return [(subfunction_names[i], step_split_arguments(subfunction_args[i])) for i in range(len(subfunction_names))]
-
-    def delete_function(self, function_name):
-
-        delete_functions = []
-        for function_id, function in self.functions.items():
-            if function.name == function_name:
-
-                #### Delete from self.functions ####
-                delete_functions.append(function_id)
-
-                #### Modify the functions pointing on the deleted function ####
-                modify_function_id = list(self.graph.out_edges(function.id))[0][1]
-                # TROUVER '#'+str(function.id) dans les arguments
-                # VERIFIER que le char d'apres n'est pas un entier
-                # REMPLACER la selection par list(self.graph.in_edges)[0]
-                modify_function = self.functions[modify_function_id]
-                for i, argument in enumerate(modify_function.arg):
-                    if type(argument) is list:
-                        for j, elem in enumerate(argument):
-                            res = find_and_replace(elem, '#'+str(function.id), '#'+str(list(self.graph.in_edges(function.id))[0][0]))
-                            if res != elem:
-                                modify_function.arg[i][j] = res
-                    else:
-                        res = find_and_replace(argument, '#'+str(function.id), '#'+str(list(self.graph.in_edges(function.id))[0][0]))
-                        if res != argument:
-                            modify_function.arg[i] = res
-
-                #### Delete from self.graph ####
-                node_edges = list(self.graph.in_edges(function.id))+list(self.graph.out_edges(function.id))
-                if len(node_edges) != 2:
-                    print(node_edges)
-                    raise ValueError
-                self.graph.remove_node(function.id)
-                self.graph.add_edge(node_edges[0][0], node_edges[1][1])
-
-                #### Delete from self.all_connections ####
-                self.all_connections = list(self.graph.edges)
-
-
-        for delete_f in delete_functions:
-            del self.functions[delete_f]
 
     def instanciate(self, instanciate_id, object_dict, primitives):
         """
@@ -4120,79 +4532,118 @@ class Step:
         for i, arg in enumerate(arguments):
             if type(arg) == str and arg[0] == '#':
                 arguments[i] = int(arg[1:])
-
-        if name in step_to_volmdlr_primitive and hasattr(step_to_volmdlr_primitive[name], "from_step"):
-
-            try:
-                volmdlr_object = step_to_volmdlr_primitive[name].from_step(arguments, object_dict)
-            except KeyError as e: 
-                print('keyerror', e)
-                return instanciate_id, object_dict, primitives
+            
+        if name == 'VERTEX_POINT':
+            object_dict[instanciate_id] = object_dict[arguments[1]]
+            
+        elif name == 'LINE':
+            pass
+            
+        elif name == 'ORIENTED_EDGE':
+            object_dict[instanciate_id] = object_dict[arguments[3]]
+            
+        elif name == 'FACE_OUTER_BOUND':
+            object_dict[instanciate_id] = object_dict[arguments[1]]
+            
+        elif name == 'FACE_BOUND':
+            object_dict[instanciate_id] = object_dict[arguments[1]]
+            
+        elif name == 'SURFACE_CURVE':
+            pass
+        
+        
+        elif name in step_to_volmdlr_primitive and hasattr(step_to_volmdlr_primitive[name], "from_step"):
+            volmdlr_object = step_to_volmdlr_primitive[name].from_step(arguments, object_dict)
 
             object_dict[instanciate_id] = volmdlr_object
             if hasattr(volmdlr_object, "primitive"):
                 primitives.append(volmdlr_object.primitive)
-
+        
         return None, object_dict, primitives
-
-    def to_volume_model(self, name, add_to_volume_model=None):
-
+    
+    def to_shell3d(self, name):
         object_dict = {}
         primitives = []
-        not_instanciated_id = []
-
+                                    
         self.graph.add_node("#0")
         for node in self.graph.nodes:
-            if node != '#0' and (self.functions[node].name == "CARTESIAN_POINT" or self.functions[node].name == "DIRECTION"):
+            if node != '#0' and self.functions[node].name == "CLOSED_SHELL":
                 self.graph.add_edge("#0", node)
-
-        edges = list(nx.algorithms.traversal.breadth_first_search.bfs_edges(self.graph, "#0"))
+        
+        edges = list(nx.algorithms.traversal.breadth_first_search.bfs_edges(self.graph, "#0"))[::-1]        
 
         for edge_nb, edge in enumerate(edges):
             instanciate_id = edge[1]
             res, object_dict, primitives = self.instanciate(instanciate_id, object_dict, primitives)
             if res is not None:
-                not_instanciated_id.append(res)
-
-        print('Nombre non instanciés', len(not_instanciated_id))
-
-        i = 0
-        still_not_instanciated_id = []
-        while not_instanciated_id:
-            print(not_instanciated_id)
-            if i > len(not_instanciated_id)-1:
-                not_instanciated_id = still_not_instanciated_id
-                still_not_instanciated_id = []
-                i = 0
-                continue
-            res, object_dict, primitives = self.instanciate(not_instanciated_id[i], object_dict, primitives)
-            if res is not None:
-                still_not_instanciated_id.append(res)
-            i += 1
+                raise NotImplementedError
 
         shells = []
         for node in list(self.graph.nodes):
-            if not list(self.graph.out_edges(node)):
+            if node != '#0' and self.functions[node].name == 'CLOSED_SHELL':
                 shells.append(object_dict[node])
         print(shells)
+        return shells
         
-        if add_to_volume_model is None:
-            volume_model = VolumeModel(shells, primitives, name)
-            return volume_model
-        else:
-            add_to_volume_model.shells.extend(shells)
-            add_to_volume_model.primitives.extend(primitives)
-            return add_to_volume_model
+
+#    def to_volume_model(self, name, add_to_volume_model=None):
+#
+#        object_dict = {}
+#        primitives = []
+#                                    
+#        self.graph.add_node("#0")
+#        for node in self.graph.nodes:
+#            if node != '#0' and self.functions[node].name == "CLOSED_SHELL":
+#                self.graph.add_edge("#0", node)
+#        
+#        edges = list(nx.algorithms.traversal.breadth_first_search.bfs_edges(self.graph, "#0"))[::-1]        
+#
+#        for edge_nb, edge in enumerate(edges):
+#            instanciate_id = edge[1]
+#            res, object_dict, primitives = self.instanciate(instanciate_id, object_dict, primitives)
+#            if res is not None:
+#                raise NotImplementedError
+#
+#        shells = []
+#        for node in list(self.graph.nodes):
+#            if node != '#0' and self.functions[node].name == 'CLOSED_SHELL':
+#                shells.append(object_dict[node])
+#        print(shells)
+#        
+#        if add_to_volume_model is None:
+#            volume_model = VolumeModel(shells, primitives, name)
+#            return volume_model
+#        else:
+#            add_to_volume_model.shells.extend(shells)
+#            add_to_volume_model.primitives.extend(primitives)
+#            return add_to_volume_model
 
 
 class VolumeModel:
     """
     :param groups: A list of two element tuple. The first element is a string naming the group and the second element is a list of primitives of the group
     """
-    def __init__(self, shells, primitives, name=''):
-        self.shells = shells
+#    def __init__(self, shells, primitives, name=''):
+#        self.shells = shells
+#        self.primitives = primitives
+#        self.name = name
+#        if self.shells:
+#            self.bounding_box = self._bounding_box()
+    
+    def __init__(self, primitives, name=''):
         self.primitives = primitives
         self.name = name
+        if self.primitives:
+            self.shells = self._extract_shells()
+        if self.shells:
+            self.bounding_box = self._bounding_box()
+            
+    def _extract_shells(self):
+        shells = []
+        for primitive in self.primitives:
+            if isinstance(primitive, Shell3D):
+                shells.append(primitive)
+        return shells
 
     def Volume(self):
         volume=0
@@ -4201,56 +4652,56 @@ class VolumeModel:
             volume+=primitive.Volume()
         return volume
 
-    def Rotation(self, center, axis, angle, copy=False):
-        new_shells = [shell.Rotation(center, axis, angle, True) for shell in self.shells]
-        new_primitives = [primitive.Rotation(center, axis, angle, True) for primitive in self.primitives]
+    def Rotation(self, center, axis, angle, copy=True):
         if copy:
-            return VolumeModel(new_shells, new_primitives, self.name)
+#            new_shells = [shell.Rotation(center, axis, angle, copy=True) for shell in self.shells]
+            new_primitives = [primitive.Rotation(center, axis, angle, copy=True) for primitive in self.primitives]
+            return VolumeModel(new_primitives, self.name)
         else:
-            self.primitives = new_primitives
-            self.shells = new_shells
+#            for shell in self.shells:
+#                shell.Translation(center, axis, angle, copy=False)
+            for primitives in self.primitives:
+                primitives.Translation(center, axis, angle, copy=False)
+            self.bounding_box = self._bounding_box()
 
-    def Translation(self, offset, copy=False):
-        new_shells = [shell.Translation(offset, True) for shell in self.shells]
-        new_primitives = [primitive.Translation(offset, True) for primitive in self.primitives]
+    def Translation(self, offset, copy=True):
         if copy:
-            return VolumeModel(new_shells, new_primitives, self.name)
+#            new_shells = [shell.Translation(offset, copy=True) for shell in self.shells]
+            new_primitives = [primitive.Translation(offset, copy=True) for primitive in self.primitives]
+            return VolumeModel(new_primitives, self.name)
         else:
-            self.primitives = new_primitives
-            self.shells = new_shells
+#            for shell in self.shells:
+#                shell.Translation(offset, copy=False)
+            for primitives in self.primitives:
+                primitives.Translation(offset, copy=False)
+            self.bounding_box = self._bounding_box()
+            
         
-    def frame_mapping(self, frame, side):
+    def frame_mapping(self, frame, side, copy=True):
         """
         side = 'old' or 'new'
         """
-        if side == 'new':
-            for shell in self.shells:
-                for face in shell.faces:
-                    for cont in face.contour:
-                        for edge in cont.edges:
-                            frame.NewCoordinates(edge.edge_start.primitive)
-                            frame.NewCoordinates(edge.edge_end.primitive)
-                            frame.NewCoordinates(edge.primitives.points[0])
-                            frame.NewCoordinates(edge.primitives.points[1])
-                    for primitive in face.primitives:
-                        frame.NewCoordinates(primitive.origin)
-                        
-        if side == 'old':
-            for shell in self.shells:
-                for face in shell.faces:
-                    for contour in face.contour:
-                        for edge in contour:
-                            frame.OldCoordinates(edge.edge_start.primitive)
-                            frame.OldCoordinates(edge.edge_end.primitive)
-                            frame.OldCoordinates(edge.primitives.points[0])
-                            frame.OldCoordinates(edge.primitives.points[1])
-                    for primitive in face.primitives:
-                        frame.OldCoordinates(primitive.origin)
+        if copy:
+#            new_shells = [shell.frame_mapping(frame, side, copy=True) for shell in self.shells]
+            new_primitives = [primitive.frame_mapping(frame, side, copy=True) for primitive in self.primitives]
+            return VolumeModel(new_primitives, self.name)
+        else:
+#            for shell in self.shells:
+#                shell.frame_mapping(frame, side, copy=False)
+            for primitives in self.primitives:
+                primitives.frame_mapping(frame, side, copy=False)
+            self.bounding_box = self._bounding_box()
             
-    def bounding_box(self):
+    def copy(self):
+#        new_shells = [shell.copy() for shell in self.shells]
+        new_primitives = [primitive.copy() for primitive in self.primitives]
+        return VolumeModel(new_primitives, self.name)
+            
+    def _bounding_box(self):
         bboxes = []
-        for shell in self.shells:
-            bboxes.append(shell.bounding_box())
+        for primitive in self.primitives:
+            if hasattr(primitive, '_bounding_box'):
+                bboxes.append(primitive.bounding_box)
         
         xmin = min([box.xmin for box in bboxes])
         xmax = max([box.xmax for box in bboxes])
@@ -4346,8 +4797,6 @@ class VolumeModel:
                 file.write(s)
         return s
 
-
-
     def FreeCADExport(self,fcstd_filepath,
                       python_path='python',
                       freecad_lib_path='/usr/lib/freecad/lib',
@@ -4380,20 +4829,21 @@ class VolumeModel:
         os.remove(f.name)
         return output
 
-
-
-
     def BabylonScript(self):
 
         env = Environment(loader=PackageLoader('volmdlr', 'templates'),
                           autoescape=select_autoescape(['html', 'xml']))
 
         template = env.get_template('babylon.html')
-
-        center,max_length=self.ModelCaracteristicLengths()
+        
+        bbox = self._bounding_box()
+        center = bbox.center
+        max_length = max([bbox.xmax - bbox.xmin,
+                          bbox.ymax - bbox.ymin,
+                          bbox.zmax - bbox.zmin])
 
         primitives_strings=[]
-        for primitive in self.shells:
+        for primitive in self.primitives:
             if hasattr(primitive, 'Babylon'):
                 primitives_strings.append(primitive.Babylon())
         return template.render(name=self.name,center=tuple(center),length=2*max_length,
@@ -4405,32 +4855,98 @@ class VolumeModel:
             file.write(self.BabylonScript())
 
         webbrowser.open('file://' + os.path.realpath(page))
+        
+        
 
-    def ModelCaracteristicLengths(self):
-#        min_vect = self.primitives[0].position
-#        max_vect = self.primitives[0].position
-#        center = self.primitives[0].position
-#        n=1
-#        for primitive in self.primitives[1:]:
-#            try:
-#                for i,(xmin,xmax,xi) in enumerate(zip(min_vect, max_vect, primitive.position)):
-#
-#                    if xi<xmin:
-#                        min_vect[i]=xi
-#
-#                    if xi>xmax:
-#                        max_vect[i]=xi
-#                center += primitive.position
-#                n+=1
-#            except AttributeError:
-#                pass
-#
-#        center=center/n
-#
-#        max_length = (min_vect-max_vect).Norm()
+class Routing:
+    def __init__(self, point1, point2, volumemodel):
+        self.points = [point1, point2]
+        self.volumemodel = volumemodel
+        
+    def straight_line(self):
+        """
+        Returns 2 distances : 
+            - no collision distance
+            - collision distance
+        """
+        line = LineSegment3D(self.points[0], self.points[1])
+        
+        intersection_points = []
+        for shell in self.volumemodel.shells:
+            for face in shell.faces:
+                intersection_point, intersection_abscissea = face.linesegment_intersection(line, abscissea=True)
+                if intersection_point is not None and intersection_abscissea != 0 and intersection_abscissea != 1:
+                    intersection_points.append((intersection_point, intersection_abscissea))
+        
+        if len(intersection_points)%2 != 0:
+            raise NotImplementedError
 
-#        return center,max_length
-        return (0,0,0),200
+        intersection_points = sorted(intersection_points, key=lambda abscissea: abscissea[1])
+        all_points_abscissea = [(self.points[0], 0)] + intersection_points[:] + [(self.points[1], 1)]
+        all_points = [p[0] for p in all_points_abscissea]
+        
+        no_collision_mesures = []
+        collision_mesures = []
+        i = 0
+        for pt1, pt2 in zip(all_points[:-1], all_points[1:]):
+            if i%2 == 0:
+                no_collision_mesures.append(Mesure(pt1, pt2, color=(0,0,1)))
+            else:
+                collision_mesures.append(Mesure(pt1, pt2, color=(1,0,0)))
+            i += 1
+            
+        return no_collision_mesures, collision_mesures
+    
+    def straight_line2(self):
+        """
+        Returns the distance of the line going around each shell's bbox encountered along the path
+        NETTOYAGE NECESSAIRE
+        """
+        line = LineSegment3D(self.points[0], self.points[1])
+        
+        all_mesures_abscissea = []
+        intersection_points = []
+        for shell in self.volumemodel.shells:
+            shell_intersection_points = []
+            bbox = shell.bounding_box
+            for face in shell.faces:
+                intersection_point, intersection_abscissea = face.linesegment_intersection(line, abscissea=True)
+                if intersection_point is not None and intersection_abscissea != 0 and intersection_abscissea != 1:
+                    intersection_points.append((intersection_point, intersection_abscissea))
+#                    shell_intersection_points.append(intersection_point)
+                    shell_intersection_points.append((intersection_point, intersection_abscissea))
+                    
+            if len(shell_intersection_points) == 2:
+                shell_intersection_points = sorted(shell_intersection_points, key=lambda abscissea: abscissea[1])
+                abscissea1 = shell_intersection_points[0][1]
+                abscissea2 = shell_intersection_points[1][1]
+                shell_intersection_points = [p[0] for p in shell_intersection_points]
+                around_bbox_mesures = bbox.distance_between_two_points_on_bbox(shell_intersection_points[0], shell_intersection_points[1])
+                all_mesures_abscissea.append((around_bbox_mesures, abscissea1, abscissea2))
+            elif len(shell_intersection_points) > 2 or len(shell_intersection_points) == 1:
+                raise NotImplementedError
+        
+        intersection_points = sorted(intersection_points, key=lambda abscissea: abscissea[1])
+        all_mesures_abscissea = sorted(all_mesures_abscissea, key=lambda abscissea: abscissea[1])
+        all_points_abscissea = [(self.points[0], 0)] + intersection_points[:] + [(self.points[1], 1)]
+        print(all_points_abscissea)
+        print(all_mesures_abscissea)
+        all_points = [p[0] for p in all_points_abscissea]
+                    
+        no_collision_mesures = []
+        i = 0
+        for pt1, pt2 in zip(all_points[:-1], all_points[1:]):
+            print(pt1, pt2)
+            if i%2 == 0:
+                print('normal')
+                no_collision_mesures.append(Mesure(pt1, pt2, color=(0,0,1)))
+            else:
+                print('around bbox', i//2)
+                no_collision_mesures.extend(all_mesures_abscissea[i//2][0])
+            i += 1
+            
+        return no_collision_mesures
+
 
 class ViewIso:
     def __init__(self, component, frame, size):
@@ -4462,7 +4978,7 @@ step_to_volmdlr_primitive = {
         'AXIS2_PLACEMENT_2D': None,
         'AXIS2_PLACEMENT_3D': Frame3D,
 
-        'LINE': Line3D,
+        'LINE': None,
         'CIRCLE': Circle3D,
         'ELLIPSE': Ellipse3D,
         'PARABOLA': None,
@@ -4477,8 +4993,8 @@ step_to_volmdlr_primitive = {
         'RATIONAL_B_SPLINE_CURVE': BSplineCurve3D,
         'UNIFORM_CURVE': BSplineCurve3D,
         'QUASI_UNIFORM_CURVE': BSplineCurve3D,
-        'SURFACE_CURVE': Edge3D, # TOPOLOGICAL EDGE
-        'SEAM_CURVE': Edge3D, # TOPOLOGICAL EDGE
+        'SURFACE_CURVE': None, # TOPOLOGICAL EDGE
+        'SEAM_CURVE': LineSegment3D, # TOPOLOGICAL EDGE
         'COMPOSITE_CURVE_SEGMENT': None, # TOPOLOGICAL EDGE
         'COMPOSITE_CURVE': Wire3D, # TOPOLOGICAL WIRE
         'COMPOSITE_CURVE_ON_SURFACE': Wire3D, # TOPOLOGICAL WIRE
@@ -4497,7 +5013,7 @@ step_to_volmdlr_primitive = {
         'SURFACE_REPLICA': None,
         'RATIONAL_B_SPLINE_SURFACE': BSplineSurface3D,
         'RECTANGULAR_TRIMMED_SURFACE': None,
-        'SURFACE_OF_LINEAR_EXTRUSION': ExtrudedCurve, # CAN BE A BSplineSurface3D
+        'SURFACE_OF_LINEAR_EXTRUSION': None, # CAN BE A BSplineSurface3D
         'SURFACE_OF_REVOLUTION': None,
         'UNIFORM_SURFACE': BSplineSurface3D,
         'QUASI_UNIFORM_SURFACE': BSplineSurface3D,
@@ -4506,9 +5022,9 @@ step_to_volmdlr_primitive = {
 
 
         # TOPOLOGICAL ENTITIES
-        'VERTEX_POINT': Vertex3D,
+        'VERTEX_POINT': None,
 
-        'EDGE_CURVE': Edge3D, # TOPOLOGICAL EDGE
+        'EDGE_CURVE': LineSegment3D, # TOPOLOGICAL EDGE
         'ORIENTED_EDGE': None, # TOPOLOGICAL EDGE
         # The one above can influence the direction with their last argument
         # TODO : maybe take them into consideration
@@ -4526,7 +5042,7 @@ step_to_volmdlr_primitive = {
 
         'CLOSED_SHELL': Shell3D,
         'OPEN_SHELL': Shell3D,
-        'ORIENTED_CLOSED_SHELL': None,
+#        'ORIENTED_CLOSED_SHELL': None,
         'CONNECTED_FACE_SET': Shell3D,
 
         }
