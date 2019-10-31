@@ -3550,7 +3550,7 @@ class Shell3D(CompositePrimitive3D):
         rays.append(LineSegment3D(point, Point3D((bbox.xmax+random.uniform(0, 1)*epsilon, bbox.ymin-random.uniform(0, 1)*epsilon, bbox.zmax+random.uniform(0, 1)*epsilon))))
         rays.append(LineSegment3D(point, Point3D((bbox.xmin-random.uniform(0, 1)*epsilon, bbox.ymax+random.uniform(0, 1)*epsilon, bbox.zmax+random.uniform(0, 1)*epsilon))))
         
-        sorted(rays, key=lambda ray: ray.Length())
+        rays = sorted(rays, key=lambda ray: ray.Length())
         
         rays_intersections = []
         tests = []
@@ -3997,8 +3997,12 @@ class BoundingBox:
             face_point2 = 1
         else:
             raise NotImplementedError
-            
+        
+        point1_copy = point1.copy()
+        point2_copy = point2.copy()
+        print(face_point1, face_point2)
         if face_point1 > face_point2:
+            print('inversion')
             point1, point2 = point2, point1
             face_point1, face_point2 = face_point2, face_point1
             
@@ -4023,6 +4027,32 @@ class BoundingBox:
                                      4: Point2D((point2[0]-self.xmin-deltax/2, point2[2]-self.zmin-deltaz/2)),
                                      5: Point2D((point2[2]-self.zmin-deltaz/2, point2[1]-self.ymin-deltay/2)),
                                      6: Point2D((point2[1]-self.ymin-deltay/2, point2[0]-self.xmin-deltax/2))}
+        
+        vertex_2d_coordinate_dict = {1: [Point2D((self.xmin-self.xmin-deltax/2, self.ymin-self.ymin-deltay/2)), Point2D((self.xmin-self.xmin-deltax/2, self.ymax-self.ymin-deltay/2)), Point2D((self.xmax-self.xmin-deltax/2, self.ymax-self.ymin-deltay/2)), Point2D((self.xmax-self.xmin-deltax/2, self.ymin-self.ymin-deltay/2))],
+                                     2: [Point2D((self.zmin-self.zmin-deltaz/2, self.xmin-self.xmin-deltax/2)), Point2D((self.zmin-self.zmin-deltaz/2, self.xmax-self.xmin-deltax/2)), Point2D((self.zmax-self.zmin-deltaz/2, self.xmax-self.xmin-deltax/2)), Point2D((self.zmax-self.zmin-deltaz/2, self.xmin-self.xmin-deltax/2))],
+                                     3: [Point2D((self.ymin-self.ymin-deltay/2, self.zmin-self.zmin-deltaz/2)), Point2D((self.ymin-self.ymin-deltay/2, self.zmax-self.zmin-deltaz/2)), Point2D((self.ymax-self.ymin-deltay/2, self.zmax-self.zmin-deltaz/2)), Point2D((self.ymax-self.ymin-deltay/2, self.zmin-self.zmin-deltaz/2))],
+                                     4: [Point2D((self.xmin-self.xmin-deltax/2, self.zmin-self.zmin-deltaz/2)), Point2D((self.xmin-self.xmin-deltax/2, self.zmax-self.zmin-deltaz/2)), Point2D((self.xmax-self.xmin-deltax/2, self.zmax-self.zmin-deltaz/2)), Point2D((self.xmax-self.xmin-deltax/2, self.zmin-self.zmin-deltaz/2))],
+                                     5: [Point2D((self.zmin-self.zmin-deltaz/2, self.ymin-self.ymin-deltay/2)), Point2D((self.zmin-self.zmin-deltaz/2, self.ymax-self.ymin-deltay/2)), Point2D((self.zmax-self.zmin-deltaz/2, self.ymax-self.ymin-deltay/2)), Point2D((self.zmax-self.zmin-deltaz/2, self.ymin-self.ymin-deltay/2))],
+                                     6: [Point2D((self.ymin-self.ymin-deltay/2, self.xmin-self.xmin-deltax/2)), Point2D((self.ymin-self.ymin-deltay/2, self.xmax-self.xmin-deltax/2)), Point2D((self.ymax-self.ymin-deltay/2, self.xmax-self.xmin-deltax/2)), Point2D((self.ymax-self.ymin-deltay/2, self.xmin-self.xmin-deltax/2))],}
+        
+        vertex_2d_coordinate_dict2 = {1: [Point2D((self.xmin, self.ymin)), Point2D((self.xmin, self.ymax)), Point2D((self.xmax, self.ymax)), Point2D((self.xmax, self.ymin))],
+                                    2: [Point2D((self.zmin, self.xmin)), Point2D((self.zmin, self.xmax)), Point2D((self.zmax, self.xmax)), Point2D((self.zmax, self.xmin))],
+                                     3: [Point2D((self.ymin, self.zmin)), Point2D((self.ymin, self.zmax)), Point2D((self.ymax, self.zmax)), Point2D((self.ymax, self.zmin))],
+                                     4: [Point2D((self.xmin, self.zmin)), Point2D((self.xmin, self.zmax)), Point2D((self.xmax, self.zmax)), Point2D((self.xmax, self.zmin))],
+                                     5: [Point2D((self.zmin, self.ymin)), Point2D((self.zmin, self.ymax)), Point2D((self.zmax, self.ymax)), Point2D((self.zmax, self.ymin))],
+                                     6: [Point2D((self.ymin, self.xmin)), Point2D((self.ymin, self.xmax)), Point2D((self.ymax, self.xmax)), Point2D((self.ymax, self.xmin))],}
+        
+        
+        vertex_to_3d_dict = {1: (2, self.zmax, 0, 1),
+                             2: (1, self.ymax, 2, 0),
+                             3: (0, self.xmax, 1, 2),
+                             4: (1, self.ymin, 0, 2),
+                             5: (0, self.xmin, 2, 1),
+                             6: (2, self.zmin, 1, 0)}
+        
+        offset_dict = {0: self.xmin+deltax/2,
+                       1: self.ymin+deltay/2,
+                       2: self.zmin+deltaz/2}
         
         opposite_face_dict = {1: 6, 2: 4, 3: 5, 4: 2, 5: 3, 6: 1}
         
@@ -4058,11 +4088,30 @@ class BoundingBox:
         if opposite_face_dict[face_point1] != face_point2:
             frame =  combination_dict[(face_point1, face_point2)]
             net_point2 = frame.OldCoordinates(point2_2d)
-            return point1_2d.PointDistance(net_point2)
+            
+            # Computes the 3D intersection between the net_line and the edges of the face_point1
+            net_line = LineSegment2D(point1_2d, net_point2)
+            vertex_points = vertex_2d_coordinate_dict[face_point1]
+            edge_lines = [LineSegment2D(p1, p2) for p1, p2 in zip(vertex_points, vertex_points[1:]+[vertex_points[0]])]
+            for line in edge_lines:
+                edge_intersection_point, a, b = Point2D.LinesIntersection(net_line, line, curvilinear_abscissa=True)
+                if edge_intersection_point is not None \
+                and a > 0 and a < 1 and b > 0 and b < 1:
+                    break
+            offset_indice, offset, indice1, indice2 = vertex_to_3d_dict[face_point1]
+            disordered_coordinate = [(indice1, edge_intersection_point[0]+offset_dict[indice1]),
+                                     (indice2, edge_intersection_point[1]+offset_dict[indice2]),
+                                     (offset_indice, offset)]
+            disordered_coordinate = sorted(disordered_coordinate, key=lambda a: a[0])
+            intersection_point_3d = Point3D(tuple([p[1] for p in disordered_coordinate]))
+            
+            mesures = [Mesure(point1_copy, intersection_point_3d), Mesure(intersection_point_3d, point2_copy)]
+            
+            return mesures
         
         # The points are on opposite faces
         else:
-            net_points2 = []
+            net_points2_and_frame = []
             
             faces_number = [1, 2, 3, 4, 5, 6]
             faces_number.remove(face_point1)
@@ -4071,15 +4120,51 @@ class BoundingBox:
             for face_nb in faces_number:
                 path = [(face_point1, face_nb), (face_nb, face_point2)]
                 pathes.append(path)
+
             for path in pathes:
                 frame1 = combination_dict[(path[0][0], path[0][1])]
                 frame2 = combination_dict[(path[1][0], path[1][1])]
                 frame = frame1 + frame2
-                
-                net_point2 = frame.OldCoordinates(point2_2d)
-                net_points2.append(net_point2)
+                net_points2_and_frame.append((Point2D(frame.OldCoordinates(point2_2d).vector), frame))
+            net_point2, frame = min(net_points2_and_frame, key=lambda pt: pt[0].PointDistance(point1_2d))
+            net_line = LineSegment2D(point1_2d, net_point2)
 
-            return min([point1_2d.PointDistance(p) for p in net_points2])
+            # Computes the 3D intersection between the net_line and the edges of the face_point1
+            vertex_points = vertex_2d_coordinate_dict[face_point1]
+            edge_lines = [LineSegment2D(p1, p2) for p1, p2 in zip(vertex_points, vertex_points[1:]+[vertex_points[0]])]
+            for line in edge_lines:
+                edge_intersection_point1, a, b = Point2D.LinesIntersection(net_line, line, curvilinear_abscissa=True)                
+                if edge_intersection_point1 is not None \
+                and a > 0 and a < 1 and b > 0 and b < 1:
+                    break
+            offset_indice, offset, indice1, indice2 = vertex_to_3d_dict[face_point1]
+            disordered_coordinate = [(indice1, edge_intersection_point1[0]+offset_dict[indice1]), 
+                                     (indice2, edge_intersection_point1[1]+offset_dict[indice2]),
+                                     (offset_indice, offset)]
+            disordered_coordinate = sorted(disordered_coordinate, key=lambda a: a[0])
+            intersection_point1_3d = Point3D(tuple([p[1] for p in disordered_coordinate]))
+
+            # Computes the 3D intersection between the net_line and the edges of the face_point2            
+            vertex_points = [frame.OldCoordinates(p) for p in vertex_2d_coordinate_dict[face_point2]]
+            edge_lines = [LineSegment2D(p1, p2) for p1, p2 in zip(vertex_points, vertex_points[1:]+[vertex_points[0]])]
+            for line in edge_lines:
+                edge_intersection_point2, a, b = Point2D.LinesIntersection(net_line, line, curvilinear_abscissa=True)
+                if edge_intersection_point2 is not None \
+                and a > 0 and a < 1 and b > 0 and b < 1:
+                    break
+            edge_intersection_point2 = Point2D(frame.NewCoordinates(edge_intersection_point2))
+            offset_indice, offset, indice1, indice2 = vertex_to_3d_dict[face_point2]
+            disordered_coordinate = [(indice1, edge_intersection_point2[0]+offset_dict[indice1]),
+                                     (indice2, edge_intersection_point2[1]+offset_dict[indice2]),
+                                     (offset_indice, offset)]
+            disordered_coordinate = sorted(disordered_coordinate, key=lambda a: a[0])
+            intersection_point2_3d = Point3D(tuple([p[1] for p in disordered_coordinate]))
+            
+            if point1 == point1_copy:
+                mesures = [Mesure(point1, intersection_point1_3d), Mesure(intersection_point1_3d, intersection_point2_3d), Mesure(intersection_point2_3d, point2)]
+            else:
+                mesures = [Mesure(point2, intersection_point2_3d), Mesure(intersection_point2_3d, intersection_point1_3d), Mesure(intersection_point1_3d, point1)]
+            return mesures
 
     def Babylon(self):
         height = self.ymax-self.ymin
@@ -4707,7 +4792,7 @@ class Routing:
         if len(intersection_points)%2 != 0:
             raise NotImplementedError
 
-        sorted(intersection_points, key=lambda abscissea: abscissea[1])
+        intersection_points = sorted(intersection_points, key=lambda abscissea: abscissea[1])
         all_points_abscissea = [(self.points[0], 0)] + intersection_points[:] + [(self.points[1], 1)]
         all_points = [p[0] for p in all_points_abscissea]
         
@@ -4726,10 +4811,11 @@ class Routing:
     def straight_line2(self):
         """
         Returns the distance of the line going around each shell's bbox encountered along the path
+        NETTOYAGE NECESSAIRE
         """
         line = LineSegment3D(self.points[0], self.points[1])
         
-        around_bbox_distances = []
+        all_mesures_abscissea = []
         intersection_points = []
         for shell in self.volumemodel.shells:
             shell_intersection_points = []
@@ -4738,22 +4824,39 @@ class Routing:
                 intersection_point, intersection_abscissea = face.linesegment_intersection(line, abscissea=True)
                 if intersection_point is not None and intersection_abscissea != 0 and intersection_abscissea != 1:
                     intersection_points.append((intersection_point, intersection_abscissea))
-                    shell_intersection_points.append(intersection_point)
-            
+#                    shell_intersection_points.append(intersection_point)
+                    shell_intersection_points.append((intersection_point, intersection_abscissea))
+                    
             if len(shell_intersection_points) == 2:
-                around_bbox_distance = bbox.distance_between_two_points_on_bbox(shell_intersection_points[0], shell_intersection_points[1])
-                around_bbox_distances.append(around_bbox_distance)
+                shell_intersection_points = sorted(shell_intersection_points, key=lambda abscissea: abscissea[1])
+                abscissea1 = shell_intersection_points[0][1]
+                abscissea2 = shell_intersection_points[1][1]
+                shell_intersection_points = [p[0] for p in shell_intersection_points]
+                around_bbox_mesures = bbox.distance_between_two_points_on_bbox(shell_intersection_points[0], shell_intersection_points[1])
+                all_mesures_abscissea.append((around_bbox_mesures, abscissea1, abscissea2))
             elif len(shell_intersection_points) > 2 or len(shell_intersection_points) == 1:
                 raise NotImplementedError
         
-        sorted(intersection_points, key=lambda abscissea: abscissea[1])
-        all_points = [p[0] for p in intersection_points]
-        
-        intersection_distance = 0
-        for pt1, pt2 in zip(all_points[::2], all_points[1::2]):
-            intersection_distance += pt1.PointDistance(pt2)
+        intersection_points = sorted(intersection_points, key=lambda abscissea: abscissea[1])
+        all_mesures_abscissea = sorted(all_mesures_abscissea, key=lambda abscissea: abscissea[1])
+        all_points_abscissea = [(self.points[0], 0)] + intersection_points[:] + [(self.points[1], 1)]
+        print(all_points_abscissea)
+        print(all_mesures_abscissea)
+        all_points = [p[0] for p in all_points_abscissea]
+                    
+        no_collision_mesures = []
+        i = 0
+        for pt1, pt2 in zip(all_points[:-1], all_points[1:]):
+            print(pt1, pt2)
+            if i%2 == 0:
+                print('normal')
+                no_collision_mesures.append(Mesure(pt1, pt2, color=(0,0,1)))
+            else:
+                print('around bbox', i//2)
+                no_collision_mesures.extend(all_mesures_abscissea[i//2][0])
+            i += 1
             
-        return line.Length() - intersection_distance + sum(around_bbox_distances)
+        return no_collision_mesures
 
 
 class ViewIso:
