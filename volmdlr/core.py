@@ -172,18 +172,6 @@ class Vector:
     def __ne__(self, other_vector):
         return not npy.allclose(self.vector, other_vector.vector)
 
-    def __hash__(self):
-        return int(1000*npy.sum(self.vector, 0))
-
-    def Normalize(self):
-        """
-        Normalize the vector modifying it's coordinate
-        """
-        n = self.Norm()
-        if n == 0:
-            raise ZeroDivisionError
-
-        self.vector /= n
 
     def copy(self):
         return self.__class__(self.vector)
@@ -204,7 +192,7 @@ class Vector:
 
 class Vector2D(Vector):
     def __init__(self, vector, name=''):
-        self.vector = npy.zeros(2)
+        self.vector = [0, 0]
         self.vector[0] = vector[0]
         self.vector[1] = vector[1]
         self.name = name
@@ -231,6 +219,9 @@ class Vector2D(Vector):
         return self.__class__((round(self.vector[0], ndigits),
                                round(self.vector[1], ndigits)))
     
+    def __hash__(self):
+        return int(1000*(self.vector[0]+self.vector[1]))
+    
     def __eq__(self, other_vector):
         return math.isclose(self.vector[0], other_vector.vector[0], abs_tol=1e-08) \
         and math.isclose(self.vector[1], other_vector.vector[1], abs_tol=1e-08)
@@ -240,6 +231,17 @@ class Vector2D(Vector):
         :returns: norm of vector
         """
         return Vector2DNorm(self.vector)
+    
+    def Normalize(self):
+        """
+        Normalize the vector modifying it's coordinate
+        """
+        n = self.Norm()
+        if n == 0:
+            raise ZeroDivisionError
+
+        self.vector[0] /= n
+        self.vector[1] /= n
 
     def Dot(self, other_vector):
         return Vector2DDot(self.vector, other_vector.vector)
@@ -1658,7 +1660,7 @@ class Vector3D(Vector):
 
     def __init__(self, vector, name=''):
 
-        self.vector = npy.zeros(3)
+        self.vector = [0, 0, 0]
         self.vector[0] = vector[0]
         self.vector[1] = vector[1]
         self.vector[2] = vector[2]
@@ -1688,6 +1690,10 @@ class Vector3D(Vector):
                                round(self.vector[1], ndigits),
                                round(self.vector[2], ndigits)))
         
+    def __hash__(self):
+        return int(1000*(self.vector[0]+self.vector[1]+self.vector[2]))
+
+        
     def __eq__(self, other_vector):
         return math.isclose(self.vector[0], other_vector.vector[0], abs_tol=1e-08) \
         and math.isclose(self.vector[1], other_vector.vector[1], abs_tol=1e-08) \
@@ -1704,17 +1710,33 @@ class Vector3D(Vector):
     def Norm(self):
         return Vector3DNorm(self.vector)
 
+
+    def Normalize(self):
+        """
+        Normalize the vector modifying it's coordinate
+        """
+        n = self.Norm()
+        if n == 0:
+            raise ZeroDivisionError
+
+        self.vector[0] /= n
+        self.vector[1] /= n
+        self.vector[2] /= n
+
     def Rotation(self, center, axis, angle, copy=True):
-        u = axis.vector
-        ux = npy.array([[0,-u[2],u[1]],
-                        [u[2],0,-u[0]],
-                        [-u[1],u[0],0]])
-        R = math.cos(angle)*npy.eye(3)+math.sin(angle)*ux+(1-math.cos(angle))*npy.tensordot(u,u,axes=0)
-        vector2 = npy.dot(R,(self.vector-center.vector))+center.vector
+        """
+        Rotation of angle around axis.
+        Used Rodrigues Formula:
+            https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
+        """
+        vector2 = (math.cos(angle)*self 
+                   + (1-math.cos(angle))*(self.Dot(axis))*axis
+                   + math.sin(angle)*axis.Cross(self))
+        
         if copy:
-            return Point3D(vector2)
+            return Point3D(vector2.vector)
         else:
-            self.vector = vector2
+            self.vector = vector2.vector
 
     def Translation(self, offset, copy=True):
         if copy:
