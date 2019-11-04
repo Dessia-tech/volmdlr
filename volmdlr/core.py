@@ -19,7 +19,7 @@ npy.seterr(divide='raise')
 #from itertools import permutations
 
 import matplotlib.pyplot as plt
-import mpl_toolkits.mplot3d as plt3d
+import  mpl_toolkits
 from matplotlib.patches import Arc, FancyArrow
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d import proj3d
@@ -192,6 +192,7 @@ class Vector:
 
 class Vector2D(Vector):
     def __init__(self, vector, name=''):
+        # TODO: change this list to 2 values vx and vy
         self.vector = [0, 0]
         self.vector[0] = vector[0]
         self.vector[1] = vector[1]
@@ -1723,20 +1724,74 @@ class Vector3D(Vector):
         self.vector[1] /= n
         self.vector[2] /= n
 
+
     def Rotation(self, center, axis, angle, copy=True):
         """
         Rotation of angle around axis.
         Used Rodrigues Formula:
             https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
         """
-        vector2 = (math.cos(angle)*self 
-                   + (1-math.cos(angle))*(self.Dot(axis))*axis
-                   + math.sin(angle)*axis.Cross(self))
+        u = self - center
+        vector2 = (math.cos(angle)*u 
+                   + (1-math.cos(angle))*(u.Dot(axis))*axis
+                   + math.sin(angle)*axis.Cross(u)
+                   + center)
         
         if copy:
             return Point3D(vector2.vector)
         else:
             self.vector = vector2.vector
+
+    def x_rotation(self, angle, copy=True):
+        """
+        Rotation of angle around X axis.
+        """
+        cos_angle = math.cos(angle)
+        sin_angle = math.sin(angle)
+        
+        y1 = cos_angle * self.vector[1] + sin_angle * self.vector[2]
+        z1 = -sin_angle * self.vector[1] + cos_angle * self.vector[2]
+        
+        
+        if copy:
+            return Point3D([self.vector[0], y1, z1])
+        else:
+            self.vector[1] = y1
+            self.vector[2] = z1
+            
+    def y_rotation(self, angle, copy=True):
+        """
+        Rotation of angle around Y axis.
+        """
+        cos_angle = math.cos(angle)
+        sin_angle = math.sin(angle)
+        
+        z1 = cos_angle * self.vector[2] + sin_angle * self.vector[0]
+        x1 = -sin_angle * self.vector[2] + cos_angle * self.vector[0]
+        
+        
+        if copy:
+            return Point3D([x1, self.vector[1], z1])
+        else:
+            self.vector[0] = x1
+            self.vector[2] = z1
+            
+    def z_rotation(self, angle, copy=True):
+        """
+        Rotation of angle around Z axis.
+        """
+        cos_angle = math.cos(angle)
+        sin_angle = math.sin(angle)
+        
+        x1 = cos_angle * self.vector[0] + sin_angle * self.vector[1]
+        y1 = -sin_angle * self.vector[0] + cos_angle * self.vector[1]
+        
+        
+        if copy:
+            return Point3D([x1, y1, self.vector[2]])
+        else:
+            self.vector[0] = x1
+            self.vector[1] = y1
 
     def Translation(self, offset, copy=True):
         if copy:
@@ -2142,10 +2197,47 @@ class Basis3D(Basis):
 
         if copy:
             return Basis3D(new_u, new_v, new_w, self.name)
-        self.u = new_u
-        self.v = new_v
-        self.w = new_w
+        else:
+            self.u = new_u
+            self.v = new_v
+            self.w = new_w
 
+    def x_rotation(self, angle, copy=True):
+        new_u = self.u.x_rotation(angle, True)
+        new_v = self.v.x_rotation(angle, True)
+        new_w = self.w.x_rotation(angle, True)
+
+        if copy:
+            return Basis3D(new_u, new_v, new_w, self.name)
+        else:
+            self.u = new_u
+            self.v = new_v
+            self.w = new_w
+        
+    def y_rotation(self, angle, copy=True):
+        new_u = self.u.y_rotation(angle, True)
+        new_v = self.v.y_rotation(angle, True)
+        new_w = self.w.y_rotation(angle, True)
+
+        if copy:
+            return Basis3D(new_u, new_v, new_w, self.name)
+        else:
+            self.u = new_u
+            self.v = new_v
+            self.w = new_w
+        
+    def z_rotation(self, angle, copy=True):
+        new_u = self.u.z_rotation(angle, True)
+        new_v = self.v.z_rotation(angle, True)
+        new_w = self.w.z_rotation(angle, True)
+
+        if copy:
+            return Basis3D(new_u, new_v, new_w, self.name)
+        else:
+            self.u = new_u
+            self.v = new_v
+            self.w = new_w
+        
     def EulerRotation(self, angles, copy=True):
         psi, theta, phi = angles
         center = o3D
@@ -2350,6 +2442,7 @@ class Frame3D(Basis3D):
             s += 'line3.parent = {};\n'.format(parent)
         
         return s 
+    
 
 oxyz = Frame3D(o3D, x3D, y3D, z3D)
 
@@ -3087,9 +3180,9 @@ class LineSegment3D(Edge3D):
         z=[p.vector[2] for p in self.points]
         ax.plot(x,y,z, 'o-k')
 
-    def MPLPlot2D(self, x_3D, y_3D, ax):
+    def MPLPlot2D(self, x_3D, y_3D, ax, color='k'):
         edge2D =  self.PlaneProjection2D(x_3D, y_3D)
-        edge2D.MPLPlot(ax)
+        edge2D.MPLPlot(ax=ax, color=color)
 
     def plot_data(self, x_3D, y_3D, marker=None, color='black', stroke_width=1,
                   dash=False, opacity=1, arrow=False):
@@ -3105,13 +3198,27 @@ class LineSegment3D(Edge3D):
     def to_line(self):
         return Line3D(*self.points)        
     
-    def Babylon(self):
-        s = 'var myPoints = [];\n'
-        s += 'var point1 = new BABYLON.Vector3({},{},{});\n'.format(self.points[0][0],self.points[0][1],self.points[0][2])
-        s += 'myPoints.push(point1);\n'
-        s += 'var point2 = new BABYLON.Vector3({},{},{});\n'.format(self.points[1][0],self.points[1][1],self.points[1][2])
-        s += 'myPoints.push(point2);\n'
-        s += 'var line = BABYLON.MeshBuilder.CreateLines("lines", {points: myPoints}, scene);\n'
+    def Babylon(self, color=(1, 1, 1), name='line',  type_='line', parent=None):
+        if type_ == 'line':
+            s = 'var myPoints = [];\n'
+            s += 'var point1 = new BABYLON.Vector3({},{},{});\n'.format(*self.points[0])
+            s += 'myPoints.push(point1);\n'
+            s += 'var point2 = new BABYLON.Vector3({},{},{});\n'.format(*self.points[1])
+            s += 'myPoints.push(point2);\n'
+            s += 'var {} = BABYLON.MeshBuilder.CreateLines("lines", {{points: myPoints}}, scene);\n'.format(name)
+            s += '{}.color = new BABYLON.Color3{};\n'.format(name, tuple(color))
+        elif type_ == 'tube':
+            radius = 0.03*self.points[0].PointDistance(self.points[1])
+            s = 'var points = [new BABYLON.Vector3({},{},{}), new BABYLON.Vector3({},{},{})];\n'.format(*self.points[0], *self.points[1])
+            s += 'var {} = BABYLON.MeshBuilder.CreateTube("frame_U", {{path: points, radius: {}}}, {});'.format(name, radius, parent)
+#            s += 'line.material = red_material;\n'
+
+        else:
+            raise NotImplementedError
+
+        if parent is not None:
+            s += '{}.parent = {};\n'.format(name, parent)
+
         return s 
 
 
@@ -3559,7 +3666,7 @@ class Face3D(Primitive3D):
                 xs = [point1[0], point2[0]]
                 ys = [point1[1], point2[1]]
                 zs = [point1[2], point2[2]]
-                line = plt3d.art3d.Line3D(xs, ys, zs)
+                line = mpl_toolkits.mplot3d.plt3d.art3d.Line3D(xs, ys, zs)
                 ax.add_line(line)
 
         plt.show()
