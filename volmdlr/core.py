@@ -721,7 +721,7 @@ class Wire2D(CompositePrimitive2D):
 
 class Contour2D(Wire2D):
     """
-    A collection of 3D primitives forming a closed wire3D
+    A collection of 2D primitives forming a closed wire2D
     """
     def __init__(self, primitives, name=''):
         Wire2D.__init__(self, primitives, name)
@@ -1188,6 +1188,7 @@ class LineSegment2D(Line2D):
             if curv_abs2 < 0. or curv_abs2 > 1.:
                 circle2 = None
         return circle1, circle2
+    
 
 class Arc2D(Primitive2D):
     def __init__(self, start, interior, end, name=''):
@@ -1244,7 +1245,10 @@ class Arc2D(Primitive2D):
         return [self.start,self.interior,self.end]
 
     geo_points=property(_get_geo_points)
-
+    
+    def tessellation_points(self, resolution=10):
+        return [self.center + self.radius*math.cos(teta)*Vector2D((1,0)) + self.radius*math.sin(teta)*Vector2D((0,1)) \
+                for teta in npy.linspace(0, self.angle, resolution)]
 
     def Length(self):
         return self.radius * abs(self.angle)
@@ -1370,6 +1374,10 @@ class Circle2D(Primitive2D):
         return [self._geo_start, self.center, self._geo_start]
 
     geo_points = property(_get_geo_points)
+    
+    def tessellation_points(self, resolution=20):
+        return [self.center + self.radius*math.cos(teta)*Vector2D((1,0)) + self.radius*math.sin(teta)*Vector2D((0,1)) \
+                for teta in npy.linspace(0, 2*math.pi, resolution+1)[:-1]]
 
     def Length(self):
         return 2* math.pi * self.radius
@@ -1731,14 +1739,14 @@ class Vector3D(Vector):
             if copy:
                 return new_vector
             else:
-                self.vector = new_vector
+                self.vector = new_vector.vector
                 
         if side == 'new':
             new_vector = frame.NewCoordinates(self)
             if copy:
                 return new_vector
             else:
-                self.vector = new_vector
+                self.vector = new_vector.vector
 
     def To2D(self, plane_origin, x, y):
         x2d = self.Dot(x) - plane_origin.Dot(x)
@@ -1818,6 +1826,9 @@ class Point3D(Vector3D):
         }
 
     def __init__(self, vector, name=''):
+        if type(vector) is not tuple and type(vector) is not npy.ndarray:
+            print(type(vector))
+            raise ValueError
         Vector3D.__init__(self, vector)
         self.name=name
 
@@ -2172,15 +2183,15 @@ class Basis3D(Basis):
 
     def NewCoordinates(self, vector):
         matrix = self.InverseTransfertMatrix()
-        return Point3D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1] + matrix[0][2]*vector[2],
-                         matrix[1][0]*vector[0] + matrix[1][1]*vector[1] + matrix[1][2]*vector[2],
-                         matrix[2][0]*vector[0] + matrix[2][1]*vector[1] + matrix[2][2]*vector[2]))
+        return vector.__class__((matrix[0][0]*vector[0] + matrix[0][1]*vector[1] + matrix[0][2]*vector[2],
+                                 matrix[1][0]*vector[0] + matrix[1][1]*vector[1] + matrix[1][2]*vector[2],
+                                 matrix[2][0]*vector[0] + matrix[2][1]*vector[1] + matrix[2][2]*vector[2]))
 
-    def OldCoordinates(self, point):
+    def OldCoordinates(self, vector):
         matrix = self.TransfertMatrix()
-        return Point3D((matrix[0][0]*point[0] + matrix[0][1]*point[1] + matrix[0][2]*point[2],
-                         matrix[1][0]*point[0] + matrix[1][1]*point[1] + matrix[1][2]*point[2],
-                         matrix[2][0]*point[0] + matrix[2][1]*point[1] + matrix[2][2]*point[2]))
+        return vector.__class__((matrix[0][0]*vector[0] + matrix[0][1]*vector[1] + matrix[0][2]*vector[2],
+                                 matrix[1][0]*vector[0] + matrix[1][1]*vector[1] + matrix[1][2]*vector[2],
+                                 matrix[2][0]*vector[0] + matrix[2][1]*vector[1] + matrix[2][2]*vector[2]))
 
     def copy(self):
         return Basis3D(self.u, self.v, self.w)
@@ -2959,7 +2970,7 @@ class Wire3D(CompositePrimitive3D):
 class Edge3D(Primitive3D):
     def __init__(self, edge_start, edge_end, name=''):
         Primitive3D.__init__(self, name=name)
-        self.points = [edge_start, edge_end]        
+        self.points = [edge_start, edge_end]
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -2978,7 +2989,7 @@ class Edge3D(Primitive3D):
         if copy:
             new_edge_start = self.points[0].Translation(offset, copy=True)
             new_edge_end = self.points[1].Translation(offset, copy=True)
-            return self.__class__(new_edge_start, new_edge_end)
+            return Edge3D(new_edge_start, new_edge_end)
         else:
             self.points[0].Translation(offset, copy=False)
             self.points[1].Translation(offset, copy=False)
@@ -3032,15 +3043,19 @@ class LineSegment3D(Edge3D):
         if copy:
             return LineSegment3D(*[p.Rotation(center, axis, angle, copy=True) for p in self.points])
         else:
-            for p in self.points:
-                p.Rotation(center, axis, angle, copy=False)
+#            for p in self.points:
+#                p.Rotation(center, axis, angle, copy=False)
+            Edge3D.Rotation(self, center, axis, angle, copy=False)
+            self.bounding_box = self._bounding_box()
 
     def Translation(self, offset, copy=True):
         if copy:
             return LineSegment3D(*[p.Translation(offset, copy=True) for p in self.points])
         else:
-            for p in self.points:
-                p.Translation(offset, copy=False)
+#            for p in self.points:
+#                p.Translation(offset, copy=False)
+            Edge3D.Translation(self, offset, copy=False)
+            self.bounding_box = self._bounding_box()
         
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -3050,20 +3065,31 @@ class LineSegment3D(Edge3D):
             if copy:
                 return LineSegment3D(*[frame.OldCoordinates(p) for p in self.points])
             else:
-                for p in self.points:
-                    p = frame.OldCoordinates(p)
+#                for p in self.points:
+#                    p = frame.OldCoordinates(p)
+                Edge3D.frame_mapping(self, frame, side, copy=False)
+                self.bounding_box = self._bounding_box()
         if side == 'new':
             if copy:
                 return LineSegment3D(*[frame.NewCoordinates(p) for p in self.points])
             else:
-                for p in self.points:
-                    p = frame.NewCoordinates(p)
+#                for p in self.points:
+#                    p = frame.NewCoordinates(p)
+                Edge3D.frame_mapping(self, frame, side, copy=False)
+                self.bounding_box = self._bounding_box()
+                
+    def copy(self):
+        return LineSegment3D(*[p.copy() for p in self.points])
 
-    def MPLPlot(self, ax):
+    def MPLPlot(self, ax=None):
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
         x=[p.vector[0] for p in self.points]
         y=[p.vector[1] for p in self.points]
         z=[p.vector[2] for p in self.points]
         ax.plot(x,y,z, 'o-k')
+        return ax
 
     def MPLPlot2D(self, x_3D, y_3D, ax):
         edge2D =  self.PlaneProjection2D(x_3D, y_3D)
@@ -3102,13 +3128,14 @@ class Contour3D(Wire3D):
         self.name = name
         self.points = points
         
+        
         if points is None:
-            points = self.edges[0].points[:]                
+            points = [p.copy() for p in self.edges[0].points[:]]
             for i, edge in enumerate(self.edges[1:-1]):
                 if edge.points[0] in points[-2:]:
-                    points.append(edge.points[1])
+                    points.append(edge.points[1].copy())
                 elif edge.points[1] in points[-2:]:
-                    points.append(edge.points[0])
+                    points.append(edge.points[0].copy())
                 else:
                     raise NotImplementedError
             self.points = [p.copy() for p in points]
@@ -3181,14 +3208,15 @@ class Face3D(Primitive3D):
         self.points = points
         self.polygon2D = polygon2D
         
+        
+        contour_points = [p.copy() for p in self.contours[0].points[:]]
         if plane is None:
 #            print('face3D recalcule self.plane')
-            self.plane = self.create_plane(self.contours[0].points)
+            self.plane = self.create_plane(contour_points)
         
         if points is None or polygon2D is None:
 #            print('face3D recalcule self.points et self.polygon2D')
-            points = [p.copy() for p in self.contours[0].points[:]]
-            self.points, self.polygon2D = self._repair_points_and_polygon2d(points, self.plane)
+            self.points, self.polygon2D = self._repair_points_and_polygon2d(contour_points, self.plane)
             self.contours[0].points = [p.copy() for p in self.points]
                         
         self.bounding_box = self._bounding_box()
@@ -3213,8 +3241,10 @@ class Face3D(Primitive3D):
     
     @classmethod
     def create_plane(cls, points):
-        if len(points) == 3:
-            return Plane3D.from_3_points(Point3D(points[0].vector), Vector3D(points[1]), Vector3D(points[2]))
+        if len(points) < 3:
+            raise ValueError
+        elif len(points) == 3:
+            return Plane3D.from_3_points(Point3D(points[0].vector), Vector3D(points[1].vector), Vector3D(points[2].vector))
         else:
             origin = Point3D(points[0].vector)
             vector1 = Vector3D(points[1]-origin)
@@ -3248,8 +3278,8 @@ class Face3D(Primitive3D):
             new_points = [p.Rotation(center, axis, angle, copy=True) for p in self.points]
             return Face3D(new_contour, new_plane, new_points, self.polygon2D, self.name)
         else:
-            for subcontour in self.contours:
-                subcontour.Rotation(center, axis, angle, copy=False)
+            for contour in self.contours:
+                contour.Rotation(center, axis, angle, copy=False)
             for point in self.points:
                 point.Rotation(center, axis, angle, copy=False)
             self.plane.Rotation(center, axis, angle, copy=False)
@@ -3262,8 +3292,8 @@ class Face3D(Primitive3D):
             new_points = [p.Translation(offset, copy=True) for p in self.points]
             return Face3D(new_contour, new_plane, new_points, self.polygon2D, self.name)
         else:
-            for subcontour in self.contours:
-                subcontour.Translation(offset, copy=False)
+            for contour in self.contours:
+                contour.Translation(offset, copy=False)
             for point in self.points:
                 point.Translation(offset, copy=False)
             self.plane.Translation(offset, copy=False)
@@ -3279,15 +3309,15 @@ class Face3D(Primitive3D):
             new_points = [p.frame_mapping(frame, side, copy=True) for p in self.points]
             return Face3D(new_contour, new_plane, new_points, None, self.name)
         else:
-            for subcontour in self.contours:
-                subcontour.frame_mapping(frame, side, copy=False)
+            for contour in self.contours:
+                contour.frame_mapping(frame, side, copy=False)
             for point in self.points:
                 point.frame_mapping(frame, side, copy=False)
             self.plane.frame_mapping(frame, side, copy=False)
             self.bounding_box = self._bounding_box()
             
     def copy(self):
-        new_contour = [subcontour.copy() for subcontour in self.contours]
+        new_contour = [contour.copy() for contour in self.contours]
         new_plane = self.plane.copy()
         new_points = [p.copy() for p in self.points]
         return Face3D(new_contour, new_plane, new_points, self.polygon2D, self.name)
@@ -3469,7 +3499,7 @@ class Face3D(Primitive3D):
             return None
         point_on_face_boo = self.point_on_face(intersection_point)
         ### PLOT ###
-#        if not point_on_face_boo:
+#        if point_on_face_boo:
 #            ax = self.plot()
 #            linesegment.MPLPlot(ax)
 #            Point3D(intersection_point.vector).MPLPlot(ax)
@@ -3647,15 +3677,15 @@ class Shell3D(CompositePrimitive3D):
         for ray in rays[:3]:
             count = 0
             ray_intersection = []
-            test = True
+            is_inside = True
             for face in self.faces:
                 intersection_point = face.linesegment_intersection(ray)
                 if intersection_point is not None:
                     ray_intersection.append(intersection_point)
                     count += 1
             if count%2 == 0:
-                test = False
-            tests.append(test)
+                is_inside = False
+            tests.append(is_inside)
             rays_intersections.append(ray_intersection)
             
         if sum(tests) == 0 or sum(tests) == 3:
@@ -3828,7 +3858,7 @@ class Shell3D(CompositePrimitive3D):
             for point in face.points:
                 if shell2.point_belongs(point):
                     shell1_points_inside_shell2.append(point)
-        
+                            
         if len(intersections_points+shell1_points_inside_shell2) == 0:
             return 0
         bbox = BoundingBox.from_points(intersections_points+shell1_points_inside_shell2)
@@ -3844,7 +3874,7 @@ class Shell3D(CompositePrimitive3D):
                 intersection_points = face1.face_intersection(face2)
                 if intersection_points is not None:
                     intersections_points.extend(intersection_points)
-       
+        
         shell1_points_outside_shell2 = []
         for face in self.faces:
             for point in face.points:
@@ -4586,50 +4616,10 @@ class Step:
         return shells
         
 
-#    def to_volume_model(self, name, add_to_volume_model=None):
-#
-#        object_dict = {}
-#        primitives = []
-#                                    
-#        self.graph.add_node("#0")
-#        for node in self.graph.nodes:
-#            if node != '#0' and self.functions[node].name == "CLOSED_SHELL":
-#                self.graph.add_edge("#0", node)
-#        
-#        edges = list(nx.algorithms.traversal.breadth_first_search.bfs_edges(self.graph, "#0"))[::-1]        
-#
-#        for edge_nb, edge in enumerate(edges):
-#            instanciate_id = edge[1]
-#            res, object_dict, primitives = self.instanciate(instanciate_id, object_dict, primitives)
-#            if res is not None:
-#                raise NotImplementedError
-#
-#        shells = []
-#        for node in list(self.graph.nodes):
-#            if node != '#0' and self.functions[node].name == 'CLOSED_SHELL':
-#                shells.append(object_dict[node])
-#        print(shells)
-#        
-#        if add_to_volume_model is None:
-#            volume_model = VolumeModel(shells, primitives, name)
-#            return volume_model
-#        else:
-#            add_to_volume_model.shells.extend(shells)
-#            add_to_volume_model.primitives.extend(primitives)
-#            return add_to_volume_model
-
-
 class VolumeModel:
     """
     :param groups: A list of two element tuple. The first element is a string naming the group and the second element is a list of primitives of the group
     """
-#    def __init__(self, shells, primitives, name=''):
-#        self.shells = shells
-#        self.primitives = primitives
-#        self.name = name
-#        if self.shells:
-#            self.bounding_box = self._bounding_box()
-    
     def __init__(self, primitives, name=''):
         self.primitives = primitives
         self.name = name
@@ -4648,30 +4638,23 @@ class VolumeModel:
     def Volume(self):
         volume=0
         for primitive in self.primitives:
-#            for primitive in primitives_group:
             volume+=primitive.Volume()
         return volume
 
     def Rotation(self, center, axis, angle, copy=True):
         if copy:
-#            new_shells = [shell.Rotation(center, axis, angle, copy=True) for shell in self.shells]
             new_primitives = [primitive.Rotation(center, axis, angle, copy=True) for primitive in self.primitives]
             return VolumeModel(new_primitives, self.name)
         else:
-#            for shell in self.shells:
-#                shell.Translation(center, axis, angle, copy=False)
             for primitives in self.primitives:
                 primitives.Translation(center, axis, angle, copy=False)
             self.bounding_box = self._bounding_box()
 
     def Translation(self, offset, copy=True):
         if copy:
-#            new_shells = [shell.Translation(offset, copy=True) for shell in self.shells]
             new_primitives = [primitive.Translation(offset, copy=True) for primitive in self.primitives]
             return VolumeModel(new_primitives, self.name)
         else:
-#            for shell in self.shells:
-#                shell.Translation(offset, copy=False)
             for primitives in self.primitives:
                 primitives.Translation(offset, copy=False)
             self.bounding_box = self._bounding_box()
@@ -4682,18 +4665,14 @@ class VolumeModel:
         side = 'old' or 'new'
         """
         if copy:
-#            new_shells = [shell.frame_mapping(frame, side, copy=True) for shell in self.shells]
             new_primitives = [primitive.frame_mapping(frame, side, copy=True) for primitive in self.primitives]
             return VolumeModel(new_primitives, self.name)
         else:
-#            for shell in self.shells:
-#                shell.frame_mapping(frame, side, copy=False)
             for primitives in self.primitives:
                 primitives.frame_mapping(frame, side, copy=False)
             self.bounding_box = self._bounding_box()
             
     def copy(self):
-#        new_shells = [shell.copy() for shell in self.shells]
         new_primitives = [primitive.copy() for primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
             
@@ -4900,7 +4879,6 @@ class Routing:
     def straight_line2(self):
         """
         Returns the distance of the line going around each shell's bbox encountered along the path
-        NETTOYAGE NECESSAIRE
         """
         line = LineSegment3D(self.points[0], self.points[1])
         
@@ -4913,7 +4891,6 @@ class Routing:
                 intersection_point, intersection_abscissea = face.linesegment_intersection(line, abscissea=True)
                 if intersection_point is not None and intersection_abscissea != 0 and intersection_abscissea != 1:
                     intersection_points.append((intersection_point, intersection_abscissea))
-#                    shell_intersection_points.append(intersection_point)
                     shell_intersection_points.append((intersection_point, intersection_abscissea))
                     
             if len(shell_intersection_points) == 2:
@@ -4929,19 +4906,14 @@ class Routing:
         intersection_points = sorted(intersection_points, key=lambda abscissea: abscissea[1])
         all_mesures_abscissea = sorted(all_mesures_abscissea, key=lambda abscissea: abscissea[1])
         all_points_abscissea = [(self.points[0], 0)] + intersection_points[:] + [(self.points[1], 1)]
-        print(all_points_abscissea)
-        print(all_mesures_abscissea)
         all_points = [p[0] for p in all_points_abscissea]
                     
         no_collision_mesures = []
         i = 0
         for pt1, pt2 in zip(all_points[:-1], all_points[1:]):
-            print(pt1, pt2)
             if i%2 == 0:
-                print('normal')
                 no_collision_mesures.append(Mesure(pt1, pt2, color=(0,0,1)))
             else:
-                print('around bbox', i//2)
                 no_collision_mesures.extend(all_mesures_abscissea[i//2][0])
             i += 1
             
