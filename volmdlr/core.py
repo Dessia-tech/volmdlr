@@ -254,10 +254,13 @@ class Vector2D(Vector):
 
 
     def Rotation(self, center, angle, copy=True):
-        vector2 = (npy.dot(npy.array([[math.cos(angle), -math.sin(angle)],
-                                      [math.sin(angle), math.cos(angle)]]),
-                           (self.vector-center.vector))
-                   + center.vector)
+        u = self - center
+        vector2 = [math.cos(angle)*u[0] - math.sin(angle)*u[1] + center[0],
+                   math.sin(angle)*u[0] + math.cos(angle)*u[1] + center[1]]
+#        vector2 = (npy.dot(npy.array([[math.cos(angle), -math.sin(angle)],
+#                                      [math.sin(angle), math.cos(angle)]]),
+#                           (self.vector-center.vector))
+#                   + center.vector)
         if copy:
             return self.__class__(vector2)
         else:
@@ -267,7 +270,8 @@ class Vector2D(Vector):
         """
         :param offset: an other Vector2D
         """
-        vector2 = self.vector + offset.vector
+        vector2 = [self.vector[0] + offset[0],
+                   self.vector[1] + offset[1]]
         if copy:
             return self.__class__(vector2)
         else:
@@ -356,8 +360,13 @@ class Point2D(Vector2D):
                         self.vector[1] / value))
 
     def To3D(self, plane_origin, vx, vy):
-        x, y = self.vector
-        return Point3D(plane_origin.vector + vx.vector*x + vy.vector*y)
+#        x, y = self.vector
+#        print(x, y, vx, vy)
+        
+        return Point3D([plane_origin.vector[0] + vx.vector[0]*self.vector[0], + vx.vector[0]*self.vector[1],
+                        plane_origin.vector[1] + vx.vector[1]*self.vector[0], + vx.vector[1]*self.vector[1],
+                        plane_origin.vector[2] + vx.vector[2]*self.vector[0], + vx.vector[2]*self.vector[1],
+                        ])
 
     def MPLPlot(self, ax=None, style='ob'):
         if ax is None:
@@ -1795,9 +1804,10 @@ class Vector3D(Vector):
 
     def Translation(self, offset, copy=True):
         if copy:
-            return self+offset
+            return self + offset
         else:
-            self.vector = self.vector+offset.vector
+            self.vector = [self.vector[0] + offset[0],
+                           self.vector[1] + offset[1]]
             
     def frame_mapping(self, frame, side, copy=True):
         """
