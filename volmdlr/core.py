@@ -194,6 +194,7 @@ class Vector2D(Vector):
     def __init__(self, vector, name=''):
         # TODO: change this list to 2 values vx and vy
         self.vector = [0, 0]
+#        self.vector = npy.zeros(2)
         self.vector[0] = vector[0]
         self.vector[1] = vector[1]
         self.name = name
@@ -277,9 +278,11 @@ class Vector2D(Vector):
         else:
             self.vector = vector2
 
-    def To3D(self, plane_origin, x1, x2):
-        x, y = self.vector
-        return Vector3D(plane_origin.vector + x1.vector*x + x2.vector*y)
+    def To3D(self, plane_origin, vx, vy):
+        return Vector3D([plane_origin.vector[0] + vx.vector[0]*self.vector[0] + vy.vector[0]*self.vector[1],
+                         plane_origin.vector[1] + vx.vector[1]*self.vector[0] + vy.vector[1]*self.vector[1],
+                         plane_origin.vector[2] + vx.vector[2]*self.vector[0] + vy.vector[2]*self.vector[1],
+                         ])
 
     def NormalVector(self, unit=False):
         n = Vector2D((-self.vector[1], self.vector[0]))
@@ -360,12 +363,9 @@ class Point2D(Vector2D):
                         self.vector[1] / value))
 
     def To3D(self, plane_origin, vx, vy):
-#        x, y = self.vector
-#        print(x, y, vx, vy)
-        
-        return Point3D([plane_origin.vector[0] + vx.vector[0]*self.vector[0], + vx.vector[0]*self.vector[1],
-                        plane_origin.vector[1] + vx.vector[1]*self.vector[0], + vx.vector[1]*self.vector[1],
-                        plane_origin.vector[2] + vx.vector[2]*self.vector[0], + vx.vector[2]*self.vector[1],
+        return Point3D([plane_origin.vector[0] + vx.vector[0]*self.vector[0] + vy.vector[0]*self.vector[1],
+                        plane_origin.vector[1] + vx.vector[1]*self.vector[0] + vy.vector[1]*self.vector[1],
+                        plane_origin.vector[2] + vx.vector[2]*self.vector[0] + vy.vector[2]*self.vector[1],
                         ])
 
     def MPLPlot(self, ax=None, style='ob'):
@@ -1678,6 +1678,7 @@ class Vector3D(Vector):
 
     def __init__(self, vector, name=''):
         self.vector = [0, 0, 0]
+#        self.vector = npy.zeros(3)
         self.vector[0] = vector[0]
         self.vector[1] = vector[1]
         self.vector[2] = vector[2]
@@ -3422,7 +3423,7 @@ class Face3D(Primitive3D):
             self.contours[0].points = [p.copy() for p in self.points]
                         
         self.bounding_box = self._bounding_box()
-        
+                        
         # CHECK #
         for pt in self.points:
             if not self.plane.point_on_plane(pt):
@@ -3435,40 +3436,18 @@ class Face3D(Primitive3D):
         contours = []
         contours.append(object_dict[int(arguments[1][0][1:])])
         
-        plane = cls.create_plane(contours[0].points)
+        plane = Plane3D.from_points(contours[0].points)
         contours[0].points, polygon2D = cls._repair_points_and_polygon2d(contours[0].points, plane)
         points = [p.copy() for p in contours[0].points[:]]
         
         return cls(contours, plane=plane, points=points, polygon2D=polygon2D, name=arguments[0][1:-1])
-    
-#    @classmethod
-#    def create_plane(cls, points):
-#        if len(points) < 3:
-#            raise ValueError
-#        elif len(points) == 3:
-#            return Plane3D.from_3_points(Point3D(points[0].vector), Vector3D(points[1].vector), Vector3D(points[2].vector))
-#        else:
-#            origin = Point3D(points[0].vector)
-#            vector1 = Vector3D(points[1]-origin)
-#            vector1.Normalize()
-#            vector2_min = Vector3D(points[2]-origin)
-#            vector2_min.Normalize()
-#            dot_min = abs(vector1.Dot(vector2_min))
-#            for point in points[3:]:
-#                vector2 = Vector3D(point-origin)
-#                vector2.Normalize()
-#                dot = abs(vector1.Dot(vector2))
-#                if dot < dot_min:
-#                    vector2_min = vector2
-#                    dot_min = dot
-#            return Plane3D.from_3_points(origin, vector1+origin, vector2_min+origin)
     
     @classmethod
     def _repair_points_and_polygon2d(cls, points, plane):
         polygon_points = [p.To2D(plane.origin, plane.vectors[0], plane.vectors[1]) for p in points]
         repaired_points = [p.copy() for p in points]
         polygon2D = Polygon2D(polygon_points)
-        if polygon2D.SelfIntersect()[0]:            
+        if polygon2D.SelfIntersect()[0]:
             repaired_points = [repaired_points[1]]+[repaired_points[0]]+repaired_points[2:]
             polygon2D = Polygon2D([polygon_points[1]]+[polygon_points[0]]+polygon_points[2:])
         return repaired_points, polygon2D
@@ -3536,21 +3515,16 @@ class Face3D(Primitive3D):
         return Point3D((x,y,z))
     
     def triangulation(self):
-#        normal = self.plane.normal
         points = [tuple(p.vector) for p in self.polygon2D.points]
         points_dict = {p: i for i, p in enumerate(points)}
         points_3D = [Point2D(p).To3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]) for p in points]
-#        print()
-#        print('points', points_dict)
         triangles = tri.earclip(points)
-#        print('triangles', triangles)
         triangles_indexes = []
         for triangle in triangles:
             triangle_indexes = []
             for point in triangle:
                 triangle_indexes.append(points_dict[point])
             triangles_indexes.append(triangle_indexes)
-            
         return points_3D, triangles_indexes
         
     def _bounding_box(self):
@@ -3769,7 +3743,7 @@ class Face3D(Primitive3D):
                 xs = [point1[0], point2[0]]
                 ys = [point1[1], point2[1]]
                 zs = [point1[2], point2[2]]
-                line = mpl_toolkits.mplot3d.plt3d.art3d.Line3D(xs, ys, zs)
+                line = mpl_toolkits.mplot3d.art3d.Line3D(xs, ys, zs)
                 ax.add_line(line)
 
         plt.show()
@@ -4793,7 +4767,7 @@ class Step:
         
         return None, object_dict, primitives
     
-    def to_shell3d(self, name):
+    def to_shells3d(self, name):
         object_dict = {}
         primitives = []
                                     
@@ -4881,9 +4855,9 @@ class VolumeModel:
     def _bounding_box(self):
         bboxes = []
         for primitive in self.primitives:
-            if hasattr(primitive, '_bounding_box'):
+            if hasattr(primitive, 'bounding_box'):
                 bboxes.append(primitive.bounding_box)
-        
+
         xmin = min([box.xmin for box in bboxes])
         xmax = max([box.xmax for box in bboxes])
         ymin = min([box.ymin for box in bboxes])
