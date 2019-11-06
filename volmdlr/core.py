@@ -1814,7 +1814,8 @@ class Vector3D(Vector):
             return self + offset
         else:
             self.vector = [self.vector[0] + offset[0],
-                           self.vector[1] + offset[1]]
+                           self.vector[1] + offset[1],
+                           self.vector[2] + offset[2]]
             
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -2385,7 +2386,7 @@ class Frame3D(Basis3D):
 
     def __add__(self, other_frame):
         P1 = self.TransfertMatrix()
-        new_origin = Point3D(npy.dot(P1, other_frame.origin.vector) + self.origin.vector)
+        new_origin = Point3D(npy.dot(P1, npy.array(other_frame.origin.vector)) + npy.array(self.origin.vector))
         
         M = npy.dot(P1, other_frame.TransfertMatrix())
         return Frame3D(new_origin,
@@ -3309,7 +3310,7 @@ class Contour3D(Wire3D):
         self.name = name
         self.points = points
         
-        print(self.edges)
+#        print(self.edges)
         
         if points is None:
             
