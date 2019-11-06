@@ -38,6 +38,8 @@ def get_version():
         # PEP 440 compatibility
         if '-' in version:
             future_version = version.split('-')[0].split('.')
+            if 'post' in future_version[-1]:
+                future_version = future_version[:-1]
             future_version[-1] = str(int(future_version[-1])+1)
             future_version = '.'.join(future_version)
             number_commits = version.split('-')[1]
