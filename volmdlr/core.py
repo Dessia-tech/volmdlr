@@ -730,7 +730,7 @@ class Contour2D(Wire2D):
         if name is None:
             name = '3D of {}'.format(self.name)
         primitives3D = [p.To3D(plane_origin, x, y) for p in self.primitives]
-        return Contour3D(primitives3D, name)
+        return Contour3D(primitives3D, name=name)
 
     def Area(self):
         if len(self.basis_primitives) == 1:
@@ -1234,7 +1234,7 @@ class Arc2D(Primitive2D):
                 self.angle = angle2 - angle1 + 2 * math.pi
             else:
                 self.angle = angle2 - angle1
-
+                
     def _get_points(self):
         return [self.start,self.interior,self.end]
 
@@ -1665,7 +1665,6 @@ class Vector3D(Vector):
         }    
 
     def __init__(self, vector, name=''):
-
         self.vector = npy.zeros(3)
         self.vector[0] = vector[0]
         self.vector[1] = vector[1]
@@ -1826,9 +1825,6 @@ class Point3D(Vector3D):
         }
 
     def __init__(self, vector, name=''):
-        if type(vector) is not tuple and type(vector) is not npy.ndarray:
-            print(type(vector))
-            raise ValueError
         Vector3D.__init__(self, vector)
         self.name=name
 
@@ -1926,6 +1922,34 @@ class Plane3D:
         normal.Normalize()
         vector = vector1.Cross(normal)
         return cls(point1.copy(), vector1.copy(), vector.copy())
+    
+    @classmethod
+    def from_normal(cls, point, normal):
+        v1 = normal.RandomUnitNormalVector()
+        v2 = v1.Cross(normal)
+        return cls(point, v1+point, v2+point)
+    
+    @classmethod
+    def from_points(cls, points):
+        if len(points) < 3:
+            raise ValueError
+        elif len(points) == 3:
+            return cls.from_3_points(Point3D(points[0].vector), Vector3D(points[1].vector), Vector3D(points[2].vector))
+        else:
+            origin = Point3D(points[0].vector)
+            vector1 = Vector3D(points[1]-origin)
+            vector1.Normalize()
+            vector2_min = Vector3D(points[2]-origin)
+            vector2_min.Normalize()
+            dot_min = abs(vector1.Dot(vector2_min))
+            for point in points[3:]:
+                vector2 = Vector3D(point-origin)
+                vector2.Normalize()
+                dot = abs(vector1.Dot(vector2))
+                if dot < dot_min:
+                    vector2_min = vector2
+                    dot_min = dot
+            return cls.from_3_points(origin, vector1+origin, vector2_min+origin)
     
     def point_on_plane(self, point):
         if math.isclose(self.normal.Dot(point-self.origin), 0, abs_tol=1e-6):
@@ -2546,7 +2570,15 @@ class Circle3D(Primitive3D):
         self.center = center
         self.radius = radius
         self.normal = normal
-
+    
+    def tessellation_points(self, resolution=20):
+        plane = Plane3D.from_normal(self.center, self.normal)
+        center_2D = self.center.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
+        circle2D = Circle2D(center_2D, self.radius)
+        tessellation_points_2D = circle2D.tessellation_points()
+        tessellation_points_3D = [p.To3D(self.center, self.start, self.end) for p in tessellation_points_2D]
+        return tessellation_points_3D
+    
     def Length(self):
         return 2* math.pi * self.radius
 
@@ -2701,6 +2733,16 @@ class Arc3D(Primitive3D):
         return [self.start,self.interior,self.end]
 
     points=property(_get_points)
+    
+    def tessellation_points(self, resolution=10):
+        plane = Plane3D.from_3_points(self.center, self.start, self.end)
+        interior_2D = self.interior.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
+        start_2D = self.start.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
+        end_2D = self.end.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
+        arc2D = Arc2D(start_2D, interior_2D, end_2D)
+        tessellation_points_2D = arc2D.tessellation_points()
+        tessellation_points_3D = [p.To3D(self.center, self.start, self.end) for p in tessellation_points_2D]
+        return tessellation_points_3D
 
     def Length(self):
         return self.radius * abs(self.angle)
@@ -3128,17 +3170,37 @@ class Contour3D(Wire3D):
         self.name = name
         self.points = points
         
+        print(self.edges)
         
         if points is None:
-            points = [p.copy() for p in self.edges[0].points[:]]
-            for i, edge in enumerate(self.edges[1:-1]):
-                if edge.points[0] in points[-2:]:
-                    points.append(edge.points[1].copy())
-                elif edge.points[1] in points[-2:]:
-                    points.append(edge.points[0].copy())
-                else:
-                    raise NotImplementedError
-            self.points = [p.copy() for p in points]
+            
+            only_has_LineSegment3D = True
+            for edge in edges:
+                if edge.__class__ != LineSegment3D:
+                    only_has_LineSegment3D = False
+                    break
+            if only_has_LineSegment3D:
+                points = [p.copy() for p in self.edges[0].points[:]]
+                for i, edge in enumerate(self.edges[1:-1]):
+                    if edge.points[0] in points[-2:]:
+                        points.append(edge.points[1].copy())
+                    elif edge.points[1] in points[-2:]:
+                        points.append(edge.points[0].copy())
+                    else:
+                        raise NotImplementedError
+                self.points = [p.copy() for p in points]
+        
+            else:
+                points = []
+                for edge in edges:
+                    if edge.__class__ == CompositePrimitive3D:
+                        points.extend(edge.basis_primitives)
+                    elif edge.__class__ == Arc3D or edge.__class__ == Circle3D:
+                        points.extend(edge.tessellation_points())
+                    else:
+                        raise NotImplementedError
+                self.points = [p.copy() for p in points]
+                    
         
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -3212,7 +3274,7 @@ class Face3D(Primitive3D):
         contour_points = [p.copy() for p in self.contours[0].points[:]]
         if plane is None:
 #            print('face3D recalcule self.plane')
-            self.plane = self.create_plane(contour_points)
+            self.plane = Plane3D.from_points(contour_points)
         
         if points is None or polygon2D is None:
 #            print('face3D recalcule self.points et self.polygon2D')
@@ -3239,27 +3301,27 @@ class Face3D(Primitive3D):
         
         return cls(contours, plane=plane, points=points, polygon2D=polygon2D, name=arguments[0][1:-1])
     
-    @classmethod
-    def create_plane(cls, points):
-        if len(points) < 3:
-            raise ValueError
-        elif len(points) == 3:
-            return Plane3D.from_3_points(Point3D(points[0].vector), Vector3D(points[1].vector), Vector3D(points[2].vector))
-        else:
-            origin = Point3D(points[0].vector)
-            vector1 = Vector3D(points[1]-origin)
-            vector1.Normalize()
-            vector2_min = Vector3D(points[2]-origin)
-            vector2_min.Normalize()
-            dot_min = abs(vector1.Dot(vector2_min))
-            for point in points[3:]:
-                vector2 = Vector3D(point-origin)
-                vector2.Normalize()
-                dot = abs(vector1.Dot(vector2))
-                if dot < dot_min:
-                    vector2_min = vector2
-                    dot_min = dot
-            return Plane3D.from_3_points(origin, vector1+origin, vector2_min+origin)
+#    @classmethod
+#    def create_plane(cls, points):
+#        if len(points) < 3:
+#            raise ValueError
+#        elif len(points) == 3:
+#            return Plane3D.from_3_points(Point3D(points[0].vector), Vector3D(points[1].vector), Vector3D(points[2].vector))
+#        else:
+#            origin = Point3D(points[0].vector)
+#            vector1 = Vector3D(points[1]-origin)
+#            vector1.Normalize()
+#            vector2_min = Vector3D(points[2]-origin)
+#            vector2_min.Normalize()
+#            dot_min = abs(vector1.Dot(vector2_min))
+#            for point in points[3:]:
+#                vector2 = Vector3D(point-origin)
+#                vector2.Normalize()
+#                dot = abs(vector1.Dot(vector2))
+#                if dot < dot_min:
+#                    vector2_min = vector2
+#                    dot_min = dot
+#            return Plane3D.from_3_points(origin, vector1+origin, vector2_min+origin)
     
     @classmethod
     def _repair_points_and_polygon2d(cls, points, plane):

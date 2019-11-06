@@ -25,7 +25,7 @@ radius = {0: 0.01, 2: 0.01, 3: 0.015}
 
 outer_profile = primitives2D.RoundedLineSegments2D([p1, p2, p3, p4, p5], radius, closed = True)
 #hole = vm.Circle2D(p6, 0.01)
-#inner_profile = primitives2D.RoundedLineSegments2D([p6, p7, p8], {0: }, closed = True)
+#inner_profile = primitives2D.RoundedLineSegments2D([p6, p7, p8], {0: 0.5}, closed = True)
 l1 = vm.LineSegment2D(p6, p7)
 l2 = vm.LineSegment2D(p7, p8)
 l3 = vm.LineSegment2D(p8, p6)
