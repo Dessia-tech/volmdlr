@@ -5,6 +5,9 @@
 Cython functions
 
 """
+
+import math
+
 # =============================================================================
 
 cdef (double, double) Csub2D(double u1, double u2,
@@ -97,6 +100,54 @@ cdef double CVector3DNorm(double u1, double u2, double u3):
 
 def Vector3DNorm(vector):
     return CVector3DNorm(vector[0], vector[1], vector[2])
+
+
+# =============================================================================
+
+cdef (double, double, double) C_vector3D_cross(double u1, double u2, double u3,
+                                               double v1, double v2, double v3):
+    return (u2*v3 - u3*v2, u3*v1 - u1*v3, u1*v2 - u2*v1)
+
+def vector3D_cross(vector1, vector2):
+    return C_vector3D_cross(vector1[0], vector1[1], vector1[2],
+                            vector2[0], vector2[1], vector2[2])
+
+
+# =============================================================================
+
+cdef (double, double, double) C_vector3D_rotation(double vx, double vy, double vz,
+                                                  double center_x, double center_y, double center_z,
+                                                  double axis_x, double axis_y, double axis_z,
+                                                  double angle):
+    
+    ux = vx - center_x
+    uy = vy - center_y
+    uz = vz - center_z
+    
+    cos_angle = math.cos(angle)
+    sin_angle = math.sin(angle)
+    
+    rv1_x = cos_angle*ux
+    rv1_y = cos_angle*uy
+    rv1_z = cos_angle*uz
+    
+    rv2_x, rv2_y, rv2_z = Cmul3D(axis_x, axis_y, axis_z,
+                                (1-cos_angle)*CVector3DDot(ux, uy, uz, axis_x, axis_y, axis_z))
+    
+    rv3_x, rv3_y, rv3_z = C_vector3D_cross(axis_x, axis_y, axis_z,
+                                           ux, uy, uz)
+    
+    return (rv1_x + rv2_x + rv3_x*sin_angle + center_x,
+            rv1_y + rv2_y + rv3_y*sin_angle + center_y,
+            rv1_z + rv2_z + rv3_z*sin_angle + center_z)
+
+def vector3D_rotation(vector, center, axis, angle):
+        return C_vector3D_rotation(vector[0], vector[1], vector[2],
+                                   center[0], center[1], center[2],
+                                   axis[0], axis[1], axis[2],
+                                   angle)
+        
+        
 
 # =============================================================================
 
