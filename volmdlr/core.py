@@ -217,7 +217,7 @@ class Matrix33:
                             det_inv*(self.M13*self.M32 - self.M12*self.M33),# a13a32−a12a33
                             det_inv*(self.M12*self.M23 - self.M13*self.M22),# a12a23−a13a22
                             det_inv*(self.M23*self.M31 - self.M21*self.M33),# a23a31−a21a33
-                            det_inv*(self.M11*self.M33 - self.M13*self.M33),# a11a33−a31a13
+                            det_inv*(self.M11*self.M33 - self.M13*self.M31),# a11a33−a31a13
                             det_inv*(self.M21*self.M13 - self.M23*self.M11),# a13a21−a23a11
                             det_inv*(self.M21*self.M32 - self.M31*self.M22),# a21a32−a31a22
                             det_inv*(self.M12*self.M31 - self.M32*self.M11),# a12a31−a32a11
@@ -354,7 +354,7 @@ class Vector2D(Vector):
         Normalize the vector modifying it's coordinate
         """
         n = self.Norm()
-        if n == 0:
+        if math.isclose(n, 0, abs_tol=1e-9):
             raise ZeroDivisionError
 
         self.vector[0] /= n
@@ -1872,7 +1872,6 @@ class Vector3D(Vector):
             return Point3D(vector2)
         else:
             self.vector = list(vector2)
-            print('self', self)
             
     def x_rotation(self, angle, copy=True):
         """
@@ -2301,20 +2300,17 @@ class Basis3D(Basis):
         
         
     def __add__(self, other_basis):
-        P = self.TransferMatrix()*other_basis.TransferMatrix()
-        return Basis3D(Vector3D((P.M11, P.M21, P.M31)),
-                       Vector3D((P.M12, P.M22, P.M32)),
-                       Vector3D((P.M13, P.M23, P.M33)))
-#        return Basis3D(Vector3D((P.M11, P.M12, P.M31)),
-#                       Vector3D((P.M12, P.M22, P.M32)),
-#                       Vector3D((P.M13, P.M23, P.M33)))
+        M = self.TransferMatrix()*other_basis.TransferMatrix()
+        return Basis3D(Vector3D((M.M11, M.M21, M.M31)),
+                       Vector3D((M.M12, M.M22, M.M32)),
+                       Vector3D((M.M13, M.M23, M.M33)))
 
 
     def __neg__(self):
-        P_inv = self.InverseTransferMatrix()
-        return Basis3D(Vector3D((P_inv.M11, P_inv.M21, P_inv.M31)),
-                       Vector3D((P_inv.M12, P_inv.M22, P_inv.M32)),
-                       Vector3D((P_inv.M13, P_inv.M23, P_inv.M33)))
+        M = self.InverseTransferMatrix()
+        return Basis3D(Vector3D((M.M11, M.M21, M.M31)),
+                       Vector3D((M.M12, M.M22, M.M32)),
+                       Vector3D((M.M13, M.M23, M.M33)))
 
     def __sub__(self, other_frame):
         P1inv = other_frame.InverseTransferMatrix()
@@ -2482,12 +2478,12 @@ class Frame3D(Basis3D):
 
 
     def __neg__(self):
-        Pinv = self.InverseTransferMatrix()
-        new_origin = Pinv.vector_multiplication(self.origin)
+        M = self.InverseTransferMatrix()
+        new_origin = M.vector_multiplication(self.origin)
         return Frame3D(new_origin,
-                       Vector3D((Pinv.M11, Pinv.M21, Pinv.M31)),
-                       Vector3D((Pinv.M12, Pinv.M22, Pinv.M32)),
-                       Vector3D((Pinv.M13, Pinv.M23, Pinv.M33)))
+                       Vector3D((M.M11, M.M21, M.M31)),
+                       Vector3D((M.M12, M.M22, M.M32)),
+                       Vector3D((M.M13, M.M23, M.M33)))
 
 
     def __add__(self, other_frame):
@@ -2991,7 +2987,6 @@ class Arc3D(Primitive3D):
         else:
             fig = None
 
-#        print(self.center.vector)
         ax.plot(*self.center.vector,color='b')
         ax.plot(*self.start.vector,c='r')
         ax.plot(*self.end.vector,c='r')
@@ -3417,8 +3412,6 @@ class Contour3D(Wire3D):
         self.edges = edges
         self.name = name
         self.points = points
-        
-#        print(self.edges)
         
         if points is None:
             

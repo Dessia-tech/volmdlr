@@ -120,19 +120,22 @@ cdef (double, double, double) C_vector3D_rotation(double vx, double vy, double v
                                                   double axis_x, double axis_y, double axis_z,
                                                   double angle):
     
-    ux = vx - center_x
-    uy = vy - center_y
-    uz = vz - center_z
+    cdef double ux = vx - center_x
+    cdef double uy = vy - center_y
+    cdef double uz = vz - center_z
     
-    cos_angle = math.cos(angle)
-    sin_angle = math.sin(angle)
+    cdef double cos_angle = math.cos(angle)
+    cdef double sin_angle = math.sin(angle)
     
-    rv1_x = cos_angle*ux
-    rv1_y = cos_angle*uy
-    rv1_z = cos_angle*uz
+    cdef double rv1_x = cos_angle*ux
+    cdef double rv1_y = cos_angle*uy
+    cdef double rv1_z = cos_angle*uz
     
     rv2_x, rv2_y, rv2_z = Cmul3D(axis_x, axis_y, axis_z,
-                                (1-cos_angle)*CVector3DDot(ux, uy, uz, axis_x, axis_y, axis_z))
+                                 (1-cos_angle)*CVector3DDot(
+                                         ux, uy, uz,
+                                         axis_x, axis_y, axis_z)
+                                 )
     
     rv3_x, rv3_y, rv3_z = C_vector3D_cross(axis_x, axis_y, axis_z,
                                            ux, uy, uz)
