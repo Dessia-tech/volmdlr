@@ -36,7 +36,7 @@ frame = vm.Frame3D(origin, u, v, w)
 block_obstacle1 = p3d.Block(frame, 'test', (0.5,0,0))
 
 origin = vm.Point3D((0.7,-0.5,0))
-u = vm.Vector3D((0.2,0,0))
+u = vm.Vector3D((3,0,0))
 v = vm.Vector3D((0,0.5,0))
 w = vm.Vector3D((0,0,2))
 frame = vm.Frame3D(origin, u, v, w)

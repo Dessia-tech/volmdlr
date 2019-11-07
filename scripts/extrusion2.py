@@ -12,7 +12,7 @@ Created on Sun Mar  5 22:01:35 2017
 import volmdlr as vm
 import volmdlr.primitives3D as primitives3D
 import volmdlr.primitives2D as primitives2D
-#import math
+import math
 
 p1=vm.Point2D((0, 0))
 p2=vm.Point2D((0.1, 0.))
@@ -25,7 +25,7 @@ p5=vm.Point2D((-0.01, 0.05))
 l1=primitives2D.RoundedLineSegments2D([p1, p2, p3, p4], {2: 0.01}, False)
 l2=vm.Arc2D(p4, p5, p1)
 c1=vm.Contour2D([l1, l2])
-c2=c1.Rotation(vm.Point2D((0,0)),npy.pi,True)
+c2=c1.Rotation(vm.Point2D((0,0)),math.pi,True)
 c1.MPLPlot()
 c2.MPLPlot()
 c3=vm.Contour2D([c1, c2])
@@ -44,4 +44,4 @@ model = vm.VolumeModel([('', [profile])])
 
 #model.MPLPlot()
 
-model.FreeCADExport('extrusion2')
+#model.FreeCADExport('extrusion2')

@@ -10,30 +10,30 @@ import volmdlr as  vm
 import volmdlr.primitives3D as p3d
 
 moteur = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/MOTEUR HRevoUNIFY v2.stp')
-boite = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/BOITE E-TECHg2.stp')
+#boite = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/BOITE E-TECHg2.stp')
 #cmo = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/CMO2.stp')
 
 
 
 
-#moteur = moteur.to_shell3d('moteur')
-#boite = boite.to_shell3d('boite')
+moteur = moteur.to_shells3d('moteur')
+#boite = boite.to_shells3d('boite')
 #cmo.to_volume_model('cmo', volumemodel)
 
-origin = vm.Point3D((0.5,0.5,-0.5))
-u = vm.Vector3D((0.2,0,0))
-v = vm.Vector3D((0,0.2,0))
-w = vm.Vector3D((0,0,0.2))
-frame = vm.Frame3D(origin, u, v, w)
-block1 = p3d.Block(frame, 'test', (1,0,1))
+#origin = vm.Point3D((0.5,0.5,-0.5))
+#u = vm.Vector3D((0.2,0,0))
+#v = vm.Vector3D((0,0.2,0))
+#w = vm.Vector3D((0,0,0.2))
+#frame = vm.Frame3D(origin, u, v, w)
+#block1 = p3d.Block(frame, 'test', (1,0,1))
 #volumemodel.shells.append(primitive3d)
 
-origin = vm.Point3D((0,0,0))
-u = vm.Vector3D((0.5,0,0))
-v = vm.Vector3D((0,0.5,0))
-w = vm.Vector3D((0,0,0.5))
-frame = vm.Frame3D(origin, u, v, w)
-block2 = p3d.Block(frame, 'test', (1,0,1))
+#origin = vm.Point3D((0,0,0))
+#u = vm.Vector3D((0.5,0,0))
+#v = vm.Vector3D((0,0.5,0))
+#w = vm.Vector3D((0,0,0.5))
+#frame = vm.Frame3D(origin, u, v, w)
+#block2 = p3d.Block(frame, 'test', (1,0,1))
 #volumemodel.shells.append(primitive3d)
 
 #origin = vm.Point3D((0,0,0))
@@ -61,12 +61,12 @@ block2 = p3d.Block(frame, 'test', (1,0,1))
 #union.Translation((1,2,-0.5), False)
 #volumemodel.BabylonShow()
 
-primitives = [block1, block2]
+primitives = moteur
 volumemodel = vm.VolumeModel(primitives, 'name')
 
 shell0 = volumemodel.primitives[0] # LE MOTEUR
 #shell0.color = (1,0,0)
-shell1 = volumemodel.primitives[1] # LA BOITE
+#shell1 = volumemodel.primitives[1] # LA BOITE
 #shell2 = volumemodel.shells[2] # LE BLOCK
 #shell2 = volumemodel.shells[2] # LE CMO
 #shell3 = volumemodel.shells[3] # UN PETIT BOUT SE TROUVANT A L'INTERIEUR DU CMO
@@ -75,7 +75,7 @@ shell1 = volumemodel.primitives[1] # LA BOITE
 #del volumemodel.shells[4]
 #del volumemodel.shells[3]
 
-#volumemodel.BabylonShow()
+volumemodel.BabylonShow()
 
 
 #%%
