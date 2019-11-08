@@ -2155,6 +2155,13 @@ class Plane3D:
         elif len(points) == 3:
             return cls.from_3_points(Point3D(points[0].vector), Vector3D(points[1].vector), Vector3D(points[2].vector))
         else:
+            indexes_to_del = []
+            for i, point in enumerate(points[1:]):
+                if point == points[0]:
+                    indexes_to_del.append(i)
+            for index in indexes_to_del[::-1]:
+                del points[index+1]
+
             origin = Point3D(points[0].vector)
             vector1 = Vector3D(points[1]-origin)
             vector1.Normalize()
