@@ -1219,6 +1219,8 @@ class LineSegment2D(Line2D):
         """
         Computes the distance of a point to segment of line
         """
+        if self.points[0] == self.points[1]:
+            return 0, Point2D(point)
         distance, point = LineSegment2DPointDistance([p.vector for p in self.points], point.vector)
         if return_other_point:
             return distance, Point2D(point)
