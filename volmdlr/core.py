@@ -1515,14 +1515,8 @@ class Circle2D(Primitive2D):
     geo_points = property(_get_geo_points)
     
     def tessellation_points(self, resolution=40):
-        pts =[self.center + self.radius*math.cos(teta)*Vector2D((1,0)) + self.radius*math.sin(teta)*Vector2D((0,1)) \
+        return [self.center + self.radius*math.cos(teta)*Vector2D((1,0)) + self.radius*math.sin(teta)*Vector2D((0,1)) \
                 for teta in npy.linspace(0, 2*math.pi, resolution+1)]
-        ax=pts[0].MPLPlot()
-        for p in pts[1:]:
-            p.MPLPlot(ax=ax)
-        ax.set_aspect('equal')
-        
-        return pts
 
     def Length(self):
         return 2* math.pi * self.radius
@@ -2825,17 +2819,10 @@ class Circle3D(Primitive3D):
         
     def tessellation_points(self, resolution=20):
         plane = Plane3D.from_normal(self.center, self.normal)
-        print('plane dict', plane.__dict__)
         center_2D = self.center.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
-        print('center_2D', center_2D )
         circle2D = Circle2D(center_2D, self.radius)
         tessellation_points_2D = circle2D.tessellation_points()
-        print('tessellation_points_2D', tessellation_points_2D)
         tessellation_points_3D = [p.To3D(plane.origin, x3D, y3D) for p in tessellation_points_2D]
-        print('tessellation_points_3D ', tessellation_points_3D)
-        ax = tessellation_points_3D[0].MPLPlot()
-        for p in tessellation_points_3D[1:]:
-            p.MPLPlot(ax)
         return tessellation_points_3D
     
     def Length(self):

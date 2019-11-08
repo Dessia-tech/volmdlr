@@ -11,6 +11,8 @@ import volmdlr.primitives3D as p3d
 import volmdlr.primitives2D as p2d
 import math
 
+#%%
+
 p1=vm.Point2D((0, 0))
 p2=vm.Point2D((0, 2))
 p3=vm.Point2D((2, 4))
@@ -48,14 +50,22 @@ model.BabylonShow()
 #%%
 
 p1=vm.Point2D((0, 0))
-p2=vm.Point2D((0, 2))
+p2=vm.Point2D((2, 0))
 p3=vm.Point2D((2, 2))
-p4=vm.Point2D((2, 0))
+p4=vm.Point2D((0, 2))
+
+p5=vm.Point2D((0.5,0.5))
+p6=vm.Point2D((1.5,0.5))
+p7=vm.Point2D((1.5,1.5))
+p8=vm.Point2D((0.5,1.5))
 
 l1 = p2d.RoundedLineSegments2D([p1, p2, p3, p4], {}, True)
 c1 = vm.Contour2D([l1])
 
-profile = p3d.ExtrudedProfile(vm.o3D, vm.x3D, vm.y3D, c1, [], vm.Vector3D((0,0,1)))
+l2 = p2d.RoundedLineSegments2D([p5, p6, p7, p8], {}, True)
+c2 = vm.Contour2D([l2])
+
+profile = p3d.ExtrudedProfile(vm.o3D, vm.x3D, vm.y3D, c1, [c2], vm.Vector3D((0,0,1)))
 
 model = vm.VolumeModel([profile])
 model.BabylonShow()

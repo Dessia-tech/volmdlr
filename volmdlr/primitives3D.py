@@ -565,7 +565,7 @@ class ExtrudedProfile(volmdlr.Shell3D):
         axis1 = lower_plane.vectors[0]
         axis2 = lower_plane.vectors[1]
         axis3 = -lower_plane.normal
-        s += 'lowerPolygon.position = new BABYLON.Vector3({},{},{});\n;'.format(x,y,z)
+        s += 'lowerPolygon.position = new BABYLON.Vector3({},{},{});\n'.format(x,y,z)
         s += 'var axis1 = new BABYLON.Vector3({},{},{});\n'.format(*axis3)
         s += 'var axis2 = new BABYLON.Vector3({},{},{});\n'.format(*axis2)
         s += 'var axis3 = new BABYLON.Vector3({},{},{});\n'.format(*axis1)
@@ -593,7 +593,7 @@ class ExtrudedProfile(volmdlr.Shell3D):
         axis1 = upper_plane.vectors[0]
         axis2 = upper_plane.vectors[1]
         axis3 = -upper_plane.normal
-        s += 'upperPolygon.position = new BABYLON.Vector3({},{},{});\n;'.format(x,y,z)
+        s += 'upperPolygon.position = new BABYLON.Vector3({},{},{});\n'.format(x,y,z)
         s += 'var axis1 = new BABYLON.Vector3({},{},{});\n'.format(*axis3)
         s += 'var axis2 = new BABYLON.Vector3({},{},{});\n'.format(*axis2)
         s += 'var axis3 = new BABYLON.Vector3({},{},{});\n'.format(*axis1)
