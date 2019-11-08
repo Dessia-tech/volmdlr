@@ -451,10 +451,14 @@ class ExtrudedProfile(volmdlr.Shell3D):
     def _bounding_box(self):
         return volmdlr.BoundingBox.from_points(self.outer_contour3d.points)
 
-    def MPLPlot(self, ax):
-        for contour in self.contours3D:
-            for primitive in contour:
+    def MPLPlot(self, ax=None):
+        if ax is None:
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
+        for contour in [self.outer_contour2d]+self.inner_contours2d:
+            for primitive in contour.primitives:
                 primitive.MPLPlot(ax)
+        return ax
 
     def FreeCADExport(self, ip):
         name='primitive'+str(ip)
@@ -548,7 +552,8 @@ class ExtrudedProfile(volmdlr.Shell3D):
         for inner_contour in lower_inner_ribbon_contours_points:
             lower_inner_polygon_points = [p.To2D(lower_plane.origin, lower_plane.vectors[0], lower_plane.vectors[1]) for p in inner_contour]
             s += 'var lower_hole = [];\n'
-            for point in lower_inner_polygon_points:
+            for point in lower_inner_polygon_points[:0:-1]:
+                print('--', round(point[0],6), round(point[1],6))
                 s += 'lower_hole.push(new BABYLON.Vector2({},{}));\n'.format(round(point[0],6), round(point[1],6))
             s += 'lowerPoly_tri.addHole(lower_hole);\n'
         s += 'var lowerPolygon = lowerPoly_tri.build(true, 0);\n'
@@ -576,7 +581,7 @@ class ExtrudedProfile(volmdlr.Shell3D):
         for inner_contour in upper_inner_ribbon_contours_points:
             upper_inner_polygon_points = [p.To2D(upper_plane.origin, upper_plane.vectors[0], upper_plane.vectors[1]) for p in inner_contour]
             s += 'var upper_hole = [];\n'
-            for point in upper_inner_polygon_points:
+            for point in upper_inner_polygon_points[:0:-1]:
                 s += 'upper_hole.push(new BABYLON.Vector2({},{}));\n'.format(round(point[0],6), round(point[1],6))
             s += 'upperPoly_tri.addHole(upper_hole);\n'
         s += 'var upperPolygon = upperPoly_tri.build(true, 0);\n'
