@@ -29,6 +29,7 @@ import networkx as nx
 
 from .vmcy import (sub2D, add2D, mul2D, Vector2DNorm, Vector2DDot, 
                    sub3D, add3D, mul3D, Vector3DNorm, Vector3DDot, 
+                   vector3D_cross, vector3D_rotation,
                    LineSegment2DPointDistance, PolygonPointBelongs)
 
 from scipy.linalg import solve, LinAlgError
@@ -126,6 +127,118 @@ def delete_node_and_successors(graph, node):
     for successor in successors:
         delete_node_and_successors(graph, successor)
 
+class Matrix22:
+    def __init__(self, M11, M12, M21, M22):
+        self.M11 = M11
+        self.M12 = M12
+        self.M21 = M21
+        self.M22 = M22
+        
+    def __add__(self, other_matrix):
+        return Matrix22(self.M11 + other_matrix.M11,
+                        self.M12 + other_matrix.M12,
+                        self.M21 + other_matrix.M21,
+                        self.M22 + other_matrix.M22,
+                        )
+
+    def __mul__(self, other_matrix):
+        return Matrix22(self.M11*other_matrix.M11 + self.M12*other_matrix.M21,
+                        self.M11*other_matrix.M12 + self.M12*other_matrix.M22,
+                        self.M21*other_matrix.M11 + self.M22*other_matrix.M21,
+                        self.M21*other_matrix.M12 + self.M22*other_matrix.M22)
+
+
+class Matrix33:
+    def __init__(self, M11, M12, M13, M21, M22, M23, M31, M32, M33):
+        self.M11 = M11
+        self.M12 = M12
+        self.M13 = M13
+        self.M21 = M21
+        self.M22 = M22
+        self.M23 = M23
+        self.M31 = M31
+        self.M32 = M32
+        self.M33 = M33
+        
+#    def __getitem__(self, key):
+#        return self.vector[key]
+        
+    def __add__(self, other_matrix):
+        return Matrix33(self.M11 + other_matrix.M11,
+                        self.M12 + other_matrix.M12,
+                        self.M13 + other_matrix.M13,
+                        self.M21 + other_matrix.M21,
+                        self.M22 + other_matrix.M22,
+                        self.M23 + other_matrix.M23,
+                        self.M31 + other_matrix.M31,
+                        self.M32 + other_matrix.M32,
+                        self.M33 + other_matrix.M33)
+
+    def __mul__(self, other_matrix):
+        return Matrix33(self.M11*other_matrix.M11 + self.M12*other_matrix.M21 + self.M13*other_matrix.M31,
+                        self.M11*other_matrix.M12 + self.M12*other_matrix.M22 + self.M13*other_matrix.M32,
+                        self.M11*other_matrix.M13 + self.M12*other_matrix.M23 + self.M13*other_matrix.M33,
+                        self.M21*other_matrix.M11 + self.M22*other_matrix.M21 + self.M23*other_matrix.M31,
+                        self.M21*other_matrix.M12 + self.M22*other_matrix.M22 + self.M23*other_matrix.M32,
+                        self.M21*other_matrix.M13 + self.M22*other_matrix.M23 + self.M23*other_matrix.M33,
+                        self.M31*other_matrix.M11 + self.M32*other_matrix.M21 + self.M33*other_matrix.M31,
+                        self.M31*other_matrix.M12 + self.M32*other_matrix.M22 + self.M33*other_matrix.M32,
+                        self.M31*other_matrix.M13 + self.M32*other_matrix.M23 + self.M33*other_matrix.M33)
+
+    def __repr__(self):
+        s = '[{} {} {}]\n[{} {} {}]\n[{} {} {}]\n'.format(self.M11, self.M12, self.M13,
+                                                          self.M21, self.M22, self.M23,
+                                                          self.M31, self.M32, self.M33)
+        return s
+
+    def float_multiplication(self, float_value):
+        return Matrix33(self.M11*float_value, self.M12*float_value, self.M13*float_value,
+                        self.M21*float_value, self.M22*float_value, self.M23*float_value,
+                        self.M31*float_value, self.M32*float_value, self.M33*float_value)
+
+
+    def vector_multiplication(self, vector):
+        return vector.__class__((self.M11*vector[0] + self.M12*vector[1] + self.M13*vector[2],
+                                 self.M21*vector[0] + self.M22*vector[1] + self.M23*vector[2],
+                                 self.M31*vector[0] + self.M32*vector[1] + self.M33*vector[2]))
+
+    def determinent(self):
+        det = self.M11*self.M22*self.M33 + self.M12*self.M23*self.M31 \
+            + self.M13*self.M21*self.M32 - self.M13*self.M22*self.M31 \
+            - self.M23*self.M32*self.M11 - self.M33*self.M12*self.M21
+        return det
+
+    def inverse(self):
+        det = self.determinent()
+        
+        if not math.isclose(det, 0, abs_tol=1e-10):
+            det_inv = 1/det
+            return Matrix33(det_inv*(self.M22*self.M33 - self.M23*self.M32),# a22a33−a23a32
+                            det_inv*(self.M13*self.M32 - self.M12*self.M33),# a13a32−a12a33
+                            det_inv*(self.M12*self.M23 - self.M13*self.M22),# a12a23−a13a22
+                            det_inv*(self.M23*self.M31 - self.M21*self.M33),# a23a31−a21a33
+                            det_inv*(self.M11*self.M33 - self.M13*self.M31),# a11a33−a31a13
+                            det_inv*(self.M21*self.M13 - self.M23*self.M11),# a13a21−a23a11
+                            det_inv*(self.M21*self.M32 - self.M31*self.M22),# a21a32−a31a22
+                            det_inv*(self.M12*self.M31 - self.M32*self.M11),# a12a31−a32a11
+                            det_inv*(self.M11*self.M22 - self.M21*self.M12) # a11a22−a21a12
+                            )
+            
+            
+        else:
+            print(self.__dict__, det)
+            raise ValueError
+
+    @classmethod
+    def random_matrix(cls, minimum=0, maximum=1):
+        range_ = maximum - minimum
+        return cls(*[minimum + range_*random.random() for _ in range(9)])
+
+    def to_numpy(self):
+        return npy.array([[self.M11, self.M12, self.M13],
+                          [self.M21, self.M22, self.M23],
+                          [self.M31, self.M32, self.M33]])
+
 class Arrow3D(FancyArrowPatch):
     def __init__(self, xs, ys, zs, *args, **kwargs):
         FancyArrowPatch.__init__(self, (0,0), (0,0), *args, **kwargs)
@@ -172,6 +285,8 @@ class Vector:
     def __ne__(self, other_vector):
         return not npy.allclose(self.vector, other_vector.vector)
 
+    def to_numpy(self):
+        return npy.array(self.vector)
 
     def copy(self):
         return self.__class__(self.vector)
@@ -239,7 +354,7 @@ class Vector2D(Vector):
         Normalize the vector modifying it's coordinate
         """
         n = self.Norm()
-        if n == 0:
+        if math.isclose(n, 0, abs_tol=1e-9):
             raise ZeroDivisionError
 
         self.vector[0] /= n
@@ -476,7 +591,7 @@ class Basis2D(Basis):
         self.v = v
     
     def __neg__(self):
-        Pinv = self.InverseTransfertMatrix()
+        Pinv = self.InverseTransferMatrix()
         return Basis2D(Vector3D(Pinv[:, 0]),
                        Vector3D(Pinv[:, 1]))
 
@@ -493,11 +608,11 @@ class Basis2D(Basis):
         return Frame2D(origin, self.u, self.v)
 
 
-    def TransfertMatrix(self):
+    def TransferMatrix(self):
         return npy.array([[self.u[0], self.v[0]],
                           [self.u[1], self.v[1]]])
 
-    def InverseTransfertMatrix(self):
+    def InverseTransferMatrix(self):
         det = self.u[0]*self.v[1] - self.v[0]*self.u[1]
         if not math.isclose(det, 0, abs_tol=1e-10):
             return 1/det * npy.array([[self.v[1], -self.v[0]],
@@ -506,12 +621,12 @@ class Basis2D(Basis):
             raise ZeroDivisionError
 
     def NewCoordinates(self, vector):
-        matrix = self.InverseTransfertMatrix()
+        matrix = self.InverseTransferMatrix()
         return Point2D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1],
                          matrix[1][0]*vector[0] + matrix[1][1]*vector[1]))
 
     def OldCoordinates(self, vector):
-        matrix = self.TransfertMatrix()
+        matrix = self.TransferMatrix()
         return Point2D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1],
                          matrix[1][0]*vector[0] + matrix[1][1]*vector[1]))
 
@@ -550,7 +665,7 @@ class Frame2D(Basis2D):
         return '{}: O={} U={}, V={}'.format(self.__class__.__name__, self.origin, self.u, self.v)
     
     def __neg__(self):
-        Pinv = self.InverseTransfertMatrix()
+        Pinv = self.InverseTransferMatrix()
         new_origin = Point2D(npy.dot(Pinv, self.origin.vector))
         return Frame2D(new_origin,
                        Vector2D(Pinv[:, 0]),
@@ -558,17 +673,17 @@ class Frame2D(Basis2D):
 
 
     def __add__(self, other_frame):
-        P1 = self.TransfertMatrix()
+        P1 = self.TransferMatrix()
         new_origin = Point2D(npy.dot(P1, other_frame.origin.vector) + self.origin.vector)
-        M = npy.dot(P1, other_frame.TransfertMatrix())
+        M = npy.dot(P1, other_frame.TransferMatrix())
         return Frame2D(new_origin,
                        Vector2D(M[:, 0]),
                        Vector2D(M[:, 1]))
 
 
     def __sub__(self, other_frame):
-        P1inv = other_frame.InverseTransfertMatrix()
-        P2 = self.TransfertMatrix()
+        P1inv = other_frame.InverseTransferMatrix()
+        P2 = self.TransferMatrix()
         new_origin = Point2D(npy.dot(P1inv, (self.origin - other_frame.origin).vector))
         M = npy.dot(P1inv, P2)
         return Frame2D(new_origin,
@@ -1719,9 +1834,7 @@ class Vector3D(Vector):
         return Vector3DDot(self.vector, other_vector.vector)
 
     def Cross(self, other_vector):
-        u1, u2, u3 = self.vector
-        v1, v2, v3 = other_vector.vector
-        return Vector3D((u2*v3 - u3*v2, u3*v1 - u1*v3, u1*v2 - u2*v1))
+        return self.__class__(vector3D_cross(self.vector, other_vector.vector))
 
     def Norm(self):
         return Vector3DNorm(self.vector)
@@ -1746,17 +1859,18 @@ class Vector3D(Vector):
         Used Rodrigues Formula:
             https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
         """
-        u = self - center
-        vector2 = (math.cos(angle)*u 
-                   + (1-math.cos(angle))*(u.Dot(axis))*axis
-                   + math.sin(angle)*axis.Cross(u)
-                   + center)
+#        u = self - center
+#        vector2 = (math.cos(angle)*u 
+#                   + (1-math.cos(angle))*(u.Dot(axis))*axis
+#                   + math.sin(angle)*axis.Cross(u)
+#                   + center)
+        vector2 = vector3D_rotation(self.vector, center.vector, axis.vector, angle)
         
         if copy:
-            return Point3D(vector2.vector)
+            return Point3D(vector2)
         else:
-            self.vector = vector2.vector
-
+            self.vector = list(vector2)
+            
     def x_rotation(self, angle, copy=True):
         """
         Rotation of angle around X axis.
@@ -2184,25 +2298,25 @@ class Basis3D(Basis):
         
         
     def __add__(self, other_basis):
-        P = npy.dot(self.TransfertMatrix(), other_basis.TransfertMatrix())
-        return Basis3D(Vector3D(P[:, 0]),
-                       Vector3D(P[:, 1]),
-                       Vector3D(P[:, 2]))
+        M = self.TransferMatrix()*other_basis.TransferMatrix()
+        return Basis3D(Vector3D((M.M11, M.M21, M.M31)),
+                       Vector3D((M.M12, M.M22, M.M32)),
+                       Vector3D((M.M13, M.M23, M.M33)))
 
 
     def __neg__(self):
-        Pinv = self.InverseTransfertMatrix()
-        return Basis3D(Vector3D(Pinv[:, 0]),
-                       Vector3D(Pinv[:, 1]),
-                       Vector3D(Pinv[:, 2]))
+        M = self.InverseTransferMatrix()
+        return Basis3D(Vector3D((M.M11, M.M21, M.M31)),
+                       Vector3D((M.M12, M.M22, M.M32)),
+                       Vector3D((M.M13, M.M23, M.M33)))
 
     def __sub__(self, other_frame):
-        P1inv = other_frame.InverseTransfertMatrix()
-        P2 = self.TransfertMatrix()
-        M = npy.dot(P1inv, P2)
-        return Basis3D(Vector3D(M[:, 0]),
-                       Vector3D(M[:, 1]),
-                       Vector3D(M[:, 2]))
+        P1inv = other_frame.InverseTransferMatrix()
+        P2 = self.TransferMatrix()
+        M = P1inv * P2
+        return Basis3D(Vector3D((M.M11, M.M21, M.M31)),
+                       Vector3D((M.M12, M.M22, M.M32)),
+                       Vector3D((M.M13, M.M23, M.M33)))
 
     def __round__(self, ndigits=6):
         return self.__class__((round(self.u, ndigits),
@@ -2309,37 +2423,24 @@ class Basis3D(Basis):
         self.v = vect_v
         self.w = vect_w
 
-    def TransfertMatrix(self):
-        return npy.array([[self.u[0], self.v[0], self.w[0]],
-                          [self.u[1], self.v[1], self.w[1]],
-                          [self.u[2], self.v[2], self.w[2]]])
+    def TransferMatrix(self):
+        return Matrix33(self.u[0], self.v[0], self.w[0],
+                        self.u[1], self.v[1], self.w[1],
+                        self.u[2], self.v[2], self.w[2])
+#        return npy.array([[self.u[0], self.v[0], self.w[0]],
+#                          [self.u[1], self.v[1], self.w[1]],
+#                          [self.u[2], self.v[2], self.w[2]]])
 
-    def InverseTransfertMatrix(self):
-        det = self.u[0]*self.v[1]*self.w[2] + self.v[0]*self.w[1]*self.u[2] \
-            + self.w[0]*self.u[1]*self.v[2] - self.w[0]*self.v[1]*self.u[2] \
-            - self.w[1]*self.v[2]*self.u[0] - self.w[2]*self.v[0]*self.u[1]
-        if not math.isclose(det, 0, abs_tol=1e-10):
-            return 1/det * npy.array([[self.v[1]*self.w[2] - self.w[1]*self.v[2],
-                                       self.w[0]*self.v[2] - self.v[0]*self.w[2],
-                                       self.v[0]*self.w[1] - self.w[0]*self.v[1]],
-                                      [self.w[1]*self.u[2] - self.u[1]*self.w[2],
-                                       self.u[0]*self.w[2] - self.w[0]*self.u[2],
-                                       self.w[0]*self.u[1] - self.u[0]*self.w[1]],
-                                      [self.u[1]*self.v[2] - self.v[1]*self.u[2],
-                                       self.v[0]*self.u[2] - self.u[0]*self.v[2],
-                                       self.u[0]*self.v[1] - self.v[0]*self.u[1]]])
+    def InverseTransferMatrix(self):
+        return self.TransferMatrix().inverse()
 
     def NewCoordinates(self, vector):
-        matrix = self.InverseTransfertMatrix()
-        return vector.__class__((matrix[0][0]*vector[0] + matrix[0][1]*vector[1] + matrix[0][2]*vector[2],
-                                 matrix[1][0]*vector[0] + matrix[1][1]*vector[1] + matrix[1][2]*vector[2],
-                                 matrix[2][0]*vector[0] + matrix[2][1]*vector[1] + matrix[2][2]*vector[2]))
+        matrix = self.InverseTransferMatrix()
+        return matrix.vector_multiplication(vector)
 
-    def OldCoordinates(self, vector):
-        matrix = self.TransfertMatrix()
-        return vector.__class__((matrix[0][0]*vector[0] + matrix[0][1]*vector[1] + matrix[0][2]*vector[2],
-                                 matrix[1][0]*vector[0] + matrix[1][1]*vector[1] + matrix[1][2]*vector[2],
-                                 matrix[2][0]*vector[0] + matrix[2][1]*vector[1] + matrix[2][2]*vector[2]))
+    def OldCoordinates(self, point):
+        matrix = self.TransferMatrix()
+        return matrix.vector_multiplication(point)
 
     def copy(self):
         return Basis3D(self.u, self.v, self.w)
@@ -2375,34 +2476,35 @@ class Frame3D(Basis3D):
 
 
     def __neg__(self):
-        Pinv = self.InverseTransfertMatrix()
-        new_origin = Point3D(npy.dot(Pinv, self.origin.vector))
+        M = self.InverseTransferMatrix()
+        new_origin = M.vector_multiplication(self.origin)
         return Frame3D(new_origin,
-                       Vector3D(Pinv[:, 0]),
-                       Vector3D(Pinv[:, 1]),
-                       Vector3D(Pinv[:, 2]))
+                       Vector3D((M.M11, M.M21, M.M31)),
+                       Vector3D((M.M12, M.M22, M.M32)),
+                       Vector3D((M.M13, M.M23, M.M33)))
 
 
     def __add__(self, other_frame):
-        P1 = self.TransfertMatrix()
-        new_origin = Point3D(npy.dot(P1, npy.array(other_frame.origin.vector)) + npy.array(self.origin.vector))
+        P1 = self.TransferMatrix()
+        new_origin = P1.vector_multiplication(other_frame.origin) + self.origin
+
         
-        M = npy.dot(P1, other_frame.TransfertMatrix())
+        M = P1 * other_frame.TransferMatrix()
         return Frame3D(new_origin,
-                       Vector3D(M[:, 0]),
-                       Vector3D(M[:, 1]),
-                       Vector3D(M[:, 2]))
+                       Vector3D((M.M11, M.M21, M.M31)),
+                       Vector3D((M.M12, M.M22, M.M32)),
+                       Vector3D((M.M13, M.M23, M.M33)))
 
 
     def __sub__(self, other_frame):
-        P1inv = other_frame.InverseTransfertMatrix()
-        P2 = self.TransfertMatrix()
-        new_origin = Point3D(npy.dot(P1inv, (self.origin - other_frame.origin).vector))
-        M = npy.dot(P1inv, P2)
+        P1inv = other_frame.InverseTransferMatrix()
+        P2 = self.TransferMatrix()
+        new_origin = P1inv.vector_multiplication(self.origin - other_frame.origin)
+        M = P1inv * P2
         return Frame3D(new_origin,
-                       Vector3D(M[:, 0]),
-                       Vector3D(M[:, 1]),
-                       Vector3D(M[:, 2]))
+                       Vector3D((M.M11, M.M21, M.M31)),
+                       Vector3D((M.M12, M.M22, M.M32)),
+                       Vector3D((M.M13, M.M23, M.M33)))
 
     def __round__(self, ndigits=6):
         return self.__class__(round(self.origin, ndigits),
@@ -2490,6 +2592,7 @@ class Frame3D(Basis3D):
     
 
 oxyz = Frame3D(o3D, x3D, y3D, z3D)
+OXYZ = Frame3D(O3D, x3D, y3D, z3D)
 
 
 class Line3D(Primitive3D, Line):
@@ -2882,7 +2985,6 @@ class Arc3D(Primitive3D):
         else:
             fig = None
 
-#        print(self.center.vector)
         ax.plot(*self.center.vector,color='b')
         ax.plot(*self.start.vector,c='r')
         ax.plot(*self.end.vector,c='r')
@@ -3308,8 +3410,6 @@ class Contour3D(Wire3D):
         self.edges = edges
         self.name = name
         self.points = points
-        
-#        print(self.edges)
         
         if points is None:
             
