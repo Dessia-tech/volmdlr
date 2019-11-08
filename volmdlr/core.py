@@ -2155,6 +2155,7 @@ class Plane3D:
         elif len(points) == 3:
             return cls.from_3_points(Point3D(points[0].vector), Vector3D(points[1].vector), Vector3D(points[2].vector))
         else:
+            points = [p.copy() for p in points]
             indexes_to_del = []
             for i, point in enumerate(points[1:]):
                 if point == points[0]:
