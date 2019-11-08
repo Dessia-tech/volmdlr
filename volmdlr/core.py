@@ -422,9 +422,7 @@ class Point2D(Vector2D):
 
     @classmethod
     def MiddlePoint(cls, point1, point2):
-        p1 = point1.vector
-        p2 = point2.vector
-        return cls((p1+p2)*0.5)
+        return (point1 + point2)*0.5
 
     @classmethod
     def LineProjection(cls, point, line):
