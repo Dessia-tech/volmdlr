@@ -664,7 +664,7 @@ class CompositePrimitive2D(Primitive2D):
         return CompositePrimitive3D(primitives3D, name)
 
     # TODO: change style to color!
-    def MPLPlot(self, ax=None, style='-k', arrow=False, width=None):
+    def MPLPlot(self, ax=None, color='k', arrow=False, width=None):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -673,9 +673,9 @@ class CompositePrimitive2D(Primitive2D):
 
         for element in self.basis_primitives:
             if element.__class__.__name__ == 'LineSegment2D':
-                element.MPLPlot(ax, style, arrow, width)
+                element.MPLPlot(ax, color, arrow, width)
             else:
-                element.MPLPlot(ax, style)
+                element.MPLPlot(ax, color=color)
 
         ax.margins(0.1)
         plt.show()
@@ -891,7 +891,7 @@ class Line2D(Primitive2D, Line):
     Define an infinte line given by two points.
     """
     def __init__(self, point1, point2, name=''):
-        Primitive2D.__init__(self, name)
+        Primitive2D.__init__(self, name=name)
         self.points=[point1, point2]
 
     def To3D(self, plane_origin, x1, x2):
@@ -930,7 +930,7 @@ class Line2D(Primitive2D, Line):
             return projection,t
         return projection
 
-    def MPLPlot(self, ax=None, style='-k', linestyle = '-.'):
+    def MPLPlot(self, ax=None, color='k', linestyle = '-.'):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -939,10 +939,10 @@ class Line2D(Primitive2D, Line):
 
         p1, p2 = self.points
         u = p2 - p1
-        plt.plot([p1[0], p2[0]], [p1[1], p2[1]], style)
+        plt.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color)
         p3 = p1 - 3*u
         p4 = p2 + 4*u
-        ax.plot([p3[0], p4[0]], [p3[1], p4[1]], style, linestyle = linestyle)
+        ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color, linestyle = linestyle)
         return fig ,ax
 
     def CreateTangentCircle(self, point, other_line):
@@ -1230,6 +1230,7 @@ class Arc2D(Primitive2D):
         i = order.index(0)
         if order[i+1] == 1:
             # Trigo wise angle should be plus
+            self.is_trigo = True
             self.angle1 = angle1
             self.angle2 = angle2
             if angle1 > angle2:
@@ -1239,6 +1240,7 @@ class Arc2D(Primitive2D):
 #            self.angle = abs(self.angle2 - self.angle1)
         else:
             # Clock wise
+            self.is_trigo = False
             self.angle1 = angle2
             self.angle2 = angle1
 #            self.angle = -abs(self.angle2 - self.angle1)
@@ -1258,9 +1260,21 @@ class Arc2D(Primitive2D):
 
     geo_points=property(_get_geo_points)
     
-    def tessellation_points(self, resolution=10):
-        return [self.center + self.radius*math.cos(teta)*Vector2D((1,0)) + self.radius*math.sin(teta)*Vector2D((0,1)) \
-                for teta in npy.linspace(0, self.angle, resolution)]
+    def tessellation_points(self, resolution=20):
+#        return [self.center + self.radius*math.cos(teta)*Vector2D((1,0)) + self.radius*math.sin(teta)*Vector2D((0,1)) \
+#                for teta in npy.linspace(0, self.angle, resolution)]
+        points = []
+        if not self.is_trigo:
+            delta_angle = -abs(self.angle1-self.angle2)/(resolution-1)
+        else:
+            delta_angle = abs(self.angle2-self.angle1)/(resolution-1)
+        points.append(self.start)
+        for i in range(resolution-2):
+            point_to_add = points[-1].Rotation(self.center, delta_angle)
+            points.append(point_to_add)
+        points.append(self.end)
+        return points
+        
 
     def Length(self):
         return self.radius * abs(self.angle)
@@ -1293,14 +1307,14 @@ class Arc2D(Primitive2D):
         alpha = abs(self.angle)
         return self.center + 4/(3*alpha)*self.radius*math.sin(alpha*0.5)*u
 
-    def MPLPlot(self, ax, style='-k'):
+    def MPLPlot(self, ax, color='k'):
         pc = self.center.vector
 #        ax.plot([pc[0]], [pc[1]], 'or')
 #        ax.plot([self.interior[0]], [self.interior[1]], 'ob')
         ax.add_patch(Arc(pc, 2*self.radius, 2*self.radius, angle=0,
                     theta1=self.angle1*0.5/math.pi*360,
                     theta2=self.angle2*0.5/math.pi*360,
-                    color='k'))
+                    color=color))
 
     def To3D(self,plane_origin, x, y):
         ps = self.start.To3D(plane_origin, x, y)
@@ -1387,7 +1401,7 @@ class Circle2D(Primitive2D):
 
     geo_points = property(_get_geo_points)
     
-    def tessellation_points(self, resolution=20):
+    def tessellation_points(self, resolution=40):
         return [self.center + self.radius*math.cos(teta)*Vector2D((1,0)) + self.radius*math.sin(teta)*Vector2D((0,1)) \
                 for teta in npy.linspace(0, 2*math.pi, resolution+1)[:-1]]
 
@@ -2009,7 +2023,7 @@ class Plane3D:
         vector2.Normalize()
         normal = vector1.Cross(vector2)
         normal.Normalize()
-        vector = vector1.Cross(normal)
+        vector = normal.Cross(vector1)
         return cls(point1.copy(), vector1.copy(), vector.copy())
     
     @classmethod
@@ -2039,7 +2053,7 @@ class Plane3D:
                     vector2_min = vector2
                     dot_min = dot
             return cls.from_3_points(origin, vector1+origin, vector2_min+origin)
-    
+        
     def point_on_plane(self, point):
         if math.isclose(self.normal.Dot(point-self.origin), 0, abs_tol=1e-6):
             return True
@@ -2499,7 +2513,7 @@ class Line3D(Primitive3D, Line):
     Define an infinite line passing through the 2 points
     """
     def __init__(self, point1, point2, name=''):
-        Primitive3D.__init__(self, name)
+        Primitive3D.__init__(self, basis_primitives=[point1, point2], name=name)
         self.points = [point1, point2]
         self.bounding_box = self._bounding_box()
         
@@ -2529,7 +2543,7 @@ class Line3D(Primitive3D, Line):
         u = self.points[1] - self.points[0]
         x1, y1, z1 = (self.points[0] - 3*u).vector
         x2, y2, z2 = (self.points[1] + 3*u).vector
-        ax.plot([x1, x2], [y1, y2], [z1, z2], '-k')
+        ax.plot([x1, x2], [y1, y2], [z1, z2], color='k')
 
     def MinimumDistancePoints(self, other_line):
         """
@@ -2595,7 +2609,7 @@ class Line3D(Primitive3D, Line):
 
 class BSplineCurve3D(Primitive3D):
     def __init__(self, degree, control_points, knot_multiplicities, knots, weights=None, periodic=False, name=''):
-        Primitive3D.__init__(self, name)
+        Primitive3D.__init__(self, basis_primitives=control_points, name=name)
         self.control_points = control_points
         self.degree = degree
         knots = standardize_knot_vector(knots)
@@ -2693,17 +2707,17 @@ class BSplineCurve3D(Primitive3D):
 
 class Circle3D(Primitive3D):
     def __init__(self, center, radius, normal, name=''):
-        Primitive3D.__init__(self, name)
         self.center = center
         self.radius = radius
         self.normal = normal
-    
+        Primitive3D.__init__(self, basis_primitives=self.tessellation_points(), name=name)
+        
     def tessellation_points(self, resolution=20):
         plane = Plane3D.from_normal(self.center, self.normal)
         center_2D = self.center.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
         circle2D = Circle2D(center_2D, self.radius)
         tessellation_points_2D = circle2D.tessellation_points()
-        tessellation_points_3D = [p.To3D(self.center, self.start, self.end) for p in tessellation_points_2D]
+        tessellation_points_3D = [p.To3D(plane.origin, plane.vectors[0], plane.vectors[1]) for p in tessellation_points_2D]
         return tessellation_points_3D
     
     def Length(self):
@@ -2743,7 +2757,7 @@ class Circle3D(Primitive3D):
 
 class Ellipse3D(Primitive3D):
     def __init__(self, major_axis, minor_axis, center, normal, major_dir, name=''):
-        Primitive3D.__init__(self, name)
+        Primitive3D.__init__(self, basis_primitives=None, name=name)
         self.major_axis = major_axis
         self.minor_axis = minor_axis
         self.center = center
@@ -2797,11 +2811,11 @@ class Arc3D(Primitive3D):
     An arc is defined by a starting point, an end point and an interior point
     """
     def __init__(self, start, interior, end, name=''):
-        Primitive3D.__init__(self, name)
         self.start = start
         self.interior = interior
         self.end = end
-
+        Primitive3D.__init__(self, basis_primitives=self.tessellation_points(), name=name)
+        
         u1 = (self.interior - self.start)
         u2 = (self.interior - self.end)
         u1.Normalize()
@@ -2862,13 +2876,20 @@ class Arc3D(Primitive3D):
     points=property(_get_points)
     
     def tessellation_points(self, resolution=10):
-        plane = Plane3D.from_3_points(self.center, self.start, self.end)
+        plane = Plane3D.from_3_points(self.interior, self.start, self.end)
         interior_2D = self.interior.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
         start_2D = self.start.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
         end_2D = self.end.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
         arc2D = Arc2D(start_2D, interior_2D, end_2D)
         tessellation_points_2D = arc2D.tessellation_points()
-        tessellation_points_3D = [p.To3D(self.center, self.start, self.end) for p in tessellation_points_2D]
+#        ax = interior_2D.MPLPlot()
+#        start_2D.MPLPlot(ax=ax)
+#        end_2D.MPLPlot(ax=ax)
+#        for pt in tessellation_points_2D:
+#            pt.MPLPlot(ax=ax)
+#        ax.set_aspect('equal')
+#        tessellation_points_3D = [p.To3D(self.interior, self.start, self.end) for p in tessellation_points_2D]
+        tessellation_points_3D = [p.To3D(plane.origin, plane.vectors[0], plane.vectors[1]) for p in tessellation_points_2D]
         return tessellation_points_3D
 
     def Length(self):
@@ -2901,7 +2922,7 @@ class Arc3D(Primitive3D):
 
         ax.plot(x, y, z, 'k')
 
-    def MPLPlot2D(self, x3d, y3D, ax, style='-k'):
+    def MPLPlot2D(self, x3d, y3D, ax, color='k'):
         # TODO: Enhance this plot
         l = self.Length()
         x = []
@@ -2911,7 +2932,7 @@ class Arc3D(Primitive3D):
             xi, yi = p.PlaneProjection2D(x3D, y3D)
             x.append(xi)
             y.append(yi)
-        ax.plot(x, y, style)
+        ax.plot(x, y, color=color)
 
     def FreeCADExport(self, name, ndigits=6):
         xs, ys, zs = npy.round(1000*self.start.vector, ndigits)
@@ -2922,7 +2943,7 @@ class Arc3D(Primitive3D):
 
 class BSplineSurface3D(Primitive3D):
     def __init__(self, degree_u, degree_v, control_points, nb_u, nb_v, u_multiplicities, v_multiplicities, u_knots, v_knots, weights=None, name=''):
-        Primitive3D.__init__(self, name)
+        Primitive3D.__init__(self, basis_primitives=control_points, name=name)
         self.control_points = control_points
         self.degree_u = degree_u
         self.degree_v = degree_v
@@ -3061,16 +3082,15 @@ class CompositePrimitive3D(Primitive3D):
     A collection of simple primitives3D
     """
     def __init__(self, primitives, name=''):
-        Primitive3D.__init__(self, name)
-
+        self.primitives = primitives
         basis_primitives=[]
         for primitive in primitives:
             if hasattr(primitive, 'basis_primitives'):
                 basis_primitives.extend(primitive.basis_primitives)
             else:
                 basis_primitives.append(primitive)
-
-        self.basis_primitives = basis_primitives
+        
+        Primitive3D.__init__(self, basis_primitives=basis_primitives, name=name)
 
     def UpdateBasisPrimitives(self):
         # TODO: This is a copy/paste from CompositePrimitive2D, in the future make a Common abstract class
@@ -3138,7 +3158,7 @@ class Wire3D(CompositePrimitive3D):
 
 class Edge3D(Primitive3D):
     def __init__(self, edge_start, edge_end, name=''):
-        Primitive3D.__init__(self, name=name)
+        Primitive3D.__init__(self, basis_primitives=[edge_start, edge_end], name=name)
         self.points = [edge_start, edge_end]
 
     @classmethod
@@ -3307,40 +3327,70 @@ class Contour3D(Wire3D):
     A collection of 3D primitives forming a closed wire3D
     """
     def __init__(self, edges, points=None, name=''):
-        self.edges = edges
+        """
+        Faire un choix : soit edges c'est un CompositePrimitives3D
+        ou alors un ensemble de primitives
+        ou alors un ensemble de basis_primtives (qui sont des points pour le moment)
+        """
+        
+#        self.edges = edges
         self.name = name
         self.points = points
         
-#        print(self.edges)
         
-        if points is None:
-            
-            only_has_LineSegment3D = True
-            for edge in edges:
-                if edge.__class__ != LineSegment3D:
-                    only_has_LineSegment3D = False
-                    break
-            if only_has_LineSegment3D:
-                points = [p.copy() for p in self.edges[0].points[:]]
-                for i, edge in enumerate(self.edges[1:-1]):
-                    if edge.points[0] in points[-2:]:
-                        points.append(edge.points[1].copy())
-                    elif edge.points[1] in points[-2:]:
-                        points.append(edge.points[0].copy())
-                    else:
-                        raise NotImplementedError
-                self.points = [p.copy() for p in points]
+#        elementary_edges = []
+#        for edge in edges:
+#            
+#            if edge.__class__ == CompositePrimitive3D:
+#                print('1', edge.basis_primitives)
+#                elementary_edges.append(edge.basis_primitives)
+#            else:
+#                elementary_edges.append(edge)
+#                
+#        self.edges = elementary_edges
         
+        edges_primitives = []
+        for edge in edges:
+            if edge.__class__ == CompositePrimitive3D:
+                edges_primitives.extend(edge.primitives)
             else:
-                points = []
-                for edge in edges:
-                    if edge.__class__ == CompositePrimitive3D:
-                        points.extend(edge.basis_primitives)
-                    elif edge.__class__ == Arc3D or edge.__class__ == Circle3D:
-                        points.extend(edge.tessellation_points())
-                    else:
-                        raise NotImplementedError
-                self.points = [p.copy() for p in points]
+                edges_primitives.append(edge)
+        self.edges = edges_primitives
+        
+        self.points = self.clean_points(self.edges)
+                
+#        if points is None:
+#            
+#            only_has_LineSegment3D = True
+#            for edge in self.edges:
+#                if edge.__class__ != LineSegment3D:
+#                    only_has_LineSegment3D = False
+#                    break
+#            if only_has_LineSegment3D:
+#                points = [p.copy() for p in self.edges[0].points[:]]
+#                for i, edge in enumerate(self.edges[1:-1]):
+#                    if edge.points[0] in points[-2:]:
+#                        points.append(edge.points[1].copy())
+#                    elif edge.points[1] in points[-2:]:
+#                        points.append(edge.points[0].copy())
+#                    else:
+#                        raise NotImplementedError
+#                self.edges = edges
+#                self.points = [p.copy() for p in points]
+#        
+#            else:
+#                edges_primitives = []
+#                points = []
+#                for edge in self.edges:
+#                    print('Contour3D edge', edge)
+#                    if edge.__class__ == CompositePrimitive3D:
+#                        edges_primitives.append(edge.primitives)
+#                        points.extend(edge.basis_primitives)
+#                    else:
+#                        raise NotImplementedError
+#                    print('Contour3D edges points', points)
+#                self.edges = edges_primitives
+#                self.points = [p.copy() for p in points]
                     
         
     @classmethod
@@ -3360,6 +3410,24 @@ class Contour3D(Wire3D):
         contour_points = [p.copy() for p in points]
 
         return cls(edges, points=contour_points, name=arguments[0][1:-1])
+    
+    def clean_points(self, edges):
+        points = edges[0].basis_primitives
+        last_points_added = points
+        for edge in edges[1:]:
+            if hasattr(edge, 'basis_primitives'):
+                points_to_add = edge.basis_primitives
+                if points_to_add[0] in [last_points_added[0], last_points_added[-1]]:
+                    points.extend(points_to_add[1:])
+                elif points_to_add[-1] in [last_points_added[0], last_points_added[-1]]:
+                    points.extend(points_to_add[:-1])
+                else:
+                    raise NotImplementedError
+                last_points_added = points_to_add
+            else:
+                raise NotImplementedError
+        return points
+        
 
     def Rotation(self, center, axis, angle, copy=True):
         if copy:

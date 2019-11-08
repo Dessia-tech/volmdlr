@@ -51,6 +51,16 @@ belt_outer_contour = vm.Contour2D([belt_outer_rl])
 belt = primitives3D.ExtrudedProfile(vm.z3D*(height - 2*thickness), vm.x3D, vm.y3D,
                                       belt_outer_contour, [inner_contour]+screw_holes, thickness * vm.z3D, 'belt')
 
-casing = vm.primitives3D.Fuse([bottom, sides, belt], 'Lower Casing')
-model = vm.VolumeModel([('casing', [casing])])
-model.FreeCADExport('casing')
+model = vm.VolumeModel([bottom])
+model.BabylonShow('bottom')
+
+model = vm.VolumeModel([sides])
+model.BabylonShow('sides')
+
+model = vm.VolumeModel([belt])
+model.BabylonShow('belt')
+
+#casing = vm.primitives3D.Fuse([bottom, sides, belt], 'Lower Casing')
+#model = vm.VolumeModel([casing])
+##model.FreeCADExport('casing')
+#model.BabylonShow()
