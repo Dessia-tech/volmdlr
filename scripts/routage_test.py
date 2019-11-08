@@ -9,6 +9,7 @@ Created on Wed Oct 30 16:55:25 2019
 import volmdlr as  vm
 import volmdlr.primitives3D as p3d
 
+
 ### BLOCK DE DEPART ###
 origin = vm.Point3D((-2,1,0))
 u = vm.Vector3D((0.2,0,0))

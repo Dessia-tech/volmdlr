@@ -3577,6 +3577,8 @@ class Face3D(Primitive3D):
     
     @classmethod
     def _repair_points_and_polygon2d(cls, points, plane):
+        if points[0] == points[-1]:
+            points = points[:-1]
         polygon_points = [p.To2D(plane.origin, plane.vectors[0], plane.vectors[1]) for p in points]
         repaired_points = [p.copy() for p in points]
         polygon2D = Polygon2D(polygon_points)
