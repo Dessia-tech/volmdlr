@@ -92,7 +92,7 @@ class RoundedLineSegments3D(volmdlr.Wire3D, RoundedLineSegments):
 
 class Sphere(volmdlr.Primitive3D):
     def __init__(self,center, radius, name=''):
-        volmdlr.Primitive3D.__init__(self, name)
+        volmdlr.Primitive3D.__init__(self, name=name)
         self.center = center
         self.radius = radius
         self.position = center
@@ -238,7 +238,7 @@ class Block(volmdlr.Shell3D):
 
 class Cylinder(volmdlr.Primitive3D):
     def __init__(self, position, axis, radius, length, name=''):
-        volmdlr.Primitive3D.__init__(self, name)
+        volmdlr.Primitive3D.__init__(self, name=name)
         self.position = position
         axis.Normalize()
         self.axis = axis
@@ -312,7 +312,7 @@ class Cylinder(volmdlr.Primitive3D):
 
 class HollowCylinder(volmdlr.Primitive3D):
     def __init__(self, position, axis, inner_radius, outer_radius, width, name=''):
-        volmdlr.Primitive3D.__init__(self, name)
+        volmdlr.Primitive3D.__init__(self, name=name)
         self.position = position
         axis.Normalize()
         self.axis = axis
@@ -365,7 +365,7 @@ class HollowCylinder(volmdlr.Primitive3D):
 
 class Cone(volmdlr.Primitive3D):
     def __init__(self, position, axis, radius, length, name=''):
-        volmdlr.Primitive3D.__init__(self, name)
+        volmdlr.Primitive3D.__init__(self, name=name)
         self.position = position
         axis.Normalize()
         self.axis = axis
@@ -426,7 +426,7 @@ class ExtrudedProfile(volmdlr.Shell3D):
     """
     def __init__(self, plane_origin, x, y, outer_contour2d, inner_contours2d,
                  extrusion_vector, name='', color=None):
-#        volmdlr.Primitive3D.__init__(self, name)
+        volmdlr.Primitive3D.__init__(self, name=name)
         self.outer_contour2d = outer_contour2d
         self.outer_contour3d = outer_contour2d.To3D(plane_origin, x, y)
         self.inner_contours2d = inner_contours2d
@@ -599,14 +599,14 @@ class ExtrudedProfile(volmdlr.Shell3D):
 
         return s
 
-class RevolvedProfile(volmdlr.Primitive3D):
+class RevolvedProfile(volmdlr.Shell3D):
     """
 
     """
-    def __init__(self, plane_origin, x, y, contours2D, axis_point,
-                 axis,angle=2*math.pi, name=''):
-        volmdlr.Primitive3D.__init__(self, name)
-        self.contours2D = contours2D
+    def __init__(self, plane_origin, x, y, contour2D, axis_point,
+                 axis, angle=2*math.pi, name='', color=None):
+        volmdlr.Primitive3D.__init__(self, name=name)
+        self.contour2D = contour2D
         self.axis_point = axis_point
         self.axis = axis
         self.angle = angle
@@ -614,9 +614,47 @@ class RevolvedProfile(volmdlr.Primitive3D):
         self.x = x
         self.y = y
 
-        self.contours3D = []
-        for contour in contours2D:
-            self.contours3D.append(contour.To3D(plane_origin, x, y))
+#        self.contours3D = []
+#        for contour in contour2D:
+#            self.contours3D.append(contour.To3D(plane_origin, x, y))
+        self.contour3D = self.contour2D.To3D(plane_origin, x, y)
+            
+        faces = self.shell_faces()
+        volmdlr.Shell3D.__init__(self, faces, name, color)
+
+    
+    def shell_faces(self):
+        faces = []
+        TESSELLATION = 40
+        delta_angle = self.angle/TESSELLATION
+        
+        for nb in range(TESSELLATION):
+            if nb == 0:
+                points = self.contour3D.points
+            else:
+                points = [p.Rotation(self.axis_point, self.axis, nb*delta_angle, copy=True) for p in self.contour3D.points]
+                
+            rotated_points = [p.Rotation(self.axis_point, self.axis, delta_angle, copy=True) for p in points]
+            
+            points_pair = list(zip(points, rotated_points))
+            for i, (pt1, pt2) in enumerate(points_pair[:-1]):
+                pt1_next = points_pair[i+1][0]
+                pt2_next = points_pair[i+1][1]
+                
+                if pt1 == pt2 and pt1_next == pt2_next:
+                    continue
+                
+                edges = [volmdlr.LineSegment3D(pt1.copy(), pt2.copy()),
+                         volmdlr.LineSegment3D(pt2.copy(), pt2_next.copy()),
+                         volmdlr.LineSegment3D(pt2_next.copy(), pt1_next.copy()),
+                         volmdlr.LineSegment3D(pt1_next.copy(), pt1.copy())]
+                
+                contour = volmdlr.Contour3D(edges)
+                faces.append(volmdlr.Face3D([contour]))
+
+        return faces
+        
+
 
     def MPLPlot(self, ax=None):
         if ax is None:
@@ -628,13 +666,13 @@ class RevolvedProfile(volmdlr.Primitive3D):
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive'+str(ip)
         s = 'W=[]\n'
-        for ic, contour in enumerate(self.contours3D):
-            s += 'L=[]\n'
-            for ibp, basis_primitive in enumerate(contour.basis_primitives):
-                s += basis_primitive.FreeCADExport('L{}_{}'.format(ic, ibp), 8)
-                s += 'L.append(L{}_{})\n'.format(ic,ibp)
-            s += 'S = Part.Shape(L)\n'
-            s += 'W.append(Part.Wire(S.Edges))\n'
+#        for ic, contour in enumerate(self.contours3D):
+        s += 'L=[]\n'
+        for ibp, basis_primitive in enumerate(self.contour2D.basis_primitives):
+            s += basis_primitive.FreeCADExport('L{}_{}'.format(1, ibp), 8)
+            s += 'L.append(L{}_{})\n'.format(1,ibp)
+        s += 'S = Part.Shape(L)\n'
+        s += 'W.append(Part.Wire(S.Edges))\n'
         s += 'F=Part.Face(W)\n'
         a1, a2, a3 = self.axis.vector
         ap1, ap2, ap3 = self.axis_point.vector
@@ -648,29 +686,30 @@ class RevolvedProfile(volmdlr.Primitive3D):
         return s
 
     def Volume(self):
-        areas=[c.Area() for c in self.contours2D]
-        # Maximum area is main surface, others cut into it
-        sic = list(npy.argsort(areas))[::-1]# sorted indices of contours
+#        areas=[c.Area() for c in self.contours2D]
+#        # Maximum area is main surface, others cut into it
+#        sic = list(npy.argsort(areas))[::-1]# sorted indices of contours
         p1=self.axis_point.PlaneProjection3D(self.plane_origin,self.x,self.y)
-        if self.axis_point.PointDistance(p1)!=0:
-            raise NotImplementedError
+#        if self.axis_point.PointDistance(p1)!=0:
+#            raise NotImplementedError
         p1_2D=p1.To2D(self.axis_point,self.x,self.y)
         p2_3D=self.axis_point+volmdlr.Point3D(self.axis.vector)
-        p2=p2_3D.PlaneProjection3D(self.plane_origin,self.x,self.y)
-        if p2_3D.PointDistance(p2)!=0:
-            raise NotImplementedError
+#        p2=p2_3D.PlaneProjection3D(self.plane_origin,self.x,self.y)
+#        if p2_3D.PointDistance(p2)!=0:
+#            raise NotImplementedError
         p2_2D=p2_3D.To2D(self.plane_origin,self.x,self.y)
         axis_2D=volmdlr.Line2D(p1_2D,p2_2D)
-        com = self.contours2D[sic[0]].CenterOfMass()
+        com = self.contour2D.CenterOfMass()
         rg = axis_2D.PointDistance(com)
-        volume=areas[sic[0]]*rg
+#        volume=areas[sic[0]]*rg
+#
+#        for i in sic[1:]:
+#            com=self.contours2D[i].CenterOfMass()
+#            rg=axis_2D.PointDistance(com)
+#            volume-=areas[i]*rg
 
-        for i in sic[1:]:
-            com=self.contours2D[i].CenterOfMass()
-            rg=axis_2D.PointDistance(com)
-            volume-=areas[i]*rg
-
-        return self.angle*volume
+#        return self.angle*volume
+        return self.angle*rg*self.contour2D.Area()
 
 
 
