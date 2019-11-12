@@ -542,19 +542,16 @@ class ExtrudedProfile(volmdlr.Shell3D):
             s += 'innerRibbon.material = mat;\n'
             
             
-            
         lower_plane = volmdlr.Plane3D.from_points(lower_outer_ribbon_points[:-1])
-        lower_outer_polygon_points = [p.To2D(lower_plane.origin, lower_plane.vectors[0], lower_plane.vectors[1]) for p in lower_outer_ribbon_points]
+        lower_outer_polygon_points = [p.To2D(lower_plane.origin, lower_plane.vectors[0], lower_plane.vectors[1]) for p in lower_outer_ribbon_points[:-1]]
         s += 'LowerPolygonPoints = [];\n'
         for point in lower_outer_polygon_points:
             s += 'LowerPolygonPoints.push(new BABYLON.Vector2({},{}));\n'.format(round(point[0],6), round(point[1],6))
         s += 'var lowerPoly_tri = new BABYLON.PolygonMeshBuilder("lowerPolygon", LowerPolygonPoints, scene);\n'
         for inner_contour in lower_inner_ribbon_contours_points:
-            print(inner_contour)
             lower_inner_polygon_points = [p.To2D(lower_plane.origin, lower_plane.vectors[0], lower_plane.vectors[1]) for p in inner_contour]
             s += 'var lower_hole = [];\n'
             for point in lower_inner_polygon_points[:0:-1]:
-                print('--', round(point[0],6), round(point[1],6))
                 s += 'lower_hole.push(new BABYLON.Vector2({},{}));\n'.format(round(point[0],6), round(point[1],6))
             s += 'lowerPoly_tri.addHole(lower_hole);\n'
         s += 'var lowerPolygon = lowerPoly_tri.build(true, 0);\n'
@@ -574,7 +571,7 @@ class ExtrudedProfile(volmdlr.Shell3D):
         
         
         upper_plane = volmdlr.Plane3D.from_points(upper_outer_ribbon_points[:-1])
-        upper_outer_polygon_points = [p.To2D(upper_plane.origin, upper_plane.vectors[0], upper_plane.vectors[1]) for p in upper_outer_ribbon_points]
+        upper_outer_polygon_points = [p.To2D(upper_plane.origin, upper_plane.vectors[0], upper_plane.vectors[1]) for p in upper_outer_ribbon_points[:-1]]
         s += 'UpperPolygonPoints = [];\n'
         for point in upper_outer_polygon_points:
             s += 'UpperPolygonPoints.push(new BABYLON.Vector2({},{}));\n'.format(round(point[0],6), round(point[1],6))

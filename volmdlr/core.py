@@ -3457,15 +3457,15 @@ class Contour3D(Wire3D):
         for edge in arguments[1]:
             edges.append(object_dict[int(edge[1:])])
 
-        points = edges[0].points[:]                
-        for i, edge in enumerate(edges[1:-1]):
-            if edge.points[0] in points[-2:]:
-                points.append(edge.points[1])
-            elif edge.points[1] in points[-2:]:
-                points.append(edge.points[0])
-            else:
-                raise NotImplementedError
-        contour_points = [p.copy() for p in points]
+#        points = edges[0].points[:]                
+#        for i, edge in enumerate(edges[1:-1]):
+#            if edge.points[0] in points[-2:]:
+#                points.append(edge.points[1])
+#            elif edge.points[1] in points[-2:]:
+#                points.append(edge.points[0])
+#            else:
+#                raise NotImplementedError
+#        contour_points = [p.copy() for p in points]
 
         return cls(edges, points=None, name=arguments[0][1:-1])
     
