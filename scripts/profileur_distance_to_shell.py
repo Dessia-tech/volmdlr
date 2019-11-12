@@ -81,9 +81,9 @@ volumemodel.BabylonShow()
 #%%
 
 origin = vm.Point3D((1,0.1,0.6))
-u = vm.x3D + vm.y3D
-v = vm.y3D + vm.z3D
-w = vm.z3D + vm.x3D
+u = vm.y3D
+v = vm.z3D
+w = vm.x3D
 u.Normalize()
 v.Normalize()
 w.Normalize()
@@ -100,9 +100,9 @@ print('Success')
 #shell0.Translation(vm.Vector3D((1,0.5,0)), False)
 #print('Success')
 
-print('frame_mapping copy=True')
-volumemodel.primitives[1] = shell1.frame_mapping(frame, 'old', True)
-print('Success')
+#print('frame_mapping copy=True')
+#volumemodel.primitives[1] = shell1.frame_mapping(frame, 'old', True)
+#print('Success')
 #print('Translation copy=True')
 #volumemodel.primitives[1] = shell0.Translation(vm.Vector3D((-1,1,2)), True)
 #print('Success')
@@ -116,21 +116,21 @@ print('Success')
 #shell1.Translation(vm.Vector3D((0,0,1)), False)
 
 
-boo10 = volumemodel.primitives[1].is_inside_shell(volumemodel.primitives[0])
-boo01 = volumemodel.primitives[0].is_inside_shell(volumemodel.primitives[1])
-print('shell1 is inside shell0', boo10)
-print('shell0 is inside shell1', boo01)
-
-mesure = volumemodel.primitives[0].distance_to_shell(volumemodel.primitives[1], volumemodel)
-if mesure is not None:
-    print('distance =', mesure.distance)
-    
-internal = shell1.intersection_internal_aabb_volume(shell0)
-print('internal volume', internal)
-external = shell1.intersection_external_aabb_volume(shell0)
-print('external volume', external)
-volumemodel.primitives.append(internal)
-volumemodel.primitives.append(external)
+#boo10 = volumemodel.primitives[1].is_inside_shell(volumemodel.primitives[0])
+#boo01 = volumemodel.primitives[0].is_inside_shell(volumemodel.primitives[1])
+#print('shell1 is inside shell0', boo10)
+#print('shell0 is inside shell1', boo01)
+#
+#mesure = volumemodel.primitives[0].distance_to_shell(volumemodel.primitives[1], volumemodel)
+#if mesure is not None:
+#    print('distance =', mesure.distance)
+#    
+#internal = shell1.intersection_internal_aabb_volume(shell0)
+#print('internal volume', internal)
+#external = shell1.intersection_external_aabb_volume(shell0)
+#print('external volume', external)
+#volumemodel.primitives.append(internal)
+#volumemodel.primitives.append(external)
 
 
 #pc = shell0.shell_intersection(shell1)

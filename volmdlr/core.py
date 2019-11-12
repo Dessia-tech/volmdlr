@@ -1838,7 +1838,6 @@ class Vector3D(Vector):
     def __hash__(self):
         return int(1000*(self.vector[0]+self.vector[1]+self.vector[2]))
 
-        
     def __eq__(self, other_vector):
         return math.isclose(self.vector[0], other_vector.vector[0], abs_tol=1e-08) \
         and math.isclose(self.vector[1], other_vector.vector[1], abs_tol=1e-08) \
@@ -3223,7 +3222,7 @@ class CompositePrimitive3D(Primitive3D):
         else:
             fig = None
 
-        for primitive in self.basis_primitives:
+        for primitive in self.edges:
             primitive.MPLPlot(ax)
 
         ax.set_aspect('equal')
@@ -3344,8 +3343,6 @@ class LineSegment3D(Edge3D):
         if copy:
             return LineSegment3D(*[p.Rotation(center, axis, angle, copy=True) for p in self.points])
         else:
-#            for p in self.points:
-#                p.Rotation(center, axis, angle, copy=False)
             Edge3D.Rotation(self, center, axis, angle, copy=False)
             self.bounding_box = self._bounding_box()
 
@@ -3353,8 +3350,6 @@ class LineSegment3D(Edge3D):
         if copy:
             return LineSegment3D(*[p.Translation(offset, copy=True) for p in self.points])
         else:
-#            for p in self.points:
-#                p.Translation(offset, copy=False)
             Edge3D.Translation(self, offset, copy=False)
             self.bounding_box = self._bounding_box()
         
@@ -3366,16 +3361,12 @@ class LineSegment3D(Edge3D):
             if copy:
                 return LineSegment3D(*[frame.OldCoordinates(p) for p in self.points])
             else:
-#                for p in self.points:
-#                    p = frame.OldCoordinates(p)
                 Edge3D.frame_mapping(self, frame, side, copy=False)
                 self.bounding_box = self._bounding_box()
         if side == 'new':
             if copy:
                 return LineSegment3D(*[frame.NewCoordinates(p) for p in self.points])
             else:
-#                for p in self.points:
-#                    p = frame.NewCoordinates(p)
                 Edge3D.frame_mapping(self, frame, side, copy=False)
                 self.bounding_box = self._bounding_box()
                 
@@ -3446,7 +3437,7 @@ class Contour3D(Wire3D):
         """
         self.name = name
         self.points = points
-
+        
         edges_primitives = []
         for edge in edges:
             if edge.__class__ == CompositePrimitive3D:
@@ -3454,8 +3445,8 @@ class Contour3D(Wire3D):
             else:
                 edges_primitives.append(edge)
         self.edges = edges_primitives
-        
-        self.points = self.clean_points(self.edges)
+                    
+        self.points = self.clean_points()
 
 
     @classmethod
@@ -3474,12 +3465,12 @@ class Contour3D(Wire3D):
                 raise NotImplementedError
         contour_points = [p.copy() for p in points]
 
-        return cls(edges, points=contour_points, name=arguments[0][1:-1])
+        return cls(edges, points=None, name=arguments[0][1:-1])
     
-    def clean_points(self, edges):
-        points = edges[0].basis_primitives
+    def clean_points(self):
+        points = self.edges[0].basis_primitives[::]
         last_points_added = points
-        for edge in edges[1:]:
+        for edge in self.edges[1:]:
             if hasattr(edge, 'basis_primitives'):
                 points_to_add = edge.basis_primitives
                 if points_to_add[0] in [last_points_added[0], last_points_added[-1]]:
@@ -3487,6 +3478,7 @@ class Contour3D(Wire3D):
                 elif points_to_add[-1] in [last_points_added[0], last_points_added[-1]]:
                     points.extend(points_to_add[:-1])
                 else:
+                    self.MPLPlot()
                     raise NotImplementedError
                 last_points_added = points_to_add
             else:
@@ -3538,12 +3530,13 @@ class Contour3D(Wire3D):
 
 class Face3D(Primitive3D):
     def __init__(self, contours, plane=None, points=None, polygon2D=None, name=''):
-        Primitive3D.__init__(self, name)
+#        Primitive3D.__init__(self, name=name)
         self.contours = contours
         self.plane = plane
         self.points = points
         self.polygon2D = polygon2D
         
+        self.name = name
         
         contour_points = [p.copy() for p in self.contours[0].points[:]]
         if plane is None:
@@ -3584,7 +3577,11 @@ class Face3D(Primitive3D):
         polygon2D = Polygon2D(polygon_points)
         if polygon2D.SelfIntersect()[0]:
             repaired_points = [repaired_points[1]]+[repaired_points[0]]+repaired_points[2:]
-            polygon2D = Polygon2D([polygon_points[1]]+[polygon_points[0]]+polygon_points[2:])
+            polygon_points = [polygon_points[1]]+[polygon_points[0]]+polygon_points[2:]
+            if polygon_points[0] == polygon_points[-1]:
+                repaired_points = repaired_points[:-1]
+                polygon_points = polygon_points[:-1]
+            polygon2D = Polygon2D(polygon_points)
         return repaired_points, polygon2D
 
     def Rotation(self, center, axis, angle, copy=True):

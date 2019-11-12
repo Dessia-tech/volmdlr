@@ -550,6 +550,7 @@ class ExtrudedProfile(volmdlr.Shell3D):
             s += 'LowerPolygonPoints.push(new BABYLON.Vector2({},{}));\n'.format(round(point[0],6), round(point[1],6))
         s += 'var lowerPoly_tri = new BABYLON.PolygonMeshBuilder("lowerPolygon", LowerPolygonPoints, scene);\n'
         for inner_contour in lower_inner_ribbon_contours_points:
+            print(inner_contour)
             lower_inner_polygon_points = [p.To2D(lower_plane.origin, lower_plane.vectors[0], lower_plane.vectors[1]) for p in inner_contour]
             s += 'var lower_hole = [];\n'
             for point in lower_inner_polygon_points[:0:-1]:
