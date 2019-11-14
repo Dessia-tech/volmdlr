@@ -5118,7 +5118,7 @@ class VolumeModel:
         os.remove(f.name)
         return output
 
-    def BabylonScript(self):
+    def BabylonScript(self, use_cdn=True):
 
         env = Environment(loader=PackageLoader('volmdlr', 'templates'),
                           autoescape=select_autoescape(['html', 'xml']))
@@ -5135,13 +5135,16 @@ class VolumeModel:
         for primitive in self.primitives:
             if hasattr(primitive, 'Babylon'):
                 primitives_strings.append(primitive.Babylon())
-        return template.render(name=self.name,center=tuple(center),length=2*max_length,
-                               primitives_strings=primitives_strings)
+        return template.render(name=self.name,
+                               center=tuple(center),
+                               length=2*max_length,
+                               primitives_strings=primitives_strings,
+                               use_cdn=use_cdn)
 
-    def BabylonShow(self,page='vm_babylonjs'):
+    def BabylonShow(self,page='vm_babylonjs', use_cdn=True):
         page+='.html'
         with open(page,'w') as file:
-            file.write(self.BabylonScript())
+            file.write(self.BabylonScript(use_cdn=use_cdn))
 
         webbrowser.open('file://' + os.path.realpath(page))
         
