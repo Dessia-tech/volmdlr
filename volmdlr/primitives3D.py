@@ -182,11 +182,12 @@ class Block(volmdlr.Shell3D):
         """
         side = 'old' or 'new'
         """
+        basis = frame.Basis()
         if side == 'new':
             new_origin = frame.NewCoordinates(self.frame.origin)
-            new_u = frame.NewCoordinates(self.frame.u)
-            new_v = frame.NewCoordinates(self.frame.v)
-            new_w = frame.NewCoordinates(self.frame.w)
+            new_u = basis.NewCoordinates(self.frame.u)
+            new_v = basis.NewCoordinates(self.frame.v)
+            new_w = basis.NewCoordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
             if copy:
                 return Block(new_frame, self.name, self.color)
@@ -196,9 +197,9 @@ class Block(volmdlr.Shell3D):
         
         if side == 'old':
             new_origin = frame.OldCoordinates(self.frame.origin)
-            new_u = frame.OldCoordinates(self.frame.u)
-            new_v = frame.OldCoordinates(self.frame.v)
-            new_w = frame.OldCoordinates(self.frame.w)
+            new_u = basis.OldCoordinates(self.frame.u)
+            new_v = basis.OldCoordinates(self.frame.v)
+            new_w = basis.OldCoordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
             if copy:
                 return Block(new_frame, self.name, self.color)
