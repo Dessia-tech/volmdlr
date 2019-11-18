@@ -3048,10 +3048,10 @@ class Arc3D(Primitive3D):
         ax.plot(x, y, color=color)
 
     def FreeCADExport(self, name, ndigits=6):
-        xs, ys, zs = npy.round(1000*self.start.vector, ndigits)
-        xm, ym, zm = npy.round(1000*self.interior.vector, ndigits)
-        xe, ye, ze = npy.round(1000*self.end.vector, ndigits)
-        return '{} = Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,xs,ys,zs,xm,ym,zm,xe,ye,ze)
+        xs, ys, zs = round(1000*self.start, ndigits).vector
+        xi, yi, zi = round(1000*self.interior, ndigits).vector
+        xe, ye, ze = round(1000*self.end, ndigits).vector
+        return '{} = Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,xs,ys,zs,xi,yi,zi,xe,ye,ze)
 
 
 class BSplineSurface3D(Primitive3D):
@@ -3396,8 +3396,8 @@ class LineSegment3D(Edge3D):
                          dash, opacity, arrow)
 
     def FreeCADExport(self, name, ndigits=6):
-        x1, y1, z1 = npy.round(1000*self.points[0].vector, ndigits)
-        x2, y2, z2 = npy.round(1000*self.points[1].vector, ndigits)
+        x1, y1, z1 = round(1000*self.points[0], ndigits).vector
+        x2, y2, z2 = round(1000*self.points[1], ndigits).vector
         return '{} = Part.LineSegment(fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,x1,y1,z1,x2,y2,z2)
 
     def to_line(self):
