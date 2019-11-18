@@ -126,6 +126,25 @@ def delete_node_and_successors(graph, node):
     graph.remove_node(node)
     for successor in successors:
         delete_node_and_successors(graph, successor)
+        
+def clockwise_angle(vector1, vector2):
+    """
+    Return the clockwise angle in radians between vector1 and vector2.
+    """
+    vector0 = Vector2D((0, 0))
+    if vector0 in (vector1, vector2):
+        return 0
+
+    dot = vector1.Dot(vector2)
+    norm_vec_1 = vector1.Norm()
+    norm_vec_2 = vector2.Norm()
+    cross = vector1.Cross(vector2)
+    inner_angle = math.acos(dot/(norm_vec_1*norm_vec_2))
+
+    if cross < 0:
+        return inner_angle
+
+    return 2*math.pi-inner_angle
 
 class Matrix22:
     def __init__(self, M11, M12, M21, M22):
@@ -850,7 +869,38 @@ class Contour2D(Wire2D):
     """
     def __init__(self, primitives, name=''):
         Wire2D.__init__(self, primitives, name)
-
+        
+        arcs = []
+        internal_arcs = []
+        external_arcs = []
+        points_polygon = []
+        for primitive in self.basis_primitives:
+            if primitive.__class__.__name__ == 'LineSegment2D':
+                points_polygon.extend(primitive.points)
+            elif primitive.__class__.__name__ == 'Arc2D':
+                points_polygon.append(primitive.center)
+                arcs.append(primitive)
+        self.polygon = Polygon2D(points_polygon)
+        for arc in arcs:
+            if self.polygon.PointBelongs(arc.interior):
+                internal_arcs.append(arc)
+            else:
+                external_arcs.append(arc)
+        # An internal arc is an arc that has his interior point inside the polygon
+        self.internal_arcs = internal_arcs
+        self.external_arcs = external_arcs
+        
+    def point_belongs(self, point):
+        for arc in self.internal_arcs:
+            if arc.point_belongs(point):
+                return False
+        if self.polygon.PointBelongs(point):
+            return True
+        for arc in self.external_arcs:
+            if arc.point_belongs(point):
+                return True
+        return False
+        
     def To3D(self, plane_origin, x, y, name=None):
         if name is None:
             name = '3D of {}'.format(self.name)
@@ -860,22 +910,13 @@ class Contour2D(Wire2D):
     def Area(self):
         if len(self.basis_primitives) == 1:
             return self.basis_primitives[0].Area()
-        arcs = []
-        points_polygon = []
-        for primitive in self.basis_primitives:
-            if primitive.__class__.__name__ == 'LineSegment2D':
-                points_polygon.extend(primitive.points)
-            elif primitive.__class__.__name__ == 'Arc2D':
-                points_polygon.append(primitive.center)
-                arcs.append(primitive)
-        polygon = Polygon2D(points_polygon)
-        A = polygon.Area()
-
-        for arc in arcs:
-            if polygon.PointBelongs(arc.interior):
-                A -= arc.Area()
-            else:
-                A += arc.Area()
+        
+        A = self.polygon.Area()
+        
+        for arc in self.internal_arcs:
+            A -= arc.Area()
+        for arc in self.external_arcs:
+            A += arc.Area()
 
         return A
 
@@ -883,51 +924,33 @@ class Contour2D(Wire2D):
         if len(self.basis_primitives) == 1:
             return self.basis_primitives[0].CenterOfMass()
 
-        arcs = []
-        points_polygon = []
-        for primitive in self.basis_primitives:
-            if primitive.__class__.__name__ == 'LineSegment2D':
-                points_polygon.extend(primitive.points)
-            elif primitive.__class__.__name__ == 'Arc2D':
-                points_polygon.append(primitive.center)
-                arcs.append(primitive)
-        polygon = Polygon2D(points_polygon)
-
-        area = polygon.Area()
+        area = self.polygon.Area()
         if area > 0.:
-            c = area*polygon.CenterOfMass()
+            c = area*self.polygon.CenterOfMass()
         else:
             c = o2D
 
-        for arc in arcs:
+        for arc in self.internal_arcs:
             arc_area = arc.Area()
-            if polygon.PointBelongs(arc.interior):
-                c -= arc_area*arc.CenterOfMass()
-                area -= arc_area
-            else:
-                c += arc_area*arc.CenterOfMass()
-                area += arc_area
+            c -= arc_area*arc.CenterOfMass()
+            area -= arc_area
+        for arc in self.external_arcs:
+            arc_area = arc.Area()
+            c += arc_area*arc.CenterOfMass()
+            area += arc_area
+            
         return c/area
 
     def SecondMomentArea(self, point):
         if len(self.primitives) == 1:
             return self.primitives[0].SecondMomentArea(point)
-
-        arcs = []
-        points_polygon = []
-        for primitive in self.primitives:
-            if primitive.__class__.__name__ == 'Line2D':
-                points_polygon.extend(primitive.points)
-            elif primitive.__class__.__name__ == 'Arc2D':
-                points_polygon.append(primitive.center)
-                arcs.append(primitive)
-        polygon = Polygon2D(points_polygon)
-        A = polygon.SecondMomentArea(point)
-        for arc in arcs:
-            if polygon.PointBelongs(arc.middle):
-                A -= arc.SecondMomentArea(point)
-            else:
-                A += arc.SecondMomentArea(point)
+        
+        A = self.polygon.SecondMomentArea(point)
+        for arc in self.internal_arcs:
+            A -= arc.SecondMomentArea(point)
+        for arc in self.external_arcs:
+            A += arc.SecondMomentArea(point)
+        
         return A
 
     def plot_data(self, name='', fill=None, color='black', stroke_width=1, opacity=1):
@@ -1220,7 +1243,9 @@ class LineSegment2D(Line2D):
         Computes the distance of a point to segment of line
         """
         if self.points[0] == self.points[1]:
-            return 0, Point2D(point)
+            if return_other_point:    
+                return 0, Point2D(point)
+            return 0
         distance, point = LineSegment2DPointDistance([p.vector for p in self.points], point.vector)
         if return_other_point:
             return distance, Point2D(point)
@@ -1389,8 +1414,24 @@ class Arc2D(Primitive2D):
             points.append(point_to_add)
         points.append(self.end)
         return points
+    
+    def point_belongs(self, point):
+        circle = Circle2D(self.center, self.radius)
+        if not circle.point_belongs(point):
+            return False
+        vector_start = self.start - self.center
+        vector_point = point - self.center
+        vector_end  = self.end - self.center
+        if not self.is_trigo:
+            vector_start, vector_end = vector_end, vector_start
+        arc_angle = clockwise_angle(vector_start, vector_end)
+        point_angle = clockwise_angle(vector_start, vector_point)
+        if point_angle <= arc_angle:
+            return True
         
-
+    def point_distance(self, point):
+        return
+        
     def Length(self):
         return self.radius * abs(self.angle)
 
@@ -1519,6 +1560,9 @@ class Circle2D(Primitive2D):
     def tessellation_points(self, resolution=40):
         return [self.center + self.radius*math.cos(teta)*Vector2D((1,0)) + self.radius*math.sin(teta)*Vector2D((0,1)) \
                 for teta in npy.linspace(0, 2*math.pi, resolution+1)]
+        
+    def point_belongs(self, point):
+        return point.PointDistance(self.center) <= self.radius
 
     def Length(self):
         return 2* math.pi * self.radius
@@ -3632,10 +3676,13 @@ class Face3D(Primitive3D):
             self.bounding_box = self._bounding_box()
             
     def copy(self):
+        print('points before copy', self.points)
         new_contour = [contour.copy() for contour in self.contours]
         new_plane = self.plane.copy()
         new_points = [p.copy() for p in self.points]
+        print('points after copy', new_points)
         return Face3D(new_contour, new_plane, new_points, self.polygon2D, self.name)
+#        return Face3D(new_contour)
         
     def average_center_point(self):
         """
