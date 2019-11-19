@@ -2253,6 +2253,35 @@ class Plane3D:
             return linesegment.points[0] + intersection_abscissea * u, intersection_abscissea
         return linesegment.points[0] + intersection_abscissea * u
 
+    def equation_coefficients(self):
+        """
+        returns the a,b,c,d coefficient from equation ax+by+cz+d = 0
+        """
+        a, b, c = self.normal.vector
+        d = -self.origin.Dot(self.normal)
+        return (a, b, c, d)
+    
+    def plane_intersection(self, other_plane):
+        line_direction = self.normal.Cross(other_plane.normal)
+        
+        if line_direction.Norm() < 1e-6:
+            return None
+        
+        a1, b1, c1, d1 = self.equation_coefficients()
+        a2, b2, c2, d2 = other_plane.equation_coefficients()
+        
+        if a1*b2-a2*b1 != 0.:
+            x0 = (b1*d2-b2*d1)/(a1*b2-a2*b1)
+            y0 = (a2*d1-a1*d2)/(a1*b2-a2*b1)
+            point1 = Point3D((x0, y0, 0))
+        else:
+            y0 = (b2*d2-c2*d1)/(b1*c2-c1*b2)
+            z0 = (c1*d1-b1*d2)/(b1*c2-c1*b2)
+            point1 = Point3D((0, y0, z0))
+            
+        point2 = point1 + line_direction
+        return Line3D(point1, point2)
+
     def Rotation(self, center, axis, angle, copy=True):
         if copy:
             new_origin = self.origin.Rotation(center, axis, angle, True)
@@ -2331,6 +2360,9 @@ class Plane3D:
         
         return s
 
+PLANE3D_OXY = Plane3D(O3D, X3D, Y3D)
+PLANE3D_OYZ = Plane3D(O3D, Y3D, Z3D)
+PLANE3D_OZX = Plane3D(O3D, Z3D, X3D)
 
 class Basis3D(Basis):
     """
