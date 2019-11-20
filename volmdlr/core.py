@@ -667,7 +667,7 @@ class Basis2D(Basis):
         vectors = [Vector2D.DictToObject(vector_dict) for vector_dict in dict_['vectors']]
         return cls(*vectors)
 
-xy = Basis2D(x2D, y2D)
+XY = Basis2D(x2D, y2D)
 
 class Frame2D(Basis2D):
     """
@@ -745,7 +745,8 @@ class Frame2D(Basis2D):
     def Copy(self):
         return Frame2D(self.origin, self.u, self.v)
 
-oxy = Frame2D(o2D, x2D, y2D)
+#oxy = Frame2D(o2D, x2D, y2D)
+OXY = Frame2D(o2D, x2D, y2D)
 
 class Primitive2D:
     def __init__(self, name=''):
@@ -1400,16 +1401,16 @@ class Arc2D(Primitive2D):
 
     geo_points=property(_get_geo_points)
     
-    def tessellation_points(self, resolution=20):
-#        return [self.center + self.radius*math.cos(teta)*Vector2D((1,0)) + self.radius*math.sin(teta)*Vector2D((0,1)) \
-#                for teta in npy.linspace(0, self.angle, resolution)]
+    def tessellation_points(self, resolution_for_circle=40):
+        number_points_tesselation = math.ceil(resolution_for_circle*abs(self.angle)/2/math.pi)
+        
         points = []
         if not self.is_trigo:
-            delta_angle = -abs(self.angle1-self.angle2)/(resolution-1)
+            delta_angle = -abs(self.angle1-self.angle2)/(number_points_tesselation-1)
         else:
-            delta_angle = abs(self.angle2-self.angle1)/(resolution-1)
+            delta_angle = abs(self.angle2-self.angle1)/(number_points_tesselation-1)
         points.append(self.start)
-        for i in range(resolution-2):
+        for i in range(number_points_tesselation-2):
             point_to_add = points[-1].Rotation(self.center, delta_angle)
             points.append(point_to_add)
         points.append(self.end)
@@ -2554,7 +2555,7 @@ class Basis3D(Basis):
         return cls(*vectors)
 
 
-xyz = Basis3D(x3D, y3D, z3D)
+#xyz = Basis3D(x3D, y3D, z3D)
 XYZ = Basis3D(x3D, y3D, z3D)
 YZX = Basis3D(y3D, z3D, x3D)
 ZXY = Basis3D(z3D, x3D, y3D)
@@ -2694,7 +2695,7 @@ class Frame3D(Basis3D):
         return s 
     
 
-oxyz = Frame3D(o3D, x3D, y3D, z3D)
+#oxyz = Frame3D(o3D, x3D, y3D, z3D)
 OXYZ = Frame3D(O3D, x3D, y3D, z3D)
 
 

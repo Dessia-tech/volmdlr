@@ -630,10 +630,11 @@ class RevolvedProfile(volmdlr.Shell3D):
     
     def shell_faces(self):
         faces = []
-        TESSELLATION = 40
-        delta_angle = self.angle/TESSELLATION
+        number_points_for_circle = 40
+        number_points_tesselation = math.ceil(number_points_for_circle*self.angle/2/math.pi)
+        delta_angle = self.angle/number_points_tesselation
         
-        for nb in range(TESSELLATION):
+        for nb in range(number_points_tesselation):
             if nb == 0:
                 points = self.contour3D.points
             else:
