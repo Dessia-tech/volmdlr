@@ -509,7 +509,7 @@ class Point2D(Vector2D):
         ax.plot([x1[0]], [x1[1]], style)
         return ax
 
-    def PointDistance(self, point2):
+    def point_distance(self, point2):
         return (self-point2).Norm()
             
     @classmethod
@@ -561,8 +561,6 @@ class Point2D(Vector2D):
     @classmethod
     def LineProjection(cls, point, line):
         p1, p2 = line.points
-#        d = (p2-p1) / p2.PointDistance(p1)
-#        n = d.Rotation(Point2D((0, 0)), math.pi/2).vector
         n = line.NormalVector(unit=True)
         pp1 = point - p1
         return  pp1 - pp1.Dot(n)*n + p1
@@ -874,13 +872,19 @@ class Contour2D(Wire2D):
         internal_arcs = []
         external_arcs = []
         points_polygon = []
+        points_straight_line_contour = []
         for primitive in self.basis_primitives:
             if primitive.__class__.__name__ == 'LineSegment2D':
                 points_polygon.extend(primitive.points)
+                points_straight_line_contour.extend(primitive.points)
             elif primitive.__class__.__name__ == 'Arc2D':
                 points_polygon.append(primitive.center)
                 arcs.append(primitive)
+            else:
+                print(primitive)
+                raise NotImplementedError
         self.polygon = Polygon2D(points_polygon)
+        self.straight_line_contour_polygon = Polygon2D(points_straight_line_contour)
         for arc in arcs:
             if self.polygon.PointBelongs(arc.interior):
                 internal_arcs.append(arc)
@@ -900,7 +904,25 @@ class Contour2D(Wire2D):
             if arc.point_belongs(point):
                 return True
         return False
-        
+    
+    def point_distance(self, point):
+        min_distance = self.basis_primitives[0].point_distance(point)
+        for primitive in self.basis_primitives[1:]:
+            distance = primitive.point_distance(point)
+            if distance < min_distance:
+                min_distance = distance
+        return min_distance
+    
+    def bounding_points(self):
+        points = self.straight_line_contour_polygon.points[:]
+        for arc in self.internal_arcs + self.external_arcs:
+            points.extend(arc.tessellation_points())
+        xmin = min([p[0] for p in points])
+        xmax = max([p[0] for p in points])
+        ymin = min([p[1] for p in points])
+        ymax = max([p[1] for p in points])
+        return (Point2D((xmin, ymin)), Point2D((xmax, ymax)))
+    
     def To3D(self, plane_origin, x, y, name=None):
         if name is None:
             name = '3D of {}'.format(self.name)
@@ -1048,7 +1070,7 @@ class Line2D(Primitive2D, Line):
             for p in self.points:
                 p.Translation(offset, copy=False)
 
-    def PointDistance(self, point):
+    def point_distance(self, point):
         """
         Computes the distance of a point to line
         """
@@ -1091,14 +1113,14 @@ class Line2D(Primitive2D, Line):
         # self will be (AB)
         # line will be (CD)
 
-        if math.isclose(self.PointDistance(point), 0, abs_tol=1e-10):
+        if math.isclose(self.point_distance(point), 0, abs_tol=1e-10):
             I = Vector2D((point[0], point[1]))
             A = Vector2D((self.points[0][0], self.points[0][1]))
             B = Vector2D((self.points[1][0], self.points[1][1]))
             C = Vector2D((other_line.points[0][0], other_line.points[0][1]))
             D = Vector2D((other_line.points[1][0], other_line.points[1][1]))
 
-        elif math.isclose(other_line.PointDistance(point), 0, abs_tol=1e-10):
+        elif math.isclose(other_line.point_distance(point), 0, abs_tol=1e-10):
             I = Vector2D((point[0], point[1]))
             C = Vector2D((self.points[0][0], self.points[0][1]))
             D = Vector2D((self.points[1][0], self.points[1][1]))
@@ -1233,12 +1255,12 @@ class LineSegment2D(Line2D):
     geo_points=property(_get_geo_points)
 
     def Length(self):
-        return self.points[1].PointDistance(self.points[0])
+        return self.points[1].point_distance(self.points[0])
 
     def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
         return self.points[0] + self.DirectionVector(unit=True) * curvilinear_abscissa
 
-    def PointDistance(self, point, return_other_point=False):
+    def point_distance(self, point, return_other_point=False):
         """
         Computes the distance of a point to segment of line
         """
@@ -1416,13 +1438,16 @@ class Arc2D(Primitive2D):
         return points
     
     def point_belongs(self, point):
+        """
+        Computes if the point belongs to the pizza slice drawn by the arc and its center
+        """
         circle = Circle2D(self.center, self.radius)
         if not circle.point_belongs(point):
             return False
         vector_start = self.start - self.center
         vector_point = point - self.center
         vector_end  = self.end - self.center
-        if not self.is_trigo:
+        if self.is_trigo:
             vector_start, vector_end = vector_end, vector_start
         arc_angle = clockwise_angle(vector_start, vector_end)
         point_angle = clockwise_angle(vector_start, vector_point)
@@ -1430,7 +1455,17 @@ class Arc2D(Primitive2D):
             return True
         
     def point_distance(self, point):
-        return
+        vector_start = self.start - self.center
+        vector_point = point - self.center
+        vector_end  = self.end - self.center
+        if self.is_trigo:
+            vector_start, vector_end = vector_end, vector_start
+        arc_angle = clockwise_angle(vector_start, vector_end)
+        point_angle = clockwise_angle(vector_start, vector_point)
+        if point_angle <= arc_angle:
+            return abs(LineSegment2D(point, self.center).Length()-self.radius)
+        else:
+            return min(LineSegment2D(point, self.start).Length(), LineSegment2D(point, self.end).Length())
         
     def Length(self):
         return self.radius * abs(self.angle)
@@ -1562,7 +1597,7 @@ class Circle2D(Primitive2D):
                 for teta in npy.linspace(0, 2*math.pi, resolution+1)]
         
     def point_belongs(self, point):
-        return point.PointDistance(self.center) <= self.radius
+        return point.point_distance(self.center) <= self.radius
 
     def Length(self):
         return 2* math.pi * self.radius
@@ -1714,9 +1749,9 @@ class Polygon2D(CompositePrimitive2D):
         Compute the distance to the border distance of polygon
         Output is always positive, even if the point belongs to the polygon
         """
-        d_min, other_point_min = self.line_segments[0].PointDistance(point, return_other_point=True)
+        d_min, other_point_min = self.line_segments[0].point_distance(point, return_other_point=True)
         for line in self.line_segments[1:]:
-            d, other_point = line.PointDistance(point, return_other_point=True)
+            d, other_point = line.point_distance(point, return_other_point=True)
             if d < d_min:
                 d_min = d
                 other_point_min = other_point
@@ -2134,7 +2169,7 @@ class Point3D(Vector3D):
         y2d = self.Dot(y) - plane_origin.Dot(y)
         return Point2D((x2d,y2d))
 
-    def PointDistance(self, point2):
+    def point_distance(self, point2):
         return (self-point2).Norm()
 
     @classmethod
@@ -2840,7 +2875,7 @@ class BSplineCurve3D(Primitive3D):
         distances = []
         for point in self.points:
 #            vmpt = Point3D((point[1], point[2], point[3]))
-            distances.append(pt1.PointDistance(point))
+            distances.append(pt1.point_distance(point))
         return min(distances)
 
     def Rotation(self, center, axis, angle, copy=True):
@@ -3379,7 +3414,7 @@ class LineSegment3D(Edge3D):
         return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def Length(self):
-        return self.points[1].PointDistance(self.points[0])
+        return self.points[1].point_distance(self.points[0])
 
     def PlaneProjection2D(self, x, y):
         return LineSegment2D(self.points[0].PlaneProjection2D(x, y),
@@ -3457,7 +3492,7 @@ class LineSegment3D(Edge3D):
             s += 'var {} = BABYLON.MeshBuilder.CreateLines("lines", {{points: myPoints}}, scene);\n'.format(name)
             s += '{}.color = new BABYLON.Color3{};\n'.format(name, tuple(color))
         elif type_ == 'tube':
-            radius = 0.03*self.points[0].PointDistance(self.points[1])
+            radius = 0.03*self.points[0].point_distance(self.points[1])
             s = 'var points = [new BABYLON.Vector3({},{},{}), new BABYLON.Vector3({},{},{})];\n'.format(*self.points[0], *self.points[1])
             s += 'var {} = BABYLON.MeshBuilder.CreateTube("frame_U", {{path: points, radius: {}}}, {});'.format(name, radius, parent)
 #            s += 'line.material = red_material;\n'
@@ -3732,7 +3767,7 @@ class Face3D(Primitive3D):
         # On utilise le theroeme de Pytagore pour calculer la distance minimale entre le point et le contour
 
         projected_pt = point.PlaneProjection3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
-        projection_distance = point.PointDistance(projected_pt)
+        projection_distance = point.point_distance(projected_pt)
 
         if self.point_on_face(projected_pt):
             if return_other_point:
@@ -4048,7 +4083,7 @@ class Shell3D(CompositePrimitive3D):
         if sum(tests) == 0 or sum(tests) == 3:
             return tests[0]
         else:
-            print('PROBLEME')
+#            print('PROBLEME')
 #            print(point)
 #            raise NotImplementedError
 #            if tuple(point.vector) == (-0.3, 0.25, -0.25):
@@ -4485,7 +4520,7 @@ class BoundingBox:
             
         # The points are on the same face
         if face_point1 == face_point2:
-            return point1.PointDistance(point2)
+            return point1.point_distance(point2)
 
         deltax = self.xmax - self.xmin
         deltay = self.ymax - self.ymin
@@ -4603,7 +4638,7 @@ class BoundingBox:
                 frame2 = combination_dict[(path[1][0], path[1][1])]
                 frame = frame1 + frame2
                 net_points2_and_frame.append((Point2D(frame.OldCoordinates(point2_2d).vector), frame))
-            net_point2, frame = min(net_points2_and_frame, key=lambda pt: pt[0].PointDistance(point1_2d))
+            net_point2, frame = min(net_points2_and_frame, key=lambda pt: pt[0].point_distance(point1_2d))
             net_line = LineSegment2D(point1_2d, net_point2)
 
             # Computes the 3D intersection between the net_line and the edges of the face_point1
@@ -5208,12 +5243,15 @@ class Routing:
         line = LineSegment3D(self.points[0], self.points[1])
         
         intersection_points = []
+        abscissea_list = []
         for shell in self.volumemodel.shells:
             for face in shell.faces:
                 intersection_point, intersection_abscissea = face.linesegment_intersection(line, abscissea=True)
-                if intersection_point is not None and intersection_abscissea != 0 and intersection_abscissea != 1:
-                    intersection_points.append((intersection_point, intersection_abscissea))
-        
+                if intersection_point is not None and intersection_abscissea != 0 and intersection_abscissea != 1 \
+                and intersection_abscissea not in abscissea_list:
+                        intersection_points.append((intersection_point, intersection_abscissea))
+                        abscissea_list.append(intersection_abscissea)
+
         if len(intersection_points)%2 != 0:
             raise NotImplementedError
 
