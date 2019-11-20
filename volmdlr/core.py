@@ -665,7 +665,7 @@ class Basis2D(Basis):
         vectors = [Vector2D.DictToObject(vector_dict) for vector_dict in dict_['vectors']]
         return cls(*vectors)
 
-xy = Basis2D(x2D, y2D)
+XY = Basis2D(x2D, y2D)
 
 class Frame2D(Basis2D):
     """
@@ -743,7 +743,8 @@ class Frame2D(Basis2D):
     def Copy(self):
         return Frame2D(self.origin, self.u, self.v)
 
-oxy = Frame2D(o2D, x2D, y2D)
+#oxy = Frame2D(o2D, x2D, y2D)
+OXY = Frame2D(o2D, x2D, y2D)
 
 class Primitive2D:
     def __init__(self, name=''):
@@ -1422,16 +1423,16 @@ class Arc2D(Primitive2D):
 
     geo_points=property(_get_geo_points)
     
-    def tessellation_points(self, resolution=20):
-#        return [self.center + self.radius*math.cos(teta)*Vector2D((1,0)) + self.radius*math.sin(teta)*Vector2D((0,1)) \
-#                for teta in npy.linspace(0, self.angle, resolution)]
+    def tessellation_points(self, resolution_for_circle=40):
+        number_points_tesselation = math.ceil(resolution_for_circle*abs(self.angle)/2/math.pi)
+        
         points = []
         if not self.is_trigo:
-            delta_angle = -abs(self.angle1-self.angle2)/(resolution-1)
+            delta_angle = -abs(self.angle1-self.angle2)/(number_points_tesselation-1)
         else:
-            delta_angle = abs(self.angle2-self.angle1)/(resolution-1)
+            delta_angle = abs(self.angle2-self.angle1)/(number_points_tesselation-1)
         points.append(self.start)
-        for i in range(resolution-2):
+        for i in range(number_points_tesselation-2):
             point_to_add = points[-1].Rotation(self.center, delta_angle)
             points.append(point_to_add)
         points.append(self.end)
@@ -2288,6 +2289,35 @@ class Plane3D:
             return linesegment.points[0] + intersection_abscissea * u, intersection_abscissea
         return linesegment.points[0] + intersection_abscissea * u
 
+    def equation_coefficients(self):
+        """
+        returns the a,b,c,d coefficient from equation ax+by+cz+d = 0
+        """
+        a, b, c = self.normal.vector
+        d = -self.origin.Dot(self.normal)
+        return (a, b, c, d)
+    
+    def plane_intersection(self, other_plane):
+        line_direction = self.normal.Cross(other_plane.normal)
+        
+        if line_direction.Norm() < 1e-6:
+            return None
+        
+        a1, b1, c1, d1 = self.equation_coefficients()
+        a2, b2, c2, d2 = other_plane.equation_coefficients()
+        
+        if a1*b2-a2*b1 != 0.:
+            x0 = (b1*d2-b2*d1)/(a1*b2-a2*b1)
+            y0 = (a2*d1-a1*d2)/(a1*b2-a2*b1)
+            point1 = Point3D((x0, y0, 0))
+        else:
+            y0 = (b2*d2-c2*d1)/(b1*c2-c1*b2)
+            z0 = (c1*d1-b1*d2)/(b1*c2-c1*b2)
+            point1 = Point3D((0, y0, z0))
+            
+        point2 = point1 + line_direction
+        return Line3D(point1, point2)
+
     def Rotation(self, center, axis, angle, copy=True):
         if copy:
             new_origin = self.origin.Rotation(center, axis, angle, True)
@@ -2366,6 +2396,9 @@ class Plane3D:
         
         return s
 
+PLANE3D_OXY = Plane3D(O3D, X3D, Y3D)
+PLANE3D_OYZ = Plane3D(O3D, Y3D, Z3D)
+PLANE3D_OZX = Plane3D(O3D, Z3D, X3D)
 
 class Basis3D(Basis):
     """
@@ -2557,7 +2590,7 @@ class Basis3D(Basis):
         return cls(*vectors)
 
 
-xyz = Basis3D(x3D, y3D, z3D)
+#xyz = Basis3D(x3D, y3D, z3D)
 XYZ = Basis3D(x3D, y3D, z3D)
 YZX = Basis3D(y3D, z3D, x3D)
 ZXY = Basis3D(z3D, x3D, y3D)
@@ -2697,7 +2730,7 @@ class Frame3D(Basis3D):
         return s 
     
 
-oxyz = Frame3D(o3D, x3D, y3D, z3D)
+#oxyz = Frame3D(o3D, x3D, y3D, z3D)
 OXYZ = Frame3D(O3D, x3D, y3D, z3D)
 
 
@@ -3127,10 +3160,10 @@ class Arc3D(Primitive3D):
         ax.plot(x, y, color=color)
 
     def FreeCADExport(self, name, ndigits=6):
-        xs, ys, zs = npy.round(1000*self.start.vector, ndigits)
-        xm, ym, zm = npy.round(1000*self.interior.vector, ndigits)
-        xe, ye, ze = npy.round(1000*self.end.vector, ndigits)
-        return '{} = Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,xs,ys,zs,xm,ym,zm,xe,ye,ze)
+        xs, ys, zs = round(1000*self.start, ndigits).vector
+        xi, yi, zi = round(1000*self.interior, ndigits).vector
+        xe, ye, ze = round(1000*self.end, ndigits).vector
+        return '{} = Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,xs,ys,zs,xi,yi,zi,xe,ye,ze)
 
 
 class BSplineSurface3D(Primitive3D):
@@ -3475,8 +3508,8 @@ class LineSegment3D(Edge3D):
                          dash, opacity, arrow)
 
     def FreeCADExport(self, name, ndigits=6):
-        x1, y1, z1 = npy.round(1000*self.points[0].vector, ndigits)
-        x2, y2, z2 = npy.round(1000*self.points[1].vector, ndigits)
+        x1, y1, z1 = round(1000*self.points[0], ndigits).vector
+        x2, y2, z2 = round(1000*self.points[1], ndigits).vector
         return '{} = Part.LineSegment(fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,x1,y1,z1,x2,y2,z2)
 
     def to_line(self):
@@ -5200,7 +5233,7 @@ class VolumeModel:
         os.remove(f.name)
         return output
 
-    def BabylonScript(self):
+    def BabylonScript(self, use_cdn=True):
 
         env = Environment(loader=PackageLoader('volmdlr', 'templates'),
                           autoescape=select_autoescape(['html', 'xml']))
@@ -5217,13 +5250,16 @@ class VolumeModel:
         for primitive in self.primitives:
             if hasattr(primitive, 'Babylon'):
                 primitives_strings.append(primitive.Babylon())
-        return template.render(name=self.name,center=tuple(center),length=2*max_length,
-                               primitives_strings=primitives_strings)
+        return template.render(name=self.name,
+                               center=tuple(center),
+                               length=2*max_length,
+                               primitives_strings=primitives_strings,
+                               use_cdn=use_cdn)
 
-    def BabylonShow(self,page='vm_babylonjs'):
+    def BabylonShow(self,page='vm_babylonjs', use_cdn=True):
         page+='.html'
         with open(page,'w') as file:
-            file.write(self.BabylonScript())
+            file.write(self.BabylonScript(use_cdn=use_cdn))
 
         webbrowser.open('file://' + os.path.realpath(page))
         
