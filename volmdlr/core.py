@@ -5283,8 +5283,12 @@ class Routing:
         for shell in self.volumemodel.shells:
             for face in shell.faces:
                 intersection_point, intersection_abscissea = face.linesegment_intersection(line, abscissea=True)
-                if intersection_point is not None and intersection_abscissea != 0 and intersection_abscissea != 1 \
-                and intersection_abscissea not in abscissea_list:
+                if intersection_point is not None and intersection_abscissea != 0 and intersection_abscissea != 1:
+                    not_in_abscissea_list = True
+                    for abscissea in abscissea_list:
+                        if math.isclose(abscissea, intersection_abscissea, abs_tol=1e-8):
+                            not_in_abscissea_list = False
+                    if not_in_abscissea_list:
                         intersection_points.append((intersection_point, intersection_abscissea))
                         abscissea_list.append(intersection_abscissea)
 
