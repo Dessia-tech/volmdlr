@@ -4115,7 +4115,7 @@ class Shell3D(CompositePrimitive3D):
             
         if sum(tests) == 0 or sum(tests) == 3:
             return tests[0]
-        else:
+#        else:
 #            print('PROBLEME')
 #            print(point)
 #            raise NotImplementedError
@@ -4151,7 +4151,7 @@ class Shell3D(CompositePrimitive3D):
                     
         for point in points:
             if not shell2.point_belongs(point):
-                print('point belongs', point)
+#                print('point belongs', point)
                 return False
             
         # Check if any faces are intersecting
