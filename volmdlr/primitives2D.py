@@ -12,7 +12,7 @@ from volmdlr.primitives import RoundedLineSegments
         
 class OpenedRoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
     closed= False
-    def __init__(self, points, radius, closed=False, adapt_radius=False, name=''):
+    def __init__(self, points, radius, adapt_radius=False, name=''):
         primitives = RoundedLineSegments.__init__(self, points, radius,
                                                   volmdlr.LineSegment2D, volmdlr.Arc2D,
                                                   closed=False,
@@ -70,21 +70,21 @@ class OpenedRoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
         if copy:
             return self.__class__([p.Rotation(center, angle, copy=True)\
                                           for p in self.points],
-                                          self.radius, self.closed,
+                                          self.radius,
                                           adapt_radius =self.adapt_radius,
                                           name = self.name)
         else:
             self.__init__([p.Rotation(center, angle, copy=True) for p in self.points],
-                           self.radius, self.closed,
+                           self.radius,
                            adapt_radius=self.adapt_radius, name = self.name)
 
     def Translation(self, offset, copy=True):
         if copy:
             return self.__class__([p.Translation(offset, copy=True) for p in self.points],
-                                          self.radius, self.closed, adapt_radius=self.adapt_radius, name = self.name)
+                                          self.radius, adapt_radius=self.adapt_radius, name = self.name)
         else:
             self.__init__([p.Translation(offset,copy=True) for p in self.points],
-                           self.radius, self.closed, adapt_radius =self.adapt_radius, name = self.name)
+                           self.radius, adapt_radius =self.adapt_radius, name = self.name)
 
     def Offset(self, offset):
         nb = len(self.points)
