@@ -432,7 +432,9 @@ class ExtrudedProfile(volmdlr.Shell3D):
                  extrusion_vector, name='', color=None):
         volmdlr.Primitive3D.__init__(self, name=name)
         self.outer_contour2d = outer_contour2d
+        print('outer_contour2d', self.outer_contour2d.primitives)
         self.outer_contour3d = outer_contour2d.To3D(plane_origin, x, y)
+        print('outer_contour3d', self.outer_contour3d)
         self.inner_contours2d = inner_contours2d
         self.extrusion_vector = extrusion_vector
         self.inner_contours3d = []

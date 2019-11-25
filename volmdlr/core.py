@@ -412,6 +412,24 @@ class Vector2D(Vector):
         else:
             self.vector = vector2
 
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        if side == 'old':
+            new_vector = frame.OldCoordinates(self)
+            if copy:
+                return new_vector
+            else:
+                self.vector = new_vector.vector
+                
+        if side == 'new':
+            new_vector = frame.NewCoordinates(self)
+            if copy:
+                return new_vector
+            else:
+                self.vector = new_vector.vector
+
     def To3D(self, plane_origin, vx, vy):
         return Vector3D([plane_origin.vector[0] + vx.vector[0]*self.vector[0] + vy.vector[0]*self.vector[1],
                          plane_origin.vector[1] + vx.vector[1]*self.vector[0] + vy.vector[1]*self.vector[1],
@@ -477,6 +495,8 @@ class Point2D(Vector2D):
     def __init__(self, vector, name=''):
         Vector2D.__init__(self, vector)
         self.name = name
+        if isinstance(self.vector[0], complex) or isinstance(self.vector[1], complex):
+            raise ValueError
 
     def __add__(self, other_vector):
         return Point2D(add2D(self.vector, other_vector.vector))
@@ -787,7 +807,19 @@ class CompositePrimitive2D(Primitive2D):
             for p in self.basis_primitives:
                 p.Translation(offset, copy=False)
             self.UpdateBasisPrimitives()
-
+            
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        if copy:
+            return self.__class__([p.frame_mapping(frame, side, copy=True)\
+                                   for p in self.primitives])
+        else:
+            for p in self.basis_primitives:
+                p.frame_mapping(frame, side, copy=False)
+            self.UpdateBasisPrimitives()
+        
     def To3D(self, plane_origin, x, y, name=None):
         if name is None:
             name = '3D of {}'.format(self.name)
@@ -865,6 +897,8 @@ class Wire2D(CompositePrimitive2D):
 class Contour2D(Wire2D):
     """
     A collection of 2D primitives forming a closed wire2D
+    TODO : CenterOfMass and SecondMomentArea should be changed accordingly to
+    Area considering the triangle drawn by the arcs
     """
     def __init__(self, primitives, name=''):
         Wire2D.__init__(self, primitives, name)
@@ -879,8 +913,12 @@ class Contour2D(Wire2D):
                 points_polygon.extend(primitive.points)
                 points_straight_line_contour.extend(primitive.points)
             elif primitive.__class__.__name__ == 'Arc2D':
-                points_polygon.append(primitive.center)
+#                points_polygon.append(primitive.center)
+                points_polygon.append(primitive.start)
+                points_polygon.append(primitive.end)
                 arcs.append(primitive)
+            elif primitive.__class__.__name__ == 'Circle2D':
+                return None
             else:
                 print(primitive)
                 raise NotImplementedError
@@ -937,9 +975,11 @@ class Contour2D(Wire2D):
         A = self.polygon.Area()
         
         for arc in self.internal_arcs:
-            A -= arc.Area()
+            triangle = Polygon2D([arc.start, arc.center, arc.end])
+            A = A - arc.Area() + triangle.Area()
         for arc in self.external_arcs:
-            A += arc.Area()
+            triangle = Polygon2D([arc.start, arc.center, arc.end])
+            A = A + arc.Area() - triangle.Area()
 
         return A
 
@@ -1334,6 +1374,21 @@ class LineSegment2D(Line2D):
         else:
             for p in self.points:
                 p.Translation(offset,copy=False)
+                
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        if side == 'old':
+            if copy:
+                return LineSegment2D(*[frame.OldCoordinates(p) for p in self.points])
+            else:
+                self.points = [frame.OldCoordinates(p) for p in self.points]
+        if side == 'new':
+            if copy:
+                return LineSegment2D(*[frame.NewCoordinates(p) for p in self.points])
+            else:
+                self.points = [frame.NewCoordinates(p) for p in self.points]
 
     def GeoScript(self, primitive_index, points_indices):
         s='Line({}) = {{{}, {}}};\n'.format(primitive_index,*points_indices)
@@ -1520,12 +1575,31 @@ class Arc2D(Primitive2D):
             return Arc2D(*[p.Rotation(center,angle,copy=True) for p in [self.start,self.interior,self.end]])
         else:
             self.__init__(*[p.Rotation(center,angle,copy=True) for p in [self.start,self.interior,self.end]])
+#            self.start.Rotation(center,angle,copy=False)
+#            self.interior.Rotation(center,angle,copy=False)
+#            self.end.Rotation(center,angle,copy=False)
 
     def Translation(self, offset, copy=True):
         if copy:
             return Arc2D(*[p.Translation(offset,copy=True) for p in [self.start,self.interior,self.end]])
         else:
             self.__init__(*[p.Translation(offset,copy=True) for p in [self.start,self.interior,self.end]])
+#            self.start.Translation(offset,copy=False)
+#            self.interior.Translation(offset,copy=False)
+#            self.end.Translation(offset,copy=False)
+            
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        if copy:
+            return Arc2D(*[p.frame_mapping(frame, side, copy=True) for p in [self.start,self.interior,self.end]])
+        else:
+            self.__init__(*[p.frame_mapping(frame, side, copy=True) for p in [self.start,self.interior,self.end]])
+#            self.start.frame_mapping(frame, side,copy=False)
+#            self.interior.frame_mapping(frame, side,copy=False)
+#            self.end.frame_mapping(frame, side,copy=False)
+        
 
     def SecondMomentArea(self, point):
         """
@@ -1638,6 +1712,21 @@ class Circle2D(Primitive2D):
         else:
             self.center.Translation(offset,copy=False)
             self.utd_geo_points=False
+            
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        if side == 'old':
+            if copy:
+                return Circle2D(frame.OldCoordinates(self.center), self.radius)
+            else:
+                self.center = frame.OldCoordinates(self.center)
+        if side == 'new':
+            if copy:
+                return Circle2D(frame.NewCoordinates(self.center), self.radius)
+            else:
+                self.points = frame.NewCoordinates(self.center)
 
     def Area(self):
         return math.pi*self.radius**2
@@ -1652,6 +1741,10 @@ class Circle2D(Primitive2D):
 
     def CenterOfMass(self):
         return self.center
+    
+    def point_symmetric(self, point):
+        center = 2*point - self.center
+        return Circle2D(center, self.radius)
 
     def plot_data(self, marker=None, color='black', stroke_width=1, opacity=1, fill=None):
         return {'type' : 'circle',
@@ -3549,6 +3642,9 @@ class Contour3D(Wire3D):
         ou alors un ensemble de primitives
         ou alors un ensemble de basis_primtives (qui sont des points pour le moment)
         """
+        
+        
+        
         self.name = name
         self.points = points
         
@@ -3559,8 +3655,15 @@ class Contour3D(Wire3D):
             else:
                 edges_primitives.append(edge)
         self.edges = edges_primitives
+        
+        print('---', edges)
+        print('--', self.edges[0].__class__.__name__)
+        if self.edges[0].__class__.__name__ == 'Contour3D':
+            raise ValueError
                     
         self.points = self.clean_points()
+        
+        
 
 
     @classmethod
@@ -3582,6 +3685,7 @@ class Contour3D(Wire3D):
         return cls(edges, points=None, name=arguments[0][1:-1])
     
     def clean_points(self):
+#        print(self.edges[0].edges)
         points = self.edges[0].basis_primitives[::]
         last_points_added = points
         for edge in self.edges[1:]:
@@ -4115,7 +4219,7 @@ class Shell3D(CompositePrimitive3D):
             
         if sum(tests) == 0 or sum(tests) == 3:
             return tests[0]
-        else:
+#        else:
 #            print('PROBLEME')
 #            print(point)
 #            raise NotImplementedError
@@ -4580,12 +4684,12 @@ class BoundingBox:
                                      5: [Point2D((self.zmin-self.zmin-deltaz/2, self.ymin-self.ymin-deltay/2)), Point2D((self.zmin-self.zmin-deltaz/2, self.ymax-self.ymin-deltay/2)), Point2D((self.zmax-self.zmin-deltaz/2, self.ymax-self.ymin-deltay/2)), Point2D((self.zmax-self.zmin-deltaz/2, self.ymin-self.ymin-deltay/2))],
                                      6: [Point2D((self.ymin-self.ymin-deltay/2, self.xmin-self.xmin-deltax/2)), Point2D((self.ymin-self.ymin-deltay/2, self.xmax-self.xmin-deltax/2)), Point2D((self.ymax-self.ymin-deltay/2, self.xmax-self.xmin-deltax/2)), Point2D((self.ymax-self.ymin-deltay/2, self.xmin-self.xmin-deltax/2))],}
         
-        vertex_2d_coordinate_dict2 = {1: [Point2D((self.xmin, self.ymin)), Point2D((self.xmin, self.ymax)), Point2D((self.xmax, self.ymax)), Point2D((self.xmax, self.ymin))],
-                                    2: [Point2D((self.zmin, self.xmin)), Point2D((self.zmin, self.xmax)), Point2D((self.zmax, self.xmax)), Point2D((self.zmax, self.xmin))],
-                                     3: [Point2D((self.ymin, self.zmin)), Point2D((self.ymin, self.zmax)), Point2D((self.ymax, self.zmax)), Point2D((self.ymax, self.zmin))],
-                                     4: [Point2D((self.xmin, self.zmin)), Point2D((self.xmin, self.zmax)), Point2D((self.xmax, self.zmax)), Point2D((self.xmax, self.zmin))],
-                                     5: [Point2D((self.zmin, self.ymin)), Point2D((self.zmin, self.ymax)), Point2D((self.zmax, self.ymax)), Point2D((self.zmax, self.ymin))],
-                                     6: [Point2D((self.ymin, self.xmin)), Point2D((self.ymin, self.xmax)), Point2D((self.ymax, self.xmax)), Point2D((self.ymax, self.xmin))],}
+#        vertex_2d_coordinate_dict2 = {1: [Point2D((self.xmin, self.ymin)), Point2D((self.xmin, self.ymax)), Point2D((self.xmax, self.ymax)), Point2D((self.xmax, self.ymin))],
+#                                    2: [Point2D((self.zmin, self.xmin)), Point2D((self.zmin, self.xmax)), Point2D((self.zmax, self.xmax)), Point2D((self.zmax, self.xmin))],
+#                                     3: [Point2D((self.ymin, self.zmin)), Point2D((self.ymin, self.zmax)), Point2D((self.ymax, self.zmax)), Point2D((self.ymax, self.zmin))],
+#                                     4: [Point2D((self.xmin, self.zmin)), Point2D((self.xmin, self.zmax)), Point2D((self.xmax, self.zmax)), Point2D((self.xmax, self.zmin))],
+#                                     5: [Point2D((self.zmin, self.ymin)), Point2D((self.zmin, self.ymax)), Point2D((self.zmax, self.ymax)), Point2D((self.zmax, self.ymin))],
+#                                     6: [Point2D((self.ymin, self.xmin)), Point2D((self.ymin, self.xmax)), Point2D((self.ymax, self.xmax)), Point2D((self.ymax, self.xmin))],}
         
         
         vertex_to_3d_dict = {1: (2, self.zmax, 0, 1),
