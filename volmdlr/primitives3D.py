@@ -23,7 +23,10 @@ class RoundedLineSegments3D(volmdlr.Wire3D, RoundedLineSegments):
                                                   volmdlr.LineSegment3D,
                                                   volmdlr.Arc3D,
                                                   closed, adapt_radius, name='')
-        volmdlr.Wire3D.__init__(self, primitives, name)
+        if closed:
+            volmdlr.Contour3D.__init__(self, primitives, name)
+        else:              
+            volmdlr.Wire3D.__init__(self, primitives, name)
 
     def ArcFeatures(self, ipoint):
         radius = self.radius[ipoint]
@@ -182,11 +185,12 @@ class Block(volmdlr.Shell3D):
         """
         side = 'old' or 'new'
         """
+        basis = frame.Basis()
         if side == 'new':
             new_origin = frame.NewCoordinates(self.frame.origin)
-            new_u = frame.NewCoordinates(self.frame.u)
-            new_v = frame.NewCoordinates(self.frame.v)
-            new_w = frame.NewCoordinates(self.frame.w)
+            new_u = basis.NewCoordinates(self.frame.u)
+            new_v = basis.NewCoordinates(self.frame.v)
+            new_w = basis.NewCoordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
             if copy:
                 return Block(new_frame, self.name, self.color)
@@ -196,9 +200,9 @@ class Block(volmdlr.Shell3D):
         
         if side == 'old':
             new_origin = frame.OldCoordinates(self.frame.origin)
-            new_u = frame.OldCoordinates(self.frame.u)
-            new_v = frame.OldCoordinates(self.frame.v)
-            new_w = frame.OldCoordinates(self.frame.w)
+            new_u = basis.OldCoordinates(self.frame.u)
+            new_v = basis.OldCoordinates(self.frame.v)
+            new_w = basis.OldCoordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
             if copy:
                 return Block(new_frame, self.name, self.color)
@@ -605,7 +609,7 @@ class RevolvedProfile(volmdlr.Shell3D):
     """
     def __init__(self, plane_origin, x, y, contour2D, axis_point,
                  axis, angle=2*math.pi, name='', color=None):
-        volmdlr.Primitive3D.__init__(self, name=name)
+#        volmdlr.Primitive3D.__init__(self, name=name)
         self.contour2D = contour2D
         self.axis_point = axis_point
         self.axis = axis
@@ -618,6 +622,7 @@ class RevolvedProfile(volmdlr.Shell3D):
 #        for contour in contour2D:
 #            self.contours3D.append(contour.To3D(plane_origin, x, y))
         self.contour3D = self.contour2D.To3D(plane_origin, x, y)
+        print('self.contour3D', self.contour3D)
             
         faces = self.shell_faces()
         volmdlr.Shell3D.__init__(self, faces, name, color)
@@ -625,10 +630,11 @@ class RevolvedProfile(volmdlr.Shell3D):
     
     def shell_faces(self):
         faces = []
-        TESSELLATION = 40
-        delta_angle = self.angle/TESSELLATION
+        number_points_for_circle = 40
+        number_points_tesselation = math.ceil(number_points_for_circle*self.angle/2/math.pi)
+        delta_angle = self.angle/number_points_tesselation
         
-        for nb in range(TESSELLATION):
+        for nb in range(number_points_tesselation):
             if nb == 0:
                 points = self.contour3D.points
             else:
@@ -668,7 +674,7 @@ class RevolvedProfile(volmdlr.Shell3D):
         s = 'W=[]\n'
 #        for ic, contour in enumerate(self.contours3D):
         s += 'L=[]\n'
-        for ibp, basis_primitive in enumerate(self.contour2D.basis_primitives):
+        for ibp, basis_primitive in enumerate(self.contour3D.edges):
             s += basis_primitive.FreeCADExport('L{}_{}'.format(1, ibp), 8)
             s += 'L.append(L{}_{})\n'.format(1,ibp)
         s += 'S = Part.Shape(L)\n'
