@@ -217,9 +217,9 @@ class Matrix33:
 
 
     def vector_multiplication(self, vector):
-        return vector.__class__((self.M11*vector[0] + self.M12*vector[1] + self.M13*vector[2],
-                                 self.M21*vector[0] + self.M22*vector[1] + self.M23*vector[2],
-                                 self.M31*vector[0] + self.M32*vector[1] + self.M33*vector[2]))
+        return vector.__class__((self.M11*vector.vector[0] + self.M12*vector.vector[1] + self.M13*vector.vector[2],
+                                 self.M21*vector.vector[0] + self.M22*vector.vector[1] + self.M23*vector.vector[2],
+                                 self.M31*vector.vector[0] + self.M32*vector.vector[1] + self.M33*vector.vector[2]))
 
     def determinent(self):
         det = self.M11*self.M22*self.M33 + self.M12*self.M23*self.M31 \
@@ -274,6 +274,8 @@ class Vector:
     """
     Abstract class of vector
     """
+    __slots__ = ('vector', 'name')
+    
     def __setitem__(self, key, item):
         self.vector[key] = item
 
@@ -493,10 +495,7 @@ Y2D = Vector2D((0, 1))
 
 class Point2D(Vector2D):
     def __init__(self, vector, name=''):
-        Vector2D.__init__(self, vector)
-        self.name = name
-        if isinstance(self.vector[0], complex) or isinstance(self.vector[1], complex):
-            raise ValueError
+        Vector2D.__init__(self, vector, name)
 
     def __add__(self, other_vector):
         return Point2D(add2D(self.vector, other_vector.vector))
@@ -1977,7 +1976,7 @@ class Vector3D(Vector):
                 }
             }
         }    
-
+    
     def __init__(self, vector, name=''):
         self.vector = [0, 0, 0]
 #        self.vector = npy.zeros(3)
@@ -2214,8 +2213,7 @@ class Point3D(Vector3D):
         }
 
     def __init__(self, vector, name=''):
-        Vector3D.__init__(self, vector)
-        self.name=name
+        Vector3D.__init__(self, vector, name)
 
     def __add__(self, other_vector):
         return Point3D(add3D(self.vector, other_vector.vector))
@@ -2656,9 +2654,9 @@ class Basis3D(Basis):
         self.w = vect_w
 
     def TransferMatrix(self):
-        return Matrix33(self.u[0], self.v[0], self.w[0],
-                        self.u[1], self.v[1], self.w[1],
-                        self.u[2], self.v[2], self.w[2])
+        return Matrix33(self.u.vector[0], self.v.vector[0], self.w.vector[0],
+                        self.u.vector[1], self.v.vector[1], self.w.vector[1],
+                        self.u.vector[2], self.v.vector[2], self.w.vector[2])
 #        return npy.array([[self.u[0], self.v[0], self.w[0]],
 #                          [self.u[1], self.v[1], self.w[1]],
 #                          [self.u[2], self.v[2], self.w[2]]])
@@ -4255,7 +4253,7 @@ class Shell3D(CompositePrimitive3D):
                     
         for point in points:
             if not shell2.point_belongs(point):
-                print('point belongs', point)
+#                print('point belongs', point)
                 return False
             
         # Check if any faces are intersecting

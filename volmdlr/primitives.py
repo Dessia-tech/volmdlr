@@ -115,8 +115,8 @@ class RoundedLineSegments:
                             p3 = self.points[ipoint +1]
                                 
         
-                        d1 = p1.PointDistance(p2)
-                        d2 = p2.PointDistance(p3)
+                        d1 = p1.point_distance(p2)
+                        d2 = p2.point_distance(p3)
 
                         if dist[ipoint] > (min(d1, d2)):
                             self.radius[ipoint] = min(self.radius[ipoint], min(d1, d2) * math.tan(alpha[ipoint]))

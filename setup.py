@@ -72,6 +72,6 @@ setup(name='volmdlr',
       package_dir={},
       include_package_data = True,
       install_requires=['numpy', 'matplotlib', 'Cython', 'scipy', 'jinja2',
-                        'geomdl', 'jsonschema'],
+                        'geomdl', 'jsonschema', 'networkx'],
       classifiers=['Topic :: Scientific/Engineering','Development Status :: 3 - Alpha'],
       ext_modules = cythonize("volmdlr/vmcy.pyx"))
