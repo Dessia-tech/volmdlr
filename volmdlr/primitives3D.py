@@ -17,16 +17,16 @@ from volmdlr.primitives import RoundedLineSegments
 
 import matplotlib.pyplot as plt
 
-class RoundedLineSegments3D(volmdlr.Wire3D, RoundedLineSegments):
-    def __init__(self, points, radius, closed=False, adapt_radius=False, name=''):
+class OpenedRoundedLineSegments3D(volmdlr.Wire3D, RoundedLineSegments):
+    def __init__(self, points, radius, adapt_radius=False, name=''):
         primitives = RoundedLineSegments.__init__(self, points, radius,
                                                   volmdlr.LineSegment3D,
                                                   volmdlr.Arc3D,
-                                                  closed, adapt_radius, name='')
-        if closed:
-            volmdlr.Contour3D.__init__(self, primitives, name)
-        else:              
-            volmdlr.Wire3D.__init__(self, primitives, name)
+                                                  closed=False,
+                                                  adapt_radius=adapt_radius,
+                                                  name='')
+            
+        volmdlr.Wire3D.__init__(self, primitives, name)
 
     def ArcFeatures(self, ipoint):
         radius = self.radius[ipoint]
@@ -92,6 +92,18 @@ class RoundedLineSegments3D(volmdlr.Wire3D, RoundedLineSegments):
             self.__init__([p.Translation(offset, copy=True)\
                            for p in self.points],
                           self.radius, self.closed, self.name)
+
+
+class ClosedRoundedLineSegments3D(volmdlr.Contour3D, OpenedRoundedLineSegments3D):
+    def __init__(self, points, radius, adapt_radius=False, name=''):
+        primitives = RoundedLineSegments.__init__(self, points, radius,
+                                                  volmdlr.LineSegment3D,
+                                                  volmdlr.Arc3D,
+                                                  closed=True,
+                                                  adapt_radius=adapt_radius,
+                                                  name='')
+            
+        volmdlr.Contour3D.__init__(self, primitives, name)
 
 class Sphere(volmdlr.Primitive3D):
     def __init__(self,center, radius, name=''):
@@ -432,9 +444,9 @@ class ExtrudedProfile(volmdlr.Shell3D):
                  extrusion_vector, name='', color=None):
         volmdlr.Primitive3D.__init__(self, name=name)
         self.outer_contour2d = outer_contour2d
-        print('outer_contour2d', self.outer_contour2d.primitives)
+#        print('outer_contour2d', self.outer_contour2d.primitives)
         self.outer_contour3d = outer_contour2d.To3D(plane_origin, x, y)
-        print('outer_contour3d', self.outer_contour3d)
+#        print('outer_contour3d', self.outer_contour3d)
         self.inner_contours2d = inner_contours2d
         self.extrusion_vector = extrusion_vector
         self.inner_contours3d = []
@@ -787,13 +799,13 @@ class Sweep(volmdlr.Primitive3D):
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive{}'.format(ip)
         s = "E = []\n"
-        for icontour, contour in enumerate(self.contour3d.basis_primitives):
+        for icontour, contour in enumerate(self.contour3d.edges):
             s += contour.FreeCADExport('L_{}'.format(icontour))
             s += 'E.append(Part.Edge(L_{}))\n'.format(icontour)
         s += 'contour = Part.Wire(E[:])\n'
 
         s += "E=[]\n"
-        for iwire, wire in enumerate(self.wire3d.basis_primitives):
+        for iwire, wire in enumerate(self.wire3d.edges):
             s += wire.FreeCADExport('L_{}'.format(iwire))
             s += 'E.append(Part.Edge(L_{}))\n'.format(iwire)
         s += 'wire = Part.Wire(E[:])\n'

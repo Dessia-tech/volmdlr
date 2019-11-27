@@ -29,12 +29,12 @@ for i in range(14):
 #print(radius)
 c = vm.Circle3D(p1, 0.008, p2-p1)
 
-rl = primitives3D.RoundedLineSegments3D(points, radius, closed=False, adapt_radius=True, name='wire')
+rl = primitives3D.ClosedRoundedLineSegments3D(points, radius, adapt_radius=True, name='wire')
 contour = vm.Contour3D([c])
 
 sweep = primitives3D.Sweep(contour, rl, name = 'Random pipe')
 
-m = vm.VolumeModel([('Random Pipe', [sweep])])
+m = vm.VolumeModel([sweep])
 
 m.FreeCADExport('sweep')
 

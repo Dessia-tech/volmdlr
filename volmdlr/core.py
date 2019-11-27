@@ -521,12 +521,15 @@ class Point2D(Vector2D):
                         plane_origin.vector[2] + vx.vector[2]*self.vector[0] + vy.vector[2]*self.vector[1],
                         ])
 
-    def MPLPlot(self, ax=None, color='b'):
+    def MPLPlot(self, ax=None, color='k'):
         if ax is None:
             fig, ax = plt.subplots()
+        else:
+            fig = ax.figure
+            
         x1, y1 = self.vector
-        ax.plot([x1], [y1], color='b')
-        return ax
+        ax.plot([x1], [y1], color=color, marker='o')
+        return fig, ax
 
     def point_distance(self, point2):
         return (self-point2).Norm()
@@ -831,7 +834,7 @@ class CompositePrimitive2D(Primitive2D):
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
         else:
-            fig = None
+            fig = ax.figure
 
         for element in self.basis_primitives:
             if element.__class__.__name__ == 'LineSegment2D':
@@ -1333,7 +1336,7 @@ class LineSegment2D(Line2D):
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
         else:
-            fig = None
+            fig = ax.figure
 
         p1, p2 = self.points
         if arrow:
@@ -1555,6 +1558,12 @@ class Arc2D(Primitive2D):
         return self.center + 4/(3*alpha)*self.radius*math.sin(alpha*0.5)*u
 
     def MPLPlot(self, ax, color='k'):
+        if ax is None:
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
+        else:
+            fig = ax.figure
+            
         pc = self.center.vector
 #        ax.plot([pc[0]], [pc[1]], 'or')
 #        ax.plot([self.interior[0]], [self.interior[1]], 'ob')
@@ -1562,6 +1571,7 @@ class Arc2D(Primitive2D):
                     theta1=self.angle1*0.5/math.pi*360,
                     theta2=self.angle2*0.5/math.pi*360,
                     color=color))
+        return fig, ax
 
     def To3D(self,plane_origin, x, y):
         ps = self.start.To3D(plane_origin, x, y)
@@ -1682,6 +1692,12 @@ class Circle2D(Primitive2D):
         return s, primitive_index+1
 
     def MPLPlot(self, ax, linestyle='-', color='k', linewidth=1):
+        if ax is None:
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
+        else:
+            fig = ax.figure
+            
         pc = self.center.vector
         if self.radius > 0:
             ax.add_patch(Arc(pc,
@@ -1693,6 +1709,7 @@ class Circle2D(Primitive2D):
                              color=color,
                              linestyle=linestyle,
                              linewidth=linewidth))
+        return fig, ax
 
     def To3D(self, plane_origin, x, y):
         normal = Vector3D(npy.cross(x.vector, y.vector))
@@ -1939,9 +1956,11 @@ class Polygon2D(CompositePrimitive2D):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
+        else:
+            fig = ax.figure()
             
         ax.plot([p[0] for p in self.points]+[self.points[0][0]], [p[1] for p in self.points]+[self.points[0][1]], '-')
-        return ax
+        return fig, ax
 
 class Primitive3D:
     def __init__(self, basis_primitives=None, name=''):
@@ -2169,6 +2188,12 @@ class Vector3D(Vector):
                         arguments[0][1:-1])
     
     def MPLPlot(self, ax=None, starting_point=None, color=''):
+        if ax is None:
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
+        else:
+            fig = ax.figure
+            
         if starting_point is None:
             starting_point = Point3D((0,0,0))
         if ax is None:
@@ -2182,7 +2207,7 @@ class Vector3D(Vector):
         else:
             a = Arrow3D(xs, ys, zs, mutation_scale=10, lw=3, arrowstyle="-|>")
         ax.add_artist(a)
-        return ax
+        return fig, ax
 
 
 x3D = Vector3D((1, 0, 0))
@@ -2236,11 +2261,15 @@ class Point3D(Vector3D):
                         self.vector[2] / value))
 
     def MPLPlot(self, ax=None):
+        
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
+        else:
+            fig = ax.figure
+            
         ax.scatter(*self.vector)
-        return ax
+        return fig, ax
 
     def PlaneProjection3D(self, plane_origin, x, y):
         z = x.Cross(y)
@@ -2465,10 +2494,13 @@ class Plane3D:
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
+        else:
+            fig = ax.figure
+            
         self.origin.MPLPlot(ax)
         self.vectors[0].MPLPlot(ax, starting_point=self.origin, color='r')
         self.vectors[1].MPLPlot(ax, starting_point=self.origin, color='g')
-        return ax
+        return fig, ax
     
     def Babylon(self):
         s = 'var myPlane = BABYLON.MeshBuilder.CreatePlane("myPlane", {width: 0.5, height: 0.5, sideOrientation: BABYLON.Mesh.DOUBLESIDE}, scene);\n'
@@ -2851,6 +2883,12 @@ class Line3D(Primitive3D, Line):
         return self.points[0] + (self.points[1]-self.points[0]) * curvilinear_abscissa
 
     def MPLPlot(self, ax):
+        if ax is None:
+            fig = plt.figure()
+            ax = Axes3D(fig)
+        else:
+            fig = ax.figure
+
         # Line segment
         x = [p.vector[0] for p in self.points]
         y = [p.vector[1] for p in self.points]
@@ -2862,6 +2900,7 @@ class Line3D(Primitive3D, Line):
         x1, y1, z1 = (self.points[0] - 3*u).vector
         x2, y2, z2 = (self.points[1] + 3*u).vector
         ax.plot([x1, x2], [y1, y2], [z1, z2], color='k')
+        return fig, ax
 
     def MinimumDistancePoints(self, other_line):
         """
@@ -3238,8 +3277,15 @@ class Arc3D(Primitive3D):
             z.append(p[2])
 
         ax.plot(x, y, z, 'k')
+        return fig, ax
 
     def MPLPlot2D(self, x3d, y3D, ax, color='k'):
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+        else:
+            fig = ax.figure
+        
         # TODO: Enhance this plot
         l = self.Length()
         x = []
@@ -3250,6 +3296,8 @@ class Arc3D(Primitive3D):
             x.append(xi)
             y.append(yi)
         ax.plot(x, y, color=color)
+        
+        return fig, ax
 
     def FreeCADExport(self, name, ndigits=6):
         xs, ys, zs = round(1000*self.start, ndigits).vector
@@ -3423,7 +3471,6 @@ class CompositePrimitive3D(Primitive3D):
     def MPLPlot(self, ax = None):
         if ax is None:
             fig = plt.figure()
-#            ax = fig.add_subplot(111, projection='3d', adjustable='box')
             ax = Axes3D(fig)
         else:
             fig = None
@@ -3583,15 +3630,25 @@ class LineSegment3D(Edge3D):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
+        else:
+            fig = ax.figure
+            
         x=[p.vector[0] for p in self.points]
         y=[p.vector[1] for p in self.points]
         z=[p.vector[2] for p in self.points]
         ax.plot(x,y,z, 'o-k')
-        return ax
+        return fig, ax
 
-    def MPLPlot2D(self, x_3D, y_3D, ax, color='k'):
+    def MPLPlot2D(self, x_3D, y_3D, ax=None, color='k'):
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+        else:
+            fig = ax.figure
+            
         edge2D =  self.PlaneProjection2D(x_3D, y_3D)
         edge2D.MPLPlot(ax=ax, color=color)
+        return fig, ax
 
     def plot_data(self, x_3D, y_3D, marker=None, color='black', stroke_width=1,
                   dash=False, opacity=1, arrow=False):
@@ -5266,7 +5323,7 @@ class VolumeModel:
             if primitive.name == '':
                 primitive_name = 'Primitive_{}'.format(ip)
             else:
-                primitive_name = 'Primitive_{}_{}'.format(ip, primitive_name)
+                primitive_name = 'Primitive_{}_{}'.format(ip, primitive.name)
             s += "part = doc.addObject('App::Part','{}')\n".format(primitive_name)
             if hasattr(primitive, 'FreeCADExport'):
                 sp = primitive.FreeCADExport(ip)

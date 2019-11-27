@@ -32,5 +32,6 @@ steps:
 - name: sdist
   image: python:3.7
   commands:
+  - pip install Cython
   - python setup.py sdist --formats=gztar,zip
 
