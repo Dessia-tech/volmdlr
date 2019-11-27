@@ -3040,10 +3040,10 @@ class Circle3D(Primitive3D):
     def Length(self):
         return 2* math.pi * self.radius
 
-    def FreeCADExport(self,ip,ndigits=3):
-        name = 'primitive{}'.format(ip)
-        xc,yc,zc = npy.round(1000*self.center.vector,ndigits)
-        xn,yn,zn = npy.round(self.normal.vector,ndigits)
+    def FreeCADExport(self, name, ndigits=3):
+#        name = 'primitive{}'.format(ip)
+        xc,yc,zc = round(1000*self.center, ndigits)
+        xn,yn,zn = round(self.normal, ndigits)
         return '{} = Part.Circle(fc.Vector({},{},{}),fc.Vector({},{},{}),{})\n'.format(name,xc,yc,zc,xn,yn,zn,1000*self.radius)
 
     def Rotation(self, rot_center, axis, angle, copy=True):
@@ -3654,8 +3654,8 @@ class Contour3D(Wire3D):
                 edges_primitives.append(edge)
         self.edges = edges_primitives
         
-        print('---', edges)
-        print('--', self.edges[0].__class__.__name__)
+#        print('---', edges)
+#        print('--', self.edges[0].__class__.__name__)
         if self.edges[0].__class__.__name__ == 'Contour3D':
             raise ValueError
                     

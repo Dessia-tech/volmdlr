@@ -470,7 +470,7 @@ class ExtrudedProfile(volmdlr.Shell3D):
         name='primitive'+str(ip)
         s = 'Wo = []\n'
         s += 'Eo = []\n'
-        for ip, primitive in enumerate(self.outer_contour3d.basis_primitives):
+        for ip, primitive in enumerate(self.outer_contour3d.edges):
             s += primitive.FreeCADExport('L{}'.format(ip))
             s += 'Eo.append(Part.Edge(L{}))\n'.format(ip)
         s += 'Wo.append(Part.Wire(Eo[:]))\n'
@@ -480,7 +480,7 @@ class ExtrudedProfile(volmdlr.Shell3D):
         s += 'W = []\n'
         for ic,contour in enumerate(self.inner_contours3d):
             s+='E = []\n'
-            for ip, primitive in enumerate(contour.basis_primitives):
+            for ip, primitive in enumerate(contour.edges):
                 s += primitive.FreeCADExport('L{}_{}'.format(ic, ip))
                 s += 'E.append(Part.Edge(L{}_{}))\n'.format(ic, ip)
             s += 'Wi = Part.Wire(E[:])\n'

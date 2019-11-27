@@ -23,7 +23,7 @@ p4 = vm.Point2D((0.2, 0.08))
 p5 = vm.Point2D((0.16, 0.18))
 p6 = vm.Point2D((0.05, 0.20))
 
-inner_rl = primitives2D.RoundedLineSegments2D([p1, p2, p3, p4, p5, p6], {0: 0.01, 1: 0.01, 2: 0.015, 3: 0.010, 4: 0.012, 5:0.008}, True)
+inner_rl = primitives2D.ClosedRoundedLineSegments2D([p1, p2, p3, p4, p5, p6], {0: 0.01, 1: 0.01, 2: 0.015, 3: 0.010, 4: 0.012, 5:0.008}, True)
 outer_rl = inner_rl.Offset(-thickness)
 inner_contour = vm.Contour2D([inner_rl])
 outer_contour = vm.Contour2D([outer_rl])
