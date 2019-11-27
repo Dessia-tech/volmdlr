@@ -39,7 +39,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.Wire2D):
             pti = self.points[ipoint]
             pt2 = self.points[ipoint + 1]
 
-        # TODO: change to PointDistance
+        # TODO: change to point_distance
         dist1 = (pt1-pti).Norm()
         dist2 = (pt2-pti).Norm()
         dist3 = (pt1-pt2).Norm()
@@ -316,8 +316,8 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.Wire2D):
         
         if len(line_indexes) > 1:
             intersection = volmdlr.Point2D.LinesIntersection(volmdlr.Line2D(self.points[line_indexes[0]], self.points[line_indexes[0]]+dir_vec_1), volmdlr.Line2D(self.points[line_indexes[-1]+1], self.points[line_indexes[-1]+1]+dir_vec_2))
-            vec1 = intersection.PointDistance(self.points[line_indexes[0]]) * dir_vec_1
-            vec2 = intersection.PointDistance(self.points[line_indexes[-1]+1]) * dir_vec_2
+            vec1 = intersection.point_distance(self.points[line_indexes[0]]) * dir_vec_1
+            vec2 = intersection.point_distance(self.points[line_indexes[-1]+1]) * dir_vec_2
         
 # =============================================================================
 # COMPUTES THE NEW POINTS AFTER THE OFFSET
@@ -327,7 +327,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.Wire2D):
         new_points[line_indexes[0]] = self.points[line_indexes[0]] + distance_dir1 * dir_vec_1
         
         for nb, index in enumerate(line_indexes[1:]):
-            coeff_vec_2 = volmdlr.Point2D.PointDistance(self.points[line_indexes[0]], self.points[index]) / volmdlr.Point2D.PointDistance(self.points[line_indexes[0]], self.points[line_indexes[-1]+1])
+            coeff_vec_2 = volmdlr.Point2D.point_distance(self.points[line_indexes[0]], self.points[index]) / volmdlr.Point2D.point_distance(self.points[line_indexes[0]], self.points[line_indexes[-1]+1])
             coeff_vec_1 = 1 - coeff_vec_2
             if dir_vec_1.Dot(normal_vectors[nb+1]) < 0:
                 coeff_vec_1 = - coeff_vec_1
