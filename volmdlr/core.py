@@ -3222,10 +3222,10 @@ class Arc3D(Primitive3D):
         else:
             fig = None
 
-        ax.plot(*self.center.vector,color='b')
-        ax.plot(*self.start.vector,c='r')
-        ax.plot(*self.end.vector,c='r')
-        ax.plot(*self.interior.vector,c='g')
+        ax.plot([self.center[0]], [self.center[1]], [self.center[2]], color='b')
+        ax.plot([self.start[0]], [self.start[1]], [self.start[2]], c='r')
+        ax.plot([self.end[0]], [self.end[1]], [self.end[2]], c='r')
+        ax.plot([self.interior[0]], [self.interior[1]], [self.interior[2]], c='g')
         x = []
         y = []
         z = []
