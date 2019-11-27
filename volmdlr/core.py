@@ -521,11 +521,11 @@ class Point2D(Vector2D):
                         plane_origin.vector[2] + vx.vector[2]*self.vector[0] + vy.vector[2]*self.vector[1],
                         ])
 
-    def MPLPlot(self, ax=None, style='ob'):
+    def MPLPlot(self, ax=None, color='b'):
         if ax is None:
             fig, ax = plt.subplots()
-        x1 = self.vector
-        ax.plot([x1[0]], [x1[1]], style)
+        x1, y1 = self.vector
+        ax.plot([x1], [y1], color='b')
         return ax
 
     def point_distance(self, point2):
@@ -837,6 +837,7 @@ class CompositePrimitive2D(Primitive2D):
             if element.__class__.__name__ == 'LineSegment2D':
                 element.MPLPlot(ax, color, arrow, width)
             else:
+                print(element)
                 element.MPLPlot(ax, color=color)
 
         ax.margins(0.1)
