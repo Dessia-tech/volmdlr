@@ -28,8 +28,8 @@ class RoundedLineSegments:
         """
         if copy:
             return self.__class__([p.frame_mapping(frame, side, copy=True)\
-                                   for p in self.points], radius=self.radius,\
-                                    closed=self.closed, adapt_radius=self.adapt_radius,\
+                                   for p in self.points], radius=self.radius,
+                                    adapt_radius=self.adapt_radius,
                                     name=self.name)
         else:
             for p in self.points:

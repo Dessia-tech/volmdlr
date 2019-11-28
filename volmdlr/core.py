@@ -459,6 +459,12 @@ class Vector2D(Vector):
             fig, ax = plt.subplots()
         else:
             fig = ax.figure
+        
+        if self - origin == Vector2D((0., 0.)):
+            point = Point2D(self.vector)
+            point.MPLPlot(ax=ax, style='o'+color)
+            return fig, ax
+        
         ax.add_patch(FancyArrow(origin[0], origin[1],
                                 self.vector[0]*amplitude, self.vector[1]*amplitude,
                                 width=0.001,
