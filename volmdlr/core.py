@@ -38,6 +38,8 @@ import volmdlr.geometry as geometry
 from volmdlr import plot_data
 from volmdlr import triangulation as tri
 
+from dessia_common import DessiaObject
+
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 import webbrowser
@@ -270,11 +272,11 @@ class Arrow3D(FancyArrowPatch):
         FancyArrowPatch.draw(self, renderer)
 
 
-class Vector:
+class Vector(DessiaObject):
     """
     Abstract class of vector
     """
-    __slots__ = ('vector', 'name')
+#    __slots__ = ('vector', 'name')
     
     def __setitem__(self, key, item):
         self.vector[key] = item
@@ -596,7 +598,7 @@ class Point2D(Vector2D):
 o2D = Point2D((0, 0))
 O2D = Point2D((0, 0))
 
-class Basis:
+class Basis(DessiaObject):
     """
     Abstract class of a basis
     """
@@ -774,7 +776,7 @@ class Frame2D(Basis2D):
 #oxy = Frame2D(o2D, x2D, y2D)
 OXY = Frame2D(o2D, x2D, y2D)
 
-class Primitive2D:
+class Primitive2D(DessiaObject):
     def __init__(self, name=''):
         self.name = name
 
@@ -1968,7 +1970,7 @@ class Polygon2D(CompositePrimitive2D):
         ax.plot([p[0] for p in self.points]+[self.points[0][0]], [p[1] for p in self.points]+[self.points[0][1]], '-')
         return fig, ax
 
-class Primitive3D:
+class Primitive3D(DessiaObject):
     def __init__(self, basis_primitives=None, name=''):
         self.name = name
         self.basis_primitives = basis_primitives # une liste
@@ -2318,7 +2320,7 @@ o3D = Point3D((0, 0, 0))
 O3D = Point3D((0, 0, 0))
 
 
-class Plane3D:
+class Plane3D(Primitive3D):
     def __init__(self, origin, vector1, vector2, name=''):
         self.origin = Point3D(origin.vector)
         vector1 = Vector3D(vector1.vector)
@@ -5207,7 +5209,7 @@ class Step:
         return shells
         
 
-class VolumeModel:
+class VolumeModel(DessiaObject):
     """
     :param groups: A list of two element tuple. The first element is a string naming the group and the second element is a list of primitives of the group
     """
