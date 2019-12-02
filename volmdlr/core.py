@@ -4526,7 +4526,7 @@ class Shell3D(CompositePrimitive3D):
         return s
 
 
-class BoundingBox:
+class BoundingBox(DessiaObject):
     """
     An axis aligned boundary box
     """
