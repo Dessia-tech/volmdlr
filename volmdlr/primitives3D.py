@@ -127,7 +127,7 @@ class Block(volmdlr.Shell3D):
     :param frame: a frame 3D. The origin of the frame is the center of the block,
      the 3 vectors are defining the edges. The frame has not to be orthogonal
     """
-    def __init__(self, frame, name='', color=None):
+    def __init__(self, frame:volmdlr.Frame3D, name:str='', color:tuple=None):
         self.frame = frame
         self.size = (self.frame.u.Norm(), self.frame.v.Norm(), self.frame.w.Norm())
         
