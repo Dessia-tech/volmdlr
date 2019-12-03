@@ -51,14 +51,16 @@ belt_outer_contour = inner_contour.Offset(-(2*screw_holes_clearance + screw_hole
 belt = primitives3D.ExtrudedProfile(vm.z3D*(height - 2*thickness), vm.x3D, vm.y3D,
                                       belt_outer_contour, [inner_contour]+screw_holes, thickness * vm.z3D, 'belt')
 
-model = vm.VolumeModel([bottom])
+model = vm.VolumeModel([bottom, sides, belt])
 model.BabylonShow('bottom')
 
-model = vm.VolumeModel([sides])
-model.BabylonShow('sides')
+#model = vm.VolumeModel([sides])
+#model.BabylonShow('sides')
+#
+#model = vm.VolumeModel([belt])
+#model.BabylonShow('belt')
 
-model = vm.VolumeModel([belt])
-model.BabylonShow('belt')
+model.to_dict()
 
 #casing = vm.primitives3D.Fuse([bottom, sides, belt], 'Lower Casing')
 #model = vm.VolumeModel([casing])
