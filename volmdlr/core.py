@@ -462,13 +462,13 @@ class Vector2D(Vector):
         
         if self - origin == Vector2D((0., 0.)):
             point = Point2D(self.vector)
-            point.MPLPlot(ax=ax, style='o'+color)
+            point.MPLPlot(ax=ax, color=color)
             return fig, ax
         
         ax.add_patch(FancyArrow(origin[0], origin[1],
                                 self.vector[0]*amplitude, self.vector[1]*amplitude,
-                                width=0.001,
-                                head_width=0.01,
+                                width=0.001*amplitude*10,
+                                head_width=0.01*amplitude*10,
                                 length_includes_head=True,
                                 color=color))
         if line:
@@ -846,7 +846,7 @@ class CompositePrimitive2D(Primitive2D):
             if element.__class__.__name__ == 'LineSegment2D':
                 element.MPLPlot(ax, color, arrow, width)
             else:
-                print(element)
+#                print(element)
                 element.MPLPlot(ax, color=color)
 
         ax.margins(0.1)
@@ -1120,7 +1120,7 @@ class Line2D(Primitive2D, Line):
             for p in self.points:
                 p.Translation(offset, copy=False)
 
-    def point_distance(self, point):
+    def point_distance(self, point, return_other_point=False):
         """
         Computes the distance of a point to line
         """
@@ -1128,6 +1128,8 @@ class Line2D(Primitive2D, Line):
         u = p2 - p1
         t = (point-p1).Dot(u) / u.Norm()**2
         projection = p1 + t * u # Projection falls on the segment
+        if return_other_point:
+            return (point-projection).Norm(), projection
         return (point-projection).Norm()
 
     def PointProjection(self, point, curvilinear_abscissa=False):
