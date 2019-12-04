@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Feb 28 14:07:37 2017
 
-@author: steven
 """
 
 
 #import bezier
 from geomdl import NURBS
-
-
 
 import warnings
 import math
@@ -32,7 +28,7 @@ from .vmcy import (sub2D, add2D, mul2D, Vector2DNorm, Vector2DDot,
                    vector3D_cross, vector3D_rotation,
                    LineSegment2DPointDistance, PolygonPointBelongs)
 
-from scipy.linalg import solve, LinAlgError
+from scipy.linalg import solve
 
 import volmdlr.geometry as geometry
 from volmdlr import plot_data
@@ -274,7 +270,7 @@ class Vector:
     """
     Abstract class of vector
     """
-    __slots__ = ('vector', 'name')
+#    __slots__ = ('vector', 'name')
     
     def __setitem__(self, key, item):
         self.vector[key] = item
@@ -846,7 +842,7 @@ class CompositePrimitive2D(Primitive2D):
             if element.__class__.__name__ == 'LineSegment2D':
                 element.MPLPlot(ax, color, arrow, width)
             else:
-                print(element)
+#                print(element)
                 element.MPLPlot(ax, color=color)
 
         ax.margins(0.1)
@@ -1032,7 +1028,7 @@ class Contour2D(Wire2D):
         plot_data['type'] = 'contour'
         plot_data['plot_data'] = []
         for item in self.basis_primitives:
-            print(item)
+#            print(item)
             plot_data['plot_data'].append(item.plot_data(color=color,
                                                         stroke_width=stroke_width,
                                                         opacity=opacity))
@@ -1487,7 +1483,7 @@ class Arc2D(Primitive2D):
 
     geo_points=property(_get_geo_points)
     
-    def tessellation_points(self, resolution_for_circle=40):
+    def tessellation_points(self, resolution_for_circle=30):
         number_points_tesselation = math.ceil(resolution_for_circle*abs(self.angle)/2/math.pi)
         
         points = []
@@ -3910,11 +3906,11 @@ class Face3D(Primitive3D):
             self.bounding_box = self._bounding_box()
             
     def copy(self):
-        print('points before copy', self.points)
+#        print('points before copy', self.points)
         new_contour = [contour.copy() for contour in self.contours]
         new_plane = self.plane.copy()
         new_points = [p.copy() for p in self.points]
-        print('points after copy', new_points)
+#        print('points after copy', new_points)
         return Face3D(new_contour, new_plane, new_points, self.polygon2D, self.name)
 #        return Face3D(new_contour)
         
@@ -4317,7 +4313,6 @@ class Shell3D(CompositePrimitive3D):
                     
         for point in points:
             if not shell2.point_belongs(point):
-#                print('point belongs', point)
                 return False
             
         # Check if any faces are intersecting
@@ -4477,8 +4472,8 @@ class Shell3D(CompositePrimitive3D):
         bbox = BoundingBox.from_points(intersections_points+shell1_points_outside_shell2)
         return bbox.volume()
     
-    def Babylon(self):
-        s = 'var customMesh = new BABYLON.Mesh("custom", scene);\n'
+    def Babylon(self, name='primitive_mesh'):
+        s = 'var {} = new BABYLON.Mesh("custom", scene);\n'.format(name)
         
         positions = ''
         indices = ''
@@ -4507,17 +4502,17 @@ class Shell3D(CompositePrimitive3D):
         s += 'vertexData.positions = positions;\n'
         s += 'vertexData.indices = indices;\n'
         s += 'vertexData.normals = normals;\n'
-        s += 'vertexData.applyToMesh(customMesh);\n'
-        s += 'customMesh.enableEdgesRendering(0.95);\n'
-        s += 'customMesh.edgesWidth = 0.1;\n'
-        s += 'customMesh.edgesColor = new BABYLON.Color4(0, 0, 0, 0.6);\n'
+        s += 'vertexData.applyToMesh({});\n'.format(name)
+        s += '{}.enableEdgesRendering(0.9);\n'.format(name)
+        s += '{}.edgesWidth = 0.1;\n'.format(name)
+        s += '{}.edgesColor = new BABYLON.Color4(0, 0, 0, 0.6);\n'.format(name)
         s += 'var mat = new BABYLON.StandardMaterial("mat", scene);\n'
 #        s += 'mat.diffuseColor = BABYLON.Color3.Green();\n'
 #        s += 'mat.specularColor = new BABYLON.Color3(0.5, 0.6, 0.87);\n'
 #        s += 'mat.emissiveColor = new BABYLON.Color3(1, 1, 1);\n'
 #        s += 'mat.ambientColor = new BABYLON.Color3(0.23, 0.98, 0.53);\n'
         s += 'mat.backFaceCulling = false;\n'
-        s += 'customMesh.material = mat;\n'
+        s += '{}.material = mat;\n'.format(name)
         if self.color is not None:
             s += 'mat.diffuseColor = new BABYLON.Color3({}, {}, {});\n'.format(self.color[0], self.color[1], self.color[2])
 
@@ -4711,7 +4706,7 @@ class BoundingBox:
         
         point1_copy = point1.copy()
         point2_copy = point2.copy()
-        print(face_point1, face_point2)
+#        print(face_point1, face_point2)
         if face_point1 > face_point2:
             print('inversion')
             point1, point2 = point2, point1
@@ -5102,10 +5097,7 @@ class Step:
         labels = {}
         for id_nb, function in self.functions.items():
             labels[id_nb] = str(id_nb)+' '+function.name
-        print(labels)
-        print()
         pos = nx.kamada_kawai_layout(self.graph)
-        print(pos)
         plt.figure()
         nx.draw_networkx_nodes(self.graph, pos)
         nx.draw_networkx_edges(self.graph, pos)
@@ -5203,7 +5195,7 @@ class Step:
         for node in list(self.graph.nodes):
             if node != '#0' and self.functions[node].name == 'CLOSED_SHELL':
                 shells.append(object_dict[node])
-        print(shells)
+#        print(shells)
         return shells
         
 
@@ -5392,8 +5384,8 @@ class VolumeModel:
         with tempfile.NamedTemporaryFile(suffix=".py",delete=False) as f:
             f.write(bytes(s,'utf8'))
 
-        arg=f.name
-        output=subprocess.call([python_path, arg])
+        arg = f.name
+        output = subprocess.call([python_path, arg])
 
         f.close()
         os.remove(f.name)
@@ -5422,13 +5414,68 @@ class VolumeModel:
                                primitives_strings=primitives_strings,
                                use_cdn=use_cdn)
 
-    def BabylonShow(self,page='vm_babylonjs', use_cdn=True):
-        page+='.html'
-        with open(page,'w') as file:
-            file.write(self.BabylonScript(use_cdn=use_cdn))
-
-        webbrowser.open('file://' + os.path.realpath(page))
+    def BabylonShow(self, page_name=None, use_cdn=True, debug=False):
+        script = self.BabylonScript(use_cdn=use_cdn, debug=debug)
         
+        if page_name is None:
+            with tempfile.NamedTemporaryFile(suffix=".html", delete=False) as file:
+                file.write(bytes(script,'utf8'))
+            page_name = file.name
+        else:
+            page_name += '.html'
+            with open(page_name,'w')  as file:
+                file.write(script)
+                
+        webbrowser.open('file://' + os.path.realpath(page_name))
+        
+        
+class MovingVolumeModel(VolumeModel):
+    def __init__(self, primitives, step_frames, name=''):
+        VolumeModel.__init__(self, primitives=primitives, name=name)
+        self.step_frames = step_frames
+        
+    
+    def BabylonScript(self, use_cdn=True, debug=False):
+
+        env = Environment(loader=PackageLoader('volmdlr', 'templates'),
+                          autoescape=select_autoescape(['html', 'xml']))
+
+        template = env.get_template('babylon.html')
+        
+        bbox = self._bounding_box()
+        center = bbox.center
+        max_length = max([bbox.xmax - bbox.xmin,
+                          bbox.ymax - bbox.ymin,
+                          bbox.zmax - bbox.zmin])
+
+        primitives_strings=[]
+        for primitive in self.primitives:
+            if hasattr(primitive, 'Babylon'):
+                primitives_strings.append(primitive.Babylon())
+              
+        positions = []
+        orientations = []
+        for step in self.step_frames:
+            step_positions = []
+            step_orientations = []
+
+            for frame in step:
+                step_positions.append(list(frame.origin))
+                step_orientations.append([list(frame.u),
+                                          list(frame.v),
+                                          list(frame.w)])
+
+            positions.append(step_positions)
+            orientations.append(step_orientations)
+                
+        return template.render(name=self.name,
+                               center=tuple(center),
+                               length=2*max_length,
+                               primitives_strings=primitives_strings,
+                               positions=positions,
+                               orientations=orientations,
+                               use_cdn=use_cdn,
+                               debug=debug)
         
 
 class Routing:
@@ -5521,7 +5568,7 @@ class Routing:
         return no_collision_mesures
 
 
-class ViewIso:
+class ViewIso:# TODO: rename this in IsoView
     def __init__(self, component, frame, size):
         self.component = component
         self.frame = frame
