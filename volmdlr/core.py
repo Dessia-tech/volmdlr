@@ -1797,6 +1797,11 @@ class Polygon2D(CompositePrimitive2D):
 
         CompositePrimitive2D.__init__(self, primitives, name)
 
+    def __eq__(self, other_):
+        equal = True
+        for point, other_point in zip(self.points, other_.points):
+            equal = (equal and point == other_point)
+        return equal
 
     def Area(self):
 
@@ -2334,6 +2339,19 @@ class Plane3D(Primitive3D):
         self.name = name
         self.normal = self.vectors[0].Cross(self.vectors[1])
         self.normal.Normalize()
+    
+    def __eq__(self, other_):
+        equal = (self.origin == other_.origin
+                 and self.vectors[0] == other_.vectors[0]
+                 and self.vectors[1] == other_.vectors[1])
+        return equal
+        
+    def to_dict(self):
+        # improve the object structure ?
+        dict_ = dc.DessiaObject.to_dict(self)
+        dict_['vector1'] = self.vectors[0]
+        dict_['vector2'] = self.vectors[1]
+        return dict_
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -3467,6 +3485,12 @@ class CompositePrimitive3D(Primitive3D):
                 basis_primitives.append(primitive)
 
         Primitive3D.__init__(self, basis_primitives=basis_primitives, name=name)
+        
+    def __eq__(self, other_):
+        equal = True
+        for primitive, other_primitive in zip(self.primitives, other_.primitives):
+            equal = (equal and primitive == other_primitive)
+        return equal
 
     def UpdateBasisPrimitives(self):
         # TODO: This is a copy/paste from CompositePrimitive2D, in the future make a Common abstract class
@@ -3535,6 +3559,19 @@ class Edge3D(Primitive3D):
     def __init__(self, edge_start, edge_end, name=''):
         Primitive3D.__init__(self, basis_primitives=[edge_start, edge_end], name=name)
         self.points = [edge_start, edge_end]
+    
+    def __eq__(self, other_):
+        equal = True
+        for point, other_point in zip(self.points, other_.points):
+            equal = (equal and point == other_point)
+        return equal
+        
+    def to_dict(self):
+        # improve the object structure ?
+        dict_ = dc.DessiaObject.to_dict(self)
+        dict_['edge_start'] = self.points[0]
+        dict_['edge_end'] = self.points[1]
+        return dict_
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -3583,6 +3620,13 @@ class LineSegment3D(Edge3D):
     def __init__(self, point1, point2, name=''):
         Edge3D.__init__(self, point1, point2, name='')
         self.bounding_box = self._bounding_box()
+        
+    def to_dict(self):
+        # improve the object structure ?
+        dict_ = dc.DessiaObject.to_dict(self)
+        dict_['point1'] = self.points[0]
+        dict_['point2'] = self.points[1]
+        return dict_
 
     def _bounding_box(self):
         points = self.points
@@ -3730,8 +3774,13 @@ class Contour3D(Wire3D):
 
         self.points = self.clean_points()
 
-
-
+    def __eq__(self, other_):
+        equal = True
+        for edge, other_edge in zip(self.edges, other_.edges):
+            equal = (equal and edge == other_edge)
+        for point, other_point in zip(self.points, other_.points):
+            equal = (equal and point == other_point)
+        return equal
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -3841,6 +3890,15 @@ class Face3D(Primitive3D):
                 print('WARNING', pt, 'not on', self.plane)
                 print('dot =', self.plane.normal.Dot(pt-self.plane.origin))
                 raise ValueError
+                
+    def __eq__(self, other_):
+        equal = (self.plane == other_.plane
+                 and self.polygon2D == other_.polygon2D)
+        for contour, other_contour in zip(self.contours, other_.contours):
+            equal = (equal and contour == other_contour)
+        for point, other_point in zip(self.points, other_.points):
+            equal = (equal and point == other_point)
+        return equal
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -4176,6 +4234,12 @@ class Shell3D(CompositePrimitive3D):
         self.name = name
         self.color = color
         self.bounding_box = self._bounding_box()
+        
+    def __eq__(self, other_):
+        equal = (self.bounding_box == other_.bounding_box)
+        for face, other_face in zip(self.faces, other_.faces):
+            equal = (equal and face == other_face)
+        return equal
 
     @classmethod
     def from_step(cls, arguments, object_dict):
