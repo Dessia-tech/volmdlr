@@ -3754,6 +3754,10 @@ class Contour3D(Wire3D):
         return cls(edges, points=None, name=arguments[0][1:-1])
 
     def clean_points(self):
+        """
+        TODO : verifier si le dernier point est toujours le meme que le premier point
+        lors d'un import step par exemple
+        """
 #        print(self.edges[0].edges)
         points = self.edges[0].basis_primitives[::]
         last_points_added = points
