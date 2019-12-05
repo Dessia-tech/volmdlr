@@ -38,6 +38,8 @@ def get_version():
         # PEP 440 compatibility
         if '-' in version:
             future_version = version.split('-')[0].split('.')
+            if 'post' in future_version[-1]:
+                future_version = future_version[:-1]
             future_version[-1] = str(int(future_version[-1])+1)
             future_version = '.'.join(future_version)
             number_commits = version.split('-')[1]
@@ -68,6 +70,8 @@ setup(name='volmdlr',
       license='Creative Commons Attribution-Share Alike license',
       packages=['volmdlr'],#,'volmdlr.primitives2D','volmdlr.primitives3D','volmdlr.geometry'],
       package_dir={},
-      install_requires=['numpy', 'matplotlib', 'Cython', 'scipy', 'jinja2', 'geomdl'],
+      include_package_data = True,
+      install_requires=['numpy', 'matplotlib', 'Cython', 'scipy', 'jinja2',
+                        'geomdl', 'jsonschema', 'networkx'],
       classifiers=['Topic :: Scientific/Engineering','Development Status :: 3 - Alpha'],
       ext_modules = cythonize("volmdlr/vmcy.pyx"))

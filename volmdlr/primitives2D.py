@@ -9,11 +9,15 @@ import volmdlr
 from volmdlr.primitives import RoundedLineSegments
 
 
-class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
-    def __init__(self, points, radius, closed=False, adapt_radius=False, name=''):
+        
+class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.Wire2D):
+    closed= False
+    def __init__(self, points, radius, adapt_radius=False, name=''):
         primitives = RoundedLineSegments.__init__(self, points, radius,
                                                   volmdlr.LineSegment2D, volmdlr.Arc2D,
-                                                  closed, adapt_radius, name='')
+                                                  closed=False,
+                                                  adapt_radius=adapt_radius,
+                                                  name='')
 
         volmdlr.Wire2D.__init__(self, primitives, name)
 
@@ -35,7 +39,7 @@ class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
             pti = self.points[ipoint]
             pt2 = self.points[ipoint + 1]
 
-        # TODO: change to PointDistance
+        # TODO: change to point_distance
         dist1 = (pt1-pti).Norm()
         dist2 = (pt2-pti).Norm()
         dist3 = (pt1-pt2).Norm()
@@ -64,23 +68,23 @@ class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
 
     def Rotation(self, center, angle, copy=True):
         if copy:
-            return RoundedLineSegments2D([p.Rotation(center, angle, copy=True)\
+            return self.__class__([p.Rotation(center, angle, copy=True)\
                                           for p in self.points],
-                                          self.radius, self.closed,
+                                          self.radius,
                                           adapt_radius =self.adapt_radius,
                                           name = self.name)
         else:
             self.__init__([p.Rotation(center, angle, copy=True) for p in self.points],
-                           self.radius, self.closed,
+                           self.radius,
                            adapt_radius=self.adapt_radius, name = self.name)
 
     def Translation(self, offset, copy=True):
         if copy:
-            return RoundedLineSegments2D([p.Translation(offset, copy=True) for p in self.points],
-                                          self.radius, self.closed, adapt_radius=self.adapt_radius, name = self.name)
+            return self.__class__([p.Translation(offset, copy=True) for p in self.points],
+                                  self.radius, adapt_radius=self.adapt_radius, name = self.name)
         else:
             self.__init__([p.Translation(offset,copy=True) for p in self.points],
-                           self.radius, self.closed, adapt_radius =self.adapt_radius, name = self.name)
+                          self.radius, adapt_radius =self.adapt_radius, name = self.name)
 
     def Offset(self, offset):
         nb = len(self.points)
@@ -152,8 +156,7 @@ class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
             offset_vectors.append(n_last)
             offset_points.append(self.points[-1] + offset*offset_vectors[-1])
 
-        return RoundedLineSegments2D(offset_points, new_radii, self.closed,
-                                         adapt_radius=self.adapt_radius)
+        return self.__class__(offset_points, new_radii, adapt_radius=self.adapt_radius)
         
         
     def OffsetSingleLine(self, line_index, offset):
@@ -238,7 +241,7 @@ class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
         if not dont_add_last_point and not self.closed:
             new_linesegment2D_points.append(self.points[-1])
         
-        rls2D = RoundedLineSegments2D(new_linesegment2D_points, self.radius,
+        rls2D = self.__class__(new_linesegment2D_points, self.radius,
                                                  self.closed, adapt_radius=self.adapt_radius)
         
         return rls2D
@@ -313,8 +316,8 @@ class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
         
         if len(line_indexes) > 1:
             intersection = volmdlr.Point2D.LinesIntersection(volmdlr.Line2D(self.points[line_indexes[0]], self.points[line_indexes[0]]+dir_vec_1), volmdlr.Line2D(self.points[line_indexes[-1]+1], self.points[line_indexes[-1]+1]+dir_vec_2))
-            vec1 = intersection.PointDistance(self.points[line_indexes[0]]) * dir_vec_1
-            vec2 = intersection.PointDistance(self.points[line_indexes[-1]+1]) * dir_vec_2
+            vec1 = intersection.point_distance(self.points[line_indexes[0]]) * dir_vec_1
+            vec2 = intersection.point_distance(self.points[line_indexes[-1]+1]) * dir_vec_2
         
 # =============================================================================
 # COMPUTES THE NEW POINTS AFTER THE OFFSET
@@ -324,7 +327,7 @@ class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
         new_points[line_indexes[0]] = self.points[line_indexes[0]] + distance_dir1 * dir_vec_1
         
         for nb, index in enumerate(line_indexes[1:]):
-            coeff_vec_2 = volmdlr.Point2D.PointDistance(self.points[line_indexes[0]], self.points[index]) / volmdlr.Point2D.PointDistance(self.points[line_indexes[0]], self.points[line_indexes[-1]+1])
+            coeff_vec_2 = volmdlr.Point2D.point_distance(self.points[line_indexes[0]], self.points[index]) / volmdlr.Point2D.point_distance(self.points[line_indexes[0]], self.points[line_indexes[-1]+1])
             coeff_vec_1 = 1 - coeff_vec_2
             if dir_vec_1.Dot(normal_vectors[nb+1]) < 0:
                 coeff_vec_1 = - coeff_vec_1
@@ -350,8 +353,18 @@ class RoundedLineSegments2D(volmdlr.Wire2D, RoundedLineSegments):
                 new_linesegment2D_points.append(self.points[i])
                 
         
-        rls2D = RoundedLineSegments2D(new_linesegment2D_points, self.radius,
-                                                 self.closed, adapt_radius=self.adapt_radius)
+        rls2D = self.__class__(new_linesegment2D_points, self.radius,
+                                                 adapt_radius=self.adapt_radius)
         
 
         return rls2D
+    
+class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D, volmdlr.Contour2D):
+    closed = True
+    def __init__(self, points, radius, adapt_radius=False, name=''):
+        primitives = RoundedLineSegments.__init__(self, points, radius,
+                                                  volmdlr.LineSegment2D, volmdlr.Arc2D,
+                                                  closed=True,
+                                                  adapt_radius=adapt_radius, name='')
+
+        volmdlr.Contour2D.__init__(self, primitives, name)

@@ -44,6 +44,6 @@ cog_p = border.CenterOfMass()
 
 ctest=vm.CompositePrimitive2D([border,ptest]+projections)
 f, a = ctest.MPLPlot()
-cog_p.MPLPlot(a, style = 'ob')
+cog_p.MPLPlot(a, color='r')
 
 
