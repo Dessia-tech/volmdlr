@@ -2275,6 +2275,9 @@ class Point3D(Vector3D):
         return Point3D((self.vector[0] / value,
                         self.vector[1] / value,
                         self.vector[2] / value))
+        
+    def Copy(self):
+        return Point3D(self.vector)
 
     def MPLPlot(self, ax=None):
 
@@ -4780,9 +4783,9 @@ class BoundingBox(dc.DessiaObject):
 
         point1_copy = point1.copy()
         point2_copy = point2.copy()
-        print(face_point1, face_point2)
+#        print(face_point1, face_point2)
         if face_point1 > face_point2:
-            print('inversion')
+#            print('inversion')
             point1, point2 = point2, point1
             face_point1, face_point2 = face_point2, face_point1
 
