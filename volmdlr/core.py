@@ -463,8 +463,8 @@ class Vector2D(Vector):
         else:
             fig = ax.figure
 
-        if self - origin == Vector2D((0., 0.)):
-            point = Point2D(self.vector)
+        if self == Vector2D((0., 0.)):
+            point = Point2D(origin.vector)
             point.MPLPlot(ax=ax, color=color)
             return fig, ax
 
@@ -1139,8 +1139,9 @@ class Line2D(Primitive2D, Line):
 
     def PointProjection(self, point, curvilinear_abscissa=False):
         p1, p2 = self.points
-        t = (point - p1).Dot(p2 - p1) / (p2-p1).Norm()**2
-        projection = p1 + t * (p2-p1)
+        u = p2 - p1
+        t = (point-p1).Dot(u) / u.Norm()**2
+        projection = p1 + t * u
         if curvilinear_abscissa:
             return projection,t
         return projection
