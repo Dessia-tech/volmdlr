@@ -392,6 +392,29 @@ class ExtrudedProfile(volmdlr.Primitive3D):
                 bool_areas.append(False)
         if any(bool_areas):
             raise ValueError('At least one inner contour is not contained in outer_contour.')
+            
+        faces = self.shell_faces()
+        volmdlr.Shell3D.__init__(self, faces, name)
+    
+    def face_contours(self):
+        faces = []
+        lower_contours = [self.outer_contour3d]+self.inner_contours3d
+        vol
+        upper_contours = [contour.Translation(self.extrusion_vector, True) for contour in lower_contours]
+        
+        external_contours = []
+        for i in range(len(self.outer_contour3d.basis_primitives)):
+            lower_vertice1 = lower_contours[0].basis_primitives[i]
+            lower_vertice2 = lower_contours[0].basis_primitives[i+1]
+            upper_vertice1 = upper_contours[0].basis_primitives[i]
+            upper_vertice2 = upper_contours[0].basis_primitives[i+1]
+            edge1 = volmdlr.LineSegment3D(lower_vertice1, lower_vertice2)
+            edge2 = volmdlr.LineSegment3D(lower_vertice2, upper_vertice2)
+            edge3 = volmdlr.LineSegment3D(upper_vertice2, upper_vertice1)
+            edge4 = volmdlr.LineSegment3D(upper_vertice1, lower_vertice1)
+            contour = volmdlr.Contour3D([edge1, edge2, edge3, edge4])
+            
+    def shell_face(self):
 
     def MPLPlot(self, ax):
         for contour in self.contours3D:
