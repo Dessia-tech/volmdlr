@@ -9,11 +9,9 @@ Created on Thu Oct  3 10:57:51 2019
 import volmdlr as  vm
 import volmdlr.primitives3D as p3d
 
-moteur = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/MOTEUR HRevoUNIFY v2.stp')
+#moteur = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/MOTEUR HRevoUNIFY v2.stp')
 #boite = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/BOITE E-TECHg2.stp')
 #cmo = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/CMO2.stp')
-
-
 
 
 moteur = moteur.to_shells3d('moteur')
@@ -61,10 +59,14 @@ moteur = moteur.to_shells3d('moteur')
 #union.Translation((1,2,-0.5), False)
 #volumemodel.BabylonShow()
 
+<<<<<<< HEAD
+#shell0 = volumemodel.shells[0] # LE MOTEUR
+=======
 primitives = moteur
 volumemodel = vm.VolumeModel(primitives, 'name')
 
 shell0 = volumemodel.primitives[0] # LE MOTEUR
+>>>>>>> c041c0803c53f405825efc9bf955b79081a69da2
 #shell0.color = (1,0,0)
 #shell1 = volumemodel.primitives[1] # LA BOITE
 #shell2 = volumemodel.shells[2] # LE BLOCK
