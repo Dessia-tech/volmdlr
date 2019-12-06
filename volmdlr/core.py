@@ -5391,7 +5391,7 @@ class VolumeModel:
         os.remove(f.name)
         return output
 
-    def BabylonScript(self, use_cdn=True):
+    def BabylonScript(self, use_cdn=True, debug=False):
 
         env = Environment(loader=PackageLoader('volmdlr', 'templates'),
                           autoescape=select_autoescape(['html', 'xml']))
@@ -5412,7 +5412,8 @@ class VolumeModel:
                                center=tuple(center),
                                length=2*max_length,
                                primitives_strings=primitives_strings,
-                               use_cdn=use_cdn)
+                               use_cdn=use_cdn,
+                               debug=debug)
 
     def BabylonShow(self, page_name=None, use_cdn=True, debug=False):
         script = self.BabylonScript(use_cdn=use_cdn, debug=debug)
