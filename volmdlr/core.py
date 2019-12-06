@@ -463,15 +463,15 @@ class Vector2D(Vector):
         else:
             fig = ax.figure
 
-        if self - origin == Vector2D((0., 0.)):
-            point = Point2D(self.vector)
-            point.MPLPlot(ax=ax, style='o'+color)
+        if self == Vector2D((0., 0.)):
+            point = Point2D(origin.vector)
+            point.MPLPlot(ax=ax, color=color)
             return fig, ax
 
         ax.add_patch(FancyArrow(origin[0], origin[1],
                                 self.vector[0]*amplitude, self.vector[1]*amplitude,
-                                width=0.001,
-                                head_width=0.01,
+                                width=0.001*amplitude*10,
+                                head_width=0.01*amplitude*10,
                                 length_includes_head=True,
                                 color=color))
         if line:
@@ -851,7 +851,7 @@ class CompositePrimitive2D(Primitive2D):
             if element.__class__.__name__ == 'LineSegment2D':
                 element.MPLPlot(ax, color, arrow, width)
             else:
-                print(element)
+#                print(element)
                 element.MPLPlot(ax, color=color)
 
         ax.margins(0.1)
@@ -1125,7 +1125,7 @@ class Line2D(Primitive2D, Line):
             for p in self.points:
                 p.Translation(offset, copy=False)
 
-    def point_distance(self, point):
+    def point_distance(self, point, return_other_point=False):
         """
         Computes the distance of a point to line
         """
@@ -1133,12 +1133,15 @@ class Line2D(Primitive2D, Line):
         u = p2 - p1
         t = (point-p1).Dot(u) / u.Norm()**2
         projection = p1 + t * u # Projection falls on the segment
+        if return_other_point:
+            return (point-projection).Norm(), projection
         return (point-projection).Norm()
 
     def PointProjection(self, point, curvilinear_abscissa=False):
         p1, p2 = self.points
-        t = (point - p1).Dot(p2 - p1) / (p2-p1).Norm()**2
-        projection = p1 + t * (p2-p1)
+        u = p2 - p1
+        t = (point-p1).Dot(u) / u.Norm()**2
+        projection = p1 + t * u
         if curvilinear_abscissa:
             return projection,t
         return projection
@@ -3804,6 +3807,10 @@ class Contour3D(Wire3D):
         return cls(edges, points=None, name=arguments[0][1:-1])
 
     def clean_points(self):
+        """
+        TODO : verifier si le dernier point est toujours le meme que le premier point
+        lors d'un import step par exemple
+        """
 #        print(self.edges[0].edges)
         points = self.edges[0].basis_primitives[::]
         last_points_added = points

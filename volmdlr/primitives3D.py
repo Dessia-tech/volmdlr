@@ -465,6 +465,35 @@ class ExtrudedProfile(volmdlr.Shell3D):
         if any(bool_areas):
             raise ValueError('At least one inner contour is not contained in outer_contour.')
             
+        faces = self.shell_faces()
+        volmdlr.Shell3D.__init__(self, faces, name)
+    
+    def shell_faces(self):
+        
+        lower_contours = [self.outer_contour3d]+self.inner_contours3d
+        lower_face = volmdlr.Face3D(lower_contours)
+        
+        upper_contours = [contour.Translation(self.extrusion_vector, True) for contour in lower_contours]
+        upper_face = volmdlr.Face3D(upper_contours)
+        
+        lateral_faces = []
+        for i in range(len(self.inner_contours3d)):
+            lower_points = lower_contours[i].points + [lower_contours[i].points[0]]
+            upper_points = upper_contours[i].points + [upper_contours[i].points[0]]
+            for j in range(len(lower_points[:-1])):
+                lower_vertice1 = lower_points[j]
+                lower_vertice2 = lower_points[j+1]
+                upper_vertice1 = upper_points[j]
+                upper_vertice2 = upper_points[j+1]
+                edge1 = volmdlr.LineSegment3D(lower_vertice1, lower_vertice2)
+                edge2 = volmdlr.LineSegment3D(lower_vertice2, upper_vertice2)
+                edge3 = volmdlr.LineSegment3D(upper_vertice2, upper_vertice1)
+                edge4 = volmdlr.LineSegment3D(upper_vertice1, lower_vertice1)
+                contour = volmdlr.Contour3D([edge1, edge2, edge3, edge4])
+                face = volmdlr.Face3D([contour])
+                lateral_faces.append(face)
+                
+        return [lower_face]+[upper_face]+lateral_faces
             
     def _bounding_box(self):
         return volmdlr.BoundingBox.from_points(self.outer_contour3d.points)
