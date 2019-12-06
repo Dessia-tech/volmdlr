@@ -133,6 +133,9 @@ class Block(volmdlr.Shell3D):
         
         faces = self.shell_faces()
         volmdlr.Shell3D.__init__(self, faces, name, color)
+        
+    def __hash__(self):
+        return hash(self.frame)
 
     def Vertices(self):
         return [self.frame.origin - 0.5*self.frame.u - 0.5*self.frame.v - 0.5*self.frame.w,

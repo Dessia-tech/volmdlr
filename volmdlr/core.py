@@ -2345,6 +2345,9 @@ class Plane3D(Primitive3D):
         self.name = name
         self.normal = self.vectors[0].Cross(self.vectors[1])
         self.normal.Normalize()
+        
+    def __hash__(self):
+        return sum([hash(v) for v in self.vectors]) + hash(self.origin)
     
     def __eq__(self, other_):
         equal = (self.origin == other_.origin
@@ -2593,7 +2596,9 @@ class Basis3D(Basis):
         self.v = v
         self.w = w
         self.name = name
-
+        
+    def __hash__(self):
+        return hash(self.u) + hash(self.v) + hash(self.w)
 
     def __add__(self, other_basis):
         M = self.TransferMatrix()*other_basis.TransferMatrix()
@@ -2810,6 +2815,8 @@ class Frame3D(Basis3D):
                               round(self.v, ndigits),
                               round(self.w, ndigits))
 
+    def __hash__(self):
+        return hash(self.u) + hash(self.v) + hash(self.w) + hash(self.origin)
 
     def Basis(self):
         return Basis3D(self.u, self.v, self.w)
@@ -2901,6 +2908,9 @@ class Line3D(Primitive3D, Line):
         Primitive3D.__init__(self, basis_primitives=[point1, point2], name=name)
         self.points = [point1, point2]
         self.bounding_box = self._bounding_box()
+        
+    def __hash__(self):
+        return sum([hash(p) for p in self.points]) + hash(self.bounding_box)
 
     def _bounding_box(self):
         points = self.points
@@ -3565,6 +3575,9 @@ class Edge3D(Primitive3D):
     def __init__(self, edge_start, edge_end, name=''):
         Primitive3D.__init__(self, basis_primitives=[edge_start, edge_end], name=name)
         self.points = [edge_start, edge_end]
+        
+    def __hash__(self):
+        return sum([hash(p) for p in self.points])
     
     def __eq__(self, other_):
         equal = True
@@ -3626,6 +3639,9 @@ class LineSegment3D(Edge3D):
     def __init__(self, point1, point2, name=''):
         Edge3D.__init__(self, point1, point2, name='')
         self.bounding_box = self._bounding_box()
+        
+    def __hash__(self):
+        return hash(self.points[0]) + hash(self.points[1])
         
     def to_dict(self):
         # improve the object structure ?
@@ -3779,6 +3795,9 @@ class Contour3D(Wire3D):
             raise ValueError
 
         self.points = self.clean_points()
+        
+    def __hash__(self):
+        return sum([hash(e) for e in self.edges]) + sum([hash(p) for p in self.points])
 
     def __eq__(self, other_):
         equal = True
@@ -3900,6 +3919,9 @@ class Face3D(Primitive3D):
                 print('WARNING', pt, 'not on', self.plane)
                 print('dot =', self.plane.normal.Dot(pt-self.plane.origin))
                 raise ValueError
+                
+    def __hash__(self):
+        return hash(self.plane) + sum([hash(p) for p in self.points])
                 
     def __eq__(self, other_):
         equal = (self.plane == other_.plane
@@ -4244,6 +4266,9 @@ class Shell3D(CompositePrimitive3D):
         self.name = name
         self.color = color
         self.bounding_box = self._bounding_box()
+        
+    def __hash__(self):
+        return sum([hash(f) for f in self.faces]) + hash(self.bounding_box)
         
     def __eq__(self, other_):
         equal = (self.bounding_box == other_.bounding_box)
@@ -4624,6 +4649,9 @@ class BoundingBox(dc.DessiaObject):
                        Point3D((self.xmin, self.ymax, self.zmax))]
         self.center = (self.points[0]+self.points[-2])/2
         self.name = name
+        
+    def __hash__(self):
+        return sum([hash(p) for p in self.points])
 
     def plot(self, ax=None, color=''):
         fig = plt.figure()
@@ -4988,6 +5016,9 @@ class Mesure(Line3D):
         self.color = color
         self.distance = Vector3D(self.points[0]-self.points[1]).Norm()
         self.bounding_box = self._bounding_box()
+        
+    def __hash__(self):
+        return sum([hash(p) for p in self.points])
 
     def Babylon(self):
         s = 'var myPoints = [];\n'
@@ -5297,6 +5328,9 @@ class VolumeModel(dc.DessiaObject):
             self.shells = self._extract_shells()
         if self.shells:
             self.bounding_box = self._bounding_box()
+            
+    def __hash__(self):
+        return sum([hash(p) for p in self.primitives])
 
     def _extract_shells(self):
         shells = []
