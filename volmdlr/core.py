@@ -2278,7 +2278,7 @@ class Point3D(Vector3D):
         return Point3D((self.vector[0] / value,
                         self.vector[1] / value,
                         self.vector[2] / value))
-        
+
     def Copy(self):
         return Point3D(self.vector)
 
@@ -2345,21 +2345,21 @@ class Plane3D(Primitive3D):
         self.name = name
         self.normal = self.vectors[0].Cross(self.vectors[1])
         self.normal.Normalize()
-        
+
     def __hash__(self):
         return sum([hash(v) for v in self.vectors]) + hash(self.origin)
-    
+
     def __eq__(self, other_):
         equal = (self.origin == other_.origin
                  and self.vectors[0] == other_.vectors[0]
                  and self.vectors[1] == other_.vectors[1])
         return equal
-        
+
     def to_dict(self):
         # improve the object structure ?
         dict_ = dc.DessiaObject.to_dict(self)
-        dict_['vector1'] = self.vectors[0]
-        dict_['vector2'] = self.vectors[1]
+        dict_['vector1'] = self.vectors[0].to_dict()
+        dict_['vector2'] = self.vectors[1].to_dict()
         return dict_
 
     @classmethod
@@ -2596,7 +2596,7 @@ class Basis3D(Basis):
         self.v = v
         self.w = w
         self.name = name
-        
+
     def __hash__(self):
         return hash(self.u) + hash(self.v) + hash(self.w)
 
@@ -2908,7 +2908,7 @@ class Line3D(Primitive3D, Line):
         Primitive3D.__init__(self, basis_primitives=[point1, point2], name=name)
         self.points = [point1, point2]
         self.bounding_box = self._bounding_box()
-        
+
     def __hash__(self):
         return sum([hash(p) for p in self.points]) + hash(self.bounding_box)
 
@@ -3501,7 +3501,7 @@ class CompositePrimitive3D(Primitive3D):
                 basis_primitives.append(primitive)
 
         Primitive3D.__init__(self, basis_primitives=basis_primitives, name=name)
-        
+
     def __eq__(self, other_):
         equal = True
         for primitive, other_primitive in zip(self.primitives, other_.primitives):
@@ -3575,16 +3575,16 @@ class Edge3D(Primitive3D):
     def __init__(self, edge_start, edge_end, name=''):
         Primitive3D.__init__(self, basis_primitives=[edge_start, edge_end], name=name)
         self.points = [edge_start, edge_end]
-        
+
     def __hash__(self):
         return sum([hash(p) for p in self.points])
-    
+
     def __eq__(self, other_):
         equal = True
         for point, other_point in zip(self.points, other_.points):
             equal = (equal and point == other_point)
         return equal
-        
+
     def to_dict(self):
         # improve the object structure ?
         dict_ = dc.DessiaObject.to_dict(self)
@@ -3639,15 +3639,15 @@ class LineSegment3D(Edge3D):
     def __init__(self, point1, point2, name=''):
         Edge3D.__init__(self, point1, point2, name='')
         self.bounding_box = self._bounding_box()
-        
+
     def __hash__(self):
         return hash(self.points[0]) + hash(self.points[1])
-        
+
     def to_dict(self):
         # improve the object structure ?
         dict_ = dc.DessiaObject.to_dict(self)
-        dict_['point1'] = self.points[0]
-        dict_['point2'] = self.points[1]
+        dict_['point1'] = self.points[0].to_dict()
+        dict_['point2'] = self.points[1].to_dict()
         return dict_
 
     def _bounding_box(self):
@@ -3795,7 +3795,7 @@ class Contour3D(Wire3D):
             raise ValueError
 
         self.points = self.clean_points()
-        
+
     def __hash__(self):
         return sum([hash(e) for e in self.edges]) + sum([hash(p) for p in self.points])
 
@@ -3919,10 +3919,10 @@ class Face3D(Primitive3D):
                 print('WARNING', pt, 'not on', self.plane)
                 print('dot =', self.plane.normal.Dot(pt-self.plane.origin))
                 raise ValueError
-                
+
     def __hash__(self):
         return hash(self.plane) + sum([hash(p) for p in self.points])
-                
+
     def __eq__(self, other_):
         equal = (self.plane == other_.plane
                  and self.polygon2D == other_.polygon2D)
@@ -4266,10 +4266,10 @@ class Shell3D(CompositePrimitive3D):
         self.name = name
         self.color = color
         self.bounding_box = self._bounding_box()
-        
+
     def __hash__(self):
         return sum([hash(f) for f in self.faces]) + hash(self.bounding_box)
-        
+
     def __eq__(self, other_):
         equal = (self.bounding_box == other_.bounding_box)
         for face, other_face in zip(self.faces, other_.faces):
@@ -4649,7 +4649,7 @@ class BoundingBox(dc.DessiaObject):
                        Point3D((self.xmin, self.ymax, self.zmax))]
         self.center = (self.points[0]+self.points[-2])/2
         self.name = name
-        
+
     def __hash__(self):
         return sum([hash(p) for p in self.points])
 
@@ -5016,7 +5016,7 @@ class Mesure(Line3D):
         self.color = color
         self.distance = Vector3D(self.points[0]-self.points[1]).Norm()
         self.bounding_box = self._bounding_box()
-        
+
     def __hash__(self):
         return sum([hash(p) for p in self.points])
 
@@ -5328,7 +5328,7 @@ class VolumeModel(dc.DessiaObject):
             self.shells = self._extract_shells()
         if self.shells:
             self.bounding_box = self._bounding_box()
-            
+
     def __hash__(self):
         return sum([hash(p) for p in self.primitives])
 
