@@ -2144,6 +2144,7 @@ class Vector3D(Vector):
         side = 'old' or 'new'
         """
         if side == 'old':
+            print(frame)
             new_vector = frame.OldCoordinates(self)
             if copy:
                 return new_vector
@@ -5434,7 +5435,12 @@ class MovingVolumeModel(VolumeModel):
     def __init__(self, primitives, step_frames, name=''):
         VolumeModel.__init__(self, primitives=primitives, name=name)
         self.step_frames = step_frames
-        
+    
+    def step_volume_model(self, istep):
+        primitives = []
+        for primitive, frame in zip(self.primitives, self.step_frames[istep]):
+            primitives.append(primitive.frame_mapping(frame, side='old', copy=True))
+        return VolumeModel(primitives)
     
     def BabylonScript(self, use_cdn=True, debug=False):
 

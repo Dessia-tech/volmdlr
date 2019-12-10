@@ -118,7 +118,7 @@ class Sphere(volmdlr.Primitive3D):
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive'+str(ip)
         r = 1000*self.radius
-        x, y, z = npy.round(1000*self.center.vector, ndigits)
+        x, y, z = round(1000*self.center, ndigits)
         return '{} = Part.makeSphere({}, fc.Vector({}, {}, {}))\n'.format(name,r,x,y,z)
 
     def Babylon(self, name='primitive_mesh'):        
@@ -131,6 +131,15 @@ class Sphere(volmdlr.Primitive3D):
                                            volmdlr.Contour2D([line, arc]), self.position, volmdlr.X3D, name=self.name)
         return extruded_profile.Babylon(name=name)
 
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        if copy:
+            return Sphere(self.center.frame_mapping(frame, side, copy),
+                          self.radius)
+        else:
+            self.center.frame_mapping(frame, side, copy)
 
 class Block(volmdlr.Shell3D):
     """
@@ -345,8 +354,20 @@ class Cylinder(volmdlr.Primitive3D):
         extruded_profile = RevolvedProfile(self.position, self.axis, normal_vector1,
                                            volmdlr.Contour2D([l1, l2, l3, l4]), self.position, self.axis, name=self.name)
         return extruded_profile.Babylon(name=name)
-
-class HollowCylinder(volmdlr.Primitive3D):
+    
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        if copy:
+            return Cylinder(self.position.frame_mapping(frame, side, copy),
+                            self.axis.frame_mapping(frame, side, copy),
+                            self.radius, self.length)
+        else:
+            self.position.frame_mapping(frame, side, copy)
+            self.axis.frame_mapping(frame, side, copy)
+            
+class HollowCylinder(Cylinder):
     def __init__(self, position, axis, inner_radius, outer_radius, length, name=''):
         volmdlr.Primitive3D.__init__(self, name=name)
         self.position = position
@@ -365,7 +386,7 @@ class HollowCylinder(volmdlr.Primitive3D):
             name = 'primitive'+str(ip)
             re = round(1000*self.outer_radius, 6)
             ri = round(1000*self.inner_radius, 6)
-            x, y, z = round((1000*(self.position - self.axis*self.width/2)), 6)
+            x, y, z = round((1000*(self.position - self.axis*self.length/2)), 6)
             ax, ay, az = npy.round(self.axis.vector, 6)
 
             s='C2 = Part.makeCircle({}, fc.Vector({}, {}, {}),fc.Vector({}, {}, {}))\n'.format(re, x, y, z, ax, ay, az)
@@ -418,6 +439,18 @@ class HollowCylinder(volmdlr.Primitive3D):
         extruded_profile = RevolvedProfile(self.position, self.axis, normal_vector1,
                                            volmdlr.Contour2D([l1, l2, l3, l4]), self.position, self.axis, name=self.name)
         return extruded_profile.Babylon(name=name)
+
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        if copy:
+            return HollowCylinder(self.position.frame_mapping(frame, side, copy),
+                            self.axis.frame_mapping(frame, side, copy),
+                            self.inner_radius, self.outer_radius, self.length)
+        else:
+            self.position.frame_mapping(frame, side, copy)
+            self.axis.frame_mapping(frame, side, copy)
 
 class Cone(volmdlr.Primitive3D):
     def __init__(self, position, axis, radius, length, name=''):
@@ -483,10 +516,9 @@ class ExtrudedProfile(volmdlr.Shell3D):
     def __init__(self, plane_origin, x, y, outer_contour2d, inner_contours2d,
                  extrusion_vector, name='', color=None):
         volmdlr.Primitive3D.__init__(self, name=name)
+        self.plane_origin = plane_origin
         self.outer_contour2d = outer_contour2d
-#        print('outer_contour2d', self.outer_contour2d.primitives)
         self.outer_contour3d = outer_contour2d.To3D(plane_origin, x, y)
-#        print('outer_contour3d', self.outer_contour3d)
         self.inner_contours2d = inner_contours2d
         self.extrusion_vector = extrusion_vector
         self.inner_contours3d = []
@@ -656,6 +688,32 @@ class ExtrudedProfile(volmdlr.Shell3D):
         s += 'upperPolygon.rotation = BABYLON.Vector3.RotationFromAxis(axis3, axis1, axis2);\n'
 
         return s
+
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        if copy:
+            return ExtrudedProfile(self.plane_origin.frame_mapping(frame, side, copy),
+                                   self.x.frame_mapping(frame, side, copy),
+                                   self.y.frame_mapping(frame, side, copy),
+                                   self.outer_contour2d,
+                                   self.inner_contours2d,
+                                   self.extrusion_vector.frame_mapping(frame, side, copy)
+
+                            )
+        else:
+            self.__init__(self.plane_origin.frame_mapping(frame, side, copy),
+                                   self.x.frame_mapping(frame, side, copy),
+                                   self.y.frame_mapping(frame, side, copy),
+                                   self.outer_contour2d,
+                                   self.inner_contours2d,
+                                   self.extrusion_vector.frame_mapping(frame, side, copy))
+#            self.plane_origin.frame_mapping(frame, side, copy)
+#            self.x.frame_mapping(frame, side, copy),
+#            self.y.frame_mapping(frame, side, copy),
+#            self.axis_point.frame_mapping(frame, side, copy),
+#            self.axis.frame_mapping(frame, side, copy)
 
 class RevolvedProfile(volmdlr.Shell3D):
     """
