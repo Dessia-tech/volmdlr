@@ -3766,6 +3766,8 @@ class LineSegment3D(Edge3D):
 
 
 class Contour3D(Wire3D):
+    _standalone_in_db = True
+    _non_eq_attributes = ['name']
     """
     A collection of 3D primitives forming a closed wire3D
     """
@@ -3796,8 +3798,8 @@ class Contour3D(Wire3D):
 
         self.points = self.clean_points()
 
-    def __hash__(self):
-        return sum([hash(e) for e in self.edges]) + sum([hash(p) for p in self.points])
+#    def __hash__(self):
+#        return sum([hash(e) for e in self.edges]) + sum([hash(p) for p in self.points])
 
     def __eq__(self, other_):
         equal = True
@@ -3892,6 +3894,10 @@ class Contour3D(Wire3D):
 
 
 class Face3D(Primitive3D):
+    _standalone_in_db = True
+    _non_serializable_attributes  = ['bounding_box']
+    _non_eq_attributes = ['name', 'bounding_box']
+    
     def __init__(self, contours, plane=None, points=None, polygon2D=None, name=''):
 #        Primitive3D.__init__(self, name=name)
         self.contours = contours
@@ -3920,8 +3926,8 @@ class Face3D(Primitive3D):
                 print('dot =', self.plane.normal.Dot(pt-self.plane.origin))
                 raise ValueError
 
-    def __hash__(self):
-        return hash(self.plane) + sum([hash(p) for p in self.points])
+#    def __hash__(self):
+#        return hash(self.plane) + sum([hash(p) for p in self.points])
 
     def __eq__(self, other_):
         equal = (self.plane == other_.plane
@@ -4262,14 +4268,17 @@ class Face3D(Primitive3D):
 
 class Shell3D(CompositePrimitive3D):
     _standalone_in_db = True
+    _non_serializable_attributes  = ['bounding_box']
+    _non_eq_attributes = ['name', 'color', 'bounding_box']
+    
     def __init__(self, faces, name='', color=None):
         self.faces = faces
         self.name = name
         self.color = color
         self.bounding_box = self._bounding_box()
 
-    def __hash__(self):
-        return sum([hash(f) for f in self.faces]) + hash(self.bounding_box)
+#    def __hash__(self):
+#        return sum([hash(f) for f in self.faces]) + hash(self.bounding_box)
 
     def __eq__(self, other_):
         equal = (self.bounding_box == other_.bounding_box)
