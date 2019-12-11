@@ -478,7 +478,6 @@ class Vector2D(Vector):
             p4 = p2 + 4*u
             ax.plot([p3[0], p4[0]], [p3[1], p4[1]], style, linestyle=linestyle)
 
-#        print(origin, self, origin+self)
         if label is not None:
             ax.text(*(origin+self*amplitude).vector, label)
 
@@ -842,7 +841,6 @@ class CompositePrimitive2D(Primitive2D):
             if element.__class__.__name__ == 'LineSegment2D':
                 element.MPLPlot(ax, color, arrow, width)
             else:
-#                print(element)
                 element.MPLPlot(ax, color=color)
 
         ax.margins(0.1)
@@ -925,8 +923,8 @@ class Contour2D(Wire2D):
             elif primitive.__class__.__name__ == 'Circle2D':
                 return None
             else:
-                print(primitive)
-                raise NotImplementedError
+                raise NotImplementedError('primitive of type {} is not handled'.format(primitive))
+                
         self.polygon = Polygon2D(points_polygon)
         self.straight_line_contour_polygon = Polygon2D(points_straight_line_contour)
         for arc in arcs:
@@ -1028,7 +1026,6 @@ class Contour2D(Wire2D):
         plot_data['type'] = 'contour'
         plot_data['plot_data'] = []
         for item in self.basis_primitives:
-#            print(item)
             plot_data['plot_data'].append(item.plot_data(color=color,
                                                         stroke_width=stroke_width,
                                                         opacity=opacity))
@@ -2144,7 +2141,6 @@ class Vector3D(Vector):
         side = 'old' or 'new'
         """
         if side == 'old':
-            print(frame)
             new_vector = frame.OldCoordinates(self)
             if copy:
                 return new_vector
@@ -2519,8 +2515,6 @@ class Plane3D:
         s += 'planemat.alpha = 0.4;\n'
         s += 'myPlane.material = planemat;\n'
         
-#        print(self.__dict__)
-        
         return s
 
 PLANE3D_OXY = Plane3D(O3D, X3D, Y3D)
@@ -2857,8 +2851,9 @@ class Frame3D(Basis3D):
         return s 
     
 
-#oxyz = Frame3D(o3D, x3D, y3D, z3D)
-OXYZ = Frame3D(O3D, x3D, y3D, z3D)
+OXYZ = Frame3D(O3D, X3D, Y3D, Z3D)
+OYZX = Frame3D(O3D, Y3D, Z3D, X3D)
+OZXY = Frame3D(O3D, Z3D, X3D, Y3D)
 
 
 class Line3D(Primitive3D, Line):
@@ -3715,8 +3710,6 @@ class Contour3D(Wire3D):
                 edges_primitives.append(edge)
         self.edges = edges_primitives
         
-#        print('---', edges)
-#        print('--', self.edges[0].__class__.__name__)
         if self.edges[0].__class__.__name__ == 'Contour3D':
             raise ValueError
                     
@@ -3744,7 +3737,6 @@ class Contour3D(Wire3D):
         return cls(edges, points=None, name=arguments[0][1:-1])
     
     def clean_points(self):
-#        print(self.edges[0].edges)
         points = self.edges[0].basis_primitives[::]
         last_points_added = points
         for edge in self.edges[1:]:
@@ -3817,11 +3809,9 @@ class Face3D(Primitive3D):
         
         contour_points = [p.copy() for p in self.contours[0].points[:]]
         if plane is None:
-#            print('face3D recalcule self.plane')
             self.plane = Plane3D.from_points(contour_points)
         
         if points is None or polygon2D is None:
-#            print('face3D recalcule self.points et self.polygon2D')
             self.points, self.polygon2D = self._repair_points_and_polygon2d(contour_points, self.plane)
             self.contours[0].points = [p.copy() for p in self.points]
                         

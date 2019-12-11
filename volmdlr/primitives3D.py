@@ -359,13 +359,21 @@ class Cylinder(volmdlr.Primitive3D):
         """
         side = 'old' or 'new'
         """
+        basis = frame.Basis()
+        if side == 'old':
+            axis = basis.OldCoordinates(self.axis)
+        elif side == 'new':
+            axis = basis.NewCoordinates(self.axis)
+        else:
+            raise ValueError('side must be either old or new')
+        
         if copy:
             return Cylinder(self.position.frame_mapping(frame, side, copy),
-                            self.axis.frame_mapping(frame, side, copy),
+                            axis,
                             self.radius, self.length)
         else:
             self.position.frame_mapping(frame, side, copy)
-            self.axis.frame_mapping(frame, side, copy)
+            self.axis = axis
             
 class HollowCylinder(Cylinder):
     def __init__(self, position, axis, inner_radius, outer_radius, length, name=''):
@@ -444,14 +452,23 @@ class HollowCylinder(Cylinder):
         """
         side = 'old' or 'new'
         """
+        basis = frame.Basis()
+        if side == 'old':
+            axis = basis.OldCoordinates(self.axis)
+        elif side == 'new':
+            axis = basis.NewCoordinates(self.axis)
+        else:
+            raise ValueError('side must be either old or new')
+
         if copy:
             return HollowCylinder(self.position.frame_mapping(frame, side, copy),
-                            self.axis.frame_mapping(frame, side, copy),
-                            self.inner_radius, self.outer_radius, self.length)
+                                  axis,
+                                  self.inner_radius, self.outer_radius, self.length)
         else:
             self.position.frame_mapping(frame, side, copy)
-            self.axis.frame_mapping(frame, side, copy)
-
+            self.axis = axis
+            
+            
 class Cone(volmdlr.Primitive3D):
     def __init__(self, position, axis, radius, length, name=''):
         volmdlr.Primitive3D.__init__(self, name=name)
@@ -693,27 +710,35 @@ class ExtrudedProfile(volmdlr.Shell3D):
         """
         side = 'old' or 'new'
         """
+        basis = frame.Basis()
+        if side == 'old':
+            extrusion_vector = basis.OldCoordinates(self.extrusion_vector)
+            x = basis.OldCoordinates(self.x)
+            y = basis.OldCoordinates(self.y)
+        elif side == 'new':
+            extrusion_vector = basis.NewCoordinates(self.extrusion_vector)
+            x = basis.NewCoordinates(self.x)
+            y = basis.NewCoordinates(self.y)
+        else:
+            raise ValueError('side must be either old or new')
+
         if copy:
+            print('frame', frame)
+            print('nxy', self.x, x, self.y, y)
             return ExtrudedProfile(self.plane_origin.frame_mapping(frame, side, copy),
-                                   self.x.frame_mapping(frame, side, copy),
-                                   self.y.frame_mapping(frame, side, copy),
+                                   x,
+                                   y,
                                    self.outer_contour2d,
                                    self.inner_contours2d,
-                                   self.extrusion_vector.frame_mapping(frame, side, copy)
-
-                            )
+                                   extrusion_vector)
         else:
             self.__init__(self.plane_origin.frame_mapping(frame, side, copy),
-                                   self.x.frame_mapping(frame, side, copy),
-                                   self.y.frame_mapping(frame, side, copy),
-                                   self.outer_contour2d,
-                                   self.inner_contours2d,
-                                   self.extrusion_vector.frame_mapping(frame, side, copy))
-#            self.plane_origin.frame_mapping(frame, side, copy)
-#            self.x.frame_mapping(frame, side, copy),
-#            self.y.frame_mapping(frame, side, copy),
-#            self.axis_point.frame_mapping(frame, side, copy),
-#            self.axis.frame_mapping(frame, side, copy)
+                          x,
+                          y,
+                          self.outer_contour2d,
+                          self.inner_contours2d,
+                          extrusion_vector)
+            
 
 class RevolvedProfile(volmdlr.Shell3D):
     """
@@ -729,12 +754,7 @@ class RevolvedProfile(volmdlr.Shell3D):
         self.plane_origin = plane_origin
         self.x = x
         self.y = y
-
-#        self.contours3D = []
-#        for contour in contour2D:
-#            self.contours3D.append(contour.To3D(plane_origin, x, y))
         self.contour3D = self.contour2D.To3D(plane_origin, x, y)
-#        print('self.contour3D', self.contour3D)
             
         faces = self.shell_faces()
         volmdlr.Shell3D.__init__(self, faces, name, color)
@@ -799,36 +819,52 @@ class RevolvedProfile(volmdlr.Shell3D):
         ap3 = round(ap3*1000, ndigits)
         angle = self.angle/math.pi*180
         s += '{} = F.revolve(fc.Vector({},{},{}), fc.Vector({},{},{}),{})\n'.format(name, ap1,ap2,ap3,a1,a2,a3,angle)
-
-#            myObject.Shape = Sweep
         return s
 
     def Volume(self):
-#        areas=[c.Area() for c in self.contours2D]
-#        # Maximum area is main surface, others cut into it
-#        sic = list(npy.argsort(areas))[::-1]# sorted indices of contours
-        p1=self.axis_point.PlaneProjection3D(self.plane_origin,self.x,self.y)
-#        if self.axis_point.PointDistance(p1)!=0:
-#            raise NotImplementedError
-        p1_2D=p1.To2D(self.axis_point,self.x,self.y)
-        p2_3D=self.axis_point+volmdlr.Point3D(self.axis.vector)
-#        p2=p2_3D.PlaneProjection3D(self.plane_origin,self.x,self.y)
-#        if p2_3D.PointDistance(p2)!=0:
-#            raise NotImplementedError
-        p2_2D=p2_3D.To2D(self.plane_origin,self.x,self.y)
-        axis_2D=volmdlr.Line2D(p1_2D,p2_2D)
+        p1 = self.axis_point.PlaneProjection3D(self.plane_origin,self.x,self.y)
+        p1_2D = p1.To2D(self.axis_point,self.x,self.y)
+        p2_3D = self.axis_point+volmdlr.Point3D(self.axis.vector)
+        p2_2D = p2_3D.To2D(self.plane_origin,self.x,self.y)
+        axis_2D = volmdlr.Line2D(p1_2D,p2_2D)
         com = self.contour2D.CenterOfMass()
         rg = axis_2D.PointDistance(com)
-#        volume=areas[sic[0]]*rg
-#
-#        for i in sic[1:]:
-#            com=self.contours2D[i].CenterOfMass()
-#            rg=axis_2D.PointDistance(com)
-#            volume-=areas[i]*rg
 
-#        return self.angle*volume
         return self.angle*rg*self.contour2D.Area()
 
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        basis = frame.Basis()
+        if side == 'old':
+            axis = basis.OldCoordinates(self.axis)
+            x = basis.OldCoordinates(self.x)
+            y = basis.OldCoordinates(self.y)
+        elif side == 'new':
+            axis = basis.NewCoordinates(self.axis)
+            x = basis.NewCoordinates(self.x)
+            y = basis.NewCoordinates(self.y)
+        else:
+            raise ValueError('side must be either old or new')
+
+        if copy:
+            
+            return RevolvedProfile(self.plane_origin.frame_mapping(frame, side, copy),
+                                   x,
+                                   y,
+                                   self.contour2D,
+                                   self.axis_point.frame_mapping(frame, side, copy),
+                                   axis,
+                                   self.angle)
+        else:
+            self.__init__(self.plane_origin.frame_mapping(frame, side, copy),
+                          x,
+                          y,
+                          self.contour2D,
+                          self.axis_point.frame_mapping(frame, side, copy),
+                          axis,
+                          self.angle)
 
 
 class HelicalExtrudedProfile(volmdlr.Primitive3D):
