@@ -4261,6 +4261,7 @@ class Face3D(Primitive3D):
 
 
 class Shell3D(CompositePrimitive3D):
+    _standalone_in_db = True
     def __init__(self, faces, name='', color=None):
         self.faces = faces
         self.name = name
@@ -5318,6 +5319,7 @@ class Step:
 
 
 class VolumeModel(dc.DessiaObject):
+    _standalone_in_db = True
     """
     :param groups: A list of two element tuple. The first element is a string naming the group and the second element is a list of primitives of the group
     """

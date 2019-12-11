@@ -122,6 +122,7 @@ class Sphere(volmdlr.Primitive3D):
         return '{} = Part.makeSphere({}, fc.Vector({}, {}, {}))\n'.format(name,r,x,y,z)
 
 class Block(volmdlr.Shell3D):
+    _standalone_in_db = True
     """
     Creates a block
     :param frame: a frame 3D. The origin of the frame is the center of the block,
