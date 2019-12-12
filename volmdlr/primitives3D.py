@@ -126,7 +126,8 @@ class Block(volmdlr.Shell3D):
     _standalone_in_db = True
     _generic_eq = True
     _non_serializable_attributes  = ['size']
-    _non_eq_attributes = ['name', 'color', 'size']
+    _non_eq_attributes = ['name', 'color', 'size', 'bounding_box', 'faces', 'contours', 
+                          'plane', 'points', 'polygon2D']
     _non_hash_attributes = []
     
     """
@@ -141,8 +142,8 @@ class Block(volmdlr.Shell3D):
         faces = self.shell_faces()
         volmdlr.Shell3D.__init__(self, faces, name, color)
 
-    def __hash__(self):
-        return hash(self.frame)
+    # def __hash__(self):
+    #     return hash(self.frame)
 
     def Vertices(self):
         return [self.frame.origin - 0.5*self.frame.u - 0.5*self.frame.v - 0.5*self.frame.w,
@@ -233,10 +234,10 @@ class Block(volmdlr.Shell3D):
                 volmdlr.Shell3D.frame_mapping(self, frame, side, copy=False)
 
     def copy(self):
-        new_origin = self.frame.origin.copy()
-        new_u = self.frame.u.copy()
-        new_v = self.frame.v.copy()
-        new_w = self.frame.w.copy()
+        new_origin = self.frame.origin.Copy()
+        new_u = self.frame.u.Copy()
+        new_v = self.frame.v.Copy()
+        new_w = self.frame.w.Copy()
         new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
         return Block(new_frame, self.name, self.color)
 

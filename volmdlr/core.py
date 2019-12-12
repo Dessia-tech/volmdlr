@@ -1799,7 +1799,14 @@ class Polygon2D(CompositePrimitive2D):
         self.line_segments = self._LineSegments()
 
         CompositePrimitive2D.__init__(self, primitives, name)
+        
+    def copy(self):
+        points = [p.copy() for p in self.points]
+        return Polygon2D(points, self.name)
 
+    def __hash__(self):
+        return sum([hash(p) for p in self.points])
+    
     def __eq__(self, other_):
         equal = True
         for point, other_point in zip(self.points, other_.points):
@@ -2279,6 +2286,9 @@ class Point3D(Vector3D):
                         self.vector[2] / value))
 
     def Copy(self):
+        return Point3D(self.vector)
+    
+    def copy(self):
         return Point3D(self.vector)
 
     def MPLPlot(self, ax=None):
@@ -3641,8 +3651,8 @@ class Edge3D(Primitive3D):
             self.points[1].frame_mapping(frame, side, copy=False)
 
     def copy(self):
-        new_edge_start = self.points[0].copy()
-        new_edge_end = self.points[1].copy()
+        new_edge_start = self.points[0].Copy()
+        new_edge_end = self.points[1].Copy()
         return Edge3D(new_edge_start, new_edge_end)
 
 
@@ -3715,7 +3725,7 @@ class LineSegment3D(Edge3D):
                 self.bounding_box = self._bounding_box()
 
     def copy(self):
-        return LineSegment3D(*[p.copy() for p in self.points])
+        return LineSegment3D(*[p.Copy() for p in self.points])
 
     def MPLPlot(self, ax=None):
         if ax is None:
@@ -3780,11 +3790,6 @@ class LineSegment3D(Edge3D):
 
 
 class Contour3D(Wire3D):
-    _standalone_in_db = True
-    _generic_eq = True
-    _non_serializable_attributes  = []
-    _non_eq_attributes = ['name']
-    _non_hash_attributes = []
     """
     A collection of 3D primitives forming a closed wire3D
     """
@@ -3815,15 +3820,16 @@ class Contour3D(Wire3D):
 
         self.points = self.clean_points()
 
-#    def __hash__(self):
-#        return sum([hash(e) for e in self.edges]) + sum([hash(p) for p in self.points])
+    def __hash__(self):
+        return sum([hash(e) for e in self.edges]) + sum([hash(p) for p in self.points])
 
     def __eq__(self, other_):
         equal = True
         for edge, other_edge in zip(self.edges, other_.edges):
             equal = (equal and edge == other_edge)
-        for point, other_point in zip(self.points, other_.points):
-            equal = (equal and point == other_point)
+        # for point, other_point in zip(self.points, other_.points):
+        #     equal = (equal and point == other_point)
+        #     print('contour', equal, point.vector, other_point.vector)
         return equal
 
     @classmethod
@@ -3906,7 +3912,7 @@ class Contour3D(Wire3D):
 
     def copy(self):
         new_edges = [edge.copy() for edge in self.edges]
-        new_points = [p.copy() for p in self.points]
+        new_points = [p.Copy() for p in self.points]
         return Contour3D(new_edges, new_points, self.name)
 
 
@@ -3945,17 +3951,17 @@ class Face3D(Primitive3D):
                 print('dot =', self.plane.normal.Dot(pt-self.plane.origin))
                 raise ValueError
 
-#    def __hash__(self):
-#        return hash(self.plane) + sum([hash(p) for p in self.points])
+    def __hash__(self):
+        return hash(self.plane) + sum([hash(p) for p in self.points])
 
-    # def __eq__(self, other_):
-    #     equal = (self.plane == other_.plane
-    #              and self.polygon2D == other_.polygon2D)
-    #     for contour, other_contour in zip(self.contours, other_.contours):
-    #         equal = (equal and contour == other_contour)
-    #     for point, other_point in zip(self.points, other_.points):
-    #         equal = (equal and point == other_point)
-    #     return equal
+    def __eq__(self, other_):
+        equal = (self.plane == other_.plane
+                  and self.polygon2D == other_.polygon2D)
+        for contour, other_contour in zip(self.contours, other_.contours):
+            equal = (equal and contour == other_contour)
+        for point, other_point in zip(self.points, other_.points):
+            equal = (equal and point == other_point)
+        return equal
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -4033,9 +4039,9 @@ class Face3D(Primitive3D):
         # print('points before copy', self.points)
         new_contour = [contour.copy() for contour in self.contours]
         new_plane = self.plane.copy()
-        new_points = [p.copy() for p in self.points]
+        new_points = [p.Copy() for p in self.points]
         # print('points after copy', new_points)
-        return Face3D(new_contour, new_plane, new_points, self.polygon2D, self.name)
+        return Face3D(new_contour, new_plane, new_points, self.polygon2D.copy(), self.name)
 #        return Face3D(new_contour)
 
     def average_center_point(self):
@@ -4289,7 +4295,7 @@ class Shell3D(CompositePrimitive3D):
     _standalone_in_db = True
     _generic_eq = True
     _non_serializable_attributes  = ['bounding_box']
-    _non_eq_attributes = ['name', 'color', 'bounding_box']
+    _non_eq_attributes = ['name', 'color', 'bounding_box', 'contours']
     _non_hash_attributes = []
     
     def __init__(self, faces, name='', color=None):
@@ -4298,14 +4304,14 @@ class Shell3D(CompositePrimitive3D):
         self.color = color
         self.bounding_box = self._bounding_box()
 
-#    def __hash__(self):
-#        return sum([hash(f) for f in self.faces]) + hash(self.bounding_box)
+    def __hash__(self):
+        return sum([hash(f) for f in self.faces])
 
-    # def __eq__(self, other_):
-    #     equal = (self.bounding_box == other_.bounding_box)
-    #     for face, other_face in zip(self.faces, other_.faces):
-    #         equal = (equal and face == other_face)
-    #     return equal
+    def __eq__(self, other_):
+        equal = True
+        for face, other_face in zip(self.faces, other_.faces):
+            equal = (equal and face == other_face)
+        return equal
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -5352,7 +5358,7 @@ class VolumeModel(dc.DessiaObject):
     _standalone_in_db = True
     _generic_eq = True
     _non_serializable_attributes  = ['shells', 'bounding_box']
-    _non_eq_attributes = ['name', 'shells', 'bounding_box']
+    _non_eq_attributes = ['name', 'shells', 'bounding_box', 'contours', 'faces']
     _non_hash_attributes = []
     """
     :param groups: A list of two element tuple. The first element is a string naming the group and the second element is a list of primitives of the group
