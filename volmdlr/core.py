@@ -385,6 +385,9 @@ class Vector2D(Vector):
         v1, v2 = other_vector.vector
         return u1*v2 - u2*v1
 
+    def point_distance(self, point2):
+        return (self-point2).Norm()
+            
 
     def Rotation(self, center, angle, copy=True):
         u = self - center
@@ -532,9 +535,7 @@ class Point2D(Vector2D):
         ax.plot([x1], [y1], color=color, marker='o')
         return fig, ax
 
-    def point_distance(self, point2):
-        return (self-point2).Norm()
-            
+
     @classmethod
     def LinesIntersection(cls, line1, line2, curvilinear_abscissa=False):
         x1 = line1.points[0].vector[0]
@@ -2058,6 +2059,8 @@ class Vector3D(Vector):
         self.vector[1] /= n
         self.vector[2] /= n
 
+    def point_distance(self, point2):
+        return (self-point2).Norm()
 
     def Rotation(self, center, axis, angle, copy=True):
         """
@@ -2289,9 +2292,6 @@ class Point3D(Vector3D):
         x2d = self.Dot(x) - plane_origin.Dot(x)
         y2d = self.Dot(y) - plane_origin.Dot(y)
         return Point2D((x2d,y2d))
-
-    def point_distance(self, point2):
-        return (self-point2).Norm()
 
     @classmethod
     def from_step(cls, arguments, object_dict):
