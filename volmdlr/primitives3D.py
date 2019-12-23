@@ -634,100 +634,100 @@ class ExtrudedProfile(volmdlr.Shell3D):
 
         return self.Area()*coeff
 
-    def Babylon(self):
-        s = 'var mat = new BABYLON.StandardMaterial("mat", scene);\n'
-        s += 'mat.backFaceCulling = false;\n'
-        if self.color is not None:
-            s += 'mat.diffuseColor = new BABYLON.Color3({},{},{});\n'.format(self.color[0], self.color[1], self.color[2])
+    # def Babylon(self):
+    #     s = 'var mat = new BABYLON.StandardMaterial("mat", scene);\n'
+    #     s += 'mat.backFaceCulling = false;\n'
+    #     if self.color is not None:
+    #         s += 'mat.diffuseColor = new BABYLON.Color3({},{},{});\n'.format(self.color[0], self.color[1], self.color[2])
 
 
-        lower_outer_ribbon_points = self.outer_contour3d.points
-        upper_outer_ribbon_points = [p.Translation(self.extrusion_vector) for p in lower_outer_ribbon_points]
+    #     lower_outer_ribbon_points = self.outer_contour3d.points
+    #     upper_outer_ribbon_points = [p.Translation(self.extrusion_vector) for p in lower_outer_ribbon_points]
 
-        s += 'var LowerOuterPathRibbon = [];\n'
-        for point in lower_outer_ribbon_points:
-            s += 'LowerOuterPathRibbon.push(new BABYLON.Vector3({},{},{}));\n'.format(round(point[0],6), round(point[1],6), round(point[2],6))
-        s += 'var UpperOuterPathRibbon = [];\n'
-        for point in upper_outer_ribbon_points:
-            s += 'UpperOuterPathRibbon.push(new BABYLON.Vector3({},{},{}));\n'.format(round(point[0],6), round(point[1],6), round(point[2],6))
-        s += 'var outerRibbon = BABYLON.MeshBuilder.CreateRibbon("ribbon", {pathArray: [LowerOuterPathRibbon, UpperOuterPathRibbon]}, scene);\n'
-        s += 'outerRibbon.material = mat;\n'
-
-
-        lower_inner_ribbon_contours_points = []
-        upper_inner_ribbon_contours_points = []
-        for inner_contour3d in self.inner_contours3d:
-            lower_inner_ribbon_points = inner_contour3d.points
-            upper_inner_ribbon_points = [p.Translation(self.extrusion_vector) for p in lower_inner_ribbon_points]
-            lower_inner_ribbon_contours_points.append(lower_inner_ribbon_points)
-            upper_inner_ribbon_contours_points.append(upper_inner_ribbon_points)
-
-            s += 'var LowerInnerPathRibbon = [];\n'
-            for point in lower_inner_ribbon_points:
-                s += 'LowerInnerPathRibbon.push(new BABYLON.Vector3({},{},{}));\n'.format(round(point[0],6), round(point[1],6), round(point[2],6))
-            s += 'var UpperInnerPathRibbon = [];\n'
-            for point in upper_inner_ribbon_points:
-                s += 'UpperInnerPathRibbon.push(new BABYLON.Vector3({},{},{}));\n'.format(round(point[0],6), round(point[1],6), round(point[2],6))
-            s += 'var innerRibbon = BABYLON.MeshBuilder.CreateRibbon("ribbon", {pathArray: [LowerInnerPathRibbon, UpperInnerPathRibbon]}, scene);\n'
-            s += 'innerRibbon.material = mat;\n'
+    #     s += 'var LowerOuterPathRibbon = [];\n'
+    #     for point in lower_outer_ribbon_points:
+    #         s += 'LowerOuterPathRibbon.push(new BABYLON.Vector3({},{},{}));\n'.format(round(point[0],6), round(point[1],6), round(point[2],6))
+    #     s += 'var UpperOuterPathRibbon = [];\n'
+    #     for point in upper_outer_ribbon_points:
+    #         s += 'UpperOuterPathRibbon.push(new BABYLON.Vector3({},{},{}));\n'.format(round(point[0],6), round(point[1],6), round(point[2],6))
+    #     s += 'var outerRibbon = BABYLON.MeshBuilder.CreateRibbon("ribbon", {pathArray: [LowerOuterPathRibbon, UpperOuterPathRibbon]}, scene);\n'
+    #     s += 'outerRibbon.material = mat;\n'
 
 
-        lower_plane = volmdlr.Plane3D.from_points(lower_outer_ribbon_points[:-1])
-        lower_outer_polygon_points = [p.To2D(lower_plane.origin, lower_plane.vectors[0], lower_plane.vectors[1]) for p in lower_outer_ribbon_points[:-1]]
-        s += 'LowerPolygonPoints = [];\n'
-        for point in lower_outer_polygon_points:
-            s += 'LowerPolygonPoints.push(new BABYLON.Vector2({},{}));\n'.format(round(point[0],6), round(point[1],6))
-        s += 'var lowerPoly_tri = new BABYLON.PolygonMeshBuilder("lowerPolygon", LowerPolygonPoints, scene);\n'
-        for inner_contour in lower_inner_ribbon_contours_points:
-            lower_inner_polygon_points = [p.To2D(lower_plane.origin, lower_plane.vectors[0], lower_plane.vectors[1]) for p in inner_contour]
-            s += 'var lower_hole = [];\n'
-            for point in lower_inner_polygon_points[:0:-1]:
-                s += 'lower_hole.push(new BABYLON.Vector2({},{}));\n'.format(round(point[0],6), round(point[1],6))
-            s += 'lowerPoly_tri.addHole(lower_hole);\n'
-        s += 'var lowerPolygon = lowerPoly_tri.build(true, 0);\n'
-        s += 'lowerPolygon.material = mat;\n'
+    #     lower_inner_ribbon_contours_points = []
+    #     upper_inner_ribbon_contours_points = []
+    #     for inner_contour3d in self.inner_contours3d:
+    #         lower_inner_ribbon_points = inner_contour3d.points
+    #         upper_inner_ribbon_points = [p.Translation(self.extrusion_vector) for p in lower_inner_ribbon_points]
+    #         lower_inner_ribbon_contours_points.append(lower_inner_ribbon_points)
+    #         upper_inner_ribbon_contours_points.append(upper_inner_ribbon_points)
 
-        x = lower_outer_ribbon_points[0][0]
-        y = lower_outer_ribbon_points[0][1]
-        z = lower_outer_ribbon_points[0][2]
-        axis1 = lower_plane.vectors[0]
-        axis2 = lower_plane.vectors[1]
-        axis3 = -lower_plane.normal
-        s += 'lowerPolygon.position = new BABYLON.Vector3({},{},{});\n'.format(x,y,z)
-        s += 'var axis1 = new BABYLON.Vector3({},{},{});\n'.format(*axis3)
-        s += 'var axis2 = new BABYLON.Vector3({},{},{});\n'.format(*axis2)
-        s += 'var axis3 = new BABYLON.Vector3({},{},{});\n'.format(*axis1)
-        s += 'lowerPolygon.rotation = BABYLON.Vector3.RotationFromAxis(axis3, axis1, axis2);\n'
+    #         s += 'var LowerInnerPathRibbon = [];\n'
+    #         for point in lower_inner_ribbon_points:
+    #             s += 'LowerInnerPathRibbon.push(new BABYLON.Vector3({},{},{}));\n'.format(round(point[0],6), round(point[1],6), round(point[2],6))
+    #         s += 'var UpperInnerPathRibbon = [];\n'
+    #         for point in upper_inner_ribbon_points:
+    #             s += 'UpperInnerPathRibbon.push(new BABYLON.Vector3({},{},{}));\n'.format(round(point[0],6), round(point[1],6), round(point[2],6))
+    #         s += 'var innerRibbon = BABYLON.MeshBuilder.CreateRibbon("ribbon", {pathArray: [LowerInnerPathRibbon, UpperInnerPathRibbon]}, scene);\n'
+    #         s += 'innerRibbon.material = mat;\n'
 
 
-        upper_plane = volmdlr.Plane3D.from_points(upper_outer_ribbon_points[:-1])
-        upper_outer_polygon_points = [p.To2D(upper_plane.origin, upper_plane.vectors[0], upper_plane.vectors[1]) for p in upper_outer_ribbon_points[:-1]]
-        s += 'UpperPolygonPoints = [];\n'
-        for point in upper_outer_polygon_points:
-            s += 'UpperPolygonPoints.push(new BABYLON.Vector2({},{}));\n'.format(round(point[0],6), round(point[1],6))
-        s += 'var upperPoly_tri = new BABYLON.PolygonMeshBuilder("upperPolygon", UpperPolygonPoints, scene);\n'
-        for inner_contour in upper_inner_ribbon_contours_points:
-            upper_inner_polygon_points = [p.To2D(upper_plane.origin, upper_plane.vectors[0], upper_plane.vectors[1]) for p in inner_contour]
-            s += 'var upper_hole = [];\n'
-            for point in upper_inner_polygon_points[:0:-1]:
-                s += 'upper_hole.push(new BABYLON.Vector2({},{}));\n'.format(round(point[0],6), round(point[1],6))
-            s += 'upperPoly_tri.addHole(upper_hole);\n'
-        s += 'var upperPolygon = upperPoly_tri.build(true, 0);\n'
-        s += 'upperPolygon.material = mat;\n'
+    #     lower_plane = volmdlr.Plane3D.from_points(lower_outer_ribbon_points[:-1])
+    #     lower_outer_polygon_points = [p.To2D(lower_plane.origin, lower_plane.vectors[0], lower_plane.vectors[1]) for p in lower_outer_ribbon_points[:-1]]
+    #     s += 'LowerPolygonPoints = [];\n'
+    #     for point in lower_outer_polygon_points:
+    #         s += 'LowerPolygonPoints.push(new BABYLON.Vector2({},{}));\n'.format(round(point[0],6), round(point[1],6))
+    #     s += 'var lowerPoly_tri = new BABYLON.PolygonMeshBuilder("lowerPolygon", LowerPolygonPoints, scene);\n'
+    #     for inner_contour in lower_inner_ribbon_contours_points:
+    #         lower_inner_polygon_points = [p.To2D(lower_plane.origin, lower_plane.vectors[0], lower_plane.vectors[1]) for p in inner_contour]
+    #         s += 'var lower_hole = [];\n'
+    #         for point in lower_inner_polygon_points[:0:-1]:
+    #             s += 'lower_hole.push(new BABYLON.Vector2({},{}));\n'.format(round(point[0],6), round(point[1],6))
+    #         s += 'lowerPoly_tri.addHole(lower_hole);\n'
+    #     s += 'var lowerPolygon = lowerPoly_tri.build(true, 0);\n'
+    #     s += 'lowerPolygon.material = mat;\n'
 
-        x = upper_outer_ribbon_points[0][0]
-        y = upper_outer_ribbon_points[0][1]
-        z = upper_outer_ribbon_points[0][2]
-        axis1 = upper_plane.vectors[0]
-        axis2 = upper_plane.vectors[1]
-        axis3 = -upper_plane.normal
-        s += 'upperPolygon.position = new BABYLON.Vector3({},{},{});\n'.format(x,y,z)
-        s += 'var axis1 = new BABYLON.Vector3({},{},{});\n'.format(*axis3)
-        s += 'var axis2 = new BABYLON.Vector3({},{},{});\n'.format(*axis2)
-        s += 'var axis3 = new BABYLON.Vector3({},{},{});\n'.format(*axis1)
-        s += 'upperPolygon.rotation = BABYLON.Vector3.RotationFromAxis(axis3, axis1, axis2);\n'
+    #     x = lower_outer_ribbon_points[0][0]
+    #     y = lower_outer_ribbon_points[0][1]
+    #     z = lower_outer_ribbon_points[0][2]
+    #     axis1 = lower_plane.vectors[0]
+    #     axis2 = lower_plane.vectors[1]
+    #     axis3 = -lower_plane.normal
+    #     s += 'lowerPolygon.position = new BABYLON.Vector3({},{},{});\n'.format(x,y,z)
+    #     s += 'var axis1 = new BABYLON.Vector3({},{},{});\n'.format(*axis3)
+    #     s += 'var axis2 = new BABYLON.Vector3({},{},{});\n'.format(*axis2)
+    #     s += 'var axis3 = new BABYLON.Vector3({},{},{});\n'.format(*axis1)
+    #     s += 'lowerPolygon.rotation = BABYLON.Vector3.RotationFromAxis(axis3, axis1, axis2);\n'
 
-        return s
+
+    #     upper_plane = volmdlr.Plane3D.from_points(upper_outer_ribbon_points[:-1])
+    #     upper_outer_polygon_points = [p.To2D(upper_plane.origin, upper_plane.vectors[0], upper_plane.vectors[1]) for p in upper_outer_ribbon_points[:-1]]
+    #     s += 'UpperPolygonPoints = [];\n'
+    #     for point in upper_outer_polygon_points:
+    #         s += 'UpperPolygonPoints.push(new BABYLON.Vector2({},{}));\n'.format(round(point[0],6), round(point[1],6))
+    #     s += 'var upperPoly_tri = new BABYLON.PolygonMeshBuilder("upperPolygon", UpperPolygonPoints, scene);\n'
+    #     for inner_contour in upper_inner_ribbon_contours_points:
+    #         upper_inner_polygon_points = [p.To2D(upper_plane.origin, upper_plane.vectors[0], upper_plane.vectors[1]) for p in inner_contour]
+    #         s += 'var upper_hole = [];\n'
+    #         for point in upper_inner_polygon_points[:0:-1]:
+    #             s += 'upper_hole.push(new BABYLON.Vector2({},{}));\n'.format(round(point[0],6), round(point[1],6))
+    #         s += 'upperPoly_tri.addHole(upper_hole);\n'
+    #     s += 'var upperPolygon = upperPoly_tri.build(true, 0);\n'
+    #     s += 'upperPolygon.material = mat;\n'
+
+    #     x = upper_outer_ribbon_points[0][0]
+    #     y = upper_outer_ribbon_points[0][1]
+    #     z = upper_outer_ribbon_points[0][2]
+    #     axis1 = upper_plane.vectors[0]
+    #     axis2 = upper_plane.vectors[1]
+    #     axis3 = -upper_plane.normal
+    #     s += 'upperPolygon.position = new BABYLON.Vector3({},{},{});\n'.format(x,y,z)
+    #     s += 'var axis1 = new BABYLON.Vector3({},{},{});\n'.format(*axis3)
+    #     s += 'var axis2 = new BABYLON.Vector3({},{},{});\n'.format(*axis2)
+    #     s += 'var axis3 = new BABYLON.Vector3({},{},{});\n'.format(*axis1)
+    #     s += 'upperPolygon.rotation = BABYLON.Vector3.RotationFromAxis(axis3, axis1, axis2);\n'
+
+    #     return s
 
     def frame_mapping(self, frame, side, copy=True):
         """
