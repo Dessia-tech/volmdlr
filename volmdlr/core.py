@@ -1801,7 +1801,19 @@ class Polygon2D(CompositePrimitive2D):
         self.line_segments = self._LineSegments()
 
         CompositePrimitive2D.__init__(self, primitives, name)
+        
+    def copy(self):
+        points = [p.copy() for p in self.points]
+        return Polygon2D(points, self.name)
 
+    def __hash__(self):
+        return sum([hash(p) for p in self.points])
+    
+    def __eq__(self, other_):
+        equal = True
+        for point, other_point in zip(self.points, other_.points):
+            equal = (equal and point == other_point)
+        return equal
 
     def Area(self):
 
@@ -1986,8 +1998,7 @@ class Primitive3D(dc.DessiaObject):
             self.basis_primitives = []
 
 class Vector3D(Vector):
-    _standalone_in_db = False
-
+    
     _jsonschema = {
         "definitions": {},
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -2276,6 +2287,12 @@ class Point3D(Vector3D):
                         self.vector[1] / value,
                         self.vector[2] / value))
 
+    def Copy(self):
+        return Point3D(self.vector)
+    
+    def copy(self):
+        return Point3D(self.vector)
+
     def MPLPlot(self, ax=None):
 
         if ax is None:
@@ -2339,6 +2356,22 @@ class Plane3D(Primitive3D):
         self.name = name
         self.normal = self.vectors[0].Cross(self.vectors[1])
         self.normal.Normalize()
+
+    def __hash__(self):
+        return sum([hash(v) for v in self.vectors]) + hash(self.origin)
+
+    def __eq__(self, other_):
+        equal = (self.origin == other_.origin
+                 and self.vectors[0] == other_.vectors[0]
+                 and self.vectors[1] == other_.vectors[1])
+        return equal
+
+    def to_dict(self):
+        # improve the object structure ?
+        dict_ = dc.DessiaObject.to_dict(self)
+        dict_['vector1'] = self.vectors[0].to_dict()
+        dict_['vector2'] = self.vectors[1].to_dict()
+        return dict_
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -2575,6 +2608,8 @@ class Basis3D(Basis):
         self.w = w
         self.name = name
 
+    def __hash__(self):
+        return hash(self.u) + hash(self.v) + hash(self.w)
 
     def __add__(self, other_basis):
         M = self.TransferMatrix()*other_basis.TransferMatrix()
@@ -2791,6 +2826,8 @@ class Frame3D(Basis3D):
                               round(self.v, ndigits),
                               round(self.w, ndigits))
 
+    def __hash__(self):
+        return hash(self.u) + hash(self.v) + hash(self.w) + hash(self.origin)
 
     def Basis(self):
         return Basis3D(self.u, self.v, self.w)
@@ -2816,7 +2853,7 @@ class Frame3D(Basis3D):
         self.origin.Translation(offset, copy=False)
 
     def copy(self):
-        return Frame3D(self.origin, self.u, self.v, self.w)
+        return Frame3D(self.origin.Copy(), self.u.Copy(), self.v.Copy(), self.w.Copy())
 
     def plot2d(self, x=x3D, y=y3D, ax=None, color='k'):
         if ax is None:
@@ -2875,6 +2912,8 @@ OXYZ = Frame3D(O3D, x3D, y3D, z3D)
 
 
 class Line3D(Primitive3D, Line):
+    _non_eq_attributes = ['name', 'basis_primitives', 'bounding_box']
+    
     """
     Define an infinite line passing through the 2 points
     """
@@ -2882,6 +2921,17 @@ class Line3D(Primitive3D, Line):
         Primitive3D.__init__(self, basis_primitives=[point1, point2], name=name)
         self.points = [point1, point2]
         self.bounding_box = self._bounding_box()
+
+    def __hash__(self):
+        return sum([hash(p) for p in self.points]) + hash(self.bounding_box)
+    
+    def to_dict(self):
+        # improve the object structure ?
+        dict_ = {}
+        dict_['name'] = self.name
+        dict_['point1'] = self.points[0].to_dict()
+        dict_['point2'] = self.points[1].to_dict()
+        return dict_
 
     def _bounding_box(self):
         points = self.points
@@ -3485,6 +3535,11 @@ class BSplineSurface3D(Primitive3D):
             self.points = new_BSplineSurface3D.points
 
 class CompositePrimitive3D(Primitive3D):
+    _standalone_in_db = True
+    _generic_eq = True
+    _non_serializable_attributes  = ['basis_primitives']
+    _non_eq_attributes = ['name', 'basis_primitives']
+    _non_hash_attributes = []
     """
     A collection of simple primitives3D
     """
@@ -3498,6 +3553,12 @@ class CompositePrimitive3D(Primitive3D):
                 basis_primitives.append(primitive)
 
         Primitive3D.__init__(self, basis_primitives=basis_primitives, name=name)
+
+    # def __eq__(self, other_):
+    #     equal = True
+    #     for primitive, other_primitive in zip(self.primitives, other_.primitives):
+    #         equal = (equal and primitive == other_primitive)
+    #     return equal
 
     def UpdateBasisPrimitives(self):
         # TODO: This is a copy/paste from CompositePrimitive2D, in the future make a Common abstract class
@@ -3567,6 +3628,22 @@ class Edge3D(Primitive3D):
         Primitive3D.__init__(self, basis_primitives=[edge_start, edge_end], name=name)
         self.points = [edge_start, edge_end]
 
+    def __hash__(self):
+        return sum([hash(p) for p in self.points])
+
+    def __eq__(self, other_):
+        equal = True
+        for point, other_point in zip(self.points, other_.points):
+            equal = (equal and point == other_point)
+        return equal
+
+    def to_dict(self):
+        # improve the object structure ?
+        dict_ = dc.DessiaObject.to_dict(self)
+        dict_['edge_start'] = self.points[0]
+        dict_['edge_end'] = self.points[1]
+        return dict_
+
     @classmethod
     def from_step(cls, arguments, object_dict):
         return LineSegment3D(object_dict[arguments[1]], object_dict[arguments[2]], arguments[0][1:-1])
@@ -3602,8 +3679,8 @@ class Edge3D(Primitive3D):
             self.points[1].frame_mapping(frame, side, copy=False)
 
     def copy(self):
-        new_edge_start = self.points[0].copy()
-        new_edge_end = self.points[1].copy()
+        new_edge_start = self.points[0].Copy()
+        new_edge_end = self.points[1].Copy()
         return Edge3D(new_edge_start, new_edge_end)
 
 
@@ -3614,6 +3691,16 @@ class LineSegment3D(Edge3D):
     def __init__(self, point1, point2, name=''):
         Edge3D.__init__(self, point1, point2, name='')
         self.bounding_box = self._bounding_box()
+
+    def __hash__(self):
+        return hash(self.points[0]) + hash(self.points[1])
+
+    def to_dict(self):
+        # improve the object structure ?
+        dict_ = dc.DessiaObject.to_dict(self)
+        dict_['point1'] = self.points[0].to_dict()
+        dict_['point2'] = self.points[1].to_dict()
+        return dict_
 
     def _bounding_box(self):
         points = self.points
@@ -3666,7 +3753,7 @@ class LineSegment3D(Edge3D):
                 self.bounding_box = self._bounding_box()
 
     def copy(self):
-        return LineSegment3D(*[p.copy() for p in self.points])
+        return LineSegment3D(*[p.Copy() for p in self.points])
 
     def MPLPlot(self, ax=None):
         if ax is None:
@@ -3761,8 +3848,17 @@ class Contour3D(Wire3D):
 
         self.points = self.clean_points()
 
+    def __hash__(self):
+        return sum([hash(e) for e in self.edges]) + sum([hash(p) for p in self.points])
 
-
+    def __eq__(self, other_):
+        equal = True
+        for edge, other_edge in zip(self.edges, other_.edges):
+            equal = (equal and edge == other_edge)
+        # for point, other_point in zip(self.points, other_.points):
+        #     equal = (equal and point == other_point)
+        #     print('contour', equal, point.vector, other_point.vector)
+        return equal
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -3844,11 +3940,17 @@ class Contour3D(Wire3D):
 
     def copy(self):
         new_edges = [edge.copy() for edge in self.edges]
-        new_points = [p.copy() for p in self.points]
+        new_points = [p.Copy() for p in self.points]
         return Contour3D(new_edges, new_points, self.name)
 
 
 class Face3D(Primitive3D):
+    _standalone_in_db = True
+    _generic_eq = True
+    _non_serializable_attributes  = ['bounding_box']
+    _non_eq_attributes = ['name', 'bounding_box']
+    _non_hash_attributes = []
+    
     def __init__(self, contours, plane=None, points=None, polygon2D=None, name=''):
 #        Primitive3D.__init__(self, name=name)
         self.contours = contours
@@ -3876,6 +3978,18 @@ class Face3D(Primitive3D):
                 print('WARNING', pt, 'not on', self.plane)
                 print('dot =', self.plane.normal.Dot(pt-self.plane.origin))
                 raise ValueError
+
+    def __hash__(self):
+        return hash(self.plane) + sum([hash(p) for p in self.points])
+
+    def __eq__(self, other_):
+        equal = (self.plane == other_.plane
+                  and self.polygon2D == other_.polygon2D)
+        for contour, other_contour in zip(self.contours, other_.contours):
+            equal = (equal and contour == other_contour)
+        for point, other_point in zip(self.points, other_.points):
+            equal = (equal and point == other_point)
+        return equal
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -3950,12 +4064,12 @@ class Face3D(Primitive3D):
             self.bounding_box = self._bounding_box()
 
     def copy(self):
-        print('points before copy', self.points)
+        # print('points before copy', self.points)
         new_contour = [contour.copy() for contour in self.contours]
         new_plane = self.plane.copy()
-        new_points = [p.copy() for p in self.points]
-        print('points after copy', new_points)
-        return Face3D(new_contour, new_plane, new_points, self.polygon2D, self.name)
+        new_points = [p.Copy() for p in self.points]
+        # print('points after copy', new_points)
+        return Face3D(new_contour, new_plane, new_points, self.polygon2D.copy(), self.name)
 #        return Face3D(new_contour)
 
     def average_center_point(self):
@@ -4206,11 +4320,26 @@ class Face3D(Primitive3D):
 
 
 class Shell3D(CompositePrimitive3D):
+    _standalone_in_db = True
+    _generic_eq = True
+    _non_serializable_attributes  = ['bounding_box']
+    _non_eq_attributes = ['name', 'color', 'bounding_box', 'contours']
+    _non_hash_attributes = []
+    
     def __init__(self, faces, name='', color=None):
         self.faces = faces
         self.name = name
         self.color = color
         self.bounding_box = self._bounding_box()
+
+    def __hash__(self):
+        return sum([hash(f) for f in self.faces])
+
+    def __eq__(self, other_):
+        equal = True
+        for face, other_face in zip(self.faces, other_.faces):
+            equal = (equal and face == other_face)
+        return equal
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -4586,6 +4715,9 @@ class BoundingBox(dc.DessiaObject):
         self.center = (self.points[0]+self.points[-2])/2
         self.name = name
 
+    def __hash__(self):
+        return sum([hash(p) for p in self.points])
+
     def plot(self, ax=None, color=''):
         fig = plt.figure()
         if ax is None:
@@ -4751,9 +4883,9 @@ class BoundingBox(dc.DessiaObject):
 
         point1_copy = point1.copy()
         point2_copy = point2.copy()
-        print(face_point1, face_point2)
+#        print(face_point1, face_point2)
         if face_point1 > face_point2:
-            print('inversion')
+#            print('inversion')
             point1, point2 = point2, point1
             face_point1, face_point2 = face_point2, face_point1
 
@@ -4949,6 +5081,9 @@ class Mesure(Line3D):
         self.color = color
         self.distance = Vector3D(self.points[0]-self.points[1]).Norm()
         self.bounding_box = self._bounding_box()
+
+    def __hash__(self):
+        return sum([hash(p) for p in self.points])
 
     def Babylon(self):
         s = 'var myPoints = [];\n'
@@ -5248,6 +5383,11 @@ class Step:
 
 
 class VolumeModel(dc.DessiaObject):
+    _standalone_in_db = True
+    _generic_eq = True
+    _non_serializable_attributes  = ['shells', 'bounding_box']
+    _non_eq_attributes = ['name', 'shells', 'bounding_box', 'contours', 'faces']
+    _non_hash_attributes = []
     """
     :param groups: A list of two element tuple. The first element is a string naming the group and the second element is a list of primitives of the group
     """
@@ -5258,6 +5398,9 @@ class VolumeModel(dc.DessiaObject):
             self.shells = self._extract_shells()
         if self.shells:
             self.bounding_box = self._bounding_box()
+
+    # def __hash__(self):
+    #     return sum([hash(p) for p in self.primitives])
 
     def _extract_shells(self):
         shells = []
