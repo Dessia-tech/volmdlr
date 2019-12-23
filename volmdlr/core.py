@@ -460,15 +460,15 @@ class Vector2D(Vector):
         else:
             fig = ax.figure
 
-        if self == Vector2D((0., 0.)):
+        if self.vector == [0., 0.]:
             point = Point2D(origin.vector)
             point.MPLPlot(ax=ax, color=color)
             return fig, ax
 
         ax.add_patch(FancyArrow(origin[0], origin[1],
                                 self.vector[0]*amplitude, self.vector[1]*amplitude,
-                                width=0.001*amplitude*10,
-                                head_width=0.01*amplitude*10,
+                                width=0.001*5*amplitude,
+                                head_width=0.01*3000*amplitude,
                                 length_includes_head=True,
                                 color=color))
         if line:
@@ -1494,7 +1494,9 @@ class Arc2D(Primitive2D):
     def tessellation_points(self, resolution_for_circle=30):
 
         number_points_tesselation = math.ceil(resolution_for_circle*abs(self.angle)/2/math.pi)
-
+        if number_points_tesselation == 1:
+            number_points_tesselation += 1
+            
         points = []
         if not self.is_trigo:
             delta_angle = -abs(self.angle1-self.angle2)/(number_points_tesselation-1)
@@ -3313,6 +3315,32 @@ class Arc3D(Primitive3D):
 
     def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
         return self.start.Rotation(self.center, self.normal, curvilinear_abscissa/self.radius)
+
+    def Rotation(self, rot_center, axis, angle, copy=True):
+        if copy:
+            new_start = self.start.Rotation(rot_center, axis, angle, True)
+            new_interior = self.interior.Rotation(rot_center, axis, angle, True)
+            new_end = self.end.Rotation(rot_center, axis, angle, True)
+            return Arc3D(new_start, new_interior, new_end, self.name)
+        else:
+            self.center.Rotation(rot_center, axis, angle, False)
+            self.start.Rotation(rot_center, axis, angle, False)
+            self.interior.Rotation(rot_center, axis, angle, False)
+            self.end.Rotation(rot_center, axis, angle, False)
+            [p.Rotation(rot_center, axis, angle, False) for p in self.basis_primitives]
+
+    def Translation(self, offset, copy=True):
+        if copy:
+            new_start = self.start.Translation(offset, True)
+            new_interior = self.interior.Translation(offset, True)
+            new_end = self.end.Translation(offset, True)
+            return Arc3D(new_start, new_interior, new_end, self.name)
+        else:
+            self.center.Translation(offset, False)
+            self.start.Translation(offset, False)
+            self.interior.Translation(offset, False)
+            self.end.Translation(offset, False)
+            [p.Translation(offset, False) for p in self.basis_primitives]
 
     def MPLPlot(self, ax=None):
         if ax is None:
