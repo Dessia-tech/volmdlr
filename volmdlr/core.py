@@ -1695,7 +1695,7 @@ class Circle2D(Primitive2D):
 
     def tessellation_points(self, resolution=40):
         return [self.center + self.radius*math.cos(teta)*Vector2D((1,0)) + self.radius*math.sin(teta)*Vector2D((0,1)) \
-                for teta in npy.linspace(0, 2*math.pi, resolution+1)]
+                for teta in npy.linspace(0, 2*math.pi, resolution+1)][:-1]
 
     def point_belongs(self, point):
         return point.point_distance(self.center) <= self.radius
@@ -3899,6 +3899,10 @@ class Contour3D(Wire3D):
                 last_points_added = points_to_add
             else:
                 raise NotImplementedError
+        
+        if points[0] == points[-1]:
+            points.pop()
+        
         return points
 
 
