@@ -36,7 +36,8 @@ from scipy.linalg import solve, LinAlgError
 
 import volmdlr.geometry as geometry
 from volmdlr import plot_data
-from volmdlr import triangulation as tri
+# from volmdlr import triangulation as tri
+import triangle
 
 import dessia_common as dc
 
@@ -3905,6 +3906,12 @@ class Contour3D(Wire3D):
         
         return points
 
+    def average_center_point(self):
+        nb = len(self.points)
+        x = npy.sum([p[0] for p in self.points]) / nb
+        y = npy.sum([p[1] for p in self.points]) / nb
+        z = npy.sum([p[2] for p in self.points]) / nb
+        return Point3D((x,y,z))
 
     def Rotation(self, center, axis, angle, copy=True):
         if copy:
@@ -4088,17 +4095,30 @@ class Face3D(Primitive3D):
         return Point3D((x,y,z))
 
     def triangulation(self):
-        points = [tuple(p.vector) for p in self.polygon2D.points]
-        points_dict = {p: i for i, p in enumerate(points)}
-        points_3D = [Point2D(p).To3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]) for p in points]
-        triangles = tri.earclip(points)
-        triangles_indexes = []
-        for triangle in triangles:
-            triangle_indexes = []
-            for point in triangle:
-                triangle_indexes.append(points_dict[point])
-            triangles_indexes.append(triangle_indexes)
-        return points_3D, triangles_indexes
+        points_3D = []
+        vertices = []
+        segments = []
+        holes = []
+        total_len = 0
+        for i, contour in enumerate(self.contours):
+            points_2D = [p.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]) for p in contour.points]
+            vertices.extend([tuple(p.vector) for p in points_2D])
+            len_points = len(contour.points)
+            segments += [[a+total_len, a+total_len+1] for a in range(len_points-1)]+[[len_points+total_len-1, 0+total_len]]
+            total_len += len_points
+            points_3D.extend(contour.points)
+            if i > 0:
+                mid_point_3D = contour.average_center_point()
+                mid_point_2D = mid_point_3D.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
+                holes.append(mid_point_2D.vector)
+        if holes:
+            tri = {'vertices': vertices, 'segments': segments, 'holes': holes}
+        else:
+            tri = {'vertices': vertices, 'segments': segments}
+        t = triangle.triangulate(tri, 'p')
+        triangles = t['triangles'].tolist()
+        triangle.compare(plt, tri, t)
+        return points_3D, triangles
 
     def _bounding_box(self):
         points = self.points

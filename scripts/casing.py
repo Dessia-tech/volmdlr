@@ -53,7 +53,7 @@ belt = primitives3D.ExtrudedProfile(vm.z3D*(height - 2*thickness), vm.x3D, vm.y3
                                       belt_outer_contour, [inner_contour]+screw_holes, thickness * vm.z3D, 'belt')
 
 
-model = vm.VolumeModel([bottom, sides, belt])
+model = vm.VolumeModel([bottom])
 model.BabylonShow('bottom')
 
 #model = vm.VolumeModel([sides])
