@@ -32,7 +32,8 @@ from scipy.linalg import solve
 
 import volmdlr.geometry as geometry
 from volmdlr import plot_data
-from volmdlr import triangulation as tri
+# from volmdlr import triangulation as tri
+import triangle
 
 import dessia_common as dc
 
@@ -1491,24 +1492,44 @@ class Arc2D(Primitive2D):
 
     geo_points=property(_get_geo_points)
 
-    def tessellation_points(self, resolution_for_circle=30):
-
+    # def tessellation_points(self, resolution_for_circle=40):
+    #     number_points_tesselation = math.ceil(resolution_for_circle*abs(self.angle)/2/math.pi)
+    #     if number_points_tesselation == 1:
+    #         number_points_tesselation += 1
+            
+    #     points = []
+    #     if not self.is_trigo:
+    #         delta_angle = -abs(self.angle1-self.angle2)/(number_points_tesselation-1)
+    #         delta_angle = -self.angle/(number_points_tesselation-1)
+    #     else:
+    #         delta_angle =  abs(self.angle1-self.angle2)/(number_points_tesselation-1)
+    #         delta_angle = self.angle/(number_points_tesselation-1)
+    #     points.append(self.start)
+    #     for i in range(number_points_tesselation-2):
+    #         point_to_add = points[-1].Rotation(self.center, delta_angle)
+    #         points.append(point_to_add)
+    #     points.append(self.end)
+    #     return points
+    
+    def tessellation_points(self, resolution_for_circle=40):
         number_points_tesselation = math.ceil(resolution_for_circle*abs(self.angle)/2/math.pi)
         if number_points_tesselation == 1:
             number_points_tesselation += 1
-            
-        points = []
+        
+        vector_start = Vector2D((self.start - self.center).vector)
+        vector_end = Vector2D((self.end - self.center).vector)
+        angle = clockwise_angle(vector_start, vector_end)
         if not self.is_trigo:
-            delta_angle = -abs(self.angle1-self.angle2)/(number_points_tesselation-1)
-        else:
-            delta_angle = abs(self.angle2-self.angle1)/(number_points_tesselation-1)
+            angle = - angle
+        delta_angle = angle/(number_points_tesselation-1)
+        points = []
         points.append(self.start)
         for i in range(number_points_tesselation-2):
             point_to_add = points[-1].Rotation(self.center, delta_angle)
             points.append(point_to_add)
         points.append(self.end)
         return points
-
+        
     def point_belongs(self, point):
         """
         Computes if the point belongs to the pizza slice drawn by the arc and its center
@@ -3293,13 +3314,13 @@ class Arc3D(Primitive3D):
 
     points=property(_get_points)
 
-    def tessellation_points(self, resolution=10):
+    def tessellation_points(self, resolution_for_circle=40):
         plane = Plane3D.from_3_points(self.interior, self.start, self.end)
         interior_2D = self.interior.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
         start_2D = self.start.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
         end_2D = self.end.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
         arc2D = Arc2D(start_2D, interior_2D, end_2D)
-        tessellation_points_2D = arc2D.tessellation_points()
+        tessellation_points_2D = arc2D.tessellation_points(resolution_for_circle)
 #        ax = interior_2D.MPLPlot()
 #        start_2D.MPLPlot(ax=ax)
 #        end_2D.MPLPlot(ax=ax)
@@ -3823,8 +3844,6 @@ class Contour3D(Wire3D):
         ou alors un ensemble de basis_primtives (qui sont des points pour le moment)
         """
 
-
-
         self.name = name
         self.points = points
 
@@ -3898,6 +3917,12 @@ class Contour3D(Wire3D):
         
         return points
 
+    def average_center_point(self):
+        nb = len(self.points)
+        x = npy.sum([p[0] for p in self.points]) / nb
+        y = npy.sum([p[1] for p in self.points]) / nb
+        z = npy.sum([p[2] for p in self.points]) / nb
+        return Point3D((x,y,z))
 
     def Rotation(self, center, axis, angle, copy=True):
         if copy:
@@ -4076,17 +4101,30 @@ class Face3D(Primitive3D):
         return Point3D((x,y,z))
 
     def triangulation(self):
-        points = [tuple(p.vector) for p in self.polygon2D.points]
-        points_dict = {p: i for i, p in enumerate(points)}
-        points_3D = [Point2D(p).To3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]) for p in points]
-        triangles = tri.earclip(points)
-        triangles_indexes = []
-        for triangle in triangles:
-            triangle_indexes = []
-            for point in triangle:
-                triangle_indexes.append(points_dict[point])
-            triangles_indexes.append(triangle_indexes)
-        return points_3D, triangles_indexes
+        points_3D = []
+        vertices = []
+        segments = []
+        holes = []
+        total_len = 0
+        for i, contour in enumerate(self.contours):
+            points_2D = [p.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]) for p in contour.points]
+            vertices.extend([tuple(p.vector) for p in points_2D])
+            len_points = len(contour.points)
+            segments += [[a+total_len, a+total_len+1] for a in range(len_points-1)]+[[len_points+total_len-1, 0+total_len]]
+            total_len += len_points
+            points_3D.extend(contour.points)
+            if i > 0:
+                mid_point_3D = contour.average_center_point()
+                mid_point_2D = mid_point_3D.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
+                holes.append(mid_point_2D.vector)
+        if holes:
+            tri = {'vertices': vertices, 'segments': segments, 'holes': holes}
+        else:
+            tri = {'vertices': vertices, 'segments': segments}
+        t = triangle.triangulate(tri, 'p')
+        triangles = t['triangles'].tolist()
+        # triangle.compare(plt, tri, t)
+        return points_3D, triangles
 
     def _bounding_box(self):
         points = self.points
