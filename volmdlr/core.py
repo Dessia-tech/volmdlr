@@ -1496,23 +1496,44 @@ class Arc2D(Primitive2D):
 
     geo_points=property(_get_geo_points)
 
+    # def tessellation_points(self, resolution_for_circle=40):
+    #     number_points_tesselation = math.ceil(resolution_for_circle*abs(self.angle)/2/math.pi)
+    #     if number_points_tesselation == 1:
+    #         number_points_tesselation += 1
+            
+    #     points = []
+    #     if not self.is_trigo:
+    #         delta_angle = -abs(self.angle1-self.angle2)/(number_points_tesselation-1)
+    #         delta_angle = -self.angle/(number_points_tesselation-1)
+    #     else:
+    #         delta_angle =  abs(self.angle1-self.angle2)/(number_points_tesselation-1)
+    #         delta_angle = self.angle/(number_points_tesselation-1)
+    #     points.append(self.start)
+    #     for i in range(number_points_tesselation-2):
+    #         point_to_add = points[-1].Rotation(self.center, delta_angle)
+    #         points.append(point_to_add)
+    #     points.append(self.end)
+    #     return points
+    
     def tessellation_points(self, resolution_for_circle=40):
         number_points_tesselation = math.ceil(resolution_for_circle*abs(self.angle)/2/math.pi)
         if number_points_tesselation == 1:
             number_points_tesselation += 1
-            
-        points = []
+        
+        vector_start = Vector2D((self.start - self.center).vector)
+        vector_end = Vector2D((self.end - self.center).vector)
+        angle = clockwise_angle(vector_start, vector_end)
         if not self.is_trigo:
-            delta_angle = -abs(self.angle1-self.angle2)/(number_points_tesselation-1)
-        else:
-            delta_angle = abs(self.angle2-self.angle1)/(number_points_tesselation-1)
+            angle = - angle
+        delta_angle = angle/(number_points_tesselation-1)
+        points = []
         points.append(self.start)
         for i in range(number_points_tesselation-2):
             point_to_add = points[-1].Rotation(self.center, delta_angle)
             points.append(point_to_add)
         points.append(self.end)
         return points
-
+        
     def point_belongs(self, point):
         """
         Computes if the point belongs to the pizza slice drawn by the arc and its center
@@ -3299,13 +3320,13 @@ class Arc3D(Primitive3D):
 
     points=property(_get_points)
 
-    def tessellation_points(self, resolution=10):
+    def tessellation_points(self, resolution_for_circle=40):
         plane = Plane3D.from_3_points(self.interior, self.start, self.end)
         interior_2D = self.interior.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
         start_2D = self.start.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
         end_2D = self.end.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
         arc2D = Arc2D(start_2D, interior_2D, end_2D)
-        tessellation_points_2D = arc2D.tessellation_points()
+        tessellation_points_2D = arc2D.tessellation_points(resolution_for_circle)
 #        ax = interior_2D.MPLPlot()
 #        start_2D.MPLPlot(ax=ax)
 #        end_2D.MPLPlot(ax=ax)
@@ -3828,8 +3849,6 @@ class Contour3D(Wire3D):
         ou alors un ensemble de primitives
         ou alors un ensemble de basis_primtives (qui sont des points pour le moment)
         """
-
-
 
         self.name = name
         self.points = points
