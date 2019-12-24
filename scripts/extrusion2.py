@@ -22,14 +22,14 @@ p5=vm.Point2D((-0.01, 0.05))
 
 #p6=vm.Point2D((0.1,0.3))
 
-l1=primitives2D.RoundedLineSegments2D([p1, p2, p3, p4], {2: 0.01}, False)
-l2=vm.Arc2D(p4, p5, p1)
-c1=vm.Contour2D([l1, l2])
-c2=c1.Rotation(vm.Point2D((0,0)),math.pi,True)
+l1 = primitives2D.OpenedRoundedLineSegments2D([p1, p2, p3, p4], {2: 0.01})
+l2 = vm.Arc2D(p4, p5, p1)
+c1 = vm.Contour2D([l1, l2])
+c2 = c1.Rotation(vm.Point2D((0,0)),math.pi,True)
 c1.MPLPlot()
 c2.MPLPlot()
-c3=vm.Contour2D([c1, c2])
-c3.MPLPlot()
+#c3 = vm.Contour2D([c1, c2])
+#c3.MPLPlot()
 
 po = vm.Point3D((0, 0, 0))
 xp = vm.Vector3D((1, 0, 0))
@@ -38,7 +38,8 @@ yp = vm.Vector3D((0, 1, 0))
 
 profile = primitives3D.ExtrudedProfile(po, xp, yp, c1, [], vm.Vector3D((0, 0.1, 0.2)))
 
-model = vm.VolumeModel([('', [profile])])
+model = vm.VolumeModel([profile])
+model.babylonjs()
 
 #profile.MPLPlot((0,0,0),(1,0,0),(0,1,0))
 

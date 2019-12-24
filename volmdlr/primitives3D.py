@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Feb 28 14:08:23 2017
-
-@author: steven
+Common primitives 3D
 """
 
 import math
@@ -122,7 +120,7 @@ class Sphere(volmdlr.Primitive3D):
         x, y, z = round(1000*self.center, ndigits)
         return '{} = Part.makeSphere({}, fc.Vector({}, {}, {}))\n'.format(name,r,x,y,z)
 
-    def Babylon(self, name='primitive_mesh'):
+    def babylon_script(self, name='primitive_mesh'):
         p1 = volmdlr.Point2D((-self.radius, 0))
         p2 = volmdlr.Point2D((0, self.radius))
         p3 = volmdlr.Point2D((self.radius, 0))
@@ -130,7 +128,7 @@ class Sphere(volmdlr.Primitive3D):
         arc = volmdlr.Arc2D(p1, p2, p3)
         extruded_profile = RevolvedProfile(self.position, volmdlr.X3D, volmdlr.Y3D,
                                            volmdlr.Contour2D([line, arc]), self.position, volmdlr.X3D, name=self.name)
-        return extruded_profile.Babylon(name=name)
+        return extruded_profile.babylon_script(name=name)
 
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -283,184 +281,6 @@ class Block(volmdlr.Shell3D):
 
         return fig, ax
 
-class Cylinder(volmdlr.Primitive3D):
-    def __init__(self, position, axis, radius, length, name=''):
-        volmdlr.Primitive3D.__init__(self, name=name)
-        self.position = position
-        axis.Normalize()
-        self.axis = axis
-        self.radius = radius
-        self.length = length
-        self.bounding_box = self._bounding_box()
-
-    def _bounding_box(self):
-        pointA = self.position - self.length/2 * self.axis
-        pointB = self.position + self.length/2 * self.axis
-
-        dx2 = (pointA[0]-pointB[0])**2
-        dy2 = (pointA[1]-pointB[1])**2
-        dz2 = (pointA[2]-pointB[2])**2
-
-        kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
-        ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
-        kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
-
-        if pointA[0] > pointB[0]:
-            pointA, pointB = pointB, pointA
-        xmin = pointA[0] - kx * self.radius
-        xmax = pointB[0] + kx * self.radius
-
-        if pointA[1] > pointB[1]:
-            pointA, pointB = pointB, pointA
-        ymin = pointA[1] - ky * self.radius
-        ymax = pointB[1] + ky * self.radius
-
-        if pointA[2] > pointB[2]:
-            pointA, pointB = pointB, pointA
-        zmin = pointA[2] - kz * self.radius
-        zmax = pointB[2] + kz * self.radius
-
-        return volmdlr.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
-
-    def Volume(self):
-        return self.length * math.pi * self.radius**2
-
-    def FreeCADExport(self, ip):
-        if self.radius > 0:
-            name = 'primitive'+str(ip)
-            e = str(1000*self.length)
-            r = str(1000*self.radius)
-            position = 1000*(self.position - self.axis*self.length/2.)
-            x, y, z = position
-            x = str(x)
-            y = str(y)
-            z = str(z)
-
-            ax, ay, az = self.axis
-            ax = str(ax)
-            ay = str(ay)
-            az = str(az)
-            return name+'=Part.makeCylinder('+r+','+e+',fc.Vector('+x+','+y+','+z+'),fc.Vector('+ax+','+ay+','+az+'),360)\n'
-        else:
-            return ''
-
-    def Babylon(self, name='primitive_mesh'):
-        normal_vector1 = self.axis.RandomUnitNormalVector()
-#        normal_vector2 = new_axis.Cross(normal_vector1)
-#        x, y, z = self.position
-#        s='var {} = BABYLON.Mesh.CreateCylinder("{}", {}, {}, {}, 30, 1, scene,false, BABYLON.Mesh.DEFAULTSIDE);'.format(name, self.name,self.length,2*self.radius,2*self.radius)
-#        s += '{}.position = new BABYLON.Vector3({},{},{});\n;'.format(name, x,y,z)
-#        s += 'var axis1 = new BABYLON.Vector3({},{},{});\n'.format(new_axis[0], new_axis[1], new_axis[2])
-#        s += 'var axis2 = new BABYLON.Vector3({},{},{});\n'.format(normal_vector1[0], normal_vector1[1], normal_vector1[2])
-#        s += 'var axis3 = new BABYLON.Vector3({},{},{});\n'.format(normal_vector2[0], normal_vector2[1], normal_vector2[2])
-#        s += '{}.rotation = BABYLON.Vector3.RotationFromAxis(axis3, axis1, axis2);\n'.format(name)
-        p1 = volmdlr.Point2D((-0.5*self.length, self.radius))
-        p2 = volmdlr.Point2D((0.5*self.length, self.radius))
-        p3 = volmdlr.Point2D((0.5*self.length, 0.))
-        p4 = volmdlr.Point2D((-0.5*self.length, 0.))
-        l1 = volmdlr.LineSegment2D(p1, p2)
-        l2 = volmdlr.LineSegment2D(p2, p3)
-        l3 = volmdlr.LineSegment2D(p3, p4)
-        l4 = volmdlr.LineSegment2D(p4, p1)
-        extruded_profile = RevolvedProfile(self.position, self.axis, normal_vector1,
-                                           volmdlr.Contour2D([l1, l2, l3, l4]), self.position, self.axis, name=self.name)
-        return extruded_profile.Babylon(name=name)
-
-    def frame_mapping(self, frame, side, copy=True):
-        """
-        side = 'old' or 'new'
-        """
-        basis = frame.Basis()
-        if side == 'old':
-            axis = basis.OldCoordinates(self.axis)
-        elif side == 'new':
-            axis = basis.NewCoordinates(self.axis)
-        else:
-            raise ValueError('side must be either old or new')
-
-        if copy:
-            return Cylinder(self.position.frame_mapping(frame, side, copy),
-                            axis,
-                            self.radius, self.length)
-        else:
-            self.position.frame_mapping(frame, side, copy)
-            self.axis = axis
-
-class HollowCylinder(Cylinder):
-    def __init__(self, position, axis, inner_radius, outer_radius, length, name=''):
-        volmdlr.Primitive3D.__init__(self, name=name)
-        self.position = position
-        axis.Normalize()
-        self.axis = axis
-        self.inner_radius = inner_radius
-        self.outer_radius = outer_radius
-        self.length = length
-
-    def Volume(self):
-        return self.length * math.pi* (self.outer_radius**2 - self.inner_radius**2)
-
-
-    def FreeCADExport(self, ip):
-        if self.outer_radius > 0.:
-            name = 'primitive'+str(ip)
-            re = round(1000*self.outer_radius, 6)
-            ri = round(1000*self.inner_radius, 6)
-            x, y, z = round((1000*(self.position - self.axis*self.length/2)), 6)
-            ax, ay, az = npy.round(self.axis.vector, 6)
-
-            s='C2 = Part.makeCircle({}, fc.Vector({}, {}, {}),fc.Vector({}, {}, {}))\n'.format(re, x, y, z, ax, ay, az)
-            s+='W2 = Part.Wire(C2.Edges)\n'
-            s+='F2 = Part.Face(W2)\n'
-
-            if self.inner_radius!=0.:
-                s+='C1 = Part.makeCircle({}, fc.Vector({}, {}, {}),fc.Vector({}, {}, {}))\n'.format(ri, x, y, z, ax, ay, az)
-                s+='W1 = Part.Wire(C1.Edges)\n'
-                s+='F1 = Part.Face(W1)\n'
-                s+='F2 = F2.cut(F1)\n'
-
-            vx, vy, vz = round(self.axis*self.length*1000, 6)
-
-            s += '{} = F2.extrude(fc.Vector({}, {}, {}))\n'.format(name, vx, vy, vz)
-            return s
-
-        else:
-            return ''
-
-
-    def Babylon(self, name='primitive_mesh'):
-        normal_vector1 = self.axis.RandomUnitNormalVector()
-        p1 = volmdlr.Point2D((-0.5*self.length, self.outer_radius))
-        p2 = volmdlr.Point2D((0.5*self.length, self.outer_radius))
-        p3 = volmdlr.Point2D((0.5*self.length, self.inner_radius))
-        p4 = volmdlr.Point2D((-0.5*self.length, self.inner_radius))
-        l1 = volmdlr.LineSegment2D(p1, p2)
-        l2 = volmdlr.LineSegment2D(p2, p3)
-        l3 = volmdlr.LineSegment2D(p3, p4)
-        l4 = volmdlr.LineSegment2D(p4, p1)
-        extruded_profile = RevolvedProfile(self.position, self.axis, normal_vector1,
-                                           volmdlr.Contour2D([l1, l2, l3, l4]), self.position, self.axis, name=self.name)
-        return extruded_profile.Babylon(name=name)
-
-
-    def frame_mapping(self, frame, side, copy=True):
-        """
-        side = 'old' or 'new'
-        """
-        basis = frame.Basis()
-        if side == 'old':
-            axis = basis.OldCoordinates(self.axis)
-        elif side == 'new':
-            axis = basis.NewCoordinates(self.axis)
-        else:
-            raise ValueError('side must be either old or new')
-
-        if copy:
-            return HollowCylinder(self.position.frame_mapping(frame, side, copy),
-                                  axis,
-                                  self.inner_radius, self.outer_radius, self.length)
-        else:
-            self.position.frame_mapping(frame, side, copy)
-            self.axis = axis
 
 
 class Cone(volmdlr.Primitive3D):
@@ -506,7 +326,7 @@ class Cone(volmdlr.Primitive3D):
     def Volume(self):
         return self.length * math.pi * self.radius**2 / 3
 
-    def Babylon(self):
+    def babylon_script(self):
         new_axis = volmdlr.Vector3D((self.axis[0], self.axis[1], self.axis[2]))
         normal_vector1 = new_axis.RandomUnitNormalVector()
         normal_vector2 = new_axis.Cross(normal_vector1)
@@ -634,100 +454,6 @@ class ExtrudedProfile(volmdlr.Shell3D):
 
         return self.Area()*coeff
 
-    # def Babylon(self):
-    #     s = 'var mat = new BABYLON.StandardMaterial("mat", scene);\n'
-    #     s += 'mat.backFaceCulling = false;\n'
-    #     if self.color is not None:
-    #         s += 'mat.diffuseColor = new BABYLON.Color3({},{},{});\n'.format(self.color[0], self.color[1], self.color[2])
-
-
-    #     lower_outer_ribbon_points = self.outer_contour3d.points
-    #     upper_outer_ribbon_points = [p.Translation(self.extrusion_vector) for p in lower_outer_ribbon_points]
-
-    #     s += 'var LowerOuterPathRibbon = [];\n'
-    #     for point in lower_outer_ribbon_points:
-    #         s += 'LowerOuterPathRibbon.push(new BABYLON.Vector3({},{},{}));\n'.format(round(point[0],6), round(point[1],6), round(point[2],6))
-    #     s += 'var UpperOuterPathRibbon = [];\n'
-    #     for point in upper_outer_ribbon_points:
-    #         s += 'UpperOuterPathRibbon.push(new BABYLON.Vector3({},{},{}));\n'.format(round(point[0],6), round(point[1],6), round(point[2],6))
-    #     s += 'var outerRibbon = BABYLON.MeshBuilder.CreateRibbon("ribbon", {pathArray: [LowerOuterPathRibbon, UpperOuterPathRibbon]}, scene);\n'
-    #     s += 'outerRibbon.material = mat;\n'
-
-
-    #     lower_inner_ribbon_contours_points = []
-    #     upper_inner_ribbon_contours_points = []
-    #     for inner_contour3d in self.inner_contours3d:
-    #         lower_inner_ribbon_points = inner_contour3d.points
-    #         upper_inner_ribbon_points = [p.Translation(self.extrusion_vector) for p in lower_inner_ribbon_points]
-    #         lower_inner_ribbon_contours_points.append(lower_inner_ribbon_points)
-    #         upper_inner_ribbon_contours_points.append(upper_inner_ribbon_points)
-
-    #         s += 'var LowerInnerPathRibbon = [];\n'
-    #         for point in lower_inner_ribbon_points:
-    #             s += 'LowerInnerPathRibbon.push(new BABYLON.Vector3({},{},{}));\n'.format(round(point[0],6), round(point[1],6), round(point[2],6))
-    #         s += 'var UpperInnerPathRibbon = [];\n'
-    #         for point in upper_inner_ribbon_points:
-    #             s += 'UpperInnerPathRibbon.push(new BABYLON.Vector3({},{},{}));\n'.format(round(point[0],6), round(point[1],6), round(point[2],6))
-    #         s += 'var innerRibbon = BABYLON.MeshBuilder.CreateRibbon("ribbon", {pathArray: [LowerInnerPathRibbon, UpperInnerPathRibbon]}, scene);\n'
-    #         s += 'innerRibbon.material = mat;\n'
-
-
-    #     lower_plane = volmdlr.Plane3D.from_points(lower_outer_ribbon_points[:-1])
-    #     lower_outer_polygon_points = [p.To2D(lower_plane.origin, lower_plane.vectors[0], lower_plane.vectors[1]) for p in lower_outer_ribbon_points[:-1]]
-    #     s += 'LowerPolygonPoints = [];\n'
-    #     for point in lower_outer_polygon_points:
-    #         s += 'LowerPolygonPoints.push(new BABYLON.Vector2({},{}));\n'.format(round(point[0],6), round(point[1],6))
-    #     s += 'var lowerPoly_tri = new BABYLON.PolygonMeshBuilder("lowerPolygon", LowerPolygonPoints, scene);\n'
-    #     for inner_contour in lower_inner_ribbon_contours_points:
-    #         lower_inner_polygon_points = [p.To2D(lower_plane.origin, lower_plane.vectors[0], lower_plane.vectors[1]) for p in inner_contour]
-    #         s += 'var lower_hole = [];\n'
-    #         for point in lower_inner_polygon_points[:0:-1]:
-    #             s += 'lower_hole.push(new BABYLON.Vector2({},{}));\n'.format(round(point[0],6), round(point[1],6))
-    #         s += 'lowerPoly_tri.addHole(lower_hole);\n'
-    #     s += 'var lowerPolygon = lowerPoly_tri.build(true, 0);\n'
-    #     s += 'lowerPolygon.material = mat;\n'
-
-    #     x = lower_outer_ribbon_points[0][0]
-    #     y = lower_outer_ribbon_points[0][1]
-    #     z = lower_outer_ribbon_points[0][2]
-    #     axis1 = lower_plane.vectors[0]
-    #     axis2 = lower_plane.vectors[1]
-    #     axis3 = -lower_plane.normal
-    #     s += 'lowerPolygon.position = new BABYLON.Vector3({},{},{});\n'.format(x,y,z)
-    #     s += 'var axis1 = new BABYLON.Vector3({},{},{});\n'.format(*axis3)
-    #     s += 'var axis2 = new BABYLON.Vector3({},{},{});\n'.format(*axis2)
-    #     s += 'var axis3 = new BABYLON.Vector3({},{},{});\n'.format(*axis1)
-    #     s += 'lowerPolygon.rotation = BABYLON.Vector3.RotationFromAxis(axis3, axis1, axis2);\n'
-
-
-    #     upper_plane = volmdlr.Plane3D.from_points(upper_outer_ribbon_points[:-1])
-    #     upper_outer_polygon_points = [p.To2D(upper_plane.origin, upper_plane.vectors[0], upper_plane.vectors[1]) for p in upper_outer_ribbon_points[:-1]]
-    #     s += 'UpperPolygonPoints = [];\n'
-    #     for point in upper_outer_polygon_points:
-    #         s += 'UpperPolygonPoints.push(new BABYLON.Vector2({},{}));\n'.format(round(point[0],6), round(point[1],6))
-    #     s += 'var upperPoly_tri = new BABYLON.PolygonMeshBuilder("upperPolygon", UpperPolygonPoints, scene);\n'
-    #     for inner_contour in upper_inner_ribbon_contours_points:
-    #         upper_inner_polygon_points = [p.To2D(upper_plane.origin, upper_plane.vectors[0], upper_plane.vectors[1]) for p in inner_contour]
-    #         s += 'var upper_hole = [];\n'
-    #         for point in upper_inner_polygon_points[:0:-1]:
-    #             s += 'upper_hole.push(new BABYLON.Vector2({},{}));\n'.format(round(point[0],6), round(point[1],6))
-    #         s += 'upperPoly_tri.addHole(upper_hole);\n'
-    #     s += 'var upperPolygon = upperPoly_tri.build(true, 0);\n'
-    #     s += 'upperPolygon.material = mat;\n'
-
-    #     x = upper_outer_ribbon_points[0][0]
-    #     y = upper_outer_ribbon_points[0][1]
-    #     z = upper_outer_ribbon_points[0][2]
-    #     axis1 = upper_plane.vectors[0]
-    #     axis2 = upper_plane.vectors[1]
-    #     axis3 = -upper_plane.normal
-    #     s += 'upperPolygon.position = new BABYLON.Vector3({},{},{});\n'.format(x,y,z)
-    #     s += 'var axis1 = new BABYLON.Vector3({},{},{});\n'.format(*axis3)
-    #     s += 'var axis2 = new BABYLON.Vector3({},{},{});\n'.format(*axis2)
-    #     s += 'var axis3 = new BABYLON.Vector3({},{},{});\n'.format(*axis1)
-    #     s += 'upperPolygon.rotation = BABYLON.Vector3.RotationFromAxis(axis3, axis1, axis2);\n'
-
-    #     return s
 
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -888,6 +614,220 @@ class RevolvedProfile(volmdlr.Shell3D):
                           self.axis_point.frame_mapping(frame, side, copy),
                           axis,
                           self.angle)
+
+class Cylinder(RevolvedProfile):
+    def __init__(self, position, axis, radius, length, name=''):
+        self.position = position
+        axis.Normalize()
+        self.axis = axis
+        self.radius = radius
+        self.length = length
+        self.bounding_box = self._bounding_box()
+
+        # Revolved Profile
+        p1 = volmdlr.Point2D((-0.5*self.length, 0))
+        p2 = volmdlr.Point2D((0.5*self.length, 0))
+        p3 = volmdlr.Point2D((0.5*self.length, self.radius))
+        p4 = volmdlr.Point2D((-0.5*self.length, self.radius))
+        l1 = volmdlr.LineSegment2D(p1, p2)
+        l2 = volmdlr.LineSegment2D(p2, p3)
+        l3 = volmdlr.LineSegment2D(p3, p4)
+        l4 = volmdlr.LineSegment2D(p4, p1)
+        contour = volmdlr.Contour2D([l1, l2, l3, l4])
+        y = axis.RandomUnitNormalVector()
+        RevolvedProfile.__init__(self, position, axis, y, contour, position, axis, name=name)
+
+
+    def _bounding_box(self):
+        
+        if hasattr(self, 'radius'):
+            radius = self.radius
+        elif hasattr(self, 'outer_radius'):
+            radius = self.outer_radius
+
+            
+        pointA = self.position - self.length/2 * self.axis
+        pointB = self.position + self.length/2 * self.axis
+
+        dx2 = (pointA[0]-pointB[0])**2
+        dy2 = (pointA[1]-pointB[1])**2
+        dz2 = (pointA[2]-pointB[2])**2
+
+        kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
+        ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
+        kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
+
+        if pointA[0] > pointB[0]:
+            pointA, pointB = pointB, pointA
+        xmin = pointA[0] - kx * radius
+        xmax = pointB[0] + kx * radius
+
+        if pointA[1] > pointB[1]:
+            pointA, pointB = pointB, pointA
+        ymin = pointA[1] - ky * radius
+        ymax = pointB[1] + ky * radius
+
+        if pointA[2] > pointB[2]:
+            pointA, pointB = pointB, pointA
+        zmin = pointA[2] - kz * radius
+        zmax = pointB[2] + kz * radius
+
+        return volmdlr.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+
+    def Volume(self):
+        return self.length * math.pi * self.radius**2
+
+    def FreeCADExport(self, ip):
+        if self.radius > 0:
+            name = 'primitive'+str(ip)
+            e = str(1000*self.length)
+            r = str(1000*self.radius)
+            position = 1000*(self.position - self.axis*self.length/2.)
+            x, y, z = position
+            x = str(x)
+            y = str(y)
+            z = str(z)
+
+            ax, ay, az = self.axis
+            ax = str(ax)
+            ay = str(ay)
+            az = str(az)
+            return name+'=Part.makeCylinder('+r+','+e+',fc.Vector('+x+','+y+','+z+'),fc.Vector('+ax+','+ay+','+az+'),360)\n'
+        else:
+            return ''
+
+    def babylon_script(self, name='primitive_mesh'):
+        normal_vector1 = self.axis.RandomUnitNormalVector()
+#        normal_vector2 = new_axis.Cross(normal_vector1)
+#        x, y, z = self.position
+#        s='var {} = BABYLON.Mesh.CreateCylinder("{}", {}, {}, {}, 30, 1, scene,false, BABYLON.Mesh.DEFAULTSIDE);'.format(name, self.name,self.length,2*self.radius,2*self.radius)
+#        s += '{}.position = new BABYLON.Vector3({},{},{});\n;'.format(name, x,y,z)
+#        s += 'var axis1 = new BABYLON.Vector3({},{},{});\n'.format(new_axis[0], new_axis[1], new_axis[2])
+#        s += 'var axis2 = new BABYLON.Vector3({},{},{});\n'.format(normal_vector1[0], normal_vector1[1], normal_vector1[2])
+#        s += 'var axis3 = new BABYLON.Vector3({},{},{});\n'.format(normal_vector2[0], normal_vector2[1], normal_vector2[2])
+#        s += '{}.rotation = BABYLON.Vector3.RotationFromAxis(axis3, axis1, axis2);\n'.format(name)
+        p1 = volmdlr.Point2D((-0.5*self.length, self.radius))
+        p2 = volmdlr.Point2D((0.5*self.length, self.radius))
+        p3 = volmdlr.Point2D((0.5*self.length, 0.))
+        p4 = volmdlr.Point2D((-0.5*self.length, 0.))
+        l1 = volmdlr.LineSegment2D(p1, p2)
+        l2 = volmdlr.LineSegment2D(p2, p3)
+        l3 = volmdlr.LineSegment2D(p3, p4)
+        l4 = volmdlr.LineSegment2D(p4, p1)
+        extruded_profile = RevolvedProfile(self.position, self.axis, normal_vector1,
+                                           volmdlr.Contour2D([l1, l2, l3, l4]), self.position, self.axis, name=self.name)
+        return extruded_profile.babylon_script(name=name)
+
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        basis = frame.Basis()
+        if side == 'old':
+            axis = basis.OldCoordinates(self.axis)
+        elif side == 'new':
+            axis = basis.NewCoordinates(self.axis)
+        else:
+            raise ValueError('side must be either old or new')
+
+        if copy:
+            return Cylinder(self.position.frame_mapping(frame, side, copy),
+                            axis,
+                            self.radius, self.length)
+        else:
+            self.position.frame_mapping(frame, side, copy)
+            self.axis = axis
+
+class HollowCylinder(Cylinder):
+    def __init__(self, position, axis, inner_radius, outer_radius, length, name=''):
+        volmdlr.Primitive3D.__init__(self, name=name)
+        self.position = position
+        axis.Normalize()
+        self.axis = axis
+        self.inner_radius = inner_radius
+        self.outer_radius = outer_radius
+        self.length = length
+        
+        # Revolved Profile
+        p1 = volmdlr.Point2D((-0.5*self.length, self.inner_radius))
+        p2 = volmdlr.Point2D((0.5*self.length, self.inner_radius))
+        p3 = volmdlr.Point2D((0.5*self.length, self.outer_radius))
+        p4 = volmdlr.Point2D((-0.5*self.length, self.outer_radius))
+        l1 = volmdlr.LineSegment2D(p1, p2)
+        l2 = volmdlr.LineSegment2D(p2, p3)
+        l3 = volmdlr.LineSegment2D(p3, p4)
+        l4 = volmdlr.LineSegment2D(p4, p1)
+        contour = volmdlr.Contour2D([l1, l2, l3, l4])
+        y = axis.RandomUnitNormalVector()
+        RevolvedProfile.__init__(self, position, axis, y, contour, position, axis, name=name)
+
+        
+
+    def Volume(self):
+        return self.length * math.pi* (self.outer_radius**2 - self.inner_radius**2)
+
+
+    def FreeCADExport(self, ip):
+        if self.outer_radius > 0.:
+            name = 'primitive'+str(ip)
+            re = round(1000*self.outer_radius, 6)
+            ri = round(1000*self.inner_radius, 6)
+            x, y, z = round((1000*(self.position - self.axis*self.length/2)), 6)
+            ax, ay, az = npy.round(self.axis.vector, 6)
+
+            s='C2 = Part.makeCircle({}, fc.Vector({}, {}, {}),fc.Vector({}, {}, {}))\n'.format(re, x, y, z, ax, ay, az)
+            s+='W2 = Part.Wire(C2.Edges)\n'
+            s+='F2 = Part.Face(W2)\n'
+
+            if self.inner_radius!=0.:
+                s+='C1 = Part.makeCircle({}, fc.Vector({}, {}, {}),fc.Vector({}, {}, {}))\n'.format(ri, x, y, z, ax, ay, az)
+                s+='W1 = Part.Wire(C1.Edges)\n'
+                s+='F1 = Part.Face(W1)\n'
+                s+='F2 = F2.cut(F1)\n'
+
+            vx, vy, vz = round(self.axis*self.length*1000, 6)
+
+            s += '{} = F2.extrude(fc.Vector({}, {}, {}))\n'.format(name, vx, vy, vz)
+            return s
+
+        else:
+            return ''
+
+
+    def babylon_script(self, name='primitive_mesh'):
+        normal_vector1 = self.axis.RandomUnitNormalVector()
+        p1 = volmdlr.Point2D((-0.5*self.length, self.outer_radius))
+        p2 = volmdlr.Point2D((0.5*self.length, self.outer_radius))
+        p3 = volmdlr.Point2D((0.5*self.length, self.inner_radius))
+        p4 = volmdlr.Point2D((-0.5*self.length, self.inner_radius))
+        l1 = volmdlr.LineSegment2D(p1, p2)
+        l2 = volmdlr.LineSegment2D(p2, p3)
+        l3 = volmdlr.LineSegment2D(p3, p4)
+        l4 = volmdlr.LineSegment2D(p4, p1)
+        extruded_profile = RevolvedProfile(self.position, self.axis, normal_vector1,
+                                           volmdlr.Contour2D([l1, l2, l3, l4]), self.position, self.axis, name=self.name)
+        return extruded_profile.babylon_script(name=name)
+
+
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        basis = frame.Basis()
+        if side == 'old':
+            axis = basis.OldCoordinates(self.axis)
+        elif side == 'new':
+            axis = basis.NewCoordinates(self.axis)
+        else:
+            raise ValueError('side must be either old or new')
+
+        if copy:
+            return HollowCylinder(self.position.frame_mapping(frame, side, copy),
+                                  axis,
+                                  self.inner_radius, self.outer_radius, self.length)
+        else:
+            self.position.frame_mapping(frame, side, copy)
+            self.axis = axis
 
 
 class HelicalExtrudedProfile(volmdlr.Primitive3D):

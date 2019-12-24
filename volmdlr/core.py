@@ -4637,31 +4637,46 @@ class Shell3D(CompositePrimitive3D):
         bbox = BoundingBox.from_points(intersections_points+shell1_points_outside_shell2)
         return bbox.volume()
 
-
-    def Babylon(self, name='primitive_mesh'):
-        s = 'var {} = new BABYLON.Mesh("custom", scene);\n'.format(name)
-
-        positions = ''
-        indices = ''
+    def babylon_meshes(self):
+        positions = []
+        indices = []
 
         nb_points = 0
         for i, face in enumerate(self.faces):
             points_3D, triangles_indexes = face.triangulation()
 
             for point in points_3D:
-                positions += '{},{},{},'.format(round(point[0],6), round(point[1],6), round(point[2],6))
+                positions.extend([i for i in round(point, 6)])
 
             for j, indexes in enumerate(triangles_indexes):
-                indices += '{},{},{},'.format(indexes[0]+nb_points, indexes[1]+nb_points, indexes[2]+nb_points)
+#                indices += '{},{},{},'.format(indexes[0]+nb_points, indexes[1]+nb_points, indexes[2]+nb_points)
+                indices.extend([i+nb_points for i in indexes])
             nb_points += len(points_3D)
 
 #            s += face.plane.Babylon()
 
         positions = positions[:-1]
         indices = indices[:-1]
+        babylon_mesh = {'positions': positions,
+                        'indices': indices,
+                        'name': self.name,
+                        }
+        
+        if self.color is None:
+            babylon_mesh['color'] = [200, 200, 200]
+        else:
+            babylon_mesh['color'] = self.color
+        
+        return [babylon_mesh]
 
-        s += 'var positions = [{}];\n'.format(positions)
-        s += 'var indices = [{}];\n'.format(indices)
+    def babylon_script(self, name='primitive_mesh'):
+        s = 'var {} = new BABYLON.Mesh("{}", scene);\n'.format(name, name)
+
+        mesh = self.babylon_meshes()[0]
+        
+
+        s += 'var positions = [{}];\n'.format(mesh['positions'])
+        s += 'var indices = [{}];\n'.format(mesh['indices'])
         s += 'var normals = [];\n'
         s += 'var vertexData = new BABYLON.VertexData();\n'
         s += 'BABYLON.VertexData.ComputeNormals(positions, indices, normals);\n'
@@ -4680,10 +4695,11 @@ class Shell3D(CompositePrimitive3D):
         s += 'mat.backFaceCulling = false;\n'
         s += '{}.material = mat;\n'.format(name)
         if self.color is not None:
-            s += 'mat.diffuseColor = new BABYLON.Color3({}, {}, {});\n'.format(self.color[0], self.color[1], self.color[2])
+            s += 'mat.diffuseColor = new BABYLON.Color3({}, {}, {});\n'.format(*self.color)
 
         return s
 
+        
 
 class BoundingBox(dc.DessiaObject):
     """
@@ -5041,7 +5057,7 @@ class BoundingBox(dc.DessiaObject):
                 mesures = [Mesure(point2, intersection_point2_3d), Mesure(intersection_point2_3d, intersection_point1_3d), Mesure(intersection_point1_3d, point1)]
             return mesures
 
-    def Babylon(self):
+    def babylon_script(self):
         height = self.ymax-self.ymin
         width = self.xmax-self.xmin
         depth = self.zmax-self.zmin
@@ -5077,7 +5093,7 @@ class Mesure(Line3D):
     def __hash__(self):
         return sum([hash(p) for p in self.points])
 
-    def Babylon(self):
+    def babylon_script(self):
         s = 'var myPoints = [];\n'
         s += 'var point1 = new BABYLON.Vector3({},{},{});\n'.format(self.points[0][0],self.points[0][1],self.points[0][2])
         s += 'myPoints.push(point1);\n'
@@ -5571,7 +5587,7 @@ class VolumeModel(dc.DessiaObject):
         os.remove(f.name)
         return output
 
-    def BabylonScript(self, use_cdn=True, debug=False):
+    def babylon_script(self, use_cdn=True, debug=False):
 
         env = Environment(loader=PackageLoader('volmdlr', 'templates'),
                           autoescape=select_autoescape(['html', 'xml']))
@@ -5586,8 +5602,8 @@ class VolumeModel(dc.DessiaObject):
 
         primitives_strings=[]
         for primitive in self.primitives:
-            if hasattr(primitive, 'Babylon'):
-                primitives_strings.append(primitive.Babylon())
+            if hasattr(primitive, 'babylon_script'):
+                primitives_strings.append(primitive.babylon_script())
         return template.render(name=self.name,
                                center=tuple(center),
                                length=2*max_length,
@@ -5595,9 +5611,53 @@ class VolumeModel(dc.DessiaObject):
                                use_cdn=use_cdn,
                                debug=debug)
 
-    def BabylonShow(self, page_name=None, use_cdn=True, debug=False):
-        script = self.BabylonScript(use_cdn=use_cdn, debug=debug)
+    def babylonjs(self, page_name=None, use_cdn=True, debug=False):
+        script = self.babylon_script(use_cdn=use_cdn, debug=debug)
 
+        if page_name is None:
+            with tempfile.NamedTemporaryFile(suffix=".html", delete=False) as file:
+                file.write(bytes(script,'utf8'))
+            page_name = file.name
+        else:
+            page_name += '.html'
+            with open(page_name,'w')  as file:
+                file.write(script)
+
+        webbrowser.open('file://' + os.path.realpath(page_name))
+
+    def babylonjs_from_meshes(self, page_name=None, use_cdn=True, debug=False):
+#        script = self.babylon_script(use_cdn=use_cdn, debug=debug)
+
+        meshes = []
+        for primitive in self.primitives:
+            print(primitive)
+            if hasattr(primitive, 'babylon_meshes'):
+                print('h')
+                meshes.extend(primitive.babylon_meshes())
+                
+        bbox = self._bounding_box()
+        center = bbox.center
+        max_length = max([bbox.xmax - bbox.xmin,
+                          bbox.ymax - bbox.ymin,
+                          bbox.zmax - bbox.zmin])
+                
+        babylon_data = {'meshes': meshes,
+                        'max_length': max_length,
+                        'center': list(center)}
+
+        print(babylon_data)
+
+        env = Environment(loader=PackageLoader('volmdlr', 'templates'),
+                          autoescape=select_autoescape(['html', 'xml']))
+
+        template = env.get_template('babylon_unpacker.html')
+
+        
+        script = template.render(babylon_data=babylon_data,
+                                 use_cdn=use_cdn,
+                                 debug=debug
+                                 )
+        
         if page_name is None:
             with tempfile.NamedTemporaryFile(suffix=".html", delete=False) as file:
                 file.write(bytes(script,'utf8'))
@@ -5621,7 +5681,7 @@ class MovingVolumeModel(VolumeModel):
             primitives.append(primitive.frame_mapping(frame, side='old', copy=True))
         return VolumeModel(primitives)
 
-    def BabylonScript(self, use_cdn=True, debug=False):
+    def babylon_script(self, use_cdn=True, debug=False):
 
         env = Environment(loader=PackageLoader('volmdlr', 'templates'),
                           autoescape=select_autoescape(['html', 'xml']))
