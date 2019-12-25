@@ -4682,26 +4682,20 @@ class Shell3D(CompositePrimitive3D):
         nb_points = 0
         for i, face in enumerate(self.faces):
             points_3D, triangles_indexes = face.triangulation()
-
             for point in points_3D:
                 positions.extend([i for i in round(point, 6)])
 
             for j, indexes in enumerate(triangles_indexes):
-#                indices += '{},{},{},'.format(indexes[0]+nb_points, indexes[1]+nb_points, indexes[2]+nb_points)
                 indices.extend([i+nb_points for i in indexes])
             nb_points += len(points_3D)
 
-#            s += face.plane.Babylon()
-
-        positions = positions[:-1]
-        indices = indices[:-1]
         babylon_mesh = {'positions': positions,
                         'indices': indices,
                         'name': self.name,
                         }
         
         if self.color is None:
-            babylon_mesh['color'] = [200, 200, 200]
+            babylon_mesh['color'] = [0.2, 0.2, 0.2]
         else:
             babylon_mesh['color'] = self.color
         
@@ -4712,9 +4706,8 @@ class Shell3D(CompositePrimitive3D):
 
         mesh = self.babylon_meshes()[0]
         
-
-        s += 'var positions = [{}];\n'.format(mesh['positions'])
-        s += 'var indices = [{}];\n'.format(mesh['indices'])
+        s += 'var positions = {};\n'.format(mesh['positions'])
+        s += 'var indices = {};\n'.format(mesh['indices'])
         s += 'var normals = [];\n'
         s += 'var vertexData = new BABYLON.VertexData();\n'
         s += 'BABYLON.VertexData.ComputeNormals(positions, indices, normals);\n'
@@ -4734,7 +4727,6 @@ class Shell3D(CompositePrimitive3D):
         s += '{}.material = mat;\n'.format(name)
         if self.color is not None:
             s += 'mat.diffuseColor = new BABYLON.Color3({}, {}, {});\n'.format(*self.color)
-
         return s
 
         
@@ -5642,6 +5634,7 @@ class VolumeModel(dc.DessiaObject):
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_script'):
                 primitives_strings.append(primitive.babylon_script())
+                
         return template.render(name=self.name,
                                center=tuple(center),
                                length=2*max_length,
@@ -5668,9 +5661,7 @@ class VolumeModel(dc.DessiaObject):
 
         meshes = []
         for primitive in self.primitives:
-            print(primitive)
             if hasattr(primitive, 'babylon_meshes'):
-                print('h')
                 meshes.extend(primitive.babylon_meshes())
                 
         bbox = self._bounding_box()
@@ -5683,7 +5674,6 @@ class VolumeModel(dc.DessiaObject):
                         'max_length': max_length,
                         'center': list(center)}
 
-        print(babylon_data)
 
         env = Environment(loader=PackageLoader('volmdlr', 'templates'),
                           autoescape=select_autoescape(['html', 'xml']))
