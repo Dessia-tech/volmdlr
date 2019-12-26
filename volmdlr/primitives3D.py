@@ -380,7 +380,7 @@ class ExtrudedProfile(volmdlr.Shell3D):
         upper_face = volmdlr.Face3D(upper_contours)
 
         lateral_faces = []
-        for i in range(len(self.inner_contours3d)):
+        for i in range(len(self.inner_contours3d)+1):
             lower_points = lower_contours[i].points + [lower_contours[i].points[0]]
             upper_points = upper_contours[i].points + [upper_contours[i].points[0]]
             for j in range(len(lower_points[:-1])):
@@ -395,7 +395,6 @@ class ExtrudedProfile(volmdlr.Shell3D):
                 contour = volmdlr.Contour3D([edge1, edge2, edge3, edge4])
                 face = volmdlr.Face3D([contour])
                 lateral_faces.append(face)
-
         return [lower_face]+[upper_face]+lateral_faces
 
     def _bounding_box(self):

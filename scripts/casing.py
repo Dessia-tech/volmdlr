@@ -36,6 +36,7 @@ outer_contour.MPLPlot(a)
 sides = primitives3D.ExtrudedProfile(vm.o3D, vm.x3D, vm.y3D,
                                       outer_contour, [inner_contour],
                                       (height-2*thickness) * vm.z3D, 'sides')
+
 bottom = primitives3D.ExtrudedProfile(vm.o3D, vm.x3D, vm.y3D, outer_contour, [], -thickness * vm.z3D, 'bottom')
 
 screw_holes_rl = inner_contour.Offset(-(thickness+screw_holes_clearance + 0.5 * screw_holes_diameter))
@@ -53,14 +54,14 @@ belt = primitives3D.ExtrudedProfile(vm.z3D*(height - 2*thickness), vm.x3D, vm.y3
                                       belt_outer_contour, [inner_contour]+screw_holes, thickness * vm.z3D, 'belt')
 
 
-# model = vm.VolumeModel([bottom, sides, belt])
-# model.BabylonShow('bottom')
+model = vm.VolumeModel([bottom, sides, belt])
+model.babylonjs_from_meshes('bottom')
 
 #model = vm.VolumeModel([sides])
 #model.BabylonShow('sides')
-#
-model = vm.VolumeModel([belt])
-model.babylonjs('belt')
+
+# model = vm.VolumeModel([belt])
+# model.babylonjs('belt')
 
 model.to_dict()
 
