@@ -1027,8 +1027,25 @@ class Contour2D(Wire2D):
             A += arc.SecondMomentArea(point)
 
         return A
-
-    def plot_data(self, name='', fill=None, color='black', stroke_width=1, opacity=1):
+    
+    def plot_data(self, name='', fill=None, marker=None, color='black', 
+                  stroke_width=1, dash=False, opacity=1):
+#        plot_datas = []
+#        for primitive in self.primitives:
+#            print(primitive)
+#            plot_datas.append(primitive.plot_data(name, fill, color, stroke_width, opacity))
+#        return plot_datas
+#        data = []
+#        for nd in self.points:
+#            data.append({'x': nd.vector[0], 'y': nd.vector[1]})
+#        return {'type' : 'path',
+#                'data' : data,
+#                'color' : color,
+#                'size' : stroke_width,
+#                'dash' : None,
+#                'marker' : marker,
+#                'opacity' : opacity}
+#        
         plot_data = {}
         plot_data['fill'] = fill
         plot_data['name'] = name
@@ -1036,8 +1053,8 @@ class Contour2D(Wire2D):
         plot_data['plot_data'] = []
         for item in self.basis_primitives:
             plot_data['plot_data'].append(item.plot_data(color=color,
-                                                        stroke_width=stroke_width,
-                                                        opacity=opacity))
+                                                         stroke_width=stroke_width,
+                                                         opacity=opacity))
         return plot_data
 
 class Mesh2D:
@@ -1678,7 +1695,7 @@ class Arc2D(Primitive2D):
         else:
             return list_node[::-1]
 
-    def plot_data(self, marker=None, color='black', stroke_width=1, opacity=1):
+    def plot_data(self, marker=None, color='black', stroke_width=1, dash=False, opacity=1):
         list_node = self.Discretise()
         data = []
         for nd in list_node:
@@ -5633,6 +5650,7 @@ class VolumeModel(dc.DessiaObject):
         primitives_strings=[]
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_script'):
+                print(primitive)
                 primitives_strings.append(primitive.babylon_script())
                 
         return template.render(name=self.name,
