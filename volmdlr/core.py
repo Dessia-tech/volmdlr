@@ -3905,7 +3905,7 @@ class Contour3D(Wire3D):
 #                raise NotImplementedError
 #        contour_points = [p.copy() for p in points]
 
-        return cls(edges, points=None, name=arguments[0][1:-1])
+        return cls(edges, point_inside_contour=None, name=arguments[0][1:-1])
 
     def clean_points(self):
         """
@@ -4146,9 +4146,11 @@ class Face3D(Primitive3D):
         else:
             tri = {'vertices': vertices, 'segments': segments}
         t = triangle.triangulate(tri, 'p')
-        triangles = t['triangles'].tolist()
-        # triangle.compare(plt, tri, t)
-        return points_3D, triangles
+        if 'triangles' in t:
+            triangles = t['triangles'].tolist()
+            return points_3D, triangles
+        else:
+            return None, None
 
     def _bounding_box(self):
         points = self.points
@@ -4706,12 +4708,13 @@ class Shell3D(CompositePrimitive3D):
         nb_points = 0
         for i, face in enumerate(self.faces):
             points_3D, triangles_indexes = face.triangulation()
-            for point in points_3D:
-                positions.extend([i for i in round(point, 6)])
-
-            for j, indexes in enumerate(triangles_indexes):
-                indices.extend([i+nb_points for i in indexes])
-            nb_points += len(points_3D)
+            if points_3D is not None:
+                for point in points_3D:
+                    positions.extend([i for i in round(point, 6)])
+    
+                for j, indexes in enumerate(triangles_indexes):
+                    indices.extend([i+nb_points for i in indexes])
+                nb_points += len(points_3D)
 
         babylon_mesh = {'positions': positions,
                         'indices': indices,
