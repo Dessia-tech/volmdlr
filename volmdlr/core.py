@@ -837,17 +837,16 @@ class CompositePrimitive2D(Primitive2D):
         primitives3D = [p.To3D(plane_origin, x, y) for p in self.primitives]
         return CompositePrimitive3D(primitives3D, name)
 
-    # TODO: change style to color!
-    def MPLPlot(self, ax=None, color='k', arrow=False, width=None):
+    def MPLPlot(self, ax=None, color='k', arrow=False, width=None, plot_points=False):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
         else:
             fig = ax.figure
 
-        for element in self.basis_primitives:
+        for element in self.primitives:
             if element.__class__.__name__ == 'LineSegment2D':
-                element.MPLPlot(ax, color, arrow, width)
+                element.MPLPlot(ax, color, arrow, width, plot_points=plot_points)
             else:
 
                 element.MPLPlot(ax, color=color)
@@ -914,6 +913,12 @@ class Contour2D(Wire2D):
     """
     def __init__(self, primitives, name=''):
         Wire2D.__init__(self, primitives, name)
+        self._utd_analysis = False
+
+    def _primitives_analysis(self):
+        """
+        An internal arc is an arc that has his interior point inside the polygon
+        """
 
         arcs = []
         internal_arcs = []
@@ -934,17 +939,54 @@ class Contour2D(Wire2D):
             else:
                 raise NotImplementedError('primitive of type {} is not handled'.format(primitive))
 
-        self.polygon = Polygon2D(points_polygon)
-        self.straight_line_contour_polygon = Polygon2D(points_straight_line_contour)
+        polygon = Polygon2D(points_polygon)
+        straight_line_contour_polygon = Polygon2D(points_straight_line_contour)
+        
         for arc in arcs:
-            if self.polygon.PointBelongs(arc.interior):
+            if polygon.PointBelongs(arc.interior):
                 internal_arcs.append(arc)
             else:
                 external_arcs.append(arc)
-        # An internal arc is an arc that has his interior point inside the polygon
-        self.internal_arcs = internal_arcs
-        self.external_arcs = external_arcs
 
+        return internal_arcs, external_arcs, polygon, straight_line_contour_polygon
+    
+    def _get_internal_arcs(self):
+        if not self._utd_analysis:
+            (self._internal_arcs, self._external_arcs,
+             self._polygon, self._straight_line_contour_polygon) = self._primitives_analysis()
+            self._utd_analysis = True
+        return self._internal_arcs
+            
+    internal_arcs = property(_get_internal_arcs)
+    
+    def _get_external_arcs(self):
+        if not self._utd_analysis:
+            (self._internal_arcs, self._external_arcs,
+             self._polygon, self._straight_line_contour_polygon) = self._primitives_analysis()
+            self._utd_analysis = True
+        return self._internal_arcs
+            
+    external_arcs = property(_get_external_arcs)
+    
+    def _get_polygon(self):
+        if not self._utd_analysis:
+            (self._internal_arcs, self._external_arcs,
+             self._polygon, self._straight_line_contour_polygon) = self._primitives_analysis()
+            self._utd_analysis = True
+        return self._polygon
+            
+    polygon = property(_get_polygon)
+    
+    def _get_straight_line_contour_polygon(self):
+        if not self._utd_analysis:
+            (self._internal_arcs, self._external_arcs,
+             self._polygon, self._straight_line_contour_polygon) = self._primitives_analysis()
+            self._utd_analysis = True
+        return self._straight_line_contour_polygon
+            
+    straight_line_contour_polygon = property(_get_straight_line_contour_polygon)
+    
+    
     def point_belongs(self, point):
         for arc in self.internal_arcs:
             if arc.point_belongs(point):
@@ -1342,7 +1384,7 @@ class LineSegment2D(Line2D):
         else:
             return point
 
-    def MPLPlot(self, ax=None, color='k', arrow=False, width=None):
+    def MPLPlot(self, ax=None, color='k', arrow=False, width=None, plot_points=False):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -1351,7 +1393,11 @@ class LineSegment2D(Line2D):
 
         p1, p2 = self.points
         if arrow:
-            ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color)
+            if plot_points:
+                ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color, style='o-')
+            else:
+                ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color)
+                
             length = ((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)**0.5
             if width is None:
                 width = length / 1000.
@@ -1365,7 +1411,10 @@ class LineSegment2D(Line2D):
                      head_width = head_width, fc = 'b', linewidth = 0,
                      head_length = head_length, width = width, alpha = 0.3)
         else:
-            ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color)
+            if plot_points:
+                ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color, marker='o')
+            else:
+                ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color)
         return fig, ax
 
     def To3D(self, plane_origin, x1, x2):
@@ -1512,6 +1561,7 @@ class Arc2D(Primitive2D):
     #     return points
     
     def tessellation_points(self, resolution_for_circle=40):
+        # TODO: change this to a simple rotation?
         number_points_tesselation = math.ceil(resolution_for_circle*abs(self.angle)/2/math.pi)
         if number_points_tesselation == 1:
             number_points_tesselation += 1
@@ -1808,17 +1858,18 @@ class Circle2D(Primitive2D):
                 'dash' : None,
                 'fill' : fill}
 
-class Polygon2D(CompositePrimitive2D):
+class Polygon2D(Contour2D):
     # TODO: inherit from contour?
     def __init__(self,points, name=''):
         self.points = points
-        primitives = []
-        for p1,p2 in zip(points,points[1:]+[points[0]]):
-            primitives.append(LineSegment2D(p1,p2))
+        # primitives = []
+        # for p1,p2 in zip(points,points[1:]+[points[0]]):
+        #     primitives.append(LineSegment2D(p1,p2))
 
+        # TODO: remove this?
         self.line_segments = self._LineSegments()
 
-        CompositePrimitive2D.__init__(self, primitives, name)
+        Contour2D.__init__(self, self.line_segments, name)
 
     def copy(self):
         points = [p.copy() for p in self.points]
@@ -1883,7 +1934,7 @@ class Polygon2D(CompositePrimitive2D):
 
     def _LineSegments(self):
         lines=[]
-        for p1,p2 in zip(self.points,self.points[1:]+[self.points[0]]):
+        for p1, p2 in zip(self.points, self.points[1:]+[self.points[0]]):
             lines.append(LineSegment2D(p1,p2))
         return lines
 
@@ -1998,15 +2049,15 @@ class Polygon2D(CompositePrimitive2D):
                     'marker' : marker,
                     'opacity' : opacity}
 
-    def MPLPlot(self, ax=None):
-        if ax is None:
-            fig, ax = plt.subplots()
-            ax.set_aspect('equal')
-        else:
-            fig = ax.figure()
+    # def MPLPlot(self, ax=None):
+    #     if ax is None:
+    #         fig, ax = plt.subplots()
+    #         ax.set_aspect('equal')
+    #     else:
+    #         fig = ax.figure()
 
-        ax.plot([p[0] for p in self.points]+[self.points[0][0]], [p[1] for p in self.points]+[self.points[0][1]], '-')
-        return fig, ax
+    #     ax.plot([p[0] for p in self.points]+[self.points[0][0]], [p[1] for p in self.points]+[self.points[0][1]], '-')
+    #     return fig, ax
 
 class Primitive3D(dc.DessiaObject):
     def __init__(self, basis_primitives=None, name=''):
@@ -3253,7 +3304,7 @@ class Arc3D(Primitive3D):
         self.start = start
         self.interior = interior
         self.end = end
-        Primitive3D.__init__(self, basis_primitives=self.tessellation_points(), name=name)
+
 
         u1 = (self.interior - self.start)
         u2 = (self.interior - self.end)
@@ -3308,6 +3359,8 @@ class Arc3D(Primitive3D):
                 self.angle = -(angle2 - angle1 + 2 * math.pi)
             else:
                 self.angle = -(angle2 - angle1)
+                
+        Primitive3D.__init__(self, basis_primitives=self.tessellation_points(), name=name)
 
     def _get_points(self):
         return [self.start,self.interior,self.end]
@@ -3315,20 +3368,29 @@ class Arc3D(Primitive3D):
     points=property(_get_points)
 
     def tessellation_points(self, resolution_for_circle=40):
-        plane = Plane3D.from_3_points(self.interior, self.start, self.end)
-        interior_2D = self.interior.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
-        start_2D = self.start.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
-        end_2D = self.end.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
-        arc2D = Arc2D(start_2D, interior_2D, end_2D)
-        tessellation_points_2D = arc2D.tessellation_points(resolution_for_circle)
-#        ax = interior_2D.MPLPlot()
-#        start_2D.MPLPlot(ax=ax)
-#        end_2D.MPLPlot(ax=ax)
-#        for pt in tessellation_points_2D:
-#            pt.MPLPlot(ax=ax)
-#        ax.set_aspect('equal')
-#        tessellation_points_3D = [p.To3D(self.interior, self.start, self.end) for p in tessellation_points_2D]
-        tessellation_points_3D = [p.To3D(plane.origin, plane.vectors[0], plane.vectors[1]) for p in tessellation_points_2D]
+        number_points_tesselation = math.ceil(resolution_for_circle*abs(0.5*self.angle/math.pi))
+        l = self.Length()
+        tessellation_points_3D = [self.PointAtCurvilinearAbscissa(l*i/(number_points_tesselation-1)) for i in range(number_points_tesselation)]
+#         plane = Plane3D.from_3_points(self.interior, self.start, self.end)
+#         interior_2D = self.interior.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
+#         start_2D = self.start.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
+#         end_2D = self.end.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
+#         arc2D = Arc2D(start_2D, interior_2D, end_2D)
+#         try:
+#             tessellation_points_2D = arc2D.tessellation_points(resolution_for_circle)
+#         except ValueError:
+#             print(self.start, self.interior, self.end)
+#             print(arc2D.start, arc2D.interior, arc2D.end)
+#             self.MPLPlot()
+#             raise ValueError
+# #        ax = interior_2D.MPLPlot()
+# #        start_2D.MPLPlot(ax=ax)
+# #        end_2D.MPLPlot(ax=ax)
+# #        for pt in tessellation_points_2D:
+# #            pt.MPLPlot(ax=ax)
+# #        ax.set_aspect('equal')
+# #        tessellation_points_3D = [p.To3D(self.interior, self.start, self.end) for p in tessellation_points_2D]
+#         tessellation_points_3D = [p.To3D(plane.origin, plane.vectors[0], plane.vectors[1]) for p in tessellation_points_2D]
         return tessellation_points_3D
 
     def Length(self):
@@ -3370,19 +3432,17 @@ class Arc3D(Primitive3D):
         else:
             fig = None
 
-        ax.plot([self.center[0]], [self.center[1]], [self.center[2]], color='b')
+        ax.plot([self.interior[0]], [self.interior[1]], [self.interior[2]], color='b')
         ax.plot([self.start[0]], [self.start[1]], [self.start[2]], c='r')
         ax.plot([self.end[0]], [self.end[1]], [self.end[2]], c='r')
         ax.plot([self.interior[0]], [self.interior[1]], [self.interior[2]], c='g')
         x = []
         y = []
         z = []
-        l = self.Length()
-        for i in range(31):
-            p = self.PointAtCurvilinearAbscissa(l*(i)/30)
-            x.append(p[0])
-            y.append(p[1])
-            z.append(p[2])
+        for px, py, pz in self.tessellation_points():
+            x.append(px)
+            y.append(py)
+            z.append(pz)
 
         ax.plot(x, y, z, 'k')
         return fig, ax
@@ -5732,8 +5792,8 @@ class MovingVolumeModel(VolumeModel):
 
         primitives_strings=[]
         for primitive in self.primitives:
-            if hasattr(primitive, 'Babylon'):
-                primitives_strings.append(primitive.Babylon())
+            if hasattr(primitive, 'babylon_script'):
+                primitives_strings.append(primitive.babylon_script())
 
         positions = []
         orientations = []
