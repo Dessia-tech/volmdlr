@@ -102,7 +102,7 @@ class ClosedRoundedLineSegments3D(volmdlr.Contour3D, OpenedRoundedLineSegments3D
                                                   adapt_radius=adapt_radius,
                                                   name='')
 
-        volmdlr.Contour3D.__init__(self, primitives, name)
+        volmdlr.Contour3D.__init__(self, primitives, name=name)
 
 class Sphere(volmdlr.Primitive3D):
     def __init__(self,center, radius, name=''):

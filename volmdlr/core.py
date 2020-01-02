@@ -3837,7 +3837,7 @@ class Contour3D(Wire3D):
     """
     A collection of 3D primitives forming a closed wire3D
     """
-    def __init__(self, edges, points=None, name=''):
+    def __init__(self, edges, point_inside_contour=None, name=''):
         """
         Faire un choix : soit edges c'est un CompositePrimitives3D
         ou alors un ensemble de primitives
@@ -3845,7 +3845,7 @@ class Contour3D(Wire3D):
         """
 
         self.name = name
-        self.points = points
+        self.point_inside_contour = point_inside_contour
 
         edges_primitives = []
         for edge in edges:
@@ -3927,8 +3927,8 @@ class Contour3D(Wire3D):
     def Rotation(self, center, axis, angle, copy=True):
         if copy:
             new_edges = [edge.Rotation(center, axis, angle, copy=True) for edge in self.edges]
-            new_points = [p.Rotation(center, axis, copy=True) for p in self.points]
-            return Contour3D(new_edges, new_points, self.name)
+            # new_points = [p.Rotation(center, axis, copy=True) for p in self.points]
+            return Contour3D(new_edges, None, self.name)
         else:
             for edge in self.edges:
                 edge.Rotation(center, axis, angle, copy=False)
@@ -3938,8 +3938,8 @@ class Contour3D(Wire3D):
     def Translation(self, offset, copy=True):
         if copy:
             new_edges = [edge.Translation(offset, copy=True) for edge in self.edges]
-            new_points = [p.Translation(offset, copy=True) for p in self.points]
-            return Contour3D(new_edges, new_points, self.name)
+            # new_points = [p.Translation(offset, copy=True) for p in self.points]
+            return Contour3D(new_edges, None, self.name)
         else:
             for edge in self.edges:
                 edge.Translation(offset, copy=False)
@@ -3952,8 +3952,8 @@ class Contour3D(Wire3D):
         """
         if copy:
             new_edges = [edge.frame_mapping(frame, side, copy=True) for edge in self.edges]
-            new_points = [p.frame_mapping(frame, side, copy=True) for p in self.points]
-            return Contour3D(new_edges, new_points, self.name)
+            # new_points = [p.frame_mapping(frame, side, copy=True) for p in self.points]
+            return Contour3D(new_edges, None, self.name)
         else:
             for edge in self.edges:
                 edge.frame_mapping(frame, side, copy=False)
@@ -3962,8 +3962,8 @@ class Contour3D(Wire3D):
 
     def copy(self):
         new_edges = [edge.copy() for edge in self.edges]
-        new_points = [p.Copy() for p in self.points]
-        return Contour3D(new_edges, new_points, self.name)
+        # new_points = [p.Copy() for p in self.points]
+        return Contour3D(new_edges, None, self.name)
 
 
 class Face3D(Primitive3D):
@@ -4114,9 +4114,16 @@ class Face3D(Primitive3D):
             total_len += len_points
             points_3D.extend(contour.points)
             if i > 0:
-                mid_point_3D = contour.average_center_point()
-                mid_point_2D = mid_point_3D.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
-                holes.append(mid_point_2D.vector)
+                if contour.point_inside_contour is not None:
+                    holes.append(contour.point_inside_contour)
+                else:
+                    mid_point_3D = contour.average_center_point()
+                    mid_point_2D = mid_point_3D.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
+                    polygon2D = Polygon2D(points_2D)
+                    holes.append(mid_point_2D.vector)
+                    if not polygon2D.PointBelongs(mid_point_2D):
+                        warnings.warn('average_center_point is not included inside its contour.')
+                        
         if holes:
             tri = {'vertices': vertices, 'segments': segments, 'holes': holes}
         else:
