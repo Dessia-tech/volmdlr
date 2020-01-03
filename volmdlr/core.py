@@ -788,17 +788,17 @@ class CompositePrimitive2D(Primitive2D):
     def __init__(self, primitives, name=''):
         Primitive2D.__init__(self, name)
         self.primitives = primitives
-        self.UpdateBasisPrimitives()
+        # self.UpdateBasisPrimitives()
 
-    def UpdateBasisPrimitives(self):
-        basis_primitives = []
-        for primitive in self.primitives:
-            if hasattr(primitive, 'basis_primitives'):
-                basis_primitives.extend(primitive.basis_primitives)
-            else:
-                basis_primitives.append(primitive)
+    # def UpdateBasisPrimitives(self):
+    #     basis_primitives = []
+    #     for primitive in self.primitives:
+    #         if hasattr(primitive, 'basis_primitives'):
+    #             basis_primitives.extend(primitive.basis_primitives)
+    #         else:
+    #             basis_primitives.append(primitive)
 
-        self.basis_primitives = basis_primitives
+    #     self.basis_primitives = basis_primitives
 
 
     def Rotation(self, center, angle, copy=True):
@@ -806,7 +806,7 @@ class CompositePrimitive2D(Primitive2D):
             return self.__class__([p.Rotation(center, angle, copy=True)\
                                    for p in self.primitives])
         else:
-            for p in self.basis_primitives:
+            for p in self.primitives:
                 p.Rotation(center, angle, copy=False)
             self.UpdateBasisPrimitives()
 
@@ -815,7 +815,7 @@ class CompositePrimitive2D(Primitive2D):
             return self.__class__([p.Translation(offset, copy=True)\
                                    for p in self.primitives])
         else:
-            for p in self.basis_primitives:
+            for p in self.primitives:
                 p.Translation(offset, copy=False)
             self.UpdateBasisPrimitives()
 
@@ -827,7 +827,7 @@ class CompositePrimitive2D(Primitive2D):
             return self.__class__([p.frame_mapping(frame, side, copy=True)\
                                    for p in self.primitives])
         else:
-            for p in self.basis_primitives:
+            for p in self.primitives:
                 p.frame_mapping(frame, side, copy=False)
             self.UpdateBasisPrimitives()
 
@@ -862,7 +862,7 @@ class CompositePrimitive2D(Primitive2D):
         plot_data['name'] = name
         plot_data['type'] = 'contour'
         plot_data['plot_data'] = []
-        for item in self.basis_primitives:
+        for item in self.primitives:
             plot_data['plot_data'].append(item.plot_data(color=color,
                                                         stroke_width=stroke_width,
                                                         opacity=opacity))
@@ -880,13 +880,13 @@ class Wire2D(CompositePrimitive2D):
 
     def Length(self):
         length = 0.
-        for primitive in self.basis_primitives:
+        for primitive in self.primitives:
             length += primitive.Length()
         return length
 
     def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
         length = 0.
-        for primitive in self.basis_primitives:
+        for primitive in self.primitives:
             primitive_length = primitive.Length()
             if length + primitive_length > curvilinear_abscissa:
                 return primitive.PointAtCurvilinearAbscissa(curvilinear_abscissa - length)
@@ -898,7 +898,7 @@ class Wire2D(CompositePrimitive2D):
         plot_data['name'] = name
         plot_data['type'] = 'wire'
         plot_data['plot_data'] = []
-        for item in self.basis_primitives:
+        for item in self.primitives:
             plot_data['plot_data'].append(item.plot_data(color=color,
                                                         stroke_width=stroke_width,
                                                         opacity=opacity))
@@ -925,7 +925,7 @@ class Contour2D(Wire2D):
         external_arcs = []
         points_polygon = []
         points_straight_line_contour = []
-        for primitive in self.basis_primitives:
+        for primitive in self.primitives:
             if primitive.__class__.__name__ == 'LineSegment2D':
                 points_polygon.extend(primitive.points)
                 points_straight_line_contour.extend(primitive.points)
@@ -999,8 +999,8 @@ class Contour2D(Wire2D):
         return False
 
     def point_distance(self, point):
-        min_distance = self.basis_primitives[0].point_distance(point)
-        for primitive in self.basis_primitives[1:]:
+        min_distance = self.primitives[0].point_distance(point)
+        for primitive in self.primitives[1:]:
             distance = primitive.point_distance(point)
             if distance < min_distance:
                 min_distance = distance
@@ -1023,8 +1023,8 @@ class Contour2D(Wire2D):
         return Contour3D(primitives3D, name=name)
 
     def Area(self):
-        if len(self.basis_primitives) == 1:
-            return self.basis_primitives[0].Area()
+        if len(self.primitives) == 1:
+            return self.primitives[0].Area()
 
         A = self.polygon.Area()
 
@@ -1038,8 +1038,8 @@ class Contour2D(Wire2D):
         return A
 
     def CenterOfMass(self):
-        if len(self.basis_primitives) == 1:
-            return self.basis_primitives[0].CenterOfMass()
+        if len(self.primitives) == 1:
+            return self.primitives[0].CenterOfMass()
 
         area = self.polygon.Area()
         if area > 0.:
@@ -1076,7 +1076,7 @@ class Contour2D(Wire2D):
         plot_data['name'] = name
         plot_data['type'] = 'contour'
         plot_data['plot_data'] = []
-        for item in self.basis_primitives:
+        for item in self.primitives:
             plot_data['plot_data'].append(item.plot_data(color=color,
                                                         stroke_width=stroke_width,
                                                         opacity=opacity))
@@ -1746,12 +1746,12 @@ class Arc2D(Primitive2D):
                     'angle1' : self.angle1,
                     'angle2' : self.angle2, }
 
-class Circle2D(Primitive2D):
+class Circle2D(Contour2D):
     def __init__(self,center,radius,name=''):
-        Primitive2D.__init__(self,name)
         self.center = center
         self.radius = radius
         self.utd_geo_points = False
+        Contour2D.__init__(self, [self], name=name)
 
     def _get_geo_points(self):
         if not self.utd_geo_points:
@@ -2062,9 +2062,9 @@ class Polygon2D(Contour2D):
 class Primitive3D(dc.DessiaObject):
     def __init__(self, basis_primitives=None, name=''):
         self.name = name
-        self.basis_primitives = basis_primitives # une liste
+        self.primitives = basis_primitives # une liste
         if basis_primitives is None:
-            self.basis_primitives = []
+            self.primitives = []
 
 class Vector3D(Vector):
 
@@ -3195,105 +3195,10 @@ class BSplineCurve3D(Primitive3D):
             self.curve = new_BSplineCurve3D.curve
             self.points = new_BSplineCurve3D.points
 
-class Circle3D(Primitive3D):
-    def __init__(self, center, radius, normal, name=''):
-        self.center = center
-        self.radius = radius
-        self.normal = normal
-        Primitive3D.__init__(self, basis_primitives=self.tessellation_points(), name=name)
-
-    def tessellation_points(self, resolution=20):
-        plane = Plane3D.from_normal(self.center, self.normal)
-        center_2D = self.center.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
-        circle2D = Circle2D(center_2D, self.radius)
-        tessellation_points_2D = circle2D.tessellation_points()
-        tessellation_points_3D = [p.To3D(plane.origin, x3D, y3D) for p in tessellation_points_2D]
-        return tessellation_points_3D
-
-    def Length(self):
-        return 2* math.pi * self.radius
-
-    def FreeCADExport(self, name, ndigits=3):
-#        name = 'primitive{}'.format(ip)
-        xc,yc,zc = round(1000*self.center, ndigits)
-        xn,yn,zn = round(self.normal, ndigits)
-        return '{} = Part.Circle(fc.Vector({},{},{}),fc.Vector({},{},{}),{})\n'.format(name,xc,yc,zc,xn,yn,zn,1000*self.radius)
-
-    def Rotation(self, rot_center, axis, angle, copy=True):
-        new_center = self.center.Rotation(rot_center, axis, angle, True)
-        new_normal = self.normal.Rotation(rot_center, axis, angle, True)
-        if copy:
-            return Circle3D(new_center, self.radius, new_normal, self.name)
-        else:
-            self.center = new_center
-            self.normal = new_normal
-
-    def Translation(self, offset, copy=True):
-        new_center = self.center.Translation(offset, True)
-        new_normal = self.normal.Translation(offset, True)
-        if copy:
-            return Circle3D(new_center, self.radius, new_normal, self.name)
-        else:
-            self.center = new_center
-            self.normal = new_normal
-
-    @classmethod
-    def from_step(cls, arguments, object_dict):
-        center = object_dict[arguments[1]].origin
-        radius = float(arguments[2])/1000
-        normal = object_dict[arguments[1]].w
-        return cls(center, radius, normal, arguments[0][1:-1])
 
 
-class Ellipse3D(Primitive3D):
-    def __init__(self, major_axis, minor_axis, center, normal, major_dir, name=''):
-        Primitive3D.__init__(self, basis_primitives=None, name=name)
-        self.major_axis = major_axis
-        self.minor_axis = minor_axis
-        self.center = center
-        self.normal = normal
-        major_dir.Normalize()
-        self.major_dir = major_dir
 
-    def FreeCADExport(self, ip, ndigits=3):
-        name = 'primitive{}'.format(ip)
-        xc, yc, zc = npy.round(1000*self.center.vector, ndigits)
-        major_vector = self.center + self.major_axis/2 * self.major_dir
-        xmaj, ymaj, zmaj = npy.round(1000*major_vector.vector, ndigits)
-        minor_vector = self.center + self.minor_axis/2 * self.normal.Cross(self.major_dir)
-        xmin, ymin, zmin = npy.round(1000*minor_vector.vector, ndigits)
-        return '{} = Part.Ellipse(fc.Vector({},{},{}), fc.Vector({},{},{}), fc.Vector({},{},{}))\n'.format(name,xmaj,ymaj,zmaj,xmin,ymin,zmin,xc,yc,zc)
 
-    def Rotation(self, rot_center, axis, angle, copy=True):
-        new_center = self.center.Rotation(rot_center, axis, angle, True)
-        new_normal = self.normal.Rotation(rot_center, axis, angle, True)
-        new_major_dir = self.major_dir.Rotation(rot_center, axis, angle, True)
-        if copy:
-            return Ellipse3D(self.major_axis, self.minor_axis, new_center, new_normal, new_major_dir, self.name)
-        else:
-            self.center = new_center
-            self.normal = new_normal
-            self.major_dir = new_major_dir
-
-    def Translation(self, offset, copy=True):
-        new_center = self.center.Translation(offset, True)
-        new_normal = self.normal.Translation(offset, True)
-        new_major_dir = self.major_dir.Translation(offset, True)
-        if copy:
-            return Ellipse3D(self.major_axis, self.minor_axis, new_center, new_normal, new_major_dir, self.name)
-        else:
-            self.center = new_center
-            self.normal = new_normal
-            self.major_dir = new_major_dir
-
-    @classmethod
-    def from_step(cls, arguments, object_dict):
-        center = object_dict[arguments[1]].origin
-        normal = object_dict[arguments[1]].w
-        major_dir = object_dict[arguments[1]].u
-        major_axis = float(arguments[2])/1000
-        minor_axis = float(arguments[3])/1000
-        return cls(major_axis, minor_axis, center, normal, major_dir, arguments[0][1:-1])
 
 
 class Arc3D(Primitive3D):
@@ -3410,7 +3315,7 @@ class Arc3D(Primitive3D):
             self.start.Rotation(rot_center, axis, angle, False)
             self.interior.Rotation(rot_center, axis, angle, False)
             self.end.Rotation(rot_center, axis, angle, False)
-            [p.Rotation(rot_center, axis, angle, False) for p in self.basis_primitives]
+            [p.Rotation(rot_center, axis, angle, False) for p in self.primitives]
 
     def Translation(self, offset, copy=True):
         if copy:
@@ -3423,7 +3328,7 @@ class Arc3D(Primitive3D):
             self.start.Translation(offset, False)
             self.interior.Translation(offset, False)
             self.end.Translation(offset, False)
-            [p.Translation(offset, False) for p in self.basis_primitives]
+            [p.Translation(offset, False) for p in self.primitives]
 
     def MPLPlot(self, ax=None):
         if ax is None:
@@ -3624,7 +3529,7 @@ class CompositePrimitive3D(Primitive3D):
         basis_primitives=[]
         for primitive in primitives:
             if hasattr(primitive, 'basis_primitives'):
-                basis_primitives.extend(primitive.basis_primitives)
+                basis_primitives.extend(primitive.primitives)
             else:
                 basis_primitives.append(primitive)
 
@@ -3641,11 +3546,11 @@ class CompositePrimitive3D(Primitive3D):
         basis_primitives=[]
         for primitive in self.primitives:
             if hasattr(primitive, 'basis_primitives'):
-                basis_primitives.extend(primitive.basis_primitives)
+                basis_primitives.extend(primitive.primitives)
             else:
                 basis_primitives.append(primitive)
 
-        self.basis_primitives = basis_primitives
+        self.primitives = basis_primitives
 
     def MPLPlot(self, ax = None):
         if ax is None:
@@ -3671,13 +3576,13 @@ class Wire3D(CompositePrimitive3D):
 
     def Length(self):
         length = 0.
-        for primitive in self.basis_primitives:
+        for primitive in self.primitives:
             length += primitive.Length()
         return length
 
     def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
         length = 0.
-        for primitive in self.basis_primitives:
+        for primitive in self.primitives:
             primitive_length = primitive.Length()
             if length + primitive_length > curvilinear_abscissa:
                 return primitive.PointAtCurvilinearAbscissa(curvilinear_abscissa - length)
@@ -3691,7 +3596,7 @@ class Wire3D(CompositePrimitive3D):
         name='primitive'+str(ip)
 
         s = 'E = []\n'
-        for ip, primitive in enumerate(self.basis_primitives):
+        for ip, primitive in enumerate(self.primitives):
             s += primitive.FreeCADExport('L{}'.format(ip))
             s += 'E.append(Part.Edge(L{}))\n'.format(ip)
         s += '{} = Part.Wire(E[:])\n'.format(name)
@@ -3898,6 +3803,7 @@ class Contour3D(Wire3D):
     A collection of 3D primitives forming a closed wire3D
     """
     def __init__(self, edges, point_inside_contour=None, name=''):
+        # TODO: docstring in english
         """
         Faire un choix : soit edges c'est un CompositePrimitives3D
         ou alors un ensemble de primitives
@@ -3955,12 +3861,14 @@ class Contour3D(Wire3D):
         TODO : verifier si le dernier point est toujours le meme que le premier point
         lors d'un import step par exemple
         """
-
-        points = self.edges[0].basis_primitives[::]
+        if hasattr(self.edges[0], 'points'):
+            points = self.edges[0].points[::]
+        else:
+            points = self.edges[0].tessellation_points()
         last_points_added = points
         for edge in self.edges[1:]:
-            if hasattr(edge, 'basis_primitives'):
-                points_to_add = edge.basis_primitives
+            if hasattr(edge, 'points'):
+                points_to_add = edge.points
                 if points_to_add[0] in [last_points_added[0], last_points_added[-1]]:
                     points.extend(points_to_add[1:])
                 elif points_to_add[-1] in [last_points_added[0], last_points_added[-1]]:
@@ -3972,8 +3880,9 @@ class Contour3D(Wire3D):
             else:
                 raise NotImplementedError
         
-        if points[0] == points[-1]:
-            points.pop()
+        if len(points) > 1:
+            if points[0] == points[-1]:
+                points.pop()
         
         return points
 
@@ -4025,6 +3934,106 @@ class Contour3D(Wire3D):
         # new_points = [p.Copy() for p in self.points]
         return Contour3D(new_edges, None, self.name)
 
+class Circle3D(Contour3D):
+    def __init__(self, center, radius, normal, name=''):
+        self.center = center
+        self.radius = radius
+        self.normal = normal
+        Contour3D.__init__(self, [self], name=name)
+
+    def tessellation_points(self, resolution=20):
+        plane = Plane3D.from_normal(self.center, self.normal)
+        center_2D = self.center.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
+        circle2D = Circle2D(center_2D, self.radius)
+        tessellation_points_2D = circle2D.tessellation_points()
+        tessellation_points_3D = [p.To3D(plane.origin, x3D, y3D) for p in tessellation_points_2D]
+        return tessellation_points_3D
+
+    def Length(self):
+        return 2* math.pi * self.radius
+
+    def FreeCADExport(self, name, ndigits=3):
+#        name = 'primitive{}'.format(ip)
+        xc,yc,zc = round(1000*self.center, ndigits)
+        xn,yn,zn = round(self.normal, ndigits)
+        return '{} = Part.Circle(fc.Vector({},{},{}),fc.Vector({},{},{}),{})\n'.format(name,xc,yc,zc,xn,yn,zn,1000*self.radius)
+
+    def Rotation(self, rot_center, axis, angle, copy=True):
+        new_center = self.center.Rotation(rot_center, axis, angle, True)
+        new_normal = self.normal.Rotation(rot_center, axis, angle, True)
+        if copy:
+            return Circle3D(new_center, self.radius, new_normal, self.name)
+        else:
+            self.center = new_center
+            self.normal = new_normal
+
+    def Translation(self, offset, copy=True):
+        new_center = self.center.Translation(offset, True)
+        new_normal = self.normal.Translation(offset, True)
+        if copy:
+            return Circle3D(new_center, self.radius, new_normal, self.name)
+        else:
+            self.center = new_center
+            self.normal = new_normal
+
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        center = object_dict[arguments[1]].origin
+        radius = float(arguments[2])/1000
+        normal = object_dict[arguments[1]].w
+        return cls(center, radius, normal, arguments[0][1:-1])
+
+
+class Ellipse3D(Contour3D):
+    def __init__(self, major_axis, minor_axis, center, normal, major_dir, name=''):
+        
+        self.major_axis = major_axis
+        self.minor_axis = minor_axis
+        self.center = center
+        self.normal = normal
+        major_dir.Normalize()
+        self.major_dir = major_dir
+        Contour3D.__init__(self, [self], name=name)
+
+    def FreeCADExport(self, ip, ndigits=3):
+        name = 'primitive{}'.format(ip)
+        xc, yc, zc = npy.round(1000*self.center.vector, ndigits)
+        major_vector = self.center + self.major_axis/2 * self.major_dir
+        xmaj, ymaj, zmaj = npy.round(1000*major_vector.vector, ndigits)
+        minor_vector = self.center + self.minor_axis/2 * self.normal.Cross(self.major_dir)
+        xmin, ymin, zmin = npy.round(1000*minor_vector.vector, ndigits)
+        return '{} = Part.Ellipse(fc.Vector({},{},{}), fc.Vector({},{},{}), fc.Vector({},{},{}))\n'.format(name,xmaj,ymaj,zmaj,xmin,ymin,zmin,xc,yc,zc)
+
+    def Rotation(self, rot_center, axis, angle, copy=True):
+        new_center = self.center.Rotation(rot_center, axis, angle, True)
+        new_normal = self.normal.Rotation(rot_center, axis, angle, True)
+        new_major_dir = self.major_dir.Rotation(rot_center, axis, angle, True)
+        if copy:
+            return Ellipse3D(self.major_axis, self.minor_axis, new_center, new_normal, new_major_dir, self.name)
+        else:
+            self.center = new_center
+            self.normal = new_normal
+            self.major_dir = new_major_dir
+
+    def Translation(self, offset, copy=True):
+        new_center = self.center.Translation(offset, True)
+        new_normal = self.normal.Translation(offset, True)
+        new_major_dir = self.major_dir.Translation(offset, True)
+        if copy:
+            return Ellipse3D(self.major_axis, self.minor_axis, new_center, new_normal, new_major_dir, self.name)
+        else:
+            self.center = new_center
+            self.normal = new_normal
+            self.major_dir = new_major_dir
+
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        center = object_dict[arguments[1]].origin
+        normal = object_dict[arguments[1]].w
+        major_dir = object_dict[arguments[1]].u
+        major_axis = float(arguments[2])/1000
+        minor_axis = float(arguments[3])/1000
+        return cls(major_axis, minor_axis, center, normal, major_dir, arguments[0][1:-1])
 
 class Face3D(Primitive3D):
     _standalone_in_db = True
@@ -4852,6 +4861,8 @@ class BoundingBox(dc.DessiaObject):
 
     @classmethod
     def from_points(cls, points):
+        # if len(points) == 0:
+        #     return (0, 0, 0, 0, 0, 0)
         xmin = min([pt[0] for pt in points])
         xmax = max([pt[0] for pt in points])
         ymin = min([pt[1] for pt in points])
