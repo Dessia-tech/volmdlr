@@ -978,7 +978,7 @@ class Contour2D(Wire2D):
         if name is None:
             name = '3D of {}'.format(self.name)
         primitives3D = [p.To3D(plane_origin, x, y) for p in self.primitives]
-        return Contour3D(primitives3D, name=name)
+        return Contour3D(edges=primitives3D, name=name)
 
     def Area(self):
         if len(self.basis_primitives) == 1:
