@@ -1069,8 +1069,25 @@ class Contour2D(Wire2D):
             A += arc.SecondMomentArea(point)
 
         return A
-
-    def plot_data(self, name='', fill=None, color='black', stroke_width=1, opacity=1):
+    
+    def plot_data(self, name='', fill=None, marker=None, color='black', 
+                  stroke_width=1, dash=False, opacity=1):
+#        plot_datas = []
+#        for primitive in self.primitives:
+#            print(primitive)
+#            plot_datas.append(primitive.plot_data(name, fill, color, stroke_width, opacity))
+#        return plot_datas
+#        data = []
+#        for nd in self.points:
+#            data.append({'x': nd.vector[0], 'y': nd.vector[1]})
+#        return {'type' : 'path',
+#                'data' : data,
+#                'color' : color,
+#                'size' : stroke_width,
+#                'dash' : None,
+#                'marker' : marker,
+#                'opacity' : opacity}
+#        
         plot_data = {}
         plot_data['fill'] = fill
         plot_data['name'] = name
@@ -1078,8 +1095,8 @@ class Contour2D(Wire2D):
         plot_data['plot_data'] = []
         for item in self.primitives:
             plot_data['plot_data'].append(item.plot_data(color=color,
-                                                        stroke_width=stroke_width,
-                                                        opacity=opacity))
+                                                         stroke_width=stroke_width,
+                                                         opacity=opacity))
         return plot_data
 
 class Mesh2D:
@@ -1728,7 +1745,7 @@ class Arc2D(Primitive2D):
         else:
             return list_node[::-1]
 
-    def plot_data(self, marker=None, color='black', stroke_width=1, opacity=1):
+    def plot_data(self, marker=None, color='black', stroke_width=1, dash=False, opacity=1):
         list_node = self.Discretise()
         data = []
         for nd in list_node:
@@ -4208,10 +4225,12 @@ class Face3D(Primitive3D):
             tri = {'vertices': vertices, 'segments': segments}
         # print('tri', tri)
         t = triangle.triangulate(tri, 'p')
-        triangles = t['triangles'].tolist()
-        # triangle.compare(plt, tri, t)
-        # print(triangles)
-        return points_3D, triangles
+        if 'triangles' in t:
+            triangles = t['triangles'].tolist()
+            return points_3D, triangles
+        else:
+            return None, None
+
 
     def _bounding_box(self):
         points = self.points
@@ -4769,14 +4788,13 @@ class Shell3D(CompositePrimitive3D):
         nb_points = 0
         for i, face in enumerate(self.faces):
             points_3D, triangles_indexes = face.triangulation()
-            if points_3D is None and triangles_indexes is None:
-                continue
-            for point in points_3D:
-                positions.extend([i for i in round(point, 6)])
-
-            for j, indexes in enumerate(triangles_indexes):
-                indices.extend([i+nb_points for i in indexes])
-            nb_points += len(points_3D)
+            if points_3D is not None:
+                for point in points_3D:
+                    positions.extend([i for i in round(point, 6)])
+    
+                for j, indexes in enumerate(triangles_indexes):
+                    indices.extend([i+nb_points for i in indexes])
+                nb_points += len(points_3D)
 
         babylon_mesh = {'positions': positions,
                         'indices': indices,
@@ -5725,6 +5743,7 @@ class VolumeModel(dc.DessiaObject):
         primitives_strings=[]
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_script'):
+                print(primitive)
                 primitives_strings.append(primitive.babylon_script())
                 
         return template.render(name=self.name,
