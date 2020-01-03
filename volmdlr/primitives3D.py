@@ -407,6 +407,7 @@ class ExtrudedProfile(volmdlr.Shell3D):
         for contour in [self.outer_contour2d]+self.inner_contours2d:
             for primitive in contour.primitives:
                 primitive.MPLPlot(ax)
+        ax.margins(0.1)
         return ax
 
     def FreeCADExport(self, ip):

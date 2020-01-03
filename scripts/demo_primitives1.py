@@ -20,6 +20,4 @@ model=vm.VolumeModel([cylinder1, cylinder2])
 #profile.MPLPlot((0,0,0),(1,0,0),(0,1,0))
 
 model.FreeCADExport('cylinders')
-
-#print(model.BabylonScript())
-#model.BabylonShow()
+model.babylonjs()
