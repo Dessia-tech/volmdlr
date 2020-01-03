@@ -3150,6 +3150,18 @@ class Circle3D(Primitive3D):
         self.radius = radius
         self.normal = normal
         Primitive3D.__init__(self, basis_primitives=self.tessellation_points(), name=name)
+        
+    def _get_points(self):
+        vr = Vector3D(npy.random.random(3))
+        vr.Normalize()
+        vn = vr.Cross(self.normal)
+        dir_radius = vn*self.radius
+        pt1 = self.center + dir_radius
+        pt2 = pt1.Rotation(self.center, self.normal, 2*math.pi/3.)
+        pt3 = pt2.Rotation(self.center, self.normal, 2*math.pi/3.)
+        return [pt1, pt2, pt3]
+
+    points=property(_get_points)
 
     def tessellation_points(self, resolution=20):
         plane = Plane3D.from_normal(self.center, self.normal)
