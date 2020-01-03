@@ -5613,6 +5613,7 @@ class VolumeModel(dc.DessiaObject):
         for primitive in self.primitives:
             primitive.MPLPlot(ax)
         ax.set_aspect('equal')
+        ax.margins(0.1)
         return fig, ax
 
     def FreeCADScript(self, fcstd_filepath,
