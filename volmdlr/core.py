@@ -3888,7 +3888,7 @@ class Contour3D(Wire3D):
 #                raise NotImplementedError
 #        contour_points = [p.copy() for p in points]
 
-        return cls(edges, points=None, name=arguments[0][1:-1])
+        return cls(edges, point_inside_contour=None, name=arguments[0][1:-1])
 
     def clean_points(self):
         """
@@ -4108,7 +4108,16 @@ class Face3D(Primitive3D):
         total_len = 0
         for i, contour in enumerate(self.contours):
             points_2D = [p.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]) for p in contour.points]
+            
+            
+            # if polygon2D.Area() == 0.:
+            #     return None, None
+            
             vertices.extend([tuple(p.vector) for p in points_2D])
+            
+            if len(vertices) != len(set(vertices)):
+                return None, None
+            
             len_points = len(contour.points)
             segments += [[a+total_len, a+total_len+1] for a in range(len_points-1)]+[[len_points+total_len-1, 0+total_len]]
             total_len += len_points
@@ -4117,9 +4126,9 @@ class Face3D(Primitive3D):
                 if contour.point_inside_contour is not None:
                     holes.append(contour.point_inside_contour)
                 else:
+                    polygon2D = Polygon2D(points_2D)
                     mid_point_3D = contour.average_center_point()
                     mid_point_2D = mid_point_3D.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
-                    polygon2D = Polygon2D(points_2D)
                     holes.append(mid_point_2D.vector)
                     if not polygon2D.PointBelongs(mid_point_2D):
                         warnings.warn('average_center_point is not included inside its contour.')
@@ -4128,9 +4137,11 @@ class Face3D(Primitive3D):
             tri = {'vertices': vertices, 'segments': segments, 'holes': holes}
         else:
             tri = {'vertices': vertices, 'segments': segments}
+        # print('tri', tri)
         t = triangle.triangulate(tri, 'p')
         triangles = t['triangles'].tolist()
         # triangle.compare(plt, tri, t)
+        # print(triangles)
         return points_3D, triangles
 
     def _bounding_box(self):
@@ -4689,6 +4700,8 @@ class Shell3D(CompositePrimitive3D):
         nb_points = 0
         for i, face in enumerate(self.faces):
             points_3D, triangles_indexes = face.triangulation()
+            if points_3D is None and triangles_indexes is None:
+                continue
             for point in points_3D:
                 positions.extend([i for i in round(point, 6)])
 
