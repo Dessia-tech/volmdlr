@@ -36,6 +36,7 @@ from volmdlr import plot_data
 import triangle
 
 import dessia_common as dc
+from typing import TypeVar, List, Tuple
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 
@@ -2017,32 +2018,32 @@ class Primitive3D(dc.DessiaObject):
 
 class Vector3D(Vector):
 
-    _jsonschema = {
-        "definitions": {},
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "type": "object",
-        "title": "powerpack.mechanical.Vector3D Base Schema",
-        "required": ["vector"],
-        "properties": {
-            'vector' : {
-                "type" : "array",
-                "order" : 0,
-                "items" : {
-                    "type" : "number",
-                    "step" : 1,
-                    "minimum" : -1,
-                    "maximum" : 1
-                    },
-                "minItems": 3,
-                "maxItems": 3,
-                "examples": [[1, 0, 0]],
-                "editable" : True,
-                "description" : "Vector array"
-                }
-            }
-        }
+    # _jsonschema = {
+    #     "definitions": {},
+    #     "$schema": "http://json-schema.org/draft-07/schema#",
+    #     "type": "object",
+    #     "title": "powerpack.mechanical.Vector3D Base Schema",
+    #     "required": ["vector"],
+    #     "properties": {
+    #         'vector' : {
+    #             "type" : "array",
+    #             "order" : 0,
+    #             "items" : {
+    #                 "type" : "number",
+    #                 "step" : 1,
+    #                 "minimum" : -1,
+    #                 "maximum" : 1
+    #                 },
+    #             "minItems": 3,
+    #             "maxItems": 3,
+    #             "examples": [[1, 0, 0]],
+    #             "editable" : True,
+    #             "description" : "Vector array"
+    #             }
+    #         }
+    #     }
 
-    def __init__(self, vector, name=''):
+    def __init__(self, vector:List[float], name:str=''):
         self.vector = [0, 0, 0]
 #        self.vector = npy.zeros(3)
         self.vector[0] = vector[0]
@@ -2268,24 +2269,24 @@ Z3D = Vector3D((0, 0, 1))
 
 class Point3D(Vector3D):
     _standalone_in_db = False
-    _jsonschema = {
-        "definitions": {},
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "type": "object",
-        "title": "powerpack.mechanical.Point3D Base Schema",
-        "required": ["vector"],
-        "properties": {
-            'vector' : {
-                "type" : "object",
-                "order" : 0,
-                "classes" : ["volmdlr.core.Vector3D"],
-                "editable" : True,
-                "description" : "Vector array"
-                }
-            }
-        }
+    # _jsonschema = {
+    #     "definitions": {},
+    #     "$schema": "http://json-schema.org/draft-07/schema#",
+    #     "type": "object",
+    #     "title": "powerpack.mechanical.Point3D Base Schema",
+    #     "required": ["vector"],
+    #     "properties": {
+    #         'vector' : {
+    #             "type" : "object",
+    #             "order" : 0,
+    #             "classes" : ["volmdlr.core.Vector3D"],
+    #             "editable" : True,
+    #             "description" : "Vector array"
+    #             }
+    #         }
+    #     }
 
-    def __init__(self, vector, name=''):
+    def __init__(self, vector:List[float], name:str=''):
         Vector3D.__init__(self, vector, name)
 
     def __add__(self, other_vector):
