@@ -116,6 +116,27 @@ export class D3Unpacker {
               //.on("mouseout", deemphasize);
         })
       }
+      else if (dict_component.type == "arc"){
+        var arcs_data = [];
+        arcs_data.push(dict_component);
+
+        arcs_data.forEach(function(d){
+          var draw_data = []
+          d.data.forEach(function(dd){
+            draw_data.push([1000*dd['x'],1000*dd['y']])
+          })
+          var lineGenerator = d3.line();
+          lineGenerator.curve(d3.curveCardinal.tension(0));
+          var pathString = lineGenerator(draw_data);
+          data_container.append("path")
+              .attr('d', pathString)
+              .attr('id', 'path_geom')
+              .attr("stroke-width", d.size)
+              .attr("stroke", d.color)
+              .attr("fill", "none")
+              .attr("stroke-width-init", d.size)
+        })
+      }
       else if (dict_component.type == "text"){
         var text_data = [];
         text_data.push(dict_component);
