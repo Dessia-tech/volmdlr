@@ -2147,6 +2147,8 @@ class Vector3D(Vector):
         return int(1000*(self.vector[0]+self.vector[1]+self.vector[2]))
 
     def __eq__(self, other_vector):
+        if self.__class__ != other_vector.__class__:
+            return False
         return math.isclose(self.vector[0], other_vector.vector[0], abs_tol=1e-08) \
         and math.isclose(self.vector[1], other_vector.vector[1], abs_tol=1e-08) \
         and math.isclose(self.vector[2], other_vector.vector[2], abs_tol=1e-08)
@@ -2665,25 +2667,25 @@ class Basis3D(Basis):
     :param w: third vector of the basis
     """
     _standalone_in_db = False
-    _jsonschema = {
-        "definitions": {},
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "type": "object",
-        "title": "powerpack.mechanical.Basis3D Base Schema",
-        "required": ['vectors'],
-        "properties": {
-            'vectors' : {
-                'type' : 'array',
-                'items' : {
-                    'type' : 'object',
-                    "editable" : True,
-                    'classes' : ['volmdlr.core.Vector3D']
-                    },
-                'order' : 0,
-                'editable' : True
-                }
-            }
-        }
+    # _jsonschema = {
+    #     "definitions": {},
+    #     "$schema": "http://json-schema.org/draft-07/schema#",
+    #     "type": "object",
+    #     "title": "powerpack.mechanical.Basis3D Base Schema",
+    #     "required": ['vectors'],
+    #     "properties": {
+    #         'vectors' : {
+    #             'type' : 'array',
+    #             'items' : {
+    #                 'type' : 'object',
+    #                 "editable" : True,
+    #                 'classes' : ['volmdlr.core.Vector3D']
+    #                 },
+    #             'order' : 0,
+    #             'editable' : True
+    #             }
+    #         }
+    #     }
 
     # TODO: create a Basis and Frame class to mutualize between 2D and 2D
     def __init__(self, u, v, w, name=''):
@@ -2862,7 +2864,7 @@ class Frame3D(Basis3D):
     :param v: second vector of the basis
     :param w: third vector of the basis
     """
-    def __init__(self, origin, u, v, w, name=''):
+    def __init__(self, origin:Point3D, u:Vector3D, v:Vector3D, w:Vector3D, name:str=''):
         self.origin = origin
         Basis3D.__init__(self, u, v, w)
         self.name = name
@@ -4479,6 +4481,8 @@ class Shell3D(CompositePrimitive3D):
         return sum([hash(f) for f in self.faces])
 
     def __eq__(self, other_):
+        if self.__class__ != other_.__class__:
+            return False
         equal = True
         for face, other_face in zip(self.faces, other_.faces):
             equal = (equal and face == other_face)
