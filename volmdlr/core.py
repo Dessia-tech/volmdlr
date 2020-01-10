@@ -1025,7 +1025,7 @@ class Contour2D(Wire2D):
         if name is None:
             name = '3D of {}'.format(self.name)
         primitives3D = [p.To3D(plane_origin, x, y) for p in self.primitives]
-        return Contour3D(primitives3D, name=name)
+        return Contour3D(edges=primitives3D, name=name)
 
     def Area(self):
         if len(self.primitives) == 1:
@@ -3223,12 +3223,6 @@ class BSplineCurve3D(Primitive3D):
             self.curve = new_BSplineCurve3D.curve
             self.points = new_BSplineCurve3D.points
 
-
-
-
-
-
-
 class Arc3D(Primitive3D):
     """
     An arc is defined by a starting point, an end point and an interior point
@@ -3971,6 +3965,18 @@ class Circle3D(Contour3D):
         self.radius = radius
         self.normal = normal
         Contour3D.__init__(self, [self], name=name)
+        
+#    def _get_points(self):
+#        vr = Vector3D(npy.random.random(3))
+#        vr.Normalize()
+#        vn = vr.Cross(self.normal)
+#        dir_radius = vn*self.radius
+#        pt1 = self.center + dir_radius
+#        pt2 = pt1.Rotation(self.center, self.normal, 2*math.pi/3.)
+#        pt3 = pt2.Rotation(self.center, self.normal, 2*math.pi/3.)
+#        return [pt1, pt2, pt3]
+#
+#    points=property(_get_points)
 
     def tessellation_points(self, resolution=20):
         plane = Plane3D.from_normal(self.center, self.normal)
