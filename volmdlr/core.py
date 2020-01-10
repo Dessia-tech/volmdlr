@@ -445,6 +445,11 @@ class Vector2D(Vector):
             n.Normalize()
         return n
 
+    @classmethod
+    def random(cls, xmin, xmax, ymin, ymax):
+        return cls(random.uniform(xmin, xmax),
+                   random.uniform(ymin, ymax))
+
     def Draw(self):
         warnings.warn(
             "Draw is deprecated and will be removed in next versions, use plot() instead",
@@ -623,7 +628,7 @@ class Basis(dc.DessiaObject):
 #        d = {'vectors' : [vector.Dict() for vector in self.vectors],
 #             'object_class' : self.full_classname}
 
-        return d
+        # return d
 
     def copy(self):
         return self.__class__(*self.vectors)
@@ -2287,6 +2292,12 @@ class Vector3D(Vector):
 
     def Copy(self):
         return Vector3D(self.vector)
+    
+    @classmethod
+    def random(cls, xmin, xmax, ymin, ymax, zmin, zmax):
+        return cls((random.uniform(xmin, xmax),
+                   random.uniform(ymin, ymax),
+                   random.uniform(zmin, zmax)))
 
 #    @classmethod
 #    def DictToObject(cls, dict_):
@@ -3792,13 +3803,16 @@ class LineSegment3D(Edge3D):
         return Line3D(*self.points)
 
     def Babylon(self, color=(1, 1, 1), name='line',  type_='line', parent=None):
-        if type_ == 'line':
+        if type_ == 'line' or type_ == 'dashed':
             s = 'var myPoints = [];\n'
             s += 'var point1 = new BABYLON.Vector3({},{},{});\n'.format(*self.points[0])
             s += 'myPoints.push(point1);\n'
             s += 'var point2 = new BABYLON.Vector3({},{},{});\n'.format(*self.points[1])
             s += 'myPoints.push(point2);\n'
-            s += 'var {} = BABYLON.MeshBuilder.CreateLines("lines", {{points: myPoints}}, scene);\n'.format(name)
+            if type_ == 'line':
+                s += 'var {} = BABYLON.MeshBuilder.CreateLines("lines", {{points: myPoints}}, scene);\n'.format(name)
+            elif type_ == 'dashed':
+                s += 'var {} = BABYLON.MeshBuilder.CreateDashedLines("lines", {{points: myPoints, dashNb:20}}, scene);'.format(name)
             s += '{}.color = new BABYLON.Color3{};\n'.format(name, tuple(color))
         elif type_ == 'tube':
             radius = 0.03*self.points[0].point_distance(self.points[1])

@@ -1,3 +1,7 @@
+# HTML files
+*.html
+
+# CAD files
 *.fcstd
 *.fcstd1
 *.stl
