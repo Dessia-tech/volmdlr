@@ -25,8 +25,6 @@ p6 = vm.Point2D((0.05, 0.20))
 
 inner_contour = primitives2D.ClosedRoundedLineSegments2D([p1, p2, p3, p4, p5, p6], {0: 0.01, 1: 0.01, 2: 0.015, 3: 0.010, 4: 0.012, 5:0.008}, True)
 outer_contour = inner_contour.Offset(-thickness)
-#inner_contour = vm.Contour2D([inner_rl])
-#outer_contour = vm.Contour2D([outer_rl])
 
 f, a = inner_contour.MPLPlot()
 outer_contour.MPLPlot(a)
@@ -45,11 +43,10 @@ l = screw_holes_rl.Length()
 for i in range(n_screws):
     s = i * l/n_screws
     p = screw_holes_rl.PointAtCurvilinearAbscissa(s)
-    screw_holes.append(vm.Contour2D([vm.Circle2D(p, screw_holes_diameter*0.5)]))
+    screw_holes.append(vm.Circle2D(p, screw_holes_diameter*0.5))
 
 
 belt_outer_contour = inner_contour.Offset(-(2*screw_holes_clearance + screw_holes_diameter+thickness))
-#belt_outer_contour = vm.Contour2D([belt_outer_rl])
 belt = primitives3D.ExtrudedProfile(vm.z3D*(height - 2*thickness), vm.x3D, vm.y3D,
                                       belt_outer_contour, [inner_contour]+screw_holes, thickness * vm.z3D, 'belt')
 
