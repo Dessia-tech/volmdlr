@@ -2503,7 +2503,6 @@ class Plane3D(Primitive3D):
 
     @classmethod
     def from_points(cls, points):
-        print(points)
         if len(points) < 3:
             raise ValueError
         elif len(points) == 3:
@@ -3982,19 +3981,11 @@ class Circle3D(Contour3D):
 #
 #    points=property(_get_points)
 
-    # def tessellation_points(self, resolution=20):
-    #     plane = Plane3D.from_normal(self.center, self.normal)
-    #     center_2D = self.center.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
-    #     circle2D = Circle2D(center_2D, self.radius)
-    #     tessellation_points_2D = circle2D.tessellation_points()
-    #     tessellation_points_3D = [p.To3D(plane.origin, plane.vectors[0], plane.vectors[1]) for p in tessellation_points_2D]
-    #     return tessellation_points_3D
-
     def tessellation_points(self, resolution=20):
         plane = Plane3D.from_normal(self.center, self.normal)
         tessellation_points_3D = [self.center + self.radius*math.cos(teta)*plane.vectors[0] + self.radius*math.sin(teta)*plane.vectors[1] \
-            for teta in npy.linspace(0, 2*math.pi, resolution+1)]#[:-1]
-        return tessellation_points_3D #+ [tessellation_points_3D[0]]
+            for teta in npy.linspace(0, 2*math.pi, resolution+1)][:-1]
+        return tessellation_points_3D 
     
     def Length(self):
         return 2* math.pi * self.radius
