@@ -36,6 +36,7 @@ from volmdlr import plot_data
 import triangle
 
 import dessia_common as dc
+from typing import TypeVar, List, Tuple
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 
@@ -1826,9 +1827,9 @@ class Circle2D(Contour2D):
         return fig, ax
 
     def To3D(self, plane_origin, x, y):
-        normal = Vector3D(npy.cross(x.vector, y.vector))
-        pc=self.center.To3D(plane_origin, x, y)
-        return Circle3D(pc,self.radius,normal, self.name)
+        normal = x.Cross(y)
+        pc = self.center.To3D(plane_origin, x, y)
+        return Circle3D(pc, self.radius, normal, self.name)
 
     def Rotation(self, center, angle, copy=True):
         if copy:
@@ -2098,32 +2099,32 @@ class Primitive3D(dc.DessiaObject):
 
 class Vector3D(Vector):
 
-    _jsonschema = {
-        "definitions": {},
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "type": "object",
-        "title": "powerpack.mechanical.Vector3D Base Schema",
-        "required": ["vector"],
-        "properties": {
-            'vector' : {
-                "type" : "array",
-                "order" : 0,
-                "items" : {
-                    "type" : "number",
-                    "step" : 1,
-                    "minimum" : -1,
-                    "maximum" : 1
-                    },
-                "minItems": 3,
-                "maxItems": 3,
-                "examples": [[1, 0, 0]],
-                "editable" : True,
-                "description" : "Vector array"
-                }
-            }
-        }
+    # _jsonschema = {
+    #     "definitions": {},
+    #     "$schema": "http://json-schema.org/draft-07/schema#",
+    #     "type": "object",
+    #     "title": "powerpack.mechanical.Vector3D Base Schema",
+    #     "required": ["vector"],
+    #     "properties": {
+    #         'vector' : {
+    #             "type" : "array",
+    #             "order" : 0,
+    #             "items" : {
+    #                 "type" : "number",
+    #                 "step" : 1,
+    #                 "minimum" : -1,
+    #                 "maximum" : 1
+    #                 },
+    #             "minItems": 3,
+    #             "maxItems": 3,
+    #             "examples": [[1, 0, 0]],
+    #             "editable" : True,
+    #             "description" : "Vector array"
+    #             }
+    #         }
+    #     }
 
-    def __init__(self, vector, name=''):
+    def __init__(self, vector:List[float], name:str=''):
         self.vector = [0, 0, 0]
 #        self.vector = npy.zeros(3)
         self.vector[0] = vector[0]
@@ -2159,6 +2160,8 @@ class Vector3D(Vector):
         return int(1000*(self.vector[0]+self.vector[1]+self.vector[2]))
 
     def __eq__(self, other_vector):
+        if self.__class__ != other_vector.__class__:
+            return False
         return math.isclose(self.vector[0], other_vector.vector[0], abs_tol=1e-08) \
         and math.isclose(self.vector[1], other_vector.vector[1], abs_tol=1e-08) \
         and math.isclose(self.vector[2], other_vector.vector[2], abs_tol=1e-08)
@@ -2311,6 +2314,20 @@ class Vector3D(Vector):
         v = v - v.Dot(self)*self/(self.Norm()**2)
         v.Normalize()
         return v
+    
+    def DeterministicUnitNormalVector(self):
+        """
+        Retuns a deterministic normal vector
+        """
+        v = X3D
+        if not math.isclose(self.vector[1], 0, abs_tol=1e-5) \
+        or not math.isclose(self.vector[2], 0, abs_tol=1e-5):
+            v = X3D
+        else:
+            v = Y3D
+        v = v - v.Dot(self)*self/(self.Norm()**2)
+        v.Normalize()
+        return v
 
     def Copy(self):
         return Vector3D(self.vector)
@@ -2369,24 +2386,24 @@ Z3D = Vector3D((0, 0, 1))
 
 class Point3D(Vector3D):
     _standalone_in_db = False
-    _jsonschema = {
-        "definitions": {},
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "type": "object",
-        "title": "powerpack.mechanical.Point3D Base Schema",
-        "required": ["vector"],
-        "properties": {
-            'vector' : {
-                "type" : "object",
-                "order" : 0,
-                "classes" : ["volmdlr.core.Vector3D"],
-                "editable" : True,
-                "description" : "Vector array"
-                }
-            }
-        }
+    # _jsonschema = {
+    #     "definitions": {},
+    #     "$schema": "http://json-schema.org/draft-07/schema#",
+    #     "type": "object",
+    #     "title": "powerpack.mechanical.Point3D Base Schema",
+    #     "required": ["vector"],
+    #     "properties": {
+    #         'vector' : {
+    #             "type" : "object",
+    #             "order" : 0,
+    #             "classes" : ["volmdlr.core.Vector3D"],
+    #             "editable" : True,
+    #             "description" : "Vector array"
+    #             }
+    #         }
+    #     }
 
-    def __init__(self, vector, name=''):
+    def __init__(self, vector:List[float], name:str=''):
         Vector3D.__init__(self, vector, name)
 
     def __add__(self, other_vector):
@@ -2499,9 +2516,9 @@ class Plane3D(Primitive3D):
 
     @classmethod
     def from_normal(cls, point, normal):
-        v1 = normal.RandomUnitNormalVector()
+        v1 = normal.DeterministicUnitNormalVector()
         v2 = v1.Cross(normal)
-        return cls(point, v1+point, v2+point)
+        return cls(point, v1, v2)
 
     @classmethod
     def from_points(cls, points):
@@ -2683,25 +2700,25 @@ class Basis3D(Basis):
     :param w: third vector of the basis
     """
     _standalone_in_db = False
-    _jsonschema = {
-        "definitions": {},
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "type": "object",
-        "title": "powerpack.mechanical.Basis3D Base Schema",
-        "required": ['vectors'],
-        "properties": {
-            'vectors' : {
-                'type' : 'array',
-                'items' : {
-                    'type' : 'object',
-                    "editable" : True,
-                    'classes' : ['volmdlr.core.Vector3D']
-                    },
-                'order' : 0,
-                'editable' : True
-                }
-            }
-        }
+    # _jsonschema = {
+    #     "definitions": {},
+    #     "$schema": "http://json-schema.org/draft-07/schema#",
+    #     "type": "object",
+    #     "title": "powerpack.mechanical.Basis3D Base Schema",
+    #     "required": ['vectors'],
+    #     "properties": {
+    #         'vectors' : {
+    #             'type' : 'array',
+    #             'items' : {
+    #                 'type' : 'object',
+    #                 "editable" : True,
+    #                 'classes' : ['volmdlr.core.Vector3D']
+    #                 },
+    #             'order' : 0,
+    #             'editable' : True
+    #             }
+    #         }
+    #     }
 
     # TODO: create a Basis and Frame class to mutualize between 2D and 2D
     def __init__(self, u, v, w, name=''):
@@ -2880,7 +2897,7 @@ class Frame3D(Basis3D):
     :param v: second vector of the basis
     :param w: third vector of the basis
     """
-    def __init__(self, origin, u, v, w, name=''):
+    def __init__(self, origin:Point3D, u:Vector3D, v:Vector3D, w:Vector3D, name:str=''):
         self.origin = origin
         Basis3D.__init__(self, u, v, w)
         self.name = name
@@ -3996,12 +4013,10 @@ class Circle3D(Contour3D):
 
     def tessellation_points(self, resolution=20):
         plane = Plane3D.from_normal(self.center, self.normal)
-        center_2D = self.center.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
-        circle2D = Circle2D(center_2D, self.radius)
-        tessellation_points_2D = circle2D.tessellation_points()
-        tessellation_points_3D = [p.To3D(plane.origin, x3D, y3D) for p in tessellation_points_2D]
-        return tessellation_points_3D
-
+        tessellation_points_3D = [self.center + self.radius*math.cos(teta)*plane.vectors[0] + self.radius*math.sin(teta)*plane.vectors[1] \
+            for teta in npy.linspace(0, 2*math.pi, resolution+1)][:-1]
+        return tessellation_points_3D 
+    
     def Length(self):
         return 2* math.pi * self.radius
 
@@ -4114,10 +4129,10 @@ class Face3D(Primitive3D):
 
         self.bounding_box = self._bounding_box()
 
-        # CHECK #
+        # CHECK
         for pt in self.points:
             if not self.plane.point_on_plane(pt):
-                print('WARNING', pt, 'not on', self.plane)
+                print('WARNING', pt, 'not on', self.plane.__dict__)
                 print('dot =', self.plane.normal.Dot(pt-self.plane.origin))
                 raise ValueError
 
@@ -4508,6 +4523,8 @@ class Shell3D(CompositePrimitive3D):
         return sum([hash(f) for f in self.faces])
 
     def __eq__(self, other_):
+        if self.__class__ != other_.__class__:
+            return False
         equal = True
         for face, other_face in zip(self.faces, other_.faces):
             equal = (equal and face == other_face)
