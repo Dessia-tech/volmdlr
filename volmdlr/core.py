@@ -916,6 +916,7 @@ class Contour2D(Wire2D):
     TODO : CenterOfMass and SecondMomentArea should be changed accordingly to
     Area considering the triangle drawn by the arcs
     """
+    _non_serializable_attributes  = ['internal_arcs', 'external_arcs' ,'polygon', 'straight_line_contour_polygon']
     def __init__(self, primitives, name=''):
         Wire2D.__init__(self, primitives, name)
         self._utd_analysis = False
@@ -1207,7 +1208,7 @@ class Line2D(Primitive2D, Line):
             return projection,t
         return projection
 
-    def MPLPlot(self, ax=None, color='k', linestyle = '-.'):
+    def MPLPlot(self, ax=None, color='k', dashed=True):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -1216,10 +1217,13 @@ class Line2D(Primitive2D, Line):
 
         p1, p2 = self.points
         u = p2 - p1
-        plt.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color)
+        # plt.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color)
         p3 = p1 - 3*u
         p4 = p2 + 4*u
-        ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color, linestyle = linestyle)
+        if dashed:
+            ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color, dashes=[30, 5, 10, 5])
+        else:
+            ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color)
         return fig ,ax
 
     def CreateTangentCircle(self, point, other_line):
@@ -1433,10 +1437,12 @@ class LineSegment2D(Line2D):
                      head_width = head_width, fc = 'b', linewidth = 0,
                      head_length = head_length, width = width, alpha = 0.3)
         else:
+            if width is None:
+                width=1
             if plot_points:
-                ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color, marker='o')
+                ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color, marker='o', linewidth=width)
             else:
-                ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color)
+                ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color, linewidth=width)
         return fig, ax
 
     def To3D(self, plane_origin, x1, x2):
@@ -1769,11 +1775,13 @@ class Arc2D(Primitive2D):
                     'angle2' : self.angle2, }
 
 class Circle2D(Contour2D):
+    _non_serializable_attributes  = ['internal_arcs', 'external_arcs' ,'polygon', 'straight_line_contour_polygon', 'primitives']
     def __init__(self,center,radius,name=''):
         self.center = center
         self.radius = radius
         self.utd_geo_points = False
-        Contour2D.__init__(self, [self], name=name)
+        
+        Contour2D.__init__(self, [self], name=name)# !!! this is dangerous
 
     def _get_geo_points(self):
         if not self.utd_geo_points:
@@ -2275,6 +2283,20 @@ class Vector3D(Vector):
             else:
                 self.vector = new_vector.vector
 
+    def PlaneProjection3D(self, plane_origin, x, y):
+        z = x.Cross(y)
+        z.Normalize()
+        return self - z.Dot(self-plane_origin)*z
+
+    def PlaneProjection2D(self, x, y):
+        z = x.Cross(y)
+        z.Normalize()
+        p3d = self - self.Dot(z)*z
+        u1 = p3d.Dot(x)
+        u2 = p3d.Dot(y)
+        return Point2D((u1, u2))
+
+
     def To2D(self, plane_origin, x, y):
         x2d = self.Dot(x) - plane_origin.Dot(x)
         y2d = self.Dot(y) - plane_origin.Dot(y)
@@ -2403,20 +2425,6 @@ class Point3D(Vector3D):
         ax.scatter(*self.vector)
         return fig, ax
 
-    def PlaneProjection3D(self, plane_origin, x, y):
-        z = x.Cross(y)
-        z /= z.Norm()
-        return self - z.Dot(self-plane_origin)*z
-
-    def PlaneProjection2D(self, x, y):
-        z = npy.cross(x.vector,y.vector)
-        z = x.Cross(y)
-        z.Normalize()
-        p3d = self - self.Dot(z)*z
-        u1 = p3d.Dot(x)
-        u2 = p3d.Dot(y)
-        return Point2D((u1, u2))
-
 
     def To2D(self, plane_origin, x, y):
         x2d = self.Dot(x) - plane_origin.Dot(x)
@@ -2464,7 +2472,7 @@ class Plane3D(Primitive3D):
 
     def to_dict(self):
         # improve the object structure ?
-        dict_ = dc.DessiaObject.to_dict(self)
+        dict_ = dc.DessiaObject.base_dict(self)
         dict_['vector1'] = self.vectors[0].to_dict()
         dict_['vector2'] = self.vectors[1].to_dict()
         return dict_
@@ -3043,7 +3051,7 @@ class Line3D(Primitive3D, Line):
     def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
         return self.points[0] + (self.points[1]-self.points[0]) * curvilinear_abscissa
 
-    def MPLPlot(self, ax):
+    def MPLPlot(self, ax=None, color='k', dashed=True):
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
@@ -3060,8 +3068,15 @@ class Line3D(Primitive3D, Line):
         u = self.points[1] - self.points[0]
         x1, y1, z1 = (self.points[0] - 3*u).vector
         x2, y2, z2 = (self.points[1] + 3*u).vector
-        ax.plot([x1, x2], [y1, y2], [z1, z2], color='k')
+        if dashed:
+            ax.plot([x1, x2], [y1, y2], [z1, z2], color=color, dashes=[30, 5, 10, 5])
+        else:
+            ax.plot([x1, x2], [y1, y2], [z1, z2], color=color)            
         return fig, ax
+
+    def PlaneProjection2D(self, x, y):
+        return Line2D(self.points[0].PlaneProjection2D(x, y),
+                      self.points[1].PlaneProjection2D(x, y))
 
     def MinimumDistancePoints(self, other_line):
         """
@@ -3642,7 +3657,7 @@ class Edge3D(Primitive3D):
 
     def to_dict(self):
         # improve the object structure ?
-        dict_ = dc.DessiaObject.to_dict(self)
+        dict_ = dc.DessiaObject.base_dict(self)
         dict_['edge_start'] = self.points[0]
         dict_['edge_end'] = self.points[1]
         return dict_
@@ -3668,6 +3683,7 @@ class Edge3D(Primitive3D):
         else:
             self.points[0].Translation(offset, copy=False)
             self.points[1].Translation(offset, copy=False)
+
 
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -3700,7 +3716,7 @@ class LineSegment3D(Edge3D):
 
     def to_dict(self):
         # improve the object structure ?
-        dict_ = dc.DessiaObject.to_dict(self)
+        dict_ = dc.DessiaObject.base_dict(self)
         dict_['point1'] = self.points[0].to_dict()
         dict_['point2'] = self.points[1].to_dict()
         return dict_
@@ -3771,7 +3787,7 @@ class LineSegment3D(Edge3D):
         ax.plot(x,y,z, 'o-k')
         return fig, ax
 
-    def MPLPlot2D(self, x_3D, y_3D, ax=None, color='k'):
+    def MPLPlot2D(self, x_3D, y_3D, ax=None, color='k', width=None):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -3779,7 +3795,7 @@ class LineSegment3D(Edge3D):
             fig = ax.figure
 
         edge2D =  self.PlaneProjection2D(x_3D, y_3D)
-        edge2D.MPLPlot(ax=ax, color=color)
+        edge2D.MPLPlot(ax=ax, color=color, width=width)
         return fig, ax
 
     def plot_data(self, x_3D, y_3D, marker=None, color='black', stroke_width=1,
@@ -4075,7 +4091,7 @@ class Ellipse3D(Contour3D):
 class Face3D(Primitive3D):
     _standalone_in_db = True
     _generic_eq = True
-    _non_serializable_attributes  = ['bounding_box']
+    _non_serializable_attributes  = ['bounding_box', 'polygon2D']
     _non_eq_attributes = ['name', 'bounding_box']
     _non_hash_attributes = []
 

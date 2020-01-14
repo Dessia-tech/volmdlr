@@ -94,6 +94,7 @@ class OpenedRoundedLineSegments3D(volmdlr.Wire3D, RoundedLineSegments):
 
 
 class ClosedRoundedLineSegments3D(volmdlr.Contour3D, OpenedRoundedLineSegments3D):
+
     def __init__(self, points, radius, adapt_radius=False, name=''):
         primitives = RoundedLineSegments.__init__(self, points, radius,
                                                   volmdlr.LineSegment3D,
@@ -344,6 +345,7 @@ class ExtrudedProfile(volmdlr.Shell3D):
     """
 
     """
+    _non_serializable_attributes  = ['faces', 'inner_contours3d', 'outer_contour3d']
     def __init__(self, plane_origin, x, y, outer_contour2d, inner_contours2d,
                  extrusion_vector, name='', color=None):
         volmdlr.Primitive3D.__init__(self, name=name)
@@ -493,6 +495,7 @@ class RevolvedProfile(volmdlr.Shell3D):
     """
 
     """
+    _non_serializable_attributes  = ['faces', 'contour3D']
     def __init__(self, plane_origin, x, y, contour2D, axis_point,
                  axis, angle=2*math.pi, name='', color=None):
 #        volmdlr.Primitive3D.__init__(self, name=name)
