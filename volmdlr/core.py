@@ -5274,14 +5274,61 @@ class BoundingBox(dc.DessiaObject):
         s += 'box.material = bboxmat;\n'
         return s
 
+class Measure2D(LineSegment2D):
+    def __init__(self, point1, point2, label='', unit='mm', type_='distance'):
+        """
+        :param unit: 'mm', 'm' or None. If None, the distance won't be in the label
 
-class Mesure(Line3D):
+        """
+        # TODO: offset parameter
+        LineSegment2D.__init__(self, point1, point2)
+        self.label = label
+        self.unit = unit
+        self.type_ = type_
+        
+    def MPLPlot(self, ax, ndigits=6):
+        x1, y1 = self.points[0]
+        x2, y2 = self.points[1]
+        xm, ym = 0.5*(self.points[0] + self.points[1])
+        distance = self.points[1].point_distance(self.points[0])
+        
+        if self.label != '':
+            label = '{}: '.format(self.label)
+        else:
+            label = ''
+        if self.unit == 'mm':            
+            label += '{} mm'.format(round(distance*1000, ndigits))
+        else:
+            label += '{} m'.format(round(distance, ndigits))
+        
+        if self.type_ == 'distance':
+            arrow = FancyArrowPatch((x1, y1), (x2, y2),
+                                    arrowstyle='<|-|>,head_length=10,head_width=5',
+                                    shrinkA=0, shrinkB=0,
+                                    color='k')
+        elif self.type_ == 'radius':
+            arrow = FancyArrowPatch((x1, y1), (x2, y2),
+                                    arrowstyle='-|>,head_length=10,head_width=5',
+                                    shrinkA=0, shrinkB=0,
+                                    color='k')
+            
+
+        ax.add_patch(arrow)
+        if x2-x1 == 0.:
+            theta = 90.
+        else:            
+            theta = math.degrees(math.atan((y2-y1)/(x2-x1)))
+        ax.text(xm, ym, label, va='bottom', ha='center', rotation=theta)
+        
+
+class Measure3D(Line3D):
     def __init__(self, point1, point2, color=(1,0,0)):
         self.points = [point1, point2]
         self.color = color
         self.distance = Vector3D(self.points[0]-self.points[1]).Norm()
         self.bounding_box = self._bounding_box()
 
+    # !!! no eq defined!
     def __hash__(self):
         return sum([hash(p) for p in self.points])
 
