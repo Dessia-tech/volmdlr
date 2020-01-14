@@ -1814,9 +1814,9 @@ class Circle2D(Contour2D):
         return fig, ax
 
     def To3D(self, plane_origin, x, y):
-        normal = Vector3D(npy.cross(x.vector, y.vector))
-        pc=self.center.To3D(plane_origin, x, y)
-        return Circle3D(pc,self.radius,normal, self.name)
+        normal = x.Cross(y)
+        pc = self.center.To3D(plane_origin, x, y)
+        return Circle3D(pc, self.radius, normal, self.name)
 
     def Rotation(self, center, angle, copy=True):
         if copy:
@@ -2287,6 +2287,20 @@ class Vector3D(Vector):
         v = v - v.Dot(self)*self/(self.Norm()**2)
         v.Normalize()
         return v
+    
+    def DeterministicUnitNormalVector(self):
+        """
+        Retuns a deterministic normal vector
+        """
+        v = X3D
+        if not math.isclose(self.vector[1], 0, abs_tol=1e-5) \
+        or not math.isclose(self.vector[2], 0, abs_tol=1e-5):
+            v = X3D
+        else:
+            v = Y3D
+        v = v - v.Dot(self)*self/(self.Norm()**2)
+        v.Normalize()
+        return v
 
     def Copy(self):
         return Vector3D(self.vector)
@@ -2483,12 +2497,13 @@ class Plane3D(Primitive3D):
 
     @classmethod
     def from_normal(cls, point, normal):
-        v1 = normal.RandomUnitNormalVector()
+        v1 = normal.DeterministicUnitNormalVector()
         v2 = v1.Cross(normal)
-        return cls(point, v1+point, v2+point)
+        return cls(point, v1, v2)
 
     @classmethod
     def from_points(cls, points):
+        print(points)
         if len(points) < 3:
             raise ValueError
         elif len(points) == 3:
@@ -3967,14 +3982,20 @@ class Circle3D(Contour3D):
 #
 #    points=property(_get_points)
 
+    # def tessellation_points(self, resolution=20):
+    #     plane = Plane3D.from_normal(self.center, self.normal)
+    #     center_2D = self.center.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
+    #     circle2D = Circle2D(center_2D, self.radius)
+    #     tessellation_points_2D = circle2D.tessellation_points()
+    #     tessellation_points_3D = [p.To3D(plane.origin, plane.vectors[0], plane.vectors[1]) for p in tessellation_points_2D]
+    #     return tessellation_points_3D
+
     def tessellation_points(self, resolution=20):
         plane = Plane3D.from_normal(self.center, self.normal)
-        center_2D = self.center.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
-        circle2D = Circle2D(center_2D, self.radius)
-        tessellation_points_2D = circle2D.tessellation_points()
-        tessellation_points_3D = [p.To3D(plane.origin, x3D, y3D) for p in tessellation_points_2D]
-        return tessellation_points_3D
-
+        tessellation_points_3D = [self.center + self.radius*math.cos(teta)*plane.vectors[0] + self.radius*math.sin(teta)*plane.vectors[1] \
+            for teta in npy.linspace(0, 2*math.pi, resolution+1)]#[:-1]
+        return tessellation_points_3D #+ [tessellation_points_3D[0]]
+    
     def Length(self):
         return 2* math.pi * self.radius
 
@@ -4087,10 +4108,10 @@ class Face3D(Primitive3D):
 
         self.bounding_box = self._bounding_box()
 
-        # CHECK #
+        # CHECK
         for pt in self.points:
             if not self.plane.point_on_plane(pt):
-                print('WARNING', pt, 'not on', self.plane)
+                print('WARNING', pt, 'not on', self.plane.__dict__)
                 print('dot =', self.plane.normal.Dot(pt-self.plane.origin))
                 raise ValueError
 
