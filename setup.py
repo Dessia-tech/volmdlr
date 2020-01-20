@@ -31,30 +31,44 @@ def get_version():
         cmd = 'git describe --tags'
         try:
             version = check_output(cmd.split()).decode().strip()[:]
+            print('version', version)
         except CalledProcessError:
             raise RuntimeError('Unable to get version number from git tags')
         if version[0]=='v':
             version = version[1:]
         # PEP 440 compatibility
+        number_commits_ahead = 0
         if '-' in version:
-            future_version = version.split('-')[0].split('.')
-            if 'post' in future_version[-1]:
-                future_version = future_version[:-1]
-            future_version[-1] = str(int(future_version[-1])+1)
+            version, number_commits_ahead, commit_hash = version.split('-')
+            number_commits_ahead = int(number_commits_ahead)
+
+        future_version = version.split('.')
+
+
+        print('fv', future_version)
+
+        for suffix in ['a', 'b', 'rc', 'post']:
+            if suffix in future_version[-1]:
+                print('fvi', future_version[-1])
+                future_version[-1] = str(future_version[-1].split(suffix)[0])
+
+        future_version[-1] = int(future_version[-1])
+        print('fv2', future_version)
+        if number_commits_ahead > 0:
+            future_version[-1] = str(future_version[-1]+1)
             future_version = '.'.join(future_version)
-            number_commits = version.split('-')[1]
-            version = '{}.dev{}'.format(future_version, number_commits)
-            return version
+            return '{}.dev{}'.format(future_version, number_commits_ahead)
+
+        else:
+            return '.'.join(future_version)
+        
+        
 
     else:
         # Extract the version from the PKG-INFO file.
         with open(join(d, 'PKG-INFO')) as f:
             version = version_re.search(f.read()).group(1)
             
-#    # Writing to file
-#    with open('powertransmission/version.py', 'w+') as vf:
-#        vf.write("# -*- coding: utf-8 -*-\nversion = '{}'".format(version))
-                 
     return version
 
 

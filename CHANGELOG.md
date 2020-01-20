@@ -10,3 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - random vector and points
 - dashed line option in babylon of LineSegment3D
+- Measure2D
+
+### Changed
+- Mesure -> Measure3D
