@@ -3920,28 +3920,32 @@ class Contour3D(Wire3D):
         lors d'un import step par exemple
         """
         if hasattr(self.edges[0], 'points'):
-            points = self.edges[0].points[::]
+            points = self.edges[0].points[:]
         else:
             points = self.edges[0].tessellation_points()
-        last_points_added = points
         for edge in self.edges[1:]:
             if hasattr(edge, 'points'):
-                points_to_add = edge.points
-                if points_to_add[0] in [last_points_added[0], last_points_added[-1]]:
+                points_to_add = edge.points[:]
+                if points_to_add[0] == points[0]:
+                    points = points[::-1]
                     points.extend(points_to_add[1:])
-                elif points_to_add[-1] in [last_points_added[0], last_points_added[-1]]:
-                    points.extend(points_to_add[:-1])
+                elif points_to_add[-1] == points[0]:
+                    points = points[::-1]
+                    points.extend(points_to_add[-2::-1])
+                elif points_to_add[0] == points[-1]:
+                    points.extend(points_to_add[1:])
+                elif points_to_add[-1] == points[-1]:
+                    points.extend(points_to_add[-2::-1])
                 else:
                     self.MPLPlot()
                     raise NotImplementedError
-                last_points_added = points_to_add
             else:
                 raise NotImplementedError
         
         if len(points) > 1:
             if points[0] == points[-1]:
                 points.pop()
-        
+
         return points
 
     def average_center_point(self):
@@ -3989,8 +3993,11 @@ class Contour3D(Wire3D):
 
     def copy(self):
         new_edges = [edge.copy() for edge in self.edges]
-        # new_points = [p.Copy() for p in self.points]
-        return Contour3D(new_edges, None, self.name)
+        if self.point_inside_contour is not None:
+            new_point_inside_contour = self.point_inside_contour.Copy()
+        else:
+            new_point_inside_contour = None
+        return Contour3D(new_edges, new_point_inside_contour, self.name)
 
 class Circle3D(Contour3D):
     def __init__(self, center, radius, normal, name=''):
@@ -4221,10 +4228,10 @@ class Face3D(Primitive3D):
             self.bounding_box = self._bounding_box()
 
     def copy(self):
-        new_contour = [contour.copy() for contour in self.contours]
+        new_contours = [contour.copy() for contour in self.contours]
         new_plane = self.plane.copy()
         new_points = [p.Copy() for p in self.points]
-        return Face3D(new_contour, new_plane, new_points, self.polygon2D.copy(), self.name)
+        return Face3D(new_contours, new_plane, new_points, self.polygon2D.copy(), self.name)
 
     def average_center_point(self):
         """
