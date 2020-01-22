@@ -63,6 +63,7 @@ cmo = cmo.to_shells3d('cmo')
 #shell0 = volumemodel.shells[0] # LE MOTEUR
 primitives = cmo
 volumemodel = vm.VolumeModel(primitives, 'name')
+volumemodel_copy = volumemodel.copy()
 
 shell0 = volumemodel.primitives[0] # LE MOTEUR
 #shell0.color = (1,0,0)
@@ -76,8 +77,8 @@ shell0 = volumemodel.primitives[0] # LE MOTEUR
 #del volumemodel.shells[3]
 
 # volumemodel.babylonjs()
-volumemodel.babylonjs_from_meshes(page_name='debug')
-# 
+# volumemodel.babylonjs_from_meshes(page_name='debug')
+volumemodel_copy.babylonjs_from_meshes(page_name='debug')
 
 #%%
 
