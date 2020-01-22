@@ -4705,9 +4705,9 @@ class Routing:
         i = 0
         for pt1, pt2 in zip(all_points[:-1], all_points[1:]):
             if i%2 == 0:
-                no_collision_mesures.append(Mesure3D(pt1, pt2, color=(0,0,1)))
+                no_collision_mesures.append(Measure3D(pt1, pt2, color=(0,0,1)))
             else:
-                collision_mesures.append(Mesure3D(pt1, pt2, color=(1,0,0)))
+                collision_mesures.append(Measure3D(pt1, pt2, color=(1,0,0)))
             i += 1
 
         return no_collision_mesures, collision_mesures
