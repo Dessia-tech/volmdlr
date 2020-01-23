@@ -2576,6 +2576,7 @@ class Contour3D(Wire3D):
         if self.edges[0].__class__.__name__ == 'Contour3D':
             raise ValueError
 
+        print(edges)
         self.points = self.clean_points()
 
     def __hash__(self):

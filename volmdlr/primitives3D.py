@@ -17,6 +17,11 @@ from typing import Tuple
 import matplotlib.pyplot as plt
 
 class OpenedRoundedLineSegments3D(volmdlr.Wire3D, RoundedLineSegments):
+    _non_serializable_attributes = []
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['name']
+    _generic_eq = True
+    
     def __init__(self, points, radius, adapt_radius=False, name=''):
         primitives = RoundedLineSegments.__init__(self, points, radius,
                                                   volmdlr.LineSegment3D,
@@ -94,7 +99,11 @@ class OpenedRoundedLineSegments3D(volmdlr.Wire3D, RoundedLineSegments):
 
 
 class ClosedRoundedLineSegments3D(volmdlr.Contour3D, OpenedRoundedLineSegments3D):
-
+    _non_serializable_attributes = []
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['name']
+    _generic_eq = True
+    
     def __init__(self, points, radius, adapt_radius=False, name=''):
         primitives = RoundedLineSegments.__init__(self, points, radius,
                                                   volmdlr.LineSegment3D,
