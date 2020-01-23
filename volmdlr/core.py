@@ -2547,6 +2547,10 @@ class LineSegment3D(Edge3D):
 
 
 class Contour3D(Wire3D):
+    _non_serializable_attributes = ['points']
+    _non_eq_attributes = ['points', 'name']
+    _non_hash_attributes = ['points', 'name']
+    _generic_eq = True
     """
     A collection of 3D primitives forming a closed wire3D
     """
