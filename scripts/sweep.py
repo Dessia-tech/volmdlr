@@ -35,6 +35,9 @@ contour = vm.Contour3D([c])
 r1 = rl.to_dict()
 r2 = primitives3D.ClosedRoundedLineSegments3D.dict_to_object(r1)
 
+c1 = c.to_dict()
+c2 = vm.Circle3D.dict_to_object(c1)
+
 c1 = contour.to_dict()
 c2 = vm.Contour3D.dict_to_object(c1)
 

@@ -2576,7 +2576,6 @@ class Contour3D(Wire3D):
         if self.edges[0].__class__.__name__ == 'Contour3D':
             raise ValueError
 
-        print(edges)
         self.points = self.clean_points()
 
     def __hash__(self):
@@ -2695,6 +2694,11 @@ class Contour3D(Wire3D):
         return Contour3D(new_edges, new_point_inside_contour, self.name)
 
 class Circle3D(Contour3D):
+    _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['name']
+    _generic_eq = True
+    
     def __init__(self, center, radius, normal, name=''):
         self.center = center
         self.radius = radius
