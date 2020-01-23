@@ -1501,6 +1501,9 @@ class Plane3D(Primitive3D):
         dict_ = dc.DessiaObject.base_dict(self)
         dict_['vector1'] = self.vectors[0].to_dict()
         dict_['vector2'] = self.vectors[1].to_dict()
+        dict_['origin'] = self.origin
+        dict_['name'] = self.name
+        dict_['object_class'] = 'volmdlr.core.Plane3D'
         return dict_
 
     @classmethod
@@ -2426,7 +2429,14 @@ class LineSegment3D(Edge3D):
         dict_ = dc.DessiaObject.base_dict(self)
         dict_['point1'] = self.points[0].to_dict()
         dict_['point2'] = self.points[1].to_dict()
+        dict_['object_class'] = 'volmdlr.core.LineSegment3D'
         return dict_
+    
+    @classmethod
+    def dict_to_object(cls, dict_):
+        return cls(point1 = Point3D.dict_to_object(dict_['point1']), 
+                   point2 = Point3D.dict_to_object(dict_['point2']), name = dict_['name'])
+                       
 
     def _bounding_box(self):
         points = self.points
@@ -2548,7 +2558,7 @@ class LineSegment3D(Edge3D):
 
 class Contour3D(Wire3D):
     _non_serializable_attributes = ['points']
-    _non_eq_attributes = ['points', 'name']
+    _non_eq_attributes = ['name']
     _non_hash_attributes = ['points', 'name']
     _generic_eq = True
     """
