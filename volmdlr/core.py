@@ -1501,7 +1501,7 @@ class Plane3D(Primitive3D):
         dict_ = dc.DessiaObject.base_dict(self)
         dict_['vector1'] = self.vectors[0].to_dict()
         dict_['vector2'] = self.vectors[1].to_dict()
-        dict_['origin'] = self.origin
+        dict_['origin'] = self.origin.to_dict()
         dict_['name'] = self.name
         dict_['object_class'] = 'volmdlr.core.Plane3D'
         return dict_
