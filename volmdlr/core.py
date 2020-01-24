@@ -1501,6 +1501,9 @@ class Plane3D(Primitive3D):
         dict_ = dc.DessiaObject.base_dict(self)
         dict_['vector1'] = self.vectors[0].to_dict()
         dict_['vector2'] = self.vectors[1].to_dict()
+        dict_['origin'] = self.origin.to_dict()
+        dict_['name'] = self.name
+        dict_['object_class'] = 'volmdlr.core.Plane3D'
         return dict_
 
     @classmethod
@@ -2426,7 +2429,14 @@ class LineSegment3D(Edge3D):
         dict_ = dc.DessiaObject.base_dict(self)
         dict_['point1'] = self.points[0].to_dict()
         dict_['point2'] = self.points[1].to_dict()
+        dict_['object_class'] = 'volmdlr.core.LineSegment3D'
         return dict_
+    
+    @classmethod
+    def dict_to_object(cls, dict_):
+        return cls(point1 = Point3D.dict_to_object(dict_['point1']), 
+                   point2 = Point3D.dict_to_object(dict_['point2']), name = dict_['name'])
+                       
 
     def _bounding_box(self):
         points = self.points
@@ -2547,6 +2557,10 @@ class LineSegment3D(Edge3D):
 
 
 class Contour3D(Wire3D):
+    _non_serializable_attributes = ['points']
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['points', 'name']
+    _generic_eq = True
     """
     A collection of 3D primitives forming a closed wire3D
     """
@@ -2690,6 +2704,11 @@ class Contour3D(Wire3D):
         return Contour3D(new_edges, new_point_inside_contour, self.name)
 
 class Circle3D(Contour3D):
+    _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['name']
+    _generic_eq = True
+    
     def __init__(self, center, radius, normal, name=''):
         self.center = center
         self.radius = radius
@@ -4705,9 +4724,9 @@ class Routing:
         i = 0
         for pt1, pt2 in zip(all_points[:-1], all_points[1:]):
             if i%2 == 0:
-                no_collision_mesures.append(Mesure3D(pt1, pt2, color=(0,0,1)))
+                no_collision_mesures.append(Measure3D(pt1, pt2, color=(0,0,1)))
             else:
-                collision_mesures.append(Mesure3D(pt1, pt2, color=(1,0,0)))
+                collision_mesures.append(Measure3D(pt1, pt2, color=(1,0,0)))
             i += 1
 
         return no_collision_mesures, collision_mesures

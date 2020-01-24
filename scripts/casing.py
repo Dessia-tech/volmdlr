@@ -62,7 +62,8 @@ model.babylonjs_from_meshes('bottom')
 # model = vm.VolumeModel([belt])
 # model.babylonjs('belt')
 
-model.to_dict()
+dict_ = model.to_dict()
+model2 = vm.VolumeModel.dict_to_object(dict_)
 
 #casing = vm.primitives3D.Fuse([bottom, sides, belt], 'Lower Casing')
 #model = vm.VolumeModel([casing])
