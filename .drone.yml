@@ -38,7 +38,8 @@ steps:
 
 - name: upload to pypi
   image: plugins/pypi
-  event: tag
+  when:
+      event: tag
   settings:
     username: dessia_tech
     password:
