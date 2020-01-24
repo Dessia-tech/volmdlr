@@ -46,7 +46,6 @@ def get_version():
 
         for suffix in ['a', 'b', 'rc', 'post']:
             if suffix in future_version[-1]:
-                print('fvi', future_version[-1])
                 future_version[-1] = str(future_version[-1].split(suffix)[0])
 
         future_version[-1] = int(future_version[-1])

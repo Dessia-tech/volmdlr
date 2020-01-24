@@ -158,7 +158,37 @@ def vector3D_rotation(vector, center, axis, angle):
                                    axis[0], axis[1], axis[2],
                                    angle)
         
-        
+    
+    
+cdef (double, double, double) C_matrix_vector_multiplication3(double M11, double M12, double M13,
+                                                              double M21, double M22, double M23,
+                                                              double M31, double M32, double M33,
+                                                              double v1, double v2, double v3):
+
+    return (M11*v1 + M12*v2 + M13*v3,
+            M21*v1 + M22*v2 + M23*v3,
+            M31*v1 + M32*v2 + M33*v3)
+
+
+cdef (double, double, double,
+      double, double, double,
+      double, double, double) C_matrix_multiplication3(double A11, double A12, double A13,
+                                                       double A21, double A22, double A23,
+                                                       double A31, double A32, double A33,
+                                                       double B11, double B12, double B13,
+                                                       double B21, double B22, double B23,
+                                                       double B31, double B32, double B33):
+
+    return (A11*B11 + A12*B21 + A13*B31,
+            A11*B12 + A12*B22 + A13*B32,
+            A11*B13 + A12*B23 + A13*B33,
+            A21*B11 + A22*B21 + A23*B31,
+            A21*B12 + A22*B22 + A23*B32,
+            A21*B13 + A22*B23 + A23*B33,
+            A31*B11 + A32*B21 + A33*B31,
+            A31*B12 + A32*B22 + A33*B32,
+            A31*B13 + A32*B23 + A33*B33)
+    
 
 # =============================================================================
 
@@ -961,15 +991,15 @@ class Matrix33:
                         self.M33 + other_matrix.M33)
 
     def __mul__(self, other_matrix):
-        return Matrix33(self.M11*other_matrix.M11 + self.M12*other_matrix.M21 + self.M13*other_matrix.M31,
-                        self.M11*other_matrix.M12 + self.M12*other_matrix.M22 + self.M13*other_matrix.M32,
-                        self.M11*other_matrix.M13 + self.M12*other_matrix.M23 + self.M13*other_matrix.M33,
-                        self.M21*other_matrix.M11 + self.M22*other_matrix.M21 + self.M23*other_matrix.M31,
-                        self.M21*other_matrix.M12 + self.M22*other_matrix.M22 + self.M23*other_matrix.M32,
-                        self.M21*other_matrix.M13 + self.M22*other_matrix.M23 + self.M23*other_matrix.M33,
-                        self.M31*other_matrix.M11 + self.M32*other_matrix.M21 + self.M33*other_matrix.M31,
-                        self.M31*other_matrix.M12 + self.M32*other_matrix.M22 + self.M33*other_matrix.M32,
-                        self.M31*other_matrix.M13 + self.M32*other_matrix.M23 + self.M33*other_matrix.M33)
+        M11, M12, M13, M21, M22, M23, M31, M32, M33 = C_matrix_multiplication3(self.M11, self.M12, self.M13,
+                                                                               self.M21, self.M22, self.M23,
+                                                                               self.M31, self.M32, self.M33,
+                                                                               other_matrix.M11, other_matrix.M12, other_matrix.M13,
+                                                                               other_matrix.M21, other_matrix.M22, other_matrix.M23,
+                                                                               other_matrix.M31, other_matrix.M32, other_matrix.M33)
+        
+        return Matrix33(M11, M12, M13, M21, M22, M23, M31, M32, M33)
+            
 
     def __repr__(self):
         s = '[{} {} {}]\n[{} {} {}]\n[{} {} {}]\n'.format(self.M11, self.M12, self.M13,
@@ -984,9 +1014,13 @@ class Matrix33:
 
 
     def vector_multiplication(self, vector):
-        return vector.__class__((self.M11*vector.vector[0] + self.M12*vector.vector[1] + self.M13*vector.vector[2],
-                                 self.M21*vector.vector[0] + self.M22*vector.vector[1] + self.M23*vector.vector[2],
-                                 self.M31*vector.vector[0] + self.M32*vector.vector[1] + self.M33*vector.vector[2]))
+        v1, v2, v3 = vector.vector
+        u1, u2, u3 = C_matrix_vector_multiplication3(self.M11, self.M12, self.M13,
+                                                     self.M21, self.M22, self.M23,
+                                                     self.M31, self.M32, self.M33,
+                                                     v1, v2, v3)
+        
+        return vector.__class__((u1, u2, u3))
 
     def determinent(self):
         det = self.M11*self.M22*self.M33 + self.M12*self.M23*self.M31 \
