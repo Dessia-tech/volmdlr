@@ -34,7 +34,6 @@ steps:
   commands:
   - pip install Cython
   - python setup.py sdist
-  - python setup.py bdist
 
 - name: upload to pypi
   image: plugins/pypi
