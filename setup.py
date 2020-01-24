@@ -44,16 +44,11 @@ def get_version():
 
         future_version = version.split('.')
 
-
-        print('fv', future_version)
-
         for suffix in ['a', 'b', 'rc', 'post']:
             if suffix in future_version[-1]:
-                print('fvi', future_version[-1])
                 future_version[-1] = str(future_version[-1].split(suffix)[0])
 
         future_version[-1] = int(future_version[-1])
-        print('fv2', future_version)
         if number_commits_ahead > 0:
             future_version[-1] = str(future_version[-1]+1)
             future_version = '.'.join(future_version)
@@ -78,9 +73,9 @@ setup(name='volmdlr',
       description=' A volume modeler computation-oriented. Include rendering bindings. ',
       long_description=readme(),
       keywords='volume, modeler',
-      url='https://github.com/masfaraud/volmdlr',
-      author='Steven Masfaraud',
-      author_email='steven@masfaraud.fr',
+      url='https://github.com/Dessia-tech/volmdlr',
+      author='DessiA Technologies',
+      author_email='root@dessia.tech',
       license='Creative Commons Attribution-Share Alike license',
       packages=['volmdlr'],#,'volmdlr.primitives2D','volmdlr.primitives3D','volmdlr.geometry'],
       package_dir={},
@@ -88,4 +83,4 @@ setup(name='volmdlr',
       install_requires=['dessia_common', 'numpy', 'matplotlib', 'Cython', 'scipy', 'jinja2',
                         'geomdl', 'jsonschema', 'networkx', 'triangle'],
       classifiers=['Topic :: Scientific/Engineering','Development Status :: 3 - Alpha'],
-      ext_modules = cythonize("volmdlr/vmcy.pyx"))
+      ext_modules = cythonize("volmdlr/core_compiled.pyx"))
