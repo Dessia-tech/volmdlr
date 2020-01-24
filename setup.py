@@ -31,7 +31,7 @@ def get_version():
         cmd = 'git describe --tags'
         try:
             version = check_output(cmd.split()).decode().strip()[:]
-            print('version', version)
+            
         except CalledProcessError:
             raise RuntimeError('Unable to get version number from git tags')
         if version[0]=='v':
@@ -46,17 +46,18 @@ def get_version():
 
         for suffix in ['a', 'b', 'rc', 'post']:
             if suffix in future_version[-1]:
-                future_version[-1] = str(future_version[-1].split(suffix)[0])
+                if number_commits_ahead > 0:
+                    future_version[-1] = str(future_version[-1].split(suffix)[0])
+                    future_version[-1] = str(int(future_version[-1])+1)
+                    future_version = '.'.join(future_version)
+                    return '{}.dev{}'.format(future_version, number_commits_ahead)
 
-        future_version[-1] = int(future_version[-1])
-        if number_commits_ahead > 0:
-            future_version[-1] = str(future_version[-1]+1)
-            future_version = '.'.join(future_version)
-            return '{}.dev{}'.format(future_version, number_commits_ahead)
+                else:
+                    return '.'.join(future_version)
 
-        else:
-            return '.'.join(future_version)
-        
+        future_version[-1] = str(int(future_version[-1])+1)
+        future_version = '.'.join(future_version)
+        return '{}.dev{}'.format(future_version, number_commits_ahead)
         
 
     else:
@@ -64,6 +65,7 @@ def get_version():
         with open(join(d, 'PKG-INFO')) as f:
             version = version_re.search(f.read()).group(1)
             
+    print('version', version)
     return version
 
 
