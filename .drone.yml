@@ -41,6 +41,7 @@ steps:
   when:
       event: tag
   settings:
+    skip_build: True
     username: dessia_tech
     password:
         from_secret: pypi_password
