@@ -29,9 +29,19 @@ steps:
   - pip install Cython
   - python setup.py develop
 
-- name: sdist
+- name: sdist, bdist
   image: python:3.7
   commands:
   - pip install Cython
   - python setup.py sdist --formats=gztar,zip
+  - python setup.py bdist
 
+- name: upload to pypi
+  image: plugins/pypi
+  when:
+      event: tag
+  settings:
+    skip_build: True
+    username: dessia_tech
+    password:
+        from_secret: pypi_password
