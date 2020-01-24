@@ -33,7 +33,7 @@ steps:
   image: python:3.7
   commands:
   - pip install Cython
-  - python setup.py sdist --formats=gztar,zip
+  - python setup.py sdist
   - python setup.py bdist
 
 - name: upload to pypi
