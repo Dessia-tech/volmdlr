@@ -36,6 +36,7 @@ def get_version():
             raise RuntimeError('Unable to get version number from git tags')
         if version[0]=='v':
             version = version[1:]
+            
         # PEP 440 compatibility
         number_commits_ahead = 0
         if '-' in version:
@@ -54,11 +55,12 @@ def get_version():
 
                 else:
                     return '.'.join(future_version)
-
-        future_version[-1] = str(int(future_version[-1])+1)
-        future_version = '.'.join(future_version)
-        return '{}.dev{}'.format(future_version, number_commits_ahead)
-        
+        if number_commits_ahead > 0:
+            future_version[-1] = str(int(future_version[-1])+1)
+            future_version = '.'.join(future_version)
+            return '{}.dev{}'.format(future_version, number_commits_ahead)
+        else:
+            return '.'.join(future_version)
 
     else:
         # Extract the version from the PKG-INFO file.
