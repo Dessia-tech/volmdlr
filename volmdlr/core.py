@@ -3573,7 +3573,7 @@ class Shell3D(CompositePrimitive3D):
         if self.color is None:
             babylon_mesh['color'] = [0.2, 0.2, 0.2]
         else:
-            babylon_mesh['color'] = self.color
+            babylon_mesh['color'] = list(self.color)
         
         return [babylon_mesh]
 

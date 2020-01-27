@@ -146,6 +146,7 @@
           mat.ambientColor = new BABYLON.Color3(0.23, 0.98, 0.53);
           mat.backFaceCulling = false;
           mesh.material = mat;
+          console.log('mc', mesh_data['color']); 
           mat.diffuseColor = new BABYLON.Color3(mesh_data['color'][0],
                                                 mesh_data['color'][1],
                                                 mesh_data['color'][2]);
@@ -250,7 +251,7 @@
                                       babylon_data['steps'][istep][iprimitive]['orientations'][2][1],
                                       babylon_data['steps'][istep][iprimitive]['orientations'][2][2]));
             }
-            
+
             if ('label' in babylon_data['steps'][istep]){
               step_label.text = babylon_data['steps'][istep]['label'];
             }
