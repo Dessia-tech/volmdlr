@@ -54,7 +54,7 @@ belt = primitives3D.ExtrudedProfile(vm.Z3D*(height - 2*thickness), vm.X3D, vm.Y3
 
 
 model = vm.VolumeModel([bottom, sides, belt])
-model.babylonjs_from_meshes('bottom')
+model.babylonjs()
 
 #model = vm.VolumeModel([sides])
 #model.BabylonShow('sides')

@@ -1463,9 +1463,9 @@ class Frame3D(Basis3D):
         return Basis3D.OldCoordinates(self, vector) + self.origin
 
     def Rotation(self, axis, angle, copy=True):
-        new_base = Basis3D.Rotation(self, axis, angle, True)
+        new_base = Basis3D.Rotation(self, axis, angle, copy=True)
         if copy:
-            new_frame = Frame3D(self.origin, new_base.u, new_base.v, new_base.w, self.name)
+            new_frame = Frame3D(self.origin.copy(), new_base.u, new_base.v, new_base.w, self.name)
             return new_frame
         self.u = new_base.u
         self.v = new_base.v
@@ -1473,7 +1473,7 @@ class Frame3D(Basis3D):
 
     def Translation(self, offset, copy=True):
         if copy:
-            return Frame3D(self.origin.Translation(offset), self.u, self.v, self.w, self.name)
+            return Frame3D(self.origin.Translation(offset, copy=True), self.u, self.v, self.w, self.name)
         self.origin.Translation(offset, copy=False)
 
     def copy(self):

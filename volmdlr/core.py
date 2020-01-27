@@ -4574,7 +4574,7 @@ class VolumeModel(dc.DessiaObject):
                                use_cdn=use_cdn,
                                debug=debug)
 
-    def babylonjs(self, page_name=None, use_cdn=True, debug=False):
+    def babylonjs_from_script(self, page_name=None, use_cdn=True, debug=False):
         script = self.babylon_script(use_cdn=use_cdn, debug=debug)
 
         if page_name is None:
@@ -4588,9 +4588,7 @@ class VolumeModel(dc.DessiaObject):
 
         webbrowser.open('file://' + os.path.realpath(page_name))
 
-    def babylonjs_from_meshes(self, page_name=None, use_cdn=True, debug=False):
-#        script = self.babylon_script(use_cdn=use_cdn, debug=debug)
-
+    def babylon_data(self):
         meshes = []
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
@@ -4605,8 +4603,10 @@ class VolumeModel(dc.DessiaObject):
         babylon_data = {'meshes': meshes,
                         'max_length': max_length,
                         'center': list(center)}
+        return babylon_data
 
-
+    @classmethod
+    def babylonjs_from_babylon_data(cls, babylon_data, page_name=None, use_cdn=True, debug=False):
         env = Environment(loader=PackageLoader('volmdlr', 'templates'),
                           autoescape=select_autoescape(['html', 'xml']))
 
@@ -4628,6 +4628,14 @@ class VolumeModel(dc.DessiaObject):
                 file.write(script)
 
         webbrowser.open('file://' + os.path.realpath(page_name))
+
+        
+    def babylonjs(self, page_name=None, use_cdn=True, debug=False):
+        babylon_data = self.babylon_data()
+        self.babylonjs_from_babylon_data(babylon_data)
+
+
+        
 
 
 class MovingVolumeModel(VolumeModel):
@@ -4683,6 +4691,40 @@ class MovingVolumeModel(VolumeModel):
                                orientations=orientations,
                                use_cdn=use_cdn,
                                debug=debug)
+    
+    def babylon_data(self):
+        meshes = []
+        for primitive in self.primitives:
+            if hasattr(primitive, 'babylon_meshes'):
+                meshes.extend(primitive.babylon_meshes())
+                
+        bbox = self._bounding_box()
+        center = bbox.center
+        max_length = max([bbox.xmax - bbox.xmin,
+                          bbox.ymax - bbox.ymin,
+                          bbox.zmax - bbox.zmin])
+                
+        steps = []
+        for istep, frames in enumerate(self.step_frames):
+
+
+            # step_positions = []
+            # step_orientations = []
+            step = {'time': istep}
+            for iframe, frame in enumerate(frames):
+                step[iframe] = {}
+                step[iframe]['position'] = list(frame.origin)
+                step[iframe]['orientations'] = [list(frame.u),
+                                                list(frame.v),
+                                                list(frame.w)]
+
+            steps.append(step)
+        
+        babylon_data = {'meshes': meshes,
+                        'max_length': max_length,
+                        'center': list(center),
+                        'steps': steps}
+        return babylon_data
 
 
 class Routing:
