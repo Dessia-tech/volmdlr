@@ -11,7 +11,8 @@ import volmdlr as vm
 import volmdlr.primitives3D as primitives3D
 
 block = primitives3D.Block(vm.Frame3D(vm.O3D.copy(),
-                                      vm.X3D.copy(), vm.Y3D.copy(), vm.Z3D.copy()))
+                                      vm.X3D.copy(), vm.Y3D.copy(), vm.Z3D.copy()),
+                           color=(0.8,0.1,0.1))
                            
 f1 = vm.OXYZ.copy()
 
@@ -29,7 +30,7 @@ f5.Translation(0.1*vm.X3D, copy=False)
 
 
 model = vm.MovingVolumeModel([block], [[f1], [f2], [f3], [f4], [f5]])
-# model.babylonjs()
+model.babylonjs()
 
 # Fetching baybylon data to put custom labels
 babylon_data = model.babylon_data()
