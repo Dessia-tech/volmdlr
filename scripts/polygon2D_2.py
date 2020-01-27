@@ -29,12 +29,12 @@ p7=pm2.Rotation(pc,-theta1)
 p6=pm2.Rotation(pc,theta1)
 p5=pm2.Rotation(pc,theta2)
 
-border=vm.Polygon2D([p1,p2,p3,p4,p5,p6,p7,p8], name='border')
+border = vm.Polygon2D([p1,p2,p3,p4,p5,p6,p7,p8], name='border')
 
 ptest=vm.Point2D((-0.08366,-0.91306))
 
 projections = []
-for line in border.basis_primitives:
+for line in border.primitives:
     projections.append(line.PointProjection(ptest))
 
 
@@ -44,6 +44,6 @@ cog_p = border.CenterOfMass()
 
 ctest=vm.CompositePrimitive2D([border,ptest]+projections)
 f, a = ctest.MPLPlot()
-cog_p.MPLPlot(a, style = 'ob')
+cog_p.MPLPlot(a, color='r')
 
 

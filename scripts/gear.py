@@ -36,7 +36,7 @@ p4.Rotation(pc,theta1+theta3,False)
 p5=p4.Rotation(pc,theta2)
 p6=p1.Rotation(pc,theta)
 
-l1=primitives2D.RoundedLineSegments2D([p3,p4,p5,p6],{1:r3,2:r3})
+l1=primitives2D.OpenedRoundedLineSegments2D([p3,p4,p5,p6],{1:r3,2:r3})
 
 #l1=primitives2D.RoundedLines2D([p1,p2,p3,p4],{0:0.01,2:0.01})
 #l2=vm.Circle2D(p5,0.01)
@@ -71,7 +71,7 @@ profile_helical = primitives3D.HelicalExtrudedProfile(po, xp, yp,
                                                     28*3.14/180, c1, [c2],
                                                     name='helical')
 
-model=vm.VolumeModel([('helical', [profile_helical]), ('straight', [profile_straight])])
+model = vm.VolumeModel([profile_helical, profile_straight])
 
 
 #resp=model_straight.FreeCADExport('python','gear-straight','/usr/lib/freecad/lib/',['stl','fcstd'])

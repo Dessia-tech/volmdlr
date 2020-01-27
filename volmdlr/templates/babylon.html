@@ -114,12 +114,124 @@ var createScene = function () {
         zChar.position = new BABYLON.Vector3(0, 0.05 * size, 0.9 * size);
     };
     showAxis(1);
-    
-                
 
-	{% for s in primitives_strings %}
-		{{s|safe}}
+
+    var primitive_meshes = [];
+    {% for s in primitives_strings %}
+	  	 {{s|safe}}
+       primitive_meshes.push(primitive_mesh);
   	{% endfor %}
+
+
+
+    {% if positions %}
+
+      var positions = {{positions}};
+      var orientations = {{orientations}};
+
+
+      var n_primitives = primitive_meshes.length;
+      var n_steps = positions.length;
+
+      var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+      var animation_stopped = false;
+
+      var buttonHeightInPixels = 50;
+      var buttonWidthInPixels = 150;
+
+      // Set container and its size and position
+      let heightInPixels = buttonHeightInPixels*6;
+      let widthInPixels = buttonWidthInPixels;
+
+      let topInPixels = -canvas.height/2 + heightInPixels/2;
+      let leftInPixels = -canvas.width/2 + widthInPixels/2;
+
+      var buttonsContainer = new BABYLON.GUI.StackPanel("buttons_panel");
+      buttonsContainer.background = "#263238";
+      buttonsContainer.color = "white";
+      buttonsContainer.height = ""+heightInPixels+"px";
+      buttonsContainer.width = ""+widthInPixels+"px";
+      buttonsContainer.top = ""+topInPixels+"px";
+      buttonsContainer.left = ""+leftInPixels+"px";
+
+      var step_number_label = new BABYLON.GUI.TextBlock();
+      step_number_label.text = "Step n°1/"+n_steps;
+      step_number_label.width = ""+buttonWidthInPixels+"px";
+      step_number_label.height = ""+buttonHeightInPixels+"px";
+      buttonsContainer.addControl(step_number_label);
+
+      var start_stop_button = BABYLON.GUI.Button.CreateSimpleButton("animation", "Stop/Resume animation");
+      start_stop_button.width = ""+buttonWidthInPixels+"px";
+      start_stop_button.height = ""+buttonHeightInPixels+"px";
+      start_stop_button.onPointerUpObservable.add(function(){animation_stopped = !animation_stopped});
+      buttonsContainer.addControl(start_stop_button);
+
+      var first_step_button = BABYLON.GUI.Button.CreateSimpleButton("animation", "First step");
+      first_step_button.width = ""+buttonWidthInPixels+"px";
+      first_step_button.height = ""+buttonHeightInPixels+"px";
+      first_step_button.onPointerUpObservable.add(function(){animation_stopped=true; iframe=0; showStep(Math.floor(0))});
+      buttonsContainer.addControl(first_step_button);
+
+      var previous_step_button = BABYLON.GUI.Button.CreateSimpleButton("animation", "Previous step");
+      previous_step_button.width = ""+buttonWidthInPixels+"px";
+      previous_step_button.height = ""+buttonHeightInPixels+"px";
+      previous_step_button.onPointerUpObservable.add(function(){animation_stopped=true; iframe-=10; showStep(Math.floor(iframe/10))});
+      buttonsContainer.addControl(previous_step_button);
+
+      var next_step_button = BABYLON.GUI.Button.CreateSimpleButton("animation", "Next step");
+      next_step_button.width = ""+buttonWidthInPixels+"px";
+      next_step_button.height = ""+buttonHeightInPixels+"px";
+      next_step_button.onPointerUpObservable.add(function(){animation_stopped=true; iframe+=10; showStep(Math.floor(iframe/10))});
+      buttonsContainer.addControl(next_step_button);
+
+      var last_step_button = BABYLON.GUI.Button.CreateSimpleButton("animation", "Last step");
+      last_step_button.width = ""+buttonWidthInPixels+"px";
+      last_step_button.height = ""+buttonHeightInPixels+"px";
+      last_step_button.onPointerUpObservable.add(function(){animation_stopped=true; iframe=10*(n_steps-1); showStep(Math.floor(iframe/10))});
+      buttonsContainer.addControl(last_step_button);
+
+      advancedTexture.addControl(buttonsContainer);
+
+
+      var showStep = function (istep){
+        // Parts position update
+        step_number_label.text = "Step n°"+(istep+1)+"/"+n_steps;
+        for(let iprimitive=0; iprimitive<n_primitives; iprimitive++){
+            mesh = primitive_meshes[iprimitive];
+            mesh.position = new BABYLON.Vector3(positions[istep][iprimitive][0],
+                                                positions[istep][iprimitive][1],
+                                                positions[istep][iprimitive][2]);
+            mesh.rotation = BABYLON.Vector3.RotationFromAxis(
+              new BABYLON.Vector3(orientations[istep][iprimitive][0][0],
+                                  orientations[istep][iprimitive][0][1],
+                                  orientations[istep][iprimitive][0][2]),
+              new BABYLON.Vector3(orientations[istep][iprimitive][1][0],
+                                  orientations[istep][iprimitive][1][1],
+                                  orientations[istep][iprimitive][1][2]),
+              new BABYLON.Vector3(orientations[istep][iprimitive][2][0],
+                                  orientations[istep][iprimitive][2][1],
+                                  orientations[istep][iprimitive][2][2]));
+        }
+
+      }
+
+    var iframe = 0;
+
+    scene.registerBeforeRender(function () {
+              if (!animation_stopped){
+                if (iframe % 10 == 0){
+                  var istep = iframe / 10;
+
+                  showStep(istep);
+
+
+                }
+                iframe++;
+                iframe = iframe % (n_steps*10);
+              }
+
+      });
+      {% endif %}
 
 
 	return scene;	  };
@@ -134,7 +246,10 @@ var createScene = function () {
       window.addEventListener("resize", function () {
          engine.resize();
       });
+
+      {% if debug %}
       scene.debugLayer.show();
+      {% endif %}
 
    </script>
 </body>

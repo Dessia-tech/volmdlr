@@ -9,16 +9,15 @@ Created on Thu Oct  3 10:57:51 2019
 import volmdlr as  vm
 import volmdlr.primitives3D as p3d
 
-moteur = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/MOTEUR HRevoUNIFY v2.stp')
-#boite = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/BOITE E-TECHg2.stp')
-#cmo = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/CMO2.stp')
+# moteur = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/MOTEUR HRevoUNIFY v2.stp')
+# moteur = vm.Step('/home/ringhausen/Bureau/Renault/MOTEUR.txt')
+# boite = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/BOITE E-TECHg2.stp')
+cmo = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/CMO2.stp')
 
 
-
-
-moteur = moteur.to_shells3d('moteur')
-#boite = boite.to_shells3d('boite')
-#cmo.to_volume_model('cmo', volumemodel)
+# moteur = moteur.to_shells3d('moteur')
+# boite = boite.to_shells3d('boite')
+cmo = cmo.to_shells3d('cmo')
 
 #origin = vm.Point3D((0.5,0.5,-0.5))
 #u = vm.Vector3D((0.2,0,0))
@@ -61,8 +60,10 @@ moteur = moteur.to_shells3d('moteur')
 #union.Translation((1,2,-0.5), False)
 #volumemodel.BabylonShow()
 
-primitives = moteur
+#shell0 = volumemodel.shells[0] # LE MOTEUR
+primitives = cmo
 volumemodel = vm.VolumeModel(primitives, 'name')
+volumemodel_copy = volumemodel.copy()
 
 shell0 = volumemodel.primitives[0] # LE MOTEUR
 #shell0.color = (1,0,0)
@@ -75,8 +76,9 @@ shell0 = volumemodel.primitives[0] # LE MOTEUR
 #del volumemodel.shells[4]
 #del volumemodel.shells[3]
 
-volumemodel.BabylonShow()
-
+# volumemodel.babylonjs()
+# volumemodel.babylonjs_from_meshes(page_name='debug')
+volumemodel_copy.babylonjs_from_meshes(page_name='debug')
 
 #%%
 
