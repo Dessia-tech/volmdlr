@@ -126,8 +126,6 @@
         var meshes = []
         for (let mesh_data of babylon_data['meshes']){
           var mesh = new BABYLON.Mesh(mesh_data['name'], scene);
-          meshes.push(mesh);
-
           var normals = [];
           var vertexData = new BABYLON.VertexData();
           BABYLON.VertexData.ComputeNormals(mesh_data['positions'], mesh_data['indices'], normals);
@@ -139,17 +137,15 @@
           mesh.enableEdgesRendering(0.9);
           mesh.edgesWidth = 0.1;
           mesh.edgesColor = new BABYLON.Color4(0, 0, 0, 0.6);
-          var mat = new BABYLON.StandardMaterial("mat", scene);
-          mat.diffuseColor = BABYLON.Color3.Green();
-          mat.specularColor = new BABYLON.Color3(0.5, 0.6, 0.87);
-          mat.emissiveColor = new BABYLON.Color3(1, 1, 1);
-          mat.ambientColor = new BABYLON.Color3(0.23, 0.98, 0.53);
+          var mat = new BABYLON.StandardMaterial("material", scene);
           mat.backFaceCulling = false;
-          mesh.material = mat;
-          console.log('mc', mesh_data['color']); 
+
           mat.diffuseColor = new BABYLON.Color3(mesh_data['color'][0],
                                                 mesh_data['color'][1],
                                                 mesh_data['color'][2]);
+          mat.alpha = mesh_data['alpha'];
+          mesh.material = mat;
+          meshes.push(mesh);
 
         }
 
@@ -238,7 +234,6 @@
                 mesh.position = new BABYLON.Vector3(babylon_data['steps'][istep][iprimitive]['position'][0],
                                                     babylon_data['steps'][istep][iprimitive]['position'][1],
                                                     babylon_data['steps'][istep][iprimitive]['position'][2]);
-
 
                 mesh.rotation = BABYLON.Vector3.RotationFromAxis(
                   new BABYLON.Vector3(babylon_data['steps'][istep][iprimitive]['orientations'][0][0],

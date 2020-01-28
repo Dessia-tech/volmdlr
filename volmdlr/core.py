@@ -3226,13 +3226,14 @@ class Shell3D(CompositePrimitive3D):
     _standalone_in_db = True
     _generic_eq = True
     _non_serializable_attributes  = ['bounding_box']
-    _non_eq_attributes = ['name', 'color', 'bounding_box', 'contours']
+    _non_eq_attributes = ['name', 'color', 'alpha' 'bounding_box', 'contours']
     _non_hash_attributes = []
 
-    def __init__(self, faces, name='', color=None):
+    def __init__(self, faces, name='', color=None, alpha=1.):
         self.faces = faces
         self.name = name
         self.color = color
+        self.alpha = alpha
         self.bounding_box = self._bounding_box()
 
     def __hash__(self):
@@ -3568,10 +3569,11 @@ class Shell3D(CompositePrimitive3D):
         babylon_mesh = {'positions': positions,
                         'indices': indices,
                         'name': self.name,
+                        'alpha': self.alpha
                         }
         
         if self.color is None:
-            babylon_mesh['color'] = [0.2, 0.2, 0.2]
+            babylon_mesh['color'] = [0.8, 0.8, 0.8]
         else:
             babylon_mesh['color'] = list(self.color)
         
@@ -3600,6 +3602,7 @@ class Shell3D(CompositePrimitive3D):
 #        s += 'mat.emissiveColor = new BABYLON.Color3(1, 1, 1);\n'
 #        s += 'mat.ambientColor = new BABYLON.Color3(0.23, 0.98, 0.53);\n'
         s += 'mat.backFaceCulling = false;\n'
+        s += 'mat.alpha = {};\n'.format(self.alpha)
         s += '{}.material = mat;\n'.format(name)
         if self.color is not None:
             s += 'mat.diffuseColor = new BABYLON.Color3({}, {}, {});\n'.format(*self.color)
@@ -4642,6 +4645,16 @@ class MovingVolumeModel(VolumeModel):
     def __init__(self, primitives, step_frames, name=''):
         VolumeModel.__init__(self, primitives=primitives, name=name)
         self.step_frames = step_frames
+        
+        if not self.is_consistent():
+            raise dc.ConsistencyError
+        
+    def is_consistent(self):
+        n_primitives = len(self.primitives)
+        for frames in self.step_frames:
+            if len(frames) != n_primitives:
+                return False
+        return True
 
     def step_volume_model(self, istep):
         primitives = []
@@ -4694,9 +4707,11 @@ class MovingVolumeModel(VolumeModel):
     
     def babylon_data(self):
         meshes = []
-        for primitive in self.primitives:
+        primitives_to_meshes = []
+        for ip, primitive in enumerate(self.primitives):
             if hasattr(primitive, 'babylon_meshes'):
                 meshes.extend(primitive.babylon_meshes())
+                primitives_to_meshes.append(ip)
                 
         bbox = self._bounding_box()
         center = bbox.center
@@ -4712,11 +4727,13 @@ class MovingVolumeModel(VolumeModel):
             # step_orientations = []
             step = {'time': istep}
             for iframe, frame in enumerate(frames):
-                step[iframe] = {}
-                step[iframe]['position'] = list(frame.origin)
-                step[iframe]['orientations'] = [list(frame.u),
-                                                list(frame.v),
-                                                list(frame.w)]
+                if iframe in primitives_to_meshes:
+                    imesh = primitives_to_meshes.index(iframe)
+                    step[imesh] = {}
+                    step[imesh]['position'] = list(frame.origin)
+                    step[imesh]['orientations'] = [list(frame.u),
+                                                    list(frame.v),
+                                                    list(frame.w)]
 
             steps.append(step)
         
