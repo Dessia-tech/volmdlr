@@ -43,9 +43,8 @@ def get_version():
             version, number_commits_ahead, commit_hash = version.split('-')
             number_commits_ahead = int(number_commits_ahead)
 
-        future_version = version.split('.')
-
-        for suffix in ['a', 'b', 'rc', 'post']:
+        future_version = version.split('.')[:3]
+        for suffix in ['a', 'b', 'rc']:
             if suffix in future_version[-1]:
                 if number_commits_ahead > 0:
                     future_version[-1] = str(future_version[-1].split(suffix)[0])
@@ -87,4 +86,4 @@ setup(name='volmdlr',
       install_requires=['dessia_common', 'numpy', 'matplotlib', 'Cython', 'scipy', 'jinja2',
                         'geomdl', 'jsonschema', 'networkx', 'triangle'],
       classifiers=['Topic :: Scientific/Engineering','Development Status :: 3 - Alpha'],
-      ext_modules = cythonize("volmdlr/core_compiled.pyx"))
+      ext_modules = cythonize(["volmdlr/core_compiled.pyx"]))
