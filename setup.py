@@ -43,9 +43,8 @@ def get_version():
             version, number_commits_ahead, commit_hash = version.split('-')
             number_commits_ahead = int(number_commits_ahead)
 
-        future_version = version.split('.')
-
-        for suffix in ['a', 'b', 'rc', 'post']:
+        future_version = version.split('.')[:3]
+        for suffix in ['a', 'b', 'rc']:
             if suffix in future_version[-1]:
                 if number_commits_ahead > 0:
                     future_version[-1] = str(future_version[-1].split(suffix)[0])
