@@ -23,10 +23,13 @@ from matplotlib.patches import FancyArrowPatch
 
 import networkx as nx
 
-from .vmcy import (sub2D, add2D, mul2D, Vector2DNorm, Vector2DDot,
-                   sub3D, add3D, mul3D, Vector3DNorm, Vector3DDot,
-                   vector3D_cross, vector3D_rotation,
-                   LineSegment2DPointDistance, PolygonPointBelongs)
+from .core_compiled import (Vector2D, Vector3D, Point2D, Point3D,
+                   O2D, X2D, Y2D, OXY,
+                   Basis3D, Frame2D, Frame3D,
+                   O3D, X3D, Y3D, Z3D,
+                   LineSegment2DPointDistance,
+                   PolygonPointBelongs,
+                   )
 
 from scipy.linalg import solve
 
@@ -47,6 +50,8 @@ import tempfile
 import subprocess
 
 import random
+
+
 
 
 
@@ -146,642 +151,12 @@ def clockwise_angle(vector1, vector2):
 
     return 2*math.pi-inner_angle
 
-class Matrix22:
-    def __init__(self, M11, M12, M21, M22):
-        self.M11 = M11
-        self.M12 = M12
-        self.M21 = M21
-        self.M22 = M22
 
-    def __add__(self, other_matrix):
-        return Matrix22(self.M11 + other_matrix.M11,
-                        self.M12 + other_matrix.M12,
-                        self.M21 + other_matrix.M21,
-                        self.M22 + other_matrix.M22,
-                        )
 
-    def __mul__(self, other_matrix):
-        return Matrix22(self.M11*other_matrix.M11 + self.M12*other_matrix.M21,
-                        self.M11*other_matrix.M12 + self.M12*other_matrix.M22,
-                        self.M21*other_matrix.M11 + self.M22*other_matrix.M21,
-                        self.M21*other_matrix.M12 + self.M22*other_matrix.M22)
 
 
-class Matrix33:
-    def __init__(self, M11, M12, M13, M21, M22, M23, M31, M32, M33):
-        self.M11 = M11
-        self.M12 = M12
-        self.M13 = M13
-        self.M21 = M21
-        self.M22 = M22
-        self.M23 = M23
-        self.M31 = M31
-        self.M32 = M32
-        self.M33 = M33
 
-#    def __getitem__(self, key):
-#        return self.vector[key]
 
-    def __add__(self, other_matrix):
-        return Matrix33(self.M11 + other_matrix.M11,
-                        self.M12 + other_matrix.M12,
-                        self.M13 + other_matrix.M13,
-                        self.M21 + other_matrix.M21,
-                        self.M22 + other_matrix.M22,
-                        self.M23 + other_matrix.M23,
-                        self.M31 + other_matrix.M31,
-                        self.M32 + other_matrix.M32,
-                        self.M33 + other_matrix.M33)
-
-    def __mul__(self, other_matrix):
-        return Matrix33(self.M11*other_matrix.M11 + self.M12*other_matrix.M21 + self.M13*other_matrix.M31,
-                        self.M11*other_matrix.M12 + self.M12*other_matrix.M22 + self.M13*other_matrix.M32,
-                        self.M11*other_matrix.M13 + self.M12*other_matrix.M23 + self.M13*other_matrix.M33,
-                        self.M21*other_matrix.M11 + self.M22*other_matrix.M21 + self.M23*other_matrix.M31,
-                        self.M21*other_matrix.M12 + self.M22*other_matrix.M22 + self.M23*other_matrix.M32,
-                        self.M21*other_matrix.M13 + self.M22*other_matrix.M23 + self.M23*other_matrix.M33,
-                        self.M31*other_matrix.M11 + self.M32*other_matrix.M21 + self.M33*other_matrix.M31,
-                        self.M31*other_matrix.M12 + self.M32*other_matrix.M22 + self.M33*other_matrix.M32,
-                        self.M31*other_matrix.M13 + self.M32*other_matrix.M23 + self.M33*other_matrix.M33)
-
-    def __repr__(self):
-        s = '[{} {} {}]\n[{} {} {}]\n[{} {} {}]\n'.format(self.M11, self.M12, self.M13,
-                                                          self.M21, self.M22, self.M23,
-                                                          self.M31, self.M32, self.M33)
-        return s
-
-    def float_multiplication(self, float_value):
-        return Matrix33(self.M11*float_value, self.M12*float_value, self.M13*float_value,
-                        self.M21*float_value, self.M22*float_value, self.M23*float_value,
-                        self.M31*float_value, self.M32*float_value, self.M33*float_value)
-
-
-    def vector_multiplication(self, vector):
-        return vector.__class__((self.M11*vector.vector[0] + self.M12*vector.vector[1] + self.M13*vector.vector[2],
-                                 self.M21*vector.vector[0] + self.M22*vector.vector[1] + self.M23*vector.vector[2],
-                                 self.M31*vector.vector[0] + self.M32*vector.vector[1] + self.M33*vector.vector[2]))
-
-    def determinent(self):
-        det = self.M11*self.M22*self.M33 + self.M12*self.M23*self.M31 \
-            + self.M13*self.M21*self.M32 - self.M13*self.M22*self.M31 \
-            - self.M23*self.M32*self.M11 - self.M33*self.M12*self.M21
-        return det
-
-    def inverse(self):
-        det = self.determinent()
-
-        if not math.isclose(det, 0, abs_tol=1e-10):
-            det_inv = 1/det
-            return Matrix33(det_inv*(self.M22*self.M33 - self.M23*self.M32),# a22a33−a23a32
-                            det_inv*(self.M13*self.M32 - self.M12*self.M33),# a13a32−a12a33
-                            det_inv*(self.M12*self.M23 - self.M13*self.M22),# a12a23−a13a22
-                            det_inv*(self.M23*self.M31 - self.M21*self.M33),# a23a31−a21a33
-                            det_inv*(self.M11*self.M33 - self.M13*self.M31),# a11a33−a31a13
-                            det_inv*(self.M21*self.M13 - self.M23*self.M11),# a13a21−a23a11
-                            det_inv*(self.M21*self.M32 - self.M31*self.M22),# a21a32−a31a22
-                            det_inv*(self.M12*self.M31 - self.M32*self.M11),# a12a31−a32a11
-                            det_inv*(self.M11*self.M22 - self.M21*self.M12) # a11a22−a21a12
-                            )
-
-
-        else:
-            print(self.__dict__, det)
-            raise ValueError
-
-    @classmethod
-    def random_matrix(cls, minimum=0, maximum=1):
-        range_ = maximum - minimum
-        return cls(*[minimum + range_*random.random() for _ in range(9)])
-
-    def to_numpy(self):
-        return npy.array([[self.M11, self.M12, self.M13],
-                          [self.M21, self.M22, self.M23],
-                          [self.M31, self.M32, self.M33]])
-
-class Arrow3D(FancyArrowPatch):
-    def __init__(self, xs, ys, zs, *args, **kwargs):
-        FancyArrowPatch.__init__(self, (0,0), (0,0), *args, **kwargs)
-        self._verts3d = xs, ys, zs
-
-    def draw(self, renderer):
-        xs3d, ys3d, zs3d = self._verts3d
-        xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, renderer.M)
-        self.set_positions((xs[0],ys[0]),(xs[1],ys[1]))
-        FancyArrowPatch.draw(self, renderer)
-
-
-class Vector(dc.DessiaObject):
-    """
-    Abstract class of vector
-    """
-    def __setitem__(self, key, item):
-        self.vector[key] = item
-
-    def __getitem__(self, key):
-        return self.vector[key]
-
-    def __repr__(self):
-        return '{}: {}'.format(self.__class__.__name__, self.vector)
-
-    def __radd__(self, other_vector):
-        return self + other_vector
-
-    def __rsub__(self, other_vector):
-        return self - other_vector
-
-    def __rmul__(self, value):
-        return self * value
-
-    def __rtruediv__(self, value):
-        return self / value
-
-    def __lt__(self, other_vector):
-        return self.Norm() < other_vector.Norm()
-
-    def __le__(self, other_vector):
-        return self.Norm() <= other_vector.Norm()
-
-    def __ne__(self, other_vector):
-        return not npy.allclose(self.vector, other_vector.vector)
-
-    def to_numpy(self):
-        return npy.array(self.vector)
-
-    def copy(self):
-        return self.__class__(self.vector)
-
-#    def Dict(self):
-#        d = {'vector': [float(i) for i in self.vector],
-#             'object_class' : self.full_classname}
-#        return d
-
-    @classmethod
-    def mean_point(cls, points):
-        n = 1
-        point = points[0].copy()
-        for point2 in points[1:]:
-            point += point2
-            n += 1
-        point /= n
-        return point
-
-class Vector2D(Vector):
-    def __init__(self, vector, name=''):
-        # TODO: change this list to 2 values vx and vy
-        self.vector = [0, 0]
-#        self.vector = npy.zeros(2)
-        self.vector[0] = vector[0]
-        self.vector[1] = vector[1]
-        self.name = name
-
-    def __add__(self, other_vector):
-        return Vector2D(add2D(self.vector, other_vector.vector))
-
-    def __neg__(self):
-        return Vector2D((-self.vector[0], -self.vector[1]))
-
-    def __sub__(self, other_vector):
-        return Vector2D(sub2D(self.vector, other_vector.vector))
-
-    def __mul__(self, value):
-        return Vector2D(mul2D(self.vector, value))
-
-    def __truediv__(self, value):
-        if value == 0:
-            raise ZeroDivisionError
-        return Vector2D((self.vector[0] / value,
-                         self.vector[1] / value))
-
-    def __round__(self, ndigits=6):
-        return self.__class__((round(self.vector[0], ndigits),
-                               round(self.vector[1], ndigits)))
-
-    def __hash__(self):
-        return int(1000*(self.vector[0]+self.vector[1]))
-
-    def __eq__(self, other_vector):
-        return math.isclose(self.vector[0], other_vector.vector[0], abs_tol=1e-08) \
-        and math.isclose(self.vector[1], other_vector.vector[1], abs_tol=1e-08)
-
-    def Norm(self):
-        """
-        :returns: norm of vector
-        """
-        return Vector2DNorm(self.vector)
-
-    def Normalize(self):
-        """
-        Normalize the vector modifying it's coordinate
-        """
-        n = self.Norm()
-        if math.isclose(n, 0, abs_tol=1e-9):
-            raise ZeroDivisionError
-
-        self.vector[0] /= n
-        self.vector[1] /= n
-
-    def Dot(self, other_vector):
-        return Vector2DDot(self.vector, other_vector.vector)
-
-    def Cross(self, other_vector):
-        u1, u2 = self.vector
-        v1, v2 = other_vector.vector
-        return u1*v2 - u2*v1
-
-    def point_distance(self, point2):
-        return (self-point2).Norm()
-
-
-    def Rotation(self, center, angle, copy=True):
-        u = self - center
-        vector2 = [math.cos(angle)*u[0] - math.sin(angle)*u[1] + center[0],
-                   math.sin(angle)*u[0] + math.cos(angle)*u[1] + center[1]]
-#        vector2 = (npy.dot(npy.array([[math.cos(angle), -math.sin(angle)],
-#                                      [math.sin(angle), math.cos(angle)]]),
-#                           (self.vector-center.vector))
-#                   + center.vector)
-        if copy:
-            return self.__class__(vector2)
-        else:
-            self.vector = vector2
-
-    def Translation(self, offset, copy=True):
-        """
-        :param offset: an other Vector2D
-        """
-        vector2 = [self.vector[0] + offset[0],
-                   self.vector[1] + offset[1]]
-        if copy:
-            return self.__class__(vector2)
-        else:
-            self.vector = vector2
-
-    def frame_mapping(self, frame, side, copy=True):
-        """
-        side = 'old' or 'new'
-        """
-        if side == 'old':
-            new_vector = frame.OldCoordinates(self)
-            if copy:
-                return new_vector
-            else:
-                self.vector = new_vector.vector
-
-        if side == 'new':
-            new_vector = frame.NewCoordinates(self)
-            if copy:
-                return new_vector
-            else:
-                self.vector = new_vector.vector
-
-    def To3D(self, plane_origin, vx, vy):
-        return Vector3D([plane_origin.vector[0] + vx.vector[0]*self.vector[0] + vy.vector[0]*self.vector[1],
-                         plane_origin.vector[1] + vx.vector[1]*self.vector[0] + vy.vector[1]*self.vector[1],
-                         plane_origin.vector[2] + vx.vector[2]*self.vector[0] + vy.vector[2]*self.vector[1],
-                         ])
-
-    def NormalVector(self, unit=False):
-        n = Vector2D((-self.vector[1], self.vector[0]))
-        if unit:
-            n.Normalize()
-        return n
-
-    @classmethod
-    def random(cls, xmin, xmax, ymin, ymax):
-        return cls(random.uniform(xmin, xmax),
-                   random.uniform(ymin, ymax))
-
-    def Draw(self):
-        warnings.warn(
-            "Draw is deprecated and will be removed in next versions, use plot() instead",
-            DeprecationWarning
-        )
-        self.plot()
-
-    def plot(self, amplitude=0.5, origin=None, ax=None, color='k', line=False, label=None):
-        if origin is None:
-            origin = Vector2D((0., 0.))
-
-        if ax is None:
-            fig, ax = plt.subplots()
-        else:
-            fig = ax.figure
-
-        if self.vector == [0., 0.]:
-            point = Point2D(origin.vector)
-            point.MPLPlot(ax=ax, color=color)
-            return fig, ax
-
-        ax.add_patch(FancyArrow(origin[0], origin[1],
-                                self.vector[0]*amplitude, self.vector[1]*amplitude,
-                                width=0.001*5*amplitude,
-                                head_width=0.01*3000*amplitude,
-                                length_includes_head=True,
-                                color=color))
-        if line:
-            style='-'+color
-            linestyle = '-.'
-            origin = Point2D(origin)
-            p1, p2 = origin, origin+self
-            u = p2 - p1
-#            plt.plot([p1[0], p2[0]], [p1[1], p2[1]], style)
-            p3 = p1 - 3*u
-            p4 = p2 + 4*u
-            ax.plot([p3[0], p4[0]], [p3[1], p4[1]], style, linestyle=linestyle)
-
-        if label is not None:
-            ax.text(*(origin+self*amplitude).vector, label)
-
-        return fig, ax
-#
-#    @classmethod
-#    def DictToObject(cls, dict_):
-#        return cls(dict_['vector'])
-
-
-x2D = Vector2D((1, 0))
-y2D = Vector2D((0, 1))
-
-X2D = Vector2D((1, 0))
-Y2D = Vector2D((0, 1))
-
-class Point2D(Vector2D):
-    def __init__(self, vector, name=''):
-        Vector2D.__init__(self, vector, name)
-
-    def __add__(self, other_vector):
-        return Point2D(add2D(self.vector, other_vector.vector))
-
-    def __neg__(self):
-        return Point2D((-self.vector[0], -self.vector[1]))
-
-    def __sub__(self, other_vector):
-        return Point2D(sub2D(self.vector, other_vector.vector))
-
-    def __mul__(self, value):
-        return Point2D(mul2D(self.vector, value))
-
-    def __truediv__(self, value):
-        if value == 0:
-            raise ZeroDivisionError
-        return Point2D((self.vector[0] / value,
-                        self.vector[1] / value))
-
-    def To3D(self, plane_origin, vx, vy):
-        return Point3D([plane_origin.vector[0] + vx.vector[0]*self.vector[0] + vy.vector[0]*self.vector[1],
-                        plane_origin.vector[1] + vx.vector[1]*self.vector[0] + vy.vector[1]*self.vector[1],
-                        plane_origin.vector[2] + vx.vector[2]*self.vector[0] + vy.vector[2]*self.vector[1],
-                        ])
-
-    def MPLPlot(self, ax=None, color='k'):
-        if ax is None:
-            fig, ax = plt.subplots()
-        else:
-            fig = ax.figure
-
-        x1, y1 = self.vector
-        ax.plot([x1], [y1], color=color, marker='o')
-        return fig, ax
-
-    def point_distance(self, point2):
-        return (self-point2).Norm()
-
-
-    @classmethod
-    def LinesIntersection(cls, line1, line2, curvilinear_abscissa=False):
-        x1 = line1.points[0].vector[0]
-        y1 = line1.points[0].vector[1]
-        x2 = line1.points[1].vector[0]
-        y2 = line1.points[1].vector[1]
-        x3 = line2.points[0].vector[0]
-        y3 = line2.points[0].vector[1]
-        x4 = line2.points[1].vector[0]
-        y4 = line2.points[1].vector[1]
-
-        denominateur = (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4)
-        if math.isclose(denominateur, 0, abs_tol=1e-6):
-            if not curvilinear_abscissa:
-                return None
-            else:
-                return None, None, None
-        else:
-            x = (x1*y2-y1*x2)*(x3-x4)-(x1-x2)*(x3*y4-y3*x4)
-            x = x / denominateur
-            y = (x1*y2-y1*x2)*(y3-y4)-(y1-y2)*(x3*y4-y3*x4)
-            y = y / denominateur
-            if not curvilinear_abscissa:
-                return cls((x,y))
-            else:
-                t = (x1-x3)*(y3-y4)-(y1-y3)*(x3-x4)
-                t = t / denominateur
-                u = (x1-x2)*(y1-y3)-(y1-y2)*(x1-x3)
-                u = -u / denominateur
-                return (cls((x,y)), t, u)
-
-
-    def plot_data(self, marker=None, color='black', size=1,
-                  opacity=1, arrow=False, stroke_width=None):
-        return {'type' : 'point',
-                'data' : [self.vector[0], self.vector[1]],
-                'color' : color,
-                'marker' : marker,
-                'size' : size,
-                'opacity' : opacity
-                }
-
-    @classmethod
-    def MiddlePoint(cls, point1, point2):
-        return (point1 + point2)*0.5
-
-    @classmethod
-    def LineProjection(cls, point, line):
-        p1, p2 = line.points
-        n = line.NormalVector(unit=True)
-        pp1 = point - p1
-        return  pp1 - pp1.Dot(n)*n + p1
-
-o2D = Point2D((0, 0))
-O2D = Point2D((0, 0))
-
-class Basis(dc.DessiaObject):
-    """
-    Abstract class of a basis
-    """
-    def __getitem__(self, key):
-        return self.vectors[key]
-
-    def __setitem__(self, key, item):
-        self.vectors[key] = item
-
-    def __contains__(self, vector):
-        return vector in self.vectors
-
-    def __eq__(self, other_basis):
-        all_equal = all([other_vector == vector\
-                         for other_vector, vector\
-                         in zip(other_basis.vectors, self.vectors)])
-        return all_equal
-
-    def __hash__(self):
-        return hash(self.vectors)
-
-#    def Dict(self):
-#        d = {'vectors' : [vector.Dict() for vector in self.vectors],
-#             'object_class' : self.full_classname}
-
-        # return d
-
-    def copy(self):
-        return self.__class__(*self.vectors)
-
-class Basis2D(Basis):
-    """
-    Defines a 2D basis
-    :param u: first vector of the basis
-    :param v: second vector of the basis
-    """
-    def __init__(self, u, v):
-        self.u = u
-        self.v = v
-
-    def __neg__(self):
-        Pinv = self.InverseTransferMatrix()
-        return Basis2D(Vector3D(Pinv[:, 0]),
-                       Vector3D(Pinv[:, 1]))
-
-    def __repr__(self):
-        return '{}: U={}, V={}'.format(self.__class__.__name__, *self.vectors)
-
-    def _get_vectors(self):
-        return (self.u, self.v)
-
-    vectors = property(_get_vectors)
-
-
-    def to_frame(self, origin):
-        return Frame2D(origin, self.u, self.v)
-
-
-    def TransferMatrix(self):
-        return npy.array([[self.u[0], self.v[0]],
-                          [self.u[1], self.v[1]]])
-
-    def InverseTransferMatrix(self):
-        det = self.u[0]*self.v[1] - self.v[0]*self.u[1]
-        if not math.isclose(det, 0, abs_tol=1e-10):
-            return 1/det * npy.array([[self.v[1], -self.v[0]],
-                                     [-self.u[1], self.u[0]]])
-        else:
-            raise ZeroDivisionError
-
-    def NewCoordinates(self, vector):
-        matrix = self.InverseTransferMatrix()
-        return Point2D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1],
-                         matrix[1][0]*vector[0] + matrix[1][1]*vector[1]))
-
-    def OldCoordinates(self, vector):
-        matrix = self.TransferMatrix()
-        return Point2D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1],
-                         matrix[1][0]*vector[0] + matrix[1][1]*vector[1]))
-
-    def Rotation(self, angle, copy=True):
-        center = o2D
-        new_u = self.u.Rotation(center, angle, True)
-        new_v = self.v.Rotation(center, angle, True)
-
-        if copy:
-            return Basis2D(new_u, new_v)
-        self.u = new_u
-        self.v = new_v
-
-    def Copy(self):
-        return Basis2D(self.u, self.v)
-
-#    @classmethod
-#    def DictToObject(cls, dict_):
-#        vectors = [Vector2D.DictToObject(vector_dict) for vector_dict in dict_['vectors']]
-#        return cls(*vectors)
-
-XY = Basis2D(x2D, y2D)
-
-class Frame2D(Basis2D):
-    """
-    Defines a 2D basis
-    :param origin: origin of the basis
-    :param u: first vector of the basis
-    :param v: second vector of the basis
-    """
-    def __init__(self, origin, u, v):
-        self.origin = origin
-        Basis2D.__init__(self, u, v)
-
-    def __repr__(self):
-        return '{}: O={} U={}, V={}'.format(self.__class__.__name__, self.origin, self.u, self.v)
-
-    def __neg__(self):
-        Pinv = self.InverseTransferMatrix()
-        new_origin = Point2D(npy.dot(Pinv, self.origin.vector))
-        return Frame2D(new_origin,
-                       Vector2D(Pinv[:, 0]),
-                       Vector2D(Pinv[:, 1]))
-
-
-    def __add__(self, other_frame):
-        P1 = self.TransferMatrix()
-        new_origin = Point2D(npy.dot(P1, other_frame.origin.vector) + self.origin.vector)
-        M = npy.dot(P1, other_frame.TransferMatrix())
-        return Frame2D(new_origin,
-                       Vector2D(M[:, 0]),
-                       Vector2D(M[:, 1]))
-
-
-    def __sub__(self, other_frame):
-        P1inv = other_frame.InverseTransferMatrix()
-        P2 = self.TransferMatrix()
-        new_origin = Point2D(npy.dot(P1inv, (self.origin - other_frame.origin).vector))
-        M = npy.dot(P1inv, P2)
-        return Frame2D(new_origin,
-                       Vector2D(M[:, 0]),
-                       Vector2D(M[:, 1]))
-
-    def Basis(self):
-        return Basis2D(self.u, self.v)
-
-    def NewCoordinates(self, vector):
-        return Basis2D.NewCoordinates(self, vector - self.origin)
-
-    def OldCoordinates(self, vector):
-        return Basis2D.OldCoordinates(self, vector) + self.origin
-
-    def Translation(self, vector, copy=True):
-        new_origin = self.origin.Translation(vector, True)
-        if copy:
-            return Frame2D(new_origin, self.u, self.v)
-        self.origin = new_origin
-
-
-    def Rotation(self, angle, copy=True):
-        new_base = Basis2D.Rotation(self, angle, True)
-        if copy:
-            new_frame = Frame2D(self.origin, new_base.u, new_base.v)
-            return new_frame
-        self.u = new_base.u
-        self.v = new_base.v
-
-    def Draw(self, ax=None, style='ok'):
-        if ax is None:
-            fig, ax = plt.subplots()
-
-        ax.plot(*self.origin.vector, style)
-        self.u.plot(origin=self.origin, ax=ax, color='r')
-        self.v.plot(origin=self.origin, ax=ax, color='g')
-        ax.axis('equal')
-
-    def Copy(self):
-        return Frame2D(self.origin, self.u, self.v)
-
-#oxy = Frame2D(o2D, x2D, y2D)
-OXY = Frame2D(o2D, x2D, y2D)
 
 class Primitive2D(dc.DessiaObject):
     def __init__(self, name=''):
@@ -1052,7 +427,7 @@ class Contour2D(Wire2D):
         if area > 0.:
             c = area*self.polygon.CenterOfMass()
         else:
-            c = o2D
+            c = O2D
 
         for arc in self.internal_arcs:
             arc_area = arc.Area()
@@ -2099,373 +1474,7 @@ class Primitive3D(dc.DessiaObject):
         if basis_primitives is None:
             self.primitives = []
 
-class Vector3D(Vector):
 
-    # _jsonschema = {
-    #     "definitions": {},
-    #     "$schema": "http://json-schema.org/draft-07/schema#",
-    #     "type": "object",
-    #     "title": "powerpack.mechanical.Vector3D Base Schema",
-    #     "required": ["vector"],
-    #     "properties": {
-    #         'vector' : {
-    #             "type" : "array",
-    #             "order" : 0,
-    #             "items" : {
-    #                 "type" : "number",
-    #                 "step" : 1,
-    #                 "minimum" : -1,
-    #                 "maximum" : 1
-    #                 },
-    #             "minItems": 3,
-    #             "maxItems": 3,
-    #             "examples": [[1, 0, 0]],
-    #             "editable" : True,
-    #             "description" : "Vector array"
-    #             }
-    #         }
-    #     }
-
-    def __init__(self, vector:List[float], name:str=''):
-        self.vector = [0, 0, 0]
-#        self.vector = npy.zeros(3)
-        self.vector[0] = vector[0]
-        self.vector[1] = vector[1]
-        self.vector[2] = vector[2]
-        self.name = name
-
-    def __add__(self, other_vector):
-        return Vector3D(add3D(self.vector, other_vector.vector))
-
-    def __neg__(self):
-        return Vector3D((-self.vector[0], -self.vector[1], -self.vector[2]))
-
-    def __sub__(self, other_vector):
-        return Vector3D(sub3D(self.vector, other_vector.vector))
-
-    def __mul__(self, value):
-        return Vector3D(mul3D(self.vector, value))
-
-    def __truediv__(self, value):
-        if value == 0:
-            raise ZeroDivisionError
-        return Vector3D((self.vector[0] / value,
-                         self.vector[1] / value,
-                         self.vector[2] / value))
-
-    def __round__(self, ndigits=6):
-        return self.__class__((round(self.vector[0], ndigits),
-                               round(self.vector[1], ndigits),
-                               round(self.vector[2], ndigits)))
-
-    def __hash__(self):
-        return int(1000*(self.vector[0]+self.vector[1]+self.vector[2]))
-
-    def __eq__(self, other_vector):
-        if self.__class__ != other_vector.__class__:
-            return False
-        return math.isclose(self.vector[0], other_vector.vector[0], abs_tol=1e-08) \
-        and math.isclose(self.vector[1], other_vector.vector[1], abs_tol=1e-08) \
-        and math.isclose(self.vector[2], other_vector.vector[2], abs_tol=1e-08)
-
-    def Dot(self, other_vector):
-        return Vector3DDot(self.vector, other_vector.vector)
-
-    def Cross(self, other_vector):
-        return self.__class__(vector3D_cross(self.vector, other_vector.vector))
-
-    def Norm(self):
-        return Vector3DNorm(self.vector)
-
-
-    def Normalize(self):
-        """
-        Normalize the vector modifying it's coordinate
-        """
-        n = self.Norm()
-        if n == 0:
-            raise ZeroDivisionError
-
-        self.vector[0] /= n
-        self.vector[1] /= n
-        self.vector[2] /= n
-
-    def point_distance(self, point2):
-        return (self-point2).Norm()
-
-    def Rotation(self, center, axis, angle, copy=True):
-        """
-        Rotation of angle around axis.
-        Used Rodrigues Formula:
-            https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
-        """
-#        u = self - center
-#        vector2 = (math.cos(angle)*u
-#                   + (1-math.cos(angle))*(u.Dot(axis))*axis
-#                   + math.sin(angle)*axis.Cross(u)
-#                   + center)
-        vector2 = vector3D_rotation(self.vector, center.vector, axis.vector, angle)
-
-        if copy:
-            return Point3D(vector2)
-        else:
-            self.vector = list(vector2)
-
-    def x_rotation(self, angle, copy=True):
-        """
-        Rotation of angle around X axis.
-        """
-        cos_angle = math.cos(angle)
-        sin_angle = math.sin(angle)
-
-        y1 = cos_angle * self.vector[1] + sin_angle * self.vector[2]
-        z1 = -sin_angle * self.vector[1] + cos_angle * self.vector[2]
-
-
-        if copy:
-            return Point3D([self.vector[0], y1, z1])
-        else:
-            self.vector[1] = y1
-            self.vector[2] = z1
-
-    def y_rotation(self, angle, copy=True):
-        """
-        Rotation of angle around Y axis.
-        """
-        cos_angle = math.cos(angle)
-        sin_angle = math.sin(angle)
-
-        z1 = cos_angle * self.vector[2] + sin_angle * self.vector[0]
-        x1 = -sin_angle * self.vector[2] + cos_angle * self.vector[0]
-
-
-        if copy:
-            return Point3D([x1, self.vector[1], z1])
-        else:
-            self.vector[0] = x1
-            self.vector[2] = z1
-
-    def z_rotation(self, angle, copy=True):
-        """
-        Rotation of angle around Z axis.
-        """
-        cos_angle = math.cos(angle)
-        sin_angle = math.sin(angle)
-
-        x1 = cos_angle * self.vector[0] + sin_angle * self.vector[1]
-        y1 = -sin_angle * self.vector[0] + cos_angle * self.vector[1]
-
-
-        if copy:
-            return Point3D([x1, y1, self.vector[2]])
-        else:
-            self.vector[0] = x1
-            self.vector[1] = y1
-
-    def Translation(self, offset, copy=True):
-        if copy:
-            return self + offset
-        else:
-            self.vector = [self.vector[0] + offset[0],
-                           self.vector[1] + offset[1],
-                           self.vector[2] + offset[2]]
-
-    def frame_mapping(self, frame, side, copy=True):
-        """
-        side = 'old' or 'new'
-        """
-        if side == 'old':
-            new_vector = frame.OldCoordinates(self)
-            if copy:
-                return new_vector
-            else:
-                self.vector = new_vector.vector
-
-        if side == 'new':
-            new_vector = frame.NewCoordinates(self)
-            if copy:
-                return new_vector
-            else:
-                self.vector = new_vector.vector
-
-    def PlaneProjection3D(self, plane_origin, x, y):
-        z = x.Cross(y)
-        z.Normalize()
-        return self - z.Dot(self-plane_origin)*z
-
-    def PlaneProjection2D(self, x, y):
-        z = x.Cross(y)
-        z.Normalize()
-        p3d = self - self.Dot(z)*z
-        u1 = p3d.Dot(x)
-        u2 = p3d.Dot(y)
-        return Point2D((u1, u2))
-
-
-    def To2D(self, plane_origin, x, y):
-        x2d = self.Dot(x) - plane_origin.Dot(x)
-        y2d = self.Dot(y) - plane_origin.Dot(y)
-        return Point2D((x2d,y2d))
-
-    def RandomUnitNormalVector(self):
-        """
-        Returns a random normal vector
-        """
-        v = Vector3D(npy.random.random(3))
-
-        v = v - v.Dot(self)*self/(self.Norm()**2)
-        v.Normalize()
-        return v
-    
-    def DeterministicUnitNormalVector(self):
-        """
-        Retuns a deterministic normal vector
-        """
-        v = X3D
-        if not math.isclose(self.vector[1], 0, abs_tol=1e-5) \
-        or not math.isclose(self.vector[2], 0, abs_tol=1e-5):
-            v = X3D
-        else:
-            v = Y3D
-        v = v - v.Dot(self)*self/(self.Norm()**2)
-        v.Normalize()
-        return v
-
-    def Copy(self):
-        return Vector3D(self.vector)
-    
-    @classmethod
-    def random(cls, xmin, xmax, ymin, ymax, zmin, zmax):
-        return cls((random.uniform(xmin, xmax),
-                   random.uniform(ymin, ymax),
-                   random.uniform(zmin, zmax)))
-
-#    @classmethod
-#    def DictToObject(cls, dict_):
-#        return cls(dict_['vector'])
-
-    @classmethod
-    def from_step(cls, arguments, object_dict):
-        if type(arguments[1]) is int:
-        # VECTOR
-            return cls(object_dict[arguments[1]], arguments[0][1:-1])
-        else:
-        # DIRECTION
-            return cls([float(i)/1000 for i in arguments[1][1:-1].split(",")],
-                        arguments[0][1:-1])
-
-    def MPLPlot(self, ax=None, starting_point=None, color=''):
-        if ax is None:
-            fig, ax = plt.subplots()
-            ax.set_aspect('equal')
-        else:
-            fig = ax.figure
-
-        if starting_point is None:
-            starting_point = Point3D((0,0,0))
-        if ax is None:
-            fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
-        xs = [starting_point[0], self.vector[0]+starting_point[0]]
-        ys = [starting_point[1], self.vector[1]+starting_point[1]]
-        zs = [starting_point[2], self.vector[2]+starting_point[2]]
-        if color:
-            a = Arrow3D(xs, ys, zs, mutation_scale=10, lw=3, arrowstyle="-|>", color=color)
-        else:
-            a = Arrow3D(xs, ys, zs, mutation_scale=10, lw=3, arrowstyle="-|>")
-        ax.add_artist(a)
-        return fig, ax
-
-
-x3D = Vector3D((1, 0, 0))
-y3D = Vector3D((0, 1, 0))
-z3D = Vector3D((0, 0, 1))
-
-X3D = Vector3D((1, 0, 0))
-Y3D = Vector3D((0, 1, 0))
-Z3D = Vector3D((0, 0, 1))
-
-
-class Point3D(Vector3D):
-    _standalone_in_db = False
-    # _jsonschema = {
-    #     "definitions": {},
-    #     "$schema": "http://json-schema.org/draft-07/schema#",
-    #     "type": "object",
-    #     "title": "powerpack.mechanical.Point3D Base Schema",
-    #     "required": ["vector"],
-    #     "properties": {
-    #         'vector' : {
-    #             "type" : "object",
-    #             "order" : 0,
-    #             "classes" : ["volmdlr.core.Vector3D"],
-    #             "editable" : True,
-    #             "description" : "Vector array"
-    #             }
-    #         }
-    #     }
-
-    def __init__(self, vector:List[float], name:str=''):
-        Vector3D.__init__(self, vector, name)
-
-    def __add__(self, other_vector):
-        return Point3D(add3D(self.vector, other_vector.vector))
-
-    def __neg__(self):
-        return Point3D((-self.vector[0], -self.vector[1], -self.vector[2]))
-
-    def __sub__(self, other_vector):
-        return Point3D(sub3D(self.vector, other_vector.vector))
-
-    def __mul__(self, value):
-        return Point3D(mul3D(self.vector, value))
-
-    def __truediv__(self, value):
-        if value == 0:
-            raise ZeroDivisionError
-        return Point3D((self.vector[0] / value,
-                        self.vector[1] / value,
-                        self.vector[2] / value))
-
-    def Copy(self):
-        return Point3D(self.vector)
-
-    def copy(self):
-        return Point3D(self.vector)
-
-    def MPLPlot(self, ax=None):
-
-        if ax is None:
-            fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
-        else:
-            fig = ax.figure
-
-        ax.scatter(*self.vector)
-        return fig, ax
-
-
-    def To2D(self, plane_origin, x, y):
-        x2d = self.Dot(x) - plane_origin.Dot(x)
-        y2d = self.Dot(y) - plane_origin.Dot(y)
-        return Point2D((x2d,y2d))
-
-    @classmethod
-    def from_step(cls, arguments, object_dict):
-        return cls([float(i)/1000 for i in arguments[1][1:-1].split(",")],
-                    arguments[0][1:-1])
-
-    def Babylon(self):
-        s = 'var sphere = BABYLON.MeshBuilder.CreateSphere("point", {diameter: 0.05}, scene);\n'
-        s += "sphere.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));\n".format(self.vector[0],self.vector[1],self.vector[2])
-        s += 'var mat = new BABYLON.StandardMaterial("mat", scene);\n'
-        s += 'mat.diffuseColor = new BABYLON.Color3(1, 0, 0);\n'
-        s += 'sphere.material = mat;\n'
-        return s
-
-
-o3D = Point3D((0, 0, 0))
-O3D = Point3D((0, 0, 0))
 
 
 class Plane3D(Primitive3D):
@@ -2494,6 +1503,9 @@ class Plane3D(Primitive3D):
         dict_ = dc.DessiaObject.base_dict(self)
         dict_['vector1'] = self.vectors[0].to_dict()
         dict_['vector2'] = self.vectors[1].to_dict()
+        dict_['origin'] = self.origin.to_dict()
+        dict_['name'] = self.name
+        dict_['object_class'] = 'volmdlr.core.Plane3D'
         return dict_
 
     @classmethod
@@ -2694,191 +1706,7 @@ PLANE3D_OXY = Plane3D(O3D, X3D, Y3D)
 PLANE3D_OYZ = Plane3D(O3D, Y3D, Z3D)
 PLANE3D_OZX = Plane3D(O3D, Z3D, X3D)
 
-class Basis3D(Basis):
-    """
-    Defines a 3D basis
-    :param u: first vector of the basis
-    :param v: second vector of the basis
-    :param w: third vector of the basis
-    """
-    _standalone_in_db = False
-    # _jsonschema = {
-    #     "definitions": {},
-    #     "$schema": "http://json-schema.org/draft-07/schema#",
-    #     "type": "object",
-    #     "title": "powerpack.mechanical.Basis3D Base Schema",
-    #     "required": ['vectors'],
-    #     "properties": {
-    #         'vectors' : {
-    #             'type' : 'array',
-    #             'items' : {
-    #                 'type' : 'object',
-    #                 "editable" : True,
-    #                 'classes' : ['volmdlr.core.Vector3D']
-    #                 },
-    #             'order' : 0,
-    #             'editable' : True
-    #             }
-    #         }
-    #     }
 
-    # TODO: create a Basis and Frame class to mutualize between 2D and 2D
-    def __init__(self, u, v, w, name=''):
-        self.u = u
-        self.v = v
-        self.w = w
-        self.name = name
-
-    def __hash__(self):
-        return hash(self.u) + hash(self.v) + hash(self.w)
-
-    def __add__(self, other_basis):
-        M = self.TransferMatrix()*other_basis.TransferMatrix()
-        return Basis3D(Vector3D((M.M11, M.M21, M.M31)),
-                       Vector3D((M.M12, M.M22, M.M32)),
-                       Vector3D((M.M13, M.M23, M.M33)))
-
-
-    def __neg__(self):
-        M = self.InverseTransferMatrix()
-        return Basis3D(Vector3D((M.M11, M.M21, M.M31)),
-                       Vector3D((M.M12, M.M22, M.M32)),
-                       Vector3D((M.M13, M.M23, M.M33)))
-
-    def __sub__(self, other_frame):
-        P1inv = other_frame.InverseTransferMatrix()
-        P2 = self.TransferMatrix()
-        M = P1inv * P2
-        return Basis3D(Vector3D((M.M11, M.M21, M.M31)),
-                       Vector3D((M.M12, M.M22, M.M32)),
-                       Vector3D((M.M13, M.M23, M.M33)))
-
-    def __round__(self, ndigits=6):
-        return self.__class__((round(self.u, ndigits),
-                               round(self.v, ndigits),
-                               round(self.w, ndigits)))
-
-    def __repr__(self):
-        return '{}: U={}, V={}, W={}'.format(self.__class__.__name__, *self.vectors)
-
-    def _get_vectors(self):
-        return (self.u, self.v, self.w)
-
-    vectors = property(_get_vectors)
-
-    @classmethod
-    def from_two_vectors(cls, vector1, vector2):
-        """
-        Create a basis with first vector1 adimensionned, as u, v is the vector2 substracted of u component,
-        w is the cross product of u and v
-        """
-        u = vector1.copy()
-        u.Normalize()
-        v = vector2 - vector2.Dot(vector1)*vector1
-        v.Normalize()
-        w = u.Cross(v)
-
-        return Basis3D(u, v, w)
-
-    def to_frame(self, origin):
-        return Frame3D(origin, self.u, self.v, self.w)
-
-    def Rotation(self, axis, angle, copy=True):
-        center = o3D
-        new_u = self.u.Rotation(center, axis, angle, True)
-        new_v = self.v.Rotation(center, axis, angle, True)
-        new_w = self.w.Rotation(center, axis, angle, True)
-
-        if copy:
-            return Basis3D(new_u, new_v, new_w, self.name)
-        else:
-            self.u = new_u
-            self.v = new_v
-            self.w = new_w
-
-    def x_rotation(self, angle, copy=True):
-        new_u = self.u.x_rotation(angle, True)
-        new_v = self.v.x_rotation(angle, True)
-        new_w = self.w.x_rotation(angle, True)
-
-        if copy:
-            return Basis3D(new_u, new_v, new_w, self.name)
-        else:
-            self.u = new_u
-            self.v = new_v
-            self.w = new_w
-
-    def y_rotation(self, angle, copy=True):
-        new_u = self.u.y_rotation(angle, True)
-        new_v = self.v.y_rotation(angle, True)
-        new_w = self.w.y_rotation(angle, True)
-
-        if copy:
-            return Basis3D(new_u, new_v, new_w, self.name)
-        else:
-            self.u = new_u
-            self.v = new_v
-            self.w = new_w
-
-    def z_rotation(self, angle, copy=True):
-        new_u = self.u.z_rotation(angle, True)
-        new_v = self.v.z_rotation(angle, True)
-        new_w = self.w.z_rotation(angle, True)
-
-        if copy:
-            return Basis3D(new_u, new_v, new_w, self.name)
-        else:
-            self.u = new_u
-            self.v = new_v
-            self.w = new_w
-
-    def EulerRotation(self, angles, copy=True):
-        psi, theta, phi = angles
-        center = o3D
-
-        vect_u = self.u.Copy()
-        vect_v = self.v.Copy()
-        vect_w = self.w.Copy()
-
-        # Rotation around w
-        vect_u.Rotation(center, vect_w, psi, False)
-        vect_v.Rotation(center, vect_w, psi, False)
-
-        # Rotation around v
-        vect_v.Rotation(center, vect_u, theta, False)
-        vect_w.Rotation(center, vect_u, theta, False)
-
-        # Rotation around w
-        vect_u.Rotation(center, vect_w, phi, False)
-        vect_v.Rotation(center, vect_w, phi, False)
-
-        if copy:
-            return Basis3D(vect_u, vect_v, vect_w)
-        self.u = vect_u
-        self.v = vect_v
-        self.w = vect_w
-
-    def TransferMatrix(self):
-        return Matrix33(self.u.vector[0], self.v.vector[0], self.w.vector[0],
-                        self.u.vector[1], self.v.vector[1], self.w.vector[1],
-                        self.u.vector[2], self.v.vector[2], self.w.vector[2])
-#        return npy.array([[self.u[0], self.v[0], self.w[0]],
-#                          [self.u[1], self.v[1], self.w[1]],
-#                          [self.u[2], self.v[2], self.w[2]]])
-
-    def InverseTransferMatrix(self):
-        return self.TransferMatrix().inverse()
-
-    def NewCoordinates(self, vector):
-        matrix = self.InverseTransferMatrix()
-        return matrix.vector_multiplication(vector)
-
-    def OldCoordinates(self, point):
-        matrix = self.TransferMatrix()
-        return matrix.vector_multiplication(point)
-
-    def copy(self):
-        return Basis3D(self.u, self.v, self.w)
 
 #    @classmethod
 #    def DictToObject(cls, dict_):
@@ -2886,152 +1714,17 @@ class Basis3D(Basis):
 #        return cls(*vectors)
 
 
-#xyz = Basis3D(x3D, y3D, z3D)
-XYZ = Basis3D(x3D, y3D, z3D)
-YZX = Basis3D(y3D, z3D, x3D)
-ZXY = Basis3D(z3D, x3D, y3D)
 
-class Frame3D(Basis3D):
-    """
-    Defines a 3D frame
-    :param origin: origin of the basis
-    :param u: first vector of the basis
-    :param v: second vector of the basis
-    :param w: third vector of the basis
-    """
-    def __init__(self, origin:Point3D, u:Vector3D, v:Vector3D, w:Vector3D, name:str=''):
-        self.origin = origin
-        Basis3D.__init__(self, u, v, w)
-        self.name = name
-
-    def __repr__(self):
-        return '{}: O={} U={}, V={}, W={}'.format(self.__class__.__name__,
-                                                  self.origin,
-                                                  self.u, self.v, self.w)
+XYZ = Basis3D(X3D, Y3D, Z3D)
+YZX = Basis3D(Y3D, Z3D, X3D)
+ZXY = Basis3D(Z3D, X3D, Y3D)
 
 
-    def __neg__(self):
-        M = self.InverseTransferMatrix()
-        new_origin = M.vector_multiplication(self.origin)
-        return Frame3D(new_origin,
-                       Vector3D((M.M11, M.M21, M.M31)),
-                       Vector3D((M.M12, M.M22, M.M32)),
-                       Vector3D((M.M13, M.M23, M.M33)))
-
-
-    def __add__(self, other_frame):
-        P1 = self.TransferMatrix()
-        new_origin = P1.vector_multiplication(other_frame.origin) + self.origin
-
-
-        M = P1 * other_frame.TransferMatrix()
-        return Frame3D(new_origin,
-                       Vector3D((M.M11, M.M21, M.M31)),
-                       Vector3D((M.M12, M.M22, M.M32)),
-                       Vector3D((M.M13, M.M23, M.M33)))
-
-
-    def __sub__(self, other_frame):
-        P1inv = other_frame.InverseTransferMatrix()
-        P2 = self.TransferMatrix()
-        new_origin = P1inv.vector_multiplication(self.origin - other_frame.origin)
-        M = P1inv * P2
-        return Frame3D(new_origin,
-                       Vector3D((M.M11, M.M21, M.M31)),
-                       Vector3D((M.M12, M.M22, M.M32)),
-                       Vector3D((M.M13, M.M23, M.M33)))
-
-    def __round__(self, ndigits=6):
-        return self.__class__(round(self.origin, ndigits),
-                              round(self.u, ndigits),
-                              round(self.v, ndigits),
-                              round(self.w, ndigits))
-
-    def __hash__(self):
-        return hash(self.u) + hash(self.v) + hash(self.w) + hash(self.origin)
-
-    def Basis(self):
-        return Basis3D(self.u, self.v, self.w)
-
-    def NewCoordinates(self, vector):
-        return Basis3D.NewCoordinates(self, vector - self.origin)
-
-    def OldCoordinates(self, vector):
-        return Basis3D.OldCoordinates(self, vector) + self.origin
-
-    def Rotation(self, axis, angle, copy=True):
-        new_base = Basis3D.Rotation(self, axis, angle, True)
-        if copy:
-            new_frame = Frame3D(self.origin, new_base.u, new_base.v, new_base.w, self.name)
-            return new_frame
-        self.u = new_base.u
-        self.v = new_base.v
-        self.w = new_base.w
-
-    def Translation(self, offset, copy=True):
-        if copy:
-            return Frame3D(self.origin.Translation(offset), self.u, self.v, self.w, self.name)
-        self.origin.Translation(offset, copy=False)
-
-    def copy(self):
-        return Frame3D(self.origin.Copy(), self.u.Copy(), self.v.Copy(), self.w.Copy())
-
-    def plot2d(self, x=x3D, y=y3D, ax=None, color='k'):
-        if ax is None:
-            fig, ax = plt.subplots()
-        else:
-            fig = ax.figure
-
-        origin2d = self.origin.To2D(o3D, x, y)
-
-        for iv, vector in enumerate(self.vectors):
-            vector2D = vector.To2D(o3D, x, y)
-            if vector2D.Norm() > 1e-8:
-                vector2D.plot(origin=origin2d, ax=ax, color=color, label=str(iv+1))
-
-        return fig, ax
-
-
-    @classmethod
-    def from_step(cls, arguments, object_dict):
-        origin = object_dict[arguments[1]]
-        if arguments[2] == '$':
-            u = None
-        else:
-            u = object_dict[arguments[2]]
-        if arguments[3] == '$':
-            v = None
-        else:
-            v = object_dict[arguments[3]]
-        if u is None or v is None:
-            w = None
-        else:
-            w = u.Cross(v)
-        return cls(origin, u, v, w, arguments[0][1:-1])
-
-    def babylonjs(self, size=0.1, parent=None):
-        s = 'var origin = new BABYLON.Vector3({},{},{});\n'.format(*self.origin)
-        s += 'var o_u = new BABYLON.Vector3({}, {}, {});\n'.format(*(size*self.u+self.origin))
-        s += 'var o_v = new BABYLON.Vector3({}, {}, {});\n'.format(*(size*self.v+self.origin))
-        s += 'var o_w = new BABYLON.Vector3({}, {}, {});\n'.format(*(size*self.w+self.origin))
-        s += 'var line1 = BABYLON.MeshBuilder.CreateTube("frame_U", {{path: [origin, o_u], radius: {}}}, scene);'.format(0.03*size)
-        s += 'line1.material = red_material;\n'
-        s += 'var line2 = BABYLON.MeshBuilder.CreateTube("frame_V", {{path: [origin, o_v], radius: {}}}, scene);'.format(0.03*size)
-        s += 'line2.material = green_material;\n'
-        s += 'var line3 = BABYLON.MeshBuilder.CreateTube("frame_W", {{path: [origin, o_w], radius: {}}}, scene);'.format(0.03*size)
-        s += 'line3.material = blue_material;\n'
-        if parent is not None:
-            s += 'line1.parent = {};\n'.format(parent)
-            s += 'line2.parent = {};\n'.format(parent)
-            s += 'line3.parent = {};\n'.format(parent)
-
-        return s
 
 
 OXYZ = Frame3D(O3D, X3D, Y3D, Z3D)
 OYZX = Frame3D(O3D, Y3D, Z3D, X3D)
 OZXY = Frame3D(O3D, Z3D, X3D, Y3D)
-
 
 class Line3D(Primitive3D, Line):
     _non_eq_attributes = ['name', 'basis_primitives', 'bounding_box']
@@ -3421,7 +2114,7 @@ class Arc3D(Primitive3D):
         y = []
         for i in range(30):
             p = self.PointAtCurvilinearAbscissa(i/(29.)*l)
-            xi, yi = p.PlaneProjection2D(x3D, y3D)
+            xi, yi = p.PlaneProjection2D(X3D, Y3D)
             x.append(xi)
             y.append(yi)
         ax.plot(x, y, color=color)
@@ -3738,7 +2431,14 @@ class LineSegment3D(Edge3D):
         dict_ = dc.DessiaObject.base_dict(self)
         dict_['point1'] = self.points[0].to_dict()
         dict_['point2'] = self.points[1].to_dict()
+        dict_['object_class'] = 'volmdlr.core.LineSegment3D'
         return dict_
+    
+    @classmethod
+    def dict_to_object(cls, dict_):
+        return cls(point1 = Point3D.dict_to_object(dict_['point1']), 
+                   point2 = Point3D.dict_to_object(dict_['point2']), name = dict_['name'])
+                       
 
     def _bounding_box(self):
         points = self.points
@@ -3859,6 +2559,10 @@ class LineSegment3D(Edge3D):
 
 
 class Contour3D(Wire3D):
+    _non_serializable_attributes = ['points']
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['points', 'name']
+    _generic_eq = True
     """
     A collection of 3D primitives forming a closed wire3D
     """
@@ -4002,6 +2706,11 @@ class Contour3D(Wire3D):
         return Contour3D(new_edges, new_point_inside_contour, self.name)
 
 class Circle3D(Contour3D):
+    _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['name']
+    _generic_eq = True
+    
     def __init__(self, center, radius, normal, name=''):
         self.center = center
         self.radius = radius
@@ -4519,13 +3228,14 @@ class Shell3D(CompositePrimitive3D):
     _standalone_in_db = True
     _generic_eq = True
     _non_serializable_attributes  = ['bounding_box']
-    _non_eq_attributes = ['name', 'color', 'bounding_box', 'contours']
+    _non_eq_attributes = ['name', 'color', 'alpha' 'bounding_box', 'contours']
     _non_hash_attributes = []
 
-    def __init__(self, faces, name='', color=None):
+    def __init__(self, faces, name='', color=None, alpha=1.):
         self.faces = faces
         self.name = name
         self.color = color
+        self.alpha = alpha
         self.bounding_box = self._bounding_box()
 
     def __hash__(self):
@@ -4773,7 +3483,7 @@ class Shell3D(CompositePrimitive3D):
                     elif distance < distance_min:
                         distance_min, point1_min, point2_min = distance, point1, point2
 
-        mesure = Mesure(point1_min, point2_min)
+        mesure = Measure3D(point1_min, point2_min)
 
         if add_to_volumemodel is not None:
             add_to_volumemodel.primitives.append(mesure)
@@ -4792,7 +3502,7 @@ class Shell3D(CompositePrimitive3D):
                 if distance < distance_min:
                     distance_min, point1_min, point2_min = distance, point1, point2
 
-        mesure = Mesure(point1_min, point2_min)
+        mesure = Measure3D(point1_min, point2_min)
 
         if add_to_volumemodel is not None:
             add_to_volumemodel.primitives.append(mesure)
@@ -4861,12 +3571,13 @@ class Shell3D(CompositePrimitive3D):
         babylon_mesh = {'positions': positions,
                         'indices': indices,
                         'name': self.name,
+                        'alpha': self.alpha
                         }
         
         if self.color is None:
-            babylon_mesh['color'] = [0.2, 0.2, 0.2]
+            babylon_mesh['color'] = [0.8, 0.8, 0.8]
         else:
-            babylon_mesh['color'] = self.color
+            babylon_mesh['color'] = list(self.color)
         
         return [babylon_mesh]
 
@@ -4893,6 +3604,7 @@ class Shell3D(CompositePrimitive3D):
 #        s += 'mat.emissiveColor = new BABYLON.Color3(1, 1, 1);\n'
 #        s += 'mat.ambientColor = new BABYLON.Color3(0.23, 0.98, 0.53);\n'
         s += 'mat.backFaceCulling = false;\n'
+        s += 'mat.alpha = {};\n'.format(self.alpha)
         s += '{}.material = mat;\n'.format(name)
         if self.color is not None:
             s += 'mat.diffuseColor = new BABYLON.Color3({}, {}, {});\n'.format(*self.color)
@@ -5197,7 +3909,8 @@ class BoundingBox(dc.DessiaObject):
             disordered_coordinate = sorted(disordered_coordinate, key=lambda a: a[0])
             intersection_point_3d = Point3D(tuple([p[1] for p in disordered_coordinate]))
 
-            mesures = [Mesure(point1_copy, intersection_point_3d), Mesure(intersection_point_3d, point2_copy)]
+            mesures = [Measure3D(point1_copy, intersection_point_3d),
+                       Measure3D(intersection_point_3d, point2_copy)]
 
             return mesures
 
@@ -5253,9 +3966,13 @@ class BoundingBox(dc.DessiaObject):
             intersection_point2_3d = Point3D(tuple([p[1] for p in disordered_coordinate]))
 
             if point1 == point1_copy:
-                mesures = [Mesure(point1, intersection_point1_3d), Mesure(intersection_point1_3d, intersection_point2_3d), Mesure(intersection_point2_3d, point2)]
+                mesures = [Measure3D(point1, intersection_point1_3d),
+                           Measure3D(intersection_point1_3d, intersection_point2_3d),
+                           Measure3D(intersection_point2_3d, point2)]
             else:
-                mesures = [Mesure(point2, intersection_point2_3d), Mesure(intersection_point2_3d, intersection_point1_3d), Mesure(intersection_point1_3d, point1)]
+                mesures = [Measure3D(point2, intersection_point2_3d),
+                           Measure3D(intersection_point2_3d, intersection_point1_3d),
+                           Measure3D(intersection_point1_3d, point1)]
             return mesures
 
     def babylon_script(self):
@@ -5862,7 +4579,7 @@ class VolumeModel(dc.DessiaObject):
                                use_cdn=use_cdn,
                                debug=debug)
 
-    def babylonjs(self, page_name=None, use_cdn=True, debug=False):
+    def babylonjs_from_script(self, page_name=None, use_cdn=True, debug=False):
         script = self.babylon_script(use_cdn=use_cdn, debug=debug)
 
         if page_name is None:
@@ -5876,9 +4593,7 @@ class VolumeModel(dc.DessiaObject):
 
         webbrowser.open('file://' + os.path.realpath(page_name))
 
-    def babylonjs_from_meshes(self, page_name=None, use_cdn=True, debug=False):
-#        script = self.babylon_script(use_cdn=use_cdn, debug=debug)
-
+    def babylon_data(self):
         meshes = []
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
@@ -5893,8 +4608,10 @@ class VolumeModel(dc.DessiaObject):
         babylon_data = {'meshes': meshes,
                         'max_length': max_length,
                         'center': list(center)}
+        return babylon_data
 
-
+    @classmethod
+    def babylonjs_from_babylon_data(cls, babylon_data, page_name=None, use_cdn=True, debug=False):
         env = Environment(loader=PackageLoader('volmdlr', 'templates'),
                           autoescape=select_autoescape(['html', 'xml']))
 
@@ -5917,11 +4634,29 @@ class VolumeModel(dc.DessiaObject):
 
         webbrowser.open('file://' + os.path.realpath(page_name))
 
+        
+    def babylonjs(self, page_name=None, use_cdn=True, debug=False):
+        babylon_data = self.babylon_data()
+        self.babylonjs_from_babylon_data(babylon_data)
+
+
+        
+
 
 class MovingVolumeModel(VolumeModel):
     def __init__(self, primitives, step_frames, name=''):
         VolumeModel.__init__(self, primitives=primitives, name=name)
         self.step_frames = step_frames
+        
+        if not self.is_consistent():
+            raise dc.ConsistencyError
+        
+    def is_consistent(self):
+        n_primitives = len(self.primitives)
+        for frames in self.step_frames:
+            if len(frames) != n_primitives:
+                return False
+        return True
 
     def step_volume_model(self, istep):
         primitives = []
@@ -5971,6 +4706,44 @@ class MovingVolumeModel(VolumeModel):
                                orientations=orientations,
                                use_cdn=use_cdn,
                                debug=debug)
+    
+    def babylon_data(self):
+        meshes = []
+        primitives_to_meshes = []
+        for ip, primitive in enumerate(self.primitives):
+            if hasattr(primitive, 'babylon_meshes'):
+                meshes.extend(primitive.babylon_meshes())
+                primitives_to_meshes.append(ip)
+                
+        bbox = self._bounding_box()
+        center = bbox.center
+        max_length = max([bbox.xmax - bbox.xmin,
+                          bbox.ymax - bbox.ymin,
+                          bbox.zmax - bbox.zmin])
+                
+        steps = []
+        for istep, frames in enumerate(self.step_frames):
+
+
+            # step_positions = []
+            # step_orientations = []
+            step = {'time': istep}
+            for iframe, frame in enumerate(frames):
+                if iframe in primitives_to_meshes:
+                    imesh = primitives_to_meshes.index(iframe)
+                    step[imesh] = {}
+                    step[imesh]['position'] = list(frame.origin)
+                    step[imesh]['orientations'] = [list(frame.u),
+                                                    list(frame.v),
+                                                    list(frame.w)]
+
+            steps.append(step)
+        
+        babylon_data = {'meshes': meshes,
+                        'max_length': max_length,
+                        'center': list(center),
+                        'steps': steps}
+        return babylon_data
 
 
 class Routing:
@@ -6012,9 +4785,9 @@ class Routing:
         i = 0
         for pt1, pt2 in zip(all_points[:-1], all_points[1:]):
             if i%2 == 0:
-                no_collision_mesures.append(Mesure(pt1, pt2, color=(0,0,1)))
+                no_collision_mesures.append(Measure3D(pt1, pt2, color=(0,0,1)))
             else:
-                collision_mesures.append(Mesure(pt1, pt2, color=(1,0,0)))
+                collision_mesures.append(Measure3D(pt1, pt2, color=(1,0,0)))
             i += 1
 
         return no_collision_mesures, collision_mesures
@@ -6055,7 +4828,7 @@ class Routing:
         i = 0
         for pt1, pt2 in zip(all_points[:-1], all_points[1:]):
             if i%2 == 0:
-                no_collision_mesures.append(Mesure(pt1, pt2, color=(0,0,1)))
+                no_collision_mesures.append(Measure3D(pt1, pt2, color=(0,0,1)))
             else:
                 no_collision_mesures.extend(all_mesures_abscissea[i//2][0])
             i += 1

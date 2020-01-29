@@ -23,7 +23,9 @@ p4 = vm.Point2D((0.2, 0.08))
 p5 = vm.Point2D((0.16, 0.18))
 p6 = vm.Point2D((0.05, 0.20))
 
-inner_contour = primitives2D.ClosedRoundedLineSegments2D([p1, p2, p3, p4, p5, p6], {0: 0.01, 1: 0.01, 2: 0.015, 3: 0.010, 4: 0.012, 5:0.008}, True)
+inner_contour = primitives2D.ClosedRoundedLineSegments2D([p1, p2, p3, p4, p5, p6],
+                                                         {0: 0.01, 1: 0.01, 2: 0.015, 3: 0.010, 4: 0.012, 5:0.008},
+                                                         True)
 outer_contour = inner_contour.Offset(-thickness)
 
 f, a = inner_contour.MPLPlot()
@@ -31,11 +33,11 @@ outer_contour.MPLPlot(a)
 
 
 
-sides = primitives3D.ExtrudedProfile(vm.o3D, vm.x3D, vm.y3D,
+sides = primitives3D.ExtrudedProfile(vm.O3D, vm.X3D, vm.Y3D,
                                       outer_contour, [inner_contour],
-                                      (height-2*thickness) * vm.z3D, 'sides')
+                                      (height-2*thickness) * vm.Z3D, 'sides')
 
-bottom = primitives3D.ExtrudedProfile(vm.o3D, vm.x3D, vm.y3D, outer_contour, [], -thickness * vm.z3D, 'bottom')
+bottom = primitives3D.ExtrudedProfile(vm.O3D, vm.X3D, vm.Y3D, outer_contour, [], -thickness * vm.Z3D, 'bottom')
 
 screw_holes_rl = inner_contour.Offset(-(thickness+screw_holes_clearance + 0.5 * screw_holes_diameter))
 screw_holes = []
@@ -47,12 +49,12 @@ for i in range(n_screws):
 
 
 belt_outer_contour = inner_contour.Offset(-(2*screw_holes_clearance + screw_holes_diameter+thickness))
-belt = primitives3D.ExtrudedProfile(vm.z3D*(height - 2*thickness), vm.x3D, vm.y3D,
-                                      belt_outer_contour, [inner_contour]+screw_holes, thickness * vm.z3D, 'belt')
+belt = primitives3D.ExtrudedProfile(vm.Z3D*(height - 2*thickness), vm.X3D, vm.Y3D,
+                                      belt_outer_contour, [inner_contour]+screw_holes, thickness * vm.Z3D, 'belt')
 
 
 model = vm.VolumeModel([bottom, sides, belt])
-model.babylonjs_from_meshes('bottom')
+model.babylonjs()
 
 #model = vm.VolumeModel([sides])
 #model.BabylonShow('sides')
@@ -60,7 +62,8 @@ model.babylonjs_from_meshes('bottom')
 # model = vm.VolumeModel([belt])
 # model.babylonjs('belt')
 
-model.to_dict()
+dict_ = model.to_dict()
+model2 = vm.VolumeModel.dict_to_object(dict_)
 
 #casing = vm.primitives3D.Fuse([bottom, sides, belt], 'Lower Casing')
 #model = vm.VolumeModel([casing])
