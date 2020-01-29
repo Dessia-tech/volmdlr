@@ -1018,10 +1018,12 @@ class Arc2D(Primitive2D):
         return self.radius * abs(self.angle)
 
     def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
-        if self.angle>0:
+        if self.is_trigo:
             return self.start.Rotation(self.center, curvilinear_abscissa/self.radius)
+            # return self.start.Rotation(self.center, curvilinear_abscissa*self.angle)
         else:
             return self.start.Rotation(self.center, -curvilinear_abscissa/self.radius)
+            # return self.start.Rotation(self.center, -curvilinear_abscissa*self.angle)
 
     def MiddlePoint(self):
         l = self.Length()
@@ -1045,7 +1047,7 @@ class Arc2D(Primitive2D):
         alpha = abs(self.angle)
         return self.center + 4/(3*alpha)*self.radius*math.sin(alpha*0.5)*u
 
-    def MPLPlot(self, ax, color='k'):
+    def MPLPlot(self, ax=None, color='k'):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
