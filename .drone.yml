@@ -29,11 +29,13 @@ steps:
   - pip install Cython
   - python setup.py develop
 
-- name: sdist, bdist
+- name: sdist, bdist, wheel
   image: python:3.7
   commands:
-  - pip install Cython
+  - pip install Cython wheel
   - python setup.py sdist
+  - python setup.py bdist
+  - python setup.py bdist_wheel
 
 - name: upload to pypi
   image: plugins/pypi
