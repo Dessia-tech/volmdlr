@@ -46,4 +46,4 @@ babylon_data = model.babylon_data()
 for i, d in enumerate(babylon_data['steps']):
     d['label'] = 'custom label {}'.format(i+1)
     
-model.babylonjs_from_babylon_data(babylon_data, debug=True)
+model.babylonjs_from_babylon_data(babylon_data)

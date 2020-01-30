@@ -646,7 +646,7 @@ class RevolvedProfile(volmdlr.Shell3D):
                           self.angle)
 
 class Cylinder(RevolvedProfile):
-    def __init__(self, position, axis, radius, length, color=None, alpha=1, name=''):
+    def __init__(self, position, axis, radius, length, color=None, alpha=1., name=''):
         self.position = position
         axis.Normalize()
         self.axis = axis
