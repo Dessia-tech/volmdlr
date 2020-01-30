@@ -424,8 +424,8 @@ class Vector2D(Vector):
 
     @classmethod
     def random(cls, xmin, xmax, ymin, ymax):
-        return cls(random.uniform(xmin, xmax),
-                   random.uniform(ymin, ymax))
+        return cls((random.uniform(xmin, xmax),
+                    random.uniform(ymin, ymax)))
 
     def Draw(self):
         warnings.warn(
@@ -941,7 +941,7 @@ class Point3D(Vector3D):
     def copy(self):
         return Point3D(self.vector)
 
-    def MPLPlot(self, ax=None):
+    def MPLPlot(self, ax=None, color='k'):
 
         if ax is None:
             fig = plt.figure()
@@ -949,7 +949,7 @@ class Point3D(Vector3D):
         else:
             fig = ax.figure
 
-        ax.scatter(*self.vector)
+        ax.scatter(*self.vector, color=color)
         return fig, ax
 
 
