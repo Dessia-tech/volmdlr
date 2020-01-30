@@ -35,9 +35,10 @@ outer_contour.MPLPlot(a)
 
 sides = primitives3D.ExtrudedProfile(vm.O3D, vm.X3D, vm.Y3D,
                                       outer_contour, [inner_contour],
-                                      (height-2*thickness) * vm.Z3D, 'sides')
+                                      (height-2*thickness) * vm.Z3D, name='sides')
 
-bottom = primitives3D.ExtrudedProfile(vm.O3D, vm.X3D, vm.Y3D, outer_contour, [], -thickness * vm.Z3D, 'bottom')
+bottom = primitives3D.ExtrudedProfile(vm.O3D, vm.X3D, vm.Y3D, outer_contour, [],
+                                      -thickness * vm.Z3D, name='bottom')
 
 screw_holes_rl = inner_contour.Offset(-(thickness+screw_holes_clearance + 0.5 * screw_holes_diameter))
 screw_holes = []
@@ -50,10 +51,26 @@ for i in range(n_screws):
 
 belt_outer_contour = inner_contour.Offset(-(2*screw_holes_clearance + screw_holes_diameter+thickness))
 belt = primitives3D.ExtrudedProfile(vm.Z3D*(height - 2*thickness), vm.X3D, vm.Y3D,
-                                      belt_outer_contour, [inner_contour]+screw_holes, thickness * vm.Z3D, 'belt')
+                                      belt_outer_contour,
+                                      [inner_contour]+screw_holes,
+                                      thickness * vm.Z3D, name='belt')
 
 
-model = vm.VolumeModel([bottom, sides, belt])
+fig, ax = belt.outer_contour3d.MPLPlot()
+l = belt.outer_contour3d.Length()
+for i in range(100):
+    p = belt.outer_contour3d.PointAtCurvilinearAbscissa(i*l/100)
+    p.MPLPlot(ax=ax)
+
+fig, ax = belt.outer_contour3d.MPLPlot()
+# l = belt.outer_contour3d.Length()
+# for i in range(100):
+for p in belt.outer_contour3d.points:
+    p.MPLPlot(ax=ax)
+
+
+
+model = vm.VolumeModel([bottom, sides, belt], name='Casing')
 model.babylonjs()
 
 #model = vm.VolumeModel([sides])
