@@ -2045,27 +2045,7 @@ class Arc3D(Primitive3D):
     def tessellation_points(self, resolution_for_circle=40):
         number_points_tesselation = math.ceil(resolution_for_circle*abs(0.5*self.angle/math.pi))
         l = self.Length()
-        tessellation_points_3D = [self.PointAtCurvilinearAbscissa(l*i/(number_points_tesselation-1)) for i in range(number_points_tesselation)]
-#         plane = Plane3D.from_3_points(self.interior, self.start, self.end)
-#         interior_2D = self.interior.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
-#         start_2D = self.start.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
-#         end_2D = self.end.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
-#         arc2D = Arc2D(start_2D, interior_2D, end_2D)
-#         try:
-#             tessellation_points_2D = arc2D.tessellation_points(resolution_for_circle)
-#         except ValueError:
-#             print(self.start, self.interior, self.end)
-#             print(arc2D.start, arc2D.interior, arc2D.end)
-#             self.MPLPlot()
-#             raise ValueError
-# #        ax = interior_2D.MPLPlot()
-# #        start_2D.MPLPlot(ax=ax)
-# #        end_2D.MPLPlot(ax=ax)
-# #        for pt in tessellation_points_2D:
-# #            pt.MPLPlot(ax=ax)
-# #        ax.set_aspect('equal')
-# #        tessellation_points_3D = [p.To3D(self.interior, self.start, self.end) for p in tessellation_points_2D]
-#         tessellation_points_3D = [p.To3D(plane.origin, plane.vectors[0], plane.vectors[1]) for p in tessellation_points_2D]
+        tessellation_points_3D = [self.PointAtCurvilinearAbscissa(l*i/(number_points_tesselation)) for i in range(number_points_tesselation+1)]
         return tessellation_points_3D
 
     def Length(self):
