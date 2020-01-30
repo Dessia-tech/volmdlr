@@ -425,8 +425,8 @@ class Vector2D(Vector):
 
     @classmethod
     def random(cls, xmin, xmax, ymin, ymax):
-        return cls(random.uniform(xmin, xmax),
-                   random.uniform(ymin, ymax))
+        return cls((random.uniform(xmin, xmax),
+                    random.uniform(ymin, ymax)))
 
     def Draw(self):
         warnings.warn(
@@ -548,7 +548,43 @@ class Point2D(Vector2D):
                 u = (x1-x2)*(y1-y3)-(y1-y2)*(x1-x3)
                 u = -u / denominateur
                 return (cls((x,y)), t, u)
+            
+    @classmethod
+    def SegmentsIntersection(cls, segment1, segment2, curvilinear_abscissa=False):
+        x1 = segment1.points[0].vector[0]
+        y1 = segment1.points[0].vector[1]
+        x2 = segment1.points[1].vector[0]
+        y2 = segment1.points[1].vector[1]
+        x3 = segment2.points[0].vector[0]
+        y3 = segment2.points[0].vector[1]
+        x4 = segment2.points[1].vector[0]
+        y4 = segment2.points[1].vector[1]
 
+        denominateur = (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4)
+        if math.isclose(denominateur, 0, abs_tol=1e-6):
+            if not curvilinear_abscissa:
+                return None
+            else:
+                return None, None, None
+            
+        t = (x1-x3)*(y3-y4)-(y1-y3)*(x3-x4)
+        t = t / denominateur
+        u = (x1-x2)*(y1-y3)-(y1-y2)*(x1-x3)
+        u = -u / denominateur
+        if (0 <= t and t <= 1) or (0 <= u and u <= 1):
+            x = (x1*y2-y1*x2)*(x3-x4)-(x1-x2)*(x3*y4-y3*x4)
+            x = x / denominateur
+            y = (x1*y2-y1*x2)*(y3-y4)-(y1-y2)*(x3*y4-y3*x4)
+            y = y / denominateur
+            if not curvilinear_abscissa:
+                return cls((x,y))
+            else:
+                return (cls((x,y)), t, u)
+        else:
+            if not curvilinear_abscissa:
+                return None
+            else:
+                return None, None, None
 
     def plot_data(self, marker=None, color='black', size=1,
                   opacity=1, arrow=False, stroke_width=None):
@@ -906,7 +942,7 @@ class Point3D(Vector3D):
     def copy(self):
         return Point3D(self.vector)
 
-    def MPLPlot(self, ax=None):
+    def MPLPlot(self, ax=None, color='k'):
 
         if ax is None:
             fig = plt.figure()
@@ -914,7 +950,7 @@ class Point3D(Vector3D):
         else:
             fig = ax.figure
 
-        ax.scatter(*self.vector)
+        ax.scatter(*self.vector, color=color)
         return fig, ax
 
 

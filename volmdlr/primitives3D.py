@@ -154,7 +154,7 @@ class Block(volmdlr.Shell3D):
     _standalone_in_db = True
     _generic_eq = True
     _non_serializable_attributes  = ['size']
-    _non_eq_attributes = ['name', 'color', 'size', 'bounding_box', 'faces', 'contours',
+    _non_eq_attributes = ['name', 'color', 'alpha', 'size', 'bounding_box', 'faces', 'contours',
                           'plane', 'points', 'polygon2D']
     _non_hash_attributes = []
 
@@ -163,12 +163,14 @@ class Block(volmdlr.Shell3D):
     :param frame: a frame 3D. The origin of the frame is the center of the block,
      the 3 vectors are defining the edges. The frame has not to be orthogonal
     """
-    def __init__(self, frame:volmdlr.Frame3D, name:str='', color:Tuple[float, float, float]=None):
+    def __init__(self, frame:volmdlr.Frame3D, *,
+                 color:Tuple[float, float, float]=None, alpha:float=1.,
+                 name:str=''):
         self.frame = frame
         self.size = (self.frame.u.Norm(), self.frame.v.Norm(), self.frame.w.Norm())
 
         faces = self.shell_faces()
-        volmdlr.Shell3D.__init__(self, faces, name, color)
+        volmdlr.Shell3D.__init__(self, faces,  color=color, alpha=alpha, name=name)
 
     # def __hash__(self):
     #     return hash(self.frame)
@@ -219,7 +221,7 @@ class Block(volmdlr.Shell3D):
     def Rotation(self, center, axis, angle, copy=True):
         if copy:
             new_frame = self.frame.Rotation(center, axis, angle, copy=True)
-            return Block(new_frame, self.name, self.color)
+            return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
         else:
             self.frame.Rotation(center, axis, angle, copy=False)
             volmdlr.Shell3D.Rotation(self, center, axis, angle, copy=False)
@@ -227,7 +229,7 @@ class Block(volmdlr.Shell3D):
     def Translation(self, offset, copy=True):
         if copy:
             new_frame = self.frame.Translation(offset, copy=True)
-            return Block(new_frame, self.name, self.color)
+            return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
         else:
             self.frame.Translation(offset, copy=False)
             volmdlr.Shell3D.Translation(self, offset, copy=False)
@@ -244,7 +246,7 @@ class Block(volmdlr.Shell3D):
             new_w = basis.NewCoordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
             if copy:
-                return Block(new_frame, self.name, self.color)
+                return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
             else:
                 self.frame = new_frame
                 volmdlr.Shell3D.frame_mapping(self, frame, side, copy=False)
@@ -256,7 +258,7 @@ class Block(volmdlr.Shell3D):
             new_w = basis.OldCoordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
             if copy:
-                return Block(new_frame, self.name, self.color)
+                return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
             else:
                 self.frame = new_frame
                 volmdlr.Shell3D.frame_mapping(self, frame, side, copy=False)
@@ -267,7 +269,7 @@ class Block(volmdlr.Shell3D):
         new_v = self.frame.v.Copy()
         new_w = self.frame.w.Copy()
         new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
-        return Block(new_frame, self.name, self.color)
+        return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
 
     def plot_data(self, x3D, y3D, marker=None, color='black', stroke_width=1,
                   dash=False, opacity=1, arrow=False):
@@ -356,7 +358,7 @@ class ExtrudedProfile(volmdlr.Shell3D):
     """
     _non_serializable_attributes  = ['faces', 'inner_contours3d', 'outer_contour3d']
     def __init__(self, plane_origin, x, y, outer_contour2d, inner_contours2d,
-                 extrusion_vector, name='', color=None):
+                 extrusion_vector, color=None, alpha=1., name=''):
         volmdlr.Primitive3D.__init__(self, name=name)
         self.plane_origin = plane_origin
         self.outer_contour2d = outer_contour2d
@@ -380,7 +382,7 @@ class ExtrudedProfile(volmdlr.Shell3D):
             raise ValueError('At least one inner contour is not contained in outer_contour.')
 
         faces = self.shell_faces()
-        volmdlr.Shell3D.__init__(self, faces, name)
+        volmdlr.Shell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
 
     def shell_faces(self):
 
@@ -506,7 +508,7 @@ class RevolvedProfile(volmdlr.Shell3D):
     """
     _non_serializable_attributes  = ['faces', 'contour3D']
     def __init__(self, plane_origin, x, y, contour2D, axis_point,
-                 axis, angle=2*math.pi, name='', color=None):
+                 axis, angle=2*math.pi, name='', color=None, alpha=1):
 #        volmdlr.Primitive3D.__init__(self, name=name)
         self.contour2D = contour2D
         self.axis_point = axis_point
@@ -518,7 +520,7 @@ class RevolvedProfile(volmdlr.Shell3D):
         self.contour3D = self.contour2D.To3D(plane_origin, x, y)
 
         faces = self.shell_faces()
-        volmdlr.Shell3D.__init__(self, faces, name, color)
+        volmdlr.Shell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
 
 
     def shell_faces(self):
@@ -644,7 +646,7 @@ class RevolvedProfile(volmdlr.Shell3D):
                           self.angle)
 
 class Cylinder(RevolvedProfile):
-    def __init__(self, position, axis, radius, length, name=''):
+    def __init__(self, position, axis, radius, length, color=None, alpha=1., name=''):
         self.position = position
         axis.Normalize()
         self.axis = axis
@@ -663,7 +665,8 @@ class Cylinder(RevolvedProfile):
         l4 = volmdlr.LineSegment2D(p4, p1)
         contour = volmdlr.Contour2D([l1, l2, l3, l4])
         y = axis.RandomUnitNormalVector()
-        RevolvedProfile.__init__(self, position, axis, y, contour, position, axis, name=name)
+        RevolvedProfile.__init__(self, position, axis, y, contour, position, axis,
+                                 color=color, alpha=alpha, name=name)
 
 
     def _bounding_box(self):
@@ -767,7 +770,8 @@ class Cylinder(RevolvedProfile):
             self.axis = axis
 
 class HollowCylinder(Cylinder):
-    def __init__(self, position, axis, inner_radius, outer_radius, length, name=''):
+    def __init__(self, position, axis, inner_radius, outer_radius, length,
+                 color=None, alpha=1, name=''):
         volmdlr.Primitive3D.__init__(self, name=name)
         self.position = position
         axis.Normalize()
@@ -787,7 +791,8 @@ class HollowCylinder(Cylinder):
         l4 = volmdlr.LineSegment2D(p4, p1)
         contour = volmdlr.Contour2D([l1, l2, l3, l4])
         y = axis.RandomUnitNormalVector()
-        RevolvedProfile.__init__(self, position, axis, y, contour, position, axis, name=name)
+        RevolvedProfile.__init__(self, position, axis, y, contour, position, axis,
+                                 color=color, alpha=alpha, name=name)
 
         
 
