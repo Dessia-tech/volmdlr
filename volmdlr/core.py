@@ -1036,8 +1036,10 @@ class Arc2D(Primitive2D):
     def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
         if self.is_trigo:
             return self.start.Rotation(self.center, curvilinear_abscissa/self.radius)
+            # return self.start.Rotation(self.center, curvilinear_abscissa*self.angle)
         else:
             return self.start.Rotation(self.center, -curvilinear_abscissa/self.radius)
+            # return self.start.Rotation(self.center, -curvilinear_abscissa*self.angle)
 
     def MiddlePoint(self):
         l = self.Length()
