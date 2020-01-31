@@ -3253,7 +3253,7 @@ class Shell3D(CompositePrimitive3D):
     _non_eq_attributes = ['name', 'color', 'alpha' 'bounding_box', 'contours']
     _non_hash_attributes = []
 
-    def __init__(self, faces, *, color=None, alpha=1., name=''):
+    def __init__(self, faces, color=None, alpha=1., name=''):
         self.faces = faces
         self.name = name
         self.color = color
@@ -3276,7 +3276,7 @@ class Shell3D(CompositePrimitive3D):
         faces = []
         for face in arguments[1]:
             faces.append(object_dict[int(face[1:])])
-        return cls(faces, arguments[0][1:-1])
+        return cls(faces, name = arguments[0][1:-1])
 
     def Rotation(self, center, axis, angle, copy=True):
         if copy:
