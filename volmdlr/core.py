@@ -3253,7 +3253,7 @@ class Shell3D(CompositePrimitive3D):
     _non_eq_attributes = ['name', 'color', 'alpha' 'bounding_box', 'contours']
     _non_hash_attributes = []
 
-    def __init__(self, faces, color=None, alpha=1., name=''):
+    def __init__(self, faces, *, color=None, alpha=1., name=''):
         self.faces = faces
         self.name = name
         self.color = color
