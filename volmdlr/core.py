@@ -3276,7 +3276,7 @@ class Shell3D(CompositePrimitive3D):
         faces = []
         for face in arguments[1]:
             faces.append(object_dict[int(face[1:])])
-        return cls(faces, arguments[0][1:-1])
+        return cls(faces, name = arguments[0][1:-1])
 
     def Rotation(self, center, axis, angle, copy=True):
         if copy:
