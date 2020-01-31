@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - color and alpha options for various primitives
 
+### Debug
+- arcs: is_trigo and angle were sometimes false
+
 ## [v0.1.7]
 
 ### Added
