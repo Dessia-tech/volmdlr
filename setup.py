@@ -100,7 +100,7 @@ setup(name='volmdlr',
       packages=['volmdlr'],#,'volmdlr.primitives2D','volmdlr.primitives3D','volmdlr.geometry'],
       package_dir={},
       include_package_data = True,
-      install_requires=['dessia_common', 'numpy', 'matplotlib', 'Cython', 'scipy', 'jinja2',
+      install_requires=['packaging', 'dessia_common', 'numpy', 'matplotlib', 'Cython', 'scipy', 'jinja2',
                         'geomdl', 'jsonschema', 'networkx', 'triangle'],
       classifiers=['Topic :: Scientific/Engineering','Development Status :: 3 - Alpha'],
       ext_modules = cythonize(["volmdlr/core_compiled.pyx"]))
