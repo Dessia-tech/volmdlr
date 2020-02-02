@@ -3281,7 +3281,7 @@ class Shell3D(CompositePrimitive3D):
     def Rotation(self, center, axis, angle, copy=True):
         if copy:
             new_faces = [face.Rotation(center, axis, angle, copy=True) for face in self.faces]
-            return Shell3D(new_faces, self.name)
+            return Shell3D(new_faces, name = self.name)
         else:
             for face in self.faces:
                 face.Rotation(center, axis, angle, copy=False)
@@ -3290,7 +3290,7 @@ class Shell3D(CompositePrimitive3D):
     def Translation(self, offset, copy=True):
         if copy:
             new_faces = [face.Translation(offset, copy=True) for face in self.faces]
-            return Shell3D(new_faces, self.name)
+            return Shell3D(new_faces, name = self.name)
         else:
             for face in self.faces:
                 face.Translation(offset, copy=False)
@@ -3302,7 +3302,7 @@ class Shell3D(CompositePrimitive3D):
         """
         if copy:
             new_faces = [face.frame_mapping(frame, side, copy=True) for face in self.faces]
-            return Shell3D(new_faces, self.name)
+            return Shell3D(new_faces, name = self.name)
         else:
             for face in self.faces:
                 face.frame_mapping(frame, side, copy=False)
@@ -3310,13 +3310,13 @@ class Shell3D(CompositePrimitive3D):
 
     def copy(self):
         new_faces = [face.copy() for face in self.faces]
-        return Shell3D(new_faces, self.name)
+        return Shell3D(new_faces, name = self.name)
 
     def union(self, shell2):
         new_faces = [face for face in self.faces+shell2.faces]
         new_name = self.name+' union '+shell2.name
         new_color = self.color
-        return Shell3D(new_faces, new_name, new_color)
+        return Shell3D(new_faces, name = new_name, color = new_color)
 
     def _bounding_box(self):
         """
