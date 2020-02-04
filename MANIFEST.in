@@ -1,6 +1,6 @@
 recursive-include volmdlr/templates *.html *.js *ts
-include volmdlr/vmcy.pyx
-exclude volmdlr/vmcy.c
+include volmdlr/core_compiled.pyx
+exclude volmdlr/core_compiled.c
 prune .git
 
 
