@@ -31,9 +31,7 @@ def version_from_git_describe(version):
         
     print('number_commits_ahead', number_commits_ahead)
     
-    print('____')
     split_versions = version.split('.')
-    print(split_versions)
     if 'post' in split_versions[-1]:
         suffix = split_versions[-1]
         split_versions = split_versions[:-1]
