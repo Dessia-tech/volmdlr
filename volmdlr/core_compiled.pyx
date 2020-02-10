@@ -6,7 +6,7 @@
 Cython functions
 
 """
-
+# from __future__ import annotations
 from typing import TypeVar, List, Tuple
 import math
 from dessia_common import DessiaObject
@@ -1127,9 +1127,10 @@ class Basis2D(Basis):
     :param u: first vector of the basis
     :param v: second vector of the basis
     """
-    def __init__(self, u:Vector2D, v:Vector2D):
+    def __init__(self, u:Vector2D, v:Vector2D, name:str=''):
         self.u = u
         self.v = v
+        self.name = name
 
     def __neg__(self):
         Pinv = self.InverseTransferMatrix()
@@ -1196,7 +1197,7 @@ class Basis3D(Basis):
     _standalone_in_db = False
 
     # TODO: create a Basis and Frame class to mutualize between 2D and 2D
-    def __init__(self, u:Vector3D, v:vector3D, w:Vector3D, name:str=''):
+    def __init__(self, u:Vector3D, v:Vector3D, w:Vector3D, name:str=''):
         self.u = u
         self.v = v
         self.w = w
@@ -1239,8 +1240,9 @@ class Basis3D(Basis):
 
     vectors = property(_get_vectors)
 
+    # TODO: transform to annotation when available
     @classmethod
-    def from_two_vectors(cls, vector1, vector2):
+    def from_two_vectors(cls, vector1:Vector3D, vector2:Vector3D) -> 'Basis3D':
         """
         Create a basis with first vector1 adimensionned, as u, v is the vector2 substracted of u component,
         w is the cross product of u and v
@@ -1358,9 +1360,9 @@ class Frame2D(Basis2D):
     :param u: first vector of the basis
     :param v: second vector of the basis
     """
-    def __init__(self, origin:Point2D, u:Vector2D, v:Vector2D):
+    def __init__(self, origin:Point2D, u:Vector2D, v:Vector2D, name:str=''):
         self.origin = origin
-        Basis2D.__init__(self, u, v)
+        Basis2D.__init__(self, u, v, name=name)
 
     def __repr__(self):
         return '{}: O={} U={}, V={}'.format(self.__class__.__name__, self.origin, self.u, self.v)
