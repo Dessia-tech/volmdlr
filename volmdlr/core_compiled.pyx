@@ -1127,7 +1127,7 @@ class Basis2D(Basis):
     :param u: first vector of the basis
     :param v: second vector of the basis
     """
-    def __init__(self, u, v):
+    def __init__(self, u:Vector2D, v:Vector2D):
         self.u = u
         self.v = v
 
@@ -1196,7 +1196,7 @@ class Basis3D(Basis):
     _standalone_in_db = False
 
     # TODO: create a Basis and Frame class to mutualize between 2D and 2D
-    def __init__(self, u, v, w, name=''):
+    def __init__(self, u:Vector3D, v:vector3D, w:Vector3D, name:str=''):
         self.u = u
         self.v = v
         self.w = w
@@ -1358,7 +1358,7 @@ class Frame2D(Basis2D):
     :param u: first vector of the basis
     :param v: second vector of the basis
     """
-    def __init__(self, origin, u, v):
+    def __init__(self, origin:Point2D, u:Vector2D, v:Vector2D):
         self.origin = origin
         Basis2D.__init__(self, u, v)
 
