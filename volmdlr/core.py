@@ -4754,10 +4754,10 @@ class MovingVolumeModel(VolumeModel):
                 if iframe in primitives_to_meshes:
                     imesh = primitives_to_meshes.index(iframe)
                     step[imesh] = {}
-                    step[imesh]['position'] = list(frame.origin)
-                    step[imesh]['orientations'] = [list(frame.u),
-                                                    list(frame.v),
-                                                    list(frame.w)]
+                    step[imesh]['position'] = list(round(frame.origin, 6))
+                    step[imesh]['orientations'] = [list(round(frame.u, 6)),
+                                                    list(round(frame.v, 6)),
+                                                    list(round(frame.w, 6))]
 
             steps.append(step)
         
