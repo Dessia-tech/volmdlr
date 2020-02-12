@@ -785,6 +785,22 @@ class LineSegment2D(Line2D):
             return point, curv_abs
         else:
             return point
+        
+    def PointProjection2(self, point, curvilinear_abscissa=False):
+        """
+        If the projection falls outside the LineSegment2D, returns None.
+        """
+        point, curv_abs = Line2D.PointProjection(self, point, True)
+        if curv_abs < 0. or curv_abs > 1:
+            if curvilinear_abscissa:
+                return None, curv_abs
+            else:
+                return None
+
+        if curvilinear_abscissa:
+            return point, curv_abs
+        else:
+            return point
 
     def MPLPlot(self, ax=None, color='k', arrow=False, width=None, plot_points=False):
         if ax is None:
