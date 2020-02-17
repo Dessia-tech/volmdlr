@@ -284,6 +284,20 @@ class Wire2D(CompositePrimitive2D):
                                                         stroke_width=stroke_width,
                                                         opacity=opacity))
         return plot_data
+    
+    def line_intersection(self, line):
+        intersection_points = []
+        for primitive in self.primitives:
+            pts = primitive.line_intersection(line)
+            if pts is not None:
+                if type(pts) is list:
+                    intersection_points.extend(pts)
+                else:
+                    intersection_points.append(pts)
+        if intersection_points:
+            return intersection_points
+        else:
+            return None
 
 
 class Contour2D(Wire2D):
@@ -791,7 +805,7 @@ class LineSegment2D(Line2D):
         If the projection falls outside the LineSegment2D, returns None.
         """
         point, curv_abs = Line2D.PointProjection(self, point, True)
-        if curv_abs < 0. or curv_abs > 1:
+        if curv_abs < 0 or curv_abs > 1:
             if curvilinear_abscissa:
                 return None, curv_abs
             else:
@@ -801,6 +815,34 @@ class LineSegment2D(Line2D):
             return point, curv_abs
         else:
             return point
+        
+    # def line_intersection(self, line):
+    #     point = Point2D.LinesIntersection(self, line)
+    #     if point is not None:
+    #         point_projection = self.PointProjection2(point)
+    #         if line.__class__ is LineSegment2D:
+    #             point_projection2 = line.PointProjection2(point)
+    #             if point_projection is None or point_projection2 is None:
+    #                 return None
+    #         return point_projection
+    #     else:
+    #         return None
+        
+    def line_intersection(self, line):
+        point = Point2D.LinesIntersection(self, line)
+        if point is not None:
+            point_projection1 = self.PointProjection2(point)
+            if point_projection1 is None:
+                return None
+            
+            if line.__class__ is LineSegment2D:
+                point_projection2 = line.PointProjection2(point)
+                if point_projection2 is None:
+                    return None
+                
+            return point_projection1
+        else:
+            return None
 
     def MPLPlot(self, ax=None, color='k', arrow=False, width=None, plot_points=False):
         if ax is None:
@@ -1029,6 +1071,19 @@ class Arc2D(Primitive2D):
             return abs(LineSegment2D(point, self.center).Length()-self.radius)
         else:
             return min(LineSegment2D(point, self.start).Length(), LineSegment2D(point, self.end).Length())
+
+    def line_intersection(self, line):
+        points = self.tessellation_points()
+        segments = []
+        intersection_points = []
+        for pt1, pt2 in zip(points[:-1], points[1:]):
+            segments.append(LineSegment2D(pt1, pt2))
+        for segment in segments:
+            # intersection_point = Point2D.LinesIntersection(line, segment)
+            intersection_point = segment.line_intersection(line)
+            if intersection_point is not None:
+                intersection_points.append(intersection_point)
+        return intersection_points
 
     def Length(self):
         return self.radius * abs(self.angle)
@@ -2392,6 +2447,11 @@ class Edge3D(Primitive3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        print(arguments)
+        print()
+        print(object_dict)
+        print()
+        print(object_dict[arguments[1]], object_dict[arguments[2]], arguments[0][1:-1])
         return LineSegment3D(object_dict[arguments[1]], object_dict[arguments[2]], arguments[0][1:-1])
 
     def Rotation(self, center, axis, angle, copy=True):
@@ -4318,8 +4378,11 @@ class Step:
         if name == 'VERTEX_POINT':
             object_dict[instanciate_id] = object_dict[arguments[1]]
 
-        elif name == 'LINE':
-            pass
+        # elif name == 'LINE':
+        #     pass
+        
+        # elif name == 'SEAM_CURVE':
+        #     object_dict[instanciate_id] = object_dict[arguments[1]]
 
         elif name == 'ORIENTED_EDGE':
             object_dict[instanciate_id] = object_dict[arguments[3]]
@@ -4882,7 +4945,7 @@ step_to_volmdlr_primitive = {
         'AXIS2_PLACEMENT_2D': None,
         'AXIS2_PLACEMENT_3D': Frame3D,
 
-        'LINE': None,
+        'LINE': Line3D,
         'CIRCLE': Circle3D,
         'ELLIPSE': Ellipse3D,
         'PARABOLA': None,

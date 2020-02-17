@@ -8,6 +8,51 @@ Created on Tue Jan 28 10:05:56 2020
 
 import matplotlib.pyplot as plt
 import volmdlr.core as vm
+from itertools import combinations
+
+def find_duplicate_linear_element(linear_elements1, linear_elements2):
+    # seen = {}
+    duplicates = []
+    for linear_element in linear_elements1:
+        if linear_element in linear_elements2 and linear_element not in duplicates:
+            duplicates.append(linear_element)
+            # if linear_element not in seen:
+            #     seen[linear_element] = 1
+            # else:
+            #     if seen[linear_element] == 1:
+            #         duplicates.append(linear_element)
+            #     seen[linear_element] += 1
+    return duplicates
+
+
+class LinearElement:
+    def __init__(self, points):
+        if len(points) != 2:
+            raise ValueError
+        
+        self.points = points
+        
+    def __hash__(self):
+        return self.points[0].__hash__() + self.points[1].__hash__()
+        
+    def __eq__(self, other_linear_element):
+        if self.__class__ != other_linear_element.__class__:
+            return False
+        return (self.points[0] == other_linear_element.points[0] and self.points[1] == other_linear_element.points[1]) \
+            or (self.points[0] == other_linear_element.points[1] and self.points[1] == other_linear_element.points[0])
+    
+    def plot(self, ax=None, color='k', width=None, plot_points=False):
+        if ax is None:
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
+        # for p1, p2 in zip(self.points, self.points[1:]+[self.points[0]]):
+        if width is None:
+            width=1
+        if plot_points:
+            ax.plot([self.points[0][0], self.points[1][0]], [self.points[0][1], self.points[1][1]], color=color, marker='o', linewidth=width)
+        else:
+            ax.plot([self.points[0][0], self.points[1][0]], [self.points[0][1], self.points[1][1]], color=color, linewidth=width)
+        return ax
 
 class TriangularElement:
     def __init__(self, points):
@@ -15,6 +60,14 @@ class TriangularElement:
             raise ValueError
             
         self.points = points
+        
+        self.linear_elements = self._to_linear_elements()
+        
+    def _to_linear_elements(self):
+        linear_element_1 = LinearElement([self.points[0], self.points[1]])
+        linear_element_2 = LinearElement([self.points[1], self.points[2]])
+        linear_element_3 = LinearElement([self.points[2], self.points[0]])
+        return [linear_element_1, linear_element_2, linear_element_3]
         
     def rotation(self, center, angle, copy=True):
         if copy:
@@ -45,10 +98,14 @@ class TriangularElement:
             for i, point in enumerate(self.points):
                 point = symmetric_points[i]
                 
-    def plot(self, ax=None, color='k', width=None, plot_points=False):
+    def plot(self, ax=None, color='k', width=None, plot_points=False, fill=False):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
+            
+        if fill:
+            plt.fill([p[0] for p in self.points], [p[1] for p in self.points])
+            return ax
         
         for p1, p2 in zip(self.points, self.points[1:]+[self.points[0]]):
             if width is None:
@@ -57,8 +114,8 @@ class TriangularElement:
                 ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color, marker='o', linewidth=width)
             else:
                 ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color, linewidth=width)
-            
         return ax
+    
     
 class ElementsGroup:
     def __init__(self, elements, name):
@@ -79,18 +136,48 @@ class ElementsGroup:
             for elem in self.elements:
                 elem.translation(offset, copy=False)
                 
-    def plot(self, ax=None):
+    def plot(self, ax=None, color='k', fill=False):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
-            
         for element in self.elements:
-            element.plot(ax=ax)
-            
+            element.plot(ax=ax, color=color, fill=fill)
         return ax
         
 class Mesh:
     def __init__(self, elements_groups):
         self.elements_groups = elements_groups
+        self.nodes = self._set_nodes_number()
+    
+    def _set_nodes_number(self):
+        nodes = set()
+        for elements_group in self.elements_groups:
+            for element in elements_group.elements:
+                nodes.add(element.points[0])
+                nodes.add(element.points[1])
+                nodes.add(element.points[2])
+        return tuple(nodes)
+    
+    def boundary_dict(self):
+        boundary_dict = {}
+        for elements_group1, elements_group2 in combinations(self.elements_groups, 2):
+            linear_elements1 = []
+            linear_elements2 = []
+            for element in elements_group1.elements:
+                linear_elements1.extend(element.linear_elements)
+            for element in elements_group2.elements:
+                linear_elements2.extend(element.linear_elements)
+            duplicate_linear_elements = find_duplicate_linear_element(linear_elements1, linear_elements2)
+            if duplicate_linear_elements:
+                boundary_dict[(elements_group1, elements_group2)] = duplicate_linear_elements
+        return boundary_dict
+    
+    def plot(self, ax=None):
+        if ax is None:
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
+        for elements_group in self.elements_groups:
+            elements_group.plot(ax=ax)
+        return ax
 
     

@@ -834,8 +834,8 @@ class Vector3D(Vector):
         Retuns a deterministic normal vector
         """
         v = X3D
-        if not math.isclose(self.vector[1], 0, abs_tol=1e-5) \
-        or not math.isclose(self.vector[2], 0, abs_tol=1e-5):
+        if not math.isclose(self.vector[1], 0, abs_tol=1e-7) \
+        or not math.isclose(self.vector[2], 0, abs_tol=1e-7):
             v = X3D
         else:
             v = Y3D
