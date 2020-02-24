@@ -9,6 +9,7 @@ Created on Tue Jan 28 10:05:56 2020
 import matplotlib.pyplot as plt
 import volmdlr.core as vm
 from itertools import combinations
+import numpy as npy
 
 def find_duplicate_linear_element(linear_elements1, linear_elements2):
     # seen = {}
@@ -16,12 +17,6 @@ def find_duplicate_linear_element(linear_elements1, linear_elements2):
     for linear_element in linear_elements1:
         if linear_element in linear_elements2 and linear_element not in duplicates:
             duplicates.append(linear_element)
-            # if linear_element not in seen:
-            #     seen[linear_element] = 1
-            # else:
-            #     if seen[linear_element] == 1:
-            #         duplicates.append(linear_element)
-            #     seen[linear_element] += 1
     return duplicates
 
 
@@ -62,12 +57,30 @@ class TriangularElement:
         self.points = points
         
         self.linear_elements = self._to_linear_elements()
+        self.form_functions = self._form_functions()
         
     def _to_linear_elements(self):
         linear_element_1 = LinearElement([self.points[0], self.points[1]])
         linear_element_2 = LinearElement([self.points[1], self.points[2]])
         linear_element_3 = LinearElement([self.points[2], self.points[0]])
         return [linear_element_1, linear_element_2, linear_element_3]
+    
+    def _form_functions(self):
+        a = npy.array([[1, self.points[0][0], self.points[0][1]],
+                       [1, self.points[1][0], self.points[1][1]],
+                       [1, self.points[2][0], self.points[2][1]]])
+        b1 = npy.array([1, 0, 0])
+        b2 = npy.array([0, 1, 0])
+        b3 = npy.array([0, 0, 1])
+        x1 = npy.linalg.solve(a, b1)
+        x2 = npy.linalg.solve(a, b2)
+        x3 = npy.linalg.solve(a, b3)
+        return list(x1), list(x2), list(x3)
+    
+    def area(self):
+        u = self.points[1] - self.points[0]
+        v = self.points[2] - self.points[0]
+        return (u.Norm() * v.Norm())/2
         
     def rotation(self, center, angle, copy=True):
         if copy:
@@ -104,7 +117,9 @@ class TriangularElement:
             ax.set_aspect('equal')
             
         if fill:
-            plt.fill([p[0] for p in self.points], [p[1] for p in self.points])
+            x = [p[0] for p in self.points]
+            y = [p[1] for p in self.points]
+            plt.fill(x, y, facecolor=color, edgecolor="k")
             return ax
         
         for p1, p2 in zip(self.points, self.points[1:]+[self.points[0]]):
@@ -118,8 +133,9 @@ class TriangularElement:
     
     
 class ElementsGroup:
-    def __init__(self, elements, name):
-        self.elements = elements 
+    def __init__(self, elements, mu_total, name):
+        self.elements = elements
+        self.mu_total = mu_total
         self.name = name
         
     def rotation(self, center, angle, copy=True):
@@ -144,6 +160,7 @@ class ElementsGroup:
             element.plot(ax=ax, color=color, fill=fill)
         return ax
         
+
 class Mesh:
     def __init__(self, elements_groups):
         self.elements_groups = elements_groups

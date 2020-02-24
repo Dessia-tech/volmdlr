@@ -2708,15 +2708,18 @@ class Contour3D(Wire3D):
         for edge in self.edges[1:]:
             if hasattr(edge, 'points'):
                 points_to_add = edge.points[:]
-                if points_to_add[0] == points[0]:
+                print(points)
+                print(points_to_add)
+                print()
+                if points_to_add[0] == points[-1]:
+                    points.extend(points_to_add[1:])
+                elif points_to_add[-1] == points[-1]:
+                    points.extend(points_to_add[-2::-1])
+                elif points_to_add[0] == points[0]:
                     points = points[::-1]
                     points.extend(points_to_add[1:])
                 elif points_to_add[-1] == points[0]:
                     points = points[::-1]
-                    points.extend(points_to_add[-2::-1])
-                elif points_to_add[0] == points[-1]:
-                    points.extend(points_to_add[1:])
-                elif points_to_add[-1] == points[-1]:
                     points.extend(points_to_add[-2::-1])
                 else:
                     self.MPLPlot()
