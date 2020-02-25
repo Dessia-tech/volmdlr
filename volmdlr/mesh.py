@@ -59,6 +59,8 @@ class TriangularElement:
         self.linear_elements = self._to_linear_elements()
         self.form_functions = self._form_functions()
         
+        self.center = (self.points[0]+self.points[1]+self.points[2])/3
+        
     def _to_linear_elements(self):
         linear_element_1 = LinearElement([self.points[0], self.points[1]])
         linear_element_2 = LinearElement([self.points[1], self.points[2]])

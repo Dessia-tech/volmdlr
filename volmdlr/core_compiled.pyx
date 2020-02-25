@@ -447,7 +447,7 @@ class Vector2D(Vector):
             point = Point2D(origin.vector)
             point.MPLPlot(ax=ax, color=color)
             return fig, ax
-
+        
         ax.add_patch(FancyArrow(origin[0], origin[1],
                                 self.vector[0]*amplitude, self.vector[1]*amplitude,
                                 width=0.001*5*amplitude,
