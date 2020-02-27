@@ -167,6 +167,7 @@ class Mesh:
     def __init__(self, elements_groups):
         self.elements_groups = elements_groups
         self.nodes = self._set_nodes_number()
+        self.node_to_index = {self.nodes[i]:i for i in range(len(self.nodes))}
     
     def _set_nodes_number(self):
         nodes = set()
