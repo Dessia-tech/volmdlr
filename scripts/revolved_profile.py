@@ -4,7 +4,7 @@
 
 """
 
-import volmdlr as vm
+import volmdlr.core as vm
 from volmdlr.primitives2D import ClosedRoundedLineSegments2D
 from volmdlr.primitives3D import RevolvedProfile
 

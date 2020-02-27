@@ -720,7 +720,8 @@ class Vector3D(Vector):
         vector2 = vector3D_rotation(self.vector, center.vector, axis.vector, angle)
 
         if copy:
-            return Point3D(vector2)
+            return self.__class__(vector2)
+            # return Point3D(vector2)
         else:
             self.vector = list(vector2)
 
@@ -835,8 +836,8 @@ class Vector3D(Vector):
         Retuns a deterministic normal vector
         """
         v = X3D
-        if not math.isclose(self.vector[1], 0, abs_tol=1e-5) \
-        or not math.isclose(self.vector[2], 0, abs_tol=1e-5):
+        if not math.isclose(self.vector[1], 0, abs_tol=1e-7) \
+        or not math.isclose(self.vector[2], 0, abs_tol=1e-7):
             v = X3D
         else:
             v = Y3D
@@ -1494,9 +1495,11 @@ class Frame3D(Basis3D):
         return Basis3D(self.u, self.v, self.w)
 
     def NewCoordinates(self, vector):
+        """ Il faut donner les coordonnées dans le repère global """
         return Basis3D.NewCoordinates(self, vector - self.origin)
 
-    def OldCoordinates(self, vector):
+    def OldCoordinates(self, vector): 
+        """ Il faut donner les coordonnées dans le repère local """
         return Basis3D.OldCoordinates(self, vector) + self.origin
 
     def Rotation(self, axis, angle, copy=True):
@@ -1532,21 +1535,38 @@ class Frame3D(Basis3D):
         return fig, ax
 
 
+    # @classmethod
+    # def from_step(cls, arguments, object_dict):
+    #     origin = object_dict[arguments[1]]
+    #     if arguments[2] == '$':
+    #         u = None
+    #     else:
+    #         u = object_dict[arguments[2]]
+    #     if arguments[3] == '$':
+    #         v = None
+    #     else:
+    #         v = object_dict[arguments[3]]
+    #     if u is None or v is None:
+    #         w = None
+    #     else:
+    #         w = u.Cross(v)
+    #     return cls(origin, u, v, w, arguments[0][1:-1])
+    
     @classmethod
     def from_step(cls, arguments, object_dict):
         origin = object_dict[arguments[1]]
         if arguments[2] == '$':
-            u = None
-        else:
-            u = object_dict[arguments[2]]
-        if arguments[3] == '$':
-            v = None
-        else:
-            v = object_dict[arguments[3]]
-        if u is None or v is None:
             w = None
         else:
-            w = u.Cross(v)
+            w = object_dict[arguments[2]]
+        if arguments[3] == '$':
+            u = None
+        else:
+            u = object_dict[arguments[3]]
+        if u is None or w is None:
+            v = None
+        else:
+            v = w.Cross(u)
         return cls(origin, u, v, w, arguments[0][1:-1])
 
     def babylonjs(self, size=0.1, parent=None):
