@@ -2661,8 +2661,8 @@ class Contour3D(Wire3D):
                 elif points_to_add[-1] == points[-1]:
                     points.extend(points_to_add[-2::-1])
                 else:
-                    print(points, points_to_add)
-                    self.MPLPlot()
+                    # print(points, points_to_add)
+                    # self.MPLPlot()
                     raise NotImplementedError
             else:
                 raise NotImplementedError
@@ -4418,7 +4418,10 @@ class VolumeModel(dc.DessiaObject):
     def Volume(self):
         volume=0
         for primitive in self.primitives:
-            volume+=primitive.Volume()
+            try:
+                volume+=primitive.Volume()
+            except:
+                pass
         return volume
 
     def Rotation(self, center, axis, angle, copy=True):
@@ -4642,7 +4645,7 @@ class VolumeModel(dc.DessiaObject):
                           bbox.zmax - bbox.zmin])
                 
         babylon_data = {'meshes': meshes,
-                        'max_length': max_length,
+                        'max_length': max_length/5.,
                         'center': list(center)}
         return babylon_data
 
