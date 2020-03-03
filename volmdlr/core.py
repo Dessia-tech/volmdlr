@@ -2448,11 +2448,6 @@ class Edge3D(Primitive3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
-        print(arguments)
-        print()
-        print(object_dict)
-        print()
-        print(object_dict[arguments[1]], object_dict[arguments[2]], arguments[0][1:-1])
         return LineSegment3D(object_dict[arguments[1]], object_dict[arguments[2]], arguments[0][1:-1])
 
     def Rotation(self, center, axis, angle, copy=True):
@@ -2712,9 +2707,6 @@ class Contour3D(Wire3D):
         for edge in self.edges[1:]:
             if hasattr(edge, 'points'):
                 points_to_add = edge.points[:]
-                print(points)
-                print(points_to_add)
-                print()
                 if points_to_add[0] == points[-1]:
                     points.extend(points_to_add[1:])
                 elif points_to_add[-1] == points[-1]:
@@ -3668,7 +3660,7 @@ class Shell3D(CompositePrimitive3D):
                 for j, indexes in enumerate(triangles_indexes):
                     indices.extend([i+nb_points for i in indexes])
                 nb_points += len(points_3D)
-
+        
         babylon_mesh = {'positions': positions,
                         'indices': indices,
                         'name': self.name,
