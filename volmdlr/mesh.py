@@ -12,7 +12,6 @@ from itertools import combinations
 import numpy as npy
 
 def find_duplicate_linear_element(linear_elements1, linear_elements2):
-    # seen = {}
     duplicates = []
     for linear_element in linear_elements1:
         if linear_element in linear_elements2 and linear_element not in duplicates:
@@ -21,11 +20,12 @@ def find_duplicate_linear_element(linear_elements1, linear_elements2):
 
 
 class LinearElement:
-    def __init__(self, points):
+    def __init__(self, points, interior_normal):
         if len(points) != 2:
             raise ValueError
         
         self.points = points
+        self.interior_normal = interior_normal
         
     def __hash__(self):
         return self.points[0].__hash__() + self.points[1].__hash__()
@@ -35,12 +35,14 @@ class LinearElement:
             return False
         return (self.points[0] == other_linear_element.points[0] and self.points[1] == other_linear_element.points[1]) \
             or (self.points[0] == other_linear_element.points[1] and self.points[1] == other_linear_element.points[0])
+            
+    def length(self):
+        return self.points[1].point_distance(self.points[0])
     
     def plot(self, ax=None, color='k', width=None, plot_points=False):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
-        # for p1, p2 in zip(self.points, self.points[1:]+[self.points[0]]):
         if width is None:
             width=1
         if plot_points:
@@ -62,9 +64,21 @@ class TriangularElement:
         self.center = (self.points[0]+self.points[1]+self.points[2])/3
         
     def _to_linear_elements(self):
-        linear_element_1 = LinearElement([self.points[0], self.points[1]])
-        linear_element_2 = LinearElement([self.points[1], self.points[2]])
-        linear_element_3 = LinearElement([self.points[2], self.points[0]])
+        vec1 = vm.Vector2D(self.points[1] - self.points[0])
+        vec2 = vm.Vector2D(self.points[2] - self.points[1])
+        vec3 = vm.Vector2D(self.points[0] - self.points[2])
+        normal1 = vm.Vector2D([-vec1[1], vec1[0]])
+        normal2 = vm.Vector2D([-vec2[1], vec2[0]])
+        normal3 = vm.Vector2D([-vec3[1], vec3[0]])
+        if normal1.Dot(vec2) < 0:
+            normal1 = - normal1
+        if normal2.Dot(vec3) < 0:
+            normal2 = - normal2
+        if normal3.Dot(vec1) < 0:
+            normal3 = - normal3
+        linear_element_1 = LinearElement([self.points[0], self.points[1]], normal1)
+        linear_element_2 = LinearElement([self.points[1], self.points[2]], normal2)
+        linear_element_3 = LinearElement([self.points[2], self.points[0]], normal3)
         return [linear_element_1, linear_element_2, linear_element_3]
     
     def _form_functions(self):

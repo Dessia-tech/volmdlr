@@ -15,7 +15,7 @@ npy.seterr(divide='raise')
 #from itertools import permutations
 
 import matplotlib.pyplot as plt
-import  mpl_toolkits
+import mpl_toolkits
 from matplotlib.patches import Arc, FancyArrow
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d import proj3d
