@@ -1535,39 +1535,39 @@ class Frame3D(Basis3D):
         return fig, ax
 
 
-    # @classmethod
-    # def from_step(cls, arguments, object_dict):
-    #     origin = object_dict[arguments[1]]
-    #     if arguments[2] == '$':
-    #         u = None
-    #     else:
-    #         u = object_dict[arguments[2]]
-    #     if arguments[3] == '$':
-    #         v = None
-    #     else:
-    #         v = object_dict[arguments[3]]
-    #     if u is None or v is None:
-    #         w = None
-    #     else:
-    #         w = u.Cross(v)
-    #     return cls(origin, u, v, w, arguments[0][1:-1])
-    
     @classmethod
     def from_step(cls, arguments, object_dict):
         origin = object_dict[arguments[1]]
         if arguments[2] == '$':
-            w = None
-        else:
-            w = object_dict[arguments[2]]
-        if arguments[3] == '$':
             u = None
         else:
-            u = object_dict[arguments[3]]
-        if u is None or w is None:
+            u = object_dict[arguments[2]]
+        if arguments[3] == '$':
             v = None
         else:
-            v = w.Cross(u)
+            v = object_dict[arguments[3]]
+        if u is None or v is None:
+            w = None
+        else:
+            w = u.Cross(v)
         return cls(origin, u, v, w, arguments[0][1:-1])
+    
+    # @classmethod
+    # def from_step(cls, arguments, object_dict):
+    #     origin = object_dict[arguments[1]]
+    #     if arguments[2] == '$':
+    #         w = None
+    #     else:
+    #         w = object_dict[arguments[2]]
+    #     if arguments[3] == '$':
+    #         u = None
+    #     else:
+    #         u = object_dict[arguments[3]]
+    #     if u is None or w is None:
+    #         v = None
+    #     else:
+    #         v = w.Cross(u)
+    #     return cls(origin, u, v, w, arguments[0][1:-1])
 
     def babylonjs(self, size=0.1, parent=None):
         s = 'var origin = new BABYLON.Vector3({},{},{});\n'.format(*self.origin)
