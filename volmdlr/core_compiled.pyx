@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+#cython: language_level=3
 """
 
 Cython functions
@@ -424,8 +425,8 @@ class Vector2D(Vector):
 
     @classmethod
     def random(cls, xmin, xmax, ymin, ymax):
-        return cls(random.uniform(xmin, xmax),
-                   random.uniform(ymin, ymax))
+        return cls((random.uniform(xmin, xmax),
+                    random.uniform(ymin, ymax)))
 
     def Draw(self):
         warnings.warn(
@@ -958,7 +959,7 @@ class Point3D(Vector3D):
     def copy(self):
         return Point3D(self.vector)
 
-    def MPLPlot(self, ax=None):
+    def MPLPlot(self, ax=None, color='k'):
 
         if ax is None:
             fig = plt.figure()
@@ -966,7 +967,7 @@ class Point3D(Vector3D):
         else:
             fig = ax.figure
 
-        ax.scatter(*self.vector)
+        ax.scatter(*self.vector, color=color)
         return fig, ax
 
 
@@ -980,7 +981,7 @@ class Point3D(Vector3D):
         return cls([float(i)/1000 for i in arguments[1][1:-1].split(",")],
                     arguments[0][1:-1])
 
-    def Babylon(self):
+    def babylon_script(self):
         s = 'var sphere = BABYLON.MeshBuilder.CreateSphere("point", {diameter: 0.05}, scene);\n'
         s += "sphere.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));\n".format(self.vector[0],self.vector[1],self.vector[2])
         s += 'var mat = new BABYLON.StandardMaterial("mat", scene);\n'

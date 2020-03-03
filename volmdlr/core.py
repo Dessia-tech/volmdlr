@@ -6,20 +6,20 @@
 
 
 #import bezier
-from geomdl import NURBS
 
+from packaging import version
 import warnings
 import math
 import numpy as npy
 npy.seterr(divide='raise')
-#from itertools import permutations
 
+from geomdl import NURBS
 import matplotlib.pyplot as plt
-import mpl_toolkits
-from matplotlib.patches import Arc, FancyArrow
+import  mpl_toolkits
+from matplotlib.patches import Arc, FancyArrow, FancyArrowPatch
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d import proj3d
-from matplotlib.patches import FancyArrowPatch
+from matplotlib import __version__ as _mpl_version
 
 import networkx as nx
 
@@ -604,16 +604,22 @@ class Line2D(Primitive2D, Line):
             ax.set_aspect('equal')
         else:
             fig = ax.figure
-
+        
         p1, p2 = self.points
-        u = p2 - p1
-        # plt.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color)
-        p3 = p1 - 3*u
-        p4 = p2 + 4*u
-        if dashed:
-            ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color, dashes=[30, 5, 10, 5])
+        if version.parse(_mpl_version) >= version.parse('3.2'):
+            if dashed:
+                ax.axline(*p1, *p2, dashes=[30, 5, 10, 5])
+            else:
+                ax.axline(*p1, *p2)
         else:
-            ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color)
+            u = p2 - p1
+            p3 = p1 - 3*u
+            p4 = p2 + 4*u
+            if dashed:
+                ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color, dashes=[30, 5, 10, 5])
+            else:
+                ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color)
+
         return fig ,ax
 
     def CreateTangentCircle(self, point, other_line):
@@ -946,6 +952,9 @@ class LineSegment2D(Line2D):
 
 
 class Arc2D(Primitive2D):
+    """
+    angle: the angle measure always >= 0
+    """
     def __init__(self, start, interior, end, name=''):
         Primitive2D.__init__(self, name)
         self.interior = interior
@@ -964,33 +973,38 @@ class Arc2D(Primitive2D):
         ri = self.interior - self.center
 
         self.radius = r1.Norm()
-        angle1 = npy.arctan2(r1.vector[1], r1.vector[0])
-        angle2 = npy.arctan2(r2.vector[1], r2.vector[0])
-
-        anglei = npy.arctan2(ri.vector[1], ri.vector[0])
-        order = [y for x, y in sorted(zip([angle1, anglei, angle2], [0, 1, 2]))]
-        order = order*2
-        i = order.index(0)
-        if order[i+1] == 1:
-            # Trigo wise angle should be plus
+        angle1 = math.atan2(r1.vector[1], r1.vector[0])
+        anglei = math.atan2(ri.vector[1], ri.vector[0])
+        angle2 = math.atan2(r2.vector[1], r2.vector[0])
+        
+        # Going trigo/clock wise from start to interior
+        if anglei < angle1:
+            trigowise_path = (anglei+2*math.pi) - angle1
+            clockwise_path = angle1 - anglei
+        else:
+            trigowise_path = anglei - angle1
+            clockwise_path = angle1 - anglei + 2*math.pi
+            
+        # Going trigo wise from interior to interior
+        if angle2 < anglei:
+            trigowise_path += (angle2+2*math.pi) - anglei
+            clockwise_path += anglei - angle2
+        else:
+            trigowise_path += angle2 - anglei
+            clockwise_path += anglei - angle2 + 2*math.pi     
+            
+        if clockwise_path > trigowise_path:
             self.is_trigo = True
             self.angle1 = angle1
             self.angle2 = angle2
-            if angle1 > angle2:
-                self.angle = angle2 - angle1 + 2 * math.pi
-            else:
-                self.angle = angle2 - angle1
-#            self.angle = abs(self.angle2 - self.angle1)
+            self.angle = trigowise_path
         else:
             # Clock wise
             self.is_trigo = False
             self.angle1 = angle2
             self.angle2 = angle1
-#            self.angle = -abs(self.angle2 - self.angle1)
-            if angle1 < angle2:
-                self.angle = angle2 - angle1 + 2 * math.pi
-            else:
-                self.angle = angle2 - angle1
+            self.angle = clockwise_path
+
 
     def _get_points(self):
         return [self.start,self.interior,self.end]
@@ -1028,19 +1042,21 @@ class Arc2D(Primitive2D):
         if number_points_tesselation == 1:
             number_points_tesselation += 1
         
-        vector_start = Vector2D((self.start - self.center).vector)
-        vector_end = Vector2D((self.end - self.center).vector)
-        angle = clockwise_angle(vector_start, vector_end)
-        if not self.is_trigo:
-            angle = - angle
-        delta_angle = angle/(number_points_tesselation-1)
-        points = []
-        points.append(self.start)
-        for i in range(number_points_tesselation-2):
-            point_to_add = points[-1].Rotation(self.center, delta_angle)
-            points.append(point_to_add)
-        points.append(self.end)
-        return points
+        # vector_start = Vector2D((self.start - self.center).vector)
+        # vector_end = Vector2D((self.end - self.center).vector)
+        # angle = clockwise_angle(vector_start, vector_end)
+        # if not self.is_trigo:
+        #     angle = - angle
+        # delta_angle = angle/(number_points_tesselation-1)
+        # points = []
+        # points.append(self.start)
+        # for i in range(number_points_tesselation-2):
+        #     point_to_add = points[-1].Rotation(self.center, delta_angle)
+        #     points.append(point_to_add)
+        # points.append(self.end)
+        l = self.Length()
+        return [self.PointAtCurvilinearAbscissa(i/(number_points_tesselation-1)*l) for i in range(number_points_tesselation)]
+        # return points
         
     def point_belongs(self, point):
         """
@@ -1132,6 +1148,7 @@ class Arc2D(Primitive2D):
                     theta1=self.angle1*0.5/math.pi*360,
                     theta2=self.angle2*0.5/math.pi*360,
                     color=color))
+        
         return fig, ax
 
     def To3D(self,plane_origin, x, y):
@@ -2060,62 +2077,46 @@ class Arc3D(Primitive3D):
         r2 = (self.end).To2D(self.center, u1, v1)
         ri = (self.interior).To2D(self.center, u1, v1)
 
-        angle1 = npy.arctan2(r1.vector[1], r1.vector[0])
-        angle2 = npy.arctan2(r2.vector[1], r2.vector[0])
+        angle1 = math.atan2(r1.vector[1], r1.vector[0])
+        anglei = math.atan2(ri.vector[1], ri.vector[0])
+        angle2 = math.atan2(r2.vector[1], r2.vector[0])
 
-        anglei = npy.arctan2(ri.vector[1], ri.vector[0])
-        order = [y for x, y in sorted(zip([angle1, anglei, angle2], [0, 1, 2]))]
-        order = order*2
-        i = order.index(0)
-        if order[i+1] == 1:
-            # Trigo wise angle should be plus
-            self.angle1 = angle1
-            self.angle2 = angle2
-            if angle1 > angle2:
-                self.angle = angle2 - angle1 + 2 * math.pi
-            else:
-                self.angle = angle2 - angle1
-#            self.angle = abs(self.angle2 - self.angle1)
+
+        # Going trigo/clock wise from start to interior
+        if anglei < angle1:
+            trigowise_path = (anglei+2*math.pi) - angle1
+            clockwise_path = angle1 - anglei
+        else:
+            trigowise_path = anglei - angle1
+            clockwise_path = angle1 - anglei + 2*math.pi
+            
+        # Going trigo wise from interior to interior
+        if angle2 < anglei:
+            trigowise_path += (angle2+2*math.pi) - anglei
+            clockwise_path += anglei - angle2
+        else:
+            trigowise_path += angle2 - anglei
+            clockwise_path += anglei - angle2 + 2*math.pi     
+            
+        if clockwise_path > trigowise_path:
+            self.is_trigo = True
+            self.angle = trigowise_path
         else:
             # Clock wise
-            self.angle1 = angle2
-            self.angle2 = angle1
-            if angle1 < angle2:
-                self.angle = -(angle2 - angle1 + 2 * math.pi)
-            else:
-                self.angle = -(angle2 - angle1)
-                
+            self.is_trigo = False
+            self.angle = clockwise_path                
         Primitive3D.__init__(self, basis_primitives=self.tessellation_points(), name=name)
 
     def _get_points(self):
-        return [self.start,self.interior,self.end]
+        return self.tessellation_points()
+        # return [self.start,self.interior,self.end]
 
     points=property(_get_points)
 
     def tessellation_points(self, resolution_for_circle=40):
         number_points_tesselation = math.ceil(resolution_for_circle*abs(0.5*self.angle/math.pi))
         l = self.Length()
-        tessellation_points_3D = [self.PointAtCurvilinearAbscissa(l*i/(number_points_tesselation-1)) for i in range(number_points_tesselation)]
-#         plane = Plane3D.from_3_points(self.interior, self.start, self.end)
-#         interior_2D = self.interior.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
-#         start_2D = self.start.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
-#         end_2D = self.end.To2D(plane.origin, plane.vectors[0], plane.vectors[1])
-#         arc2D = Arc2D(start_2D, interior_2D, end_2D)
-#         try:
-#             tessellation_points_2D = arc2D.tessellation_points(resolution_for_circle)
-#         except ValueError:
-#             print(self.start, self.interior, self.end)
-#             print(arc2D.start, arc2D.interior, arc2D.end)
-#             self.MPLPlot()
-#             raise ValueError
-# #        ax = interior_2D.MPLPlot()
-# #        start_2D.MPLPlot(ax=ax)
-# #        end_2D.MPLPlot(ax=ax)
-# #        for pt in tessellation_points_2D:
-# #            pt.MPLPlot(ax=ax)
-# #        ax.set_aspect('equal')
-# #        tessellation_points_3D = [p.To3D(self.interior, self.start, self.end) for p in tessellation_points_2D]
-#         tessellation_points_3D = [p.To3D(plane.origin, plane.vectors[0], plane.vectors[1]) for p in tessellation_points_2D]
+        tessellation_points_3D = [self.PointAtCurvilinearAbscissa(l*i/(number_points_tesselation)) for i in range(number_points_tesselation+1)]
         return tessellation_points_3D
 
     def Length(self):
@@ -2382,7 +2383,7 @@ class CompositePrimitive3D(Primitive3D):
         for primitive in self.edges:
             primitive.MPLPlot(ax)
 
-        ax.set_aspect('equal')
+        # ax.set_aspect('equal')
 
         return fig, ax
 
@@ -2530,6 +2531,9 @@ class LineSegment3D(Edge3D):
 
     def Length(self):
         return self.points[1].point_distance(self.points[0])
+    
+    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
+        return self.points[0] + curvilinear_abscissa*(self.points[1] - self.points[0]) / self.Length()
 
     def PlaneProjection2D(self, x, y):
         return LineSegment2D(self.points[0].PlaneProjection2D(x, y),
@@ -2607,7 +2611,7 @@ class LineSegment3D(Edge3D):
     def to_line(self):
         return Line3D(*self.points)
 
-    def Babylon(self, color=(1, 1, 1), name='line',  type_='line', parent=None):
+    def babylon_script(self, color=(1, 1, 1), name='line',  type_='line', parent=None):
         if type_ == 'line' or type_ == 'dashed':
             s = 'var myPoints = [];\n'
             s += 'var point1 = new BABYLON.Vector3({},{},{});\n'.format(*self.points[0])
@@ -2783,6 +2787,24 @@ class Contour3D(Wire3D):
         else:
             new_point_inside_contour = None
         return Contour3D(new_edges, new_point_inside_contour, self.name)
+    
+    def Length(self):
+        # TODO: this is duplicated code from Wire3D!
+        length = 0.
+        for edge in self.edges:
+            length += edge.Length()
+        return length
+    
+    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
+        # TODO: this is duplicated code from Wire3D!
+        length = 0.
+        for primitive in self.edges:
+            primitive_length = primitive.Length()
+            if length + primitive_length > curvilinear_abscissa:
+                return primitive.PointAtCurvilinearAbscissa(curvilinear_abscissa - length)
+            length += primitive_length
+        # Outside of length
+        raise ValueError
 
 class Circle3D(Contour3D):
     _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']
@@ -3310,7 +3332,7 @@ class Shell3D(CompositePrimitive3D):
     _non_eq_attributes = ['name', 'color', 'alpha' 'bounding_box', 'contours']
     _non_hash_attributes = []
 
-    def __init__(self, faces, name='', color=None, alpha=1.):
+    def __init__(self, faces, *, color=None, alpha=1., name=''):
         self.faces = faces
         self.name = name
         self.color = color
@@ -3333,12 +3355,12 @@ class Shell3D(CompositePrimitive3D):
         faces = []
         for face in arguments[1]:
             faces.append(object_dict[int(face[1:])])
-        return cls(faces, arguments[0][1:-1])
+        return cls(faces, name = arguments[0][1:-1])
 
     def Rotation(self, center, axis, angle, copy=True):
         if copy:
             new_faces = [face.Rotation(center, axis, angle, copy=True) for face in self.faces]
-            return Shell3D(new_faces, self.name)
+            return Shell3D(new_faces, name = self.name)
         else:
             for face in self.faces:
                 face.Rotation(center, axis, angle, copy=False)
@@ -3347,7 +3369,7 @@ class Shell3D(CompositePrimitive3D):
     def Translation(self, offset, copy=True):
         if copy:
             new_faces = [face.Translation(offset, copy=True) for face in self.faces]
-            return Shell3D(new_faces, self.name)
+            return Shell3D(new_faces, name = self.name)
         else:
             for face in self.faces:
                 face.Translation(offset, copy=False)
@@ -3359,7 +3381,7 @@ class Shell3D(CompositePrimitive3D):
         """
         if copy:
             new_faces = [face.frame_mapping(frame, side, copy=True) for face in self.faces]
-            return Shell3D(new_faces, self.name)
+            return Shell3D(new_faces, name = self.name)
         else:
             for face in self.faces:
                 face.frame_mapping(frame, side, copy=False)
@@ -3367,13 +3389,13 @@ class Shell3D(CompositePrimitive3D):
 
     def copy(self):
         new_faces = [face.copy() for face in self.faces]
-        return Shell3D(new_faces, self.name)
+        return Shell3D(new_faces, name = self.name)
 
     def union(self, shell2):
         new_faces = [face for face in self.faces+shell2.faces]
         new_name = self.name+' union '+shell2.name
         new_color = self.color
-        return Shell3D(new_faces, new_name, new_color)
+        return Shell3D(new_faces, name = new_name, color = new_color)
 
     def _bounding_box(self):
         """
@@ -4147,7 +4169,6 @@ class Measure3D(Line3D):
         s += 'line.color = new BABYLON.Color3({}, {}, {});\n'.format(self.color[0], self.color[1], self.color[2])
         return s
 
-
 class Group:
     def __init__(self, primitives, name):
         self.primitives = primitives
@@ -4719,7 +4740,8 @@ class VolumeModel(dc.DessiaObject):
         
     def babylonjs(self, page_name=None, use_cdn=True, debug=False):
         babylon_data = self.babylon_data()
-        self.babylonjs_from_babylon_data(babylon_data)
+        self.babylonjs_from_babylon_data(babylon_data, page_name = page_name,
+                                         use_cdn = use_cdn, debug = debug)
 
 
         
@@ -4814,10 +4836,10 @@ class MovingVolumeModel(VolumeModel):
                 if iframe in primitives_to_meshes:
                     imesh = primitives_to_meshes.index(iframe)
                     step[imesh] = {}
-                    step[imesh]['position'] = list(frame.origin)
-                    step[imesh]['orientations'] = [list(frame.u),
-                                                    list(frame.v),
-                                                    list(frame.w)]
+                    step[imesh]['position'] = list(round(frame.origin, 6))
+                    step[imesh]['orientations'] = [list(round(frame.u, 6)),
+                                                    list(round(frame.v, 6)),
+                                                    list(round(frame.w, 6))]
 
             steps.append(step)
         

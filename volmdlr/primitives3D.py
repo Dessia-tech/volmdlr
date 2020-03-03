@@ -163,7 +163,7 @@ class Block(volmdlr.Shell3D):
     :param frame: a frame 3D. The origin of the frame is the center of the block,
      the 3 vectors are defining the edges. The frame has not to be orthogonal
     """
-    def __init__(self, frame:volmdlr.Frame3D,
+    def __init__(self, frame:volmdlr.Frame3D, *,
                  color:Tuple[float, float, float]=None, alpha:float=1.,
                  name:str=''):
         self.frame = frame
@@ -221,7 +221,7 @@ class Block(volmdlr.Shell3D):
     def Rotation(self, center, axis, angle, copy=True):
         if copy:
             new_frame = self.frame.Rotation(center, axis, angle, copy=True)
-            return Block(new_frame, self.name, self.color)
+            return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
         else:
             self.frame.Rotation(center, axis, angle, copy=False)
             volmdlr.Shell3D.Rotation(self, center, axis, angle, copy=False)
@@ -229,7 +229,7 @@ class Block(volmdlr.Shell3D):
     def Translation(self, offset, copy=True):
         if copy:
             new_frame = self.frame.Translation(offset, copy=True)
-            return Block(new_frame, self.name, self.color)
+            return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
         else:
             self.frame.Translation(offset, copy=False)
             volmdlr.Shell3D.Translation(self, offset, copy=False)
@@ -246,7 +246,7 @@ class Block(volmdlr.Shell3D):
             new_w = basis.NewCoordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
             if copy:
-                return Block(new_frame, self.name, self.color)
+                return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
             else:
                 self.frame = new_frame
                 volmdlr.Shell3D.frame_mapping(self, frame, side, copy=False)
@@ -258,7 +258,7 @@ class Block(volmdlr.Shell3D):
             new_w = basis.OldCoordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
             if copy:
-                return Block(new_frame, self.name, self.color)
+                return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
             else:
                 self.frame = new_frame
                 volmdlr.Shell3D.frame_mapping(self, frame, side, copy=False)
@@ -269,7 +269,7 @@ class Block(volmdlr.Shell3D):
         new_v = self.frame.v.Copy()
         new_w = self.frame.w.Copy()
         new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
-        return Block(new_frame, self.name, self.color)
+        return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
 
     def plot_data(self, x3D, y3D, marker=None, color='black', stroke_width=1,
                   dash=False, opacity=1, arrow=False):
@@ -646,7 +646,7 @@ class RevolvedProfile(volmdlr.Shell3D):
                           self.angle)
 
 class Cylinder(RevolvedProfile):
-    def __init__(self, position, axis, radius, length, color=None, alpha=1, name=''):
+    def __init__(self, position, axis, radius, length, color=None, alpha=1., name=''):
         self.position = position
         axis.Normalize()
         self.axis = axis
