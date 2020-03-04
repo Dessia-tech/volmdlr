@@ -104,7 +104,7 @@ def get_version():
 setup(name='volmdlr',
       version = get_version(),
 #      setup_requires=['setuptools_scm'],
-      description=' A volume modeler computation-oriented. Include rendering bindings. ',
+      description=' A volume modeler computation-oriented. Include rendering bindings.',
       long_description=readme(),
       keywords='volume, modeler, CAD',
       url='https://github.com/Dessia-tech/volmdlr',
