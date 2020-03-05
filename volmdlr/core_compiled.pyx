@@ -301,7 +301,7 @@ class Vector(DessiaObject):
         return point
 
 class Vector2D(Vector):
-    def __init__(self, vector, name=''):
+    def __init__(self, vector:List[float], name:str=''):
         # TODO: change this list to 2 values vx and vy
         self.vector = [0, 0]
 #        self.vector = npy.zeros(2)
@@ -477,7 +477,7 @@ Y2D = Vector2D((0, 1))
 
 
 class Point2D(Vector2D):
-    def __init__(self, vector, name=''):
+    def __init__(self, vector:List[float], name:str=''):
         Vector2D.__init__(self, vector, name)
 
     def __add__(self, other_vector):
