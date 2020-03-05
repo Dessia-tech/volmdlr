@@ -435,7 +435,7 @@ class Vector2D(Vector):
         )
         self.plot()
 
-    def plot(self, amplitude=0.5, origin=None, ax=None, color='k', line=False, label=None):
+    def plot(self, amplitude=0.5, width=None, head_width=None, origin=None, ax=None, color='k', line=False, label=None, normalize=False):
         if origin is None:
             origin = Vector2D((0., 0.))
 
@@ -448,13 +448,29 @@ class Vector2D(Vector):
             point = Point2D(origin.vector)
             point.MPLPlot(ax=ax, color=color)
             return fig, ax
-
-        ax.add_patch(FancyArrow(origin[0], origin[1],
-                                self.vector[0]*amplitude, self.vector[1]*amplitude,
-                                width=0.001*5*amplitude,
-                                head_width=0.01*3000*amplitude,
-                                length_includes_head=True,
-                                color=color))
+        
+        if width is None:
+            width = 0.001*5*amplitude
+        if head_width is None:
+            head_width = 0.3*amplitude
+        
+        if not normalize:
+            ax.add_patch(FancyArrow(origin[0], origin[1],
+                                    self.vector[0]*amplitude, self.vector[1]*amplitude,
+                                    width=width,
+                                    head_width=head_width,
+                                    length_includes_head=True,
+                                    color=color))
+        else:
+            normalized_vector = self.copy()
+            normalized_vector.Normalize()
+            ax.add_patch(FancyArrow(origin[0], origin[1],
+                                    normalized_vector[0]*amplitude, normalized_vector[1]*amplitude,
+                                    width=width,
+                                    head_width=head_width,
+                                    length_includes_head=True,
+                                    color=color))
+            
         if line:
             style='-'+color
             linestyle = '-.'
@@ -470,6 +486,7 @@ class Vector2D(Vector):
             ax.text(*(origin+self*amplitude).vector, label)
 
         return fig, ax
+    
 
 
 X2D = Vector2D((1, 0))
@@ -835,8 +852,8 @@ class Vector3D(Vector):
         Retuns a deterministic normal vector
         """
         v = X3D
-        if not math.isclose(self.vector[1], 0, abs_tol=1e-5) \
-        or not math.isclose(self.vector[2], 0, abs_tol=1e-5):
+        if not math.isclose(self.vector[1], 0, abs_tol=1e-7) \
+        or not math.isclose(self.vector[2], 0, abs_tol=1e-7):
             v = X3D
         else:
             v = Y3D

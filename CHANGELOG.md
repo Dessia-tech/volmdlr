@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - color and alpha options for various primitives
-
+- line segments intersection
+ 
 ### Debug
 - arcs: is_trigo and angle were sometimes false
 
