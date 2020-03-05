@@ -290,7 +290,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.Wire2D):
     
 # =============================================================================
 # COMPUTES THE ANGLE BETWEEN THE NORMAL VECTOR OF THE SURFACE TO OFFSET AND 
-# THE DIRETIVE VECTOR IN ORDER TO SET THE NEW POINT AT THE RIGHT DISTANCE
+# THE DIRECTIVE VECTOR IN ORDER TO SET THE NEW POINT AT THE RIGHT DISTANCE
 # =============================================================================
         normal_vectors = []
         for index in line_indexes:

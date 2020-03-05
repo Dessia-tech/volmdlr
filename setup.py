@@ -29,7 +29,7 @@ def version_from_git_describe(version):
         version, number_commits_ahead, commit_hash = version.split('-')
         number_commits_ahead = int(number_commits_ahead)
         
-    print('number_commits_ahead', number_commits_ahead)
+    # print('number_commits_ahead', number_commits_ahead)
     
     split_versions = version.split('.')
     if 'post' in split_versions[-1]:
