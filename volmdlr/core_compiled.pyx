@@ -964,7 +964,7 @@ class Point3D(Vector3D):
         return cls([float(i)/1000 for i in arguments[1][1:-1].split(",")],
                     arguments[0][1:-1])
 
-    def Babylon(self):
+    def babylon_script(self):
         s = 'var sphere = BABYLON.MeshBuilder.CreateSphere("point", {diameter: 0.05}, scene);\n'
         s += "sphere.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));\n".format(self.vector[0],self.vector[1],self.vector[2])
         s += 'var mat = new BABYLON.StandardMaterial("mat", scene);\n'
