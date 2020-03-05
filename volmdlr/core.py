@@ -3741,7 +3741,7 @@ class CylindricalFace3D(Face3D):
         segmentspt=[]
         for k in range (0,len(placement2d)-1):
             segmentspt.append(LineSegment2D(Point2D(placement2d[k].vector),Point2D(placement2d[k+1].vector)))
-        print('pts2d',placement2d)
+        # print('pts2d',placement2d)
         
         
         #On cherche les extremum pour tracer le bounding
@@ -3757,10 +3757,52 @@ class CylindricalFace3D(Face3D):
         #Lignes verticales
         line = [LineSegment2D(ptxmax, ptxmin) for ptxmin,ptxmax in list(zip(pointsxzmin, pointsxzmax))] #du h vers le b
         
-    
-        for l in line[1:-1]:
-            print(l)
-        
+        all_contours_points=[]
+        for enum, ligne in enumerate(line[1:-1]):
+            contour_points=[]
+            l1, l2 = line[enum+1], line[enum+2]
+            for i, seg in enumerate(segmentspt):
+                p1 = seg.line_intersection(l1)
+                if p1 is not None:
+                    break
+            for j, seg in enumerate(segmentspt):
+                p2 = seg.line_intersection(l2)
+                if p2 is not None:
+                    break
+            for k, seg in enumerate(segmentspt[i+1:]):
+                p3 = seg.line_intersection(l1)
+                if p3 is not None:
+                    break
+            for l, seg in enumerate(segmentspt[j+1:]):
+                p4 = seg.line_intersection(l2)
+                if p4 is not None:
+                    break    
+            if i==j :
+                contours_points.append(p1, p2, p4)
+                
+            else :
+                points=[]
+                points.extend(p1)
+                for pos in range (i+1,j+1):
+                    points.extend(placement2d[pos])
+                points.extend(p2, p4)
+                
+                contours_points.append(points)
+            
+            if k==l :
+                contours_points.append(p3)
+            
+            else :
+                points=[]
+                for pos in range (k+1,l+1):
+                    points.extend(placement2d[pos])
+                points.extend(p3)
+                
+                contours_points.append(points)
+                
+            all_contours_points.append(contours_points)
+            
+        print('all contours points', all_contours_points)
         # fig, ax = plt.subplots()
         
         # [s1.MPLPlot(ax=ax) for s1 in segmentspt] 
