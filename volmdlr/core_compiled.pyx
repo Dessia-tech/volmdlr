@@ -6,7 +6,7 @@
 Cython functions
 
 """
-
+# from __future__ import annotations
 from typing import TypeVar, List, Tuple
 import math
 from dessia_common import DessiaObject
@@ -301,7 +301,7 @@ class Vector(DessiaObject):
         return point
 
 class Vector2D(Vector):
-    def __init__(self, vector, name=''):
+    def __init__(self, vector:List[float], name:str=''):
         # TODO: change this list to 2 values vx and vy
         self.vector = [0, 0]
 #        self.vector = npy.zeros(2)
@@ -435,7 +435,7 @@ class Vector2D(Vector):
         )
         self.plot()
 
-    def plot(self, amplitude=0.5, origin=None, ax=None, color='k', line=False, label=None):
+    def plot(self, amplitude=0.5, width=None, head_width=None, origin=None, ax=None, color='k', line=False, label=None, normalize=False):
         if origin is None:
             origin = Vector2D((0., 0.))
 
@@ -448,13 +448,29 @@ class Vector2D(Vector):
             point = Point2D(origin.vector)
             point.MPLPlot(ax=ax, color=color)
             return fig, ax
-
-        ax.add_patch(FancyArrow(origin[0], origin[1],
-                                self.vector[0]*amplitude, self.vector[1]*amplitude,
-                                width=0.001*5*amplitude,
-                                head_width=0.01*3000*amplitude,
-                                length_includes_head=True,
-                                color=color))
+        
+        if width is None:
+            width = 0.001*5*amplitude
+        if head_width is None:
+            head_width = 0.3*amplitude
+        
+        if not normalize:
+            ax.add_patch(FancyArrow(origin[0], origin[1],
+                                    self.vector[0]*amplitude, self.vector[1]*amplitude,
+                                    width=width,
+                                    head_width=head_width,
+                                    length_includes_head=True,
+                                    color=color))
+        else:
+            normalized_vector = self.copy()
+            normalized_vector.Normalize()
+            ax.add_patch(FancyArrow(origin[0], origin[1],
+                                    normalized_vector[0]*amplitude, normalized_vector[1]*amplitude,
+                                    width=width,
+                                    head_width=head_width,
+                                    length_includes_head=True,
+                                    color=color))
+            
         if line:
             style='-'+color
             linestyle = '-.'
@@ -470,6 +486,7 @@ class Vector2D(Vector):
             ax.text(*(origin+self*amplitude).vector, label)
 
         return fig, ax
+    
 
 
 X2D = Vector2D((1, 0))
@@ -477,7 +494,7 @@ Y2D = Vector2D((0, 1))
 
 
 class Point2D(Vector2D):
-    def __init__(self, vector, name=''):
+    def __init__(self, vector:List[float], name:str=''):
         Vector2D.__init__(self, vector, name)
 
     def __add__(self, other_vector):
@@ -835,8 +852,8 @@ class Vector3D(Vector):
         Retuns a deterministic normal vector
         """
         v = X3D
-        if not math.isclose(self.vector[1], 0, abs_tol=1e-5) \
-        or not math.isclose(self.vector[2], 0, abs_tol=1e-5):
+        if not math.isclose(self.vector[1], 0, abs_tol=1e-7) \
+        or not math.isclose(self.vector[2], 0, abs_tol=1e-7):
             v = X3D
         else:
             v = Y3D
@@ -964,7 +981,7 @@ class Point3D(Vector3D):
         return cls([float(i)/1000 for i in arguments[1][1:-1].split(",")],
                     arguments[0][1:-1])
 
-    def Babylon(self):
+    def babylon_script(self):
         s = 'var sphere = BABYLON.MeshBuilder.CreateSphere("point", {diameter: 0.05}, scene);\n'
         s += "sphere.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));\n".format(self.vector[0],self.vector[1],self.vector[2])
         s += 'var mat = new BABYLON.StandardMaterial("mat", scene);\n'
@@ -1127,9 +1144,10 @@ class Basis2D(Basis):
     :param u: first vector of the basis
     :param v: second vector of the basis
     """
-    def __init__(self, u, v):
+    def __init__(self, u:Vector2D, v:Vector2D, name:str=''):
         self.u = u
         self.v = v
+        self.name = name
 
     def __neg__(self):
         Pinv = self.InverseTransferMatrix()
@@ -1196,7 +1214,7 @@ class Basis3D(Basis):
     _standalone_in_db = False
 
     # TODO: create a Basis and Frame class to mutualize between 2D and 2D
-    def __init__(self, u, v, w, name=''):
+    def __init__(self, u:Vector3D, v:Vector3D, w:Vector3D, name:str=''):
         self.u = u
         self.v = v
         self.w = w
@@ -1239,8 +1257,9 @@ class Basis3D(Basis):
 
     vectors = property(_get_vectors)
 
+    # TODO: transform to annotation when available
     @classmethod
-    def from_two_vectors(cls, vector1, vector2):
+    def from_two_vectors(cls, vector1:Vector3D, vector2:Vector3D) -> 'Basis3D':
         """
         Create a basis with first vector1 adimensionned, as u, v is the vector2 substracted of u component,
         w is the cross product of u and v
@@ -1358,9 +1377,9 @@ class Frame2D(Basis2D):
     :param u: first vector of the basis
     :param v: second vector of the basis
     """
-    def __init__(self, origin, u, v):
+    def __init__(self, origin:Point2D, u:Vector2D, v:Vector2D, name:str=''):
         self.origin = origin
-        Basis2D.__init__(self, u, v)
+        Basis2D.__init__(self, u, v, name=name)
 
     def __repr__(self):
         return '{}: O={} U={}, V={}'.format(self.__class__.__name__, self.origin, self.u, self.v)

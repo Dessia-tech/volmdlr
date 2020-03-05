@@ -11,13 +11,13 @@ import volmdlr.primitives3D as p3d
 
 # moteur = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/MOTEUR HRevoUNIFY v2.stp')
 # moteur = vm.Step('/home/ringhausen/Bureau/Renault/MOTEUR.txt')
-# boite = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/BOITE E-TECHg2.stp')
-cmo = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/CMO2.stp')
+boite = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/BOITE E-TECHg2.stp')
+# cmo = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/CMO2.stp')
 
 
 # moteur = moteur.to_shells3d('moteur')
 # boite = boite.to_shells3d('boite')
-cmo = cmo.to_shells3d('cmo')
+boite = boite.to_shells3d('cmo')
 
 #origin = vm.Point3D((0.5,0.5,-0.5))
 #u = vm.Vector3D((0.2,0,0))
@@ -61,7 +61,7 @@ cmo = cmo.to_shells3d('cmo')
 #volumemodel.BabylonShow()
 
 #shell0 = volumemodel.shells[0] # LE MOTEUR
-primitives = cmo
+primitives = boite
 volumemodel = vm.VolumeModel(primitives, 'name')
 volumemodel_copy = volumemodel.copy()
 
@@ -78,7 +78,7 @@ shell0 = volumemodel.primitives[0] # LE MOTEUR
 
 # volumemodel.babylonjs()
 # volumemodel.babylonjs_from_meshes(page_name='debug')
-volumemodel_copy.babylonjs_from_meshes(page_name='debug')
+volumemodel_copy.babylonjs(page_name='debug')
 
 #%%
 
