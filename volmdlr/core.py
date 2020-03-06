@@ -151,9 +151,43 @@ def clockwise_angle(vector1, vector2):
 
     return 2*math.pi-inner_angle
 
-
-
-
+def delete_double_pos(points, triangles):
+    
+    points_to_indexes = {}
+    
+    for index, point in enumerate(points):
+        if point not in points_to_indexes:
+            points_to_indexes[point] = [index]
+        else:
+            points_to_indexes[point].append(index)
+            
+    new_points = []
+    index_to_modified_index = {}
+    for i, (point, indexes) in enumerate(points_to_indexes.items()):
+        new_points.append(point)
+        index_to_modified_index[indexes[0]] = i
+    
+    index_to_new_index = {}
+    
+    for indexes in points_to_indexes.values():
+        for index in indexes[1:]:
+            index_to_new_index[index] = indexes[0]
+    
+    new_triangles = []
+    for face_triangles in triangles:
+        new_face_triangles = []
+        for triangle in face_triangles:
+            new_triangle = []
+            for index in triangle:
+                if index in index_to_new_index:
+                    modified_index = index_to_modified_index[index_to_new_index[index]]
+                else:
+                    modified_index = index_to_modified_index[index]
+                new_triangle.append(modified_index)
+            new_face_triangles.append(tuple(new_triangle))
+        new_triangles.append(new_face_triangles)
+        
+    return new_points, new_triangles
 
 
 
@@ -855,7 +889,7 @@ class LineSegment2D(Line2D):
     def MPLPlot(self, ax=None, color='k', arrow=False, width=None, plot_points=False):
         if ax is None:
             fig, ax = plt.subplots()
-            ax.set_aspect('equal')
+            # ax.set_aspect('equal')
         else:
             fig = ax.figure
 
@@ -2813,7 +2847,6 @@ class Contour3D(Wire3D):
         for edge in self.edges[1:]:
             if hasattr(edge, 'points'):
                 points_to_add = edge.points[:]
-<<<<<<< HEAD
                 
                 if points[0] == points[-1]: # Dans le cas où le (dernier) edge relie deux fois le même point
                     # print('=', points_to_add[::-1])
@@ -2821,9 +2854,6 @@ class Contour3D(Wire3D):
                     points.extend(points_to_add[::-1])
                 
                 elif points_to_add[0] == points[-1]:
-=======
-                if points_to_add[0] == points[-1]:
->>>>>>> dev
                     points.extend(points_to_add[1:])
                 elif points_to_add[-1] == points[-1]:
                     points.extend(points_to_add[-2::-1])
@@ -2833,10 +2863,6 @@ class Contour3D(Wire3D):
                 elif points_to_add[-1] == points[0]:
                     points = points[::-1]
                     points.extend(points_to_add[-2::-1])
-<<<<<<< HEAD
-
-=======
->>>>>>> dev
                 else:
                     # fig, ax = self.MPLPlot()
                     # [print(edge.points) for edge in self.edges]
@@ -3552,7 +3578,7 @@ class CylindricalFace3D(Face3D):
         zmax = max([pt[2] for pt in points])
         return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
-    def triangulation(self, resolution=30):
+    def triangulation(self, resolution=31):
         ###### IF C EST UN CONTOUR 3D :
         contour = self.contours[0] 
         points = self.points
@@ -3588,213 +3614,7 @@ class CylindricalFace3D(Face3D):
                 Ls.append(Le[i][pos])
             return (min(Ls), max(Ls))
         
-        
-        ##pts2d = delete_double(pts2D) #liste des points2d sans doublon
-        ##pts2d.append(pts2d[0]) #On rajoute le premier point à la fin pour boucler la boucle
-
-        ## placement2d=[] #pour placer les points à la hauteur de l'origine
-        ## placement2dh=[] #pour placer les points à la hauteur du cylindre
-        
-        ## pos=radius*math.acos(pts2d[0][0]/radius)
-        ## placement2d.append(Vector2D([pos,hmin],'')) #On doit initialiser la liste
-        ## placement2dh.append(Vector2D([pos,hmax],'')) ###" a voir pour les hauteurs spécifique
-
-        ## for enum, pt in enumerate(pts2d):
-        ##     pos=clockwise_angle(Vector2D(pts2d[0]),Vector2D(pt))*radius #l'arc de cercle mesure alpha*r
-        ##     placement2d.append(Vector2D([pos,hmin],'')) 
-        ##     placement2dh.append(Vector2D([pos,hmax],''))
-        
-        
-################################################################################## OK1
-        # placement_2d=[]
-        # for enum, pt in enumerate(pts2D):
-        #     pos=clockwise_angle(Vector2D(pts2D[0].vector),Vector2D(pt.vector))*radius #l'arc de cercle mesure alpha*r
-        #     placement_2d.append(Vector2D([pos,newpoints[enum][2]],''))
-        # placement2d=delete_double(placement_2d)
-        # placement2d.append(placement2d[0]) #on rajoute le premier point pour compléter le segment
-        
-##################################################################################  OK2   
-        
-        
-        #On cherche les extremum pour tracer le bounding
-        # hmin, hmax = min_max(newpoints,2) #hauteur de l'origine
-        # posimin, posimax = min_max(placement2d,0)
-        
-        # #créer lignes/segments entre xmax et xmin avec pas:xmax-xmin/resolution
-
-        # pas=(posimax-posimin)/resolution
-        # pointsxzmin = [Point2D([posimin+i*pas,hmin]) for i in range (0,resolution+1)]
-        # pointsxzmax = [Point2D([posimin+i*pas,hmax]) for i in range (0,resolution+1)]
-        
-        #Lignes verticales
-        # line = [LineSegment2D(ptxmin, ptxmax) for ptxmin,ptxmax in list(zip(pointsxzmin, pointsxzmax))]
-        
-        #Segment entre les points haut et bas
-        
-        
-        
-        ## segmentspt1=[]
-        ## segmentspt2=[]
-        ## for k in range (0,len(placement2d)-1):
-        ##     if k==0 :
-        ##         continue
-        ##     elif k==len(placement2d)-2: #le point [1] est aussi le dernier point
-        ##         segmentspt1.append(LineSegment2D(Point2D(placement2d[k].vector),Point2D(placement2d[0].vector)))
-        ##         segmentspt2.append(LineSegment2D(Point2D(placement2dh[k].vector),Point2D(placement2dh[0].vector)))
-        ##     else :
-        ##         segmentspt1.append(LineSegment2D(Point2D(placement2d[k].vector),Point2D(placement2d[k+1].vector)))
-        ##         segmentspt2.append(LineSegment2D(Point2D(placement2dh[k].vector),Point2D(placement2dh[k+1].vector)))
-  
-################################################################################# test1
       
-        # segmentspt=[]
-        # for k in range (0,len(placement2d)-1):
-        #     segmentspt.append(LineSegment2D(Point2D(placement2d[k].vector),Point2D(placement2d[k+1].vector)))
-        
-################################################################################# test2
-        
-        #Points d'intersections
-            
-            
-            
-            
-        ## ptsInter1=[]        
-        ## ptsInter2=[]
-        ## ind=0
-        ## for i,j in zip(reversed(segmentspt1),reversed(segmentspt2)): #Reversed car les points sont dans l'ordre décroissant
-        ##     for k in line[ind:]:
-        ##         if i.points[0][0] >= k.points[0][0]:
-        ##             ptsInter1.append(Point2D.SegmentsIntersection(i,k))
-        ##             ptsInter2.append(Point2D.SegmentsIntersection(j,k))
-        ##             ind+=1
-        ##         else : 
-        ##             break
-   
-################################################################################### test1
-     
-        # ptsInter=[]
-        # for seg in segmentspt:
-        #     val1, val2 = seg.points[0][0], seg.points[1][0] #on récup les deux composantes de longueur des segments
-        #     for l in line:
-        #         if l.points[0][0] >= min(val1,val2) and l.points[0][0] <= max(val1,val2):
-        #             if Point2D.SegmentsIntersection(seg,l) is None :
-        #                 break
-        #             #une condition pour supprimer les doublons présents successivement
-        #             elif len(ptsInter)!=0 and Point2D.SegmentsIntersection(seg,l)==ptsInter[-1]:
-        #                 break
-        #             else :
-        #                 # print(round(Point2D.SegmentsIntersection(seg,l), 9))#(Point2D.SegmentsIntersection(seg,l)).vector[0])
-        #                 # print(ptsInter1[-1].vector[0])
-        #                 # print()
-        #                 ptsInter.append(Point2D.SegmentsIntersection(seg,l))
-        #         else :
-        #             continue
-
-################################################################################### test2
-        
-        # Segments entre les points d'intersections
-                
-                
-                
-        ## seg1 = [LineSegment2D(ptsInter1[k],ptsInter1[k+1]) for k in range(0,len(ptsInter1)-1)]
-        ## seg2 = [LineSegment2D(ptsInter2[k],ptsInter2[k+1]) for k in range(0,len(ptsInter2)-1)]
-#################################################################################### test1        
-        
-        # seg = [LineSegment2D(ptsInter[k],ptsInter[k+1]) for k in range(0,len(ptsInter)-1)]
-
-########################################################################################" test 2 
-        
-        #Sommets et segments des faces à trianguler
-        # ts=[]
-        # Points3D=[]
-        
-        # for i,j in zip(ptsInter1,ptsInter2): #2D en 3D
-        #     Points3D.append(Point3D(Vector3D([radius*math.cos(i[0]/radius),radius*math.sin(i[0]/radius),i[1]])))            
-        #     Points3D.append(Point3D(Vector3D([radius*math.cos(j[0]/radius),radius*math.sin(j[0]/radius),j[1]])))            
-
-##################################################################################### test 1
-        # ptsInter1=[]
-        # ptsInter2=[]
-        # for k in range(0,len(ptsInter)-1):
-        #     if k!=0 and ptsInter[k]==ptsInter2[-1] : #si le point lu est le même dans la liste 2, on veut pas de doublon
-        #         break
-        #     else :
-        #         ptsInter1.append(ptsInter[k])
-        #         ptsInter2.append(ptsInter[-k-1])
-        
-        # for i,j in zip(ptsInter1,ptsInter2): #2D en 3D
-        #     Points3D.append(Point3D(Vector3D([radius*math.cos(i[0]/radius),radius*math.sin(i[0]/radius),i[1]])))            
-        #     Points3D.append(Point3D(Vector3D([radius*math.cos(j[0]/radius),radius*math.sin(j[0]/radius),j[1]])))    
-####################################################################################### test 2
-
-        # Points_3D=[frame3d.OldCoordinates(point) for point in Points3D]  #Création de la nouvelle liste de points dans le repère de base
-        
-        
-####################### TEST AVEC UNE GROSSE LISTE ET TRIANGLE QUI POINTE SUR LES POINTS    
-########################### CA MARCHE
-        #############
-        
-        # print('pt1',ptsInter1)
-        # print('pt2',ptsInter2) 
-        # print('pt3d',Points_3D)
-        
-        # for k in range(0,len(ptsInter1)-1): 
-        
-        #     # vertices = [ptsInter1[k].vector,ptsInter2[k].vector,ptsInter1[k+1].vector,ptsInter2[k+1].vector] #liste de points représentant les sommets
-        #     #.vector pour avoir le tuple
-        #     # segments = [(0,1), (1,3), (3,2), (2,0)]
-            
-        #     tri = {'vertices': [ptsInter1[k].vector,ptsInter2[k].vector,ptsInter1[k+1].vector,ptsInter2[k+1].vector], 'segments': [(0,1), (1,3), (3,2), (2,0)]}
-        #     # print('tri', tri)
-        #     t = triangle.triangulate(tri, 'p')
-        #     ts.append(t)
-        
-        # for k, t in enumerate(ts):
-        #     if 'triangles' in t:
-        #         triangles = t['triangles'].tolist()
-        #         # print('triangles',triangles)
-        #         # print('triangles[0]',triangles[0])
-        #         # print('triangles[1]',triangles[1])
-        #         # print()
-        #         for n,tri in enumerate(triangles):
-        #             for i in range (0,3):
-        #                 tri[i]=tri[i]+2*k
-        #         Triangles.append(triangles)        
-        #         # if k==0 :
-        #             # Triangles.append(([Points_3D[0],Points_3D[1],Points_3D[2],Points_3D[3]],triangles))
-        #         # else :
-        #             # Triangles.append(([Triangles[k-1][0][2],Triangles[k-1][0][3],Points_3D[2+2*k],Points_3D[3+2*k]],triangles))
-        #     else:
-        #         Triangles.append(None)
-        # return Points_3D, Triangles
-                
-#################################################################################################################### test solution G
-        
-        # print('pt1',ptsInter1)
-        # print('pt2',ptsInter2) 
-        # print('pt3d',Points_3D)
-
-           
-        # for k in range(0,len(ptsInter1)-1):
-        
-        #     #.vector pour avoir le tuple
-            
-        #     tri = {'vertices': [ptsInter1[k].vector,ptsInter2[k].vector,ptsInter1[k+1].vector,ptsInter2[k+1].vector], 'segments': [(0,1), (1,3), (3,2), (2,0)]}
-        #     t = triangle.triangulate(tri, 'p')
-        #     ts.append(t)
-        
-        # for k, t in enumerate(ts):
-        #     if 'triangles' in t:
-        #         triangles = t['triangles'].tolist()
-        #         for n,tri in enumerate(triangles):
-        #             for i in range (0,3):
-        #                 tri[i]=tri[i]+2*k
-        #         Triangles.append(triangles)        
-        #     else:
-        #         Triangles.append(None)
-        # return Points_3D, Triangles
-    
-############################################################################################################ NEW SOLU 5/03    
         placement_2d=[]
         for enum, pt in enumerate(pts2D):
             pos=(2*math.pi-clockwise_angle(Vector2D(pts2D[0].vector),Vector2D(pt.vector)))*radius #l'arc de cercle mesure alpha*r
@@ -3819,58 +3639,166 @@ class CylindricalFace3D(Face3D):
         pointsxzmax = [Point2D([posimin+i*pas,hmax]) for i in range (0,resolution+1)]
         
         #Lignes verticales
-        line = [LineSegment2D(ptxmax, ptxmin) for ptxmin,ptxmax in list(zip(pointsxzmin, pointsxzmax))] #du h vers le b
+        line = [Line2D(ptxmax, ptxmin) for ptxmin,ptxmax in list(zip(pointsxzmin, pointsxzmax))] #du h vers le b
         
-        all_contours_points=[]
+
+
+        all_contours_points = []
+        #On recupere les points tout à gauche avec la line[1]
+        contours_points = []
+        for i, seg in enumerate(segmentspt) :
+            p1 = seg.line_intersection(line[1])
+            if p1 is not None:
+                break
+        for k, seg in enumerate(segmentspt[i+1:]) :
+            p3 = seg.line_intersection(line[1])
+            if p3 is not None:
+                break    
+        k += i+1
+        for pos in range (0,i+1):
+            contours_points.append(Point2D(placement2d[pos].vector))
+        contours_points.append(p1)
+        contours_points.append(p3)
+        for pos in range (k+1,len(placement2d)-1):
+            contours_points.append(Point2D(placement2d[pos].vector))
+        
+        all_contours_points.append(contours_points)
+        #On recupere les points entre la line 1 et l avant derniere
         for enum, ligne in enumerate(line[1:-1]):
-            contour_points=[]
-            l1, l2 = line[enum+1], line[enum+2]
-            for i, seg in enumerate(segmentspt):
-                p1 = seg.line_intersection(l1)
-                if p1 is not None:
-                    break
-            for j, seg in enumerate(segmentspt):
-                p2 = seg.line_intersection(l2)
-                if p2 is not None:
-                    break
-            for k, seg in enumerate(segmentspt[i+1:]):
-                p3 = seg.line_intersection(l1)
-                if p3 is not None:
-                    break
-            for l, seg in enumerate(segmentspt[j+1:]):
-                p4 = seg.line_intersection(l2)
-                if p4 is not None:
-                    break    
-            if i==j :
-                contours_points.append(p1, p2, p4)
+            contours_points=[]
+            if enum != len(line)-3 : #sinon on va chercher la derniere ligne
+                l1, l2 = line[enum+1], line[enum+2]
+                for i, seg in enumerate(segmentspt) :
+                    p1 = seg.line_intersection(l1)
+                    if p1 is not None:
+                        break
+                for j, seg in enumerate(segmentspt) :
+                    p2 = seg.line_intersection(l2)
+                    if p2 is not None:
+                        break
+                for k, seg in enumerate(segmentspt[i+2:]) :
+                    p3 = seg.line_intersection(l1)
+                    if p3 is not None:
+                        break
+                for l, seg in enumerate(segmentspt[j+2:]) :
+                    p4 = seg.line_intersection(l2)
+                    if p4 is not None:
+                        break    
+                    
+                k += i+2
+                l += j+2
+                if i==j :
+                    contours_points.extend([p1, p2, p4])
                 
-            else :
-                points=[]
-                points.extend(p1)
-                for pos in range (i+1,j+1):
-                    points.extend(placement2d[pos])
-                points.extend(p2, p4)
+                else :
+                    points=[]
+                    points.append(p1)
+                    for pos in range (i+1,j+1):
+                        points.append(Point2D(placement2d[pos].vector))
+                    points.append(p2)
+                    points.append(p4)
                 
-                contours_points.append(points)
+                    contours_points.extend(points)
             
-            if k==l :
-                contours_points.append(p3)
+                if k==l :
+                    contours_points.append(p3)
             
-            else :
-                points=[]
-                for pos in range (k+1,l+1):
-                    points.extend(placement2d[pos])
-                points.extend(p3)
+                else :
+                    points=[]
+                    for pos in range (l+1,k+1):
+                        points.append(Point2D(placement2d[pos].vector))
+                    points.append(p3)
                 
-                contours_points.append(points)
-                
-            all_contours_points.append(contours_points)
+                    contours_points.extend(points)
+                all_contours_points.append(contours_points)
+        
+        #On recupere les points tout à droite avec l'avant derniere line
+        contours_points = []
+        for i, seg in enumerate(segmentspt) :
+            p1 = seg.line_intersection(line[len(line)-2])
+            if p1 is not None:
+                break
+        for k, seg in enumerate(segmentspt[i+1:]) :
+            p3 = seg.line_intersection(line[len(line)-2])
+            if p3 is not None:
+                break    
+        k += i+1
+        contours_points.append(p1)
+        for pos in range (i+1,k+1):
+            contours_points.append(Point2D(placement2d[pos].vector))
+        contours_points.append(p3)
+        all_contours_points.append(contours_points)
+        
+        Points3D=[]
+        tlist=[] #liste regroupant la taille de toutes les sous listes
+        for listpt in  all_contours_points: #2D en 3D
+            for enum, pt in enumerate(listpt) :
+                Points3D.append(Point3D(Vector3D([radius*math.cos(pt[0]/radius),radius*math.sin(pt[0]/radius),pt[1]])))            
+            tlist.append(enum+1)
             
-        print('all contours points', all_contours_points)
+        Points_3D=[frame3d.OldCoordinates(point) for point in Points3D]  #Création de la nouvelle liste de points dans le repère de base
+        ts=[]
+        
+        for k, listpt in enumerate(all_contours_points) :
+            vertices=[]
+            segments=[]
+            for i, pt in enumerate(listpt):
+                vertices.append(pt.vector)
+                segments.append([i,i+1])
+            
+            segments[-1]=(tlist[k]-1,0) #on remplace le dernier terme pour boucler la boucle
+            tri = {'vertices': vertices, 'segments': segments}
+            t = triangle.triangulate(tri, 'p')
+            ts.append(t)
+        
+        seuil=0
+        k=0
+        
+        for t in ts :
+            if 'triangles' in t:
+                triangles = t['triangles'].tolist()
+                for n,tri in enumerate(triangles):
+                    for i in range (0,3):
+                        tri[i]=tri[i]+seuil
+                seuil += tlist[k]
+                k += 1
+                Triangles.append(triangles)        
+            else:
+                Triangles.append(None)
+        pt3d, tangle = delete_double_pos(Points_3D, Triangles)       
+        return pt3d, tangle
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        # print('all contours points', all_contours_points)
         # fig, ax = plt.subplots()
         
-        # [s1.MPLPlot(ax=ax) for s1 in segmentspt] 
-        # [l.MPLPlot(ax=ax) for l in line]
+        # # # [s1.MPLPlot(ax=ax) for s1 in segmentspt] 
+        # [l.MPLPlot(ax=ax) for l in line[1:-1]]
     
     
     
@@ -4236,7 +4164,6 @@ class Shell3D(CompositePrimitive3D):
         nb_points = 0
         for i, face in enumerate(self.faces):
             points_3D, triangles_indexes = face.triangulation()
-<<<<<<< HEAD
             # points_3D_triangles_indexes = face.triangulation()
             # print('=>', points_3D, triangles_indexes)
             # print()
@@ -4253,18 +4180,6 @@ class Shell3D(CompositePrimitive3D):
                     indices.extend([k+nb_points for k in index])
             nb_points += len(points_3D)
             
-            
-            
-=======
-            if points_3D is not None:
-                for point in points_3D:
-                    positions.extend([i for i in round(point, 6)])
-    
-                for j, indexes in enumerate(triangles_indexes):
-                    indices.extend([i+nb_points for i in indexes])
-                nb_points += len(points_3D)
->>>>>>> dev
-        
         babylon_mesh = {'positions': positions,
                         'indices': indices,
                         'name': self.name,
@@ -5002,12 +4917,6 @@ class Step:
 
         # elif name == 'LINE':
         #     pass
-<<<<<<< HEAD
-=======
-        
-        # elif name == 'SEAM_CURVE':
-        #     object_dict[instanciate_id] = object_dict[arguments[1]]
->>>>>>> dev
 
         elif name == 'ORIENTED_EDGE':
             object_dict[instanciate_id] = object_dict[arguments[3]]
@@ -5577,11 +5486,7 @@ step_to_volmdlr_primitive = {
         'AXIS2_PLACEMENT_2D': None, # ??????????????????
         'AXIS2_PLACEMENT_3D': Frame3D,
 
-<<<<<<< HEAD
         'LINE': Line3D, #LineSegment3D,
-=======
-        'LINE': Line3D,
->>>>>>> dev
         'CIRCLE': Circle3D,
         'ELLIPSE': Ellipse3D,
         'PARABOLA': None,
