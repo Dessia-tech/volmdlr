@@ -3593,7 +3593,8 @@ class Shell3D(CompositePrimitive3D):
         babylon_mesh = {'positions': positions,
                         'indices': indices,
                         'name': self.name,
-                        'alpha': self.alpha
+                        'alpha': self.alpha,
+                        'name': self.name
                         }
         
         if self.color is None:

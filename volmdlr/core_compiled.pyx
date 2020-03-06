@@ -301,7 +301,7 @@ class Vector(DessiaObject):
         return point
 
 class Vector2D(Vector):
-    def __init__(self, vector, name=''):
+    def __init__(self, vector:Tuple[float, float], name=''):
         # TODO: change this list to 2 values vx and vy
         self.vector = [0, 0]
 #        self.vector = npy.zeros(2)
@@ -318,16 +318,16 @@ class Vector2D(Vector):
     def __sub__(self, other_vector):
         return Vector2D(sub2D(self.vector, other_vector.vector))
 
-    def __mul__(self, value):
+    def __mul__(self, value:float):
         return Vector2D(mul2D(self.vector, value))
 
-    def __truediv__(self, value):
+    def __truediv__(self, value:float):
         if value == 0:
             raise ZeroDivisionError
         return Vector2D((self.vector[0] / value,
                          self.vector[1] / value))
 
-    def __round__(self, ndigits=6):
+    def __round__(self, ndigits:int=6):
         return self.__class__((round(self.vector[0], ndigits),
                                round(self.vector[1], ndigits)))
 
@@ -477,7 +477,7 @@ Y2D = Vector2D((0, 1))
 
 
 class Point2D(Vector2D):
-    def __init__(self, vector, name=''):
+    def __init__(self, vector:Tuple[float, float], name=''):
         Vector2D.__init__(self, vector, name)
 
     def __add__(self, other_vector):
@@ -489,10 +489,10 @@ class Point2D(Vector2D):
     def __sub__(self, other_vector):
         return Point2D(sub2D(self.vector, other_vector.vector))
 
-    def __mul__(self, value):
+    def __mul__(self, value:float):
         return Point2D(mul2D(self.vector, value))
 
-    def __truediv__(self, value):
+    def __truediv__(self, value:float):
         if value == 0:
             raise ZeroDivisionError
         return Point2D((self.vector[0] / value,
@@ -636,7 +636,7 @@ class Vector3D(Vector):
     #         }
     #     }
 
-    def __init__(self, vector:List[float], name:str=''):
+    def __init__(self, vector::Tuple[float, float, float], name:str=''):
         self.vector = [0, 0, 0]
 #        self.vector = npy.zeros(3)
         self.vector[0] = vector[0]
@@ -914,7 +914,7 @@ class Point3D(Vector3D):
     #         }
     #     }
 
-    def __init__(self, vector:List[float], name:str=''):
+    def __init__(self, vector:Tuple[float, float, float], name:str=''):
         Vector3D.__init__(self, vector, name)
 
     def __add__(self, other_vector):
@@ -981,7 +981,7 @@ O3D = Point3D((0, 0, 0))
    
     
 class Matrix22:
-    def __init__(self, M11, M12, M21, M22):
+    def __init__(self, M11:float, M12:float, M21:float, M22:float):
         self.M11 = M11
         self.M12 = M12
         self.M21 = M21
@@ -1146,7 +1146,7 @@ class Basis2D(Basis):
     vectors = property(_get_vectors)
 
 
-    def to_frame(self, origin):
+    def to_frame(self, origin:Point3D) -> 'Frame3D':
         return Frame2D(origin, self.u, self.v)
 
 
@@ -1172,7 +1172,7 @@ class Basis2D(Basis):
         return Point2D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1],
                          matrix[1][0]*vector[0] + matrix[1][1]*vector[1]))
 
-    def Rotation(self, angle, copy=True):
+    def Rotation(self, angle:float, copy=True):
         center = O2D
         new_u = self.u.Rotation(center, angle, True)
         new_v = self.v.Rotation(center, angle, True)
@@ -1227,7 +1227,7 @@ class Basis3D(Basis):
                        Vector3D((M.M12, M.M22, M.M32)),
                        Vector3D((M.M13, M.M23, M.M33)))
 
-    def __round__(self, ndigits=6):
+    def __round__(self, ndigits:int=6):
         return self.__class__((round(self.u, ndigits),
                                round(self.v, ndigits),
                                round(self.w, ndigits)))
@@ -1258,7 +1258,7 @@ class Basis3D(Basis):
     def to_frame(self, origin):
         return Frame3D(origin, self.u, self.v, self.w)
 
-    def Rotation(self, axis, angle, copy=True):
+    def Rotation(self, axis:Vector3D, angle:float, copy:bool=True):
         center = O3D
         new_u = self.u.Rotation(center, axis, angle, True)
         new_v = self.v.Rotation(center, axis, angle, True)
@@ -1271,7 +1271,7 @@ class Basis3D(Basis):
             self.v = new_v
             self.w = new_w
 
-    def x_rotation(self, angle, copy=True):
+    def x_rotation(self, angle:float, copy:bool=True):
         new_u = self.u.x_rotation(angle, True)
         new_v = self.v.x_rotation(angle, True)
         new_w = self.w.x_rotation(angle, True)
@@ -1283,7 +1283,7 @@ class Basis3D(Basis):
             self.v = new_v
             self.w = new_w
 
-    def y_rotation(self, angle, copy=True):
+    def y_rotation(self, angle:float, copy:bool=True):
         new_u = self.u.y_rotation(angle, True)
         new_v = self.v.y_rotation(angle, True)
         new_w = self.w.y_rotation(angle, True)
@@ -1295,7 +1295,7 @@ class Basis3D(Basis):
             self.v = new_v
             self.w = new_w
 
-    def z_rotation(self, angle, copy=True):
+    def z_rotation(self, angle:float, copy:bool=True):
         new_u = self.u.z_rotation(angle, True)
         new_v = self.v.z_rotation(angle, True)
         new_w = self.w.z_rotation(angle, True)
@@ -1307,7 +1307,7 @@ class Basis3D(Basis):
             self.v = new_v
             self.w = new_w
 
-    def EulerRotation(self, angles, copy=True):
+    def EulerRotation(self, angles:Tuple[float, float, float], copy:bool=True):
         psi, theta, phi = angles
         center = O3D
 
