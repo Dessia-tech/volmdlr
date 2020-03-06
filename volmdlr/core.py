@@ -454,22 +454,7 @@ class Contour2D(Wire2D):
     
     def plot_data(self, name='', fill=None, marker=None, color='black', 
                   stroke_width=1, dash=False, opacity=1):
-#        plot_datas = []
-#        for primitive in self.primitives:
-#            print(primitive)
-#            plot_datas.append(primitive.plot_data(name, fill, color, stroke_width, opacity))
-#        return plot_datas
-#        data = []
-#        for nd in self.points:
-#            data.append({'x': nd.vector[0], 'y': nd.vector[1]})
-#        return {'type' : 'path',
-#                'data' : data,
-#                'color' : color,
-#                'size' : stroke_width,
-#                'dash' : None,
-#                'marker' : marker,
-#                'opacity' : opacity}
-#        
+
         plot_data = {}
         plot_data['fill'] = fill
         plot_data['name'] = name
@@ -2535,7 +2520,7 @@ class LineSegment3D(Edge3D):
     def to_line(self):
         return Line3D(*self.points)
 
-    def Babylon(self, color=(1, 1, 1), name='line',  type_='line', parent=None):
+    def babylon_script(self, color=(1, 1, 1), name='line',  type_='line', parent=None):
         if type_ == 'line' or type_ == 'dashed':
             s = 'var myPoints = [];\n'
             s += 'var point1 = new BABYLON.Vector3({},{},{});\n'.format(*self.points[0])
@@ -4091,7 +4076,6 @@ class Measure3D(Line3D):
         s += 'line.color = new BABYLON.Color3({}, {}, {});\n'.format(self.color[0], self.color[1], self.color[2])
         return s
 
-
 class Group:
     def __init__(self, primitives, name):
         self.primitives = primitives
@@ -4660,7 +4644,8 @@ class VolumeModel(dc.DessiaObject):
         
     def babylonjs(self, page_name=None, use_cdn=True, debug=False):
         babylon_data = self.babylon_data()
-        self.babylonjs_from_babylon_data(babylon_data)
+        self.babylonjs_from_babylon_data(babylon_data, page_name = page_name,
+                                         use_cdn = use_cdn, debug = debug)
 
 
         
@@ -4755,10 +4740,10 @@ class MovingVolumeModel(VolumeModel):
                 if iframe in primitives_to_meshes:
                     imesh = primitives_to_meshes.index(iframe)
                     step[imesh] = {}
-                    step[imesh]['position'] = list(frame.origin)
-                    step[imesh]['orientations'] = [list(frame.u),
-                                                    list(frame.v),
-                                                    list(frame.w)]
+                    step[imesh]['position'] = list(round(frame.origin, 6))
+                    step[imesh]['orientations'] = [list(round(frame.u, 6)),
+                                                    list(round(frame.v, 6)),
+                                                    list(round(frame.w, 6))]
 
             steps.append(step)
         
