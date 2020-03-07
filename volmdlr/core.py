@@ -4418,10 +4418,7 @@ class VolumeModel(dc.DessiaObject):
     def Volume(self):
         volume=0
         for primitive in self.primitives:
-            try:
-                volume+=primitive.Volume()
-            except:
-                pass
+            volume+=primitive.Volume()
         return volume
 
     def Rotation(self, center, axis, angle, copy=True):
@@ -4645,7 +4642,7 @@ class VolumeModel(dc.DessiaObject):
                           bbox.zmax - bbox.zmin])
                 
         babylon_data = {'meshes': meshes,
-                        'max_length': max_length/5.,
+                        'max_length': max_length,
                         'center': list(center)}
         return babylon_data
 
