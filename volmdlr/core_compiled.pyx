@@ -636,7 +636,7 @@ class Vector3D(Vector):
     #         }
     #     }
 
-    def __init__(self, vector::Tuple[float, float, float], name:str=''):
+    def __init__(self, vector:Tuple[float, float, float], name:str=''):
         self.vector = [0, 0, 0]
 #        self.vector = npy.zeros(3)
         self.vector[0] = vector[0]

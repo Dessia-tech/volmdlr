@@ -1451,7 +1451,7 @@ class Polygon2D(Contour2D):
         data = []
         for nd in self.points:
             data.append({'x': nd.vector[0], 'y': nd.vector[1]})
-        return {'type' : 'path',
+        return {'type' : 'wire',
                     'data' : data,
                     'color' : color,
                     'size' : stroke_width,

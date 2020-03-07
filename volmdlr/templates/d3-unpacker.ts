@@ -251,7 +251,7 @@ export class D3Unpacker {
             d.data.forEach(function(d){
               area_data.push([1000*d['x'],1000*d['y']])})
           }
-          else if (d.type == "path"){
+          else if (d.type == "wire"){
             paths_data.push(d);
             d.data.forEach(function(d){
               area_data.push([1000*d['x'],1000*d['y']])})
@@ -265,7 +265,7 @@ export class D3Unpacker {
             rectangles_data.push(d);
           }
         })
-
+        console.log(paths_data)
         arcs_data.forEach(function(d){
           var draw_data = []
           d.data.forEach(function(dd){
