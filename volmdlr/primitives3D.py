@@ -923,9 +923,22 @@ class Sweep(volmdlr.Primitive3D):
     Sweep a 3D contour along a Wire3D
     """
     def __init__(self, contour3d, wire3d, name=''):
-        volmdlr.Primitive3D.__init__(self,name)
+        volmdlr.Primitive3D.__init__(self, name=name)
         self.contour3d = contour3d
         self.wire3d = wire3d
+        self.bounding_box = self._bounding_box()
+        
+    def _bounding_box(self):
+        points = self.contour3d.points
+        print(11, points)
+        xmin = min([pt[0] for pt in points])
+        xmax = max([pt[0] for pt in points])
+        ymin = min([pt[1] for pt in points])
+        ymax = max([pt[1] for pt in points])
+        zmin = min([pt[2] for pt in points])
+        zmax = max([pt[2] for pt in points])
+        print(xmin, xmax, ymin, ymax, zmin, zmax)
+        return volmdlr.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive{}'.format(ip)

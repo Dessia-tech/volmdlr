@@ -1532,6 +1532,7 @@ class Plane3D(Primitive3D):
 
     @classmethod
     def from_normal(cls, point, normal):
+        print(point, normal)
         v1 = normal.DeterministicUnitNormalVector()
         v2 = v1.Cross(normal)
         return cls(point, v1, v2)
@@ -4430,9 +4431,10 @@ class VolumeModel(dc.DessiaObject):
     def _bounding_box(self):
         bboxes = []
         for primitive in self.primitives:
+            print(primitive)
             if hasattr(primitive, 'bounding_box'):
                 bboxes.append(primitive.bounding_box)
-
+        print(bboxes)
         xmin = min([box.xmin for box in bboxes])
         xmax = max([box.xmax for box in bboxes])
         ymin = min([box.ymin for box in bboxes])
