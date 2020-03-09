@@ -523,7 +523,7 @@ class Mesh2D:
                 file.write(s)
         return s
 
-class Line:
+class Line(dc.DessiaObject):
     def __neg__(self):
         return self.__class__(self.points[::-1])
 
@@ -771,6 +771,20 @@ class LineSegment2D(Line2D):
     """
     def __init__(self,point1, point2, name=''):
         Line2D.__init__(self, point1, point2, name = name)
+        
+    def to_dict(self):
+        # improve the object structure ?
+        dict_ = {}
+        dict_['name'] = self.name
+        dict_['point1'] = self.points[0].to_dict()
+        dict_['point2'] = self.points[1].to_dict()
+        dict_['object_class'] = 'volmdlr.core.LineSegment2D'
+        return dict_
+    
+    @classmethod
+    def dict_to_object(cls, dict_):
+        return cls(point1 = Point2D.dict_to_object(dict_['point1']), 
+                   point2 = Point2D.dict_to_object(dict_['point2']), name = dict_['name'])
 
     def _get_geo_points(self):
         return self.points
@@ -2722,7 +2736,8 @@ class Contour3D(Wire3D):
                     points = points[::-1]
                     points.extend(points_to_add[-2::-1])
                 else:
-                    self.MPLPlot()
+                    # print(points, points_to_add)
+                    # self.MPLPlot()
                     raise NotImplementedError
             else:
                 raise NotImplementedError
