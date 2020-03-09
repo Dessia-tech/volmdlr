@@ -13,7 +13,7 @@ import volmdlr.primitives3D as p3d
 # moteur = vm.Step('/home/ringhausen/Bureau/Renault/MOTEUR.txt')
 boite = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/BOITE E-TECHg2.stp')
 # cmo = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/CMO2.stp')
-
+boite = vm.Step('/home/ringhausen/Bureau/Test STEP/Test STEP.step')
 
 # moteur = moteur.to_shells3d('moteur')
 # boite = boite.to_shells3d('boite')

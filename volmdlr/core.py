@@ -13,7 +13,8 @@ import math
 import numpy as npy
 npy.seterr(divide='raise')
 
-from geomdl import NURBS
+# from geomdl import NURBS
+from geomdl import BSpline
 import matplotlib.pyplot as plt
 import  mpl_toolkits
 from matplotlib.patches import Arc, FancyArrow, FancyArrowPatch
@@ -1954,7 +1955,7 @@ class BSplineCurve3D(Primitive3D):
         self.periodic = periodic
         self.name = name
 
-        curve = NURBS.Curve()
+        curve = BSpline.Curve()
         curve.degree = degree
         if weights is None:
             P = [(control_points[i][0], control_points[i][1], control_points[i][2]) for i in range(len(control_points))]
@@ -2233,7 +2234,7 @@ class BSplineSurface3D(Primitive3D):
         # TRANSPOSE THE LIST OF LISTS
 #        self.control_points_table = list(map(list, zip(*self.control_points_table)))
 
-        surface = NURBS.Surface()
+        surface = BSpline.Surface()
         surface.degree_u = degree_u
         surface.degree_v = degree_v
         if weights is None:
@@ -2250,12 +2251,27 @@ class BSplineSurface3D(Primitive3D):
             knot_vector_v.extend([v_knot]*v_multiplicities[i])
         surface.knotvector_u = knot_vector_u
         surface.knotvector_v = knot_vector_v
-        surface.delta = 0.01
+        surface.delta = 0.05
         surface_points = surface.evalpts
-
+        
         self.surface = surface
         self.points = [Point3D((p[0], p[1], p[2])) for p in surface_points]
+        print(surface.sample_size)
 
+
+    def triangulation(self):
+        sample_size = self.surface.sample_size
+        
+        triangles = []
+        for i in range(sample_size[0]-1):
+            for j in range(sample_size[1]-1):
+                if j % sample_size[1] == 0:
+                    continue
+                triangles.append((i+j, i+j+sample_size[0], i+j+sample_size[0]+1))
+                triangles.append((i+j, i+j+1, i+j+sample_size[0]+1))
+
+        return self.points, triangles
+        
 
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive{}'.format(ip)
@@ -2861,7 +2877,10 @@ class Circle3D(Contour3D):
     def from_step(cls, arguments, object_dict):
         center = object_dict[arguments[1]].origin
         radius = float(arguments[2])/1000
-        normal = object_dict[arguments[1]].w
+        if object_dict[arguments[1]].w is not None:
+            normal = object_dict[arguments[1]].w
+        else:
+            normal = object_dict[arguments[1]].u
         return cls(center, radius, normal, arguments[0][1:-1])
 
 
@@ -2943,11 +2962,11 @@ class Face3D(Primitive3D):
         self.bounding_box = self._bounding_box()
 
         # CHECK
-        for pt in self.points:
-            if not self.plane.point_on_plane(pt):
-                print('WARNING', pt, 'not on', self.plane.__dict__)
-                print('dot =', self.plane.normal.Dot(pt-self.plane.origin))
-                raise ValueError
+        # for pt in self.points:
+        #     if not self.plane.point_on_plane(pt):
+        #         print('WARNING', pt, 'not on', self.plane.__dict__)
+        #         print('dot =', self.plane.normal.Dot(pt-self.plane.origin))
+        #         raise ValueError
 
     def __hash__(self):
         return hash(self.plane) + sum([hash(p) for p in self.points])
