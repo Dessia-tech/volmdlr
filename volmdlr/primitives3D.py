@@ -211,12 +211,12 @@ class Block(volmdlr.Shell3D):
 
     def shell_faces(self):
         c1, c2, c3, c4, c5, c6 = self.face_contours()
-        return [volmdlr.Face3D([c1]),
-                volmdlr.Face3D([c2]),
-                volmdlr.Face3D([c3]),
-                volmdlr.Face3D([c4]),
-                volmdlr.Face3D([c5]),
-                volmdlr.Face3D([c6])]
+        return [volmdlr.PlaneFace3D([c1]),
+                volmdlr.PlaneFace3D([c2]),
+                volmdlr.PlaneFace3D([c3]),
+                volmdlr.PlaneFace3D([c4]),
+                volmdlr.PlaneFace3D([c5]),
+                volmdlr.PlaneFace3D([c6])]
 
     def Rotation(self, center, axis, angle, copy=True):
         if copy:

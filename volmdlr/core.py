@@ -152,9 +152,48 @@ def clockwise_angle(vector1, vector2):
 
     return 2*math.pi-inner_angle
 
+def vectors3d_angle(vector1, vector2):
+    dot = vector1.Dot(vector2)
+    teta = math.acos(dot/vector1.Norm()/vector2.Norm())
+    return teta
 
-
-
+def delete_double_pos(points, triangles):
+    
+    points_to_indexes = {}
+    
+    for index, point in enumerate(points):
+        if point not in points_to_indexes:
+            points_to_indexes[point] = [index]
+        else:
+            points_to_indexes[point].append(index)
+            
+    new_points = []
+    index_to_modified_index = {}
+    for i, (point, indexes) in enumerate(points_to_indexes.items()):
+        new_points.append(point)
+        index_to_modified_index[indexes[0]] = i
+    
+    index_to_new_index = {}
+    
+    for indexes in points_to_indexes.values():
+        for index in indexes[1:]:
+            index_to_new_index[index] = indexes[0]
+    
+    new_triangles = []
+    for face_triangles in triangles:
+        new_face_triangles = []
+        for triangle in face_triangles:
+            new_triangle = []
+            for index in triangle:
+                if index in index_to_new_index:
+                    modified_index = index_to_modified_index[index_to_new_index[index]]
+                else:
+                    modified_index = index_to_modified_index[index]
+                new_triangle.append(modified_index)
+            new_face_triangles.append(tuple(new_triangle))
+        new_triangles.append(new_face_triangles)
+        
+    return new_points, new_triangles
 
 
 
@@ -856,7 +895,7 @@ class LineSegment2D(Line2D):
     def MPLPlot(self, ax=None, color='k', arrow=False, width=None, plot_points=False):
         if ax is None:
             fig, ax = plt.subplots()
-            ax.set_aspect('equal')
+            # ax.set_aspect('equal')
         else:
             fig = ax.figure
 
@@ -1159,7 +1198,7 @@ class Arc2D(Primitive2D):
         pi = self.interior.To3D(plane_origin, x, y)
         pe = self.end.To3D(plane_origin, x, y)
 
-        return Arc3D(ps, pi, pe, self.name)
+        return Arc3D(ps, pi, pe, name=self.name)
 
     def Rotation(self, center, angle, copy=True):
         if copy:
@@ -1817,6 +1856,28 @@ OXYZ = Frame3D(O3D, X3D, Y3D, Z3D)
 OYZX = Frame3D(O3D, Y3D, Z3D, X3D)
 OZXY = Frame3D(O3D, Z3D, X3D, Y3D)
 
+class CylindricalSurface3D(Primitive3D):
+    
+    def __init__(self, frame, radius, name=''): 
+        self.frame = frame
+        self.radius = radius
+        self.name = name
+        V=frame.v
+        V.Normalize()
+        W=frame.w
+        W.Normalize()
+        self.plane = Plane3D(frame.origin,V,W)
+        
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        frame3d = object_dict[arguments[1]]
+        radius=arguments[2]
+        return cls(frame3d, radius, arguments[0][1:-1])
+    
+    # def cyl_to_plan(self, point, frame3d):
+    #     frame3d = object_dict[arguments[1]]
+        
+        
 class Line3D(Primitive3D, Line):
     _non_eq_attributes = ['name', 'basis_primitives', 'bounding_box']
 
@@ -2044,34 +2105,72 @@ class BSplineCurve3D(Primitive3D):
 class Arc3D(Primitive3D):
     """
     An arc is defined by a starting point, an end point and an interior point
+    
     """
-    def __init__(self, start, interior, end, name=''):
+    def __init__(self, start, interior, end, normal=None, name=''):
+        """
+        TODO : vérifier la position du centre et valeur du rayon pas seulement pour le cas particulier (s=e et i à 180°)    
+    
+        """
         self.start = start
         self.interior = interior
         self.end = end
+        # self.normal = normal
+        
 
 
         u1 = (self.interior - self.start)
         u2 = (self.interior - self.end)
         u1.Normalize()
         u2.Normalize()
-
-        n = u2.Cross(u1)
-        n.Normalize()
-        self.normal = n
-        v1 = n.Cross(u1)# v1 is normal
-        v2 = n.Cross(u2)
+        
+        if normal is None:
+            n = u2.Cross(u1)
+            n.Normalize()
+            self.normal = n
+        else:
+            n = normal
+            n.Normalize()
+            self.normal = normal
+        
+        if u1 == u2:
+            u2=n.Cross(u1) #vecteur normé
+            u2.Normalize()
+            # if start != O3D:
+                # u2 = start + interior
+            # else:
+                # u2 = 2 * interior
+        # print('u1', u1)
+        # print('n', n)        
+        # print('u2', u2)
+        v1 = n.Cross(u1)# v1 is normal, égal à u2
+        v2 = n.Cross(u2)# égal à -u1
+        
+        # print('v1', v1)
+        # print('v2', v2)
 
         p11 = 0.5 * (start + interior)# Mid point of segment s,m
         p12 = p11 + v1
         p21 = 0.5 * (end + interior)# Mid point of segment s,m
         p22 = p21 + v2
 
+        # print('p11',p11)
+        # print('p12',p12)
+        # print('p21',p21)
+        # print('p22',p22)
+        
         l1 = Line3D(p11, p12)
         l2 = Line3D(p21, p22)
-
+        
+        # print('l1', l1)
+        # print('l2', l2)
+        
         c1, _ = l1.MinimumDistancePoints(l2)
-        self.center = c1
+        
+        # print('minidistance pts', l1.MinimumDistancePoints(l2))
+        # print('c1', c1)
+        
+        self.center = c1 
         self.radius = (self.center - self.start).Norm()
 
         # Determining angle
@@ -2109,6 +2208,12 @@ class Arc3D(Primitive3D):
             self.is_trigo = False
             self.angle = clockwise_path                
         Primitive3D.__init__(self, basis_primitives=self.tessellation_points(), name=name)
+        
+    # @classmethod
+    # def from_step(cls, arguments, object_dict):
+    #     edges = []
+    #     for edge in arguments[1]:
+    #         edges.append(object_dict[int(edge[1:])])
 
     def _get_points(self):
         return self.tessellation_points()
@@ -2126,14 +2231,14 @@ class Arc3D(Primitive3D):
         return self.radius * abs(self.angle)
 
     def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
-        return self.start.Rotation(self.center, self.normal, curvilinear_abscissa/self.radius)
+        return self.start.Rotation(self.center, self.normal, curvilinear_abscissa/self.radius, copy=True)
 
     def Rotation(self, rot_center, axis, angle, copy=True):
         if copy:
             new_start = self.start.Rotation(rot_center, axis, angle, True)
             new_interior = self.interior.Rotation(rot_center, axis, angle, True)
             new_end = self.end.Rotation(rot_center, axis, angle, True)
-            return Arc3D(new_start, new_interior, new_end, self.name)
+            return Arc3D(new_start, new_interior, new_end, name=self.name)
         else:
             self.center.Rotation(rot_center, axis, angle, False)
             self.start.Rotation(rot_center, axis, angle, False)
@@ -2146,7 +2251,7 @@ class Arc3D(Primitive3D):
             new_start = self.start.Translation(offset, True)
             new_interior = self.interior.Translation(offset, True)
             new_end = self.end.Translation(offset, True)
-            return Arc3D(new_start, new_interior, new_end, self.name)
+            return Arc3D(new_start, new_interior, new_end, name=self.name)
         else:
             self.center.Translation(offset, False)
             self.start.Translation(offset, False)
@@ -2256,22 +2361,6 @@ class BSplineSurface3D(Primitive3D):
         
         self.surface = surface
         self.points = [Point3D((p[0], p[1], p[2])) for p in surface_points]
-        print(surface.sample_size)
-
-
-    def triangulation(self):
-        sample_size = self.surface.sample_size
-        
-        triangles = []
-        for i in range(sample_size[0]-1):
-            for j in range(sample_size[1]-1):
-                if j % sample_size[1] == 0:
-                    continue
-                triangles.append((i+j, i+j+sample_size[0], i+j+sample_size[0]+1))
-                triangles.append((i+j, i+j+1, i+j+sample_size[0]+1))
-
-        return self.points, triangles
-        
 
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive{}'.format(ip)
@@ -2466,8 +2555,43 @@ class Edge3D(Primitive3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
-        return LineSegment3D(object_dict[arguments[1]], object_dict[arguments[2]], arguments[0][1:-1])
+        # print(arguments)
+        # # print(object_dict)
+        # if len(arguments) > 3:
+        #     print(object_dict[arguments[3]])
+        if object_dict[arguments[3]].__class__ is Line3D:
+            return LineSegment3D(object_dict[arguments[1]], object_dict[arguments[2]], arguments[0][1:-1])
+        
+        elif object_dict[arguments[3]].__class__ is Circle3D:
+            # on suppose que le step tourne dans le sens trigo
+            print(arguments)
+            print(object_dict[arguments[3]].radius)
+            center = object_dict[arguments[3]].center
+            normal = object_dict[arguments[3]].normal
+            p1 = object_dict[arguments[1]]
+            p2 = object_dict[arguments[2]]
+            if p1 == p2:
+                angle = math.pi
+            else: 
+                # angle = clockwise_angle(p2, p1)/2
+                # angle = -0.01
+                angle = vectors3d_angle(p2, p1)
+                cross = p2.Cross(p1)
+                if cross.Dot(normal) > 0:
+                    angle = - angle
+            p3 = p1.Rotation(center, normal, angle, True) ##P3 incorrecte !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            arc = Arc3D(p1, p3, p2, normal, arguments[0][1:-1])
+            return arc
 
+        elif object_dict[arguments[3]].__class__ is BSplineCurve3D:
+            print(object_dict[arguments[1]], object_dict[arguments[2]])
+            # BSplineCurve3D à couper à gauche et à droite avec les points ci dessus ?
+            return object_dict[arguments[3]]
+
+        else:
+            print(object_dict[arguments[3]])
+            raise NotImplementedError
+        
     def Rotation(self, center, axis, angle, copy=True):
         if copy:
             new_edge_start = self.points[0].Rotation(center, axis, angle, copy=True)
@@ -2699,8 +2823,9 @@ class Contour3D(Wire3D):
     def from_step(cls, arguments, object_dict):
         edges = []
         for edge in arguments[1]:
+            # print(arguments[1])
             edges.append(object_dict[int(edge[1:])])
-
+            # print(edges)
 #        points = edges[0].points[:]
 #        for i, edge in enumerate(edges[1:-1]):
 #            if edge.points[0] in points[-2:]:
@@ -2710,6 +2835,7 @@ class Contour3D(Wire3D):
 #            else:
 #                raise NotImplementedError
 #        contour_points = [p.copy() for p in points]
+        ################################################################ print('arg', arguments)
 
         return cls(edges, point_inside_contour=None, name=arguments[0][1:-1])
 
@@ -2718,14 +2844,32 @@ class Contour3D(Wire3D):
         TODO : verifier si le dernier point est toujours le meme que le premier point
         lors d'un import step par exemple
         """
+        # print('!' , self.edges)
         if hasattr(self.edges[0], 'points'):
             points = self.edges[0].points[:]
+            # print(self.edges)
+            # print(self.edges[0].points)
+            # print(points)
         else:
             points = self.edges[0].tessellation_points()
+            # print('center',self.edges[0].center)
+            # print('radius',self.edges[0].radius)
+            # print('normal',self.edges[0].normal)
+        # print(self.edges[0])
+        # print(self.edges)
+        # print()
+        # print(points)
+        # print(self.edges[1:])
         for edge in self.edges[1:]:
             if hasattr(edge, 'points'):
                 points_to_add = edge.points[:]
-                if points_to_add[0] == points[-1]:
+                
+                if points[0] == points[-1]: # Dans le cas où le (dernier) edge relie deux fois le même point
+                    # print('=', points_to_add[::-1])
+                    # print('==', points_to_add[-2::-1])
+                    points.extend(points_to_add[::-1])
+                
+                elif points_to_add[0] == points[-1]:
                     points.extend(points_to_add[1:])
                 elif points_to_add[-1] == points[-1]:
                     points.extend(points_to_add[-2::-1])
@@ -2736,7 +2880,13 @@ class Contour3D(Wire3D):
                     points = points[::-1]
                     points.extend(points_to_add[-2::-1])
                 else:
-                    self.MPLPlot()
+                    fig, ax = self.MPLPlot()
+                    print()
+                    [print(edge.points) for edge in self.edges]
+                    print()
+                    print(self.edges)
+                    print(points)
+                    print(points_to_add)
                     raise NotImplementedError
             else:
                 raise NotImplementedError
@@ -2744,7 +2894,7 @@ class Contour3D(Wire3D):
         if len(points) > 1:
             if points[0] == points[-1]:
                 points.pop()
-
+                
         return points
 
     def average_center_point(self):
@@ -2828,6 +2978,7 @@ class Circle3D(Contour3D):
         self.normal = normal
         Contour3D.__init__(self, [self], name=name)
         
+        
 #    def _get_points(self):
 #        vr = Vector3D(npy.random.random(3))
 #        vr.Normalize()
@@ -2844,7 +2995,12 @@ class Circle3D(Contour3D):
         plane = Plane3D.from_normal(self.center, self.normal)
         tessellation_points_3D = [self.center + self.radius*math.cos(teta)*plane.vectors[0] + self.radius*math.sin(teta)*plane.vectors[1] \
             for teta in npy.linspace(0, 2*math.pi, resolution+1)][:-1]
-        return tessellation_points_3D 
+        return tessellation_points_3D
+    
+    # def to_arc3d(self):
+    #     point1 = center + self.normal.DeterministicNormalVector()*radius #premier point sur le cercle
+    #     point2 = 
+    #     return Arc3D(point1, point2, point1)
     
     def Length(self):
         return 2* math.pi * self.radius
@@ -2872,6 +3028,27 @@ class Circle3D(Contour3D):
         else:
             self.center = new_center
             self.normal = new_normal
+            
+    def MPLPlot(self, ax=None, color='k'):
+        if ax is None:
+            fig = plt.figure()
+            ax = Axes3D(fig)
+        else:
+            fig = None
+
+        x = []
+        y = []
+        z = []
+        for px, py, pz in self.tessellation_points():
+            x.append(px)
+            y.append(py)
+            z.append(pz)
+        x.append(x[0])
+        y.append(y[0])
+        z.append(z[0])
+        ax.plot(x, y, z, color)
+        return fig, ax
+            
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -2936,6 +3113,50 @@ class Ellipse3D(Contour3D):
         return cls(major_axis, minor_axis, center, normal, major_dir, arguments[0][1:-1])
 
 class Face3D(Primitive3D):
+    def __init__(self, contours):
+        self.contours = contours
+        self.bounding_box = self._bounding_box()
+        
+    def _bounding_box(self):
+        points = self.contours[0].points
+
+        xmin = min([pt[0] for pt in points])
+        xmax = max([pt[0] for pt in points])
+        ymin = min([pt[1] for pt in points])
+        ymax = max([pt[1] for pt in points])
+        zmin = min([pt[2] for pt in points])
+        zmax = max([pt[2] for pt in points])
+
+        return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+    
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        
+        contours = []
+        contours.append(object_dict[int(arguments[1][0][1:])])
+        
+        # plane = Plane3D.from_points(contours[0].points)
+        # contours[0].points, polygon2D = cls._repair_points_and_polygon2d(contours[0].points, plane)
+        # points = [p.copy() for p in contours[0].points[:]]
+
+        if object_dict[int(arguments[2])].__class__  is Plane3D:
+            # [print(e.points) for e in contours]
+            # print(arguments)
+            # object_dict[110].MPLPlot()
+            return PlaneFace3D(contours, plane=None, points=None, polygon2D=None, name=arguments[0][1:-1])
+    
+        elif object_dict[int(arguments[2])].__class__  is CylindricalSurface3D:
+            return CylindricalFace3D(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
+        
+        elif object_dict[int(arguments[2])].__class__  is BSplineSurface3D:
+            return BSplineFace3D()
+        
+        else:
+            raise NotImplementedError
+
+
+
+class PlaneFace3D(Face3D):
     _standalone_in_db = True
     _generic_eq = True
     _non_serializable_attributes  = ['bounding_box', 'polygon2D']
@@ -2944,6 +3165,8 @@ class Face3D(Primitive3D):
 
     def __init__(self, contours, plane=None, points=None, polygon2D=None, name=''):
 #        Primitive3D.__init__(self, name=name)
+        Face3D.__init__(self, contours)
+        
         self.contours = contours
         self.plane = plane
         self.points = points
@@ -2959,7 +3182,7 @@ class Face3D(Primitive3D):
             self.points, self.polygon2D = self._repair_points_and_polygon2d(contour_points, self.plane)
             self.contours[0].points = [p.copy() for p in self.points]
 
-        self.bounding_box = self._bounding_box()
+        # self.bounding_box = self._bounding_box()
 
         # CHECK
         # for pt in self.points:
@@ -2979,18 +3202,19 @@ class Face3D(Primitive3D):
         for point, other_point in zip(self.points, other_.points):
             equal = (equal and point == other_point)
         return equal
+    
+# """
+#     @classmethod
+#     def from_step(cls, arguments, object_dict):
+#         contours = []
+#         contours.append(object_dict[int(arguments[1][0][1:])])
+        
+#         plane = Plane3D.from_points(contours[0].points)
+#         contours[0].points, polygon2D = cls._repair_points_and_polygon2d(contours[0].points, plane)
+#         points = [p.copy() for p in contours[0].points[:]]
 
-    @classmethod
-    def from_step(cls, arguments, object_dict):
-        contours = []
-        contours.append(object_dict[int(arguments[1][0][1:])])
-
-        plane = Plane3D.from_points(contours[0].points)
-        contours[0].points, polygon2D = cls._repair_points_and_polygon2d(contours[0].points, plane)
-        points = [p.copy() for p in contours[0].points[:]]
-
-        return cls(contours, plane=plane, points=points, polygon2D=polygon2D, name=arguments[0][1:-1])
-
+#         return cls(contours, plane=plane, points=points, polygon2D=polygon2D, name=arguments[0][1:-1])
+# """
     @classmethod
     def _repair_points_and_polygon2d(cls, points, plane):
         if points[0] == points[-1]:
@@ -3012,7 +3236,7 @@ class Face3D(Primitive3D):
             new_contour = [subcontour.Rotation(center, axis, angle, copy=True) for subcontour in self.contour]
             new_plane = self.plane.Rotation(center, axis, angle, copy=True)
             new_points = [p.Rotation(center, axis, angle, copy=True) for p in self.points]
-            return Face3D(new_contour, new_plane, new_points, self.polygon2D, self.name)
+            return (new_contour, new_plane, new_points, self.polygon2D, self.name)
         else:
             for contour in self.contours:
                 contour.Rotation(center, axis, angle, copy=False)
@@ -3026,7 +3250,7 @@ class Face3D(Primitive3D):
             new_contour = [subcontour.Translation(offset, copy=True) for subcontour in self.contours]
             new_plane = self.plane.Translation(offset, copy=True)
             new_points = [p.Translation(offset, copy=True) for p in self.points]
-            return Face3D(new_contour, new_plane, new_points, self.polygon2D, self.name)
+            return (new_contour, new_plane, new_points, self.polygon2D, self.name)
         else:
             for contour in self.contours:
                 contour.Translation(offset, copy=False)
@@ -3043,7 +3267,7 @@ class Face3D(Primitive3D):
             new_contour = [subcontour.frame_mapping(frame, side, copy=True) for subcontour in self.contours]
             new_plane = self.plane.frame_mapping(frame, side, copy=True)
             new_points = [p.frame_mapping(frame, side, copy=True) for p in self.points]
-            return Face3D(new_contour, new_plane, new_points, None, self.name)
+            return PlaneFace3D(new_contour, new_plane, new_points, None, self.name)
         else:
             for contour in self.contours:
                 contour.frame_mapping(frame, side, copy=False)
@@ -3056,7 +3280,7 @@ class Face3D(Primitive3D):
         new_contours = [contour.copy() for contour in self.contours]
         new_plane = self.plane.copy()
         new_points = [p.Copy() for p in self.points]
-        return Face3D(new_contours, new_plane, new_points, self.polygon2D.copy(), self.name)
+        return PlaneFace3D(new_contours, new_plane, new_points, self.polygon2D.copy(), self.name)
 
     def average_center_point(self):
         """
@@ -3078,12 +3302,10 @@ class Face3D(Primitive3D):
         for i, contour in enumerate(self.contours):
             points_2D = [p.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]) for p in contour.points]
             
-            
             # if polygon2D.Area() == 0.:
             #     return None, None
             
             vertices.extend([tuple(p.vector) for p in points_2D])
-            
             if len(vertices) != len(set(vertices)):
                 return None, None
             
@@ -3110,22 +3332,11 @@ class Face3D(Primitive3D):
         t = triangle.triangulate(tri, 'p')
         if 'triangles' in t:
             triangles = t['triangles'].tolist()
-            return points_3D, triangles
+            return points_3D, [triangles]
+            # return [(points_3D, triangles)]
         else:
-            return None, None
-
-
-    def _bounding_box(self):
-        points = self.points
-
-        xmin = min([pt[0] for pt in points])
-        xmax = max([pt[0] for pt in points])
-        ymin = min([pt[1] for pt in points])
-        ymax = max([pt[1] for pt in points])
-        zmin = min([pt[2] for pt in points])
-        zmax = max([pt[2] for pt in points])
-
-        return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+            return None, [None]
+            # return [(None, None)]
 
     def distance_to_point(self, point, return_other_point=False):
         """
@@ -3338,6 +3549,293 @@ class Face3D(Primitive3D):
         return ax
 
 
+class CylindricalFace3D(Face3D):       
+        
+    def __init__(self, contours, cylindricalsurface3d, points=None, name=''):
+#        Primitive3D.__init__(self, name=name)
+        Face3D.__init__(self, contours)
+        
+        self.contours = contours #contours 3d
+        self.cylindricalsurface3d = cylindricalsurface3d #Information about Cylindrical_Surface
+        if points is None:
+            # print(self.contours[0].points)
+            self.points = self.contours[0].points #tout les points du contour, les deux cercles + segments
+        else:
+            self.points = points #les points utilisés, notamment les limites si cercle non complet, le centre des cercles à tracer
+        self.name = name #nom à donner à l'élément à tracer
+        
+        for primitive in self.contours[0].edges:
+            contour_points = [p.copy() for p in self.contours[0].points[:]]
+
+        # self.bounding_box = self._bounding_box()
+        
+        # print(self.points)
+        
+        
+        # # CHECK
+        # for pt in self.points:
+        #     if not self.frame.point_on_plane(pt):
+        #         print('WARNING', pt, 'not on', self.frame.__dict__)
+        #         print('dot =', self.frame.normal.Dot(pt-self.frame.origin))
+        #         raise ValueError
+
+       
+    # def _bounding_box(self):
+    #     points = self.points
+         
+    #     xmin = min([pt[0] for pt in points])
+    #     xmax = max([pt[0] for pt in points])
+    #     ymin = min([pt[1] for pt in points])  #on devra mettre z ici car le contour sera en 2D !!!!!!!!!!!!!!!!
+    #     ymax = max([pt[1] for pt in points])
+    #     zmin = min([pt[2] for pt in points]) #z=hauteur pour que position soit reprojeté dans x,y tantôt
+    #     zmax = max([pt[2] for pt in points])
+    #     return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+
+    def triangulation(self, resolution=31):
+        ###### IF C EST UN CONTOUR 3D :
+        contour = self.contours[0] 
+        points = self.points
+        radius = (float(self.cylindricalsurface3d.radius))/1000 #il faut diviser par 1000 pour être dans les mêmes ordres de grandeurs que les points
+        O=Vector3D(self.cylindricalsurface3d.frame.origin) #Origine du Frame du cylindre (cercle en origine)
+        U=self.cylindricalsurface3d.frame[0] 
+        U.Normalize()
+        V=self.cylindricalsurface3d.frame[1]
+        V.Normalize()
+        W=self.cylindricalsurface3d.frame[2]
+        W.Normalize()
+        
+        Triangles=[]
+        
+        frame3d=Frame3D(O, V, W, U, '')    # On créé un nouveau Frame3d avec des vecteurs normalisés ---- le dernier vecteur est le vecteur normal  
+        newpoints=[frame3d.NewCoordinates(point) for point in points]  #Création de la nouvelle liste de points dans le repère du cylindre
+        
+        newpts=[Vector3D(pt) for pt in newpoints] #on passe en vector 3D pour faciliter clockwise_angle
+        # plane=self.cylindricalsurface3d.plane #on va créer le plan contenant la surface souhaitée (cercle)
+        # pts2D=[newpts[i].PlaneProjection2D(V,W) for i in range (0,len(newpts))]
+        pts2D = [pt.PlaneProjection2D(V,W) for pt in newpts]
+        
+        def delete_double(Le):
+            Ls=[]
+            for i in Le:
+                if i not in Ls:
+                    Ls.append(i)
+            return Ls
+        
+        def min_max(Le,pos):
+            Ls=[]
+            for i in range (0,len(Le)) :
+                Ls.append(Le[i][pos])
+            return (min(Ls), max(Ls))
+        
+      
+        placement_2d=[]
+        for enum, pt in enumerate(pts2D):
+            pos=(2*math.pi-clockwise_angle(Vector2D(pts2D[0].vector),Vector2D(pt.vector)))*radius #l'arc de cercle mesure alpha*r
+            placement_2d.append(Vector2D([pos,newpoints[enum][2]],''))
+        placement2d=delete_double(placement_2d)
+        placement2d.append(placement2d[0]) #on rajoute le premier point pour compléter le segment
+        
+        segmentspt=[]
+        for k in range (0,len(placement2d)-1):
+            segmentspt.append(LineSegment2D(Point2D(placement2d[k].vector),Point2D(placement2d[k+1].vector)))
+        # print('pts2d',placement2d)
+        
+        
+        #On cherche les extremum pour tracer le bounding
+        hmin, hmax = min_max(newpoints,2) #hauteur de l'origine
+        posimin, posimax = min_max(placement2d,0)
+        
+        #créer lignes/segments entre xmax et xmin avec pas:xmax-xmin/resolution
+
+        pas=(posimax-posimin)/resolution
+        pointsxzmin = [Point2D([posimin+i*pas,hmin]) for i in range (0,resolution+1)]
+        pointsxzmax = [Point2D([posimin+i*pas,hmax]) for i in range (0,resolution+1)]
+        
+        #Lignes verticales
+        line = [Line2D(ptxmax, ptxmin) for ptxmin,ptxmax in list(zip(pointsxzmin, pointsxzmax))] #du h vers le b
+        
+
+
+        all_contours_points = []
+        #On recupere les points tout à gauche avec la line[1]
+        contours_points = []
+        for i, seg in enumerate(segmentspt) :
+            p1 = seg.line_intersection(line[1])
+            if p1 is not None:
+                break
+        for k, seg in enumerate(segmentspt[i+1:]) :
+            p3 = seg.line_intersection(line[1])
+            if p3 is not None:
+                break    
+        k += i+1
+        for pos in range (0,i+1):
+            contours_points.append(Point2D(placement2d[pos].vector))
+        contours_points.append(p1)
+        contours_points.append(p3)
+        for pos in range (k+1,len(placement2d)-1):
+            contours_points.append(Point2D(placement2d[pos].vector))
+        
+        all_contours_points.append(contours_points)
+        #On recupere les points entre la line 1 et l avant derniere
+        for enum, ligne in enumerate(line[1:-1]):
+            contours_points=[]
+            if enum != len(line)-3 : #sinon on va chercher la derniere ligne
+                l1, l2 = line[enum+1], line[enum+2]
+                for i, seg in enumerate(segmentspt) :
+                    p1 = seg.line_intersection(l1)
+                    if p1 is not None:
+                        break
+                for j, seg in enumerate(segmentspt) :
+                    p2 = seg.line_intersection(l2)
+                    if p2 is not None:
+                        break
+                for k, seg in enumerate(segmentspt[i+2:]) :
+                    p3 = seg.line_intersection(l1)
+                    if p3 is not None:
+                        break
+                for l, seg in enumerate(segmentspt[j+2:]) :
+                    p4 = seg.line_intersection(l2)
+                    if p4 is not None:
+                        break    
+                    
+                k += i+2
+                l += j+2
+                if i==j :
+                    contours_points.extend([p1, p2, p4])
+                
+                else :
+                    points=[]
+                    points.append(p1)
+                    for pos in range (i+1,j+1):
+                        points.append(Point2D(placement2d[pos].vector))
+                    points.append(p2)
+                    points.append(p4)
+                
+                    contours_points.extend(points)
+            
+                if k==l :
+                    contours_points.append(p3)
+            
+                else :
+                    points=[]
+                    for pos in range (l+1,k+1):
+                        points.append(Point2D(placement2d[pos].vector))
+                    points.append(p3)
+                
+                    contours_points.extend(points)
+                all_contours_points.append(contours_points)
+        
+        #On recupere les points tout à droite avec l'avant derniere line
+        contours_points = []
+        for i, seg in enumerate(segmentspt) :
+            p1 = seg.line_intersection(line[len(line)-2])
+            if p1 is not None:
+                break
+        for k, seg in enumerate(segmentspt[i+1:]) :
+            p3 = seg.line_intersection(line[len(line)-2])
+            if p3 is not None:
+                break    
+        k += i+1
+        contours_points.append(p1)
+        for pos in range (i+1,k+1):
+            contours_points.append(Point2D(placement2d[pos].vector))
+        contours_points.append(p3)
+        all_contours_points.append(contours_points)
+        
+        Points3D=[]
+        tlist=[] #liste regroupant la taille de toutes les sous listes
+        for listpt in  all_contours_points: #2D en 3D
+            for enum, pt in enumerate(listpt) :
+                Points3D.append(Point3D(Vector3D([radius*math.cos(pt[0]/radius),radius*math.sin(pt[0]/radius),pt[1]])))            
+            tlist.append(enum+1)
+            
+        Points_3D=[frame3d.OldCoordinates(point) for point in Points3D]  #Création de la nouvelle liste de points dans le repère de base
+        ts=[]
+        
+        for k, listpt in enumerate(all_contours_points) :
+            vertices=[]
+            segments=[]
+            for i, pt in enumerate(listpt):
+                vertices.append(pt.vector)
+                segments.append([i,i+1])
+            
+            segments[-1]=(tlist[k]-1,0) #on remplace le dernier terme pour boucler la boucle
+            tri = {'vertices': vertices, 'segments': segments}
+            t = triangle.triangulate(tri, 'p')
+            ts.append(t)
+        
+        seuil=0
+        k=0
+        
+        for t in ts :
+            if 'triangles' in t:
+                triangles = t['triangles'].tolist()
+                for n,tri in enumerate(triangles):
+                    for i in range (0,3):
+                        tri[i]=tri[i]+seuil
+                seuil += tlist[k]
+                k += 1
+                Triangles.append(triangles)        
+            else:
+                Triangles.append(None)
+        pt3d, tangle = delete_double_pos(Points_3D, Triangles)       
+        return pt3d, tangle
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        # print('all contours points', all_contours_points)
+        # fig, ax = plt.subplots()
+        
+        # # # [s1.MPLPlot(ax=ax) for s1 in segmentspt] 
+        # [l.MPLPlot(ax=ax) for l in line[1:-1]]
+    
+    
+class BSplineFace3D(Face3D):
+    def __init__(self, contours, bsplinesurface3d, points, name=''):
+#        Primitive3D.__init__(self, name=name)
+        Face3D.__init__(self, contours)
+        
+        self.bsplinesurface3d = bsplinesurface3d
+        self.points = points
+        
+    def triangulation(self):
+        sample_size = self.bsplinesurface3d.surface.sample_size
+        
+        triangles = []
+        for i in range(sample_size[0]-1):
+            for j in range(sample_size[1]-1):
+                if j % sample_size[1] == 0:
+                    continue
+                triangles.append((i+j, i+j+sample_size[0], i+j+sample_size[0]+1))
+                triangles.append((i+j, i+j+1, i+j+sample_size[0]+1))
+
+        return self.bsplinesurface3d.points, triangles
+    
+                    
 class Shell3D(CompositePrimitive3D):
     _standalone_in_db = True
     _generic_eq = True
@@ -3345,7 +3843,7 @@ class Shell3D(CompositePrimitive3D):
     _non_eq_attributes = ['name', 'color', 'alpha' 'bounding_box', 'contours']
     _non_hash_attributes = []
 
-    def __init__(self, faces, *, color=None, alpha=1., name=''):
+    def __init__(self, faces, color=None, alpha=1., name=''):
         self.faces = faces
         self.name = name
         self.color = color
@@ -3409,7 +3907,33 @@ class Shell3D(CompositePrimitive3D):
         new_name = self.name+' union '+shell2.name
         new_color = self.color
         return Shell3D(new_faces, name = new_name, color = new_color)
-
+    
+    def volume(self):
+        """
+        Do not consider holes
+        """
+        volume = 0
+        for i, face in enumerate(self.faces):
+            points_3D, triangles_indexes = face.triangulation()
+            for triangle_indexes in triangles_indexes[0]:
+                
+                point1 = points_3D[triangle_indexes[0]]
+                point2 = points_3D[triangle_indexes[1]]
+                point3 = points_3D[triangle_indexes[2]]
+                
+                v321 = point3[0] * point2[1] * point1[2]
+                v231 = point2[0] * point3[1] * point1[2]
+                v312 = point3[0] * point1[1] * point2[2]
+                v132 = point1[0] * point3[1] * point2[2]
+                v213 = point2[0] * point1[1] * point3[2]
+                v123 = point1[0] * point2[1] * point3[2]
+                volume_tetraedre = 1/6 * (-v321 + v231 + v312 - v132 - v213 + v123)
+                print(volume_tetraedre)
+                
+                volume += volume_tetraedre
+        
+        return abs(volume)
+                
     def _bounding_box(self):
         """
         Returns the boundary box
@@ -3668,20 +4192,52 @@ class Shell3D(CompositePrimitive3D):
         return bbox.volume()
 
     def babylon_meshes(self):
+        # positions = []
+        # indices = []
+
+        # nb_points = 0
+        # for i, face in enumerate(self.faces):
+        #     # Points_3D, Triangles_indexes = face.triangulation()
+        #     points_3D_triangles_indexes = face.triangulation()
+        #     # print('=>', points_3D, triangles_indexes)
+        #     # print()
+        #     # for points_3D, triangles_indexes in zip(Points_3D, Triangles_indexes):
+        #     for points_3D, triangles_indexes in points_3D_triangles_indexes:
+        #         # print('==>', points_3D, triangles_indexes)
+        #         if points_3D is not None:
+        #             for point in points_3D:
+        #                 positions.extend([k for k in round(point, 6)])
+                        
+        #             for j, indexes in enumerate(triangles_indexes):
+        #                 indices.extend([k+nb_points for k in indexes])
+        #             nb_points += len(points_3D)
+        
+        #############                       TEST
+        #############
+        #############
+        
         positions = []
         indices = []
 
         nb_points = 0
         for i, face in enumerate(self.faces):
             points_3D, triangles_indexes = face.triangulation()
-            if points_3D is not None:
-                for point in points_3D:
-                    positions.extend([i for i in round(point, 6)])
-    
-                for j, indexes in enumerate(triangles_indexes):
-                    indices.extend([i+nb_points for i in indexes])
-                nb_points += len(points_3D)
-        
+            # points_3D_triangles_indexes = face.triangulation()
+            # print('=>', points_3D, triangles_indexes)
+            # print()
+            # print('len pt3d',len(points_3D))
+            for point in points_3D:
+                # print(point)
+                positions.extend([k for k in round(point, 6)])
+            # print('len positions',len(positions))
+            for j, indexes in enumerate(triangles_indexes):
+                # print('j',j)
+                # print('indexes',indexes)
+                # print()
+                for index in indexes:
+                    indices.extend([k+nb_points for k in index])
+            nb_points += len(points_3D)
+            
         babylon_mesh = {'positions': positions,
                         'indices': indices,
                         'name': self.name,
@@ -4404,6 +4960,8 @@ class Step:
         """
         Returns None if the object was instanciate
         """
+        
+        # print('instanciate_id', instanciate_id)
 
         name = self.functions[instanciate_id].name
         arguments = self.functions[instanciate_id].arg[:]
@@ -4417,9 +4975,6 @@ class Step:
 
         # elif name == 'LINE':
         #     pass
-        
-        # elif name == 'SEAM_CURVE':
-        #     object_dict[instanciate_id] = object_dict[arguments[1]]
 
         elif name == 'ORIENTED_EDGE':
             object_dict[instanciate_id] = object_dict[arguments[3]]
@@ -4431,7 +4986,13 @@ class Step:
             object_dict[instanciate_id] = object_dict[arguments[1]]
 
         elif name == 'SURFACE_CURVE':
-            pass
+            object_dict[instanciate_id] = object_dict[arguments[1]]
+        
+        elif name == 'SEAM_CURVE':
+            object_dict[instanciate_id] = object_dict[arguments[1]]
+            
+        # elif name == 'EDGE_CURVE':
+        #     object_dict[instanciate_id] = object_dict[arguments[3]]
 
 
         elif name in step_to_volmdlr_primitive and hasattr(step_to_volmdlr_primitive[name], "from_step"):
@@ -4980,10 +5541,10 @@ step_to_volmdlr_primitive = {
         'VECTOR': Vector3D,
 
         'AXIS1_PLACEMENT': None,
-        'AXIS2_PLACEMENT_2D': None,
+        'AXIS2_PLACEMENT_2D': None, # ??????????????????
         'AXIS2_PLACEMENT_3D': Frame3D,
 
-        'LINE': Line3D,
+        'LINE': Line3D, #LineSegment3D,
         'CIRCLE': Circle3D,
         'ELLIPSE': Ellipse3D,
         'PARABOLA': None,
@@ -4999,14 +5560,14 @@ step_to_volmdlr_primitive = {
         'UNIFORM_CURVE': BSplineCurve3D,
         'QUASI_UNIFORM_CURVE': BSplineCurve3D,
         'SURFACE_CURVE': None, # TOPOLOGICAL EDGE
-        'SEAM_CURVE': LineSegment3D, # TOPOLOGICAL EDGE
+        'SEAM_CURVE': None, #LineSegment3D, # TOPOLOGICAL EDGE ############################
         'COMPOSITE_CURVE_SEGMENT': None, # TOPOLOGICAL EDGE
         'COMPOSITE_CURVE': Wire3D, # TOPOLOGICAL WIRE
         'COMPOSITE_CURVE_ON_SURFACE': Wire3D, # TOPOLOGICAL WIRE
         'BOUNDARY_CURVE': Wire3D, # TOPOLOGICAL WIRE
 
         'PLANE': Plane3D,
-        'CYLINDRICAL_SURFACE': None,
+        'CYLINDRICAL_SURFACE': CylindricalSurface3D,
         'CONICAL_SURFACE': None,
         'SPHERICAL_SURFACE': None,
         'TOROIDAL_SURFACE': None,
@@ -5022,14 +5583,14 @@ step_to_volmdlr_primitive = {
         'SURFACE_OF_REVOLUTION': None,
         'UNIFORM_SURFACE': BSplineSurface3D,
         'QUASI_UNIFORM_SURFACE': BSplineSurface3D,
-        'RECTANGULAR_COMPOSITE_SURFACE': Face3D, # TOPOLOGICAL FACES
-        'CURVE_BOUNDED_SURFACE': Face3D, # TOPOLOGICAL FACE
+        'RECTANGULAR_COMPOSITE_SURFACE': PlaneFace3D, # TOPOLOGICAL FACES
+        'CURVE_BOUNDED_SURFACE': PlaneFace3D, # TOPOLOGICAL FACE
 
 
         # TOPOLOGICAL ENTITIES
         'VERTEX_POINT': None,
 
-        'EDGE_CURVE': LineSegment3D, # TOPOLOGICAL EDGE
+        'EDGE_CURVE': Edge3D, # LineSegment3D, # TOPOLOGICAL EDGE
         'ORIENTED_EDGE': None, # TOPOLOGICAL EDGE
         # The one above can influence the direction with their last argument
         # TODO : maybe take them into consideration
@@ -5042,8 +5603,8 @@ step_to_volmdlr_primitive = {
         'POLY_LOOP': Contour3D, # TOPOLOGICAL WIRE
         'VERTEX_LOOP': Contour3D, # TOPOLOGICAL WIRE
 
-        'ADVANCED_FACE': Face3D,
-        'FACE_SURFACE': Face3D,
+        'ADVANCED_FACE': PlaneFace3D,
+        'FACE_SURFACE': PlaneFace3D,
 
         'CLOSED_SHELL': Shell3D,
         'OPEN_SHELL': Shell3D,
