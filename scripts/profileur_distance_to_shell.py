@@ -9,11 +9,12 @@ Created on Thu Oct  3 10:57:51 2019
 import volmdlr as  vm
 import volmdlr.primitives3D as p3d
 
-# moteur = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/MOTEUR HRevoUNIFY v2.stp')
+# step_boite = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/MOTEUR HRevoUNIFY v2.stp')
 # moteur = vm.Step('/home/ringhausen/Bureau/Renault/MOTEUR.txt')
-step_boite = vm.Step('/home/joly/Bureau/BOITE E-TECHg2.stp')
+# step_boite = vm.Step('/home/ringhausen/Bureau/Renault/BOITE E-TECHg2.stp')
+step_boite = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/BOITE E-TECHg2.stp')
 # cmo = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/CMO2.stp')
-
+# cylindre = vm.Step('/home/ringhausen/Bureau/Test STEP/Test STEP.step')
 
 # moteur = moteur.to_shells3d('moteur')
 # boite = boite.to_shells3d('boite')
@@ -27,13 +28,15 @@ boite = step_boite.to_shells3d('cmo')
 #block1 = p3d.Block(frame, 'test', (1,0,1))
 #volumemodel.shells.append(primitive3d)
 
-#origin = vm.Point3D((0,0,0))
-#u = vm.Vector3D((0.5,0,0))
-#v = vm.Vector3D((0,0.5,0))
-#w = vm.Vector3D((0,0,0.5))
-#frame = vm.Frame3D(origin, u, v, w)
-#block2 = p3d.Block(frame, 'test', (1,0,1))
-#volumemodel.shells.append(primitive3d)
+# origin = vm.Point3D((0.5,0.5,0.5))
+# u = vm.Vector3D((1,0,0))
+# v = vm.Vector3D((0,1,0))
+# w = vm.Vector3D((0,0,1))
+# frame = vm.Frame3D(origin, u, v, w)
+# block2 = p3d.Block(frame, name='test', color=(1,0,1))
+# volmod = vm.VolumeModel([block2])
+# volmod.babylonjs()
+# print(block2.volume())
 
 #origin = vm.Point3D((0,0,0))
 #u = vm.Vector3D((2,1,0))

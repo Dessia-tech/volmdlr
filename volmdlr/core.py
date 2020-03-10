@@ -13,7 +13,8 @@ import math
 import numpy as npy
 npy.seterr(divide='raise')
 
-from geomdl import NURBS
+# from geomdl import NURBS
+from geomdl import BSpline
 import matplotlib.pyplot as plt
 import  mpl_toolkits
 from matplotlib.patches import Arc, FancyArrow, FancyArrowPatch
@@ -155,6 +156,11 @@ def clockwise_angle(vector1, vector2):
         return inner_angle
 
     return 2*math.pi-inner_angle
+
+def vectors3d_angle(vector1, vector2):
+    dot = vector1.Dot(vector2)
+    teta = math.acos(dot/vector1.Norm()/vector2.Norm())
+    return teta
 
 def delete_double_pos(points, triangles):
     
@@ -1875,7 +1881,6 @@ class CylindricalSurface3D(Primitive3D):
     
     # def cyl_to_plan(self, point, frame3d):
     #     frame3d = object_dict[arguments[1]]
-        
 
 class EllipseSurface3D(Primitive3D):
     
@@ -2035,7 +2040,7 @@ class BSplineCurve3D(Primitive3D):
         self.periodic = periodic
         self.name = name
 
-        curve = NURBS.Curve()
+        curve = BSpline.Curve()
         curve.degree = degree
         if weights is None:
             P = [(control_points[i][0], control_points[i][1], control_points[i][2]) for i in range(len(control_points))]
@@ -2553,7 +2558,7 @@ class BSplineSurface3D(Primitive3D):
         # TRANSPOSE THE LIST OF LISTS
 #        self.control_points_table = list(map(list, zip(*self.control_points_table)))
 
-        surface = NURBS.Surface()
+        surface = BSpline.Surface()
         surface.degree_u = degree_u
         surface.degree_v = degree_v
         if weights is None:
@@ -2570,12 +2575,11 @@ class BSplineSurface3D(Primitive3D):
             knot_vector_v.extend([v_knot]*v_multiplicities[i])
         surface.knotvector_u = knot_vector_u
         surface.knotvector_v = knot_vector_v
-        surface.delta = 0.01
+        surface.delta = 0.05
         surface_points = surface.evalpts
-
+        
         self.surface = surface
         self.points = [Point3D((p[0], p[1], p[2])) for p in surface_points]
-
 
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive{}'.format(ip)
@@ -2776,8 +2780,11 @@ class Edge3D(Primitive3D):
         #     print(object_dict[arguments[3]])
         if object_dict[arguments[3]].__class__ is Line3D:
             return LineSegment3D(object_dict[arguments[1]], object_dict[arguments[2]], arguments[0][1:-1])
+        
         elif object_dict[arguments[3]].__class__ is Circle3D:
             # on suppose que le step tourne dans le sens trigo
+            print(arguments)
+            print(object_dict[arguments[3]].radius)
             center = object_dict[arguments[3]].center
             normal = object_dict[arguments[3]].normal
             p1 = object_dict[arguments[1]]
@@ -2793,6 +2800,12 @@ class Edge3D(Primitive3D):
                 p2_2D = p2.PlaneProjection2D(vectors[0], plane.vectors[0])
                 angle = clockwise_angle(Vector2D(p2_2D.vector),Vector2D(p1_2D.vector))/2
                 # angle = clockwise_angle(Vector2D(p2.vector),Vector2D(p1.vector))/2 #marche que si extrusion suivant z ??
+                # angle = clockwise_angle(p2, p1)/2
+                # angle = -0.01
+                # angle = vectors3d_angle(p2, p1)
+                # cross = p2.Cross(p1)
+                # if cross.Dot(normal) > 0:
+                #     angle = - angle
             p3 = p1.Rotation(center, normal, angle, True) ##P3 incorrecte !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             arc = Arc3D(p1, p3, p2, normal, arguments[0][1:-1])
             return arc
@@ -2839,8 +2852,13 @@ class Edge3D(Primitive3D):
             arcellipse = ArcEllipse3D(p1, p3, p2, center, normal, arguments[0][1:-1])
             return arcellipse
         
+        elif object_dict[arguments[3]].__class__ is BSplineCurve3D:
+            print(object_dict[arguments[1]], object_dict[arguments[2]])
+            # BSplineCurve3D à couper à gauche et à droite avec les points ci dessus ?
+            return object_dict[arguments[3]]
+
         else:
-            # print(object_dict[arguments[3]])
+            print(object_dict[arguments[3]])
             raise NotImplementedError
         
     def Rotation(self, center, axis, angle, copy=True):
@@ -3131,12 +3149,13 @@ class Contour3D(Wire3D):
                     points = points[::-1]
                     points.extend(points_to_add[-2::-1])
                 else:
-                    # fig, ax = self.MPLPlot()
-                    # [print(edge.points) for edge in self.edges]
-                    # print()
-                    # print(self.edges)
-                    # print(points)
-                    # print(points_to_add)
+                    fig, ax = self.MPLPlot()
+                    print()
+                    [print(edge.points) for edge in self.edges]
+                    print()
+                    print(self.edges)
+                    print(points)
+                    print(points_to_add)
                     raise NotImplementedError
             
             else:
@@ -3312,7 +3331,10 @@ class Circle3D(Contour3D):
     def from_step(cls, arguments, object_dict):
         center = object_dict[arguments[1]].origin
         radius = float(arguments[2])/1000
-        normal = object_dict[arguments[1]].u
+        if object_dict[arguments[1]].w is not None:
+            normal = object_dict[arguments[1]].w
+        else:
+            normal = object_dict[arguments[1]].u
         return cls(center, radius, normal, arguments[0][1:-1])
 
 
@@ -3378,6 +3400,19 @@ class Ellipse3D(Contour3D):
 class Face3D(Primitive3D):
     def __init__(self, contours):
         self.contours = contours
+        self.bounding_box = self._bounding_box()
+        
+    def _bounding_box(self):
+        points = self.contours[0].points
+
+        xmin = min([pt[0] for pt in points])
+        xmax = max([pt[0] for pt in points])
+        ymin = min([pt[1] for pt in points])
+        ymax = max([pt[1] for pt in points])
+        zmin = min([pt[2] for pt in points])
+        zmax = max([pt[2] for pt in points])
+
+        return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
     
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -3397,10 +3432,14 @@ class Face3D(Primitive3D):
     
         elif object_dict[int(arguments[2])].__class__  is CylindricalSurface3D:
             return CylindricalFace3D(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
-
+###################################################################### t tu la ?
         elif object_dict[int(arguments[2])].__class__  is EllipseSurface3D:
+            print('est ce quon passe par ici ?')
             return EllipseFace3D(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
-
+##########################################################################
+        elif object_dict[int(arguments[2])].__class__  is BSplineSurface3D:
+            return BSplineFace3D()
+        
         else:
             raise NotImplementedError
 
@@ -3432,14 +3471,14 @@ class PlaneFace3D(Face3D):
             self.points, self.polygon2D = self._repair_points_and_polygon2d(contour_points, self.plane)
             self.contours[0].points = [p.copy() for p in self.points]
 
-        self.bounding_box = self._bounding_box()
+        # self.bounding_box = self._bounding_box()
 
         # CHECK
-        for pt in self.points:
-            if not self.plane.point_on_plane(pt):
-                print('WARNING', pt, 'not on', self.plane.__dict__)
-                print('dot =', self.plane.normal.Dot(pt-self.plane.origin))
-                raise ValueError
+        # for pt in self.points:
+        #     if not self.plane.point_on_plane(pt):
+        #         print('WARNING', pt, 'not on', self.plane.__dict__)
+        #         print('dot =', self.plane.normal.Dot(pt-self.plane.origin))
+        #         raise ValueError
 
     def __hash__(self):
         return hash(self.plane) + sum([hash(p) for p in self.points])
@@ -3587,19 +3626,6 @@ class PlaneFace3D(Face3D):
         else:
             return None, [None]
             # return [(None, None)]
-
-
-    def _bounding_box(self):
-        points = self.points
-
-        xmin = min([pt[0] for pt in points])
-        xmax = max([pt[0] for pt in points])
-        ymin = min([pt[1] for pt in points])
-        ymax = max([pt[1] for pt in points])
-        zmin = min([pt[2] for pt in points])
-        zmax = max([pt[2] for pt in points])
-
-        return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def distance_to_point(self, point, return_other_point=False):
         """
@@ -3810,17 +3836,7 @@ class PlaneFace3D(Face3D):
 
         plt.show()
         return ax
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
 
 class CylindricalFace3D(Face3D):       
         
@@ -3840,7 +3856,7 @@ class CylindricalFace3D(Face3D):
         for primitive in self.contours[0].edges:
             contour_points = [p.copy() for p in self.contours[0].points[:]]
 
-        self.bounding_box = self._bounding_box()
+        # self.bounding_box = self._bounding_box()
         
         # print(self.points)
         
@@ -3853,16 +3869,16 @@ class CylindricalFace3D(Face3D):
         #         raise ValueError
 
        
-    def _bounding_box(self):
-        points = self.points
+    # def _bounding_box(self):
+    #     points = self.points
          
-        xmin = min([pt[0] for pt in points])
-        xmax = max([pt[0] for pt in points])
-        ymin = min([pt[1] for pt in points])  #on devra mettre z ici car le contour sera en 2D !!!!!!!!!!!!!!!!
-        ymax = max([pt[1] for pt in points])
-        zmin = min([pt[2] for pt in points]) #z=hauteur pour que position soit reprojeté dans x,y tantôt
-        zmax = max([pt[2] for pt in points])
-        return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+    #     xmin = min([pt[0] for pt in points])
+    #     xmax = max([pt[0] for pt in points])
+    #     ymin = min([pt[1] for pt in points])  #on devra mettre z ici car le contour sera en 2D !!!!!!!!!!!!!!!!
+    #     ymax = max([pt[1] for pt in points])
+    #     zmin = min([pt[2] for pt in points]) #z=hauteur pour que position soit reprojeté dans x,y tantôt
+    #     zmax = max([pt[2] for pt in points])
+    #     return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def triangulation(self, resolution=31):
         ###### IF C EST UN CONTOUR 3D :
@@ -4120,6 +4136,28 @@ class CylindricalFace3D(Face3D):
 #         zmin = min([pt[2] for pt in points]) #z=hauteur pour que position soit reprojeté dans x,y tantôt
 #         zmax = max([pt[2] for pt in points])
 #         return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+
+
+class BSplineFace3D(Face3D):
+    def __init__(self, contours, bsplinesurface3d, points, name=''):
+#        Primitive3D.__init__(self, name=name)
+        Face3D.__init__(self, contours)
+        
+        self.bsplinesurface3d = bsplinesurface3d
+        self.points = points
+        
+    def triangulation(self):
+        sample_size = self.bsplinesurface3d.surface.sample_size
+        
+        triangles = []
+        for i in range(sample_size[0]-1):
+            for j in range(sample_size[1]-1):
+                if j % sample_size[1] == 0:
+                    continue
+                triangles.append((i+j, i+j+sample_size[0], i+j+sample_size[0]+1))
+                triangles.append((i+j, i+j+1, i+j+sample_size[0]+1))
+
+        return self.bsplinesurface3d.points, triangles
     
                     
 class Shell3D(CompositePrimitive3D):
@@ -4193,7 +4231,33 @@ class Shell3D(CompositePrimitive3D):
         new_name = self.name+' union '+shell2.name
         new_color = self.color
         return Shell3D(new_faces, name = new_name, color = new_color)
-
+    
+    def volume(self):
+        """
+        Do not consider holes
+        """
+        volume = 0
+        for i, face in enumerate(self.faces):
+            points_3D, triangles_indexes = face.triangulation()
+            for triangle_indexes in triangles_indexes[0]:
+                
+                point1 = points_3D[triangle_indexes[0]]
+                point2 = points_3D[triangle_indexes[1]]
+                point3 = points_3D[triangle_indexes[2]]
+                
+                v321 = point3[0] * point2[1] * point1[2]
+                v231 = point2[0] * point3[1] * point1[2]
+                v312 = point3[0] * point1[1] * point2[2]
+                v132 = point1[0] * point3[1] * point2[2]
+                v213 = point2[0] * point1[1] * point3[2]
+                v123 = point1[0] * point2[1] * point3[2]
+                volume_tetraedre = 1/6 * (-v321 + v231 + v312 - v132 - v213 + v123)
+                print(volume_tetraedre)
+                
+                volume += volume_tetraedre
+        
+        return abs(volume)
+                
     def _bounding_box(self):
         """
         Returns the boundary box
