@@ -136,16 +136,21 @@ def clockwise_angle(vector1, vector2):
     """
     Return the clockwise angle in radians between vector1 and vector2.
     """
+    # print('vector1',vector1)
+    # print('vector2',vector2)
     vector0 = Vector2D((0, 0))
     if vector0 in (vector1, vector2):
         return 0
-
+    
     dot = vector1.Dot(vector2)
     norm_vec_1 = vector1.Norm()
     norm_vec_2 = vector2.Norm()
+    # print('vector1', vector1)
+    # print('vector2', vector2)
     cross = vector1.Cross(vector2)
     inner_angle = math.acos(dot/(norm_vec_1*norm_vec_2))
-
+    # print('cross', cross)
+    
     if cross < 0:
         return inner_angle
 
@@ -1868,9 +1873,29 @@ class CylindricalSurface3D(Primitive3D):
         radius=arguments[2]
         return cls(frame3d, radius, arguments[0][1:-1])
     
-    def cyl_to_plan(self, point, frame3d):
-        frame3d = object_dict[arguments[1]]
+    # def cyl_to_plan(self, point, frame3d):
+    #     frame3d = object_dict[arguments[1]]
         
+
+class EllipseSurface3D(Primitive3D):
+    
+    def __init__(self, frame, R, r, name=''): 
+        self.frame = frame
+        self.R = R
+        self.r = r
+        self.name = name
+        V=frame.v #U représente la normale
+        V.Normalize()
+        W=frame.w
+        W.Normalize()
+        self.plane = Plane3D(frame.origin,V,W)
+        
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        frame3d = object_dict[arguments[1]]
+        R=arguments[2]
+        r=arguments[3]
+        return cls(frame3d, R, r, arguments[0][1:-1])
         
 class Line3D(Primitive3D, Line):
     _non_eq_attributes = ['name', 'basis_primitives', 'bounding_box']
@@ -2302,6 +2327,201 @@ class Arc3D(Primitive3D):
         return '{} = Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,xs,ys,zs,xi,yi,zi,xe,ye,ze)
 
 
+class ArcEllipse3D(Primitive3D) :
+    """
+    An arc is defined by a starting point, an end point and an interior point
+    
+    """
+    def __init__(self, start, interior, end, center, normal=None, name=''):  #, inter=None):
+        self.start = start
+        self.interior = interior
+        self.end = end
+        self.center = center
+        
+        u1 = (self.interior - self.start)
+        u2 = (self.interior - self.end)
+        u1.Normalize()
+        u2.Normalize()
+        
+        if normal is None:
+            n = u2.Cross(u1)
+            n.Normalize()
+            self.normal = n
+        else:
+            n = normal
+            n.Normalize()
+            self.normal = normal
+        
+        if u1 == u2:
+            u2=n.Cross(u1) 
+            u2.Normalize()
+        
+        v1 = n.Cross(u1)# v1 is normal, égal à u2
+        v2 = n.Cross(u2)# égal à -u1
+        
+        def theta_A_B(s,i,e): #theta=angle d'inclinaison ellipse par rapport à horizontal(sens horaire),A=demi grd axe, B=demi petit axe
+            xs, ys, xi, yi, xe, ye = s[0], s[1], i[0], i[1], e[0], e[1]
+            A = npy.array(([xs**2, ys**2, 2*xs*ys],
+                          [xi**2, yi**2, 2*xi*yi],
+                          [xe**2, ye**2, 2*xe*ye]))
+            invA = npy.linalg.inv(A)
+            One = npy.array(([1],
+                            [1],
+                            [1]))
+            C = npy.dot(invA,One) #matrice colonne de taille 3
+            theta = 0.5*math.atan(2*C[2]/(C[1]-C[0]))
+            c1 = C[0]+C[1]
+            c2 = (C[1]-C[0])/math.cos(2*theta)
+            gdaxe = math.sqrt((2/(c1-c2)))
+            ptax = math.sqrt((2/(c1+c2)))
+            return theta, gdaxe, ptax
+        
+        plane = Plane3D.from_normal(center, normal)
+        s_2D = start.PlaneProjection2D(plane.vectors[0], plane.vectors[1]) #On supprimer center+plan vect.. car on ne se préocuppe pas de la composante en hauteur en 2d
+        i_2D = interior.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
+        e_2D = end.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
+        
+        if start==end :
+            inter = interior
+            inter[1] = -interior[1]
+            it_2D = inter.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
+            theta, A, B = theta_A_B(s_2D,it_2D,i_2D)
+        
+        else : 
+            theta, A, B = theta_A_B(s_2D,i_2D,e_2D)
+        
+        self.Gradius = A
+        self.Sradius = B
+        
+        # Determining angle
+        
+        r1 = (self.start).To2D(self.center, u1, v1)
+        r2 = (self.end).To2D(self.center, u1, v1)
+        ri = (self.interior).To2D(self.center, u1, v1)
+
+        angle1 = math.atan2(r1.vector[1], r1.vector[0])
+        anglei = math.atan2(ri.vector[1], ri.vector[0])
+        angle2 = math.atan2(r2.vector[1], r2.vector[0])
+
+
+        # Going trigo/clock wise from start to interior
+        if anglei < angle1:
+            trigowise_path = (anglei+2*math.pi) - angle1
+            clockwise_path = angle1 - anglei
+        else:
+            trigowise_path = anglei - angle1
+            clockwise_path = angle1 - anglei + 2*math.pi
+            
+        # Going trigo wise from interior to interior
+        if angle2 < anglei:
+            trigowise_path += (angle2+2*math.pi) - anglei
+            clockwise_path += anglei - angle2
+        else:
+            trigowise_path += angle2 - anglei
+            clockwise_path += anglei - angle2 + 2*math.pi     
+            
+        if clockwise_path > trigowise_path:
+            self.is_trigo = True
+            self.angle = trigowise_path
+        else:
+            # Clock wise
+            self.is_trigo = False
+            self.angle = clockwise_path                
+        Primitive3D.__init__(self, basis_primitives=self.tessellation_points(), name=name)
+        
+    
+    def _get_points(self):
+        return self.tessellation_points()
+    
+    points=property(_get_points)
+    
+    def tessellation_points(self, resolution_for_ellipse=40):
+        number_points_tesselation = math.ceil(resolution_for_ellipse*abs(0.5*self.angle/math.pi))
+        l = self.Length()
+        tessellation_points_3D = [self.PointAtCurvilinearAbscissa(l*i/(number_points_tesselation)) for i in range(number_points_tesselation+1)]
+        return tessellation_points_3D
+    
+    def Length(self):
+        return self.angle*math.sqrt((self.Gradius**2+self.Sradius**2)/2)
+    
+    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
+        return self.start.Rotation(self.center, self.normal, curvilinear_abscissa/math.sqrt((self.Gradius**2+self.Sradius**2)/2), copy=True)
+    
+    def Rotation(self, rot_center, axis, angle, copy=True):
+        if copy:
+            new_start = self.start.Rotation(rot_center, axis, angle, True)
+            new_interior = self.interior.Rotation(rot_center, axis, angle, True)
+            new_end = self.end.Rotation(rot_center, axis, angle, True)
+            return Arc3D(new_start, new_interior, new_end, name=self.name)
+        else:
+            self.center.Rotation(rot_center, axis, angle, False)
+            self.start.Rotation(rot_center, axis, angle, False)
+            self.interior.Rotation(rot_center, axis, angle, False)
+            self.end.Rotation(rot_center, axis, angle, False)
+            [p.Rotation(rot_center, axis, angle, False) for p in self.primitives]
+
+    def Translation(self, offset, copy=True):
+        if copy:
+            new_start = self.start.Translation(offset, True)
+            new_interior = self.interior.Translation(offset, True)
+            new_end = self.end.Translation(offset, True)
+            return Arc3D(new_start, new_interior, new_end, name=self.name)
+        else:
+            self.center.Translation(offset, False)
+            self.start.Translation(offset, False)
+            self.interior.Translation(offset, False)
+            self.end.Translation(offset, False)
+            [p.Translation(offset, False) for p in self.primitives]
+
+    def MPLPlot(self, ax=None):
+        if ax is None:
+            fig = plt.figure()
+            ax = Axes3D(fig)
+        else:
+            fig = None
+
+        ax.plot([self.interior[0]], [self.interior[1]], [self.interior[2]], color='b')
+        ax.plot([self.start[0]], [self.start[1]], [self.start[2]], c='r')
+        ax.plot([self.end[0]], [self.end[1]], [self.end[2]], c='r')
+        ax.plot([self.interior[0]], [self.interior[1]], [self.interior[2]], c='g')
+        x = []
+        y = []
+        z = []
+        for px, py, pz in self.tessellation_points():
+            x.append(px)
+            y.append(py)
+            z.append(pz)
+
+        ax.plot(x, y, z, 'k')
+        return fig, ax
+
+    def MPLPlot2D(self, x3d, y3D, ax, color='k'):
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+        else:
+            fig = ax.figure
+
+        # TODO: Enhance this plot
+        l = self.Length()
+        x = []
+        y = []
+        for i in range(30):
+            p = self.PointAtCurvilinearAbscissa(i/(29.)*l)
+            xi, yi = p.PlaneProjection2D(X3D, Y3D)
+            x.append(xi)
+            y.append(yi)
+        ax.plot(x, y, color=color)
+
+        return fig, ax
+
+    def FreeCADExport(self, name, ndigits=6):
+        xs, ys, zs = round(1000*self.start, ndigits).vector
+        xi, yi, zi = round(1000*self.interior, ndigits).vector
+        xe, ye, ze = round(1000*self.end, ndigits).vector
+        return '{} = Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,xs,ys,zs,xi,yi,zi,xe,ye,ze)
+    
+    
 class BSplineSurface3D(Primitive3D):
     def __init__(self, degree_u, degree_v, control_points, nb_u, nb_v, u_multiplicities, v_multiplicities, u_knots, v_knots, weights=None, name=''):
         Primitive3D.__init__(self, basis_primitives=control_points, name=name)
@@ -2420,23 +2640,23 @@ class BSplineSurface3D(Primitive3D):
 
     def Rotation(self, center, axis, angle, copy=True):
         new_control_points = [p.Rotation(center, axis, angle, True) for p in self.control_points]
-        new_BSplineSurPlaneFace3D = BSplineSurPlaneFace3D(self.degree_u, self.degree_v, new_control_points, self.nb_u, self.nb_v, self.u_multiplicities, self.v_multiplicities, self.u_knots, self.v_knots, self.weights, self.name)
+        new_BSplineSurface3D = BSplineSurface3D(self.degree_u, self.degree_v, new_control_points, self.nb_u, self.nb_v, self.u_multiplicities, self.v_multiplicities, self.u_knots, self.v_knots, self.weights, self.name)
         if copy:
-            return new_BSplineSurPlaneFace3D
+            return new_BSplineSurface3D
         else:
             self.control_points = new_control_points
-            self.curve = new_BSplineSurPlaneFace3D.curve
-            self.points = new_BSplineSurPlaneFace3D.points
+            self.curve = new_BSplineSurface3D.curve
+            self.points = new_BSplineSurface3D.points
 
     def Translation(self, offset, copy=True):
         new_control_points = [p.Translation(offset, True) for p in self.control_points]
-        new_BSplineSurPlaneFace3D = BSplineSurPlaneFace3D(self.degree_u, self.degree_v, new_control_points, self.nb_u, self.nb_v, self.u_multiplicities, self.v_multiplicities, self.u_knots, self.v_knots, self.weights, self.name)
+        new_BSplineSurface3D = BSplineSurface3D(self.degree_u, self.degree_v, new_control_points, self.nb_u, self.nb_v, self.u_multiplicities, self.v_multiplicities, self.u_knots, self.v_knots, self.weights, self.name)
         if copy:
-            return new_BSplineSurPlaneFace3D
+            return new_BSplineSurface3D
         else:
             self.control_points = new_control_points
-            self.curve = new_BSplineSurPlaneFace3D.curve
-            self.points = new_BSplineSurPlaneFace3D.points
+            self.curve = new_BSplineSurface3D.curve
+            self.points = new_BSplineSurface3D.points
 
 class CompositePrimitive3D(Primitive3D):
     _standalone_in_db = True
@@ -2562,18 +2782,65 @@ class Edge3D(Primitive3D):
             normal = object_dict[arguments[3]].normal
             p1 = object_dict[arguments[1]]
             p2 = object_dict[arguments[2]]
+            ####################### comprendre pq depuis le step p1 et p2 sont des vector 2d ou pts 3d
+            # if p1.__class__ is V
+           
             if p1 == p2:
                 angle = math.pi
             else: 
-                angle = clockwise_angle(p2, p1)/2
+                plane = Plane3D.from_normal(center, normal)
+                p1_2D = p1.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
+                p2_2D = p2.PlaneProjection2D(vectors[0], plane.vectors[0])
+                angle = clockwise_angle(Vector2D(p2_2D.vector),Vector2D(p1_2D.vector))/2
+                # angle = clockwise_angle(Vector2D(p2.vector),Vector2D(p1.vector))/2 #marche que si extrusion suivant z ??
             p3 = p1.Rotation(center, normal, angle, True) ##P3 incorrecte !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             arc = Arc3D(p1, p3, p2, normal, arguments[0][1:-1])
-            # print(arc.radius)
-            
-            
             return arc
-            # return Arc3D(p1, p3, p2, normal, arguments[0][1:-1])
+
+        elif object_dict[arguments[3]].__class__ is Ellipse3D:
+            majorax = object_dict[arguments[3]].major_axis
+            # print('majorax',majorax)
+            minorax = object_dict[arguments[3]].minor_axis
+            # print('minorax',minorax)
+            center = object_dict[arguments[3]].center
+            # print('center',center)
+            normal = object_dict[arguments[3]].normal
+            normal.Normalize()
+            # print('normal',normal)
+            majordir = object_dict[arguments[3]].major_dir
+            majordir.Normalize()
+            # print('majordir',majordir)
+            minordir = normal.Cross(majordir)
+            minordir.Normalize()
+            # print('minodir',minordir)
+            p1 = object_dict[arguments[1]] #on part du principe que p1 suivant majordir
+            # print('p1',p1)
+            p2 = object_dict[arguments[2]]
+            # print('p2',p2)
+            plane = Plane3D.from_normal(center, normal)
+            # print('planev0', plane.vectors[0])
+            # print('planev1', plane.vectors[1])
+            p1_2D = p1.PlaneProjection2D(plane.vectors[0], plane.vectors[1]) #center+plane.vectors[0], center+plane.vectors[1])
+            # print('p1_2D',p1_2D)
+            p2_2D = p2.PlaneProjection2D(plane.vectors[0], plane.vectors[1]) #center+plane.vectors[0], center+plane.vectors[1])
+            # print('p2_2D',p2_2D)
+            theta = clockwise_angle(majordir.To2D(center,plane.vectors[0],plane.vectors[1]),Vector2D(p1_2D.vector))
+            # print('theta', theta)
+            gamma = clockwise_angle(majordir.To2D(center,plane.vectors[0],plane.vectors[1]),Vector2D(p2_2D.vector))
+            # print('gamma', gamma)
+            # print()
+            if p1 == p2: 
+                angle = 5*math.pi/4
+            else :
+                
+                angle = theta+abs(gamma-theta)//2
+            p3 = majorax*Point3D(majordir.vector)*math.cos(angle)+minorax*Point3D(minordir.vector)*math.sin(angle)+center
+            # print('p3',p3)
+            arcellipse = ArcEllipse3D(p1, p3, p2, center, normal, arguments[0][1:-1])
+            return arcellipse
+        
         else:
+            # print(object_dict[arguments[3]])
             raise NotImplementedError
         
     def Rotation(self, center, axis, angle, copy=True):
@@ -2871,7 +3138,15 @@ class Contour3D(Wire3D):
                     # print(points)
                     # print(points_to_add)
                     raise NotImplementedError
+            
             else:
+                # print('hello')
+                # print()
+                print('edge',self.edges)
+                print('points',points)
+                [print(edge.points) for edge in self.edges]
+                print()
+                # print('pts add',points_to_add)
                 raise NotImplementedError
         
         if len(points) > 1:
@@ -3051,6 +3326,14 @@ class Ellipse3D(Contour3D):
         major_dir.Normalize()
         self.major_dir = major_dir
         Contour3D.__init__(self, [self], name=name)
+        
+        
+        
+    def tessellation_points(self, resolution=20):
+        plane = Plane3D.from_normal(self.center, self.normal)
+        tessellation_points_3D = [self.center + self.major_axis*math.cos(teta)*self.major_dir + self.minor_axis*math.sin(teta)*self.major_dir.Cross(self.normal) \
+                                  for teta in npy.linspace(0, 2*math.pi, resolution+1)][:-1]
+        return tessellation_points_3D
 
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive{}'.format(ip)
@@ -3086,8 +3369,8 @@ class Ellipse3D(Contour3D):
     @classmethod
     def from_step(cls, arguments, object_dict):
         center = object_dict[arguments[1]].origin
-        normal = object_dict[arguments[1]].w
-        major_dir = object_dict[arguments[1]].u
+        normal = object_dict[arguments[1]].u   #ancien w
+        major_dir = object_dict[arguments[1]].v # ancien u
         major_axis = float(arguments[2])/1000
         minor_axis = float(arguments[3])/1000
         return cls(major_axis, minor_axis, center, normal, major_dir, arguments[0][1:-1])
@@ -3114,6 +3397,9 @@ class Face3D(Primitive3D):
     
         elif object_dict[int(arguments[2])].__class__  is CylindricalSurface3D:
             return CylindricalFace3D(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
+
+        elif object_dict[int(arguments[2])].__class__  is EllipseSurface3D:
+            return EllipseFace3D(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
 
         else:
             raise NotImplementedError
@@ -3742,6 +4028,7 @@ class CylindricalFace3D(Face3D):
         for k, listpt in enumerate(all_contours_points) :
             vertices=[]
             segments=[]
+            # print(listpt)
             for i, pt in enumerate(listpt):
                 vertices.append(pt.vector)
                 segments.append([i,i+1])
@@ -3765,6 +4052,8 @@ class CylindricalFace3D(Face3D):
                 Triangles.append(triangles)        
             else:
                 Triangles.append(None)
+        # print('Points_3D',Points_3D)
+        # print('Triangles', len(Triangles))
         pt3d, tangle = delete_double_pos(Points_3D, Triangles)       
         return pt3d, tangle
     
@@ -3801,7 +4090,36 @@ class CylindricalFace3D(Face3D):
         # [l.MPLPlot(ax=ax) for l in line[1:-1]]
     
     
-    
+# class EllipseFace3D(Face3D):
+
+#     def __init__(self, contours, ellipsesurface3d, points=None, name=''):
+# #        Primitive3D.__init__(self, name=name)
+#         Face3D.__init__(self, contours)
+        
+#         self.contours = contours #contours 3d
+#         self.ellipsesurface3d = ellipsesurface3d #Information about EllipseSurface3D
+#         if points is None:
+#             # print(self.contours[0].points)
+#             self.points = self.contours[0].points #tout les points du contour, les deux ellipses + segments
+#         else:
+#             self.points = points #les points utilisés, notamment les limites si ellipse non complet, le centre des ellipses à tracer
+#         self.name = name #nom à donner à l'élément à tracer
+        
+#         for primitive in self.contours[0].edges:
+#             contour_points = [p.copy() for p in self.contours[0].points[:]]
+
+#         self.bounding_box = self._bounding_box()
+        
+#     def _bounding_box(self):
+#         points = self.points
+         
+#         xmin = min([pt[0] for pt in points])
+#         xmax = max([pt[0] for pt in points])
+#         ymin = min([pt[1] for pt in points])  #on devra mettre z ici car le contour sera en 2D !!!!!!!!!!!!!!!!
+#         ymax = max([pt[1] for pt in points])
+#         zmin = min([pt[2] for pt in points]) #z=hauteur pour que position soit reprojeté dans x,y tantôt
+#         zmax = max([pt[2] for pt in points])
+#         return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
     
                     
 class Shell3D(CompositePrimitive3D):
@@ -5111,7 +5429,7 @@ class VolumeModel(dc.DessiaObject):
                     s += (sp)
                     s += 'shapeobj = doc.addObject("Part::Feature","{}")\n'.format(primitive_name)
                     if isinstance(primitive, BSplineCurve3D) \
-                    or isinstance(primitive, BSplineSurPlaneFace3D) \
+                    or isinstance(primitive, BSplineSurface3D) \
                     or isinstance(primitive, Circle3D) \
                     or isinstance(primitive, Ellipse3D):
 #                            print(primitive)
@@ -5521,7 +5839,7 @@ step_to_volmdlr_primitive = {
         'SURFACE_REPLICA': None,
         'RATIONAL_B_SPLINE_SURFACE': BSplineSurface3D,
         'RECTANGULAR_TRIMMED_SURFACE': None,
-        'SURFACE_OF_LINEAR_EXTRUSION': None, # CAN BE A BSplineSurPlaneFace3D
+        'SURFACE_OF_LINEAR_EXTRUSION': BSplineSurface3D, # CAN BE A BSplineSurface3D
         'SURFACE_OF_REVOLUTION': None,
         'UNIFORM_SURFACE': BSplineSurface3D,
         'QUASI_UNIFORM_SURFACE': BSplineSurface3D,
@@ -5545,8 +5863,8 @@ step_to_volmdlr_primitive = {
         'POLY_LOOP': Contour3D, # TOPOLOGICAL WIRE
         'VERTEX_LOOP': Contour3D, # TOPOLOGICAL WIRE
 
-        'ADVANCED_FACE': PlaneFace3D,
-        'FACE_SURFACE': PlaneFace3D,
+        'ADVANCED_FACE': Face3D,
+        'FACE_SURFACE': Face3D,
 
         'CLOSED_SHELL': Shell3D,
         'OPEN_SHELL': Shell3D,
