@@ -485,8 +485,6 @@ class ExtrudedProfile(volmdlr.Shell3D):
             raise ValueError('side must be either old or new')
 
         if copy:
-            print('frame', frame)
-            print('nxy', self.x, x, self.y, y)
             return ExtrudedProfile(self.plane_origin.frame_mapping(frame, side, copy),
                                    x,
                                    y,
@@ -839,7 +837,8 @@ class HollowCylinder(Cylinder):
         l3 = volmdlr.LineSegment2D(p3, p4)
         l4 = volmdlr.LineSegment2D(p4, p1)
         extruded_profile = RevolvedProfile(self.position, self.axis, normal_vector1,
-                                           volmdlr.Contour2D([l1, l2, l3, l4]), self.position, self.axis, name=self.name)
+                                           volmdlr.Contour2D([l1, l2, l3, l4]),
+                                           self.position, self.axis, name=self.name)
         return extruded_profile.babylon_script(name=name)
 
 
@@ -856,9 +855,11 @@ class HollowCylinder(Cylinder):
             raise ValueError('side must be either old or new')
 
         if copy:
-            return HollowCylinder(self.position.frame_mapping(frame, side, copy),
-                                  axis,
-                                  self.inner_radius, self.outer_radius, self.length)
+            return HollowCylinder(position=self.position.frame_mapping(frame, side, copy),
+                                  axis=axis,
+                                  inner_radius=self.inner_radius, 
+                                  outer_radius=self.outer_radius,
+                                  length=self.length)
         else:
             self.position.frame_mapping(frame, side, copy)
             self.axis = axis
