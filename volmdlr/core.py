@@ -523,7 +523,7 @@ class Mesh2D:
                 file.write(s)
         return s
 
-class Line:
+class Line(dc.DessiaObject):
     def __neg__(self):
         return self.__class__(self.points[::-1])
 
@@ -591,8 +591,10 @@ class Line2D(Primitive2D, Line):
             fig = ax.figure
         
         p1, p2 = self.points
+
         # Axline disappeared in matplotlib 3.2.0 but was in 3.2.0.rc ...
         # TODO: if it comes back implement it...
+
         # if version.parse(_mpl_version) >= version.parse('3.2'):
         #     if dashed:
         #         ax.axline(*p1, *p2, dashes=[30, 5, 10, 5])
@@ -605,7 +607,8 @@ class Line2D(Primitive2D, Line):
         if dashed:
             ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color, dashes=[30, 5, 10, 5])
         else:
-                ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color)
+            ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color)
+
 
         return fig ,ax
     
@@ -771,6 +774,20 @@ class LineSegment2D(Line2D):
     """
     def __init__(self,point1, point2, name=''):
         Line2D.__init__(self, point1, point2, name = name)
+        
+    def to_dict(self):
+        # improve the object structure ?
+        dict_ = {}
+        dict_['name'] = self.name
+        dict_['point1'] = self.points[0].to_dict()
+        dict_['point2'] = self.points[1].to_dict()
+        dict_['object_class'] = 'volmdlr.core.LineSegment2D'
+        return dict_
+    
+    @classmethod
+    def dict_to_object(cls, dict_):
+        return cls(point1 = Point2D.dict_to_object(dict_['point1']), 
+                   point2 = Point2D.dict_to_object(dict_['point2']), name = dict_['name'])
 
     def _get_geo_points(self):
         return self.points
@@ -2722,7 +2739,8 @@ class Contour3D(Wire3D):
                     points = points[::-1]
                     points.extend(points_to_add[-2::-1])
                 else:
-                    self.MPLPlot()
+                    # print(points, points_to_add)
+                    # self.MPLPlot()
                     raise NotImplementedError
             else:
                 raise NotImplementedError
@@ -3668,7 +3686,8 @@ class Shell3D(CompositePrimitive3D):
         babylon_mesh = {'positions': positions,
                         'indices': indices,
                         'name': self.name,
-                        'alpha': self.alpha
+                        'alpha': self.alpha,
+                        'name': self.name
                         }
         
         if self.color is None:
