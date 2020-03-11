@@ -577,19 +577,19 @@ class Line2D(Primitive2D, Line):
             fig = ax.figure
         
         p1, p2 = self.points
-        if version.parse(_mpl_version) >= version.parse('3.2'):
-            if dashed:
-                ax.axline(*p1, *p2, dashes=[30, 5, 10, 5])
-            else:
-                ax.axline(*p1, *p2)
+        # if version.parse(_mpl_version) >= version.parse('3.2'):
+        #     if dashed:
+        #         ax.axline(*p1, *p2, dashes=[30, 5, 10, 5])
+        #     else:
+        #         ax.axline(*p1, *p2)
+        # else:
+        u = p2 - p1
+        p3 = p1 - 3*u
+        p4 = p2 + 4*u
+        if dashed:
+            ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color, dashes=[30, 5, 10, 5])
         else:
-            u = p2 - p1
-            p3 = p1 - 3*u
-            p4 = p2 + 4*u
-            if dashed:
-                ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color, dashes=[30, 5, 10, 5])
-            else:
-                ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color)
+            ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color)
 
         return fig ,ax
 
