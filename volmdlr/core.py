@@ -437,8 +437,10 @@ class Contour2D(Wire2D):
             arc_area = arc.Area()
             c += arc_area*arc.CenterOfMass()
             area += arc_area
-
-        return c/area
+        if area != 0:
+            return c/area
+        else:
+            return False
 
     def SecondMomentArea(self, point):
         if len(self.primitives) == 1:
@@ -1532,7 +1534,6 @@ class Plane3D(Primitive3D):
 
     @classmethod
     def from_normal(cls, point, normal):
-        print(point, normal)
         v1 = normal.DeterministicUnitNormalVector()
         v2 = v1.Cross(normal)
         return cls(point, v1, v2)
@@ -4431,10 +4432,8 @@ class VolumeModel(dc.DessiaObject):
     def _bounding_box(self):
         bboxes = []
         for primitive in self.primitives:
-            print(primitive)
             if hasattr(primitive, 'bounding_box'):
                 bboxes.append(primitive.bounding_box)
-        print(bboxes)
         xmin = min([box.xmin for box in bboxes])
         xmax = max([box.xmax for box in bboxes])
         ymin = min([box.ymin for box in bboxes])
@@ -4578,7 +4577,6 @@ class VolumeModel(dc.DessiaObject):
         primitives_strings=[]
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_script'):
-                print(primitive)
                 primitives_strings.append(primitive.babylon_script())
                 
         return template.render(name=self.name,
