@@ -37,7 +37,7 @@ from scipy.linalg import solve
 import volmdlr.geometry as geometry
 from volmdlr import plot_data
 # from volmdlr import triangulation as tri
-import triangle
+import triangle # doc : https://rufat.be/triangle/
 
 import dessia_common as dc
 from typing import TypeVar, List, Tuple
