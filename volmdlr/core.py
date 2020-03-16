@@ -15,6 +15,7 @@ npy.seterr(divide='raise')
 
 # from geomdl import NURBS
 from geomdl import BSpline
+from geomdl import utilities
 import matplotlib.pyplot as plt
 import  mpl_toolkits
 from matplotlib.patches import Arc, FancyArrow, FancyArrowPatch
@@ -1882,25 +1883,25 @@ class CylindricalSurface3D(Primitive3D):
     # def cyl_to_plan(self, point, frame3d):
     #     frame3d = object_dict[arguments[1]]
 
-class EllipseSurface3D(Primitive3D):
+# class EllipseSurface3D(Primitive3D):
     
-    def __init__(self, frame, R, r, name=''): 
-        self.frame = frame
-        self.R = R
-        self.r = r
-        self.name = name
-        V=frame.v #U représente la normale
-        V.Normalize()
-        W=frame.w
-        W.Normalize()
-        self.plane = Plane3D(frame.origin,V,W)
+#     def __init__(self, frame, R, r, name=''): 
+#         self.frame = frame
+#         self.R = R
+#         self.r = r
+#         self.name = name
+#         V=frame.v #U représente la normale
+#         V.Normalize()
+#         W=frame.w
+#         W.Normalize()
+#         self.plane = Plane3D(frame.origin,V,W)
         
-    @classmethod
-    def from_step(cls, arguments, object_dict):
-        frame3d = object_dict[arguments[1]]
-        R=arguments[2]
-        r=arguments[3]
-        return cls(frame3d, R, r, arguments[0][1:-1])
+#     @classmethod
+#     def from_step(cls, arguments, object_dict):
+#         frame3d = object_dict[arguments[1]]
+#         R=arguments[2]
+#         r=arguments[3]
+#         return cls(frame3d, R, r, arguments[0][1:-1])
         
 class Line3D(Primitive3D, Line):
     _non_eq_attributes = ['name', 'basis_primitives', 'bounding_box']
@@ -2337,7 +2338,7 @@ class ArcEllipse3D(Primitive3D) :
     An arc is defined by a starting point, an end point and an interior point
     
     """
-    def __init__(self, start, interior, end, center, normal=None, name=''):  #, inter=None):
+    def __init__(self, start, interior, end, center, normal=None, name='', extra=None):
         self.start = start
         self.interior = interior
         self.end = end
@@ -2364,8 +2365,8 @@ class ArcEllipse3D(Primitive3D) :
         v1 = n.Cross(u1)# v1 is normal, égal à u2
         v2 = n.Cross(u2)# égal à -u1
         
-        def theta_A_B(s,i,e): #theta=angle d'inclinaison ellipse par rapport à horizontal(sens horaire),A=demi grd axe, B=demi petit axe
-            xs, ys, xi, yi, xe, ye = s[0], s[1], i[0], i[1], e[0], e[1]
+        def theta_A_B(s,i,e,c): #theta=angle d'inclinaison ellipse par rapport à horizontal(sens horaire),A=demi grd axe, B=demi petit axe
+            xs, ys, xi, yi, xe, ye = s[0]-c[0], s[1]-c[1], i[0]-c[0], i[1]-c[1], e[0]-c[0], e[1]-c[1]
             A = npy.array(([xs**2, ys**2, 2*xs*ys],
                           [xi**2, yi**2, 2*xi*yi],
                           [xe**2, ye**2, 2*xe*ye]))
@@ -2385,18 +2386,17 @@ class ArcEllipse3D(Primitive3D) :
         s_2D = start.PlaneProjection2D(plane.vectors[0], plane.vectors[1]) #On supprimer center+plan vect.. car on ne se préocuppe pas de la composante en hauteur en 2d
         i_2D = interior.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
         e_2D = end.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
+        c_2D = center.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
         
         if start==end :
-            inter = interior
-            inter[1] = -interior[1]
-            it_2D = inter.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
-            theta, A, B = theta_A_B(s_2D,it_2D,i_2D)
-        
+            ex_2D = extra.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
+            theta, A, B = theta_A_B(s_2D,ex_2D,i_2D,c_2D)
         else : 
-            theta, A, B = theta_A_B(s_2D,i_2D,e_2D)
+            theta, A, B = theta_A_B(s_2D,i_2D,e_2D,c_2D)
         
         self.Gradius = A
         self.Sradius = B
+        self.teta = theta
         
         # Determining angle
         
@@ -2442,41 +2442,14 @@ class ArcEllipse3D(Primitive3D) :
     
     def tessellation_points(self, resolution_for_ellipse=40):
         number_points_tesselation = math.ceil(resolution_for_ellipse*abs(0.5*self.angle/math.pi))
-        l = self.Length()
-        tessellation_points_3D = [self.PointAtCurvilinearAbscissa(l*i/(number_points_tesselation)) for i in range(number_points_tesselation+1)]
+        # l = self.Length()
+        tessellation_points_3D = [Point3D([self.Gradius*math.cos(self.angle*i/(number_points_tesselation)+self.teta)+self.center[0]*self.normal[0],self.Sradius*math.sin(self.angle*i/(number_points_tesselation)+self.teta)+self.center[1]*self.normal[1],self.center[2]*self.normal[2]]) for i in range(number_points_tesselation+1)]
         return tessellation_points_3D
     
     def Length(self):
-        return self.angle*math.sqrt((self.Gradius**2+self.Sradius**2)/2)
-    
-    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
-        return self.start.Rotation(self.center, self.normal, curvilinear_abscissa/math.sqrt((self.Gradius**2+self.Sradius**2)/2), copy=True)
-    
-    def Rotation(self, rot_center, axis, angle, copy=True):
-        if copy:
-            new_start = self.start.Rotation(rot_center, axis, angle, True)
-            new_interior = self.interior.Rotation(rot_center, axis, angle, True)
-            new_end = self.end.Rotation(rot_center, axis, angle, True)
-            return Arc3D(new_start, new_interior, new_end, name=self.name)
-        else:
-            self.center.Rotation(rot_center, axis, angle, False)
-            self.start.Rotation(rot_center, axis, angle, False)
-            self.interior.Rotation(rot_center, axis, angle, False)
-            self.end.Rotation(rot_center, axis, angle, False)
-            [p.Rotation(rot_center, axis, angle, False) for p in self.primitives]
-
-    def Translation(self, offset, copy=True):
-        if copy:
-            new_start = self.start.Translation(offset, True)
-            new_interior = self.interior.Translation(offset, True)
-            new_end = self.end.Translation(offset, True)
-            return Arc3D(new_start, new_interior, new_end, name=self.name)
-        else:
-            self.center.Translation(offset, False)
-            self.start.Translation(offset, False)
-            self.interior.Translation(offset, False)
-            self.end.Translation(offset, False)
-            [p.Translation(offset, False) for p in self.primitives]
+        # l=self.Gradius*math.cos(self.angle+self.teta)+self.Sradius*math.sin(self.angle+self.teta)
+        return self.Gradius*math.cos(self.angle+self.teta)+self.Sradius*math.sin(self.angle+self.teta)
+        # return self.angle*math.sqrt((self.Gradius**2+self.Sradius**2)/2)
 
     def MPLPlot(self, ax=None):
         if ax is None:
@@ -2525,8 +2498,7 @@ class ArcEllipse3D(Primitive3D) :
         xi, yi, zi = round(1000*self.interior, ndigits).vector
         xe, ye, ze = round(1000*self.end, ndigits).vector
         return '{} = Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,xs,ys,zs,xi,yi,zi,xe,ye,ze)
-    
-    
+ 
 class BSplineSurface3D(Primitive3D):
     def __init__(self, degree_u, degree_v, control_points, nb_u, nb_v, u_multiplicities, v_multiplicities, u_knots, v_knots, weights=None, name=''):
         Primitive3D.__init__(self, basis_primitives=control_points, name=name)
@@ -2555,17 +2527,17 @@ class BSplineSurface3D(Primitive3D):
                 i = 1
             else:
                 i += 1
-        # TRANSPOSE THE LIST OF LISTS
-#        self.control_points_table = list(map(list, zip(*self.control_points_table)))
-
         surface = BSpline.Surface()
         surface.degree_u = degree_u
         surface.degree_v = degree_v
         if weights is None:
-            P = [(control_points[i][0], control_points[i][1], control_points[i][2]) for i in range(len(control_points))]
+            P = [(control_points[i][0], control_points[i][1],
+                  control_points[i][2]) for i in range(len(control_points))]
             surface.set_ctrlpts(P, nb_u, nb_v)
         else:
-            Pw = [(control_points[i][0]*weights[i], control_points[i][1]*weights[i], control_points[i][2]*weights[i], weights[i]) for i in range(len(control_points))]
+            Pw = [(control_points[i][0]*weights[i],
+                   control_points[i][1]*weights[i], control_points[i][2]*weights[i],
+                   weights[i]) for i in range(len(control_points))]
             surface.set_ctrlpts(Pw, nb_u, nb_v)
         knot_vector_u = []
         for i, u_knot in enumerate(u_knots):
@@ -2577,10 +2549,10 @@ class BSplineSurface3D(Primitive3D):
         surface.knotvector_v = knot_vector_v
         surface.delta = 0.05
         surface_points = surface.evalpts
-        
+
         self.surface = surface
         self.points = [Point3D((p[0], p[1], p[2])) for p in surface_points]
-
+        
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive{}'.format(ip)
         script = ""
@@ -2601,10 +2573,31 @@ class BSplineSurface3D(Primitive3D):
             script += '{}.buildFromPolesMultsKnots({},{},{},udegree={},vdegree={},uknots={},vknots={},weights={})\n'.format(name,points,self.u_multiplicities,self.v_multiplicities,self.degree_u,self.degree_v,self.u_knots,self.v_knots,self.weights)
 
         return script
+    
+    def Rotation(self, center, axis, angle, copy=True):
+        new_control_points = [p.Rotation(center, axis, angle, True) for p in self.control_points]
+        new_BSplineSurface3D = BSplineSurface3D(self.degree_u, self.degree_v, new_control_points, self.nb_u, self.nb_v, self.u_multiplicities, self.v_multiplicities, self.u_knots, self.v_knots, self.weights, self.name)
+        if copy:
+            return new_BSplineSurface3D
+        else:
+            self.control_points = new_control_points
+            self.curve = new_BSplineSurface3D.curve
+            self.points = new_BSplineSurface3D.points
+
+    def Translation(self, offset, copy=True):
+        new_control_points = [p.Translation(offset, True) for p in self.control_points]
+        new_BSplineSurface3D = BSplineSurface3D(self.degree_u, self.degree_v, new_control_points, self.nb_u, self.nb_v, self.u_multiplicities, self.v_multiplicities, self.u_knots, self.v_knots, self.weights, self.name)
+        if copy:
+            return new_BSplineSurface3D
+        else:
+            self.control_points = new_control_points
+            self.curve = new_BSplineSurface3D.curve
+            self.points = new_BSplineSurface3D.points
 
     @classmethod
     def from_step(cls, arguments, object_dict):
         name = arguments[0][1:-1]
+        
         degree_u = int(arguments[1])
         degree_v = int(arguments[2])
         points_sets = arguments[3][1:-1].split("),")
@@ -2634,34 +2627,101 @@ class BSplineSurface3D(Primitive3D):
         u_knots = [float(i) for i in arguments[10][1:-1].split(",")]
         v_knots = [float(i) for i in arguments[11][1:-1].split(",")]
         knot_spec = arguments[12]
-
+    
         if 13 in range(len(arguments)):
             weight_data = [float(i) for i in arguments[13][1:-1].replace("(", "").replace(")", "").split(",")]
         else:
             weight_data = None
-
+    
         return cls(degree_u, degree_v, control_points, nb_u, nb_v, u_multiplicities, v_multiplicities, u_knots, v_knots, weight_data, name)
+    
+    
+class BSplineExtrusion(Primitive3D):
 
-    def Rotation(self, center, axis, angle, copy=True):
-        new_control_points = [p.Rotation(center, axis, angle, True) for p in self.control_points]
-        new_BSplineSurface3D = BSplineSurface3D(self.degree_u, self.degree_v, new_control_points, self.nb_u, self.nb_v, self.u_multiplicities, self.v_multiplicities, self.u_knots, self.v_knots, self.weights, self.name)
-        if copy:
-            return new_BSplineSurface3D
-        else:
-            self.control_points = new_control_points
-            self.curve = new_BSplineSurface3D.curve
-            self.points = new_BSplineSurface3D.points
+    def __init__(self, obj, vectorextru, name=''):
+        self.obj = obj
+        vectorextru.Normalize()
+        self.vectorextru = vectorextru
+        # if obj.__class__ is Ellipse3D :
+        self.points = obj.points
+            # self.surface = obj.points
+        
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        name = arguments[0][1:-1]
+        if object_dict[arguments[1]].__class__ is Ellipse3D:
+            ell = object_dict[arguments[1]]
+            vectextru = object_dict[arguments[2]]
+            return cls(ell, vectextru, name)
+        else : 
+            # surface = BSpline.Surface()
+            # surface.degree_u = degree_u
+            # surface.degree_v = degree_v
+            # if weights is None:
+            #     P = [(control_points[i][0], control_points[i][1], control_points[i][2]) for i in range(len(control_points))]
+            #     surface.set_ctrlpts(P, nb_u, nb_v)
+            # else:
+            #     Pw = [(control_points[i][0]*weights[i], control_points[i][1]*weights[i], control_points[i][2]*weights[i], weights[i]) for i in range(len(control_points))]
+            #     surface.set_ctrlpts(Pw, nb_u, nb_v)
+            # knot_vector_u = []
+            # for i, u_knot in enumerate(u_knots):
+            #     knot_vector_u.extend([u_knot]*u_multiplicities[i])
+            # knot_vector_v = []
+            # for i, v_knot in enumerate(v_knots):
+            #     knot_vector_v.extend([v_knot]*v_multiplicities[i])
+            # surface.knotvector_u = knot_vector_u
+            # surface.knotvector_v = knot_vector_v
+            # surface.delta = 0.05
+            # surface_points = surface.evalpts
+            
+            # self.surface = surface
+            # self.points = [Point3D((p[0], p[1], p[2])) for p in surface_points]
+            return NotImplementedError  ## a adapter pour les bpsline
+            
 
-    def Translation(self, offset, copy=True):
-        new_control_points = [p.Translation(offset, True) for p in self.control_points]
-        new_BSplineSurface3D = BSplineSurface3D(self.degree_u, self.degree_v, new_control_points, self.nb_u, self.nb_v, self.u_multiplicities, self.v_multiplicities, self.u_knots, self.v_knots, self.weights, self.name)
-        if copy:
-            return new_BSplineSurface3D
-        else:
-            self.control_points = new_control_points
-            self.curve = new_BSplineSurface3D.curve
-            self.points = new_BSplineSurface3D.points
-
+    # @classmethod
+    # def from_step(cls, arguments, object_dict):
+    #     name = arguments[0][1:-1]
+        
+        # degree_u = int(arguments[1])
+        # degree_v = int(arguments[2])
+        # points_sets = arguments[3][1:-1].split("),")
+        # points_sets = [elem+")" for elem in points_sets[:-1]]+[points_sets[-1]]
+        # control_points = []
+        # for points_set in points_sets:
+        #     points = [object_dict[int(i[1:])] for i in points_set[1:-1].split(",")]
+        #     nb_v = len(points)
+        #     control_points.extend(points)
+        # nb_u = int(len(control_points) / nb_v)
+        # surface_form = arguments[4]
+        # if arguments[5] == '.F.':
+        #     u_closed = False
+        # elif arguments[5] == '.T.':
+        #     u_closed = True
+        # else:
+        #     raise ValueError
+        # if arguments[6] == '.F.':
+        #     v_closed = False
+        # elif arguments[6] == '.T.':
+        #     v_closed = True
+        # else:
+        #     raise ValueError
+        # self_intersect = arguments[7]
+        # u_multiplicities = [int(i) for i in arguments[8][1:-1].split(",")]
+        # v_multiplicities = [int(i) for i in arguments[9][1:-1].split(",")]
+        # u_knots = [float(i) for i in arguments[10][1:-1].split(",")]
+        # v_knots = [float(i) for i in arguments[11][1:-1].split(",")]
+        # knot_spec = arguments[12]
+    
+        # if 13 in range(len(arguments)):
+        #     weight_data = [float(i) for i in arguments[13][1:-1].replace("(", "").replace(")", "").split(",")]
+        # else:
+        #     weight_data = None
+    
+        # return cls(degree_u, degree_v, control_points, nb_u, nb_v, u_multiplicities, v_multiplicities, u_knots, v_knots, weight_data, name)
+    
+    
+    
 class CompositePrimitive3D(Primitive3D):
     _standalone_in_db = True
     _generic_eq = True
@@ -2783,8 +2843,8 @@ class Edge3D(Primitive3D):
         
         elif object_dict[arguments[3]].__class__ is Circle3D:
             # on suppose que le step tourne dans le sens trigo
-            print(arguments)
-            print(object_dict[arguments[3]].radius)
+            # print(arguments)
+            # print(object_dict[arguments[3]].radius)
             center = object_dict[arguments[3]].center
             normal = object_dict[arguments[3]].normal
             p1 = object_dict[arguments[1]]
@@ -2797,7 +2857,7 @@ class Edge3D(Primitive3D):
             else: 
                 plane = Plane3D.from_normal(center, normal)
                 p1_2D = p1.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
-                p2_2D = p2.PlaneProjection2D(vectors[0], plane.vectors[0])
+                p2_2D = p2.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
                 angle = clockwise_angle(Vector2D(p2_2D.vector),Vector2D(p1_2D.vector))/2
                 # angle = clockwise_angle(Vector2D(p2.vector),Vector2D(p1.vector))/2 #marche que si extrusion suivant z ??
                 # angle = clockwise_angle(p2, p1)/2
@@ -2844,16 +2904,17 @@ class Edge3D(Primitive3D):
             # print()
             if p1 == p2: 
                 angle = 5*math.pi/4
+                extra = majorax*Point3D(majordir.vector)*math.cos(math.pi/2)+minorax*Point3D(minordir.vector)*math.sin(math.pi/2)+center
             else :
-                
+                extra = None
                 angle = theta+abs(gamma-theta)//2
             p3 = majorax*Point3D(majordir.vector)*math.cos(angle)+minorax*Point3D(minordir.vector)*math.sin(angle)+center
             # print('p3',p3)
-            arcellipse = ArcEllipse3D(p1, p3, p2, center, normal, arguments[0][1:-1])
+            arcellipse = ArcEllipse3D(p1, p3, p2, center, normal, arguments[0][1:-1], extra)
             return arcellipse
         
         elif object_dict[arguments[3]].__class__ is BSplineCurve3D:
-            print(object_dict[arguments[1]], object_dict[arguments[2]])
+            # print(object_dict[arguments[1]], object_dict[arguments[2]])
             # BSplineCurve3D à couper à gauche et à droite avec les points ci dessus ?
             return object_dict[arguments[3]]
 
@@ -3132,7 +3193,6 @@ class Contour3D(Wire3D):
         for edge in self.edges[1:]:
             if hasattr(edge, 'points'):
                 points_to_add = edge.points[:]
-                
                 if points[0] == points[-1]: # Dans le cas où le (dernier) edge relie deux fois le même point
                     # print('=', points_to_add[::-1])
                     # print('==', points_to_add[-2::-1])
@@ -3150,21 +3210,23 @@ class Contour3D(Wire3D):
                     points.extend(points_to_add[-2::-1])
                 else:
                     fig, ax = self.MPLPlot()
-                    print()
-                    [print(edge.points) for edge in self.edges]
-                    print()
-                    print(self.edges)
-                    print(points)
-                    print(points_to_add)
+                    # print()
+                    # [print(edge.points) for edge in self.edges]
+                    # print()
+                    # print('self edges',self.edges)
+                    # print('points',points)
+                    # [pt.MPLPlot(ax=ax) for pt in points]
+                    # print('pts to add',points_to_add)
+                    # [pt.MPLPlot(ax=ax, color='r') for pt in points_to_add]
                     raise NotImplementedError
-            
+                    # continue
             else:
                 # print('hello')
                 # print()
-                print('edge',self.edges)
-                print('points',points)
-                [print(edge.points) for edge in self.edges]
-                print()
+                # print('edge',self.edges)
+                # print('points',points)
+                # [print(edge.points) for edge in self.edges]
+                # print()
                 # print('pts add',points_to_add)
                 raise NotImplementedError
         
@@ -3331,10 +3393,10 @@ class Circle3D(Contour3D):
     def from_step(cls, arguments, object_dict):
         center = object_dict[arguments[1]].origin
         radius = float(arguments[2])/1000
-        if object_dict[arguments[1]].w is not None:
-            normal = object_dict[arguments[1]].w
-        else:
+        if object_dict[arguments[1]].u is not None:
             normal = object_dict[arguments[1]].u
+        else:
+            normal = object_dict[arguments[1]].v ### ou w 
         return cls(center, radius, normal, arguments[0][1:-1])
 
 
@@ -3344,12 +3406,11 @@ class Ellipse3D(Contour3D):
         self.major_axis = major_axis
         self.minor_axis = minor_axis
         self.center = center
+        normal.Normalize()
         self.normal = normal
         major_dir.Normalize()
         self.major_dir = major_dir
         Contour3D.__init__(self, [self], name=name)
-        
-        
         
     def tessellation_points(self, resolution=20):
         plane = Plane3D.from_normal(self.center, self.normal)
@@ -3420,6 +3481,7 @@ class Face3D(Primitive3D):
         contours = []
         contours.append(object_dict[int(arguments[1][0][1:])])
         
+        # print(object_dict[int(arguments[2])].__class__)
         # plane = Plane3D.from_points(contours[0].points)
         # contours[0].points, polygon2D = cls._repair_points_and_polygon2d(contours[0].points, plane)
         # points = [p.copy() for p in contours[0].points[:]]
@@ -3433,12 +3495,17 @@ class Face3D(Primitive3D):
         elif object_dict[int(arguments[2])].__class__  is CylindricalSurface3D:
             return CylindricalFace3D(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
 ###################################################################### t tu la ?
-        elif object_dict[int(arguments[2])].__class__  is EllipseSurface3D:
-            print('est ce quon passe par ici ?')
-            return EllipseFace3D(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
+        # elif object_dict[int(arguments[2])].__class__  is EllipseSurface3D:
+            # print('est ce quon passe par ici ?')
+            # return EllipseFace3D(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
 ##########################################################################
+        # elif object_dict[int(arguments[2])].__class__  is BSplineSurface3D:
+        elif object_dict[int(arguments[2])].__class__  is BSplineExtrusion:
+            return BSplineFace3D(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
+        
         elif object_dict[int(arguments[2])].__class__  is BSplineSurface3D:
-            return BSplineFace3D()
+            # print(object_dict[int(arguments[2])])
+            return BSplineFace3D(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
         
         else:
             raise NotImplementedError
@@ -4139,26 +4206,149 @@ class CylindricalFace3D(Face3D):
 
 
 class BSplineFace3D(Face3D):
-    def __init__(self, contours, bsplinesurface3d, points, name=''):
+    def __init__(self, contours, bspline_shape, points=None, name=''):
 #        Primitive3D.__init__(self, name=name)
         Face3D.__init__(self, contours)
         
-        self.bsplinesurface3d = bsplinesurface3d
-        self.points = points
+        self.contours = contours
+        self.bspline_shape = bspline_shape
+        self.name = name
+        
+        self.surface, self.points = self._contour_bspline()
+        
+        
+    def _contour_bspline(self):
+        if self.bspline_shape.__class__ is BSplineExtrusion:
+        
+            normal = self.bspline_shape.vectorextru
+            
+            #determination hauteur du bd box, on change de repere les pts du contours
+            scal = [normal.Dot(Vector3D(pt.vector)) for pt in self.contours[0].points[:]]
+            mini, maxi = min(scal), max(scal)
+            h = maxi-mini
+            
+            n = 10
+            control_points = []
+            for i in range(0,n+1):
+                offset_point = - normal*h*i/n
+                for pt in self.bspline_shape.points :
+                    control_points.append((pt+offset_point).vector)
+                control_points.append((self.bspline_shape.points[0]+offset_point).vector)
+            
+            # TRANSPOSE THE LIST OF LISTS
+    #        self.control_points_table = list(map(list, zip(*self.control_points_table)))
+            
+            surface = BSpline.Surface()
+            surface.degree_u = 3 #len(control_points)-1 #degree_u a voir
+            surface.degree_v = 1 #n #degree_v a voir 
+            # control_points = []
+            # for pts in control_points :
+                # control_points3D.append(Point3D(pts))
+            # print('control_points3D', control_points3D)
+            # newctrlpts = Polygon2D(ctrlpts).PointBelongs(ctrlpts)
+            # ctpts = []
+            # for pts in newctrlpts :
+                # ctpts.append(pts.vector)
+            nb_v = len(self.bspline_shape.points)+1
+            # nb_v = len(ctpts)+1
+            nb_u = n+1
+            surface.set_ctrlpts(control_points, nb_u, nb_v)
+            # surface.set_ctrlpts(control_points, nb_u, nb_v)
+            surface.knotvector_u = utilities.generate_knot_vector(surface.degree_u, surface.ctrlpts_size_u)
+            surface.knotvector_v = utilities.generate_knot_vector(surface.degree_v, surface.ctrlpts_size_v)
+            surface.delta = 0.05
+            surface_points = surface.evalpts
+            
+            # # PLOT #
+            # from matplotlib import cm
+            # from geomdl.visualization import VisMPL
+            # surface.vis = VisMPL.VisSurface(ctrlpts=False, legend=False)
+            # surface.render(colormap=cm.terrain)
+            
+            return surface, [Point3D((p[0], p[1], p[2])) for p in surface_points]
+        
+        elif self.bspline_shape.__class__ is BSplineSurface3D:
+            
+            u_multiplicities, v_multiplicities = self.bspline_shape.u_multiplicities, self.bspline_shape.v_multiplicities
+            control_points = self.bspline_shape.control_points
+            surface = BSpline.Surface()
+            weights = self.bspline_shape.weights
+            u_knots = self.bspline_shape.u_knots
+            v_knots = self.bspline_shape.v_knots
+            u_multiplicities = self.bspline_shape.u_multiplicities
+            v_multiplicities = self.bspline_shape.v_multiplicities
+            surface.degree_u = self.bspline_shape.degree_u #len(control_points)-1 #degree_u a voir
+            surface.degree_v = self.bspline_shape.degree_v #n #degree_v a voir 
+            nb_v = self.bspline_shape.nb_v
+            nb_u = self.bspline_shape.nb_u
+            if weights is None:
+                P = [(control_points[i][0], control_points[i][1], control_points[i][2]) for i in range(len(control_points))]
+                surface.set_ctrlpts(P, nb_u, nb_v)
+            else:
+                Pw = [(control_points[i][0]*weights[i], control_points[i][1]*weights[i], control_points[i][2]*weights[i], weights[i]) for i in range(len(control_points))]
+                surface.set_ctrlpts(Pw, nb_u, nb_v)
+            # surface.set_ctrlpts(control_points, nb_u, nb_v)
+            # for i, u_knot in enumerate(u_knots):
+            #     knot_vector_u.extend([u_knot]*u_multiplicities[i])
+                
+            surface.knotvector_u = utilities.generate_knot_vector(surface.degree_u, surface.ctrlpts_size_u)
+            surface.knotvector_v = utilities.generate_knot_vector(surface.degree_v, surface.ctrlpts_size_v)
+            surface.delta = 0.05
+            surface_points = surface.evalpts
+            
+            return surface, points
+            
+        # print('ctrl pts',control_points)
+        # print()
+        # print('self.points',self.points)
+        
+        # if bsplinextru.obj.__class__ is ArcEllipse3D or bsplinextru.obj.__class__ is Ellipse3D :
+        #     # if bsplinextru.obj.__class__ is Ellipse3D :
+        #     #     control_points.append(control_points[0])
+        #     #     surface.degree_u += 1
+        #     weights = None #[1 for i in range(len(control_points))]
+        #     u_knots = control_points
+        #     v_knots = [(self.normal*h*i/n).vector for i in range(n+1)]
+        #     nb_u = len(control_points)
+        #     print('nbu', nb_u)
+        #     nb_v = n
+        #     print('nbv', nb_v)
+        # if weights is None:
+        #     P = [(control_points[i][0], control_points[i][1], control_points[i][2]) for i in range(len(control_points))]
+        #     surface.set_ctrlpts(P, nb_u, nb_v)
+        # else:
+        #     Pw = [(control_points[i][0]*weights[i], control_points[i][1]*weights[i], control_points[i][2]*weights[i], weights[i]) for i in range(len(control_points))]
+        #     surface.set_ctrlpts(Pw, nb_u, nb_v)
+        # knot_vector_u = knotvector.generate(surface.degree_u, len(control_points))
+        # for i, u_knot in enumerate(u_knots):
+        #     knot_vector_u.extend([u_knot]*u_multiplicities[i])
+        # knot_vector_v = []
+        # knot_vector_v = knotvector.generate(surface.degree_u, len(control_points))
+        # for i, v_knot in enumerate(v_knots):
+        #     knot_vector_v.extend([v_knot]*v_multiplicities[i])
+        # surface.knotvector_u = knot_vector_u
+        # surface.knotvector_v = knot_vector_v
+        # surface.delta = 0.05
+        # surface_points = surface.evalpts
+        
+        # self.surface = surface
+        # self.points = [Point3D((p[0], p[1], p[2])) for p in surface_points]
         
     def triangulation(self):
-        sample_size = self.bsplinesurface3d.surface.sample_size
-        
+        sample_size = self.surface.sample_size
         triangles = []
-        for i in range(sample_size[0]-1):
-            for j in range(sample_size[1]-1):
-                if j % sample_size[1] == 0:
-                    continue
-                triangles.append((i+j, i+j+sample_size[0], i+j+sample_size[0]+1))
-                triangles.append((i+j, i+j+1, i+j+sample_size[0]+1))
-
-        return self.bsplinesurface3d.points, triangles
-    
+        etage0 = 0
+        etage1 = sample_size[1]
+        for i in range(sample_size[0]-1): #nb etage
+            for j in range(1,sample_size[1]-1): #nb point
+                triangles.append((etage0+j, etage1+j, etage1+j+1))
+                triangles.append((etage0+j, etage1+j+1, etage0+j+1))
+            triangles.append((etage0+sample_size[1]-1, etage1+sample_size[1]-1, etage1+1))
+            triangles.append((etage0+sample_size[1]-1, etage1+1, etage0+1))
+            etage0 += sample_size[1]
+            etage1 += sample_size[1]
+        pts, tri = delete_double_pos(self.points, [triangles])
+        return pts, tri
                     
 class Shell3D(CompositePrimitive3D):
     _standalone_in_db = True
@@ -5903,7 +6093,7 @@ step_to_volmdlr_primitive = {
         'SURFACE_REPLICA': None,
         'RATIONAL_B_SPLINE_SURFACE': BSplineSurface3D,
         'RECTANGULAR_TRIMMED_SURFACE': None,
-        'SURFACE_OF_LINEAR_EXTRUSION': BSplineSurface3D, # CAN BE A BSplineSurface3D
+        'SURFACE_OF_LINEAR_EXTRUSION': BSplineExtrusion, # CAN BE A BSplineSurface3D
         'SURFACE_OF_REVOLUTION': None,
         'UNIFORM_SURFACE': BSplineSurface3D,
         'QUASI_UNIFORM_SURFACE': BSplineSurface3D,
