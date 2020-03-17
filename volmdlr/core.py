@@ -284,6 +284,20 @@ class Wire2D(CompositePrimitive2D):
                                                         stroke_width=stroke_width,
                                                         opacity=opacity))
         return plot_data
+    
+    def line_intersection(self, line):
+        intersection_points = []
+        for primitive in self.primitives:
+            pts = primitive.line_intersection(line)
+            if pts is not None:
+                if type(pts) is list:
+                    intersection_points.extend(pts)
+                else:
+                    intersection_points.append(pts)
+        if intersection_points:
+            return intersection_points
+        else:
+            return None
 
 
 class Contour2D(Wire2D):
@@ -511,7 +525,7 @@ class Mesh2D:
                 file.write(s)
         return s
 
-class Line:
+class Line(dc.DessiaObject):
     def __neg__(self):
         return self.__class__(self.points[::-1])
 
@@ -579,21 +593,43 @@ class Line2D(Primitive2D, Line):
             fig = ax.figure
         
         p1, p2 = self.points
-        if version.parse(_mpl_version) >= version.parse('3.2'):
-            if dashed:
-                ax.axline(*p1, *p2, dashes=[30, 5, 10, 5])
-            else:
-                ax.axline(*p1, *p2)
+
+        # Axline disappeared in matplotlib 3.2.0 but was in 3.2.0.rc ...
+        # TODO: if it comes back implement it...
+
+        # if version.parse(_mpl_version) >= version.parse('3.2'):
+        #     if dashed:
+        #         ax.axline(*p1, *p2, dashes=[30, 5, 10, 5])
+        #     else:
+        #         ax.axline(*p1, *p2)
+        # else:
+        u = p2 - p1
+        p3 = p1 - 3*u
+        p4 = p2 + 4*u
+        if dashed:
+            ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color, dashes=[30, 5, 10, 5])
         else:
-            u = p2 - p1
-            p3 = p1 - 3*u
-            p4 = p2 + 4*u
-            if dashed:
-                ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color, dashes=[30, 5, 10, 5])
-            else:
-                ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color)
+            ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color)
+
 
         return fig ,ax
+    
+    def plot_data(self, marker=None, color='black', stroke_width=1,
+                 dash=False, opacity=1, arrow=False):
+        p1, p2 = self.points
+        u = p2 - p1
+        p3 = p1 - 3*u
+        p4 = p2 + 4*u
+        return {'type' : 'line',
+                'data' : [p3[0], p3[1],
+                          p4[0], p4[1]],
+                'color' : color,
+                'marker' : marker,
+                'size' : stroke_width,
+                'dash' : dash,
+                'opacity' : opacity,
+                'arrow': arrow
+                }
 
     def CreateTangentCircle(self, point, other_line):
         """
@@ -740,6 +776,20 @@ class LineSegment2D(Line2D):
     """
     def __init__(self,point1, point2, name=''):
         Line2D.__init__(self, point1, point2, name = name)
+        
+    def to_dict(self):
+        # improve the object structure ?
+        dict_ = {}
+        dict_['name'] = self.name
+        dict_['point1'] = self.points[0].to_dict()
+        dict_['point2'] = self.points[1].to_dict()
+        dict_['object_class'] = 'volmdlr.core.LineSegment2D'
+        return dict_
+    
+    @classmethod
+    def dict_to_object(cls, dict_):
+        return cls(point1 = Point2D.dict_to_object(dict_['point1']), 
+                   point2 = Point2D.dict_to_object(dict_['point2']), name = dict_['name'])
 
     def _get_geo_points(self):
         return self.points
@@ -778,6 +828,50 @@ class LineSegment2D(Line2D):
             return point, curv_abs
         else:
             return point
+        
+    def PointProjection2(self, point, curvilinear_abscissa=False):
+        """
+        If the projection falls outside the LineSegment2D, returns None.
+        """
+        point, curv_abs = Line2D.PointProjection(self, point, True)
+        if curv_abs < 0 or curv_abs > 1:
+            if curvilinear_abscissa:
+                return None, curv_abs
+            else:
+                return None
+
+        if curvilinear_abscissa:
+            return point, curv_abs
+        else:
+            return point
+        
+    # def line_intersection(self, line):
+    #     point = Point2D.LinesIntersection(self, line)
+    #     if point is not None:
+    #         point_projection = self.PointProjection2(point)
+    #         if line.__class__ is LineSegment2D:
+    #             point_projection2 = line.PointProjection2(point)
+    #             if point_projection is None or point_projection2 is None:
+    #                 return None
+    #         return point_projection
+    #     else:
+    #         return None
+        
+    def line_intersection(self, line):
+        point = Point2D.LinesIntersection(self, line)
+        if point is not None:
+            point_projection1 = self.PointProjection2(point)
+            if point_projection1 is None:
+                return None
+            
+            if line.__class__ is LineSegment2D:
+                point_projection2 = line.PointProjection2(point)
+                if point_projection2 is None:
+                    return None
+                
+            return point_projection1
+        else:
+            return None
 
     def MPLPlot(self, ax=None, color='k', arrow=False, width=None, plot_points=False):
         if ax is None:
@@ -1016,6 +1110,19 @@ class Arc2D(Primitive2D):
             return abs(LineSegment2D(point, self.center).Length()-self.radius)
         else:
             return min(LineSegment2D(point, self.start).Length(), LineSegment2D(point, self.end).Length())
+
+    def line_intersection(self, line):
+        points = self.tessellation_points()
+        segments = []
+        intersection_points = []
+        for pt1, pt2 in zip(points[:-1], points[1:]):
+            segments.append(LineSegment2D(pt1, pt2))
+        for segment in segments:
+            # intersection_point = Point2D.LinesIntersection(line, segment)
+            intersection_point = segment.line_intersection(line)
+            if intersection_point is not None:
+                intersection_points.append(intersection_point)
+        return intersection_points
 
     def Length(self):
         return self.radius * abs(self.angle)
@@ -2623,18 +2730,19 @@ class Contour3D(Wire3D):
         for edge in self.edges[1:]:
             if hasattr(edge, 'points'):
                 points_to_add = edge.points[:]
-                if points_to_add[0] == points[0]:
+                if points_to_add[0] == points[-1]:
+                    points.extend(points_to_add[1:])
+                elif points_to_add[-1] == points[-1]:
+                    points.extend(points_to_add[-2::-1])
+                elif points_to_add[0] == points[0]:
                     points = points[::-1]
                     points.extend(points_to_add[1:])
                 elif points_to_add[-1] == points[0]:
                     points = points[::-1]
                     points.extend(points_to_add[-2::-1])
-                elif points_to_add[0] == points[-1]:
-                    points.extend(points_to_add[1:])
-                elif points_to_add[-1] == points[-1]:
-                    points.extend(points_to_add[-2::-1])
                 else:
-                    self.MPLPlot()
+                    # print(points, points_to_add)
+                    # self.MPLPlot()
                     raise NotImplementedError
             else:
                 raise NotImplementedError
@@ -3576,7 +3684,7 @@ class Shell3D(CompositePrimitive3D):
                 for j, indexes in enumerate(triangles_indexes):
                     indices.extend([i+nb_points for i in indexes])
                 nb_points += len(points_3D)
-
+        
         babylon_mesh = {'positions': positions,
                         'indices': indices,
                         'name': self.name,
@@ -4311,8 +4419,11 @@ class Step:
         if name == 'VERTEX_POINT':
             object_dict[instanciate_id] = object_dict[arguments[1]]
 
-        elif name == 'LINE':
-            pass
+        # elif name == 'LINE':
+        #     pass
+        
+        # elif name == 'SEAM_CURVE':
+        #     object_dict[instanciate_id] = object_dict[arguments[1]]
 
         elif name == 'ORIENTED_EDGE':
             object_dict[instanciate_id] = object_dict[arguments[3]]
@@ -4874,7 +4985,7 @@ step_to_volmdlr_primitive = {
         'AXIS2_PLACEMENT_2D': None,
         'AXIS2_PLACEMENT_3D': Frame3D,
 
-        'LINE': None,
+        'LINE': Line3D,
         'CIRCLE': Circle3D,
         'ELLIPSE': Ellipse3D,
         'PARABOLA': None,

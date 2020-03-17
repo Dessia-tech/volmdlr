@@ -792,6 +792,7 @@ class HollowCylinder(Cylinder):
         l4 = volmdlr.LineSegment2D(p4, p1)
         contour = volmdlr.Contour2D([l1, l2, l3, l4])
         y = axis.RandomUnitNormalVector()
+        # contour.MPLPlot()
         RevolvedProfile.__init__(self, position, axis, y, contour, position, axis,
                                  color=color, alpha=alpha, name=name)
 

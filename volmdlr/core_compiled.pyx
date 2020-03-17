@@ -435,7 +435,7 @@ class Vector2D(Vector):
         )
         self.plot()
 
-    def plot(self, amplitude=0.5, origin=None, ax=None, color='k', line=False, label=None):
+    def plot(self, amplitude=0.5, width=None, head_width=None, origin=None, ax=None, color='k', line=False, label=None, normalize=False):
         if origin is None:
             origin = Vector2D((0., 0.))
 
@@ -448,13 +448,29 @@ class Vector2D(Vector):
             point = Point2D(origin.vector)
             point.MPLPlot(ax=ax, color=color)
             return fig, ax
-
-        ax.add_patch(FancyArrow(origin[0], origin[1],
-                                self.vector[0]*amplitude, self.vector[1]*amplitude,
-                                width=0.001*5*amplitude,
-                                head_width=0.01*3000*amplitude,
-                                length_includes_head=True,
-                                color=color))
+        
+        if width is None:
+            width = 0.001*5*amplitude
+        if head_width is None:
+            head_width = 0.3*amplitude
+        
+        if not normalize:
+            ax.add_patch(FancyArrow(origin[0], origin[1],
+                                    self.vector[0]*amplitude, self.vector[1]*amplitude,
+                                    width=width,
+                                    head_width=head_width,
+                                    length_includes_head=True,
+                                    color=color))
+        else:
+            normalized_vector = self.copy()
+            normalized_vector.Normalize()
+            ax.add_patch(FancyArrow(origin[0], origin[1],
+                                    normalized_vector[0]*amplitude, normalized_vector[1]*amplitude,
+                                    width=width,
+                                    head_width=head_width,
+                                    length_includes_head=True,
+                                    color=color))
+            
         if line:
             style='-'+color
             linestyle = '-.'
@@ -470,6 +486,7 @@ class Vector2D(Vector):
             ax.text(*(origin+self*amplitude).vector, label)
 
         return fig, ax
+    
 
 
 X2D = Vector2D((1, 0))
@@ -663,7 +680,7 @@ class Vector3D(Vector):
                          self.vector[1] / value,
                          self.vector[2] / value))
 
-    def __round__(self, ndigits=6):
+    def __round__(self, ndigits:int=6):
         return self.__class__((round(self.vector[0], ndigits),
                                round(self.vector[1], ndigits),
                                round(self.vector[2], ndigits)))
@@ -671,7 +688,7 @@ class Vector3D(Vector):
     def __hash__(self):
         return int(1000*(self.vector[0]+self.vector[1]+self.vector[2]))
 
-    def __eq__(self, other_vector):
+    def __eq__(self, other_vector:'Vector3D'):
         if self.__class__ != other_vector.__class__:
             return False
         return math.isclose(self.vector[0], other_vector.vector[0], abs_tol=1e-08) \
@@ -683,15 +700,15 @@ class Vector3D(Vector):
         ov1, ov2, ov3 = other_vector.vector
         return CVector3DDot(v1, v2, v3, ov1, ov2, ov3)
 
-    def Cross(self, other_vector):
+    def Cross(self, other_vector:'Vector3D') -> 'Vector3D':
         return self.__class__(vector3D_cross(self.vector, other_vector.vector))
 
-    def Norm(self):
+    def Norm(self) -> float:
         vx, vy, vz = self.vector
         return CVector3DNorm(vx, vy, vz)
 
 
-    def Normalize(self):
+    def Normalize(self) -> 'Vector3D':
         """
         Normalize the vector modifying it's coordinate
         """
@@ -703,10 +720,10 @@ class Vector3D(Vector):
         self.vector[1] /= n
         self.vector[2] /= n
 
-    def point_distance(self, point2):
+    def point_distance(self, point2:'Vector3D') -> float:
         return (self-point2).Norm()
 
-    def Rotation(self, center, axis, angle, copy=True):
+    def Rotation(self, center:'Point3D', axis:'Vector3D', angle:float, copy:bool=True):
         """
         Rotation of angle around axis.
         Used Rodrigues Formula:
@@ -724,7 +741,7 @@ class Vector3D(Vector):
         else:
             self.vector = list(vector2)
 
-    def x_rotation(self, angle, copy=True):
+    def x_rotation(self, angle:float, copy:bool=True):
         """
         Rotation of angle around X axis.
         """
@@ -741,7 +758,7 @@ class Vector3D(Vector):
             self.vector[1] = y1
             self.vector[2] = z1
 
-    def y_rotation(self, angle, copy=True):
+    def y_rotation(self, angle:float, copy:bool=True):
         """
         Rotation of angle around Y axis.
         """
@@ -758,7 +775,7 @@ class Vector3D(Vector):
             self.vector[0] = x1
             self.vector[2] = z1
 
-    def z_rotation(self, angle, copy=True):
+    def z_rotation(self, angle:float, copy:bool=True):
         """
         Rotation of angle around Z axis.
         """
@@ -835,8 +852,8 @@ class Vector3D(Vector):
         Retuns a deterministic normal vector
         """
         v = X3D
-        if not math.isclose(self.vector[1], 0, abs_tol=1e-5) \
-        or not math.isclose(self.vector[2], 0, abs_tol=1e-5):
+        if not math.isclose(self.vector[1], 0, abs_tol=1e-7) \
+        or not math.isclose(self.vector[2], 0, abs_tol=1e-7):
             v = X3D
         else:
             v = Y3D
