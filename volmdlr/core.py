@@ -241,7 +241,7 @@ class CompositePrimitive2D(Primitive2D):
         plot_data = {}
         plot_data['fill'] = fill
         plot_data['name'] = name
-        plot_data['type'] = 'contour'
+        plot_data['type'] = 'wire'
         plot_data['plot_data'] = []
         for item in self.primitives:
             plot_data['plot_data'].append(item.plot_data(color=color,
