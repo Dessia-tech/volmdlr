@@ -2545,11 +2545,22 @@ class LineSegment3D(Edge3D):
 
         return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
+    def DirectionVector(self, unit=False):
+        u = self.points[1] - self.points[0]
+        if unit:
+            u.Normalize()
+        return u
+
+
     def Length(self):
         return self.points[1].point_distance(self.points[0])
     
     def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
         return self.points[0] + curvilinear_abscissa*(self.points[1] - self.points[0]) / self.Length()
+
+    def middle_point(self):
+        l = self.Length()
+        return self.PointAtCurvilinearAbscissa(0.5*l)
 
     def PlaneProjection2D(self, x, y):
         return LineSegment2D(self.points[0].PlaneProjection2D(x, y),

@@ -506,7 +506,7 @@ class RevolvedProfile(volmdlr.Shell3D):
     """
     _non_serializable_attributes  = ['faces', 'contour3D']
     def __init__(self, plane_origin, x, y, contour2D, axis_point,
-                 axis, angle=2*math.pi, name='', color=None, alpha=1):
+                 axis, angle=2*math.pi, *, color=None, alpha=1, name=''):
 #        volmdlr.Primitive3D.__init__(self, name=name)
         self.contour2D = contour2D
         self.axis_point = axis_point
@@ -919,15 +919,41 @@ class HelicalExtrudedProfile(volmdlr.Primitive3D):
         return s
 
 
-class Sweep(volmdlr.Primitive3D):
+class Sweep(volmdlr.Shell3D):
     """
     Sweep a 3D contour along a Wire3D
     """
-    def __init__(self, contour3d, wire3d, name=''):
-        volmdlr.Primitive3D.__init__(self,name)
+    def __init__(self, contour3d, wire3d, *, color=None, alpha=1, name=''):
         self.contour3d = contour3d
         self.wire3d = wire3d
+        
+        faces = self.shell_faces()
+        volmdlr.Shell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
 
+    def shell_faces(self):
+        faces = []
+        for wire_primitive in self.wire3d.edges:
+            for contour_primitive in self.contour3d.edges:
+                # Build face created by generating primitive of contour along wire primitive
+                if wire_primitive.__class__ == volmdlr.LineSegment3D:
+                    if contour_primitive.__class__ == volmdlr.LineSegment3D:
+                        # Planar face
+                        pass
+                    elif contour_primitive.__class__ == volmdlr.Circle3D:
+                        # Cylindrical face
+                        # Change code below by proper cylindrical surface!
+                        cylinder = Cylinder(wire_primitive.middle_point(),
+                                            wire_primitive.DirectionVector(unit=True),
+                                            contour_primitive.radius,
+                                            wire_primitive.Length())
+                        faces.extend(cylinder.shell_faces())
+                    elif contour_primitive.__class__ == volmdlr.Arc3D:
+                        # Part of cylinder
+                        pass
+                    
+        return faces
+    
+    
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive{}'.format(ip)
         s = "E = []\n"
