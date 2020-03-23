@@ -44,6 +44,6 @@ c2 = vm.Contour3D.dict_to_object(c1)
 sweep = primitives3D.Sweep(contour, rl, name = 'Random pipe')
 
 m = vm.VolumeModel([sweep])
-
+m.babylonjs()
 m.FreeCADExport('sweep')
 

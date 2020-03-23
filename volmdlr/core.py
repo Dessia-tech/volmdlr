@@ -514,22 +514,7 @@ class Contour2D(Wire2D):
     
     def plot_data(self, name='', fill=None, marker=None, color='black', 
                   stroke_width=1, dash=False, opacity=1):
-#        plot_datas = []
-#        for primitive in self.primitives:
-#            print(primitive)
-#            plot_datas.append(primitive.plot_data(name, fill, color, stroke_width, opacity))
-#        return plot_datas
-#        data = []
-#        for nd in self.points:
-#            data.append({'x': nd.vector[0], 'y': nd.vector[1]})
-#        return {'type' : 'path',
-#                'data' : data,
-#                'color' : color,
-#                'size' : stroke_width,
-#                'dash' : None,
-#                'marker' : marker,
-#                'opacity' : opacity}
-#        
+
         plot_data = {}
         plot_data['fill'] = fill
         plot_data['name'] = name
@@ -584,7 +569,7 @@ class Mesh2D:
                 file.write(s)
         return s
 
-class Line:
+class Line(dc.DessiaObject):
     def __neg__(self):
         return self.__class__(self.points[::-1])
 
@@ -652,8 +637,10 @@ class Line2D(Primitive2D, Line):
             fig = ax.figure
         
         p1, p2 = self.points
+
         # Axline disappeared in matplotlib 3.2.0 but was in 3.2.0.rc ...
         # TODO: if it comes back implement it...
+
         # if version.parse(_mpl_version) >= version.parse('3.2'):
         #     if dashed:
         #         ax.axline(*p1, *p2, dashes=[30, 5, 10, 5])
@@ -666,9 +653,27 @@ class Line2D(Primitive2D, Line):
         if dashed:
             ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color, dashes=[30, 5, 10, 5])
         else:
-                ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color)
+            ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color)
+
 
         return fig ,ax
+    
+    def plot_data(self, marker=None, color='black', stroke_width=1,
+                 dash=False, opacity=1, arrow=False):
+        p1, p2 = self.points
+        u = p2 - p1
+        p3 = p1 - 3*u
+        p4 = p2 + 4*u
+        return {'type' : 'line',
+                'data' : [p3[0], p3[1],
+                          p4[0], p4[1]],
+                'color' : color,
+                'marker' : marker,
+                'size' : stroke_width,
+                'dash' : dash,
+                'opacity' : opacity,
+                'arrow': arrow
+                }
 
     def CreateTangentCircle(self, point, other_line):
         """
@@ -815,6 +820,20 @@ class LineSegment2D(Line2D):
     """
     def __init__(self,point1, point2, name=''):
         Line2D.__init__(self, point1, point2, name = name)
+        
+    def to_dict(self):
+        # improve the object structure ?
+        dict_ = {}
+        dict_['name'] = self.name
+        dict_['point1'] = self.points[0].to_dict()
+        dict_['point2'] = self.points[1].to_dict()
+        dict_['object_class'] = 'volmdlr.core.LineSegment2D'
+        return dict_
+    
+    @classmethod
+    def dict_to_object(cls, dict_):
+        return cls(point1 = Point2D.dict_to_object(dict_['point1']), 
+                   point2 = Point2D.dict_to_object(dict_['point2']), name = dict_['name'])
 
     def _get_geo_points(self):
         return self.points
@@ -3010,11 +3029,22 @@ class LineSegment3D(Edge3D):
 
         return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
+    def DirectionVector(self, unit=False):
+        u = self.points[1] - self.points[0]
+        if unit:
+            u.Normalize()
+        return u
+
+
     def Length(self):
         return self.points[1].point_distance(self.points[0])
     
     def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
         return self.points[0] + curvilinear_abscissa*(self.points[1] - self.points[0]) / self.Length()
+
+    def middle_point(self):
+        l = self.Length()
+        return self.PointAtCurvilinearAbscissa(0.5*l)
 
     def PlaneProjection2D(self, x, y):
         return LineSegment2D(self.points[0].PlaneProjection2D(x, y),
@@ -3275,6 +3305,7 @@ class Contour3D(Wire3D):
                     
                     # raise NotImplementedError
                     continue
+
             else:
                 # print('hello')
                 # print()
@@ -4861,7 +4892,8 @@ class Shell3D(CompositePrimitive3D):
         babylon_mesh = {'positions': positions,
                         'indices': indices,
                         'name': self.name,
-                        'alpha': self.alpha
+                        'alpha': self.alpha,
+                        'name': self.name
                         }
         
         if self.color is None:
