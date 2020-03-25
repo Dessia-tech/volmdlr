@@ -461,11 +461,9 @@ class ExtrudedProfile(volmdlr.Shell3D):
         return areas
 
     def Volume(self):
-#        e=extrusion_vector/norm(extrusion_vector)
-        z = npy.cross(self.x.vector,self.y.vector)
-        z = npy.linalg.norm(z)
+        z = self.x.Cross(self.y)
+        z.Normalize()
         coeff = npy.dot(self.extrusion_vector, z)
-
         return self.Area()*coeff
 
 
