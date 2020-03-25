@@ -241,7 +241,7 @@ class CompositePrimitive2D(Primitive2D):
         plot_data = {}
         plot_data['fill'] = fill
         plot_data['name'] = name
-        plot_data['type'] = 'contour'
+        plot_data['type'] = 'wire'
         plot_data['plot_data'] = []
         for item in self.primitives:
             plot_data['plot_data'].append(item.plot_data(color=color,
@@ -451,8 +451,10 @@ class Contour2D(Wire2D):
             arc_area = arc.Area()
             c += arc_area*arc.CenterOfMass()
             area += arc_area
-
-        return c/area
+        if area != 0:
+            return c/area
+        else:
+            return False
 
     def SecondMomentArea(self, point):
         if len(self.primitives) == 1:
@@ -1558,7 +1560,7 @@ class Polygon2D(Contour2D):
         data = []
         for nd in self.points:
             data.append({'x': nd.vector[0], 'y': nd.vector[1]})
-        return {'type' : 'path',
+        return {'type' : 'wire',
                     'data' : data,
                     'color' : color,
                     'size' : stroke_width,
@@ -4543,7 +4545,6 @@ class VolumeModel(dc.DessiaObject):
         for primitive in self.primitives:
             if hasattr(primitive, 'bounding_box'):
                 bboxes.append(primitive.bounding_box)
-
         xmin = min([box.xmin for box in bboxes])
         xmax = max([box.xmax for box in bboxes])
         ymin = min([box.ymin for box in bboxes])
@@ -4687,7 +4688,6 @@ class VolumeModel(dc.DessiaObject):
         primitives_strings=[]
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_script'):
-                print(primitive)
                 primitives_strings.append(primitive.babylon_script())
                 
         return template.render(name=self.name,
