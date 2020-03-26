@@ -186,9 +186,14 @@ def delete_double_pos(points, triangles):
             index_to_new_index[index] = indexes[0]
     
     new_triangles = []
+    # print('triangles', triangles)
     for face_triangles in triangles:
+        if face_triangles is None : 
+            continue
+        # print('face_triangles', face_triangles)
         new_face_triangles = []
         for triangle in face_triangles:
+            # print('triangle', triangle)
             new_triangle = []
             for index in triangle:
                 if index in index_to_new_index:
@@ -3068,12 +3073,25 @@ class LineSegment3D(Edge3D):
 
 
         #résolution 2 inconnus 3eq avec t1 et t2 les inconnus
+        if (x2-x1+y1-y2) != 0 and (y4-y3) != 0:
         
-        t1 = (x3-x1 + (x4-x3)*(y1-y3)/(y4-y3))/(x2-x1+y1-y2)
-        t2 = (y1-y3 + (y2-y1)*t1)/(y4-y3)
-        res1 = z1 + (z2-z1)*t1
-        res2 = z3 + (z4-z3)*t2
+            t1 = (x3-x1 + (x4-x3)*(y1-y3)/(y4-y3))/(x2-x1+y1-y2)
+            t2 = (y1-y3 + (y2-y1)*t1)/(y4-y3)
+            res1 = z1 + (z2-z1)*t1
+            res2 = z3 + (z4-z3)*t2
         
+        elif (z2-z1+y1-y2) != 0 and (y4-y3) != 0:
+            t1 = (z3-z1 + (z4-z3)*(y1-y3)/(y4-y3))/(z2-z1+y1-y2)
+            t2 = (y1-y3 + (y2-y1)*t1)/(y4-y3)
+            res1 = x1 + (x2-x1)*t1
+            res2 = x3 + (x4-x3)*t2
+        
+        else :
+            t1 = (z3-z1 + (z4-z3)*(x1-x3)/(x4-x3))/(z2-z1+x1-x2)
+            t2 = (x1-x3 + (x2-x1)*t1)/(x4-x3)
+            res1 = y1 + (y2-y1)*t1
+            res2 = y3 + (y4-y3)*t2
+            
         if math.isclose(res1, res2, abs_tol=1e-7) : #il y a un point d'intersection
             return Point3D([x1+(x2-x1)*t1, y1+(y2-y1)*t1, z1+(z2-z1)*t1])
         else : 
@@ -3264,7 +3282,6 @@ class Contour3D(Wire3D):
         # print(points)
         # print(self.edges[1:])
         for edge in self.edges[1:]:
-            # print('edge',edge.points)
             if hasattr(edge, 'points'):
                 # [pt.MPLPlot(ax=ax) for pt in edge.points]
                 points_to_add = edge.points[:]
@@ -3545,7 +3562,7 @@ class Ellipse3D(Contour3D):
         return cls(major_axis, minor_axis, center, normal, major_dir, arguments[0][1:-1])
 
 class Face3D(Primitive3D):
-    def __init__(self, contours):
+    def __init__(self, contours, radius=None):
         self.contours = contours
         self.bounding_box = self._bounding_box()
         
@@ -3580,12 +3597,7 @@ class Face3D(Primitive3D):
     
         elif object_dict[int(arguments[2])].__class__  is CylindricalSurface3D:
             return CylindricalFace3D(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
-###################################################################### t tu la ?
-        # elif object_dict[int(arguments[2])].__class__  is EllipseSurface3D:
-            # print('est ce quon passe par ici ?')
-            # return EllipseFace3D(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
-##########################################################################
-        # elif object_dict[int(arguments[2])].__class__  is BSplineSurface3D:
+
         elif object_dict[int(arguments[2])].__class__  is BSplineExtrusion:
             return BSplineFace3D(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
         
@@ -3992,22 +4004,37 @@ class PlaneFace3D(Face3D):
 
 
 class CylindricalFace3D(Face3D):       
-        
+    # Does not work with automatical cylinder from FREECAD (problem with clean_points)
     def __init__(self, contours, cylindricalsurface3d, points=None, name=''):
-        Face3D.__init__(self, contours)
+        self.radius = float(cylindricalsurface3d.radius)//1000
+        if contours[0].__class__ is Contour2D :
+            ctr = [Contour3D([Circle3D(cylindricalsurface3d.frame.origin, self.radius, cylindricalsurface3d.frame.u ), Circle3D(cylindricalsurface3d.frame.origin+contours[0].primitives[0].points[1][1]*cylindricalsurface3d.frame.u, self.radius, cylindricalsurface3d.frame.u)])]
+            Face3D.__init__(self, ctr)
+        else :
+            Face3D.__init__(self, contours)
         
         self.contours = contours #contours 3d
         self.cylindricalsurface3d = cylindricalsurface3d #Information about Cylindrical_Surface
         if points is None:
-            # print(self.contours[0].points)
             self.points = self.contours[0].points #tout les points du contour, les deux cercles + segments
         else:
             self.points = points #les points utilisés, notamment les limites si cercle non complet, le centre des cercles à tracer
         self.name = name #nom à donner à l'élément à tracer
         
-        for primitive in self.contours[0].edges:
-            contour_points = [p.copy() for p in self.contours[0].points[:]]
-
+       
+        
+        
+        
+        
+        
+        
+        
+        # for primitive in self.contours[0].edges:
+            # contour_points = [p.copy() for p in self.contours[0].points[:]]
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111, projection='3d')
+        # [pt.MPLPlot(ax=ax, color='r') for pt in self.points]    
+        
         # # CHECK
         # for pt in self.points:
         #     if not self.frame.point_on_plane(pt):
@@ -4015,12 +4042,59 @@ class CylindricalFace3D(Face3D):
         #         print('dot =', self.frame.normal.Dot(pt-self.frame.origin))
         #         raise ValueError
 
-       
-    def triangulation(self, resolution=31):
-        ###### IF C EST UN CONTOUR 3D :
-        # contour = self.contours[0] 
+    @classmethod
+    def withcontour3D(cls, contours, cylindricalsurface3d, points=None, name='') :
+        Face3D.__init__(self, contours)
+        
+        return cls(frame3d, radius, arguments[0][1:-1])
+    
+    def delete_double(self, Le):
+            Ls=[]
+            for i in Le:
+                if i not in Ls:
+                    Ls.append(i)
+            return Ls
+        
+    def min_max(self, Le, pos):
+        Ls=[]
+        for i in range (0,len(Le)) :
+            Ls.append(Le[i][pos])
+        return (min(Ls), max(Ls))
+
+    def Contour2D_To3D(self, all_contours_points, radius, frame3d) :
+        Points3D=[]
+        tlist=[] #liste regroupant la taille de toutes les sous listes
+        for listpt in  all_contours_points: #2D en 3D
+            for enum, pt in enumerate(listpt) :
+                Points3D.append(Point3D(Vector3D([radius*math.cos(pt[0]/radius),radius*math.sin(pt[0]/radius),pt[1]])))            
+            tlist.append(enum+1)
+            
+        Points_3D=[frame3d.OldCoordinates(point) for point in Points3D]  #Création de la nouvelle liste de points dans le repère de base
+        
+        return Points_3D, tlist
+        
+    def Contour3D_To2D(self, frame3d, radius) :
         points = self.points
+        newpoints = [frame3d.NewCoordinates(point) for point in points]  #Création de la nouvelle liste de points dans le repère du cylindre
+        U = frame3d.u
+        V = frame3d.v
+        newpts = [Vector3D(pt) for pt in newpoints] #on passe en vector 3D pour faciliter clockwise_angle
+        pts2D = [pt.PlaneProjection2D(U,V) for pt in newpts]
+        
+        placement_2d = []
+        for enum, pt in enumerate(pts2D):
+            pos = (2*math.pi-clockwise_angle(Vector2D(pts2D[0].vector),Vector2D(pt.vector)))*radius #l'arc de cercle mesure alpha*r
+            placement_2d.append(Vector2D([pos,newpoints[enum][2]],''))
+        placement2d = self.delete_double(placement_2d)
+        placement2d.append(placement2d[0]) #on rajoute le premier point pour compléter le segment
+        
+        return newpoints, placement2d
+    
+    def triangulation(self, resolution=31):
+        # contour = self.contours[0] 
+        # points = self.points
         radius = (float(self.cylindricalsurface3d.radius))/1000 #il faut diviser par 1000 pour être dans les mêmes ordres de grandeurs que les points
+        
         O=Vector3D(self.cylindricalsurface3d.frame.origin) #Origine du Frame du cylindre (cercle en origine)
         U=self.cylindricalsurface3d.frame[0] 
         U.Normalize()
@@ -4028,45 +4102,69 @@ class CylindricalFace3D(Face3D):
         V.Normalize()
         W=self.cylindricalsurface3d.frame[2]
         W.Normalize()
-        
         Triangles=[]
         
         frame3d=Frame3D(O, V, W, U, '')    # On créé un nouveau Frame3d avec des vecteurs normalisés ---- le dernier vecteur est le vecteur normal  
-        newpoints=[frame3d.NewCoordinates(point) for point in points]  #Création de la nouvelle liste de points dans le repère du cylindre
         
-        newpts=[Vector3D(pt) for pt in newpoints] #on passe en vector 3D pour faciliter clockwise_angle
-        pts2D = [pt.PlaneProjection2D(V,W) for pt in newpts]
+        # newpoints=[frame3d.NewCoordinates(point) for point in points]  #Création de la nouvelle liste de points dans le repère du cylindre
         
-        def delete_double(Le):
-            Ls=[]
-            for i in Le:
-                if i not in Ls:
-                    Ls.append(i)
-            return Ls
+        # newpts=[Vector3D(pt) for pt in newpoints] #on passe en vector 3D pour faciliter clockwise_angle
+        # pts2D = [pt.PlaneProjection2D(V,W) for pt in newpts]
         
-        def min_max(Le,pos):
-            Ls=[]
-            for i in range (0,len(Le)) :
-                Ls.append(Le[i][pos])
-            return (min(Ls), max(Ls))
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111, projection='3d')
+        # [pt.MPLPlot(ax=ax) for pt in self.points]
+        # [pt.MPLPlot(ax=ax, color='r') for pt in newpoints]
+        # [pt.MPLPlot(ax=ax) for pt in self.contours[0].points]
+        # print('lencontourpoints', len(self.contours[0].points))
+        # print('lenselfpoints', len(self.points))
+        # def delete_double(Le):
+        #     Ls=[]
+        #     for i in Le:
+        #         if i not in Ls:
+        #             Ls.append(i)
+        #     return Ls
+        
+        # def min_max(Le,pos):
+        #     Ls=[]
+        #     for i in range (0,len(Le)) :
+        #         Ls.append(Le[i][pos])
+        #     return (min(Ls), max(Ls))
         
       
-        placement_2d=[]
-        for enum, pt in enumerate(pts2D):
-            pos=(2*math.pi-clockwise_angle(Vector2D(pts2D[0].vector),Vector2D(pt.vector)))*radius #l'arc de cercle mesure alpha*r
-            placement_2d.append(Vector2D([pos,newpoints[enum][2]],''))
-        placement2d=delete_double(placement_2d)
-        placement2d.append(placement2d[0]) #on rajoute le premier point pour compléter le segment
+        # placement_2d=[]
+        # for enum, pt in enumerate(pts2D):
+        #     pos=(2*math.pi-clockwise_angle(Vector2D(pts2D[0].vector),Vector2D(pt.vector)))*radius #l'arc de cercle mesure alpha*r
+        #     placement_2d.append(Vector2D([pos,newpoints[enum][2]],''))
+        # placement2d=delete_double(placement_2d)
+        # placement2d.append(placement2d[0]) #on rajoute le premier point pour compléter le segment
         
+        if self.contours[0].__class__ is Contour3D :
+            newpoints, placement2d = self.Contour3D_To2D(frame3d, radius)
+        else :
+            newpoints = self.points
+            placement_2d = []
+            for k in range(0, len(self.contours[0].primitives)):
+                placement_2d.extend(self.contours[0].primitives[k].points) 
+            placement2d = self.delete_double(placement_2d)
+            placement2d.append(placement2d[0])
+            # print('nwpts', newpoints)
+            # print('plc2d', placement2d)
+            
         segmentspt=[]
         for k in range (0,len(placement2d)-1):
             segmentspt.append(LineSegment2D(Point2D(placement2d[k].vector),Point2D(placement2d[k+1].vector)))
         # print('pts2d',placement2d)
         
+        # fig, ax = plt.subplots()
+        # [seg.MPLPlot(ax=ax) for seg in segmentspt]
         
         #On cherche les extremum pour tracer le bounding
-        hmin, hmax = min_max(newpoints,2) #hauteur de l'origine
-        posimin, posimax = min_max(placement2d,0)
+        if self.contours[0].__class__ is Contour2D :
+            hmin, hmax = self.min_max(newpoints,1)
+        else :
+            hmin, hmax = self.min_max(newpoints,2) #hauteur de l'origine a changer pour toutes les hauteurs avec U
+        posimin, posimax = self.min_max(placement2d,0)
         
         #créer lignes/segments entre xmax et xmin avec pas:xmax-xmin/resolution
 
@@ -4076,7 +4174,11 @@ class CylindricalFace3D(Face3D):
         
         #Lignes verticales
         line = [Line2D(ptxmax, ptxmin) for ptxmin,ptxmax in list(zip(pointsxzmin, pointsxzmax))] #du h vers le b
-
+        
+        
+        # [l.MPLPlot(ax=ax, color='r') for l in line]
+        
+        
         all_contours_points = []
         #On recupere les points tout à gauche avec la line[1]
         contours_points = []
@@ -4148,31 +4250,42 @@ class CylindricalFace3D(Face3D):
         
         #On recupere les points tout à droite avec l'avant derniere line
         contours_points = []
+        # print('segmentspt', segmentspt)
         for i, seg in enumerate(segmentspt) :
             p1 = seg.line_intersection(line[len(line)-2])
+            # print('p1', p1)
             if p1 is not None:
                 break
         for k, seg in enumerate(segmentspt[i+1:]) :
             p3 = seg.line_intersection(line[len(line)-2])
+            # print('p3', p3)
             if p3 is not None:
                 break    
         k += i+1
+        # print()
         contours_points.append(p1)
         for pos in range (i+1,k+1):
             contours_points.append(Point2D(placement2d[pos].vector))
         contours_points.append(p3)
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111, projection='3d')
+        # [pt.MPLPlot(ax=ax) for pt in contours_points]
         all_contours_points.append(contours_points)
         
-        Points3D=[]
-        tlist=[] #liste regroupant la taille de toutes les sous listes
-        for listpt in  all_contours_points: #2D en 3D
-            for enum, pt in enumerate(listpt) :
-                Points3D.append(Point3D(Vector3D([radius*math.cos(pt[0]/radius),radius*math.sin(pt[0]/radius),pt[1]])))            
-            tlist.append(enum+1)
-            
-        Points_3D=[frame3d.OldCoordinates(point) for point in Points3D]  #Création de la nouvelle liste de points dans le repère de base
-        ts=[]
+        Points_3D, tlist = self.Contour2D_To3D(all_contours_points, radius, frame3d)
         
+        # Points3D=[]
+        # tlist=[] #liste regroupant la taille de toutes les sous listes
+        # for listpt in  all_contours_points: #2D en 3D
+        #     # print()
+        #     # print('listpt', listpt)
+        #     for enum, pt in enumerate(listpt) :
+        #         # print('pt', pt)
+        #         Points3D.append(Point3D(Vector3D([radius*math.cos(pt[0]/radius),radius*math.sin(pt[0]/radius),pt[1]])))            
+        #     tlist.append(enum+1)
+            
+        # Points_3D=[frame3d.OldCoordinates(point) for point in Points3D]  #Création de la nouvelle liste de points dans le repère de base
+        ts=[]
         for k, listpt in enumerate(all_contours_points) :
             vertices=[]
             segments=[]
@@ -4201,10 +4314,51 @@ class CylindricalFace3D(Face3D):
             else:
                 Triangles.append(None)
         # print('Points_3D',Points_3D)
+        # print('lenpts3d', len(Points_3D))
         # print('Triangles', len(Triangles))
+        
         pt3d, tangle = delete_double_pos(Points_3D, Triangles)       
         return pt3d, tangle
+
+    def MPLPlotpoints(self, ax=None, color='k'):
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+        else:
+            fig = ax.figure
+
+        x = []
+        y = []
+        z = []
+        for px, py, pz in self.points :
+            x.append(px)
+            y.append(py)
+            z.append(pz)
+        x.append(x[0])
+        y.append(y[0])
+        z.append(z[0])
+        ax.plot(x, y, z, color)
+        return fig, ax
     
+    def MPLPlotcontours(self, ax=None, color='k'):
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+        else:
+            fig = ax.figure
+
+        x = []
+        y = []
+        z = []
+        for px, py, pz in self.contours[0].points :
+            x.append(px)
+            y.append(py)
+            z.append(pz)
+        x.append(x[0])
+        y.append(y[0])
+        z.append(z[0])
+        ax.plot(x, y, z, color)
+        return fig, ax
     
 class BSplineFace3D(Face3D):
     def __init__(self, contours, bspline_shape, points=None, name=''):
@@ -4312,6 +4466,9 @@ class BSplineFace3D(Face3D):
             for ptsetage in pointsbbx :
                 # print('lenptsetage', len(ptsetage))
                 nbu = 0
+                if len(ptsetage) <= 2 :
+                    continue
+                # print('ptsetage',ptsetage)
                 ptsetage.append(ptsetage[0])
                 posi1, posi2 = [], []
                 porte1 = False
@@ -4369,7 +4526,7 @@ class BSplineFace3D(Face3D):
                         nbu += 1
                         ptsurf.append(ptsetage[pos].vector)
                     nbx_u.append(nbu)
-            
+            # print()
             # [pt.MPLPlot(ax=ax, color='y') for pt in pointsbbx[0]]
             # [pt.MPLPlot(ax=ax, color='y') for pt in pointsbbx[1]]
             # [pt.MPLPlot(ax=ax, color='y') for pt in pointsbbx[2]]
@@ -4390,8 +4547,15 @@ class BSplineFace3D(Face3D):
             bsplineu, bsplinev = self.contours[0].edges[0], self.contours[0].edges[1]
             control_points = ptsurf
             surface = BSpline.Surface()
-            surface.degree_u = bsplineu.degree
-            surface.degree_v = bsplinev.degree
+            if bsplineu.__class__ is LineSegment3D :
+                surface.degree_u = 1
+            else :
+                surface.degree_u = bsplineu.degree
+            
+            if bsplinev.__class__ is LineSegment3D :  
+                surface.degree_v = 1
+            else :
+                surface.degree_v = bsplinev.degree
             nb_v = len(nbx_u)
             nb_u = nbx_u[0]
             
@@ -4403,11 +4567,11 @@ class BSplineFace3D(Face3D):
             surface.delta = 0.05
             surface_points = surface.evalpts
             
-            # PLOT #
-            from matplotlib import cm
-            from geomdl.visualization import VisMPL
-            surface.vis = VisMPL.VisSurface(ctrlpts=False, legend=False)
-            surface.render(colormap=cm.terrain)
+            # # PLOT #
+            # from matplotlib import cm
+            # from geomdl.visualization import VisMPL
+            # surface.vis = VisMPL.VisSurface(ctrlpts=False, legend=False)
+            # surface.render(colormap=cm.terrain)
             
             
             
@@ -4931,8 +5095,6 @@ class Shell3D(CompositePrimitive3D):
         if self.color is not None:
             s += 'mat.diffuseColor = new BABYLON.Color3({}, {}, {});\n'.format(*self.color)
         return s
-
-        
 
 class BoundingBox(dc.DessiaObject):
     """
