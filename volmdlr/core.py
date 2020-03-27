@@ -3604,7 +3604,13 @@ class Face3D(Primitive3D):
         # plane = Plane3D.from_points(contours[0].points)
         # contours[0].points, polygon2D = cls._repair_points_and_polygon2d(contours[0].points, plane)
         # points = [p.copy() for p in contours[0].points[:]]
-
+        
+        if int(arguments[2]) not in list(object_dict.keys()):
+            return None
+        
+        
+        
+        
         if object_dict[int(arguments[2])].__class__  is Plane3D:
             # [print(e.points) for e in contours]
             # print(arguments)
@@ -3619,7 +3625,8 @@ class Face3D(Primitive3D):
         
         elif object_dict[int(arguments[2])].__class__  is BSplineSurface3D:
             # print(object_dict[int(arguments[2])])
-            return BSplineFace3D(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
+            return None
+            # return BSplineFace3D(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
         
         elif object_dict[int(arguments[2])].__class__  is ToroidalSurface3D:
             return ToroidalFace3D(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
@@ -3649,6 +3656,8 @@ class PlaneFace3D(Face3D):
 
         contour_points = [p.copy() for p in self.contours[0].points[:]]
         if plane is None:
+            print('self.contours',self.contours)
+            print('contour_points', contour_points)
             self.plane = Plane3D.from_points(contour_points)
 
         if points is None or polygon2D is None:
@@ -4025,7 +4034,7 @@ class PlaneFace3D(Face3D):
 class CylindricalFace3D(Face3D):       
     # Does not work with automatical cylinder from FREECAD (problem with clean_points)
     def __init__(self, contours, cylindricalsurface3d, points=None, name=''):
-        self.radius = float(cylindricalsurface3d.radius)//1000
+        self.radius = float(cylindricalsurface3d.radius)/1000
         if contours[0].__class__ is Contour2D :
             ctr = [Contour3D([Circle3D(cylindricalsurface3d.frame.origin, self.radius, cylindricalsurface3d.frame.u ), Circle3D(cylindricalsurface3d.frame.origin+contours[0].primitives[0].points[1][1]*cylindricalsurface3d.frame.u, self.radius, cylindricalsurface3d.frame.u)])]
             Face3D.__init__(self, ctr)
@@ -4328,8 +4337,9 @@ class CylindricalFace3D(Face3D):
 
 class ToroidalFace3D (Face3D) :
     def __init__(self, contours, toroidalsurface3d, points=None, name=''):
-        self.rcenter = float(toroidalsurface3d.rcenter)//1000
-        self.rcircle = float(toroidalsurface3d.rcircle)//1000
+        self.rcenter = float(toroidalsurface3d.rcenter)/1000
+        self.rcircle = float(toroidalsurface3d.rcircle)/1000
+        self.toroidalsurface3d = toroidalsurface3d 
         # if contours[0].__class__ is Contour2D :
             ##### Creer un contour3D avec 3 ou 4 cercle pour montrer l'ampleur du tore
             # ctr = [Contour3D([Circle3D(toroidalsurface3d.frame.origin, self.radius, cylindricalsurface3d.frame.u ), Circle3D(cylindricalsurface3d.frame.origin+contours[0].primitives[0].points[1][1]*cylindricalsurface3d.frame.u, self.radius, cylindricalsurface3d.frame.u)])]
@@ -4338,41 +4348,33 @@ class ToroidalFace3D (Face3D) :
             # Face3D.__init__(self, contours)
         if contours[0].__class__ is Point3D :
             ptext = contours[0]
-            c1 = Circle3D(toroidalsurface3d.frame.origin, self.rcenter+2*self.rcircle, toroidalsurface3d.frame.u)
-            c2 = Circle3D(ptext-Point3D((self.rcircle*toroidalsurface3d.frame.v).vector), self.rcircle, toroidalsurface3d.frame.w)
-            c3 = Circle3D(toroidalsurface3d.frame.origin, self.rcenter+2*self.rcircle, -toroidalsurface3d.frame.u)
-            c4 = Circle3D(ptext-Point3D((self.rcircle*toroidalsurface3d.frame.v).vector), self.rcircle, -toroidalsurface3d.frame.w)
+            center = self.toroidalsurface3d.frame.origin
+            normal = self.toroidalsurface3d.frame.u
+            vec1 = self.toroidalsurface3d.frame.v
+            vec2 = self.toroidalsurface3d.frame.w
+            ccircle = ptext-Point3D((self.rcircle*vec1).vector)
+            c1 = Arc3D(ptext, ptext.Rotation(center, normal, math.pi), ptext, normal)
+            c2 = Arc3D(ptext, ptext.Rotation(ccircle, vec2, math.pi), ptext, vec2)
+            c3 = Arc3D(ptext, ptext.Rotation(center, -normal, math.pi), ptext, -normal)
+            c4 = Arc3D(ptext, ptext.Rotation(ccircle, -vec2, math.pi), ptext, -vec2)
             
             edges = [c1, c2, c3, c4]
             contours = [Contour3D(edges)]
         
-        # print('contours', contours)
-        # print('contours[0]', contours[0])
-        # print('contours[0].edges', contours[0].edges)
         Face3D.__init__(self, contours)
         self.contours = contours 
-        self.toroidalsurface3d = toroidalsurface3d 
+        
         if points is None:
             self.points = self.contours[0].points 
         else:
             self.points = points 
         self.name = name 
     
-    def triangulation(self, resolution=31):
+    def triangulation(self) : #, resolution=31):
         # contour = self.contours[0] 
-        points = self.points
-        # print('points', points)
-        # fig = plt.figure()
-        # ax = fig.add_subplot(111, projection='3d')
-        # [pt.MPLPlot(ax=ax) for pt in self.points]
-        # print('self.contours', self.contours[0].edges)
-        # [pt.MPLPlot(ax=ax, color='r') for pt in self.contours[0].points]
-        # [pt.MPLPlot(ax=ax) for pt in self.contours[0].edges[0].points]
-        # [pt.MPLPlot(ax=ax, color='r') for pt in self.contours[0].edges[1].points]
-        # [pt.MPLPlot(ax=ax, color='b') for pt in self.contours[0].edges[2].points]
-        # [pt.MPLPlot(ax=ax, color='g') for pt in self.contours[0].edges[3].points]
-        rcenter = float(self.toroidalsurface3d.rcenter)//1000
-        rcircle = float(self.toroidalsurface3d.rcircle)//1000
+        # points = self.points
+        rcenter = self.rcenter
+        rcircle = self.rcircle
         
         O=Vector3D(self.toroidalsurface3d.frame.origin) #Origine du Frame du cylindre (cercle en origine)
         U=self.toroidalsurface3d.frame[0] 
@@ -4383,7 +4385,47 @@ class ToroidalFace3D (Face3D) :
         W.Normalize()
         frame3d=Frame3D(O, V, W, U, '')    # On créé un nouveau Frame3d avec des vecteurs normalisés ---- le dernier vecteur est le vecteur normal
         
-        Triangles=[]
+        #Creation of circle in each point of the master vector but not first and last
+        pointscontours = self.contours[0].edges[0].points
+        Circle = []
+        Linextru = []
+        
+        Circle.append(self.contours[0].edges[1]) #start circle
+        
+        for enum, pt in enumerate(pointscontours[1:len(pointscontours)-2]):
+            vec_ext_center = Vector3D((O-pt).vector)
+            vec_ext_center.Normalize()
+            vec_master = U.Cross(vec_ext_center)
+            ccircle = pt + Point3D((rcircle*vec_ext_center).vector)
+            cpt = Arc3D(pt, pt.Rotation(ccircle, vec_master, math.pi), pt, vec_master)
+            
+            Circle.append(cpt)
+            
+            #Size of extru line
+            line_extru = LineSegment3D(pointscontours[enum], pt)
+            Linextru.append(line_extru)
+        
+        Circle.append(self.contours[0].edges[3]) #end circle
+        Linextru.append(LineSegment3D(pointscontours[-2], pointscontours[-1]))
+        
+        #Creation of face between couple of circle
+        faces = []
+        for k in range(0,len(Linextru)):
+            cstart, cend = Circle[k], Circle[k+1]
+            ls1 = Linextru[k]
+            ls2 = LineSegment3D(ls1.points[1], ls1.points[0])
+            contours = [Contour3D([ls1, cstart, ls2, cend])]
+            frame3d = Frame3D(cstart.center, cstart.normal, U, cstart.normal.Cross(U))
+            cylsurf3d = CylindricalSurface3D(frame3d, cstart.radius)
+            cylface = CylindricalFace3D(contours, cylsurf3d)
+            # faces.append(cylface.triangulation)
+            faces.append(cylface)
+            
+        shell = Shell3D(faces)
+        volumemodel = VolumeModel([shell])
+        volumemodel.babylonjs(debug=True)
+        return
+        # Triangles=[]
         
           
     
@@ -4707,6 +4749,13 @@ class Shell3D(CompositePrimitive3D):
     def from_step(cls, arguments, object_dict):
         faces = []
         for face in arguments[1]:
+            
+            
+            if face is None : 
+                continue
+            
+            
+            
             faces.append(object_dict[int(face[1:])])
         return cls(faces, name = arguments[0][1:-1])
 
@@ -5838,6 +5887,7 @@ class Step:
 
         elif name == 'VERTEX_LOOP' :
             object_dict[instanciate_id] = object_dict[arguments[1]]
+
         elif name in step_to_volmdlr_primitive and hasattr(step_to_volmdlr_primitive[name], "from_step"):
             volmdlr_object = step_to_volmdlr_primitive[name].from_step(arguments, object_dict)
 
@@ -6376,83 +6426,7 @@ class ViewIso:# TODO: rename this in IsoView
 
 
 step_to_volmdlr_primitive = {
-        # GEOMETRICAL ENTITIES
-        'CARTESIAN_POINT': Point3D,
-        'DIRECTION': Vector3D,
-        'VECTOR': Vector3D,
-
-        'AXIS1_PLACEMENT': None,
-        'AXIS2_PLACEMENT_2D': None, # ??????????????????
-        'AXIS2_PLACEMENT_3D': Frame3D,
-
-        'LINE': Line3D, #LineSegment3D,
-        'CIRCLE': Circle3D,
-        'ELLIPSE': Ellipse3D,
-        'PARABOLA': None,
-        'HYPERBOLA': None,
-        'PCURVE': None,
-        'CURVE_REPLICA': None,
-        'OFFSET_CURVE_3D': None,
-        'TRIMMED_CURVE': None, # BSplineCurve3D cannot be trimmed on FreeCAD
-        'B_SPLINE_CURVE': BSplineCurve3D,
-        'B_SPLINE_CURVE_WITH_KNOTS': BSplineCurve3D,
-        'BEZIER_CURVE': BSplineCurve3D,
-        'RATIONAL_B_SPLINE_CURVE': BSplineCurve3D,
-        'UNIFORM_CURVE': BSplineCurve3D,
-        'QUASI_UNIFORM_CURVE': BSplineCurve3D,
-        'SURFACE_CURVE': None, # TOPOLOGICAL EDGE
-        'SEAM_CURVE': None, #LineSegment3D, # TOPOLOGICAL EDGE ############################
-        'COMPOSITE_CURVE_SEGMENT': None, # TOPOLOGICAL EDGE
-        'COMPOSITE_CURVE': Wire3D, # TOPOLOGICAL WIRE
-        'COMPOSITE_CURVE_ON_SURFACE': Wire3D, # TOPOLOGICAL WIRE
-        'BOUNDARY_CURVE': Wire3D, # TOPOLOGICAL WIRE
-
-        'PLANE': Plane3D,
-        'CYLINDRICAL_SURFACE': CylindricalSurface3D,
-        'CONICAL_SURFACE': None,
-        'SPHERICAL_SURFACE': None,
-        'TOROIDAL_SURFACE': ToroidalSurface3D,
-        'DEGENERATE_TOROIDAL_SURFACE': None,
-        'B_SPLINE_SURFACE_WITH_KNOTS': BSplineSurface3D,
-        'B_SPLINE_SURFACE': BSplineSurface3D,
-        'BEZIER_SURFACE': BSplineSurface3D,
-        'OFFSET_SURFACE': None,
-        'SURFACE_REPLICA': None,
-        'RATIONAL_B_SPLINE_SURFACE': BSplineSurface3D,
-        'RECTANGULAR_TRIMMED_SURFACE': None,
-        'SURFACE_OF_LINEAR_EXTRUSION': BSplineExtrusion, # CAN BE A BSplineSurface3D
-        'SURFACE_OF_REVOLUTION': None,
-        'UNIFORM_SURFACE': BSplineSurface3D,
-        'QUASI_UNIFORM_SURFACE': BSplineSurface3D,
-        'RECTANGULAR_COMPOSITE_SURFACE': PlaneFace3D, # TOPOLOGICAL FACES
-        'CURVE_BOUNDED_SURFACE': PlaneFace3D, # TOPOLOGICAL FACE
-
-
-        # TOPOLOGICAL ENTITIES
-        'VERTEX_POINT': None,
-
-        'EDGE_CURVE': Edge3D, # LineSegment3D, # TOPOLOGICAL EDGE
-        'ORIENTED_EDGE': None, # TOPOLOGICAL EDGE
-        # The one above can influence the direction with their last argument
-        # TODO : maybe take them into consideration
-
-        'FACE_BOUND': None, # TOPOLOGICAL WIRE
-        'FACE_OUTER_BOUND': None, # TOPOLOGICAL WIRE
-        # Both above can influence the direction with their last argument
-        # TODO : maybe take them into consideration
-        'EDGE_LOOP': Contour3D, # TOPOLOGICAL WIRE
-        'POLY_LOOP': Contour3D, # TOPOLOGICAL WIRE
-        'VERTEX_LOOP': None, # TOPOLOGICAL WIRE
-
-        'ADVANCED_FACE': Face3D,
-        'FACE_SURFACE': Face3D,
-
-        'CLOSED_SHELL': Shell3D,
-        'OPEN_SHELL': Shell3D,
-#        'ORIENTED_CLOSED_SHELL': None,
-        'CONNECTED_FACE_SET': Shell3D,
-
-# # GEOMETRICAL ENTITIES
+#         # GEOMETRICAL ENTITIES
 #         'CARTESIAN_POINT': Point3D,
 #         'DIRECTION': Vector3D,
 #         'VECTOR': Vector3D,
@@ -6487,19 +6461,19 @@ step_to_volmdlr_primitive = {
 #         'CYLINDRICAL_SURFACE': CylindricalSurface3D,
 #         'CONICAL_SURFACE': None,
 #         'SPHERICAL_SURFACE': None,
-#         'TOROIDAL_SURFACE': None,
+#         'TOROIDAL_SURFACE': ToroidalSurface3D,
 #         'DEGENERATE_TOROIDAL_SURFACE': None,
-#         'B_SPLINE_SURFACE_WITH_KNOTS': None,
-#         'B_SPLINE_SURFACE': None,
-#         'BEZIER_SURFACE': None,
+#         'B_SPLINE_SURFACE_WITH_KNOTS': BSplineSurface3D,
+#         'B_SPLINE_SURFACE': BSplineSurface3D,
+#         'BEZIER_SURFACE': BSplineSurface3D,
 #         'OFFSET_SURFACE': None,
 #         'SURFACE_REPLICA': None,
-#         'RATIONAL_B_SPLINE_SURFACE': None,
+#         'RATIONAL_B_SPLINE_SURFACE': BSplineSurface3D,
 #         'RECTANGULAR_TRIMMED_SURFACE': None,
 #         'SURFACE_OF_LINEAR_EXTRUSION': BSplineExtrusion, # CAN BE A BSplineSurface3D
 #         'SURFACE_OF_REVOLUTION': None,
-#         'UNIFORM_SURFACE': None,
-#         'QUASI_UNIFORM_SURFACE': None,
+#         'UNIFORM_SURFACE': BSplineSurface3D,
+#         'QUASI_UNIFORM_SURFACE': BSplineSurface3D,
 #         'RECTANGULAR_COMPOSITE_SURFACE': PlaneFace3D, # TOPOLOGICAL FACES
 #         'CURVE_BOUNDED_SURFACE': PlaneFace3D, # TOPOLOGICAL FACE
 
@@ -6527,5 +6501,81 @@ step_to_volmdlr_primitive = {
 #         'OPEN_SHELL': Shell3D,
 # #        'ORIENTED_CLOSED_SHELL': None,
 #         'CONNECTED_FACE_SET': Shell3D,
+
+# GEOMETRICAL ENTITIES
+        'CARTESIAN_POINT': Point3D,
+        'DIRECTION': Vector3D,
+        'VECTOR': Vector3D,
+
+        'AXIS1_PLACEMENT': None,
+        'AXIS2_PLACEMENT_2D': None, # ??????????????????
+        'AXIS2_PLACEMENT_3D': Frame3D,
+
+        'LINE': Line3D, #LineSegment3D,
+        'CIRCLE': Circle3D,
+        'ELLIPSE': Ellipse3D,
+        'PARABOLA': None,
+        'HYPERBOLA': None,
+        'PCURVE': None,
+        'CURVE_REPLICA': None,
+        'OFFSET_CURVE_3D': None,
+        'TRIMMED_CURVE': None, # BSplineCurve3D cannot be trimmed on FreeCAD
+        'B_SPLINE_CURVE': BSplineCurve3D,
+        'B_SPLINE_CURVE_WITH_KNOTS': BSplineCurve3D,
+        'BEZIER_CURVE': BSplineCurve3D,
+        'RATIONAL_B_SPLINE_CURVE': BSplineCurve3D,
+        'UNIFORM_CURVE': BSplineCurve3D,
+        'QUASI_UNIFORM_CURVE': BSplineCurve3D,
+        'SURFACE_CURVE': None, # TOPOLOGICAL EDGE
+        'SEAM_CURVE': None, #LineSegment3D, # TOPOLOGICAL EDGE ############################
+        'COMPOSITE_CURVE_SEGMENT': None, # TOPOLOGICAL EDGE
+        'COMPOSITE_CURVE': Wire3D, # TOPOLOGICAL WIRE
+        'COMPOSITE_CURVE_ON_SURFACE': Wire3D, # TOPOLOGICAL WIRE
+        'BOUNDARY_CURVE': Wire3D, # TOPOLOGICAL WIRE
+
+        'PLANE': Plane3D,
+        'CYLINDRICAL_SURFACE': CylindricalSurface3D,
+        'CONICAL_SURFACE': None,
+        'SPHERICAL_SURFACE': None,
+        'TOROIDAL_SURFACE': None,
+        'DEGENERATE_TOROIDAL_SURFACE': None,
+        'B_SPLINE_SURFACE_WITH_KNOTS': None,
+        'B_SPLINE_SURFACE': None,
+        'BEZIER_SURFACE': None,
+        'OFFSET_SURFACE': None,
+        'SURFACE_REPLICA': None,
+        'RATIONAL_B_SPLINE_SURFACE': None,
+        'RECTANGULAR_TRIMMED_SURFACE': None,
+        'SURFACE_OF_LINEAR_EXTRUSION': BSplineExtrusion, # CAN BE A BSplineSurface3D
+        'SURFACE_OF_REVOLUTION': None,
+        'UNIFORM_SURFACE': None,
+        'QUASI_UNIFORM_SURFACE': None,
+        'RECTANGULAR_COMPOSITE_SURFACE': PlaneFace3D, # TOPOLOGICAL FACES
+        'CURVE_BOUNDED_SURFACE': PlaneFace3D, # TOPOLOGICAL FACE
+
+
+        # TOPOLOGICAL ENTITIES
+        'VERTEX_POINT': None,
+
+        'EDGE_CURVE': Edge3D, # LineSegment3D, # TOPOLOGICAL EDGE
+        'ORIENTED_EDGE': None, # TOPOLOGICAL EDGE
+        # The one above can influence the direction with their last argument
+        # TODO : maybe take them into consideration
+
+        'FACE_BOUND': None, # TOPOLOGICAL WIRE
+        'FACE_OUTER_BOUND': None, # TOPOLOGICAL WIRE
+        # Both above can influence the direction with their last argument
+        # TODO : maybe take them into consideration
+        'EDGE_LOOP': Contour3D, # TOPOLOGICAL WIRE
+        'POLY_LOOP': Contour3D, # TOPOLOGICAL WIRE
+        'VERTEX_LOOP': None, # TOPOLOGICAL WIRE
+
+        'ADVANCED_FACE': Face3D,
+        'FACE_SURFACE': Face3D,
+
+        'CLOSED_SHELL': Shell3D,
+        'OPEN_SHELL': Shell3D,
+#        'ORIENTED_CLOSED_SHELL': None,
+        'CONNECTED_FACE_SET': Shell3D,
 
         }
