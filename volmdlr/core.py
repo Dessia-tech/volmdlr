@@ -2611,6 +2611,8 @@ class BSplineSurface3D(Primitive3D):
         self.surface = surface
         self.points = [Point3D((p[0], p[1], p[2])) for p in surface_points]
         
+        print('ca intencie des bsplinesurface3d')
+        
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive{}'.format(ip)
         script = ""
@@ -3605,8 +3607,12 @@ class Face3D(Primitive3D):
         # contours[0].points, polygon2D = cls._repair_points_and_polygon2d(contours[0].points, plane)
         # points = [p.copy() for p in contours[0].points[:]]
         
+        
+        
+        
         if int(arguments[2]) not in list(object_dict.keys()):
-            return None
+            print(int(arguments[2]))
+#            return None
         
         
         
@@ -3624,9 +3630,9 @@ class Face3D(Primitive3D):
             return BSplineFace3D(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
         
         elif object_dict[int(arguments[2])].__class__  is BSplineSurface3D:
-            # print(object_dict[int(arguments[2])])
-            return None
-            # return BSplineFace3D(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
+             print(int(arguments[2]))
+#            return None
+             return BSplineFace3D(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
         
         elif object_dict[int(arguments[2])].__class__  is ToroidalSurface3D:
             return ToroidalFace3D(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
@@ -5920,7 +5926,15 @@ class Step:
                 shells.append(object_dict[node])
 #        print(shells)
         return shells
-
+    
+    def to_scatter_volume_model(self, name):
+        object_dict = {}
+        primitives = []
+        for stepfunction in self.functions.values():
+            res, object_dict, primitives = self.instanciate(stepfunction.id, object_dict, primitives)
+            if res is not None:
+                raise NotImplementedError
+        return VolumeModel(list(object_dict.values()))
 
 class VolumeModel(dc.DessiaObject):
     _standalone_in_db = True
@@ -5992,18 +6006,29 @@ class VolumeModel(dc.DessiaObject):
 
     def _bounding_box(self):
         bboxes = []
+        points = []
         for primitive in self.primitives:
             if hasattr(primitive, 'bounding_box'):
                 bboxes.append(primitive.bounding_box)
-        xmin = min([box.xmin for box in bboxes])
-        xmax = max([box.xmax for box in bboxes])
-        ymin = min([box.ymin for box in bboxes])
-        ymax = max([box.ymax for box in bboxes])
-        zmin = min([box.zmin for box in bboxes])
-        zmax = max([box.zmax for box in bboxes])
-
+            else:
+                if primitive.__class__.__name__ == 'Point3D':
+                    points.append(primitive)
+        if bboxes:
+            xmin = min([box.xmin for box in bboxes])
+            xmax = max([box.xmax for box in bboxes])
+            ymin = min([box.ymin for box in bboxes])
+            ymax = max([box.ymax for box in bboxes])
+            zmin = min([box.zmin for box in bboxes])
+            zmax = max([box.zmax for box in bboxes])
+        elif points:
+            xmin = min([p[0] for p in points])
+            xmax = max([p[0] for p in points])
+            ymin = min([p[1] for p in points])
+            ymax = max([p[1] for p in points])
+            zmin = min([p[2] for p in points])
+            zmax = max([p[2] for p in points])
         return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
-
+    
     def plot(self, ax=None, color=None):
         fig = plt.figure()
         if ax is None:
@@ -6539,8 +6564,8 @@ step_to_volmdlr_primitive = {
         'SPHERICAL_SURFACE': None,
         'TOROIDAL_SURFACE': None,
         'DEGENERATE_TOROIDAL_SURFACE': None,
-        'B_SPLINE_SURFACE_WITH_KNOTS': None,
-        'B_SPLINE_SURFACE': None,
+        'B_SPLINE_SURFACE_WITH_KNOTS': BSplineSurface3D,
+        'B_SPLINE_SURFACE': BSplineSurface3D,
         'BEZIER_SURFACE': None,
         'OFFSET_SURFACE': None,
         'SURFACE_REPLICA': None,
