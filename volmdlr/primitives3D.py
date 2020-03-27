@@ -1071,8 +1071,6 @@ class Sweep(volmdlr.Shell3D):
         # s += 'wire = Part.Wire(E[:])\n'
 
         # s += '{} = wire.makePipeShell([contour],True, True)\n'.format(name)
-
-
         return s
 
 class Cut(volmdlr.Primitive3D):
