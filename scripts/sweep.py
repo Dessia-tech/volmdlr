@@ -50,8 +50,8 @@ c2 = vm.Contour2D.dict_to_object(c1)
 # print('c2', c2)
 # print('contour', contour.edges)
 
-print('contour', contour.primitives)
-print('rl', rl)
+# print('contour', contour.primitives)
+# print('rl', rl)
 sweep = primitives3D.Sweep(contour, rl, name = 'Random pipe')
 
 m = vm.VolumeModel([sweep])
