@@ -453,20 +453,19 @@ class ExtrudedProfile(volmdlr.Shell3D):
         return s
 
     def Area(self):
-        areas = [c.Area() for c in self.contours2D]
-        sic=list(npy.argsort(areas))[::-1]# sorted indices of contours
-        area=areas[sic[0]]
+        areas = self.outer_contour2d.Area()
+        areas -= sum([c.Area() for c in self.inner_contours2d])
+        # sic=list(npy.argsort(areas))[::-1]# sorted indices of contours
+        # area=areas[sic[0]]
 
-        for i in sic[1:]:
-            area-=self.contours2D[i].Area()
-        return area
+        # for i in sic[1:]:
+        #     area-=self.contours2D[i].Area()
+        return areas
 
     def Volume(self):
-#        e=extrusion_vector/norm(extrusion_vector)
-        z = npy.cross(self.x.vector,self.y.vector)
+        z = self.x.Cross(self.y)
         z.Normalize()
         coeff = npy.dot(self.extrusion_vector, z)
-
         return self.Area()*coeff
 
 
@@ -607,9 +606,11 @@ class RevolvedProfile(volmdlr.Shell3D):
         p2_2D = p2_3D.To2D(self.plane_origin,self.x,self.y)
         axis_2D = volmdlr.Line2D(p1_2D,p2_2D)
         com = self.contour2D.CenterOfMass()
-        rg = axis_2D.PointDistance(com)
-
-        return self.angle*rg*self.contour2D.Area()
+        if com is not False:
+            rg = axis_2D.point_distance(com)
+            return self.angle*rg*self.contour2D.Area()
+        else:
+            return 0
 
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -926,6 +927,7 @@ class Sweep(volmdlr.Shell3D):
     Sweep a 3D contour along a Wire3D
             2D contour
     """
+
     def __init__(self, contour2d, wire3d, *, color=None, alpha=1, name=''):
         self.contour2d = contour2d
         self.wire3d = wire3d
