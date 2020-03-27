@@ -389,10 +389,10 @@ class ExtrudedProfile(volmdlr.Shell3D):
     def shell_faces(self):
 
         lower_contours = [self.outer_contour3d]+self.inner_contours3d
-        lower_face = volmdlr.Face3D(lower_contours)
+        lower_face = volmdlr.PlaneFace3D(lower_contours)
 
         upper_contours = [contour.Translation(self.extrusion_vector, True) for contour in lower_contours]
-        upper_face = volmdlr.Face3D(upper_contours)
+        upper_face = volmdlr.PlaneFace3D(upper_contours)
 
         lateral_faces = []
         for i in range(len(self.inner_contours3d)+1):
@@ -408,7 +408,7 @@ class ExtrudedProfile(volmdlr.Shell3D):
                 edge3 = volmdlr.LineSegment3D(upper_vertice2, upper_vertice1)
                 edge4 = volmdlr.LineSegment3D(upper_vertice1, lower_vertice1)
                 contour = volmdlr.Contour3D([edge1, edge2, edge3, edge4])
-                face = volmdlr.Face3D([contour])
+                face = volmdlr.PlaneFace3D([contour])
                 lateral_faces.append(face)
         return [lower_face]+[upper_face]+lateral_faces
 
@@ -567,7 +567,7 @@ class RevolvedProfile(volmdlr.Shell3D):
                              volmdlr.LineSegment3D(pt1_next.copy(), pt1.copy())]
 
                 contour = volmdlr.Contour3D(edges)
-                faces.append(volmdlr.Face3D([contour]))
+                faces.append(volmdlr.PlaneFace3D([contour]))
 
         return faces
 
