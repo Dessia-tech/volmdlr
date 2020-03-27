@@ -1059,18 +1059,18 @@ class Sweep(volmdlr.Shell3D):
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive{}'.format(ip)
         s = "E = []\n"
-        for icontour, contour in enumerate(self.contour3d.edges):
-            s += contour.FreeCADExport('L_{}'.format(icontour))
-            s += 'E.append(Part.Edge(L_{}))\n'.format(icontour)
-        s += 'contour = Part.Wire(E[:])\n'
+        # for icontour, contour in enumerate(self.contour3d.edges):
+        #     s += contour.FreeCADExport('L_{}'.format(icontour))
+        #     s += 'E.append(Part.Edge(L_{}))\n'.format(icontour)
+        # s += 'contour = Part.Wire(E[:])\n'
 
-        s += "E=[]\n"
-        for iwire, wire in enumerate(self.wire3d.edges):
-            s += wire.FreeCADExport('L_{}'.format(iwire))
-            s += 'E.append(Part.Edge(L_{}))\n'.format(iwire)
-        s += 'wire = Part.Wire(E[:])\n'
+        # s += "E=[]\n"
+        # for iwire, wire in enumerate(self.wire3d.edges):
+        #     s += wire.FreeCADExport('L_{}'.format(iwire))
+        #     s += 'E.append(Part.Edge(L_{}))\n'.format(iwire)
+        # s += 'wire = Part.Wire(E[:])\n'
 
-        s += '{} = wire.makePipeShell([contour],True, True)\n'.format(name)
+        # s += '{} = wire.makePipeShell([contour],True, True)\n'.format(name)
 
 
         return s
