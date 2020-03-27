@@ -4344,9 +4344,9 @@ class ToroidalFace3D (Face3D) :
             edges = [c1, c2, c3, c4]
             contours = [Contour3D(edges)]
         
-        print('contours', contours)
-        print('contours[0]', contours[0])
-        print('contours[0].edges', contours[0].edges)
+        # print('contours', contours)
+        # print('contours[0]', contours[0])
+        # print('contours[0].edges', contours[0].edges)
         Face3D.__init__(self, contours)
         self.contours = contours 
         self.toroidalsurface3d = toroidalsurface3d 
@@ -4360,11 +4360,11 @@ class ToroidalFace3D (Face3D) :
         # contour = self.contours[0] 
         points = self.points
         # print('points', points)
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-        [pt.MPLPlot(ax=ax) for pt in self.points]
-        print('self.contours', self.contours[0].edges)
-        [pt.MPLPlot(ax=ax, color='r') for pt in self.contours[0].points]
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111, projection='3d')
+        # [pt.MPLPlot(ax=ax) for pt in self.points]
+        # print('self.contours', self.contours[0].edges)
+        # [pt.MPLPlot(ax=ax, color='r') for pt in self.contours[0].points]
         # [pt.MPLPlot(ax=ax) for pt in self.contours[0].edges[0].points]
         # [pt.MPLPlot(ax=ax, color='r') for pt in self.contours[0].edges[1].points]
         # [pt.MPLPlot(ax=ax, color='b') for pt in self.contours[0].edges[2].points]

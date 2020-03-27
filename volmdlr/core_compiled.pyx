@@ -712,7 +712,6 @@ class Vector3D(Vector):
         """
         Normalize the vector modifying it's coordinate
         """
-        print('n',n)
         n = self.Norm()
         if n == 0:
             raise ZeroDivisionError
