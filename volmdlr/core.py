@@ -5931,9 +5931,10 @@ class Step:
         object_dict = {}
         primitives = []
         for stepfunction in self.functions.values():
-            res, object_dict, primitives = self.instanciate(stepfunction.id, object_dict, primitives)
-            if res is not None:
-                raise NotImplementedError
+            if stepfunction.name == 'CARTESIAN_POINT':
+                res, object_dict, primitives = self.instanciate(stepfunction.id, object_dict, primitives)
+                if res is not None:
+                    raise NotImplementedError
         return VolumeModel(list(object_dict.values()))
 
 class VolumeModel(dc.DessiaObject):
