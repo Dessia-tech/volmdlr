@@ -4132,15 +4132,15 @@ class Shell3D(CompositePrimitive3D):
         """
         Computes the distance of a point to a Shell3D, whether it is inside or outside the Shell3D
         """
-        distance_min, point1_min, point2_min = self.faces[0].distance_to_point(point, return_other_point=True)
+        distance_min, point1_min = self.faces[0].distance_to_point(point, return_other_point=True)
         for face in self.faces[1:]:
             bbox_distance = self.bounding_box.distance_to_point(point)
             if bbox_distance < distance_min:
-                distance, point1, point2 = face.distance_to_point(point, return_other_point=True)
+                distance, point1 = face.distance_to_point(point, return_other_point=True)
                 if distance < distance_min:
-                    distance_min, point1_min, point2_min = distance, point1, point2
+                    distance_min, point1_min = distance, point1
 
-        mesure = Measure3D(point1_min, point2_min)
+        mesure = Measure3D(point, point1_min)
 
         if add_to_volumemodel is not None:
             add_to_volumemodel.primitives.append(mesure)
