@@ -3604,13 +3604,7 @@ class Face3D(Primitive3D):
         # plane = Plane3D.from_points(contours[0].points)
         # contours[0].points, polygon2D = cls._repair_points_and_polygon2d(contours[0].points, plane)
         # points = [p.copy() for p in contours[0].points[:]]
-        
-        if int(arguments[2]) not in list(object_dict.keys()):
-            return None
-        
-        
-        
-        
+
         if object_dict[int(arguments[2])].__class__  is Plane3D:
             # [print(e.points) for e in contours]
             # print(arguments)
@@ -3625,8 +3619,7 @@ class Face3D(Primitive3D):
         
         elif object_dict[int(arguments[2])].__class__  is BSplineSurface3D:
             # print(object_dict[int(arguments[2])])
-            return None
-            # return BSplineFace3D(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
+            return BSplineFace3D(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
         
         elif object_dict[int(arguments[2])].__class__  is ToroidalSurface3D:
             return ToroidalFace3D(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
@@ -3656,8 +3649,6 @@ class PlaneFace3D(Face3D):
 
         contour_points = [p.copy() for p in self.contours[0].points[:]]
         if plane is None:
-            print('self.contours',self.contours)
-            print('contour_points', contour_points)
             self.plane = Plane3D.from_points(contour_points)
 
         if points is None or polygon2D is None:
@@ -4055,53 +4046,61 @@ class CylindricalFace3D(Face3D):
         #         print('WARNING', pt, 'not on', self.frame.__dict__)
         #         print('dot =', self.frame.normal.Dot(pt-self.frame.origin))
         #         raise ValueError
-
-    # @classmethod
-    # def withcontour3D(cls, contours, cylindricalsurface3d, points=None, name='') :
-    #     Face3D.__init__(self, contours)
-        
-    #     return cls(frame3d, radius, arguments[0][1:-1])
     
     def delete_double(self, Le):
-            Ls=[]
+            Ls = []
             for i in Le:
                 if i not in Ls:
                     Ls.append(i)
             return Ls
         
     def min_max(self, Le, pos):
-        Ls=[]
+        Ls = []
         for i in range (0,len(Le)) :
             Ls.append(Le[i][pos])
         return (min(Ls), max(Ls))
 
-    def Contour2D_To3D(self, all_contours_points, radius, frame3d) :
-        Points3D=[]
-        tlist=[] #liste regroupant la taille de toutes les sous listes
+    def contour2d_to3d(self, all_contours_points, radius, frame3d) :
+        Points3D = []
+        tlist = [] #liste regroupant la taille de toutes les sous listes
         for listpt in  all_contours_points: #2D en 3D
             for enum, pt in enumerate(listpt) :
                 Points3D.append(Point3D(Vector3D([radius*math.cos(pt[0]/radius),radius*math.sin(pt[0]/radius),pt[1]])))            
             tlist.append(enum+1)
-            
-        Points_3D=[frame3d.OldCoordinates(point) for point in Points3D]  #Création de la nouvelle liste de points dans le repère de base
+        
+        # FRAME = Frame3D(frame3d.origin, Vector3D([1,0,0]), Vector3D([0,1,0]), Vector3D([0,0,1]))
+        Points_3D = [frame3d.OldCoordinates(point) for point in Points3D]  #Création de la nouvelle liste de points dans le repère de base
+        # Points_3D = [FRAME.OldCoordinates(point) for point in Points3D]
         
         return Points_3D, tlist
         
-    def Contour3D_To2D(self, frame3d, radius) :
+    def contour3d_to2d(self, frame3d, radius) :
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        
         points = self.points
+        print('points', points)
+        [pt.MPLPlot(ax=ax, color='r') for pt in points]
+        # FRAME = Frame3D(frame3d.origin, Vector3D([1,0,0]), Vector3D([0,1,0]), Vector3D([0,0,1]))
+        # newpoints = [FRAME.NewCoordinates(point) for point in points]
+        
         newpoints = [frame3d.NewCoordinates(point) for point in points]  #Création de la nouvelle liste de points dans le repère du cylindre
+        [pt.MPLPlot(ax=ax) for pt in newpoints]
         U = frame3d.u
         V = frame3d.v
+        normal = frame3d.w
         newpts = [Vector3D(pt) for pt in newpoints] #on passe en vector 3D pour faciliter clockwise_angle
         pts2D = [pt.PlaneProjection2D(U,V) for pt in newpts]
-        
+        # [pt.MPLPlot(ax=ax, color='r') for pt in pts2D]
         placement_2d = []
         for enum, pt in enumerate(pts2D):
             pos = (2*math.pi-clockwise_angle(Vector2D(pts2D[0].vector),Vector2D(pt.vector)))*radius #l'arc de cercle mesure alpha*r
-            placement_2d.append(Vector2D([pos,newpoints[enum][2]],''))
+            # placement_2d.append(Vector2D([pos,newpoints[enum][2]],''))
+            placement_2d.append(Vector2D([pos,-newpoints[enum].Dot(normal)],''))
         placement2d = self.delete_double(placement_2d)
         placement2d.append(placement2d[0]) #on rajoute le premier point pour compléter le segment
         
+        # [Point2D(pt.vector).MPLPlot(ax=ax) for pt in placement2d]
         return newpoints, placement2d
     
     def triangulation(self, resolution=31):
@@ -4117,9 +4116,9 @@ class CylindricalFace3D(Face3D):
         W=self.cylindricalsurface3d.frame[2]
         W.Normalize()
         Triangles=[]
-        
+        # print(self.cylindricalsurface3d.frame)
         frame3d=Frame3D(O, V, W, U, '')    # On créé un nouveau Frame3d avec des vecteurs normalisés ---- le dernier vecteur est le vecteur normal  
-        
+        # print(frame3d)
         # newpoints=[frame3d.NewCoordinates(point) for point in points]  #Création de la nouvelle liste de points dans le repère du cylindre
         
         # newpts=[Vector3D(pt) for pt in newpoints] #on passe en vector 3D pour faciliter clockwise_angle
@@ -4133,7 +4132,7 @@ class CylindricalFace3D(Face3D):
         # placement2d.append(placement2d[0]) #on rajoute le premier point pour compléter le segment
         
         if self.contours[0].__class__ is Contour3D :
-            newpoints, placement2d = self.Contour3D_To2D(frame3d, radius)
+            newpoints, placement2d = self.contour3d_to2d(frame3d, radius)
         else :
             newpoints = self.points
             placement_2d = []
@@ -4141,7 +4140,10 @@ class CylindricalFace3D(Face3D):
                 placement_2d.extend(self.contours[0].primitives[k].points) 
             placement2d = self.delete_double(placement_2d)
             placement2d.append(placement2d[0])
-            
+        
+        return
+        
+        
         segmentspt=[]
         for k in range (0,len(placement2d)-1):
             segmentspt.append(LineSegment2D(Point2D(placement2d[k].vector),Point2D(placement2d[k+1].vector)))
@@ -4152,7 +4154,8 @@ class CylindricalFace3D(Face3D):
         else :
             hmin, hmax = self.min_max(newpoints,2) #hauteur de l'origine a changer pour toutes les hauteurs avec U
         posimin, posimax = self.min_max(placement2d,0)
-        
+        # print('hmin', hmin)
+        # print('hmax', hmax)
         #créer lignes/segments entre xmax et xmin avec pas:xmax-xmin/resolution
 
         pas=(posimax-posimin)/resolution
@@ -4165,13 +4168,23 @@ class CylindricalFace3D(Face3D):
         all_contours_points = []
         #On recupere les points tout à gauche avec la line[1]
         contours_points = []
+        # print('segmentspt', segmentspt)
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111, projection='3d')
+        # [l.MPLPlot(ax=ax) for l in line]
+        # line[1].MPLPlot(ax=ax, color='r')
+        # [seg.MPLPlot(ax=ax, color='b') for seg in segmentspt]
+        
         for i, seg in enumerate(segmentspt) :
             p1 = seg.line_intersection(line[1])
             if p1 is not None:
+                # p1.MPLPlot(ax=ax, color='g')
                 break
+        # print('segmentspt[i+1:]',segmentspt[i+1:])
         for k, seg in enumerate(segmentspt[i+1:]) :
             p3 = seg.line_intersection(line[1])
             if p3 is not None:
+                # p3.MPLPlot(ax=ax, color='g')
                 break    
         k += i+1
         for pos in range (0,i+1):
@@ -4252,7 +4265,7 @@ class CylindricalFace3D(Face3D):
         contours_points.append(p3)
         all_contours_points.append(contours_points)
         
-        Points_3D, tlist = self.Contour2D_To3D(all_contours_points, radius, frame3d)
+        Points_3D, tlist = self.contour2d_to3d(all_contours_points, radius, frame3d)
         
         # Points3D=[]
         # tlist=[] #liste regroupant la taille de toutes les sous listes
@@ -4390,35 +4403,64 @@ class ToroidalFace3D (Face3D) :
         Circle = []
         Linextru = []
         
-        Circle.append(self.contours[0].edges[1]) #start circle
         
-        for enum, pt in enumerate(pointscontours[1:len(pointscontours)-2]):
+        ######### A TERMES : REUSSIR A TRAVAILLER AVEC çA
+        # Circle.append(self.contours[0].edges[1]) #start circle
+        
+        # for enum, pt in enumerate(pointscontours[1:len(pointscontours)-1]):
+        #     vec_ext_center = Vector3D((O-pt).vector)
+        #     vec_ext_center.Normalize()
+        #     vec_master = U.Cross(vec_ext_center)
+        #     ccircle = pt + Point3D((rcircle*vec_ext_center).vector)
+        #     cpt = Arc3D(pt, pt.Rotation(ccircle, vec_master, math.pi), pt, vec_master)
+            
+        #     Circle.append(cpt)
+            
+        #     #Size of extru line
+        #     line_extru = LineSegment3D(pointscontours[enum], pt)
+        #     Linextru.append(line_extru)
+        
+        # Circle.append(self.contours[0].edges[3]) #end circle
+        # Linextru.append(LineSegment3D(pointscontours[-2], pointscontours[-1]))
+        #########
+        
+        for enum, pt in enumerate(pointscontours):
             vec_ext_center = Vector3D((O-pt).vector)
             vec_ext_center.Normalize()
             vec_master = U.Cross(vec_ext_center)
+                
             ccircle = pt + Point3D((rcircle*vec_ext_center).vector)
             cpt = Arc3D(pt, pt.Rotation(ccircle, vec_master, math.pi), pt, vec_master)
             
             Circle.append(cpt)
             
             #Size of extru line
-            line_extru = LineSegment3D(pointscontours[enum], pt)
+            if enum == len(pointscontours)-1 :
+                line_extru = LineSegment3D(pt, pointscontours[0])
+                pt1 = line_extru.points[1]
+            else : 
+                line_extru = LineSegment3D(pt, pointscontours[enum+1])
+                pt1 = line_extru.points[1]
+
             Linextru.append(line_extru)
-        
-        Circle.append(self.contours[0].edges[3]) #end circle
-        Linextru.append(LineSegment3D(pointscontours[-2], pointscontours[-1]))
+            
+            # cpt2 = cpt.Translation(line_extru.points[1]-line_extru.points[0])
+            ccircle2 = pt1 + Point3D((rcircle*vec_ext_center).vector)
+            cpt2 = Arc3D(pt1, pt1.Rotation(ccircle2, vec_master, math.pi), pt1, vec_master)
+            Circle.append(cpt2)
         
         #Creation of face between couple of circle
         faces = []
         for k in range(0,len(Linextru)):
-            cstart, cend = Circle[k], Circle[k+1]
+            # cstart, cend = Circle[k], Circle[k+1]
+            cstart, cend = Circle[2*k], Circle[2*k+1]
+            
             ls1 = Linextru[k]
             ls2 = LineSegment3D(ls1.points[1], ls1.points[0])
             contours = [Contour3D([ls1, cstart, ls2, cend])]
-            frame3d = Frame3D(cstart.center, cstart.normal, U, cstart.normal.Cross(U))
-            cylsurf3d = CylindricalSurface3D(frame3d, cstart.radius)
+            frame3d_circle = Frame3D(cstart.center, cstart.normal, U, cstart.normal.Cross(U))
+            cylsurf3d = CylindricalSurface3D(frame3d_circle, cstart.radius)
             cylface = CylindricalFace3D(contours, cylsurf3d)
-            # faces.append(cylface.triangulation)
             faces.append(cylface)
             
         shell = Shell3D(faces)
@@ -4749,13 +4791,6 @@ class Shell3D(CompositePrimitive3D):
     def from_step(cls, arguments, object_dict):
         faces = []
         for face in arguments[1]:
-            
-            
-            if face is None : 
-                continue
-            
-            
-            
             faces.append(object_dict[int(face[1:])])
         return cls(faces, name = arguments[0][1:-1])
 
@@ -6426,83 +6461,7 @@ class ViewIso:# TODO: rename this in IsoView
 
 
 step_to_volmdlr_primitive = {
-#         # GEOMETRICAL ENTITIES
-#         'CARTESIAN_POINT': Point3D,
-#         'DIRECTION': Vector3D,
-#         'VECTOR': Vector3D,
-
-#         'AXIS1_PLACEMENT': None,
-#         'AXIS2_PLACEMENT_2D': None, # ??????????????????
-#         'AXIS2_PLACEMENT_3D': Frame3D,
-
-#         'LINE': Line3D, #LineSegment3D,
-#         'CIRCLE': Circle3D,
-#         'ELLIPSE': Ellipse3D,
-#         'PARABOLA': None,
-#         'HYPERBOLA': None,
-#         'PCURVE': None,
-#         'CURVE_REPLICA': None,
-#         'OFFSET_CURVE_3D': None,
-#         'TRIMMED_CURVE': None, # BSplineCurve3D cannot be trimmed on FreeCAD
-#         'B_SPLINE_CURVE': BSplineCurve3D,
-#         'B_SPLINE_CURVE_WITH_KNOTS': BSplineCurve3D,
-#         'BEZIER_CURVE': BSplineCurve3D,
-#         'RATIONAL_B_SPLINE_CURVE': BSplineCurve3D,
-#         'UNIFORM_CURVE': BSplineCurve3D,
-#         'QUASI_UNIFORM_CURVE': BSplineCurve3D,
-#         'SURFACE_CURVE': None, # TOPOLOGICAL EDGE
-#         'SEAM_CURVE': None, #LineSegment3D, # TOPOLOGICAL EDGE ############################
-#         'COMPOSITE_CURVE_SEGMENT': None, # TOPOLOGICAL EDGE
-#         'COMPOSITE_CURVE': Wire3D, # TOPOLOGICAL WIRE
-#         'COMPOSITE_CURVE_ON_SURFACE': Wire3D, # TOPOLOGICAL WIRE
-#         'BOUNDARY_CURVE': Wire3D, # TOPOLOGICAL WIRE
-
-#         'PLANE': Plane3D,
-#         'CYLINDRICAL_SURFACE': CylindricalSurface3D,
-#         'CONICAL_SURFACE': None,
-#         'SPHERICAL_SURFACE': None,
-#         'TOROIDAL_SURFACE': ToroidalSurface3D,
-#         'DEGENERATE_TOROIDAL_SURFACE': None,
-#         'B_SPLINE_SURFACE_WITH_KNOTS': BSplineSurface3D,
-#         'B_SPLINE_SURFACE': BSplineSurface3D,
-#         'BEZIER_SURFACE': BSplineSurface3D,
-#         'OFFSET_SURFACE': None,
-#         'SURFACE_REPLICA': None,
-#         'RATIONAL_B_SPLINE_SURFACE': BSplineSurface3D,
-#         'RECTANGULAR_TRIMMED_SURFACE': None,
-#         'SURFACE_OF_LINEAR_EXTRUSION': BSplineExtrusion, # CAN BE A BSplineSurface3D
-#         'SURFACE_OF_REVOLUTION': None,
-#         'UNIFORM_SURFACE': BSplineSurface3D,
-#         'QUASI_UNIFORM_SURFACE': BSplineSurface3D,
-#         'RECTANGULAR_COMPOSITE_SURFACE': PlaneFace3D, # TOPOLOGICAL FACES
-#         'CURVE_BOUNDED_SURFACE': PlaneFace3D, # TOPOLOGICAL FACE
-
-
-#         # TOPOLOGICAL ENTITIES
-#         'VERTEX_POINT': None,
-
-#         'EDGE_CURVE': Edge3D, # LineSegment3D, # TOPOLOGICAL EDGE
-#         'ORIENTED_EDGE': None, # TOPOLOGICAL EDGE
-#         # The one above can influence the direction with their last argument
-#         # TODO : maybe take them into consideration
-
-#         'FACE_BOUND': None, # TOPOLOGICAL WIRE
-#         'FACE_OUTER_BOUND': None, # TOPOLOGICAL WIRE
-#         # Both above can influence the direction with their last argument
-#         # TODO : maybe take them into consideration
-#         'EDGE_LOOP': Contour3D, # TOPOLOGICAL WIRE
-#         'POLY_LOOP': Contour3D, # TOPOLOGICAL WIRE
-#         'VERTEX_LOOP': None, # TOPOLOGICAL WIRE
-
-#         'ADVANCED_FACE': Face3D,
-#         'FACE_SURFACE': Face3D,
-
-#         'CLOSED_SHELL': Shell3D,
-#         'OPEN_SHELL': Shell3D,
-# #        'ORIENTED_CLOSED_SHELL': None,
-#         'CONNECTED_FACE_SET': Shell3D,
-
-# GEOMETRICAL ENTITIES
+        # GEOMETRICAL ENTITIES
         'CARTESIAN_POINT': Point3D,
         'DIRECTION': Vector3D,
         'VECTOR': Vector3D,
@@ -6537,19 +6496,19 @@ step_to_volmdlr_primitive = {
         'CYLINDRICAL_SURFACE': CylindricalSurface3D,
         'CONICAL_SURFACE': None,
         'SPHERICAL_SURFACE': None,
-        'TOROIDAL_SURFACE': None,
+        'TOROIDAL_SURFACE': ToroidalSurface3D,
         'DEGENERATE_TOROIDAL_SURFACE': None,
-        'B_SPLINE_SURFACE_WITH_KNOTS': None,
-        'B_SPLINE_SURFACE': None,
-        'BEZIER_SURFACE': None,
+        'B_SPLINE_SURFACE_WITH_KNOTS': BSplineSurface3D,
+        'B_SPLINE_SURFACE': BSplineSurface3D,
+        'BEZIER_SURFACE': BSplineSurface3D,
         'OFFSET_SURFACE': None,
         'SURFACE_REPLICA': None,
-        'RATIONAL_B_SPLINE_SURFACE': None,
+        'RATIONAL_B_SPLINE_SURFACE': BSplineSurface3D,
         'RECTANGULAR_TRIMMED_SURFACE': None,
         'SURFACE_OF_LINEAR_EXTRUSION': BSplineExtrusion, # CAN BE A BSplineSurface3D
         'SURFACE_OF_REVOLUTION': None,
-        'UNIFORM_SURFACE': None,
-        'QUASI_UNIFORM_SURFACE': None,
+        'UNIFORM_SURFACE': BSplineSurface3D,
+        'QUASI_UNIFORM_SURFACE': BSplineSurface3D,
         'RECTANGULAR_COMPOSITE_SURFACE': PlaneFace3D, # TOPOLOGICAL FACES
         'CURVE_BOUNDED_SURFACE': PlaneFace3D, # TOPOLOGICAL FACE
 
@@ -6577,5 +6536,81 @@ step_to_volmdlr_primitive = {
         'OPEN_SHELL': Shell3D,
 #        'ORIENTED_CLOSED_SHELL': None,
         'CONNECTED_FACE_SET': Shell3D,
+
+# # GEOMETRICAL ENTITIES
+#         'CARTESIAN_POINT': Point3D,
+#         'DIRECTION': Vector3D,
+#         'VECTOR': Vector3D,
+
+#         'AXIS1_PLACEMENT': None,
+#         'AXIS2_PLACEMENT_2D': None, # ??????????????????
+#         'AXIS2_PLACEMENT_3D': Frame3D,
+
+#         'LINE': Line3D, #LineSegment3D,
+#         'CIRCLE': Circle3D,
+#         'ELLIPSE': Ellipse3D,
+#         'PARABOLA': None,
+#         'HYPERBOLA': None,
+#         'PCURVE': None,
+#         'CURVE_REPLICA': None,
+#         'OFFSET_CURVE_3D': None,
+#         'TRIMMED_CURVE': None, # BSplineCurve3D cannot be trimmed on FreeCAD
+#         'B_SPLINE_CURVE': BSplineCurve3D,
+#         'B_SPLINE_CURVE_WITH_KNOTS': BSplineCurve3D,
+#         'BEZIER_CURVE': BSplineCurve3D,
+#         'RATIONAL_B_SPLINE_CURVE': BSplineCurve3D,
+#         'UNIFORM_CURVE': BSplineCurve3D,
+#         'QUASI_UNIFORM_CURVE': BSplineCurve3D,
+#         'SURFACE_CURVE': None, # TOPOLOGICAL EDGE
+#         'SEAM_CURVE': None, #LineSegment3D, # TOPOLOGICAL EDGE ############################
+#         'COMPOSITE_CURVE_SEGMENT': None, # TOPOLOGICAL EDGE
+#         'COMPOSITE_CURVE': Wire3D, # TOPOLOGICAL WIRE
+#         'COMPOSITE_CURVE_ON_SURFACE': Wire3D, # TOPOLOGICAL WIRE
+#         'BOUNDARY_CURVE': Wire3D, # TOPOLOGICAL WIRE
+
+#         'PLANE': Plane3D,
+#         'CYLINDRICAL_SURFACE': CylindricalSurface3D,
+#         'CONICAL_SURFACE': None,
+#         'SPHERICAL_SURFACE': None,
+#         'TOROIDAL_SURFACE': None,
+#         'DEGENERATE_TOROIDAL_SURFACE': None,
+#         'B_SPLINE_SURFACE_WITH_KNOTS': None,
+#         'B_SPLINE_SURFACE': None,
+#         'BEZIER_SURFACE': None,
+#         'OFFSET_SURFACE': None,
+#         'SURFACE_REPLICA': None,
+#         'RATIONAL_B_SPLINE_SURFACE': None,
+#         'RECTANGULAR_TRIMMED_SURFACE': None,
+#         'SURFACE_OF_LINEAR_EXTRUSION': BSplineExtrusion, # CAN BE A BSplineSurface3D
+#         'SURFACE_OF_REVOLUTION': None,
+#         'UNIFORM_SURFACE': None,
+#         'QUASI_UNIFORM_SURFACE': None,
+#         'RECTANGULAR_COMPOSITE_SURFACE': PlaneFace3D, # TOPOLOGICAL FACES
+#         'CURVE_BOUNDED_SURFACE': PlaneFace3D, # TOPOLOGICAL FACE
+
+
+#         # TOPOLOGICAL ENTITIES
+#         'VERTEX_POINT': None,
+
+#         'EDGE_CURVE': Edge3D, # LineSegment3D, # TOPOLOGICAL EDGE
+#         'ORIENTED_EDGE': None, # TOPOLOGICAL EDGE
+#         # The one above can influence the direction with their last argument
+#         # TODO : maybe take them into consideration
+
+#         'FACE_BOUND': None, # TOPOLOGICAL WIRE
+#         'FACE_OUTER_BOUND': None, # TOPOLOGICAL WIRE
+#         # Both above can influence the direction with their last argument
+#         # TODO : maybe take them into consideration
+#         'EDGE_LOOP': Contour3D, # TOPOLOGICAL WIRE
+#         'POLY_LOOP': Contour3D, # TOPOLOGICAL WIRE
+#         'VERTEX_LOOP': None, # TOPOLOGICAL WIRE
+
+#         'ADVANCED_FACE': Face3D,
+#         'FACE_SURFACE': Face3D,
+
+#         'CLOSED_SHELL': Shell3D,
+#         'OPEN_SHELL': Shell3D,
+# #        'ORIENTED_CLOSED_SHELL': None,
+#         'CONNECTED_FACE_SET': Shell3D,
 
         }
