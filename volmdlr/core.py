@@ -2611,8 +2611,6 @@ class BSplineSurface3D(Primitive3D):
         self.surface = surface
         self.points = [Point3D((p[0], p[1], p[2])) for p in surface_points]
         
-        print('ca intencie des bsplinesurface3d')
-        
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive{}'.format(ip)
         script = ""
