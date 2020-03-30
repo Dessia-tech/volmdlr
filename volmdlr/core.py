@@ -4066,7 +4066,7 @@ class CylindricalFace3D(Face3D):
             Ls.append(Le[i][pos])
         return (min(Ls), max(Ls))
 
-    def Contour2D_To3D(self, all_contours_points, radius, frame3d) :
+    def contour2d_to3d(self, all_contours_points, radius, frame3d) :
         Points3D=[]
         tlist=[] #liste regroupant la taille de toutes les sous listes
         for listpt in  all_contours_points: #2D en 3D
@@ -4078,7 +4078,7 @@ class CylindricalFace3D(Face3D):
         
         return Points_3D, tlist
         
-    def Contour3D_To2D(self, frame3d, radius) :
+    def contour3d_to2d(self, frame3d, radius) :
         points = self.points
         newpoints = [frame3d.NewCoordinates(point) for point in points]  #Création de la nouvelle liste de points dans le repère du cylindre
         U = frame3d.u
@@ -4124,7 +4124,7 @@ class CylindricalFace3D(Face3D):
         # placement2d.append(placement2d[0]) #on rajoute le premier point pour compléter le segment
         
         if self.contours[0].__class__ is Contour3D :
-            newpoints, placement2d = self.Contour3D_To2D(frame3d, radius)
+            newpoints, placement2d = self.contour3d_to2d(frame3d, radius)
         else :
             newpoints = self.points
             placement_2d = []
@@ -4243,7 +4243,7 @@ class CylindricalFace3D(Face3D):
         contours_points.append(p3)
         all_contours_points.append(contours_points)
         
-        Points_3D, tlist = self.Contour2D_To3D(all_contours_points, radius, frame3d)
+        Points_3D, tlist = self.contour2d_to3d(all_contours_points, radius, frame3d)
         
         # Points3D=[]
         # tlist=[] #liste regroupant la taille de toutes les sous listes
