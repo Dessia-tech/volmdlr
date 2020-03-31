@@ -5851,7 +5851,7 @@ class Step:
                 subfunction_arg += char
         return [(subfunction_names[i], step_split_arguments(subfunction_args[i])) for i in range(len(subfunction_names))]
 
-    def instanciate(self, instanciate_id, object_dict, primitives):
+    def instanciate(self, instanciate_id, object_dict):
         """
         Returns None if the object was instanciate
         """
@@ -5867,45 +5867,55 @@ class Step:
 
         if name == 'VERTEX_POINT':
             object_dict[instanciate_id] = object_dict[arguments[1]]
+            volmdlr_object = object_dict[arguments[1]]
 
         # elif name == 'LINE':
         #     pass
 
         elif name == 'ORIENTED_EDGE':
             object_dict[instanciate_id] = object_dict[arguments[3]]
+            volmdlr_object = object_dict[arguments[3]]
 
         elif name == 'FACE_OUTER_BOUND':
-            object_dict[instanciate_id] = object_dict[arguments[1]]
+#            object_dict[instanciate_id] = object_dict[arguments[1]]
+            volmdlr_object = object_dict[arguments[1]]
 
         elif name == 'FACE_BOUND':
-            object_dict[instanciate_id] = object_dict[arguments[1]]
+#            object_dict[instanciate_id] = object_dict[arguments[1]]
+            volmdlr_object = object_dict[arguments[1]]
 
         elif name == 'SURFACE_CURVE':
-            object_dict[instanciate_id] = object_dict[arguments[1]]
+#            object_dict[instanciate_id] = object_dict[arguments[1]]
+            volmdlr_object = object_dict[arguments[1]]
         
         elif name == 'SEAM_CURVE':
-            object_dict[instanciate_id] = object_dict[arguments[1]]
-            
+#            object_dict[instanciate_id] = object_dict[arguments[1]]
+            volmdlr_object = object_dict[arguments[1]]
         # elif name == 'EDGE_CURVE':
         #     object_dict[instanciate_id] = object_dict[arguments[3]]
 
         elif name == 'VERTEX_LOOP' :
-            object_dict[instanciate_id] = object_dict[arguments[1]]
+#            object_dict[instanciate_id] = object_dict[arguments[1]]
+            volmdlr_object = object_dict[arguments[1]]
 
         elif name in step_to_volmdlr_primitive and hasattr(step_to_volmdlr_primitive[name], "from_step"):
             volmdlr_object = step_to_volmdlr_primitive[name].from_step(arguments, object_dict)
 
-            object_dict[instanciate_id] = volmdlr_object
-            if hasattr(volmdlr_object, "primitive"):
-                primitives.append(volmdlr_object.primitive)
+#            object_dict[instanciate_id] = volmdlr_object
+#            if hasattr(volmdlr_object, "primitive"):
+#                primitives.append(volmdlr_object.primitive)primitives
+        else:
+            print('name', name)
+            print('arguments', arguments)
+            raise NotImplementedError
 
-        return None, object_dict, primitives
+        return volmdlr_object
 
     def to_shells3d(self, name):
         self.graph = self.create_graph()
         
         object_dict = {}
-        primitives = []
+#        primitives = []
 
         self.graph.add_node("#0")
         for node in self.graph.nodes:
@@ -5916,9 +5926,10 @@ class Step:
 
         for edge_nb, edge in enumerate(edges):
             instanciate_id = edge[1]
-            res, object_dict, primitives = self.instanciate(instanciate_id, object_dict, primitives)
-            if res is not None:
-                raise NotImplementedError
+            volmdlr_object = self.instanciate(instanciate_id, object_dict)
+            object_dict[instanciate_id] = volmdlr_object
+#            if hasattr(volmdlr_object, "primitive"):
+#                primitives.append(volmdlr_object.primitive)
 
         shells = []
         for node in list(self.graph.nodes):
