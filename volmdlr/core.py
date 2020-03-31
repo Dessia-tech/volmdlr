@@ -5670,7 +5670,6 @@ class Step:
         self.stepfile = stepfile
 
         self.functions, self.all_connections = self.read_functions()
-        self.graph = self.create_graph()
 
     def read_functions(self):
         f = open(self.stepfile, "r", encoding = "ISO-8859-1")
@@ -5811,6 +5810,7 @@ class Step:
         return F
 
     def draw_graph(self):
+        self.graph = self.create_graph()
         labels = {}
         for id_nb, function in self.functions.items():
             labels[id_nb] = str(id_nb)+' '+function.name
@@ -5902,6 +5902,8 @@ class Step:
         return None, object_dict, primitives
 
     def to_shells3d(self, name):
+        self.graph = self.create_graph()
+        
         object_dict = {}
         primitives = []
 
@@ -5927,13 +5929,18 @@ class Step:
     
     def to_scatter_volume_model(self, name):
         object_dict = {}
-        primitives = []
+        points3d = []
         for stepfunction in self.functions.values():
             if stepfunction.name == 'CARTESIAN_POINT':
-                res, object_dict, primitives = self.instanciate(stepfunction.id, object_dict, primitives)
-                if res is not None:
-                    raise NotImplementedError
-        return VolumeModel(list(object_dict.values()))
+                # INSTANCIATION
+                name = self.functions[stepfunction.id].name
+                arguments = self.functions[stepfunction.id].arg[:]
+                for i, arg in enumerate(arguments):
+                    if type(arg) == str and arg[0] == '#':
+                        arguments[i] = int(arg[1:])
+                volmdlr_object = step_to_volmdlr_primitive[name].from_step(arguments, object_dict)
+                points3d.append(volmdlr_object)
+        return VolumeModel(points3d)
 
 class VolumeModel(dc.DessiaObject):
     _standalone_in_db = True
