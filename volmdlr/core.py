@@ -4066,26 +4066,25 @@ class CylindricalFace3D(Face3D):
 
     def contour2d_to3d(self, all_contours_points, radius, frame3d) :
         Points3D = []
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111, projection='3d')
         
         tlist = [] #liste regroupant la taille de toutes les sous listes
-        
         for listpt in  all_contours_points: #2D en 3D
-            [pt.MPLPlot(ax=ax) for pt in listpt]
+            # [pt.MPLPlot(ax=ax) for pt in listpt]
             # listpt[0].MPLPlot(ax=ax, color='r')
-            listpt[1].MPLPlot(ax=ax, color='b')
+            # listpt[1].MPLPlot(ax=ax, color='b')
             # listpt[2].MPLPlot(ax=ax, color='g')
             # listpt[3].MPLPlot(ax=ax, color='y')
-            print()
+            # print()
             for enum, pt in enumerate(listpt) :
-                print(pt)
+                # print(pt)
                 Points3D.append(Point3D(Vector3D([radius*math.cos(pt[0]/radius),radius*math.sin(pt[0]/radius),pt[1]])))            
             tlist.append(enum+1)
-        print()
-        print()
-        print()
-        print()
+        # print()
+        # print()
+        # print()
+        # print()
         # [pt.MPLPlot(ax=ax, color='r') for pt in Points3D] 
         Points_3D = [frame3d.OldCoordinates(point) for point in Points3D]  #Création de la nouvelle liste de points dans le repère de base
         
@@ -4154,34 +4153,40 @@ class CylindricalFace3D(Face3D):
         #créer lignes/segments entre xmax et xmin avec pas:xmax-xmin/resolution
 
         pas = (posimax-posimin)/resolution
-        pointsxzmin = [Point2D([posimin+i*pas,hmin]) for i in range (0,resolution+1)]
-        pointsxzmax = [Point2D([posimin+i*pas,hmax]) for i in range (0,resolution+1)]
+        # pointsxzmin = [Point2D([posimin+i*pas,hmin]) for i in range (0,resolution+1)]
+        # pointsxzmax = [Point2D([posimin+i*pas,hmax]) for i in range (0,resolution+1)]
+        pointsxzmin = [Point2D([posimin+i*pas,hmin-1]) for i in range (0,resolution+1)]
+        pointsxzmax = [Point2D([posimin+i*pas,hmax+1]) for i in range (0,resolution+1)]
+        
         
         #Lignes verticales
-        line = [Line2D(ptxmax, ptxmin) for ptxmin,ptxmax in list(zip(pointsxzmin, pointsxzmax))] #du h vers le b
+        # line = [Line2D(ptxmax, ptxmin) for ptxmin,ptxmax in list(zip(pointsxzmin, pointsxzmax))] #du h vers le b
+        line = [LineSegment2D(ptxmax, ptxmin) for ptxmin,ptxmax in list(zip(pointsxzmin, pointsxzmax))]
 
         all_contours_points = []
         #On recupere les points tout à gauche avec la line[1]
         contours_points = []
         # print('segmentspt', segmentspt)
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-        [l.MPLPlot(ax=ax) for l in line]
-        line[1].MPLPlot(ax=ax, color='r')
-        [seg.MPLPlot(ax=ax, color='b') for seg in segmentspt]
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111, projection='3d')
+        # [l.MPLPlot(ax=ax) for l in line]
+        # line[1].MPLPlot(ax=ax, color='r')
+        # [seg.MPLPlot(ax=ax, color='b') for seg in segmentspt]
         
         
         
         for i, seg in enumerate(segmentspt) :
-            print('seg.points[0]', seg.points[0])
-            print('seg.points[1]', seg.points[1])
-            print('line[1].points[0]', line[1].points[0])
-            print('line[1].points[1]', line[1].points[1])
-            print('=====>', seg.line_intersection(line[1]))
-            print()
+            # print('seg.points[0]', seg.points[0])
+            # print('seg.points[1]', seg.points[1])
+            # print('line[1].points[0]', line[1].points[0])
+            # print('line[1].points[1]', line[1].points[1])
+            # print('=====>', seg.line_intersection(line[1]))
+            # print('=====>', line[1].line_intersection(seg))
+            # print('=====>', Point2D.LinesIntersection(seg, line[1]))
+            # print()
             p1 = seg.line_intersection(line[1])
             if p1 is not None:
-                p1.MPLPlot(ax=ax, color='g')
+                # p1.MPLPlot(ax=ax, color='g')
                 break
         # print('segmentspt[i+1:]',segmentspt[i+1:])
         for k, seg in enumerate(segmentspt[i+1:]) :
@@ -4284,7 +4289,8 @@ class CylindricalFace3D(Face3D):
         
         seuil=0
         k=0
-        
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111, projection='3d')
         for t in ts :
             if 'triangles' in t:
                 triangles = t['triangles'].tolist()
@@ -4296,7 +4302,9 @@ class CylindricalFace3D(Face3D):
                 Triangles.append(triangles)        
             else:
                 Triangles.append(None)
-        pt3d, tangle = delete_double_pos(Points_3D, Triangles)       
+        pt3d, tangle = delete_double_pos(Points_3D, Triangles)
+        # [pt.MPLPlot(ax=ax) for pt in pt3d]
+        # plt.show()
         return pt3d, tangle
 
     def MPLPlotpoints(self, ax=None, color='k'):
@@ -4440,7 +4448,8 @@ class ToroidalFace3D (Face3D) :
             
         #Creation of face between couple of circle
         faces = []
-        
+        pts = []
+        triangulation = []
         for k in range(0,len(Linextru)-1):
             # cstart, cend = Circle[k], Circle[k+1]
             cstart, cend = Circle[2*k], Circle[2*k+1]
@@ -4484,11 +4493,22 @@ class ToroidalFace3D (Face3D) :
             # cylface = CylindricalFace3D(contours, cylsurf3d)
             cylface = CylindricalFace3D(contours, cylsurf3d, points)
             faces.append(cylface)
+            points, triangles = cylface.triangulation()
+            print('====>')
+            pts.append(points)
+            triangulation.append(triangles)
         
+        
+        print('HEY')
+        print('faces', faces)
         shell = Shell3D(faces)
+        print('1')
         volumemodel = VolumeModel([shell])
+        print('2')
         volumemodel.babylonjs(debug=True)
+        print('3')
         return
+        # return pts, triangulation
         # Triangles=[]
         
           
