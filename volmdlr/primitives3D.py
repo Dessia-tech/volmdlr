@@ -1024,14 +1024,7 @@ class Sweep(volmdlr.Shell3D):
                         points = edges[0].points 
                         
                         cylinder = volmdlr.CylindricalFace3D([volmdlr.Contour2D(edges)], cylindersurface3d, points)
-                        
                         faces.append(cylinder)
-                        
-                        # chopper les frames, les stocker
-                        # à chaque frame, le contour 2d on l'envoie en 3d
-                        # methode qui calcule les frames à chaque point
-                        # pour chaque primitive, calculer frame debut, frame fin
-                        # y,z du contours initial (cf extrusion)
                         
                     elif contour_primitive.__class__ == volmdlr.Arc3D:
                         # Part of cylinder a completer
