@@ -2611,8 +2611,6 @@ class BSplineSurface3D(Primitive3D):
         self.surface = surface
         self.points = [Point3D((p[0], p[1], p[2])) for p in surface_points]
         
-        print('ca intencie des bsplinesurface3d')
-        
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive{}'.format(ip)
         script = ""
@@ -5082,15 +5080,15 @@ class Shell3D(CompositePrimitive3D):
         """
         Computes the distance of a point to a Shell3D, whether it is inside or outside the Shell3D
         """
-        distance_min, point1_min, point2_min = self.faces[0].distance_to_point(point, return_other_point=True)
+        distance_min, point1_min = self.faces[0].distance_to_point(point, return_other_point=True)
         for face in self.faces[1:]:
             bbox_distance = self.bounding_box.distance_to_point(point)
             if bbox_distance < distance_min:
-                distance, point1, point2 = face.distance_to_point(point, return_other_point=True)
+                distance, point1 = face.distance_to_point(point, return_other_point=True)
                 if distance < distance_min:
-                    distance_min, point1_min, point2_min = distance, point1, point2
+                    distance_min, point1_min = distance, point1
 
-        mesure = Measure3D(point1_min, point2_min)
+        mesure = Measure3D(point, point1_min)
 
         if add_to_volumemodel is not None:
             add_to_volumemodel.primitives.append(mesure)
@@ -5729,7 +5727,6 @@ class Step:
         self.stepfile = stepfile
 
         self.functions, self.all_connections = self.read_functions()
-        self.graph = self.create_graph()
 
     def read_functions(self):
         f = open(self.stepfile, "r", encoding = "ISO-8859-1")
@@ -5870,6 +5867,7 @@ class Step:
         return F
 
     def draw_graph(self):
+        self.graph = self.create_graph()
         labels = {}
         for id_nb, function in self.functions.items():
             labels[id_nb] = str(id_nb)+' '+function.name
@@ -5910,7 +5908,7 @@ class Step:
                 subfunction_arg += char
         return [(subfunction_names[i], step_split_arguments(subfunction_args[i])) for i in range(len(subfunction_names))]
 
-    def instanciate(self, instanciate_id, object_dict, primitives):
+    def instanciate(self, instanciate_id, object_dict):
         """
         Returns None if the object was instanciate
         """
@@ -5926,43 +5924,55 @@ class Step:
 
         if name == 'VERTEX_POINT':
             object_dict[instanciate_id] = object_dict[arguments[1]]
+            volmdlr_object = object_dict[arguments[1]]
 
         # elif name == 'LINE':
         #     pass
 
         elif name == 'ORIENTED_EDGE':
             object_dict[instanciate_id] = object_dict[arguments[3]]
+            volmdlr_object = object_dict[arguments[3]]
 
         elif name == 'FACE_OUTER_BOUND':
-            object_dict[instanciate_id] = object_dict[arguments[1]]
+#            object_dict[instanciate_id] = object_dict[arguments[1]]
+            volmdlr_object = object_dict[arguments[1]]
 
         elif name == 'FACE_BOUND':
-            object_dict[instanciate_id] = object_dict[arguments[1]]
+#            object_dict[instanciate_id] = object_dict[arguments[1]]
+            volmdlr_object = object_dict[arguments[1]]
 
         elif name == 'SURFACE_CURVE':
-            object_dict[instanciate_id] = object_dict[arguments[1]]
+#            object_dict[instanciate_id] = object_dict[arguments[1]]
+            volmdlr_object = object_dict[arguments[1]]
         
         elif name == 'SEAM_CURVE':
-            object_dict[instanciate_id] = object_dict[arguments[1]]
-            
+#            object_dict[instanciate_id] = object_dict[arguments[1]]
+            volmdlr_object = object_dict[arguments[1]]
         # elif name == 'EDGE_CURVE':
         #     object_dict[instanciate_id] = object_dict[arguments[3]]
 
         elif name == 'VERTEX_LOOP' :
-            object_dict[instanciate_id] = object_dict[arguments[1]]
+#            object_dict[instanciate_id] = object_dict[arguments[1]]
+            volmdlr_object = object_dict[arguments[1]]
 
         elif name in step_to_volmdlr_primitive and hasattr(step_to_volmdlr_primitive[name], "from_step"):
             volmdlr_object = step_to_volmdlr_primitive[name].from_step(arguments, object_dict)
 
-            object_dict[instanciate_id] = volmdlr_object
-            if hasattr(volmdlr_object, "primitive"):
-                primitives.append(volmdlr_object.primitive)
+#            object_dict[instanciate_id] = volmdlr_object
+#            if hasattr(volmdlr_object, "primitive"):
+#                primitives.append(volmdlr_object.primitive)primitives
+        else:
+            print('name', name)
+            print('arguments', arguments)
+            raise NotImplementedError
 
-        return None, object_dict, primitives
+        return volmdlr_object
 
     def to_shells3d(self, name):
+        self.graph = self.create_graph()
+        
         object_dict = {}
-        primitives = []
+#        primitives = []
 
         self.graph.add_node("#0")
         for node in self.graph.nodes:
@@ -5973,9 +5983,10 @@ class Step:
 
         for edge_nb, edge in enumerate(edges):
             instanciate_id = edge[1]
-            res, object_dict, primitives = self.instanciate(instanciate_id, object_dict, primitives)
-            if res is not None:
-                raise NotImplementedError
+            volmdlr_object = self.instanciate(instanciate_id, object_dict)
+            object_dict[instanciate_id] = volmdlr_object
+#            if hasattr(volmdlr_object, "primitive"):
+#                primitives.append(volmdlr_object.primitive)
 
         shells = []
         for node in list(self.graph.nodes):
@@ -5986,13 +5997,18 @@ class Step:
     
     def to_scatter_volume_model(self, name):
         object_dict = {}
-        primitives = []
+        points3d = []
         for stepfunction in self.functions.values():
             if stepfunction.name == 'CARTESIAN_POINT':
-                res, object_dict, primitives = self.instanciate(stepfunction.id, object_dict, primitives)
-                if res is not None:
-                    raise NotImplementedError
-        return VolumeModel(list(object_dict.values()))
+                # INSTANCIATION
+                name = self.functions[stepfunction.id].name
+                arguments = self.functions[stepfunction.id].arg[:]
+                for i, arg in enumerate(arguments):
+                    if type(arg) == str and arg[0] == '#':
+                        arguments[i] = int(arg[1:])
+                volmdlr_object = step_to_volmdlr_primitive[name].from_step(arguments, object_dict)
+                points3d.append(volmdlr_object)
+        return VolumeModel(points3d)
 
 class VolumeModel(dc.DessiaObject):
     _standalone_in_db = True
