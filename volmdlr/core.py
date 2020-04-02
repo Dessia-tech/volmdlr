@@ -5866,14 +5866,14 @@ class Step:
                 arguments[i] = int(arg[1:])
 
         if name == 'VERTEX_POINT':
-            object_dict[instanciate_id] = object_dict[arguments[1]]
+#            object_dict[instanciate_id] = object_dict[arguments[1]]
             volmdlr_object = object_dict[arguments[1]]
 
         # elif name == 'LINE':
         #     pass
 
         elif name == 'ORIENTED_EDGE':
-            object_dict[instanciate_id] = object_dict[arguments[3]]
+#            object_dict[instanciate_id] = object_dict[arguments[3]]
             volmdlr_object = object_dict[arguments[3]]
 
         elif name == 'FACE_OUTER_BOUND':
@@ -5915,7 +5915,6 @@ class Step:
         self.graph = self.create_graph()
         
         object_dict = {}
-#        primitives = []
 
         self.graph.add_node("#0")
         for node in self.graph.nodes:
@@ -5923,19 +5922,15 @@ class Step:
                 self.graph.add_edge("#0", node)
 
         edges = list(nx.algorithms.traversal.breadth_first_search.bfs_edges(self.graph, "#0"))[::-1]
-
         for edge_nb, edge in enumerate(edges):
             instanciate_id = edge[1]
             volmdlr_object = self.instanciate(instanciate_id, object_dict)
             object_dict[instanciate_id] = volmdlr_object
-#            if hasattr(volmdlr_object, "primitive"):
-#                primitives.append(volmdlr_object.primitive)
 
         shells = []
         for node in list(self.graph.nodes):
             if node != '#0' and self.functions[node].name == 'CLOSED_SHELL':
                 shells.append(object_dict[node])
-#        print(shells)
         return shells
     
     def to_scatter_volume_model(self, name):
