@@ -16,7 +16,7 @@ u = vm.Vector3D((0.2,0,0))
 v = vm.Vector3D((0,0.2,0))
 w = vm.Vector3D((0,0,0.2))
 frame = vm.Frame3D(origin, u, v, w)
-block_depart = p3d.Block(frame, 'test', (0,0.5,0))
+block_depart = p3d.Block(frame, color=(0,0.5,0))
 
 
 ### BLOCK D'ARIVEE ###
@@ -25,7 +25,7 @@ u = vm.Vector3D((0.2,0,0))
 v = vm.Vector3D((0,0.2,0))
 w = vm.Vector3D((0,0,0.2))
 frame = vm.Frame3D(origin, u, v, w)
-block_arrivee = p3d.Block(frame, 'test', (0,0,0.5))
+block_arrivee = p3d.Block(frame, color=(0,0,0.5))
 
 
 ### BLOCKS OBSTACLES ###
@@ -34,14 +34,14 @@ u = vm.Vector3D((1,0,0))
 v = vm.Vector3D((0,0.9,0))
 w = vm.Vector3D((0,0,0.6))
 frame = vm.Frame3D(origin, u, v, w)
-block_obstacle1 = p3d.Block(frame, 'test', (0.5,0,0))
+block_obstacle1 = p3d.Block(frame, color=(0.5,0,0))
 
 origin = vm.Point3D((0.7,-0.5,0))
 u = vm.Vector3D((3,0,0))
 v = vm.Vector3D((0,0.5,0))
 w = vm.Vector3D((0,0,2))
 frame = vm.Frame3D(origin, u, v, w)
-block_obstacle2 = p3d.Block(frame, 'test', (0.5,0,0))
+block_obstacle2 = p3d.Block(frame, color=(0.5,0,0))
 
 
 ### POINT DE DEPART ET D'ARRIVEE DU ROUTAGE
@@ -76,8 +76,8 @@ routage = vm.Routing(point_depart, point_arrivee, volumemodel=volumemodel)
 #print('distance en bleu', good_distance)
 #print('distance en rouge', bad_distance)
 ### ALGORITHME 2 ###
-mesures = routage.straight_line2()
+mesures = routage.straight_line()
 ### AJOUT DANS LES PRIMITIVES POUR LE BABYLONSHOW ###
 volumemodel.primitives.extend(mesures)
 
-volumemodel.BabylonShow()
+volumemodel.babylonjs_from_script()

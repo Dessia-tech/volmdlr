@@ -3660,8 +3660,6 @@ class PlaneFace3D(Face3D):
 
         contour_points = [p.copy() for p in self.contours[0].points[:]]
         if plane is None:
-            print('self.contours',self.contours)
-            print('contour_points', contour_points)
             self.plane = Plane3D.from_points(contour_points)
 
         if points is None or polygon2D is None:
@@ -5666,11 +5664,12 @@ class StepFunction:
 
 
 class Step:
-    def __init__(self, stepfile):
+    def __init__(self, stepfile, all=True):
         self.stepfile = stepfile
 
         self.functions, self.all_connections = self.read_functions()
-        self.graph = self.create_graph()
+        if all:
+            self.graph = self.create_graph()
 
     def read_functions(self):
         f = open(self.stepfile, "r", encoding = "ISO-8859-1")
@@ -5680,8 +5679,10 @@ class Step:
         previous_line = ""
         functions = {}
 
-        for line in f:
+        for ii, line in enumerate(f):
 
+            if ii/100000 == (int(ii/100000)):
+                print(ii)
             line = line.replace(" ", "")
             line = line.replace("\n", "")
 
@@ -5928,12 +5929,41 @@ class Step:
     def to_scatter_volume_model(self, name):
         object_dict = {}
         primitives = []
+        points = []
         for stepfunction in self.functions.values():
             if stepfunction.name == 'CARTESIAN_POINT':
                 res, object_dict, primitives = self.instanciate(stepfunction.id, object_dict, primitives)
                 if res is not None:
                     raise NotImplementedError
-        return VolumeModel(list(object_dict.values()))
+            points_input = list(object_dict.values())
+            if len(points_input) > 1:
+                if len(points_input)/10000 == int(len(points_input)/10000):
+                    print(len(points_input))
+                    # points_output = simplify_points(points_input, 1e-3)
+                    points += points_input
+                    object_dict = {}
+                    primitives = []
+        if points == []:
+            points_input = list(object_dict.values())
+            points = simplify_points(points_input, 1e-3)
+        # return VolumeModel(list(object_dict.values()))
+        return VolumeModel(points)
+
+def simplify_points(points_input, minimum_dist):
+    points = [points_input[0]]
+    for pt1 in points_input:
+        if pt1 not in points:
+            valid_check = True
+            for pt2 in points:
+                dist = pt1.point_distance(pt2)
+                if dist < minimum_dist:
+                    valid_check = False
+                    break
+            points_temp = [p for p in points]
+            if valid_check:
+                points_temp.append(pt1)
+            points = [p for p in points_temp]
+    return points
 
 class VolumeModel(dc.DessiaObject):
     _standalone_in_db = True

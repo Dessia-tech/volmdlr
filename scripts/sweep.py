@@ -55,7 +55,7 @@ c2 = vm.Contour2D.dict_to_object(c1)
 sweep = primitives3D.Sweep(contour, rl, name = 'Random pipe')
 
 m = vm.VolumeModel([sweep])
-m.babylonjs()
+m.babylonjs(page_name='sweep')
 m.FreeCADExport('sweep')
 
 ### a adapter pour les segments non perpendiculaires
