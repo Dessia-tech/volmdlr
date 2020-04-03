@@ -4724,8 +4724,8 @@ class VolumeModel(dc.DessiaObject):
                           bbox.zmax - bbox.zmin])
                 
         babylon_data = {'meshes': meshes,
-                        'max_length': max_length,
-                        'center': list(center)}
+                        'max_length': round(max_length, 6),
+                        'center': list(round(center), 6)}
         return babylon_data
 
     @classmethod
@@ -4859,8 +4859,8 @@ class MovingVolumeModel(VolumeModel):
             steps.append(step)
         
         babylon_data = {'meshes': meshes,
-                        'max_length': max_length,
-                        'center': list(center),
+                        'max_length': round(max_length, 6),
+                        'center': list(round(center, 6)),
                         'steps': steps}
         return babylon_data
 
