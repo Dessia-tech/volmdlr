@@ -4159,9 +4159,9 @@ class CylindricalFace3D(Face3D):
     
     @classmethod
     def from_contour3d(cls, contours3d, cylindricalsurface3d, points=None, name=''):
-        Face3D.__init__(self, contours3d[0])
+#        Face3D.__init__(self, contours3d[0])
         center = cylindricalsurface3d.frame.origin
-        h = contours3d[0].edges[0].Lenght()
+        h = contours3d[0].edges[0].Length()
         angle = contours3d[0].edges[1].angle
         
         center2d = center.To2D(center, cylindricalsurface3d.frame.v, cylindricalsurface3d.frame.w)
@@ -6242,9 +6242,9 @@ class Step:
 #            object_dict[instanciate_id] = object_dict[arguments[1]]
             volmdlr_object = object_dict[arguments[1]]
 
-        # elif name == 'PCURVE' :
+        elif name == 'PCURVE' :
         #     # object_dict[instanciate_id] = object_dict[arguments[1]]
-        #     volmdlr_object = object_dict[arguments[1]]
+            volmdlr_object = object_dict[arguments[1]]
         
         elif name in step_to_volmdlr_primitive and hasattr(step_to_volmdlr_primitive[name], "from_step"):
             volmdlr_object = step_to_volmdlr_primitive[name].from_step(arguments, object_dict)
@@ -6826,7 +6826,7 @@ step_to_volmdlr_primitive = {
         'ELLIPSE': Ellipse3D,
         'PARABOLA': None,
         'HYPERBOLA': None,
-        'PCURVE': None,
+#        'PCURVE': None,
         'CURVE_REPLICA': None,
         'OFFSET_CURVE_3D': None,
         'TRIMMED_CURVE': None, # BSplineCurve3D cannot be trimmed on FreeCAD
