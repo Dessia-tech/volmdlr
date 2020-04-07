@@ -22,7 +22,7 @@ radius = {1: 0.015, 2: 0.020, 3: 0.005}
 current_point = p5.vector
 #points = [p1, p2]
 #radius = {1: 0.010}
-for i in range(4):
+for i in range(10):
     current_point += 0.300 * (npy.random.random(3) -0.5)
     points.append(vm.Point3D(current_point))
     radius[4+i] = 0.01 + 0.03 * random.random()
