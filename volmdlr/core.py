@@ -6125,7 +6125,7 @@ class VolumeModel(dc.DessiaObject):
                 
         babylon_data = {'meshes': meshes,
                         'max_length': round(max_length, 6),
-                        'center': list(round(center), 6)}
+                        'center': list(round(center, 6))}
         return babylon_data
 
     @classmethod
