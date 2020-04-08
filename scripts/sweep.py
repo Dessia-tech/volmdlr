@@ -32,13 +32,9 @@ c = vm.Circle2D(vm.Point2D((0,0)), 0.008)
 
 rl = primitives3D.ClosedRoundedLineSegments3D(points, radius, adapt_radius=True, name='wire')
 contour = vm.Contour2D([c])
-# print('c', c)
-# print('rl', rl)
 
 r1 = rl.to_dict()
 r2 = primitives3D.ClosedRoundedLineSegments3D.dict_to_object(r1)
-# print('r1', r1)
-# print('r2', r2)
 c1 = c.to_dict()
 c2 = vm.Circle2D.dict_to_object(c1)
 
@@ -46,16 +42,10 @@ c1 = contour.to_dict()
 c2 = vm.Contour2D.dict_to_object(c1)
 
 
-# print('c1', c1)
-# print('c2', c2)
-# print('contour', contour.edges)
-
-# print('contour', contour.primitives)
-# print('rl', rl)
 sweep = primitives3D.Sweep(contour, rl, name = 'Random pipe')
 
 m = vm.VolumeModel([sweep])
 m.babylonjs()
 m.FreeCADExport('sweep')
 
-### a adapter pour les segments non perpendiculaires
+

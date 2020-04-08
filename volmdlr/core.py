@@ -3418,6 +3418,7 @@ class Circle3D(Contour3D):
         self.center = center
         self.radius = radius
         self.normal = normal
+        self.angle = 2*math.pi
         Contour3D.__init__(self, [self], name=name)
         
         
@@ -3501,7 +3502,6 @@ class Circle3D(Contour3D):
         else:
             normal = object_dict[arguments[1]].v ### ou w 
         return cls(center, radius, normal, arguments[0][1:-1])
-
 
 class Ellipse3D(Contour3D):
     def __init__(self, major_axis, minor_axis, center, normal, major_dir, name=''):
@@ -4136,19 +4136,16 @@ class CylindricalFace3D(Face3D):
     # Does not work with automatical cylinder from FREECAD (problem with clean_points)
     def __init__(self, contours2d, cylindricalsurface3d, points=None, name=''):
         self.radius = float(cylindricalsurface3d.radius)/1000
-        if contours2d[0].__class__ is Contour2D :
-            ctr = [Contour3D([Circle3D(cylindricalsurface3d.frame.origin, self.radius, cylindricalsurface3d.frame.u ), Circle3D(cylindricalsurface3d.frame.origin+contours2d[0].primitives[0].points[1][1]*cylindricalsurface3d.frame.u, self.radius, cylindricalsurface3d.frame.u)])]
-            Face3D.__init__(self, ctr)
-        # else :
-            # Face3D.__init__(self, contours)
+        ctr = [Contour3D([Circle3D(cylindricalsurface3d.frame.origin, self.radius, cylindricalsurface3d.frame.u ), Circle3D(cylindricalsurface3d.frame.origin+contours2d[0].primitives[0].points[1][1]*cylindricalsurface3d.frame.u, self.radius, cylindricalsurface3d.frame.u)])]
+        Face3D.__init__(self, ctr)
         
-        self.contours2d = contours2d #contours 2d
-        self.cylindricalsurface3d = cylindricalsurface3d #Information about Cylindrical_Surface
+        self.contours2d = contours2d 
+        self.cylindricalsurface3d = cylindricalsurface3d 
         if points is None:
-            self.points = self.contours2d[0].points #tout les points du contour, les deux cercles + segments
+            self.points = self.contours2d[0].points 
         else:
-            self.points = points #les points utilisés, notamment les limites si cercle non complet, le centre des cercles à tracer
-        self.name = name #nom à donner à l'élément à tracer
+            self.points = points 
+        self.name = name 
         
         # # CHECK
         # for pt in self.points:
@@ -4164,7 +4161,7 @@ class CylindricalFace3D(Face3D):
         angle = contours3d[0].edges[1].angle
         
         center2d = center.To2D(center, cylindricalsurface3d.frame.v, cylindricalsurface3d.frame.w)
-        segbh = LineSegment2D(center2d, center2d + Point2D((0,h)))
+        segbh = LineSegment2D(center2d, center2d - Point2D((0,h))) #Minus because of the normal given by STEP
         circlestart = LineSegment2D(segbh.points[1], segbh.points[1]+Point2D((angle*float(cylindricalsurface3d.radius)/1000,0))) #You can change 2*pi by an other angle
         seghb = LineSegment2D(circlestart.points[1],circlestart.points[1]-segbh.points[1])
         circlend = LineSegment2D(seghb.points[1],segbh.points[0])
@@ -4172,193 +4169,43 @@ class CylindricalFace3D(Face3D):
         points = edges[0].points 
         contours2d =  [Contour2D(edges)]
         return cls(contours2d, cylindricalsurface3d, points, name='')
-    
-    
-    # def delete_double(self, Le):
-    #         Ls = []
-    #         for i in Le:
-    #             if i not in Ls:
-    #                 Ls.append(i)
-    #         return Ls
-        
-    # def min_max(self, Le, pos):
-    #     Ls = []
-    #     for i in range (0,len(Le)) :
-    #         Ls.append(Le[i][pos])
-    #     return (min(Ls), max(Ls))
 
-    def contour2d_to3d(self, all_contours_points, radius, frame3d) :
+    # def contour2d_to3d(self, all_contours_points, radius, frame3d) :
+    #     Points3D = []
+    #     tlist = [] #liste regroupant la taille de toutes les sous listes
+    #     for listpt in  all_contours_points: #2D en 3D
+    #         for enum, pt in enumerate(listpt) :
+    #             Points3D.append(Point3D(Vector3D([radius*math.cos(pt[0]/radius),radius*math.sin(pt[0]/radius),pt[1]])))            
+    #         tlist.append(enum+1)
+    #     Points_3D = [frame3d.OldCoordinates(point) for point in Points3D]  #Création de la nouvelle liste de points dans le repère de base
+        
+    #     return Points_3D, tlist
+    
+    def points2d_to3d(self, all_contours_points, radius, frame3d) :
         Points3D = []
-        # print(all_contours_points)
-        tlist = [] #liste regroupant la taille de toutes les sous listes
-        for listpt in  all_contours_points: #2D en 3D
+        center = frame3d.origin
+        for listpt in  all_contours_points: 
             for enum, pt in enumerate(listpt) :
                 Points3D.append(Point3D(Vector3D([radius*math.cos(pt[0]/radius),radius*math.sin(pt[0]/radius),pt[1]])))            
-            tlist.append(enum+1)
-        Points_3D = [frame3d.OldCoordinates(point) for point in Points3D]  #Création de la nouvelle liste de points dans le repère de base
-        
-        return Points_3D, tlist
-        
-    # def contour3d_to2d(self, frame3d, radius) :
-        
-    #     points = self.points
-    #     newpoints = [frame3d.NewCoordinates(point) for point in points]  #Création de la nouvelle liste de points dans le repère du cylindre
-    #     # U = frame3d.u
-    #     # V = frame3d.v
-    #     U = Vector3D([-1,0,0])
-    #     V = Vector3D([0,1,0])
-    #     # LA NORMAL EST TOUJOURS 0,0,1 DANS LE NOUVEAU FRAME
-    #     # normal = frame3d.w
-    #     newpts = [Vector3D(pt) for pt in newpoints] #on passe en vector 3D pour faciliter clockwise_angle
-        
-    #     pts2D = [pt.PlaneProjection2D(U,V) for pt in newpts]
-    #     placement_2d = []
-    #     for enum, pt in enumerate(pts2D):
-    #         pos = (2*math.pi-clockwise_angle(Vector2D(pts2D[0].vector),Vector2D(pt.vector)))*radius #l'arc de cercle mesure alpha*r
-    #         placement_2d.append(Vector2D([pos,newpoints[enum][2]],''))
-    #     placement2d = self.delete_double(placement_2d)
-    #     placement2d.append(placement2d[0]) #on rajoute le premier point pour compléter le segment
-        
-    #     return newpoints, placement2d
+        Points_3D = [frame3d.OldCoordinates(point) for point in Points3D]
+        return Points_3D
     
     def triangulation(self, resolution=31):
-        radius = (float(self.cylindricalsurface3d.radius))/1000 #il faut diviser par 1000 pour être dans les mêmes ordres de grandeurs que les points
+        radius = (float(self.cylindricalsurface3d.radius))/1000 #Need to divide by 1000 because of step read
         
-        O=Vector3D(self.cylindricalsurface3d.frame.origin) #Origine du Frame du cylindre (cercle en origine)
-        U=self.cylindricalsurface3d.frame[0] 
+        O = Vector3D(self.cylindricalsurface3d.frame.origin)
+        U = self.cylindricalsurface3d.frame[0] 
         U.Normalize()
-        V=self.cylindricalsurface3d.frame[1]
+        V = self.cylindricalsurface3d.frame[1]
         V.Normalize()
-        W=self.cylindricalsurface3d.frame[2]
+        W = self.cylindricalsurface3d.frame[2]
         W.Normalize()
-        Triangles=[]
-        frame3d=Frame3D(O, V, W, -U, '')    # On créé un nouveau Frame3d avec des vecteurs normalisés ---- le dernier vecteur est le vecteur normal  
         
-        # if self.contours[0].__class__ is Contour3D :
-        #     newpoints, placement2d = self.contour3d_to2d(frame3d, radius)
-        # else :
+        frame3d = Frame3D(O, V, W, U, '') #Frame with normal as last vector 
         
         all_contours_points = self.cut_contours(self.contours2d, resolution)
         
-        ## newpoints = self.points
-        ## placement_2d = []
-        ## for k in range(0, len(self.contours2d[0].primitives)):
-        ##     placement_2d.extend(self.contours2d[0].primitives[k].points) 
-        ## placement2d = self.delete_double(placement_2d)
-        ## placement2d.append(placement2d[0])
-        
-        ## segmentspt=[]
-        ## for k in range (0,len(placement2d)-1):
-        ##     segmentspt.append(LineSegment2D(Point2D(placement2d[k].vector),Point2D(placement2d[k+1].vector)))
-        
-        #On cherche les extremum pour tracer le bounding
-        # if self.contours[0].__class__ is Contour2D :
-        ## hmin, hmax = self.min_max(newpoints,1)
-        # else :
-        #     hmin, hmax = self.min_max(newpoints,2) #hauteur de l'origine a changer pour toutes les hauteurs avec U
-        ## posimin, posimax = self.min_max(placement2d,0)
-        #créer lignes/segments entre xmax et xmin avec pas:xmax-xmin/resolution
-
-        ## pas = (posimax-posimin)/resolution
-        ## pointsxzmin = [Point2D([posimin+i*pas,hmin-1]) for i in range (0,resolution+1)]
-        ## pointsxzmax = [Point2D([posimin+i*pas,hmax+1]) for i in range (0,resolution+1)]
-        
-        
-        #Lignes verticales
-        # line = [Line2D(ptxmax, ptxmin) for ptxmin,ptxmax in list(zip(pointsxzmin, pointsxzmax))] #du h vers le b
-        # line = [LineSegment2D(ptxmax, ptxmin) for ptxmin,ptxmax in list(zip(pointsxzmin, pointsxzmax))]
-
-        # all_contours_points = []
-        # #On recupere les points tout à gauche avec la line[1]
-        # contours_points = []
-        
-        
-        
-        # for i, seg in enumerate(segmentspt) :
-        #     p1 = seg.line_intersection(line[1])
-        #     if p1 is not None:
-        #         break
-        # for k, seg in enumerate(segmentspt[i+1:]) :
-        #     p3 = seg.line_intersection(line[1])
-        #     if p3 is not None:
-        #         break    
-        # k += i+1
-        # for pos in range (0,i+1):
-        #     contours_points.append(Point2D(placement2d[pos].vector))
-        # contours_points.append(p1)
-        # contours_points.append(p3)
-        # for pos in range (k+1,len(placement2d)-1):
-        #     contours_points.append(Point2D(placement2d[pos].vector))
-        
-        # all_contours_points.append(contours_points)
-        # #On recupere les points entre la line 1 et l avant derniere
-        # for enum, ligne in enumerate(line[1:-1]):
-        #     contours_points=[]
-        #     if enum != len(line)-3 : #sinon on va chercher la derniere ligne
-        #         l1, l2 = line[enum+1], line[enum+2]
-        #         for i, seg in enumerate(segmentspt) :
-        #             p1 = seg.line_intersection(l1)
-        #             if p1 is not None:
-        #                 break
-        #         for j, seg in enumerate(segmentspt) :
-        #             p2 = seg.line_intersection(l2)
-        #             if p2 is not None:
-        #                 break
-        #         for k, seg in enumerate(segmentspt[i+2:]) :
-        #             p3 = seg.line_intersection(l1)
-        #             if p3 is not None:
-        #                 break
-        #         for l, seg in enumerate(segmentspt[j+2:]) :
-        #             p4 = seg.line_intersection(l2)
-        #             if p4 is not None:
-        #                 break    
-                    
-        #         k += i+2
-        #         l += j+2
-        #         if i==j :
-        #             contours_points.extend([p1, p2, p4])
-                
-        #         else :
-        #             points=[]
-        #             points.append(p1)
-        #             for pos in range (i+1,j+1):
-        #                 points.append(Point2D(placement2d[pos].vector))
-        #             points.append(p2)
-        #             points.append(p4)
-                
-        #             contours_points.extend(points)
-            
-        #         if k==l :
-        #             contours_points.append(p3)
-            
-        #         else :
-        #             points=[]
-        #             for pos in range (l+1,k+1):
-        #                 points.append(Point2D(placement2d[pos].vector))
-        #             points.append(p3)
-                
-        #             contours_points.extend(points)
-        #         all_contours_points.append(contours_points)
-        
-        # #On recupere les points tout à droite avec l'avant derniere line
-        # contours_points = []
-        # for i, seg in enumerate(segmentspt) :
-        #     p1 = seg.line_intersection(line[len(line)-2])
-        #     if p1 is not None:
-        #         break
-        # for k, seg in enumerate(segmentspt[i+1:]) :
-        #     p3 = seg.line_intersection(line[len(line)-2])
-        #     if p3 is not None:
-        #         break    
-        # k += i+1
-        # contours_points.append(p1)
-        # for pos in range (i+1,k+1):
-        #     contours_points.append(Point2D(placement2d[pos].vector))
-        # contours_points.append(p3)
-        # all_contours_points.append(contours_points)
-        
-        Points_3D, tlist = self.contour2d_to3d(all_contours_points, radius, frame3d)
-        
+        Triangles = []
         ts=[]
         for k, listpt in enumerate(all_contours_points) :
             vertices=[]
@@ -4367,7 +4214,7 @@ class CylindricalFace3D(Face3D):
                 vertices.append(pt.vector)
                 segments.append([i,i+1])
             
-            segments[-1]=(tlist[k]-1,0) #on remplace le dernier terme pour boucler la boucle
+            segments[-1]=(len(listpt)-1,0) 
             tri = {'vertices': vertices, 'segments': segments}
             t = triangle.triangulate(tri, 'p')
             ts.append(t)
@@ -4380,15 +4227,17 @@ class CylindricalFace3D(Face3D):
                 for n,tri in enumerate(triangles):
                     for i in range (0,3):
                         tri[i]=tri[i]+seuil
-                seuil += tlist[k]
+                seuil += len(all_contours_points[k])
                 k += 1
                 Triangles.append(triangles)        
             else:
                 Triangles.append(None)
+        
+        
+        Points_3D = self.points2d_to3d(all_contours_points, radius, frame3d)
         pt3d, tangle = delete_double_pos(Points_3D, Triangles)
         
-        
-        return pt3d, tangle ### return point 2d, a envoyer en 3d
+        return pt3d, tangle 
 
     def MPLPlotpoints(self, ax=None, color='k'):
         if ax is None:
@@ -4435,12 +4284,6 @@ class ToroidalFace3D (Face3D) :
         self.rcenter = float(toroidalsurface3d.rcenter)/1000
         self.rcircle = float(toroidalsurface3d.rcircle)/1000
         self.toroidalsurface3d = toroidalsurface3d 
-        # if contours[0].__class__ is Contour2D :
-            ##### Creer un contour3D avec 3 ou 4 cercle pour montrer l'ampleur du tore
-            # ctr = [Contour3D([Circle3D(toroidalsurface3d.frame.origin, self.radius, cylindricalsurface3d.frame.u ), Circle3D(cylindricalsurface3d.frame.origin+contours[0].primitives[0].points[1][1]*cylindricalsurface3d.frame.u, self.radius, cylindricalsurface3d.frame.u)])]
-            # Face3D.__init__(self, ctr)
-        # else :
-            # Face3D.__init__(self, contours)
         if contours[0].__class__ is Point3D :
             ptext = contours[0]
             center = self.toroidalsurface3d.frame.origin
@@ -4492,135 +4335,135 @@ class ToroidalFace3D (Face3D) :
             y = (R+rcircle*math.cos(phi))*math.sin(theta)
             z = rcircle*math.sin(phi)
             Points3D.append(Point3D([x,y,z])+center)
-        return Points3D    
+        Points_3D = [frame3d.OldCoordinates(point) for point in Points3D]
+        return Points_3D
     
     def triangulation(self, resolution=30):
         rcenter = self.rcenter
         rcircle = self.rcircle
         
-        O=Vector3D(self.toroidalsurface3d.frame.origin) #Origine du Frame du cylindre (cercle en origine)
-        U=self.toroidalsurface3d.frame[0] 
+        O = Vector3D(self.toroidalsurface3d.frame.origin)
+        U = self.toroidalsurface3d.frame[0] 
         U.Normalize()
-        V=self.toroidalsurface3d.frame[1]
+        V = self.toroidalsurface3d.frame[1]
         V.Normalize()
-        W=self.toroidalsurface3d.frame[2]
+        W = self.toroidalsurface3d.frame[2]
         W.Normalize()
-        frame3d=Frame3D(O, V, W, U, '')    # On créé un nouveau Frame3d avec des vecteurs normalisés ---- le dernier vecteur est le vecteur normal
+        frame3d = Frame3D(O, V, W, U, '')    # Creation of new frame with normal as last vector
         
-        pointscontours = self.contours[0].edges[0].points
-
         ######### OK : contours2d
-        # Circle = []
-        # Linextru = []
+        pointscontours = self.contours[0].edges[0].points
+        Circle = []
+        Linextru = []
         
-        # for enum, pt in enumerate(pointscontours[0:len(pointscontours)]):
-        #     vec_ext_center = Vector3D((O-pt).vector)
-        #     vec_ext_center.Normalize()
-        #     vec_master = U.Cross(vec_ext_center)
-        #     ccircle = pt + Point3D((rcircle*vec_ext_center).vector)
-        #     cpt = Arc3D(pt, pt.Rotation(ccircle, vec_master, math.pi), pt, vec_master)
+        for enum, pt in enumerate(pointscontours[0:len(pointscontours)]):
+            vec_ext_center = Vector3D((O-pt).vector)
+            vec_ext_center.Normalize()
+            vec_master = U.Cross(vec_ext_center)
+            ccircle = pt + Point3D((rcircle*vec_ext_center).vector)
+            cpt = Arc3D(pt, pt.Rotation(ccircle, vec_master, math.pi), pt, vec_master)
             
-        #     if enum == 0 :
-        #         Circle.append(cpt)
-        #         continue
-        #     if enum == len(pointscontours)-1 :
-        #         Circle.append(cpt)
-        #         continue
-        #     Circle.append(cpt)
+            if enum == 0 :
+                Circle.append(cpt)
+                continue
+            if enum == len(pointscontours)-1 :
+                Circle.append(cpt)
+                continue
+            Circle.append(cpt)
             
-        #     #Size of extru line
-        #     line_extru = LineSegment3D(pointscontours[enum], pt)
-        #     Linextru.append(line_extru)
+            #Size of extru line
+            line_extru = LineSegment3D(pointscontours[enum], pt)
+            Linextru.append(line_extru)
         
-        # Linextru.append(LineSegment3D(pointscontours[-2], pointscontours[-1]))
+        Linextru.append(LineSegment3D(pointscontours[-2], pointscontours[-1]))
        
-        # faces = []
-        # ptstri, triangulation = [], []
-        # taillepts = 0
-        # for k in range(0,len(Linextru)):
-        #     cstart, cend = Circle[k], Circle[k+1]
+        faces = []
+        ptstri, triangulation = [], []
+        taillepts = 0
+        for k in range(0,len(Linextru)):
+            cstart, cend = Circle[k], Circle[k+1]
             
-        #     long = []
-        #     for pts, pte in zip(cstart.points,cend.points) :
-        #         long.append(LineSegment3D(pte,pts).Length())
+            long = []
+            for pts, pte in zip(cstart.points,cend.points) :
+                long.append(LineSegment3D(pte,pts).Length())
             
-        #     intermediaire = min(long)
-        #     maxi = max(long)
-        #     center = cstart.center
-        #     plane = Plane3D.from_normal(center, cstart.normal)
-        #     center2d = center.To2D(center, plane.vectors[0], plane.vectors[1])
-        #     segbh = LineSegment2D(center2d, center2d + Point2D((0,maxi)))
-        #     seg1 = LineSegment2D(segbh.points[1], segbh.points[1]+Point2D((math.pi*rcircle,maxi-intermediaire))) #You can change 2*pi by an other angle
-        #     seg2 = LineSegment2D(seg1.points[1], seg1.points[1]+Point2D((math.pi*rcircle,intermediaire-maxi)))
-        #     seghb = LineSegment2D(seg2.points[1],seg2.points[1]-segbh.points[1])
-        #     seg3 = LineSegment2D(seghb.points[1],segbh.points[0])
-        #     edges = [segbh, seg1, seg2, seghb, seg3]
-        #     points = edges[0].points 
-        #     contours =  [Contour2D(edges)]
+            intermediaire = min(long)
+            maxi = max(long)
+            center = cstart.center
+            plane = Plane3D.from_normal(center, cstart.normal)
+            center2d = center.To2D(center, plane.vectors[0], plane.vectors[1])
+            segbh = LineSegment2D(center2d, center2d + Point2D((0,maxi)))
+            seg1 = LineSegment2D(segbh.points[1], segbh.points[1]+Point2D((math.pi*rcircle,maxi-intermediaire))) #You can change 2*pi by an other angle
+            seg2 = LineSegment2D(seg1.points[1], seg1.points[1]+Point2D((math.pi*rcircle,intermediaire-maxi)))
+            seghb = LineSegment2D(seg2.points[1],seg2.points[1]-segbh.points[1])
+            seg3 = LineSegment2D(seghb.points[1],segbh.points[0])
+            edges = [segbh, seg1, seg2, seghb, seg3]
+            points = edges[0].points 
+            contours =  [Contour2D(edges)]
             
-        #     frame3d_circle = Frame3D(cstart.center, -cstart.normal, U, cstart.normal.Cross(U))
-        #     cylsurf3d = CylindricalSurface3D(frame3d_circle, cstart.radius*1000)
-        #     cylface = CylindricalFace3D(contours, cylsurf3d, points)
-        #     faces.append(cylface)
-        #     points, triangles = cylface.triangulation()
-        #     ptstri.extend(points)
-        #     for i, listtri in enumerate(triangles) :
-        #         for j, index in enumerate(listtri) :
-        #             triangles[i][j] = [index[0]+taillepts,index[1]+taillepts,index[2]+taillepts]
-        #     triangulation.extend(triangles)
-        #     taillepts += len(points)
-        # Points, Triangles = delete_double_pos(ptstri,triangulation)
-        # return Points, Triangles
+            frame3d_circle = Frame3D(cstart.center, -cstart.normal, U, cstart.normal.Cross(U))
+            cylsurf3d = CylindricalSurface3D(frame3d_circle, cstart.radius*1000)
+            cylface = CylindricalFace3D(contours, cylsurf3d, points)
+            faces.append(cylface)
+            points, triangles = cylface.triangulation()
+            ptstri.extend(points)
+            for i, listtri in enumerate(triangles) :
+                for j, index in enumerate(listtri) :
+                    triangles[i][j] = [index[0]+taillepts,index[1]+taillepts,index[2]+taillepts]
+            triangulation.extend(triangles)
+            taillepts += len(points)
+        Points, Triangles = delete_double_pos(ptstri,triangulation)
+        return Points, Triangles
         #########
     
     
         ########## With angle frame
         #Angle of the tore
-        theta = self.contours[0].edges[0].angle
+        # theta = self.contours[0].edges[0].angle
         
-        arc1 = self.contours[0].edges[1] #arc start
-        arc2 = self.contours[0].edges[-1] #arc end
-        phi1 = arc1.angle
-        phi2 = arc2.angle
+        # arc1 = self.contours[0].edges[1] #arc start
+        # arc2 = self.contours[0].edges[-1] #arc end
+        # phi1 = arc1.angle
+        # phi2 = arc2.angle
         
-        #Creation of the window
-        centerota = Point2D((0,0))
-        pt1, pt2, pt3, pt4 = Point2D((0, 0)), Point2D((0, phi1)), Point2D((theta, phi2)), Point2D((theta, 0))
+        # #Creation of the window
+        # centerota = Point2D((0,0))
+        # pt1, pt2, pt3, pt4 = Point2D((0, 0)), Point2D((0, phi1)), Point2D((theta, phi2)), Point2D((theta, 0))
         
-        seg1, seg2, seg3, seg4 = LineSegment2D(pt1, pt2), LineSegment2D(pt2, pt3), LineSegment2D(pt3, pt4), LineSegment2D(pt4, pt1) 
+        # seg1, seg2, seg3, seg4 = LineSegment2D(pt1, pt2), LineSegment2D(pt2, pt3), LineSegment2D(pt3, pt4), LineSegment2D(pt4, pt1) 
         
-        edges = [seg1, seg2, seg3, seg4]
-        contours2d =  [Contour2D(edges)]
-        ctr_pt1 = self.cut_contours(contours2d, resolution)
+        # edges = [seg1, seg2, seg3, seg4]
+        # contours2d =  [Contour2D(edges)]
+        # ctr_pt1 = self.cut_contours(contours2d, resolution)
         
-        all_contours_points = []
-        for listpt in ctr_pt1 :
-            bandept = []
-            for pt in listpt :
-                bandept.append(pt.Rotation(centerota, -math.pi/2))
-            edges = []
-            for k in range (0,len(bandept)) :
-                if k == len(bandept)-1 :
-                    edges.append(LineSegment2D(bandept[k], bandept[0]))
-                else :
-                    edges.append(LineSegment2D(bandept[k], bandept[k+1]))
-            ctr2d = [Contour2D(edges)]
-            all_contours_points.extend(self.cut_contours(ctr2d, resolution))
+        # all_contours_points = []
+        # for listpt in ctr_pt1 :
+        #     bandept = []
+        #     for pt in listpt :
+        #         bandept.append(pt.Rotation(centerota, -math.pi/2))
+        #     edges = []
+        #     for k in range (0,len(bandept)) :
+        #         if k == len(bandept)-1 :
+        #             edges.append(LineSegment2D(bandept[k], bandept[0]))
+        #         else :
+        #             edges.append(LineSegment2D(bandept[k], bandept[k+1]))
+        #     ctr2d = [Contour2D(edges)]
+        #     all_contours_points.extend(self.cut_contours(ctr2d, resolution))
         
-        pts_frame1 = []
-        for listpt in all_contours_points :
-            for pt in listpt : 
-                pts_frame1.append(pt.Rotation(centerota, math.pi/2))
+        # pts_frame1 = []
+        # for listpt in all_contours_points :
+        #     for pt in listpt : 
+        #         pts_frame1.append(pt.Rotation(centerota, math.pi/2))
         
-        all_points = self.delete_double(pts_frame1) # All points necessary for triangulation
+        # all_points = self.delete_double(pts_frame1) # All points necessary for triangulation
         
-        A = dict(vertices=[pt.vector for pt in all_points])
-        B = triangle.triangulate(A, 'cp')
-        tangle = list(B['triangles'])
+        # A = dict(vertices=[pt.vector for pt in all_points])
+        # B = triangle.triangulate(A, 'cp')
+        # tangle = list(B['triangles'])
         
-        pts3d = self.points2d_to3d(all_points, rcenter, rcircle, frame3d)
+        # pts3d = self.points2d_to3d(all_points, rcenter, rcircle, frame3d)
         
-        return pts3d, [tangle]
+        # return pts3d, [tangle]
     
 class BSplineFace3D(Face3D):
     def __init__(self, contours, bspline_shape, points=None, name=''):
