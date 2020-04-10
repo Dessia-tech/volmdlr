@@ -949,7 +949,7 @@ class Sweep(volmdlr.Shell3D):
 
     def shell_faces(self):
         faces = []
-        for wire_primitive in self.wire3d.edges:
+        for wire_primitive in self.wire3d.primitives : #edges:
             for contour_primitive in self.contour2d.primitives:
                 
                 # Build face created by generating primitive of contour along wire primitive
@@ -1050,16 +1050,22 @@ class Sweep(volmdlr.Shell3D):
                     rcenter = wire_primitive.radius
                     rcircle = contour_primitive.radius
                     
+                    
+                    
                     center = wire_primitive.center
                     normal = wire_primitive.normal
                     normal.Normalize()
-                    plane = volmdlr.Plane3D.from_normal(center, normal)
-                    frame3d = volmdlr.Frame3D(center, normal, plane.vectors[0], plane.vectors[1])
+                    # plane = volmdlr.Plane3D.from_normal(center, normal)
+                    
+                    center1 = wire_primitive.points[0]
+                    y = volmdlr.Vector3D((center1 - center).vector)
+                    y.Normalize()
+                    frame3d = volmdlr.Frame3D(center, normal, y, normal.Cross(y))#, plane.vectors[0], plane.vectors[1])
                     toroidalsurface3d = volmdlr.ToroidalSurface3D(frame3d, rcenter*1000, rcircle*1000)
 
-                    center1 = wire_primitive.points[0]
-                    y = volmdlr.Vector3D((center - center1).vector)
-                    y.Normalize()
+                    # center1 = wire_primitive.points[0]
+                    # y = volmdlr.Vector3D((center - center1).vector)
+                    # y.Normalize()
                     ptcircle1 = center1 - volmdlr.Point3D([i*rcircle for i in y.vector])
                     Arcstart = contour_primitive.To3D(center1, normal, y)
                     
@@ -1075,8 +1081,14 @@ class Sweep(volmdlr.Shell3D):
                     intocenter.Normalize()
                     ptint = interior - volmdlr.Point3D([i*rcircle for i in intocenter.vector])
                     
-                    Arcmaster = volmdlr.Arc3D(ptcircle1, ptint, ptcircle2, normal)
+                    Arcmaster = wire_primitive#volmdlr.Arc3D(ptcircle1, ptint, ptcircle2, normal)
                     
+                    
+                    # fig = plt.figure()
+                    # ax = fig.add_subplot(111, projection='3d')
+                    # [pt.MPLPlot(ax=ax) for pt in Arcmaster.points]
+                    # [pt.MPLPlot(ax=ax, color='r') for pt in Arcstart.points]
+                    # [pt.MPLPlot(ax=ax, color='b') for pt in Arcend.points]
                     edges = [Arcmaster, Arcstart, Arcend]
                     points = Arcmaster.points + Arcstart.points + Arcmaster.points[::-1] + Arcend.points
                     
