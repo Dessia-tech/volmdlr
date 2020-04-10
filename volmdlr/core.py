@@ -3867,7 +3867,6 @@ class PlaneFace3D(Face3D):
         total_len = 0
         for i, contour in enumerate(self.contours):
             points_2D = [p.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]) for p in contour.points]
-            
             # if polygon2D.Area() == 0.:
             #     return None, None
             
@@ -5179,6 +5178,11 @@ class Shell3D(CompositePrimitive3D):
             # print('=>', points_3D, triangles_indexes)
             # print()
             # print('len pt3d',len(points_3D))
+            
+            if points_3D is None : 
+                continue
+            
+            
             for point in points_3D:
                 # print('===========>',point)
                 positions.extend([k for k in round(point, 6)])
