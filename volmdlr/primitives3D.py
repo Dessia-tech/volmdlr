@@ -1060,12 +1060,9 @@ class Sweep(volmdlr.Shell3D):
                     center1 = wire_primitive.points[0]
                     y = volmdlr.Vector3D((center1 - center).vector)
                     y.Normalize()
-                    frame3d = volmdlr.Frame3D(center, normal, y, normal.Cross(y))#, plane.vectors[0], plane.vectors[1])
+                    frame3d = volmdlr.Frame3D(center, normal, y, normal.Cross(y))
                     toroidalsurface3d = volmdlr.ToroidalSurface3D(frame3d, rcenter*1000, rcircle*1000)
 
-                    # center1 = wire_primitive.points[0]
-                    # y = volmdlr.Vector3D((center - center1).vector)
-                    # y.Normalize()
                     ptcircle1 = center1 - volmdlr.Point3D([i*rcircle for i in y.vector])
                     Arcstart = contour_primitive.To3D(center1, normal, y)
                     
@@ -1083,12 +1080,6 @@ class Sweep(volmdlr.Shell3D):
                     
                     Arcmaster = wire_primitive#volmdlr.Arc3D(ptcircle1, ptint, ptcircle2, normal)
                     
-                    
-                    # fig = plt.figure()
-                    # ax = fig.add_subplot(111, projection='3d')
-                    # [pt.MPLPlot(ax=ax) for pt in Arcmaster.points]
-                    # [pt.MPLPlot(ax=ax, color='r') for pt in Arcstart.points]
-                    # [pt.MPLPlot(ax=ax, color='b') for pt in Arcend.points]
                     edges = [Arcmaster, Arcstart, Arcend]
                     points = Arcmaster.points + Arcstart.points + Arcmaster.points[::-1] + Arcend.points
                     

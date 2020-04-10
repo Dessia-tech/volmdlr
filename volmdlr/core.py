@@ -4289,7 +4289,6 @@ class ToroidalFace3D (Face3D) :
         
         Face3D.__init__(self, contours)
         self.contours = contours 
-        # print(contours[0].edges)
         
         if points is None:
             self.points = self.contours[0].points 
@@ -4411,7 +4410,6 @@ class ToroidalFace3D (Face3D) :
         ########## With angle frame
         
         #Angle of the tore
-        # theta = self.contours[0].edges[1].angle
         theta = self.contours[0].edges[0].angle
         arc1 = self.contours[0].edges[1] #arc start
         # arc2 = self.contours[0].edges[2] #arc end # if using two different arc at each side of the tore
@@ -4422,14 +4420,6 @@ class ToroidalFace3D (Face3D) :
         
         centerota = Point2D((0,0))
         pt1, pt2, pt3, pt4 = Point2D((0, 0)), Point2D((0, phi1)), Point2D((theta, phi2)), Point2D((theta, 0))
-        # pt1, pt2, pt3, pt4 = Point2D((0, 0)), Point2D((phi1, 0)), Point2D((phi2, theta)), Point2D((0, theta))
-        
-        
-        
-        # center2d = frame3d.origin.To2D(frame3d.origin, frame3d.u, frame3d.v)
-        # pt1, pt2, pt3, pt4 = center2d + Point2D((0, 0)), center2d + Point2D((phi1, 0)), center2d + Point2D((phi2, theta)), center2d + Point2D((0, theta))
-        
-        
         
         seg1, seg2, seg3, seg4 = LineSegment2D(pt1, pt2), LineSegment2D(pt2, pt3), LineSegment2D(pt3, pt4), LineSegment2D(pt4, pt1) 
         
@@ -4465,10 +4455,6 @@ class ToroidalFace3D (Face3D) :
             ptvert[k].sort(key=lambda pt: pt[1])
             pts.extend(ptvert[k])
 
-        # fig, ax = plt.subplots()
-        # [pt.MPLPlot(ax=ax) for pt in pts]
-        # [pt.MPLPlot(ax=ax, color='r') for pt in pts[0:2*resolution-5]]
-        
         # A = dict(vertices=[pt.vector for pt in pts]) #in all_points
         # B = triangle.triangulate(A, 'cp')
         # tangle = list(B['triangles'])
@@ -4480,8 +4466,6 @@ class ToroidalFace3D (Face3D) :
         for k in range (0,len(pts)-resolution-2) : #do not use the last column
             vertices=[]
             segments=[]
-            # if k%(resolution+1) == 0 :
-                # continue
             listpt = [pts[k], pts[k+1], pts[k+1+resolution+1], pts[k+resolution+1]]
             listindice = [k, k+1, k+1+resolution+1, k+resolution+1]
             for i, pt in enumerate(listpt):
@@ -4501,15 +4485,7 @@ class ToroidalFace3D (Face3D) :
                 Triangles.append(None)
             ts.append(t)
         
-        
-        
-        # print(triangles)
-        # fig = plt.figure()
-        # ax = fig.add_subplot(111, projection='3d')
-        # [pt.MPLPlot(ax=ax) for pt in self.contours[0].edges[0].points]
-        # [pt.MPLPlot(ax=ax, color='r') for pt in arc1.points]
-        # premierpt = self.contours[0].edges[1].points[0]
-        pts3d = self.points2d_to3d(pts, rcenter, rcircle, frame3d, theta, phi1)#, premierpt) ##all_points instead of pts 
+        pts3d = self.points2d_to3d(pts, rcenter, rcircle, frame3d, theta, phi1)
         pt3d, tangle = delete_double_pos(pts3d, Triangles)
         return pt3d, tangle
     
