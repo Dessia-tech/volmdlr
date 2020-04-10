@@ -2217,41 +2217,24 @@ class Arc3D(Primitive3D):
             self.normal = normal
         
         if u1 == u2:
-            u2=n.Cross(u1) #vecteur normé
+            u2=n.Cross(u1) 
             u2.Normalize()
             # if start != O3D:
                 # u2 = start + interior
             # else:
                 # u2 = 2 * interior
-        # print('u1', u1)
-        # print('n', n)        
-        # print('u2', u2)
-        v1 = n.Cross(u1)# v1 is normal, égal à u2
-        v2 = n.Cross(u2)# égal à -u1
+        v1 = n.Cross(u1)# v1 is normal, equal u2
+        v2 = n.Cross(u2)#equal -u1
         
-        # print('v1', v1)
-        # print('v2', v2)
-
         p11 = 0.5 * (start + interior)# Mid point of segment s,m
         p12 = p11 + v1
         p21 = 0.5 * (end + interior)# Mid point of segment s,m
         p22 = p21 + v2
 
-        # print('p11',p11)
-        # print('p12',p12)
-        # print('p21',p21)
-        # print('p22',p22)
-        
         l1 = Line3D(p11, p12)
         l2 = Line3D(p21, p22)
         
-        # print('l1', l1)
-        # print('l2', l2)
-        
         c1, _ = l1.MinimumDistancePoints(l2)
-        
-        # print('minidistance pts', l1.MinimumDistancePoints(l2))
-        # print('c1', c1)
         
         self.center = c1 
         self.radius = (self.center - self.start).Norm()
@@ -3649,7 +3632,7 @@ class Face3D(Primitive3D):
         line = [LineSegment2D(ptxmax, ptxmin) for ptxmin,ptxmax in list(zip(pointsxzmin, pointsxzmax))]
 
         all_contours_points = []
-        #On recupere les points tout à gauche avec la line[1]
+        #Taking points on the left with line[1]
         contours_points = []
         
         for i, seg in enumerate(segmentspt) :
@@ -3669,10 +3652,10 @@ class Face3D(Primitive3D):
             contours_points.append(Point2D(placement2d[pos].vector))
         
         all_contours_points.append(contours_points)
-        #On recupere les points entre la line 1 et l avant derniere
+        #Taking points between line 1 and before the last one
         for enum, ligne in enumerate(line[1:-1]):
             contours_points=[]
-            if enum != len(line)-3 : #sinon on va chercher la derniere ligne
+            if enum != len(line)-3 : #Otherwise taking the last line
                 l1, l2 = line[enum+1], line[enum+2]
                 for i, seg in enumerate(segmentspt) :
                     p1 = seg.line_intersection(l1)
@@ -3718,7 +3701,7 @@ class Face3D(Primitive3D):
                     contours_points.extend(points)
                 all_contours_points.append(contours_points)
         
-        #On recupere les points tout à droite avec l'avant derniere line
+        #Taking points on the right with last line
         contours_points = []
         for i, seg in enumerate(segmentspt) :
             p1 = seg.line_intersection(line[len(line)-2])
@@ -4172,7 +4155,6 @@ class CylindricalFace3D(Face3D):
 
     def points2d_to3d(self, all_contours_points, radius, frame3d) :
         Points3D = []
-        # center = frame3d.origin
         for listpt in  all_contours_points: 
             for enum, pt in enumerate(listpt) :
                 Points3D.append(Point3D(Vector3D([radius*math.cos(pt[0]/radius),radius*math.sin(pt[0]/radius),pt[1]])))            
@@ -4503,7 +4485,7 @@ class BSplineFace3D(Face3D):
         
             normal = self.bspline_shape.vectorextru
             
-            #determination hauteur du bd box, on change de repere les pts du contours
+            #find the bd box's height ,changing the frame of points
             scal = [normal.Dot(Vector3D(pt.vector)) for pt in self.contours[0].points[:]]
             mini, maxi = min(scal), max(scal)
             h = maxi-mini
