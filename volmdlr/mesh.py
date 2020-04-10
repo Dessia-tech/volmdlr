@@ -64,6 +64,8 @@ class TriangularElement:
         
         self.center = (self.points[0]+self.points[1]+self.points[2])/3
         
+        self.area = self._area()
+        
     def _to_linear_elements(self):
         vec1 = vm.Vector2D(self.points[1] - self.points[0])
         vec2 = vm.Vector2D(self.points[2] - self.points[1])
@@ -94,7 +96,7 @@ class TriangularElement:
         x3 = npy.linalg.solve(a, b3)
         return list(x1), list(x2), list(x3)
     
-    def area(self):
+    def _area(self):
         u = self.points[1] - self.points[0]
         v = self.points[2] - self.points[0]
         return (u.Norm() * v.Norm())/2
@@ -155,21 +157,21 @@ class ElementsGroup:
         self.mu_total = mu_total
         self.name = name
         
-    @classmethod
-    def from_contour(cls, points, minimal_area, mu_total, name):
-        A = dict(vertices=npy.array([pt.vector for pt in points]))
-        t = triangle.triangulate(A, 'qa{}'.format(minimal_area))
-        if 'triangles' in t:
-            triangles = t['triangles'].tolist()
-            
-            elements = []
-            for tri in triangles:
-                pts = [points[i] for i in tri]
-                elements.append(TriangularElement(pts))
-        else:
-            raise NotImplementedError
-        
-        return cls(elements, mu_total, name)
+#    @classmethod
+#    def from_contour(cls, points, minimal_area, mu_total, name):
+#        A = dict(vertices=npy.array([pt.vector for pt in points]))
+#        t = triangle.triangulate(A, 'qa{}'.format(minimal_area))
+#        if 'triangles' in t:
+#            triangles = t['triangles'].tolist()
+#            
+#            elements = []
+#            for tri in triangles:
+#                pts = [points[i] for i in tri]
+#                elements.append(TriangularElement(pts))
+#        else:
+#            raise NotImplementedError
+#        
+#        return cls(elements, mu_total, name)
         
         
     def rotation(self, center, angle, copy=True):
