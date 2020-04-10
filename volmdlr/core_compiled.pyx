@@ -332,11 +332,12 @@ class Vector2D(Vector):
                                round(self.vector[1], ndigits)))
 
     def __hash__(self):
-        return int(1000*(self.vector[0]+self.vector[1]))
+#        return int(1000*(self.vector[0]+self.vector[1]))
+        return int(round(1e6*(self.vector[0]+self.vector[1])))
 
     def __eq__(self, other_vector):
-        return math.isclose(self.vector[0], other_vector.vector[0], abs_tol=1e-08) \
-        and math.isclose(self.vector[1], other_vector.vector[1], abs_tol=1e-08)
+        return math.isclose(self.vector[0], other_vector.vector[0], abs_tol=1e-06) \
+        and math.isclose(self.vector[1], other_vector.vector[1], abs_tol=1e-06)
 
     def Norm(self):
         """
@@ -444,7 +445,8 @@ class Vector2D(Vector):
         else:
             fig = ax.figure
 
-        if self.vector == [0., 0.]:
+#        if self.vector == [0., 0.]:
+        if math.isclose(self.Norm(), 0, abs_tol=1e-9):
             point = Point2D(origin.vector)
             point.MPLPlot(ax=ax, color=color)
             return fig, ax
@@ -686,14 +688,15 @@ class Vector3D(Vector):
                                round(self.vector[2], ndigits)))
 
     def __hash__(self):
-        return int(1000*(self.vector[0]+self.vector[1]+self.vector[2]))
+#        return int(1000*(self.vector[0]+self.vector[1]+self.vector[2]))
+        return int(round(1e6*(self.vector[0]+self.vector[1]+self.vector[2])))
 
     def __eq__(self, other_vector:'Vector3D'):
-        if self.__class__ != other_vector.__class__:
-            return False
-        return math.isclose(self.vector[0], other_vector.vector[0], abs_tol=1e-08) \
-        and math.isclose(self.vector[1], other_vector.vector[1], abs_tol=1e-08) \
-        and math.isclose(self.vector[2], other_vector.vector[2], abs_tol=1e-08)
+#        if self.__class__ != other_vector.__class__:
+#            return False
+        return math.isclose(self.vector[0], other_vector.vector[0], abs_tol=1e-06) \
+        and math.isclose(self.vector[1], other_vector.vector[1], abs_tol=1e-06) \
+        and math.isclose(self.vector[2], other_vector.vector[2], abs_tol=1e-06)
 
     def Dot(self, other_vector):
         v1, v2, v3 = self.vector

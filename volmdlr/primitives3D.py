@@ -949,11 +949,12 @@ class Sweep(volmdlr.Shell3D):
 
     def shell_faces(self):
         faces = []
-        for wire_primitive in self.wire3d.edges:
+        for wire_primitive in self.wire3d.primitives : #edges:
             for contour_primitive in self.contour2d.primitives:
-                framestart, framend = self.framestart_end(wire_primitive)
+                
                 # Build face created by generating primitive of contour along wire primitive
                 if wire_primitive.__class__ == volmdlr.LineSegment3D:
+                    framestart, framend = self.framestart_end(wire_primitive)
                     
                     # self.contour3d = contour2d.To3D(plan_origin, x, y)
                     if contour_primitive.__class__ == volmdlr.LineSegment2D:
@@ -1024,14 +1025,7 @@ class Sweep(volmdlr.Shell3D):
                         points = edges[0].points 
                         
                         cylinder = volmdlr.CylindricalFace3D([volmdlr.Contour2D(edges)], cylindersurface3d, points)
-                        
                         faces.append(cylinder)
-                        
-                        # chopper les frames, les stocker
-                        # à chaque frame, le contour 2d on l'envoie en 3d
-                        # methode qui calcule les frames à chaque point
-                        # pour chaque primitive, calculer frame debut, frame fin
-                        # y,z du contours initial (cf extrusion)
                         
                     elif contour_primitive.__class__ == volmdlr.Arc3D:
                         # Part of cylinder a completer
@@ -1053,7 +1047,44 @@ class Sweep(volmdlr.Shell3D):
                         # faces.append(cylinder)
                         pass
                 elif wire_primitive.__class__ == volmdlr.Arc3D :
-                    pass
+                    rcenter = wire_primitive.radius
+                    rcircle = contour_primitive.radius
+                    
+                    
+                    
+                    center = wire_primitive.center
+                    normal = wire_primitive.normal
+                    normal.Normalize()
+                    # plane = volmdlr.Plane3D.from_normal(center, normal)
+                    
+                    center1 = wire_primitive.points[0]
+                    y = volmdlr.Vector3D((center1 - center).vector)
+                    y.Normalize()
+                    frame3d = volmdlr.Frame3D(center, normal, y, normal.Cross(y))
+                    toroidalsurface3d = volmdlr.ToroidalSurface3D(frame3d, rcenter*1000, rcircle*1000)
+
+                    ptcircle1 = center1 - volmdlr.Point3D([i*rcircle for i in y.vector])
+                    Arcstart = contour_primitive.To3D(center1, normal, y)
+                    
+                    center2 = wire_primitive.points[-1]
+                    pt2center = volmdlr.Vector3D((center - center2).vector)
+                    pt2center.Normalize()
+                    ptcircle2 = center2 - volmdlr.Point3D([i*rcircle for i in pt2center.vector])
+                    normal2 = normal.Cross(pt2center)                            
+                    Arcend = volmdlr.Arc3D(ptcircle2, ptcircle2.Rotation(center2, normal2, math.pi), ptcircle2, normal2)
+                    
+                    interior = wire_primitive.points[1]
+                    intocenter = volmdlr.Vector3D((center - interior).vector)
+                    intocenter.Normalize()
+                    ptint = interior - volmdlr.Point3D([i*rcircle for i in intocenter.vector])
+                    
+                    Arcmaster = wire_primitive#volmdlr.Arc3D(ptcircle1, ptint, ptcircle2, normal)
+                    
+                    edges = [Arcmaster, Arcstart, Arcend]
+                    points = Arcmaster.points + Arcstart.points + Arcmaster.points[::-1] + Arcend.points
+                    
+                    tore = volmdlr.ToroidalFace3D([volmdlr.Contour3D(edges)], toroidalsurface3d, points)
+                    faces.append(tore)
                       
         return faces
     
