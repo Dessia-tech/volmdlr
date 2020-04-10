@@ -4316,15 +4316,12 @@ class ToroidalFace3D (Face3D) :
         # source wikipedia Tore
         Points3D = []
         R = rcenter# - rcircle
-        # center = frame3d.origin
         for pt in points2d :
-            # phi, theta = pt[0], pt[1]
-            phi, theta = -pt[1], pt[0] #####  why -
-            # theta = -(theta + (2*math.pi)-ttot))
+            phi, theta = -pt[1], pt[0] 
             x = (R+rcircle*math.cos(phi))*math.cos(theta)
             y = (R+rcircle*math.cos(phi))*math.sin(theta)
             z = rcircle*math.sin(phi)
-            Points3D.append(Point3D([x,y,z]))#+center)
+            Points3D.append(Point3D([x,y,z]))
         Points_3D = [frame3d.OldCoordinates(point) for point in Points3D]
         return Points_3D
     
