@@ -1694,7 +1694,7 @@ class Plane3D(Primitive3D):
 
     @classmethod
     def from_normal(cls, point, normal):
-        v1 = normal.DeterministicUnitNormalVector()
+        v1 = normal.deterministic_unit_normal_vector()
         v2 = v1.Cross(normal)
         return cls(point, v1, v2)
 
