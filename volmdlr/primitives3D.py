@@ -879,19 +879,20 @@ class HelicalExtrudedProfile(volmdlr.Primitive3D):
             self.inner_contours2d = inner_contours2d
         else:
             self.inner_contours2d = []
+            
         self.outer_contour2d = outer_contour2d
         self.axis_point=axis_point
         self.axis=axis
         self.pitch=pitch
 
-        self.inner_contours3d=[c.To3D(plane_origin,x,y) for c in inner_contours2d]
+        self.inner_contours3d=[c.To3D(plane_origin,x,y) for c in self.inner_contours2d]
         self.outer_contour3d=outer_contour2d.To3D(plane_origin,x,y)
 
 
     def FreeCADExport(self,ip,ndigits=3):
         name='primitive{}'.format(ip)
         s="E = []\n"
-        for icontour, contour in enumerate(self.outer_contour3d.basis_primitives):
+        for icontour, contour in enumerate(self.outer_contour3d.edges):
             s += contour.FreeCADExport('L_{}'.format(icontour))
             s += 'E.append(Part.Edge(L_{}))\n'.format(icontour)
         s += 'W = Part.Wire(E[:])\n'
