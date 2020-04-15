@@ -11,8 +11,8 @@ import volmdlr.primitives3D as p3d
 
 # step_boite = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/MOTEUR HRevoUNIFY v2.stp')
 # moteur = vm.Step('/home/ringhausen/Bureau/Renault/MOTEUR.txt')
-# step_boite = vm.Step('/home/ringhausen/Bureau/Renault/BOITE E-TECHg2.stp')
-step_boite = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/BOITE E-TECHg2.stp')
+step_boite = vm.Step('/home/ringhausen/Bureau/Renault/BOITE E-TECHg2.stp')
+#step_boite = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/BOITE E-TECHg2.stp')
 # cmo = vm.Step('/home/ringhausen/Documents/git/ClientsProjects/Renault/CMO/data/step/CMO2.stp')
 # cylindre = vm.Step('/home/ringhausen/Bureau/Test STEP/Test STEP.step')
 
