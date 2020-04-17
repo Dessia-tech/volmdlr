@@ -393,23 +393,65 @@ class ExtrudedProfile(volmdlr.Shell3D):
 
         upper_contours = [contour.Translation(self.extrusion_vector, True) for contour in lower_contours]
         upper_face = volmdlr.PlaneFace3D(upper_contours)
-
+        
+        ##### WIP
         lateral_faces = []
-        for i in range(len(self.inner_contours3d)+1):
-            lower_points = lower_contours[i].points + [lower_contours[i].points[0]]
-            upper_points = upper_contours[i].points + [upper_contours[i].points[0]]
-            for j in range(len(lower_points[:-1])):
-                lower_vertice1 = lower_points[j]
-                lower_vertice2 = lower_points[j+1]
-                upper_vertice1 = upper_points[j]
-                upper_vertice2 = upper_points[j+1]
-                edge1 = volmdlr.LineSegment3D(lower_vertice1, lower_vertice2)
-                edge2 = volmdlr.LineSegment3D(lower_vertice2, upper_vertice2)
-                edge3 = volmdlr.LineSegment3D(upper_vertice2, upper_vertice1)
-                edge4 = volmdlr.LineSegment3D(upper_vertice1, lower_vertice1)
-                contour = volmdlr.Contour3D([edge1, edge2, edge3, edge4])
-                face = volmdlr.PlaneFace3D([contour])
-                lateral_faces.append(face)
+        # for i in range(len(self.inner_contours3d)+1):
+        #     lower_points = lower_contours[i].points + [lower_contours[i].points[0]]
+        #     upper_points = upper_contours[i].points + [upper_contours[i].points[0]]
+        #     for j in range(len(lower_points[:-1])):
+        #         lower_vertice1 = lower_points[j]
+        #         lower_vertice2 = lower_points[j+1]
+        #         upper_vertice1 = upper_points[j]
+        #         upper_vertice2 = upper_points[j+1]
+        #         edge1 = volmdlr.LineSegment3D(lower_vertice1, lower_vertice2)
+        #         edge2 = volmdlr.LineSegment3D(lower_vertice2, upper_vertice2)
+        #         edge3 = volmdlr.LineSegment3D(upper_vertice2, upper_vertice1)
+        #         edge4 = volmdlr.LineSegment3D(upper_vertice1, lower_vertice1)
+        #         contour = volmdlr.Contour3D([edge1, edge2, edge3, edge4])
+        #         face = volmdlr.PlaneFace3D([contour])
+        #         lateral_faces.append(face)
+        def generated_faces(extru_vec, edge) :
+            linextru = volmdlr.LineSegment3D(volmdlr.Point3D([0,0,0]), volmdlr.Point3D(extru_vec.vector))
+            normal = volmdlr.Vector3D(list(extru_vec))
+            normal.Normalize()
+            # u = self.x
+            # v = self.y
+            if edge.__class__ is volmdlr.core.Arc3D or edge.__class__ is volmdlr.core.Circle3D :
+                
+                center = edge.center
+                u = volmdlr.Vector3D((edge.points[0] - center).vector)
+                u.Normalize()
+                v = normal.Cross(u)
+                v.Normalize()
+                
+                frame = volmdlr.Frame3D(center, u, v, normal)
+                return [edge.generated_cylindricalface(linextru, frame)]
+            
+            elif edge.__class__ is volmdlr.core.LineSegment3D :
+                seg1 = edge
+                seg2 = volmdlr.LineSegment3D(seg1.points[1], seg1.points[1] + volmdlr.Point3D(extru_vec.vector))
+                seg3 = volmdlr.LineSegment3D(seg2.points[1], seg2.points[1]-seg1.points[1] + seg1.points[0])
+                seg4 = volmdlr.LineSegment3D(seg3.points[1], seg1.points[0])
+                edges = [seg1, seg2, seg3, seg4]
+                return [volmdlr.generated_face(edge, volmdlr.Contour3D(edges))]
+            
+            elif edge.__class__ is volmdlr.primitives3D.OpenedRoundedLineSegments2D or edge.__class__ is volmdlr.primitives3D.ClosedRoundedLineSegments2D :
+                faces = []
+                for element in edge.primitives :
+                    faces.extend(generated_faces(extru_vec, element))
+                return faces
+            else : 
+                return NotImplementedError
+        
+        for edge in self.outer_contour3d.edges :
+            lateral_faces.extend(generated_faces(self.extrusion_vector, edge))
+        
+        if self.inner_contours3d != [] :
+            for element in self.inner_contours3d :
+                for edge in element.edges :
+                    lateral_faces.extend(generated_faces(self.extrusion_vector, edge))
+        
         return [lower_face]+[upper_face]+lateral_faces
 
     def _bounding_box(self):
@@ -942,8 +984,8 @@ class Sweep(volmdlr.Shell3D):
         vec3d.Normalize()
         plan1 = volmdlr.Plane3D.from_normal(wire.points[0], vec3d)
         plan2 = volmdlr.Plane3D.from_normal(wire.points[1], vec3d)
-        framestart = volmdlr.Frame3D(wire.points[0], vec3d, plan1.vectors[0], plan1.vectors[1])
-        framend = volmdlr.Frame3D(wire.points[1], vec3d, plan2.vectors[0], plan2.vectors[1])
+        framestart = volmdlr.Frame3D(wire.points[0], plan1.vectors[0], plan1.vectors[1], vec3d)
+        framend = volmdlr.Frame3D(wire.points[1], plan2.vectors[0], plan2.vectors[1], vec3d)
         self.frames.extend([framestart, framend])
         return framestart, framend
 
@@ -956,11 +998,10 @@ class Sweep(volmdlr.Shell3D):
                 if wire_primitive.__class__ == volmdlr.LineSegment3D:
                     framestart, framend = self.framestart_end(wire_primitive)
                     
-                    # self.contour3d = contour2d.To3D(plan_origin, x, y)
                     if contour_primitive.__class__ == volmdlr.LineSegment2D:
                         # Planar face
                         pass
-                    elif contour_primitive.__class__ == volmdlr.Circle2D :# and normal perpendiculaire :
+                    elif contour_primitive.__class__ == volmdlr.Circle2D :
                         # Cylindrical face
                         # Change code below by proper cylindrical surface!
                         # cylinder = Cylinder(wire_primitive.middle_point(),
@@ -1008,83 +1049,62 @@ class Sweep(volmdlr.Shell3D):
                         # # ax = fig.add_subplot(111, projection='3d')
                         # # [pt.MPLPlot(ax=ax) for pt in points]
                         # cylinder = volmdlr.CylindricalFace3D([volmdlr.Contour3D(edges)], cylindersurface3d, points)
-                        
-                        
-                        ##### Method with contour2D
-                        radius = contour_primitive.radius
-                        center = contour_primitive.center.To3D(framestart.origin, framestart.v, framestart.w)
-                        frame = volmdlr.Frame3D(center, framestart.u, framestart.v, framestart.w)
-                        cylindersurface3d = volmdlr.CylindricalSurface3D(frame, radius*1000)
-                        
-                        segbh = volmdlr.LineSegment2D(contour_primitive.center, contour_primitive.center+volmdlr.Point2D((0,wire_primitive.Length())))
-                        circlestart = volmdlr.LineSegment2D(segbh.points[1], segbh.points[1]+volmdlr.Point2D((2*math.pi*radius,0)))
-                        seghb = volmdlr.LineSegment2D(circlestart.points[1],circlestart.points[1]-segbh.points[1])
-                        circlend = volmdlr.LineSegment2D(seghb.points[1],segbh.points[0])
-                        
-                        edges = [segbh, circlestart, seghb, circlend]
-                        points = edges[0].points 
-                        
-                        cylinder = volmdlr.CylindricalFace3D([volmdlr.Contour2D(edges)], cylindersurface3d, points)
-                        faces.append(cylinder)
+                        cylindricalsurface3d = volmdlr.CylindricalSurface3D(framestart, contour_primitive.radius*1000)
+                        faces.append(volmdlr.CylindricalFace3D.from_arc3d(wire_primitive, contour_primitive, cylindricalsurface3d))
+                        # faces.append(contour_primitive.generated_cylindricalface(wire_primitive, framestart))
                         
                     elif contour_primitive.__class__ == volmdlr.Arc3D:
-                        # Part of cylinder a completer
-                        # planeoff = volmdlr.Plane3D.from_normal(contour_primitive.center, contour_primitive.normal)
-                        # frame = volmdlr.Frame3D(contour_primitive.center, contour_primitive.normal, planeoff.vectors[0], planeoff.vectors[1])
-                        # radius = contour_primitive.radius
-                        # cylindersurface3d = volmdlr.CylindricalSurface3D(frame, radius)
-                        # start = contour_primitive.start + contour_primitive.normal
-                        # interior = contour_primitive.interior + contour_primitive.normal
-                        # end = contour_primitive.end + contour_primitive.normal
-                        # Arc_circlend = volmdlr.Arc3D(start, interior, end, normal=contour_primitive.normal)
-                        # edges = []
-                        # edges.append(wire_primitive)
-                        # edges.append(contour_primitive)
-                        # edges.append(wire_primitive)
-                        # edges.append(Arc_circlend)
-                        # cylinder = volmdlr.CylindricalFace3D([volmdlr.Contour3D(edges)], cylindersurface3d)
-                        # # faces.extend(cylinder.shell_faces())
-                        # faces.append(cylinder)
                         pass
                 elif wire_primitive.__class__ == volmdlr.Arc3D :
-                    rcenter = wire_primitive.radius
-                    rcircle = contour_primitive.radius
+                    # rcenter = wire_primitive.radius
+                    # rcircle = contour_primitive.radius
                     
+                    # center = wire_primitive.center
+                    # normal = wire_primitive.normal
+                    # normal.Normalize()
                     
-                    
-                    center = wire_primitive.center
-                    normal = wire_primitive.normal
-                    normal.Normalize()
-                    # plane = volmdlr.Plane3D.from_normal(center, normal)
-                    
-                    center1 = wire_primitive.points[0]
-                    y = volmdlr.Vector3D((center1 - center).vector)
-                    y.Normalize()
-                    frame3d = volmdlr.Frame3D(center, normal, y, normal.Cross(y))
-                    toroidalsurface3d = volmdlr.ToroidalSurface3D(frame3d, rcenter*1000, rcircle*1000)
+                    # center1 = wire_primitive.points[0]
+                    # y = volmdlr.Vector3D((center1 - center).vector)
+                    # y.Normalize()
+                    # frame3d = volmdlr.Frame3D(center, normal, y, normal.Cross(y))
+                    # toroidalsurface3d = volmdlr.ToroidalSurface3D(frame3d, rcenter*1000, rcircle*1000)
 
-                    ptcircle1 = center1 - volmdlr.Point3D([i*rcircle for i in y.vector])
-                    Arcstart = contour_primitive.To3D(center1, normal, y)
+                    # theta = wire_primitive.angle
+                    # phi = contour_primitive.angle
                     
-                    center2 = wire_primitive.points[-1]
-                    pt2center = volmdlr.Vector3D((center - center2).vector)
-                    pt2center.Normalize()
-                    ptcircle2 = center2 - volmdlr.Point3D([i*rcircle for i in pt2center.vector])
-                    normal2 = normal.Cross(pt2center)                            
-                    Arcend = volmdlr.Arc3D(ptcircle2, ptcircle2.Rotation(center2, normal2, math.pi), ptcircle2, normal2)
+                    # pt1, pt2, pt3, pt4 = volmdlr.Point2D((0, 0)), volmdlr.Point2D((0, phi)), volmdlr.Point2D((theta, phi)), volmdlr.Point2D((theta, 0))
+                    # seg1, seg2, seg3, seg4 = volmdlr.LineSegment2D(pt1, pt2), volmdlr.LineSegment2D(pt2, pt3), volmdlr.LineSegment2D(pt3, pt4), volmdlr.LineSegment2D(pt4, pt1) 
+                    # edges = [seg1, seg2, seg3, seg4]
+                    # contours2d =  [volmdlr.Contour2D(edges)]
+                    # points = [theta, phi]
                     
-                    interior = wire_primitive.points[1]
-                    intocenter = volmdlr.Vector3D((center - interior).vector)
-                    intocenter.Normalize()
-                    ptint = interior - volmdlr.Point3D([i*rcircle for i in intocenter.vector])
+                    # tore = volmdlr.ToroidalFace3D(contours2d, toroidalsurface3d, points)
                     
-                    Arcmaster = wire_primitive#volmdlr.Arc3D(ptcircle1, ptint, ptcircle2, normal)
                     
-                    edges = [Arcmaster, Arcstart, Arcend]
-                    points = Arcmaster.points + Arcstart.points + Arcmaster.points[::-1] + Arcend.points
                     
-                    tore = volmdlr.ToroidalFace3D([volmdlr.Contour3D(edges)], toroidalsurface3d, points)
-                    faces.append(tore)
+                    
+                    # ptcircle1 = center1 - volmdlr.Point3D([i*rcircle for i in y.vector])
+                    # Arcstart = contour_primitive.To3D(center1, normal, y)
+                    
+                    # center2 = wire_primitive.points[-1]
+                    # pt2center = volmdlr.Vector3D((center - center2).vector)
+                    # pt2center.Normalize()
+                    # ptcircle2 = center2 - volmdlr.Point3D([i*rcircle for i in pt2center.vector])
+                    # normal2 = normal.Cross(pt2center)                            
+                    # Arcend = volmdlr.Arc3D(ptcircle2, ptcircle2.Rotation(center2, normal2, math.pi), ptcircle2, normal2)
+                    
+                    # interior = wire_primitive.points[1]
+                    # intocenter = volmdlr.Vector3D((center - interior).vector)
+                    # intocenter.Normalize()
+                    # ptint = interior - volmdlr.Point3D([i*rcircle for i in intocenter.vector])
+                    
+                    # Arcmaster = wire_primitive#volmdlr.Arc3D(ptcircle1, ptint, ptcircle2, normal)
+                    
+                    # edges = [Arcmaster, Arcstart, Arcend]
+                    # points = Arcmaster.points + Arcstart.points + Arcmaster.points[::-1] + Arcend.points
+                    
+                    # tore = volmdlr.ToroidalFace3D([volmdlr.Contour3D(edges)], toroidalsurface3d, points)
+                    faces.append(contour_primitive.generated_toroidalface(wire_primitive))
                       
         return faces
     
