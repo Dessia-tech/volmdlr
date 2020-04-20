@@ -208,55 +208,24 @@ def delete_double_pos(points, triangles):
         
     return new_points, new_triangles
 
-def generated_face(edge, arg, arg2=None):# linextru=None, framestart=None, arcgen=None, Contours3D=None) :
-    if arg.__class__ is Contour3D : 
-        return edge.generated_planeface([arg]) #In LineSegment3D
-    elif edge.__class__ is Circle2D or edge.__class__ is Arc2D :
-        if (arg.__class__ is LineSegment3D or arg.__class__ is LineSegment2D)and arg2.__class__ is Frame3D : 
-            return Arc2D.generated_cylindricalface(arg, arg2) #In Arc2D
-        #pb : on ne connait pas l'angle si on fait ça
+# def generated_face(edge, arg, arg2=None):# linextru=None, framestart=None, arcgen=None, Contours3D=None) :
+#     ###### WIP : keep or not ?
+#     if arg.__class__ is Contour3D : 
+#         return edge.generated_planeface([arg]) #In LineSegment3D
+#     elif edge.__class__ is Circle2D or edge.__class__ is Arc2D :
+#         if (arg.__class__ is LineSegment3D or arg.__class__ is LineSegment2D)and arg2.__class__ is Frame3D : 
+#             return Arc2D.generated_cylindricalface(arg, arg2) #In Arc2D
+#         #pb : on ne connait pas l'angle si on fait ça
         
-    elif edge.__class__ is Circle3D or edge.__class__ is Arc3D :
-        if (arg.__class__ is LineSegment3D or arg.__class__ is LineSegment2D)and arg2.__class__ is Frame3D : 
-            return Arc3D.generated_cylindricalface(arg, arg2) #In Arc3D   
+#     elif edge.__class__ is Circle3D or edge.__class__ is Arc3D :
+#         if (arg.__class__ is LineSegment3D or arg.__class__ is LineSegment2D)and arg2.__class__ is Frame3D : 
+#             return Arc3D.generated_cylindricalface(arg, arg2) #In Arc3D   
 
 
 class Primitive2D(dc.DessiaObject):
     def __init__(self, name=''):
         self.name = name
     
-    def generated_cylindricalface(self, lineseg, framestart) :
-        radius = self.radius
-        # center = self.center.To3D(framestart.origin, framestart.v, framestart.w)
-        # frame = Frame3D(center, framestart.u, framestart.v, framestart.w)
-        cylindersurface3d = CylindricalSurface3D(framestart, radius*1000)
-        reste = 0 #self.angle/2 + 3*math.pi/2
-        print('reste', reste*180/(math.pi))
-        # segbh = LineSegment2D(Point2D([0,0]), Point2D((0,lineseg.Length())))
-        
-        segbh = LineSegment2D(Point2D([0,0])-Point2D((reste*radius/2,0)), Point2D((0,lineseg.Length()))-Point2D((reste*radius/2,0)))
-        
-        # segbh = LineSegment2D(self.center, self.center+Point2D((0,lineseg.Length())))
-        circlestart = LineSegment2D(segbh.points[1], segbh.points[1]+Point2D((self.angle*radius,0)))
-        seghb = LineSegment2D(circlestart.points[1],circlestart.points[1]-segbh.points[1]+segbh.points[0])
-        circlend = LineSegment2D(seghb.points[1],segbh.points[0])
-        
-        ## print('angle', self.angle)
-        ## segbh = LineSegment2D(-Point2D((self.angle*radius,0)), -Point2D((self.angle*radius,0)) + Point2D((0,lineseg.Length())))
-        ## circlestart = LineSegment2D(segbh.points[1], segbh.points[1]+Point2D((self.angle*radius,0)))
-        ## seghb = LineSegment2D(circlestart.points[1],circlestart.points[1]-segbh.points[1]+segbh.points[0])
-        ## circlend = LineSegment2D(seghb.points[1],segbh.points[0])
-        
-        edges = [segbh, circlestart, seghb, circlend]
-        # fig, ax = plt.subplots()
-        # segbh.MPLPlot(ax=ax)
-        # circlestart.MPLPlot(ax=ax, color='r')
-        # seghb.MPLPlot(ax=ax)
-        # circlend.MPLPlot(ax=ax, color='b')
-        points = edges[0].points 
-        
-        return CylindricalFace3D([Contour2D(edges)], cylindersurface3d, points)
-
     def generated_toroidalface(self, arcgen) :
         rcenter = arcgen.radius
         rcircle = self.radius
@@ -1789,50 +1758,6 @@ class Primitive3D(dc.DessiaObject):
         self.primitives = basis_primitives # une liste
         if basis_primitives is None:
             self.primitives = []
-
-
-    def generated_cylindricalface(self, lineseg, framestart) :
-        radius = self.radius
-        
-        u, v = Vector3D(list(framestart.u)), Vector3D(list(framestart.v))
-        O = framestart.origin #Point3D(list(self.points[1]))
-        
-        u.To2D(O, u, v)
-        v.To2D(O, u, v)
-        x, y = self.end.To2D(O, u, v)
-        # x, y = point1.To2D(O, u, v)
-        
-        theta = math.atan2(y, x)
-        print('theta', theta*180/math.pi, math.degrees(self.angle))
-        # if theta <0 :
-            # theta += 2*math.pi
-        # if math.isclose(theta, math.pi/2, abs_tol=1e-6) :
-            # framestart.v = -framestart.v
-        
-        
-        # vectest = Vector3D((self.points[1] - framestart.origin).vector)
-        # vectest.Normalize()
-        # angletest = math.acos(vectest.Dot(v))
-        # theta1 = math.acos(u.Dot(vectest))
-        # if math.isclose((angletest-theta1), math.pi/2, abs_tol=1e-6) :
-        #     framestart.v = -framestart.v
-        
-        cylindersurface3d = CylindricalSurface3D(framestart, radius*1000)
-        segbh = LineSegment2D(Point2D([0,0]), Point2D((0,lineseg.Length())))
-        circlestart = LineSegment2D(segbh.points[1], segbh.points[1]+Point2D((theta*radius,0)))
-        # circlestart = LineSegment2D(segbh.points[1], segbh.points[1]+Point2D((self.angle*radius,0)))
-        seghb = LineSegment2D(circlestart.points[1],circlestart.points[1]-segbh.points[1]+segbh.points[0])
-        circlend = LineSegment2D(seghb.points[1],segbh.points[0])
-        
-        edges = [segbh, circlestart, seghb, circlend]
-        # fig, ax = plt.subplots()
-        # segbh.MPLPlot(ax=ax)
-        # circlestart.MPLPlot(ax=ax, color='r')
-        # seghb.MPLPlot(ax=ax)
-        # circlend.MPLPlot(ax=ax, color='b')
-        points = edges[0].points 
-        
-        return CylindricalFace3D([Contour2D(edges)], cylindersurface3d, points)
 
     def generated_toroidalface(self, arcgen) :
         rcenter = arcgen.radius
@@ -4476,16 +4401,13 @@ class CylindricalFace3D(Face3D):
     def from_arc3d(cls, lineseg, arc, cylindricalsurface3d):
         radius = float(cylindricalsurface3d.radius)/1000
         frame = cylindricalsurface3d.frame
-        normal = frame.w
-        center = frame.origin
+        normal, center = frame.w, frame.origin
+        offset = 0
         if arc.__class__.__name__ == 'Circle3D' or arc.__class__.__name__ == 'Circle2D' : 
             frame_adapt = cylindricalsurface3d.frame
             theta = arc.angle
-            
-            
                 
         else :
-            print('hello')
             point12d = arc.start
             if point12d.__class__ is Point3D :
                 point12d = point12d.To2D(center, frame.u, frame.v) #Using it to put arc.start at the same height 
@@ -4504,13 +4426,16 @@ class CylindricalFace3D(Face3D):
         
             theta = math.atan2(y, x)
             if theta <= 0 :
-                theta += 2*math.pi
-            print('theta', theta*180/math.pi, math.degrees(arc.angle))
+                if arc.angle>math.pi :
+                    theta += 2*math.pi
+                else :
+                    offset = theta
+                    theta = -theta
             
             frame_adapt = Frame3D(center, u, v, normal)
-            
+         
         cylindersurface3d = CylindricalSurface3D(frame_adapt, radius*1000)
-        segbh = LineSegment2D(Point2D([0,0]), Point2D((0,lineseg.Length())))
+        segbh = LineSegment2D(Point2D([offset*radius,0]), Point2D((offset*radius,lineseg.Length())))
         circlestart = LineSegment2D(segbh.points[1], segbh.points[1]+Point2D((theta*radius,0)))
         seghb = LineSegment2D(circlestart.points[1],circlestart.points[1]-segbh.points[1]+segbh.points[0])
         circlend = LineSegment2D(seghb.points[1],segbh.points[0])
