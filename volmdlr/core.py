@@ -4401,8 +4401,16 @@ class CylindricalFace3D(Face3D):
             # W = cylindricalsurface3d.frame[2]
             # W.Normalize()
             # frame3d = Frame3D(center, V, W, U, '')
+            radius = float(cylindricalsurface3d.radius)/1000
+            frame3d = cylindricalsurface3d.frame
+            
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+            # [pt.MPLPlot(ax=ax) for pt in contours3d[0].points]
+            
             
             ptsnew = [frame3d.NewCoordinates(point) for point in contours3d[0].points]
+            [pt.MPLPlot(ax=ax, color='r') for pt in ptsnew]
             pts2d, seg, points = [], [], []
             for pt in ptsnew :
                 if pt.vector[1] >= 0 :
@@ -4411,7 +4419,7 @@ class CylindricalFace3D(Face3D):
                     else : 
                         theta = math.acos(pt.vector[0]/radius)
                 else :
-                    if math.isclose(pt.vector[0], radius, abs_tol=1e-8) :
+                    if math.isclose(pt.vector[0], radius, abs_tol=1e-8) or pt.vector[0]>radius:
                         theta = 2*math.pi
                     else :
                         theta = 2*math.pi - math.acos(pt.vector[0]/radius)
