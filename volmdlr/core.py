@@ -235,9 +235,9 @@ class Primitive2D(dc.DessiaObject):
         normal.Normalize()
         
         center1 = arcgen.points[0]
-        y = Vector3D((center1 - center).vector)
-        y.Normalize()
-        frame3d = Frame3D(center, normal, y, normal.Cross(y))
+        x = Vector3D((center1 - center).vector)
+        x.Normalize()
+        frame3d = Frame3D(center, x, normal.Cross(x), normal)
         toroidalsurface3d = ToroidalSurface3D(frame3d, rcenter*1000, rcircle*1000)
 
         theta = arcgen.angle
@@ -1767,16 +1767,55 @@ class Primitive3D(dc.DessiaObject):
         normal = arcgen.normal
         normal.Normalize()
         
-        center1 = arcgen.points[0]
-        y = Vector3D((center1 - center).vector)
-        y.Normalize()
-        frame3d = Frame3D(center, normal, y, normal.Cross(y))
+        center1 = arcgen.start
+        u = Vector3D((center1 - center).vector)
+        u.Normalize()
+        v = normal.Cross(u)
+        
+        # theta = arcgen.angle
+        # phi = self.angle
+        
+        #Offset for the Arcgen
+        point_last = arcgen.end.To2D(center, u, v)
+        x1, y1 = point_last.vector[0], point_last.vector[1]
+        offset1 = 0 
+        theta =math.atan2(y1, x1)
+        if theta <= 0 :
+            if arcgen.angle>math.pi :
+                theta += 2*math.pi
+            else :
+                offset1 = theta
+                theta = -theta
+                # theta = arcgen.angle
+       
+        # Offset for the Arc generated
+        center_generated = self.center
+        n = v
+        u_g = Vector3D((self.start - center_generated).vector)
+        u_g.Normalize()
+        v_g = n.Cross(u_g)
+        
+        last_generated = self.end.To2D(center_generated, u_g, v_g)
+        x2, y2 = last_generated.vector[0], last_generated.vector[1]
+    
+        offset2 = 0
+        phi = math.atan2(y2, x2)
+        print('phi', math.degrees(phi), math.degrees(self.angle))
+        if phi <= 0 :
+            if self.angle>math.pi :
+                phi += 2*math.pi
+            else :
+                offset2 = phi
+                phi = -phi
+                # phi = self.angle
+       
+        
+        frame3d = Frame3D(center, u, v, normal)
         toroidalsurface3d = ToroidalSurface3D(frame3d, rcenter*1000, rcircle*1000)
 
-        theta = arcgen.angle
-        phi = self.angle
         
-        pt1, pt2, pt3, pt4 = Point2D((0, 0)), Point2D((0, phi)), Point2D((theta, phi)), Point2D((theta, 0))
+        pt1, pt2, pt3, pt4 = Point2D((offset1, offset2)), Point2D((offset1, phi+offset2)), Point2D((theta+offset1, phi+offset2)), Point2D((theta+offset1, offset2))
+        # pt1, pt2, pt3, pt4 = Point2D((0, 0)), Point2D((0, phi)), Point2D((theta, phi)), Point2D((theta, 0))
         seg1, seg2, seg3, seg4 = LineSegment2D(pt1, pt2), LineSegment2D(pt2, pt3), LineSegment2D(pt3, pt4), LineSegment2D(pt4, pt1) 
         edges = [seg1, seg2, seg3, seg4]
         contours2d =  [Contour2D(edges)]
@@ -2074,9 +2113,15 @@ class ToroidalSurface3D(Primitive3D):
     @classmethod
     def from_step(cls, arguments, object_dict):
         frame3d = object_dict[arguments[1]]
+        U, W = frame3d.v, -frame3d.u
+        U.Normalize()
+        W.Normalize()
+        V = W.Cross(U)
+        frame_direct = Frame3D(frame3d.origin, U, V, W)
         rcenter = arguments[2]
         rcircle = arguments[3]
-        return cls(frame3d, rcenter, rcircle, arguments[0][1:-1])
+        # return cls(frame3d, rcenter, rcircle, arguments[0][1:-1])
+        return cls(frame_direct, rcenter, rcircle, arguments[0][1:-1])
     
 
 # class EllipseSurface3D(Primitive3D):
@@ -3276,6 +3321,15 @@ class LineSegment3D(Edge3D):
             Edge3D.Rotation(self, center, axis, angle, copy=False)
             self.bounding_box = self._bounding_box()
 
+    def __contains__(self, point):
+        point1, point2 = self.points[0], self.points[1]
+        axis = Vector3D(point2 - point1)
+        test = point.Rotation(point1, axis, math.pi)
+        if test==point :
+            return True
+        else : 
+            return False
+    
     def Translation(self, offset, copy=True):
         if copy:
             return LineSegment3D(*[p.Translation(offset, copy=True) for p in self.points])
@@ -4398,7 +4452,7 @@ class CylindricalFace3D(Face3D):
         return cls(contours2d, cylindricalsurface3d, points, name='')
     
     @classmethod 
-    def from_arc3d(cls, lineseg, arc, cylindricalsurface3d):
+    def from_arc3d(cls, lineseg, arc, cylindricalsurface3d): #Work with 2D too
         radius = float(cylindricalsurface3d.radius)/1000
         frame = cylindricalsurface3d.frame
         normal, center = frame.w, frame.origin
@@ -4604,6 +4658,78 @@ class ToroidalFace3D (Face3D) :
             
         return cls(contours2d, toroidalsurface3d, points, name='')
     
+    @classmethod
+    def from_arc3d(cls, arc, arcgen):#, toroidalsurface3d) :
+        rcircle = arc.radius
+        rcenter = arcgen.radius
+        
+        # center = toroidalsurface3d.origin
+        center = arcgen.center
+        # normal = toroidalsurface3d.w
+        normal = arcgen.normal
+        normal.Normalize()
+        
+        center1 = arcgen.start
+        u = Vector3D((center1 - center).vector)
+        u.Normalize()
+        v = normal.Cross(u)
+        
+        offset1 = 0
+        if arcgen.__class__.__name__ == 'Circle3D' or arcgen.__class__.__name__ == 'Circle2D' : 
+            theta = 2*math.pi
+       
+        else : #Offset for the Arcgen
+            point_last = arcgen.end
+            if point_last.__class__ is Point3D :
+                point_last = arcgen.end.To2D(center, u, v)
+            x1, y1 = point_last.vector[0], point_last.vector[1]
+            
+            theta =math.atan2(y1, x1)
+            if theta <= 0 :
+                if arcgen.angle>math.pi :
+                    theta += 2*math.pi
+                else :
+                    offset1 = theta
+                    theta = -theta
+       
+        offset2 = 0
+        if arc.__class__.__name__ == 'Circle3D' or arc.__class__.__name__ == 'Circle2D' : 
+            phi = 2*math.pi
+        
+        else : # Offset for the Arc 
+        
+            center_generated = arc.center
+            n = v
+            u_g = Vector3D((arc.start - center_generated).vector)
+            u_g.Normalize()
+            v_g = n.Cross(u_g)
+            
+            last_generated = arc.end
+            if last_generated.__class__ is Point3D :
+                last_generated = last_generated.To2D(center_generated, u_g, v_g)
+            x2, y2 = last_generated.vector[0], last_generated.vector[1]
+        
+            
+            phi = math.atan2(y2, x2)
+            if phi <= 0 :
+                if arc.angle>math.pi :
+                    phi += 2*math.pi
+                else :
+                    offset2 = phi
+                    phi = -phi
+       
+        frame3d = Frame3D(center, u, v, normal)
+        toroidalsurface3d = ToroidalSurface3D(frame3d, rcenter*1000, rcircle*1000)
+
+        
+        pt1, pt2, pt3, pt4 = Point2D((offset1, offset2)), Point2D((offset1, phi+offset2)), Point2D((theta+offset1, phi+offset2)), Point2D((theta+offset1, offset2))
+        seg1, seg2, seg3, seg4 = LineSegment2D(pt1, pt2), LineSegment2D(pt2, pt3), LineSegment2D(pt3, pt4), LineSegment2D(pt4, pt1) 
+        edges = [seg1, seg2, seg3, seg4]
+        contours2d =  [Contour2D(edges)]
+        points = [theta, phi]
+        
+        return cls(contours2d, toroidalsurface3d, points, name='')
+    
     def points_resolution(self, line, pos, resolution) : #With a resolution wished
         points = []
         points.append(line.points[0])
@@ -4623,7 +4749,7 @@ class ToroidalFace3D (Face3D) :
     def points2d_to3d(self, points2d, rcenter, rcircle, frame3d) :#, ttot, phitot) :
         # source wikipedia Tore
         Points3D = []
-        R = rcenter# - rcircle
+        R = rcenter #- rcircle #Rcenter is the radius at the extremum of the circle generated
         for pt in points2d :
             phi, theta = -pt[1], pt[0] 
             x = (R+rcircle*math.cos(phi))*math.cos(theta)
@@ -4637,14 +4763,16 @@ class ToroidalFace3D (Face3D) :
         rcenter = self.rcenter
         rcircle = self.rcircle
         
-        O = Vector3D(self.toroidalsurface3d.frame.origin)
-        U = self.toroidalsurface3d.frame[0] 
-        U.Normalize()
-        V = self.toroidalsurface3d.frame[1]
-        V.Normalize()
-        W = self.toroidalsurface3d.frame[2]
-        W.Normalize()
-        frame3d = Frame3D(O, V, W, U, '')    # Creation of new frame with normal as last vector
+        # O = Vector3D(self.toroidalsurface3d.frame.origin)
+        # U = self.toroidalsurface3d.frame[0] 
+        # U.Normalize()
+        # V = self.toroidalsurface3d.frame[1]
+        # V.Normalize()
+        # W = self.toroidalsurface3d.frame[2]
+        # W.Normalize()
+        # frame3d = Frame3D(O, V, W, U, '')    # Creation of new frame with normal as last vector
+        
+        frame3d = self.toroidalsurface3d.frame
         
         ######### OK : contours2d
         # pointscontours = self.contours[0].edges[0].points
@@ -4769,9 +4897,16 @@ class ToroidalFace3D (Face3D) :
         # print(B)
         
         Triangles, ts = [], []
+        
+        step = resolution
         for k in range (0,len(pts)-resolution-2) : #do not use the last column
             vertices=[]
             segments=[]
+            
+            if k%step == 0 and k!=0:
+                step += resolution+1
+                continue
+            
             listpt = [pts[k], pts[k+1], pts[k+1+resolution+1], pts[k+resolution+1]]
             listindice = [k, k+1, k+1+resolution+1, k+resolution+1]
             for i, pt in enumerate(listpt):

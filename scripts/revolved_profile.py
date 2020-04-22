@@ -20,7 +20,7 @@ p8 = vm.Point2D((-0.08, 0.04))
 points1 = [p1, p2, p3, p4, p5, p6, p7, p8]
 
 c1 = vm.Polygon2D(points1)
-c2 = ClosedRoundedLineSegments2D(points1, {0: 0.002, 1: 0.002, 3: 0.002})
+c2 = ClosedRoundedLineSegments2D(points1, {0: 0.002, 1: 0.002, 3: 0.002}) 
 
 c1.MPLPlot(plot_points=True)
 c2.MPLPlot(plot_points=True)

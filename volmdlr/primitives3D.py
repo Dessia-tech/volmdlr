@@ -566,46 +566,133 @@ class RevolvedProfile(volmdlr.Shell3D):
         number_points_tesselation = math.ceil(number_points_for_circle*self.angle/2/math.pi)
         delta_angle = self.angle/number_points_tesselation
 
-        for nb in range(number_points_tesselation):
-            if nb == 0:
-                points = self.contour3D.points
-            else:
-                points = [p.Rotation(self.axis_point, self.axis, nb*delta_angle, copy=True) for p in self.contour3D.points]
+        # for nb in range(number_points_tesselation):
+        #     if nb == 0:
+        #         points = self.contour3D.points
+        #     else:
+        #         points = [p.Rotation(self.axis_point, self.axis, nb*delta_angle, copy=True) for p in self.contour3D.points]
 
-            rotated_points = [p.Rotation(self.axis_point, self.axis, delta_angle, copy=True) for p in points]
+        #     rotated_points = [p.Rotation(self.axis_point, self.axis, delta_angle, copy=True) for p in points]
 
-            points_pair = list(zip(points, rotated_points))
-            for i, (pt1, pt2) in enumerate(points_pair):
+        #     points_pair = list(zip(points, rotated_points))
+        #     for i, (pt1, pt2) in enumerate(points_pair):
                 
-                if i == len(points_pair)-1:
-                    pt1_next = points_pair[0][0]
-                    pt2_next = points_pair[0][1]
-                else:
-                    pt1_next = points_pair[i+1][0]
-                    pt2_next = points_pair[i+1][1]
+        #         if i == len(points_pair)-1:
+        #             pt1_next = points_pair[0][0]
+        #             pt2_next = points_pair[0][1]
+        #         else:
+        #             pt1_next = points_pair[i+1][0]
+        #             pt2_next = points_pair[i+1][1]
 
-                if pt1 == pt2 and pt1_next == pt2_next:
-                    continue
+        #         if pt1 == pt2 and pt1_next == pt2_next:
+        #             continue
                 
-                elif pt1 == pt2:
-                    edges = [volmdlr.LineSegment3D(pt1.copy(), pt2_next.copy()),
-                             volmdlr.LineSegment3D(pt2_next.copy(), pt1_next.copy()),
-                             volmdlr.LineSegment3D(pt1_next.copy(), pt1.copy())]
+        #         elif pt1 == pt2:
+        #             edges = [volmdlr.LineSegment3D(pt1.copy(), pt2_next.copy()),
+        #                       volmdlr.LineSegment3D(pt2_next.copy(), pt1_next.copy()),
+        #                       volmdlr.LineSegment3D(pt1_next.copy(), pt1.copy())]
                 
-                elif pt1_next == pt2_next:
-                    edges = [volmdlr.LineSegment3D(pt1.copy(), pt2.copy()),
-                             volmdlr.LineSegment3D(pt2.copy(), pt1_next.copy()),
-                             volmdlr.LineSegment3D(pt1_next.copy(), pt1.copy())]
+        #         elif pt1_next == pt2_next:
+        #             edges = [volmdlr.LineSegment3D(pt1.copy(), pt2.copy()),
+        #                       volmdlr.LineSegment3D(pt2.copy(), pt1_next.copy()),
+        #                       volmdlr.LineSegment3D(pt1_next.copy(), pt1.copy())]
                     
-                else:
-                    edges = [volmdlr.LineSegment3D(pt1.copy(), pt2.copy()),
-                             volmdlr.LineSegment3D(pt2.copy(), pt2_next.copy()),
-                             volmdlr.LineSegment3D(pt2_next.copy(), pt1_next.copy()),
-                             volmdlr.LineSegment3D(pt1_next.copy(), pt1.copy())]
+        #         else:
+        #             edges = [volmdlr.LineSegment3D(pt1.copy(), pt2.copy()),
+        #                       volmdlr.LineSegment3D(pt2.copy(), pt2_next.copy()),
+        #                       volmdlr.LineSegment3D(pt2_next.copy(), pt1_next.copy()),
+        #                       volmdlr.LineSegment3D(pt1_next.copy(), pt1.copy())]
 
-                contour = volmdlr.Contour3D(edges)
-                faces.append(volmdlr.PlaneFace3D([contour]))
+        #         contour = volmdlr.Contour3D(edges)
+        #         faces.append(volmdlr.PlaneFace3D([contour]))
+        def create_arc(start, angle, axis_point, axis) :
+            start_gen = start
+            int_gen, end_gen = start_gen.Rotation(axis_point, axis, angle/2, copy=True), start_gen.Rotation(axis_point, axis, angle, copy=True)
+            if angle == 2*math.pi :
+                end_gen = start_gen
+            arcgen = volmdlr.Arc3D(start_gen, int_gen, end_gen, axis)
+            return arcgen
 
+        angle, axis, axis_point = float(self.angle), self.axis.copy(), self.axis_point.copy() 
+        axis.Normalize()
+        LS = volmdlr.LineSegment3D(axis_point, axis_point+axis)
+        for edge in self.contour3D.edges :
+            if edge.__class__ is volmdlr.core.Arc3D :
+                pt = edge.start
+                pt2 = edge.end
+                
+                vec2 = volmdlr.Vector3D(axis_point - pt2)
+                n2 = vec2.Norm()
+                vec = volmdlr.Vector3D(axis_point - pt)
+                n1 = vec.Norm()
+                
+                if n1>n2 :
+                    offset = volmdlr.Vector3D(edge.center-pt)
+                    pt_arc = pt + offset
+                else : 
+                    edge = volmdlr.Arc3D(pt2, edge.interior, pt, -edge.normal)
+                    offset = volmdlr.Vector3D(edge.center-pt2)
+                    pt_arc = pt2 + offset
+                arcgen = create_arc(pt_arc, angle, axis_point, axis)
+                faces.append(volmdlr.ToroidalFace3D.from_arc3d(edge, arcgen))
+            
+            elif edge.__class__ is volmdlr.core.LineSegment3D :
+                vect = volmdlr.Vector3D((edge.points[1]-edge.points[0]).vector)
+                vect.Normalize()
+                dot = axis.Dot(vect)
+                if dot==0 :
+                    point1, point2 = edge.points[0], edge.points[1]
+                    if point1 in LS : #LS.__contains__(point1) :
+                        arcgen = create_arc(point2, angle, axis_point, axis)
+                        if angle != 2*math.pi :
+                            LS1 = volmdlr.LineSegment3D(point1, arcgen.start)
+                            LS2 = volmdlr.LineSegment3D(arcgen.end, point1)
+                            faces.append(volmdlr.PlaneFace3D([volmdlr.Contour3D([LS1, arcgen, LS2])]))
+                        else : 
+                            faces.append(volmdlr.PlaneFace3D([volmdlr.Contour3D([arcgen])]))
+                    elif point2 in LS : # LS.__contains__(point2) :
+                        arcgen = create_arc(point1, angle, axis_point, axis)
+                        if angle != 2*math.pi :
+                            LS1 = volmdlr.LineSegment3D(point2, arcgen.start)
+                            LS2 = volmdlr.LineSegment3D(arcgen.end, point2)
+                            faces.append(volmdlr.PlaneFace3D([volmdlr.Contour3D([LS1, arcgen, LS2])]))
+                        else : 
+                            faces.append(volmdlr.PlaneFace3D([volmdlr.Contour3D([arcgen])]))
+                    else :
+                        test1 = volmdlr.Vector3D(edge.points[0]-axis_point)
+                        test2 = volmdlr.Vector3D(edge.points[1]-axis_point)
+                        if test1.Norm() > test2.Norm() :
+                            arcgen1 = create_arc(edge.points[0], angle, axis_point, axis)
+                            arcgen2 = create_arc(edge.points[1], angle, axis_point, axis)
+                        else :
+                            arcgen2 = create_arc(edge.points[0], angle, axis_point, axis)
+                            arcgen1 = create_arc(edge.points[1], angle, axis_point, axis)
+                        
+                        if angle == 2*math.pi :
+                            faces.append(volmdlr.PlaneFace3D([volmdlr.Contour3D([arcgen1]),volmdlr.Contour3D([arcgen2])]))
+                        else : #Change arc to make a direct contour
+                            arcgen_change = volmdlr.Arc3D(arcgen1.end, arcgen1.interior, arcgen1.start, -axis)
+                            LS2 = volmdlr.LineSegment3D(arcgen2.end, arcgen_change.start)
+                            LS1 = volmdlr.LineSegment3D(arcgen_change.end, arcgen2.start)
+                            faces.append(volmdlr.PlaneFace3D([volmdlr.Contour3D([arcgen2, LS2, arcgen_change, LS1])]))
+                
+                elif dot==1 or dot==-1 : 
+                    if LS.__contains__(edge.points[0]) :
+                        continue
+                    else :
+                        arcgen = create_arc(edge.points[0], angle, axis_point, axis)
+                        x = axis.DeterministicUnitNormalVector()
+                        frame = volmdlr.Frame3D(arcgen.center, x, axis.Cross(x), dot*axis)
+                        cylsurf3d = volmdlr.CylindricalSurface3D(frame, arcgen.radius*1000)
+                        faces.append(volmdlr.CylindricalFace3D.from_arc3d(edge, arcgen, cylsurf3d))
+                
+                else : ### TODO : case of conic
+                    pass
+                
+        if angle < 2*math.pi :
+            faces.append(volmdlr.PlaneFace3D([self.contour3D]))
+            faces.append(volmdlr.PlaneFace3D([self.contour3D.Rotation(axis_point, axis, angle)]))
+        
         return faces
 
 
@@ -1091,7 +1178,8 @@ class Sweep(volmdlr.Shell3D):
                     # edges = [Arcmaster, Arcstart, Arcend]
                     # points = Arcmaster.points + Arcstart.points + Arcmaster.points[::-1] + Arcend.points
                     # tore = volmdlr.ToroidalFace3D([volmdlr.Contour3D(edges)], toroidalsurface3d, points)
-                    faces.append(contour_primitive.generated_toroidalface(wire_primitive))
+                    faces.append(volmdlr.ToroidalFace3D.from_arc3d(contour_primitive, wire_primitive))
+                    # faces.append(contour_primitive.generated_toroidalface(wire_primitive))
                       
         return faces
     
