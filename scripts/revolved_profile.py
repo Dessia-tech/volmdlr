@@ -5,7 +5,7 @@
 """
 
 import volmdlr.core as vm
-from volmdlr.primitives2D import ClosedRoundedLineSegments2D
+from volmdlr.primitives2D import ClosedRoundedLineSegments2D, OpenedRoundedLineSegments2D
 from volmdlr.primitives3D import RevolvedProfile
 
 p1 = vm.Point2D((-0.08, 0.1755))
@@ -46,183 +46,40 @@ profile2 = RevolvedProfile(0.5*vm.X3D, vm.Y3D, vm.Z3D, c2, 0.5*vm.X3D, vm.Y3D)
 profile3 = RevolvedProfile(-0.5*vm.X3D, vm.Y3D, vm.Z3D, c1, -0.5*vm.X3D, vm.Y3D)
 profile4 = RevolvedProfile(vm.X3D, vm.Y3D, vm.Z3D, c2, vm.X3D, vm.Y3D)
 
-contour_dict = {'name': '',
- 'package_version': None,
- 'object_class': 'volmdlr.core.Contour2D',
- 'primitives': [{'name': '',
-   'package_version': None,
-   'object_class': 'volmdlr.core.Arc2D',
-   'interior': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [0, 0.031875]},
-   'start': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [-0.0041097537330863606, 0.0345]},
-   'end': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [0.0041097537330863606, 0.0345]},
-   'center': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [0.0, 0.03640465728506993]},
-   'radius': 0.004529657285069946,
-   'is_trigo': True,
-   'angle1': -2.707611789919429,
-   'angle2': -0.4339808636703642,
-   'angle': 2.273630926249065},
-  {'name': '',
-   'point1': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [0.0041097537330863606, 0.0345]},
-   'point2': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [0.004999999999999999, 0.0345]},
-   'object_class': 'volmdlr.core.LineSegment2D'},
-  {'name': '',
-   'package_version': None,
-   'object_class': 'volmdlr.core.Arc2D',
-   'interior': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [0.005353553390593273, 0.034353553390593275]},
-   'start': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [0.004999999999999999, 0.0345]},
-   'end': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [0.0055, 0.034]},
-   'center': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [0.005000000000000158, 0.034000000000000294]},
-   'radius': 0.000499999999999709,
-   'is_trigo': False,
-   'angle1': -5.828670879283917e-13,
-   'angle2': 1.570796326795214,
-   'angle': 1.570796326795797},
-  {'name': '',
-   'point1': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [0.0055, 0.034]},
-   'point2': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [0.0055, 0.028]},
-   'object_class': 'volmdlr.core.LineSegment2D'},
-  {'name': '',
-   'package_version': None,
-   'object_class': 'volmdlr.core.Arc2D',
-   'interior': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [0.005353553390593273, 0.027646446609406728]},
-   'start': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [0.0055, 0.028]},
-   'end': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [0.004999999999999999, 0.0275]},
-   'center': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [0.005000000000000029, 0.028000000000000094]},
-   'radius': 0.000499999999999971,
-   'is_trigo': False,
-   'angle1': -1.5707963267949556,
-   'angle2': -1.8735013540550605e-13,
-   'angle': 1.5707963267947682},
-  {'name': '',
-   'point1': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [0.004999999999999999, 0.0275]},
-   'point2': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [-0.004999999999999999, 0.0275]},
-   'object_class': 'volmdlr.core.LineSegment2D'},
-  {'name': '',
-   'package_version': None,
-   'object_class': 'volmdlr.core.Arc2D',
-   'interior': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [-0.005353553390593273, 0.027646446609406728]},
-   'start': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [-0.004999999999999999, 0.0275]},
-   'end': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [-0.0055, 0.028]},
-   'center': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [-0.005000000000000029, 0.028000000000000094]},
-   'radius': 0.0005000000000000941,
-   'is_trigo': False,
-   'angle1': -3.1415926535896057,
-   'angle2': -1.5707963267948377,
-   'angle': 1.570796326794768},
-  {'name': '',
-   'point1': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [-0.0055, 0.028]},
-   'point2': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [-0.0055, 0.034]},
-   'object_class': 'volmdlr.core.LineSegment2D'},
-  {'name': '',
-   'package_version': None,
-   'object_class': 'volmdlr.core.Arc2D',
-   'interior': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [-0.005353553390593273, 0.034353553390593275]},
-   'start': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [-0.0055, 0.034]},
-   'end': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [-0.004999999999999999, 0.0345]},
-   'center': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [-0.005000000000000158, 0.034000000000000294]},
-   'radius': 0.0004999999999998417,
-   'is_trigo': False,
-   'angle1': 1.5707963267945793,
-   'angle2': -3.1415926535892105,
-   'angle': 1.5707963267957965},
-  {'name': '',
-   'point1': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [-0.004999999999999999, 0.0345]},
-   'point2': {'name': '',
-    'package_version': None,
-    'object_class': 'volmdlr.core_compiled.Point2D',
-    'vector': [-0.0041097537330863606, 0.0345]},
-   'object_class': 'volmdlr.core.LineSegment2D'}],
- '_utd_analysis': False}
 
-contour = vm.Contour2D.dict_to_object(contour_dict)
-profile5 = RevolvedProfile(0.15*vm.Y3D, vm.X3D, vm.Z3D, contour, 0.15*vm.Y3D, vm.X3D)
+# B = 0.020
+# d1 = 0.015
+# h = 0.005
+# radius = 0.002
+# F = 0.025
+# d = 0.010
+B = 0.057
+d1 = 0.45200000000000007
+h = 0.007778409372698711
+radius = 0.0005
+F = 0.42500000000000004
+d = 0.38
+
+
+# Internal ring contour
+pbi2 = vm.Point2D((-B/2., d1/2.))
+pbi1 = pbi2.Translation(vm.Vector2D((h, 0)))
+pbi3 = vm.Point2D((-B/2., d/2.))
+pbi4 = vm.Point2D((B/2., d/2.))
+pbi5 = vm.Point2D((B/2., d1/2.))
+pbi6 = pbi5.Translation(vm.Vector2D((-h, 0)))
+bi1 = OpenedRoundedLineSegments2D([pbi6, pbi5, pbi4, pbi3, pbi2, pbi1],
+                                         {1: radius,
+                                          2: radius,
+                                          3: radius,
+                                          4: radius},
+                                          adapt_radius=True)
+cbi1 = vm.Arc2D(pbi1, vm.Point2D((0, F/2)), pbi6)
+c5 = vm.Contour2D([cbi1] + bi1.primitives)
+
+y = vm.X3D.RandomUnitNormalVector()
+z = vm.X3D.Cross(y)
+profile5 = RevolvedProfile(0.15*vm.Y3D, vm.X3D, z, c5, 0.15*vm.Y3D, vm.X3D)
 
 model = vm.VolumeModel([profile1, profile2, profile3, profile4, profile5])
 model.babylonjs()
