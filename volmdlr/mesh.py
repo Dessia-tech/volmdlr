@@ -63,6 +63,8 @@ class TriangularElement:
         
         self.center = (self.points[0]+self.points[1]+self.points[2])/3
         
+        self.area = self.area()
+        
     def _to_linear_elements(self):
         vec1 = vm.Vector2D(self.points[1] - self.points[0])
         vec2 = vm.Vector2D(self.points[2] - self.points[1])
@@ -70,6 +72,9 @@ class TriangularElement:
         normal1 = vm.Vector2D([-vec1[1], vec1[0]])
         normal2 = vm.Vector2D([-vec2[1], vec2[0]])
         normal3 = vm.Vector2D([-vec3[1], vec3[0]])
+        normal1.Normalize()
+        normal2.Normalize()
+        normal3.Normalize()
         if normal1.Dot(vec2) < 0:
             normal1 = - normal1
         if normal2.Dot(vec3) < 0:
