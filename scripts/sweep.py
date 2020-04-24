@@ -22,28 +22,30 @@ radius = {1: 0.015, 2: 0.020, 3: 0.005}
 current_point = p5.vector
 #points = [p1, p2]
 #radius = {1: 0.010}
-for i in range(14):
+for i in range(10):
     current_point += 0.300 * (npy.random.random(3) -0.5)
     points.append(vm.Point3D(current_point))
     radius[4+i] = 0.01 + 0.03 * random.random()
 #print(radius)
-c = vm.Circle3D(p1, 0.008, p2-p1)
+# c = vm.Circle3D(p1, 0.008, p2-p1)
+c = vm.Circle2D(vm.Point2D((0,0)), 0.008)
 
-rl = primitives3D.ClosedRoundedLineSegments3D(points, radius, adapt_radius=True, name='wire')
-contour = vm.Contour3D([c])
+rl = primitives3D.OpenedRoundedLineSegments3D(points, radius, adapt_radius=True, name='wire')
+contour = vm.Contour2D([c])
 
 r1 = rl.to_dict()
-r2 = primitives3D.ClosedRoundedLineSegments3D.dict_to_object(r1)
-
+r2 = primitives3D.OpenedRoundedLineSegments3D.dict_to_object(r1)
 c1 = c.to_dict()
-c2 = vm.Circle3D.dict_to_object(c1)
+c2 = vm.Circle2D.dict_to_object(c1)
 
 c1 = contour.to_dict()
-c2 = vm.Contour3D.dict_to_object(c1)
+c2 = vm.Contour2D.dict_to_object(c1)
+
 
 sweep = primitives3D.Sweep(contour, rl, name = 'Random pipe')
 
 m = vm.VolumeModel([sweep])
+m.babylonjs()
+# m.FreeCADExport('sweep')
 
-m.FreeCADExport('sweep')
 

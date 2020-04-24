@@ -65,9 +65,7 @@ export class D3Unpacker {
       if (dict_component.type == 'line') {
         var lines_data = [];
         lines_data.push(dict_component);
-        console.log(dict_component);
         lines_data.forEach(function(d){
-          console.log(d);
           var stroke_color = d3.rgb(0*255, 1*255, 1*255);
           data_container.append("line")
             .attr('id', 'line_geom')
@@ -80,7 +78,7 @@ export class D3Unpacker {
             .attr("stroke-width-init", d.size)
         })
       }
-      else if (dict_component.type == "path"){
+      else if (dict_component.type == "wire"){
         var paths_data = [];
         paths_data.push(dict_component);
         paths_data.forEach(function(d){
@@ -238,7 +236,7 @@ export class D3Unpacker {
         var lines_data = [];
         var texts_data = [];
         var arcs_data = [];
-        var paths_data = [];
+        var wires_data = [];
         var area_data = [];
 
         var explore = dict_component['plot_data'];
@@ -251,8 +249,8 @@ export class D3Unpacker {
             d.data.forEach(function(d){
               area_data.push([1000*d['x'],1000*d['y']])})
           }
-          else if (d.type == "path"){
-            paths_data.push(d);
+          else if (d.type == "wire"){
+            wires_data.push(d);
             d.data.forEach(function(d){
               area_data.push([1000*d['x'],1000*d['y']])})
           }
@@ -265,7 +263,6 @@ export class D3Unpacker {
             rectangles_data.push(d);
           }
         })
-
         arcs_data.forEach(function(d){
           var draw_data = []
           d.data.forEach(function(dd){
@@ -283,7 +280,7 @@ export class D3Unpacker {
               .attr("stroke-width-init", d.size)
         })
 
-        paths_data.forEach(function(d){
+        wires_data.forEach(function(d){
           var draw_data = []
           d.data.forEach(function(dd){
             draw_data.push([1000*dd['x'],1000*dd['y']])

@@ -56,7 +56,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.Wire2D):
         if w != volmdlr.Vector2D((0, 0)):
             w.Normalize()
 
-        v1 = u1.NormalVector()
+        v1 = u1.deterministic_unit_normal_vector()
         if v1.Dot(w) < 0:
             v1 = -v1
 
