@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+ #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 
@@ -56,7 +56,7 @@ profile4 = RevolvedProfile(vm.X3D, vm.Y3D, vm.Z3D, c2, vm.X3D, vm.Y3D)
 B = 0.057
 d1 = 0.45200000000000007
 h = 0.007778409372698711
-radius = 0.0005
+radius = 0.0005 #with 0.005 it's better to debug
 F = 0.42500000000000004
 d = 0.38
 
@@ -82,6 +82,7 @@ z = vm.X3D.Cross(y)
 profile5 = RevolvedProfile(0.15*vm.Y3D, vm.X3D, z, c5, 0.15*vm.Y3D, vm.X3D)
 
 model = vm.VolumeModel([profile1, profile2, profile3, profile4, profile5])
+# model = vm.VolumeModel([profile5])
 model.babylonjs()
 
 

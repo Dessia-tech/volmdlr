@@ -616,6 +616,7 @@ class RevolvedProfile(volmdlr.Shell3D):
         angle, axis, axis_point = float(self.angle), self.axis.copy(), self.axis_point.copy() 
         axis.Normalize()
         LS = volmdlr.LineSegment3D(axis_point, axis_point+axis)
+        
         for edge in self.contour3D.edges :
             if edge.__class__ is volmdlr.core.Arc3D :
                 pt = edge.start
@@ -625,14 +626,15 @@ class RevolvedProfile(volmdlr.Shell3D):
                 n2 = vec2.Norm()
                 vec = volmdlr.Vector3D(axis_point - pt)
                 n1 = vec.Norm()
-                
-                if n1>n2 :
+                if n1>=n2 :
                     offset = volmdlr.Vector3D(edge.center-pt)
                     pt_arc = pt + offset
+                    
                 else : 
                     edge = volmdlr.Arc3D(pt2, edge.interior, pt, -edge.normal)
                     offset = volmdlr.Vector3D(edge.center-pt2)
                     pt_arc = pt2 + offset
+
                 arcgen = create_arc(pt_arc, angle, axis_point, axis)
                 faces.append(volmdlr.ToroidalFace3D.from_arc3d(edge, arcgen))
             
@@ -642,7 +644,7 @@ class RevolvedProfile(volmdlr.Shell3D):
                 dot = axis.Dot(vect)
                 if dot==0 :
                     point1, point2 = edge.points[0], edge.points[1]
-                    if point1 in LS : #LS.__contains__(point1) :
+                    if point1 in LS : 
                         arcgen = create_arc(point2, angle, axis_point, axis)
                         if angle != 2*math.pi :
                             LS1 = volmdlr.LineSegment3D(point1, arcgen.start)
@@ -650,7 +652,7 @@ class RevolvedProfile(volmdlr.Shell3D):
                             faces.append(volmdlr.PlaneFace3D([volmdlr.Contour3D([LS1, arcgen, LS2])]))
                         else : 
                             faces.append(volmdlr.PlaneFace3D([volmdlr.Contour3D([arcgen])]))
-                    elif point2 in LS : # LS.__contains__(point2) :
+                    elif point2 in LS : 
                         arcgen = create_arc(point1, angle, axis_point, axis)
                         if angle != 2*math.pi :
                             LS1 = volmdlr.LineSegment3D(point2, arcgen.start)
@@ -677,7 +679,7 @@ class RevolvedProfile(volmdlr.Shell3D):
                             faces.append(volmdlr.PlaneFace3D([volmdlr.Contour3D([arcgen2, LS2, arcgen_change, LS1])]))
                 
                 elif dot==1 or dot==-1 : 
-                    if LS.__contains__(edge.points[0]) :
+                    if edge.points[0] in LS :
                         continue
                     else :
                         arcgen = create_arc(edge.points[0], angle, axis_point, axis)
