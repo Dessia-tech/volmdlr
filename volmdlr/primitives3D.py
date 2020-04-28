@@ -607,7 +607,6 @@ class RevolvedProfile(volmdlr.Shell3D):
                     arcgen = create_arc(pt_arc+0.00001*vec_offset, angle, axis_point, axis)
                 else :
                     arcgen = create_arc(pt_arc, angle, axis_point, axis)
-                print(arcgen.angle, edge.angle)
                 faces.append(volmdlr.ToroidalFace3D.from_arc3d(edge, arcgen))
             
             elif edge.__class__ is volmdlr.core.LineSegment3D :
@@ -1225,9 +1224,9 @@ class Sphere(RevolvedProfile):
         self.position = center
         
         # Revolved Profile for complete sphere
-        s = volmdlr.Point2D((-math.pi*self.radius, 0))
-        i = volmdlr.Point2D((0, math.pi*self.radius))
-        e = volmdlr.Point2D((1.1*math.pi*self.radius, 0))
+        s = volmdlr.Point2D((-self.radius, 0))
+        i = volmdlr.Point2D((0, self.radius))
+        e = volmdlr.Point2D((1.1*self.radius, 0)) #Not coherent but it works at first, to change !!
         c = volmdlr.Arc2D(s, i , e)
         contour = volmdlr.Contour2D([c])
         axis = volmdlr.X3D

@@ -4786,18 +4786,19 @@ class ToroidalFace3D (Face3D) :
         
         centerota = Point2D((0,0))
         
-        # angle_theta = self.points[0]
-        # angle_phi = self.points[1]
-        # pas_theta = 0.04
-        # pas_phi = 0.02
-        # resolution_theta = abs(int(angle_theta*rcenter/pas_theta))+1
-        # resolution_phi = abs(int(angle_phi*rcircle/pas_phi))
-        # if resolution_phi < 3 :
-        #     resolution_phi = 6
-        # print('resolution', resolution_theta, resolution_phi)
+        angle_theta = self.points[0]
+        angle_phi = self.points[1]
+        pas_theta = 0.05
+        pas_phi = 0.01
+        resolution_theta = abs(int(angle_theta*rcenter/pas_theta))+1
+        resolution_phi = abs(int(angle_phi*rcircle/pas_phi))
+        if resolution_phi < 14 :
+            resolution_phi = 14
+        if resolution_theta < 14 :
+            resolution_theta = 14
         
-        ctr_pt1 = self.cut_contours(self.contours2d, resolution) ####
-        # ctr_pt1 = self.cut_contours(self.contours2d, resolution_theta)
+        ctr_pt1 = self.cut_contours(self.contours2d, resolution_theta)
+        
         
         all_contours_points = []
         for listpt in ctr_pt1 :
@@ -4811,8 +4812,7 @@ class ToroidalFace3D (Face3D) :
                 else :
                     edges.append(LineSegment2D(bandept[k], bandept[k+1]))
             ctr2d = [Contour2D(edges)]
-            all_contours_points.extend(self.cut_contours(ctr2d, resolution)) ####
-            # all_contours_points.extend(self.cut_contours(ctr2d, resolution_phi))
+            all_contours_points.extend(self.cut_contours(ctr2d, resolution_phi))
         
         pts_frame1 = []
         for listpt in all_contours_points :
@@ -4820,16 +4820,13 @@ class ToroidalFace3D (Face3D) :
                 pts_frame1.append(pt.Rotation(centerota, math.pi/2))
         
         all_points = self.delete_double(pts_frame1) # All points necessary to triangulate
-        
         all_points.sort(key=lambda pt: pt[0]) 
         ptvert, pts = [], []
-        for k in range(0, resolution +1) :
-        # for k in range(0, resolution_phi +1) :
-            ptvert.append([point for point in all_points[k*(resolution+1):(k+1)*(resolution+1)]])
-            # ptvert.append([point for point in all_points[k*(resolution_phi+1):(k+1)*(resolution_phi+1)]])
+        for k in range(0, resolution_theta +1) :
+            ptvert.append([point for point in all_points[k*(resolution_phi+1):(k+1)*(resolution_phi+1)]])
             ptvert[k].sort(key=lambda pt: pt[1])
             pts.extend(ptvert[k])
-
+        
         # A = dict(vertices=[pt.vector for pt in pts]) #in all_points
         # B = triangle.triangulate(A, 'cp')
         # tangle = list(B['triangles'])
@@ -4839,22 +4836,17 @@ class ToroidalFace3D (Face3D) :
         
         Triangles, ts = [], []
         
-        step = resolution
-        # step = resolution_theta
-        for k in range (0,len(pts)-resolution-2) : #do not use the last column
-        # for k in range (0,len(pts)-resolution_phi-2) :
+        step = resolution_phi
+        for k in range (0,len(pts)-resolution_phi-2) :
             vertices=[]
             segments=[]
             
             if k%step == 0 and k!=0:
-                step += resolution+1
-                # step += resolution_phi+1
+                step += resolution_phi+1
                 continue
             
-            listpt = [pts[k], pts[k+1], pts[k+1+resolution+1], pts[k+resolution+1]]
-            listindice = [k, k+1, k+1+resolution+1, k+resolution+1]
-            # listpt = [pts[k], pts[k+1], pts[k+1+resolution_phi+1], pts[k+resolution_phi+1]]
-            # listindice = [k, k+1, k+1+resolution_phi+1, k+resolution_phi+1]
+            listpt = [pts[k], pts[k+1], pts[k+1+resolution_phi+1], pts[k+resolution_phi+1]]
+            listindice = [k, k+1, k+1+resolution_phi+1, k+resolution_phi+1]
             for i, pt in enumerate(listpt):
                 vertices.append(pt.vector)
                 segments.append([i,i+1])
@@ -4871,9 +4863,6 @@ class ToroidalFace3D (Face3D) :
             else:
                 Triangles.append(None)
             ts.append(t)
-        
-        # fig, ax = plt.subplots()
-        # [pt.MPLPlot(ax=ax) for pt in pts]
         
         pts3d = self.points2d_to3d(pts, rcenter, rcircle, frame3d)
         pt3d, tangle = delete_double_pos(pts3d, Triangles)
