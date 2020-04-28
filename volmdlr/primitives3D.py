@@ -114,41 +114,7 @@ class ClosedRoundedLineSegments3D(volmdlr.Contour3D, OpenedRoundedLineSegments3D
 
         volmdlr.Contour3D.__init__(self, primitives, name=name)
 
-class Sphere(volmdlr.Primitive3D):
-    def __init__(self,center, radius, name=''):
-        volmdlr.Primitive3D.__init__(self, name=name)
-        self.center = center
-        self.radius = radius
-        self.position = center
 
-    def Volume(self):
-        return 4/3*math.pi*self.radius**3
-
-    def FreeCADExport(self, ip, ndigits=3):
-        name = 'primitive'+str(ip)
-        r = 1000*self.radius
-        x, y, z = round(1000*self.center, ndigits)
-        return '{} = Part.makeSphere({}, fc.Vector({}, {}, {}))\n'.format(name,r,x,y,z)
-
-    def babylon_script(self, name='primitive_mesh'):
-        p1 = volmdlr.Point2D((-self.radius, 0))
-        p2 = volmdlr.Point2D((0, self.radius))
-        p3 = volmdlr.Point2D((self.radius, 0))
-        line = volmdlr.LineSegment2D(p1, p3)
-        arc = volmdlr.Arc2D(p1, p2, p3)
-        extruded_profile = RevolvedProfile(self.position, volmdlr.X3D, volmdlr.Y3D,
-                                           volmdlr.Contour2D([line, arc]), self.position, volmdlr.X3D, name=self.name)
-        return extruded_profile.babylon_script(name=name)
-
-    def frame_mapping(self, frame, side, copy=True):
-        """
-        side = 'old' or 'new'
-        """
-        if copy:
-            return Sphere(self.center.frame_mapping(frame, side, copy),
-                          self.radius)
-        else:
-            self.center.frame_mapping(frame, side, copy)
 
 class Block(volmdlr.Shell3D):
     _standalone_in_db = True
@@ -634,15 +600,21 @@ class RevolvedProfile(volmdlr.Shell3D):
                     edge = volmdlr.Arc3D(pt2, edge.interior, pt, -edge.normal)
                     offset = volmdlr.Vector3D(edge.center-pt2)
                     pt_arc = pt2 + offset
-
-                arcgen = create_arc(pt_arc, angle, axis_point, axis)
+                
+                if pt_arc == axis_point :
+                    ax = axis.DeterministicUnitNormalVector()
+                    vec_offset = volmdlr.Vector3D((1,1,1)) - axis - ax
+                    arcgen = create_arc(pt_arc+0.00001*vec_offset, angle, axis_point, axis)
+                else :
+                    arcgen = create_arc(pt_arc, angle, axis_point, axis)
+                print(arcgen.angle, edge.angle)
                 faces.append(volmdlr.ToroidalFace3D.from_arc3d(edge, arcgen))
             
             elif edge.__class__ is volmdlr.core.LineSegment3D :
                 vect = volmdlr.Vector3D((edge.points[1]-edge.points[0]).vector)
                 vect.Normalize()
                 dot = axis.Dot(vect)
-                if dot==0 :
+                if math.isclose(dot, 0, abs_tol=1e-7) :
                     point1, point2 = edge.points[0], edge.points[1]
                     if point1 in LS : 
                         arcgen = create_arc(point2, angle, axis_point, axis)
@@ -678,7 +650,7 @@ class RevolvedProfile(volmdlr.Shell3D):
                             LS1 = volmdlr.LineSegment3D(arcgen_change.end, arcgen2.start)
                             faces.append(volmdlr.PlaneFace3D([volmdlr.Contour3D([arcgen2, LS2, arcgen_change, LS1])]))
                 
-                elif dot==1 or dot==-1 : 
+                elif math.isclose(dot, 1, abs_tol=1e-7) or math.isclose(dot, -1, abs_tol=1e-7) : 
                     if edge.points[0] in LS :
                         continue
                     else :
@@ -1242,3 +1214,52 @@ class Fuse(volmdlr.Primitive3D):
             s += "{} = {}.fuse({}_0)\n".format(name,name,name)
 
         return s
+    
+    
+# class Sphere(volmdlr.Primitive3D):
+class Sphere(RevolvedProfile):
+    def __init__(self, center, radius, color=None, alpha=1., name=''):
+        volmdlr.Primitive3D.__init__(self, name=name)
+        self.center = center
+        self.radius = radius
+        self.position = center
+        
+        # Revolved Profile for complete sphere
+        s = volmdlr.Point2D((-math.pi*self.radius, 0))
+        i = volmdlr.Point2D((0, math.pi*self.radius))
+        e = volmdlr.Point2D((1.1*math.pi*self.radius, 0))
+        c = volmdlr.Arc2D(s, i , e)
+        contour = volmdlr.Contour2D([c])
+        axis = volmdlr.X3D
+        y = axis.RandomUnitNormalVector()
+        RevolvedProfile.__init__(self, center, axis, y, contour, center, axis,
+                                 color=color, alpha=alpha, name=name)
+
+    def Volume(self):
+        return 4/3*math.pi*self.radius**3
+
+    def FreeCADExport(self, ip, ndigits=3):
+        name = 'primitive'+str(ip)
+        r = 1000*self.radius
+        x, y, z = round(1000*self.center, ndigits)
+        return '{} = Part.makeSphere({}, fc.Vector({}, {}, {}))\n'.format(name,r,x,y,z)
+
+    def babylon_script(self, name='primitive_mesh'):
+        p1 = volmdlr.Point2D((-self.radius, 0))
+        p2 = volmdlr.Point2D((0, self.radius))
+        p3 = volmdlr.Point2D((self.radius, 0))
+        line = volmdlr.LineSegment2D(p1, p3)
+        arc = volmdlr.Arc2D(p1, p2, p3)
+        extruded_profile = RevolvedProfile(self.position, volmdlr.X3D, volmdlr.Y3D,
+                                           volmdlr.Contour2D([line, arc]), self.position, volmdlr.X3D, name=self.name)
+        return extruded_profile.babylon_script(name=name)
+
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        if copy:
+            return Sphere(self.center.frame_mapping(frame, side, copy),
+                          self.radius)
+        else:
+            self.center.frame_mapping(frame, side, copy)

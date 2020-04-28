@@ -4362,41 +4362,47 @@ class CylindricalFace3D(Face3D):
             radius = float(cylindricalsurface3d.radius)/1000
             frame3d = cylindricalsurface3d.frame
             
-            fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
+            # fig = plt.figure()
+            # ax = fig.add_subplot(111, projection='3d')
             # [pt.MPLPlot(ax=ax) for pt in contours3d[0].points]
             
             
             ptsnew = [frame3d.NewCoordinates(point) for point in contours3d[0].points]
-            [pt.MPLPlot(ax=ax, color='r') for pt in ptsnew]
+            # [pt.MPLPlot(ax=ax, color='r') for pt in ptsnew]
             pts2d, seg, points = [], [], []
+            
             for pt in ptsnew :
                 if pt.vector[1] >= 0 :
-                    if math.isclose(pt.vector[0], radius, abs_tol=1e-8) :
+                    if math.isclose(abs(pt.vector[0]), radius, abs_tol=1e-8) :
                         theta = math.pi
                     else : 
+                        # print(pt.vector[0], radius)
                         theta = math.acos(pt.vector[0]/radius)
                 else :
-                    if math.isclose(pt.vector[0], radius, abs_tol=1e-8) or pt.vector[0]>radius:
+                    if math.isclose(abs(pt.vector[0]), radius, abs_tol=1e-8) or abs(pt.vector[0])>radius:
                         theta = 2*math.pi
                     else :
+                        # print(pt.vector[0], radius)
                         theta = 2*math.pi - math.acos(pt.vector[0]/radius)
                 pts2d.append(Point2D([theta*radius, pt.vector[2]]))
-            pts2d.append(center2d)
+            
+            #### pts2d.append(center2d)
             
             fig, ax = plt.subplots()
-            [pt.MPLPlot(ax=ax) for pt in pts2d]
-            center2d.MPLPlot(ax=ax, color='r')
+            # [pt.MPLPlot(ax=ax) for pt in pts2d]
+            # center2d.MPLPlot(ax=ax, color='r')
             
             seg.append(LineSegment2D(center2d, center2d + pts2d[0]))
-            seg[0].MPLPlot(ax=ax)
-            points.append(seg[0].points)
+            # seg[0].MPLPlot(ax=ax)
+            #### points.append(seg[0].points)
             for k in range(0, len(pts2d)-1) :
                 seg.append(LineSegment2D(seg[k].points[1], center2d + pts2d[k+1]))
-                [pt.MPLPlot(ax=ax, color='g') for pt in seg[k].points]
-                seg[k+1].MPLPlot(ax=ax)
-            contours2d = [Contour2D(seg)]        
+                # [pt.MPLPlot(ax=ax, color='g') for pt in seg[k].points]
+                # seg[k+1].MPLPlot(ax=ax)
+            contours2d = [Contour2D(seg[1:])]        
             points = pts2d
+        # [pt.MPLPlot(ax=ax, color='r') for pt in contours2d[0].points]
+        [pt.MPLPlot(ax=ax) for pt in points]
     
         ####
         
@@ -4475,19 +4481,19 @@ class CylindricalFace3D(Face3D):
     def triangulation(self, resolution=31):
         radius = (float(self.cylindricalsurface3d.radius))/1000 #Need to divide by 1000 because of step read
         
-        # O = Vector3D(self.cylindricalsurface3d.frame.origin)
-        # U = self.cylindricalsurface3d.frame[0] 
-        # U.Normalize()
-        # V = self.cylindricalsurface3d.frame[1]
-        # V.Normalize()
-        # W = self.cylindricalsurface3d.frame[2]
-        # W.Normalize()
-        
-        # frame3d = Frame3D(O, V, W, U, '') #Frame with normal as last vector 
         frame3d = self.cylindricalsurface3d.frame
 
         all_contours_points = self.cut_contours(self.contours2d, resolution)
         
+        ##########
+        # fig, ax = plt.subplots()
+        # for listpt in all_contours_points :
+        #     for pt in listpt :
+        #         if pt is None : 
+        #             continue
+        #         else :
+        #             pt.MPLPlot(ax=ax) 
+        #############
         Triangles = []
         ts=[]
         for k, listpt in enumerate(all_contours_points) :
@@ -4779,7 +4785,19 @@ class ToroidalFace3D (Face3D) :
         frame3d = self.toroidalsurface3d.frame
         
         centerota = Point2D((0,0))
+        
+        # angle_theta = self.points[0]
+        # angle_phi = self.points[1]
+        # pas_theta = 0.04
+        # pas_phi = 0.02
+        # resolution_theta = abs(int(angle_theta*rcenter/pas_theta))+1
+        # resolution_phi = abs(int(angle_phi*rcircle/pas_phi))
+        # if resolution_phi < 3 :
+        #     resolution_phi = 6
+        # print('resolution', resolution_theta, resolution_phi)
+        
         ctr_pt1 = self.cut_contours(self.contours2d, resolution) ####
+        # ctr_pt1 = self.cut_contours(self.contours2d, resolution_theta)
         
         all_contours_points = []
         for listpt in ctr_pt1 :
@@ -4794,6 +4812,7 @@ class ToroidalFace3D (Face3D) :
                     edges.append(LineSegment2D(bandept[k], bandept[k+1]))
             ctr2d = [Contour2D(edges)]
             all_contours_points.extend(self.cut_contours(ctr2d, resolution)) ####
+            # all_contours_points.extend(self.cut_contours(ctr2d, resolution_phi))
         
         pts_frame1 = []
         for listpt in all_contours_points :
@@ -4805,7 +4824,9 @@ class ToroidalFace3D (Face3D) :
         all_points.sort(key=lambda pt: pt[0]) 
         ptvert, pts = [], []
         for k in range(0, resolution +1) :
+        # for k in range(0, resolution_phi +1) :
             ptvert.append([point for point in all_points[k*(resolution+1):(k+1)*(resolution+1)]])
+            # ptvert.append([point for point in all_points[k*(resolution_phi+1):(k+1)*(resolution_phi+1)]])
             ptvert[k].sort(key=lambda pt: pt[1])
             pts.extend(ptvert[k])
 
@@ -4819,16 +4840,21 @@ class ToroidalFace3D (Face3D) :
         Triangles, ts = [], []
         
         step = resolution
+        # step = resolution_theta
         for k in range (0,len(pts)-resolution-2) : #do not use the last column
+        # for k in range (0,len(pts)-resolution_phi-2) :
             vertices=[]
             segments=[]
             
             if k%step == 0 and k!=0:
                 step += resolution+1
+                # step += resolution_phi+1
                 continue
             
             listpt = [pts[k], pts[k+1], pts[k+1+resolution+1], pts[k+resolution+1]]
             listindice = [k, k+1, k+1+resolution+1, k+resolution+1]
+            # listpt = [pts[k], pts[k+1], pts[k+1+resolution_phi+1], pts[k+resolution_phi+1]]
+            # listindice = [k, k+1, k+1+resolution_phi+1, k+resolution_phi+1]
             for i, pt in enumerate(listpt):
                 vertices.append(pt.vector)
                 segments.append([i,i+1])
@@ -4845,6 +4871,9 @@ class ToroidalFace3D (Face3D) :
             else:
                 Triangles.append(None)
             ts.append(t)
+        
+        # fig, ax = plt.subplots()
+        # [pt.MPLPlot(ax=ax) for pt in pts]
         
         pts3d = self.points2d_to3d(pts, rcenter, rcircle, frame3d)
         pt3d, tangle = delete_double_pos(pts3d, Triangles)
