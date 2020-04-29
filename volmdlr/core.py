@@ -3044,7 +3044,6 @@ class Wire3D(CompositePrimitive3D):
 
         return s
 
-
 class Edge3D(Primitive3D):
     def __init__(self, edge_start, edge_end, name=''):
         Primitive3D.__init__(self, basis_primitives=[edge_start, edge_end], name=name)
@@ -4793,10 +4792,10 @@ class ToroidalFace3D (Face3D) :
         resolution_theta = abs(int(angle_theta/pas_theta))
         resolution_phi = abs(int(angle_phi/pas_phi))
         
-        if resolution_phi < 14 :
-            resolution_phi = 14
-        if resolution_theta < 14 :
-            resolution_theta = 14
+        if resolution_phi < 5 :
+            resolution_phi = 5
+        if resolution_theta < 5 :
+            resolution_theta = 5
         
         ctr_pt1 = self.cut_contours(self.contours2d, resolution_theta)
         
