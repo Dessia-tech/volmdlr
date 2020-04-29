@@ -1226,8 +1226,16 @@ class Sphere(RevolvedProfile):
         # Revolved Profile for complete sphere
         s = volmdlr.Point2D((-self.radius, 0))
         i = volmdlr.Point2D((0, self.radius))
-        e = volmdlr.Point2D((1.1*self.radius, 0)) #Not coherent but it works at first, to change !!
+        e = volmdlr.Point2D((1*self.radius, 0)) #Not coherent but it works at first, to change !!
+        
+        # s = volmdlr.Point2D((-self.radius, 0))
+        # i = volmdlr.Point2D(((math.sqrt(2)/2)*self.radius,(math.sqrt(2)/2)*self.radius))
+        # e = volmdlr.Point2D(((-math.sqrt(2)/2)*self.radius,(-math.sqrt(2)/2)*self.radius)) 
+        
         c = volmdlr.Arc2D(s, i , e)
+        # fig, ax = plt.subplots()
+        # c.MPLPlot(ax=ax)
+        
         contour = volmdlr.Contour2D([c])
         axis = volmdlr.X3D
         y = axis.RandomUnitNormalVector()

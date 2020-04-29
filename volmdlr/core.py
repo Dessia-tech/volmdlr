@@ -3231,8 +3231,7 @@ class LineSegment3D(Edge3D):
                              self.points[1].PlaneProjection2D(x, y))
 
     @classmethod
-    def Intersection(self,segment1, segment2): #, curvilinear_abscissa=False):
-        """ TO DO : different t1 et t2 car denominateur peut etre 0, verify if it works everywhere"""
+    def Intersection(self,segment1, segment2):
         x1 = segment1.points[0].vector[0]
         y1 = segment1.points[0].vector[1]
         z1 = segment1.points[0].vector[2]
@@ -3247,7 +3246,7 @@ class LineSegment3D(Edge3D):
         z4 = segment2.points[1].vector[2]
 
 
-        #résolution 2 inconnus 3eq avec t1 et t2 les inconnus
+        #2 unknown 3eq with t1 et t2 unknown
         if (x2-x1+y1-y2) != 0 and (y4-y3) != 0:
         
             t1 = (x3-x1 + (x4-x3)*(y1-y3)/(y4-y3))/(x2-x1+y1-y2)
@@ -3267,7 +3266,7 @@ class LineSegment3D(Edge3D):
             res1 = y1 + (y2-y1)*t1
             res2 = y3 + (y4-y3)*t2
             
-        if math.isclose(res1, res2, abs_tol=1e-7) : #il y a un point d'intersection
+        if math.isclose(res1, res2, abs_tol=1e-7) : #if there is an intersection point
             return Point3D([x1+(x2-x1)*t1, y1+(y2-y1)*t1, z1+(z2-z1)*t1])
         else : 
             return None
@@ -4788,10 +4787,12 @@ class ToroidalFace3D (Face3D) :
         
         angle_theta = self.points[0]
         angle_phi = self.points[1]
-        pas_theta = 0.05
-        pas_phi = 0.01
-        resolution_theta = abs(int(angle_theta*rcenter/pas_theta))+1
-        resolution_phi = abs(int(angle_phi*rcircle/pas_phi))
+        pas_theta = 2*math.pi/30 #Step of 12 degrees
+        pas_phi = pas_theta
+        
+        resolution_theta = abs(int(angle_theta/pas_theta))
+        resolution_phi = abs(int(angle_phi/pas_phi))
+        
         if resolution_phi < 14 :
             resolution_phi = 14
         if resolution_theta < 14 :
