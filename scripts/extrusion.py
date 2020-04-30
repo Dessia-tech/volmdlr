@@ -34,8 +34,8 @@ c2 = vm.Contour2D([l1,l2,l3])
 #c1 = vm.Contour2D([outer_profile])
 #c2 = vm.Contour2D([inner_profile])
 
-f, a = outer_profile.MPLPlot()
-c2.MPLPlot(a)
+# f, a = outer_profile.MPLPlot()
+# c2.MPLPlot(a)
 
 profile=primitives3D.ExtrudedProfile(vm.O3D, vm.Y3D, vm.Z3D, outer_profile, [c2], vm.X3D*0.1, name = 'extrusion')
 
@@ -46,4 +46,4 @@ model=vm.VolumeModel([profile])
 #model.MPLPlot()
 
 model.babylonjs()
-model.FreeCADExport('extrusion')
+# model.FreeCADExport('extrusion')
