@@ -385,6 +385,16 @@ class Contour2D(Wire2D):
                 arcs.append(primitive)
             elif primitive.__class__.__name__ == 'Circle2D':
                 return None
+            elif primitive.__class__.__name__ == 'OpenedRoundedLineSegments2D':
+                for prim in primitive.primitives:
+                    if prim.__class__.__name__ == 'LineSegment2D':
+                        points_polygon.extend(prim.points)
+                        points_straight_line_contour.extend(prim.points)
+                    elif prim.__class__.__name__ == 'Arc2D':
+        #                points_polygon.append(primitive.center)
+                        points_polygon.append(prim.start)
+                        points_polygon.append(prim.end)
+                        arcs.append(prim)
             else:
                 raise NotImplementedError('primitive of type {} is not handled'.format(primitive))
 
