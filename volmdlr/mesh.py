@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import volmdlr.core as vm
 from itertools import combinations
 import numpy as npy
+import triangle
 
 def find_duplicate_linear_element(linear_elements1, linear_elements2):
     duplicates = []
@@ -63,6 +64,8 @@ class TriangularElement:
         
         self.center = (self.points[0]+self.points[1]+self.points[2])/3
         
+        self.area = self._area()
+        
     def _to_linear_elements(self):
         vec1 = vm.Vector2D(self.points[1] - self.points[0])
         vec2 = vm.Vector2D(self.points[2] - self.points[1])
@@ -70,6 +73,9 @@ class TriangularElement:
         normal1 = vm.Vector2D([-vec1[1], vec1[0]])
         normal2 = vm.Vector2D([-vec2[1], vec2[0]])
         normal3 = vm.Vector2D([-vec3[1], vec3[0]])
+        normal1.Normalize()
+        normal2.Normalize()
+        normal3.Normalize()
         if normal1.Dot(vec2) < 0:
             normal1 = - normal1
         if normal2.Dot(vec3) < 0:
@@ -93,7 +99,7 @@ class TriangularElement:
         x3 = npy.linalg.solve(a, b3)
         return list(x1), list(x2), list(x3)
     
-    def area(self):
+    def _area(self):
         u = self.points[1] - self.points[0]
         v = self.points[2] - self.points[0]
         return (u.Norm() * v.Norm())/2
@@ -153,6 +159,23 @@ class ElementsGroup:
         self.elements = elements
         self.mu_total = mu_total
         self.name = name
+        
+#    @classmethod
+#    def from_contour(cls, points, minimal_area, mu_total, name):
+#        A = dict(vertices=npy.array([pt.vector for pt in points]))
+#        t = triangle.triangulate(A, 'qa{}'.format(minimal_area))
+#        if 'triangles' in t:
+#            triangles = t['triangles'].tolist()
+#            
+#            elements = []
+#            for tri in triangles:
+#                pts = [points[i] for i in tri]
+#                elements.append(TriangularElement(pts))
+#        else:
+#            raise NotImplementedError
+#        
+#        return cls(elements, mu_total, name)
+        
         
     def rotation(self, center, angle, copy=True):
         if copy:
