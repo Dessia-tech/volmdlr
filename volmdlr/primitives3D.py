@@ -654,7 +654,7 @@ class RevolvedProfile(volmdlr.Shell3D):
                         continue
                     else :
                         arcgen = create_arc(edge.points[0], angle, axis_point, axis)
-                        x = axis.DeterministicUnitNormalVector()
+                        x = axis.deterministic_unit_normal_vector()
                         frame = volmdlr.Frame3D(arcgen.center, x, axis.Cross(x), dot*axis)
                         cylsurf3d = volmdlr.CylindricalSurface3D(frame, arcgen.radius*1000)
                         faces.append(volmdlr.CylindricalFace3D.from_arc3d(edge, arcgen, cylsurf3d))

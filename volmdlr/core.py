@@ -2492,7 +2492,8 @@ class Arc3D(Primitive3D):
     points=property(_get_points)
 
     def tessellation_points(self, resolution_for_circle=40):
-        number_points_tesselation = math.ceil(resolution_for_circle*abs(0.5*self.angle/math.pi))
+#        number_points_tesselation = math.ceil(resolution_for_circle*abs(0.5*self.angle/math.pi))
+        number_points_tesselation = resolution_for_circle
         l = self.Length()
         tessellation_points_3D = [self.PointAtCurvilinearAbscissa(l*i/(number_points_tesselation)) for i in range(number_points_tesselation+1)]
         return tessellation_points_3D
@@ -3438,7 +3439,7 @@ class Contour3D(Wire3D):
     @classmethod
     def from_step(cls, arguments, object_dict):
         edges = []
-        # print('arguments', arguments)
+        print('!! arguments', arguments)
         for edge in arguments[1]:
             # print(arguments[1])
             edges.append(object_dict[int(edge[1:])])
@@ -3776,9 +3777,10 @@ class Face3D(Primitive3D):
     
     @classmethod
     def from_step(cls, arguments, object_dict):
-        
+        print('arguments', arguments)
         contours = []
         contours.append(object_dict[int(arguments[1][0][1:])])
+        print('=', contours)
         
         # print(object_dict[int(arguments[2])].__class__)
         # plane = Plane3D.from_points(contours[0].points)
@@ -3945,6 +3947,9 @@ class PlaneFace3D(Face3D):
     def __init__(self, contours, plane=None, points=None, polygon2D=None, name=''):
 #        Primitive3D.__init__(self, name=name)
         Face3D.__init__(self, contours)
+        
+        print('contours', contours[0].__dict__)
+        print(contours[0].edges[0].points)
         
         self.contours = contours
         self.plane = plane
@@ -4384,7 +4389,8 @@ class CylindricalFace3D(Face3D):
                     if math.isclose(abs(pt.vector[0]), radius, abs_tol=1e-8) :
                         theta = math.pi
                     else : 
-                        # print(pt.vector[0], radius)
+                        print(pt.vector[0], radius)
+                        print(pt.vector[0]/radius)
                         theta = math.acos(pt.vector[0]/radius)
                 else :
                     if math.isclose(abs(pt.vector[0]), radius, abs_tol=1e-8) or abs(pt.vector[0])>radius:
@@ -6125,21 +6131,22 @@ class StepFunction:
                 self.simplify('B_SPLINE_SURFACE')
             if self.arg[1][0] == 'B_SPLINE_CURVE':
                 self.simplify('B_SPLINE_CURVE')
-
+                
     def simplify(self, new_name):
         # ITERATE ON SUBFUNCTIONS
         args = [subfun[1] for (i, subfun) in enumerate(self.arg) if (len(subfun[1]) != 0 or i == 0)]
         arguments = []
+        print('===', args)
         for arg in args:
             if arg == []:
-                arguments.append('')
+                arguments.append("''")
             else:
                 arguments.extend(arg)
         arguments.pop() # DELETE REPRESENTATION_ITEM('')
 
         self.name = new_name
         self.arg = arguments
-
+        
 
 class Step:
     def __init__(self, stepfile):
@@ -6297,6 +6304,7 @@ class Step:
         nx.draw_networkx_labels(self.graph, pos, labels)
 
     def step_subfunctions(self, subfunctions):
+        print(subfunctions)
         subfunctions = subfunctions[0]
         parenthesis_count = 0
         subfunction_names = []
@@ -6304,7 +6312,7 @@ class Step:
         subfunction_name = ""
         subfunction_arg = ""
         for char in subfunctions:
-
+            
             if char == "(":
                 parenthesis_count += 1
                 if parenthesis_count == 1:
@@ -6312,21 +6320,23 @@ class Step:
                     subfunction_name = ""
                 else:
                     subfunction_arg += char
-                continue
-            if char == ")":
+                    
+            elif char == ")":
                 parenthesis_count -= 1
                 if parenthesis_count == 0:
                     subfunction_args.append(subfunction_arg)
                     subfunction_arg = ""
                 else:
                     subfunction_arg += char
-                continue
-
+                
+            elif parenthesis_count == 0:
                 subfunction_name += char
+                
             else:
                 subfunction_arg += char
-        return [(subfunction_names[i], step_split_arguments(subfunction_args[i])) for i in range(len(subfunction_names))]
 
+        return [(subfunction_names[i], step_split_arguments(subfunction_args[i])) for i in range(len(subfunction_names))]
+            
     def instanciate(self, instanciate_id, object_dict):
         """
         Returns None if the object was instanciate
@@ -6340,6 +6350,19 @@ class Step:
         for i, arg in enumerate(arguments):
             if type(arg) == str and arg[0] == '#':
                 arguments[i] = int(arg[1:])
+            elif type(arg) == str and arg[0:2] == '(#':
+                argument = []
+                arg_id = ""
+                for char in arg[1:-1]:
+                    if char == ',':
+                        print(arg_id)
+                        argument.append(arg_id)
+                        arg_id = ""
+                        continue
+                    
+                    arg_id += char
+                argument.append(arg_id)
+                arguments[i] = list(argument)
 
         if name == 'VERTEX_POINT':
 #            object_dict[instanciate_id] = object_dict[arguments[1]]
@@ -6399,7 +6422,7 @@ class Step:
 
         self.graph.add_node("#0")
         for node in self.graph.nodes:
-            if node != '#0' and self.functions[node].name == "CLOSED_SHELL":
+            if node != '#0' and (self.functions[node].name == "CLOSED_SHELL" or self.functions[node].name == "OPEN_SHELL"):
                 self.graph.add_edge("#0", node)
 
         edges = list(nx.algorithms.traversal.breadth_first_search.bfs_edges(self.graph, "#0"))[::-1]
@@ -6410,7 +6433,7 @@ class Step:
 
         shells = []
         for node in list(self.graph.nodes):
-            if node != '#0' and self.functions[node].name == 'CLOSED_SHELL':
+            if node != '#0' and (self.functions[node].name == 'CLOSED_SHELL' or self.functions[node].name == "OPEN_SHELL"):
                 shells.append(object_dict[node])
         return shells
     
