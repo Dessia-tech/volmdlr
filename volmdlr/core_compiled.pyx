@@ -813,14 +813,14 @@ class Vector3D(Vector):
             if copy:
                 return new_vector
             else:
-                self.vector = new_vector.vector
+                self.vector = new_vector.vector#.copy() #copy was adding to avoid connection point in RoundedLS
 
         if side == 'new':
             new_vector = frame.NewCoordinates(self)
             if copy:
                 return new_vector
             else:
-                self.vector = new_vector.vector
+                self.vector = new_vector.vector#.copy()
 
     def PlaneProjection3D(self, plane_origin, x, y):
         z = x.Cross(y)

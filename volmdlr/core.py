@@ -2095,11 +2095,28 @@ class CylindricalSurface3D(Primitive3D):
         return cls(frame_direct, radius, arguments[0][1:-1])
     
     def frame_mapping(self, frame, side, copy=True) :
-        if copy : 
-            new_frame = frame
-            return CylindricalSurface3D(new_frame, self.radius, name=self.name)
-        else :
-            self.frame = frame
+        basis = frame.Basis()
+        if side == 'new':
+            new_origin = frame.NewCoordinates(self.frame.origin)
+            new_u = basis.NewCoordinates(self.frame.u)
+            new_v = basis.NewCoordinates(self.frame.v)
+            new_w = basis.NewCoordinates(self.frame.w)
+            new_frame = Frame3D(new_origin, new_u, new_v, new_w)
+            if copy:
+                return CylindricalSurface3D(new_frame, self.radius, name=self.name)
+            else:
+                self.frame = new_frame
+
+        if side == 'old':
+            new_origin = frame.OldCoordinates(self.frame.origin)
+            new_u = basis.OldCoordinates(self.frame.u)
+            new_v = basis.OldCoordinates(self.frame.v)
+            new_w = basis.OldCoordinates(self.frame.w)
+            new_frame = Frame3D(new_origin, new_u, new_v, new_w)
+            if copy:
+                return CylindricalSurface3D(new_frame, self.radius, name=self.name)
+            else:
+                self.frame = new_frame
 
 class ToroidalSurface3D(Primitive3D):
     
@@ -2128,11 +2145,28 @@ class ToroidalSurface3D(Primitive3D):
         return cls(frame_direct, rcenter, rcircle, arguments[0][1:-1])
     
     def frame_mapping(self, frame, side, copy=True) :
-        if copy : 
-            new_frame = frame
-            return ToroidalSurface3D(new_frame, self.rcenter, self.rcircle, name=self.name)
-        else :
-            self.frame = frame
+        basis = frame.Basis()
+        if side == 'new':
+            new_origin = frame.NewCoordinates(self.frame.origin)
+            new_u = basis.NewCoordinates(self.frame.u)
+            new_v = basis.NewCoordinates(self.frame.v)
+            new_w = basis.NewCoordinates(self.frame.w)
+            new_frame = Frame3D(new_origin, new_u, new_v, new_w)
+            if copy:
+                return ToroidalSurface3D(new_frame,self.rcenter,self.rcircle,name=self.name)
+            else:
+                self.frame = new_frame
+
+        if side == 'old':
+            new_origin = frame.OldCoordinates(self.frame.origin)
+            new_u = basis.OldCoordinates(self.frame.u)
+            new_v = basis.OldCoordinates(self.frame.v)
+            new_w = basis.OldCoordinates(self.frame.w)
+            new_frame = Frame3D(new_origin, new_u, new_v, new_w)
+            if copy:
+                return ToroidalSurface3D(new_frame,self.rcenter,self.rcircle,name=self.name)
+            else:
+                self.frame = new_frame
 
 # class EllipseSurface3D(Primitive3D):
     
@@ -2405,6 +2439,9 @@ class Arc3D(Primitive3D):
         self.start = start
         self.interior = interior
         self.end = end
+        self.setup_arc(start, interior, end, normal=normal, name=name)
+
+    def setup_arc(self, start, interior, end, normal=None, name='') :
         # self.normal = normal
         u1 = (self.interior - self.start)
         u2 = (self.interior - self.end)
@@ -2583,21 +2620,27 @@ class Arc3D(Primitive3D):
         """
         if side == 'old':
             new_start = frame.OldCoordinates(self.start.copy())
+            # new_start = self.start.copy()
             new_interior = frame.OldCoordinates(self.interior.copy())
             new_end = frame.OldCoordinates(self.end.copy())
             if copy:
                 return Arc3D(new_start, new_interior, new_end, self.normal, self.name)
             else:
                 self.start, self.interior, self.end = new_start, new_interior, new_end
-               
+                self.setup_arc(self.start, self.interior, self.end)
+                
         if side == 'new':
             new_start = frame.NewCoordinates(self.start.copy())
+            # new_start = self.start.copy()
             new_interior = frame.NewCoordinates(self.interior.copy())
             new_end = frame.NewCoordinates(self.end.copy())
             if copy:
                 return Arc3D(new_start, new_interior, new_end, self.normal, self.name)
             else:
+                # print('self', self.start, self.interior, self.end)
                 self.start, self.interior, self.end = new_start, new_interior, new_end
+                self.setup_arc(self.start, self.interior, self.end)
+                # print('self', self.start, self.interior, self.end)
                 
     def distance_mini(self, element) :
         if element.__class__ is Arc3D :
@@ -3126,17 +3169,24 @@ class Wire3D(CompositePrimitive3D):
         return s
 
     def frame_mapping(self, frame, side, copy=True):
-        new_wire = self.copy()
+        new_wire = []
         if side == 'new':
-            for k, primitive in enumerate(self.primitives) :
-                new_wire.primitives[k] = primitive.frame_mapping(frame, side, copy)
             if copy :
+                for primitive in self.primitives :
+                    new_wire.append(primitive.frame_mapping(frame, side, copy))
                 return new_wire
+            else :
+                for primitive in self.primitives :
+                    primitive.frame_mapping(frame, side, copy=False)
+                
         if side == 'old':
-            for k, primitive in enumerate(self.primitives) :
-                new_wire.primitives[k] = primitive.frame_mapping(frame, side, copy=False)
             if copy :
+                for primitive in self.primitives :
+                    new_wire.append(primitive.frame_mapping(frame, side, copy))
                 return new_wire
+            else :
+                for primitive in self.primitives :
+                    primitive.frame_mapping(frame, side, copy=False)
                 
         
     def min_distance(self, wire2) :
@@ -3264,8 +3314,10 @@ class Edge3D(Primitive3D):
             new_edge_end = self.points[1].frame_mapping(frame, side, copy=True)
             return Edge3D(new_edge_start, new_edge_end)
         else:
-            self.points[0].frame_mapping(frame, side, copy=False)
-            self.points[1].frame_mapping(frame, side, copy=False)
+            # self.points[0].frame_mapping(frame, side, copy=False)
+            # self.points[1].frame_mapping(frame, side, copy=False)
+            self.points[0] = self.points[0].frame_mapping(frame, side, copy=True)
+            self.points[1] = self.points[1].frame_mapping(frame, side, copy=True)
 
     def copy(self):
         new_edge_start = self.points[0].Copy()
@@ -5175,9 +5227,7 @@ class ToroidalFace3D (Face3D) :
             new_toroidalsurface3d = ToroidalSurface3D.frame_mapping(frame, side, copy)
             return ToroidalFace3D(self.contours2d, new_toroidalsurface3d, points=self.points, name=self.name)
         else:
-            print(self.toroidalsurface3d.frame)
             self.toroidalsurface3d.frame_mapping(frame, side, copy=False)
-            print(self.toroidalsurface3d.frame)
     
 class BSplineFace3D(Face3D):
     def __init__(self, contours, bspline_shape, points=None, name=''):
