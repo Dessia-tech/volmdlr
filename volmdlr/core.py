@@ -2102,8 +2102,7 @@ class CylindricalSurface3D(Primitive3D):
         W.Normalize()
         V = W.Cross(U)
         frame_direct = Frame3D(frame3d.origin, U, V, W)
-        radius=arguments[2]
-        # return cls(frame3d, radius, arguments[0][1:-1])
+        radius = float(arguments[2])/1000
         return cls(frame_direct, radius, arguments[0][1:-1])
     
 
@@ -2628,10 +2627,15 @@ class ArcEllipse3D(Primitive3D) :
             return theta, gdaxe, ptax
         
         plane = Plane3D.from_normal(center, normal)
-        s_2D = start.PlaneProjection2D(plane.vectors[0], plane.vectors[1]) #On supprimer center+plan vect.. car on ne se préocuppe pas de la composante en hauteur en 2d
-        i_2D = interior.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
-        e_2D = end.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
-        c_2D = center.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
+#        s_2D = start.PlaneProjection2D(plane.vectors[0], plane.vectors[1]) #On supprimer center+plan vect.. car on ne se préocuppe pas de la composante en hauteur en 2d
+#        i_2D = interior.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
+#        e_2D = end.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
+#        c_2D = center.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
+        
+        s_2D = start.To2D(center, plane.vectors[0], plane.vectors[1]) #On supprimer center+plan vect.. car on ne se préocuppe pas de la composante en hauteur en 2d
+        i_2D = interior.To2D(center,plane.vectors[0], plane.vectors[1])
+        e_2D = end.To2D(center, plane.vectors[0], plane.vectors[1])
+        c_2D = center.To2D(center, plane.vectors[0], plane.vectors[1])
         
         if start==end :
             ex_2D = extra.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
@@ -2640,11 +2644,19 @@ class ArcEllipse3D(Primitive3D) :
             theta, A, B = theta_A_B(s_2D,i_2D,e_2D,c_2D)
         
         self.Gradius = A
+#        self.major_axis = (X2D * self.Gradius).Rotation(O2D, -theta, copy=True)
         self.Sradius = B
+#        self.minor_axis = (Y2D * self.Sradius).Rotation(c_2D, -theta, copy=True)
         self.teta = theta
         
-        # Determining angle
+#        fig, ax = plt.subplots()
+#        s_2D.MPLPlot(ax=ax, color='r')
+#        i_2D.MPLPlot(ax=ax, color='g')
+#        e_2D.MPLPlot(ax=ax, color='b')
+#        c_2D.MPLPlot(ax=ax)
+#        self.major_axis.plot(ax=ax, amplitude=0.0005)
         
+        # Determining angle
         r1 = (self.start).To2D(self.center, u1, v1)
         r2 = (self.end).To2D(self.center, u1, v1)
         ri = (self.interior).To2D(self.center, u1, v1)
@@ -2688,8 +2700,17 @@ class ArcEllipse3D(Primitive3D) :
     def tessellation_points(self, resolution_for_ellipse=40):
         number_points_tesselation = math.ceil(resolution_for_ellipse*abs(0.5*self.angle/math.pi))
         # l = self.Length()
-        tessellation_points_3D = [Point3D([self.Gradius*math.cos(self.angle*i/(number_points_tesselation)+self.teta)+self.center[0]*self.normal[0],self.Sradius*math.sin(self.angle*i/(number_points_tesselation)+self.teta)+self.center[1]*self.normal[1],self.center[2]*self.normal[2]]) for i in range(number_points_tesselation+1)]
-        return tessellation_points_3D
+        
+        plane3d = Plane3D.from_normal(self.center, self.normal)
+        frame3d = Frame3D(self.center, plane3d.vectors[0], plane3d.vectors[1], plane3d.normal)
+        
+        tessellation_points_3D = [Point3D((self.Gradius*math.cos(self.angle*i/(number_points_tesselation)), self.Sradius*math.sin(self.angle*i/(number_points_tesselation)), 0)) for i in range(number_points_tesselation+1)]
+        
+        global_points = []
+        for pt in tessellation_points_3D:
+            global_points.append(frame3d.OldCoordinates(pt))
+        
+        return global_points
     
     def Length(self):
         # l=self.Gradius*math.cos(self.angle+self.teta)+self.Sradius*math.sin(self.angle+self.teta)
@@ -3091,8 +3112,8 @@ class Edge3D(Primitive3D):
                 angle = math.pi
             else: 
                 plane = Plane3D.from_normal(center, normal)
-                p1_2D = p1.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
-                p2_2D = p2.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
+                p1_2D = p1.PlaneProjection2D(center, plane.vectors[0], plane.vectors[1])
+                p2_2D = p2.PlaneProjection2D(center, plane.vectors[0], plane.vectors[1])
                 angle = (2*math.pi-clockwise_angle(Vector2D(p2_2D.vector),Vector2D(p1_2D.vector)))/2
                 
                 
@@ -3122,8 +3143,8 @@ class Edge3D(Primitive3D):
             p1 = object_dict[arguments[1]] #on part du principe que p1 suivant majordir
             p2 = object_dict[arguments[2]]
             plane = Plane3D.from_normal(center, normal)
-            p1_2D = p1.PlaneProjection2D(plane.vectors[0], plane.vectors[1]) #center+plane.vectors[0], center+plane.vectors[1])
-            p2_2D = p2.PlaneProjection2D(plane.vectors[0], plane.vectors[1]) #center+plane.vectors[0], center+plane.vectors[1])
+            p1_2D = p1.PlaneProjection2D(center, plane.vectors[0], plane.vectors[1]) #center+plane.vectors[0], center+plane.vectors[1])
+            p2_2D = p2.PlaneProjection2D(center, plane.vectors[0], plane.vectors[1]) #center+plane.vectors[0], center+plane.vectors[1])
             theta = clockwise_angle(majordir.To2D(center,plane.vectors[0],plane.vectors[1]),Vector2D(p1_2D.vector))
             gamma = clockwise_angle(majordir.To2D(center,plane.vectors[0],plane.vectors[1]),Vector2D(p2_2D.vector))
             if p1 == p2: 
@@ -3134,6 +3155,14 @@ class Edge3D(Primitive3D):
                 angle = theta+abs(gamma-theta)//2
             p3 = majorax*Point3D(majordir.vector)*math.cos(angle)+minorax*Point3D(minordir.vector)*math.sin(angle)+center
             arcellipse = ArcEllipse3D(p1, p3, p2, center, normal, arguments[0][1:-1], extra)
+            
+#            object_dict[arguments[3]].MPLPlot()
+#            fig, ax = arcellipse.MPLPlot()
+#            p1.MPLPlot(ax=ax, color='r')
+#            p3.MPLPlot(ax=ax, color='g')
+#            p2.MPLPlot(ax=ax, color='b')
+#            print('p1', p1, p2, p3)
+            
             return arcellipse
         
         elif object_dict[arguments[3]].__class__ is BSplineCurve3D:
@@ -3439,7 +3468,6 @@ class Contour3D(Wire3D):
     @classmethod
     def from_step(cls, arguments, object_dict):
         edges = []
-        print('!! arguments', arguments)
         for edge in arguments[1]:
             # print(arguments[1])
             edges.append(object_dict[int(edge[1:])])
@@ -3604,6 +3632,19 @@ class Contour3D(Wire3D):
             length += primitive_length
         # Outside of length
         raise ValueError
+        
+    def MPLPlot(self, ax=None):
+        if ax is None:
+            fig = plt.figure()
+            ax = Axes3D(fig)
+        else:
+            fig = None
+            
+        for edge in self.edges:
+            edge.MPLPlot(ax=ax)
+            
+        return ax
+            
 
 class Circle3D(Contour3D):
     _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']
@@ -3748,6 +3789,26 @@ class Ellipse3D(Contour3D):
             self.center = new_center
             self.normal = new_normal
             self.major_dir = new_major_dir
+            
+    def MPLPlot(self, ax=None, color='k'):
+        if ax is None:
+            fig = plt.figure()
+            ax = Axes3D(fig)
+        else:
+            fig = None
+
+        x = []
+        y = []
+        z = []
+        for px, py, pz in self.tessellation_points():
+            x.append(px)
+            y.append(py)
+            z.append(pz)
+        x.append(x[0])
+        y.append(y[0])
+        z.append(z[0])
+        ax.plot(x, y, z, color)
+        return fig, ax
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -3777,10 +3838,8 @@ class Face3D(Primitive3D):
     
     @classmethod
     def from_step(cls, arguments, object_dict):
-        print('arguments', arguments)
         contours = []
         contours.append(object_dict[int(arguments[1][0][1:])])
-        print('=', contours)
         
         # print(object_dict[int(arguments[2])].__class__)
         # plane = Plane3D.from_points(contours[0].points)
@@ -3947,9 +4006,6 @@ class PlaneFace3D(Face3D):
     def __init__(self, contours, plane=None, points=None, polygon2D=None, name=''):
 #        Primitive3D.__init__(self, name=name)
         Face3D.__init__(self, contours)
-        
-        print('contours', contours[0].__dict__)
-        print(contours[0].edges[0].points)
         
         self.contours = contours
         self.plane = plane
@@ -4363,7 +4419,6 @@ class CylindricalFace3D(Face3D):
         if contours3d[0].edges[0].__class__ is LineSegment3D and contours3d[0].edges[1].__class__ is Arc3D :
             return CylindricalFace3D.from_arc3d(contours3d[0].edges[0], contours3d[0].edges[1], cylindricalsurface3d)
             
-            
         else : 
             # U = cylindricalsurface3d.frame[0] 
             # U.Normalize()
@@ -4372,16 +4427,15 @@ class CylindricalFace3D(Face3D):
             # W = cylindricalsurface3d.frame[2]
             # W.Normalize()
             # frame3d = Frame3D(center, V, W, U, '')
-            radius = float(cylindricalsurface3d.radius)/1000
+            radius = cylindricalsurface3d.radius 
             frame3d = cylindricalsurface3d.frame
             
-            # fig = plt.figure()
-            # ax = fig.add_subplot(111, projection='3d')
-            # [pt.MPLPlot(ax=ax) for pt in contours3d[0].points]
-            
+#            fig = plt.figure()
+#            ax = fig.add_subplot(111, projection='3d')
+#            contours3d[0].MPLPlot(ax=ax)
             
             ptsnew = [frame3d.NewCoordinates(point) for point in contours3d[0].points]
-            # [pt.MPLPlot(ax=ax, color='r') for pt in ptsnew]
+#            [pt.MPLPlot(ax=ax, color='r') for pt in ptsnew]
             pts2d, seg, points = [], [], []
             
             for pt in ptsnew :
@@ -4389,8 +4443,6 @@ class CylindricalFace3D(Face3D):
                     if math.isclose(abs(pt.vector[0]), radius, abs_tol=1e-8) :
                         theta = math.pi
                     else : 
-                        print(pt.vector[0], radius)
-                        print(pt.vector[0]/radius)
                         theta = math.acos(pt.vector[0]/radius)
                 else :
                     if math.isclose(abs(pt.vector[0]), radius, abs_tol=1e-8) or abs(pt.vector[0])>radius:
@@ -4402,7 +4454,7 @@ class CylindricalFace3D(Face3D):
             
             #### pts2d.append(center2d)
             
-            fig, ax = plt.subplots()
+#            fig, ax = plt.subplots()
             # [pt.MPLPlot(ax=ax) for pt in pts2d]
             # center2d.MPLPlot(ax=ax, color='r')
             
@@ -4416,7 +4468,7 @@ class CylindricalFace3D(Face3D):
             contours2d = [Contour2D(seg[1:])]        
             points = pts2d
         # [pt.MPLPlot(ax=ax, color='r') for pt in contours2d[0].points]
-        [pt.MPLPlot(ax=ax) for pt in points]
+#        [pt.MPLPlot(ax=ax) for pt in points]
     
         ####
         
@@ -6136,7 +6188,6 @@ class StepFunction:
         # ITERATE ON SUBFUNCTIONS
         args = [subfun[1] for (i, subfun) in enumerate(self.arg) if (len(subfun[1]) != 0 or i == 0)]
         arguments = []
-        print('===', args)
         for arg in args:
             if arg == []:
                 arguments.append("''")
@@ -6304,7 +6355,6 @@ class Step:
         nx.draw_networkx_labels(self.graph, pos, labels)
 
     def step_subfunctions(self, subfunctions):
-        print(subfunctions)
         subfunctions = subfunctions[0]
         parenthesis_count = 0
         subfunction_names = []
@@ -6355,7 +6405,6 @@ class Step:
                 arg_id = ""
                 for char in arg[1:-1]:
                     if char == ',':
-                        print(arg_id)
                         argument.append(arg_id)
                         arg_id = ""
                         continue

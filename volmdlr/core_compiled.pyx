@@ -830,10 +830,10 @@ class Vector3D(Vector):
         z.Normalize()
         return self - z.Dot(self-plane_origin)*z
 
-    def PlaneProjection2D(self, x, y):
+    def PlaneProjection2D(self, plane_origin, x, y):
         z = x.Cross(y)
         z.Normalize()
-        p3d = self - self.Dot(z)*z
+        p3d = self - (self-plane_origin).Dot(z)*z
         u1 = p3d.Dot(x)
         u2 = p3d.Dot(y)
         return Point2D((u1, u2))
