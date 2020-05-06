@@ -1031,7 +1031,6 @@ class Sweep(volmdlr.Shell3D):
         self.wire3d = wire3d
         self.frames = []
         
-        
         faces = self.shell_faces()
         volmdlr.Shell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
 
@@ -1117,42 +1116,7 @@ class Sweep(volmdlr.Shell3D):
                     elif contour_primitive.__class__ == volmdlr.Arc3D:
                         pass
                 elif wire_primitive.__class__ == volmdlr.Arc3D :
-                    # rcenter = wire_primitive.radius
-                    # rcircle = contour_primitive.radius
-                    # center = wire_primitive.center
-                    # normal = wire_primitive.normal
-                    # normal.Normalize()
-                    # center1 = wire_primitive.points[0]
-                    # y = volmdlr.Vector3D((center1 - center).vector)
-                    # y.Normalize()
-                    # frame3d = volmdlr.Frame3D(center, normal, y, normal.Cross(y))
-                    # toroidalsurface3d = volmdlr.ToroidalSurface3D(frame3d, rcenter*1000, rcircle*1000)
-                    # theta = wire_primitive.angle
-                    # phi = contour_primitive.angle
-                    # pt1, pt2, pt3, pt4 = volmdlr.Point2D((0, 0)), volmdlr.Point2D((0, phi)), volmdlr.Point2D((theta, phi)), volmdlr.Point2D((theta, 0))
-                    # seg1, seg2, seg3, seg4 = volmdlr.LineSegment2D(pt1, pt2), volmdlr.LineSegment2D(pt2, pt3), volmdlr.LineSegment2D(pt3, pt4), volmdlr.LineSegment2D(pt4, pt1) 
-                    # edges = [seg1, seg2, seg3, seg4]
-                    # contours2d =  [volmdlr.Contour2D(edges)]
-                    # points = [theta, phi]
-                    # tore = volmdlr.ToroidalFace3D(contours2d, toroidalsurface3d, points)
-                    # ptcircle1 = center1 - volmdlr.Point3D([i*rcircle for i in y.vector])
-                    # Arcstart = contour_primitive.To3D(center1, normal, y)
-                    # center2 = wire_primitive.points[-1]
-                    # pt2center = volmdlr.Vector3D((center - center2).vector)
-                    # pt2center.Normalize()
-                    # ptcircle2 = center2 - volmdlr.Point3D([i*rcircle for i in pt2center.vector])
-                    # normal2 = normal.Cross(pt2center)                            
-                    # Arcend = volmdlr.Arc3D(ptcircle2, ptcircle2.Rotation(center2, normal2, math.pi), ptcircle2, normal2)
-                    # interior = wire_primitive.points[1]
-                    # intocenter = volmdlr.Vector3D((center - interior).vector)
-                    # intocenter.Normalize()
-                    # ptint = interior - volmdlr.Point3D([i*rcircle for i in intocenter.vector])
-                    # Arcmaster = wire_primitive#volmdlr.Arc3D(ptcircle1, ptint, ptcircle2, normal)
-                    # edges = [Arcmaster, Arcstart, Arcend]
-                    # points = Arcmaster.points + Arcstart.points + Arcmaster.points[::-1] + Arcend.points
-                    # tore = volmdlr.ToroidalFace3D([volmdlr.Contour3D(edges)], toroidalsurface3d, points)
                     faces.append(volmdlr.ToroidalFace3D.from_arc3d(contour_primitive, wire_primitive))
-                    # faces.append(contour_primitive.generated_toroidalface(wire_primitive))
                       
         return faces
     
@@ -1173,6 +1137,22 @@ class Sweep(volmdlr.Shell3D):
 
     #     # s += '{} = wire.makePipeShell([contour],True, True)\n'.format(name)
     #     return s
+
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        new_wire = self.wire3d.frame_mapping(frame, side, copy)
+        if copy:
+            return Sweep(self.contour2d, new_wire, color=self.color, alpha=self.alpha, name=self.name)
+        else:
+            volmdlr.Shell3D.frame_mapping(self, frame, side, copy=False)
+
+    def copy(self):
+        new_contour2d = self.contour2d.copy()
+        new_wire3d = self.wire3d.copy()
+        return Sweep(self, new_contour2d, new_wire3d, color=self.color, alpha=self.alpha, name=self.name)
+
 
 class Cut(volmdlr.Primitive3D):
     """

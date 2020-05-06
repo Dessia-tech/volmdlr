@@ -44,7 +44,14 @@ c2 = vm.Contour2D.dict_to_object(c1)
 
 sweep = primitives3D.Sweep(contour, rl, name = 'Random pipe')
 
+# frame0 = vm.Frame3D(vm.Point3D((0.5,0.5,0)), vm.Vector3D((1,0,0)), vm.Vector3D((0,1,0)), vm.Vector3D((0,0,1)))
+
+# frame_mapping = sweep.frame_mapping(frame0, 'old', False)
+# print(frame_mapping)
+
+
 m = vm.VolumeModel([sweep])
+# m = vm.VolumeModel([frame_mapping])
 m.babylonjs()
 # m.FreeCADExport('sweep')
 
