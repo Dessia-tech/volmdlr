@@ -423,6 +423,9 @@ class Vector2D(Vector):
         if unit:
             n.Normalize()
         return n
+    
+    def deterministic_unit_normal_vector(self):
+        return self.NormalVector(unit=True)
 
     @classmethod
     def random(cls, xmin, xmax, ymin, ymax):
@@ -851,7 +854,7 @@ class Vector3D(Vector):
         v.Normalize()
         return v
     
-    def DeterministicUnitNormalVector(self):
+    def deterministic_unit_normal_vector(self):
         """
         Retuns a deterministic normal vector
         """
