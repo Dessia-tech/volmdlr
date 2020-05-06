@@ -2582,21 +2582,22 @@ class Arc3D(Primitive3D):
         side = 'old' or 'new'
         """
         if side == 'old':
-            start = frame.OldCoordinates(self.start)
-            interior = frame.OldCoordinates(self.interior)
-            end = frame.OldCoordinates(self.end)
+            new_start = frame.OldCoordinates(self.start.copy())
+            new_interior = frame.OldCoordinates(self.interior.copy())
+            new_end = frame.OldCoordinates(self.end.copy())
             if copy:
-                return Arc3D(start, interior, end, self.normal, self.name)
+                return Arc3D(new_start, new_interior, new_end, self.normal, self.name)
             else:
-                self = Arc3D(start, interior, end, self.normal, self.name)
+                self.start, self.interior, self.end = new_start, new_interior, new_end
+               
         if side == 'new':
-            start = frame.NewCoordinates(self.start)
-            interior = frame.NewCoordinates(self.interior)
-            end = frame.NewCoordinates(self.end)
+            new_start = frame.NewCoordinates(self.start.copy())
+            new_interior = frame.NewCoordinates(self.interior.copy())
+            new_end = frame.NewCoordinates(self.end.copy())
             if copy:
-                return Arc3D(start, interior, end, self.normal, self.name)
+                return Arc3D(new_start, new_interior, new_end, self.normal, self.name)
             else:
-                self = Arc3D(start, interior, end, self.normal, self.name)
+                self.start, self.interior, self.end = new_start, new_interior, new_end
                 
     def distance_mini(self, element) :
         if element.__class__ is Arc3D :
@@ -3133,7 +3134,7 @@ class Wire3D(CompositePrimitive3D):
                 return new_wire
         if side == 'old':
             for k, primitive in enumerate(self.primitives) :
-                new_wire.primitives[k] = primitive.frame_mapping(frame, side, copy)
+                new_wire.primitives[k] = primitive.frame_mapping(frame, side, copy=False)
             if copy :
                 return new_wire
                 
@@ -4864,7 +4865,7 @@ class CylindricalFace3D(Face3D):
             new_cylindricalsurface3d = CylindricalSurface3D.frame_mapping(frame, side, copy)
             return CylindricalFace3D(self.contours2d, new_cylindricalsurface3d, points=self.points, name=self.name)
         else:
-            self.cylindricalsurface3d = self.cylindricalsurface3d.frame_mapping(frame, side, copy)
+            self.cylindricalsurface3d.frame_mapping(frame, side, copy=False)
 
 class ToroidalFace3D (Face3D) :
     def __init__(self, contours2d, toroidalsurface3d, points=None, name=''):
@@ -5174,7 +5175,9 @@ class ToroidalFace3D (Face3D) :
             new_toroidalsurface3d = ToroidalSurface3D.frame_mapping(frame, side, copy)
             return ToroidalFace3D(self.contours2d, new_toroidalsurface3d, points=self.points, name=self.name)
         else:
-            self.toroidalsurface3d = self.toroidalsurface3d.frame_mapping(frame, side, copy)
+            print(self.toroidalsurface3d.frame)
+            self.toroidalsurface3d.frame_mapping(frame, side, copy=False)
+            print(self.toroidalsurface3d.frame)
     
 class BSplineFace3D(Face3D):
     def __init__(self, contours, bspline_shape, points=None, name=''):
@@ -6740,7 +6743,6 @@ class VolumeModel(dc.DessiaObject):
         self.primitives = primitives
         self.name = name
         self.shells = []
-        print('self.primitives', self.primitives)
         if self.primitives:
             self.shells = self._extract_shells()
         if self.shells:
@@ -6802,9 +6804,7 @@ class VolumeModel(dc.DessiaObject):
     def _bounding_box(self):
         bboxes = []
         points = []
-        print('self', self)
         for primitive in self.primitives:
-            print('primitive',primitive)
             if hasattr(primitive, 'bounding_box'):
                 bboxes.append(primitive.bounding_box)
             else:

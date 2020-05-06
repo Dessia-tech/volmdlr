@@ -1142,17 +1142,29 @@ class Sweep(volmdlr.Shell3D):
         """
         side = 'old' or 'new'
         """
-        new_wire = self.wire3d.frame_mapping(frame, side, copy)
+        # print(self.faces)
         if copy:
+            new_wire = self.wire3d.frame_mapping(frame, side, copy)
             return Sweep(self.contour2d, new_wire, color=self.color, alpha=self.alpha, name=self.name)
         else:
-            volmdlr.Shell3D.frame_mapping(self, frame, side, copy=False)
+            # fig = plt.figure()
+            # ax = fig.add_subplot(111, projection='3d')
+            # [prim.MPLPlot(ax=ax) for prim in self.wire3d.primitives]
+            self.wire3d.frame_mapping(frame, side, copy=False)
+            # for pri in self.wire3d.primitives :
+                # if pri.__class__ is volmdlr.Arc3D :
+                    # print(pri.start, pri.interior, pri.end)   
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+            [prim.MPLPlot(ax=ax) for prim in self.wire3d.primitives]
+            self.shell_faces()
+            # volmdlr.Shell3D.frame_mapping(self, frame, side, copy=False)
+            
 
     def copy(self):
         new_contour2d = self.contour2d.copy()
         new_wire3d = self.wire3d.copy()
         return Sweep(self, new_contour2d, new_wire3d, color=self.color, alpha=self.alpha, name=self.name)
-
 
 class Cut(volmdlr.Primitive3D):
     """
