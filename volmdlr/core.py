@@ -6241,11 +6241,11 @@ class Step:
             function_arg = function_name_arg[1].split("#")
             function_connections = []
             for connec in function_arg[1:]:
-                # print('connec', connec)
                 connec = connec.split(",")
                 connec = connec[0].split(")")
-                function_connection = int(connec[0])
-                function_connections.append((function_id, function_connection))
+                if connec[0][-1] != "'":
+                    function_connection = int(connec[0])
+                    function_connections.append((function_id, function_connection))
 
             all_connections.extend(function_connections)
 
@@ -6794,6 +6794,7 @@ class VolumeModel(dc.DessiaObject):
 
         
     def babylonjs(self, page_name=None, use_cdn=True, debug=False):
+        print('self.primitives', self.primitives)
         babylon_data = self.babylon_data()
         self.babylonjs_from_babylon_data(babylon_data, page_name = page_name,
                                          use_cdn = use_cdn, debug = debug)
