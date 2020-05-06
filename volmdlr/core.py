@@ -2620,27 +2620,23 @@ class Arc3D(Primitive3D):
         """
         if side == 'old':
             new_start = frame.OldCoordinates(self.start.copy())
-            # new_start = self.start.copy()
             new_interior = frame.OldCoordinates(self.interior.copy())
             new_end = frame.OldCoordinates(self.end.copy())
             if copy:
-                return Arc3D(new_start, new_interior, new_end, self.normal, self.name)
+                return Arc3D(new_start, new_interior, new_end, normal=None, name=self.name)
             else:
                 self.start, self.interior, self.end = new_start, new_interior, new_end
                 self.setup_arc(self.start, self.interior, self.end)
                 
         if side == 'new':
             new_start = frame.NewCoordinates(self.start.copy())
-            # new_start = self.start.copy()
             new_interior = frame.NewCoordinates(self.interior.copy())
             new_end = frame.NewCoordinates(self.end.copy())
             if copy:
-                return Arc3D(new_start, new_interior, new_end, self.normal, self.name)
+                return Arc3D(new_start, new_interior, new_end, normal=None, name=self.name)
             else:
-                # print('self', self.start, self.interior, self.end)
                 self.start, self.interior, self.end = new_start, new_interior, new_end
                 self.setup_arc(self.start, self.interior, self.end)
-                # print('self', self.start, self.interior, self.end)
                 
     def distance_mini(self, element) :
         if element.__class__ is Arc3D :
@@ -3174,7 +3170,7 @@ class Wire3D(CompositePrimitive3D):
             if copy :
                 for primitive in self.primitives :
                     new_wire.append(primitive.frame_mapping(frame, side, copy))
-                return new_wire
+                return Wire3D(new_wire)
             else :
                 for primitive in self.primitives :
                     primitive.frame_mapping(frame, side, copy=False)
@@ -3183,7 +3179,7 @@ class Wire3D(CompositePrimitive3D):
             if copy :
                 for primitive in self.primitives :
                     new_wire.append(primitive.frame_mapping(frame, side, copy))
-                return new_wire
+                return Wire3D(new_wire)
             else :
                 for primitive in self.primitives :
                     primitive.frame_mapping(frame, side, copy=False)
