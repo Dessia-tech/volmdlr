@@ -1155,7 +1155,7 @@ class Sweep(volmdlr.Shell3D):
     def copy(self):
         new_contour2d = self.contour2d.copy()
         new_wire3d = self.wire3d.copy()
-        return Sweep(self, new_contour2d, new_wire3d, color=self.color, alpha=self.alpha, name=self.name)
+        return Sweep(new_contour2d, new_wire3d, color=self.color, alpha=self.alpha, name=self.name)
 
 class Cut(volmdlr.Primitive3D):
     """
