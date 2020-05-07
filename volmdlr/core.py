@@ -210,7 +210,7 @@ def delete_double_pos(points, triangles):
 
 def h_triangle(vec1, vec2) :
     #Al-Kashi Formula
-    l1, l2 = vec1.Norm(), vec2.Norm()
+    l1, l2 = vec1.Norm(), vec2.Norm() #two length, other than the basis
     l3 = math.sqrt(l2**2 + l1**2 - 2*vec1.Dot(vec2))
     pos_l3 = (l2**2 - l1**2 +l3**2)/(2*l3)
     h = math.sqrt(l2**2 - pos_l3**2)
@@ -2549,7 +2549,7 @@ class Arc3D(Primitive3D):
                 self.start, self.interior, self.end = new_start, new_interior, new_end
                 self.setup_arc(self.start, self.interior, self.end)
                 
-    def distance_mini(self, element) :
+    def minimum_distance(self, element) :
         if element.__class__ is Arc3D :
             if self.normal == element.normal :
                 min_distance = LineSegment3D(self.center, element.center).Length()
@@ -3461,12 +3461,15 @@ class LineSegment3D(Edge3D):
         c = v.Dot(v)
         d = u.Dot(w)
         e = v.Dot(w)
-
-        s = (b*e -c*d) / (a*c - b**2)
-        t = (a*e -b*d) / (a*c - b**2)
-        p1 = self.points[0] + s*u
-        p2 = other_line.points[0] + t*v
-        return p1, p2, s, t
+        
+        if (a*c - b**2)!=0 :
+            s = (b*e -c*d) / (a*c - b**2)
+            t = (a*e -b*d) / (a*c - b**2)
+            p1 = self.points[0] + s*u
+            p2 = other_line.points[0] + t*v
+            return p1, p2, s, t
+        else :
+            return None, None, -1, -1
 
     def Matrix_distance(self, other_line) :
         u = self.points[1] - self.points[0]
@@ -3489,8 +3492,53 @@ class LineSegment3D(Edge3D):
         #               [e])
         # return scp.linalg.lstsq(A, B)
         return scp.optimize.lsq_linear(A, B, bounds=(0,1))
-
-    def distance_mini(self, element):
+    
+    def distance_parallele(self, LS2):
+        ptA, ptB, ptC = self.points[0], self.points[1], LS2.points[0]
+        u = Vector3D((ptA - ptB).vector)
+        u.Normalize()
+        plane1 = Plane3D.from_3_points(ptA, ptB, ptC)
+        v = u.Cross(plane1.normal) #distance vector
+        #ptA = k*u + c*v + ptC
+        res = (ptA - ptC).vector
+        x, y, z = res[0], res[1], res[2]
+        u1, u2, u3 = u.vector[0], u.vector[1], u.vector[2]
+        v1, v2, v3 = v.vector[0], v.vector[1], v.vector[2]
+        
+        if (u1*v2-v1*u2)!=0 and u1!=0: 
+            c = (y*u1-x*u2)/(u1*v2-v1*u2)
+            k = (x-c*v1)/u1
+            if math.isclose(k*u3+c*v3, z, abs_tol=1e-7) :
+                return k
+        elif (u1*v3-v1*u3)!=0 and u1!=0: 
+            c = (z*u1-x*u3)/(u1*v3-v1*u3)
+            k = (x-c*v1)/u1
+            if math.isclose(k*u2+c*v2, y, abs_tol=1e-7) :
+                return k
+        elif (v1*u2-v2*u1)!=0 and u2!=0:
+            c = (u2*x-y*u1)/(v1*u2-v2*u1)
+            k = (y-c*v2)/u2
+            if math.isclose(k*u3+c*v3, z, abs_tol=1e-7) :
+                return k
+        elif (v3*u2-v2*u3)!=0 and u2!=0:
+            c = (u2*z-y*u3)/(v3*u2-v2*u3)
+            k = (y-c*v2)/u2
+            if math.isclose(k*u1+c*v1, x, abs_tol=1e-7) :
+                return k
+        elif (u1*v3-v1*u3)!=0 and u3!=0: 
+            c = (z*u1-x*u3)/(u1*v3-v1*u3)
+            k = (z-c*v3)/u3
+            if math.isclose(k*u2+c*v2, y, abs_tol=1e-7) :
+                return k
+        elif (u2*v3-v2*u3)!=0 and u3!=0: 
+            c = (z*u2-y*u3)/(u2*v3-v2*u3)
+            k = (z-c*v3)/u3
+            if math.isclose(k*u1+c*v1, x, abs_tol=1e-7) :
+                return k
+        else :
+            return NotImplementedError
+        
+    def minimum_distance(self, element):
         if element.__class__ is Arc3D :
             #Find the closest arc point from LS
             pos = 0
@@ -3525,6 +3573,7 @@ class LineSegment3D(Edge3D):
         
         elif element.__class__ is LineSegment3D :
             # parallelepipedic's height with 3 non colinear vectors
+            distance = []
             x = Vector3D((self.points[1] - self.points[0]))
             y = Vector3D((element.points[1] - element.points[0]))
            
@@ -3594,6 +3643,12 @@ class LineSegment3D(Edge3D):
             # #             end = mid.copy()
             # #         else :
             # #             start = mid.copy()
+            p1, p2, s, t = self.MinimumDistancePoints(element)
+            print('s, t',s, t)
+            if s >= 0 and s <= 1 and t >= 0 and t <= 1 :
+                return (p2-p1).Norm()
+            
+            
             l1 = Vector3D((self.points[0] - element.points[0])).Norm()
             l2 = Vector3D((self.points[0] - element.points[1])).Norm()
             l3 = Vector3D((self.points[1] - element.points[0])).Norm()
@@ -3601,39 +3656,37 @@ class LineSegment3D(Edge3D):
             
             mid1, mid2 = (self.points[0]+self.points[1])/2, (element.points[0]+element.points[1])/2
             vecmid = Vector3D((mid1 - mid2))
-
-
-            if math.isclose(x.Cross(y).Norm(), 0, abs_tol=1e-7) or math.isclose(x.Dot(y), 0, abs_tol=1e-7):
-                #add al-kashi formula
-                return min(vecmid.Norm(), l1, l2, l3, l4)
+            distance.extend([l1, l2, l3, l4, vecmid.Norm()])
             
+            if math.isclose(x.Cross(y).Norm(), 0, abs_tol=1e-7) :
+                start1, end1 = self.points[0], self.points[1]
+                if (l1 <= l2 and l2 < l4) or (l4 <= l3 and l3 < l1):
+                    start2, end2 = element.points[1], element.points[0]
+                else : 
+                    start2, end2 = element.points[0], element.points[1]
+                vec1 = Vector3D((start1 - start2))
+                vec2 = Vector3D((end1 - end2))
+                print(self.distance_parallele(element))
+                print('al-kashi', h_triangle(vec1, Vector3D((vec1-(start2+end2)/2).vector)))
+
+            # elif math.isclose(x.Dot(y), 0, abs_tol=1e-7) :
+                # return NotImplementedError
             print(self.Matrix_distance(element).x)
             if self.Matrix_distance(element).success :
                 res = self.Matrix_distance(element).x
                 matrix_distance = ((self.points[0]+res[0]*x)-(element.points[0]+res[1]*y)).Norm()
-                print(matrix_distance)
-
+                print(vec1.Norm(), vec2.Norm(), vecmid.Norm(), matrix_distance)
+                return min(l1, l2, l3, l4, vecmid.Norm(), matrix_distance)
             
             #With MM' perpendicular with x and y 
             
-            p1, p2, s, t = self.MinimumDistancePoints(element)
-            print('s, t, minidistancepts',s, t, (p1-p2).Norm())
-            if s >= 0 and s <= 1 and t >= 0 and t <= 1 :
-                return (p2-p1).Norm()
+           
             
             
             
             
             # print(l1, l2)
-            start1, end1 = self.points[0], self.points[1]
-            if l1 < l2 :
-                start2, end2 = element.points[0], element.points[1]
-            else : # case elif l1==l2
-                start2, end2 = element.points[1], element.points[0]
-            vec1 = Vector3D((start1 - start2))
-            vec2 = Vector3D((end1 - end2))
             
-            print(vec1.Norm(), vec2.Norm(), vecmid.Norm())
             
             
             
