@@ -3333,7 +3333,10 @@ class LineSegment3D(Edge3D):
             res2 = y3 + (y4-y3)*t2
             
         if math.isclose(res1, res2, abs_tol=1e-7) : #if there is an intersection point
-            return Point3D([x1+(x2-x1)*t1, y1+(y2-y1)*t1, z1+(z2-z1)*t1])
+            if t1<0 or t1>1:
+                return None
+            else :
+                return Point3D([x1+(x2-x1)*t1, y1+(y2-y1)*t1, z1+(z2-z1)*t1])
         else : 
             return None
 
@@ -3461,7 +3464,6 @@ class LineSegment3D(Edge3D):
         c = v.Dot(v)
         d = u.Dot(w)
         e = v.Dot(w)
-        
         if (a*c - b**2)!=0 :
             s = (b*e -c*d) / (a*c - b**2)
             t = (a*e -b*d) / (a*c - b**2)
@@ -3659,15 +3661,46 @@ class LineSegment3D(Edge3D):
             distance.extend([l1, l2, l3, l4, vecmid.Norm()])
             
             if math.isclose(x.Cross(y).Norm(), 0, abs_tol=1e-7) :
+                ptA, ptB, ptC = self.points[0], self.points[1], element.points[0]
+                u = Vector3D((ptA - ptB).vector)
+                u.Normalize()
+                plane1 = Plane3D.from_3_points(ptA, ptB, ptC)
+                v = u.Cross(plane1.normal) #distance vector
+                print('vector v',v)
+                
                 start1, end1 = self.points[0], self.points[1]
                 if (l1 <= l2 and l2 < l4) or (l4 <= l3 and l3 < l1):
                     start2, end2 = element.points[1], element.points[0]
                 else : 
                     start2, end2 = element.points[0], element.points[1]
+                fig = plt.figure()
+                ax = fig.add_subplot(111, projection='3d')
+                start1.MPLPlot(ax=ax)
+                end1.MPLPlot(ax=ax, color='r')
+                start2.MPLPlot(ax=ax, color='b')
+                end2.MPLPlot(ax=ax, color='g')
+                
                 vec1 = Vector3D((start1 - start2))
                 vec2 = Vector3D((end1 - end2))
-                print(self.distance_parallele(element))
-                print('al-kashi', h_triangle(vec1, Vector3D((vec1-(start2+end2)/2).vector)))
+                h1, h2 = h_triangle(vec1, Vector3D((end1-start2).vector)), h_triangle(vec2, Vector3D((start1-end2).vector))
+                
+                if x.Norm() <= y.Norm():
+                    ptest1, ptest2, ptest3, ptest4 = start1 + v*(h1+1), start1 - v*(h1+1), end1 + v*(h1+1), end1 - v*(h1+1)
+                    LS_cut = LineSegment3D(start2, end2)
+                else :
+                    ptest1, ptest2, ptest3, ptest4 = start2 + v*(h1+1), start2 - v*(h1+1), end2 + v*(h1+1), end2 - v*(h1+1)
+                    LS_cut = LineSegment3D(start1, end1)
+                    
+                LS1, LS2 = LineSegment3D(ptest1, ptest2), LineSegment3D(ptest3, ptest4)
+                LS1.MPLPlot(ax=ax)
+                LS2.MPLPlot(ax=ax)
+                LS_cut.MPLPlot(ax=ax)
+                test1, test2 = LineSegment3D.Intersection(LS_cut, LS1), LineSegment3D.Intersection(LS_cut, LS2)
+                print(test1, test2)
+                if test1 is not None and test2 is not None : 
+                    distance.append(h1)
+                    
+                print('al-kashi', h1, h2)
 
             # elif math.isclose(x.Dot(y), 0, abs_tol=1e-7) :
                 # return NotImplementedError
@@ -3675,8 +3708,8 @@ class LineSegment3D(Edge3D):
             if self.Matrix_distance(element).success :
                 res = self.Matrix_distance(element).x
                 matrix_distance = ((self.points[0]+res[0]*x)-(element.points[0]+res[1]*y)).Norm()
-                print(vec1.Norm(), vec2.Norm(), vecmid.Norm(), matrix_distance)
-                return min(l1, l2, l3, l4, vecmid.Norm(), matrix_distance)
+                distance.append(matrix_distance)
+                return min(distance)
             
             #With MM' perpendicular with x and y 
             

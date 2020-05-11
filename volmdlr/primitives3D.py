@@ -654,7 +654,7 @@ class RevolvedProfile(volmdlr.Shell3D):
                         continue
                     else :
                         arcgen = create_arc(edge.points[0], angle, axis_point, axis)
-                        x = axis.DeterministicUnitNormalVector()
+                        x = axis.deterministic_unit_normal_vector()
                         frame = volmdlr.Frame3D(arcgen.center, x, axis.Cross(x), dot*axis)
                         cylsurf3d = volmdlr.CylindricalSurface3D(frame, arcgen.radius*1000)
                         faces.append(volmdlr.CylindricalFace3D.from_arc3d(edge, arcgen, cylsurf3d))
@@ -848,7 +848,7 @@ class Cylinder(RevolvedProfile):
                                            volmdlr.Contour2D([l1, l2, l3, l4]), self.position, self.axis, name=self.name)
         return extruded_profile.babylon_script(name=name)
 
-    def frame_mapping(self, frame, side, copy=True):
+    def frame_mapping(self, frame, side, copy=True, color=None, alpha=1.):
         """
         side = 'old' or 'new'
         """
@@ -863,10 +863,18 @@ class Cylinder(RevolvedProfile):
         if copy:
             return Cylinder(self.position.frame_mapping(frame, side, copy),
                             axis,
-                            self.radius, self.length)
+                            self.radius, self.length, color=color, alpha=alpha)
         else:
             self.position.frame_mapping(frame, side, copy)
             self.axis = axis
+            Cylinder.init(self, self.position, self.axis, self.radius, 
+                          self.length, color=self.color, alpha=self.alpha)
+            
+    def copy(self) :
+        new_position = self.position.copy()
+        new_axis = self.axis.copy()
+        return Cylinder(new_position, new_axis, self.radius, self.length, color=self.color, alpha=self.alpha, name=self.name)
+        
 
 class HollowCylinder(Cylinder):
     def __init__(self, position, axis, inner_radius, outer_radius, length,
