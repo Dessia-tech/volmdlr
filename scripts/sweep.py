@@ -22,7 +22,7 @@ radius = {1: 0.015, 2: 0.020, 3: 0.005}
 current_point = p5.vector
 #points = [p1, p2]
 #radius = {1: 0.010}
-for i in range(10):
+for i in range(4):
     current_point += 0.300 * (npy.random.random(3) -0.5)
     points.append(vm.Point3D(current_point))
     radius[4+i] = 0.01 + 0.03 * random.random()
@@ -43,8 +43,17 @@ c2 = vm.Contour2D.dict_to_object(c1)
 
 
 sweep = primitives3D.Sweep(contour, rl, name = 'Random pipe')
+sweepy = sweep.copy()
+v1 = vm.Vector3D((1,1,1))
+v1.Normalize()
+v2 = v1.deterministic_unit_normal_vector()
+v3 = v1.Cross(v2)
+frame0 = vm.Frame3D(vm.Point3D((0,0,0)), v1, v2, v3)
 
-m = vm.VolumeModel([sweep])
+frame_mapping = sweepy.frame_mapping(frame0, 'new', True)
+
+# m = vm.VolumeModel([sweepy])
+m = vm.VolumeModel([frame_mapping])
 m.babylonjs()
 # m.FreeCADExport('sweep')
 
