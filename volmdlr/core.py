@@ -4692,7 +4692,9 @@ class ToroidalFace3D (Face3D) :
             contours2d =  [Contour2D(edges)]
             points = [theta, phi1]
             
-        ### TODO else :
+        else:
+            print('contours3d edges', contours3d[0].edges)
+            raise NotImplementedError
             
         return cls(contours2d, toroidalsurface3d, points, name='')
     
@@ -7057,7 +7059,6 @@ step_to_volmdlr_primitive = {
         'B_SPLINE_SURFACE_WITH_KNOTS': BSplineSurface3D,
         'B_SPLINE_SURFACE': BSplineSurface3D,
         'BEZIER_SURFACE': BSplineSurface3D,
-        # 'BEZIER_SURFACE': None,
         'OFFSET_SURFACE': None,
         'SURFACE_REPLICA': None,
         'RATIONAL_B_SPLINE_SURFACE': BSplineSurface3D,
