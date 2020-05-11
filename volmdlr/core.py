@@ -2221,6 +2221,46 @@ class Line3D(Primitive3D, Line):
         point2 = point1 + direction
         return cls(point1, point2, arguments[0][1:-1])
 
+    @classmethod
+    def Intersection(self,line1, line2):
+        x1 = line1.points[0].vector[0]
+        y1 = line1.points[0].vector[1]
+        z1 = line1.points[0].vector[2]
+        x2 = line1.points[1].vector[0]
+        y2 = line1.points[1].vector[1]
+        z2 = line1.points[1].vector[2]
+        x3 = line2.points[0].vector[0]
+        y3 = line2.points[0].vector[1]
+        z3 = line2.points[0].vector[2]
+        x4 = line2.points[1].vector[0]
+        y4 = line2.points[1].vector[1]
+        z4 = line2.points[1].vector[2]
+
+
+        #2 unknown 3eq with t1 et t2 unknown
+        if (x2-x1+y1-y2) != 0 and (y4-y3) != 0:
+        
+            t1 = (x3-x1 + (x4-x3)*(y1-y3)/(y4-y3))/(x2-x1+y1-y2)
+            t2 = (y1-y3 + (y2-y1)*t1)/(y4-y3)
+            res1 = z1 + (z2-z1)*t1
+            res2 = z3 + (z4-z3)*t2
+        
+        elif (z2-z1+y1-y2) != 0 and (y4-y3) != 0:
+            t1 = (z3-z1 + (z4-z3)*(y1-y3)/(y4-y3))/(z2-z1+y1-y2)
+            t2 = (y1-y3 + (y2-y1)*t1)/(y4-y3)
+            res1 = x1 + (x2-x1)*t1
+            res2 = x3 + (x4-x3)*t2
+        
+        else :
+            t1 = (z3-z1 + (z4-z3)*(x1-x3)/(x4-x3))/(z2-z1+x1-x2)
+            t2 = (x1-x3 + (x2-x1)*t1)/(x4-x3)
+            res1 = y1 + (y2-y1)*t1
+            res2 = y3 + (y4-y3)*t2
+            
+        if math.isclose(res1, res2, abs_tol=1e-7) : #if there is an intersection point
+            return Point3D([x1+(x2-x1)*t1, y1+(y2-y1)*t1, z1+(z2-z1)*t1])
+        else : 
+            return None
 
 class BSplineCurve3D(Primitive3D):
     def __init__(self, degree, control_points, knot_multiplicities, knots, weights=None, periodic=False, name=''):
@@ -3979,7 +4019,7 @@ class Circle3D(Contour3D):
         return tessellation_points_3D
     
     # def to_arc3d(self):
-    #     point1 = center + self.normal.DeterministicNormalVector()*radius #premier point sur le cercle
+    #     point1 = center + self.normal.deterministic_unit_normal_vector()*radius #premier point sur le cercle
     #     point2 = 
     #     return Arc3D(point1, point2, point1)
     

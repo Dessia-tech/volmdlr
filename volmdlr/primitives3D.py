@@ -602,7 +602,7 @@ class RevolvedProfile(volmdlr.Shell3D):
                     pt_arc = pt2 + offset
                 
                 if pt_arc == axis_point :
-                    ax = axis.DeterministicUnitNormalVector()
+                    ax = axis.deterministic_unit_normal_vector()
                     vec_offset = volmdlr.Vector3D((1,1,1)) - axis - ax
                     arcgen = create_arc(pt_arc+0.00001*vec_offset, angle, axis_point, axis)
                 else :
