@@ -848,7 +848,7 @@ class Cylinder(RevolvedProfile):
                                            volmdlr.Contour2D([l1, l2, l3, l4]), self.position, self.axis, name=self.name)
         return extruded_profile.babylon_script(name=name)
 
-    def frame_mapping(self, frame, side, copy=True, color=None, alpha=1.):
+    def frame_mapping(self, frame, side, copy=True):
         """
         side = 'old' or 'new'
         """
@@ -863,7 +863,7 @@ class Cylinder(RevolvedProfile):
         if copy:
             return Cylinder(self.position.frame_mapping(frame, side, copy),
                             axis,
-                            self.radius, self.length, color=color, alpha=alpha)
+                            self.radius, self.length, color=self.color, alpha=self.alpha)
         else:
             self.position.frame_mapping(frame, side, copy)
             self.axis = axis
