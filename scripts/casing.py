@@ -56,13 +56,13 @@ belt = primitives3D.ExtrudedProfile(vm.Z3D*(height - 2*thickness), vm.X3D, vm.Y3
                                       thickness * vm.Z3D, name='belt')
 
 
-fig, ax = belt.outer_contour3d.MPLPlot()
+ax = belt.outer_contour3d.MPLPlot()
 l = belt.outer_contour3d.Length()
 for i in range(100):
     p = belt.outer_contour3d.PointAtCurvilinearAbscissa(i*l/100)
     p.MPLPlot(ax=ax)
 
-fig, ax = belt.outer_contour3d.MPLPlot()
+ax = belt.outer_contour3d.MPLPlot()
 # l = belt.outer_contour3d.Length()
 # for i in range(100):
 for p in belt.outer_contour3d.points:

@@ -64,7 +64,7 @@ class TriangularElement:
         
         self.center = (self.points[0]+self.points[1]+self.points[2])/3
         
-        self.area = self.area()
+        self.area = self._area()
         
     def _to_linear_elements(self):
         vec1 = vm.Vector2D(self.points[1] - self.points[0])
