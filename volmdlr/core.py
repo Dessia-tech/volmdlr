@@ -2602,7 +2602,7 @@ class Arc3D(Primitive3D):
                 self.setup_arc(self.start, self.interior, self.end)
                 
     def minimum_distance(self, element) :
-        if element.__class__ is Arc3D :
+        if element.__class__ is Arc3D or element.__class__ is Circle3D :
             if self.normal == element.normal :
                 min_distance = LineSegment3D(self.center, element.center).Length()
                 return min_distance
@@ -2618,6 +2618,7 @@ class Arc3D(Primitive3D):
             
         elif element.__class__ is LineSegment3D :
             #Find the closest arc point from LS
+            #Initialize
             pos = 0
             i1, i2 = 0, 0
             d1 = abs(LineSegment3D(self.points[0], element.points[0]).Length())
@@ -2641,12 +2642,8 @@ class Arc3D(Primitive3D):
             x = Vector3D((element.points[0]-self.points[pos_triangle]))
             y = Vector3D((element.points[1]-self.points[pos_triangle]))
             
-            l1 = abs(LineSegment3D(self.points[pos_triangle], element.points[0]).Length())
-            l2 = abs(LineSegment3D(self.points[pos_triangle], element.points[1]).Length())
-            l3 = sqrt(l2**2 + l1**2 - 2*x.Dot(y))
-            pos_l3 = (l2**2 - l1**2 +l3**2)/(2*l3)
-            h3 = sqrt(l2**2 - pos_l3**2)
-            return min([h1,h3])
+            h2 = h_triangle(x, y)
+            return min([h1,h2])
         else :
             return NotImplementedError
 
@@ -3596,8 +3593,9 @@ class LineSegment3D(Edge3D):
             return NotImplementedError
         
     def minimum_distance(self, element):
-        if element.__class__ is Arc3D :
+        if element.__class__ is Arc3D or element.__class__ is Circle3D:
             #Find the closest arc point from LS
+            #Initialize
             pos = 0
             i1, i2 = 0, 0
             d1 = abs(LineSegment3D(element.points[0], self.points[0]).Length())
@@ -3621,12 +3619,8 @@ class LineSegment3D(Edge3D):
             x = Vector3D((self.points[0]-element.points[pos_triangle]))
             y = Vector3D((self.points[1]-element.points[pos_triangle]))
             
-            l1 = abs(LineSegment3D(element.points[pos_triangle], self.points[0]).Length())
-            l2 = abs(LineSegment3D(element.points[pos_triangle], self.points[1]).Length())
-            l3 = sqrt(l2**2 + l1**2 - 2*x.Dot(y))
-            pos_l3 = (l2**2 - l1**2 +l3**2)/(2*l3)
-            h3 = sqrt(l2**2 - pos_l3**2)
-            return min([h1,h3])
+            h2 = h_triangle(x, y)
+            return min([h1,h2])
         
         elif element.__class__ is LineSegment3D :
             # parallelepipedic's height with 3 non colinear vectors
