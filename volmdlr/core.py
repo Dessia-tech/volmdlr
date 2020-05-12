@@ -2612,17 +2612,29 @@ class Arc3D(Primitive3D):
             return min(distance)
             
         elif element.__class__ is LineSegment3D :
+            #If LS cut the arc
+            for k in range (0, len(self.points)-1) :
+                LS2 = LineSegment3D(self.points[k], self.points[k+1])
+                # cut = LineSegment3D.Intersection(element, LS2)
+                p1, p2, s, t = element.MinimumDistancePoints(LS2)
+                if p1 is not None and p2 is not None :
+                    if s >= 0 and s <= 1 and t >= 0 and t <= 1 :
+                        if math.isclose((p1-p2).Norm(), 0, abs_tol = 1e-7):
+                            return 0
+                # if cut is not None :
+                #     return 0
+            
             #Find the closest arc point from LS
             #Initialize
             pos = 0
             i1, i2 = 0, 0
-            d1 = abs(LineSegment3D(self.points[0], element.points[0]).Length())
-            d2 = abs(LineSegment3D(self.points[0], element.points[1]).Length())
+            d1 = (self.points[0] - element.points[0]).Norm()
+            d2 = (self.points[0] - element.points[1]).Norm()
             
             for pt in self.points[1:] :
                 pos += 1
-                dtest1 = abs(LineSegment3D(pt, element.points[0]).Length())
-                dtest2 = abs(LineSegment3D(pt, element.points[1]).Length())
+                dtest1 = (pt - element.points[0]).Norm()
+                dtest2 = (pt - element.points[1]).Norm()
                 if dtest1 < d1 :
                     d1, i1 = dtest1, pos
                 if dtest2 < d2 :
@@ -2633,12 +2645,17 @@ class Arc3D(Primitive3D):
             else :
                 h1, pos_triangle = d2, i2
             
-            #Al-Kashi formula
-            x = Vector3D((element.points[0]-self.points[pos_triangle]))
-            y = Vector3D((element.points[1]-self.points[pos_triangle]))
-            
-            h2 = h_triangle(x, y)
-            return min([h1,h2])
+            mid_LS = (element.points[0]+element.points[1])/2
+            d3 = (self.points[pos_triangle] - mid_LS)
+            if d3.Norm() < h1 :
+                h2 = h2_triangle(self.points[pos_triangle], element.points[0], element.points[1])
+                return min([h1,h2])
+            else :
+                d4 = (self.points[pos_triangle] - (element.points[0] + (element.points[1]-element.points[0])/4)).Norm()
+                d5 = (self.points[pos_triangle] - (element.points[1] + (element.points[0]-element.points[1])/4)).Norm()
+                if d4 < h1 or d5 < h1:
+                    return min(d4, h2_triangle(self.points[pos_triangle], element.points[0], element.points[1]))
+                return h1
         else :
             return NotImplementedError
 
@@ -3378,7 +3395,7 @@ class LineSegment3D(Edge3D):
         
         else :
             return None
-            
+        
         if math.isclose(res1, res2, abs_tol=1e-7) : #if there is an intersection point
             if t1<0 or t1>1:
                 return None
@@ -3589,17 +3606,29 @@ class LineSegment3D(Edge3D):
         
     def minimum_distance(self, element):
         if element.__class__ is Arc3D or element.__class__ is Circle3D:
+            #If LS cut the arc
+            for k in range (0, len(element.points)-1) :
+                LS2 = LineSegment3D(element.points[k], element.points[k+1])
+                # cut = LineSegment3D.Intersection(LS2, self)
+                p1, p2, s, t = self.MinimumDistancePoints(LS2)
+                if p1 is not None and p2 is not None :
+                    if s >= 0 and s <= 1 and t >= 0 and t <= 1 :
+                        if math.isclose((p1-p2).Norm(), 0, abs_tol = 1e-7):
+                            return 0
+                # if cut is not None :
+                #     return 0
+            
             #Find the closest arc point from LS
             #Initialize
             pos = 0
             i1, i2 = 0, 0
-            d1 = abs(LineSegment3D(element.points[0], self.points[0]).Length())
-            d2 = abs(LineSegment3D(element.points[0], self.points[1]).Length())
+            d1 = (element.points[0] - self.points[0]).Norm()
+            d2 = (element.points[0] - self.points[1]).Norm()
             
             for pt in element.points[1:] :
                 pos += 1
-                dtest1 = abs(LineSegment3D(pt, self.points[0]).Length())
-                dtest2 = abs(LineSegment3D(pt, self.points[1]).Length())
+                dtest1 = (pt - self.points[0]).Norm()
+                dtest2 = (pt - self.points[1]).Norm()
                 if dtest1 < d1 :
                     d1, i1 = dtest1, pos
                 if dtest2 < d2 :
@@ -3610,12 +3639,17 @@ class LineSegment3D(Edge3D):
             else :
                 h1, pos_triangle = d2, i2
             
-            #Al-Kashi Formula
-            x = Vector3D((self.points[0]-element.points[pos_triangle]))
-            y = Vector3D((self.points[1]-element.points[pos_triangle]))
-            
-            h2 = h_triangle(x, y)
-            return min([h1,h2])
+            mid_LS = (self.points[0]+self.points[1])/2
+            d3 = (element.points[pos_triangle] - mid_LS)
+            if d3.Norm() < h1 :
+                h2 = h2_triangle( element.points[pos_triangle], self.points[0], self.points[1])
+                return min([h1,h2])
+            else :
+                d4 = (element.points[pos_triangle] - (self.points[0] + (self.points[1]-self.points[0])/4)).Norm()
+                d5 = (element.points[pos_triangle] - (self.points[1] + (self.points[0]-self.points[1])/4)).Norm()
+                if d4 < h1 or d5 < h1:
+                    return min(d4, h2_triangle(element.points[pos_triangle], self.points[0], self.points[1]))
+                return h1
         
         elif element.__class__ is LineSegment3D :
             # parallelepipedic's height with 3 non colinear vectors
