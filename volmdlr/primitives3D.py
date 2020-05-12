@@ -867,7 +867,7 @@ class Cylinder(RevolvedProfile):
         else:
             self.position.frame_mapping(frame, side, copy)
             self.axis = axis
-            Cylinder.init(self, self.position, self.axis, self.radius, 
+            Cylinder.__init__(self, self.position, self.axis, self.radius, 
                           self.length, color=self.color, alpha=self.alpha)
             
     def copy(self) :
