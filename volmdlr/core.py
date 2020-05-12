@@ -3551,7 +3551,7 @@ class LineSegment3D(Edge3D):
         
         A = npy.array([[a, b],
                       [b, c]])
-        
+        print(A)
         B = npy.array([-d,-e])
         
         # B = npy.array([d],
