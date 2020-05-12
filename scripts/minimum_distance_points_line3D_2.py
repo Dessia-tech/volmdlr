@@ -39,21 +39,25 @@ radius1 = {1: 0.01, 2: 0.05}
 
 rl1 = primitives3D.OpenedRoundedLineSegments3D(pts1, radius1, adapt_radius=True, name='wire1')
 sweep1 = primitives3D.Sweep(contour, rl1, name = 'pipe1')
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-for prim in rl.primitives :
-    prim.MPLPlot(ax=ax)
-for prim1 in rl1.primitives :
-    prim1.MPLPlot(ax=ax) 
+# fig = plt.figure()
+# ax = fig.add_subplot(111, projection='3d')
+# for prim in rl.primitives :
+#     prim.MPLPlot(ax=ax)
+# for prim1 in rl1.primitives :
+#     prim1.MPLPlot(ax=ax) 
     
 l1 = rl.primitives[2]
 l2 = rl1.primitives[2]
 
-minimum_distance = l1.Matrix_distance(l2)
+p1, p2 = l1.Matrix_distance(l2)
 
-p1 = l2.PointAtCurvilinearAbscissa(minimum_distance.x[0])
-p2 = l1.PointAtCurvilinearAbscissa(minimum_distance.x[1])
+
 
 mes = volmdlr.Measure3D(p1, p2)
+ll = primitives3D.OpenedRoundedLineSegments3D([p1, p2], {}, name='mesure')
 
-mes.MPLPlot(ax=ax)
+
+# mes.MPLPlot(ax=ax)
+
+model = volmdlr.VolumeModel([rl1, rl, ll])
+model.FreeCADExport('lines')
