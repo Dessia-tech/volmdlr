@@ -2603,18 +2603,13 @@ class Arc3D(Primitive3D):
                 
     def minimum_distance(self, element) :
         if element.__class__ is Arc3D or element.__class__ is Circle3D :
-            if self.normal == element.normal :
-                min_distance = LineSegment3D(self.center, element.center).Length()
-                return min_distance
-            #Point to point and find the closest couple
-            else :
-                distance = []
-                for pt1 in self.points :
-                    pt1_to_pt2 = []
-                    for pt2 in element.points :
-                        pt1_to_pt2.append(abs(LineSegment3D(pt1, pt2).Length()))
-                    distance.append(min(pt1_to_pt2))
-                return min(distance)
+            distance = []
+            for pt1 in self.points :
+                pt1_to_pt2 = []
+                for pt2 in element.points :
+                    pt1_to_pt2.append((pt1-pt2).Norm())
+                distance.append(min(pt1_to_pt2))
+            return min(distance)
             
         elif element.__class__ is LineSegment3D :
             #Find the closest arc point from LS
