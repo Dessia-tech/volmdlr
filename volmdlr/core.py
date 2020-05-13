@@ -3549,25 +3549,31 @@ class LineSegment3D(Edge3D):
 #        v = other_line.points[1] - other_line.points[0]
         u = self.DirectionVector()
         v = other_line.DirectionVector()
-        w = self.points[0] - other_line.points[0]
+        w = other_line.points[0] - self.points[0]
         
+#        a = u.Dot(u)
+#        b = -2*u.Dot(v)
+#        c = v.Dot(v)
+#        d = -2*u.Dot(w)
+#        e = 2*v.Dot(w)
+#        f = w.Dot(w)
         a = u.Dot(u)
-        b = -2*u.Dot(v)
-        c = v.Dot(v)
-        d = -2*u.Dot(w)
-        e = 2*v.Dot(w)
-        f = w.Dot(w)
+        b = -u.Dot(v)
+        d = v.Dot(v)
+        
+        e = w.Dot(u)
+        f = -w.Dot(v)
         
         A = npy.array([[a, b],
-                       [b, c]])
+                       [b, d]])
         print(A)
-        B = npy.array([-d,-e])
+        B = npy.array([e, f])
         
         # B = npy.array([[d],
                       # [e]])
         # return scp.linalg.lstsq(A, B)
         res = scp.optimize.lsq_linear(A, B, bounds=(0,1))
-    
+        print(res)
         p1 = self.PointAtCurvilinearAbscissa(res.x[0]*self.Length())
         p2 = other_line.PointAtCurvilinearAbscissa(res.x[1]*other_line.Length())
         return p1, p2
