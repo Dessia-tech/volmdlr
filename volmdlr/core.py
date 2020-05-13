@@ -3545,8 +3545,10 @@ class LineSegment3D(Edge3D):
             return None, None, -1, -1
 
     def Matrix_distance(self, other_line) :
-        u = self.points[1] - self.points[0]
-        v = other_line.points[1] - other_line.points[0]
+#        u = self.points[1] - self.points[0]
+#        v = other_line.points[1] - other_line.points[0]
+        u = self.DirectionVector()
+        v = other_line.DirectionVector()
         w = self.points[0] - other_line.points[0]
         
         a = u.Dot(u)
@@ -3557,7 +3559,7 @@ class LineSegment3D(Edge3D):
         f = w.Dot(w)
         
         A = npy.array([[a, b],
-                      [b, c]])
+                       [b, c]])
         print(A)
         B = npy.array([-d,-e])
         
@@ -3566,8 +3568,8 @@ class LineSegment3D(Edge3D):
         # return scp.linalg.lstsq(A, B)
         res = scp.optimize.lsq_linear(A, B, bounds=(0,1))
     
-        p1 = self.PointAtCurvilinearAbscissa(res.x[0])
-        p2 = other_line.PointAtCurvilinearAbscissa(res.x[1])
+        p1 = self.PointAtCurvilinearAbscissa(res.x[0]*self.Length())
+        p2 = other_line.PointAtCurvilinearAbscissa(res.x[1]*other_line.Length())
         return p1, p2
     
     def distance_parallele(self, LS2):
