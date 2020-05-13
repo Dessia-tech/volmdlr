@@ -3157,11 +3157,16 @@ class Wire3D(CompositePrimitive3D):
                     primitive.frame_mapping(frame, side, copy=False)
                 
         
-    def min_distance(self, wire2) :
+    def minimum_distance(self, wire2) :
         distance = []
         for element in self.primitives :
             for element2 in wire2.primitives :
-                distance.append(distance_mini(element2))
+                # fig = plt.figure()
+                # ax = fig.add_subplot(111, projection='3d')
+                # element.MPLPlot(ax=ax)
+                # element2.MPLPlot(ax=ax)
+                distance.append(element.minimum_distance(element2))
+                
         return min(distance)
     
     def copy(self) :
@@ -3554,8 +3559,8 @@ class LineSegment3D(Edge3D):
         
         B = npy.array([-d,-e])
         
-        # B = npy.array([d],
-        #               [e])
+        # B = npy.array([[d],
+                      # [e]])
         # return scp.linalg.lstsq(A, B)
         return scp.optimize.lsq_linear(A, B, bounds=(0,1))
     
@@ -3725,6 +3730,19 @@ class LineSegment3D(Edge3D):
             vecmid = Vector3D((mid1 - mid2))
             distance.extend([l1, l2, l3, l4, vecmid.Norm()])
             
+            
+            start1, end1 = self.points[0], self.points[1]
+            if (l1 <= l2 and l2 < l4) or (l4 <= l3 and l3 < l1):
+                start2, end2 = element.points[1], element.points[0]
+            else : 
+                start2, end2 = element.points[0], element.points[1]
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+            start1.MPLPlot(ax=ax)
+            end1.MPLPlot(ax=ax, color='r')
+            start2.MPLPlot(ax=ax, color='b')
+            end2.MPLPlot(ax=ax, color='g')
+            
             if math.isclose(x.Cross(y).Norm(), 0, abs_tol=1e-7) or math.isclose(x.Dot(y), 0, abs_tol=1e-7):
                 ptA, ptB, ptC = self.points[0], self.points[1], element.points[0]
                 u = Vector3D((ptA - ptB).vector)
@@ -3732,17 +3750,17 @@ class LineSegment3D(Edge3D):
                 plane1 = Plane3D.from_3_points(ptA, ptB, ptC)
                 v = u.Cross(plane1.normal) #distance vector
                 
-                start1, end1 = self.points[0], self.points[1]
-                if (l1 <= l2 and l2 < l4) or (l4 <= l3 and l3 < l1):
-                    start2, end2 = element.points[1], element.points[0]
-                else : 
-                    start2, end2 = element.points[0], element.points[1]
-                fig = plt.figure()
-                ax = fig.add_subplot(111, projection='3d')
-                start1.MPLPlot(ax=ax)
-                end1.MPLPlot(ax=ax, color='r')
-                start2.MPLPlot(ax=ax, color='b')
-                end2.MPLPlot(ax=ax, color='g')
+                # start1, end1 = self.points[0], self.points[1]
+                # if (l1 <= l2 and l2 < l4) or (l4 <= l3 and l3 < l1):
+                #     start2, end2 = element.points[1], element.points[0]
+                # else : 
+                #     start2, end2 = element.points[0], element.points[1]
+                # # fig = plt.figure()
+                # # ax = fig.add_subplot(111, projection='3d')
+                # # start1.MPLPlot(ax=ax)
+                # # end1.MPLPlot(ax=ax, color='r')
+                # # start2.MPLPlot(ax=ax, color='b')
+                # # end2.MPLPlot(ax=ax, color='g')
                 
                 vec1 = Vector3D((start1 - start2))
                 vec2 = Vector3D((end1 - end2))
@@ -3756,9 +3774,9 @@ class LineSegment3D(Edge3D):
                     LS_cut = LineSegment3D(start1, end1)
                     
                 LS1, LS2 = LineSegment3D(ptest1, ptest2), LineSegment3D(ptest3, ptest4)
-                LS1.MPLPlot(ax=ax)
-                LS2.MPLPlot(ax=ax)
-                LS_cut.MPLPlot(ax=ax)
+                # LS1.MPLPlot(ax=ax)
+                # LS2.MPLPlot(ax=ax)
+                # LS_cut.MPLPlot(ax=ax)
                 test1, test2 = LineSegment3D.Intersection(LS_cut, LS1), LineSegment3D.Intersection(LS_cut, LS2)
                 if test1 is not None or test2 is not None : 
                     distance.append(h1)
@@ -3769,28 +3787,45 @@ class LineSegment3D(Edge3D):
                 if s >= 0 and s <= 1 and t >= 0 and t <= 1 :
                     return (p2-p1).Norm()
                     
-            
+                
             
                 # Héron all points
-                # print(h2_triangle(LS1.points[0], LS2.points[0], LS1.points[1]),
-                                  # h2_triangle(LS1.points[0], LS2.points[1], LS1.points[1]),
-                                  # h2_triangle(LS2.points[0], LS1.points[0], LS2.points[1]),
-                                  # h2_triangle(LS2.points[0], LS1.points[1], LS2.points[1]))
-                distance.extend([h2_triangle(LS1.points[0], LS2.points[0], LS1.points[1]),
-                                  h2_triangle(LS1.points[0], LS2.points[1], LS1.points[1]),
-                                  h2_triangle(LS2.points[0], LS1.points[0], LS2.points[1]),
-                                  h2_triangle(LS2.points[0], LS1.points[1], LS2.points[1])])
+                
+                # distance.extend([h2_triangle(LS2.points[0], LS1.points[0], LS1.points[1]),
+                #                   h2_triangle(LS2.points[1], LS1.points[0], LS1.points[1]),
+                #                   h2_triangle(LS1.points[0], LS2.points[0], LS2.points[1]),
+                #                   h2_triangle(LS1.points[1], LS2.points[0], LS2.points[1])])
+                
+                dist = [h2_triangle(LS2.points[0], LS1.points[0], LS1.points[1]),
+                                  h2_triangle(LS2.points[1], LS1.points[0], LS1.points[1]),
+                                  h2_triangle(LS1.points[0], LS2.points[0], LS2.points[1]),
+                                  h2_triangle(LS1.points[1], LS2.points[0], LS2.points[1])]
+                
+                max_dist = max(dist)
+                for d in dist :
+                    if math.isclose(d, max_dist, abs_tol = 1e-2):
+                        distance.append(d)
+                
+                
+                print(self.Matrix_distance(element).x)
+                if self.Matrix_distance(element).success :
+                    res = self.Matrix_distance(element).x
+                    matrix_distance = ((self.points[0]+res[0]*x)-(element.points[0]+res[1]*y)).Norm()
+                    distance.append(matrix_distance)
+                    print('matrix_distance', matrix_distance)
+                #     return min(distance)
+                
+                print('!!!!!!!!!!!!!!!!!!!!',h2_triangle(LS2.points[0], LS1.points[0], LS1.points[1]),
+                                  h2_triangle(LS2.points[1], LS1.points[0], LS1.points[1]),
+                                  h2_triangle(LS1.points[0], LS2.points[0], LS2.points[1]),
+                                  h2_triangle(LS1.points[1], LS2.points[0], LS2.points[1]))
+            
+                print('distance_parallele', element.distance_parallele(self))
             
             
-            
-            # print(self.Matrix_distance(element).x)
-            # if self.Matrix_distance(element).success :
-            #     res = self.Matrix_distance(element).x
-            #     matrix_distance = ((self.points[0]+res[0]*x)-(element.points[0]+res[1]*y)).Norm()
-            #     distance.append(matrix_distance)
-            #     print('matrix_distance', matrix_distance)
-            #     return min(distance)
-            
+           
+            print('mini',min(distance))
+            print()
             return min(distance)
 
         else :
