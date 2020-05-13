@@ -3484,6 +3484,7 @@ class LineSegment3D(Edge3D):
                          dash, opacity, arrow)
 
     def FreeCADExport(self, name, ndigits=6):
+        name = 'primitive'+str(name)
         x1, y1, z1 = round(1000*self.points[0], ndigits).vector
         x2, y2, z2 = round(1000*self.points[1], ndigits).vector
         print('name', name)
@@ -3545,35 +3546,40 @@ class LineSegment3D(Edge3D):
             return None, None, -1, -1
 
     def Matrix_distance(self, other_line) :
-        u = self.points[1] - self.points[0]
-        v = other_line.points[1] - other_line.points[0]
-        w = self.points[0] - other_line.points[0]
+#        u = self.points[1] - self.points[0]
+#        v = other_line.points[1] - other_line.points[0]
+        u = self.DirectionVector()
+        v = other_line.DirectionVector()
+        w = other_line.points[0] - self.points[0]
         
+#        a = u.Dot(u)
+#        b = -2*u.Dot(v)
+#        c = v.Dot(v)
+#        d = -2*u.Dot(w)
+#        e = 2*v.Dot(w)
+#        f = w.Dot(w)
         a = u.Dot(u)
-        b = -2*u.Dot(v)
-        c = v.Dot(v)
-        d = -2*u.Dot(w)
-        e = 2*v.Dot(w)
-        f = w.Dot(w)
+        b = -u.Dot(v)
+        d = v.Dot(v)
+        
+        e = w.Dot(u)
+        f = -w.Dot(v)
         
         # A = npy.array([[a, b],
         #               [b, c]])
         
         A = npy.array([[a, b],
-                      [0, c]])
+                       [b, d]])
         print(A)
-        B = npy.array([-d,-e])
+        B = npy.array([e, f])
         
         # B = npy.array([[d],
                       # [e]])
         # return scp.linalg.lstsq(A, B)
-        res = scp.optimize.lsq_linear(A, B, bounds=(0,1), method='bvls')
-        print(res.x)
-        print(res.fun)
-    
-        p1 = other_line.PointAtCurvilinearAbscissa(res.x[1])
-        p2 = self.PointAtCurvilinearAbscissa(res.x[0])
-        
+        res = scp.optimize.lsq_linear(A, B, bounds=(0,1))
+        print(res)
+        p1 = self.PointAtCurvilinearAbscissa(res.x[0]*self.Length())
+        p2 = other_line.PointAtCurvilinearAbscissa(res.x[1]*other_line.Length())
         return p1, p2
         
         
@@ -7056,6 +7062,7 @@ class VolumeModel(dc.DessiaObject):
                     if isinstance(primitive, BSplineCurve3D) \
                     or isinstance(primitive, BSplineSurface3D) \
                     or isinstance(primitive, Circle3D) \
+                    or isinstance(primitive, LineSegment3D) \
                     or isinstance(primitive, Ellipse3D):
 #                            print(primitive)
 #                            s += 'S = Part.Shape([primitive{}])\n'.format(ip)
