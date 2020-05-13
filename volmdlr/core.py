@@ -3556,19 +3556,29 @@ class LineSegment3D(Edge3D):
         e = 2*v.Dot(w)
         f = w.Dot(w)
         
+        # A = npy.array([[a, b],
+        #               [b, c]])
+        
         A = npy.array([[a, b],
-                      [b, c]])
+                      [0, c]])
         print(A)
         B = npy.array([-d,-e])
         
         # B = npy.array([[d],
                       # [e]])
         # return scp.linalg.lstsq(A, B)
-        res = scp.optimize.lsq_linear(A, B, bounds=(0,1))
+        res = scp.optimize.lsq_linear(A, B, bounds=(0,1), method='bvls')
+        print(res.x)
+        print(res.fun)
     
-        p1 = other_line.PointAtCurvilinearAbscissa(res.x[0])
-        p2 = self.PointAtCurvilinearAbscissa(res.x[1])
+        p1 = other_line.PointAtCurvilinearAbscissa(res.x[1])
+        p2 = self.PointAtCurvilinearAbscissa(res.x[0])
+        
         return p1, p2
+        
+        
+    
+        
     
     def distance_parallele(self, LS2):
         ptA, ptB, ptC = self.points[0], self.points[1], LS2.points[0]
@@ -3802,10 +3812,10 @@ class LineSegment3D(Edge3D):
                 #                   h2_triangle(LS1.points[0], LS2.points[0], LS2.points[1]),
                 #                   h2_triangle(LS1.points[1], LS2.points[0], LS2.points[1])])
                 
-                dist = [h2_triangle(LS2.points[0], LS1.points[0], LS1.points[1]),
-                                  h2_triangle(LS2.points[1], LS1.points[0], LS1.points[1]),
-                                  h2_triangle(LS1.points[0], LS2.points[0], LS2.points[1]),
-                                  h2_triangle(LS1.points[1], LS2.points[0], LS2.points[1])]
+                dist = [h2_triangle(self.points[0], element.points[0], element.points[1]),
+                                  h2_triangle(self.points[1], element.points[0], element.points[1]),
+                                  h2_triangle(element.points[0], self.points[0], self.points[1]),
+                                  h2_triangle(element.points[1], self.points[0], self.points[1])]
                 
                 max_dist = max(dist)
                 for d in dist :
@@ -3822,10 +3832,10 @@ class LineSegment3D(Edge3D):
                 #     print('matrix_distance', matrix_distance)
                 # #     return min(distance)
                 
-                print('!!!!!!!!!!!!!!!!!!!!',h2_triangle(LS2.points[0], LS1.points[0], LS1.points[1]),
-                                  h2_triangle(LS2.points[1], LS1.points[0], LS1.points[1]),
-                                  h2_triangle(LS1.points[0], LS2.points[0], LS2.points[1]),
-                                  h2_triangle(LS1.points[1], LS2.points[0], LS2.points[1]))
+                print('!!!!!!!!!!!!!!!!!!!!',h2_triangle(self.points[0], element.points[0], element.points[1]),
+                                  h2_triangle(self.points[1], element.points[0], element.points[1]),
+                                  h2_triangle(element.points[0], self.points[0], self.points[1]),
+                                  h2_triangle(element.points[1], self.points[0], self.points[1]))
             
                 print('distance_parallele', element.distance_parallele(self))
             
