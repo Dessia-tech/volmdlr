@@ -3485,6 +3485,7 @@ class LineSegment3D(Edge3D):
     def FreeCADExport(self, name, ndigits=6):
         x1, y1, z1 = round(1000*self.points[0], ndigits).vector
         x2, y2, z2 = round(1000*self.points[1], ndigits).vector
+        print('name', name)
         return '{} = Part.LineSegment(fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,x1,y1,z1,x2,y2,z2)
 
     def to_line(self):
@@ -3556,13 +3557,17 @@ class LineSegment3D(Edge3D):
         
         A = npy.array([[a, b],
                       [b, c]])
-        
+        print(A)
         B = npy.array([-d,-e])
         
         # B = npy.array([[d],
                       # [e]])
         # return scp.linalg.lstsq(A, B)
-        return scp.optimize.lsq_linear(A, B, bounds=(0,1))
+        res = scp.optimize.lsq_linear(A, B, bounds=(0,1))
+    
+        p1 = other_line.PointAtCurvilinearAbscissa(res.x[0])
+        p2 = self.PointAtCurvilinearAbscissa(res.x[1])
+        return p1, p2
     
     def distance_parallele(self, LS2):
         ptA, ptB, ptC = self.points[0], self.points[1], LS2.points[0]
