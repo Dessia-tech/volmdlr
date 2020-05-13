@@ -61,3 +61,39 @@ ll = primitives3D.OpenedRoundedLineSegments3D([p1, p2], {}, name='mesure')
 
 model = volmdlr.VolumeModel([rl1, rl, ll])
 # model.FreeCADExport('lines')
+
+
+
+#Cas 1 
+
+pt1 = volmdlr.Point3D((0,0,10))
+pt2 = volmdlr.Point3D((0,0,4))
+ptmid = ( pt1 + pt2 )/2
+pt3 = volmdlr.Point3D((4,0,5))
+pt4 = volmdlr.Point3D((-2,0,2))
+ptmid2 = (pt3 + pt4)/2
+
+LS1 = volmdlr.LineSegment3D(pt1, pt2)
+LS2 = volmdlr.LineSegment3D(pt3, pt4)
+
+p1, p2 = LS1.Matrix_distance(LS2)
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+pt1.MPLPlot(ax=ax)
+pt2.MPLPlot(ax=ax, color='r')
+LS1.MPLPlot(ax=ax)
+
+pt3.MPLPlot(ax=ax, color='g')
+pt4.MPLPlot(ax=ax, color='b')
+LS2.MPLPlot(ax=ax)
+ptmid.MPLPlot(ax=ax)
+ptmid2.MPLPlot(ax=ax)
+
+p1.MPLPlot(ax=ax, color='m')
+p2.MPLPlot(ax=ax, color='m')
+
+d_min = LS1.minimum_distance(LS2)
+# p1, p2 = LS1.Matrix_distance(LS2)
+# d_min = (p1-p2).Norm()
+print(d_min)

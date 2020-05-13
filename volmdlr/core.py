@@ -3812,13 +3812,14 @@ class LineSegment3D(Edge3D):
                         distance.append(d)
                 
                 
-                print(self.Matrix_distance(element).x)
-                if self.Matrix_distance(element).success :
-                    res = self.Matrix_distance(element).x
-                    matrix_distance = ((self.points[0]+res[0]*x)-(element.points[0]+res[1]*y)).Norm()
-                    distance.append(matrix_distance)
-                    print('matrix_distance', matrix_distance)
-                #     return min(distance)
+                p1, p2 = self.Matrix_distance(element)
+                print('Matrix distance',p1.point_distance(p2))
+                # if self.Matrix_distance(element).success :
+                #     res = self.Matrix_distance(element).x
+                #     matrix_distance = ((self.points[0]+res[0]*x)-(element.points[0]+res[1]*y)).Norm()
+                #     distance.append(matrix_distance)
+                #     print('matrix_distance', matrix_distance)
+                # #     return min(distance)
                 
                 print('!!!!!!!!!!!!!!!!!!!!',h2_triangle(LS2.points[0], LS1.points[0], LS1.points[1]),
                                   h2_triangle(LS2.points[1], LS1.points[0], LS1.points[1]),
