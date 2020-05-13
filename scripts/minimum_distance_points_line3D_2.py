@@ -60,4 +60,4 @@ ll = primitives3D.OpenedRoundedLineSegments3D([p1, p2], {}, name='mesure')
 # mes.MPLPlot(ax=ax)
 
 model = volmdlr.VolumeModel([rl1, rl, ll])
-model.FreeCADExport('lines')
+# model.FreeCADExport('lines')
