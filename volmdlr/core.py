@@ -3483,6 +3483,7 @@ class LineSegment3D(Edge3D):
                          dash, opacity, arrow)
 
     def FreeCADExport(self, name, ndigits=6):
+        name = 'primitive'+str(name)
         x1, y1, z1 = round(1000*self.points[0], ndigits).vector
         x2, y2, z2 = round(1000*self.points[1], ndigits).vector
         print('name', name)
@@ -3565,8 +3566,8 @@ class LineSegment3D(Edge3D):
         # return scp.linalg.lstsq(A, B)
         res = scp.optimize.lsq_linear(A, B, bounds=(0,1))
     
-        p1 = other_line.PointAtCurvilinearAbscissa(res.x[0])
-        p2 = self.PointAtCurvilinearAbscissa(res.x[1])
+        p1 = self.PointAtCurvilinearAbscissa(res.x[0])
+        p2 = other_line.PointAtCurvilinearAbscissa(res.x[1])
         return p1, p2
     
     def distance_parallele(self, LS2):
@@ -7045,6 +7046,7 @@ class VolumeModel(dc.DessiaObject):
                     if isinstance(primitive, BSplineCurve3D) \
                     or isinstance(primitive, BSplineSurface3D) \
                     or isinstance(primitive, Circle3D) \
+                    or isinstance(primitive, LineSegment3D) \
                     or isinstance(primitive, Ellipse3D):
 #                            print(primitive)
 #                            s += 'S = Part.Shape([primitive{}])\n'.format(ip)

@@ -97,3 +97,8 @@ d_min = LS1.minimum_distance(LS2)
 # p1, p2 = LS1.Matrix_distance(LS2)
 # d_min = (p1-p2).Norm()
 print(d_min)
+ll2 = primitives3D.OpenedRoundedLineSegments3D([p1, p2], {}, name='mesure')
+
+model2 = volmdlr.VolumeModel([LS1, LS2, ll2])
+#model2.MPLPlot()
+#model2.FreeCADExport('lines2')
