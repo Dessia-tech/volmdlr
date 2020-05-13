@@ -226,6 +226,8 @@ class Primitive2D(dc.DessiaObject):
     def __init__(self, name=''):
         self.name = name
     
+        dc.DessiaObject.__init__(self, name=name)
+    
     def generated_toroidalface(self, arcgen) :
         rcenter = arcgen.radius
         rcircle = self.radius
@@ -1413,8 +1415,16 @@ class Circle2D(Contour2D):
         self.angle = 2*math.pi
         self.utd_geo_points = False
         
-        Contour2D.__init__(self, [self], name=name)# !!! this is dangerous
+        Contour2D.__init__(self, [self], name=name) # !!! this is dangerous
+    
+    def __hash__ (self):
+        return int(round(1e6*(self.center.vector[0] + self.center.vector[1] + self.radius)))
 
+    def __eq__(self, other_circle):
+        return math.isclose(self.center.vector[0], other_circle.center.vector[0], abs_tol=1e-06) \
+           and math.isclose(self.center.vector[1], other_circle.center.vector[1], abs_tol=1e-06) \
+           and math.isclose(self.radius, other_circle.radius, abs_tol=1e-06)
+        
     def _get_geo_points(self):
         if not self.utd_geo_points:
             self._geo_start = self.center+self.radius*Point2D((1,0))
@@ -1768,6 +1778,8 @@ class Primitive3D(dc.DessiaObject):
         self.primitives = basis_primitives # une liste
         if basis_primitives is None:
             self.primitives = []
+        
+        dc.DessiaObject.__init__(self, name=name)
 
     def generated_toroidalface(self, arcgen) :
         rcenter = arcgen.radius
@@ -3659,6 +3671,14 @@ class Circle3D(Contour3D):
         self.angle = 2*math.pi
         Contour3D.__init__(self, [self], name=name)
         
+    def __hash__ (self):
+        return int(round(1e6*(self.center.vector[0] + self.center.vector[1] + self.center.vector[2] + self.radius)))
+
+    def __eq__(self, other_circle):
+        return math.isclose(self.center.vector[0], other_circle.center.vector[0], abs_tol=1e-06) \
+           and math.isclose(self.center.vector[1], other_circle.center.vector[1], abs_tol=1e-06) \
+           and math.isclose(self.center.vector[2], other_circle.center.vector[2], abs_tol=1e-06) \
+           and math.isclose(self.radius, other_circle.radius, abs_tol=1e-06)
         
 #    def _get_points(self):
 #        vr = Vector3D(npy.random.random(3))
