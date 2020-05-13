@@ -2233,14 +2233,13 @@ class Line3D(Primitive3D, Line):
         point2 = point1 + direction
         return cls(point1, point2, arguments[0][1:-1])
 
-    @classmethod
-    def Intersection(self,line1, line2):
-        x1 = line1.points[0].vector[0]
-        y1 = line1.points[0].vector[1]
-        z1 = line1.points[0].vector[2]
-        x2 = line1.points[1].vector[0]
-        y2 = line1.points[1].vector[1]
-        z2 = line1.points[1].vector[2]
+    def Intersection(self,line2):
+        x1 = self.points[0].vector[0]
+        y1 = self.points[0].vector[1]
+        z1 = self.points[0].vector[2]
+        x2 = self.points[1].vector[0]
+        y2 = self.points[1].vector[1]
+        z2 = self.points[1].vector[2]
         x3 = line2.points[0].vector[0]
         y3 = line2.points[0].vector[1]
         z3 = line2.points[0].vector[2]
@@ -2615,7 +2614,7 @@ class Arc3D(Primitive3D):
             #If LS cut the arc
             for k in range (0, len(self.points)-1) :
                 LS2 = LineSegment3D(self.points[k], self.points[k+1])
-                # cut = LineSegment3D.Intersection(element, LS2)
+                # cut = element.Intersection(LS2)
                 p1, p2, s, t = element.MinimumDistancePoints(LS2)
                 if p1 is not None and p2 is not None :
                     if s >= 0 and s <= 1 and t >= 0 and t <= 1 :
@@ -3362,21 +3361,23 @@ class LineSegment3D(Edge3D):
         return LineSegment2D(self.points[0].PlaneProjection2D(x, y),
                              self.points[1].PlaneProjection2D(x, y))
 
-    @classmethod
-    def Intersection(self,segment1, segment2):
-        x1 = segment1.points[0].vector[0]
-        y1 = segment1.points[0].vector[1]
-        z1 = segment1.points[0].vector[2]
-        x2 = segment1.points[1].vector[0]
-        y2 = segment1.points[1].vector[1]
-        z2 = segment1.points[1].vector[2]
+    def Intersection(self, segment2):
+        x1 = self.points[0].vector[0]
+        y1 = self.points[0].vector[1]
+        z1 = self.points[0].vector[2]
+        x2 = self.points[1].vector[0]
+        y2 = self.points[1].vector[1]
+        z2 = self.points[1].vector[2]
         x3 = segment2.points[0].vector[0]
         y3 = segment2.points[0].vector[1]
         z3 = segment2.points[0].vector[2]
         x4 = segment2.points[1].vector[0]
         y4 = segment2.points[1].vector[1]
         z4 = segment2.points[1].vector[2]
-
+        
+        # v1, v2 = self.points[0]-self.points[1], segment2.points[0]-segment2.points[1]
+        # if math.isclose(v1.Dot(v2), 0, abs_tol=1e-6) :
+            
 
         #2 unknown 3eq with t1 et t2 unknown
         if (x2-x1+y1-y2) != 0 and (y4-y3) != 0:
@@ -3619,14 +3620,14 @@ class LineSegment3D(Edge3D):
             #If LS cut the arc
             for k in range (0, len(element.points)-1) :
                 LS2 = LineSegment3D(element.points[k], element.points[k+1])
-                # cut = LineSegment3D.Intersection(LS2, self)
-                p1, p2, s, t = self.MinimumDistancePoints(LS2)
-                if p1 is not None and p2 is not None :
-                    if s >= 0 and s <= 1 and t >= 0 and t <= 1 :
-                        if math.isclose((p1-p2).Norm(), 0, abs_tol = 1e-7):
-                            return 0
-                # if cut is not None :
-                #     return 0
+                cut = self.Intersection(LS2)
+                # p1, p2, s, t = self.MinimumDistancePoints(LS2)
+                # if p1 is not None and p2 is not None :
+                    # if s >= 0 and s <= 1 and t >= 0 and t <= 1 :
+                        # if math.isclose((p1-p2).Norm(), 0, abs_tol = 1e-7):
+                            # return 0
+                if cut is not None :
+                    return 0
             
             #Find the closest arc point from LS
             #Initialize
@@ -3722,8 +3723,8 @@ class LineSegment3D(Edge3D):
             # #             end = mid.copy()
             # #         else :
             # #             start = mid.copy()
-            LS1, LS2 = LineSegment3D(self.points[1], self.points[0]), LineSegment3D(element.points[1], element.points[0]) 
-            if LineSegment3D.Intersection(LS1, LS2) is not None :
+            if self.Intersection(element) is not None :
+                print('intersection')
                 return 0
             
             l1 = Vector3D((self.points[0] - element.points[0])).Norm()
@@ -3782,7 +3783,7 @@ class LineSegment3D(Edge3D):
                 # LS1.MPLPlot(ax=ax)
                 # LS2.MPLPlot(ax=ax)
                 # LS_cut.MPLPlot(ax=ax)
-                test1, test2 = LineSegment3D.Intersection(LS_cut, LS1), LineSegment3D.Intersection(LS_cut, LS2)
+                test1, test2 = LS_cut.Intersection(LS1), LS_cut.Intersection(LS2)
                 if test1 is not None or test2 is not None : 
                     distance.append(h1)
             
