@@ -2599,7 +2599,40 @@ class Arc3D(Primitive3D):
             else:
                 self.start, self.interior, self.end = new_start, new_interior, new_end
                 self.setup_arc(self.start, self.interior, self.end)
-                
+ 
+    def Matrix_distance(self, other_line) :
+            u = other_line.DirectionVector()
+            v = self.points[0] - self.center
+            v.Normalize()
+            w = self.points[0] - other_line.points[0]
+            k = self.normal.Cross(v)
+
+            a = u.Dot(u)
+            b = -u.Dot(v)
+            c = -u.Dot(k)
+            d = v.Dot(v)
+            e = v.Dot(k)
+            f = k.Dot(k)
+            
+            g = w.Dot(u)
+            h = -w.Dot(v)
+            i = -w.Dot(k)
+            
+            A = npy.array([[a, b, c],
+                           [b, d, e],
+                           [c, e, f]])
+            # print(A)
+            B = npy.array([g, h, i])
+            
+            # B = npy.array([[d],
+                          # [e]])
+            # return scp.linalg.lstsq(A, B)
+            res = scp.optimize.lsq_linear(A, B, bounds=(0,1))
+            # print(res)
+            p1 = self.PointAtCurvilinearAbscissa(res.x[0]*self.Length())
+            p2 = other_line.PointAtCurvilinearAbscissa(res.x[1]*other_line.Length())
+            return p1, p2
+               
     def minimum_distance(self, element) :
         if element.__class__ is Arc3D or element.__class__ is Circle3D :
             distance = []
@@ -3570,14 +3603,14 @@ class LineSegment3D(Edge3D):
         
         A = npy.array([[a, b],
                        [b, d]])
-        print(A)
+        # print(A)
         B = npy.array([e, f])
         
         # B = npy.array([[d],
                       # [e]])
         # return scp.linalg.lstsq(A, B)
         res = scp.optimize.lsq_linear(A, B, bounds=(0,1))
-        print(res)
+        # print(res)
         p1 = self.PointAtCurvilinearAbscissa(res.x[0]*self.Length())
         p2 = other_line.PointAtCurvilinearAbscissa(res.x[1]*other_line.Length())
         return p1, p2
@@ -3680,176 +3713,76 @@ class LineSegment3D(Edge3D):
         
         elif element.__class__ is LineSegment3D :
             # parallelepipedic's height with 3 non colinear vectors
-            distance = []
-            x = Vector3D((self.points[1] - self.points[0]))
-            y = Vector3D((element.points[1] - element.points[0]))
+            # distance = []
+            # x = Vector3D((self.points[1] - self.points[0]))
+            # y = Vector3D((element.points[1] - element.points[0]))
             
-            # h1 = determinant(x, y, z1)/(x.Cross(y).Norm())
-            # h2 = determinant(x, y, z2)/(x.Cross(y).Norm())
-            # h3 = determinant(x, y, z3)/(x.Cross(y).Norm())
-            # h4 = determinant(x, y, z4)/(x.Cross(y).Norm())
-            # #LS closer 
-            # #Al-Kashi Formula + dichotomia
+            # if self.Intersection(element) is not None :
+            #     print('intersection')
+            #     return 0
             
-            # # min1, min2 = min([h1, h2]), min([h3,h4])
-            # # if min1<min2 :
-            # #     start, end, hmin = self.points[0], self.points[1], min1
-            # #     vec1, vec2 = z1, z2
-            # # else : 
-            # #     start, end, hmin = self.points[1], self.points[0], min2
-            # #     vec1, vec2 = z3, z4
-            # print(h1, h2, h3, h4)
-            # # print()
-            # h_min = min([h1,h2,h3,h4])
+            # l1 = Vector3D((self.points[0] - element.points[0])).Norm()
+            # l2 = Vector3D((self.points[0] - element.points[1])).Norm()
+            # l3 = Vector3D((self.points[1] - element.points[0])).Norm()
+            # l4 = Vector3D((self.points[1] - element.points[1])).Norm()
             
-            # #Initialization
-            # # start, end = self.points[0], self.points[1]
-            # # mid = (start + end)/2
-            # # vec_mid1, vec_mid2 = Vector3D((mid - element.points[0])), Vector3D((mid - element.points[1]))
-            # # h_start, h_end, h_mid = h_triangle(z1, z2), h_triangle(z3, z4), h_triangle(vec_mid1, vec_mid2)
+            # mid1, mid2 = (self.points[0]+self.points[1])/2, (element.points[0]+element.points[1])/2
+            # vecmid = Vector3D((mid1 - mid2))
+            # distance.extend([l1, l2, l3, l4, vecmid.Norm()])
             
-            # # if (h_start<h_mid and h_end>h_mid) or (h_end<h_mid and h_start>h_mid): #that is to say, the nearest is on of the extremum
-            # #     h_mid = min([h_start, h_end])
-            # #     if hmin < h_mid : #if the two LS aren't superimposed
-            # #         return hmin
-            # #     else : 
-            # #         return h_mid
             
-            # # h_min = h_mid
-            # # if h_start < h_end : 
-            # #     end = mid.copy()
-            # # else :
-            # #     start = mid.copy()
-            # # print(h_start, h_end, h_mid, h_min)
-            # # while not(math.isclose((start-end).Norm(), 0, abs_tol=1e-2)) :
-            # #     mid = (start + end)/2
-            # #     s1, s2 = Vector3D((start - element.points[0])),  Vector3D((start - element.points[1]))
-            # #     e1, e2 = Vector3D((end - element.points[0])),  Vector3D((end - element.points[1]))
-            # #     vec_mid1, vec_mid2 = Vector3D((mid - element.points[0])), Vector3D((mid - element.points[1]))
+            # start1, end1 = self.points[0], self.points[1]
+            # if (l1 <= l2 and l2 < l4) or (l4 <= l3 and l3 < l1):
+            #     start2, end2 = element.points[1], element.points[0]
+            # else : 
+            #     start2, end2 = element.points[0], element.points[1]
+            # fig = plt.figure()
+            # ax = fig.add_subplot(111, projection='3d')
+            # start1.MPLPlot(ax=ax)
+            # end1.MPLPlot(ax=ax, color='r')
+            # start2.MPLPlot(ax=ax, color='b')
+            # end2.MPLPlot(ax=ax, color='g')
+            
+            # if math.isclose(x.Cross(y).Norm(), 0, abs_tol=1e-7) or math.isclose(x.Dot(y), 0, abs_tol=1e-7):
+            #     ptA, ptB, ptC = self.points[0], self.points[1], element.points[0]
+            #     u = Vector3D((ptA - ptB).vector)
+            #     u.Normalize()
+            #     plane1 = Plane3D.from_3_points(ptA, ptB, ptC)
+            #     v = u.Cross(plane1.normal) #distance vector
+            #     vec1 = Vector3D((start1 - start2))
+            #     vec2 = Vector3D((end1 - end2))
+            #     h1, h2 = h_triangle(vec1, Vector3D((end1-start2).vector)), h_triangle(vec2, Vector3D((start1-end2).vector))
                 
-            # #     h_start, h_end, h_mid = h_triangle(s1, s2), h_triangle(e1, e2), h_triangle(vec_mid1, vec_mid2) 
-                
-            # #     print(h_start, h_end, h_mid, h_min)
-                
-            # #     if math.isclose(min([h_start, h_end, h_mid]), h_min, abs_tol=1e-7) :
-            # #         return h_min
-            # #     else :
-            # #         h_min = min([h_start, h_end, h_mid])
-            # #         if h_start < h_end : 
-            # #             end = mid.copy()
-            # #         else :
-            # #             start = mid.copy()
-            if self.Intersection(element) is not None :
-                print('intersection')
-                return 0
-            
-            l1 = Vector3D((self.points[0] - element.points[0])).Norm()
-            l2 = Vector3D((self.points[0] - element.points[1])).Norm()
-            l3 = Vector3D((self.points[1] - element.points[0])).Norm()
-            l4 = Vector3D((self.points[1] - element.points[1])).Norm()
-            
-            mid1, mid2 = (self.points[0]+self.points[1])/2, (element.points[0]+element.points[1])/2
-            vecmid = Vector3D((mid1 - mid2))
-            distance.extend([l1, l2, l3, l4, vecmid.Norm()])
-            
-            
-            start1, end1 = self.points[0], self.points[1]
-            if (l1 <= l2 and l2 < l4) or (l4 <= l3 and l3 < l1):
-                start2, end2 = element.points[1], element.points[0]
-            else : 
-                start2, end2 = element.points[0], element.points[1]
-            fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
-            start1.MPLPlot(ax=ax)
-            end1.MPLPlot(ax=ax, color='r')
-            start2.MPLPlot(ax=ax, color='b')
-            end2.MPLPlot(ax=ax, color='g')
-            
-            if math.isclose(x.Cross(y).Norm(), 0, abs_tol=1e-7) or math.isclose(x.Dot(y), 0, abs_tol=1e-7):
-                ptA, ptB, ptC = self.points[0], self.points[1], element.points[0]
-                u = Vector3D((ptA - ptB).vector)
-                u.Normalize()
-                plane1 = Plane3D.from_3_points(ptA, ptB, ptC)
-                v = u.Cross(plane1.normal) #distance vector
-                
-                # start1, end1 = self.points[0], self.points[1]
-                # if (l1 <= l2 and l2 < l4) or (l4 <= l3 and l3 < l1):
-                #     start2, end2 = element.points[1], element.points[0]
-                # else : 
-                #     start2, end2 = element.points[0], element.points[1]
-                # # fig = plt.figure()
-                # # ax = fig.add_subplot(111, projection='3d')
-                # # start1.MPLPlot(ax=ax)
-                # # end1.MPLPlot(ax=ax, color='r')
-                # # start2.MPLPlot(ax=ax, color='b')
-                # # end2.MPLPlot(ax=ax, color='g')
-                
-                vec1 = Vector3D((start1 - start2))
-                vec2 = Vector3D((end1 - end2))
-                h1, h2 = h_triangle(vec1, Vector3D((end1-start2).vector)), h_triangle(vec2, Vector3D((start1-end2).vector))
-                
-                if x.Norm() <= y.Norm():
-                    ptest1, ptest2, ptest3, ptest4 = start1 + v*(h1+1), start1 - v*(h1+1), end1 + v*(h1+1), end1 - v*(h1+1)
-                    LS_cut = LineSegment3D(start2, end2)
-                else :
-                    ptest1, ptest2, ptest3, ptest4 = start2 + v*(h1+1), start2 - v*(h1+1), end2 + v*(h1+1), end2 - v*(h1+1)
-                    LS_cut = LineSegment3D(start1, end1)
+            #     if x.Norm() <= y.Norm():
+            #         ptest1, ptest2, ptest3, ptest4 = start1 + v*(h1+1), start1 - v*(h1+1), end1 + v*(h1+1), end1 - v*(h1+1)
+            #         LS_cut = LineSegment3D(start2, end2)
+            #     else :
+            #         ptest1, ptest2, ptest3, ptest4 = start2 + v*(h1+1), start2 - v*(h1+1), end2 + v*(h1+1), end2 - v*(h1+1)
+            #         LS_cut = LineSegment3D(start1, end1)
                     
-                LS1, LS2 = LineSegment3D(ptest1, ptest2), LineSegment3D(ptest3, ptest4)
-                # LS1.MPLPlot(ax=ax)
-                # LS2.MPLPlot(ax=ax)
-                # LS_cut.MPLPlot(ax=ax)
-                test1, test2 = LS_cut.Intersection(LS1), LS_cut.Intersection(LS2)
-                if test1 is not None or test2 is not None : 
-                    distance.append(h1)
+            #     LS1, LS2 = LineSegment3D(ptest1, ptest2), LineSegment3D(ptest3, ptest4)
+            #     test1, test2 = LS_cut.Intersection(LS1), LS_cut.Intersection(LS2)
+            #     if test1 is not None or test2 is not None : 
+            #         distance.append(h1)
             
-            else :
-                p1, p2, s, t = self.MinimumDistancePoints(element)
-                # print('s, t',s, t)
-                if s >= 0 and s <= 1 and t >= 0 and t <= 1 :
-                    return (p2-p1).Norm()
-                    
+            # else :
+            #     p1, p2, s, t = self.MinimumDistancePoints(element)
+            #     if s >= 0 and s <= 1 and t >= 0 and t <= 1 :
+            #         return (p2-p1).Norm()
                 
+            #     dist = [h2_triangle(self.points[0], element.points[0], element.points[1]),
+            #                       h2_triangle(self.points[1], element.points[0], element.points[1]),
+            #                       h2_triangle(element.points[0], self.points[0], self.points[1]),
+            #                       h2_triangle(element.points[1], self.points[0], self.points[1])]
+                
+            #     max_dist = max(dist)
+            #     for d in dist :
+            #         if math.isclose(d, max_dist, abs_tol = 1e-2):
+            #             distance.append(d)
+            # return min(distance)
+            p1, p2 = self.Matrix_distance(element)
             
-                # Héron all points
-                
-                # distance.extend([h2_triangle(LS2.points[0], LS1.points[0], LS1.points[1]),
-                #                   h2_triangle(LS2.points[1], LS1.points[0], LS1.points[1]),
-                #                   h2_triangle(LS1.points[0], LS2.points[0], LS2.points[1]),
-                #                   h2_triangle(LS1.points[1], LS2.points[0], LS2.points[1])])
-                
-                dist = [h2_triangle(self.points[0], element.points[0], element.points[1]),
-                                  h2_triangle(self.points[1], element.points[0], element.points[1]),
-                                  h2_triangle(element.points[0], self.points[0], self.points[1]),
-                                  h2_triangle(element.points[1], self.points[0], self.points[1])]
-                
-                max_dist = max(dist)
-                for d in dist :
-                    if math.isclose(d, max_dist, abs_tol = 1e-2):
-                        distance.append(d)
-                
-                
-                p1, p2 = self.Matrix_distance(element)
-                print('Matrix distance',p1.point_distance(p2))
-                # if self.Matrix_distance(element).success :
-                #     res = self.Matrix_distance(element).x
-                #     matrix_distance = ((self.points[0]+res[0]*x)-(element.points[0]+res[1]*y)).Norm()
-                #     distance.append(matrix_distance)
-                #     print('matrix_distance', matrix_distance)
-                # #     return min(distance)
-                
-                print('!!!!!!!!!!!!!!!!!!!!',h2_triangle(self.points[0], element.points[0], element.points[1]),
-                                  h2_triangle(self.points[1], element.points[0], element.points[1]),
-                                  h2_triangle(element.points[0], self.points[0], self.points[1]),
-                                  h2_triangle(element.points[1], self.points[0], self.points[1]))
-            
-                print('distance_parallele', element.distance_parallele(self))
-            
-            
-           
-            print('mini',min(distance))
-            print()
-            return min(distance)
+            return p1.point_distance(p2)
 
         else :
             return NotImplementedError
