@@ -2243,6 +2243,7 @@ class Line3D(Primitive3D, Line):
         return cls(point1, point2, arguments[0][1:-1])
 
     def Intersection(self,line2):
+        
         x1 = self.points[0].vector[0]
         y1 = self.points[0].vector[1]
         z1 = self.points[0].vector[2]
@@ -2255,32 +2256,44 @@ class Line3D(Primitive3D, Line):
         x4 = line2.points[1].vector[0]
         y4 = line2.points[1].vector[1]
         z4 = line2.points[1].vector[2]
-
-
-        #2 unknown 3eq with t1 et t2 unknown
-        if (x2-x1+y1-y2) != 0 and (y4-y3) != 0:
         
+        res, list_t1 = [], []
+        
+        #2 unknown 3eq with t1 et t2 unknown
+        
+        if (x2-x1+y1-y2) != 0 and (y4-y3) != 0:
             t1 = (x3-x1 + (x4-x3)*(y1-y3)/(y4-y3))/(x2-x1+y1-y2)
             t2 = (y1-y3 + (y2-y1)*t1)/(y4-y3)
             res1 = z1 + (z2-z1)*t1
             res2 = z3 + (z4-z3)*t2
+            list_t1.append(t1)
+            res.append([res1, res2])
         
-        elif (z2-z1+y1-y2) != 0 and (y4-y3) != 0:
+        if (z2-z1+y1-y2) != 0 and (y4-y3) != 0:
             t1 = (z3-z1 + (z4-z3)*(y1-y3)/(y4-y3))/(z2-z1+y1-y2)
             t2 = (y1-y3 + (y2-y1)*t1)/(y4-y3)
             res1 = x1 + (x2-x1)*t1
             res2 = x3 + (x4-x3)*t2
+            list_t1.append(t1)
+            res.append([res1, res2])
         
-        else :
+        if (z2-z1+x1-x2) != 0 and (x4-x3) != 0: 
             t1 = (z3-z1 + (z4-z3)*(x1-x3)/(x4-x3))/(z2-z1+x1-x2)
             t2 = (x1-x3 + (x2-x1)*t1)/(x4-x3)
             res1 = y1 + (y2-y1)*t1
             res2 = y3 + (y4-y3)*t2
-            
-        if math.isclose(res1, res2, abs_tol=1e-7) : #if there is an intersection point
-            return Point3D([x1+(x2-x1)*t1, y1+(y2-y1)*t1, z1+(z2-z1)*t1])
-        else : 
+            list_t1.append(t1)
+            res.append([res1, res2])
+        
+        if len(res)==0 :
             return None
+        
+        for pair, t1 in zip(res, list_t1) :
+            res1, res2 = pair[0], pair[1]
+            if math.isclose(res1, res2, abs_tol=1e-7) : #if there is an intersection point
+                return Point3D([x1+(x2-x1)*t1, y1+(y2-y1)*t1, z1+(z2-z1)*t1])
+        
+        return None
 
 class BSplineCurve3D(Primitive3D):
     def __init__(self, degree, control_points, knot_multiplicities, knots, weights=None, periodic=False, name=''):
@@ -3449,40 +3462,43 @@ class LineSegment3D(Edge3D):
         y4 = segment2.points[1].vector[1]
         z4 = segment2.points[1].vector[2]
         
-        # v1, v2 = self.points[0]-self.points[1], segment2.points[0]-segment2.points[1]
-        # if math.isclose(v1.Dot(v2), 0, abs_tol=1e-6) :
-            
+        res, list_t1 = [], []
 
         #2 unknown 3eq with t1 et t2 unknown
         if (x2-x1+y1-y2) != 0 and (y4-y3) != 0:
-        
             t1 = (x3-x1 + (x4-x3)*(y1-y3)/(y4-y3))/(x2-x1+y1-y2)
             t2 = (y1-y3 + (y2-y1)*t1)/(y4-y3)
             res1 = z1 + (z2-z1)*t1
             res2 = z3 + (z4-z3)*t2
+            list_t1.append(t1)
+            res.append([res1, res2])
         
-        elif (z2-z1+y1-y2) != 0 and (y4-y3) != 0:
+        if (z2-z1+y1-y2) != 0 and (y4-y3) != 0:
             t1 = (z3-z1 + (z4-z3)*(y1-y3)/(y4-y3))/(z2-z1+y1-y2)
             t2 = (y1-y3 + (y2-y1)*t1)/(y4-y3)
             res1 = x1 + (x2-x1)*t1
             res2 = x3 + (x4-x3)*t2
+            list_t1.append(t1)
+            res.append([res1, res2])
         
-        elif (z2-z1+x1-x2) !=0 and (x4-x3) != 0 :
+        if (z2-z1+x1-x2) !=0 and (x4-x3) != 0 :
             t1 = (z3-z1 + (z4-z3)*(x1-x3)/(x4-x3))/(z2-z1+x1-x2)
             t2 = (x1-x3 + (x2-x1)*t1)/(x4-x3)
             res1 = y1 + (y2-y1)*t1
             res2 = y3 + (y4-y3)*t2
+            list_t1.append(t1)
+            res.append([res1, res2])
         
-        else :
+        if len(res)==0 :
             return None
         
-        if math.isclose(res1, res2, abs_tol=1e-7) : #if there is an intersection point
-            if t1<0 or t1>1:
-                return None
-            else :
-                return Point3D([x1+(x2-x1)*t1, y1+(y2-y1)*t1, z1+(z2-z1)*t1])
-        else : 
-            return None
+        for pair, t1 in zip(res, list_t1) :
+            res1, res2 = pair[0], pair[1]
+            if math.isclose(res1, res2, abs_tol=1e-7) : #if there is an intersection point
+                if t1>=0 or t1<=1:
+                    return Point3D([x1+(x2-x1)*t1, y1+(y2-y1)*t1, z1+(z2-z1)*t1])
+        
+        return None
 
     def Rotation(self, center, axis, angle, copy=True):
         if copy:
