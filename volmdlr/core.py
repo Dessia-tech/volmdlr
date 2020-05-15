@@ -2624,37 +2624,69 @@ class Arc3D(Primitive3D):
                 self.setup_arc(self.start, self.interior, self.end)
  
     def Matrix_distance(self, other_line) :
-            u = other_line.DirectionVector()
-            v = self.points[0] - self.center
-            v.Normalize()
-            w = self.points[0] - other_line.points[0]
-            k = self.normal.Cross(v)
+        #unknown : s, sin(theta) and cos(theta)
+    
+        u = other_line.DirectionVector()
+        k = self.center - self.start
+        k.Normalize()
+        w = self.start - other_line.points[0] 
+        v = self.normal.Cross(k)
+        
+        r = self.radius
 
-            a = u.Dot(u)
-            b = -u.Dot(v)
-            c = -u.Dot(k)
-            d = v.Dot(v)
-            e = v.Dot(k)
-            f = k.Dot(k)
+        a = u.Dot(u)
+        b = -u.Dot(v)
+        # b = -u.Dot(v)*r
+        c = -u.Dot(k)
+        # c = -u.Dot(k)*r
+        d = v.Dot(v)
+        # d = v.Dot(v)*r**2
+        e = v.Dot(k)
+        # e = v.Dot(k)*r**2
+        f = k.Dot(k)
+        # f = k.Dot(k)*r**2
+        
+        g = w.Dot(u)
+        h = -w.Dot(v)
+        # h = -w.Dot(v)*r
+        i = -w.Dot(k)
+        # i = -w.Dot(k)*r
+        
+        A = npy.array([[a, b, c],
+                       [b, d, e],
+                       [c, e, f]])
+        # print(A)
+        B = npy.array([g, h, i])
+        res = scp.optimize.lsq_linear(A, B, bounds=(0,1))
+        
+        print('res', res.x)
+        p1 = other_line.PointAtCurvilinearAbscissa(res.x[0]*other_line.Length())
+        p2 = self.PointAtCurvilinearAbscissa(res.x[1]*self.Length())
+        
+        
+        ### with boundes =(-1,1)
+        # if res.x[0] < 0 :
+        #     p1 = other_line.PointAtCurvilinearAbscissa(0*other_line.Length())
+        # else :
+        #     p1 = other_line.PointAtCurvilinearAbscissa(res.x[0]*other_line.Length())
             
-            g = w.Dot(u)
-            h = -w.Dot(v)
-            i = -w.Dot(k)
+        # sol1, sol2 = res.x[1], res.x[2]
+        # if sol1<0 :
+        #     if sol2<0 :
+        #         theta = -math.acos(sol2)
+        #         print('angle',-math.acos(sol2))
+        #     else :
+        #         theta = math.asin(sol1)
+        # else :
+        #     theta = math.acos(sol2)
+        # print(sol1, sol2)
+        # if sol1<0 and sol2 <0 :
+        #     sol1, sol2 = -sol1, -sol2
+        
+       
             
-            A = npy.array([[a, b, c],
-                           [b, d, e],
-                           [c, e, f]])
-            # print(A)
-            B = npy.array([g, h, i])
-            
-            # B = npy.array([[d],
-                          # [e]])
-            # return scp.linalg.lstsq(A, B)
-            res = scp.optimize.lsq_linear(A, B, bounds=(0,1))
-            # print(res)
-            p1 = self.PointAtCurvilinearAbscissa(res.x[0]*self.Length())
-            p2 = other_line.PointAtCurvilinearAbscissa(res.x[1]*other_line.Length())
-            return p1, p2
+        # p2 = self.PointAtCurvilinearAbscissa(theta*r)
+        return p1, p2
                
     def minimum_distance(self, element) :
         if element.__class__ is Arc3D or element.__class__ is Circle3D :
@@ -2667,6 +2699,10 @@ class Arc3D(Primitive3D):
             return min(distance)
             
         elif element.__class__ is LineSegment3D :
+            
+            # pt1, pt2 = self.Matrix_distance(element)
+            # print('Matrix_distance',pt1.point_distance(pt2))
+            
             #If LS cut the arc
             for k in range (0, len(self.points)-1) :
                 LS2 = LineSegment3D(self.points[k], self.points[k+1])
@@ -3723,6 +3759,8 @@ class LineSegment3D(Edge3D):
         
     def minimum_distance(self, element):
         if element.__class__ is Arc3D or element.__class__ is Circle3D:
+            # pt1, pt2 = element.Matrix_distance(self)
+            # print(pt1.point_distance(pt2))
             #If LS cut the arc
             for k in range (0, len(element.points)-1) :
                 LS2 = LineSegment3D(element.points[k], element.points[k+1])
