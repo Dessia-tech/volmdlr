@@ -2623,8 +2623,48 @@ class Arc3D(Primitive3D):
                 self.start, self.interior, self.end = new_start, new_interior, new_end
                 self.setup_arc(self.start, self.interior, self.end)
  
-    def minimum_distance_points(self, other_line) :
-        #unknown : s, sin(theta) and cos(theta)
+    def minimum_distance_points_arc(self, other_arc) :
+    
+        u1 = self.start - self.center
+        u1.Normalize()
+        u2 = self.normal.Cross(u1)
+        
+        w = other_arc.center - self.center
+        
+        u3 = other_arc.start - other_arc.center
+        u3.Normalize()
+        u4 = other_arc.normal.Cross(u3)
+        
+        r1, r2 = self.radius, other_arc.radius
+
+        a, b, c, d = u1.Dot(u1), u1.Dot(u2), u1.Dot(u3), u1.Dot(u4) 
+        e, f, g = u2.Dot(u2), u2.Dot(u3), u2.Dot(u4)
+        h, i = u3.Dot(u3), u3.Dot(u4)
+        j = u4.Dot(u4)
+        k, l, m, n, o = w.Dot(u1), w.Dot(u2), w.Dot(u3), w.Dot(u4), w.Dot(w)
+        
+        # x = (theta1, theta2)
+        def distance_squared(x):
+            return (a*((math.cos(x[0]))**2)*r1**2 + e*((math.sin(x[0]))**2)*r1**2
+                    + o + h*((math.cos(x[1]))**2)*r2**2 + j*((math.sin(x[1]))**2)*r2**2
+                    + b*math.sin(2*x[0])*r1**2 - 2*r1*math.cos(x[0])*k
+                    - 2*r1*r2*math.cos(x[0])*math.cos(x[1])*c
+                    - 2*r1*r2*math.cos(x[0])*math.sin(x[1])*d - 2*r1*math.sin(x[0])*l
+                    - 2*r1*r2*math.sin(x[0])*math.cos(x[1])*f
+                    - 2*r1*r2*math.sin(x[0])*math.sin(x[1])*g + 2*r2*math.cos(x[1])*m
+                    + 2*r2*math.sin(x[1])*n + i*math.sin(2*x[1])*r2**2)
+                    
+        
+        x01 = npy.array([self.angle/2, other_arc.angle/2])
+        
+        res1 = scp.optimize.least_squares(distance_squared, x01, bounds=[(0,0), (self.angle,other_arc.angle)])
+            
+        p1 = self.PointAtCurvilinearAbscissa(res1.x[0]*r1)
+        p2 = other_arc.PointAtCurvilinearAbscissa(res1.x[1]*r2)
+        
+        return p1, p2
+    
+    def minimum_distance_points_line(self, other_line) :
     
         u = other_line.DirectionVector()
         k = self.start - self.center
@@ -2650,7 +2690,7 @@ class Arc3D(Primitive3D):
             return (a*x[0]**2 + j + d*((math.sin(x[1]))**2)*r**2 + f*((math.cos(x[1]))**2)*r**2
                     - 2*x[0]*g - 2*x[0]*r*math.sin(x[1])*b - 2*x[0]*r*math.cos(x[1])*c
                     + 2*r*math.sin(x[1])*h + 2*r*math.cos(x[1])*i
-                    + 2*2*math.sin(2*x[1])*e*r**2)
+                    + math.sin(2*x[1])*e*r**2)
         x01 = npy.array([0.5, self.angle/2])
         x02 = npy.array([0.5, 0])
         x03 = npy.array([0.5, self.angle])
@@ -2675,17 +2715,21 @@ class Arc3D(Primitive3D):
                
     def minimum_distance(self, element) :
         if element.__class__ is Arc3D or element.__class__ is Circle3D :
-            distance = []
-            for pt1 in self.points :
-                pt1_to_pt2 = []
-                for pt2 in element.points :
-                    pt1_to_pt2.append((pt1-pt2).Norm())
-                distance.append(min(pt1_to_pt2))
-            return min(distance)
+            p1, p2 = self.minimum_distance_points_arc(element)
+            # print('distancearc', p1.point_distance(p2))
+            return p1.point_distance(p2)
             
-        elif element.__class__ is LineSegment3D :
+        #     distance = []
+        #     for pt1 in self.points :
+        #         pt1_to_pt2 = []
+        #         for pt2 in element.points :
+        #             pt1_to_pt2.append((pt1-pt2).Norm())
+        #         distance.append(min(pt1_to_pt2))
+        #     return min(distance)
             
-            pt1, pt2 = self.minimum_distance_points(element)
+        # elif element.__class__ is LineSegment3D :
+            
+        #     pt1, pt2 = self.minimum_distance_points_line(element)
             # print('_distance',pt1.point_distance(pt2))
             return pt1.point_distance(pt2)
             #If LS cut the arc
@@ -3744,7 +3788,7 @@ class LineSegment3D(Edge3D):
         
     def minimum_distance(self, element):
         if element.__class__ is Arc3D or element.__class__ is Circle3D:
-            pt1, pt2 = element.minimum_distance_points(self)
+            pt1, pt2 = element.minimum_distance_points_line(self)
             # print(pt1.point_distance(pt2))
             return pt1.point_distance(pt2)
             # #If LS cut the arc
