@@ -2629,7 +2629,7 @@ class Arc3D(Primitive3D):
         u = other_line.DirectionVector()
         k = self.start - self.center
         k.Normalize()
-        w = self.start - other_line.points[0] 
+        w = self.center - other_line.points[0] 
         v = self.normal.Cross(k)
         
         r = self.radius
