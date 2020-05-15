@@ -2647,7 +2647,7 @@ class Arc3D(Primitive3D):
         
         # x = (s, theta)
         def distance_squared(x):
-            return (a*x[0]**2 + j + d*math.sin(x[1])*r**2 + f*math.cos(x[1])*r**2
+            return (a*x[0]**2 + j + d*((math.sin(x[1]))**2)*r**2 + f*((math.cos(x[1]))**2)*r**2
                     - 2*x[0]*g - 2*x[0]*r*math.sin(x[1])*b - 2*x[0]*r*math.cos(x[1])*c
                     + 2*r*math.sin(x[1])*h + 2*r*math.cos(x[1])*i
                     + 2*2*math.sin(2*x[1])*e*r**2)
