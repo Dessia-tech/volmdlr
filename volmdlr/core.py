@@ -2623,69 +2623,54 @@ class Arc3D(Primitive3D):
                 self.start, self.interior, self.end = new_start, new_interior, new_end
                 self.setup_arc(self.start, self.interior, self.end)
  
-    def Matrix_distance(self, other_line) :
+    def minimum_distance_points(self, other_line) :
         #unknown : s, sin(theta) and cos(theta)
     
         u = other_line.DirectionVector()
-        k = self.center - self.start
+        k = self.start - self.center
         k.Normalize()
         w = self.start - other_line.points[0] 
-        v = k.Cross(self.normal)
+        v = self.normal.Cross(k)
         
         r = self.radius
 
         a = u.Dot(u)
-        b = -u.Dot(v)
-        # b = -u.Dot(v)*r
-        c = -u.Dot(k)
-        # c = -u.Dot(k)*r
+        b = u.Dot(v)
+        c = u.Dot(k)
         d = v.Dot(v)
-        # d = v.Dot(v)*r**2
         e = v.Dot(k)
-        # e = v.Dot(k)*r**2
         f = k.Dot(k)
-        # f = k.Dot(k)*r**2
-        
         g = w.Dot(u)
-        h = -w.Dot(v)
-        # h = -w.Dot(v)*r
-        i = -w.Dot(k)
-        # i = -w.Dot(k)*r
+        h = w.Dot(v)
+        i = w.Dot(k)
+        j = w.Dot(w)
         
-        A = npy.array([[a, b, c],
-                       [b, d, e],
-                       [c, e, f]])
-        # print(A)
-        B = npy.array([g, h, i])
-        res = scp.optimize.lsq_linear(A, B, bounds=(0,1))
+        # x = (s, theta)
+        def distance_squared(x):
+            return (a*x[0]**2 + j + d*math.sin(x[1])*r**2 + f*math.cos(x[1])*r**2
+                    - 2*x[0]*g - 2*x[0]*r*math.sin(x[1])*b - 2*x[0]*r*math.cos(x[1])*c
+                    + 2*r*math.sin(x[1])*h + 2*r*math.cos(x[1])*i
+                    + 2*2*math.sin(2*x[1])*e*r**2)
+        x01 = npy.array([0.5, self.angle/2])
+        x02 = npy.array([0.5, 0])
+        x03 = npy.array([0.5, self.angle])
         
-        print('res', res.x)
-        p1 = other_line.PointAtCurvilinearAbscissa(res.x[0]*other_line.Length())
-        p2 = self.PointAtCurvilinearAbscissa(res.x[1]*self.Length())
-        
-        
-        ### with boundes =(-1,1)
-        # if res.x[0] < 0 :
-        #     p1 = other_line.PointAtCurvilinearAbscissa(0*other_line.Length())
-        # else :
-        #     p1 = other_line.PointAtCurvilinearAbscissa(res.x[0]*other_line.Length())
+        res1 = scp.optimize.least_squares(distance_squared, x01, bounds=[(0,0), (1,self.angle)])
+        res2 = scp.optimize.least_squares(distance_squared, x02, bounds=[(0,0), (1,self.angle)])
+        res3 = scp.optimize.least_squares(distance_squared, x03, bounds=[(0,0), (1,self.angle)])
             
-        # sol1, sol2 = res.x[1], res.x[2]
-        # if sol1<0 :
-        #     if sol2<0 :
-        #         theta = -math.acos(sol2)
-        #         print('angle',-math.acos(sol2))
-        #     else :
-        #         theta = math.asin(sol1)
-        # else :
-        #     theta = math.acos(sol2)
-        # print(sol1, sol2)
-        # if sol1<0 and sol2 <0 :
-        #     sol1, sol2 = -sol1, -sol2
+        p1 = other_line.PointAtCurvilinearAbscissa(res1.x[0]*other_line.Length())
+        p2 = self.PointAtCurvilinearAbscissa(res1.x[1]*r)
+        d1 = p1.point_distance(p2)
         
-       
-            
-        # p2 = self.PointAtCurvilinearAbscissa(theta*r)
+        res = [res2, res3]
+        for couple in res :
+            ptest1 = other_line.PointAtCurvilinearAbscissa(couple.x[0]*other_line.Length())
+            ptest2 = self.PointAtCurvilinearAbscissa(couple.x[1]*r)
+            dtest = ptest1.point_distance(ptest2)
+            if dtest < d :
+                p1, p2 = ptest1, ptest2
+        
         return p1, p2
                
     def minimum_distance(self, element) :
@@ -2700,53 +2685,53 @@ class Arc3D(Primitive3D):
             
         elif element.__class__ is LineSegment3D :
             
-            # pt1, pt2 = self.Matrix_distance(element)
-            # print('Matrix_distance',pt1.point_distance(pt2))
-            
+            pt1, pt2 = self.minimum_distance_points(element)
+            # print('_distance',pt1.point_distance(pt2))
+            return pt1.point_distance(pt2)
             #If LS cut the arc
-            for k in range (0, len(self.points)-1) :
-                LS2 = LineSegment3D(self.points[k], self.points[k+1])
-                # cut = element.Intersection(LS2)
-                p1, p2, s, t = element.MinimumDistancePoints(LS2)
-                if p1 is not None and p2 is not None :
-                    if s >= 0 and s <= 1 and t >= 0 and t <= 1 :
-                        if math.isclose((p1-p2).Norm(), 0, abs_tol = 1e-7):
-                            return 0
-                # if cut is not None :
-                #     return 0
+            # for k in range (0, len(self.points)-1) :
+            #     LS2 = LineSegment3D(self.points[k], self.points[k+1])
+            #     # cut = element.Intersection(LS2)
+            #     p1, p2, s, t = element.MinimumDistancePoints(LS2)
+            #     if p1 is not None and p2 is not None :
+            #         if s >= 0 and s <= 1 and t >= 0 and t <= 1 :
+            #             if math.isclose((p1-p2).Norm(), 0, abs_tol = 1e-7):
+            #                 return 0
+            #     # if cut is not None :
+            #     #     return 0
             
-            #Find the closest arc point from LS
-            #Initialize
-            pos = 0
-            i1, i2 = 0, 0
-            d1 = (self.points[0] - element.points[0]).Norm()
-            d2 = (self.points[0] - element.points[1]).Norm()
+            # #Find the closest arc point from LS
+            # #Initialize
+            # pos = 0
+            # i1, i2 = 0, 0
+            # d1 = (self.points[0] - element.points[0]).Norm()
+            # d2 = (self.points[0] - element.points[1]).Norm()
             
-            for pt in self.points[1:] :
-                pos += 1
-                dtest1 = (pt - element.points[0]).Norm()
-                dtest2 = (pt - element.points[1]).Norm()
-                if dtest1 < d1 :
-                    d1, i1 = dtest1, pos
-                if dtest2 < d2 :
-                    d2, i2 = dtest2, pos
+            # for pt in self.points[1:] :
+            #     pos += 1
+            #     dtest1 = (pt - element.points[0]).Norm()
+            #     dtest2 = (pt - element.points[1]).Norm()
+            #     if dtest1 < d1 :
+            #         d1, i1 = dtest1, pos
+            #     if dtest2 < d2 :
+            #         d2, i2 = dtest2, pos
                     
-            if d1 < d2 :
-                h1, pos_triangle = d1, i1
-            else :
-                h1, pos_triangle = d2, i2
+            # if d1 < d2 :
+            #     h1, pos_triangle = d1, i1
+            # else :
+            #     h1, pos_triangle = d2, i2
             
-            mid_LS = (element.points[0]+element.points[1])/2
-            d3 = (self.points[pos_triangle] - mid_LS)
-            if d3.Norm() < h1 :
-                h2 = h2_triangle(self.points[pos_triangle], element.points[0], element.points[1])
-                return min([h1,h2])
-            else :
-                d4 = (self.points[pos_triangle] - (element.points[0] + (element.points[1]-element.points[0])/4)).Norm()
-                d5 = (self.points[pos_triangle] - (element.points[1] + (element.points[0]-element.points[1])/4)).Norm()
-                if d4 < h1 or d5 < h1:
-                    return min(d4, h2_triangle(self.points[pos_triangle], element.points[0], element.points[1]))
-                return h1
+            # mid_LS = (element.points[0]+element.points[1])/2
+            # d3 = (self.points[pos_triangle] - mid_LS)
+            # if d3.Norm() < h1 :
+            #     h2 = h2_triangle(self.points[pos_triangle], element.points[0], element.points[1])
+            #     return min([h1,h2])
+            # else :
+            #     d4 = (self.points[pos_triangle] - (element.points[0] + (element.points[1]-element.points[0])/4)).Norm()
+            #     d5 = (self.points[pos_triangle] - (element.points[1] + (element.points[0]-element.points[1])/4)).Norm()
+            #     if d4 < h1 or d5 < h1:
+            #         return min(d4, h2_triangle(self.points[pos_triangle], element.points[0], element.points[1]))
+            #     return h1
         else :
             return NotImplementedError
 
@@ -3759,52 +3744,53 @@ class LineSegment3D(Edge3D):
         
     def minimum_distance(self, element):
         if element.__class__ is Arc3D or element.__class__ is Circle3D:
-            # pt1, pt2 = element.Matrix_distance(self)
+            pt1, pt2 = element.minimum_distance_points(self)
             # print(pt1.point_distance(pt2))
-            #If LS cut the arc
-            for k in range (0, len(element.points)-1) :
-                LS2 = LineSegment3D(element.points[k], element.points[k+1])
-                cut = self.Intersection(LS2)
-                # p1, p2, s, t = self.MinimumDistancePoints(LS2)
-                # if p1 is not None and p2 is not None :
-                    # if s >= 0 and s <= 1 and t >= 0 and t <= 1 :
-                        # if math.isclose((p1-p2).Norm(), 0, abs_tol = 1e-7):
-                            # return 0
-                if cut is not None :
-                    return 0
+            return pt1.point_distance(pt2)
+            # #If LS cut the arc
+            # for k in range (0, len(element.points)-1) :
+            #     LS2 = LineSegment3D(element.points[k], element.points[k+1])
+            #     cut = self.Intersection(LS2)
+            #     # p1, p2, s, t = self.MinimumDistancePoints(LS2)
+            #     # if p1 is not None and p2 is not None :
+            #         # if s >= 0 and s <= 1 and t >= 0 and t <= 1 :
+            #             # if math.isclose((p1-p2).Norm(), 0, abs_tol = 1e-7):
+            #                 # return 0
+            #     if cut is not None :
+            #         return 0
             
-            #Find the closest arc point from LS
-            #Initialize
-            pos = 0
-            i1, i2 = 0, 0
-            d1 = (element.points[0] - self.points[0]).Norm()
-            d2 = (element.points[0] - self.points[1]).Norm()
+            # #Find the closest arc point from LS
+            # #Initialize
+            # pos = 0
+            # i1, i2 = 0, 0
+            # d1 = (element.points[0] - self.points[0]).Norm()
+            # d2 = (element.points[0] - self.points[1]).Norm()
             
-            for pt in element.points[1:] :
-                pos += 1
-                dtest1 = (pt - self.points[0]).Norm()
-                dtest2 = (pt - self.points[1]).Norm()
-                if dtest1 < d1 :
-                    d1, i1 = dtest1, pos
-                if dtest2 < d2 :
-                    d2, i2 = dtest2, pos
+            # for pt in element.points[1:] :
+            #     pos += 1
+            #     dtest1 = (pt - self.points[0]).Norm()
+            #     dtest2 = (pt - self.points[1]).Norm()
+            #     if dtest1 < d1 :
+            #         d1, i1 = dtest1, pos
+            #     if dtest2 < d2 :
+            #         d2, i2 = dtest2, pos
                     
-            if d1 < d2 :
-                h1, pos_triangle = d1, i1
-            else :
-                h1, pos_triangle = d2, i2
+            # if d1 < d2 :
+            #     h1, pos_triangle = d1, i1
+            # else :
+            #     h1, pos_triangle = d2, i2
             
-            mid_LS = (self.points[0]+self.points[1])/2
-            d3 = (element.points[pos_triangle] - mid_LS)
-            if d3.Norm() < h1 :
-                h2 = h2_triangle( element.points[pos_triangle], self.points[0], self.points[1])
-                return min([h1,h2])
-            else :
-                d4 = (element.points[pos_triangle] - (self.points[0] + (self.points[1]-self.points[0])/4)).Norm()
-                d5 = (element.points[pos_triangle] - (self.points[1] + (self.points[0]-self.points[1])/4)).Norm()
-                if d4 < h1 or d5 < h1:
-                    return min(d4, h2_triangle(element.points[pos_triangle], self.points[0], self.points[1]))
-                return h1
+            # mid_LS = (self.points[0]+self.points[1])/2
+            # d3 = (element.points[pos_triangle] - mid_LS)
+            # if d3.Norm() < h1 :
+            #     h2 = h2_triangle( element.points[pos_triangle], self.points[0], self.points[1])
+            #     return min([h1,h2])
+            # else :
+            #     d4 = (element.points[pos_triangle] - (self.points[0] + (self.points[1]-self.points[0])/4)).Norm()
+            #     d5 = (element.points[pos_triangle] - (self.points[1] + (self.points[0]-self.points[1])/4)).Norm()
+            #     if d4 < h1 or d5 < h1:
+            #         return min(d4, h2_triangle(element.points[pos_triangle], self.points[0], self.points[1]))
+            #     return h1
         
         elif element.__class__ is LineSegment3D :
             # parallelepipedic's height with 3 non colinear vectors
