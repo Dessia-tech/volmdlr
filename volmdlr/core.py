@@ -4885,6 +4885,8 @@ class CylindricalFace3D(Face3D):
     # Does not work with automatical cylinder from FREECAD (problem with clean_points)
     def __init__(self, contours2d, cylindricalsurface3d, points=None, name=''):
         self.radius = float(cylindricalsurface3d.radius)/1000
+        self.center = cylindricalsurface3d.frame.origin
+        self.normal = cylindricalsurface3d.frame.w
         ctr = [Contour3D([Circle3D(cylindricalsurface3d.frame.origin, self.radius, cylindricalsurface3d.frame.u ), Circle3D(cylindricalsurface3d.frame.origin+contours2d[0].primitives[0].points[1][1]*cylindricalsurface3d.frame.u, self.radius, cylindricalsurface3d.frame.u)])]
         Face3D.__init__(self, ctr)
         
@@ -5132,6 +5134,80 @@ class CylindricalFace3D(Face3D):
             return CylindricalFace3D(self.contours2d, new_cylindricalsurface3d, points=self.points, name=self.name)
         else:
             self.cylindricalsurface3d.frame_mapping(frame, side, copy=False)
+            
+    def minimum_maximum(self, contour2d, radius) :
+        points = []
+        for prim in contour2d.primitives :
+            points.extend(prim.points)
+        
+        min_h, min_theta = min([pt[1] for pt in points]), min([pt[0] for pt in points])/radius
+        max_h, max_theta = max([pt[1] for pt in points]), max([pt[0] for pt in points])/radius 
+        return min_h, min_theta, max_h, max_theta
+            
+    def minimum_distance_points_cyl(self, other_cyl) :
+        r1, r2 = self.radius, other_cyl.radius
+        min_h1, min_theta1, max_h1, max_theta1 = self.minimum_maximum(self.contours2d[0], r1)
+        
+        start1 = self.center + Point3D((r1*math.cos(min_theta1),r1*math.sin(min_theta1),min_h1))
+        n1 = self.normal
+        u1 = start1 - self.center
+        u1.Normalize()
+        v1 = n1.Cross(u1)
+        
+        min_h2, min_theta2, max_h2, max_theta2 = self.minimum_maximum(other_cyl.contours2d[0], r2)
+             
+        start2 = other_cyl.center + Point3D((r2*math.cos(min_theta2),r2*math.sin(min_theta2),min_h2))
+        n2 = other_cyl.normal
+        u2 = start2 - other_cyl.center
+        u2.Normalize()
+        v2 = n2.Cross(u2)
+        
+        w = other_cyl.center - self.center
+        
+
+        n1n1, n1u1, n1v1, n1n2, n1u2, n1v2 = n1.Dot(n1), n1.Dot(u1), n1.Dot(v1), n1.Dot(n2), n1.Dot(u2), n1.Dot(v2)
+        u1u1, u1v1, u1n2, u1u2, u1v2 = u1.Dot(u1), u1.Dot(v1), u1.Dot(n2), u1.Dot(u2), u1.Dot(v2)
+        v1v1, v1n2, v1u2, v1v2 = v1.Dot(v1), v1.Dot(n2), v1.Dot(u2), v1.Dot(v2)
+        n2n2, n2u2, n2v2 = n2.Dot(n2), n2.Dot(u2), n2.Dot(v2)
+        u2u2, u2v2, v2v2 = u2.Dot(u2), u2.Dot(v2), v2.Dot(v2)
+        
+        w2, wn1, wu1, wv1, wn2, wu2, wv2 = w.Dot(w), w.Dot(n1), w.Dot(u1), w.Dot(v1), w.Dot(n2), w.Dot(u2), w.Dot(v2)
+        
+        # x = (theta1, h1, theta2, h2)
+        def distance_squared(x):
+            return (n1n1*x[1]**2 + u1u1*((math.cos(x[0]))**2)*r1**2 + v1v1*((math.sin(x[0]))**2)*r1**2
+                    + w2 + n2n2*x[3]**2 + u2u2*((math.cos(x[2]))**2)*r2**2 + v2v2*((math.sin(x[2]))**2)*r2**2
+                    + 2*x[1]*r1*math.cos(x[0])*n1u1 + 2*x[1]*r1*math.sin(x[0])*n1v1 -2*x[1]*wn1 
+                    - 2*x[1]*x[3]*n1n2 - 2*x[1]*r2*math.cos(x[2])*n1u2 - 2*x[1]*r2*math.sin(x[2])*n1v2
+                    + 2*math.cos(x[0])*math.sin(x[0])*u1v1*r1**2 - 2*r1*math.cos(x[0])*wu1 
+                    - 2*r1*x[3]*math.cos(x[0])*u1n2 - 2*r1*r2*math.cos(x[0])*math.cos(x[2])*u1u2
+                    - 2*r1*r2*math.cos(x[0])*math.sin(x[2])*u1v2 -2*r1*math.sin(x[0])*wv1
+                    - 2*r1*x[3]*math.sin(x[0])*v1n2 - 2*r1*r2*math.sin(x[0])*math.cos(x[2])*v1u2
+                    - 2*r1*r2*math.sin(x[0])*math.sin(x[2])*v1v2 + 2*x[3]*wn2 + 2*r2*math.cos(x[2])*wu2
+                    + 2*r2*math.sin(x[2])*wv2 + 2*x[3]*r2*math.cos(x[2])*n2u2 + 2*x[3]*r2*math.sin(x[2])*n2v2
+                    + 2*math.cos(x[2])*math.sin(x[2])*u2v2*r2**2)
+        
+        
+        
+        x01 = npy.array([(min_theta1+max_theta1)/2, (min_h1+max_h1)/2,
+                         (min_theta2+max_theta2)/2, (min_h2+max_h2)/2])
+        minimax = [(min_theta1, min_h1, min_theta2, min_h2), (max_theta1, max_h1, max_theta2, max_h2)]
+        
+        res1 = scp.optimize.least_squares(distance_squared, x01, bounds=minimax)
+            
+        frame1, frame2 = Frame3D(self.center, u1, v1, n1), Frame3D(other_cyl.center, u2, v2, n2)
+        pt1 = Point3D((r1*math.cos(res1.x[0]),r1*math.sin(res1.x[0]),res1.x[1]))
+        pt2 = Point3D((r2*math.cos(res1.x[2]),r1*math.sin(res1.x[2]),res1.x[3]))
+        
+        p1, p2 = frame1.OldCoordinates(pt1), frame2.OldCoordinates(pt2)
+        return p1, p2
+            
+    def minimum_distance(self, other_face) :
+        if other_face.__class__ is CylindricalFace3D :
+            p1, p2 = self.minimum_distance_points_cyl(other_face)
+            
+            return p1.point_distance(p2)
+            
 
 class ToroidalFace3D (Face3D) :
     def __init__(self, contours2d, toroidalsurface3d, points=None, name=''):
