@@ -7206,7 +7206,7 @@ class VolumeModel(dc.DessiaObject):
 
         
     def babylonjs(self, page_name=None, use_cdn=True, debug=False):
-        print('self.primitives', self.primitives)
+        # print('self.primitives', self.primitives)
         babylon_data = self.babylon_data()
         self.babylonjs_from_babylon_data(babylon_data, page_name = page_name,
                                          use_cdn = use_cdn, debug = debug)
