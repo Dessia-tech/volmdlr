@@ -4887,7 +4887,7 @@ class CylindricalFace3D(Face3D):
         self.radius = float(cylindricalsurface3d.radius)/1000
         self.center = cylindricalsurface3d.frame.origin
         self.normal = cylindricalsurface3d.frame.w
-        ctr = [Contour3D([Circle3D(cylindricalsurface3d.frame.origin, self.radius, cylindricalsurface3d.frame.u ), Circle3D(cylindricalsurface3d.frame.origin+contours2d[0].primitives[0].points[1][1]*cylindricalsurface3d.frame.u, self.radius, cylindricalsurface3d.frame.u)])]
+        ctr = [Contour3D([Circle3D(cylindricalsurface3d.frame.origin, self.radius, cylindricalsurface3d.frame.w ), Circle3D(cylindricalsurface3d.frame.origin+contours2d[0].primitives[0].points[1][1]*cylindricalsurface3d.frame.w, self.radius, cylindricalsurface3d.frame.w)])]
         Face3D.__init__(self, ctr)
         
         self.contours2d = contours2d 
@@ -4908,7 +4908,6 @@ class CylindricalFace3D(Face3D):
     @classmethod
     def from_contour3d(cls, contours3d, cylindricalsurface3d, points=None, name=''):
         center = Vector3D(cylindricalsurface3d.frame.origin)
-        # center2d = center.To2D(center, cylindricalsurface3d.frame.v, cylindricalsurface3d.frame.w)
         center2d = Point2D((0,0))
         
         if contours3d[0].edges[0].__class__ is LineSegment3D and contours3d[0].edges[1].__class__ is Arc3D :
@@ -5086,6 +5085,8 @@ class CylindricalFace3D(Face3D):
         Points_3D = self.points2d_to3d(all_contours_points, radius, frame3d)
         pt3d, tangle = delete_double_pos(Points_3D, Triangles)
         
+        self.start = pt3d[0]
+        
         return pt3d, tangle 
 
     def MPLPlotpoints(self, ax=None, color='k'):
@@ -5148,7 +5149,9 @@ class CylindricalFace3D(Face3D):
         r1, r2 = self.radius, other_cyl.radius
         min_h1, min_theta1, max_h1, max_theta1 = self.minimum_maximum(self.contours2d[0], r1)
         
-        start1 = self.center + Point3D((r1*math.cos(min_theta1),r1*math.sin(min_theta1),min_h1))
+        # plane1, plane2 = Plane3D.from_normal(self.center, self.normal), Plane3D.from_normal(other_cyl.center, other_cyl.normal) 
+        # start1 = self.center + Point3D((r1*math.cos(min_theta1),r1*math.sin(min_theta1),min_h1))
+        start1 = self.start
         n1 = self.normal
         u1 = start1 - self.center
         u1.Normalize()
@@ -5156,7 +5159,8 @@ class CylindricalFace3D(Face3D):
         
         min_h2, min_theta2, max_h2, max_theta2 = self.minimum_maximum(other_cyl.contours2d[0], r2)
              
-        start2 = other_cyl.center + Point3D((r2*math.cos(min_theta2),r2*math.sin(min_theta2),min_h2))
+        # start2 = other_cyl.center + Point3D((r2*math.cos(min_theta2),r2*math.sin(min_theta2),min_h2))
+        start2 = other_cyl.start
         n2 = other_cyl.normal
         u2 = start2 - other_cyl.center
         u2.Normalize()
@@ -5187,19 +5191,83 @@ class CylindricalFace3D(Face3D):
                     + 2*r2*math.sin(x[2])*wv2 + 2*x[3]*r2*math.cos(x[2])*n2u2 + 2*x[3]*r2*math.sin(x[2])*n2v2
                     + 2*math.cos(x[2])*math.sin(x[2])*u2v2*r2**2)
         
-        
-        
         x01 = npy.array([(min_theta1+max_theta1)/2, (min_h1+max_h1)/2,
                          (min_theta2+max_theta2)/2, (min_h2+max_h2)/2])
+        x02 = npy.array([min_theta1, (min_h1+max_h1)/2,
+                          min_theta2, (min_h2+max_h2)/2])
+        x03 = npy.array([max_theta1, (min_h1+max_h1)/2,
+                          max_theta2, (min_h2+max_h2)/2])
+        
         minimax = [(min_theta1, min_h1, min_theta2, min_h2), (max_theta1, max_h1, max_theta2, max_h2)]
         
         res1 = scp.optimize.least_squares(distance_squared, x01, bounds=minimax)
-            
+        res2 = scp.optimize.least_squares(distance_squared, x02, bounds=minimax)
+        res3 = scp.optimize.least_squares(distance_squared, x03, bounds=minimax)
+        
         frame1, frame2 = Frame3D(self.center, u1, v1, n1), Frame3D(other_cyl.center, u2, v2, n2)
         pt1 = Point3D((r1*math.cos(res1.x[0]),r1*math.sin(res1.x[0]),res1.x[1]))
-        pt2 = Point3D((r2*math.cos(res1.x[2]),r1*math.sin(res1.x[2]),res1.x[3]))
+        p1 = frame1.OldCoordinates(pt1)
+        pt2 = Point3D((r2*math.cos(res1.x[2]),r2*math.sin(res1.x[2]),res1.x[3]))
+        p2 = frame2.OldCoordinates(pt2)
+        d = p1.point_distance(p2)
+        result = res1
         
-        p1, p2 = frame1.OldCoordinates(pt1), frame2.OldCoordinates(pt2)
+        res = [res2, res3]
+        for couple in res :
+            pttest1 = Point3D((r1*math.cos(couple.x[0]),r1*math.sin(couple.x[0]),couple.x[1]))
+            pttest2 = Point3D((r2*math.cos(couple.x[2]),r2*math.sin(couple.x[2]),couple.x[3]))
+            ptest1 = frame1.OldCoordinates(pttest1)
+            ptest2 = frame2.OldCoordinates(pttest2)
+            dtest = ptest1.point_distance(ptest2)
+            if dtest < d :
+                result = couple
+                p1, p2 = ptest1, ptest2
+        
+        pt1_2d, pt2_2d = Point2D((result.x[0]*r1, result.x[1])), Point2D((result.x[2]*r2, result.x[3]))
+        
+        if not(self.contours2d[0].point_belongs(pt1_2d)) :
+            #Find the closest one
+            points_contours1 = []
+            for prim in self.contours2d[0].primitives :
+                points_contours1.append(prim.points[0])
+            
+            # fig, ax = plt.subplots()
+            # [pt.MPLPlot(ax=ax) for pt in points_contours1]
+            # points_contours1[1].MPLPlot(ax=ax, color='r')
+            # points_contours1[2].MPLPlot(ax=ax, color='b')
+            # points_contours1[3].MPLPlot(ax=ax, color='g')
+            # fig, ax = plt.subplots()
+            # [pt.MPLPlot(ax=ax) for pt in points_contours1]
+            # pt1_2d.MPLPlot(ax=ax, color='r')
+            
+            poly1 = Polygon2D(points_contours1)
+            d1, new_pt1_2d = poly1.PointBorderDistance(pt1_2d, return_other_point=True)
+                    
+            pt1 = Point3D((r1*math.cos(new_pt1_2d.vector[0]/r1),
+                           r1*math.sin(new_pt1_2d.vector[0]/r1),
+                           new_pt1_2d.vector[1]))
+            p1 = frame1.OldCoordinates(pt1)        
+            
+            # fig, ax = plt.subplots()
+            # [pt.MPLPlot(ax=ax) for pt in points_contours1]
+            # pt1_2d.MPLPlot(ax=ax, color='r')
+            # new_pt1_2d.MPLPlot(ax=ax, color='b')
+        
+        
+        if not(other_cyl.contours2d[0].point_belongs(pt2_2d)) :
+            #Find the closest one
+            points_contours2 = []
+            for prim in other_cyl.contours2d[0].primitives :
+                points_contours2.append(prim.points[0])
+            
+            poly2 = Polygon2D(points_contours2)
+            d2, new_pt2_2d = poly2.PointBorderDistance(pt2_2d, return_other_point=True)
+                    
+            pt2 = Point3D((r2*math.cos(new_pt2_2d.vector[0]/r2),
+                           r2*math.sin(new_pt2_2d.vector[0]/r2),
+                           new_pt2_2d.vector[1]))
+            p2 = frame2.OldCoordinates(pt2)        
+            
         return p1, p2
             
     def minimum_distance(self, other_face) :
