@@ -2001,6 +2001,12 @@ OYZX = Frame3D(O3D, Y3D, Z3D, X3D)
 OZXY = Frame3D(O3D, Z3D, X3D, Y3D)
 
 class CylindricalSurface3D(Primitive3D):
+    """
+    :param frame: Cylinder's frame to position it 
+    :type frame: Frame3D
+    :param radius: Cylinder's radius
+    :type radius: float
+    """
     
     def __init__(self, frame, radius, name=''): 
         self.frame = frame
@@ -2048,7 +2054,14 @@ class CylindricalSurface3D(Primitive3D):
                 self.frame = new_frame
 
 class ToroidalSurface3D(Primitive3D):
-    
+    """
+    :param frame: Tore's frame to position it 
+    :type frame: Frame3D
+    :param rcenter: Tore's radius
+    :type rcenter: float
+    :param rcircle: Circle to revolute radius
+    :type rcircle: float
+    """
     def __init__(self, frame, rcenter, rcircle, name=''): 
         self.frame = frame
         self.rcenter = rcenter
@@ -4235,6 +4248,18 @@ class Circle3D(Contour3D):
         return cls(center, radius, normal, arguments[0][1:-1])
 
 class Ellipse3D(Contour3D):
+    """
+    :param major_axis: Largest radius of the ellipse
+    :type major_axis: float
+    :param minor_axis: Smallest radius of the ellipse
+    :type minor_axis: float
+    :param center: Ellipse's center
+    :type center: Point3D
+    :param normal: Ellipse's normal
+    :type normal: Vector3D
+    :param major_dir: Direction of the largest radius/major_axis
+    :type major_dir: Vector3D
+    """
     def __init__(self, major_axis, minor_axis, center, normal, major_dir, name=''):
         
         self.major_axis = major_axis
@@ -4881,7 +4906,18 @@ class PlaneFace3D(Face3D):
         return ax
 
 
-class CylindricalFace3D(Face3D):       
+class CylindricalFace3D(Face3D): 
+    """
+    :param contours2d: The cylinder's contour2D 
+    :type contours2d: Contour2D
+    :param cylindricalsurface3d: Information about the Cylinder
+    :type cylindricalsurface3d: CylindricalSurface3D
+    :param points: contours2d's point
+    :type points: List of Point2D
+    
+    :Example: 
+        >>> contours2d is rectangular and will create a classic cylinder with x= 2*pi*radius, y=h
+    """      
     # Does not work with automatical cylinder from FREECAD (problem with clean_points)
     def __init__(self, contours2d, cylindricalsurface3d, points=None, name=''):
         self.radius = float(cylindricalsurface3d.radius)/1000
@@ -4906,7 +4942,16 @@ class CylindricalFace3D(Face3D):
         #         raise ValueError
     
     @classmethod
-    def from_contour3d(cls, contours3d, cylindricalsurface3d, points=None, name=''):
+    def from_contour3d(cls, contours3d, cylindricalsurface3d, name=''):
+        """
+        :param contours3d: The cylinder's contour3D
+        :type contours3d: Contour3D
+        :param cylindricalsurface3d: Information about the Cylinder
+        :type cylindricalsurface3d: CylindricalSurface3D
+        
+        :Example:
+            >>> contours3d is [Arc3D, LineSegment3D, Arc3D], the cylinder's bones
+        """
         center = Vector3D(cylindricalsurface3d.frame.origin)
         center2d = Point2D((0,0))
         
@@ -4985,6 +5030,14 @@ class CylindricalFace3D(Face3D):
     
     @classmethod 
     def from_arc3d(cls, lineseg, arc, cylindricalsurface3d): #Work with 2D too
+        """
+        :param lineseg: The segment which represent the extrusion of the arc
+        :type lineseg: LineSegment3D/2D
+        :param arc: The Arc circle to extrude
+        :type arc: Arc3D/2D, Circle3D/2D
+        :param cylindricalsurface3d: Information about the Cylinder
+        :type cylindricalsurface3d: CylindricalSurface3D
+        """
         radius = float(cylindricalsurface3d.radius)/1000
         frame = cylindricalsurface3d.frame
         normal, center = frame.w, frame.origin
@@ -5275,9 +5328,25 @@ class CylindricalFace3D(Face3D):
             p1, p2 = self.minimum_distance_points_cyl(other_face)
             
             return p1.point_distance(p2)
+        else :
+            return NotImplementedError 
             
 
 class ToroidalFace3D (Face3D) :
+    """
+    :param contours2d: The Tore's contour2D 
+    :type contours2d: Contour2D
+    :param toroidalsurface3d: Information about the Tore
+    :type toroidalsurface3d: ToroidalSurface3D
+    :param points: Angle's Tore
+    :type points: List of float
+    
+    :Example: 
+        >>> contours2d is rectangular and will create a classic tore with x:2*pi, y:2*pi
+        x is for exterior, and y for the circle to revolute
+        >>> points = [pi, 2*pi] for an half tore
+    """      
+    
     def __init__(self, contours2d, toroidalsurface3d, points=None, name=''):
         self.rcenter = float(toroidalsurface3d.rcenter)/1000
         self.rcircle = float(toroidalsurface3d.rcircle)/1000
@@ -5314,7 +5383,16 @@ class ToroidalFace3D (Face3D) :
         self.name = name 
     
     @classmethod
-    def from_contour3d(cls, contours3d, toroidalsurface3d, points=None, name=''):
+    def from_contour3d(cls, contours3d, toroidalsurface3d, name=''):
+        """
+        :param contours3d: The Tore's contour3D
+        :type contours3d: Contour3D
+        :param toroidalsurface3d: Information about the Tore
+        :type toroidalsurface3d: ToroidalSurface3D
+        
+        :Example:
+            >>> contours3d is [Arc3D, Arc3D, Arc3D], the tore's bones
+        """
         center = toroidalsurface3d.frame.origin
         
         if contours3d[0].__class__ is Point3D : #If it is a complete tore
@@ -5344,6 +5422,12 @@ class ToroidalFace3D (Face3D) :
     
     @classmethod
     def from_arc3d(cls, arc, arcgen):
+        """
+        :param arc: The arc which is extruded by the arcgen
+        :type arc: Arc3D/2D, Circle3D/2D
+        :param arcgen: The Arc generator
+        :type arcgen: Arc3D/2D, Circle3D/2D
+        """
         rcircle = arc.radius
         rcenter = arcgen.radius
         
