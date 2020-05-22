@@ -336,6 +336,9 @@ class Vector2D(Vector):
         return int(round(1e6*(self.vector[0]+self.vector[1])))
 
     def __eq__(self, other_vector):
+
+        if other_vector.__class__.__name__ not in ['Vector2D', 'Point2D']:
+            return False
         return math.isclose(self.vector[0], other_vector.vector[0], abs_tol=1e-06) \
         and math.isclose(self.vector[1], other_vector.vector[1], abs_tol=1e-06)
 
@@ -347,7 +350,7 @@ class Vector2D(Vector):
 
     def Normalize(self):
         """
-        Normalize the vector modifying it's coordinate
+        Normalize the vector modifying its coordinates
         """
         n = self.Norm()
         if math.isclose(n, 0, abs_tol=1e-9):
@@ -1107,7 +1110,7 @@ class Matrix33:
 
 
         else:
-            print(self.__dict__, det)
+            # print(self.__dict__, det)
             raise ValueError
 
     @classmethod
