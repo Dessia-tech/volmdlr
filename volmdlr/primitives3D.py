@@ -177,12 +177,12 @@ class Block(volmdlr.Shell3D):
 
     def shell_faces(self):
         c1, c2, c3, c4, c5, c6 = self.face_contours()
-        return [volmdlr.PlaneFace3D([c1]),
-                volmdlr.PlaneFace3D([c2]),
-                volmdlr.PlaneFace3D([c3]),
-                volmdlr.PlaneFace3D([c4]),
-                volmdlr.PlaneFace3D([c5]),
-                volmdlr.PlaneFace3D([c6])]
+        return [volmdlr.PlaneFace3D.from_contours3d([c1]),
+                volmdlr.PlaneFace3D.from_contours3d([c2]),
+                volmdlr.PlaneFace3D.from_contours3d([c3]),
+                volmdlr.PlaneFace3D.from_contours3d([c4]),
+                volmdlr.PlaneFace3D.from_contours3d([c5]),
+                volmdlr.PlaneFace3D.from_contours3d([c6])]
 
     def Rotation(self, center, axis, angle, copy=True):
         if copy:
@@ -355,10 +355,10 @@ class ExtrudedProfile(volmdlr.Shell3D):
     def shell_faces(self):
 
         lower_contours = [self.outer_contour3d]+self.inner_contours3d
-        lower_face = volmdlr.PlaneFace3D(lower_contours)
+        lower_face = volmdlr.PlaneFace3D.from_contours3d(lower_contours)
 
         upper_contours = [contour.Translation(self.extrusion_vector, True) for contour in lower_contours]
-        upper_face = volmdlr.PlaneFace3D(upper_contours)
+        upper_face = volmdlr.PlaneFace3D.from_contours3d(upper_contours)
         
         lateral_faces = []
         # for i in range(len(self.inner_contours3d)+1):
@@ -620,17 +620,17 @@ class RevolvedProfile(volmdlr.Shell3D):
                         if angle != 2*math.pi :
                             LS1 = volmdlr.LineSegment3D(point1, arcgen.start)
                             LS2 = volmdlr.LineSegment3D(arcgen.end, point1)
-                            faces.append(volmdlr.PlaneFace3D([volmdlr.Contour3D([LS1, arcgen, LS2])]))
+                            faces.append(volmdlr.PlaneFace3D.from_contours3d([volmdlr.Contour3D([LS1, arcgen, LS2])]))
                         else : 
-                            faces.append(volmdlr.PlaneFace3D([volmdlr.Contour3D([arcgen])]))
+                            faces.append(volmdlr.PlaneFace3D.from_contours3d([volmdlr.Contour3D([arcgen])]))
                     elif point2 in LS : 
                         arcgen = create_arc(point1, angle, axis_point, axis)
                         if angle != 2*math.pi :
                             LS1 = volmdlr.LineSegment3D(point2, arcgen.start)
                             LS2 = volmdlr.LineSegment3D(arcgen.end, point2)
-                            faces.append(volmdlr.PlaneFace3D([volmdlr.Contour3D([LS1, arcgen, LS2])]))
+                            faces.append(volmdlr.PlaneFace3D.from_contours3d([volmdlr.Contour3D([LS1, arcgen, LS2])]))
                         else : 
-                            faces.append(volmdlr.PlaneFace3D([volmdlr.Contour3D([arcgen])]))
+                            faces.append(volmdlr.PlaneFace3D.from_contours3d([volmdlr.Contour3D([arcgen])]))
                     else :
                         test1 = volmdlr.Vector3D(edge.points[0]-axis_point)
                         test2 = volmdlr.Vector3D(edge.points[1]-axis_point)
@@ -642,12 +642,12 @@ class RevolvedProfile(volmdlr.Shell3D):
                             arcgen1 = create_arc(edge.points[1], angle, axis_point, axis)
                         
                         if angle == 2*math.pi :
-                            faces.append(volmdlr.PlaneFace3D([volmdlr.Contour3D([arcgen1]),volmdlr.Contour3D([arcgen2])]))
+                            faces.append(volmdlr.PlaneFace3D.from_contours3d([volmdlr.Contour3D([arcgen1]),volmdlr.Contour3D([arcgen2])]))
                         else : #Change arc to make a direct contour
                             arcgen_change = volmdlr.Arc3D(arcgen1.end, arcgen1.interior, arcgen1.start, -axis)
                             LS2 = volmdlr.LineSegment3D(arcgen2.end, arcgen_change.start)
                             LS1 = volmdlr.LineSegment3D(arcgen_change.end, arcgen2.start)
-                            faces.append(volmdlr.PlaneFace3D([volmdlr.Contour3D([arcgen2, LS2, arcgen_change, LS1])]))
+                            faces.append(volmdlr.PlaneFace3D.from_contours3d([volmdlr.Contour3D([arcgen2, LS2, arcgen_change, LS1])]))
                 
                 elif math.isclose(dot, 1, abs_tol=1e-7) or math.isclose(dot, -1, abs_tol=1e-7) : 
                     if edge.points[0] in LS :
@@ -663,8 +663,8 @@ class RevolvedProfile(volmdlr.Shell3D):
                     pass
                 
         if angle < 2*math.pi :
-            faces.append(volmdlr.PlaneFace3D([self.contour3D]))
-            faces.append(volmdlr.PlaneFace3D([self.contour3D.Rotation(axis_point, axis, angle)]))
+            faces.append(volmdlr.PlaneFace3D.from_contours3d([self.contour3D]))
+            faces.append(volmdlr.PlaneFace3D.from_contours3d([self.contour3D.Rotation(axis_point, axis, angle)]))
         
         return faces
 
