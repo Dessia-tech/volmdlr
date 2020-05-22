@@ -4326,7 +4326,7 @@ class PlaneFace3D(Face3D):
         else :
             self.points = points
             self.polygon2D = polygon2D
-        
+        # print(contours[0])
         ctr3d = contours[0].copy()
         Face3D.__init__(self, [ctr3d.To3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])])
             
