@@ -5216,7 +5216,7 @@ class CylindricalFace3D(Face3D):
                    + 2*x[2]*wu + 2*x[3]*wv + 2*x[2]*x[3]*uv )
         
         x01 = npy.array([(min_h1+max_h1)/2, (min_theta1+max_theta1)/2,
-                         (xmin+xmax)/2, (ymin+ymax)/2])
+                         (xmax-xmin)/2, (ymax-ymin)/2])
 
         # minimax = [(min_h1, min_theta1, xmin, ymin), (max_h1, max_theta1, xmax, ymax)]
         minimax = [(min_h1, min_theta1, 0, 0), (max_h1, max_theta1, xmax-xmin, ymax-ymin)]
@@ -5235,6 +5235,10 @@ class CylindricalFace3D(Face3D):
         u2d, v2d = (pf3_2d-pf1_2d), (pf2_2d-pf1_2d)
         u2d.Normalize()
         v2d.Normalize()
+        print('xmin, ymin', xmin, ymin)
+        print(p2)
+        p2.To2D(pf1,u, v)
+        print('p2',p2)
         pt2_2d = Point2D((xmin, ymin)) + res1.x[2]*u2d + res1.x[3]*v2d 
         
         if not(self.contours2d[0].point_belongs(pt1_2d)) :
@@ -5262,7 +5266,8 @@ class CylindricalFace3D(Face3D):
             # pt2_2d.MPLPlot(ax=ax, color='g')
             d2, new_pt2_2d = planeface.polygon2D.PointBorderDistance(pt2_2d, return_other_point=True)
             # new_pt2_2d.MPLPlot(ax=ax, color='r')
-            p2 = new_pt2_2d.To3D(origin, vx, vy)
+            p2 = new_pt2_2d.To3D(Point3D((0,0,0)), u, v)
+            # p2 = pf1 + new_pt2_2d.vector[0]*u + new_pt2_2d.vector[1]*v
         
         return p1, p2
             
