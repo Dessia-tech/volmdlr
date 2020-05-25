@@ -68,11 +68,23 @@ Primitives
 .. autoclass:: volmdlr.Arc3D
   :members:
 
+.. autoclass:: volmdlr.core.CylindricalFace3D
+  :members:
+
+.. autoclass:: volmdlr.core.CylindricalSurface3D
+  :members:
+
+.. autoclass:: volmdlr.core.ToroidalFace3D
+  :members:
+
+.. autoclass:: volmdlr.core.ToroidalSurface3D
+  :members:
 
 3D advanced primitives
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: volmdlr.primitives3D.RoundedLineSegments3D
+.. autoclass:: volmdlr.primitives3D.OpenedRoundedLineSegments3D
+.. autoclass:: volmdlr.primitives3D.ClosedRoundedLineSegments3D
   :members:
 
 .. autoclass:: volmdlr.primitives3D.Cylinder
@@ -102,14 +114,4 @@ Primitives
 .. autoclass:: volmdlr.primitives3D.Fuse
   :members:
 
-.. autoclass:: volmdlr.core.CylindricalFace3D
-  :members:
 
-.. autoclass:: volmdlr.core.CylindricalSurface3D
-  :members:
-
-.. autoclass:: volmdlr.core.ToroidalFace3D
-  :members:
-
-.. autoclass:: volmdlr.core.ToroidalSurface3D
-  :members:

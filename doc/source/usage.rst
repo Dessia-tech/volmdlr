@@ -18,6 +18,14 @@ Once a VolumeModel is instanciated, one can call the FreeCADExport method:
 .. autoclass:: volmdlr.VolumeModel
   :members: FreeCADExport
 
+Sweep
+-----
+'Sweep' creates pipes with the following tool :
+
+.. autoclass:: volmdlr.primitives3D.Sweep
+
+To understand how Sweep works, see :ref:`primitives-label` in 3D advanced primitives.
+
 Tutorials
 ---------
 

@@ -99,6 +99,15 @@ class OpenedRoundedLineSegments3D(volmdlr.Wire3D, RoundedLineSegments):
 
 
 class ClosedRoundedLineSegments3D(volmdlr.Contour3D, OpenedRoundedLineSegments3D):
+    """
+    Creates a wire 
+    :param points: Points used to draw the wire 
+    :type points: List of Point3D
+    :param radius: Radius used to connect different parts of the wire
+    :type radius: {position1(n): float which is the radius linked the n+1 and n+2 points, position2(n+1):...}
+    
+    
+    """
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
@@ -1034,6 +1043,10 @@ class Sweep(volmdlr.Shell3D):
     """
     Sweep a 3D contour along a Wire3D
             2D contour
+    
+    :Example: 
+        >>> contour2d is a Circle2D or a Arc2D
+        >>> wire3d refers to a (Opened/Closed)RoundedLineSegments3D
     """
 
     def __init__(self, contour2d, wire3d, *, color=None, alpha=1, name=''):
