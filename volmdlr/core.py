@@ -236,9 +236,10 @@ class Primitive2D(dc.DessiaObject):
     def __init__(self, name=''):
         self.name = name
     
-    def generated_planeface(self, contours2d) : 
-        
-        return PlaneFace3D(contours2d)
+    # def generated_planeface(self, contours2d, plane=None) : 
+    #     if plane is None :
+    #         raise ValueError('You must give a plane')
+    #     return PlaneFace3D(contours2d, plane)
     
 class CompositePrimitive2D(Primitive2D):
     """
@@ -390,7 +391,14 @@ class Contour2D(Wire2D):
         self._utd_analysis = False
         pts = []
         for prim in primitives :
-            pts.extend(prim.points)
+            if prim.__class__ is Circle2D :
+                pts.extend(prim.points)
+            elif prim.__class__ is Arc2D :
+                points_arc = prim.tessellation_points() 
+                pts.extend(points_arc[0:len(points_arc)-1])
+            else :
+                for pt in prim.points[0:len(prim.points)-1] :
+                    pts.append(pt)
         self.points = pts
 
     def _primitives_analysis(self):
@@ -1137,8 +1145,7 @@ class Arc2D(Primitive2D):
             self.angle1 = angle2
             self.angle2 = angle1
             self.angle = clockwise_path
-
-
+        
     def _get_points(self):
         return [self.start,self.interior,self.end]
 
@@ -1190,7 +1197,7 @@ class Arc2D(Primitive2D):
         l = self.Length()
         return [self.PointAtCurvilinearAbscissa(i/(number_points_tesselation-1)*l) for i in range(number_points_tesselation)]
         # return points
-        
+    
     def point_belongs(self, point):
         """
         Computes if the point belongs to the pizza slice drawn by the arc and its center
@@ -3598,8 +3605,8 @@ class LineSegment3D(Edge3D):
         p2D=[p.To2D(plane_origin,x1,x2) for p in self.points]
         return LineSegment2D(*p2D,name=self.name)
 
-    def generated_planeface(self, contours3d) : 
-        return PlaneFace3D.from_contours3d(contours3d)
+    # def generated_planeface(self, contours3d) : 
+    #     return PlaneFace3D.from_contours3d(contours3d)
 
     def MinimumDistancePoints(self, other_line):
         """
@@ -4319,14 +4326,13 @@ class PlaneFace3D(Face3D):
         contour_points = []
         for prim in self.contours[0].primitives :
             for pt in prim.points :
-                pt3d = Point3D((pt.vector + [0]))
-                contour_points.append(pt3d.copy())
+                pt3d = (pt.copy()).To3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
+                contour_points.append(pt3d)
         if points is None or polygon2D is None:
             self.points, self.polygon2D = self._repair_points_and_polygon2d(contour_points, self.plane)
         else :
             self.points = points
             self.polygon2D = polygon2D
-        # print(contours[0])
         ctr3d = contours[0].copy()
         Face3D.__init__(self, [ctr3d.To3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])])
             
@@ -4422,7 +4428,7 @@ class PlaneFace3D(Face3D):
         for contour in contours3d :
             prim = [p.To2D(O,x,y) for p in contour.edges]
             contours2d.append(Contour2D(prim))
-        
+            
         return cls(contours2d, plane, points=None, polygon2D=None, name=name)
     
     def Rotation(self, center, axis, angle, copy=True):
@@ -4501,13 +4507,14 @@ class PlaneFace3D(Face3D):
             points_2D = contour.points
             
             vertices.extend([tuple(p.vector) for p in points_2D])
-            if len(vertices) != len(set(vertices)):
-                return None, None
             
-            len_points = len(contour.points)
+            if len(vertices) != len(set(vertices)):
+                raise ValueError('There are points in double, please check __init__')
+            
+            len_points = len(points_2D)
             segments += [[a+total_len, a+total_len+1] for a in range(len_points-1)]+[[len_points+total_len-1, 0+total_len]]
             total_len += len_points
-            points_3D.extend([pt.To3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]) for pt in contour.points])
+            points_3D.extend([pt.To3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]) for pt in points_2D])
             if i > 0:
                 polygon2D = Polygon2D(points_2D)
                 mid_point_2D = contour.average_center_point()
