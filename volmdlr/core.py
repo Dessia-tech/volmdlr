@@ -4744,6 +4744,19 @@ class PlaneFace3D(Face3D):
 
         plt.show()
         return ax
+    
+    def minimum_distance(self, other_face) :
+        if other_face.__class__ is CylindricalFace3D :
+            p1, p2 = other_face.minimum_distance_points_cyl(self)
+            
+            return p1.point_distance(p2)
+        
+        if other_face.__class__ is PlaneFace3D : 
+            dmin, p1, p2 = self.distance_to_face(other_face, return_points=True)
+            
+            return p1.point_distance(p2)
+        else :
+            return NotImplementedError 
 
 
 class CylindricalFace3D(Face3D): 
@@ -4774,6 +4787,8 @@ class CylindricalFace3D(Face3D):
             self.points = points 
         self.name = name 
         
+        pts3d, t = self.triangulation()
+        self.start = pts3d[0]
         # # CHECK
         # for pt in self.points:
         #     if not self.frame.point_on_plane(pt):
@@ -4977,8 +4992,6 @@ class CylindricalFace3D(Face3D):
         
         Points_3D = self.points2d_to3d(all_contours_points, radius, frame3d)
         pt3d, tangle = delete_double_pos(Points_3D, Triangles)
-        
-        self.start = pt3d[0]
         
         return pt3d, tangle 
 
@@ -5236,17 +5249,9 @@ class CylindricalFace3D(Face3D):
         
         p2 = pf1 + res1.x[2]*u + res1.x[3]*v
         d = p1.point_distance(p2)
-        print('>>>>>>> d',d)
         
         pt1_2d = Point2D((res1.x[1]*r, res1.x[0]))
-        u2d, v2d = (pf3_2d-pf1_2d), (pf2_2d-pf1_2d)
-        u2d.Normalize()
-        v2d.Normalize()
-        print('xmin, ymin', xmin, ymin)
-        print(p2)
-        p2.To2D(pf1,u, v)
-        print('p2',p2)
-        pt2_2d = Point2D((xmin, ymin)) + res1.x[2]*u2d + res1.x[3]*v2d 
+        pt2_2d = p2.To2D(pf1,u, v)
         
         if not(self.contours2d[0].point_belongs(pt1_2d)) :
             #Find the closest one
@@ -5273,7 +5278,7 @@ class CylindricalFace3D(Face3D):
             # pt2_2d.MPLPlot(ax=ax, color='g')
             d2, new_pt2_2d = planeface.polygon2D.PointBorderDistance(pt2_2d, return_other_point=True)
             # new_pt2_2d.MPLPlot(ax=ax, color='r')
-            p2 = new_pt2_2d.To3D(Point3D((0,0,0)), u, v)
+            p2 = new_pt2_2d.To3D(pf1, u, v)
             # p2 = pf1 + new_pt2_2d.vector[0]*u + new_pt2_2d.vector[1]*v
         
         return p1, p2
