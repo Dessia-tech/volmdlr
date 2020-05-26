@@ -39,7 +39,8 @@ Primitives
 2D advanced primitives
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: volmdlr.primitives2D.RoundedLineSegments2D
+.. autoclass:: volmdlr.primitives2D.OpenedRoundedLineSegments2D
+.. autoclass:: volmdlr.primitives2D.ClosedRoundedLineSegments2D
   :members:
 
 

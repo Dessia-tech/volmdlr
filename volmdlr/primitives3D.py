@@ -100,13 +100,10 @@ class OpenedRoundedLineSegments3D(volmdlr.Wire3D, RoundedLineSegments):
 
 class ClosedRoundedLineSegments3D(volmdlr.Contour3D, OpenedRoundedLineSegments3D):
     """
-    Creates a wire 
     :param points: Points used to draw the wire 
     :type points: List of Point3D
     :param radius: Radius used to connect different parts of the wire
-    :type radius: {position1(n): float which is the radius linked the n+1 and n+2 points, position2(n+1):...}
-    
-    
+    :type radius: {position1(n): float which is the radius linked the n-1 and n+1 points, position2(n+1):...}
     """
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
@@ -329,7 +326,7 @@ class Cone(volmdlr.Primitive3D):
 
 class ExtrudedProfile(volmdlr.Shell3D):
     """
-
+    
     """
     _non_serializable_attributes  = ['faces', 'inner_contours3d', 'outer_contour3d']
     def __init__(self, plane_origin, x, y, outer_contour2d, inner_contours2d,
@@ -755,6 +752,9 @@ class RevolvedProfile(volmdlr.Shell3D):
                           self.angle)
 
 class Cylinder(RevolvedProfile):
+    """
+    Creates a full cylinder with the position, the axis of revolution, the radius and the length.
+    """
     def __init__(self, position, axis, radius, length, color=None, alpha=1., name=''):
         self.position = position
         axis.Normalize()

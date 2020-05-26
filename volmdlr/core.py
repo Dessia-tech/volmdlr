@@ -2768,7 +2768,7 @@ class ArcEllipse3D(Primitive3D) :
         c_2D = center.To2D(center, plane.vectors[0], plane.vectors[1])
         
         if start==end :
-            ex_2D = extra.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
+            ex_2D = extra.PlaneProjection2D(plane.origin, plane.vectors[0], plane.vectors[1])
             theta, A, B = theta_A_B(s_2D,ex_2D,i_2D,c_2D)
         else : 
             theta, A, B = theta_A_B(s_2D,i_2D,e_2D,c_2D)
@@ -4505,6 +4505,9 @@ class PlaneFace3D(Face3D):
             #     return None, None
 
             points_2D = contour.points
+            
+            fig, ax = plt.subplots()
+            [pt.MPLPlot(ax=ax) for pt in points_2D]
             
             vertices.extend([tuple(p.vector) for p in points_2D])
             
