@@ -27,7 +27,7 @@ import networkx as nx
 
 from .core_compiled import (Vector2D, Vector3D, Point2D, Point3D,
                    O2D, X2D, Y2D, OXY,
-                   Basis3D, Frame2D, Frame3D,
+                   Basis2D, Basis3D, Frame2D, Frame3D,
                    O3D, X3D, Y3D, Z3D,
                    LineSegment2DPointDistance,
                    PolygonPointBelongs,
@@ -213,7 +213,19 @@ def h_triangle(vec1, vec2) :
     l1, l2 = vec1.Norm(), vec2.Norm() #two length, other than the basis
     l3 = math.sqrt(l2**2 + l1**2 - 2*vec1.Dot(vec2))
     pos_l3 = (l2**2 - l1**2 +l3**2)/(2*l3)
-    h = math.sqrt(l2**2 - pos_l3**2)
+    if pos_l3**2 > l2**2 :
+        return None
+    else :
+        h = math.sqrt(l2**2 - pos_l3**2)
+        return h
+
+def h2_triangle(pt1,pt2,pt3) :
+    #pt2 and pt3 form the side where we want the height
+    #Héron Formula
+    a, b, c = (pt1-pt2).Norm(), (pt1-pt3).Norm(), (pt2-pt3).Norm()
+    p = (a+b+c)/2 #half perimeter
+    area = math.sqrt(p*(p-a)*(p-b)*(p-c))
+    h = area*2/c
     return h
 
 def determinant(vec1, vec2, vec3) :
@@ -254,6 +266,7 @@ class Primitive2D(dc.DessiaObject):
     def generated_planeface(self, contours3D) : 
         
         return PlaneFace3D(contours3D)
+
     
 class CompositePrimitive2D(Primitive2D):
     """
@@ -403,6 +416,17 @@ class Contour2D(Wire2D):
     def __init__(self, primitives, name=''):
         Wire2D.__init__(self, primitives, name)
         self._utd_analysis = False
+        pts = []
+        for prim in primitives :
+            if prim.__class__ is Circle2D :
+                pts.extend(prim.points)
+            elif prim.__class__ is Arc2D :
+                points_arc = prim.tessellation_points() 
+                pts.extend(points_arc[0:len(points_arc)-1])
+            else :
+                for pt in prim.points[0:len(prim.points)-1] :
+                    pts.append(pt)
+        self.points = pts
 
     def _primitives_analysis(self):
         """
@@ -424,7 +448,8 @@ class Contour2D(Wire2D):
                 points_polygon.append(primitive.end)
                 arcs.append(primitive)
             elif primitive.__class__.__name__ == 'Circle2D':
-                return None
+                raise ValueError('Circle2D primitives should not be inserted in a contour, as a circle is already a contour. Use directcly the circle')
+                # return None
             elif primitive.__class__.__name__ == 'OpenedRoundedLineSegments2D':
                 for prim in primitive.primitives:
                     if prim.__class__.__name__ == 'LineSegment2D':
@@ -591,6 +616,12 @@ class Contour2D(Wire2D):
             primitives_copy.append(primitive.copy())
         return Contour2D(primitives_copy)
 
+    def average_center_point(self):
+        nb = len(self.points)
+        x = npy.sum([p[0] for p in self.points]) / nb
+        y = npy.sum([p[1] for p in self.points]) / nb
+        return Point2D((x,y))
+
 class Mesh2D:
     def __init__(self, contours, points_densities, default_density):
         self.contours = contours
@@ -651,9 +682,11 @@ class Line2D(Primitive2D, Line):
     """
     Define an infinte line given by two points.
     """
-    def __init__(self, point1, point2, name=''):
+    def __init__(self, point1, point2,*, name=''):
         Primitive2D.__init__(self, name=name)
         self.points=[point1, point2]
+        self.point1 = point1
+        self.point2 = point2
 
     def To3D(self, plane_origin, x1, x2):
         p3D = [p.To3D(plane_origin, x1, x2) for p in self.points]
@@ -883,8 +916,11 @@ class LineSegment2D(Line2D):
     """
     Define a line segment limited by two points
     """
-    def __init__(self,point1, point2, name=''):
+    def __init__(self,point1, point2, *,name=''):
+        # self.point1 = point1
+        # self.point2 = point2
         Line2D.__init__(self, point1, point2, name = name)
+       
         
     def to_dict(self):
         # improve the object structure ?
@@ -1136,8 +1172,7 @@ class Arc2D(Primitive2D):
             self.angle1 = angle2
             self.angle2 = angle1
             self.angle = clockwise_path
-
-
+        
     def _get_points(self):
         return [self.start,self.interior,self.end]
 
@@ -1189,7 +1224,7 @@ class Arc2D(Primitive2D):
         l = self.Length()
         return [self.PointAtCurvilinearAbscissa(i/(number_points_tesselation-1)*l) for i in range(number_points_tesselation)]
         # return points
-        
+    
     def point_belongs(self, point):
         """
         Computes if the point belongs to the pizza slice drawn by the arc and its center
@@ -1714,70 +1749,6 @@ class Primitive3D(dc.DessiaObject):
         
         dc.DessiaObject.__init__(self, name=name)
 
-    # def generated_toroidalface(self, arcgen) :
-    #     rcenter = arcgen.radius
-    #     rcircle = self.radius
-        
-    #     center = arcgen.center
-    #     normal = arcgen.normal
-    #     normal.Normalize()
-        
-    #     center1 = arcgen.start
-    #     u = Vector3D((center1 - center).vector)
-    #     u.Normalize()
-    #     v = normal.Cross(u)
-        
-    #     # theta = arcgen.angle
-    #     # phi = self.angle
-        
-    #     #Offset for the Arcgen
-    #     point_last = arcgen.end.To2D(center, u, v)
-    #     x1, y1 = point_last.vector[0], point_last.vector[1]
-    #     offset1 = 0 
-    #     theta =math.atan2(y1, x1)
-    #     if theta <= 0 :
-    #         if arcgen.angle>math.pi :
-    #             theta += 2*math.pi
-    #         else :
-    #             offset1 = theta
-    #             theta = -theta
-    #             # theta = arcgen.angle
-       
-    #     # Offset for the Arc generated
-    #     center_generated = self.center
-    #     n = v
-    #     u_g = Vector3D((self.start - center_generated).vector)
-    #     u_g.Normalize()
-    #     v_g = n.Cross(u_g)
-        
-    #     last_generated = self.end.To2D(center_generated, u_g, v_g)
-    #     x2, y2 = last_generated.vector[0], last_generated.vector[1]
-    
-    #     offset2 = 0
-    #     phi = math.atan2(y2, x2)
-    #     print('phi', math.degrees(phi), math.degrees(self.angle))
-    #     if phi <= 0 :
-    #         if self.angle>math.pi :
-    #             phi += 2*math.pi
-    #         else :
-    #             offset2 = phi
-    #             phi = -phi
-    #             # phi = self.angle
-       
-        
-    #     frame3d = Frame3D(center, u, v, normal)
-    #     toroidalsurface3d = ToroidalSurface3D(frame3d, rcenter*1000, rcircle*1000)
-
-        
-    #     pt1, pt2, pt3, pt4 = Point2D((offset1, offset2)), Point2D((offset1, phi+offset2)), Point2D((theta+offset1, phi+offset2)), Point2D((theta+offset1, offset2))
-    #     # pt1, pt2, pt3, pt4 = Point2D((0, 0)), Point2D((0, phi)), Point2D((theta, phi)), Point2D((theta, 0))
-    #     seg1, seg2, seg3, seg4 = LineSegment2D(pt1, pt2), LineSegment2D(pt2, pt3), LineSegment2D(pt3, pt4), LineSegment2D(pt4, pt1) 
-    #     edges = [seg1, seg2, seg3, seg4]
-    #     contours2d =  [Contour2D(edges)]
-    #     points = [theta, phi]
-        
-    #     return ToroidalFace3D(contours2d, toroidalsurface3d, points)
-    
 class Plane3D(Primitive3D):
     def __init__(self, origin, vector1, vector2, name=''):
         self.origin = Point3D(origin.vector)
@@ -2028,6 +1999,12 @@ OYZX = Frame3D(O3D, Y3D, Z3D, X3D)
 OZXY = Frame3D(O3D, Z3D, X3D, Y3D)
 
 class CylindricalSurface3D(Primitive3D):
+    """
+    :param frame: Cylinder's frame to position it 
+    :type frame: Frame3D
+    :param radius: Cylinder's radius
+    :type radius: float
+    """
     
     def __init__(self, frame, radius, name=''): 
         self.frame = frame
@@ -2075,7 +2052,14 @@ class CylindricalSurface3D(Primitive3D):
                 self.frame = new_frame
 
 class ToroidalSurface3D(Primitive3D):
-    
+    """
+    :param frame: Tore's frame to position it 
+    :type frame: Frame3D
+    :param rcenter: Tore's radius
+    :type rcenter: float
+    :param rcircle: Circle to revolute radius
+    :type rcircle: float
+    """
     def __init__(self, frame, rcenter, rcircle, name=''): 
         self.frame = frame
         self.rcenter = rcenter
@@ -2269,46 +2253,58 @@ class Line3D(Primitive3D, Line):
         point2 = point1 + direction
         return cls(point1, point2, arguments[0][1:-1])
 
-    @classmethod
-    def Intersection(self,line1, line2):
-        x1 = line1.points[0].vector[0]
-        y1 = line1.points[0].vector[1]
-        z1 = line1.points[0].vector[2]
-        x2 = line1.points[1].vector[0]
-        y2 = line1.points[1].vector[1]
-        z2 = line1.points[1].vector[2]
+    def Intersection(self,line2):
+        
+        x1 = self.points[0].vector[0]
+        y1 = self.points[0].vector[1]
+        z1 = self.points[0].vector[2]
+        x2 = self.points[1].vector[0]
+        y2 = self.points[1].vector[1]
+        z2 = self.points[1].vector[2]
         x3 = line2.points[0].vector[0]
         y3 = line2.points[0].vector[1]
         z3 = line2.points[0].vector[2]
         x4 = line2.points[1].vector[0]
         y4 = line2.points[1].vector[1]
         z4 = line2.points[1].vector[2]
-
-
-        #2 unknown 3eq with t1 et t2 unknown
-        if (x2-x1+y1-y2) != 0 and (y4-y3) != 0:
         
+        res, list_t1 = [], []
+        
+        #2 unknown 3eq with t1 et t2 unknown
+        
+        if (x2-x1+y1-y2) != 0 and (y4-y3) != 0:
             t1 = (x3-x1 + (x4-x3)*(y1-y3)/(y4-y3))/(x2-x1+y1-y2)
             t2 = (y1-y3 + (y2-y1)*t1)/(y4-y3)
             res1 = z1 + (z2-z1)*t1
             res2 = z3 + (z4-z3)*t2
+            list_t1.append(t1)
+            res.append([res1, res2])
         
-        elif (z2-z1+y1-y2) != 0 and (y4-y3) != 0:
+        if (z2-z1+y1-y2) != 0 and (y4-y3) != 0:
             t1 = (z3-z1 + (z4-z3)*(y1-y3)/(y4-y3))/(z2-z1+y1-y2)
             t2 = (y1-y3 + (y2-y1)*t1)/(y4-y3)
             res1 = x1 + (x2-x1)*t1
             res2 = x3 + (x4-x3)*t2
+            list_t1.append(t1)
+            res.append([res1, res2])
         
-        else :
+        if (z2-z1+x1-x2) != 0 and (x4-x3) != 0: 
             t1 = (z3-z1 + (z4-z3)*(x1-x3)/(x4-x3))/(z2-z1+x1-x2)
             t2 = (x1-x3 + (x2-x1)*t1)/(x4-x3)
             res1 = y1 + (y2-y1)*t1
             res2 = y3 + (y4-y3)*t2
-            
-        if math.isclose(res1, res2, abs_tol=1e-7) : #if there is an intersection point
-            return Point3D([x1+(x2-x1)*t1, y1+(y2-y1)*t1, z1+(z2-z1)*t1])
-        else : 
+            list_t1.append(t1)
+            res.append([res1, res2])
+        
+        if len(res)==0 :
             return None
+        
+        for pair, t1 in zip(res, list_t1) :
+            res1, res2 = pair[0], pair[1]
+            if math.isclose(res1, res2, abs_tol=1e-7) : #if there is an intersection point
+                return Point3D([x1+(x2-x1)*t1, y1+(y2-y1)*t1, z1+(z2-z1)*t1])
+        
+        return None
 
 class BSplineCurve3D(Primitive3D):
     def __init__(self, degree, control_points, knot_multiplicities, knots, weights=None, periodic=False, name=''):
@@ -2638,52 +2634,112 @@ class Arc3D(Primitive3D):
                 self.start, self.interior, self.end = new_start, new_interior, new_end
                 self.setup_arc(self.start, self.interior, self.end)
                 
+    def To2D(self,plane_origin, x, y):
+        ps = self.start.To2D(plane_origin, x, y)
+        pi = self.interior.To2D(plane_origin, x, y)
+        pe = self.end.To2D(plane_origin, x, y)
+
+        return Arc2D(ps, pi, pe, name=self.name)
+ 
+    def minimum_distance_points_arc(self, other_arc) :
+    
+        u1 = self.start - self.center
+        u1.Normalize()
+        u2 = self.normal.Cross(u1)
+        
+        w = other_arc.center - self.center
+        
+        u3 = other_arc.start - other_arc.center
+        u3.Normalize()
+        u4 = other_arc.normal.Cross(u3)
+        
+        r1, r2 = self.radius, other_arc.radius
+
+        a, b, c, d = u1.Dot(u1), u1.Dot(u2), u1.Dot(u3), u1.Dot(u4) 
+        e, f, g = u2.Dot(u2), u2.Dot(u3), u2.Dot(u4)
+        h, i = u3.Dot(u3), u3.Dot(u4)
+        j = u4.Dot(u4)
+        k, l, m, n, o = w.Dot(u1), w.Dot(u2), w.Dot(u3), w.Dot(u4), w.Dot(w)
+        
+        # x = (theta1, theta2)
+        def distance_squared(x):
+            return (a*((math.cos(x[0]))**2)*r1**2 + e*((math.sin(x[0]))**2)*r1**2
+                    + o + h*((math.cos(x[1]))**2)*r2**2 + j*((math.sin(x[1]))**2)*r2**2
+                    + b*math.sin(2*x[0])*r1**2 - 2*r1*math.cos(x[0])*k
+                    - 2*r1*r2*math.cos(x[0])*math.cos(x[1])*c
+                    - 2*r1*r2*math.cos(x[0])*math.sin(x[1])*d - 2*r1*math.sin(x[0])*l
+                    - 2*r1*r2*math.sin(x[0])*math.cos(x[1])*f
+                    - 2*r1*r2*math.sin(x[0])*math.sin(x[1])*g + 2*r2*math.cos(x[1])*m
+                    + 2*r2*math.sin(x[1])*n + i*math.sin(2*x[1])*r2**2)
+                    
+        
+        x01 = npy.array([self.angle/2, other_arc.angle/2])
+        
+        res1 = scp.optimize.least_squares(distance_squared, x01, bounds=[(0,0), (self.angle,other_arc.angle)])
+            
+        p1 = self.PointAtCurvilinearAbscissa(res1.x[0]*r1)
+        p2 = other_arc.PointAtCurvilinearAbscissa(res1.x[1]*r2)
+        
+        return p1, p2
+    
+    def minimum_distance_points_line(self, other_line) :
+    
+        u = other_line.DirectionVector()
+        k = self.start - self.center
+        k.Normalize()
+        w = self.center - other_line.points[0] 
+        v = self.normal.Cross(k)
+        
+        r = self.radius
+
+        a = u.Dot(u)
+        b = u.Dot(v)
+        c = u.Dot(k)
+        d = v.Dot(v)
+        e = v.Dot(k)
+        f = k.Dot(k)
+        g = w.Dot(u)
+        h = w.Dot(v)
+        i = w.Dot(k)
+        j = w.Dot(w)
+        
+        # x = (s, theta)
+        def distance_squared(x):
+            return (a*x[0]**2 + j + d*((math.sin(x[1]))**2)*r**2 + f*((math.cos(x[1]))**2)*r**2
+                    - 2*x[0]*g - 2*x[0]*r*math.sin(x[1])*b - 2*x[0]*r*math.cos(x[1])*c
+                    + 2*r*math.sin(x[1])*h + 2*r*math.cos(x[1])*i
+                    + math.sin(2*x[1])*e*r**2)
+        x01 = npy.array([0.5, self.angle/2])
+        x02 = npy.array([0.5, 0])
+        x03 = npy.array([0.5, self.angle])
+        
+        res1 = scp.optimize.least_squares(distance_squared, x01, bounds=[(0,0), (1,self.angle)])
+        res2 = scp.optimize.least_squares(distance_squared, x02, bounds=[(0,0), (1,self.angle)])
+        res3 = scp.optimize.least_squares(distance_squared, x03, bounds=[(0,0), (1,self.angle)])
+            
+        p1 = other_line.PointAtCurvilinearAbscissa(res1.x[0]*other_line.Length())
+        p2 = self.PointAtCurvilinearAbscissa(res1.x[1]*r)
+        d1 = p1.point_distance(p2)
+        
+        res = [res2, res3]
+        for couple in res :
+            ptest1 = other_line.PointAtCurvilinearAbscissa(couple.x[0]*other_line.Length())
+            ptest2 = self.PointAtCurvilinearAbscissa(couple.x[1]*r)
+            dtest = ptest1.point_distance(ptest2)
+            if dtest < d :
+                p1, p2 = ptest1, ptest2
+        
+        return p1, p2
+               
     def minimum_distance(self, element) :
-        if element.__class__ is Arc3D :
-            if self.normal == element.normal :
-                min_distance = LineSegment3D(self.center, element.center).Length()
-                return min_distance
-            #Point to point and find the closest couple
-            else :
-                distance = []
-                for pt1 in self.points :
-                    pt1_to_pt2 = []
-                    for pt2 in element.points :
-                        pt1_to_pt2.append(abs(LineSegment3D(pt1, pt2).Length()))
-                    distance.append(min(pt1_to_pt2))
-                return min(distance)
+        if element.__class__ is Arc3D or element.__class__ is Circle3D :
+            p1, p2 = self.minimum_distance_points_arc(element)
+            return p1.point_distance(p2)
             
         elif element.__class__ is LineSegment3D :
-            #Find the closest arc point from LS
-            pos = 0
-            i1, i2 = 0, 0
-            d1 = abs(LineSegment3D(self.points[0], element.points[0]).Length())
-            d2 = abs(LineSegment3D(self.points[0], element.points[1]).Length())
             
-            for pt in self.points[1:] :
-                pos += 1
-                dtest1 = abs(LineSegment3D(pt, element.points[0]).Length())
-                dtest2 = abs(LineSegment3D(pt, element.points[1]).Length())
-                if dtest1 < d1 :
-                    d1, i1 = dtest1, pos
-                if dtest2 < d2 :
-                    d2, i2 = dtest2, pos
-                    
-            if d1 < d2 :
-                h1, pos_triangle = d1, i1
-            else :
-                h1, pos_triangle = d2, i2
-            
-            #Al-Kashi formula
-            x = Vector3D((element.points[0]-self.points[pos_triangle]))
-            y = Vector3D((element.points[1]-self.points[pos_triangle]))
-            
-            l1 = abs(LineSegment3D(self.points[pos_triangle], element.points[0]).Length())
-            l2 = abs(LineSegment3D(self.points[pos_triangle], element.points[1]).Length())
-            l3 = sqrt(l2**2 + l1**2 - 2*x.Dot(y))
-            pos_l3 = (l2**2 - l1**2 +l3**2)/(2*l3)
-            h3 = sqrt(l2**2 - pos_l3**2)
-            return min([h1,h3])
+            pt1, pt2 = self.minimum_distance_points_line(element)
+            return pt1.point_distance(pt2)
         else :
             return NotImplementedError
 
@@ -3208,11 +3264,16 @@ class Wire3D(CompositePrimitive3D):
                     primitive.frame_mapping(frame, side, copy=False)
                 
         
-    def min_distance(self, wire2) :
+    def minimum_distance(self, wire2) :
         distance = []
         for element in self.primitives :
             for element2 in wire2.primitives :
-                distance.append(distance_mini(element2))
+                # fig = plt.figure()
+                # ax = fig.add_subplot(111, projection='3d')
+                # element.MPLPlot(ax=ax)
+                # element2.MPLPlot(ax=ax)
+                distance.append(element.minimum_distance(element2))
+                
         return min(distance)
     
     def copy(self) :
@@ -3416,49 +3477,57 @@ class LineSegment3D(Edge3D):
         return LineSegment2D(self.points[0].PlaneProjection2D(x, y),
                              self.points[1].PlaneProjection2D(x, y))
 
-    @classmethod
-    def Intersection(self,segment1, segment2):
-        x1 = segment1.points[0].vector[0]
-        y1 = segment1.points[0].vector[1]
-        z1 = segment1.points[0].vector[2]
-        x2 = segment1.points[1].vector[0]
-        y2 = segment1.points[1].vector[1]
-        z2 = segment1.points[1].vector[2]
+    def Intersection(self, segment2):
+        x1 = self.points[0].vector[0]
+        y1 = self.points[0].vector[1]
+        z1 = self.points[0].vector[2]
+        x2 = self.points[1].vector[0]
+        y2 = self.points[1].vector[1]
+        z2 = self.points[1].vector[2]
         x3 = segment2.points[0].vector[0]
         y3 = segment2.points[0].vector[1]
         z3 = segment2.points[0].vector[2]
         x4 = segment2.points[1].vector[0]
         y4 = segment2.points[1].vector[1]
         z4 = segment2.points[1].vector[2]
-
+        
+        res, list_t1 = [], []
 
         #2 unknown 3eq with t1 et t2 unknown
         if (x2-x1+y1-y2) != 0 and (y4-y3) != 0:
-        
             t1 = (x3-x1 + (x4-x3)*(y1-y3)/(y4-y3))/(x2-x1+y1-y2)
             t2 = (y1-y3 + (y2-y1)*t1)/(y4-y3)
             res1 = z1 + (z2-z1)*t1
             res2 = z3 + (z4-z3)*t2
+            list_t1.append(t1)
+            res.append([res1, res2])
         
-        elif (z2-z1+y1-y2) != 0 and (y4-y3) != 0:
+        if (z2-z1+y1-y2) != 0 and (y4-y3) != 0:
             t1 = (z3-z1 + (z4-z3)*(y1-y3)/(y4-y3))/(z2-z1+y1-y2)
             t2 = (y1-y3 + (y2-y1)*t1)/(y4-y3)
             res1 = x1 + (x2-x1)*t1
             res2 = x3 + (x4-x3)*t2
+            list_t1.append(t1)
+            res.append([res1, res2])
         
-        else :
+        if (z2-z1+x1-x2) !=0 and (x4-x3) != 0 :
             t1 = (z3-z1 + (z4-z3)*(x1-x3)/(x4-x3))/(z2-z1+x1-x2)
             t2 = (x1-x3 + (x2-x1)*t1)/(x4-x3)
             res1 = y1 + (y2-y1)*t1
             res2 = y3 + (y4-y3)*t2
-            
-        if math.isclose(res1, res2, abs_tol=1e-7) : #if there is an intersection point
-            if t1<0 or t1>1:
-                return None
-            else :
-                return Point3D([x1+(x2-x1)*t1, y1+(y2-y1)*t1, z1+(z2-z1)*t1])
-        else : 
+            list_t1.append(t1)
+            res.append([res1, res2])
+        
+        if len(res)==0 :
             return None
+        
+        for pair, t1 in zip(res, list_t1) :
+            res1, res2 = pair[0], pair[1]
+            if math.isclose(res1, res2, abs_tol=1e-7) : #if there is an intersection point
+                if t1>=0 or t1<=1:
+                    return Point3D([x1+(x2-x1)*t1, y1+(y2-y1)*t1, z1+(z2-z1)*t1])
+        
+        return None
 
     def Rotation(self, center, axis, angle, copy=True):
         if copy:
@@ -3534,8 +3603,10 @@ class LineSegment3D(Edge3D):
                          dash, opacity, arrow)
 
     def FreeCADExport(self, name, ndigits=6):
+        name = 'primitive'+str(name)
         x1, y1, z1 = round(1000*self.points[0], ndigits).vector
         x2, y2, z2 = round(1000*self.points[1], ndigits).vector
+        print('name', name)
         return '{} = Part.LineSegment(fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(name,x1,y1,z1,x2,y2,z2)
 
     def to_line(self):
@@ -3567,9 +3638,12 @@ class LineSegment3D(Edge3D):
 
         return s
 
-    def generated_planeface(self, contours3D) : 
-        
-        return PlaneFace3D(contours3D)
+    def To2D(self, plane_origin, x1, x2):
+        p2D=[p.To2D(plane_origin,x1,x2) for p in self.points]
+        return LineSegment2D(*p2D,name=self.name)
+
+    # def generated_planeface(self, contours3d) : 
+    #     return PlaneFace3D.from_contours3d(contours3d)
 
     def MinimumDistancePoints(self, other_line):
         """
@@ -3594,26 +3668,29 @@ class LineSegment3D(Edge3D):
             return None, None, -1, -1
 
     def Matrix_distance(self, other_line) :
-        u = self.points[1] - self.points[0]
-        v = other_line.points[1] - other_line.points[0]
-        w = self.points[0] - other_line.points[0]
+        u = self.DirectionVector()
+        v = other_line.DirectionVector()
+        w = other_line.points[0] - self.points[0]
         
         a = u.Dot(u)
-        b = -2*u.Dot(v)
-        c = v.Dot(v)
-        d = -2*u.Dot(w)
-        e = 2*v.Dot(w)
-        f = w.Dot(w)
+        b = -u.Dot(v)
+        d = v.Dot(v)
+        
+        e = w.Dot(u)
+        f = -w.Dot(v)
         
         A = npy.array([[a, b],
-                      [b, c]])
+                       [b, d]])
+        B = npy.array([e, f])
         
-        B = npy.array([-d,-e])
+        res = scp.optimize.lsq_linear(A, B, bounds=(0,1))
+        p1 = self.PointAtCurvilinearAbscissa(res.x[0]*self.Length())
+        p2 = other_line.PointAtCurvilinearAbscissa(res.x[1]*other_line.Length())
+        return p1, p2
         
-        # B = npy.array([d],
-        #               [e])
-        # return scp.linalg.lstsq(A, B)
-        return scp.optimize.lsq_linear(A, B, bounds=(0,1))
+        
+    
+        
     
     def distance_parallele(self, LS2):
         ptA, ptB, ptC = self.points[0], self.points[1], LS2.points[0]
@@ -3661,192 +3738,13 @@ class LineSegment3D(Edge3D):
             return NotImplementedError
         
     def minimum_distance(self, element):
-        if element.__class__ is Arc3D :
-            #Find the closest arc point from LS
-            pos = 0
-            i1, i2 = 0, 0
-            d1 = abs(LineSegment3D(element.points[0], self.points[0]).Length())
-            d2 = abs(LineSegment3D(element.points[0], self.points[1]).Length())
-            
-            for pt in element.points[1:] :
-                pos += 1
-                dtest1 = abs(LineSegment3D(pt, self.points[0]).Length())
-                dtest2 = abs(LineSegment3D(pt, self.points[1]).Length())
-                if dtest1 < d1 :
-                    d1, i1 = dtest1, pos
-                if dtest2 < d2 :
-                    d2, i2 = dtest2, pos
-                    
-            if d1 < d2 :
-                h1, pos_triangle = d1, i1
-            else :
-                h1, pos_triangle = d2, i2
-            
-            #Al-Kashi Formula
-            x = Vector3D((self.points[0]-element.points[pos_triangle]))
-            y = Vector3D((self.points[1]-element.points[pos_triangle]))
-            
-            l1 = abs(LineSegment3D(element.points[pos_triangle], self.points[0]).Length())
-            l2 = abs(LineSegment3D(element.points[pos_triangle], self.points[1]).Length())
-            l3 = sqrt(l2**2 + l1**2 - 2*x.Dot(y))
-            pos_l3 = (l2**2 - l1**2 +l3**2)/(2*l3)
-            h3 = sqrt(l2**2 - pos_l3**2)
-            return min([h1,h3])
+        if element.__class__ is Arc3D or element.__class__ is Circle3D:
+            pt1, pt2 = element.minimum_distance_points_line(self)
+            return pt1.point_distance(pt2)
         
         elif element.__class__ is LineSegment3D :
-            # parallelepipedic's height with 3 non colinear vectors
-            distance = []
-            x = Vector3D((self.points[1] - self.points[0]))
-            y = Vector3D((element.points[1] - element.points[0]))
-           
-            # z1 = Vector3D((self.points[0] - element.points[0]))
-            # z2 = Vector3D((self.points[0] - element.points[1]))
-            # z3 = Vector3D((self.points[1] - element.points[0]))
-            # z4 = Vector3D((self.points[1] - element.points[1]))
-            # if x.Cross(y).Norm() == 0 :
-            #    return min(z1.Norm(), z2.Norm(), z3.Norm(), z4.Norm()) 
-            
-            # # h1 = (z1.Dot(x.Cross(y)))/(x.Cross(y).Norm()) #det instead of abs ?
-            # # h2 = (z2.Dot(x.Cross(y)))/(x.Cross(y).Norm())
-            # # h3 = (z3.Dot(x.Cross(y)))/(x.Cross(y).Norm())
-            # # h4 = (z4.Dot(x.Cross(y)))/(x.Cross(y).Norm())
-            # h1 = determinant(x, y, z1)/(x.Cross(y).Norm())
-            # h2 = determinant(x, y, z2)/(x.Cross(y).Norm())
-            # h3 = determinant(x, y, z3)/(x.Cross(y).Norm())
-            # h4 = determinant(x, y, z4)/(x.Cross(y).Norm())
-            # #LS closer 
-            # #Al-Kashi Formula + dichotomia
-            
-            # # min1, min2 = min([h1, h2]), min([h3,h4])
-            # # if min1<min2 :
-            # #     start, end, hmin = self.points[0], self.points[1], min1
-            # #     vec1, vec2 = z1, z2
-            # # else : 
-            # #     start, end, hmin = self.points[1], self.points[0], min2
-            # #     vec1, vec2 = z3, z4
-            # print(h1, h2, h3, h4)
-            # # print()
-            # h_min = min([h1,h2,h3,h4])
-            
-            # #Initialization
-            # # start, end = self.points[0], self.points[1]
-            # # mid = (start + end)/2
-            # # vec_mid1, vec_mid2 = Vector3D((mid - element.points[0])), Vector3D((mid - element.points[1]))
-            # # h_start, h_end, h_mid = h_triangle(z1, z2), h_triangle(z3, z4), h_triangle(vec_mid1, vec_mid2)
-            
-            # # if (h_start<h_mid and h_end>h_mid) or (h_end<h_mid and h_start>h_mid): #that is to say, the nearest is on of the extremum
-            # #     h_mid = min([h_start, h_end])
-            # #     if hmin < h_mid : #if the two LS aren't superimposed
-            # #         return hmin
-            # #     else : 
-            # #         return h_mid
-            
-            # # h_min = h_mid
-            # # if h_start < h_end : 
-            # #     end = mid.copy()
-            # # else :
-            # #     start = mid.copy()
-            # # print(h_start, h_end, h_mid, h_min)
-            # # while not(math.isclose((start-end).Norm(), 0, abs_tol=1e-2)) :
-            # #     mid = (start + end)/2
-            # #     s1, s2 = Vector3D((start - element.points[0])),  Vector3D((start - element.points[1]))
-            # #     e1, e2 = Vector3D((end - element.points[0])),  Vector3D((end - element.points[1]))
-            # #     vec_mid1, vec_mid2 = Vector3D((mid - element.points[0])), Vector3D((mid - element.points[1]))
-                
-            # #     h_start, h_end, h_mid = h_triangle(s1, s2), h_triangle(e1, e2), h_triangle(vec_mid1, vec_mid2) 
-                
-            # #     print(h_start, h_end, h_mid, h_min)
-                
-            # #     if math.isclose(min([h_start, h_end, h_mid]), h_min, abs_tol=1e-7) :
-            # #         return h_min
-            # #     else :
-            # #         h_min = min([h_start, h_end, h_mid])
-            # #         if h_start < h_end : 
-            # #             end = mid.copy()
-            # #         else :
-            # #             start = mid.copy()
-            p1, p2, s, t = self.MinimumDistancePoints(element)
-            print('s, t',s, t)
-            if s >= 0 and s <= 1 and t >= 0 and t <= 1 :
-                return (p2-p1).Norm()
-            
-            
-            l1 = Vector3D((self.points[0] - element.points[0])).Norm()
-            l2 = Vector3D((self.points[0] - element.points[1])).Norm()
-            l3 = Vector3D((self.points[1] - element.points[0])).Norm()
-            l4 = Vector3D((self.points[1] - element.points[1])).Norm()
-            
-            mid1, mid2 = (self.points[0]+self.points[1])/2, (element.points[0]+element.points[1])/2
-            vecmid = Vector3D((mid1 - mid2))
-            distance.extend([l1, l2, l3, l4, vecmid.Norm()])
-            
-            if math.isclose(x.Cross(y).Norm(), 0, abs_tol=1e-7) :
-                ptA, ptB, ptC = self.points[0], self.points[1], element.points[0]
-                u = Vector3D((ptA - ptB).vector)
-                u.Normalize()
-                plane1 = Plane3D.from_3_points(ptA, ptB, ptC)
-                v = u.Cross(plane1.normal) #distance vector
-                print('vector v',v)
-                
-                start1, end1 = self.points[0], self.points[1]
-                if (l1 <= l2 and l2 < l4) or (l4 <= l3 and l3 < l1):
-                    start2, end2 = element.points[1], element.points[0]
-                else : 
-                    start2, end2 = element.points[0], element.points[1]
-                fig = plt.figure()
-                ax = fig.add_subplot(111, projection='3d')
-                start1.MPLPlot(ax=ax)
-                end1.MPLPlot(ax=ax, color='r')
-                start2.MPLPlot(ax=ax, color='b')
-                end2.MPLPlot(ax=ax, color='g')
-                
-                vec1 = Vector3D((start1 - start2))
-                vec2 = Vector3D((end1 - end2))
-                h1, h2 = h_triangle(vec1, Vector3D((end1-start2).vector)), h_triangle(vec2, Vector3D((start1-end2).vector))
-                
-                if x.Norm() <= y.Norm():
-                    ptest1, ptest2, ptest3, ptest4 = start1 + v*(h1+1), start1 - v*(h1+1), end1 + v*(h1+1), end1 - v*(h1+1)
-                    LS_cut = LineSegment3D(start2, end2)
-                else :
-                    ptest1, ptest2, ptest3, ptest4 = start2 + v*(h1+1), start2 - v*(h1+1), end2 + v*(h1+1), end2 - v*(h1+1)
-                    LS_cut = LineSegment3D(start1, end1)
-                    
-                LS1, LS2 = LineSegment3D(ptest1, ptest2), LineSegment3D(ptest3, ptest4)
-                LS1.MPLPlot(ax=ax)
-                LS2.MPLPlot(ax=ax)
-                LS_cut.MPLPlot(ax=ax)
-                test1, test2 = LineSegment3D.Intersection(LS_cut, LS1), LineSegment3D.Intersection(LS_cut, LS2)
-                print(test1, test2)
-                if test1 is not None and test2 is not None : 
-                    distance.append(h1)
-                    
-                print('al-kashi', h1, h2)
-
-            # elif math.isclose(x.Dot(y), 0, abs_tol=1e-7) :
-                # return NotImplementedError
-            print(self.Matrix_distance(element).x)
-            if self.Matrix_distance(element).success :
-                res = self.Matrix_distance(element).x
-                matrix_distance = ((self.points[0]+res[0]*x)-(element.points[0]+res[1]*y)).Norm()
-                distance.append(matrix_distance)
-                return min(distance)
-            
-            #With MM' perpendicular with x and y 
-            
-           
-            
-            
-            
-            
-            # print(l1, l2)
-            
-            
-            
-            
-            
-            
-            
-            return 
+            p1, p2 = self.Matrix_distance(element)
+            return p1.point_distance(p2)
 
         else :
             return NotImplementedError
@@ -4180,8 +4078,24 @@ class Circle3D(Contour3D):
         else:
             normal = object_dict[arguments[1]].v ### ou w 
         return cls(center, radius, normal, arguments[0][1:-1])
+    
+    def To2D(self, plane_origin, x, y):
+        pc = self.center.To2D(plane_origin, x, y)
+        return Circle2D(pc, self.radius, self.name)
 
 class Ellipse3D(Contour3D):
+    """
+    :param major_axis: Largest radius of the ellipse
+    :type major_axis: float
+    :param minor_axis: Smallest radius of the ellipse
+    :type minor_axis: float
+    :param center: Ellipse's center
+    :type center: Point3D
+    :param normal: Ellipse's normal
+    :type normal: Vector3D
+    :param major_dir: Direction of the largest radius/major_axis
+    :type major_dir: Vector3D
+    """
     def __init__(self, major_axis, minor_axis, center, normal, major_dir, name=''):
         
         self.major_axis = major_axis
@@ -4261,11 +4175,11 @@ class Ellipse3D(Contour3D):
 
 class Face3D(Primitive3D):
     def __init__(self, contours, radius=None):
-        self.contours = contours
+        self.contours3d = contours
         self.bounding_box = self._bounding_box()
         
     def _bounding_box(self):
-        points = self.contours[0].points
+        points = self.contours3d[0].points
 
         xmin = min([pt[0] for pt in points])
         xmax = max([pt[0] for pt in points])
@@ -4293,7 +4207,9 @@ class Face3D(Primitive3D):
             # [print(e.points) for e in contours]
             # print(arguments)
             # object_dict[110].MPLPlot()
-            return PlaneFace3D(contours, plane=None, points=None, polygon2D=None, name=arguments[0][1:-1])
+            
+            # return PlaneFace3D(contours, plane=None, points=None, polygon2D=None, name=arguments[0][1:-1])
+            return PlaneFace3D.from_contours3d(contours, name=arguments[0][1:-1])
     
         elif object_dict[int(arguments[2])].__class__  is CylindricalSurface3D:
             return CylindricalFace3D.from_contour3d(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
@@ -4443,24 +4359,61 @@ class PlaneFace3D(Face3D):
     _non_eq_attributes = ['name', 'bounding_box']
     _non_hash_attributes = []
 
-    def __init__(self, contours, plane=None, points=None, polygon2D=None, name=''):
+    def __init__(self, contours, plane, points=None, polygon2D=None, name=''):
 #        Primitive3D.__init__(self, name=name)
-        Face3D.__init__(self, contours)
-        
+        # if contours[0].__class__ is Contour2D :
+        if contours[0].__class__ is Contour3D :
+            raise ValueError('You must use Contour2D or use from_contours3d')
+            
+        self.name = name
         self.contours = contours
         self.plane = plane
-        self.points = points
-        self.polygon2D = polygon2D
-
-        self.name = name
-
-        contour_points = [p.copy() for p in self.contours[0].points[:]]
-        if plane is None:
-            self.plane = Plane3D.from_points(contour_points)
-
+        contour_points = []
+        for prim in self.contours[0].primitives :
+            for pt in prim.points :
+                pt3d = (pt.copy()).To3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
+                contour_points.append(pt3d)
         if points is None or polygon2D is None:
             self.points, self.polygon2D = self._repair_points_and_polygon2d(contour_points, self.plane)
-            self.contours[0].points = [p.copy() for p in self.points]
+        else :
+            self.points = points
+            self.polygon2D = polygon2D
+        ctr3d = contours[0].copy()
+        Face3D.__init__(self, [ctr3d.To3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])])
+            
+        # else :
+        #     self.contours = contours
+        #     contour_points = [p.copy() for p in self.contours[0].points[:]]
+
+        #     if plane is None : 
+        #         self.plane = Plane3D.from_points(contour_points)
+        #     else : 
+        #         self.plane = plane
+            
+        #     if points is None or polygon2D is None:
+        #         self.points, self.polygon2D = self._repair_points_and_polygon2d(contour_points, self.plane)
+        #         self.contours[0].points = [p.copy() for p in self.points]
+        #     else :
+        #         self.points = points
+        #         self.polygon2D = polygon2D
+        #     Face3D.__init__(self, contours)
+        
+        # self.contours = contours
+        # self.plane = plane
+        # self.points = points
+        # self.polygon2D = polygon2D
+
+
+
+        
+
+        # contour_points = [p.copy() for p in self.contours[0].points[:]]
+        # if plane is None:
+        #     self.plane = Plane3D.from_points(contour_points)
+
+        # if points is None or polygon2D is None:
+        #     self.points, self.polygon2D = self._repair_points_and_polygon2d(contour_points, self.plane)
+        #     self.contours[0].points = [p.copy() for p in self.points]
 
         # self.bounding_box = self._bounding_box()
 
@@ -4511,6 +4464,18 @@ class PlaneFace3D(Face3D):
             polygon2D = Polygon2D(polygon_points)
         return repaired_points, polygon2D
 
+    @classmethod
+    def from_contours3d(cls, contours3d, name=''):
+        contour_points = [p.copy() for p in contours3d[0].points[:]]
+        plane = Plane3D.from_points(contour_points)
+        O, x, y = plane.origin, plane.vectors[0], plane.vectors[1]
+        contours2d = []
+        for contour in contours3d :
+            prim = [p.To2D(O,x,y) for p in contour.edges]
+            contours2d.append(Contour2D(prim))
+            
+        return cls(contours2d, plane, points=None, polygon2D=None, name=name)
+    
     def Rotation(self, center, axis, angle, copy=True):
         if copy:
             new_contour = [subcontour.Rotation(center, axis, angle, copy=True) for subcontour in self.contour]
@@ -4580,34 +4545,32 @@ class PlaneFace3D(Face3D):
         holes = []
         total_len = 0
         for i, contour in enumerate(self.contours):
-            points_2D = [p.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]) for p in contour.points]
+            ##### points_2D = [p.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]) for p in contour.points]
             # if polygon2D.Area() == 0.:
             #     return None, None
+
+            points_2D = contour.points
             
             vertices.extend([tuple(p.vector) for p in points_2D])
-            if len(vertices) != len(set(vertices)):
-                return None, None
             
-            len_points = len(contour.points)
+            if len(vertices) != len(set(vertices)):
+                raise ValueError('There are points in double, please check __init__')
+            
+            len_points = len(points_2D)
             segments += [[a+total_len, a+total_len+1] for a in range(len_points-1)]+[[len_points+total_len-1, 0+total_len]]
             total_len += len_points
-            points_3D.extend(contour.points)
+            points_3D.extend([pt.To3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]) for pt in points_2D])
             if i > 0:
-                if contour.point_inside_contour is not None:
-                    holes.append(contour.point_inside_contour)
-                else:
-                    polygon2D = Polygon2D(points_2D)
-                    mid_point_3D = contour.average_center_point()
-                    mid_point_2D = mid_point_3D.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
-                    holes.append(mid_point_2D.vector)
-                    if not polygon2D.PointBelongs(mid_point_2D):
-                        warnings.warn('average_center_point is not included inside its contour.')
+                polygon2D = Polygon2D(points_2D)
+                mid_point_2D = contour.average_center_point()
+                holes.append(mid_point_2D.vector)
+                if not polygon2D.PointBelongs(mid_point_2D):
+                    warnings.warn('average_center_point is not included inside its contour.')
                         
         if holes:
             tri = {'vertices': vertices, 'segments': segments, 'holes': holes}
         else:
             tri = {'vertices': vertices, 'segments': segments}
-        # print('tri', tri)
         t = triangle.triangulate(tri, 'p')
         if 'triangles' in t:
             triangles = t['triangles'].tolist()
@@ -4828,11 +4791,24 @@ class PlaneFace3D(Face3D):
         return ax
 
 
-class CylindricalFace3D(Face3D):       
+class CylindricalFace3D(Face3D): 
+    """
+    :param contours2d: The cylinder's contour2D 
+    :type contours2d: Contour2D
+    :param cylindricalsurface3d: Information about the Cylinder
+    :type cylindricalsurface3d: CylindricalSurface3D
+    :param points: contours2d's point
+    :type points: List of Point2D
+    
+    :Example: 
+        >>> contours2d is rectangular and will create a classic cylinder with x= 2*pi*radius, y=h
+    """      
     # Does not work with automatical cylinder from FREECAD (problem with clean_points)
     def __init__(self, contours2d, cylindricalsurface3d, points=None, name=''):
         self.radius = float(cylindricalsurface3d.radius)/1000
-        ctr = [Contour3D([Circle3D(cylindricalsurface3d.frame.origin, self.radius, cylindricalsurface3d.frame.u ), Circle3D(cylindricalsurface3d.frame.origin+contours2d[0].primitives[0].points[1][1]*cylindricalsurface3d.frame.u, self.radius, cylindricalsurface3d.frame.u)])]
+        self.center = cylindricalsurface3d.frame.origin
+        self.normal = cylindricalsurface3d.frame.w
+        ctr = [Contour3D([Circle3D(cylindricalsurface3d.frame.origin, self.radius, cylindricalsurface3d.frame.w ), Circle3D(cylindricalsurface3d.frame.origin+contours2d[0].primitives[0].points[1][1]*cylindricalsurface3d.frame.w, self.radius, cylindricalsurface3d.frame.w)])]
         Face3D.__init__(self, ctr)
         
         self.contours2d = contours2d 
@@ -4851,9 +4827,17 @@ class CylindricalFace3D(Face3D):
         #         raise ValueError
     
     @classmethod
-    def from_contour3d(cls, contours3d, cylindricalsurface3d, points=None, name=''):
+    def from_contour3d(cls, contours3d, cylindricalsurface3d, name=''):
+        """
+        :param contours3d: The cylinder's contour3D
+        :type contours3d: Contour3D
+        :param cylindricalsurface3d: Information about the Cylinder
+        :type cylindricalsurface3d: CylindricalSurface3D
+        
+        :Example:
+            >>> contours3d is [Arc3D, LineSegment3D, Arc3D], the cylinder's bones
+        """
         center = Vector3D(cylindricalsurface3d.frame.origin)
-        # center2d = center.To2D(center, cylindricalsurface3d.frame.v, cylindricalsurface3d.frame.w)
         center2d = Point2D((0,0))
         
         if contours3d[0].edges[0].__class__ is LineSegment3D and contours3d[0].edges[1].__class__ is Arc3D :
@@ -4931,6 +4915,14 @@ class CylindricalFace3D(Face3D):
     
     @classmethod 
     def from_arc3d(cls, lineseg, arc, cylindricalsurface3d): #Work with 2D too
+        """
+        :param lineseg: The segment which represent the extrusion of the arc
+        :type lineseg: LineSegment3D/2D
+        :param arc: The Arc circle to extrude
+        :type arc: Arc3D/2D, Circle3D/2D
+        :param cylindricalsurface3d: Information about the Cylinder
+        :type cylindricalsurface3d: CylindricalSurface3D
+        """
         radius = float(cylindricalsurface3d.radius)/1000
         frame = cylindricalsurface3d.frame
         normal, center = frame.w, frame.origin
@@ -5031,6 +5023,8 @@ class CylindricalFace3D(Face3D):
         Points_3D = self.points2d_to3d(all_contours_points, radius, frame3d)
         pt3d, tangle = delete_double_pos(Points_3D, Triangles)
         
+        self.start = pt3d[0]
+        
         return pt3d, tangle 
 
     def MPLPlotpoints(self, ax=None, color='k'):
@@ -5079,8 +5073,285 @@ class CylindricalFace3D(Face3D):
             return CylindricalFace3D(self.contours2d, new_cylindricalsurface3d, points=self.points, name=self.name)
         else:
             self.cylindricalsurface3d.frame_mapping(frame, side, copy=False)
+            
+    def minimum_maximum(self, contour2d, radius) :
+        points = []
+        for prim in contour2d.primitives :
+            points.extend(prim.points)
+        
+        min_h, min_theta = min([pt[1] for pt in points]), min([pt[0] for pt in points])/radius
+        max_h, max_theta = max([pt[1] for pt in points]), max([pt[0] for pt in points])/radius 
+        return min_h, min_theta, max_h, max_theta
+            
+    def minimum_distance_points_cyl(self, other_cyl) :
+        r1, r2 = self.radius, other_cyl.radius
+        min_h1, min_theta1, max_h1, max_theta1 = self.minimum_maximum(self.contours2d[0], r1)
+        
+        # plane1, plane2 = Plane3D.from_normal(self.center, self.normal), Plane3D.from_normal(other_cyl.center, other_cyl.normal) 
+        # start1 = self.center + Point3D((r1*math.cos(min_theta1),r1*math.sin(min_theta1),min_h1))
+        start1 = self.start
+        n1 = self.normal
+        u1 = start1 - self.center
+        u1.Normalize()
+        v1 = n1.Cross(u1)
+        
+        min_h2, min_theta2, max_h2, max_theta2 = self.minimum_maximum(other_cyl.contours2d[0], r2)
+             
+        # start2 = other_cyl.center + Point3D((r2*math.cos(min_theta2),r2*math.sin(min_theta2),min_h2))
+        start2 = other_cyl.start
+        n2 = other_cyl.normal
+        u2 = start2 - other_cyl.center
+        u2.Normalize()
+        v2 = n2.Cross(u2)
+        
+        w = other_cyl.center - self.center
+        
+
+        n1n1, n1u1, n1v1, n1n2, n1u2, n1v2 = n1.Dot(n1), n1.Dot(u1), n1.Dot(v1), n1.Dot(n2), n1.Dot(u2), n1.Dot(v2)
+        u1u1, u1v1, u1n2, u1u2, u1v2 = u1.Dot(u1), u1.Dot(v1), u1.Dot(n2), u1.Dot(u2), u1.Dot(v2)
+        v1v1, v1n2, v1u2, v1v2 = v1.Dot(v1), v1.Dot(n2), v1.Dot(u2), v1.Dot(v2)
+        n2n2, n2u2, n2v2 = n2.Dot(n2), n2.Dot(u2), n2.Dot(v2)
+        u2u2, u2v2, v2v2 = u2.Dot(u2), u2.Dot(v2), v2.Dot(v2)
+        
+        w2, wn1, wu1, wv1, wn2, wu2, wv2 = w.Dot(w), w.Dot(n1), w.Dot(u1), w.Dot(v1), w.Dot(n2), w.Dot(u2), w.Dot(v2)
+        
+        # x = (theta1, h1, theta2, h2)
+        def distance_squared(x):
+            return (n1n1*x[1]**2 + u1u1*((math.cos(x[0]))**2)*r1**2 + v1v1*((math.sin(x[0]))**2)*r1**2
+                    + w2 + n2n2*x[3]**2 + u2u2*((math.cos(x[2]))**2)*r2**2 + v2v2*((math.sin(x[2]))**2)*r2**2
+                    + 2*x[1]*r1*math.cos(x[0])*n1u1 + 2*x[1]*r1*math.sin(x[0])*n1v1 -2*x[1]*wn1 
+                    - 2*x[1]*x[3]*n1n2 - 2*x[1]*r2*math.cos(x[2])*n1u2 - 2*x[1]*r2*math.sin(x[2])*n1v2
+                    + 2*math.cos(x[0])*math.sin(x[0])*u1v1*r1**2 - 2*r1*math.cos(x[0])*wu1 
+                    - 2*r1*x[3]*math.cos(x[0])*u1n2 - 2*r1*r2*math.cos(x[0])*math.cos(x[2])*u1u2
+                    - 2*r1*r2*math.cos(x[0])*math.sin(x[2])*u1v2 -2*r1*math.sin(x[0])*wv1
+                    - 2*r1*x[3]*math.sin(x[0])*v1n2 - 2*r1*r2*math.sin(x[0])*math.cos(x[2])*v1u2
+                    - 2*r1*r2*math.sin(x[0])*math.sin(x[2])*v1v2 + 2*x[3]*wn2 + 2*r2*math.cos(x[2])*wu2
+                    + 2*r2*math.sin(x[2])*wv2 + 2*x[3]*r2*math.cos(x[2])*n2u2 + 2*x[3]*r2*math.sin(x[2])*n2v2
+                    + 2*math.cos(x[2])*math.sin(x[2])*u2v2*r2**2)
+        
+        x01 = npy.array([(min_theta1+max_theta1)/2, (min_h1+max_h1)/2,
+                         (min_theta2+max_theta2)/2, (min_h2+max_h2)/2])
+        x02 = npy.array([min_theta1, (min_h1+max_h1)/2,
+                          min_theta2, (min_h2+max_h2)/2])
+        x03 = npy.array([max_theta1, (min_h1+max_h1)/2,
+                          max_theta2, (min_h2+max_h2)/2])
+        
+        minimax = [(min_theta1, min_h1, min_theta2, min_h2), (max_theta1, max_h1, max_theta2, max_h2)]
+        
+        res1 = scp.optimize.least_squares(distance_squared, x01, bounds=minimax)
+        res2 = scp.optimize.least_squares(distance_squared, x02, bounds=minimax)
+        res3 = scp.optimize.least_squares(distance_squared, x03, bounds=minimax)
+        
+        frame1, frame2 = Frame3D(self.center, u1, v1, n1), Frame3D(other_cyl.center, u2, v2, n2)
+        pt1 = Point3D((r1*math.cos(res1.x[0]),r1*math.sin(res1.x[0]),res1.x[1]))
+        p1 = frame1.OldCoordinates(pt1)
+        pt2 = Point3D((r2*math.cos(res1.x[2]),r2*math.sin(res1.x[2]),res1.x[3]))
+        p2 = frame2.OldCoordinates(pt2)
+        d = p1.point_distance(p2)
+        result = res1
+        
+        res = [res2, res3]
+        for couple in res :
+            pttest1 = Point3D((r1*math.cos(couple.x[0]),r1*math.sin(couple.x[0]),couple.x[1]))
+            pttest2 = Point3D((r2*math.cos(couple.x[2]),r2*math.sin(couple.x[2]),couple.x[3]))
+            ptest1 = frame1.OldCoordinates(pttest1)
+            ptest2 = frame2.OldCoordinates(pttest2)
+            dtest = ptest1.point_distance(ptest2)
+            if dtest < d :
+                result = couple
+                p1, p2 = ptest1, ptest2
+        
+        pt1_2d, pt2_2d = Point2D((result.x[0]*r1, result.x[1])), Point2D((result.x[2]*r2, result.x[3]))
+        
+        if not(self.contours2d[0].point_belongs(pt1_2d)) :
+            #Find the closest one
+            points_contours1 = []
+            for prim in self.contours2d[0].primitives :
+                points_contours1.append(prim.points[0])
+            
+            # fig, ax = plt.subplots()
+            # [pt.MPLPlot(ax=ax) for pt in points_contours1]
+            # points_contours1[1].MPLPlot(ax=ax, color='r')
+            # points_contours1[2].MPLPlot(ax=ax, color='b')
+            # points_contours1[3].MPLPlot(ax=ax, color='g')
+            # fig, ax = plt.subplots()
+            # [pt.MPLPlot(ax=ax) for pt in points_contours1]
+            # pt1_2d.MPLPlot(ax=ax, color='r')
+            
+            poly1 = Polygon2D(points_contours1)
+            d1, new_pt1_2d = poly1.PointBorderDistance(pt1_2d, return_other_point=True)
+                    
+            pt1 = Point3D((r1*math.cos(new_pt1_2d.vector[0]/r1),
+                           r1*math.sin(new_pt1_2d.vector[0]/r1),
+                           new_pt1_2d.vector[1]))
+            p1 = frame1.OldCoordinates(pt1)        
+            
+            # fig, ax = plt.subplots()
+            # [pt.MPLPlot(ax=ax) for pt in points_contours1]
+            # pt1_2d.MPLPlot(ax=ax, color='r')
+            # new_pt1_2d.MPLPlot(ax=ax, color='b')
+        
+        
+        if not(other_cyl.contours2d[0].point_belongs(pt2_2d)) :
+            #Find the closest one
+            points_contours2 = []
+            for prim in other_cyl.contours2d[0].primitives :
+                points_contours2.append(prim.points[0])
+            
+            poly2 = Polygon2D(points_contours2)
+            d2, new_pt2_2d = poly2.PointBorderDistance(pt2_2d, return_other_point=True)
+                    
+            pt2 = Point3D((r2*math.cos(new_pt2_2d.vector[0]/r2),
+                           r2*math.sin(new_pt2_2d.vector[0]/r2),
+                           new_pt2_2d.vector[1]))
+            p2 = frame2.OldCoordinates(pt2)        
+            
+        return p1, p2
+    
+    def minimum_distance_points_plane(self, planeface): #Planeface with contour2D
+        #### ADD THE FACT THAT PLANEFACE.CONTOURS : [0] = contours totale, le reste = trous
+        r = self.radius
+        min_h1, min_theta1, max_h1, max_theta1 = self.minimum_maximum(self.contours2d[0], r)
+        start1 = self.start
+        n1 = self.normal
+        u1 = start1 - self.center
+        u1.Normalize()
+        v1 = n1.Cross(u1)
+        
+        poly2d = planeface.polygon2D
+        pfpoints = poly2d.points
+        xmin, ymin = min([pt[0] for pt in pfpoints]), min([pt[1] for pt in pfpoints])
+        xmax, ymax = max([pt[0] for pt in pfpoints]), max([pt[1] for pt in pfpoints])
+        origin, vx, vy = planeface.plane.origin, planeface.plane.vectors[0], planeface.plane.vectors[1] 
+        pf1_2d, pf2_2d = Point2D((xmin, ymin)), Point2D((xmin, ymax))
+        pf3_2d, pf4_2d = Point2D((xmax, ymin)), Point2D((xmax, ymax))
+        pf1, pf2 = pf1_2d.To3D(origin, vx, vy), pf2_2d.To3D(origin, vx, vy) 
+        pf3, pf4 = pf3_2d.To3D(origin, vx, vy), pf4_2d.To3D(origin, vx, vy)
+        
+        # fig, ax = plt.subplots()
+        # [pt.MPLPlot(ax=ax) for pt in planeface.polygon2D.points]
+        # pf1_2d.MPLPlot(ax=ax, color='r')
+        # pf2_2d.MPLPlot(ax=ax, color='b')
+        # pf3_2d.MPLPlot(ax=ax, color='g')
+        # pf4_2d.MPLPlot(ax=ax, color='y')
+        
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111, projection='3d')
+        # pf1.MPLPlot(ax=ax, color='r')
+        # pf2.MPLPlot(ax=ax, color='b')
+        # pf3.MPLPlot(ax=ax, color='g')
+        # pf4.MPLPlot(ax=ax, color='y')
+        
+        
+        u, v = (pf3-pf1), (pf2-pf1)
+        u.Normalize()
+        v.Normalize()
+        
+        w = pf1 - self.center
+        
+        n1n1, n1u1, n1v1, n1u, n1v = n1.Dot(n1), n1.Dot(u1), n1.Dot(v1), n1.Dot(u), n1.Dot(v)
+        u1u1, u1v1, u1u, u1v = u1.Dot(u1), u1.Dot(v1), u1.Dot(u), u1.Dot(v)
+        v1v1, v1u, v1v = v1.Dot(v1), v1.Dot(u), v1.Dot(v)
+        uu, uv, vv = u.Dot(u), u.Dot(v), v.Dot(v)
+        
+        w2, wn1, wu1, wv1, wu, wv = w.Dot(w), w.Dot(n1), w.Dot(u1), w.Dot(v1), w.Dot(u), w.Dot(v)
+        
+        # x = (h, theta, x, y)
+        def distance_squared(x):
+            return(n1n1*x[0]**2 + ((math.cos(x[1]))**2)*u1u1*r**2 + ((math.sin(x[1]))**2)*v1v1*r**2 
+                   + w2 + uu*x[2]**2 + vv*x[3]**2 + 2*x[0]*math.cos(x[1])*r*n1u1
+                   + 2*x[0]*math.sin(x[1])*r*n1v1 - 2*x[0]*wn1 - 2*x[0]*x[2]*n1u
+                   - 2*x[0]*x[3]*n1v + 2*math.sin(x[1])*math.cos(x[1])*u1v1*r**2
+                   - 2*r*math.cos(x[1])*wu1 - 2*r*x[2]*math.cos(x[1])*u1u 
+                   - 2*r*x[3]*math.sin(x[1])*u1v - 2*r*math.sin(x[1])*wv1
+                   - 2*r*x[2]*math.sin(x[1])*v1u - 2*r*x[3]*math.sin(x[1])*v1v
+                   + 2*x[2]*wu + 2*x[3]*wv + 2*x[2]*x[3]*uv )
+        
+        x01 = npy.array([(min_h1+max_h1)/2, (min_theta1+max_theta1)/2,
+                         (xmax-xmin)/2, (ymax-ymin)/2])
+
+        # minimax = [(min_h1, min_theta1, xmin, ymin), (max_h1, max_theta1, xmax, ymax)]
+        minimax = [(min_h1, min_theta1, 0, 0), (max_h1, max_theta1, xmax-xmin, ymax-ymin)]
+        
+        res1 = scp.optimize.least_squares(distance_squared, x01, bounds=minimax)   
+
+        frame1 = Frame3D(self.center, u1, v1, n1)
+        pt1 = Point3D((r*math.cos(res1.x[1]),r*math.sin(res1.x[1]),res1.x[0]))
+        p1 = frame1.OldCoordinates(pt1)
+        
+        p2 = pf1 + res1.x[2]*u + res1.x[3]*v
+        d = p1.point_distance(p2)
+        print('>>>>>>> d',d)
+        
+        pt1_2d = Point2D((res1.x[1]*r, res1.x[0]))
+        u2d, v2d = (pf3_2d-pf1_2d), (pf2_2d-pf1_2d)
+        u2d.Normalize()
+        v2d.Normalize()
+        print('xmin, ymin', xmin, ymin)
+        print(p2)
+        p2.To2D(pf1,u, v)
+        print('p2',p2)
+        pt2_2d = Point2D((xmin, ymin)) + res1.x[2]*u2d + res1.x[3]*v2d 
+        
+        if not(self.contours2d[0].point_belongs(pt1_2d)) :
+            #Find the closest one
+            points_contours1 = []
+            for prim in self.contours2d[0].primitives :
+                points_contours1.append(prim.points[0])
+            
+            poly1 = Polygon2D(points_contours1)
+            d1, new_pt1_2d = poly1.PointBorderDistance(pt1_2d, return_other_point=True)
+                    
+            pt1 = Point3D((r*math.cos(new_pt1_2d.vector[0]/r),
+                           r*math.sin(new_pt1_2d.vector[0]/r),
+                           new_pt1_2d.vector[1]))
+            p1 = frame1.OldCoordinates(pt1)
+            
+        if not(poly2d.PointBelongs(pt2_2d)) :
+            #Find the closest one
+            # fig, ax = plt.subplots()
+            # [pt.MPLPlot(ax=ax) for pt in poly2d.points]
+            # pf1_2d.MPLPlot(ax=ax, color='b')
+            # pf2_2d.MPLPlot(ax=ax, color='b')
+            # pf3_2d.MPLPlot(ax=ax, color='b')
+            # pf4_2d.MPLPlot(ax=ax, color='b')
+            # pt2_2d.MPLPlot(ax=ax, color='g')
+            d2, new_pt2_2d = planeface.polygon2D.PointBorderDistance(pt2_2d, return_other_point=True)
+            # new_pt2_2d.MPLPlot(ax=ax, color='r')
+            p2 = new_pt2_2d.To3D(Point3D((0,0,0)), u, v)
+            # p2 = pf1 + new_pt2_2d.vector[0]*u + new_pt2_2d.vector[1]*v
+        
+        return p1, p2
+            
+    def minimum_distance(self, other_face) :
+        if other_face.__class__ is CylindricalFace3D :
+            p1, p2 = self.minimum_distance_points_cyl(other_face)
+            
+            return p1.point_distance(p2)
+        
+        if other_face.__class__ is PlaneFace3D : 
+            p1, p2 = self.minimum_distance_points_plane(other_face)
+            
+            return p1.point_distance(p2)
+        else :
+            return NotImplementedError 
+            
 
 class ToroidalFace3D (Face3D) :
+    """
+    :param contours2d: The Tore's contour2D 
+    :type contours2d: Contour2D
+    :param toroidalsurface3d: Information about the Tore
+    :type toroidalsurface3d: ToroidalSurface3D
+    :param points: Angle's Tore
+    :type points: List of float
+    
+    :Example: 
+        >>> contours2d is rectangular and will create a classic tore with x:2*pi, y:2*pi
+        x is for exterior, and y for the circle to revolute
+        >>> points = [pi, 2*pi] for an half tore
+    """      
+    
     def __init__(self, contours2d, toroidalsurface3d, points=None, name=''):
         self.rcenter = float(toroidalsurface3d.rcenter)/1000
         self.rcircle = float(toroidalsurface3d.rcircle)/1000
@@ -5117,7 +5388,16 @@ class ToroidalFace3D (Face3D) :
         self.name = name 
     
     @classmethod
-    def from_contour3d(cls, contours3d, toroidalsurface3d, points=None, name=''):
+    def from_contour3d(cls, contours3d, toroidalsurface3d, name=''):
+        """
+        :param contours3d: The Tore's contour3D
+        :type contours3d: Contour3D
+        :param toroidalsurface3d: Information about the Tore
+        :type toroidalsurface3d: ToroidalSurface3D
+        
+        :Example:
+            >>> contours3d is [Arc3D, Arc3D, Arc3D], the tore's bones
+        """
         center = toroidalsurface3d.frame.origin
         
         if contours3d[0].__class__ is Point3D : #If it is a complete tore
@@ -5147,6 +5427,12 @@ class ToroidalFace3D (Face3D) :
     
     @classmethod
     def from_arc3d(cls, arc, arcgen):
+        """
+        :param arc: The arc which is extruded by the arcgen
+        :type arc: Arc3D/2D, Circle3D/2D
+        :param arcgen: The Arc generator
+        :type arcgen: Arc3D/2D, Circle3D/2D
+        """
         rcircle = arc.radius
         rcenter = arcgen.radius
         
@@ -7112,6 +7398,7 @@ class VolumeModel(dc.DessiaObject):
                     if isinstance(primitive, BSplineCurve3D) \
                     or isinstance(primitive, BSplineSurface3D) \
                     or isinstance(primitive, Circle3D) \
+                    or isinstance(primitive, LineSegment3D) \
                     or isinstance(primitive, Ellipse3D):
 #                            print(primitive)
 #                            s += 'S = Part.Shape([primitive{}])\n'.format(ip)

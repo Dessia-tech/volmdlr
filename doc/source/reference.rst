@@ -101,3 +101,15 @@ Primitives
 
 .. autoclass:: volmdlr.primitives3D.Fuse
   :members:
+
+.. autoclass:: volmdlr.core.CylindricalFace3D
+  :members:
+
+.. autoclass:: volmdlr.core.CylindricalSurface3D
+  :members:
+
+.. autoclass:: volmdlr.core.ToroidalFace3D
+  :members:
+
+.. autoclass:: volmdlr.core.ToroidalSurface3D
+  :members:
