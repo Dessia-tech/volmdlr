@@ -1383,6 +1383,8 @@ class Circle2D(Contour2D):
         self.angle = 2*math.pi
         self.utd_geo_points = False
         
+        self.points = self.tessellation_points()
+        
         Contour2D.__init__(self, [self], name=name) # !!! this is dangerous
     
     def __hash__ (self):
