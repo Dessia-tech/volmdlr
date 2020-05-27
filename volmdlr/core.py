@@ -4462,6 +4462,14 @@ class PlaneFace3D(Face3D):
         
         return cls(contours2d, plane, points=None, polygon2D=None, name=name)
     
+    def _contours3d(self):
+        ctr3d = []
+        for contour2d in self.contours :
+            ctr3d.append(contour2d.To3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]))
+        return ctr3d
+    
+    contours3d = property(_contours3d)
+    
     def Rotation(self, center, axis, angle, copy=True):
         if copy:
             new_contour = [subcontour.Rotation(center, axis, angle, copy=True) for subcontour in self.contour]
