@@ -465,7 +465,7 @@ class Contour2D(Wire2D):
             (self._internal_arcs, self._external_arcs,
              self._polygon, self._straight_line_contour_polygon) = self._primitives_analysis()
             self._utd_analysis = True
-        return self._internal_arcs
+        return self._external_arcs
             
     external_arcs = property(_get_external_arcs)
     
