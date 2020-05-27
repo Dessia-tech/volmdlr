@@ -360,6 +360,12 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.Wire2D):
         return rls2D
     
 class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D, volmdlr.Contour2D):
+    """
+    :param points: Points used to draw the wire 
+    :type points: List of Point2D
+    :param radius: Radius used to connect different parts of the wire
+    :type radius: {position1(n): float which is the radius linked the n-1 and n+1 points, position2(n+1):...}
+    """
     closed = True
     def __init__(self, points, radius, adapt_radius=False, name=''):
         primitives = RoundedLineSegments.__init__(self, points, radius,

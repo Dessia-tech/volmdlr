@@ -69,8 +69,8 @@ profile3=primitives3D.ExtrudedProfile(vm.O3D, vm.Y3D, vm.Z3D, c4, [], -vm.X3D*0.
 
 y = vm.X3D.RandomUnitNormalVector()
 z = vm.X3D.Cross(y)
-# profile4=primitives3D.RevolvedProfile(vm.Z3D*0.08-0.015*vm.Y3D, vm.X3D, z, c5, vm.Z3D*0.08-0.015*vm.Y3D , vm.X3D)
-# profile5=primitives3D.RevolvedProfile(vm.Z3D*0.22+0.035*vm.Y3D, vm.X3D, z, c5, vm.Z3D*0.22+0.035*vm.Y3D , vm.X3D)
+profile4=primitives3D.RevolvedProfile(vm.Z3D*0.08-0.015*vm.Y3D, vm.X3D, z, c5, vm.Z3D*0.08-0.015*vm.Y3D , vm.X3D)
+profile5=primitives3D.RevolvedProfile(vm.Z3D*0.22+0.035*vm.Y3D, vm.X3D, z, c5, vm.Z3D*0.22+0.035*vm.Y3D , vm.X3D)
 
 c = vm.Circle2D(vm.Point2D((0,0)), 0.008)
 contour = vm.Contour2D([c])
@@ -98,7 +98,7 @@ sphere = primitives3D.Sphere(vm.Point3D((0.05, 0.29, 0.1)), 0.05)
 
 
 
-model=vm.VolumeModel([profile, profile1, profile2, profile3, sweep, sweep1, sphere])#, profile4, profile5
+model=vm.VolumeModel([profile, profile1, profile2, profile3, profile4, profile5, sweep, sweep1, sphere])
 
 model.babylonjs()
 

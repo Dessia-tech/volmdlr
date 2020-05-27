@@ -11,7 +11,8 @@ Volmdlr: A python volume modeler
 
   intro
   usage
-  reference
+  primitive2D
+  primitive3D
   dev
 
 
@@ -74,3 +75,4 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+ 

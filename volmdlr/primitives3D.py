@@ -174,12 +174,24 @@ class Block(volmdlr.Shell3D):
 
     def face_contours(self):
         e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11, e12 = self.Edges()
+        e5_switch = e5.reverse()
+        e6_switch = e6.reverse()
+        e7_switch = e7.reverse()
+        e8_switch = e8.reverse()
+        e9_switch = e9.reverse()
+        e10_switch = e10.reverse()
+        e11_switch = e11.reverse()
+        e12_switch = e12.reverse()
         return [volmdlr.Contour3D([e1.copy(), e2.copy(), e3.copy(), e4.copy()]),
                 volmdlr.Contour3D([e5.copy(), e6.copy(), e7.copy(), e8.copy()]),
-                volmdlr.Contour3D([e1.copy(), e9.copy(), e5.copy(), e10.copy()]),
-                volmdlr.Contour3D([e2.copy(), e10.copy(), e6.copy(), e11.copy()]),
-                volmdlr.Contour3D([e3.copy(), e11.copy(), e7.copy(), e12.copy()]),
-                volmdlr.Contour3D([e4.copy(), e12.copy(), e8.copy(), e9.copy()])]
+                # volmdlr.Contour3D([e1.copy(), e9.copy(), e5.copy(), e10.copy()]),
+                volmdlr.Contour3D([e1.copy(), e10.copy(), e5_switch.copy(), e9_switch.copy()]),
+                # volmdlr.Contour3D([e2.copy(), e10.copy(), e6.copy(), e11.copy()]),
+                volmdlr.Contour3D([e2.copy(), e11.copy(), e6_switch.copy(), e10_switch.copy()]),
+                # volmdlr.Contour3D([e3.copy(), e11.copy(), e7.copy(), e12.copy()]),
+                volmdlr.Contour3D([e3.copy(), e12.copy(), e7_switch.copy(), e11_switch.copy()]),
+                # volmdlr.Contour3D([e4.copy(), e12.copy(), e8.copy(), e9.copy()])]
+                volmdlr.Contour3D([e4.copy(), e9.copy(), e8_switch.copy(), e12_switch.copy()])]
 
     def shell_faces(self):
         c1, c2, c3, c4, c5, c6 = self.face_contours()

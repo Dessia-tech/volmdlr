@@ -1,7 +1,7 @@
 Tutorial
 =====
 
-This guide can help you using tools developed with the Volume Modeler (volmdlr).
+This guide can help you using tools developed with the Volume Modeler Volmdlr.
 
 Models
 ------
@@ -9,7 +9,7 @@ In volmdlr, you can create Models as a face contained in a plane, Cylinder (Cyli
 a Tore (ToroidalFace3D) and more (BSpline, ConicalFace, SphericalFace WIP).
 Please refers to :ref:`primitives-label` in 3D advanced primitives to know how it works.
 
-To show the final result, we use Babylon.
+To show the final result, we use Babylonjs.
 
 VolumeModel
 -----------

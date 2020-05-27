@@ -843,10 +843,10 @@ class Vector3D(Vector):
 
 
     def To2D(self, plane_origin, x, y):
-        print(self.Dot(x))
-        print(plane_origin.Dot(x))
-        print(self.Dot(y))
-        print(plane_origin.Dot(y))
+        # print(self.Dot(x))
+        # print(plane_origin.Dot(x))
+        # print(self.Dot(y))
+        # print(plane_origin.Dot(y))
         x2d = self.Dot(x) - plane_origin.Dot(x)
         y2d = self.Dot(y) - plane_origin.Dot(y)
         return Point2D((x2d,y2d))
