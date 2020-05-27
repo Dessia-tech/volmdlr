@@ -19,7 +19,7 @@ A model is set instanciating a VolumeModel:
 
 Prior to that, primitives have to be instanciated. See :ref:`primitives-label`.
 
-FreeCAD binding
+FreeCAD binding (Optional)
 ---------------
 
 Once a VolumeModel is instanciated, one can call the FreeCADExport method:
@@ -33,10 +33,23 @@ Sweep
 
 .. autoclass:: volmdlr.primitives3D.Sweep
 
-To understand how Sweep works, see :ref:`primitives-label` in 3D advanced primitives.
+To understand how Sweep works, see :ref:`primitives3D-label` in 3D advanced primitives.
 
-Tutorials
----------
+Shell3D
+-------
+
+If you want to create a simple Face3D or more, you can create them thanks to our tools see :ref:`primitives3D-label` in 3D advanced primitives.
+
+:Example: 
+  >>> You can create a Shell3D : 
+	import volmdlr as vm
+	(create faces with our examples of each Face3D)
+	shell = vm.Shell3D([face1, face2, etc..])
+	volumodel = vm.VolumeModel([shell])
+	volumodel.babylonjs() (to show it in babylonjs interface)
+
+More Tutorials
+--------------
 
 The scripts folder contains some examples of the capabilities of volmdlr:
 

@@ -26,6 +26,9 @@ Primitives3D
 .. autoclass:: volmdlr.Arc3D
   :members:
 
+Faces3D
+~~~~~~~
+
 .. autoclass:: volmdlr.core.PlaneFace3D
   :members:
 https://github.com/Dessia-tech/volmdlr/blob/distancewire/scripts/Tutorial/PlaneFace.py
