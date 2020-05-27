@@ -34,10 +34,10 @@ c = vm.Circle2D(vm.Point2D((0,0)), 0.008)
 rl = primitives3D.OpenedRoundedLineSegments3D(points, radius, adapt_radius=True, name='wire')
 contour = vm.Contour2D([c])
 
-# fig = plt.figure()
-# ax = fig.add_subplot(111, projection='3d')
-# for prim in rl.primitives :
-#     prim.MPLPlot(ax=ax)
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+for prim in rl.primitives :
+    prim.MPLPlot(ax=ax)
     
 
 r1 = rl.to_dict()

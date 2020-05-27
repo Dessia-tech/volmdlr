@@ -1396,7 +1396,9 @@ class Arc2D(Primitive2D):
         return Arc2D(self.start.copy(), self.interior.copy(), self.end.copy())
 
 class Circle2D(Contour2D):
-    _non_serializable_attributes  = ['internal_arcs', 'external_arcs' ,'polygon', 'straight_line_contour_polygon', 'primitives']
+    _non_serializable_attributes  = ['internal_arcs', 'external_arcs',
+                                     'polygon', 'straight_line_contour_polygon',
+                                     'primitives', 'basis_primitives']
     def __init__(self,center,radius,name=''):
         self.center = center
         self.radius = radius
