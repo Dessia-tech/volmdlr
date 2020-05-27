@@ -55,16 +55,14 @@ All the primitives are fused together in a single volume.
 
 Sweep
 ~~~~~
-.. image:: images/sweep.jpg
-
-CHANGE PHOTO 
+.. image:: images/sweep1.jpg
 
 https://github.com/Dessia-tech/volmdlr/blob/master/scripts/sweep.py
 
 A Sweep is pipes, created thanks to Circle2D/Arc2D which is contained in a Contour2D.
 You have to create the neutral fiber, i.e., the pipe's road, with the primitive RoundedLineSegment3D. 
 
-ADD PHOTO MPLPLOT OF ROUNDEDLS3D
+.. image:: images/sweepMPLPlot.jpg
 
 Polygon
 ~~~~~~~
