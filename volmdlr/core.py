@@ -4347,7 +4347,6 @@ class PlaneFace3D(Face3D):
         self.name = name
         self.contours = contours
         self.plane = plane
-        # self.setup_planeface(self.contours, self.plane, points=points, polygon2D=polygon2D, name=self.name)
         contour_points = []
         for prim in self.contours[0].primitives :
             for pt in prim.points :
@@ -4406,20 +4405,6 @@ class PlaneFace3D(Face3D):
         #         print('WARNING', pt, 'not on', self.plane.__dict__)
         #         print('dot =', self.plane.normal.Dot(pt-self.plane.origin))
         #         raise ValueError
-
-    def setup_planeface(self, contours, plane, points=None, polygon2D=None, name=''):
-        contour_points = []
-        for prim in self.contours[0].primitives :
-            for pt in prim.points :
-                pt3d = (pt.copy()).To3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
-                contour_points.append(pt3d)
-        if points is None or polygon2D is None:
-            self.points, self.polygon2D = self._repair_points_and_polygon2d(contour_points, self.plane)
-        else :
-            self.points = points
-            self.polygon2D = polygon2D
-        ctr3d = contours[0].copy()
-        Face3D.__init__(self, [ctr3d.To3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])])
 
     def __hash__(self):
         return hash(self.plane) + sum([hash(p) for p in self.points])
@@ -4510,9 +4495,9 @@ class PlaneFace3D(Face3D):
         side = 'old' or 'new'
         """
         # print(frame)
-        pt_o = frame.origin.To2D(Point3D((0,0,0)), frame.u, frame.v)
-        x, y = frame.u.To2D(Point3D((0,0,0)), frame.u, frame.v), frame.v.To2D(Point3D((0,0,0)), frame.u, frame.v)
-        frame2d = Frame2D(pt_o, x, y, name=frame.name)
+        # pt_o = frame.origin.To2D(Point3D((0,0,0)), frame.u, frame.v)
+        # x, y = frame.u.To2D(Point3D((0,0,0)), frame.u, frame.v), frame.v.To2D(Point3D((0,0,0)), frame.u, frame.v)
+        # frame2d = Frame2D(pt_o, x, y, name=frame.name)
         # print(frame)
         # if copy:
         #     new_contour = [subcontour.frame_mapping(frame, side, copy=True) for subcontour in self.contours]
@@ -4531,18 +4516,7 @@ class PlaneFace3D(Face3D):
             new_plane = self.plane.frame_mapping(frame, side, copy=True)
             return PlaneFace3D(self.contours, new_plane, None, None, self.name)
         else:
-            # for point in self.points:
-                # print('hey')
-                # point.frame_mapping(frame2d, side, copy=False)
-            # self.contours[0].points = self.points
-            # for contour in self.contours:
-                # contour.frame_mapping(frame, side, copy=False)
             self.plane.frame_mapping(frame, side, copy=False)
-            # print('self.contours',self.contours[0].points)
-            self.setup_planeface(self.contours, self.plane, name=self.name)
-            
-            # self.__init__(self.contours, self.plane, self.points, self.polygon2D, self.name)
-            # self.bounding_
 
     def copy(self):
         new_contours = [contour.copy() for contour in self.contours]
@@ -6411,9 +6385,7 @@ class Shell3D(CompositePrimitive3D):
             # print('face.triangulation', face.triangulation())
             # print('i', i)
             # print()
-            print('face', face)
             points_3D, triangles_indexes = face.triangulation()
-            # print('points_3D',points_3D)
             # points_3D_triangles_indexes = face.triangulation()
             # print('=>', points_3D, triangles_indexes)
             # print()
