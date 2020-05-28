@@ -665,7 +665,7 @@ class Line(dc.DessiaObject):
 
 class Line2D(Primitive2D, Line):
     """
-    Define an infinte line given by two points.
+    Define an infinite line given by two points.
     """
     def __init__(self, point1, point2,*, name=''):
         Primitive2D.__init__(self, name=name)
@@ -4520,6 +4520,7 @@ class PlaneFace3D(Face3D):
             return PlaneFace3D(self.contours, new_plane, None, None, self.name)
         else:
             self.plane.frame_mapping(frame, side, copy=False)
+            self.contours3d.frame_mapping(frame, side, copy=False) 
 
     def copy(self):
         new_contours = [contour.copy() for contour in self.contours]
@@ -4580,10 +4581,10 @@ class PlaneFace3D(Face3D):
             # return [(None, None)]
 
     def distance_to_point(self, point, return_other_point=False):
-        """
-        Only works if the surface is planar
-        TODO : this function does not take into account if Face has holes
-        """
+        ## """
+        ## Only works if the surface is planar
+        ## TODO : this function does not take into account if Face has holes
+        ## """
         # On projette le point sur la surface plane
         # Si le point est à l'intérieur de la face, on retourne la distance de projection
         # Si le point est à l'extérieur, on projette le point sur le plan
@@ -4609,19 +4610,19 @@ class PlaneFace3D(Face3D):
         return (projection_distance**2 + border_distance**2)**0.5
 
     def distance_to_face(self, face2, return_points=False):
-        """
-        Only works if the surface is planar
-        TODO : this function does not take into account if Face has holes
-        TODO : TRAITER LE CAS OU LA DISTANCE LA PLUS COURTE N'EST PAS D'UN SOMMET
-        """
+        ## """
+        ## Only works if the surface is planar
+        ## TODO : this function does not take into account if Face has holes
+        ## TODO : TRAITER LE CAS OU LA DISTANCE LA PLUS COURTE N'EST PAS D'UN SOMMET
+        ## """
         # On calcule la distance entre la face 1 et chaque point de la face 2
         # On calcule la distance entre la face 2 et chaque point de la face 1
 
         if self.face_intersection(face2) is not None:
             return 0, None, None
 
-        polygon1_points_3D = [Point3D(p.vector) for p in self.points]
-        polygon2_points_3D = [Point3D(p.vector) for p in face2.points]
+        polygon1_points_3D = [Point3D(p.vector) for p in self.contours3d[0].points]
+        polygon2_points_3D = [Point3D(p.vector) for p in face2.contours3d[0].points]
 
         distances = []
         if not return_points:
@@ -4655,12 +4656,11 @@ class PlaneFace3D(Face3D):
 
     def point_on_face(self, point):
         """
-        Only works if the surface is planar
-        TODO : this function does not take into account if Face has holes
-
         Tells you if a point is on the 3D face and inside its contour
         """
-
+        ## Only works if the surface is planar
+        ## TODO : this function does not take into account if Face has holes
+        
         point_on_plane = self.plane.point_on_plane(point)
         # The point is not in the same plane
         if not point_on_plane:
@@ -4736,10 +4736,10 @@ class PlaneFace3D(Face3D):
         return intersection_point
 
     def face_intersection(self, face2):
-        """
-        Only works if the surface is planar
-        TODO : this function does not take into account if Face has holes
-        """
+        ## """
+        ## Only works if the surface is planar
+        ## TODO : this function does not take into account if Face has holes
+        ## """
         bbox1 = self.bounding_box
         bbox2 = face2.bounding_box
         if not bbox1.bbox_intersection(bbox2):
@@ -6365,7 +6365,7 @@ class Shell3D(CompositePrimitive3D):
 
         shell1_points_inside_shell2 = []
         for face in self.faces:
-            for point in face.points:
+            for point in face.contours3d[0].points:
                 if shell2.point_belongs(point):
                     shell1_points_inside_shell2.append(point)
 
@@ -6387,7 +6387,7 @@ class Shell3D(CompositePrimitive3D):
 
         shell1_points_outside_shell2 = []
         for face in self.faces:
-            for point in face.points:
+            for point in face.contours3d[0].points:
                 if not shell2.point_belongs(point):
                     shell1_points_outside_shell2.append(point)
 

@@ -27,4 +27,3 @@ https://github.com/Dessia-tech/volmdlr/blob/distancewire/scripts/Tutorial/CasTes
 This engine is made from ExtrudedProfile and RoundedLineSegment2D. With CylindricalFace3D and ToroidalFace3D too.
 You can see Sweep as presented before.
 If you want to load it, run the code above, and if you are curious, check on Primitives3D how to create Faces.
-

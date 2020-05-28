@@ -114,4 +114,3 @@ Primitives
 
 .. autoclass:: volmdlr.primitives3D.Fuse
   :members:
-

@@ -81,4 +81,3 @@ https://github.com/Dessia-tech/volmdlr/blob/distancewire/scripts/Tutorial/Tore.p
 .. autoclass:: volmdlr.primitives3D.Fuse
   :members:
 
-

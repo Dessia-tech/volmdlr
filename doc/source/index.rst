@@ -47,7 +47,7 @@ This contour is offset by the casing width.
 .. image:: images/casing_contours.png
 
 These contours are extruded to form the side shell.
-A bottom is formed from an extrusion
+A bottom is formed from an extrusion.
 
 Screw holes are placed at equal curvilign distance of the belt.
 
@@ -59,7 +59,7 @@ Sweep
 
 https://github.com/Dessia-tech/volmdlr/blob/master/scripts/sweep.py
 
-A Sweep is pipes, created thanks to Circle2D/Arc2D which is contained in a Contour2D.
+A Sweep is pipes, created with Circle2D/Arc2D which is contained in a Contour2D.
 You have to create the neutral fiber, i.e., the pipe's road, with the primitive RoundedLineSegment3D. 
 
 .. image:: images/sweepMPLPlot.jpg
@@ -87,4 +87,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
- 

@@ -1053,8 +1053,8 @@ class HelicalExtrudedProfile(volmdlr.Primitive3D):
 
 class Sweep(volmdlr.Shell3D):
     """
-    Sweep a 3D contour along a Wire3D
-            2D contour
+    Sweep a 3D/2D contour along a Wire3D
+            
     
     :Example: 
         >>> contour2d is a Circle2D or a Arc2D
