@@ -4520,7 +4520,8 @@ class PlaneFace3D(Face3D):
             return PlaneFace3D(self.contours, new_plane, None, None, self.name)
         else:
             self.plane.frame_mapping(frame, side, copy=False)
-            self.contours3d.frame_mapping(frame, side, copy=False) 
+            for contour in self.contours3d :
+                contour.frame_mapping(frame, side, copy=False) 
 
     def copy(self):
         new_contours = [contour.copy() for contour in self.contours]
