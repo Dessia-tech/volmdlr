@@ -4352,18 +4352,19 @@ class PlaneFace3D(Face3D):
         contour_points = []
         for prim in self.contours[0].primitives :
             for pt in prim.points :
-                pt3d = (pt.copy()).To3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
-                contour_points.append(pt3d)
+                # pt3d = (pt.copy()).To3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
+                # contour_points.append(pt3d)
+                contour_points.append(pt)
         if points is None or polygon2D is None:
-            self.points, self.polygon2D = self._repair_points_and_polygon2d(contour_points, self.plane)
+            # self.points, self.polygon2D = self._repair_points_and_polygon2d(contour_points, self.plane)
+            self.points = contour_points
+            self.polygon2D = Polygon2D(self.points)
         else :
             self.points = points
             self.polygon2D = polygon2D
         ctr3d = contours[0].copy()
         Face3D.__init__(self, [ctr3d.To3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])])
             
-        
-        
         
         # else :
         #     self.contours = contours
@@ -4712,18 +4713,19 @@ class PlaneFace3D(Face3D):
             if abscissea:
                 return None, None
             return None
+        
         point_on_face_boo = self.point_on_face(intersection_point)
-        ### PLOT ###
-#        if point_on_face_boo:
-#            ax = self.plot()
-#            linesegment.MPLPlot(ax)
-#            Point3D(intersection_point.vector).MPLPlot(ax)
-#            self.plane.MPLPlot(ax)
-#            ax.set_aspect('equal')
+        # ## PLOT ###
+        # if point_on_face_boo:
+        #     ax = self.plot()
+        #     linesegment.MPLPlot(ax)
+        #     Point3D(intersection_point.vector).MPLPlot(ax)
+        #     self.plane.MPLPlot(ax)
+        #     ax.set_aspect('equal')
 
-#            print('=>', self.plane.normal.Dot(intersection_point-self.plane.origin))
-#            print('point_on_face_boo', point_on_face_boo)
-        ############
+        #     print('=>', self.plane.normal.Dot(intersection_point-self.plane.origin))
+        #     print('point_on_face_boo', point_on_face_boo)
+        # ###########
         if not point_on_face_boo:
             if abscissea:
                 return None, None
@@ -4745,12 +4747,12 @@ class PlaneFace3D(Face3D):
 
         intersection_points = []
 
-        for edge2 in face2.contours[0].edges:
+        for edge2 in face2.contours3d[0].edges:
             intersection_point = self.edge_intersection(edge2)
             if intersection_point is not None:
                 intersection_points.append(intersection_point)
 
-        for edge1 in self.contours[0].edges:
+        for edge1 in self.contours3d[0].edges:
             intersection_point = face2.edge_intersection(edge1)
             if intersection_point is not None:
                 intersection_points.append(intersection_point)
@@ -6112,14 +6114,16 @@ class Shell3D(CompositePrimitive3D):
 
         return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax, self.name)
 
-    def point_belongs(self, point):
+    def point_belongs(self, point, nb_rays=1):
         """
         Ray Casting algorithm
         Returns True if the point is inside the Shell, False otherwise
         """
-        epsilon = 1
+        epsilon = 10
 
         bbox = self.bounding_box
+        # print('bounding_box',bbox.xmin, bbox.xmax, bbox.ymin, bbox.ymax, bbox.zmin, bbox.zmax)
+        # print(point)
         if point[0] < bbox.xmin or point[0] > bbox.xmax:
             return False
         if point[1] < bbox.ymin or point[1] > bbox.ymax:
@@ -6128,20 +6132,24 @@ class Shell3D(CompositePrimitive3D):
             return False
 
         rays = []
-        rays.append(LineSegment3D(point, Point3D((bbox.xmin-random.uniform(0, 1)*epsilon, bbox.ymin-random.uniform(0, 1)*epsilon, bbox.zmin-random.uniform(0, 1)*epsilon))))
-        rays.append(LineSegment3D(point, Point3D((bbox.xmax+random.uniform(0, 1)*epsilon, bbox.ymin-random.uniform(0, 1)*epsilon, bbox.zmin-random.uniform(0, 1)*epsilon))))
-        rays.append(LineSegment3D(point, Point3D((bbox.xmin-random.uniform(0, 1)*epsilon, bbox.ymax+random.uniform(0, 1)*epsilon, bbox.zmin-random.uniform(0, 1)*epsilon))))
-        rays.append(LineSegment3D(point, Point3D((bbox.xmin-random.uniform(0, 1)*epsilon, bbox.ymin-random.uniform(0, 1)*epsilon, bbox.zmax+random.uniform(0, 1)*epsilon))))
-        rays.append(LineSegment3D(point, Point3D((bbox.xmax+random.uniform(0, 1)*epsilon, bbox.ymax+random.uniform(0, 1)*epsilon, bbox.zmax+random.uniform(0, 1)*epsilon))))
-        rays.append(LineSegment3D(point, Point3D((bbox.xmax+random.uniform(0, 1)*epsilon, bbox.ymax+random.uniform(0, 1)*epsilon, bbox.zmin-random.uniform(0, 1)*epsilon))))
-        rays.append(LineSegment3D(point, Point3D((bbox.xmax+random.uniform(0, 1)*epsilon, bbox.ymin-random.uniform(0, 1)*epsilon, bbox.zmax+random.uniform(0, 1)*epsilon))))
-        rays.append(LineSegment3D(point, Point3D((bbox.xmin-random.uniform(0, 1)*epsilon, bbox.ymax+random.uniform(0, 1)*epsilon, bbox.zmax+random.uniform(0, 1)*epsilon))))
+        # rays.append(LineSegment3D(point, Point3D((bbox.xmin-random.uniform(0, 1)*epsilon, bbox.ymin-random.uniform(0, 1)*epsilon, bbox.zmin-random.uniform(0, 1)*epsilon))))
+        # rays.append(LineSegment3D(point, Point3D((bbox.xmax+random.uniform(0, 1)*epsilon, bbox.ymin-random.uniform(0, 1)*epsilon, bbox.zmin-random.uniform(0, 1)*epsilon))))
+        # rays.append(LineSegment3D(point, Point3D((bbox.xmin-random.uniform(0, 1)*epsilon, bbox.ymax+random.uniform(0, 1)*epsilon, bbox.zmin-random.uniform(0, 1)*epsilon))))
+        # rays.append(LineSegment3D(point, Point3D((bbox.xmin-random.uniform(0, 1)*epsilon, bbox.ymin-random.uniform(0, 1)*epsilon, bbox.zmax+random.uniform(0, 1)*epsilon))))
+        # rays.append(LineSegment3D(point, Point3D((bbox.xmax+random.uniform(0, 1)*epsilon, bbox.ymax+random.uniform(0, 1)*epsilon, bbox.zmax+random.uniform(0, 1)*epsilon))))
+        # rays.append(LineSegment3D(point, Point3D((bbox.xmax+random.uniform(0, 1)*epsilon, bbox.ymax+random.uniform(0, 1)*epsilon, bbox.zmin-random.uniform(0, 1)*epsilon))))
+        # rays.append(LineSegment3D(point, Point3D((bbox.xmax+random.uniform(0, 1)*epsilon, bbox.ymin-random.uniform(0, 1)*epsilon, bbox.zmax+random.uniform(0, 1)*epsilon))))
+        # rays.append(LineSegment3D(point, Point3D((bbox.xmin-random.uniform(0, 1)*epsilon, bbox.ymax+random.uniform(0, 1)*epsilon, bbox.zmax+random.uniform(0, 1)*epsilon))))
+        for k in range (0, nb_rays):
+            rays.append(LineSegment3D(point,Point3D((random.uniform(0, 1)*epsilon, random.uniform(0, 1)*epsilon, random.uniform(0, 1)*epsilon))))
 
         rays = sorted(rays, key=lambda ray: ray.Length())
 
         rays_intersections = []
         tests = []
-        for ray in rays[:3]:
+        
+        # for ray in rays[:3]:
+        for ray in rays[:nb_rays]:
             count = 0
             ray_intersection = []
             is_inside = True
@@ -6154,9 +6162,44 @@ class Shell3D(CompositePrimitive3D):
                 is_inside = False
             tests.append(is_inside)
             rays_intersections.append(ray_intersection)
+        
+        for test1, test2 in zip(tests[:-1], tests[1:]):
+            if test1 != test2:
+                raise ValueError
 
-        if sum(tests) == 0 or sum(tests) == 3:
-            return tests[0]
+        # vol=VolumeModel([self] + rays + ray_intersection)
+        # vol.babylonjs_from_script(debug=True)
+        return tests[0]
+        # print('------------------------')
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111, projection='3d')
+        # p1, p2 = Point3D((bbox.xmin,bbox.ymin,bbox.zmin)), Point3D((bbox.xmin,bbox.ymin,bbox.zmax))
+        # p3, p4 = Point3D((bbox.xmin,bbox.ymax,bbox.zmin)), Point3D((bbox.xmin,bbox.ymax,bbox.zmax))
+        # p5, p6 = Point3D((bbox.xmax,bbox.ymin,bbox.zmin)), Point3D((bbox.xmax,bbox.ymin,bbox.zmax))
+        # p7, p8 = Point3D((bbox.xmax,bbox.ymax,bbox.zmax)), Point3D((bbox.xmax,bbox.ymax,bbox.zmin))
+        # p1.MPLPlot(ax=ax, color='g')
+        # p2.MPLPlot(ax=ax, color='g')
+        # p3.MPLPlot(ax=ax, color='g')
+        # p4.MPLPlot(ax=ax, color='g')
+        # p5.MPLPlot(ax=ax, color='g')
+        # p6.MPLPlot(ax=ax, color='g')
+        # p7.MPLPlot(ax=ax, color='g')
+        # p8.MPLPlot(ax=ax, color='g')
+        # point = Point3D(point.vector)
+        # # print(point.babylon_script())
+        # for ray in rays[:3]:
+        #     ray.MPLPlot(ax=ax) 
+        #     # print(ray.babylon_script())
+        # for ray in rays_intersections:
+        #     for point in ray:
+        #         point = Point3D(point.vector)
+        #         point.MPLPlot(ax=ax, color='r')
+        #         # print(point.babylon_script())
+        # print('------------------------')
+
+        # if sum(tests) == 0 or sum(tests) == 3:
+        #     return tests[0]
+        
 #        else:
 #            print('PROBLEME')
 #            print(point)
@@ -6175,7 +6218,7 @@ class Shell3D(CompositePrimitive3D):
 #                print('------------------------')
             ###############
 
-        return sum(tests) > 1
+        # return sum(tests) > 1
 
     def is_inside_shell(self, shell2):
         """
@@ -6189,9 +6232,10 @@ class Shell3D(CompositePrimitive3D):
 
         points = []
         for face in self.faces:
-            points.extend(face.contours[0].points)
+            points.extend(face.contours3d[0].points)
 
         for point in points:
+            # print('>>>>>>>>>>>>>>>>>>>>>>>>>>>',shell2.point_belongs(point))
             if not shell2.point_belongs(point):
                 return False
 
