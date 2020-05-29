@@ -402,8 +402,14 @@ class Contour2D(Wire2D):
             else :
                 for pt in prim.points[0:len(prim.points)-1] :
                     pts.append(pt)
-                
-        self.points = pts
+        #to delete double points
+        points = []
+        for k in range (0, len(pts)-1) :
+            if pts[k]==pts[k+1] :
+                pass
+            else :
+                points.append(pts[k])
+        self.points = points
 
     def _primitives_analysis(self):
         """
@@ -2711,15 +2717,20 @@ class Arc3D(Primitive3D):
         
         return p1, p2
                
-    def minimum_distance(self, element) :
+    def minimum_distance(self, element, return_points=False) :
         if element.__class__ is Arc3D or element.__class__ is Circle3D :
             p1, p2 = self.minimum_distance_points_arc(element)
-            return p1.point_distance(p2)
+            if return_points : 
+                return p1.point_distance(p2), p1, p2
+            else :
+                return p1.point_distance(p2)
             
         elif element.__class__ is LineSegment3D :
-            
             pt1, pt2 = self.minimum_distance_points_line(element)
-            return pt1.point_distance(pt2)
+            if return_points : 
+                return pt1.point_distance(pt2), pt1, pt2
+            else :
+                return pt1.point_distance(pt2)
         else :
             return NotImplementedError
 
@@ -3720,14 +3731,20 @@ class LineSegment3D(Edge3D):
         else :
             return NotImplementedError
         
-    def minimum_distance(self, element):
+    def minimum_distance(self, element, return_points=False):
         if element.__class__ is Arc3D or element.__class__ is Circle3D:
             pt1, pt2 = element.minimum_distance_points_line(self)
-            return pt1.point_distance(pt2)
+            if return_points : 
+                return pt1.point_distance(pt2), pt1, pt2
+            else :
+                return pt1.point_distance(pt2)
         
         elif element.__class__ is LineSegment3D :
             p1, p2 = self.Matrix_distance(element)
-            return p1.point_distance(p2)
+            if return_points : 
+                return p1.point_distance(p2), p1, p2
+            else :
+                return p1.point_distance(p2)
 
         else :
             return NotImplementedError
@@ -4349,21 +4366,22 @@ class PlaneFace3D(Face3D):
         self.name = name
         self.contours = contours
         self.plane = plane
-        contour_points = []
-        for prim in self.contours[0].primitives :
-            for pt in prim.points :
-                # pt3d = (pt.copy()).To3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
-                # contour_points.append(pt3d)
-                contour_points.append(pt)
-        if points is None or polygon2D is None:
-            # self.points, self.polygon2D = self._repair_points_and_polygon2d(contour_points, self.plane)
-            self.points = contour_points
-            self.polygon2D = Polygon2D(self.points)
-        else :
-            self.points = points
-            self.polygon2D = polygon2D
-        ctr3d = contours[0].copy()
-        Face3D.__init__(self, [ctr3d.To3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])])
+        self.setup_planeface(self.contours, self.plane, points=points, polygon2D=polygon2D, name=self.name)
+        # contour_points = []
+        # for prim in self.contours[0].primitives :
+        #     for pt in prim.points :
+        #         # pt3d = (pt.copy()).To3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
+        #         # contour_points.append(pt3d)
+        #         contour_points.append(pt)
+        # if points is None or polygon2D is None:
+        #     # self.points, self.polygon2D = self._repair_points_and_polygon2d(contour_points, self.plane)
+        #     self.points = contour_points
+        #     self.polygon2D = Polygon2D(self.points)
+        # else :
+        #     self.points = points
+        #     self.polygon2D = polygon2D
+        # ctr3d = contours[0].copy()
+        # Face3D.__init__(self, [ctr3d.To3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])])
             
         
         # else :
@@ -4408,6 +4426,21 @@ class PlaneFace3D(Face3D):
         #         print('WARNING', pt, 'not on', self.plane.__dict__)
         #         print('dot =', self.plane.normal.Dot(pt-self.plane.origin))
         #         raise ValueError
+
+    def setup_planeface(self, ctrs2d, plane, points=None, polygon2D=None, name=''):
+        contour_points = []
+        for pt in self.contours[0].points :
+            contour_points.append(pt)
+        if points is None or polygon2D is None:
+            # self.points, self.polygon2D = self._repair_points_and_polygon2d(contour_points, self.plane)
+            self.points = contour_points
+            self.polygon2D = Polygon2D(self.points)
+        else :
+            self.points = points
+            self.polygon2D = polygon2D
+        ctr3d = ctrs2d[0].copy()
+        Face3D.__init__(self, [ctr3d.To3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])])
+            
 
     def __hash__(self):
         return hash(self.plane) + sum([hash(p) for p in self.points])
@@ -4521,7 +4554,8 @@ class PlaneFace3D(Face3D):
         else:
             self.plane.frame_mapping(frame, side, copy=False)
             for contour in self.contours3d :
-                contour.frame_mapping(frame, side, copy=False) 
+                contour.frame_mapping(frame, side, copy=False)
+            self.setup_planeface(self.contours, self.plane, name=self.name)
 
     def copy(self):
         new_contours = [contour.copy() for contour in self.contours]
@@ -4645,14 +4679,14 @@ class PlaneFace3D(Face3D):
             for point2 in polygon2_points_3D:
                 d, other_point = self.distance_to_point(point2, return_other_point=True)
                 distances.append((d, point2, other_point))
-
+        
         d_min, point_min, other_point_min = distances[0]
         for distance in distances[1:]:
             if distance[0] < d_min:
                 d_min = distance[0]
                 point_min = distance[1]
                 other_point_min = distance[2]
-
+        
         return d_min, point_min, other_point_min
 
     def point_on_face(self, point):
@@ -4791,16 +4825,20 @@ class PlaneFace3D(Face3D):
         plt.show()
         return ax
     
-    def minimum_distance(self, other_face) :
+    def minimum_distance(self, other_face, return_points=False) :
         if other_face.__class__ is CylindricalFace3D :
             p1, p2 = other_face.minimum_distance_points_cyl(self)
-            
-            return p1.point_distance(p2)
+            if return_points : 
+                return p1.point_distance(p2), p1, p2
+            else :
+                return p1.point_distance(p2)
         
         if other_face.__class__ is PlaneFace3D : 
             dmin, p1, p2 = self.distance_to_face(other_face, return_points=True)
-            
-            return p1.point_distance(p2)
+            if return_points : 
+                return p1.point_distance(p2), p1, p2
+            else :
+                return p1.point_distance(p2)
         else :
             return NotImplementedError 
 
@@ -5329,16 +5367,20 @@ class CylindricalFace3D(Face3D):
         
         return p1, p2
             
-    def minimum_distance(self, other_face) :
+    def minimum_distance(self, other_face, return_points=False) :
         if other_face.__class__ is CylindricalFace3D :
             p1, p2 = self.minimum_distance_points_cyl(other_face)
-            
-            return p1.point_distance(p2)
+            if return_points : 
+                return p1.point_distance(p2), p1, p2
+            else :
+                return p1.point_distance(p2)
         
         if other_face.__class__ is PlaneFace3D : 
             p1, p2 = self.minimum_distance_points_plane(other_face)
-            
-            return p1.point_distance(p2)
+            if return_points : 
+                return p1.point_distance(p2), p1, p2
+            else :
+                return p1.point_distance(p2)
         else :
             return NotImplementedError 
             
@@ -6272,10 +6314,10 @@ class Shell3D(CompositePrimitive3D):
         # Check if any point of the first shell is in the second shell
         points1 = []
         for face in self.faces:
-            points1.extend(face.contours[0].points)
+            points1.extend(face.contours3d[0].points)
         points2 = []
         for face in shell2.faces:
-            points2.extend(face.contours[0].points)
+            points2.extend(face.contours3d[0].points)
 
         nb_pts1 = len(points1)
         nb_pts2 = len(points2)
@@ -6314,14 +6356,16 @@ class Shell3D(CompositePrimitive3D):
         if self.shell_intersection(shell2) is not None and self.shell_intersection(shell2) != 1:
             return None
 
-        distance_min, point1_min, point2_min = self.faces[0].distance_to_face(shell2.faces[0], return_points=True)
+        # distance_min, point1_min, point2_min = self.faces[0].distance_to_face(shell2.faces[0], return_points=True)
+        distance_min, point1_min, point2_min = self.faces[0].minimum_distance(shell2.faces[0], return_points=True)
         for face1 in self.faces:
             bbox1 = face1.bounding_box
             for face2 in shell2.faces:
                 bbox2 = face2.bounding_box
                 bbox_distance = bbox1.distance_to_bbox(bbox2)
                 if bbox_distance < distance_min:
-                    distance, point1, point2 = face1.distance_to_face(face2, return_points=True)
+                    # distance, point1, point2 = face1.distance_to_face(face2, return_points=True)
+                    distance, point1, point2 = face1.minimum_distance(face2, return_points=True)
                     if distance == 0:
                         return None
                     elif distance < distance_min:
