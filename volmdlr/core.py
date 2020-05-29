@@ -403,13 +403,13 @@ class Contour2D(Wire2D):
                 for pt in prim.points[0:len(prim.points)-1] :
                     pts.append(pt)
         #to delete double points
-        points = []
-        for k in range (0, len(pts)-1) :
-            if pts[k]==pts[k+1] :
-                pass
-            else :
-                points.append(pts[k])
-        self.points = points
+        # points = []
+        # for k in range (0, len(pts)-1) :
+        #     if pts[k]==pts[k+1] :
+        #         pass
+        #     else :
+        #         points.append(pts[k])
+        self.points = pts
 
     def _primitives_analysis(self):
         """
