@@ -4649,13 +4649,7 @@ class PlaneFace3D(Face3D):
             vertices.extend([tuple(p.vector) for p in points_2D])
             
             if len(vertices) != len(set(vertices)):
-                
-                print(len(vertices), len(set(vertices)))
-                fig, ax = plt.subplots()
-                [pt.MPLPlot(ax=ax) for pt in contour.points]
-                [prim.MPLPlot(ax=ax) for prim in contour.primitives]
-                print(contour.points)
-                raise ValueError('There are points in double, please check __init__')
+                raise ValueError('Clean_points problem')
             
             len_points = len(points_2D)
             segments += [[a+total_len, a+total_len+1] for a in range(len_points-1)]+[[len_points+total_len-1, 0+total_len]]
@@ -5783,6 +5777,7 @@ class ToroidalFace3D (Face3D) :
         
         pts3d = self.points2d_to3d(pts, rcenter, rcircle, frame3d)
         pt3d, tangle = delete_double_pos(pts3d, Triangles)
+        
         return pt3d, tangle
     
     def frame_mapping(self, frame, side, copy=True) :
