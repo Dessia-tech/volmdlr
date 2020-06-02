@@ -389,27 +389,7 @@ class Contour2D(Wire2D):
     def __init__(self, primitives, name=''):
         Wire2D.__init__(self, primitives, name)
         self._utd_analysis = False
-        pts = []
-        # print()
-        # for prim in primitives :
-        #     print('prim.points', prim.points)
-        for prim in primitives :
-            if prim.__class__ is Circle2D :
-                pts.extend(prim.points)
-            elif prim.__class__ is Arc2D :
-                points_arc = prim.tessellation_points() 
-                pts.extend(points_arc[0:len(points_arc)-1])
-            else :
-                for pt in prim.points[0:len(prim.points)-1] :
-                    pts.append(pt)
-        #to delete double points
-        # points = []
-        # for k in range (0, len(pts)-1) :
-        #     if pts[k]==pts[k+1] :
-        #         pass
-        #     else :
-        #         points.append(pts[k])
-        self.points = pts
+        self.points = self.clean_points()
 
     def _primitives_analysis(self):
         """
@@ -604,6 +584,86 @@ class Contour2D(Wire2D):
         x = npy.sum([p[0] for p in self.points]) / nb
         y = npy.sum([p[1] for p in self.points]) / nb
         return Point2D((x,y))
+    
+    def clean_points(self):
+        """
+        This method is copy from Contour3D, if changes are done there or here,
+        please change both method
+        Be aware about primitives = 2D, edges = 3D
+        """
+        # print('!' , self.edges)
+        if hasattr(self.primitives[0], 'points'):
+            points = self.primitives[0].points[:]
+            # print(self.edges)
+            # print(self.edges[0].points)
+            # print(points)
+        else:
+            points = self.primtives[0].tessellation_points()
+            # print('center',self.edges[0].center)
+            # print('radius',self.edges[0].radius)
+            # print('normal',self.edges[0].normal)
+        # print(self.edges[0])
+        # print(self.edges)
+        # print()
+        # print(points)
+        # print(self.edges[1:])
+        for primitive in self.primitives[1:]:
+            if hasattr(primitive, 'points'):
+                # [pt.MPLPlot(ax=ax) for pt in edge.points]
+                points_to_add = primitive.points[:]
+                if points[0] == points[-1]: # Dans le cas où le (dernier) edge relie deux fois le même point
+                    # print('=', points_to_add[::-1])
+                    # print('==', points_to_add[-2::-1])
+                    points.extend(points_to_add[::-1])
+                
+                elif points_to_add[0] == points[-1]:
+                    points.extend(points_to_add[1:])
+                elif points_to_add[-1] == points[-1]:
+                    points.extend(points_to_add[-2::-1])
+                elif points_to_add[0] == points[0]:
+                    points = points[::-1]
+                    points.extend(points_to_add[1:])
+                elif points_to_add[-1] == points[0]:
+                    points = points[::-1]
+                    points.extend(points_to_add[-2::-1])
+                else:
+                    # fig, ax = self.MPLPlot()
+                    # print()
+                    # [print(edge.points) for edge in self.edges]
+                    # print()
+                    # print('self edges',self.edges)
+                    
+                    # print('edge', edge)
+                    # print('pts to add',points_to_add)
+                    # # print('l1', len(points_to_add))
+                    # # print('edge.points',edge.points[:])
+                    # # print('l2', len(edge.points[:]))
+                    # print('points',points)
+                    # fig, ax = self.MPLPlot()
+                    # [pt.MPLPlot(ax=ax) for pt in points]
+                    # [pt.MPLPlot(ax=ax, color='r') for pt in points_to_add]
+                    # print()
+                    
+                    #NotImplementedError peut être plus nécessaire ??
+                    
+                    # raise NotImplementedError
+                    continue
+
+            else:
+                # print('hello')
+                # print()
+                # print('edge',self.edges)
+                # print('points',points)
+                # [print(edge.points) for edge in self.edges]
+                # print()
+                # print('pts add',points_to_add)
+                raise NotImplementedError
+        
+        if len(points) > 1:
+            if points[0] == points[-1]:
+                points.pop()
+                
+        return points
 
     # def clean_primitives(self, contour):
     #     for prim in contour.primitives :
@@ -1924,9 +1984,9 @@ class Plane3D(Primitive3D):
                 self.normal.Normalize()
 
     def copy(self):
-        new_origin = self.origin.Copy()
-        new_vector1 = self.vectors[0].Copy()
-        new_vector2 = self.vectors[1].Copy()
+        new_origin = self.origin.copy()
+        new_vector1 = self.vectors[0].copy()
+        new_vector2 = self.vectors[1].copy()
         return Plane3D(new_origin, new_vector1, new_vector2, self.name)
 
     def MPLPlot(self, ax=None):
@@ -2227,7 +2287,7 @@ class Line3D(Primitive3D, Line):
                     self.points = [frame.NewCoordinates(p) for p in self.points]
 
     def copy(self):
-        return Line3D(*[p.Copy() for p in self.points])
+        return Line3D(*[p.copy() for p in self.points])
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -3405,8 +3465,8 @@ class Edge3D(Primitive3D):
             self.points[1] = self.points[1].frame_mapping(frame, side, copy=True)
 
     def copy(self):
-        new_edge_start = self.points[0].Copy()
-        new_edge_end = self.points[1].Copy()
+        new_edge_start = self.points[0].copy()
+        new_edge_end = self.points[1].copy()
         return Edge3D(new_edge_start, new_edge_end)
 
 
@@ -3561,7 +3621,7 @@ class LineSegment3D(Edge3D):
                 self.bounding_box = self._bounding_box()
 
     def copy(self):
-        return LineSegment3D(*[p.Copy() for p in self.points])
+        return LineSegment3D(*[p.copy() for p in self.points])
 
     def MPLPlot(self, ax=None):
         if ax is None:
@@ -3940,7 +4000,7 @@ class Contour3D(Wire3D):
     def copy(self):
         new_edges = [edge.copy() for edge in self.edges]
         if self.point_inside_contour is not None:
-            new_point_inside_contour = self.point_inside_contour.Copy()
+            new_point_inside_contour = self.point_inside_contour.copy()
         else:
             new_point_inside_contour = None
         return Contour3D(new_edges, new_point_inside_contour, self.name)
@@ -4495,7 +4555,7 @@ class PlaneFace3D(Face3D):
         for contour in contours3d :
             prim = [p.To2D(O,x,y) for p in contour.edges]
             contours2d.append(Contour2D(prim))
-        
+
         return cls(contours2d, plane, points=None, polygon2D=None, name=name)
     
     def Rotation(self, center, axis, angle, copy=True):
@@ -4560,7 +4620,7 @@ class PlaneFace3D(Face3D):
     def copy(self):
         new_contours = [contour.copy() for contour in self.contours]
         new_plane = self.plane.copy()
-        new_points = [p.Copy() for p in self.points]
+        new_points = [p.copy() for p in self.points]
         return PlaneFace3D(new_contours, new_plane, new_points, self.polygon2D.copy(), self.name)
 
     def average_center_point(self):
@@ -4589,6 +4649,12 @@ class PlaneFace3D(Face3D):
             vertices.extend([tuple(p.vector) for p in points_2D])
             
             if len(vertices) != len(set(vertices)):
+                
+                print(len(vertices), len(set(vertices)))
+                fig, ax = plt.subplots()
+                [pt.MPLPlot(ax=ax) for pt in contour.points]
+                [prim.MPLPlot(ax=ax) for prim in contour.primitives]
+                print(contour.points)
                 raise ValueError('There are points in double, please check __init__')
             
             len_points = len(points_2D)
