@@ -12,6 +12,7 @@ import volmdlr.primitives3D as primitives3D
 import volmdlr.primitives2D as primitives2D
 import matplotlib.pyplot as plt
 import random
+import math
 
 #### Cyl Cyl
 rmin, rmax = 10, 100
@@ -76,5 +77,7 @@ p2.MPLPlot(ax=ax, color='b')
 
 
 shell = volmdlr.Shell3D([cyl1,cyl2])
-m = volmdlr.VolumeModel([shell])
-m.babylonjs()
+vol = volmdlr.VolumeModel([shell, p1, p2])
+vol.babylonjs_from_script()
+# m = volmdlr.VolumeModel([shell])
+# m.babylonjs()

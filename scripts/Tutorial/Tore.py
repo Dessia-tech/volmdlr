@@ -19,7 +19,7 @@ normal1.Normalize() #Normalize the normal if it is not the case
 vec1 = normal1.deterministic_unit_normal_vector()
 
 
-frame = vm.Frame3D(center, vec1, normal1.Cross(vec1), normal1,) #Frame in the center of the generative arc3D
+frame = vm.Frame3D(center, vec1, normal1.Cross(vec1), normal1) #Frame in the center of the generative arc3D
 toroidalsurface3d = vm.ToroidalSurface3D(frame, r1*1000, r2*1000) #*1000 because Toroidalsurface /1000
 
 theta = 4*math.pi/3 #Tore's length
