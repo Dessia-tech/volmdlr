@@ -6035,6 +6035,102 @@ class ToroidalFace3D (Face3D) :
             
         return p1, p2
     
+    
+    def minimum_distance_points_plane(self, planeface): #Planeface with contour2D
+        #### ADD THE FACT THAT PLANEFACE.CONTOURS : [0] = contours totale, le reste = trous
+        
+        poly2d = planeface.polygon2D
+        pfpoints = poly2d.points
+        xmin, ymin = min([pt[0] for pt in pfpoints]), min([pt[1] for pt in pfpoints])
+        xmax, ymax = max([pt[0] for pt in pfpoints]), max([pt[1] for pt in pfpoints])
+        origin, vx, vy = planeface.plane.origin, planeface.plane.vectors[0], planeface.plane.vectors[1] 
+        pf1_2d, pf2_2d = Point2D((xmin, ymin)), Point2D((xmin, ymax))
+        pf3_2d, pf4_2d = Point2D((xmax, ymin)), Point2D((xmax, ymax))
+        pf1, pf2 = pf1_2d.To3D(origin, vx, vy), pf2_2d.To3D(origin, vx, vy) 
+        pf3, pf4 = pf3_2d.To3D(origin, vx, vy), pf4_2d.To3D(origin, vx, vy)
+        
+        u, v = (pf3-pf1), (pf2-pf1)
+        u.Normalize()
+        v.Normalize()
+        
+        R1, r1 = self.rcenter, self.rcircle
+        min_phi1, min_theta1, max_phi1, max_theta1 = self.minimum_maximum_tore(self.contours2d[0])
+        
+        start1 = self.start
+        n1 = self.normal
+        # u1 = start1 - self.center
+        # u1.Normalize()
+        # v1 = n1.Cross(u1)
+        u1 = self.toroidalsurface3d.frame.u
+        v1 = self.toroidalsurface3d.frame.v
+        
+        
+        
+        w = self.center - pf1
+        
+        n1n1, n1u1, n1v1, n1u, n1v = n1.Dot(n1), n1.Dot(u1), n1.Dot(v1), n1.Dot(u), n1.Dot(v)
+        u1u1, u1v1, u1u, u1v = u1.Dot(u1), u1.Dot(v1), u1.Dot(u), u1.Dot(v)
+        v1v1, v1u, v1v = v1.Dot(v1), v1.Dot(u), v1.Dot(v)
+        uu, uv, vv = u.Dot(u), u.Dot(v), v.Dot(v)
+        
+        w2, wn1, wu1, wv1, wu, wv = w.Dot(w), w.Dot(n1), w.Dot(u1), w.Dot(v1), w.Dot(u), w.Dot(v)
+        
+        # x = (x, y, phi1, theta1)
+        def distance_squared(x):
+            return( uu*(x[0]**2) + vv*(x[1]**2) + w2 
+                   + u1u1*(((R1+r1*math.cos(x[2]))*math.cos(x[3]))**2)
+                   + v1v1*(((R1+r1*math.cos(x[2]))*math.sin(x[3]))**2)
+                   + n1n1*((math.sin(x[2]))**2)*(r1**2)
+                   + 2*x[0]*x[1]*uv - 2*x[0]*wu
+                   - 2*x[0]*(R1+r1*math.cos(x[2]))*math.cos(x[3])*u1u
+                   - 2*x[0]*(R1+r1*math.cos(x[2]))*math.sin(x[3])*v1u
+                   - 2*x[0]*math.sin(x[2])*r1*n1u - 2*x[1]*wv
+                   - 2*x[1]*(R1+r1*math.cos(x[2]))*math.cos(x[3])*u1v
+                   - 2*x[1]*(R1+r1*math.cos(x[2]))*math.sin(x[3])*v1v
+                   - 2*x[1]*math.sin(x[2])*r1*n1v
+                   + 2*(R1+r1*math.cos(x[2]))*math.cos(x[3])*wu1
+                   + 2*(R1+r1*math.cos(x[2]))*math.sin(x[3])*wv1
+                   + 2*math.sin(x[2])*r1*wn1
+                   + 2*u1v1*math.cos(x[3])*math.sin(x[3])*((R1+r1*math.cos(x[2]))**2)
+                   + 2*(R1+r1*math.cos(x[2]))*math.cos(x[3])*r1*math.sin(x[2])*n1u1
+                   + 2*(R1+r1*math.cos(x[2]))*math.sin(x[3])*r1*math.sin(x[2])*n1v1 )
+                
+                
+        
+        x01 = npy.array([(xmax-xmin)/2, (ymax-ymin)/2,
+                         (min_phi1+max_phi1)/2, (min_theta1+max_theta1)/2 ])
+
+        minimax = [(0, 0, min_phi1, min_theta1), (xmax-xmin, ymax-ymin, max_phi1, max_theta1)]
+        
+        res1 = scp.optimize.least_squares(distance_squared, x01, bounds=minimax)   
+
+        frame1 = Frame3D(self.center, u1, v1, n1)
+        pt1 = self.points2d_to3d([[res1.x[3], res1.x[2]]], R1, r1, frame1)
+        p1 = pt1[0]
+        p2 = pf1 + res1.x[2]*u + res1.x[3]*v
+        # d = p1.point_distance(p2)
+        
+        pt1_2d = Point2D((res1.x[3], res1.x[2]))
+        pt2_2d = p2.To2D(pf1,u, v)
+        
+        if not(self.contours2d[0].point_belongs(pt1_2d)) :
+            #Find the closest one
+            points_contours1 = self.contours2d[0].points
+            
+            poly1 = Polygon2D(points_contours1)
+            d1, new_pt1_2d = poly1.PointBorderDistance(pt1_2d, return_other_point=True)
+                    
+            pt1 = self.points2d_to3d([new_pt1_2d], R1, r1, frame1)
+            p1 = pt1[0]
+        
+        if not(planeface.contours[0].point_belongs(pt2_2d)) :
+            #Find the closest one
+            d2, new_pt2_2d = planeface.polygon2D.PointBorderDistance(pt2_2d, return_other_point=True)
+            
+            p2 = new_pt2_2d.To3D(pf1, u, v)
+        
+        return p1, p2
+    
     def minimum_distance(self, other_face, return_points=False) :
         if other_face.__class__ is ToroidalFace3D :
             p1, p2 = self.minimum_distance_points_tore(other_face)
