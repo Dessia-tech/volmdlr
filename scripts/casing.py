@@ -55,6 +55,9 @@ belt = primitives3D.ExtrudedProfile(vm.Z3D*(height - 2*thickness), vm.X3D, vm.Y3
                                       [inner_contour]+screw_holes,
                                       thickness * vm.Z3D, name='belt')
 
+# fig, ax = plt.subplots()
+fig, ax = inner_contour.MPLPlot()
+belt_outer_contour.MPLPlot(ax=ax)
 
 ax = belt.outer_contour3d.MPLPlot()
 l = belt.outer_contour3d.Length()

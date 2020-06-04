@@ -86,78 +86,99 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.Wire2D):
             self.__init__([p.Translation(offset,copy=True) for p in self.points],
                           self.radius, adapt_radius =self.adapt_radius, name = self.name)
 
-    def Offset(self, offset):
-        nb = len(self.points)
-        vectors = []
-        for i in range(nb-1):
-            v1 = volmdlr.Vector2D((self.points[i+1] - self.points[i]))
-            v2 = volmdlr.Vector2D((self.points[i] - self.points[i+1]))
-            v1.Normalize()
-            v2.Normalize()
-            vectors.append(v1)
-            vectors.append(v2)
+    # def Offset(self, offset):
+    #     nb = len(self.points)
+    #     vectors = []
+    #     for i in range(nb-1):
+    #         v1 = volmdlr.Vector2D((self.points[i+1] - self.points[i]))
+    #         v2 = volmdlr.Vector2D((self.points[i] - self.points[i+1]))
+    #         v1.Normalize()
+    #         v2.Normalize()
+    #         vectors.append(v1)
+    #         vectors.append(v2)
 
-        if self.closed:
-            v1 = volmdlr.Vector2D((self.points[0] - self.points[-1]))
-            v2 = volmdlr.Vector2D((self.points[-1] - self.points[0]))
-            v1.Normalize()
-            v2.Normalize()
-            vectors.append(v1)
-            vectors.append(v2)
-
-
-        offset_vectors = []
-        new_radii = {}
-        offset_points = []
-
-        for i in range((not self.closed),nb-(not self.closed)):
-
-            check = False
-            ni = vectors[2*i-1] + vectors[2*i]
-            if ni == volmdlr.Vector2D((0,0)):
-                ni = vectors[2*i]
-                ni = ni.NormalVector()
-                offset_vectors.append(ni)
-            else:
-                ni.Normalize()
-                if ni.Dot(vectors[2*i-1].NormalVector()) > 0:
-                    ni = - ni
-                    check = True
-                offset_vectors.append(ni)
-
-            if i in self.radius:
-                if (check and offset > 0) or (not check and offset < 0):
-                    new_radius = self.radius[i] + abs(offset)
-                else:
-                    new_radius = self.radius[i] - abs(offset)
-                if new_radius > 0:
-                    new_radii[i] = new_radius
-                else:
-                    if self.adapt_radius:
-                        new_radii[i] = 1e-6
-
-            normal_vector1 = - vectors[2*i-1].NormalVector()
-            normal_vector2 =   vectors[ 2*i ].NormalVector()
-            normal_vector1.Normalize()
-            normal_vector2.Normalize()
-            alpha = math.acos(normal_vector1.Dot(normal_vector2))
-
-            offset_point = self.points[i] + offset/math.cos(alpha/2)*offset_vectors[i-(not self.closed)]
-            offset_points.append(offset_point)
+    #     if self.closed:
+    #         v1 = volmdlr.Vector2D((self.points[0] - self.points[-1]))
+    #         v2 = volmdlr.Vector2D((self.points[-1] - self.points[0]))
+    #         v1.Normalize()
+    #         v2.Normalize()
+    #         vectors.append(v1)
+    #         vectors.append(v2)
 
 
-        if not self.closed:
-            n1 = vectors[0].NormalVector(unit=True)
-            offset_vectors.insert(0, n1)
-            offset_points.insert(0, self.points[0] + offset*offset_vectors[0])
+    #     offset_vectors = []
+    #     new_radii = {}
+    #     offset_points = []
 
-            n_last = vectors[-1].NormalVector(unit=True)
-            n_last = - n_last
-            offset_vectors.append(n_last)
-            offset_points.append(self.points[-1] + offset*offset_vectors[-1])
+    #     for i in range((not self.closed),nb-(not self.closed)):
 
-        return self.__class__(offset_points, new_radii, adapt_radius=self.adapt_radius)
+    #         # check = False
+    #         ni = vectors[2*i-1] + vectors[2*i]
+    #         if ni == volmdlr.Vector2D((0,0)):
+    #             ni = vectors[2*i]
+    #             ni = ni.NormalVector()
+    #             offset_vectors.append(ni)
+    #         else:
+    #             ni.Normalize()
+    #             # print(ni.Dot(vectors[2*i-1].NormalVector()))
+    #             if ni.Dot(vectors[2*i-1].NormalVector()) > 0:
+    #                 ni = - ni
+    #                 # check = True
+    #             offset_vectors.append(ni)
+                
+            
+
+    #         if i in self.radius:
+    #             # Determine side
+    #             side = ni.NormalVector().Dot(vectors[2*i-1]) > 0
+    #             print('side', side)
+    #             if (side and offset > 0) or (not side and offset < 0):
+    #                 new_radius = self.radius[i] + abs(offset)
+    #             else:
+    #                 new_radius = self.radius[i] - abs(offset)
+    #             if new_radius > 0:
+    #                 new_radii[i] = new_radius
+    #             else:
+    #                 if self.adapt_radius:
+    #                     new_radii[i] = 1e-6
+
+    #         normal_vector1 = - vectors[2*i-1].NormalVector()
+    #         normal_vector2 =   vectors[ 2*i ].NormalVector()
+    #         normal_vector1.Normalize()
+    #         normal_vector2.Normalize()
+    #         alpha = math.acos(normal_vector1.Dot(normal_vector2))
+
+    #         offset_point = self.points[i] + offset/math.cos(alpha/2)*offset_vectors[i-(not self.closed)]
+    #         offset_points.append(offset_point)
+
+
+        # if not self.closed:
+        #     n1 = vectors[0].NormalVector(unit=True)
+        #     offset_vectors.insert(0, n1)
+        #     offset_points.insert(0, self.points[0] + offset*offset_vectors[0])
+
+        #     n_last = vectors[-1].NormalVector(unit=True)
+        #     n_last = - n_last
+        #     offset_vectors.append(n_last)
+        #     offset_points.append(self.points[-1] + offset*offset_vectors[-1])
+
+        # return self.__class__(offset_points, new_radii, adapt_radius=self.adapt_radius)
         
+    def Offset(self, offset:float) -> 'OpenedRoundedLineSegments2D':
+        lines = []
+        for point1, point2 in zip(self.points[:-1], self.points[1:]):
+            line_direction_vector = point2 - point1
+            line_direction_vector.Normalize()
+            line_normal_vector = line_direction_vector.NormalVector()
+            line = volmdlr.Line2D(point1+offset*line_normal_vector,
+                                  point2+offset*line_normal_vector)
+            lines.append(line)
+        
+        new_points = [self.points[0]]
+        for line1, line2 in zip(lines[:-1], lines[1:]):
+            new_point = line1.line_intersection(line2)
+            new_points.append(new_point)
+        new_points = [self.points[-1]]
         
     def OffsetSingleLine(self, line_index, offset):
         """
