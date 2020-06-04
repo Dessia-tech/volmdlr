@@ -593,7 +593,10 @@ class Contour2D(Wire2D):
         """
         # print('!' , self.edges)
         if hasattr(self.primitives[0], 'points'):
-            points = self.primitives[0].points[:]
+            if self.primitives[0].__class__ is Arc2D :
+                points = self.primitives[0].tessellation_points()
+            else :
+                points = self.primitives[0].points[:]
             # print(self.edges)
             # print(self.edges[0].points)
             # print(points)
@@ -609,8 +612,11 @@ class Contour2D(Wire2D):
         # print(self.edges[1:])
         for primitive in self.primitives[1:]:
             if hasattr(primitive, 'points'):
+                if primitive.__class__ is Arc2D :
+                    points_to_add = primitive.tessellation_points()
                 # [pt.MPLPlot(ax=ax) for pt in edge.points]
-                points_to_add = primitive.points[:]
+                else :
+                    points_to_add = primitive.points[:]
                 if points[0] == points[-1]: # Dans le cas où le (dernier) edge relie deux fois le même point
                     # print('=', points_to_add[::-1])
                     # print('==', points_to_add[-2::-1])
@@ -1223,7 +1229,7 @@ class Arc2D(Primitive2D):
             self.angle1 = angle2
             self.angle2 = angle1
             self.angle = clockwise_path
-        
+            
     def _get_points(self):
         return [self.start,self.interior,self.end]
 
@@ -4294,15 +4300,21 @@ class Face3D(Primitive3D):
         return (min(Ls), max(Ls))
     
     def cut_contours(self, contours2d, resolution) :
-        placement_2d = []
-        for k in range(0, len(contours2d[0].primitives)):
-            placement_2d.extend(contours2d[0].primitives[k].points) 
-        placement2d = self.delete_double(placement_2d)
-        placement2d.append(placement2d[0])
+        # placement_2d = []
+        # for k in range(0, len(contours2d[0].primitives)):
+        #     placement_2d.extend(contours2d[0].primitives[k].points) 
+        # placement2d = self.delete_double(placement_2d)
+        # placement2d.append(placement2d[0])
         
+        placement2d = contours2d[0].points
+        if placement2d[-1] != placement2d[0] :
+            placement2d.append(placement2d[0])
+            
         segmentspt=[]
         for k in range (0,len(placement2d)-1):
             segmentspt.append(LineSegment2D(Point2D(placement2d[k].vector),Point2D(placement2d[k+1].vector)))
+        
+        # [LS.MPLPlot(ax=ax) for LS in segmentspt]
         
         hmin, hmax = self.min_max(placement2d,1)
         posimin, posimax = self.min_max(placement2d,0)
@@ -5090,8 +5102,8 @@ class CylindricalFace3D(Face3D):
         circlend = LineSegment2D(seghb.points[1],segbh.points[0])
         
         edges = [segbh, circlestart, seghb, circlend]
-        points = edges[0].points 
-        return cls([Contour2D(edges)], cylindersurface3d, points, name='')
+        # points = edges[0].points 
+        return cls([Contour2D(edges)], cylindersurface3d, points=None, name='')
     
     def points2d_to3d(self, all_contours_points, radius, frame3d) :
         Points3D = []
