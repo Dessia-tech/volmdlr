@@ -414,7 +414,6 @@ class ExtrudedProfile(volmdlr.Shell3D):
                 seg3 = volmdlr.LineSegment3D(seg2.points[1], seg2.points[1]-seg1.points[1] + seg1.points[0])
                 seg4 = volmdlr.LineSegment3D(seg3.points[1], seg1.points[0])
                 edges = [seg1, seg2, seg3, seg4]
-                # return [edge.generated_planeface([volmdlr.Contour3D(edges)])]
                 return [volmdlr.PlaneFace3D.from_contours3d([volmdlr.Contour3D(edges)])]
             
             elif edge.__class__ is volmdlr.primitives3D.OpenedRoundedLineSegments3D or edge.__class__ is volmdlr.primitives3D.ClosedRoundedLineSegments3D :
@@ -436,7 +435,7 @@ class ExtrudedProfile(volmdlr.Shell3D):
         return [lower_face]+[upper_face]+lateral_faces
 
     def _bounding_box(self):
-        return volmdlr.BoundingBox.from_points(self.outer_contour3d.points)
+        return volmdlr.BoundingBox.from_points(self.outer_contour3d.tessellation_points)
 
     def MPLPlot(self, ax=None):
         if ax is None:

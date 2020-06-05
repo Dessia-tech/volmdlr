@@ -55,7 +55,6 @@ belt = primitives3D.ExtrudedProfile(vm.Z3D*(height - 2*thickness), vm.X3D, vm.Y3
                                       [inner_contour]+screw_holes,
                                       thickness * vm.Z3D, name='belt')
 
-# fig, ax = plt.subplots()
 fig, ax = inner_contour.MPLPlot()
 belt_outer_contour.MPLPlot(ax=ax)
 
@@ -72,7 +71,6 @@ for p in belt.outer_contour3d.points:
     p.MPLPlot(ax=ax)
 
 
-
 model = vm.VolumeModel([bottom, sides, belt], name='Casing')
 model.babylonjs()
 
@@ -82,8 +80,8 @@ model.babylonjs()
 # model = vm.VolumeModel([belt])
 # model.babylonjs('belt')
 
-dict_ = model.to_dict()
-model2 = vm.VolumeModel.dict_to_object(dict_)
+# dict_ = model.to_dict()
+# model2 = vm.VolumeModel.dict_to_object(dict_)
 
 #casing = vm.primitives3D.Fuse([bottom, sides, belt], 'Lower Casing')
 #model = vm.VolumeModel([casing])
