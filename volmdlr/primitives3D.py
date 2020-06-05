@@ -435,7 +435,7 @@ class ExtrudedProfile(volmdlr.Shell3D):
         return [lower_face]+[upper_face]+lateral_faces
 
     def _bounding_box(self):
-        return volmdlr.BoundingBox.from_points(self.outer_contour3d.tessellation_points)
+        return volmdlr.BoundingBox.from_points(self.outer_contour3d.tessel_points)
 
     def MPLPlot(self, ax=None):
         if ax is None:

@@ -389,7 +389,7 @@ class Contour2D(Wire2D):
     def __init__(self, primitives, name=''):
         Wire2D.__init__(self, primitives, name)
         self._utd_analysis = False
-        self.tessellation_points = self.tessellation_points()
+        self.tessel_points = self.clean_points()
 
     def _primitives_analysis(self):
         """
@@ -580,12 +580,12 @@ class Contour2D(Wire2D):
         return Contour2D(primitives_copy)
 
     def average_center_point(self):
-        nb = len(self.primitives_endpoints )
-        x = npy.sum([p[0] for p in self.primitives_endpoints]) / nb
-        y = npy.sum([p[1] for p in self.primitives_endpoints]) / nb
+        nb = len(self.tessel_points )
+        x = npy.sum([p[0] for p in self.tessel_points]) / nb
+        y = npy.sum([p[1] for p in self.tessel_points]) / nb
         return Point2D((x,y))
     
-    def tessellation_points(self):
+    def clean_points(self):
         """
         This method is copy from Contour3D, if changes are done there or here,
         please change both method
@@ -3805,10 +3805,10 @@ class Contour3D(Wire3D):
         if self.edges[0].__class__.__name__ == 'Contour3D':
             raise ValueError
 
-        self.tessellation_points = self.tessellation_points()
+        self.tessel_points = self.clean_points()
 
     def __hash__(self):
-        return sum([hash(e) for e in self.edges]) + sum([hash(p) for p in self.tessellation_points])
+        return sum([hash(e) for e in self.edges]) + sum([hash(p) for p in self.tessel_points])
 
     def __eq__(self, other_):
         equal = True
@@ -3839,7 +3839,7 @@ class Contour3D(Wire3D):
 
         return cls(edges, point_inside_contour=None, name=arguments[0][1:-1])
 
-    def tessellation_points(self):
+    def clean_points(self):
         """
         TODO : verifier si le dernier point est toujours le meme que le premier point
         lors d'un import step par exemple
@@ -3851,7 +3851,6 @@ class Contour3D(Wire3D):
             # print(self.edges[0].points)
             # print(points)
         else:
-            print('edges', self.edges[0])
             points = self.edges[0].tessellation_points()
             # print('center',self.edges[0].center)
             # print('radius',self.edges[0].radius)
@@ -3865,53 +3864,55 @@ class Contour3D(Wire3D):
             if hasattr(edge, 'points'):
                 # [pt.MPLPlot(ax=ax) for pt in edge.points]
                 points_to_add = edge.points[:]
-                if points[0] == points[-1]: # Dans le cas où le (dernier) edge relie deux fois le même point
-                    # print('=', points_to_add[::-1])
-                    # print('==', points_to_add[-2::-1])
-                    points.extend(points_to_add[::-1])
-                
-                elif points_to_add[0] == points[-1]:
-                    points.extend(points_to_add[1:])
-                elif points_to_add[-1] == points[-1]:
-                    points.extend(points_to_add[-2::-1])
-                elif points_to_add[0] == points[0]:
-                    points = points[::-1]
-                    points.extend(points_to_add[1:])
-                elif points_to_add[-1] == points[0]:
-                    points = points[::-1]
-                    points.extend(points_to_add[-2::-1])
-                else:
-                    # fig, ax = self.MPLPlot()
-                    # print()
-                    # [print(edge.points) for edge in self.edges]
-                    # print()
-                    # print('self edges',self.edges)
-                    
-                    # print('edge', edge)
-                    # print('pts to add',points_to_add)
-                    # # print('l1', len(points_to_add))
-                    # # print('edge.points',edge.points[:])
-                    # # print('l2', len(edge.points[:]))
-                    # print('points',points)
-                    # fig, ax = self.MPLPlot()
-                    # [pt.MPLPlot(ax=ax) for pt in points]
-                    # [pt.MPLPlot(ax=ax, color='r') for pt in points_to_add]
-                    # print()
-                    
-                    #NotImplementedError peut être plus nécessaire ??
-                    
-                    # raise NotImplementedError
-                    continue
-
+            else :
+                points_to_add = edge.tessellation_points()
+            if points[0] == points[-1]: # Dans le cas où le (dernier) edge relie deux fois le même point
+                # print('=', points_to_add[::-1])
+                # print('==', points_to_add[-2::-1])
+                points.extend(points_to_add[::-1])
+            
+            elif points_to_add[0] == points[-1]:
+                points.extend(points_to_add[1:])
+            elif points_to_add[-1] == points[-1]:
+                points.extend(points_to_add[-2::-1])
+            elif points_to_add[0] == points[0]:
+                points = points[::-1]
+                points.extend(points_to_add[1:])
+            elif points_to_add[-1] == points[0]:
+                points = points[::-1]
+                points.extend(points_to_add[-2::-1])
             else:
-                # print('hello')
+                # fig, ax = self.MPLPlot()
                 # print()
-                # print('edge',self.edges)
-                # print('points',points)
                 # [print(edge.points) for edge in self.edges]
                 # print()
-                # print('pts add',points_to_add)
-                raise NotImplementedError
+                # print('self edges',self.edges)
+                
+                # print('edge', edge)
+                # print('pts to add',points_to_add)
+                # # print('l1', len(points_to_add))
+                # # print('edge.points',edge.points[:])
+                # # print('l2', len(edge.points[:]))
+                # print('points',points)
+                # fig, ax = self.MPLPlot()
+                # [pt.MPLPlot(ax=ax) for pt in points]
+                # [pt.MPLPlot(ax=ax, color='r') for pt in points_to_add]
+                # print()
+                
+                #NotImplementedError peut être plus nécessaire ??
+                
+                # raise NotImplementedError
+                    continue
+
+            # else:
+            #     # print('hello')
+            #     # print()
+            #     # print('edge',self.edges)
+            #     # print('points',points)
+            #     # [print(edge.points) for edge in self.edges]
+            #     # print()
+            #     # print('pts add',points_to_add)
+            #     raise NotImplementedError
         
         if len(points) > 1:
             if points[0] == points[-1]:
@@ -3920,7 +3921,7 @@ class Contour3D(Wire3D):
         return points
 
     def average_center_point(self):
-        nb = len(self.tessellation_points)
+        nb = len(self.tessel_points)
         x = npy.sum([p[0] for p in self.points]) / nb
         y = npy.sum([p[1] for p in self.points]) / nb
         z = npy.sum([p[2] for p in self.points]) / nb
@@ -3934,7 +3935,7 @@ class Contour3D(Wire3D):
         else:
             for edge in self.edges:
                 edge.Rotation(center, axis, angle, copy=False)
-            for point in self.tessellation_points:
+            for point in self.tessel_points:
                 point.Rotation(center, axis, angle, copy=False)
 
     def Translation(self, offset, copy=True):
@@ -3945,7 +3946,7 @@ class Contour3D(Wire3D):
         else:
             for edge in self.edges:
                 edge.Translation(offset, copy=False)
-            for point in self.tessellation_points:
+            for point in self.tessel_points:
                 point.Translation(offset, copy=False)
 
     def frame_mapping(self, frame, side, copy=True):
@@ -3959,7 +3960,7 @@ class Contour3D(Wire3D):
         else:
             for edge in self.edges:
                 edge.frame_mapping(frame, side, copy=False)
-            for point in self.tessellation_points:
+            for point in self.tessel_points:
                 point.frame_mapping(frame, side, copy=False)
 
     def copy(self):
@@ -4012,6 +4013,7 @@ class Circle3D(Contour3D):
         self.radius = radius
         self.normal = normal
         self.angle = 2*math.pi
+        self.points = self.tessellation_points()
         Contour3D.__init__(self, [self], name=name)
         
         
@@ -4196,7 +4198,7 @@ class Face3D(Primitive3D):
         self.bounding_box = self._bounding_box()
         
     def _bounding_box(self):
-        points = self.contours3d[0].tessellation_points
+        points = self.contours3d[0].tessel_points
 
         xmin = min([pt[0] for pt in points])
         xmax = max([pt[0] for pt in points])
@@ -4459,7 +4461,7 @@ class PlaneFace3D(Face3D):
         #     contour_points.append(pt)
         if points is None or polygon2D is None:
             # self.points, self.polygon2D = self._repair_points_and_polygon2d(contour_points, self.plane)
-            self.points = self.contours[0].tessellation_points
+            self.points = self.contours[0].tessel_points
             self.polygon2D = Polygon2D(self.points)
         else :
             self.points = points
@@ -4514,7 +4516,7 @@ class PlaneFace3D(Face3D):
         :param contours3d: The face's contour3D
         :type contours3d: Contour3D
         """
-        contour_points = [p.copy() for p in contours3d[0].tessellation_points[:]]
+        contour_points = [p.copy() for p in contours3d[0].tessel_points[:]]
         plane = Plane3D.from_points(contour_points)
         O, x, y = plane.origin, plane.vectors[0], plane.vectors[1]
         contours2d = []
@@ -4611,7 +4613,7 @@ class PlaneFace3D(Face3D):
             # if polygon2D.Area() == 0.:
             #     return None, None
 
-            points_2D = contour.tessellation_points
+            points_2D = contour.tessel_points
             vertices.extend([tuple(p.vector) for p in points_2D])
             
             if len(vertices) != len(set(vertices)):
@@ -4682,8 +4684,8 @@ class PlaneFace3D(Face3D):
         if self.face_intersection(face2) is not None:
             return 0, None, None
 
-        polygon1_points_3D = [Point3D(p.vector) for p in self.contours3d[0].tessellation_points]
-        polygon2_points_3D = [Point3D(p.vector) for p in face2.contours3d[0].tessellation_points]
+        polygon1_points_3D = [Point3D(p.vector) for p in self.contours3d[0].tessel_points]
+        polygon2_points_3D = [Point3D(p.vector) for p in face2.contours3d[0].tessel_points]
 
         distances = []
         if not return_points:
@@ -4832,9 +4834,9 @@ class PlaneFace3D(Face3D):
 #        y = [p[1] for edge in self.contours[0].edges for p in edge.points]
 #        z = [p[2] for edge in self.contours[0].edges for p in edge.points]
 #        print(x,y,z)
-        x = [p[0] for p in self.contours[0].tessellation_points]
-        y = [p[1] for p in self.contours[0].tessellation_points]
-        z = [p[2] for p in self.contours[0].tessellation_points]
+        x = [p[0] for p in self.contours[0].tessel_points]
+        y = [p[1] for p in self.contours[0].tessel_points]
+        z = [p[2] for p in self.contours[0].tessel_points]
 
         ax.scatter(x, y, z)
         ax.set_xlabel('X Label')
@@ -4902,7 +4904,7 @@ class CylindricalFace3D(Face3D):
         self.contours2d = contours2d 
         self.cylindricalsurface3d = cylindricalsurface3d 
         if points is None:
-            self.points = self.contours2d[0].tessellation_points 
+            self.points = self.contours2d[0].tessel_points 
         else:
             self.points = points 
         self.name = name 
@@ -4951,7 +4953,7 @@ class CylindricalFace3D(Face3D):
 #            ax = fig.add_subplot(111, projection='3d')
 #            contours3d[0].MPLPlot(ax=ax)
             
-            ptsnew = [frame3d.NewCoordinates(point) for point in contours3d[0].tessellation_points]
+            ptsnew = [frame3d.NewCoordinates(point) for point in contours3d[0].tessel_points]
 #            [pt.MPLPlot(ax=ax, color='r') for pt in ptsnew]
             pts2d, seg, points = [], [], []
             
@@ -4984,7 +4986,7 @@ class CylindricalFace3D(Face3D):
                 # seg[k+1].MPLPlot(ax=ax)
             contours2d = [Contour2D(seg[1:])]        
             points = pts2d
-        # [pt.MPLPlot(ax=ax, color='r') for pt in contours2d[0].tessellation_points]
+        # [pt.MPLPlot(ax=ax, color='r') for pt in contours2d[0].tessel_points]
 #        [pt.MPLPlot(ax=ax) for pt in points]
     
         ####
@@ -5084,7 +5086,7 @@ class CylindricalFace3D(Face3D):
         #             continue
         #         else :
         #             pt.MPLPlot(ax=ax) 
-        # [pt.MPLPlot(ax=ax, color='r') for pt in self.contours2d[0].tessellation_points]
+        # [pt.MPLPlot(ax=ax, color='r') for pt in self.contours2d[0].tessel_points]
         #############
         Triangles = []
         ts=[]
@@ -5149,7 +5151,7 @@ class CylindricalFace3D(Face3D):
         x = []
         y = []
         z = []
-        for px, py, pz in self.contours[0].tessellation_points :
+        for px, py, pz in self.contours[0].tessel_points :
             x.append(px)
             y.append(py)
             z.append(pz)
@@ -5167,7 +5169,7 @@ class CylindricalFace3D(Face3D):
             self.cylindricalsurface3d.frame_mapping(frame, side, copy=False)
             
     def minimum_maximum(self, contour2d, radius) :
-        points = contour2d.tessellation_points
+        points = contour2d.tessel_points
         
         min_h, min_theta = min([pt[1] for pt in points]), min([pt[0] for pt in points])/radius
         max_h, max_theta = max([pt[1] for pt in points]), max([pt[0] for pt in points])/radius 
@@ -5255,7 +5257,7 @@ class CylindricalFace3D(Face3D):
         
         if not(self.contours2d[0].point_belongs(pt1_2d)) :
             #Find the closest one
-            points_contours1 = self.contours2d[0].tessellation_points
+            points_contours1 = self.contours2d[0].tessel_points
             
             poly1 = Polygon2D(points_contours1)
             d1, new_pt1_2d = poly1.PointBorderDistance(pt1_2d, return_other_point=True)
@@ -5267,7 +5269,7 @@ class CylindricalFace3D(Face3D):
         
         if not(other_cyl.contours2d[0].point_belongs(pt2_2d)) :
             #Find the closest one
-            points_contours2 = other_cyl.contours2d[0].tessellation_points
+            points_contours2 = other_cyl.contours2d[0].tessel_points
             
             poly2 = Polygon2D(points_contours2)
             d2, new_pt2_2d = poly2.PointBorderDistance(pt2_2d, return_other_point=True)
@@ -5342,7 +5344,7 @@ class CylindricalFace3D(Face3D):
         
         if not(self.contours2d[0].point_belongs(pt1_2d)) :
             #Find the closest one
-            points_contours1 = self.contours2d[0].tessellation_points
+            points_contours1 = self.contours2d[0].tessel_points
             
             poly1 = Polygon2D(points_contours1)
             d1, new_pt1_2d = poly1.PointBorderDistance(pt1_2d, return_other_point=True)
@@ -5424,7 +5426,7 @@ class ToroidalFace3D (Face3D) :
         self.contours2d = contours2d 
         
         if points is None or len(points)==1 :
-            self.points = self.contours2d[0].tessellation_points 
+            self.points = self.contours2d[0].tessel_points 
         else:
             self.points = points 
         self.name = name 
@@ -5725,7 +5727,7 @@ class ToroidalFace3D (Face3D) :
             self.toroidalsurface3d.frame_mapping(frame, side, copy=False)
             
     def minimum_maximum_tore(self, contour2d) :
-        points = contour2d.tessellation_points
+        points = contour2d.tessel_points
         
         min_phi, min_theta = min([pt[1] for pt in points]), min([pt[0] for pt in points])
         max_phi, max_theta = max([pt[1] for pt in points]), max([pt[0] for pt in points])
@@ -5848,7 +5850,7 @@ class ToroidalFace3D (Face3D) :
         
         if not(self.contours2d[0].point_belongs(pt1_2d)) :
             #Find the closest one
-            points_contours1 = self.contours2d[0].tessellation_points
+            points_contours1 = self.contours2d[0].tessel_points
             
             poly1 = Polygon2D(points_contours1)
             d1, new_pt1_2d = poly1.PointBorderDistance(pt1_2d, return_other_point=True)
@@ -5859,7 +5861,7 @@ class ToroidalFace3D (Face3D) :
         
         if not(other_tore.contours2d[0].point_belongs(pt2_2d)) :
             #Find the closest one
-            points_contours2 = other_tore.contours2d[0].tessellation_points
+            points_contours2 = other_tore.contours2d[0].tessel_points
             
             poly2 = Polygon2D(points_contours2)
             d2, new_pt2_2d = poly2.PointBorderDistance(pt2_2d, return_other_point=True)
@@ -5980,7 +5982,7 @@ class ToroidalFace3D (Face3D) :
         
         if not(self.contours2d[0].point_belongs(pt2_2d)) :
             #Find the closest one
-            points_contours2 = self.contours2d[0].tessellation_points
+            points_contours2 = self.contours2d[0].tessel_points
             
             poly2 = Polygon2D(points_contours2)
             d2, new_pt2_2d = poly2.PointBorderDistance(pt2_2d, return_other_point=True)
@@ -6083,7 +6085,7 @@ class ToroidalFace3D (Face3D) :
         
         if not(self.contours2d[0].point_belongs(pt1_2d)) :
             #Find the closest one
-            points_contours1 = self.contours2d[0].tessellation_points
+            points_contours1 = self.contours2d[0].tessel_points
             
             poly1 = Polygon2D(points_contours1)
             d1, new_pt1_2d = poly1.PointBorderDistance(pt1_2d, return_other_point=True)
@@ -6141,7 +6143,7 @@ class BSplineFace3D(Face3D):
             normal = self.bspline_shape.vectorextru
             
             #find the bd box's height ,changing the frame of points
-            scal = [normal.Dot(Vector3D(pt.vector)) for pt in self.contours[0].tessellation_points[:]]
+            scal = [normal.Dot(Vector3D(pt.vector)) for pt in self.contours[0].tessel_points[:]]
             mini, maxi = min(scal), max(scal)
             h = maxi-mini
             
@@ -6186,7 +6188,7 @@ class BSplineFace3D(Face3D):
             # fig = plt.figure()
             # ax = fig.add_subplot(111, projection='3d')
             ######### FORMAT 1 : AVEC "PORTES"
-            # self.points = self.contours[0].tessellation_points
+            # self.points = self.contours[0].tessel_points
             # self.bounding_box = self._bounding_box()
             # xmax, xmin = self.bounding_box.xmax, self.bounding_box.xmin
             # ymax, ymin = self.bounding_box.ymax, self.bounding_box.ymin
@@ -6218,7 +6220,7 @@ class BSplineFace3D(Face3D):
             #     pointsbbx.append(ptetage)
             # #STEP 2 : Find the intersection between surfacepoint and contourspoints + interior points
             # ptsurf = []
-            # ptscontours = self.contours[0].tessellation_points
+            # ptscontours = self.contours[0].tessel_points
             # # ptscontours.append(ptscontours[0])
             # # ptscontours = ptscontour[::-1] #on inverse pour concorder avec la lecture des pts
             # nbx_u = []
@@ -6672,7 +6674,7 @@ class Shell3D(CompositePrimitive3D):
 
         points = []
         for face in self.faces:
-            points.extend(face.contours3d[0].tessellation_points)
+            points.extend(face.contours3d[0].tessel_points)
 
         for point in points:
             if not shell2.point_belongs(point):
@@ -6710,10 +6712,10 @@ class Shell3D(CompositePrimitive3D):
         # Check if any point of the first shell is in the second shell
         points1 = []
         for face in self.faces:
-            points1.extend(face.contours3d[0].tessellation_points)
+            points1.extend(face.contours3d[0].tessel_points)
         points2 = []
         for face in shell2.faces:
-            points2.extend(face.contours3d[0].tessellation_points)
+            points2.extend(face.contours3d[0].tessel_points)
 
         nb_pts1 = len(points1)
         nb_pts2 = len(points2)
@@ -6806,7 +6808,7 @@ class Shell3D(CompositePrimitive3D):
 
         shell1_points_inside_shell2 = []
         for face in self.faces:
-            for point in face.contours3d[0].tessellation_points:
+            for point in face.contours3d[0].tessel_points:
                 if shell2.point_belongs(point):
                     shell1_points_inside_shell2.append(point)
 
@@ -6828,7 +6830,7 @@ class Shell3D(CompositePrimitive3D):
 
         shell1_points_outside_shell2 = []
         for face in self.faces:
-            for point in face.contours3d[0].tessellation_points:
+            for point in face.contours3d[0].tessel_points:
                 if not shell2.point_belongs(point):
                     shell1_points_outside_shell2.append(point)
 
