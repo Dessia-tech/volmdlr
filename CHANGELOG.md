@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use PlaneFace3D with contours2D in a classic way and use it with contours3D with a 'from_contours3d' as CylindricalFace3D does.
 - Calculate the distance between CylindricalFace3D and PlaneFace3D.
 - Calculate the distance between CylindricalFace3D, PlaneFace3D and ToroidalFace3D.
+- contours2d.tessel_points which gives all points of a contour2d, and .points the end points of primitives.
 
 ## [v0.1.10]
 - typings
