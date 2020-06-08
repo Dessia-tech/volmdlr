@@ -99,6 +99,12 @@ class OpenedRoundedLineSegments3D(volmdlr.Wire3D, RoundedLineSegments):
 
 
 class ClosedRoundedLineSegments3D(volmdlr.Contour3D, OpenedRoundedLineSegments3D):
+    """
+    :param points: Points used to draw the wire 
+    :type points: List of Point3D
+    :param radius: Radius used to connect different parts of the wire
+    :type radius: {position1(n): float which is the radius linked the n-1 and n+1 points, position2(n+1):...}
+    """
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
@@ -168,12 +174,24 @@ class Block(volmdlr.Shell3D):
 
     def face_contours(self):
         e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11, e12 = self.Edges()
+        e5_switch = e5.reverse()
+        e6_switch = e6.reverse()
+        e7_switch = e7.reverse()
+        e8_switch = e8.reverse()
+        e9_switch = e9.reverse()
+        e10_switch = e10.reverse()
+        e11_switch = e11.reverse()
+        e12_switch = e12.reverse()
         return [volmdlr.Contour3D([e1.copy(), e2.copy(), e3.copy(), e4.copy()]),
                 volmdlr.Contour3D([e5.copy(), e6.copy(), e7.copy(), e8.copy()]),
-                volmdlr.Contour3D([e1.copy(), e9.copy(), e5.copy(), e10.copy()]),
-                volmdlr.Contour3D([e2.copy(), e10.copy(), e6.copy(), e11.copy()]),
-                volmdlr.Contour3D([e3.copy(), e11.copy(), e7.copy(), e12.copy()]),
-                volmdlr.Contour3D([e4.copy(), e12.copy(), e8.copy(), e9.copy()])]
+                # volmdlr.Contour3D([e1.copy(), e9.copy(), e5.copy(), e10.copy()]),
+                volmdlr.Contour3D([e1.copy(), e10.copy(), e5_switch.copy(), e9_switch.copy()]),
+                # volmdlr.Contour3D([e2.copy(), e10.copy(), e6.copy(), e11.copy()]),
+                volmdlr.Contour3D([e2.copy(), e11.copy(), e6_switch.copy(), e10_switch.copy()]),
+                # volmdlr.Contour3D([e3.copy(), e11.copy(), e7.copy(), e12.copy()]),
+                volmdlr.Contour3D([e3.copy(), e12.copy(), e7_switch.copy(), e11_switch.copy()]),
+                # volmdlr.Contour3D([e4.copy(), e12.copy(), e8.copy(), e9.copy()])]
+                volmdlr.Contour3D([e4.copy(), e9.copy(), e8_switch.copy(), e12_switch.copy()])]
 
     def shell_faces(self):
         c1, c2, c3, c4, c5, c6 = self.face_contours()
@@ -320,7 +338,7 @@ class Cone(volmdlr.Primitive3D):
 
 class ExtrudedProfile(volmdlr.Shell3D):
     """
-
+    
     """
     _non_serializable_attributes  = ['faces', 'inner_contours3d', 'outer_contour3d']
     def __init__(self, plane_origin, x, y, outer_contour2d, inner_contours2d,
@@ -746,6 +764,9 @@ class RevolvedProfile(volmdlr.Shell3D):
                           self.angle)
 
 class Cylinder(RevolvedProfile):
+    """
+    Creates a full cylinder with the position, the axis of revolution, the radius and the length.
+    """
     def __init__(self, position, axis, radius, length, color=None, alpha=1., name=''):
         self.position = position
         axis.Normalize()
@@ -1032,8 +1053,12 @@ class HelicalExtrudedProfile(volmdlr.Primitive3D):
 
 class Sweep(volmdlr.Shell3D):
     """
-    Sweep a 3D contour along a Wire3D
-            2D contour
+    Sweep a 3D/2D contour along a Wire3D
+            
+    
+    :Example: 
+        >>> contour2d is a Circle2D or a Arc2D
+        >>> wire3d refers to a (Opened/Closed)RoundedLineSegments3D
     """
 
     def __init__(self, contour2d, wire3d, *, color=None, alpha=1, name=''):

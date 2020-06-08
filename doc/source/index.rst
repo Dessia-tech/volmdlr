@@ -6,12 +6,19 @@
 Volmdlr: A python volume modeler
 ================================
 
+    Volmdlr is a volume modeler, which is used as a CAD plateform.
+It is simple to understand and operate.
+With it, you can create a lot of 3D Models easily. Check the follow examples
+to see what you can do with Volmdlr.
+    Volmdlr uses Babylonjs as a display.
+
 .. toctree::
   :maxdepth: 1
 
   intro
   usage
-  reference
+  primitive2D
+  primitive3D
   dev
 
 
@@ -20,8 +27,9 @@ Features
 --------
 
  * A geometrical description of basis objects and primitives built on top: lines, points contours...
- * Computational tools for creating the geometry and to analyse it (area, second moment area, intersections, closest point)
+ * Computational tools for creating the geometry and to analyse it (area, second moment area, intersections, closest point, distance)
  * FreeCAD binding for exporting in .fcstd, .step, .stl
+ * Volmdlr is able to read .step files (WIP)
 
 
 Galery
@@ -39,7 +47,7 @@ This contour is offset by the casing width.
 .. image:: images/casing_contours.png
 
 These contours are extruded to form the side shell.
-A bottom is formed from an extrusion
+A bottom is formed from an extrusion.
 
 Screw holes are placed at equal curvilign distance of the belt.
 
@@ -47,9 +55,14 @@ All the primitives are fused together in a single volume.
 
 Sweep
 ~~~~~
+.. image:: images/sweep1.jpg
+
 https://github.com/Dessia-tech/volmdlr/blob/master/scripts/sweep.py
 
-.. image:: images/sweep.jpg
+A Sweep is pipes, created with Circle2D/Arc2D which is contained in a Contour2D.
+You have to create the neutral fiber, i.e., the pipe's road, with the primitive RoundedLineSegment3D. 
+
+.. image:: images/sweepMPLPlot.jpg
 
 Polygon
 ~~~~~~~

@@ -1,48 +1,5 @@
-Reference
-=========
-
-
-.. _primitives-label:
-
-Primitives
-----------
-
-2D core primitives
-~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: volmdlr.Vector2D
-  :members:
-
-.. autoclass:: volmdlr.Point2D
-  :members:
-
-.. autoclass:: volmdlr.Basis2D
-  :members:
-
-.. autoclass:: volmdlr.Frame2D
-  :members:
-
-
-.. autoclass:: volmdlr.Line2D
-  :members:
-
-.. autoclass:: volmdlr.LineSegment2D
-  :members:
-
-.. autoclass:: volmdlr.Polygon2D
-  :members:
-
-.. autoclass:: volmdlr.Arc2D
-  :members:
-
-
-2D advanced primitives
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: volmdlr.primitives2D.OpenedRoundedLineSegments2D
-.. autoclass:: volmdlr.primitives2D.ClosedRoundedLineSegments2D
-  :members:
-
+Primitives3D
+============
 
 3D core Primitives
 ~~~~~~~~~~~~~~~~~~
@@ -69,17 +26,26 @@ Primitives
 .. autoclass:: volmdlr.Arc3D
   :members:
 
+Faces3D
+~~~~~~~
+
+.. autoclass:: volmdlr.core.PlaneFace3D
+  :members:
+https://github.com/Dessia-tech/volmdlr/blob/distancewire/scripts/Tutorial/PlaneFace.py
+
 .. autoclass:: volmdlr.core.CylindricalFace3D
   :members:
 
 .. autoclass:: volmdlr.core.CylindricalSurface3D
   :members:
+https://github.com/Dessia-tech/volmdlr/blob/distancewire/scripts/Tutorial/Cylinder.py
 
 .. autoclass:: volmdlr.core.ToroidalFace3D
   :members:
 
 .. autoclass:: volmdlr.core.ToroidalSurface3D
   :members:
+https://github.com/Dessia-tech/volmdlr/blob/distancewire/scripts/Tutorial/Tore.py
 
 3D advanced primitives
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -114,3 +80,4 @@ Primitives
 
 .. autoclass:: volmdlr.primitives3D.Fuse
   :members:
+
