@@ -2147,6 +2147,29 @@ class ConicalSurface3D(Primitive3D):
         semi_angle = float(arguments[3])
         return cls(frame_direct, radius, semi_angle, arguments[0][1:-1])
     
+    def frame_mapping(self, frame, side, copy=True) :
+        basis = frame.Basis()
+        if side == 'new':
+            new_origin = frame.NewCoordinates(self.frame.origin)
+            new_u = basis.NewCoordinates(self.frame.u)
+            new_v = basis.NewCoordinates(self.frame.v)
+            new_w = basis.NewCoordinates(self.frame.w)
+            new_frame = Frame3D(new_origin, new_u, new_v, new_w)
+            if copy:
+                return ConicalSurface3D(new_frame, self.radius, name=self.name)
+            else:
+                self.frame = new_frame
+
+        if side == 'old':
+            new_origin = frame.OldCoordinates(self.frame.origin)
+            new_u = basis.OldCoordinates(self.frame.u)
+            new_v = basis.OldCoordinates(self.frame.v)
+            new_w = basis.OldCoordinates(self.frame.w)
+            new_frame = Frame3D(new_origin, new_u, new_v, new_w)
+            if copy:
+                return ConicalSurface3D(new_frame, self.radius, name=self.name)
+            else:
+                self.frame = new_frame
 # class EllipseSurface3D(Primitive3D):
     
 #     def __init__(self, frame, R, r, name=''): 
@@ -2505,6 +2528,11 @@ class Arc3D(Primitive3D):
 
         l1 = Line3D(p11, p12)
         l2 = Line3D(p21, p22)
+        
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111, projection='3d')
+        # l1.MPLPlot(ax=ax)
+        # l2.MPLPlot(ax=ax)
         
         c1, _ = l1.MinimumDistancePoints(l2)
         
@@ -6186,7 +6214,10 @@ class ConicalFace3D (Face3D) :
             c1 = LineSegment3D(self.center, center2)
         else :
             c1 = Arc3D(ptext1, ptext1.Rotation(self.center, vec2, points[3]/2), ptext1.Rotation(self.center, vec2, points[3]), self.normal) 
-        c2 = Arc3D(ptext2, ptext2.Rotation(center2, vec2, points[1]/2), ptext2.Rotation(center2, vec2, points[1]), self.normal)
+        if math.isclose(self.rt, 0, abs_tol = 1e-6) :
+            c2 = LineSegment3D(center2, self.center)
+        else :
+            c2 = Arc3D(ptext2, ptext2.Rotation(center2, vec2, points[1]/2), ptext2.Rotation(center2, vec2, points[1]), self.normal)
             
         edges = [c1, c2]
         ctr = [Contour3D(edges)]
@@ -6209,10 +6240,6 @@ class ConicalFace3D (Face3D) :
         :Example:
             >>> contours3d is [Arc3D, LineSegment3D, Arc3D], the Cone's bones
         """
-        # fig = plt.figure()
-        # ax = fig.add_subplot(111, projection='3d')
-        # [edge.MPLPlot(ax=ax) for edge in contours3d[0].edges]
-        
         if contours3d[0].edges[0].__class__ is Arc3D and contours3d[0].edges[1].__class__ is LineSegment3D : #Portion of Tore
             r1 = contours3d[0].edges[0].radius
             theta1 = contours3d[0].edges[0].angle
@@ -6223,7 +6250,7 @@ class ConicalFace3D (Face3D) :
                 theta2 = contours3d[0].edges[2].angle
             linelength, R = contours3d[0].edges[1].Length(), max((r1,r2))-min((r1,r2))
             
-            h = math.sqrt(linelength**2 - R**2) ## Check if h is equal for both line otherwise le top is not in the middle
+            h = math.sqrt(linelength**2 - R**2) ## Check if h is equal for both line otherwise the top is not in the middle
             
             offset = (theta1 - theta2)/2
             
@@ -6250,6 +6277,46 @@ class ConicalFace3D (Face3D) :
         Points_3D = [frame3d.OldCoordinates(point) for point in Points3D]
         return Points_3D
     
+    def create_triangle(self, all_contours_points, part) :
+        Triangles, ts = [], []
+        pts, h_list = [], []
+        for listpt in all_contours_points :
+            for pt in listpt :
+                pts.append(pt)
+                h_list.append(pt[1])
+        if part == 'bot' :        
+            h_concerned = min(h_list)
+        else :
+            h_concerned = max(h_list)
+        peak_list, other = [], []
+        for pt in pts : 
+            if pt[1]==h_concerned :
+                peak_list.append(pt)
+            else : 
+                other.append(pt)
+        points = [peak_list[0]] + other
+        
+        for i in range(1, len(points)):
+            if i == len(points)-1 :
+                vertices = [points[i].vector, points[0].vector, points[1].vector]
+                segments = [[0,1],[1,2],[2,0]]
+                listindice = [i,0,1]
+            else :
+                vertices = [points[i].vector, points[0].vector, points[i+1].vector]
+                segments = [[0,1],[1,2],[2,0]]
+                listindice = [i,0,i+1]
+            tri = {'vertices': vertices, 'segments': segments}
+            t = triangle.triangulate(tri, 'p')
+            if 'triangles' in t:
+                triangles = t['triangles'].tolist()
+                triangles[0] = listindice
+                Triangles.append(triangles)        
+            else:
+                Triangles.append(None)
+            ts.append(t)
+            
+        return points, Triangles
+    
     def triangulation(self, resolution=30):
         rb = self.rb
         rt = self.rt
@@ -6266,54 +6333,57 @@ class ConicalFace3D (Face3D) :
             resolution_theta = 5
 
         all_contours_points = self.cut_contours(self.contours2d, resolution_theta)
-        # fig, ax = plt.subplots()
-        # [pt.MPLPlot(ax=ax) for pt in all_contours_points[0]]
-        # [pt.MPLPlot(ax=ax, color='b') for pt in all_contours_points[1]]
-        # [pt.MPLPlot(ax=ax, color='g') for pt in all_contours_points[2]]
-        # [pt.MPLPlot(ax=ax, color='y') for pt in all_contours_points[3]]
-        # [pt.MPLPlot(ax=ax, color='r') for pt in all_contours_points[4]]
-        # [pt.MPLPlot(ax=ax) for pt in all_contours_points[5]]
-        # pts = []
-        # for listpt in all_contours_points :
-        #     [pt.MPLPlot(ax=ax) for pt in listpt]
-        #     for pt in listpt :
-        #         pts.append(pt)
+
+        if rb == 0 :
+            points, Triangles = self.create_triangle(all_contours_points, part='bot')
+            Points_3D = self.points2d_to3d([points], rb, rt, h, frame3d)
+        elif rt == 0 :
+            points, Triangles = self.create_triangle(all_contours_points, part='top')
+            Points_3D = self.points2d_to3d([points], rb, rt, h, frame3d)
+        else :    
+            Triangles, ts = [], []
+            for k, listpt in enumerate(all_contours_points) :
+                vertices=[]
+                segments=[]
+                for i, pt in enumerate(listpt):
+                    vertices.append(pt.vector)
+                    segments.append([i,i+1])
+                segments[-1]=(len(listpt)-1,0) 
+                tri = {'vertices': vertices, 'segments': segments}
+                t = triangle.triangulate(tri, 'p')
+                ts.append(t)
+            
+            seuil, k = 0, 0
+            for t in ts :
+                if 'triangles' in t:
+                    triangles = t['triangles'].tolist()
+                    for n,tri in enumerate(triangles):
+                        for i in range (0,3):
+                            tri[i]=tri[i]+seuil
+                    seuil += len(all_contours_points[k])
+                    k += 1
+                    Triangles.append(triangles)        
+                else:
+                    Triangles.append(None)
         
-        Triangles, ts = [], []
+            Points_3D = self.points2d_to3d(all_contours_points, rb, rt, h, frame3d)
         
-        for k, listpt in enumerate(all_contours_points) :
-            vertices=[]
-            segments=[]
-            for i, pt in enumerate(listpt):
-                vertices.append(pt.vector)
-                segments.append([i,i+1])
-            segments[-1]=(len(listpt)-1,0) 
-            tri = {'vertices': vertices, 'segments': segments}
-            t = triangle.triangulate(tri, 'p')
-            ts.append(t)
-        
-        seuil, k = 0, 0
-        for t in ts :
-            if 'triangles' in t:
-                triangles = t['triangles'].tolist()
-                for n,tri in enumerate(triangles):
-                    for i in range (0,3):
-                        tri[i]=tri[i]+seuil
-                seuil += len(all_contours_points[k])
-                k += 1
-                Triangles.append(triangles)        
-            else:
-                Triangles.append(None)
-        
-        Points_3D = self.points2d_to3d(all_contours_points, rb, rt, h, frame3d)
+        pt3d, tangle = delete_double_pos(Points_3D, Triangles)
         # fig = plt.figure()
         # ax = fig.add_subplot(111, projection='3d')
-        # [pt.MPLPlot(ax=ax) for pt in Points_3D]
-        # print('>>>>', len(Points_3D))
-        pt3d, tangle = delete_double_pos(Points_3D, Triangles)
-        # print('>>>>>>', len(pt3d), len(set(pt3d)) )
+        # [pt.MPLPlot(ax=ax) for pt in pt3d]     
+        # print('>>>>len(Points_3D)', len(Points_3D))
+        # print('>>>>>len(pt3d)', len(pt3d)) 
+        # print('>>>>>>len(tangle)', len(tangle))
         
         return pt3d, tangle 
+    
+    def frame_mapping(self, frame, side, copy=True) :
+        if copy:
+            new_conicalsurface3d = ConicalSurface3D.frame_mapping(frame, side, copy)
+            return ConicalFace3D(self.contours2d, new_coniccalsurface3d, points=self.points, name=self.name)
+        else:
+            self.conicalsurface3d.frame_mapping(frame, side, copy=False)
             
 class BSplineFace3D(Face3D):
     def __init__(self, contours, bspline_shape, points=None, name=''):
