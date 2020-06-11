@@ -3431,6 +3431,7 @@ class Edge3D(Primitive3D):
             # on suppose que le step tourne dans le sens trigo
             center = object_dict[arguments[3]].center
             normal = object_dict[arguments[3]].normal
+            normal.Normalize()
             p1 = object_dict[arguments[1]]
             p2 = object_dict[arguments[2]]
             if p1 == p2:
@@ -3451,7 +3452,8 @@ class Edge3D(Primitive3D):
                 #     angle = - angle
             if math.isclose(angle, 0, abs_tol=1e-6) :
                 angle = math.pi
-            p3 = p1.Rotation(center, normal, angle, True) ##P3 incorrecte ?!?!?!
+                
+            p3 = p1.Rotation(center, normal, angle, True) 
             arc = Arc3D(p1, p3, p2, normal, arguments[0][1:-1])
             return arc
 
@@ -4207,14 +4209,13 @@ class Circle3D(Contour3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
-        print('arguments',arguments)
         center = object_dict[arguments[1]].origin
         radius = float(arguments[2])/1000
         if object_dict[arguments[1]].u is not None:
             normal = object_dict[arguments[1]].u
         else:
             normal = object_dict[arguments[1]].v ### ou w 
-        print('normal',normal)
+        normal.Normalize()
         return cls(center, radius, normal, arguments[0][1:-1])
     
     def To2D(self, plane_origin, x, y):
@@ -6495,6 +6496,7 @@ class SphericalFace3D (Face3D) :
         
         """
         center = sphericalsurface3d.frame.origin
+        normal = sphericalsurface3d.frame.w
         
         if contours3d[0].__class__ is Point3D : #If it is a complete sphere
             angle = 2*math.pi
@@ -6503,39 +6505,40 @@ class SphericalFace3D (Face3D) :
             edges = [seg1, seg2, seg3, seg4]
             contours2d =  [Contour2D(edges)]
             points = [angle, angle]
-            
+         
         elif contours3d[0].edges[0].__class__ is Arc3D and contours3d[0].edges[1].__class__ is Arc3D : #Portion of Sphere
+            ## we supposed a contours with 4 edges maximum here
+            arc_base, arc_link = [], []
+            range_list = []
+            for edge in contours3d[0].edges :
+                if edge.normal == normal :
+                    arc_base.append(edge)
+                    range_list.append(1)
+                else :
+                    arc_link.append(edge)
+                    range_list.append(2)
+            if len(arc_base) == 0 :
+                raise NotImplementedError
+                 
             radius = sphericalsurface3d.radius 
-            theta = contours3d[0].edges[0].angle
-            phi = contours3d[0].edges[1].angle #arc start
-            
-            fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
-            for k,edge in enumerate(contours3d[0].edges) :
-                edge.MPLPlot(ax=ax)
-                print('>>>>> angle', math.degrees(edge.angle))
-            
-            # n1 = contours3d[0].edges[2].normal
-            # top = center + n1*radius
-            # vec1, vec2 = top - center, contours3d[0].edges[2].start - center
-            # offset_phi = vectors3d_angle(vec1, vec2)
-            offset_phi = 0
-            
-            print('offset_phi', math.degrees(offset_phi))
-            
-            # vec3, vec4 = sphericalsurface3d.frame.u*radius - center, contours3d[0].edges[0].start - center
-            # offset_theta = vectors3d_angle(vec3, vec4)
+            theta = arc_base[0].angle
+            phi = arc_link[0].angle
+            if range_list[-1] == range_list[-2] :
+                offset_phi = -math.pi/2
+            else :
+                pos = len(arc_base)-1
+                c1 = arc_base[pos].center
+                vec1, vec2 = c1 - center, arc_base[pos].start - center
+                offset_phi = -math.pi/2 + vectors3d_angle(vec1, vec2)
             offset_theta = 0
             
-            # print('offset_theta', math.degrees(offset_theta))
-            
-            #Creation of the window
+            # Creation of the window
             pt1, pt2, pt3, pt4 = Point2D((offset_theta, offset_phi)), Point2D((offset_theta, offset_phi + phi)), Point2D((offset_theta+theta, offset_phi + phi)), Point2D((offset_theta+theta, offset_phi))
             seg1, seg2, seg3, seg4 = LineSegment2D(pt1, pt2), LineSegment2D(pt2, pt3), LineSegment2D(pt3, pt4), LineSegment2D(pt4, pt1) 
             edges = [seg1, seg2, seg3, seg4]
             contours2d =  [Contour2D(edges)]
             points = [theta, phi]
-            
+                
         else:
             print('contours3d edges', contours3d[0].edges)
             raise NotImplementedError
