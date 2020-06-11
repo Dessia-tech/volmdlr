@@ -162,8 +162,9 @@ def clockwise_angle(vector1, vector2):
 
 def vectors3d_angle(vector1, vector2):
     dot = vector1.Dot(vector2)
-    teta = math.acos(dot/(vector1.Norm()*vector2.Norm()))
-    return teta
+    theta = math.acos(dot/(vector1.Norm()*vector2.Norm()))
+    
+    return theta
 
 def delete_double_pos(points, triangles):
     
@@ -615,14 +616,10 @@ class Contour2D(Wire2D):
                 points.extend(points_to_add[-2::-1])
             else:
                 continue
-
-            # else:
-            #     raise NotImplementedError
-        
+            
         if len(points) > 1:
             if points[0] == points[-1]:
                 points.pop()
-                
         return points
 
     # def clean_primitives(self, contour):
@@ -2170,6 +2167,36 @@ class ConicalSurface3D(Primitive3D):
                 return ConicalSurface3D(new_frame, self.radius, name=self.name)
             else:
                 self.frame = new_frame
+
+class SphericalSurface3D(Primitive3D):
+    """
+    :param frame: Sphere's frame to position it 
+    :type frame: Frame3D
+    :param radius: Sphere's radius
+    :type radius: float
+    """
+    
+    def __init__(self, frame, radius, name=''): 
+        self.frame = frame
+        self.radius = radius
+        self.name = name
+        V=frame.v
+        V.Normalize()
+        W=frame.w
+        W.Normalize()
+        self.plane = Plane3D(frame.origin,V,W)
+        
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        frame3d = object_dict[arguments[1]]
+        U, W = frame3d.v, frame3d.u
+        U.Normalize()
+        W.Normalize()
+        V = W.Cross(U)
+        frame_direct = Frame3D(frame3d.origin, U, V, W)
+        radius = float(arguments[2])/1000
+        return cls(frame_direct, radius, arguments[0][1:-1])
+
 # class EllipseSurface3D(Primitive3D):
     
 #     def __init__(self, frame, R, r, name=''): 
@@ -2330,6 +2357,23 @@ class Line3D(Primitive3D, Line):
         y4 = line2.points[1].vector[1]
         z4 = line2.points[1].vector[2]
         
+        if x3 == 0 and x4 ==0 and y4-y3 == 0 :
+            x5, y5, z5 = x3, y3, z3
+            x6, y6, z6 = x4, y4, z4
+            x3, y3, z3 = x1, y1, z1
+            x4, y4, z4 = x2, y2, z2
+            x1, y1, z1 = x5, y5, z5
+            x2, y2, z2 = x6, y6, z6
+        
+        elif y3 == 0 and y4 ==0 and x4-x3 == 0 :
+            x5, y5, z5 = x3, y3, z3
+            x6, y6, z6 = x4, y4, z4
+            x3, y3, z3 = x1, y1, z1
+            x4, y4, z4 = x2, y2, z2
+            x1, y1, z1 = x5, y5, z5
+            x2, y2, z2 = x6, y6, z6
+            
+            
         res, list_t1 = [], []
         
         #2 unknown 3eq with t1 et t2 unknown
@@ -3566,6 +3610,22 @@ class LineSegment3D(Edge3D):
         y4 = segment2.points[1].vector[1]
         z4 = segment2.points[1].vector[2]
         
+        if x3 == 0 and x4 ==0 and y4-y3 == 0 :
+            x5, y5, z5 = x3, y3, z3
+            x6, y6, z6 = x4, y4, z4
+            x3, y3, z3 = x1, y1, z1
+            x4, y4, z4 = x2, y2, z2
+            x1, y1, z1 = x5, y5, z5
+            x2, y2, z2 = x6, y6, z6
+        
+        elif y3 == 0 and y4 ==0 and x4-x3 == 0 :
+            x5, y5, z5 = x3, y3, z3
+            x6, y6, z6 = x4, y4, z4
+            x3, y3, z3 = x1, y1, z1
+            x4, y4, z4 = x2, y2, z2
+            x1, y1, z1 = x5, y5, z5
+            x2, y2, z2 = x6, y6, z6
+        
         res, list_t1 = [], []
 
         #2 unknown 3eq with t1 et t2 unknown
@@ -3719,9 +3779,6 @@ class LineSegment3D(Edge3D):
 
     def reverse(self):
         return LineSegment3D(self.points[1].copy(), self.points[0].copy())
-
-    # def generated_planeface(self, contours3d) : 
-    #     return PlaneFace3D.from_contours3d(contours3d)
 
     def MinimumDistancePoints(self, other_line):
         """
@@ -4150,12 +4207,14 @@ class Circle3D(Contour3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        print('arguments',arguments)
         center = object_dict[arguments[1]].origin
         radius = float(arguments[2])/1000
         if object_dict[arguments[1]].u is not None:
             normal = object_dict[arguments[1]].u
         else:
             normal = object_dict[arguments[1]].v ### ou w 
+        print('normal',normal)
         return cls(center, radius, normal, arguments[0][1:-1])
     
     def To2D(self, plane_origin, x, y):
@@ -4299,13 +4358,15 @@ class Face3D(Primitive3D):
         elif object_dict[int(arguments[2])].__class__  is BSplineSurface3D:
             # print(object_dict[int(arguments[2])])
             return BSplineFace3D(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
-
         
         elif object_dict[int(arguments[2])].__class__  is ToroidalSurface3D:
             return ToroidalFace3D.from_contour3d(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
         
         elif object_dict[int(arguments[2])].__class__  is ConicalSurface3D:
             return ConicalFace3D.from_contour3d(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
+        
+        elif object_dict[int(arguments[2])].__class__  is SphericalSurface3D:
+            return SphericalFace3D.from_contour3d(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
         
         else:
             raise NotImplementedError
@@ -4692,7 +4753,7 @@ class PlaneFace3D(Face3D):
                 holes.append(mid_point_2D.vector)
                 if not polygon2D.PointBelongs(mid_point_2D):
                     warnings.warn('average_center_point is not included inside its contour.')
-                        
+        
         if holes:
             tri = {'vertices': vertices, 'segments': segments, 'holes': holes}
         else:
@@ -6213,11 +6274,11 @@ class ConicalFace3D (Face3D) :
         if math.isclose(self.rb, 0, abs_tol = 1e-6) :
             c1 = LineSegment3D(self.center, center2)
         else :
-            c1 = Arc3D(ptext1, ptext1.Rotation(self.center, vec2, points[3]/2), ptext1.Rotation(self.center, vec2, points[3]), self.normal) 
+            c1 = Arc3D(ptext1, ptext1.Rotation(self.center, self.normal, points[3]/2), ptext1.Rotation(self.center, self.normal, points[3]), self.normal) 
         if math.isclose(self.rt, 0, abs_tol = 1e-6) :
             c2 = LineSegment3D(center2, self.center)
         else :
-            c2 = Arc3D(ptext2, ptext2.Rotation(center2, vec2, points[1]/2), ptext2.Rotation(center2, vec2, points[1]), self.normal)
+            c2 = Arc3D(ptext2, ptext2.Rotation(center2, self.normal, points[1]/2), ptext2.Rotation(center2, self.normal, points[1]), self.normal)
             
         edges = [c1, c2]
         ctr = [Contour3D(edges)]
@@ -6238,7 +6299,7 @@ class ConicalFace3D (Face3D) :
         :type conicalsurface3d: ConicalSurface3D
         
         :Example:
-            >>> contours3d is [Arc3D, LineSegment3D, Arc3D], the Cone's bones
+            >>> contours3d is [Arc3D, LineSegment3D, Arc3D or LineSegment3D], the Cone's bones
         """
         if contours3d[0].edges[0].__class__ is Arc3D and contours3d[0].edges[1].__class__ is LineSegment3D : #Portion of Tore
             r1 = contours3d[0].edges[0].radius
@@ -6250,7 +6311,7 @@ class ConicalFace3D (Face3D) :
                 theta2 = contours3d[0].edges[2].angle
             linelength, R = contours3d[0].edges[1].Length(), max((r1,r2))-min((r1,r2))
             
-            h = math.sqrt(linelength**2 - R**2) ## Check if h is equal for both line otherwise the top is not in the middle
+            h = math.sqrt(abs(linelength**2 - R**2)) ## Check if h is equal for both line otherwise the top is not in the middle
             
             offset = (theta1 - theta2)/2
             
@@ -6384,7 +6445,208 @@ class ConicalFace3D (Face3D) :
             return ConicalFace3D(self.contours2d, new_coniccalsurface3d, points=self.points, name=self.name)
         else:
             self.conicalsurface3d.frame_mapping(frame, side, copy=False)
+  
+class SphericalFace3D (Face3D) :
+    """
+    :param contours2d: The Sphere's contour2D 
+    :type contours2d: Contour2D
+    :param sphericalsurface3d: Information about the Sphere
+    :type sphericalsurface3d: SphericalSurface3D
+    :param points: Angle's Sphere
+    :type points: List of float
+    
+    :Example: 
+        >>> contours2d is rectangular and will create a classic tore with x:2*pi, y:2*pi
+        
+        >>> points = [pi, 2*pi] for an half sphere
+    """      
+    
+    def __init__(self, contours2d, sphericalsurface3d, points=None, name=''):
+        self.radius = sphericalsurface3d.radius
+        self.sphericalsurface3d = sphericalsurface3d 
+        
+        self.center = self.sphericalsurface3d.frame.origin
+        self.normal = self.sphericalsurface3d.frame.w
+        vec1, vec2 = self.sphericalsurface3d.frame.u, self.sphericalsurface3d.frame.v
+        ptext1 = self.center + Point3D((self.radius*vec1).vector) 
+        ptext2 = self.center + Point3D((self.radius*vec1).vector) 
+        c1 = Arc3D(ptext1, ptext1.Rotation(self.center, self.normal, points[0]/2), ptext1.Rotation(self.center, self.normal, points[0]), self.normal) 
+        c2 = Arc3D(ptext2, ptext2.Rotation(self.center, self.normal, points[1]/2), ptext2.Rotation(self.center, self.normal, points[1]), self.normal)
             
+        edges = [c1, c2]
+        ctr = [Contour3D(edges)]
+        
+        Face3D.__init__(self, ctr)
+        self.contours2d = contours2d 
+        
+        self.points = points 
+        self.name = name 
+    
+        # pts3d, t = self.triangulation()
+        # self.start = pts3d[0]
+    
+    @classmethod
+    def from_contour3d(cls, contours3d, sphericalsurface3d, name=''):
+        """
+        :param contours3d: The Sphere's contour3D
+        :type contours3d: Contour3D
+        :param sphericalsurface3d: Information about the Tore
+        :type sphericalsurface3d: SphericalSurface3D
+        
+        """
+        center = sphericalsurface3d.frame.origin
+        
+        if contours3d[0].__class__ is Point3D : #If it is a complete sphere
+            angle = 2*math.pi
+            pt1, pt2, pt3, pt4 = Point2D((0, 0)), Point2D((0, angle)), Point2D((angle, angle)), Point2D((angle, 0))
+            seg1, seg2, seg3, seg4 = LineSegment2D(pt1, pt2), LineSegment2D(pt2, pt3), LineSegment2D(pt3, pt4), LineSegment2D(pt4, pt1) 
+            edges = [seg1, seg2, seg3, seg4]
+            contours2d =  [Contour2D(edges)]
+            points = [angle, angle]
+            
+        elif contours3d[0].edges[0].__class__ is Arc3D and contours3d[0].edges[1].__class__ is Arc3D : #Portion of Sphere
+            radius = sphericalsurface3d.radius 
+            theta = contours3d[0].edges[0].angle
+            phi = contours3d[0].edges[1].angle #arc start
+            
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+            for k,edge in enumerate(contours3d[0].edges) :
+                edge.MPLPlot(ax=ax)
+                print('>>>>> angle', math.degrees(edge.angle))
+            
+            # n1 = contours3d[0].edges[2].normal
+            # top = center + n1*radius
+            # vec1, vec2 = top - center, contours3d[0].edges[2].start - center
+            # offset_phi = vectors3d_angle(vec1, vec2)
+            offset_phi = 0
+            
+            print('offset_phi', math.degrees(offset_phi))
+            
+            # vec3, vec4 = sphericalsurface3d.frame.u*radius - center, contours3d[0].edges[0].start - center
+            # offset_theta = vectors3d_angle(vec3, vec4)
+            offset_theta = 0
+            
+            # print('offset_theta', math.degrees(offset_theta))
+            
+            #Creation of the window
+            pt1, pt2, pt3, pt4 = Point2D((offset_theta, offset_phi)), Point2D((offset_theta, offset_phi + phi)), Point2D((offset_theta+theta, offset_phi + phi)), Point2D((offset_theta+theta, offset_phi))
+            seg1, seg2, seg3, seg4 = LineSegment2D(pt1, pt2), LineSegment2D(pt2, pt3), LineSegment2D(pt3, pt4), LineSegment2D(pt4, pt1) 
+            edges = [seg1, seg2, seg3, seg4]
+            contours2d =  [Contour2D(edges)]
+            points = [theta, phi]
+            
+        else:
+            print('contours3d edges', contours3d[0].edges)
+            raise NotImplementedError
+            
+        return cls(contours2d, sphericalsurface3d, points, name=name)
+ 
+    def points2d_to3d(self, points2d, r, frame3d) :
+        # source mathcurve.com/surfaces/sphere
+        # -pi<theta<pi, -pi/2<phi<pi/2
+        points3D = []
+        for pt in points2d :
+            theta, phi = pt[0], pt[1]
+            x = r*math.cos(phi)*math.cos(theta)
+            y = r*math.cos(phi)*math.sin(theta)
+            z = r*math.sin(phi)
+            points3D.append(Point3D([x,y,z]))
+        Points_3D = [frame3d.OldCoordinates(point) for point in points3D]
+        return Points_3D
+    
+    def triangulation(self, resolution=30):
+        r = self.radius
+        
+        frame3d = self.sphericalsurface3d.frame
+        
+        centerota = Point2D((0,0))
+        
+        angle_theta = self.points[0]
+        angle_phi = self.points[1]
+        pas_theta = 2*math.pi/30 #Step of 12 degrees
+        pas_phi = pas_theta
+        
+        resolution_theta = abs(int(angle_theta/pas_theta))
+        resolution_phi = abs(int(angle_phi/pas_phi))
+        
+        if resolution_phi < 5 :
+            resolution_phi = 5
+        if resolution_theta < 5 :
+            resolution_theta = 5
+        
+        ctr_pt1 = self.cut_contours(self.contours2d, resolution_theta)
+        
+        
+        all_contours_points = []
+        for listpt in ctr_pt1 :
+            bandept = []
+            for pt in listpt :
+                bandept.append(pt.Rotation(centerota, -math.pi/2))
+            edges = []
+            for k in range (0,len(bandept)) :
+                if k == len(bandept)-1 :
+                    edges.append(LineSegment2D(bandept[k], bandept[0]))
+                else :
+                    edges.append(LineSegment2D(bandept[k], bandept[k+1]))
+            ctr2d = [Contour2D(edges)]
+            all_contours_points.extend(self.cut_contours(ctr2d, resolution_phi))
+        
+        pts_frame1 = []
+        for listpt in all_contours_points :
+            for pt in listpt : 
+                pts_frame1.append(pt.Rotation(centerota, math.pi/2))
+        
+        all_points = self.delete_double(pts_frame1) # All points necessary to triangulate
+        all_points.sort(key=lambda pt: pt[0]) 
+        ptvert, pts = [], []
+        for k in range(0, resolution_theta +1) :
+            ptvert.append([point for point in all_points[k*(resolution_phi+1):(k+1)*(resolution_phi+1)]])
+            ptvert[k].sort(key=lambda pt: pt[1])
+            pts.extend(ptvert[k])
+        
+        # A = dict(vertices=[pt.vector for pt in pts]) #in all_points
+        # B = triangle.triangulate(A, 'cp')
+        # tangle = list(B['triangles'])
+        # triangle.compare(plt, A, B)
+        # print(B['triangles'].shape)
+        # print(B)
+        
+        Triangles, ts = [], []
+        
+        step = resolution_phi
+        for k in range (0,len(pts)-resolution_phi-2) :
+            vertices=[]
+            segments=[]
+            
+            if k%step == 0 and k!=0:
+                step += resolution_phi+1
+                continue
+            
+            listpt = [pts[k], pts[k+1], pts[k+1+resolution_phi+1], pts[k+resolution_phi+1]]
+            listindice = [k, k+1, k+1+resolution_phi+1, k+resolution_phi+1]
+            for i, pt in enumerate(listpt):
+                vertices.append(pt.vector)
+                segments.append([i,i+1])
+            
+            segments[-1]=(len(listpt)-1,0) 
+            tri = {'vertices': vertices, 'segments': segments}
+            t = triangle.triangulate(tri, 'p')
+            if 'triangles' in t:
+                triangles = t['triangles'].tolist()
+                for n,tri in enumerate(triangles):
+                    for i in range (0,3):
+                        tri[i]=listindice[tri[i]]
+                Triangles.append(triangles)        
+            else:
+                Triangles.append(None)
+            ts.append(t)
+        
+        pts3d = self.points2d_to3d(pts, r, frame3d)
+        pt3d, tangle = delete_double_pos(pts3d, Triangles)
+        
+        return pt3d, tangle
+         
 class BSplineFace3D(Face3D):
     def __init__(self, contours, bspline_shape, points=None, name=''):
 #        Primitive3D.__init__(self, name=name)
@@ -8547,7 +8809,7 @@ step_to_volmdlr_primitive = {
         'PLANE': Plane3D,
         'CYLINDRICAL_SURFACE': CylindricalSurface3D,
         'CONICAL_SURFACE': ConicalSurface3D,
-        'SPHERICAL_SURFACE': None,
+        'SPHERICAL_SURFACE': SphericalSurface3D,
         'TOROIDAL_SURFACE': ToroidalSurface3D,
         'DEGENERATE_TOROIDAL_SURFACE': None,
         'B_SPLINE_SURFACE_WITH_KNOTS': BSplineSurface3D,
