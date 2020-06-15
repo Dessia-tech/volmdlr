@@ -698,8 +698,8 @@ class Vector3D(Vector):
         return int(round(1e6*(self.vector[0]+self.vector[1]+self.vector[2])))
 
     def __eq__(self, other_vector:'Vector3D'):
-#        if self.__class__ != other_vector.__class__:
-#            return False
+        if other_vector.__class__.__name__ not in ['Vector3D', 'Point3D']:
+            return False
         return math.isclose(self.vector[0], other_vector.vector[0], abs_tol=1e-06) \
         and math.isclose(self.vector[1], other_vector.vector[1], abs_tol=1e-06) \
         and math.isclose(self.vector[2], other_vector.vector[2], abs_tol=1e-06)

@@ -46,3 +46,16 @@ steps:
     username: dessia_tech
     password:
         from_secret: pypi_password
+
+- name: notify by email
+  when:
+    status:
+    - failure
+  image: drillster/drone-email
+  settings:
+    host: mail.dessia.tech
+    username: technical@dessia.tech
+    password:
+     from_secret: email_password
+    from: technical@dessia.tech
+    recipients: [ root@dessia.tech ]

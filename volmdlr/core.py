@@ -237,10 +237,37 @@ class Primitive2D(dc.DessiaObject):
     def __init__(self, name=''):
         self.name = name
     
-    # def generated_planeface(self, contours2d, plane=None) : 
-    #     if plane is None :
-    #         raise ValueError('You must give a plane')
-    #     return PlaneFace3D(contours2d, plane)
+        dc.DessiaObject.__init__(self, name=name)
+    
+    def generated_toroidalface(self, arcgen) :
+        rcenter = arcgen.radius
+        rcircle = self.radius
+        
+        center = arcgen.center
+        normal = arcgen.normal
+        normal.Normalize()
+        
+        center1 = arcgen.points[0]
+        x = Vector3D((center1 - center).vector)
+        x.Normalize()
+        frame3d = Frame3D(center, x, normal.Cross(x), normal)
+        toroidalsurface3d = ToroidalSurface3D(frame3d, rcenter*1000, rcircle*1000)
+
+        theta = arcgen.angle
+        phi = self.angle
+        
+        pt1, pt2, pt3, pt4 = Point2D((0, 0)), Point2D((0, phi)), Point2D((theta, phi)), Point2D((theta, 0))
+        seg1, seg2, seg3, seg4 = LineSegment2D(pt1, pt2), LineSegment2D(pt2, pt3), LineSegment2D(pt3, pt4), LineSegment2D(pt4, pt1) 
+        edges = [seg1, seg2, seg3, seg4]
+        contours2d =  [Contour2D(edges)]
+        points = [theta, phi]
+        
+        return ToroidalFace3D(contours2d, toroidalsurface3d, points)
+    
+    def generated_planeface(self, contours3D) : 
+        
+        return PlaneFace3D(contours3D)
+
     
 class CompositePrimitive2D(Primitive2D):
     """
@@ -616,7 +643,6 @@ class Contour2D(Wire2D):
                 points.extend(points_to_add[-2::-1])
             else:
                 continue
-            
         if len(points) > 1:
             if points[0] == points[-1]:
                 points.pop()
@@ -1183,8 +1209,8 @@ class Arc2D(Primitive2D):
             self.angle1 = angle2
             self.angle2 = angle1
             self.angle = clockwise_path
-            
         # self.endpoints = [self.start, self.end]
+    
     def _get_points(self):
         return [self.start,self.interior,self.end]
 
@@ -1434,8 +1460,16 @@ class Circle2D(Contour2D):
         
         self.points = self.tessellation_points()
         
-        Contour2D.__init__(self, [self], name=name)# !!! this is dangerous
+        Contour2D.__init__(self, [self], name=name) # !!! this is dangerous
+    
+    def __hash__ (self):
+        return int(round(1e6*(self.center.vector[0] + self.center.vector[1] + self.radius)))
 
+    def __eq__(self, other_circle):
+        return math.isclose(self.center.vector[0], other_circle.center.vector[0], abs_tol=1e-06) \
+           and math.isclose(self.center.vector[1], other_circle.center.vector[1], abs_tol=1e-06) \
+           and math.isclose(self.radius, other_circle.radius, abs_tol=1e-06)
+        
     def _get_geo_points(self):
         if not self.utd_geo_points:
             self._geo_start = self.center+self.radius*Point2D((1,0))
@@ -1752,6 +1786,8 @@ class Primitive3D(dc.DessiaObject):
         self.primitives = basis_primitives # une liste
         if basis_primitives is None:
             self.primitives = []
+        
+        dc.DessiaObject.__init__(self, name=name)
 
 class Plane3D(Primitive3D):
     def __init__(self, origin, vector1, vector2, name=''):
@@ -4135,6 +4171,14 @@ class Circle3D(Contour3D):
         self.points = self.tessellation_points()
         Contour3D.__init__(self, [self], name=name)
         
+    def __hash__ (self):
+        return int(round(1e6*(self.center.vector[0] + self.center.vector[1] + self.center.vector[2] + self.radius)))
+
+    def __eq__(self, other_circle):
+        return math.isclose(self.center.vector[0], other_circle.center.vector[0], abs_tol=1e-06) \
+           and math.isclose(self.center.vector[1], other_circle.center.vector[1], abs_tol=1e-06) \
+           and math.isclose(self.center.vector[2], other_circle.center.vector[2], abs_tol=1e-06) \
+           and math.isclose(self.radius, other_circle.radius, abs_tol=1e-06)
         
 #    def _get_points(self):
 #        vr = Vector3D(npy.random.random(3))
@@ -5050,8 +5094,8 @@ class CylindricalFace3D(Face3D):
         circlend = LineSegment2D(seghb.points[1],segbh.points[0])
         
         edges = [segbh, circlestart, seghb, circlend]
-        points = edges[0].points 
-        return cls([Contour2D(edges)], cylindersurface3d, points, name='')
+        # points = edges[0].points 
+        return cls([Contour2D(edges)], cylindersurface3d, points=None, name='')
     
     def points2d_to3d(self, all_contours_points, radius, frame3d) :
         Points3D = []
