@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implementation of ConicalFace3D in Core and RevolvedProfile.
 - Implementation of SphericalFace3D in Core.
 
+### Changed
+- cut_contours in Face3D which take all points from a Contour2D, not one side like before. Furthermore, it is light and quick.
+
 ## [v0.1.10]
 - typings
 - workflow to instanciate point

@@ -405,7 +405,7 @@ class ExtrudedProfile(volmdlr.Shell3D):
                 v = normal.Cross(u)
                 v.Normalize()
                 frame = volmdlr.Frame3D(center, u, v, normal)
-                cylsurf3d = volmdlr.CylindricalSurface3D(frame, edge.radius*1000)
+                cylsurf3d = volmdlr.CylindricalSurface3D(frame, edge.radius)
                 return [volmdlr.CylindricalFace3D.from_arc3d(linextru, edge, cylsurf3d)]
             
             elif edge.__class__ is volmdlr.core.LineSegment3D :
@@ -674,7 +674,7 @@ class RevolvedProfile(volmdlr.Shell3D):
                         arcgen = create_arc(edge.points[0], angle, axis_point, axis)
                         x = axis.deterministic_unit_normal_vector()
                         frame = volmdlr.Frame3D(arcgen.center, x, axis.Cross(x), dot*axis)
-                        cylsurf3d = volmdlr.CylindricalSurface3D(frame, arcgen.radius*1000)
+                        cylsurf3d = volmdlr.CylindricalSurface3D(frame, arcgen.radius)
                         faces.append(volmdlr.CylindricalFace3D.from_arc3d(edge, arcgen, cylsurf3d))
                 
                 else : ### TODO : case of conic
@@ -1175,7 +1175,7 @@ class Sweep(volmdlr.Shell3D):
                         # center = contour_primitive.center.To3D(framestart.origin, framestart.v, framestart.w)
                         # frame = volmdlr.Frame3D(center, framestart.u, framestart.v, framestart.w)
                         # radius = contour_primitive.radius
-                        # cylindersurface3d = volmdlr.CylindricalSurface3D(frame, radius*1000)
+                        # cylindersurface3d = volmdlr.CylindricalSurface3D(frame, radius)
                         
                         # circlestart = volmdlr.Circle3D(center, radius, framestart.u) 
                         
@@ -1206,7 +1206,7 @@ class Sweep(volmdlr.Shell3D):
                         # # ax = fig.add_subplot(111, projection='3d')
                         # # [pt.MPLPlot(ax=ax) for pt in points]
                         # cylinder = volmdlr.CylindricalFace3D([volmdlr.Contour3D(edges)], cylindersurface3d, points)
-                        cylindricalsurface3d = volmdlr.CylindricalSurface3D(framestart, contour_primitive.radius*1000)
+                        cylindricalsurface3d = volmdlr.CylindricalSurface3D(framestart, contour_primitive.radius)
                         faces.append(volmdlr.CylindricalFace3D.from_arc3d(wire_primitive, contour_primitive, cylindricalsurface3d))
                         
                     elif contour_primitive.__class__ == volmdlr.Arc3D:
