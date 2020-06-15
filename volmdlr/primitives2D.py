@@ -7,7 +7,7 @@
 import math
 import volmdlr
 from volmdlr.primitives import RoundedLineSegments
-
+import matplotlib.pyplot as plt
 
         
 class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.Wire2D):
@@ -157,7 +157,6 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.Wire2D):
             offset_points.append(self.points[-1] + offset*offset_vectors[-1])
 
         return self.__class__(offset_points, new_radii, adapt_radius=self.adapt_radius)
-        
         
     def OffsetSingleLine(self, line_index, offset):
         """

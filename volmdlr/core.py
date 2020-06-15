@@ -162,8 +162,9 @@ def clockwise_angle(vector1, vector2):
 
 def vectors3d_angle(vector1, vector2):
     dot = vector1.Dot(vector2)
-    teta = math.acos(dot/(vector1.Norm()*vector2.Norm()))
-    return teta
+    theta = math.acos(dot/(vector1.Norm()*vector2.Norm()))
+    
+    return theta
 
 def delete_double_pos(points, triangles):
     
@@ -416,7 +417,7 @@ class Contour2D(Wire2D):
     def __init__(self, primitives, name=''):
         Wire2D.__init__(self, primitives, name)
         self._utd_analysis = False
-        self.points = self.clean_points()
+        self.tessel_points = self.clean_points()
 
     def _primitives_analysis(self):
         """
@@ -607,9 +608,9 @@ class Contour2D(Wire2D):
         return Contour2D(primitives_copy)
 
     def average_center_point(self):
-        nb = len(self.points)
-        x = npy.sum([p[0] for p in self.points]) / nb
-        y = npy.sum([p[1] for p in self.points]) / nb
+        nb = len(self.tessel_points )
+        x = npy.sum([p[0] for p in self.tessel_points]) / nb
+        y = npy.sum([p[1] for p in self.tessel_points]) / nb
         return Point2D((x,y))
     
     def clean_points(self):
@@ -618,84 +619,33 @@ class Contour2D(Wire2D):
         please change both method
         Be aware about primitives = 2D, edges = 3D
         """
-        # print('!' , self.edges)
-        if hasattr(self.primitives[0], 'points'):
-            if self.primitives[0].__class__ is Arc2D :
-                points = self.primitives[0].tessellation_points()
-            else :
-                points = self.primitives[0].points[:]
-            # print(self.edges)
-            # print(self.edges[0].points)
-            # print(points)
+        if hasattr(self.primitives[0], 'endpoints'):
+            points = self.primitives[0].endpoints[:]
         else:
-            points = self.primtives[0].tessellation_points()
-            # print('center',self.edges[0].center)
-            # print('radius',self.edges[0].radius)
-            # print('normal',self.edges[0].normal)
-        # print(self.edges[0])
-        # print(self.edges)
-        # print()
-        # print(points)
-        # print(self.edges[1:])
+            points = self.primitives[0].tessellation_points()
         for primitive in self.primitives[1:]:
-            if hasattr(primitive, 'points'):
-                if primitive.__class__ is Arc2D :
-                    points_to_add = primitive.tessellation_points()
-                # [pt.MPLPlot(ax=ax) for pt in edge.points]
-                else :
-                    points_to_add = primitive.points[:]
-                if points[0] == points[-1]: # Dans le cas où le (dernier) edge relie deux fois le même point
-                    # print('=', points_to_add[::-1])
-                    # print('==', points_to_add[-2::-1])
-                    points.extend(points_to_add[::-1])
-                
-                elif points_to_add[0] == points[-1]:
-                    points.extend(points_to_add[1:])
-                elif points_to_add[-1] == points[-1]:
-                    points.extend(points_to_add[-2::-1])
-                elif points_to_add[0] == points[0]:
-                    points = points[::-1]
-                    points.extend(points_to_add[1:])
-                elif points_to_add[-1] == points[0]:
-                    points = points[::-1]
-                    points.extend(points_to_add[-2::-1])
-                else:
-                    # fig, ax = self.MPLPlot()
-                    # print()
-                    # [print(edge.points) for edge in self.edges]
-                    # print()
-                    # print('self edges',self.edges)
-                    
-                    # print('edge', edge)
-                    # print('pts to add',points_to_add)
-                    # # print('l1', len(points_to_add))
-                    # # print('edge.points',edge.points[:])
-                    # # print('l2', len(edge.points[:]))
-                    # print('points',points)
-                    # fig, ax = self.MPLPlot()
-                    # [pt.MPLPlot(ax=ax) for pt in points]
-                    # [pt.MPLPlot(ax=ax, color='r') for pt in points_to_add]
-                    # print()
-                    
-                    #NotImplementedError peut être plus nécessaire ??
-                    
-                    # raise NotImplementedError
-                    continue
-
+            if hasattr(primitive, 'endpoints'):
+                points_to_add = primitive.endpoints[:]
+            else :
+                points_to_add = primitive.tessellation_points()
+            if points[0] == points[-1]: # Dans le cas où le (dernier) edge relie deux fois le même point
+                points.extend(points_to_add[::-1])
+            
+            elif points_to_add[0] == points[-1]:
+                points.extend(points_to_add[1:])
+            elif points_to_add[-1] == points[-1]:
+                points.extend(points_to_add[-2::-1])
+            elif points_to_add[0] == points[0]:
+                points = points[::-1]
+                points.extend(points_to_add[1:])
+            elif points_to_add[-1] == points[0]:
+                points = points[::-1]
+                points.extend(points_to_add[-2::-1])
             else:
-                # print('hello')
-                # print()
-                # print('edge',self.edges)
-                # print('points',points)
-                # [print(edge.points) for edge in self.edges]
-                # print()
-                # print('pts add',points_to_add)
-                raise NotImplementedError
-        
+                continue
         if len(points) > 1:
             if points[0] == points[-1]:
                 points.pop()
-                
         return points
 
     # def clean_primitives(self, contour):
@@ -769,6 +719,9 @@ class Line2D(Primitive2D, Line):
     def __init__(self, point1, point2,*, name=''):
         Primitive2D.__init__(self, name=name)
         self.points=[point1, point2]
+        
+        self.endpoints=[point1, point2]
+        
         self.point1 = point1
         self.point2 = point2
 
@@ -1256,7 +1209,8 @@ class Arc2D(Primitive2D):
             self.angle1 = angle2
             self.angle2 = angle1
             self.angle = clockwise_path
-            
+        # self.endpoints = [self.start, self.end]
+    
     def _get_points(self):
         return [self.start,self.interior,self.end]
 
@@ -2194,6 +2148,91 @@ class ToroidalSurface3D(Primitive3D):
             else:
                 self.frame = new_frame
 
+class ConicalSurface3D(Primitive3D):
+    """
+    :param frame: Cone's frame to position it 
+    :type frame: Frame3D
+    :param r: Cone's bottom radius
+    :type r: float
+    :param semi_angle: Cone's semi-angle
+    :type semi_angle: float
+    """
+    def __init__(self, frame, radius, semi_angle, name=''): 
+        self.frame = frame
+        self.radius = radius
+        self.semi_angle = semi_angle
+        self.name = name
+        V=frame.v
+        V.Normalize()
+        W=frame.w
+        W.Normalize()
+        self.plane = Plane3D(frame.origin,V,W)
+        
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        frame3d = object_dict[arguments[1]]
+        U, W = frame3d.v, frame3d.u
+        U.Normalize()
+        W.Normalize()
+        V = W.Cross(U)
+        frame_direct = Frame3D(frame3d.origin, U, V, W)
+        radius = float(arguments[2])/1000
+        semi_angle = float(arguments[3])
+        return cls(frame_direct, radius, semi_angle, arguments[0][1:-1])
+    
+    def frame_mapping(self, frame, side, copy=True) :
+        basis = frame.Basis()
+        if side == 'new':
+            new_origin = frame.NewCoordinates(self.frame.origin)
+            new_u = basis.NewCoordinates(self.frame.u)
+            new_v = basis.NewCoordinates(self.frame.v)
+            new_w = basis.NewCoordinates(self.frame.w)
+            new_frame = Frame3D(new_origin, new_u, new_v, new_w)
+            if copy:
+                return ConicalSurface3D(new_frame, self.radius, name=self.name)
+            else:
+                self.frame = new_frame
+
+        if side == 'old':
+            new_origin = frame.OldCoordinates(self.frame.origin)
+            new_u = basis.OldCoordinates(self.frame.u)
+            new_v = basis.OldCoordinates(self.frame.v)
+            new_w = basis.OldCoordinates(self.frame.w)
+            new_frame = Frame3D(new_origin, new_u, new_v, new_w)
+            if copy:
+                return ConicalSurface3D(new_frame, self.radius, name=self.name)
+            else:
+                self.frame = new_frame
+
+class SphericalSurface3D(Primitive3D):
+    """
+    :param frame: Sphere's frame to position it 
+    :type frame: Frame3D
+    :param radius: Sphere's radius
+    :type radius: float
+    """
+    
+    def __init__(self, frame, radius, name=''): 
+        self.frame = frame
+        self.radius = radius
+        self.name = name
+        V=frame.v
+        V.Normalize()
+        W=frame.w
+        W.Normalize()
+        self.plane = Plane3D(frame.origin,V,W)
+        
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        frame3d = object_dict[arguments[1]]
+        U, W = frame3d.v, frame3d.u
+        U.Normalize()
+        W.Normalize()
+        V = W.Cross(U)
+        frame_direct = Frame3D(frame3d.origin, U, V, W)
+        radius = float(arguments[2])/1000
+        return cls(frame_direct, radius, arguments[0][1:-1])
+
 # class EllipseSurface3D(Primitive3D):
     
 #     def __init__(self, frame, R, r, name=''): 
@@ -2354,6 +2393,23 @@ class Line3D(Primitive3D, Line):
         y4 = line2.points[1].vector[1]
         z4 = line2.points[1].vector[2]
         
+        if x3 == 0 and x4 ==0 and y4-y3 == 0 :
+            x5, y5, z5 = x3, y3, z3
+            x6, y6, z6 = x4, y4, z4
+            x3, y3, z3 = x1, y1, z1
+            x4, y4, z4 = x2, y2, z2
+            x1, y1, z1 = x5, y5, z5
+            x2, y2, z2 = x6, y6, z6
+        
+        elif y3 == 0 and y4 ==0 and x4-x3 == 0 :
+            x5, y5, z5 = x3, y3, z3
+            x6, y6, z6 = x4, y4, z4
+            x3, y3, z3 = x1, y1, z1
+            x4, y4, z4 = x2, y2, z2
+            x1, y1, z1 = x5, y5, z5
+            x2, y2, z2 = x6, y6, z6
+            
+            
         res, list_t1 = [], []
         
         #2 unknown 3eq with t1 et t2 unknown
@@ -2552,6 +2608,11 @@ class Arc3D(Primitive3D):
 
         l1 = Line3D(p11, p12)
         l2 = Line3D(p21, p22)
+        
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111, projection='3d')
+        # l1.MPLPlot(ax=ax)
+        # l2.MPLPlot(ax=ax)
         
         c1, _ = l1.MinimumDistancePoints(l2)
         
@@ -3406,6 +3467,7 @@ class Edge3D(Primitive3D):
             # on suppose que le step tourne dans le sens trigo
             center = object_dict[arguments[3]].center
             normal = object_dict[arguments[3]].normal
+            normal.Normalize()
             p1 = object_dict[arguments[1]]
             p2 = object_dict[arguments[2]]
             if p1 == p2:
@@ -3426,7 +3488,8 @@ class Edge3D(Primitive3D):
                 #     angle = - angle
             if math.isclose(angle, 0, abs_tol=1e-6) :
                 angle = math.pi
-            p3 = p1.Rotation(center, normal, angle, True) ##P3 incorrecte ?!?!?!
+                
+            p3 = p1.Rotation(center, normal, angle, True) 
             arc = Arc3D(p1, p3, p2, normal, arguments[0][1:-1])
             return arc
 
@@ -3585,6 +3648,22 @@ class LineSegment3D(Edge3D):
         y4 = segment2.points[1].vector[1]
         z4 = segment2.points[1].vector[2]
         
+        if x3 == 0 and x4 ==0 and y4-y3 == 0 :
+            x5, y5, z5 = x3, y3, z3
+            x6, y6, z6 = x4, y4, z4
+            x3, y3, z3 = x1, y1, z1
+            x4, y4, z4 = x2, y2, z2
+            x1, y1, z1 = x5, y5, z5
+            x2, y2, z2 = x6, y6, z6
+        
+        elif y3 == 0 and y4 ==0 and x4-x3 == 0 :
+            x5, y5, z5 = x3, y3, z3
+            x6, y6, z6 = x4, y4, z4
+            x3, y3, z3 = x1, y1, z1
+            x4, y4, z4 = x2, y2, z2
+            x1, y1, z1 = x5, y5, z5
+            x2, y2, z2 = x6, y6, z6
+        
         res, list_t1 = [], []
 
         #2 unknown 3eq with t1 et t2 unknown
@@ -3739,9 +3818,6 @@ class LineSegment3D(Edge3D):
     def reverse(self):
         return LineSegment3D(self.points[1].copy(), self.points[0].copy())
 
-    # def generated_planeface(self, contours3d) : 
-    #     return PlaneFace3D.from_contours3d(contours3d)
-
     def MinimumDistancePoints(self, other_line):
         """
         Returns the points on this line and the other line that are the closest
@@ -3884,10 +3960,10 @@ class Contour3D(Wire3D):
         if self.edges[0].__class__.__name__ == 'Contour3D':
             raise ValueError
 
-        self.points = self.clean_points()
+        self.tessel_points = self.clean_points()
 
     def __hash__(self):
-        return sum([hash(e) for e in self.edges]) + sum([hash(p) for p in self.points])
+        return sum([hash(e) for e in self.edges]) + sum([hash(p) for p in self.tessel_points])
 
     def __eq__(self, other_):
         equal = True
@@ -3943,53 +4019,55 @@ class Contour3D(Wire3D):
             if hasattr(edge, 'points'):
                 # [pt.MPLPlot(ax=ax) for pt in edge.points]
                 points_to_add = edge.points[:]
-                if points[0] == points[-1]: # Dans le cas où le (dernier) edge relie deux fois le même point
-                    # print('=', points_to_add[::-1])
-                    # print('==', points_to_add[-2::-1])
-                    points.extend(points_to_add[::-1])
-                
-                elif points_to_add[0] == points[-1]:
-                    points.extend(points_to_add[1:])
-                elif points_to_add[-1] == points[-1]:
-                    points.extend(points_to_add[-2::-1])
-                elif points_to_add[0] == points[0]:
-                    points = points[::-1]
-                    points.extend(points_to_add[1:])
-                elif points_to_add[-1] == points[0]:
-                    points = points[::-1]
-                    points.extend(points_to_add[-2::-1])
-                else:
-                    # fig, ax = self.MPLPlot()
-                    # print()
-                    # [print(edge.points) for edge in self.edges]
-                    # print()
-                    # print('self edges',self.edges)
-                    
-                    # print('edge', edge)
-                    # print('pts to add',points_to_add)
-                    # # print('l1', len(points_to_add))
-                    # # print('edge.points',edge.points[:])
-                    # # print('l2', len(edge.points[:]))
-                    # print('points',points)
-                    # fig, ax = self.MPLPlot()
-                    # [pt.MPLPlot(ax=ax) for pt in points]
-                    # [pt.MPLPlot(ax=ax, color='r') for pt in points_to_add]
-                    # print()
-                    
-                    #NotImplementedError peut être plus nécessaire ??
-                    
-                    # raise NotImplementedError
-                    continue
-
+            else :
+                points_to_add = edge.tessellation_points()
+            if points[0] == points[-1]: # Dans le cas où le (dernier) edge relie deux fois le même point
+                # print('=', points_to_add[::-1])
+                # print('==', points_to_add[-2::-1])
+                points.extend(points_to_add[::-1])
+            
+            elif points_to_add[0] == points[-1]:
+                points.extend(points_to_add[1:])
+            elif points_to_add[-1] == points[-1]:
+                points.extend(points_to_add[-2::-1])
+            elif points_to_add[0] == points[0]:
+                points = points[::-1]
+                points.extend(points_to_add[1:])
+            elif points_to_add[-1] == points[0]:
+                points = points[::-1]
+                points.extend(points_to_add[-2::-1])
             else:
-                # print('hello')
+                # fig, ax = self.MPLPlot()
                 # print()
-                # print('edge',self.edges)
-                # print('points',points)
                 # [print(edge.points) for edge in self.edges]
                 # print()
-                # print('pts add',points_to_add)
-                raise NotImplementedError
+                # print('self edges',self.edges)
+                
+                # print('edge', edge)
+                # print('pts to add',points_to_add)
+                # # print('l1', len(points_to_add))
+                # # print('edge.points',edge.points[:])
+                # # print('l2', len(edge.points[:]))
+                # print('points',points)
+                # fig, ax = self.MPLPlot()
+                # [pt.MPLPlot(ax=ax) for pt in points]
+                # [pt.MPLPlot(ax=ax, color='r') for pt in points_to_add]
+                # print()
+                
+                #NotImplementedError peut être plus nécessaire ??
+                
+                # raise NotImplementedError
+                    continue
+
+            # else:
+            #     # print('hello')
+            #     # print()
+            #     # print('edge',self.edges)
+            #     # print('points',points)
+            #     # [print(edge.points) for edge in self.edges]
+            #     # print()
+            #     # print('pts add',points_to_add)
+            #     raise NotImplementedError
         
         if len(points) > 1:
             if points[0] == points[-1]:
@@ -3998,7 +4076,7 @@ class Contour3D(Wire3D):
         return points
 
     def average_center_point(self):
-        nb = len(self.points)
+        nb = len(self.tessel_points)
         x = npy.sum([p[0] for p in self.points]) / nb
         y = npy.sum([p[1] for p in self.points]) / nb
         z = npy.sum([p[2] for p in self.points]) / nb
@@ -4012,7 +4090,7 @@ class Contour3D(Wire3D):
         else:
             for edge in self.edges:
                 edge.Rotation(center, axis, angle, copy=False)
-            for point in self.points:
+            for point in self.tessel_points:
                 point.Rotation(center, axis, angle, copy=False)
 
     def Translation(self, offset, copy=True):
@@ -4023,7 +4101,7 @@ class Contour3D(Wire3D):
         else:
             for edge in self.edges:
                 edge.Translation(offset, copy=False)
-            for point in self.points:
+            for point in self.tessel_points:
                 point.Translation(offset, copy=False)
 
     def frame_mapping(self, frame, side, copy=True):
@@ -4037,7 +4115,7 @@ class Contour3D(Wire3D):
         else:
             for edge in self.edges:
                 edge.frame_mapping(frame, side, copy=False)
-            for point in self.points:
+            for point in self.tessel_points:
                 point.frame_mapping(frame, side, copy=False)
 
     def copy(self):
@@ -4090,6 +4168,7 @@ class Circle3D(Contour3D):
         self.radius = radius
         self.normal = normal
         self.angle = 2*math.pi
+        self.points = self.tessellation_points()
         Contour3D.__init__(self, [self], name=name)
         
     def __hash__ (self):
@@ -4180,6 +4259,7 @@ class Circle3D(Contour3D):
             normal = object_dict[arguments[1]].u
         else:
             normal = object_dict[arguments[1]].v ### ou w 
+        normal.Normalize()
         return cls(center, radius, normal, arguments[0][1:-1])
     
     def To2D(self, plane_origin, x, y):
@@ -4282,7 +4362,7 @@ class Face3D(Primitive3D):
         self.bounding_box = self._bounding_box()
         
     def _bounding_box(self):
-        points = self.contours3d[0].points
+        points = self.contours3d[0].tessel_points
 
         xmin = min([pt[0] for pt in points])
         xmax = max([pt[0] for pt in points])
@@ -4323,10 +4403,15 @@ class Face3D(Primitive3D):
         elif object_dict[int(arguments[2])].__class__  is BSplineSurface3D:
             # print(object_dict[int(arguments[2])])
             return BSplineFace3D(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
-
         
         elif object_dict[int(arguments[2])].__class__  is ToroidalSurface3D:
             return ToroidalFace3D.from_contour3d(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
+        
+        elif object_dict[int(arguments[2])].__class__  is ConicalSurface3D:
+            return ConicalFace3D.from_contour3d(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
+        
+        elif object_dict[int(arguments[2])].__class__  is SphericalSurface3D:
+            return SphericalFace3D.from_contour3d(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
         
         else:
             raise NotImplementedError
@@ -4345,121 +4430,69 @@ class Face3D(Primitive3D):
         return (min(Ls), max(Ls))
     
     def cut_contours(self, contours2d, resolution) :
-        # placement_2d = []
-        # for k in range(0, len(contours2d[0].primitives)):
-        #     placement_2d.extend(contours2d[0].primitives[k].points) 
-        # placement2d = self.delete_double(placement_2d)
-        # placement2d.append(placement2d[0])
+        placement2d = contours2d[0].tessel_points 
+        segmentspt = []
+        offset = 0.0001
+        xmin, xmax = min([pt[0] for pt in placement2d]), max([pt[0] for pt in placement2d])
+        ymin, ymax = min([pt[1] for pt in placement2d]), max([pt[1] for pt in placement2d])
+        for k in range (0,len(placement2d)):
+            if k == len(placement2d)-1 :
+                pt1, pt2 = segmentspt[-1].points[1], segmentspt[0].points[0]
+                segmentspt.append(LineSegment2D(pt1,pt2))
+            else : 
+                pt1, pt2 = placement2d[k], placement2d[k+1]
+                segpoints = []
+                if pt1[0] == xmin :
+                    segpoints.append(pt1 - Point2D((offset,0)))
+                elif pt1 [0] == xmax :
+                    segpoints.append(pt1 + Point2D((offset,0)))
+                else : 
+                    segpoints.append(pt1)
+                if pt2[0] == xmin :
+                    segpoints.append(pt2 - Point2D((offset,0)))
+                elif pt2 [0] == xmax :
+                    segpoints.append(pt2 + Point2D((offset,0)))
+                else : 
+                    segpoints.append(pt2)
+                segmentspt.append(LineSegment2D(segpoints[0],segpoints[1]))
         
-        placement2d = contours2d[0].points
-        if placement2d[-1] != placement2d[0] :
-            placement2d.append(placement2d[0])
-            
-        segmentspt=[]
-        for k in range (0,len(placement2d)-1):
-            segmentspt.append(LineSegment2D(Point2D(placement2d[k].vector),Point2D(placement2d[k+1].vector)))
-        
-        # [LS.MPLPlot(ax=ax) for LS in segmentspt]
-        
-        hmin, hmax = self.min_max(placement2d,1)
-        posimin, posimax = self.min_max(placement2d,0)
-        
-        pas = (posimax-posimin)/resolution
-        pointsxzmin = [Point2D([posimin+i*pas,hmin-1]) for i in range (0,resolution+1)]
-        pointsxzmax = [Point2D([posimin+i*pas,hmax+1]) for i in range (0,resolution+1)]
+        pas = (xmax-xmin)/resolution
+        pointsxzmin = [Point2D([xmin+i*pas,ymin-1]) for i in range (0,resolution+1)]
+        pointsxzmax = [Point2D([xmin+i*pas,ymax+1]) for i in range (0,resolution+1)]
         
         line = [LineSegment2D(ptxmax, ptxmin) for ptxmin,ptxmax in list(zip(pointsxzmin, pointsxzmax))]
 
-        all_contours_points = []
-        #Taking points on the left with line[1]
-        contours_points = []
-        
-        for i, seg in enumerate(segmentspt) :
-            p1 = seg.line_intersection(line[1])
-            if p1 is not None:
-                break
-        for k, seg in enumerate(segmentspt[i+1:]) :
-            p3 = seg.line_intersection(line[1])
-            if p3 is not None:
-                break    
-        k += i+1
-        for pos in range (0,i+1):
-            contours_points.append(Point2D(placement2d[pos].vector))
-        contours_points.append(p1)
-        contours_points.append(p3)
-        for pos in range (k+1,len(placement2d)-1):
-            contours_points.append(Point2D(placement2d[pos].vector))
-        
-        all_contours_points.append(contours_points)
-        #Taking points between line 1 and before the last one
-        for enum, ligne in enumerate(line[1:-1]):
-            contours_points=[]
-            if enum != len(line)-3 : #Otherwise taking the last line
-                l1, l2 = line[enum+1], line[enum+2]
-                for i, seg in enumerate(segmentspt) :
-                    p1 = seg.line_intersection(l1)
-                    if p1 is not None:
-                        break
-                for j, seg in enumerate(segmentspt) :
-                    p2 = seg.line_intersection(l2)
-                    if p2 is not None:
-                        break
-                for k, seg in enumerate(segmentspt[i+2:]) :
-                    p3 = seg.line_intersection(l1)
-                    if p3 is not None:
-                        break
-                for l, seg in enumerate(segmentspt[j+2:]) :
-                    p4 = seg.line_intersection(l2)
-                    if p4 is not None:
-                        break    
-                    
-                k += i+2
-                l += j+2
-                if i==j :
-                    contours_points.extend([p1, p2, p4])
-                
+        all_contours_points, contours_points = [], []
+        register = []
+        for l in line :
+            nb_pt = 0
+            for s in segmentspt :
+                p = l.line_intersection(s)
+                if p is None :
+                    continue
                 else :
-                    points=[]
-                    points.append(p1)
-                    for pos in range (i+1,j+1):
-                        points.append(Point2D(placement2d[pos].vector))
-                    points.append(p2)
-                    points.append(p4)
-                
-                    contours_points.extend(points)
-            
-                if k==l :
-                    contours_points.append(p3)
-            
-                else :
-                    points=[]
-                    for pos in range (l+1,k+1):
-                        points.append(Point2D(placement2d[pos].vector))
-                    points.append(p3)
-                
-                    contours_points.extend(points)
-                all_contours_points.append(contours_points)
+                    nb_pt += 1
+                    contours_points.append(p)
+            register.append(nb_pt)
         
-        #Taking points on the right with last line
-        contours_points = []
-        for i, seg in enumerate(segmentspt) :
-            p1 = seg.line_intersection(line[len(line)-2])
-            if p1 is not None:
-                break
-        for k, seg in enumerate(segmentspt[i+1:]) :
-            p3 = seg.line_intersection(line[len(line)-2])
-            if p3 is not None:
-                break    
-        k += i+1
-        contours_points.append(p1)
-        for pos in range (i+1,k+1):
-            contours_points.append(Point2D(placement2d[pos].vector))
-        contours_points.append(p3)
-        all_contours_points.append(contours_points)
-        
+        seuil = 0
+        for k in range(0, len(register)):
+            list_pt = []
+            for i in range(seuil, seuil+register[k]):
+                list_pt.append(contours_points[i])
+            seuil += register[k]
+            if k == len(register)-1:
+                for i in range(0, register[0]):
+                    list_pt.append(contours_points[register[0]-1-i])
+            else :
+                for i in range(seuil+register[k+1]-1, seuil-1, -1):
+                    list_pt.append(contours_points[i])
+            all_contours_points.append(list_pt)
+
+        all_contours_points.pop() 
+
         return all_contours_points
-    
-    
+
 
 class PlaneFace3D(Face3D):
     """
@@ -4475,8 +4508,6 @@ class PlaneFace3D(Face3D):
     _non_hash_attributes = []
 
     def __init__(self, contours, plane, points=None, polygon2D=None, name=''):
-#        Primitive3D.__init__(self, name=name)
-        # if contours[0].__class__ is Contour2D :
         if contours[0].__class__ is Contour3D :
             raise ValueError('You must use Contour2D or use from_contours3d')
             
@@ -4484,73 +4515,10 @@ class PlaneFace3D(Face3D):
         self.contours = contours
         self.plane = plane
         self.setup_planeface(self.contours, self.plane, points=points, polygon2D=polygon2D, name=self.name)
-        # contour_points = []
-        # for prim in self.contours[0].primitives :
-        #     for pt in prim.points :
-        #         # pt3d = (pt.copy()).To3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])
-        #         # contour_points.append(pt3d)
-        #         contour_points.append(pt)
-        # if points is None or polygon2D is None:
-        #     # self.points, self.polygon2D = self._repair_points_and_polygon2d(contour_points, self.plane)
-        #     self.points = contour_points
-        #     self.polygon2D = Polygon2D(self.points)
-        # else :
-        #     self.points = points
-        #     self.polygon2D = polygon2D
-        # ctr3d = contours[0].copy()
-        # Face3D.__init__(self, [ctr3d.To3D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1])])
-            
-        
-        # else :
-        #     self.contours = contours
-        #     contour_points = [p.copy() for p in self.contours[0].points[:]]
-
-        #     if plane is None : 
-        #         self.plane = Plane3D.from_points(contour_points)
-        #     else : 
-        #         self.plane = plane
-            
-        #     if points is None or polygon2D is None:
-        #         self.points, self.polygon2D = self._repair_points_and_polygon2d(contour_points, self.plane)
-        #         self.contours[0].points = [p.copy() for p in self.points]
-        #     else :
-        #         self.points = points
-        #         self.polygon2D = polygon2D
-        #     Face3D.__init__(self, contours)
-        
-        # self.contours = contours
-        # self.plane = plane
-        # self.points = points
-        # self.polygon2D = polygon2D
-
-
-
-        
-
-        # contour_points = [p.copy() for p in self.contours[0].points[:]]
-        # if plane is None:
-        #     self.plane = Plane3D.from_points(contour_points)
-
-        # if points is None or polygon2D is None:
-        #     self.points, self.polygon2D = self._repair_points_and_polygon2d(contour_points, self.plane)
-        #     self.contours[0].points = [p.copy() for p in self.points]
-
-        # self.bounding_box = self._bounding_box()
-
-        # CHECK
-        # for pt in self.points:
-        #     if not self.plane.point_on_plane(pt):
-        #         print('WARNING', pt, 'not on', self.plane.__dict__)
-        #         print('dot =', self.plane.normal.Dot(pt-self.plane.origin))
-        #         raise ValueError
 
     def setup_planeface(self, ctrs2d, plane, points=None, polygon2D=None, name=''):
-        contour_points = []
-        for pt in self.contours[0].points :
-            contour_points.append(pt)
         if points is None or polygon2D is None:
-            # self.points, self.polygon2D = self._repair_points_and_polygon2d(contour_points, self.plane)
-            self.points = contour_points
+            self.points = self.contours[0].tessel_points
             self.polygon2D = Polygon2D(self.points)
         else :
             self.points = points
@@ -4605,7 +4573,7 @@ class PlaneFace3D(Face3D):
         :param contours3d: The face's contour3D
         :type contours3d: Contour3D
         """
-        contour_points = [p.copy() for p in contours3d[0].points[:]]
+        contour_points = [p.copy() for p in contours3d[0].tessel_points[:]]
         plane = Plane3D.from_points(contour_points)
         O, x, y = plane.origin, plane.vectors[0], plane.vectors[1]
         contours2d = []
@@ -4647,24 +4615,6 @@ class PlaneFace3D(Face3D):
         """
         side = 'old' or 'new'
         """
-        # print(frame)
-        # pt_o = frame.origin.To2D(Point3D((0,0,0)), frame.u, frame.v)
-        # x, y = frame.u.To2D(Point3D((0,0,0)), frame.u, frame.v), frame.v.To2D(Point3D((0,0,0)), frame.u, frame.v)
-        # frame2d = Frame2D(pt_o, x, y, name=frame.name)
-        # print(frame)
-        # if copy:
-        #     new_contour = [subcontour.frame_mapping(frame, side, copy=True) for subcontour in self.contours]
-        #     new_plane = self.plane.frame_mapping(frame, side, copy=True)
-        #     new_points = [p.frame_mapping(frame, side, copy=True) for p in self.points]
-        #     return PlaneFace3D(new_contour, new_plane, new_points, None, self.name)
-        # else:
-        #     for contour in self.contours:
-        #         contour.frame_mapping(frame, side, copy=False)
-        #     for point in self.points:
-        #         point.frame_mapping(frame, side, copy=False)
-        #     self.plane.frame_mapping(frame, side, copy=False)
-        #     self.bounding_box = self._bounding_box()
-            
         if copy:
             new_plane = self.plane.frame_mapping(frame, side, copy=True)
             return PlaneFace3D(self.contours, new_plane, None, None, self.name)
@@ -4698,11 +4648,8 @@ class PlaneFace3D(Face3D):
         holes = []
         total_len = 0
         for i, contour in enumerate(self.contours):
-            ##### points_2D = [p.To2D(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1]) for p in contour.points]
-            # if polygon2D.Area() == 0.:
-            #     return None, None
 
-            points_2D = contour.points
+            points_2D = contour.tessel_points
             vertices.extend([tuple(p.vector) for p in points_2D])
             
             if len(vertices) != len(set(vertices)):
@@ -4718,7 +4665,7 @@ class PlaneFace3D(Face3D):
                 holes.append(mid_point_2D.vector)
                 if not polygon2D.PointBelongs(mid_point_2D):
                     warnings.warn('average_center_point is not included inside its contour.')
-                        
+        
         if holes:
             tri = {'vertices': vertices, 'segments': segments, 'holes': holes}
         else:
@@ -4727,10 +4674,8 @@ class PlaneFace3D(Face3D):
         if 'triangles' in t:
             triangles = t['triangles'].tolist()
             return points_3D, [triangles]
-            # return [(points_3D, triangles)]
         else:
             return None, [None]
-            # return [(None, None)]
 
     def distance_to_point(self, point, return_other_point=False):
         ## """
@@ -4773,8 +4718,8 @@ class PlaneFace3D(Face3D):
         if self.face_intersection(face2) is not None:
             return 0, None, None
 
-        polygon1_points_3D = [Point3D(p.vector) for p in self.contours3d[0].points]
-        polygon2_points_3D = [Point3D(p.vector) for p in face2.contours3d[0].points]
+        polygon1_points_3D = [Point3D(p.vector) for p in self.contours3d[0].tessel_points]
+        polygon2_points_3D = [Point3D(p.vector) for p in face2.contours3d[0].tessel_points]
 
         distances = []
         if not return_points:
@@ -4923,9 +4868,9 @@ class PlaneFace3D(Face3D):
 #        y = [p[1] for edge in self.contours[0].edges for p in edge.points]
 #        z = [p[2] for edge in self.contours[0].edges for p in edge.points]
 #        print(x,y,z)
-        x = [p[0] for p in self.contours[0].points]
-        y = [p[1] for p in self.contours[0].points]
-        z = [p[2] for p in self.contours[0].points]
+        x = [p[0] for p in self.contours[0].tessel_points]
+        y = [p[1] for p in self.contours[0].tessel_points]
+        z = [p[2] for p in self.contours[0].tessel_points]
 
         ax.scatter(x, y, z)
         ax.set_xlabel('X Label')
@@ -4982,16 +4927,18 @@ class CylindricalFace3D(Face3D):
     """      
     # Does not work with automatical cylinder from FREECAD (problem with clean_points)
     def __init__(self, contours2d, cylindricalsurface3d, points=None, name=''):
-        self.radius = float(cylindricalsurface3d.radius)/1000
+        self.radius = cylindricalsurface3d.radius
         self.center = cylindricalsurface3d.frame.origin
         self.normal = cylindricalsurface3d.frame.w
-        ctr = [Contour3D([Circle3D(cylindricalsurface3d.frame.origin, self.radius, cylindricalsurface3d.frame.w ), Circle3D(cylindricalsurface3d.frame.origin+contours2d[0].primitives[0].points[1][1]*cylindricalsurface3d.frame.w, self.radius, cylindricalsurface3d.frame.w)])]
+        edge1 = Circle3D(cylindricalsurface3d.frame.origin, self.radius, cylindricalsurface3d.frame.w )
+        edge2 = Circle3D(cylindricalsurface3d.frame.origin+contours2d[0].primitives[0].points[1][1]*cylindricalsurface3d.frame.w, self.radius, cylindricalsurface3d.frame.w)
+        ctr = [Contour3D([edge1, edge2], name='')]
         Face3D.__init__(self, ctr)
         
         self.contours2d = contours2d 
         self.cylindricalsurface3d = cylindricalsurface3d 
         if points is None:
-            self.points = self.contours2d[0].points 
+            self.points = self.contours2d[0].tessel_points 
         else:
             self.points = points 
         self.name = name 
@@ -5040,7 +4987,7 @@ class CylindricalFace3D(Face3D):
 #            ax = fig.add_subplot(111, projection='3d')
 #            contours3d[0].MPLPlot(ax=ax)
             
-            ptsnew = [frame3d.NewCoordinates(point) for point in contours3d[0].points]
+            ptsnew = [frame3d.NewCoordinates(point) for point in contours3d[0].tessel_points]
 #            [pt.MPLPlot(ax=ax, color='r') for pt in ptsnew]
             pts2d, seg, points = [], [], []
             
@@ -5073,7 +5020,7 @@ class CylindricalFace3D(Face3D):
                 # seg[k+1].MPLPlot(ax=ax)
             contours2d = [Contour2D(seg[1:])]        
             points = pts2d
-        # [pt.MPLPlot(ax=ax, color='r') for pt in contours2d[0].points]
+        # [pt.MPLPlot(ax=ax, color='r') for pt in contours2d[0].tessel_points]
 #        [pt.MPLPlot(ax=ax) for pt in points]
     
         ####
@@ -5093,7 +5040,7 @@ class CylindricalFace3D(Face3D):
         # points = edges[0].points 
         # contours2d =  [Contour2D(edges)]
         
-        return cls(contours2d, cylindricalsurface3d, points, name='')
+        return cls(contours2d, cylindricalsurface3d, points, name=name)
     
     @classmethod 
     def from_arc3d(cls, lineseg, arc, cylindricalsurface3d): #Work with 2D too
@@ -5105,7 +5052,7 @@ class CylindricalFace3D(Face3D):
         :param cylindricalsurface3d: Information about the Cylinder
         :type cylindricalsurface3d: CylindricalSurface3D
         """
-        radius = float(cylindricalsurface3d.radius)/1000
+        radius = cylindricalsurface3d.radius
         frame = cylindricalsurface3d.frame
         normal, center = frame.w, frame.origin
         offset = 0
@@ -5140,7 +5087,7 @@ class CylindricalFace3D(Face3D):
             
             frame_adapt = Frame3D(center, u, v, normal)
 
-        cylindersurface3d = CylindricalSurface3D(frame_adapt, radius*1000)
+        cylindersurface3d = CylindricalSurface3D(frame_adapt, radius)
         segbh = LineSegment2D(Point2D([offset*radius,0]), Point2D((offset*radius,lineseg.Length())))
         circlestart = LineSegment2D(segbh.points[1], segbh.points[1]+Point2D((theta*radius,0)))
         seghb = LineSegment2D(circlestart.points[1],circlestart.points[1]-segbh.points[1]+segbh.points[0])
@@ -5159,10 +5106,8 @@ class CylindricalFace3D(Face3D):
         return Points_3D
     
     def triangulation(self, resolution=31):
-        radius = (float(self.cylindricalsurface3d.radius))/1000 #Need to divide by 1000 because of step read
-        
+        radius = self.radius
         frame3d = self.cylindricalsurface3d.frame
-
         all_contours_points = self.cut_contours(self.contours2d, resolution)
         
         ##########
@@ -5173,10 +5118,9 @@ class CylindricalFace3D(Face3D):
         #             continue
         #         else :
         #             pt.MPLPlot(ax=ax) 
-        # [pt.MPLPlot(ax=ax, color='r') for pt in self.contours2d[0].points]
+        # [pt.MPLPlot(ax=ax, color='r') for pt in self.contours2d[0].tessel_points]
         #############
-        Triangles = []
-        ts=[]
+        Triangles, ts = [], []
         for k, listpt in enumerate(all_contours_points) :
             vertices=[]
             segments=[]
@@ -5189,8 +5133,7 @@ class CylindricalFace3D(Face3D):
             t = triangle.triangulate(tri, 'p')
             ts.append(t)
         
-        seuil=0
-        k=0
+        seuil, k = 0, 0
         for t in ts :
             if 'triangles' in t:
                 triangles = t['triangles'].tolist()
@@ -5215,9 +5158,7 @@ class CylindricalFace3D(Face3D):
         else:
             fig = ax.figure
 
-        x = []
-        y = []
-        z = []
+        x, y, z = [], [], []
         for px, py, pz in self.points :
             x.append(px)
             y.append(py)
@@ -5238,7 +5179,7 @@ class CylindricalFace3D(Face3D):
         x = []
         y = []
         z = []
-        for px, py, pz in self.contours[0].points :
+        for px, py, pz in self.contours[0].tessel_points :
             x.append(px)
             y.append(py)
             z.append(pz)
@@ -5256,7 +5197,7 @@ class CylindricalFace3D(Face3D):
             self.cylindricalsurface3d.frame_mapping(frame, side, copy=False)
             
     def minimum_maximum(self, contour2d, radius) :
-        points = contour2d.points
+        points = contour2d.tessel_points
         
         min_h, min_theta = min([pt[1] for pt in points]), min([pt[0] for pt in points])/radius
         max_h, max_theta = max([pt[1] for pt in points]), max([pt[0] for pt in points])/radius 
@@ -5344,7 +5285,7 @@ class CylindricalFace3D(Face3D):
         
         if not(self.contours2d[0].point_belongs(pt1_2d)) :
             #Find the closest one
-            points_contours1 = self.contours2d[0].points
+            points_contours1 = self.contours2d[0].tessel_points
             
             poly1 = Polygon2D(points_contours1)
             d1, new_pt1_2d = poly1.PointBorderDistance(pt1_2d, return_other_point=True)
@@ -5356,7 +5297,7 @@ class CylindricalFace3D(Face3D):
         
         if not(other_cyl.contours2d[0].point_belongs(pt2_2d)) :
             #Find the closest one
-            points_contours2 = other_cyl.contours2d[0].points
+            points_contours2 = other_cyl.contours2d[0].tessel_points
             
             poly2 = Polygon2D(points_contours2)
             d2, new_pt2_2d = poly2.PointBorderDistance(pt2_2d, return_other_point=True)
@@ -5431,7 +5372,7 @@ class CylindricalFace3D(Face3D):
         
         if not(self.contours2d[0].point_belongs(pt1_2d)) :
             #Find the closest one
-            points_contours1 = self.contours2d[0].points
+            points_contours1 = self.contours2d[0].tessel_points
             
             poly1 = Polygon2D(points_contours1)
             d1, new_pt1_2d = poly1.PointBorderDistance(pt1_2d, return_other_point=True)
@@ -5513,7 +5454,7 @@ class ToroidalFace3D (Face3D) :
         self.contours2d = contours2d 
         
         if points is None or len(points)==1 :
-            self.points = self.contours2d[0].points 
+            self.points = self.contours2d[0].tessel_points 
         else:
             self.points = points 
         self.name = name 
@@ -5557,7 +5498,7 @@ class ToroidalFace3D (Face3D) :
             print('contours3d edges', contours3d[0].edges)
             raise NotImplementedError
             
-        return cls(contours2d, toroidalsurface3d, points, name='')
+        return cls(contours2d, toroidalsurface3d, points, name=name)
     
     @classmethod
     def from_arc3d(cls, arc, arcgen):
@@ -5814,7 +5755,7 @@ class ToroidalFace3D (Face3D) :
             self.toroidalsurface3d.frame_mapping(frame, side, copy=False)
             
     def minimum_maximum_tore(self, contour2d) :
-        points = contour2d.points
+        points = contour2d.tessel_points
         
         min_phi, min_theta = min([pt[1] for pt in points]), min([pt[0] for pt in points])
         max_phi, max_theta = max([pt[1] for pt in points]), max([pt[0] for pt in points])
@@ -5937,7 +5878,7 @@ class ToroidalFace3D (Face3D) :
         
         if not(self.contours2d[0].point_belongs(pt1_2d)) :
             #Find the closest one
-            points_contours1 = self.contours2d[0].points
+            points_contours1 = self.contours2d[0].tessel_points
             
             poly1 = Polygon2D(points_contours1)
             d1, new_pt1_2d = poly1.PointBorderDistance(pt1_2d, return_other_point=True)
@@ -5948,7 +5889,7 @@ class ToroidalFace3D (Face3D) :
         
         if not(other_tore.contours2d[0].point_belongs(pt2_2d)) :
             #Find the closest one
-            points_contours2 = other_tore.contours2d[0].points
+            points_contours2 = other_tore.contours2d[0].tessel_points
             
             poly2 = Polygon2D(points_contours2)
             d2, new_pt2_2d = poly2.PointBorderDistance(pt2_2d, return_other_point=True)
@@ -6069,7 +6010,7 @@ class ToroidalFace3D (Face3D) :
         
         if not(self.contours2d[0].point_belongs(pt2_2d)) :
             #Find the closest one
-            points_contours2 = self.contours2d[0].points
+            points_contours2 = self.contours2d[0].tessel_points
             
             poly2 = Polygon2D(points_contours2)
             d2, new_pt2_2d = poly2.PointBorderDistance(pt2_2d, return_other_point=True)
@@ -6172,7 +6113,7 @@ class ToroidalFace3D (Face3D) :
         
         if not(self.contours2d[0].point_belongs(pt1_2d)) :
             #Find the closest one
-            points_contours1 = self.contours2d[0].points
+            points_contours1 = self.contours2d[0].tessel_points
             
             poly1 = Polygon2D(points_contours1)
             d1, new_pt1_2d = poly1.PointBorderDistance(pt1_2d, return_other_point=True)
@@ -6211,7 +6152,400 @@ class ToroidalFace3D (Face3D) :
                 return p1.point_distance(p2)
         else :
             return NotImplementedError 
+ 
+class ConicalFace3D (Face3D) :
+    """
+    :param contours2d: The Cone's contour2D 
+    :type contours2d: Contour2D
+    :param conicalsurface3d: Information about the Cone
+    :type conicalsurface3d: ConicalSurface3D
+    :param points: Contour2d's parameter Cone
+    :type points: List of float
     
+    """      
+    
+    def __init__(self, contours2d, conicalsurface3d, points, name=''):
+        self.rb = conicalsurface3d.radius
+        self.rt = points[0]
+        self.conicalsurface3d = conicalsurface3d 
+        
+        self.center = self.conicalsurface3d.frame.origin
+        self.normal = self.conicalsurface3d.frame.w
+        vec1, vec2 = self.conicalsurface3d.frame.u, self.conicalsurface3d.frame.v
+        ptext1 = self.center + Point3D((self.rb*vec1).vector)
+        center2 = self.center + points[4]*self.normal
+        ptext2 =  center2 + Point3D((self.rt*vec1).vector) 
+        if math.isclose(self.rb, 0, abs_tol = 1e-6) :
+            c1 = LineSegment3D(self.center, center2)
+        else :
+            c1 = Arc3D(ptext1, ptext1.Rotation(self.center, self.normal, points[3]/2), ptext1.Rotation(self.center, self.normal, points[3]), self.normal) 
+        if math.isclose(self.rt, 0, abs_tol = 1e-6) :
+            c2 = LineSegment3D(center2, self.center)
+        else :
+            c2 = Arc3D(ptext2, ptext2.Rotation(center2, self.normal, points[1]/2), ptext2.Rotation(center2, self.normal, points[1]), self.normal)
+            
+        edges = [c1, c2]
+        ctr = [Contour3D(edges)]
+        
+        Face3D.__init__(self, ctr)
+        self.contours2d = contours2d 
+        self.name = name 
+        self.points = points
+        # pts3d, t = self.triangulation()
+        # self.start = pts3d[0]
+    
+    @classmethod
+    def from_contour3d(cls, contours3d, conicalsurface3d, name=''):
+        """
+        :param contours3d: The Cone's contour3D
+        :type contours3d: Contour3D
+        :param conicalsurface3d: Information about the Cone
+        :type conicalsurface3d: ConicalSurface3D
+        
+        :Example:
+            >>> contours3d is [Arc3D, LineSegment3D, Arc3D or LineSegment3D], the Cone's bones
+        """
+        if contours3d[0].edges[0].__class__ is Arc3D and contours3d[0].edges[1].__class__ is LineSegment3D : #Portion of Tore
+            r1 = contours3d[0].edges[0].radius
+            theta1 = contours3d[0].edges[0].angle
+            if contours3d[0].edges[2].__class__ is LineSegment3D :
+                r2, theta2 = 0, 2*math.pi
+            else :
+                r2 = contours3d[0].edges[2].radius
+                theta2 = contours3d[0].edges[2].angle
+            linelength, R = contours3d[0].edges[1].Length(), max((r1,r2))-min((r1,r2))
+            
+            h = math.sqrt(abs(linelength**2 - R**2)) ## Check if h is equal for both line otherwise the top is not in the middle
+            
+            offset = (theta1 - theta2)/2
+            
+            #Creation of the window
+            pt1, pt2, pt3, pt4 = Point2D((0, 0)), Point2D((offset, h)), Point2D((offset+theta2, h)), Point2D((theta1, 0))
+            seg1, seg2, seg3, seg4 = LineSegment2D(pt1, pt2), LineSegment2D(pt2, pt3), LineSegment2D(pt3, pt4), LineSegment2D(pt4, pt1) 
+            edges = [seg1, seg2, seg3, seg4]
+            contours2d =  [Contour2D(edges)]
+            points = [r1,theta1,r2,theta2,h]
+        
+        else:
+            print('contours3d edges', contours3d[0].edges)
+            raise NotImplementedError
+            
+        return cls(contours2d, conicalsurface3d, points, name=name)
+    
+    def points2d_to3d(self, all_contours_points, rb, rt, h, frame3d) :
+        Points3D = []
+        for listpt in  all_contours_points: 
+            for pt in listpt :
+                ratio = pt[1]/h
+                radius = (1-ratio)*rb + ratio*rt
+                Points3D.append(Point3D(Vector3D([radius*math.cos(pt[0]),radius*math.sin(pt[0]),pt[1]])))            
+        Points_3D = [frame3d.OldCoordinates(point) for point in Points3D]
+        return Points_3D
+    
+    def create_triangle(self, all_contours_points, part) :
+        Triangles, ts = [], []
+        pts, h_list = [], []
+        for listpt in all_contours_points :
+            for pt in listpt :
+                pts.append(pt)
+                h_list.append(pt[1])
+        if part == 'bot' :        
+            h_concerned = min(h_list)
+        else :
+            h_concerned = max(h_list)
+        peak_list, other = [], []
+        for pt in pts : 
+            if pt[1]==h_concerned :
+                peak_list.append(pt)
+            else : 
+                other.append(pt)
+        points = [peak_list[0]] + other
+        
+        for i in range(1, len(points)):
+            if i == len(points)-1 :
+                vertices = [points[i].vector, points[0].vector, points[1].vector]
+                segments = [[0,1],[1,2],[2,0]]
+                listindice = [i,0,1]
+            else :
+                vertices = [points[i].vector, points[0].vector, points[i+1].vector]
+                segments = [[0,1],[1,2],[2,0]]
+                listindice = [i,0,i+1]
+            tri = {'vertices': vertices, 'segments': segments}
+            t = triangle.triangulate(tri, 'p')
+            if 'triangles' in t:
+                triangles = t['triangles'].tolist()
+                triangles[0] = listindice
+                Triangles.append(triangles)        
+            else:
+                Triangles.append(None)
+            ts.append(t)
+            
+        return points, Triangles
+    
+    def triangulation(self, resolution=30):
+        rb = self.rb
+        rt = self.rt
+        h = self.points[4] 
+        
+        frame3d = self.conicalsurface3d.frame
+        
+        angle_theta1 = self.points[1]
+        angle_theta2 = self.points[3]
+        pas_theta = 2*math.pi/30 #Step of 12 degrees
+         
+        resolution_theta = abs(int(max(angle_theta1,angle_theta2)/pas_theta))
+        if resolution_theta < 5 :
+            resolution_theta = 5
+
+        all_contours_points = self.cut_contours(self.contours2d, resolution_theta)
+
+        if rb == 0 :
+            points, Triangles = self.create_triangle(all_contours_points, part='bot')
+            Points_3D = self.points2d_to3d([points], rb, rt, h, frame3d)
+        elif rt == 0 :
+            points, Triangles = self.create_triangle(all_contours_points, part='top')
+            Points_3D = self.points2d_to3d([points], rb, rt, h, frame3d)
+        else :    
+            Triangles, ts = [], []
+            for k, listpt in enumerate(all_contours_points) :
+                vertices=[]
+                segments=[]
+                for i, pt in enumerate(listpt):
+                    vertices.append(pt.vector)
+                    segments.append([i,i+1])
+                segments[-1]=(len(listpt)-1,0) 
+                tri = {'vertices': vertices, 'segments': segments}
+                t = triangle.triangulate(tri, 'p')
+                ts.append(t)
+            
+            seuil, k = 0, 0
+            for t in ts :
+                if 'triangles' in t:
+                    triangles = t['triangles'].tolist()
+                    for n,tri in enumerate(triangles):
+                        for i in range (0,3):
+                            tri[i]=tri[i]+seuil
+                    seuil += len(all_contours_points[k])
+                    k += 1
+                    Triangles.append(triangles)        
+                else:
+                    Triangles.append(None)
+        
+            Points_3D = self.points2d_to3d(all_contours_points, rb, rt, h, frame3d)
+        
+        pt3d, tangle = delete_double_pos(Points_3D, Triangles)
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111, projection='3d')
+        # [pt.MPLPlot(ax=ax) for pt in pt3d]     
+        # print('>>>>len(Points_3D)', len(Points_3D))
+        # print('>>>>>len(pt3d)', len(pt3d)) 
+        # print('>>>>>>len(tangle)', len(tangle))
+        
+        return pt3d, tangle 
+    
+    def frame_mapping(self, frame, side, copy=True) :
+        if copy:
+            new_conicalsurface3d = ConicalSurface3D.frame_mapping(frame, side, copy)
+            return ConicalFace3D(self.contours2d, new_coniccalsurface3d, points=self.points, name=self.name)
+        else:
+            self.conicalsurface3d.frame_mapping(frame, side, copy=False)
+  
+class SphericalFace3D (Face3D) :
+    """
+    :param contours2d: The Sphere's contour2D 
+    :type contours2d: Contour2D
+    :param sphericalsurface3d: Information about the Sphere
+    :type sphericalsurface3d: SphericalSurface3D
+    :param points: Angle's Sphere
+    :type points: List of float
+    
+    :Example: 
+        >>> contours2d is rectangular and will create a classic tore with x:2*pi, y:2*pi
+        
+        >>> points = [pi, 2*pi] for an half sphere
+    """      
+    
+    def __init__(self, contours2d, sphericalsurface3d, points=None, name=''):
+        self.radius = sphericalsurface3d.radius
+        self.sphericalsurface3d = sphericalsurface3d 
+        
+        self.center = self.sphericalsurface3d.frame.origin
+        self.normal = self.sphericalsurface3d.frame.w
+        vec1, vec2 = self.sphericalsurface3d.frame.u, self.sphericalsurface3d.frame.v
+        ptext1 = self.center + Point3D((self.radius*vec1).vector) 
+        ptext2 = self.center + Point3D((self.radius*vec1).vector) 
+        c1 = Arc3D(ptext1, ptext1.Rotation(self.center, self.normal, points[0]/2), ptext1.Rotation(self.center, self.normal, points[0]), self.normal) 
+        c2 = Arc3D(ptext2, ptext2.Rotation(self.center, self.normal, points[1]/2), ptext2.Rotation(self.center, self.normal, points[1]), self.normal)
+            
+        edges = [c1, c2]
+        ctr = [Contour3D(edges)]
+        
+        Face3D.__init__(self, ctr)
+        self.contours2d = contours2d 
+        
+        self.points = points 
+        self.name = name 
+    
+        # pts3d, t = self.triangulation()
+        # self.start = pts3d[0]
+    
+    @classmethod
+    def from_contour3d(cls, contours3d, sphericalsurface3d, name=''):
+        """
+        :param contours3d: The Sphere's contour3D
+        :type contours3d: Contour3D
+        :param sphericalsurface3d: Information about the Tore
+        :type sphericalsurface3d: SphericalSurface3D
+        
+        """
+        center = sphericalsurface3d.frame.origin
+        normal = sphericalsurface3d.frame.w
+        
+        if contours3d[0].__class__ is Point3D : #If it is a complete sphere
+            angle = 2*math.pi
+            pt1, pt2, pt3, pt4 = Point2D((0, 0)), Point2D((0, angle)), Point2D((angle, angle)), Point2D((angle, 0))
+            seg1, seg2, seg3, seg4 = LineSegment2D(pt1, pt2), LineSegment2D(pt2, pt3), LineSegment2D(pt3, pt4), LineSegment2D(pt4, pt1) 
+            edges = [seg1, seg2, seg3, seg4]
+            contours2d =  [Contour2D(edges)]
+            points = [angle, angle]
+         
+        elif contours3d[0].edges[0].__class__ is Arc3D and contours3d[0].edges[1].__class__ is Arc3D : #Portion of Sphere
+            ## we supposed a contours with 4 edges maximum here
+            arc_base, arc_link = [], []
+            range_list = []
+            for edge in contours3d[0].edges :
+                if edge.normal == normal :
+                    arc_base.append(edge)
+                    range_list.append(1)
+                else :
+                    arc_link.append(edge)
+                    range_list.append(2)
+            if len(arc_base) == 0 :
+                raise NotImplementedError
+                 
+            radius = sphericalsurface3d.radius 
+            theta = arc_base[0].angle
+            phi = arc_link[0].angle
+            if range_list[-1] == range_list[-2] :
+                offset_phi = -math.pi/2
+            else :
+                pos = len(arc_base)-1
+                c1 = arc_base[pos].center
+                vec1, vec2 = c1 - center, arc_base[pos].start - center
+                offset_phi = -math.pi/2 + vectors3d_angle(vec1, vec2)
+            offset_theta = 0
+            
+            # Creation of the window
+            pt1, pt2, pt3, pt4 = Point2D((offset_theta, offset_phi)), Point2D((offset_theta, offset_phi + phi)), Point2D((offset_theta+theta, offset_phi + phi)), Point2D((offset_theta+theta, offset_phi))
+            seg1, seg2, seg3, seg4 = LineSegment2D(pt1, pt2), LineSegment2D(pt2, pt3), LineSegment2D(pt3, pt4), LineSegment2D(pt4, pt1) 
+            edges = [seg1, seg2, seg3, seg4]
+            contours2d =  [Contour2D(edges)]
+            points = [theta, phi]
+                
+        else:
+            print('contours3d edges', contours3d[0].edges)
+            raise NotImplementedError
+            
+        return cls(contours2d, sphericalsurface3d, points, name=name)
+ 
+    def points2d_to3d(self, points2d, r, frame3d) :
+        # source mathcurve.com/surfaces/sphere
+        # -pi<theta<pi, -pi/2<phi<pi/2
+        points3D = []
+        for pt in points2d :
+            theta, phi = pt[0], pt[1]
+            x = r*math.cos(phi)*math.cos(theta)
+            y = r*math.cos(phi)*math.sin(theta)
+            z = r*math.sin(phi)
+            points3D.append(Point3D([x,y,z]))
+        Points_3D = [frame3d.OldCoordinates(point) for point in points3D]
+        return Points_3D
+    
+    def triangulation(self, resolution=30):
+        r = self.radius
+        
+        frame3d = self.sphericalsurface3d.frame
+        
+        centerota = Point2D((0,0))
+        
+        angle_theta = self.points[0]
+        angle_phi = self.points[1]
+        pas_theta = 2*math.pi/30 #Step of 12 degrees
+        pas_phi = pas_theta
+        
+        resolution_theta = abs(int(angle_theta/pas_theta))
+        resolution_phi = abs(int(angle_phi/pas_phi))
+        
+        if resolution_phi < 5 :
+            resolution_phi = 5
+        if resolution_theta < 5 :
+            resolution_theta = 5
+        
+        ctr_pt1 = self.cut_contours(self.contours2d, resolution_theta)
+        
+        
+        all_contours_points = []
+        for listpt in ctr_pt1 :
+            bandept = []
+            for pt in listpt :
+                bandept.append(pt.Rotation(centerota, -math.pi/2))
+            edges = []
+            for k in range (0,len(bandept)) :
+                if k == len(bandept)-1 :
+                    edges.append(LineSegment2D(bandept[k], bandept[0]))
+                else :
+                    edges.append(LineSegment2D(bandept[k], bandept[k+1]))
+            ctr2d = [Contour2D(edges)]
+            all_contours_points.extend(self.cut_contours(ctr2d, resolution_phi))
+        
+        pts_frame1 = []
+        for listpt in all_contours_points :
+            for pt in listpt : 
+                pts_frame1.append(pt.Rotation(centerota, math.pi/2))
+        
+        all_points = self.delete_double(pts_frame1) # All points necessary to triangulate
+        all_points.sort(key=lambda pt: pt[0]) 
+        ptvert, pts = [], []
+        for k in range(0, resolution_theta +1) :
+            ptvert.append([point for point in all_points[k*(resolution_phi+1):(k+1)*(resolution_phi+1)]])
+            ptvert[k].sort(key=lambda pt: pt[1])
+            pts.extend(ptvert[k])
+        
+        Triangles, ts = [], []
+        
+        step = resolution_phi
+        for k in range (0,len(pts)-resolution_phi-2) :
+            vertices=[]
+            segments=[]
+            
+            if k%step == 0 and k!=0:
+                step += resolution_phi+1
+                continue
+            
+            listpt = [pts[k], pts[k+1], pts[k+1+resolution_phi+1], pts[k+resolution_phi+1]]
+            listindice = [k, k+1, k+1+resolution_phi+1, k+resolution_phi+1]
+            for i, pt in enumerate(listpt):
+                vertices.append(pt.vector)
+                segments.append([i,i+1])
+            
+            segments[-1]=(len(listpt)-1,0) 
+            tri = {'vertices': vertices, 'segments': segments}
+            t = triangle.triangulate(tri, 'p')
+            if 'triangles' in t:
+                triangles = t['triangles'].tolist()
+                for n,tri in enumerate(triangles):
+                    for i in range (0,3):
+                        tri[i]=listindice[tri[i]]
+                Triangles.append(triangles)        
+            else:
+                Triangles.append(None)
+            ts.append(t)
+        
+        pts3d = self.points2d_to3d(pts, r, frame3d)
+        pt3d, tangle = delete_double_pos(pts3d, Triangles)
+        
+        return pt3d, tangle
+         
 class BSplineFace3D(Face3D):
     def __init__(self, contours, bspline_shape, points=None, name=''):
 #        Primitive3D.__init__(self, name=name)
@@ -6230,7 +6564,7 @@ class BSplineFace3D(Face3D):
             normal = self.bspline_shape.vectorextru
             
             #find the bd box's height ,changing the frame of points
-            scal = [normal.Dot(Vector3D(pt.vector)) for pt in self.contours[0].points[:]]
+            scal = [normal.Dot(Vector3D(pt.vector)) for pt in self.contours[0].tessel_points[:]]
             mini, maxi = min(scal), max(scal)
             h = maxi-mini
             
@@ -6275,7 +6609,7 @@ class BSplineFace3D(Face3D):
             # fig = plt.figure()
             # ax = fig.add_subplot(111, projection='3d')
             ######### FORMAT 1 : AVEC "PORTES"
-            # self.points = self.contours[0].points
+            # self.points = self.contours[0].tessel_points
             # self.bounding_box = self._bounding_box()
             # xmax, xmin = self.bounding_box.xmax, self.bounding_box.xmin
             # ymax, ymin = self.bounding_box.ymax, self.bounding_box.ymin
@@ -6307,7 +6641,7 @@ class BSplineFace3D(Face3D):
             #     pointsbbx.append(ptetage)
             # #STEP 2 : Find the intersection between surfacepoint and contourspoints + interior points
             # ptsurf = []
-            # ptscontours = self.contours[0].points
+            # ptscontours = self.contours[0].tessel_points
             # # ptscontours.append(ptscontours[0])
             # # ptscontours = ptscontour[::-1] #on inverse pour concorder avec la lecture des pts
             # nbx_u = []
@@ -6761,7 +7095,7 @@ class Shell3D(CompositePrimitive3D):
 
         points = []
         for face in self.faces:
-            points.extend(face.contours3d[0].points)
+            points.extend(face.contours3d[0].tessel_points)
 
         for point in points:
             if not shell2.point_belongs(point):
@@ -6799,10 +7133,10 @@ class Shell3D(CompositePrimitive3D):
         # Check if any point of the first shell is in the second shell
         points1 = []
         for face in self.faces:
-            points1.extend(face.contours3d[0].points)
+            points1.extend(face.contours3d[0].tessel_points)
         points2 = []
         for face in shell2.faces:
-            points2.extend(face.contours3d[0].points)
+            points2.extend(face.contours3d[0].tessel_points)
 
         nb_pts1 = len(points1)
         nb_pts2 = len(points2)
@@ -6895,7 +7229,7 @@ class Shell3D(CompositePrimitive3D):
 
         shell1_points_inside_shell2 = []
         for face in self.faces:
-            for point in face.contours3d[0].points:
+            for point in face.contours3d[0].tessel_points:
                 if shell2.point_belongs(point):
                     shell1_points_inside_shell2.append(point)
 
@@ -6917,7 +7251,7 @@ class Shell3D(CompositePrimitive3D):
 
         shell1_points_outside_shell2 = []
         for face in self.faces:
-            for point in face.contours3d[0].points:
+            for point in face.contours3d[0].tessel_points:
                 if not shell2.point_belongs(point):
                     shell1_points_outside_shell2.append(point)
 
@@ -8373,8 +8707,8 @@ step_to_volmdlr_primitive = {
 
         'PLANE': Plane3D,
         'CYLINDRICAL_SURFACE': CylindricalSurface3D,
-        'CONICAL_SURFACE': None,
-        'SPHERICAL_SURFACE': None,
+        'CONICAL_SURFACE': ConicalSurface3D,
+        'SPHERICAL_SURFACE': SphericalSurface3D,
         'TOROIDAL_SURFACE': ToroidalSurface3D,
         'DEGENERATE_TOROIDAL_SURFACE': None,
         'B_SPLINE_SURFACE_WITH_KNOTS': BSplineSurface3D,

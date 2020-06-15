@@ -16,7 +16,7 @@ normal.Normalize() #Normalize the normal if it is not the case
 plane = vm.Plane3D.from_normal(center, normal) #Create a plane to give us two others vector
 
 frame = vm.Frame3D(center, plane.vectors[0], plane.vectors[1], normal) #Frame in the center of the cylinder
-cylindersurface3d = vm.CylindricalSurface3D(frame, radius*1000) #*1000 because cylsurf3d /1000
+cylindersurface3d = vm.CylindricalSurface3D(frame, radius)
 
 h = 10e-3 #Height of cylinder
 angle = 3*math.pi/2 #Arc's angle 

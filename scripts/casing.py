@@ -58,10 +58,11 @@ belt = primitives3D.ExtrudedProfile(vm.Z3D*(height - 2*thickness), vm.X3D, vm.Y3
                                       belt_outer_contour,
                                       [inner_contour]+screw_holes,
                                       thickness * vm.Z3D, name='belt')
-##
-# fig, ax = plt.subplots()
-# [prim.MPLPlot(ax=ax) for prim in belt_outer_contour.primitives]
-# ##
+
+fig, ax = inner_contour.MPLPlot()
+belt_outer_contour.MPLPlot(ax=ax)
+
+
 ax = belt.outer_contour3d.MPLPlot()
 l = belt.outer_contour3d.Length()
 for i in range(100):
@@ -71,9 +72,8 @@ for i in range(100):
 ax = belt.outer_contour3d.MPLPlot()
 # l = belt.outer_contour3d.Length()
 # for i in range(100):
-for p in belt.outer_contour3d.points:
+for p in belt.outer_contour3d.tessel_points:
     p.MPLPlot(ax=ax)
-
 
 
 model = vm.VolumeModel([bottom, sides, belt], name='Casing')
