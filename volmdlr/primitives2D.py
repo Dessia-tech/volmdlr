@@ -86,17 +86,6 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.Wire2D):
             self.__init__([p.Translation(offset,copy=True) for p in self.points],
                           self.radius, adapt_radius =self.adapt_radius, name = self.name)
 
-    # def Offset(self, offset):
-        ## add
-        # lines = []
-        # for k in range (0,len(self.points)):
-        #     if k==len(self.points)-1:
-        #         new_line = volmdlr.LineSegment2D(self.points[k], self.points[0])
-        #     else :
-        #         new_line = volmdlr.LineSegment2D(self.points[k], self.points[k+1])
-        #     lines.append(new_line)
-        #####
-        
     def Offset(self, offset):
         nb = len(self.points)
         vectors = []
@@ -168,104 +157,6 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.Wire2D):
             offset_points.append(self.points[-1] + offset*offset_vectors[-1])
 
         return self.__class__(offset_points, new_radii, adapt_radius=self.adapt_radius)
-        
-        # ##### add    
-        # lines_newpts = []
-        # for k in range (0,len(offset_points)):
-        #     if k==len(offset_points)-1:
-        #         new_line = volmdlr.LineSegment2D(offset_points[k], offset_points[0])
-        #     else :
-        #         new_line = volmdlr.LineSegment2D(offset_points[k], offset_points[k+1])
-        #     lines_newpts.append(new_line)
-            
-        # for i in range((not self.closed),nb-(not self.closed)):
-        #     if i in self.radius:
-        #         # Determine side
-        #         # side = ni.NormalVector().Dot(vectors[2*i-1]) > 0
-        #         ratio = lines_newpts[i].Length()/lines[i].Length()
-        #         if ratio>1 :
-        #             new_radius = self.radius[i]*ratio
-        #         elif ratio<1 :
-        #             new_radius = self.radius[i]*ratio
-        #         else :
-        #             new_radius = self.radius[i]
-                
-        #         if new_radius > 0:
-        #             new_radii[i] = new_radius
-        #         else:
-        #             if self.adapt_radius:
-        #                 new_radii[i] = 1e-6
-                
-        # fig, ax = plt.subplots()
-        # [line.MPLPlot(ax=ax) for line in lines]
-        # [line.MPLPlot(ax=ax) for line in lines_newpts]
-        # [pt.MPLPlot(ax=ax, color='r') for pt in offset_points]
-            
-        #####
-        # return self.__class__(offset_points, new_radii, adapt_radius=self.adapt_radius)
-        
-    # def Offset(self, offset:float) -> 'OpenedRoundedLineSegments2D':
-    #     fig, ax = plt.subplots()
-    #     [pt.MPLPlot(ax=ax) for pt in self.points]
-
-    #     lines_init = []
-
-    #     lines = []
-    #     # for point1, point2 in zip(self.points[:-1], self.points[1:]):
-    #     for point1, point2 in zip(self.original_points[:-1], self.original_points[1:]):
-    #         line_direction_vector = point2 - point1
-    #         line_direction_vector.Normalize()
-    #         line_normal_vector = line_direction_vector.NormalVector()
-    #         # line = volmdlr.Line2D(point1+offset*line_normal_vector,
-    #         #                       point2+offset*line_normal_vector)
-    #         line = volmdlr.LineSegment2D(point1+offset*line_normal_vector,
-    #                               point2+offset*line_normal_vector)
-    #         line_init = volmdlr.LineSegment2D(point1, point2)
-    #         lines_init.append(line_init)
-    #         lines.append(line)
-            
-    #     ## Add last lines :
-    #     # last_line = volmdlr.Line2D(lines[0].points[0], lines[-1].points[1])
-    #     last_line = volmdlr.LineSegment2D(lines[0].points[0], lines[-1].points[1])
-    #     lines.append(last_line)
-    #     line_init = volmdlr.LineSegment2D(lines_init[0].points[0], lines_init[-1].points[1])
-    #     lines_init.append(line_init)
-        
-    #     [line.MPLPlot(ax=ax) for line in lines]
-    #     [line.MPLPlot(ax=ax) for line in lines_init]
-        
-    #     # new_points = [self.points[0]]
-    #     new_points = []
-    #     for line1, line2 in zip(lines[:-1], lines[1:]):
-    #         # new_point = line1.line_intersection(line2)
-    #         new_point = volmdlr.Point2D.LinesIntersection(line1, line2)
-    #         new_points.append(new_point)
-    #     # new_points = [self.points[-1]]
-    #     ## Add last points :
-    #     last_new_point = volmdlr.Point2D.LinesIntersection(lines[0], lines[-1])
-    #     new_points.append(last_new_point)
-        
-    #     [pt.MPLPlot(ax=ax, color='r') for pt in new_points]
-        
-    #     new_radii = {}
-    #     nb = len(self.original_points)
-    #     for i in range((not self.closed),nb-(not self.closed)):
-    #         if i in self.radius : 
-    #             if lines[i].Length()>lines_init[i].Length() :
-    #                 new_radius = self.radius[i] + abs(offset)
-    #             elif lines[i].Length()>lines_init[i].Length() :
-    #                 new_radius = self.radius[i] - abs(offset)
-    #             else :
-    #                 new_radius = self.radius[i]
-                
-    #             if new_radius > 0:
-    #                 new_radii[i] = new_radius
-    #             else:
-    #                 if self.adapt_radius:
-    #                     new_radii[i] = 1e-6
-                    
-                        
-    #     return self.__class__(new_points, new_radii, adapt_radius=self.adapt_radius)
         
     def OffsetSingleLine(self, line_index, offset):
         """
