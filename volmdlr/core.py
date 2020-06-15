@@ -4445,7 +4445,7 @@ class Face3D(Primitive3D):
                     list_pt.append(contours_points[i])
             all_contours_points.append(list_pt)
 
-        all_contours_points.pop()
+        all_contours_points.pop() 
 
         return all_contours_points
 
