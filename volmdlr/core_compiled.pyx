@@ -398,9 +398,9 @@ class Vector2D(Vector):
             self.vector = vector2
 
     def frame_mapping(self, frame, side, copy=True):
-        """
-        side = 'old' or 'new'
-        """
+        # """
+        # side = 'old' or 'new'
+        # """
         if side == 'old':
             new_vector = frame.OldCoordinates(self)
             if copy:
@@ -698,8 +698,8 @@ class Vector3D(Vector):
         return int(round(1e6*(self.vector[0]+self.vector[1]+self.vector[2])))
 
     def __eq__(self, other_vector:'Vector3D'):
-#        if self.__class__ != other_vector.__class__:
-#            return False
+        if other_vector.__class__.__name__ not in ['Vector3D', 'Point3D']:
+            return False
         return math.isclose(self.vector[0], other_vector.vector[0], abs_tol=1e-06) \
         and math.isclose(self.vector[1], other_vector.vector[1], abs_tol=1e-06) \
         and math.isclose(self.vector[2], other_vector.vector[2], abs_tol=1e-06)
@@ -719,7 +719,7 @@ class Vector3D(Vector):
 
     def Normalize(self) -> 'Vector3D':
         """
-        Normalize the vector modifying it's coordinate
+        Normalize the vector modifying its coordinates
         """
         n = self.Norm()
         if n == 0:
@@ -843,10 +843,10 @@ class Vector3D(Vector):
 
 
     def To2D(self, plane_origin, x, y):
-        print(self.Dot(x))
-        print(plane_origin.Dot(x))
-        print(self.Dot(y))
-        print(plane_origin.Dot(y))
+        # print(self.Dot(x))
+        # print(plane_origin.Dot(x))
+        # print(self.Dot(y))
+        # print(plane_origin.Dot(y))
         x2d = self.Dot(x) - plane_origin.Dot(x)
         y2d = self.Dot(y) - plane_origin.Dot(y)
         return Point2D((x2d,y2d))
@@ -863,7 +863,7 @@ class Vector3D(Vector):
     
     def deterministic_unit_normal_vector(self):
         """
-        Retuns a deterministic normal vector
+        Returns a deterministic normal vector
         """
         v = X3D
         if not math.isclose(self.vector[1], 0, abs_tol=1e-7) \
@@ -1169,8 +1169,8 @@ class Basis(DessiaObject):
 class Basis2D(Basis):
     """
     Defines a 2D basis
-    :param u: first vector of the basis
-    :param v: second vector of the basis
+    :param u:Vector2D: first vector of the basis
+    :param v:Vector2D: second vector of the basis
     """
     def __init__(self, u:Vector2D, v:Vector2D, name:str=''):
         self.u = u
@@ -1235,9 +1235,10 @@ XY = Basis2D(X2D, Y2D)
 class Basis3D(Basis):
     """
     Defines a 3D basis
-    :param u: first vector of the basis
-    :param v: second vector of the basis
-    :param w: third vector of the basis
+    
+    :param u:Vector3D: first vector of the basis
+    :param v:Vector3D: second vector of the basis
+    :param w:Vector3D: third vector of the basis
     """
     _standalone_in_db = False
 
@@ -1401,9 +1402,9 @@ class Basis3D(Basis):
 class Frame2D(Basis2D):
     """
     Defines a 2D basis
-    :param origin: origin of the basis
-    :param u: first vector of the basis
-    :param v: second vector of the basis
+    :param origin:Point2D: origin of the basis
+    :param u:Vector2D: first vector of the basis
+    :param v:Vector2D: second vector of the basis
     """
     def __init__(self, origin:Point2D, u:Vector2D, v:Vector2D, name:str=''):
         self.origin = origin
@@ -1481,10 +1482,10 @@ OXY = Frame2D(O2D, X2D, Y2D)
 class Frame3D(Basis3D):
     """
     Defines a 3D frame
-    :param origin: origin of the basis
-    :param u: first vector of the basis
-    :param v: second vector of the basis
-    :param w: third vector of the basis
+    :param origin:Point3D: origin of the basis
+    :param u:Vector3D: first vector of the basis
+    :param v:Vector3D: second vector of the basis
+    :param w:Vector3D: third vector of the basis
     """
     def __init__(self, origin:Point3D, u:Vector3D, v:Vector3D, w:Vector3D, name:str=''):
         self.origin = origin
@@ -1541,11 +1542,11 @@ class Frame3D(Basis3D):
         return Basis3D(self.u, self.v, self.w)
 
     def NewCoordinates(self, vector):
-        """ Il faut donner les coordonnées dans le repère global """
+        """ You have to give coordinates in the global landmark """
         return Basis3D.NewCoordinates(self, vector - self.origin)
 
     def OldCoordinates(self, vector): 
-        """ Il faut donner les coordonnées dans le repère local """
+        """ You have to give coordinates in the local landmark """
         return Basis3D.OldCoordinates(self, vector) + self.origin
 
     def Rotation(self, axis, angle, copy=True):

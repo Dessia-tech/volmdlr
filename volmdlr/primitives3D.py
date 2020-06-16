@@ -99,6 +99,12 @@ class OpenedRoundedLineSegments3D(volmdlr.Wire3D, RoundedLineSegments):
 
 
 class ClosedRoundedLineSegments3D(volmdlr.Contour3D, OpenedRoundedLineSegments3D):
+    """
+    :param points: Points used to draw the wire 
+    :type points: List of Point3D
+    :param radius: Radius used to connect different parts of the wire
+    :type radius: {position1(n): float which is the radius linked the n-1 and n+1 points, position2(n+1):...}
+    """
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
@@ -168,12 +174,24 @@ class Block(volmdlr.Shell3D):
 
     def face_contours(self):
         e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11, e12 = self.Edges()
+        e5_switch = e5.reverse()
+        e6_switch = e6.reverse()
+        e7_switch = e7.reverse()
+        e8_switch = e8.reverse()
+        e9_switch = e9.reverse()
+        e10_switch = e10.reverse()
+        e11_switch = e11.reverse()
+        e12_switch = e12.reverse()
         return [volmdlr.Contour3D([e1.copy(), e2.copy(), e3.copy(), e4.copy()]),
                 volmdlr.Contour3D([e5.copy(), e6.copy(), e7.copy(), e8.copy()]),
-                volmdlr.Contour3D([e1.copy(), e9.copy(), e5.copy(), e10.copy()]),
-                volmdlr.Contour3D([e2.copy(), e10.copy(), e6.copy(), e11.copy()]),
-                volmdlr.Contour3D([e3.copy(), e11.copy(), e7.copy(), e12.copy()]),
-                volmdlr.Contour3D([e4.copy(), e12.copy(), e8.copy(), e9.copy()])]
+                # volmdlr.Contour3D([e1.copy(), e9.copy(), e5.copy(), e10.copy()]),
+                volmdlr.Contour3D([e1.copy(), e10.copy(), e5_switch.copy(), e9_switch.copy()]),
+                # volmdlr.Contour3D([e2.copy(), e10.copy(), e6.copy(), e11.copy()]),
+                volmdlr.Contour3D([e2.copy(), e11.copy(), e6_switch.copy(), e10_switch.copy()]),
+                # volmdlr.Contour3D([e3.copy(), e11.copy(), e7.copy(), e12.copy()]),
+                volmdlr.Contour3D([e3.copy(), e12.copy(), e7_switch.copy(), e11_switch.copy()]),
+                # volmdlr.Contour3D([e4.copy(), e12.copy(), e8.copy(), e9.copy()])]
+                volmdlr.Contour3D([e4.copy(), e9.copy(), e8_switch.copy(), e12_switch.copy()])]
 
     def shell_faces(self):
         c1, c2, c3, c4, c5, c6 = self.face_contours()
@@ -320,7 +338,7 @@ class Cone(volmdlr.Primitive3D):
 
 class ExtrudedProfile(volmdlr.Shell3D):
     """
-
+    
     """
     _non_serializable_attributes  = ['faces', 'inner_contours3d', 'outer_contour3d']
     def __init__(self, plane_origin, x, y, outer_contour2d, inner_contours2d,
@@ -387,7 +405,7 @@ class ExtrudedProfile(volmdlr.Shell3D):
                 v = normal.Cross(u)
                 v.Normalize()
                 frame = volmdlr.Frame3D(center, u, v, normal)
-                cylsurf3d = volmdlr.CylindricalSurface3D(frame, edge.radius*1000)
+                cylsurf3d = volmdlr.CylindricalSurface3D(frame, edge.radius)
                 return [volmdlr.CylindricalFace3D.from_arc3d(linextru, edge, cylsurf3d)]
             
             elif edge.__class__ is volmdlr.core.LineSegment3D :
@@ -396,7 +414,6 @@ class ExtrudedProfile(volmdlr.Shell3D):
                 seg3 = volmdlr.LineSegment3D(seg2.points[1], seg2.points[1]-seg1.points[1] + seg1.points[0])
                 seg4 = volmdlr.LineSegment3D(seg3.points[1], seg1.points[0])
                 edges = [seg1, seg2, seg3, seg4]
-                # return [edge.generated_planeface([volmdlr.Contour3D(edges)])]
                 return [volmdlr.PlaneFace3D.from_contours3d([volmdlr.Contour3D(edges)])]
             
             elif edge.__class__ is volmdlr.primitives3D.OpenedRoundedLineSegments3D or edge.__class__ is volmdlr.primitives3D.ClosedRoundedLineSegments3D :
@@ -418,7 +435,7 @@ class ExtrudedProfile(volmdlr.Shell3D):
         return [lower_face]+[upper_face]+lateral_faces
 
     def _bounding_box(self):
-        return volmdlr.BoundingBox.from_points(self.outer_contour3d.points)
+        return volmdlr.BoundingBox.from_points(self.outer_contour3d.tessel_points)
 
     def MPLPlot(self, ax=None):
         if ax is None:
@@ -579,7 +596,7 @@ class RevolvedProfile(volmdlr.Shell3D):
                 end_gen = start_gen
             arcgen = volmdlr.Arc3D(start_gen, int_gen, end_gen, axis)
             return arcgen
-
+        
         angle, axis, axis_point = float(self.angle), self.axis.copy(), self.axis_point.copy() 
         axis.Normalize()
         LS = volmdlr.LineSegment3D(axis_point, axis_point+axis)
@@ -657,12 +674,74 @@ class RevolvedProfile(volmdlr.Shell3D):
                         arcgen = create_arc(edge.points[0], angle, axis_point, axis)
                         x = axis.deterministic_unit_normal_vector()
                         frame = volmdlr.Frame3D(arcgen.center, x, axis.Cross(x), dot*axis)
-                        cylsurf3d = volmdlr.CylindricalSurface3D(frame, arcgen.radius*1000)
+                        cylsurf3d = volmdlr.CylindricalSurface3D(frame, arcgen.radius)
                         faces.append(volmdlr.CylindricalFace3D.from_arc3d(edge, arcgen, cylsurf3d))
                 
                 else : ### TODO : case of conic
-                    pass
-                
+                    point1, point2 = edge.points[0], edge.points[1]
+                    LS_line = volmdlr.Line3D(LS.points[0], LS.points[1])
+                    
+                    if point1 in LS :
+                        pt2_turn = point2.Rotation(LS.points[0], axis, math.pi)
+                        Lpt2 = volmdlr.Line3D(point2, pt2_turn)
+                        point2_onLS = Lpt2.Intersection(LS_line)
+                        vec1 = point2 - point2_onLS
+                        vec1.Normalize()
+                        frame = volmdlr.Frame3D(point1, vec1, axis.Cross(vec1), axis)
+                        conisurf3d = volmdlr.ConicalSurface3D(frame, 0, 0)
+                        arc = create_arc(point2, angle, axis_point, axis)
+                        ls1 = volmdlr.LineSegment3D(point2, point1)
+                        ls2 = ls1.reverse()
+                        contours3d = [volmdlr.Contour3D([arc, ls1, ls2])]
+                        faces.append(volmdlr.ConicalFace3D.from_contour3d(contours3d, conisurf3d))
+                    
+                    elif point2 in LS : 
+                        pt1_turn = point1.Rotation(LS.points[0], axis, math.pi)
+                        Lpt1 = volmdlr.Line3D(point1, pt1_turn)
+                        point1_onLS = Lpt1.Intersection(LS_line)
+                        vec1 = point1 - point1_onLS
+                        vec1.Normalize()
+                        frame = volmdlr.Frame3D(point2, vec1, axis.Cross(vec1), axis)
+                        conisurf3d = volmdlr.ConicalSurface3D(frame, 0, 0)
+                        arc = create_arc(point1, angle, axis_point, axis)
+                        ls1 = volmdlr.LineSegment3D(point1, point2)
+                        ls2 = ls1.reverse()
+                        contours3d = [volmdlr.Contour3D([arc, ls1, ls2])]
+                        faces.append(volmdlr.ConicalFace3D.from_contour3d(contours3d, conisurf3d))
+                    
+                    else :
+                        pt1_turn = point1.Rotation(LS_line.points[1], axis, math.pi)
+                        Lpt1 = volmdlr.Line3D(point1, pt1_turn)
+                        point1_onLS = Lpt1.Intersection(LS_line)
+                        
+                        pt2_turn = point2.Rotation(LS.points[0], axis, math.pi)
+                        Lpt2 = volmdlr.Line3D(point2, pt2_turn)
+                        point2_onLS = Lpt2.Intersection(LS_line)
+                        
+                        dot = (point1-point2).Dot(axis)
+                        
+                        vec1 = point1 - point1_onLS
+                        vec2 = point2 - point2_onLS
+                        radius1 = vec1.Norm()
+                        radius2 = vec2.Norm()
+                        if dot < 0 :
+                            vec1.Normalize()
+                            frame = volmdlr.Frame3D(point1_onLS, vec1, axis.Cross(vec1), axis)
+                            conisurf3d = volmdlr.ConicalSurface3D(frame, radius1, 0)
+                        else : 
+                            vec2.Normalize()
+                            frame = volmdlr.Frame3D(point2_onLS, vec2, axis.Cross(vec2), axis)
+                            conisurf3d = volmdlr.ConicalSurface3D(frame, radius2, 0)
+                            pt_int = point2.copy()
+                            point2 = point1
+                            point1 = pt_int
+                        
+                        arc1 = create_arc(point1, angle, axis_point, axis)
+                        arc2 = create_arc(point2, angle, axis_point, axis)
+                        ls1 = volmdlr.LineSegment3D(point2, point1)
+                        contours3d = [volmdlr.Contour3D([arc2, ls1, arc1])]
+                        faces.append(volmdlr.ConicalFace3D.from_contour3d(contours3d, conisurf3d))
+                        
         if angle < 2*math.pi :
             faces.append(volmdlr.PlaneFace3D.from_contours3d([self.contour3D]))
             faces.append(volmdlr.PlaneFace3D.from_contours3d([self.contour3D.Rotation(axis_point, axis, angle)]))
@@ -746,6 +825,9 @@ class RevolvedProfile(volmdlr.Shell3D):
                           self.angle)
 
 class Cylinder(RevolvedProfile):
+    """
+    Creates a full cylinder with the position, the axis of revolution, the radius and the length.
+    """
     def __init__(self, position, axis, radius, length, color=None, alpha=1., name=''):
         self.position = position
         axis.Normalize()
@@ -1032,8 +1114,12 @@ class HelicalExtrudedProfile(volmdlr.Primitive3D):
 
 class Sweep(volmdlr.Shell3D):
     """
-    Sweep a 3D contour along a Wire3D
-            2D contour
+    Sweep a 3D/2D contour along a Wire3D
+            
+    
+    :Example: 
+        >>> contour2d is a Circle2D or a Arc2D
+        >>> wire3d refers to a (Opened/Closed)RoundedLineSegments3D
     """
 
     def __init__(self, contour2d, wire3d, *, color=None, alpha=1, name=''):
@@ -1089,7 +1175,7 @@ class Sweep(volmdlr.Shell3D):
                         # center = contour_primitive.center.To3D(framestart.origin, framestart.v, framestart.w)
                         # frame = volmdlr.Frame3D(center, framestart.u, framestart.v, framestart.w)
                         # radius = contour_primitive.radius
-                        # cylindersurface3d = volmdlr.CylindricalSurface3D(frame, radius*1000)
+                        # cylindersurface3d = volmdlr.CylindricalSurface3D(frame, radius)
                         
                         # circlestart = volmdlr.Circle3D(center, radius, framestart.u) 
                         
@@ -1120,7 +1206,7 @@ class Sweep(volmdlr.Shell3D):
                         # # ax = fig.add_subplot(111, projection='3d')
                         # # [pt.MPLPlot(ax=ax) for pt in points]
                         # cylinder = volmdlr.CylindricalFace3D([volmdlr.Contour3D(edges)], cylindersurface3d, points)
-                        cylindricalsurface3d = volmdlr.CylindricalSurface3D(framestart, contour_primitive.radius*1000)
+                        cylindricalsurface3d = volmdlr.CylindricalSurface3D(framestart, contour_primitive.radius)
                         faces.append(volmdlr.CylindricalFace3D.from_arc3d(wire_primitive, contour_primitive, cylindricalsurface3d))
                         
                     elif contour_primitive.__class__ == volmdlr.Arc3D:
