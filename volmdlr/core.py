@@ -30,7 +30,7 @@ from .core_compiled import (Vector2D, Vector3D, Point2D, Point3D,
                    Basis2D, Basis3D, Frame2D, Frame3D,
                    O3D, X3D, Y3D, Z3D,
                    LineSegment2DPointDistance,
-                   PolygonPointBelongs,
+                   PolygonPointBelongs, Matrix22
                    )
 
 from scipy.linalg import solve
@@ -1131,11 +1131,18 @@ class Arc2D(Primitive2D):
         xi, yi = interior.vector
         xe, ye = end.vector
         xs, ys = start.vector
-        A = npy.array([[2*(xs-xi), 2*(ys-yi)],
-                       [2*(xs-xe), 2*(ys-ye)]])
-        b = - npy.array([xi**2 + yi**2 - xs**2 - ys**2,
-                         xe**2 + ye**2 - xs**2 - ys**2])
-        self.center = Point2D(solve(A,b))
+        # A = npy.array([[2*(xs-xi), 2*(ys-yi)],
+        #                [2*(xs-xe), 2*(ys-ye)]])
+        # b = - npy.array([xi**2 + yi**2 - xs**2 - ys**2,
+        #                  xe**2 + ye**2 - xs**2 - ys**2])
+        A = Matrix22(2*(xs-xi), 2*(ys-yi),
+                     2*(xs-xe), 2*(ys-ye))
+        b = Vector2D((xi**2 + yi**2 - xs**2 - ys**2,
+                      xe**2 + ye**2 - xs**2 - ys**2))
+        inv_A = A.inverse()
+        x = inv_A.vector_multiplication(b)
+        self.center = Point2D(x.vector)
+        # self.center = Point2D(solve(A,b))
         r1 = self.start - self.center
         r2 = self.end - self.center
         ri = self.interior - self.center
@@ -2638,7 +2645,6 @@ class Arc3D(Primitive3D):
         ps = self.start.To2D(plane_origin, x, y)
         pi = self.interior.To2D(plane_origin, x, y)
         pe = self.end.To2D(plane_origin, x, y)
-
         return Arc2D(ps, pi, pe, name=self.name)
  
     def minimum_distance_points_arc(self, other_arc) :
