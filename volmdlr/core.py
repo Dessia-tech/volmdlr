@@ -6353,7 +6353,7 @@ class ConicalFace3D (Face3D) :
     def frame_mapping(self, frame, side, copy=True) :
         if copy:
             new_conicalsurface3d = ConicalSurface3D.frame_mapping(frame, side, copy)
-            return ConicalFace3D(self.contours2d, new_coniccalsurface3d, points=self.points, name=self.name)
+            return ConicalFace3D(self.contours2d, new_conicalsurface3d, points=self.points, name=self.name)
         else:
             self.conicalsurface3d.frame_mapping(frame, side, copy=False)
   
