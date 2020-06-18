@@ -22,8 +22,9 @@ points1 = [p1, p2, p3, p4, p5, p6, p7, p8]
 c1 = vm.Polygon2D(points1)
 c2 = ClosedRoundedLineSegments2D(points1, {0: 0.002, 1: 0.002, 3: 0.002}) 
 
-# c1.MPLPlot(plot_points=True)
-# c2.MPLPlot(plot_points=True)
+c1.MPLPlot(plot_points=True)
+
+c2.MPLPlot(plot_points=True)
 
 p21 = vm.Point2D((0.1, 0.))
 p22 = vm.Point2D((0.1, 0.1))
@@ -69,7 +70,7 @@ pbi4 = vm.Point2D((B/2., d/2.))
 pbi5 = vm.Point2D((B/2., d1/2.))
 pbi6 = pbi5.Translation(vm.Vector2D((-h, 0)))
 bi1 = OpenedRoundedLineSegments2D([pbi6, pbi5, pbi4, pbi3, pbi2, pbi1],
-                                         {1: radius,
+                                          {1: radius,
                                           2: radius,
                                           3: radius,
                                           4: radius},

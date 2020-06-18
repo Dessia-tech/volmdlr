@@ -33,8 +33,8 @@ plane1, plane2 = volmdlr.Plane3D.from_normal(c1, n1), volmdlr.Plane3D.from_norma
 
 frame1 = volmdlr.Frame3D(c1, plane1.vectors[0], plane1.vectors[1], n1) #Frame in the center of the cylinder
 frame2 = volmdlr.Frame3D(c2, plane2.vectors[0], plane2.vectors[1], n2)
-cylsurface1 = volmdlr.CylindricalSurface3D(frame1, r1*1000) #*1000 because cylsurf3d /1000
-cylsurface2 = volmdlr.CylindricalSurface3D(frame2, r2*1000)
+cylsurface1 = volmdlr.CylindricalSurface3D(frame1, r1) 
+cylsurface2 = volmdlr.CylindricalSurface3D(frame2, r2)
 
 hmin, hmax = -50, 50
 
