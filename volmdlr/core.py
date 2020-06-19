@@ -6297,10 +6297,28 @@ class ConicalFace3D (Face3D) :
             contours2d =  [Contour2D(primitives)]
             points = [r1,theta1,r2,theta2,h]
             
+        elif contours3d[0].edges[0].__class__ is Arc3D and contours3d[0].edges[2].__class__ is Arc3D : 
+            r1 = contours3d[0].edges[0].radius
+            theta1 = contours3d[0].edges[0].angle
+            r2 = contours3d[0].edges[2].radius
+            theta2 = contours3d[0].edges[2].angle
+            
+            h = (contours3d[0].edges[0].center - contours3d[0].edges[2].center).Norm()
+            
+            offset = (theta1 - theta2)/2
+            
+            #Creation of the window
+            pt1, pt2, pt3, pt4 = Point2D((0, 0)), Point2D((offset, h)), Point2D((offset+theta2, h)), Point2D((theta1, 0))
+            seg1, seg2, seg3, seg4 = LineSegment2D(pt1, pt2), LineSegment2D(pt2, pt3), LineSegment2D(pt3, pt4), LineSegment2D(pt4, pt1) 
+            primitives = [seg1, seg2, seg3, seg4]
+            contours2d =  [Contour2D(primitives)]
+            points = [r1,theta1,r2,theta2,h]
+            
         else:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
             [edge.MPLPlot(ax=ax) for edge in contours3d[0].edges]
+            
             hmax, hmin = max(pt[2] for pt in new_pts), min(pt[2] for pt in new_pts)  
             pts_max, pts_min = [], []
             for pt in new_pts :
@@ -6323,97 +6341,290 @@ class ConicalFace3D (Face3D) :
                 list_rmin.append((pt-cmin).Norm())
             
             Rmin = sum(list_rmin)/len(list_rmin)
-            fig, ax = plt.subplots()
             
-            points_2d = ConicalFace3D.points3d_to2d(new_pts, Rmin, Rmax, hmax, hmin)
+            ####test
+            list_points, nb_points = [], []
+            for edge in contours3d[0].edges:
+                if hasattr(edge, 'points'):
+                    points = edge.points
+                else:
+                    points = edge.tessellation_points()
+                new_points = []
+                for pt in points :
+                    new_points.append(frame.NewCoordinates(pt))  
+                nb_points.append(len(new_points))
+                list_points.append(new_points)
             
-            # [pt.MPLPlot(ax=ax) for pt in points2d]
-            
-            # xmin = abs(min(pt[0] for pt in points2d))
-            # points_2d = []
-            # for point in points2d :
-            #     newpt = Point2D((point.vector[0]+xmin, point.vector[1]))
-            #     points_2d.append(newpt)
-            
-            # points_2d = []
-            # for point in points2d :
-            #     if point.vector[0] < 0:
-            #         newpt = Point2D((point.vector[0]+2*math.pi, point.vector[1]))
-            #         points_2d.append(newpt)
-            #     else :
-            #         points_2d.append(point)
-            
-            # points_2d = []
-            # for point in points2d :
-            #     if point.vector[0] < 0:
-            #         newpt = Point2D((-point.vector[0], point.vector[1]))
-            #         points_2d.append(newpt)
-            #     else :
-            #         newpt = Point2D((-point.vector[0]+2*math.pi, point.vector[1]))
-            #         points_2d.append(newpt)
-                    
-            [pt.MPLPlot(ax=ax, color='r') for pt in points_2d]
-            
-            pointstart = points_2d[0]
-            pt_equ_horizontal, pt_equ_vertical = [pointstart], [pointstart]
-            points_2dcleaned = [pointstart]
-            for k in range(0, len(points_2d)) :
-                if k == len(points_2d) - 1 :
-                    ptnext = points_2d[0]
-                else :
-                    ptnext = points_2d[k+1]
-                if math.isclose(ptnext.vector[0], pointstart.vector[0], abs_tol=1e-6) :
-                    pt_equ_horizontal.append(ptnext)
-                elif math.isclose(ptnext.vector[1], pointstart.vector[1], abs_tol=1e-6) :
-                    pt_equ_vertical.append(ptnext)
+            points2d = []
+            for points in list_points :
+                points_toadd = ConicalFace3D.points3d_to2d(points, Rmin, Rmax, hmax, hmin, 0)
+                points2d.append(points_toadd)
+                
+            pointsclean = []
+            for points in points2d:
+                # fig, ax = plt.subplots()
+                # [pt.MPLPlot(ax=ax) for pt in points]
+                # points[0].MPLPlot(ax=ax, color='r')
+                # points[1].MPLPlot(ax=ax, color='m')
+                # points[-1].MPLPlot(ax=ax, color='b')
+                
+                if points[0][0]>points[1][0] :
+                    # print('oui')
+                    # print(points[0])
+                    # print(points[1])
+                    # print('points', points)
+                    # print('points[1:]', points[1:])
+                    pointsclean.append(points[1:])
                 else : 
-                    if len(pt_equ_horizontal)>1 :
-                        far = pt_equ_horizontal[1]
-                        dist = (pointstart-far).Norm()
-                        if len(pt_equ_horizontal)>2 :
-                            for i in range(2,len(pt_equ_horizontal)) :
-                                distest = (pointstart - pt_equ_horizontal[i]).Norm()
-                                if distest > dist :
-                                    dist = distest
-                                    far = pt_equ_horizontal[i]
-                        points_2dcleaned.append(far)
-                    elif len(pt_equ_vertical)>1 :
-                        far = pt_equ_vertical[1]
-                        dist = (pointstart-far).Norm()
-                        if len(pt_equ_vertical)>2 :
-                            for i in range(2,len(pt_equ_vertical)) :
-                                distest = (pointstart - pt_equ_vertical[i]).Norm()
-                                if distest > dist :
-                                    dist = distest
-                                    far = pt_equ_vertical[i]
-                        points_2dcleaned.append(far)
-                    else : 
-                        points_2dcleaned.append(ptnext)
-                        
-                    pointstart = ptnext
-                    pt_equ_horizontal = [pointstart]
-                    pt_equ_vertical = [pointstart] 
-
-            # points_2dcleaned.sort(key=lambda pt: pt[1]) 
-            # points_2dcleaned.sort(key=lambda pt: pt[0])
-            [pt.MPLPlot(ax=ax, color='g') for pt in points_2dcleaned]
+                    pointsclean.append(points)
+                    
+            points_finaux = []
+            list_start, list_end = [], []
+            for list_point in pointsclean:
+                list_start.append(list_point[0])
+                list_end.append(list_point[-1])
+                
+            mini, pos = list_start[0], 0
+            for k in range(1, len(list_start)) :
+                if list_start[k][0]<mini[0] :
+                    mini = list_start[k]
+                    pos = k
             
-                       
-            primitives = []
-            for k in range (0, len(points_2dcleaned)) :
-                if k == len(points_2dcleaned)-1:
-                    primitives.append(LineSegment2D(points_2dcleaned[k], points_2dcleaned[0]))
-                else :
-                    primitives.append(LineSegment2D(points_2dcleaned[k], points_2dcleaned[k+1]))
+            if pos == len(list_start)-1 :
+                points_finaux.extend(pointsclean[pos])
+                point_last = pointsclean[pos][-1]
+                for k in range (0, pos) :
+                    if point_last == pointsclean[k][0] :
+                        points_finaux.extend(pointsclean[k])
+                        point_last = pointsclean[k][-1]
+                    else :
+                        points_finaux.extend(pointsclean[k][::-1])
+                        point_last = pointsclean[k][0]
+                        
+            elif pos == 0 :
+                point_last = None
+                for k in range (0, len(pointsclean)) :
+                    if point_last is None or point_last == pointsclean[k][0]:
+                        points_finaux.extend(pointsclean[k]) 
+                        point_last = pointsclean[k][-1]
+                    else :
+                        points_finaux.extend(pointsclean[k][::-1])
+                        point_last = pointsclean[k][0]
+            else :
+                point_last = None
+                for k in range (pos, len(pointsclean)) :
+                    if point_last is None or point_last == pointsclean[k][0]:
+                        points_finaux.extend(pointsclean[k]) 
+                        point_last = pointsclean[k][-1]
+                    else :
+                        points_finaux.extend(pointsclean[k][::-1])
+                        point_last = pointsclean[k][0]
+                for k in range (0, pos) :
+                    if point_last is None or point_last == pointsclean[k][0]:
+                        points_finaux.extend(pointsclean[k]) 
+                        point_last = pointsclean[k][-1]
+                    else :
+                        points_finaux.extend(pointsclean[k][::-1])
+                        point_last = pointsclean[k][0]
+            
+            # points_2dcleaned.sort(key=lambda pt: pt[1]) 
+            points_finaux.sort(key=lambda pt: pt[0])
             
             fig, ax = plt.subplots()
-            [pt.MPLPlot(ax=ax) for pt in points_2dcleaned]
-            points_2dcleaned[0].MPLPlot(ax=ax, color='r')
-            points_2dcleaned[-1].MPLPlot(ax=ax, color='m')
+            [pt.MPLPlot(ax=ax) for pt in points_finaux]
+            [pt.MPLPlot(ax=ax, color='r') for pt in points_finaux[:10]]
+            [pt.MPLPlot(ax=ax, color='g') for pt in points_finaux[len(points_finaux)-10:]]
+            
+            points_2dint = [points_finaux[0]]
+            for k in range(1, len(points_finaux)):
+                for i in range (0, len(points_2dint)) :
+                    if points_finaux[k] == points_2dint[i] :
+                        break
+                    if i == len(points_2dint)-1 :
+                        points_2dint.append(points_finaux[k])
+            
+            primitives = []
+            for k in range (0, len(points_2dint)) :
+                if k == len(points_2dint)-1:
+                    primitives.append(LineSegment2D(points_2dint[k], points_2dint[0]))
+                else :
+                    primitives.append(LineSegment2D(points_2dint[k], points_2dint[k+1]))
+                    
+            fig, ax = plt.subplots()
+            [pt.MPLPlot(ax=ax) for pt in points_2dint]
             [prim.MPLPlot(ax=ax) for prim in primitives]
+                
+            ######
+            
+            # points_2d = ConicalFace3D.points3d_to2d(new_pts, Rmin, Rmax, hmax, hmin, 0)
+            # points_2d2 = ConicalFace3D.points3d_to2d(new_pts, Rmin, Rmax, hmax, hmin, math.pi/12)
+            
+            # fig, ax = plt.subplots()
+            # [pt.MPLPlot(ax=ax) for pt in points_2d]
+            
+            # new_primitives = []
+            # for k in range (0, len(points_2d)) :
+            #     if k == len(points_2d)-1:
+            #         new_primitives.append(LineSegment2D(points_2d[k], points_2d[0]))
+            #     else :
+            #         new_primitives.append(LineSegment2D(points_2d[k], points_2d[k+1]))
+            # [prim.MPLPlot(ax=ax) for prim in new_primitives]
+            
+            
+            
+            
+            # points_2d2 = [pt.copy() for pt in points_2d]
+            # new_points2 = [points_2d2[0]]
+            # for k in range(1, len(points_2d2)) :
+            #     pstart = new_points2[-1]
+            #     p_toadd, pos = points_2d2[k], k
+            #     if p_toadd is None :
+            #             continue
+            #     dstart = (pstart - p_toadd).Norm()
+            #     for i in range (1, len(points_2d2)):
+            #         p2 = points_2d2[i]
+            #         if p2 is None :
+            #             continue
+            #         d2 = (pstart - p2).Norm()
+            #         if d2 < dstart :
+            #             p_toadd, pos = p2, i
+            #             dstart = (pstart - p_toadd).Norm()
+            #         else : 
+            #             continue
+            #     new_points2.append(p_toadd)
+            #     points_2d2[pos] = None
+            # # points_2d2.sort(key=lambda pt: pt[1]) 
+            # # points_2d2.sort(key=lambda pt: pt[0])
+            # new_primitives2 = []
+            # for k in range (0, len(new_points2)) :
+            #     if k == len(new_points2)-1:
+            #         new_primitives2.append(LineSegment2D(new_points2[k], new_points2[0]))
+            #     else :
+            #         new_primitives2.append(LineSegment2D(new_points2[k], new_points2[k+1]))
+            
+            
+            # fig, ax = plt.subplots()
+            # [pt.MPLPlot(ax=ax, color='g') for pt in new_points2]
+            # [prim.MPLPlot(ax=ax) for prim in new_primitives2]
+            
+            
+            
+            
+            # pointstart = points_2d[0]
+            # pt_equ_horizontal, pt_equ_vertical = [pointstart], [pointstart]
+            # points_2dcleaned = [pointstart]
+            # for k in range(0, len(points_2d)) :
+            #     if k == len(points_2d) - 1 :
+            #         ptnext = points_2d[0]
+            #     else :
+            #         ptnext = points_2d[k+1]
+            #     if math.isclose(ptnext.vector[0], pointstart.vector[0], abs_tol=1e-6) :
+            #         pt_equ_horizontal.append(ptnext)
+            #     elif math.isclose(ptnext.vector[1], pointstart.vector[1], abs_tol=1e-6) :
+            #         pt_equ_vertical.append(ptnext)
+            #     else : 
+            #         if len(pt_equ_horizontal)>1 :
+            #             far = pt_equ_horizontal[1]
+            #             dist = (pointstart-far).Norm()
+            #             if len(pt_equ_horizontal)>2 :
+            #                 for i in range(2,len(pt_equ_horizontal)) :
+            #                     distest = (pointstart - pt_equ_horizontal[i]).Norm()
+            #                     if distest > dist :
+            #                         dist = distest
+            #                         far = pt_equ_horizontal[i]
+            #             points_2dcleaned.append(far)
+            #         elif len(pt_equ_vertical)>1 :
+            #             far = pt_equ_vertical[1]
+            #             dist = (pointstart-far).Norm()
+            #             if len(pt_equ_vertical)>2 :
+            #                 for i in range(2,len(pt_equ_vertical)) :
+            #                     distest = (pointstart - pt_equ_vertical[i]).Norm()
+            #                     if distest > dist :
+            #                         dist = distest
+            #                         far = pt_equ_vertical[i]
+            #             points_2dcleaned.append(far)
+            #         else : 
+            #             points_2dcleaned.append(ptnext)
+                        
+            #         pointstart = ptnext
+            #         pt_equ_horizontal = [pointstart]
+            #         pt_equ_vertical = [pointstart] 
+
+
+            # print('len', len(points_2dcleaned), len(set(points_2dcleaned)))
+            # points_2dint = [points_2dcleaned[0]]
+            # for k in range(1, len(points_2dcleaned)):
+            #     for i in range (0, len(points_2dint)) :
+            #         if points_2dcleaned[k] == points_2dint[i] :
+            #             break
+            #         if i == len(points_2dint)-1 :
+            #             points_2dint.append(points_2dcleaned[k])
+            # print('len(points_2dint)', len(points_2dint))
+            
+            # points_2dcleaned = [pt.copy() for pt in points_2dint]
+            # # points_2dcleaned.sort(key=lambda pt: pt[1]) 
+            # # points_2dcleaned.sort(key=lambda pt: pt[0])
+                       
+            # primitives = []
+            # for k in range (0, len(points_2dcleaned)) :
+            #     if k == len(points_2dcleaned)-1:
+            #         primitives.append(LineSegment2D(points_2dcleaned[k], points_2dcleaned[0]))
+            #     else :
+            #         primitives.append(LineSegment2D(points_2dcleaned[k], points_2dcleaned[k+1]))
+            
+            # # new_ptscleaned = [pt.copy() for pt in points_2dcleaned]
+            # # x, y = Vector2D((1,0)), Vector2D((0,1))
+            # # for l in range (0, len(primitives)-1) :
+            # #     # fig, ax = plt.subplots()
+                
+            # #     #l referes to points_2dcleaned[l]
+            # #     ls1, ls2 = primitives[l], primitives[l-1]
+            # #     vec1, vec2 = ls1.points[1]-ls1.points[0], ls2.points[1]-ls2.points[0]
+            # #     # ls_next = primitives[l+1]
+            # #     ls_test = LineSegment2D(ls1.points[1], ls2.points[0])
+            # #     pt_commun = new_ptscleaned[l]
+                
+            # #     # ls1.MPLPlot(ax=ax)
+            # #     # ls2.MPLPlot(ax=ax)
+            # #     # print('\n ls1.points', ls1.points)
+            # #     # print('ls2.points', ls2.points)
+            # #     # print('ls_test.points', ls_test.points)
+            # #     # new_ptscleaned[l].MPLPlot(ax=ax, color='b')
+            # #     # [pt.MPLPlot(ax=ax, color='r') for pt in ls_test.points]
+            # #     # print('length', ls_test.Length(), ls1.Length(), ls2.Length())
+            # #     # if l == 5 :
+            # #     #     break
+                
+            # #     if math.isclose(ls_test.Length(), 0, abs_tol=1e-7) :
+            # #         ls_test = LineSegment2D(ls1.points[0], ls2.points[1])
+                
+            # #     if vec1.Dot(x)*vec2.Dot(x) < 0 or vec1.Dot(y)*vec2.Dot(y) < 0 :
+            # #         new_ptscleaned[l] = ls_test.PointAtCurvilinearAbscissa(0.5)
+            # #     # if ls_test.Length()<min(ls1.Length(), ls2.Length()) :
+            # #         #we place the new point on the middle
+            # #         # new_ptscleaned[l] = ls_test.PointAtCurvilinearAbscissa(0.5)
+            # #     # new_ptscleaned[l].MPLPlot(ax=ax, color='g')
+            # #     else :
+            # #         continue
+                
+            # # new_primitives = []
+            # # for k in range (0, len(new_ptscleaned)) :
+            # #     if k == len(new_ptscleaned)-1:
+            # #         new_primitives.append(LineSegment2D(new_ptscleaned[k], new_ptscleaned[0]))
+            # #     else :
+            # #         new_primitives.append(LineSegment2D(new_ptscleaned[k], new_ptscleaned[k+1]))
+                    
+            # # fig, ax = plt.subplots()
+            # # [pt.MPLPlot(ax=ax, color='r') for pt in new_ptscleaned]
+            # # [prim.MPLPlot(ax=ax) for prim in new_primitives]
+                    
+            # fig, ax = plt.subplots()
+            # [pt.MPLPlot(ax=ax) for pt in points_2dcleaned]
+            # [prim.MPLPlot(ax=ax) for prim in primitives]
+            
             contours2d =  [Contour2D(primitives)]
             points = [Rmin,2*math.pi,Rmax,2*math.pi,hmax-hmin]
-            print('contours3d edges', contours3d[0].edges)
+            # print('contours3d edges', contours3d[0].edges)
             # raise NotImplementedError
             
         return cls(contours2d, conicalsurface3d, points, name=name)
@@ -6428,7 +6639,7 @@ class ConicalFace3D (Face3D) :
         Points_3D = [frame3d.OldCoordinates(point) for point in Points3D]
         return Points_3D
     
-    def points3d_to2d(points3d, rb, rt, hmax, hmin) :
+    def points3d_to2d(points3d, rb, rt, hmax, hmin, offset) :
         points_2D = []
         for pt in points3d :
             x, y, z = pt[0], pt[1], pt[2]
@@ -6438,16 +6649,6 @@ class ConicalFace3D (Face3D) :
             h = z
             
             u1, u2 = x/radius, y/radius
-            # print('u1, u2', u1, u2)
-            #cos(theta)=u1, sin(theta)=u2 :
-            # if math.isclose(u1, -1, abs_tol=1e-6) :
-            #     u1 = -1
-            # elif math.isclose(u1, 1, abs_tol=1e-6) :
-            #     u1 = 1
-            # elif math.isclose(u2, -1, abs_tol=1e-6) :
-            #     u2 = -1
-            # elif math.isclose(u2, 1, abs_tol=1e-6) :
-            #     u2 = 1
             if u1<-1 :
                 u1 = -1
             elif u1>1 :
@@ -6457,6 +6658,14 @@ class ConicalFace3D (Face3D) :
             elif u2>1 :
                 u2 = 1
             
+            # u1 = (u1+offset+1)%2 - 1
+            # u2 = (u2+offset+1)%2 - 1
+                
+            # if u1 + offset > 1:
+            #     u1 = -1 + offset
+            # if u1 + offset < -1:
+            #     u1 = 1 + offset
+                        
             if u1 > 0 :
                 if u2 >= 0 :
                     theta = math.acos(u1)
@@ -6470,7 +6679,43 @@ class ConicalFace3D (Face3D) :
                 else :
                     theta = 2*math.pi - math.acos(u1) 
             
-            points_2D.append(Point2D([theta, h]))           
+            points_2D.append(Point2D([theta, h]))    
+        i0, i2pi, ih = 0, 0, 0 
+        for enum,point in enumerate(points_2D) :
+            if enum == 0 :
+                h = point[1]
+            if math.isclose(point[0], 0, abs_tol=1e-6) :
+                i0 += 1
+            elif math.isclose(point[0], 2*math.pi, abs_tol=1e-6) :
+                i2pi += 1
+            elif math.isclose(point[1], h, abs_tol=1e-6) :
+                ih += 1
+    
+        
+        if i2pi/len(points_2D)>0.5 :
+            new_points2d = []
+            for point in points_2D :
+                new_points2d.append(Point2D((2*math.pi, point.vector[1])))
+            new_points2d.sort(key=lambda pt: pt[1])
+            points_2D = [new_points2d[0], new_points2d[-1]]
+        elif i0/len(points_2D)>0.5 :
+            new_points2d = []
+            for point in points_2D :
+                new_points2d.append(Point2D((2*math.pi, point.vector[1]))) 
+            new_points2d.sort(key=lambda pt: pt[1])
+            points_2D = [new_points2d[0], new_points2d[-1]]
+        elif ih/len(points_2D)>0.5 :
+            new_points2d = [pt.copy() for pt in points_2D]
+            new_points2d.sort(key=lambda pt: pt[0])
+            if i2pi == 2 :
+                pt1, pt2 = new_points2d[0], new_points2d[-1]
+                pt1.vector[0] = 0-0.0000001
+                pt2.vector[0] = 2*math.pi+0.0000001
+                points_2D = [pt1, pt2]
+            else :
+                points_2D = [new_points2d[0], new_points2d[-1]]
+            
+        
         return points_2D
     
     def create_triangle(self, all_contours_points, part) :
