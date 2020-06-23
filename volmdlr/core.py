@@ -1642,8 +1642,8 @@ class Polygon2D(Contour2D):
     def SecondMomentArea(self, point):
         Ix, Iy, Ixy = 0, 0, 0
         for pi, pj in zip(self.points,self.points[1:]+[self.points[0]]):
-            xi, yi = pi.vector-point.vector
-            xj, yj = pj.vector-point.vector
+            xi, yi = (pi-point).vector
+            xj, yj = (pj-point).vector
             Ix += (yi**2 + yi*yj + yj**2)*(xi*yj - xj*yi)
             Iy += (xi**2 + xi*xj + xj**2)*(xi*yj - xj*yi)
             Ixy += (xi*yj + 2*xi*yi + 2*xj*yj + xj*yi)*(xi*yj - xj*yi)
