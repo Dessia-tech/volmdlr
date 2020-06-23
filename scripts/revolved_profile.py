@@ -77,6 +77,7 @@ bi1 = OpenedRoundedLineSegments2D([pbi6, pbi5, pbi4, pbi3, pbi2, pbi1],
                                           adapt_radius=True)
 cbi1 = vm.Arc2D(pbi1, vm.Point2D((0, F/2)), pbi6)
 c5 = vm.Contour2D([cbi1] + bi1.primitives)
+c5.MPLPlot(plot_points=True)
 
 y = vm.X3D.RandomUnitNormalVector()
 z = vm.X3D.Cross(y)
