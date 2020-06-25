@@ -1612,7 +1612,6 @@ class ArcEllipse2D(Primitive2D) :
     points=property(_get_points)
 
     def tessellation_points(self, resolution_for_ellipse=40):
-        print('self.angle', self.angle)
         number_points_tesselation = math.ceil(resolution_for_ellipse*abs(0.5*self.angle/math.pi))
         
         frame2d = Frame2D(self.center, self.major_dir, self.minor_dir)
@@ -1673,18 +1672,18 @@ class ArcEllipse2D(Primitive2D) :
         else:
             fig = ax.figure
 
-        ax.plot([self.interior[0]], [self.interior[1]], color='b')
-        ax.plot([self.start[0]], [self.start[1]], c='r')
-        ax.plot([self.end[0]], [self.end[1]], c='r')
-        ax.plot([self.interior[0]], [self.interior[1]], c='g')
+        self.interior.MPLPlot(ax=ax, color='m')
+        self.start.MPLPlot(ax=ax, color='r')
+        self.end.MPLPlot(ax=ax, color='b')
+        self.center.MPLPlot(ax=ax, color='y')
+
         x = []
         y = []
-        z = []
         for px, py in self.tessellation_points():
             x.append(px)
             y.append(py)
 
-        ax.plot(x, y, 'k')
+        plt.plot(x, y, 'k')
         return fig, ax
 
 class Circle2D(Contour2D):
