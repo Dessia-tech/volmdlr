@@ -1174,8 +1174,8 @@ class Arc2D(Primitive2D):
         #                  xe**2 + ye**2 - xs**2 - ys**2])
         A = Matrix22(2*(xs-xi), 2*(ys-yi),
                      2*(xs-xe), 2*(ys-ye))
-        b = Vector2D((xi**2 + yi**2 - xs**2 - ys**2,
-                      xe**2 + ye**2 - xs**2 - ys**2))
+        b = - Vector2D((xi**2 + yi**2 - xs**2 - ys**2,
+                       xe**2 + ye**2 - xs**2 - ys**2))
         inv_A = A.inverse()
         x = inv_A.vector_multiplication(b)
         self.center = Point2D(x.vector)
