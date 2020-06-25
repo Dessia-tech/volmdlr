@@ -1491,6 +1491,8 @@ class ArcEllipse2D(Primitive2D) :
         self.major_dir = major_dir
         self.minor_dir = self.major_dir.deterministic_unit_normal_vector()
         
+        print('self.major_dir.Cross(self.minor_dir)', self.major_dir.Cross(self.minor_dir))
+        
         u1 = (self.interior - self.start)
         u2 = (self.interior - self.end)
         u1.Normalize()
@@ -1616,18 +1618,18 @@ class ArcEllipse2D(Primitive2D) :
         frame2d = Frame2D(self.center, self.major_dir, self.minor_dir)
         
         # tessellation_points_2D = [(self.center + Point2D((self.Gradius*math.cos(self.angle*i/(number_points_tesselation)), self.Sradius*math.sin(self.angle*i/(number_points_tesselation))))) for i in range(number_points_tesselation+1)]
-        tessellation_points_2D = [(Point2D((self.offset_angle + self.Gradius*math.cos(self.angle*i/(number_points_tesselation)), self.Sradius*math.sin(self.offset_angle + self.angle*i/(number_points_tesselation))))) for i in range(number_points_tesselation+1)]
+        tessellation_points_2D = [(self.center + Point2D((self.Gradius*math.cos(self.offset_angle + self.angle*i/(number_points_tesselation)), self.Sradius*math.sin(self.offset_angle + self.angle*i/(number_points_tesselation))))) for i in range(number_points_tesselation+1)]
         
-        global_points = []
-        for pt in tessellation_points_2D:
-            global_points.append(frame2d.OldCoordinates(pt))
+        # global_points = []
+        # for pt in tessellation_points_2D:
+        #     global_points.append(frame2d.OldCoordinates(pt))
         
-        return global_points
+        return tessellation_points_2D
 
     def To3D(self,plane_origin, x, y):
-        fig, ax = plt.subplots()
-        ax.set_aspect('equal')
-        [pt.MPLPlot(ax=ax) for pt in self.points]
+        # fig, ax = plt.subplots()
+        # ax.set_aspect('equal')
+        # [pt.MPLPlot(ax=ax) for pt in self.points]
         # self.MPLPlot(ax=ax)
         ps = self.start.To3D(plane_origin, x, y)
         pi = self.interior.To3D(plane_origin, x, y)
@@ -1637,15 +1639,15 @@ class ArcEllipse2D(Primitive2D) :
             pextra = None
         else :
             pextra = self.extra.To3D(plane_origin, x, y)
-            self.extra.MPLPlot(ax=ax, color='m')
+            # self.extra.MPLPlot(ax=ax, color='m')
             # pextra.MPLPlot(ax=ax, color='m')
         
-        self.start.MPLPlot(ax=ax, color='r')
-        self.interior.MPLPlot(ax=ax, color='g')
-        self.end.MPLPlot(ax=ax, color='b')
+        # self.start.MPLPlot(ax=ax, color='r')
+        # self.interior.MPLPlot(ax=ax, color='g')
+        # self.end.MPLPlot(ax=ax, color='b')
         # line = Line2D(self.center, self.center+self.major_dir)
         # line.MPLPlot(ax=ax)
-        self.center.MPLPlot(ax=ax, color='y')
+        # self.center.MPLPlot(ax=ax, color='y')
         # ps.MPLPlot(ax=ax)
         # pi.MPLPlot(ax=ax, color='b')
         # pe.MPLPlot(ax=ax, color='r')
@@ -3314,10 +3316,10 @@ class ArcEllipse3D(Primitive3D) :
         return global_points
     
     def To2D(self,plane_origin, x, y):
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-        self.MPLPlot(ax=ax)
-        [pt.MPLPlot(ax=ax) for pt in self.points]
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111, projection='3d')
+        # self.MPLPlot(ax=ax)
+        # [pt.MPLPlot(ax=ax) for pt in self.points]
         # frame3d = Frame3D(self.center, self.major_dir, self.minor_dir, self.normal)
         # start_local = frame3d.NewCoordinates(self.start)
         # interior_local = frame3d.NewCoordinates(self.interior)
@@ -3340,31 +3342,33 @@ class ArcEllipse3D(Primitive3D) :
             # pextra = extra_local.To2D(plane_origin, x, y)
             pextra = self.extra.To2D(plane_origin, x, y)
             
-            self.extra.MPLPlot(ax=ax, color='m')
-            # pextra.MPLPlot(ax=ax, color='m')
+            # self.extra.MPLPlot(ax=ax, color='m')
         
-        self.start.MPLPlot(ax=ax, color='r')
-        self.interior.MPLPlot(ax=ax, color='g')
-        self.end.MPLPlot(ax=ax, color='b')
-        self.center.MPLPlot(ax=ax, color='y')
+        # self.start.MPLPlot(ax=ax, color='r')
+        # self.interior.MPLPlot(ax=ax, color='g')
+        # self.end.MPLPlot(ax=ax, color='b')
+        # self.center.MPLPlot(ax=ax, color='y')
+        # (self.center + self.major_dir).MPLPlot(ax=ax)
+        # line = Line3D(self.center, self.center+self.major_dir)
+        # line.MPLPlot(ax=ax)
         
         # fig, ax = plt.subplots()
         # ax.set_aspect('equal')
         # ps.MPLPlot(ax=ax, color='r')
         # pi.MPLPlot(ax=ax, color='g')
         # pe.MPLPlot(ax=ax, color='b')
-        
+        # pextra.MPLPlot(ax=ax, color='m')
         
         # frame_global = Frame3D(O3D, X3D, Y3D, Z3D)
         # maj_dir2d =  self.major_dir.To2D(O3D, X3D, Y3D) 
         maj_dir2d = self.major_dir.To2D(plane_origin, x, y)
         maj_dir2d.Normalize()
+        # (center+maj_dir2d).MPLPlot(ax=ax)
         # print('self.major_dir', self.major_dir)
         # print('maj_dir2d', maj_dir2d)
         # line = Line2D(center, center+maj_dir2d)
         # line.MPLPlot(ax=ax)
         # center.MPLPlot(ax=ax, color='m')
-        
         return ArcEllipse2D(ps, pi, pe, center, maj_dir2d, name=self.name, extra=pextra)
     
     def Length(self):
