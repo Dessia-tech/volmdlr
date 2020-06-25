@@ -93,7 +93,12 @@ class TriangularElement:
         a = Matrix33(1, self.points[0][0], self.points[0][1],
                      1, self.points[1][0], self.points[1][1],
                      1, self.points[2][0], self.points[2][1])
-        inv_a = a.inverse()
+        try :
+            inv_a = a.inverse()
+        except ValueError:
+            self.plot()
+            print(self.area)
+            raise ValueError('form function bug')
         x1 = inv_a.vector_multiplication(vm.X3D)
         x2 = inv_a.vector_multiplication(vm.Y3D)
         x3 = inv_a.vector_multiplication(vm.Z3D)
