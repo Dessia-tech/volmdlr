@@ -1035,7 +1035,7 @@ class Matrix22:
         return self.M11 * self.M22 - self.M12 * self.M21
     
     def inverse(self):
-        der = self.determinent()
+        det = self.determinent()
         if not math.isclose(det, 0, abs_tol=1e-10):
             det_inv = 1/self.determinent()
             return Matrix22(det_inv*self.M22, -det_inv*self.M12,
