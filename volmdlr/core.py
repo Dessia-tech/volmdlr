@@ -1616,7 +1616,7 @@ class ArcEllipse2D(Primitive2D) :
         frame2d = Frame2D(self.center, self.major_dir, self.minor_dir)
         
         # tessellation_points_2D = [(self.center + Point2D((self.Gradius*math.cos(self.angle*i/(number_points_tesselation)), self.Sradius*math.sin(self.angle*i/(number_points_tesselation))))) for i in range(number_points_tesselation+1)]
-        tessellation_points_2D = [(Point2D((self.offset_angle + self.Gradius*math.cos(self.angle*i/(number_points_tesselation)), self.Sradius*math.sin(self.offset_angle + self.angle*i/(number_points_tesselation))))) for i in range(number_points_tesselation+1)]
+        tessellation_points_2D = [(Point2D((self.Gradius*math.cos(self.offset_angle + self.angle*i/(number_points_tesselation)), self.Sradius*math.sin(self.offset_angle + self.angle*i/(number_points_tesselation))))) for i in range(number_points_tesselation+1)]
         
         global_points = []
         for pt in tessellation_points_2D:
@@ -1671,18 +1671,18 @@ class ArcEllipse2D(Primitive2D) :
         else:
             fig = ax.figure
 
-        ax.plot([self.interior[0]], [self.interior[1]], color='b')
-        ax.plot([self.start[0]], [self.start[1]], c='r')
-        ax.plot([self.end[0]], [self.end[1]], c='r')
-        ax.plot([self.interior[0]], [self.interior[1]], c='g')
+        self.interior.MPLPlot(ax=ax, color='m')
+        self.start.MPLPlot(ax=ax, color='r')
+        self.end.MPLPlot(ax=ax, color='b')
+        self.center.MPLPlot(ax=ax, color='y')
+
         x = []
         y = []
-        z = []
         for px, py in self.tessellation_points():
             x.append(px)
             y.append(py)
 
-        ax.plot(x, y, 'k')
+        plt.plot(x, y, 'k')
         return fig, ax
 
 class Circle2D(Contour2D):
