@@ -7450,23 +7450,35 @@ class BoundingBox(dc.DessiaObject):
     def intersection_volume(self, bbox2):
         if not self.bbox_intersection(bbox2):
             return 0
+        if self.is_inside_bbox(bbox2) or bbox2.is_inside_bbox(self):
+            return min(self.volume(), bbox2.volume())
 
-        permute_bbox1 = self
-        permute_bbox2 = bbox2
+        lx = min(self.xmax, bbox2.xmax) - max(self.xmin, bbox2.xmin)
+        ly = min(self.ymax, bbox2.ymax) - max(self.ymin, bbox2.ymin)
+        lz = min(self.zmax, bbox2.zmax) - max(self.zmin, bbox2.zmin)
 
-        if permute_bbox2.xmin < permute_bbox1.xmin:
-            permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
-        lx = permute_bbox1.xmax - permute_bbox2.xmin
+        return lx * ly * lz
 
-        if permute_bbox2.ymin < permute_bbox1.ymin:
-            permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
-        ly = permute_bbox1.ymax - permute_bbox2.ymin
-
-        if permute_bbox2.zmin < permute_bbox1.zmin:
-            permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
-        lz = permute_bbox1.zmax - permute_bbox2.zmin
-
-        return lx*ly*lz
+    # def intersection_volume(self, bbox2):
+    #     if not self.bbox_intersection(bbox2):
+    #         return 0
+    #
+    #     permute_bbox1 = self
+    #     permute_bbox2 = bbox2
+    #
+    #     if permute_bbox2.xmin < permute_bbox1.xmin:
+    #         permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
+    #     lx = permute_bbox1.xmax - permute_bbox2.xmin
+    #
+    #     if permute_bbox2.ymin < permute_bbox1.ymin:
+    #         permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
+    #     ly = permute_bbox1.ymax - permute_bbox2.ymin
+    #
+    #     if permute_bbox2.zmin < permute_bbox1.zmin:
+    #         permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
+    #     lz = permute_bbox1.zmax - permute_bbox2.zmin
+    #
+    #     return lx*ly*lz
 
     def distance_to_bbox(self, bbox2):
         if self.bbox_intersection(bbox2):
