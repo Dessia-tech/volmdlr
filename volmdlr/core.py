@@ -163,7 +163,36 @@ def clockwise_angle(vector1, vector2):
 def vectors3d_angle(vector1, vector2):
     dot = vector1.Dot(vector2)
     theta = math.acos(dot/(vector1.Norm()*vector2.Norm()))
+    # u1 = dot/(vector1.Norm()*vector2.Norm())
+    # cross = vector1.Cross(vector2)
+    # theta2 = math.asin(cross.Norm()/(vector1.Norm()*vector2.Norm()))
+    # u2 = cross.Norm()/(vector1.Norm()*vector2.Norm())
+    # theta = sin_cos_angle(u1, u2)
     
+    return theta
+
+def sin_cos_angle(u1, u2):
+    #You have to give cos(theta)=u1, sin(theta)=u2
+    #return an angle between 0 and 2pi
+    if u1<-1 :
+        u1 = -1
+    elif u1>1 :
+        u1 = 1
+    if u2<-1 :
+        u2 = -1
+    elif u2>1 :
+        u2 = 1
+    
+    if u1 > 0 :
+        if u2 >= 0 :
+            theta = math.acos(u1)
+        else : 
+            theta = 2*math.pi + math.asin(u2)
+    else : 
+        if u2 >= 0 :
+            theta = math.acos(u1) 
+        else :
+            theta = 2*math.pi - math.acos(u1)
     return theta
 
 def delete_double_pos(points, triangles):
@@ -1453,20 +1482,26 @@ class ArcEllipse2D(Primitive2D) :
     An arc is defined by a starting point, an end point and an interior point
     
     """
-    def __init__(self, start, interior, end, center, name='', extra=None):
+    def __init__(self, start, interior, end, center, major_dir, name='', extra=None):
         self.start = start
         self.interior = interior
         self.end = end
         self.center = center
         self.extra = extra
+        self.major_dir = major_dir
+        self.minor_dir = self.major_dir.deterministic_unit_normal_vector()
         
         u1 = (self.interior - self.start)
         u2 = (self.interior - self.end)
         u1.Normalize()
         u2.Normalize()
         
+        # if u1 == u2:
+        #     u2 = u1.NormalVector()
+        #     u2.Normalize()
+        
         if u1 == u2:
-            u2=u1.NormalVector()
+            u2 = (self.interior - self.extra)
             u2.Normalize()
         
         #### from : https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
@@ -1487,10 +1522,10 @@ class ArcEllipse2D(Primitive2D) :
             ptax = math.sqrt((2/(c1+c2)))
             return theta, gdaxe, ptax
         
-        s_2D = start
-        i_2D = interior
-        e_2D = end
-        c_2D = center
+        s_2D = self.start
+        i_2D = self.interior
+        e_2D = self.end
+        c_2D = self.center
         
         if start==end :
             ex_2D = extra
@@ -1500,17 +1535,37 @@ class ArcEllipse2D(Primitive2D) :
         
         self.Gradius = A
         self.Sradius = B
-        self.teta = theta
+        self.theta = theta
+        print('>>>> 2D self.Gradius, self.Sradius', self.Gradius, self.Sradius)
         
         # Determining angle
-        r1 = self.start
-        r2 = self.end
-        ri = self.interior
+        # r1 = self.start
+        # r2 = self.end
+        # ri = self.interior
 
-        angle1 = math.atan2(r1.vector[1], r1.vector[0])
-        anglei = math.atan2(ri.vector[1], ri.vector[0])
-        angle2 = math.atan2(r2.vector[1], r2.vector[0])
-
+        # angle1 = math.atan2(r1.vector[1], r1.vector[0])
+        # anglei = math.atan2(ri.vector[1], ri.vector[0])
+        # angle2 = math.atan2(r2.vector[1], r2.vector[0])
+        # frame = Frame2D(self.center, self.major_dir, self.minor_dir)
+        # start_new, end_new = frame.NewCoordinates(self.start), frame.NewCoordinates(self.end)
+        start_new, end_new = self.start, self.end
+        ######## test analytique
+        #Angle pour start
+        u1, u2 = start_new.vector[0]/self.Gradius, start_new.vector[1]/self.Sradius
+        angle1 = sin_cos_angle(u1, u2)
+        #Angle pour end
+        u3, u4 = end_new.vector[0]/self.Gradius, end_new.vector[1]/self.Sradius
+        angle2 = sin_cos_angle(u3, u4)
+        
+        #Angle pour interior
+        if angle1 > angle2 : #sens trigo
+            anglei = math.pi + (angle1 + angle2)/2
+            self.offset_angle = angle1
+        else :
+            anglei = (angle1 + angle2)/2
+            self.offset_angle = angle2
+            
+        # print('angle1, angle2, anglei', angle1, angle2, anglei)
 
         # Going trigo/clock wise from start to interior
         if anglei < angle1:
@@ -1534,7 +1589,19 @@ class ArcEllipse2D(Primitive2D) :
         else:
             # Clock wise
             self.is_trigo = False
-            self.angle = clockwise_path                
+            self.angle = clockwise_path 
+        
+        if self.start == self.end :
+            self.angle = 2*math.pi
+        
+        # print('self.angle', self.angle)
+        # fig, ax = plt.subplots()
+        # ax.set_aspect('equal')
+        # self.start.MPLPlot(ax=ax, color='r')
+        # self.interior.MPLPlot(ax=ax, color='g')
+        # self.end.MPLPlot(ax=ax, color='b')
+        # self.center.MPLPlot(ax=ax, color='m')
+               
         Primitive2D.__init__(self, name=name)
 
     def _get_points(self):
@@ -1543,18 +1610,25 @@ class ArcEllipse2D(Primitive2D) :
     points=property(_get_points)
 
     def tessellation_points(self, resolution_for_ellipse=40):
+        print('self.angle', self.angle)
         number_points_tesselation = math.ceil(resolution_for_ellipse*abs(0.5*self.angle/math.pi))
         
+        frame2d = Frame2D(self.center, self.major_dir, self.minor_dir)
         
-        tessellation_points_2D = [(self.center + Point2D((self.Gradius*math.cos(self.angle*i/(number_points_tesselation)), self.Sradius*math.sin(self.angle*i/(number_points_tesselation))))) for i in range(number_points_tesselation+1)]
+        # tessellation_points_2D = [(self.center + Point2D((self.Gradius*math.cos(self.angle*i/(number_points_tesselation)), self.Sradius*math.sin(self.angle*i/(number_points_tesselation))))) for i in range(number_points_tesselation+1)]
+        tessellation_points_2D = [(Point2D((self.offset_angle + self.Gradius*math.cos(self.angle*i/(number_points_tesselation)), self.Sradius*math.sin(self.offset_angle + self.angle*i/(number_points_tesselation))))) for i in range(number_points_tesselation+1)]
         
-        return tessellation_points_2D
+        global_points = []
+        for pt in tessellation_points_2D:
+            global_points.append(frame2d.OldCoordinates(pt))
+        
+        return global_points
 
     def To3D(self,plane_origin, x, y):
-        # fig = plt.figure()
-        # ax = fig.add_subplot(111, projection='3d')
-        # [pt.MPLPlot(ax=ax, color='y') for pt in self.points]
-        
+        fig, ax = plt.subplots()
+        ax.set_aspect('equal')
+        [pt.MPLPlot(ax=ax) for pt in self.points]
+        # self.MPLPlot(ax=ax)
         ps = self.start.To3D(plane_origin, x, y)
         pi = self.interior.To3D(plane_origin, x, y)
         pe = self.end.To3D(plane_origin, x, y)
@@ -1563,12 +1637,15 @@ class ArcEllipse2D(Primitive2D) :
             pextra = None
         else :
             pextra = self.extra.To3D(plane_origin, x, y)
-            # self.extra.MPLPlot(ax=ax, color='m')
+            self.extra.MPLPlot(ax=ax, color='m')
             # pextra.MPLPlot(ax=ax, color='m')
         
-        # self.start.MPLPlot(ax=ax)
-        # self.interior.MPLPlot(ax=ax, color='b')
-        # self.end.MPLPlot(ax=ax, color='r')
+        self.start.MPLPlot(ax=ax, color='r')
+        self.interior.MPLPlot(ax=ax, color='g')
+        self.end.MPLPlot(ax=ax, color='b')
+        # line = Line2D(self.center, self.center+self.major_dir)
+        # line.MPLPlot(ax=ax)
+        self.center.MPLPlot(ax=ax, color='y')
         # ps.MPLPlot(ax=ax)
         # pi.MPLPlot(ax=ax, color='b')
         # pe.MPLPlot(ax=ax, color='r')
@@ -1576,9 +1653,37 @@ class ArcEllipse2D(Primitive2D) :
             p3 = pextra
         else :
             p3 = pe
-        plane = Plane3D.from_3_points(pi, ps, p3)
+        plane = Plane3D.from_3_points(ps, pi, p3)
         n = plane.normal
-        return ArcEllipse3D(ps, pi, pe, pc, normal=n, name=self.name, extra=pextra)
+        # print('n', n)
+        major_dir = self.major_dir.To3D(plane_origin, x, y)
+        major_dir.Normalize()
+        # print('major_dir_to3d', major_dir)
+        # print('ps, pi, pe, pc', ps, pi, pe, pc)
+        
+        
+        return ArcEllipse3D(ps, pi, pe, pc, major_dir, normal=n, name=self.name, extra=pextra)
+
+    def MPLPlot(self, ax=None):
+        if ax is None:
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
+        else:
+            fig = ax.figure
+
+        ax.plot([self.interior[0]], [self.interior[1]], color='b')
+        ax.plot([self.start[0]], [self.start[1]], c='r')
+        ax.plot([self.end[0]], [self.end[1]], c='r')
+        ax.plot([self.interior[0]], [self.interior[1]], c='g')
+        x = []
+        y = []
+        z = []
+        for px, py in self.tessellation_points():
+            x.append(px)
+            y.append(py)
+
+        ax.plot(x, y, 'k')
+        return fig, ax
 
 class Circle2D(Contour2D):
     _non_serializable_attributes  = ['internal_arcs', 'external_arcs',
@@ -3040,17 +3145,23 @@ class ArcEllipse3D(Primitive3D) :
     An arc is defined by a starting point, an end point and an interior point
     
     """
-    def __init__(self, start, interior, end, center, normal=None, name='', extra=None):
+    def __init__(self, start, interior, end, center, major_dir, normal=None, name='', extra=None):
         self.start = start
         self.interior = interior
         self.end = end
         self.center = center
+        major_dir.Normalize()
+        self.major_dir = major_dir #Vector for Gradius
         self.extra = extra
         
         u1 = (self.interior - self.start)
         u2 = (self.interior - self.end)
         u1.Normalize()
         u2.Normalize()
+        
+        if u1 == u2:
+            u2 = (self.interior - self.extra)
+            u2.Normalize()
         
         if normal is None:
             n = u2.Cross(u1)
@@ -3061,9 +3172,10 @@ class ArcEllipse3D(Primitive3D) :
             n.Normalize()
             self.normal = normal
         
-        if u1 == u2:
-            u2=n.Cross(u1) 
-            u2.Normalize()
+        self.minor_dir = self.normal.Cross(self.major_dir)
+        # if u1 == u2:
+        #     u2=n.Cross(u1) 
+        #     u2.Normalize()
         
         v1 = n.Cross(u1)# v1 is normal, égal à u2
         # v2 = n.Cross(u2)# égal à -u1
@@ -3085,12 +3197,13 @@ class ArcEllipse3D(Primitive3D) :
             ptax = math.sqrt((2/(c1+c2)))
             return theta, gdaxe, ptax
         
-        plane = Plane3D.from_normal(center, normal)
-
-#        s_2D = start.PlaneProjection2D(plane.vectors[0], plane.vectors[1]) #On supprimer center+plan vect.. car on ne se préocuppe pas de la composante en hauteur en 2d
-#        i_2D = interior.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
-#        e_2D = end.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
-#        c_2D = center.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
+        # plane = Plane3D.from_normal(center, normal)
+        plane = Plane3D(self.center, self.major_dir, self.minor_dir)
+        
+        # s_2D = start.PlaneProjection2D(plane.vectors[0], plane.vectors[1]) #On supprimer center+plan vect.. car on ne se préocuppe pas de la composante en hauteur en 2d
+        # i_2D = interior.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
+        # e_2D = end.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
+        # c_2D = center.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
         
         s_2D = start.To2D(center, plane.vectors[0], plane.vectors[1]) #On supprimer center+plan vect.. car on ne se préocuppe pas de la composante en hauteur en 2d
         i_2D = interior.To2D(center,plane.vectors[0], plane.vectors[1])
@@ -3107,7 +3220,9 @@ class ArcEllipse3D(Primitive3D) :
 #        self.major_axis = (X2D * self.Gradius).Rotation(O2D, -theta, copy=True)
         self.Sradius = B
 #        self.minor_axis = (Y2D * self.Sradius).Rotation(c_2D, -theta, copy=True)
-        self.teta = theta
+        self.theta = theta
+        print('>>>> 3D self.Gradius, self.Sradius', self.Gradius, self.Sradius)
+        
         
 #        fig, ax = plt.subplots()
 #        s_2D.MPLPlot(ax=ax, color='r')
@@ -3117,13 +3232,33 @@ class ArcEllipse3D(Primitive3D) :
 #        self.major_axis.plot(ax=ax, amplitude=0.0005)
         
         # Determining angle
-        r1 = (self.start).To2D(self.center, u1, v1)
-        r2 = (self.end).To2D(self.center, u1, v1)
-        ri = (self.interior).To2D(self.center, u1, v1)
+        # r1 = (self.start).To2D(self.center, u1, v1)
+        # r2 = (self.end).To2D(self.center, u1, v1)
+        # ri = (self.interior).To2D(self.center, u1, v1)
 
-        angle1 = math.atan2(r1.vector[1], r1.vector[0])
-        anglei = math.atan2(ri.vector[1], ri.vector[0])
-        angle2 = math.atan2(r2.vector[1], r2.vector[0])
+        # angle1 = math.atan2(r1.vector[1], r1.vector[0])
+        # anglei = math.atan2(ri.vector[1], ri.vector[0])
+        # angle2 = math.atan2(r2.vector[1], r2.vector[0])
+        
+        frame = Frame3D(self.center, self.major_dir, self.minor_dir, self.normal)
+        start_new, end_new = frame.NewCoordinates(self.start), frame.NewCoordinates(self.end)
+        ######## test analytique
+        #Angle pour start
+        u1, u2 = start_new.vector[0]/self.Gradius, start_new.vector[1]/self.Sradius
+        angle1 = sin_cos_angle(u1, u2)
+        #Angle pour end
+        u3, u4 = end_new.vector[0]/self.Gradius, end_new.vector[1]/self.Sradius
+        angle2 = sin_cos_angle(u3, u4)
+        
+        #Angle pour interior
+        if angle1 > angle2 : #sens trigo
+            anglei = math.pi + (angle1 + angle2)/2
+            self.offset_angle = angle1
+        else :
+            anglei = (angle1 + angle2)/2
+            self.offset_angle = angle2
+        
+        
 
 
         # Going trigo/clock wise from start to interior
@@ -3148,7 +3283,11 @@ class ArcEllipse3D(Primitive3D) :
         else:
             # Clock wise
             self.is_trigo = False
-            self.angle = clockwise_path                
+            self.angle = clockwise_path 
+            
+        if self.start == self.end :
+            self.angle = 2*math.pi
+
         Primitive3D.__init__(self, basis_primitives=self.tessellation_points(), name=name)
         
     
@@ -3161,10 +3300,12 @@ class ArcEllipse3D(Primitive3D) :
         number_points_tesselation = math.ceil(resolution_for_ellipse*abs(0.5*self.angle/math.pi))
         # l = self.Length()
         
-        plane3d = Plane3D.from_normal(self.center, self.normal)
+        # plane3d = Plane3D.from_normal(self.center, self.normal)
+        plane3d = Plane3D(self.center, self.major_dir, self.minor_dir, self.normal)
         frame3d = Frame3D(self.center, plane3d.vectors[0], plane3d.vectors[1], plane3d.normal)
         
-        tessellation_points_3D = [Point3D((self.Gradius*math.cos(self.angle*i/(number_points_tesselation)), self.Sradius*math.sin(self.angle*i/(number_points_tesselation)), 0)) for i in range(number_points_tesselation+1)]
+        # tessellation_points_3D = [Point3D((self.Gradius*math.cos(self.angle*i/(number_points_tesselation)), self.Sradius*math.sin(self.angle*i/(number_points_tesselation)), 0)) for i in range(number_points_tesselation+1)]
+        tessellation_points_3D = [Point3D((self.Gradius*math.cos(self.offset_angle + self.angle*i/(number_points_tesselation)), self.Sradius*math.sin(self.offset_angle + self.angle*i/(number_points_tesselation)), 0)) for i in range(number_points_tesselation+1)]
         
         global_points = []
         for pt in tessellation_points_3D:
@@ -3173,28 +3314,58 @@ class ArcEllipse3D(Primitive3D) :
         return global_points
     
     def To2D(self,plane_origin, x, y):
-        # fig = plt.figure()
-        # ax = fig.add_subplot(111, projection='3d')
-        # [pt.MPLPlot(ax=ax) for pt in self.points]
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        self.MPLPlot(ax=ax)
+        [pt.MPLPlot(ax=ax) for pt in self.points]
+        # frame3d = Frame3D(self.center, self.major_dir, self.minor_dir, self.normal)
+        # start_local = frame3d.NewCoordinates(self.start)
+        # interior_local = frame3d.NewCoordinates(self.interior)
+        # end_local = frame3d.NewCoordinates(self.end)
+        # center_local = frame3d.NewCoordinates(self.center)
+        # ps = start_local.To2D(plane_origin, x, y)
+        # pi = interior_local.To2D(plane_origin, x, y)
+        # pe = end_local.To2D(plane_origin, x, y)
+        # center = center_local.To2D(plane_origin, x, y)
+        
         ps = self.start.To2D(plane_origin, x, y)
         pi = self.interior.To2D(plane_origin, x, y)
         pe = self.end.To2D(plane_origin, x, y)
         center = self.center.To2D(plane_origin, x, y)
+        
         if self.extra is None :
             pextra = None
         else :
+            # extra_local = frame3d.NewCoordinates(self.extra)
+            # pextra = extra_local.To2D(plane_origin, x, y)
             pextra = self.extra.To2D(plane_origin, x, y)
-            # self.extra.MPLPlot(ax=ax, color='m')
+            
+            self.extra.MPLPlot(ax=ax, color='m')
             # pextra.MPLPlot(ax=ax, color='m')
         
-        # self.start.MPLPlot(ax=ax)
-        # self.interior.MPLPlot(ax=ax, color='b')
-        # self.end.MPLPlot(ax=ax, color='r')
-        # ps.MPLPlot(ax=ax)
-        # pi.MPLPlot(ax=ax, color='b')
-        # pe.MPLPlot(ax=ax, color='r')
-                   
-        return ArcEllipse2D(ps, pi, pe, center, name=self.name, extra=pextra)
+        self.start.MPLPlot(ax=ax, color='r')
+        self.interior.MPLPlot(ax=ax, color='g')
+        self.end.MPLPlot(ax=ax, color='b')
+        self.center.MPLPlot(ax=ax, color='y')
+        
+        # fig, ax = plt.subplots()
+        # ax.set_aspect('equal')
+        # ps.MPLPlot(ax=ax, color='r')
+        # pi.MPLPlot(ax=ax, color='g')
+        # pe.MPLPlot(ax=ax, color='b')
+        
+        
+        # frame_global = Frame3D(O3D, X3D, Y3D, Z3D)
+        # maj_dir2d =  self.major_dir.To2D(O3D, X3D, Y3D) 
+        maj_dir2d = self.major_dir.To2D(plane_origin, x, y)
+        maj_dir2d.Normalize()
+        # print('self.major_dir', self.major_dir)
+        # print('maj_dir2d', maj_dir2d)
+        # line = Line2D(center, center+maj_dir2d)
+        # line.MPLPlot(ax=ax)
+        # center.MPLPlot(ax=ax, color='m')
+        
+        return ArcEllipse2D(ps, pi, pe, center, maj_dir2d, name=self.name, extra=pextra)
     
     def Length(self):
         # l=self.Gradius*math.cos(self.angle+self.teta)+self.Sradius*math.sin(self.angle+self.teta)
@@ -3702,29 +3873,6 @@ class Edge3D(Primitive3D):
             return arc
 
         elif object_dict[arguments[3]].__class__ is Ellipse3D:
-            def sin_cos_angle(u1, u2):
-                if u1<-1 :
-                    u1 = -1
-                elif u1>1 :
-                    u1 = 1
-                if u2<-1 :
-                    u2 = -1
-                elif u2>1 :
-                    u2 = 1
-                
-                if u1 > 0 :
-                    if u2 >= 0 :
-                        theta = math.acos(u1)
-                    else : 
-                        theta = 2*math.pi + math.asin(u2)
-                else : 
-                    if u2 >= 0 :
-                        theta = math.acos(u1) 
-                    else :
-                        theta = 2*math.pi - math.acos(u1)
-                return theta
-            
-            
             majorax = object_dict[arguments[3]].major_axis
             minorax = object_dict[arguments[3]].minor_axis
             center = object_dict[arguments[3]].center
@@ -3745,81 +3893,104 @@ class Edge3D(Primitive3D):
             if p1 == p2: 
                 angle = 5*math.pi/4
                 # extra = majorax*Point3D(majordir.vector)*math.cos(math.pi/2)+minorax*Point3D(minordir.vector)*math.sin(math.pi/2)+center
-                xtra = Point3D((majorax*math.cos(angle), minorax*math.sin(angle),0))
+                xtra = Point3D((majorax*math.cos(math.pi/2), minorax*math.sin(math.pi/2),0))
                 extra = frame.OldCoordinates(xtra) 
             else :
                 extra = None
                 # angle = theta+abs(gamma-theta)//2
+                ## Positionnement des points dans leur frame
                 p1_new, p2_new = frame.NewCoordinates(p1), frame.NewCoordinates(p2)
                 
-                # u1, u2 = round(x/u, 5)
+                # point_local = []
+                # for pt in object_dict[arguments[3]].tessel_points :
+                #     point_local.append(frame.NewCoordinates(pt))
+                # fig, ax = object_dict[arguments[3]].MPLPlot()
+                # [pt.MPLPlot(ax=ax) for pt in point_local]
+                # p1_new.MPLPlot(ax=ax, color='r')
+                # p2_new.MPLPlot(ax=ax, color='m')
+                ######## test analytique
+                #Angle pour le p1
+                u1, u2 = p1_new.vector[0]/majorax, p1_new.vector[1]/minorax
+                theta1 = sin_cos_angle(u1, u2)
+                #Angle pour le p2
+                u3, u4 = p2_new.vector[0]/majorax, p2_new.vector[1]/minorax
+                theta2 = sin_cos_angle(u3, u4)
                 
-                x, y = majordir, minordir
-                p1_2D = p1_new.PlaneProjection2D(center, x, y) 
-                p2_2D = p2_new.PlaneProjection2D(center, x, y) 
-                majdir = majordir.PlaneProjection2D(center, x, y) 
-                p1_2D.Normalize()
-                p2_2D.Normalize()
-                majdir.Normalize()
-                # theta1 = 2*math.pi - clockwise_angle(majdir, p1_2D)
-                # theta2 = 2*math.pi - clockwise_angle(majdir, p2_2D)
-                theta1 = math.atan2(p1_2D.vector[1], p1_2D.vector[0])
-                theta2 = math.atan2(p2_2D.vector[1], p2_2D.vector[0])
-                angle = (theta1 + theta2)/2 
-                if angle < 0 :
-                    angle += math.pi
-                print('theta1, theta2', math.degrees(theta1), math.degrees(theta2))
+                # print('theta1, theta2', math.degrees(theta1), math.degrees(theta2))
+                if theta1 > theta2 : #sens trigo
+                    angle = math.pi + (theta1 + theta2)/2
+                else :
+                    angle = (theta1 + theta2)/2
+                # print('angle', math.degrees(angle))
+                ######## fin test analytique
                 
-                pt_random1 = Point3D((majorax*math.cos(0), minorax*math.sin(0),0))
-                randomito1 = frame.OldCoordinates(pt_random1) 
-                pt_random2 = Point3D((majorax*math.cos(math.pi/4), minorax*math.sin(math.pi/4),0))
-                randomito2 = frame.OldCoordinates(pt_random2) 
                 
-                rdd = frame.NewCoordinates(pt_random2)
-                p_rd = rdd.PlaneProjection2D(center, x, y) 
-                angletest = math.atan2(p_rd.vector[1], p_rd.vector[0])
-                if angletest < 0 :
-                    angletest += math.pi
-                print('angletest', math.degrees(angletest))
+                # x, y = majordir, minordir
+                # print('center, x, y', center, x, y)
+                # #Passage des points en 2D pour calculer l'angle
+                # p1_2D = p1_new.PlaneProjection2D(center, x, y) 
+                # p2_2D = p2_new.PlaneProjection2D(center, x, y) 
+                # pt_ellipse2d = []
+                # for pt in point_local :
+                #     pt_ellipse2d.append(pt.PlaneProjection2D(center, x, y))
+                    
+                # fig, ax = plt.subplots()
+                # ax.set_aspect('equal')
+                # [pt.MPLPlot(ax=ax) for pt in pt_ellipse2d]
+                # p1_2D.MPLPlot(ax=ax, color='r')
+                # p2_2D.MPLPlot(ax=ax, color='m')
                 
+                # majdir = majordir.PlaneProjection2D(center, x, y)
+                # mindir = minordir.PlaneProjection2D(center, x, y)
+                # # p1_2D.Normalize()
+                # # p2_2D.Normalize()
+                # majdir.Normalize()
+                # mindir.Normalize()
+                
+                # #Repassage des points dans le frame (1,0), (0,1) ????
+                # frame2d = Frame2D(Point2D((0,0)), majdir, mindir)
+                # pts_ellipselocal = []
+                # for pt in pt_ellipse2d :
+                #     pts_ellipselocal.append(frame2d.NewCoordinates(pt))
+                # p1_2Dlocal = frame2d.NewCoordinates(p1_2D)
+                # p2_2Dlocal = frame2d.NewCoordinates(p2_2D)
+                
+                # fig, ax = plt.subplots()
+                # ax.set_aspect('equal')
+                # [pt.MPLPlot(ax=ax) for pt in pts_ellipselocal]
+                # p1_2Dlocal.MPLPlot(ax=ax, color='r')
+                # p2_2Dlocal.MPLPlot(ax=ax, color='m')
+                
+                # print('x, y la direction du grand rayon de l ellipse', x, y)
+                # print('x, y en 2D', majdir, mindir)
+                
+                # #Calcul de l'angle avec 2 pi - angle car clockwise angle non conventionnel
+                # # theta1 = 2*math.pi - clockwise_angle(majdir, p1_2D)
+                # # theta2 = 2*math.pi - clockwise_angle(majdir, p2_2D)
+                # theta1 = math.atan2(p1_2Dlocal.vector[1], p1_2Dlocal.vector[0])
+                # theta2 = math.atan2(p2_2Dlocal.vector[1], p2_2Dlocal.vector[0])
                 
             # p3 = majorax*Point3D(majordir.vector)*math.cos(angle)+minorax*Point3D(minordir.vector)*math.sin(angle)+center
             p_3 = Point3D((majorax*math.cos(angle), minorax*math.sin(angle),0))
             p3 = frame.OldCoordinates(p_3)
             
-            arcellipse = ArcEllipse3D(p1, p3, p2, center, normal, arguments[0][1:-1], extra)
+            arcellipse = ArcEllipse3D(p1, p3, p2, center, majordir, normal, arguments[0][1:-1], extra)
             
-            print('p1, p2', p1, p2)
-            newp1, newp2 = frame.NewCoordinates(p1), frame.NewCoordinates(p2)
-            print('newp1, newp2', newp1, newp2)
+            # fig, ax = arcellipse.MPLPlot()
+            # p1.MPLPlot(ax=ax, color='r')
+            # p3.MPLPlot(ax=ax, color='g')
+            # p2.MPLPlot(ax=ax, color='b')
             
-            fig, ax = object_dict[arguments[3]].MPLPlot()
-            p1.MPLPlot(ax=ax, color='r')
-            p2.MPLPlot(ax=ax, color='b')
-            # p1_2D.MPLPlot(ax=ax, color='m')
-            # p2_2D.MPLPlot(ax=ax, color='g')
-            # line1 = Line3D(center, majordir+center)
-            # line2 = Line3D(center, minordir+center)
-            # line1.MPLPlot(ax=ax)
-            # line2.MPLPlot(ax=ax)
-            # newp1.MPLPlot(ax=ax, color='m')
-            # newp2.MPLPlot(ax=ax, color='m')
-            randomito1.MPLPlot(ax=ax, color='m')
-            randomito2.MPLPlot(ax=ax, color='m')
+            # fig, ax = object_dict[arguments[3]].MPLPlot()
+            # arcellipse.MPLPlot(ax=ax)
+            # p1.MPLPlot(ax=ax, color='r')
+            # p3.MPLPlot(ax=ax, color='g')
+            # p2.MPLPlot(ax=ax, color='b')
+            # center.MPLPlot(ax=ax)
+            # arcellipse.center.MPLPlot(ax=ax)
             
-            fig, ax = arcellipse.MPLPlot()
-            p1.MPLPlot(ax=ax, color='r')
-            p3.MPLPlot(ax=ax, color='g')
-            p2.MPLPlot(ax=ax, color='b')
-            
-            fig, ax = object_dict[arguments[3]].MPLPlot()
-            arcellipse.MPLPlot(ax=ax)
-            p1.MPLPlot(ax=ax, color='r')
-            p3.MPLPlot(ax=ax, color='g')
-            p2.MPLPlot(ax=ax, color='b')
-            
-            print('p1', p1, p2, p3)
-            raise NotImplementedError
+            # print('points', p1, p2, p3)
+            # raise NotImplementedError
             
             return arcellipse
         
@@ -4958,6 +5129,11 @@ class PlaneFace3D(Face3D):
 
             points_2D = contour.tessel_points
             vertices.extend([tuple(p.vector) for p in points_2D])
+            
+            print('contour.primitives',contour.primitives)
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
+            [pt.MPLPlot(ax=ax) for pt in points_2D]
             
             if len(vertices) != len(set(vertices)):
                 raise ValueError('Clean_points problem')
