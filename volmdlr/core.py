@@ -30,7 +30,7 @@ from .core_compiled import (Vector2D, Vector3D, Point2D, Point3D,
                    Basis2D, Basis3D, Frame2D, Frame3D,
                    O3D, X3D, Y3D, Z3D,
                    LineSegment2DPointDistance,
-                   PolygonPointBelongs,
+                   PolygonPointBelongs, Matrix22
                    )
 
 from scipy.linalg import solve
@@ -1168,11 +1168,18 @@ class Arc2D(Primitive2D):
         xi, yi = interior.vector
         xe, ye = end.vector
         xs, ys = start.vector
-        A = npy.array([[2*(xs-xi), 2*(ys-yi)],
-                       [2*(xs-xe), 2*(ys-ye)]])
-        b = - npy.array([xi**2 + yi**2 - xs**2 - ys**2,
-                         xe**2 + ye**2 - xs**2 - ys**2])
-        self.center = Point2D(solve(A,b))
+        # A = npy.array([[2*(xs-xi), 2*(ys-yi)],
+        #                [2*(xs-xe), 2*(ys-ye)]])
+        # b = - npy.array([xi**2 + yi**2 - xs**2 - ys**2,
+        #                  xe**2 + ye**2 - xs**2 - ys**2])
+        A = Matrix22(2*(xs-xi), 2*(ys-yi),
+                     2*(xs-xe), 2*(ys-ye))
+        b = - Vector2D((xi**2 + yi**2 - xs**2 - ys**2,
+                       xe**2 + ye**2 - xs**2 - ys**2))
+        inv_A = A.inverse()
+        x = inv_A.vector_multiplication(b)
+        self.center = Point2D(x.vector)
+        # self.center = Point2D(solve(A,b))
         r1 = self.start - self.center
         r2 = self.end - self.center
         ri = self.interior - self.center
@@ -1642,8 +1649,8 @@ class Polygon2D(Contour2D):
     def SecondMomentArea(self, point):
         Ix, Iy, Ixy = 0, 0, 0
         for pi, pj in zip(self.points,self.points[1:]+[self.points[0]]):
-            xi, yi = pi.vector-point.vector
-            xj, yj = pj.vector-point.vector
+            xi, yi = (pi-point).vector
+            xj, yj = (pj-point).vector
             Ix += (yi**2 + yi*yj + yj**2)*(xi*yj - xj*yi)
             Iy += (xi**2 + xi*xj + xj**2)*(xi*yj - xj*yi)
             Ixy += (xi*yj + 2*xi*yi + 2*xj*yj + xj*yi)*(xi*yj - xj*yi)
@@ -6346,7 +6353,7 @@ class ConicalFace3D (Face3D) :
     def frame_mapping(self, frame, side, copy=True) :
         if copy:
             new_conicalsurface3d = ConicalSurface3D.frame_mapping(frame, side, copy)
-            return ConicalFace3D(self.contours2d, new_coniccalsurface3d, points=self.points, name=self.name)
+            return ConicalFace3D(self.contours2d, new_conicalsurface3d, points=self.points, name=self.name)
         else:
             self.conicalsurface3d.frame_mapping(frame, side, copy=False)
   

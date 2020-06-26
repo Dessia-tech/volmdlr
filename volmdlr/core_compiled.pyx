@@ -1030,10 +1030,28 @@ class Matrix22:
                         self.M11*other_matrix.M12 + self.M12*other_matrix.M22,
                         self.M21*other_matrix.M11 + self.M22*other_matrix.M21,
                         self.M21*other_matrix.M12 + self.M22*other_matrix.M22)
+    
+    def determinent(self):
+        return self.M11 * self.M22 - self.M12 * self.M21
+    
+    def inverse(self):
+        det = self.determinent()
+        if not math.isclose(det, 0, abs_tol=1e-10):
+            det_inv = 1/self.determinent()
+            return Matrix22(det_inv*self.M22, -det_inv*self.M12,
+                            -det_inv*self.M21, det_inv*self.M11)
+        else:
+            raise ValueError('The matrix is singular')
+    
+    def vector_multiplication(self, vector):
+        return vector.__class__((self.M11*vector[0] + self.M12*vector[1],
+                                 self.M21*vector[0] + self.M22*vector[1]))
 
 
 class Matrix33:
-    def __init__(self, M11, M12, M13, M21, M22, M23, M31, M32, M33):
+    def __init__(self, M11:float, M12:float, M13:float,
+                       M21:float, M22:float, M23:float,
+                       M31:float, M32:float, M33:float):
         self.M11 = M11
         self.M12 = M12
         self.M13 = M13
@@ -1111,11 +1129,9 @@ class Matrix33:
                             det_inv*(self.M12*self.M31 - self.M32*self.M11),# a12a31−a32a11
                             det_inv*(self.M11*self.M22 - self.M21*self.M12) # a11a22−a21a12
                             )
-
-
         else:
             # print(self.__dict__, det)
-            raise ValueError
+            raise ValueError('The matrix is singular')
 
     @classmethod
     def random_matrix(cls, minimum=0, maximum=1):

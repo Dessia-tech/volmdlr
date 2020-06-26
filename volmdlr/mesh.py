@@ -8,9 +8,15 @@ Created on Tue Jan 28 10:05:56 2020
 
 import matplotlib.pyplot as plt
 import volmdlr.core as vm
+import volmdlr.core_compiled as vmc
 from itertools import combinations
 import numpy as npy
 import triangle
+from volmdlr.core_compiled import Matrix33
+
+
+class FlatElementError(Exception):
+    pass
 
 def find_duplicate_linear_element(linear_elements1, linear_elements2):
     duplicates = []
@@ -22,8 +28,8 @@ def find_duplicate_linear_element(linear_elements1, linear_elements2):
 
 class LinearElement:
     def __init__(self, points, interior_normal):
-        if len(points) != 2:
-            raise ValueError
+        # if len(points) != 2:
+        #     raise ValueError
         
         self.points = points
         self.interior_normal = interior_normal
@@ -54,8 +60,8 @@ class LinearElement:
 
 class TriangularElement:
     def __init__(self, points):
-        if len(points) != 3:
-            raise ValueError
+        # if len(points) != 3:
+        #     raise ValueError
             
         self.points = points
         
@@ -88,21 +94,24 @@ class TriangularElement:
         return [linear_element_1, linear_element_2, linear_element_3]
     
     def _form_functions(self):
-        a = npy.array([[1, self.points[0][0], self.points[0][1]],
-                       [1, self.points[1][0], self.points[1][1]],
-                       [1, self.points[2][0], self.points[2][1]]])
-        b1 = npy.array([1, 0, 0])
-        b2 = npy.array([0, 1, 0])
-        b3 = npy.array([0, 0, 1])
-        x1 = npy.linalg.solve(a, b1)
-        x2 = npy.linalg.solve(a, b2)
-        x3 = npy.linalg.solve(a, b3)
-        return list(x1), list(x2), list(x3)
-    
+        a = Matrix33(1, self.points[0][0], self.points[0][1],
+                     1, self.points[1][0], self.points[1][1],
+                     1, self.points[2][0], self.points[2][1])
+        try :
+            inv_a = a.inverse()
+        except ValueError:
+            self.plot()
+            print(self._area())
+            raise FlatElementError('form function bug')
+        x1 = inv_a.vector_multiplication(vm.X3D)
+        x2 = inv_a.vector_multiplication(vm.Y3D)
+        x3 = inv_a.vector_multiplication(vm.Z3D)
+        return x1, x2, x3
+ 
     def _area(self):
         u = self.points[1] - self.points[0]
         v = self.points[2] - self.points[0]
-        return (u.Norm() * v.Norm())/2
+        return abs(u.Cross(v)) / 2
         
     def rotation(self, center, angle, copy=True):
         if copy:
