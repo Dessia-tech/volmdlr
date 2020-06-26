@@ -14,6 +14,10 @@ import numpy as npy
 import triangle
 from volmdlr.core_compiled import Matrix33
 
+
+class FlatElementError(Exception):
+    pass
+
 def find_duplicate_linear_element(linear_elements1, linear_elements2):
     duplicates = []
     for linear_element in linear_elements1:
@@ -97,8 +101,8 @@ class TriangularElement:
             inv_a = a.inverse()
         except ValueError:
             self.plot()
-            print(self.area)
-            raise ValueError('form function bug')
+            print(self._area())
+            raise FlatElementError('form function bug')
         x1 = inv_a.vector_multiplication(vm.X3D)
         x2 = inv_a.vector_multiplication(vm.Y3D)
         x3 = inv_a.vector_multiplication(vm.Z3D)
