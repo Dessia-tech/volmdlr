@@ -14,6 +14,9 @@ import numpy as npy
 import triangle
 from volmdlr.core_compiled import Matrix33
 
+from dessia_common import DessiaObject
+from typing import TypeVar, List, Tuple
+
 
 class FlatElementError(Exception):
     pass
@@ -26,13 +29,17 @@ def find_duplicate_linear_element(linear_elements1, linear_elements2):
     return duplicates
 
 
-class LinearElement:
-    def __init__(self, points, interior_normal):
-        # if len(points) != 2:
-        #     raise ValueError
-        
+class LinearElement(DessiaObject):
+    _standalone_in_db = False
+    _non_serializable_attributes = []
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['name']
+    _generic_eq = True
+    def __init__(self, points:Tuple[vm.Point2D, vm.Point2D], interior_normal:vm.Vector2D):
         self.points = points
         self.interior_normal = interior_normal
+        
+        DessiaObject.__init__(self, name='')
         
     def __hash__(self):
         return self.points[0].__hash__() + self.points[1].__hash__()
@@ -58,11 +65,13 @@ class LinearElement:
             ax.plot([self.points[0][0], self.points[1][0]], [self.points[0][1], self.points[1][1]], color=color, linewidth=width)
         return ax
 
-class TriangularElement:
-    def __init__(self, points):
-        # if len(points) != 3:
-        #     raise ValueError
-            
+class TriangularElement(DessiaObject):
+    _standalone_in_db = False
+    _non_serializable_attributes = []
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['name']
+    _generic_eq = True
+    def __init__(self, points:Tuple[vm.Point2D, vm.Point2D, vm.Point2D]):
         self.points = points
         
         self.linear_elements = self._to_linear_elements()
@@ -71,6 +80,8 @@ class TriangularElement:
         self.center = (self.points[0]+self.points[1]+self.points[2])/3
         
         self.area = self._area()
+        
+        DessiaObject.__init__(self, name='')
         
     def _to_linear_elements(self):
         vec1 = vm.Vector2D(self.points[1] - self.points[0])
@@ -163,28 +174,18 @@ class TriangularElement:
         return ax
     
     
-class ElementsGroup:
-    def __init__(self, elements, mu_total, name):
+class ElementsGroup(DessiaObject):
+    _standalone_in_db = False
+    _non_serializable_attributes = []
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['name']
+    _generic_eq = True
+    def __init__(self, elements:List[TriangularElement], mu_total:float, name:str):
         self.elements = elements
         self.mu_total = mu_total
         self.name = name
         
-#    @classmethod
-#    def from_contour(cls, points, minimal_area, mu_total, name):
-#        A = dict(vertices=npy.array([pt.vector for pt in points]))
-#        t = triangle.triangulate(A, 'qa{}'.format(minimal_area))
-#        if 'triangles' in t:
-#            triangles = t['triangles'].tolist()
-#            
-#            elements = []
-#            for tri in triangles:
-#                pts = [points[i] for i in tri]
-#                elements.append(TriangularElement(pts))
-#        else:
-#            raise NotImplementedError
-#        
-#        return cls(elements, mu_total, name)
-        
+        DessiaObject.__init__(self, name='')
         
     def rotation(self, center, angle, copy=True):
         if copy:
@@ -209,11 +210,18 @@ class ElementsGroup:
         return ax
         
 
-class Mesh:
-    def __init__(self, elements_groups):
+class Mesh(DessiaObject):
+    _standalone_in_db = False
+    _non_serializable_attributes = []
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['name']
+    _generic_eq = True
+    def __init__(self, elements_groups:List[ElementsGroup]):
         self.elements_groups = elements_groups
         self.nodes = self._set_nodes_number()
         self.node_to_index = {self.nodes[i]:i for i in range(len(self.nodes))}
+        
+        DessiaObject.__init__(self, name='')
     
     def _set_nodes_number(self):
         nodes = set()
