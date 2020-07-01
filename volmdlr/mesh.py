@@ -185,7 +185,7 @@ class ElementsGroup(DessiaObject):
         self.mu_total = mu_total
         self.name = name
         
-        DessiaObject.__init__(self, name='')
+        DessiaObject.__init__(self, name=name)
         
     def rotation(self, center, angle, copy=True):
         if copy:
@@ -211,8 +211,8 @@ class ElementsGroup(DessiaObject):
         
 
 class Mesh(DessiaObject):
-    _standalone_in_db = False
-    _non_serializable_attributes = []
+    _standalone_in_db = True
+    _non_serializable_attributes = ['node_to_index']
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
     _generic_eq = True
