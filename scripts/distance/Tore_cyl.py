@@ -35,8 +35,8 @@ plane1, plane2 = volmdlr.Plane3D.from_normal(c1, n1), volmdlr.Plane3D.from_norma
 
 frame1 = volmdlr.Frame3D(c1, plane1.vectors[0], plane1.vectors[1], n1) #Frame in the center of the Tore
 frame2 = volmdlr.Frame3D(c2, plane2.vectors[0], plane2.vectors[1], n2)
-toresurface1 = volmdlr.ToroidalSurface3D(frame1, R1*1000, r1*1000) #*1000 because torsurf3d /1000
-cylsurface2 = volmdlr.CylindricalSurface3D(frame2, r2*1000)
+toresurface1 = volmdlr.ToroidalSurface3D(frame1, R1, r1) 
+cylsurface2 = volmdlr.CylindricalSurface3D(frame2, r2)
 
 
 angle_min, angle_max = 0, 2*3.14*100

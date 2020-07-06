@@ -22,7 +22,6 @@ x2, y2, z2 = random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, p
 
 r1, r2 = random.randrange(rmin, rmax, 1)/1000, random.randrange(rmin, rmax, 1)/1000 #Choose the radius
 c1, c2 = volmdlr.Point3D([x1,y1,z1]), volmdlr.Point3D([x2,y2,z2]) #Choose the coordinate of the center
-
 x3, y3, z3 = random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100
 x4, y4, z4 = random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100
 
@@ -36,11 +35,12 @@ frame2 = volmdlr.Frame3D(c2, plane2.vectors[0], plane2.vectors[1], n2)
 cylsurface1 = volmdlr.CylindricalSurface3D(frame1, r1) 
 cylsurface2 = volmdlr.CylindricalSurface3D(frame2, r2)
 
-hmin, hmax = -50, 50
+hmin, hmax = 0, 100
 
 h1, h2 = random.randrange(hmin, hmax, 5)/100, random.randrange(hmin, hmax, 5)/100 #Height of cylinder
 
-center2d = c1.To2D(c1, plane1.vectors[0], plane1.vectors[1])
+# center2d = c1.To2D(c1, plane1.vectors[0], plane1.vectors[1])
+center2d = volmdlr.Point2D((0,0))
 segbh = volmdlr.LineSegment2D(center2d, center2d + volmdlr.Point2D((0,h1))) #### Minus Pt2D because of Step adaptation
 circlestart = volmdlr.LineSegment2D(segbh.points[1], segbh.points[1]+volmdlr.Point2D((2*math.pi*r1*3/4,0))) #You can change 2*pi by an other angle
 seghb = volmdlr.LineSegment2D(circlestart.points[1],circlestart.points[1]-segbh.points[1])
@@ -49,7 +49,8 @@ edges = [segbh, circlestart, seghb, circlend]
 points = edges[0].points 
 contours =  [volmdlr.Contour2D(edges)]
 
-center2d2 = c2.To2D(c2, plane2.vectors[0], plane2.vectors[1])
+# center2d2 = c2.To2D(c2, plane2.vectors[0], plane2.vectors[1])
+center2d2 = volmdlr.Point2D((0,0))
 segbh2 = volmdlr.LineSegment2D(center2d2, center2d2 + volmdlr.Point2D((0,h2))) #### Minus Pt2D because of Step adaptation
 circlestart2 = volmdlr.LineSegment2D(segbh2.points[1], segbh2.points[1]+volmdlr.Point2D((2*math.pi*r2,0))) #You can change 2*pi by an other angle
 seghb2 = volmdlr.LineSegment2D(circlestart2.points[1],circlestart2.points[1]-segbh2.points[1])

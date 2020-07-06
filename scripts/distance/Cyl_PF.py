@@ -28,7 +28,7 @@ n1.Normalize() #Normalize the normal if it is not the case
 plane1 = volmdlr.Plane3D.from_normal(c1, n1)
 
 frame1 = volmdlr.Frame3D(c1, plane1.vectors[0], plane1.vectors[1], n1) #Frame in the center of the cylinder
-cylsurface1 = volmdlr.CylindricalSurface3D(frame1, r1*1000) #*1000 because cylsurf3d /1000
+cylsurface1 = volmdlr.CylindricalSurface3D(frame1, r1)
 
 hmin, hmax = -50, 50
 

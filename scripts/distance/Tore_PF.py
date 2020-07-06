@@ -32,7 +32,7 @@ n1.Normalize() #Normalize the normal if it is not the case
 plane1 = volmdlr.Plane3D.from_normal(c1, n1) #Create a plane to give us two others vector
 
 frame1 = volmdlr.Frame3D(c1, plane1.vectors[0], plane1.vectors[1], n1) #Frame in the center of the Tore
-toresurface1 = volmdlr.ToroidalSurface3D(frame1, R1*1000, r1*1000) #*1000 because torsurf3d /1000
+toresurface1 = volmdlr.ToroidalSurface3D(frame1, R1, r1)
 
 angle_min, angle_max = 0, 2*3.14*100
 
