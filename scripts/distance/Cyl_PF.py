@@ -37,19 +37,12 @@ h1 = random.randrange(hmin, hmax, 5)/100
 center2d = c1.To2D(c1, plane1.vectors[0], plane1.vectors[1])
 #Classic Contour
 segbh = volmdlr.LineSegment2D(center2d, center2d + volmdlr.Point2D((0,h1))) #### Minus Pt2D because of Step adaptation
-circlestart = volmdlr.LineSegment2D(segbh.points[1], segbh.points[1]+volmdlr.Point2D((2*math.pi*r1*3/4,0))) #You can change 2*pi by an other angle
+circlestart = volmdlr.LineSegment2D(segbh.points[1], segbh.points[1]+volmdlr.Point2D((2*math.pi*3/4,0))) #You can change 2*pi by an other angle
 seghb = volmdlr.LineSegment2D(circlestart.points[1],circlestart.points[1]-segbh.points[1])
 circlend = volmdlr.LineSegment2D(seghb.points[1],segbh.points[0])
 edges = [segbh, circlestart, seghb, circlend]
 points = edges[0].points 
 contours =  [volmdlr.Contour2D(edges)]
-# segbh = volmdlr.LineSegment2D(center2d, center2d + volmdlr.Point2D((0,h1/2))) #### Minus Pt2D because of Step adaptation
-# circlestart = volmdlr.LineSegment2D(segbh.points[1], segbh.points[1]+volmdlr.Point2D((2*math.pi*r1*3/4,-h1/10))) #You can change 2*pi by an other angle
-# seghb = volmdlr.LineSegment2D(circlestart.points[1],circlestart.points[1]-segbh.points[1])
-# circlend = volmdlr.LineSegment2D(seghb.points[1],segbh.points[0])
-# edges = [segbh, circlestart, seghb, circlend]
-# points = edges[0].points 
-# contours =  [volmdlr.Contour2D(edges)]
 
 cyl1 = volmdlr.CylindricalFace3D(contours, cylsurface1, points)
 
