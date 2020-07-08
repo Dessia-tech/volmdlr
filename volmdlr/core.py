@@ -454,7 +454,9 @@ class Contour2D(Wire2D):
             else:
                 raise NotImplementedError('primitive of type {} is not handled'.format(primitive))
 
+        points_polygon = list(set(points_polygon))
         polygon = Polygon2D(points_polygon)
+        points_straight_line_contour = list(set(points_straight_line_contour))
         straight_line_contour_polygon = Polygon2D(points_straight_line_contour)
         
         for arc in arcs:
@@ -1046,7 +1048,7 @@ class LineSegment2D(Line2D):
             if point_projection1 is None:
                 return None
             
-            if line.__class__ is LineSegment2D:
+            if line.__class__.__name__ == 'LineSegment2D':
                 point_projection2 = line.PointProjection2(point)
                 if point_projection2 is None:
                     return None
