@@ -454,7 +454,7 @@ class Contour2D(Wire2D):
             else:
                 raise NotImplementedError('primitive of type {} is not handled'.format(primitive))
 
-        points_polygon = list(set(points_polygon))
+        # points_polygon = list(set(points_polygon))
         polygon = Polygon2D(points_polygon)
         points_straight_line_contour = list(set(points_straight_line_contour))
         straight_line_contour_polygon = Polygon2D(points_straight_line_contour)
