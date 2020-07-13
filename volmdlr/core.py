@@ -8337,13 +8337,13 @@ class BSplineFace3D(Face3D):
             [edge.MPLPlot(ax=ax) for edge in self.contours[0].edges]
             [pt.MPLPlot(ax=ax, color='r') for pt in points_face]
             
-            surface = self.bspline_shape.surface
-            surface.evalpts = points_face
+            # surface = self.bspline_shape.surface
+            # surface.evalpts = points_face
             
-            from matplotlib import cm
-            from geomdl.visualization import VisMPL
-            surface.vis = VisMPL.VisSurface(ctrlpts=False, legend=False)
-            surface.render(colormap=cm.terrain)
+            # from matplotlib import cm
+            # from geomdl.visualization import VisMPL
+            # surface.vis = VisMPL.VisSurface(ctrlpts=False, legend=False)
+            # surface.render(colormap=cm.terrain)
             
             raise NotImplementedError
             
