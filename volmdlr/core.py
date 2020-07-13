@@ -5558,7 +5558,7 @@ class CylindricalFace3D(Face3D):
                 start, end = couple[0].vector[0], couple[1].vector[0]
                 if math.isclose(start, end, abs_tol = 5e-2) :
                     intersect = min(start, end)
-                    if math.isclose(intersect, 0, abs_tol = 1e-6) or math.isclose(intersect, 2*math.pi, abs_tol = 1e-6) and (check1 or check2):
+                    if math.isclose(intersect, 0, abs_tol = 1e-6) or math.isclose(intersect, 2*math.pi, abs_tol = 1e-6) or (not check1 or not check2):
                         points_cleaned = delete_double_point(all_points)
                         all_points = [pt.copy() for pt in points_cleaned]
                         all_points.sort(key=lambda pt: pt[0])
@@ -6382,7 +6382,7 @@ class ToroidalFace3D (Face3D) :
                 start, end = couple[0].vector[0], couple[1].vector[0]
                 if math.isclose(start, end, abs_tol = 5e-2) :
                     intersect = min(start, end)
-                    if math.isclose(intersect, 0, abs_tol = 1e-6) or math.isclose(intersect, 2*math.pi, abs_tol = 1e-6) and (check1 or check2):
+                    if math.isclose(intersect, 0, abs_tol = 1e-6) or math.isclose(intersect, 2*math.pi, abs_tol = 1e-6) or (not check1 or not check2):
                         points_cleaned = delete_double_point(all_points)
                         all_points = [pt.copy() for pt in points_cleaned]
                         all_points.sort(key=lambda pt: pt[0])
@@ -7319,7 +7319,7 @@ class ConicalFace3D (Face3D) :
                 start, end = couple[0].vector[0], couple[1].vector[0]
                 if math.isclose(start, end, abs_tol = 5e-2) :
                     intersect = min(start, end)
-                    if math.isclose(intersect, 0, abs_tol = 1e-6) or math.isclose(intersect, 2*math.pi, abs_tol = 1e-6) and (check1 or check2):
+                    if math.isclose(intersect, 0, abs_tol = 1e-6) or math.isclose(intersect, 2*math.pi, abs_tol = 1e-6) or (not check1 or not check2):
                         points_cleaned = delete_double_point(all_points)
                         all_points = [pt.copy() for pt in points_cleaned]
                         all_points.sort(key=lambda pt: pt[0])
@@ -7342,14 +7342,14 @@ class ConicalFace3D (Face3D) :
                                             new_list_points.append(Point2D((intersect + 2*math.pi, pt[1])))
                                         else :
                                             new_list_points.append(Point2D((2*math.pi + pt[0], pt[1])))
-                                    elif math.isclose(pt[0], intersect, abs_tol=1e-1) :
+                                    elif math.isclose(pt[0], intersect, abs_tol=1e-4) :
                                         change += 1
                                         new_list_points.append(Point2D((2*math.pi + pt[0], pt[1])))
                                     else :
                                         new_list_points.append(pt)
                                 if change > 0 :
                                     points.extend(new_list_points)
-                                    # list_prim[k] = LineSegment2D(new_list_points[0], new_list_points[1])
+                                    list_prim[k] = LineSegment2D(new_list_points[0], new_list_points[1])
                                 else :
                                     points.extend(prim.points)
                                     continue
@@ -7400,7 +7400,7 @@ class ConicalFace3D (Face3D) :
                                 new_list_points.append(pt)
                         if change > 0:
                             points.extend(new_list_points)
-                            primitives[k] = LineSegment2D(new_list_points[0], new_list_points[1])
+                            # primitives[k] = LineSegment2D(new_list_points[0], new_list_points[1])
                         else :
                             points.extend(prim.points)
                             continue
@@ -7415,7 +7415,6 @@ class ConicalFace3D (Face3D) :
         # intersect.MPLPlot(ax=ax, color='r')
         # l_vert.MPLPlot(ax=ax)
         contour2d = [Contour2D(primitives)]
-        
         return contour2d
     
     def create_triangle(self, all_contours_points, part) :
@@ -7875,7 +7874,7 @@ class SphericalFace3D (Face3D) :
                 start, end = couple[0].vector[0], couple[1].vector[0]
                 if math.isclose(start, end, abs_tol = 5e-2) :
                     intersect = min(start, end)
-                    if math.isclose(intersect, 0, abs_tol = 1e-6) or math.isclose(intersect, 2*math.pi, abs_tol = 1e-6) and (check1 or check2):
+                    if math.isclose(intersect, 0, abs_tol = 1e-6) or math.isclose(intersect, 2*math.pi, abs_tol = 1e-6) or (not check1 or not check2):
                         points_cleaned = delete_double_point(all_points)
                         all_points = [pt.copy() for pt in points_cleaned]
                         all_points.sort(key=lambda pt: pt[0])
