@@ -2686,6 +2686,27 @@ class BSplineCurve3D(Primitive3D):
         else :
             self.points = [Point3D((p[0], p[1], p[2])) for p in curve_points]
 
+    def Length(self):
+        #Approximately
+        length = 0
+        for k in range(0,len(self.points)-1) :
+            length += (self.points[k] - self.points[k+1]).Norm()
+        return length
+    
+    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
+        #copy paste from wire3D
+        length = 0.
+        primitives = []
+        for k in range(0, len(self.points)-1) :
+            primitives.append(LineSegment3D(self.points[k], self.points[k+1]))
+        for primitive in primitives:
+            primitive_length = primitive.Length()
+            if length + primitive_length >= curvilinear_abscissa:
+                return primitive.PointAtCurvilinearAbscissa(curvilinear_abscissa - length)
+            length += primitive_length
+        # Outside of length
+        raise ValueError
+
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive{}'.format(ip)
         points = '['
@@ -3602,7 +3623,7 @@ class Wire3D(CompositePrimitive3D):
         length = 0.
         for primitive in self.primitives:
             primitive_length = primitive.Length()
-            if length + primitive_length > curvilinear_abscissa:
+            if length + primitive_length >= curvilinear_abscissa:
                 return primitive.PointAtCurvilinearAbscissa(curvilinear_abscissa - length)
             length += primitive_length
         # Outside of length
@@ -8255,20 +8276,27 @@ class BSplineFace3D(Face3D):
             
             
             ######### CONSIDERING ALL POINTS ARE OKAY
-            fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
-            [edge.MPLPlot(ax=ax) for edge in self.contours[0].edges]
+            # fig = plt.figure()
+            # ax = fig.add_subplot(111, projection='3d')
+            # [edge.MPLPlot(ax=ax) for edge in self.contours[0].edges]
             
-            print('self.contours[0].edges', self.contours[0].edges)
+            # print('self.contours[0].edges', self.contours[0].edges)
 
-            print('self.bspline_shape.degree_u' ,self.bspline_shape.degree_u)
-            print('self.bspline_shape.degree_v', self.bspline_shape.degree_v)
-            print('self.bspline_shape.nb_u', self.bspline_shape.nb_u)
-            print('self.bspline_shape.nb_v', self.bspline_shape.nb_v)
-            print('self.bspline_shape.u_multiplicities', self.bspline_shape.u_multiplicities)
-            print('self.bspline_shape.v_multiplicities', self.bspline_shape.v_multiplicities)
-            print('len(self.bspline_shape.points)', print(len(self.bspline_shape.points)))
+            # print('self.bspline_shape.degree_u' ,self.bspline_shape.degree_u)
+            # print('self.bspline_shape.degree_v', self.bspline_shape.degree_v)
+            # print('self.bspline_shape.nb_u', self.bspline_shape.nb_u)
+            # print('self.bspline_shape.nb_v', self.bspline_shape.nb_v)
+            # print('self.bspline_shape.u_multiplicities', self.bspline_shape.u_multiplicities)
+            # print('self.bspline_shape.v_multiplicities', self.bspline_shape.v_multiplicities)
+            # print('len(self.bspline_shape.points)', len(self.bspline_shape.points))
+            # surface = self.bspline_shape.surface
             
+            # from matplotlib import cm
+            # from geomdl.visualization import VisMPL
+            # surface.vis = VisMPL.VisSurface(ctrlpts=False, legend=False)
+            # surface.render(colormap=cm.terrain)
+            
+            # raise NotImplementedError
             pos_points_shape = []
             for ptcontour in self.contours[0].tessel_points :
                 d0 = (ptcontour - self.bspline_shape.points[0]).Norm()
@@ -8293,92 +8321,116 @@ class BSplineFace3D(Face3D):
             points_face = []
             nb_points = 0
             for list_pos in list_etage_pospoints :
-                if len(list_pos) == 0 or len(list_pos) == 1:
-                    continue
-                minpos, maxpos = min(list_pos), max(list_pos)
-                nb_points += maxpos-minpos+1
-                # if minpos == maxpos :
-                #     points_face.append(self.bspline_shape.points[minpos])
-                points_face.append(self.bspline_shape.points[minpos:maxpos+1])
-            
+                if len(list_pos) > 1 :
+                    minpos, maxpos = min(list_pos), max(list_pos)
+                    size = maxpos-minpos+1
+                    if size > 1 :
+                        nb_points += size
+                        points_face.append(self.bspline_shape.points[minpos:maxpos+1])
+                    
             avg_points = int(nb_points/len(points_face))+1
-            
             final_points = []
             for list_pt in points_face :
                 size = len(list_pt)
                 if size == avg_points :
                     final_points.extend(list_pt)
-                elif size > avg_points :
-                    random_points = []
-                    for k in range(0, avg_points-2) :
-                        pos_toadd = random.randrange(1, size-2, 1)
-                        while pos_toadd not in random_points :
-                            pos_toadd = random.randrange(1, size-2, 1)
-                        random_points.append(pos_toadd)
-                    random_points.sort()
-                    points_toadd = [list_pt[0]]
-                    for pos in random_points :
-                        points_toadd.append(list_pt[pos])
-                    points_toadd.append(list_pt[-1])
                 else :
+                    points_toadd = []
                     if size == 2 :
-                        LS = LineSegment3D(list_pt[0], list_pt[1])
-                        points_toadd = []
-                        for k in range(0, avg_points) :
-                            curvilinear_abscissa = k/(avg_points)
-                            points_toadd.append(LS.PointAtCurvilinearAbscissa(curvilinear_abscissa))
+                        wire = LineSegment3D(list_pt[0], list_pt[1])
+                        length = 1
+                    else :
+                        primitives = []
+                        for k in range(0, len(list_pt)-1) :
+                            primitives.append(LineSegment3D(list_pt[k], list_pt[k+1]))
+                        wire = Wire3D(primitives)
+                        length = wire.Length()
+                    for k in range(0, avg_points) :
+                        curvilinear_abscissa = length*k/(avg_points-1)
+                        points_toadd.append(wire.PointAtCurvilinearAbscissa(curvilinear_abscissa))
+                    final_points.extend(points_toadd)                    
                             
-                    points_toadd = list_pt
-                    nb_pointstoadd = avg_points - size
+            # fig = plt.figure()
+            # ax = fig.add_subplot(111, projection='3d')
+            # [edge.MPLPlot(ax=ax) for edge in self.contours[0].edges]
+            # for list_pt in points_face :
+            #     [pt.MPLPlot(ax=ax, color='r') for pt in list_pt]
+            
+            ## add contour limit
+            degree_u, degree_v = 3, 3
+            nbv, nbu = avg_points, len(points_face)
+            wire_contour = Wire3D(self.contours[0].edges)
+            length = wire_contour.Length()
+            points_contours = []
+            for k in range(0, 2*(nbv+nbu)+4) :
+                curvilinear_abscissa = length*k/(2*(nbv+nbu)+4-1)
+                points_contours.append(wire_contour.PointAtCurvilinearAbscissa(curvilinear_abscissa))
             
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
             [edge.MPLPlot(ax=ax) for edge in self.contours[0].edges]
-            [pt.MPLPlot(ax=ax, color='r') for pt in points_face]
+            [pt.MPLPlot(ax=ax, color='r') for pt in final_points]
+            [pt.MPLPlot(ax=ax, color='b') for pt in points_contours]
             
-            # surface = self.bspline_shape.surface
-            # surface.evalpts = points_face
-            
-            # from matplotlib import cm
-            # from geomdl.visualization import VisMPL
-            # surface.vis = VisMPL.VisSurface(ctrlpts=False, legend=False)
-            # surface.render(colormap=cm.terrain)
-            
-            raise NotImplementedError
-            
-            
-            
-            
-            
-            
-            delta = self.bspline_shape.surface.delta
-            nbu = int(1/delta[0])+1
-            nbv = int(1/delta[1])+1
-            pointsinf = [pt.vector for pt in self.bspline_shape.points]
-            # print('pointsinf', pointsinf)
-            bsplineu, bsplinev = self.contours[0].edges[0], self.contours[0].edges[1]
-            control_points = pointsinf
-            surface = BSpline.Surface()
-            
-            if bsplineu.__class__ is LineSegment3D :
-                surface.degree_u = 1
-            elif bsplineu.__class__ is Arc3D or bsplineu.__class__ is ArcEllipse3D:
-                surface.degree_u = 3    
-            else :
-                surface.degree_u = bsplineu.degree
-            
-            if bsplinev.__class__ is LineSegment3D :  
-                surface.degree_v = 1
-            elif bsplinev.__class__ is Arc3D or bsplinev.__class__ is ArcEllipse3D:  
-                surface.degree_v = 3
-            else :
-                surface.degree_v = bsplinev.degree
-            
-            surface.set_ctrlpts(control_points, nbu, nbv)
-            surface.knotvector_u = utilities.generate_knot_vector(surface.degree_u, surface.ctrlpts_size_u)
-            surface.knotvector_v = utilities.generate_knot_vector(surface.degree_v, surface.ctrlpts_size_v)
-            surface.delta = 0.05
+            # print('avg_points, len(points_face)', avg_points, len(points_face))
+            # print('len(final_points)', len(final_points))
+            # surface = BSpline.Surface()  
+            # surface.degree_u = 3
+            # surface.degree_v = 3
+            # nbv, nbu = avg_points, len(points_face)
+            # control_points = [pt.vector for pt in final_points]
+            # surface.set_ctrlpts(control_points, nbu, nbv)
+            # surface.knotvector_u = utilities.generate_knot_vector(surface.degree_u, surface.ctrlpts_size_u)
+            # surface.knotvector_v = utilities.generate_knot_vector(surface.degree_v, surface.ctrlpts_size_v)
+            # surface.delta = 0.05
+            # surface_points = surface.evalpts
+            from geomdl import fitting   
+            # degree_u, degree_v = 3, 3
+            # nbv, nbu = avg_points, len(points_face)
+            control_points = [pt.vector for pt in final_points]
+            surface = fitting.interpolate_surface(control_points, nbu, nbv, degree_u, degree_v)
             surface_points = surface.evalpts
+            
+            from matplotlib import cm
+            from geomdl.visualization import VisMPL
+            surface.vis = VisMPL.VisSurface(ctrlpts=False, legend=False)
+            surface.render(colormap=cm.terrain)
+            
+            # raise NotImplementesdError
+            
+            
+            
+            
+            
+            
+            # delta = self.bspline_shape.surface.delta
+            # nbu = int(1/delta[0])+1
+            # nbv = int(1/delta[1])+1
+            # pointsinf = [pt.vector for pt in self.bspline_shape.points]
+            # # print('pointsinf', pointsinf)
+            # bsplineu, bsplinev = self.contours[0].edges[0], self.contours[0].edges[1]
+            # control_points = pointsinf
+            # surface = BSpline.Surface()
+            
+            # if bsplineu.__class__ is LineSegment3D :
+            #     surface.degree_u = 1
+            # elif bsplineu.__class__ is Arc3D or bsplineu.__class__ is ArcEllipse3D:
+            #     surface.degree_u = 3    
+            # else :
+            #     surface.degree_u = bsplineu.degree
+            
+            # if bsplinev.__class__ is LineSegment3D :  
+            #     surface.degree_v = 1
+            # elif bsplinev.__class__ is Arc3D or bsplinev.__class__ is ArcEllipse3D:  
+            #     surface.degree_v = 3
+            # else :
+            #     surface.degree_v = bsplinev.degree
+            
+            # surface.set_ctrlpts(control_points, nbu, nbv)
+            # surface.knotvector_u = utilities.generate_knot_vector(surface.degree_u, surface.ctrlpts_size_u)
+            # surface.knotvector_v = utilities.generate_knot_vector(surface.degree_v, surface.ctrlpts_size_v)
+            # surface.delta = 0.05
+            # surface_points = surface.evalpts
             
             # print('nbu', nbu)
             # print('nbv', nbv)
