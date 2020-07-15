@@ -7,7 +7,7 @@
 import math
 import volmdlr
 from volmdlr.primitives import RoundedLineSegments
-
+import matplotlib.pyplot as plt
 
         
 class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.Wire2D):
@@ -56,7 +56,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.Wire2D):
         if w != volmdlr.Vector2D((0, 0)):
             w.Normalize()
 
-        v1 = u1.NormalVector()
+        v1 = u1.deterministic_unit_normal_vector()
         if v1.Dot(w) < 0:
             v1 = -v1
 
@@ -157,7 +157,6 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.Wire2D):
             offset_points.append(self.points[-1] + offset*offset_vectors[-1])
 
         return self.__class__(offset_points, new_radii, adapt_radius=self.adapt_radius)
-        
         
     def OffsetSingleLine(self, line_index, offset):
         """
@@ -360,6 +359,12 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.Wire2D):
         return rls2D
     
 class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D, volmdlr.Contour2D):
+    """
+    :param points: Points used to draw the wire 
+    :type points: List of Point2D
+    :param radius: Radius used to connect different parts of the wire
+    :type radius: {position1(n): float which is the radius linked the n-1 and n+1 points, position2(n+1):...}
+    """
     closed = True
     def __init__(self, points, radius, adapt_radius=False, name=''):
         primitives = RoundedLineSegments.__init__(self, points, radius,
