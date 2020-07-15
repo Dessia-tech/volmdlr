@@ -253,5 +253,20 @@ class Mesh(DessiaObject):
         for elements_group in self.elements_groups:
             elements_group.plot(ax=ax)
         return ax
+    
+    def plot_data(self, pos=0, quote=True, constructor=True, direction=1):
+        plot_datas = []
+        for element_group in self.elements_groups:
+            for element in element_group.elements:
+                c1 = vm.Contour2D([vm.LineSegment2D(element.points[0], element.points[1])])
+                c2 = vm.Contour2D([vm.LineSegment2D(element.points[1], element.points[2])])
+                c3 = vm.Contour2D([vm.LineSegment2D(element.points[2], element.points[0])])
+                plot_datas.append(c1.plot_data())
+                plot_datas.append(c2.plot_data())
+                plot_datas.append(c3.plot_data())
+                # plot_datas.extend([c1, c2, c3])
+        return plot_datas
+
+
 
     

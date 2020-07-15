@@ -454,7 +454,9 @@ class Contour2D(Wire2D):
             else:
                 raise NotImplementedError('primitive of type {} is not handled'.format(primitive))
 
+        # points_polygon = list(set(points_polygon))
         polygon = Polygon2D(points_polygon)
+        points_straight_line_contour = list(set(points_straight_line_contour))
         straight_line_contour_polygon = Polygon2D(points_straight_line_contour)
         
         for arc in arcs:
@@ -1046,7 +1048,7 @@ class LineSegment2D(Line2D):
             if point_projection1 is None:
                 return None
             
-            if line.__class__ is LineSegment2D:
+            if line.__class__.__name__ == 'LineSegment2D':
                 point_projection2 = line.PointProjection2(point)
                 if point_projection2 is None:
                     return None
@@ -1251,8 +1253,7 @@ class Arc2D(Primitive2D):
     def tessellation_points(self, resolution_for_circle=40):
         # TODO: change this to a simple rotation?
         number_points_tesselation = math.ceil(resolution_for_circle*abs(self.angle)/2/math.pi)
-        if number_points_tesselation == 1:
-            number_points_tesselation += 1
+        number_points_tesselation = max(number_points_tesselation, 5)
         
         # vector_start = Vector2D((self.start - self.center).vector)
         # vector_end = Vector2D((self.end - self.center).vector)
@@ -1301,16 +1302,16 @@ class Arc2D(Primitive2D):
             return min(LineSegment2D(point, self.start).Length(), LineSegment2D(point, self.end).Length())
 
     def line_intersection(self, line):
-        points = self.tessellation_points()
-        segments = []
+        circle = Circle2D(self.center, self.radius)
+        circle_intersection_points = circle.line_intersection(line)
+        
+        if circle_intersection_points is None:
+            return None
+        
         intersection_points = []
-        for pt1, pt2 in zip(points[:-1], points[1:]):
-            segments.append(LineSegment2D(pt1, pt2))
-        for segment in segments:
-            # intersection_point = Point2D.LinesIntersection(line, segment)
-            intersection_point = segment.line_intersection(line)
-            if intersection_point is not None:
-                intersection_points.append(intersection_point)
+        for pt in circle_intersection_points:
+            if self.point_belongs(pt):
+                intersection_points.append(pt)
         return intersection_points
 
     def Length(self):
@@ -1490,7 +1491,46 @@ class Circle2D(Contour2D):
                 for teta in npy.linspace(0, 2*math.pi, resolution+1)][:-1]
 
     def point_belongs(self, point):
-        return point.point_distance(self.center) <= self.radius
+        epsilon = 1e-6
+        return point.point_distance(self.center) <= self.radius + epsilon
+    
+    def line_intersection(self, line):
+        V = Vector2D((line.points[1] - line.points[0]).vector)
+        Q = Vector2D(self.center.vector)
+        P1 = Vector2D(line.points[0].vector)
+        
+        a = V.Dot(V)
+        b = 2 * V.Dot(P1 - Q)
+        c = P1.Dot(P1) + Q.Dot(Q) - 2 * P1.Dot(Q) - self.radius**2
+        
+        disc = b**2 - 4 * a * c
+        if disc < 0:
+            return None
+        
+        if math.isclose(disc, 0, abs_tol=1e-6):
+            t = -b / (2 * a)
+            if line.__class__ is Line2D:
+                return [Point2D((P1+t*V).vector)]
+            else:
+                if 0 <= t <= 1:
+                    return [Point2D((P1+t*V).vector)]
+                else:
+                    return None
+        
+        sqrt_disc = math.sqrt(disc)
+        t1 = (-b + sqrt_disc) / (2 * a)
+        t2 = (-b - sqrt_disc) / (2 * a)
+        if line.__class__ is Line2D:
+            return [Point2D((P1+t1*V).vector), Point2D((P1+t2*V).vector)]
+        else:
+            if not (0 <= t1 <= 1 or 0 <= t2 <= 1):
+                return None
+            elif 0 <= t1 <= 1 and not 0 <= t2 <= 1:
+                return [Point2D((P1+t1*V).vector)]
+            elif not 0 <= t1 <= 1 and 0 <= t2 <= 1:
+                return [Point2D((P1+t2*V).vector)]
+            else:
+                [Point2D((P1+t1*V).vector), Point2D((P1+t2*V).vector)]
 
     def Length(self):
         return 2* math.pi * self.radius
