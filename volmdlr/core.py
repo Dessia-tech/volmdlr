@@ -3587,9 +3587,14 @@ class LineSegment3D(Edge3D):
     """
     Define a line segment limited by two points
     """
-    def __init__(self, point1, point2, name=''):
+    def __init__(self, point1, point2, color=None, alpha=1., name=''):
         Edge3D.__init__(self, point1, point2, name='')
         self.bounding_box = self._bounding_box()
+        if color is None:
+            self.color = (1, 1, 1)
+        else:
+            self.color = color
+        self.alpha = alpha
 
     def __hash__(self):
         return hash(self.points[0]) + hash(self.points[1])
@@ -3803,7 +3808,7 @@ class LineSegment3D(Edge3D):
                 s += 'var {} = BABYLON.MeshBuilder.CreateLines("lines", {{points: myPoints}}, scene);\n'.format(name)
             elif type_ == 'dashed':
                 s += 'var {} = BABYLON.MeshBuilder.CreateDashedLines("lines", {{points: myPoints, dashNb:20}}, scene);'.format(name)
-            s += '{}.color = new BABYLON.Color3{};\n'.format(name, tuple(color))
+            s += '{}.color = new BABYLON.Color3{};\n'.format(name, tuple(self.color))
         elif type_ == 'tube':
             radius = 0.03*self.points[0].point_distance(self.points[1])
             s = 'var points = [new BABYLON.Vector3({},{},{}), new BABYLON.Vector3({},{},{})];\n'.format(*self.points[0], *self.points[1])

@@ -945,8 +945,13 @@ class Point3D(Vector3D):
     #         }
     #     }
 
-    def __init__(self, vector:Tuple[float, float, float], name:str=''):
+    def __init__(self, vector:Tuple[float, float, float], color:Tuple[float, float, float]=None, alpha:float=1.,name:str=''):
         Vector3D.__init__(self, vector, name)
+        if color is None:
+            self.color = (1, 0, 0)
+        else:
+            self.color = color
+        self.alpha = alpha
 
     def __add__(self, other_vector):
         return Point3D(add3D(self.vector, other_vector.vector))
@@ -996,10 +1001,10 @@ class Point3D(Vector3D):
                     arguments[0][1:-1])
 
     def babylon_script(self):
-        s = 'var sphere = BABYLON.MeshBuilder.CreateSphere("point", {diameter: 0.05}, scene);\n'
+        s = 'var sphere = BABYLON.MeshBuilder.CreateSphere("point {}"'.format(self.name)+', {diameter: 0.01}, scene);\n'
         s += "sphere.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));\n".format(self.vector[0],self.vector[1],self.vector[2])
         s += 'var mat = new BABYLON.StandardMaterial("mat", scene);\n'
-        s += 'mat.diffuseColor = new BABYLON.Color3(1, 0, 0);\n'
+        s += 'mat.diffuseColor = new BABYLON.Color3({},{},{});\n'.format(self.color[0],self.color[1],self.color[2])
         s += 'sphere.material = mat;\n'
         return s
 
