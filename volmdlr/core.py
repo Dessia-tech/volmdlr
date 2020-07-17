@@ -54,7 +54,8 @@ import subprocess
 import random
 
 import scipy as scp
-
+import scipy.optimize 
+# import cma
 
 
 def standardize_knot_vector(knot_vector):
@@ -270,6 +271,28 @@ def delete_double_point(list_point) :
         else :
             continue
     return points
+
+def max_pos(list_of_float) :
+    pos_max, max_float = 0, list_of_float[0]
+    for pos, fl in enumerate(list_of_float):
+        if pos == 0 :
+            continue
+        else :
+            if fl > max_float :
+                max_float = fl
+                pos_max = pos
+    return max_float, pos_max
+
+def min_pos(list_of_float) :
+    pos_min, min_float = 0, list_of_float[0]
+    for pos, fl in enumerate(list_of_float):
+        if pos == 0 :
+            continue
+        else :
+            if fl < min_float :
+                min_float = fl
+                pos_min = pos
+    return min_float, pos_min
 
 class Primitive2D(dc.DessiaObject):
     def __init__(self, name=''):
@@ -2675,7 +2698,7 @@ class BSplineCurve3D(Primitive3D):
             # ax = fig.add_subplot(111, projection='3d')
             # pointscrv = [Point3D((p[0], p[1], p[2])) for p in curve_points]
             # [pt.MPLPlot(ax=ax) for pt in pointscrv]
-            pas = 3
+            pas = 4
             pt_tocurve = []
             for k in range(0, len(curve_points)//pas):
                 pt_tocurve.append(curve_points[k*pas])
@@ -3474,10 +3497,11 @@ class BSplineExtrusion(Primitive3D):
         self.obj = obj
         vectorextru.Normalize()
         self.vectorextru = vectorextru
-        # if obj.__class__ is Ellipse3D :
-        self.points = obj.tessel_points
+        if obj.__class__ is Ellipse3D :
+            self.points = obj.tessel_points
             # self.surface = obj.points
-        
+        else :
+            self.points = obj.points
     @classmethod
     def from_step(cls, arguments, object_dict):
         name = arguments[0][1:-1]
@@ -3485,6 +3509,11 @@ class BSplineExtrusion(Primitive3D):
             ell = object_dict[arguments[1]]
             vectextru = object_dict[arguments[2]]
             return cls(ell, vectextru, name)
+        
+        elif object_dict[arguments[1]].__class__ is BSplineCurve3D:
+            bsplinecurve = object_dict[arguments[1]]
+            vectextru = object_dict[arguments[2]]
+            return cls(bsplinecurve, vectextru, name)
         else : 
             # surface = BSpline.Surface()
             # surface.degree_u = degree_u
@@ -3508,7 +3537,7 @@ class BSplineExtrusion(Primitive3D):
             
             # self.surface = surface
             # self.points = [Point3D((p[0], p[1], p[2])) for p in surface_points]
-            return NotImplementedError  ## a adapter pour les bpsline
+            raise NotImplementedError  ## a adapter pour les bpsline
             
 
     # @classmethod
@@ -3712,11 +3741,13 @@ class Edge3D(Primitive3D):
             center = object_dict[arguments[3]].center
             normal = object_dict[arguments[3]].normal
             normal.Normalize()
-            other_vec = object_dict[arguments[3]].other_vec
-            other_vec.Normalize()
             radius = object_dict[arguments[3]].radius
             p1 = object_dict[arguments[1]]
             p2 = object_dict[arguments[2]]
+            other_vec = object_dict[arguments[3]].other_vec
+            if other_vec is None :
+                other_vec = p1 - center
+            other_vec.Normalize()
             frame = Frame3D(center, other_vec, normal.Cross(other_vec), normal)
             if p1 == p2:
                 angle = math.pi
@@ -4515,7 +4546,8 @@ class Circle3D(Contour3D):
         if object_dict[arguments[1]].u is not None:
             normal = object_dict[arguments[1]].u
             other_vec = object_dict[arguments[1]].v
-            other_vec.Normalize()
+            if other_vec is not None :
+                other_vec.Normalize()
         else:
             normal = object_dict[arguments[1]].v ### ou w 
             other_vec = None
@@ -4675,6 +4707,7 @@ class Face3D(Primitive3D):
             return SphericalFace3D.from_contour3d(contours, object_dict[int(arguments[2])], name=arguments[0][1:-1])
         
         else:
+            print('arguments', arguments)
             print(object_dict[int(arguments[2])])
             raise NotImplementedError
     
@@ -5645,7 +5678,8 @@ class CylindricalFace3D(Face3D):
             if intersect is not None : 
                 x_intersect = intersect.vector[0]
                 y_intersect = intersect.vector[1]
-                if y_intersect < ymax*0.8 and y_intersect > 0.8*ymin :
+                value1, value2 = ymax-0.2*(ymax-ymin), ymin+0.2*(ymax-ymin)
+                if y_intersect < max(value1, value2) and y_intersect > min(value1, value2) :
                     points = []
                     for k, prim in enumerate(primitives) :
                         new_list_points, change = [], 0
@@ -6469,7 +6503,8 @@ class ToroidalFace3D (Face3D) :
             if intersect is not None : 
                 x_intersect = intersect.vector[0]
                 y_intersect = intersect.vector[1]
-                if y_intersect < ymax*0.8 and y_intersect > 0.8*ymin :
+                value1, value2 = ymax-0.2*(ymax-ymin), ymin+0.2*(ymax-ymin)
+                if y_intersect < max(value1, value2) and y_intersect > min(value1, value2) :
                     points = []
                     for k, prim in enumerate(primitives) :
                         new_list_points, change = [], 0
@@ -7228,6 +7263,9 @@ class ConicalFace3D (Face3D) :
             
         hmax, hmin, Rmax, Rmin = ConicalFace3D.from_points3d_param(contours3d[0].tessel_points, frame)
         
+        if math.isclose(Rmin, 0, abs_tol=1e-6) :
+            Rmin = 1e-6
+        
         primitives, start_end, all_points = [], [], []
         for edge in contours3d[0].edges :
             new_points = [frame.NewCoordinates(pt) for pt in edge.points]
@@ -7267,7 +7305,7 @@ class ConicalFace3D (Face3D) :
             elif edge.__class__ is LineSegment3D :
                 start2d, end2d = ConicalFace3D.points3d_to2d(new_points, Rmin, Rmax, hmin, hmax)
                 ls_toadd = LineSegment2D(start2d, end2d)
-                same = same = Face3D.LS2D_inprimitives(ls_toadd, primitives)
+                same = Face3D.LS2D_inprimitives(ls_toadd, primitives)
                 if same is False :
                     primitives.append([ls_toadd])
                     all_points.extend(ls_toadd.points)
@@ -7406,7 +7444,8 @@ class ConicalFace3D (Face3D) :
             if intersect is not None : 
                 x_intersect = intersect.vector[0]
                 y_intersect = intersect.vector[1]
-                if y_intersect < ymax*0.8 and y_intersect > 0.8*ymin :
+                value1, value2 = ymax-0.2*(ymax-ymin), ymin+0.2*(ymax-ymin)
+                if y_intersect < max(value1, value2) and y_intersect > min(value1, value2) :
                     points = []
                     for k, prim in enumerate(primitives) :
                         new_list_points, change = [], 0
@@ -7506,11 +7545,11 @@ class ConicalFace3D (Face3D) :
         if self.rb == 0 :
             # print('>>>>>>>1')
             points, Triangles = self.create_triangle(all_contours_points, part='bot')
-            Points_3D = self.points2d_to3d([points], rb, rt, hmin, hmax, frame3d)
+            Points_3D = self.points2d_to3d([points], self.rb, self.rt, hmin, hmax, frame3d)
         elif self.rt == 0 :
             # print('>>>>>>>2')
             points, Triangles = self.create_triangle(all_contours_points, part='top')
-            Points_3D = self.points2d_to3d([points], rb, rt, hmin, hmax, frame3d)
+            Points_3D = self.points2d_to3d([points], self.rb, self.rt, hmin, hmax, frame3d)
         else :    
             # print('>>>>>>>3')
             Triangles, ts = [], []
@@ -7665,7 +7704,6 @@ class SphericalFace3D (Face3D) :
         #     [prim.MPLPlot(ax=ax) for prim in primitives]
                 
         else: 
-            print('>>>>>>>>>>>>sphere')
             contours2d = SphericalFace3D.contours3d_to2d(contours3d, sphericalsurface3d)
             theta = max(pt[0] for pt in contours2d[0].tessel_points) - min(pt[0] for pt in contours2d[0].tessel_points)
             phi = max(pt[1] for pt in contours2d[0].tessel_points) - min(pt[1] for pt in contours2d[0].tessel_points)
@@ -7719,9 +7757,9 @@ class SphericalFace3D (Face3D) :
                 i0 += 1
             elif math.isclose(point[0], 2*math.pi, abs_tol=1e-6) :
                 i2pi += 1
-            elif math.isclose(point[0], angle, abs_tol=1e-6) :
+            elif math.isclose(point[0], angle, abs_tol=5e-2) :
                 iangle += 1
-            elif math.isclose(point[1], h, abs_tol=1e-6) :
+            elif math.isclose(point[1], h, abs_tol=5e-2) :
                 ih += 1
     
         if i2pi/len(points_2D)>=0.5 :
@@ -7759,7 +7797,7 @@ class SphericalFace3D (Face3D) :
                 plus_7pi4.append(enum)
             elif pt.vector[0]<math.pi/4 :
                 moins_7pi4.append(enum)
-            
+        
         if len(moins_7pi4) > 3*len(plus_7pi4) :
             for pos in plus_7pi4 :
                 new_pt = points_2D[pos].copy() - Point2D((2*math.pi, 0))
@@ -7886,6 +7924,24 @@ class SphericalFace3D (Face3D) :
         # for couple in points_common :
         #     [pt.MPLPlot(ax=ax, color='b') for pt in couple]        
         
+        def check_singularity(all_points):
+            plus_pi, moins_pi = [], []
+            for enum, pt in enumerate(all_points) :
+                if pt.vector[0]>math.pi*1.01 :
+                    plus_pi.append(enum)
+                elif pt.vector[0]<math.pi*0.99 :
+                    moins_pi.append(enum)
+                    
+            if len(moins_pi) <= 2 and len(all_points)>4 :
+                for pos in moins_pi :
+                    new_pt = all_points[pos].copy() + Point2D((2*math.pi, 0))
+                    all_points[pos] = new_pt
+            if len(plus_pi) <=2 and len(all_points)>4 :
+                for pos in plus_pi :
+                    new_pt = all_points[pos].copy() - Point2D((2*math.pi, 0))
+                    all_points[pos] = new_pt
+            return all_points
+        
         if len(points_common) >= 1 :
             solve = False
             for couple in points_common :
@@ -7895,7 +7951,13 @@ class SphericalFace3D (Face3D) :
                 start, end = couple[0].vector[0], couple[1].vector[0]
                 if math.isclose(start, end, abs_tol = 5e-2) :
                     intersect = min(start, end)
+                    if math.isclose(intersect, math.pi, abs_tol = 5e-2) :
+                        all_points = check_singularity(all_points)
+                        intersect = 0
+                        
                     if math.isclose(intersect, 0, abs_tol = 1e-6) or math.isclose(intersect, 2*math.pi, abs_tol = 1e-6) or (not check1 or not check2):
+                        all_points = check_singularity(all_points)
+                        
                         points_cleaned = delete_double_point(all_points)
                         all_points = [pt.copy() for pt in points_cleaned]
                         all_points.sort(key=lambda pt: pt[0])
@@ -7961,7 +8023,8 @@ class SphericalFace3D (Face3D) :
             if intersect is not None : 
                 x_intersect = intersect.vector[0]
                 y_intersect = intersect.vector[1]
-                if y_intersect < ymax*0.8 and y_intersect > 0.8*ymin :
+                value1, value2 = ymax-0.2*(ymax-ymin), ymin+0.2*(ymax-ymin)
+                if y_intersect < max(value1, value2) and y_intersect > min(value1, value2) :
                     points = []
                     for k, prim in enumerate(primitives) :
                         new_list_points, change = [], 0
@@ -7982,6 +8045,10 @@ class SphericalFace3D (Face3D) :
                             continue
                     solve = True
                     points_cleaned = delete_double_point(points)
+                    all_points = Face3D.range_trigo(points_cleaned)
+                    primitives = Face3D.create_primitives(all_points)
+                else :
+                    points_cleaned = delete_double_point(all_points)
                     all_points = Face3D.range_trigo(points_cleaned)
                     primitives = Face3D.create_primitives(all_points)
                     
@@ -8044,37 +8111,47 @@ class SphericalFace3D (Face3D) :
             pts.extend(ptvert[k])
         
         Triangles, ts = [], []
+        if math.isclose(angle_phi, 2*math.pi, abs_tol=1e-6) or math.isclose(angle_theta, 2*math.pi, abs_tol=1e-6):
+            step = resolution_phi
+            for k in range (0,len(pts)-resolution_phi-2) :
+                vertices=[]
+                segments=[]
+                
+                if k%step == 0 and k!=0:
+                    step += resolution_phi+1
+                    continue
+                
+                listpt = [pts[k], pts[k+1], pts[k+1+resolution_phi+1], pts[k+resolution_phi+1]]
+                listindice = [k, k+1, k+1+resolution_phi+1, k+resolution_phi+1]
+                for i, pt in enumerate(listpt):
+                    vertices.append(pt.vector)
+                    segments.append([i,i+1])
+                
+                segments[-1]=(len(listpt)-1,0) 
+                tri = {'vertices': vertices, 'segments': segments}
+                t = triangle.triangulate(tri, 'p')
+                if 'triangles' in t:
+                    triangles = t['triangles'].tolist()
+                    for n,tri in enumerate(triangles):
+                        for i in range (0,3):
+                            tri[i]=listindice[tri[i]]
+                    Triangles.append(triangles)        
+                else:
+                    Triangles.append(None)
+                ts.append(t)
+            
+            pts3d = self.points2d_to3d(pts, r, frame3d)
+            pt3d, tangle = delete_double_pos(pts3d, Triangles)
         
-        step = resolution_phi
-        for k in range (0,len(pts)-resolution_phi-2) :
-            vertices=[]
-            segments=[]
-            
-            if k%step == 0 and k!=0:
-                step += resolution_phi+1
-                continue
-            
-            listpt = [pts[k], pts[k+1], pts[k+1+resolution_phi+1], pts[k+resolution_phi+1]]
-            listindice = [k, k+1, k+1+resolution_phi+1, k+resolution_phi+1]
-            for i, pt in enumerate(listpt):
-                vertices.append(pt.vector)
-                segments.append([i,i+1])
-            
-            segments[-1]=(len(listpt)-1,0) 
-            tri = {'vertices': vertices, 'segments': segments}
-            t = triangle.triangulate(tri, 'p')
-            if 'triangles' in t:
-                triangles = t['triangles'].tolist()
-                for n,tri in enumerate(triangles):
-                    for i in range (0,3):
-                        tri[i]=listindice[tri[i]]
-                Triangles.append(triangles)        
-            else:
-                Triangles.append(None)
-            ts.append(t)
-        
-        pts3d = self.points2d_to3d(pts, r, frame3d)
-        pt3d, tangle = delete_double_pos(pts3d, Triangles)
+        else :
+            A = dict(vertices=[pt.vector for pt in pts]) #in all_points
+            B = triangle.triangulate(A, 'cp')
+            Triangles = list(B['triangles'])
+            # triangle.compare(plt, A, B)
+            # print(B['triangles'].shape)
+            # print(B)
+            pts3d = self.points2d_to3d(pts, r, frame3d)
+            pt3d, tangle = delete_double_pos(pts3d, [Triangles])
         
         return pt3d, tangle
          
@@ -8084,13 +8161,11 @@ class BSplineFace3D(Face3D):
         Face3D.__init__(self, contours)
         
         self.contours = contours
-        # fig = plt.figure()
-        # ax = fig.add_subplot(111, projection='3d')
-        # [edge.MPLPlot(ax=ax) for edge in contours[0].edges]
         self.bspline_shape = bspline_shape
         self.name = name
         
-        self.surface, self.points = self._contour_bspline()
+        # self.surface, self.points = self._contour_bspline()
+        self.points2d, self.points3d = self._contour_bspline()
         
     def _contour_bspline(self):
         if self.bspline_shape.__class__ is BSplineExtrusion:
@@ -8111,7 +8186,6 @@ class BSplineFace3D(Face3D):
                 control_points.append((self.bspline_shape.points[0]+offset_point).vector)
             
             # TRANSPOSE THE LIST OF LISTS
-    #        self.control_points_table = list(map(list, zip(*self.control_points_table)))
             
             surface = BSpline.Surface()
             surface.degree_u = 3 
@@ -8123,404 +8197,203 @@ class BSplineFace3D(Face3D):
             surface.knotvector_v = utilities.generate_knot_vector(surface.degree_v, surface.ctrlpts_size_v)
             surface.delta = 0.05
             surface_points = surface.evalpts
+            points = [Point3D((vector)) for vector in surface_points]
+            
+            delta = surface.delta
+            nbu, nbv = int(1/delta[0])+1, int(1/delta[1])+1
+            list_pointsv, list_pointsu = [], []
+            for etage in range(0, nbu) :
+                list_pointsv.append(points[etage*nbv:(etage+1)*nbv])
+            
+            for etage in range(0, nbv) :
+                pointsu = []
+                for k in range(0, nbu) :
+                    pointsu.append(points[k*nbv+etage])
+                list_pointsu.append(pointsu)
+                
+            points2d, contours2d = [], []
+            points3d, contours3d = [], []
+            for u, list_pointv in enumerate(list_pointsv) :
+                for v, pt in enumerate(list_pointv) :
+                    pt_2d = Point2D((u/(nbu-1), (v/(nbv-1))))
+                    if pt_2d.vector[0] == 0 or pt_2d.vector[0] == 1 or pt_2d.vector[1] == 0 or pt_2d.vector[1] == 1 :
+                        contours2d.append(pt_2d)
+                        # contours3d.append(pt)
+                    else :
+                        points2d.append(pt_2d)
+                        points3d.append(pt)
+            
+            range_contours2d = Face3D.range_trigo(contours2d)
+            
+            all_points2d = range_contours2d + points2d
+            
+            for pt2d in range_contours2d :
+                u, v = int(pt2d.vector[0]*(nbu-1)), int(pt2d.vector[1]*(nbv-1))
+                contours3d.append(list_pointsv[u][v])
+            
+            all_points3d = contours3d + points3d
             
             # fig = plt.figure()
             # ax = fig.add_subplot(111, projection='3d')
-            # points = []
-            # for vec in surface_points :
-            #     points.append(Point3D((vec[0], vec[1], vec[2])))
             # [pt.MPLPlot(ax=ax) for pt in points]
+            # [pt.MPLPlot(ax=ax, color='r') for pt in contours3d]
             
             # # PLOT #
             # from matplotlib import cm
             # from geomdl.visualization import VisMPL
             # surface.vis = VisMPL.VisSurface(ctrlpts=False, legend=False)
             # surface.render(colormap=cm.terrain)
+            return all_points2d, all_points3d
             
-            return surface, [Point3D((p[0], p[1], p[2])) for p in surface_points]
-        
-        
-        
         elif self.bspline_shape.__class__ is BSplineSurface3D:
             
-            """TODO add contours.points
-            Problem with index size
-            intersections 3D problem???"""
-            
-            # fig = plt.figure()
-            # ax = fig.add_subplot(111, projection='3d')
-            ######### FORMAT 1 : AVEC "PORTES"
-            # self.points = self.contours[0].tessel_points
-            # self.bounding_box = self._bounding_box()
-            # xmax, xmin = self.bounding_box.xmax, self.bounding_box.xmin
-            # ymax, ymin = self.bounding_box.ymax, self.bounding_box.ymin
-            # zmax, zmin = self.bounding_box.zmax, self.bounding_box.zmin
-            
-            # # pointsinf = self.bspline_shape.points
-            # delta = self.bspline_shape.surface.delta
-            # nbu = int(1/delta[0])+1
-            # nbv = int(1/delta[1])+1
-            # pointsinf = []
-            # for k in range(0,nbv):
-            #     pt = []
-            #     pt = self.bspline_shape.points[k*nbu:(k+1)*nbu]
-            #     pointsinf.append(pt)
-            
-            # #STEP 1 : Find points out of the scope
-            # pointsbbx = []
-            # for pts in pointsinf :
-            #     ptetage = []
-            #     for pt in pts : 
-            #         if pt[0] > xmax or pt[0] < xmin :
-            #             continue
-            #         elif pt[1] > ymax or pt[1] < ymin :
-            #             continue
-            #         elif pt[2] > zmax or pt[2] < zmin :
-            #             continue
-            #         else :
-            #             ptetage.append(pt)
-            #     pointsbbx.append(ptetage)
-            # #STEP 2 : Find the intersection between surfacepoint and contourspoints + interior points
-            # ptsurf = []
-            # ptscontours = self.contours[0].tessel_points
-            # # ptscontours.append(ptscontours[0])
-            # # ptscontours = ptscontour[::-1] #on inverse pour concorder avec la lecture des pts
-            # nbx_u = []
-            
-            # # [pt.MPLPlot(ax=ax) for pt in ptscontours]
-            # # [pt.MPLPlot(ax=ax, color='r') for pt in self.bspline_shape.points]
-           
-            # for ptsetage in pointsbbx :
-            #     # print('lenptsetage', len(ptsetage))
-            #     nbu = 0
-            #     if len(ptsetage) <= 2 :
-            #         continue
-            #     # print('ptsetage',ptsetage)
-            #     ptsetage.append(ptsetage[0])
-            #     posi1, posi2 = [], []
-            #     porte1 = False
-            #     porte2 = False
-            #     # pts = []
-            #     # ptporte1, ptporte2 = [], []
-                
-                
-            #     #test rajout points
-            #     # ptsetage.append(ptsetage[-1]+(ptsetage[-1]-ptsetage[-2]))
-            #     # ptsetage.append(ptsetage[0]-(ptsetage[1]-ptsetage[0]))
-                
-                
-            #     for j in range (0,len(ptsetage)-1):
-            #         # print('--->')
-            #         seg1 = LineSegment3D(ptsetage[j], ptsetage[j+1])
-            #         for enum in range (0,len(ptscontours)-1) :
-            #             seg2 = LineSegment3D(ptscontours[enum], ptscontours[enum+1])
-            #             # print(seg1.Intersection(seg1,seg2))
-            #             if seg1.Intersection(seg1,seg2) is None :
-            #                 continue
-            #             elif seg1.Intersection(seg1,seg2) is not None and porte1 == False:
-            #                 porte1 = True
-            #                 posi1.append(j)
-            #                 # print('entrée')
-            #                 # pts.append(seg1.Intersection(seg1,seg2))
-            #                 # ptporte1.append(seg1.Intersection(seg1,seg2))
-            #                 break
-            #             elif seg1.Intersection(seg1,seg2) is not None and porte1 == True and porte2 == False:
-            #                 porte1 = False
-            #                 posi2.append(j)
-            #                 # print('sortie')
-            #                 # pts.append(seg1.Intersection(seg1,seg2))
-            #                 # ptporte2.append(seg1.Intersection(seg1,seg2)) #If the contour is a 'wave'
-            #                 break
-            #             elif enum == len(ptscontours)-2 and porte1 == True :
-            #                 # pts.append(ptsetage[j])
-            #                 posi2.append(posi1[-1])
-            #                 break #Facultatif
-            #     if len(posi1) == 0 : #if a floor is not kept
-            #         continue
-            #     for i in range (0, len(posi2)) : #Considering len posi1=len posi2
-            #         if len(posi1)+len(posi2) >= len(ptsetage)-1:
-            #             for k in range(posi1[0], max(posi1[-1],posi2[-1])+1):
-            #                 nbu += 1
-            #                 ptsurf.append(ptsetage[k].vector)
-            #             nbx_u.append(nbu)
-            #             break
-            #         for pos in range (posi1[i], posi2[i]+1):
-            #             nbu += 1
-            #             ptsurf.append(ptsetage[pos].vector)
-            #         nbx_u.append(nbu)
-
-            # #STEP 3 : Creation of surface with ptsurf, considering a surface with 4 curves, pair identical
-            # bsplineu, bsplinev = self.contours[0].edges[0], self.contours[0].edges[1]
-            # print('ptsurf', ptsurf)
-            # control_points = ptsurf
-            # surface = BSpline.Surface()
-            # if bsplineu.__class__ is LineSegment3D :
-            #     surface.degree_u = 1
-            # else :
-            #     surface.degree_u = bsplineu.degree
-            
-            # if bsplinev.__class__ is LineSegment3D :  
-            #     surface.degree_v = 1
-            # else :
-            #     surface.degree_v = bsplinev.degree
-            # nb_v = len(nbx_u)
-            # nb_u = nbx_u[0]
-            
-            
-            
-            # surface.set_ctrlpts(control_points, nb_u, nb_v)
-            # surface.knotvector_u = utilities.generate_knot_vector(surface.degree_u, surface.ctrlpts_size_u)
-            # surface.knotvector_v = utilities.generate_knot_vector(surface.degree_v, surface.ctrlpts_size_v)
-            # surface.delta = 0.05
-            # surface_points = surface.evalpts
-            
-            
-            ######### CONSIDERING ALL POINTS ARE OKAY
-            # fig = plt.figure()
-            # ax = fig.add_subplot(111, projection='3d')
-            # [edge.MPLPlot(ax=ax) for edge in self.contours[0].edges]
-            
-            # print('self.contours[0].edges', self.contours[0].edges)
-
-            # print('self.bspline_shape.degree_u' ,self.bspline_shape.degree_u)
-            # print('self.bspline_shape.degree_v', self.bspline_shape.degree_v)
-            # print('self.bspline_shape.nb_u', self.bspline_shape.nb_u)
-            # print('self.bspline_shape.nb_v', self.bspline_shape.nb_v)
-            # print('self.bspline_shape.u_multiplicities', self.bspline_shape.u_multiplicities)
-            # print('self.bspline_shape.v_multiplicities', self.bspline_shape.v_multiplicities)
-            # print('len(self.bspline_shape.points)', len(self.bspline_shape.points))
-            # surface = self.bspline_shape.surface
-            
-            # from matplotlib import cm
-            # from geomdl.visualization import VisMPL
-            # surface.vis = VisMPL.VisSurface(ctrlpts=False, legend=False)
-            # surface.render(colormap=cm.terrain)
-            
-            # raise NotImplementedError
-            pos_points_shape = []
-            for ptcontour in self.contours[0].tessel_points :
-                d0 = (ptcontour - self.bspline_shape.points[0]).Norm()
-                pos = 0
-                for k, pt_bspline in enumerate(self.bspline_shape.points[1:]) :
-                    dtest = (ptcontour - pt_bspline).Norm()
-                    if dtest < d0 :
-                        d0 = dtest
-                        pos = k+1
-                pos_points_shape.append(pos)
-                
-            list_etage_pospoints = []
             delta = self.bspline_shape.surface.delta
             nbu, nbv = int(1/delta[0])+1, int(1/delta[1])+1
+            list_pointsv, list_pointsu = [], []
             for etage in range(0, nbu) :
-                list_pos_etage = []
-                for pos in pos_points_shape : 
-                    if pos >= etage*(nbv) and pos < (etage+1)*(nbv):
-                        list_pos_etage.append(pos)
-                list_etage_pospoints.append(list_pos_etage)
-
-            points_face = []
-            nb_points = 0
-            for list_pos in list_etage_pospoints :
-                if len(list_pos) > 1 :
-                    minpos, maxpos = min(list_pos), max(list_pos)
-                    size = maxpos-minpos+1
-                    if size > 1 :
-                        nb_points += size
-                        points_face.append(self.bspline_shape.points[minpos:maxpos+1])
-                    
-            avg_points = int(nb_points/len(points_face))+1
-            final_points = []
-            for list_pt in points_face :
-                size = len(list_pt)
-                if size == avg_points :
-                    final_points.extend(list_pt)
+                list_pointsv.append(self.bspline_shape.points[etage*nbv:(etage+1)*nbv])
+            
+            for etage in range(0, nbv) :
+                pointsu = []
+                for k in range(0, nbu) :
+                    pointsu.append(self.bspline_shape.points[k*nbv+etage])
+                list_pointsu.append(pointsu)
+            
+            tessel_points2d = []
+            four_points, four_points2d = [], []
+            four_distances = []
+            for point in self.contours[0].tessel_points :
+                all_posv, distance, global_position = [], [], []
+                offset = 0
+                for list_pointv in list_pointsv :
+                    point1, point2 = list_pointv[0], list_pointv[1]
+                    d = [point.point_distance(point1), point.point_distance(point2)]
+                    posv = [0, 1]
+                    glo_posv = [offset+0, offset+1]
+                    for enum, pt in enumerate(list_pointv[2:]) :
+                        dtest = point.point_distance(pt)
+                        if dtest < max(d) :
+                            maxi, maxpos = max_pos(d)
+                            d[maxpos] = dtest
+                            posv[maxpos] = enum+2
+                            glo_posv[maxpos] = offset+enum+2
+                    all_posv.append(posv)
+                    distance.append(d)
+                    global_position.append(glo_posv)
+                    offset += len(list_pointv)
+                #take 4 closest points
+                d = [distance[0], distance[1]]
+                avg1, avg2 = sum(d[0])/2, sum(d[1])/2
+                if avg1 > avg2 :
+                    avg = avg1
+                    pos_to_change = 0
                 else :
-                    points_toadd = []
-                    if size == 2 :
-                        wire = LineSegment3D(list_pt[0], list_pt[1])
-                        length = 1
-                    else :
-                        primitives = []
-                        for k in range(0, len(list_pt)-1) :
-                            primitives.append(LineSegment3D(list_pt[k], list_pt[k+1]))
-                        wire = Wire3D(primitives)
-                        length = wire.Length()
-                    for k in range(0, avg_points) :
-                        curvilinear_abscissa = length*k/(avg_points-1)
-                        points_toadd.append(wire.PointAtCurvilinearAbscissa(curvilinear_abscissa))
-                    final_points.extend(points_toadd)                    
-                            
-            # fig = plt.figure()
-            # ax = fig.add_subplot(111, projection='3d')
-            # [edge.MPLPlot(ax=ax) for edge in self.contours[0].edges]
-            # for list_pt in points_face :
-            #     [pt.MPLPlot(ax=ax, color='r') for pt in list_pt]
-            
-            ## add contour limit
-            degree_u, degree_v = 3, 3
-            nbv, nbu = avg_points, len(points_face)
-            wire_contour = Wire3D(self.contours[0].edges)
-            length = wire_contour.Length()
-            points_contours = []
-            for k in range(0, 2*(nbv+nbu)+4) :
-                curvilinear_abscissa = length*k/(2*(nbv+nbu)+4-1)
-                points_contours.append(wire_contour.PointAtCurvilinearAbscissa(curvilinear_abscissa))
-            
-            fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
-            [edge.MPLPlot(ax=ax) for edge in self.contours[0].edges]
-            [pt.MPLPlot(ax=ax, color='r') for pt in final_points]
-            [pt.MPLPlot(ax=ax, color='b') for pt in points_contours]
-            
-            # print('avg_points, len(points_face)', avg_points, len(points_face))
-            # print('len(final_points)', len(final_points))
-            # surface = BSpline.Surface()  
-            # surface.degree_u = 3
-            # surface.degree_v = 3
-            # nbv, nbu = avg_points, len(points_face)
-            # control_points = [pt.vector for pt in final_points]
-            # surface.set_ctrlpts(control_points, nbu, nbv)
-            # surface.knotvector_u = utilities.generate_knot_vector(surface.degree_u, surface.ctrlpts_size_u)
-            # surface.knotvector_v = utilities.generate_knot_vector(surface.degree_v, surface.ctrlpts_size_v)
-            # surface.delta = 0.05
-            # surface_points = surface.evalpts
-            from geomdl import fitting   
-            # degree_u, degree_v = 3, 3
-            # nbv, nbu = avg_points, len(points_face)
-            control_points = [pt.vector for pt in final_points]
-            surface = fitting.interpolate_surface(control_points, nbu, nbv, degree_u, degree_v)
-            surface_points = surface.evalpts
-            
-            from matplotlib import cm
-            from geomdl.visualization import VisMPL
-            surface.vis = VisMPL.VisSurface(ctrlpts=False, legend=False)
-            surface.render(colormap=cm.terrain)
-            
-            # raise NotImplementesdError
-            
-            
-            
-            
-            
-            
-            # delta = self.bspline_shape.surface.delta
-            # nbu = int(1/delta[0])+1
-            # nbv = int(1/delta[1])+1
-            # pointsinf = [pt.vector for pt in self.bspline_shape.points]
-            # # print('pointsinf', pointsinf)
-            # bsplineu, bsplinev = self.contours[0].edges[0], self.contours[0].edges[1]
-            # control_points = pointsinf
-            # surface = BSpline.Surface()
-            
-            # if bsplineu.__class__ is LineSegment3D :
-            #     surface.degree_u = 1
-            # elif bsplineu.__class__ is Arc3D or bsplineu.__class__ is ArcEllipse3D:
-            #     surface.degree_u = 3    
-            # else :
-            #     surface.degree_u = bsplineu.degree
-            
-            # if bsplinev.__class__ is LineSegment3D :  
-            #     surface.degree_v = 1
-            # elif bsplinev.__class__ is Arc3D or bsplinev.__class__ is ArcEllipse3D:  
-            #     surface.degree_v = 3
-            # else :
-            #     surface.degree_v = bsplinev.degree
-            
-            # surface.set_ctrlpts(control_points, nbu, nbv)
-            # surface.knotvector_u = utilities.generate_knot_vector(surface.degree_u, surface.ctrlpts_size_u)
-            # surface.knotvector_v = utilities.generate_knot_vector(surface.degree_v, surface.ctrlpts_size_v)
-            # surface.delta = 0.05
-            # surface_points = surface.evalpts
-            
-            # print('nbu', nbu)
-            # print('nbv', nbv)
-            
-            # # PLOT #
-            # from matplotlib import cm
-            # from geomdl.visualization import VisMPL
-            # surface.vis = VisMPL.VisSurface(ctrlpts=False, legend=False)
-            # surface.render(colormap=cm.terrain)
-            # ###########
-            # raise NotImplementedError
-            
-            # u_multiplicities = self.bspline_shape.u_multiplicities
-            # v_multiplicities = self.bspline_shape.v_multiplicities
-            # surface.degree_u = self.bspline_shape.degree_u #len(control_points)-1 #degree_u a voir
-            # surface.degree_v = self.bspline_shape.degree_v #n #degree_v a voir 
-            # nb_v = self.bspline_shape.nb_v
-            # nb_u = self.bspline_shape.nb_u
-            # if weights is None:
-            #     P = [(control_points[i][0], control_points[i][1], control_points[i][2]) for i in range(len(control_points))]
-            #     surface.set_ctrlpts(P, nb_u, nb_v)
-            # else:
-            #     Pw = [(control_points[i][0]*weights[i], control_points[i][1]*weights[i], control_points[i][2]*weights[i], weights[i]) for i in range(len(control_points))]
-            #     surface.set_ctrlpts(Pw, nb_u, nb_v)
-            # # surface.set_ctrlpts(control_points, nb_u, nb_v)
-            # # for i, u_knot in enumerate(u_knots):
-            # #     knot_vector_u.extend([u_knot]*u_multiplicities[i])
+                    avg = avg2
+                    pos_to_change = 1
+                posu = [0, 1]
+                for k, dist in enumerate(distance[2:]) :
+                    avg_test = sum(dist)/2
+                    if avg_test<avg:
+                        d[pos_to_change] = dist
+                        posu[pos_to_change] = k+2
+                        avg1, avg2 = sum(d[0])/2, sum(d[1])/2
+                        if avg1 > avg2 :
+                            avg = avg1
+                            pos_to_change = 0
+                        else :
+                            avg = avg2
+                            pos_to_change = 1
+                point1 = self.bspline_shape.points[global_position[posu[0]][0]]
+                point1_2d = Point2D((posu[0]/(nbu-1), all_posv[posu[0]][0]/(nbv-1)))
+                d1 = distance[posu[0]][0]
+                point2 = self.bspline_shape.points[global_position[posu[0]][1]]
+                point2_2d = Point2D((posu[0]/(nbu-1), all_posv[posu[0]][1]/(nbv-1)))
+                d2 = distance[posu[0]][1]
+                point3 = self.bspline_shape.points[global_position[posu[1]][0]]
+                point3_2d = Point2D((posu[1]/(nbu-1), all_posv[posu[1]][0]/(nbv-1)))
+                d3 = distance[posu[1]][0]
+                point4 = self.bspline_shape.points[global_position[posu[1]][1]]
+                point4_2d = Point2D((posu[1]/(nbu-1), all_posv[posu[1]][1]/(nbv-1)))
+                d4 = distance[posu[1]][1]
+                four_points.append([point1, point2, point3, point4])
+                four_points2d.append([point1_2d, point2_2d, point3_2d, point4_2d])
+                four_distances.append([d1, d2, d3, d4])
                 
-            # surface.knotvector_u = utilities.generate_knot_vector(surface.degree_u, surface.ctrlpts_size_u)
-            # surface.knotvector_v = utilities.generate_knot_vector(surface.degree_v, surface.ctrlpts_size_v)
-            # surface.delta = 0.05
-            # surface_points = surface.evalpts
+                D = sum(four_distances[-1])
+                #the closest, the strongest
+                point_2d = (point1_2d*((D-d1)/D) + point2_2d*((D-d2)/D) + point3_2d*((D-d3)/D) + point4_2d*((D-d4)/D))/3
+                tessel_points2d.append(point_2d)
+                
+            # fig, ax = plt.subplots()
+            # for list_four in four_points2d :
+            #     [pt.MPLPlot(ax=ax) for pt in list_four]
+            # [point_2d.MPLPlot(ax=ax, color='r') for point_2d in tessel_points2d]
             
-            return surface, [Point3D((p[0], p[1], p[2])) for p in surface_points]
-            # return surface, points
+            # lines = []
+            # for k in range(0,len(tessel_points2d)) :
+                # if k == len(tessel_points2d)-1 :
+                    # lines.append(LineSegment2D(tessel_points2d[k],tessel_points2d[0]))
+                # else :
+                    # lines.append(LineSegment2D(tessel_points2d[k],tessel_points2d[k+1]))
             
-        # print('ctrl pts',control_points)
-        # print()
-        # print('self.points',self.points)
-        
-        # if bsplinextru.obj.__class__ is ArcEllipse3D or bsplinextru.obj.__class__ is Ellipse3D :
-        #     # if bsplinextru.obj.__class__ is Ellipse3D :
-        #     #     control_points.append(control_points[0])
-        #     #     surface.degree_u += 1
-        #     weights = None #[1 for i in range(len(control_points))]
-        #     u_knots = control_points
-        #     v_knots = [(self.normal*h*i/n).vector for i in range(n+1)]
-        #     nb_u = len(control_points)
-        #     print('nbu', nb_u)
-        #     nb_v = n
-        #     print('nbv', nb_v)
-        # if weights is None:
-        #     P = [(control_points[i][0], control_points[i][1], control_points[i][2]) for i in range(len(control_points))]
-        #     surface.set_ctrlpts(P, nb_u, nb_v)
-        # else:
-        #     Pw = [(control_points[i][0]*weights[i], control_points[i][1]*weights[i], control_points[i][2]*weights[i], weights[i]) for i in range(len(control_points))]
-        #     surface.set_ctrlpts(Pw, nb_u, nb_v)
-        # knot_vector_u = knotvector.generate(surface.degree_u, len(control_points))
-        # for i, u_knot in enumerate(u_knots):
-        #     knot_vector_u.extend([u_knot]*u_multiplicities[i])
-        # knot_vector_v = []
-        # knot_vector_v = knotvector.generate(surface.degree_u, len(control_points))
-        # for i, v_knot in enumerate(v_knots):
-        #     knot_vector_v.extend([v_knot]*v_multiplicities[i])
-        # surface.knotvector_u = knot_vector_u
-        # surface.knotvector_v = knot_vector_v
-        # surface.delta = 0.05
-        # surface_points = surface.evalpts
-        
-        # self.surface = surface
-        # self.points = [Point3D((p[0], p[1], p[2])) for p in surface_points]
-        
+            # [l.MPLPlot(ax=ax) for l in lines]
+            
+            poly2d = Polygon2D(tessel_points2d)
+            minu, maxu = int(min(pt[0] for pt in tessel_points2d)*(nbu-1))+1, int(max(pt[0] for pt in tessel_points2d)*(nbu-1))
+            minv, maxv = int(min(pt[1] for pt in tessel_points2d)*(nbv-1))+1, int(max(pt[1] for pt in tessel_points2d)*(nbv-1))
+            
+            all_points2d = [pt.copy() for pt in tessel_points2d]
+            all_points3d = [pt.copy() for pt in self.contours[0].tessel_points]
+            # all_points2d = []
+            for u, list_pointv in enumerate(list_pointsv[minu:maxu+1]) :
+                for v, pt in enumerate(list_pointv[minv:maxv+1]) :
+                    etageu = u + minu
+                    etagev = v + minv
+                    pt_2d = Point2D((etageu/(nbu-1), (etagev/(nbv-1))))
+                    if poly2d.PointBelongs(pt_2d) :
+                        all_points2d.append(pt_2d)
+                        all_points3d.append(pt)
+            # [pt.MPLPlot(ax=ax, color='g') for pt in all_points2d]
+            # [point_2d.MPLPlot(ax=ax, color='r') for point_2d in tessel_points2d]
+            
+            return all_points2d, all_points3d            
+    
     def triangulation(self):
-        sample_size = self.surface.sample_size
-        # print(sample_size)
-        triangles = []
-        etage0 = 0
-        etage1 = sample_size[1]
+        # sample_size = self.surface.sample_size
+        # # print(sample_size)
+        # triangles = []
+        # etage0 = 0
+        # etage1 = sample_size[1]
         
-        for i in range(sample_size[0]-1): #nb etage
-            for j in range(1,sample_size[1]-1): #nb point
-                triangles.append((etage0+j, etage1+j, etage1+j+1))
-                triangles.append((etage0+j, etage1+j+1, etage0+j+1))
-            triangles.append((etage0+sample_size[1]-1, etage1+sample_size[1]-1, etage1+1))
-            triangles.append((etage0+sample_size[1]-1, etage1+1, etage0+1))
-            etage0 += sample_size[1]
-            etage1 += sample_size[1]
-        pts, tri = delete_double_pos(self.points, [triangles])
+        # for i in range(sample_size[0]-1): #nb etage
+        #     for j in range(1,sample_size[1]-1): #nb point
+        #         triangles.append((etage0+j, etage1+j, etage1+j+1))
+        #         triangles.append((etage0+j, etage1+j+1, etage0+j+1))
+        #     triangles.append((etage0+sample_size[1]-1, etage1+sample_size[1]-1, etage1+1))
+        #     triangles.append((etage0+sample_size[1]-1, etage1+1, etage0+1))
+        #     etage0 += sample_size[1]
+        #     etage1 += sample_size[1]
+        # pts, tri = delete_double_pos(self.points, [triangles])
         # print('pts', pts)
-        return pts, tri
+        
+        del_point = delete_double_point(self.contours[0].tessel_points)
+        seg = []
+        for k in range(0, len(del_point)) :
+            if k == len(del_point)-1 :
+                seg.append([k,0])
+            else :
+                seg.append([k,k+1])
+        
+        A = dict(vertices=[pt.vector for pt in self.points2d],
+                 segments=seg) 
+        B = triangle.triangulate(A, 'p')
+        Triangles = list(B['triangles'])
+        # triangle.compare(plt, A, B)
+        # print(B['triangles'].shape)
+        # print(B)
+        
+        return self.points3d, [Triangles]
+        # return pts, tri
                     
 class Shell3D(CompositePrimitive3D):
     _standalone_in_db = True
@@ -8951,7 +8824,7 @@ class Shell3D(CompositePrimitive3D):
 
         nb_points = 0
         for i, face in enumerate(self.faces):
-            print('\n face', face)
+            # print('\n face', face)
             # if face.__class__ is not CylindricalFace3D :
             #     continue
             # print('face.triangulation', face.triangulation())

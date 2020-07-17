@@ -42,6 +42,7 @@
       var engine = new BABYLON.Engine(canvas, true);
 
       var babylon_data = {{babylon_data | safe}};
+      var max_length = {{babylon_data['max_length']}}
 
       // -------------------------------------------------------------
       // Here begins a function that we will 'call' just after it's built
@@ -137,7 +138,7 @@
           vertexData.normals = normals;
           vertexData.applyToMesh(mesh);
           mesh.enableEdgesRendering(0.9);
-          mesh.edgesWidth = 0.01;
+          mesh.edgesWidth = max_length*0.3;
           mesh.edgesColor = new BABYLON.Color4(0, 0, 0, 0.6);
           var mat = new BABYLON.StandardMaterial("material", scene);
           // mat.diffuseColor = BABYLON.Color3.Green();
