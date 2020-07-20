@@ -294,6 +294,50 @@ def min_pos(list_of_float) :
                 pos_min = pos
     return min_float, pos_min
 
+def check_singularity(all_points):
+    plus_pi, moins_pi = [], []
+    for enum, pt in enumerate(all_points) :
+        if pt.vector[0]>math.pi*1.02 :
+            plus_pi.append(enum)
+        elif pt.vector[0]<math.pi*0.98 :
+            moins_pi.append(enum)
+            
+    if len(moins_pi) <= 2 and len(all_points)>4 :
+        for pos in moins_pi :
+            new_pt = all_points[pos].copy() + Point2D((2*math.pi, 0))
+            if new_pt.vector[0]> 2*math.pi :
+                new_pt.vector[0] = 2*math.pi
+            all_points[pos] = new_pt    
+    if len(plus_pi) <=2 and len(all_points)>4 :
+        for pos in plus_pi :
+            new_pt = all_points[pos].copy() - Point2D((2*math.pi, 0))
+            all_points[pos] = new_pt
+    if 3*len(moins_pi) <= len(plus_pi) and len(all_points)>4 :
+        for pos in moins_pi :
+            new_pt = all_points[pos].copy() + Point2D((2*math.pi, 0))
+            if new_pt.vector[0]> 2*math.pi :
+                new_pt.vector[0] = 2*math.pi
+            all_points[pos] = new_pt   
+    if 3*len(plus_pi) <= len(moins_pi) and len(all_points)>4 :
+        for pos in plus_pi :
+            new_pt = all_points[pos].copy() - Point2D((2*math.pi, 0))
+            all_points[pos] = new_pt
+    
+    return all_points
+
+def posangle_arc(start, end, radius, frame=None) :
+    if frame is None :
+        p1_new, p2_new = start, end
+    else :
+        p1_new, p2_new = frame.NewCoordinates(start), frame.NewCoordinates(end)
+    #Angle pour le p1
+    u1, u2 = p1_new.vector[0]/radius, p1_new.vector[1]/radius
+    theta1 = sin_cos_angle(u1, u2)
+    #Angle pour le p2
+    u3, u4 = p2_new.vector[0]/radius, p2_new.vector[1]/radius
+    theta2 = sin_cos_angle(u3, u4)
+    return theta1, theta2
+
 class Primitive2D(dc.DessiaObject):
     def __init__(self, name=''):
         self.name = name
@@ -2693,12 +2737,20 @@ class BSplineCurve3D(Primitive3D):
         curve_points = curve.evalpts
 
         self.curve = curve
-        if len(curve_points)>10 :
+        if len(curve_points)>100 :
+            pas = 10
+            pt_tocurve = []
+            for k in range(0, len(curve_points)//pas):
+                pt_tocurve.append(curve_points[k*pas])
+            if curve_points[-1] != pt_tocurve[-1] :
+                pt_tocurve.append(curve_points[-1])
+            self.points = [Point3D((p[0], p[1], p[2])) for p in pt_tocurve]
+        elif len(curve_points)>10 :
             # fig = plt.figure()
             # ax = fig.add_subplot(111, projection='3d')
             # pointscrv = [Point3D((p[0], p[1], p[2])) for p in curve_points]
             # [pt.MPLPlot(ax=ax) for pt in pointscrv]
-            pas = 4
+            pas = 3
             pt_tocurve = []
             for k in range(0, len(curve_points)//pas):
                 pt_tocurve.append(curve_points[k*pas])
@@ -3752,13 +3804,14 @@ class Edge3D(Primitive3D):
             if p1 == p2:
                 angle = math.pi
             else: 
-                p1_new, p2_new = frame.NewCoordinates(p1), frame.NewCoordinates(p2)
-                #Angle pour le p1
-                u1, u2 = p1_new.vector[0]/radius, p1_new.vector[1]/radius
-                theta1 = sin_cos_angle(u1, u2)
-                #Angle pour le p2
-                u3, u4 = p2_new.vector[0]/radius, p2_new.vector[1]/radius
-                theta2 = sin_cos_angle(u3, u4)
+                # p1_new, p2_new = frame.NewCoordinates(p1), frame.NewCoordinates(p2)
+                # #Angle pour le p1
+                # u1, u2 = p1_new.vector[0]/radius, p1_new.vector[1]/radius
+                # theta1 = sin_cos_angle(u1, u2)
+                # #Angle pour le p2
+                # u3, u4 = p2_new.vector[0]/radius, p2_new.vector[1]/radius
+                # theta2 = sin_cos_angle(u3, u4)
+                theta1, theta2 = posangle_arc(p1, p2, radius, frame)
                 
                 if theta1 > theta2 : #sens trigo
                     angle = math.pi + (theta1 + theta2)/2
@@ -4740,6 +4793,12 @@ class Face3D(Primitive3D):
                 s += 1
                 closest = points_test[s]
             angle_min = math.atan2(closest.vector[1], closest.vector[0]) + math.pi
+            #test
+            # if k > 0 :
+            #     dist_min = (points_2dint[-1] - closest).Norm()
+            # else :
+            #     dist_min = 0
+            #
             pos = s
             for i in range (s+1, len(points_test)) :
                 close_test = points_test[i]
@@ -4747,7 +4806,13 @@ class Face3D(Primitive3D):
                     continue
                 else :
                     angle_test = math.atan2(close_test.vector[1], close_test.vector[0]) + math.pi
-                    if angle_test < angle_min :
+                    #test
+                    # if k > 0 :
+                    #     dist_test = (points_2dint[-1] - close_test).Norm()
+                    # else :
+                    #     dist_test = 0
+                    #
+                    if angle_test < angle_min : #and dist_test <= dist_min:
                         angle_min = angle_test
                         closest = close_test
                         pos = i
@@ -4756,7 +4821,40 @@ class Face3D(Primitive3D):
         
         points_old = [frame2d.OldCoordinates(pt) for pt in points_2dint]
         return points_old
+    
+    def range_closest(list_point, r1=None, r2=None) :
+        #use r1, r2 to compare h and r*angle or r1*angle and r2*angle
+        points_set = delete_double_point(list_point)
+        if r1 is not None :
+            for k in range(0, len(points_set)) :
+                points_set[k].vector[0] = points_set[k].vector[0]*r1
+        if r2 is not None :
+            for k in range(0, len(points_set)) :
+                points_set[k].vector[1] = points_set[k].vector[1]*r2
         
+        points_2dint = [points_set[0]]
+        s = 1
+        for k in range(1, len(points_set)) :
+            closest = points_set[s]
+            while closest is None : 
+                s += 1
+                closest = points_set[s]
+            dist_min = (points_2dint[-1] - closest).Norm()
+            pos = s
+            for i in range (s+1, len(points_set)) :
+                close_test = points_set[i]
+                if close_test is None : 
+                    continue
+                else :
+                    dist_test = (points_2dint[-1] - close_test).Norm()
+                    if dist_test <= dist_min:
+                        dist_min = dist_test
+                        closest = close_test
+                        pos = i
+            points_2dint.append(closest)
+            points_set[pos] = None
+        
+        return points_2dint
     
     def cut_contours(self, contours2d, resolution) :
         placement2d = contours2d[0].tessel_points 
@@ -5505,12 +5603,28 @@ class CylindricalFace3D(Face3D):
             if edge.__class__ is Arc3D :
                 if edge.normal == n or edge.normal == -n:
                     start2d, end2d = CylindricalFace3D.points3d_to2d(new_points, radius)
+                    # if math.isclose(edge.angle, 2*math.pi, abs_tol=1e-6):
+                    #     if start2d == end2d :
+                    #         if math.isclose(start2d.vector[0], 2*math.pi, abs_tol = 1e-6) :
+                    #             end2d = end2d - Point2D((2*math.pi, 0))
+                    #         else :
+                    #             end2d = end2d + Point2D((2*math.pi, 0))
+                    
+                    ######################New
+                    angle2d = abs(end2d[0]-start2d[0])
                     if math.isclose(edge.angle, 2*math.pi, abs_tol=1e-6):
                         if start2d == end2d :
                             if math.isclose(start2d.vector[0], 2*math.pi, abs_tol = 1e-6) :
                                 end2d = end2d - Point2D((2*math.pi, 0))
                             else :
                                 end2d = end2d + Point2D((2*math.pi, 0))
+                    elif not(math.isclose(edge.angle, angle2d, abs_tol=1e-2)) :
+                        # if math.isclose(angle2d, 2*math.pi, abs_tol=1e-2) :
+                        if start2d[0] < end2d[0] :
+                            end2d = start2d + Point2D((edge.angle,0))
+                        else :
+                            end2d = start2d - Point2D((edge.angle,0))
+                    #####################
                     
                     ls_toadd = LineSegment2D(start2d, end2d)
                     same = Face3D.LS2D_inprimitives(ls_toadd, primitives)
@@ -5612,7 +5726,32 @@ class CylindricalFace3D(Face3D):
                 start, end = couple[0].vector[0], couple[1].vector[0]
                 if math.isclose(start, end, abs_tol = 5e-2) :
                     intersect = min(start, end)
-                    if math.isclose(intersect, 0, abs_tol = 1e-6) or math.isclose(intersect, 2*math.pi, abs_tol = 1e-6) or (not check1 or not check2):
+                    if math.isclose(intersect, math.pi, abs_tol = 5e-2) :
+                        # all_points = check_singularity(all_points)
+                        # intersect = 0
+                        
+                        ##################### NEW
+                        points_sing = check_singularity(all_points)
+                        pt0, pt2pi = 0, 0
+                        for pt in points_sing :
+                            if math.isclose(pt.vector[0], 0, abs_tol=1e-2):
+                                pt0 += 1
+                            elif math.isclose(pt.vector[0], 2*math.pi, abs_tol=1e-2):
+                                pt2pi += 1
+                        points_sing.sort(key=lambda pt: pt[1])
+                        points_sing.sort(key=lambda pt: pt[0])
+                        if pt2pi !=0 and pt0 == 0 :
+                            points = [pt.copy() for pt in points_sing[::-1]]
+                            points_sing = points
+                        points_range = Face3D.range_closest(points_sing)
+                        all_points = delete_double_point(points_range)
+                        break
+                        #######################
+                        
+                    # if math.isclose(intersect, 0, abs_tol = 1e-6) or math.isclose(intersect, 2*math.pi, abs_tol = 1e-6) or (not check1 or not check2):
+                    elif math.isclose(intersect, 0, abs_tol = 1e-6) or math.isclose(intersect, 2*math.pi, abs_tol = 1e-6) or (not check1 or not check2):
+                        all_points = check_singularity(all_points)
+                        
                         points_cleaned = delete_double_point(all_points)
                         all_points = [pt.copy() for pt in points_cleaned]
                         all_points.sort(key=lambda pt: pt[0])
@@ -5649,6 +5788,15 @@ class CylindricalFace3D(Face3D):
                         points_cleaned = delete_double_point(points)
                         all_points = Face3D.range_trigo(points_cleaned)
                     solve = True
+                else :
+                    points_cleaned = delete_double_point(all_points)
+                    all_points = [pt.copy() for pt in points_cleaned]
+                    all_points.sort(key=lambda pt: pt[0])
+                    d1, d2 = (all_points[0]-all_points[-1]).Norm(), (all_points[0]-all_points[-2]).Norm()
+                    if d2 < d1 :
+                        last = all_points[-1].copy()
+                        all_points[-1] = all_points[-2].copy()
+                        all_points[-2] = last
         else :
             points_cleaned = delete_double_point(all_points)
             all_points = [pt.copy() for pt in points_cleaned]
@@ -5703,9 +5851,9 @@ class CylindricalFace3D(Face3D):
                     all_points = Face3D.range_trigo(points_cleaned)
                     primitives = Face3D.create_primitives(all_points)
                     
-        # fig, ax = plt.subplots()
-        # [pt.MPLPlot(ax=ax) for pt in all_points]
-        # [p.MPLPlot(ax=ax) for p in primitives]
+        fig, ax = plt.subplots()
+        [pt.MPLPlot(ax=ax) for pt in all_points]
+        [p.MPLPlot(ax=ax) for p in primitives]
         # # intersect.MPLPlot(ax=ax, color='r')
         # l_vert.MPLPlot(ax=ax)
         contour2d = [Contour2D(primitives)]
@@ -6326,12 +6474,28 @@ class ToroidalFace3D (Face3D) :
             if edge.__class__ is Arc3D :
                 if edge.normal == n or edge.normal == -n:
                     start2d, end2d = ToroidalFace3D.points3d_to2d(new_points, rcenter, rcircle)
+                    # if math.isclose(edge.angle, 2*math.pi, abs_tol=1e-6):
+                    #     if start2d == end2d :
+                    #         if math.isclose(start2d.vector[0], 2*math.pi, abs_tol = 1e-6) :
+                    #             end2d = end2d - Point2D((2*math.pi, 0))
+                    #         else :
+                    #             end2d = end2d + Point2D((2*math.pi, 0))
+                    
+                    ######################New
+                    angle2d = abs(end2d[0]-start2d[0])
                     if math.isclose(edge.angle, 2*math.pi, abs_tol=1e-6):
                         if start2d == end2d :
                             if math.isclose(start2d.vector[0], 2*math.pi, abs_tol = 1e-6) :
                                 end2d = end2d - Point2D((2*math.pi, 0))
                             else :
                                 end2d = end2d + Point2D((2*math.pi, 0))
+                    elif not(math.isclose(edge.angle, angle2d, abs_tol=1e-2)) :
+                        # if math.isclose(angle2d, 2*math.pi, abs_tol=1e-2) :
+                        if start2d[0] < end2d[0] :
+                            end2d = start2d + Point2D((edge.angle,0))
+                        else :
+                            end2d = start2d - Point2D((edge.angle,0))
+                    #####################
                     
                     ls_toadd = LineSegment2D(start2d, end2d)
                     same = Face3D.LS2D_inprimitives(ls_toadd, primitives)
@@ -6437,7 +6601,32 @@ class ToroidalFace3D (Face3D) :
                 start, end = couple[0].vector[0], couple[1].vector[0]
                 if math.isclose(start, end, abs_tol = 5e-2) :
                     intersect = min(start, end)
-                    if math.isclose(intersect, 0, abs_tol = 1e-6) or math.isclose(intersect, 2*math.pi, abs_tol = 1e-6) or (not check1 or not check2):
+                    if math.isclose(intersect, math.pi, abs_tol = 5e-2) :
+                        # all_points = check_singularity(all_points)
+                        # intersect = 0
+                        
+                        ##################### NEW
+                        points_sing = check_singularity(all_points)
+                        pt0, pt2pi = 0, 0
+                        for pt in points_sing :
+                            if math.isclose(pt.vector[0], 0, abs_tol=1e-2):
+                                pt0 += 1
+                            elif math.isclose(pt.vector[0], 2*math.pi, abs_tol=1e-2):
+                                pt2pi += 1
+                        points_sing.sort(key=lambda pt: pt[1])
+                        points_sing.sort(key=lambda pt: pt[0])
+                        if pt2pi !=0 and pt0 == 0 :
+                            points = [pt.copy() for pt in points_sing[::-1]]
+                            points_sing = points
+                        points_range = Face3D.range_closest(points_sing)
+                        all_points = delete_double_point(points_range)
+                        break
+                        #######################
+                    
+                    # if math.isclose(intersect, 0, abs_tol = 1e-6) or math.isclose(intersect, 2*math.pi, abs_tol = 1e-6) or (not check1 or not check2):
+                    elif math.isclose(intersect, 0, abs_tol = 1e-6) or math.isclose(intersect, 2*math.pi, abs_tol = 1e-6) or (not check1 or not check2):
+                        all_points = check_singularity(all_points)
+                        
                         points_cleaned = delete_double_point(all_points)
                         all_points = [pt.copy() for pt in points_cleaned]
                         all_points.sort(key=lambda pt: pt[0])
@@ -6474,6 +6663,15 @@ class ToroidalFace3D (Face3D) :
                         points_cleaned = delete_double_point(points)
                         all_points = Face3D.range_trigo(points_cleaned)
                     solve = True
+                else :
+                    points_cleaned = delete_double_point(all_points)
+                    all_points = [pt.copy() for pt in points_cleaned]
+                    all_points.sort(key=lambda pt: pt[0])
+                    d1, d2 = (all_points[0]-all_points[-1]).Norm(), (all_points[0]-all_points[-2]).Norm()
+                    if d2 < d1 :
+                        last = all_points[-1].copy()
+                        all_points[-1] = all_points[-2].copy()
+                        all_points[-2] = last
         else :
             points_cleaned = delete_double_point(all_points)
             all_points = [pt.copy() for pt in points_cleaned]
@@ -7086,9 +7284,9 @@ class ConicalFace3D (Face3D) :
         new_pts = []
         for pt in contours3d[0].tessel_points:
             new_pts.append(frame.NewCoordinates(pt))
+        size = len(contours3d[0].edges)
         
-        
-        if contours3d[0].edges[0].__class__ is Arc3D and contours3d[0].edges[1].__class__ is LineSegment3D : #Portion of Tore
+        if contours3d[0].edges[0].__class__ is Arc3D and contours3d[0].edges[1].__class__ is LineSegment3D and size<=4: #Portion of Tore
             r1 = contours3d[0].edges[0].radius
             theta1 = contours3d[0].edges[0].angle
             if contours3d[0].edges[2].__class__ is LineSegment3D :
@@ -7096,9 +7294,7 @@ class ConicalFace3D (Face3D) :
             else :
                 r2 = contours3d[0].edges[2].radius
                 theta2 = contours3d[0].edges[2].angle
-            linelength, R = contours3d[0].edges[1].Length(), max((r1,r2))-min((r1,r2))
-            
-            # h = math.sqrt(abs(linelength**2 - R**2)) ## Check if h is equal for both line otherwise the top is not in the middle
+
             hmax, hmin = max(pt[2] for pt in new_pts), min(pt[2] for pt in new_pts) 
             
             offset = (theta1 - theta2)/2
@@ -7110,7 +7306,59 @@ class ConicalFace3D (Face3D) :
             contours2d =  [Contour2D(primitives)]
             param = [r1,theta1,r2,theta2,hmin,hmax]
             
-        elif contours3d[0].edges[0].__class__ is Arc3D and contours3d[0].edges[2].__class__ is Arc3D : 
+        elif contours3d[0].edges[1].__class__ is Arc3D and contours3d[0].edges[0].__class__ is LineSegment3D and size<=4: 
+            r1 = contours3d[0].edges[1].radius
+            theta1 = contours3d[0].edges[1].angle
+            if size > 3 :
+                if contours3d[0].edges[3].__class__ is Arc3D :
+                    r2 = contours3d[0].edges[3].radius
+                    theta2 = contours3d[0].edges[3].angle
+                else :
+                    r2, theta2 = 0, 2*math.pi
+            else :
+                r2, theta2 = 0, 2*math.pi
+
+            hmax, hmin = max(pt[2] for pt in new_pts), min(pt[2] for pt in new_pts) 
+            
+            offset = (theta1 - theta2)/2
+            
+            #Creation of the window
+            pt1, pt2, pt3, pt4 = Point2D((offset, hmin)), Point2D((offset, hmax)), Point2D((offset+theta2, hmax)), Point2D((theta1, hmin))
+            seg1, seg2, seg3, seg4 = LineSegment2D(pt1, pt2), LineSegment2D(pt2, pt3), LineSegment2D(pt3, pt4), LineSegment2D(pt4, pt1) 
+            primitives = [seg1, seg2, seg3, seg4]
+            contours2d =  [Contour2D(primitives)]
+            param = [r1,theta1,r2,theta2,hmin,hmax]
+            
+        elif contours3d[0].edges[0].__class__ is LineSegment3D and contours3d[0].edges[1].__class__ is LineSegment3D and size==3 :
+            if contours3d[0].edges[2].__class__ is Arc3D:
+                hmax, hmin, Rmax, Rmin = ConicalFace3D.from_points3d_param(contours3d[0].tessel_points, frame)
+                theta1, theta2 = posangle_arc(contours3d[0].edges[2].start, contours3d[0].edges[2].end, Rmax, frame)
+                offset = theta1
+                if theta1 > theta2 : #sens trigo
+                    angle = theta1-theta2
+                else :
+                    angle = theta2-theta1
+                
+                hmax, hmin = max(pt[2] for pt in new_pts), min(pt[2] for pt in new_pts)     
+                
+                #Creation of the window
+                pt1, pt2, pt3, pt4 = Point2D((offset, hmin)), Point2D((offset, hmax)), Point2D((offset+angle, hmax)), Point2D((offset+angle, hmin))
+                seg1, seg2, seg3, seg4 = LineSegment2D(pt1, pt2), LineSegment2D(pt2, pt3), LineSegment2D(pt3, pt4), LineSegment2D(pt4, pt1) 
+                primitives = [seg1, seg2, seg3, seg4]
+                contours2d =  [Contour2D(primitives)]
+                param = [Rmin,angle,Rmax,angle,hmin,hmax]
+                
+                # fig, ax = plt.subplots()
+                # [seg.MPLPlot(ax=ax) for seg in primitives]
+                # [pt.MPLPlot(ax=ax, color='r') for pt in contours2d[0].tessel_points]
+                
+            else :
+                contours2d = ConicalFace3D.contours3d_to2d(contours3d, conicalsurface3d)
+                hmax, hmin, Rmax, Rmin = ConicalFace3D.from_points3d_param(contours3d[0].tessel_points, frame)
+                theta = max(pt[0] for pt in contours2d[0].tessel_points) - min(pt[0] for pt in contours2d[0].tessel_points)
+                param = [Rmin,angle,Rmax,angle,hmin,hmax]
+
+        elif contours3d[0].edges[0].__class__ is Arc3D and contours3d[0].edges[2].__class__ is Arc3D and size<=4: 
             r1 = contours3d[0].edges[0].radius
             t1 = contours3d[0].edges[0].angle
             r2 = contours3d[0].edges[2].radius
@@ -7219,6 +7467,7 @@ class ConicalFace3D (Face3D) :
             for pos in plus_7pi4 :
                 new_pt = points_2D[pos].copy() - Point2D((2*math.pi, 0))
                 points_2D[pos] = new_pt
+        # points_2D = check_singularity(points_2D)     
         
         return points_2D
     
@@ -7249,14 +7498,13 @@ class ConicalFace3D (Face3D) :
         Rmin = sum(list_rmin)/len(list_rmin)
         
         return hmax, hmin, Rmax, Rmin
-        
-    
+     
     def contours3d_to2d(contours3d, conicalsurface3d) :
         frame = conicalsurface3d.frame
         n = frame.w
         center = frame.origin
         
-        # print('contours3d[0].edges', contours3d[0].edges)
+        # print('\n contours3d[0].edges', contours3d[0].edges)
         # fig = plt.figure()
         # ax = fig.add_subplot(111, projection='3d')
         # [edge.MPLPlot(ax=ax) for edge in contours3d[0].edges]
@@ -7272,13 +7520,19 @@ class ConicalFace3D (Face3D) :
             if edge.__class__ is Arc3D :
                 if edge.normal == n or edge.normal == -n:
                     start2d, end2d = ConicalFace3D.points3d_to2d(new_points, edge.radius, edge.radius, hmin, hmax)
+                    angle2d = abs(end2d[0]-start2d[0])
                     if math.isclose(edge.angle, 2*math.pi, abs_tol=1e-6):
                         if start2d == end2d :
                             if math.isclose(start2d.vector[0], 2*math.pi, abs_tol = 1e-6) :
                                 end2d = end2d - Point2D((2*math.pi, 0))
                             else :
                                 end2d = end2d + Point2D((2*math.pi, 0))
-                    
+                    elif not(math.isclose(edge.angle, angle2d, abs_tol=1e-2)) :
+                        # if math.isclose(angle2d, 2*math.pi, abs_tol=1e-2) :
+                        if start2d[0] < end2d[0] :
+                            end2d = start2d + Point2D((edge.angle,0))
+                        else :
+                            end2d = start2d - Point2D((edge.angle,0))
                     ls_toadd = LineSegment2D(start2d, end2d)
                     same = Face3D.LS2D_inprimitives(ls_toadd, primitives)
                     if same is False :
@@ -7378,7 +7632,25 @@ class ConicalFace3D (Face3D) :
                 start, end = couple[0].vector[0], couple[1].vector[0]
                 if math.isclose(start, end, abs_tol = 5e-2) :
                     intersect = min(start, end)
-                    if math.isclose(intersect, 0, abs_tol = 1e-6) or math.isclose(intersect, 2*math.pi, abs_tol = 1e-6) or (not check1 or not check2):
+                    if math.isclose(intersect, math.pi, abs_tol = 5e-2) :
+                        points_sing = check_singularity(all_points)
+                        pt0, pt2pi = 0, 0
+                        for pt in points_sing :
+                            if math.isclose(pt.vector[0], 0, abs_tol=1e-2):
+                                pt0 += 1
+                            elif math.isclose(pt.vector[0], 2*math.pi, abs_tol=1e-2):
+                                pt2pi += 1
+                        points_sing.sort(key=lambda pt: pt[1])
+                        points_sing.sort(key=lambda pt: pt[0])
+                        if pt2pi !=0 and pt0 == 0 :
+                            points = [pt.copy() for pt in points_sing[::-1]]
+                            points_sing = points
+                        points_range = Face3D.range_closest(points_sing)
+                        all_points = delete_double_point(points_range)
+                        # intersect = 0
+                        break
+                    elif math.isclose(intersect, 0, abs_tol = 1e-6) or math.isclose(intersect, 2*math.pi, abs_tol = 1e-6) or (not check1 or not check2):
+                        all_points = check_singularity(all_points)
                         points_cleaned = delete_double_point(all_points)
                         all_points = [pt.copy() for pt in points_cleaned]
                         all_points.sort(key=lambda pt: pt[0])
@@ -7415,6 +7687,15 @@ class ConicalFace3D (Face3D) :
                         points_cleaned = delete_double_point(points)
                         all_points = Face3D.range_trigo(points_cleaned)
                     solve = True
+                else :
+                    points_cleaned = delete_double_point(all_points)
+                    all_points = [pt.copy() for pt in points_cleaned]
+                    all_points.sort(key=lambda pt: pt[0])
+                    d1, d2 = (all_points[0]-all_points[-1]).Norm(), (all_points[0]-all_points[-2]).Norm()
+                    if d2 < d1 :
+                        last = all_points[-1].copy()
+                        all_points[-1] = all_points[-2].copy()
+                        all_points[-2] = last
         else :
             points_cleaned = delete_double_point(all_points)
             all_points = [pt.copy() for pt in points_cleaned]
@@ -7822,12 +8103,28 @@ class SphericalFace3D (Face3D) :
             if edge.__class__ is Arc3D :
                 if edge.normal == n or edge.normal == -n:
                     start2d, end2d = SphericalFace3D.points3d_to2d(new_points, radius)
+                    # if math.isclose(edge.angle, 2*math.pi, abs_tol=1e-6):
+                    #     if start2d == end2d :
+                    #         if math.isclose(start2d.vector[0], 2*math.pi, abs_tol = 1e-6) :
+                    #             end2d = end2d - Point2D((2*math.pi, 0))
+                    #         else :
+                    #             end2d = end2d + Point2D((2*math.pi, 0))
+                    
+                    ######################New
+                    angle2d = abs(end2d[0]-start2d[0])
                     if math.isclose(edge.angle, 2*math.pi, abs_tol=1e-6):
                         if start2d == end2d :
                             if math.isclose(start2d.vector[0], 2*math.pi, abs_tol = 1e-6) :
                                 end2d = end2d - Point2D((2*math.pi, 0))
                             else :
                                 end2d = end2d + Point2D((2*math.pi, 0))
+                    elif not(math.isclose(edge.angle, angle2d, abs_tol=1e-2)) :
+                        # if math.isclose(angle2d, 2*math.pi, abs_tol=1e-2) :
+                        if start2d[0] < end2d[0] :
+                            end2d = start2d + Point2D((edge.angle,0))
+                        else :
+                            end2d = start2d - Point2D((edge.angle,0))
+                    #####################
                     
                     ls_toadd = LineSegment2D(start2d, end2d)
                     same = Face3D.LS2D_inprimitives(ls_toadd, primitives)
@@ -7924,24 +8221,6 @@ class SphericalFace3D (Face3D) :
         # for couple in points_common :
         #     [pt.MPLPlot(ax=ax, color='b') for pt in couple]        
         
-        def check_singularity(all_points):
-            plus_pi, moins_pi = [], []
-            for enum, pt in enumerate(all_points) :
-                if pt.vector[0]>math.pi*1.01 :
-                    plus_pi.append(enum)
-                elif pt.vector[0]<math.pi*0.99 :
-                    moins_pi.append(enum)
-                    
-            if len(moins_pi) <= 2 and len(all_points)>4 :
-                for pos in moins_pi :
-                    new_pt = all_points[pos].copy() + Point2D((2*math.pi, 0))
-                    all_points[pos] = new_pt
-            if len(plus_pi) <=2 and len(all_points)>4 :
-                for pos in plus_pi :
-                    new_pt = all_points[pos].copy() - Point2D((2*math.pi, 0))
-                    all_points[pos] = new_pt
-            return all_points
-        
         if len(points_common) >= 1 :
             solve = False
             for couple in points_common :
@@ -7952,10 +8231,29 @@ class SphericalFace3D (Face3D) :
                 if math.isclose(start, end, abs_tol = 5e-2) :
                     intersect = min(start, end)
                     if math.isclose(intersect, math.pi, abs_tol = 5e-2) :
-                        all_points = check_singularity(all_points)
-                        intersect = 0
+                        # all_points = check_singularity(all_points)
+                        # intersect = 0
                         
-                    if math.isclose(intersect, 0, abs_tol = 1e-6) or math.isclose(intersect, 2*math.pi, abs_tol = 1e-6) or (not check1 or not check2):
+                        ##################### NEW
+                        points_sing = check_singularity(all_points)
+                        pt0, pt2pi = 0, 0
+                        for pt in points_sing :
+                            if math.isclose(pt.vector[0], 0, abs_tol=1e-2):
+                                pt0 += 1
+                            elif math.isclose(pt.vector[0], 2*math.pi, abs_tol=1e-2):
+                                pt2pi += 1
+                        points_sing.sort(key=lambda pt: pt[1])
+                        points_sing.sort(key=lambda pt: pt[0])
+                        if pt2pi !=0 and pt0 == 0 :
+                            points = [pt.copy() for pt in points_sing[::-1]]
+                            points_sing = points
+                        points_range = Face3D.range_closest(points_sing)
+                        all_points = delete_double_point(points_range)
+                        break
+                        #######################
+                        
+                    # if math.isclose(intersect, 0, abs_tol = 1e-6) or math.isclose(intersect, 2*math.pi, abs_tol = 1e-6) or (not check1 or not check2):
+                    elif math.isclose(intersect, 0, abs_tol = 1e-6) or math.isclose(intersect, 2*math.pi, abs_tol = 1e-6) or (not check1 or not check2):
                         all_points = check_singularity(all_points)
                         
                         points_cleaned = delete_double_point(all_points)
@@ -7994,6 +8292,15 @@ class SphericalFace3D (Face3D) :
                         points_cleaned = delete_double_point(points)
                         all_points = Face3D.range_trigo(points_cleaned)
                     solve = True
+                else :
+                    points_cleaned = delete_double_point(all_points)
+                    all_points = [pt.copy() for pt in points_cleaned]
+                    all_points.sort(key=lambda pt: pt[0])
+                    d1, d2 = (all_points[0]-all_points[-1]).Norm(), (all_points[0]-all_points[-2]).Norm()
+                    if d2 < d1 :
+                        last = all_points[-1].copy()
+                        all_points[-1] = all_points[-2].copy()
+                        all_points[-2] = last
         else :
             points_cleaned = delete_double_point(all_points)
             all_points = [pt.copy() for pt in points_cleaned]
@@ -8165,7 +8472,7 @@ class BSplineFace3D(Face3D):
         self.name = name
         
         # self.surface, self.points = self._contour_bspline()
-        self.points2d, self.points3d = self._contour_bspline()
+        self.points2d, self.points3d, self.nbpts_contour2d = self._contour_bspline()
         
     def _contour_bspline(self):
         if self.bspline_shape.__class__ is BSplineExtrusion:
@@ -8232,6 +8539,8 @@ class BSplineFace3D(Face3D):
                 contours3d.append(list_pointsv[u][v])
             
             all_points3d = contours3d + points3d
+            nbpts_contour2d = len(range_contours2d)
+            
             
             # fig = plt.figure()
             # ax = fig.add_subplot(111, projection='3d')
@@ -8243,7 +8552,7 @@ class BSplineFace3D(Face3D):
             # from geomdl.visualization import VisMPL
             # surface.vis = VisMPL.VisSurface(ctrlpts=False, legend=False)
             # surface.render(colormap=cm.terrain)
-            return all_points2d, all_points3d
+            return all_points2d, all_points3d, nbpts_contour2d
             
         elif self.bspline_shape.__class__ is BSplineSurface3D:
             
@@ -8341,10 +8650,10 @@ class BSplineFace3D(Face3D):
             poly2d = Polygon2D(tessel_points2d)
             minu, maxu = int(min(pt[0] for pt in tessel_points2d)*(nbu-1))+1, int(max(pt[0] for pt in tessel_points2d)*(nbu-1))
             minv, maxv = int(min(pt[1] for pt in tessel_points2d)*(nbv-1))+1, int(max(pt[1] for pt in tessel_points2d)*(nbv-1))
-            
-            all_points2d = [pt.copy() for pt in tessel_points2d]
-            all_points3d = [pt.copy() for pt in self.contours[0].tessel_points]
-            # all_points2d = []
+           
+            all_points2d = delete_double_point(tessel_points2d)
+            all_points3d = delete_double_point(self.contours[0].tessel_points)
+            nbpts_contour2d = len(self.contours[0].tessel_points)
             for u, list_pointv in enumerate(list_pointsv[minu:maxu+1]) :
                 for v, pt in enumerate(list_pointv[minv:maxv+1]) :
                     etageu = u + minu
@@ -8353,10 +8662,16 @@ class BSplineFace3D(Face3D):
                     if poly2d.PointBelongs(pt_2d) :
                         all_points2d.append(pt_2d)
                         all_points3d.append(pt)
+             
+            # pourcentageminu, pourcentagemaxu = min(pt.vector[0] for pt in all_points2d), max(pt.vector[0] for pt in all_points2d)
+            # pourcentageminv, pourcentagemaxv = min(pt.vector[1] for pt in all_points2d), max(pt.vector[1] for pt in all_points2d)
+            
+             
+            # fig, ax = plt.subplots()
             # [pt.MPLPlot(ax=ax, color='g') for pt in all_points2d]
             # [point_2d.MPLPlot(ax=ax, color='r') for point_2d in tessel_points2d]
             
-            return all_points2d, all_points3d            
+            return all_points2d, all_points3d, nbpts_contour2d          
     
     def triangulation(self):
         # sample_size = self.surface.sample_size
@@ -8376,10 +8691,10 @@ class BSplineFace3D(Face3D):
         # pts, tri = delete_double_pos(self.points, [triangles])
         # print('pts', pts)
         
-        del_point = delete_double_point(self.contours[0].tessel_points)
+        # del_point = delete_double_point(self.contours[0].tessel_points)
         seg = []
-        for k in range(0, len(del_point)) :
-            if k == len(del_point)-1 :
+        for k in range(0, self.nbpts_contour2d) :
+            if k == self.nbpts_contour2d-1 :
                 seg.append([k,0])
             else :
                 seg.append([k,k+1])
@@ -8825,8 +9140,6 @@ class Shell3D(CompositePrimitive3D):
         nb_points = 0
         for i, face in enumerate(self.faces):
             # print('\n face', face)
-            # if face.__class__ is not CylindricalFace3D :
-            #     continue
             # print('face.triangulation', face.triangulation())
             # print('i', i)
             # print()
@@ -9948,7 +10261,6 @@ class VolumeModel(dc.DessiaObject):
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
                 meshes.extend(primitive.babylon_meshes())
-                
         bbox = self._bounding_box()
         center = bbox.center
         max_length = max([bbox.xmax - bbox.xmin,
@@ -9972,7 +10284,6 @@ class VolumeModel(dc.DessiaObject):
                                  use_cdn=use_cdn,
                                  debug=debug
                                  )
-        
         if page_name is None:
             with tempfile.NamedTemporaryFile(suffix=".html", delete=False) as file:
                 file.write(bytes(script,'utf8'))
