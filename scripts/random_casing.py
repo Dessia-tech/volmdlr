@@ -1,0 +1,388 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Jul 23 16:14:08 2020
+
+@author: joly
+"""
+
+import numpy as npy
+import volmdlr as vm
+import volmdlr.primitives3D as primitives3D
+import volmdlr.primitives2D as primitives2D
+import matplotlib.pyplot as plt
+import random
+
+# nb_components = 10
+xmax, xmin, ymax, ymin = 5, -5, 5, -5
+c_min, c_max = 0.5, 6
+h_min, h_max = 5, 20
+extrusion_vector = vm.Z3D
+x, y = vm.X3D, vm.Y3D
+origin = vm.Point3D((0,0,0))
+basis_plane = vm.Plane3D(origin, x, y)
+
+
+class Component :
+    def __init__(self, center, compo_side, vector1, vector2, height, plane) :
+        self.center = center
+        self.compo_side = compo_side
+        self.vectors = [vector1, vector2]
+        self.height = height
+        self.plane = plane
+        
+        self.points = self.compo_points()
+        self.primitives = [vm.LineSegment2D(self.points[0], self.points[1]), vm.LineSegment2D(self.points[1], self.points[2]),
+                           vm.LineSegment2D(self.points[2], self.points[3]), vm.LineSegment2D(self.points[3], self.points[0])]
+        self.contour = vm.Contour2D(self.primitives)
+        self.solid = self.compo_solid()
+        
+    def compo_points(self) :
+        x_size, y_size = random.randrange(10, 100, 1)/100, random.randrange(10, 100, 1)/100
+        pt1 = self.center + self.vectors[0]*self.compo_side*x_size + self.vectors[1]*self.compo_side*y_size
+        pt2 = self.center + self.vectors[0]*self.compo_side*x_size - self.vectors[1]*self.compo_side*y_size
+        pt3 = self.center - self.vectors[0]*self.compo_side*x_size - self.vectors[1]*self.compo_side*y_size
+        pt4 = self.center - self.vectors[0]*self.compo_side*x_size + self.vectors[1]*self.compo_side*y_size
+        return [pt1, pt2, pt3, pt4]
+    
+    def compo_solid(self) :
+        extrusion_vector = self.plane.vectors[0].Cross(self.plane.vectors[1])
+        return primitives3D.ExtrudedProfile(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1], self.contour, [], extrusion_vector*self.height)
+        
+    
+    def MPLPlot(self, color_center='k', color_points='k') :
+        fig, ax = plt.subplots()
+        ax.set_aspect('equal')
+        self.center.MPLPlot(ax=ax, color=color_center)
+        [pt.MPLPlot(ax=ax, color=color_points) for pt in self.points]
+        [prim.MPLPlot(ax=ax) for prim in self.primitives]
+        
+def generate_param_component(xmin, xmax, ymin, ymax, c_min, c_max, h_min, h_max) :
+    x, y = random.randrange(xmin*100, xmax*100, 1)/100, random.randrange(ymin*100, ymax*100, 1)/100
+    c = random.randrange(c_min*100, c_max*100, 1)/100 
+    x_vec, y_vec = random.randrange(xmin*100, xmax*100, 1)/100, random.randrange(ymin*100, ymax*100, 1)/100
+    vec1 = vm.Vector2D((x_vec, y_vec))
+    vec1.Normalize()
+    vec2 = vec1.deterministic_unit_normal_vector()
+    
+    center = vm.Point2D((x, y))
+    height = random.randrange(h_min*100, h_max*100, 1)/100
+    return center, c, vec1, vec2, height
+
+# fig, ax = plt.subplots()
+# ax.set_aspect('equal')
+# list_component, all_solid = [], []
+# all_points, all_height = [], []
+# for k in range(0, nb_components) :
+#     center, c, vec1, vec2, height = generate_param_component(xmin, xmax, ymin, ymax, c_min, c_max, h_min, h_max)
+#     if k==0 or nb_components%k == 0 :
+#         vec1, vec2 = vm.Vector2D((1,0)), vm.Vector2D((0,1))
+#     component = Component(center, c, vec1, vec2, height, basis_plane)
+#     [pt.MPLPlot(ax=ax) for pt in component.points]
+#     component.center.MPLPlot(ax=ax, color='r')
+#     [prim.MPLPlot(ax=ax) for prim in component.primitives]
+#     list_component.append(component)
+#     all_solid.append(component.solid)
+#     all_points.extend(component.points)
+#     all_height.append(component.height)
+    
+# poly = vm.Polygon2D.points_convex_hull(all_points)
+
+# poly.MPLPlot(ax=ax)
+# [pt.MPLPlot(ax=ax, color='m') for pt in poly.points]
+
+# radius = {0: 0.1, 1: 0.1, 2: 0.1}
+# for k in range(0, len(poly.points)-3) :
+#     radius[3+k] = 0.1 + 0.3 * random.random()
+
+# contour = primitives2D.ClosedRoundedLineSegments2D(poly.points,
+#                                                           radius,
+#                                                           adapt_radius=True)
+# offset_radius = []
+# for prim in contour.primitives :
+#     if prim.__class__ is vm.core.Arc2D :
+#         offset_radius.append(prim.radius)
+        
+# inner_contour = contour.Offset(-min(offset_radius))
+# f, a = inner_contour.MPLPlot()
+
+# thickness = 0.5
+# screw_holes_diameter = 0.3
+# screw_holes_clearance = 0.4
+# n_screws = 25
+# outer_contour = inner_contour.Offset(-thickness)
+
+
+# outer_contour.MPLPlot(a)
+
+# height, max_height = (min(all_height) + max(all_height))/2, max(all_height)
+
+# sides = primitives3D.ExtrudedProfile(origin, basis_plane.vectors[0], basis_plane.vectors[1],
+#                                       outer_contour, [inner_contour],
+#                                       height * basis_plane.normal, name='sides')
+
+# bottom = primitives3D.ExtrudedProfile(origin, basis_plane.vectors[0], basis_plane.vectors[1]
+#                                       , outer_contour, [], -thickness * basis_plane.normal, name='bottom')
+
+# screw_holes_rl = inner_contour.Offset(-(thickness+screw_holes_clearance + 0.5 * screw_holes_diameter))
+# screw_holes = []
+# l = screw_holes_rl.Length()
+# for i in range(n_screws):
+#     s = i * l/n_screws
+#     p = screw_holes_rl.PointAtCurvilinearAbscissa(s)
+#     screw_holes.append(vm.Circle2D(p, screw_holes_diameter*0.5))  
+    
+# belt_outer_contour = inner_contour.Offset(-(2*screw_holes_clearance + screw_holes_diameter+thickness))
+
+# height_belt = thickness
+
+# belt = primitives3D.ExtrudedProfile(origin + basis_plane.normal*height, basis_plane.vectors[0], basis_plane.vectors[1],
+#                                       belt_outer_contour,
+#                                       [inner_contour]+screw_holes,
+#                                       height_belt * basis_plane.normal, name='belt')
+
+# # m = vm.VolumeModel(all_solid+[sides,bottom, belt])
+# # m.babylonjs(debug=True)  
+
+# #ADD TOP
+# print('len(list_component)', len(list_component))
+
+# fig, ax = plt.subplots()
+# ax.set_aspect('equal')
+
+# top_component, top_points = [], []
+# for component in list_component :
+#     if component.height > (height + height_belt) :
+#         top_component.append(component)
+#         top_points.extend(component.points)
+#         [pt.MPLPlot(ax=ax) for pt in component.points]
+#         component.center.MPLPlot(ax=ax, color='r')
+#         [prim.MPLPlot(ax=ax) for prim in component.primitives]
+
+# print('len(top_component)', len(top_component))
+        
+# poly_top = vm.Polygon2D.points_convex_hull(top_points)
+
+# poly_top.MPLPlot(ax=ax)
+# [pt.MPLPlot(ax=ax, color='m') for pt in poly_top.points]
+
+# radius_top = {0: 0.1, 1: 0.1, 2: 0.1}
+# for k in range(0, len(poly_top.points)-3) :
+#     radius_top[3+k] = 0.1 + 0.3 * random.random()
+    
+# contour_top = primitives2D.ClosedRoundedLineSegments2D(poly_top.points,
+#                                                           radius_top,
+#                                                           adapt_radius=True)
+
+# offset_radius_top = []
+# for prim in contour_top.primitives :
+#     if prim.__class__ is vm.core.Arc2D :
+#         offset_radius_top.append(prim.radius)
+        
+# inner_contour_top = contour_top.Offset(-min(offset_radius_top))
+# outer_contour_top = inner_contour_top.Offset(-thickness)
+
+# inner_contour_top.MPLPlot(a)
+# outer_contour_top.MPLPlot(a)
+
+# sides_top = primitives3D.ExtrudedProfile(origin + extrusion_vector*(height + thickness), basis_plane.vectors[0], basis_plane.vectors[1],
+#                                       outer_contour_top, [inner_contour_top],
+#                                       (max_height - height - thickness) * basis_plane.normal, name='sides_top')
+
+# top = primitives3D.ExtrudedProfile(origin + extrusion_vector*max_height, basis_plane.vectors[0], basis_plane.vectors[1]
+#                                       , outer_contour_top, [], thickness * basis_plane.normal, name='top')
+
+# belt_top = primitives3D.ExtrudedProfile(origin + basis_plane.normal*(height + height_belt), basis_plane.vectors[0], basis_plane.vectors[1],
+#                                       belt_outer_contour,
+#                                       [inner_contour_top]+screw_holes,
+#                                       height_belt * basis_plane.normal, name='belt_top')
+
+# m = vm.VolumeModel(all_solid+[sides,bottom, belt]+[sides_top, top, belt_top])
+# m.babylonjs(debug=True)  
+
+################# with n floor
+
+nb_components = 10
+# nb_floor = 5
+thickness = 0.5
+screw_holes_diameter = 0.3
+screw_holes_clearance = 0.4
+n_screws = 25
+thickness_min = 0.3
+height_belt = thickness
+
+########## creation of all component
+list_component, all_solid = [], []
+all_points, all_height = [], []
+for k in range(0, nb_components) :
+    center, c, vec1, vec2, height = generate_param_component(xmin, xmax, ymin, ymax, c_min, c_max, h_min, h_max)
+    if k==0 or nb_components%k == 0 :
+        vec1, vec2 = vm.Vector2D((1,0)), vm.Vector2D((0,1))
+    component = Component(center, c, vec1, vec2, height, basis_plane)
+    list_component.append(component)
+    all_solid.append(component.solid)
+    all_points.extend(component.points)
+    all_height.append(component.height)
+ 
+height_sorted = sorted(all_height)
+height, max_height = height_sorted[0], height_sorted[-1]
+  
+poly = vm.Polygon2D.points_convex_hull(all_points)
+
+############### diagram
+# listofarea = []
+# for h in height_sorted :
+#     points_test = []
+#     for compo in list_component :
+#         if compo.height >= h :
+#             points_test.extend(compo.points)
+#         else :
+#             continue
+#     if len(points_test) == 4 :
+#         poly_test = vm.Polygon2D(points_test)
+#     else :
+#         poly_test = vm.Polygon2D.points_convex_hull(points_test)
+#     listofarea.append(poly_test.Area())
+    
+# middle_area, width_area = [], []
+# for k, area in enumerate(listofarea) :
+#     if k == 0 :
+#         middle_area.append(area/2)
+#         width_area.append(area)
+#     else :
+#         middle_area.append((listofarea[k-1]+area)/2)
+#         width_area.append((area-listofarea[k-1]))
+    
+# fig, ax = plt.subplots()
+# plt.bar(middle_area, height_sorted, width = width_area) 
+
+# fig, ax = plt.subplots()
+# plt.bar(listofarea, height_sorted) 
+# #################
+
+height_bot_belt = height
+initial_height = height_bot_belt + height_belt
+minimum_stepfloor, delta_surface = 0.5, 0.9
+initial_area = poly.Area()
+
+list_polyfloor, list_height_polyfloor = [poly], [initial_height]
+for k, h in enumerate(height_sorted[1:]) :
+    points_test = []
+    for component in list_component :
+            if component.height >= h :
+                points_test.extend(component.points)
+    poly_test = vm.Polygon2D.points_convex_hull(points_test)
+    
+    if h > initial_height + minimum_stepfloor or k==len(height_sorted)-2:
+        if poly_test.Area() < delta_surface*initial_area or k==len(height_sorted)-2: 
+            list_polyfloor.append(poly_test)
+            list_height_polyfloor.append(h)
+            initial_height, initial_area = h, poly_test.Area()
+        else :
+            list_height_polyfloor[-1] = h
+            if len(list_polyfloor) == 1 :
+                height_bot_belt = h
+                list_height_polyfloor[-1] += height_belt
+    else :
+        vol_seuil = minimum_stepfloor*delta_surface*list_polyfloor[-1].Area()
+        delta_h = h-list_height_polyfloor[-1]
+        vol = delta_h*(list_polyfloor[-1].Area()-poly_test.Area())
+        if vol < vol_seuil and delta_h > 0.4*minimum_stepfloor:
+            list_polyfloor.append(poly_test)
+            list_height_polyfloor.append(h)
+            initial_height, initial_area = h, poly_test.Area()
+        else :
+            list_height_polyfloor[-1] = h
+            if len(list_polyfloor) == 1 :
+                height_bot_belt = h
+                list_height_polyfloor[-1] += height_belt
+
+#### test
+print('list_height_polyfloor', list_height_polyfloor)
+if list_height_polyfloor[1]-list_height_polyfloor[0]<height_belt :
+    del list_height_polyfloor[1]
+    del list_polyfloor[1]
+            
+print('list_height_polyfloor', list_height_polyfloor)
+################################# REZ DE CHAUSSEE 
+radius = {0: 0.1, 1: 0.1, 2: 0.1}
+for k in range(0, len(poly.points)-3) :
+    radius[3+k] = 0.1 + 0.3 * random.random()
+
+contour = primitives2D.ClosedRoundedLineSegments2D(poly.points, radius,
+                                                   adapt_radius=True)
+offset_radius = []
+for prim in contour.primitives :
+    if prim.__class__ is vm.core.Arc2D :
+        offset_radius.append(prim.radius)
+        
+inner_contour = contour.Offset(-min(offset_radius))
+outer_contour = inner_contour.Offset(-thickness_min)
+
+sides = primitives3D.ExtrudedProfile(origin, x, y, outer_contour, [inner_contour],
+                                     height_bot_belt * extrusion_vector, name='sides')
+
+bottom = primitives3D.ExtrudedProfile(origin, x, y, outer_contour, [],
+                                      -thickness_min * extrusion_vector, name='bottom')
+
+screw_holes_rl = inner_contour.Offset(-(thickness+screw_holes_clearance + 0.5 * screw_holes_diameter))
+screw_holes = []
+l = screw_holes_rl.Length()
+for i in range(n_screws):
+    s = i * l/n_screws
+    p = screw_holes_rl.PointAtCurvilinearAbscissa(s)
+    screw_holes.append(vm.Circle2D(p, screw_holes_diameter*0.5))  
+    
+belt_outer_contour = inner_contour.Offset(-(2*screw_holes_clearance + screw_holes_diameter + thickness))
+
+belt = primitives3D.ExtrudedProfile(origin + basis_plane.normal*height_bot_belt, x, y,
+                                    belt_outer_contour, [inner_contour]+screw_holes,
+                                    height_belt * extrusion_vector, name='belt')
+
+# m = vm.VolumeModel(all_solid+[sides,bottom, belt])
+# m.babylonjs(debug=True) 
+
+list_component_hat = []    
+for enum, polyfloor in enumerate(list_polyfloor[1:]) :
+    radius_floor = {0: 0.1, 1: 0.1}
+    for k in range(0, len(polyfloor.points)-2) :
+        radius_floor[2+k] = 0.1 + 0.3 * random.random()
+        
+    contour_floor = primitives2D.ClosedRoundedLineSegments2D(polyfloor.points,
+                                                              radius_floor,
+                                                              adapt_radius=True)
+    
+    offset_radius_floor = []
+    for prim in contour_floor.primitives :
+        if prim.__class__ is vm.core.Arc2D :
+            offset_radius_floor.append(prim.radius)
+            
+    inner_contour_floor = contour_floor.Offset(-min(offset_radius_floor))
+    outer_contour_floor = inner_contour_floor.Offset(-thickness_min)
+    
+    height_origin = list_height_polyfloor[enum]
+    
+    if enum == 0 :
+        belt_top = primitives3D.ExtrudedProfile(origin + basis_plane.normal*height_origin, x, y,
+                                                belt_outer_contour,
+                                                [inner_contour_floor]+screw_holes,
+                                                height_belt * basis_plane.normal, name='belt_top')
+        list_component_hat.append(belt_top)
+        height_origin += height_belt
+        
+    
+    if enum == len(list_polyfloor)-2: 
+        top = primitives3D.ExtrudedProfile(origin + extrusion_vector*list_height_polyfloor[enum+1], x, y,
+                                            outer_contour_floor, [], 
+                                            thickness_min * basis_plane.normal, name='top')
+        list_component_hat.append(top)
+    
+    sides_floor = primitives3D.ExtrudedProfile(origin + extrusion_vector*height_origin, x, y,
+                                                outer_contour_floor, [inner_contour_floor],
+                                                (list_height_polyfloor[enum+1]-height_origin)*basis_plane.normal, name='sides_floor')
+    
+    list_component_hat.append(sides_floor)
+    
+m = vm.VolumeModel(all_solid+[sides,bottom, belt]+list_component_hat)
+m.babylonjs(debug=True)  
+
