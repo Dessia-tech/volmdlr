@@ -50,6 +50,7 @@
         // This creates a basic Babylon Scene object (non-mesh)
         var scene = new BABYLON.Scene(engine);
         scene.useRightHandedSystem = true;
+        scene.clearColor = new BABYLON.Color4(.6, .705882, .815686, .9);
       	var cam = new BABYLON.ArcRotateCamera("ArcRotateCamera",
                                               0, 0, 2*{{babylon_data['max_length']}},
                                               new BABYLON.Vector3({{babylon_data['center'][0]}},
