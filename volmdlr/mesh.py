@@ -8,9 +8,18 @@ Created on Tue Jan 28 10:05:56 2020
 
 import matplotlib.pyplot as plt
 import volmdlr.core as vm
+import volmdlr.core_compiled as vmc
 from itertools import combinations
 import numpy as npy
 import triangle
+from volmdlr.core_compiled import Matrix33
+
+from dessia_common import DessiaObject
+from typing import TypeVar, List, Tuple
+
+
+class FlatElementError(Exception):
+    pass
 
 def find_duplicate_linear_element(linear_elements1, linear_elements2):
     duplicates = []
@@ -20,13 +29,17 @@ def find_duplicate_linear_element(linear_elements1, linear_elements2):
     return duplicates
 
 
-class LinearElement:
-    def __init__(self, points, interior_normal):
-        if len(points) != 2:
-            raise ValueError
-        
+class LinearElement(DessiaObject):
+    _standalone_in_db = False
+    _non_serializable_attributes = []
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['name']
+    _generic_eq = True
+    def __init__(self, points:Tuple[vm.Point2D, vm.Point2D], interior_normal:vm.Vector2D):
         self.points = points
         self.interior_normal = interior_normal
+        
+        DessiaObject.__init__(self, name='')
         
     def __hash__(self):
         return self.points[0].__hash__() + self.points[1].__hash__()
@@ -52,11 +65,13 @@ class LinearElement:
             ax.plot([self.points[0][0], self.points[1][0]], [self.points[0][1], self.points[1][1]], color=color, linewidth=width)
         return ax
 
-class TriangularElement:
-    def __init__(self, points):
-        if len(points) != 3:
-            raise ValueError
-            
+class TriangularElement(DessiaObject):
+    _standalone_in_db = False
+    _non_serializable_attributes = []
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['name']
+    _generic_eq = True
+    def __init__(self, points:Tuple[vm.Point2D, vm.Point2D, vm.Point2D]):
         self.points = points
         
         self.linear_elements = self._to_linear_elements()
@@ -65,6 +80,8 @@ class TriangularElement:
         self.center = (self.points[0]+self.points[1]+self.points[2])/3
         
         self.area = self._area()
+        
+        DessiaObject.__init__(self, name='')
         
     def _to_linear_elements(self):
         vec1 = vm.Vector2D(self.points[1] - self.points[0])
@@ -88,21 +105,24 @@ class TriangularElement:
         return [linear_element_1, linear_element_2, linear_element_3]
     
     def _form_functions(self):
-        a = npy.array([[1, self.points[0][0], self.points[0][1]],
-                       [1, self.points[1][0], self.points[1][1]],
-                       [1, self.points[2][0], self.points[2][1]]])
-        b1 = npy.array([1, 0, 0])
-        b2 = npy.array([0, 1, 0])
-        b3 = npy.array([0, 0, 1])
-        x1 = npy.linalg.solve(a, b1)
-        x2 = npy.linalg.solve(a, b2)
-        x3 = npy.linalg.solve(a, b3)
-        return list(x1), list(x2), list(x3)
-    
+        a = Matrix33(1, self.points[0][0], self.points[0][1],
+                     1, self.points[1][0], self.points[1][1],
+                     1, self.points[2][0], self.points[2][1])
+        try :
+            inv_a = a.inverse()
+        except ValueError:
+            self.plot()
+            print(self._area())
+            raise FlatElementError('form function bug')
+        x1 = inv_a.vector_multiplication(vm.X3D)
+        x2 = inv_a.vector_multiplication(vm.Y3D)
+        x3 = inv_a.vector_multiplication(vm.Z3D)
+        return x1, x2, x3
+ 
     def _area(self):
         u = self.points[1] - self.points[0]
         v = self.points[2] - self.points[0]
-        return (u.Norm() * v.Norm())/2
+        return abs(u.Cross(v)) / 2
         
     def rotation(self, center, angle, copy=True):
         if copy:
@@ -154,28 +174,18 @@ class TriangularElement:
         return ax
     
     
-class ElementsGroup:
-    def __init__(self, elements, mu_total, name):
+class ElementsGroup(DessiaObject):
+    _standalone_in_db = False
+    _non_serializable_attributes = []
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['name']
+    _generic_eq = True
+    def __init__(self, elements:List[TriangularElement], mu_total:float, name:str):
         self.elements = elements
         self.mu_total = mu_total
         self.name = name
         
-#    @classmethod
-#    def from_contour(cls, points, minimal_area, mu_total, name):
-#        A = dict(vertices=npy.array([pt.vector for pt in points]))
-#        t = triangle.triangulate(A, 'qa{}'.format(minimal_area))
-#        if 'triangles' in t:
-#            triangles = t['triangles'].tolist()
-#            
-#            elements = []
-#            for tri in triangles:
-#                pts = [points[i] for i in tri]
-#                elements.append(TriangularElement(pts))
-#        else:
-#            raise NotImplementedError
-#        
-#        return cls(elements, mu_total, name)
-        
+        DessiaObject.__init__(self, name=name)
         
     def rotation(self, center, angle, copy=True):
         if copy:
@@ -200,11 +210,18 @@ class ElementsGroup:
         return ax
         
 
-class Mesh:
-    def __init__(self, elements_groups):
+class Mesh(DessiaObject):
+    _standalone_in_db = True
+    _non_serializable_attributes = ['node_to_index']
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['name']
+    _generic_eq = True
+    def __init__(self, elements_groups:List[ElementsGroup]):
         self.elements_groups = elements_groups
         self.nodes = self._set_nodes_number()
         self.node_to_index = {self.nodes[i]:i for i in range(len(self.nodes))}
+        
+        DessiaObject.__init__(self, name='')
     
     def _set_nodes_number(self):
         nodes = set()
@@ -236,5 +253,20 @@ class Mesh:
         for elements_group in self.elements_groups:
             elements_group.plot(ax=ax)
         return ax
+    
+    def plot_data(self, pos=0, quote=True, constructor=True, direction=1):
+        plot_datas = []
+        for element_group in self.elements_groups:
+            for element in element_group.elements:
+                c1 = vm.Contour2D([vm.LineSegment2D(element.points[0], element.points[1])])
+                c2 = vm.Contour2D([vm.LineSegment2D(element.points[1], element.points[2])])
+                c3 = vm.Contour2D([vm.LineSegment2D(element.points[2], element.points[0])])
+                plot_datas.append(c1.plot_data())
+                plot_datas.append(c2.plot_data())
+                plot_datas.append(c3.plot_data())
+                # plot_datas.extend([c1, c2, c3])
+        return plot_datas
+
+
 
     
