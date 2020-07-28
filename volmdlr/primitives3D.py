@@ -1144,68 +1144,14 @@ class Sweep(volmdlr.Shell3D):
         faces = []
         for wire_primitive in self.wire3d.primitives : #edges:
             for contour_primitive in self.contour2d.primitives:
-                
                 # Build face created by generating primitive of contour along wire primitive
                 if wire_primitive.__class__ == volmdlr.LineSegment3D:
                     framestart, framend = self.framestart_end(wire_primitive)
                     
                     if contour_primitive.__class__ == volmdlr.LineSegment2D:
-                        # seg1 = contour_primitive.To3D(framestart.origin, framestart.u, framestart.v)
-                        # seg2 = volmdlr.LineSegment3D(seg1.points[1], seg1.points[1] + volmdlr.Point3D(wire_primitive.vector))
-                        # seg3 = volmdlr.LineSegment3D(seg2.points[1], seg2.points[1]-seg1.points[1] + seg1.points[0])
-                        # seg4 = volmdlr.LineSegment3D(seg3.points[1], seg1.points[0])
-                        # edges = [seg1, seg2, seg3, seg4]
-                        # faces.append(seg1.generated_planeface([volmdlr.Contour3D(edges)]))
                         # Planar face
                         pass
-                    elif contour_primitive.__class__ == volmdlr.Circle2D :
-                        # Cylindrical face
-                        # Change code below by proper cylindrical surface!
-                        # cylinder = Cylinder(wire_primitive.middle_point(),
-                        #                     wire_primitive.DirectionVector(unit=True),
-                        #                     contour_primitive.radius,
-                        #                     wire_primitive.Length())
-                        # normal = contour_primitive.normal
-                        # normal.Normalize()
-                        # planeoff = volmdlr.Plane3D.from_normal(contour_primitive.center, normal)
-                        # frame = volmdlr.Frame3D(contour_primitive.center, normal, planeoff.vectors[0], planeoff.vectors[1])
-                        
-                        
-                        ###### Method with frame 
-                        # center = contour_primitive.center.To3D(framestart.origin, framestart.v, framestart.w)
-                        # frame = volmdlr.Frame3D(center, framestart.u, framestart.v, framestart.w)
-                        # radius = contour_primitive.radius
-                        # cylindersurface3d = volmdlr.CylindricalSurface3D(frame, radius)
-                        
-                        # circlestart = volmdlr.Circle3D(center, radius, framestart.u) 
-                        
-                        # # circlend = contour_primitive.Translation(wire_primitive.points[1]-wire_primitive.points[0])
-                        # circlend = volmdlr.Circle3D(center+(framend.origin-framestart.origin), radius, framend.u)
-                        
-                        # edges = []
-                        # points = []
-                        # # print('wire_primitive.points[0]', wire_primitive.points[0])
-                        # # print('wire_primitive.points[1]', wire_primitive.points[1])
-                        # # seg1 = volmdlr.LineSegment3D(wire_primitive.points[0]+radius*volmdlr.Point3D(planeoff.vectors[0].vector),wire_primitive.points[1]+radius*volmdlr.Point3D(planeoff.vectors[0].vector))
-                        # # seg2 = volmdlr.LineSegment3D(wire_primitive.points[1]+radius*volmdlr.Point3D(planeoff.vectors[0].vector), wire_primitive.points[0]+radius*volmdlr.Point3D(planeoff.vectors[0].vector))
-                        # seg1 = volmdlr.LineSegment3D(framestart.origin+radius*volmdlr.Point3D(framestart.v.vector),framend.origin+radius*volmdlr.Point3D(framestart.v.vector))
-                        # seg2 = volmdlr.LineSegment3D(framend.origin+radius*volmdlr.Point3D(framend.v.vector), framestart.origin+radius*volmdlr.Point3D(framend.v.vector))
-                        # edges.append(seg2)
-                        # points.extend(seg2.points)
-                        # # edges.append(contour_primitive)
-                        # # points.extend(contour_primitive.points)
-                        # edges.append(circlestart)
-                        # points.extend(circlestart.points)
-                        # points.append(circlestart.points[0])
-                        # edges.append(seg1)
-                        # points.extend(seg1.points)
-                        # edges.append(circlend)
-                        # points.extend(circlend.points)
-                        # points.append(circlend.points[0])
-                        # # fig = plt.figure()
-                        # # ax = fig.add_subplot(111, projection='3d')
-                        # # [pt.MPLPlot(ax=ax) for pt in points]
-                        # cylinder = volmdlr.CylindricalFace3D([volmdlr.Contour3D(edges)], cylindersurface3d, points)
+                    elif contour_primitive.__class__ == volmdlr.Circle2D or contour_primitive.__class__ == volmdlr.Arc2D:
                         cylindricalsurface3d = volmdlr.CylindricalSurface3D(framestart, contour_primitive.radius)
                         faces.append(volmdlr.CylindricalFace3D.from_arc3d(wire_primitive, contour_primitive, cylindricalsurface3d))
                         

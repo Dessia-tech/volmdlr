@@ -12,6 +12,7 @@ import volmdlr.primitives3D as primitives3D
 import volmdlr.primitives2D as primitives2D
 import matplotlib.pyplot as plt
 import random
+import math
 
 # nb_components = 10
 xmax, xmin, ymax, ymin = 5, -5, 5, -5
@@ -21,6 +22,7 @@ extrusion_vector = vm.Z3D
 x, y = vm.X3D, vm.Y3D
 origin = vm.Point3D((0,0,0))
 basis_plane = vm.Plane3D(origin, x, y)
+alpha = 0.9
 
 
 class Component :
@@ -299,7 +301,7 @@ for k, h in enumerate(height_sorted[1:]) :
 
 #### test
 print('list_height_polyfloor', list_height_polyfloor)
-if list_height_polyfloor[1]-list_height_polyfloor[0]<height_belt :
+while list_height_polyfloor[1]-list_height_polyfloor[0]<height_belt :
     del list_height_polyfloor[1]
     del list_polyfloor[1]
             
@@ -342,7 +344,8 @@ belt = primitives3D.ExtrudedProfile(origin + basis_plane.normal*height_bot_belt,
 # m = vm.VolumeModel(all_solid+[sides,bottom, belt])
 # m.babylonjs(debug=True) 
 
-list_component_hat = []    
+list_component_hat, list_contour_floor = [], []    
+list_inner, list_outer = [], []
 for enum, polyfloor in enumerate(list_polyfloor[1:]) :
     radius_floor = {0: 0.1, 1: 0.1}
     for k in range(0, len(polyfloor.points)-2) :
@@ -360,6 +363,9 @@ for enum, polyfloor in enumerate(list_polyfloor[1:]) :
     inner_contour_floor = contour_floor.Offset(-min(offset_radius_floor))
     outer_contour_floor = inner_contour_floor.Offset(-thickness_min)
     
+    list_inner.append(inner_contour_floor)
+    list_outer.append(outer_contour_floor)
+    
     height_origin = list_height_polyfloor[enum]
     
     if enum == 0 :
@@ -371,17 +377,66 @@ for enum, polyfloor in enumerate(list_polyfloor[1:]) :
         height_origin += height_belt
         
     
-    if enum == len(list_polyfloor)-2: 
-        top = primitives3D.ExtrudedProfile(origin + extrusion_vector*list_height_polyfloor[enum+1], x, y,
-                                            outer_contour_floor, [], 
-                                            thickness_min * basis_plane.normal, name='top')
-        list_component_hat.append(top)
-    
     sides_floor = primitives3D.ExtrudedProfile(origin + extrusion_vector*height_origin, x, y,
                                                 outer_contour_floor, [inner_contour_floor],
                                                 (list_height_polyfloor[enum+1]-height_origin)*basis_plane.normal, name='sides_floor')
     
     list_component_hat.append(sides_floor)
+    
+    #### congé
+    # c = vm.Circle2D(vm.Point2D((0,0)), 0.03)
+    r = 0.15
+    arc = vm.Arc2D(vm.Point2D((0,0)), vm.Point2D(((-1+math.sqrt(2)/2)*r,r*math.sqrt(2)/2)), vm.Point2D((-r,r)))
+    
+    contour_sweep = outer_contour_floor.Offset(r)
+    
+    contour = vm.Contour2D([arc])
+    wire_sweep = vm.Wire3D([p.To3D(origin + extrusion_vector*list_height_polyfloor[enum+1], x, y) for p in contour_sweep.primitives])
+    # sweep_line = outer_contour_floor.To3D(origin + extrusion_vector*list_height_polyfloor[enum+1], x, y)
+    sweep = primitives3D.Sweep(contour, wire_sweep, name = 'congé')
+    
+    list_component_hat.append(sweep)
+    list_contour_floor.append(contour_sweep)
+    
+    if enum == len(list_polyfloor)-2: 
+        list_component_hat.pop()
+
+        r_top = thickness_min
+        arc_top = vm.Arc2D(vm.Point2D((0,0)), vm.Point2D(((-1+math.sqrt(2)/2)*r_top,r_top*math.sqrt(2)/2)), vm.Point2D((-r_top,r_top)))
+        contour_top = vm.Contour2D([arc_top])
+        contour_sweep_top = outer_contour_floor.Offset(r_top)
+        
+        new_wire_sweep = vm.Wire3D([p.To3D(origin + extrusion_vector*(list_height_polyfloor[enum+1]), x, y) for p in contour_sweep_top.primitives])
+        sweep = primitives3D.Sweep(contour_top, new_wire_sweep, name = 'congé')
+        list_component_hat.append(sweep)
+        
+        # top = primitives3D.ExtrudedProfile(origin + extrusion_vector*list_height_polyfloor[enum+1], x, y,
+        #                                     outer_contour_floor, [], 
+        #                                     thickness_min * basis_plane.normal, name='top')
+        top = primitives3D.ExtrudedProfile(origin + extrusion_vector*list_height_polyfloor[enum+1], x, y,
+                                           contour_sweep_top, [], 
+                                           thickness_min * basis_plane.normal, name='top')
+        
+        list_component_hat.append(top)
+    
+fig, ax = plt.subplots()
+ax.set_aspect('equal')
+belt_top.outer_contour2d.MPLPlot(ax=ax)
+[pt.MPLPlot(ax=ax, color='r') for pt in belt_top.outer_contour2d.points]
+[inner.MPLPlot(ax=ax) for inner in belt_top.inner_contours2d]
+for inner in belt_top.inner_contours2d :
+    [pt.MPLPlot(ax=ax, color='g') for pt in inner.points]
+for k, contour_floor in enumerate(list_contour_floor) :
+    contour_floor.MPLPlot(ax=ax)
+    if k < len(list_contour_floor)-1 :
+        terrasse = primitives3D.ExtrudedProfile(origin + extrusion_vector*list_height_polyfloor[k+1], x, y,
+                                                contour_floor, [list_inner[k+1]],
+                                                r*basis_plane.normal, name='rooftop')
+    else :
+        terrasse = primitives3D.ExtrudedProfile(origin + extrusion_vector*list_height_polyfloor[k+1], x, y,
+                                                contour_floor, [],
+                                                r*basis_plane.normal, name='rooftop')
+    list_component_hat.append(terrasse)
     
 m = vm.VolumeModel(all_solid+[sides,bottom, belt]+list_component_hat)
 m.babylonjs(debug=True)  

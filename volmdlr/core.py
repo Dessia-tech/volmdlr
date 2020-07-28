@@ -2121,7 +2121,7 @@ class Polygon2D(Contour2D):
                     'marker' : marker,
                     'opacity' : opacity}
     @classmethod
-    def points_convex_hull(self, points):
+    def points_convex_hull(cls, points):
         # print('points', points)
         ymax, pos_ymax = max_pos([pt.vector[1] for pt in points])
         point_start = points[pos_ymax]
@@ -2179,7 +2179,7 @@ class Polygon2D(Contour2D):
         
         hull.pop()
         
-        return Polygon2D(hull)
+        return cls(hull)
         
         ############################################################
 #         zr=[z-r for (y,z),r in zip(self.yz,radius)]
@@ -5264,6 +5264,36 @@ class PlaneFace3D(Face3D):
         
         return cls(contours2d, plane, points=None, polygon2D=None, name=name)
     
+    # @classmethod
+    # def from_two_contours(cls, contour1, contour2) :
+    #     #test, which is the smallest
+    #     poly1, poly2 = contour1.polygon, contour2.polygon
+    #     area1, area2 = poly1.Area(), poly2.Area()
+    #     if area1 < area2 :
+    #         basis_contour, other_contour = contour2, contour1
+    #     else :
+    #         basis_contour, other_contour = contour1, contour2
+    #     #creation of polygon
+    #     basis_points, other_points = basis_contour.tessel_points, other_contour.tessel_points
+    #     basis_polygon, other_polygon = Polygon2D(basis_points), Polygon2D(other_points)
+    #     #test to know if other_points in basis_polygon
+    #     points_in_polygon = []
+    #     for point in other_points :
+    #         inside = basis_polygon.PointBelongs(point)
+    #         if inside :
+    #             points_in_polygon.append(point)
+        
+    #     fig, ax = plt.subplots()
+    #     ax.set_aspect('equal')
+    #     [pt.MPLPlot(ax=ax) for pt in basis_points]
+    #     [pt.MPLPlot(ax=ax, color='b') for pt in other_points]
+    #     [pt.MPLPlot(ax=ax, color='r') for pt in points_in_polygon]
+        
+        
+    #     raise NotImplementedError
+        
+    #     return cls()
+    
     def Rotation(self, center, axis, angle, copy=True):
         if copy:
             new_contour = [subcontour.Rotation(center, axis, angle, copy=True) for subcontour in self.contour]
@@ -5747,9 +5777,13 @@ class CylindricalFace3D(Face3D):
             if point12d.__class__ is Point3D :
                 point12d = point12d.To2D(center, frame.u, frame.v) #Using it to put arc.start at the same height 
             point13d = point12d.To3D(center, frame.u, frame.v)
-        
-            u = Vector3D((point13d - center).vector)
-            u.Normalize()
+            if arc.start.__class__ is Point2D :
+                u_g2d = Vector2D((arc.start - arc.center).vector)
+                u = u_g2d.To3D(center, frame.u, frame.v)
+                u.Normalize()
+            else :
+                u = Vector3D((point13d - center).vector)
+                u.Normalize()
             v = normal.Cross(u)
             v.Normalize()
             
@@ -5766,7 +5800,7 @@ class CylindricalFace3D(Face3D):
                 else :
                     offset = theta
                     theta = -theta
-            
+                    
             frame_adapt = Frame3D(center, u, v, normal)
 
         cylindersurface3d = CylindricalSurface3D(frame_adapt, radius)
@@ -6654,29 +6688,39 @@ class ToroidalFace3D (Face3D) :
             
             center_generated = arc.center
             n = v
-            u_g = Vector3D((arc.start - center_generated).vector)
-            u_g.Normalize()
+            if arc.start.__class__ is Point2D :
+                u_g2d = Vector2D((arc.start - center_generated).vector)
+                u_g = u_g2d.To3D(center, normal, u)
+                u_g.Normalize()
+            else :
+                u_g = Vector3D((arc.start - center_generated).vector)
+                u_g.Normalize()
             v_g = n.Cross(u_g)
             v_g.Normalize()
             
-            last_generated = arc.end
+            first_generated, last_generated, c2d = arc.end, arc.start, center_generated
             if last_generated.__class__ is Point3D :
+                first_generated = arc.start.To2D(center_generated, u_g, v_g)
+                c2d = center.To2D(center_generated, u_g, v_g)
                 last_generated = last_generated.To2D(center_generated, u_g, v_g)
             x2, y2 = last_generated.vector[0], last_generated.vector[1]
             phi = math.atan2(y2, x2)
             
             # Calculate angle between first point of arcgen and arc
             
-            first_generated = arc.start.To2D(center_generated, u_g, v_g)
-            c2d = center.To2D(center_generated, u_g, v_g)
+            # first_generated = arc.start.To2D(center_generated, u_g, v_g)
+            # c2d = center.To2D(center_generated, u_g, v_g)
             
             angle1 = math.atan2(first_generated.vector[1], first_generated.vector[0]) ## should be 0
             angle_offset = math.atan2(c2d.vector[1], c2d.vector[0]) 
-            
-            if n == -arc.normal :
-                offset2 += -phi+math.pi+angle_offset
-            else : 
-                offset2 += -phi-math.pi+angle_offset
+            if arc.__class__.__name__ == 'Arc2D' :
+                offset2 = 0
+                phi = arc.angle
+            else :
+                if n == -arc.normal :
+                    offset2 += -phi+math.pi+angle_offset
+                else : 
+                    offset2 += -phi-math.pi+angle_offset
 
         frame3d = Frame3D(center, u, v, normal)
         toroidalsurface3d = ToroidalSurface3D(frame3d, rcenter, rcircle)
@@ -6686,6 +6730,7 @@ class ToroidalFace3D (Face3D) :
         edges = [seg1, seg2, seg3, seg4]
         contours2d =  [Contour2D(edges)]
         param = [theta, phi]
+        
         return cls(contours2d, toroidalsurface3d, param, name='')
     
     def points_resolution(self, line, pos, resolution) : #With a resolution wished
