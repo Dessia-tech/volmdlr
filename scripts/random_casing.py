@@ -60,7 +60,7 @@ class Component :
     
     def compo_solid(self) :
         extrusion_vector = self.plane.vectors[0].Cross(self.plane.vectors[1])
-        return primitives3D.ExtrudedProfile(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1], self.contour, [], extrusion_vector*self.height, color=(0.92549, 0.89411765, 0.517647))
+        return primitives3D.ExtrudedProfile(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1], self.contour, [], extrusion_vector*self.height, color=(0.44313725, 0.27058824, 0.12156863))
         
     def update(self, new_height, new_side) :
         # self.height = new_height
