@@ -254,9 +254,9 @@ for step in range(0, nb_step) :
     list_component_hat, list_contour_floor = [], []    
     list_inner, list_outer = [], []
     for enum, polyfloor in enumerate(list_polyfloor[1:]) :
-        radius_floor = {0: 0.1, 1: 0.1}
+        radius_floor = {0: 0.2, 1: 0.2}
         for k in range(0, len(polyfloor.points)-2) :
-            radius_floor[2+k] = 0.1 + 0.3 * random.random()
+            radius_floor[2+k] = 0.2 + 0.3 * random.random()
             
         contour_floor = primitives2D.ClosedRoundedLineSegments2D(polyfloor.points,
                                                                   radius_floor,

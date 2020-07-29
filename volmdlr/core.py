@@ -1373,19 +1373,33 @@ class Arc2D(Primitive2D):
         xi, yi = interior.vector
         xe, ye = end.vector
         xs, ys = start.vector
-        print('xe, ye, xs, ys', xe, ye, xs, ys)
+        # print('xe, ye, xs, ys', xe, ye, xs, ys)
+        ######### old
         # A = npy.array([[2*(xs-xi), 2*(ys-yi)],
-        #                [2*(xs-xe), 2*(ys-ye)]])
+                        # [2*(xs-xe), 2*(ys-ye)]])
         # b = - npy.array([xi**2 + yi**2 - xs**2 - ys**2,
-        #                  xe**2 + ye**2 - xs**2 - ys**2])
-        A = Matrix22(2*(xs-xi), 2*(ys-yi),
-                     2*(xs-xe), 2*(ys-ye))
-        b = - Vector2D((xi**2 + yi**2 - xs**2 - ys**2,
-                       xe**2 + ye**2 - xs**2 - ys**2))
-        inv_A = A.inverse()
-        x = inv_A.vector_multiplication(b)
-        self.center = Point2D(x.vector)
+                          # xe**2 + ye**2 - xs**2 - ys**2])
+        
+        ######## NEW, TODO : debug for start and end close
+        try : 
+            A = Matrix22(2*(xs-xi), 2*(ys-yi),
+                          2*(xs-xe), 2*(ys-ye))
+            b = - Vector2D((xi**2 + yi**2 - xs**2 - ys**2,
+                            xe**2 + ye**2 - xs**2 - ys**2))
+            inv_A = A.inverse()
+            x = inv_A.vector_multiplication(b)
+            self.center = Point2D(x.vector)
+        except ValueError : 
+            A = npy.array([[2*(xs-xi), 2*(ys-yi)],
+                           [2*(xs-xe), 2*(ys-ye)]])
+            b = - npy.array([xi**2 + yi**2 - xs**2 - ys**2,
+                               xe**2 + ye**2 - xs**2 - ys**2])
+            self.center = Point2D(solve(A,b))
+        #########
+        
+        #######old
         # self.center = Point2D(solve(A,b))
+        ######
         r1 = self.start - self.center
         r2 = self.end - self.center
         ri = self.interior - self.center
