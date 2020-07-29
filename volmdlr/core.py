@@ -30,7 +30,7 @@ from .core_compiled import (Vector2D, Vector3D, Point2D, Point3D,
                    Basis2D, Basis3D, Frame2D, Frame3D,
                    O3D, X3D, Y3D, Z3D,
                    LineSegment2DPointDistance,
-                   PolygonPointBelongs,
+                   PolygonPointBelongs, Matrix22
                    )
 
 from scipy.linalg import solve
@@ -583,7 +583,9 @@ class Contour2D(Wire2D):
             else:
                 raise NotImplementedError('primitive of type {} is not handled'.format(primitive))
 
+        # points_polygon = list(set(points_polygon))
         polygon = Polygon2D(points_polygon)
+        points_straight_line_contour = list(set(points_straight_line_contour))
         straight_line_contour_polygon = Polygon2D(points_straight_line_contour)
         
         for arc in arcs:
@@ -1377,11 +1379,18 @@ class Arc2D(Primitive2D):
         xi, yi = interior.vector
         xe, ye = end.vector
         xs, ys = start.vector
-        A = npy.array([[2*(xs-xi), 2*(ys-yi)],
-                       [2*(xs-xe), 2*(ys-ye)]])
-        b = - npy.array([xi**2 + yi**2 - xs**2 - ys**2,
-                         xe**2 + ye**2 - xs**2 - ys**2])
-        self.center = Point2D(solve(A,b))
+        # A = npy.array([[2*(xs-xi), 2*(ys-yi)],
+        #                [2*(xs-xe), 2*(ys-ye)]])
+        # b = - npy.array([xi**2 + yi**2 - xs**2 - ys**2,
+        #                  xe**2 + ye**2 - xs**2 - ys**2])
+        A = Matrix22(2*(xs-xi), 2*(ys-yi),
+                     2*(xs-xe), 2*(ys-ye))
+        b = - Vector2D((xi**2 + yi**2 - xs**2 - ys**2,
+                       xe**2 + ye**2 - xs**2 - ys**2))
+        inv_A = A.inverse()
+        x = inv_A.vector_multiplication(b)
+        self.center = Point2D(x.vector)
+        # self.center = Point2D(solve(A,b))
         r1 = self.start - self.center
         r2 = self.end - self.center
         ri = self.interior - self.center
@@ -1453,8 +1462,7 @@ class Arc2D(Primitive2D):
     def tessellation_points(self, resolution_for_circle=40):
         # TODO: change this to a simple rotation?
         number_points_tesselation = math.ceil(resolution_for_circle*abs(self.angle)/2/math.pi)
-        if number_points_tesselation == 1:
-            number_points_tesselation += 1
+        number_points_tesselation = max(number_points_tesselation, 5)
         
         # vector_start = Vector2D((self.start - self.center).vector)
         # vector_end = Vector2D((self.end - self.center).vector)
@@ -1503,16 +1511,16 @@ class Arc2D(Primitive2D):
             return min(LineSegment2D(point, self.start).Length(), LineSegment2D(point, self.end).Length())
 
     def line_intersection(self, line):
-        points = self.tessellation_points()
-        segments = []
+        circle = Circle2D(self.center, self.radius)
+        circle_intersection_points = circle.line_intersection(line)
+        
+        if circle_intersection_points is None:
+            return None
+        
         intersection_points = []
-        for pt1, pt2 in zip(points[:-1], points[1:]):
-            segments.append(LineSegment2D(pt1, pt2))
-        for segment in segments:
-            # intersection_point = Point2D.LinesIntersection(line, segment)
-            intersection_point = segment.line_intersection(line)
-            if intersection_point is not None:
-                intersection_points.append(intersection_point)
+        for pt in circle_intersection_points:
+            if self.point_belongs(pt):
+                intersection_points.append(pt)
         return intersection_points
 
     def Length(self):
@@ -1841,7 +1849,46 @@ class Circle2D(Contour2D):
                 for teta in npy.linspace(0, 2*math.pi, resolution+1)][:-1]
 
     def point_belongs(self, point):
-        return point.point_distance(self.center) <= self.radius
+        epsilon = 1e-6
+        return point.point_distance(self.center) <= self.radius + epsilon
+    
+    def line_intersection(self, line):
+        V = Vector2D((line.points[1] - line.points[0]).vector)
+        Q = Vector2D(self.center.vector)
+        P1 = Vector2D(line.points[0].vector)
+        
+        a = V.Dot(V)
+        b = 2 * V.Dot(P1 - Q)
+        c = P1.Dot(P1) + Q.Dot(Q) - 2 * P1.Dot(Q) - self.radius**2
+        
+        disc = b**2 - 4 * a * c
+        if disc < 0:
+            return None
+        
+        if math.isclose(disc, 0, abs_tol=1e-6):
+            t = -b / (2 * a)
+            if line.__class__ is Line2D:
+                return [Point2D((P1+t*V).vector)]
+            else:
+                if 0 <= t <= 1:
+                    return [Point2D((P1+t*V).vector)]
+                else:
+                    return None
+        
+        sqrt_disc = math.sqrt(disc)
+        t1 = (-b + sqrt_disc) / (2 * a)
+        t2 = (-b - sqrt_disc) / (2 * a)
+        if line.__class__ is Line2D:
+            return [Point2D((P1+t1*V).vector), Point2D((P1+t2*V).vector)]
+        else:
+            if not (0 <= t1 <= 1 or 0 <= t2 <= 1):
+                return None
+            elif 0 <= t1 <= 1 and not 0 <= t2 <= 1:
+                return [Point2D((P1+t1*V).vector)]
+            elif not 0 <= t1 <= 1 and 0 <= t2 <= 1:
+                return [Point2D((P1+t2*V).vector)]
+            else:
+                [Point2D((P1+t1*V).vector), Point2D((P1+t2*V).vector)]
 
     def Length(self):
         return 2* math.pi * self.radius
@@ -2000,8 +2047,8 @@ class Polygon2D(Contour2D):
     def SecondMomentArea(self, point):
         Ix, Iy, Ixy = 0, 0, 0
         for pi, pj in zip(self.points,self.points[1:]+[self.points[0]]):
-            xi, yi = pi.vector-point.vector
-            xj, yj = pj.vector-point.vector
+            xi, yi = (pi-point).vector
+            xj, yj = (pj-point).vector
             Ix += (yi**2 + yi*yj + yj**2)*(xi*yj - xj*yi)
             Iy += (xi**2 + xi*xj + xj**2)*(xi*yj - xj*yi)
             Ixy += (xi*yj + 2*xi*yi + 2*xj*yj + xj*yi)*(xi*yj - xj*yi)
@@ -9723,23 +9770,35 @@ class BoundingBox(dc.DessiaObject):
     def intersection_volume(self, bbox2):
         if not self.bbox_intersection(bbox2):
             return 0
+        if self.is_inside_bbox(bbox2) or bbox2.is_inside_bbox(self):
+            return min(self.volume(), bbox2.volume())
 
-        permute_bbox1 = self
-        permute_bbox2 = bbox2
+        lx = min(self.xmax, bbox2.xmax) - max(self.xmin, bbox2.xmin)
+        ly = min(self.ymax, bbox2.ymax) - max(self.ymin, bbox2.ymin)
+        lz = min(self.zmax, bbox2.zmax) - max(self.zmin, bbox2.zmin)
 
-        if permute_bbox2.xmin < permute_bbox1.xmin:
-            permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
-        lx = permute_bbox1.xmax - permute_bbox2.xmin
+        return lx * ly * lz
 
-        if permute_bbox2.ymin < permute_bbox1.ymin:
-            permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
-        ly = permute_bbox1.ymax - permute_bbox2.ymin
-
-        if permute_bbox2.zmin < permute_bbox1.zmin:
-            permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
-        lz = permute_bbox1.zmax - permute_bbox2.zmin
-
-        return lx*ly*lz
+    # def intersection_volume(self, bbox2):
+    #     if not self.bbox_intersection(bbox2):
+    #         return 0
+    #
+    #     permute_bbox1 = self
+    #     permute_bbox2 = bbox2
+    #
+    #     if permute_bbox2.xmin < permute_bbox1.xmin:
+    #         permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
+    #     lx = permute_bbox1.xmax - permute_bbox2.xmin
+    #
+    #     if permute_bbox2.ymin < permute_bbox1.ymin:
+    #         permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
+    #     ly = permute_bbox1.ymax - permute_bbox2.ymin
+    #
+    #     if permute_bbox2.zmin < permute_bbox1.zmin:
+    #         permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
+    #     lz = permute_bbox1.zmax - permute_bbox2.zmin
+    #
+    #     return lx*ly*lz
 
     def distance_to_bbox(self, bbox2):
         if self.bbox_intersection(bbox2):
