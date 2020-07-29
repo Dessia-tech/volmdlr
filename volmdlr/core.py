@@ -342,7 +342,7 @@ class CompositePrimitive2D(Primitive2D):
         ax.margins(0.1)
         plt.show()
 
-        return fig, ax
+        return ax
 
     def plot_data(self, name, fill=None, color='black', stroke_width=0.2, opacity=1):
         plot_data = {}
@@ -793,7 +793,7 @@ class Line2D(Primitive2D, Line):
             ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color)
 
 
-        return fig ,ax
+        return ax
     
     def plot_data(self, marker=None, color='black', stroke_width=1,
                  dash=False, opacity=1, arrow=False):
@@ -1090,7 +1090,7 @@ class LineSegment2D(Line2D):
                 ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color, marker='o', linewidth=width)
             else:
                 ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color, linewidth=width)
-        return fig, ax
+        return ax
 
     def To3D(self, plane_origin, x1, x2):
         p3D=[p.To3D(plane_origin,x1,x2) for p in self.points]
@@ -1362,7 +1362,7 @@ class Arc2D(Primitive2D):
                     theta2=self.angle2*0.5/math.pi*360,
                     color=color))
         
-        return fig, ax
+        return ax
 
     def To3D(self,plane_origin, x, y):
         ps = self.start.To3D(plane_origin, x, y)
@@ -1557,7 +1557,7 @@ class Circle2D(Contour2D):
                              color=color,
                              linestyle=linestyle,
                              linewidth=linewidth))
-        return fig, ax
+        return ax
 
     def To3D(self, plane_origin, x, y):
         normal = x.Cross(y)
@@ -1817,15 +1817,6 @@ class Polygon2D(Contour2D):
                     'marker' : marker,
                     'opacity' : opacity}
 
-    # def MPLPlot(self, ax=None):
-    #     if ax is None:
-    #         fig, ax = plt.subplots()
-    #         ax.set_aspect('equal')
-    #     else:
-    #         fig = ax.figure()
-
-    #     ax.plot([p[0] for p in self.points]+[self.points[0][0]], [p[1] for p in self.points]+[self.points[0][1]], '-')
-    #     return fig, ax
 
 class Primitive3D(dc.DessiaObject):
     def __init__(self, basis_primitives=None, name=''):
@@ -2043,7 +2034,7 @@ class Plane3D(Primitive3D):
         self.origin.MPLPlot(ax)
         self.vectors[0].MPLPlot(ax, starting_point=self.origin, color='r')
         self.vectors[1].MPLPlot(ax, starting_point=self.origin, color='g')
-        return fig, ax
+        return ax
 
     def Babylon(self):
         s = 'var myPlane = BABYLON.MeshBuilder.CreatePlane("myPlane", {width: 0.5, height: 0.5, sideOrientation: BABYLON.Mesh.DOUBLESIDE}, scene);\n'
@@ -2358,7 +2349,7 @@ class Line3D(Primitive3D, Line):
             ax.plot([x1, x2], [y1, y2], [z1, z2], color=color, dashes=[30, 5, 10, 5])
         else:
             ax.plot([x1, x2], [y1, y2], [z1, z2], color=color)            
-        return fig, ax
+        return ax
 
     def PlaneProjection2D(self,center, x, y):
         return Line2D(self.points[0].PlaneProjection2D(center, x, y),
@@ -2604,7 +2595,7 @@ class BSplineCurve3D(Primitive3D):
         y=[p.vector[1] for p in self.points]
         z=[p.vector[2] for p in self.points]
         ax.plot(x,y,z, 'o-k')
-        return fig, ax
+        return ax
 
 
 class Arc3D(Primitive3D):
@@ -2773,7 +2764,7 @@ class Arc3D(Primitive3D):
             z.append(pz)
 
         ax.plot(x, y, z, 'k')
-        return fig, ax
+        return ax
 
     def MPLPlot2D(self, center=O3D, x3d=X3D, y3D=Y3D, ax=None, color='k'):
         if ax is None:
@@ -2793,7 +2784,7 @@ class Arc3D(Primitive3D):
             y.append(yi)
         ax.plot(x, y, color=color)
 
-        return fig, ax
+        return ax
 
     def FreeCADExport(self, name, ndigits=6):
         xs, ys, zs = round(1000*self.start, ndigits).vector
@@ -3093,7 +3084,7 @@ class ArcEllipse3D(Primitive3D) :
             z.append(pz)
 
         ax.plot(x, y, z, 'k')
-        return fig, ax
+        return ax
 
     def MPLPlot2D(self, x3d, y3D, ax, color='k'):
         if ax is None:
@@ -3113,7 +3104,7 @@ class ArcEllipse3D(Primitive3D) :
             y.append(yi)
         ax.plot(x, y, color=color)
 
-        return fig, ax
+        return ax
 
     def FreeCADExport(self, name, ndigits=6):
         xs, ys, zs = round(1000*self.start, ndigits).vector
@@ -3393,7 +3384,7 @@ class CompositePrimitive3D(Primitive3D):
 
         # ax.set_aspect('equal')
 
-        return fig, ax
+        return ax
 
 
 class Wire3D(CompositePrimitive3D):
@@ -3790,7 +3781,7 @@ class LineSegment3D(Edge3D):
         y=[p.vector[1] for p in self.points]
         z=[p.vector[2] for p in self.points]
         ax.plot(x,y,z, 'o-k')
-        return fig, ax
+        return ax
 
     def MPLPlot2D(self, x_3D, y_3D, ax=None, color='k', width=None):
         if ax is None:
@@ -3801,7 +3792,7 @@ class LineSegment3D(Edge3D):
 
         edge2D =  self.PlaneProjection2D(O3D, x_3D, y_3D)
         edge2D.MPLPlot(ax=ax, color=color, width=width)
-        return fig, ax
+        return ax
 
     def plot_data(self, x_3D, y_3D, marker=None, color='black', stroke_width=1,
                   dash=False, opacity=1, arrow=False):
@@ -4282,7 +4273,7 @@ class Circle3D(Contour3D):
         y.append(y[0])
         z.append(z[0])
         ax.plot(x, y, z, color)
-        return fig, ax
+        return ax
             
 
     @classmethod
@@ -4379,7 +4370,7 @@ class Ellipse3D(Contour3D):
         y.append(y[0])
         z.append(z[0])
         ax.plot(x, y, z, color)
-        return fig, ax
+        return ax
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -5201,7 +5192,7 @@ class CylindricalFace3D(Face3D):
         y.append(y[0])
         z.append(z[0])
         ax.plot(x, y, z, color)
-        return fig, ax
+        return ax
     
     def MPLPlotcontours(self, ax=None, color='k'):
         if ax is None:
@@ -5221,7 +5212,7 @@ class CylindricalFace3D(Face3D):
         y.append(y[0])
         z.append(z[0])
         ax.plot(x, y, z, color)
-        return fig, ax
+        return ax
     
     def frame_mapping(self, frame, side, copy=True) :
         if copy:
@@ -8294,6 +8285,9 @@ class VolumeModel(dc.DessiaObject):
             ymax = max([p[1] for p in points])
             zmin = min([p[2] for p in points])
             zmax = max([p[2] for p in points])
+        else:
+            raise ValueError('Bounding box cant be determined')
+            # return BoundingBox(-1, 1, -1, 1, -1, 1)
         return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
     
     def plot(self, ax=None, color=None):
@@ -8319,7 +8313,7 @@ class VolumeModel(dc.DessiaObject):
             primitive.MPLPlot(ax)
         ax.set_aspect('equal')
         ax.margins(0.1)
-        return fig, ax
+        return ax
 
     def FreeCADScript(self, fcstd_filepath,
                       freecad_lib_path='/usr/lib/freecad/lib',
