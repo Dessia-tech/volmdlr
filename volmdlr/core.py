@@ -2360,9 +2360,9 @@ class Line3D(Primitive3D, Line):
             ax.plot([x1, x2], [y1, y2], [z1, z2], color=color)            
         return fig, ax
 
-    def PlaneProjection2D(self, x, y):
-        return Line2D(self.points[0].PlaneProjection2D(x, y),
-                      self.points[1].PlaneProjection2D(x, y))
+    def PlaneProjection2D(self,center, x, y):
+        return Line2D(self.points[0].PlaneProjection2D(center, x, y),
+                      self.points[1].PlaneProjection2D(center, x, y))
 
     def MinimumDistancePoints(self, other_line):
         """
@@ -2775,7 +2775,7 @@ class Arc3D(Primitive3D):
         ax.plot(x, y, z, 'k')
         return fig, ax
 
-    def MPLPlot2D(self, x3d, y3D, ax, color='k'):
+    def MPLPlot2D(self, center=O3D, x3d=X3D, y3D=Y3D, ax=None, color='k'):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -2788,7 +2788,7 @@ class Arc3D(Primitive3D):
         y = []
         for i in range(30):
             p = self.PointAtCurvilinearAbscissa(i/(29.)*l)
-            xi, yi = p.PlaneProjection2D(X3D, Y3D)
+            xi, yi = p.PlaneProjection2D(center, X3D, Y3D)
             x.append(xi)
             y.append(yi)
         ax.plot(x, y, color=color)
@@ -2996,10 +2996,6 @@ class ArcEllipse3D(Primitive3D) :
         
         plane = Plane3D.from_normal(center, normal)
 
-#        s_2D = start.PlaneProjection2D(plane.vectors[0], plane.vectors[1]) #On supprimer center+plan vect.. car on ne se préocuppe pas de la composante en hauteur en 2d
-#        i_2D = interior.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
-#        e_2D = end.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
-#        c_2D = center.PlaneProjection2D(plane.vectors[0], plane.vectors[1])
         
         s_2D = start.To2D(center, plane.vectors[0], plane.vectors[1]) #On supprimer center+plan vect.. car on ne se préocuppe pas de la composante en hauteur en 2d
         i_2D = interior.To2D(center,plane.vectors[0], plane.vectors[1])
@@ -3013,17 +3009,8 @@ class ArcEllipse3D(Primitive3D) :
             theta, A, B = theta_A_B(s_2D,i_2D,e_2D,c_2D)
         
         self.Gradius = A
-#        self.major_axis = (X2D * self.Gradius).Rotation(O2D, -theta, copy=True)
         self.Sradius = B
-#        self.minor_axis = (Y2D * self.Sradius).Rotation(c_2D, -theta, copy=True)
         self.teta = theta
-        
-#        fig, ax = plt.subplots()
-#        s_2D.MPLPlot(ax=ax, color='r')
-#        i_2D.MPLPlot(ax=ax, color='g')
-#        e_2D.MPLPlot(ax=ax, color='b')
-#        c_2D.MPLPlot(ax=ax)
-#        self.major_axis.plot(ax=ax, amplitude=0.0005)
         
         # Determining angle
         r1 = (self.start).To2D(self.center, u1, v1)
@@ -3677,9 +3664,9 @@ class LineSegment3D(Edge3D):
         l = self.Length()
         return self.PointAtCurvilinearAbscissa(0.5*l)
 
-    def PlaneProjection2D(self, x, y):
-        return LineSegment2D(self.points[0].PlaneProjection2D(x, y),
-                             self.points[1].PlaneProjection2D(x, y))
+    def PlaneProjection2D(self, center, x, y):
+        return LineSegment2D(self.points[0].PlaneProjection2D(center, x, y),
+                             self.points[1].PlaneProjection2D(center, x, y))
 
     def Intersection(self, segment2):
         x1 = self.points[0].vector[0]
@@ -3812,13 +3799,13 @@ class LineSegment3D(Edge3D):
         else:
             fig = ax.figure
 
-        edge2D =  self.PlaneProjection2D(x_3D, y_3D)
+        edge2D =  self.PlaneProjection2D(O3D, x_3D, y_3D)
         edge2D.MPLPlot(ax=ax, color=color, width=width)
         return fig, ax
 
     def plot_data(self, x_3D, y_3D, marker=None, color='black', stroke_width=1,
                   dash=False, opacity=1, arrow=False):
-        edge2D =  self.PlaneProjection2D(x_3D, y_3D)
+        edge2D =  self.PlaneProjection2D(O3D, x_3D, y_3D)
         return edge2D.plot_data(marker, color, stroke_width,
                          dash, opacity, arrow)
 
