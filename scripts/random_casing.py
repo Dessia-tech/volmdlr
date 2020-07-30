@@ -144,37 +144,6 @@ for step in range(0, nb_step) :
     poly.MPLPlot(ax=ax)
     [pt.MPLPlot(ax=ax, color='m') for pt in poly.points]
     
-    ############### diagram
-    # listofarea = []
-    # for h in height_sorted :
-    #     points_test = []
-    #     for compo in list_component :
-    #         if compo.height >= h :
-    #             points_test.extend(compo.points)
-    #         else :
-    #             continue
-    #     if len(points_test) == 4 :
-    #         poly_test = vm.Polygon2D(points_test)
-    #     else :
-    #         poly_test = vm.Polygon2D.points_convex_hull(points_test)
-    #     listofarea.append(poly_test.Area())
-        
-    # middle_area, width_area = [], []
-    # for k, area in enumerate(listofarea) :
-    #     if k == 0 :
-    #         middle_area.append(area/2)
-    #         width_area.append(area)
-    #     else :
-    #         middle_area.append((listofarea[k-1]+area)/2)
-    #         width_area.append((area-listofarea[k-1]))
-        
-    # fig, ax = plt.subplots()
-    # plt.bar(middle_area, height_sorted, width = width_area) 
-    
-    # fig, ax = plt.subplots()
-    # plt.bar(listofarea, height_sorted) 
-    # #################
-    
     height_bot_belt = height
     initial_height = height_bot_belt + height_belt
     initial_area = poly.Area()
@@ -256,7 +225,9 @@ for step in range(0, nb_step) :
     # Hat floors
     list_component_hat, list_contour_floor = [], []    
     list_inner, list_outer = [], []
+    primitives_floor = []
     for enum, polyfloor in enumerate(list_polyfloor[1:]) :
+        primitive_of_floor = []
         radius_floor = {0: 0.1, 1: 0.1}
         for k in range(0, len(polyfloor.points)-2) :
             radius_floor[2+k] = 0.1 + 0.3 * random.random()
@@ -292,6 +263,7 @@ for step in range(0, nb_step) :
                                                     (list_height_polyfloor[enum+1]-height_origin)*basis_plane.normal, alpha=alpha, name='sides_floor')
         
         list_component_hat.append(sides_floor)
+        primitive_of_floor.append(sides_floor)
         
         if with_borders :
             r = 0.15
@@ -331,6 +303,8 @@ for step in range(0, nb_step) :
                 
             
             list_component_hat.append(top)
+            primitive_of_floor.append(top)
+        primitives_floor.append(primitive_of_floor)
         
     # fig, ax = plt.subplots()
     # ax.set_aspect('equal')
@@ -373,5 +347,17 @@ for step in range(0, nb_step) :
     # m = vm.VolumeModel(all_solid+list_component_hat)
     # m.babylonjs(debug=True)
     
-    m = vm.VolumeModel(all_solid+[sides,bottom, belt]+list_component_hat)
-    m.babylonjs(debug=True)  
+    # m = vm.VolumeModel(all_solid+[sides,bottom, belt]+list_component_hat)
+    # m.babylonjs()  
+    primitives = all_solid+[bottom, sides, belt]+list_component_hat
+    
+nb_primitives = len(primitives)
+away_frame = vm.Frame3D(vm.Point3D((100,100,100)), vm.X3D, vm.Y3D, vm.Z3D)
+steps = [[vm.OXYZ]*nb_components+[away_frame]*(nb_primitives-nb_components),
+         [vm.OXYZ]*(nb_components+1)+[away_frame]*(nb_primitives-nb_components-1), 
+         [vm.OXYZ]*(nb_components+3)+[away_frame]*(nb_primitives-nb_components-3),
+         [vm.OXYZ]*(nb_components+3+len(primitives_floor[0]))+[away_frame]*(nb_primitives-nb_components-3-len(primitives_floor[0])),
+         [vm.OXYZ]*(nb_components+3+len(primitives_floor[0])+len(primitives_floor[1]))+[away_frame]*(nb_primitives-nb_components-3-len(primitives_floor[0])-len(primitives_floor[1])),
+         [vm.OXYZ]*nb_primitives]
+volmod = vm.MovingVolumeModel(primitives, steps)
+volmod.babylonjs()
