@@ -3381,6 +3381,7 @@ class ArcEllipse3D(Primitive3D) :
     
     """
     def __init__(self, start, interior, end, center, major_dir, normal=None, name='', extra=None):
+        #Extra is an additionnal point if start=end because you need 3 points on the arcellipse to define it
         self.start = start
         self.interior = interior
         self.end = end
@@ -4367,7 +4368,7 @@ class LineSegment3D(Edge3D):
         p2 = other_line.PointAtCurvilinearAbscissa(res.x[1]*other_line.Length())
         return p1, p2
     
-    def distance_parallele(self, LS2):
+    def parallele_distance(self, LS2):
         ptA, ptB, ptC = self.points[0], self.points[1], LS2.points[0]
         u = Vector3D((ptA - ptB).vector)
         u.Normalize()

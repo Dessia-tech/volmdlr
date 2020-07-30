@@ -25,8 +25,8 @@ origin = vm.Point3D((0,0,0))
 basis_plane = vm.Plane3D(origin, x, y)
 alpha = 0.8
 
-nb_step = 5
-nb_components = 50
+nb_step = 1
+nb_components = 20
 thickness = 0.5
 screw_holes_diameter = 0.3
 screw_holes_clearance = 0.4
@@ -51,7 +51,6 @@ class Component :
         self.solid = self.compo_solid()
         
     def compo_points(self) :
-        # x_size, y_size = random.randrange(10, 100, 1)/100, random.randrange(10, 100, 1)/100
         pt1 = self.center + self.vectors[0]*self.compo_side*x_size + self.vectors[1]*self.compo_side*y_size
         pt2 = self.center + self.vectors[0]*self.compo_side*x_size - self.vectors[1]*self.compo_side*y_size
         pt3 = self.center - self.vectors[0]*self.compo_side*x_size - self.vectors[1]*self.compo_side*y_size
@@ -60,11 +59,10 @@ class Component :
     
     def compo_solid(self) :
         extrusion_vector = self.plane.vectors[0].Cross(self.plane.vectors[1])
-        return primitives3D.ExtrudedProfile(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1], self.contour, [], extrusion_vector*self.height, color=(0.44313725, 0.27058824, 0.12156863))
+        return primitives3D.ExtrudedProfile(self.plane.origin, self.plane.vectors[0], self.plane.vectors[1], 
+                                            self.contour, [], extrusion_vector*self.height, color=(0.44313725, 0.27058824, 0.12156863))
         
     def update(self, new_height, new_side) :
-        # self.height = new_height
-        # self.compo_side = new_side
         return Component(self.center, new_side, self.vectors[0], self.vectors[1], new_height, self.plane)
         
         self.points = self.compo_points()
@@ -93,7 +91,10 @@ def generate_param_component(xmin, xmax, ymin, ymax, c_min, c_max, h_min, h_max)
     height = random.randrange(h_min*100, h_max*100, 1)/100
     return center, c, vec1, vec2, height
 
-######### creation of random change
+
+
+
+
 random_change, list_component_init = [], []
 all_solid_init = []
 for k in range(0, nb_components) :
@@ -108,20 +109,11 @@ for k in range(0, nb_components) :
     list_component_init.append(component)
     all_solid_init.append(component.solid)
 
+# for k in range(0, 3) :
+#     list_component_init[k].MPLPlot(color_center='r', color_points='b')
+
+
 for step in range(0, nb_step) :
-    ########## creation of all component
-    # list_component, all_solid = [], []
-    # all_points, all_height = [], []
-    # for k in range(0, nb_components) :
-    #     center, c, vec1, vec2, height = generate_param_component(xmin, xmax, ymin, ymax, c_min, c_max, h_min, h_max)
-    #     if k==0 or nb_components%k == 0 :
-    #         vec1, vec2 = vm.Vector2D((1,0)), vm.Vector2D((0,1))
-    #     component = Component(center, c, vec1, vec2, height, basis_plane)
-    #     list_component.append(component)
-    #     all_solid.append(component.solid)
-    #     all_points.extend(component.points)
-    #     all_height.append(component.height)
-    
     list_component, all_solid = [], []
     all_points, all_height = [], []
     for k in range(0, nb_components) :
@@ -141,7 +133,16 @@ for step in range(0, nb_step) :
     height_sorted = sorted(all_height)
     height, max_height = height_sorted[0], height_sorted[-1]
       
+    fig, ax = plt.subplots()
+    ax.set_aspect('equal')
+    for component in list_component :
+        [pt.MPLPlot(ax=ax) for pt in component.points]
+        component.center.MPLPlot(ax=ax, color='r')
+        [prim.MPLPlot(ax=ax) for prim in component.primitives]
+    
     poly = vm.Polygon2D.points_convex_hull(all_points)
+    poly.MPLPlot(ax=ax)
+    [pt.MPLPlot(ax=ax, color='m') for pt in poly.points]
     
     ############### diagram
     # listofarea = []
@@ -214,9 +215,8 @@ for step in range(0, nb_step) :
     while list_height_polyfloor[1]-list_height_polyfloor[0]<height_belt :
         del list_height_polyfloor[1]
         del list_polyfloor[0]
-        # del list_polyfloor[1]
                 
-    ################################# REZ DE CHAUSSEE 
+    # First Floor
     radius = {0: 0.1, 1: 0.1, 2: 0.1}
     for k in range(0, len(poly.points)-3) :
         radius[3+k] = 0.1 + 0.3 * random.random()
@@ -237,6 +237,7 @@ for step in range(0, nb_step) :
     bottom = primitives3D.ExtrudedProfile(origin, x, y, outer_contour, [],
                                           -thickness_min * extrusion_vector, alpha=alpha, name='bottom')
     
+    # Screw
     screw_holes_rl = inner_contour.Offset(-(thickness+screw_holes_clearance + 0.5 * screw_holes_diameter))
     screw_holes = []
     l = screw_holes_rl.Length()
@@ -244,19 +245,21 @@ for step in range(0, nb_step) :
         s = i * l/n_screws
         p = screw_holes_rl.PointAtCurvilinearAbscissa(s)
         screw_holes.append(vm.Circle2D(p, screw_holes_diameter*0.5))  
-        
+    
+    # Belt
     belt_outer_contour = inner_contour.Offset(-(2*screw_holes_clearance + screw_holes_diameter + thickness))
     
     belt = primitives3D.ExtrudedProfile(origin + basis_plane.normal*height_bot_belt, x, y,
                                         belt_outer_contour, [inner_contour]+screw_holes,
                                         height_belt * extrusion_vector, alpha=alpha, name='belt')
     
+    # Hat floors
     list_component_hat, list_contour_floor = [], []    
     list_inner, list_outer = [], []
     for enum, polyfloor in enumerate(list_polyfloor[1:]) :
-        radius_floor = {0: 0.2, 1: 0.2}
+        radius_floor = {0: 0.1, 1: 0.1}
         for k in range(0, len(polyfloor.points)-2) :
-            radius_floor[2+k] = 0.2 + 0.3 * random.random()
+            radius_floor[2+k] = 0.1 + 0.3 * random.random()
             
         contour_floor = primitives2D.ClosedRoundedLineSegments2D(polyfloor.points,
                                                                   radius_floor,
