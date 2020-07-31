@@ -17,8 +17,6 @@ https://volmdlr.readthedocs.io/en/latest/
 
 ## Contributors
 
-- The Dess
-
 - [DessiA team](https://github.com/orgs/Dessia-tech/people)
 - [Mack Joly](https://www.linkedin.com/in/mack-joly-979824182/)
 
