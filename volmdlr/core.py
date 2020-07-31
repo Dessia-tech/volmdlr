@@ -6309,7 +6309,7 @@ class CylindricalFace3D(Face3D):
         u1 = self.cylindricalsurface3d.frame.u
         v1 = self.cylindricalsurface3d.frame.v
         frame1 = Frame3D(self.center, u1, v1, n1)
-        st1 = Point3D((r1*math.cos(min_theta1), r1*math.sin(min_theta1), min_h1))
+        st1 = Point3D((r*math.cos(min_theta1), r*math.sin(min_theta1), min_h1))
         start1 = frame1.OldCoordinates(st1)
         
         poly2d = planeface.polygon2D
