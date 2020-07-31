@@ -21,7 +21,6 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.Wire2D):
 
         volmdlr.Wire2D.__init__(self, primitives, name)
 
-
     def ArcFeatures(self, ipoint):
         radius = self.radius[ipoint]
         if self.closed:

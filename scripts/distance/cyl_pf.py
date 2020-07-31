@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jun  3 17:08:56 2020
+Created on Wed Jun  3 12:11:37 2020
 
 @author: Mack Pro
 """
@@ -14,46 +14,47 @@ import matplotlib.pyplot as plt
 import random
 import math
 
-rmin, rmax = 100, 1000
+rmin, rmax = 10, 100
 posmin, posmax = -100, 100
 x1, y1, z1 = random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100
-x2, y2, z2 = random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100
 
-
-R1 = random.randrange(rmin, rmax, 1)/1000 #Radius of the generative arc3D
-r1 = random.randrange(rmin/10, rmax/10, 1)/1000 #Radius of the arc3d generated
-
-c1 = volmdlr.Point3D([x1,y1,z1]) #Choose the coordinate of the center
+r1 = random.randrange(rmin, rmax, 1)/1000
+c1 = volmdlr.Point3D([x1,y1,z1])
 
 x3, y3, z3 = random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100
 
-n1 = volmdlr.Vector3D([x3,y3,z3]) #Choose the normal
+n1 = volmdlr.Vector3D([x3,y3,z3])
 n1.Normalize() #Normalize the normal if it is not the case
-plane1 = volmdlr.Plane3D.from_normal(c1, n1) #Create a plane to give us two others vector
+plane1 = volmdlr.Plane3D.from_normal(c1, n1)
 
-frame1 = volmdlr.Frame3D(c1, plane1.vectors[0], plane1.vectors[1], n1) #Frame in the center of the Tore
-toresurface1 = volmdlr.ToroidalSurface3D(frame1, R1*1000, r1*1000) #*1000 because torsurf3d /1000
+frame1 = volmdlr.Frame3D(c1, plane1.vectors[0], plane1.vectors[1], n1) #Frame in the center of the cylinder
+cylsurface1 = volmdlr.CylindricalSurface3D(frame1, r1)
 
-angle_min, angle_max = 0, 2*3.14*100
+hmin, hmax = -50, 50
 
-theta1 = random.randrange(angle_min, angle_max, 20)/100 #Tore's length
-phi1 = 2*math.pi #angle of circle 
-offset_theta1 = random.randrange(angle_min, angle_max, 20)/100 #Theta's offset if you want to turn it with normal's reference
-offset_phi1 = random.randrange(angle_min, angle_max, 20)/100 #Idem but with circle's normal
+h1 = random.randrange(hmin, hmax, 5)/100
 
-print('param1', phi1, theta1, offset_phi1, offset_theta1)
+center2d = c1.To2D(c1, plane1.vectors[0], plane1.vectors[1])
+#Classic Contour
+segbh = volmdlr.LineSegment2D(center2d, center2d + volmdlr.Point2D((0,h1))) #### Minus Pt2D because of Step adaptation
+circlestart = volmdlr.LineSegment2D(segbh.points[1], segbh.points[1]+volmdlr.Point2D((2*math.pi*3/4,0))) #You can change 2*pi by an other angle
+seghb = volmdlr.LineSegment2D(circlestart.points[1],circlestart.points[1]-segbh.points[1])
+circlend = volmdlr.LineSegment2D(seghb.points[1],segbh.points[0])
+edges = [segbh, circlestart, seghb, circlend]
+points = edges[0].points 
+contours =  [volmdlr.Contour2D(edges)]
 
-#You have to create a cutting pattern in 2D
+cyl1 = volmdlr.CylindricalFace3D(contours, cylsurface1, points)
 
-pt1, pt2, pt3, pt4 = volmdlr.Point2D((offset_theta1, offset_phi1)), volmdlr.Point2D((offset_theta1, offset_phi1+phi1)), volmdlr.Point2D((offset_theta1+theta1, offset_phi1+phi1)), volmdlr.Point2D((offset_theta1+theta1, offset_phi1))
-seg1, seg2, seg3, seg4 = volmdlr.LineSegment2D(pt1, pt2), volmdlr.LineSegment2D(pt2, pt3), volmdlr.LineSegment2D(pt3, pt4), volmdlr.LineSegment2D(pt4, pt1) 
-edges = [seg1, seg2, seg3, seg4]
-contours2d =  [volmdlr.Contour2D(edges)]
-points = [theta1, phi1] 
+pts1, tangle1 = cyl1.triangulation(resolution=12)
 
-toroidalface1 = volmdlr.ToroidalFace3D(contours2d, toresurface1, points)
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+[pt.MPLPlot(ax=ax) for pt in pts1]
 
-pts1, tangle1 = toroidalface1.triangulation(resolution=10)
+
+
+
 
 # number_holes = 5
 
@@ -117,11 +118,11 @@ c2 = volmdlr.Contour2D([l1,l2,l3])
 # c2.MPLPlot(a)
 
 profile=primitives3D.ExtrudedProfile(volmdlr.O3D, volmdlr.Y3D, volmdlr.Z3D, outer_profile, [c2], volmdlr.X3D*0.1, name = 'extrusion')
-dmin, p1 ,p2 = toroidalface1.minimum_distance(profile.faces[0], return_points=True)
+dmin, p1 ,p2 = cyl1.minimum_distance(profile.faces[0], return_points=True)
 face_min = profile.faces[0]
 # print('dmin', dmin)
 for face in profile.faces[1:] :
-    dtest, ptest1, ptest2 = toroidalface1.minimum_distance(face, return_points=True)
+    dtest, ptest1, ptest2 = cyl1.minimum_distance(face, return_points=True)
     # print('dtest', dtest)
     if dtest < dmin :
         p1, p2 = ptest1, ptest2
@@ -131,7 +132,7 @@ for face in profile.faces[1:] :
 
 # print('>>>>>>>>> distance minimale', dmin)
 
-shell = volmdlr.Shell3D([toroidalface1])
+shell = volmdlr.Shell3D([cyl1])
 vol = volmdlr.VolumeModel([shell, profile, p1, p2])
 vol.babylonjs_from_script()
 # m = volmdlr.VolumeModel([shell, profile])

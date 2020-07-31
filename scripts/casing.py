@@ -30,7 +30,7 @@ inner_contour = primitives2D.ClosedRoundedLineSegments2D([p1, p2, p3, p4, p5, p6
 
 outer_contour = inner_contour.Offset(-thickness)
 
-f, a = inner_contour.MPLPlot()
+a = inner_contour.MPLPlot()
 outer_contour.MPLPlot(a)
 
 
@@ -59,7 +59,7 @@ belt = primitives3D.ExtrudedProfile(vm.Z3D*(height - 2*thickness), vm.X3D, vm.Y3
                                       [inner_contour]+screw_holes,
                                       thickness * vm.Z3D, name='belt')
 
-fig, ax = inner_contour.MPLPlot()
+ax = inner_contour.MPLPlot()
 belt_outer_contour.MPLPlot(ax=ax)
 
 

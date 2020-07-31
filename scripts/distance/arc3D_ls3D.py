@@ -40,7 +40,7 @@ end.MPLPlot(ax=ax,color='y')
 arc.MPLPlot(ax=ax)
 ptmid.MPLPlot(ax=ax)
 
-pta1, pta2 = arc.Matrix_distance_line(LS1)
+pta1, pta2 = arc.minimum_distance_points_line(LS1)
 pta1.MPLPlot(ax=ax, color='m')
 pta2.MPLPlot(ax=ax, color='m')
 
