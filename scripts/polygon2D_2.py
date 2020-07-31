@@ -43,7 +43,7 @@ for line in border.primitives:
 cog_p = border.CenterOfMass()
 
 ctest=vm.CompositePrimitive2D([border,ptest]+projections)
-f, a = ctest.MPLPlot()
+a = ctest.MPLPlot()
 cog_p.MPLPlot(a, color='r')
 
 
