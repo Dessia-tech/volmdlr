@@ -26,7 +26,7 @@ angle = 3*math.pi/2 #Arc's angle
 
 center2d = center.To2D(center, plane.vectors[0], plane.vectors[1])
 segbh = vm.LineSegment2D(center2d, center2d + vm.Point2D((0,h))) 
-circlestart = vm.LineSegment2D(segbh.points[1], segbh.points[1]+vm.Point2D((angle*radius,0)))
+circlestart = vm.LineSegment2D(segbh.points[1], segbh.points[1]+vm.Point2D((angle,0)))
 seghb = vm.LineSegment2D(circlestart.points[1],circlestart.points[1]-segbh.points[1])
 circlend = vm.LineSegment2D(seghb.points[1],segbh.points[0])
 edges = [segbh, circlestart, seghb, circlend]

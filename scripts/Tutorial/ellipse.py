@@ -37,14 +37,14 @@ segbh = vm.LineSegment3D(pointellipse, pointellipse + vm.Point3D([i*h for i in n
 
 #IF you want to do a complete ellipse, you need to add an 'extra' point ---> see angle
 
-ellipse1 = vm.ArcEllipse3D(pointellipse, pint, pointellipse, center, normal, 'ellipse1',extra1)
+ellipse1 = vm.ArcEllipse3D(pointellipse, pint, pointellipse, center,Gdir, normal, 'ellipse1', extra = extra1)
 seghb = vm.LineSegment3D(segbh.points[1], segbh.points[0])
 
 center2 = center + vm.Point3D([i*h for i in normal.vector])
 pointellipse2 = center2 + Gradius*Gdir
 pint2 = pint + vm.Point3D([i*h for i in normal.vector])
 extra2 = extra1 + vm.Point3D([i*h for i in normal.vector])
-ellipse2 = vm.ArcEllipse3D(pointellipse2, pint2, pointellipse2, center2, normal, 'ellipse2',extra2)
+ellipse2 = vm.ArcEllipse3D(pointellipse2, pint2, pointellipse2, center2, Gdir, normal, 'ellipse2',extra = extra2)
 
 edges = [segbh, ellipse1, seghb, ellipse2]
 points = segbh.points+ellipse1.points+seghb.points+ellipse2.points
