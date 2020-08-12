@@ -1,6 +1,90 @@
 export class D3Unpacker {
 
   constructor(D3Data, data_container){
+
+    var svg = d3.select('#svg_container').select('#svg_container1').select('svg').node().getBoundingClientRect();
+    var height = svg.height
+    var width = svg.width
+
+    var minX = 0;
+    var maxX = 0;
+    var minY = 0;
+    var maxY = 0;
+    var compteur = 0;
+
+    D3Data.forEach(function(dict_component){
+      console.log(dict_component)
+      var texts_data = [];
+      if (dict_component['type'] == 'line'){
+        if(dict_component['data'][0]*1000 < minX){
+          minX = dict_component['data'][0]*1000;
+        }
+        if(dict_component['data'][1]*1000 < minY){
+          minY = dict_component['data'][1]*1000;
+        }
+        if(dict_component['data'][2]*1000 > maxX){
+          maxX = dict_component['data'][2]*1000;
+        }
+        if(dict_component['data'][3]*1000 > maxY){
+          maxY = dict_component['data'][3]*1000;
+        }
+      }
+      if (dict_component['type'] == 'contour'){
+      var explore = dict_component['plot_data'];
+      explore.forEach(function(d){
+        if(d['type'] == "circle" || d['type'] == "arc"){
+          if((d['cx'] - d['r'])*1000 < minX){
+            minX = (d['cx'] - d['r'])*1000;
+          }
+          if((d['cx'] + d['r'])*1000 > maxX){
+            maxX = (d['cx'] + d['r'])*1000;
+          }
+          if((d['cy'] - d['r'])*1000 < minY){
+            minY = (d['cy'] - d['r'])*1000;
+          }
+          if((d['cy'] + d['r'])*1000 > maxY){
+            maxY = (d['cy'] + d['r'])*1000;
+          }
+        }
+
+        else if(d['type'] == "rect"){
+          if(d['x']*1000 < minX){
+            minX = d['x']*1000;
+          }
+          if((d['x'] + d['width'])*1000 > maxX){
+            maxX = (d['x'] + d['width'])*1000;
+          }
+          if(d['y']*1000 < minY){
+            minY = d['y']*1000;
+          }
+          if((d['y'] + d['height'])*1000 > maxY){
+            maxY = (d['y'] + d['height'])*1000;
+          }
+        }
+        else if(d['type'] == "line" || d['type'] == "quote"){
+          if(d['data'][0]*1000 < minX){
+            minX = d['data'][0]*1000;
+          }
+          if(d['data'][1]*1000 < minY){
+            minY = d['data'][1]*1000;
+          }
+          if(d['data'][2]*1000 > maxX){
+            maxX = d['data'][2]*1000;
+          }
+          if(d['data'][3]*1000 > maxY){
+            maxY = d['data'][3]*1000;
+          }
+        }
+        else if (d['type'] == "text"){
+          d['text'] = d['text'].split(" ").join("_");
+          d['id'] = "text"+compteur;
+          texts_data.push(d);
+          compteur += 1;
+        }
+    })}
+    })
+    var coeff_size = Math.min(height, width)/Math.max(maxX - minX, maxY - minY)
+
     var scale_factor = 1; // Remove statement (Binding ? Arguments ?)
     var font_size = 1.5; // Remove statement (Binding ? Arguments ?)
 
@@ -8,12 +92,15 @@ export class D3Unpacker {
     var svg2 = data_container.append("defs")
         .append("pattern")
         .attr("id","diagonal-stripe-1")
-        .attr("width","1")
+        .attr("width", 10/coeff_size)
+        .attr("data-width-init", 10/coeff_size)
         .attr("height","1")
         .attr("patternUnits","userSpaceOnUse")
         .attr("patternTransform", "rotate(45)")
         .append("rect")
-        .attr("width","0.1")
+        .attr("id","rect-diagonal-stripe-1")
+        .attr("width", 1/coeff_size)
+        .attr("data-width-init", 1/coeff_size)
         .attr("height","100")
         .attr("transform","translate(0,0)")
         .attr("fill","black");
@@ -62,11 +149,13 @@ export class D3Unpacker {
 
     D3Data.forEach(function(dict_component){
       // Trace quote
+      console.log(333, dict_component)
       if (dict_component.type == 'line') {
         var lines_data = [];
         lines_data.push(dict_component);
         lines_data.forEach(function(d){
           var stroke_color = d3.rgb(0*255, 1*255, 1*255);
+          console.log(111, d)
           data_container.append("line")
             .attr('id', 'line_geom')
             .attr("x1", 1000*d.data[0])
@@ -265,6 +354,7 @@ export class D3Unpacker {
         })
         arcs_data.forEach(function(d){
           var draw_data = []
+          console.log(111, d)
           d.data.forEach(function(dd){
             draw_data.push([1000*dd['x'],1000*dd['y']])
           })
@@ -274,10 +364,10 @@ export class D3Unpacker {
           data_container.append("path")
               .attr('d', pathString)
               .attr('id', 'path_geom')
-              .attr("stroke-width", d.size)
+              .attr("stroke-width", d.size/coeff_size)
               .attr("stroke", d.color)
               .attr("fill", "none")
-              .attr("stroke-width-init", d.size)
+              .attr("stroke-width-init", d.size/coeff_size)
         })
 
         wires_data.forEach(function(d){
@@ -290,10 +380,10 @@ export class D3Unpacker {
           data_container.append("path")
               .attr('d', pathString)
               .attr('id', 'path_geom')
-              .attr("stroke-width", d.size)
+              .attr("stroke-width", d.size/coeff_size)
               .attr("stroke", d.color)
               .attr("fill", "none")
-              .attr("stroke-width-init", d.size)
+              .attr("stroke-width-init", d.size/coeff_size)
         })
 
         circles_data.forEach(function(d){
@@ -302,29 +392,31 @@ export class D3Unpacker {
               .attr('cx', 1000*d.cx)
               .attr('cy', 1000*d.cy)
               .attr('id', 'circle_geom')
-              .attr("stroke-width", d.size)
-              .attr("stroke-width-init", d.size)
+              .attr("stroke-width", d.size/coeff_size)
+              .attr("stroke-width-init", d.size/coeff_size)
               .attr("stroke", 'black')
-              .attr("fill", "none")
+              .attr("fill", dict_component.fill)
+              .attr("fill-init", dict_component.fill)
               .attr("pointer-events", 'all')
-              //.on("mouseover", highlight)
-              //.on("mouseout", deemphasize);
+              .on("mouseover", highlight)
+              .on("mouseout", deemphasize);
         })
 
         lines_data.forEach(function(d){
+          console.log(111, d)
           var stroke_color = d3.rgb(d.color[0]*255, d.color[1]*255, d.color[2]*255);
+          console.log(d.size)
           data_container.append("line")
             .attr('id', 'line_geom')
             .attr("x1", 1000*d.data[0])
             .attr("y1", 1000*d.data[1])
             .attr("x2", 1000*d.data[2])
             .attr("y2", 1000*d.data[3])
-            .attr("stroke-width", d.size)
+            .attr("stroke-width", d.size/coeff_size)
             .attr("stroke", d.color)
             // .attr("opacity", d.opacity)
             .attr("fill", "none")
-            .attr("stroke-width-init", d.size)
-            // .attr("stroke-linecap", "round");
+            .attr("stroke-width-init", d.size/coeff_size)
         })
 
         rectangles_data.forEach(function(d){
@@ -336,31 +428,14 @@ export class D3Unpacker {
           .attr("width", d.width*1000)
           .attr("height", d.height*1000)
           .attr("stroke", stroke_color.toString())
-          .attr("stroke-width", d.size)
-          .attr("stroke-width-init", d.size)
+          .attr("stroke-width", d.size/coeff_size)
+          .attr("stroke-width-init", d.size/coeff_size)
           .attr("fill", "none")
           .attr("pointer-events", "all")
-          .attr("data", d);
-          // .on("mouseover", highlight)
-          // .on("mouseout", deemphasize);
+          .attr("data", d)
+          .on("mouseover", highlight)
+          .on("mouseout", deemphasize);
         })
-
-        // data_container.selectAll("rect")
-        //     .data(rectangles_data)
-        //     .enter()
-        //     .append("rect")
-        //     .attr('id', 'rect_geom')
-        //     .attr("x", function(d){return d.x*1000;})
-        //     .attr("y", function(d){return d.y*1000;})
-        //     .attr("width", function(d){return d.width*1000;})
-        //     .attr("height", function(d){return d.height*1000;})
-        //     .attr("stroke", function(d){console.log(d);
-        //       let color:any = d3.rgb(d.color[0]*256, d.color[1]*256, d.color[2]*256);
-        //       return color;})
-        //     .attr("fill", "none")
-        //     .attr("pointer-events", "all")
-        //     .on("mouseover", highlight)
-        //     .on("mouseout", deemphasize);
 
         data_container.selectAll("text")
             .data(texts_data)
@@ -373,13 +448,22 @@ export class D3Unpacker {
             .attr('text-anchor', "middle")
             .text(function(d){return d.text;});
 
-        if (dict_component['fill'] != 'none'){
+        if (dict_component['fill'] != null){
+          var stroke_color = d3.rgb(0, 0, 0);
           var areaGenerator = d3.area();
           var area = areaGenerator(area_data);
+          var col = d3.interpolateRdYlGn(dict_component['fill']);
           data_container.append('path')
-            .attr('id', 'essai')
+            .attr('id', 'area_geom')
             .attr('d', area)
-            .attr("fill", "url(#diagonal-stripe-1)")
+            // .attr("fill", dict_component['fill'])
+            .attr("fill", col)
+            .attr("fill-init", col)
+            .attr("color-no-dimension", dict_component['fill'])
+            .attr("show", true)
+            .on("mouseover", highlight)
+            .on("mouseout", deemphasize);
+          console.log(dict_component['fill'], data_container)
         }
       }
     })
@@ -449,19 +533,107 @@ export class D3Unpacker {
     // Highlight function
     function highlight(d){
       d3.select(this)
-        .attr("fill", "#e0e0e0")
-        .attr("fill-opacity", 0.5)
-        .attr("stroke", "#263238")
-        .attr("stroke-width", this['stroke-width']*2/scale_factor); // Size à changer en stroke_width
+        .attr("fill-opacity", 0.2)
+        .attr("fill", "lightsteelblue")
+
     }
 
     // De-emphasize function
     function deemphasize(d){
-      var stroke_color = d3.rgb(this.stroke[0]*255, this.stroke[1]*255, this.stroke[2]*255);
+      console.log(this.getAttribute('show'), this.getAttribute('show') === false)
+      if (this.getAttribute('show') === 'true') {
+        var color = this.getAttribute('fill-init')
+      } else {
+        var color = 'white'
+      }
       d3.select(this)
-        .attr("fill", "none")
-        .attr("stroke", stroke_color.toString())
-        .attr("stroke-width", this['stroke-width']/scale_factor); // Size à changer en stroke_width
+        .attr("fill-opacity", 1)
+        .attr("fill", color)
     }
   }
 }
+
+
+export class Slider {
+
+  constructor(svg_minX, svg_minY, svg_width, svg_height){
+    var svg = d3.select('#svg_container').select('#svg_container1').select('svg')
+
+    var arr = d3.range(98)
+    //position scale
+    var xScale = d3.scaleLinear().domain([0, 100]).range([svg_minX, svg_minX+100])
+
+    //The mystical polylinear color scale
+    var colorScale = d3.scaleLinear().domain([svg_minX, svg_minX+100]).range([0, 1])
+
+    svg.selectAll('rect').data(arr).enter()
+        .append('rect')
+        .attr('x', function(d) { return svg_minX + d })
+        .attr('y', svg_minY)
+        .attr('height', 20)
+        .attr('width', 1)
+        .attr('fill', function(d) { return d3.interpolateRdYlGn(colorScale(xScale(d))) });
+
+    var arc = d3.arc()
+      .innerRadius(0)
+      .outerRadius(10)
+      .startAngle(0)
+      .endAngle((d, i) => i ? Math.PI : -Math.PI)
+
+    function brushHandle(g, selection) {
+      g.selectAll(".handle--custom")
+        .data([{type: "w"}, {type: "e"}])
+        .join(
+          enter => enter.append("path")
+              .attr("class", "handle--custom")
+              .attr("fill", "#666")
+              .attr("fill-opacity", 0.4)
+              .attr("stroke", "#000")
+              .attr("stroke-width", 0.5)
+              .attr("cursor", "ew-resize")
+              .attr("d", arc)
+        )
+          .attr("display", selection === null ? "none" : null)
+          .attr("transform", selection === null ? null : function(d, i){return 'translate('+selection[i]+','+(svg_minY + 20/2+')'})
+      }
+
+    function update(sx){
+      console.log(33, sx)
+      var svg_name = 'svg_container1'
+      d3.selectAll('#' + svg_name).selectAll("#area_geom")
+        .each(function(d) {
+          var select = d3.select(this)
+          var color = select.attr("color-no-dimension")
+          if (sx[0] > color || sx[1] < color){
+            select.attr("fill", 'white')
+            select.attr("show", false)
+          } else {
+            select.attr("fill", select.attr("fill-init"))
+            select.attr("show", true)
+          }
+        })
+      }
+
+    function brushed() {
+      var selection = d3.event.selection;
+      if (selection === null) {
+        circle.attr("stroke", null);
+      } else {
+        // console.log(22, colorScale(selection[0]), colorScale(selection[1]))
+        sx = [colorScale(selection[0]), colorScale(selection[1])]
+        var sol = update(sx)
+      }
+      d3.select(this).call(brushHandle, selection);
+    }
+
+    const brush = d3.brushX()
+        .extent([[svg_minX, svg_minY], [svg_minX+100, svg_minY+20]])
+        .on("start brush end", brushed);
+
+    svg.append("g")
+        .call(brush)
+        .call(brush.move, [0, 100].map(xScale));
+
+
+
+  }}

@@ -20,93 +20,96 @@ from mpl_toolkits.mplot3d import Axes3D
 import pkg_resources
 import tempfile
 import webbrowser
+from dessia_common import DessiaObject
+from typing import TypeVar, List
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 
-_jsonschema = {
-    "definitions": {},
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "plot_data Base Schema",
-    'type' : 'array',
-    'editable' : True,
-    'description' : 'plot data',
-    "items" : {
-          "anyOf": [
-               {"type" : "object",
-                "required": ['type', 'data', 'color', 'marker', 'size', 'dash'],
-                "properties": {'type' : {"const": 'line'},
-                               'data' : {'type' : 'array',
-                                         "minItems": 4,
-                                         "maxItems": 4,
-                                         'examples' : [[0, 1, 1, 2]],
-                                         "description" : "Point coord",
-                                         'items' : {'type' : 'number',
-                                                    'step' : "any",
-                                                    'unit' : 'm'
-                                                    }
-                                         },
-                                'color': {"enum": ['black', 'red', 'blue']},
-                                'marker': {"enum": [None, 'o']},
-                                'dash': {'type': 'boolean'},
-                                'size': {"type": 'number',
-                                         "examples" : [0.5],
-                                         "step" : 'any',
-                                         "minimum" : 0,
-                                         "description" : "Point size"},
-                                'opacity': {"type": 'number',
-                                            "examples" : [1],
-                                            "step" : 'any',
-                                            "minimum" : 0,
-                                            "description" : "Point opacity"},
-                               }
-                       },
-               {"type" : "object",
-                "required": ['type', 'data', 'color', 'marker', 'size'],
-                "properties": {'type' : {"const": 'point'},
-                               'data' : {'type' : 'array',
-                                         "minItems": 2,
-                                         "maxItems": 2,
-                                         'examples' : [[0, 1]],
-                                         "description" : "Point coord",
-                                         'items' : {'type' : 'number',
-                                                    'step' : "any",
-                                                    'unit' : 'm'
-                                                    }
-                                         },
-                                'color': {"enum": ['black', 'red', 'blue']},
-                                'marker': {"enum": ['o']},
-                                'size': {"type": 'number',
-                                         "examples" : [0.5],
-                                         "step" : 'any',
-                                         "minimum" : 0,
-                                         "description" : "Point size"},
-                                'opacity': {"type": 'number',
-                                            "examples" : [1],
-                                            "step" : 'any',
-                                            "minimum" : 0,
-                                            "description" : "Point opacity"},
-                               }
-                       },
-               {"type" : "object",
-                "properties": {'type' : {"const": 'contour'}}
-                       },
-               {"type" : "object",
-                "properties": {'type' : {"const": 'wire'}}
-                       },
-                    ]
-                    },
-         }
-     
-         
-color = {'black': 'k', 'blue': 'b', 'red': 'r', 'green': 'g'}
+class ColorMapSet(DessiaObject):
+    def __init__(self, name:str='', value:float=None, tooltip:bool=False,
+                 color_range:str=None, selector: bool=True):
+        self.selector = selector
+        self.color_range = color_range
+        self.tooltip = tooltip
+        self.value = value
+        DessiaObject.__init__(self, name=name)
 
-def validate(plot_datas):
-    return jsonschema.validate(instance=plot_datas, schema=_jsonschema)
+class HatchingSet(DessiaObject):
+    def __init__(self, name:str='', stroke_width: float=1):
+        self.stroke_width = stroke_width
+        DessiaObject.__init__(self, name=name)
+
+class ColorSurfaceSet(DessiaObject):
+    def __init__(self, name:str='', color: str='white'):
+        self.color = color
+        DessiaObject.__init__(self, name=name)
+
+class PlotDataState(DessiaObject):
+    def __init__(self, name: str='', color_map: ColorMapSet=None, hatching: HatchingSet=None,
+                 color_surface: ColorSurfaceSet=None,
+                 stroke_width: float=1, color_line:str='black', marker:str=None,
+                 dash:str=None, opacity:float=1):
+        self.color_surface = color_surface
+        self.color_map = color_map
+        self.hatching = hatching
+        self.opacity = opacity
+        self.dash = dash
+        self.marker = marker
+        self.color_line = color_line
+        self.stroke_width = stroke_width
+        DessiaObject.__init__(self, name=name)
+
+class PlotDataLine2D(DessiaObject):
+    def __init__(self, data: List[float],
+                 plot_data_states: List[PlotDataState],
+                 type: str='line', name:str='', ):
+        self.data = data
+        self.type = type
+        self.plot_data_states = plot_data_states
+        DessiaObject.__init__(self, name=name)
+
+class PlotDataCircle2D(DessiaObject):
+    def __init__(self, cx: float, cy: float, r: float,
+                 plot_data_states: List[PlotDataState],
+                 type: str='circle', name:str='', ):
+        self.type = type
+        self.plot_data_states = plot_data_states
+        self.r = r
+        self.cy = cy
+        self.cx = cx
+        DessiaObject.__init__(self, name=name)
+
+class PlotDataArc2D(DessiaObject):
+    def __init__(self, cx: float, cy: float, r: float,
+                 data:List[float], angle1: float, angle2: float,
+                 plot_data_states: List[PlotDataState],
+                 type: str='arc', name:str='', ):
+        self.angle2 = angle2
+        self.angle1 = angle1
+        self.data = data
+        self.type = type
+        self.plot_data_states = plot_data_states
+        self.r = r
+        self.cy = cy
+        self.cx = cx
+        DessiaObject.__init__(self, name=name)
+
+class PlotDataContour2D(DessiaObject):
+    def __init__(self, plot_data_primitives: List[float],
+                 plot_data_states: List[PlotDataState],
+                 type: str='contour', name:str='', ):
+        self.plot_data_primitives = plot_data_primitives
+        self.type = type
+        self.plot_data_states = plot_data_states
+        DessiaObject.__init__(self, name=name)
+
+
+color = {'black': 'k', 'blue': 'b', 'red': 'r', 'green': 'g'}
 
 def plot_d3(plot_datas):
     env = Environment(loader=PackageLoader('volmdlr', 'templates'),
                           autoescape=select_autoescape(['html', 'xml']))
-    template = env.get_template('plot_data.html')
+    template = env.get_template('plot_data2.html')
     
     volmdlr_path = pkg_resources.resource_filename(pkg_resources.Requirement('volmdlr'),
                                               'volmdlr/templates')

@@ -13,6 +13,7 @@ from itertools import combinations
 import numpy as npy
 import triangle
 from volmdlr.core_compiled import Matrix33
+import math
 
 from dessia_common import DessiaObject
 from typing import TypeVar, List, Tuple
@@ -253,18 +254,34 @@ class Mesh(DessiaObject):
         for elements_group in self.elements_groups:
             elements_group.plot(ax=ax)
         return ax
-    
+
+    def min_max_area(self):
+        min_area, max_area = math.inf, 0
+        for element_group in self.elements_groups:
+            for element in element_group.elements:
+                area = element._area()
+                max_area = max(max_area, area)
+                min_area = min(min_area, area)
+        return min_area, max_area
+
     def plot_data(self, pos=0, quote=True, constructor=True, direction=1):
+        min_area, max_area = self.min_max_area()
+        color_range = [0, 1]
+        coeff = (color_range[1] - color_range[0])/(max_area - min_area)
         plot_datas = []
         for element_group in self.elements_groups:
             for element in element_group.elements:
-                c1 = vm.Contour2D([vm.LineSegment2D(element.points[0], element.points[1])])
-                c2 = vm.Contour2D([vm.LineSegment2D(element.points[1], element.points[2])])
-                c3 = vm.Contour2D([vm.LineSegment2D(element.points[2], element.points[0])])
-                plot_datas.append(c1.plot_data())
-                plot_datas.append(c2.plot_data())
-                plot_datas.append(c3.plot_data())
-                # plot_datas.extend([c1, c2, c3])
+                area = element._area()
+                fill_color = coeff*(area - min_area)
+                c1 = vm.Contour2D([vm.LineSegment2D(element.points[0], element.points[1]),
+                                   vm.LineSegment2D(element.points[1], element.points[2]),
+                                   vm.LineSegment2D(element.points[2], element.points[0])])
+                plot_datas.append(c1.plot_data(plot_states=[{'value': fill_color, 'name':'area',
+                                                             'tooltip':True, 'color_range': 'RdYlGn',
+                                                             'stroke_width': 1, 'color_line': 'black'},
+                                                            {'value': None, 'name': 'mesh',
+                                                             'stroke_width': 1, 'color_line': 'black'}
+                                                         ]))
         return plot_datas
 
 

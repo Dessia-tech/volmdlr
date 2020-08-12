@@ -1,6 +1,6 @@
 <div #svg_container id='svg_container'></div>
 
-<script type="text/javascript" src="{{volmdlr_path}}/d3/d3-v4.js"></script>
+<script type="text/javascript" src="{{volmdlr_path}}/d3/d3-v5.js"></script>
 
 	<!-- Sets the basepath for the library if not in same directory -->
 	<script type="text/typescript">
@@ -19,10 +19,8 @@
     var font_size = 1.5;
 
     // Get client width and height that preserve the right aspect ratio
-    var margin = {'top' : 4,
-                  'bottom' : 4,
-                  'left' : 4,
-                  'right' : 4};
+    var margin = {'pourcentage_x' : 0.1,
+                  'pourcentage_y' : 0.1};
 
     var minX = 0;
     var maxX = 0;
@@ -82,14 +80,6 @@
         }
 
         else if(d['type'] == "line" || d['type'] == "quote"){
-          // var annotation = {type : "text",
-          //                   x : d['data'][2],
-          //                   y : d['data'][3],
-          //                   text : d['label'],
-          //                   id : "shaft_line_"+d['label']
-          //                 };
-          //
-          // texts_data.push(annotation);
           if(d['data'][0]*1000 < minX){
             minX = d['data'][0]*1000;
           }
@@ -112,24 +102,24 @@
     })}
     })
 
-
-
     // Zoom behavior
     var zoom = d3.zoom()
         .scaleExtent([0.5, 100])
         .on("zoom", zoomed);
 
-    var svg_width = maxX - minX + margin['left'] + margin['right']
-    var svg_height = maxY - minY + margin['top'] + margin['bottom']
+		var margin_x = (maxX - minX)*margin['pourcentage_x']
+		var svg_width = maxX - minX + margin_x
+		var margin_y = (maxY - minY)*margin['pourcentage_y']
+		var svg_height = maxY - minY + margin_y
     if (svg_height/svg_width < alpha) {
       var svg_height_new = svg_width*alpha
-      var svg_minY = minY - margin['top'] + svg_height/2 - svg_height_new/2
-      var svg_minX = minX - margin['left']
+      var svg_minY = minY - margin_y/2 + svg_height/2 - svg_height_new/2
+      var svg_minX = minX - margin_x/2
       svg_height = svg_height_new
     } else {
       var svg_width_new = svg_height/alpha
-      var svg_minY = minY - margin['top']
-      var svg_minX = minX - margin['left'] + svg_width/(2) - svg_width_new/2.
+      var svg_minY = minY - margin_y/2
+      var svg_minX = minX - margin_x/2 + svg_width/(2) - svg_width_new/2.
       var svg_width = svg_width_new
     }
 
@@ -152,10 +142,7 @@
         .call(zoom) // Add zoom behavior
         .on("dblclick.zoom", null); // Disable double-click zoom
 
-
-
-
-
+		var svg = d3.select('#svg_container').select('#svg_container1').select('svg')
     var container = svg.append('g')
         .attr("id", "container_"+'name');
 
@@ -166,7 +153,7 @@
         .attr("width", svg_width)
         .attr("height", svg_height)
         .attr("fill", "none")
-        .attr("stroke-width", 0.5)
+        .attr("stroke-width", 0.001)
         .attr("stroke", "black");
       }
 
@@ -181,6 +168,16 @@
       var stroke_width = 1
 
       data_container.attr("transform", "translate(" + [d3.event.transform.x, d3.event.transform.y].join(",") + ")scale(" + scale_factor + ")");
+
+			d3.selectAll('#diagonal-stripe-1')
+				.each(function(d) {
+					var width1_init = document.getElementById("diagonal-stripe-1").dataset.widthInit
+					var width2_init = document.getElementById("rect-diagonal-stripe-1").dataset.widthInit
+					var selection = d3.select(this);
+					selection.attr("width", Number(width1_init)/scale_factor);
+					var selection = d3.selectAll('#rect-diagonal-stripe-1');
+					selection.attr("width", Number(width2_init)/scale_factor);
+				})
 
       d3.selectAll('#' + svg_name).selectAll('#circle_geom')
         .each(function(d) {
@@ -258,6 +255,8 @@
       // console.log(trace)
 
       var greeter = new Unpacker.D3Unpacker(D3Data, data_container);
+			var slider = new Unpacker.Slider(svg_minX+10, svg_minY+10, svg_width, svg_height);
+
 
   </script>
 

@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>d3 and canvas</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<script src="http://d3js.org/d3.v4.js"></script>
+	<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+
+	<style type="text/css">
+
+		body {
+			font-family: 'Open Sans', sans-serif;
+
+		}
+
+		canvas {
+			border:  1px dotted #ccc;
+
+		}
+
+		#text-explain {
+			display: inline-block;
+			font-size: 0.75em;
+			margin-bottom: 1em;
+		}
+
+		.alert {
+			color: tomato;
+		}
+
+
+/* new (in comparison to code w/o interactivty at:) ---- */
+/* (http://blockbuilder.org/larsvers/d187337850d58a444082841c739985ca) */
+
+		div#tooltip {
+		  position: absolute;
+			display: inline-block;
+			padding: 10px;
+			font-family: 'Open Sans' sans-serif;
+			color: #000;
+		  background-color: #fff;
+			border: 1px solid #999;
+			border-radius: 2px;
+		  pointer-events: none;
+			opacity: 0;
+			z-index: 1;
+		}
+
+/* new ------------------------------------------------ */
+
+
+	</style>
+
+</head>
+<body>
+
+	<h3>Coloured grids</h3>
+	<input type="text" id="text-input" value="5000">
+	<div id="text-explain">...takes numbers between 1 and 10k</div>
+	<div id="container"></div>
+
+	<div id="tooltip">hello</div>	<!-- new  -->
+
+	<script>
+
+		var D3Data = {{ D3Data | safe }};
+		
+		var log = console.log.bind(console);
+		var dir = console.dir.bind(console);
+		var replace = function(string) { return string.replace(/[^a-z0-9]/gi,""); };
+
+
+		// === Set up canvas === //
+
+		var width = 750,
+				height = 400;
+
+		var data = [];
+		var value = 5000;
+		var colorScale;
+
+		var coeff_size = 1
+		// d3.select('#container').append("defs")
+    //     .append("pattern")
+    //     .attr("id","diagonal-stripe-1")
+    //     .attr("width", 100)
+    //     .attr("data-width-init", 100)
+    //     .attr("height","1")
+    //     .attr("patternUnits","userSpaceOnUse")
+    //     .attr("patternTransform", "rotate(45)")
+    //     .append("rect")
+    //     .attr("id","rect-diagonal-stripe-1")
+    //     .attr("width", 1/coeff_size)
+    //     .attr("data-width-init", 1/coeff_size)
+    //     .attr("height","100")
+    //     .attr("transform","translate(0,0)")
+    //     .attr("fill","blue");
+
+		// ctx.fillStyle=ctx.createPattern(p_hatch,'repeat');
+
+		var mainCanvas = d3.select('#container')
+			.append('canvas')
+			.classed('mainCanvas', true)
+			.attr('width', width)
+			.attr('height', height)
+			.attr('overflow', true);
+		//
+		// var p_hatch = d3.select('#container')
+		// 		.append('canvas')
+		// 		.classed('p_hatch', true)
+		// 		.attr('width', 200)
+		// 		.attr('height', 200);
+		var p_hatch = document.createElement("canvas");
+		var max_size = 100
+		var nb_hatch = 20
+		p_hatch.width = max_size;
+		p_hatch.height = max_size;
+		var pctx = p_hatch.getContext("2d");
+
+		// var pctx=p_hatch.node().getContext('2d');
+
+		pctx.lineWidth = 0.5;
+		pctx.lineCap = 'square';
+		pctx.beginPath();
+		var pos_x = - Math.pow(Math.pow(max_size,2)/2, 0.5)
+		var pos_y = Math.pow(Math.pow(max_size,2)/2, 0.5)
+		for (var i = 0; i <= 2*nb_hatch; i++) {
+			pos_x = pos_x + max_size/nb_hatch
+			pos_y = pos_y - max_size/nb_hatch
+			pctx.moveTo(pos_x, pos_y);
+			pctx.lineTo(pos_x + max_size, pos_y + max_size);
+		}
+
+		pctx.stroke();
+		// pctx.strokeRect(0.5, 0.5, 10, 10);
+		// pctx.arc(5.5, 5.5, 3, 0, Math.PI);
+		// pctx.rect(3, 3, 1, 1);
+		// pctx.rect(7, 3, 1, 1);
+
+
+
+
+// new -----------------------------------------------------
+
+		var hiddenCanvas = d3.select('#container')
+			.append('canvas')
+			.classed('hiddenCanvas', true)
+			.attr('width', width)
+			.attr('height', height)
+			.attr('overflow', true);
+
+		var colourToNode = {}; // map to track the colour of nodes
+
+		// function to create new colours for the picking
+
+		var nextCol = 1;
+
+		function genColor(){
+			var ret = [];
+			// via http://stackoverflow.com/a/15804183
+			if(nextCol < 16777215){
+			  ret.push(nextCol & 0xff); // R
+			  ret.push((nextCol & 0xff00) >> 8); // G
+			  ret.push((nextCol & 0xff0000) >> 16); // B
+
+			  nextCol += 1;
+			}
+			var col = "rgb(" + ret.join(',') + ")";
+			return col;
+		}
+
+// new -----------------------------------------------------
+
+
+		// === Load and prepare the data === //
+
+		var data = [];
+		d3.range(1).forEach(function(el) {
+		  data.push({ value: el + 1});
+		});
+
+		// === Bind data to custom elements === //
+
+		var customBase = document.createElement('custom');
+		var custom = d3.select(customBase); // this is our svg replacement
+
+
+		// settings for a grid with 40 cells in a row and 2x5 cells in a group
+		var groupSpacing = 4;
+		var cellSpacing = 2;
+		var cellSize = 200;
+
+
+		// === First call === //
+
+		databind(data); // ...then update the databind function
+
+		var t = d3.timer(function(elapsed) {
+			draw(mainCanvas, false, 0, 0, 1); // <--- new insert arguments
+			draw(hiddenCanvas, true, 0, 0, 1);
+			if (elapsed > 300) t.stop();
+		}); // start a timer that runs the draw function for 300 ms (this needs to be higher than the transition in the databind function)
+
+
+		// === Bind and draw functions === //
+
+		function databind(data) {
+
+			colorScale = d3.scaleSequential(d3.interpolateSpectral).domain(d3.extent(data, function(d) { return d.value; }));
+
+			var join = custom.selectAll('custom.rect')
+				.data(data);
+
+			var enterSel = join.enter()
+				.append('custom')
+				.attr('class', 'rect')
+	      .attr('x', function(d, i) {
+	        var x0 = Math.floor(i / 100) % 10, x1 = Math.floor(i % 10);
+	        return groupSpacing * x0 + (cellSpacing + cellSize) * (x1 + x0 * 10);
+	      })
+	      .attr('y', function(d, i) {
+	        var y0 = Math.floor(i / 1000), y1 = Math.floor(i % 100 / 10);
+	        return groupSpacing * y0 + (cellSpacing + cellSize) * (y1 + y0 * 10);
+	      })
+				.attr('width', 0)
+				.attr('height', 0);
+
+			join
+				.merge(enterSel)
+				.transition()
+				.attr('width', cellSize)
+				.attr('height', cellSize)
+				// .attr('fillStyle', 'url(#diagonal-stripe-1)')
+
+				// new -----------------------------------------------------
+
+				.attr('fillStyleHidden', function(d) {
+					if (!d.hiddenCol) {
+
+						d.hiddenCol = genColor();
+						colourToNode[d.hiddenCol] = d;
+
+					} // here we (1) add a unique colour as property to each element and (2) map the colour to the node in the colourToNode-dictionary
+
+					return d.hiddenCol;
+
+				});
+
+				// new -----------------------------------------------------
+
+
+
+
+			var exitSel = join.exit()
+				.transition()
+				.attr('width', 0)
+				.attr('height', 0)
+				.remove();
+
+		} // databind()
+
+
+		// === Draw canvas === //
+
+		function draw(canvas, hidden, mvx, mvy, scale) { // <---- new arguments
+
+			// build context
+			var context = canvas.node().getContext('2d');
+
+
+			// clear canvas
+			context.clearRect(0, 0, width, height);
+
+
+			// draw each individual custom element with their properties
+
+			var elements = custom.selectAll('custom.rect') // this is the same as the join variable, but used here to draw
+
+			elements.each(function(d,i) { // for each virtual/custom element...
+
+				var node = d3.select(this);
+
+
+				context.fillStyle = context.createPattern(p_hatch,'repeat');
+				// context.fillStyle = hidden ? node.attr('fillStyleHidden') : node.attr('fillStyle'); // <--- new: node colour depends on the canvas we draw
+				// log(context.fillStyle)
+				context.fillRect(scale*(Math.floor(node.attr('x')) + mvx), scale*(Math.floor(node.attr('y')) + mvy), scale*Math.floor(node.attr('width')), scale*Math.floor(node.attr('height')))
+				context.strokeRect(scale*(Math.floor(node.attr('x')) + mvx), scale*(Math.floor(node.attr('y')) + mvy), scale*Math.floor(node.attr('width')), scale*Math.floor(node.attr('height')))
+				context.fill();
+				context.strokeStyle = 'green'
+				context.lineWidth = 2;
+
+			});
+
+		} // draw()
+
+
+		// === Listeners/handlers === //
+
+
+		d3.select('#text-input').on('keydown', function() {
+
+			if (d3.event.keyCode === 13) {
+
+				d3.select('#alert').html('');
+
+				if (+this.value < 1 || +this.value > 10000) {
+
+					d3.select('#text-explain').classed('alert', true);
+
+					return;
+
+				} else {
+
+					d3.select('#text-explain').classed('alert', false);
+
+					data = [];
+
+					d3.range(+this.value).forEach(function(el) {
+
+						data.push({ value: el });
+
+					});
+
+			    databind(data);
+
+					var t = d3.timer(function(elapsed) {
+						draw(mainCanvas, false); // <--- new insert arguments
+						if (elapsed > 300) t.stop();
+					}); // start a timer that runs the draw function for 300 ms (this needs to be higher than the transition in the databind function)
+
+				} // value test
+
+		  } // keyCode 13 === return
+
+		}); // text input listener/handler
+
+
+
+
+// new -----------------------------------------------------
+		let isDrawing = false
+		let mouse1X = 0
+		let mouse1Y = 0
+		let mouse2X = 0
+		let mouse2Y = 0
+		let mouse3X = 0
+		let mouse3Y = 0
+		let last_mouse1X = 0
+		let last_mouse1Y = 0
+		let scale = 1
+
+		d3.select('.mainCanvas').on('mousedown', function() {
+			mouse1X = d3.event.layerX || d3.event.offsetX;
+			mouse1Y = d3.event.layerY || d3.event.offsetY;
+			isDrawing = true
+		});
+
+		d3.select('.mainCanvas').on('mousemove', function() {
+			if (isDrawing === true) {
+				mouse2X = d3.event.layerX || d3.event.offsetX;
+				mouse2Y = d3.event.layerY || d3.event.offsetY;
+				draw(mainCanvas, false, last_mouse1X + mouse2X - mouse1X, last_mouse1Y + mouse2Y - mouse1Y, scale);
+				draw(hiddenCanvas, true, last_mouse1X + mouse2X - mouse1X, last_mouse1Y + mouse2Y - mouse1Y, scale);
+			}
+		});
+
+		d3.select('.mainCanvas').on('mouseup', function() {
+			last_mouse1X = last_mouse1X + mouse2X - mouse1X
+			last_mouse1Y = last_mouse1Y + mouse2Y - mouse1Y
+			isDrawing = false
+		});
+
+		d3.select('.mainCanvas').on('wheel', function() {
+			scale = scale + d3.event.wheelDelta/100
+			mouse3X = d3.event.layerX || d3.event.offsetX;
+			mouse3Y = d3.event.layerY || d3.event.offsetY;
+			last_mouse1X = last_mouse1X - (mouse3X/(scale - d3.event.wheelDelta/100) - mouse3X/scale)
+			last_mouse1Y = last_mouse1Y - (mouse3Y/(scale - d3.event.wheelDelta/100) - mouse3Y/scale)
+			draw(mainCanvas, false, last_mouse1X, last_mouse1Y, scale);
+			draw(hiddenCanvas, true, last_mouse1X, last_mouse1Y, scale);
+		});
+
+		// d3.select('.mainCanvas').on('mousemove', function() {
+		//
+		// 	// draw the hiddenCanvas
+		//
+		//
+		// 	// get mousePositions from the main canvas
+		// 	var mouseX = d3.event.layerX || d3.event.offsetX;
+		// 	var mouseY = d3.event.layerY || d3.event.offsetY;
+		// 	console.log(mouseX, mouseY)
+		//
+		//
+		// 	// get the toolbox for the hidden canvas
+		// 	var hiddenCtx = hiddenCanvas.node().getContext('2d');
+		//
+		// 	// Now to pick the colours from where our mouse is then stringify it in a way our map-object can read it
+		// 	var col = hiddenCtx.getImageData(mouseX, mouseY, 1, 1).data;
+		// 	var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
+		//
+		// 	// get the data from our map !
+		// 	var nodeData = colourToNode[colKey];
+		// 	log(nodeData);
+		//
+		//
+		// 	if (nodeData) {
+		//
+		// 		// Show the tooltip only when there is nodeData found by the mouse
+		//
+		// 		d3.select('#tooltip')
+		// 			.style('opacity', 0.8)
+		// 			.style('top', d3.event.pageY + 5 + 'px')
+		// 			.style('left', d3.event.pageX + 5 + 'px')
+		// 			.html(nodeData.value);
+		//
+		// 	} else {
+		//
+		// 		// Hide the tooltip when there our mouse doesn't find nodeData
+		//
+		// 		d3.select('#tooltip')
+		// 			.style('opacity', 0);
+		//
+		// 	}
+		//
+		// }); // canvas listener/handler
+
+
+// new -----------------------------------------------------
+
+
+
+
+
+
+
+
+
+	</script>
+
+</body>
+</html>

@@ -26,7 +26,7 @@ basis_plane = vm.Plane3D(origin, x, y)
 alpha = 0.8
 
 nb_step = 5
-nb_components = 50
+nb_components = 10
 thickness = 0.5
 screw_holes_diameter = 0.3
 screw_holes_clearance = 0.4
@@ -35,6 +35,7 @@ thickness_min = 0.3
 height_belt = thickness
 minimum_stepfloor, delta_surface = 0.8, 0.8
 
+li_m = []
 
 class Component :
     def __init__(self, center, compo_side, vector1, vector2, height, plane) :
@@ -369,6 +370,28 @@ for step in range(0, nb_step) :
     
     # m = vm.VolumeModel(all_solid+list_component_hat)
     # m.babylonjs(debug=True)
-    
+
     m = vm.VolumeModel(all_solid+[sides,bottom, belt]+list_component_hat)
-    m.babylonjs(debug=True)  
+    li_m.append(m)
+    # m.babylonjs(debug=True)
+
+f_init = vm.OXYZ.copy()
+f1 = f_init.Translation(100*vm.Z3D, copy=True)
+f2 = f1.Translation(-100*vm.Z3D, copy=True)
+
+li_prims = []
+li_frames = [[] for i in range(len(li_m)+1)]
+for i, mi in enumerate(li_m):
+    new_prim = mi.primitives
+    li_prims.extend(new_prim)
+    li_frames[0].extend([f1]*len(new_prim))
+    for i_frame in range(len(li_m)):
+        if i_frame == i:
+            li_frames[i_frame + 1].extend([f_init] * len(new_prim))
+        elif i_frame - 1 == i:
+            li_frames[i_frame + 1].extend([f1] * len(new_prim))
+        else:
+            li_frames[i_frame + 1].extend([f1] * len(new_prim))
+
+model = vm.MovingVolumeModel(li_prims, li_frames)
+model.babylonjs()

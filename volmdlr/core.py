@@ -41,7 +41,7 @@ from volmdlr import plot_data
 import triangle # doc : https://rufat.be/triangle/
 
 import dessia_common as dc
-# from typing import TypeVar, List, Tuple
+from typing import TypeVar, List, Tuple
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 
@@ -718,19 +718,24 @@ class Contour2D(Wire2D):
 
         return A
     
-    def plot_data(self, name='', fill=None, marker=None, color='black', 
-                  stroke_width=1, dash=False, opacity=1):
+    def plot_data(self, plot_data_states:List[plot_data.PlotDataState]=None):
+        if plot_data_states is None:
+            plot_data_states = [plot_data.PlotDataState()]
+        plot_data_primitives = [item.plot_data(plot_data_states=plot_data_states) for item in self.primitives]
+        return plot_data.PlotDataContour2D(plot_data_primitives=plot_data_primitives,
+                                           plot_data_states=plot_data_states,
+                                           name=self.name)
 
-        plot_data = {}
-        plot_data['fill'] = fill
-        plot_data['name'] = name
-        plot_data['type'] = 'contour'
-        plot_data['plot_data'] = []
-        for item in self.primitives:
-            plot_data['plot_data'].append(item.plot_data(color=color,
-                                                         stroke_width=stroke_width,
-                                                         opacity=opacity))
-        return plot_data
+
+
+        # plot_data = {}
+        # plot_data['plot_data_states'] = [pds.to_dict() for pds in plot_data_states]
+        # plot_data['type'] = 'contour'
+        # plot_data['plot_data'] = []
+        # for item in self.primitives:
+        #     print(item)
+        #     plot_data['plot_data'].append(item.plot_data(plot_data_states=plot_data_states))
+        # return plot_data
 
     def copy(self) :
         primitives_copy = []
@@ -1335,18 +1340,10 @@ class LineSegment2D(Line2D):
         s='Line({}) = {{{}, {}}};\n'.format(primitive_index,*points_indices)
         return s,primitive_index+1
 
-    def plot_data(self, marker=None, color='black', stroke_width=1,
-                 dash=False, opacity=1, arrow=False):
-        return {'type' : 'line',
-                'data' : [self.points[0].vector[0], self.points[0].vector[1],
-                          self.points[1].vector[0], self.points[1].vector[1]],
-                'color' : color,
-                'marker' : marker,
-                'size' : stroke_width,
-                'dash' : dash,
-                'opacity' : opacity,
-                'arrow': arrow
-                }
+    def plot_data(self, plot_data_states:List[plot_data.PlotDataState]=None):
+        return plot_data.PlotDataLine2D(data=[self.points[0].vector[0], self.points[0].vector[1],
+                                              self.points[1].vector[0], self.points[1].vector[1]],
+                                        plot_data_states=plot_data_states)
 
     def CreateTangentCircle(self, point, other_line):
         circle1, circle2 = Line2D.CreateTangentCircle(other_line, point, self)
@@ -1653,23 +1650,18 @@ class Arc2D(Primitive2D):
         else:
             return list_node[::-1]
 
-    def plot_data(self, marker=None, color='black', stroke_width=1, dash=False, opacity=1):
+    def plot_data(self, plot_data_states:List[plot_data.PlotDataState]=None):
         list_node = self.Discretise()
         data = []
         for nd in list_node:
             data.append({'x': nd.vector[0], 'y': nd.vector[1]})
-        return {'type' : 'arc',
-                    'cx' : self.center.vector[0],
-                    'cy' : self.center.vector[1],
-                    'data' : data,
-                    'r' : self.radius,
-                    'color' : color,
-                    'opacity' : opacity,
-                    'size' : stroke_width,
-                    'dash' : None,
-                    'marker' : marker,
-                    'angle1' : self.angle1,
-                    'angle2' : self.angle2, }
+        return plot_data.PlotDataArc2D(cx=self.center.vector[0],
+                                       cy=self.center.vector[1],
+                                       data=data,
+                                       r=self.radius,
+                                       angle1=self.angle1,
+                                       angle2=self.angle2,
+                                       plot_data_states=plot_data_states)
 
     def copy(self) :
         return Arc2D(self.start.copy(), self.interior.copy(), self.end.copy())
@@ -1978,16 +1970,11 @@ class Circle2D(Contour2D):
         center = 2*point - self.center
         return Circle2D(center, self.radius)
 
-    def plot_data(self, marker=None, color='black', stroke_width=1, opacity=1, fill=None):
-        return {'type' : 'circle',
-                'cx' : self.center.vector[0],
-                'cy' : self.center.vector[1],
-                'r' : self.radius,
-                'color' : color,
-                'opacity' : opacity,
-                'size' : stroke_width,
-                'dash' : None,
-                'fill' : fill}
+    def plot_data(self, plot_data_states:List[plot_data.PlotDataState]=None):
+        return plot_data.PlotDataCircle2D(cx=self.center.vector[0],
+                                          cy=self.center.vector[1],
+                                          r=self.radius,
+                                          plot_data_states=plot_data_states)
     
     def copy(self) :
         return Circle2D(self.center.copy(), self.radius)
