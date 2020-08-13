@@ -66,7 +66,7 @@
 	<script>
 
 		var D3Data = {{ D3Data | safe }};
-		
+
 		var log = console.log.bind(console);
 		var dir = console.dir.bind(console);
 		var replace = function(string) { return string.replace(/[^a-z0-9]/gi,""); };
@@ -208,7 +208,21 @@
 
 		function databind(data) {
 
-			colorScale = d3.scaleSequential(d3.interpolateSpectral).domain(d3.extent(data, function(d) { return d.value; }));
+			D3Data.forEach(function(dict_component, i){
+				var custom_temp = custom.selectAll('custom.plot_data'+i.toString())
+				custom_temp.append('custom')
+					.attr('class', 'plot_data'+i.toString())
+				dict_component.plot_data_primitives.forEach(function(d, j){
+					if (d.type === 'line'){
+						custom_temp.append('line')
+							.attr('x1', d.data[0])
+							.attr('y1', d.data[1])
+							.attr('x2', d.data[2])
+							.attr('y2', d.data[3])
+					}
+				})
+				console.log(custom, d.type, d.type === 'line')
+			})
 
 			var join = custom.selectAll('custom.rect')
 				.data(data);
@@ -281,8 +295,6 @@
 			elements.each(function(d,i) { // for each virtual/custom element...
 
 				var node = d3.select(this);
-
-
 				context.fillStyle = context.createPattern(p_hatch,'repeat');
 				// context.fillStyle = hidden ? node.attr('fillStyleHidden') : node.attr('fillStyle'); // <--- new: node colour depends on the canvas we draw
 				// log(context.fillStyle)
