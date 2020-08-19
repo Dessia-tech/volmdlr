@@ -143,7 +143,7 @@ def circle_1_point_2_segments(point, line1, line2):
 def points_inside_circle(points, circle):
     point_inside_the_circle = False
     for point in points:
-        if point.PointDistance(circle.center) < circle.radius:
+        if point.point_distance(circle.center) < circle.radius:
             point_inside_the_circle = True
             break
     return point_inside_the_circle

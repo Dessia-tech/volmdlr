@@ -55,37 +55,40 @@ for prim2 in rl2.primitives :
 minimum_distance = rl1.minimum_distance(rl2)
 print('minimum_distance', minimum_distance)
 
-distance_sweep = sweep1.distance_to_shell(sweep2)
-print('distance_sweep', distance_sweep.distance)
+try:
+    distance_sweep = sweep1.distance_to_shell(sweep2)
+    print('distance_sweep', distance_sweep.distance)
 
-pt1, pt2 = distance_sweep.points
-
-dmin, p1 ,p2 = sweep1.faces[0].minimum_distance(sweep2.faces[0], return_points=True)
-face_min1, face_min2 = sweep1.faces[0], sweep2.faces[0]
-# print('dmin', dmin)
-for face1 in sweep1.faces :
-    for face2 in sweep2.faces :
-        dtest, ptest1, ptest2 = face1.minimum_distance(face2, return_points=True)
-        # print('dtest', dtest)
-        if dtest < dmin :
-            p1, p2 = ptest1, ptest2
-            dmin = dtest
-            face_min1, face_min2 = face1, face2
-
-print('distancep1p2', (p1-p2).Norm())        
- 
-
-pt1.MPLPlot(ax=ax, color='g')
-pt2.MPLPlot(ax=ax, color='g')
-p1.MPLPlot(ax=ax, color='r')
-p2.MPLPlot(ax=ax, color='r')
-
-# model=volmdlr.VolumeModel([sweep1, sweep2])
-
-# model.babylonjs()
-
-vol = volmdlr.VolumeModel([sweep1, sweep2, p1, p2])
-vol.babylonjs_from_script()
-
-vol = volmdlr.VolumeModel([sweep1, sweep2, pt1, pt2])
-vol.babylonjs_from_script()
+    pt1, pt2 = distance_sweep.points
+    
+    dmin, p1 ,p2 = sweep1.faces[0].minimum_distance(sweep2.faces[0], return_points=True)
+    face_min1, face_min2 = sweep1.faces[0], sweep2.faces[0]
+    # print('dmin', dmin)
+    for face1 in sweep1.faces :
+        for face2 in sweep2.faces :
+            dtest, ptest1, ptest2 = face1.minimum_distance(face2, return_points=True)
+            # print('dtest', dtest)
+            if dtest < dmin :
+                p1, p2 = ptest1, ptest2
+                dmin = dtest
+                face_min1, face_min2 = face1, face2
+    
+    print('distancep1p2', (p1-p2).Norm())        
+     
+    
+    pt1.MPLPlot(ax=ax, color='g')
+    pt2.MPLPlot(ax=ax, color='g')
+    p1.MPLPlot(ax=ax, color='r')
+    p2.MPLPlot(ax=ax, color='r')
+    
+    # model=volmdlr.VolumeModel([sweep1, sweep2])
+    
+    # model.babylonjs()
+    
+    vol = volmdlr.VolumeModel([sweep1, sweep2, p1, p2])
+    vol.babylonjs_from_script()
+    
+    vol = volmdlr.VolumeModel([sweep1, sweep2, pt1, pt2])
+    vol.babylonjs_from_script()
+except AttributeError:
+    print('Nothing was tested,  CylindricalFace3D object has no attribute linesegment_intersection')

@@ -48,7 +48,7 @@ rl2D_o = primitives2D.OpenedRoundedLineSegments2D([p0, p1, p2, p3, p4, p5, p6, p
 
 
 rl2D_o2 = rl2D_o.OffsetLines([2], -1.25)
-f, ax= rl2D_o.MPLPlot()
+ax= rl2D_o.MPLPlot()
 rl2D_o2.MPLPlot(ax=ax)
 
 
@@ -56,7 +56,7 @@ rl2D_c = primitives2D.ClosedRoundedLineSegments2D([p0, p1, p2, p3, p4, p5, p6, p
 #                                        {0:1, 1:0.05, 2:0.05, 3:1},
                                         adapt_radius=True)
 rl2D_c2 = rl2D_c.OffsetLines([2], 0.2)
-f2, ax2 = rl2D_c.MPLPlot()
+ax2 = rl2D_c.MPLPlot()
 rl2D_c2.MPLPlot(ax=ax2)
 
 

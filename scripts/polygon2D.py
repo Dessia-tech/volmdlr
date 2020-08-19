@@ -40,7 +40,7 @@ for i in range(100):
 #points_inside.MPLPlot()
 #c1=vm.CompositePrimitive2D([polygon, *points_inside])
 #c1.MPLPlot()
-f, a = polygon.MPLPlot()
+a = polygon.MPLPlot()
 for point in points_inside:
     point.MPLPlot(a, color='b')
 for point in points_outside:

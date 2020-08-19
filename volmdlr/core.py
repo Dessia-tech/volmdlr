@@ -227,10 +227,10 @@ def delete_double_pos(points, triangles):
             continue
         # print('face_triangles', face_triangles)
         new_face_triangles = []
-        for triangle in face_triangles:
+        for triangle_ in face_triangles:
             # print('triangle', triangle)
             new_triangle = []
-            for index in triangle:
+            for index in triangle_:
                 if index in index_to_new_index:
                     modified_index = index_to_modified_index[index_to_new_index[index]]
                 else:
@@ -458,8 +458,8 @@ class CompositePrimitive2D(Primitive2D):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
-        else:
-            fig = ax.figure
+        # else:
+        #     fig = ax.figure
 
         for element in self.primitives:
             if element.__class__.__name__ == 'LineSegment2D':
@@ -471,7 +471,7 @@ class CompositePrimitive2D(Primitive2D):
         ax.margins(0.1)
         plt.show()
 
-        return fig, ax
+        return ax
 
     def plot_data(self, name, fill=None, color='black', stroke_width=0.2, opacity=1):
         plot_data = {}
@@ -931,7 +931,7 @@ class Line2D(Primitive2D, Line):
             ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color)
 
 
-        return fig ,ax
+        return ax
     
     def plot_data(self, marker=None, color='black', stroke_width=1,
                  dash=False, opacity=1, arrow=False):
@@ -1266,8 +1266,8 @@ class LineSegment2D(Line2D):
         if ax is None:
             fig, ax = plt.subplots()
             # ax.set_aspect('equal')
-        else:
-            fig = ax.figure
+        # else:
+        #     fig = ax.figure
 
         p1, p2 = self.points
         if arrow:
@@ -1295,7 +1295,7 @@ class LineSegment2D(Line2D):
                 ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color, marker='o', linewidth=width)
             else:
                 ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color, linewidth=width)
-        return fig, ax
+        return ax
 
     def To3D(self, plane_origin, x1, x2):
         p3D=[p.To3D(plane_origin,x1,x2) for p in self.points]
@@ -1566,8 +1566,8 @@ class Arc2D(Primitive2D):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
-        else:
-            fig = ax.figure
+        # else:
+        #     fig = ax.figure
 
         pc = self.center.vector
 #        ax.plot([pc[0]], [pc[1]], 'or')
@@ -1577,7 +1577,7 @@ class Arc2D(Primitive2D):
                     theta2=self.angle2*0.5/math.pi*360,
                     color=color))
         
-        return fig, ax
+        return ax
 
     def To3D(self,plane_origin, x, y):
         ps = self.start.To3D(plane_origin, x, y)
@@ -1902,8 +1902,8 @@ class Circle2D(Contour2D):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
-        else:
-            fig = ax.figure
+        # else:
+        #     fig = ax.figure
 
         pc = self.center.vector
         if self.radius > 0:
@@ -1916,7 +1916,7 @@ class Circle2D(Contour2D):
                              color=color,
                              linestyle=linestyle,
                              linewidth=linewidth))
-        return fig, ax
+        return ax
 
     def To3D(self, plane_origin, x, y):
         normal = x.Cross(y)
@@ -2170,6 +2170,7 @@ class Polygon2D(Contour2D):
                     'dash' : None,
                     'marker' : marker,
                     'opacity' : opacity}
+
     @classmethod
     def points_convex_hull(cls, points):
         ymax, pos_ymax = max_pos([pt.vector[1] for pt in points])
@@ -2217,6 +2218,7 @@ class Polygon2D(Contour2D):
         
         return cls(hull)
         
+
 class Primitive3D(dc.DessiaObject):
     def __init__(self, basis_primitives=None, name=''):
         self.name = name
@@ -2433,7 +2435,7 @@ class Plane3D(Primitive3D):
         self.origin.MPLPlot(ax)
         self.vectors[0].MPLPlot(ax, starting_point=self.origin, color='r')
         self.vectors[1].MPLPlot(ax, starting_point=self.origin, color='g')
-        return fig, ax
+        return ax
 
     def Babylon(self):
         s = 'var myPlane = BABYLON.MeshBuilder.CreatePlane("myPlane", {width: 0.5, height: 0.5, sideOrientation: BABYLON.Mesh.DOUBLESIDE}, scene);\n'
@@ -2747,7 +2749,7 @@ class Line3D(Primitive3D, Line):
             ax.plot([x1, x2], [y1, y2], [z1, z2], color=color, dashes=[30, 5, 10, 5])
         else:
             ax.plot([x1, x2], [y1, y2], [z1, z2], color=color)            
-        return fig, ax
+        return ax
 
     def PlaneProjection2D(self,center, x, y):
         return Line2D(self.points[0].PlaneProjection2D(center, x, y),
@@ -2952,17 +2954,17 @@ class BSplineCurve3D(Primitive3D):
         name = arguments[0][1:-1]
         degree = int(arguments[1])
         points = [object_dict[int(i[1:])] for i in arguments[2]]
-        curve_form = arguments[3]
+        # curve_form = arguments[3]
         if arguments[4] == '.F.':
             closed_curve = False
         elif arguments[4] == '.T.':
             closed_curve = True
         else:
             raise ValueError
-        self_intersect = arguments[5]
+        # self_intersect = arguments[5]
         knot_multiplicities = [int(i) for i in arguments[6][1:-1].split(",")]
         knots = [float(i) for i in arguments[7][1:-1].split(",")]
-        knot_spec = arguments[8]
+        # knot_spec = arguments[8]
         knot_vector = []
         for i, knot in enumerate(knots):
             knot_vector.extend([knot]*knot_multiplicities[i])
@@ -3014,7 +3016,7 @@ class BSplineCurve3D(Primitive3D):
         y=[p.vector[1] for p in self.points]
         z=[p.vector[2] for p in self.points]
         ax.plot(x,y,z, 'o-k')
-        return fig, ax
+        return ax
 
     def To2D(self, plane_origin, x1, x2):
         control_points2D=[p.To2D(plane_origin,x1,x2) for p in self.control_points]
@@ -3190,7 +3192,7 @@ class Arc3D(Primitive3D):
             z.append(pz)
 
         ax.plot(x, y, z, 'k')
-        return fig, ax
+        return ax
 
     def MPLPlot2D(self, center=O3D, x3d=X3D, y3D=Y3D, ax=None, color='k'):
         if ax is None:
@@ -3210,7 +3212,7 @@ class Arc3D(Primitive3D):
             y.append(yi)
         ax.plot(x, y, color=color)
 
-        return fig, ax
+        return ax
 
     def FreeCADExport(self, name, ndigits=6):
         xs, ys, zs = round(1000*self.start, ndigits).vector
@@ -3333,7 +3335,7 @@ class Arc3D(Primitive3D):
             
         p1 = other_line.PointAtCurvilinearAbscissa(res1.x[0]*other_line.Length())
         p2 = self.PointAtCurvilinearAbscissa(res1.x[1]*r)
-        d1 = p1.point_distance(p2)
+        # d1 = p1.point_distance(p2)
         
         res = [res2, res3]
         for couple in res :
@@ -3368,6 +3370,7 @@ class ArcEllipse3D(Primitive3D) :
     
     """
     def __init__(self, start, interior, end, center, major_dir, normal=None, name='', extra=None):
+        #Extra is an additionnal point if start=end because you need 3 points on the arcellipse to define it
         self.start = start
         self.interior = interior
         self.end = end
@@ -3530,7 +3533,7 @@ class ArcEllipse3D(Primitive3D) :
             z.append(pz)
 
         ax.plot(x, y, z, 'k')
-        return fig, ax
+        return ax
 
     def MPLPlot2D(self, x3d, y3D, ax, color='k'):
         if ax is None:
@@ -3550,7 +3553,7 @@ class ArcEllipse3D(Primitive3D) :
             y.append(yi)
         ax.plot(x, y, color=color)
 
-        return fig, ax
+        return ax
 
     def FreeCADExport(self, name, ndigits=6):
         xs, ys, zs = round(1000*self.start, ndigits).vector
@@ -3836,7 +3839,7 @@ class CompositePrimitive3D(Primitive3D):
 
         # ax.set_aspect('equal')
 
-        return fig, ax
+        return ax
 
 
 class Wire3D(CompositePrimitive3D):
@@ -4249,7 +4252,7 @@ class LineSegment3D(Edge3D):
         y=[p.vector[1] for p in self.points]
         z=[p.vector[2] for p in self.points]
         ax.plot(x,y,z, 'o-k')
-        return fig, ax
+        return ax
 
     def MPLPlot2D(self, x_3D, y_3D, ax=None, color='k', width=None):
         if ax is None:
@@ -4260,7 +4263,7 @@ class LineSegment3D(Edge3D):
 
         edge2D =  self.PlaneProjection2D(O3D, x_3D, y_3D)
         edge2D.MPLPlot(ax=ax, color=color, width=width)
-        return fig, ax
+        return ax
 
     def plot_data(self, x_3D, y_3D, marker=None, color='black', stroke_width=1,
                   dash=False, opacity=1, arrow=False):
@@ -4354,7 +4357,7 @@ class LineSegment3D(Edge3D):
         p2 = other_line.PointAtCurvilinearAbscissa(res.x[1]*other_line.Length())
         return p1, p2
     
-    def distance_parallele(self, LS2):
+    def parallele_distance(self, LS2):
         ptA, ptB, ptC = self.points[0], self.points[1], LS2.points[0]
         u = Vector3D((ptA - ptB).vector)
         u.Normalize()
@@ -4700,7 +4703,7 @@ class Circle3D(Contour3D):
         y.append(y[0])
         z.append(z[0])
         ax.plot(x, y, z, color)
-        return fig, ax
+        return ax
             
 
     @classmethod
@@ -4802,7 +4805,7 @@ class Ellipse3D(Contour3D):
         y.append(y[0])
         z.append(z[0])
         ax.plot(x, y, z, color)
-        return fig, ax
+        return ax
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -6146,7 +6149,7 @@ class CylindricalFace3D(Face3D):
         y.append(y[0])
         z.append(z[0])
         ax.plot(x, y, z, color)
-        return fig, ax
+        return ax
     
     def MPLPlotcontours(self, ax=None, color='k'):
         if ax is None:
@@ -6166,7 +6169,7 @@ class CylindricalFace3D(Face3D):
         y.append(y[0])
         z.append(z[0])
         ax.plot(x, y, z, color)
-        return fig, ax
+        return ax
     
     def frame_mapping(self, frame, side, copy=True) :
         if copy:
@@ -6190,8 +6193,8 @@ class CylindricalFace3D(Face3D):
         u1 = self.cylindricalsurface3d.frame.u
         v1 = self.cylindricalsurface3d.frame.v
         frame1 = Frame3D(self.center, u1, v1, n1)
-        st1 = Point3D((r1*math.cos(min_theta1), r1*math.sin(min_theta1), min_h1))
-        start1 = frame1.OldCoordinates(st1)
+        # st1 = Point3D((r1*math.cos(min_theta1), r1*math.sin(min_theta1), min_h1))
+        # start1 = frame1.OldCoordinates(st1)
         
         min_h2, min_theta2, max_h2, max_theta2 = self.minimum_maximum(other_cyl.contours2d[0], r2)
              
@@ -6199,8 +6202,8 @@ class CylindricalFace3D(Face3D):
         u2 = other_cyl.cylindricalsurface3d.frame.u
         v2 = other_cyl.cylindricalsurface3d.frame.v
         frame2 = Frame3D(other_cyl.center, u2, v2, n2)
-        st2 = Point3D((r2*math.cos(min_theta2), r2*math.sin(min_theta2), min_h2))
-        start2 = frame2.OldCoordinates(st2)
+        # st2 = Point3D((r2*math.cos(min_theta2), r2*math.sin(min_theta2), min_h2))
+        # start2 = frame2.OldCoordinates(st2)
         
         w = other_cyl.center - self.center
         
@@ -6293,8 +6296,8 @@ class CylindricalFace3D(Face3D):
         u1 = self.cylindricalsurface3d.frame.u
         v1 = self.cylindricalsurface3d.frame.v
         frame1 = Frame3D(self.center, u1, v1, n1)
-        st1 = Point3D((r1*math.cos(min_theta1), r1*math.sin(min_theta1), min_h1))
-        start1 = frame1.OldCoordinates(st1)
+        # st1 = Point3D((r*math.cos(min_theta1), r*math.sin(min_theta1), min_h1))
+        # start1 = frame1.OldCoordinates(st1)
         
         poly2d = planeface.polygon2D
         pfpoints = poly2d.points
@@ -6304,7 +6307,7 @@ class CylindricalFace3D(Face3D):
         pf1_2d, pf2_2d = Point2D((xmin, ymin)), Point2D((xmin, ymax))
         pf3_2d, pf4_2d = Point2D((xmax, ymin)), Point2D((xmax, ymax))
         pf1, pf2 = pf1_2d.To3D(origin, vx, vy), pf2_2d.To3D(origin, vx, vy) 
-        pf3, pf4 = pf3_2d.To3D(origin, vx, vy), pf4_2d.To3D(origin, vx, vy)
+        pf3, _ = pf3_2d.To3D(origin, vx, vy), pf4_2d.To3D(origin, vx, vy)
         
         u, v = (pf3-pf1), (pf2-pf1)
         u.Normalize()
@@ -6444,7 +6447,7 @@ class ToroidalFace3D (Face3D) :
         """
         frame = toroidalsurface3d.frame
         rcenter, rcircle = toroidalsurface3d.rcenter, toroidalsurface3d.rcircle
-        center = frame.origin
+        # center = frame.origin
         
         if contours3d[0].__class__ is Point3D : #If it is a complete tore
             angle = 2*math.pi
@@ -6545,9 +6548,9 @@ class ToroidalFace3D (Face3D) :
             v_g = n.Cross(u_g)
             v_g.Normalize()
             
-            first_generated, last_generated, c2d = arc.end, arc.start, center_generated
+            _, last_generated, c2d = arc.end, arc.start, center_generated
             if last_generated.__class__ is Point3D :
-                first_generated = arc.start.To2D(center_generated, u_g, v_g)
+                # first_generated = arc.start.To2D(center_generated, u_g, v_g)
                 c2d = center.To2D(center_generated, u_g, v_g)
                 last_generated = last_generated.To2D(center_generated, u_g, v_g)
             x2, y2 = last_generated.vector[0], last_generated.vector[1]
@@ -6558,7 +6561,7 @@ class ToroidalFace3D (Face3D) :
             # first_generated = arc.start.To2D(center_generated, u_g, v_g)
             # c2d = center.To2D(center_generated, u_g, v_g)
             
-            angle1 = math.atan2(first_generated.vector[1], first_generated.vector[0]) ## should be 0
+            # angle1 = math.atan2(first_generated.vector[1], first_generated.vector[0]) ## should be 0
             angle_offset = math.atan2(c2d.vector[1], c2d.vector[0]) 
             if arc.__class__.__name__ == 'Arc2D' :
                 offset2 = 0
@@ -6689,7 +6692,7 @@ class ToroidalFace3D (Face3D) :
     def contours3d_to2d(contours3d, toroidalsurface3d) :
         frame = toroidalsurface3d.frame
         n = frame.w
-        center = frame.origin
+        # center = frame.origin
         rcenter, rcircle = toroidalsurface3d.rcenter, toroidalsurface3d.rcircle
         
         # print('contours3d[0].edges', contours3d[0].edges)
@@ -7093,7 +7096,7 @@ class ToroidalFace3D (Face3D) :
         u1 = self.toroidalsurface3d.frame.u
         v1 = self.toroidalsurface3d.frame.v
         frame1 = Frame3D(self.center, u1, v1, n1)
-        start1 = self.points2d_to3d([[min_theta1, min_phi1]], R1, r1, frame1)
+        # start1 = self.points2d_to3d([[min_theta1, min_phi1]], R1, r1, frame1)
         
         min_phi2, min_theta2, max_phi2, max_theta2 = self.minimum_maximum_tore(other_tore.contours2d[0])
              
@@ -7102,7 +7105,7 @@ class ToroidalFace3D (Face3D) :
         u2 = other_tore.toroidalsurface3d.frame.u
         v2 = other_tore.toroidalsurface3d.frame.v
         frame2 = Frame3D(other_tore.center, u2, v2, n2)
-        start2 = other_tore.points2d_to3d([[min_theta2, min_phi2]], R2, r2, frame2)
+        # start2 = other_tore.points2d_to3d([[min_theta2, min_phi2]], R2, r2, frame2)
         
         w = other_tore.center - self.center
         
@@ -7209,8 +7212,8 @@ class ToroidalFace3D (Face3D) :
         u1 = cyl.cylindricalsurface3d.frame.u
         v1 = cyl.cylindricalsurface3d.frame.v
         frame1 = Frame3D(cyl.center, u1, v1, n1)
-        st1 = Point3D((r*math.cos(min_theta), r*math.sin(min_theta), min_h))
-        start1 = frame1.OldCoordinates(st1)
+        # st1 = Point3D((r*math.cos(min_theta), r*math.sin(min_theta), min_h))
+        # start1 = frame1.OldCoordinates(st1)
         
         min_phi2, min_theta2, max_phi2, max_theta2 = self.minimum_maximum_tore(self.contours2d[0])
         
@@ -7218,7 +7221,7 @@ class ToroidalFace3D (Face3D) :
         u2 = self.toroidalsurface3d.frame.u
         v2 = self.toroidalsurface3d.frame.v
         frame2 = Frame3D(self.center, u2, v2, n2)
-        start2 = self.points2d_to3d([[min_theta2, min_phi2]], R2, r2, frame2)
+        # start2 = self.points2d_to3d([[min_theta2, min_phi2]], R2, r2, frame2)
         
         w = self.center - cyl.center
         
@@ -7326,9 +7329,6 @@ class ToroidalFace3D (Face3D) :
             poly1 = Polygon2D(points_contours1)
             d1, new_pt1_2d = poly1.PointBorderDistance(pt1_2d, return_other_point=True)
                     
-            # pt1 = Point3D((r*math.cos(new_pt1_2d.vector[0]/r),
-            #                r*math.sin(new_pt1_2d.vector[0]/r),
-            #                new_pt1_2d.vector[1]))
             pt1 = Point3D((r*math.cos(new_pt1_2d.vector[0]),
                            r*math.sin(new_pt1_2d.vector[0]),
                            new_pt1_2d.vector[1]))
@@ -7348,7 +7348,7 @@ class ToroidalFace3D (Face3D) :
         pf1_2d, pf2_2d = Point2D((xmin, ymin)), Point2D((xmin, ymax))
         pf3_2d, pf4_2d = Point2D((xmax, ymin)), Point2D((xmax, ymax))
         pf1, pf2 = pf1_2d.To3D(origin, vx, vy), pf2_2d.To3D(origin, vx, vy) 
-        pf3, pf4 = pf3_2d.To3D(origin, vx, vy), pf4_2d.To3D(origin, vx, vy)
+        pf3, _ = pf3_2d.To3D(origin, vx, vy), pf4_2d.To3D(origin, vx, vy)
         
         u, v = (pf3-pf1), (pf2-pf1)
         u.Normalize()
@@ -7357,12 +7357,11 @@ class ToroidalFace3D (Face3D) :
         R1, r1 = self.rcenter, self.rcircle
         min_phi1, min_theta1, max_phi1, max_theta1 = self.minimum_maximum_tore(self.contours2d[0])
         
-        # start1 = self.start
         n1 = self.normal
         u1 = self.toroidalsurface3d.frame.u
         v1 = self.toroidalsurface3d.frame.v
         frame1 = Frame3D(self.center, u1, v1, n1)
-        start1 = self.points2d_to3d([[min_theta1, min_phi1]], R1, r1, frame1)
+        # start1 = self.points2d_to3d([[min_theta1, min_phi1]], R1, r1, frame1)
         
         w = self.center - pf1
         
@@ -7473,7 +7472,7 @@ class ConicalFace3D (Face3D) :
         
         self.center = self.conicalsurface3d.frame.origin
         self.normal = self.conicalsurface3d.frame.w
-        vec1, vec2 = self.conicalsurface3d.frame.u, self.conicalsurface3d.frame.v
+        vec1 = self.conicalsurface3d.frame.u
         ptext1 = self.center + Point3D((self.rb*vec1).vector) + self.normal*param[4]
         center2 = self.center + param[5]*self.normal
         ptext2 =  center2 + Point3D((self.rt*vec1).vector) + param[5]*self.normal 
@@ -7794,7 +7793,7 @@ class ConicalFace3D (Face3D) :
     def contours3d_to2d(contours3d, conicalsurface3d) :
         frame = conicalsurface3d.frame
         n = frame.w
-        center = frame.origin
+        # center = frame.origin
         
         # print('\n contours3d[0].edges', contours3d[0].edges)
         # fig = plt.figure()
@@ -8195,7 +8194,7 @@ class SphericalFace3D (Face3D) :
         
         self.center = self.sphericalsurface3d.frame.origin
         self.normal = self.sphericalsurface3d.frame.w
-        vec1, vec2 = self.sphericalsurface3d.frame.u, self.sphericalsurface3d.frame.v
+        vec1 = self.sphericalsurface3d.frame.u
         ptext1 = self.center + Point3D((self.radius*vec1).vector) 
         ptext2 = self.center + Point3D((self.radius*vec1).vector) 
         c1 = Arc3D(ptext1, ptext1.Rotation(self.center, self.normal, points[0]/2), ptext1.Rotation(self.center, self.normal, points[0]), self.normal) 
@@ -8225,7 +8224,7 @@ class SphericalFace3D (Face3D) :
         frame = sphericalsurface3d.frame
         center = frame.origin
         normal = frame.w
-        r = sphericalsurface3d.radius
+        # r = sphericalsurface3d.radius
         
         if contours3d[0].__class__ is Point3D : #If it is a complete sphere
             angle = 2*math.pi
@@ -8255,7 +8254,7 @@ class SphericalFace3D (Face3D) :
             if len(arc_base) == 0 :
                 raise NotImplementedError
                  
-            radius = sphericalsurface3d.radius 
+            # radius = sphericalsurface3d.radius 
             theta = arc_base[0].angle
             phi = arc_link[0].angle
             if range_list[-1] == range_list[-2] :
@@ -8382,7 +8381,7 @@ class SphericalFace3D (Face3D) :
     def contours3d_to2d(contours3d, sphericalsurface3d) :
         frame = sphericalsurface3d.frame
         n = frame.w
-        center = frame.origin
+        # center = frame.origin
         radius = sphericalsurface3d.radius
         
         # print('contours3d[0].edges', contours3d[0].edges)
@@ -9342,7 +9341,6 @@ class Shell3D(CompositePrimitive3D):
         positions, indices = self.triangulation()
         babylon_mesh = {'positions': positions,
                         'indices': indices,
-                        'name': self.name,
                         'alpha': self.alpha,
                         'name': self.name
                         }
@@ -10280,6 +10278,9 @@ class VolumeModel(dc.DessiaObject):
             ymax = max([p[1] for p in points])
             zmin = min([p[2] for p in points])
             zmax = max([p[2] for p in points])
+        else:
+            raise ValueError('Bounding box cant be determined')
+            # return BoundingBox(-1, 1, -1, 1, -1, 1)
         return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
     
     def plot(self, ax=None, color=None):
@@ -10305,7 +10306,7 @@ class VolumeModel(dc.DessiaObject):
             primitive.MPLPlot(ax)
         ax.set_aspect('equal')
         ax.margins(0.1)
-        return fig, ax
+        return ax
 
     def FreeCADScript(self, fcstd_filepath,
                       freecad_lib_path='/usr/lib/freecad/lib',
