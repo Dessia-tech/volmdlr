@@ -5,8 +5,7 @@
 	<title>d3 and canvas</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 
-	<script src="http://d3js.org/d3.v4.js"></script>
-	<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+	<script type="text/javascript" src="{{volmdlr_path}}/d3/d3-v5.js"></script>
 
 	<style type="text/css">
 
@@ -66,6 +65,12 @@
 	<script>
 
 		var D3Data = {{ D3Data | safe }};
+		var number_plot_data = D3Data.length
+		var show_state = 1
+
+		D3Data.forEach(function(dict_component, i){
+			var number_states = dict_component.plot_data_states.length
+		})
 
 		var log = console.log.bind(console);
 		var dir = console.dir.bind(console);
@@ -132,15 +137,7 @@
 			pctx.moveTo(pos_x, pos_y);
 			pctx.lineTo(pos_x + max_size, pos_y + max_size);
 		}
-
 		pctx.stroke();
-		// pctx.strokeRect(0.5, 0.5, 10, 10);
-		// pctx.arc(5.5, 5.5, 3, 0, Math.PI);
-		// pctx.rect(3, 3, 1, 1);
-		// pctx.rect(7, 3, 1, 1);
-
-
-
 
 // new -----------------------------------------------------
 
@@ -177,7 +174,7 @@
 		// === Load and prepare the data === //
 
 		var data = [];
-		d3.range(1).forEach(function(el) {
+		d3.range(2).forEach(function(el) {
 		  data.push({ value: el + 1});
 		});
 
@@ -185,7 +182,6 @@
 
 		var customBase = document.createElement('custom');
 		var custom = d3.select(customBase); // this is our svg replacement
-
 
 		// settings for a grid with 40 cells in a row and 2x5 cells in a group
 		var groupSpacing = 4;
@@ -195,7 +191,7 @@
 
 		// === First call === //
 
-		databind(data); // ...then update the databind function
+		databind(D3Data, show_state); // ...then update the databind function
 
 		var t = d3.timer(function(elapsed) {
 			draw(mainCanvas, false, 0, 0, 1); // <--- new insert arguments
@@ -205,108 +201,146 @@
 
 
 		// === Bind and draw functions === //
+		var plot_data_states = D3Data
 
-		function databind(data) {
+		function databind(data, show_state) {
 
-			D3Data.forEach(function(dict_component, i){
-				var custom_temp = custom.selectAll('custom.plot_data'+i.toString())
-				custom_temp.append('custom')
-					.attr('class', 'plot_data'+i.toString())
-				dict_component.plot_data_primitives.forEach(function(d, j){
-					if (d.type === 'line'){
-						custom_temp.append('line')
-							.attr('x1', d.data[0])
-							.attr('y1', d.data[1])
-							.attr('x2', d.data[2])
-							.attr('y2', d.data[3])
-					}
-				})
-				console.log(custom, d.type, d.type === 'line')
+			data.forEach(function(dict_component, i){
+
+				var stroke_width = dict_component.plot_data_states[show_state-1].stroke_width
+				var color_line = dict_component.plot_data_states[show_state-1].color_line
+				var hatching = dict_component.plot_data_states[show_state-1].hatching
+				var color_surface = dict_component.plot_data_states[show_state-1].color_surface
+				if (color_surface != null) {
+					var color = color_surface.color
+				} else {
+					var color = null
+				}
+
+				var join = custom.selectAll('custom.plot_data_'+i.toString())
+					.data(dict_component.plot_data_primitives);
+				var enterSel = join.enter()
+					.append('custom')
+					.attr('class', 'plot_data_'+i.toString())
+		      .attr('type', function(d, i) {return d.type;})
+		      .attr('data', function(d, i) {return d.data;})
+					.attr('r', function(d, i) {return d.r;})
+					.attr('cx', function(d, i) {return d.cx;})
+					.attr('cy', function(d, i) {return d.cy;})
+					.attr('angle1', function(d, i) {return d.angle1;})
+					.attr('angle2', function(d, i) {return d.angle2;})
+					.attr('hatching', hatching)
+					.attr('fill', color)
+					.attr('stroke_width', stroke_width)
+					.attr('color_line', color_line)
+					.attr('width', 0)
+					.attr('height', 0);
+				join
+					.merge(enterSel)
+					.transition()
+					.attr('width', cellSize)
+					.attr('height', cellSize)
+					.attr('fillStyleHidden', function(d) {
+						if (!d.hiddenCol) {
+							d.hiddenCol = genColor();
+							colourToNode[d.hiddenCol] = i;
+						} // here we (1) add a unique colour as property to each element and (2) map the colour to the node in the colourToNode-dictionary
+						return d.hiddenCol;
+					});
+				var exitSel = join.exit()
+					.transition()
+					.attr('width', 0)
+					.attr('height', 0)
+					.remove();
+				console.log(custom)
 			})
-
-			var join = custom.selectAll('custom.rect')
-				.data(data);
-
-			var enterSel = join.enter()
-				.append('custom')
-				.attr('class', 'rect')
-	      .attr('x', function(d, i) {
-	        var x0 = Math.floor(i / 100) % 10, x1 = Math.floor(i % 10);
-	        return groupSpacing * x0 + (cellSpacing + cellSize) * (x1 + x0 * 10);
-	      })
-	      .attr('y', function(d, i) {
-	        var y0 = Math.floor(i / 1000), y1 = Math.floor(i % 100 / 10);
-	        return groupSpacing * y0 + (cellSpacing + cellSize) * (y1 + y0 * 10);
-	      })
-				.attr('width', 0)
-				.attr('height', 0);
-
-			join
-				.merge(enterSel)
-				.transition()
-				.attr('width', cellSize)
-				.attr('height', cellSize)
-				// .attr('fillStyle', 'url(#diagonal-stripe-1)')
-
-				// new -----------------------------------------------------
-
-				.attr('fillStyleHidden', function(d) {
-					if (!d.hiddenCol) {
-
-						d.hiddenCol = genColor();
-						colourToNode[d.hiddenCol] = d;
-
-					} // here we (1) add a unique colour as property to each element and (2) map the colour to the node in the colourToNode-dictionary
-
-					return d.hiddenCol;
-
-				});
-
-				// new -----------------------------------------------------
-
-
-
-
-			var exitSel = join.exit()
-				.transition()
-				.attr('width', 0)
-				.attr('height', 0)
-				.remove();
-
-		} // databind()
+		}
 
 
 		// === Draw canvas === //
 
-		function draw(canvas, hidden, mvx, mvy, scale) { // <---- new arguments
+		function draw(canvas, show_state, hidden, mvx, mvy, scale, on_mouse, on_clic) { // <---- new arguments
+
+			var color_surface_on_mouse = 'blue'
+			var color_surface_on_clic = 'green'
 
 			// build context
 			var context = canvas.node().getContext('2d');
 
-
 			// clear canvas
 			context.clearRect(0, 0, width, height);
 
-
 			// draw each individual custom element with their properties
 
-			var elements = custom.selectAll('custom.rect') // this is the same as the join variable, but used here to draw
+			for (var k = 0; k < number_plot_data; k++) {
+				var elements = custom.selectAll('custom.plot_data_'+k.toString()) // this is the same as the join variable, but used here to draw
+				var states = custom.selectAll('custom.plot_data_'+k.toString()+'_state')
 
-			elements.each(function(d,i) { // for each virtual/custom element...
+				context.beginPath();
+				if (hidden) {
+					context.fillStyle = elements.attr('fillStyleHidden')
+				} else {
+					var hatching = elements.attr('hatching')
+					var color = elements.attr('fill')
+					if (hatching != null) {
+						context.fillStyle = context.createPattern(p_hatch,'repeat');
+					} else if (color != null) {
+						context.fillStyle = color
+					}
+					if (on_mouse != null && k == on_mouse) {
+						context.fillStyle = color_surface_on_mouse
+					}
+					if (on_clic != null && k == on_clic) {
+						context.fillStyle = color_surface_on_clic
+					}
 
-				var node = d3.select(this);
-				context.fillStyle = context.createPattern(p_hatch,'repeat');
-				// context.fillStyle = hidden ? node.attr('fillStyleHidden') : node.attr('fillStyle'); // <--- new: node colour depends on the canvas we draw
-				// log(context.fillStyle)
-				context.fillRect(scale*(Math.floor(node.attr('x')) + mvx), scale*(Math.floor(node.attr('y')) + mvy), scale*Math.floor(node.attr('width')), scale*Math.floor(node.attr('height')))
-				context.strokeRect(scale*(Math.floor(node.attr('x')) + mvx), scale*(Math.floor(node.attr('y')) + mvy), scale*Math.floor(node.attr('width')), scale*Math.floor(node.attr('height')))
+					context.strokeStyle = elements.attr('color_line');
+					context.lineWidth = elements.attr('stroke_width');
+				}
+				elements.each(function(d,i) { // for each virtual/custom element...
+
+					var node = d3.select(this);
+					if (node.attr('type') === 'line'){
+						var data = node.attr('data')
+						if (i = 0) {
+							context.moveTo(scale*(1000*d.data[0]+ mvx), scale*(1000*d.data[1]+ mvy));
+						}
+						context.lineTo(scale*(1000*d.data[2]+ mvx), scale*(1000*d.data[3]+ mvy));
+					} else if (node.attr('type') === 'arc') {
+						var ptsa = []
+						for (var l = 0; l < d.data.length; l++) {
+							ptsa.push(scale*(1000*d.data[l]['x']+ mvx))
+							ptsa.push(scale*(1000*d.data[l]['y']+ mvy))
+						}
+						var tension = 0.4
+						var isClosed = false
+						var numOfSegments = 16
+    				drawLines(context, getCurvePoints(ptsa, tension, isClosed, numOfSegments));
+
+					} else if (node.attr('type') === 'circle') {
+						context.arc(scale*(1000*node.attr('cx')+ mvx), scale*(1000*node.attr('cy')+ mvy), scale*1000*node.attr('r'), 0, 2*Math.PI);
+					}
+
+
+
+					// console.log(node, node.attr('type'))
+					// context.fillStyle = context.createPattern(p_hatch,'repeat');
+					// // context.fillStyle = hidden ? node.attr('fillStyleHidden') : node.attr('fillStyle'); // <--- new: node colour depends on the canvas we draw
+					// // log(context.fillStyle)
+					// context.fillRect(scale*(Math.floor(node.attr('x')) + mvx), scale*(Math.floor(node.attr('y')) + mvy), scale*Math.floor(node.attr('width')), scale*Math.floor(node.attr('height')))
+					// context.strokeRect(scale*(Math.floor(node.attr('x')) + mvx), scale*(Math.floor(node.attr('y')) + mvy), scale*Math.floor(node.attr('width')), scale*Math.floor(node.attr('height')))
+					// context.fill();
+					// context.strokeStyle = 'green'
+					// context.lineWidth = 2;
+
+				});
+
+				context.closePath();
 				context.fill();
-				context.strokeStyle = 'green'
-				context.lineWidth = 2;
+				context.stroke();
+			}
 
-			});
-
-		} // draw()
+		}
 
 
 		// === Listeners/handlers === //
@@ -354,6 +388,7 @@
 
 // new -----------------------------------------------------
 		let isDrawing = false
+		let isDrawing_onmouse = true
 		let mouse1X = 0
 		let mouse1Y = 0
 		let mouse2X = 0
@@ -370,19 +405,56 @@
 			isDrawing = true
 		});
 
+		d3.select('.mainCanvas').on('click', function() {
+			console.log('clic')
+			if (isDrawing_onmouse == true) {
+				var mouseX = d3.event.layerX || d3.event.offsetX;
+				var mouseY = d3.event.layerY || d3.event.offsetY;
+
+				// get the toolbox for the hidden canvas
+				var hiddenCtx = hiddenCanvas.node().getContext('2d');
+
+				// Now to pick the colours from where our mouse is then stringify it in a way our map-object can read it
+				var col = hiddenCtx.getImageData(mouseX, mouseY, 1, 1).data;
+				var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
+
+				// get the data from our map !
+				var nodeData = colourToNode[colKey];
+				console.log(nodeData)
+				draw(mainCanvas, show_state, false, last_mouse1X, last_mouse1Y, scale, null, nodeData);
+			}
+		});
+
 		d3.select('.mainCanvas').on('mousemove', function() {
 			if (isDrawing === true) {
+				isDrawing_onmouse = false
 				mouse2X = d3.event.layerX || d3.event.offsetX;
 				mouse2Y = d3.event.layerY || d3.event.offsetY;
-				draw(mainCanvas, false, last_mouse1X + mouse2X - mouse1X, last_mouse1Y + mouse2Y - mouse1Y, scale);
-				draw(hiddenCanvas, true, last_mouse1X + mouse2X - mouse1X, last_mouse1Y + mouse2Y - mouse1Y, scale);
+				draw(mainCanvas, show_state, false, last_mouse1X + mouse2X/scale - mouse1X/scale, last_mouse1Y + mouse2Y/scale - mouse1Y/scale, scale, null, null);
+				draw(hiddenCanvas, show_state, true, last_mouse1X + mouse2X/scale - mouse1X/scale, last_mouse1Y + mouse2Y/scale - mouse1Y/scale, scale, null, null);
+			} else {
+				var mouseX = d3.event.layerX || d3.event.offsetX;
+				var mouseY = d3.event.layerY || d3.event.offsetY;
+
+				// get the toolbox for the hidden canvas
+				var hiddenCtx = hiddenCanvas.node().getContext('2d');
+
+				// Now to pick the colours from where our mouse is then stringify it in a way our map-object can read it
+				var col = hiddenCtx.getImageData(mouseX, mouseY, 1, 1).data;
+				var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
+
+				// get the data from our map !
+				var nodeData = colourToNode[colKey];
+				console.log(nodeData)
+				draw(mainCanvas, show_state, false, last_mouse1X, last_mouse1Y, scale, nodeData, null);
 			}
 		});
 
 		d3.select('.mainCanvas').on('mouseup', function() {
-			last_mouse1X = last_mouse1X + mouse2X - mouse1X
-			last_mouse1Y = last_mouse1Y + mouse2Y - mouse1Y
+			last_mouse1X = last_mouse1X + mouse2X/scale - mouse1X/scale
+			last_mouse1Y = last_mouse1Y + mouse2Y/scale - mouse1Y/scale
 			isDrawing = false
+			isDrawing_onmouse = true
 		});
 
 		d3.select('.mainCanvas').on('wheel', function() {
@@ -391,58 +463,151 @@
 			mouse3Y = d3.event.layerY || d3.event.offsetY;
 			last_mouse1X = last_mouse1X - (mouse3X/(scale - d3.event.wheelDelta/100) - mouse3X/scale)
 			last_mouse1Y = last_mouse1Y - (mouse3Y/(scale - d3.event.wheelDelta/100) - mouse3Y/scale)
-			draw(mainCanvas, false, last_mouse1X, last_mouse1Y, scale);
-			draw(hiddenCanvas, true, last_mouse1X, last_mouse1Y, scale);
+			draw(mainCanvas, show_state, false, last_mouse1X, last_mouse1Y, scale, null, null);
+			draw(hiddenCanvas, show_state, true, last_mouse1X, last_mouse1Y, scale, null, null);
 		});
 
 		// d3.select('.mainCanvas').on('mousemove', function() {
 		//
+		// 	console.log(isDrawing)
+		// 	if (!isDrawing) {
+		// 		var mouseX = d3.event.layerX || d3.event.offsetX;
+		// 		var mouseY = d3.event.layerY || d3.event.offsetY;
+		// 		console.log(mouseX, mouseY)
+		//
+		//
+		// 		// get the toolbox for the hidden canvas
+		// 		var hiddenCtx = hiddenCanvas.node().getContext('2d');
+		//
+		// 		// Now to pick the colours from where our mouse is then stringify it in a way our map-object can read it
+		// 		var col = hiddenCtx.getImageData(mouseX, mouseY, 1, 1).data;
+		// 		var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
+		//
+		// 		// get the data from our map !
+		// 		var nodeData = colourToNode[colKey];
+		// 		log(nodeData);
+		// 	}
 		// 	// draw the hiddenCanvas
 		//
 		//
 		// 	// get mousePositions from the main canvas
-		// 	var mouseX = d3.event.layerX || d3.event.offsetX;
-		// 	var mouseY = d3.event.layerY || d3.event.offsetY;
-		// 	console.log(mouseX, mouseY)
-		//
-		//
-		// 	// get the toolbox for the hidden canvas
-		// 	var hiddenCtx = hiddenCanvas.node().getContext('2d');
-		//
-		// 	// Now to pick the colours from where our mouse is then stringify it in a way our map-object can read it
-		// 	var col = hiddenCtx.getImageData(mouseX, mouseY, 1, 1).data;
-		// 	var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
-		//
-		// 	// get the data from our map !
-		// 	var nodeData = colourToNode[colKey];
-		// 	log(nodeData);
-		//
-		//
-		// 	if (nodeData) {
-		//
-		// 		// Show the tooltip only when there is nodeData found by the mouse
-		//
-		// 		d3.select('#tooltip')
-		// 			.style('opacity', 0.8)
-		// 			.style('top', d3.event.pageY + 5 + 'px')
-		// 			.style('left', d3.event.pageX + 5 + 'px')
-		// 			.html(nodeData.value);
-		//
-		// 	} else {
-		//
-		// 		// Hide the tooltip when there our mouse doesn't find nodeData
-		//
-		// 		d3.select('#tooltip')
-		// 			.style('opacity', 0);
-		//
-		// 	}
+		// 	// var mouseX = d3.event.layerX || d3.event.offsetX;
+		// 	// var mouseY = d3.event.layerY || d3.event.offsetY;
+		// 	// console.log(mouseX, mouseY)
+		// 	//
+		// 	//
+		// 	// // get the toolbox for the hidden canvas
+		// 	// var hiddenCtx = hiddenCanvas.node().getContext('2d');
+		// 	//
+		// 	// // Now to pick the colours from where our mouse is then stringify it in a way our map-object can read it
+		// 	// var col = hiddenCtx.getImageData(mouseX, mouseY, 1, 1).data;
+		// 	// var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
+		// 	//
+		// 	// // get the data from our map !
+		// 	// var nodeData = colourToNode[colKey];
+		// 	// log(nodeData);
+		// 	//
+		// 	//
+		// 	// if (nodeData) {
+		// 	//
+		// 	// 	// Show the tooltip only when there is nodeData found by the mouse
+		// 	//
+		// 	// 	d3.select('#tooltip')
+		// 	// 		.style('opacity', 0.8)
+		// 	// 		.style('top', d3.event.pageY + 5 + 'px')
+		// 	// 		.style('left', d3.event.pageX + 5 + 'px')
+		// 	// 		.html(nodeData.value);
+		// 	//
+		// 	// } else {
+		// 	//
+		// 	// 	// Hide the tooltip when there our mouse doesn't find nodeData
+		// 	//
+		// 	// 	d3.select('#tooltip')
+		// 	// 		.style('opacity', 0);
+		// 	//
+		// 	// }
 		//
 		// }); // canvas listener/handler
 
 
 // new -----------------------------------------------------
+function drawLines(ctx, pts) {
+    // ctx.moveTo(pts[0], pts[1]);
+    for(i=2;i<pts.length-1;i+=2) ctx.lineTo(pts[i], pts[i+1]);
+}
 
+function getCurvePoints(pts, tension, isClosed, numOfSegments) {
 
+    // use input value if provided, or use a default value
+    tension = (typeof tension != 'undefined') ? tension : 0.5;
+    isClosed = isClosed ? isClosed : false;
+    numOfSegments = numOfSegments ? numOfSegments : 16;
+
+    var _pts = [], res = [],    // clone array
+        x, y,           // our x,y coords
+        t1x, t2x, t1y, t2y, // tension vectors
+        c1, c2, c3, c4,     // cardinal points
+        st, t, i;       // steps based on num. of segments
+
+    // clone array so we don't change the original
+    //
+    _pts = pts.slice(0);
+
+    // The algorithm require a previous and next point to the actual point array.
+    // Check if we will draw closed or open curve.
+    // If closed, copy end points to beginning and first points to end
+    // If open, duplicate first points to befinning, end points to end
+    if (isClosed) {
+        _pts.unshift(pts[pts.length - 1]);
+        _pts.unshift(pts[pts.length - 2]);
+        _pts.unshift(pts[pts.length - 1]);
+        _pts.unshift(pts[pts.length - 2]);
+        _pts.push(pts[0]);
+        _pts.push(pts[1]);
+    }
+    else {
+        _pts.unshift(pts[1]);   //copy 1. point and insert at beginning
+        _pts.unshift(pts[0]);
+        _pts.push(pts[pts.length - 2]); //copy last point and append
+        _pts.push(pts[pts.length - 1]);
+    }
+
+    // ok, lets start..
+
+    // 1. loop goes through point array
+    // 2. loop goes through each segment between the 2 pts + 1e point before and after
+    for (i=2; i < (_pts.length - 4); i+=2) {
+        for (t=0; t <= numOfSegments; t++) {
+
+            // calc tension vectors
+            t1x = (_pts[i+2] - _pts[i-2]) * tension;
+            t2x = (_pts[i+4] - _pts[i]) * tension;
+
+            t1y = (_pts[i+3] - _pts[i-1]) * tension;
+            t2y = (_pts[i+5] - _pts[i+1]) * tension;
+
+            // calc step
+            st = t / numOfSegments;
+
+            // calc cardinals
+            c1 =   2 * Math.pow(st, 3)  - 3 * Math.pow(st, 2) + 1;
+            c2 = -(2 * Math.pow(st, 3)) + 3 * Math.pow(st, 2);
+            c3 =       Math.pow(st, 3)  - 2 * Math.pow(st, 2) + st;
+            c4 =       Math.pow(st, 3)  -     Math.pow(st, 2);
+
+            // calc x and y cords with common control vectors
+            x = c1 * _pts[i]    + c2 * _pts[i+2] + c3 * t1x + c4 * t2x;
+            y = c1 * _pts[i+1]  + c2 * _pts[i+3] + c3 * t1y + c4 * t2y;
+
+            //store points in array
+            res.push(x);
+            res.push(y);
+
+        }
+    }
+
+    return res;
+}
 
 
 

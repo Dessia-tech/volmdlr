@@ -1634,7 +1634,7 @@ class Arc2D(Primitive2D):
         Ic = npy.array([[Ix, Ixy], [Ixy, Iy]])
         return geometry.Huygens2D(Ic, self.Area(), self.center, point)
 
-    def Discretise(self, num=10):
+    def Discretise(self, num=11):
         list_node = []
         if (self.angle1 < 0) and (self.angle2 > 0):
             delta_angle = -self.angle1 + self.angle2
