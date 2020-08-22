@@ -553,7 +553,6 @@ export class D3Unpacker {
   }
 }
 
-
 export class Slider {
 
   constructor(svg_minX, svg_minY, svg_width, svg_height){

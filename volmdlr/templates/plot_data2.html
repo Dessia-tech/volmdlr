@@ -6,6 +6,8 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 
 	<script type="text/javascript" src="{{volmdlr_path}}/d3/d3-v5.js"></script>
+	<script type="text/javascript" src="{{volmdlr_path}}/js/minmax.js"></script>
+	<script type="text/javascript" src="{{volmdlr_path}}/js/hatching.js"></script>
 
 	<style type="text/css">
 
@@ -63,47 +65,24 @@
 	<div id="tooltip">hello</div>	<!-- new  -->
 
 	<script>
+		var width = 750,
+				height = 400;
+		var show_state = 1
+		var coeff_pixel = 1000
 
 		var D3Data = {{ D3Data | safe }};
 		var number_plot_data = D3Data.length
-		var show_state = 1
+
+		var size = new evaluate_minmax(D3Data, coeff_pixel);
+		var canvas_hatching = new hatching(max_size=100, nb_hatch=20, lineWidth=0.5).generate();
 
 		D3Data.forEach(function(dict_component, i){
 			var number_states = dict_component.plot_data_states.length
 		})
 
-		var log = console.log.bind(console);
-		var dir = console.dir.bind(console);
-		var replace = function(string) { return string.replace(/[^a-z0-9]/gi,""); };
-
-
 		// === Set up canvas === //
-
-		var width = 750,
-				height = 400;
-
 		var data = [];
 		var value = 5000;
-		var colorScale;
-
-		var coeff_size = 1
-		// d3.select('#container').append("defs")
-    //     .append("pattern")
-    //     .attr("id","diagonal-stripe-1")
-    //     .attr("width", 100)
-    //     .attr("data-width-init", 100)
-    //     .attr("height","1")
-    //     .attr("patternUnits","userSpaceOnUse")
-    //     .attr("patternTransform", "rotate(45)")
-    //     .append("rect")
-    //     .attr("id","rect-diagonal-stripe-1")
-    //     .attr("width", 1/coeff_size)
-    //     .attr("data-width-init", 1/coeff_size)
-    //     .attr("height","100")
-    //     .attr("transform","translate(0,0)")
-    //     .attr("fill","blue");
-
-		// ctx.fillStyle=ctx.createPattern(p_hatch,'repeat');
 
 		var mainCanvas = d3.select('#container')
 			.append('canvas')
@@ -111,42 +90,11 @@
 			.attr('width', width)
 			.attr('height', height)
 			.attr('overflow', true);
-		//
-		// var p_hatch = d3.select('#container')
-		// 		.append('canvas')
-		// 		.classed('p_hatch', true)
-		// 		.attr('width', 200)
-		// 		.attr('height', 200);
-		var p_hatch = document.createElement("canvas");
-		var max_size = 100
-		var nb_hatch = 20
-		p_hatch.width = max_size;
-		p_hatch.height = max_size;
-		var pctx = p_hatch.getContext("2d");
-
-		// var pctx=p_hatch.node().getContext('2d');
-
-		pctx.lineWidth = 0.5;
-		pctx.lineCap = 'square';
-		pctx.beginPath();
-		var pos_x = - Math.pow(Math.pow(max_size,2)/2, 0.5)
-		var pos_y = Math.pow(Math.pow(max_size,2)/2, 0.5)
-		for (var i = 0; i <= 2*nb_hatch; i++) {
-			pos_x = pos_x + max_size/nb_hatch
-			pos_y = pos_y - max_size/nb_hatch
-			pctx.moveTo(pos_x, pos_y);
-			pctx.lineTo(pos_x + max_size, pos_y + max_size);
-		}
-		pctx.stroke();
 
 // new -----------------------------------------------------
-
-		var hiddenCanvas = d3.select('#container')
-			.append('canvas')
-			.classed('hiddenCanvas', true)
-			.attr('width', width)
-			.attr('height', height)
-			.attr('overflow', true);
+		var hiddenCanvas = document.createElement("canvas");
+		hiddenCanvas.width = width;
+		hiddenCanvas.height = height;
 
 		var colourToNode = {}; // map to track the colour of nodes
 
@@ -170,7 +118,6 @@
 
 // new -----------------------------------------------------
 
-
 		// === Load and prepare the data === //
 
 		var data = [];
@@ -178,10 +125,10 @@
 		  data.push({ value: el + 1});
 		});
 
-		// === Bind data to custom elements === //
+		// === Bind data to show_DOM elements === //
 
-		var customBase = document.createElement('custom');
-		var custom = d3.select(customBase); // this is our svg replacement
+		var show_DOMBase = document.createElement('show_DOM');
+		var show_DOM = d3.select(show_DOMBase); // this is our svg replacement
 
 		// settings for a grid with 40 cells in a row and 2x5 cells in a group
 		var groupSpacing = 4;
@@ -193,12 +140,34 @@
 
 		databind(D3Data, show_state); // ...then update the databind function
 
+		let isDrawing = false
+		let mouse_mouving = false
+		let mouse1X = 0
+		let mouse1Y = 0
+		let mouse2X = 0
+		let mouse2Y = 0
+		let mouse3X = 0
+		let mouse3Y = 0
+		let scale = Math.min(width/(size.maxX - size.minX), height/(size.maxY - size.minY))
+		let last_mouse1X = (width/2 - (size.maxX - size.minX)*scale/2)/scale + (size.maxX - size.minX)/2
+		let last_mouse1Y = (height/2 - (size.maxY - size.minY)*scale/2)/scale + (size.maxY - size.minY)/2
+
 		var t = d3.timer(function(elapsed) {
-			draw(mainCanvas, false, 0, 0, 1); // <--- new insert arguments
-			draw(hiddenCanvas, true, 0, 0, 1);
+			draw(mainCanvas, show_state, false, last_mouse1X, last_mouse1Y, scale, null, null); // <--- new insert arguments
+			draw(hiddenCanvas, show_state, true, last_mouse1X, last_mouse1Y, scale, null, null);
 			if (elapsed > 300) t.stop();
 		}); // start a timer that runs the draw function for 300 ms (this needs to be higher than the transition in the databind function)
 
+
+		// draw(mainCanvas, false, 0, 0, 1); // <--- new insert arguments
+		// draw(hiddenCanvas, true, 0, 0, 1);
+		//
+		// draw(mainCanvas, false, last_mouse1X, last_mouse1Y, scale); // <--- new insert arguments
+		// draw(hiddenCanvas, true, last_mouse1X, last_mouse1Y, scale);
+
+
+		// draw(mainCanvas, false, last_mouse1X, last_mouse1Y, scale); // <--- new insert arguments
+		// draw(hiddenCanvas, true, last_mouse1X, last_mouse1Y, scale);
 
 		// === Bind and draw functions === //
 		var plot_data_states = D3Data
@@ -217,10 +186,10 @@
 					var color = null
 				}
 
-				var join = custom.selectAll('custom.plot_data_'+i.toString())
+				var join = show_DOM.selectAll('show_DOM.plot_data_'+i.toString())
 					.data(dict_component.plot_data_primitives);
 				var enterSel = join.enter()
-					.append('custom')
+					.append('show_DOM')
 					.attr('class', 'plot_data_'+i.toString())
 		      .attr('type', function(d, i) {return d.type;})
 		      .attr('data', function(d, i) {return d.data;})
@@ -252,7 +221,7 @@
 					.attr('width', 0)
 					.attr('height', 0)
 					.remove();
-				console.log(custom)
+				console.log(show_DOM)
 			})
 		}
 
@@ -261,20 +230,24 @@
 
 		function draw(canvas, show_state, hidden, mvx, mvy, scale, on_mouse, on_clic) { // <---- new arguments
 
-			var color_surface_on_mouse = 'blue'
-			var color_surface_on_clic = 'green'
+			var color_surface_on_mouse = 'lightskyblue'
+			var color_surface_on_clic = 'blue'
 
 			// build context
-			var context = canvas.node().getContext('2d');
+
+			if (hidden) {
+				var context = canvas.getContext("2d");
+			} else {
+				var context = canvas.node().getContext('2d');
+			}
 
 			// clear canvas
 			context.clearRect(0, 0, width, height);
 
-			// draw each individual custom element with their properties
+			// draw each individual show_DOM element with their properties
 
 			for (var k = 0; k < number_plot_data; k++) {
-				var elements = custom.selectAll('custom.plot_data_'+k.toString()) // this is the same as the join variable, but used here to draw
-				var states = custom.selectAll('custom.plot_data_'+k.toString()+'_state')
+				var elements = show_DOM.selectAll('show_DOM.plot_data_'+k.toString()) // this is the same as the join variable, but used here to draw
 
 				context.beginPath();
 				if (hidden) {
@@ -283,12 +256,13 @@
 					var hatching = elements.attr('hatching')
 					var color = elements.attr('fill')
 					if (hatching != null) {
-						context.fillStyle = context.createPattern(p_hatch,'repeat');
+						context.fillStyle = context.createPattern(canvas_hatching,'repeat');
 					} else if (color != null) {
 						context.fillStyle = color
 					}
 					if (on_mouse != null && k == on_mouse) {
 						context.fillStyle = color_surface_on_mouse
+						context.opacity = 0.2
 					}
 					if (on_clic != null && k == on_clic) {
 						context.fillStyle = color_surface_on_clic
@@ -297,7 +271,7 @@
 					context.strokeStyle = elements.attr('color_line');
 					context.lineWidth = elements.attr('stroke_width');
 				}
-				elements.each(function(d,i) { // for each virtual/custom element...
+				elements.each(function(d,i) { // for each virtual/show_DOM element...
 
 					var node = d3.select(this);
 					if (node.attr('type') === 'line'){
@@ -324,7 +298,7 @@
 
 
 					// console.log(node, node.attr('type'))
-					// context.fillStyle = context.createPattern(p_hatch,'repeat');
+					// context.fillStyle = context.createPattern(canvas_hatching,'repeat');
 					// // context.fillStyle = hidden ? node.attr('fillStyleHidden') : node.attr('fillStyle'); // <--- new: node colour depends on the canvas we draw
 					// // log(context.fillStyle)
 					// context.fillRect(scale*(Math.floor(node.attr('x')) + mvx), scale*(Math.floor(node.attr('y')) + mvy), scale*Math.floor(node.attr('width')), scale*Math.floor(node.attr('height')))
@@ -387,17 +361,7 @@
 
 
 // new -----------------------------------------------------
-		let isDrawing = false
-		let isDrawing_onmouse = true
-		let mouse1X = 0
-		let mouse1Y = 0
-		let mouse2X = 0
-		let mouse2Y = 0
-		let mouse3X = 0
-		let mouse3Y = 0
-		let last_mouse1X = 0
-		let last_mouse1Y = 0
-		let scale = 1
+
 
 		d3.select('.mainCanvas').on('mousedown', function() {
 			mouse1X = d3.event.layerX || d3.event.offsetX;
@@ -405,29 +369,10 @@
 			isDrawing = true
 		});
 
-		d3.select('.mainCanvas').on('click', function() {
-			console.log('clic')
-			if (isDrawing_onmouse == true) {
-				var mouseX = d3.event.layerX || d3.event.offsetX;
-				var mouseY = d3.event.layerY || d3.event.offsetY;
-
-				// get the toolbox for the hidden canvas
-				var hiddenCtx = hiddenCanvas.node().getContext('2d');
-
-				// Now to pick the colours from where our mouse is then stringify it in a way our map-object can read it
-				var col = hiddenCtx.getImageData(mouseX, mouseY, 1, 1).data;
-				var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
-
-				// get the data from our map !
-				var nodeData = colourToNode[colKey];
-				console.log(nodeData)
-				draw(mainCanvas, show_state, false, last_mouse1X, last_mouse1Y, scale, null, nodeData);
-			}
-		});
-
 		d3.select('.mainCanvas').on('mousemove', function() {
 			if (isDrawing === true) {
-				isDrawing_onmouse = false
+				mouse_mouving = true
+				console.log('mouse_mouving', mouse_mouving)
 				mouse2X = d3.event.layerX || d3.event.offsetX;
 				mouse2Y = d3.event.layerY || d3.event.offsetY;
 				draw(mainCanvas, show_state, false, last_mouse1X + mouse2X/scale - mouse1X/scale, last_mouse1Y + mouse2Y/scale - mouse1Y/scale, scale, null, null);
@@ -437,7 +382,7 @@
 				var mouseY = d3.event.layerY || d3.event.offsetY;
 
 				// get the toolbox for the hidden canvas
-				var hiddenCtx = hiddenCanvas.node().getContext('2d');
+				var hiddenCtx = hiddenCanvas.getContext('2d');
 
 				// Now to pick the colours from where our mouse is then stringify it in a way our map-object can read it
 				var col = hiddenCtx.getImageData(mouseX, mouseY, 1, 1).data;
@@ -451,10 +396,23 @@
 		});
 
 		d3.select('.mainCanvas').on('mouseup', function() {
-			last_mouse1X = last_mouse1X + mouse2X/scale - mouse1X/scale
-			last_mouse1Y = last_mouse1Y + mouse2Y/scale - mouse1Y/scale
+			if (mouse_mouving) {
+				last_mouse1X = last_mouse1X + mouse2X/scale - mouse1X/scale
+				last_mouse1Y = last_mouse1Y + mouse2Y/scale - mouse1Y/scale
+			} else {
+				// get the toolbox for the hidden canvas
+				var hiddenCtx = hiddenCanvas .getContext('2d');
+
+				// Now to pick the colours from where our mouse is then stringify it in a way our map-object can read it
+				var col = hiddenCtx.getImageData(mouse1X, mouse1Y, 1, 1).data;
+				var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
+
+				// get the data from our map !
+				var nodeData = colourToNode[colKey];
+				draw(mainCanvas, show_state, false, last_mouse1X, last_mouse1Y, scale, null, nodeData);
+			}
 			isDrawing = false
-			isDrawing_onmouse = true
+			mouse_mouving = false
 		});
 
 		d3.select('.mainCanvas').on('wheel', function() {
