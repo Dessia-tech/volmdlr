@@ -8,6 +8,7 @@ Created on Tue Jan 28 10:05:56 2020
 
 import matplotlib.pyplot as plt
 import volmdlr.core as vm
+from volmdlr import plot_data
 import volmdlr.core_compiled as vmc
 from itertools import combinations
 import numpy as npy
@@ -265,6 +266,11 @@ class Mesh(DessiaObject):
         return min_area, max_area
 
     def plot_data(self, pos=0, quote=True, constructor=True, direction=1):
+
+        stroke_width = 1
+        color_surface = plot_data.ColorSurfaceSet(color='white')
+        plot_data_state = plot_data.PlotDataState(name='', stroke_width=stroke_width, color_surface=color_surface)
+
         min_area, max_area = self.min_max_area()
         color_range = [0, 1]
         coeff = (color_range[1] - color_range[0])/(max_area - min_area)
@@ -276,12 +282,13 @@ class Mesh(DessiaObject):
                 c1 = vm.Contour2D([vm.LineSegment2D(element.points[0], element.points[1]),
                                    vm.LineSegment2D(element.points[1], element.points[2]),
                                    vm.LineSegment2D(element.points[2], element.points[0])])
-                plot_datas.append(c1.plot_data(plot_states=[{'value': fill_color, 'name':'area',
-                                                             'tooltip':True, 'color_range': 'RdYlGn',
-                                                             'stroke_width': 1, 'color_line': 'black'},
-                                                            {'value': None, 'name': 'mesh',
-                                                             'stroke_width': 1, 'color_line': 'black'}
-                                                         ]))
+                # plot_datas.append(c1.plot_data(plot_states=[{'value': fill_color, 'name':'area',
+                #                                              'tooltip':True, 'color_range': 'RdYlGn',
+                #                                              'stroke_width': 1, 'color_line': 'black'},
+                #                                             {'value': None, 'name': 'mesh',
+                #                                              'stroke_width': 1, 'color_line': 'black'}
+                #                                          ]))
+                plot_datas.append(c1.plot_data(plot_data_states=[plot_data_state]))
         return plot_datas
 
 

@@ -1,0 +1,31 @@
+<div id="app"></div>
+<canvas id="canvas" width="490" height="490"
+            style="border: 1px solid black;">
+</canvas>
+
+<!-- <script type="text/javascript" src="{{volmdlr_path}}/d3/d3-v5.js"></script> -->
+
+<!-- Sets the basepath for the library if not in same directory -->
+<script type="text/typescript">
+	module core {
+		{% include 'core.ts' %}
+	}
+</script>
+
+<script type="text/typescript">
+	var width = 750,
+			height = 400;
+	var show_state = 1
+	var coeff_pixel = 1000
+
+  var D3Data = {{ D3Data | safe }};
+	var number_plot_data = D3Data.length
+
+	var plot_data = new core.PlotData(D3Data, width, height, 1000);
+	plot_data.draw_initial()
+
+
+</script>
+
+<script type="text/javascript" src="{{volmdlr_path}}/js/typescript.min.js"></script>
+<script type="text/javascript" src="{{volmdlr_path}}/js/typescript.compile.min.js"></script>

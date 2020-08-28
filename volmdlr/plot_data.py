@@ -26,8 +26,8 @@ from typing import TypeVar, List
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 class ColorMapSet(DessiaObject):
-    def __init__(self, name:str='', value:float=None, tooltip:bool=False,
-                 color_range:str=None, selector: bool=True):
+    def __init__(self, value:float=None, tooltip:bool=False,
+                 color_range:str=None, selector: bool=True, name:str=''):
         self.selector = selector
         self.color_range = color_range
         self.tooltip = tooltip
@@ -35,12 +35,13 @@ class ColorMapSet(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
 class HatchingSet(DessiaObject):
-    def __init__(self, name:str='', stroke_width: float=1):
+    def __init__(self, stroke_width: float=1, hatch_spacing: float=10, name:str=''):
         self.stroke_width = stroke_width
+        self.hatch_spacing = hatch_spacing
         DessiaObject.__init__(self, name=name)
 
 class ColorSurfaceSet(DessiaObject):
-    def __init__(self, name:str='', color: str='white'):
+    def __init__(self, color: str='white', name:str=''):
         self.color = color
         DessiaObject.__init__(self, name=name)
 
@@ -109,7 +110,7 @@ color = {'black': 'k', 'blue': 'b', 'red': 'r', 'green': 'g'}
 def plot_d3(plot_datas):
     env = Environment(loader=PackageLoader('volmdlr', 'templates'),
                           autoescape=select_autoescape(['html', 'xml']))
-    template = env.get_template('plot_data2.html')
+    template = env.get_template('plot_data3.html')
     
     volmdlr_path = pkg_resources.resource_filename(pkg_resources.Requirement('volmdlr'),
                                               'volmdlr/templates')

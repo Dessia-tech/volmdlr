@@ -65,22 +65,24 @@
 	<div id="tooltip">hello</div>	<!-- new  -->
 
 	<script>
-		var width = 750,
-				height = 400;
-		var show_state = 1
-		var coeff_pixel = 1000
 
 		var D3Data = {{ D3Data | safe }};
 		var number_plot_data = D3Data.length
+		var show_state = 1
+		var coeff_pixel = 1000
 
 		var size = new evaluate_minmax(D3Data, coeff_pixel);
-		var canvas_hatching = new hatching(max_size=100, nb_hatch=20, lineWidth=0.5).generate();
+		var p_hatch = new hatching(max_size=100, nb_hatch=20, lineWidth=0.5).generate();
 
 		D3Data.forEach(function(dict_component, i){
 			var number_states = dict_component.plot_data_states.length
 		})
 
 		// === Set up canvas === //
+
+		var width = 750,
+				height = 400;
+
 		var data = [];
 		var value = 5000;
 
@@ -95,6 +97,13 @@
 		var hiddenCanvas = document.createElement("canvas");
 		hiddenCanvas.width = width;
 		hiddenCanvas.height = height;
+
+		// var hiddenCanvas = d3.select('#container')
+		// 	.append('canvas')
+		// 	.classed('hiddenCanvas', true)
+		// 	.attr('width', width)
+		// 	.attr('height', height)
+		// 	.attr('overflow', true);
 
 		var colourToNode = {}; // map to track the colour of nodes
 
@@ -117,6 +126,7 @@
 		}
 
 // new -----------------------------------------------------
+
 
 		// === Load and prepare the data === //
 
@@ -151,6 +161,7 @@
 		let scale = Math.min(width/(size.maxX - size.minX), height/(size.maxY - size.minY))
 		let last_mouse1X = (width/2 - (size.maxX - size.minX)*scale/2)/scale + (size.maxX - size.minX)/2
 		let last_mouse1Y = (height/2 - (size.maxY - size.minY)*scale/2)/scale + (size.maxY - size.minY)/2
+		console.log('scale', scale, last_mouse1X, last_mouse1Y)
 
 		var t = d3.timer(function(elapsed) {
 			draw(mainCanvas, show_state, false, last_mouse1X, last_mouse1Y, scale, null, null); // <--- new insert arguments
@@ -256,7 +267,7 @@
 					var hatching = elements.attr('hatching')
 					var color = elements.attr('fill')
 					if (hatching != null) {
-						context.fillStyle = context.createPattern(canvas_hatching,'repeat');
+						context.fillStyle = context.createPattern(p_hatch,'repeat');
 					} else if (color != null) {
 						context.fillStyle = color
 					}
@@ -298,7 +309,7 @@
 
 
 					// console.log(node, node.attr('type'))
-					// context.fillStyle = context.createPattern(canvas_hatching,'repeat');
+					// context.fillStyle = context.createPattern(p_hatch,'repeat');
 					// // context.fillStyle = hidden ? node.attr('fillStyleHidden') : node.attr('fillStyle'); // <--- new: node colour depends on the canvas we draw
 					// // log(context.fillStyle)
 					// context.fillRect(scale*(Math.floor(node.attr('x')) + mvx), scale*(Math.floor(node.attr('y')) + mvy), scale*Math.floor(node.attr('width')), scale*Math.floor(node.attr('height')))
