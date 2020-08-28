@@ -94,11 +94,9 @@ radius1 = {1: 0.01, 2: 0.05}
 rl1 = primitives3D.OpenedRoundedLineSegments3D(pts1, radius1, adapt_radius=True, name='wire1')
 sweep1 = primitives3D.Sweep(contour, rl1, name = 'pipe1')
 
-sphere = primitives3D.Sphere(vm.Point3D((0.05, 0.29, 0.1)), 0.05)
 
 
-
-model=vm.VolumeModel([profile, profile1, profile2, profile3, profile4, profile5, sweep, sweep1, sphere])
+model=vm.VolumeModel([profile, profile1, profile2, profile3, profile4, profile5, sweep, sweep1])
 
 model.babylonjs()
 

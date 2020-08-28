@@ -15,7 +15,7 @@ import random
 ##### cas 9 arc/arc
 
 mini, maxi = -5, 5
-rad_min, rad_max = -2, 2
+rad_min, rad_max = 1, 3
 
 pt1 = volmdlr.Point3D((random.randint(mini, maxi),random.randint(mini, maxi),random.randint(mini, maxi)))
 rad1 = random.randint(rad_min, rad_max)
