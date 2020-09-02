@@ -9027,7 +9027,7 @@ class Shell3D(CompositePrimitive3D):
 
     def copy(self):
         new_faces = [face.copy() for face in self.faces]
-        return Shell3D(new_faces, name = self.name)
+        return Shell3D(new_faces, alpha = self.alpha, color = self.color, name = self.name)
 
     def union(self, shell2):
         new_faces = [face for face in self.faces+shell2.faces]
