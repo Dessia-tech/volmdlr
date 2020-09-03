@@ -22,6 +22,7 @@ from matplotlib.patches import Arc, FancyArrowPatch
 from mpl_toolkits.mplot3d import Axes3D
 # from mpl_toolkits.mplot3d import proj3d
 # from matplotlib import __version__ as _mpl_version
+from typing import Union, List, Tuple
 
 import networkx as nx
 
@@ -2233,7 +2234,7 @@ class Polygon2D(Contour2D):
         
 
 class Primitive3D(dc.DessiaObject):
-    def __init__(self, basis_primitives=None, name=''):
+    def __init__(self, basis_primitives:List[object]=None, name:str=''):
         self.name = name
         self.primitives = basis_primitives # une liste
         if basis_primitives is None:
@@ -2242,7 +2243,7 @@ class Primitive3D(dc.DessiaObject):
         dc.DessiaObject.__init__(self, name=name)
 
 class Plane3D(Primitive3D):
-    def __init__(self, origin, vector1, vector2, name=''):
+    def __init__(self, origin:Point3D, vector1:Vector3D, vector2:Vector3D, name:str=''):
         self.origin = Point3D(origin.vector)
         vector1 = Vector3D(vector1.vector)
         vector1.Normalize()
@@ -2498,7 +2499,7 @@ class CylindricalSurface3D(Primitive3D):
     :type radius: float
     """
     
-    def __init__(self, frame, radius, name=''): 
+    def __init__(self, frame:Frame3D, radius:float, name:str=''):
         self.frame = frame
         self.radius = radius
         self.name = name
@@ -2710,7 +2711,7 @@ class Line3D(Primitive3D, Line):
     """
     Define an infinite line passing through the 2 points
     """
-    def __init__(self, point1, point2, name=''):
+    def __init__(self, point1:Point3D, point2:Point3D, name:str=''):
         Primitive3D.__init__(self, basis_primitives=[point1, point2], name=name)
         self.points = [point1, point2]
         self.bounding_box = self._bounding_box()
@@ -3043,7 +3044,7 @@ class Arc3D(Primitive3D):
     An arc is defined by a starting point, an end point and an interior point
     
     """
-    def __init__(self, start, interior, end, normal=None, name='', other_vec=None):
+    def __init__(self, start:Point3D, interior:Point3D, end:Point3D, normal:Vector3D=None, name:str='', other_vec:Vector3D=None):
         """
         TODO : vérifier la position du centre et valeur du rayon pas seulement pour le cas particulier (s=e et i à 180°)    
     
@@ -3812,7 +3813,7 @@ class CompositePrimitive3D(Primitive3D):
     """
     A collection of simple primitives3D
     """
-    def __init__(self, primitives, name=''):
+    def __init__(self, primitives:List[Primitive3D], name:str=''):
         self.primitives = primitives
         basis_primitives=[]
         for primitive in primitives:
@@ -3859,7 +3860,7 @@ class Wire3D(CompositePrimitive3D):
     """
     A collection of simple primitives, following each other making a wire
     """
-    def __init__(self, primitives, name=''):
+    def __init__(self, primitives:List[Primitive3D], name:str=''):
         CompositePrimitive3D.__init__(self, primitives, name)
 
     def Length(self):
@@ -3931,7 +3932,7 @@ class Wire3D(CompositePrimitive3D):
         return Wire3D(primitives_copy)
 
 class Edge3D(Primitive3D):
-    def __init__(self, edge_start, edge_end, name=''):
+    def __init__(self, edge_start:Primitive3D, edge_end:Primitive3D, name:str=''):
         Primitive3D.__init__(self, basis_primitives=[edge_start, edge_end], name=name)
         self.points = [edge_start, edge_end]
 
@@ -4089,7 +4090,7 @@ class LineSegment3D(Edge3D):
     """
     Define a line segment limited by two points
     """
-    def __init__(self, point1, point2, name=''):
+    def __init__(self, point1:Point3D, point2:Point3D, name:str=''):
         Edge3D.__init__(self, point1, point2, name='')
         self.bounding_box = self._bounding_box()
 
@@ -4443,7 +4444,7 @@ class Contour3D(Wire3D):
     """
     A collection of 3D primitives forming a closed wire3D
     """
-    def __init__(self, edges, point_inside_contour=None, name=''):
+    def __init__(self, edges:List[Edge3D], point_inside_contour:Point3D=None, name:str=''):
         # TODO: docstring in english
         """
         Faire un choix : soit edges c'est un CompositePrimitives3D
@@ -4635,7 +4636,7 @@ class Circle3D(Contour3D):
     _non_hash_attributes = ['name']
     _generic_eq = True
     
-    def __init__(self, center, radius, normal, name='', other_vec=None):
+    def __init__(self, center:Point3D, radius:float, normal:Vector3D, name:str='', other_vec:Vector3D=None):
         self.center = center
         self.radius = radius
         self.normal = normal
@@ -4830,7 +4831,7 @@ class Ellipse3D(Contour3D):
         return cls(major_axis, minor_axis, center, normal, major_dir, arguments[0][1:-1])
 
 class Face3D(Primitive3D):
-    def __init__(self, contours, radius=None):
+    def __init__(self, contours:List[Contour3D], radius:float=None):
         self.contours3d = contours
         self.bounding_box = self._bounding_box()
         
@@ -5076,7 +5077,7 @@ class PlaneFace3D(Face3D):
     _non_eq_attributes = ['name', 'bounding_box']
     _non_hash_attributes = []
 
-    def __init__(self, contours, plane, points=None, polygon2D=None, name=''):
+    def __init__(self, contours:List[Contour2D], plane:Plane3D, points:List[Point3D]=None, polygon2D:Polygon2D=None, name:str=''):
         if contours[0].__class__ is Contour3D :
             raise ValueError('You must use Contour2D or use from_contours3d')
             
@@ -8983,7 +8984,7 @@ class Shell3D(CompositePrimitive3D):
     _non_eq_attributes = ['name', 'color', 'alpha' 'bounding_box', 'contours']
     _non_hash_attributes = []
 
-    def __init__(self, faces, color=None, alpha=1., name=''):
+    def __init__(self, faces:List[Face3D], color:Tuple[float, float, float]=None, alpha:float=1., name:str=''):
         self.faces = faces
         self.name = name
         self.color = color
@@ -9040,7 +9041,7 @@ class Shell3D(CompositePrimitive3D):
 
     def copy(self):
         new_faces = [face.copy() for face in self.faces]
-        return Shell3D(new_faces, name = self.name)
+        return Shell3D(new_faces, color=self.color, alpha=self.alpha, name = self.name)
 
     def union(self, shell2):
         new_faces = [face for face in self.faces+shell2.faces]
@@ -9398,7 +9399,7 @@ class BoundingBox(dc.DessiaObject):
     """
     An axis aligned boundary box
     """
-    def __init__(self, xmin, xmax, ymin, ymax, zmin, zmax, name=''):
+    def __init__(self, xmin:float, xmax:float, ymin:float, ymax:float, zmin:float, zmax:float, name:str=''):
         self.xmin = xmin
         self.xmax = xmax
         self.ymin = ymin
@@ -9795,7 +9796,7 @@ class BoundingBox(dc.DessiaObject):
         return s
 
 class Measure2D(LineSegment2D):
-    def __init__(self, point1, point2, label='', unit='mm', type_='distance'):
+    def __init__(self, point1:Point2D, point2:Point2D, label:str='', unit:str='mm', type_:str='distance'):
         """
         :param unit: 'mm', 'm' or None. If None, the distance won't be in the label
 
@@ -9842,7 +9843,7 @@ class Measure2D(LineSegment2D):
         
 
 class Measure3D(Line3D):
-    def __init__(self, point1, point2, color=(1,0,0)):
+    def __init__(self, point1:Point3D, point2:Point3D, color:Tuple[float, float, float]=(1,0,0)):
         self.points = [point1, point2]
         self.color = color
         self.distance = Vector3D(self.points[0]-self.points[1]).Norm()
@@ -9863,7 +9864,7 @@ class Measure3D(Line3D):
         return s
 
 class Group:
-    def __init__(self, primitives, name):
+    def __init__(self, primitives:List[Primitive3D], name:str=''):
         self.primitives = primitives
         self.name = name
 
@@ -10206,7 +10207,7 @@ class VolumeModel(dc.DessiaObject):
     """
     :param groups: A list of two element tuple. The first element is a string naming the group and the second element is a list of primitives of the group
     """
-    def __init__(self, primitives, name=''):
+    def __init__(self, primitives:List[Primitive3D], name:str=''):
         self.primitives = primitives
         self.name = name
         self.shells = []
