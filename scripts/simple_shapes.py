@@ -7,6 +7,7 @@ Created on Wed Mar 14 15:32:37 2018
 """
 import volmdlr as vm
 #import volmdlr.primitives2D as primitives2D
+from volmdlr import plot_data
 import numpy as npy
 
 #for i in range(20):
@@ -33,3 +34,10 @@ print(c.plot_data())
 c2 = vm.CompositePrimitive2D([c])
 c2.MPLPlot()
 print(c.Area())
+
+hatching = plot_data.HatchingSet(0.5, 3)
+color_surface = plot_data.ColorSurfaceSet(color='white')
+plot_data_state = plot_data.PlotDataState(name='be_sup', hatching=hatching, stroke_width=1)
+plot_datas = [c.plot_data(plot_data_states=[plot_data_state])]
+sol = [plt.to_dict() for plt in plot_datas]
+plot_data.plot_d3(sol)
