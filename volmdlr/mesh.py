@@ -112,7 +112,7 @@ class TriangularElement(DessiaObject):
             inv_a = a.inverse()
         except ValueError:
             self.plot()
-            print(self._area())
+            print('buggy element area', self._area())
             raise FlatElementError('form function bug')
         x1 = inv_a.vector_multiplication(vm.X3D)
         x2 = inv_a.vector_multiplication(vm.Y3D)

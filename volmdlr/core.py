@@ -1875,7 +1875,7 @@ class Circle2D(Contour2D):
         if disc < 0:
             return None
         
-        if math.isclose(disc, 0, abs_tol=1e-6):
+        if math.isclose(disc, 0, abs_tol=1e-8):
             t = -b / (2 * a)
             if line.__class__ is Line2D:
                 return [Point2D((P1+t*V).vector)]
@@ -1907,7 +1907,7 @@ class Circle2D(Contour2D):
         s = 'Circle({}) = {{{}, {}, {}}};\n'.format(primitive_index,*points_indices)
         return s, primitive_index+1
 
-    def MPLPlot(self, ax, linestyle='-', color='k', linewidth=1):
+    def MPLPlot(self, ax=None, linestyle='-', color='k', linewidth=1):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
