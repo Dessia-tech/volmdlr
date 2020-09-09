@@ -28,20 +28,19 @@ export class PlotData {
       var d = data[i]
       if (d['type'] == 'contour'){
         var a = PlotDataContour2D.deserialize(d)
-        console.log(a);
         this.plot_datas.push(a)
         this.minX = Math.min(this.minX, a.minX)
         this.maxX = Math.max(this.maxX, a.maxX)
         this.minY = Math.min(this.minY, a.minY)
         this.maxY = Math.max(this.maxY, a.maxY)
         this.colour_to_plot_data[a.mouse_selection_color] = a
-      } else if(d['type']=='circle') {
-        var b = PlotDataCircle2D.deserialize(d);
+      } else if (d['type'] == 'point') {
+        var b = PlotDataPoint2D.deserialize(d);
         this.plot_datas.push(b);
-        this.minX = b.cx - b.r;
-        this.maxX = b.cx + b.r;
-        this.minY = b.cy - b.r;
-        this.maxY = b.cy + b.r;
+        this.minX = Math.min(this.minX, b.minX)
+        this.maxX = Math.max(this.maxX, b.maxX)
+        this.minY = Math.min(this.minY, b.minY)
+        this.maxY = Math.max(this.maxY, b.maxY)
 
       }
     }
@@ -78,41 +77,50 @@ export class PlotData {
 
     context.clearRect(0, 0, this.width, this.height);
 
+
     for (var i = 0; i < this.plot_datas.length; i++) {
       var d = this.plot_datas[i]
-      context.beginPath();
-      if (hidden) {
-        context.fillStyle = d.mouse_selection_color;
-      } else {
-        context.strokeStyle = d.plot_data_states[show_state].color_line
-        context.lineWidth = d.plot_data_states[show_state].stroke_width;
-        context.fillStyle = 'white'
-        if (d.plot_data_states[show_state].hatching != null) {
-          context.fillStyle = context.createPattern(d.plot_data_states[show_state].hatching.canvas_hatching,'repeat');
-        }
-        if (d.plot_data_states[show_state].color_surface != null) {
-          context.fillStyle = d.plot_data_states[show_state].color_surface.color;
-        }
-        if (this.select_on_mouse == d) {
-          context.fillStyle = this.color_surface_on_mouse
-        }
-        for (var j = 0; j < this.select_on_click.length; j++) {
-          var z = this.select_on_click[j]
-          if (z == d) {
-            context.fillStyle = this.color_surface_on_click
+      
+      if (d['type'] == 'contour') {
+        context.beginPath();
+        if (hidden) {
+          context.fillStyle = d.mouse_selection_color;
+        } else {
+          context.strokeStyle = d.plot_data_states[show_state].color_line
+          context.lineWidth = d.plot_data_states[show_state].stroke_width;
+          context.fillStyle = 'white'
+          if (d.plot_data_states[show_state].hatching != null) {
+            context.fillStyle = context.createPattern(d.plot_data_states[show_state].hatching.canvas_hatching,'repeat');
+          }
+          if (d.plot_data_states[show_state].color_surface != null) {
+            context.fillStyle = d.plot_data_states[show_state].color_surface.color;
+          }
+          if (this.select_on_mouse == d) {
+            context.fillStyle = this.color_surface_on_mouse
+          }
+          for (var j = 0; j < this.select_on_click.length; j++) {
+            var z = this.select_on_click[j]
+            if (z == d) {
+              context.fillStyle = this.color_surface_on_click
+            }
           }
         }
+        for (var j = 0; j < d.plot_data_primitives.length; j++) {
+          var elem = d.plot_data_primitives[j]
+          if (j == 0) {var first_elem = true} else {var first_elem = false}
+          elem.draw(context, first_elem,  mvx, mvy, scale)
+        }
+        context.closePath();
+        context.fill();
+        
+      } else {
+        context.beginPath()
+        context.strokeStyle = 'black'
+        var elem = d.draw(context, first_elem,  mvx, mvy, scale)
+        context.closePath();
+        context.fill();
       }
-
-      for (var j = 0; j < d.plot_data_primitives.length; j++) {
-        var elem = d.plot_data_primitives[j]
-        if (j == 0) {var first_elem = true} else {var first_elem = false}
-        elem.draw(context, first_elem,  mvx, mvy, scale)
-      }
-      context.closePath();
-      context.fill();
       context.stroke();
-
     }
   }
 
@@ -334,6 +342,46 @@ export class PlotDataCircle2D {
     context.arc(scale*(1000*this.cx+ mvx), scale*(1000*this.cy+ mvy), scale*1000*this.r, 0, 2*Math.PI);
   }
 
+}
+
+export class PlotDataPoint2D {
+  minX:float=0;
+  maxX:float=0;
+  minY:float=0;
+  maxY:float=0;
+
+  constructor(public data:any,
+              public cx:float,
+              public cy:float,
+              public r:float,
+              public plot_data_states:PlotDataState[],
+              public type:string,
+              public name:string) {
+    this.minX = this.cx - this.r;
+    this.maxX = this.cx + this.r;
+    this.minY = this.cy - this.r;
+    this.maxY = this.cy + this.r;
+    }
+
+    public static deserialize(serialized) {
+      var temp = serialized['plot_data_states']
+      var plot_data_states = []
+      for (var i = 0; i < temp.length; i++) {
+        var d = temp[i]
+        plot_data_states.push(PlotDataState.deserialize(d))
+      }
+      return new PlotDataPoint2D(serialized['data'],
+                                  serialized['cx'],
+                                  serialized['cy'],
+                                  serialized['r'],
+                                  plot_data_states,
+                                  serialized['type'],
+                                  serialized['name']);
+    }
+
+    draw(context, first_elem, mvx, mvy, scale) {
+      context.arc(scale*(1000*this.cx+ mvx), scale*(1000*this.cy+ mvy), scale*1000*this.r, 0, 2*Math.PI);
+    }
 }
 
 export class PlotDataArc2D {

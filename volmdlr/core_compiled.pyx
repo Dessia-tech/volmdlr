@@ -534,6 +534,9 @@ class Point2D(Vector2D):
         return plot_data.PlotDataPoint2D(cx=cx,cy=cy,plot_data_states=plot_data_states,
                                            name=self.name)
 
+    def to_dict(self):
+        return self.to_dict()
+
     def To3D(self, plane_origin, vx, vy):
         return Point3D([plane_origin.vector[0] + vx.vector[0]*self.vector[0] + vy.vector[0]*self.vector[1],
                         plane_origin.vector[1] + vx.vector[1]*self.vector[0] + vy.vector[1]*self.vector[1],
@@ -622,15 +625,15 @@ class Point2D(Vector2D):
             else:
                 return None, None, None
 
-    def plot_data(self, marker=None, color='black', size=1,
-                  opacity=1, arrow=False, stroke_width=None):
-        return {'type' : 'point',
-                'data' : [self.vector[0], self.vector[1]],
-                'color' : color,
-                'marker' : marker,
-                'size' : size,
-                'opacity' : opacity
-                }
+    #def plot_data(self, marker=None, color='black', size=1,
+    #              opacity=1, arrow=False, stroke_width=None):
+    #     return {'type' : 'point',
+    #             'data' : [self.vector[0], self.vector[1]],
+    #             'color' : color,
+    #             'marker' : marker,
+    #             'size' : size,
+    #             'opacity' : opacity
+    #             }
 
     @classmethod
     def MiddlePoint(cls, point1, point2):

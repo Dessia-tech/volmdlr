@@ -41,13 +41,24 @@ class HatchingSet(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
 class ColorSurfaceSet(DessiaObject):
-    def __init__(self, color: str='white', name:str=''):
+    def __init__(self, color: str= 'white', name:str=''):
         self.color = color
         DessiaObject.__init__(self, name=name)
 
+
+class PointShapeSet(DessiaObject):
+    def __init__(self, shape: str='circle', name:str=''):
+        self.shape = shape
+        DessiaObject.__init__(self, name=name)
+
+class WindowSizeSet(DessiaObject):
+    def __init__(self, height: float, width: float):
+        self.height = height
+        self.width = width
+
 class PlotDataState(DessiaObject):
     def __init__(self, name: str='', color_map: ColorMapSet=None, hatching: HatchingSet=None,
-                 color_surface: ColorSurfaceSet=None,
+                 color_surface: ColorSurfaceSet=None, shape_set: PointShapeSet=None, window_size: WindowSizeSet=None,
                  stroke_width: float=1, color_line:str='black', marker:str=None,
                  dash:str=None, opacity:float=1):
         self.color_surface = color_surface
@@ -58,6 +69,8 @@ class PlotDataState(DessiaObject):
         self.marker = marker
         self.color_line = color_line
         self.stroke_width = stroke_width
+        self.shape_set = shape_set
+        self.window_size = window_size
         DessiaObject.__init__(self, name=name)
 
 class PlotDataLine2D(DessiaObject):
@@ -87,7 +100,7 @@ class PlotDataPoint2D(DessiaObject):
         self.plot_data_states = plot_data_states
         self.cy = cy
         self.cx = cx
-        self.r = 0.2
+        self.r = 0.001
         DessiaObject.__init__(self, name=name)
 
 class PlotDataArc2D(DessiaObject):
