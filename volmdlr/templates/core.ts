@@ -28,12 +28,21 @@ export class PlotData {
       var d = data[i]
       if (d['type'] == 'contour'){
         var a = PlotDataContour2D.deserialize(d)
+        console.log(a);
         this.plot_datas.push(a)
         this.minX = Math.min(this.minX, a.minX)
         this.maxX = Math.max(this.maxX, a.maxX)
         this.minY = Math.min(this.minY, a.minY)
         this.maxY = Math.max(this.maxY, a.maxY)
         this.colour_to_plot_data[a.mouse_selection_color] = a
+      } else if(d['type']=='circle') {
+        var b = PlotDataCircle2D.deserialize(d);
+        this.plot_datas.push(b);
+        this.minX = b.cx - b.r;
+        this.maxX = b.cx + b.r;
+        this.minY = b.cy - b.r;
+        this.maxY = b.cy + b.r;
+
       }
     }
     this.define_canvas()
@@ -70,9 +79,8 @@ export class PlotData {
     context.clearRect(0, 0, this.width, this.height);
 
     for (var i = 0; i < this.plot_datas.length; i++) {
-      d = this.plot_datas[i]
+      var d = this.plot_datas[i]
       context.beginPath();
-
       if (hidden) {
         context.fillStyle = d.mouse_selection_color;
       } else {
