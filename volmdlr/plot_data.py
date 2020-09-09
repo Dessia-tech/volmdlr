@@ -80,6 +80,16 @@ class PlotDataCircle2D(DessiaObject):
         self.cx = cx
         DessiaObject.__init__(self, name=name)
 
+class PlotDataPoint2D(DessiaObject):
+    def __init__(self, cx: float, cy: float,
+                 plot_data_states: List[PlotDataState], type: str='point', name:str='', ):
+        self.type = type
+        self.plot_data_states = plot_data_states
+        self.cy = cy
+        self.cx = cx
+        self.r = 0.2
+        DessiaObject.__init__(self, name=name)
+
 class PlotDataArc2D(DessiaObject):
     def __init__(self, cx: float, cy: float, r: float,
                  data:List[float], angle1: float, angle2: float,

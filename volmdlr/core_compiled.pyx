@@ -9,13 +9,15 @@ Cython functions
 # from __future__ import annotations
 from typing import TypeVar, List, Tuple
 import math
-from dessia_common import DessiaObject
+from dessia_common import DessiaObject, json
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyArrow, FancyArrowPatch
 import warnings
 import random
 import numpy as npy
 from mpl_toolkits.mplot3d import proj3d
+from volmdlr import plot_data
+
 
 # =============================================================================
 
@@ -397,6 +399,7 @@ class Vector2D(Vector):
         else:
             self.vector = vector2
 
+
     def frame_mapping(self, frame, side, copy=True):
         # """
         # side = 'old' or 'new'
@@ -522,6 +525,14 @@ class Point2D(Vector2D):
             raise ZeroDivisionError
         return Point2D((self.vector[0] / value,
                         self.vector[1] / value))
+
+    def plot_data(self, plot_data_states:List[plot_data.PlotDataState]=None):
+        if plot_data_states is None:
+            plot_data_states = [plot_data.PlotDataState()]
+        cx = self.vector[0]
+        cy = self.vector[1]
+        return plot_data.PlotDataPoint2D(cx=cx,cy=cy,plot_data_states=plot_data_states,
+                                           name=self.name)
 
     def To3D(self, plane_origin, vx, vy):
         return Point3D([plane_origin.vector[0] + vx.vector[0]*self.vector[0] + vy.vector[0]*self.vector[1],

@@ -14,13 +14,18 @@ Points = []
 #for p in Points:
 #    p.MPLPlot(ax=ax)
 
-center = vm.Point2D((0,0))
-radius = 0.5
+#### Circle test ####
+#center = vm.Point2D((0,0))
+#radius = 0.5
+#circle = vm.Circle2D(center,radius)
+#contour = vm.Contour2D([circle])
+#contour1 = [contour.plot_data([plot_data.PlotDataState()])]
+#print(contour1)
 
-plot_datas = []
-for i in range(50):
-    point = vm.Point2D.random(0,400,0,400)
-    contour = vm.Contour2D([point])
-    plot_datas += [contour.plot_data([plot_data.PlotDataState()])] #PlotDataState doit être dans une liste []
-sol = [plots.to_dict() for plots in plot_datas]
+#### Point test ####
+point = vm.Point2D.random(0,400,0,400)
+
+contour1 = [point.plot_data([plot_data.PlotDataState()])]
+print(contour1)
+sol = [c.to_dict() for c in contour1]
 plot_data.plot_d3(sol)
