@@ -116,7 +116,7 @@ export class PlotData {
       } else {
         context.beginPath()
         context.strokeStyle = 'black'
-        var elem = d.draw(context, first_elem,  mvx, mvy, scale)
+        d.draw(context, first_elem,  mvx, mvy, scale)
         context.closePath();
         context.fill();
       }
@@ -370,7 +370,6 @@ export class PlotDataPoint2D {
         var d = temp[i]
         plot_data_states.push(PlotDataState.deserialize(d))
       }
-      console.log(plot_data_states)
       return new PlotDataPoint2D(serialized['data'],
                                   serialized['cx'],
                                   serialized['cy'],
@@ -381,8 +380,16 @@ export class PlotDataPoint2D {
     }
 
     draw(context, first_elem, mvx, mvy, scale) {
-        console.log(this.plot_data_states)
-        context.arc(scale*(1000*this.cx+ mvx), scale*(1000*this.cy+ mvy), scale*1000*this.r, 0, 2*Math.PI);
+        for (var i=0; i<this.plot_data_states.length; i++) {
+          var shape = this.plot_data_states[i].shape_set.shape
+          if (shape == 'circle') {
+            context.arc(scale*(1000*this.cx+ mvx), scale*(1000*this.cy+ mvy), scale*1000*this.r, 0, 2*Math.PI);
+          } else if (shape == 'square') {
+            console.log('aaaaaaaa')
+            context.rect(scale*(1000*this.cx+ mvx),scale*(1000*this.cy+ mvy),scale*1000*this.r,scale*1000*this.r)
+            context.stroke()
+          }
+        }
     }
 }
 
