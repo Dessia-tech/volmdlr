@@ -80,7 +80,7 @@ export class PlotData {
 
     for (var i = 0; i < this.plot_datas.length; i++) {
       var d = this.plot_datas[i]
-      
+      console.log(d)
       if (d['type'] == 'contour') {
         context.beginPath();
         if (hidden) {
@@ -385,9 +385,17 @@ export class PlotDataPoint2D {
           if (shape == 'circle') {
             context.arc(scale*(1000*this.cx+ mvx), scale*(1000*this.cy+ mvy), scale*1000*this.r, 0, 2*Math.PI);
           } else if (shape == 'square') {
-            console.log('aaaaaaaa')
-            context.rect(scale*(1000*this.cx+ mvx),scale*(1000*this.cy+ mvy),scale*1000*this.r,scale*1000*this.r)
+            context.rect(scale*(1000*(this.cx - this.r) + mvx),scale*(1000*(this.cy - this.r) + mvy),scale*1000*this.r*2,scale*1000*this.r*2)
             context.stroke()
+          } else if (shape == 'crux') {
+            context.moveTo(scale*(1000*(this.cx - this.r)) + mvx, scale*(1000*this.cy) + mvy)
+            context.lineTo(scale*(1000*(this.cx + this.r)) + mvx, scale*(1000*this.cy) + mvy)
+
+            context.moveTo(scale*(1000*this.cx) + mvx, scale*(1000*(this.cy - this.r)) + mvy)
+            context.lineTo(scale*(1000*this.cx) + mvx, scale*(1000*(this.cy + this.r)) + mvy)
+            context.stroke()
+          } else {
+            throw new Error('Invalid shape for point')
           }
         }
     }

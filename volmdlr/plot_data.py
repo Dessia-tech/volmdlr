@@ -59,9 +59,9 @@ class PointShapeSet(DessiaObject):
 
 
 class WindowSizeSet(DessiaObject):
-    def __init__(self, height: float, width: float, name: str = ''):
-        self.height = height
+    def __init__(self, width: float, height: float, name: str = ''):
         self.width = width
+        self.height = height
         DessiaObject.__init__(self, name=name)
 
 
@@ -115,12 +115,14 @@ class PlotDataPoint2D(DessiaObject):
                  name: str = '', ):
         self.type = type
         self.plot_data_states = plot_data_states
-        self.cy = cy
         self.cx = cx
+        self.cy = cy
+        list_r = []
         for plot in self.plot_data_states:
             height = plot.window_size.height
             width = plot.window_size.width
-            self.r = min(height, width) / 100
+            list_r.append(min(height, width) / 100)
+        self.r = min(list_r)
         DessiaObject.__init__(self, name=name)
 
 
