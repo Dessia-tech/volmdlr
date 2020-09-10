@@ -52,9 +52,10 @@ class PointShapeSet(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
 class WindowSizeSet(DessiaObject):
-    def __init__(self, height: float, width: float):
+    def __init__(self, height: float, width: float, name:str=''):
         self.height = height
         self.width = width
+        DessiaObject.__init__(self, name=name)
 
 class PlotDataState(DessiaObject):
     def __init__(self, name: str='', color_map: ColorMapSet=None, hatching: HatchingSet=None,
@@ -100,7 +101,10 @@ class PlotDataPoint2D(DessiaObject):
         self.plot_data_states = plot_data_states
         self.cy = cy
         self.cx = cx
-        self.r = 0.001
+        for plot in self.plot_data_states:
+            height = plot.window_size.height
+            width = plot.window_size.width
+            self.r = min(height,width)/100
         DessiaObject.__init__(self, name=name)
 
 class PlotDataArc2D(DessiaObject):

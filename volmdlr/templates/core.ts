@@ -453,6 +453,8 @@ export class PlotDataState {
               public dash:any,
               public marker:any,
               public color_line:any,
+              public shape:any,
+              public size:any
               public stroke_width:any,
               public name:any,) {}
 
@@ -465,13 +467,23 @@ export class PlotDataState {
       if (serialized['hatching'] != null) {
         hatching = HatchingSet.deserialize(serialized['hatching'])
       }
-      return new PlotDataState(color_surface,
+      shape = null;
+      if(serialized['shape'] != null) {
+        shape = PointShapeSet.deserialize(serialized['shape'])
+      }
+      size = null
+      if(serialized['size']) != null) {
+        size = WindowSizeSet.deserialize(serialized['size'])
+      }
+      return new PlotDataState(serialized['color_surface'],
                                serialized['color_map'],
-                               hatching,
+                               serialized['hatching'],
                                serialized['opacity'],
                                serialized['dash'],
                                serialized['marker'],
                                serialized['color_line'],
+                               serialized['shape'],
+                               serialized['size'],
                                serialized['stroke_width'],
                                serialized['name']);
   }
@@ -485,6 +497,25 @@ export class ColorSurfaceSet {
   public static deserialize(serialized) {
       return new ColorSurfaceSet(serialized['name'],
                                serialized['color']);
+  }
+}
+
+export class PointShapeSet {
+  constructor(public name:string, public shape:any){}
+
+  public static deserialize(serialized) {
+    return new PointShapeSet(serialized['name'],
+                             serialized['shape']);
+  }
+}
+
+export class WindowSizeSet {
+  constructor(public name:string, public height:any,public width:any){}
+
+  public static deserialize(serialized) {
+    return new WindowSizeSet(serialized['name'],
+                             serialized['height'],
+                             serialized('width'));
   }
 }
 
@@ -527,6 +558,7 @@ export class HatchingSet {
     return p_hatch
   }
 }
+
 
 function drawLines(ctx, pts) {
     // ctx.moveTo(pts[0], pts[1]);
