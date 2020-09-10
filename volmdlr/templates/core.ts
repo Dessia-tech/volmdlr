@@ -80,7 +80,6 @@ export class PlotData {
 
     for (var i = 0; i < this.plot_datas.length; i++) {
       var d = this.plot_datas[i]
-      console.log(d)
       if (d['type'] == 'contour') {
         context.beginPath();
         if (hidden) {
