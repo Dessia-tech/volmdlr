@@ -17,7 +17,7 @@ triangle=vm.Polygon2D(triangle_points)
 
 cog_triangle=triangle.CenterOfMass()
 c1 = vm.CompositePrimitive2D([triangle, cog_triangle])
-c1.MPLPlot()
+#c1.MPLPlot()
 
 print(triangle.Area())
 
@@ -30,10 +30,10 @@ l = vm.LineSegment2D(p2,a.center)
 #list_node = a.Discretise()
 
 c = vm.Contour2D([a, l])
-print(c.plot_data())
+#print(c.plot_data())
 c2 = vm.CompositePrimitive2D([c])
-c2.MPLPlot()
-print(c.Area())
+#c2.MPLPlot()
+#print(c.Area())
 
 hatching = plot_data.HatchingSet(0.5, 3)
 color_surface = plot_data.ColorSurfaceSet(color='white')

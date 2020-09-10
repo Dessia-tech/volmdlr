@@ -2,13 +2,13 @@ export class PlotData {
   plot_datas:any;
   context_show:any;
   context_hidden:any;
-  minX:float=0;
-  maxX:float=0;
-  minY:float=0;
-  maxY:float=0;
-  scale:float;
-  last_mouse1X:float;
-  last_mouse1Y:float;
+  minX:number=0;
+  maxX:number=0;
+  minY:number=0;
+  maxY:number=0;
+  scale:number;
+  last_mouse1X:number;
+  last_mouse1Y:number;
   colour_to_plot_data:any;
   select_on_mouse:any;
   select_on_click:any[]=[];
@@ -16,9 +16,9 @@ export class PlotData {
   color_surface_on_click:string='blue'
 
   constructor(public data: any,
-              public width: float,
-              public height: float,
-              public coeff_pixel: float) {
+              public width: number,
+              public height: number,
+              public coeff_pixel: number) {
     this.width = width;
     this.height = height;
     this.plot_datas = []
@@ -217,10 +217,10 @@ export class PlotData {
 }
 
 export class PlotDataContour2D {
-  minX:float=0;
-  maxX:float=0;
-  minY:float=0;
-  maxY:float=0;
+  minX:number=0;
+  maxX:number=0;
+  minY:number=0;
+  maxY:number=0;
   mouse_selection_color:any;
 
   constructor(public plot_data_primitives:any,
@@ -267,10 +267,10 @@ export class PlotDataContour2D {
 }
 
 export class PlotDataLine2D {
-  minX:float=0;
-  maxX:float=0;
-  minY:float=0;
-  maxY:float=0;
+  minX:number=0;
+  maxX:number=0;
+  minY:number=0;
+  maxY:number=0;
 
   constructor(public data:any,
               public plot_data_states:any,
@@ -304,15 +304,15 @@ export class PlotDataLine2D {
 }
 
 export class PlotDataCircle2D {
-  minX:float=0;
-  maxX:float=0;
-  minY:float=0;
-  maxY:float=0;
+  minX:number=0;
+  maxX:number=0;
+  minY:number=0;
+  maxY:number=0;
 
   constructor(public data:any,
-              public cx:float,
-              public cy:float,
-              public r:float,
+              public cx:number,
+              public cy:number,
+              public r:number,
               public plot_data_states:PlotDataState[],
               public type:string,
               public name:string) {
@@ -345,15 +345,15 @@ export class PlotDataCircle2D {
 }
 
 export class PlotDataPoint2D {
-  minX:float=0;
-  maxX:float=0;
-  minY:float=0;
-  maxY:float=0;
+  minX:number=0;
+  maxX:number=0;
+  minY:number=0;
+  maxY:number=0;
 
   constructor(public data:any,
-              public cx:float,
-              public cy:float,
-              public r:float,
+              public cx:number,
+              public cy:number,
+              public r:number,
               public plot_data_states:PlotDataState[],
               public type:string,
               public name:string) {
@@ -370,6 +370,7 @@ export class PlotDataPoint2D {
         var d = temp[i]
         plot_data_states.push(PlotDataState.deserialize(d))
       }
+      console.log(plot_data_states)
       return new PlotDataPoint2D(serialized['data'],
                                   serialized['cx'],
                                   serialized['cy'],
@@ -380,22 +381,23 @@ export class PlotDataPoint2D {
     }
 
     draw(context, first_elem, mvx, mvy, scale) {
-      context.arc(scale*(1000*this.cx+ mvx), scale*(1000*this.cy+ mvy), scale*1000*this.r, 0, 2*Math.PI);
+        console.log(this.plot_data_states)
+        context.arc(scale*(1000*this.cx+ mvx), scale*(1000*this.cy+ mvy), scale*1000*this.r, 0, 2*Math.PI);
     }
 }
 
 export class PlotDataArc2D {
-  minX:float=0;
-  maxX:float=0;
-  minY:float=0;
-  maxY:float=0;
+  minX:number=0;
+  maxX:number=0;
+  minY:number=0;
+  maxY:number=0;
 
-  constructor(public cx:float,
-              public cy:float,
-              public r:float,
+  constructor(public cx:number,
+              public cy:number,
+              public r:number,
               public data:any,
-              public angle1:float,
-              public angle2:float,
+              public angle1:number,
+              public angle2:number,
               public plot_data_states:PlotDataState[],
               public type:string,
               public name:string) {
@@ -449,12 +451,12 @@ export class PlotDataState {
   constructor(public color_surface:ColorSurfaceSet,
               public color_map:any,
               public hatching:HatchingSet,
-              public opacity:float,
+              public opacity:number,
               public dash:any,
               public marker:any,
               public color_line:any,
-              public shape:any,
-              public size:any
+              public shape_set:PointShapeSet,
+              public window_size:WindowSizeSet,
               public stroke_width:any,
               public name:any,) {}
 
@@ -467,23 +469,23 @@ export class PlotDataState {
       if (serialized['hatching'] != null) {
         hatching = HatchingSet.deserialize(serialized['hatching'])
       }
-      shape = null;
-      if(serialized['shape'] != null) {
-        shape = PointShapeSet.deserialize(serialized['shape'])
+      shape_set = null
+      if (serialized['shape_set'] != null) {
+        shape_set = PointShapeSet.deserialize(serialized['shape_set'])
       }
-      size = null
-      if(serialized['size']) != null) {
-        size = WindowSizeSet.deserialize(serialized['size'])
+      window_size = null
+      if(serialized['window_size'] != null) {
+        window_size = WindowSizeSet.deserialize(serialized['window_size'])
       }
-      return new PlotDataState(serialized['color_surface'],
+      return new PlotDataState(color_surface,
                                serialized['color_map'],
-                               serialized['hatching'],
+                               hatching,
                                serialized['opacity'],
                                serialized['dash'],
                                serialized['marker'],
                                serialized['color_line'],
-                               serialized['shape'],
-                               serialized['size'],
+                               shape_set,
+                               window_size,
                                serialized['stroke_width'],
                                serialized['name']);
   }
@@ -510,12 +512,13 @@ export class PointShapeSet {
 }
 
 export class WindowSizeSet {
-  constructor(public name:string, public height:any,public width:any){}
+  constructor(public name:string, public height:number,public width:number){
+  }
 
   public static deserialize(serialized) {
     return new WindowSizeSet(serialized['name'],
                              serialized['height'],
-                             serialized('width'));
+                             serialized['width']);
   }
 }
 
@@ -523,8 +526,8 @@ export class HatchingSet {
   canvas_hatching:any;
 
   constructor(public name:string,
-              public stroke_width:float,
-              public hatch_spacing:float) {
+              public stroke_width:number,
+              public hatch_spacing:number) {
       this.canvas_hatching = this.generate_canvas()
   }
 
