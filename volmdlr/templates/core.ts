@@ -78,7 +78,21 @@ export class PlotData {
     }
 
     context.clearRect(0, 0, this.width, this.height);
-
+    
+    context.strokeStyle = 'black'
+    context.beginPath()
+    context.moveTo(this.minX, this.minY + 20)
+    context.lineTo(this.minX + 10, this.minY)
+    context.moveTo(this.minX + 10, this.minY)
+    context.lineTo(this.minX + 20, this.minY + 20)
+    
+    context.moveTo(this.width - 20, this.height - 20)
+    context.lineTo(this.width, this.height - 10)
+    context.moveTo(this.width, this.height - 10)
+    context.lineTo(this.width - 20, this.height)
+    context.stroke()
+    context.closePath()
+    
 
     for (var i = 0; i < this.plot_datas.length; i++) {
       var d = this.plot_datas[i]
