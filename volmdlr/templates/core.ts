@@ -423,31 +423,6 @@ export class PlotDataPoint2D {
             context.rect(scale*(1000*(this.cx - this.size) + mvx),scale*(1000*(this.cy - this.size) + mvy),init_scale*1000*this.size*2, init_scale*1000*this.size*2)
             context.stroke()
           } else if (shape == 'crux') {
-            //Construction de la croix avec deux lignes
-            //context.moveTo(scale*(1000*(this.cx - this.size)) + mvx, scale*(1000*this.cy) + mvy)
-            //context.lineTo(scale*(1000*(this.cx + this.size)) + mvx, scale*(1000*this.cy) + mvy)
-            //context.moveTo(scale*(1000*this.cx) + mvx, scale*(1000*(this.cy - this.size)) + mvy)
-            //context.lineTo(scale*(1000*this.cx) + mvx, scale*(1000*(this.cy + this.size)) + mvy)
-
-
-            //Construction de la croix avec deux rectangles
-            //context.rect(scale*(1000*(this.cx - this.size) + mvx), scale*(1000*this.cy + mvy),scale*1000*this.size*2, scale*10*this.size*2)
-            //context.rect(scale*(1000*this.cx + mvx), scale*(1000*(this.cy - this.size) + mvy),scale*10*this.size*2, scale*1000*this.size*2)
-
-
-            //Construction de la croix avec quatres lignes partant du centre
-            //context.moveTo(init_scale*(1000*this.cx + mvx), init_scale*(1000*this.cy + mvy))
-            //context.lineTo(init_scale*(1000*(this.cx + this.size) + mvx), init_scale*(1000*this.cy + mvy))
-
-            //context.moveTo(init_scale*(1000*this.cx + mvx), init_scale*(1000*this.cy + mvy))
-            //context.lineTo(init_scale*(1000*(this.cx - this.size) + mvx), init_scale*(1000*this.cy + mvy))
-
-            //context.moveTo(init_scale*(1000*this.cx + mvx), init_scale*(1000*this.cy + mvy))
-            //context.lineTo(init_scale*(1000*this.cx + mvx), init_scale*(1000*(this.cy + this.size) + mvy))
-
-            //context.moveTo(init_scale*(1000*this.cx + mvx), init_scale*(1000*this.cy + mvy))
-            //context.lineTo(init_scale*(1000*this.cx + mvx), init_scale*(1000*(this.cy - this.size) + mvy))
-            
             context.rect(scale*(1000*this.cx + mvx), scale*(1000*this.cy + mvy),init_scale*1000*this.size, init_scale*10*this.size)
             context.rect(scale*(1000*this.cx + mvx), scale*(1000*this.cy + mvy),-init_scale*1000*this.size, init_scale*10*this.size)
             context.rect(scale*(1000*this.cx + mvx), scale*(1000*this.cy + mvy),init_scale*10*this.size, init_scale*1000*this.size)
