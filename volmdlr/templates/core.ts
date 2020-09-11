@@ -6,6 +6,7 @@ export class PlotData {
   maxX:number=0;
   minY:number=0;
   maxY:number=0;
+  init_scale:number;
   scale:number;
   last_mouse1X:number;
   last_mouse1Y:number;
@@ -61,7 +62,8 @@ export class PlotData {
   }
 
   draw_initial() {
-    this.scale = Math.min(this.width/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX), this.height/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY))
+    this.init_scale = Math.min(this.width/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX), this.height/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY))
+    this.scale = this.init_scale
 		this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scale/2)/this.scale - this.coeff_pixel*this.minX
 		this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scale/2)/this.scale - this.coeff_pixel*this.minY
 		this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scale)
@@ -115,7 +117,7 @@ export class PlotData {
       } else if (d['type'] == 'point'){
         if (hidden) {
           context.fillStyle = d.mouse_selection_color;
-        } else{
+        } else {
           context.fillStyle = d.plot_data_states[show_state].point_color.color_fill;
           context.strokeStyle = d.plot_data_states[show_state].point_color.color_stroke;
 
@@ -131,7 +133,7 @@ export class PlotData {
           }
         }
         context.beginPath()
-        d.draw(context, first_elem,  mvx, mvy, scale)
+        d.draw(context, first_elem,  mvx, mvy, scale, this.init_scale)
         context.closePath();
         context.fill();
       } else {
@@ -252,6 +254,7 @@ export class PlotDataContour2D {
         this.maxY = Math.max(this.maxY, d.maxY)
       }
       this.mouse_selection_color = genColor()
+
   }
 
   public static deserialize(serialized) {
@@ -410,21 +413,45 @@ export class PlotDataPoint2D {
                                   serialized['name']);
     }
 
-    draw(context, first_elem, mvx, mvy, scale) {
+    draw(context, first_elem, mvx, mvy, scale, init_scale) {
 
         for (var i=0; i<this.plot_data_states.length; i++) {
           var shape = this.plot_data_states[i].shape_set.shape
           if (shape == 'circle') {
-            context.arc(scale*(1000*this.cx+ mvx), scale*(1000*this.cy+ mvy), scale*1000*this.size, 0, 2*Math.PI);
+            context.arc(scale*(1000*this.cx+ mvx), scale*(1000*this.cy+ mvy), init_scale*1000*this.size, 0, 2*Math.PI);
           } else if (shape == 'square') {
-            context.rect(scale*(1000*(this.cx - this.size) + mvx),scale*(1000*(this.cy - this.size) + mvy),scale*1000*this.size*2,scale*1000*this.size*2)
+            context.rect(scale*(1000*(this.cx - this.size) + mvx),scale*(1000*(this.cy - this.size) + mvy),init_scale*1000*this.size*2, init_scale*1000*this.size*2)
             context.stroke()
           } else if (shape == 'crux') {
-            context.moveTo(scale*(1000*(this.cx - this.size)) + mvx, scale*(1000*this.cy) + mvy)
-            context.lineTo(scale*(1000*(this.cx + this.size)) + mvx, scale*(1000*this.cy) + mvy)
+            //Construction de la croix avec deux lignes
+            //context.moveTo(scale*(1000*(this.cx - this.size)) + mvx, scale*(1000*this.cy) + mvy)
+            //context.lineTo(scale*(1000*(this.cx + this.size)) + mvx, scale*(1000*this.cy) + mvy)
+            //context.moveTo(scale*(1000*this.cx) + mvx, scale*(1000*(this.cy - this.size)) + mvy)
+            //context.lineTo(scale*(1000*this.cx) + mvx, scale*(1000*(this.cy + this.size)) + mvy)
 
-            context.moveTo(scale*(1000*this.cx) + mvx, scale*(1000*(this.cy - this.size)) + mvy)
-            context.lineTo(scale*(1000*this.cx) + mvx, scale*(1000*(this.cy + this.size)) + mvy)
+
+            //Construction de la croix avec deux rectangles
+            //context.rect(scale*(1000*(this.cx - this.size) + mvx), scale*(1000*this.cy + mvy),scale*1000*this.size*2, scale*10*this.size*2)
+            //context.rect(scale*(1000*this.cx + mvx), scale*(1000*(this.cy - this.size) + mvy),scale*10*this.size*2, scale*1000*this.size*2)
+
+
+            //Construction de la croix avec quatres lignes partant du centre
+            //context.moveTo(init_scale*(1000*this.cx + mvx), init_scale*(1000*this.cy + mvy))
+            //context.lineTo(init_scale*(1000*(this.cx + this.size) + mvx), init_scale*(1000*this.cy + mvy))
+
+            //context.moveTo(init_scale*(1000*this.cx + mvx), init_scale*(1000*this.cy + mvy))
+            //context.lineTo(init_scale*(1000*(this.cx - this.size) + mvx), init_scale*(1000*this.cy + mvy))
+
+            //context.moveTo(init_scale*(1000*this.cx + mvx), init_scale*(1000*this.cy + mvy))
+            //context.lineTo(init_scale*(1000*this.cx + mvx), init_scale*(1000*(this.cy + this.size) + mvy))
+
+            //context.moveTo(init_scale*(1000*this.cx + mvx), init_scale*(1000*this.cy + mvy))
+            //context.lineTo(init_scale*(1000*this.cx + mvx), init_scale*(1000*(this.cy - this.size) + mvy))
+            
+            context.rect(scale*(1000*this.cx + mvx), scale*(1000*this.cy + mvy),init_scale*1000*this.size, init_scale*10*this.size)
+            context.rect(scale*(1000*this.cx + mvx), scale*(1000*this.cy + mvy),-init_scale*1000*this.size, init_scale*10*this.size)
+            context.rect(scale*(1000*this.cx + mvx), scale*(1000*this.cy + mvy),init_scale*10*this.size, init_scale*1000*this.size)
+            context.rect(scale*(1000*this.cx + mvx), scale*(1000*this.cy + mvy),init_scale*10*this.size, -init_scale*1000*this.size)
             context.stroke()
           } else {
             throw new Error('Invalid shape for point')
