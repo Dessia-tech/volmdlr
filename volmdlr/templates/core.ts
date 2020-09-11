@@ -41,7 +41,7 @@ export class PlotData {
         this.maxX = Math.max(this.maxX, b.maxX)
         this.minY = Math.min(this.minY, b.minY)
         this.maxY = Math.max(this.maxY, b.maxY)
-
+        this.colour_to_plot_data[b.mouse_selection_color] = b
       }
     }
     this.define_canvas()
@@ -112,9 +112,18 @@ export class PlotData {
         context.closePath();
         context.fill();
         
-      } else {
+      } else if (d['type'] == 'point'){
+        if (hidden) {
+          context.fillStyle = d.mouse_selection_color;
+        } else{
+          context.fillStyle = d.plot_data_states[show_state].point_color.color_fill;
+          context.strokeStyle = d.plot_data_states[show_state].point_color.color_stroke;
+          if (this.select_on_mouse == d) {
+            context.fillStyle = this.color_surface_on_mouse
+          }
+        }
+        
         context.beginPath()
-        context.strokeStyle = 'black'
         d.draw(context, first_elem,  mvx, mvy, scale)
         context.closePath();
         context.fill();
@@ -348,18 +357,32 @@ export class PlotDataPoint2D {
   maxX:number=0;
   minY:number=0;
   maxY:number=0;
+  mouse_selection_color:any;
 
   constructor(public data:any,
               public cx:number,
               public cy:number,
-              public r:number,
+              public size:number,
               public plot_data_states:PlotDataState[],
               public type:string,
               public name:string) {
-    this.minX = this.cx - this.r;
-    this.maxX = this.cx + this.r;
-    this.minY = this.cy - this.r;
-    this.maxY = this.cy + this.r;
+    
+    for (var i=0; i<this.plot_data_states.length; i++) {
+      var plot = this.plot_data_states[i]
+      var point_size = plot.point_size.size
+      if (point_size==1||point_size==2||point_size==3||point_size==4) {
+        var height = plot.window_size.height
+      var width = plot.window_size.width
+      } else {
+        throw new Error('Invalid point_size')
+      }
+    }
+    this.size = point_size * Math.min(height,width)/200
+    this.minX = this.cx - this.size;
+    this.maxX = this.cx + this.size;
+    this.minY = this.cy - this.size;
+    this.maxY = this.cy + this.size;
+    this.mouse_selection_color = genColor()
     }
 
     public static deserialize(serialized) {
@@ -379,19 +402,20 @@ export class PlotDataPoint2D {
     }
 
     draw(context, first_elem, mvx, mvy, scale) {
+
         for (var i=0; i<this.plot_data_states.length; i++) {
           var shape = this.plot_data_states[i].shape_set.shape
           if (shape == 'circle') {
-            context.arc(scale*(1000*this.cx+ mvx), scale*(1000*this.cy+ mvy), scale*1000*this.r, 0, 2*Math.PI);
+            context.arc(scale*(1000*this.cx+ mvx), scale*(1000*this.cy+ mvy), scale*1000*this.size, 0, 2*Math.PI);
           } else if (shape == 'square') {
-            context.rect(scale*(1000*(this.cx - this.r) + mvx),scale*(1000*(this.cy - this.r) + mvy),scale*1000*this.r*2,scale*1000*this.r*2)
+            context.rect(scale*(1000*(this.cx - this.size) + mvx),scale*(1000*(this.cy - this.size) + mvy),scale*1000*this.size*2,scale*1000*this.size*2)
             context.stroke()
           } else if (shape == 'crux') {
-            context.moveTo(scale*(1000*(this.cx - this.r)) + mvx, scale*(1000*this.cy) + mvy)
-            context.lineTo(scale*(1000*(this.cx + this.r)) + mvx, scale*(1000*this.cy) + mvy)
+            context.moveTo(scale*(1000*(this.cx - this.size)) + mvx, scale*(1000*this.cy) + mvy)
+            context.lineTo(scale*(1000*(this.cx + this.size)) + mvx, scale*(1000*this.cy) + mvy)
 
-            context.moveTo(scale*(1000*this.cx) + mvx, scale*(1000*(this.cy - this.r)) + mvy)
-            context.lineTo(scale*(1000*this.cx) + mvx, scale*(1000*(this.cy + this.r)) + mvy)
+            context.moveTo(scale*(1000*this.cx) + mvx, scale*(1000*(this.cy - this.size)) + mvy)
+            context.lineTo(scale*(1000*this.cx) + mvx, scale*(1000*(this.cy + this.size)) + mvy)
             context.stroke()
           } else {
             throw new Error('Invalid shape for point')
@@ -470,26 +494,36 @@ export class PlotDataState {
               public marker:any,
               public color_line:any,
               public shape_set:PointShapeSet,
+              public point_size:PointSizeSet,
+              public point_color:PointColorSet,
               public window_size:WindowSizeSet,
               public stroke_width:any,
               public name:any,) {}
 
   public static deserialize(serialized) {
-      color_surface = null
+      var color_surface = null
       if (serialized['color_surface'] != null) {
         color_surface = ColorSurfaceSet.deserialize(serialized['color_surface'])
       }
-      hatching = null
+      var hatching = null
       if (serialized['hatching'] != null) {
         hatching = HatchingSet.deserialize(serialized['hatching'])
       }
-      shape_set = null
+      var shape_set = null
       if (serialized['shape_set'] != null) {
         shape_set = PointShapeSet.deserialize(serialized['shape_set'])
       }
-      window_size = null
+      var window_size = null
       if(serialized['window_size'] != null) {
         window_size = WindowSizeSet.deserialize(serialized['window_size'])
+      }
+      var point_size = null
+      if (serialized['point_size'] != null) {
+        point_size = PointSizeSet.deserialize(serialized['point_size'])
+      }
+      var point_color = null
+      if (serialized['point_color'] != null) {
+        point_color = PointColorSet.deserialize(serialized['point_color'])
       }
       return new PlotDataState(color_surface,
                                serialized['color_map'],
@@ -499,6 +533,8 @@ export class PlotDataState {
                                serialized['marker'],
                                serialized['color_line'],
                                shape_set,
+                               point_size,
+                               point_color,
                                window_size,
                                serialized['stroke_width'],
                                serialized['name']);
@@ -522,6 +558,25 @@ export class PointShapeSet {
   public static deserialize(serialized) {
     return new PointShapeSet(serialized['name'],
                              serialized['shape']);
+  }
+}
+
+export class PointSizeSet {
+  constructor(public name:string, public size:number) {}
+
+  public static deserialize(serialized) {
+    return new PointSizeSet(serialized['name'],
+                            serialized['size'])
+  }
+}
+
+export class PointColorSet {
+  constructor(public name:string, public color_fill:string, public color_stroke:string) {}
+
+  public static deserialize(serialized) {
+    return new PointColorSet(serialized['name'],
+                             serialized['color_fill'],
+                             serialized['color_stroke'])
   }
 }
 
@@ -579,7 +634,7 @@ export class HatchingSet {
 
 function drawLines(ctx, pts) {
     // ctx.moveTo(pts[0], pts[1]);
-    for(i=2;i<pts.length-1;i+=2) ctx.lineTo(pts[i], pts[i+1]);
+    for(var i=2; i<pts.length-1; i+=2) ctx.lineTo(pts[i], pts[i+1]);
 }
 
 function getCurvePoints(pts, tension, isClosed, numOfSegments) {

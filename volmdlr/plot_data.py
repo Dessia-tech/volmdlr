@@ -58,6 +58,19 @@ class PointShapeSet(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
 
+class PointSizeSet(DessiaObject):
+    def __init__(self, size: int, name: str = ''):
+        self.size = size
+        DessiaObject.__init__(self, name=name)
+
+
+class PointColorSet(DessiaObject):
+    def __init__(self, color_fill: str, color_stroke: str, name: str = ''):
+        self.color_fill = color_fill
+        self.color_stroke = color_stroke
+        DessiaObject.__init__(self, name=name)
+
+
 class WindowSizeSet(DessiaObject):
     def __init__(self, width: float, height: float, name: str = ''):
         self.width = width
@@ -69,7 +82,9 @@ class PlotDataState(DessiaObject):
     def __init__(self, name: str = '', color_map: ColorMapSet = None,
                  hatching: HatchingSet = None,
                  color_surface: ColorSurfaceSet = None,
-                 shape_set: PointShapeSet = PointShapeSet(),
+                 shape_set: PointShapeSet = None,
+                 point_size: PointSizeSet = None,
+                 point_color: PointColorSet = None,
                  window_size: WindowSizeSet = None,
                  stroke_width: float = 1, color_line: str = 'black',
                  marker: str = None,
@@ -83,6 +98,15 @@ class PlotDataState(DessiaObject):
         self.color_line = color_line
         self.stroke_width = stroke_width
         self.shape_set = shape_set
+        if self.shape_set is None:
+            self.shape_set = PointShapeSet(shape='circle')
+        self.point_size = point_size
+        if self.point_size is None:
+            self.point_size = PointSizeSet(size=2)
+        self.point_color = point_color
+        if self.point_color is None:
+            self.point_color = PointColorSet(color_fill='black',
+                                             color_stroke='black')
         self.window_size = window_size
         DessiaObject.__init__(self, name=name)
 
@@ -117,12 +141,6 @@ class PlotDataPoint2D(DessiaObject):
         self.plot_data_states = plot_data_states
         self.cx = cx
         self.cy = cy
-        list_r = []
-        for plot in self.plot_data_states:
-            height = plot.window_size.height
-            width = plot.window_size.width
-            list_r.append(min(height, width) / 100)
-        self.r = min(list_r)
         DessiaObject.__init__(self, name=name)
 
 

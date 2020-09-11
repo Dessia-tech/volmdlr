@@ -6,11 +6,13 @@ from volmdlr import plot_data
 
 #### Point test ####
 plot_datas = []
-window_size = plot_data.WindowSizeSet(width=0.1,height=0.1)
-shape_set = plot_data.PointShapeSet(shape='square')
+window_size = plot_data.WindowSizeSet(width=0.2,height=0.1)
+shape_set = plot_data.PointShapeSet(shape='circle')
+point_size = plot_data.PointSizeSet(size=2)
+point_color = plot_data.PointColorSet(color_fill='blue', color_stroke='red')
 for i in range(50):
     point = vm.Point2D.random(0,window_size.width,0,window_size.height)
-    plot_datas += [point.plot_data([plot_data.PlotDataState(color_surface=plot_data.ColorSurfaceSet(color='black'), window_size=window_size, shape_set=shape_set)])]
+    plot_datas += [point.plot_data([plot_data.PlotDataState(color_surface=plot_data.ColorSurfaceSet(color='black'), window_size=window_size, shape_set=shape_set, point_size=point_size,point_color=point_color)])]
 
 ### LineSegment2D test ###
 
