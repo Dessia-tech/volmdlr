@@ -118,15 +118,24 @@ export class PlotData {
         } else{
           context.fillStyle = d.plot_data_states[show_state].point_color.color_fill;
           context.strokeStyle = d.plot_data_states[show_state].point_color.color_stroke;
+
           if (this.select_on_mouse == d) {
             context.fillStyle = this.color_surface_on_mouse
           }
+
+          for (var j = 0; j < this.select_on_click.length; j++) {
+            var z = this.select_on_click[j]
+            if (z == d) {
+              context.fillStyle = this.color_surface_on_click
+            }
+          }
         }
-        
         context.beginPath()
         d.draw(context, first_elem,  mvx, mvy, scale)
         context.closePath();
         context.fill();
+      } else {
+        throw new Error("Invalid type for plotting. For now, only contours and points can be plotted")
       }
       context.stroke();
     }
