@@ -43,6 +43,9 @@ export class PlotData {
         this.minY = Math.min(this.minY, b.minY)
         this.maxY = Math.max(this.maxY, b.maxY)
         this.colour_to_plot_data[b.mouse_selection_color] = b
+      } else if (d['type'] == 'plot') {
+        var c = PlotDataScatterPlot.deserialize(d)
+        this.plot_datas.push(c)
       }
     }
     this.define_canvas()
@@ -78,20 +81,6 @@ export class PlotData {
     }
 
     context.clearRect(0, 0, this.width, this.height);
-    
-    context.strokeStyle = 'black'
-    context.beginPath()
-    context.moveTo(this.minX, this.minY + 20)
-    context.lineTo(this.minX + 10, this.minY)
-    context.moveTo(this.minX + 10, this.minY)
-    context.lineTo(this.minX + 20, this.minY + 20)
-    
-    context.moveTo(this.width - 20, this.height - 20)
-    context.lineTo(this.width, this.height - 10)
-    context.moveTo(this.width, this.height - 10)
-    context.lineTo(this.width - 20, this.height)
-    context.stroke()
-    context.closePath()
     
 
     for (var i = 0; i < this.plot_datas.length; i++) {
@@ -150,6 +139,13 @@ export class PlotData {
         d.draw(context, first_elem,  mvx, mvy, scale, this.init_scale)
         context.closePath();
         context.fill();
+
+      } else if (d['type'] == 'plot'){
+        context.beginPath()
+        d.draw(context, first_elem, mvx, mvy, scale, this.width, this.height)
+        context.closePath()
+        context.fill()
+
       } else {
         throw new Error("Invalid type for plotting. For now, only contours and points can be plotted")
       }
@@ -447,6 +443,101 @@ export class PlotDataPoint2D {
           }
         }
     }
+}
+
+export class PlotDataScatterPlot {
+  minX:number=0;
+  maxX:number=0;
+  minY:number=0;
+  maxY:number=0;
+  colorStroke:any;
+
+  constructor(public nb_points_x:number, 
+                     public x_distance:number, 
+                     public nb_points_y:number, 
+                     public y_distance:number, 
+                     public name:string, 
+                     public type:string, 
+                     public plot_data_states:PlotDataState[]) {
+    this.minX = 0;
+    this.maxX = x_distance*nb_points_x;
+    this.minY = 0;
+    this.maxY = y_distance*nb_points_y;
+    for (var i=0; i<this.plot_data_states.length; i++) {
+      var plot = this.plot_data_states[i]
+      this.colorStroke = plot.color_line
+    }
+  }
+
+  public static deserialize(serialized) {
+    var temp = serialized['plot_data_states']
+    var plot_data_states = []
+    for (var i = 0; i < temp.length; i++) {
+      var d = temp[i]
+      plot_data_states.push(PlotDataState.deserialize(d))
+    }
+    return new PlotDataScatterPlot(serialized['nb_points_x'],
+                           serialized['x_distance'],
+                           serialized['nb_points_y'],
+                           serialized['y_distance'],
+                           serialized['name'],
+                           serialized['type'],
+                           serialized['plot_data_states'])
+  }
+
+  draw(context, first_elem, mvx, mvy, scale, width, height) {
+    // Dessin du repère
+    context.strokeStyle = this.colorStroke
+    //Flèches
+
+    context.moveTo(0, 20)
+    context.lineTo(10, 0)
+    context.moveTo(10, 0)
+    context.lineTo(20, 20)
+    
+    context.moveTo(width - 20, height - 20)
+    context.lineTo(width, height - 10)
+    context.moveTo(width, height - 10)
+    context.lineTo(width - 20, height)
+
+    //Axes
+    context.moveTo(10, 0)
+    context.lineTo(10, height)
+
+    context.moveTo(0, height - 10)
+    context.lineTo(width, height - 10)
+
+    //Graduations
+      //pour l'axe des x
+    for (var i=0; i<this.nb_points_x; i++) {
+      context.moveTo(scale*(1000*i + mvx), height - 13)
+      context.lineTo(scale*(1000*i + mvx), height - 7)
+
+      context.font = '12px Arial';
+      context.textAlign = 'start';
+      context.fillText(i,scale*(1000*i - 5 + mvx), height - 15 )
+
+      context.moveTo(scale*(-1000*i + mvx), height - 13)
+      context.lineTo(scale*(-1000*i + mvx), height - 7)
+      if(i != 0) {
+        context.fillText(-i,scale*(-1000*i - 5 + mvx), height - 15 )
+      }
+      
+    }
+
+      //pour l'axe des y
+    for (var i=0; i<this.nb_points_y; i++) {
+      context.moveTo(7, scale*(-1000*i + mvy))
+      context.lineTo(13, scale*(-1000*i + mvy))
+      context.fillText(i,15, scale*(-1000*i + mvy))
+
+      context.moveTo(7, scale*(1000*i + mvy))
+      context.lineTo(13, scale*(1000*i + mvy))
+      context.fillText(-i, 15, scale*(1000*i + mvy))
+    }
+
+    context.stroke()
+  }
 }
 
 export class PlotDataArc2D {

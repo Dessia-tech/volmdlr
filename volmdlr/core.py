@@ -1979,6 +1979,18 @@ class Circle2D(Contour2D):
     def copy(self) :
         return Circle2D(self.center.copy(), self.radius)
         
+class ScatterPlot(dc.DessiaObject):
+    def __init(self, nb_points_x, x_distance, nb_points_y, y_distance, name=''):
+        self.nb_points_x = nb_points_x
+        self.x_distance = x_distance
+        self.nb_points_y = nb_points_y
+        self.y_distance = y_distance
+        dc.DessiaObject.__init__(self,name)
+
+    def plot_data(self, plot_data_states:List[plot_data.PlotDataState]=None):
+        if plot_data_states is None:
+            plot_data_states = [plot_data.PlotDataState()]
+        return plot_data.PlotDataScatterPlot(nb_points_x=self.nb_points_x, x_distance=self.x_distance, nb_points_y=self.nb_points_y, y_distance=self.y_distance, plot_data_states=plot_data_states)
 
 class Polygon2D(Contour2D):
     # TODO: inherit from contour?
