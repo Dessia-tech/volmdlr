@@ -446,23 +446,27 @@ export class PlotDataPoint2D {
 }
 
 export class PlotDataScatterPlot {
-  minX:number=0;
-  maxX:number=0;
-  minY:number=0;
-  maxY:number=0;
   colorStroke:any;
-
-  constructor(public nb_points_x:number, 
-                     public x_distance:number, 
-                     public nb_points_y:number, 
-                     public y_distance:number, 
+  nb_points_x:number;
+  nb_points_y:number;
+  constructor(public x_start:number,
+                     public x_end:number,
+                     public x_step:number,
+                     public y_start:number,
+                     public y_end:number,
+                     public y_step:number, 
                      public name:string, 
                      public type:string, 
                      public plot_data_states:PlotDataState[]) {
-    this.minX = 0;
-    this.maxX = x_distance*nb_points_x;
-    this.minY = 0;
-    this.maxY = y_distance*nb_points_y;
+    this.nb_points_x = (this.x_end - this.x_start)/this.x_step
+    if (this.nb_points_x != Math.abs(Math.floor(this.nb_points_x))) {
+      throw new Error('ScatterPlot x_step is not valid')
+    }
+    this.nb_points_y = (this.y_end - this.y_start)/this.y_step
+    if (this.nb_points_y != Math.abs(Math.floor(this.nb_points_y))) {
+      throw new Error('ScatterPlot y_step is not valid')
+    }
+
     for (var i=0; i<this.plot_data_states.length; i++) {
       var plot = this.plot_data_states[i]
       this.colorStroke = plot.color_line
@@ -476,10 +480,12 @@ export class PlotDataScatterPlot {
       var d = temp[i]
       plot_data_states.push(PlotDataState.deserialize(d))
     }
-    return new PlotDataScatterPlot(serialized['nb_points_x'],
-                           serialized['x_distance'],
-                           serialized['nb_points_y'],
-                           serialized['y_distance'],
+    return new PlotDataScatterPlot(serialized['x_start'],
+                           serialized['x_end'],
+                           serialized['x_step'],
+                           serialized['y_start'],
+                           serialized['y_end'],
+                           serialized['y_step'],
                            serialized['name'],
                            serialized['type'],
                            serialized['plot_data_states'])
@@ -509,31 +515,28 @@ export class PlotDataScatterPlot {
 
     //Graduations
       //pour l'axe des x
+    var display_nb_x = 0
+    if (this.x_step.toString().split(".").length == 2) {
+      display_nb_x = this.x_step.toString().split(".")[1].length;
+    }
     for (var i=0; i<this.nb_points_x; i++) {
-      context.moveTo(scale*(1000*i + mvx), height - 13)
-      context.lineTo(scale*(1000*i + mvx), height - 7)
+      context.moveTo(scale*(1000*(this.x_start + i*this.x_step) + mvx), height - 13)
+      context.lineTo(scale*(1000*(this.x_start + i*this.x_step) + mvx), height - 7)
 
       context.font = '12px Arial';
       context.textAlign = 'start';
-      context.fillText(i,scale*(1000*i - 5 + mvx), height - 15 )
-
-      context.moveTo(scale*(-1000*i + mvx), height - 13)
-      context.lineTo(scale*(-1000*i + mvx), height - 7)
-      if(i != 0) {
-        context.fillText(-i,scale*(-1000*i - 5 + mvx), height - 15 )
-      }
+      context.fillText(Math.round((this.x_start + i*this.x_step)*Math.pow(10,display_nb_x))/Math.pow(10,display_nb_x), scale*(1000*(this.x_start + i*this.x_step) - 20 + mvx), height - 15 )
       
     }
-
       //pour l'axe des y
+    var display_nb_y = 0
+    if (this.y_step.toString().split(".").length == 2) {
+      display_nb_y = this.x_step.toString().split(".")[1].length;
+    }
     for (var i=0; i<this.nb_points_y; i++) {
-      context.moveTo(7, scale*(-1000*i + mvy))
-      context.lineTo(13, scale*(-1000*i + mvy))
-      context.fillText(i,15, scale*(-1000*i + mvy))
-
-      context.moveTo(7, scale*(1000*i + mvy))
-      context.lineTo(13, scale*(1000*i + mvy))
-      context.fillText(-i, 15, scale*(1000*i + mvy))
+      context.moveTo(7, scale*(-1000*(this.y_start + i*this.y_step) + mvy))
+      context.lineTo(13, scale*(-1000*(this.y_start + i*this.y_step) + mvy))
+      context.fillText(Math.round((this.y_start + i*this.y_step)*Math.pow(10,display_nb_y))/Math.pow(10,display_nb_y), 15, scale*(-1000*(this.y_start + i*this.y_step) + mvy))
     }
 
     context.stroke()

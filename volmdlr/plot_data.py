@@ -145,14 +145,16 @@ class PlotDataPoint2D(DessiaObject):
 
 
 class PlotDataScatterPlot(DessiaObject):
-    def __init__(self, nb_points_x: float, x_distance: float, plot_data_states: List[PlotDataState],
-                 nb_points_y: float, y_distance: float, name: str = '',
+    def __init__(self, x_start: float, x_end: float, x_step: float, plot_data_states: List[PlotDataState],
+                 y_start: float, y_end: float, y_step: float, name: str = '',
                  type: str = 'plot'):
-        self.nb_points_x = nb_points_x
-        self.x_distance = x_distance
+        self.x_start = x_start
+        self.x_end = x_end
+        self.x_step = x_step
         self.plot_data_states = plot_data_states
-        self.nb_points_y = nb_points_y
-        self.y_distance = y_distance
+        self.y_start = y_start
+        self.y_end = y_end
+        self.y_step = y_step
         self.type = type
         DessiaObject.__init__(self, name=name)
 

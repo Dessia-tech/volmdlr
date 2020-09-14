@@ -11,6 +11,7 @@
 import warnings
 import math
 import numpy as npy
+from math import floor
 npy.seterr(divide='raise')
 
 # from geomdl import NURBS
@@ -1980,17 +1981,25 @@ class Circle2D(Contour2D):
         return Circle2D(self.center.copy(), self.radius)
         
 class ScatterPlot(dc.DessiaObject):
-    def __init(self, nb_points_x, x_distance, nb_points_y, y_distance, name=''):
-        self.nb_points_x = nb_points_x
-        self.x_distance = x_distance
-        self.nb_points_y = nb_points_y
-        self.y_distance = y_distance
+    def __init(self, x_start, x_end, x_step, y_start, y_end, y_step, name=''):
+        self.x_start = x_start
+        self.x_end = x_end
+        self.x_step = x_step
+        self.y_start = y_start
+        self.y_end = y_end
+        self.y_step = y_step
         dc.DessiaObject.__init__(self,name)
+        k1 = (self.x_end - self.x_start)/self.x_step
+        k2 = (self.y_end - self.y_start)/self.y_step
+        if (k1 != abs(floor(k1))) or (k2 != abs(floor(k2))):
+            print("ScatterPlot step is not correct")
+
+
 
     def plot_data(self, plot_data_states:List[plot_data.PlotDataState]=None):
         if plot_data_states is None:
             plot_data_states = [plot_data.PlotDataState()]
-        return plot_data.PlotDataScatterPlot(nb_points_x=self.nb_points_x, x_distance=self.x_distance, nb_points_y=self.nb_points_y, y_distance=self.y_distance, plot_data_states=plot_data_states)
+        return plot_data.PlotDataScatterPlot(x_start=self.x_start, x_end=self.x_end, x_step=self.x_step, y_start=self.y_start, y_end = self.y_end, y_step = self.y_step, plot_data_states=plot_data_states)
 
 class Polygon2D(Contour2D):
     # TODO: inherit from contour?
