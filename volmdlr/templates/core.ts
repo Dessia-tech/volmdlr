@@ -124,6 +124,7 @@ export class PlotData {
           context.fillStyle = d.mouse_selection_color;
         } else {
           context.fillStyle = d.plot_data_states[show_state].point_color.color_fill;
+          context.lineWidth = d.plot_data_states[show_state].stroke_width;
           context.strokeStyle = d.plot_data_states[show_state].point_color.color_stroke;
 
           if (this.select_on_mouse == d) {
@@ -134,6 +135,8 @@ export class PlotData {
             var z = this.select_on_click[j]
             var shape = d.plot_data_states[show_state].shape_set.shape
             if (z == d) {
+              this.tooltip(context,d, scale, mvx, mvy)
+              context.lineWidth = d.plot_data_states[show_state].stroke_width;
               if (shape == 'crux') {
                 context.strokeStyle = this.color_surface_on_click
               } else {
@@ -143,7 +146,7 @@ export class PlotData {
           }
         }
         context.beginPath()
-        d.draw(context, first_elem,  mvx, mvy, scale, this.init_scale)
+        d.draw(context, mvx, mvy, scale, this.init_scale)
         context.closePath();
         context.fill();
 
@@ -158,6 +161,46 @@ export class PlotData {
       context.stroke();
     }
   }
+
+  roundRect(x, y, w, h, radius, context) {
+  var r = x + w;
+  var b = y + h;
+  context.beginPath();
+  context.strokeStyle="black";
+  context.lineWidth="3";
+  context.moveTo(x+radius, y);
+  context.lineTo(r-radius, y);
+  context.quadraticCurveTo(r, y, r, y+radius);
+  context.lineTo(r, y+h-radius);
+  context.quadraticCurveTo(r, b, r-radius, b);
+  context.lineTo(x+radius, b);
+  context.quadraticCurveTo(x, b, x, b-radius);
+  context.lineTo(x, y+radius);
+  context.quadraticCurveTo(x, y, x+radius, y);
+  context.stroke();
+  context.closePath();
+}
+
+tooltip(context,point, scale, mvx, mvy) {
+  context.beginPath()
+  var cx = point.cx
+  var cy = point.cy
+  this.roundRect(scale*(1000*(cx + 0.1) + mvx),scale*(1000*(cy - 0.1) + mvy),scale*300, scale*200,scale*40, context)
+  context.strokeStyle = 'black'
+  context.fillStyle = 'lightblue'
+  context.stroke()
+  context.fill()
+
+  var coordinate_size = 50*scale
+  context.font = coordinate_size.toString() + 'px Arial'
+  context.fillStyle = 'black'
+  context.textAlign = 'center'
+  var round_cx = Math.round(cx * 1000) / 1000
+  var round_cy = Math.round(cy * 1000) / 1000
+  context.fillText('x = ' + round_cx.toString(), scale*(1000*(cx + 0.25) + mvx),scale*(1000*(cy - 0.03) + mvy))
+  context.fillText('y = ' + round_cy.toString(), scale*(1000*(cx + 0.25) + mvx),scale*(1000*(cy + 0.05) + mvy))
+  context.closePath()
+}
 
   mouse_interaction() {
     var isDrawing = false
@@ -429,7 +472,7 @@ export class PlotDataPoint2D {
                                   serialized['name']);
     }
 
-    draw(context, first_elem, mvx, mvy, scale, init_scale) {
+    draw(context, mvx, mvy, scale, init_scale) {
 
         for (var i=0; i<this.plot_data_states.length; i++) {
           var shape = this.plot_data_states[i].shape_set.shape
