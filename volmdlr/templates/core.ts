@@ -7,6 +7,7 @@ export class PlotData {
   minY:number=0;
   maxY:number=0;
   init_scale:number;
+  last_scale:number;
   scale:number;
   last_mouse1X:number;
   last_mouse1Y:number;
@@ -67,6 +68,7 @@ export class PlotData {
   draw_initial() {
     this.init_scale = Math.min(this.width/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX), this.height/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY))
     this.scale = this.init_scale
+    this.last_scale = this.init_scale
 		this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scale/2)/this.scale - this.coeff_pixel*this.minX
 		this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scale/2)/this.scale - this.coeff_pixel*this.minY
 		this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scale)
@@ -130,8 +132,13 @@ export class PlotData {
 
           for (var j = 0; j < this.select_on_click.length; j++) {
             var z = this.select_on_click[j]
+            var shape = d.plot_data_states[show_state].shape_set.shape
             if (z == d) {
-              context.fillStyle = this.color_surface_on_click
+              if (shape == 'crux') {
+                context.strokeStyle = this.color_surface_on_click
+              } else {
+                context.fillStyle = this.color_surface_on_click             
+              }
             }
           }
         }
@@ -142,12 +149,11 @@ export class PlotData {
 
       } else if (d['type'] == 'plot'){
         context.beginPath()
-        d.draw(context, first_elem, mvx, mvy, scale, this.width, this.height)
+        d.draw(context, mvx, mvy, scale, this.width, this.height,this.init_scale, this.minX, this.maxX, this.minY, this.maxY)
         context.closePath()
         context.fill()
-
       } else {
-        throw new Error("Invalid type for plotting. For now, only contours and points can be plotted")
+        throw new Error("Invalid type for plotting. For now, only contours, points and scatterplot can be plotted")
       }
       context.stroke();
     }
@@ -399,7 +405,7 @@ export class PlotDataPoint2D {
         throw new Error('Invalid point_size')
       }
     }
-    this.size = point_size * Math.min(height,width)/200
+    this.size = point_size * Math.min(height,width)/150
     this.minX = this.cx - this.size;
     this.maxX = this.cx + this.size;
     this.minY = this.cy - this.size;
@@ -417,7 +423,7 @@ export class PlotDataPoint2D {
       return new PlotDataPoint2D(serialized['data'],
                                   serialized['cx'],
                                   serialized['cy'],
-                                  serialized['r'],
+                                  serialized['size'],
                                   plot_data_states,
                                   serialized['type'],
                                   serialized['name']);
@@ -447,25 +453,12 @@ export class PlotDataPoint2D {
 
 export class PlotDataScatterPlot {
   colorStroke:any;
-  nb_points_x:number;
-  nb_points_y:number;
-  constructor(public x_start:number,
-                     public x_end:number,
-                     public x_step:number,
-                     public y_start:number,
-                     public y_end:number,
-                     public y_step:number, 
+  constructor(public nb_points_x:number,
+                     public nb_points_y:number,
+                     public font_size:number,
                      public name:string, 
                      public type:string, 
                      public plot_data_states:PlotDataState[]) {
-    this.nb_points_x = (this.x_end - this.x_start)/this.x_step
-    if (this.nb_points_x != Math.abs(Math.floor(this.nb_points_x))) {
-      throw new Error('ScatterPlot x_step is not valid')
-    }
-    this.nb_points_y = (this.y_end - this.y_start)/this.y_step
-    if (this.nb_points_y != Math.abs(Math.floor(this.nb_points_y))) {
-      throw new Error('ScatterPlot y_step is not valid')
-    }
 
     for (var i=0; i<this.plot_data_states.length; i++) {
       var plot = this.plot_data_states[i]
@@ -480,18 +473,17 @@ export class PlotDataScatterPlot {
       var d = temp[i]
       plot_data_states.push(PlotDataState.deserialize(d))
     }
-    return new PlotDataScatterPlot(serialized['x_start'],
-                           serialized['x_end'],
-                           serialized['x_step'],
-                           serialized['y_start'],
-                           serialized['y_end'],
-                           serialized['y_step'],
-                           serialized['name'],
-                           serialized['type'],
-                           serialized['plot_data_states'])
+    return new PlotDataScatterPlot(serialized['nb_points_x'],
+                                  serialized['nb_points_y'],
+                                  serialized['font_size'],
+                                  serialized['name'],
+                                  serialized['type'],
+                                  serialized['plot_data_states'])
   }
 
-  draw(context, first_elem, mvx, mvy, scale, width, height) {
+
+
+  draw(context, mvx, mvy, scale, width, height, init_scale, minX, maxX, minY, maxY) {
     // Dessin du repère
     context.strokeStyle = this.colorStroke
     //Flèches
@@ -514,29 +506,43 @@ export class PlotDataScatterPlot {
     context.lineTo(width, height - 10)
 
     //Graduations
-      //pour l'axe des x
-    var display_nb_x = 0
-    if (this.x_step.toString().split(".").length == 2) {
-      display_nb_x = this.x_step.toString().split(".")[1].length;
+    console.log(scale/init_scale)
+    if (scale>init_scale) {
+      var kx = scale/init_scale
+      var ky = 0.6*scale/init_scale
+    } else {
+      var kx = 1
+      var ky = 1
     }
-    for (var i=0; i<this.nb_points_x; i++) {
-      context.moveTo(scale*(1000*(this.x_start + i*this.x_step) + mvx), height - 13)
-      context.lineTo(scale*(1000*(this.x_start + i*this.x_step) + mvx), height - 7)
+    
+    var x_step = (maxX - minX)/(kx*this.nb_points_x)
+    var y_step = (maxY - minY)/(ky*this.nb_points_y)
 
-      context.font = '12px Arial';
+      //pour l'axe des x
+    var display_nb_x = 3
+    var i=0
+    while(minX + i*x_step < maxX) {
+      context.moveTo(scale*(1000*(minX + i*x_step) + mvx), height - 13)
+      context.lineTo(scale*(1000*(minX + i*x_step) + mvx), height - 7)
+
+      context.font = this.font_size.toString() + 'px Arial';
       context.textAlign = 'start';
-      context.fillText(Math.round((this.x_start + i*this.x_step)*Math.pow(10,display_nb_x))/Math.pow(10,display_nb_x), scale*(1000*(this.x_start + i*this.x_step) - 20 + mvx), height - 15 )
-      
+      context.fillText(Math.round((minX + i*x_step)*Math.pow(10,display_nb_x))/Math.pow(10,display_nb_x), scale*(1000*(minX + i*x_step) + mvx), height - 15 )
+      i++
     }
+
       //pour l'axe des y
-    var display_nb_y = 0
-    if (this.y_step.toString().split(".").length == 2) {
-      display_nb_y = this.x_step.toString().split(".")[1].length;
-    }
-    for (var i=0; i<this.nb_points_y; i++) {
-      context.moveTo(7, scale*(-1000*(this.y_start + i*this.y_step) + mvy))
-      context.lineTo(13, scale*(-1000*(this.y_start + i*this.y_step) + mvy))
-      context.fillText(Math.round((this.y_start + i*this.y_step)*Math.pow(10,display_nb_y))/Math.pow(10,display_nb_y), 15, scale*(-1000*(this.y_start + i*this.y_step) + mvy))
+    
+    var display_nb_y = 3
+    i=0
+    var real_minY=-maxY
+    var real_maxY = - minY
+
+    while (real_minY + i*y_step < real_maxY) {
+      context.moveTo(7, scale*(-1000*(real_minY + i*y_step) + mvy))
+      context.lineTo(13, scale*(-1000*(real_minY + i*y_step) + mvy))
+      context.fillText(Math.round((real_minY + i*y_step)*Math.pow(10,display_nb_y))/Math.pow(10,display_nb_y), 15, scale*(-1000*(real_minY + i*y_step) + mvy))
+      i++
     }
 
     context.stroke()
@@ -838,7 +844,7 @@ function genColor(){
     ret.push((nextCol & 0xff00) >> 8); // G
     ret.push((nextCol & 0xff0000) >> 16); // B
 
-    nextCol += 1;
+    nextCol += 10;
   }
   var col = "rgb(" + ret.join(',') + ")";
   return col;

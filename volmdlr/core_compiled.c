@@ -833,8 +833,8 @@ struct __pyx_ctuple_double__and_double;
 typedef struct __pyx_ctuple_double__and_double __pyx_ctuple_double__and_double;
 struct __pyx_ctuple_double__and_double__and_double;
 typedef struct __pyx_ctuple_double__and_double__and_double __pyx_ctuple_double__and_double__and_double;
-struct __pyx_ctuple_c7296__double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__etc;
-typedef struct __pyx_ctuple_c7296__double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__etc __pyx_ctuple_c7296__double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__etc;
+struct __pyx_ctuple_fec11__double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__etc;
+typedef struct __pyx_ctuple_fec11__double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__etc __pyx_ctuple_fec11__double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__etc;
 struct __pyx_ctuple_double__and___dunderpyx_ctuple_double__dunderand_double;
 typedef struct __pyx_ctuple_double__and___dunderpyx_ctuple_double__dunderand_double __pyx_ctuple_double__and___dunderpyx_ctuple_double__dunderand_double;
 struct __pyx_defaults;
@@ -872,7 +872,7 @@ struct __pyx_ctuple_double__and_double__and_double {
  *       double, double, double,
  *       double, double, double) C_matrix_multiplication3(double A11, double A12, double A13,
  */
-struct __pyx_ctuple_c7296__double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__etc {
+struct __pyx_ctuple_fec11__double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__etc {
   double f0;
   double f1;
   double f2;
@@ -1440,7 +1440,7 @@ static double __pyx_f_7volmdlr_13core_compiled_CVector3DNorm(double, double, dou
 static __pyx_ctuple_double__and_double__and_double __pyx_f_7volmdlr_13core_compiled_C_vector3D_cross(double, double, double, double, double, double); /*proto*/
 static __pyx_ctuple_double__and_double__and_double __pyx_f_7volmdlr_13core_compiled_C_vector3D_rotation(double, double, double, double, double, double, double, double, double, double); /*proto*/
 static __pyx_ctuple_double__and_double__and_double __pyx_f_7volmdlr_13core_compiled_C_matrix_vector_multiplication3(double, double, double, double, double, double, double, double, double, double, double, double); /*proto*/
-static __pyx_ctuple_c7296__double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__etc __pyx_f_7volmdlr_13core_compiled_C_matrix_multiplication3(double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double); /*proto*/
+static __pyx_ctuple_fec11__double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__etc __pyx_f_7volmdlr_13core_compiled_C_matrix_multiplication3(double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double); /*proto*/
 static __pyx_ctuple_double__and___dunderpyx_ctuple_double__dunderand_double __pyx_f_7volmdlr_13core_compiled_CLineSegment2DPointDistance(__pyx_ctuple_double__and_double, __pyx_ctuple_double__and_double, __pyx_ctuple_double__and_double); /*proto*/
 #define __Pyx_MODULE_NAME "volmdlr.core_compiled"
 extern int __pyx_module_is_main_volmdlr__core_compiled;
@@ -5665,10 +5665,10 @@ static __pyx_ctuple_double__and_double__and_double __pyx_f_7volmdlr_13core_compi
  *       double, double, double) C_matrix_multiplication3(double A11, double A12, double A13,
  */
 
-static __pyx_ctuple_c7296__double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__etc __pyx_f_7volmdlr_13core_compiled_C_matrix_multiplication3(double __pyx_v_A11, double __pyx_v_A12, double __pyx_v_A13, double __pyx_v_A21, double __pyx_v_A22, double __pyx_v_A23, double __pyx_v_A31, double __pyx_v_A32, double __pyx_v_A33, double __pyx_v_B11, double __pyx_v_B12, double __pyx_v_B13, double __pyx_v_B21, double __pyx_v_B22, double __pyx_v_B23, double __pyx_v_B31, double __pyx_v_B32, double __pyx_v_B33) {
-  __pyx_ctuple_c7296__double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__etc __pyx_r;
+static __pyx_ctuple_fec11__double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__etc __pyx_f_7volmdlr_13core_compiled_C_matrix_multiplication3(double __pyx_v_A11, double __pyx_v_A12, double __pyx_v_A13, double __pyx_v_A21, double __pyx_v_A22, double __pyx_v_A23, double __pyx_v_A31, double __pyx_v_A32, double __pyx_v_A33, double __pyx_v_B11, double __pyx_v_B12, double __pyx_v_B13, double __pyx_v_B21, double __pyx_v_B22, double __pyx_v_B23, double __pyx_v_B31, double __pyx_v_B32, double __pyx_v_B33) {
+  __pyx_ctuple_fec11__double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__etc __pyx_r;
   __Pyx_RefNannyDeclarations
-  __pyx_ctuple_c7296__double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__etc __pyx_t_1;
+  __pyx_ctuple_fec11__double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__etc __pyx_t_1;
   __Pyx_RefNannySetupContext("C_matrix_multiplication3", 0);
 
   /* "volmdlr/core_compiled.pyx":185
@@ -9257,7 +9257,7 @@ static PyObject *__pyx_pf_7volmdlr_13core_compiled_8Vector2D___init__(CYTHON_UNU
  *         self.vector = [0, 0]
  * #        self.vector = npy.zeros(2)
  *         self.vector[0] = vector[0]             # <<<<<<<<<<<<<<
- *         self.vector[1] = vector[1]
+ *         self.vector[1] = -vector[1]
  *         self.name = name
  */
   __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_vector, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 310, __pyx_L1_error)
@@ -9271,21 +9271,24 @@ static PyObject *__pyx_pf_7volmdlr_13core_compiled_8Vector2D___init__(CYTHON_UNU
   /* "volmdlr/core_compiled.pyx":311
  * #        self.vector = npy.zeros(2)
  *         self.vector[0] = vector[0]
- *         self.vector[1] = vector[1]             # <<<<<<<<<<<<<<
+ *         self.vector[1] = -vector[1]             # <<<<<<<<<<<<<<
  *         self.name = name
  * 
  */
   __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_vector, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 311, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_vector); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 311, __pyx_L1_error)
+  __pyx_t_2 = PyNumber_Negative(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 311, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (unlikely(__Pyx_SetItemInt(__pyx_t_2, 1, __pyx_t_1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1) < 0)) __PYX_ERR(0, 311, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_vector); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 311, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (unlikely(__Pyx_SetItemInt(__pyx_t_1, 1, __pyx_t_2, long, 1, __Pyx_PyInt_From_long, 0, 0, 1) < 0)) __PYX_ERR(0, 311, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "volmdlr/core_compiled.pyx":312
  *         self.vector[0] = vector[0]
- *         self.vector[1] = vector[1]
+ *         self.vector[1] = -vector[1]
  *         self.name = name             # <<<<<<<<<<<<<<
  * 
  *     def __add__(self, other_vector):
@@ -31027,7 +31030,7 @@ static PyObject *__pyx_pf_7volmdlr_13core_compiled_8Matrix33_4__mul__(CYTHON_UNU
   double __pyx_t_17;
   double __pyx_t_18;
   double __pyx_t_19;
-  __pyx_ctuple_c7296__double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__etc __pyx_t_20;
+  __pyx_ctuple_fec11__double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__and_double__etc __pyx_t_20;
   PyObject *__pyx_t_21 = NULL;
   PyObject *__pyx_t_22 = NULL;
   PyObject *__pyx_t_23 = NULL;

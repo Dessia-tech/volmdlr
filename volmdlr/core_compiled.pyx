@@ -308,7 +308,7 @@ class Vector2D(Vector):
         self.vector = [0, 0]
 #        self.vector = npy.zeros(2)
         self.vector[0] = vector[0]
-        self.vector[1] = vector[1]
+        self.vector[1] = -vector[1]
         self.name = name
 
     def __add__(self, other_vector):
