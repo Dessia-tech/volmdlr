@@ -456,6 +456,7 @@ export class PlotDataScatterPlot {
   constructor(public nb_points_x:number,
                      public nb_points_y:number,
                      public font_size:number,
+                     public graduation_color:string,
                      public name:string, 
                      public type:string, 
                      public plot_data_states:PlotDataState[]) {
@@ -476,6 +477,7 @@ export class PlotDataScatterPlot {
     return new PlotDataScatterPlot(serialized['nb_points_x'],
                                   serialized['nb_points_y'],
                                   serialized['font_size'],
+                                  serialized['graduation_color'],
                                   serialized['name'],
                                   serialized['type'],
                                   serialized['plot_data_states'])
@@ -506,44 +508,47 @@ export class PlotDataScatterPlot {
     context.lineTo(width, height - 10)
 
     //Graduations
-    console.log(scale/init_scale)
     if (scale>init_scale) {
-      var kx = scale/init_scale
-      var ky = 0.6*scale/init_scale
+      var k = scale/init_scale
     } else {
-      var kx = 1
-      var ky = 1
+      var k = 1
     }
     
-    var x_step = (maxX - minX)/(kx*this.nb_points_x)
-    var y_step = (maxY - minY)/(ky*this.nb_points_y)
+    var x_step = (maxX - minX)/(k*(this.nb_points_x-1))
+    var y_step = (maxY - minY)/(k*(this.nb_points_y-1))
 
+    context.font = this.font_size.toString() + 'px Arial';
+    context.fillStyle = this.graduation_color
+    
       //pour l'axe des x
     var display_nb_x = 3
     var i=0
+    context.textAlign = 'center';
     while(minX + i*x_step < maxX) {
       context.moveTo(scale*(1000*(minX + i*x_step) + mvx), height - 13)
       context.lineTo(scale*(1000*(minX + i*x_step) + mvx), height - 7)
-
-      context.font = this.font_size.toString() + 'px Arial';
-      context.textAlign = 'start';
       context.fillText(Math.round((minX + i*x_step)*Math.pow(10,display_nb_x))/Math.pow(10,display_nb_x), scale*(1000*(minX + i*x_step) + mvx), height - 15 )
       i++
     }
+    context.moveTo(scale*(1000*(minX + i*x_step) + mvx), height - 13)
+    context.lineTo(scale*(1000*(minX + i*x_step) + mvx), height - 7)
+    context.fillText(Math.round((minX + i*x_step)*Math.pow(10,display_nb_x))/Math.pow(10,display_nb_x), scale*(1000*(minX + i*x_step) + mvx), height - 15 )
 
       //pour l'axe des y
-    
     var display_nb_y = 3
     i=0
-    var real_minY=-maxY
-    var real_maxY = - minY
-
+    var real_minY = -maxY
+    var real_maxY = -minY
+    context.textAlign = 'start'
     while (real_minY + i*y_step < real_maxY) {
       context.moveTo(7, scale*(-1000*(real_minY + i*y_step) + mvy))
       context.lineTo(13, scale*(-1000*(real_minY + i*y_step) + mvy))
       context.fillText(Math.round((real_minY + i*y_step)*Math.pow(10,display_nb_y))/Math.pow(10,display_nb_y), 15, scale*(-1000*(real_minY + i*y_step) + mvy))
       i++
     }
+    context.moveTo(7, scale*(-1000*(real_minY + i*y_step) + mvy))
+    context.lineTo(13, scale*(-1000*(real_minY + i*y_step) + mvy))
+    context.fillText(Math.round((real_minY + i*y_step)*Math.pow(10,display_nb_y))/Math.pow(10,display_nb_y), 15, scale*(-1000*(real_minY + i*y_step) + mvy))
 
     context.stroke()
   }
