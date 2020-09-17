@@ -18,7 +18,8 @@
 	var show_state = 1
 	var coeff_pixel = 1000
 
-  var D3Data = {{ D3Data | safe }};
+  var D3Data = [{% for d in D3Data %} {{ d | safe }} , 
+  {% endfor %}];
 	var number_plot_data = D3Data.length
 
 	var plot_data = new core.PlotData(D3Data, width, height, 1000);

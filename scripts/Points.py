@@ -1,7 +1,4 @@
-import random
 import volmdlr as vm
-import volmdlr.primitives2D as primitives2D
-import matplotlib.pyplot as plt
 from volmdlr import plot_data
 
 #### Point test ####

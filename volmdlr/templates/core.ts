@@ -83,7 +83,6 @@ export class PlotData {
     }
 
     context.clearRect(0, 0, this.width, this.height);
-    
 
     for (var i = 0; i < this.plot_datas.length; i++) {
       var d = this.plot_datas[i]
@@ -130,14 +129,11 @@ export class PlotData {
           if (this.select_on_mouse == d) {
             context.fillStyle = this.color_surface_on_mouse
           }
-          console.log(mvx)
-              console.log(mvy)
           for (var j = 0; j < this.select_on_click.length; j++) {
             var z = this.select_on_click[j]
             var shape = d.plot_data_states[show_state].shape_set.shape
+
             if (z == d) {
-              this.tooltip(context,d, scale, mvx, mvy)
-              context.lineWidth = d.plot_data_states[show_state].stroke_width;
               if (shape == 'crux') {
                 context.strokeStyle = this.color_surface_on_click
               } else {
@@ -160,6 +156,11 @@ export class PlotData {
         throw new Error("Invalid type for plotting. For now, only contours, points and scatterplot can be plotted")
       }
       context.stroke();
+    }
+    for (var i=0; i<this.select_on_click.length; i++) {
+      if (!(typeof this.select_on_click[i] === "undefined")) {
+        this.tooltip(context, this.select_on_click[i], scale, mvx, mvy)
+      }
     }
   }
 
@@ -255,7 +256,7 @@ tooltip(context,point, scale, mvx, mvy) {
 				this.last_mouse1Y = this.last_mouse1Y + mouse2Y/this.scale - mouse1Y/this.scale
 			}
       else {
-  				var col = this.context_hidden.getImageData(mouse1X, mouse1Y, 1, 1).data;
+          var col = this.context_hidden.getImageData(mouse1X, mouse1Y, 1, 1).data;
   				var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
           var click_plot_data = this.colour_to_plot_data[colKey]
           if (this.is_include(click_plot_data, this.select_on_click)) {
