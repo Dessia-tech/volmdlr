@@ -1374,14 +1374,6 @@ class Arc2D(Primitive2D):
         xi, yi = interior.vector
         xe, ye = end.vector
         xs, ys = start.vector
-        # print('xe, ye, xs, ys', xe, ye, xs, ys)
-        ######### old
-        # A = npy.array([[2*(xs-xi), 2*(ys-yi)],
-                        # [2*(xs-xe), 2*(ys-ye)]])
-        # b = - npy.array([xi**2 + yi**2 - xs**2 - ys**2,
-                          # xe**2 + ye**2 - xs**2 - ys**2])
-        
-        ######## NEW, TODO : debug for start and end close
         try : 
             A = Matrix22(2*(xs-xi), 2*(ys-yi),
                           2*(xs-xe), 2*(ys-ye))
@@ -1396,11 +1388,7 @@ class Arc2D(Primitive2D):
             b = - npy.array([xi**2 + yi**2 - xs**2 - ys**2,
                                xe**2 + ye**2 - xs**2 - ys**2])
             self.center = Point2D(solve(A,b))
-        #########
-        
-        #######old
-        # self.center = Point2D(solve(A,b))
-        ######
+
         r1 = self.start - self.center
         r2 = self.end - self.center
         ri = self.interior - self.center
@@ -1437,7 +1425,7 @@ class Arc2D(Primitive2D):
             self.angle1 = angle2
             self.angle2 = angle1
             self.angle = clockwise_path
-        # self.endpoints = [self.start, self.end]
+            
     
     def _get_points(self):
         return [self.start,self.interior,self.end]
@@ -1875,7 +1863,7 @@ class Circle2D(Contour2D):
         if disc < 0:
             return None
         
-        if math.isclose(disc, 0, abs_tol=1e-6):
+        if math.isclose(disc, 0, abs_tol=1e-8):
             t = -b / (2 * a)
             if line.__class__ is Line2D:
                 return [Point2D((P1+t*V).vector)]
@@ -1907,7 +1895,7 @@ class Circle2D(Contour2D):
         s = 'Circle({}) = {{{}, {}, {}}};\n'.format(primitive_index,*points_indices)
         return s, primitive_index+1
 
-    def MPLPlot(self, ax, linestyle='-', color='k', linewidth=1):
+    def MPLPlot(self, ax=None, linestyle='-', color='k', linewidth=1):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -2246,6 +2234,9 @@ class Primitive3D(dc.DessiaObject):
             self.primitives = []
         
         dc.DessiaObject.__init__(self, name=name)
+        
+    def volmdlr_primitives(self):
+        return [self]
 
 class Plane3D(Primitive3D):
     def __init__(self, origin, vector1, vector2, name=''):
@@ -3063,8 +3054,11 @@ class Arc3D(Primitive3D):
     def setup_arc(self, start, interior, end, normal=None, name='') :
         u1 = (self.interior - self.start)
         u2 = (self.interior - self.end)
-        u1.Normalize()
-        u2.Normalize()
+        try:
+            u1.Normalize()
+            u2.Normalize()
+        except ZeroDivisionError:
+            raise ValueError('Start, end and interior points  of an arc must be distincts')
         
         if normal is None:
             n = u2.Cross(u1)
@@ -5642,7 +5636,8 @@ class CylindricalFace3D(Face3D):
         frame = cylindricalsurface3d.frame
         normal, center = frame.w, frame.origin
         offset = 0
-        if arc.__class__.__name__ == 'Circle3D' or arc.__class__.__name__ == 'Circle2D' : 
+        if arc.__class__.__name__ == 'Circle3D' or arc.__class__.__name__ == 'Circle2D' :
+            
             frame_adapt = cylindricalsurface3d.frame
             theta = arc.angle
                 
@@ -6426,6 +6421,7 @@ class ToroidalFace3D (Face3D) :
     """      
     
     def __init__(self, contours2d, toroidalsurface3d, param, name=''):
+        
         self.rcenter = toroidalsurface3d.rcenter
         self.rcircle = toroidalsurface3d.rcircle
         self.toroidalsurface3d = toroidalsurface3d 
@@ -6433,8 +6429,8 @@ class ToroidalFace3D (Face3D) :
         self.center = self.toroidalsurface3d.frame.origin
         self.normal = self.toroidalsurface3d.frame.w
         vec1, vec2 = self.toroidalsurface3d.frame.u, self.toroidalsurface3d.frame.v
-        ptext = self.center + Point3D((self.rcenter*vec1).vector) 
-        ccircle = ptext - Point3D((self.rcircle*vec1).vector) 
+        ptext = self.center + Point3D((self.rcenter*vec1).vector)
+        ccircle = ptext - Point3D((self.rcircle*vec1).vector)
         c1 = Arc3D(ptext, self.center+Point3D((self.rcenter*vec1*math.cos(param[0]/2)+self.rcenter*vec2*math.sin(param[0]/2)).vector), self.center+Point3D((self.rcenter*vec1*math.cos(param[0])+self.rcenter*vec2*math.sin(param[0])).vector), self.normal) 
         c2 = Arc3D(ptext, ptext.Rotation(ccircle, vec2, param[1]/2), ptext.Rotation(ccircle, vec2, param[1]), vec2)
             
@@ -6444,14 +6440,8 @@ class ToroidalFace3D (Face3D) :
         Face3D.__init__(self, ctr)
         self.contours2d = contours2d 
         self.param = param
-        # if points is None or len(points)==1 :
-        #     self.points = self.contours2d[0].tessel_points 
-        # else:
-        #     self.points = points 
         self.name = name 
     
-        # pts3d, t = self.triangulation()
-        # self.start = pts3d[0]
     
     @classmethod
     def from_contour3d(cls, contours3d, toroidalsurface3d, name=''):
@@ -6529,7 +6519,7 @@ class ToroidalFace3D (Face3D) :
         u = Vector3D((center1 - center).vector)
         u.Normalize()
         v = normal.Cross(u)
-        
+        # print('arc angle', arc.angle)
         offset1 = 0
         if arcgen.__class__.__name__ == 'Circle3D' or arcgen.__class__.__name__ == 'Circle2D' : 
             theta = 2*math.pi
@@ -6574,13 +6564,8 @@ class ToroidalFace3D (Face3D) :
                 last_generated = last_generated.To2D(center_generated, u_g, v_g)
             x2, y2 = last_generated.vector[0], last_generated.vector[1]
             phi = math.atan2(y2, x2)
-            
             # Calculate angle between first point of arcgen and arc
-            
-            # first_generated = arc.start.To2D(center_generated, u_g, v_g)
-            # c2d = center.To2D(center_generated, u_g, v_g)
-            
-            # angle1 = math.atan2(first_generated.vector[1], first_generated.vector[0]) ## should be 0
+          
             angle_offset = math.atan2(c2d.vector[1], c2d.vector[0]) 
             if arc.__class__.__name__ == 'Arc2D' :
                 offset2 = 0
@@ -6592,13 +6577,16 @@ class ToroidalFace3D (Face3D) :
                     offset2 += -phi-math.pi+angle_offset
 
         frame3d = Frame3D(center, u, v, normal)
+        # print('rcenter rcircle')
+        # print(rcenter, rcircle)
         toroidalsurface3d = ToroidalSurface3D(frame3d, rcenter, rcircle)
-        
+        # print('tp', theta, phi)
         pt1, pt2, pt3, pt4 = Point2D((offset1, offset2)), Point2D((offset1, phi+offset2)), Point2D((theta+offset1, phi+offset2)), Point2D((theta+offset1, offset2))
         seg1, seg2, seg3, seg4 = LineSegment2D(pt1, pt2), LineSegment2D(pt2, pt3), LineSegment2D(pt3, pt4), LineSegment2D(pt4, pt1) 
         edges = [seg1, seg2, seg3, seg4]
         contours2d =  [Contour2D(edges)]
         param = [theta, phi]
+        print('theta phi', theta, phi)
         
         return cls(contours2d, toroidalsurface3d, param, name='')
     
@@ -10298,8 +10286,8 @@ class VolumeModel(dc.DessiaObject):
             zmin = min([p[2] for p in points])
             zmax = max([p[2] for p in points])
         else:
-            raise ValueError('Bounding box cant be determined')
-            # return BoundingBox(-1, 1, -1, 1, -1, 1)
+            # raise ValueError('Bounding box cant be determined')
+            return BoundingBox(-1, 1, -1, 1, 1-1, 1)
         return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
     
     def plot(self, ax=None, color=None):
