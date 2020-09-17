@@ -143,7 +143,7 @@ export class PlotData {
           }
         }
         context.beginPath()
-        d.draw(context, mvx, mvy, scale, this.init_scale)
+        d.draw(context, this.context_hidden, mvx, mvy, scale, this.init_scale)
         context.closePath();
         context.fill();
 
@@ -193,8 +193,18 @@ tooltip(context, point, scale, mvx, mvy) {
   var rect_w = this.init_scale*300
   var rect_h = this.init_scale*200
   var rect_radius = this.init_scale*40
-  var rect_x = scale*(1000*(cx + 0) + mvx) + this.init_scale*80
-  var rect_y = scale*(1000*(cy - 0) + mvy) - 1/2*rect_h
+  var rect_x = scale*(1000*cx + mvx) + this.init_scale*80
+  var rect_y = scale*(1000*cy + mvy) - 1/2*rect_h
+
+  if (rect_x + rect_w  > this.width) {
+    rect_x = scale*(1000*cx + mvx) - this.init_scale*80 - rect_w
+  }
+  if (rect_y < 0) {
+    rect_y = scale*(1000*cy + mvy)
+  }
+  if (rect_y + rect_h > this.height) {
+    rect_y = scale*(1000*cy + mvy) - rect_h
+  }
 
   this.roundRect(rect_x, rect_y, rect_w, rect_h, rect_radius, context)
   context.strokeStyle = 'black'
@@ -492,7 +502,7 @@ export class PlotDataPoint2D {
                                   serialized['name']);
     }
 
-    draw(context, mvx, mvy, scale, init_scale) {
+    draw(context, context_hidden, mvx, mvy, scale, init_scale) {
 
         for (var i=0; i<this.plot_data_states.length; i++) {
           var shape = this.plot_data_states[i].shape_set.shape
@@ -506,7 +516,9 @@ export class PlotDataPoint2D {
             context.rect(scale*(1000*this.cx + mvx), scale*(1000*this.cy + mvy),-init_scale*1000*this.size, init_scale*100*this.size)
             context.rect(scale*(1000*this.cx + mvx), scale*(1000*this.cy + mvy),init_scale*100*this.size, init_scale*1000*this.size)
             context.rect(scale*(1000*this.cx + mvx), scale*(1000*this.cy + mvy),init_scale*100*this.size, -init_scale*1000*this.size)
+
             context.stroke()
+
           } else {
             throw new Error('Invalid shape for point')
           }
