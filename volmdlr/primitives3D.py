@@ -625,6 +625,9 @@ class RevolvedProfile(volmdlr.Shell3D):
                     arcgen = create_arc(pt_arc+0.00001*vec_offset, angle, axis_point, axis)
                 else :
                     arcgen = create_arc(pt_arc, angle, axis_point, axis)
+                
+                # ax = edge.MPLPlot()
+                # arcgen.MPLPlot(ax=ax)
                 faces.append(volmdlr.ToroidalFace3D.from_arc3d(edge, arcgen))
             
             elif edge.__class__ is volmdlr.core.LineSegment3D :

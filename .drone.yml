@@ -23,6 +23,7 @@ steps:
   - python demo2D.py
   - python casing.py
   - python sweep.py
+  - python revolved_profile.py
   - cd distance
   - python arc3D_arc3D.py
   - python arc3D_ls3D.py
