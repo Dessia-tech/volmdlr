@@ -34,9 +34,12 @@ l4 = vm.LineSegment2D(p4,p5)
 l5 = vm.LineSegment2D(p5,p1)
 contour=vm.Contour2D([l1,l2,l3,l4,l5])
 polygon=contour.polygon
-mesher=vmmesh.Mesher(contour,[],1.5 )
+mesher=vmmesh.Mesher(contour,[],[],1.5 )
 triangles=mesher.triangulation_polygone_recursive(polygon)
+all_triangles=mesher.assemble_mesh(triangles,0.001)
 
-print(mesher.assemble_mesh(triangles,0.001))
 
 
+
+print(len(all_triangles))
+print(len(set(all_triangles)))

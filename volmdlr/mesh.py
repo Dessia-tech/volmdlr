@@ -328,8 +328,9 @@ class Mesh(DessiaObject):
     
 class Mesher(DessiaObject):
     
-    def __init__(self,contour:vm.Contour2D,triangles:List[TriangularElement],nodes_len:float):
+    def __init__(self,contour:vm.Contour2D,triangles:List[TriangularElement],all_triangles:List[TriangularElement],nodes_len:float):
         self.nodes_len=nodes_len
+        self.all_triangles=all_triangles
         self.contour=contour
         self.polygon=self.contour._get_polygon()
         self.triangles=triangles
@@ -535,6 +536,28 @@ class Mesher(DessiaObject):
                         
                       
         return neightbours
+    
+    # def assemble_mesh(self, triangles: List[TriangularElement], trigger: float):
+        
+    #     nodes = self.nodes_on_segments(triangles)[0]
+    #     for triangle in triangles: 
+    #         l0 = triangle.linear_elements[0].length()/3
+    #         if l0 > trigger and len(nodes) >= 3:
+    #             nodes = self.nodes_on_segments(triangles)[0]
+    #             new_triangles = []
+    #             for node in nodes:
+    #                 u = self.closest_neightbours(triangles, node)
+    #                 if u:
+    #                     n1, n2 = u                    
+    #                     new_triangle = TriangularElement((node, n1, n2))
+    #                     new_triangles.append(new_triangle)
+    #                     if new_triangle not in self.all_triangles:
+                            
+    #                         self.all_triangles.append(triangle)
+                            
+    #             self.all_triangles.extend(self.assemble_mesh(triangles=new_triangles,
+    #                                                trigger=trigger))
+    #     return self.all_triangles
                 
         
                 
@@ -543,38 +566,36 @@ class Mesher(DessiaObject):
         memo=[]
         nodes=self.nodes_on_segments(triangles)[0]
         for triangle in triangles: 
-           l0=triangle.linear_elements[0].length()/3
-           if l0 > trigger and len(nodes) >= 3 :
+            l0=triangle.linear_elements[0].length()/3
+            if l0 > trigger and len(nodes) >= 3 :
                
-               nodes=self.nodes_on_segments(triangles)[0]
-               #print(nodes)
+                nodes=self.nodes_on_segments(triangles)[0]
+                #print(nodes)
+             
+                new_triangles=[]
                
-               node_linear_element=self.nodes_on_segments(triangles)[1]
-               node_counter=[]
-               segment_counter=[]
-               new_triangles=[]
-               
-               for node in nodes :
+                for node in nodes :
                    
-                   u=self.closest_neightbours(triangles,node)
-                   if u!=[]:
+                    u=self.closest_neightbours(triangles,node)
+                    if u!=[]:
                        
-                       n1=u[0]
-                       n2=u[1]
+                        n1=u[0]
+                        n2=u[1]
                        
                     
-                       triangle = TriangularElement([node,n1,n2])
-                       #memo.append(triangle)
+                        new_triangle = TriangularElement([node,n1,n2])
+                        new_triangles.append(new_triangle)
+                        if new_triangle not in self.all_triangles:
+                            self.all_triangles.append(new_triangle)
                        
-                       new_triangles.append(triangle)
-               memo.extend(self.assemble_mesh(new_triangles,trigger))
+                        
+                self.all_triangles.extend(self.assemble_mesh(triangles=new_triangles,trigger=trigger))
                
                
           
       
-        return memo
-                       
-    
+        return self.all_triangles
+     
           
       
            
