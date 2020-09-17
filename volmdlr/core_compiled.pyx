@@ -350,7 +350,7 @@ class Vector2D(Vector):
 
     def Normalize(self):
         """
-        Normalize the vector modifying its coordinates
+        flize the vector modifying its coordinates
         """
         n = self.Norm()
         if math.isclose(n, 0, abs_tol=1e-9):

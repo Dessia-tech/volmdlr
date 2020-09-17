@@ -21,9 +21,11 @@ p2 = vm.Point2D([2,1])
 p3 = vm.Point2D([2.5,2])
 p4 = vm.Point2D([1.5,3])
 p5 =  vm.Point2D([1,2])
+p6 =  vm.Point2D([1.6666666666666667, 2.3333333333333335])
 
 
-tr1=vmmesh.TriangularElement([p1,p2,p3])
+#tr1=vmmesh.TriangularElement([p3,p4,p6])
+#tr1.plot()
 
 l1 = vm.LineSegment2D(p1,p2)
 l2 = vm.LineSegment2D(p2,p3)
@@ -32,9 +34,9 @@ l4 = vm.LineSegment2D(p4,p5)
 l5 = vm.LineSegment2D(p5,p1)
 contour=vm.Contour2D([l1,l2,l3,l4,l5])
 polygon=contour.polygon
-mesher=vmmesh.Mesher(contour,[],1.5)
+mesher=vmmesh.Mesher(contour,[],1.5 )
 triangles=mesher.triangulation_polygone_recursive(polygon)
 
-mesher.assemble_mesh(triangles,0.001)
+print(mesher.assemble_mesh(triangles,0.001))
 
 

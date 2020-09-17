@@ -436,26 +436,26 @@ class Mesher(DessiaObject):
                
                 l0= int(n*linear_element.length())
                 
-                
-                for k in range(1,l0):
-
-                    node=vm.Point2D([linear_element.points[1][0]*k/l0+(1-k/l0)*linear_element.points[0][0],linear_element.points[1][1]*k/l0+(1-k/l0)*linear_element.points[0][1]])
-                    if node not in nodes:
-                        nodes.append(node)
-                    
-                    node_linear_element[node]=linear_element
+                if l0 > 1 :
+                    for k in range(l0):
+    
+                        node=vm.Point2D([linear_element.points[1][0]*k/l0+(1-k/l0)*linear_element.points[0][0],linear_element.points[1][1]*k/l0+(1-k/l0)*linear_element.points[0][1]])
+                        if node not in nodes:
+                            nodes.append(node)
+                        
+                        node_linear_element[node]=linear_element
         random.shuffle(nodes)
-            
+        
         return [nodes, node_linear_element]
     
     def closest_neightbours(self,triangles:List[TriangularElement],node:vm.Point2D):
-        
+       # print(node)
         neightbours=[]
         d=[]
         possible_nodes=[]
         nodes=self.nodes_on_segments(triangles)[0]
         node_linear_element=self.nodes_on_segments(triangles)[1]
-        k=True
+        k=1
         # while k < len(nodes):
         #     if node_linear_element[node]==node_linear_element[nodes[k]] and node_linear_element[node]==node_linear_element[nodes[k+1]]:
         #         k=k+2
@@ -467,38 +467,73 @@ class Mesher(DessiaObject):
                 # d.append(math.sqrt((node[0]-nodes[k+1])**2+(node[1]-nodes[k+1])**2))
                 
                     possible_nodes.append(p)
-        print(d)
-       
+        
+        #print(d)
             
-        while k :
-           
-                
+        while k==1 :
+                #print(possible_nodes)
+               # print(d)
+                if len(d)==1:
+                   k=0
+                    
                 index_min_1=d.index(min(d))
                 d.pop(index_min_1)
-                nodes.pop(index_min_1)
-                print(index_min_1)
+                
+               # print(d)
                 index_min_2=d.index(min(d))
-                print(index_min_2)
+             
+                index_3=d.index(max(d))
+                if index_min_1==index_min_2:
+                   index_min_2=index_min_2+1
+                   
                 n1=possible_nodes[index_min_1]
                 n2=possible_nodes[index_min_2]
-                if n1!=n2:
-                    if (n1[0]!= node[0] and n2[0]!=node[0]) or (n1[1]!= node[1] and n2[1]!=node[1]) :
-                        
-                           
+                n3=possible_nodes[index_3]
+                
+                line=vm.Line2D(n1,n2)
+                
+                    #f (n1[0]!= node[0] and n2[0]!=node[0]) or (n1[1]!= node[1] and n2[1]!=node[1]) :
+                if line.PointProjection(node)!=node:   
+                               
+                       
                            
                     
-                    # if node_linear_element[possible_nodes[index_min_1]]!=node_linear_element[node] and node_linear_element[possible_nodes[index_min_2]]!=node_linear_element[node]:
+                 
                            
                            
-                           neightbours.append(possible_nodes[index_min_1])
-                           neightbours.append(possible_nodes[index_min_2])
-                           k=False
-                           print('ok')
+                           neightbours.append(n1)
+                           neightbours.append(n2)
+                          # print(neightbours)
+                           #print('ok')
+                           
+                           k=0
                     
                 else : 
-                    
-                    k=True
-                    
+                    if n3!=n1:
+                        if vm.Line2D(n3,n1).PointProjection(node)!=node:
+                            neightbours.append(n3)
+                            neightbours.append(n1)
+                            #print(neightbours)
+                           # print('ok2')
+                        k=0
+                    else : 
+                        if n3!=n2:
+                            if vm.Line2D(n3,n2).PointProjection(node)!=node:
+                                neightbours.append(n3)
+                                neightbours.append(n2)
+                               # print(neightbours)
+                              #  print('ok3')
+                                k=0
+                         
+                         
+                        
+                        
+                            else : 
+                                    k=0
+                        
+                        
+                        
+                      
         return neightbours
                 
         
@@ -506,12 +541,13 @@ class Mesher(DessiaObject):
             
     def assemble_mesh(self,triangles:List[TriangularElement],trigger):
         memo=[]
+        nodes=self.nodes_on_segments(triangles)[0]
         for triangle in triangles: 
            l0=triangle.linear_elements[0].length()/3
-           if l0 > trigger :
+           if l0 > trigger and len(nodes) >= 3 :
                
                nodes=self.nodes_on_segments(triangles)[0]
-               
+               #print(nodes)
                
                node_linear_element=self.nodes_on_segments(triangles)[1]
                node_counter=[]
@@ -519,19 +555,24 @@ class Mesher(DessiaObject):
                new_triangles=[]
                
                for node in nodes :
-                   print(node)
-                  
-                   n1=self.closest_neightbours(triangles,node)[0]
-                   n2=self.closest_neightbours(triangles,node)[1]
                    
-                   triangle = TriangularElement([node,n1,n2])
-                   
-                   new_triangles.append(triangle)
-               memo.extend(self.assemble_mesh(new_triangles,trigger)) 
-            
+                   u=self.closest_neightbours(triangles,node)
+                   if u!=[]:
+                       
+                       n1=u[0]
+                       n2=u[1]
+                       
+                    
+                       triangle = TriangularElement([node,n1,n2])
+                       #memo.append(triangle)
+                       
+                       new_triangles.append(triangle)
+               memo.extend(self.assemble_mesh(new_triangles,trigger))
+               
+               
           
-          
-        return memo 
+      
+        return memo
                        
     
           
