@@ -152,11 +152,13 @@ export class PlotData {
         d.draw(context, mvx, mvy, scale, this.width, this.height, this.init_scale, this.minX, this.maxX, this.minY, this.maxY)
         context.closePath()
         context.fill()
+
       } else {
         throw new Error("Invalid type for plotting. For now, only contours, points and scatterplot can be plotted")
       }
       context.stroke();
     }
+
     for (var i=0; i<this.select_on_click.length; i++) {
       if (!(typeof this.select_on_click[i] === "undefined")) {
         this.tooltip(context, this.select_on_click[i], scale, mvx, mvy)
@@ -183,7 +185,7 @@ export class PlotData {
   context.closePath();
 }
 
-tooltip(context,point, scale, mvx, mvy) {
+tooltip(context, point, scale, mvx, mvy) {
   context.beginPath()
   var cx = point.cx
   var cy = point.cy
@@ -204,8 +206,8 @@ tooltip(context,point, scale, mvx, mvy) {
   context.font = coordinate_size.toString() + 'px Arial'
   context.fillStyle = 'black'
   context.textAlign = 'center'
-  var round_cx = Math.round(cx * 10000) / 10000
-  var round_cy = Math.round(cy * 10000) / 10000
+  var round_cx = MyMath.round(cx,4)
+  var round_cy = MyMath.round(cy,4)
 
   var x_middle = rect_x + 1/2*rect_w
   var y_middle = rect_y + 1/2*rect_h + rect_radius
@@ -304,6 +306,12 @@ tooltip(context,point, scale, mvx, mvy) {
     return check
   }
 
+}
+
+class MyMath {
+  public static round(x:number, n:number) {
+    return Math.round(x*Math.pow(10,n)) / Math.pow(10,n)
+  }
 }
 
 export class PlotDataContour2D {
@@ -576,21 +584,21 @@ export class PlotDataScatterPlot {
     context.fillStyle = this.graduation_color
     
       //pour l'axe des x
-    var display_nb_x = 3
+    var x_nb_digits = 3
     var i=0
     context.textAlign = 'center';
     while(minX + i*x_step < maxX) {
       context.moveTo(scale*(1000*(minX + i*x_step) + mvx), height - 23)
       context.lineTo(scale*(1000*(minX + i*x_step) + mvx), height - 17)
-      context.fillText(Math.round((minX + i*x_step)*Math.pow(10,display_nb_x))/Math.pow(10,display_nb_x), scale*(1000*(minX + i*x_step) + mvx), height - 5 )
+      context.fillText(MyMath.round(minX + i*x_step, x_nb_digits), scale*(1000*(minX + i*x_step) + mvx), height - 4 )
       i++
     }
     context.moveTo(scale*(1000*(minX + i*x_step) + mvx), height - 23)
     context.lineTo(scale*(1000*(minX + i*x_step) + mvx), height - 17)
-    context.fillText(Math.round((minX + i*x_step)*Math.pow(10,display_nb_x))/Math.pow(10,display_nb_x), scale*(1000*(minX + i*x_step) + mvx), height - 5 )
+    context.fillText(MyMath.round(minX + i*x_step, x_nb_digits), scale*(1000*(minX + i*x_step) + mvx), height - 4 )
 
       //pour l'axe des y
-    var display_nb_y = 3
+    var y_nb_digits = 3
     i=0
     var real_minY = -maxY
     var real_maxY = -minY
@@ -598,15 +606,17 @@ export class PlotDataScatterPlot {
     while (real_minY + i*y_step < real_maxY) {
       context.moveTo(7, scale*(-1000*(real_minY + i*y_step) + mvy))
       context.lineTo(13, scale*(-1000*(real_minY + i*y_step) + mvy))
-      context.fillText(Math.round((real_minY + i*y_step)*Math.pow(10,display_nb_y))/Math.pow(10,display_nb_y), 15, scale*(-1000*(real_minY + i*y_step) + mvy))
+      context.fillText(MyMath.round(real_minY + i*y_step, y_nb_digits), 15, scale*(-1000*(real_minY + i*y_step) + mvy) + 5)
       i++
     }
     context.moveTo(7, scale*(-1000*(real_minY + i*y_step) + mvy))
     context.lineTo(13, scale*(-1000*(real_minY + i*y_step) + mvy))
-    context.fillText(Math.round((real_minY + i*y_step)*Math.pow(10,display_nb_y))/Math.pow(10,display_nb_y), 15, scale*(-1000*(real_minY + i*y_step) + mvy))
+    context.fillText(MyMath.round(real_minY + i*y_step, y_nb_digits), 15, scale*(-1000*(real_minY + i*y_step) + mvy) + 5)
 
     context.stroke()
   }
+
+  
 }
 
 export class PlotDataArc2D {
