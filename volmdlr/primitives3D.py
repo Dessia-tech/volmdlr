@@ -548,47 +548,9 @@ class RevolvedProfile(volmdlr.Shell3D):
         faces = []
         number_points_for_circle = 30
         number_points_tesselation = math.ceil(number_points_for_circle*self.angle/2/math.pi)
-        delta_angle = self.angle/number_points_tesselation
+        # delta_angle = self.angle/number_points_tesselation
 
-        # for nb in range(number_points_tesselation):
-        #     if nb == 0:
-        #         points = self.contour3D.points
-        #     else:
-        #         points = [p.Rotation(self.axis_point, self.axis, nb*delta_angle, copy=True) for p in self.contour3D.points]
 
-        #     rotated_points = [p.Rotation(self.axis_point, self.axis, delta_angle, copy=True) for p in points]
-
-        #     points_pair = list(zip(points, rotated_points))
-        #     for i, (pt1, pt2) in enumerate(points_pair):
-                
-        #         if i == len(points_pair)-1:
-        #             pt1_next = points_pair[0][0]
-        #             pt2_next = points_pair[0][1]
-        #         else:
-        #             pt1_next = points_pair[i+1][0]
-        #             pt2_next = points_pair[i+1][1]
-
-        #         if pt1 == pt2 and pt1_next == pt2_next:
-        #             continue
-                
-        #         elif pt1 == pt2:
-        #             edges = [volmdlr.LineSegment3D(pt1.copy(), pt2_next.copy()),
-        #                       volmdlr.LineSegment3D(pt2_next.copy(), pt1_next.copy()),
-        #                       volmdlr.LineSegment3D(pt1_next.copy(), pt1.copy())]
-                
-        #         elif pt1_next == pt2_next:
-        #             edges = [volmdlr.LineSegment3D(pt1.copy(), pt2.copy()),
-        #                       volmdlr.LineSegment3D(pt2.copy(), pt1_next.copy()),
-        #                       volmdlr.LineSegment3D(pt1_next.copy(), pt1.copy())]
-                    
-        #         else:
-        #             edges = [volmdlr.LineSegment3D(pt1.copy(), pt2.copy()),
-        #                       volmdlr.LineSegment3D(pt2.copy(), pt2_next.copy()),
-        #                       volmdlr.LineSegment3D(pt2_next.copy(), pt1_next.copy()),
-        #                       volmdlr.LineSegment3D(pt1_next.copy(), pt1.copy())]
-
-        #         contour = volmdlr.Contour3D(edges)
-        #         faces.append(volmdlr.PlaneFace3D([contour]))
         def create_arc(start, angle, axis_point, axis) :
             start_gen = start
             int_gen, end_gen = start_gen.Rotation(axis_point, axis, angle/2, copy=True), start_gen.Rotation(axis_point, axis, angle, copy=True)
