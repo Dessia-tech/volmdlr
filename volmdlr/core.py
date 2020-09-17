@@ -560,12 +560,13 @@ class Contour2D(Wire2D):
         points_straight_line_contour = []
         for primitive in self.primitives:
             if primitive.__class__.__name__ == 'LineSegment2D':
-                points_polygon.extend(primitive.points)
+                points_polygon.append(primitive.points[0])
                 points_straight_line_contour.extend(primitive.points)
             elif primitive.__class__.__name__ == 'Arc2D':
-#                points_polygon.append(primitive.center)
                 points_polygon.append(primitive.start)
-                points_polygon.append(primitive.end)
+                points_polygon.append(primitive.center)
+                
+                # points_polygon.append(primitive.end)
                 arcs.append(primitive)
             elif primitive.__class__.__name__ == 'Circle2D':
                 raise ValueError('Circle2D primitives should not be inserted in a contour, as a circle is already a contour. Use directcly the circle')
@@ -790,6 +791,7 @@ class Contour2D(Wire2D):
             if points[0] == points[-1]:
                 points.pop()
         return points
+    
 
 class Mesh2D:
     def __init__(self, contours, points_densities, default_density):
@@ -1223,7 +1225,6 @@ class LineSegment2D(Line2D):
                 return None, curv_abs
             else:
                 return None
-
         if curvilinear_abscissa:
             return point, curv_abs
         else:
@@ -2172,6 +2173,11 @@ class Polygon2D(Contour2D):
 #    def DictToObject(cls, dict_):
 #        return cls([Point2D.DictToObject(p) for p in dict_['points']], name=dict_['name'])
 
+
+
+   
+        
+   
     def plot_data(self, marker=None, color='black', stroke_width=1, opacity=1):
         data = []
         for nd in self.points:
