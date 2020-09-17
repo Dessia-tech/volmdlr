@@ -199,7 +199,6 @@ def plot_d3(plot_datas):
     s = template.render(
         volmdlr_path=volmdlr_path,
         D3Data=json.dumps(plot_datas))
-
     temp_file = tempfile.mkstemp(suffix='.html')[1]
 
     with open(temp_file, 'wb') as file:

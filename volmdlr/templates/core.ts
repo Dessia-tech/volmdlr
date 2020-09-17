@@ -130,7 +130,8 @@ export class PlotData {
           if (this.select_on_mouse == d) {
             context.fillStyle = this.color_surface_on_mouse
           }
-
+          console.log(mvx)
+              console.log(mvy)
           for (var j = 0; j < this.select_on_click.length; j++) {
             var z = this.select_on_click[j]
             var shape = d.plot_data_states[show_state].shape_set.shape
@@ -152,7 +153,7 @@ export class PlotData {
 
       } else if (d['type'] == 'plot'){
         context.beginPath()
-        d.draw(context, mvx, mvy, scale, this.width, this.height,this.init_scale, this.minX, this.maxX, this.minY, this.maxY)
+        d.draw(context, mvx, mvy, scale, this.width, this.height, this.init_scale, this.minX, this.maxX, this.minY, this.maxY)
         context.closePath()
         context.fill()
       } else {
@@ -185,20 +186,30 @@ tooltip(context,point, scale, mvx, mvy) {
   context.beginPath()
   var cx = point.cx
   var cy = point.cy
-  this.roundRect(scale*(1000*(cx + 0.1) + mvx),scale*(1000*(cy - 0.1) + mvy),scale*300, scale*200,scale*40, context)
+
+  var rect_w = this.init_scale*300
+  var rect_h = this.init_scale*200
+  var rect_radius = this.init_scale*40
+  var rect_x = scale*(1000*(cx + 0) + mvx) + this.init_scale*80
+  var rect_y = scale*(1000*(cy - 0) + mvy) - 1/2*rect_h
+
+  this.roundRect(rect_x, rect_y, rect_w, rect_h, rect_radius, context)
   context.strokeStyle = 'black'
   context.fillStyle = 'lightblue'
   context.stroke()
   context.fill()
 
-  var coordinate_size = 50*scale
+  var coordinate_size = this.init_scale*50
   context.font = coordinate_size.toString() + 'px Arial'
   context.fillStyle = 'black'
   context.textAlign = 'center'
-  var round_cx = Math.round(cx * 1000) / 1000
-  var round_cy = Math.round(cy * 1000) / 1000
-  context.fillText('x = ' + round_cx.toString(), scale*(1000*(cx + 0.25) + mvx),scale*(1000*(cy - 0.03) + mvy))
-  context.fillText('y = ' + round_cy.toString(), scale*(1000*(cx + 0.25) + mvx),scale*(1000*(cy + 0.05) + mvy))
+  var round_cx = Math.round(cx * 10000) / 10000
+  var round_cy = Math.round(cy * 10000) / 10000
+
+  var x_middle = rect_x + 1/2*rect_w
+  var y_middle = rect_y + 1/2*rect_h + rect_radius
+  context.fillText('x = ' + round_cx.toString(), x_middle, y_middle - this.init_scale*65)
+  context.fillText('y = ' + round_cy.toString(), x_middle, y_middle + this.init_scale*15)
   context.closePath()
 }
 
@@ -482,10 +493,10 @@ export class PlotDataPoint2D {
             context.rect(scale*(1000*(this.cx - this.size) + mvx),scale*(1000*(this.cy - this.size) + mvy),init_scale*1000*this.size*2, init_scale*1000*this.size*2)
             context.stroke()
           } else if (shape == 'crux') {
-            context.rect(scale*(1000*this.cx + mvx), scale*(1000*this.cy + mvy),init_scale*1000*this.size, init_scale*10*this.size)
-            context.rect(scale*(1000*this.cx + mvx), scale*(1000*this.cy + mvy),-init_scale*1000*this.size, init_scale*10*this.size)
-            context.rect(scale*(1000*this.cx + mvx), scale*(1000*this.cy + mvy),init_scale*10*this.size, init_scale*1000*this.size)
-            context.rect(scale*(1000*this.cx + mvx), scale*(1000*this.cy + mvy),init_scale*10*this.size, -init_scale*1000*this.size)
+            context.rect(scale*(1000*this.cx + mvx), scale*(1000*this.cy + mvy),init_scale*1000*this.size, init_scale*100*this.size)
+            context.rect(scale*(1000*this.cx + mvx), scale*(1000*this.cy + mvy),-init_scale*1000*this.size, init_scale*100*this.size)
+            context.rect(scale*(1000*this.cx + mvx), scale*(1000*this.cy + mvy),init_scale*100*this.size, init_scale*1000*this.size)
+            context.rect(scale*(1000*this.cx + mvx), scale*(1000*this.cy + mvy),init_scale*100*this.size, -init_scale*1000*this.size)
             context.stroke()
           } else {
             throw new Error('Invalid shape for point')
@@ -538,17 +549,17 @@ export class PlotDataScatterPlot {
     context.moveTo(10, 0)
     context.lineTo(20, 20)
     
-    context.moveTo(width - 20, height - 20)
-    context.lineTo(width, height - 10)
-    context.moveTo(width, height - 10)
-    context.lineTo(width - 20, height)
+    context.moveTo(width - 20, height - 30)
+    context.lineTo(width, height - 20)
+    context.moveTo(width, height - 20)
+    context.lineTo(width - 20, height - 10)
 
     //Axes
     context.moveTo(10, 0)
     context.lineTo(10, height)
 
-    context.moveTo(0, height - 10)
-    context.lineTo(width, height - 10)
+    context.moveTo(0, height - 20)
+    context.lineTo(width, height - 20)
 
     //Graduations
     if (scale>init_scale) {
@@ -568,14 +579,14 @@ export class PlotDataScatterPlot {
     var i=0
     context.textAlign = 'center';
     while(minX + i*x_step < maxX) {
-      context.moveTo(scale*(1000*(minX + i*x_step) + mvx), height - 13)
-      context.lineTo(scale*(1000*(minX + i*x_step) + mvx), height - 7)
-      context.fillText(Math.round((minX + i*x_step)*Math.pow(10,display_nb_x))/Math.pow(10,display_nb_x), scale*(1000*(minX + i*x_step) + mvx), height - 15 )
+      context.moveTo(scale*(1000*(minX + i*x_step) + mvx), height - 23)
+      context.lineTo(scale*(1000*(minX + i*x_step) + mvx), height - 17)
+      context.fillText(Math.round((minX + i*x_step)*Math.pow(10,display_nb_x))/Math.pow(10,display_nb_x), scale*(1000*(minX + i*x_step) + mvx), height - 5 )
       i++
     }
-    context.moveTo(scale*(1000*(minX + i*x_step) + mvx), height - 13)
-    context.lineTo(scale*(1000*(minX + i*x_step) + mvx), height - 7)
-    context.fillText(Math.round((minX + i*x_step)*Math.pow(10,display_nb_x))/Math.pow(10,display_nb_x), scale*(1000*(minX + i*x_step) + mvx), height - 15 )
+    context.moveTo(scale*(1000*(minX + i*x_step) + mvx), height - 23)
+    context.lineTo(scale*(1000*(minX + i*x_step) + mvx), height - 17)
+    context.fillText(Math.round((minX + i*x_step)*Math.pow(10,display_nb_x))/Math.pow(10,display_nb_x), scale*(1000*(minX + i*x_step) + mvx), height - 5 )
 
       //pour l'axe des y
     var display_nb_y = 3
