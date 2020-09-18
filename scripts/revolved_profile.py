@@ -22,9 +22,9 @@ points1 = [p1, p2, p3, p4, p5, p6, p7, p8]
 c1 = vm.Polygon2D(points1)
 c2 = ClosedRoundedLineSegments2D(points1, {0: 0.002, 1: 0.002, 3: 0.002}) 
 
-c1.MPLPlot(plot_points=True)
+# c1.MPLPlot(plot_points=True)
 
-c2.MPLPlot(plot_points=True)
+# c2.MPLPlot(plot_points=True)
 
 p21 = vm.Point2D((0.1, 0.))
 p22 = vm.Point2D((0.1, 0.1))
@@ -57,7 +57,7 @@ c4 = ClosedRoundedLineSegments2D(points2, {0: 0.002, 1: 0.002, 3: 0.002})
 B = 0.057
 d1 = 0.45200000000000007
 h = 0.007778409372698711
-radius = 0.0005 #with 0.005 it's better to debug
+radius = 0.005 #with 0.005 it's better to debug
 F = 0.42500000000000004
 d = 0.38
 
@@ -77,7 +77,7 @@ bi1 = OpenedRoundedLineSegments2D([pbi6, pbi5, pbi4, pbi3, pbi2, pbi1],
                                           adapt_radius=True)
 cbi1 = vm.Arc2D(pbi1, vm.Point2D((0, F/2)), pbi6)
 c5 = vm.Contour2D([cbi1] + bi1.primitives)
-c5.MPLPlot(plot_points=True)
+# c5.MPLPlot(plot_points=True)
 
 y = vm.X3D.RandomUnitNormalVector()
 z = vm.X3D.Cross(y)

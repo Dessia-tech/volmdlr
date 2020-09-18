@@ -537,7 +537,7 @@ class Point2D(Vector2D):
 
         x1, y1 = self.vector
         ax.plot([x1], [y1], color=color, marker='o')
-        return fig, ax
+        return ax
 
     def point_distance(self, point2):
         return (self-point2).Norm()
