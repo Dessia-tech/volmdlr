@@ -15,7 +15,11 @@ export class PlotData {
   select_on_mouse:any;
   select_on_click:any[]=[];
   color_surface_on_mouse:string='lightskyblue';
-  color_surface_on_click:string='blue'
+  color_surface_on_click:string='blue';
+  zoom_rect_x:number;
+  zoom_rect_y:number;
+  zoom_rect_w:number;
+  zoom_rect_h:number;
 
   constructor(public data: any,
               public width: number,
@@ -83,7 +87,6 @@ export class PlotData {
     }
 
     context.clearRect(0, 0, this.width, this.height);
-
     for (var i = 0; i < this.plot_datas.length; i++) {
       var d = this.plot_datas[i]
       if (d['type'] == 'contour') {
@@ -164,26 +167,12 @@ export class PlotData {
         this.tooltip(context, this.select_on_click[i], scale, mvx, mvy)
       }
     }
+    this.zoom_rect_x = this.width - 45
+    this.zoom_rect_y = 10
+    this.zoom_rect_w = 35
+    this.zoom_rect_h = 25
+    this.zoom_button(context, this.zoom_rect_x, this.zoom_rect_y, this.zoom_rect_w, this.zoom_rect_h)
   }
-
-  roundRect(x, y, w, h, radius, context) {
-  var r = x + w;
-  var b = y + h;
-  context.beginPath();
-  context.strokeStyle="black";
-  context.lineWidth="3";
-  context.moveTo(x+radius, y);
-  context.lineTo(r-radius, y);
-  context.quadraticCurveTo(r, y, r, y+radius);
-  context.lineTo(r, y+h-radius);
-  context.quadraticCurveTo(r, b, r-radius, b);
-  context.lineTo(x+radius, b);
-  context.quadraticCurveTo(x, b, x, b-radius);
-  context.lineTo(x, y+radius);
-  context.quadraticCurveTo(x, y, x+radius, y);
-  context.stroke();
-  context.closePath();
-}
 
 tooltip(context, point, scale, mvx, mvy) {
   context.beginPath()
@@ -206,7 +195,7 @@ tooltip(context, point, scale, mvx, mvy) {
     rect_y = scale*(1000*cy + mvy) - rect_h
   }
 
-  this.roundRect(rect_x, rect_y, rect_w, rect_h, rect_radius, context)
+  Shape.roundRect(rect_x, rect_y, rect_w, rect_h, rect_radius, context)
   context.strokeStyle = 'black'
   context.fillStyle = 'lightblue'
   context.stroke()
@@ -223,6 +212,25 @@ tooltip(context, point, scale, mvx, mvy) {
   var y_middle = rect_y + 1/2*rect_h + rect_radius
   context.fillText('x = ' + round_cx.toString(), x_middle, y_middle - this.init_scale*65)
   context.fillText('y = ' + round_cy.toString(), x_middle, y_middle + this.init_scale*15)
+  context.closePath()
+}
+
+zoom_button(context, x, y, w, h) {
+  if ((x<0) || (x+h>this.width) || (y<0) || (y+h>this.height)) {
+    throw new Error("Invalid x or y, the zoom button is outside of the canvas")
+  }
+  context.beginPath()
+  context.lineWidth = "2"
+  context.fillStyle = 'white'
+  context.rect(x, y, w, h)
+  context.rect(x, y+h, w, h)
+  context.moveTo(x, y+h)
+  context.lineTo(x+w, y+h)
+  Shape.crux(context, x+w/2, y+h/2, h/3)
+  context.moveTo(x + w/2 - h/3, y + 3*h/2)
+  context.lineTo(x + w/2 + h/3, y + 3*h/2)
+  context.fill()
+  context.stroke()
   context.closePath()
 }
 
@@ -276,6 +284,13 @@ tooltip(context, point, scale, mvx, mvy) {
           } else {
             this.select_on_click.push(click_plot_data)
           }
+
+          if (Shape.Is_in_rect(mouse1X, mouse1Y, this.zoom_rect_x, this.zoom_rect_y, this.zoom_rect_w, this.zoom_rect_h)) {
+            this.scale = this.scale*1.2
+          }
+          if (Shape.Is_in_rect(mouse1X, mouse1Y, this.zoom_rect_x, this.zoom_rect_y + this.zoom_rect_h, this.zoom_rect_w, this.zoom_rect_h)) {
+            this.scale = this.scale/1.2
+          }
           this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scale)
   			}
       isDrawing = false
@@ -306,14 +321,13 @@ tooltip(context, point, scale, mvx, mvy) {
   }
 
   is_include(val, list){
-    var check = false
     for (var i = 0; i < list.length; i++) {
       var d = list[i]
       if (val == d) {
-        check = true
+        return true
       }
     }
-    return check
+    return false
   }
 
 }
@@ -321,6 +335,45 @@ tooltip(context, point, scale, mvx, mvy) {
 class MyMath {
   public static round(x:number, n:number) {
     return Math.round(x*Math.pow(10,n)) / Math.pow(10,n)
+  }
+}
+
+class Shape {
+  public static crux(context:any, cx:number, cy:number, length:number) {
+    context.moveTo(cx, cy)
+    context.lineTo(cx - length, cy)
+    context.moveTo(cx, cy)
+    context.lineTo(cx + length, cy)
+    context.moveTo(cx, cy)
+    context.lineTo(cx, cy - length)
+    context.moveTo(cx, cy)
+    context.lineTo(cx, cy + length)
+  }
+
+  public static roundRect(x, y, w, h, radius, context) {
+    var r = x + w;
+    var b = y + h;
+    context.beginPath();
+    context.strokeStyle="black";
+    context.lineWidth="3";
+    context.moveTo(x+radius, y);
+    context.lineTo(r-radius, y);
+    context.quadraticCurveTo(r, y, r, y+radius);
+    context.lineTo(r, y+h-radius);
+    context.quadraticCurveTo(r, b, r-radius, b);
+    context.lineTo(x+radius, b);
+    context.quadraticCurveTo(x, b, x, b-radius);
+    context.lineTo(x, y+radius);
+    context.quadraticCurveTo(x, y, x+radius, y);
+    context.stroke();
+    context.closePath();
+  }
+
+  public static Is_in_rect(x, y, rect_x, rect_y, rect_w, rect_h) {
+    if ((x>=rect_x) && (x<= rect_x + rect_w) && (y>=rect_y) && (y<=rect_y + rect_h)) {
+      return true;
+    }
+    return false;
   }
 }
 
@@ -558,13 +611,11 @@ export class PlotDataScatterPlot {
                                   serialized['plot_data_states'])
   }
 
-
-
   draw(context, mvx, mvy, scale, width, height, init_scale, minX, maxX, minY, maxY) {
     // Dessin du repère
     context.strokeStyle = this.colorStroke
-    //Flèches
 
+    //Flèches
     context.moveTo(0, 20)
     context.lineTo(10, 0)
     context.moveTo(10, 0)
@@ -627,7 +678,6 @@ export class PlotDataScatterPlot {
 
     context.stroke()
   }
-
   
 }
 
