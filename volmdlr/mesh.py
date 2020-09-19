@@ -111,7 +111,6 @@ class TriangularElement(DessiaObject):
         try :
             inv_a = a.inverse()
         except ValueError:
-            self.plot()
             print('buggy element area', self._area())
             raise FlatElementError('form function bug')
         x1 = inv_a.vector_multiplication(vm.X3D)
@@ -124,6 +123,11 @@ class TriangularElement(DessiaObject):
         v = self.points[2] - self.points[0]
         return abs(u.Cross(v)) / 2
         
+    def point_belongs(self, point):
+        polygon = vm.Polygon2D(self.points)
+        point_belongs = polygon.PointBelongs(point)
+        return point_belongs
+    
     def rotation(self, center, angle, copy=True):
         if copy:
             return TriangularElement([pt.Rotation(center, angle, copy=True) for pt in self.points])
@@ -187,6 +191,12 @@ class ElementsGroup(DessiaObject):
         
         DessiaObject.__init__(self, name=name)
         
+    def point_to_element(self, point):
+        for element in self.elements:
+            if element.point_belongs(point):
+                return element
+        return None
+        
     def rotation(self, center, angle, copy=True):
         if copy:
             return Mesh([elem.rotation(center, angle, copy=True) for elem in self.elements])
@@ -231,6 +241,13 @@ class Mesh(DessiaObject):
                 nodes.add(element.points[1])
                 nodes.add(element.points[2])
         return tuple(nodes)
+    
+    def point_to_element(self, point):
+        for element_group in self.elements_groups:
+            element = element_group.point_to_element(point)
+            if element is not None:
+                return element
+        return None
     
     def boundary_dict(self):
         boundary_dict = {}
