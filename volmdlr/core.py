@@ -3039,6 +3039,26 @@ class BSplineCurve3D(Primitive3D):
     def tessellation_points(self) :
         return self.points
 
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        if side == 'old':
+            new_control_points = [frame.OldCoordinates(p) for p in self.control_points]
+
+
+        if side == 'new':
+            new_control_points = [frame.NewCoordinates(p) for p in self.control_points]
+
+        new_BSplineCurve3D = BSplineCurve3D(self.degree, new_control_points, self.knot_multiplicities, self.knots,
+                                            self.weights, self.periodic, self.name)
+        if copy:
+            return new_BSplineCurve3D
+        else:
+            self.control_points = new_control_points
+            self.curve = new_BSplineCurve3D.curve
+            self.points = new_BSplineCurve3D.points
+
 class Arc3D(Primitive3D):
     """
     An arc is defined by a starting point, an end point and an interior point
@@ -5404,7 +5424,7 @@ class PlaneFace3D(Face3D):
         return True
 
     def edge_intersection(self, edge):
-        linesegment = LineSegment3D(*edge.points)
+        linesegment = LineSegment3D(*edge.points[0:2])
         intersection_point = self.plane.linesegment_intersection(linesegment)
 
         if intersection_point is None:
