@@ -308,7 +308,7 @@ class Vector2D(Vector):
         self.vector = [0, 0]
 #        self.vector = npy.zeros(2)
         self.vector[0] = vector[0]
-        self.vector[1] = -vector[1]
+        self.vector[1] = vector[1]
         self.name = name
 
     def __add__(self, other_vector):
@@ -536,6 +536,9 @@ class Point2D(Vector2D):
 
     def to_dict(self):
         return self.to_dict()
+
+    def to_canvas_style(self):
+        return Point2D([self.vector[0], -self.vector[1]])
 
     def To3D(self, plane_origin, vx, vy):
         return Point3D([plane_origin.vector[0] + vx.vector[0]*self.vector[0] + vy.vector[0]*self.vector[1],

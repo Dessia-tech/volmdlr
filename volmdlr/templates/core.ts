@@ -8,6 +8,8 @@ export class PlotData {
   maxY:number=0;
   init_scale:number;
   scale:number;
+  scaleX:number;
+  scaleY:number;
   last_mouse1X:number;
   last_mouse1Y:number;
   colour_to_plot_data:any;
@@ -26,6 +28,11 @@ export class PlotData {
   zw_y:number;
   zw_w:number;
   zw_h:number;
+  reset_ON:boolean;
+  reset_rect_x:number;
+  reset_rect_y:number;
+  reset_rect_w:number;
+  reset_rect_h:number;
 
 
   constructor(public data: any,
@@ -40,6 +47,7 @@ export class PlotData {
 
     this.zoom_rect_ON = true;
     this.zw_ON = true;
+    this.reset_ON = true;
 
     for (var i = 0; i < data.length; i++) {
       var d = data[i];
@@ -83,19 +91,24 @@ export class PlotData {
   draw_initial() {
     this.init_scale = Math.min(this.width/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX), this.height/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY));
     this.scale = this.init_scale;
+    this.scaleX = this.init_scale;
+    this.scaleY = this.init_scale;
 		this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scale/2)/this.scale - this.coeff_pixel*this.minX;
 		this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scale/2)/this.scale - this.coeff_pixel*this.minY;
-		this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scale);
-    this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scale);
+		this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scale, this.scale);
+    this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scale, this.scale);
   }
 
-  draw(hidden, show_state, mvx, mvy, scale) {
+  draw(hidden, show_state, mvx, mvy, scaleX, scaleY) {
+    //Creating an empty canvas
     if (hidden) {
       var context = this.context_hidden;
     } else {
       var context = this.context_show;
     }
     context.clearRect(0, 0, this.width, this.height);
+
+    //Drawing all the contours, points and ScatterPlot
     for (var i = 0; i < this.plot_datas.length; i++) {
       var d = this.plot_datas[i];
       if (d['type'] == 'contour') {
@@ -125,7 +138,7 @@ export class PlotData {
         for (var j = 0; j < d.plot_data_primitives.length; j++) {
           var elem = d.plot_data_primitives[j];
           if (j == 0) {var first_elem = true} else {var first_elem = false}
-          elem.draw(context, first_elem,  mvx, mvy, scale);
+          elem.draw(context, first_elem,  mvx, mvy, scaleX);
         }
         context.closePath();
         context.fill();
@@ -155,13 +168,13 @@ export class PlotData {
           }
         }
         context.beginPath();
-        d.draw(context, this.context_hidden, mvx, mvy, scale, this.init_scale);
+        d.draw(context, this.context_hidden, mvx, mvy, scaleX, scaleY, this.init_scale);
         context.closePath();
         context.fill();
 
       } else if (d['type'] == 'plot'){
         context.beginPath();
-        d.draw(context, mvx, mvy, scale, this.width, this.height, this.init_scale, this.minX, this.maxX, this.minY, this.maxY);
+        d.draw(context, mvx, mvy, scaleX, scaleY, this.width, this.height, this.init_scale, this.minX, this.maxX, this.minY, this.maxY);
         context.closePath();
         context.fill();
 
@@ -171,11 +184,14 @@ export class PlotData {
       context.stroke();
     }
 
+    //Drawing the tooltips
     for (var i=0; i<this.select_on_click.length; i++) {
       if (!(typeof this.select_on_click[i] === "undefined")) {
-        this.tooltip(context, this.select_on_click[i], scale, mvx, mvy);
+        this.tooltip(context, this.select_on_click[i], scaleX, scaleY, mvx, mvy);
       }
     }
+
+    //Drawing the zooming button
     if (this.zoom_rect_ON) {
       this.zoom_rect_x = this.width - 45;
       this.zoom_rect_y = 10;
@@ -184,188 +200,245 @@ export class PlotData {
       this.zoom_button(context, this.zoom_rect_x, this.zoom_rect_y, this.zoom_rect_w, this.zoom_rect_h);
     }
     
+    //Drawing the button for zooming window selection
     if (this.zw_ON) {
       this.zw_x = this.width - 45;
-    this.zw_y = 70;
-    this.zw_w = 35;
-    this.zw_h = 30;
-    this.zoom_window_button(context, this.zw_x,this.zw_y,this.zw_w,this.zw_h);
+      this.zw_y = 70;
+      this.zw_w = 35;
+      this.zw_h = 30;
+      this.zoom_window_button(context, this.zw_x,this.zw_y,this.zw_w,this.zw_h);
+    }
+
+    //Drawing the reset button
+    if (this.reset_ON) {
+      this.reset_rect_x = this.width - 45;
+      this.reset_rect_y = 110;
+      this.reset_rect_w = 35;
+      this.reset_rect_h = 30;
+      this.reset_button(context, this.reset_rect_x, this.reset_rect_y, this.reset_rect_w, this.reset_rect_h);
     }
   }
 
-tooltip(context, point, scale, mvx, mvy) {
-  context.beginPath();
-  var cx = point.cx;
-  var cy = point.cy;
+  tooltip(context, point, scaleX, scaleY, mvx, mvy) {
+    context.beginPath();
+    var cx = point.cx;
+    var cy = point.cy;
 
-  var rect_w = this.init_scale*300;
-  var rect_h = this.init_scale*200;
-  var rect_radius = this.init_scale*40;
-  var rect_x = scale*(1000*cx + mvx) + this.init_scale*80;
-  var rect_y = scale*(1000*cy + mvy) - 1/2*rect_h;
+    var rect_w = this.init_scale*300;
+    var rect_h = this.init_scale*200;
+    var rect_radius = this.init_scale*40;
+    var rect_x = scaleX*(1000*cx + mvx) + this.init_scale*80;
+    var rect_y = scaleY*(1000*cy + mvy) - 1/2*rect_h;
 
-  if (rect_x + rect_w  > this.width) {
-    rect_x = scale*(1000*cx + mvx) - this.init_scale*80 - rect_w;
-  }
-  if (rect_y < 0) {
-    rect_y = scale*(1000*cy + mvy);
-  }
-  if (rect_y + rect_h > this.height) {
-    rect_y = scale*(1000*cy + mvy) - rect_h;
-  }
+    if (rect_x + rect_w  > this.width) {
+      rect_x = scaleX*(1000*cx + mvx) - this.init_scale*80 - rect_w;
+    }
+    if (rect_y < 0) {
+      rect_y = scaleY*(1000*cy + mvy);
+    }
+    if (rect_y + rect_h > this.height) {
+      rect_y = scaleY*(1000*cy + mvy) - rect_h;
+    }
 
-  Shape.roundRect(rect_x, rect_y, rect_w, rect_h, rect_radius, context)
-  context.strokeStyle = 'black';
-  context.fillStyle = 'lightblue';
-  context.stroke();
-  context.fill();
+    Shape.roundRect(rect_x, rect_y, rect_w, rect_h, rect_radius, context)
+    context.strokeStyle = 'black';
+    context.fillStyle = 'lightblue';
+    context.stroke();
+    context.fill();
 
-  var coordinate_size = this.init_scale*50;
-  context.font = coordinate_size.toString() + 'px Arial';
-  context.fillStyle = 'black';
-  context.textAlign = 'center';
-  var round_cx = MyMath.round(cx,4);
-  var round_cy = MyMath.round(cy,4);
+    var coordinate_size = this.init_scale*50;
+    context.font = coordinate_size.toString() + 'px Arial';
+    context.fillStyle = 'black';
+    context.textAlign = 'center';
+    var round_cx = MyMath.round(cx,4);
+    var round_cy = MyMath.round(cy,4);
 
-  var x_middle = rect_x + 1/2*rect_w;
-  var y_middle = rect_y + 1/2*rect_h + rect_radius;
-  context.fillText('x = ' + round_cx.toString(), x_middle, y_middle - this.init_scale*65);
-  context.fillText('y = ' + (-round_cy).toString(), x_middle, y_middle + this.init_scale*15);
-  context.closePath();
-}
-
-zoom_button(context, x, y, w, h) {
-  if ((x<0) || (x+h>this.width) || (y<0) || (y+2*h>this.height)) {
-    throw new Error("Invalid x or y, the zoom button is out of the canvas");
-  }
-  context.beginPath();
-  context.lineWidth = "2";
-  context.fillStyle = 'white';
-  context.rect(x, y, w, h);
-  context.rect(x, y+h, w, h);
-  context.moveTo(x, y+h);
-  context.lineTo(x+w, y+h);
-  Shape.crux(context, x+w/2, y+h/2, h/3);
-  context.moveTo(x + w/2 - h/3, y + 3*h/2);
-  context.lineTo(x + w/2 + h/3, y + 3*h/2);
-  context.fill();
-  context.stroke();
-  context.closePath();
-}
-
-zoom_window_button(context, x, y, w, h) {
-  if ((x<0) || (x+h>this.width) || (y<0) || (y+h>this.height)) {
-    throw new Error("Invalid x or y, the zoom window button is out of the canvas");
-  }
-  context.beginPath();
-  context.fillStyle = 'white';
-  context.lineWidth = "2";
-  context.rect(x,y,w,h);
-  context.stroke();
-  context.fill();
-  context.closePath();
-  context.beginPath();
-  context.fillStyle = "black"
-  context.textAlign = "center";
-  context.font = "12px Arial";
-  context.fillText("Zoom", x+w/2, y+h/1.8);
-  context.fill();
-  context.closePath();
-}
-
-reset_button(context, x, y, w, h) {
-  if ((x<0) || (x+h>this.width) || (y<0) || (y+h>this.height)) {
-    throw new Error("Invalid x or y, the reset button is out of the canvas");
+    var x_middle = rect_x + 1/2*rect_w;
+    var y_middle = rect_y + 1/2*rect_h + rect_radius;
+    context.fillText('x = ' + round_cx.toString(), x_middle, y_middle - this.init_scale*65);
+    context.fillText('y = ' + (-round_cy).toString(), x_middle, y_middle + this.init_scale*15);
+    context.closePath();
   }
 
-}
+  zoom_button(context, x, y, w, h) {
+    if ((x<0) || (x+h>this.width) || (y<0) || (y+2*h>this.height)) {
+      throw new Error("Invalid x or y, the zoom button is out of the canvas");
+    }
+    context.beginPath();
+    context.lineWidth = "2";
+    context.fillStyle = 'white';
+    context.rect(x, y, w, h);
+    context.rect(x, y+h, w, h);
+    context.moveTo(x, y+h);
+    context.lineTo(x+w, y+h);
+    Shape.crux(context, x+w/2, y+h/2, h/3);
+    context.moveTo(x + w/2 - h/3, y + 3*h/2);
+    context.lineTo(x + w/2 + h/3, y + 3*h/2);
+    context.fill();
+    context.stroke();
+    context.closePath();
+  }
 
-mouse_interaction() {
-  var isDrawing = false;
-  var mouse_mouving = false;
-  var mouse1X = 0;
-  var mouse1Y = 0;
-  var mouse2X = 0;
-  var mouse2Y = 0;
-  var mouse3X = 0;
-  var mouse3Y = 0;
+  zoom_window_button(context, x, y, w, h) {
+    if ((x<0) || (x+h>this.width) || (y<0) || (y+h>this.height)) {
+      throw new Error("Invalid x or y, the zoom window button is out of the canvas");
+    }
+    if (this.zw_bool) {
+      Shape.createButton(x, y, w, h, context, "ON");
+    } else {
+      Shape.createButton(x, y, w, h, context, "OFF");
+    }
+    
+  }
 
-  var canvas = document.getElementById('canvas');
+  reset_button(context, x, y, w, h) {
+    if ((x<0) || (x+h>this.width) || (y<0) || (y+h>this.height)) {
+      throw new Error("Invalid x or y, the reset button is out of the canvas");
+    }
+    Shape.createButton(x, y, w, h, context, "Reset")
+  }
 
-  canvas.addEventListener('mousedown', e => {
-    mouse1X = e.offsetX;
-    mouse1Y = e.offsetY;
-    isDrawing = true;
-  })
+  mouse_interaction() {
+    var isDrawing = false;
+    var mouse_mouving = false;
+    var mouse1X = 0;
+    var mouse1Y = 0;
+    var mouse2X = 0;
+    var mouse2Y = 0;
+    var mouse3X = 0;
+    var mouse3Y = 0;
 
-  canvas.addEventListener('mousemove', e => {
-    if (isDrawing === true) {
-      mouse_mouving = true;
+    var canvas = document.getElementById('canvas');
+
+    canvas.addEventListener('mousedown', e => {
+      mouse1X = e.offsetX;
+      mouse1Y = e.offsetY;
       mouse2X = e.offsetX;
       mouse2Y = e.offsetY;
-      this.draw(false, 0, this.last_mouse1X + mouse2X/this.scale - mouse1X/this.scale, this.last_mouse1Y + mouse2Y/this.scale - mouse1Y/this.scale, this.scale);
-      this.draw(true, 0, this.last_mouse1X + mouse2X/this.scale - mouse1X/this.scale, this.last_mouse1Y + mouse2Y/this.scale - mouse1Y/this.scale, this.scale);
-    }
-    else {
-      var mouseX = e.offsetX;
-      var mouseY = e.offsetY;
-      var col = this.context_hidden.getImageData(mouseX, mouseY, 1, 1).data;
-      var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
-      this.select_on_mouse = this.colour_to_plot_data[colKey];
-      this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scale);
-    }
-  })
+      isDrawing = true;
+    })
 
-  canvas.addEventListener('mouseup', e => {
-    if (mouse_mouving) {
-      this.last_mouse1X = this.last_mouse1X + mouse2X/this.scale - mouse1X/this.scale;
-      this.last_mouse1Y = this.last_mouse1Y + mouse2Y/this.scale - mouse1Y/this.scale;
-    }
-    else {
-        var col = this.context_hidden.getImageData(mouse1X, mouse1Y, 1, 1).data;
+    canvas.addEventListener('mousemove', e => {
+      if ((isDrawing === true) && !(this.zw_bool)) {
+        mouse_mouving = true;
+        mouse2X = e.offsetX;
+        mouse2Y = e.offsetY;
+        this.draw(false, 0, this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX, this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY, this.scaleX, this.scaleY);
+        this.draw(true, 0, this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX, this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY, this.scaleX, this.scaleY);
+      
+      } else if ((isDrawing === true) && (this.zw_bool)) {
+        mouse2X = e.offsetX;
+        mouse2Y = e.offsetY;
+        this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
+        this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
+        this.context_show.beginPath();
+        this.context_show.rect(mouse1X, mouse1Y, mouse2X - mouse1X, mouse2Y - mouse1Y);
+        this.context_show.stroke();
+        this.context_show.closePath();
+        this.context_hidden.beginPath();
+        this.context_hidden.rect(mouse1X, mouse1Y, mouse2X - mouse1X, mouse2Y - mouse1Y);
+        this.context_hidden.stroke();
+        this.context_hidden.closePath(); 
+      } else {
+        var mouseX = e.offsetX;
+        var mouseY = e.offsetY;
+        var col = this.context_hidden.getImageData(mouseX, mouseY, 1, 1).data;
         var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
-        var click_plot_data = this.colour_to_plot_data[colKey];
-        if (this.is_include(click_plot_data, this.select_on_click)) {
-          this.select_on_click = this.remove_selection(click_plot_data, this.select_on_click);
-        } else {
-          this.select_on_click.push(click_plot_data);
-        }
-
-        if (Shape.Is_in_rect(mouse1X, mouse1Y, this.zoom_rect_x, this.zoom_rect_y, this.zoom_rect_w, this.zoom_rect_h)) {
-          this.scale = this.scale*1.2;
-          this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scale/2)/this.scale - this.coeff_pixel*this.minX;
-          this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scale/2)/this.scale - this.coeff_pixel*this.minY;
-        }
-        if (Shape.Is_in_rect(mouse1X, mouse1Y, this.zoom_rect_x, this.zoom_rect_y + this.zoom_rect_h, this.zoom_rect_w, this.zoom_rect_h)) {
-          this.scale = this.scale/1.2;
-          this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scale/2)/this.scale - this.coeff_pixel*this.minX;
-          this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scale/2)/this.scale - this.coeff_pixel*this.minY;
-        }
-
-        if (Shape.Is_in_rect(mouse1X, mouse1Y, this.zw_x, this.zw_y, this.zw_w, this.zw_h)) {
-          if (this.zw_bool) {
-            this.zw_bool = false;
-          } else {
-            this.zw_bool = true
-          }
-        }
-        this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scale);
+        this.select_on_mouse = this.colour_to_plot_data[colKey];
+        this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
       }
-    isDrawing = false;
-    mouse_mouving = false;
-  })
+    })
 
-  canvas.addEventListener('wheel', e => {
-    var event = -e.deltaY/100;
-    this.scale = this.scale + event;
-    mouse3X = e.offsetX;
-    mouse3Y = e.offsetY;
-    this.last_mouse1X = this.last_mouse1X - (mouse3X/(this.scale - event) - mouse3X/this.scale);
-    this.last_mouse1Y = this.last_mouse1Y - (mouse3Y/(this.scale - event) - mouse3Y/this.scale);
-    this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scale);
-    this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scale);
-  })
-}
+    canvas.addEventListener('mouseup', e => {
+      if (mouse_mouving) {
+        this.last_mouse1X = this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX;
+        this.last_mouse1Y = this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY;
+      }
+      else {
+          var col = this.context_hidden.getImageData(mouse1X, mouse1Y, 1, 1).data;
+          var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
+          var click_plot_data = this.colour_to_plot_data[colKey];
+          if (this.is_include(click_plot_data, this.select_on_click)) {
+            this.select_on_click = this.remove_selection(click_plot_data, this.select_on_click);
+          } else {
+            this.select_on_click.push(click_plot_data);
+          }
+
+          var click_on_plus = Shape.Is_in_rect(mouse1X, mouse1Y, this.zoom_rect_x, this.zoom_rect_y, this.zoom_rect_w, this.zoom_rect_h);
+          var click_on_minus = Shape.Is_in_rect(mouse1X, mouse1Y, this.zoom_rect_x, this.zoom_rect_y + this.zoom_rect_h, this.zoom_rect_w, this.zoom_rect_h);
+          var click_on_zoom_window = Shape.Is_in_rect(mouse1X, mouse1Y, this.zw_x, this.zw_y, this.zw_w, this.zw_h);
+          var click_on_reset = Shape.Is_in_rect(mouse1X, mouse1Y, this.reset_rect_x, this.reset_rect_y, this.reset_rect_w, this.reset_rect_h);
+
+          if (click_on_plus === true) {
+            this.scaleX = this.scaleX*1.2;
+            this.scaleY = this.scaleY*1.2;
+            this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX;
+            this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY;
+
+          } else if (click_on_minus === true) {
+            this.scaleX = this.scaleX/1.2;
+            this.scaleY = this.scaleY/1.2;
+            this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX;
+            this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY;
+
+          } else if (click_on_zoom_window === true) {
+            if (this.zw_bool) {
+              this.zw_bool = false;
+              console.log("zw_bool is false");
+            } else {
+              this.zw_bool = true
+              console.log("zw_bool is true");
+            }
+
+          } else if (click_on_reset === true){
+            this.scaleX = this.init_scale;
+            this.scaleY = this.init_scale;
+            this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX;
+            this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY;
+
+          } else if ((this.zw_bool) && (Math.abs(mouse2X - mouse1X)>40) && (Math.abs(mouse2Y - mouse1Y)>30)) {
+            var zoom_coeff_x = this.width/Math.abs(mouse2X - mouse1X);
+            var zoom_coeff_y = this.height/Math.abs(mouse2Y - mouse1Y);
+            //this.scaleX = this.scaleX*zoom_coeff_x;
+            //this.scaleY = this.scaleY*zoom_coeff_y;
+            this.scaleX = this.init_scale;
+            this.scaleY = this.init_scale;
+            this.last_mouse1X = this.last_mouse1X + (mouse2X - mouse1X)/(2*this.scaleX);
+            this.last_mouse1Y = this.last_mouse1Y + (mouse2Y - mouse1Y)/(2*this.scaleY);
+            console.log(mouse1X)
+            console.log(mouse2X)
+            console.log(this.last_mouse1X);
+            console.log(this.last_mouse1Y);
+          }
+          
+          this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
+        }
+      isDrawing = false;
+      mouse_mouving = false;
+    })
+
+    canvas.addEventListener('wheel', e => {
+      var event = -e.deltaY/100;
+      this.scale = this.scale + event;
+      mouse3X = e.offsetX;
+      mouse3Y = e.offsetY;
+      if ((mouse3Y>=this.height - 25) && (mouse3X>25)) {
+        this.scaleX = this.scaleX + event;
+        this.last_mouse1X = this.last_mouse1X - ((this.width/2)/(this.scaleX - event) - (this.width/2)/this.scaleX);
+      } else if ((mouse3X<=25) && (mouse3Y<this.height - 25)) {
+        this.scaleY = this.scaleY + event;
+        this.last_mouse1Y = this.last_mouse1Y - ((this.height/2)/(this.scaleY - event) - (this.height/2)/this.scaleY);
+      } else {
+        this.scaleX = this.scaleX + event;
+        this.scaleY = this.scaleY + event;
+        this.last_mouse1X = this.last_mouse1X - (mouse3X/(this.scaleX - event) - mouse3X/this.scaleX);
+        this.last_mouse1Y = this.last_mouse1Y - (mouse3Y/(this.scaleY - event) - mouse3Y/this.scaleY);
+        
+      }
+      this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
+      this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
+    })
+  }
 
   remove_selection(val, list){
     var temp = [];
@@ -428,10 +501,24 @@ class Shape {
   }
 
   public static Is_in_rect(x, y, rect_x, rect_y, rect_w, rect_h) {
-    if ((x>=rect_x) && (x<= rect_x + rect_w) && (y>=rect_y) && (y<=rect_y + rect_h)) {
-      return true;
-    }
-    return false;
+    return ((x>=rect_x) && (x<= rect_x + rect_w) && (y>=rect_y) && (y<=rect_y + rect_h))
+  }
+
+  public static createButton(x, y, w, h, context, text) {
+    context.beginPath();
+    context.fillStyle = 'white';
+    context.lineWidth = "3";
+    context.rect(x,y,w,h);
+    context.stroke();
+    context.fill();
+    context.closePath();
+    context.beginPath();
+    context.fillStyle = "black"
+    context.textAlign = "center";
+    context.font = "12px Arial";
+    context.fillText(text, x+w/2, y+h/1.8);
+    context.fill();
+    context.closePath();
   }
 }
 
@@ -515,11 +602,11 @@ export class PlotDataLine2D {
                                serialized['name']);
   }
 
-  draw(context, first_elem, mvx, mvy, scale) {
+  draw(context, first_elem, mvx, mvy, scaleX, scaleY) {
     if (first_elem) {
-      context.moveTo(scale*(1000*this.data[0]+ mvx), scale*(1000*this.data[1]+ mvy));
+      context.moveTo(scaleX*(1000*this.data[0]+ mvx), scaleX*(1000*this.data[1]+ mvy));
     }
-    context.lineTo(scale*(1000*this.data[2]+ mvx), scale*(1000*this.data[3]+ mvy));
+    context.lineTo(scaleY*(1000*this.data[2]+ mvx), scaleY*(1000*this.data[3]+ mvy));
   }
 }
 
@@ -558,8 +645,8 @@ export class PlotDataCircle2D {
                                   serialized['name']);
   }
 
-  draw(context, first_elem, mvx, mvy, scale) {
-    context.arc(scale*(1000*this.cx+ mvx), scale*(1000*this.cy+ mvy), scale*1000*this.r, 0, 2*Math.PI);
+  draw(context, first_elem, mvx, mvy, scaleX, scaleY, init_scale) {
+    context.arc(scaleX*(1000*this.cx+ mvx), scaleY*(1000*this.cy+ mvy), init_scale*1000*this.r, 0, 2*Math.PI);
   }
 
 }
@@ -613,19 +700,19 @@ export class PlotDataPoint2D {
                                   serialized['name']);
     }
 
-    draw(context, context_hidden, mvx, mvy, scale, init_scale) {
+    draw(context, context_hidden, mvx, mvy, scaleX, scaleY, init_scale) {
         for (var i=0; i<this.plot_data_states.length; i++) {
           var shape = this.plot_data_states[i].shape_set.shape;
           if (shape == 'circle') {
-            context.arc(scale*(1000*this.cx+ mvx), scale*(1000*this.cy+ mvy), init_scale*1000*this.size, 0, 2*Math.PI);
+            context.arc(scaleX*(1000*this.cx+ mvx), scaleY*(1000*this.cy+ mvy), init_scale*1000*this.size, 0, 2*Math.PI);
           } else if (shape == 'square') {
-            context.rect(scale*(1000*(this.cx - this.size) + mvx),scale*(1000*(this.cy - this.size) + mvy),init_scale*1000*this.size*2, init_scale*1000*this.size*2);
+            context.rect(scaleX*(1000*(this.cx - this.size) + mvx),scaleY*(1000*(this.cy - this.size) + mvy),init_scale*1000*this.size*2, init_scale*1000*this.size*2);
             context.stroke();
           } else if (shape == 'crux') {
-            context.rect(scale*(1000*this.cx + mvx), scale*(1000*this.cy + mvy),init_scale*1000*this.size, init_scale*100*this.size);
-            context.rect(scale*(1000*this.cx + mvx), scale*(1000*this.cy + mvy),-init_scale*1000*this.size, init_scale*100*this.size);
-            context.rect(scale*(1000*this.cx + mvx), scale*(1000*this.cy + mvy),init_scale*100*this.size, init_scale*1000*this.size);
-            context.rect(scale*(1000*this.cx + mvx), scale*(1000*this.cy + mvy),init_scale*100*this.size, -init_scale*1000*this.size);
+            context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),init_scale*1000*this.size, init_scale*100*this.size);
+            context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),-init_scale*1000*this.size, init_scale*100*this.size);
+            context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),init_scale*100*this.size, init_scale*1000*this.size);
+            context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),init_scale*100*this.size, -init_scale*1000*this.size);
 
             context.stroke();
 
@@ -638,7 +725,8 @@ export class PlotDataPoint2D {
 
 export class PlotDataScatterPlot {
   colorStroke:any;
-  n:number;
+  nx:number;
+  ny:number;
   x_step:number;
   y_step:number;
   constructor(public nb_points_x:number,
@@ -653,7 +741,8 @@ export class PlotDataScatterPlot {
       var plot = this.plot_data_states[i];
       this.colorStroke = plot.color_line;
     }
-    this.n = 0;
+    this.nx = 0;
+    this.ny = 0;
   }
 
   public static deserialize(serialized) {
@@ -672,20 +761,21 @@ export class PlotDataScatterPlot {
                                   serialized['plot_data_states']);
   }
 
-  draw_axes(context, mvx, mvy, scale, height, minX, maxX, minY, maxY, x_step, y_step) {
+  draw_axes(context, mvx, mvy, scaleX, scaleY, height, minX, maxX, minY, maxY, x_step, y_step) {
+    //pour l'axe des x
     var x_nb_digits = 3
     var i=0
     context.textAlign = 'center';
 
     while(minX + i*x_step < maxX) {
-      context.moveTo(scale*(1000*(minX + i*x_step) + mvx), height - 23)
-      context.lineTo(scale*(1000*(minX + i*x_step) + mvx), height - 17)
-      context.fillText(MyMath.round(minX + i*x_step, x_nb_digits), scale*(1000*(minX + i*x_step) + mvx), height - 4 )
+      context.moveTo(scaleX*(1000*(minX + i*x_step) + mvx), height - 23)
+      context.lineTo(scaleX*(1000*(minX + i*x_step) + mvx), height - 17)
+      context.fillText(MyMath.round(minX + i*x_step, x_nb_digits), scaleX*(1000*(minX + i*x_step) + mvx), height - 4 )
       i++
     }
-    context.moveTo(scale*(1000*(minX + i*x_step) + mvx), height - 23)
-    context.lineTo(scale*(1000*(minX + i*x_step) + mvx), height - 17)
-    context.fillText(MyMath.round(minX + i*x_step, x_nb_digits), scale*(1000*(minX + i*x_step) + mvx), height - 4 )
+    context.moveTo(scaleX*(1000*(minX + i*x_step) + mvx), height - 23)
+    context.lineTo(scaleX*(1000*(minX + i*x_step) + mvx), height - 17)
+    context.fillText(MyMath.round(minX + i*x_step, x_nb_digits), scaleX*(1000*(minX + i*x_step) + mvx), height - 4 )
     
     
       //pour l'axe des y
@@ -695,19 +785,19 @@ export class PlotDataScatterPlot {
     var real_maxY = -minY
     context.textAlign = 'start'
     while (real_minY + (i-1)*y_step < real_maxY) {
-      context.moveTo(7, scale*(-1000*(real_minY + i*y_step) + mvy))
-      context.lineTo(13, scale*(-1000*(real_minY + i*y_step) + mvy))
-      context.fillText(MyMath.round(real_minY + i*y_step, y_nb_digits), 15, scale*(-1000*(real_minY + i*y_step) + mvy) + 5)
+      context.moveTo(7, scaleY*(-1000*(real_minY + i*y_step) + mvy))
+      context.lineTo(13, scaleY*(-1000*(real_minY + i*y_step) + mvy))
+      context.fillText(MyMath.round(real_minY + i*y_step, y_nb_digits), 15, scaleY*(-1000*(real_minY + i*y_step) + mvy) + 5)
       i++
     }
-    context.moveTo(7, scale*(-1000*(real_minY + i*y_step) + mvy))
-    context.lineTo(13, scale*(-1000*(real_minY + i*y_step) + mvy))
-    context.fillText(MyMath.round(real_minY + i*y_step, y_nb_digits), 15, scale*(-1000*(real_minY + i*y_step) + mvy) + 5)
+    context.moveTo(7, scaleY*(-1000*(real_minY + i*y_step) + mvy))
+    context.lineTo(13, scaleY*(-1000*(real_minY + i*y_step) + mvy))
+    context.fillText(MyMath.round(real_minY + i*y_step, y_nb_digits), 15, scaleY*(-1000*(real_minY + i*y_step) + mvy) + 5)
 
     context.stroke()
   }
 
-  draw(context, mvx, mvy, scale, width, height, init_scale, minX, maxX, minY, maxY) {
+  draw(context, mvx, mvy, scaleX, scaleY, width, height, init_scale, minX, maxX, minY, maxY) {
     // Dessin du repère
     context.strokeStyle = this.colorStroke;
 
@@ -730,28 +820,43 @@ export class PlotDataScatterPlot {
     context.lineTo(width, height - 20)
     //Graduations
 
-    var refresh_step = 0.3;
-    if (scale>init_scale) {
-      var k = scale/init_scale
+    var refresh_step_x = 0.3;
+    var refresh_step_y = 0.5;
+    if (scaleX>init_scale) {
+      var kx = scaleX/init_scale
     } else {
-      var k = 1
+      var kx = 1
     }
-    if (k == 1) {
-      this.x_step = (maxX - minX)/(k*(this.nb_points_x-1));
-      this.y_step = (maxY - minY)/(k*(this.nb_points_y-1));
-    } else if (scale < init_scale + (this.n-1)*refresh_step) {
-      this.x_step = (maxX - minX)/(k*(this.nb_points_x-1));
-      this.y_step = (maxY - minY)/(k*(this.nb_points_y-1));
-      this.n--;
-    } else if (scale > init_scale + this.n*refresh_step) {
-      this.x_step = (maxX - minX)/(k*(this.nb_points_x-1));
-      this.y_step = (maxY - minY)/(k*(this.nb_points_y-1));
-      this.n++;
+
+    if (scaleY>init_scale) {
+      var ky = scaleY/init_scale
+    } else {
+      var ky = 1
+    }
+
+    if (kx == 1) {
+      this.x_step = (maxX - minX)/(kx*(this.nb_points_x-1));
+    } else if (scaleX < init_scale + (this.nx-1)*refresh_step_x) {
+      this.x_step = (maxX - minX)/(kx*(this.nb_points_x-1));
+      this.nx--;
+    } else if (scaleX > init_scale + this.nx*refresh_step_x) {
+      this.x_step = (maxX - minX)/(kx*(this.nb_points_x-1));
+      this.nx++;
+    }
+
+    if (ky == 1) {
+      this.y_step = (maxY - minY)/(ky*(this.nb_points_y-1));
+    } else if (scaleY < init_scale + (this.ny-1)*refresh_step_y) {
+      this.y_step = (maxY - minY)/(ky*(this.nb_points_y-1));
+      this.ny--;
+    } else if (scaleY > init_scale + this.ny*refresh_step_y) {
+      this.y_step = (maxY - minY)/(ky*(this.nb_points_y-1));
+      this.ny++;
     }
     context.font = this.font_size.toString() + 'px Arial';
     context.fillStyle = this.graduation_color
     
-    this.draw_axes(context, mvx, mvy, scale, height, minX, maxX, minY, maxY, this.x_step, this.y_step);
+    this.draw_axes(context, mvx, mvy, scaleX, scaleY, height, minX, maxX, minY, maxY, this.x_step, this.y_step);
     
   }
   
@@ -804,11 +909,11 @@ export class PlotDataArc2D {
                                   serialized['name']);
   }
 
-  draw(context, first_elem, mvx, mvy, scale) {
+  draw(context, first_elem, mvx, mvy, scaleX, scaleY) {
     var ptsa = []
     for (var l = 0; l < this.data.length; l++) {
-      ptsa.push(scale*(1000*this.data[l]['x']+ mvx))
-      ptsa.push(scale*(1000*this.data[l]['y']+ mvy))
+      ptsa.push(scaleX*(1000*this.data[l]['x']+ mvx))
+      ptsa.push(scaleY*(1000*this.data[l]['y']+ mvy))
     }
     var tension = 0.4
     var isClosed = false
