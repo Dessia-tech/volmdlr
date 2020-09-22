@@ -94,8 +94,8 @@ export class PlotData {
     this.scaleX = this.init_scale;
     this.scaleY = this.init_scale;
 		this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scale/2)/this.scale - this.coeff_pixel*this.minX;
-		this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scale/2)/this.scale - this.coeff_pixel*this.minY;
-		this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scale, this.scale);
+    this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scale/2)/this.scale - this.coeff_pixel*this.minY;
+    this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scale, this.scale);
     this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scale, this.scale);
   }
 
@@ -368,6 +368,7 @@ export class PlotData {
           var click_on_minus = Shape.Is_in_rect(mouse1X, mouse1Y, this.zoom_rect_x, this.zoom_rect_y + this.zoom_rect_h, this.zoom_rect_w, this.zoom_rect_h);
           var click_on_zoom_window = Shape.Is_in_rect(mouse1X, mouse1Y, this.zw_x, this.zw_y, this.zw_w, this.zw_h);
           var click_on_reset = Shape.Is_in_rect(mouse1X, mouse1Y, this.reset_rect_x, this.reset_rect_y, this.reset_rect_w, this.reset_rect_h);
+          var is_rect_big_enough = (Math.abs(mouse2X - mouse1X)>40) && (Math.abs(mouse2Y - mouse1Y)>30)
 
           if (click_on_plus === true) {
             this.scaleX = this.scaleX*1.2;
@@ -382,36 +383,26 @@ export class PlotData {
             this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY;
 
           } else if (click_on_zoom_window === true) {
-            if (this.zw_bool) {
-              this.zw_bool = false;
-              console.log("zw_bool is false");
-            } else {
-              this.zw_bool = true
-              console.log("zw_bool is true");
-            }
+            this.zw_bool = !this.zw_bool;
 
           } else if (click_on_reset === true){
             this.scaleX = this.init_scale;
             this.scaleY = this.init_scale;
+            this.scale = this.init_scale;
             this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX;
             this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY;
 
-          } else if ((this.zw_bool) && (Math.abs(mouse2X - mouse1X)>40) && (Math.abs(mouse2Y - mouse1Y)>30)) {
+          } else if (this.zw_bool && is_rect_big_enough) {
             var zoom_coeff_x = this.width/Math.abs(mouse2X - mouse1X);
             var zoom_coeff_y = this.height/Math.abs(mouse2Y - mouse1Y);
-            //this.scaleX = this.scaleX*zoom_coeff_x;
-            //this.scaleY = this.scaleY*zoom_coeff_y;
-            this.scaleX = this.init_scale;
-            this.scaleY = this.init_scale;
-            this.last_mouse1X = this.last_mouse1X + (mouse2X - mouse1X)/(2*this.scaleX);
-            this.last_mouse1Y = this.last_mouse1Y + (mouse2Y - mouse1Y)/(2*this.scaleY);
-            console.log(mouse1X)
-            console.log(mouse2X)
-            console.log(this.last_mouse1X);
-            console.log(this.last_mouse1Y);
+            this.last_mouse1X = this.last_mouse1X - mouse1X/this.scaleX
+            this.last_mouse1Y = this.last_mouse1Y - mouse1Y/this.scaleY
+            this.scaleX = this.scaleX*zoom_coeff_x;
+            this.scaleY = this.scaleY*zoom_coeff_y;
           }
-          
+
           this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
+          this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
         }
       isDrawing = false;
       mouse_mouving = false;
@@ -433,7 +424,6 @@ export class PlotData {
         this.scaleY = this.scaleY + event;
         this.last_mouse1X = this.last_mouse1X - (mouse3X/(this.scaleX - event) - mouse3X/this.scaleX);
         this.last_mouse1Y = this.last_mouse1Y - (mouse3Y/(this.scaleY - event) - mouse3Y/this.scaleY);
-        
       }
       this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
       this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
@@ -821,7 +811,7 @@ export class PlotDataScatterPlot {
     //Graduations
 
     var refresh_step_x = 0.3;
-    var refresh_step_y = 0.5;
+    var refresh_step_y = 0.4;
     if (scaleX>init_scale) {
       var kx = scaleX/init_scale
     } else {
@@ -833,25 +823,29 @@ export class PlotDataScatterPlot {
     } else {
       var ky = 1
     }
-
+    console.log(Math.floor((scaleX - init_scale)/refresh_step_x), scaleX)
     if (kx == 1) {
       this.x_step = (maxX - minX)/(kx*(this.nb_points_x-1));
+
     } else if (scaleX < init_scale + (this.nx-1)*refresh_step_x) {
       this.x_step = (maxX - minX)/(kx*(this.nb_points_x-1));
-      this.nx--;
+      this.nx = Math.floor((scaleX - init_scale)/refresh_step_x);
+
     } else if (scaleX > init_scale + this.nx*refresh_step_x) {
       this.x_step = (maxX - minX)/(kx*(this.nb_points_x-1));
-      this.nx++;
+      this.nx = Math.ceil((scaleX - init_scale)/refresh_step_x);
     }
 
     if (ky == 1) {
       this.y_step = (maxY - minY)/(ky*(this.nb_points_y-1));
+
     } else if (scaleY < init_scale + (this.ny-1)*refresh_step_y) {
       this.y_step = (maxY - minY)/(ky*(this.nb_points_y-1));
-      this.ny--;
+      this.ny = Math.floor((scaleY - init_scale)/refresh_step_y);
+
     } else if (scaleY > init_scale + this.ny*refresh_step_y) {
       this.y_step = (maxY - minY)/(ky*(this.nb_points_y-1));
-      this.ny++;
+      this.ny = Math.ceil((scaleY - init_scale)/refresh_step_y);
     }
     context.font = this.font_size.toString() + 'px Arial';
     context.fillStyle = this.graduation_color
@@ -1157,7 +1151,7 @@ function genColor(){
     ret.push((nextCol & 0xff00) >> 8); // G
     ret.push((nextCol & 0xff0000) >> 16); // B
 
-    nextCol += 10;
+    nextCol += 50;
   }
   var col = "rgb(" + ret.join(',') + ")";
   return col;
