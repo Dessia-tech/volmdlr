@@ -933,21 +933,21 @@ class LineSegment2D(Line2D):
     #     else:
     #         return None
         
-    def line_intersection(self, line):
+    def line_intersections(self, line):
         point = Point2D.LinesIntersection(self, line)
         if point is not None:
             point_projection1 = self.PointProjection2(point)
             if point_projection1 is None:
-                return None
+                return []
             
             if line.__class__.__name__ == 'LineSegment2D':
                 point_projection2 = line.PointProjection2(point)
                 if point_projection2 is None:
-                    return None
+                    return []
                 
-            return point_projection1
+            return [point_projection1]
         else:
-            return None
+            return []
 
     def MPLPlot(self, ax=None, color='k', arrow=False, width=None, plot_points=False):
         if ax is None:
@@ -1199,9 +1199,9 @@ class Arc2D(Primitive2D):
         else:
             return min(LineSegment2D(point, self.start).Length(), LineSegment2D(point, self.end).Length())
 
-    def line_intersection(self, line):
+    def line_intersections(self, line):
         circle = Circle2D(self.center, self.radius)
-        circle_intersection_points = circle.line_intersection(line)
+        circle_intersection_points = circle.line_intersections(line)
         
         if circle_intersection_points is None:
             return None
@@ -1359,47 +1359,6 @@ class Arc2D(Primitive2D):
         raise NotImplementedError
         return [Arc2D(self.start, self.split_point)]
 
-    def Length(self):
-        length = 0.
-        for primitive in self.primitives:
-            length += primitive.Length()
-        return length
-
-    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa:float):
-        length = 0.
-        for primitive in self.primitives:
-            primitive_length = primitive.Length()
-            if length + primitive_length > curvilinear_abscissa:
-                return primitive.PointAtCurvilinearAbscissa(curvilinear_abscissa - length)
-            length += primitive_length
-        return ValueError
-
-    def plot_data(self, name:str='', fill=None, color='black',
-                  stroke_width:float=1, opacity:float=1):
-        plot_data = {}
-        plot_data['name'] = name
-        plot_data['type'] = 'wire'
-        plot_data['plot_data'] = []
-        for item in self.primitives:
-            plot_data['plot_data'].append(item.plot_data(color=color,
-                                                        stroke_width=stroke_width,
-                                                        opacity=opacity))
-        return plot_data
-    
-    def line_intersection(self, line:Line2D):
-        """
-        Returns a list of intersection in ther form of a tuple (point, primitive)
-        of the wire primitives intersecting with the line
-        """
-        intersection_points = []
-        for primitive in self.primitives:
-            pts = primitive.line_intersection(line)
-            if pts is not None:
-                if type(pts) is list:
-                    intersection_points.extend(pts)
-                else:
-                    intersection_points.append(pts)
-        return intersection_points
 
 
 
@@ -1564,7 +1523,44 @@ class Wire2D(CompositePrimitive2D):
 
     # TODO: method to check if it is a wire
 
-            
+    def Length(self):
+        length = 0.
+        for primitive in self.primitives:
+            length += primitive.Length()
+        return length
+
+    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa:float):
+        length = 0.
+        for primitive in self.primitives:
+            primitive_length = primitive.Length()
+            if length + primitive_length > curvilinear_abscissa:
+                return primitive.PointAtCurvilinearAbscissa(curvilinear_abscissa - length)
+            length += primitive_length
+        return ValueError
+
+    def plot_data(self, name:str='', fill=None, color='black',
+                  stroke_width:float=1, opacity:float=1):
+        plot_data = {}
+        plot_data['name'] = name
+        plot_data['type'] = 'wire'
+        plot_data['plot_data'] = []
+        for item in self.primitives:
+            plot_data['plot_data'].append(item.plot_data(color=color,
+                                                        stroke_width=stroke_width,
+                                                        opacity=opacity))
+        return plot_data
+    
+    def line_intersections(self, line:Line2D):
+        """
+        Returns a list of intersection in ther form of a tuple (point, primitive)
+        of the wire primitives intersecting with the line
+        """
+        intersection_points = []
+        for primitive in self.primitives:
+            for p in primitive.line_intersections(line):            
+                intersection_points.append((p, primitive))
+        return intersection_points
+
 
 class Contour2D(Wire2D):
     """
@@ -1830,22 +1826,22 @@ class Contour2D(Wire2D):
         ymax = self.points[0][1]
         for point in self.points[1:]:
             xmin = min(point[0], xmin)
-            xmax = min(point[0], xmax)
+            xmax = max(point[0], xmax)
             ymin = min(point[1], ymin)
-            ymax = min(point[1], ymax)
+            ymax = max(point[1], ymax)
         return xmin, xmax, ymin, ymax
             
-    def line_intersections(self, line:Line2D) -> List[Tuple[Point2D, Primitive2D]]:
-        """
-        Returns a list of points and lines of intersection with the contour
-        """
-        intersection_points = Wire2D.line_intersections(self, line)
-        if not intersection_points:
-            return []
-        elif len(intersection_points) == 2:
-            return [LineSegment2D(*intersection_points)]
-        else:
-            raise NotImplementedError('Non convex contour not supported yet')
+    # def line_intersections(self, line:Line2D) -> List[Tuple[Point2D, Primitive2D]]:
+    #     """
+    #     Returns a list of points and lines of intersection with the contour
+    #     """
+    #     intersection_points = Wire2D.line_intersections(self, line)
+    #     if not intersection_points:
+    #         return []
+    #     elif len(intersection_points) == 2:
+    #         return [LineSegment2D(*intersection_points)]
+    #     else:
+    #         raise NotImplementedError('Non convex contour not supported yet')
 
         
     def cut_by_line(self, line):
@@ -1853,16 +1849,14 @@ class Contour2D(Wire2D):
         if not intersections:
             return [self]
         
-        if len(intersections) == 1:
-            # if intersections[0][0].__class__.__name__ == 'Point2D':
+        if len(intersections) < 2:
             return [self]
-        elif len(intersections) == 1:
+        elif len(intersections) == 2:
             if intersections[0][0].__class__.__name__ == 'Point2D' and\
                 intersections[1][0].__class__.__name__ == 'Point2D':
-                # contour1 = self.copy()
-                # contour2 = self.copy()
                 ip1, ip2 = sorted([self.primitives.index(intersections[0][1]),
                                    self.primitives.index(intersections[1][1])])
+                
                 sp11, sp12 = intersections[0][1].split(intersections[0][0])
                 sp21, sp22 = intersections[1][1].split(intersections[1][0])
                 
@@ -1874,23 +1868,69 @@ class Contour2D(Wire2D):
                 primitives1.extend(self.primitives[ip2+1:])
                 
                 primitives2 = self.primitives[ip1+1:ip2]
-                primitives1.append(sp21)
-                primitives1.append(LineSegment2D(intersections[1][0],
+                primitives2.append(sp21)
+                primitives2.append(LineSegment2D(intersections[1][0],
                                                  intersections[0][0]))
-                primitives1.append(sp12)
-                primitives1.extend(self.primitives[ip2+1:])
+                primitives2.append(sp12)
+                primitives2.extend(self.primitives[ip2+1:])
                 
                 
-
+                return Contour2D(primitives1), Contour2D(primitives2)
                 
             else:
+                print(intersections)
                 raise NotImplementedError('Non convex contour not supported yet')
-    
+
+        raise NotImplementedError('{} intersections not supported yet'.format(len(intersections)))
+
+    def simple_triangulation(self):
+        lpp = len(self.polygon.points)
+        if lpp == 3:
+            return self.polygon.points, [(0, 1, 2)]
+        elif lpp == 4:
+            return self.polygon.points, [(0, 1, 2), (0, 2, 3)]
+        print('lpp', lpp)
+        self.MPLPlot()
+        return [], []
+
+
+
     def grid_triangulation(self, n, m):
         
         xmin, xmax, ymin, ymax = self.bounding_rectangle()
-        for i in range(n+1):
-            xi = xmin + i*(xmax-xmin)/n
+        cutted_contours = []
+        iteration_contours = [self]
+        for i in range(n-1):
+            # print(i)
+            xi = xmin + (i+1)*(xmax-xmin)/n
+            # print(xi)
+            cut_line = Line2D(Point2D((xi, 0)), Point2D((xi, 1)))
+            
+            iteration_contours2 = []
+            for c in iteration_contours:
+                sc = c.cut_by_line(cut_line)
+                lsc = len(sc)
+                # print('lsc', lsc)
+                if lsc == 1:
+                    cutted_contours.append(c)
+                else:
+                    iteration_contours2.extend(sc)
+                
+            iteration_contours = iteration_contours2[:]
+        cutted_contours.extend(iteration_contours)
+        
+        return cutted_contours
+    
+        points = []
+        indices = []
+        lp = 0
+        for c in cutted_contours:
+            cp, ci = c.simple_triangulation()
+            points.extend(cp)
+            indices.extend([[i+lp for i in indices] for indices in ci])
+            lp += len(cp)
+        
+        return points, indices
             
 
 class Circle2D(Contour2D):
@@ -1931,7 +1971,7 @@ class Circle2D(Contour2D):
         epsilon = 1e-6
         return point.point_distance(self.center) <= self.radius + epsilon
     
-    def line_intersection(self, line):
+    def line_intersections(self, line):
         V = Vector2D((line.points[1] - line.points[0]).vector)
         Q = Vector2D(self.center.vector)
         P1 = Vector2D(line.points[0].vector)
@@ -1942,7 +1982,7 @@ class Circle2D(Contour2D):
         
         disc = b**2 - 4 * a * c
         if disc < 0:
-            return None
+            return []
         
         if math.isclose(disc, 0, abs_tol=1e-8):
             t = -b / (2 * a)
@@ -1952,7 +1992,7 @@ class Circle2D(Contour2D):
                 if 0 <= t <= 1:
                     return [Point2D((P1+t*V).vector)]
                 else:
-                    return None
+                    return []
         
         sqrt_disc = math.sqrt(disc)
         t1 = (-b + sqrt_disc) / (2 * a)
@@ -1961,7 +2001,7 @@ class Circle2D(Contour2D):
             return [Point2D((P1+t1*V).vector), Point2D((P1+t2*V).vector)]
         else:
             if not (0 <= t1 <= 1 or 0 <= t2 <= 1):
-                return None
+                return []
             elif 0 <= t1 <= 1 and not 0 <= t2 <= 1:
                 return [Point2D((P1+t1*V).vector)]
             elif not 0 <= t1 <= 1 and 0 <= t2 <= 1:
@@ -2437,13 +2477,13 @@ class Plane3D(Primitive3D):
             return True
         return False
 
-    def line_intersection(self, line):
+    def line_intersections(self, line):
         u = line.points[1] - line.points[0]
         w = line.points[0] - self.origin
         if math.isclose(self.normal.Dot(u), 0, abs_tol=1e-08):
-            return None
+            return []
         intersection_abscissea = - self.normal.Dot(w) / self.normal.Dot(u)
-        return line.points[0] + intersection_abscissea * u
+        return [line.points[0] + intersection_abscissea * u]
 
     def linesegment_intersection(self, linesegment, abscissea=False):
         u = linesegment.points[1] - linesegment.points[0]
@@ -2847,8 +2887,8 @@ class ToroidalSurface3D(Primitive3D):
         diag1_cut, diag2_cut = [], []
         diag1_pointcut, diag2_pointcut = [], []
         for enum,l in enumerate(primitives_se) :
-            cut1 = diag1.line_intersection(l)
-            cut2 = diag2.line_intersection(l)
+            cut1 = diag1.line_intersections(l)
+            cut2 = diag2.line_intersections(l)
             if cut1 is not None : 
                 diag1_cut.append(enum)
                 diag1_pointcut.append(cut1)
@@ -2967,7 +3007,7 @@ class ToroidalSurface3D(Primitive3D):
         for prim in primitives :
             if solve :
                 break
-            intersect = prim.line_intersection(l_vert)
+            intersect = prim.line_intersections(l_vert)
             if intersect is not None : 
                 x_intersect = intersect.vector[0]
                 y_intersect = intersect.vector[1]
@@ -6308,8 +6348,8 @@ class CylindricalFace3D(Face3D):
         diag1_cut, diag2_cut = [], []
         diag1_pointcut, diag2_pointcut = [], []
         for enum,l in enumerate(primitives_se) :
-            cut1 = diag1.line_intersection(l)
-            cut2 = diag2.line_intersection(l)
+            cut1 = diag1.line_intersections(l)
+            cut2 = diag2.line_intersections(l)
             if cut1 is not None : 
                 diag1_cut.append(enum)
                 diag1_pointcut.append(cut1)
@@ -6438,7 +6478,7 @@ class CylindricalFace3D(Face3D):
         for prim in primitives :
             if solve :
                 break
-            intersect = prim.line_intersection(l_vert)
+            intersect = prim.line_intersections(l_vert)
             if intersect is not None : 
                 x_intersect = intersect.vector[0]
                 y_intersect = intersect.vector[1]
@@ -7978,8 +8018,8 @@ class ConicalFace3D (Face3D) :
         diag1_cut, diag2_cut = [], []
         diag1_pointcut, diag2_pointcut = [], []
         for enum,l in enumerate(primitives_se) :
-            cut1 = diag1.line_intersection(l)
-            cut2 = diag2.line_intersection(l)
+            cut1 = diag1.line_intersections(l)
+            cut2 = diag2.line_intersections(l)
             if cut1 is not None : 
                 diag1_cut.append(enum)
                 diag1_pointcut.append(cut1)
@@ -8102,7 +8142,7 @@ class ConicalFace3D (Face3D) :
         for prim in primitives :
             if solve :
                 break
-            intersect = prim.line_intersection(l_vert)
+            intersect = prim.line_intersections(l_vert)
             if intersect is not None : 
                 x_intersect = intersect.vector[0]
                 y_intersect = intersect.vector[1]
@@ -8536,8 +8576,8 @@ class SphericalFace3D (Face3D) :
         diag1_cut, diag2_cut = [], []
         diag1_pointcut, diag2_pointcut = [], []
         for enum,l in enumerate(primitives_se) :
-            cut1 = diag1.line_intersection(l)
-            cut2 = diag2.line_intersection(l)
+            cut1 = diag1.line_intersections(l)
+            cut2 = diag2.line_intersections(l)
             if cut1 is not None : 
                 diag1_cut.append(enum)
                 diag1_pointcut.append(cut1)
@@ -8661,7 +8701,7 @@ class SphericalFace3D (Face3D) :
         for prim in primitives :
             if solve :
                 break
-            intersect = prim.line_intersection(l_vert)
+            intersect = prim.line_intersections(l_vert)
             if intersect is not None : 
                 x_intersect = intersect.vector[0]
                 y_intersect = intersect.vector[1]

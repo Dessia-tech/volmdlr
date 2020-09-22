@@ -6,6 +6,7 @@ Created on Tue Oct  9 10:50:18 2018
 @author: steven
 """
 
+import math
 import volmdlr as vm
 import volmdlr.primitives2D as primitives2D
 import volmdlr.primitives3D as primitives3D
@@ -60,9 +61,25 @@ ax2 = rl2D_c.MPLPlot()
 rl2D_c2.MPLPlot(ax=ax2)
 
 
-cut_line = vm.Line2D(p1, p2)
 
-c1, c2 = rl2D_c2.cut_by_line(cut_line)
+cut_line = vm.Line2D(vm.Point2D((-1, 0.5)), vm.Point2D((1, -0.5)))
+ax3 = rl2D_c2.MPLPlot()
+cut_line.MPLPlot(ax=ax3, color='red')
+
+cutted_contours = rl2D_c2.cut_by_line(cut_line)
+# for c in cutted_contours:
+cutted_contours[0].Translation(-0.05*cut_line.NormalVector()).MPLPlot(ax=ax3, color='g')
+cutted_contours[1].Translation(0.05*cut_line.NormalVector()).MPLPlot(ax=ax3, color='blue')
+
+assert math.isclose(cutted_contours[0].Area()+cutted_contours[1].Area(),
+                    rl2D_c2.Area(), abs_tol=1e-12)
+
+
+ax4 = rl2D_c2.MPLPlot()
+for ic, c in enumerate(rl2D_c2.grid_triangulation(10, 2)):
+    print(c)
+    c.MPLPlot(color='r')
+    
 
 # =============================================================================
 #  3D Version
