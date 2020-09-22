@@ -57,6 +57,8 @@ import scipy as scp
 import scipy.optimize 
 # import cma
 
+from typing import List, Tuple
+
 
 def standardize_knot_vector(knot_vector):
     u0 = knot_vector[0]
@@ -475,361 +477,6 @@ class CompositePrimitive2D(Primitive2D):
         return plot_data
 
 
-class Wire2D(CompositePrimitive2D):
-    """
-    A collection of simple primitives, following each other making a wire
-    """
-    def __init__(self, primitives, name=''):
-        CompositePrimitive2D.__init__(self, primitives, name)
-
-    # TODO: method to check if it is a wire
-
-    def Length(self):
-        length = 0.
-        for primitive in self.primitives:
-            length += primitive.Length()
-        return length
-
-    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
-        length = 0.
-        for primitive in self.primitives:
-            primitive_length = primitive.Length()
-            if length + primitive_length > curvilinear_abscissa:
-                return primitive.PointAtCurvilinearAbscissa(curvilinear_abscissa - length)
-            length += primitive_length
-        return ValueError
-
-    def plot_data(self, name='', fill=None, color='black', stroke_width=1, opacity=1):
-        plot_data = {}
-        plot_data['name'] = name
-        plot_data['type'] = 'wire'
-        plot_data['plot_data'] = []
-        for item in self.primitives:
-            plot_data['plot_data'].append(item.plot_data(color=color,
-                                                        stroke_width=stroke_width,
-                                                        opacity=opacity))
-        return plot_data
-    
-    def line_intersection(self, line):
-        """
-        Returns a list of intersection in ther form of a tuple (point, primitive)
-        of the wire primitives intersecting with the line
-        """
-        intersection_points = []
-        for primitive in self.primitives:
-            pts = primitive.line_intersection(line)
-            if pts is not None:
-                if type(pts) is list:
-                    intersection_points.extend(pts)
-                else:
-                    intersection_points.append(pts)
-        return intersection_points
-
-
-
-class Contour2D(Wire2D):
-    """
-    A collection of 2D primitives forming a closed wire2D
-    TODO : CenterOfMass and SecondMomentArea should be changed accordingly to
-    Area considering the triangle drawn by the arcs
-    """
-    _non_serializable_attributes  = ['internal_arcs', 'external_arcs' ,'polygon', 'straight_line_contour_polygon']
-    def __init__(self, primitives, name=''):
-        Wire2D.__init__(self, primitives, name)
-        self._utd_analysis = False
-        self.tessel_points = self.clean_points()
-
-    def _primitives_analysis(self):
-        """
-        An internal arc is an arc that has his interior point inside the polygon
-        """
-
-        arcs = []
-        internal_arcs = []
-        external_arcs = []
-        points_polygon = []
-        points_straight_line_contour = []
-        for primitive in self.primitives:
-            if primitive.__class__.__name__ == 'LineSegment2D':
-                points_polygon.append(primitive.points[0])
-                points_straight_line_contour.extend(primitive.points)
-            elif primitive.__class__.__name__ == 'Arc2D':
-                points_polygon.append(primitive.start)
-                points_polygon.append(primitive.center)
-                
-                # points_polygon.append(primitive.end)
-                arcs.append(primitive)
-            elif primitive.__class__.__name__ == 'Circle2D':
-                raise ValueError('Circle2D primitives should not be inserted in a contour, as a circle is already a contour. Use directcly the circle')
-                # return None
-            elif primitive.__class__.__name__ == 'OpenedRoundedLineSegments2D':
-                for prim in primitive.primitives:
-                    if prim.__class__.__name__ == 'LineSegment2D':
-                        points_polygon.extend(prim.points)
-                        points_straight_line_contour.extend(prim.points)
-                    elif prim.__class__.__name__ == 'Arc2D':
-        #                points_polygon.append(primitive.center)
-                        points_polygon.append(prim.start)
-                        points_polygon.append(prim.end)
-                        arcs.append(prim)
-            else:
-                raise NotImplementedError('primitive of type {} is not handled'.format(primitive))
-
-        # points_polygon = list(set(points_polygon))
-        polygon = Polygon2D(points_polygon)
-        points_straight_line_contour = list(set(points_straight_line_contour))
-        straight_line_contour_polygon = Polygon2D(points_straight_line_contour)
-        
-        for arc in arcs:
-            if polygon.PointBelongs(arc.interior):
-                internal_arcs.append(arc)
-            else:
-                external_arcs.append(arc)
-
-        return internal_arcs, external_arcs, polygon, straight_line_contour_polygon
-    
-    def _get_internal_arcs(self):
-        if not self._utd_analysis:
-            (self._internal_arcs, self._external_arcs,
-             self._polygon, self._straight_line_contour_polygon) = self._primitives_analysis()
-            self._utd_analysis = True
-        return self._internal_arcs
-            
-    internal_arcs = property(_get_internal_arcs)
-    
-    def _get_external_arcs(self):
-        if not self._utd_analysis:
-            (self._internal_arcs, self._external_arcs,
-             self._polygon, self._straight_line_contour_polygon) = self._primitives_analysis()
-            self._utd_analysis = True
-        return self._external_arcs
-            
-    external_arcs = property(_get_external_arcs)
-    
-    def _get_polygon(self):
-        if not self._utd_analysis:
-            (self._internal_arcs, self._external_arcs,
-             self._polygon, self._straight_line_contour_polygon) = self._primitives_analysis()
-            self._utd_analysis = True
-        return self._polygon
-            
-    polygon = property(_get_polygon)
-    
-    def _get_straight_line_contour_polygon(self):
-        if not self._utd_analysis:
-            (self._internal_arcs, self._external_arcs,
-             self._polygon, self._straight_line_contour_polygon) = self._primitives_analysis()
-            self._utd_analysis = True
-        return self._straight_line_contour_polygon
-            
-    straight_line_contour_polygon = property(_get_straight_line_contour_polygon)
-    
-    
-    def point_belongs(self, point):
-        for arc in self.internal_arcs:
-            if arc.point_belongs(point):
-                return False
-        if self.polygon.PointBelongs(point):
-            return True
-        for arc in self.external_arcs:
-            if arc.point_belongs(point):
-                return True
-        return False
-
-    def point_distance(self, point):
-        min_distance = self.primitives[0].point_distance(point)
-        for primitive in self.primitives[1:]:
-            distance = primitive.point_distance(point)
-            if distance < min_distance:
-                min_distance = distance
-        return min_distance
-
-    def bounding_points(self):
-        points = self.straight_line_contour_polygon.points[:]
-        for arc in self.internal_arcs + self.external_arcs:
-            points.extend(arc.tessellation_points())
-        xmin = min([p[0] for p in points])
-        xmax = max([p[0] for p in points])
-        ymin = min([p[1] for p in points])
-        ymax = max([p[1] for p in points])
-        return (Point2D((xmin, ymin)), Point2D((xmax, ymax)))
-
-    def To3D(self, plane_origin, x, y, name=None):
-        if name is None:
-            name = '3D of {}'.format(self.name)
-        primitives3D = [p.To3D(plane_origin, x, y) for p in self.primitives]
-        return Contour3D(edges=primitives3D, name=name)
-
-    def Area(self):
-        if len(self.primitives) == 1:
-            return self.primitives[0].Area()
-
-        A = self.polygon.Area()
-
-        for arc in self.internal_arcs:
-            triangle = Polygon2D([arc.start, arc.center, arc.end])
-            A = A - arc.Area() + triangle.Area()
-        for arc in self.external_arcs:
-            triangle = Polygon2D([arc.start, arc.center, arc.end])
-            A = A + arc.Area() - triangle.Area()
-
-        return A
-
-    def CenterOfMass(self):
-        if len(self.primitives) == 1:
-            return self.primitives[0].CenterOfMass()
-
-        area = self.polygon.Area()
-        if area > 0.:
-            c = area*self.polygon.CenterOfMass()
-        else:
-            c = O2D
-
-        for arc in self.internal_arcs:
-            arc_area = arc.Area()
-            c -= arc_area*arc.CenterOfMass()
-            area -= arc_area
-        for arc in self.external_arcs:
-            arc_area = arc.Area()
-            c += arc_area*arc.CenterOfMass()
-            area += arc_area
-        if area != 0:
-            return c/area
-        else:
-            return False
-
-    def SecondMomentArea(self, point):
-        if len(self.primitives) == 1:
-            return self.primitives[0].SecondMomentArea(point)
-
-        A = self.polygon.SecondMomentArea(point)
-        for arc in self.internal_arcs:
-            A -= arc.SecondMomentArea(point)
-        for arc in self.external_arcs:
-            A += arc.SecondMomentArea(point)
-
-        return A
-    
-    def plot_data(self, name='', fill=None, marker=None, color='black', 
-                  stroke_width=1, dash=False, opacity=1):
-
-        plot_data = {}
-        plot_data['fill'] = fill
-        plot_data['name'] = name
-        plot_data['type'] = 'contour'
-        plot_data['plot_data'] = []
-        for item in self.primitives:
-            plot_data['plot_data'].append(item.plot_data(color=color,
-                                                         stroke_width=stroke_width,
-                                                         opacity=opacity))
-        return plot_data
-
-    def copy(self) :
-        primitives_copy = []
-        for primitive in self.primitives :
-            primitives_copy.append(primitive.copy())
-        return Contour2D(primitives_copy)
-
-    def average_center_point(self):
-        nb = len(self.tessel_points )
-        x = npy.sum([p[0] for p in self.tessel_points]) / nb
-        y = npy.sum([p[1] for p in self.tessel_points]) / nb
-        return Point2D((x,y))
-    
-    def clean_points(self):
-        """
-        This method is copy from Contour3D, if changes are done there or here,
-        please change both method
-        Be aware about primitives = 2D, edges = 3D
-        """
-        if hasattr(self.primitives[0], 'endpoints'):
-            points = self.primitives[0].endpoints[:]
-        else:
-            points = self.primitives[0].tessellation_points()
-        for primitive in self.primitives[1:]:
-            if hasattr(primitive, 'endpoints'):
-                points_to_add = primitive.endpoints[:]
-            else :
-                points_to_add = primitive.tessellation_points()
-            if points[0] == points[-1]: # Dans le cas où le (dernier) edge relie deux fois le même point
-                points.extend(points_to_add[::-1])
-            
-            elif points_to_add[0] == points[-1]:
-                points.extend(points_to_add[1:])
-            elif points_to_add[-1] == points[-1]:
-                points.extend(points_to_add[-2::-1])
-            elif points_to_add[0] == points[0]:
-                points = points[::-1]
-                points.extend(points_to_add[1:])
-            elif points_to_add[-1] == points[0]:
-                points = points[::-1]
-                points.extend(points_to_add[-2::-1])
-            else: 
-                d1, d2 = (points_to_add[0]-points[0]).Norm(), (points_to_add[0]-points[-1]).Norm()
-                d3, d4 = (points_to_add[-1]-points[0]).Norm(), (points_to_add[-1]-points[-1]).Norm()
-                if math.isclose(d2, 0, abs_tol=1e-3):
-                    points.extend(points_to_add[1:])
-                elif math.isclose(d4, 0, abs_tol=1e-3):
-                    points.extend(points_to_add[-2::-1])
-                elif math.isclose(d1, 0, abs_tol=1e-3):
-                    points = points[::-1]
-                    points.extend(points_to_add[1:])
-                elif math.isclose(d3, 0, abs_tol=1e-3):
-                    points = points[::-1]
-                    points.extend(points_to_add[-2::-1])
-                    
-        if len(points) > 1:
-            if points[0] == points[-1]:
-                points.pop()
-        return points
-
-    def bounding_rectangle(self):
-        # bounding rectangle
-        xmin = outer_contour2d.points[0][0]
-        xmax = outer_contour2d.points[0][0]
-        ymin = outer_contour2d.points[0][1]
-        ymax = outer_contour2d.points[0][1]
-        for point in outer_contour2d.points[1:]:
-            xmin = min(point[0], xmin)
-            xmax = min(point[0], xmax)
-            ymin = min(point[1], ymin)
-            ymax = min(point[1], ymax)
-        return xmin, xmax, ymin, ymax
-            
-    def line_intersection(self, line):
-        """
-        Returns a list of points and lines of intersection with the contour
-        """
-        intersection_points = Wire2D.line_intersections(self, line)
-        if not intersection_points:
-            return []
-        elif len(intersection_points) == 2:
-            return [LineSegment2D(*intersection_points)]
-        else:
-            raise NotImplementedError('Non convex contour not supported yet')
-        
-        
-    def cut_by_line(self, line):
-        intersections = self.line_intersection(line)
-        if not intersections:
-            return [self]
-        
-        if len(intersections)==1:
-            if intersections[0][0].__class__.__name__ == 'Point2D':
-                return [self]
-            elif intersections[0][0].__class__.__name__ == 'LineSegment2D':
-                contour1 = self.copy()
-                contour2 = self.copy()
-                
-            else:
-                raise NotImplementedError('Non convex contour not supported yet')
-    
-    def grid_triangulation(self, n, m):
-        
-        xmin, xmax, ymin, ymax = self.bounding_rectangle()
-        for i in range(n+1):
-            xi = xmin + i*(xmax-xmin)/n
-            
 
 
 class Mesh2D:
@@ -1708,9 +1355,54 @@ class Arc2D(Primitive2D):
         return Arc2D(self.start.copy(), self.interior.copy(), self.end.copy())
 
     
-    def split(self, split_point):
+    def split(self, split_point:Point2D):
         raise NotImplementedError
         return [Arc2D(self.start, self.split_point)]
+
+    def Length(self):
+        length = 0.
+        for primitive in self.primitives:
+            length += primitive.Length()
+        return length
+
+    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa:float):
+        length = 0.
+        for primitive in self.primitives:
+            primitive_length = primitive.Length()
+            if length + primitive_length > curvilinear_abscissa:
+                return primitive.PointAtCurvilinearAbscissa(curvilinear_abscissa - length)
+            length += primitive_length
+        return ValueError
+
+    def plot_data(self, name:str='', fill=None, color='black',
+                  stroke_width:float=1, opacity:float=1):
+        plot_data = {}
+        plot_data['name'] = name
+        plot_data['type'] = 'wire'
+        plot_data['plot_data'] = []
+        for item in self.primitives:
+            plot_data['plot_data'].append(item.plot_data(color=color,
+                                                        stroke_width=stroke_width,
+                                                        opacity=opacity))
+        return plot_data
+    
+    def line_intersection(self, line:Line2D):
+        """
+        Returns a list of intersection in ther form of a tuple (point, primitive)
+        of the wire primitives intersecting with the line
+        """
+        intersection_points = []
+        for primitive in self.primitives:
+            pts = primitive.line_intersection(line)
+            if pts is not None:
+                if type(pts) is list:
+                    intersection_points.extend(pts)
+                else:
+                    intersection_points.append(pts)
+        return intersection_points
+
+
+
     
 
 class ArcEllipse2D(Primitive2D) :
@@ -1861,6 +1553,345 @@ class ArcEllipse2D(Primitive2D) :
 
         plt.plot(x, y, 'k')
         return fig, ax
+
+
+class Wire2D(CompositePrimitive2D):
+    """
+    A collection of simple primitives, following each other making a wire
+    """
+    def __init__(self, primitives, name=''):
+        CompositePrimitive2D.__init__(self, primitives, name)
+
+    # TODO: method to check if it is a wire
+
+            
+
+class Contour2D(Wire2D):
+    """
+    A collection of 2D primitives forming a closed wire2D
+    TODO : CenterOfMass and SecondMomentArea should be changed accordingly to
+    Area considering the triangle drawn by the arcs
+    """
+    _non_serializable_attributes  = ['internal_arcs', 'external_arcs' ,'polygon', 'straight_line_contour_polygon']
+    def __init__(self, primitives, name=''):
+        Wire2D.__init__(self, primitives, name)
+        self._utd_analysis = False
+        self.tessel_points = self.clean_points()
+
+    def _primitives_analysis(self):
+        """
+        An internal arc is an arc that has his interior point inside the polygon
+        """
+
+        arcs = []
+        internal_arcs = []
+        external_arcs = []
+        points_polygon = []
+        points_straight_line_contour = []
+        for primitive in self.primitives:
+            if primitive.__class__.__name__ == 'LineSegment2D':
+                points_polygon.append(primitive.points[0])
+                points_straight_line_contour.extend(primitive.points)
+            elif primitive.__class__.__name__ == 'Arc2D':
+                points_polygon.append(primitive.start)
+                points_polygon.append(primitive.center)
+                
+                # points_polygon.append(primitive.end)
+                arcs.append(primitive)
+            elif primitive.__class__.__name__ == 'Circle2D':
+                raise ValueError('Circle2D primitives should not be inserted in a contour, as a circle is already a contour. Use directcly the circle')
+                # return None
+            elif primitive.__class__.__name__ == 'OpenedRoundedLineSegments2D':
+                for prim in primitive.primitives:
+                    if prim.__class__.__name__ == 'LineSegment2D':
+                        points_polygon.extend(prim.points)
+                        points_straight_line_contour.extend(prim.points)
+                    elif prim.__class__.__name__ == 'Arc2D':
+        #                points_polygon.append(primitive.center)
+                        points_polygon.append(prim.start)
+                        points_polygon.append(prim.end)
+                        arcs.append(prim)
+            else:
+                raise NotImplementedError('primitive of type {} is not handled'.format(primitive))
+
+        # points_polygon = list(set(points_polygon))
+        polygon = Polygon2D(points_polygon)
+        points_straight_line_contour = list(set(points_straight_line_contour))
+        straight_line_contour_polygon = Polygon2D(points_straight_line_contour)
+        
+        for arc in arcs:
+            if polygon.PointBelongs(arc.interior):
+                internal_arcs.append(arc)
+            else:
+                external_arcs.append(arc)
+
+        return internal_arcs, external_arcs, polygon, straight_line_contour_polygon
+    
+    def _get_internal_arcs(self):
+        if not self._utd_analysis:
+            (self._internal_arcs, self._external_arcs,
+             self._polygon, self._straight_line_contour_polygon) = self._primitives_analysis()
+            self._utd_analysis = True
+        return self._internal_arcs
+            
+    internal_arcs = property(_get_internal_arcs)
+    
+    def _get_external_arcs(self):
+        if not self._utd_analysis:
+            (self._internal_arcs, self._external_arcs,
+             self._polygon, self._straight_line_contour_polygon) = self._primitives_analysis()
+            self._utd_analysis = True
+        return self._external_arcs
+            
+    external_arcs = property(_get_external_arcs)
+    
+    def _get_polygon(self):
+        if not self._utd_analysis:
+            (self._internal_arcs, self._external_arcs,
+             self._polygon, self._straight_line_contour_polygon) = self._primitives_analysis()
+            self._utd_analysis = True
+        return self._polygon
+            
+    polygon = property(_get_polygon)
+    
+    def _get_straight_line_contour_polygon(self):
+        if not self._utd_analysis:
+            (self._internal_arcs, self._external_arcs,
+             self._polygon, self._straight_line_contour_polygon) = self._primitives_analysis()
+            self._utd_analysis = True
+        return self._straight_line_contour_polygon
+            
+    straight_line_contour_polygon = property(_get_straight_line_contour_polygon)
+    
+    
+    def point_belongs(self, point):
+        for arc in self.internal_arcs:
+            if arc.point_belongs(point):
+                return False
+        if self.polygon.PointBelongs(point):
+            return True
+        for arc in self.external_arcs:
+            if arc.point_belongs(point):
+                return True
+        return False
+
+    def point_distance(self, point):
+        min_distance = self.primitives[0].point_distance(point)
+        for primitive in self.primitives[1:]:
+            distance = primitive.point_distance(point)
+            if distance < min_distance:
+                min_distance = distance
+        return min_distance
+
+    def bounding_points(self):
+        points = self.straight_line_contour_polygon.points[:]
+        for arc in self.internal_arcs + self.external_arcs:
+            points.extend(arc.tessellation_points())
+        xmin = min([p[0] for p in points])
+        xmax = max([p[0] for p in points])
+        ymin = min([p[1] for p in points])
+        ymax = max([p[1] for p in points])
+        return (Point2D((xmin, ymin)), Point2D((xmax, ymax)))
+
+    def To3D(self, plane_origin, x, y, name=None):
+        if name is None:
+            name = '3D of {}'.format(self.name)
+        primitives3D = [p.To3D(plane_origin, x, y) for p in self.primitives]
+        return Contour3D(edges=primitives3D, name=name)
+
+    def Area(self):
+        if len(self.primitives) == 1:
+            return self.primitives[0].Area()
+
+        A = self.polygon.Area()
+
+        for arc in self.internal_arcs:
+            triangle = Polygon2D([arc.start, arc.center, arc.end])
+            A = A - arc.Area() + triangle.Area()
+        for arc in self.external_arcs:
+            triangle = Polygon2D([arc.start, arc.center, arc.end])
+            A = A + arc.Area() - triangle.Area()
+
+        return A
+
+    def CenterOfMass(self):
+        if len(self.primitives) == 1:
+            return self.primitives[0].CenterOfMass()
+
+        area = self.polygon.Area()
+        if area > 0.:
+            c = area*self.polygon.CenterOfMass()
+        else:
+            c = O2D
+
+        for arc in self.internal_arcs:
+            arc_area = arc.Area()
+            c -= arc_area*arc.CenterOfMass()
+            area -= arc_area
+        for arc in self.external_arcs:
+            arc_area = arc.Area()
+            c += arc_area*arc.CenterOfMass()
+            area += arc_area
+        if area != 0:
+            return c/area
+        else:
+            return False
+
+    def SecondMomentArea(self, point):
+        if len(self.primitives) == 1:
+            return self.primitives[0].SecondMomentArea(point)
+
+        A = self.polygon.SecondMomentArea(point)
+        for arc in self.internal_arcs:
+            A -= arc.SecondMomentArea(point)
+        for arc in self.external_arcs:
+            A += arc.SecondMomentArea(point)
+
+        return A
+    
+    def plot_data(self, name='', fill=None, marker=None, color='black', 
+                  stroke_width=1, dash=False, opacity=1):
+
+        plot_data = {}
+        plot_data['fill'] = fill
+        plot_data['name'] = name
+        plot_data['type'] = 'contour'
+        plot_data['plot_data'] = []
+        for item in self.primitives:
+            plot_data['plot_data'].append(item.plot_data(color=color,
+                                                         stroke_width=stroke_width,
+                                                         opacity=opacity))
+        return plot_data
+
+    def copy(self) :
+        primitives_copy = []
+        for primitive in self.primitives :
+            primitives_copy.append(primitive.copy())
+        return Contour2D(primitives_copy)
+
+    def average_center_point(self):
+        nb = len(self.tessel_points )
+        x = npy.sum([p[0] for p in self.tessel_points]) / nb
+        y = npy.sum([p[1] for p in self.tessel_points]) / nb
+        return Point2D((x,y))
+    
+    def clean_points(self):
+        """
+        This method is copy from Contour3D, if changes are done there or here,
+        please change both method
+        Be aware about primitives = 2D, edges = 3D
+        """
+        if hasattr(self.primitives[0], 'endpoints'):
+            points = self.primitives[0].endpoints[:]
+        else:
+            points = self.primitives[0].tessellation_points()
+        for primitive in self.primitives[1:]:
+            if hasattr(primitive, 'endpoints'):
+                points_to_add = primitive.endpoints[:]
+            else :
+                points_to_add = primitive.tessellation_points()
+            if points[0] == points[-1]: # Dans le cas où le (dernier) edge relie deux fois le même point
+                points.extend(points_to_add[::-1])
+            
+            elif points_to_add[0] == points[-1]:
+                points.extend(points_to_add[1:])
+            elif points_to_add[-1] == points[-1]:
+                points.extend(points_to_add[-2::-1])
+            elif points_to_add[0] == points[0]:
+                points = points[::-1]
+                points.extend(points_to_add[1:])
+            elif points_to_add[-1] == points[0]:
+                points = points[::-1]
+                points.extend(points_to_add[-2::-1])
+            else: 
+                d1, d2 = (points_to_add[0]-points[0]).Norm(), (points_to_add[0]-points[-1]).Norm()
+                d3, d4 = (points_to_add[-1]-points[0]).Norm(), (points_to_add[-1]-points[-1]).Norm()
+                if math.isclose(d2, 0, abs_tol=1e-3):
+                    points.extend(points_to_add[1:])
+                elif math.isclose(d4, 0, abs_tol=1e-3):
+                    points.extend(points_to_add[-2::-1])
+                elif math.isclose(d1, 0, abs_tol=1e-3):
+                    points = points[::-1]
+                    points.extend(points_to_add[1:])
+                elif math.isclose(d3, 0, abs_tol=1e-3):
+                    points = points[::-1]
+                    points.extend(points_to_add[-2::-1])
+                    
+        if len(points) > 1:
+            if points[0] == points[-1]:
+                points.pop()
+        return points
+
+    def bounding_rectangle(self):
+        # bounding rectangle
+        xmin = self.points[0][0]
+        xmax = self.points[0][0]
+        ymin = self.points[0][1]
+        ymax = self.points[0][1]
+        for point in self.points[1:]:
+            xmin = min(point[0], xmin)
+            xmax = min(point[0], xmax)
+            ymin = min(point[1], ymin)
+            ymax = min(point[1], ymax)
+        return xmin, xmax, ymin, ymax
+            
+    def line_intersections(self, line:Line2D) -> List[Tuple[Point2D, Primitive2D]]:
+        """
+        Returns a list of points and lines of intersection with the contour
+        """
+        intersection_points = Wire2D.line_intersections(self, line)
+        if not intersection_points:
+            return []
+        elif len(intersection_points) == 2:
+            return [LineSegment2D(*intersection_points)]
+        else:
+            raise NotImplementedError('Non convex contour not supported yet')
+
+        
+    def cut_by_line(self, line):
+        intersections = self.line_intersections(line)
+        if not intersections:
+            return [self]
+        
+        if len(intersections) == 1:
+            # if intersections[0][0].__class__.__name__ == 'Point2D':
+            return [self]
+        elif len(intersections) == 1:
+            if intersections[0][0].__class__.__name__ == 'Point2D' and\
+                intersections[1][0].__class__.__name__ == 'Point2D':
+                # contour1 = self.copy()
+                # contour2 = self.copy()
+                ip1, ip2 = sorted([self.primitives.index(intersections[0][1]),
+                                   self.primitives.index(intersections[1][1])])
+                sp11, sp12 = intersections[0][1].split(intersections[0][0])
+                sp21, sp22 = intersections[1][1].split(intersections[1][0])
+                
+                primitives1 = self.primitives[:ip1]
+                primitives1.append(sp11)
+                primitives1.append(LineSegment2D(intersections[0][0],
+                                                 intersections[1][0]))
+                primitives1.append(sp22)
+                primitives1.extend(self.primitives[ip2+1:])
+                
+                primitives2 = self.primitives[ip1+1:ip2]
+                primitives1.append(sp21)
+                primitives1.append(LineSegment2D(intersections[1][0],
+                                                 intersections[0][0]))
+                primitives1.append(sp12)
+                primitives1.extend(self.primitives[ip2+1:])
+                
+                
+
+                
+            else:
+                raise NotImplementedError('Non convex contour not supported yet')
+    
+    def grid_triangulation(self, n, m):
+        
+        xmin, xmax, ymin, ymax = self.bounding_rectangle()
+        for i in range(n+1):
+            xi = xmin + i*(xmax-xmin)/n
+            
 
 class Circle2D(Contour2D):
     _non_serializable_attributes  = ['internal_arcs', 'external_arcs',
@@ -2030,7 +2061,7 @@ class Circle2D(Contour2D):
     
     def copy(self) :
         return Circle2D(self.center.copy(), self.radius)
-        
+
 
 class Polygon2D(Contour2D):
     # TODO: inherit from contour?
@@ -7054,7 +7085,7 @@ class ToroidalFace3D(Face3D) :
         return points_2D
     
     def triangulation(self):
-        self.outer_contour2d.
+        # self.outer_contour2d.
         return [[], []]
     
     # def triangulation(self, resolution=30):
