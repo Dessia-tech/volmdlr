@@ -12,7 +12,6 @@ import warnings
 import math
 import numpy as npy
 npy.seterr(divide='raise')
-
 # from geomdl import NURBS
 from geomdl import BSpline
 from geomdl import utilities
@@ -22,7 +21,7 @@ from matplotlib.patches import Arc, FancyArrowPatch
 from mpl_toolkits.mplot3d import Axes3D
 # from mpl_toolkits.mplot3d import proj3d
 # from matplotlib import __version__ as _mpl_version
-
+from scipy.spatial import Delaunay
 import networkx as nx
 
 from .core_compiled import (Vector2D, Vector3D, Point2D, Point3D,
@@ -1348,6 +1347,34 @@ class LineSegment2D(Line2D):
                 'opacity' : opacity,
                 'arrow': arrow
                 }
+    def mesh_segment(self,n:float):
+        
+        
+         segment_to_nodes={}
+    
+         
+         nodes=[]
+         if n*self.Length() < 1 :
+            segment_to_nodes[self]=[self.point1,self.point2]
+         else :
+             l0= int(math.ceil(n*self.Length()))
+        
+                    
+   
+             for k in range(l0):
+                      
+                             
+                 node=self.PointAtCurvilinearAbscissa(k/n)
+                       
+                 nodes.append(node)
+             nodes.insert(len(nodes),self.point2)
+                   
+             segment_to_nodes[self]=nodes
+         
+                
+               
+            
+         return segment_to_nodes
 
     def CreateTangentCircle(self, point, other_line):
         circle1, circle2 = Line2D.CreateTangentCircle(other_line, point, self)
@@ -2151,6 +2178,42 @@ class Polygon2D(Contour2D):
                                 return True, line1, line2
 
         return False, None, None
+    
+    def  is_intersecting(self,line:LineSegment2D):
+         intersection=[]
+         for linear_element in self.linear_elements:
+            point=linear_element.line_intersection(line)
+            if point !=None :
+                intersection.append(point)
+         if len(intersection)>1:
+            return True
+         return False
+            
+    def delaunay_triangulation(self):
+        points=self.points
+        new_points=[]
+        delaunay_triangles=[]
+        
+        for point in points : 
+            new_points.append([point[0],point[1]])
+        
+            
+        delaunay=npy.array(new_points)  
+        
+        tri=Delaunay(delaunay)
+        
+       
+       
+        
+      
+        for simplice in delaunay[tri.simplices]:
+        
+            polygon=Polygon2D([Point2D(simplice[0]),Point2D(simplice[1]),Point2D(simplice[2])])
+            delaunay_triangles.append(polygon)
+            
+                
+        
+        return delaunay_triangles
 
 
 #    def Dict(self):
