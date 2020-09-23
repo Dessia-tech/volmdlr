@@ -17,6 +17,7 @@ export class PlotData {
   colour_to_plot_data:any;
   select_on_mouse:any;
   select_on_click:any[]=[];
+  tooltip_list:any[]=[];
   color_surface_on_mouse:string='lightskyblue';
   color_surface_on_click:string='blue';
   zoom_rect_ON:boolean;
@@ -36,7 +37,6 @@ export class PlotData {
   reset_rect_w:number;
   reset_rect_h:number;
 
-
   constructor(public data: any,
               public width: number,
               public height: number,
@@ -45,6 +45,7 @@ export class PlotData {
     this.height = height;
     this.plot_datas = [];
     this.select_on_click = [];
+    this.tooltip_list = [];
     this.colour_to_plot_data = {};
 
     this.zoom_rect_ON = true;
@@ -53,6 +54,7 @@ export class PlotData {
 
     this.scroll_x = 0;
     this.scroll_y = 0;
+
 
     for (var i = 0; i < data.length; i++) {
       var d = data[i];
@@ -105,7 +107,6 @@ export class PlotData {
   }
 
   draw(hidden, show_state, mvx, mvy, scaleX, scaleY) {
-    console.log(this.scale)
     //Creating an empty canvas
     if (hidden) {
       var context = this.context_hidden;
@@ -201,9 +202,10 @@ export class PlotData {
     }
 
     //Drawing the tooltips
-    for (var i=0; i<this.select_on_click.length; i++) {
-      if (!(typeof this.select_on_click[i] === "undefined")) {
-        this.tooltip(context, this.select_on_click[i], scaleX, scaleY, mvx, mvy);
+    for (var i=0; i<this.tooltip_list.length; i++) {
+      console.log(this.tooltip_list)
+      if (!(typeof this.tooltip_list[i] === "undefined")) {
+        this.tooltip(context, this.tooltip_list[i], scaleX, scaleY, mvx, mvy);
       }
     }
 
@@ -266,8 +268,12 @@ export class PlotData {
     context.font = coordinate_size.toString() + 'px Arial';
     context.fillStyle = 'black';
     context.textAlign = 'center';
-    var round_cx = MyMath.round(cx,4);
-    var round_cy = MyMath.round(cy,4);
+    var int_nb_digit_x = cx.toString().split('.')[0].length;
+    var nb_digits_x = Math.max(0, 5 - int_nb_digit_x);
+    var int_nb_digit_y = (-cy).toString().split('.')[0].length;
+    var nb_digits_y = Math.max(0, 5 - int_nb_digit_y);
+    var round_cx = MyMath.round(cx,nb_digits_x);
+    var round_cy = MyMath.round(cy,nb_digits_y);
 
     var x_middle = rect_x + 1/2*rect_w;
     var y_middle = rect_y + 1/2*rect_h + rect_radius;
@@ -335,6 +341,7 @@ export class PlotData {
     })
 
     canvas.addEventListener('mousemove', e => {
+
       if ((isDrawing === true) && !(this.zw_bool)) {
         mouse_mouving = true;
         mouse2X = e.offsetX;
@@ -378,6 +385,15 @@ export class PlotData {
           } else {
             this.select_on_click.push(click_plot_data);
           }
+          if (this.is_include(click_plot_data, this.tooltip_list)) {
+            this.tooltip_list = this.remove_selection(click_plot_data, this.tooltip_list);
+          } else {
+            this.tooltip_list.push(click_plot_data);
+          }
+          if (this.contains_undefined(this.select_on_click) === true) {
+            this.select_on_click = [];
+            this.tooltip_list = [];
+          }
 
           var click_on_plus = Shape.Is_in_rect(mouse1X, mouse1Y, this.zoom_rect_x, this.zoom_rect_y, this.zoom_rect_w, this.zoom_rect_h);
           var click_on_minus = Shape.Is_in_rect(mouse1X, mouse1Y, this.zoom_rect_x, this.zoom_rect_y + this.zoom_rect_h, this.zoom_rect_w, this.zoom_rect_h);
@@ -416,8 +432,8 @@ export class PlotData {
           } else if (this.zw_bool && is_rect_big_enough) {
             var zoom_coeff_x = this.width/Math.abs(mouse2X - mouse1X);
             var zoom_coeff_y = this.height/Math.abs(mouse2Y - mouse1Y);
-            this.last_mouse1X = this.last_mouse1X - mouse1X/this.scaleX
-            this.last_mouse1Y = this.last_mouse1Y - mouse1Y/this.scaleY
+            this.last_mouse1X = this.last_mouse1X - Math.min(mouse1X, mouse2X)/this.scaleX
+            this.last_mouse1Y = this.last_mouse1Y - Math.min(mouse1Y,mouse2Y)/this.scaleY
             this.scaleX = this.scaleX*zoom_coeff_x;
             this.scaleY = this.scaleY*zoom_coeff_y;
           }
@@ -430,33 +446,56 @@ export class PlotData {
     })
 
     canvas.addEventListener('wheel', e => {
-      var event = 1 - e.deltaY/30;
-      this.scale = this.scale*event;
+      var zoom_coeff = 1.1;
+      var event = -e.deltaY;
       mouse3X = e.offsetX;
       mouse3Y = e.offsetY;
       if ((mouse3Y>=this.height - 25) && (mouse3X>25)) {
-        var old_scaleX = this.scaleX;
-        this.scaleX = this.scaleX*event;
-        this.scroll_x = this.scroll_x - e.deltaY/Math.abs(e.deltaY);
-        this.last_mouse1X = this.last_mouse1X - ((this.width/2)/old_scaleX - (this.width/2)/this.scaleX);
+          var old_scaleX = this.scaleX;
+          if (event>0) {
+            this.scaleX = this.scaleX*zoom_coeff;
+          } else {
+            this.scaleX = this.scaleX/zoom_coeff;
+          }
+          this.scroll_x = this.scroll_x - e.deltaY/Math.abs(e.deltaY);
+          this.last_mouse1X = this.last_mouse1X - ((this.width/2)/old_scaleX - (this.width/2)/this.scaleX);
       } else if ((mouse3X<=25) && (mouse3Y<this.height - 25)) {
-        var old_scaleY = this.scaleY;
-        this.scaleY = this.scaleY*event;
-        this.scroll_y = this.scroll_y - e.deltaY/Math.abs(e.deltaY);
-        this.last_mouse1Y = this.last_mouse1Y - ((this.height/2)/old_scaleY - (this.height/2)/this.scaleY);
+          var old_scaleY = this.scaleY;
+          if (event>0) {
+            this.scaleY = this.scaleY*zoom_coeff;
+          } else {
+            this.scaleY = this.scaleY/zoom_coeff;
+          }
+          this.scroll_y = this.scroll_y - e.deltaY/Math.abs(e.deltaY);
+          this.last_mouse1Y = this.last_mouse1Y - ((this.height/2)/old_scaleY - (this.height/2)/this.scaleY);
       } else {
-        var old_scaleY = this.scaleY;
-        var old_scaleX = this.scaleX;
-        this.scaleX = this.scaleX*event;
-        this.scaleY = this.scaleY*event;
-        this.scroll_x = this.scroll_x - e.deltaY/Math.abs(e.deltaY);
-        this.scroll_y = this.scroll_y - e.deltaY/Math.abs(e.deltaY);
-        this.last_mouse1X = this.last_mouse1X - (mouse3X/old_scaleX - mouse3X/this.scaleX);
-        this.last_mouse1Y = this.last_mouse1Y - (mouse3Y/old_scaleY - mouse3Y/this.scaleY);
+          var old_scaleY = this.scaleY;
+          var old_scaleX = this.scaleX;
+          if (event>0) {
+            this.scaleX = this.scaleX*zoom_coeff;
+            this.scaleY = this.scaleY*zoom_coeff;
+          } else {
+            this.scaleX = this.scaleX/zoom_coeff;
+            this.scaleY = this.scaleY/zoom_coeff;
+          }
+          
+          this.scroll_x = this.scroll_x - e.deltaY/Math.abs(e.deltaY);
+          this.scroll_y = this.scroll_y - e.deltaY/Math.abs(e.deltaY);
+          this.last_mouse1X = this.last_mouse1X - (mouse3X/old_scaleX - mouse3X/this.scaleX);
+          this.last_mouse1Y = this.last_mouse1Y - (mouse3Y/old_scaleY - mouse3Y/this.scaleY);
       }
       this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
       this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
     })
+  }
+
+  contains_undefined(list) {
+    for (var i=0; i<list.length; i++) {
+      if (typeof list[i] === "undefined") {
+        return true;
+      }
+    }
+    return false;
   }
 
   remove_selection(val, list){
@@ -760,8 +799,6 @@ export class PlotDataScatterPlot {
       var plot = this.plot_data_states[i];
       this.colorStroke = plot.color_line;
     }
-    this.nx = 0;
-    this.ny = 0;
   }
 
   public static deserialize(serialized) {
@@ -782,13 +819,14 @@ export class PlotDataScatterPlot {
 
   draw_axes(context, mvx, mvy, scaleX, scaleY, height, minX, maxX, minY, maxY, x_step, y_step) {
     //pour l'axe des x
-    var x_nb_digits = 3
     var i=0
     context.textAlign = 'center';
-
     while(minX + i*x_step < maxX) {
       context.moveTo(scaleX*(1000*(minX + i*x_step) + mvx), height - 23)
       context.lineTo(scaleX*(1000*(minX + i*x_step) + mvx), height - 17)
+      var int_part_digit_x = (minX + i*x_step).toString().split('.')[0].length;
+      var x_nb_digits = Math.max(0, 4 - int_part_digit_x);
+
       context.fillText(MyMath.round(minX + i*x_step, x_nb_digits), scaleX*(1000*(minX + i*x_step) + mvx), height - 4 )
       i++
     }
@@ -798,7 +836,6 @@ export class PlotDataScatterPlot {
     
     
       //pour l'axe des y
-    var y_nb_digits = 3
     i=0
     var real_minY = -maxY
     var real_maxY = -minY
@@ -806,6 +843,8 @@ export class PlotDataScatterPlot {
     while (real_minY + (i-1)*y_step < real_maxY) {
       context.moveTo(7, scaleY*(-1000*(real_minY + i*y_step) + mvy))
       context.lineTo(13, scaleY*(-1000*(real_minY + i*y_step) + mvy))
+      var int_part_digit_y = (real_minY + i*y_step).toString().split('.')[0].length;
+      var y_nb_digits = Math.max(0, 4 - int_part_digit_y);
       context.fillText(MyMath.round(real_minY + i*y_step, y_nb_digits), 15, scaleY*(-1000*(real_minY + i*y_step) + mvy) + 5)
       i++
     }
@@ -839,11 +878,11 @@ export class PlotDataScatterPlot {
     context.lineTo(width, height - 20)
     //Graduations
 
-    if (scroll_x % 7 == 0) {
+    if (scroll_x % 5 == 0) {
       var kx = scaleX/init_scale
       this.x_step = (maxX - minX)/(kx*(this.nb_points_x-1));
     } 
-    if (scroll_y % 7 == 0) {
+    if (scroll_y % 5 == 0) {
       var ky = scaleY/init_scale
       this.y_step = (maxY - minY)/(ky*(this.nb_points_y-1))
     }
@@ -854,7 +893,6 @@ export class PlotDataScatterPlot {
     this.draw_axes(context, mvx, mvy, scaleX, scaleY, height, minX, maxX, minY, maxY, this.x_step, this.y_step);
     
   }
-  
 }
 
 export class PlotDataArc2D {
