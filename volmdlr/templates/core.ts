@@ -10,6 +10,8 @@ export class PlotData {
   scale:number;
   scaleX:number;
   scaleY:number;
+  scroll_x:number;
+  scroll_y:number;
   last_mouse1X:number;
   last_mouse1Y:number;
   colour_to_plot_data:any;
@@ -48,6 +50,9 @@ export class PlotData {
     this.zoom_rect_ON = true;
     this.zw_ON = true;
     this.reset_ON = true;
+
+    this.scroll_x = 0;
+    this.scroll_y = 0;
 
     for (var i = 0; i < data.length; i++) {
       var d = data[i];
@@ -100,6 +105,7 @@ export class PlotData {
   }
 
   draw(hidden, show_state, mvx, mvy, scaleX, scaleY) {
+    console.log(this.scale)
     //Creating an empty canvas
     if (hidden) {
       var context = this.context_hidden;
@@ -184,12 +190,12 @@ export class PlotData {
 
       } else if (d['type'] == 'plot'){
         context.beginPath();
-        d.draw(context, mvx, mvy, scaleX, scaleY, this.width, this.height, this.init_scale, this.minX, this.maxX, this.minY, this.maxY);
+        d.draw(context, mvx, mvy, scaleX, scaleY, this.width, this.height, this.init_scale, this.minX, this.maxX, this.minY, this.maxY, this.scroll_x, this.scroll_y);
         context.closePath();
         context.fill();
 
       } else {
-        throw new Error("Invalid type for plotting. For now, only contours, points and scatterplot can be plotted");
+        throw new Error("Invalid type for plotting. For now, only contours, points and scatterplots can be plotted");
       }
 
     }
@@ -402,6 +408,8 @@ export class PlotData {
             this.scaleX = this.init_scale;
             this.scaleY = this.init_scale;
             this.scale = this.init_scale;
+            this.scroll_x = 0;
+            this.scroll_y = 0;
             this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX;
             this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY;
 
@@ -422,21 +430,29 @@ export class PlotData {
     })
 
     canvas.addEventListener('wheel', e => {
-      var event = -e.deltaY/100;
-      this.scale = this.scale + event;
+      var event = 1 - e.deltaY/30;
+      this.scale = this.scale*event;
       mouse3X = e.offsetX;
       mouse3Y = e.offsetY;
       if ((mouse3Y>=this.height - 25) && (mouse3X>25)) {
-        this.scaleX = this.scaleX + event;
-        this.last_mouse1X = this.last_mouse1X - ((this.width/2)/(this.scaleX - event) - (this.width/2)/this.scaleX);
+        var old_scaleX = this.scaleX;
+        this.scaleX = this.scaleX*event;
+        this.scroll_x = this.scroll_x - e.deltaY/Math.abs(e.deltaY);
+        this.last_mouse1X = this.last_mouse1X - ((this.width/2)/old_scaleX - (this.width/2)/this.scaleX);
       } else if ((mouse3X<=25) && (mouse3Y<this.height - 25)) {
-        this.scaleY = this.scaleY + event;
-        this.last_mouse1Y = this.last_mouse1Y - ((this.height/2)/(this.scaleY - event) - (this.height/2)/this.scaleY);
+        var old_scaleY = this.scaleY;
+        this.scaleY = this.scaleY*event;
+        this.scroll_y = this.scroll_y - e.deltaY/Math.abs(e.deltaY);
+        this.last_mouse1Y = this.last_mouse1Y - ((this.height/2)/old_scaleY - (this.height/2)/this.scaleY);
       } else {
-        this.scaleX = this.scaleX + event;
-        this.scaleY = this.scaleY + event;
-        this.last_mouse1X = this.last_mouse1X - (mouse3X/(this.scaleX - event) - mouse3X/this.scaleX);
-        this.last_mouse1Y = this.last_mouse1Y - (mouse3Y/(this.scaleY - event) - mouse3Y/this.scaleY);
+        var old_scaleY = this.scaleY;
+        var old_scaleX = this.scaleX;
+        this.scaleX = this.scaleX*event;
+        this.scaleY = this.scaleY*event;
+        this.scroll_x = this.scroll_x - e.deltaY/Math.abs(e.deltaY);
+        this.scroll_y = this.scroll_y - e.deltaY/Math.abs(e.deltaY);
+        this.last_mouse1X = this.last_mouse1X - (mouse3X/old_scaleX - mouse3X/this.scaleX);
+        this.last_mouse1Y = this.last_mouse1Y - (mouse3Y/old_scaleY - mouse3Y/this.scaleY);
       }
       this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
       this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
@@ -730,8 +746,6 @@ export class PlotDataPoint2D {
 
 export class PlotDataScatterPlot {
   colorStroke:any;
-  nx:number;
-  ny:number;
   x_step:number;
   y_step:number;
   constructor(public nb_points_x:number,
@@ -802,7 +816,7 @@ export class PlotDataScatterPlot {
     context.stroke()
   }
 
-  draw(context, mvx, mvy, scaleX, scaleY, width, height, init_scale, minX, maxX, minY, maxY) {
+  draw(context, mvx, mvy, scaleX, scaleY, width, height, init_scale, minX, maxX, minY, maxY, scroll_x, scroll_y) {
     // Dessin du repère
     context.strokeStyle = this.colorStroke;
 
@@ -825,42 +839,15 @@ export class PlotDataScatterPlot {
     context.lineTo(width, height - 20)
     //Graduations
 
-    var refresh_step_x = 0.3;
-    var refresh_step_y = 0.4;
-    if (scaleX>init_scale) {
+    if (scroll_x % 7 == 0) {
       var kx = scaleX/init_scale
-    } else {
-      var kx = 1
-    }
-
-    if (scaleY>init_scale) {
+      this.x_step = (maxX - minX)/(kx*(this.nb_points_x-1));
+    } 
+    if (scroll_y % 7 == 0) {
       var ky = scaleY/init_scale
-    } else {
-      var ky = 1
-    }
-    if (kx == 1) {
-      this.x_step = (maxX - minX)/(kx*(this.nb_points_x-1));
-
-    } else if (scaleX < init_scale + (this.nx-1)*refresh_step_x) {
-      this.x_step = (maxX - minX)/(kx*(this.nb_points_x-1));
-      this.nx = Math.floor((scaleX - init_scale)/refresh_step_x);
-
-    } else if (scaleX > init_scale + this.nx*refresh_step_x) {
-      this.x_step = (maxX - minX)/(kx*(this.nb_points_x-1));
-      this.nx = Math.ceil((scaleX - init_scale)/refresh_step_x);
+      this.y_step = (maxY - minY)/(ky*(this.nb_points_y-1))
     }
 
-    if (ky == 1) {
-      this.y_step = (maxY - minY)/(ky*(this.nb_points_y-1));
-
-    } else if (scaleY < init_scale + (this.ny-1)*refresh_step_y) {
-      this.y_step = (maxY - minY)/(ky*(this.nb_points_y-1));
-      this.ny = Math.floor((scaleY - init_scale)/refresh_step_y);
-
-    } else if (scaleY > init_scale + this.ny*refresh_step_y) {
-      this.y_step = (maxY - minY)/(ky*(this.nb_points_y-1));
-      this.ny = Math.ceil((scaleY - init_scale)/refresh_step_y);
-    }
     context.font = this.font_size.toString() + 'px Arial';
     context.fillStyle = this.graduation_color
     

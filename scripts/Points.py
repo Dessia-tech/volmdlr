@@ -4,7 +4,7 @@ from volmdlr import plot_data
 #### Point test ####
 plot_datas = []
 window_size = plot_data.WindowSizeSet(width=2,height=1)
-shape_set = plot_data.PointShapeSet(shape='crux')
+shape_set = plot_data.PointShapeSet(shape='circle')
 point_size = plot_data.PointSizeSet(size=3)
 point_color = plot_data.PointColorSet(color_fill='violet', color_stroke='black')
 for i in range(50):
