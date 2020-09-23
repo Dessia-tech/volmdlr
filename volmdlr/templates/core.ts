@@ -142,8 +142,9 @@ export class PlotData {
         }
         context.closePath();
         context.fill();
+        context.stroke();
         
-      } else if (d['type'] == 'point'){
+      } else if (d['type'] == 'point') {
         if (hidden) {
           context.fillStyle = d.mouse_selection_color;
         } else {
@@ -167,10 +168,19 @@ export class PlotData {
             }
           }
         }
-        context.beginPath();
-        d.draw(context, this.context_hidden, mvx, mvy, scaleX, scaleY, this.init_scale);
-        context.closePath();
-        context.fill();
+        var x = scaleX*(1000*d.cx+ mvx);
+        var y = scaleY*(1000*d.cy + mvy);
+        var length = 1000*d.size*this.init_scale;
+
+        var is_inside_canvas = ((x + length>=0) && (x - length <= this.width) && (y + length >= 0) && (y - length <= this.height));
+
+        if (is_inside_canvas === true) {
+          context.lineWidth = 1
+          context.beginPath();
+          d.draw(context, this.context_hidden, mvx, mvy, scaleX, scaleY, this.init_scale);
+          context.fill();
+          context.closePath();
+        }
 
       } else if (d['type'] == 'plot'){
         context.beginPath();
@@ -181,7 +191,7 @@ export class PlotData {
       } else {
         throw new Error("Invalid type for plotting. For now, only contours, points and scatterplot can be plotted");
       }
-      context.stroke();
+
     }
 
     //Drawing the tooltips
@@ -353,8 +363,7 @@ export class PlotData {
       if (mouse_mouving) {
         this.last_mouse1X = this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX;
         this.last_mouse1Y = this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY;
-      }
-      else {
+      } else {
           var col = this.context_hidden.getImageData(mouse1X, mouse1Y, 1, 1).data;
           var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
           var click_plot_data = this.colour_to_plot_data[colKey];
@@ -371,16 +380,20 @@ export class PlotData {
           var is_rect_big_enough = (Math.abs(mouse2X - mouse1X)>40) && (Math.abs(mouse2Y - mouse1Y)>30)
 
           if (click_on_plus === true) {
+            var old_scaleX = this.scaleX
+            var old_scaleY = this.scaleY
             this.scaleX = this.scaleX*1.2;
             this.scaleY = this.scaleY*1.2;
-            this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX;
-            this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY;
+            this.last_mouse1X = this.last_mouse1X - (this.width/(2*old_scaleX) - this.width/(2*this.scaleX));
+            this.last_mouse1Y = this.last_mouse1Y - (this.height/(2*old_scaleY) - this.height/(2*this.scaleY));
 
           } else if (click_on_minus === true) {
+            var old_scaleX = this.scaleX
+            var old_scaleY = this.scaleY
             this.scaleX = this.scaleX/1.2;
             this.scaleY = this.scaleY/1.2;
-            this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX;
-            this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY;
+            this.last_mouse1X = this.last_mouse1X - (this.width/(2*old_scaleX) - this.width/(2*this.scaleX));
+            this.last_mouse1Y = this.last_mouse1Y - (this.height/(2*old_scaleY) - this.height/(2*this.scaleY));
 
           } else if (click_on_zoom_window === true) {
             this.zw_bool = !this.zw_bool;
@@ -661,7 +674,7 @@ export class PlotDataPoint2D {
       var point_size = plot.point_size.size;
       if (point_size==1||point_size==2||point_size==3||point_size==4) {
         var height = plot.window_size.height;
-      var width = plot.window_size.width;
+        var width = plot.window_size.width;
       } else {
         throw new Error('Invalid point_size');
       }
@@ -692,9 +705,11 @@ export class PlotDataPoint2D {
 
     draw(context, context_hidden, mvx, mvy, scaleX, scaleY, init_scale) {
         for (var i=0; i<this.plot_data_states.length; i++) {
+          context.lineWidth = this.plot_data_states[i].stroke_width;
           var shape = this.plot_data_states[i].shape_set.shape;
           if (shape == 'circle') {
             context.arc(scaleX*(1000*this.cx+ mvx), scaleY*(1000*this.cy+ mvy), init_scale*1000*this.size, 0, 2*Math.PI);
+            context.stroke();
           } else if (shape == 'square') {
             context.rect(scaleX*(1000*(this.cx - this.size) + mvx),scaleY*(1000*(this.cy - this.size) + mvy),init_scale*1000*this.size*2, init_scale*1000*this.size*2);
             context.stroke();
@@ -703,7 +718,7 @@ export class PlotDataPoint2D {
             context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),-init_scale*1000*this.size, init_scale*100*this.size);
             context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),init_scale*100*this.size, init_scale*1000*this.size);
             context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),init_scale*100*this.size, -init_scale*1000*this.size);
-
+            context.fillStyle = context.strokeStyle;
             context.stroke();
 
           } else {
@@ -823,7 +838,6 @@ export class PlotDataScatterPlot {
     } else {
       var ky = 1
     }
-    console.log(Math.floor((scaleX - init_scale)/refresh_step_x), scaleX)
     if (kx == 1) {
       this.x_step = (maxX - minX)/(kx*(this.nb_points_x-1));
 
