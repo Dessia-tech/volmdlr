@@ -61,25 +61,24 @@ ax2 = rl2D_c.MPLPlot()
 rl2D_c2.MPLPlot(ax=ax2)
 
 
-
-cut_line = vm.Line2D(vm.Point2D((-1, 0.5)), vm.Point2D((1, -0.5)))
+com = rl2D_c2.CenterOfMass()
+cut_line = vm.Line2D(com, com+ vm.Point2D.random(0, 1, 0, 1))
 ax3 = rl2D_c2.MPLPlot()
 cut_line.MPLPlot(ax=ax3, color='red')
 
 cutted_contours = rl2D_c2.cut_by_line(cut_line)
 # for c in cutted_contours:
 cutted_contours[0].Translation(-0.05*cut_line.NormalVector()).MPLPlot(ax=ax3, color='g')
-cutted_contours[1].Translation(0.05*cut_line.NormalVector()).MPLPlot(ax=ax3, color='blue')
+cutted_contours[1].Translation(+0.05*cut_line.NormalVector()).MPLPlot(ax=ax3, color='blue')
 
 assert math.isclose(cutted_contours[0].Area()+cutted_contours[1].Area(),
                     rl2D_c2.Area(), abs_tol=1e-12)
 
 
 ax4 = rl2D_c2.MPLPlot()
-for ic, c in enumerate(rl2D_c2.grid_triangulation(10, 2)):
-    print(c)
-    c.MPLPlot(color='r')
-    
+mesh = rl2D_c2.grid_triangulation(25, 10)
+mesh.plot(ax=ax4)
+
 
 # =============================================================================
 #  3D Version

@@ -17,6 +17,6 @@ R = 0.1
 r = 0.03
 ts = vm.ToroidalSurface3D(vm.OXYZ, R, r)
 
-tf = ts.rectangular_cut(0, 0.3, 0., 0.5)
+tf = ts.rectangular_cut(0, 0.3, 0., 0.1)
 tf.outer_contour2d.MPLPlot()
 tf.babylonjs(debug=True, use_cdn=False)
