@@ -493,7 +493,7 @@ class TriangularElement(vm.Polygon2D):
            
     def mesh_triangle(self,n:float):
        segment_to_nodes=self.mesh_segments(n)
-       print(segment_to_nodes)
+       # print(segment_to_nodes)
 
        
      
@@ -535,9 +535,9 @@ class TriangularElement(vm.Polygon2D):
            nodes_0=segment_to_nodes[linear_elements[0]]
            nodes_1=segment_to_nodes[linear_elements[1]]
            min_segment.append(linear_elements[2])
-       print(nodes_1)
-       print(nodes_0)
-       print(min_segment[0].point1,min_segment[0].point2)
+       # print(nodes_1)
+       # print(nodes_0)
+       
        
        l0=min(len(nodes_0),len(nodes_1))
        l1=max(len(nodes_0),len(nodes_1))
@@ -555,10 +555,7 @@ class TriangularElement(vm.Polygon2D):
                interior_segment=vm.LineSegment2D(nodes_1[k+1],nodes_0[len(nodes_0)-k-2])
               
                interior_segments.append(interior_segment)
-             
-               
-             
-             
+           
                k=k+1
     
        # if len(nodes_0)>len(nodes_1):
@@ -573,68 +570,112 @@ class TriangularElement(vm.Polygon2D):
        #          new_triangle=vm.TriangularElement([nodes_1[k],nodes_0[len(nodes_0)],nodes_0[len(nodes_0)-1]])
              
        #          all_triangles.append(new_triangle)
-              
-       interior_segments.insert(0,min_segment[0])
        
-       interior_segment_nodes[interior_segments[0]]=segment_to_nodes[interior_segments[0]]
+       
        
        for seg in interior_segments:
          
 
                interior_segment_nodes[seg]=seg.mesh_segment(n)[seg]
-              
-       # print(interior_segment_nodes) 
+               
+       if min_segment[0].point_distance(vm.Point2D(interior_segments[0].points[0])) < min_segment[0].point_distance(interior_segments[len(interior_segments)-1].points[0]):
+           
+           interior_segments.insert(0,min_segment[0])
+           
+           interior_segment_nodes[interior_segments[0]]=segment_to_nodes[interior_segments[0]]
+       
+       else :
+           
+           interior_segments.insert(len(interior_segments),min_segment[0])
+           
+       
+           interior_segment_nodes[interior_segments[len(interior_segments)-1]]=segment_to_nodes[interior_segments[len(interior_segments)-1]]
+       for k in range(len(interior_segments)):
+           
+            print(interior_segments[k].points )
+          
        
        for k in range(len(interior_segments)-1):
            
            u=len(interior_segment_nodes[interior_segments[k]])
            v=len(interior_segment_nodes[interior_segments[k+1]])
-           # print(u)
-           # print(v)
-           # print(interior_segment_nodes[interior_segments[k]])
-           # print(interior_segment_nodes[interior_segments[k+1]])
-          
+           print(u)
+           print(v)
+           if interior_segment_nodes[interior_segments[k]][0].point_distance(interior_segment_nodes[interior_segments[k+1]][0])> interior_segment_nodes[interior_segments[k]][0].point_distance(interior_segment_nodes[interior_segments[k+1]][1]):
+               interior_segment_nodes[interior_segments[k+1]].reverse()
                
-           if u>2 or v>2:
+           if u>2 and v>2:
+               print('ok')
                for j in range(min(u,v)-1):
-                       new_triangle=TriangularElement([interior_segment_nodes[interior_segments[k]][j],interior_segment_nodes[interior_segments[k]][j+1],interior_segment_nodes[interior_segments[k+1]][j]])
-                       if new_triangle not in all_triangles:
-                           
-                           all_triangles.append(new_triangle)
-                           
-           if v==2 and u>2:
-              for j in range(u-1):
-                 new_triangle=TriangularElement([interior_segment_nodes[interior_segments[k]][j],interior_segment_nodes[interior_segments[k]][j+1],interior_segment_nodes[interior_segments[k+1]][0]])
-             
-                 if new_triangle not in all_triangles:
-                           
-                         all_triangles.append(new_triangle)
-                         
-              new_triangle_1=TriangularElement([interior_segment_nodes[interior_segments[k]][u-1],interior_segment_nodes[interior_segments[k]][u-2],interior_segment_nodes[interior_segments[k+1]][1]])
-             
-              if new_triangle_1 not in all_triangles:
+                       
+                       
+                       new_triangle_1=TriangularElement([interior_segment_nodes[interior_segments[k]][j+1],interior_segment_nodes[interior_segments[k]][j],interior_segment_nodes[interior_segments[k+1]][j]])
+                       new_triangle_2=TriangularElement([interior_segment_nodes[interior_segments[k]][j+1],interior_segment_nodes[interior_segments[k+1]][j+1],interior_segment_nodes[interior_segments[k+1]][j]])
+                       if new_triangle_1 not in all_triangles:
                            
                            all_triangles.append(new_triangle_1)
-              new_triangle_2=TriangularElement([interior_segment_nodes[interior_segments[k]][u-2],interior_segment_nodes[interior_segments[k]][u-3],interior_segment_nodes[interior_segments[k+1]][1]])
-              all_triangles.append(new_triangle_2)
-              if new_triangle_2 not in all_triangles:
                            
-                           all_triangles.append(new_triangle_2)
+                       if new_triangle_2 not in all_triangles:
+                              # print(new_triangle_2.points)
+                           
+                              all_triangles.append(new_triangle_2)
+               # for j in range(min(u,v),u-1):
+               #             new_triangle=TriangularElement([interior_segment_nodes[interior_segments[k]][j],interior_segment_nodes[interior_segments[k]][j+1],interior_segment_nodes[interior_segments[k+1]][v-1]])
+                       
+               #             if new_triangle not in all_triangles:
+                           
+                #                all_triangles.append(new_triangle)       
+           if v==2 and u>2:
+                 for j in range(math.ceil(u/2)):
+                   
+                   new_triangle_1=TriangularElement([interior_segment_nodes[interior_segments[k]][j],interior_segment_nodes[interior_segments[k]][j+1],interior_segment_nodes[interior_segments[k+1]][0]])
+                  
+                   if new_triangle_1 not in all_triangles:
+                     
+                       all_triangles.append(new_triangle_1) 
+                 for j in range((math.ceil(u/2)-1),u-1):
+                   new_triangle_2=TriangularElement([interior_segment_nodes[interior_segments[k]][j],interior_segment_nodes[interior_segments[k]][j+1],interior_segment_nodes[interior_segments[k+1]][1]])
+           
+          
+                   new_triangle_2=TriangularElement([interior_segment_nodes[interior_segments[k]][0],interior_segment_nodes[interior_segments[k]][1],interior_segment_nodes[interior_segments[k+1]][0]]) 
+                   if new_triangle_2 not in all_triangles:
+                           
+                                  all_triangles.append(new_triangle_2)
+                  # for j in range(u-1):
+                  #    # new_triangle=TriangularElement([interior_segment_nodes[interior_segments[k]][j],interior_segment_nodes[interior_segments[k+1]][j+1],interior_segment_nodes[interior_segments[k+1]][0]])
+                  #    new_triangle=TriangularElement([interior_segment_nodes[interior_segments[k]][j],interior_segment_nodes[interior_segments[k+1]][0],interior_segment_nodes[interior_segments[k+1]][1]])
+                  #    if new_triangle not in all_triangles:
+                           
+                  #            all_triangles.append(new_triangle)
+                         
+                  # new_triangle_1=TriangularElement([interior_segment_nodes[interior_segments[k]][u-1],interior_segment_nodes[interior_segments[k]][u-2],interior_segment_nodes[interior_segments[k+1]][1]])
+             
+                  # if new_triangle_1 not in all_triangles:
+                           
+                  #               all_triangles.append(new_triangle_1)
+                  
+                  # new_triangle_2=TriangularElement([interior_segment_nodes[interior_segments[k]][0],interior_segment_nodes[interior_segments[k]][1],interior_segment_nodes[interior_segments[k+1]][0]])
+               
+                  # if new_triangle_2 not in all_triangles:
+                           
+                  #              all_triangles.append(new_triangle_2)
              
            if u==2 and v>2:
-              for j in range(v-1):
-                 new_triangle=TriangularElement([interior_segment_nodes[interior_segments[k+1]][j],interior_segment_nodes[interior_segments[k+1]][j+1],interior_segment_nodes[interior_segments[k]][0]])
-                 all_triangles.append(new_triangle) 
-             
-              if new_triangle_1 not in all_triangles:
+                for j in range(math.ceil(v/2)):
+                   
+                   new_triangle_1=TriangularElement([interior_segment_nodes[interior_segments[k+1]][j],interior_segment_nodes[interior_segments[k+1]][j+1],interior_segment_nodes[interior_segments[k]][0]])
+                  
+                   if new_triangle_1 not in all_triangles:
+                     
+                       all_triangles.append(new_triangle_1) 
+                for j in range((math.ceil(v/2)-1),v-1):
+                   new_triangle_2=TriangularElement([interior_segment_nodes[interior_segments[k+1]][j],interior_segment_nodes[interior_segments[k+1]][j+1],interior_segment_nodes[interior_segments[k]][1]])
+           
+          
+                   new_triangle_2=TriangularElement([interior_segment_nodes[interior_segments[k+1]][0],interior_segment_nodes[interior_segments[k+1]][1],interior_segment_nodes[interior_segments[k]][0]]) 
+                   if new_triangle_2 not in all_triangles:
                            
-                           all_triangles.append(new_triangle_1)
-                           
-              new_triangle_2=TriangularElement([interior_segment_nodes[interior_segments[k+1]][v-2],interior_segment_nodes[interior_segments[k+1]][v-3],interior_segment_nodes[interior_segments[k]][1]])
-              
-              if new_triangle_2 not in all_triangles:
-                           
-                           all_triangles.append(new_triangle_2)
+                                  all_triangles.append(new_triangle_2)
        return all_triangles  
     
       
@@ -975,10 +1016,11 @@ class Mesher(DessiaObject):
                
                       
     def assemble_mesh(self,triangles:List[TriangularElement]):
+        
         all_triangles=[]
         all_triangles+=triangles
         for triangle in triangles:
-          
+            print('next')
             all_triangles+=triangle.mesh_triangle(self.nodes_len)
         
         return all_triangles
