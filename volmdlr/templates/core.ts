@@ -866,41 +866,46 @@ export class PlotDataScatterPlot {
                                   serialized['plot_data_states']);
   }
 
-  draw_axes(context, mvx, mvy, scaleX, scaleY, height, minX, maxX, minY, maxY, x_step, y_step) {
+  draw_axes(context, mvx, mvy, scaleX, scaleY, width, height, minX, maxX, minY, maxY, x_step, y_step) {
     //pour l'axe des x
     var i=0
     context.textAlign = 'center';
+    var x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(x_step)));
     while(minX + i*x_step < maxX) {
-      context.moveTo(scaleX*(1000*(minX + i*x_step) + mvx), height - 23)
-      context.lineTo(scaleX*(1000*(minX + i*x_step) + mvx), height - 17)
-      var int_part_digit_x = (minX + i*x_step).toString().split('.')[0].length;
-      var x_nb_digits = Math.max(0, 4 - int_part_digit_x);
-
-      context.fillText(MyMath.round(minX + i*x_step, x_nb_digits), scaleX*(1000*(minX + i*x_step) + mvx), height - 4 )
+      if ((scaleX*(1000*(minX + i*x_step) + mvx) >0) && (scaleX*(1000*(minX + i*x_step) + mvx)<width)) {
+        context.moveTo(scaleX*(1000*(minX + i*x_step) + mvx), height - 23)
+        context.lineTo(scaleX*(1000*(minX + i*x_step) + mvx), height - 17)
+        //var int_part_digit_x = (minX + i*x_step).toString().split('.')[0].length;
+        context.fillText(MyMath.round(minX + i*x_step, x_nb_digits), scaleX*(1000*(minX + i*x_step) + mvx), height - 4 )
+      } 
       i++
     }
-    context.moveTo(scaleX*(1000*(minX + i*x_step) + mvx), height - 23)
-    context.lineTo(scaleX*(1000*(minX + i*x_step) + mvx), height - 17)
-    context.fillText(MyMath.round(minX + i*x_step, x_nb_digits), scaleX*(1000*(minX + i*x_step) + mvx), height - 4 )
-    
+    if ((scaleX*(1000*(minX + i*x_step) + mvx) >0) && (scaleX*(1000*(minX + i*x_step) + mvx)<width)) {
+      context.moveTo(scaleX*(1000*(minX + i*x_step) + mvx), height - 23)
+      context.lineTo(scaleX*(1000*(minX + i*x_step) + mvx), height - 17)
+      context.fillText(MyMath.round(minX + i*x_step, x_nb_digits), scaleX*(1000*(minX + i*x_step) + mvx), height - 4 )
+    }
     
       //pour l'axe des y
     i=0
     var real_minY = -maxY
     var real_maxY = -minY
     context.textAlign = 'start'
+    var y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(y_step)));
     while (real_minY + (i-1)*y_step < real_maxY) {
-      context.moveTo(7, scaleY*(-1000*(real_minY + i*y_step) + mvy))
-      context.lineTo(13, scaleY*(-1000*(real_minY + i*y_step) + mvy))
-      var int_part_digit_y = (real_minY + i*y_step).toString().split('.')[0].length;
-      var y_nb_digits = Math.max(0, 4 - int_part_digit_y);
-      context.fillText(MyMath.round(real_minY + i*y_step, y_nb_digits), 15, scaleY*(-1000*(real_minY + i*y_step) + mvy) + 5)
+      if ((scaleY*(-1000*(real_minY + i*y_step) + mvy)>0) && (scaleY*(-1000*(real_minY + i*y_step) + mvy)<height)) {
+        context.moveTo(7, scaleY*(-1000*(real_minY + i*y_step) + mvy))
+        context.lineTo(13, scaleY*(-1000*(real_minY + i*y_step) + mvy))
+        //var int_part_digit_y = (real_minY + i*y_step).toString().split('.')[0].length;
+        context.fillText(MyMath.round(real_minY + i*y_step, y_nb_digits), 15, scaleY*(-1000*(real_minY + i*y_step) + mvy) + 5)
+      }
       i++
     }
-    context.moveTo(7, scaleY*(-1000*(real_minY + i*y_step) + mvy))
-    context.lineTo(13, scaleY*(-1000*(real_minY + i*y_step) + mvy))
-    context.fillText(MyMath.round(real_minY + i*y_step, y_nb_digits), 15, scaleY*(-1000*(real_minY + i*y_step) + mvy) + 5)
-
+    if ((scaleY*(-1000*(real_minY + i*y_step) + mvy)>0) && (scaleY*(-1000*(real_minY + i*y_step) + mvy)<height)) {
+      context.moveTo(7, scaleY*(-1000*(real_minY + i*y_step) + mvy))
+      context.lineTo(13, scaleY*(-1000*(real_minY + i*y_step) + mvy))
+      context.fillText(MyMath.round(real_minY + i*y_step, y_nb_digits), 15, scaleY*(-1000*(real_minY + i*y_step) + mvy) + 5)
+    }
     context.stroke()
   }
 
@@ -939,7 +944,7 @@ export class PlotDataScatterPlot {
     context.font = this.font_size.toString() + 'px Arial';
     context.fillStyle = this.graduation_color
     
-    this.draw_axes(context, mvx, mvy, scaleX, scaleY, height, minX, maxX, minY, maxY, this.x_step, this.y_step);
+    this.draw_axes(context, mvx, mvy, scaleX, scaleY, width, height, minX, maxX, minY, maxY, this.x_step, this.y_step);
     
   }
 }
