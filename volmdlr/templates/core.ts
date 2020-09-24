@@ -36,6 +36,11 @@ export class PlotData {
   reset_rect_y:number;
   reset_rect_w:number;
   reset_rect_h:number;
+  select_bool:boolean;
+  select_x:number;
+  select_y:number;
+  select_w:number;
+  select_h:number;
 
   constructor(public data: any,
               public width: number,
@@ -145,12 +150,12 @@ export class PlotData {
         for (var j = 0; j < d.plot_data_primitives.length; j++) {
           var elem = d.plot_data_primitives[j];
           if (j == 0) {var first_elem = true} else {var first_elem = false}
-          elem.draw(context, first_elem,  mvx, mvy, scaleX);
+          elem.draw(context, first_elem,  mvx, mvy, scaleX, scaleY);
         }
-        context.closePath();
         context.fill();
         context.stroke();
-        
+        context.closePath();
+
       } else if (d['type'] == 'point') {
         if (hidden) {
           context.fillStyle = d.mouse_selection_color;
@@ -203,7 +208,6 @@ export class PlotData {
 
     //Drawing the tooltips
     for (var i=0; i<this.tooltip_list.length; i++) {
-      console.log(this.tooltip_list)
       if (!(typeof this.tooltip_list[i] === "undefined")) {
         this.tooltip(context, this.tooltip_list[i], scaleX, scaleY, mvx, mvy);
       }
@@ -235,6 +239,12 @@ export class PlotData {
       this.reset_rect_h = 30;
       this.reset_button(context, this.reset_rect_x, this.reset_rect_y, this.reset_rect_w, this.reset_rect_h);
     }
+
+    this.select_x = this.width - 45;
+    this.select_y = 150;
+    this.select_w = 35;
+    this.select_h = 30;
+    this.selection_button(context, this.select_x, this.select_y, this.select_w, this.select_h);
   }
 
   tooltip(context, point, scaleX, scaleY, mvx, mvy) {
@@ -306,9 +316,9 @@ export class PlotData {
       throw new Error("Invalid x or y, the zoom window button is out of the canvas");
     }
     if (this.zw_bool) {
-      Shape.createButton(x, y, w, h, context, "ON");
+      Shape.createButton(x, y, w, h, context, "Z ON");
     } else {
-      Shape.createButton(x, y, w, h, context, "OFF");
+      Shape.createButton(x, y, w, h, context, "Z OFF");
     }
     
   }
@@ -318,6 +328,18 @@ export class PlotData {
       throw new Error("Invalid x or y, the reset button is out of the canvas");
     }
     Shape.createButton(x, y, w, h, context, "Reset")
+  }
+
+  selection_button(context, x, y, w, h) {
+    if ((x<0) || (x+h>this.width) || (y<0) || (y+h>this.height)) {
+      throw new Error("Invalid x or y, the selection button is out of the canvas");
+    }
+    if (this.select_bool) {
+      Shape.createButton(x, y, w, h, context, "S ON")
+    } else {
+      Shape.createButton(x, y, w, h, context, "S OFF")
+    }
+    
   }
 
   mouse_interaction() {
@@ -341,15 +363,15 @@ export class PlotData {
     })
 
     canvas.addEventListener('mousemove', e => {
-
-      if ((isDrawing === true) && !(this.zw_bool)) {
+      if ((isDrawing === true) && !(this.zw_bool||this.select_bool)) {
         mouse_mouving = true;
         mouse2X = e.offsetX;
         mouse2Y = e.offsetY;
         this.draw(false, 0, this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX, this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY, this.scaleX, this.scaleY);
         this.draw(true, 0, this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX, this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY, this.scaleX, this.scaleY);
       
-      } else if ((isDrawing === true) && (this.zw_bool)) {
+      } else if ((isDrawing === true) && (this.zw_bool||this.select_bool)) {
+        mouse_mouving = true;
         mouse2X = e.offsetX;
         mouse2Y = e.offsetY;
         this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
@@ -373,9 +395,42 @@ export class PlotData {
     })
 
     canvas.addEventListener('mouseup', e => {
+
+      var click_on_plus = Shape.Is_in_rect(mouse1X, mouse1Y, this.zoom_rect_x, this.zoom_rect_y, this.zoom_rect_w, this.zoom_rect_h);
+      var click_on_minus = Shape.Is_in_rect(mouse1X, mouse1Y, this.zoom_rect_x, this.zoom_rect_y + this.zoom_rect_h, this.zoom_rect_w, this.zoom_rect_h);
+      var click_on_zoom_window = Shape.Is_in_rect(mouse1X, mouse1Y, this.zw_x, this.zw_y, this.zw_w, this.zw_h);
+      var click_on_reset = Shape.Is_in_rect(mouse1X, mouse1Y, this.reset_rect_x, this.reset_rect_y, this.reset_rect_w, this.reset_rect_h);
+      var is_rect_big_enough = (Math.abs(mouse2X - mouse1X)>40) && (Math.abs(mouse2Y - mouse1Y)>30);
+      var click_on_select = Shape.Is_in_rect(mouse1X, mouse1Y, this.select_x, this.select_y, this.select_w, this.select_h);
+      var click_on_button = click_on_plus || click_on_minus || click_on_zoom_window || click_on_reset || click_on_select;
+
       if (mouse_mouving) {
-        this.last_mouse1X = this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX;
-        this.last_mouse1Y = this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY;
+          if (this.zw_bool && is_rect_big_enough) {
+            var zoom_coeff_x = this.width/Math.abs(mouse2X - mouse1X);
+            var zoom_coeff_y = this.height/Math.abs(mouse2Y - mouse1Y);
+            this.last_mouse1X = this.last_mouse1X - Math.min(mouse1X, mouse2X)/this.scaleX
+            this.last_mouse1Y = this.last_mouse1Y - Math.min(mouse1Y,mouse2Y)/this.scaleY
+            this.scaleX = this.scaleX*zoom_coeff_x;
+            this.scaleY = this.scaleY*zoom_coeff_y;
+            this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
+            this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
+
+          } else if (this.select_bool) {
+            for (var i=0; i<this.plot_datas.length; i++) {
+              var d = this.plot_datas[i];
+              var in_rect = Shape.Is_in_rect(this.scaleX*(1000*d.cx + this.last_mouse1X),this.scaleY*(1000*d.cy + this.last_mouse1Y), Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
+              if ((d['type']=="point") && (in_rect === true) && !(this.is_include(d, this.select_on_click))) {
+                this.select_on_click.push(d);
+              }
+            }
+            this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
+            this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
+
+          } else {
+            this.last_mouse1X = this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX;
+            this.last_mouse1Y = this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY;
+          }
+
       } else {
           var col = this.context_hidden.getImageData(mouse1X, mouse1Y, 1, 1).data;
           var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
@@ -385,21 +440,18 @@ export class PlotData {
           } else {
             this.select_on_click.push(click_plot_data);
           }
-          if (this.is_include(click_plot_data, this.tooltip_list)) {
+          if (this.is_include(click_plot_data, this.tooltip_list) && (!this.is_include(click_plot_data, this.select_on_click))) {
             this.tooltip_list = this.remove_selection(click_plot_data, this.tooltip_list);
-          } else {
+          } else if (!this.is_include(click_plot_data, this.tooltip_list) && this.is_include(click_plot_data, this.select_on_click)){
             this.tooltip_list.push(click_plot_data);
           }
-          if (this.contains_undefined(this.select_on_click) === true) {
+
+          
+
+          if (this.contains_undefined(this.select_on_click) && !click_on_button) {
             this.select_on_click = [];
             this.tooltip_list = [];
           }
-
-          var click_on_plus = Shape.Is_in_rect(mouse1X, mouse1Y, this.zoom_rect_x, this.zoom_rect_y, this.zoom_rect_w, this.zoom_rect_h);
-          var click_on_minus = Shape.Is_in_rect(mouse1X, mouse1Y, this.zoom_rect_x, this.zoom_rect_y + this.zoom_rect_h, this.zoom_rect_w, this.zoom_rect_h);
-          var click_on_zoom_window = Shape.Is_in_rect(mouse1X, mouse1Y, this.zw_x, this.zw_y, this.zw_w, this.zw_h);
-          var click_on_reset = Shape.Is_in_rect(mouse1X, mouse1Y, this.reset_rect_x, this.reset_rect_y, this.reset_rect_w, this.reset_rect_h);
-          var is_rect_big_enough = (Math.abs(mouse2X - mouse1X)>40) && (Math.abs(mouse2Y - mouse1Y)>30)
 
           if (click_on_plus === true) {
             var old_scaleX = this.scaleX
@@ -419,6 +471,7 @@ export class PlotData {
 
           } else if (click_on_zoom_window === true) {
             this.zw_bool = !this.zw_bool;
+            this.select_bool = false;
 
           } else if (click_on_reset === true){
             this.scaleX = this.init_scale;
@@ -429,14 +482,11 @@ export class PlotData {
             this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX;
             this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY;
 
-          } else if (this.zw_bool && is_rect_big_enough) {
-            var zoom_coeff_x = this.width/Math.abs(mouse2X - mouse1X);
-            var zoom_coeff_y = this.height/Math.abs(mouse2Y - mouse1Y);
-            this.last_mouse1X = this.last_mouse1X - Math.min(mouse1X, mouse2X)/this.scaleX
-            this.last_mouse1Y = this.last_mouse1Y - Math.min(mouse1Y,mouse2Y)/this.scaleY
-            this.scaleX = this.scaleX*zoom_coeff_x;
-            this.scaleY = this.scaleY*zoom_coeff_y;
-          }
+          } else if (click_on_select === true) {
+            this.zw_bool = false;
+            this.select_bool = !this.select_bool;
+
+          } 
 
           this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
           this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
@@ -518,7 +568,6 @@ export class PlotData {
     }
     return false;
   }
-
 }
 
 class MyMath {
@@ -703,8 +752,8 @@ export class PlotDataCircle2D {
                                   serialized['name']);
   }
 
-  draw(context, first_elem, mvx, mvy, scaleX, scaleY, init_scale) {
-    context.arc(scaleX*(1000*this.cx+ mvx), scaleY*(1000*this.cy+ mvy), init_scale*1000*this.r, 0, 2*Math.PI);
+  draw(context, first_elem, mvx, mvy, scaleX, scaleY) {
+    context.arc(scaleX*(1000*this.cx+ mvx), scaleY*(1000*this.cy+ mvy), scaleX*1000*this.r, 0, 2*Math.PI);
   }
 
 }

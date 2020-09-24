@@ -195,12 +195,12 @@ def plot_d3(plot_datas):
     volmdlr_path = pkg_resources.resource_filename(
         pkg_resources.Requirement('volmdlr'),
         'volmdlr/templates')
-    datas = []
+    data = []
     for d in plot_datas:
-        datas.append(json.dumps(d))
+        data.append(json.dumps(d))
     s = template.render(
         volmdlr_path=volmdlr_path,
-        D3Data=datas)
+        D3Data=data)
     temp_file = tempfile.mkstemp(suffix='.html')[1]
 
     with open(temp_file, 'wb') as file:
