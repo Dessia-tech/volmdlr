@@ -22,8 +22,8 @@
   {% endfor %}];
 	var number_plot_data = D3Data.length
 
-	var plot_data = new core.PlotData(D3Data, width, height, 1000);
-	plot_data.draw_initial()
+	var plot_data = new core.PlotScatter(D3Data, width, height, 1000);
+	plot_data.draw_initial(width, height,1000);
 
 
 </script>

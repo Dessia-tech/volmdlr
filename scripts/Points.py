@@ -1,47 +1,58 @@
 import volmdlr as vm
 from volmdlr import plot_data
 
-#### Point test ####
+# Point test ####
 
-## PARAMETERS ##
-   # Window size
+# PARAMETERS #
+# Window size
 width = 2
 height = 1
-    # Shape set (circle, square, crux)
+
+# Shape set (circle, square, crux)
 shape = 'circle'
-    # Point size (1 to 4)
+
+# Point size (1 to 4)
 size = 3
-    # Points' color
+
+# Points' color
 color_fill = 'violet'
 color_stroke = 'black'
-    # PlotDataState
+
+# PlotDataState
 surface_color = 'black'
-stroke_width = 2    #Points' stroke width
-    # Scatter plot
+stroke_width = 2  # Points' stroke width
+
+# Scatter plot
 nb_points_x = 10
 nb_points_y = 10
 font_size = 15
 graduation_color = 'black'
 
-
 plot_datas = []
-window_size = plot_data.WindowSizeSet(width=width,height=height)
+window_size = plot_data.WindowSizeSet(width=width, height=height)
 shape_set = plot_data.PointShapeSet(shape=shape)
 point_size = plot_data.PointSizeSet(size=size)
-point_color = plot_data.PointColorSet(color_fill=color_fill, color_stroke=color_stroke)
+point_color = plot_data.PointColorSet(color_fill=color_fill,
+                                      color_stroke=color_stroke)
 for i in range(50):
-    point = vm.Point2D.random(0,window_size.width,0,window_size.height).to_canvas_style()
-    plot_datas += [point.plot_data([plot_data.PlotDataState(color_surface=plot_data.ColorSurfaceSet(color=surface_color), window_size=window_size,stroke_width=stroke_width, shape_set=shape_set, point_size=point_size,point_color=point_color)])]
-#point0 = vm.Point2D([0,0])
-#plot_datas += [point0.plot_data([plot_data.PlotDataState(color_surface=plot_data.ColorSurfaceSet(color='black'), window_size=window_size, shape_set=shape_set, point_size=point_size,point_color=point_color)])]
-#point1 = vm.Point2D([1,1])
-#plot_datas += [point1.plot_data([plot_data.PlotDataState(color_surface=plot_data.ColorSurfaceSet(color='black'), window_size=window_size, shape_set=shape_set, point_size=point_size,point_color=point_color)])]
-#point2 = vm.Point2D([2,2])
-#plot_datas += [point2.plot_data([plot_data.PlotDataState(color_surface=plot_data.ColorSurfaceSet(color='black'), window_size=window_size, shape_set=shape_set, point_size=point_size,point_color=point_color)])]
-#point3 = vm.Point2D([-1,1])
-#plot_datas += [point1.plot_data([plot_data.PlotDataState(color_surface=plot_data.ColorSurfaceSet(color='black'), window_size=window_size, shape_set=shape_set, point_size=point_size,point_color=point_color)])]
+    point = vm.Point2D.random(0, window_size.width, 0,
+                              window_size.height).to_canvas_style()
+    plot_datas += [point.plot_data([plot_data.PlotDataState(
+        color_surface=plot_data.ColorSurfaceSet(color=surface_color),
+        window_size=window_size, stroke_width=stroke_width,
+        shape_set=shape_set, point_size=point_size, point_color=point_color)])]
+# point0 = vm.Point2D([0,0])
+# plot_datas += [point0.plot_data([plot_data.PlotDataState(color_surface=plot_data.ColorSurfaceSet(color='black'), window_size=window_size, shape_set=shape_set, point_size=point_size,point_color=point_color)])]
+# point1 = vm.Point2D([1,1])
+# plot_datas += [point1.plot_data([plot_data.PlotDataState(color_surface=plot_data.ColorSurfaceSet(color='black'), window_size=window_size, shape_set=shape_set, point_size=point_size,point_color=point_color)])]
+# point2 = vm.Point2D([2,2])
+# plot_datas += [point2.plot_data([plot_data.PlotDataState(color_surface=plot_data.ColorSurfaceSet(color='black'), window_size=window_size, shape_set=shape_set, point_size=point_size,point_color=point_color)])]
+# point3 = vm.Point2D([-1,1])
+# plot_datas += [point1.plot_data([plot_data.PlotDataState(color_surface=plot_data.ColorSurfaceSet(color='black'), window_size=window_size, shape_set=shape_set, point_size=point_size,point_color=point_color)])]
 
-scatter_plot = vm.ScatterPlot(nb_points_x=nb_points_x, nb_points_y=nb_points_y, font_size=font_size, graduation_color=graduation_color)
+scatter_plot = vm.ScatterPlot(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
+                              font_size=font_size,
+                              graduation_color=graduation_color)
 plot_datas += [scatter_plot.plot_data([plot_data.PlotDataState()])]
 sol = [c.to_dict() for c in plot_datas]
 plot_data.plot_d3(sol)
