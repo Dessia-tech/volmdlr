@@ -123,3 +123,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+volmdlr/templates/core.ts
+volmdlr/templates/core.ts
