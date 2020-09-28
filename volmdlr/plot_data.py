@@ -157,6 +157,17 @@ class PlotDataScatterPlot(DessiaObject):
         self.type = type
         DessiaObject.__init__(self, name=name)
 
+class PlotDataTooltip(DessiaObject):
+    def __init__(self, colorfill:str, font:str, tp_width:float, tp_height:float, tp_radius:float, to_plot_list:list, plot_data_states: List[PlotDataState], type:str='tooltip', name:str=''):
+        self.colorfill = colorfill
+        self.font = font
+        self.tp_width = tp_width
+        self.tp_height = tp_height
+        self.tp_radius = tp_radius
+        self.to_plot_list = to_plot_list
+        self.plot_data_states = plot_data_states
+        self.type = type
+        DessiaObject.__init__(self, name=name)
 
 class PlotDataArc2D(DessiaObject):
     def __init__(self, cx: float, cy: float, r: float,

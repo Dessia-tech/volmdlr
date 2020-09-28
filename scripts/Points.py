@@ -28,6 +28,14 @@ nb_points_y = 10
 font_size = 15
 graduation_color = 'black'
 
+# Tooltip
+colorfill = 'lightblue'
+font = '15px'  # Font family : Arial, Helvetica, serif, sans-serif, Verdana, Times New Roman, Courier New
+tp_width = 90
+tp_height = 35
+tp_radius = 10
+to_plot_list = ['cx', 'cy']
+
 plot_datas = []
 window_size = plot_data.WindowSizeSet(width=width, height=height)
 shape_set = plot_data.PointShapeSet(shape=shape)
@@ -54,5 +62,9 @@ scatter_plot = vm.ScatterPlot(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               font_size=font_size,
                               graduation_color=graduation_color)
 plot_datas += [scatter_plot.plot_data([plot_data.PlotDataState()])]
+
+tooltip = vm.Tooltip(colorfill=colorfill, font=font, tp_width=tp_width, tp_height=tp_height, tp_radius=tp_radius, to_plot_list=to_plot_list)
+plot_datas += [tooltip.plot_data([plot_data.PlotDataState()])]
+
 sol = [c.to_dict() for c in plot_datas]
 plot_data.plot_d3(sol)

@@ -19,7 +19,8 @@ export class PlotData {
   color_surface_on_mouse:string='lightskyblue';
   color_surface_on_click:string='blue';
   context:any;
-  
+  tooltip_ON:boolean;
+  axis_ON:boolean;
 
   define_canvas() {
     var canvas = document.getElementById('canvas');
@@ -140,59 +141,64 @@ export class PlotData {
       this.context.fill();
     }
   }
-
-  draw_tooltip(point, mvx, mvy) {
-    this.context.beginPath();
-    var cx = point.cx;
-    var cy = point.cy;
-
-    var rect_w = this.init_scale*300;
-    var rect_h = this.init_scale*200;
-    var rect_radius = this.init_scale*40;
-    var rect_x = this.scaleX*(1000*cx + mvx) + this.init_scale*80;
-    var rect_y = this.scaleY*(1000*cy + mvy) - 1/2*rect_h;
-
-    if (rect_x + rect_w  > this.width) {
-      rect_x = this.scaleX*(1000*cx + mvx) - this.init_scale*80 - rect_w;
-    }
-    if (rect_y < 0) {
-      rect_y = this.scaleY*(1000*cy + mvy);
-    }
-    if (rect_y + rect_h > this.height) {
-      rect_y = this.scaleY*(1000*cy + mvy) - rect_h;
-    }
-
-    Shape.roundRect(rect_x, rect_y, rect_w, rect_h, rect_radius, this.context)
-    this.context.strokeStyle = 'black';
-    this.context.fillStyle = 'lightblue';
-    this.context.stroke();
-    this.context.fill();
-
-    var coordinate_size = this.init_scale*50;
-    this.context.font = coordinate_size.toString() + 'px Arial';
-    this.context.fillStyle = 'black';
-    this.context.textAlign = 'center';
-    var int_nb_digit_x = cx.toString().split('.')[0].length;
-    var nb_digits_x = Math.max(0, 5 - int_nb_digit_x);
-    var int_nb_digit_y = (-cy).toString().split('.')[0].length;
-    var nb_digits_y = Math.max(0, 5 - int_nb_digit_y);
-    var round_cx = MyMath.round(cx,nb_digits_x);
-    var round_cy = MyMath.round(cy,nb_digits_y);
-
-    var x_middle = rect_x + 1/2*rect_w;
-    var y_middle = rect_y + 1/2*rect_h + rect_radius;
-    this.context.fillText('x = ' + round_cx.toString(), x_middle, y_middle - this.init_scale*65);
-    this.context.fillText('y = ' + (-round_cy).toString(), x_middle, y_middle + this.init_scale*15);
-    this.context.closePath();
-  }
-
-  manage_tooltip(mvx, mvy) {
-    for (var i=0; i<this.tooltip_list.length; i++) {
-      if (!(typeof this.tooltip_list[i] === "undefined")) {
-        this.draw_tooltip(this.tooltip_list[i], mvx, mvy);
-      }
+  draw_tooltip(d, mvx, mvy) {
+    if (d['type'] == 'tooltip') {
+      this.tooltip_ON = true;
+      d.manage_tooltip(this.context, mvx, mvy, this.scaleX, this.scaleY, this.init_scale, this.width, this.height, this.tooltip_list)
     }
   }
+//  draw_tooltip(point, mvx, mvy) {
+//    this.context.beginPath();
+//    var cx = point.cx;
+//    var cy = point.cy;
+
+//    var rect_w = this.init_scale*300;
+//    var rect_h = this.init_scale*200;
+//    var rect_radius = this.init_scale*40;
+//    var rect_x = this.scaleX*(1000*cx + mvx) + this.init_scale*80;
+//    var rect_y = this.scaleY*(1000*cy + mvy) - 1/2*rect_h;
+
+//    if (rect_x + rect_w  > this.width) {
+//      rect_x = this.scaleX*(1000*cx + mvx) - this.init_scale*80 - rect_w;
+//    }
+//    if (rect_y < 0) {
+//      rect_y = this.scaleY*(1000*cy + mvy);
+//    }
+//    if (rect_y + rect_h > this.height) {
+//      rect_y = this.scaleY*(1000*cy + mvy) - rect_h;
+//    }
+
+//    Shape.roundRect(rect_x, rect_y, rect_w, rect_h, rect_radius, this.context)
+//    this.context.strokeStyle = 'black';
+//    this.context.fillStyle = 'lightblue';
+//    this.context.stroke();
+//    this.context.fill();
+
+//    var coordinate_size = this.init_scale*50;
+//    this.context.font = coordinate_size.toString() + 'px Arial';
+//    this.context.fillStyle = 'black';
+//    this.context.textAlign = 'center';
+//    var int_nb_digit_x = cx.toString().split('.')[0].length;
+//    var nb_digits_x = Math.max(0, 5 - int_nb_digit_x);
+//    var int_nb_digit_y = (-cy).toString().split('.')[0].length;
+//    var nb_digits_y = Math.max(0, 5 - int_nb_digit_y);
+//    var round_cx = MyMath.round(cx,nb_digits_x);
+//    var round_cy = MyMath.round(cy,nb_digits_y);
+//
+  //  var x_middle = rect_x + 1/2*rect_w;
+  //  var y_middle = rect_y + 1/2*rect_h + rect_radius;
+  //  this.context.fillText('x = ' + round_cx.toString(), x_middle, y_middle - this.init_scale*65);
+  //  this.context.fillText('y = ' + (-round_cy).toString(), x_middle, y_middle + this.init_scale*15);
+  //  this.context.closePath();
+  //}
+
+  //manage_tooltip(mvx, mvy) {
+  //  for (var i=0; i<this.tooltip_list.length; i++) {
+  //    if (!(typeof this.tooltip_list[i] === "undefined")) {
+  //      this.draw_tooltip(this.tooltip_list[i], mvx, mvy);
+  //    }
+  //  }
+  //}
 
   zoom_button(x, y, w, h) {
     if ((x<0) || (x+h>this.width) || (y<0) || (y+2*h>this.height)) {
@@ -292,6 +298,7 @@ export class PlotData {
         var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
         this.select_on_mouse = this.colour_to_plot_data[colKey];
         this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
+        this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
       }
     })
 
@@ -341,14 +348,14 @@ export class PlotData {
           } else {
             this.select_on_click.push(click_plot_data);
           }
-          if (this.is_include(click_plot_data, this.tooltip_list) && (!this.is_include(click_plot_data, this.select_on_click))) {
-            this.tooltip_list = this.remove_selection(click_plot_data, this.tooltip_list);
-          } else if (!this.is_include(click_plot_data, this.tooltip_list) && this.is_include(click_plot_data, this.select_on_click)){
-            this.tooltip_list.push(click_plot_data);
+          if (this.tooltip_ON) {
+              if (this.is_include(click_plot_data, this.tooltip_list) && (!this.is_include(click_plot_data, this.select_on_click))) {
+                this.tooltip_list = this.remove_selection(click_plot_data, this.tooltip_list);
+              } else if (!this.is_include(click_plot_data, this.tooltip_list) && this.is_include(click_plot_data, this.select_on_click)){
+                this.tooltip_list.push(click_plot_data);
+              }
           }
-
           
-
           if (this.contains_undefined(this.select_on_click) && !click_on_button) {
             this.select_on_click = [];
             this.tooltip_list = [];
@@ -401,7 +408,7 @@ export class PlotData {
       var event = -e.deltaY;
       mouse3X = e.offsetX;
       mouse3Y = e.offsetY;
-      if ((mouse3Y>=this.height - 25) && (mouse3X>25)) {
+      if ((mouse3Y>=this.height - 25) && (mouse3X>25) && this.axis_ON) {
           var old_scaleX = this.scaleX;
           if (event>0) {
             this.scaleX = this.scaleX*zoom_coeff;
@@ -410,7 +417,8 @@ export class PlotData {
           }
           this.scroll_x = this.scroll_x - e.deltaY/Math.abs(e.deltaY);
           this.last_mouse1X = this.last_mouse1X - ((this.width/2)/old_scaleX - (this.width/2)/this.scaleX);
-      } else if ((mouse3X<=25) && (mouse3Y<this.height - 25)) {
+
+      } else if ((mouse3X<=25) && (mouse3Y<this.height - 25) && this.axis_ON) {
           var old_scaleY = this.scaleY;
           if (event>0) {
             this.scaleY = this.scaleY*zoom_coeff;
@@ -478,6 +486,8 @@ export class PlotContour extends PlotData {
                 public height: number,
                 public coeff_pixel: number) {
     super();
+    this.tooltip_ON = false;
+    this.axis_ON = false;
     this.plot_datas = [];
     for (var i = 0; i < data.length; i++) {
       var d = this.data[i];
@@ -506,18 +516,15 @@ export class PlotContour extends PlotData {
 export class PlotScatter extends PlotData {
   plot_datas:any;
   tooltip_list:any[]=[];
-  zoom_rect_ON:boolean=true;
   zoom_rect_x:number;
   zoom_rect_y:number;
   zoom_rect_w:number;
   zoom_rect_h:number;
-  zw_ON:boolean=true;
   zw_bool:boolean;
   zw_x:number;
   zw_y:number;
   zw_w:number;
   zw_h:number;
-  reset_ON:boolean=true;
   reset_rect_x:number;
   reset_rect_y:number;
   reset_rect_w:number;
@@ -533,6 +540,22 @@ export class PlotScatter extends PlotData {
     public height: number,
     public coeff_pixel: number) {
       super();
+      this.zoom_rect_x = this.width - 45;
+      this.zoom_rect_y = 10;
+      this.zoom_rect_w = 35;
+      this.zoom_rect_h = 25;
+      this.zw_x = this.width - 45;
+      this.zw_y = 70;
+      this.zw_w = 35;
+      this.zw_h = 30;
+      this.reset_rect_x = this.width - 45;
+      this.reset_rect_y = 110;
+      this.reset_rect_w = 35;
+      this.reset_rect_h = 30;
+      this.select_x = this.width - 45;
+      this.select_y = 150;
+      this.select_w = 35;
+      this.select_h = 30;
       this.plot_datas = [];
       for (var i = 0; i < data.length; i++) {
         var d = data[i];
@@ -545,8 +568,11 @@ export class PlotScatter extends PlotData {
           this.colour_to_plot_data[a.mouse_selection_color] = a;
           this.plot_datas.push(a);
         } else if (d['type'] == 'plot') {
-          var b = PlotDataScatterPlot.deserialize(d);
+          var b = PlotDataScatter.deserialize(d);
           this.plot_datas.push(b);
+        } else if (d['type'] == 'tooltip') {
+          var c = PlotDataTooltip.deserialize(d);
+          this.plot_datas.push(c);
         }
       }
       this.define_canvas();
@@ -558,43 +584,23 @@ export class PlotScatter extends PlotData {
 
     for (var i = 0; i < this.plot_datas.length; i++) {
       var d = this.plot_datas[i];
-      this.draw_contour(hidden, show_state, mvx, mvy, scaleX, scaleY, d);
       this.draw_point(hidden, show_state, mvx, mvy, scaleX, scaleY, d);
       this.draw_plot(mvx, mvy, scaleX, scaleY, d);
+      this.draw_tooltip(d, mvx, mvy);
     }
-      
-      //Drawing the tooltips
-      this.manage_tooltip(mvx, mvy);
-  
-      //Drawing the zooming button
 
-      this.zoom_rect_x = this.width - 45;
-      this.zoom_rect_y = 10;
-      this.zoom_rect_w = 35;
-      this.zoom_rect_h = 25;
+
+      //Drawing the zooming button 
       this.zoom_button(this.zoom_rect_x, this.zoom_rect_y, this.zoom_rect_w, this.zoom_rect_h);
       
       
       //Drawing the button for zooming window selection
-      this.zw_x = this.width - 45;
-      this.zw_y = 70;
-      this.zw_w = 35;
-      this.zw_h = 30;
       this.zoom_window_button(this.zw_x,this.zw_y,this.zw_w,this.zw_h);
-      
   
       //Drawing the reset button
-      this.reset_rect_x = this.width - 45;
-      this.reset_rect_y = 110;
-      this.reset_rect_w = 35;
-      this.reset_rect_h = 30;
       this.reset_button(this.reset_rect_x, this.reset_rect_y, this.reset_rect_w, this.reset_rect_h);
       
-  
-      this.select_x = this.width - 45;
-      this.select_y = 150;
-      this.select_w = 35;
-      this.select_h = 30;
+      //Drawing the selection button
       this.selection_button(this.select_x, this.select_y, this.select_w, this.select_h);
     
   }
@@ -863,7 +869,7 @@ export class PlotDataPoint2D {
     }
 }
 
-export class PlotDataScatterPlot {
+export class PlotDataScatter {
   colorStroke:any;
   x_step:number;
   y_step:number;
@@ -888,7 +894,7 @@ export class PlotDataScatterPlot {
       var d = temp[i];
       plot_data_states.push(PlotDataState.deserialize(d));
     }
-    return new PlotDataScatterPlot(serialized['nb_points_x'],
+    return new PlotDataScatter(serialized['nb_points_x'],
                                   serialized['nb_points_y'],
                                   serialized['font_size'],
                                   serialized['graduation_color'],
@@ -897,7 +903,7 @@ export class PlotDataScatterPlot {
                                   serialized['plot_data_states']);
   }
 
-  draw_axes(context, mvx, mvy, scaleX, scaleY, width, height, minX, maxX, minY, maxY, x_step, y_step) {
+  draw_graduations(context, mvx, mvy, scaleX, scaleY, width, height, minX, maxX, minY, maxY, x_step, y_step) {
     //pour l'axe des x
     var i=0;
     context.textAlign = 'center';
@@ -959,8 +965,8 @@ export class PlotDataScatterPlot {
 
     context.moveTo(0, height - 20);
     context.lineTo(width, height - 20);
-    //Graduations
 
+    //Graduations
     if (scroll_x % 5 == 0) {
       var kx = scaleX/init_scale;
       this.x_step = (maxX - minX)/(kx*(this.nb_points_x-1));
@@ -973,8 +979,83 @@ export class PlotDataScatterPlot {
     context.font = this.font_size.toString() + 'px Arial';
     context.fillStyle = this.graduation_color;
     
-    this.draw_axes(context, mvx, mvy, scaleX, scaleY, width, height, minX, maxX, minY, maxY, this.x_step, this.y_step);
+    this.draw_graduations(context, mvx, mvy, scaleX, scaleY, width, height, minX, maxX, minY, maxY, this.x_step, this.y_step);
     
+  }
+}
+
+export class PlotDataTooltip {
+  constructor(public colorfill:string, public font:string, public tp_width:number, public tp_height:any, public tp_radius:any, public to_plot_list:any, public plot_data_states:PlotDataState[],public type:string, public name:string) {}
+
+  public static deserialize(serialized) {
+    var temp = serialized['plot_data_states']
+      var plot_data_states = [];
+      for (var i = 0; i < temp.length; i++) {
+        var d = temp[i];
+        plot_data_states.push(PlotDataState.deserialize(d));
+      }
+      return new PlotDataTooltip(serialized['colorfill'],
+                                  serialized['font'],
+                                  serialized['tp_width'],
+                                  serialized['tp_height'],
+                                  serialized['tp_radius'],
+                                  serialized['to_plot_list'],
+                                  plot_data_states,
+                                  serialized['type'],
+                                  serialized['name']);
+  }
+
+  draw(context, object, mvx, mvy, scaleX, scaleY, init_scale, canvas_width, canvas_height) {
+    context.beginPath();
+    var textfills = [];
+    for (var i=0; i<this.to_plot_list.length; i++) {
+      if (this.to_plot_list[i] == 'cx') {
+        textfills.push('x : ' + MyMath.round(object.cx,4).toString());
+      } else if (this.to_plot_list[i] == 'cy') {
+        textfills.push('y : ' + MyMath.round(-object.cy, 4).toString());
+      }
+    }
+    var cx = object.cx;
+    var cy = object.cy;
+    var tp_x = scaleX*(1000*cx + mvx) + init_scale*40;
+    var tp_y = scaleY*(1000*cy + mvy) - 1/2*this.tp_height;
+
+    if (tp_x + this.tp_width  > canvas_width) {
+      tp_x = scaleX*(1000*cx + mvx) - init_scale*40 - this.tp_width;
+    }
+    if (tp_y < 0) {
+      tp_y = scaleY*(1000*cy + mvy);
+    }
+    if (tp_y + this.tp_height > canvas_height) {
+      tp_y = scaleY*(1000*cy + mvy) - this.tp_height;
+    }
+
+    Shape.roundRect(tp_x, tp_y, this.tp_width, this.tp_height, this.tp_radius, context);
+    context.strokeStyle = 'black';
+    context.fillStyle = this.colorfill;
+    context.stroke();
+    context.fill();
+    context.fillStyle = 'black';
+    context.textAlign = 'center';
+
+    var x_middle = tp_x + 1/2*this.tp_width;
+    context.font = this.font;
+    var font_size = Number(this.font.split('px')[0]);
+    var current_y = tp_y + font_size;
+    for (var i=0; i<textfills.length; i++) {
+      context.fillText(textfills[i], x_middle, current_y);
+      current_y = current_y + font_size;
+    }
+    context.closePath();
+
+  }
+
+  manage_tooltip(context, mvx, mvy, scaleX, scaleY, init_scale, canvas_width, canvas_height, tooltip_list) {
+    for (var i=0; i<tooltip_list.length; i++) {
+      if (!(typeof tooltip_list[i] === "undefined")) {
+        this.draw(context, tooltip_list[i], mvx, mvy, scaleX, scaleY, init_scale, canvas_width, canvas_height);
+      }
+    }
   }
 }
 
