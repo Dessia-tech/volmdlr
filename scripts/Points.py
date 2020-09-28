@@ -27,6 +27,7 @@ nb_points_x = 10
 nb_points_y = 10
 font_size = 15
 graduation_color = 'black'
+arrow_on = False
 
 # Tooltip
 colorfill = 'lightblue'
@@ -60,7 +61,7 @@ for i in range(50):
 
 scatter_plot = vm.ScatterPlot(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               font_size=font_size,
-                              graduation_color=graduation_color)
+                              graduation_color=graduation_color, arrow_on=arrow_on)
 plot_datas += [scatter_plot.plot_data([plot_data.PlotDataState()])]
 
 tooltip = vm.Tooltip(colorfill=colorfill, font=font, tp_width=tp_width, tp_height=tp_height, tp_radius=tp_radius, to_plot_list=to_plot_list)

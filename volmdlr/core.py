@@ -2124,11 +2124,12 @@ class Circle2D(Contour2D):
 
 class ScatterPlot(dc.DessiaObject):
     def __init__(self, nb_points_x: int, nb_points_y: int, font_size: int,
-               graduation_color: str, name: str = ''):
+               graduation_color: str, arrow_on:bool, name: str = ''):
         self.nb_points_x = nb_points_x
         self.nb_points_y = nb_points_y
         self.font_size = font_size
         self.graduation_color = graduation_color
+        self.arrow_on = arrow_on
         dc.DessiaObject.__init__(self, name)
 
     def plot_data(self,
@@ -2139,6 +2140,7 @@ class ScatterPlot(dc.DessiaObject):
                                              nb_points_y=self.nb_points_y,
                                              font_size=self.font_size,
                                              graduation_color=self.graduation_color,
+                                             arrow_on = self.arrow_on,
                                              plot_data_states=plot_data_states)
 
 class Tooltip(dc.DessiaObject):
