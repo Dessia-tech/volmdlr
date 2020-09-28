@@ -12,11 +12,11 @@ height = 1
 shape = 'circle'
 
 # Point size (1 to 4)
-size = 3
+size = 2
 
 # Points' color
 color_fill = 'violet'
-color_stroke = 'black'
+color_stroke = 'grey'
 
 # PlotDataState
 surface_color = 'black'
@@ -26,7 +26,8 @@ stroke_width = 2  # Points' stroke width
 nb_points_x = 10
 nb_points_y = 10
 font_size = 15
-graduation_color = 'black'
+graduation_color = 'grey'
+axis_color = 'grey'
 arrow_on = False
 
 # Tooltip
@@ -61,10 +62,10 @@ for i in range(50):
 
 scatter_plot = vm.ScatterPlot(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               font_size=font_size,
-                              graduation_color=graduation_color, arrow_on=arrow_on)
+                              graduation_color=graduation_color, axis_color=axis_color, arrow_on=arrow_on)
 plot_datas += [scatter_plot.plot_data([plot_data.PlotDataState()])]
 
-tooltip = vm.Tooltip(colorfill=colorfill, font=font, tp_width=tp_width, tp_height=tp_height, tp_radius=tp_radius, to_plot_list=to_plot_list)
+tooltip = vm.Tooltip(colorfill=colorfill, font=font, tp_width=tp_width, tp_radius=tp_radius, to_plot_list=to_plot_list)
 plot_datas += [tooltip.plot_data([plot_data.PlotDataState()])]
 
 sol = [c.to_dict() for c in plot_datas]

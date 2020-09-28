@@ -822,6 +822,7 @@ export class PlotDataScatter {
                      public nb_points_y:number,
                      public font_size:number,
                      public graduation_color:string,
+                     public axis_color:string,
                      public name:string, 
                      public arrow_on:boolean,
                      public type:string, 
@@ -844,6 +845,7 @@ export class PlotDataScatter {
                                   serialized['nb_points_y'],
                                   serialized['font_size'],
                                   serialized['graduation_color'],
+                                  serialized['axis_color'],
                                   serialized['arrow_on'],
                                   serialized['name'],
                                   serialized['type'],
@@ -930,6 +932,7 @@ export class PlotDataScatter {
 
     context.font = this.font_size.toString() + 'px Arial';
     context.fillStyle = this.graduation_color;
+    context.strokeStyle = this.axis_color;
     
     this.draw_graduations(context, mvx, mvy, scaleX, scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minX, maxX, minY, maxY, this.x_step, this.y_step, this.font_size);
     
@@ -937,7 +940,7 @@ export class PlotDataScatter {
 }
 
 export class PlotDataTooltip {
-  constructor(public colorfill:string, public font:string, public tp_width:number, public tp_height:any, public tp_radius:any, public to_plot_list:any, public plot_data_states:PlotDataState[],public type:string, public name:string) {}
+  constructor(public colorfill:string, public font:string, public tp_width:number, public tp_radius:any, public to_plot_list:any, public plot_data_states:PlotDataState[],public type:string, public name:string) {}
 
   public static deserialize(serialized) {
     var temp = serialized['plot_data_states']
@@ -949,7 +952,6 @@ export class PlotDataTooltip {
       return new PlotDataTooltip(serialized['colorfill'],
                                   serialized['font'],
                                   serialized['tp_width'],
-                                  serialized['tp_height'],
                                   serialized['tp_radius'],
                                   serialized['to_plot_list'],
                                   plot_data_states,
@@ -965,12 +967,18 @@ export class PlotDataTooltip {
         textfills.push('x : ' + MyMath.round(object.cx,4).toString());
       } else if (this.to_plot_list[i] == 'cy') {
         textfills.push('y : ' + MyMath.round(-object.cy, 4).toString());
+      } else if (this.to_plot_list[i] == 'shape') {
+        console.log(object.plot_data_states)
+        textfills.push('shape : ' + object.plot_data_states[0]['shape_set']['shape']);
       }
     }
+
+    var font_size = Number(this.font.split('px')[0]);
+    var tp_height = (textfills.length + 0.5)*font_size ;
     var cx = object.cx;
     var cy = object.cy;
     var tp_x = scaleX*(1000*cx + mvx) + init_scale*40;
-    var tp_y = scaleY*(1000*cy + mvy) - 1/2*this.tp_height;
+    var tp_y = scaleY*(1000*cy + mvy) - 1/2*tp_height;
 
     if (tp_x + this.tp_width  > canvas_width) {
       tp_x = scaleX*(1000*cx + mvx) - init_scale*40 - this.tp_width;
@@ -978,11 +986,11 @@ export class PlotDataTooltip {
     if (tp_y < 0) {
       tp_y = scaleY*(1000*cy + mvy);
     }
-    if (tp_y + this.tp_height > canvas_height) {
-      tp_y = scaleY*(1000*cy + mvy) - this.tp_height;
+    if (tp_y + tp_height > canvas_height) {
+      tp_y = scaleY*(1000*cy + mvy) - tp_height;
     }
 
-    Shape.roundRect(tp_x, tp_y, this.tp_width, this.tp_height, this.tp_radius, context);
+    Shape.roundRect(tp_x, tp_y, this.tp_width, tp_height, this.tp_radius, context);
     context.strokeStyle = 'black';
     context.fillStyle = this.colorfill;
     context.stroke();
@@ -992,14 +1000,13 @@ export class PlotDataTooltip {
 
     var x_middle = tp_x + 1/2*this.tp_width;
     context.font = this.font;
-    var font_size = Number(this.font.split('px')[0]);
+
     var current_y = tp_y + font_size;
     for (var i=0; i<textfills.length; i++) {
       context.fillText(textfills[i], x_middle, current_y);
       current_y = current_y + font_size;
     }
     context.closePath();
-
   }
 
   manage_tooltip(context, mvx, mvy, scaleX, scaleY, init_scale, canvas_width, canvas_height, tooltip_list) {
