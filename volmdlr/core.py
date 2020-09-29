@@ -1459,7 +1459,6 @@ class DisplayMesh(dc.DessiaObject):
         self.name = name
 
     def __add__(self, other_mesh):
-        print('add', len(self.points))
         new_points = self.points[:]
         new_point_index = {p: i for i, p in enumerate(self.points)}
         ip = len(new_points)
@@ -2722,7 +2721,7 @@ PLANE3D_OZX = Plane3D(OZXY)
 
 class CylindricalSurface3D(Primitive3D):
     """
-    :param frame: Cylinder's frame to position it
+    :param frame: frame.w is axis, frame.u is theta=0 frame.v theta=pi/2
     :type frame: Frame3D
     :param radius: Cylinder's radius
     :type radius: float
@@ -2732,11 +2731,6 @@ class CylindricalSurface3D(Primitive3D):
         self.frame = frame
         self.radius = radius
         self.name = name
-        V = frame.v
-        V.Normalize()
-        W = frame.w
-        W.Normalize()
-        self.plane = Plane3D(frame.origin, V, W)
 
     def point2d_to_3d(self, point2d):
         p = Point3D(Vector3D([self.radius * math.cos(point2d[0]),
@@ -2745,11 +2739,11 @@ class CylindricalSurface3D(Primitive3D):
         return self.frame.OldCoordinates(p)
 
     def point3d_to_2d(self, point3d):
-        x, y, h = point3d
+        x, y, z = point3d
 
         u1, u2 = x / self.radius, y / self.radius
         theta = sin_cos_angle(u1, u2)
-        return Point2D([theta, h])
+        return Point2D([theta, z])
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -2788,17 +2782,18 @@ class CylindricalSurface3D(Primitive3D):
             else:
                 self.frame = new_frame
 
-    def rectangular_cut(self, x1, x2, theta1, theta2, name=''):
-        theta1 = angle_principal_measure(theta1)
-        theta2 = angle_principal_measure(theta2)
+    def rectangular_cut(self, theta1:float, theta2:float,
+                        z1:float, z2:float, name:str=''):
+        # theta1 = angle_principal_measure(theta1)
+        # theta2 = angle_principal_measure(theta2)
 
         if theta1 == theta2:
             theta2 += 2 * math.pi
 
-        p1 = Point2D((x1, theta1))
-        p2 = Point2D((x1, theta2))
-        p3 = Point2D((x2, theta2))
-        p4 = Point2D((x2, theta1))
+        p1 = Point2D((theta1, z1))
+        p2 = Point2D((theta2, z1))
+        p3 = Point2D((theta2, z2))
+        p4 = Point2D((theta1, z2))
         outer_contour = Polygon2D([p1, p2, p3, p4])
         return CylindricalFace3D(self, outer_contour, [], name)
 
@@ -2900,16 +2895,16 @@ class ToroidalSurface3D(Primitive3D):
                 self.frame = new_frame
 
     def rectangular_cut(self, theta1, theta2, phi1, phi2, name=''):
-        theta1 = angle_principal_measure(theta1)
-        theta2 = angle_principal_measure(theta2)
-        phi1 = angle_principal_measure(phi1)
-        phi2 = angle_principal_measure(phi2)
+        # theta1 = angle_principal_measure(theta1)
+        # theta2 = angle_principal_measure(theta2)
+        # phi1 = angle_principal_measure(phi1)
+        # phi2 = angle_principal_measure(phi2)
 
         if phi1 == phi2:
             phi2 += 2 * math.pi
         if theta1 == theta2:
             theta2 += 2 * math.pi
-        print(theta1, theta2, phi1, phi2)
+        # print(theta1, theta2, phi1, phi2)
         p1 = Point2D((theta1, phi1))
         p2 = Point2D((theta1, phi2))
         p3 = Point2D((theta2, phi2))
@@ -5263,17 +5258,17 @@ class LineSegment3D(Edge3D):
             return NotImplementedError
 
     def revolution(self, axis_point, axis, angle):
-        line3d = Line3D(axis_point, axis_point + axis)
+        axis_line3d = Line3D(axis_point, axis_point + axis)
 
-        p1_proj, _ = line3d.point_projection(self.points[0])
-        p2_proj, _ = line3d.point_projection(self.points[1])
+        p1_proj, _ = axis_line3d.point_projection(self.points[0])
+        p2_proj, _ = axis_line3d.point_projection(self.points[1])
         d1 = self.points[0].point_distance(p1_proj)
         d2 = self.points[1].point_distance(p2_proj)
         u1 = (self.points[0] - p1_proj)  # Unit vector from p1_proj to p1
         u1.Normalize()
-        u2 = (self.points[1] - p2_proj)  # Unit vector from p1_proj to p1
-        u2.Normalize()
-        if u1.is_colinear(u2):
+        # u2 = (self.points[1] - p2_proj)  # Unit vector from p2_proj to p2
+        # u2.Normalize()
+        if u1.is_colinear_to(self.DirectionVector()):
             # Planar face
             surface = Plane3D(Frame3D(p1_proj, u1, axis.Cross(u1), axis))
             if angle == 2 * math.pi:
@@ -5313,7 +5308,6 @@ class LineSegment3D(Edge3D):
 
         elif d1 != d2:
             # Conical
-            v = self.points[0] - p1_proj
             w = axis.Cross(v)
             u1 = self.DirectionVector()
             semi_angle = math.asin(u1.Cross(axis).Norm())
@@ -5321,10 +5315,9 @@ class LineSegment3D(Edge3D):
                                        semi_angle)
             return surface.rectangular_cut(0, self.Length(), 0, angle)
         else:
-            v = self.points[0] - p1_proj
-            w = axis.Cross(v)
-            surface = CylindricalSurface3D(Frame3D(p1_proj, axis, v, w), d1)
-            return surface.rectangular_cut(0, self.Length(), 0, angle)
+            v = axis.Cross(u1)
+            surface = CylindricalSurface3D(Frame3D(p1_proj, u1, v, axis), d1)
+            return surface.rectangular_cut(0, angle, 0, self.Length())
 
 
 class DisplayMesh3D(DisplayMesh):
@@ -5359,11 +5352,8 @@ class Contour3D(Wire3D):
     """
 
     def __init__(self, edges, point_inside_contour=None, name=''):
-        # TODO: docstring in english
         """
-        Faire un choix : soit edges c'est un CompositePrimitives3D
-        ou alors un ensemble de primitives
-        ou alors un ensemble de basis_primtives (qui sont des points pour le moment)
+
         """
 
         self.name = name
@@ -5543,6 +5533,16 @@ class Contour3D(Wire3D):
     def to_2d(self, plane3d, name=None):
         primitives2d = [plane3d.point3d_to_2d(p) for p in self.primitives]
         return Contour3D(edges=primitives2d, name=name)
+
+    def _bounding_box(self):
+        """
+        Flawed method, to be enforced by overloading
+        """
+        n = 50
+        l = self.Length()
+        points = [self.PointAtCurvilinearAbscissa(i/n*l)\
+                  for i in range(n)]
+        return BoundingBox.from_points(points)
 
 
 class Circle3D(Contour3D):
@@ -5863,7 +5863,7 @@ class Face3D(Primitive3D):
                     primitive2d.__class__.__name__))
 
             primitives3d.append(primitive3d)
-        return Contour3D(primitive3d)
+        return Contour3D(primitives3d)
 
     def _bounding_box(self):
         """
