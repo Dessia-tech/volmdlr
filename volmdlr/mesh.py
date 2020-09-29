@@ -80,19 +80,19 @@ class LinearElement(vm.LineSegment2D):
     #     if n*self.length() < 1 :
     #         segment_to_nodes[self]=[]
     #     else :
-    #          l0= int(math.ceil(n*self.length()))
+    #           l0= int(math.ceil(n*self.length()))
         
                     
    
-    #          for k in range(l0):
+    #           for k in range(l0):
                       
                              
-    #              node=self.PointAtCurvilinearAbscissa(k/n)
+    #               node=self.PointAtCurvilinearAbscissa(k/n)
                        
-    #              nodes.append(node)
-    #          nodes.insert(len(nodes),self.point2)
+    #               nodes.append(node)
+    #           nodes.insert(len(nodes),self.point2)
                    
-    #          segment_to_nodes[self]=nodes
+    #           segment_to_nodes[self]=nodes
          
                 
                
@@ -101,7 +101,15 @@ class LinearElement(vm.LineSegment2D):
         
                
         
-    
+    def common_edge(self,nodes_1:List[vm.Point2D],nodes_2:List[vm.Point2D]):
+        common_edge=[]
+        for point_1 in nodes_1:
+            for point_2 in nodes_2:
+                if point_1==point_2:
+                    common_edge.append(point_1)
+        if len(common_edge)==1:
+            return True
+        return False
     
     
     def plot(self, ax=None, color='k', width=None, plot_points=False):
@@ -116,7 +124,7 @@ class LinearElement(vm.LineSegment2D):
             ax.plot([self.point1[0], self.point2[0]], [self.point1[1], self.point2[1]], color=color, linewidth=width)
         return ax
 
-class TriangularElement(vm.Polygon2D):
+class TriangularElement(vm.Triangle2D):
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
@@ -236,15 +244,7 @@ class TriangularElement(vm.Polygon2D):
         P2=self.points[2]
         return self.line_equation(P0,P1,M)> 0 and self.line_equation(P1,P2,M) > 0 and self.line_equation(P2,P0,M) > 0
     
-    
-    def min_length(self):
-         L=[]
-        
-         for k in range(len(self.linear_elements)):
-             L.append(self.linear_elements[k].length())
-       
-         return min(L)     
-              
+
     
         
         
@@ -334,38 +334,46 @@ class TriangularElement(vm.Polygon2D):
     def triangle_to_polygon(self):
         points=self.points
         return vm.Polygon2D(points)
+    def common_edge(self,triangle:'TriangularElement'):
+        common_edge=[]
+        for point_1 in self.points:
+            for point_2 in triangle.points:
+                if point_1==point_2:
+                    common_edge.append(point_1)
+        if len(common_edge)==2:
+            return True
+        return False
     
     
-    
-    def mesh_segments(self,n:float):
+    # def mesh_segments(self,n:float):
         
         
-        segment_to_nodes={}
-        for linear_element in self.linear_elements:
+    #     segment_to_nodes={}
+    #     for linear_element in self.linear_elements:
             
-            nodes=[]
-            if n*linear_element.length() < 1:
+    #         nodes=[]
+    #         if n*linear_element.length() < 1:
                 
-                 segment_to_nodes[linear_element]=[linear_element.point1,linear_element.point2]
+    #              segment_to_nodes[linear_element]=[linear_element.point1,linear_element.point2]
                 
-            else :
+    #         else :
                    
-                   l0= int(math.ceil(n*linear_element.length()))
+    #                l0= math.ceil(n*linear_element.length())
                     
            
-                   for k in range(l0):
+    #                for k in range(l0+1):
                   
                          
-                       node=linear_element.PointAtCurvilinearAbscissa(k/n)
+    #                    node=linear_element.PointAtCurvilinearAbscissa(k*n)
                        
-                       nodes.append(node)
-                   nodes.insert(len(nodes),linear_element.point2)
-                   segment_to_nodes[linear_element]=nodes
+    #                    nodes.append(node)
+    #                # nodes.insert(len(nodes),linear_element.point2)
+    #                segment_to_nodes[linear_element]=nodes
 
                 
                
             
-        return segment_to_nodes
+    #     return segment_to_nodes
         
       
         
@@ -490,195 +498,22 @@ class TriangularElement(vm.Polygon2D):
     #    return all_polygons
          
            
-           
-    def mesh_triangle(self,n:float):
-       segment_to_nodes=self.mesh_segments(n)
-       # print(segment_to_nodes)
-
-       
-     
-       linear_elements=self.linear_elements
-       
-       min_segment=[]
-       interior_segments=[]
-       interior_segment_nodes={}
-       all_triangles=[]
-       
-       k=0
-       nodes_0=[]
-       nodes_1=[]
-       if len(segment_to_nodes[linear_elements[1]])> len(segment_to_nodes[linear_elements[0]]) and len(segment_to_nodes[linear_elements[2]])>= len(segment_to_nodes[linear_elements[0]]) :
-           
-           nodes_0=segment_to_nodes[linear_elements[1]]
-           nodes_1=segment_to_nodes[linear_elements[2]]
-           min_segment.append(linear_elements[0])
-           
-       if len(segment_to_nodes[linear_elements[1]])< len(segment_to_nodes[linear_elements[0]]) and len(segment_to_nodes[linear_elements[2]])>= len(segment_to_nodes[linear_elements[0]]) :
-           
-           nodes_0=segment_to_nodes[linear_elements[0]]
-           nodes_1=segment_to_nodes[linear_elements[2]]
-           min_segment.append(linear_elements[1])
-             
-       if len(segment_to_nodes[linear_elements[0]])> len(segment_to_nodes[linear_elements[2]]) and len(segment_to_nodes[linear_elements[1]])>= len(segment_to_nodes[linear_elements[0]]) :
-           
-           nodes_0=segment_to_nodes[linear_elements[0]]
-           nodes_1=segment_to_nodes[linear_elements[1]]
-           min_segment.append(linear_elements[2])
-       if len(segment_to_nodes[linear_elements[0]])> len(segment_to_nodes[linear_elements[1]]) and len(segment_to_nodes[linear_elements[1]])>= len(segment_to_nodes[linear_elements[2]]) :
-           
-           nodes_0=segment_to_nodes[linear_elements[0]]
-           nodes_1=segment_to_nodes[linear_elements[1]]
-           min_segment.append(linear_elements[2])
-           
-       if len(segment_to_nodes[linear_elements[0]])== len(segment_to_nodes[linear_elements[2]]) and len(segment_to_nodes[linear_elements[1]])==len(segment_to_nodes[linear_elements[0]]):
-         
-           nodes_0=segment_to_nodes[linear_elements[0]]
-           nodes_1=segment_to_nodes[linear_elements[1]]
-           min_segment.append(linear_elements[2])
-       # print(nodes_1)
-       # print(nodes_0)
-       
-       
-       l0=min(len(nodes_0),len(nodes_1))
-       l1=max(len(nodes_0),len(nodes_1))
-      
-       if len(nodes_0)>len(nodes_1):
-           while k < l0-2:
-              
-               interior_segment=vm.LineSegment2D(nodes_0[k+1],nodes_1[len(nodes_1)-k-2])
-              
-               interior_segments.append(interior_segment)
-               k=k+1
-       else :
-            while k < l0-2:
-              
-               interior_segment=vm.LineSegment2D(nodes_1[k+1],nodes_0[len(nodes_0)-k-2])
-              
-               interior_segments.append(interior_segment)
-           
-               k=k+1
+    def common_vertice(self,triangle:'TriangularElement'):
+        linear_elements_1=self.linear_elements
+        linear_elements_2=triangle.linear_elements
+        common_vertice=[]
+        for linear_1 in linear_elements_1:
+            for linear_2 in linear_elements_2:
+                if linear_1==linear_2:
+                    common_vertice.append(linear_1)
+        if common_vertice!=[]:
+            
+            return common_vertice[0]
+        return None
     
-       # if len(nodes_0)>len(nodes_1):
-       #       for k in range(l0,len(nodes_0)-1):
-       #           new_triangle=TriangularElement([nodes_0[k],nodes_1[len(nodes_1)],nodes_1[len(nodes_1)-1]])
-               
-       #           all_triangles.append(new_triangle)
-          
-              
-       # if len(nodes_1)>len(nodes_0):
-       #        for k in range(l0,len(nodes_1)-1):
-       #          new_triangle=vm.TriangularElement([nodes_1[k],nodes_0[len(nodes_0)],nodes_0[len(nodes_0)-1]])
-             
-       #          all_triangles.append(new_triangle)
-       
-       
-       
-       for seg in interior_segments:
-         
-
-               interior_segment_nodes[seg]=seg.mesh_segment(n)[seg]
-               
-       if min_segment[0].point_distance(vm.Point2D(interior_segments[0].points[0])) < min_segment[0].point_distance(interior_segments[len(interior_segments)-1].points[0]):
-           
-           interior_segments.insert(0,min_segment[0])
-           
-           interior_segment_nodes[interior_segments[0]]=segment_to_nodes[interior_segments[0]]
-       
-       else :
-           
-           interior_segments.insert(len(interior_segments),min_segment[0])
-           
-       
-           interior_segment_nodes[interior_segments[len(interior_segments)-1]]=segment_to_nodes[interior_segments[len(interior_segments)-1]]
-       for k in range(len(interior_segments)):
-           
-            print(interior_segments[k].points )
-          
-       
-       for k in range(len(interior_segments)-1):
-           
-           u=len(interior_segment_nodes[interior_segments[k]])
-           v=len(interior_segment_nodes[interior_segments[k+1]])
-           print(u)
-           print(v)
-           if interior_segment_nodes[interior_segments[k]][0].point_distance(interior_segment_nodes[interior_segments[k+1]][0])> interior_segment_nodes[interior_segments[k]][0].point_distance(interior_segment_nodes[interior_segments[k+1]][1]):
-               interior_segment_nodes[interior_segments[k+1]].reverse()
-               
-           if u>2 and v>2:
-               print('ok')
-               for j in range(min(u,v)-1):
-                       
-                       
-                       new_triangle_1=TriangularElement([interior_segment_nodes[interior_segments[k]][j+1],interior_segment_nodes[interior_segments[k]][j],interior_segment_nodes[interior_segments[k+1]][j]])
-                       new_triangle_2=TriangularElement([interior_segment_nodes[interior_segments[k]][j+1],interior_segment_nodes[interior_segments[k+1]][j+1],interior_segment_nodes[interior_segments[k+1]][j]])
-                       if new_triangle_1 not in all_triangles:
-                           
-                           all_triangles.append(new_triangle_1)
-                           
-                       if new_triangle_2 not in all_triangles:
-                              # print(new_triangle_2.points)
-                           
-                              all_triangles.append(new_triangle_2)
-               # for j in range(min(u,v),u-1):
-               #             new_triangle=TriangularElement([interior_segment_nodes[interior_segments[k]][j],interior_segment_nodes[interior_segments[k]][j+1],interior_segment_nodes[interior_segments[k+1]][v-1]])
-                       
-               #             if new_triangle not in all_triangles:
-                           
-                #                all_triangles.append(new_triangle)       
-           if v==2 and u>2:
-                 for j in range(math.ceil(u/2)):
-                   
-                   new_triangle_1=TriangularElement([interior_segment_nodes[interior_segments[k]][j],interior_segment_nodes[interior_segments[k]][j+1],interior_segment_nodes[interior_segments[k+1]][0]])
-                  
-                   if new_triangle_1 not in all_triangles:
-                     
-                       all_triangles.append(new_triangle_1) 
-                 for j in range((math.ceil(u/2)-1),u-1):
-                   new_triangle_2=TriangularElement([interior_segment_nodes[interior_segments[k]][j],interior_segment_nodes[interior_segments[k]][j+1],interior_segment_nodes[interior_segments[k+1]][1]])
-           
-          
-                   new_triangle_2=TriangularElement([interior_segment_nodes[interior_segments[k]][0],interior_segment_nodes[interior_segments[k]][1],interior_segment_nodes[interior_segments[k+1]][0]]) 
-                   if new_triangle_2 not in all_triangles:
-                           
-                                  all_triangles.append(new_triangle_2)
-                  # for j in range(u-1):
-                  #    # new_triangle=TriangularElement([interior_segment_nodes[interior_segments[k]][j],interior_segment_nodes[interior_segments[k+1]][j+1],interior_segment_nodes[interior_segments[k+1]][0]])
-                  #    new_triangle=TriangularElement([interior_segment_nodes[interior_segments[k]][j],interior_segment_nodes[interior_segments[k+1]][0],interior_segment_nodes[interior_segments[k+1]][1]])
-                  #    if new_triangle not in all_triangles:
-                           
-                  #            all_triangles.append(new_triangle)
-                         
-                  # new_triangle_1=TriangularElement([interior_segment_nodes[interior_segments[k]][u-1],interior_segment_nodes[interior_segments[k]][u-2],interior_segment_nodes[interior_segments[k+1]][1]])
-             
-                  # if new_triangle_1 not in all_triangles:
-                           
-                  #               all_triangles.append(new_triangle_1)
-                  
-                  # new_triangle_2=TriangularElement([interior_segment_nodes[interior_segments[k]][0],interior_segment_nodes[interior_segments[k]][1],interior_segment_nodes[interior_segments[k+1]][0]])
-               
-                  # if new_triangle_2 not in all_triangles:
-                           
-                  #              all_triangles.append(new_triangle_2)
-             
-           if u==2 and v>2:
-                for j in range(math.ceil(v/2)):
-                   
-                   new_triangle_1=TriangularElement([interior_segment_nodes[interior_segments[k+1]][j],interior_segment_nodes[interior_segments[k+1]][j+1],interior_segment_nodes[interior_segments[k]][0]])
-                  
-                   if new_triangle_1 not in all_triangles:
-                     
-                       all_triangles.append(new_triangle_1) 
-                for j in range((math.ceil(v/2)-1),v-1):
-                   new_triangle_2=TriangularElement([interior_segment_nodes[interior_segments[k+1]][j],interior_segment_nodes[interior_segments[k+1]][j+1],interior_segment_nodes[interior_segments[k]][1]])
-           
-          
-                   new_triangle_2=TriangularElement([interior_segment_nodes[interior_segments[k+1]][0],interior_segment_nodes[interior_segments[k+1]][1],interior_segment_nodes[interior_segments[k]][0]]) 
-                   if new_triangle_2 not in all_triangles:
-                           
-                                  all_triangles.append(new_triangle_2)
-       return all_triangles  
     
-      
+                
+   
     
           
            
@@ -886,12 +721,12 @@ class Mesher(DessiaObject):
         j=self.edge_max_distance(polygone,P0,P1,P2,[j0,j1,j2])
    
         if j==None:
-            self.triangles.append(TriangularElement([P0,P1,P2]))
+            self.triangles.append(vm.Triangle2D([P0,P1,P2]))
            
             polygone_1=self.new_polygon(polygone,j1,j2)
             
             if len(polygone_1.points)==3:
-                self.triangles.append(TriangularElement([polygone_1.points[0],polygone_1.points[1],polygone_1.points[2]]))
+                self.triangles.append(vm.Triangle2D([polygone_1.points[0],polygone_1.points[1],polygone_1.points[2]]))
                 
             else :
                 
@@ -921,34 +756,9 @@ class Mesher(DessiaObject):
     def polygon_to_triangles(self,polygons:List[vm.Polygon2D]):
         triangles=[]
         for polygon in polygons:
-            triangles.append(TriangularElement(polygon.points))
+            triangles.append(vm.Triangle2D(polygon.points))
         return triangles
-    # def delaunay_triangulation(self,points:List[vm.Point2D]):
-    #     new_points=[]
-    #     delaunay_triangles=[]
-        
-    #     for point in points : 
-    #         new_points.append([point[0],point[1]])
-        
-            
-    #     delaunay=npy.array(new_points)  
-        
-    #     tri=Delaunay(delaunay)
-        
-       
-    #     fig,ax=plt.subplots()
-        
-      
-    #     for simplice in delaunay[tri.simplices]:
-        
-    #         triangle=TriangularElement([vm.Point2D(simplice[0]),vm.Point2D(simplice[1]),vm.Point2D(simplice[2])])
-    #         delaunay_triangles.append(triangle)
-    #         triangle.plot(ax=ax)
-                
-        
-        
-    #     return delaunay_triangles
-         
+
              
   
         
@@ -962,114 +772,55 @@ class Mesher(DessiaObject):
         return ax
     
     
-    # def assemble_mesh(self,triangles:List[TriangularElement]):
-    #     all_triangles=[]
-    #     all_triangles+=self.delaunay_triangulation(self.polygon.points)   
-        
-      
-    #     for triangle in triangles :
-                
-    #             all_polygons=[]
-    #             linear_elements=triangle.linear_elements
-    #             segment_to_nodes=triangle.mesh_segment(self.nodes_len)
-    #             nodes_1=segment_to_nodes[linear_elements[0]]
-    #             nodes_2=segment_to_nodes[linear_elements[1]]
-    #             nodes_3=nodes_2=segment_to_nodes[linear_elements[2]]
-    #             nodes=list(product(nodes_1,nodes_2))
-             
-    #             all_polygons.append(vm.Polygon2D([nodes[0][0],nodes[1][0],nodes[0][1],nodes[1][1]]))
-    #             length=len(all_polygons)
-    #             for k in range(1,len(nodes)):
-    #                 for j in range(2,len(nodes)-1):
-                    
-    #                           if abs(nodes[k][0][0]nodes[j][0][])<10e-10 and abs(nodes[k][1]!=nodes[j][1])<10e-10:
-                                     
-                                    
-    #                                   i=0
-                                     
-    #                                   while i<length:
-    #                                       print(vm.Polygon2D([nodes[k][0],nodes[j][0],nodes[k][1],nodes[j][1]]).is_intersecting(all_polygons[i]))
-                                         
-    #                                       if vm.Polygon2D([nodes[k][0],nodes[j][0],nodes[k][1],nodes[j][1]]).is_intersecting(all_polygons[i])==False:
-                                           
-                                           
-    #                                         all_polygons.append(vm.Polygon2D([nodes[k][0],nodes[j][0],nodes[k][1],nodes[j][1]]))
-    #                                         i+=1
-                                            
-                                           
-    #                                       else : 
-    #                                           i+=1
-                                             
-                                                
-                                    
-              
-    #             print(all_polygons)
-    #             for polygon in all_polygons:
-    #                 polygon.points()
-    #                 all_triangles+=self.delaunay_triangulation(polygon.points)
-                        
-                
-                
-                
-    #     return all_triangles
-                    
-               
-                      
-    def assemble_mesh(self,triangles:List[TriangularElement]):
-        
-        all_triangles=[]
-        all_triangles+=triangles
-        for triangle in triangles:
-            print('next')
-            all_triangles+=triangle.mesh_triangle(self.nodes_len)
-        
-        return all_triangles
-   
-                
-            
-        
-        
-      
-        
-               
-          
-          
-                                                
-                                    
-              
-                
-                        
-                
-                
+
                 
 
                     
-                          
-                
-          
-                
-     
-                
-                
-                
-                    
+               
+    def mesh(self):
+        ax=plt.subplot()
+        segment_to_nodes={}
+        all_segments=set()
         
-        
-        
+        # polygons=self.contour.polygon.delaunay_triangulation()
+        # triangles=self.polygon_to_triangles(polygons)
+        triangles=self.triangulation_polygone_recursive(self.polygon)
         
        
-        
-        
-        # for triangle in triangles :
-        #     all_triangles+=(triangle.mesh_triangle(self.nodes_len,trigger))
             
-        # return all_triangles
+        all_triangles=[]
+        all_triangles+=triangles
+        all_triangle_elements=[]
+        all_aspect_ratios=[]
+        for triangle in all_triangles:
+            triangle.MPLPlot(ax=ax)
+        for triangle in triangles:
+            all_segments= all_segments.union(triangle.line_segments)
+        for segment in all_segments:
+            segment_to_nodes[segment]=segment.mesh_segment(self.nodes_len,ax)
+        
+        for triangle in triangles :
+              all_triangles+=triangle.mesh_triangle(segment_to_nodes,self.nodes_len,ax)[0]
+              all_aspect_ratios+=triangle.mesh_triangle(segment_to_nodes,self.nodes_len,ax)[1]
+             
+
+        for triangle in all_triangles:
+            triangle.MPLPlot(ax=ax)
+            triangular_element=TriangularElement(triangle.points)
+            all_triangle_elements.append(triangular_element)
+     
+        grade=min(all_aspect_ratios)
+      
+            
+        print("The grade of the mesh is " + str(grade))
+        return all_triangle_elements
+                
+            
+                
             
         
-  
-    
-   
-                        
+        
+
                         
                         
                       
@@ -1078,41 +829,7 @@ class Mesher(DessiaObject):
                 
         
                 
-            
-    # def assemble_mesh(self,triangles:List[TriangularElement],trigger):
-    #     memo=[]
-    #     nodes=self.nodes_on_segments(triangles)[0]
-    #     for triangle in triangles: 
-    #         l0=triangle.linear_elements[0].length()/3
-    #         if l0 > trigger and len(nodes) >= 3 :
-               
-    #             nodes=self.nodes_on_segments(triangles)[0]
-                
-             
-    #             new_triangles=[]
-               
-    #             for node in nodes :
-                   
-    #                 u=self.closest_neightbours(triangles,node)
-    #                 if u!=[]:
-                       
-    #                     n1=u[0]
-    #                     n2=u[1]
-                       
-                    
-    #                     new_triangle = TriangularElement([node,n1,n2])
-    #                     new_triangles.append(new_triangle)
-    #                     if new_triangle not in memo:
-    #                         memo.append(new_triangle)
-                       
-                        
-    #             memo.extend(self.assemble_mesh(triangles=new_triangles,trigger=trigger))
-               
-               
-          
-      
-    #     return memo
-     
+
           
       
     
