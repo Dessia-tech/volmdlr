@@ -37,7 +37,6 @@ grid_on = True
 colorfill = 'lightblue'
 font = '12px sans-serif'  # Font family : Arial, Helvetica, serif, sans-serif, Verdana, Times New Roman, Courier New
 tp_width = 90
-tp_height = 35
 tp_radius = 10
 to_plot_list = ['cx', 'cy']
 

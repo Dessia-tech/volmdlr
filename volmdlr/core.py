@@ -2124,7 +2124,7 @@ class Circle2D(Contour2D):
 
 class ScatterPlot(dc.DessiaObject):
     def __init__(self, nb_points_x: int, nb_points_y: int, font_size: int,
-                 graduation_color: str, axis_color: str, axis_width: str, arrow_on: bool,
+                 graduation_color: str, axis_color: str, axis_width: float, arrow_on: bool,
                  grid_on: bool, name: str = ''):
         self.nb_points_x = nb_points_x
         self.nb_points_y = nb_points_y

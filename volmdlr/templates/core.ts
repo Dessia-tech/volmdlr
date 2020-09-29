@@ -767,11 +767,11 @@ export class PlotDataPoint2D {
   minY:number=0;
   maxY:number=0;
   mouse_selection_color:any;
+  size:number;
 
   constructor(public data:any,
               public cx:number,
               public cy:number,
-              public size:number,
               public plot_data_states:PlotDataState[],
               public type:string,
               public name:string) {
@@ -779,14 +779,11 @@ export class PlotDataPoint2D {
     for (var i=0; i<this.plot_data_states.length; i++) {
       var plot = this.plot_data_states[i];
       var point_size = plot.point_size.size;
-      if (point_size==1||point_size==2||point_size==3||point_size==4) {
-        var height = plot.window_size.height;
-        var width = plot.window_size.width;
-      } else {
+      if ((point_size<1) || (point_size>4)) {
         throw new Error('Invalid point_size');
       }
     }
-    this.size = point_size * Math.min(height,width)/150;
+    this.size = point_size/400;
     this.minX = this.cx - this.size;
     this.maxX = this.cx + this.size;
     this.minY = this.cy - this.size;
@@ -804,7 +801,6 @@ export class PlotDataPoint2D {
       return new PlotDataPoint2D(serialized['data'],
                                   serialized['cx'],
                                   serialized['cy'],
-                                  serialized['size'],
                                   plot_data_states,
                                   serialized['type'],
                                   serialized['name']);
@@ -815,16 +811,16 @@ export class PlotDataPoint2D {
           context.lineWidth = this.plot_data_states[i].stroke_width;
           var shape = this.plot_data_states[i].shape_set.shape;
           if (shape == 'circle') {
-            context.arc(scaleX*(1000*this.cx+ mvx), scaleY*(1000*this.cy+ mvy), init_scale*1000*this.size, 0, 2*Math.PI);
+            context.arc(scaleX*(1000*this.cx+ mvx), scaleY*(1000*this.cy+ mvy), 1000*this.size, 0, 2*Math.PI);
             context.stroke();
           } else if (shape == 'square') {
-            context.rect(scaleX*(1000*(this.cx - this.size) + mvx),scaleY*(1000*(this.cy - this.size) + mvy),init_scale*1000*this.size*2, init_scale*1000*this.size*2);
+            context.rect(scaleX*(1000*(this.cx - this.size) + mvx),scaleY*(1000*(this.cy - this.size) + mvy),1000*this.size*2, 1000*this.size*2);
             context.stroke();
           } else if (shape == 'crux') {
-            context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),init_scale*1000*this.size, init_scale*100*this.size);
-            context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),-init_scale*1000*this.size, init_scale*100*this.size);
-            context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),init_scale*100*this.size, init_scale*1000*this.size);
-            context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),init_scale*100*this.size, -init_scale*1000*this.size);
+            context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),1000*this.size, 100*this.size);
+            context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),-1000*this.size, 100*this.size);
+            context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),100*this.size, 1000*this.size);
+            context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),100*this.size, -1000*this.size);
             context.fillStyle = context.strokeStyle;
             context.stroke();
 
@@ -1003,7 +999,7 @@ export class PlotDataTooltip {
     }
 
     var font_size = Number(this.font.split('px')[0]);
-    var tp_height = (textfills.length + 0.5)*font_size ;
+    var tp_height = (textfills.length + 0.25)*font_size ;
     var cx = object.cx;
     var cy = object.cy;
     var tp_x = scaleX*(1000*cx + mvx) + init_scale*40;
@@ -1031,7 +1027,7 @@ export class PlotDataTooltip {
     var x_middle = tp_x + 1/2*this.tp_width;
     context.font = this.font;
 
-    var current_y = tp_y + font_size;
+    var current_y = tp_y + 0.75*font_size;
     for (var i=0; i<textfills.length; i++) {
       context.fillText(textfills[i], x_middle, current_y);
       current_y = current_y + font_size;
