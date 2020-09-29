@@ -16,24 +16,38 @@ from dessia_common import DessiaObject
 from typing import TypeVar, List, Tuple
 from scipy.spatial import Delaunay
 from itertools import product 
-p1 = vm.Point2D([1,1])
-p2 = vm.Point2D([2,1])
-p3 = vm.Point2D([2.5,2])
-p4 = vm.Point2D([1.5,3])
-p5 =  vm.Point2D([1,2])
-p6 =  vm.Point2D([1.6666666666666667, 2.3333333333333335])
-points=npy.array([[1,1],[2,1],[2.5,2],[1.5,3],[1,2]])
+# p1 = vm.Point2D([1,1])
+# p2 = vm.Point2D([2,1])
+# p3 = vm.Point2D([2.5,2])
+# p4 = vm.Point2D([1.5,3])
+# p5 =  vm.Point2D([1,2])
+# p6 =  vm.Point2D([1.6666666666666667, 2.3333333333333335])
 
-tr1=vmmesh.TriangularElement([p3,p4,p6])
+p1 = vm.Point2D([2,2])
+p2 = vm.Point2D([3,3])
+p3 = vm.Point2D([3,4])
+p4 = vm.Point2D([2.8,4])
+p5 =  vm.Point2D([1.9,5])
+p6 =  vm.Point2D([1,4])
+a1=vm.Arc2D(vm.Point2D(1,1),vm.Point2D(2,3),vm.Point2D(1.6))
+a1.MPLPlot()
 
 
+
+
+# l1 = vm.LineSegment2D(p1,p2)
+# l2 = vm.LineSegment2D(p2,p3)
+# l3=vm.LineSegment2D(p3,p4)
+# l4 = vm.LineSegment2D(p4,p5) 
+# l5 = vm.LineSegment2D(p5,p1)
 
 l1 = vm.LineSegment2D(p1,p2)
 l2 = vm.LineSegment2D(p2,p3)
 l3=vm.LineSegment2D(p3,p4)
 l4 = vm.LineSegment2D(p4,p5) 
-l5 = vm.LineSegment2D(p5,p1)
-contour=vm.Contour2D([l1,l2,l3,l4,l5])
+l5 = vm.LineSegment2D(p5,p6)
+l6 = vm.LineSegment2D(p6,p1)
+contour=vm.Contour2D([l1,l2,l3,l4,l5,l6])
 
 # L=[p1,p2]
 # M=[p3,p4]
@@ -41,39 +55,25 @@ contour=vm.Contour2D([l1,l2,l3,l4,l5])
 
 
 
-polygon=contour.polygon
-all_points=polygon.points
+# polygon=contour.polygon
+# all_points=polygon.points
 
-mesher=vmmesh.Mesher(contour,[],1.7)
-polygons=polygon.delaunay_triangulation()
-triangles=mesher.polygon_to_triangles(polygons)
-
-
-
-all_triangles=mesher.assemble_mesh(triangles)
-
-print(len(all_triangles))
-print(len(set(all_triangles)))
-
-
-# all_triangles=mesher.assemble_mesh(triangles)
-
-element_group=vmmesh.ElementsGroup(all_triangles,'element_group')
-
-mesh=vmmesh.Mesh([element_group])
-mesh.plot()  
+# mesher=vmmesh.Mesher(contour,[],1.7)
+# all_triangle_elements=mesher.mesh()
 
 
 
 
 
-                                              
-#all_triangles=mesher.assemble_mesh(triangles,0.1)
-# element_group=vmmesh.ElementsGroup(all_triangles,'element_group')
+# element_group=vmmesh.ElementsGroup(all_triangle_elements,'element_group')
+
 # mesh=vmmesh.Mesh([element_group])
-# mesh.plot()  
-# print(len(all_triangles))
-# print(len(set(all_triangles)))
+
+
+
+
+
+
 
 
 
