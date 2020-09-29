@@ -1,5 +1,6 @@
 import volmdlr as vm
 from volmdlr import plot_data
+import numpy as np
 
 # Point test ####
 
@@ -25,7 +26,7 @@ stroke_width = 2  # Points' stroke width
 # Scatter plot
 nb_points_x = 10
 nb_points_y = 10
-font_size = 15
+font_size = 12
 graduation_color = 'grey'
 axis_color = 'grey'
 axis_width = 0.5
@@ -34,7 +35,7 @@ grid_on = True
 
 # Tooltip
 colorfill = 'lightblue'
-font = '15px'  # Font family : Arial, Helvetica, serif, sans-serif, Verdana, Times New Roman, Courier New
+font = '12px sans-serif'  # Font family : Arial, Helvetica, serif, sans-serif, Verdana, Times New Roman, Courier New
 tp_width = 90
 tp_height = 35
 tp_radius = 10
@@ -46,13 +47,23 @@ shape_set = plot_data.PointShapeSet(shape=shape)
 point_size = plot_data.PointSizeSet(size=size)
 point_color = plot_data.PointColorSet(color_fill=color_fill,
                                       color_stroke=color_stroke)
-for i in range(3):
+for i in range(50):
     point = vm.Point2D.random(0, window_size.width, 0,
                               window_size.height).to_canvas_style()
     plot_datas += [point.plot_data([plot_data.PlotDataState(
         color_surface=plot_data.ColorSurfaceSet(color=surface_color),
         window_size=window_size, stroke_width=stroke_width,
         shape_set=shape_set, point_size=point_size, point_color=point_color)])]
+
+# k = 0
+# while k < 10 * np.pi:
+#     point = vm.Point2D([k, np.sin(k)])
+#     plot_datas += [point.plot_data([plot_data.PlotDataState(
+#         color_surface=plot_data.ColorSurfaceSet(color=surface_color),
+#         window_size=window_size, stroke_width=stroke_width,
+#         shape_set=shape_set, point_size=point_size, point_color=point_color)])]
+#     k = k + np.pi/10
+
 # point0 = vm.Point2D([0,0])
 # plot_datas += [point0.plot_data([plot_data.PlotDataState(color_surface=plot_data.ColorSurfaceSet(color='black'), window_size=window_size, shape_set=shape_set, point_size=point_size,point_color=point_color)])]
 # point1 = vm.Point2D([1,1])
@@ -64,10 +75,13 @@ for i in range(3):
 
 scatter_plot = vm.ScatterPlot(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               font_size=font_size,
-                              graduation_color=graduation_color, axis_color=axis_color, arrow_on=arrow_on, axis_width=axis_width, grid_on=grid_on)
+                              graduation_color=graduation_color,
+                              axis_color=axis_color, arrow_on=arrow_on,
+                              axis_width=axis_width, grid_on=grid_on)
 plot_datas += [scatter_plot.plot_data([plot_data.PlotDataState()])]
 
-tooltip = vm.Tooltip(colorfill=colorfill, font=font, tp_width=tp_width, tp_radius=tp_radius, to_plot_list=to_plot_list)
+tooltip = vm.Tooltip(colorfill=colorfill, font=font, tp_width=tp_width,
+                     tp_radius=tp_radius, to_plot_list=to_plot_list)
 plot_datas += [tooltip.plot_data([plot_data.PlotDataState()])]
 
 sol = [c.to_dict() for c in plot_datas]
