@@ -195,12 +195,12 @@ class Block(volmdlr.Shell3D):
 
     def shell_faces(self):
         c1, c2, c3, c4, c5, c6 = self.face_contours()
-        return [volmdlr.PlaneFace3D.from_contours3d([c1]),
-                volmdlr.PlaneFace3D.from_contours3d([c2]),
-                volmdlr.PlaneFace3D.from_contours3d([c3]),
-                volmdlr.PlaneFace3D.from_contours3d([c4]),
-                volmdlr.PlaneFace3D.from_contours3d([c5]),
-                volmdlr.PlaneFace3D.from_contours3d([c6])]
+        return [volmdlr.PlaneFace3D.from_contours3d(c1),
+                volmdlr.PlaneFace3D.from_contours3d(c2),
+                volmdlr.PlaneFace3D.from_contours3d(c3),
+                volmdlr.PlaneFace3D.from_contours3d(c4),
+                volmdlr.PlaneFace3D.from_contours3d(c5),
+                volmdlr.PlaneFace3D.from_contours3d(c6)]
 
     def Rotation(self, center, axis, angle, copy=True):
         if copy:
@@ -514,6 +514,7 @@ class RevolvedProfile(volmdlr.Shell3D):
 
     """
     _non_serializable_attributes  = ['faces', 'contour3D']
+
     def __init__(self, plane_origin, x, y, contour2d, axis_point,
                  axis, angle=2*math.pi, *, color=None, alpha=1, name=''):
 
@@ -527,24 +528,22 @@ class RevolvedProfile(volmdlr.Shell3D):
         self.contour3d = self.contour2d.To3D(plane_origin, x, y)
 
         faces = self.shell_faces()
-        volmdlr.Shell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
-
+        volmdlr.Shell3D.__init__(self, faces, color=color,
+                                 alpha=alpha, name=name)
 
     def shell_faces(self):
         faces = []
                         
         for edge in self.contour3d.edges:
-            faces.append(edge.revolution(self.axis_point, self.axis, self.angle))
+            faces.append(edge.revolution(self.axis_point,
+                                         self.axis, self.angle))
                     
         return faces
-
-
 
     def MPLPlot(self, ax=None):
         if ax is None:
             fig, ax = plt.subplots()
         for contour in self.contours3D:
-#            for primitive in contour:
             contour.MPLPlot(ax)
 
     def FreeCADExport(self, ip, ndigits=3):
@@ -736,17 +735,19 @@ class Cylinder(RevolvedProfile):
         if copy:
             return Cylinder(self.position.frame_mapping(frame, side, copy),
                             axis,
-                            self.radius, self.length, color=self.color, alpha=self.alpha)
+                            self.radius, self.length, color=self.color,
+                            alpha=self.alpha)
         else:
             self.position.frame_mapping(frame, side, copy)
             self.axis = axis
             Cylinder.__init__(self, self.position, self.axis, self.radius, 
-                          self.length, color=self.color, alpha=self.alpha)
+                              self.length, color=self.color, alpha=self.alpha)
             
-    def copy(self) :
+    def copy(self):
         new_position = self.position.copy()
         new_axis = self.axis.copy()
-        return Cylinder(new_position, new_axis, self.radius, self.length, color=self.color, alpha=self.alpha, name=self.name)
+        return Cylinder(new_position, new_axis, self.radius, self.length,
+                        color=self.color, alpha=self.alpha, name=self.name)
         
 
 class HollowCylinder(Cylinder):

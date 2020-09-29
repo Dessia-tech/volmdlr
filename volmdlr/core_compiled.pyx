@@ -285,10 +285,10 @@ class Vector(DessiaObject):
     def copy(self):
         return self.__class__(self.vector)
 
-#    def Dict(self):
-#        d = {'vector': [float(i) for i in self.vector],
-#             'object_class' : self.full_classname}
-#        return d
+    def is_colinear_to(self, other_vector):
+        return math.isclose(abs(self.Dot(other_vector)),
+                            self.Norm()*other_vector.Norm(),
+                            abs_tol=1e-9)
 
     @classmethod
     def mean_point(cls, points):
