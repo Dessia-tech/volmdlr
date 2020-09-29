@@ -28,7 +28,9 @@ nb_points_y = 10
 font_size = 15
 graduation_color = 'grey'
 axis_color = 'grey'
+axis_width = 0.5
 arrow_on = False
+grid_on = True
 
 # Tooltip
 colorfill = 'lightblue'
@@ -44,7 +46,7 @@ shape_set = plot_data.PointShapeSet(shape=shape)
 point_size = plot_data.PointSizeSet(size=size)
 point_color = plot_data.PointColorSet(color_fill=color_fill,
                                       color_stroke=color_stroke)
-for i in range(50):
+for i in range(3):
     point = vm.Point2D.random(0, window_size.width, 0,
                               window_size.height).to_canvas_style()
     plot_datas += [point.plot_data([plot_data.PlotDataState(
@@ -62,7 +64,7 @@ for i in range(50):
 
 scatter_plot = vm.ScatterPlot(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               font_size=font_size,
-                              graduation_color=graduation_color, axis_color=axis_color, arrow_on=arrow_on)
+                              graduation_color=graduation_color, axis_color=axis_color, arrow_on=arrow_on, axis_width=axis_width, grid_on=grid_on)
 plot_datas += [scatter_plot.plot_data([plot_data.PlotDataState()])]
 
 tooltip = vm.Tooltip(colorfill=colorfill, font=font, tp_width=tp_width, tp_radius=tp_radius, to_plot_list=to_plot_list)

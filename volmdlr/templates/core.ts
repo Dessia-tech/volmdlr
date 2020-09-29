@@ -825,6 +825,8 @@ export class PlotDataScatter {
                      public axis_color:string,
                      public name:string, 
                      public arrow_on:boolean,
+                     public axis_width:string,
+                     public grid_on:boolean,
                      public type:string, 
                      public plot_data_states:PlotDataState[]) {
 
@@ -846,10 +848,12 @@ export class PlotDataScatter {
                                   serialized['font_size'],
                                   serialized['graduation_color'],
                                   serialized['axis_color'],
-                                  serialized['arrow_on'],
                                   serialized['name'],
+                                  serialized['arrow_on'],
+                                  serialized['axis_width'],
+                                  serialized['grid_on'], 
                                   serialized['type'],
-                                  serialized['plot_data_states']);
+                                  plot_data_states);
   }
 
   draw_graduations(context, mvx, mvy, scaleX, scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minX, maxX, minY, maxY, x_step, y_step, font_size) {
@@ -859,14 +863,27 @@ export class PlotDataScatter {
     var x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(x_step)));
     while(minX + i*x_step < maxX) {
       if ((scaleX*(1000*(minX + i*x_step) + mvx) >axis_x_start) && (scaleX*(1000*(minX + i*x_step) + mvx)<axis_x_end)) {
-        context.moveTo(scaleX*(1000*(minX + i*x_step) + mvx), axis_y_end - 3);
+        
+        if (this.grid_on === true) {
+          // context.lineWidth = 0.5;
+          context.strokeStyle = 'lightgrey';
+          context.moveTo(scaleX*(1000*(minX + i*x_step) + mvx), axis_y_start);
+        } else {
+          context.moveTo(scaleX*(1000*(minX + i*x_step) + mvx), axis_y_end - 3);
+        }
         context.lineTo(scaleX*(1000*(minX + i*x_step) + mvx), axis_y_end + 3);
         context.fillText(MyMath.round(minX + i*x_step, x_nb_digits), scaleX*(1000*(minX + i*x_step) + mvx), axis_y_end + font_size );
       } 
       i++
     }
     if ((scaleX*(1000*(minX + i*x_step) + mvx) >axis_x_start) && (scaleX*(1000*(minX + i*x_step) + mvx)<axis_x_end)) {
-      context.moveTo(scaleX*(1000*(minX + i*x_step) + mvx), axis_y_end - 3);
+      if (this.grid_on === true) {
+        // context.lineWidth = 0.5;
+        context.strokeStyle = 'lightgrey';
+        context.moveTo(scaleX*(1000*(minX + i*x_step) + mvx), axis_y_start);
+      } else {
+        context.moveTo(scaleX*(1000*(minX + i*x_step) + mvx), axis_y_end - 3);
+      }
       context.lineTo(scaleX*(1000*(minX + i*x_step) + mvx), axis_y_end + 3);
       context.fillText(MyMath.round(minX + i*x_step, x_nb_digits), scaleX*(1000*(minX + i*x_step) + mvx), axis_y_end + font_size );
     }
@@ -880,14 +897,26 @@ export class PlotDataScatter {
     while (real_minY + (i-1)*y_step < real_maxY) {
       if ((scaleY*(-1000*(real_minY + i*y_step) + mvy) > axis_y_start) && (scaleY*(-1000*(real_minY + i*y_step) + mvy) < axis_y_end)) {
         context.moveTo(axis_x_start - 3, scaleY*(-1000*(real_minY + i*y_step) + mvy));
-        context.lineTo(axis_x_start + 3, scaleY*(-1000*(real_minY + i*y_step) + mvy));
+        if (this.grid_on === true) {
+          // context.lineWidth = 0.5;
+          context.strokeStyle = 'lightgrey';
+          context.lineTo(axis_x_end, scaleY*(-1000*(real_minY + i*y_step) + mvy));
+        } else {
+          context.lineTo(axis_x_start + 3, scaleY*(-1000*(real_minY + i*y_step) + mvy));
+        }   
         context.fillText(MyMath.round(real_minY + i*y_step, y_nb_digits), axis_x_start - 5, scaleY*(-1000*(real_minY + i*y_step) + mvy) + font_size/3);
       }
       i++;
     }
     if ((scaleY*(-1000*(real_minY + i*y_step) + mvy) > axis_y_start) && (scaleY*(-1000*(real_minY + i*y_step) + mvy) < axis_y_end)) {
       context.moveTo(axis_x_start - 3, scaleY*(-1000*(real_minY + i*y_step) + mvy));
-      context.lineTo(axis_x_start + 3, scaleY*(-1000*(real_minY + i*y_step) + mvy));
+      if (this.grid_on === true) {
+        // context.lineWidth = 0.5;
+        context.strokeStyle = 'lightgrey';
+        context.lineTo(axis_x_end, scaleY*(-1000*(real_minY + i*y_step) + mvy));
+      } else {
+        context.lineTo(axis_x_start + 3, scaleY*(-1000*(real_minY + i*y_step) + mvy));
+      } 
       context.fillText(MyMath.round(real_minY + i*y_step, y_nb_digits), axis_x_start - 5, scaleY*(-1000*(real_minY + i*y_step) + mvy) + font_size/3);
     }
     context.stroke();
@@ -895,7 +924,9 @@ export class PlotDataScatter {
 
   draw(context, mvx, mvy, scaleX, scaleY, width, height, init_scale, minX, maxX, minY, maxY, scroll_x, scroll_y) {
     // Dessin du repère
-    context.strokeStyle = this.colorStroke;
+    context.beginPath();
+    context.strokeStyle = this.axis_color;
+    context.lineWidth = this.axis_width;
     var axis_x_start = 50;
     var axis_x_end = width;
     var axis_y_start = 0;
@@ -919,6 +950,7 @@ export class PlotDataScatter {
 
     context.moveTo(axis_x_start, axis_y_end);
     context.lineTo(axis_x_end, axis_y_end);
+    context.stroke();
 
     //Graduations
     if (scroll_x % 5 == 0) {
@@ -929,12 +961,13 @@ export class PlotDataScatter {
       var ky = 1.1*scaleY/init_scale;
       this.y_step = (maxY - minY)/(ky*(this.nb_points_y-1));
     }
-
+    
     context.font = this.font_size.toString() + 'px Arial';
     context.fillStyle = this.graduation_color;
     context.strokeStyle = this.axis_color;
     
     this.draw_graduations(context, mvx, mvy, scaleX, scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minX, maxX, minY, maxY, this.x_step, this.y_step, this.font_size);
+    context.closePath();
     
   }
 }

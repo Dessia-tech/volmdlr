@@ -2124,13 +2124,16 @@ class Circle2D(Contour2D):
 
 class ScatterPlot(dc.DessiaObject):
     def __init__(self, nb_points_x: int, nb_points_y: int, font_size: int,
-               graduation_color: str, axis_color: str, arrow_on:bool, name: str = ''):
+                 graduation_color: str, axis_color: str, axis_width: str, arrow_on: bool,
+                 grid_on: bool, name: str = ''):
         self.nb_points_x = nb_points_x
         self.nb_points_y = nb_points_y
         self.font_size = font_size
         self.graduation_color = graduation_color
         self.axis_color = axis_color
+        self.axis_width = axis_width
         self.arrow_on = arrow_on
+        self.grid_on = grid_on
         dc.DessiaObject.__init__(self, name)
 
     def plot_data(self,
@@ -2141,12 +2144,16 @@ class ScatterPlot(dc.DessiaObject):
                                              nb_points_y=self.nb_points_y,
                                              font_size=self.font_size,
                                              graduation_color=self.graduation_color,
-                                             axis_color = self.axis_color,
-                                             arrow_on = self.arrow_on,
+                                             axis_color=self.axis_color,
+                                             arrow_on=self.arrow_on,
+                                             axis_width=self.axis_width,
+                                             grid_on=self.grid_on,
                                              plot_data_states=plot_data_states)
 
+
 class Tooltip(dc.DessiaObject):
-    def __init__(self, colorfill:str, font:str, tp_width:float, tp_radius:float, to_plot_list:list, name: str = ''):
+    def __init__(self, colorfill: str, font: str, tp_width: float,
+                 tp_radius: float, to_plot_list: list, name: str = ''):
         self.colorfill = colorfill
         self.font = font
         self.tp_width = tp_width
@@ -2158,7 +2165,14 @@ class Tooltip(dc.DessiaObject):
                   plot_data_states: List[plot_data.PlotDataState] = None):
         if plot_data_states is None:
             plot_data_states = [plot_data.PlotDataState()]
-        return plot_data.PlotDataTooltip(colorfill=self.colorfill, font=self.font, tp_width=self.tp_width, tp_radius=self.tp_radius, to_plot_list=self.to_plot_list, plot_data_states=plot_data_states, name=self.name)
+        return plot_data.PlotDataTooltip(colorfill=self.colorfill,
+                                         font=self.font,
+                                         tp_width=self.tp_width,
+                                         tp_radius=self.tp_radius,
+                                         to_plot_list=self.to_plot_list,
+                                         plot_data_states=plot_data_states,
+                                         name=self.name)
+
 
 class Polygon2D(Contour2D):
     # TODO: inherit from contour?
