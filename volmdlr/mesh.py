@@ -659,12 +659,12 @@ class Mesh(DessiaObject):
     
 class Mesher(DessiaObject):
     
-    def __init__(self,contour:vm.Contour2D,triangles:List[TriangularElement],nodes_len:float):
+    def __init__(self,contours:List[vm.Contour2D],triangles:List[TriangularElement],nodes_len:float):
         self.nodes_len=nodes_len
-        self.contour=contour
+        # self.contour=contour
         # self.polygon=self.contour._get_polygon()
         self.triangles=triangles
-        
+        self.contours=contours
                 
         
         
@@ -727,12 +727,11 @@ class Mesher(DessiaObject):
             
             if len(polygone_1.points)==3:
                 new_triangle=vm.Triangle2D([polygone_1.points[0],polygone_1.points[1],polygone_1.points[2]])
-                print(new_triangle.aspect_ratio())
-                if new_triangle.aspect_ratio()<0.7:
+                
+                # if new_triangle.aspect_ratio()<0.7:
                         
-                        self.triangles.append(new_triangle)
-                # else : 
-                #     self.triangulation_polygone_recursive(polygone_1)
+                self.triangles.append(new_triangle)
+                
             else :
                 
                 self.triangulation_polygone_recursive(polygone_1)
@@ -745,23 +744,21 @@ class Mesher(DessiaObject):
             
             if len(polygone_1.points)==3:
                 new_triangle=vm.Triangle2D([polygone_1.points[0],polygone_1.points[1],polygone_1.points[2]])
-                print(new_triangle.aspect_ratio())
-                if new_triangle.aspect_ratio()<0.7:
+               
+                # if new_triangle.aspect_ratio()<0.7:
                     
-                    self.triangles.append(new_triangle)
-                # else :
-                #      self.triangulate_polygone_recursive(polygone_1)
+                self.triangles.append(new_triangle)
+                
             else :
                 self.triangulate_polygone_recursive(polygone_1)
                 
             if len(polygone_2.points)==3:
                 new_triangle=vm.Triangle2D([polygone_2.points[0],polygone_2.points[1],polygone_2.points[2]])
-                print(new_triangle.aspect_ratio())
-                if new_triangle.aspect_ratio()<0.7:
+               
+                # if new_triangle.aspect_ratio()<0.7:
                     
-                    self.triangles.append(new_triangle)
-                # else :
-                #      self.triangulate_polygone_recursive(polygone_2)
+                self.triangles.append(new_triangle)
+                
             else :
                 self.triangulate_polygone_recursive(polygone_2)
             
@@ -777,72 +774,81 @@ class Mesher(DessiaObject):
         return triangles
 
               
-               
+    # def assemble_conour(self,contours:List[vm.Contour2D],ax):
+    #     polygon_points=[]
+    #     for contour in contours :
+    #         for primitive in contour.primitives:
+    #             if isinstance(primitive,vm.LineSegment2D):
+    #                 if primitive.point1 not in polygon_points:
+    #                     polygon_points.append(primitive.point1)
+    #             else :
+    #                  for point in primitive.discretise(self.nodes_len,ax):
+    #                      if point not in polygon_points:
+    #                          polygon_points.append(point)    
+          
     def mesh(self):
         ax=plt.subplot()
         segment_to_nodes={}
         all_segments=set()
         external_arc_nodes=[]
         internal_arc_nodes=[]
-        polygon_points=[]
-     
-        for primitive in self.contour.primitives:
-            if isinstance(primitive,vm.LineSegment2D):
-                if primitive.point1 not in polygon_points:
-                    polygon_points.append(primitive.point1)
-            else :
-                 for point in primitive.discretise(self.nodes_len,ax):
-                     if point not in polygon_points:
-                         polygon_points.append(point)
+        all_polygons=[]
+        triangles=[]
+        for contour in self.contours:
+            polygon_points=[]
+            for primitive in contour.primitives:
+                if isinstance(primitive,vm.LineSegment2D):
+                    if primitive.point1 not in polygon_points:
+                        polygon_points.append(primitive.point1)
+                else :
+                     for point in primitive.discretise(self.nodes_len,ax):
+                         if point not in polygon_points:
+                             polygon_points.append(point)
                          
-            
-    
-        polygon = vm.Polygon2D(polygon_points)
-        polygon.MPLPlot()
-        # triangles=self.triangulation_polygone_recursive(polygon)
-        triangles=polygon.delaunay_triangulation()
+            all_polygons.append(vm.Polygon2D(polygon_points))
+       
+        
+        for polygon in all_polygons:
+            # triangles+=polygon.delaunay_triangulation()
+            triangles+=self.triangulation_polygone_recursive(polygon)
+        
         bad_triangles=[]
-        for triangle in triangles:
-            for segment in triangle.line_segments:
-                u=0
-                point=segment.PointAtCurvilinearAbscissa(segment.Length()/2)
-                # point=vm.Point2D([(segment.point1[0]+segment.point2[0])/2,(segment.point1[1]+segment.point2[1])/2])
-                for seg in polygon.line_segments:
+        # for triangle in triangles:
+        #     for segment in triangle.line_segments:
+        #         u=0
+        #         point=segment.PointAtCurvilinearAbscissa(segment.Length()/2)
+        #         # point=vm.Point2D([(segment.point1[0]+segment.point2[0])/2,(segment.point1[1]+segment.point2[1])/2])
+        #         for seg in polygon.line_segments:
                    
-                    if seg.point_distance(point)>10E-16:
+        #             if seg.point_distance(point)>10E-16:
                          
-                            u+=1
-                            if u == len(polygon.line_segments):
+        #                     u+=1
+        #                     if u == len(polygon.line_segments):
                            
-                                if polygon.PointBelongs(point) is False :
-                                    
-                                      print(point)
-                                      print(polygon.PointBelongs(point))
-                                            
-                                      bad_triangles.append(triangle)
-                                    
+        #                         if polygon.PointBelongs(point) is False :
+        #                             bad_triangles.append(triangle) 
+                                   
                                 
         
-        for triangle in bad_triangles:
-            triangles.remove(triangle)
+        # for triangle in bad_triangles:
+        #     triangles.remove(triangle)
            
-        print(triangles)       
+             
         all_triangles=[]
         all_triangles+=triangles
         all_triangle_elements=[]
         all_aspect_ratios=[]
         
-        # for triangle in all_triangles:
-        #     triangle.MPLPlot(ax=ax)
+        for triangle in all_triangles:
+            triangle.MPLPlot(ax=ax)
         for triangle in triangles:
             all_segments= all_segments.union(triangle.line_segments)
-        # max_segment=max([segment.Length() for segment in all_segments])
+            # for segment in triangle.line_segments:
+            #     all_segments.append(segment)
         
         for segment in all_segments:
             segment_to_nodes[segment]=segment.discretise(self.nodes_len,ax)
-        # for triangle in triangles:
-        #     for segment in triangle.line_segments:
-        #         segment_to_nodes[segment]=triangle.discretise(self.nodes_len,ax)[segment]
+          
                 
         for triangle in triangles :
               all_triangles+=triangle.mesh_triangle(segment_to_nodes,self.nodes_len,ax)[0]

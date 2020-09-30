@@ -1681,7 +1681,7 @@ class Arc2D(Primitive2D):
                  # node=Point2D([(1-k/l0)*self.point1[0]+self.point2[0]*k/l0,(1-k/l0)*self.point1[1]+self.point2[1]*k/l0])
                        
                  nodes.append(node)
-             # nodes.insert(len(nodes),self.end)
+             nodes.insert(len(nodes),self.end)
                    
              arc_to_nodes[self]=nodes
              
@@ -1979,6 +1979,11 @@ class Circle2D(Contour2D):
         else:
             self.center.Rotation(center,angle,copy=False)
             self.utd_geo_points=False
+            
+    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
+        start = self.center + self.radius * X3D
+        return start.Rotation(self.center,
+                              curvilinear_abscissa / self.radius)
 
     def Translation(self,offset,copy=True):
         if copy:
@@ -2040,7 +2045,7 @@ class Circle2D(Contour2D):
                        
                   nodes.append(node)
               # nodes.insert(len(nodes),self.end)
-                   
+              nodes.insert(len(nodes),self.center)    
               circle_to_nodes[self]=nodes
              
               for point in circle_to_nodes[self]:
@@ -2440,38 +2445,88 @@ class Triangle2D(Polygon2D):
        
        nodes_0=[]
        nodes_1=[]
-      
- 
-       if len(segment_to_nodes[segments[1]])> len(segment_to_nodes[segments[0]]) and len(segment_to_nodes[segments[2]])>= len(segment_to_nodes[segments[0]]) :
+    
+       
+       # if len(segment_to_nodes[segments[1]])> len(segment_to_nodes[segments[0]]) and len(segment_to_nodes[segments[2]])> len(segment_to_nodes[segments[0]]) :
            
-           nodes_0=segment_to_nodes[segments[1]]
-           nodes_1=segment_to_nodes[segments[2]]
-           min_segment.append(segments[0])
+       #     nodes_0=segment_to_nodes[segments[1]]
+       #     nodes_1=segment_to_nodes[segments[2]]
+       #     min_segment.append(segments[0])
            
-       if len(segment_to_nodes[segments[1]])< len(segment_to_nodes[segments[0]]) and len(segment_to_nodes[segments[2]])>= len(segment_to_nodes[segments[0]]) :
+       # else: #len(segment_to_nodes[segments[1]])< len(segment_to_nodes[segments[0]]) and len(segment_to_nodes[segments[2]])>= len(segment_to_nodes[segments[0]]) :
            
-           nodes_0=segment_to_nodes[segments[0]]
-           nodes_1=segment_to_nodes[segments[2]]
-           min_segment.append(segments[1])
+       #     nodes_0=segment_to_nodes[segments[0]]
+       #     nodes_1=segment_to_nodes[segments[2]]
+       #     min_segment.append(segments[1])
              
-       if len(segment_to_nodes[segments[0]])> len(segment_to_nodes[segments[2]]) and len(segment_to_nodes[segments[1]])>= len(segment_to_nodes[segments[0]]) :
+       # if len(segment_to_nodes[segments[0]])> len(segment_to_nodes[segments[2]]) and len(segment_to_nodes[segments[1]])> len(segment_to_nodes[segments[0]]) :
            
-           nodes_0=segment_to_nodes[segments[0]]
-           nodes_1=segment_to_nodes[segments[1]]
-           min_segment.append(segments[2])
-       if len(segment_to_nodes[segments[0]])> len(segment_to_nodes[segments[1]]) and len(segment_to_nodes[segments[1]])>= len(segment_to_nodes[segments[2]]) :
+       #     nodes_0=segment_to_nodes[segments[0]]
+       #     nodes_1=segment_to_nodes[segments[1]]
+       #     min_segment.append(segments[2])
+       # else: #len(segment_to_nodes[segments[0]])> len(segment_to_nodes[segments[1]]) and len(segment_to_nodes[segments[1]])>= len(segment_to_nodes[segments[2]]) :
            
-           nodes_0=segment_to_nodes[segments[0]]
-           nodes_1=segment_to_nodes[segments[1]]
-           min_segment.append(segments[2])
+       #     nodes_0=segment_to_nodes[segments[1]]
+       #     nodes_1=segment_to_nodes[segments[2]]
+       #     min_segment.append(segments[0])
+       # if len(segment_to_nodes[segments[0]])> len(segment_to_nodes[segments[1]]) and len(segment_to_nodes[segments[2]])> len(segment_to_nodes[segments[1]]) :
            
-       if len(segment_to_nodes[segments[0]])== len(segment_to_nodes[segments[2]]) and len(segment_to_nodes[segments[1]])==len(segment_to_nodes[segments[2]]):
+       #      nodes_0=segment_to_nodes[segments[0]]
+       #      nodes_1=segment_to_nodes[segments[2]]
+       #      min_segment.append(segments[1])
+       # else: 
+       #      nodes_0=segment_to_nodes[segments[0]]
+       #      nodes_1=segment_to_nodes[segments[2]]
+       #      min_segment.append(segments[1])
+           
+       # if len(segment_to_nodes[segments[0]])== len(segment_to_nodes[segments[2]]) and len(segment_to_nodes[segments[1]])==len(segment_to_nodes[segments[2]]):
          
-           nodes_0=segment_to_nodes[segments[0]]
-           nodes_1=segment_to_nodes[segments[1]]
-           min_segment.append(segments[2])
+       #     nodes_0=segment_to_nodes[segments[0]]
+       #     nodes_1=segment_to_nodes[segments[1]]
+       #     min_segment.append(segments[2])
+       
+       if len(segment_to_nodes[segments[1]])>= len(segment_to_nodes[segments[0]]):
+           if len(segment_to_nodes[segments[0]])> len(segment_to_nodes[segments[2]]) :
+             nodes_0=segment_to_nodes[segments[0]]
+             nodes_1=segment_to_nodes[segments[1]]
+             min_segment.append(segments[2])
+           
+           else :
+                 nodes_0=segment_to_nodes[segments[1]]
+                 nodes_1=segment_to_nodes[segments[2]]
+                 min_segment.append(segments[0])
+       if  len(segment_to_nodes[segments[0]])>= len(segment_to_nodes[segments[1]]):
+          if len(segment_to_nodes[segments[2]])> len(segment_to_nodes[segments[1]]):
+             nodes_0=segment_to_nodes[segments[0]]
+             nodes_1=segment_to_nodes[segments[2]]
+             min_segment.append(segments[1])
+          else :
+              nodes_0=segment_to_nodes[segments[0]]
+              nodes_1=segment_to_nodes[segments[1]]
+              min_segment.append(segments[2])
+       if  len(segment_to_nodes[segments[0]])>= len(segment_to_nodes[segments[2]]):
+           if  len(segment_to_nodes[segments[2]])> len(segment_to_nodes[segments[1]]):
+               nodes_0=segment_to_nodes[segments[0]]
+               nodes_1=segment_to_nodes[segments[2]]
+               min_segment.append(segments[1])
+           else :
+                 nodes_0=segment_to_nodes[segments[0]]
+                 nodes_1=segment_to_nodes[segments[1]]
+                 min_segment.append(segments[2])
+            
+       if  len(segment_to_nodes[segments[2]])>= len(segment_to_nodes[segments[0]]):
+          if len(segment_to_nodes[segments[0]])> len(segment_to_nodes[segments[1]]):
+              nodes_0=segment_to_nodes[segments[0]]
+              nodes_1=segment_to_nodes[segments[2]]
+              min_segment.append(segments[1])
+          else :
+                 nodes_0=segment_to_nodes[segments[1]]
+                 nodes_1=segment_to_nodes[segments[2]]
+                 min_segment.append(segments[0])
+                                    
+    
        min_segment=min_segment[0]  
-      
+       
        edge=self.common_edge(nodes_0,nodes_1)   
       
        if edge!=None:
@@ -2517,7 +2572,12 @@ class Triangle2D(Polygon2D):
                 
                
        
-    
+       if len(nodes_0)==2 and len(nodes_1)==2:
+           all_aspect_ratios.append(self.aspect_ratio())
+           all_triangles.append(self)
+           return [all_triangles,all_aspect_ratios]
+      
+        
        for seg in interior_segments:
          
 
@@ -2560,12 +2620,22 @@ class Triangle2D(Polygon2D):
                                   
                                          all_triangles.append(new_triangle_1)
                                          all_aspect_ratios.append(new_triangle_1.aspect_ratio())
+                            # if  interior_segment_nodes[interior_segments[k]][v-1]!=interior_segment_nodes[interior_segments[k+1]][v-1]:        
                             for  j in range(v-1,u-1):
-                                new_triangle_1=Triangle2D([interior_segment_nodes[interior_segments[k]][j],interior_segment_nodes[interior_segments[k+1]][v-1],interior_segment_nodes[interior_segments[k]][j+1]])
-                                if new_triangle_1 not in all_triangles:
-                                           
-                                                all_triangles.append(new_triangle_1)   
-                                                all_aspect_ratios.append(new_triangle_1.aspect_ratio())         
+                                    
+                                    if interior_segment_nodes[interior_segments[k]][j+1]!=interior_segment_nodes[interior_segments[k+1]][v-1]:
+                                        new_triangle_1=Triangle2D([interior_segment_nodes[interior_segments[k]][j],interior_segment_nodes[interior_segments[k+1]][v-1],interior_segment_nodes[interior_segments[k]][j+1]])
+                                        if new_triangle_1 not in all_triangles:
+                                                   
+                                                        all_triangles.append(new_triangle_1)   
+                                                        all_aspect_ratios.append(new_triangle_1.aspect_ratio()) 
+                            # else :
+                            #      for  j in range(v-1,u-1):
+                            #         new_triangle_1=Triangle2D([interior_segment_nodes[interior_segments[k]][j],interior_segment_nodes[interior_segments[k+1]][v-1],interior_segment_nodes[interior_segments[k]][j+1]])
+                            #         if new_triangle_1 not in all_triangles:
+                                               
+                            #                         all_triangles.append(new_triangle_1)   
+                            #                         all_aspect_ratios.append(new_triangle_1.aspect_ratio())
                 else :
                      for j in range(v-1):
                            
@@ -2581,7 +2651,7 @@ class Triangle2D(Polygon2D):
                         
            if (u<v and v>2):
                    
-                     if interior_segment_nodes[interior_segments[k]][j]!=interior_segment_nodes[interior_segments[k+1]][j]:
+                     if interior_segment_nodes[interior_segments[k]][0]!=interior_segment_nodes[interior_segments[k+1]][0]:
                                 for j in range(u-1):
                        
                                
@@ -2593,12 +2663,12 @@ class Triangle2D(Polygon2D):
                                             all_aspect_ratios.append(new_triangle_1.aspect_ratio())
                                     
                                     for j in range(u-1,v-1):
-                   
-                                        new_triangle_2=Triangle2D([interior_segment_nodes[interior_segments[k+1]][j],interior_segment_nodes[interior_segments[k]][u-1],interior_segment_nodes[interior_segments[k+1]][j+1]])
-                                        if new_triangle_2 not in all_triangles:
-                                               
-                                                      all_triangles.append(new_triangle_2)
-                                                      all_aspect_ratios.append(new_triangle_2.aspect_ratio())       
+                                        if interior_segment_nodes[interior_segments[k]][j+1]!=interior_segment_nodes[interior_segments[k+1]][u-1]:
+                                            new_triangle_2=Triangle2D([interior_segment_nodes[interior_segments[k+1]][j],interior_segment_nodes[interior_segments[k]][u-1],interior_segment_nodes[interior_segments[k+1]][j+1]])
+                                            if new_triangle_2 not in all_triangles:
+                                                   
+                                                          all_triangles.append(new_triangle_2)
+                                                          all_aspect_ratios.append(new_triangle_2.aspect_ratio())       
                                     # new_triangle_1=Triangle2D([interior_segment_nodes[interior_segments[k+1]][j+1],interior_segment_nodes[interior_segments[k]][j],interior_segment_nodes[interior_segments[k+1]][j]])
                                     # if new_triangle_1 not in all_triangles:
                                        
@@ -2607,7 +2677,7 @@ class Triangle2D(Polygon2D):
                                     
                         
                      else :
-                                    for j in range (v-1):
+                                    for j in range (v-2):
                                         new_triangle_2=Triangle2D([interior_segment_nodes[interior_segments[k]][j+1],interior_segment_nodes[interior_segments[k+1]][j+1],interior_segment_nodes[interior_segments[k+1]][j]])
                              
                                         if new_triangle_2 not in all_triangles:
