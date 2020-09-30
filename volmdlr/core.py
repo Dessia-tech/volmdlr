@@ -1863,7 +1863,7 @@ class Circle2D(Contour2D):
         if disc < 0:
             return None
         
-        if math.isclose(disc, 0, abs_tol=1e-8):
+        if math.isclose(disc, 0, abs_tol=1e-10):
             t = -b / (2 * a)
             if line.__class__ is Line2D:
                 return [Point2D((P1+t*V).vector)]
