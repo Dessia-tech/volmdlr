@@ -176,6 +176,13 @@ class PlotDataTooltip(DessiaObject):
         self.type = type
         DessiaObject.__init__(self, name=name)
 
+class PlotDataLinkObject(DessiaObject):
+    def __init__(self, lo_colorstroke: str, lo_linewidth: str, plot_data_states: List[PlotDataState], type:str='link_object', name: str= ''):
+        self.lo_colorstroke = lo_colorstroke
+        self.lo_linewidth = lo_linewidth
+        self.plot_data_states = plot_data_states
+        self.type = type
+        DessiaObject.__init__(self, name)
 
 class PlotDataArc2D(DessiaObject):
     def __init__(self, cx: float, cy: float, r: float,

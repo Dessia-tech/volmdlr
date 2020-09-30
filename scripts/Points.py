@@ -40,12 +40,20 @@ tp_width = 90
 tp_radius = 10
 to_plot_list = ['cx', 'cy']
 
+# link_object
+lo_colorstroke = 'black'
+lo_linewidth = 1
+
 plot_datas = []
 window_size = plot_data.WindowSizeSet(width=width, height=height)
 shape_set = plot_data.PointShapeSet(shape=shape)
 point_size = plot_data.PointSizeSet(size=size)
 point_color = plot_data.PointColorSet(color_fill=color_fill,
                                       color_stroke=color_stroke)
+
+# link_object = vm.LinkObject(lo_colorstroke=lo_colorstroke, lo_linewidth=lo_linewidth)
+# plot_datas += [link_object.plot_data([plot_data.PlotDataState()])]
+
 for i in range(50):
     point = vm.Point2D.random(0, window_size.width, 0,
                               window_size.height).to_canvas_style()
@@ -55,13 +63,13 @@ for i in range(50):
         shape_set=shape_set, point_size=point_size, point_color=point_color)])]
 
 # k = 0
-# while k < 10 * np.pi:
+# while k < 20 * np.pi:
 #     point = vm.Point2D([k, np.sin(k)])
 #     plot_datas += [point.plot_data([plot_data.PlotDataState(
 #         color_surface=plot_data.ColorSurfaceSet(color=surface_color),
 #         window_size=window_size, stroke_width=stroke_width,
 #         shape_set=shape_set, point_size=point_size, point_color=point_color)])]
-#     k = k + np.pi/10
+#     k = k + np.pi/20
 
 # point0 = vm.Point2D([0,0])
 # plot_datas += [point0.plot_data([plot_data.PlotDataState(color_surface=plot_data.ColorSurfaceSet(color='black'), window_size=window_size, shape_set=shape_set, point_size=point_size,point_color=point_color)])]
