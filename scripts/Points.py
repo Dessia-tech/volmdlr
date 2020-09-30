@@ -21,7 +21,7 @@ color_stroke = 'grey'
 
 # PlotDataState
 surface_color = 'black'
-stroke_width = 2  # Points' stroke width
+stroke_width = 0.5  # Points' stroke width
 
 # Scatter plot
 nb_points_x = 10
@@ -44,12 +44,33 @@ to_plot_list = ['cx', 'cy']
 lo_colorstroke = 'black'
 lo_linewidth = 1
 
+# Graph2D
+point_list = []
+k = 0
+while k < 20 * np.pi:
+    point = vm.Point2D([k, np.sin(k)])
+    point_list.append(point)
+    k = k + np.pi/20
+dashline=[]
+graph_colorstroke = 'black'
+graph_linewidth = 0.5
+point_colorfill = 'violet'
+point_colorstroke = 'grey'
+point_strokewidth = 0.5
+graph_point_size = 2;
+
 plot_datas = []
 window_size = plot_data.WindowSizeSet(width=width, height=height)
 shape_set = plot_data.PointShapeSet(shape=shape)
 point_size = plot_data.PointSizeSet(size=size)
 point_color = plot_data.PointColorSet(color_fill=color_fill,
                                       color_stroke=color_stroke)
+
+# graph = vm.Graph2D(point_list=point_list, dashline=dashline,
+#                    graph_colorstroke=graph_colorstroke, graph_linewidth=graph_linewidth,
+#                    point_colorfill=point_colorfill, point_colorstroke=point_colorstroke,
+#                    point_strokewidth=point_strokewidth, graph_point_size=graph_point_size)
+# plot_datas += [graph.plot_data([plot_data.PlotDataState()])]
 
 # link_object = vm.LinkObject(lo_colorstroke=lo_colorstroke, lo_linewidth=lo_linewidth)
 # plot_datas += [link_object.plot_data([plot_data.PlotDataState()])]

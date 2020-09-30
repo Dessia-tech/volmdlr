@@ -2188,6 +2188,38 @@ class LinkObject(dc.DessiaObject):
                                             plot_data_states=plot_data_states,
                                             name=self.name)
 
+class Graph2D(dc.DessiaObject):
+    def __init__(self, point_list: List[Point2D], dashline: List[float], graph_colorstroke: str, graph_linewidth: float, point_colorfill:str, point_colorstroke:str, point_strokewidth:float, graph_point_size: float, name: str=''):
+        self.point_list = point_list
+        self.dashline = dashline
+        self.graph_colorstroke = graph_colorstroke
+        self.graph_linewidth = graph_linewidth
+        self.point_colorfill = point_colorfill
+        self.point_colorstroke = point_colorstroke
+        self.point_strokewidth = point_strokewidth
+        self.graph_point_size = graph_point_size
+        dc.DessiaObject.__init__(self, name)
+
+    def plot_data(self, plot_data_states: List[plot_data.PlotDataState] = None):
+        if plot_data_states is None:
+            plot_data_states = [plot_data.PlotDataState()]
+
+        point_color = plot_data.PointColorSet(color_fill=self.point_colorfill,
+                                              color_stroke=self.point_colorstroke)
+        point_size = plot_data.PointSizeSet(size=self.graph_point_size)
+        serialized_point_list = [point.plot_data([plot_data.PlotDataState(point_color=point_color, stroke_width=self.point_strokewidth, point_size=point_size)]).to_dict() for point in self.point_list]
+
+        serialized_segments = []
+        for i in range(0,len(self.point_list) - 1):
+            serialized_segments.append(LineSegment2D(self.point_list[i], self.point_list[i+1]).plot_data([plot_data.PlotDataState()]).to_dict())
+        return plot_data.PlotDataGraph2D(serialized_point_list=serialized_point_list,
+                                         dashline=self.dashline,
+                                         graph_colorstroke=self.graph_colorstroke,
+                                         graph_linewidth=self.graph_linewidth,
+                                         serialized_segments=serialized_segments,
+                                         plot_data_states=plot_data_states,
+                                         name=self.name)
+
 class Polygon2D(Contour2D):
     # TODO: inherit from contour?
     def __init__(self, points, name=''):

@@ -38,7 +38,6 @@ export class PlotData {
   }
 
   draw_initial() {
-    console.log(this.minX, this.maxX, this.minY, this.maxY)
     this.init_scale = Math.min(this.width/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX), this.height/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY));
     this.scale = this.init_scale;
     this.init_scaleX = this.width/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX);
@@ -130,10 +129,10 @@ export class PlotData {
       var is_inside_canvas = ((x + length>=0) && (x - length <= this.width) && (y + length >= 0) && (y - length <= this.height));
 
       if (is_inside_canvas === true) {
-        this.context.lineWidth = 1
         this.context.beginPath();
         d.draw(this.context, this.context_hidden, mvx, mvy, scaleX, scaleY);
         this.context.fill();
+        this.context.stroke();
         this.context.closePath();
       }
     }
@@ -159,6 +158,32 @@ export class PlotData {
     if (d['type'] == 'link_object') {
       d.draw(this.context, this.sort_list_points, this.scaleX, this.scaleY, mvx, mvy);
     }
+  }
+
+  draw_graph2D(d, hidden, mvx, mvy) {
+    if (d['type'] == 'graph2D') {
+      this.context.beginPath();
+      this.context.strokeStyle = d.graph_colorstroke;
+      this.context.lineWidth = d.graph_linewidth;
+      for (var i=0; i<d.segments.length; i++) {
+        if (i==0) {
+          d.segments[i].draw(this.context, true, mvx, mvy, this.scaleX, this.scaleY);
+        } else {
+          d.segments[i].draw(this.context, false, mvx, mvy, this.scaleX, this.scaleY);
+        }
+      }
+      this.context.stroke();
+      this.context.closePath();
+      this.context.beginPath();
+      this.context.fillStyle = 'violet';
+      for (var i=0; i<d.point_list.length; i++) {
+        var point = d.point_list[i];
+        this.draw_point(hidden, 0, mvx, mvy, this.scaleX, this.scaleY, point);
+      }
+    }
+    this.context.fill();
+    this.context.stroke();
+    this.context.closePath();
   }
 
   zoom_button(x, y, w, h) {
@@ -232,7 +257,6 @@ export class PlotData {
       mouse2X = e.offsetX;
       mouse2Y = e.offsetY;
       isDrawing = true;
-      console.log(mouse1X, mouse1Y)
     })
 
     canvas.addEventListener('mousemove', e => {
@@ -270,7 +294,7 @@ export class PlotData {
 
     canvas.addEventListener('mouseup', e => {
 
-      var scale_ceil = 50*this.init_scale;
+      var scale_ceil = 300*this.init_scale;
       var scale_floor = this.init_scale/3;
 
       var click_on_plus = Shape.Is_in_rect(mouse1X, mouse1Y, this.zoom_rect_x, this.zoom_rect_y, this.zoom_rect_w, this.zoom_rect_h);
@@ -378,7 +402,7 @@ export class PlotData {
     })
 
     canvas.addEventListener('wheel', e => {
-      var scale_ceil = 50*this.init_scale;
+      var scale_ceil = 300*this.init_scale;
       var scale_floor = this.init_scale/3;
       var zoom_coeff = 1.1;
       var event = -e.deltaY;
@@ -564,7 +588,7 @@ export class PlotScatter extends PlotData {
       this.select_h = 30;
       this.plot_datas = [];
       for (var i = 0; i < data.length; i++) {
-        var d = data[i];
+        var d = data[i]; 
         if (d['type'] == 'point') {
           var a = PlotDataPoint2D.deserialize(d)
           if (isNaN(this.minX)) {this.minX = a.minX} else {this.minX = Math.min(this.minX, a.minX)};
@@ -577,7 +601,7 @@ export class PlotScatter extends PlotData {
           if (this.link_object_ON === true) {
             this.add_sort_by_cx(a, this.sort_list_points);
           }
-
+        
         } else if (d['type'] == 'axis') {
           var b = PlotDataScatter.deserialize(d);
           this.plot_datas.push(b);
@@ -588,6 +612,17 @@ export class PlotScatter extends PlotData {
           this.link_object_ON = true;
           var e = PlotDataLinkObject.deserialize(d);
           this.plot_datas.push(e);
+        } else if (d['type'] == 'graph2D') {
+          var f = PlotDataGraph2D.deserialize(d);
+          for (var j=0; j<f.point_list.length; j++) {
+            var point = f.point_list[j];
+            if (isNaN(this.minX)) {this.minX = point.minX} else {this.minX = Math.min(this.minX, point.minX)};
+            if (isNaN(this.maxX)) {this.maxX = point.maxX} else {this.maxX = Math.max(this.maxX, point.maxX)};
+            if (isNaN(this.minY)) {this.minY = point.minY} else {this.minY = Math.min(this.minY, point.minY)};
+            if (isNaN(this.maxY)) {this.maxY = point.maxY} else {this.maxY = Math.max(this.maxY, point.maxY)};
+            this.colour_to_plot_data[point.mouse_selection_color] = point;
+          }
+          this.plot_datas.push(f);
         }
       }
       this.define_canvas();
@@ -596,9 +631,9 @@ export class PlotScatter extends PlotData {
 
   draw(hidden, show_state, mvx, mvy, scaleX, scaleY) {
     this.draw_empty_canvas(hidden);
-
     for (var i = 0; i < this.plot_datas.length; i++) {
       var d = this.plot_datas[i];
+      this.draw_graph2D(d, hidden, mvx, mvy);
       this.draw_link_object(d, mvx, mvy);
       this.draw_point(hidden, show_state, mvx, mvy, scaleX, scaleY, d);
       this.draw_axis(mvx, mvy, scaleX, scaleY, d);
@@ -617,7 +652,6 @@ export class PlotScatter extends PlotData {
       this.selection_button(this.select_x, this.select_y, this.select_w, this.select_h);
     
   }
-  
 }
 
 class MyMath {
@@ -763,9 +797,9 @@ export class PlotDataLine2D {
 
   draw(context, first_elem, mvx, mvy, scaleX, scaleY) {
     if (first_elem) {
-      context.moveTo(scaleX*(1000*this.data[0]+ mvx), scaleX*(1000*this.data[1]+ mvy));
+      context.moveTo(scaleX*(1000*this.data[0]+ mvx), scaleY*(1000*this.data[1]+ mvy));
     }
-    context.lineTo(scaleY*(1000*this.data[2]+ mvx), scaleY*(1000*this.data[3]+ mvy));
+    context.lineTo(scaleX*(1000*this.data[2]+ mvx), scaleY*(1000*this.data[3]+ mvy));
   }
 }
 
@@ -858,7 +892,6 @@ export class PlotDataPoint2D {
 
     draw(context, context_hidden, mvx, mvy, scaleX, scaleY) {
         for (var i=0; i<this.plot_data_states.length; i++) {
-          context.lineWidth = this.plot_data_states[i].stroke_width;
           var shape = this.plot_data_states[i].shape_set.shape;
           if (shape == 'circle') {
             context.arc(scaleX*(1000*this.cx+ mvx), scaleY*(1000*this.cy+ mvy), 1000*this.size, 0, 2*Math.PI);
@@ -1052,11 +1085,13 @@ export class PlotDataTooltip {
     var tp_height = (textfills.length + 0.25)*font_size ;
     var cx = object.cx;
     var cy = object.cy;
-    var tp_x = scaleX*(1000*cx + mvx) + init_scale*40;
+    var point_size = object.plot_data_states[0].point_size.size;
+    var decalage = 2.5*point_size + 5
+    var tp_x = scaleX*(1000*cx + mvx) + decalage;
     var tp_y = scaleY*(1000*cy + mvy) - 1/2*tp_height;
 
     if (tp_x + this.tp_width  > canvas_width) {
-      tp_x = scaleX*(1000*cx + mvx) - init_scale*40 - this.tp_width;
+      tp_x = scaleX*(1000*cx + mvx) - decalage - this.tp_width;
     }
     if (tp_y < 0) {
       tp_y = scaleY*(1000*cy + mvy);
@@ -1128,6 +1163,50 @@ export class PlotDataLinkObject {
     }
     context.stroke();
     context.closePath();
+  }
+}
+
+export class PlotDataGraph2D {
+  mouse_selection_color:any;
+  constructor(public point_list:PlotDataPoint2D[],
+              public dashline: number[],
+              public graph_colorstroke: string,
+              public graph_linewidth: number,
+              public segments:PlotDataLine2D[],
+              public plot_data_states: PlotDataState[],
+              public type: string,
+              public name:string) {
+    this.mouse_selection_color = genColor();
+  }
+  
+  public static deserialize(serialized) {
+    var temp = serialized['plot_data_states'];
+    var plot_data_states = [];
+    for (var i = 0; i < temp.length; i++) {
+      var d = temp[i];
+      plot_data_states.push(PlotDataState.deserialize(d));
+    }
+    var point_list = [];
+    temp = serialized['serialized_point_list'];
+    for (var i=0; i<temp.length; i++) {
+      var d = temp[i];
+      point_list.push(PlotDataPoint2D.deserialize(d));
+    }
+
+    var segments = [];
+    temp = serialized['serialized_segments'];
+    for (i=0; i<temp.length; i++) {
+      var d = temp[i];
+      segments.push(PlotDataLine2D.deserialize(d));
+    }
+    return new PlotDataGraph2D(point_list,
+                           serialized['dashline'],
+                           serialized['graph_colorstroke'],
+                           serialized['graph_linewidth'],
+                           segments,
+                           plot_data_states,
+                           serialized['type'],
+                           serialized['name']);
   }
 }
 
