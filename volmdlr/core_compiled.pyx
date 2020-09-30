@@ -350,7 +350,7 @@ class Vector2D(Vector):
 
     def Normalize(self):
         """
-        Normalize the vector modifying its coordinates
+        flize the vector modifying its coordinates
         """
         n = self.Norm()
         if math.isclose(n, 0, abs_tol=1e-9):
@@ -544,7 +544,7 @@ class Point2D(Vector2D):
 
 
     @classmethod
-    def LinesIntersection(cls, line1, line2, curvilinear_abscissa=False):
+    def LinesIntersection(cls,_abscissa=False):
         x1 = line1.points[0].vector[0]
         y1 = line1.points[0].vector[1]
         x2 = line1.points[1].vector[0]
