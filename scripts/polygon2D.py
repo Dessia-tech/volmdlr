@@ -34,7 +34,15 @@ for i in range(100):
         points_inside.append(pt)
     else:
         points_outside.append(pt)
- 
+for i in range(100):
+    for segment in polygon.line_segments:
+        pt=vm.Point2D(segment.PointAtCurvilinearAbscissa(segment.Length()/2))
+    #    print(p.PointDistance(pt))
+        if polygon.PointBelongs(pt):
+            points_inside.append(pt)
+        else:
+            points_outside.append(pt)
+     
     
 #polygon.MPLPlot()
 #points_inside.MPLPlot()
