@@ -2045,7 +2045,7 @@ class Circle2D(Contour2D):
                        
                   nodes.append(node)
               # nodes.insert(len(nodes),self.end)
-              nodes.insert(len(nodes),self.center)    
+              # nodes.insert(len(nodes),self.center)    
               circle_to_nodes[self]=nodes
              
               for point in circle_to_nodes[self]:
@@ -2663,7 +2663,7 @@ class Triangle2D(Polygon2D):
                                             all_aspect_ratios.append(new_triangle_1.aspect_ratio())
                                     
                                     for j in range(u-1,v-1):
-                                        if interior_segment_nodes[interior_segments[k]][j+1]!=interior_segment_nodes[interior_segments[k+1]][u-1]:
+                                        if interior_segment_nodes[interior_segments[k+1]][j+1]!=interior_segment_nodes[interior_segments[k]][u-1]:
                                             new_triangle_2=Triangle2D([interior_segment_nodes[interior_segments[k+1]][j],interior_segment_nodes[interior_segments[k]][u-1],interior_segment_nodes[interior_segments[k+1]][j+1]])
                                             if new_triangle_2 not in all_triangles:
                                                    

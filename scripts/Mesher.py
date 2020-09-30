@@ -38,8 +38,8 @@ stator_external_contour = vm.Contour2D.dict_to_object({'name': '', 'package_vers
 rotor_contour=rotor_magnet_contours+[rotor_external_contour]
 rotor_magnet=[rotor_magnet_contours[0]]
 rotor_external=[rotor_external_contour]
-rotor_external_contour.MPLPlot()
-rotor=vmmesh.Mesher(rotor_contour,[],60)
+rotor_internal=[rotor_internal_contour]
+rotor=vmmesh.Mesher(rotor_internal,[],60)
 all_triangle_elements=rotor.mesh()
 
 # mesher=vmmesh.Mesher([stator_external_contour],[],20)

@@ -681,7 +681,7 @@ class Mesher(DessiaObject):
             if not (i in indexes):
                 M=polygone.points[i]
                 if triangle.is_inside_triangle(M):
-                    d=math.abs(triangle.line_equation(P1,P2,M))
+                    d=abs(triangle.line_equation(P1,P2,M))
                     if d > distance:
                         distance=d
                         j=i
@@ -728,7 +728,7 @@ class Mesher(DessiaObject):
             if len(polygone_1.points)==3:
                 new_triangle=vm.Triangle2D([polygone_1.points[0],polygone_1.points[1],polygone_1.points[2]])
                 
-                # if new_triangle.aspect_ratio()<0.7:
+                
                         
                 self.triangles.append(new_triangle)
                 
@@ -745,22 +745,22 @@ class Mesher(DessiaObject):
             if len(polygone_1.points)==3:
                 new_triangle=vm.Triangle2D([polygone_1.points[0],polygone_1.points[1],polygone_1.points[2]])
                
-                # if new_triangle.aspect_ratio()<0.7:
+               
                     
                 self.triangles.append(new_triangle)
                 
             else :
-                self.triangulate_polygone_recursive(polygone_1)
+                self.triangulation_polygone_recursive(polygone_1)
                 
             if len(polygone_2.points)==3:
                 new_triangle=vm.Triangle2D([polygone_2.points[0],polygone_2.points[1],polygone_2.points[2]])
                
-                # if new_triangle.aspect_ratio()<0.7:
+                
                     
                 self.triangles.append(new_triangle)
                 
             else :
-                self.triangulate_polygone_recursive(polygone_2)
+                self.triangulation_polygone_recursive(polygone_2)
             
             
                 
@@ -774,17 +774,6 @@ class Mesher(DessiaObject):
         return triangles
 
               
-    # def assemble_conour(self,contours:List[vm.Contour2D],ax):
-    #     polygon_points=[]
-    #     for contour in contours :
-    #         for primitive in contour.primitives:
-    #             if isinstance(primitive,vm.LineSegment2D):
-    #                 if primitive.point1 not in polygon_points:
-    #                     polygon_points.append(primitive.point1)
-    #             else :
-    #                  for point in primitive.discretise(self.nodes_len,ax):
-    #                      if point not in polygon_points:
-    #                          polygon_points.append(point)    
           
     def mesh(self):
         ax=plt.subplot()
