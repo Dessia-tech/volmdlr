@@ -72,8 +72,7 @@ for i in range(100):
 ax = belt.outer_contour3d.MPLPlot()
 # l = belt.outer_contour3d.Length()
 # for i in range(100):
-for p in belt.outer_contour3d.tessel_points:
-    p.MPLPlot(ax=ax)
+
 
 
 model = vm.VolumeModel([bottom, sides, belt], name='Casing')

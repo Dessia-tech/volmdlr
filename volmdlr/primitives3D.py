@@ -355,7 +355,6 @@ class ExtrudedProfile(volmdlr.Shell3D):
         self.x = x
         self.y = y
         self.color = color
-        self.bounding_box = self._bounding_box()
 
         bool_areas = []
         for contour in inner_contours2d:
@@ -371,57 +370,18 @@ class ExtrudedProfile(volmdlr.Shell3D):
         volmdlr.Shell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
 
     def shell_faces(self):
+        lower_face = volmdlr.PlaneFace3D.from_contours3d(self.outer_contour3d,
+                                                         self.inner_contours3d)
 
-        lower_contours = [self.outer_contour3d]+self.inner_contours3d
-        lower_face = volmdlr.PlaneFace3D.from_contours3d(lower_contours)
+        upper_face = lower_face.Translation(self.extrusion_vector)
+        lateral_faces = [p.extrusion(self.extrusion_vector)
+                         for p in self.outer_contour3d.primitives]
 
-        upper_contours = [contour.Translation(self.extrusion_vector, True) for contour in lower_contours]
-        upper_face = volmdlr.PlaneFace3D.from_contours3d(upper_contours)
-        
-        lateral_faces = []
-
-        def generated_faces(extru_vec, edge) :
-            linextru = volmdlr.LineSegment3D(volmdlr.Point3D([0,0,0]), volmdlr.Point3D(extru_vec.vector))
-            normal = volmdlr.Vector3D(list(extru_vec))
-            normal.Normalize()
-            if edge.__class__ is volmdlr.core.Arc3D or edge.__class__ is volmdlr.core.Circle3D :
-                center = edge.center
-                u = volmdlr.Vector3D((edge.points[0] - center).vector)
-                u.Normalize()
-                v = normal.Cross(u)
-                v.Normalize()
-                frame = volmdlr.Frame3D(center, u, v, normal)
-                cylsurf3d = volmdlr.CylindricalSurface3D(frame, edge.radius)
-                return [volmdlr.CylindricalFace3D.from_arc3d(linextru, edge, cylsurf3d)]
-            
-            elif edge.__class__ is volmdlr.core.LineSegment3D :
-                seg1 = edge
-                seg2 = volmdlr.LineSegment3D(seg1.points[1], seg1.points[1] + volmdlr.Point3D(extru_vec.vector))
-                seg3 = volmdlr.LineSegment3D(seg2.points[1], seg2.points[1]-seg1.points[1] + seg1.points[0])
-                seg4 = volmdlr.LineSegment3D(seg3.points[1], seg1.points[0])
-                edges = [seg1, seg2, seg3, seg4]
-                return [volmdlr.PlaneFace3D.from_contours3d([volmdlr.Contour3D(edges)])]
-            
-            elif edge.__class__ is volmdlr.primitives3D.OpenedRoundedLineSegments3D or edge.__class__ is volmdlr.primitives3D.ClosedRoundedLineSegments3D :
-                faces = []
-                for element in edge.primitives :
-                    faces.extend(generated_faces(extru_vec, element))
-                return faces
-            else : 
-                return NotImplementedError
-        
-        for edge in self.outer_contour3d.edges :
-            lateral_faces.extend(generated_faces(self.extrusion_vector, edge))
-        
-        if self.inner_contours3d != [] :
-            for element in self.inner_contours3d :
-                for edge in element.edges :
-                    lateral_faces.extend(generated_faces(self.extrusion_vector, edge))
+        for inner_contour in self.inner_contours3d:
+            lateral_faces.extend([p.extrusion(self.extrusion_vector)
+                                  for p in inner_contour.primitives])
 
         return [lower_face]+[upper_face]+lateral_faces
-
-    def _bounding_box(self):
-        return volmdlr.BoundingBox.from_points(self.outer_contour3d.tessel_points)
 
     def MPLPlot(self, ax=None):
         if ax is None:
@@ -534,7 +494,7 @@ class RevolvedProfile(volmdlr.Shell3D):
     def shell_faces(self):
         faces = []
                         
-        for edge in self.contour3d.edges:
+        for edge in self.contour3d.primitives:
             faces.append(edge.revolution(self.axis_point,
                                          self.axis, self.angle))
                     
