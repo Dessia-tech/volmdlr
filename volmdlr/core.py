@@ -936,10 +936,6 @@ class LineSegment2D(Line2D):
             else:
                 self.points = [frame.NewCoordinates(p) for p in self.points]
 
-    def GeoScript(self, primitive_index, points_indices):
-        s = 'Line({}) = {{{}, {}}};\n'.format(primitive_index, *points_indices)
-        return s, primitive_index + 1
-
     def plot_data(self, marker=None, color='black', stroke_width=1,
                   dash=False, opacity=1, arrow=False):
         return {'type': 'line',
@@ -1131,11 +1127,6 @@ class Arc2D(Primitive2D):
         l = self.Length()
         return self.PointAtCurvilinearAbscissa(0.5 * l)
 
-    def GeoScript(self, primitive_index, points_indices):
-        s = 'Circle({}) = {{{}, {}, {}}};\n'.format(primitive_index,
-                                                    *points_indices)
-        return s, primitive_index + 1
-
     def Area(self):
         if self.angle2 < self.angle1:
             angle = self.angle2 + 2 * math.pi - self.angle1
@@ -1151,16 +1142,16 @@ class Arc2D(Primitive2D):
         return self.center + 4 / (3 * alpha) * self.radius * math.sin(
             alpha * 0.5) * u
 
-    def MPLPlot(self, ax=None, color='k'):
+    def MPLPlot(self, ax=None, color='k', plot_points=False):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
-        # else:
-        #     fig = ax.figure
+
+        if plot_points:
+            for p in [self.center, self.start, self.interior, self.end]:
+                p.MPLPlot(ax=ax)
 
         pc = self.center.vector
-        #        ax.plot([pc[0]], [pc[1]], 'or')
-        #        ax.plot([self.interior[0]], [self.interior[1]], 'ob')
         ax.add_patch(Arc(pc, 2 * self.radius, 2 * self.radius, angle=0,
                          theta1=self.angle1 * 0.5 / math.pi * 360,
                          theta2=self.angle2 * 0.5 / math.pi * 360,
@@ -1183,9 +1174,6 @@ class Arc2D(Primitive2D):
             self.__init__(*[p.Rotation(center, angle, copy=True) for p in
                             [self.start, self.interior, self.end]])
 
-    #            self.start.Rotation(center,angle,copy=False)
-    #            self.interior.Rotation(center,angle,copy=False)
-    #            self.end.Rotation(center,angle,copy=False)
 
     def Translation(self, offset, copy=True):
         if copy:
@@ -1195,9 +1183,6 @@ class Arc2D(Primitive2D):
             self.__init__(*[p.Translation(offset, copy=True) for p in
                             [self.start, self.interior, self.end]])
 
-    #            self.start.Translation(offset,copy=False)
-    #            self.interior.Translation(offset,copy=False)
-    #            self.end.Translation(offset,copy=False)
 
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -1210,9 +1195,6 @@ class Arc2D(Primitive2D):
             self.__init__(*[p.frame_mapping(frame, side, copy=True) for p in
                             [self.start, self.interior, self.end]])
 
-    #            self.start.frame_mapping(frame, side,copy=False)
-    #            self.interior.frame_mapping(frame, side,copy=False)
-    #            self.end.frame_mapping(frame, side,copy=False)
 
     def SecondMomentArea(self, point):
         """
@@ -1284,7 +1266,6 @@ class Arc2D(Primitive2D):
 
 class ArcEllipse2D(Primitive2D):
     """
-    An arc is defined by a starting point, an end point and an interior point
 
     """
 
@@ -1931,13 +1912,13 @@ class Contour2D(Wire2D):
         return cutted_contours
 
     def triangulation(self):
-        return self.grid_triangulation(number_points_x=10,
-                                       number_points_y=10)
+        return self.grid_triangulation(number_points_x=20,
+                                       number_points_y=20)
 
     def grid_triangulation(self, x_density: float = None,
                            y_density: float = None,
-                           min_points_x: int = 10,
-                           min_points_y: int = 10,
+                           min_points_x: int = 20,
+                           min_points_y: int = 20,
                            number_points_x: int = None,
                            number_points_y: int = None):
         """
@@ -2078,11 +2059,6 @@ class Circle2D(Contour2D):
 
     def Length(self):
         return 2 * math.pi * self.radius
-
-    def GeoScript(self, primitive_index, points_indices):
-        s = 'Circle({}) = {{{}, {}, {}}};\n'.format(primitive_index,
-                                                    *points_indices)
-        return s, primitive_index + 1
 
     def MPLPlot(self, ax=None, linestyle='-', color='k', linewidth=1):
         if ax is None:
@@ -2800,7 +2776,8 @@ class CylindricalSurface3D(Primitive3D):
 
 class ToroidalSurface3D(Primitive3D):
     """
-    :param frame: Tore's frame to position it
+    :param frame: Tore's frame: origin is thet center, u is pointing at
+                    theta=0
     :type frame: Frame3D
     :param R: Tore's radius
     :type R: float
@@ -3219,7 +3196,7 @@ class ToroidalSurface3D(Primitive3D):
 
 class ConicalSurface3D(Primitive3D):
     """
-    :param frame: Cone's frame to position it
+    :param frame: Cone's frame to position it: frame.w is axis of cone
     :type frame: Frame3D
     :param r: Cone's bottom radius
     :type r: float
@@ -3229,14 +3206,8 @@ class ConicalSurface3D(Primitive3D):
 
     def __init__(self, frame, semi_angle, name=''):
         self.frame = frame
-        # self.radius = radius
         self.semi_angle = semi_angle
         self.name = name
-        # V=frame.v
-        # V.Normalize()
-        # W=frame.w
-        # W.Normalize()
-        # self.plane = Plane3D(frame.origin,V,W)
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -3246,7 +3217,6 @@ class ConicalSurface3D(Primitive3D):
         W.Normalize()
         V = W.Cross(U)
         frame_direct = Frame3D(frame3d.origin, U, V, W)
-        # radius = float(arguments[2])/1000
         semi_angle = float(arguments[3])
         return cls(frame_direct, semi_angle, arguments[0][1:-1])
 
@@ -3275,30 +3245,31 @@ class ConicalSurface3D(Primitive3D):
                 self.frame = new_frame
 
     def point2d_to_3d(self, point):
-        new_point = Point3D((point[0],
-                             point[0] * self.semi_angle * math.cos(point[1]),
-                             point[0] * self.semi_angle * math.sin(point[1]),
+        theta, z = point
+        new_point = Point3D((z * self.semi_angle * math.cos(theta),
+                             z * self.semi_angle * math.sin(theta),
+                             z,
                              ))
         return self.frame.OldCoordinates(new_point)
 
     def point3d_to_2d(self, point):
-        x = self.frame.u.Dot(point)
-        y, z = point.PlaneProjection(self.frame.origin, self.frame.v,
-                                     self.frame.w)
-        theta = math.atan2(z, y)
-        return Point2D([x, theta])
+        z = self.frame.w.Dot(point)
+        x, y = point.PlaneProjection(self.frame.origin, self.frame.u,
+                                     self.frame.v)
+        theta = math.atan2(y, x)
+        return Point2D([theta, z])
 
-    def rectangular_cut(self, x1, x2, theta1, theta2, name=''):
-        theta1 = angle_principal_measure(theta1)
-        theta2 = angle_principal_measure(theta2)
-
+    def rectangular_cut(self, theta1: float, theta2: float,
+                        z1: float, z2: float, name: str=''):
+        # theta1 = angle_principal_measure(theta1)
+        # theta2 = angle_principal_measure(theta2)
         if theta1 == theta2:
             theta2 += 2 * math.pi
 
-        p1 = Point2D((x1, theta1))
-        p2 = Point2D((x1, theta2))
-        p3 = Point2D((x2, theta2))
-        p4 = Point2D((x2, theta1))
+        p1 = Point2D((theta1, z1))
+        p2 = Point2D((theta2, z1))
+        p3 = Point2D((theta2, z2))
+        p4 = Point2D((theta1, z2))
         outer_contour = Polygon2D([p1, p2, p3, p4])
         return ConicalFace3D(self, outer_contour, [], name)
 
@@ -4103,11 +4074,12 @@ class Arc3D(Primitive3D):
         else:
             return NotImplementedError
 
-    def revolution(self, axis_point, axis, angle):
-
+    def revolution(self, axis_point: Point3D, axis: Vector3D,
+                   angle: float):
+        print('arc3d', self.start, self.interior, self.end)
         line3d = Line3D(axis_point, axis_point + axis)
         tore_center, _ = line3d.point_projection(self.center)
-        u = tore_center - self.center
+        u =  self.center - tore_center
         u.Normalize()
         v = axis.Cross(u)
         if not math.isclose(self.normal.Dot(u), 0., abs_tol=1e-9):
@@ -4117,7 +4089,13 @@ class Arc3D(Primitive3D):
         R = tore_center.point_distance(self.center)
         surface = ToroidalSurface3D(Frame3D(tore_center, u, v, axis), R,
                                     self.radius)
-        return surface.rectangular_cut(0, self.angle, 0, 3.14)
+        arc2d = self.To2D(tore_center, u, axis)
+        print('u', u)
+        print(arc2d.angle1, arc2d.angle2, arc2d.angle)
+        arc2d.MPLPlot(plot_points=True)
+
+        return surface.rectangular_cut(0, angle,
+                                       arc2d.angle1, arc2d.angle2)
 
 
 class ArcEllipse3D(Primitive3D):
@@ -6540,7 +6518,8 @@ class CylindricalFace3D(Face3D):
         frame = cylindricalsurface3d.frame
         normal, center = frame.w, frame.origin
         offset = 0
-        if arc.__class__.__name__ == 'Circle3D' or arc.__class__.__name__ == 'Circle2D':
+        if arc.__class__.__name__ == 'Circle3D'\
+            or arc.__class__.__name__ == 'Circle2D':
 
             frame_adapt = cylindricalsurface3d.frame
             theta = arc.angle
@@ -6549,7 +6528,8 @@ class CylindricalFace3D(Face3D):
             point12d = arc.start
             if point12d.__class__ is Point3D:
                 point12d = point12d.To2D(center, frame.u,
-                                         frame.v)  # Using it to put arc.start at the same height
+                                         frame.v)
+                # Using it to put arc.start at the same height
             point13d = point12d.To3D(center, frame.u, frame.v)
             if arc.start.__class__ is Point2D:
                 u_g2d = Vector2D((arc.start - arc.center).vector)
@@ -6651,15 +6631,6 @@ class CylindricalFace3D(Face3D):
                     all_points.extend(ls_toadd.points)
                     start_end.append(ls_toadd.points)
 
-            # elif edge.__class__ is BSplineCurve3D :
-
-            #     points2d = CylindricalFace3D.points3d_to2d(new_points, radius)
-            #     print('edge.knot_multiplicities', edge.knot_multiplicities)
-            #     prim_list = [BSplineCurve2D(edge.degree, points2d, edge.knot_multiplicities, edge.knots)]
-            #     all_points.extend(points2d)
-            #     primitives.append(prim_list)
-            #     start_end.append([points2d[0], points2d[-1]])
-
             else:
                 points2d = CylindricalFace3D.points3d_to2d(new_points, radius)
                 lines = []
@@ -6676,62 +6647,6 @@ class CylindricalFace3D(Face3D):
                     primitives.append(prim_list)
                     start_end.append([points[0], points[-1]])
 
-        # fig, ax = plt.subplots()
-        # [pt.MPLPlot(ax=ax) for pt in all_points]
-
-        # fig, ax = plt.subplots()
-        # for list_prim in primitives :
-        #     [prim.MPLPlot(ax=ax) for prim in list_prim]
-        # maxi, mini = max(pt.vector[0] for pt in all_points), min(pt.vector[0] for pt in all_points)
-        # if (mini > 0 and maxi < math.pi) or (mini > math.pi and maxi < 2*math.pi) :
-        #     fig, ax = plt.subplots()
-        #     for enum, list_prim in enumerate(primitives) :
-        #         [prim.MPLPlot(ax=ax) for prim in list_prim]
-        #         start_end[enum][0].MPLPlot(ax=ax, color='g')
-        #         start_end[enum][1].MPLPlot(ax=ax, color='r')
-
-        #     for n, s_e in enumerate(start_end) :
-        #         if n == 0 :
-        #             start1, end1 = s_e
-        #             start2, end2 = start_end[n+1]
-        #         elif n == len(start_end)-1 :
-        #             continue
-        #         else :
-        #             start2, end2 = start_end[n+1]
-
-        #         d1, d2 = start1.point_distance(start2), start1.point_distance(end2)
-        #         d3, d4 = end1.point_distance(start2), end1.point_distance(end2)
-        #         posmin, dmin = min_pos([d1, d2, d3, d4])
-        #         if posmin == 2 or posmin == 1:
-        #             continue
-        #         else:
-        #             new_prim = []
-        #             for prim in primitives[n+1] :
-        #                 new_prim.append(prim.reverse())
-        #             primitives[n+1] = new_prim
-        #             new_start = end2
-        #             end2 = start2
-        #             start2 = new_start
-        #         start1, end1 = start2, end2
-
-        #     points_primitives = []
-        #     for list_prim in primitives :
-        #         for prim in list_prim :
-        #             points_primitives.extend(prim.points)
-        #     # points = delete_double_point(points_primitives)
-        #     primitives = Face3D.create_primitives(points_primitives)
-        #     fig, ax = plt.subplots()
-        #     [p.MPLPlot(ax=ax) for p in primitives]
-        #     contour2d = [Contour2D(primitives)]
-
-        #     # prim2 = Face3D.create_primitives(contour2d[0].tessel_points)
-        #     # fig, ax = plt.subplots()
-        #     # [p.MPLPlot(ax=ax) for p in prim2]
-
-        #     # contour2d = [Contour2D(prim2)]
-        #     # raise NotImplementedError
-
-        # else :
         points_se, primitives_se = [], []
         for double in start_end:
             primitives_se.append(LineSegment2D(double[0], double[1]))
@@ -7000,8 +6915,6 @@ class CylindricalFace3D(Face3D):
         u1 = self.cylindricalsurface3d.frame.u
         v1 = self.cylindricalsurface3d.frame.v
         frame1 = Frame3D(self.center, u1, v1, n1)
-        # st1 = Point3D((r1*math.cos(min_theta1), r1*math.sin(min_theta1), min_h1))
-        # start1 = frame1.OldCoordinates(st1)
 
         min_h2, min_theta2, max_h2, max_theta2 = self.minimum_maximum(
             other_cyl.contours2d[0], r2)
