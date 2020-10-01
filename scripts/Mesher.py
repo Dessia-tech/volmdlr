@@ -35,13 +35,16 @@ stator_external_contour = vm.Contour2D.dict_to_object({'name': '', 'package_vers
 # ax=circle.MPLPlot()
 # circle.discretise(40,ax)
 
-rotor_contour=rotor_magnet_contours+[rotor_external_contour]
-rotor_magnet=[rotor_magnet_contours[0]]
-rotor_external=[rotor_external_contour]
+rotor_external=rotor_magnet_contours+[rotor_external_contour]
 rotor_internal=[rotor_internal_contour]
-rotor=vmmesh.Mesher(rotor_internal,[],60)
-all_triangle_elements=rotor.mesh()
 
+rotor_magnet=[rotor_magnet_contours[0]]
+
+# rotor=vmmesh.Mesher(rotor_internal,[],60)
+# all_triangle_elements=rotor.mesh()
+# element_group=vmmesh.ElementsGroup(all_triangle_elements,'element_group')
+# mesh=vmmesh.Mesh([element_group])
+# mesh.plot()
 # mesher=vmmesh.Mesher([stator_external_contour],[],20)
 
 
@@ -95,9 +98,11 @@ contour=vm.Contour2D([l1,l2,l3,l4,l5,l6])
 # polygon=contour.polygon
 # all_points=polygon.points
 
-# mesher=vmmesh.Mesher(contour,[],1.5)
-# all_triangle_elements=mesher.mesh()
-
+mesher=vmmesh.Mesher([contour],[],1.5)
+all_triangle_elements=mesher.mesh()
+element_group=vmmesh.ElementsGroup(all_triangle_elements,'element_group')
+mesh=vmmesh.Mesh([element_group])
+mesh.plot()
 
 
 

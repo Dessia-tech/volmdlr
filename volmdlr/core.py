@@ -1377,7 +1377,9 @@ class LineSegment2D(Line2D):
                    
              segment_to_nodes[self]=nodes
              for point in segment_to_nodes[self]:
-                 point.MPLPlot(ax=ax,color='r')
+                 if ax is not None:
+                    
+                     point.MPLPlot(ax=ax,color='r')
                
             
          return segment_to_nodes[self]
