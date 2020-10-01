@@ -21,9 +21,9 @@ export class PlotData {
   color_surface_on_mouse:string='lightskyblue';
   color_surface_on_click:string='blue';
   context:any;
-  tooltip_ON:boolean;
-  axis_ON:boolean;
-  link_object_ON:boolean;
+  tooltip_ON:boolean = false;
+  axis_ON:boolean = false;
+  link_object_ON:boolean = false;
 
   define_canvas() {
     var canvas = document.getElementById('canvas');
@@ -114,7 +114,6 @@ export class PlotData {
           var shape = d.plot_data_states[show_state].shape_set.shape;
 
           if (z == d) {
-            console.log(z,d)
             if (shape == 'crux') {
               this.context.strokeStyle = this.color_surface_on_click;
             } else {
@@ -162,8 +161,9 @@ export class PlotData {
   }
 
   draw_graph2D(d, hidden, mvx, mvy) {
-    if (d['type'] == 'graph2D') {
+    if ((d['type'] == 'graph2D') && (this.graph_enable[d.id] === true)) {
       this.context.beginPath();
+      this.context.setLineDash(d.dashline);
       this.context.strokeStyle = d.graph_colorstroke;
       this.context.lineWidth = d.graph_linewidth;
       for (var i=0; i<d.segments.length; i++) {
@@ -174,6 +174,7 @@ export class PlotData {
         }
       }
       this.context.stroke();
+      this.context.setLineDash([]);
       for (var i=0; i<d.point_list.length; i++) {
         var point = d.point_list[i];
         this.draw_point(hidden, 0, mvx, mvy, this.scaleX, this.scaleY, point);
@@ -207,9 +208,9 @@ export class PlotData {
     }
     this.context.strokeStyle = 'black';
     if (this.zw_bool) {
-      Shape.createButton(x, y, w, h, this.context, "Z ON");
+      Shape.createButton(x, y, w, h, this.context, "Z ON", "12px Arial");
     } else {
-      Shape.createButton(x, y, w, h, this.context, "Z OFF");
+      Shape.createButton(x, y, w, h, this.context, "Z OFF", "12px Arial");
     }
     
   }
@@ -219,7 +220,7 @@ export class PlotData {
       throw new Error("Invalid x or y, the reset button is out of the canvas");
     }
     this.context.strokeStyle = 'black';
-    Shape.createButton(x, y, w, h, this.context, "Reset")
+    Shape.createButton(x, y, w, h, this.context, "Reset", "12px Arial");
   }
 
   selection_button(x, y, w, h) {
@@ -228,9 +229,19 @@ export class PlotData {
     }
     this.context.strokeStyle = 'black';
     if (this.select_bool) {
-      Shape.createButton(x, y, w, h, this.context, "S ON")
+      Shape.createButton(x, y, w, h, this.context, "S ON", "12px Arial")
     } else {
-      Shape.createButton(x, y, w, h, this.context, "S OFF")
+      Shape.createButton(x, y, w, h, this.context, "S OFF", "12px Arial")
+    }
+  }
+
+  graph_buttons(x, y, w, h) {
+    for (var i=0; i<this.nb_graph; i++) {
+      if (this.graph_enable[i]===true) {
+        Shape.createButton(x + i*w, y, w, h, this.context, "Graph" +(i+1).toString() + ":ON", "10px Arial");
+      } else {
+        Shape.createButton(x + i*w, y, w, h, this.context, "Graph" +(i+1).toString() + ":OFF", "10px Arial");
+      }
     }
   }
 
@@ -255,13 +266,14 @@ export class PlotData {
     })
 
     canvas.addEventListener('mousemove', e => {
+      
       if ((isDrawing === true) && !(this.zw_bool||this.select_bool)) {
         mouse_moving = true;
         mouse2X = e.offsetX;
         mouse2Y = e.offsetY;
         this.draw(false, 0, this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX, this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY, this.scaleX, this.scaleY);
         this.draw(true, 0, this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX, this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY, this.scaleX, this.scaleY);
-      
+        
       } else if ((isDrawing === true) && (this.zw_bool||this.select_bool)) {
         mouse_moving = true;
         mouse2X = e.offsetX;
@@ -289,7 +301,7 @@ export class PlotData {
 
     canvas.addEventListener('mouseup', e => {
 
-      var scale_ceil = 300*this.init_scale;
+      var scale_ceil = 400*this.init_scale;
       var scale_floor = this.init_scale/3;
 
       var click_on_plus = Shape.Is_in_rect(mouse1X, mouse1Y, this.zoom_rect_x, this.zoom_rect_y, this.zoom_rect_w, this.zoom_rect_h);
@@ -298,7 +310,8 @@ export class PlotData {
       var click_on_reset = Shape.Is_in_rect(mouse1X, mouse1Y, this.reset_rect_x, this.reset_rect_y, this.reset_rect_w, this.reset_rect_h);
       var is_rect_big_enough = (Math.abs(mouse2X - mouse1X)>40) && (Math.abs(mouse2Y - mouse1Y)>30);
       var click_on_select = Shape.Is_in_rect(mouse1X, mouse1Y, this.select_x, this.select_y, this.select_w, this.select_h);
-      var click_on_button = click_on_plus || click_on_minus || click_on_zoom_window || click_on_reset || click_on_select;
+      var click_on_graph = Shape.Is_in_rect(mouse1X, mouse1Y, this.graph1_button_x, this.graph1_button_y, this.nb_graph*this.graph1_button_w, this.graph1_button_h);
+      var click_on_button = click_on_plus || click_on_minus || click_on_zoom_window || click_on_reset || click_on_select || click_on_graph;
 
       if (mouse_moving) {
           if ((this.zw_bool && is_rect_big_enough)) {
@@ -388,7 +401,14 @@ export class PlotData {
             this.zw_bool = false;
             this.select_bool = !this.select_bool;
 
-          } 
+          } else if (click_on_graph) {
+            for (var i=0; i<this.nb_graph; i++) {
+              var click_on_graph_i = Shape.Is_in_rect(mouse1X, mouse1Y, this.graph1_button_x + i*this.graph1_button_w, this.graph1_button_y, this.graph1_button_w, this.graph1_button_h);
+              if (click_on_graph_i === true) {
+                this.graph_enable[i] = ! this.graph_enable[i];
+              }
+            }
+          }
 
           this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
         }
@@ -397,7 +417,7 @@ export class PlotData {
     })
 
     canvas.addEventListener('wheel', e => {
-      var scale_ceil = 300*this.init_scale;
+      var scale_ceil = 400*this.init_scale;
       var scale_floor = this.init_scale/3;
       var zoom_coeff = 1.1;
       var event = -e.deltaY;
@@ -510,8 +530,6 @@ export class PlotContour extends PlotData {
                 public height: number,
                 public coeff_pixel: number) {
     super();
-    this.tooltip_ON = false;
-    this.axis_ON = false;
     this.plot_datas = [];
     for (var i = 0; i < data.length; i++) {
       var d = this.data[i];
@@ -559,6 +577,13 @@ export class PlotScatter extends PlotData {
   select_w:number;
   select_h:number;
   sort_list_points:any[]=[];
+  graph_enable:boolean[]=[];
+  graph1_button_x:number;
+  graph1_button_y:number;
+  graph1_button_w:number;
+  graph1_button_h:number;
+  nb_graph:number = 0;
+
 
   constructor(public data:any, 
     public width: number,
@@ -581,11 +606,16 @@ export class PlotScatter extends PlotData {
       this.select_y = 150;
       this.select_w = 35;
       this.select_h = 30;
+      this.graph1_button_y = 10;
+      this.graph1_button_w = 60;
+      this.graph1_button_h = 25;
       this.plot_datas = [];
+      var graphID = 0;
       for (var i = 0; i < data.length; i++) {
         var d = data[i]; 
+        var a;
         if (d['type'] == 'point') {
-          var a = PlotDataPoint2D.deserialize(d)
+          a = PlotDataPoint2D.deserialize(d)
           if (isNaN(this.minX)) {this.minX = a.minX} else {this.minX = Math.min(this.minX, a.minX)};
           if (isNaN(this.maxX)) {this.maxX = a.maxX} else {this.maxX = Math.max(this.maxX, a.maxX)};
           if (isNaN(this.minY)) {this.minY = a.minY} else {this.minY = Math.min(this.minY, a.minY)};
@@ -598,34 +628,38 @@ export class PlotScatter extends PlotData {
           }
         
         } else if (d['type'] == 'axis') {
-          var b = PlotDataScatter.deserialize(d);
-          this.plot_datas.push(b);
+          a = PlotDataScatter.deserialize(d);
+          this.plot_datas.push(a);
         } else if (d['type'] == 'tooltip') {
-          var c = PlotDataTooltip.deserialize(d);
-          this.plot_datas.push(c);
+          a = PlotDataTooltip.deserialize(d);
+          this.plot_datas.push(a);
         } else if (d['type'] == 'link_object') {
           this.link_object_ON = true;
-          var e = PlotDataLinkObject.deserialize(d);
-          this.plot_datas.push(e);
+          a = PlotDataLinkObject.deserialize(d);
+          this.plot_datas.push(a);
         } else if (d['type'] == 'graph2D') {
-          var f = PlotDataGraph2D.deserialize(d);
-          for (var j=0; j<f.point_list.length; j++) {
-            var point = f.point_list[j];
+          a = PlotDataGraph2D.deserialize(d);
+          a.id = graphID;
+          graphID++;
+          this.graph_enable.push(true);
+          for (var j=0; j<a.point_list.length; j++) {
+            var point = a.point_list[j];
             if (isNaN(this.minX)) {this.minX = point.minX} else {this.minX = Math.min(this.minX, point.minX)};
             if (isNaN(this.maxX)) {this.maxX = point.maxX} else {this.maxX = Math.max(this.maxX, point.maxX)};
             if (isNaN(this.minY)) {this.minY = point.minY} else {this.minY = Math.min(this.minY, point.minY)};
             if (isNaN(this.maxY)) {this.maxY = point.maxY} else {this.maxY = Math.max(this.maxY, point.maxY)};
             this.colour_to_plot_data[point.mouse_selection_color] = point;
           }
-          this.plot_datas.push(f);
+          this.plot_datas.push(a);
         }
       }
+      this.nb_graph = graphID;
+      this.graph1_button_x = width/2 - this.nb_graph*this.graph1_button_w/2;
       this.define_canvas();
       this.mouse_interaction();
   }
 
   draw(hidden, show_state, mvx, mvy, scaleX, scaleY) {
-    console.log(this.colour_to_plot_data)
     this.draw_empty_canvas(hidden);
     for (var i = 0; i < this.plot_datas.length; i++) {
       var d = this.plot_datas[i];
@@ -646,6 +680,9 @@ export class PlotScatter extends PlotData {
       
       //Drawing the selection button
       this.selection_button(this.select_x, this.select_y, this.select_w, this.select_h);
+
+      //Drawing the enable/disable graph button
+      this.graph_buttons(this.graph1_button_x ,this.graph1_button_y, this.graph1_button_w, this.graph1_button_h);
     
   }
 }
@@ -693,7 +730,7 @@ class Shape {
     return ((x>=rect_x) && (x<= rect_x + rect_w) && (y>=rect_y) && (y<=rect_y + rect_h))
   }
 
-  public static createButton(x, y, w, h, context, text) {
+  public static createButton(x, y, w, h, context, text, police) {
     context.beginPath();
     context.fillStyle = 'white';
     context.lineWidth = "3";
@@ -704,7 +741,7 @@ class Shape {
     context.beginPath();
     context.fillStyle = "black"
     context.textAlign = "center";
-    context.font = "12px Arial";
+    context.font = police;
     context.fillText(text, x+w/2, y+h/1.8);
     context.fill();
     context.closePath();
@@ -1163,6 +1200,7 @@ export class PlotDataLinkObject {
 }
 
 export class PlotDataGraph2D {
+  id:number=0;
   constructor(public point_list:PlotDataPoint2D[],
               public dashline: number[],
               public graph_colorstroke: string,

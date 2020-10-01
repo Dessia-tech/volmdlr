@@ -534,11 +534,6 @@ class Point2D(Vector2D):
         return plot_data.PlotDataPoint2D(cx=cx,cy=cy,plot_data_states=plot_data_states,
                                            name=self.name)
 
-    def to_dict(self):
-        return self.to_dict()
-
-    def to_canvas_style(self):
-        return Point2D([self.vector[0], -self.vector[1]])
 
     def To3D(self, plane_origin, vx, vy):
         return Point3D([plane_origin.vector[0] + vx.vector[0]*self.vector[0] + vy.vector[0]*self.vector[1],

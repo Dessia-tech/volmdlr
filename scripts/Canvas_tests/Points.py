@@ -57,20 +57,12 @@ point_color = plot_data.PointColorSet(color_fill=color_fill,
 
 for i in range(50):
     point = vm.Point2D.random(0, window_size.width, 0,
-                              window_size.height).to_canvas_style()
+                              window_size.height)
     plot_datas += [point.plot_data([plot_data.PlotDataState(
         color_surface=plot_data.ColorSurfaceSet(color=surface_color),
         window_size=window_size, stroke_width=stroke_width,
         shape_set=shape_set, point_size=point_size, point_color=point_color)])]
 
-# k = 0
-# while k < 20 * np.pi:
-#     point = vm.Point2D([k, np.sin(k)])
-#     plot_datas += [point.plot_data([plot_data.PlotDataState(
-#         color_surface=plot_data.ColorSurfaceSet(color=surface_color),
-#         window_size=window_size, stroke_width=stroke_width,
-#         shape_set=shape_set, point_size=point_size, point_color=point_color)])]
-#     k = k + np.pi/20
 
 scatter_plot = vm.ScatterPlot(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               font_size=font_size,
