@@ -155,32 +155,6 @@ export class PlotData {
     }
   }
 
-  draw_graph2D(d, hidden, mvx, mvy) {
-    if (d['type'] == 'graph2D') {
-      this.context.beginPath();
-      this.context.strokeStyle = d.graph_colorstroke;
-      this.context.lineWidth = d.graph_linewidth;
-      for (var i=0; i<d.segments.length; i++) {
-        if (i==0) {
-          d.segments[i].draw(this.context, true, mvx, mvy, this.scaleX, this.scaleY);
-        } else {
-          d.segments[i].draw(this.context, false, mvx, mvy, this.scaleX, this.scaleY);
-        }
-      }
-      this.context.stroke();
-      this.context.closePath();
-      this.context.beginPath();
-      this.context.fillStyle = 'violet';
-      for (var i=0; i<d.point_list.length; i++) {
-        var point = d.point_list[i];
-        this.draw_point(hidden, 0, mvx, mvy, this.scaleX, this.scaleY, point);
-      }
-      this.context.fill();
-      this.context.stroke();
-      this.context.closePath();
-    }
-  }
-
   draw_link_object(d, mvx, mvy) {
     if (d['type'] == 'link_object') {
       d.draw(this.context, this.sort_list_points, this.scaleX, this.scaleY, mvx, mvy);
@@ -200,16 +174,10 @@ export class PlotData {
         }
       }
       this.context.stroke();
-      this.context.closePath();
-      this.context.beginPath();
-      this.context.fillStyle = 'violet';
       for (var i=0; i<d.point_list.length; i++) {
         var point = d.point_list[i];
         this.draw_point(hidden, 0, mvx, mvy, this.scaleX, this.scaleY, point);
       }
-      this.context.fill();
-      this.context.stroke();
-      this.context.closePath();
     }
   }
 
@@ -657,6 +625,7 @@ export class PlotScatter extends PlotData {
   }
 
   draw(hidden, show_state, mvx, mvy, scaleX, scaleY) {
+    console.log(this.colour_to_plot_data)
     this.draw_empty_canvas(hidden);
     for (var i = 0; i < this.plot_datas.length; i++) {
       var d = this.plot_datas[i];
@@ -924,7 +893,7 @@ export class PlotDataPoint2D {
             context.arc(scaleX*(1000*this.cx+ mvx), scaleY*(1000*this.cy+ mvy), 1000*this.size, 0, 2*Math.PI);
             context.stroke();
           } else if (shape == 'square') {
-            context.rect(scaleX*(1000*(this.cx - this.size) + mvx),scaleY*(1000*(this.cy - this.size) + mvy),1000*this.size*2, 1000*this.size*2);
+            context.rect(scaleX*(1000*this.cx + mvx) - 1000*this.size,scaleY*(1000*this.cy + mvy) - 1000*this.size,1000*this.size*2, 1000*this.size*2);
             context.stroke();
           } else if (shape == 'crux') {
             context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),1000*this.size, 100*this.size);
@@ -1194,7 +1163,6 @@ export class PlotDataLinkObject {
 }
 
 export class PlotDataGraph2D {
-  mouse_selection_color:any;
   constructor(public point_list:PlotDataPoint2D[],
               public dashline: number[],
               public graph_colorstroke: string,
@@ -1202,9 +1170,7 @@ export class PlotDataGraph2D {
               public segments:PlotDataLine2D[],
               public plot_data_states: PlotDataState[],
               public type: string,
-              public name:string) {
-    this.mouse_selection_color = genColor();
-  }
+              public name:string) {}
   
   public static deserialize(serialized) {
     var temp = serialized['plot_data_states'];
