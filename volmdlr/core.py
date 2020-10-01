@@ -1537,7 +1537,7 @@ class Wire2D(CompositePrimitive2D):
     def tesselation_points(self):
         points = []
         for p in self.primitives:
-            points.extend([p.tessellation_points()])
+            points.extend(p.tessellation_points())
         return points
 
 class Contour2D(Wire2D):
@@ -1941,8 +1941,8 @@ class Contour2D(Wire2D):
         else:
             m = number_points_y
 
-        x = [xmin + (i) * dx / n for i in range(n + 1)]
-        y = [ymin + (i) * dy / m for i in range(m + 1)]
+        x = [xmin + i * dx / n for i in range(n + 1)]
+        y = [ymin + i * dy / m for i in range(m + 1)]
 
         point_is_inside = {}
         point_index = {}
@@ -2019,9 +2019,8 @@ class Circle2D(Contour2D):
             (1, 0)) + self.radius * math.sin(teta) * Vector2D((0, 1)) \
                 for teta in npy.linspace(0, two_pi, resolution + 1)][:-1]
 
-    def point_belongs(self, point):
-        epsilon = 1e-6
-        return point.point_distance(self.center) <= self.radius + epsilon
+    def point_belongs(self, point, tolerance=1e-9):
+        return point.point_distance(self.center) <= self.radius + tolerance
 
     def line_intersections(self, line):
         V = Vector2D((line.points[1] - line.points[0]).vector)
@@ -5099,7 +5098,6 @@ class LineSegment3D(Edge3D):
         name = 'primitive' + str(name)
         x1, y1, z1 = round(1000 * self.points[0], ndigits).vector
         x2, y2, z2 = round(1000 * self.points[1], ndigits).vector
-        print('name', name)
         return '{} = Part.LineSegment(fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(
             name, x1, y1, z1, x2, y2, z2)
 
@@ -5844,7 +5842,6 @@ class Face3D(Primitive3D):
         """
 
         """
-        print('name', self.outer_contour2d.__class__.__name__)
         if self.outer_contour2d.__class__.__name__ == 'Circle2D':
             return Circle3D.from_3_points(
                 self.surface.point2d_to_3d(
