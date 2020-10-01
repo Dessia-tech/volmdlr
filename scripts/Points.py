@@ -58,7 +58,8 @@ point_colorfill = 'violet'
 point_colorstroke = 'grey'
 point_strokewidth = 0.5
 graph_point_size = 2;
-point_shape = 'crux'
+point_shape = 'circle'
+
 
 plot_datas = []
 window_size = plot_data.WindowSizeSet(width=width, height=height)
@@ -66,7 +67,6 @@ shape_set = plot_data.PointShapeSet(shape=shape)
 point_size = plot_data.PointSizeSet(size=size)
 point_color = plot_data.PointColorSet(color_fill=color_fill,
                                       color_stroke=color_stroke)
-
 # graph = vm.Graph2D(point_list=point_list, dashline=dashline,
 #                    graph_colorstroke=graph_colorstroke, graph_linewidth=graph_linewidth,
 #                    point_colorfill=point_colorfill, point_colorstroke=point_colorstroke,

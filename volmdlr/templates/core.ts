@@ -155,6 +155,32 @@ export class PlotData {
     }
   }
 
+  draw_graph2D(d, hidden, mvx, mvy) {
+    if (d['type'] == 'graph2D') {
+      this.context.beginPath();
+      this.context.strokeStyle = d.graph_colorstroke;
+      this.context.lineWidth = d.graph_linewidth;
+      for (var i=0; i<d.segments.length; i++) {
+        if (i==0) {
+          d.segments[i].draw(this.context, true, mvx, mvy, this.scaleX, this.scaleY);
+        } else {
+          d.segments[i].draw(this.context, false, mvx, mvy, this.scaleX, this.scaleY);
+        }
+      }
+      this.context.stroke();
+      this.context.closePath();
+      this.context.beginPath();
+      this.context.fillStyle = 'violet';
+      for (var i=0; i<d.point_list.length; i++) {
+        var point = d.point_list[i];
+        this.draw_point(hidden, 0, mvx, mvy, this.scaleX, this.scaleY, point);
+      }
+      this.context.fill();
+      this.context.stroke();
+      this.context.closePath();
+    }
+  }
+
   draw_link_object(d, mvx, mvy) {
     if (d['type'] == 'link_object') {
       d.draw(this.context, this.sort_list_points, this.scaleX, this.scaleY, mvx, mvy);
@@ -181,10 +207,10 @@ export class PlotData {
         var point = d.point_list[i];
         this.draw_point(hidden, 0, mvx, mvy, this.scaleX, this.scaleY, point);
       }
+      this.context.fill();
+      this.context.stroke();
+      this.context.closePath();
     }
-    this.context.fill();
-    this.context.stroke();
-    this.context.closePath();
   }
 
   zoom_button(x, y, w, h) {
