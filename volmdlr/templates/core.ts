@@ -38,7 +38,6 @@ export class PlotData {
   }
 
   draw_initial() {
-    console.log(this.minX, this.maxX, this.minY, this.maxY)
     this.init_scale = Math.min(this.width/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX), this.height/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY));
     this.scale = this.init_scale;
     this.init_scaleX = this.width/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX);
@@ -155,6 +154,32 @@ export class PlotData {
     }
   }
 
+  draw_graph2D(d, hidden, mvx, mvy) {
+    if (d['type'] == 'graph2D') {
+      this.context.beginPath();
+      this.context.strokeStyle = d.graph_colorstroke;
+      this.context.lineWidth = d.graph_linewidth;
+      for (var i=0; i<d.segments.length; i++) {
+        if (i==0) {
+          d.segments[i].draw(this.context, true, mvx, mvy, this.scaleX, this.scaleY);
+        } else {
+          d.segments[i].draw(this.context, false, mvx, mvy, this.scaleX, this.scaleY);
+        }
+      }
+      this.context.stroke();
+      this.context.closePath();
+      this.context.beginPath();
+      this.context.fillStyle = 'violet';
+      for (var i=0; i<d.point_list.length; i++) {
+        var point = d.point_list[i];
+        this.draw_point(hidden, 0, mvx, mvy, this.scaleX, this.scaleY, point);
+      }
+      this.context.fill();
+      this.context.stroke();
+      this.context.closePath();
+    }
+  }
+
   draw_link_object(d, mvx, mvy) {
     if (d['type'] == 'link_object') {
       d.draw(this.context, this.sort_list_points, this.scaleX, this.scaleY, mvx, mvy);
@@ -232,7 +257,6 @@ export class PlotData {
       mouse2X = e.offsetX;
       mouse2Y = e.offsetY;
       isDrawing = true;
-      console.log(mouse1X, mouse1Y)
     })
 
     canvas.addEventListener('mousemove', e => {
@@ -588,6 +612,17 @@ export class PlotScatter extends PlotData {
           this.link_object_ON = true;
           var e = PlotDataLinkObject.deserialize(d);
           this.plot_datas.push(e);
+        } else if (d['type'] == 'graph2D') {
+          var f = PlotDataGraph2D.deserialize(d);
+          var point = f.point_list[j];
+          for (var j=0; j<f.point_list.length; j++) {
+            if (isNaN(this.minX)) {this.minX = point.minX} else {this.minX = Math.min(this.minX, point.minX)};
+            if (isNaN(this.maxX)) {this.maxX = point.maxX} else {this.maxX = Math.max(this.maxX, point.maxX)};
+            if (isNaN(this.minY)) {this.minY = point.minY} else {this.minY = Math.min(this.minY, point.minY)};
+            if (isNaN(this.maxY)) {this.maxY = point.maxY} else {this.maxY = Math.max(this.maxY, point.maxY)};
+            this.colour_to_plot_data[point.mouse_selection_color] = point;
+          }
+          this.plot_datas.push(f);
         }
       }
       this.define_canvas();
@@ -599,6 +634,7 @@ export class PlotScatter extends PlotData {
 
     for (var i = 0; i < this.plot_datas.length; i++) {
       var d = this.plot_datas[i];
+      this.draw_graph2D(d, hidden, mvx, mvy)
       this.draw_link_object(d, mvx, mvy);
       this.draw_point(hidden, show_state, mvx, mvy, scaleX, scaleY, d);
       this.draw_axis(mvx, mvy, scaleX, scaleY, d);
@@ -1128,6 +1164,48 @@ export class PlotDataLinkObject {
     }
     context.stroke();
     context.closePath();
+  }
+}
+
+export class PlotDataGraph2D {
+  mouse_selection_color:any;
+  constructor(public point_list:PlotDataPoint2D[],
+              public dashline: number[],
+              public graph_colorstroke: string,
+              public graph_linewidth: number,
+              public segments:PlotDataLine2D[],
+              public plot_data_states: PlotDataState[],
+              public type: string,
+              public name:string) {
+  }
+  public static deserialize(serialized) {
+    var temp = serialized['plot_data_states'];
+    var plot_data_states = [];
+    for (var i = 0; i < temp.length; i++) {
+      var d = temp[i];
+      plot_data_states.push(PlotDataState.deserialize(d));
+    }
+    var point_list = [];
+    temp = serialized['serialized_point_list'];
+    for (var i=0; i<temp.length; i++) {
+      var d = temp[i];
+      point_list.push(PlotDataPoint2D.deserialize(d));
+    }
+
+    var segments = [];
+    temp = serialized['serialized_segments'];
+    for (i=0; i<temp.length; i++) {
+      var d = temp[i];
+      segments.push(PlotDataLine2D.deserialize(d));
+    }
+    return new PlotDataGraph2D(point_list,
+                           serialized['dashline'],
+                           serialized['graph_colorstroke'],
+                           serialized['graph_linewidth'],
+                           segments,
+                           plot_data_states,
+                           serialized['type'],
+                           serialized['name']);
   }
 }
 

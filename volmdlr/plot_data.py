@@ -184,6 +184,17 @@ class PlotDataLinkObject(DessiaObject):
         self.type = type
         DessiaObject.__init__(self, name)
 
+class PlotDataGraph2D(DessiaObject):
+    def __init__(self, serialized_point_list, dashline: List[float], graph_colorstroke: str, graph_linewidth: float, serialized_segments, plot_data_states: List[PlotDataState], type:str='graph2D', name:str=''):
+        self.serialized_point_list = serialized_point_list
+        self.dashline = dashline
+        self.graph_colorstroke = graph_colorstroke
+        self.graph_linewidth = graph_linewidth
+        self.serialized_segments = serialized_segments
+        self.plot_data_states = plot_data_states
+        self.type = type
+        DessiaObject.__init__(self, name)
+
 class PlotDataArc2D(DessiaObject):
     def __init__(self, cx: float, cy: float, r: float,
                  data: List[float], angle1: float, angle2: float,
