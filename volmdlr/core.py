@@ -2163,20 +2163,6 @@ class Tooltip(dc.DessiaObject):
                                          plot_data_states=plot_data_states,
                                          name=self.name)
 
-class LinkObject(dc.DessiaObject):
-    def __init__(self, lo_colorstroke: str, lo_linewidth: float, name:str=''):
-        self.lo_colorstroke = lo_colorstroke
-        self.lo_linewidth = lo_linewidth
-        dc.DessiaObject.__init__(self, name)
-
-    def plot_data(self,
-                  plot_data_states: List[plot_data.PlotDataState] = None):
-        if plot_data_states is None:
-            plot_data_states = [plot_data.PlotDataState()]
-        return plot_data.PlotDataLinkObject(lo_colorstroke=self.lo_colorstroke,
-                                            lo_linewidth=self.lo_linewidth,
-                                            plot_data_states=plot_data_states,
-                                            name=self.name)
 
 class Graph2D(dc.DessiaObject):
     def __init__(self, point_list: List[Point2D], dashline: List[float], graph_colorstroke: str, graph_linewidth: float, point_colorfill:str, point_colorstroke:str, point_strokewidth:float, graph_point_size: float, point_shape:str,name: str=''):

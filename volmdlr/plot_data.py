@@ -176,14 +176,6 @@ class PlotDataTooltip(DessiaObject):
         self.type = type
         DessiaObject.__init__(self, name=name)
 
-class PlotDataLinkObject(DessiaObject):
-    def __init__(self, lo_colorstroke: str, lo_linewidth: str, plot_data_states: List[PlotDataState], type:str='link_object', name: str= ''):
-        self.lo_colorstroke = lo_colorstroke
-        self.lo_linewidth = lo_linewidth
-        self.plot_data_states = plot_data_states
-        self.type = type
-        DessiaObject.__init__(self, name)
-
 class PlotDataGraph2D(DessiaObject):
     def __init__(self, serialized_point_list, dashline: List[float], graph_colorstroke: str, graph_linewidth: float, serialized_segments, plot_data_states: List[PlotDataState], type:str='graph2D', name:str=''):
         self.serialized_point_list = serialized_point_list

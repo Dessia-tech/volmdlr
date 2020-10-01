@@ -51,10 +51,6 @@ point_size = plot_data.PointSizeSet(size=size)
 point_color = plot_data.PointColorSet(color_fill=color_fill,
                                       color_stroke=color_stroke)
 
-
-# link_object = vm.LinkObject(lo_colorstroke=lo_colorstroke, lo_linewidth=lo_linewidth)
-# plot_datas += [link_object.plot_data([plot_data.PlotDataState()])]
-
 for i in range(50):
     point = vm.Point2D.random(0, window_size.width, 0,
                               window_size.height)
