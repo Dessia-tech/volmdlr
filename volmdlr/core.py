@@ -2189,7 +2189,7 @@ class LinkObject(dc.DessiaObject):
                                             name=self.name)
 
 class Graph2D(dc.DessiaObject):
-    def __init__(self, point_list: List[Point2D], dashline: List[float], graph_colorstroke: str, graph_linewidth: float, point_colorfill:str, point_colorstroke:str, point_strokewidth:float, graph_point_size: float, name: str=''):
+    def __init__(self, point_list: List[Point2D], dashline: List[float], graph_colorstroke: str, graph_linewidth: float, point_colorfill:str, point_colorstroke:str, point_strokewidth:float, graph_point_size: float, point_shape:str,name: str=''):
         self.point_list = point_list
         self.dashline = dashline
         self.graph_colorstroke = graph_colorstroke
@@ -2198,6 +2198,7 @@ class Graph2D(dc.DessiaObject):
         self.point_colorstroke = point_colorstroke
         self.point_strokewidth = point_strokewidth
         self.graph_point_size = graph_point_size
+        self.point_shape = point_shape
         dc.DessiaObject.__init__(self, name)
 
     def plot_data(self, plot_data_states: List[plot_data.PlotDataState] = None):
@@ -2207,7 +2208,11 @@ class Graph2D(dc.DessiaObject):
         point_color = plot_data.PointColorSet(color_fill=self.point_colorfill,
                                               color_stroke=self.point_colorstroke)
         point_size = plot_data.PointSizeSet(size=self.graph_point_size)
-        serialized_point_list = [point.plot_data([plot_data.PlotDataState(point_color=point_color, stroke_width=self.point_strokewidth, point_size=point_size)]).to_dict() for point in self.point_list]
+        shape = plot_data.PointShapeSet(shape=self.point_shape)
+        serialized_point_list = [point.plot_data([plot_data.PlotDataState(point_color=point_color,
+                                                                          stroke_width=self.point_strokewidth,
+                                                                          point_size=point_size,
+                                                                          shape_set=shape)]).to_dict() for point in self.point_list]
 
         serialized_segments = []
         for i in range(0,len(self.point_list) - 1):

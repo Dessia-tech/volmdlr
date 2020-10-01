@@ -114,6 +114,7 @@ export class PlotData {
           var shape = d.plot_data_states[show_state].shape_set.shape;
 
           if (z == d) {
+            console.log(z,d)
             if (shape == 'crux') {
               this.context.strokeStyle = this.color_surface_on_click;
             } else {
@@ -355,7 +356,7 @@ export class PlotData {
             this.select_on_click = [];
             this.tooltip_list = [];
           }
-
+ 
           if ((click_on_plus === true) && (this.scaleX*1.2 < scale_ceil) && (this.scaleY*1.2 < scale_ceil)) {
             var old_scaleX = this.scaleX
             var old_scaleY = this.scaleY

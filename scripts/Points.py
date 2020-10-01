@@ -58,6 +58,7 @@ point_colorfill = 'violet'
 point_colorstroke = 'grey'
 point_strokewidth = 0.5
 graph_point_size = 2;
+point_shape = 'crux'
 
 plot_datas = []
 window_size = plot_data.WindowSizeSet(width=width, height=height)
@@ -69,7 +70,8 @@ point_color = plot_data.PointColorSet(color_fill=color_fill,
 # graph = vm.Graph2D(point_list=point_list, dashline=dashline,
 #                    graph_colorstroke=graph_colorstroke, graph_linewidth=graph_linewidth,
 #                    point_colorfill=point_colorfill, point_colorstroke=point_colorstroke,
-#                    point_strokewidth=point_strokewidth, graph_point_size=graph_point_size)
+#                    point_strokewidth=point_strokewidth, graph_point_size=graph_point_size,
+#                    point_shape=point_shape)
 # plot_datas += [graph.plot_data([plot_data.PlotDataState()])]
 
 # link_object = vm.LinkObject(lo_colorstroke=lo_colorstroke, lo_linewidth=lo_linewidth)
@@ -91,15 +93,6 @@ for i in range(50):
 #         window_size=window_size, stroke_width=stroke_width,
 #         shape_set=shape_set, point_size=point_size, point_color=point_color)])]
 #     k = k + np.pi/20
-
-# point0 = vm.Point2D([0,0])
-# plot_datas += [point0.plot_data([plot_data.PlotDataState(color_surface=plot_data.ColorSurfaceSet(color='black'), window_size=window_size, shape_set=shape_set, point_size=point_size,point_color=point_color)])]
-# point1 = vm.Point2D([1,1])
-# plot_datas += [point1.plot_data([plot_data.PlotDataState(color_surface=plot_data.ColorSurfaceSet(color='black'), window_size=window_size, shape_set=shape_set, point_size=point_size,point_color=point_color)])]
-# point2 = vm.Point2D([2,2])
-# plot_datas += [point2.plot_data([plot_data.PlotDataState(color_surface=plot_data.ColorSurfaceSet(color='black'), window_size=window_size, shape_set=shape_set, point_size=point_size,point_color=point_color)])]
-# point3 = vm.Point2D([-1,1])
-# plot_datas += [point1.plot_data([plot_data.PlotDataState(color_surface=plot_data.ColorSurfaceSet(color='black'), window_size=window_size, shape_set=shape_set, point_size=point_size,point_color=point_color)])]
 
 scatter_plot = vm.ScatterPlot(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               font_size=font_size,
