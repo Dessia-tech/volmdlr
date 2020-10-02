@@ -28,6 +28,7 @@ export class PlotData {
   index_last_in:number;
   nb_points_in:number;
 
+
   define_canvas() {
     var canvas = document.getElementById('canvas');
     canvas.width = this.width;
@@ -43,12 +44,19 @@ export class PlotData {
   draw_initial() {
     this.init_scale = Math.min(this.width/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX), this.height/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY));
     this.scale = this.init_scale;
-    this.init_scaleX = this.width/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX);
-    this.init_scaleY = this.height/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY);
-    this.scaleX = this.init_scaleX;
-    this.scaleY = this.init_scaleY;
-		this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX;
-    this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY;
+    if (this.axis_ON) {
+      this.init_scaleX = (this.width-this.decalage_axis_x)/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX);
+      this.init_scaleY = (this.height - this.decalage_axis_y)/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY);
+      this.scaleX = this.init_scaleX;
+      this.scaleY = this.init_scaleY;
+      this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX + this.decalage_axis_x/(2*this.scaleX);
+      this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY - this.decalage_axis_y/(2*this.scaleY);
+    } else {
+      this.scaleX = this.init_scale;
+      this.scaleY = this.init_scale;
+      this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX;
+      this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY;
+    }
     this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
     this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
 
@@ -62,7 +70,7 @@ export class PlotData {
     }
     this.context.clearRect(0, 0, this.width, this.height);
   }
-  
+
   draw_contour(hidden, show_state, mvx, mvy, scaleX, scaleY, d) {
     if (d['type'] == 'contour') {
       this.context.beginPath();
@@ -108,14 +116,16 @@ export class PlotData {
         this.context.fillStyle = d.plot_data_states[show_state].point_color.color_fill;
         this.context.lineWidth = d.plot_data_states[show_state].stroke_width;
         this.context.strokeStyle = d.plot_data_states[show_state].point_color.color_stroke;
+        var shape = d.plot_data_states[show_state].shape_set.shape;
 
+        if (shape == 'crux') {
+          this.context.strokeStyle = d.plot_data_states[show_state].point_color.color_fill;
+        }
         if (this.select_on_mouse == d) {
           this.context.fillStyle = this.color_surface_on_mouse;
         }
         for (var j = 0; j < this.select_on_click.length; j++) {
           var z = this.select_on_click[j];
-          var shape = d.plot_data_states[show_state].shape_set.shape;
-
           if (z == d) {
             if (shape == 'crux') {
               this.context.strokeStyle = this.color_surface_on_click;
@@ -143,9 +153,8 @@ export class PlotData {
 
   draw_axis(mvx, mvy, scaleX, scaleY, d) {
     if (d['type'] == 'axis'){
-      this.axis_ON = true;
       this.context.beginPath();
-      d.draw(this.context, mvx, mvy, scaleX, scaleY, this.width, this.height, this.init_scaleX, this.init_scaleY, this.minX, this.maxX, this.minY, this.maxY, this.scroll_x, this.scroll_y);
+      d.draw(this.context, mvx, mvy, scaleX, scaleY, this.width, this.height, this.init_scaleX, this.init_scaleY, this.minX, this.maxX, this.minY, this.maxY, this.scroll_x, this.scroll_y, this.decalage_axis_x, this.decalage_axis_y);
       this.context.closePath();
       this.context.fill();
     }
@@ -418,16 +427,21 @@ export class PlotData {
           } else if (click_on_zoom_window === true) {
             this.zw_bool = !this.zw_bool;
             this.select_bool = false;
-
-          } else if (click_on_reset === true){
+            
+          } else if (click_on_reset === true) {
             this.scaleX = this.init_scaleX;
             this.scaleY = this.init_scaleY;
             this.scale = this.init_scale;
             this.scroll_x = 0;
             this.scroll_y = 0;
-            this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX;
-            this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY;
-
+            if (this.axis_ON === true) {
+              this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX + this.decalage_axis_x/(2*this.scaleX);
+              this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY - this.decalage_axis_y/(2*this.scaleY);
+            } else {
+              this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX;
+              this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY;
+            }
+            
           } else if (click_on_select === true) {
             this.zw_bool = false;
             this.select_bool = !this.select_bool;
@@ -454,7 +468,7 @@ export class PlotData {
       var event = -e.deltaY;
       mouse3X = e.offsetX;
       mouse3Y = e.offsetY;
-      if ((mouse3Y>=this.height - 25) && (mouse3X>50) && this.axis_ON) {
+      if ((mouse3Y>=this.height - this.decalage_axis_y) && (mouse3X>this.decalage_axis_x) && this.axis_ON) {
           var old_scaleX = this.scaleX;
           if ((event>0) && (this.scaleX*zoom_coeff<scale_ceil)) {
             this.scaleX = this.scaleX*zoom_coeff;
@@ -466,7 +480,7 @@ export class PlotData {
             this.last_mouse1X = this.last_mouse1X - ((this.width/2)/old_scaleX - (this.width/2)/this.scaleX);
           }         
 
-      } else if ((mouse3X<=50) && (mouse3Y<this.height - 25) && this.axis_ON) {
+      } else if ((mouse3X<=this.decalage_axis_x) && (mouse3Y<this.height - this.decalage_axis_y) && this.axis_ON) {
           var old_scaleY = this.scaleY;
           if ((event>0) && (this.scaleY*zoom_coeff<scale_ceil)) {
             this.scaleY = this.scaleY*zoom_coeff;
@@ -579,10 +593,10 @@ export class PlotContour extends PlotData {
     for (var i = 0; i < data.length; i++) {
       var d = this.data[i];
       var a = PlotDataContour2D.deserialize(d);
-      this.minX = Math.min(this.minX, a.minX);
-      this.maxX = Math.max(this.maxX, a.maxX);
-      this.minY = Math.min(this.minY, a.minY);
-      this.maxY = Math.max(this.maxY, a.maxY);
+      if (isNaN(this.minX)) {this.minX = a.minX} else {this.minX = Math.min(this.minX, a.minX)};
+          if (isNaN(this.maxX)) {this.maxX = a.maxX} else {this.maxX = Math.max(this.maxX, a.maxX)};
+          if (isNaN(this.minY)) {this.minY = a.minY} else {this.minY = Math.min(this.minY, a.minY)};
+          if (isNaN(this.maxY)) {this.maxY = a.maxY} else {this.maxY = Math.max(this.maxY, a.maxY)};
       this.colour_to_plot_data[a.mouse_selection_color] = a;
       this.plot_datas.push(a);
     }
@@ -630,6 +644,8 @@ export class PlotScatter extends PlotData {
   nb_graph:number = 0;
   graph_colorlist:string[]=[];
   graph_text_spacing:number;
+  decalage_axis_x = 50;
+  decalage_axis_y = 20;
 
 
   constructor(public data:any, 
@@ -672,6 +688,7 @@ export class PlotScatter extends PlotData {
           this.plot_datas.push(a);
         
         } else if (d['type'] == 'axis') {
+          this.axis_ON = true;
           a = PlotDataScatter.deserialize(d);
           this.plot_datas.push(a);
         } else if (d['type'] == 'tooltip') {
@@ -963,8 +980,8 @@ export class PlotDataPoint2D {
       }
     }
     this.size = point_size/400;
-    this.minX = this.cx - 5*this.size;
-    this.maxX = this.cx + 5*this.size;
+    this.minX = this.cx - 2.5*this.size;
+    this.maxX = this.cx + 2.5*this.size;
     this.minY = this.cy - 5*this.size;
     this.maxY = this.cy + 5*this.size;
     
@@ -996,7 +1013,6 @@ export class PlotDataPoint2D {
           context.rect(scaleX*(1000*this.cx + mvx) - 1000*this.size,scaleY*(1000*this.cy + mvy) - 1000*this.size,1000*this.size*2, 1000*this.size*2);
           context.stroke();
         } else if (shape == 'crux') {
-          context.strokeStyle = this.plot_data_states[show_states].point_color.color_fill;
           context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),1000*this.size, 100*this.size);
           context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),-1000*this.size, 100*this.size);
           context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),100*this.size, 1000*this.size);
@@ -1100,15 +1116,15 @@ export class PlotDataScatter {
     context.stroke();
   }
 
-  draw(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, minX, maxX, minY, maxY, scroll_x, scroll_y) {
+  draw(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, minX, maxX, minY, maxY, scroll_x, scroll_y, decalage_axis_x, decalage_axis_y) {
     // Dessin du repère
     context.beginPath();
     context.strokeStyle = this.axis_color;
     context.lineWidth = this.axis_width;
-    var axis_x_start = 50;
+    var axis_x_start = decalage_axis_x;
     var axis_x_end = width;
     var axis_y_start = 0;
-    var axis_y_end = height - 20;
+    var axis_y_end = height - decalage_axis_y;
     //Flèches
     if (this.arrow_on === true) {
       Shape.drawLine(context, [axis_x_start - 10, axis_y_start + 20], [axis_x_start, axis_y_start]);
