@@ -865,12 +865,7 @@ class HelicalExtrudedProfile(volmdlr.Primitive3D):
 
 class Sweep(volmdlr.Shell3D):
     """
-    Sweep a 3D/2D contour along a Wire3D
-            
-    
-    :Example: 
-        >>> contour2d is a Circle2D or a Arc2D
-        >>> wire3d refers to a (Opened/Closed)RoundedLineSegments3D
+    Sweep a 2D contour along a Wire3D
     """
 
     def __init__(self, contour2d, wire3d, *, color=None, alpha=1, name=''):
@@ -881,39 +876,46 @@ class Sweep(volmdlr.Shell3D):
         faces = self.shell_faces()
         volmdlr.Shell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
 
-    def framestart_end(self, wire) :
-        vec3d = volmdlr.Vector3D((wire.points[1]-wire.points[0]).vector)
-        vec3d.Normalize()
-        plan1 = volmdlr.Plane3D.from_normal(wire.points[0], vec3d)
-        plan2 = volmdlr.Plane3D.from_normal(wire.points[1], vec3d)
-        framestart = volmdlr.Frame3D(wire.points[0], plan1.vectors[0], plan1.vectors[1], vec3d)
-        framend = volmdlr.Frame3D(wire.points[1], plan2.vectors[0], plan2.vectors[1], vec3d)
-        self.frames.extend([framestart, framend])
-        return framestart, framend
 
     def shell_faces(self):
+        """
+        For now it does not take into account rotation of sections
+        """
         faces = []
-        for wire_primitive in self.wire3d.primitives : #edges:
-            for contour_primitive in self.contour2d.primitives:
-                # Build face created by generating primitive of contour along wire primitive
-                if wire_primitive.__class__ == volmdlr.LineSegment3D:
-                    framestart, framend = self.framestart_end(wire_primitive)
-                    
-                    if contour_primitive.__class__ == volmdlr.LineSegment2D:
-                        # Planar face
-                        pass
-                    elif contour_primitive.__class__ == volmdlr.Circle2D or contour_primitive.__class__ == volmdlr.Arc2D:
-                        cylindricalsurface3d = volmdlr.CylindricalSurface3D(framestart, contour_primitive.radius)
-                        faces.append(volmdlr.CylindricalFace3D.from_arc3d(wire_primitive, contour_primitive, cylindricalsurface3d))
-                        
-                    elif contour_primitive.__class__ == volmdlr.Arc3D:
-                        pass
-                elif wire_primitive.__class__ == volmdlr.Arc3D :
-                    faces.append(volmdlr.ToroidalFace3D.from_arc3d(contour_primitive, wire_primitive))
-                      
+        last_n = None
+        for wire_primitive in self.wire3d.primitives :
+            tangent, normal = wire_primitive.frenet(0.)
+            if normal is None:
+                normal = tangent.deterministic_unit_normal_vector()
+            n2 = tangent.Cross(normal)
+            contour3d = self.contour2d.To3D(wire_primitive.start,
+                                            normal,
+                                            n2)
+
+            if wire_primitive.__class__ is volmdlr.LineSegment3D:
+                for contour_primitive in contour3d.primitives:
+                    faces.append(contour_primitive.extrusion(
+                        wire_primitive.direction_vector()))
+            elif wire_primitive.__class__ is volmdlr.Arc3D:
+                for contour_primitive in contour3d.primitives:
+                    faces.append(contour_primitive.revolution(
+                        wire_primitive.center,
+                        wire_primitive.normal,
+                        wire_primitive.angle))
+            elif wire_primitive.__class__ is volmdlr.Arc3D:
+                for contour_primitive in contour3d.primitives:
+                    faces.append(contour_primitive.revolution(
+                        wire_primitive.center,
+                        wire_primitive.normal,
+                        volmdlr.two_pi))
+            else:
+                raise NotImplementedError(
+                    'Unimplemented primitive for sweep: {}'\
+                        .format(wire_primitive.__class__.__name__)
+                )
+
         return faces
-    
-    
+
     # def FreeCADExport(self, ip, ndigits=3):
     #     name = 'primitive{}'.format(ip)
     #     s = "E = []\n"
