@@ -158,7 +158,7 @@ export class PlotData {
   }
 
   draw_graph2D(d, hidden, mvx, mvy) {
-    if ((d['type'] == 'graph2D') && (this.graph_enable[d.id] === true)) {
+    if ((d['type'] == 'graph2D') && (this.graph_to_display[d.id] === true)) {
       this.context.beginPath();
       this.context.setLineDash(d.dashline);
       this.context.strokeStyle = d.graph_colorstroke;
@@ -240,14 +240,27 @@ export class PlotData {
     }
   }
 
-  graph_buttons(x, y, w, h) {
+  graph_buttons(x, y, w, h, police, text_spacing) {
     for (var i=0; i<this.nb_graph; i++) {
-      if (this.graph_enable[i]===true) {
-        Shape.createButton(x + i*w, y, w, h, this.context, "Graph" +(i+1).toString() + ":ON", "10px Arial");
+      this.context.font = police;
+      var text = 'Graph ' + (i+1).toString();
+      if (this.graph_to_display[i] === true) {
+        Shape.createGraphButton(x + i*(w+text_spacing), y, w, h, this.context, text, police, this.graph_colorlist[i], false);
       } else {
-        Shape.createButton(x + i*w, y, w, h, this.context, "Graph" +(i+1).toString() + ":OFF", "10px Arial");
+        Shape.createGraphButton(x + i*(w+text_spacing), y, w, h, this.context, text, police, this.graph_colorlist[i], true);
       }
     }
+
+
+
+
+    // for (var i=0; i<this.nb_graph; i++) {
+    //   if (this.graph_to_display[i]===true) {
+    //     Shape.createButton(x + i*w, y, w, h, this.context, "Graph" +(i+1).toString() + ":ON", "10px Arial");
+    //   } else {
+    //     Shape.createButton(x + i*w, y, w, h, this.context, "Graph" +(i+1).toString() + ":OFF", "10px Arial");
+    //   }
+    // }
   }
 
   mouse_interaction() {
@@ -315,7 +328,11 @@ export class PlotData {
       var click_on_reset = Shape.Is_in_rect(mouse1X, mouse1Y, this.reset_rect_x, this.reset_rect_y, this.reset_rect_w, this.reset_rect_h);
       var is_rect_big_enough = (Math.abs(mouse2X - mouse1X)>40) && (Math.abs(mouse2Y - mouse1Y)>30);
       var click_on_select = Shape.Is_in_rect(mouse1X, mouse1Y, this.select_x, this.select_y, this.select_w, this.select_h);
-      var click_on_graph = Shape.Is_in_rect(mouse1X, mouse1Y, this.graph1_button_x, this.graph1_button_y, this.nb_graph*this.graph1_button_w, this.graph1_button_h);
+      var click_on_graph = false;
+      for (var i=0; i<this.nb_graph; i++) {
+        var click_on_graph_i = Shape.Is_in_rect(mouse1X, mouse1Y, this.graph1_button_x + i*(this.graph1_button_w + this.graph_text_spacing), this.graph1_button_y, this.graph1_button_w, this.graph1_button_h);
+        click_on_graph = click_on_graph || click_on_graph_i;
+      }
       var click_on_button = click_on_plus || click_on_minus || click_on_zoom_window || click_on_reset || click_on_select || click_on_graph;
 
       if (mouse_moving) {
@@ -342,7 +359,6 @@ export class PlotData {
                   var x = this.scaleX*(1000*d.point_list[j].cx + this.last_mouse1X);
                   var y = this.scaleY*(1000*d.point_list[j].cy + this.last_mouse1Y);
                   in_rect = Shape.Is_in_rect(x, y, Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
-                  console.log(in_rect)
                   if ((in_rect===true) && !(this.is_include(d.point_list[j], this.select_on_click))) {
                     this.select_on_click.push(d.point_list[j])
                   }
@@ -418,9 +434,9 @@ export class PlotData {
 
           } else if (click_on_graph) {
             for (var i=0; i<this.nb_graph; i++) {
-              var click_on_graph_i = Shape.Is_in_rect(mouse1X, mouse1Y, this.graph1_button_x + i*this.graph1_button_w, this.graph1_button_y, this.graph1_button_w, this.graph1_button_h);
+              var click_on_graph_i = Shape.Is_in_rect(mouse1X, mouse1Y, this.graph1_button_x + i*(this.graph1_button_w + this.graph_text_spacing), this.graph1_button_y, this.graph1_button_w, this.graph1_button_h);
               if (click_on_graph_i === true) {
-                this.graph_enable[i] = ! this.graph_enable[i];
+                this.graph_to_display[i] = !this.graph_to_display[i];
               }
             }
           }
@@ -606,12 +622,14 @@ export class PlotScatter extends PlotData {
   select_w:number;
   select_h:number;
   sort_list_points:any[]=[];
-  graph_enable:boolean[]=[];
+  graph_to_display:boolean[]=[];
   graph1_button_x:number;
   graph1_button_y:number;
   graph1_button_w:number;
   graph1_button_h:number;
   nb_graph:number = 0;
+  graph_colorlist:string[]=[];
+  graph_text_spacing:number;
 
 
   constructor(public data:any, 
@@ -636,10 +654,11 @@ export class PlotScatter extends PlotData {
       this.select_w = 35;
       this.select_h = 30;
       this.graph1_button_y = 10;
-      this.graph1_button_w = 60;
-      this.graph1_button_h = 25;
+      this.graph1_button_w = 30;
+      this.graph1_button_h = 15;
       this.plot_datas = [];
       var graphID = 0;
+      this.graph_text_spacing = 50;
       for (var i = 0; i < data.length; i++) {
         var d = data[i]; 
         var a;
@@ -662,7 +681,8 @@ export class PlotScatter extends PlotData {
           a = PlotDataGraph2D.deserialize(d);
           a.id = graphID;
           graphID++;
-          this.graph_enable.push(true);
+          this.graph_colorlist.push(a.point_list[0].plot_data_states[0].point_color.color_fill);
+          this.graph_to_display.push(true);
           for (var j=0; j<a.point_list.length; j++) {
             var point = a.point_list[j];
             if (isNaN(this.minX)) {this.minX = point.minX} else {this.minX = Math.min(this.minX, point.minX)};
@@ -675,7 +695,7 @@ export class PlotScatter extends PlotData {
         }
       }
       this.nb_graph = graphID;
-      this.graph1_button_x = width/2 - this.nb_graph*this.graph1_button_w/2;
+      this.graph1_button_x = width/2 - this.nb_graph*(this.graph1_button_w + this.graph_text_spacing)/2;
       this.define_canvas();
       this.mouse_interaction();
   }
@@ -702,7 +722,7 @@ export class PlotScatter extends PlotData {
       this.selection_button(this.select_x, this.select_y, this.select_w, this.select_h);
 
       //Drawing the enable/disable graph button
-      this.graph_buttons(this.graph1_button_x ,this.graph1_button_y, this.graph1_button_w, this.graph1_button_h);
+      this.graph_buttons(this.graph1_button_x ,this.graph1_button_y, this.graph1_button_w, this.graph1_button_h, '10px Arial', this.graph_text_spacing);
     
   }
 }
@@ -764,6 +784,29 @@ class Shape {
     context.font = police;
     context.fillText(text, x+w/2, y+h/1.8);
     context.fill();
+    context.closePath();
+  }
+
+  public static createGraphButton(x, y, w, h, context, text, police, colorfill, strikeout) {
+    context.beginPath();
+    context.fillStyle = colorfill;
+    context.rect(x,y,w,h);
+    context.fill();
+    context.closePath();
+    context.beginPath();
+    context.fillStyle = 'grey';
+    context.textAlign = 'start';
+    context.textBaseline = 'middle';
+    context.font = police;
+    context.fillText(text, x+w + 5, y+h/1.8);
+    context.fill();
+    if (strikeout === true) {
+      var text_w = context.measureText(text).width;
+      context.lineWidth = 1.5;
+      context.strokeStyle = 'grey';
+      Shape.drawLine(context, [x+w + 5, y+h/1.8], [x+w+5+text_w, y+h/2]);
+      context.stroke();
+    }
     context.closePath();
   }
 }
@@ -944,26 +987,26 @@ export class PlotDataPoint2D {
     }
 
     draw(context, context_hidden, mvx, mvy, scaleX, scaleY) {
-        for (var i=0; i<this.plot_data_states.length; i++) {
-          var shape = this.plot_data_states[i].shape_set.shape;
-          if (shape == 'circle') {
-            context.arc(scaleX*(1000*this.cx+ mvx), scaleY*(1000*this.cy+ mvy), 1000*this.size, 0, 2*Math.PI);
-            context.stroke();
-          } else if (shape == 'square') {
-            context.rect(scaleX*(1000*this.cx + mvx) - 1000*this.size,scaleY*(1000*this.cy + mvy) - 1000*this.size,1000*this.size*2, 1000*this.size*2);
-            context.stroke();
-          } else if (shape == 'crux') {
-            context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),1000*this.size, 100*this.size);
-            context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),-1000*this.size, 100*this.size);
-            context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),100*this.size, 1000*this.size);
-            context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),100*this.size, -1000*this.size);
-            context.fillStyle = context.strokeStyle;
-            context.stroke();
-
-          } else {
-            throw new Error('Invalid shape for point');
-          }
+      var show_states = 0;
+        var shape = this.plot_data_states[show_states].shape_set.shape;
+        if (shape == 'circle') {
+          context.arc(scaleX*(1000*this.cx+ mvx), scaleY*(1000*this.cy+ mvy), 1000*this.size, 0, 2*Math.PI);
+          context.stroke();
+        } else if (shape == 'square') {
+          context.rect(scaleX*(1000*this.cx + mvx) - 1000*this.size,scaleY*(1000*this.cy + mvy) - 1000*this.size,1000*this.size*2, 1000*this.size*2);
+          context.stroke();
+        } else if (shape == 'crux') {
+          context.strokeStyle = this.plot_data_states[show_states].point_color.color_fill;
+          context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),1000*this.size, 100*this.size);
+          context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),-1000*this.size, 100*this.size);
+          context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),100*this.size, 1000*this.size);
+          context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),100*this.size, -1000*this.size);
+          context.fillStyle = context.strokeStyle;
+          context.stroke();
+        } else {
+          throw new Error('Invalid shape for point');
         }
+        
     }
 }
 
