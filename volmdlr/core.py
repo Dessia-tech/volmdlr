@@ -2165,7 +2165,10 @@ class Tooltip(dc.DessiaObject):
 
 
 class Graph2D(dc.DessiaObject):
-    def __init__(self, point_list: List[Point2D], dashline: List[float], graph_colorstroke: str, graph_linewidth: float, point_colorfill:str, point_colorstroke:str, point_strokewidth:float, graph_point_size: float, point_shape:str,name: str=''):
+    def __init__(self, point_list: List[Point2D], dashline: List[float],
+                 graph_colorstroke: str, graph_linewidth: float, point_colorfill:str,
+                 point_colorstroke:str, point_strokewidth:float, graph_point_size: float,
+                 point_shape:str, display_step:float, name: str=''):
         self.point_list = point_list
         self.dashline = dashline
         self.graph_colorstroke = graph_colorstroke
@@ -2175,6 +2178,7 @@ class Graph2D(dc.DessiaObject):
         self.point_strokewidth = point_strokewidth
         self.graph_point_size = graph_point_size
         self.point_shape = point_shape
+        self.display_step = display_step
         dc.DessiaObject.__init__(self, name)
 
     def plot_data(self, plot_data_states: List[plot_data.PlotDataState] = None):
@@ -2198,6 +2202,7 @@ class Graph2D(dc.DessiaObject):
                                          graph_colorstroke=self.graph_colorstroke,
                                          graph_linewidth=self.graph_linewidth,
                                          serialized_segments=serialized_segments,
+                                         display_step = self.display_step,
                                          plot_data_states=plot_data_states,
                                          name=self.name)
 

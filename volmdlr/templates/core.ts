@@ -130,7 +130,7 @@ export class PlotData {
             if (shape == 'crux') {
               this.context.strokeStyle = this.color_surface_on_click;
             } else {
-              this.context.fillStyle = this.color_surface_on_click    ;         
+              this.context.fillStyle = this.color_surface_on_click;         
             }
           }
         }
@@ -184,7 +184,7 @@ export class PlotData {
 
       [this.index_first_in, this.nb_points_in, this.index_last_in] = this.get_points_inside_canvas(d.point_list, mvx, mvy);
 
-      var step = 3;
+      var step = d.display_step;
       if (this.nb_points_in<=10) {
         step = 1;
       }
@@ -1248,6 +1248,7 @@ export class PlotDataGraph2D {
               public graph_colorstroke: string,
               public graph_linewidth: number,
               public segments:PlotDataLine2D[],
+              public display_step:number,
               public plot_data_states: PlotDataState[],
               public type: string,
               public name:string) {}
@@ -1277,6 +1278,7 @@ export class PlotDataGraph2D {
                            serialized['graph_colorstroke'],
                            serialized['graph_linewidth'],
                            segments,
+                           serialized['display_step'],
                            plot_data_states,
                            serialized['type'],
                            serialized['name']);

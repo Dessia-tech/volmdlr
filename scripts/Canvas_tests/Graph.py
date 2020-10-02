@@ -39,13 +39,14 @@ point_colorstroke = 'grey'
 point_strokewidth = 0.5
 graph_point_size = 2;
 point_shape = 'circle'
+display_step = 3
 
 
 graph = vm.Graph2D(point_list=point_list, dashline=dashline,
                    graph_colorstroke=graph_colorstroke, graph_linewidth=graph_linewidth,
                    point_colorfill=point_colorfill, point_colorstroke=point_colorstroke,
                    point_strokewidth=point_strokewidth, graph_point_size=graph_point_size,
-                   point_shape=point_shape)
+                   point_shape=point_shape, display_step=display_step)
 plot_datas += [graph.plot_data([plot_data.PlotDataState()])]
 
 point_list1 = []
@@ -54,7 +55,7 @@ while k < 20 * np.pi:
     point = vm.Point2D([k, np.sin(k + np.pi/3)])
     point_list1.append(point)
     k = k + np.pi/20
-graph1 = vm.Graph2D(point_list=point_list1, dashline=[10,10], graph_colorstroke='red', graph_linewidth=0.5, point_colorfill='green', point_colorstroke='black', point_strokewidth=0.5, graph_point_size=2, point_shape='square')
+graph1 = vm.Graph2D(point_list=point_list1, dashline=[10,10], graph_colorstroke='red', graph_linewidth=0.5, point_colorfill='green', point_colorstroke='black', point_strokewidth=0.5, graph_point_size=2, point_shape='square', display_step=3)
 plot_datas += [graph1.plot_data([plot_data.PlotDataState()])]
 
 
@@ -64,7 +65,7 @@ while k < 20 * np.pi:
     point = vm.Point2D([k, np.sin(k - np.pi/3)])
     point_list2.append(point)
     k = k + np.pi/20
-graph2 = vm.Graph2D(point_list=point_list2, dashline=[5,3,1,3], graph_colorstroke='blue', graph_linewidth=0.5, point_colorfill='brown', point_colorstroke='black', point_strokewidth=0.5, graph_point_size=2, point_shape='crux')
+graph2 = vm.Graph2D(point_list=point_list2, dashline=[5,3,1,3], graph_colorstroke='blue', graph_linewidth=0.5, point_colorfill='brown', point_colorstroke='black', point_strokewidth=0.5, graph_point_size=2, point_shape='crux', display_step=3)
 plot_datas += [graph2.plot_data([plot_data.PlotDataState()])]
 
 scatter_plot = vm.ScatterPlot(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
