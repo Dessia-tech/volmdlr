@@ -182,7 +182,7 @@ export class PlotData {
       this.context.stroke();
       this.context.setLineDash([]);
 
-      [this.index_first_in, this.nb_points_in, this.index_last_in] = this.get_points_inside_canvas(d.point_list, mvx, mvy);
+      [this.index_first_in, this.nb_points_in, this.index_last_in] = this.get_nb_points_inside_canvas(d.point_list, mvx, mvy);
 
       var step = d.display_step;
       if (this.nb_points_in<=10) {
@@ -193,22 +193,8 @@ export class PlotData {
         this.draw_point(hidden, 0, mvx, mvy, this.scaleX, this.scaleY, point);
       }
     } else if ((d['type'] == 'graph2D') && (this.graph_to_display[d.id] === false)) {
-      var i = 0;
-      while (i<this.select_on_click.length) {
-        if (this.is_include(this.select_on_click[i], d.point_list)) {
-          this.select_on_click = this.remove_selection(this.select_on_click[i], this.select_on_click);
-        } else {
-          i++;
-        }
-      }
-      i = 0;
-      while (i<this.tooltip_list.length) {
-        if (this.is_include(this.tooltip_list[i], d.point_list)) {
-          this.tooltip_list = this.remove_selection(this.tooltip_list[i], this.tooltip_list);
-        } else {
-          i++;
-        }
-      }
+      this.delete_clicked_points(d.point_list);
+      this.delete_tooltip(d.point_list);
     }
   }
 
@@ -216,7 +202,6 @@ export class PlotData {
     if (d['type'] == 'ScatterPlot') {
       // if (this.last_point_list.length == 0) {this.last_point_list = d.point_list}
       var new_point_list = this.refresh_point_list(d.point_list,mvx,mvy);
-      console.log(new_point_list)
       for (var i=0; i<new_point_list.length; i++) {
         var point = new_point_list[i];
         this.draw_point(hidden, 0, mvx, mvy, this.scaleX, this.scaleY, point);
@@ -480,7 +465,7 @@ export class PlotData {
 
     canvas.addEventListener('wheel', e => {
       var scale_ceil = 400*this.init_scale;
-      var scale_floor = this.init_scale/3;
+      var scale_floor = this.init_scale/100;
       var zoom_coeff = 1.1;
       var event = -e.deltaY;
       mouse3X = e.offsetX;
@@ -563,7 +548,7 @@ export class PlotData {
     return false;
   }
 
-  get_points_inside_canvas(list_points, mvx, mvy) { //Sous hypothèse que la liste est ordonnée par ordre croissant des x
+  get_nb_points_inside_canvas(list_points, mvx, mvy) { //Sous hypothèse que la liste est ordonnée par ordre croissant des x
     var bool = true;
     var k = 0;
     var index_first_in = -1;
@@ -598,32 +583,62 @@ export class PlotData {
     return [index_first_in, nb_points_in, index_last_in];
   }
 
+  is_inside_canvas(point, mvx, mvy) {
+    var x = this.scaleX*(1000*point.cx + mvx);
+    var y = this.scaleY*(1000*point.cy + mvy);
+    return (x>=0) && (x<=this.width) && (y>=0) && (y<=this.height);
+  }
+
+  get_points_inside_canvas(list_points, mvx, mvy) {
+    var new_list_points = [];
+    for (var i=0; i<list_points.length; i++) {
+      if (this.is_inside_canvas(list_points[i],mvx,mvy)) {
+        new_list_points.push(list_points[i]);
+      }
+    }
+    return new_list_points;
+  }
+
   distance(p1,p2) {
     return Math.sqrt(Math.pow(p1[0] - p2[0],2) + Math.pow(p1[1] - p2[1], 2));
   }
 
+  copy_list(list) {
+    var new_list = [];
+    for (var i=0; i<list.length; i++) {
+      new_list.push(list[i]);
+    }
+    return new_list;
+  }
+
   refresh_point_list(point_list, mvx, mvy) {
-    var new_point_list = point_list;
+    var new_point_list = this.get_points_inside_canvas(this.copy_list(point_list), mvx, mvy);
     var i = 0;
     var length = new_point_list.length;
     while (i<length) {
-      var size_i = new_point_list[i].plot_data_states[0].point_size.size;
+      var size_i = new_point_list[i].size;
       var xi = this.scaleX*(1000*new_point_list[i].cx + mvx);
       var yi = this.scaleY*(1000*new_point_list[i].cy + mvy);
       var bool = false;
       var j = i+1;
       while (j<length) {
-        var size_j = new_point_list[j].plot_data_states[0].point_size.size;
-        var max_size = Math.max(size_i, size_j);
+        var size_j = new_point_list[j].size;
+        if (size_i>=size_j) {var max_size_index = i} else {var max_size_index = j}
         var xj = this.scaleX*(1000*new_point_list[j].cx + mvx);
         var yj = this.scaleY*(1000*new_point_list[j].cy + mvy);
-        if (this.distance([xi,yi], [xj,yj])<5*max_size) {
-          var point = new_point_list[i];
-          point.cx = (new_point_list[i].cx + new_point_list[j].cx)/2;
-          point.cy = (new_point_list[i].cy + new_point_list[j].cy)/2;
-          point.plot_data_states[0].point_size.size = max_size;
+        if (this.distance([xi,yi], [xj,yj])<1000*(new_point_list[i].size + new_point_list[j].size)) {
+          var new_cx = (new_point_list[i].cx + new_point_list[j].cx)/2;
+          var new_cy = (new_point_list[i].cy + new_point_list[j].cy)/2;
+          var copy_plot_data_states = [new_point_list[max_size_index].plot_data_states[0].copy()];
+          var point = new PlotDataPoint2D([],new_cx, new_cy, copy_plot_data_states, 'point', '');
+          var size_coeff = 1.2;
+          point.size = new_point_list[max_size_index].size*size_coeff;
+          var point_i = new_point_list[i];
+          var point_j = new_point_list[j];
+          this.delete_clicked_points([point_i, point_j]);
+          this.delete_tooltip([point_i, point_j]);
           new_point_list = this.remove_selection(new_point_list[i], new_point_list);
-          new_point_list = this.remove_selection(new_point_list[j], new_point_list);
+          new_point_list = this.remove_selection(new_point_list[j-1], new_point_list);
           new_point_list.push(point);
           this.colour_to_plot_data[point.mouse_selection_color] = point;
           bool = true;
@@ -639,6 +654,28 @@ export class PlotData {
       }
     }
     return new_point_list;
+  }
+
+  delete_clicked_points(point_list) {
+    var i = 0;
+    while (i<this.select_on_click.length) {
+      if (this.is_include(this.select_on_click[i], point_list)) {
+        this.select_on_click = this.remove_selection(this.select_on_click[i], this.select_on_click);
+      } else {
+        i++;
+      }
+    }
+  }
+
+  delete_tooltip(point_list) {
+    var i = 0;
+    while (i<this.tooltip_list.length) {
+      if (this.is_include(this.tooltip_list[i], point_list)) {
+        this.tooltip_list = this.remove_selection(this.tooltip_list[i], this.tooltip_list);
+      } else {
+        i++;
+      }
+    }
   }
 
 }
@@ -1037,6 +1074,7 @@ export class PlotDataPoint2D {
   maxY:number=0;
   mouse_selection_color:any;
   size:number;
+  k:number=1;
 
   constructor(public data:any,
               public cx:number,
@@ -1050,7 +1088,7 @@ export class PlotDataPoint2D {
     if (point_size<1) {
       throw new Error('Invalid point_size');
     }
-    this.size = point_size/400;
+    this.size = this.k*point_size/400;
     this.minX = this.cx - 2.5*this.size;
     this.maxX = this.cx + 2.5*this.size;
     this.minY = this.cy - 5*this.size;
@@ -1094,6 +1132,10 @@ export class PlotDataPoint2D {
           throw new Error('Invalid shape for point');
         }
         
+    }
+
+    copy() {
+      return new PlotDataPoint2D(this.data, this.cx, this.cy, this.plot_data_states, this.type, this.name);
     }
 }
 
@@ -1496,6 +1538,9 @@ export class PlotDataState {
                                window_size,
                                serialized['stroke_width'],
                                serialized['name']);
+  }
+  copy() {
+    return new PlotDataState(this.color_surface, this.color_map, this.hatching, this.opacity, this.dash, this.marker, this.color_line, this.shape_set, this.point_size, this.point_color, this.window_size, this.stroke_width, this.name);
   }
 }
 

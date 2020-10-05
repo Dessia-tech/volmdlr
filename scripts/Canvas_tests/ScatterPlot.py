@@ -42,11 +42,12 @@ to_plot_list = ['cx', 'cy']
 
 plot_datas = []
 point_list = []
-for i in range(50):
-    point = vm.Point2D.random(0, 2, 0, 1)
+for i in range(2000):
+    point = vm.Point2D.random(0, 200, 0, 100)
     point_list += [point]
 
 # point_list += [vm.Point2D([0,0])]
+# point_list += [vm.Point2D([0.2,0])]
 # point_list += [vm.Point2D([1,0])]
 ScatterPlot = vm.ScatterPlot(point_list, colorfill=colorfill, colorstroke=colorstroke, size=size, shape=shape, strokewidth=strokewidth)
 plot_datas += [ScatterPlot.plot_data([plot_data.PlotDataState()])]
