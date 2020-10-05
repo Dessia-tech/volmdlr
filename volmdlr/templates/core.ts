@@ -192,8 +192,36 @@ export class PlotData {
         var point = d.point_list[i];
         this.draw_point(hidden, 0, mvx, mvy, this.scaleX, this.scaleY, point);
       }
-      
+    } else if ((d['type'] == 'graph2D') && (this.graph_to_display[d.id] === false)) {
+      var i = 0;
+      while (i<this.select_on_click.length) {
+        if (this.is_include(this.select_on_click[i], d.point_list)) {
+          this.select_on_click = this.remove_selection(this.select_on_click[i], this.select_on_click);
+        } else {
+          i++;
+        }
+      }
+      i = 0;
+      while (i<this.tooltip_list.length) {
+        if (this.is_include(this.tooltip_list[i], d.point_list)) {
+          this.tooltip_list = this.remove_selection(this.tooltip_list[i], this.tooltip_list);
+        } else {
+          i++;
+        }
+      }
     }
+  }
+
+  draw_scatterplot(d, hidden, mvx, mvy) {
+    if (d['type'] == 'ScatterPlot') {
+      // if (this.last_point_list.length == 0) {this.last_point_list = d.point_list}
+      var new_point_list = this.refresh_point_list(d.point_list,mvx,mvy);
+      console.log(new_point_list)
+      for (var i=0; i<new_point_list.length; i++) {
+        var point = new_point_list[i];
+        this.draw_point(hidden, 0, mvx, mvy, this.scaleX, this.scaleY, point);
+      }
+    } 
   }
 
   zoom_button(x, y, w, h) {
@@ -259,17 +287,6 @@ export class PlotData {
         Shape.createGraphButton(x + i*(w+text_spacing), y, w, h, this.context, text, police, this.graph_colorlist[i], true);
       }
     }
-
-
-
-
-    // for (var i=0; i<this.nb_graph; i++) {
-    //   if (this.graph_to_display[i]===true) {
-    //     Shape.createButton(x + i*w, y, w, h, this.context, "Graph" +(i+1).toString() + ":ON", "10px Arial");
-    //   } else {
-    //     Shape.createButton(x + i*w, y, w, h, this.context, "Graph" +(i+1).toString() + ":OFF", "10px Arial");
-    //   }
-    // }
   }
 
   mouse_interaction() {
@@ -580,6 +597,50 @@ export class PlotData {
     }
     return [index_first_in, nb_points_in, index_last_in];
   }
+
+  distance(p1,p2) {
+    return Math.sqrt(Math.pow(p1[0] - p2[0],2) + Math.pow(p1[1] - p2[1], 2));
+  }
+
+  refresh_point_list(point_list, mvx, mvy) {
+    var new_point_list = point_list;
+    var i = 0;
+    var length = new_point_list.length;
+    while (i<length) {
+      var size_i = new_point_list[i].plot_data_states[0].point_size.size;
+      var xi = this.scaleX*(1000*new_point_list[i].cx + mvx);
+      var yi = this.scaleY*(1000*new_point_list[i].cy + mvy);
+      var bool = false;
+      var j = i+1;
+      while (j<length) {
+        var size_j = new_point_list[j].plot_data_states[0].point_size.size;
+        var max_size = Math.max(size_i, size_j);
+        var xj = this.scaleX*(1000*new_point_list[j].cx + mvx);
+        var yj = this.scaleY*(1000*new_point_list[j].cy + mvy);
+        if (this.distance([xi,yi], [xj,yj])<5*max_size) {
+          var point = new_point_list[i];
+          point.cx = (new_point_list[i].cx + new_point_list[j].cx)/2;
+          point.cy = (new_point_list[i].cy + new_point_list[j].cy)/2;
+          point.plot_data_states[0].point_size.size = max_size;
+          new_point_list = this.remove_selection(new_point_list[i], new_point_list);
+          new_point_list = this.remove_selection(new_point_list[j], new_point_list);
+          new_point_list.push(point);
+          this.colour_to_plot_data[point.mouse_selection_color] = point;
+          bool = true;
+          break;
+        } else {
+          j++
+        }
+      }
+      if (bool) {
+        length--;
+      } else {
+        i++;
+      }
+    }
+    return new_point_list;
+  }
+
 }
 
 export class PlotContour extends PlotData {
@@ -594,9 +655,9 @@ export class PlotContour extends PlotData {
       var d = this.data[i];
       var a = PlotDataContour2D.deserialize(d);
       if (isNaN(this.minX)) {this.minX = a.minX} else {this.minX = Math.min(this.minX, a.minX)};
-          if (isNaN(this.maxX)) {this.maxX = a.maxX} else {this.maxX = Math.max(this.maxX, a.maxX)};
-          if (isNaN(this.minY)) {this.minY = a.minY} else {this.minY = Math.min(this.minY, a.minY)};
-          if (isNaN(this.maxY)) {this.maxY = a.maxY} else {this.maxY = Math.max(this.maxY, a.maxY)};
+      if (isNaN(this.maxX)) {this.maxX = a.maxX} else {this.maxX = Math.max(this.maxX, a.maxX)};
+      if (isNaN(this.minY)) {this.minY = a.minY} else {this.minY = Math.min(this.minY, a.minY)};
+      if (isNaN(this.maxY)) {this.maxY = a.maxY} else {this.maxY = Math.max(this.maxY, a.maxY)};
       this.colour_to_plot_data[a.mouse_selection_color] = a;
       this.plot_datas.push(a);
     }
@@ -646,7 +707,7 @@ export class PlotScatter extends PlotData {
   graph_text_spacing:number;
   decalage_axis_x = 50;
   decalage_axis_y = 20;
-
+  last_point_list:any[]=[];
 
   constructor(public data:any, 
     public width: number,
@@ -689,7 +750,7 @@ export class PlotScatter extends PlotData {
         
         } else if (d['type'] == 'axis') {
           this.axis_ON = true;
-          a = PlotDataScatter.deserialize(d);
+          a = PlotDataAxis.deserialize(d);
           this.plot_datas.push(a);
         } else if (d['type'] == 'tooltip') {
           a = PlotDataTooltip.deserialize(d);
@@ -700,6 +761,17 @@ export class PlotScatter extends PlotData {
           graphID++;
           this.graph_colorlist.push(a.point_list[0].plot_data_states[0].point_color.color_fill);
           this.graph_to_display.push(true);
+          for (var j=0; j<a.point_list.length; j++) {
+            var point = a.point_list[j];
+            if (isNaN(this.minX)) {this.minX = point.minX} else {this.minX = Math.min(this.minX, point.minX)};
+            if (isNaN(this.maxX)) {this.maxX = point.maxX} else {this.maxX = Math.max(this.maxX, point.maxX)};
+            if (isNaN(this.minY)) {this.minY = point.minY} else {this.minY = Math.min(this.minY, point.minY)};
+            if (isNaN(this.maxY)) {this.maxY = point.maxY} else {this.maxY = Math.max(this.maxY, point.maxY)};
+            this.colour_to_plot_data[point.mouse_selection_color] = point;
+          }
+          this.plot_datas.push(a);
+        } else if (d['type'] == 'ScatterPlot') {
+          a = PlotDataScatter.deserialize(d);
           for (var j=0; j<a.point_list.length; j++) {
             var point = a.point_list[j];
             if (isNaN(this.minX)) {this.minX = point.minX} else {this.minX = Math.min(this.minX, point.minX)};
@@ -722,6 +794,7 @@ export class PlotScatter extends PlotData {
     for (var i = 0; i < this.plot_datas.length; i++) {
       var d = this.plot_datas[i];
       this.draw_graph2D(d, hidden, mvx, mvy);
+      this.draw_scatterplot(d, hidden, mvx, mvy);
       this.draw_point(hidden, show_state, mvx, mvy, scaleX, scaleY, d);
       this.draw_axis(mvx, mvy, scaleX, scaleY, d);
       this.draw_tooltip(d, mvx, mvy);
@@ -972,12 +1045,10 @@ export class PlotDataPoint2D {
               public type:string,
               public name:string) {
     
-    for (var i=0; i<this.plot_data_states.length; i++) {
-      var plot = this.plot_data_states[i];
-      var point_size = plot.point_size.size;
-      if ((point_size<1) || (point_size>4)) {
-        throw new Error('Invalid point_size');
-      }
+    var plot = plot_data_states[0];
+    var point_size = plot.point_size.size;
+    if (point_size<1) {
+      throw new Error('Invalid point_size');
     }
     this.size = point_size/400;
     this.minX = this.cx - 2.5*this.size;
@@ -1026,7 +1097,7 @@ export class PlotDataPoint2D {
     }
 }
 
-export class PlotDataScatter {
+export class PlotDataAxis {
   colorStroke:any;
   x_step:number;
   y_step:number;
@@ -1055,7 +1126,7 @@ export class PlotDataScatter {
       var d = temp[i];
       plot_data_states.push(PlotDataState.deserialize(d));
     }
-    return new PlotDataScatter(serialized['nb_points_x'],
+    return new PlotDataAxis(serialized['nb_points_x'],
                                   serialized['nb_points_y'],
                                   serialized['font_size'],
                                   serialized['graduation_color'],
@@ -1282,6 +1353,32 @@ export class PlotDataGraph2D {
                            plot_data_states,
                            serialized['type'],
                            serialized['name']);
+  }
+}
+
+export class PlotDataScatter {
+  constructor(public point_list:PlotDataPoint2D[],
+              public plot_data_states:PlotDataState[],
+              public type:string,
+              public name:string) {}
+  
+  public static deserialize(serialized) {
+    var temp = serialized['plot_data_states'];
+    var plot_data_states = [];
+    for (var i = 0; i < temp.length; i++) {
+      var d = temp[i];
+      plot_data_states.push(PlotDataState.deserialize(d));
+    }
+    var point_list = [];
+    temp = serialized['serialized_point_list'];
+    for (var i=0; i<temp.length; i++) {
+      var d = temp[i];
+      point_list.push(PlotDataPoint2D.deserialize(d));
+    }
+    return new PlotDataScatter(point_list,
+                               plot_data_states,
+                               serialized['type'],
+                               serialized['name']);
   }
 }
 

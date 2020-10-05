@@ -2112,7 +2112,7 @@ class Circle2D(Contour2D):
         return Circle2D(self.center.copy(), self.radius)
 
 
-class ScatterPlot(dc.DessiaObject):
+class Axis(dc.DessiaObject):
     def __init__(self, nb_points_x: int, nb_points_y: int, font_size: int,
                  graduation_color: str, axis_color: str, axis_width: float, arrow_on: bool,
                  grid_on: bool, name: str = ''):
@@ -2130,7 +2130,7 @@ class ScatterPlot(dc.DessiaObject):
                   plot_data_states: List[plot_data.PlotDataState] = None):
         if plot_data_states is None:
             plot_data_states = [plot_data.PlotDataState()]
-        return plot_data.PlotDataScatterPlot(nb_points_x=self.nb_points_x,
+        return plot_data.PlotDataAxis(nb_points_x=self.nb_points_x,
                                              nb_points_y=self.nb_points_y,
                                              font_size=self.font_size,
                                              graduation_color=self.graduation_color,
@@ -2203,6 +2203,32 @@ class Graph2D(dc.DessiaObject):
                                          graph_linewidth=self.graph_linewidth,
                                          serialized_segments=serialized_segments,
                                          display_step = self.display_step,
+                                         plot_data_states=plot_data_states,
+                                         name=self.name)
+
+class ScatterPlot(dc.DessiaObject):
+    def __init__(self, point_list:List[Point2D],colorfill:str, colorstroke:str, size:int, shape:str, strokewidth:float, name:str=''):
+        self.point_list = point_list
+        self.colorfill = colorfill
+        self.colorstroke = colorstroke
+        self.size = size
+        self.shape = shape
+        self.strokewidth = strokewidth
+        dc.DessiaObject.__init__(self, name)
+
+    def plot_data(self, plot_data_states: List[plot_data.PlotDataState]):
+        if plot_data_states is None:
+            plot_data_states = [plot_data.PlotDataState()]
+
+        point_color = plot_data.PointColorSet(color_fill=self.colorfill,
+                                              color_stroke=self.colorstroke)
+        point_size = plot_data.PointSizeSet(size=self.size)
+        shape = plot_data.PointShapeSet(shape=self.shape)
+        serialized_point_list = [point.plot_data([plot_data.PlotDataState(point_color=point_color,
+                                                  stroke_width=self.strokewidth,
+                                                  point_size=point_size,
+                                                  shape_set=shape)]).to_dict() for point in self.point_list]
+        return plot_data.PlotDataScatter(serialized_point_list=serialized_point_list,
                                          plot_data_states=plot_data_states,
                                          name=self.name)
 

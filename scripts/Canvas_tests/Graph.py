@@ -55,7 +55,7 @@ while k < 20 * np.pi:
     point = vm.Point2D([k, np.sin(k + np.pi/3)])
     point_list1.append(point)
     k = k + np.pi/20
-graph1 = vm.Graph2D(point_list=point_list1, dashline=[10,10], graph_colorstroke='red', graph_linewidth=0.5, point_colorfill='green', point_colorstroke='black', point_strokewidth=0.5, graph_point_size=2, point_shape='square', display_step=3)
+graph1 = vm.Graph2D(point_list=point_list1, dashline=[10,10], graph_colorstroke='red', graph_linewidth=0.5, point_colorfill='green', point_colorstroke='black', point_strokewidth=0.5, graph_point_size=2, point_shape='square', display_step=display_step)
 plot_datas += [graph1.plot_data([plot_data.PlotDataState()])]
 
 
@@ -65,15 +65,15 @@ while k < 20 * np.pi:
     point = vm.Point2D([k, np.sin(k - np.pi/3)])
     point_list2.append(point)
     k = k + np.pi/20
-graph2 = vm.Graph2D(point_list=point_list2, dashline=[5,3,1,3], graph_colorstroke='blue', graph_linewidth=0.5, point_colorfill='brown', point_colorstroke='black', point_strokewidth=0.5, graph_point_size=2, point_shape='crux', display_step=3)
+graph2 = vm.Graph2D(point_list=point_list2, dashline=[5,3,1,3], graph_colorstroke='blue', graph_linewidth=0.5, point_colorfill='brown', point_colorstroke='black', point_strokewidth=0.5, graph_point_size=2, point_shape='crux', display_step=display_step)
 plot_datas += [graph2.plot_data([plot_data.PlotDataState()])]
 
-scatter_plot = vm.ScatterPlot(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
+axis = vm.Axis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               font_size=font_size,
                               graduation_color=graduation_color,
                               axis_color=axis_color, arrow_on=arrow_on,
                               axis_width=axis_width, grid_on=grid_on)
-plot_datas += [scatter_plot.plot_data([plot_data.PlotDataState()])]
+plot_datas += [axis.plot_data([plot_data.PlotDataState()])]
 
 tooltip = vm.Tooltip(colorfill=colorfill, font=font, tp_width=tp_width,
                      tp_radius=tp_radius, to_plot_list=to_plot_list)

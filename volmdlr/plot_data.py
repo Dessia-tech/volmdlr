@@ -144,10 +144,11 @@ class PlotDataPoint2D(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
 
-class PlotDataScatterPlot(DessiaObject):
+class PlotDataAxis(DessiaObject):
     def __init__(self, nb_points_x: int, nb_points_y: int, font_size: int,
-                 graduation_color: str, axis_color: str, plot_data_states: List[PlotDataState],
-                 arrow_on: bool, axis_width:float, grid_on: bool,
+                 graduation_color: str, axis_color: str,
+                 plot_data_states: List[PlotDataState],
+                 arrow_on: bool, axis_width: float, grid_on: bool,
                  name: str = '',
                  type: str = 'axis'):
         self.nb_points_x = nb_points_x
@@ -164,7 +165,8 @@ class PlotDataScatterPlot(DessiaObject):
 
 
 class PlotDataTooltip(DessiaObject):
-    def __init__(self, colorfill: str, font: str, tp_width: float, tp_radius: float, to_plot_list: list,
+    def __init__(self, colorfill: str, font: str, tp_width: float,
+                 tp_radius: float, to_plot_list: list,
                  plot_data_states: List[PlotDataState], type: str = 'tooltip',
                  name: str = ''):
         self.colorfill = colorfill
@@ -176,8 +178,13 @@ class PlotDataTooltip(DessiaObject):
         self.type = type
         DessiaObject.__init__(self, name=name)
 
+
 class PlotDataGraph2D(DessiaObject):
-    def __init__(self, serialized_point_list, dashline: List[float], graph_colorstroke: str, graph_linewidth: float, serialized_segments, display_step:float, plot_data_states: List[PlotDataState], type:str='graph2D', name:str=''):
+    def __init__(self, serialized_point_list, dashline: List[float],
+                 graph_colorstroke: str, graph_linewidth: float,
+                 serialized_segments, display_step: float,
+                 plot_data_states: List[PlotDataState], type: str = 'graph2D',
+                 name: str = ''):
         self.serialized_point_list = serialized_point_list
         self.dashline = dashline
         self.graph_colorstroke = graph_colorstroke
@@ -189,6 +196,17 @@ class PlotDataGraph2D(DessiaObject):
         self.plot_data_states = plot_data_states
         self.type = type
         DessiaObject.__init__(self, name)
+
+
+class PlotDataScatter(DessiaObject):
+    def __init__(self, serialized_point_list,
+                 plot_data_states: List[PlotDataState],
+                 type: str = 'ScatterPlot', name: str = ''):
+        self.serialized_point_list = serialized_point_list
+        self.plot_data_states = plot_data_states
+        self.type = type
+        DessiaObject.__init__(self, name)
+
 
 class PlotDataArc2D(DessiaObject):
     def __init__(self, cx: float, cy: float, r: float,
