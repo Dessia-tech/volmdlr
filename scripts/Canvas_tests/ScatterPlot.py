@@ -43,7 +43,7 @@ to_plot_list = ['cx', 'cy']
 plot_datas = []
 point_list = []
 for i in range(2000):
-    point = vm.Point2D.random(0, 200, 0, 100)
+    point = vm.Point2D.random(0, 2, 0, 1)
     point_list += [point]
 
 # point_list += [vm.Point2D([0,0])]

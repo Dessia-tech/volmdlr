@@ -27,6 +27,7 @@ export class PlotData {
   index_first_in:number;
   index_last_in:number;
   nb_points_in:number;
+  graph_ON:boolean=false;
 
 
   define_canvas() {
@@ -44,13 +45,20 @@ export class PlotData {
   draw_initial() {
     this.init_scale = Math.min(this.width/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX), this.height/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY));
     this.scale = this.init_scale;
-    if (this.axis_ON) {
+    if ((this.axis_ON) && !(this.graph_ON)) {
       this.init_scaleX = (this.width-this.decalage_axis_x)/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX);
       this.init_scaleY = (this.height - this.decalage_axis_y)/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY);
       this.scaleX = this.init_scaleX;
       this.scaleY = this.init_scaleY;
       this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX + this.decalage_axis_x/(2*this.scaleX);
       this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY - this.decalage_axis_y/(2*this.scaleY);
+    } else if ((this.axis_ON) && (this.graph_ON)) {
+      this.init_scaleX = (this.width-this.decalage_axis_x)/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX);
+      this.init_scaleY = (this.height - this.decalage_axis_y - (this.graph1_button_y + this.graph1_button_h + 5))/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY);
+      this.scaleX = this.init_scaleX;
+      this.scaleY = this.init_scaleY;
+      this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX + this.decalage_axis_x/(2*this.scaleX);
+      this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY - (this.decalage_axis_y - (this.graph1_button_y + this.graph1_button_h + 5))/(2*this.scaleY);
     } else {
       this.scaleX = this.init_scale;
       this.scaleY = this.init_scale;
@@ -200,12 +208,26 @@ export class PlotData {
 
   draw_scatterplot(d, hidden, mvx, mvy) {
     if (d['type'] == 'ScatterPlot') {
-      // if (this.last_point_list.length == 0) {this.last_point_list = d.point_list}
-      var new_point_list = this.refresh_point_list(d.point_list,mvx,mvy);
+      var new_point_list = this.refresh_point_list1(d.point_list,mvx,mvy);
       for (var i=0; i<new_point_list.length; i++) {
         var point = new_point_list[i];
         this.draw_point(hidden, 0, mvx, mvy, this.scaleX, this.scaleY, point);
       }
+      // var to_unselect_list = [];
+      // for (var i=0; i<this.select_on_click.length; i++) {
+      //   if (!this.is_include(this.select_on_click[i],new_point_list)) {
+      //     to_unselect_list.push(this.select_on_click[i]);
+      //   }
+      // }
+      // this.delete_clicked_points(to_unselect_list);
+
+      // var to_delete_tooltip_list = [];
+      // for (var i=0; i<this.tooltip_list.length; i++) {
+      //   if (!this.is_include(this.tooltip_list[i],new_point_list)) {
+      //     to_delete_tooltip_list.push(this.tooltip_list[i]);
+      //   }
+      // }
+      // this.delete_tooltip(to_delete_tooltip_list);
     } 
   }
 
@@ -436,9 +458,12 @@ export class PlotData {
             this.scale = this.init_scale;
             this.scroll_x = 0;
             this.scroll_y = 0;
-            if (this.axis_ON === true) {
+            if ((this.axis_ON === true) && (this.graph_ON === false)) {
               this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX + this.decalage_axis_x/(2*this.scaleX);
               this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY - this.decalage_axis_y/(2*this.scaleY);
+            } else if ((this.axis_ON === true) && (this.graph_ON === true)) {
+              this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX + this.decalage_axis_x/(2*this.scaleX);
+              this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY - (this.decalage_axis_y - (this.graph1_button_y + this.graph1_button_h + 5))/(2*this.scaleY);
             } else {
               this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX;
               this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY;
@@ -586,7 +611,8 @@ export class PlotData {
   is_inside_canvas(point, mvx, mvy) {
     var x = this.scaleX*(1000*point.cx + mvx);
     var y = this.scaleY*(1000*point.cy + mvy);
-    return (x>=0) && (x<=this.width) && (y>=0) && (y<=this.height);
+    length = 100*point.size;
+    return (x+length>=0) && (x<=this.width-length) && (y+length>=0) && (y-length<=this.height);
   }
 
   get_points_inside_canvas(list_points, mvx, mvy) {
@@ -611,6 +637,93 @@ export class PlotData {
     return new_list;
   }
 
+  hashing_point(point, nb_x, nb_y, mvx, mvy) {
+    var x_step = this.width/nb_x;
+    var y_step = this.height/nb_y;
+    var x = this.scaleX*(1000*point.cx + mvx);
+    var y = this.scaleY*(1000*point.cy + mvy);
+    var i = Math.ceil(x/x_step);
+    var j = Math.ceil(y/y_step);
+    var key = 100*i + j;
+    return [key,point];
+  }
+
+  hashing_list(point_list, nb_x, nb_y, mvx, mvy) {
+    var dict = [];
+    for (var k=0; k<point_list.length; k++) {
+      var point_dict = this.hashing_point(point_list[k], nb_x, nb_y, mvx, mvy);
+      dict.push(point_dict);
+    }
+    return dict;
+  }
+
+  dehashing_list(hashed_point_list) {
+    var point_list = [];
+    for (var i=0; i<hashed_point_list.length; i++) {
+      point_list.push(hashed_point_list[i][1]);
+    }
+    return point_list;
+  }
+
+  refresh_point_list1(point_list, mvx, mvy) {
+    var new_point_list = this.get_points_inside_canvas(this.copy_list(point_list), mvx, mvy);
+    var nb_x = 10;
+    var nb_y = 10;
+    var dict_point_list = this.hashing_list(new_point_list, nb_x, nb_y, mvx, mvy);
+    var i=0;
+    var length = dict_point_list.length;
+    while (i<length) {
+      var point_dict_i = dict_point_list[i];
+      var i_0 = Math.floor(point_dict_i[0]/100);
+      var i_1 = point_dict_i[0]%100; 
+      var size_i = point_dict_i[1].size;
+      var xi = this.scaleX*(1000*point_dict_i[1].cx + mvx);
+      var yi = this.scaleY*(1000*point_dict_i[1].cy + mvy);
+      var bool = false;
+      var j = i+1;
+      while (j<length) {
+        var point_dict_j = dict_point_list[j];
+        var j_0 = Math.floor(point_dict_j[0]/100);
+        var j_1 = point_dict_j[0]%100;
+        var size_j = point_dict_j[1].size;
+        if (size_i>=size_j) {
+          var max_size_index = i
+          var min_size_index = j;
+        } else {
+          var max_size_index = j;
+          var min_size_index = i;
+        }
+        var xj = this.scaleX*(1000*point_dict_j[1].cx + mvx);
+        var yj = this.scaleY*(1000*point_dict_j[1].cy + mvy);
+        var is_touching_ij = this.distance([xi,yi], [xj,yj])<1000*(size_i + size_j);
+        if ((Math.abs(i_0-j_0)<=1) && (Math.abs(i_1-j_1)<=1) && is_touching_ij) {
+          var copy_point_max_index = dict_point_list[max_size_index][1].copy();
+          var copy_point_min_index = dict_point_list[min_size_index][1].copy();
+          var new_cx = (copy_point_max_index.cx + copy_point_min_index.cx)/2;
+          var new_cy = (copy_point_max_index.cy + copy_point_min_index.cy)/2;
+          var copy_plot_data_states = [copy_point_max_index.plot_data_states[0]];
+          var point = new PlotDataPoint2D([],new_cx, new_cy, copy_plot_data_states, 'point', '');
+          var size_coeff = 1.15;
+          point.size = dict_point_list[max_size_index][1].size*size_coeff;
+          var point_i = dict_point_list[i][1];
+          var point_j = dict_point_list[j][1];
+          this.delete_clicked_points([point_i, point_j]);
+          this.delete_tooltip([point_i, point_j]);
+          dict_point_list = this.remove_selection(dict_point_list[i], dict_point_list);
+          dict_point_list = this.remove_selection(dict_point_list[j-1], dict_point_list);
+          dict_point_list.push(this.hashing_point(point, nb_x, nb_y, mvx, mvy));
+          this.colour_to_plot_data[point.mouse_selection_color] = point;
+          bool = true;
+          break;
+        } else {
+          j++;
+        }
+      }
+      if (bool) {length--} else {i++}
+    }
+    return this.dehashing_list(dict_point_list);
+  }
+
   refresh_point_list(point_list, mvx, mvy) {
     var new_point_list = this.get_points_inside_canvas(this.copy_list(point_list), mvx, mvy);
     var i = 0;
@@ -631,7 +744,7 @@ export class PlotData {
           var new_cy = (new_point_list[i].cy + new_point_list[j].cy)/2;
           var copy_plot_data_states = [new_point_list[max_size_index].plot_data_states[0].copy()];
           var point = new PlotDataPoint2D([],new_cx, new_cy, copy_plot_data_states, 'point', '');
-          var size_coeff = 1.2;
+          var size_coeff = 1.3;
           point.size = new_point_list[max_size_index].size*size_coeff;
           var point_i = new_point_list[i];
           var point_j = new_point_list[j];
@@ -793,6 +906,7 @@ export class PlotScatter extends PlotData {
           a = PlotDataTooltip.deserialize(d);
           this.plot_datas.push(a);
         } else if (d['type'] == 'graph2D') {
+          this.graph_ON = true;
           a = PlotDataGraph2D.deserialize(d);
           a.id = graphID;
           graphID++;
@@ -1187,8 +1301,8 @@ export class PlotDataAxis {
     context.textAlign = 'center';
     var x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(x_step)));
     var delta_x = maxX - minX;
-    var grad_beg_x = minX - delta_x;
-    var grad_end_x = maxX + delta_x;
+    var grad_beg_x = minX - 10*delta_x;
+    var grad_end_x = maxX + 10*delta_x;
     while(grad_beg_x + i*x_step < grad_end_x) {
       if ((scaleX*(1000*(grad_beg_x + i*x_step) + mvx) >axis_x_start) && (scaleX*(1000*(grad_beg_x + i*x_step) + mvx)<axis_x_end)) {
         
@@ -1208,8 +1322,8 @@ export class PlotDataAxis {
     var real_minY = -maxY;
     var real_maxY = -minY;
     var delta_y = maxY - minY;
-    var grad_beg_y = real_minY - delta_y;
-    var grad_end_y = real_maxY + delta_y;
+    var grad_beg_y = real_minY - 10*delta_y;
+    var grad_end_y = real_maxY + 10*delta_y;
     context.textAlign = 'end';
     context.textBaseline = 'middle';
     var y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(y_step)));
