@@ -922,10 +922,10 @@ class LineSegment2D(LineSegment):
         Edge.__init__(self, start, end, name=name)
 
     def Length(self):
-        return self.point2.point_distance(self.point1)
+        return self.end.point_distance(self.start)
 
     def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
-        return self.point1 + self.unit_direction_vector() * curvilinear_abscissa
+        return self.start + self.unit_direction_vector() * curvilinear_abscissa
 
     def point_distance(self, point, return_other_point=False):
         """
@@ -974,7 +974,7 @@ class LineSegment2D(LineSegment):
         # else:
         #     fig = ax.figure
 
-        p1, p2 = self.points
+        p1, p2 = self.start, self.end
         if arrow:
             if plot_points:
                 ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color,
@@ -1078,6 +1078,20 @@ class LineSegment2D(LineSegment):
     def tessellation_points(self):
         return [self.start, self.end]
 
+    def polygon_points(self, min_x_density=None, min_y_density=None):
+        n = 0# Number of points to insert between start and end
+        if min_x_density:
+            dx = abs(self.start[0]-self.end[0])
+            n = max(n, math.floor(dx*min_x_density))
+        if min_y_density:
+            dy = abs(self.start[1]-self.end[1])
+            n = max(n, math.floor(dy*min_y_density))
+
+        if n:
+            l = self.Length()
+            return [self.PointAtCurvilinearAbscissa(i*l/(n+1)) for i in range(n+2)]
+        else:
+            return [self.start, self.end]
 
 class Arc2D(Primitive2D):
     """
@@ -1376,6 +1390,21 @@ class Arc2D(Primitive2D):
         raise NotImplementedError
         return [Arc2D(self.start, self.split_point)]
 
+    def polygon_points(self, points_per_radian=10, min_x_density=None,
+                       min_y_density=None):
+
+        number_points = math.ceil(self.angle*points_per_radian)
+        densities = []
+        for d in [min_x_density, min_y_density]:
+            if d:
+                densities.append(d)
+        if densities:
+            number_points = max(number_points,
+                                min(densities)*self.angle*self.radius)
+        l = self.Length()
+        return [self.PointAtCurvilinearAbscissa(i*l/number_points)\
+                for i in range(number_points+1)]
+
 
 class ArcEllipse2D(Primitive2D):
     """
@@ -1546,10 +1575,13 @@ class ArcEllipse2D(Primitive2D):
 
 
 class DisplayMesh(dc.DessiaObject):
-    def __init__(self, points, triangles, name=''):
+    def __init__(self, points, triangles, edges=None, name=''):
 
         self.points = points
         self.triangles = triangles
+        if edges is None:
+            edges = []
+        self.edges = edges
         self.name = name
 
     def __add__(self, other_mesh):
@@ -1573,9 +1605,10 @@ class DisplayMesh(dc.DessiaObject):
 
         return self.__class__(new_points, new_triangles)
 
-    def plot(self, ax=None):
+    def plot(self, ax=None, numbering=False):
         if ax is None:
-            fig, ax = plt.figure()
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
 
         for p in self.points:
             p.MPLPlot(ax=ax)
@@ -1587,6 +1620,14 @@ class DisplayMesh(dc.DessiaObject):
                 ax=ax)
             self._linesegment_class(self.points[i1], self.points[i3]).MPLPlot(
                 ax=ax)
+
+        for i, (i1, i2) in enumerate(self.edges):
+            self._linesegment_class(self.points[i1], self.points[i2]).MPLPlot(
+                ax=ax)
+            if numbering:
+                ax.text(*0.5*(self.points[i1]+self.points[i2]), 'edge {}'.format(i+1),
+                        ha='center', va='center')
+
         return ax
 
 
@@ -1595,8 +1636,10 @@ class DisplayMesh2D(DisplayMesh):
     _point_class = Point2D
 
     def __init__(self, points: List[Point2D],
-                 triangles: List[Tuple[int, int, int]], name=''):
-        DisplayMesh.__init__(self, points, triangles)
+                 triangles: List[Tuple[int, int, int]],
+                 edges: List[Tuple[int, int]]=None,
+                 name: str=''):
+        DisplayMesh.__init__(self, points, triangles, edges, name=name)
 
 
 class Wire2D(CompositePrimitive2D):
@@ -1940,6 +1983,13 @@ class Contour2D(Wire2D):
             ymax = max(point[1], ymax)
         return xmin, xmax, ymin, ymax
 
+
+    def random_point_inside(self):
+        xmin, xmax, ymin, ymax = self.bounding_rectangle()
+        for i in range(1000):
+            p = Point2D.random(xmin, xmax, ymin, ymax)
+            if self.point_belongs(p):
+                return p
     # def line_intersections(self, line:Line2D) -> List[Tuple[Point2D, Primitive2D]]:
     #     """
     #     Returns a list of points and lines of intersection with the contour
@@ -2033,6 +2083,15 @@ class Contour2D(Wire2D):
     def triangulation(self):
         return self.grid_triangulation(number_points_x=20,
                                        number_points_y=20)
+
+    def polygonization(self, min_x_density=None, min_y_density=None):
+        # points = self.primitives[0].polygon_points()
+        points = []
+        for primitive in self.primitives:
+            points.extend(primitive.polygon_points(min_x_density=min_x_density,
+                                                   min_y_density=min_y_density)[1:])
+
+        return Polygon2D(points)
 
     def grid_triangulation(self, x_density: float = None,
                            y_density: float = None,
@@ -2272,16 +2331,16 @@ class Circle2D(Contour2D):
         triangles = [(i, i + 1, n) for i in range(n - 1)] + [(n - 1, 0, n)]
         return DisplayMesh(points, triangles)
 
+    def polygon_points(self, points_per_radian=10, min_x_density=None,
+                       min_y_density=None):
+        return Arc2D.polygon_points(self, points_per_radian=points_per_radian,
+                                    min_x_density=min_x_density,
+                                    min_y_density=min_y_density)
 
 class Polygon2D(Contour2D):
 
     def __init__(self, points, name=''):
         self.points = points
-        # primitives = []
-        # for p1,p2 in zip(points,points[1:]+[points[0]]):
-        #     primitives.append(LineSegment2D(p1,p2))
-
-        # TODO: remove this?
         self.line_segments = self._LineSegments()
 
         Contour2D.__init__(self, self.line_segments, name)
@@ -2457,13 +2516,6 @@ class Polygon2D(Contour2D):
 
         return False, None, None
 
-    #    def Dict(self):
-    #        d = {'points': [point.Dict() for point in self.points], 'name':self.name}
-    #        return d
-    #
-    #    @classmethod
-    #    def DictToObject(cls, dict_):
-    #        return cls([Point2D.DictToObject(p) for p in dict_['points']], name=dict_['name'])
 
     def plot_data(self, marker=None, color='black', stroke_width=1, opacity=1):
         data = []
@@ -2523,6 +2575,93 @@ class Polygon2D(Contour2D):
         hull.pop()
 
         return cls(hull)
+
+    def MPLPlot(self, ax=None, color='k',
+                plot_points=False, point_numbering=False):
+        if ax is None:
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
+
+        for ls in self.line_segments:
+            ls.MPLPlot(ax=ax ,color=color)
+
+        if plot_points or point_numbering:
+            for point in self.points:
+                point.MPLPlot(ax=ax, color=color)
+
+        if point_numbering:
+            for ip, point in enumerate(self.points):
+                ax.text(*point, 'point {}'.format(ip+1),
+                        ha='center', va='top')
+
+        ax.margins(0.1)
+        plt.show()
+
+        return ax
+
+class Surface2D(Primitive2D):
+    """
+    A surface bounded by an outer contour
+    """
+    def __init__(self, outer_contour: Contour2D,
+                 inner_contours: List[Contour2D],
+                 name:str='name'):
+        self.outer_contour = outer_contour
+        self.inner_contours = inner_contours
+
+        Primitive2D.__init__(self, name=name)
+
+    def triangulation(self, min_x_density=None, min_y_density=None):
+        outer_polygon = self.outer_contour.polygonization(min_x_density=15, min_y_density=12)
+        # ax2 = outer_polygon.MPLPlot(color='r', point_numbering=True)
+        points = outer_polygon.points
+        vertices = [p.vector for p in points]
+        n = len(outer_polygon.points)
+        segments = [(i, i+1) for i in range(n-1)]
+        segments.append((n-1, 0))
+        point_index = {p:i for i,p in enumerate(points)}
+        holes = []
+
+        for inner_contour in self.inner_contours:
+            inner_polygon = inner_contour.polygonization()
+            # inner_polygon.MPLPlot(ax=ax2)
+            for point in inner_polygon.points:
+                if not point in point_index:
+                    points.append(point)
+                    vertices.append(point.vector)
+                    point_index[point] = n
+                    n += 1
+            for point1, point2 in zip(inner_polygon.points[:-1],
+                                      inner_polygon.points[1:]):
+                segments.append((point_index[point1],
+                                 point_index[point2]))
+            segments.append((point_index[inner_polygon.points[-1]],
+                             point_index[inner_polygon.points[0]]))
+            holes.append(inner_contour.random_point_inside().vector)
+
+
+        tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
+               'segments': npy.array(segments).reshape((-1, 2)),
+               }
+        if holes:
+            tri['holes'] = npy.array(holes).reshape((-1, 2))
+
+        t = triangle.triangulate(tri, 'p')
+        triangles = t['triangles'].tolist()
+
+        return DisplayMesh2D(points, triangles=triangles, edges=None)
+
+    def plot(self, ax=None):
+        if ax is None:
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
+        self.outer_contour.MPLPlot(ax=ax)
+        for inner_contour in self.inner_contours:
+            inner_contour.MPLPlot(ax=ax)
+
+        ax.set_aspect('equal')
+        ax.margins(0.1)
+        return ax
 
 
 class Primitive3D(dc.DessiaObject):
@@ -2790,7 +2929,8 @@ class Plane3D(Primitive3D):
         p3 = Point2D((x2, y2))
         p4 = Point2D((x1, y2))
         outer_contour = Polygon2D([p1, p2, p3, p4])
-        return PlaneFace3D(self, outer_contour, [], name)
+        surface = Surface2D(outer_contour, [])
+        return PlaneFace3D(self, surface, name)
 
 XYZ = Basis3D(X3D, Y3D, Z3D)
 YZX = Basis3D(Y3D, Z3D, X3D)
@@ -2870,6 +3010,7 @@ class CylindricalSurface3D(Primitive3D):
 
     def rectangular_cut(self, theta1:float, theta2:float,
                         z1:float, z2:float, name:str=''):
+        print(theta1, theta2, z1, z2)
         # theta1 = angle_principal_measure(theta1)
         # theta2 = angle_principal_measure(theta2)
 
@@ -2881,7 +3022,8 @@ class CylindricalSurface3D(Primitive3D):
         p3 = Point2D((theta2, z2))
         p4 = Point2D((theta1, z2))
         outer_contour = Polygon2D([p1, p2, p3, p4])
-        return CylindricalFace3D(self, outer_contour, [], name)
+        surface2d = Surface2D(outer_contour, [])
+        return CylindricalFace3D(self, surface2d, name)
 
 
 class ToroidalSurface3D(Primitive3D):
@@ -3002,7 +3144,7 @@ class ToroidalSurface3D(Primitive3D):
         p3 = Point2D((theta2, phi2))
         p4 = Point2D((theta2, phi1))
         outer_contour = Polygon2D([p1, p2, p3, p4])
-        return ToroidalFace3D(self, outer_contour, [], name)
+        return ToroidalFace3D(self, Surface2D(outer_contour, []), name)
 
     def contour2d_to3d(self, contour2d):
         edges3d = []
@@ -5083,7 +5225,7 @@ class LineSegment3D(LineSegment):
         return s
 
     def To2D(self, plane_origin, x1, x2):
-        p2D = [p.To2D(plane_origin, x1, x2) for p in self.points]
+        p2D = [p.To2D(plane_origin, x1, x2) for p in (self.start, self.end)]
         return LineSegment2D(*p2D, name=self.name)
 
     def reverse(self):
@@ -5787,11 +5929,13 @@ class Ellipse3D(Contour3D):
 
 
 class Face3D(Primitive3D):
-    def __init__(self, surface, outer_contour2d: Contour2D,
-                 inner_contours2d: List[Contour2D], name: str = ''):
-        self.surface = surface
-        self.outer_contour2d = outer_contour2d
-        self.inner_contours2d = inner_contours2d
+    min_x_density=1
+    min_y_density=1
+
+    def __init__(self, surface3d, surface2d: Surface2D,
+                 name: str = ''):
+        self.surface3d = surface3d
+        self.surface2d = surface2d
 
         self.bounding_box = self._bounding_box()
 
@@ -5802,31 +5946,31 @@ class Face3D(Primitive3D):
         """
 
         """
-        if self.outer_contour2d.__class__.__name__ == 'Circle2D':
+        if self.surface2d.outer_contour.__class__.__name__ == 'Circle2D':
             return Circle3D.from_3_points(
-                self.surface.point2d_to_3d(
-                    self.outer_contour2d.PointAtCurvilinearAbscissa(0.)),
-                self.surface.point2d_to_3d(
-                    self.outer_contour2d.PointAtCurvilinearAbscissa(
-                        self.outer_contour2d.radius)),
-                self.surface.point2d_to_3d(
-                    self.outer_contour2d.PointAtCurvilinearAbscissa(
-                        2 * self.outer_contour2d.radius)),
+                self.surface3d.point2d_to_3d(
+                    self.surface2d.outer_contour.PointAtCurvilinearAbscissa(0.)),
+                self.surface3d.point2d_to_3d(
+                    self.surface2d.outer_contour.PointAtCurvilinearAbscissa(
+                        self.surface2d.outer_contour.radius)),
+                self.surface3d.point2d_to_3d(
+                    self.surface2d.outer_contour.PointAtCurvilinearAbscissa(
+                        2 * self.surface2d.outer_contour.radius)),
             )
 
         primitives3d = []
-        for primitive2d in self.outer_contour2d.primitives:
+        for primitive2d in self.surface2d.outer_contour.primitives:
             if primitive2d.__class__ == LineSegment2D:
-                p1 = self.surface.point2d_to_3d(primitive2d.start)
-                p2 = self.surface.point2d_to_3d(primitive2d.end)
+                p1 = self.surface3d.point2d_to_3d(primitive2d.start)
+                p2 = self.surface3d.point2d_to_3d(primitive2d.end)
                 primitive3d = LineSegment3D(p1, p2)
             elif primitive2d.__class__ == Arc2D:
-                start = self.surface.point2d_to_3d(primitive2d.start)
-                interior = self.surface.point2d_to_3d(primitive2d.interior)
-                end = self.surface.point2d_to_3d(primitive2d.end)
+                start = self.surface3d.point2d_to_3d(primitive2d.start)
+                interior = self.surface3d.point2d_to_3d(primitive2d.interior)
+                end = self.surface3d.point2d_to_3d(primitive2d.end)
                 primitive3d = Arc3D(start, interior, end)
             else:
-                print(self.outer_contour2d.primitives)
+                print(self.surface2d.outer_contour.primitives)
                 raise NotImplementedError('Unsupported primitive {}' \
                                           .format(
                     primitive2d.__class__.__name__))
@@ -5995,10 +6139,12 @@ class Face3D(Primitive3D):
         return same
 
     def triangulation(self):
-        mesh2d = self.outer_contour2d.triangulation()
+        mesh2d = self.surface2d.triangulation(min_x_density=self.min_x_density,
+                                              min_y_density=self.min_y_density)
 
+        mesh2d.plot()
         return DisplayMesh3D(
-            [self.surface.point2d_to_3d(p) for p in mesh2d.points],
+            [self.surface3d.point2d_to_3d(p) for p in mesh2d.points],
             mesh2d.triangles)
 
     def plot2d(self, ax=None):
@@ -6022,14 +6168,10 @@ class Face3D(Primitive3D):
 
     def Translation(self, offset, copy=True):
         if copy:
-            new_surface = self.surface.Translation(offset=offset, copy=True)
-            return self.__class__(new_surface, self.outer_contour2d,
-                                  self.inner_contours2d)
+            new_surface3d = self.surface3d.Translation(offset=offset, copy=True)
+            return self.__class__(new_surface3d, self.surface2d)
         else:
             self.surface.Translation(offset=offset, copy=False)
-            # self.outer_contour.Translation(offset=offset, copy=False)
-            # for contour in self.inner_contours:
-            #     contour.Translation(offset=offset, copy=False)
 
 
     def frame_mapping(self, frame, side, copy=True):
@@ -6063,13 +6205,12 @@ class PlaneFace3D(Face3D):
     _non_eq_attributes = ['name', 'bounding_box']
     _non_hash_attributes = []
 
-    def __init__(self, plane3d, outer_contour2d, inner_contours2d, name=''):
-        if not isinstance(outer_contour2d, Contour2D):
-            raise ValueError('Not a contour2D: {}'.format(outer_contour2d))
+    def __init__(self, plane3d, surface2d, name=''):
+        # if not isinstance(outer_contour2d, Contour2D):
+        #     raise ValueError('Not a contour2D: {}'.format(outer_contour2d))
         Face3D.__init__(self,
-                        surface=plane3d,
-                        outer_contour2d=outer_contour2d,
-                        inner_contours2d=inner_contours2d,
+                        surface3d=plane3d,
+                        surface2d=surface2d,
                         name=name)
 
     def __hash__(self):
@@ -6133,8 +6274,8 @@ class PlaneFace3D(Face3D):
             inner_contours2d.append(contour.to_2d(plane3d))
 
         return cls(plane3d=plane3d,
-                   outer_contour2d=outer_contour2d,
-                   inner_contours2d=inner_contours2d,
+                   surface2d=Surface2D(outer_contour=outer_contour2d,
+                                       inner_contours=inner_contours2d),
                    name=name)
 
 
@@ -6399,18 +6540,19 @@ class CylindricalFace3D(Face3D):
     :Example:
         >>> contours2d is rectangular and will create a classic cylinder with x= 2*pi*radius, y=h
     """
+    min_x_density = 5
+    min_y_density = 1
 
     def __init__(self,
                  cylindricalsurface3d: CylindricalSurface3D,
-                 outer_contour2d: Contour2D,
-                 inner_contours2d: List[Contour2D], name: str = ''):
+                 surface2d: Surface2D,
+                 name: str = ''):
 
         self.radius = cylindricalsurface3d.radius
         self.center = cylindricalsurface3d.frame.origin
         self.normal = cylindricalsurface3d.frame.w
-        Face3D.__init__(self, surface=cylindricalsurface3d,
-                        outer_contour2d=outer_contour2d,
-                        inner_contours2d=inner_contours2d,
+        Face3D.__init__(self, surface3d=cylindricalsurface3d,
+                        surface2d=surface2d,
                         name=name)
 
     @classmethod
@@ -7153,10 +7295,11 @@ class ToroidalFace3D(Face3D):
         x is for exterior, and y for the circle to revolute
         points = [pi, 2*pi] for an half tore
     """
+    min_x_density = 5
+    min_y_density = 1
 
     def __init__(self, toroidalsurface3d: ToroidalSurface3D,
-                 outer_contour2d: Contour2D,
-                 inner_contours2d: List[Contour2D],
+                 surface2d: Surface2D,
                  name: str = ''):
 
         # self.toroidalsurface3d = toroidalsurface3d
@@ -7164,10 +7307,7 @@ class ToroidalFace3D(Face3D):
         self.center = toroidalsurface3d.frame.origin
         self.normal = toroidalsurface3d.frame.w
 
-        self.outer_contour2d = outer_contour2d
-        self.inner_contours2d = inner_contours2d
-
-        theta_min, theta_max, phi_min, phi_max = self.outer_contour2d.bounding_rectangle()
+        theta_min, theta_max, phi_min, phi_max = surface2d.outer_contour.bounding_rectangle()
 
         self.theta_min = theta_min
         self.theta_max = theta_max
@@ -7178,9 +7318,8 @@ class ToroidalFace3D(Face3D):
         #               for c in [outer_contour2d]+inners_contours2d]
 
         Face3D.__init__(self,
-                        surface=toroidalsurface3d,
-                        outer_contour2d=outer_contour2d,
-                        inner_contours2d=inner_contours2d,
+                        surface3d=toroidalsurface3d,
+                        surface2d=surface2d,
                         name=name)
 
     @classmethod
@@ -7264,16 +7403,8 @@ class ToroidalFace3D(Face3D):
         return points
 
     def _bounding_box(self):
-        return self.surface._bounding_box()
+        return self.surface3d._bounding_box()
 
-    # def frame_mapping(self, frame, side, copy=True):
-    #     if copy:
-    #         new_toroidalsurface3d = ToroidalSurface3D.frame_mapping(frame,
-    #                                                                 side, copy)
-    #         return ToroidalFace3D(self.contours2d, new_toroidalsurface3d,
-    #                               points=self.points, name=self.name)
-    #     else:
-    #         self.toroidalsurface3d.frame_mapping(frame, side, copy=False)
 
     def minimum_maximum_tore(self, contour2d):
         points = contour2d.tessel_points
@@ -7283,6 +7414,7 @@ class ToroidalFace3D(Face3D):
         max_phi, max_theta = max([pt[1] for pt in points]), max(
             [pt[0] for pt in points])
         return min_phi, min_theta, max_phi, max_theta
+
 
     def minimum_distance_points_tore(self, other_tore):
         R1, r1, R2, r2 = self.rcenter, self.rcircle, other_tore.rcenter, other_tore.rcircle
@@ -7731,6 +7863,8 @@ class ConicalFace3D(Face3D):
     :type points: List of float
 
     """
+    min_x_density = 5
+    min_y_density = 1
 
     def __init__(self, conicalsurface3d: ConicalSurface3D,
                  outer_contour2d: Contour2D,
@@ -7796,6 +7930,8 @@ class SphericalFace3D(Face3D):
     :type points: List of float
 
     """
+    min_x_density = 5
+    min_y_density = 5
 
     def __init__(self, spherical_surface3d:SphericalSurface3D,
                  outer_contour2d: Contour2D,

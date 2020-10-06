@@ -18,7 +18,7 @@ class RoundedLineSegments:
         self.adapt_radius = adapt_radius
         self.name = name
         self.npoints = len(points)
-        primitives = self.Primitives(line_class, arc_class)
+        primitives = self._primitives(line_class, arc_class)
         
         return primitives
     
@@ -35,7 +35,7 @@ class RoundedLineSegments:
             for p in self.points:
                 p.frame_mapping(frame, side, copy=False)
                     
-    def Primitives(self, line_class, arc_class):
+    def _primitives(self, line_class, arc_class):
         alpha = {}
         dist = {}
         lines_length = {}
