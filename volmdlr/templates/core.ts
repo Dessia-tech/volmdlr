@@ -174,6 +174,25 @@ export class PlotData {
     }
   }
 
+  find_min_dist(d, mvx, mvy, step) {
+    var x0 = this.scaleX*(1000*d.point_list[0].cx + mvx);
+    var y0 = this.scaleY*(1000*d.point_list[0].cy + mvy);
+    var x1 = this.scaleX*(1000*d.point_list[step].cx + mvx);
+    var y1 = this.scaleY*(1000*d.point_list[step].cy + mvy);
+    var min_dist = this.distance([x0,y0],[x1,y1]);
+    for (var i=1; i<d.point_list.length-step; i=i+step) {
+      x0 = this.scaleX*(1000*d.point_list[i].cx + mvx);
+      y0 = this.scaleY*(1000*d.point_list[i].cy + mvy);
+      x1 = this.scaleX*(1000*d.point_list[i+step].cx + mvx);
+      y1 = this.scaleY*(1000*d.point_list[i+step].cy + mvy);
+      var dist = this.distance([x0,y0], [x1,y1]);
+      if (dist<min_dist) {
+        min_dist = dist;
+      }
+    }
+    return min_dist;
+  }
+
   draw_graph2D(d, hidden, mvx, mvy) {
     if ((d['type'] == 'graph2D') && (this.graph_to_display[d.id] === true)) {
       this.context.beginPath();
@@ -191,10 +210,11 @@ export class PlotData {
       this.context.setLineDash([]);
 
       [this.index_first_in, this.nb_points_in, this.index_last_in] = this.get_nb_points_inside_canvas(d.point_list, mvx, mvy);
-
       var step = d.display_step;
-      if (this.nb_points_in<=10) {
-        step = 1;
+      var min_dist = this.find_min_dist(d,mvx,mvy,step);
+      while ((min_dist<20) && (step<d.point_list.length)) {
+        min_dist = this.find_min_dist(d, mvx, mvy, step);
+        step++;
       }
       for (var i=0; i<d.point_list.length; i=i+step) {
         var point = d.point_list[i];
@@ -208,9 +228,11 @@ export class PlotData {
 
   draw_scatterplot(d, hidden, mvx, mvy) {
     if (d['type'] == 'ScatterPlot') {
-      var new_point_list = this.refresh_point_list1(d.point_list,mvx,mvy);
-      for (var i=0; i<new_point_list.length; i++) {
-        var point = new_point_list[i];
+      if ((this.scroll_x%5==0) || (this.scroll_y%5==0)){
+        this.scatter_point_list = this.refresh_point_list(d.point_list,mvx,mvy);
+      }
+      for (var i=0; i<this.scatter_point_list.length; i++) {
+        var point = this.scatter_point_list[i];
         this.draw_point(hidden, 0, mvx, mvy, this.scaleX, this.scaleY, point);
       }
       // var to_unselect_list = [];
@@ -351,7 +373,6 @@ export class PlotData {
     })
 
     canvas.addEventListener('mouseup', e => {
-
       var scale_ceil = 400*this.init_scale;
       var scale_floor = this.init_scale/3;
 
@@ -665,7 +686,7 @@ export class PlotData {
     return point_list;
   }
 
-  refresh_point_list1(point_list, mvx, mvy) {
+  refresh_point_list1(point_list, mvx, mvy) { //methode avec hachage
     var new_point_list = this.get_points_inside_canvas(this.copy_list(point_list), mvx, mvy);
     var nb_x = 10;
     var nb_y = 10;
@@ -724,8 +745,8 @@ export class PlotData {
     return this.dehashing_list(dict_point_list);
   }
 
-  refresh_point_list(point_list, mvx, mvy) {
-    var new_point_list = this.get_points_inside_canvas(this.copy_list(point_list), mvx, mvy);
+  refresh_point_list(point_list, mvx, mvy) { //methode recherche naive
+    var new_point_list = this.copy_list(point_list);
     var i = 0;
     var length = new_point_list.length;
     while (i<length) {
@@ -744,7 +765,7 @@ export class PlotData {
           var new_cy = (new_point_list[i].cy + new_point_list[j].cy)/2;
           var copy_plot_data_states = [new_point_list[max_size_index].plot_data_states[0].copy()];
           var point = new PlotDataPoint2D([],new_cx, new_cy, copy_plot_data_states, 'point', '');
-          var size_coeff = 1.3;
+          var size_coeff = 1.15;
           point.size = new_point_list[max_size_index].size*size_coeff;
           var point_i = new_point_list[i];
           var point_j = new_point_list[j];
@@ -858,6 +879,7 @@ export class PlotScatter extends PlotData {
   decalage_axis_x = 50;
   decalage_axis_y = 20;
   last_point_list:any[]=[];
+  scatter_point_list:PlotDataPoint2D[]=[]
 
   constructor(public data:any, 
     public width: number,
