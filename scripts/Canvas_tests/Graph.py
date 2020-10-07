@@ -37,7 +37,7 @@ graph_linewidth = 0.5
 point_colorfill = 'violet'
 point_colorstroke = 'grey'
 point_strokewidth = 0.5
-graph_point_size = 2;
+graph_point_size = 2
 point_shape = 'circle'
 display_step = 3
 
