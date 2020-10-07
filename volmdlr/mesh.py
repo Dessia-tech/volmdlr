@@ -661,10 +661,10 @@ class Mesher(DessiaObject):
     
     def __init__(self,contours:List[vm.Contour2D],triangles:List[TriangularElement],nodes_len:float):
         self.nodes_len=nodes_len
-        # self.contour=contour
+        self.contours=contours
         # self.polygon=self.contour._get_polygon()
         self.triangles=triangles
-        self.contours=contours
+    
                 
         
         
@@ -1021,10 +1021,11 @@ class Mesher(DessiaObject):
         ax=plt.subplot()
         segment_to_nodes={}
         all_segments=set()
-        external_arc_nodes=[]
-        internal_arc_nodes=[]
-        all_polygons=[]
         triangles=[]
+        all_polygons=[]
+        all_internal_polygons=[]
+        external_triangles=[]
+        internal_triangles=[]
         for contour in self.contours:
             polygon_points=[]
             for primitive in contour.primitives:
@@ -1041,6 +1042,7 @@ class Mesher(DessiaObject):
             
        
        
+
         for polygon in all_polygons:
             polygon_1=polygon.copy()
             
@@ -1069,6 +1071,12 @@ class Mesher(DessiaObject):
         # for triangle in triangles :
         #     print(triangle.aspect_ratio())
        
+
+
+           
+       
+        bad_triangles=[]
+
         # for triangle in triangles:
         #     for segment in triangle.line_segments:
         #         u=0
@@ -1088,8 +1096,10 @@ class Mesher(DessiaObject):
         
         # for triangle in bad_triangles:
         #     triangles.remove(triangle)
-           
-             
+        # contour_triangles=[]
+        # contour_triangles+=external_triangles+internal_triangles 
+        # internal_meshing_triangles=[]
+        # internal_meshing_triangles+=internal_triangles
         all_triangles=[]
         all_triangles+=triangles
         all_triangle_elements=[]
@@ -1097,11 +1107,12 @@ class Mesher(DessiaObject):
         
         for triangle in all_triangles:
             triangle.MPLPlot(ax=ax)
+
         # for triangle in triangles:
         #     all_segments= all_segments.union(triangle.line_segments)
         #     # for segment in triangle.line_segments:
         #     #     all_segments.append(segment)
-        
+
         # for segment in all_segments:
         #     segment_to_nodes[segment]=segment.discretise(self.nodes_len,ax)
            
@@ -1111,6 +1122,7 @@ class Mesher(DessiaObject):
         #       all_triangles+=triangle.mesh_triangle(segment_to_nodes,self.nodes_len,ax)[0]
         #       # print('next')
               
+
         #       all_aspect_ratios+=triangle.mesh_triangle(segment_to_nodes,self.nodes_len,ax)[1]
              
 
@@ -1118,6 +1130,7 @@ class Mesher(DessiaObject):
         #     triangle.MPLPlot(ax=ax)
         #     triangular_element=TriangularElement(triangle.points)
         #     all_triangle_elements.append(triangular_element)
+
       
         # grade=min(all_aspect_ratios)
       

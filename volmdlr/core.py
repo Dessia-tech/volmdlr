@@ -1379,10 +1379,12 @@ class LineSegment2D(Line2D):
              nodes.insert(len(nodes),self.point2)
                    
              segment_to_nodes[self]=nodes
+
              if ax is not None :
                  for point in segment_to_nodes[self]:
                      point.MPLPlot(ax=ax,color='r')
-               
+
+           
             
          return segment_to_nodes[self]
 

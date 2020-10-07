@@ -34,6 +34,7 @@ stator_external_contour = vm.Contour2D.dict_to_object({'name': '', 'package_vers
 # circle=vm.Circle2D(vm.Point2D([0.4,0.5]),0.3)
 # ax=circle.MPLPlot()
 # circle.discretise(40,ax)
+
 # print(list(combinations(range(3),3)))
 rotor_contour=rotor_magnet_contours+[rotor_external_contour]
 rotor_magnet=[rotor_magnet_contours[0]]
@@ -45,6 +46,7 @@ rotor=vmmesh.Mesher(rotor_external,[],40)
 ax=rotor_external_contour.MPLPlot()
 rotor.mesh(6)
 # rotor.complete_ear(rotor_magnet_contours[0].polygon,ax)
+
 # mesher=vmmesh.Mesher([stator_external_contour],[],20)
 
 
@@ -109,9 +111,17 @@ contour=vm.Contour2D([l1,l2,l3,l4,l5,l6])
 # polygon=contour.polygon
 # all_points=polygon.points
 
+<<<<<<< HEAD
 # mesher=vmmesh.Mesher([contour],[],1.5)
 # all_triangle_elements=mesher.mesh()
 
+=======
+mesher=vmmesh.Mesher([contour],[],1.5)
+all_triangle_elements=mesher.mesh()
+element_group=vmmesh.ElementsGroup(all_triangle_elements,'element_group')
+mesh=vmmesh.Mesh([element_group])
+mesh.plot()
+>>>>>>> 9cf296f3b4e6efa487a2b3c0e5c12da3c12e5500
 
 
 
