@@ -16,6 +16,9 @@ p4=vm.Point2D((1, 0.5))
 p5=vm.Point2D((-0.5, 1))
 
 polygon = vm.Polygon2D([p1, p2, p3, p4, p5])
+ax=polygon.MPLPlot()
+polygon_offset=polygon.Offset(0.1)
+polygon_offset.MPLPlot(ax=ax)
 a = polygon.SelfIntersect()
 print(a)
 #print(c.Area())
@@ -70,3 +73,4 @@ for i in range(n):
     polygon.PointBelongs(pt)
 t= time.time() - t 
 print('time spent: {}s, {}s/eval'.format(t, t/n))   
+
