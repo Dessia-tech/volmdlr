@@ -16,6 +16,1020 @@ from typing import Tuple
 
 import matplotlib.pyplot as plt
 
+
+class Line3D(volmdlr.Line):
+    _non_eq_attributes = ['name', 'basis_primitives', 'bounding_box']
+
+    """
+    Define an infinite line passing through the 2 points
+    """
+
+    def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
+                 name: str=''):
+        Line.__init__(self, point1, point2, name=name)
+        self.bounding_box = self._bounding_box()
+
+
+    def _bounding_box(self):
+        points = [self.point1, self.point2]
+
+        xmin = min([pt[0] for pt in points])
+        xmax = max([pt[0] for pt in points])
+        ymin = min([pt[1] for pt in points])
+        ymax = max([pt[1] for pt in points])
+        zmin = min([pt[2] for pt in points])
+        zmax = max([pt[2] for pt in points])
+
+        return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+
+    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
+        return self.points[0] + (
+                self.point2 - self.points[0]) * curvilinear_abscissa
+
+    def MPLPlot(self, ax=None, color='k', dashed=True):
+        if ax is None:
+            fig = plt.figure()
+            ax = Axes3D(fig)
+        else:
+            fig = ax.figure
+
+        # Line segment
+        x = [p.vector[0] for p in self.points]
+        y = [p.vector[1] for p in self.points]
+        z = [p.vector[2] for p in self.points]
+        ax.plot(x, y, z, 'ok')
+
+        # Drawing 3 times length of segment on each side
+        u = self.point2 - self.points[0]
+        x1, y1, z1 = (self.points[0] - 3 * u).vector
+        x2, y2, z2 = (self.point2 + 3 * u).vector
+        if dashed:
+            ax.plot([x1, x2], [y1, y2], [z1, z2], color=color,
+                    dashes=[30, 5, 10, 5])
+        else:
+            ax.plot([x1, x2], [y1, y2], [z1, z2], color=color)
+        return ax
+
+    def PlaneProjection2D(self, center, x, y):
+        return Line2D(self.points[0].PlaneProjection2D(center, x, y),
+                      self.point2.PlaneProjection2D(center, x, y))
+
+    def MinimumDistancePoints(self, other_line):
+        """
+        Returns the points on this line and the other line that are the closest
+        of lines
+        """
+        u = self.point2 - self.point1
+        v = other_line.point2 - other_line.point1
+        w = self.point1 - other_line.point1
+        a = u.Dot(u)
+        b = u.Dot(v)
+        c = v.Dot(v)
+        d = u.Dot(w)
+        e = v.Dot(w)
+
+        s = (b * e - c * d) / (a * c - b ** 2)
+        t = (a * e - b * d) / (a * c - b ** 2)
+        p1 = self.point1 + s * u
+        p2 = other_line.point1 + t * v
+        return p1, p2
+
+    def Rotation(self, center, axis, angle, copy=True):
+        if copy:
+            return Line3D(*[p.Rotation(center, axis, angle, copy=True) for p in
+                            self.points])
+        else:
+            for p in self.points:
+                p.Rotation(center, axis, angle, copy=False)
+
+    def Translation(self, offset, copy=True):
+        if copy:
+            return Line3D(
+                *[p.Translation(offset, copy=True) for p in self.points])
+        else:
+            for p in self.points:
+                p.Translation(offset, copy=False)
+
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        if side == 'old':
+            if copy:
+                return Line3D(*[frame.OldCoordinates(p) for p in self.points])
+            else:
+                for p in self.points:
+                    self.points = [frame.OldCoordinates(p) for p in
+                                   self.points]
+        if side == 'new':
+            if copy:
+                return Line3D(*[frame.NewCoordinates(p) for p in self.points])
+            else:
+                for p in self.points:
+                    self.points = [frame.NewCoordinates(p) for p in
+                                   self.points]
+
+    def copy(self):
+        return Line3D(*[p.copy() for p in self.points])
+
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        point1 = object_dict[arguments[1]]
+        direction = object_dict[arguments[2]]
+        point2 = point1 + direction
+        return cls(point1, point2, arguments[0][1:-1])
+
+    def Intersection(self, line2):
+
+        x1 = self.point1.vector[0]
+        y1 = self.point1.vector[1]
+        z1 = self.point1.vector[2]
+        x2 = self.point2.vector[0]
+        y2 = self.point2.vector[1]
+        z2 = self.point2.vector[2]
+        x3 = line2.points[0].vector[0]
+        y3 = line2.points[0].vector[1]
+        z3 = line2.points[0].vector[2]
+        x4 = line2.point2.vector[0]
+        y4 = line2.point2.vector[1]
+        z4 = line2.point2.vector[2]
+
+        if x3 == 0 and x4 == 0 and y4 - y3 == 0:
+            x5, y5, z5 = x3, y3, z3
+            x6, y6, z6 = x4, y4, z4
+            x3, y3, z3 = x1, y1, z1
+            x4, y4, z4 = x2, y2, z2
+            x1, y1, z1 = x5, y5, z5
+            x2, y2, z2 = x6, y6, z6
+
+        elif y3 == 0 and y4 == 0 and x4 - x3 == 0:
+            x5, y5, z5 = x3, y3, z3
+            x6, y6, z6 = x4, y4, z4
+            x3, y3, z3 = x1, y1, z1
+            x4, y4, z4 = x2, y2, z2
+            x1, y1, z1 = x5, y5, z5
+            x2, y2, z2 = x6, y6, z6
+
+        res, list_t1 = [], []
+
+        # 2 unknown 3eq with t1 et t2 unknown
+
+        if (x2 - x1 + y1 - y2) != 0 and (y4 - y3) != 0:
+            t1 = (x3 - x1 + (x4 - x3) * (y1 - y3) / (y4 - y3)) / (
+                        x2 - x1 + y1 - y2)
+            t2 = (y1 - y3 + (y2 - y1) * t1) / (y4 - y3)
+            res1 = z1 + (z2 - z1) * t1
+            res2 = z3 + (z4 - z3) * t2
+            list_t1.append(t1)
+            res.append([res1, res2])
+
+        if (z2 - z1 + y1 - y2) != 0 and (y4 - y3) != 0:
+            t1 = (z3 - z1 + (z4 - z3) * (y1 - y3) / (y4 - y3)) / (
+                        z2 - z1 + y1 - y2)
+            t2 = (y1 - y3 + (y2 - y1) * t1) / (y4 - y3)
+            res1 = x1 + (x2 - x1) * t1
+            res2 = x3 + (x4 - x3) * t2
+            list_t1.append(t1)
+            res.append([res1, res2])
+
+        if (z2 - z1 + x1 - x2) != 0 and (x4 - x3) != 0:
+            t1 = (z3 - z1 + (z4 - z3) * (x1 - x3) / (x4 - x3)) / (
+                        z2 - z1 + x1 - x2)
+            t2 = (x1 - x3 + (x2 - x1) * t1) / (x4 - x3)
+            res1 = y1 + (y2 - y1) * t1
+            res2 = y3 + (y4 - y3) * t2
+            list_t1.append(t1)
+            res.append([res1, res2])
+
+        if len(res) == 0:
+            return None
+
+        for pair, t1 in zip(res, list_t1):
+            res1, res2 = pair[0], pair[1]
+            if math.isclose(res1, res2,
+                            abs_tol=1e-7):  # if there is an intersection point
+                return Point3D([x1 + (x2 - x1) * t1, y1 + (y2 - y1) * t1,
+                                z1 + (z2 - z1) * t1])
+
+        return None
+
+
+class BSplineCurve3D(volmdlr.Primitive3D):
+    def __init__(self, degree, control_points, knot_multiplicities, knots,
+                 weights=None, periodic=False, name=''):
+        Primitive3D.__init__(self, basis_primitives=control_points, name=name)
+        self.control_points = control_points
+        self.degree = degree
+        knots = standardize_knot_vector(knots)
+        self.knots = knots
+        self.knot_multiplicities = knot_multiplicities
+        self.weights = weights
+        self.periodic = periodic
+        self.name = name
+
+        curve = BSpline.Curve()
+        curve.degree = degree
+        if weights is None:
+            P = [(control_points[i][0], control_points[i][1],
+                  control_points[i][2]) for i in range(len(control_points))]
+            curve.ctrlpts = P
+        else:
+            Pw = [(control_points[i][0] * weights[i],
+                   control_points[i][1] * weights[i],
+                   control_points[i][2] * weights[i], weights[i]) for i in
+                  range(len(control_points))]
+            curve.ctrlptsw = Pw
+        knot_vector = []
+        for i, knot in enumerate(knots):
+            knot_vector.extend([knot] * knot_multiplicities[i])
+        curve.knotvector = knot_vector
+        curve.delta = 0.1
+        curve_points = curve.evalpts
+
+        self.curve = curve
+        self.points = [Point3D((p[0], p[1], p[2])) for p in curve_points]
+
+    def Length(self):
+        # Approximately
+        length = 0
+        for k in range(0, len(self.points) - 1):
+            length += (self.points[k] - self.points[k + 1]).Norm()
+        return length
+
+    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
+        # copy paste from wire3D
+        length = 0.
+        primitives = []
+        for k in range(0, len(self.points) - 1):
+            primitives.append(
+                LineSegment3D(self.points[k], self.points[k + 1]))
+        for primitive in primitives:
+            primitive_length = primitive.Length()
+            if length + primitive_length >= curvilinear_abscissa:
+                return primitive.PointAtCurvilinearAbscissa(
+                    curvilinear_abscissa - length)
+            length += primitive_length
+        # Outside of length
+        raise ValueError
+
+    def FreeCADExport(self, ip, ndigits=3):
+        name = 'primitive{}'.format(ip)
+        points = '['
+        for i in range(len(self.control_points)):
+            point = 'fc.Vector({},{},{}),'.format(self.control_points[i][0],
+                                                  self.control_points[i][1],
+                                                  self.control_points[i][2])
+            points += point
+        points = points[:-1]
+        points += ']'
+        # !!! : A QUOI SERT LE DERNIER ARG DE BSplineCurve (False)?
+        # LA MULTIPLICITE EN 3e ARG ET LES KNOTS EN 2e ARG ?
+        return '{} = Part.BSplineCurve({},{},{},{},{},{},{})\n'.format(name,
+                                                                       points,
+                                                                       self.knot_multiplicities,
+                                                                       self.knots,
+                                                                       self.periodic,
+                                                                       self.degree,
+                                                                       self.weights,
+                                                                       False)
+
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        name = arguments[0][1:-1]
+        degree = int(arguments[1])
+        points = [object_dict[int(i[1:])] for i in arguments[2]]
+        # curve_form = arguments[3]
+        if arguments[4] == '.F.':
+            closed_curve = False
+        elif arguments[4] == '.T.':
+            closed_curve = True
+        else:
+            raise ValueError
+        # self_intersect = arguments[5]
+        knot_multiplicities = [int(i) for i in arguments[6][1:-1].split(",")]
+        knots = [float(i) for i in arguments[7][1:-1].split(",")]
+        # knot_spec = arguments[8]
+        knot_vector = []
+        for i, knot in enumerate(knots):
+            knot_vector.extend([knot] * knot_multiplicities[i])
+
+        if 9 in range(len(arguments)):
+            weight_data = [float(i) for i in arguments[9][1:-1].split(",")]
+        else:
+            weight_data = None
+
+        # FORCING CLOSED_CURVE = FALSE:
+        closed_curve = False
+        return cls(degree, points, knot_multiplicities, knots, weight_data,
+                   closed_curve, name)
+
+    def point_distance(self, pt1):
+        distances = []
+        for point in self.points:
+            #            vmpt = Point3D((point[1], point[2], point[3]))
+            distances.append(pt1.point_distance(point))
+        return min(distances)
+
+    def Rotation(self, center, axis, angle, copy=True):
+        new_control_points = [p.Rotation(center, axis, angle, True) for p in
+                              self.control_points]
+        new_BSplineCurve3D = BSplineCurve3D(self.degree, new_control_points,
+                                            self.knot_multiplicities,
+                                            self.knots, self.weights,
+                                            self.periodic, self.name)
+        if copy:
+            return new_BSplineCurve3D
+        else:
+            self.control_points = new_control_points
+            self.curve = new_BSplineCurve3D.curve
+            self.points = new_BSplineCurve3D.points
+
+    def Translation(self, offset, copy=True):
+        new_control_points = [p.Translation(offset, True) for p in
+                              self.control_points]
+        new_BSplineCurve3D = BSplineCurve3D(self.degree, new_control_points,
+                                            self.knot_multiplicities,
+                                            self.knots, self.weights,
+                                            self.periodic, self.name)
+        if copy:
+            return new_BSplineCurve3D
+        else:
+            self.control_points = new_control_points
+            self.curve = new_BSplineCurve3D.curve
+            self.points = new_BSplineCurve3D.points
+
+    # Copy paste du LineSegment3D
+    def MPLPlot(self, ax=None):
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+        else:
+            fig = ax.figure
+
+        x = [p.vector[0] for p in self.points]
+        y = [p.vector[1] for p in self.points]
+        z = [p.vector[2] for p in self.points]
+        ax.plot(x, y, z, 'o-k')
+        return ax
+
+    def To2D(self, plane_origin, x1, x2):
+        control_points2D = [p.To2D(plane_origin, x1, x2) for p in
+                            self.control_points]
+        return BSplineCurve2D(self.degree, control_points2D,
+                              self.knot_multiplicities, self.knots,
+                              self.weights, self.periodic, self.name)
+
+    def tessellation_points(self):
+        return self.points
+
+
+class Arc3D(volmdlr.Primitive3D):
+    """
+    An arc is defined by a starting point, an end point and an interior point
+
+    """
+
+    def __init__(self, start, interior, end, name='',
+                 other_vec=None):
+        """
+
+        """
+        self.start = start
+        self.interior = interior
+        self.end = end
+        self.other_vec = other_vec
+        self.setup_arc(start, interior, end, name=name)
+
+    @classmethod
+    def from_angle(cls, start: volmdlr.Point3D, angle: float,
+                   axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D):
+        start_gen = start
+        int_gen = start_gen.Rotation(axis_point, axis, angle / 2, copy=True)
+        end_gen = start_gen.Rotation(axis_point, axis, angle, copy=True)
+        if angle == two_pi:
+            line = Line3D(axis_point, axis_point + axis)
+            center, _ = line.point_projection(start)
+            radius = center.point_distance(start)
+            u = start - center
+            v = axis.Cross(u)
+            return Circle3D(Frame3D(center, u, v, axis), radius)
+        return cls(start_gen, int_gen, end_gen, axis)
+
+    def setup_arc(self, start, interior, end, name=''):
+        u1 = (self.interior - self.start)
+        u2 = (self.interior - self.end)
+        try:
+            u1.Normalize()
+            u2.Normalize()
+        except ZeroDivisionError:
+            raise ValueError(
+                'Start, end and interior points of an arc must be distincts')
+
+        self.normal = u2.Cross(u1)
+        self.normal.Normalize()
+
+        if u1 == u2:
+            u2 = self.normal.Cross(u1)
+            u2.Normalize()
+
+        v1 = self.normal.Cross(u1)  # v1 is normal, equal u2
+        v2 = self.normal.Cross(u2)  # equal -u1
+
+        p11 = 0.5 * (start + interior)  # Mid point of segment s,m
+        p12 = p11 + v1
+        p21 = 0.5 * (end + interior)  # Mid point of segment s,m
+        p22 = p21 + v2
+
+        l1 = Line3D(p11, p12)
+        l2 = Line3D(p21, p22)
+
+        try:
+            c1, _ = l1.MinimumDistancePoints(l2)
+        except ZeroDivisionError:
+            raise ValueError(
+                'Start, end and interior points  of an arc must be distincts')
+
+        self.center = c1
+        self.radius = (self.center - self.start).Norm()
+
+        # Determining angle
+
+        if self.other_vec is None:
+            vec1 = (self.start - self.center)
+        else:
+            vec1 = self.other_vec
+        vec1.Normalize()
+        vec2 = self.normal.Cross(vec1)
+
+        r1 = self.start.To2D(self.center, vec1, vec2)
+        r2 = self.end.To2D(self.center, vec1, vec2)
+        ri = self.interior.To2D(self.center, vec1, vec2)
+
+        angle1 = math.atan2(r1.vector[1], r1.vector[0])
+        anglei = math.atan2(ri.vector[1], ri.vector[0])
+        angle2 = math.atan2(r2.vector[1], r2.vector[0])
+
+        # Going trigo/clock wise from start to interior
+        if anglei < angle1:
+            trigowise_path = (anglei + two_pi) - angle1
+            clockwise_path = angle1 - anglei
+        else:
+            trigowise_path = anglei - angle1
+            clockwise_path = angle1 - anglei + two_pi
+
+        # Going trigo wise from interior to interior
+        if angle2 < anglei:
+            trigowise_path += (angle2 + two_pi) - anglei
+            clockwise_path += anglei - angle2
+        else:
+            trigowise_path += angle2 - anglei
+            clockwise_path += anglei - angle2 + two_pi
+
+        if clockwise_path > trigowise_path:
+            self.is_trigo = True
+            self.angle = trigowise_path
+        else:
+            # Clock wise
+            self.is_trigo = False
+            self.angle = clockwise_path
+
+        if self.angle > math.pi:
+            # Inverting normal to be sure to have a right defined normal for rotation
+            self.normal = -self.normal
+        Primitive3D.__init__(self, name=name)
+
+    @property
+    def points(self):
+        return [self.start, self.interior, self.end]
+
+    def tessellation_points(self, resolution_for_circle=40):
+        number_points_tesselation = resolution_for_circle
+        l = self.Length()
+        tessellation_points_3D = [self.PointAtCurvilinearAbscissa(
+            l * i / (number_points_tesselation)) for i in
+                                  range(number_points_tesselation + 1)]
+        return tessellation_points_3D
+
+    def Length(self):
+        return self.radius * abs(self.angle)
+
+    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
+        return self.start.Rotation(self.center, self.normal,
+                                   curvilinear_abscissa / self.radius,
+                                   copy=True)
+
+    def frenet(self, curvilinear_abscissa):
+        theta = curvilinear_abscissa/self.radius
+        t0 = self.normal.Cross(self.start-self.center)
+        t0.Normalize()
+        tangent = t0.Rotation(self.center, self.normal, theta, copy=True)
+        normal = -self.normal.Cross(tangent)
+        return tangent, normal
+
+    def Rotation(self, rot_center, axis, angle, copy=True):
+        if copy:
+            new_start = self.start.Rotation(rot_center, axis, angle, True)
+            new_interior = self.interior.Rotation(rot_center, axis, angle,
+                                                  True)
+            new_end = self.end.Rotation(rot_center, axis, angle, True)
+            return Arc3D(new_start, new_interior, new_end, name=self.name)
+        else:
+            self.center.Rotation(rot_center, axis, angle, False)
+            self.start.Rotation(rot_center, axis, angle, False)
+            self.interior.Rotation(rot_center, axis, angle, False)
+            self.end.Rotation(rot_center, axis, angle, False)
+            [p.Rotation(rot_center, axis, angle, False) for p in
+             self.primitives]
+
+    def Translation(self, offset, copy=True):
+        if copy:
+            new_start = self.start.Translation(offset, True)
+            new_interior = self.interior.Translation(offset, True)
+            new_end = self.end.Translation(offset, True)
+            return Arc3D(new_start, new_interior, new_end, name=self.name)
+        else:
+            self.center.Translation(offset, False)
+            self.start.Translation(offset, False)
+            self.interior.Translation(offset, False)
+            self.end.Translation(offset, False)
+            [p.Translation(offset, False) for p in self.primitives]
+
+    def MPLPlot(self, ax=None):
+        if ax is None:
+            fig = plt.figure()
+            ax = Axes3D(fig)
+        else:
+            fig = None
+
+        ax.plot([self.interior[0]], [self.interior[1]], [self.interior[2]],
+                color='b')
+        ax.plot([self.start[0]], [self.start[1]], [self.start[2]], c='r')
+        ax.plot([self.end[0]], [self.end[1]], [self.end[2]], c='r')
+        ax.plot([self.interior[0]], [self.interior[1]], [self.interior[2]],
+                c='g')
+        x = []
+        y = []
+        z = []
+        for px, py, pz in self.tessellation_points():
+            x.append(px)
+            y.append(py)
+            z.append(pz)
+
+        ax.plot(x, y, z, 'k')
+        return ax
+
+    def MPLPlot2D(self, center=volmdlr.O3D,
+                  x3d=volmdlr.X3D, y3D=volmdlr.Y3D,
+                  ax=None, color='k'):
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+        else:
+            fig = ax.figure
+
+        # TODO: Enhance this plot
+        l = self.Length()
+        x = []
+        y = []
+        for i in range(30):
+            p = self.PointAtCurvilinearAbscissa(i / (29.) * l)
+            xi, yi = p.PlaneProjection2D(center, X3D, Y3D)
+            x.append(xi)
+            y.append(yi)
+        ax.plot(x, y, color=color)
+
+        return ax
+
+    def FreeCADExport(self, name, ndigits=6):
+        xs, ys, zs = round(1000 * self.start, ndigits).vector
+        xi, yi, zi = round(1000 * self.interior, ndigits).vector
+        xe, ye, ze = round(1000 * self.end, ndigits).vector
+        return '{} = Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(
+            name, xs, ys, zs, xi, yi, zi, xe, ye, ze)
+
+    def copy(self):
+        return Arc3D(self.start.copy(), self.interior.copy(), self.end.copy())
+
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        if side == 'old':
+            new_start = frame.OldCoordinates(self.start.copy())
+            new_interior = frame.OldCoordinates(self.interior.copy())
+            new_end = frame.OldCoordinates(self.end.copy())
+            if copy:
+                return Arc3D(new_start, new_interior, new_end, normal=None,
+                             name=self.name)
+            else:
+                self.start, self.interior, self.end = new_start, new_interior, new_end
+                self.setup_arc(self.start, self.interior, self.end)
+
+        if side == 'new':
+            new_start = frame.NewCoordinates(self.start.copy())
+            new_interior = frame.NewCoordinates(self.interior.copy())
+            new_end = frame.NewCoordinates(self.end.copy())
+            if copy:
+                return Arc3D(new_start, new_interior, new_end, normal=None,
+                             name=self.name)
+            else:
+                self.start, self.interior, self.end = new_start, new_interior, new_end
+                self.setup_arc(self.start, self.interior, self.end)
+
+    def To2D(self, plane_origin, x, y):
+        ps = self.start.To2D(plane_origin, x, y)
+        pi = self.interior.To2D(plane_origin, x, y)
+        pe = self.end.To2D(plane_origin, x, y)
+        return Arc2D(ps, pi, pe, name=self.name)
+
+    def minimum_distance_points_arc(self, other_arc):
+
+        u1 = self.start - self.center
+        u1.Normalize()
+        u2 = self.normal.Cross(u1)
+
+        w = other_arc.center - self.center
+
+        u3 = other_arc.start - other_arc.center
+        u3.Normalize()
+        u4 = other_arc.normal.Cross(u3)
+
+        r1, r2 = self.radius, other_arc.radius
+
+        a, b, c, d = u1.Dot(u1), u1.Dot(u2), u1.Dot(u3), u1.Dot(u4)
+        e, f, g = u2.Dot(u2), u2.Dot(u3), u2.Dot(u4)
+        h, i = u3.Dot(u3), u3.Dot(u4)
+        j = u4.Dot(u4)
+        k, l, m, n, o = w.Dot(u1), w.Dot(u2), w.Dot(u3), w.Dot(u4), w.Dot(w)
+
+        def distance_squared(x):
+            return (a * ((math.cos(x[0])) ** 2) * r1 ** 2 + e * (
+                        (math.sin(x[0])) ** 2) * r1 ** 2
+                    + o + h * ((math.cos(x[1])) ** 2) * r2 ** 2 + j * (
+                                (math.sin(x[1])) ** 2) * r2 ** 2
+                    + b * math.sin(2 * x[0]) * r1 ** 2 - 2 * r1 * math.cos(
+                        x[0]) * k
+                    - 2 * r1 * r2 * math.cos(x[0]) * math.cos(x[1]) * c
+                    - 2 * r1 * r2 * math.cos(x[0]) * math.sin(
+                        x[1]) * d - 2 * r1 * math.sin(x[0]) * l
+                    - 2 * r1 * r2 * math.sin(x[0]) * math.cos(x[1]) * f
+                    - 2 * r1 * r2 * math.sin(x[0]) * math.sin(
+                        x[1]) * g + 2 * r2 * math.cos(x[1]) * m
+                    + 2 * r2 * math.sin(x[1]) * n + i * math.sin(
+                        2 * x[1]) * r2 ** 2)
+
+        x01 = npy.array([self.angle / 2, other_arc.angle / 2])
+
+        res1 = scp.optimize.least_squares(distance_squared, x01,
+                                          bounds=[(0, 0), (
+                                              self.angle, other_arc.angle)])
+
+        p1 = self.PointAtCurvilinearAbscissa(res1.x[0] * r1)
+        p2 = other_arc.PointAtCurvilinearAbscissa(res1.x[1] * r2)
+
+        return p1, p2
+
+    def minimum_distance_points_line(self, other_line):
+
+        u = other_line.DirectionVector()
+        k = self.start - self.center
+        k.Normalize()
+        w = self.center - other_line.points[0]
+        v = self.normal.Cross(k)
+
+        r = self.radius
+
+        a = u.Dot(u)
+        b = u.Dot(v)
+        c = u.Dot(k)
+        d = v.Dot(v)
+        e = v.Dot(k)
+        f = k.Dot(k)
+        g = w.Dot(u)
+        h = w.Dot(v)
+        i = w.Dot(k)
+        j = w.Dot(w)
+
+        # x = (s, theta)
+        def distance_squared(x):
+            return (a * x[0] ** 2 + j + d * (
+                        (math.sin(x[1])) ** 2) * r ** 2 + f * (
+                                (math.cos(x[1])) ** 2) * r ** 2
+                    - 2 * x[0] * g - 2 * x[0] * r * math.sin(x[1]) * b - 2 * x[
+                        0] * r * math.cos(x[1]) * c
+                    + 2 * r * math.sin(x[1]) * h + 2 * r * math.cos(x[1]) * i
+                    + math.sin(2 * x[1]) * e * r ** 2)
+
+        x01 = npy.array([0.5, self.angle / 2])
+        x02 = npy.array([0.5, 0])
+        x03 = npy.array([0.5, self.angle])
+
+        res1 = scp.optimize.least_squares(distance_squared, x01,
+                                          bounds=[(0, 0), (1, self.angle)])
+        res2 = scp.optimize.least_squares(distance_squared, x02,
+                                          bounds=[(0, 0), (1, self.angle)])
+        res3 = scp.optimize.least_squares(distance_squared, x03,
+                                          bounds=[(0, 0), (1, self.angle)])
+
+        p1 = other_line.PointAtCurvilinearAbscissa(
+            res1.x[0] * other_line.Length())
+        p2 = self.PointAtCurvilinearAbscissa(res1.x[1] * r)
+
+        res = [res2, res3]
+        for couple in res:
+            ptest1 = other_line.PointAtCurvilinearAbscissa(
+                couple.x[0] * other_line.Length())
+            ptest2 = self.PointAtCurvilinearAbscissa(couple.x[1] * r)
+            dtest = ptest1.point_distance(ptest2)
+            if dtest < d:
+                p1, p2 = ptest1, ptest2
+
+        return p1, p2
+
+    def minimum_distance(self, element, return_points=False):
+        if element.__class__ is Arc3D or element.__class__ is Circle3D:
+            p1, p2 = self.minimum_distance_points_arc(element)
+            if return_points:
+                return p1.point_distance(p2), p1, p2
+            else:
+                return p1.point_distance(p2)
+
+        elif element.__class__ is LineSegment3D:
+            pt1, pt2 = self.minimum_distance_points_line(element)
+            if return_points:
+                return pt1.point_distance(pt2), pt1, pt2
+            else:
+                return pt1.point_distance(pt2)
+        else:
+            return NotImplementedError
+
+    def extrusion(self, extrusion_vector):
+        if self.normal.is_colinear_to(extrusion_vector):
+            u = self.start - self.center
+            u.Normalize()
+            w = extrusion_vector.copy()
+            w.Normalize()
+            v = w.Cross(u)
+            arc2d = self.To2D(self.center, u, v)
+            cylinder = volmdlr.surfaces.CylindricalSurface3D(Frame3D(self.center,
+                                                    u,
+                                                    v,
+                                                    w),
+                                            self.radius
+                                            )
+            return cylinder.rectangular_cut(arc2d.angle1,
+                                            arc2d.angle2,
+                                            0, extrusion_vector.Norm())
+        else:
+            raise NotImplementedError('Elliptic faces not handled: dot={}'.format(
+                self.normal.Dot(extrusion_vector)
+            ))
+
+
+    def revolution(self, axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D,
+                   angle: float):
+        line3d = Line3D(axis_point, axis_point + axis)
+        tore_center, _ = line3d.point_projection(self.center)
+        u =  self.center - tore_center
+        u.Normalize()
+        v = axis.Cross(u)
+        if not math.isclose(self.normal.Dot(u), 0., abs_tol=1e-9):
+            raise NotImplementedError(
+                'Outside of plane revolution not supported')
+
+        R = tore_center.point_distance(self.center)
+        surface = surfaces3d.ToroidalSurface3D(Frame3D(tore_center, u, v, axis), R,
+                                    self.radius)
+        arc2d = self.To2D(tore_center, u, axis)
+        return surface.rectangular_cut(0, angle,
+                                       arc2d.angle1, arc2d.angle2)
+
+
+
+class ArcEllipse3D(volmdlr.Primitive3D):
+    """
+    An arc is defined by a starting point, an end point and an interior point
+
+    """
+
+    def __init__(self, start, interior, end, center, major_dir, normal=None,
+                 name='', extra=None):
+        # Extra is an additionnal point if start=end because you need 3 points on the arcellipse to define it
+        self.start = start
+        self.interior = interior
+        self.end = end
+        self.center = center
+        major_dir.Normalize()
+        self.major_dir = major_dir  # Vector for Gradius
+        self.extra = extra
+
+        u1 = (self.interior - self.start)
+        u2 = (self.interior - self.end)
+        u1.Normalize()
+        u2.Normalize()
+
+        if u1 == u2:
+            u2 = (self.interior - self.extra)
+            u2.Normalize()
+
+        if normal is None:
+            n = u2.Cross(u1)
+            n.Normalize()
+            self.normal = n
+        else:
+            n = normal
+            n.Normalize()
+            self.normal = normal
+
+        self.minor_dir = self.normal.Cross(self.major_dir)
+
+        frame = Frame3D(self.center, self.major_dir, self.minor_dir,
+                        self.normal)
+        start_new, end_new = frame.NewCoordinates(
+            self.start), frame.NewCoordinates(self.end)
+        interior_new, center_new = frame.NewCoordinates(
+            self.interior), frame.NewCoordinates(self.center)
+
+        #### from : https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
+        def theta_A_B(s, i, e,
+                      c):  # theta=angle d'inclinaison ellipse par rapport à horizontal(sens horaire),A=demi grd axe, B=demi petit axe
+            xs, ys, xi, yi, xe, ye = s[0] - c[0], s[1] - c[1], i[0] - c[0], i[
+                1] - c[1], e[0] - c[0], e[1] - c[1]
+            A = npy.array(([xs ** 2, ys ** 2, 2 * xs * ys],
+                           [xi ** 2, yi ** 2, 2 * xi * yi],
+                           [xe ** 2, ye ** 2, 2 * xe * ye]))
+            invA = npy.linalg.inv(A)
+            One = npy.array(([1],
+                             [1],
+                             [1]))
+            C = npy.dot(invA, One)  # matrice colonne de taille 3
+            theta = 0.5 * math.atan(2 * C[2] / (C[1] - C[0]))
+            c1 = C[0] + C[1]
+            c2 = (C[1] - C[0]) / math.cos(2 * theta)
+            gdaxe = math.sqrt((2 / (c1 - c2)))
+            ptax = math.sqrt((2 / (c1 + c2)))
+            return theta, gdaxe, ptax
+
+        if start == end:
+            extra_new = frame.NewCoordinates(self.extra)
+            theta, A, B = theta_A_B(start_new, extra_new, interior_new,
+                                    center_new)
+        else:
+            theta, A, B = theta_A_B(start_new, interior_new, end_new,
+                                    center_new)
+
+        self.Gradius = A
+        self.Sradius = B
+        self.theta = theta
+
+        # Angle pour start
+        u1, u2 = start_new.vector[0] / self.Gradius, start_new.vector[
+            1] / self.Sradius
+        angle1 = sin_cos_angle(u1, u2)
+        # Angle pour end
+        u3, u4 = end_new.vector[0] / self.Gradius, end_new.vector[
+            1] / self.Sradius
+        angle2 = sin_cos_angle(u3, u4)
+        # Angle pour interior
+        u5, u6 = interior_new.vector[0] / self.Gradius, interior_new.vector[
+            1] / self.Sradius
+        anglei = sin_cos_angle(u5, u6)
+
+        # Going trigo/clock wise from start to interior
+        if anglei < angle1:
+            trigowise_path = (anglei + two_pi) - angle1
+            clockwise_path = angle1 - anglei
+        else:
+            trigowise_path = anglei - angle1
+            clockwise_path = angle1 - anglei + two_pi
+
+        # Going trigo wise from interior to interior
+        if angle2 < anglei:
+            trigowise_path += (angle2 + two_pi) - anglei
+            clockwise_path += anglei - angle2
+        else:
+            trigowise_path += angle2 - anglei
+            clockwise_path += anglei - angle2 + two_pi
+
+        if clockwise_path > trigowise_path:
+            self.is_trigo = True
+            self.angle = trigowise_path
+        else:
+            # Clock wise
+            self.is_trigo = False
+            self.angle = clockwise_path
+
+        if self.start == self.end:
+            self.angle = two_pi
+
+        if self.is_trigo:
+            self.offset_angle = angle1
+        else:
+            self.offset_angle = angle2
+
+        Primitive3D.__init__(self, basis_primitives=self.tessellation_points(),
+                             name=name)
+
+    def _get_points(self):
+        return self.tessellation_points()
+
+    points = property(_get_points)
+
+    def tessellation_points(self, resolution_for_ellipse=40):
+        number_points_tesselation = math.ceil(
+            resolution_for_ellipse * abs(0.5 * self.angle / math.pi))
+
+        plane3d = volmdlr.faces.Plane3D(self.center, self.major_dir, self.minor_dir,
+                          self.normal)
+        frame3d = Frame3D(self.center, plane3d.vectors[0], plane3d.vectors[1],
+                          plane3d.normal)
+
+        tessellation_points_3D = [Point3D((self.Gradius * math.cos(
+            self.offset_angle + self.angle * i / (number_points_tesselation)),
+                                           self.Sradius * math.sin(
+                                               self.offset_angle + self.angle * i / (
+                                                   number_points_tesselation)),
+                                           0)) for i in
+                                  range(number_points_tesselation + 1)]
+
+        global_points = []
+        for pt in tessellation_points_3D:
+            global_points.append(frame3d.OldCoordinates(pt))
+
+        return global_points
+
+    def To2D(self, plane_origin, x, y):
+        ps = self.start.To2D(plane_origin, x, y)
+        pi = self.interior.To2D(plane_origin, x, y)
+        pe = self.end.To2D(plane_origin, x, y)
+        center = self.center.To2D(plane_origin, x, y)
+
+        if self.extra is None:
+            pextra = None
+        else:
+            pextra = self.extra.To2D(plane_origin, x, y)
+
+        maj_dir2d = self.major_dir.To2D(plane_origin, x, y)
+        maj_dir2d.Normalize()
+        return ArcEllipse2D(ps, pi, pe, center, maj_dir2d, name=self.name,
+                            extra=pextra)
+
+    def Length(self):
+        return self.angle * math.sqrt(
+            (self.Gradius ** 2 + self.Sradius ** 2) / 2)
+
+    def MPLPlot(self, ax=None):
+        if ax is None:
+            fig = plt.figure()
+            ax = Axes3D(fig)
+        else:
+            fig = None
+
+        ax.plot([self.interior[0]], [self.interior[1]], [self.interior[2]],
+                color='b')
+        ax.plot([self.start[0]], [self.start[1]], [self.start[2]], c='r')
+        ax.plot([self.end[0]], [self.end[1]], [self.end[2]], c='r')
+        ax.plot([self.interior[0]], [self.interior[1]], [self.interior[2]],
+                c='g')
+        x = []
+        y = []
+        z = []
+        for px, py, pz in self.tessellation_points():
+            x.append(px)
+            y.append(py)
+            z.append(pz)
+
+        ax.plot(x, y, z, 'k')
+        return ax
+
+    def MPLPlot2D(self, x3d, y3D, ax, color='k'):
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+        else:
+            fig = ax.figure
+
+        # TODO: Enhance this plot
+        l = self.Length()
+        x = []
+        y = []
+        for i in range(30):
+            p = self.PointAtCurvilinearAbscissa(i / (29.) * l)
+            xi, yi = p.PlaneProjection2D(X3D, Y3D)
+            x.append(xi)
+            y.append(yi)
+        ax.plot(x, y, color=color)
+
+        return ax
+
+    def FreeCADExport(self, name, ndigits=6):
+        xs, ys, zs = round(1000 * self.start, ndigits).vector
+        xi, yi, zi = round(1000 * self.interior, ndigits).vector
+        xe, ye, ze = round(1000 * self.end, ndigits).vector
+        return '{} = Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(
+            name, xs, ys, zs, xi, yi, zi, xe, ye, ze)
+
+
 class OpenedRoundedLineSegments3D(volmdlr.Wire3D, RoundedLineSegments):
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
@@ -1047,3 +2061,333 @@ class Sphere(RevolvedProfile):
                           self.radius)
         else:
             self.center.frame_mapping(frame, side, copy)
+
+
+class Circle3D(volmdlr.Contour3D):
+    _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['name']
+    _generic_eq = True
+
+    def __init__(self, frame: volmdlr.Frame3D, radius: float,
+                 name: str = ''):
+        """
+        frame.u, frame.v define the plane, frame.w the normal
+        """
+        self.radius = radius
+        self.frame = frame
+        self.angle = two_pi
+        Contour3D.__init__(self, [self], name=name)
+
+    @property
+    def center(self):
+        return self.frame.origin
+
+    @property
+    def normal(self):
+        return self.frame.w
+
+    def __hash__(self):
+        return hash(self.frame.origin)
+
+    def __eq__(self, other_circle):
+        return self.frame.origin == other_circle.frame.origin \
+               and self.frame.w.is_colinear(other_circle.frame.w) \
+               and math.isclose(self.radius,
+                                other_circle.radius, abs_tol=1e-06)
+
+    def tessellation_points(self, resolution=20):
+
+        tessellation_points_3D = [self.center
+                                  + self.radius * math.cos(
+            teta) * self.surface.frame.u
+                                  + self.radius * math.sin(
+            teta) * self.surface.frame.v \
+                                  for teta in npy.linspace(0, two_pi,
+                                                           resolution + 1)][
+                                 :-1]
+        return tessellation_points_3D
+
+    def Length(self):
+        return two_pi * self.radius
+
+    def FreeCADExport(self, name, ndigits=3):
+        xc, yc, zc = round(1000 * self.center, ndigits)
+        xn, yn, zn = round(self.normal, ndigits)
+        return '{} = Part.Circle(fc.Vector({},{},{}),fc.Vector({},{},{}),{})\n'.format(
+            name, xc, yc, zc, xn, yn, zn, 1000 * self.radius)
+
+    def Rotation(self, rot_center, axis, angle, copy=True):
+        new_center = self.center.Rotation(rot_center, axis, angle, True)
+        new_normal = self.normal.Rotation(rot_center, axis, angle, True)
+        if copy:
+            return Circle3D(new_center, self.radius, new_normal, self.name)
+        else:
+            self.center = new_center
+            self.normal = new_normal
+
+    def Translation(self, offset, copy=True):
+        new_frame = self.center.Translation(offset, True)
+        if copy:
+            return Circle3D(new_frame, self.radius, self.frame,
+                            self.name)
+        else:
+            self.frame = new_frame
+
+    def MPLPlot(self, ax=None, color='k'):
+        if ax is None:
+            fig = plt.figure()
+            ax = Axes3D(fig)
+        else:
+            fig = None
+
+        x = []
+        y = []
+        z = []
+        for px, py, pz in self.tessellation_points():
+            x.append(px)
+            y.append(py)
+            z.append(pz)
+        x.append(x[0])
+        y.append(y[0])
+        z.append(z[0])
+        ax.plot(x, y, z, color)
+        return ax
+
+    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
+        """
+        start point is at intersection of frame.u axis
+        """
+        start = self.frame.origin + self.radius * self.frame.u
+        return start.Rotation(self.frame.origin, self.frame.w,
+                              curvilinear_abscissa / self.radius,
+                              copy=True)
+
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        center = object_dict[arguments[1]].origin
+        radius = float(arguments[2]) / 1000
+        if object_dict[arguments[1]].u is not None:
+            normal = object_dict[arguments[1]].u
+            other_vec = object_dict[arguments[1]].v
+            if other_vec is not None:
+                other_vec.Normalize()
+        else:
+            normal = object_dict[arguments[1]].v  ### ou w
+            other_vec = None
+        normal.Normalize()
+
+        return cls(center, radius, normal, arguments[0][1:-1], other_vec)
+
+    def _bounding_box(self):
+        """
+        """
+        u = self.normal.deterministic_unit_normal_vector()
+        v = self.normal.Cross(u)
+        points = [self.frame.origin + self.radius * v \
+                  for v in [self.frame.u,
+                            -self.frame.u,
+                            self.frame.v,
+                            -self.frame.v]]
+        return BoundingBox.from_points(points)
+
+    def to_2d(self, plane3d, name=None):
+        return Circle2D(plane3d.point3d_to_2d(self.center), self.radius)
+
+    @classmethod
+    def from_3_points(cls, point1, point2, point3):
+        u1 = (point2 - point1)
+        u2 = (point2 - point3)
+        try:
+            u1.Normalize()
+            u2.Normalize()
+        except ZeroDivisionError:
+            raise ValueError(
+                'the 3 points must be distincts')
+
+        normal = u2.Cross(u1)
+        normal.Normalize()
+
+        if u1 == u2:
+            u2 = normal.Cross(u1)
+            u2.Normalize()
+
+        v1 = normal.Cross(u1)  # v1 is normal, equal u2
+        v2 = normal.Cross(u2)  # equal -u1
+
+        p11 = 0.5 * (point1 + point2)  # Mid point of segment s,m
+        p21 = 0.5 * (point2 + point3)  # Mid point of segment s,m
+
+        l1 = Line3D(p11, p11 + v1)
+        l2 = Line3D(p21, p21 + v2)
+
+        try:
+            center, _ = l1.MinimumDistancePoints(l2)
+        except ZeroDivisionError:
+            raise ValueError(
+                'Start, end and interior points  of an arc must be distincts')
+
+        radius = (center - point1).Norm()
+        return cls(frame=Frame3D(center, u1, normal.Cross(u1), normal),
+                   radius=radius)
+
+    def extrusion(self, extrusion_vector):
+        if self.normal.is_colinear_to(extrusion_vector):
+            u = self.normal.deterministic_unit_normal_vector()
+            v = self.normal.Cross(u)
+            cylinder = volmdlr.surfaces.CylindricalSurface3D(Frame3D(self.center,
+                                                    u,
+                                                    v,
+                                                    self.normal),
+                                            self.radius
+                                            )
+            return cylinder.rectangular_cut(0, two_pi,
+                                            0, extrusion_vector.Norm())
+        else:
+            raise NotImplementedError('Elliptic faces not handled: dot={}'.format(
+                self.normal.Dot(extrusion_vector)
+            ))
+
+    def revolution(self, axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D,
+                   angle: float):
+        line3d = Line3D(axis_point, axis_point + axis)
+        tore_center, _ = line3d.point_projection(self.center)
+        u =  self.center - tore_center
+        u.Normalize()
+        v = axis.Cross(u)
+        if not math.isclose(self.normal.Dot(u), 0., abs_tol=1e-9):
+            raise NotImplementedError(
+                'Outside of plane revolution not supported')
+
+        R = tore_center.point_distance(self.center)
+        surface = volmdlr.surfaces.ToroidalSurface3D(volmdlr.Frame3D(tore_center, u, v, axis),
+                                    R, self.radius)
+        return surface.rectangular_cut(0, angle, 0, volmdlr.two_pi)
+
+
+class Ellipse3D(volmdlr.Contour3D):
+    """
+    :param major_axis: Largest radius of the ellipse
+    :type major_axis: float
+    :param minor_axis: Smallest radius of the ellipse
+    :type minor_axis: float
+    :param center: Ellipse's center
+    :type center: Point3D
+    :param normal: Ellipse's normal
+    :type normal: Vector3D
+    :param major_dir: Direction of the largest radius/major_axis
+    :type major_dir: Vector3D
+    """
+
+    def __init__(self, major_axis, minor_axis, center, normal, major_dir,
+                 name=''):
+
+        self.major_axis = major_axis
+        self.minor_axis = minor_axis
+        self.center = center
+        normal.Normalize()
+        self.normal = normal
+        major_dir.Normalize()
+        self.major_dir = major_dir
+        Contour3D.__init__(self, [self], name=name)
+
+    def tessellation_points(self, resolution=20):
+        # plane = Plane3D.from_normal(self.center, self.normal)
+        tessellation_points_3D = [self.center + self.major_axis * math.cos(
+            teta) * self.major_dir + self.minor_axis * math.sin(
+            teta) * self.major_dir.Cross(self.normal) \
+                                  for teta in npy.linspace(0, two_pi,
+                                                           resolution + 1)][
+                                 :-1]
+        return tessellation_points_3D
+
+    def FreeCADExport(self, ip, ndigits=3):
+        name = 'primitive{}'.format(ip)
+        xc, yc, zc = npy.round(1000 * self.center.vector, ndigits)
+        major_vector = self.center + self.major_axis / 2 * self.major_dir
+        xmaj, ymaj, zmaj = npy.round(1000 * major_vector.vector, ndigits)
+        minor_vector = self.center + self.minor_axis / 2 * self.normal.Cross(
+            self.major_dir)
+        xmin, ymin, zmin = npy.round(1000 * minor_vector.vector, ndigits)
+        return '{} = Part.Ellipse(fc.Vector({},{},{}), fc.Vector({},{},{}), fc.Vector({},{},{}))\n'.format(
+            name, xmaj, ymaj, zmaj, xmin, ymin, zmin, xc, yc, zc)
+
+    def Rotation(self, rot_center, axis, angle, copy=True):
+        new_center = self.center.Rotation(rot_center, axis, angle, True)
+        new_normal = self.normal.Rotation(rot_center, axis, angle, True)
+        new_major_dir = self.major_dir.Rotation(rot_center, axis, angle, True)
+        if copy:
+            return Ellipse3D(self.major_axis, self.minor_axis, new_center,
+                             new_normal, new_major_dir, self.name)
+        else:
+            self.center = new_center
+            self.normal = new_normal
+            self.major_dir = new_major_dir
+
+    def Translation(self, offset, copy=True):
+        new_center = self.center.Translation(offset, True)
+        new_normal = self.normal.Translation(offset, True)
+        new_major_dir = self.major_dir.Translation(offset, True)
+        if copy:
+            return Ellipse3D(self.major_axis, self.minor_axis, new_center,
+                             new_normal, new_major_dir, self.name)
+        else:
+            self.center = new_center
+            self.normal = new_normal
+            self.major_dir = new_major_dir
+
+    def MPLPlot(self, ax=None, color='k'):
+        if ax is None:
+            fig = plt.figure()
+            ax = Axes3D(fig)
+        else:
+            fig = None
+
+        x = []
+        y = []
+        z = []
+        for px, py, pz in self.tessellation_points():
+            x.append(px)
+            y.append(py)
+            z.append(pz)
+        x.append(x[0])
+        y.append(y[0])
+        z.append(z[0])
+        ax.plot(x, y, z, color)
+        return ax
+
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        center = object_dict[arguments[1]].origin
+        normal = object_dict[arguments[1]].u  # ancien w
+        major_dir = object_dict[arguments[1]].v  # ancien u
+        major_axis = float(arguments[2]) / 1000
+        minor_axis = float(arguments[3]) / 1000
+        return cls(major_axis, minor_axis, center, normal, major_dir,
+                   arguments[0][1:-1])
+
+
+
+class Measure3D(Line3D):
+    def __init__(self, point1, point2, color=(1, 0, 0)):
+        self.points = [point1, point2]
+        self.color = color
+        self.distance = Vector3D(self.points[0] - self.points[1]).Norm()
+        self.bounding_box = self._bounding_box()
+
+    # !!! no eq defined!
+    def __hash__(self):
+        return sum([hash(p) for p in self.points])
+
+    def babylon_script(self):
+        s = 'var myPoints = [];\n'
+        s += 'var point1 = new BABYLON.Vector3({},{},{});\n'.format(
+            self.points[0][0], self.points[0][1], self.points[0][2])
+        s += 'myPoints.push(point1);\n'
+        s += 'var point2 = new BABYLON.Vector3({},{},{});\n'.format(
+            self.points[1][0], self.points[1][1], self.points[1][2])
+        s += 'myPoints.push(point2);\n'
+        s += 'var line = BABYLON.MeshBuilder.CreateLines("lines", {points: myPoints}, scene);\n'
+        s += 'line.color = new BABYLON.Color3({}, {}, {});\n'.format(
+            self.color[0], self.color[1], self.color[2])
+        return s
