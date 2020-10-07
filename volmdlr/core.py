@@ -2246,7 +2246,7 @@ class Polygon2D(Contour2D):
 
         return False, None, None
     def repair(self):
-        points=self.points
+        points=self.points[:]
         if self.SelfIntersect()[0] is True :
               line1= self.SelfIntersect()[1]
               line2=self.SelfIntersect()[2]
@@ -2255,19 +2255,17 @@ class Polygon2D(Contour2D):
                       bad_line=LineSegment2D(point1,point2)
                       if bad_line!=line1 and bad_line!=line2:
                           if bad_line in self.line_segments :
-                             points.remove(line1.points[0])
-                             points.remove(line1.points[1])
-                             
-                             # points.remove(point2)
-                             # points.append(line1.line_intersection(line2))
+                             points.remove(point1)
+                             points.remove(point2)
+                             points.append(line1.line_intersection(line2))
                          
               new_polygon=Polygon2D(points)
               # new_polygon.MPLPlot()
               new_polygon.repair()
         else : 
-              return self
+              return Polygon2D(points)
        
-        return self
+        return Polygon2D(points)
              
        
     def  is_intersecting(self,line:LineSegment2D):
@@ -2303,6 +2301,8 @@ class Polygon2D(Contour2D):
             new_points.append(new_point)
         reduced_polygon=Polygon2D(new_points)
         return reduced_polygon
+   
+        
     def Offset(self, offset):
         nb = len(self.points)
         vectors = []

@@ -43,7 +43,7 @@ rotor_internal=[rotor_internal_contour]
 
 # all_triangle_elements=rotor.mesh()
 rotor=vmmesh.Mesher(rotor_external,[],40)
-ax=rotor_external_contour.MPLPlot()
+# ax=rotor_external_contour.MPLPlot()
 rotor.mesh(6)
 # rotor.complete_ear(rotor_magnet_contours[0].polygon,ax)
 
@@ -53,13 +53,16 @@ rotor.mesh(6)
 # for seg in rotor_external_contour.polygon.line_segments:
     
 #     print(seg.Length())
-ax=rotor_magnet_contours[0].MPLPlot()
+ax=rotor_external_contour.MPLPlot()
 # reduced_polygon=rotor_external_contour.polygon.reduction(0.5)
 # reduced_polygon.MPLPlot(ax=ax)
 polygon_offsets=[]
 for k in range(4):
-    offset=rotor_magnet_contours[0].polygon.reduction(0.5*k)
-    offset.MPLPlot(ax=ax)
+    offset=rotor_external_contour.polygon.Offset(-k*0.1)
+    if offset.SelfIntersect()[0] is True:
+       new_offset=offset.repair()
+       new_offset.MPLPlot(ax=ax)
+    
     
 #     new_offset=offset.repair()
     # new_offset.MPLPlot(ax=ax)
