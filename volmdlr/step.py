@@ -1,9 +1,65 @@
 
-
+import networkx as nx
 import volmdlr
 import volmdlr.primitives3D
 import volmdlr.surfaces3d
 
+
+def step_split_arguments(function_arg):
+    """
+    Split the arguments of a function that doesn't start with '(' but end with ')'
+    ex: IN: '#123,#124,#125)'
+       OUT: ['#123', '#124', '#125']
+    """
+    if len(function_arg) > 0 and function_arg[-1] != ')':
+        function_arg += ')'
+    arguments = []
+    argument = ""
+    parenthesis = 1
+    for char in function_arg:
+        if char == "(":
+            parenthesis += 1
+
+        if char != "," or parenthesis > 1:
+            argument += char
+        else:
+            arguments.append(argument)
+            argument = ""
+
+        if char == ")":
+            parenthesis -= 1
+            if parenthesis == 0:
+                arguments.append(argument[:-1])
+                argument = ""
+                break
+    return arguments
+
+class StepFunction:
+    def __init__(self, function_id, function_name, function_arg):
+        self.id = function_id
+        self.name = function_name
+        self.arg = function_arg
+
+        if self.name == "":
+            if self.arg[1][0] == 'B_SPLINE_SURFACE':
+                self.simplify('B_SPLINE_SURFACE')
+            if self.arg[1][0] == 'B_SPLINE_CURVE':
+                self.simplify('B_SPLINE_CURVE')
+
+    def simplify(self, new_name):
+        # ITERATE ON SUBFUNCTIONS
+        args = [subfun[1] for (i, subfun) in enumerate(self.arg) if
+                (len(subfun[1]) != 0 or i == 0)]
+        arguments = []
+        for arg in args:
+            if arg == []:
+                arguments.append("''")
+            else:
+                arguments.extend(arg)
+        arguments.pop()  # DELETE REPRESENTATION_ITEM('')
+
+        self.name = new_name
+        self.arg = arguments
 
 class Step:
     def __init__(self, stepfile):
@@ -60,7 +116,7 @@ class Step:
 
             # FUNCTION ARGUMENTS
             function_arg = function_name_arg[1]
-            arguments = volmdlr.step_split_arguments(function_arg)
+            arguments = step_split_arguments(function_arg)
             if function_name == "":
                 arguments = self.step_subfunctions(arguments)
 
@@ -354,31 +410,31 @@ STEP_TO_VOLMDLR = {
     'COMPOSITE_CURVE_ON_SURFACE': volmdlr.Wire3D,  # TOPOLOGICAL WIRE
     'BOUNDARY_CURVE': volmdlr.Wire3D,  # TOPOLOGICAL WIRE
 
-    'PLANE': volmdlr.surfaces.Plane3D,
-    'CYLINDRICAL_SURFACE': volmdlr.surfaces.CylindricalSurface3D,
-    'CONICAL_SURFACE': volmdlr.surfaces.ConicalSurface3D,
-    'SPHERICAL_SURFACE': volmdlr.surfaces.SphericalSurface3D,
-    'TOROIDAL_SURFACE': volmdlr.surfaces.ToroidalSurface3D,
+    'PLANE': volmdlr.surfaces3d.Plane3D,
+    'CYLINDRICAL_SURFACE': volmdlr.surfaces3d.CylindricalSurface3D,
+    'CONICAL_SURFACE': volmdlr.surfaces3d.ConicalSurface3D,
+    'SPHERICAL_SURFACE': volmdlr.surfaces3d.SphericalSurface3D,
+    'TOROIDAL_SURFACE': volmdlr.surfaces3d.ToroidalSurface3D,
     'DEGENERATE_TOROIDAL_SURFACE': None,
-    'B_SPLINE_SURFACE_WITH_KNOTS': volmdlr.surfaces.BSplineSurface3D,
-    'B_SPLINE_SURFACE': volmdlr.surfaces.BSplineSurface3D,
-    'BEZIER_SURFACE': volmdlr.surfaces.BSplineSurface3D,
+    'B_SPLINE_SURFACE_WITH_KNOTS': volmdlr.surfaces3d.BSplineSurface3D,
+    'B_SPLINE_SURFACE': volmdlr.surfaces3d.BSplineSurface3D,
+    'BEZIER_SURFACE': volmdlr.surfaces3d.BSplineSurface3D,
     'OFFSET_SURFACE': None,
     'SURFACE_REPLICA': None,
-    'RATIONAL_B_SPLINE_SURFACE': volmdlr.surfaces.BSplineSurface3D,
+    'RATIONAL_B_SPLINE_SURFACE': volmdlr.surfaces3d.BSplineSurface3D,
     'RECTANGULAR_TRIMMED_SURFACE': None,
     'SURFACE_OF_LINEAR_EXTRUSION': volmdlr.primitives3D.BSplineExtrusion,
     # CAN BE A BSplineSurface3D
     'SURFACE_OF_REVOLUTION': None,
-    'UNIFORM_SURFACE': volmdlr.surfaces.BSplineSurface3D,
-    'QUASI_UNIFORM_SURFACE': volmdlr.surfaces.BSplineSurface3D,
-    'RECTANGULAR_COMPOSITE_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACES
-    'CURVE_BOUNDED_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACE
+    'UNIFORM_SURFACE': volmdlr.surfaces3d.BSplineSurface3D,
+    'QUASI_UNIFORM_SURFACE': volmdlr.surfaces3d.BSplineSurface3D,
+    'RECTANGULAR_COMPOSITE_SURFACE': volmdlr.surfaces3d.PlaneFace3D,  # TOPOLOGICAL FACES
+    'CURVE_BOUNDED_SURFACE': volmdlr.surfaces3d.PlaneFace3D,  # TOPOLOGICAL FACE
 
     # TOPOLOGICAL ENTITIES
     'VERTEX_POINT': None,
 
-    'EDGE_CURVE': Edge,  # LineSegment3D, # TOPOLOGICAL EDGE
+    'EDGE_CURVE': volmdlr.Edge,  # LineSegment3D, # TOPOLOGICAL EDGE
     'ORIENTED_EDGE': None,  # TOPOLOGICAL EDGE
     # The one above can influence the direction with their last argument
     # TODO : maybe take them into consideration
@@ -391,8 +447,8 @@ STEP_TO_VOLMDLR = {
     'POLY_LOOP': volmdlr.Contour3D,  # TOPOLOGICAL WIRE
     'VERTEX_LOOP': None,  # TOPOLOGICAL WIRE
 
-    'ADVANCED_FACE': volmdlr.faces.Face3D,
-    'FACE_SURFACE': volmdlr.faces.Face3D,
+    'ADVANCED_FACE': volmdlr.surfaces3d.Face3D,
+    'FACE_SURFACE': volmdlr.surfaces3d.Face3D,
 
     'CLOSED_SHELL': volmdlr.Shell3D,
     'OPEN_SHELL': volmdlr.Shell3D,

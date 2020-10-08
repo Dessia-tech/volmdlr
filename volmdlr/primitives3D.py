@@ -10,14 +10,16 @@ import numpy as npy
 npy.seterr(divide='raise')
 
 import volmdlr
-from volmdlr.primitives import RoundedLineSegments
+import volmdlr.primitives
+import volmdlr.surfaces3d
 from typing import Tuple
+
 
 
 import matplotlib.pyplot as plt
 
 
-class Line3D(volmdlr.Line):
+class Line3D(volmdlr.primitives.Line):
     _non_eq_attributes = ['name', 'basis_primitives', 'bounding_box']
 
     """
@@ -26,7 +28,7 @@ class Line3D(volmdlr.Line):
 
     def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
                  name: str=''):
-        Line.__init__(self, point1, point2, name=name)
+        volmdlr.primitives.Line.__init__(self, point1, point2, name=name)
         self.bounding_box = self._bounding_box()
 
 
@@ -40,7 +42,7 @@ class Line3D(volmdlr.Line):
         zmin = min([pt[2] for pt in points])
         zmax = max([pt[2] for pt in points])
 
-        return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+        return volmdlr.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
         return self.points[0] + (
@@ -212,6 +214,438 @@ class Line3D(volmdlr.Line):
                                 z1 + (z2 - z1) * t1])
 
         return None
+
+class LineSegment3D(volmdlr.primitives.LineSegment):
+    """
+    Define a line segment limited by two points
+    """
+
+    def __init__(self, start, end, name=''):
+        volmdlr.primitives.LineSegment.__init__(self, start, end, name)
+        self.bounding_box = self._bounding_box()
+
+    def __hash__(self):
+        return 2 + hash(self.start) + hash(self.end)
+
+    def __eq__(self, other_linesegment3d):
+        if other_linesegment3d.__class__ != self.__class__:
+            return False
+        return
+
+    def _bounding_box(self):
+        points = [self.start, self.end]
+
+        xmin = min([pt[0] for pt in points])
+        xmax = max([pt[0] for pt in points])
+        ymin = min([pt[1] for pt in points])
+        ymax = max([pt[1] for pt in points])
+        zmin = min([pt[2] for pt in points])
+        zmax = max([pt[2] for pt in points])
+
+        return volmdlr.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+
+
+    def Length(self):
+        return self.end.point_distance(self.start)
+
+    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
+        return self.start + curvilinear_abscissa * (
+                    self.end - self.start) / self.Length()
+
+    def frenet(self, curvilinear_abscissa):
+        return self.unit_direction_vector(), None
+
+    def middle_point(self):
+        l = self.Length()
+        return self.PointAtCurvilinearAbscissa(0.5 * l)
+
+    def PlaneProjection2D(self, center, x, y):
+        return LineSegment2D(self.start.PlaneProjection2D(center, x, y),
+                             self.point2.PlaneProjection2D(center, x, y))
+
+    def Intersection(self, segment2):
+        x1 = self.start.vector[0]
+        y1 = self.start.vector[1]
+        z1 = self.start.vector[2]
+        x2 = self.point2.vector[0]
+        y2 = self.point2.vector[1]
+        z2 = self.point2.vector[2]
+        x3 = segment2.start.vector[0]
+        y3 = segment2.start.vector[1]
+        z3 = segment2.start.vector[2]
+        x4 = segment2.end_point.vector[0]
+        y4 = segment2.end_point.vector[1]
+        z4 = segment2.end_point.vector[2]
+
+        if x3 == 0 and x4 == 0 and y4 - y3 == 0:
+            x5, y5, z5 = x3, y3, z3
+            x6, y6, z6 = x4, y4, z4
+            x3, y3, z3 = x1, y1, z1
+            x4, y4, z4 = x2, y2, z2
+            x1, y1, z1 = x5, y5, z5
+            x2, y2, z2 = x6, y6, z6
+
+        elif y3 == 0 and y4 == 0 and x4 - x3 == 0:
+            x5, y5, z5 = x3, y3, z3
+            x6, y6, z6 = x4, y4, z4
+            x3, y3, z3 = x1, y1, z1
+            x4, y4, z4 = x2, y2, z2
+            x1, y1, z1 = x5, y5, z5
+            x2, y2, z2 = x6, y6, z6
+
+        res, list_t1 = [], []
+
+        # 2 unknown 3eq with t1 et t2 unknown
+        if (x2 - x1 + y1 - y2) != 0 and (y4 - y3) != 0:
+            t1 = (x3 - x1 + (x4 - x3) * (y1 - y3) / (y4 - y3)) / (
+                        x2 - x1 + y1 - y2)
+            t2 = (y1 - y3 + (y2 - y1) * t1) / (y4 - y3)
+            res1 = z1 + (z2 - z1) * t1
+            res2 = z3 + (z4 - z3) * t2
+            list_t1.append(t1)
+            res.append([res1, res2])
+
+        if (z2 - z1 + y1 - y2) != 0 and (y4 - y3) != 0:
+            t1 = (z3 - z1 + (z4 - z3) * (y1 - y3) / (y4 - y3)) / (
+                        z2 - z1 + y1 - y2)
+            t2 = (y1 - y3 + (y2 - y1) * t1) / (y4 - y3)
+            res1 = x1 + (x2 - x1) * t1
+            res2 = x3 + (x4 - x3) * t2
+            list_t1.append(t1)
+            res.append([res1, res2])
+
+        if (z2 - z1 + x1 - x2) != 0 and (x4 - x3) != 0:
+            t1 = (z3 - z1 + (z4 - z3) * (x1 - x3) / (x4 - x3)) / (
+                        z2 - z1 + x1 - x2)
+            t2 = (x1 - x3 + (x2 - x1) * t1) / (x4 - x3)
+            res1 = y1 + (y2 - y1) * t1
+            res2 = y3 + (y4 - y3) * t2
+            list_t1.append(t1)
+            res.append([res1, res2])
+
+        if len(res) == 0:
+            return None
+
+        for pair, t1 in zip(res, list_t1):
+            res1, res2 = pair[0], pair[1]
+            if math.isclose(res1, res2,
+                            abs_tol=1e-7):  # if there is an intersection point
+                if t1 >= 0 or t1 <= 1:
+                    return Point3D([x1 + (x2 - x1) * t1, y1 + (y2 - y1) * t1,
+                                    z1 + (z2 - z1) * t1])
+
+        return None
+
+    def Rotation(self, center, axis, angle, copy=True):
+        if copy:
+            return LineSegment3D(
+                *[p.Rotation(center, axis, angle, copy=True) for p in
+                  self.points])
+        else:
+            Edge.Rotation(self, center, axis, angle, copy=False)
+            self.bounding_box = self._bounding_box()
+
+    def __contains__(self, point):
+        point1, point2 = self.start, self.end
+        axis = Vector3D(point2 - point1)
+        test = point.Rotation(point1, axis, math.pi)
+        if test == point:
+            return True
+        else:
+            return False
+
+    def Translation(self, offset, copy=True):
+        if copy:
+            return LineSegment3D(
+                *[p.Translation(offset, copy=True) for p in self.points])
+        else:
+            Edge.Translation(self, offset, copy=False)
+            self.bounding_box = self._bounding_box()
+
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        if side == 'old':
+            if copy:
+                return LineSegment3D(
+                    *[frame.OldCoordinates(p) for p in self.points])
+            else:
+                Edge.frame_mapping(self, frame, side, copy=False)
+                self.bounding_box = self._bounding_box()
+        if side == 'new':
+            if copy:
+                return LineSegment3D(
+                    *[frame.NewCoordinates(p) for p in self.points])
+            else:
+                Edge.frame_mapping(self, frame, side, copy=False)
+                self.bounding_box = self._bounding_box()
+
+    def copy(self):
+        return LineSegment3D(*[p.copy() for p in self.points])
+
+    def MPLPlot(self, ax=None):
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+        else:
+            fig = ax.figure
+
+        points = [self.start, self.end]
+        x = [p.vector[0] for p in points]
+        y = [p.vector[1] for p in points]
+        z = [p.vector[2] for p in points]
+        ax.plot(x, y, z, 'o-k')
+        return ax
+
+    def MPLPlot2D(self, x_3D, y_3D, ax=None, color='k', width=None):
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+        else:
+            fig = ax.figure
+
+        edge2D = self.PlaneProjection2D(O3D, x_3D, y_3D)
+        edge2D.MPLPlot(ax=ax, color=color, width=width)
+        return ax
+
+    def plot_data(self, x_3D, y_3D, marker=None, color='black', stroke_width=1,
+                  dash=False, opacity=1, arrow=False):
+        edge2D = self.PlaneProjection2D(O3D, x_3D, y_3D)
+        return edge2D.plot_data(marker, color, stroke_width,
+                                dash, opacity, arrow)
+
+    def FreeCADExport(self, name, ndigits=6):
+        name = 'primitive' + str(name)
+        x1, y1, z1 = round(1000 * self.start, ndigits).vector
+        x2, y2, z2 = round(1000 * self.end, ndigits).vector
+        return '{} = Part.LineSegment(fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(
+            name, x1, y1, z1, x2, y2, z2)
+
+    def to_line(self):
+        return Line3D(*self.points)
+
+    def babylon_script(self, color=(1, 1, 1), name='line', type_='line',
+                       parent=None):
+        if type_ == 'line' or type_ == 'dashed':
+            s = 'var myPoints = [];\n'
+            s += 'var point1 = new BABYLON.Vector3({},{},{});\n'.format(
+                *self.start)
+            s += 'myPoints.push(point1);\n'
+            s += 'var point2 = new BABYLON.Vector3({},{},{});\n'.format(
+                *self.end)
+            s += 'myPoints.push(point2);\n'
+            if type_ == 'line':
+                s += 'var {} = BABYLON.MeshBuilder.CreateLines("lines", {{points: myPoints}}, scene);\n'.format(
+                    name)
+            elif type_ == 'dashed':
+                s += 'var {} = BABYLON.MeshBuilder.CreateDashedLines("lines", {{points: myPoints, dashNb:20}}, scene);'.format(
+                    name)
+            s += '{}.color = new BABYLON.Color3{};\n'.format(name,
+                                                             tuple(color))
+        elif type_ == 'tube':
+            radius = 0.03 * self.start.point_distance(self.end)
+            s = 'var points = [new BABYLON.Vector3({},{},{}), new BABYLON.Vector3({},{},{})];\n'.format(
+                *self.start, *self.end)
+            s += 'var {} = BABYLON.MeshBuilder.CreateTube("frame_U", {{path: points, radius: {}}}, {});'.format(
+                name, radius, parent)
+        #            s += 'line.material = red_material;\n'
+
+        else:
+            raise NotImplementedError
+
+        if parent is not None:
+            s += '{}.parent = {};\n'.format(name, parent)
+
+        return s
+
+    def To2D(self, plane_origin, x1, x2):
+        p2D = [p.To2D(plane_origin, x1, x2) for p in (self.start, self.end)]
+        return LineSegment2D(*p2D, name=self.name)
+
+    def reverse(self):
+        return LineSegment3D(self.end.copy(), self.start.copy())
+
+    def MinimumDistancePoints(self, other_line):
+        """
+        Returns the points on this line and the other line that are the closest
+        of lines
+        """
+        u = self.end - self.start
+        v = other_line.end_point - other_line.start
+        w = self.start - other_line.start
+        a = u.Dot(u)
+        b = u.Dot(v)
+        c = v.Dot(v)
+        d = u.Dot(w)
+        e = v.Dot(w)
+        if (a * c - b ** 2) != 0:
+            s = (b * e - c * d) / (a * c - b ** 2)
+            t = (a * e - b * d) / (a * c - b ** 2)
+            p1 = self.start + s * u
+            p2 = other_line.start + t * v
+            return p1, p2, s, t
+        else:
+            return None, None, -1, -1
+
+    def Matrix_distance(self, other_line):
+        u = self.direction_vector()
+        v = other_line.direction_vector()
+        w = other_line.start - self.start
+
+        a = u.Dot(u)
+        b = -u.Dot(v)
+        d = v.Dot(v)
+
+        e = w.Dot(u)
+        f = -w.Dot(v)
+
+        A = npy.array([[a, b],
+                       [b, d]])
+        B = npy.array([e, f])
+
+        res = scp.optimize.lsq_linear(A, B, bounds=(0, 1))
+        p1 = self.PointAtCurvilinearAbscissa(res.x[0] * self.Length())
+        p2 = other_line.PointAtCurvilinearAbscissa(
+            res.x[1] * other_line.Length())
+        return p1, p2
+
+    def parallele_distance(self, other_linesegment):
+        ptA, ptB, ptC = self.start, self.end, other_linesegment.points[0]
+        u = Vector3D((ptA - ptB).vector)
+        u.Normalize()
+        plane1 = volmdlr.faces.Plane3D.from_3_points(ptA, ptB, ptC)
+        v = u.Cross(plane1.normal)  # distance vector
+        # ptA = k*u + c*v + ptC
+        res = (ptA - ptC).vector
+        x, y, z = res[0], res[1], res[2]
+        u1, u2, u3 = u.vector[0], u.vector[1], u.vector[2]
+        v1, v2, v3 = v.vector[0], v.vector[1], v.vector[2]
+
+        if (u1 * v2 - v1 * u2) != 0 and u1 != 0:
+            c = (y * u1 - x * u2) / (u1 * v2 - v1 * u2)
+            k = (x - c * v1) / u1
+            if math.isclose(k * u3 + c * v3, z, abs_tol=1e-7):
+                return k
+        elif (u1 * v3 - v1 * u3) != 0 and u1 != 0:
+            c = (z * u1 - x * u3) / (u1 * v3 - v1 * u3)
+            k = (x - c * v1) / u1
+            if math.isclose(k * u2 + c * v2, y, abs_tol=1e-7):
+                return k
+        elif (v1 * u2 - v2 * u1) != 0 and u2 != 0:
+            c = (u2 * x - y * u1) / (v1 * u2 - v2 * u1)
+            k = (y - c * v2) / u2
+            if math.isclose(k * u3 + c * v3, z, abs_tol=1e-7):
+                return k
+        elif (v3 * u2 - v2 * u3) != 0 and u2 != 0:
+            c = (u2 * z - y * u3) / (v3 * u2 - v2 * u3)
+            k = (y - c * v2) / u2
+            if math.isclose(k * u1 + c * v1, x, abs_tol=1e-7):
+                return k
+        elif (u1 * v3 - v1 * u3) != 0 and u3 != 0:
+            c = (z * u1 - x * u3) / (u1 * v3 - v1 * u3)
+            k = (z - c * v3) / u3
+            if math.isclose(k * u2 + c * v2, y, abs_tol=1e-7):
+                return k
+        elif (u2 * v3 - v2 * u3) != 0 and u3 != 0:
+            c = (z * u2 - y * u3) / (u2 * v3 - v2 * u3)
+            k = (z - c * v3) / u3
+            if math.isclose(k * u1 + c * v1, x, abs_tol=1e-7):
+                return k
+        else:
+            return NotImplementedError
+
+    def minimum_distance(self, element, return_points=False):
+        if element.__class__ is Arc3D or element.__class__ is Circle3D:
+            pt1, pt2 = element.minimum_distance_points_line(self)
+            if return_points:
+                return pt1.point_distance(pt2), pt1, pt2
+            else:
+                return pt1.point_distance(pt2)
+
+        elif element.__class__ is LineSegment3D:
+            p1, p2 = self.Matrix_distance(element)
+            if return_points:
+                return p1.point_distance(p2), p1, p2
+            else:
+                return p1.point_distance(p2)
+
+        else:
+            return NotImplementedError
+
+    def extrusion(self, extrusion_vector):
+        u = self.unit_direction_vector()
+        v = extrusion_vector.copy()
+        v.Normalize()
+        w = u.Cross(v)
+        l1 = self.Length()
+        l2 = extrusion_vector.Norm()
+        # outer_contour = Polygon2D([O2D, Point2D((l1, 0.)),
+        #                            Point2D((l1, l2)), Point2D((0., l2))])
+        plane = volmdlr.surfaces3d.Plane3D(Frame3D(self.start, u, v, w))
+        return plane.rectangular_cut(0, l1, 0, l2)
+
+    def revolution(self, axis_point, axis, angle):
+        axis_line3d = Line3D(axis_point, axis_point + axis)
+
+        p1_proj, _ = axis_line3d.point_projection(self.start)
+        p2_proj, _ = axis_line3d.point_projection(self.end)
+        d1 = self.start.point_distance(p1_proj)
+        d2 = self.end.point_distance(p2_proj)
+        u1 = (self.start - p1_proj)  # Unit vector from p1_proj to p1
+        u1.Normalize()
+        if u1.is_colinear_to(self.direction_vector()):
+            # Planar face
+            surface = volmdlr.faces.Plane3D(Frame3D(p1_proj, u1, axis.Cross(u1), axis))
+            if angle == two_pi:
+                # Only 2 circles as countours
+                r, R = sorted([d1, d2])
+                v1 = axis.Cross(u1)
+                outer_contour3d = Circle3D(Frame3D(p1_proj, u1, v1, axis),
+                                           R)
+                if not math.isclose(r, 0, abs_tol=1e-9):
+                    inner_contours3d = [Circle3D(Frame3D(p1_proj, u1, v1, axis)
+                                                 , r)]
+                else:
+                    inner_contours3d = []
+            else:
+                # Two arcs and lines
+                arc1_i = self.end.Rotation(axis=axis,
+                                                 axis_point=axis_point,
+                                                 angle=0.5 * angle)
+                arc1_e = self.end.Rotation(axis=axis,
+                                                 axis_point=axis_point,
+                                                 angle=angle)
+                arc2_i = self.start.Rotation(axis=axis,
+                                                 axis_point=axis_point,
+                                                 angle=0.5 * angle)
+                arc2_s = self.start.Rotation(axis=axis,
+                                                 axis_point=axis_point,
+                                                 angle=angle)
+
+                arc1 = Arc3D(self.end, arc1_i, arc1_e)
+                arc2 = Arc3D(arc2_s, arc1_i, self.start)
+                line2 = LineSegment3D(arc1_e, arc2_s)
+                outer_contour3d = Contour3D([self, arc1, line2, arc2])
+                inner_contours3d = []
+            return volmdlr.faces.PlaneFace3D.from_contours3d(
+                outer_contour3d=outer_contour3d,
+                inner_contours3d=inner_contours3d)
+
+        elif d1 != d2:
+            # Conical
+            v = axis.Cross(u1)
+            w = axis.Cross(v)
+            u1 = self.direction_vector()
+            semi_angle = math.asin(u1.Cross(axis).Norm())
+            surface = volmdlr.surfaces.ConicalSurface3D(Frame3D(p1_proj, axis, v, w),
+                                       semi_angle)
+            return surface.rectangular_cut(0, self.Length(), 0, angle)
+        else:
+            v = axis.Cross(u1)
+            surface = volmdlr.surfaces.CylindricalSurface3D(Frame3D(p1_proj, u1, v, axis), d1)
+            return surface.rectangular_cut(0, angle,
+                                           0, (self.end-self.start).Dot(axis))
 
 
 class BSplineCurve3D(volmdlr.Primitive3D):
@@ -475,15 +909,15 @@ class Arc3D(volmdlr.Primitive3D):
             clockwise_path = angle1 - anglei
         else:
             trigowise_path = anglei - angle1
-            clockwise_path = angle1 - anglei + two_pi
+            clockwise_path = angle1 - anglei + volmdlr.two_pi
 
         # Going trigo wise from interior to interior
         if angle2 < anglei:
-            trigowise_path += (angle2 + two_pi) - anglei
+            trigowise_path += (angle2 + volmdlr.two_pi) - anglei
             clockwise_path += anglei - angle2
         else:
             trigowise_path += angle2 - anglei
-            clockwise_path += anglei - angle2 + two_pi
+            clockwise_path += anglei - angle2 + volmdlr.two_pi
 
         if clockwise_path > trigowise_path:
             self.is_trigo = True
@@ -496,7 +930,7 @@ class Arc3D(volmdlr.Primitive3D):
         if self.angle > math.pi:
             # Inverting normal to be sure to have a right defined normal for rotation
             self.normal = -self.normal
-        Primitive3D.__init__(self, name=name)
+        volmdlr.Primitive3D.__init__(self, name=name)
 
     @property
     def points(self):
@@ -640,7 +1074,7 @@ class Arc3D(volmdlr.Primitive3D):
         ps = self.start.To2D(plane_origin, x, y)
         pi = self.interior.To2D(plane_origin, x, y)
         pe = self.end.To2D(plane_origin, x, y)
-        return Arc2D(ps, pi, pe, name=self.name)
+        return volmdlr.primitives2D.Arc2D(ps, pi, pe, name=self.name)
 
     def minimum_distance_points_arc(self, other_arc):
 
@@ -771,7 +1205,7 @@ class Arc3D(volmdlr.Primitive3D):
             w.Normalize()
             v = w.Cross(u)
             arc2d = self.To2D(self.center, u, v)
-            cylinder = volmdlr.surfaces.CylindricalSurface3D(Frame3D(self.center,
+            cylinder = volmdlr.surfaces3d.CylindricalSurface3D(volmdlr.Frame3D(self.center,
                                                     u,
                                                     v,
                                                     w),
@@ -1030,7 +1464,7 @@ class ArcEllipse3D(volmdlr.Primitive3D):
             name, xs, ys, zs, xi, yi, zi, xe, ye, ze)
 
 
-class OpenedRoundedLineSegments3D(volmdlr.Wire3D, RoundedLineSegments):
+class OpenedRoundedLineSegments3D(volmdlr.Wire3D, volmdlr.primitives.RoundedLineSegments):
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
@@ -1384,7 +1818,7 @@ class ExtrudedProfile(volmdlr.Shell3D):
         volmdlr.Shell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
 
     def shell_faces(self):
-        lower_face = volmdlr.PlaneFace3D.from_contours3d(self.outer_contour3d,
+        lower_face = volmdlr.surfaces3d.PlaneFace3D.from_contours3d(self.outer_contour3d,
                                                          self.inner_contours3d)
 
         upper_face = lower_face.Translation(self.extrusion_vector)
@@ -2391,3 +2825,30 @@ class Measure3D(Line3D):
         s += 'line.color = new BABYLON.Color3({}, {}, {});\n'.format(
             self.color[0], self.color[1], self.color[2])
         return s
+
+
+class BSplineExtrusion(volmdlr.Primitive3D):
+
+    def __init__(self, obj, vectorextru, name=''):
+        self.obj = obj
+        vectorextru.Normalize()
+        self.vectorextru = vectorextru
+        if obj.__class__ is Ellipse3D:
+            self.points = obj.tessel_points
+        else:
+            self.points = obj.points
+
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        name = arguments[0][1:-1]
+        if object_dict[arguments[1]].__class__ is Ellipse3D:
+            ell = object_dict[arguments[1]]
+            vectextru = -object_dict[arguments[2]]
+            return cls(ell, vectextru, name)
+
+        elif object_dict[arguments[1]].__class__ is BSplineCurve3D:
+            bsplinecurve = object_dict[arguments[1]]
+            vectextru = object_dict[arguments[2]]
+            return cls(bsplinecurve, vectextru, name)
+        else:
+            raise NotImplementedError  ## a adapter pour les bpsline

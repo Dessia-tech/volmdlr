@@ -7,6 +7,179 @@ Common abstract primitives
 from scipy.optimize import linprog
 import math
 from numpy import zeros
+import dessia_common as dc
+
+class Edge(dc.DessiaObject):
+    def __init__(self, start, end, name=''):
+        self.start = start
+        self.end = end
+        dc.DessiaObject.__init__(self, name=name)
+
+    @classmethod
+    def from_step(cls, arguments, object_dict):
+        if object_dict[arguments[3]].__class__ is volmdlr.primitives3D.Line3D:
+            return LineSegment3D(object_dict[arguments[1]],
+                                 object_dict[arguments[2]], arguments[0][1:-1])
+
+        elif object_dict[arguments[3]].__class__ is volmdlr.primitives3D.Circle3D:
+            # We supposed that STEP file is reading on trigo way
+            center = object_dict[arguments[3]].center
+            normal = object_dict[arguments[3]].normal
+            normal.Normalize()
+            radius = object_dict[arguments[3]].radius
+            p1 = object_dict[arguments[1]]
+            p2 = object_dict[arguments[2]]
+            other_vec = object_dict[arguments[3]].other_vec
+            if other_vec is None:
+                other_vec = p1 - center
+            other_vec.Normalize()
+            frame = Frame3D(center, other_vec, normal.Cross(other_vec), normal)
+            if p1 == p2:
+                angle = math.pi
+            else:
+                # p1_new, p2_new = frame.NewCoordinates(p1), frame.NewCoordinates(p2)
+                # #Angle for p1
+                # u1, u2 = p1_new.vector[0]/radius, p1_new.vector[1]/radius
+                # theta1 = sin_cos_angle(u1, u2)
+                # #Angle for p2
+                # u3, u4 = p2_new.vector[0]/radius, p2_new.vector[1]/radius
+                # theta2 = sin_cos_angle(u3, u4)
+                theta1, theta2 = posangle_arc(p1, p2, radius, frame)
+                if theta1 > theta2:  # sens trigo
+                    angle = math.pi + (theta1 + theta2) / 2
+                else:
+                    angle = (theta1 + theta2) / 2
+            p_3 = Point3D(
+                (radius * math.cos(angle), radius * math.sin(angle), 0))
+            p3 = frame.OldCoordinates(p_3)
+            if p1 == p3 or p2 == p3:
+                p_3 = Point3D((radius * math.cos(0), radius * math.sin(0), 0))
+                p3 = frame.OldCoordinates(p_3)
+            arc = volmdlr.primitives3D.Arc3D(p1, p3, p2, normal, arguments[0][1:-1], other_vec)
+            if math.isclose(arc.radius, 0, abs_tol=1e-9):
+                if p1 == p2:
+                    p_3 = Point3D(
+                        (radius * math.cos(0), radius * math.sin(0), 0))
+                    p3 = frame.OldCoordinates(p_3)
+                    arc = volmdlr.primitives3D.Arc3D(p1, p3, p2, normal, arguments[0][1:-1],
+                                other_vec)
+            return arc
+
+        elif object_dict[arguments[3]].__class__ is volmdlr.primitives3D.Ellipse3D:
+            majorax = object_dict[arguments[3]].major_axis
+            minorax = object_dict[arguments[3]].minor_axis
+            center = object_dict[arguments[3]].center
+            normal = object_dict[arguments[3]].normal
+            normal.Normalize()
+            majordir = object_dict[arguments[3]].major_dir
+            majordir.Normalize()
+            minordir = normal.Cross(majordir)
+            minordir.Normalize()
+            frame = Frame3D(center, majordir, minordir, normal)
+            p1 = object_dict[
+                arguments[1]]  # on part du principe que p1 suivant majordir
+            p2 = object_dict[arguments[2]]
+            if p1 == p2:
+                angle = 5 * math.pi / 4
+                xtra = Point3D((majorax * math.cos(math.pi / 2),
+                                minorax * math.sin(math.pi / 2), 0))
+                extra = frame.OldCoordinates(xtra)
+            else:
+                extra = None
+                ## Positionnement des points dans leur frame
+                p1_new, p2_new = frame.NewCoordinates(
+                    p1), frame.NewCoordinates(p2)
+                # Angle pour le p1
+                u1, u2 = p1_new.vector[0] / majorax, p1_new.vector[1] / minorax
+                theta1 = sin_cos_angle(u1, u2)
+                # Angle pour le p2
+                u3, u4 = p2_new.vector[0] / majorax, p2_new.vector[1] / minorax
+                theta2 = sin_cos_angle(u3, u4)
+
+                if theta1 > theta2:  # sens trigo
+                    angle = math.pi + (theta1 + theta2) / 2
+                else:
+                    angle = (theta1 + theta2) / 2
+
+            p_3 = Point3D(
+                (majorax * math.cos(angle), minorax * math.sin(angle), 0))
+            p3 = frame.OldCoordinates(p_3)
+
+            arcellipse = ArcEllipse3D(p1, p3, p2, center, majordir, normal,
+                                      arguments[0][1:-1], extra)
+
+            return arcellipse
+
+        elif object_dict[arguments[3]].__class__ is volmdlr.primitives3D.BSplineCurve3D:
+            # print(object_dict[arguments[1]], object_dict[arguments[2]])
+            # BSplineCurve3D à couper à gauche et à droite avec les points ci dessus ?
+            return object_dict[arguments[3]]
+
+        else:
+            print(object_dict[arguments[3]])
+            raise NotImplementedError
+
+class Line(dc.DessiaObject):
+    """
+    Abstract class
+    """
+    def __init__(self, point1, point2, name=''):
+        self.point1 = point1
+        self.point2 = point2
+
+    def unit_direction_vector(self):
+        u = self.direction_vector()
+        u.Normalize()
+        return u
+
+    def direction_vector(self):
+        return self.point2 - self.point1
+
+    def normal_vector(self):
+        return self.unit_direction_vector().normal_vector()
+
+    def point_projection(self, point):
+
+        u = self.point2 - self.point1
+        norm_u = u.Norm()
+        t = (point - self.point1).Dot(u) / norm_u ** 2
+        projection = self.point1 + t * u
+
+        return projection, t * norm_u
+
+    def split(self, split_point):
+        return [self.__class__(self.point1, split_point),
+                self.__class__(split_point, self.point2)]
+
+class LineSegment(Edge):
+    """
+    Abstract class
+    """
+
+    def unit_direction_vector(self):
+        u = self.direction_vector()
+        u.Normalize()
+        return u
+
+    def direction_vector(self):
+        return self.end - self.start
+
+    def normal_vector(self):
+        return self.unit_direction_vector().normal_vector()
+
+    def point_projection(self, point):
+        p1, p2 = self.points
+        u = p2 - p1
+        norm_u = u.Norm()
+        t = (point - p1).Dot(u) / norm_u ** 2
+        projection = p1 + t * u
+
+        return projection, t * norm_u
+
+    def split(self, split_point):
+        return [self.__class__(self.start, split_point),
+                self.__class__(split_point, self.end)]
+
 
 class RoundedLineSegments:
     def __init__(self, points, radius, line_class, arc_class,
