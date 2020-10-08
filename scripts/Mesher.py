@@ -42,9 +42,13 @@ rotor_external=[rotor_external_contour]
 rotor_internal=[rotor_internal_contour]
 
 # all_triangle_elements=rotor.mesh()
-rotor=vmmesh.Mesher(rotor_external,[],40)
+# rotor=vmmesh.Mesher(rotor_external,[],40)
 # ax=rotor_external_contour.MPLPlot()
-rotor.mesh(6)
+# all_triangle_elements=rotor.mesh(6)
+# element_group=vmmesh.ElementsGroup(all_triangle_elements,'element_group')
+# mesh=vmmesh.Mesh([element_group])
+# mesh.plot()
+
 # rotor.complete_ear(rotor_magnet_contours[0].polygon,ax)
 
 # mesher=vmmesh.Mesher([stator_external_contour],[],20)
@@ -53,16 +57,43 @@ rotor.mesh(6)
 # for seg in rotor_external_contour.polygon.line_segments:
     
 #     print(seg.Length())
+# ax=rotor_external_contour.MPLPlot()
+# offset=rotor_external_contour.polygon.Offset(-0.1)
+# points=offset.points[:]
+# new_points=[]
+# print(offset.SelfIntersect()[0])
+# if offset.SelfIntersect()[0] is True :
+#               line1=offset.SelfIntersect()[1]
+#               line2=offset.SelfIntersect()[2]
+#               index_1=points.index(line1.point1)
+#               index_2=points.index(line2.point2)
+#               inter=line1.line_intersection(line2)
+#               points.pop(index_1)
+#               points.pop(index_1-1)
+#               points.pop(index_2)
+#               points.pop(index_2-1)
+#               points.append(inter)
+#               new_polygon=vm.Polygon2D(points)
+#               new_polygon.MPLPlot()
+              
+# else : 
+#                vm.Polygon2D(points).MPLPlot()
+       
+        
+        
 ax=rotor_external_contour.MPLPlot()
-# reduced_polygon=rotor_external_contour.polygon.reduction(0.5)
-# reduced_polygon.MPLPlot(ax=ax)
 polygon_offsets=[]
-for k in range(4):
-    offset=rotor_external_contour.polygon.Offset(-k*0.1)
-    if offset.SelfIntersect()[0] is True:
-       new_offset=offset.repair()
-       new_offset.MPLPlot(ax=ax)
+for k in range(0,4):
+    print(k)
+    offset=rotor_external_contour.polygon.Offset(-0.1*k)
+    offset.repair().MPLPlot()
     
+ 
+        
+
+  
+    
+
     
 #     new_offset=offset.repair()
     # new_offset.MPLPlot(ax=ax)
@@ -114,17 +145,17 @@ contour=vm.Contour2D([l1,l2,l3,l4,l5,l6])
 # polygon=contour.polygon
 # all_points=polygon.points
 
-<<<<<<< HEAD
+
 # mesher=vmmesh.Mesher([contour],[],1.5)
 # all_triangle_elements=mesher.mesh()
 
-=======
-mesher=vmmesh.Mesher([contour],[],1.5)
-all_triangle_elements=mesher.mesh()
-element_group=vmmesh.ElementsGroup(all_triangle_elements,'element_group')
-mesh=vmmesh.Mesh([element_group])
-mesh.plot()
->>>>>>> 9cf296f3b4e6efa487a2b3c0e5c12da3c12e5500
+
+# mesher=vmmesh.Mesher([contour],[],1.5)
+# all_triangle_elements=mesher.mesh()
+# element_group=vmmesh.ElementsGroup(all_triangle_elements,'element_group')
+# mesh=vmmesh.Mesh([element_group])
+# mesh.plot()
+
 
 
 

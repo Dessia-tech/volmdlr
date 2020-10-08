@@ -2246,26 +2246,57 @@ class Polygon2D(Contour2D):
 
         return False, None, None
     def repair(self):
+        
+                  
+       
+        
         points=self.points[:]
-        if self.SelfIntersect()[0] is True :
+        print(self.SelfIntersect()[0])
+        
+        if self.SelfIntersect()[0] is False :
+              
+              return self 
+        else :
+          
               line1= self.SelfIntersect()[1]
               line2=self.SelfIntersect()[2]
-              for point1 in line1.points:
-                  for point2 in line2.points:
-                      bad_line=LineSegment2D(point1,point2)
-                      if bad_line!=line1 and bad_line!=line2:
-                          if bad_line in self.line_segments :
-                             points.remove(point1)
-                             points.remove(point2)
-                             points.append(line1.line_intersection(line2))
-                         
+            
+              index_1=points.index(line1.point1)
+              index_2=points.index(line1.point2)
+              index_3=points.index(line2.point1)
+              index_4=points.index(line2.point2)  
+              inter=line1.line_intersection(line2)
+              if index_1==index_3-1 or index_1==index_3+1 :
+                 points.insert(index_3,inter)
+                 points.remove(line1.point1)
+                 points.remove(line2.point1)
+                 
+                 
+              if index_2==index_3-1 or index_2==index_3+1:
+                  points.insert(index_3,inter)
+                  points.remove(line1.point2)
+                  points.remove(line2.point1)
+                 
+                  
+              if index_1==index_4-1 or index_1==index_4+1:
+                  points.insert(index_4,inter)
+                  points.remove(line1.point1)
+                  points.remove(line2.point2)
+                  
+              if index_2==index_4-1 or index_2==index_4+1:
+                  points.insert(index_4,inter)
+                  points.remove(line1.point2)
+                  points.remove(line2.point2)
+                  
+              
               new_polygon=Polygon2D(points)
-              # new_polygon.MPLPlot()
-              new_polygon.repair()
-        else : 
-              return Polygon2D(points)
+              
+              return new_polygon.repair()
+              
        
-        return Polygon2D(points)
+            
+        
+        
              
        
     def  is_intersecting(self,line:LineSegment2D):

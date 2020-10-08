@@ -896,22 +896,25 @@ class Mesher(DessiaObject):
     def complete_ear(self,polygon:vm.Polygon2D,ax):
        
         segment_to_nodes={}
-        polygon_reduction=[]
+        polygon_offsets=[]
         max_length=polygon.max_length()
         offset_triangles=[]
        
         for k in range(4):
-            polygon.reduction(2*k*max_length).MPLPlot(ax=ax)
-            polygon_reduction.append(polygon.reduction(2*k*max_length))
-       
-        for polygon in polygon_reduction:
+            # polygon.Offset(-k*max_length).MPLPlot()
+            new_polygon=polygon.Offset(-k*max_length)
+            polygon_offset=new_polygon.repair()
+            polygon_offsets.append(polygon_offset)
+            
+        print(len(polygon_offsets))
+        for polygon in polygon_offsets:
             for segment in polygon.line_segments:
                 segment_to_nodes[segment]=segment.discretise(self.nodes_len,ax)
-        for k in range(len(polygon_reduction)-1):
+        for k in range(len(polygon_offsets)-2):
             
             for j in range(len(polygon.line_segments)):
-                pj=segment_to_nodes[polygon_reduction[k].line_segments[j]]
-                qj=segment_to_nodes[polygon_reduction[k+1].line_segments[j]]
+                pj=segment_to_nodes[polygon_offsets[k].line_segments[j]]
+                qj=segment_to_nodes[polygon_offsets[k+1].line_segments[j]]
                 u=len(pj)
                 v=len(qj)
                 if u==2 and v==2 : 
@@ -934,8 +937,8 @@ class Mesher(DessiaObject):
          
                          
          
-        # last_polygon=polygon_reduction[-1]
-        # offset_triangles+=self.earclip(last_polygon,None,ax)
+        last_polygon=polygon_offsets[-1]
+        offset_triangles+=self.earclip(last_polygon)
         
                 
         return offset_triangles                   
@@ -1126,10 +1129,10 @@ class Mesher(DessiaObject):
         #       all_aspect_ratios+=triangle.mesh_triangle(segment_to_nodes,self.nodes_len,ax)[1]
              
 
-        # for triangle in all_triangles:
+        for triangle in all_triangles:
         #     triangle.MPLPlot(ax=ax)
-        #     triangular_element=TriangularElement(triangle.points)
-        #     all_triangle_elements.append(triangular_element)
+            triangular_element=TriangularElement(triangle.points)
+            all_triangle_elements.append(triangular_element)
 
       
         # grade=min(all_aspect_ratios)
