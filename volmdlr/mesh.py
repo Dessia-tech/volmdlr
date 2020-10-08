@@ -916,13 +916,20 @@ class Mesher(DessiaObject):
         polygon_offsets=[]
         max_length=polygon.max_length()
         offset_triangles=[]
-       
-        for k in range(4):
+        repair = False
+        k=0
+        while repair is False :
+     
             # polygon.Offset(-k*max_length).MPLPlot()
             new_polygon=polygon.Offset(-k*max_length)
-            polygon_offset=new_polygon.repair()
-            polygon_offsets.append(polygon_offset)
-            
+            if new_polygon.SelfIntersect()[0]==False :
+                polygon_offsets.append(new_polygon)
+                k=k+1
+            if new_polygon.SelfIntersect()[0]==True :
+                polygon_offset=new_polygon.repair()
+                polygon_offsets.append(polygon_offset)
+                repair=True
+                
         print(len(polygon_offsets))
         for polygon in polygon_offsets:
             for segment in polygon.line_segments:
