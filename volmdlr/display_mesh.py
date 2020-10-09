@@ -1,3 +1,9 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+
+"""
+
 class DisplayMesh(dc.DessiaObject):
     def __init__(self, points, triangles, edges=None, name=''):
 

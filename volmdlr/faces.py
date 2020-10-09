@@ -9,8 +9,74 @@ import matplotlib.pyplot as plt
 import dessia_common as dc
 from geomdl import BSpline
 import volmdlr
-# import volmdlr.faces3d
+import volmdlr.wires
 
+import volmdlr.primitives2d
+import volmdlr.primitives3d
+
+class Surface2D(volmdlr.Primitive2D):
+    """
+    A surface bounded by an outer contour
+    """
+    def __init__(self, outer_contour: volmdlr.wires.Contour2D,
+                 inner_contours: List[volmdlr.wires.Contour2D],
+                 name:str='name'):
+        self.outer_contour = outer_contour
+        self.inner_contours = inner_contours
+
+        Primitive2D.__init__(self, name=name)
+
+    def triangulation(self, min_x_density=None, min_y_density=None):
+        outer_polygon = self.outer_contour.polygonization(min_x_density=15, min_y_density=12)
+        # ax2 = outer_polygon.MPLPlot(color='r', point_numbering=True)
+        points = outer_polygon.points
+        vertices = [p.vector for p in points]
+        n = len(outer_polygon.points)
+        segments = [(i, i+1) for i in range(n-1)]
+        segments.append((n-1, 0))
+        point_index = {p:i for i,p in enumerate(points)}
+        holes = []
+
+        for inner_contour in self.inner_contours:
+            inner_polygon = inner_contour.polygonization()
+            # inner_polygon.MPLPlot(ax=ax2)
+            for point in inner_polygon.points:
+                if not point in point_index:
+                    points.append(point)
+                    vertices.append(point.vector)
+                    point_index[point] = n
+                    n += 1
+            for point1, point2 in zip(inner_polygon.points[:-1],
+                                      inner_polygon.points[1:]):
+                segments.append((point_index[point1],
+                                 point_index[point2]))
+            segments.append((point_index[inner_polygon.points[-1]],
+                             point_index[inner_polygon.points[0]]))
+            holes.append(inner_contour.random_point_inside().vector)
+
+
+        tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
+               'segments': npy.array(segments).reshape((-1, 2)),
+               }
+        if holes:
+            tri['holes'] = npy.array(holes).reshape((-1, 2))
+
+        t = triangle.triangulate(tri, 'p')
+        triangles = t['triangles'].tolist()
+
+        return DisplayMesh2D(points, triangles=triangles, edges=None)
+
+    def plot(self, ax=None):
+        if ax is None:
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
+        self.outer_contour.MPLPlot(ax=ax)
+        for inner_contour in self.inner_contours:
+            inner_contour.MPLPlot(ax=ax)
+
+        ax.set_aspect('equal')
+        ax.margins(0.1)
+        return ax
 
 
 class Surface3D():
@@ -1097,7 +1163,7 @@ class Face3D():
     min_x_density=1
     min_y_density=1
 
-    def __init__(self, surface3d, surface2d: volmdlr.primitives2D.Surface2D,
+    def __init__(self, surface3d, surface2d: Surface2D,
                  name: str = ''):
         self.surface3d = surface3d
         self.surface2d = surface2d
@@ -1409,14 +1475,14 @@ class PlaneFace3D(Face3D):
 
     @classmethod
     def from_contours3d(cls,
-                        outer_contour3d: volmdlr.Contour3D,
-                        inner_contours3d: List[volmdlr.Contour3D],
+                        outer_contour3d: volmdlr.wires.Contour3D,
+                        inner_contours3d: List[volmdlr.wires.Contour3D],
                         name: str = ''):
         """
         :param outer_contour3d: The face's contour3D
         :param inner_contours3d: A list of the face's inner contours3D
         """
-        if outer_contour3d.__class__ == volmdlr.primitives3D.Circle3D:
+        if outer_contour3d.__class__ == volmdlr.wires.Circle3D:
             u = outer_contour3d.normal.deterministic_unit_normal_vector()
             v = outer_contour3d.normal.Cross(u)
             plane3d = Plane3D(frame=volmdlr.Frame3D(outer_contour3d.center,
@@ -1709,7 +1775,7 @@ class CylindricalFace3D(Face3D):
 
     def __init__(self,
                  cylindricalsurface3d: CylindricalSurface3D,
-                 surface2d: volmdlr.primitives2D.Surface2D,
+                 surface2d: Surface2D,
                  name: str = ''):
 
         self.radius = cylindricalsurface3d.radius
@@ -2463,7 +2529,7 @@ class ToroidalFace3D(Face3D):
     min_y_density = 1
 
     def __init__(self, toroidalsurface3d: ToroidalSurface3D,
-                 surface2d: volmdlr.primitives2D.Surface2D,
+                 surface2d: Surface2D,
                  name: str = ''):
 
         # self.toroidalsurface3d = toroidalsurface3d
@@ -2971,8 +3037,8 @@ class ConicalFace3D(Face3D):
     min_y_density = 1
 
     def __init__(self, conicalsurface3d: ConicalSurface3D,
-                 outer_contour2d: volmdlr.primitives2D.Contour2D,
-                 inner_contours2d: List[volmdlr.primitives2D.Contour2D],
+                 outer_contour2d: volmdlr.wires.Contour2D,
+                 inner_contours2d: List[volmdlr.wires.Contour2D],
                  name: str = ''):
 
         Face3D.__init__(self,
@@ -3038,8 +3104,8 @@ class SphericalFace3D(Face3D):
     min_y_density = 5
 
     def __init__(self, spherical_surface3d:SphericalSurface3D,
-                 outer_contour2d: volmdlr.primitives2D.Contour2D,
-                 inner_contours2d: List[volmdlr.primitives2D.Contour2D],
+                 outer_contour2d: volmdlr.wires.Contour2D,
+                 inner_contours2d: List[volmdlr.wires.Contour2D],
                  name: str = ''):
         Face3D.__init__(self,
                         surface=spherical_surface3d,
@@ -3128,8 +3194,8 @@ class SphericalFace3D(Face3D):
 
 class BSplineFace3D(Face3D):
     def __init__(self, bspline_surface:BSplineSurface3D,
-                 outer_contour2d: volmdlr.primitives2D.Contour2D,
-                 inner_contours2d: List[volmdlr.primitives2D.Contour2D],
+                 outer_contour2d: volmdlr.wires.Contour2D,
+                 inner_contours2d: List[volmdlr.wires.Contour2D],
                  name: str = ''):
         Face3D.__init__(self,
                         surface=bspline_surface,

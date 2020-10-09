@@ -1,4 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
 
+"""
+
+
+import matplotlib.pyplot as plt
 import networkx as nx
 import volmdlr
 import volmdlr.primitives3D
@@ -373,7 +380,7 @@ class Step:
                 volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
                     arguments, object_dict)
                 points3d.append(volmdlr_object)
-        return VolumeModel(points3d)
+        return volmdlr.VolumeModel(points3d)
 
 
 
