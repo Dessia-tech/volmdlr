@@ -996,7 +996,7 @@ class Point3D(Vector3D):
                     arguments[0][1:-1])
 
     def babylon_script(self):
-        s = 'var sphere = BABYLON.MeshBuilder.CreateSphere("point", {diameter: 0.05}, scene);\n'
+        s = 'var sphere = BABYLON.MeshBuilder.CreateSphere("point", {diameter: 0.005}, scene);\n'
         s += "sphere.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));\n".format(self.vector[0],self.vector[1],self.vector[2])
         s += 'var mat = new BABYLON.StandardMaterial("mat", scene);\n'
         s += 'mat.diffuseColor = new BABYLON.Color3(1, 0, 0);\n'

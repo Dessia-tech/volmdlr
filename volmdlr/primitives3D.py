@@ -33,6 +33,8 @@ class OpenedRoundedLineSegments3D(volmdlr.Wire3D, RoundedLineSegments):
         volmdlr.Wire3D.__init__(self, primitives, name)
 
     def ArcFeatures(self, ipoint):
+        ipoint=int(ipoint)
+        print(self.radius, ipoint)
         radius = self.radius[ipoint]
         if self.closed:
             if ipoint == 0:
@@ -45,7 +47,12 @@ class OpenedRoundedLineSegments3D(volmdlr.Wire3D, RoundedLineSegments):
             else:
                 pt2 = self.points[0]
         else:
-            pt1 = self.points[ipoint - 1]
+            try:
+                pt1 = self.points[ipoint - 1]
+            except:
+                print(ipoint)
+                print(self.points)
+                raise KeyError()
             pti = self.points[ipoint]
             pt2 = self.points[ipoint + 1]
 
@@ -125,10 +132,11 @@ class ClosedRoundedLineSegments3D(volmdlr.Contour3D, OpenedRoundedLineSegments3D
 class Block(volmdlr.Shell3D):
     _standalone_in_db = True
     _generic_eq = True
-    _non_serializable_attributes  = ['size']
+    _non_serializable_attributes  = ['size', 'bounding_box', 'faces', 'contours',
+                          'plane', 'points', 'polygon2D']
     _non_eq_attributes = ['name', 'color', 'alpha', 'size', 'bounding_box', 'faces', 'contours',
                           'plane', 'points', 'polygon2D']
-    _non_hash_attributes = []
+    _non_hash_attributes = ['name']
 
     """
     Creates a block
@@ -146,6 +154,14 @@ class Block(volmdlr.Shell3D):
 
     # def __hash__(self):
     #     return hash(self.frame)
+
+    def __hash__(self):
+        return sum([hash(f) for f in self.faces])
+
+    def __eq__(self, other_):
+        if self.__class__ != other_.__class__:
+            return False
+        return self.frame == other_.frame
 
     def Vertices(self):
         return [self.frame.origin - 0.5*self.frame.u - 0.5*self.frame.v - 0.5*self.frame.w,
