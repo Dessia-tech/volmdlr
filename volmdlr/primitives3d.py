@@ -12,12 +12,10 @@ npy.seterr(divide='raise')
 import volmdlr
 import volmdlr.primitives
 import volmdlr.faces
+import volmdlr.shells
 from typing import Tuple
 
-
-
 import matplotlib.pyplot as plt
-
 
 
 class OpenedRoundedLineSegments3D(volmdlr.wires.Wire3D, volmdlr.primitives.RoundedLineSegments):
@@ -127,7 +125,7 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
 
 
 
-class Block(volmdlr.Shell3D):
+class Block(volmdlr.shells.Shell3D):
     _standalone_in_db = True
     _generic_eq = True
     _non_serializable_attributes  = ['size']
@@ -269,7 +267,7 @@ class Block(volmdlr.Shell3D):
 
         return lines
 
-    def MPLPlot2D(self, x3D, y3D, ax=None):
+    def plot2D(self, x3D, y3D, ax=None):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -278,13 +276,12 @@ class Block(volmdlr.Shell3D):
 
         for edge3D in self.Edges():
 #            edge2D = edge3D.PlaneProjection2D()
-            edge3D.MPLPlot2D(x3D, y3D, ax)
+            edge3D.plot2D(x3D, y3D, ax)
 
         return fig, ax
 
 
-
-class Cone(volmdlr.Primitive3D):
+class Cone(volmdlr.core.Primitive3D):
     def __init__(self, position, axis, radius, length, name=''):
         volmdlr.Primitive3D.__init__(self, name=name)
         self.position = position
@@ -341,18 +338,17 @@ class Cone(volmdlr.Primitive3D):
         return s
 
 
-class ExtrudedProfile(volmdlr.Shell3D):
+class ExtrudedProfile(volmdlr.shells.Shell3D):
     """
     
     """
     _non_serializable_attributes  = ['faces', 'inner_contours3d', 'outer_contour3d']
     def __init__(self, plane_origin, x, y, outer_contour2d, inner_contours2d,
                  extrusion_vector, color=None, alpha=1., name=''):
-        volmdlr.Primitive3D.__init__(self, name=name)
         self.plane_origin = plane_origin
         
         self.outer_contour2d = outer_contour2d
-        self.outer_contour3d = outer_contour2d.To3D(plane_origin, x, y)
+        self.outer_contour3d = outer_contour2d.to_3d(plane_origin, x, y)
         
         self.inner_contours2d = inner_contours2d
         self.extrusion_vector = extrusion_vector
@@ -363,8 +359,8 @@ class ExtrudedProfile(volmdlr.Shell3D):
 
         bool_areas = []
         for contour in inner_contours2d:
-            self.inner_contours3d.append(contour.To3D(plane_origin, x, y))
-            if contour.Area() > outer_contour2d.Area():
+            self.inner_contours3d.append(contour.to_3d(plane_origin, x, y))
+            if contour.area() > outer_contour2d.area():
                 bool_areas.append(True)
             else:
                 bool_areas.append(False)
@@ -388,13 +384,13 @@ class ExtrudedProfile(volmdlr.Shell3D):
 
         return [lower_face]+[upper_face]+lateral_faces
 
-    def MPLPlot(self, ax=None):
+    def plot(self, ax=None):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
         for contour in [self.outer_contour2d]+self.inner_contours2d:
             for primitive in contour.primitives:
-                primitive.MPLPlot(ax)
+                primitive.plot(ax)
         ax.margins(0.1)
         return ax
 
@@ -474,7 +470,7 @@ class ExtrudedProfile(volmdlr.Shell3D):
                           extrusion_vector)
 
 
-class RevolvedProfile(volmdlr.Shell3D):
+class RevolvedProfile(volmdlr.shells.Shell3D):
     """
 
     """
@@ -490,7 +486,7 @@ class RevolvedProfile(volmdlr.Shell3D):
         self.plane_origin = plane_origin
         self.x = x
         self.y = y
-        self.contour3d = self.contour2d.To3D(plane_origin, x, y)
+        self.contour3d = self.contour2d.to_3d(plane_origin, x, y)
 
         faces = self.shell_faces()
         volmdlr.Shell3D.__init__(self, faces, color=color,
@@ -505,11 +501,11 @@ class RevolvedProfile(volmdlr.Shell3D):
                     
         return faces
 
-    def MPLPlot(self, ax=None):
+    def plot(self, ax=None):
         if ax is None:
             fig, ax = plt.subplots()
         for contour in self.contours3D:
-            contour.MPLPlot(ax)
+            contour.plot(ax)
 
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive'+str(ip)
@@ -737,7 +733,7 @@ class HollowCylinder(Cylinder):
         l4 = volmdlr.LineSegment2D(p4, p1)
         contour = volmdlr.Contour2D([l1, l2, l3, l4])
         y = axis.RandomUnitNormalVector()
-        # contour.MPLPlot()
+        # contour.plot()
         RevolvedProfile.__init__(self, position, axis, y, contour, position, axis,
                                  color=color, alpha=alpha, name=name)
 
@@ -813,62 +809,7 @@ class HollowCylinder(Cylinder):
             self.axis = axis
 
 
-class HelicalExtrudedProfile(volmdlr.Primitive3D):
-    """
-
-    """
-    def __init__(self, plane_origin, x, y, axis_point,axis, pitch,
-                 outer_contour2d, inner_contours2d=None, name=''):
-        volmdlr.Primitive3D.__init__(self, name)
-        if inner_contours2d is not None:
-            self.inner_contours2d = inner_contours2d
-        else:
-            self.inner_contours2d = []
-            
-        self.outer_contour2d = outer_contour2d
-        self.axis_point=axis_point
-        self.axis=axis
-        self.pitch=pitch
-
-        self.inner_contours3d=[c.To3D(plane_origin,x,y) for c in self.inner_contours2d]
-        self.outer_contour3d=outer_contour2d.To3D(plane_origin,x,y)
-
-
-    def FreeCADExport(self,ip,ndigits=3):
-        name='primitive{}'.format(ip)
-        s="E = []\n"
-        for icontour, contour in enumerate(self.outer_contour3d.edges):
-            s += contour.FreeCADExport('L_{}'.format(icontour))
-            s += 'E.append(Part.Edge(L_{}))\n'.format(icontour)
-        s += 'W = Part.Wire(E[:])\n'
-
-#        a1,a2,a3=self.axis
-        ap1, ap2, ap3 = self.axis_point
-        ap1 = round(ap1*1000, ndigits)
-        ap2 = round(ap2*1000, ndigits)
-        ap3 = round(ap3*1000, ndigits)
-
-        width = self.axis.Norm()*1000
-        direction = bool(self.pitch < 0)
-        pitch = round(abs(self.pitch)*1000, ndigits)
-        s += "helix = Part.makeHelix({}, {}, 50., 0, {})\n".format(pitch, width, direction)
-        s += "helix.translate(fc.Vector({},{},{}))\n".format(ap1, ap2, ap3)
-
-        s += '{} = helix.makePipeShell([W],True,True)\n'.format(name)
-        for ic, contour in enumerate(self.inner_contours3d):
-            s += "Ei=[]\n"
-            s += "helix2 = Part.makeHelix({}, {}, 50., 0, {})\n".format(pitch,1.01*width+pitch,direction)
-            s += "helix2.translate(fc.Vector({},{},{}))\n".format(ap1,ap2,ap3-pitch)
-            for ip, primitive in enumerate(contour.basis_primitives):
-                s += primitive.FreeCADExport('L_{}_{}'.format(ic,ip))
-                s += 'Ei.append(Part.Edge(L_{}_{}))\n'.format(ic,ip)
-            s+= 'Wi = Part.Wire(Ei[:])\n'
-            s+= "{} = {}.cut(helix2.makePipeShell([Wi],True,True))\n".format(name,name)
-
-        return s
-
-
-class Sweep(volmdlr.Shell3D):
+class Sweep(volmdlr.shells.Shell3D):
     """
     Sweep a 2D contour along a Wire3D
     """
@@ -893,7 +834,7 @@ class Sweep(volmdlr.Shell3D):
             if normal is None:
                 normal = tangent.deterministic_unit_normal_vector()
             n2 = tangent.Cross(normal)
-            contour3d = self.contour2d.To3D(wire_primitive.start,
+            contour3d = self.contour2d.to_3d(wire_primitive.start,
                                             normal,
                                             n2)
 
@@ -921,22 +862,6 @@ class Sweep(volmdlr.Shell3D):
 
         return faces
 
-    # def FreeCADExport(self, ip, ndigits=3):
-    #     name = 'primitive{}'.format(ip)
-    #     s = "E = []\n"
-    #     # for icontour, contour in enumerate(self.contour3d.edges):
-    #     #     s += contour.FreeCADExport('L_{}'.format(icontour))
-    #     #     s += 'E.append(Part.Edge(L_{}))\n'.format(icontour)
-    #     # s += 'contour = Part.Wire(E[:])\n'
-
-    #     # s += "E=[]\n"
-    #     # for iwire, wire in enumerate(self.wire3d.edges):
-    #     #     s += wire.FreeCADExport('L_{}'.format(iwire))
-    #     #     s += 'E.append(Part.Edge(L_{}))\n'.format(iwire)
-    #     # s += 'wire = Part.Wire(E[:])\n'
-
-    #     # s += '{} = wire.makePipeShell([contour],True, True)\n'.format(name)
-    #     return s
 
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -955,46 +880,6 @@ class Sweep(volmdlr.Shell3D):
         new_contour2d = self.contour2d.copy()
         new_wire3d = self.wire3d.copy()
         return Sweep(new_contour2d, new_wire3d, color=self.color, alpha=self.alpha, name=self.name)
-
-class Cut(volmdlr.Primitive3D):
-    """
-    Cut primitive 1 by primitive 2
-    """
-    def __init__(self,primitive,cut_primitives,name=''):
-        volmdlr.Primitive3D.__init__(self,name)
-        self.primitive=primitive
-        self.cut_primitives = cut_primitives
-
-
-    def FreeCADExport(self,ip):
-        name = 'primitive{}'.format(ip)
-
-        s = self.primitive.FreeCADExport('{}'.format(ip))
-        for icp, cut_primitive in enumerate(self.cut_primitives):
-            s += cut_primitive.FreeCADExport('{}_{}'.format(ip, icp))
-            s += "{} = {}.cut({}_{})\n".format(name, name, name, icp)
-
-        return s
-
-class Fuse(volmdlr.Primitive3D):
-    """
-    Fuse primitives
-    """
-    def __init__(self, primitives, name=''):
-        volmdlr.Primitive3D.__init__(self, name)
-        self.primitives = primitives
-
-
-    def FreeCADExport(self,ip):
-        name = 'primitive{}'.format(ip)
-
-
-        s = self.primitives[0].FreeCADExport(ip)
-        for primitive in self.primitives[1:]:
-            s += primitive.FreeCADExport('{}_0'.format(ip))
-            s += "{} = {}.fuse({}_0)\n".format(name,name,name)
-
-        return s
     
     
 # class Sphere(volmdlr.Primitive3D):
@@ -1016,7 +901,7 @@ class Sphere(RevolvedProfile):
         
         contour = volmdlr.Contour2D([volmdlr.Arc2D(s, i , e), volmdlr.LineSegment2D(s, e)])
         # fig, ax = plt.subplots()
-        # c.MPLPlot(ax=ax)
+        # c.plot(ax=ax)
         
         # contour = volmdlr.Contour2D([c])
         axis = volmdlr.X3D
@@ -1081,7 +966,7 @@ class Measure3D(volmdlr.edges.Line3D):
         return s
 
 
-class BSplineExtrusion(volmdlr.Primitive3D):
+class BSplineExtrusion(volmdlr.core.Primitive3D):
 
     def __init__(self, obj, vectorextru, name=''):
         self.obj = obj

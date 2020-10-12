@@ -14,7 +14,7 @@ import volmdlr.wires
 import volmdlr.primitives2d
 import volmdlr.primitives3d
 
-class Surface2D(volmdlr.Primitive2D):
+class Surface2D(volmdlr.core.Primitive2D):
     """
     A surface bounded by an outer contour
     """
@@ -137,18 +137,18 @@ class Plane3D(Surface3D):
         """
         vector1 = point2 - point1
         vector2 = point3 - point1
-        vector1.Normalize()
-        vector2.Normalize()
-        normal = vector1.Cross(vector2)
-        normal.Normalize()
-        vector = normal.Cross(vector1)
-        frame = volmdlr.Frame3D(point1, vector1, normal.Cross(vector1), normal)
+        vector1.normalize()
+        vector2.normalize()
+        normal = vector1.cross(vector2)
+        normal.normalize()
+        vector = normal.cross(vector1)
+        frame = volmdlr.Frame3D(point1, vector1, normal.cross(vector1), normal)
         return cls(frame)
 
     @classmethod
     def from_normal(cls, point, normal):
         v1 = normal.deterministic_unit_normal_vector()
-        v2 = v1.Cross(normal)
+        v2 = v1.cross(normal)
         return cls(volmdlr.Frame3D(point, v1, v2, normal))
 
     @classmethod
@@ -170,14 +170,14 @@ class Plane3D(Surface3D):
 
             origin = volmdlr.Point3D(points[0].vector)
             vector1 = volmdlr.Vector3D(points[1] - origin)
-            vector1.Normalize()
+            vector1.normalize()
             vector2_min = volmdlr.Vector3D(points[2] - origin)
-            vector2_min.Normalize()
-            dot_min = abs(vector1.Dot(vector2_min))
+            vector2_min.normalize()
+            dot_min = abs(vector1.dot(vector2_min))
             for point in points[3:]:
                 vector2 = volmdlr.Vector3D(point - origin)
-                vector2.Normalize()
-                dot = abs(vector1.Dot(vector2))
+                vector2.normalize()
+                dot = abs(vector1.dot(vector2))
                 if dot < dot_min:
                     vector2_min = vector2
                     dot_min = dot
@@ -185,7 +185,7 @@ class Plane3D(Surface3D):
                                      vector2_min + origin)
 
     def point_on_plane(self, point):
-        if math.isclose(self.frame.w.Dot(point - self.frame.origin), 0,
+        if math.isclose(self.frame.w.dot(point - self.frame.origin), 0,
                         abs_tol=1e-6):
             return True
         return False
@@ -193,20 +193,20 @@ class Plane3D(Surface3D):
     def line_intersections(self, line):
         u = line.points[1] - line.points[0]
         w = line.points[0] - self.frame.origin
-        if math.isclose(self.frame.w.Dot(u), 0, abs_tol=1e-08):
+        if math.isclose(self.frame.w.dot(u), 0, abs_tol=1e-08):
             return []
-        intersection_abscissea = - self.frame.w.Dot(w) / self.frame.w.Dot(u)
+        intersection_abscissea = - self.frame.w.dot(w) / self.frame.w.dot(u)
         return [line.points[0] + intersection_abscissea * u]
 
     def linesegment_intersection(self, linesegment, abscissea=False):
         u = linesegment.points[1] - linesegment.points[0]
         w = linesegment.points[0] - self.frame.origin
-        normalDotu = self.frame.w.Dot(u)
-        if math.isclose(normalDotu, 0, abs_tol=1e-08):
+        normaldotu = self.frame.w.dot(u)
+        if math.isclose(normaldotu, 0, abs_tol=1e-08):
             if abscissea:
                 return None, None
             return None
-        intersection_abscissea = - self.frame.w.Dot(w) / normalDotu
+        intersection_abscissea = - self.frame.w.dot(w) / normaldotu
         if intersection_abscissea < 0 or intersection_abscissea > 1:
             if abscissea:
                 return None, None
@@ -221,11 +221,11 @@ class Plane3D(Surface3D):
         returns the a,b,c,d coefficient from equation ax+by+cz+d = 0
         """
         a, b, c = self.frame.w
-        d = -self.frame.origin.Dot(self.frame.w)
+        d = -self.frame.origin.dot(self.frame.w)
         return (a, b, c, d)
 
     def plane_intersection(self, other_plane):
-        line_direction = self.frame.w.Cross(other_plane.frame.w)
+        line_direction = self.frame.w.cross(other_plane.frame.w)
 
         if line_direction.Norm() < 1e-6:
             return None
@@ -273,7 +273,7 @@ class Plane3D(Surface3D):
                 self.origin = new_origin
                 self.vectors = [new_vector1, new_vector2]
                 self.normal = frame.Basis().OldCoordinates(self.normal)
-                self.normal.Normalize()
+                self.normal.normalize()
         if side == 'new':
             new_origin = frame.NewCoordinates(self.origin)
             new_vector1 = frame.Basis().NewCoordinates(self.vectors[0])
@@ -284,7 +284,7 @@ class Plane3D(Surface3D):
                 self.origin = new_origin
                 self.vectors = [new_vector1, new_vector2]
                 self.normal = frame.Basis().NewCoordinates(self.normal)
-                self.normal.Normalize()
+                self.normal.normalize()
 
     def copy(self):
         new_origin = self.origin.copy()
@@ -329,6 +329,13 @@ class Plane3D(Surface3D):
 
     def point3d_to_2d(self, point3d):
         return point3d.To2D(self.frame.origin, self.frame.u, self.frame.v)
+
+    def contour2d_to_3d(self, contour2d):
+        return contour2d.to_3d(self.frame.origin, self.frame.u, self.frame.v)
+
+    def contour3d_to_2d(self, contour3d):
+        return contour3d.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+
 
     def rectangular_cut(self, x1:float, x2:float,
                         y1:float, y2:float, name:str=''):
@@ -384,9 +391,9 @@ class CylindricalSurface3D(Surface3D):
     def from_step(cls, arguments, object_dict):
         frame3d = object_dict[arguments[1]]
         U, W = frame3d.v, -frame3d.u
-        U.Normalize()
-        W.Normalize()
-        V = W.Cross(U)
+        U.normalize()
+        W.normalize()
+        V = W.cross(U)
         frame_direct = volmdlr.Frame3D(frame3d.origin, U, V, W)
         radius = float(arguments[2]) / 1000
         return cls(frame_direct, radius, arguments[0][1:-1])
@@ -497,9 +504,9 @@ class ToroidalSurface3D(Surface3D):
     def from_step(cls, arguments, object_dict):
         frame3d = object_dict[arguments[1]]
         U, W = frame3d.v, -frame3d.u
-        U.Normalize()
-        W.Normalize()
-        V = W.Cross(U)
+        U.normalize()
+        W.normalize()
+        V = W.cross(U)
         frame_direct = volmdlr.Frame3D(frame3d.origin, U, V, W)
         rcenter = float(arguments[2]) / 1000
         rcircle = float(arguments[3]) / 1000
@@ -558,7 +565,7 @@ class ToroidalSurface3D(Surface3D):
                                       volmdlr.Surface2D(outer_contour, []),
                                     name)
 
-    def contour2d_to3d(self, contour2d):
+    def contour2d_to_3d(self, contour2d):
         edges3d = []
         # contour2d.MPLPlot()
         for edge in contour2d.primitives:
@@ -583,7 +590,7 @@ class ToroidalSurface3D(Surface3D):
 
         return volmdlr.Contour3D(edges3d)
 
-    def contour3d_to2d(self, contour3d, toroidalsurface3d):
+    def contour3d_to_2d(self, contour3d, toroidalsurface3d):
         frame = toroidalsurface3d.frame
         n = frame.w
         # center = frame.origin
@@ -876,9 +883,9 @@ class ConicalSurface3D(Surface3D):
     def from_step(cls, arguments, object_dict):
         frame3d = object_dict[arguments[1]]
         U, W = frame3d.v, frame3d.u
-        U.Normalize()
-        W.Normalize()
-        V = W.Cross(U)
+        U.normalize()
+        W.normalize()
+        V = W.cross(U)
         frame_direct = volmdlr.Frame3D(frame3d.origin, U, V, W)
         semi_angle = float(arguments[3])
         return cls(frame_direct, semi_angle, arguments[0][1:-1])
@@ -916,7 +923,7 @@ class ConicalSurface3D(Surface3D):
         return self.frame.OldCoordinates(new_point)
 
     def point3d_to_2d(self, point):
-        z = self.frame.w.Dot(point)
+        z = self.frame.w.dot(point)
         x, y = point.PlaneProjection(self.frame.origin, self.frame.u,
                                      self.frame.v)
         theta = math.atan2(y, x)
@@ -951,18 +958,18 @@ class SphericalSurface3D(Surface3D):
         self.radius = radius
         self.name = name
         V = frame.v
-        V.Normalize()
+        V.normalize()
         W = frame.w
-        W.Normalize()
+        W.normalize()
         self.plane = Plane3D(frame.origin, V, W)
 
     @classmethod
     def from_step(cls, arguments, object_dict):
         frame3d = object_dict[arguments[1]]
         U, W = frame3d.v, frame3d.u
-        U.Normalize()
-        W.Normalize()
-        V = W.Cross(U)
+        U.normalize()
+        W.normalize()
+        V = W.cross(U)
         frame_direct = volmdlr.Frame3D(frame3d.origin, U, V, W)
         radius = float(arguments[2]) / 1000
         return cls(frame_direct, radius, arguments[0][1:-1])
@@ -1484,7 +1491,7 @@ class PlaneFace3D(Face3D):
         """
         if outer_contour3d.__class__ == volmdlr.wires.Circle3D:
             u = outer_contour3d.normal.deterministic_unit_normal_vector()
-            v = outer_contour3d.normal.Cross(u)
+            v = outer_contour3d.normal.cross(u)
             plane3d = Plane3D(frame=volmdlr.Frame3D(outer_contour3d.center,
                                             u, v,
                                             outer_contour3d.normal))
@@ -1497,7 +1504,7 @@ class PlaneFace3D(Face3D):
             #       len(outer_contour3d.edges[0].points))
             plane3d = Plane3D.from_3_points(*points)
 
-        outer_contour2d = outer_contour3d.to_2d(plane3d)
+        outer_contour2d = plane3d.contour3d_to_2d(outer_contour3d)
 
         inner_contours2d = []
         for contour in inner_contours3d:
@@ -1886,12 +1893,12 @@ class CylindricalFace3D(Face3D):
             if arc.start.__class__ is volmdlr.Point2D:
                 u_g2d = Vector2D((arc.start - arc.center).vector)
                 u = u_g2d.To3D(center, frame.u, frame.v)
-                u.Normalize()
+                u.normalize()
             else:
                 u = Vector3D((point13d - center).vector)
-                u.Normalize()
-            v = normal.Cross(u)
-            v.Normalize()
+                u.normalize()
+            v = normal.cross(u)
+            v.normalize()
 
             point_last = arc.end
             if point_last.__class__ is volmdlr.Point3D:
@@ -2280,16 +2287,16 @@ class CylindricalFace3D(Face3D):
 
         w = other_cyl.center - self.center
 
-        n1n1, n1u1, n1v1, n1n2, n1u2, n1v2 = n1.Dot(n1), n1.Dot(u1), n1.Dot(
-            v1), n1.Dot(n2), n1.Dot(u2), n1.Dot(v2)
-        u1u1, u1v1, u1n2, u1u2, u1v2 = u1.Dot(u1), u1.Dot(v1), u1.Dot(
-            n2), u1.Dot(u2), u1.Dot(v2)
-        v1v1, v1n2, v1u2, v1v2 = v1.Dot(v1), v1.Dot(n2), v1.Dot(u2), v1.Dot(v2)
-        n2n2, n2u2, n2v2 = n2.Dot(n2), n2.Dot(u2), n2.Dot(v2)
-        u2u2, u2v2, v2v2 = u2.Dot(u2), u2.Dot(v2), v2.Dot(v2)
+        n1n1, n1u1, n1v1, n1n2, n1u2, n1v2 = n1.dot(n1), n1.dot(u1), n1.dot(
+            v1), n1.dot(n2), n1.dot(u2), n1.dot(v2)
+        u1u1, u1v1, u1n2, u1u2, u1v2 = u1.dot(u1), u1.dot(v1), u1.dot(
+            n2), u1.dot(u2), u1.dot(v2)
+        v1v1, v1n2, v1u2, v1v2 = v1.dot(v1), v1.dot(n2), v1.dot(u2), v1.dot(v2)
+        n2n2, n2u2, n2v2 = n2.dot(n2), n2.dot(u2), n2.dot(v2)
+        u2u2, u2v2, v2v2 = u2.dot(u2), u2.dot(v2), v2.dot(v2)
 
-        w2, wn1, wu1, wv1, wn2, wu2, wv2 = w.Dot(w), w.Dot(n1), w.Dot(
-            u1), w.Dot(v1), w.Dot(n2), w.Dot(u2), w.Dot(v2)
+        w2, wn1, wu1, wv1, wn2, wu2, wv2 = w.dot(w), w.dot(n1), w.dot(
+            u1), w.dot(v1), w.dot(n2), w.dot(u2), w.dot(v2)
 
         # x = (theta1, h1, theta2, h2)
         def distance_squared(x):
@@ -2415,19 +2422,19 @@ class CylindricalFace3D(Face3D):
         pf3, _ = pf3_2d.To3D(origin, vx, vy), pf4_2d.To3D(origin, vx, vy)
 
         u, v = (pf3 - pf1), (pf2 - pf1)
-        u.Normalize()
-        v.Normalize()
+        u.normalize()
+        v.normalize()
 
         w = pf1 - self.center
 
-        n1n1, n1u1, n1v1, n1u, n1v = n1.Dot(n1), n1.Dot(u1), n1.Dot(
-            v1), n1.Dot(u), n1.Dot(v)
-        u1u1, u1v1, u1u, u1v = u1.Dot(u1), u1.Dot(v1), u1.Dot(u), u1.Dot(v)
-        v1v1, v1u, v1v = v1.Dot(v1), v1.Dot(u), v1.Dot(v)
-        uu, uv, vv = u.Dot(u), u.Dot(v), v.Dot(v)
+        n1n1, n1u1, n1v1, n1u, n1v = n1.dot(n1), n1.dot(u1), n1.dot(
+            v1), n1.dot(u), n1.dot(v)
+        u1u1, u1v1, u1u, u1v = u1.dot(u1), u1.dot(v1), u1.dot(u), u1.dot(v)
+        v1v1, v1u, v1v = v1.dot(v1), v1.dot(u), v1.dot(v)
+        uu, uv, vv = u.dot(u), u.dot(v), v.dot(v)
 
-        w2, wn1, wu1, wv1, wu, wv = w.Dot(w), w.Dot(n1), w.Dot(u1), w.Dot(
-            v1), w.Dot(u), w.Dot(v)
+        w2, wn1, wu1, wv1, wu, wv = w.dot(w), w.dot(n1), w.dot(u1), w.dot(
+            v1), w.dot(u), w.dot(v)
 
         # x = (h, theta, x, y)
         def distance_squared(x):
@@ -2544,7 +2551,7 @@ class ToroidalFace3D(Face3D):
         self.phi_min = phi_min
         self.phi_max = phi_max
 
-        # contours3d = [self.toroidalsurface3d.contour2d_to3d(c)\
+        # contours3d = [self.toroidalsurface3d.contour2d_to_3d(c)\
         #               for c in [outer_contour2d]+inners_contours2d]
 
         Face3D.__init__(self,
@@ -2611,16 +2618,16 @@ class ToroidalFace3D(Face3D):
 
         w = other_tore.center - self.center
 
-        n1n1, n1u1, n1v1, n1n2, n1u2, n1v2 = n1.Dot(n1), n1.Dot(u1), n1.Dot(
-            v1), n1.Dot(n2), n1.Dot(u2), n1.Dot(v2)
-        u1u1, u1v1, u1n2, u1u2, u1v2 = u1.Dot(u1), u1.Dot(v1), u1.Dot(
-            n2), u1.Dot(u2), u1.Dot(v2)
-        v1v1, v1n2, v1u2, v1v2 = v1.Dot(v1), v1.Dot(n2), v1.Dot(u2), v1.Dot(v2)
-        n2n2, n2u2, n2v2 = n2.Dot(n2), n2.Dot(u2), n2.Dot(v2)
-        u2u2, u2v2, v2v2 = u2.Dot(u2), u2.Dot(v2), v2.Dot(v2)
+        n1n1, n1u1, n1v1, n1n2, n1u2, n1v2 = n1.dot(n1), n1.dot(u1), n1.dot(
+            v1), n1.dot(n2), n1.dot(u2), n1.dot(v2)
+        u1u1, u1v1, u1n2, u1u2, u1v2 = u1.dot(u1), u1.dot(v1), u1.dot(
+            n2), u1.dot(u2), u1.dot(v2)
+        v1v1, v1n2, v1u2, v1v2 = v1.dot(v1), v1.dot(n2), v1.dot(u2), v1.dot(v2)
+        n2n2, n2u2, n2v2 = n2.dot(n2), n2.dot(u2), n2.dot(v2)
+        u2u2, u2v2, v2v2 = u2.dot(u2), u2.dot(v2), v2.dot(v2)
 
-        w2, wn1, wu1, wv1, wn2, wu2, wv2 = w.Dot(w), w.Dot(n1), w.Dot(
-            u1), w.Dot(v1), w.Dot(n2), w.Dot(u2), w.Dot(v2)
+        w2, wn1, wu1, wv1, wn2, wu2, wv2 = w.dot(w), w.dot(n1), w.dot(
+            u1), w.dot(v1), w.dot(n2), w.dot(u2), w.dot(v2)
 
         # x = (phi1, theta1, phi2, theta2)
         def distance_squared(x):
@@ -2764,16 +2771,16 @@ class ToroidalFace3D(Face3D):
 
         w = self.center - cyl.center
 
-        n1n1, n1u1, n1v1, n1n2, n1u2, n1v2 = n1.Dot(n1), n1.Dot(u1), n1.Dot(
-            v1), n1.Dot(n2), n1.Dot(u2), n1.Dot(v2)
-        u1u1, u1v1, u1n2, u1u2, u1v2 = u1.Dot(u1), u1.Dot(v1), u1.Dot(
-            n2), u1.Dot(u2), u1.Dot(v2)
-        v1v1, v1n2, v1u2, v1v2 = v1.Dot(v1), v1.Dot(n2), v1.Dot(u2), v1.Dot(v2)
-        n2n2, n2u2, n2v2 = n2.Dot(n2), n2.Dot(u2), n2.Dot(v2)
-        u2u2, u2v2, v2v2 = u2.Dot(u2), u2.Dot(v2), v2.Dot(v2)
+        n1n1, n1u1, n1v1, n1n2, n1u2, n1v2 = n1.dot(n1), n1.dot(u1), n1.dot(
+            v1), n1.dot(n2), n1.dot(u2), n1.dot(v2)
+        u1u1, u1v1, u1n2, u1u2, u1v2 = u1.dot(u1), u1.dot(v1), u1.dot(
+            n2), u1.dot(u2), u1.dot(v2)
+        v1v1, v1n2, v1u2, v1v2 = v1.dot(v1), v1.dot(n2), v1.dot(u2), v1.dot(v2)
+        n2n2, n2u2, n2v2 = n2.dot(n2), n2.dot(u2), n2.dot(v2)
+        u2u2, u2v2, v2v2 = u2.dot(u2), u2.dot(v2), v2.dot(v2)
 
-        w2, wn1, wu1, wv1, wn2, wu2, wv2 = w.Dot(w), w.Dot(n1), w.Dot(
-            u1), w.Dot(v1), w.Dot(n2), w.Dot(u2), w.Dot(v2)
+        w2, wn1, wu1, wv1, wn2, wu2, wv2 = w.dot(w), w.dot(n1), w.dot(
+            u1), w.dot(v1), w.dot(n2), w.dot(u2), w.dot(v2)
 
         # x = (theta, h, phi2, theta2)
         def distance_squared(x):
@@ -2907,8 +2914,8 @@ class ToroidalFace3D(Face3D):
         pf3, _ = pf3_2d.To3D(origin, vx, vy), pf4_2d.To3D(origin, vx, vy)
 
         u, v = (pf3 - pf1), (pf2 - pf1)
-        u.Normalize()
-        v.Normalize()
+        u.normalize()
+        v.normalize()
 
         R1, r1 = self.rcenter, self.rcircle
         min_phi1, min_theta1, max_phi1, max_theta1 = self.minimum_maximum_tore(
@@ -2922,14 +2929,14 @@ class ToroidalFace3D(Face3D):
 
         w = self.center - pf1
 
-        n1n1, n1u1, n1v1, n1u, n1v = n1.Dot(n1), n1.Dot(u1), n1.Dot(
-            v1), n1.Dot(u), n1.Dot(v)
-        u1u1, u1v1, u1u, u1v = u1.Dot(u1), u1.Dot(v1), u1.Dot(u), u1.Dot(v)
-        v1v1, v1u, v1v = v1.Dot(v1), v1.Dot(u), v1.Dot(v)
-        uu, uv, vv = u.Dot(u), u.Dot(v), v.Dot(v)
+        n1n1, n1u1, n1v1, n1u, n1v = n1.dot(n1), n1.dot(u1), n1.dot(
+            v1), n1.dot(u), n1.dot(v)
+        u1u1, u1v1, u1u, u1v = u1.dot(u1), u1.dot(v1), u1.dot(u), u1.dot(v)
+        v1v1, v1u, v1v = v1.dot(v1), v1.dot(u), v1.dot(v)
+        uu, uv, vv = u.dot(u), u.dot(v), v.dot(v)
 
-        w2, wn1, wu1, wv1, wu, wv = w.Dot(w), w.Dot(n1), w.Dot(u1), w.Dot(
-            v1), w.Dot(u), w.Dot(v)
+        w2, wn1, wu1, wv1, wu, wv = w.dot(w), w.dot(n1), w.dot(u1), w.dot(
+            v1), w.dot(u), w.dot(v)
 
         # x = (x, y, phi1, theta1)
         def distance_squared(x):

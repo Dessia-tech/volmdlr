@@ -23,9 +23,6 @@ cdef (double, double) Csub2D(double u1, double u2,
                              double v1, double v2):
     return (u1-v1, u2-v2)
 
-def sub2D(vector1, vector2):
-    return Csub2D(vector1.x, vector1.y,
-                  vector2.x, vector2.y)
 
 # =============================================================================
 
@@ -33,17 +30,14 @@ cdef (double, double) Cadd2D(double u1, double u2,
                              double v1, double v2,):
     return (u1+v1, u2+v2)
 
-def add2D(vector1, vector2):
-    return Cadd2D(vector1.x, vector1.y,
-                  vector2.x, vector2.y)
 
 # =============================================================================
 
 cdef (double, double) Cmul2D(double u1, double u2, double value):
     return (u1*value, u2*value)
 
-def mul2D(vector, value):
-    return Cmul2D(vector.x, vector.y, value)
+#def mul2D(vector, value):
+#    return Cmul2D(vector.x, vector.y, value)
 
 # =============================================================================
 
@@ -51,17 +45,17 @@ cdef double CVector2DDot(double u1, double u2,
                          double v1, double v2):
     return u1*v1 + u2*v2
 
-def Vector2DDot(vector1, vector2):
-    return CVector2DDot(vector1.x, vector1.y,
-                        vector2.x, vector2.y)
+#def Vector2DDot(vector1, vector2):
+#    return CVector2DDot(vector1.x, vector1.y,
+#                        vector2.x, vector2.y)
 
 # =============================================================================
 
-cdef double CVector2DNorm(double u1, double u2):
+cdef double CVector2Dnorm(double u1, double u2):
     return (u1*u1 + u2*u2)**0.5
 
-def Vector2DNorm(vector):
-    return CVector2DNorm(vector.x, vector.y)
+#def Vector2Dnorm(vector):
+#    return CVector2Dnorm(vector.x, vector.y)
 
 # =============================================================================
 
@@ -69,9 +63,9 @@ cdef (double, double, double) Csub3D(double u1, double u2, double u3,
                                      double v1, double v2, double v3):
     return (u1-v1, u2-v2, u3-v3)
 
-def sub3D(vector1, vector2):
-    return Csub3D(vector1.x, vector1.y, vector1.z,
-                  vector2.x, vector2.y, vector2.z)
+#def sub3D(vector1, vector2):
+#    return Csub3D(vector1.x, vector1.y, vector1.z,
+#                  vector2.x, vector2.y, vector2.z)
 
 # =============================================================================
 
@@ -79,9 +73,9 @@ cdef (double, double, double) Cadd3D(double u1, double u2, double u3,
                                      double v1, double v2, double v3):
     return (u1+v1, u2+v2, u3+v3)
 
-def add3D(vector1, vector2):
-    return Cadd3D(vector1.x, vector1.y, vector1.z,
-                  vector2.x, vector2.y, vector2.z)
+#def add3D(vector1, vector2):
+#    return Cadd3D(vector1.x, vector1.y, vector1.z,
+#                  vector2.x, vector2.y, vector2.z)
 
 # =============================================================================
 
@@ -89,8 +83,8 @@ cdef (double, double, double) Cmul3D(double u1, double u2, double u3,
                                      double value):
     return (u1*value, u2*value, u3*value)
 
-def mul3D(vector, value):
-    return Cmul3D(vector.x, vector.y, vector.z, value)
+#def mul3D(vector, value):
+#    return Cmul3D(vector.x, vector.y, vector.z, value)
 
 # =============================================================================
 
@@ -98,28 +92,28 @@ cdef double CVector3DDot(double u1, double u2, double u3,
                          double v1, double v2, double v3):
     return u1*v1 + u2*v2 + u3*v3
 
-def Vector3DDot(vector1, vector2):
-    return CVector3DDot(vector1.x, vector1.y, vector1.z,
-                        vector2.x, vector2.y, vector2.z)
+#def Vector3DDot(vector1, vector2):
+#    return CVector3DDot(vector1.x, vector1.y, vector1.z,
+#                        vector2.x, vector2.y, vector2.z)
 
 # =============================================================================
 
-cdef double CVector3DNorm(double u1, double u2, double u3):
+cdef double CVector3Dnorm(double u1, double u2, double u3):
     return (u1*u1 + u2*u2 + u3*u3)**0.5
 
-def Vector3DNorm(vector):
-    return CVector3DNorm(vector.x, vector.y, vector.z)
+#def Vector3Dnorm(vector):
+#    return CVector3Dnorm(vector.x, vector.y, vector.z)
 
 
 # =============================================================================
 
-cdef (double, double, double) C_vector3D_cross(double u1, double u2, double u3,
+cdef (double, double, double) CVector3D_cross(double u1, double u2, double u3,
                                                double v1, double v2, double v3):
     return (u2*v3 - u3*v2, u3*v1 - u1*v3, u1*v2 - u2*v1)
 
-def vector3D_cross(vector1, vector2):
-    return C_vector3D_cross(vector1.x, vector1.y, vector1.z,
-                            vector2.x, vector2.y, vector2.z)
+#def vector3D_cross(vector1, vector2):
+#    return C_vector3D_cross(vector1.x, vector1.y, vector1.z,
+#                            vector2.x, vector2.y, vector2.z)
 
 
 # =============================================================================
@@ -146,7 +140,7 @@ cdef (double, double, double) C_vector3D_rotation(double vx, double vy, double v
                                          axis_x, axis_y, axis_z)
                                  )
     
-    rv3_x, rv3_y, rv3_z = C_vector3D_cross(axis_x, axis_y, axis_z,
+    rv3_x, rv3_y, rv3_z = CVector3D_cross(axis_x, axis_y, axis_z,
                                            ux, uy, uz)
     
     return (rv1_x + rv2_x + rv3_x*sin_angle + center_x,
@@ -173,12 +167,12 @@ cdef (double, double, double) C_matrix_vector_multiplication3(double M11, double
 
 cdef (double, double, double,
       double, double, double,
-      double, double, double) C_matrix_multiplication3(double A11, double A12, double A13,
-                                                       double A21, double A22, double A23,
-                                                       double A31, double A32, double A33,
-                                                       double B11, double B12, double B13,
-                                                       double B21, double B22, double B23,
-                                                       double B31, double B32, double B33):
+      double, double, double) Cmatrix_multiplication3(double A11, double A12, double A13,
+                                                      double A21, double A22, double A23,
+                                                      double A31, double A32, double A33,
+                                                      double B11, double B12, double B13,
+                                                      double B21, double B22, double B23,
+                                                      double B31, double B32, double B33):
 
     return (A11*B11 + A12*B21 + A13*B31,
             A11*B12 + A12*B22 + A13*B32,
@@ -193,7 +187,7 @@ cdef (double, double, double,
 
 # =============================================================================
 
-def PolygonPointBelongs(point, points):
+def polygon_point_belongs(point, points):
 
     cdef int i
     cdef int n = len(points)
@@ -221,10 +215,13 @@ cdef (double, (double, double)) CLineSegment2DPointDistance((double, double) p1,
     cdef double t
     cdef (double, double) u, projection
 
-    u = sub2D(p2, p1)
-    t = max(0, min(1, Vector2DDot(sub2D(point, p1), u) / Vector2DNorm(u)**2))
-    projection = add2D(p1, mul2D(u, t))
-    return Vector2DNorm(sub2D(projection, point)), projection
+    u = p2 - p1
+    ppx, ppy = Csub2D(point.x, point.y, p1.x, p1.y)
+    t = max(0, min(1, CVector2DDot(ppx, ppy, u.x, u.y) / CVector2Dnorm(u.x, u.y)**2))
+    vx, vy  = Cmul2D(u.x, u.y, t)
+    projection = Cadd2D(p1.x, p1.y, vx, vy)
+    ppx, ppy = projection-point
+    return CVector2Dnorm(ppx, ppy), projection
 
 def LineSegment2DPointDistance(points, point):
     return CLineSegment2DPointDistance(tuple(points[0]), tuple(points[1]), tuple(point))
@@ -250,13 +247,27 @@ class Vector(DessiaObject):
     Abstract class of vector
     """
     def __setitem__(self, key, item):
-        self.vector[key] = item
+        if key == 0:
+            self.x = item
+        elif key == 1:
+            self.y = item
+        elif key == 2:
+            self.z = item
+        else:
+            raise IndexError
 
     def __getitem__(self, key):
-        return self.vector[key]
+        if key == 0:
+            return self.x
+        elif key == 1:
+            return self.y
+        elif key == 2:
+            return self.z
+        else:
+            raise IndexError
 
     def __repr__(self):
-        return '{}: {}'.format(self.__class__.__name__, self.vector)
+        return '{}: {}'.format(self.__class__.__name__, self)
 
     def __radd__(self, other_vector):
         return self + other_vector
@@ -271,23 +282,15 @@ class Vector(DessiaObject):
         return self / value
 
     def __lt__(self, other_vector):
-        return self.Norm() < other_vector.Norm()
+        return self.norm() < other_vector.norm()
 
     def __le__(self, other_vector):
-        return self.Norm() <= other_vector.Norm()
+        return self.norm() <= other_vector.norm()
 
-    # def __ne__(self, other_vector):
-    #     return not npy.allclose(self.vector, other_vector.vector)
-
-    def to_numpy(self):
-        return npy.array(self.vector)
-
-    def copy(self):
-        return self.__class__(self.vector)
 
     def is_colinear_to(self, other_vector):
-        return math.isclose(abs(self.Dot(other_vector)),
-                            self.Norm()*other_vector.Norm(),
+        return math.isclose(abs(self.dot(other_vector)),
+                            self.norm()*other_vector.norm(),
                             abs_tol=1e-9)
 
     @classmethod
@@ -301,131 +304,130 @@ class Vector(DessiaObject):
         return point
 
 class Vector2D(Vector):
-    def __init__(self, x, y, name=''):
+    def __init__(self, x:float, y:float, name=''):
         self.x = x
         self.y = y
         self.name = name
 
     def __add__(self, other_vector):
-        return Vector2D(add2D(self, other_vector))
+        return Vector2D(*Cadd2D(self.x, self.y,
+                               other_vector.x, other_vector.y))
 
     def __neg__(self):
-        return Vector2D((-self.x, -self.y))
+        return Vector2D(-self.x, -self.y)
 
     def __sub__(self, other_vector):
-        return Vector2D(sub2D(self.vector, other_vector.vector))
+        return Vector2D(*Csub2D(self.x, self.y,
+                                other_vector.x, other_vector.y))
 
     def __mul__(self, value:float):
-        return Vector2D(mul2D(self.vector, value))
+        return Vector2D(*Cmul2D(self.x, self.y, value))
 
     def __truediv__(self, value:float):
         if value == 0:
             raise ZeroDivisionError
-        return Vector2D((self.vector.x / value,
-                         self.vector.y / value))
+        return Vector2D(self.x / value,
+                        self.y / value)
 
     def __round__(self, ndigits:int=6):
-        return self.__class__((round(self.vector.x, ndigits),
-                               round(self.vector.y, ndigits)))
+        return self.__class__(round(self.x, ndigits),
+                              round(self.y, ndigits))
 
     def __hash__(self):
-#        return int(1000*(self.vector.x+self.vector.y))
-        return int(round(1e6*(self.vector.x+self.vector.y)))
+        return int(round(1e6*(self.x+self.y)))
 
     def __eq__(self, other_vector):
-
         if other_vector.__class__.__name__ not in ['Vector2D', 'Point2D']:
             return False
-        return math.isclose(self.vector.x, other_vector.vector.x, abs_tol=1e-06) \
-        and math.isclose(self.vector.y, other_vector.vector.y, abs_tol=1e-06)
+        return math.isclose(self.x, other_vector.x, abs_tol=1e-06) \
+        and math.isclose(self.y, other_vector.y, abs_tol=1e-06)
 
     def norm(self):
         """
         :returns: norm of vector
         """
-        return Vector2DNorm(self.vector)
+        return CVector2Dnorm(self.x, self.y)
 
     def normalize(self):
         """
-        flize the vector modifying its coordinates
+        normalize the vector modifying its coordinates in place
         """
-        n = self.Norm()
+        n = self.norm()
         if math.isclose(n, 0, abs_tol=1e-9):
             raise ZeroDivisionError
 
-        self.vector.x /= n
-        self.vector.y /= n
+        self.x /= n
+        self.y /= n
 
     def dot(self, other_vector):
-        v1, v2 = self.vector
-        ov1, ov2 = other_vector.vector
-        return CVector2DDot(v1, v2, ov1, ov2)
+        return CVector2DDot(self.x,
+                            self.y,
+                            other_vector.x,
+                            other_vector.y)
 
     def cross(self, other_vector):
-        u1, u2 = self.vector
-        v1, v2 = other_vector.vector
-        return u1*v2 - u2*v1
+        return self.x*other_vector.y - self.y*other_vector.x
 
     def point_distance(self, point2):
-        return (self-point2).Norm()
+        return (self-point2).norm()
 
 
     def rotation(self, center, angle, copy=True):
         u = self - center
-        vector2 = [math.cos(angle)*u[0] - math.sin(angle)*u[1] + center[0],
-                   math.sin(angle)*u[0] + math.cos(angle)*u[1] + center[1]]
-#        vector2 = (npy.dot(npy.array([[math.cos(angle), -math.sin(angle)],
-#                                      [math.sin(angle), math.cos(angle)]]),
-#                           (self.vector-center.vector))
-#                   + center.vector)
+        v2x = math.cos(angle)*u[0] - math.sin(angle)*u[1] + center[0]
+        v2y = math.sin(angle)*u[0] + math.cos(angle)*u[1] + center[1]
         if copy:
-            return self.__class__(vector2)
+            return self.__class__(v2x, v2y)
         else:
-            self.vector = vector2
+            self.x = v2x
+            self.y = v2y
 
     def translation(self, offset, copy=True):
         """
         :param offset: an other Vector2D
         """
-        vector2 = [self.vector.x + offset[0],
-                   self.vector.y + offset[1]]
+        v2x = self.x + offset[0]
+        v2y = self.y + offset[1]
         if copy:
-            return self.__class__(vector2)
+            return self.__class__(v2x, v2y)
         else:
-            self.vector = vector2
+            self.x = v2x
+            self.y = v2y
 
     def frame_mapping(self, frame, side, copy=True):
-        # """
-        # side = 'old' or 'new'
-        # """
+        """
+        side = 'old' or 'new'
+        """
         if side == 'old':
-            new_vector = frame.OldCoordinates(self)
+            new_vector = frame.old_coordinates(self)
             if copy:
                 return new_vector
             else:
-                self.vector = new_vector.vector
+                self.x = new_vector.x
+                self.y = new_vector.y
 
         if side == 'new':
-            new_vector = frame.NewCoordinates(self)
+            new_vector = frame.new_coordinates(self)
             if copy:
                 return new_vector
             else:
-                self.vector = new_vector.vector
+                self.x = new_vector.x
+                self.y = new_vector.y
 
     def to3d(self, plane_origin, vx, vy):
-        return Vector3D([plane_origin.vector.x + vx.vector.x*self.vector.x + vy.vector.x*self.vector.y,
-                         plane_origin.vector.y + vx.vector.y*self.vector.x + vy.vector.y*self.vector.y,
-                         plane_origin.vector.z + vx.vector.z*self.vector.x + vy.vector.z*self.vector.y,
-                         ])
+        return Vector3D(plane_origin.x + vx.x*self.x + vy.x*self.y,
+                        plane_origin.y + vx.y*self.x + vy.y*self.y,
+                        plane_origin.z + vx.z*self.x + vy.z*self.y,
+                        )
 
     def normal_vector(self, unit=False):
-        n = Vector2D((-self.vector.y, self.vector.x))
+        n = Vector2D(-self.y, self.x)
         if unit:
-            n.Normalize()
+            n.normalize()
         return n
     
     def deterministic_unit_normal_vector(self):
-        return self.NormalVector(unit=True)
+        return self.normal_vector(unit=True)
 
     @classmethod
     def random(cls, xmin, xmax, ymin, ymax):
@@ -441,17 +443,16 @@ class Vector2D(Vector):
 
     def plot(self, amplitude=0.5, width=None, head_width=None, origin=None, ax=None, color='k', line=False, label=None, normalize=False):
         if origin is None:
-            origin = Vector2D((0., 0.))
+            origin = Vector2D(0., 0.)
 
         if ax is None:
             fig, ax = plt.subplots()
         else:
             fig = ax.figure
 
-#        if self.vector == [0., 0.]:
-        if math.isclose(self.Norm(), 0, abs_tol=1e-9):
-            point = Point2D(origin.vector)
-            point.MPLPlot(ax=ax, color=color)
+        if math.isclose(self.norm(), 0, abs_tol=1e-9):
+            point = origin.copy()
+            point.plot(ax=ax, color=color)
             return fig, ax
         
         if width is None:
@@ -461,16 +462,17 @@ class Vector2D(Vector):
         
         if not normalize:
             ax.add_patch(FancyArrow(origin[0], origin[1],
-                                    self.vector.x*amplitude, self.vector.y*amplitude,
+                                    self.x*amplitude, self.y*amplitude,
                                     width=width,
                                     head_width=head_width,
                                     length_includes_head=True,
                                     color=color))
         else:
             normalized_vector = self.copy()
-            normalized_vector.Normalize()
+            normalized_vector.normalize()
             ax.add_patch(FancyArrow(origin[0], origin[1],
-                                    normalized_vector.x*amplitude, normalized_vector.y*amplitude,
+                                    normalized_vector.x*amplitude,
+                                    normalized_vector.y*amplitude,
                                     width=width,
                                     head_width=head_width,
                                     length_includes_head=True,
@@ -488,7 +490,7 @@ class Vector2D(Vector):
             ax.plot([p3[0], p4[0]], [p3[1], p4[1]], style, linestyle=linestyle)
 
         if label is not None:
-            ax.text(*(origin+self*amplitude).vector, label)
+            ax.text(*(origin+self*amplitude), label)
 
         return fig, ax
     
@@ -498,32 +500,32 @@ Y2D = Vector2D(0, 1)
 
 
 class Point2D(Vector2D):
-    def __init__(self, vector:Tuple[float, float], name=''):
-        Vector2D.__init__(self, vector, name)
+    def __init__(self, x:float, y: float, name: str=''):
+        Vector2D.__init__(self, x=x, y=y, name=name)
 
     def __add__(self, other_vector):
-        return Point2D(add2D(self, other_vector))
+        return Point2D(*Cadd2D(self.x, self.y, other_vector.x, other_vector.y))
 
     def __neg__(self):
-        return Point2D((-self.x, -self.y))
+        return Point2D(-self.x, -self.y)
 
     def __sub__(self, other_vector):
-        return Point2D(sub2D(self, other_vector))
+        return Point2D(*Csub2D(self.x, self.y,
+                               other_vector.x, other_vector.y))
 
     def __mul__(self, value:float):
-        return Point2D(mul2D(self.vector, value))
+        return Point2D(*Cmul2D(self.x, self.y, value))
 
     def __truediv__(self, value:float):
         if value == 0:
             raise ZeroDivisionError
-        return Point2D((self.vector.x / value,
-                        self.vector.y / value))
+        return Point2D(self.x / value,
+                       self.y / value)
 
     def to_3d(self, plane_origin, vx, vy):
-        return Point3D([plane_origin.vector.x + vx.vector.x*self.vector.x + vy.vector.x*self.vector.y,
-                        plane_origin.vector.y + vx.vector.y*self.vector.x + vy.vector.y*self.vector.y,
-                        plane_origin.vector.z + vx.vector.z*self.vector.x + vy.vector.z*self.vector.y,
-                        ])
+        return Point3D(plane_origin.x + vx.x*self.x + vy.x*self.y,
+                       plane_origin.y + vx.y*self.x + vy.y*self.y,
+                       plane_origin.z + vx.z*self.x + vy.z*self.y)
 
     def plot(self, ax=None, color='k'):
         if ax is None:
@@ -531,24 +533,24 @@ class Point2D(Vector2D):
         else:
             fig = ax.figure
 
-        x1, y1 = self.vector
-        ax.plot([x1], [y1], color=color, marker='o')
+
+        ax.plot([self.x], [self.y], color=color, marker='o')
         return ax
 
     def point_distance(self, point2):
-        return (self-point2).Norm()
+        return (self-point2).norm()
 
 
     @classmethod
     def line_intersection(cls,line1, line2, curvilinear_abscissa=False):
-        x1 = line1.points[0].vector.x
-        y1 = line1.points[0].vector.y
-        x2 = line1.points[1].vector.x
-        y2 = line1.points[1].vector.y
-        x3 = line2.points[0].vector.x
-        y3 = line2.points[0].vector.y
-        x4 = line2.points[1].vector.x
-        y4 = line2.points[1].vector.y
+        x1 = line1.points[0].x
+        y1 = line1.points[0].y
+        x2 = line1.points[1].x
+        y2 = line1.points[1].y
+        x3 = line2.points[0].x
+        y3 = line2.points[0].y
+        x4 = line2.points[1].x
+        y4 = line2.points[1].y
 
         denominateur = (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4)
         if math.isclose(denominateur, 0, abs_tol=1e-6):
@@ -573,14 +575,14 @@ class Point2D(Vector2D):
     @classmethod
     def segment_intersection(cls, segment1, segment2,
                              curvilinear_abscissa=False):
-        x1 = segment1.points[0].vector.x
-        y1 = segment1.points[0].vector.y
-        x2 = segment1.points[1].vector.x
-        y2 = segment1.points[1].vector.y
-        x3 = segment2.points[0].vector.x
-        y3 = segment2.points[0].vector.y
-        x4 = segment2.points[1].vector.x
-        y4 = segment2.points[1].vector.y
+        x1 = segment1.points[0].x
+        y1 = segment1.points[0].y
+        x2 = segment1.points[1].x
+        y2 = segment1.points[1].y
+        x3 = segment2.points[0].x
+        y3 = segment2.points[0].y
+        x4 = segment2.points[1].x
+        y4 = segment2.points[1].y
 
         denominateur = (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4)
         if math.isclose(denominateur, 0, abs_tol=1e-6):
@@ -611,7 +613,7 @@ class Point2D(Vector2D):
     def plot_data(self, marker=None, color='black', size=1,
                   opacity=1, arrow=False, stroke_width=None):
         return {'type' : 'point',
-                'data' : [self.vector.x, self.vector.y],
+                'data' : [self.x, self.y],
                 'color' : color,
                 'marker' : marker,
                 'size' : size,
@@ -625,11 +627,11 @@ class Point2D(Vector2D):
     @classmethod
     def line_projection(cls, point, line):
         p1, p2 = line.points
-        n = line.NormalVector(unit=True)
+        n = line.normalVector(unit=True)
         pp1 = point - p1
-        return  pp1 - pp1.Dot(n)*n + p1
+        return  pp1 - pp1.dot(n)*n + p1
 
-O2D = Point2D((0, 0))
+O2D = Point2D(0, 0)
 
 class Vector3D(Vector):
 
@@ -640,67 +642,73 @@ class Vector3D(Vector):
         self.name = name
 
     def __add__(self, other_vector):
-        return Vector3D(add3D(self, other_vector))
+        return Vector3D(*Cadd3D(self.x, self.y, self.z,
+                                other_vector.x,
+                                other_vector.y,
+                                other_vector.z))
 
     def __neg__(self):
-        return Vector3D((-self.vector.x, -self.vector.y, -self.vector.z))
+        return Vector3D(-self.x, -self.y, -self.z)
 
     def __sub__(self, other_vector):
-        return Vector3D(sub3D(self.vector, other_vector.vector))
+        return Vector3D(*Csub3D(self.x, self.y, self.z,
+                                other_vector.x,
+                                other_vector.y,
+                                other_vector.z))
 
     def __mul__(self, value):
-        return Vector3D(mul3D(self.vector, value))
+        return Vector3D(*Cmul3D(self.x, self.y, self.z, value))
 
     def __truediv__(self, value):
         if value == 0:
             raise ZeroDivisionError
-        return Vector3D((self.vector.x / value,
-                         self.vector.y / value,
-                         self.vector.z / value))
+        return Vector3D(self.x / value,
+                        self.y / value,
+                        self.z / value)
 
     def __round__(self, ndigits:int=6):
-        return self.__class__((round(self.vector.x, ndigits),
-                               round(self.vector.y, ndigits),
-                               round(self.vector.z, ndigits)))
+        return self.__class__(round(self.x, ndigits),
+                              round(self.y, ndigits),
+                              round(self.z, ndigits))
 
     def __hash__(self):
-#        return int(1000*(self.vector.x+self.vector.y+self.vector.z))
-        return int(round(1e6*(self.vector.x+self.vector.y+self.vector.z)))
+        return int(round(1e6*(self.x+self.y+self.z)))
 
     def __eq__(self, other_vector:'Vector3D'):
         if other_vector.__class__.__name__ not in ['Vector3D', 'Point3D']:
             return False
-        return math.isclose(self.vector.x, other_vector.vector.x, abs_tol=1e-06) \
-        and math.isclose(self.vector.y, other_vector.vector.y, abs_tol=1e-06) \
-        and math.isclose(self.vector.z, other_vector.vector.z, abs_tol=1e-06)
+        return math.isclose(self.x, other_vector.x, abs_tol=1e-06) \
+        and math.isclose(self.y, other_vector.y, abs_tol=1e-06) \
+        and math.isclose(self.z, other_vector.z, abs_tol=1e-06)
 
-    def Dot(self, other_vector):
-        v1, v2, v3 = self.vector
-        ov1, ov2, ov3 = other_vector.vector
-        return CVector3DDot(v1, v2, v3, ov1, ov2, ov3)
+    def dot(self, other_vector):
+        return CVector3DDot(self.x, self.y, self.z,
+                            other_vector.x, other_vector.y, other_vector.z)
 
-    def Cross(self, other_vector:'Vector3D') -> 'Vector3D':
-        return self.__class__(vector3D_cross(self.vector, other_vector.vector))
+    def cross(self, other_vector:'Vector3D') -> 'Vector3D':
+        return self.__class__(*CVector3D_cross(self.x, self.y, self.z,
+                                              other_vector.x,
+                                              other_vector.y,
+                                              other_vector.z))
 
-    def Norm(self) -> float:
-        vx, vy, vz = self.vector
-        return CVector3DNorm(vx, vy, vz)
+    def norm(self) -> float:
+        return CVector3Dnorm(self.x, self.y, self.z)
 
 
-    def Normalize(self) -> 'Vector3D':
+    def normalize(self) -> 'Vector3D':
         """
-        Normalize the vector modifying its coordinates
+        normalize the vector modifying its coordinates
         """
-        n = self.Norm()
+        n = self.norm()
         if n == 0:
             raise ZeroDivisionError
 
-        self.vector.x /= n
-        self.vector.y /= n
-        self.vector.z /= n
+        self.x /= n
+        self.y /= n
+        self.z /= n
 
     def point_distance(self, point2:'Vector3D') -> float:
-        return (self-point2).Norm()
+        return (self-point2).norm()
 
     def rotation(self, center:'Point3D', axis:'Vector3D', angle:float, copy:bool=True):
         """
@@ -713,13 +721,16 @@ class Vector3D(Vector):
 #                   + (1-math.cos(angle))*(u.Dot(axis))*axis
 #                   + math.sin(angle)*axis.Cross(u)
 #                   + center)
-        vector2 = vector3D_rotation(self.vector, center.vector, axis.vector, angle)
+        vector2 = vector3D_rotation(self.x, self.y, self.z,
+                center, axis, angle)
 
         if copy:
             return self.__class__(vector2)
             # return Point3D(vector2)
         else:
-            self.vector = list(vector2)
+            self.x = vector2.x
+            self.y = vector2.y
+            self.z = vector2.z
 
     def x_rotation(self, angle:float, copy:bool=True):
         """
@@ -728,15 +739,15 @@ class Vector3D(Vector):
         cos_angle = math.cos(angle)
         sin_angle = math.sin(angle)
 
-        y1 = cos_angle * self.vector.y + sin_angle * self.vector.z
-        z1 = -sin_angle * self.vector.y + cos_angle * self.vector.z
+        y1 = cos_angle * self.y + sin_angle * self.z
+        z1 = -sin_angle * self.y + cos_angle * self.z
 
 
         if copy:
-            return Point3D([self.vector.x, y1, z1])
+            return Point3D([self.x, y1, z1])
         else:
-            self.vector.y = y1
-            self.vector.z = z1
+            self.y = y1
+            self.z = z1
 
     def y_rotation(self, angle:float, copy:bool=True):
         """
@@ -745,15 +756,15 @@ class Vector3D(Vector):
         cos_angle = math.cos(angle)
         sin_angle = math.sin(angle)
 
-        z1 = cos_angle * self.vector.z + sin_angle * self.vector.x
-        x1 = -sin_angle * self.vector.z + cos_angle * self.vector.x
+        z1 = cos_angle * self.z + sin_angle * self.x
+        x1 = -sin_angle * self.z + cos_angle * self.x
 
 
         if copy:
-            return Point3D([x1, self.vector.y, z1])
+            return Point3D([x1, self.y, z1])
         else:
-            self.vector.x = x1
-            self.vector.z = z1
+            self.x = x1
+            self.z = z1
 
     def z_rotation(self, angle:float, copy:bool=True):
         """
@@ -762,73 +773,74 @@ class Vector3D(Vector):
         cos_angle = math.cos(angle)
         sin_angle = math.sin(angle)
 
-        x1 = cos_angle * self.vector.x + sin_angle * self.vector.y
-        y1 = -sin_angle * self.vector.x + cos_angle * self.vector.y
+        x1 = cos_angle * self.x + sin_angle * self.y
+        y1 = -sin_angle * self.x + cos_angle * self.y
 
 
         if copy:
-            return Point3D([x1, y1, self.vector.z])
+            return Point3D([x1, y1, self.z])
         else:
-            self.vector.x = x1
-            self.vector.y = y1
+            self.x = x1
+            self.y = y1
 
     def translation(self, offset, copy=True):
         if copy:
             return self + offset
         else:
-            self.vector = [self.vector.x + offset[0],
-                           self.vector.y + offset[1],
-                           self.vector.z + offset[2]]
+            self.x += offset[0]
+            self.y += offset[1]
+            self.z += offset[2]
 
     def frame_mapping(self, frame, side, copy=True):
         """
         side = 'old' or 'new'
         """
         if side == 'old':
-            new_vector = frame.OldCoordinates(self)
+            new_vector = frame.old_coordinates(self)
             if copy:
                 return new_vector
             else:
-                self.vector = new_vector.vector#.copy() #copy was adding to avoid connection point in RoundedLS
+                self.x = new_vector.x
+                self.y = new_vector.y
+                self.z = new_vector.z
+
 
         if side == 'new':
-            new_vector = frame.NewCoordinates(self)
+            new_vector = frame.new_coordinates(self)
             if copy:
                 return new_vector
             else:
-                self.vector = new_vector.vector#.copy()
+                self.x = new_vector.x
+                self.y = new_vector.y
+                self.z = new_vector.z
 
-    def PlaneProjection3D(self, plane_origin, x, y):
+    def plane_projection3d(self, plane_origin, x, y):
         z = x.Cross(y)
-        z.Normalize()
-        return self - z.Dot(self-plane_origin)*z
+        z.normalize()
+        return self - z.dot(self-plane_origin)*z
 
-    def PlaneProjection2D(self, plane_origin, x, y):
+    def plane_projection2d(self, plane_origin, x, y):
         z = x.Cross(y)
-        z.Normalize()
-        p3d = self - (self-plane_origin).Dot(z)*z
-        u1 = p3d.Dot(x)
-        u2 = p3d.Dot(y)
+        z.normalize()
+        p3d = self - (self-plane_origin).dot(z)*z
+        u1 = p3d.dot(x)
+        u2 = p3d.dot(y)
         return Point2D((u1, u2))
 
 
-    def To2D(self, plane_origin, x, y):
-        # print(self.Dot(x))
-        # print(plane_origin.Dot(x))
-        # print(self.Dot(y))
-        # print(plane_origin.Dot(y))
-        x2d = self.Dot(x) - plane_origin.Dot(x)
-        y2d = self.Dot(y) - plane_origin.Dot(y)
+    def to_2d(self, plane_origin, x, y):
+        x2d = self.dot(x) - plane_origin.dot(x)
+        y2d = self.dot(y) - plane_origin.dot(y)
         return Point2D((x2d,y2d))
 
-    def RandomUnitNormalVector(self):
+    def random_unit_normal_vector(self):
         """
         Returns a random normal vector
         """
         v = Vector3D(npy.random.random(3))
 
-        v = v - v.Dot(self)*self/(self.Norm()**2)
-        v.Normalize()
+        v = v - v.dot(self)*self/(self.norm()**2)
+        v.normalize()
         return v
     
     def deterministic_unit_normal_vector(self):
@@ -836,17 +848,17 @@ class Vector3D(Vector):
         Returns a deterministic normal vector
         """
         v = X3D
-        if not math.isclose(self.vector.y, 0, abs_tol=1e-7) \
-        or not math.isclose(self.vector.z, 0, abs_tol=1e-7):
+        if not math.isclose(self.y, 0, abs_tol=1e-7) \
+        or not math.isclose(self.z, 0, abs_tol=1e-7):
             v = X3D
         else:
             v = Y3D
-        v = v - v.Dot(self)*self/(self.Norm()**2)
-        v.Normalize()
+        v = v - v.dot(self)*self/(self.norm()**2)
+        v.normalize()
         return v
 
-    def Copy(self):
-        return Vector3D(self.vector)
+    def copy(self):
+        return Vector3D(self.x, self.y, self.z)
     
     @classmethod
     def random(cls, xmin, xmax, ymin, ymax, zmin, zmax):
@@ -868,7 +880,7 @@ class Vector3D(Vector):
             return cls([float(i)/1000 for i in arguments[1][1:-1].split(",")],
                         arguments[0][1:-1])
 
-    def MPLPlot(self, ax=None, starting_point=None, color=''):
+    def plot(self, ax=None, starting_point=None, color=''):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -880,9 +892,9 @@ class Vector3D(Vector):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-        xs = [starting_point[0], self.vector.x+starting_point[0]]
-        ys = [starting_point[1], self.vector.y+starting_point[1]]
-        zs = [starting_point[2], self.vector.z+starting_point[2]]
+        xs = [starting_point[0], self.x+starting_point[0]]
+        ys = [starting_point[1], self.y+starting_point[1]]
+        zs = [starting_point[2], self.z+starting_point[2]]
         if color:
             a = Arrow3D(xs, ys, zs, mutation_scale=10, lw=3, arrowstyle="-|>", color=color)
         else:
@@ -899,35 +911,37 @@ Z3D = Vector3D(0, 0, 1)
 class Point3D(Vector3D):
     _standalone_in_db = False
 
-    def __init__(self, vector:Tuple[float, float, float], name:str=''):
-        Vector3D.__init__(self, vector, name)
+    def __init__(self, x: float, y: float, z: float, name:str=''):
+        Vector3D.__init__(self, x, y, z, name)
 
     def __add__(self, other_vector):
-        return Point3D(add3D(self.vector, other_vector.vector))
+        return Point3D(*Cadd3D(self.x, self.y, self.z,
+                              other_vector.x,
+                              other_vector.y,
+                              other_vector.z))
 
     def __neg__(self):
-        return Point3D((-self.vector.x, -self.vector.y, -self.vector.z))
+        return Point3D((-self.x, -self.y, -self.z))
 
     def __sub__(self, other_vector):
-        return Point3D(sub3D(self.vector, other_vector.vector))
+        return Point3D(*Csub3D(self.x, self.y, self.z,
+                               other_vector.x, other_vector.y, other_vector.z))
 
     def __mul__(self, value):
-        return Point3D(mul3D(self.vector, value))
+        return Point3D(*Cmul3D(self.x, self.y, self.z, value))
 
     def __truediv__(self, value):
         if value == 0:
             raise ZeroDivisionError
-        return Point3D((self.vector.x / value,
-                        self.vector.y / value,
-                        self.vector.z / value))
-
-    def Copy(self):
-        return Point3D(self.vector)
+        return Point3D(self.x / value,
+                       self.y / value,
+                       self.z / value)
 
     def copy(self):
-        return Point3D(self.vector)
+        return Point3D(self.x, self.y, self.z)
 
-    def MPLPlot(self, ax=None, color='k'):
+
+    def plot(self, ax=None, color='k'):
 
         if ax is None:
             fig = plt.figure()
@@ -935,23 +949,23 @@ class Point3D(Vector3D):
         else:
             fig = ax.figure
 
-        ax.scatter(*self.vector, color=color)
+        ax.scatter(self.x, self.y, color=color)
         return fig, ax
 
 
     def To2D(self, plane_origin, x, y):
-        x2d = self.Dot(x) - plane_origin.Dot(x)
-        y2d = self.Dot(y) - plane_origin.Dot(y)
-        return Point2D((x2d,y2d))
+        x2d = self.dot(x) - plane_origin.dot(x)
+        y2d = self.dot(y) - plane_origin.dot(y)
+        return Point2D(x2d,y2d)
 
     @classmethod
     def from_step(cls, arguments, object_dict):
-        return cls([float(i)/1000 for i in arguments[1][1:-1].split(",")],
+        return cls(*[float(i)/1000 for i in arguments[1][1:-1].split(",")],
                     arguments[0][1:-1])
 
     def babylon_script(self):
         s = 'var sphere = BABYLON.MeshBuilder.CreateSphere("point", {diameter: 0.05}, scene);\n'
-        s += "sphere.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));\n".format(self.vector.x,self.vector.y,self.vector.z)
+        s += "sphere.setPositionWithLocalVector(new BABYLON.Vector3({},{},{}));\n".format(self.x,self.y,self.z)
         s += 'var mat = new BABYLON.StandardMaterial("mat", scene);\n'
         s += 'mat.diffuseColor = new BABYLON.Color3(1, 0, 0);\n'
         s += 'sphere.material = mat;\n'
@@ -959,11 +973,9 @@ class Point3D(Vector3D):
 
 O3D = Point3D(0, 0, 0)
 
-
 # =============================================================================
 #  Basis, Frames
 # =============================================================================
-   
     
 class Matrix22:
     def __init__(self, M11:float, M12:float, M21:float, M22:float):
@@ -998,8 +1010,8 @@ class Matrix22:
             raise ValueError('The matrix is singular')
     
     def vector_multiplication(self, vector):
-        return vector.__class__((self.M11*vector.x + self.M12*vector.y,
-                                 self.M21*vector.x + self.M22*vector.y))
+        return vector.__class__(self.M11*vector.x + self.M12*vector.y,
+                                self.M21*vector.x + self.M22*vector.y)
 
 
 class Matrix33:
@@ -1016,8 +1028,6 @@ class Matrix33:
         self.M32 = M32
         self.M33 = M33
 
-#    def __getitem__(self, key):
-#        return self.vector[key]
 
     def __add__(self, other_matrix):
         return Matrix33(self.M11 + other_matrix.M11,
@@ -1031,7 +1041,7 @@ class Matrix33:
                         self.M33 + other_matrix.M33)
 
     def __mul__(self, other_matrix):
-        M11, M12, M13, M21, M22, M23, M31, M32, M33 = C_matrix_multiplication3(self.M11, self.M12, self.M13,
+        M11, M12, M13, M21, M22, M23, M31, M32, M33 = Cmatrix_multiplication3(self.M11, self.M12, self.M13,
                                                                                self.M21, self.M22, self.M23,
                                                                                self.M31, self.M32, self.M33,
                                                                                other_matrix.M11, other_matrix.M12, other_matrix.M13,
@@ -1054,11 +1064,10 @@ class Matrix33:
 
 
     def vector_multiplication(self, vector):
-        v1, v2, v3 = vector.vector
         u1, u2, u3 = C_matrix_vector_multiplication3(self.M11, self.M12, self.M13,
                                                      self.M21, self.M22, self.M23,
                                                      self.M31, self.M32, self.M33,
-                                                     v1, v2, v3)
+                                                     vector.x, vector.y, vector.z)
         
         return vector.__class__((u1, u2, u3))
 
@@ -1101,11 +1110,6 @@ class Basis(DessiaObject):
     """
     Abstract class of a basis
     """
-    def __getitem__(self, key):
-        return self.vectors[key]
-
-    def __setitem__(self, key, item):
-        self.vectors[key] = item
 
     def __contains__(self, vector):
         return vector in self.vectors
@@ -1163,12 +1167,12 @@ class Basis2D(Basis):
         else:
             raise ZeroDivisionError
 
-    def NewCoordinates(self, vector):
+    def new_coordinates(self, vector):
         matrix = self.InverseTransferMatrix()
         return Point2D((matrix[0][0]*vector.x + matrix[0][1]*vector.y,
                          matrix[1][0]*vector.x + matrix[1][1]*vector.y))
 
-    def OldCoordinates(self, vector):
+    def old_coordinates(self, vector):
         matrix = self.TransferMatrix()
         return Point2D((matrix[0][0]*vector.x + matrix[0][1]*vector.y,
                          matrix[1][0]*vector.x + matrix[1][1]*vector.y))
@@ -1250,9 +1254,9 @@ class Basis3D(Basis):
         w is the cross product of u and v
         """
         u = vector1.copy()
-        u.Normalize()
-        v = vector2 - vector2.Dot(vector1)*vector1
-        v.Normalize()
+        u.normalize()
+        v = vector2 - vector2.dot(vector1)*vector1
+        v.normalize()
         w = u.Cross(v)
 
         return Basis3D(u, v, w)
@@ -1336,18 +1340,18 @@ class Basis3D(Basis):
         self.w = vect_w
 
     def TransferMatrix(self):
-        return Matrix33(self.u.vector.x, self.v.vector.x, self.w.vector.x,
-                        self.u.vector.y, self.v.vector.y, self.w.vector.y,
-                        self.u.vector.z, self.v.vector.z, self.w.vector.z)
+        return Matrix33(self.u.x, self.v.x, self.w.x,
+                        self.u.y, self.v.y, self.w.y,
+                        self.u.z, self.v.z, self.w.z)
 
     def InverseTransferMatrix(self):
         return self.TransferMatrix().inverse()
 
-    def NewCoordinates(self, vector):
+    def new_coordinates(self, vector):
         matrix = self.InverseTransferMatrix()
         return matrix.vector_multiplication(vector)
 
-    def OldCoordinates(self, point):
+    def old_coordinates(self, point):
         matrix = self.TransferMatrix()
         return matrix.vector_multiplication(point)
 
@@ -1371,7 +1375,7 @@ class Frame2D(Basis2D):
 
     def __neg__(self):
         Pinv = self.InverseTransferMatrix()
-        new_origin = Point2D(npy.dot(Pinv, self.origin.vector))
+        new_origin = Point2D(npy.dot(Pinv, self.origin))
         return Frame2D(new_origin,
                        Vector2D(Pinv[:, 0]),
                        Vector2D(Pinv[:, 1]))
@@ -1379,7 +1383,7 @@ class Frame2D(Basis2D):
 
     def __add__(self, other_frame):
         P1 = self.TransferMatrix()
-        new_origin = Point2D(npy.dot(P1, other_frame.origin.vector) + self.origin.vector)
+        new_origin = Point2D(npy.dot(P1, other_frame.origin) + self.origin)
         M = npy.dot(P1, other_frame.TransferMatrix())
         return Frame2D(new_origin,
                        Vector2D(M[:, 0]),
@@ -1389,7 +1393,7 @@ class Frame2D(Basis2D):
     def __sub__(self, other_frame):
         P1inv = other_frame.InverseTransferMatrix()
         P2 = self.TransferMatrix()
-        new_origin = Point2D(npy.dot(P1inv, (self.origin - other_frame.origin).vector))
+        new_origin = Point2D(npy.dot(P1inv, (self.origin - other_frame.origin)))
         M = npy.dot(P1inv, P2)
         return Frame2D(new_origin,
                        Vector2D(M[:, 0]),
@@ -1423,7 +1427,7 @@ class Frame2D(Basis2D):
         if ax is None:
             fig, ax = plt.subplots()
 
-        ax.plot(*self.origin.vector, style)
+        ax.plot(*self.origin, style)
         self.u.plot(origin=self.origin, ax=ax, color='r')
         self.v.plot(origin=self.origin, ax=ax, color='g')
         ax.axis('equal')
@@ -1497,13 +1501,13 @@ class Frame3D(Basis3D):
     def Basis(self):
         return Basis3D(self.u, self.v, self.w)
 
-    def NewCoordinates(self, vector):
+    def new_coordinates(self, vector):
         """ You have to give coordinates in the global landmark """
-        return Basis3D.NewCoordinates(self, vector - self.origin)
+        return Basis3D.new_coordinates(self, vector - self.origin)
 
-    def OldCoordinates(self, vector): 
+    def old_coordinates(self, vector): 
         """ You have to give coordinates in the local landmark """
-        return Basis3D.OldCoordinates(self, vector) + self.origin
+        return Basis3D.old_coordinates(self, vector) + self.origin
 
     def rotation(self, axis, angle, copy=True):
         new_base = Basis3D.rotation(self, axis, angle, copy=True)
@@ -1532,7 +1536,7 @@ class Frame3D(Basis3D):
 
         for iv, vector in enumerate(self.vectors):
             vector2D = vector.To2D(O3D, x, y)
-            if vector2D.Norm() > 1e-8:
+            if vector2D.norm() > 1e-8:
                 vector2D.plot(origin=origin2d, ax=ax, color=color, label=str(iv+1))
 
         return fig, ax

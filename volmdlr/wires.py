@@ -8,16 +8,16 @@ import math
 import numpy as npy
 
 import volmdlr
-from volmdlr.core_compiled import PolygonPointBelongs
+from volmdlr.core_compiled import polygon_point_belongs
 
 
-class Wire2D(volmdlr.CompositePrimitive2D):
+class Wire2D(volmdlr.core.CompositePrimitive2D):
     """
     A collection of simple primitives, following each other making a wire
     """
 
     def __init__(self, primitives, name=''):
-        volmdlr.CompositePrimitive2D.__init__(self, primitives, name)
+        volmdlr.core.CompositePrimitive2D.__init__(self, primitives, name)
 
     # TODO: method to check if it is a wire
 
@@ -27,12 +27,12 @@ class Wire2D(volmdlr.CompositePrimitive2D):
             length += primitive.Length()
         return length
 
-    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa: float):
+    def point_at_curvilinear_abscissa(self, curvilinear_abscissa: float):
         length = 0.
         for primitive in self.primitives:
             primitive_length = primitive.Length()
             if length + primitive_length > curvilinear_abscissa:
-                return primitive.PointAtCurvilinearAbscissa(
+                return primitive.point_at_curvilinear_abscissa(
                     curvilinear_abscissa - length)
             length += primitive_length
         return ValueError
@@ -67,7 +67,7 @@ class Wire2D(volmdlr.CompositePrimitive2D):
         return points
 
 
-class Wire3D(volmdlr.CompositePrimitive3D):
+class Wire3D(volmdlr.core.CompositePrimitive3D):
     """
     A collection of simple primitives, following each other making a wire
     """
@@ -81,12 +81,12 @@ class Wire3D(volmdlr.CompositePrimitive3D):
             length += primitive.Length()
         return length
 
-    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
+    def point_at_curvilinear_abscissa(self, curvilinear_abscissa):
         length = 0.
         for primitive in self.primitives:
             primitive_length = primitive.Length()
             if length + primitive_length >= curvilinear_abscissa:
-                return primitive.PointAtCurvilinearAbscissa(
+                return primitive.point_at_curvilinear_abscissa(
                     curvilinear_abscissa - length)
             length += primitive_length
         # Outside of length
@@ -141,8 +141,8 @@ class Wire3D(volmdlr.CompositePrimitive3D):
 class Contour2D(Wire2D):
     """
     A collection of 2D primitives forming a closed wire2D
-    TODO : CenterOfMass and SecondMomentArea should be changed accordingly to
-    Area considering the triangle drawn by the arcs
+    TODO : center_of_mass and second_moment_area should be changed accordingly to
+    area considering the triangle drawn by the arcs
     """
     _non_serializable_attributes = ['internal_arcs', 'external_arcs',
                                     'polygon', 'straight_line_contour_polygon']
@@ -281,53 +281,53 @@ class Contour2D(Wire2D):
     #     primitives3D = [p.To3D(plane_origin, x, y) for p in self.primitives]
     #     return Contour3D(primitives=primitives3D, name=name)
 
-    def Area(self):
+    def area(self):
         if len(self.primitives) == 1:
-            return self.primitives[0].Area()
+            return self.primitives[0].area()
 
-        A = self.polygon.Area()
+        A = self.polygon.area()
 
         for arc in self.internal_arcs:
             triangle = Polygon2D([arc.start, arc.center, arc.end])
-            A = A - arc.Area() + triangle.Area()
+            A = A - arc.area() + triangle.area()
         for arc in self.external_arcs:
             triangle = Polygon2D([arc.start, arc.center, arc.end])
-            A = A + arc.Area() - triangle.Area()
+            A = A + arc.area() - triangle.area()
 
         return A
 
-    def CenterOfMass(self):
+    def center_of_mass(self):
         if len(self.primitives) == 1:
-            return self.primitives[0].CenterOfMass()
+            return self.primitives[0].center_of_mass()
 
-        area = self.polygon.Area()
+        area = self.polygon.area()
         if area > 0.:
-            c = area * self.polygon.CenterOfMass()
+            c = area * self.polygon.center_of_mass()
         else:
             c = O2D
 
         for arc in self.internal_arcs:
-            arc_area = arc.Area()
-            c -= arc_area * arc.CenterOfMass()
+            arc_area = arc.area()
+            c -= arc_area * arc.center_of_mass()
             area -= arc_area
         for arc in self.external_arcs:
-            arc_area = arc.Area()
-            c += arc_area * arc.CenterOfMass()
+            arc_area = arc.area()
+            c += arc_area * arc.center_of_mass()
             area += arc_area
         if area != 0:
             return c / area
         else:
             return False
 
-    def SecondMomentArea(self, point):
+    def second_moment_area(self, point):
         if len(self.primitives) == 1:
-            return self.primitives[0].SecondMomentArea(point)
+            return self.primitives[0].second_moment_area(point)
 
-        A = self.polygon.SecondMomentArea(point)
+        A = self.polygon.second_moment_area(point)
         for arc in self.internal_arcs:
-            A -= arc.SecondMomentArea(point)
+            A -= arc.second_moment_area(point)
         for arc in self.external_arcs:
-            A += arc.SecondMomentArea(point)
+            A += arc.second_moment_area(point)
 
         return A
 
@@ -610,15 +610,15 @@ class Polygon2D(Contour2D):
             equal = (equal and point == other_point)
         return equal
 
-    def Area(self):
+    def area(self):
 
-        x = [point.vector[0] for point in self.points]
-        y = [point.vector[1] for point in self.points]
+        x = [point.x for point in self.points]
+        y = [point.y for point in self.points]
 
         return 0.5 * npy.abs(
             npy.dot(x, npy.roll(y, 1)) - npy.dot(y, npy.roll(x, 1)))
 
-    def CenterOfMass(self):
+    def center_of_mass(self):
 
         x = [point.vector[0] for point in self.points]
         y = [point.vector[1] for point in self.points]
@@ -629,7 +629,7 @@ class Polygon2D(Contour2D):
         xi1_yi = npy.multiply(npy.roll(x, -1), y)
 
         a = 0.5 * npy.sum(xi_yi1 - xi1_yi)  # signed area!
-        #        a=self.Area()
+        #        a=self.area()
         if not math.isclose(a, 0, abs_tol=1e-08):
             cx = npy.sum(npy.multiply(xi_xi1, (xi_yi1 - xi1_yi))) / 6. / a
             cy = npy.sum(npy.multiply(yi_yi1, (xi_yi1 - xi1_yi))) / 6. / a
@@ -642,10 +642,10 @@ class Polygon2D(Contour2D):
         """
         Ray casting algorithm copied from internet...
         """
-        return PolygonPointBelongs(point.vector,
-                                   [p.vector for p in self.points])
+        return polygon_point_belongs((point.x, point.y),
+                                     [(p.x, p.y) for p in self.points])
 
-    def SecondMomentArea(self, point):
+    def second_moment_area(self, point):
         Ix, Iy, Ixy = 0, 0, 0
         for pi, pj in zip(self.points, self.points[1:] + [self.points[0]]):
             xi, yi = (pi - point).vector
@@ -828,18 +828,18 @@ class Polygon2D(Contour2D):
 
         return cls(hull)
 
-    def MPLPlot(self, ax=None, color='k',
+    def plot(self, ax=None, color='k',
                 plot_points=False, point_numbering=False):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
 
         for ls in self.line_segments:
-            ls.MPLPlot(ax=ax ,color=color)
+            ls.plot(ax=ax ,color=color)
 
         if plot_points or point_numbering:
             for point in self.points:
-                point.MPLPlot(ax=ax, color=color)
+                point.plot(ax=ax, color=color)
 
         if point_numbering:
             for ip, point in enumerate(self.points):
@@ -929,7 +929,7 @@ class Circle2D(Contour2D):
     def Length(self):
         return two_pi * self.radius
 
-    def MPLPlot(self, ax=None, linestyle='-', color='k', linewidth=1):
+    def plot(self, ax=None, linestyle='-', color='k', linewidth=1):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -986,18 +986,18 @@ class Circle2D(Contour2D):
             else:
                 self.points = frame.NewCoordinates(self.center)
 
-    def Area(self):
+    def area(self):
         return math.pi * self.radius ** 2
 
-    def SecondMomentArea(self, point):
+    def second_moment_area(self, point):
         """
         Second moment area of part of disk
         """
         I = math.pi * self.radius ** 4 / 4
         Ic = npy.array([[I, 0], [0, I]])
-        return geometry.Huygens2D(Ic, self.Area(), self.center, point)
+        return geometry.Huygens2D(Ic, self.area(), self.center, point)
 
-    def CenterOfMass(self):
+    def center_of_mass(self):
         return self.center
 
     def point_symmetric(self, point):
@@ -1019,14 +1019,14 @@ class Circle2D(Contour2D):
     def copy(self):
         return Circle2D(self.center.copy(), self.radius)
 
-    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
+    def point_at_curvilinear_abscissa(self, curvilinear_abscissa):
         start = self.center + self.radius * X3D
         return start.Rotation(self.center,
                               curvilinear_abscissa / self.radius)
 
     def triangulation(self, n=35):
         l = self.Length()
-        points = [self.PointAtCurvilinearAbscissa(l * i / n) for i in range(n)]
+        points = [self.point_at_curvilinear_abscissa(l * i / n) for i in range(n)]
         points.append(self.center)
         triangles = [(i, i + 1, n) for i in range(n - 1)] + [(n - 1, 0, n)]
         return DisplayMesh(points, triangles)
@@ -1189,19 +1189,19 @@ class Contour3D(Wire3D):
             length += edge.Length()
         return length
 
-    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
+    def point_at_curvilinear_abscissa(self, curvilinear_abscissa):
         # TODO: this is duplicated code from Wire3D!
         length = 0.
         for primitive in self.primitives:
             primitive_length = primitive.Length()
             if length + primitive_length > curvilinear_abscissa:
-                return primitive.PointAtCurvilinearAbscissa(
+                return primitive.point_at_curvilinear_abscissa(
                     curvilinear_abscissa - length)
             length += primitive_length
         # Outside of length
         raise ValueError
 
-    def MPLPlot(self, ax=None):
+    def plot(self, ax=None):
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
@@ -1209,7 +1209,7 @@ class Contour3D(Wire3D):
             fig = None
 
         for edge in self.primitives:
-            edge.MPLPlot(ax=ax)
+            edge.plot(ax=ax)
 
         return ax
 
@@ -1223,11 +1223,11 @@ class Contour3D(Wire3D):
         """
         n = 50
         l = self.Length()
-        points = [self.PointAtCurvilinearAbscissa(i/n*l)\
+        points = [self.point_at_curvilinear_abscissa(i/n*l)\
                   for i in range(n)]
         return BoundingBox.from_points(points)
 
-class Circle3D(volmdlr.wires.Contour3D):
+class Circle3D(Contour3D):
     _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
@@ -1298,7 +1298,7 @@ class Circle3D(volmdlr.wires.Contour3D):
         else:
             self.frame = new_frame
 
-    def MPLPlot(self, ax=None, color='k'):
+    def plot(self, ax=None, color='k'):
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
@@ -1318,7 +1318,7 @@ class Circle3D(volmdlr.wires.Contour3D):
         ax.plot(x, y, z, color)
         return ax
 
-    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
+    def point_at_curvilinear_abscissa(self, curvilinear_abscissa):
         """
         start point is at intersection of frame.u axis
         """
@@ -1429,7 +1429,7 @@ class Circle3D(volmdlr.wires.Contour3D):
         return surface.rectangular_cut(0, angle, 0, volmdlr.two_pi)
 
 
-class Ellipse3D(volmdlr.wires.Contour3D):
+class Ellipse3D(Contour3D):
     """
     :param major_axis: Largest radius of the ellipse
     :type major_axis: float
@@ -1500,7 +1500,7 @@ class Ellipse3D(volmdlr.wires.Contour3D):
             self.normal = new_normal
             self.major_dir = new_major_dir
 
-    def MPLPlot(self, ax=None, color='k'):
+    def plot(self, ax=None, color='k'):
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)

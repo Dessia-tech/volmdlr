@@ -26,10 +26,10 @@ inner_contour = primitives2d.ClosedRoundedLineSegments2D([p1, p2, p3, p4, p5, p6
                                                          {0: 0.01, 1: 0.01, 2: 0.015, 3: 0.020, 4: 0.012, 5:0.008},
                                                          adapt_radius=True)
 
-outer_contour = inner_contour.Offset(-thickness)
+outer_contour = inner_contour.offset(-thickness)
 
-a = inner_contour.MPLPlot()
-outer_contour.MPLPlot(a)
+a = inner_contour.plot()
+outer_contour.plot(a)
 
 
 

@@ -63,7 +63,7 @@ class RoundedLineSegments:
                 if i-1 in self.radius:
                     p1 = self.points[i-1]
                     p2 = self.points[i]
-                    l = (p2 - p1).Norm()
+                    l = (p2 - p1).norm()
                     lines_length[i-1] = l
                     dist1 = dist[i-1]
 

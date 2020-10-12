@@ -28,7 +28,7 @@ from volmdlr.core_compiled import (Vector2D, Vector3D, Point2D, Point3D,
                             Basis2D, Basis3D, Frame2D, Frame3D,
                             O3D, X3D, Y3D, Z3D,
                             LineSegment2DPointDistance,
-                            PolygonPointBelongs, Matrix22
+                            polygon_point_belongs, Matrix22
                             )
 
 from scipy.linalg import solve
@@ -56,8 +56,6 @@ from typing import List, Tuple
 # import volmdlr.faces3d
 # import volmdlr.surfaces3d as surfaces3d
 # import volmdlr.primitives3D
-
-two_pi = 2*math.pi
 
 def standardize_knot_vector(knot_vector):
     u0 = knot_vector[0]
@@ -363,22 +361,22 @@ class CompositePrimitive2D(Primitive2D):
 
         self.basis_primitives = basis_primitives
 
-    def Rotation(self, center, angle, copy=True):
+    def rotation(self, center, angle, copy=True):
         if copy:
-            return self.__class__([p.Rotation(center, angle, copy=True) \
+            return self.__class__([p.rotation(center, angle, copy=True) \
                                    for p in self.primitives])
         else:
             for p in self.primitives:
-                p.Rotation(center, angle, copy=False)
+                p.rotation(center, angle, copy=False)
             self.UpdateBasisPrimitives()
 
-    def Translation(self, offset, copy=True):
+    def translation(self, offset, copy=True):
         if copy:
-            return self.__class__([p.Translation(offset, copy=True) \
+            return self.__class__([p.translation(offset, copy=True) \
                                    for p in self.primitives])
         else:
             for p in self.primitives:
-                p.Translation(offset, copy=False)
+                p.translation(offset, copy=False)
             self.UpdateBasisPrimitives()
 
     def frame_mapping(self, frame, side, copy=True):
@@ -393,13 +391,13 @@ class CompositePrimitive2D(Primitive2D):
                 p.frame_mapping(frame, side, copy=False)
             self.UpdateBasisPrimitives()
 
-    def To3D(self, plane_origin, x, y, name=None):
+    def to_3d(self, plane_origin, x, y, name=None):
         if name is None:
             name = '3D of {}'.format(self.name)
-        primitives3D = [p.To3D(plane_origin, x, y) for p in self.primitives]
+        primitives3D = [p.to_3d(plane_origin, x, y) for p in self.primitives]
         return CompositePrimitive3D(primitives3D, name)
 
-    def MPLPlot(self, ax=None, color='k', arrow=False, width=None,
+    def plot(self, ax=None, color='k', arrow=False, width=None,
                 plot_points=False):
         if ax is None:
             fig, ax = plt.subplots()
@@ -409,11 +407,11 @@ class CompositePrimitive2D(Primitive2D):
 
         for element in self.primitives:
             if element.__class__.__name__ == 'LineSegment2D':
-                element.MPLPlot(ax, color, arrow, width,
+                element.plot(ax, color, arrow, width,
                                 plot_points=plot_points)
             else:
 
-                element.MPLPlot(ax, color=color)
+                element.plot(ax, color=color)
 
         ax.margins(0.1)
         plt.show()
@@ -496,7 +494,7 @@ class CompositePrimitive3D(Primitive3D):
 
         self.primitives = basis_primitives
 
-    def MPLPlot(self, ax=None):
+    def plot(self, ax=None):
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
@@ -504,399 +502,9 @@ class CompositePrimitive3D(Primitive3D):
             fig = None
 
         for primitive in self.primitives:
-            primitive.MPLPlot(ax)
+            primitive.plot(ax)
 
         return ax
-
-
-
-
-class Shell3D(CompositePrimitive3D):
-    _standalone_in_db = True
-    _generic_eq = True
-    _non_serializable_attributes = ['bounding_box']
-    _non_eq_attributes = ['name', 'color', 'alpha' 'bounding_box', 'contours']
-    _non_hash_attributes = []
-
-    def __init__(self, faces, color=None, alpha=1., name=''):
-        self.faces = faces
-        self.name = name
-        self.color = color
-        self.alpha = alpha
-        self.bounding_box = self._bounding_box()
-
-    def __hash__(self):
-        return sum([hash(f) for f in self.faces])
-
-    def __eq__(self, other_):
-        if self.__class__ != other_.__class__:
-            return False
-        equal = True
-        for face, other_face in zip(self.faces, other_.faces):
-            equal = (equal and face == other_face)
-        return equal
-
-    @classmethod
-    def from_step(cls, arguments, object_dict):
-        faces = []
-        for face in arguments[1]:
-            faces.append(object_dict[int(face[1:])])
-        return cls(faces, name=arguments[0][1:-1])
-
-    def Rotation(self, center, axis, angle, copy=True):
-        if copy:
-            new_faces = [face.Rotation(center, axis, angle, copy=True) for face
-                         in self.faces]
-            return Shell3D(new_faces, name=self.name)
-        else:
-            for face in self.faces:
-                face.Rotation(center, axis, angle, copy=False)
-            self.bounding_box = self._bounding_box()
-
-    def Translation(self, offset, copy=True):
-        if copy:
-            new_faces = [face.Translation(offset, copy=True) for face in
-                         self.faces]
-            return Shell3D(new_faces, name=self.name)
-        else:
-            for face in self.faces:
-                face.Translation(offset, copy=False)
-            self.bounding_box = self._bounding_box()
-
-    def frame_mapping(self, frame, side, copy=True):
-        """
-        side = 'old' or 'new'
-        """
-        if copy:
-            new_faces = [face.frame_mapping(frame, side, copy=True) for face in
-                         self.faces]
-            return Shell3D(new_faces, name=self.name)
-        else:
-            for face in self.faces:
-                face.frame_mapping(frame, side, copy=False)
-            self.bounding_box = self._bounding_box()
-
-    def copy(self):
-        new_faces = [face.copy() for face in self.faces]
-        return Shell3D(new_faces, name=self.name)
-
-    def union(self, shell2):
-        new_faces = [face for face in self.faces + shell2.faces]
-        new_name = self.name + ' union ' + shell2.name
-        new_color = self.color
-        return Shell3D(new_faces, name=new_name, color=new_color)
-
-    def volume(self):
-        """
-        Does not consider holes
-        """
-        volume = 0
-        for i, face in enumerate(self.faces):
-            points_3D, triangles_indexes = face.triangulation()
-            for triangle_indexes in triangles_indexes[0]:
-                point1 = points_3D[triangle_indexes[0]]
-                point2 = points_3D[triangle_indexes[1]]
-                point3 = points_3D[triangle_indexes[2]]
-
-                v321 = point3[0] * point2[1] * point1[2]
-                v231 = point2[0] * point3[1] * point1[2]
-                v312 = point3[0] * point1[1] * point2[2]
-                v132 = point1[0] * point3[1] * point2[2]
-                v213 = point2[0] * point1[1] * point3[2]
-                v123 = point1[0] * point2[1] * point3[2]
-                volume_tetraedre = 1 / 6 * (
-                            -v321 + v231 + v312 - v132 - v213 + v123)
-
-                volume += volume_tetraedre
-
-        return abs(volume)
-
-    def _bounding_box(self):
-        """
-        Returns the boundary box
-        """
-        points = []
-        bbox = self.faces[0]._bounding_box()
-
-        for face in self.faces:
-            bbox += face._bounding_box()
-
-        return bbox
-
-    def point_belongs(self, point, nb_rays=1):
-        """
-        Ray Casting algorithm
-        Returns True if the point is inside the Shell, False otherwise
-        """
-        epsilon = 10
-
-        bbox = self.bounding_box
-        if point[0] < bbox.xmin or point[0] > bbox.xmax:
-            return False
-        if point[1] < bbox.ymin or point[1] > bbox.ymax:
-            return False
-        if point[2] < bbox.zmin or point[2] > bbox.zmax:
-            return False
-
-        rays = []
-        for k in range(0, nb_rays):
-            rays.append(LineSegment3D(point, Point3D((random.uniform(0,
-                                                                     1) * epsilon,
-                                                      random.uniform(0,
-                                                                     1) * epsilon,
-                                                      random.uniform(0,
-                                                                     1) * epsilon))))
-
-        rays = sorted(rays, key=lambda ray: ray.Length())
-
-        rays_intersections = []
-        tests = []
-
-        # for ray in rays[:3]:
-        for ray in rays[:nb_rays]:
-            count = 0
-            ray_intersection = []
-            is_inside = True
-            for face in self.faces:
-                intersection_point = face.linesegment_intersection(ray)
-                if intersection_point is not None:
-                    ray_intersection.append(intersection_point)
-                    count += 1
-            if count % 2 == 0:
-                is_inside = False
-            tests.append(is_inside)
-            rays_intersections.append(ray_intersection)
-
-        for test1, test2 in zip(tests[:-1], tests[1:]):
-            if test1 != test2:
-                raise ValueError
-
-        return tests[0]
-
-    def is_inside_shell(self, shell2):
-        """
-        Returns True if all the points of self are inside shell2 and no face \
-        are intersecting
-        """
-        bbox1 = self.bounding_box
-        bbox2 = shell2.bounding_box
-        if not bbox1.is_inside_bbox(bbox2):
-            return False
-
-        points = []
-        for face in self.faces:
-            points.extend(face.contours3d[0].tessel_points)
-
-        for point in points:
-            if not shell2.point_belongs(point):
-                return False
-
-        # Check if any faces are intersecting
-        for face1 in self.faces:
-            for face2 in shell2.faces:
-                intersection_points = face1.face_intersection(face2)
-                if intersection_points is not None:
-                    #                    print('Two faces are intersecting :', face1, face2)
-                    return False
-
-        return True
-
-    def shell_intersection(self, shell2):
-        """
-        Return None if disjointed
-        Return (1, 0) or (0, 1) if one is inside the other
-        Return (n1, n2) if intersection
-
-        4 cases :
-            (n1, n2) with face intersection             => (n1, n2)
-            (0, 0) with face intersection               => (0, 0)
-            (0, 0) with no face intersection            => None
-            (1, 0) or (0, 1) with no face intersection  => 1
-        """
-        # Check if boundary boxes don't intersect
-        bbox1 = self.bounding_box
-        bbox2 = shell2.bounding_box
-        if not bbox1.bbox_intersection(bbox2):
-            #            print("No intersection of shells' BBox")
-            return None
-
-        # Check if any point of the first shell is in the second shell
-        points1 = []
-        for face in self.faces:
-            points1.extend(face.contours3d[0].tessel_points)
-        points2 = []
-        for face in shell2.faces:
-            points2.extend(face.contours3d[0].tessel_points)
-
-        nb_pts1 = len(points1)
-        nb_pts2 = len(points2)
-        compteur1 = 0
-        compteur2 = 0
-        for point1 in points1:
-            if shell2.point_belongs(point1):
-                compteur1 += 1
-        for point2 in points2:
-            if self.point_belongs(point2):
-                compteur2 += 1
-
-        inter1 = compteur1 / nb_pts1
-        inter2 = compteur2 / nb_pts2
-        #        print('shell intersection')
-        #        print('shell1 intersecte shell2 à', inter1*100, '%')
-        #        print('shell2 intersecte shell1 à', inter2*100, '%')
-
-        for face1 in self.faces:
-            for face2 in shell2.faces:
-                intersection_points = face1.face_intersection(face2)
-                if intersection_points is not None:
-                    #                    print('Two faces are intersecting :', face1, face2)
-                    #                    ax = face1.plot()
-                    #                    face2.plot(ax)
-                    return inter1, inter2
-        if (inter1, inter2) == (0, 0):
-            return None
-        return 1
-
-    def distance_to_shell(self, shell2, add_to_volumemodel=None):
-        """
-        Returns a Mesure object if the distance is not zero, otherwise returns None
-        """
-
-        if self.shell_intersection(
-                shell2) is not None and self.shell_intersection(shell2) != 1:
-            return None
-
-        # distance_min, point1_min, point2_min = self.faces[0].distance_to_face(shell2.faces[0], return_points=True)
-        distance_min, point1_min, point2_min = self.faces[0].minimum_distance(
-            shell2.faces[0], return_points=True)
-        for face1 in self.faces:
-            bbox1 = face1.bounding_box
-            for face2 in shell2.faces:
-                bbox2 = face2.bounding_box
-                bbox_distance = bbox1.distance_to_bbox(bbox2)
-                if bbox_distance < distance_min:
-                    # distance, point1, point2 = face1.distance_to_face(face2, return_points=True)
-                    distance, point1, point2 = face1.minimum_distance(face2,
-                                                                      return_points=True)
-                    if distance == 0:
-                        return None
-                    elif distance < distance_min:
-                        distance_min, point1_min, point2_min = distance, point1, point2
-
-        mesure = Measure3D(point1_min, point2_min)
-
-        if add_to_volumemodel is not None:
-            add_to_volumemodel.primitives.append(mesure)
-
-        return mesure
-
-    def distance_to_point(self, point, add_to_volumemodel=None):
-        """
-        Computes the distance of a point to a Shell3D, whether it is inside or outside the Shell3D
-        """
-        distance_min, point1_min = self.faces[0].distance_to_point(point,
-                                                                   return_other_point=True)
-        for face in self.faces[1:]:
-            bbox_distance = self.bounding_box.distance_to_point(point)
-            if bbox_distance < distance_min:
-                distance, point1 = face.distance_to_point(point,
-                                                          return_other_point=True)
-                if distance < distance_min:
-                    distance_min, point1_min = distance, point1
-
-        mesure = Measure3D(point, point1_min)
-
-        if add_to_volumemodel is not None:
-            add_to_volumemodel.primitives.append(mesure)
-
-        return mesure
-
-    def intersection_internal_aabb_volume(self, shell2):
-        """
-        aabb made of the intersection points and the points of self internal to shell2
-        """
-        intersections_points = []
-        for face1 in self.faces:
-            for face2 in shell2.faces:
-                intersection_points = face1.face_intersection(face2)
-                if intersection_points is not None:
-                    intersections_points.extend(intersection_points)
-
-        shell1_points_inside_shell2 = []
-        for face in self.faces:
-            for point in face.contours3d[0].tessel_points:
-                if shell2.point_belongs(point):
-                    shell1_points_inside_shell2.append(point)
-
-        if len(intersections_points + shell1_points_inside_shell2) == 0:
-            return 0
-        bbox = BoundingBox.from_points(
-            intersections_points + shell1_points_inside_shell2)
-        return bbox.volume()
-
-    def intersection_external_aabb_volume(self, shell2):
-        """
-        aabb made of the intersection points and the points of self external to shell2
-        """
-        intersections_points = []
-        for face1 in self.faces:
-            for face2 in shell2.faces:
-                intersection_points = face1.face_intersection(face2)
-                if intersection_points is not None:
-                    intersections_points.extend(intersection_points)
-
-        shell1_points_outside_shell2 = []
-        for face in self.faces:
-            for point in face.contours3d[0].tessel_points:
-                if not shell2.point_belongs(point):
-                    shell1_points_outside_shell2.append(point)
-
-        if len(intersections_points + shell1_points_outside_shell2) == 0:
-            return 0
-        bbox = BoundingBox.from_points(
-            intersections_points + shell1_points_outside_shell2)
-        return bbox.volume()
-
-    def triangulation(self):
-        positions = []
-        indices = []
-
-        nb_points = 0
-        mesh = DisplayMesh3D([], [])
-        for i, face in enumerate(self.faces):
-            face_mesh = face.triangulation()
-            mesh += face_mesh
-        return mesh
-
-    def babylon_script(self, name='primitive_mesh'):
-        s = 'var {} = new BABYLON.Mesh("{}", scene);\n'.format(name, name)
-
-        mesh = self.babylon_meshes()[0]
-
-        s += 'var positions = {};\n'.format(mesh['positions'])
-        s += 'var indices = {};\n'.format(mesh['indices'])
-        s += 'var normals = [];\n'
-        s += 'var vertexData = new BABYLON.VertexData();\n'
-        s += 'BABYLON.VertexData.ComputeNormals(positions, indices, normals);\n'
-        s += 'vertexData.positions = positions;\n'
-        s += 'vertexData.indices = indices;\n'
-        s += 'vertexData.normals = normals;\n'
-        s += 'vertexData.applyToMesh({});\n'.format(name)
-        s += '{}.enableEdgesRendering(0.9);\n'.format(name)
-        s += '{}.edgesWidth = 0.1;\n'.format(name)
-        s += '{}.edgesColor = new BABYLON.Color4(0, 0, 0, 0.6);\n'.format(name)
-        s += 'var mat = new BABYLON.StandardMaterial("mat", scene);\n'
-        #        s += 'mat.diffuseColor = BABYLON.Color3.Green();\n'
-        #        s += 'mat.specularColor = new BABYLON.Color3(0.5, 0.6, 0.87);\n'
-        #        s += 'mat.emissiveColor = new BABYLON.Color3(1, 1, 1);\n'
-        #        s += 'mat.ambientColor = new BABYLON.Color3(0.23, 0.98, 0.53);\n'
-        s += 'mat.backFaceCulling = false;\n'
-        s += 'mat.alpha = {};\n'.format(self.alpha)
-        s += '{}.material = mat;\n'.format(name)
-        if self.color is not None:
-            s += 'mat.diffuseColor = new BABYLON.Color3({}, {}, {});\n'.format(
-                *self.color)
-        return s
 
 
 class BoundingBox(dc.DessiaObject):
@@ -911,14 +519,14 @@ class BoundingBox(dc.DessiaObject):
         self.ymax = ymax
         self.zmin = zmin
         self.zmax = zmax
-        self.points = [Point3D((self.xmin, self.ymin, self.zmin)), \
-                       Point3D((self.xmax, self.ymin, self.zmin)), \
-                       Point3D((self.xmax, self.ymax, self.zmin)), \
-                       Point3D((self.xmin, self.ymax, self.zmin)), \
-                       Point3D((self.xmin, self.ymin, self.zmax)), \
-                       Point3D((self.xmax, self.ymin, self.zmax)), \
-                       Point3D((self.xmax, self.ymax, self.zmax)), \
-                       Point3D((self.xmin, self.ymax, self.zmax))]
+        self.points = [Point3D(self.xmin, self.ymin, self.zmin), \
+                       Point3D(self.xmax, self.ymin, self.zmin), \
+                       Point3D(self.xmax, self.ymax, self.zmin), \
+                       Point3D(self.xmin, self.ymax, self.zmin), \
+                       Point3D(self.xmin, self.ymin, self.zmax), \
+                       Point3D(self.xmax, self.ymin, self.zmax), \
+                       Point3D(self.xmax, self.ymax, self.zmax), \
+                       Point3D(self.xmin, self.ymax, self.zmax)]
         self.center = (self.points[0] + self.points[-2]) / 2
         self.name = name
 
@@ -1503,25 +1111,25 @@ class VolumeModel(dc.DessiaObject):
             volume += primitive.Volume()
         return volume
 
-    def Rotation(self, center, axis, angle, copy=True):
+    def rotation(self, center, axis, angle, copy=True):
         if copy:
             new_primitives = [
-                primitive.Rotation(center, axis, angle, copy=True) for
+                primitive.rotation(center, axis, angle, copy=True) for
                 primitive in self.primitives]
             return VolumeModel(new_primitives, self.name)
         else:
             for primitives in self.primitives:
-                primitives.Translation(center, axis, angle, copy=False)
+                primitives.translation(center, axis, angle, copy=False)
             self.bounding_box = self._bounding_box()
 
-    def Translation(self, offset, copy=True):
+    def translation(self, offset, copy=True):
         if copy:
-            new_primitives = [primitive.Translation(offset, copy=True) for
+            new_primitives = [primitive.translation(offset, copy=True) for
                               primitive in self.primitives]
             return VolumeModel(new_primitives, self.name)
         else:
             for primitives in self.primitives:
-                primitives.Translation(offset, copy=False)
+                primitives.translation(offset, copy=False)
             self.bounding_box = self._bounding_box()
 
     def frame_mapping(self, frame, side, copy=True):
@@ -1580,7 +1188,7 @@ class VolumeModel(dc.DessiaObject):
 
         return ax
 
-    def MPLPlot(self):
+    def plot(self):
         """
         Matplotlib plot of model.
         To use for debug.
@@ -1589,7 +1197,7 @@ class VolumeModel(dc.DessiaObject):
         ax = fig.add_subplot(111, projection='3d', adjustable='box')
         #        ax.set_aspect('equal')
         for primitive in self.primitives:
-            primitive.MPLPlot(ax)
+            primitive.plot(ax)
         ax.set_aspect('equal')
         ax.margins(0.1)
         return ax
