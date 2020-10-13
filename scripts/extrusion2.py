@@ -14,11 +14,11 @@ import volmdlr.primitives3D as primitives3D
 import volmdlr.primitives2D as primitives2D
 import math
 
-p1=vm.Point2D((0, 0))
-p2=vm.Point2D((0.1, 0.))
-p3=vm.Point2D((0.1, 0.2))
-p4=vm.Point2D((0, 0.1))
-p5=vm.Point2D((-0.01, 0.05))
+p1=vm.Point2D(0, 0)
+p2=vm.Point2D(0.1, 0.)
+p3=vm.Point2D(0.1, 0.2)
+p4=vm.Point2D(0, 0.1)
+p5=vm.Point2D(-0.01, 0.05)
 
 #p6=vm.Point2D((0.1,0.3))
 

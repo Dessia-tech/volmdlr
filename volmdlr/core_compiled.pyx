@@ -246,29 +246,6 @@ class Vector(DessiaObject):
     """
     Abstract class of vector
     """
-    def __setitem__(self, key, item):
-        if key == 0:
-            self.x = item
-        elif key == 1:
-            self.y = item
-        elif key == 2:
-            self.z = item
-        else:
-            raise IndexError
-
-    def __getitem__(self, key):
-        if key == 0:
-            return self.x
-        elif key == 1:
-            return self.y
-        elif key == 2:
-            return self.z
-        else:
-            raise IndexError
-
-    def __repr__(self):
-        return '{}: {}'.format(self.__class__.__name__, self)
-
     def __radd__(self, other_vector):
         return self + other_vector
 
@@ -308,6 +285,25 @@ class Vector2D(Vector):
         self.x = x
         self.y = y
         self.name = name
+
+    def __repr__(self):
+        return '{}: [{}, {}]'.format(self.__class__.__name__, self.x, self.y)
+
+    def __setitem__(self, key, item):
+        if key == 0:
+            self.x = item
+        elif key == 1:
+            self.y = item
+        else:
+            raise IndexError
+
+    def __getitem__(self, key):
+        if key == 0:
+            return self.x
+        elif key == 1:
+            return self.y
+        else:
+            raise IndexError
 
     def __add__(self, other_vector):
         return Vector2D(*Cadd2D(self.x, self.y,
@@ -431,15 +427,9 @@ class Vector2D(Vector):
 
     @classmethod
     def random(cls, xmin, xmax, ymin, ymax):
-        return cls((random.uniform(xmin, xmax),
-                    random.uniform(ymin, ymax)))
+        return cls(random.uniform(xmin, xmax),
+                   random.uniform(ymin, ymax))
 
-    def Draw(self):
-        warnings.warn(
-            "Draw is deprecated and will be removed in next versions, use plot() instead",
-            DeprecationWarning
-        )
-        self.plot()
 
     def plot(self, amplitude=0.5, width=None, head_width=None, origin=None, ax=None, color='k', line=False, label=None, normalize=False):
         if origin is None:
@@ -641,6 +631,29 @@ class Vector3D(Vector):
         self.z = z
         self.name = name
 
+    def __repr__(self):
+        return '{}: [{}, {}, {}]'.format(self.__class__.__name__, self.x, self.y, self.z)
+
+    def __setitem__(self, key, item):
+        if key == 0:
+            self.x = item
+        elif key == 1:
+            self.y = item
+        elif key == 2:
+            self.z = item
+        else:
+            raise IndexError
+
+    def __getitem__(self, key):
+        if key == 0:
+            return self.x
+        elif key == 1:
+            return self.y
+        elif key == 2:
+            return self.z
+        else:
+            raise IndexError
+
     def __add__(self, other_vector):
         return Vector3D(*Cadd3D(self.x, self.y, self.z,
                                 other_vector.x,
@@ -721,16 +734,15 @@ class Vector3D(Vector):
 #                   + (1-math.cos(angle))*(u.Dot(axis))*axis
 #                   + math.sin(angle)*axis.Cross(u)
 #                   + center)
-        vector2 = vector3D_rotation(self.x, self.y, self.z,
-                center, axis, angle)
+        vector2 = vector3D_rotation(self, center, axis, angle)
 
         if copy:
-            return self.__class__(vector2)
+            return self.__class__(*vector2)
             # return Point3D(vector2)
         else:
-            self.x = vector2.x
-            self.y = vector2.y
-            self.z = vector2.z
+            self.x = vector2[0]
+            self.y = vector2[1]
+            self.z = vector2[2]
 
     def x_rotation(self, angle:float, copy:bool=True):
         """
@@ -744,7 +756,7 @@ class Vector3D(Vector):
 
 
         if copy:
-            return Point3D([self.x, y1, z1])
+            return Point3D(self.x, y1, z1)
         else:
             self.y = y1
             self.z = z1
@@ -761,7 +773,7 @@ class Vector3D(Vector):
 
 
         if copy:
-            return Point3D([x1, self.y, z1])
+            return Point3D(x1, self.y, z1)
         else:
             self.x = x1
             self.z = z1
@@ -778,7 +790,7 @@ class Vector3D(Vector):
 
 
         if copy:
-            return Point3D([x1, y1, self.z])
+            return Point3D(x1, y1, self.z)
         else:
             self.x = x1
             self.y = y1
@@ -825,19 +837,19 @@ class Vector3D(Vector):
         p3d = self - (self-plane_origin).dot(z)*z
         u1 = p3d.dot(x)
         u2 = p3d.dot(y)
-        return Point2D((u1, u2))
+        return Point2D(u1, u2)
 
 
     def to_2d(self, plane_origin, x, y):
         x2d = self.dot(x) - plane_origin.dot(x)
         y2d = self.dot(y) - plane_origin.dot(y)
-        return Point2D((x2d,y2d))
+        return Point2D(x2d, y2d)
 
     def random_unit_normal_vector(self):
         """
         Returns a random normal vector
         """
-        v = Vector3D(npy.random.random(3))
+        v = Vector3D.random(0, 1, 0, 1, 0, 1)
 
         v = v - v.dot(self)*self/(self.norm()**2)
         v.normalize()
@@ -862,9 +874,9 @@ class Vector3D(Vector):
     
     @classmethod
     def random(cls, xmin, xmax, ymin, ymax, zmin, zmax):
-        return cls((random.uniform(xmin, xmax),
+        return cls(random.uniform(xmin, xmax),
                    random.uniform(ymin, ymax),
-                   random.uniform(zmin, zmax)))
+                   random.uniform(zmin, zmax))
 
 #    @classmethod
 #    def DictToObject(cls, dict_):
@@ -921,7 +933,7 @@ class Point3D(Vector3D):
                               other_vector.z))
 
     def __neg__(self):
-        return Point3D((-self.x, -self.y, -self.z))
+        return Point3D(-self.x, -self.y, -self.z)
 
     def __sub__(self, other_vector):
         return Point3D(*Csub3D(self.x, self.y, self.z,
@@ -1069,7 +1081,7 @@ class Matrix33:
                                                      self.M31, self.M32, self.M33,
                                                      vector.x, vector.y, vector.z)
         
-        return vector.__class__((u1, u2, u3))
+        return vector.__class__(u1, u2, u3)
 
     def determinent(self):
         det = self.M11*self.M22*self.M33 + self.M12*self.M23*self.M31 \

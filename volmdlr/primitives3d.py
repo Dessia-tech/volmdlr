@@ -25,16 +25,16 @@ class OpenedRoundedLineSegments3D(volmdlr.wires.Wire3D, volmdlr.primitives.Round
     _generic_eq = True
     
     def __init__(self, points, radius, adapt_radius=False, name=''):
-        primitives = RoundedLineSegments.__init__(self, points, radius,
-                                                  volmdlr.LineSegment3D,
-                                                  volmdlr.Arc3D,
+        primitives = volmdlr.primitives.RoundedLineSegments.__init__(self, points, radius,
+                                                  volmdlr.edges.LineSegment3D,
+                                                  volmdlr.edges.Arc3D,
                                                   closed=False,
                                                   adapt_radius=adapt_radius,
                                                   name='')
 
-        volmdlr.Wire3D.__init__(self, primitives, name)
+        volmdlr.wires.Wire3D.__init__(self, primitives, name)
 
-    def ArcFeatures(self, ipoint):
+    def arc_features(self, ipoint):
         radius = self.radius[ipoint]
         if self.closed:
             if ipoint == 0:
@@ -51,9 +51,9 @@ class OpenedRoundedLineSegments3D(volmdlr.wires.Wire3D, volmdlr.primitives.Round
             pti = self.points[ipoint]
             pt2 = self.points[ipoint + 1]
 
-        dist1 = (pt1 - pti).Norm()
-        dist2 = (pt2 - pti).Norm()
-        dist3 = (pt1 - pt2).Norm()
+        dist1 = (pt1 - pti).norm()
+        dist2 = (pt2 - pti).norm()
+        dist3 = (pt1 - pt2).norm()
         alpha = math.acos(-(dist3**2-dist1**2-dist2**2)/(2*dist1*dist2))/2.
         dist = radius/math.tan(alpha)
 
@@ -63,39 +63,39 @@ class OpenedRoundedLineSegments3D(volmdlr.wires.Wire3D, volmdlr.primitives.Round
         p3 = pti + u1*dist
         p4 = pti + u2*dist
 
-        n = u1.Cross(u2)
-        n /= n.Norm()
-        v1 = u1.Cross(n)
-        v2 = u2.Cross(n)
+        n = u1.cross(u2)
+        n /= n.norm()
+        v1 = u1.cross(n)
+        v2 = u2.cross(n)
 
-        l1 = volmdlr.Line3D(p3, p3+v1)
-        l2 = volmdlr.Line3D(p4, p4+v2)
+        l1 = volmdlr.edges.Line3D(p3, p3+v1)
+        l2 = volmdlr.edges.Line3D(p4, p4+v2)
         c, _ = l1.MinimumDistancePoints(l2)
 
         u3 = u1 + u2# mean of v1 and v2
-        u3 /= u3.Norm()
+        u3 /= u3.norm()
 
         interior = c - u3 * radius
         return p3, interior, p4, dist, alpha
 
 
-    def Rotation(self, center, angle, copy=True):
+    def rotation(self, center, angle, copy=True):
         if copy:
-            return self.__class__([p.Rotation(center, angle, copy=True)\
+            return self.__class__([p.rotation(center, angle, copy=True)\
                                           for p in self.points],
                                          self.radius, self.closed, self.name)
         else:
-            self.__init__([p.Rotation(center, angle, copy=True)\
+            self.__init__([p.rotation(center, angle, copy=True)\
                            for p in self.points],
                           self.radius, self.closed, self.name)
 
-    def Translation(self, offset, copy=True):
+    def translation(self, offset, copy=True):
         if copy:
-            return self.__class__([p.Translation(offset, copy=True)\
+            return self.__class__([p.translation(offset, copy=True)\
                                           for p in self.points],
                                          self.radius, self.closed, self.name)
         else:
-            self.__init__([p.Translation(offset, copy=True)\
+            self.__init__([p.translation(offset, copy=True)\
                            for p in self.points],
                           self.radius, self.closed, self.name)
 
@@ -142,10 +142,10 @@ class Block(volmdlr.shells.Shell3D):
                  color:Tuple[float, float, float]=None, alpha:float=1.,
                  name:str=''):
         self.frame = frame
-        self.size = (self.frame.u.Norm(), self.frame.v.Norm(), self.frame.w.Norm())
+        self.size = (self.frame.u.norm(), self.frame.v.norm(), self.frame.w.norm())
 
         faces = self.shell_faces()
-        volmdlr.Shell3D.__init__(self, faces,  color=color, alpha=alpha, name=name)
+        volmdlr.shells.Shell3D.__init__(self, faces,  color=color, alpha=alpha, name=name)
 
     # def __hash__(self):
     #     return hash(self.frame)
@@ -162,18 +162,18 @@ class Block(volmdlr.shells.Shell3D):
 
     def Edges(self):
         p1, p2, p3, p4, p5, p6, p7, p8 = self.Vertices()
-        return [volmdlr.LineSegment3D(p1.copy(), p2.copy()),
-                volmdlr.LineSegment3D(p2.copy(), p3.copy()),
-                volmdlr.LineSegment3D(p3.copy(), p4.copy()),
-                volmdlr.LineSegment3D(p4.copy(), p1.copy()),
-                volmdlr.LineSegment3D(p5.copy(), p6.copy()),
-                volmdlr.LineSegment3D(p6.copy(), p7.copy()),
-                volmdlr.LineSegment3D(p7.copy(), p8.copy()),
-                volmdlr.LineSegment3D(p8.copy(), p5.copy()),
-                volmdlr.LineSegment3D(p1.copy(), p5.copy()),
-                volmdlr.LineSegment3D(p2.copy(), p6.copy()),
-                volmdlr.LineSegment3D(p3.copy(), p7.copy()),
-                volmdlr.LineSegment3D(p4.copy(), p8.copy())]
+        return [volmdlr.edges.LineSegment3D(p1.copy(), p2.copy()),
+                volmdlr.edges.LineSegment3D(p2.copy(), p3.copy()),
+                volmdlr.edges.LineSegment3D(p3.copy(), p4.copy()),
+                volmdlr.edges.LineSegment3D(p4.copy(), p1.copy()),
+                volmdlr.edges.LineSegment3D(p5.copy(), p6.copy()),
+                volmdlr.edges.LineSegment3D(p6.copy(), p7.copy()),
+                volmdlr.edges.LineSegment3D(p7.copy(), p8.copy()),
+                volmdlr.edges.LineSegment3D(p8.copy(), p5.copy()),
+                volmdlr.edges.LineSegment3D(p1.copy(), p5.copy()),
+                volmdlr.edges.LineSegment3D(p2.copy(), p6.copy()),
+                volmdlr.edges.LineSegment3D(p3.copy(), p7.copy()),
+                volmdlr.edges.LineSegment3D(p4.copy(), p8.copy())]
 
     def face_contours(self):
         e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11, e12 = self.Edges()
@@ -198,28 +198,28 @@ class Block(volmdlr.shells.Shell3D):
 
     def shell_faces(self):
         c1, c2, c3, c4, c5, c6 = self.face_contours()
-        return [volmdlr.PlaneFace3D.from_contours3d(c1),
-                volmdlr.PlaneFace3D.from_contours3d(c2),
-                volmdlr.PlaneFace3D.from_contours3d(c3),
-                volmdlr.PlaneFace3D.from_contours3d(c4),
-                volmdlr.PlaneFace3D.from_contours3d(c5),
-                volmdlr.PlaneFace3D.from_contours3d(c6)]
+        return [volmdlr.faces.PlaneFace3D.from_contours3d(c1),
+                volmdlr.faces.PlaneFace3D.from_contours3d(c2),
+                volmdlr.faces.PlaneFace3D.from_contours3d(c3),
+                volmdlr.faces.PlaneFace3D.from_contours3d(c4),
+                volmdlr.faces.PlaneFace3D.from_contours3d(c5),
+                volmdlr.faces.PlaneFace3D.from_contours3d(c6)]
 
-    def Rotation(self, center, axis, angle, copy=True):
+    def rotation(self, center, axis, angle, copy=True):
         if copy:
-            new_frame = self.frame.Rotation(center, axis, angle, copy=True)
+            new_frame = self.frame.rotation(center, axis, angle, copy=True)
             return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
         else:
-            self.frame.Rotation(center, axis, angle, copy=False)
-            volmdlr.Shell3D.Rotation(self, center, axis, angle, copy=False)
+            self.frame.rotation(center, axis, angle, copy=False)
+            volmdlr.Shell3D.rotation(self, center, axis, angle, copy=False)
 
-    def Translation(self, offset, copy=True):
+    def translation(self, offset, copy=True):
         if copy:
-            new_frame = self.frame.Translation(offset, copy=True)
+            new_frame = self.frame.translation(offset, copy=True)
             return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
         else:
-            self.frame.Translation(offset, copy=False)
-            volmdlr.Shell3D.Translation(self, offset, copy=False)
+            self.frame.translation(offset, copy=False)
+            volmdlr.Shell3D.translation(self, offset, copy=False)
 
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -285,7 +285,7 @@ class Cone(volmdlr.core.Primitive3D):
     def __init__(self, position, axis, radius, length, name=''):
         volmdlr.Primitive3D.__init__(self, name=name)
         self.position = position
-        axis.Normalize()
+        axis.normalize()
         self.axis = axis
         self.radius = radius
         self.length = length
@@ -326,15 +326,15 @@ class Cone(volmdlr.core.Primitive3D):
 
     def babylon_script(self):
         new_axis = volmdlr.Vector3D((self.axis[0], self.axis[1], self.axis[2]))
-        normal_vector1 = new_axis.RandomUnitNormalVector()
-        normal_vector2 = new_axis.Cross(normal_vector1)
+        normal_vector1 = new_axis.RandomUnitnormalVector()
+        normal_vector2 = new_axis.cross(normal_vector1)
         x, y, z = self.position
         s = 'var cone = BABYLON.MeshBuilder.CreateCylinder("cone", {{diameterTop:0, diameterBottom:{}, height: {}, tessellation: 100}}, scene);\n'.format(2*self.radius, self.length)
         s += 'cone.position = new BABYLON.Vector3({},{},{});\n;'.format(x,y,z)
         s += 'var axis1 = new BABYLON.Vector3({},{},{});\n'.format(new_axis[0], new_axis[1], new_axis[2])
         s += 'var axis2 = new BABYLON.Vector3({},{},{});\n'.format(normal_vector1[0], normal_vector1[1], normal_vector1[2])
         s += 'var axis3 = new BABYLON.Vector3({},{},{});\n'.format(normal_vector2[0], normal_vector2[1], normal_vector2[2])
-        s += 'cone.rotation = BABYLON.Vector3.RotationFromAxis(axis3, axis1, axis2);\n'
+        s += 'cone.rotation = BABYLON.Vector3.rotationFromAxis(axis3, axis1, axis2);\n'
         return s
 
 
@@ -368,13 +368,13 @@ class ExtrudedProfile(volmdlr.shells.Shell3D):
             raise ValueError('At least one inner contour is not contained in outer_contour.')
 
         faces = self.shell_faces()
-        volmdlr.Shell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
+        volmdlr.shells.Shell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
 
     def shell_faces(self):
         lower_face = volmdlr.faces.PlaneFace3D.from_contours3d(self.outer_contour3d,
                                                          self.inner_contours3d)
 
-        upper_face = lower_face.Translation(self.extrusion_vector)
+        upper_face = lower_face.translation(self.extrusion_vector)
         lateral_faces = [p.extrusion(self.extrusion_vector)
                          for p in self.outer_contour3d.primitives]
 
@@ -432,8 +432,8 @@ class ExtrudedProfile(volmdlr.shells.Shell3D):
         return areas
 
     def Volume(self):
-        z = self.x.Cross(self.y)
-        z.Normalize()
+        z = self.x.cross(self.y)
+        z.normalize()
         coeff = npy.dot(self.extrusion_vector, z)
         return self.Area()*coeff
 
@@ -489,7 +489,7 @@ class RevolvedProfile(volmdlr.shells.Shell3D):
         self.contour3d = self.contour2d.to_3d(plane_origin, x, y)
 
         faces = self.shell_faces()
-        volmdlr.Shell3D.__init__(self, faces, color=color,
+        volmdlr.shells.Shell3D.__init__(self, faces, color=color,
                                  alpha=alpha, name=name)
 
     def shell_faces(self):
@@ -580,7 +580,7 @@ class Cylinder(RevolvedProfile):
     """
     def __init__(self, position, axis, radius, length, color=None, alpha=1., name=''):
         self.position = position
-        axis.Normalize()
+        axis.normalize()
         self.axis = axis
         self.radius = radius
         self.length = length
@@ -596,7 +596,7 @@ class Cylinder(RevolvedProfile):
         l3 = volmdlr.LineSegment2D(p3, p4)
         l4 = volmdlr.LineSegment2D(p4, p1)
         contour = volmdlr.Contour2D([l1, l2, l3, l4])
-        y = axis.RandomUnitNormalVector()
+        y = axis.RandomUnitnormalVector()
         RevolvedProfile.__init__(self, position, axis, y, contour, position, axis,
                                  color=color, alpha=alpha, name=name)
 
@@ -660,15 +660,15 @@ class Cylinder(RevolvedProfile):
             return ''
 
     def babylon_script(self, name='primitive_mesh'):
-        normal_vector1 = self.axis.RandomUnitNormalVector()
-#        normal_vector2 = new_axis.Cross(normal_vector1)
+        normal_vector1 = self.axis.RandomUnitnormalVector()
+#        normal_vector2 = new_axis.cross(normal_vector1)
 #        x, y, z = self.position
 #        s='var {} = BABYLON.Mesh.CreateCylinder("{}", {}, {}, {}, 30, 1, scene,false, BABYLON.Mesh.DEFAULTSIDE);'.format(name, self.name,self.length,2*self.radius,2*self.radius)
 #        s += '{}.position = new BABYLON.Vector3({},{},{});\n;'.format(name, x,y,z)
 #        s += 'var axis1 = new BABYLON.Vector3({},{},{});\n'.format(new_axis[0], new_axis[1], new_axis[2])
 #        s += 'var axis2 = new BABYLON.Vector3({},{},{});\n'.format(normal_vector1[0], normal_vector1[1], normal_vector1[2])
 #        s += 'var axis3 = new BABYLON.Vector3({},{},{});\n'.format(normal_vector2[0], normal_vector2[1], normal_vector2[2])
-#        s += '{}.rotation = BABYLON.Vector3.RotationFromAxis(axis3, axis1, axis2);\n'.format(name)
+#        s += '{}.rotation = BABYLON.Vector3.rotationFromAxis(axis3, axis1, axis2);\n'.format(name)
         p1 = volmdlr.Point2D((-0.5*self.length, self.radius))
         p2 = volmdlr.Point2D((0.5*self.length, self.radius))
         p3 = volmdlr.Point2D((0.5*self.length, 0.))
@@ -716,7 +716,7 @@ class HollowCylinder(Cylinder):
                  color=None, alpha=1, name=''):
         volmdlr.Primitive3D.__init__(self, name=name)
         self.position = position
-        axis.Normalize()
+        axis.normalize()
         self.axis = axis
         self.inner_radius = inner_radius
         self.outer_radius = outer_radius
@@ -732,7 +732,7 @@ class HollowCylinder(Cylinder):
         l3 = volmdlr.LineSegment2D(p3, p4)
         l4 = volmdlr.LineSegment2D(p4, p1)
         contour = volmdlr.Contour2D([l1, l2, l3, l4])
-        y = axis.RandomUnitNormalVector()
+        y = axis.RandomUnitnormalVector()
         # contour.plot()
         RevolvedProfile.__init__(self, position, axis, y, contour, position, axis,
                                  color=color, alpha=alpha, name=name)
@@ -771,7 +771,7 @@ class HollowCylinder(Cylinder):
 
 
     def babylon_script(self, name='primitive_mesh'):
-        normal_vector1 = self.axis.RandomUnitNormalVector()
+        normal_vector1 = self.axis.RandomUnitnormalVector()
         p1 = volmdlr.Point2D((-0.5*self.length, self.outer_radius))
         p2 = volmdlr.Point2D((0.5*self.length, self.outer_radius))
         p3 = volmdlr.Point2D((0.5*self.length, self.inner_radius))
@@ -820,7 +820,7 @@ class Sweep(volmdlr.shells.Shell3D):
         self.frames = []
         
         faces = self.shell_faces()
-        volmdlr.Shell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
+        volmdlr.shells.Shell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
 
 
     def shell_faces(self):
@@ -833,22 +833,22 @@ class Sweep(volmdlr.shells.Shell3D):
             tangent, normal = wire_primitive.frenet(0.)
             if normal is None:
                 normal = tangent.deterministic_unit_normal_vector()
-            n2 = tangent.Cross(normal)
+            n2 = tangent.cross(normal)
             contour3d = self.contour2d.to_3d(wire_primitive.start,
                                             normal,
                                             n2)
 
-            if wire_primitive.__class__ is volmdlr.LineSegment3D:
+            if wire_primitive.__class__ is volmdlr.edges.LineSegment3D:
                 for contour_primitive in contour3d.primitives:
                     faces.append(contour_primitive.extrusion(
                         wire_primitive.direction_vector()))
-            elif wire_primitive.__class__ is volmdlr.Arc3D:
+            elif wire_primitive.__class__ is volmdlr.edges.Arc3D:
                 for contour_primitive in contour3d.primitives:
                     faces.append(contour_primitive.revolution(
                         wire_primitive.center,
                         wire_primitive.normal,
                         wire_primitive.angle))
-            elif wire_primitive.__class__ is volmdlr.Arc3D:
+            elif wire_primitive.__class__ is volmdlr.wires.Circle3D:
                 for contour_primitive in contour3d.primitives:
                     faces.append(contour_primitive.revolution(
                         wire_primitive.center,
@@ -905,7 +905,7 @@ class Sphere(RevolvedProfile):
         
         # contour = volmdlr.Contour2D([c])
         axis = volmdlr.X3D
-        y = axis.RandomUnitNormalVector()
+        y = axis.RandomUnitnormalVector()
         RevolvedProfile.__init__(self, center, axis, y, contour, center, axis,
                                  color=color, alpha=alpha, name=name)
 
@@ -945,7 +945,7 @@ class Measure3D(volmdlr.edges.Line3D):
     def __init__(self, point1, point2, color=(1, 0, 0)):
         self.points = [point1, point2]
         self.color = color
-        self.distance = Vector3D(self.points[0] - self.points[1]).Norm()
+        self.distance = volmdlr.Vector3D(self.points[0] - self.points[1]).norm()
         self.bounding_box = self._bounding_box()
 
     # !!! no eq defined!
@@ -970,9 +970,9 @@ class BSplineExtrusion(volmdlr.core.Primitive3D):
 
     def __init__(self, obj, vectorextru, name=''):
         self.obj = obj
-        vectorextru.Normalize()
+        vectorextru.normalize()
         self.vectorextru = vectorextru
-        if obj.__class__ is Ellipse3D:
+        if obj.__class__ is volmdlr.edges.Ellipse3D:
             self.points = obj.tessel_points
         else:
             self.points = obj.points
@@ -980,12 +980,12 @@ class BSplineExtrusion(volmdlr.core.Primitive3D):
     @classmethod
     def from_step(cls, arguments, object_dict):
         name = arguments[0][1:-1]
-        if object_dict[arguments[1]].__class__ is Ellipse3D:
+        if object_dict[arguments[1]].__class__ is volmdlr.edges.Ellipse3D:
             ell = object_dict[arguments[1]]
             vectextru = -object_dict[arguments[2]]
             return cls(ell, vectextru, name)
 
-        elif object_dict[arguments[1]].__class__ is BSplineCurve3D:
+        elif object_dict[arguments[1]].__class__ is volmdlr.edges.BSplineCurve3D:
             bsplinecurve = object_dict[arguments[1]]
             vectextru = object_dict[arguments[2]]
             return cls(bsplinecurve, vectextru, name)

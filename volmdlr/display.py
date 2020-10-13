@@ -3,6 +3,10 @@
 """
 
 """
+from typing import List, Tuple
+import matplotlib.pyplot as plt
+import dessia_common as dc
+import volmdlr.edges
 
 class DisplayMesh(dc.DessiaObject):
     def __init__(self, points, triangles, edges=None, name=''):
@@ -41,18 +45,18 @@ class DisplayMesh(dc.DessiaObject):
             ax.set_aspect('equal')
 
         for p in self.points:
-            p.MPLPlot(ax=ax)
+            p.plot(ax=ax)
 
         for i1, i2, i3 in self.triangles:
-            self._linesegment_class(self.points[i1], self.points[i2]).MPLPlot(
+            self._linesegment_class(self.points[i1], self.points[i2]).plot(
                 ax=ax)
-            self._linesegment_class(self.points[i2], self.points[i3]).MPLPlot(
+            self._linesegment_class(self.points[i2], self.points[i3]).plot(
                 ax=ax)
-            self._linesegment_class(self.points[i1], self.points[i3]).MPLPlot(
+            self._linesegment_class(self.points[i1], self.points[i3]).plot(
                 ax=ax)
 
         for i, (i1, i2) in enumerate(self.edges):
-            self._linesegment_class(self.points[i1], self.points[i2]).MPLPlot(
+            self._linesegment_class(self.points[i1], self.points[i2]).plot(
                 ax=ax)
             if numbering:
                 ax.text(*0.5*(self.points[i1]+self.points[i2]), 'edge {}'.format(i+1),
@@ -62,10 +66,10 @@ class DisplayMesh(dc.DessiaObject):
 
 
 class DisplayMesh2D(DisplayMesh):
-    _linesegment_class = LineSegment2D
-    _point_class = Point2D
+    _linesegment_class = volmdlr.edges.LineSegment2D
+    _point_class = volmdlr.Point2D
 
-    def __init__(self, points: List[Point2D],
+    def __init__(self, points: List[volmdlr.Point2D],
                  triangles: List[Tuple[int, int, int]],
                  edges: List[Tuple[int, int]]=None,
                  name: str=''):
@@ -74,10 +78,10 @@ class DisplayMesh2D(DisplayMesh):
 
 
 class DisplayMesh3D(DisplayMesh):
-    _linesegment_class = LineSegment3D
-    _point_class = Point3D
+    _linesegment_class = volmdlr.edges.LineSegment3D
+    _point_class = volmdlr.Point3D
 
-    def __init__(self, points: List[Point3D],
+    def __init__(self, points: List[volmdlr.Point3D],
                  triangles: List[Tuple[int, int, int]], name=''):
         DisplayMesh.__init__(self, points, triangles)
 

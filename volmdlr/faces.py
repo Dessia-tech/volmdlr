@@ -3,8 +3,10 @@
 """
 
 """
+import triangle
 from typing import List
 import math
+import numpy as npy
 import matplotlib.pyplot as plt
 import dessia_common as dc
 from geomdl import BSpline
@@ -24,13 +26,13 @@ class Surface2D(volmdlr.core.Primitive2D):
         self.outer_contour = outer_contour
         self.inner_contours = inner_contours
 
-        Primitive2D.__init__(self, name=name)
+        volmdlr.core.Primitive2D.__init__(self, name=name)
 
     def triangulation(self, min_x_density=None, min_y_density=None):
         outer_polygon = self.outer_contour.polygonization(min_x_density=15, min_y_density=12)
         # ax2 = outer_polygon.MPLPlot(color='r', point_numbering=True)
         points = outer_polygon.points
-        vertices = [p.vector for p in points]
+        vertices = [(p.x, p.y) for p in points]
         n = len(outer_polygon.points)
         segments = [(i, i+1) for i in range(n-1)]
         segments.append((n-1, 0))
@@ -43,7 +45,7 @@ class Surface2D(volmdlr.core.Primitive2D):
             for point in inner_polygon.points:
                 if not point in point_index:
                     points.append(point)
-                    vertices.append(point.vector)
+                    vertices.append((point.x, point.y))
                     point_index[point] = n
                     n += 1
             for point1, point2 in zip(inner_polygon.points[:-1],
@@ -52,7 +54,8 @@ class Surface2D(volmdlr.core.Primitive2D):
                                  point_index[point2]))
             segments.append((point_index[inner_polygon.points[-1]],
                              point_index[inner_polygon.points[0]]))
-            holes.append(inner_contour.random_point_inside().vector)
+            rpi = inner_contour.random_point_inside()
+            holes.append((rpi.x, rpi.y))
 
 
         tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
@@ -64,7 +67,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         t = triangle.triangulate(tri, 'p')
         triangles = t['triangles'].tolist()
 
-        return DisplayMesh2D(points, triangles=triangles, edges=None)
+        return volmdlr.display.DisplayMesh2D(points, triangles=triangles, edges=None)
 
     def plot(self, ax=None):
         if ax is None:
@@ -245,45 +248,45 @@ class Plane3D(Surface3D):
         point2 = point1 + line_direction
         return volmdlr.Line3D(point1, point2)
 
-    def Rotation(self, center, axis, angle, copy=True):
+    def rotation(self, center, axis, angle, copy=True):
         if copy:
-            new_frame = self.frame.Rotation(center, axis, angle, copy=True)
+            new_frame = self.frame.rotation(center, axis, angle, copy=True)
             return Plane3D(new_frame)
         else:
-            self.frame.Rotation(center, axis, angle, copy=False)
+            self.frame.rotation(center, axis, angle, copy=False)
 
-    def Translation(self, offset, copy=True):
+    def translation(self, offset, copy=True):
         if copy:
-            new_frame = self.frame.Translation(offset, True)
+            new_frame = self.frame.translation(offset, True)
             return Plane3D(new_frame)
         else:
-            self.origin.Translation(offset, False)
+            self.origin.translation(offset, False)
 
     def frame_mapping(self, frame, side, copy=True):
         """
         side = 'old' or 'new'
         """
         if side == 'old':
-            new_origin = frame.OldCoordinates(self.origin)
-            new_vector1 = frame.Basis().OldCoordinates(self.vectors[0])
-            new_vector2 = frame.Basis().OldCoordinates(self.vectors[1])
+            new_origin = frame.old_coordinates(self.origin)
+            new_vector1 = frame.Basis().old_coordinates(self.vectors[0])
+            new_vector2 = frame.Basis().old_coordinates(self.vectors[1])
             if copy:
                 return Plane3D(new_origin, new_vector1, new_vector2, self.name)
             else:
                 self.origin = new_origin
                 self.vectors = [new_vector1, new_vector2]
-                self.normal = frame.Basis().OldCoordinates(self.normal)
+                self.normal = frame.Basis().old_coordinates(self.normal)
                 self.normal.normalize()
         if side == 'new':
-            new_origin = frame.NewCoordinates(self.origin)
-            new_vector1 = frame.Basis().NewCoordinates(self.vectors[0])
-            new_vector2 = frame.Basis().NewCoordinates(self.vectors[1])
+            new_origin = frame.new_coordinates(self.origin)
+            new_vector1 = frame.Basis().new_coordinates(self.vectors[0])
+            new_vector2 = frame.Basis().new_coordinates(self.vectors[1])
             if copy:
                 return Plane3D(new_origin, new_vector1, new_vector2, self.name)
             else:
                 self.origin = new_origin
                 self.vectors = [new_vector1, new_vector2]
-                self.normal = frame.Basis().NewCoordinates(self.normal)
+                self.normal = frame.Basis().new_coordinates(self.normal)
                 self.normal.normalize()
 
     def copy(self):
@@ -315,7 +318,7 @@ class Plane3D(Surface3D):
             self.vectors[1][0], self.vectors[1][1], self.vectors[1][2])
         s += 'var axis3 = new BABYLON.Vector3({}, {}, {});\n'.format(
             self.normal[0], self.normal[1], self.normal[2])
-        s += 'var orientation = BABYLON.Vector3.RotationFromAxis(axis1, axis2, axis3);\n'
+        s += 'var orientation = BABYLON.Vector3.rotationFromAxis(axis1, axis2, axis3);\n'
         s += 'myPlane.rotation = orientation;\n'
 
         s += 'var planemat = new BABYLON.StandardMaterial("planemat", scene);\n'
@@ -325,10 +328,10 @@ class Plane3D(Surface3D):
         return s
 
     def point2d_to_3d(self, point2d):
-        return point2d.To3D(self.frame.origin, self.frame.u, self.frame.v)
+        return point2d.to_3d(self.frame.origin, self.frame.u, self.frame.v)
 
     def point3d_to_2d(self, point3d):
-        return point3d.To2D(self.frame.origin, self.frame.u, self.frame.v)
+        return point3d.to_2d(self.frame.origin, self.frame.u, self.frame.v)
 
     def contour2d_to_3d(self, contour2d):
         return contour2d.to_3d(self.frame.origin, self.frame.u, self.frame.v)
@@ -340,13 +343,13 @@ class Plane3D(Surface3D):
     def rectangular_cut(self, x1:float, x2:float,
                         y1:float, y2:float, name:str=''):
 
-        p1 = volmdlr.volmdlr.Point2D((x1, y1))
-        p2 = volmdlr.volmdlr.Point2D((x2, y1))
-        p3 = volmdlr.volmdlr.Point2D((x2, y2))
-        p4 = volmdlr.volmdlr.Point2D((x1, y2))
-        outer_contour = volmdlr.Polygon2D([p1, p2, p3, p4])
-        surface = volmdlr.Surface2D(outer_contour, [])
-        return volmdlr.faces3d.Planevolmdlr.faces3d.Face3D(self, surface, name)
+        p1 = volmdlr.Point2D(x1, y1)
+        p2 = volmdlr.Point2D(x2, y1)
+        p3 = volmdlr.Point2D(x2, y2)
+        p4 = volmdlr.Point2D(x1, y2)
+        outer_contour = volmdlr.wires.Polygon2D([p1, p2, p3, p4])
+        surface = Surface2D(outer_contour, [])
+        return Face3D(self, surface, name)
 
 XYZ = volmdlr.Basis3D(volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)
 YZX = volmdlr.Basis3D(volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D)
@@ -375,17 +378,15 @@ class CylindricalSurface3D(Surface3D):
         self.name = name
 
     def point2d_to_3d(self, point2d):
-        p = volmdlr.Point3D(volmdlr.Vector3D([self.radius * math.cos(point2d[0]),
-                              self.radius * math.sin(point2d[0]),
-                              point2d[1]]))
-        return self.frame.OldCoordinates(p)
+        p = volmdlr.Point3D(self.radius * math.cos(point2d[0]),
+                            self.radius * math.sin(point2d[0]),
+                            point2d[1])
+        return self.frame.old_coordinates(p)
 
     def point3d_to_2d(self, point3d):
-        x, y, z = point3d
-
-        u1, u2 = x / self.radius, y / self.radius
+        u1, u2 = point3d.x / self.radius, point3d.y / self.radius
         theta = volmdlr.sin_cos_angle(u1, u2)
-        return volmdlr.Point2D([theta, z])
+        return volmdlr.Point2D(theta, point3d.z)
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -401,10 +402,10 @@ class CylindricalSurface3D(Surface3D):
     def frame_mapping(self, frame, side, copy=True):
         basis = frame.Basis()
         if side == 'new':
-            new_origin = frame.NewCoordinates(self.frame.origin)
-            new_u = basis.NewCoordinates(self.frame.u)
-            new_v = basis.NewCoordinates(self.frame.v)
-            new_w = basis.NewCoordinates(self.frame.w)
+            new_origin = frame.new_coordinates(self.frame.origin)
+            new_u = basis.new_coordinates(self.frame.u)
+            new_v = basis.new_coordinates(self.frame.v)
+            new_w = basis.new_coordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
             if copy:
                 return CylindricalSurface3D(new_frame, self.radius,
@@ -413,10 +414,10 @@ class CylindricalSurface3D(Surface3D):
                 self.frame = new_frame
 
         if side == 'old':
-            new_origin = frame.OldCoordinates(self.frame.origin)
-            new_u = basis.OldCoordinates(self.frame.u)
-            new_v = basis.OldCoordinates(self.frame.v)
-            new_w = basis.OldCoordinates(self.frame.w)
+            new_origin = frame.old_coordinates(self.frame.origin)
+            new_u = basis.old_coordinates(self.frame.u)
+            new_v = basis.old_coordinates(self.frame.v)
+            new_w = basis.old_coordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
             if copy:
                 return CylindricalSurface3D(new_frame, self.radius,
@@ -426,20 +427,17 @@ class CylindricalSurface3D(Surface3D):
 
     def rectangular_cut(self, theta1:float, theta2:float,
                         z1:float, z2:float, name:str=''):
-        print(theta1, theta2, z1, z2)
-        # theta1 = angle_principal_measure(theta1)
-        # theta2 = angle_principal_measure(theta2)
 
         if theta1 == theta2:
             theta2 += volmdlr.volmdlr.two_pi
 
-        p1 = volmdlr.Point2D((theta1, z1))
-        p2 = volmdlr.Point2D((theta2, z1))
-        p3 = volmdlr.Point2D((theta2, z2))
-        p4 = volmdlr.Point2D((theta1, z2))
-        outer_contour = volmdlr.Polygon2D([p1, p2, p3, p4])
-        surface2d = volmdlr.Surface2D(outer_contour, [])
-        return volmdlr.surfaces3d.CylindricalFace3D(self, surface2d, name)
+        p1 = volmdlr.Point2D(theta1, z1)
+        p2 = volmdlr.Point2D(theta2, z1)
+        p3 = volmdlr.Point2D(theta2, z2)
+        p4 = volmdlr.Point2D(theta1, z2)
+        outer_contour = volmdlr.wires.Polygon2D([p1, p2, p3, p4])
+        surface2d = Surface2D(outer_contour, [])
+        return volmdlr.faces.CylindricalFace3D(self, surface2d, name)
 
 
 class ToroidalSurface3D(Surface3D):
@@ -474,14 +472,14 @@ class ToroidalSurface3D(Surface3D):
         p7 = self.frame.origin - self.frame.u * d - self.frame.v * d + self.frame.w * self.r
         p8 = self.frame.origin - self.frame.u * d - self.frame.v * d - self.frame.w * self.r
 
-        return volmdlr.BoundingBox.from_points([p1, p2, p3, p4, p5, p6, p7, p8])
+        return volmdlr.core.BoundingBox.from_points([p1, p2, p3, p4, p5, p6, p7, p8])
 
     def point2d_to_3d(self, point2d):
         theta, phi = point2d
         x = (self.R + self.r * math.cos(phi)) * math.cos(theta)
         y = (self.R + self.r * math.cos(phi)) * math.sin(theta)
         z = self.r * math.sin(phi)
-        return self.frame.OldCoordinates(volmdlr.Point3D([x, y, z]))
+        return self.frame.old_coordinates(volmdlr.Point3D(x, y, z))
 
     def point3d_to_2d(self, point3d):
         # points_2D = []
@@ -498,7 +496,7 @@ class ToroidalSurface3D(Surface3D):
         u1, u2 = round(x / u, 5), round(y / u, 5)
         theta = volmdlr.sin_cos_angle(u1, u2)
 
-        return volmdlr.volmdlr.Point2D([theta, phi])
+        return volmdlr.volmdlr.Point2D(theta, phi)
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -515,10 +513,10 @@ class ToroidalSurface3D(Surface3D):
     def frame_mapping(self, frame, side, copy=True):
         basis = frame.Basis()
         if side == 'new':
-            new_origin = frame.NewCoordinates(self.frame.origin)
-            new_u = basis.NewCoordinates(self.frame.u)
-            new_v = basis.NewCoordinates(self.frame.v)
-            new_w = basis.NewCoordinates(self.frame.w)
+            new_origin = frame.new_coordinates(self.frame.origin)
+            new_u = basis.new_coordinates(self.frame.u)
+            new_v = basis.new_coordinates(self.frame.v)
+            new_w = basis.new_coordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
             if copy:
                 return ToroidalSurface3D(new_frame,
@@ -528,10 +526,10 @@ class ToroidalSurface3D(Surface3D):
                 self.frame = new_frame
 
         if side == 'old':
-            new_origin = frame.OldCoordinates(self.frame.origin)
-            new_u = basis.OldCoordinates(self.frame.u)
-            new_v = basis.OldCoordinates(self.frame.v)
-            new_w = basis.OldCoordinates(self.frame.w)
+            new_origin = frame.old_coordinates(self.frame.origin)
+            new_u = basis.old_coordinates(self.frame.u)
+            new_v = basis.old_coordinates(self.frame.v)
+            new_w = basis.old_coordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
             if copy:
                 return ToroidalSurface3D(new_frame,
@@ -555,15 +553,14 @@ class ToroidalSurface3D(Surface3D):
         elif theta2 < theta1:
             theta2 += volmdlr.two_pi
 
-        # print(theta1, theta2, phi1, phi2)
-        p1 = volmdlr.volmdlr.Point2D((theta1, phi1))
-        p2 = volmdlr.volmdlr.Point2D((theta1, phi2))
-        p3 = volmdlr.volmdlr.Point2D((theta2, phi2))
-        p4 = volmdlr.volmdlr.Point2D((theta2, phi1))
-        outer_contour = volmdlr.Polygon2D([p1, p2, p3, p4])
-        return self.ToroidalFace3D(self,
-                                      volmdlr.Surface2D(outer_contour, []),
-                                    name)
+        p1 = volmdlr.Point2D(theta1, phi1)
+        p2 = volmdlr.Point2D(theta1, phi2)
+        p3 = volmdlr.Point2D(theta2, phi2)
+        p4 = volmdlr.Point2D(theta2, phi1)
+        outer_contour = volmdlr.wires.Polygon2D([p1, p2, p3, p4])
+        return ToroidalFace3D(self,
+                              Surface2D(outer_contour, []),
+                              name)
 
     def contour2d_to_3d(self, contour2d):
         edges3d = []
@@ -598,7 +595,7 @@ class ToroidalSurface3D(Surface3D):
 
         primitives, start_end, all_points = [], [], []
         for edge in contour3d.edges:
-            new_points = [frame.NewCoordinates(pt) for pt in edge.points]
+            new_points = [frame.new_coordinates(pt) for pt in edge.points]
             if edge.__class__ is volmdlr.Arc3D:
                 if edge.normal == n or edge.normal == -n:
                     start2d, end2d = self.points3d_to2d(new_points,
@@ -893,10 +890,10 @@ class ConicalSurface3D(Surface3D):
     def frame_mapping(self, frame, side, copy=True):
         basis = frame.Basis()
         if side == 'new':
-            new_origin = frame.NewCoordinates(self.frame.origin)
-            new_u = basis.NewCoordinates(self.frame.u)
-            new_v = basis.NewCoordinates(self.frame.v)
-            new_w = basis.NewCoordinates(self.frame.w)
+            new_origin = frame.new_coordinates(self.frame.origin)
+            new_u = basis.new_coordinates(self.frame.u)
+            new_v = basis.new_coordinates(self.frame.v)
+            new_w = basis.new_coordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
             if copy:
                 return ConicalSurface3D(new_frame, self.radius, name=self.name)
@@ -904,10 +901,10 @@ class ConicalSurface3D(Surface3D):
                 self.frame = new_frame
 
         if side == 'old':
-            new_origin = frame.OldCoordinates(self.frame.origin)
-            new_u = basis.OldCoordinates(self.frame.u)
-            new_v = basis.OldCoordinates(self.frame.v)
-            new_w = basis.OldCoordinates(self.frame.w)
+            new_origin = frame.old_coordinates(self.frame.origin)
+            new_u = basis.old_coordinates(self.frame.u)
+            new_v = basis.old_coordinates(self.frame.v)
+            new_w = basis.old_coordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
             if copy:
                 return ConicalSurface3D(new_frame, self.radius, name=self.name)
@@ -920,7 +917,7 @@ class ConicalSurface3D(Surface3D):
                              z * self.semi_angle * math.sin(theta),
                              z,
                              ))
-        return self.frame.OldCoordinates(new_point)
+        return self.frame.old_coordinates(new_point)
 
     def point3d_to_2d(self, point):
         z = self.frame.w.dot(point)
@@ -982,7 +979,7 @@ class SphericalSurface3D(Surface3D):
         x = self.radius * math.cos(phi) * math.cos(theta)
         y = self.radius * math.cos(phi) * math.sin(theta)
         z = self.radius * math.sin(phi)
-        return self.frame3d.OldCoordinates(volmdlr.Point3D([x, y, z]))
+        return self.frame3d.old_coordinates(volmdlr.Point3D([x, y, z]))
 
     def point3d_to2d(self, point3d):
         x, y, z = point3d
@@ -1084,8 +1081,8 @@ class BSplineSurface3D(Surface3D):
 
         return script
 
-    def Rotation(self, center, axis, angle, copy=True):
-        new_control_points = [p.Rotation(center, axis, angle, True) for p in
+    def rotation(self, center, axis, angle, copy=True):
+        new_control_points = [p.rotation(center, axis, angle, True) for p in
                               self.control_points]
         new_BSplineSurface3D = BSplineSurface3D(self.degree_u, self.degree_v,
                                                 new_control_points, self.nb_u,
@@ -1101,8 +1098,8 @@ class BSplineSurface3D(Surface3D):
             self.curve = new_BSplineSurface3D.curve
             self.points = new_BSplineSurface3D.points
 
-    def Translation(self, offset, copy=True):
-        new_control_points = [p.Translation(offset, True) for p in
+    def translation(self, offset, copy=True):
+        new_control_points = [p.translation(offset, True) for p in
                               self.control_points]
         new_BSplineSurface3D = BSplineSurface3D(self.degree_u, self.degree_v,
                                                 new_control_points, self.nb_u,
@@ -1185,28 +1182,28 @@ class Face3D():
 
         """
         if self.surface2d.outer_contour.__class__.__name__ == 'Circle2D':
-            return volmdlr.Circle3D.from_3_points(
+            return volmdlr.wires.Circle3D.from_3_points(
                 self.surface3d.point2d_to_3d(
-                    self.surface2d.outer_contour.PointAtCurvilinearAbscissa(0.)),
+                    self.surface2d.outer_contour.point_at_abscissa(0.)),
                 self.surface3d.point2d_to_3d(
-                    self.surface2d.outer_contour.PointAtCurvilinearAbscissa(
+                    self.surface2d.outer_contour.point_at_abscissa(
                         self.surface2d.outer_contour.radius)),
                 self.surface3d.point2d_to_3d(
-                    self.surface2d.outer_contour.PointAtCurvilinearAbscissa(
+                    self.surface2d.outer_contour.point_at_abscissa(
                         2 * self.surface2d.outer_contour.radius)),
             )
 
         primitives3d = []
         for primitive2d in self.surface2d.outer_contour.primitives:
-            if primitive2d.__class__ == volmdlr.LineSegment2D:
+            if primitive2d.__class__ == volmdlr.edges.LineSegment2D:
                 p1 = self.surface3d.point2d_to_3d(primitive2d.start)
                 p2 = self.surface3d.point2d_to_3d(primitive2d.end)
-                primitive3d = volmdlr.LineSegment3D(p1, p2)
-            elif primitive2d.__class__ == volmdlr.primitives2D.Arc2D:
+                primitive3d = volmdlr.edges.LineSegment3D(p1, p2)
+            elif primitive2d.__class__ == volmdlr.edges.Arc2D:
                 start = self.surface3d.point2d_to_3d(primitive2d.start)
                 interior = self.surface3d.point2d_to_3d(primitive2d.interior)
                 end = self.surface3d.point2d_to_3d(primitive2d.end)
-                primitive3d = volmdlr.primitives3D.Arc3D(start, interior, end)
+                primitive3d = volmdlr.edges.Arc3D(start, interior, end)
             else:
                 print(self.surface2d.outer_contour.primitives)
                 raise NotImplementedError('Unsupported primitive {}' \
@@ -1214,7 +1211,7 @@ class Face3D():
                     primitive2d.__class__.__name__))
 
             primitives3d.append(primitive3d)
-        return volmdlr.Contour3D(primitives3d)
+        return volmdlr.wires.Contour3D(primitives3d)
 
     def _bounding_box(self):
         """
@@ -1239,16 +1236,16 @@ class Face3D():
             return BSplineFace3D(contours, object_dict[int(arguments[2])],
                                  name=arguments[0][1:-1])
 
-        elif object_dict[int(arguments[2])].__class__ is volmdlr.surfaces3d.BSplineSurface3D:
+        elif object_dict[int(arguments[2])].__class__ is volmdlr.faces.BSplineSurface3D:
             # print(object_dict[int(arguments[2])])
             return BSplineFace3D(contours, object_dict[int(arguments[2])],
                                  name=arguments[0][1:-1])
 
-        elif object_dict[int(arguments[2])].__class__ is volmdlr.surfaces3d.ToroidalSurface3D:
+        elif object_dict[int(arguments[2])].__class__ is volmdlr.faces.ToroidalSurface3D:
             return ToroidalFace3D.face_from_contours3d(contours, object_dict[
                 int(arguments[2])], name=arguments[0][1:-1])
 
-        elif object_dict[int(arguments[2])].__class__ is volmdlr.surfaces3d.ConicalSurface3D:
+        elif object_dict[int(arguments[2])].__class__ is volmdlr.faces.ConicalSurface3D:
             return ConicalFace3D.face_from_contours3d(contours,
                                                 object_dict[int(arguments[2])],
                                                 name=arguments[0][1:-1])
@@ -1282,7 +1279,7 @@ class Face3D():
             pt[1] for pt in points_set)
         center = volmdlr.Point2D(((xmax + xmin) / 2, (ymax + ymin) / 2))
         frame2d = Frame2D(center, X2D, Y2D)
-        points_test = [frame2d.NewCoordinates(pt) for pt in points_set]
+        points_test = [frame2d.new_coordinates(pt) for pt in points_set]
 
         points_2dint = []
         s = 0
@@ -1308,7 +1305,7 @@ class Face3D():
             points_2dint.append(closest)
             points_test[pos] = None
 
-        points_old = [frame2d.OldCoordinates(pt) for pt in points_2dint]
+        points_old = [frame2d.old_coordinates(pt) for pt in points_2dint]
         return points_old
 
     def range_closest(list_point, r1=None, r2=None):
@@ -1379,8 +1376,7 @@ class Face3D():
         mesh2d = self.surface2d.triangulation(min_x_density=self.min_x_density,
                                               min_y_density=self.min_y_density)
 
-        mesh2d.plot()
-        return DisplayMesh3D(
+        return volmdlr.display.DisplayMesh3D(
             [self.surface3d.point2d_to_3d(p) for p in mesh2d.points],
             mesh2d.triangles)
 
@@ -1391,24 +1387,24 @@ class Face3D():
         self.outer_contour.MPLPlot()
 
 
-    def Rotation(self, center, axis, angle, copy=True):
+    def rotation(self, center, axis, angle, copy=True):
         if copy:
-            new_surface = self.surface.Rotation(center, axis,
+            new_surface = self.surface.rotation(center, axis,
                                                 angle, copy=True)
             return self.__class__(new_surface, self.outer_contour2d,
                                   self.inner_contours2d)
         else:
-            self.surface.Rotation(center, axis,
+            self.surface.rotation(center, axis,
                                   angle, copy=False)
 
 
 
-    def Translation(self, offset, copy=True):
+    def translation(self, offset, copy=True):
         if copy:
-            new_surface3d = self.surface3d.Translation(offset=offset, copy=True)
+            new_surface3d = self.surface3d.translation(offset=offset, copy=True)
             return self.__class__(new_surface3d, self.surface2d)
         else:
-            self.surface.Translation(offset=offset, copy=False)
+            self.surface.translation(offset=offset, copy=False)
 
 
     def frame_mapping(self, frame, side, copy=True):
@@ -1465,7 +1461,7 @@ class PlaneFace3D(Face3D):
         if points[0] == points[-1]:
             points = points[:-1]
         polygon_points = [
-            p.To2D(plane.origin, plane.vectors[0], plane.vectors[1]) for p in
+            p.to_2d(plane.origin, plane.vectors[0], plane.vectors[1]) for p in
             points]
         repaired_points = [p.copy() for p in points]
         polygon2D = volmdlr.Polygon2D(polygon_points)
@@ -1508,10 +1504,13 @@ class PlaneFace3D(Face3D):
 
         inner_contours2d = []
         for contour in inner_contours3d:
-            inner_contours2d.append(contour.to_2d(plane3d))
+            inner_contours2d.append(contour.to_2d(plane3d.frame.origin,
+                                                  plane3d.frame.u,
+                                                  plane3d.frame.v,
+                                                  ))
 
         return cls(plane3d=plane3d,
-                   surface2d=volmdlr.Surface2D(outer_contour=outer_contour2d,
+                   surface2d=Surface2D(outer_contour=outer_contour2d,
                                        inner_contours=inner_contours2d),
                    name=name)
 
@@ -1548,13 +1547,13 @@ class PlaneFace3D(Face3D):
                 return projection_distance, projected_pt
             return projection_distance
 
-        point_2D = point.To2D(self.plane.origin, self.plane.vectors[0],
+        point_2D = point.to_2d(self.plane.origin, self.plane.vectors[0],
                               self.plane.vectors[1])
 
         border_distance, other_point = self.polygon2D.PointBorderDistance(
             point_2D, return_other_point=True)
 
-        other_point = other_point.To3D(self.plane.origin,
+        other_point = other_point.to_3d(self.plane.origin,
                                        self.plane.vectors[0],
                                        self.plane.vectors[1])
 
@@ -1625,7 +1624,7 @@ class PlaneFace3D(Face3D):
             print('point not on plane so not on face')
             return False
 
-        point_2D = point.To2D(self.plane.origin, self.plane.vectors[0],
+        point_2D = point.to_2d(self.plane.origin, self.plane.vectors[0],
                               self.plane.vectors[1])
 
         ### PLOT ###
@@ -1818,7 +1817,7 @@ class CylindricalFace3D(Face3D):
             2].__class__ is Arc3D and size <= 4:
 
             arc1, arc2 = contours3d[0].edges[0], contours3d[0].edges[2]
-            c1, c2 = frame.NewCoordinates(arc1.center), frame.NewCoordinates(
+            c1, c2 = frame.new_coordinates(arc1.center), frame.new_coordinates(
                 arc2.center)
             hmin, hmax = min(c1.vector[2], c2.vector[2]), max(c1.vector[2],
                                                               c2.vector[2])
@@ -1886,13 +1885,13 @@ class CylindricalFace3D(Face3D):
         else:
             point12d = arc.start
             if point12d.__class__ is volmdlr.Point3D:
-                point12d = point12d.To2D(center, frame.u,
+                point12d = point12d.to_2d(center, frame.u,
                                          frame.v)
                 # Using it to put arc.start at the same height
-            point13d = point12d.To3D(center, frame.u, frame.v)
+            point13d = point12d.to_3d(center, frame.u, frame.v)
             if arc.start.__class__ is volmdlr.Point2D:
                 u_g2d = Vector2D((arc.start - arc.center).vector)
-                u = u_g2d.To3D(center, frame.u, frame.v)
+                u = u_g2d.to_3d(center, frame.u, frame.v)
                 u.normalize()
             else:
                 u = Vector3D((point13d - center).vector)
@@ -1902,7 +1901,7 @@ class CylindricalFace3D(Face3D):
 
             point_last = arc.end
             if point_last.__class__ is volmdlr.Point3D:
-                point_last = point_last.To2D(center, u, v)
+                point_last = point_last.to_2d(center, u, v)
 
             x, y = point_last.vector[0], point_last.vector[1]
 
@@ -1936,7 +1935,7 @@ class CylindricalFace3D(Face3D):
 
         primitives, start_end, all_points = [], [], []
         for edge in contours3d[0].edges:
-            new_points = [frame.NewCoordinates(pt) for pt in edge.points]
+            new_points = [frame.new_coordinates(pt) for pt in edge.points]
             if edge.__class__ is Arc3D:
                 if edge.normal == n or edge.normal == -n:
                     start2d, end2d = CylindricalFace3D.points3d_to2d(
@@ -2283,7 +2282,7 @@ class CylindricalFace3D(Face3D):
         v2 = other_cyl.cylindricalsurface3d.frame.v
         frame2 = volmdlr.Frame3D(other_cyl.center, u2, v2, n2)
         # st2 = volmdlr.Point3D((r2*math.cos(min_theta2), r2*math.sin(min_theta2), min_h2))
-        # start2 = frame2.OldCoordinates(st2)
+        # start2 = frame2.old_coordinates(st2)
 
         w = other_cyl.center - self.center
 
@@ -2345,10 +2344,10 @@ class CylindricalFace3D(Face3D):
 
         pt1 = volmdlr.Point3D(
             (r1 * math.cos(res1.x[0]), r1 * math.sin(res1.x[0]), res1.x[1]))
-        p1 = frame1.OldCoordinates(pt1)
+        p1 = frame1.old_coordinates(pt1)
         pt2 = volmdlr.Point3D(
             (r2 * math.cos(res1.x[2]), r2 * math.sin(res1.x[2]), res1.x[3]))
-        p2 = frame2.OldCoordinates(pt2)
+        p2 = frame2.old_coordinates(pt2)
         d = p1.point_distance(p2)
         result = res1
 
@@ -2358,8 +2357,8 @@ class CylindricalFace3D(Face3D):
                                r1 * math.sin(couple.x[0]), couple.x[1]))
             pttest2 = volmdlr.Point3D((r2 * math.cos(couple.x[2]),
                                r2 * math.sin(couple.x[2]), couple.x[3]))
-            ptest1 = frame1.OldCoordinates(pttest1)
-            ptest2 = frame2.OldCoordinates(pttest2)
+            ptest1 = frame1.old_coordinates(pttest1)
+            ptest2 = frame2.old_coordinates(pttest2)
             dtest = ptest1.point_distance(ptest2)
             if dtest < d:
                 result = couple
@@ -2378,7 +2377,7 @@ class CylindricalFace3D(Face3D):
             pt1 = volmdlr.Point3D((r1 * math.cos(new_pt1_2d.vector[0]),
                            r1 * math.sin(new_pt1_2d.vector[0]),
                            new_pt1_2d.vector[1]))
-            p1 = frame1.OldCoordinates(pt1)
+            p1 = frame1.old_coordinates(pt1)
 
         if not (other_cyl.contours2d[0].point_belongs(pt2_2d)):
             # Find the closest one
@@ -2390,7 +2389,7 @@ class CylindricalFace3D(Face3D):
             pt2 = volmdlr.Point3D((r2 * math.cos(new_pt2_2d.vector[0]),
                            r2 * math.sin(new_pt2_2d.vector[0]),
                            new_pt2_2d.vector[1]))
-            p2 = frame2.OldCoordinates(pt2)
+            p2 = frame2.old_coordinates(pt2)
 
         return p1, p2
 
@@ -2406,7 +2405,7 @@ class CylindricalFace3D(Face3D):
         v1 = self.cylindricalsurface3d.frame.v
         frame1 = volmdlr.Frame3D(self.center, u1, v1, n1)
         # st1 = volmdlr.Point3D((r*math.cos(min_theta1), r*math.sin(min_theta1), min_h1))
-        # start1 = frame1.OldCoordinates(st1)
+        # start1 = frame1.old_coordinates(st1)
 
         poly2d = planeface.polygon2D
         pfpoints = poly2d.points
@@ -2418,8 +2417,8 @@ class CylindricalFace3D(Face3D):
                          planeface.plane.vectors[1]
         pf1_2d, pf2_2d = volmdlr.Point2D((xmin, ymin)), volmdlr.Point2D((xmin, ymax))
         pf3_2d, pf4_2d = volmdlr.Point2D((xmax, ymin)), volmdlr.Point2D((xmax, ymax))
-        pf1, pf2 = pf1_2d.To3D(origin, vx, vy), pf2_2d.To3D(origin, vx, vy)
-        pf3, _ = pf3_2d.To3D(origin, vx, vy), pf4_2d.To3D(origin, vx, vy)
+        pf1, pf2 = pf1_2d.to_3d(origin, vx, vy), pf2_2d.to_3d(origin, vx, vy)
+        pf3, _ = pf3_2d.to_3d(origin, vx, vy), pf4_2d.to_3d(origin, vx, vy)
 
         u, v = (pf3 - pf1), (pf2 - pf1)
         u.normalize()
@@ -2465,10 +2464,10 @@ class CylindricalFace3D(Face3D):
 
         pt1 = volmdlr.Point3D(
             (r * math.cos(res1.x[1]), r * math.sin(res1.x[1]), res1.x[0]))
-        p1 = frame1.OldCoordinates(pt1)
+        p1 = frame1.old_coordinates(pt1)
         p2 = pf1 + res1.x[2] * u + res1.x[3] * v
         pt1_2d = volmdlr.Point2D((res1.x[1], res1.x[0]))
-        pt2_2d = p2.To2D(pf1, u, v)
+        pt2_2d = p2.to_2d(pf1, u, v)
 
         if not (self.contours2d[0].point_belongs(pt1_2d)):
             # Find the closest one
@@ -2480,14 +2479,14 @@ class CylindricalFace3D(Face3D):
             pt1 = volmdlr.Point3D((r * math.cos(new_pt1_2d.vector[0]),
                            r * math.sin(new_pt1_2d.vector[0]),
                            new_pt1_2d.vector[1]))
-            p1 = frame1.OldCoordinates(pt1)
+            p1 = frame1.old_coordinates(pt1)
 
         if not (planeface.contours[0].point_belongs(pt2_2d)):
             # Find the closest one
             d2, new_pt2_2d = planeface.polygon2D.PointBorderDistance(pt2_2d,
                                                                      return_other_point=True)
 
-            p2 = new_pt2_2d.To3D(pf1, u, v)
+            p2 = new_pt2_2d.to_3d(pf1, u, v)
 
         return p1, p2
 
@@ -2758,7 +2757,7 @@ class ToroidalFace3D(Face3D):
         v1 = cyl.cylindricalsurface3d.frame.v
         frame1 = volmdlr.Frame3D(cyl.center, u1, v1, n1)
         # st1 = volmdlr.Point3D((r*math.cos(min_theta), r*math.sin(min_theta), min_h))
-        # start1 = frame1.OldCoordinates(st1)
+        # start1 = frame1.old_coordinates(st1)
 
         min_phi2, min_theta2, max_phi2, max_theta2 = self.minimum_maximum_tore(
             self.contours2d[0])
@@ -2849,7 +2848,7 @@ class ToroidalFace3D(Face3D):
 
         pt1 = volmdlr.Point3D(
             (r * math.cos(res1.x[0]), r * math.sin(res1.x[0]), res1.x[1]))
-        p1 = frame1.OldCoordinates(pt1)
+        p1 = frame1.old_coordinates(pt1)
         pt2 = self.points2d_to3d([[res1.x[3], res1.x[2]]], R2, r2, frame2)
         p2 = pt2[0]
         d = p1.point_distance(p2)
@@ -2859,7 +2858,7 @@ class ToroidalFace3D(Face3D):
         for couple in res:
             pttest1 = volmdlr.Point3D((r * math.cos(couple.x[0]),
                                r * math.sin(couple.x[0]), couple.x[1]))
-            ptest1 = frame1.OldCoordinates(pttest1)
+            ptest1 = frame1.old_coordinates(pttest1)
             ptest2 = self.points2d_to3d([[couple.x[3], couple.x[2]]], R2, r2,
                                         frame2)
             dtest = ptest1.point_distance(ptest2[0])
@@ -2892,7 +2891,7 @@ class ToroidalFace3D(Face3D):
             pt1 = volmdlr.Point3D((r * math.cos(new_pt1_2d.vector[0]),
                            r * math.sin(new_pt1_2d.vector[0]),
                            new_pt1_2d.vector[1]))
-            p1 = frame1.OldCoordinates(pt1)
+            p1 = frame1.old_coordinates(pt1)
 
         return p1, p2
 
@@ -2910,8 +2909,8 @@ class ToroidalFace3D(Face3D):
                          planeface.plane.vectors[1]
         pf1_2d, pf2_2d = volmdlr.Point2D((xmin, ymin)), volmdlr.Point2D((xmin, ymax))
         pf3_2d, pf4_2d = volmdlr.Point2D((xmax, ymin)), volmdlr.Point2D((xmax, ymax))
-        pf1, pf2 = pf1_2d.To3D(origin, vx, vy), pf2_2d.To3D(origin, vx, vy)
-        pf3, _ = pf3_2d.To3D(origin, vx, vy), pf4_2d.To3D(origin, vx, vy)
+        pf1, pf2 = pf1_2d.to_3d(origin, vx, vy), pf2_2d.to_3d(origin, vx, vy)
+        pf3, _ = pf3_2d.to_3d(origin, vx, vy), pf4_2d.to_3d(origin, vx, vy)
 
         u, v = (pf3 - pf1), (pf2 - pf1)
         u.normalize()
@@ -2983,7 +2982,7 @@ class ToroidalFace3D(Face3D):
         p2 = pf1 + res1.x[2] * u + res1.x[3] * v
 
         pt1_2d = volmdlr.Point2D((res1.x[3], res1.x[2]))
-        pt2_2d = p2.To2D(pf1, u, v)
+        pt2_2d = p2.to_2d(pf1, u, v)
 
         if not (self.contours2d[0].point_belongs(pt1_2d)):
             # Find the closest one
@@ -3001,7 +3000,7 @@ class ToroidalFace3D(Face3D):
             d2, new_pt2_2d = planeface.polygon2D.PointBorderDistance(pt2_2d,
                                                                      return_other_point=True)
 
-            p2 = new_pt2_2d.To3D(pf1, u, v)
+            p2 = new_pt2_2d.to_3d(pf1, u, v)
 
         return p1, p2
 
@@ -3150,7 +3149,6 @@ class SphericalFace3D(Face3D):
             arc_base, arc_link = [], []
             range_list = []
             for edge in contours3d[0].edges:
-                # print('edge.normal', edge.normal)
                 if edge.normal == normal:
                     arc_base.append(edge)
                     range_list.append(1)

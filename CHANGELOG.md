@@ -6,9 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- WIP : read STEP files
 
 ### Changed
+- modules *2D or *3D renamed in *2d, *3d
+- point and vector declared with their x, y, z vm.Point2D((0, 0)) -> vm.Point2D(0, 0)
+- separating in new modules: display, wires, edges...
+- PEP8: method names
+- PointAtCurvilinearAbscissa changed to point_at_abscissa
+- MPLPlot changed to plot()
 - MPLPlot now returns only ax instead of fig, ax 
 
 ## [v0.1.11]

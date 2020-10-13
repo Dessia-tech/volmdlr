@@ -6,8 +6,11 @@ Script checking offset and Curvilinear absissa of roundedline2D
 
 import math
 import numpy as npy
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 import volmdlr
+import volmdlr.core
 from volmdlr.core_compiled import polygon_point_belongs
 
 
@@ -21,18 +24,18 @@ class Wire2D(volmdlr.core.CompositePrimitive2D):
 
     # TODO: method to check if it is a wire
 
-    def Length(self):
+    def length(self):
         length = 0.
         for primitive in self.primitives:
-            length += primitive.Length()
+            length += primitive.length()
         return length
 
-    def point_at_curvilinear_abscissa(self, curvilinear_abscissa: float):
+    def point_at_abscissa(self, curvilinear_abscissa: float):
         length = 0.
         for primitive in self.primitives:
-            primitive_length = primitive.Length()
+            primitive_length = primitive.length()
             if length + primitive_length > curvilinear_abscissa:
-                return primitive.point_at_curvilinear_abscissa(
+                return primitive.point_at_abscissa(
                     curvilinear_abscissa - length)
             length += primitive_length
         return ValueError
@@ -73,20 +76,20 @@ class Wire3D(volmdlr.core.CompositePrimitive3D):
     """
 
     def __init__(self, primitives, name=''):
-        CompositePrimitive3D.__init__(self, primitives, name)
+        volmdlr.core.CompositePrimitive3D.__init__(self, primitives, name)
 
-    def Length(self):
+    def length(self):
         length = 0.
         for primitive in self.primitives:
-            length += primitive.Length()
+            length += primitive.length()
         return length
 
-    def point_at_curvilinear_abscissa(self, curvilinear_abscissa):
+    def point_at_abscissa(self, curvilinear_abscissa):
         length = 0.
         for primitive in self.primitives:
-            primitive_length = primitive.Length()
+            primitive_length = primitive.length()
             if length + primitive_length >= curvilinear_abscissa:
-                return primitive.point_at_curvilinear_abscissa(
+                return primitive.point_at_abscissa(
                     curvilinear_abscissa - length)
             length += primitive_length
         # Outside of length
@@ -245,6 +248,13 @@ class Contour2D(Wire2D):
     straight_line_contour_polygon = property(
         _get_straight_line_contour_polygon)
 
+    def to_3d(self, plane_origin, x, y):
+        p3d = []
+        for edge in self.primitives:
+            p3d.append(edge.to_3d(plane_origin, x, y))
+
+        return Contour3D(p3d)
+
     def point_belongs(self, point):
         for arc in self.internal_arcs:
             if arc.point_belongs(point):
@@ -272,7 +282,7 @@ class Contour2D(Wire2D):
         xmax = max([p[0] for p in points])
         ymin = min([p[1] for p in points])
         ymax = max([p[1] for p in points])
-        return (Point2D((xmin, ymin)), Point2D((xmax, ymax)))
+        return (volmdlr.Point2D((xmin, ymin)), volmdlr.Point2D((xmax, ymax)))
 
 
     # def To3D(self, plane_origin, x, y, name=None):
@@ -304,7 +314,7 @@ class Contour2D(Wire2D):
         if area > 0.:
             c = area * self.polygon.center_of_mass()
         else:
-            c = O2D
+            c = volmdlr.O2D
 
         for arc in self.internal_arcs:
             arc_area = arc.area()
@@ -355,7 +365,7 @@ class Contour2D(Wire2D):
         nb = len(self.tessel_points)
         x = npy.sum([p[0] for p in self.tessel_points]) / nb
         y = npy.sum([p[1] for p in self.tessel_points]) / nb
-        return Point2D((x, y))
+        return volmdlr.Point2D((x, y))
 
     def clean_points(self):
         """
@@ -387,10 +397,10 @@ class Contour2D(Wire2D):
                 points = points[::-1]
                 points.extend(points_to_add[-2::-1])
             else:
-                d1, d2 = (points_to_add[0] - points[0]).Norm(), (
-                            points_to_add[0] - points[-1]).Norm()
-                d3, d4 = (points_to_add[-1] - points[0]).Norm(), (
-                            points_to_add[-1] - points[-1]).Norm()
+                d1, d2 = (points_to_add[0] - points[0]).norm(), (
+                            points_to_add[0] - points[-1]).norm()
+                d3, d4 = (points_to_add[-1] - points[0]).norm(), (
+                            points_to_add[-1] - points[-1]).norm()
                 if math.isclose(d2, 0, abs_tol=1e-3):
                     points.extend(points_to_add[1:])
                 elif math.isclose(d4, 0, abs_tol=1e-3):
@@ -425,10 +435,10 @@ class Contour2D(Wire2D):
     def random_point_inside(self):
         xmin, xmax, ymin, ymax = self.bounding_rectangle()
         for i in range(1000):
-            p = Point2D.random(xmin, xmax, ymin, ymax)
+            p = volmdlr.Point2D.random(xmin, xmax, ymin, ymax)
             if self.point_belongs(p):
                 return p
-    # def line_intersections(self, line:Line2D) -> List[Tuple[Point2D, Primitive2D]]:
+    # def line_intersections(self, line:Line2D) -> List[Tuple[volmdlr.Point2D, Primitive2D]]:
     #     """
     #     Returns a list of points and lines of intersection with the contour
     #     """
@@ -448,8 +458,8 @@ class Contour2D(Wire2D):
         if len(intersections) < 2:
             return [self]
         elif len(intersections) == 2:
-            if intersections[0][0].__class__.__name__ == 'Point2D' and \
-                    intersections[1][0].__class__.__name__ == 'Point2D':
+            if intersections[0][0].__class__.__name__ == 'volmdlr.Point2D' and \
+                    intersections[1][0].__class__.__name__ == 'volmdlr.Point2D':
                 ip1, ip2 = sorted([self.primitives.index(intersections[0][1]),
                                    self.primitives.index(intersections[1][1])])
 
@@ -458,14 +468,14 @@ class Contour2D(Wire2D):
 
                 primitives1 = self.primitives[:ip1]
                 primitives1.append(sp11)
-                primitives1.append(LineSegment2D(intersections[0][0],
+                primitives1.append(volmdlr.edges.LineSegment2D(intersections[0][0],
                                                  intersections[1][0]))
                 primitives1.append(sp22)
                 primitives1.extend(self.primitives[ip2 + 1:])
 
                 primitives2 = self.primitives[ip1 + 1:ip2]
                 primitives2.append(sp21)
-                primitives2.append(LineSegment2D(intersections[1][0],
+                primitives2.append(volmdlr.edges.LineSegment2D(intersections[1][0],
                                                  intersections[0][0]))
                 primitives2.append(sp12)
 
@@ -502,7 +512,8 @@ class Contour2D(Wire2D):
             # print(i)
             xi = xmin + (i + 1) * (xmax - xmin) / n
             # print(xi)
-            cut_line = Line2D(Point2D((xi, 0)), Point2D((xi, 1)))
+            cut_line = volmdlr.edges.Line2D(volmdlr.Point2D(xi, 0),
+                                            volmdlr.Point2D(xi, 1))
 
             iteration_contours2 = []
             for c in iteration_contours:
@@ -562,7 +573,7 @@ class Contour2D(Wire2D):
         triangles = []
         for xi in x:
             for yi in y:
-                p = Point2D((xi, yi))
+                p = volmdlr.Point2D((xi, yi))
                 if self.point_belongs(p):
                     point_index[p] = ip
                     points.append(p)
@@ -570,10 +581,10 @@ class Contour2D(Wire2D):
 
         for i in range(n):
             for j in range(m):
-                p1 = Point2D((x[i], y[j]))
-                p2 = Point2D((x[i + 1], y[j]))
-                p3 = Point2D((x[i + 1], y[j + 1]))
-                p4 = Point2D((x[i], y[j + 1]))
+                p1 = volmdlr.Point2D((x[i], y[j]))
+                p2 = volmdlr.Point2D((x[i + 1], y[j]))
+                p3 = volmdlr.Point2D((x[i + 1], y[j + 1]))
+                p4 = volmdlr.Point2D((x[i], y[j + 1]))
                 points_in = []
                 for p in [p1, p2, p3, p4]:
                     if p in point_index:
@@ -587,7 +598,7 @@ class Contour2D(Wire2D):
                 elif len(points_in) == 3:
                     triangles.append([point_index[p] for p in points_in])
 
-        return DisplayMesh2D(points, triangles)
+        return volmdlr.display_mesh.DisplayMesh2D(points, triangles)
 
 class Polygon2D(Contour2D):
 
@@ -633,7 +644,7 @@ class Polygon2D(Contour2D):
         if not math.isclose(a, 0, abs_tol=1e-08):
             cx = npy.sum(npy.multiply(xi_xi1, (xi_yi1 - xi1_yi))) / 6. / a
             cy = npy.sum(npy.multiply(yi_yi1, (xi_yi1 - xi1_yi))) / 6. / a
-            return Point2D((cx, cy))
+            return volmdlr.Point2D((cx, cy))
 
         else:
             raise NotImplementedError
@@ -666,21 +677,21 @@ class Polygon2D(Contour2D):
             lines.append(volmdlr.edges.LineSegment2D(p1, p2))
         return lines
 
-    def Rotation(self, center, angle, copy=True):
+    def rotation(self, center, angle, copy=True):
         if copy:
             return Polygon2D(
-                [p.Rotation(center, angle, copy=True) for p in self.points])
+                [p.rotation(center, angle, copy=True) for p in self.points])
         else:
             for p in self.points:
-                p.Rotation(center, angle, copy=False)
+                p.rotation(center, angle, copy=False)
 
-    def Translation(self, offset, copy=True):
+    def translation(self, offset, copy=True):
         if copy:
             return Polygon2D(
-                [p.Translation(offset, copy=True) for p in self.points])
+                [p.translation(offset, copy=True) for p in self.points])
         else:
             for p in self.points:
-                p.Translation(offset, copy=False)
+                p.translation(offset, copy=False)
 
     def PointBorderDistance(self, point, return_other_point=False):
         """
@@ -753,14 +764,14 @@ class Polygon2D(Contour2D):
                         1] and segment1[0] != segment2[1] and segment1[1] != \
                             segment2[0]:
 
-                        line1 = LineSegment2D(
-                            Point2D(self.points[segment1[0]]),
-                            Point2D(self.points[segment1[1]]))
-                        line2 = LineSegment2D(
-                            Point2D(self.points[segment2[0]]),
-                            Point2D(self.points[segment2[1]]))
+                        line1 = volmdlr.edges.LineSegment2D(
+                            volmdlr.Point2D(self.points[segment1[0]]),
+                            volmdlr.Point2D(self.points[segment1[1]]))
+                        line2 = volmdlr.edges.LineSegment2D(
+                            volmdlr.Point2D(self.points[segment2[0]]),
+                            volmdlr.Point2D(self.points[segment2[1]]))
 
-                        p, a, b = Point2D.LinesIntersection(line1, line2, True)
+                        p, a, b = volmdlr.Point2D.LinesIntersection(line1, line2, True)
 
                         if p is not None:
                             if a >= 0 + epsilon and a <= 1 - epsilon and b >= 0 + epsilon and b <= 1 - epsilon:
@@ -783,7 +794,7 @@ class Polygon2D(Contour2D):
 
     @classmethod
     def points_convex_hull(cls, points):
-        ymax, pos_ymax = max_pos([pt.vector[1] for pt in points])
+        ymax, pos_ymax = volmdlr.max_pos([pt.vector[1] for pt in points])
         point_start = points[pos_ymax]
         hull, thetac = [point_start], 0  # thetac is the current theta
 
@@ -860,7 +871,7 @@ class Circle2D(Contour2D):
     def __init__(self, center: volmdlr.Point2D, radius: float, name: str = ''):
         self.center = center
         self.radius = radius
-        self.angle = two_pi
+        self.angle = volmdlr.two_pi
         self.utd_geo_points = False
 
         self.points = self.tessellation_points()
@@ -880,21 +891,22 @@ class Circle2D(Contour2D):
                                 abs_tol=1e-06)
 
     def tessellation_points(self, resolution=40):
-        return [self.center + self.radius * math.cos(teta) * Vector2D(
-            (1, 0)) + self.radius * math.sin(teta) * Vector2D((0, 1)) \
-                for teta in npy.linspace(0, two_pi, resolution + 1)][:-1]
+        return [(self.center
+                 + self.radius * math.cos(teta) * volmdlr.X2D
+                 + self.radius * math.sin(teta) * volmdlr.Y2D)\
+                for teta in npy.linspace(0, volmdlr.two_pi, resolution + 1)][:-1]
 
     def point_belongs(self, point, tolerance=1e-9):
         return point.point_distance(self.center) <= self.radius + tolerance
 
     def line_intersections(self, line):
-        V = Vector2D((line.points[1] - line.points[0]).vector)
-        Q = Vector2D(self.center.vector)
-        P1 = Vector2D(line.points[0].vector)
+        V = volmdlr.Vector2D((line.points[1] - line.points[0]).vector)
+        Q = volmdlr.Vector2D(self.center.vector)
+        P1 = volmdlr.Vector2D(line.points[0].vector)
 
-        a = V.Dot(V)
-        b = 2 * V.Dot(P1 - Q)
-        c = P1.Dot(P1) + Q.Dot(Q) - 2 * P1.Dot(Q) - self.radius ** 2
+        a = V.dot(V)
+        b = 2 * V.dot(P1 - Q)
+        c = P1.dot(P1) + Q.dot(Q) - 2 * P1.dot(Q) - self.radius ** 2
 
         disc = b ** 2 - 4 * a * c
         if disc < 0:
@@ -902,32 +914,32 @@ class Circle2D(Contour2D):
 
         if math.isclose(disc, 0, abs_tol=1e-8):
             t = -b / (2 * a)
-            if line.__class__ is Line2D:
-                return [Point2D((P1 + t * V).vector)]
+            if line.__class__ is volmdlr.edges.Line2D:
+                return [volmdlr.Point2D((P1 + t * V).vector)]
             else:
                 if 0 <= t <= 1:
-                    return [Point2D((P1 + t * V).vector)]
+                    return [volmdlr.Point2D((P1 + t * V).vector)]
                 else:
                     return []
 
         sqrt_disc = math.sqrt(disc)
         t1 = (-b + sqrt_disc) / (2 * a)
         t2 = (-b - sqrt_disc) / (2 * a)
-        if line.__class__ is Line2D:
-            return [Point2D((P1 + t1 * V).vector),
-                    Point2D((P1 + t2 * V).vector)]
+        if line.__class__ is volmdlr.edges.Line2D:
+            return [volmdlr.Point2D((P1 + t1 * V).vector),
+                    volmdlr.Point2D((P1 + t2 * V).vector)]
         else:
             if not (0 <= t1 <= 1 or 0 <= t2 <= 1):
                 return []
             elif 0 <= t1 <= 1 and not 0 <= t2 <= 1:
-                return [Point2D((P1 + t1 * V).vector)]
+                return [volmdlr.Point2D((P1 + t1 * V).vector)]
             elif not 0 <= t1 <= 1 and 0 <= t2 <= 1:
-                return [Point2D((P1 + t2 * V).vector)]
+                return [volmdlr.Point2D((P1 + t2 * V).vector)]
             else:
-                [Point2D((P1 + t1 * V).vector), Point2D((P1 + t2 * V).vector)]
+                [volmdlr.Point2D((P1 + t1 * V).vector), volmdlr.Point2D((P1 + t2 * V).vector)]
 
-    def Length(self):
-        return two_pi * self.radius
+    def length(self):
+        return volmdlr.two_pi * self.radius
 
     def plot(self, ax=None, linestyle='-', color='k', linewidth=1):
         if ax is None:
@@ -949,26 +961,26 @@ class Circle2D(Contour2D):
                              linewidth=linewidth))
         return ax
 
-    def To3D(self, plane_origin, x, y):
-        normal = x.Cross(y)
-        center3d = self.center.To3D(plane_origin, x, y)
-        return Circle3D(Frame3D(center3d, x, y, normal),
+    def to_3d(self, plane_origin, x, y):
+        normal = x.cross(y)
+        center3d = self.center.to_3d(plane_origin, x, y)
+        return Circle3D(volmdlr.Frame3D(center3d, x, y, normal),
                         self.radius, self.name)
 
-    def Rotation(self, center, angle, copy=True):
+    def rotation(self, center, angle, copy=True):
         if copy:
-            return Circle2D(self.center.Rotation(center, angle, copy=True),
+            return Circle2D(self.center.rotation(center, angle, copy=True),
                             self.radius)
         else:
-            self.center.Rotation(center, angle, copy=False)
+            self.center.rotation(center, angle, copy=False)
             self.utd_geo_points = False
 
-    def Translation(self, offset, copy=True):
+    def translation(self, offset, copy=True):
         if copy:
-            return Circle2D(self.center.Translation(offset, copy=True),
+            return Circle2D(self.center.translation(offset, copy=True),
                             self.radius)
         else:
-            self.center.Translation(offset, copy=False)
+            self.center.translation(offset, copy=False)
             self.utd_geo_points = False
 
     def frame_mapping(self, frame, side, copy=True):
@@ -1019,17 +1031,17 @@ class Circle2D(Contour2D):
     def copy(self):
         return Circle2D(self.center.copy(), self.radius)
 
-    def point_at_curvilinear_abscissa(self, curvilinear_abscissa):
-        start = self.center + self.radius * X3D
-        return start.Rotation(self.center,
+    def point_at_abscissa(self, curvilinear_abscissa):
+        start = self.center + self.radius * volmdlr.X3D
+        return start.rotation(self.center,
                               curvilinear_abscissa / self.radius)
 
     def triangulation(self, n=35):
-        l = self.Length()
-        points = [self.point_at_curvilinear_abscissa(l * i / n) for i in range(n)]
+        l = self.length()
+        points = [self.point_at_abscissa(l * i / n) for i in range(n)]
         points.append(self.center)
         triangles = [(i, i + 1, n) for i in range(n - 1)] + [(n - 1, 0, n)]
-        return DisplayMesh(points, triangles)
+        return volmdlr.display_mesh.DisplayMesh(points, triangles)
 
     def polygon_points(self, points_per_radian=10, min_x_density=None,
                        min_y_density=None):
@@ -1107,10 +1119,10 @@ class Contour3D(Wire3D):
                 points = points[::-1]
                 points.extend(points_to_add[-2::-1])
             else:
-                d1, d2 = (points_to_add[0] - points[0]).Norm(), (
-                            points_to_add[0] - points[-1]).Norm()
-                d3, d4 = (points_to_add[-1] - points[0]).Norm(), (
-                            points_to_add[-1] - points[-1]).Norm()
+                d1, d2 = (points_to_add[0] - points[0]).norm(), (
+                            points_to_add[0] - points[-1]).norm()
+                d3, d4 = (points_to_add[-1] - points[0]).norm(), (
+                            points_to_add[-1] - points[-1]).norm()
                 if math.isclose(d2, 0, abs_tol=1e-3):
                     points.extend(points_to_add[1:])
                 elif math.isclose(d4, 0, abs_tol=1e-3):
@@ -1135,29 +1147,29 @@ class Contour3D(Wire3D):
         z = npy.sum([p[2] for p in self.points]) / nb
         return Point3D((x, y, z))
 
-    def Rotation(self, center, axis, angle, copy=True):
+    def rotation(self, center, axis, angle, copy=True):
         if copy:
-            new_edges = [edge.Rotation(center, axis, angle, copy=True) for edge
+            new_edges = [edge.rotation(center, axis, angle, copy=True) for edge
                          in self.primitives]
-            # new_points = [p.Rotation(center, axis, copy=True) for p in self.points]
+            # new_points = [p.rotation(center, axis, copy=True) for p in self.points]
             return Contour3D(new_edges, None, self.name)
         else:
             for edge in self.primitives:
-                edge.Rotation(center, axis, angle, copy=False)
+                edge.rotation(center, axis, angle, copy=False)
             for point in self.tessel_points:
-                point.Rotation(center, axis, angle, copy=False)
+                point.rotation(center, axis, angle, copy=False)
 
-    def Translation(self, offset, copy=True):
+    def translation(self, offset, copy=True):
         if copy:
-            new_edges = [edge.Translation(offset, copy=True) for edge in
+            new_edges = [edge.translation(offset, copy=True) for edge in
                          self.primitives]
-            # new_points = [p.Translation(offset, copy=True) for p in self.points]
+            # new_points = [p.translation(offset, copy=True) for p in self.points]
             return Contour3D(new_edges, None, self.name)
         else:
             for edge in self.primitives:
-                edge.Translation(offset, copy=False)
+                edge.translation(offset, copy=False)
             for point in self.tessel_points:
-                point.Translation(offset, copy=False)
+                point.translation(offset, copy=False)
 
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -1182,20 +1194,20 @@ class Contour3D(Wire3D):
             new_point_inside_contour = None
         return Contour3D(new_edges, new_point_inside_contour, self.name)
 
-    def Length(self):
+    def length(self):
         # TODO: this is duplicated code from Wire3D!
         length = 0.
         for edge in self.primitives:
-            length += edge.Length()
+            length += edge.length()
         return length
 
-    def point_at_curvilinear_abscissa(self, curvilinear_abscissa):
+    def point_at_abscissa(self, curvilinear_abscissa):
         # TODO: this is duplicated code from Wire3D!
         length = 0.
         for primitive in self.primitives:
-            primitive_length = primitive.Length()
+            primitive_length = primitive.length()
             if length + primitive_length > curvilinear_abscissa:
-                return primitive.point_at_curvilinear_abscissa(
+                return primitive.point_at_abscissa(
                     curvilinear_abscissa - length)
             length += primitive_length
         # Outside of length
@@ -1213,19 +1225,21 @@ class Contour3D(Wire3D):
 
         return ax
 
-    def to_2d(self, plane3d, name=None):
+    def to_2d(self, plane_origin, x, y):
+        z = x.cross(y)
+        plane3d = volmdlr.faces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
         primitives2d = [plane3d.point3d_to_2d(p) for p in self.primitives]
-        return Contour2D(primitives=primitives2d, name=name)
+        return Contour2D(primitives=primitives2d)
 
     def _bounding_box(self):
         """
         Flawed method, to be enforced by overloading
         """
         n = 50
-        l = self.Length()
-        points = [self.point_at_curvilinear_abscissa(i/n*l)\
+        l = self.length()
+        points = [self.point_at_abscissa(i/n*l)\
                   for i in range(n)]
-        return BoundingBox.from_points(points)
+        return volmdlr.core.BoundingBox.from_points(points)
 
 class Circle3D(Contour3D):
     _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']
@@ -1240,7 +1254,7 @@ class Circle3D(Contour3D):
         """
         self.radius = radius
         self.frame = frame
-        self.angle = two_pi
+        self.angle = volmdlr.two_pi
         Contour3D.__init__(self, [self], name=name)
 
     @property
@@ -1272,7 +1286,7 @@ class Circle3D(Contour3D):
                                  :-1]
         return tessellation_points_3D
 
-    def Length(self):
+    def length(self):
         return two_pi * self.radius
 
     def FreeCADExport(self, name, ndigits=3):
@@ -1281,17 +1295,17 @@ class Circle3D(Contour3D):
         return '{} = Part.Circle(fc.Vector({},{},{}),fc.Vector({},{},{}),{})\n'.format(
             name, xc, yc, zc, xn, yn, zn, 1000 * self.radius)
 
-    def Rotation(self, rot_center, axis, angle, copy=True):
-        new_center = self.center.Rotation(rot_center, axis, angle, True)
-        new_normal = self.normal.Rotation(rot_center, axis, angle, True)
+    def rotation(self, rot_center, axis, angle, copy=True):
+        new_center = self.center.rotation(rot_center, axis, angle, True)
+        new_normal = self.normal.rotation(rot_center, axis, angle, True)
         if copy:
             return Circle3D(new_center, self.radius, new_normal, self.name)
         else:
             self.center = new_center
             self.normal = new_normal
 
-    def Translation(self, offset, copy=True):
-        new_frame = self.center.Translation(offset, True)
+    def translation(self, offset, copy=True):
+        new_frame = self.center.translation(offset, True)
         if copy:
             return Circle3D(new_frame, self.radius, self.frame,
                             self.name)
@@ -1318,12 +1332,12 @@ class Circle3D(Contour3D):
         ax.plot(x, y, z, color)
         return ax
 
-    def point_at_curvilinear_abscissa(self, curvilinear_abscissa):
+    def point_at_abscissa(self, curvilinear_abscissa):
         """
         start point is at intersection of frame.u axis
         """
         start = self.frame.origin + self.radius * self.frame.u
-        return start.Rotation(self.frame.origin, self.frame.w,
+        return start.rotation(self.frame.origin, self.frame.w,
                               curvilinear_abscissa / self.radius,
                               copy=True)
 
@@ -1335,11 +1349,11 @@ class Circle3D(Contour3D):
             normal = object_dict[arguments[1]].u
             other_vec = object_dict[arguments[1]].v
             if other_vec is not None:
-                other_vec.Normalize()
+                other_vec.normalize()
         else:
             normal = object_dict[arguments[1]].v  ### ou w
             other_vec = None
-        normal.Normalize()
+        normal.normalize()
 
         return cls(center, radius, normal, arguments[0][1:-1], other_vec)
 
@@ -1347,15 +1361,17 @@ class Circle3D(Contour3D):
         """
         """
         u = self.normal.deterministic_unit_normal_vector()
-        v = self.normal.Cross(u)
+        v = self.normal.cross(u)
         points = [self.frame.origin + self.radius * v \
                   for v in [self.frame.u,
                             -self.frame.u,
                             self.frame.v,
                             -self.frame.v]]
-        return BoundingBox.from_points(points)
+        return volmdlr.core.BoundingBox.from_points(points)
 
-    def to_2d(self, plane3d, name=None):
+    def to_2d(self, plane_origin, x, y):
+        z = x.cross(y)
+        plane3d = volmdlr.faces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
         return Circle2D(plane3d.point3d_to_2d(self.center), self.radius)
 
     @classmethod
@@ -1363,27 +1379,27 @@ class Circle3D(Contour3D):
         u1 = (point2 - point1)
         u2 = (point2 - point3)
         try:
-            u1.Normalize()
-            u2.Normalize()
+            u1.normalize()
+            u2.normalize()
         except ZeroDivisionError:
             raise ValueError(
                 'the 3 points must be distincts')
 
-        normal = u2.Cross(u1)
-        normal.Normalize()
+        normal = u2.cross(u1)
+        normal.normalize()
 
         if u1 == u2:
-            u2 = normal.Cross(u1)
-            u2.Normalize()
+            u2 = normal.cross(u1)
+            u2.normalize()
 
-        v1 = normal.Cross(u1)  # v1 is normal, equal u2
-        v2 = normal.Cross(u2)  # equal -u1
+        v1 = normal.cross(u1)  # v1 is normal, equal u2
+        v2 = normal.cross(u2)  # equal -u1
 
         p11 = 0.5 * (point1 + point2)  # Mid point of segment s,m
         p21 = 0.5 * (point2 + point3)  # Mid point of segment s,m
 
-        l1 = Line3D(p11, p11 + v1)
-        l2 = Line3D(p21, p21 + v2)
+        l1 = volmdlr.edges.Line3D(p11, p11 + v1)
+        l2 = volmdlr.edges.Line3D(p21, p21 + v2)
 
         try:
             center, _ = l1.MinimumDistancePoints(l2)
@@ -1391,40 +1407,40 @@ class Circle3D(Contour3D):
             raise ValueError(
                 'Start, end and interior points  of an arc must be distincts')
 
-        radius = (center - point1).Norm()
-        return cls(frame=Frame3D(center, u1, normal.Cross(u1), normal),
+        radius = (center - point1).norm()
+        return cls(frame=volmdlr.Frame3D(center, u1, normal.cross(u1), normal),
                    radius=radius)
 
     def extrusion(self, extrusion_vector):
         if self.normal.is_colinear_to(extrusion_vector):
             u = self.normal.deterministic_unit_normal_vector()
-            v = self.normal.Cross(u)
-            cylinder = volmdlr.surfaces.CylindricalSurface3D(Frame3D(self.center,
+            v = self.normal.cross(u)
+            cylinder = volmdlr.faces.CylindricalSurface3D(volmdlr.Frame3D(self.center,
                                                     u,
                                                     v,
                                                     self.normal),
                                             self.radius
                                             )
-            return cylinder.rectangular_cut(0, two_pi,
-                                            0, extrusion_vector.Norm())
+            return cylinder.rectangular_cut(0, volmdlr.two_pi,
+                                            0, extrusion_vector.norm())
         else:
             raise NotImplementedError('Elliptic faces not handled: dot={}'.format(
-                self.normal.Dot(extrusion_vector)
+                self.normal.dot(extrusion_vector)
             ))
 
     def revolution(self, axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D,
                    angle: float):
-        line3d = Line3D(axis_point, axis_point + axis)
+        line3d = volmdlr.edges.Line3D(axis_point, axis_point + axis)
         tore_center, _ = line3d.point_projection(self.center)
         u =  self.center - tore_center
-        u.Normalize()
-        v = axis.Cross(u)
-        if not math.isclose(self.normal.Dot(u), 0., abs_tol=1e-9):
+        u.normalize()
+        v = axis.cross(u)
+        if not math.isclose(self.normal.dot(u), 0., abs_tol=1e-9):
             raise NotImplementedError(
                 'Outside of plane revolution not supported')
 
         R = tore_center.point_distance(self.center)
-        surface = volmdlr.surfaces.ToroidalSurface3D(volmdlr.Frame3D(tore_center, u, v, axis),
+        surface = volmdlr.faces.ToroidalSurface3D(volmdlr.Frame3D(tore_center, u, v, axis),
                                     R, self.radius)
         return surface.rectangular_cut(0, angle, 0, volmdlr.two_pi)
 
@@ -1449,9 +1465,9 @@ class Ellipse3D(Contour3D):
         self.major_axis = major_axis
         self.minor_axis = minor_axis
         self.center = center
-        normal.Normalize()
+        normal.normalize()
         self.normal = normal
-        major_dir.Normalize()
+        major_dir.normalize()
         self.major_dir = major_dir
         Contour3D.__init__(self, [self], name=name)
 
@@ -1459,8 +1475,8 @@ class Ellipse3D(Contour3D):
         # plane = Plane3D.from_normal(self.center, self.normal)
         tessellation_points_3D = [self.center + self.major_axis * math.cos(
             teta) * self.major_dir + self.minor_axis * math.sin(
-            teta) * self.major_dir.Cross(self.normal) \
-                                  for teta in npy.linspace(0, two_pi,
+            teta) * self.major_dir.cross(self.normal) \
+                                  for teta in npy.linspace(0, volmdlr.two_pi,
                                                            resolution + 1)][
                                  :-1]
         return tessellation_points_3D
@@ -1470,16 +1486,16 @@ class Ellipse3D(Contour3D):
         xc, yc, zc = npy.round(1000 * self.center.vector, ndigits)
         major_vector = self.center + self.major_axis / 2 * self.major_dir
         xmaj, ymaj, zmaj = npy.round(1000 * major_vector.vector, ndigits)
-        minor_vector = self.center + self.minor_axis / 2 * self.normal.Cross(
+        minor_vector = self.center + self.minor_axis / 2 * self.normal.cross(
             self.major_dir)
         xmin, ymin, zmin = npy.round(1000 * minor_vector.vector, ndigits)
         return '{} = Part.Ellipse(fc.Vector({},{},{}), fc.Vector({},{},{}), fc.Vector({},{},{}))\n'.format(
             name, xmaj, ymaj, zmaj, xmin, ymin, zmin, xc, yc, zc)
 
-    def Rotation(self, rot_center, axis, angle, copy=True):
-        new_center = self.center.Rotation(rot_center, axis, angle, True)
-        new_normal = self.normal.Rotation(rot_center, axis, angle, True)
-        new_major_dir = self.major_dir.Rotation(rot_center, axis, angle, True)
+    def rotation(self, rot_center, axis, angle, copy=True):
+        new_center = self.center.rotation(rot_center, axis, angle, True)
+        new_normal = self.normal.rotation(rot_center, axis, angle, True)
+        new_major_dir = self.major_dir.rotation(rot_center, axis, angle, True)
         if copy:
             return Ellipse3D(self.major_axis, self.minor_axis, new_center,
                              new_normal, new_major_dir, self.name)
@@ -1488,10 +1504,10 @@ class Ellipse3D(Contour3D):
             self.normal = new_normal
             self.major_dir = new_major_dir
 
-    def Translation(self, offset, copy=True):
-        new_center = self.center.Translation(offset, True)
-        new_normal = self.normal.Translation(offset, True)
-        new_major_dir = self.major_dir.Translation(offset, True)
+    def translation(self, offset, copy=True):
+        new_center = self.center.translation(offset, True)
+        new_normal = self.normal.translation(offset, True)
+        new_major_dir = self.major_dir.translation(offset, True)
         if copy:
             return Ellipse3D(self.major_axis, self.minor_axis, new_center,
                              new_normal, new_major_dir, self.name)

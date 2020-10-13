@@ -23,10 +23,7 @@ from matplotlib import __version__ as _mpl_version
 
 import networkx as nx
 
-from volmdlr.core_compiled import (Vector2D, Vector3D, Point2D, Point3D,
-                            O2D, X2D, Y2D, OXY,
-                            Basis2D, Basis3D, Frame2D, Frame3D,
-                            O3D, X3D, Y3D, Z3D,
+from volmdlr.core_compiled import (
                             LineSegment2DPointDistance,
                             polygon_point_belongs, Matrix22
                             )
@@ -35,7 +32,7 @@ from scipy.linalg import solve
 from scipy.spatial import Delaunay
 
 import volmdlr.geometry as geometry
-from volmdlr import plot_data
+import volmdlr
 # from volmdlr import triangulation as tri
 import triangle  # doc : https://rufat.be/triangle/
 
@@ -114,7 +111,7 @@ def clockwise_angle(vector1, vector2):
     """
     Return the clockwise angle in radians between vector1 and vector2.
     """
-    vector0 = Vector2D((0, 0))
+    vector0 = volmdlr.Vector2D((0, 0))
     if vector0 in (vector1, vector2):
         return 0
 
@@ -133,7 +130,7 @@ def clockwise_angle(vector1, vector2):
     if cross < 0:
         return inner_angle
 
-    return two_pi - inner_angle
+    return volmdlr.two_pi - inner_angle
 
 
 def vectors3d_angle(vector1, vector2):
@@ -159,12 +156,12 @@ def sin_cos_angle(u1, u2):
         if u2 >= 0:
             theta = math.acos(u1)
         else:
-            theta = two_pi + math.asin(u2)
+            theta = volmdlr.two_pi + math.asin(u2)
     else:
         if u2 >= 0:
             theta = math.acos(u1)
         else:
-            theta = two_pi - math.acos(u1)
+            theta = volmdlr.two_pi - math.acos(u1)
     return theta
 
 
@@ -260,25 +257,25 @@ def check_singularity(all_points):
 
     if len(moins_pi) <= 2 and len(all_points) > 4:
         for pos in moins_pi:
-            new_pt = all_points[pos].copy() + Point2D((two_pi, 0))
+            new_pt = all_points[pos].copy() + volmdlr.Point2D((volmdlr.two_pi, 0))
             if new_pt.vector[0] > two_pi:
                 new_pt.vector[0] = two_pi
             all_points[pos] = new_pt
     elif len(plus_pi) <= 2 and len(all_points) > 4:
         for pos in plus_pi:
-            new_pt = all_points[pos].copy() - Point2D((two_pi, 0))
+            new_pt = all_points[pos].copy() - volmdlr.Point2D((volmdlr.two_pi, 0))
             if new_pt.vector[0] < 0:
                 new_pt.vector[0] = 0
             all_points[pos] = new_pt
     if 3 * len(moins_pi) <= len(plus_pi) and len(all_points) > 4:
         for pos in moins_pi:
-            new_pt = all_points[pos].copy() + Point2D((two_pi, 0))
+            new_pt = all_points[pos].copy() + volmdlr.Point2D((volmdlr.two_pi, 0))
             if new_pt.vector[0] > two_pi:
                 new_pt.vector[0] = two_pi
             all_points[pos] = new_pt
     elif 3 * len(plus_pi) <= len(moins_pi) and len(all_points) > 4:
         for pos in plus_pi:
-            new_pt = all_points[pos].copy() - Point2D((two_pi, 0))
+            new_pt = all_points[pos].copy() - volmdlr.Point2D((volmdlr.two_pi, 0))
             if new_pt.vector[0] < 0:
                 new_pt.vector[0] = 0
             all_points[pos] = new_pt
@@ -300,9 +297,9 @@ def posangle_arc(start, end, radius, frame=None):
 
     if math.isclose(theta1, theta2, abs_tol=1e-6):
         if math.isclose(theta2, 0, abs_tol=1e-6):
-            theta2 += two_pi
-        elif math.isclose(theta1, two_pi, abs_tol=1e-6):
-            theta1 -= two_pi
+            theta2 += volmdlr.two_pi
+        elif math.isclose(theta1, volmdlr.two_pi, abs_tol=1e-6):
+            theta1 -= volmdlr.two_pi
 
     return theta1, theta2
 
@@ -323,8 +320,8 @@ def angle_principal_measure(angle, min_angle=-math.pi):
     """
     returns angle between O and 2 pi
     """
-    max_angle = min_angle + two_pi
-    angle = angle % (two_pi)
+    max_angle = min_angle + volmdlr.two_pi
+    angle = angle % (volmdlr.two_pi)
 
     if math.isclose(angle, min_angle, abs_tol=1e-9):
         return min_angle
@@ -391,11 +388,6 @@ class CompositePrimitive2D(Primitive2D):
                 p.frame_mapping(frame, side, copy=False)
             self.UpdateBasisPrimitives()
 
-    def to_3d(self, plane_origin, x, y, name=None):
-        if name is None:
-            name = '3D of {}'.format(self.name)
-        primitives3D = [p.to_3d(plane_origin, x, y) for p in self.primitives]
-        return CompositePrimitive3D(primitives3D, name)
 
     def plot(self, ax=None, color='k', arrow=False, width=None,
                 plot_points=False):
@@ -494,6 +486,12 @@ class CompositePrimitive3D(Primitive3D):
 
         self.primitives = basis_primitives
 
+    # def to_2d(self, plane_origin, x, y):
+    #     if name is None:
+    #         name = '2D of {}'.format(self.name)
+    #     primitives2d = [p.to_2d(plane_origin, x, y) for p in self.primitives]
+    #     return CompositePrimitive2D(primitives2d, name)
+
     def plot(self, ax=None):
         if ax is None:
             fig = plt.figure()
@@ -519,14 +517,14 @@ class BoundingBox(dc.DessiaObject):
         self.ymax = ymax
         self.zmin = zmin
         self.zmax = zmax
-        self.points = [Point3D(self.xmin, self.ymin, self.zmin), \
-                       Point3D(self.xmax, self.ymin, self.zmin), \
-                       Point3D(self.xmax, self.ymax, self.zmin), \
-                       Point3D(self.xmin, self.ymax, self.zmin), \
-                       Point3D(self.xmin, self.ymin, self.zmax), \
-                       Point3D(self.xmax, self.ymin, self.zmax), \
-                       Point3D(self.xmax, self.ymax, self.zmax), \
-                       Point3D(self.xmin, self.ymax, self.zmax)]
+        self.points = [volmdlr.Point3D(self.xmin, self.ymin, self.zmin), \
+                       volmdlr.Point3D(self.xmax, self.ymin, self.zmin), \
+                       volmdlr.Point3D(self.xmax, self.ymax, self.zmin), \
+                       volmdlr.Point3D(self.xmin, self.ymax, self.zmin), \
+                       volmdlr.Point3D(self.xmin, self.ymin, self.zmax), \
+                       volmdlr.Point3D(self.xmax, self.ymin, self.zmax), \
+                       volmdlr.Point3D(self.xmax, self.ymax, self.zmax), \
+                       volmdlr.Point3D(self.xmin, self.ymax, self.zmax)]
         self.center = (self.points[0] + self.points[-2]) / 2
         self.name = name
 
@@ -739,69 +737,69 @@ class BoundingBox(dc.DessiaObject):
         deltay = self.ymax - self.ymin
         deltaz = self.zmax - self.zmin
 
-        point1_2d_coordinate_dict = {1: Point2D((point1[
+        point1_2d_coordinate_dict = {1: volmdlr.Point2D((point1[
                                                      0] - self.xmin - deltax / 2,
                                                  point1[
                                                      1] - self.ymin - deltay / 2)),
-                                     2: Point2D((point1[
+                                     2: volmdlr.Point2D((point1[
                                                      2] - self.zmin - deltaz / 2,
                                                  point1[
                                                      0] - self.xmin - deltax / 2)),
-                                     3: Point2D((point1[
+                                     3: volmdlr.Point2D((point1[
                                                      1] - self.ymin - deltay / 2,
                                                  point1[
                                                      2] - self.zmin - deltaz / 2)),
-                                     4: Point2D((point1[
+                                     4: volmdlr.Point2D((point1[
                                                      0] - self.xmin - deltax / 2,
                                                  point1[
                                                      2] - self.zmin - deltaz / 2)),
-                                     5: Point2D((point1[
+                                     5: volmdlr.Point2D((point1[
                                                      2] - self.zmin - deltaz / 2,
                                                  point1[
                                                      1] - self.ymin - deltay / 2)),
-                                     6: Point2D((point1[
+                                     6: volmdlr.Point2D((point1[
                                                      1] - self.ymin - deltay / 2,
                                                  point1[
                                                      0] - self.xmin - deltax / 2))}
 
-        point2_2d_coordinate_dict = {1: Point2D((point2[
+        point2_2d_coordinate_dict = {1: volmdlr.Point2D((point2[
                                                      0] - self.xmin - deltax / 2,
                                                  point2[
                                                      1] - self.ymin - deltay / 2)),
-                                     2: Point2D((point2[
+                                     2: volmdlr.Point2D((point2[
                                                      2] - self.zmin - deltaz / 2,
                                                  point2[
                                                      0] - self.xmin - deltax / 2)),
-                                     3: Point2D((point2[
+                                     3: volmdlr.Point2D((point2[
                                                      1] - self.ymin - deltay / 2,
                                                  point2[
                                                      2] - self.zmin - deltaz / 2)),
-                                     4: Point2D((point2[
+                                     4: volmdlr.Point2D((point2[
                                                      0] - self.xmin - deltax / 2,
                                                  point2[
                                                      2] - self.zmin - deltaz / 2)),
-                                     5: Point2D((point2[
+                                     5: volmdlr.Point2D((point2[
                                                      2] - self.zmin - deltaz / 2,
                                                  point2[
                                                      1] - self.ymin - deltay / 2)),
-                                     6: Point2D((point2[
+                                     6: volmdlr.Point2D((point2[
                                                      1] - self.ymin - deltay / 2,
                                                  point2[
                                                      0] - self.xmin - deltax / 2))}
 
-        vertex_2d_coordinate_dict = {1: [Point2D((
+        vertex_2d_coordinate_dict = {1: [volmdlr.Point2D((
                                                  self.xmin - self.xmin - deltax / 2,
                                                  self.ymin - self.ymin - deltay / 2)),
-                                         Point2D((
+                                         volmdlr.Point2D((
                                                  self.xmin - self.xmin - deltax / 2,
                                                  self.ymax - self.ymin - deltay / 2)),
-                                         Point2D((
+                                         volmdlr.Point2D((
                                                  self.xmax - self.xmin - deltax / 2,
                                                  self.ymax - self.ymin - deltay / 2)),
-                                         Point2D((
+                                         volmdlr.Point2D((
                                                  self.xmax - self.xmin - deltax / 2,
                                                  self.ymin - self.ymin - deltay / 2))],
-                                     2: [Point2D((
+                                     2: [volmdlr.Point2D((
                                                  self.zmin - self.zmin - deltaz / 2,
                                                  self.xmin - self.xmin - deltax / 2)),
                                          Point2D((
@@ -953,7 +951,7 @@ class BoundingBox(dc.DessiaObject):
                 (offset_indice, offset)]
             disordered_coordinate = sorted(disordered_coordinate,
                                            key=lambda a: a[0])
-            intersection_point_3d = Point3D(
+            intersection_point_3d = volmdlr.Point3D(
                 tuple([p[1] for p in disordered_coordinate]))
 
             mesures = [Measure3D(point1_copy, intersection_point_3d),
@@ -1003,7 +1001,7 @@ class BoundingBox(dc.DessiaObject):
                 (offset_indice, offset)]
             disordered_coordinate = sorted(disordered_coordinate,
                                            key=lambda a: a[0])
-            intersection_point1_3d = Point3D(
+            intersection_point1_3d = volmdlr.Point3D(
                 tuple([p[1] for p in disordered_coordinate]))
 
             # Computes the 3D intersection between the net_line and the edges of the face_point2
@@ -1028,7 +1026,7 @@ class BoundingBox(dc.DessiaObject):
                 (offset_indice, offset)]
             disordered_coordinate = sorted(disordered_coordinate,
                                            key=lambda a: a[0])
-            intersection_point2_3d = Point3D(
+            intersection_point2_3d = volmdlr.Point3D(
                 tuple([p[1] for p in disordered_coordinate]))
 
             if point1 == point1_copy:
@@ -1088,22 +1086,23 @@ class VolumeModel(dc.DessiaObject):
         self.primitives = primitives
         self.name = name
         self.shells = []
-        if self.primitives:
-            self.shells = self._extract_shells()
-        if self.shells:
-            self.bounding_box = self._bounding_box()
-        else:
-            self.bounding_box = BoundingBox(-1, 1, -1, 1, -1, 1)
+        # if self.primitives:
+        #     self.shells = self._extract_shells()
+        # if self.shells:
+
+        self.bounding_box = self._bounding_box()
+        # else:
+        #     self.bounding_box = BoundingBox(-1, 1, -1, 1, -1, 1)
 
     # def __hash__(self):
     #     return sum([hash(p) for p in self.primitives])
 
-    def _extract_shells(self):
-        shells = []
-        for primitive in self.primitives:
-            if isinstance(primitive, Shell3D):
-                shells.append(primitive)
-        return shells
+    # def _extract_shells(self):
+    #     shells = []
+    #     for primitive in self.primitives:
+    #         if isinstance(primitive, Shell3D):
+    #             shells.append(primitive)
+    #     return shells
 
     def Volume(self):
         volume = 0
@@ -1156,7 +1155,7 @@ class VolumeModel(dc.DessiaObject):
             if hasattr(primitive, 'bounding_box'):
                 bboxes.append(primitive.bounding_box)
             else:
-                if primitive.__class__.__name__ == 'Point3D':
+                if primitive.__class__.__name__ == 'volmdlr.Point3D':
                     points.append(primitive)
         if bboxes:
             xmin = min([box.xmin for box in bboxes])
@@ -1600,7 +1599,7 @@ class Routing:
         return no_collision_mesures
 
 
-class ViewIso:  # TODO: rename this in IsoView
+class IsoView:  # TODO: rename this in IsoView
     def __init__(self, component, frame, size):
         self.component = component
         self.frame = frame
@@ -1612,11 +1611,11 @@ class ViewIso:  # TODO: rename this in IsoView
         plot_datas = []
         plot_datas.extend(self.component.plot_data(self.frame, detail=detail))
         plot_datas.extend(self.component.plot_data(Frame3D(
-            self.frame.origin + Point3D(
+            self.frame.origin + volmdlr.Point3D(
                 (0, self.size[1] / 2 + self.size[2] / 2 + wide, 0)),
             self.frame.u, self.frame.w, self.frame.v), detail=detail))
         plot_datas.extend(self.component.plot_data(Frame3D(
-            self.frame.origin + Point3D(
+            self.frame.origin + volmdlr.Point3D(
                 (self.size[0] / 2 + self.size[2] / 2 + wide, 0, 0)),
             self.frame.w, self.frame.v, self.frame.u), detail=detail))
         return plot_datas

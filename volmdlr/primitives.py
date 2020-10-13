@@ -51,13 +51,13 @@ class RoundedLineSegments:
         
         if self.radius != {}:
             group = [rounded_points_indices[0]]
-            _, _, _, dist0, alpha0 = self.ArcFeatures(rounded_points_indices[0])
+            _, _, _, dist0, alpha0 = self.arc_features(rounded_points_indices[0])
             dist[rounded_points_indices[0]] = dist0
             alpha[rounded_points_indices[0]] = alpha0
             
             for i in rounded_points_indices[1:]:
                 # Computing the arc
-                ps2, pi2, pe2, dist2, alpha2 = self.ArcFeatures(i)
+                ps2, pi2, pe2, dist2, alpha2 = self.arc_features(i)
                 dist[i] = dist2
                 alpha[i] = alpha2
                 if i-1 in self.radius:
@@ -162,7 +162,7 @@ class RoundedLineSegments:
             # Creating geometry
             # Creating arcs
             for ipoint, r in self.radius.items():
-                ps, pi, pe, _, _ = self.ArcFeatures(ipoint)
+                ps, pi, pe, _, _ = self.arc_features(ipoint)
                 arcs[ipoint] = arc_class(ps, pi, pe)
         
         # Creating lines

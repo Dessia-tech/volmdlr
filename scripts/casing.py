@@ -4,7 +4,7 @@
 Script checking offset and Curvilinear absissa of roundedline2D
 """
 
-import volmdlr.core as vm
+import volmdlr as vm
 import volmdlr.primitives2d as primitives2d
 import volmdlr.primitives3d as primitives3d
 import matplotlib.pyplot as plt
@@ -40,40 +40,40 @@ sides = primitives3d.ExtrudedProfile(vm.O3D, vm.X3D, vm.Y3D,
 bottom = primitives3d.ExtrudedProfile(vm.O3D, vm.X3D, vm.Y3D, outer_contour, [],
                                       -thickness * vm.Z3D, name='bottom')
 
-screw_holes_rl = inner_contour.Offset(-(thickness+screw_holes_clearance + 0.5 * screw_holes_diameter))
+screw_holes_rl = inner_contour.offset(-(thickness+screw_holes_clearance + 0.5 * screw_holes_diameter))
 screw_holes = []
-l = screw_holes_rl.Length()
+l = screw_holes_rl.length()
 for i in range(n_screws):
     s = i * l/n_screws
-    p = screw_holes_rl.PointAtCurvilinearAbscissa(s)
-    screw_holes.append(vm.Circle2D(p, screw_holes_diameter*0.5))
+    p = screw_holes_rl.point_at_abscissa(s)
+    screw_holes.append(vm.wires.Circle2D(p, screw_holes_diameter*0.5))
 # ###
 # fig, ax = plt.subplots()
 # [prim.MPLPlot(ax=ax) for prim in inner_contour.primitives]
 # ###
-belt_outer_contour = inner_contour.Offset(-(2*screw_holes_clearance + screw_holes_diameter+thickness))
+belt_outer_contour = inner_contour.offset(-(2*screw_holes_clearance + screw_holes_diameter+thickness))
 belt = primitives3d.ExtrudedProfile(vm.Z3D*(height - 2*thickness), vm.X3D, vm.Y3D,
                                       belt_outer_contour,
                                       [inner_contour]+screw_holes,
                                       thickness * vm.Z3D, name='belt')
 
-ax = inner_contour.MPLPlot()
-belt_outer_contour.MPLPlot(ax=ax)
+ax = inner_contour.plot()
+belt_outer_contour.plot(ax=ax)
 
 
-ax = belt.outer_contour3d.MPLPlot()
-l = belt.outer_contour3d.Length()
+ax = belt.outer_contour3d.plot()
+l = belt.outer_contour3d.length()
 for i in range(100):
-    p = belt.outer_contour3d.PointAtCurvilinearAbscissa(i*l/100)
-    p.MPLPlot(ax=ax)
+    p = belt.outer_contour3d.point_at_abscissa(i*l/100)
+    p.plot(ax=ax)
 
-ax = belt.outer_contour3d.MPLPlot()
+ax = belt.outer_contour3d.plot()
 # l = belt.outer_contour3d.Length()
 # for i in range(100):
 
 
 
-model = vm.VolumeModel([bottom, sides, belt], name='Casing')
+model = vm.core.VolumeModel([bottom, sides, belt], name='Casing')
 model.babylonjs()
 
 # model = vm.VolumeModel([sides])

@@ -7,6 +7,7 @@
 from typing import List
 import math
 import numpy as npy
+import matplotlib.patches
 import volmdlr
 from volmdlr.core_compiled import polygon_point_belongs
 from volmdlr.primitives import RoundedLineSegments
@@ -24,15 +25,15 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
     def __init__(self, points, radius, adapt_radius=False, name=''):
         primitives = RoundedLineSegments.__init__(self, points, radius,
-                                                  volmdlr.LineSegment2D,
-                                                  volmdlr.Arc2D,
+                                                  volmdlr.edges.LineSegment2D,
+                                                  volmdlr.edges.Arc2D,
                                                   closed=False,
                                                   adapt_radius=adapt_radius,
                                                   name='')
 
-        volmdlr.Wire2D.__init__(self, primitives, name)
+        volmdlr.wires.Wire2D.__init__(self, primitives, name)
 
-    def ArcFeatures(self, ipoint):
+    def arc_features(self, ipoint):
         radius = self.radius[ipoint]
         if self.closed:
             if ipoint == 0:
@@ -267,7 +268,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
         return rls2D
 
-    def OffsetLines(self, line_indexes, offset):
+    def offset_lines(self, line_indexes, offset):
         """
         line_indexes is a list of consecutive line indexes
         These line should all be aligned
@@ -430,7 +431,7 @@ class Measure2D(volmdlr.edges.LineSegment2D):
         self.unit = unit
         self.type_ = type_
 
-    def MPLPlot(self, ax, ndigits=6):
+    def plot(self, ax, ndigits=6):
         x1, y1 = self.points[0]
         x2, y2 = self.points[1]
         xm, ym = 0.5 * (self.points[0] + self.points[1])
@@ -446,12 +447,12 @@ class Measure2D(volmdlr.edges.LineSegment2D):
             label += '{} m'.format(round(distance, ndigits))
 
         if self.type_ == 'distance':
-            arrow = FancyArrowPatch((x1, y1), (x2, y2),
+            arrow = matplotlib.patches.FancyArrowPatch((x1, y1), (x2, y2),
                                     arrowstyle='<|-|>,head_length=10,head_width=5',
                                     shrinkA=0, shrinkB=0,
                                     color='k')
         elif self.type_ == 'radius':
-            arrow = FancyArrowPatch((x1, y1), (x2, y2),
+            arrow = matplotlib.patches.FancyArrowPatch((x1, y1), (x2, y2),
                                     arrowstyle='-|>,head_length=10,head_width=5',
                                     shrinkA=0, shrinkB=0,
                                     color='k')

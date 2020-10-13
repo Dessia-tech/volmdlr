@@ -5,6 +5,7 @@
 """
 
 import volmdlr.core
+import volmdlr.display
 
 class Shell3D(volmdlr.core.CompositePrimitive3D):
     _standalone_in_db = True
@@ -355,7 +356,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         indices = []
 
         nb_points = 0
-        mesh = DisplayMesh3D([], [])
+        mesh = volmdlr.display.DisplayMesh3D([], [])
         for i, face in enumerate(self.faces):
             face_mesh = face.triangulation()
             mesh += face_mesh
