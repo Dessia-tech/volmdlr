@@ -443,7 +443,7 @@ class Vector2D(Vector):
         if math.isclose(self.norm(), 0, abs_tol=1e-9):
             point = origin.copy()
             point.plot(ax=ax, color=color)
-            return fig, ax
+            return ax
         
         if width is None:
             width = 0.001*5*amplitude
@@ -474,7 +474,6 @@ class Vector2D(Vector):
             origin = Point2D(origin)
             p1, p2 = origin, origin+self
             u = p2 - p1
-#            plt.plot([p1[0], p2[0]], [p1[1], p2[1]], style)
             p3 = p1 - 3*u
             p4 = p2 + 4*u
             ax.plot([p3[0], p4[0]], [p3[1], p4[1]], style, linestyle=linestyle)
@@ -482,7 +481,7 @@ class Vector2D(Vector):
         if label is not None:
             ax.text(*(origin+self*amplitude), label)
 
-        return fig, ax
+        return ax
     
 
 X2D = Vector2D(1, 0)
@@ -520,9 +519,6 @@ class Point2D(Vector2D):
     def plot(self, ax=None, color='k'):
         if ax is None:
             fig, ax = plt.subplots()
-        else:
-            fig = ax.figure
-
 
         ax.plot([self.x], [self.y], color=color, marker='o')
         return ax
@@ -893,14 +889,8 @@ class Vector3D(Vector):
                         arguments[0][1:-1])
 
     def plot(self, ax=None, starting_point=None, color=''):
-        if ax is None:
-            fig, ax = plt.subplots()
-            ax.set_aspect('equal')
-        else:
-            fig = ax.figure
-
         if starting_point is None:
-            starting_point = Point3D((0,0,0))
+            starting_point = Point3D(0, 0, 0)
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -912,7 +902,7 @@ class Vector3D(Vector):
         else:
             a = Arrow3D(xs, ys, zs, mutation_scale=10, lw=3, arrowstyle="-|>")
         ax.add_artist(a)
-        return fig, ax
+        return ax
 
 
 X3D = Vector3D(1, 0, 0)
@@ -962,7 +952,7 @@ class Point3D(Vector3D):
             fig = ax.figure
 
         ax.scatter(self.x, self.y, color=color)
-        return fig, ax
+        return ax
 
 
     def To2D(self, plane_origin, x, y):

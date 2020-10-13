@@ -871,7 +871,7 @@ class Circle2D(Contour2D):
     def __init__(self, center: volmdlr.Point2D, radius: float, name: str = ''):
         self.center = center
         self.radius = radius
-        self.angle = volmdlr.two_pi
+        self.angle = volmdlr.TWO_PI
         self.utd_geo_points = False
 
         self.points = self.tessellation_points()
@@ -894,7 +894,7 @@ class Circle2D(Contour2D):
         return [(self.center
                  + self.radius * math.cos(teta) * volmdlr.X2D
                  + self.radius * math.sin(teta) * volmdlr.Y2D)\
-                for teta in npy.linspace(0, volmdlr.two_pi, resolution + 1)][:-1]
+                for teta in npy.linspace(0, volmdlr.TWO_PI, resolution + 1)][:-1]
 
     def point_belongs(self, point, tolerance=1e-9):
         return point.point_distance(self.center) <= self.radius + tolerance
@@ -939,7 +939,7 @@ class Circle2D(Contour2D):
                 [volmdlr.Point2D((P1 + t1 * V).vector), volmdlr.Point2D((P1 + t2 * V).vector)]
 
     def length(self):
-        return volmdlr.two_pi * self.radius
+        return volmdlr.TWO_PI * self.radius
 
     def plot(self, ax=None, linestyle='-', color='k', linewidth=1):
         if ax is None:
@@ -1210,8 +1210,9 @@ class Contour3D(Wire3D):
                 return primitive.point_at_abscissa(
                     curvilinear_abscissa - length)
             length += primitive_length
-        # Outside of length
-        raise ValueError
+        if math.isclose(curvilinear_abscissa, length, abs_tol=1e-6):
+            return primitive.point_at_abscissa(primitive_length)
+        raise ValueError('abscissa out of contour length')
 
     def plot(self, ax=None):
         if ax is None:
@@ -1254,7 +1255,7 @@ class Circle3D(Contour3D):
         """
         self.radius = radius
         self.frame = frame
-        self.angle = volmdlr.two_pi
+        self.angle = volmdlr.TWO_PI
         Contour3D.__init__(self, [self], name=name)
 
     @property
@@ -1281,13 +1282,13 @@ class Circle3D(Contour3D):
             teta) * self.surface.frame.u
                                   + self.radius * math.sin(
             teta) * self.surface.frame.v \
-                                  for teta in npy.linspace(0, two_pi,
+                                  for teta in npy.linspace(0, TWO_PI,
                                                            resolution + 1)][
                                  :-1]
         return tessellation_points_3D
 
     def length(self):
-        return two_pi * self.radius
+        return TWO_PI * self.radius
 
     def FreeCADExport(self, name, ndigits=3):
         xc, yc, zc = round(1000 * self.center, ndigits)
@@ -1421,7 +1422,7 @@ class Circle3D(Contour3D):
                                                     self.normal),
                                             self.radius
                                             )
-            return cylinder.rectangular_cut(0, volmdlr.two_pi,
+            return cylinder.rectangular_cut(0, volmdlr.TWO_PI,
                                             0, extrusion_vector.norm())
         else:
             raise NotImplementedError('Elliptic faces not handled: dot={}'.format(
@@ -1442,7 +1443,7 @@ class Circle3D(Contour3D):
         R = tore_center.point_distance(self.center)
         surface = volmdlr.faces.ToroidalSurface3D(volmdlr.Frame3D(tore_center, u, v, axis),
                                     R, self.radius)
-        return surface.rectangular_cut(0, angle, 0, volmdlr.two_pi)
+        return surface.rectangular_cut(0, angle, 0, volmdlr.TWO_PI)
 
 
 class Ellipse3D(Contour3D):
@@ -1476,7 +1477,7 @@ class Ellipse3D(Contour3D):
         tessellation_points_3D = [self.center + self.major_axis * math.cos(
             teta) * self.major_dir + self.minor_axis * math.sin(
             teta) * self.major_dir.cross(self.normal) \
-                                  for teta in npy.linspace(0, volmdlr.two_pi,
+                                  for teta in npy.linspace(0, volmdlr.TWO_PI,
                                                            resolution + 1)][
                                  :-1]
         return tessellation_points_3D

@@ -496,8 +496,10 @@ class RevolvedProfile(volmdlr.shells.Shell3D):
         faces = []
                         
         for edge in self.contour3d.primitives:
-            faces.append(edge.revolution(self.axis_point,
-                                         self.axis, self.angle))
+            face = edge.revolution(self.axis_point,
+                                         self.axis, self.angle)
+            if face:# Can be None
+                faces.append(face)
                     
         return faces
 
@@ -587,16 +589,16 @@ class Cylinder(RevolvedProfile):
         self.bounding_box = self._bounding_box()
 
         # Revolved Profile
-        p1 = volmdlr.Point2D((-0.5*self.length, 0))
-        p2 = volmdlr.Point2D((0.5*self.length, 0))
-        p3 = volmdlr.Point2D((0.5*self.length, self.radius))
-        p4 = volmdlr.Point2D((-0.5*self.length, self.radius))
-        l1 = volmdlr.LineSegment2D(p1, p2)
-        l2 = volmdlr.LineSegment2D(p2, p3)
-        l3 = volmdlr.LineSegment2D(p3, p4)
-        l4 = volmdlr.LineSegment2D(p4, p1)
-        contour = volmdlr.Contour2D([l1, l2, l3, l4])
-        y = axis.RandomUnitnormalVector()
+        p1 = volmdlr.Point2D(-0.5*self.length, 0.)
+        p2 = volmdlr.Point2D(0.5*self.length, 0.)
+        p3 = volmdlr.Point2D(0.5*self.length, self.radius)
+        p4 = volmdlr.Point2D(-0.5*self.length, self.radius)
+        l1 = volmdlr.edges.LineSegment2D(p1, p2)
+        l2 = volmdlr.edges.LineSegment2D(p2, p3)
+        l3 = volmdlr.edges.LineSegment2D(p3, p4)
+        l4 = volmdlr.edges.LineSegment2D(p4, p1)
+        contour = volmdlr.wires.Contour2D([l1, l2, l3, l4])
+        y = axis.random_unit_normal_vector()
         RevolvedProfile.__init__(self, position, axis, y, contour, position, axis,
                                  color=color, alpha=alpha, name=name)
 
@@ -635,7 +637,7 @@ class Cylinder(RevolvedProfile):
         zmin = pointA[2] - kz * radius
         zmax = pointB[2] + kz * radius
 
-        return volmdlr.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+        return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def Volume(self):
         return self.length * math.pi * self.radius**2
@@ -853,7 +855,7 @@ class Sweep(volmdlr.shells.Shell3D):
                     faces.append(contour_primitive.revolution(
                         wire_primitive.center,
                         wire_primitive.normal,
-                        volmdlr.two_pi))
+                        volmdlr.TWO_PI))
             else:
                 raise NotImplementedError(
                     'Unimplemented primitive for sweep: {}'\

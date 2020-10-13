@@ -691,19 +691,19 @@ class Arc2D(Edge):
 
         # Going trigo/clock wise from start to interior
         if anglei < angle1:
-            trigowise_path = (anglei + volmdlr.two_pi) - angle1
+            trigowise_path = (anglei + volmdlr.TWO_PI) - angle1
             clockwise_path = angle1 - anglei
         else:
             trigowise_path = anglei - angle1
-            clockwise_path = angle1 - anglei + volmdlr.two_pi
+            clockwise_path = angle1 - anglei + volmdlr.TWO_PI
 
         # Going trigo wise from interior to interior
         if angle2 < anglei:
-            trigowise_path += (angle2 + volmdlr.two_pi) - anglei
+            trigowise_path += (angle2 + volmdlr.TWO_PI) - anglei
             clockwise_path += anglei - angle2
         else:
             trigowise_path += angle2 - anglei
-            clockwise_path += anglei - angle2 + volmdlr.two_pi
+            clockwise_path += anglei - angle2 + volmdlr.TWO_PI
 
         if clockwise_path > trigowise_path:
             self.is_trigo = True
@@ -795,7 +795,7 @@ class Arc2D(Edge):
 
     def area(self):
         if self.angle2 < self.angle1:
-            angle = self.angle2 + volmdlr.two_pi - self.angle1
+            angle = self.angle2 + volmdlr.TWO_PI - self.angle1
         else:
             angle = self.angle2 - self.angle1
         return self.radius ** 2 * angle / 2
@@ -863,7 +863,7 @@ class Arc2D(Edge):
         Second moment area of part of disk
         """
         if self.angle2 < self.angle1:
-            angle2 = self.angle2 + volmdlr.volmdlr.two_pi
+            angle2 = self.angle2 + volmdlr.volmdlr.TWO_PI
 
         else:
             angle2 = self.angle2
@@ -1008,19 +1008,19 @@ class ArcEllipse2D(Edge):
 
         # Going trigo/clock wise from start to interior
         if anglei < angle1:
-            trigowise_path = (anglei + volmdlr.two_pi) - angle1
+            trigowise_path = (anglei + volmdlr.TWO_PI) - angle1
             clockwise_path = angle1 - anglei
         else:
             trigowise_path = anglei - angle1
-            clockwise_path = angle1 - anglei + volmdlr.two_pi
+            clockwise_path = angle1 - anglei + volmdlr.TWO_PI
 
         # Going trigo wise from interior to interior
         if angle2 < anglei:
-            trigowise_path += (angle2 + volmdlr.two_pi) - anglei
+            trigowise_path += (angle2 + volmdlr.TWO_PI) - anglei
             clockwise_path += anglei - angle2
         else:
             trigowise_path += angle2 - anglei
-            clockwise_path += anglei - angle2 + volmdlr.two_pi
+            clockwise_path += anglei - angle2 + volmdlr.TWO_PI
 
         if clockwise_path > trigowise_path:
             self.is_trigo = True
@@ -1031,7 +1031,7 @@ class ArcEllipse2D(Edge):
             self.angle = clockwise_path
 
         if self.start == self.end or self.angle == 0:
-            self.angle = volmdlr.volmdlr.two_pi
+            self.angle = volmdlr.volmdlr.TWO_PI
 
         if self.is_trigo:  # sens trigo
             self.offset_angle = angle1
@@ -1681,19 +1681,27 @@ class LineSegment3D(LineSegment):
         p2_proj, _ = axis_line3d.point_projection(self.end)
         d1 = self.start.point_distance(p1_proj)
         d2 = self.end.point_distance(p2_proj)
-        u1 = (self.start - p1_proj)  # Unit vector from p1_proj to p1
-        u1.normalize()
-        if u1.is_colinear_to(self.direction_vector()):
+        if d1 != 0.:
+            u = (self.start - p1_proj)  # Unit vector from p1_proj to p1
+            u.normalize()
+        elif d2 != 0.:
+            u = (self.end - p2_proj)  # Unit vector from p1_proj to p1
+            u.normalize()
+        else:
+            return None
+
+        if u.is_colinear_to(self.direction_vector()):
             # Planar face
-            surface = volmdlr.faces.Plane3D(volmdlr.Frame3D(p1_proj, u1, axis.cross(u1), axis))
-            if angle == volmdlr.two_pi:
+            v = axis.cross(u)
+            surface = volmdlr.faces.Plane3D(volmdlr.Frame3D(p1_proj, u, v, axis))
+            if angle == volmdlr.TWO_PI:
                 # Only 2 circles as countours
                 r, R = sorted([d1, d2])
-                v1 = axis.cross(u1)
-                outer_contour3d = volmdlr.wires.Circle3D(volmdlr.Frame3D(p1_proj, u1, v1, axis),
+                # v1 = axis.cross(u)
+                outer_contour3d = volmdlr.wires.Circle3D(volmdlr.Frame3D(p1_proj, u, v, axis),
                                            R)
                 if not math.isclose(r, 0, abs_tol=1e-9):
-                    inner_contours3d = [volmdlr.wires.Circle3D(volmdlr.Frame3D(p1_proj, u1, v1, axis)
+                    inner_contours3d = [volmdlr.wires.Circle3D(volmdlr.Frame3D(p1_proj, u, v, axis)
                                                  , r)]
                 else:
                     inner_contours3d = []
@@ -1703,8 +1711,8 @@ class LineSegment3D(LineSegment):
                                                  axis_point=axis_point,
                                                  angle=0.5 * angle)
                 arc1_e = self.end.rotation(axis=axis,
-                                                 axis_point=axis_point,
-                                                 angle=angle)
+                                           axis_point=axis_point,
+                                           angle=angle)
                 arc2_i = self.start.rotation(axis=axis,
                                                  axis_point=axis_point,
                                                  angle=0.5 * angle)
@@ -1723,7 +1731,7 @@ class LineSegment3D(LineSegment):
 
         elif d1 != d2:
             # Conical
-            v = axis.cross(u1)
+            v = axis.cross(u)
             w = axis.cross(v)
             u1 = self.direction_vector()
             semi_angle = math.asin(u1.cross(axis).norm())
@@ -1731,8 +1739,8 @@ class LineSegment3D(LineSegment):
                                        semi_angle)
             return surface.rectangular_cut(0, self.length(), 0, angle)
         else:
-            v = axis.cross(u1)
-            surface = volmdlr.faces.CylindricalSurface3D(volmdlr.Frame3D(p1_proj, u1, v, axis), d1)
+            v = axis.cross(u)
+            surface = volmdlr.faces.CylindricalSurface3D(volmdlr.Frame3D(p1_proj, u, v, axis), d1)
             return surface.rectangular_cut(0, angle,
                                            0, (self.end-self.start).dot(axis))
 
@@ -1926,7 +1934,7 @@ class Arc3D(Edge):
         start_gen = start
         int_gen = start_gen.rotation(axis_point, axis, angle / 2, copy=True)
         end_gen = start_gen.rotation(axis_point, axis, angle, copy=True)
-        if angle == volmdlr.volmdlr.two_pi:
+        if angle == volmdlr.volmdlr.TWO_PI:
             line = Line3D(axis_point, axis_point + axis)
             center, _ = line.point_projection(start)
             radius = center.point_distance(start)
@@ -1988,19 +1996,19 @@ class Arc3D(Edge):
 
         # Going trigo/clock wise from start to interior
         if anglei < angle1:
-            trigowise_path = (anglei + volmdlr.two_pi) - angle1
+            trigowise_path = (anglei + volmdlr.TWO_PI) - angle1
             clockwise_path = angle1 - anglei
         else:
             trigowise_path = anglei - angle1
-            clockwise_path = angle1 - anglei + volmdlr.two_pi
+            clockwise_path = angle1 - anglei + volmdlr.TWO_PI
 
         # Going trigo wise from interior to interior
         if angle2 < anglei:
-            trigowise_path += (angle2 + volmdlr.two_pi) - anglei
+            trigowise_path += (angle2 + volmdlr.TWO_PI) - anglei
             clockwise_path += anglei - angle2
         else:
             trigowise_path += angle2 - anglei
-            clockwise_path += anglei - angle2 + volmdlr.two_pi
+            clockwise_path += anglei - angle2 + volmdlr.TWO_PI
 
         if clockwise_path > trigowise_path:
             self.is_trigo = True
@@ -2412,19 +2420,19 @@ class ArcEllipse3D(Edge):
 
         # Going trigo/clock wise from start to interior
         if anglei < angle1:
-            trigowise_path = (anglei + volmdlr.two_pi) - angle1
+            trigowise_path = (anglei + volmdlr.TWO_PI) - angle1
             clockwise_path = angle1 - anglei
         else:
             trigowise_path = anglei - angle1
-            clockwise_path = angle1 - anglei + volmdlr.two_pi
+            clockwise_path = angle1 - anglei + volmdlr.TWO_PI
 
         # Going trigo wise from interior to interior
         if angle2 < anglei:
-            trigowise_path += (angle2 + volmdlr.two_pi) - anglei
+            trigowise_path += (angle2 + volmdlr.TWO_PI) - anglei
             clockwise_path += anglei - angle2
         else:
             trigowise_path += angle2 - anglei
-            clockwise_path += anglei - angle2 + volmdlr.two_pi
+            clockwise_path += anglei - angle2 + volmdlr.TWO_PI
 
         if clockwise_path > trigowise_path:
             self.is_trigo = True
@@ -2435,7 +2443,7 @@ class ArcEllipse3D(Edge):
             self.angle = clockwise_path
 
         if self.start == self.end:
-            self.angle = volmdlr.two_pi
+            self.angle = volmdlr.TWO_PI
 
         if self.is_trigo:
             self.offset_angle = angle1

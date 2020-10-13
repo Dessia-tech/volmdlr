@@ -351,17 +351,9 @@ class Plane3D(Surface3D):
         surface = Surface2D(outer_contour, [])
         return Face3D(self, surface, name)
 
-XYZ = volmdlr.Basis3D(volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)
-YZX = volmdlr.Basis3D(volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D)
-ZXY = volmdlr.Basis3D(volmdlr.Z3D, volmdlr.X3D, volmdlr.Y3D)
-
-OXYZ = volmdlr.Frame3D(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)
-OYZX = volmdlr.Frame3D(volmdlr.O3D, volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D)
-OZXY = volmdlr.Frame3D(volmdlr.O3D, volmdlr.Z3D, volmdlr.X3D, volmdlr.Y3D)
-
-PLANE3D_OXY = Plane3D(OXYZ)
-PLANE3D_OYZ = Plane3D(OYZX)
-PLANE3D_OZX = Plane3D(OZXY)
+PLANE3D_OXY = Plane3D(volmdlr.OXYZ)
+PLANE3D_OYZ = Plane3D(volmdlr.OYZX)
+PLANE3D_OZX = Plane3D(volmdlr.OZXY)
 
 class CylindricalSurface3D(Surface3D):
     # face_class = CylindricalFace3D
@@ -429,7 +421,7 @@ class CylindricalSurface3D(Surface3D):
                         z1:float, z2:float, name:str=''):
 
         if theta1 == theta2:
-            theta2 += volmdlr.volmdlr.two_pi
+            theta2 += volmdlr.volmdlr.TWO_PI
 
         p1 = volmdlr.Point2D(theta1, z1)
         p2 = volmdlr.Point2D(theta2, z1)
@@ -545,13 +537,13 @@ class ToroidalSurface3D(Surface3D):
         # phi2 = angle_principal_measure(phi2)
 
         if phi1 == phi2:
-            phi2 += volmdlr.two_pi
+            phi2 += volmdlr.TWO_PI
         elif phi2 < phi1:
-            phi2 += volmdlr.two_pi
+            phi2 += volmdlr.TWO_PI
         if theta1 == theta2:
-            theta2 += volmdlr.two_pi
+            theta2 += volmdlr.TWO_PI
         elif theta2 < theta1:
-            theta2 += volmdlr.two_pi
+            theta2 += volmdlr.TWO_PI
 
         p1 = volmdlr.Point2D(theta1, phi1)
         p2 = volmdlr.Point2D(theta1, phi2)
@@ -603,15 +595,15 @@ class ToroidalSurface3D(Surface3D):
                                                         rcircle)
 
                     angle2d = abs(end2d[0] - start2d[0])
-                    if math.isclose(edge.angle, volmdlr.two_pi, abs_tol=1e-6):
+                    if math.isclose(edge.angle, volmdlr.TWO_PI, abs_tol=1e-6):
                         if start2d == end2d:
-                            if math.isclose(start2d.vector[0], volmdlr.two_pi,
+                            if math.isclose(start2d.vector[0], volmdlr.TWO_PI,
                                             abs_tol=1e-6):
-                                end2d = end2d - volmdlr.volmdlr.Point2D((volmdlr.two_pi, 0))
+                                end2d = end2d - volmdlr.volmdlr.Point2D((volmdlr.TWO_PI, 0))
                             else:
-                                end2d = end2d + volmdlr.volmdlr.Point2D((volmdlr.two_pi, 0))
+                                end2d = end2d + volmdlr.volmdlr.Point2D((volmdlr.TWO_PI, 0))
                     elif not (math.isclose(edge.angle, angle2d, abs_tol=1e-2)):
-                        # if math.isclose(angle2d, volmdlr.two_pi, abs_tol=1e-2) :
+                        # if math.isclose(angle2d, volmdlr.TWO_PI, abs_tol=1e-2) :
                         if start2d[0] < end2d[0]:
                             end2d = start2d + volmdlr.volmdlr.Point2D((edge.angle, 0))
                         else:
@@ -721,7 +713,7 @@ class ToroidalSurface3D(Surface3D):
                         for pt in points_sing:
                             if math.isclose(pt.vector[0], 0, abs_tol=1e-2):
                                 pt0 += 1
-                            elif math.isclose(pt.vector[0], volmdlr.two_pi,
+                            elif math.isclose(pt.vector[0], volmdlr.TWO_PI,
                                               abs_tol=1e-2):
                                 pt2pi += 1
                         points_sing.sort(key=lambda pt: pt[1])
@@ -734,10 +726,10 @@ class ToroidalSurface3D(Surface3D):
                         break
                         #######################
 
-                    # if math.isclose(intersect, 0, abs_tol = 1e-6) or math.isclose(intersect, volmdlr.two_pi, abs_tol = 1e-6) or (not check1 or not check2):
+                    # if math.isclose(intersect, 0, abs_tol = 1e-6) or math.isclose(intersect, volmdlr.TWO_PI, abs_tol = 1e-6) or (not check1 or not check2):
                     elif math.isclose(intersect, 0,
                                       abs_tol=1e-6) or math.isclose(intersect,
-                                                                    volmdlr.two_pi,
+                                                                    volmdlr.TWO_PI,
                                                                     abs_tol=1e-6) or (
                             not check1 or not check2):
                         all_points = volmdlr.check_singularity(all_points)
@@ -764,17 +756,17 @@ class ToroidalSurface3D(Surface3D):
                                         if math.isclose(pt[0], 0,
                                                         abs_tol=1e-1):
                                             new_list_points.append(volmdlr.volmdlr.Point2D((
-                                                                           intersect + volmdlr.two_pi,
+                                                                           intersect + volmdlr.TWO_PI,
                                                                            pt[
                                                                                1])))
                                         else:
                                             new_list_points.append(volmdlr.volmdlr.Point2D(
-                                                (volmdlr.two_pi + pt[0], pt[1])))
+                                                (volmdlr.TWO_PI + pt[0], pt[1])))
                                     elif math.isclose(pt[0], intersect,
                                                       abs_tol=1e-1):
                                         change += 1
                                         new_list_points.append(volmdlr.volmdlr.Point2D(
-                                            (volmdlr.two_pi + pt[0], pt[1])))
+                                            (volmdlr.TWO_PI + pt[0], pt[1])))
                                     else:
                                         new_list_points.append(pt)
                                 if change > 0:
@@ -838,10 +830,10 @@ class ToroidalSurface3D(Surface3D):
                                 change += 1
                                 if math.isclose(pt[0], 0, abs_tol=1e-1):
                                     new_list_points.append(volmdlr.volmdlr.Point2D(
-                                        (x_intersect + volmdlr.two_pi, pt[1])))
+                                        (x_intersect + volmdlr.TWO_PI, pt[1])))
                                 else:
                                     new_list_points.append(
-                                        volmdlr.volmdlr.Point2D((volmdlr.two_pi + pt[0], pt[1])))
+                                        volmdlr.volmdlr.Point2D((volmdlr.TWO_PI + pt[0], pt[1])))
                             else:
                                 new_list_points.append(pt)
                         if change > 0:
@@ -931,7 +923,7 @@ class ConicalSurface3D(Surface3D):
         # theta1 = angle_principal_measure(theta1)
         # theta2 = angle_principal_measure(theta2)
         if theta1 == theta2:
-            theta2 += volmdlr.two_pi
+            theta2 += volmdlr.TWO_PI
 
         p1 = volmdlr.volmdlr.Point2D((theta1, z1))
         p2 = volmdlr.volmdlr.Point2D((theta2, z1))
@@ -1492,12 +1484,9 @@ class PlaneFace3D(Face3D):
                                             u, v,
                                             outer_contour3d.normal))
         else:
-            points = outer_contour3d.primitives[0].points
-            if len(points) == 2:
-                points.append(outer_contour3d.primitives[1].points)
-            p3 = outer_contour3d.primitives[0].points
-            # print('fault', outer_contour3d.primitives[0],
-            #       len(outer_contour3d.edges[0].points))
+            ocl = outer_contour3d.length()
+
+            points = [outer_contour3d.point_at_abscissa(i*ocl/3.) for i in range(3)]
             plane3d = Plane3D.from_3_points(*points)
 
         outer_contour2d = plane3d.contour3d_to_2d(outer_contour3d)
@@ -1830,9 +1819,9 @@ class CylindricalFace3D(Face3D):
             if not (
             math.isclose(arc1.angle, abs(theta1_1 - theta1_2), abs_tol=1e-4)):
                 if math.isclose(theta1_1, 0, abs_tol=1e-4):
-                    theta1_1 = volmdlr.two_pi
+                    theta1_1 = volmdlr.TWO_PI
                 elif math.isclose(theta1_2, 0, abs_tol=1e-4):
-                    theta1_2 = volmdlr.two_pi
+                    theta1_2 = volmdlr.TWO_PI
                 else:
                     # if theta1_2 > theta1_1 :
                     #     theta1_2 -= math.pi
@@ -1908,7 +1897,7 @@ class CylindricalFace3D(Face3D):
             theta = math.atan2(y, x)
             if theta < 0 or math.isclose(theta, 0, abs_tol=1e-9):
                 if arc.angle > math.pi:
-                    theta += volmdlr.two_pi
+                    theta += volmdlr.TWO_PI
                 else:
                     offset = theta
                     theta = -theta
@@ -1941,15 +1930,15 @@ class CylindricalFace3D(Face3D):
                     start2d, end2d = CylindricalFace3D.points3d_to2d(
                         new_points, radius)
                     angle2d = abs(end2d[0] - start2d[0])
-                    if math.isclose(edge.angle, volmdlr.two_pi, abs_tol=1e-6):
+                    if math.isclose(edge.angle, volmdlr.TWO_PI, abs_tol=1e-6):
                         if start2d == end2d:
-                            if math.isclose(start2d.vector[0], volmdlr.two_pi,
+                            if math.isclose(start2d.vector[0], volmdlr.TWO_PI,
                                             abs_tol=1e-6):
-                                end2d = end2d - volmdlr.Point2D((volmdlr.two_pi, 0))
+                                end2d = end2d - volmdlr.Point2D((volmdlr.TWO_PI, 0))
                             else:
-                                end2d = end2d + volmdlr.Point2D((volmdlr.two_pi, 0))
+                                end2d = end2d + volmdlr.Point2D((volmdlr.TWO_PI, 0))
                     elif not (math.isclose(edge.angle, angle2d, abs_tol=1e-2)):
-                        # if math.isclose(angle2d, volmdlr.two_pi, abs_tol=1e-2) :
+                        # if math.isclose(angle2d, volmdlr.TWO_PI, abs_tol=1e-2) :
                         if start2d[0] < end2d[0]:
                             end2d = start2d + volmdlr.Point2D((edge.angle, 0))
                         else:
@@ -2050,7 +2039,7 @@ class CylindricalFace3D(Face3D):
                         for pt in points_sing:
                             if math.isclose(pt.vector[0], 0, abs_tol=1e-2):
                                 pt0 += 1
-                            elif math.isclose(pt.vector[0], volmdlr.two_pi,
+                            elif math.isclose(pt.vector[0], volmdlr.TWO_PI,
                                               abs_tol=1e-2):
                                 pt2pi += 1
                         points_sing.sort(key=lambda pt: pt[1])
@@ -2064,7 +2053,7 @@ class CylindricalFace3D(Face3D):
                         break
                     elif math.isclose(intersect, 0,
                                       abs_tol=1e-6) or math.isclose(intersect,
-                                                                    volmdlr.two_pi,
+                                                                    volmdlr.TWO_PI,
                                                                     abs_tol=1e-6) or (
                             not check1 or not check2):
                         all_points = check_singularity(all_points)
@@ -2091,17 +2080,17 @@ class CylindricalFace3D(Face3D):
                                         if math.isclose(pt[0], 0,
                                                         abs_tol=1e-1):
                                             new_list_points.append(volmdlr.Point2D((
-                                                                           intersect + volmdlr.two_pi,
+                                                                           intersect + volmdlr.TWO_PI,
                                                                            pt[
                                                                                1])))
                                         else:
                                             new_list_points.append(volmdlr.Point2D(
-                                                (volmdlr.two_pi + pt[0], pt[1])))
+                                                (volmdlr.TWO_PI + pt[0], pt[1])))
                                     elif math.isclose(pt[0], intersect,
                                                       abs_tol=1e-1):
                                         change += 1
                                         new_list_points.append(volmdlr.Point2D(
-                                            (volmdlr.two_pi + pt[0], pt[1])))
+                                            (volmdlr.TWO_PI + pt[0], pt[1])))
                                     else:
                                         new_list_points.append(pt)
                                 if change > 0:
@@ -2157,10 +2146,10 @@ class CylindricalFace3D(Face3D):
                                 change += 1
                                 if math.isclose(pt[0], 0, abs_tol=1e-1):
                                     new_list_points.append(volmdlr.Point2D(
-                                        (x_intersect + volmdlr.two_pi, pt[1])))
+                                        (x_intersect + volmdlr.TWO_PI, pt[1])))
                                 else:
                                     new_list_points.append(
-                                        volmdlr.Point2D((volmdlr.two_pi + pt[0], pt[1])))
+                                        volmdlr.Point2D((volmdlr.TWO_PI + pt[0], pt[1])))
                             else:
                                 new_list_points.append(pt)
                         if change > 0:
@@ -3134,7 +3123,7 @@ class SphericalFace3D(Face3D):
         # r = sphericalsurface3d.radius
 
         if contours3d[0].__class__ is volmdlr.Point3D:  # If it is a complete sphere
-            angle = volmdlr.two_pi
+            angle = volmdlr.TWO_PI
             pt1, pt2, pt3, pt4 = volmdlr.Point2D((0, 0)), volmdlr.Point2D((0, angle)), volmdlr.Point2D(
                 (angle, angle)), volmdlr.Point2D((angle, 0))
             seg1, seg2, seg3, seg4 = volmdlr.LineSegment2D(pt1, pt2), volmdlr.LineSegment2D(

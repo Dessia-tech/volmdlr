@@ -25,12 +25,12 @@ current_point = p5
 #points = [p1, p2]
 #radius = {1: 0.010}
 for i in range(4):
-    current_point += vm.Point3D.random(0, 0.3, 0., 0.3, 0, 0.3)
+    current_point += vm.Point3D.random(-0.1, 0.3, -0.1, 0.3, -0.1, 0.3)
     points.append(current_point)
     radius[4+i] = 0.01 + 0.03 * random.random()
 #print(radius)
 # c = vm.Circle3D(p1, 0.008, p2-p1)
-c = vm.wires.Circle2D(vm.O2D, 0.008)
+c = wires.Circle2D(vm.O2D, 0.008)
 
 rl = primitives3d.OpenedRoundedLineSegments3D(points, radius, adapt_radius=True, name='wire')
 contour = wires.Contour2D([c])
