@@ -1506,8 +1506,8 @@ class LineSegment3D(LineSegment):
 
     def FreeCADExport(self, name, ndigits=6):
         name = 'primitive' + str(name)
-        x1, y1, z1 = round(1000 * self.start, ndigits).vector
-        x2, y2, z2 = round(1000 * self.end, ndigits).vector
+        x1, y1, z1 = round(1000 * self.start, ndigits)
+        x2, y2, z2 = round(1000 * self.end, ndigits)
         return '{} = Part.LineSegment(fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(
             name, x1, y1, z1, x2, y2, z2)
 
@@ -2125,11 +2125,11 @@ class Arc3D(Edge):
         return ax
 
     def FreeCADExport(self, name, ndigits=6):
-        xs, ys, zs = round(1000 * self.start, ndigits).vector
-        xi, yi, zi = round(1000 * self.interior, ndigits).vector
-        xe, ye, ze = round(1000 * self.end, ndigits).vector
-        return '{} = Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(
-            name, xs, ys, zs, xi, yi, zi, xe, ye, ze)
+        xs, ys, zs = round(1000 * self.start, ndigits)
+        xi, yi, zi = round(1000 * self.interior, ndigits)
+        xe, ye, ze = round(1000 * self.end, ndigits)
+        return '{} = Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n'\
+            .format(name, xs, ys, zs, xi, yi, zi, xe, ye, ze)
 
     def copy(self):
         return Arc3D(self.start.copy(), self.interior.copy(), self.end.copy())

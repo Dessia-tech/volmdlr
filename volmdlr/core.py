@@ -1104,7 +1104,7 @@ class VolumeModel(dc.DessiaObject):
     #             shells.append(primitive)
     #     return shells
 
-    def Volume(self):
+    def volume(self):
         volume = 0
         for primitive in self.primitives:
             volume += primitive.Volume()
@@ -1201,7 +1201,7 @@ class VolumeModel(dc.DessiaObject):
         ax.margins(0.1)
         return ax
 
-    def FreeCADScript(self, fcstd_filepath,
+    def freecad_script(self, fcstd_filepath,
                       freecad_lib_path='/usr/lib/freecad/lib',
                       export_types=('fcstd',),
                       save_to='',
@@ -1234,18 +1234,18 @@ class VolumeModel(dc.DessiaObject):
                     s += (sp)
                     s += 'shapeobj = doc.addObject("Part::Feature","{}")\n'.format(
                         primitive_name)
-                    if isinstance(primitive, BSplineCurve3D) \
-                            or isinstance(primitive, BSplineSurface3D) \
-                            or isinstance(primitive, Circle3D) \
-                            or isinstance(primitive, LineSegment3D) \
-                            or isinstance(primitive, Ellipse3D):
-                        #                            print(primitive)
-                        #                            s += 'S = Part.Shape([primitive{}])\n'.format(ip)
-                        #                            s += 'shapeobj.Shape = S\n'
-                        s += 'shapeobj.Shape = primitive{}.toShape()\n'.format(
-                            ip)
-                    else:
-                        s += "shapeobj.Shape = primitive{}\n".format(ip)
+                    # if isinstance(primitive, BSplineCurve3D) \
+                    #         or isinstance(primitive, BSplineSurface3D) \
+                    #         or isinstance(primitive, Circle3D) \
+                    #         or isinstance(primitive, LineSegment3D) \
+                    #         or isinstance(primitive, Ellipse3D):
+                    #     #                            print(primitive)
+                    #     #                            s += 'S = Part.Shape([primitive{}])\n'.format(ip)
+                    #     #                            s += 'shapeobj.Shape = S\n'
+                    #     s += 'shapeobj.Shape = primitive{}.toShape()\n'.format(
+                    #         ip)
+                    # else:
+                    s += "shapeobj.Shape = primitive{}\n".format(ip)
                     s += 'part.addObject(shapeobj)\n\n'.format(ip,
                                                                primitive.name)
             # --------------------DEBUG-------------------
@@ -1267,8 +1267,8 @@ class VolumeModel(dc.DessiaObject):
                 file.write(s)
         return s
 
-    def FreeCADExport(self, fcstd_filepath,
-                      python_path='python',
+    def freecad_export(self, fcstd_filepath,
+                      python_path='python3',
                       freecad_lib_path='/usr/lib/freecad/lib',
                       export_types=('fcstd',),
                       tolerance=0.0001):
@@ -1285,7 +1285,7 @@ class VolumeModel(dc.DessiaObject):
 
         """
         fcstd_filepath = os.path.abspath(fcstd_filepath)
-        s = self.FreeCADScript(fcstd_filepath,
+        s = self.freecad_script(fcstd_filepath,
                                freecad_lib_path=freecad_lib_path,
                                export_types=export_types,
                                tolerance=tolerance)
