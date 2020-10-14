@@ -1166,7 +1166,15 @@ class LineSegment2D(Line2D):
     def __init__(self,point1, point2, *,name=''):
         Line2D.__init__(self, point1, point2, name = name)
        
+    def __hash__(self):
+        return self.point1.__hash__() + self.point2.__hash__()
         
+    def __eq__(self, other_line_segment):
+        if self.__class__ != other_line_segment.__class__:
+            return False
+        return (self.point1 == other_line_segment.point1 and self.point2 == other_line_segment.point2) \
+            or (self.point1 == other_line_segment.point2 and self.point2 == other_line_segment.point1)
+                
     def to_dict(self):
         # improve the object structure ?
         dict_ = {}
@@ -2085,7 +2093,7 @@ class Polygon2D(Contour2D):
 
         # TODO: remove this?
         self.line_segments = self._LineSegments()
-
+        
         Contour2D.__init__(self, self.line_segments, name)
 
     def copy(self):
@@ -2245,59 +2253,131 @@ class Polygon2D(Contour2D):
                                 return True, line1, line2
 
         return False, None, None
-    def repair(self):
+    def repair_single_intersection(self):
         
-                  
-       
+        all_polygons=[]
+        polygon_1_points=[]
+        polygon_2_points=[]
         
-        points=self.points[:]
-        print(self.SelfIntersect()[0])
         
-        if self.SelfIntersect()[0] is False :
-              
-              return self 
+        lines=self.SelfIntersect()
+        
+        if not lines[0] :
+            all_polygons.append(self)
+                        
         else :
           
-              line1= self.SelfIntersect()[1]
-              line2=self.SelfIntersect()[2]
+            line1= lines[1]
+            line2=lines[2]
+            inter=line1.line_intersection(line2)
+            a=self.points.index(line1.point1)
+            b=self.points.index(line1.point2)
+            c=self.points.index(line2.point1)
+            d=self.points.index(line2.point2)
+            alpha=min(a,b)
+            beta=min(c,d)
+            gamma=max(a,b)
+            zeta=max(c,d)
+            w=sorted([alpha,beta])
+            x=sorted([gamma,zeta])
+            m= a==0 and b==len(self.points)-1
+            n= b==0 and a==len(self.points)-1
+            o= c==0 and d==len(self.points)-1
+            p= d==0 and c==len(self.points)-1
+           
             
-              index_1=points.index(line1.point1)
-              index_2=points.index(line1.point2)
-              index_3=points.index(line2.point1)
-              index_4=points.index(line2.point2)  
-              inter=line1.line_intersection(line2)
-              if index_1==index_3-1 or index_1==index_3+1 :
-                 points.insert(index_3,inter)
-                 points.remove(line1.point1)
-                 points.remove(line2.point1)
-                 
-                 
-              if index_2==index_3-1 or index_2==index_3+1:
-                  points.insert(index_3,inter)
-                  points.remove(line1.point2)
-                  points.remove(line2.point1)
-                 
+            # if w[1]!=w[0]+1 :
+               
+               
+            if m or n or o or p :
                   
-              if index_1==index_4-1 or index_1==index_4+1:
-                  points.insert(index_4,inter)
-                  points.remove(line1.point1)
-                  points.remove(line2.point2)
-                  
-              if index_2==index_4-1 or index_2==index_4+1:
-                  points.insert(index_4,inter)
-                  points.remove(line1.point2)
-                  points.remove(line2.point2)
-                  
+               
+               
+                # polygon_1_points=[self.points[x[0]]]+[inter]+[self.points[x[1]]]
+                # polygon_2_points=self.points[w[0]:w[1]+1]+[inter] 
+                polygon_1_points=[inter]+self.points[w[1]+1:]
+                polygon_2_points=self.points[w[0]:w[1]+1]+[inter]
               
-              new_polygon=Polygon2D(points)
-              
-              return new_polygon.repair()
-              
-       
-            
-        
-        
+            else :
              
+                polygon_1_points=self.points[:w[0]+1]+[inter]+self.points[w[1]+1:]
+                polygon_2_points=self.points[w[0]+1:w[1]+1]+[inter]
+                
+            # else :
+            #     print('zob')
+            #     print(a)
+            #     print(b)
+            #     print(c)
+            #     print(d)
+              
+            #     polygon_1_points=[inter]+self.points[w[1]+1:]
+            #     polygon_2_points=self.points[w[0]:w[1]+1]+[inter]
+               
+            
+     
+            
+            new_polygon_1=Polygon2D(polygon_1_points)
+            new_polygon_2=Polygon2D(polygon_2_points)
+            # new_polygon_1.MPLPlot()
+            # new_polygon_2.MPLPlot()
+            all_polygons.append(new_polygon_1)
+            all_polygons.append(new_polygon_2)
+      
+        return all_polygons               
+                               
+        
+    def repair_intersections(self,all_polygons:List['Polygon2D']):
+        reapaired_intersection=self.repair_single_intersection()
+        
+     
+       
+        
+        if len(reapaired_intersection)>1:
+            polygon_1=reapaired_intersection[0]
+            polygon_2=reapaired_intersection[1]
+            lines_1=polygon_1.SelfIntersect()
+            lines_2=polygon_2.SelfIntersect()
+            
+            if not lines_1[0] and not lines_2[0] :
+              
+                all_polygons.extend([polygon_1,polygon_2])
+                return all_polygons
+            if not lines_1[0] and lines_2[0]  :
+                
+                 all_polygons.append(polygon_1)
+                 return  polygon_2.repair_intersections(all_polygons)
+            if  lines_1[0] and not lines_2[0]:
+              
+                all_polygons.append(polygon_2)
+                return  polygon_1.repair_intersections(all_polygons)
+            if  lines_1[0] and lines_2[0]:
+                
+                return polygon_1.repair_intersections(all_polygons),polygon_2.repair_intersections(all_polygons)
+                
+        else :
+            polygon=reapaired_intersection[0]
+            lines =polygon.SelfIntersect()
+            if not lines[0]  :
+               all_polygons.append(polygon)
+               return all_polygons
+          
+               
+                    
+           
+             
+    def select_reapaired_polygon(self,all_polygons:List['Polygon2D']):
+        reapaired_polygons=self.repair_intersections(all_polygons) 
+        good_polygons=[]
+      
+        for polygon in reapaired_polygons:
+            if len(polygon.points)>3:
+                good_polygons.append(polygon)           
+        A=[]
+        for polygon in good_polygons:
+           A.append(polygon.Area())
+           
+        index=A.index(max(A))
+        return good_polygons[index]
        
     def  is_intersecting(self,line:LineSegment2D):
          intersection=[]
@@ -2353,7 +2433,7 @@ class Polygon2D(Contour2D):
         vectors.append(v1)
         vectors.append(v2)
 
-
+        correct_points=[]
         offset_vectors = []
         new_radii = {}
         offset_points = []
@@ -2382,9 +2462,11 @@ class Polygon2D(Contour2D):
             alpha = math.acos(normal_vector1.Dot(normal_vector2))
 
             offset_point = self.points[i] + offset/math.cos(alpha/2)*offset_vectors[i]
+         
+           
             offset_points.append(offset_point)
 
-
+      
         
 
         return self.__class__(offset_points)
@@ -3020,6 +3102,13 @@ class Triangle2D(Polygon2D):
                                   
                                           all_triangles.append(new_triangle_1)
                                           all_aspect_ratios.append(new_triangle_1.aspect_ratio())
+                                if interior_segment_nodes[interior_segments[k]][v-1]!=interior_segment_nodes[interior_segments[k+1]][v-1]:
+                                    print('blyat')
+                                    new_triangle_2=Triangle2D([interior_segment_nodes[interior_segments[k]][j+1],interior_segment_nodes[interior_segments[k+1]][j],interior_segment_nodes[interior_segments[k+1]][j+1]])
+                                    if new_triangle_2 not in all_triangles:
+                                  
+                                          all_triangles.append(new_triangle_2)
+                                          all_aspect_ratios.append(new_triangle_2.aspect_ratio())
                             # if  interior_segment_nodes[interior_segments[k]][v-1]!=interior_segment_nodes[interior_segments[k+1]][v-1]:        
                             for  j in range(v-1,u-1):
                                     
@@ -3050,18 +3139,27 @@ class Triangle2D(Polygon2D):
                            
                         
             if (u<v and v>2):
-                   
+                      print('ok')
                       if interior_segment_nodes[interior_segments[k]][0]!=interior_segment_nodes[interior_segments[k+1]][0]:
+                                
                                 for j in range(u-1):
-                       
+                                    
                                
-                                    new_triangle_1=Triangle2D([interior_segment_nodes[interior_segments[k+1]][j+1],interior_segment_nodes[interior_segments[k]][j+1],interior_segment_nodes[interior_segments[k]][j]])
+                                    new_triangle_1=Triangle2D([interior_segment_nodes[interior_segments[k+1]][j+1],interior_segment_nodes[interior_segments[k]][j],interior_segment_nodes[interior_segments[k+1]][j+1]])
                      
                            
                                     if new_triangle_1 not in all_triangles:
                                             all_triangles.append(new_triangle_1)
                                             all_aspect_ratios.append(new_triangle_1.aspect_ratio())
-                                    
+                                    if interior_segment_nodes[interior_segments[k+1]][u-1]!=interior_segment_nodes[interior_segments[k]][u-1]:
+                                       print('blyat2')
+                                       new_triangle_2=Triangle2D([interior_segment_nodes[interior_segments[k+1]][j+1],interior_segment_nodes[interior_segments[k]][j],interior_segment_nodes[interior_segments[k]][j+1]])
+                     
+                           
+                                    if new_triangle_2 not in all_triangles:
+                                            all_triangles.append(new_triangle_2)
+                                            all_aspect_ratios.append(new_triangle_2.aspect_ratio()) 
+                                        
                                     for j in range(u-1,v-1):
                                         if interior_segment_nodes[interior_segments[k+1]][j+1]!=interior_segment_nodes[interior_segments[k]][u-1]:
                                             new_triangle_2=Triangle2D([interior_segment_nodes[interior_segments[k+1]][j],interior_segment_nodes[interior_segments[k]][u-1],interior_segment_nodes[interior_segments[k+1]][j+1]])
@@ -3089,7 +3187,7 @@ class Triangle2D(Polygon2D):
               if interior_segment_nodes[interior_segments[k]][0]!=interior_segment_nodes[interior_segments[k+1]][0]:
                   new_triangle_1=Triangle2D([interior_segment_nodes[interior_segments[k+1]][0],interior_segment_nodes[interior_segments[k]][0],interior_segment_nodes[interior_segments[k]][1]])
                   if new_triangle_1 not in all_triangles:
-                                   
+                                      
                                           all_triangles.append(new_triangle_1)
                                           all_aspect_ratios.append(new_triangle_1.aspect_ratio())
                   if interior_segment_nodes[interior_segments[k]][1]!=interior_segment_nodes[interior_segments[k+1]][1] :                       
