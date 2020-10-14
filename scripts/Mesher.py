@@ -44,7 +44,7 @@ rotor_internal=[rotor_internal_contour]
 # all_triangle_elements=rotor.mesh()
 
 
-offset=rotor_external_contour.polygon.Offset(-0.03)
+offset=rotor_external_contour.polygon.Offset(-0.025)
 offset.MPLPlot()
 polygon=offset.select_reapaired_polygon([])
 polygon.MPLPlot()
@@ -59,7 +59,8 @@ rotor.mesh(6)
         
   
 ax=rotor_external_contour.MPLPlot()
-offset=rotor_external_contour.polygon.Offset(-0.)
+offset=rotor_external_contour.polygon.Offset(-0.01)
+print(len(offset.points))
 offset.MPLPlot(ax=ax)
 # repairs=offset.repair_single_intersection()
 # # for polygon in repairs:

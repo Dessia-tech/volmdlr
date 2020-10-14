@@ -3031,7 +3031,9 @@ class Triangle2D(Polygon2D):
                 interior_segment=LineSegment2D(nodes_0[k+1],nodes_1[k])
               
                 interior_segments.append(interior_segment)
-               
+            for k in range(len(nodes_1),len(nodes_0)-1):
+                interior_segment=LineSegment2D(nodes_0[k],nodes_1[len(nodes_1)-2])
+                interior_segments.append(interior_segment)  
         if len(nodes_1)>len(nodes_0):
            
           
@@ -3040,7 +3042,10 @@ class Triangle2D(Polygon2D):
                 interior_segment=LineSegment2D(nodes_1[k+1],nodes_0[k])
     
                 interior_segments.append(interior_segment)
-             
+            for k in range(len(nodes_0),len(nodes_1)-1):
+                interior_segment=LineSegment2D(nodes_1[k],nodes_0[len(nodes_0)-2])
+                interior_segments.append(interior_segment) 
+           
                
         if len(nodes_0)==len(nodes_1):
            
@@ -3103,7 +3108,7 @@ class Triangle2D(Polygon2D):
                                           all_triangles.append(new_triangle_1)
                                           all_aspect_ratios.append(new_triangle_1.aspect_ratio())
                                 if interior_segment_nodes[interior_segments[k]][v-1]!=interior_segment_nodes[interior_segments[k+1]][v-1]:
-                                    print('blyat')
+                                   
                                     new_triangle_2=Triangle2D([interior_segment_nodes[interior_segments[k]][j+1],interior_segment_nodes[interior_segments[k+1]][j],interior_segment_nodes[interior_segments[k+1]][j+1]])
                                     if new_triangle_2 not in all_triangles:
                                   
@@ -3139,7 +3144,7 @@ class Triangle2D(Polygon2D):
                            
                         
             if (u<v and v>2):
-                      print('ok')
+                      
                       if interior_segment_nodes[interior_segments[k]][0]!=interior_segment_nodes[interior_segments[k+1]][0]:
                                 
                                 for j in range(u-1):
@@ -3152,7 +3157,7 @@ class Triangle2D(Polygon2D):
                                             all_triangles.append(new_triangle_1)
                                             all_aspect_ratios.append(new_triangle_1.aspect_ratio())
                                     if interior_segment_nodes[interior_segments[k+1]][u-1]!=interior_segment_nodes[interior_segments[k]][u-1]:
-                                       print('blyat2')
+                                       
                                        new_triangle_2=Triangle2D([interior_segment_nodes[interior_segments[k+1]][j+1],interior_segment_nodes[interior_segments[k]][j],interior_segment_nodes[interior_segments[k]][j+1]])
                      
                            

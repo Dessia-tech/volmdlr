@@ -914,15 +914,16 @@ class Mesher(DessiaObject):
        
         segment_to_nodes={}
         polygon_offsets=[]
+        polygon_offsets+=[polygon]
         max_length=polygon.max_length()
         offset_triangles=[]
         repair = False
-        k=0
+        k=1
         while repair is False :
      
-            new_polygon=polygon.Offset(-k*max_length/4)
+            new_polygon=polygon.Offset(-k*max_length/10)
             if not new_polygon.SelfIntersect()[0] :
-                polygon_offsets.append(new_polygon)
+                # polygon_offsets.append(new_polygon)
                 k=k+1
             if new_polygon.SelfIntersect()[0] :
               
@@ -970,11 +971,11 @@ class Mesher(DessiaObject):
      
         return offset_triangles                   
     def mesh_in_between(self,in_polygon:vm.Polygon2D,out_polygon:vm.Polygon2D):
-        
+        # ax=plt.subplot()
         segment_to_nodes={}
         closest_segment={}
         all_triangles=[]
-    
+        
         for segment in in_polygon.line_segments:
             segment_to_nodes[segment]=segment.discretise(self.nodes_len,None)
         for segment in out_polygon.line_segments:
@@ -993,6 +994,7 @@ class Mesher(DessiaObject):
             closest_segment[in_segment]=near_segment
             for point in in_segment.points:
                 projection=near_segment.PointProjection2(point)
+                # projection.MPLPlot(ax=ax,color='g')
                 segment_to_nodes[near_segment].insert(-1,projection)
                
      
@@ -1039,7 +1041,8 @@ class Mesher(DessiaObject):
                
                
         all_triangles+=self.earclip(in_polygon)
-     
+        # for triangle in all_triangles:
+        #     triangle.MPLPlot(ax=ax)
         return all_triangles
     
     
@@ -1115,7 +1118,7 @@ class Mesher(DessiaObject):
         all_aspect_ratios=[]
         
         # for triangle in all_triangles:
-        #      triangle.MPLPlot(ax=ax)
+        #       triangle.MPLPlot(ax=ax)
 
         for triangle in triangles:
             all_segments= all_segments.union(triangle.line_segments)
@@ -1124,7 +1127,7 @@ class Mesher(DessiaObject):
        
                     
         for segment in all_segments:
-            segment.MPLPlot(ax=ax,color='g')
+            # segment.MPLPlot(ax=ax,color='g')
             segment_to_nodes[segment]=segment.discretise(self.nodes_len,ax)
            
           
