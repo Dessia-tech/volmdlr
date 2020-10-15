@@ -2061,9 +2061,9 @@ class Circle2D(Contour2D):
               # nodes.insert(len(nodes),self.end)
               # nodes.insert(len(nodes),self.center)    
               circle_to_nodes[self]=nodes
-             
-              for point in circle_to_nodes[self]:
-                  point.MPLPlot(ax=ax,color='r')
+              if ax is not None :
+                  for point in circle_to_nodes[self]:
+                      point.MPLPlot(ax=ax,color='r')
                
             
         return circle_to_nodes[self]

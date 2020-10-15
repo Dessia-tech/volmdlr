@@ -38,49 +38,53 @@ stator_external_contour = vm.Contour2D.dict_to_object({'name': '', 'package_vers
 # print(list(combinations(range(3),3)))
 rotor_contour=rotor_magnet_contours+[rotor_external_contour]
 rotor_magnet=[rotor_magnet_contours[0]]
+all_rotor=[rotor_internal_contour,rotor_external_contour]
 rotor_external=[rotor_external_contour]
 rotor_internal=[rotor_internal_contour]
 
 # all_triangle_elements=rotor.mesh()
 
 
-offset=rotor_external_contour.polygon.Offset(-0.025)
-offset.MPLPlot()
-polygon=offset.select_reapaired_polygon([])
-polygon.MPLPlot()
+# offset=rotor_external_contour.polygon.Offset(-0.025)
+# offset.MPLPlot()
+# polygon=offset.select_reapaired_polygon([])
+# polygon.MPLPlot()
 ax=rotor_external_contour.MPLPlot()
 # rotor=vmmesh.Mesher(rotor_magnet,[],40)
+all_rotor=[rotor_internal_contour,rotor_external_contour]
+rotor_external=[rotor_external_contour]
 rotor=vmmesh.Mesher(rotor_external,[],40)
-rotor.mesh(6)
-
-
+all_triangle_elements=rotor.mesh(None)
+element_group=vmmesh.ElementsGroup(all_triangle_elements,'element_group')
+mesh=vmmesh.Mesh([element_group])
+mesh.plot()
 
 
         
   
-ax=rotor_external_contour.MPLPlot()
-offset=rotor_external_contour.polygon.Offset(-0.01)
-print(len(offset.points))
-offset.MPLPlot(ax=ax)
-# repairs=offset.repair_single_intersection()
-# # for polygon in repairs:
-# #     polygon.MPLPlot()
-# polygons_1= repairs[0].repair_single_intersection()
+# ax=rotor_external_contour.MPLPlot()
+offset=rotor_external_contour.polygon.Offset(-0.005)
+offset.MPLPlot()
+# offset.MPLPlot(ax=ax)
+# # repairs=offset.repair_single_intersection()
+# # # for polygon in repairs:
+# # #     polygon.MPLPlot()
+# # polygons_1= repairs[0].repair_single_intersection()
 
-# # for polygon in polygons_1:
-# #     polygon.MPLPlot()
+# # # for polygon in polygons_1:
+# # #     polygon.MPLPlot()
 
-# polygons_2= polygons_1[1].repair_single_intersection()
-# # for polygon in polygons_2:
-# #     polygon.MPLPlot()
-# polygons_3= polygons_2[0].repair_single_intersection()
+# # polygons_2= polygons_1[1].repair_single_intersection()
+# # # for polygon in polygons_2:
+# # #     polygon.MPLPlot()
+# # polygons_3= polygons_2[0].repair_single_intersection()
 
-# # for polygon in polygons_3:
-# #     polygon.MPLPlot()
-repairs = offset.repair_intersections([])
-print(len(repairs))
-for polygon in repairs :
-    polygon.MPLPlot()
+# # # for polygon in polygons_3:
+# # #     polygon.MPLPlot()
+# repairs = offset.repair_intersections([])
+# print(len(repairs))
+# for polygon in repairs :
+#     polygon.MPLPlot()
 
  
 
