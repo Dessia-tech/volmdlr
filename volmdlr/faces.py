@@ -1022,16 +1022,13 @@ class RuledSurface3D(Surface3D):
     def point3d_to_2d(self, point3d):
         raise NotImplementedError
 
-    def rectangular_cut(self, theta1:float, theta2:float,
-                        z1:float, z2:float, name:str=''):
+    def rectangular_cut(self, x1: float, x2: float,
+                        y1: float, y2: float, name: str=''):
 
-        if theta1 == theta2:
-            theta2 += volmdlr.volmdlr.TWO_PI
-
-        p1 = volmdlr.Point2D(theta1, z1)
-        p2 = volmdlr.Point2D(theta2, z1)
-        p3 = volmdlr.Point2D(theta2, z2)
-        p4 = volmdlr.Point2D(theta1, z2)
+        p1 = volmdlr.Point2D(x1, y1)
+        p2 = volmdlr.Point2D(x2, y1)
+        p3 = volmdlr.Point2D(x2, y2)
+        p4 = volmdlr.Point2D(x1, y2)
         outer_contour = volmdlr.wires.Polygon2D([p1, p2, p3, p4])
         surface2d = Surface2D(outer_contour, [])
         return volmdlr.faces.RuledFace3D(self, surface2d, name)
