@@ -991,6 +991,51 @@ class SphericalSurface3D(Surface3D):
         theta = volmdlr.sin_cos_angle(u1, u2)
         return volmdlr.volmdlr.Point2D((theta, phi))
 
+class RuledSurface3D(Surface3D):
+    # face_class = CylindricalFace3D
+    """
+    :param frame: frame.w is axis, frame.u is theta=0 frame.v theta=pi/2
+    :type frame: volmdlr.Frame3D
+    :param radius: Cylinder's radius
+    :type radius: float
+    """
+
+    def __init__(self,
+                 wire1:volmdlr.wires.Wire3D,
+                 wire2:volmdlr.wires.Wire3D,
+                 name=''):
+
+        self.wire1 = wire1
+        self.wire2 = wire2
+        self.length1 = wire1.length()
+        self.length2 = wire2.length()
+        self.name = name
+
+    def point2d_to_3d(self, point2d):
+        x, y = point2d
+        point1 = self.wire1.point_at_abscissa(x*self.length1)
+        point2 = self.wire2.point_at_abscissa(x*self.length2)
+        joining_line = volmdlr.edges.LineSegment3D(point1, point2)
+        point = joining_line.point_at_abscissa(y*joining_line.length())
+        return point
+
+    def point3d_to_2d(self, point3d):
+        raise NotImplementedError
+
+    def rectangular_cut(self, theta1:float, theta2:float,
+                        z1:float, z2:float, name:str=''):
+
+        if theta1 == theta2:
+            theta2 += volmdlr.volmdlr.TWO_PI
+
+        p1 = volmdlr.Point2D(theta1, z1)
+        p2 = volmdlr.Point2D(theta2, z1)
+        p3 = volmdlr.Point2D(theta2, z2)
+        p4 = volmdlr.Point2D(theta1, z2)
+        outer_contour = volmdlr.wires.Polygon2D([p1, p2, p3, p4])
+        surface2d = Surface2D(outer_contour, [])
+        return volmdlr.faces.RuledFace3D(self, surface2d, name)
+
 class BSplineSurface3D(Surface3D):
     def __init__(self, degree_u, degree_v, control_points, nb_u, nb_v,
                  u_multiplicities, v_multiplicities, u_knots, v_knots,
@@ -1155,7 +1200,7 @@ class BSplineSurface3D(Surface3D):
                    u_multiplicities, v_multiplicities, u_knots, v_knots,
                    weight_data, name)
 
-class Face3D():
+class Face3D(volmdlr.core.Primitive3D):
     min_x_density=1
     min_y_density=1
 
@@ -1166,7 +1211,7 @@ class Face3D():
 
         self.bounding_box = self._bounding_box()
 
-        # volmdlr.Primitive3D.__init__(self, name=name)
+        volmdlr.core.Primitive3D.__init__(self, name=name)
 
     @property
     def outer_contour3d(self):
@@ -3184,6 +3229,22 @@ class SphericalFace3D(Face3D):
             # raise NotImplementedError
 
         return cls(contours2d, sphericalsurface3d, points, name=name)
+
+class RuledFace3D(Face3D):
+    """
+
+    """
+    min_x_density = 50
+    min_y_density = 1
+
+    def __init__(self,
+                 ruledsurface3d: RuledSurface3D,
+                 surface2d: Surface2D,
+                 name: str = ''):
+
+        Face3D.__init__(self, surface3d=ruledsurface3d,
+                        surface2d=surface2d,
+                        name=name)
 
 
 class BSplineFace3D(Face3D):

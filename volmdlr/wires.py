@@ -1288,7 +1288,7 @@ class Circle3D(Contour3D):
         return tessellation_points_3D
 
     def length(self):
-        return TWO_PI * self.radius
+        return volmdlr.TWO_PI * self.radius
 
     def FreeCADExport(self, name, ndigits=3):
         xc, yc, zc = round(1000 * self.center, ndigits)

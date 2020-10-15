@@ -1134,8 +1134,8 @@ class Line3D(Line):
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def point_at_abscissa(self, curvilinear_abscissa):
-        return self.points[0] + (
-                self.point2 - self.points[0]) * curvilinear_abscissa
+        return self.point1 + (
+                self.point2 - self.point1) * curvilinear_abscissa
 
     def plot(self, ax=None, color='k', dashed=True):
         if ax is None:
@@ -1145,9 +1145,9 @@ class Line3D(Line):
             fig = ax.figure
 
         # Line segment
-        x = [p.vector[0] for p in self.points]
-        y = [p.vector[1] for p in self.points]
-        z = [p.vector[2] for p in self.points]
+        x = [self.point1.x, self.point2.x]
+        y = [self.point1.y, self.point2.y]
+        z = [self.point1.z, self.point2.z]
         ax.plot(x, y, z, 'ok')
 
         # Drawing 3 times length of segment on each side
