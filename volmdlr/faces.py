@@ -1513,7 +1513,7 @@ class PlaneFace3D(Face3D):
     @classmethod
     def from_contours3d(cls,
                         outer_contour3d: volmdlr.wires.Contour3D,
-                        inner_contours3d: List[volmdlr.wires.Contour3D],
+                        inner_contours3d: List[volmdlr.wires.Contour3D]=None,
                         name: str = ''):
         """
         :param outer_contour3d: The face's contour3D
@@ -1534,11 +1534,12 @@ class PlaneFace3D(Face3D):
         outer_contour2d = plane3d.contour3d_to_2d(outer_contour3d)
 
         inner_contours2d = []
-        for contour in inner_contours3d:
-            inner_contours2d.append(contour.to_2d(plane3d.frame.origin,
-                                                  plane3d.frame.u,
-                                                  plane3d.frame.v,
-                                                  ))
+        if inner_contours3d is not None:
+            for contour in inner_contours3d:
+                inner_contours2d.append(contour.to_2d(plane3d.frame.origin,
+                                                      plane3d.frame.u,
+                                                      plane3d.frame.v,
+                                                      ))
 
         return cls(plane3d=plane3d,
                    surface2d=Surface2D(outer_contour=outer_contour2d,

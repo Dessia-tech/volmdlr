@@ -1472,7 +1472,7 @@ class LineSegment3D(LineSegment):
                 self.bounding_box = self._bounding_box()
 
     def copy(self):
-        return LineSegment3D(*[p.copy() for p in self.points])
+        return LineSegment3D(self.start.copy(), self.end.copy())
 
     def plot(self, ax=None):
         if ax is None:
