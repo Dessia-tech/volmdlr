@@ -16,6 +16,7 @@ import dessia_common as dc
 import volmdlr.core
 # import volmdlr.primitives3D
 
+
 class Edge(dc.DessiaObject):
     def __init__(self, start, end, name=''):
         self.start = start
