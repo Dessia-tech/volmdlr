@@ -114,12 +114,12 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
     _generic_eq = True
     
     def __init__(self, points, radius, adapt_radius=False, name=''):
-        primitives = RoundedLineSegments.__init__(self, points, radius,
-                                                  volmdlr.LineSegment3D,
-                                                  volmdlr.Arc3D,
-                                                  closed=True,
-                                                  adapt_radius=adapt_radius,
-                                                  name='')
+        primitives = volmdlr.primitives.RoundedLineSegments(self, points, radius,
+                                                            volmdlr.LineSegment3D,
+                                                            volmdlr.Arc3D,
+                                                            closed=True,
+                                                            adapt_radius=adapt_radius,
+                                                            name='')
 
         volmdlr.Contour3D.__init__(self, primitives, name=name)
 
