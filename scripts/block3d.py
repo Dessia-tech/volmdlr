@@ -8,23 +8,6 @@ Created on Wed Sep 11 23:39:42 2020
 import math
 import volmdlr as vm
 import volmdlr.primitives3d as primitives3d
-import matplotlib.pyplot as plt
-import layout_3d as l3d
-import layout_3d.piping as piping
-import layout_3d.optimization.layout_3d as l3d_opt
-import layout_3d.optimization.piping as piping_opt
-import plotly.graph_objects as go
-
-# import volmdlr as vm
-import mechanical_components.optimization.wires_protected as wires_opt
-from dessia_api_client import Client
-from dessia_common import workflow as wf
-import dessia_common as dc
-
-from random import random
-from itertools import product
-
-import volmdlr.primitives3d as primitives3d
 
 bx0 = primitives3d.Block(
     vm.Frame3D(vm.Point3D(0, 0, 0), vm.Vector3D(0.3, 0, 0), vm.Vector3D(0, 0.3, 0), vm.Vector3D(0, 0, 0.3)),

@@ -1217,6 +1217,14 @@ class Face3D(volmdlr.core.Primitive3D):
 
         volmdlr.core.Primitive3D.__init__(self, name=name)
 
+    def __hash__(self):
+        return hash(self.surface3d) + hash(self.surface2d)
+
+    def __eq__(self, other_):
+        equal = (self.surface3d == other_.surface3d
+                 and self.surface2d == other_.surface2d)
+        return equal
+
     @property
     def outer_contour3d(self):
         """
@@ -1486,16 +1494,6 @@ class PlaneFace3D(Face3D):
                         surface3d=plane3d,
                         surface2d=surface2d,
                         name=name)
-
-    def __hash__(self):
-        return hash(self.surface) + sum([hash(p) for p in self.points])
-
-    def __eq__(self, other_):
-        equal = (self.surface3d == other_.plane
-                 and self.polygon2D == other_.polygon2D)
-        for contour, other_contour in zip(self.contours, other_.contours):
-            equal = (equal and contour == other_contour)
-        return equal
 
     @classmethod
     def _repair_points_and_polygon2d(cls, points, plane):
