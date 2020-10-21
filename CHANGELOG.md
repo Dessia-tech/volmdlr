@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- WIP : read STEP files
+
+### Changed
+- MPLPlot now returns only ax instead of fig, ax 
+
+## [v0.1.11]
 
 ### Added 
 - Calculate the distance between LineSegment3D/LS3D, Arc3D/LS3D, Arc3D/Arc3D and between CylindricalFace3D too.
@@ -15,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - contours2d.tessel_points which gives all points of a contour2d, and .points the end points of primitives.
 - Implementation of ConicalFace3D in Core and RevolvedProfile.
 - Implementation of SphericalFace3D in Core.
+- BSplineFace3D works.
 
 ### Changed
 - cut_contours in Face3D which take all points from a Contour2D, not one side like before. Furthermore, it is light and quick.

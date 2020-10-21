@@ -24,7 +24,7 @@ s = vm.Point2D.random(-1,1,-1,1)
 
 
 a = vm.Arc2D(s, i, e)
-fig, ax = a.MPLPlot()
+ax = a.MPLPlot()
 
 
 

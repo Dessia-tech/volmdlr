@@ -23,7 +23,7 @@ project = 'Volmdlr'
 copyright = '2018, DessIA Technologies'
 author = 'DessIA Technologies'
 
-
+import volmdlr
 import re
 from os.path import dirname, isdir, join
 from subprocess import CalledProcessError, check_output

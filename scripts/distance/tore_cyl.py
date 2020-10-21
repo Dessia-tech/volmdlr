@@ -35,8 +35,8 @@ plane1, plane2 = volmdlr.Plane3D.from_normal(c1, n1), volmdlr.Plane3D.from_norma
 
 frame1 = volmdlr.Frame3D(c1, plane1.vectors[0], plane1.vectors[1], n1) #Frame in the center of the Tore
 frame2 = volmdlr.Frame3D(c2, plane2.vectors[0], plane2.vectors[1], n2)
-toresurface1 = volmdlr.ToroidalSurface3D(frame1, R1*1000, r1*1000) #*1000 because torsurf3d /1000
-cylsurface2 = volmdlr.CylindricalSurface3D(frame2, r2*1000)
+toresurface1 = volmdlr.ToroidalSurface3D(frame1, R1, r1) 
+cylsurface2 = volmdlr.CylindricalSurface3D(frame2, r2)
 
 
 angle_min, angle_max = 0, 2*3.14*100
@@ -63,9 +63,9 @@ h2 = random.randrange(hmin, hmax, 5)/100 #Height of cylinder
 angle_cyl = random.randrange(angle_min, angle_max, 20)/100
 
 center2d2 = c2.To2D(c2, plane2.vectors[0], plane2.vectors[1])
-segbh2 = volmdlr.LineSegment2D(center2d2, center2d2 + volmdlr.Point2D((0,h2)) + volmdlr.Point2D((angle_cyl*r2/3,0))) #### Minus Pt2D because of Step adaptation
-circlestart2 = volmdlr.LineSegment2D(segbh2.points[1], segbh2.points[1]+volmdlr.Point2D((angle_cyl*r2,0)) - volmdlr.Point2D((0,h2/10))) #You can change 2*pi by an other angle
-seghb2 = volmdlr.LineSegment2D(circlestart2.points[1],circlestart2.points[1]-segbh2.points[1] + volmdlr.Point2D((angle_cyl*r2/3,0)))
+segbh2 = volmdlr.LineSegment2D(center2d2, center2d2 + volmdlr.Point2D((0,h2)) + volmdlr.Point2D((angle_cyl/3,0))) #### Minus Pt2D because of Step adaptation
+circlestart2 = volmdlr.LineSegment2D(segbh2.points[1], segbh2.points[1]+volmdlr.Point2D((angle_cyl,0)) - volmdlr.Point2D((0,h2/10))) #You can change 2*pi by an other angle
+seghb2 = volmdlr.LineSegment2D(circlestart2.points[1],circlestart2.points[1]-segbh2.points[1] + volmdlr.Point2D((angle_cyl/3,0)))
 circlend2 = volmdlr.LineSegment2D(seghb2.points[1],segbh2.points[0])
 edges2 = [segbh2, circlestart2, seghb2, circlend2]
 points2 = edges2[0].points 

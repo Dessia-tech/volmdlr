@@ -25,7 +25,7 @@ e = vm.Point3D.random(-1,1,-1,1,-1,1)
 s = vm.Point3D.random(-1,1,-1,1,-1,1)
 
 a = vm.Arc3D(s, i, e)
-fig, ax = a.MPLPlot()
+ax = a.MPLPlot()
 
 for p in a.tessellation_points():
     p.MPLPlot(ax=ax)
@@ -40,19 +40,11 @@ arc1 = vm.Arc3D(vm.Point3D([-0.030962035803739997, 0.0011626900994054661, -0.02]
                 vm.Point3D([-0.026119083, 0.0, -0.02]),
                 vm.Vector3D([0.0, 0.0, 0.001]))
 
-fig, ax = arc1.MPLPlot()
+ax = arc1.MPLPlot()
 for p in arc1.tessellation_points():
     p.MPLPlot(ax=ax)
 
 
-# arc1 = vm.Arc3D(vm.Point3D([0, 0, 0]),
-#                 vm.Point3D([1, 0, 0]),
-#                 vm.Point3D([0, 0, 0]),
-#                 vm.Vector3D([0.0, 0.0, 1]))
-
-# fig, ax = arc1.MPLPlot()
-# for p in arc1.tessellation_points():
-    # p.MPLPlot(ax=ax)
 arc1.start.MPLPlot(ax=ax, color='r')
 arc1.end.MPLPlot(ax=ax, color='m')
 arc1.interior.MPLPlot(ax=ax, color='b')
