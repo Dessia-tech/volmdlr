@@ -1731,12 +1731,13 @@ class LineSegment3D(LineSegment):
                 inner_contours3d=inner_contours3d)
 
         elif d1 != d2:
+            print(d1, d2)
             # Conical
             v = axis.cross(u)
             w = axis.cross(v)
             u1 = self.direction_vector()
             semi_angle = math.asin(u1.cross(axis).norm())
-            surface = volmdlr.surfaces.ConicalSurface3D(volmdlr.Frame3D(p1_proj, axis, v, w),
+            surface = volmdlr.faces.ConicalSurface3D(volmdlr.Frame3D(p1_proj, axis, v, w),
                                        semi_angle)
             return surface.rectangular_cut(0, self.length(), 0, angle)
         else:

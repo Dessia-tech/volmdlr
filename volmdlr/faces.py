@@ -912,10 +912,10 @@ class ConicalSurface3D(Surface3D):
 
     def point2d_to_3d(self, point):
         theta, z = point
-        new_point = volmdlr.Point3D((z * self.semi_angle * math.cos(theta),
+        new_point = volmdlr.Point3D(z * self.semi_angle * math.cos(theta),
                              z * self.semi_angle * math.sin(theta),
                              z,
-                             ))
+                             )
         return self.frame.old_coordinates(new_point)
 
     def point3d_to_2d(self, point):
@@ -932,12 +932,12 @@ class ConicalSurface3D(Surface3D):
         if theta1 == theta2:
             theta2 += volmdlr.TWO_PI
 
-        p1 = volmdlr.volmdlr.Point2D((theta1, z1))
-        p2 = volmdlr.volmdlr.Point2D((theta2, z1))
-        p3 = volmdlr.volmdlr.Point2D((theta2, z2))
-        p4 = volmdlr.volmdlr.Point2D((theta1, z2))
-        outer_contour = volmdlr.Polygon2D([p1, p2, p3, p4])
-        return ConicalFace3D(self, outer_contour, [], name)
+        p1 = volmdlr.Point2D(theta1, z1)
+        p2 = volmdlr.Point2D(theta2, z1)
+        p3 = volmdlr.Point2D(theta2, z2)
+        p4 = volmdlr.Point2D(theta1, z2)
+        outer_contour = volmdlr.wires.Polygon2D([p1, p2, p3, p4])
+        return ConicalFace3D(self, Surface2D(outer_contour, []), name)
 
 
 class SphericalSurface3D(Surface3D):
@@ -3080,14 +3080,12 @@ class ConicalFace3D(Face3D):
     min_y_density = 1
 
     def __init__(self, conicalsurface3d: ConicalSurface3D,
-                 outer_contour2d: volmdlr.wires.Contour2D,
-                 inner_contours2d: List[volmdlr.wires.Contour2D],
+                 surface2d: Surface2D,
                  name: str = ''):
 
         Face3D.__init__(self,
-                        surface=conicalsurface3d,
-                        outer_contour2d=outer_contour2d,
-                        inner_contours2d=inner_contours2d,
+                        surface3d=conicalsurface3d,
+                        surface2d=surface2d,
                         name=name)
 
     def create_triangle(self, all_contours_points, part):
