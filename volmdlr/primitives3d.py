@@ -213,7 +213,7 @@ class Block(volmdlr.shells.Shell3D):
             return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
         else:
             self.frame.rotation(center, axis, angle, copy=False)
-            volmdlr.Shell3D.rotation(self, center, axis, angle, copy=False)
+            volmdlr.shells.Shell3D.rotation(self, center, axis, angle, copy=False)
 
     def translation(self, offset, copy=True):
         if copy:
@@ -221,7 +221,7 @@ class Block(volmdlr.shells.Shell3D):
             return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
         else:
             self.frame.translation(offset, copy=False)
-            volmdlr.Shell3D.translation(self, offset, copy=False)
+            volmdlr.shells.Shell3D.translation(self, offset, copy=False)
 
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -229,34 +229,34 @@ class Block(volmdlr.shells.Shell3D):
         """
         basis = frame.Basis()
         if side == 'new':
-            new_origin = frame.NewCoordinates(self.frame.origin)
-            new_u = basis.NewCoordinates(self.frame.u)
-            new_v = basis.NewCoordinates(self.frame.v)
-            new_w = basis.NewCoordinates(self.frame.w)
+            new_origin = frame.new_coordinates(self.frame.origin)
+            new_u = basis.new_coordinates(self.frame.u)
+            new_v = basis.new_coordinates(self.frame.v)
+            new_w = basis.new_coordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
             if copy:
                 return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
             else:
                 self.frame = new_frame
-                volmdlr.Shell3D.frame_mapping(self, frame, side, copy=False)
+                volmdlr.shells.Shell3D.frame_mapping(self, frame, side, copy=False)
 
         if side == 'old':
-            new_origin = frame.OldCoordinates(self.frame.origin)
-            new_u = basis.OldCoordinates(self.frame.u)
-            new_v = basis.OldCoordinates(self.frame.v)
-            new_w = basis.OldCoordinates(self.frame.w)
+            new_origin = frame.old_coordinates(self.frame.origin)
+            new_u = basis.old_coordinates(self.frame.u)
+            new_v = basis.old_coordinates(self.frame.v)
+            new_w = basis.old_coordinates(self.frame.w)
             new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
             if copy:
                 return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
             else:
                 self.frame = new_frame
-                volmdlr.Shell3D.frame_mapping(self, frame, side, copy=False)
+                volmdlr.shells.Shell3D.frame_mapping(self, frame, side, copy=False)
 
     def copy(self):
-        new_origin = self.frame.origin.Copy()
-        new_u = self.frame.u.Copy()
-        new_v = self.frame.v.Copy()
-        new_w = self.frame.w.Copy()
+        new_origin = self.frame.origin.copy()
+        new_u = self.frame.u.copy()
+        new_v = self.frame.v.copy()
+        new_w = self.frame.w.copy()
         new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
         return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
 
@@ -446,13 +446,13 @@ class ExtrudedProfile(volmdlr.shells.Shell3D):
         """
         basis = frame.Basis()
         if side == 'old':
-            extrusion_vector = basis.OldCoordinates(self.extrusion_vector)
-            x = basis.OldCoordinates(self.x)
-            y = basis.OldCoordinates(self.y)
+            extrusion_vector = basis.old_coordinates(self.extrusion_vector)
+            x = basis.old_coordinates(self.x)
+            y = basis.old_coordinates(self.y)
         elif side == 'new':
-            extrusion_vector = basis.NewCoordinates(self.extrusion_vector)
-            x = basis.NewCoordinates(self.x)
-            y = basis.NewCoordinates(self.y)
+            extrusion_vector = basis.new_coordinates(self.extrusion_vector)
+            x = basis.new_coordinates(self.x)
+            y = basis.new_coordinates(self.y)
         else:
             raise ValueError('side must be either old or new')
 
@@ -550,13 +550,13 @@ class RevolvedProfile(volmdlr.shells.Shell3D):
         """
         basis = frame.Basis()
         if side == 'old':
-            axis = basis.OldCoordinates(self.axis)
-            x = basis.OldCoordinates(self.x)
-            y = basis.OldCoordinates(self.y)
+            axis = basis.old_coordinates(self.axis)
+            x = basis.old_coordinates(self.x)
+            y = basis.old_coordinates(self.y)
         elif side == 'new':
-            axis = basis.NewCoordinates(self.axis)
-            x = basis.NewCoordinates(self.x)
-            y = basis.NewCoordinates(self.y)
+            axis = basis.new_coordinates(self.axis)
+            x = basis.new_coordinates(self.x)
+            y = basis.new_coordinates(self.y)
         else:
             raise ValueError('side must be either old or new')
 
@@ -691,9 +691,9 @@ class Cylinder(RevolvedProfile):
         """
         basis = frame.Basis()
         if side == 'old':
-            axis = basis.OldCoordinates(self.axis)
+            axis = basis.old_coordinates(self.axis)
         elif side == 'new':
-            axis = basis.NewCoordinates(self.axis)
+            axis = basis.new_coordinates(self.axis)
         else:
             raise ValueError('side must be either old or new')
 
@@ -796,9 +796,9 @@ class HollowCylinder(Cylinder):
         """
         basis = frame.Basis()
         if side == 'old':
-            axis = basis.OldCoordinates(self.axis)
+            axis = basis.old_coordinates(self.axis)
         elif side == 'new':
-            axis = basis.NewCoordinates(self.axis)
+            axis = basis.new_coordinates(self.axis)
         else:
             raise ValueError('side must be either old or new')
 

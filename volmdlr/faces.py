@@ -267,27 +267,34 @@ class Plane3D(Surface3D):
         side = 'old' or 'new'
         """
         if side == 'old':
-            new_origin = frame.old_coordinates(self.origin)
-            new_vector1 = frame.Basis().old_coordinates(self.vectors[0])
-            new_vector2 = frame.Basis().old_coordinates(self.vectors[1])
+            new_origin = frame.old_coordinates(self.frame.origin)
+            new_vector1 = frame.Basis().old_coordinates(self.frame.u)
+            new_vector2 = frame.Basis().old_coordinates(self.frame.v)
+            new_vector3 = frame.Basis().old_coordinates(self.frame.w)
             if copy:
-                return Plane3D(new_origin, new_vector1, new_vector2, self.name)
+                return Plane3D(volmdlr.Frame3D(new_origin, new_vector1, new_vector2, new_vector3), self.name)
             else:
-                self.origin = new_origin
-                self.vectors = [new_vector1, new_vector2]
-                self.normal = frame.Basis().old_coordinates(self.normal)
-                self.normal.normalize()
+                # self.origin = new_origin
+                # self.vectors = [new_vector1, new_vector2]
+                # self.normal = frame.Basis().old_coordinates(self.normal)
+                # self.normal.normalize()
+                self.frame.origin = new_origin
+                self.frame.u = new_vector1
+                self.frame.v = new_vector2
+                self.frame.w = new_vector3
+
         if side == 'new':
-            new_origin = frame.new_coordinates(self.origin)
-            new_vector1 = frame.Basis().new_coordinates(self.vectors[0])
-            new_vector2 = frame.Basis().new_coordinates(self.vectors[1])
+            new_origin = frame.new_coordinates(self.frame.origin)
+            new_vector1 = frame.Basis().new_coordinates(self.frame.u)
+            new_vector2 = frame.Basis().new_coordinates(self.frame.v)
+            new_vector3 = frame.Basis().new_coordinates(self.frame.w)
             if copy:
-                return Plane3D(new_origin, new_vector1, new_vector2, self.name)
+                return Plane3D(volmdlr.Frame3D(new_origin, new_vector1, new_vector2, new_vector3), self.name)
             else:
-                self.origin = new_origin
-                self.vectors = [new_vector1, new_vector2]
-                self.normal = frame.Basis().new_coordinates(self.normal)
-                self.normal.normalize()
+                self.frame.origin = new_origin
+                self.frame.u = new_vector1
+                self.frame.v = new_vector2
+                self.frame.w = new_vector3
 
     def copy(self):
         new_origin = self.origin.copy()
@@ -1446,11 +1453,11 @@ class Face3D(volmdlr.core.Primitive3D):
         side = 'old' or 'new'
         """
         if copy:
-            new_surface = self.surface.frame_mapping(frame, side, copy=True)
+            new_surface = self.surface3d.frame_mapping(frame, side, copy=True)
             return self.__class__(new_surface, self.outer_contour,
                                   self.inner_contours)
         else:
-            self.surface.frame_mapping(frame, side, copy=False)
+            self.surface3d.frame_mapping(frame, side, copy=False)
 
     def copy(self):
         new_contours = [contour.copy() for contour in self.contours]
@@ -1484,7 +1491,7 @@ class PlaneFace3D(Face3D):
         return hash(self.surface) + sum([hash(p) for p in self.points])
 
     def __eq__(self, other_):
-        equal = (self.surface == other_.plane
+        equal = (self.surface3d == other_.plane
                  and self.polygon2D == other_.polygon2D)
         for contour, other_contour in zip(self.contours, other_.contours):
             equal = (equal and contour == other_contour)

@@ -1464,9 +1464,9 @@ class Frame3D(Basis3D):
         M = self.InverseTransferMatrix()
         new_origin = M.vector_multiplication(self.origin)
         return Frame3D(new_origin,
-                       Vector3D((M.M11, M.M21, M.M31)),
-                       Vector3D((M.M12, M.M22, M.M32)),
-                       Vector3D((M.M13, M.M23, M.M33)))
+                       Vector3D(M.M11, M.M21, M.M31),
+                       Vector3D(M.M12, M.M22, M.M32),
+                       Vector3D(M.M13, M.M23, M.M33))
 
 
     def __add__(self, other_frame):
@@ -1476,9 +1476,9 @@ class Frame3D(Basis3D):
 
         M = P1 * other_frame.TransferMatrix()
         return Frame3D(new_origin,
-                       Vector3D((M.M11, M.M21, M.M31)),
-                       Vector3D((M.M12, M.M22, M.M32)),
-                       Vector3D((M.M13, M.M23, M.M33)))
+                       Vector3D(M.M11, M.M21, M.M31),
+                       Vector3D(M.M12, M.M22, M.M32),
+                       Vector3D(M.M13, M.M23, M.M33))
 
 
     def __sub__(self, other_frame):
@@ -1487,9 +1487,9 @@ class Frame3D(Basis3D):
         new_origin = P1inv.vector_multiplication(self.origin - other_frame.origin)
         M = P1inv * P2
         return Frame3D(new_origin,
-                       Vector3D((M.M11, M.M21, M.M31)),
-                       Vector3D((M.M12, M.M22, M.M32)),
-                       Vector3D((M.M13, M.M23, M.M33)))
+                       Vector3D(M.M11, M.M21, M.M31),
+                       Vector3D(M.M12, M.M22, M.M32),
+                       Vector3D(M.M13, M.M23, M.M33))
 
     def __round__(self, ndigits=6):
         return self.__class__(round(self.origin, ndigits),
@@ -1526,7 +1526,7 @@ class Frame3D(Basis3D):
         self.origin.translation(offset, copy=False)
 
     def copy(self):
-        return Frame3D(self.origin.Copy(), self.u.Copy(), self.v.Copy(), self.w.Copy())
+        return Frame3D(self.origin.copy(), self.u.copy(), self.v.copy(), self.w.copy())
 
     def plot2d(self, x=X3D, y=Y3D, ax=None, color='k'):
         if ax is None:

@@ -1233,18 +1233,18 @@ class Line3D(Line):
 
     def Intersection(self, line2):
 
-        x1 = self.point1.vector[0]
-        y1 = self.point1.vector[1]
-        z1 = self.point1.vector[2]
-        x2 = self.point2.vector[0]
-        y2 = self.point2.vector[1]
-        z2 = self.point2.vector[2]
-        x3 = line2.points[0].vector[0]
-        y3 = line2.points[0].vector[1]
-        z3 = line2.points[0].vector[2]
-        x4 = line2.point2.vector[0]
-        y4 = line2.point2.vector[1]
-        z4 = line2.point2.vector[2]
+        x1 = self.point1.x
+        y1 = self.point1.y
+        z1 = self.point1.z
+        x2 = self.point2.x
+        y2 = self.point2.y
+        z2 = self.point2.z
+        x3 = line2.point1.x
+        y3 = line2.point1.y
+        z3 = line2.point1.z
+        x4 = line2.point2.x
+        y4 = line2.point2.y
+        z4 = line2.point2.z
 
         if x3 == 0 and x4 == 0 and y4 - y3 == 0:
             x5, y5, z5 = x3, y3, z3
@@ -1300,8 +1300,8 @@ class Line3D(Line):
             res1, res2 = pair[0], pair[1]
             if math.isclose(res1, res2,
                             abs_tol=1e-7):  # if there is an intersection point
-                return volmdlr.Point3D([x1 + (x2 - x1) * t1, y1 + (y2 - y1) * t1,
-                                z1 + (z2 - z1) * t1])
+                return volmdlr.Point3D(x1 + (x2 - x1) * t1, y1 + (y2 - y1) * t1,
+                                z1 + (z2 - z1) * t1)
 
         return None
 
