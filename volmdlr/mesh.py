@@ -36,7 +36,8 @@ class LinearElement(DessiaObject):
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
     _generic_eq = True
-    def __init__(self, points:Tuple[vm.Point2D, vm.Point2D], interior_normal:vm.Vector2D):
+    def __init__(self, points:Tuple[vm.Point2D, vm.Point2D],
+                 interior_normal:vm.Vector2D):
         self.points = points
         self.interior_normal = interior_normal
         
@@ -48,8 +49,10 @@ class LinearElement(DessiaObject):
     def __eq__(self, other_linear_element):
         if self.__class__ != other_linear_element.__class__:
             return False
-        return (self.points[0] == other_linear_element.points[0] and self.points[1] == other_linear_element.points[1]) \
-            or (self.points[0] == other_linear_element.points[1] and self.points[1] == other_linear_element.points[0])
+        return (self.points[0] == other_linear_element.points[0]
+                and self.points[1] == other_linear_element.points[1]) \
+            or (self.points[0] == other_linear_element.points[1]
+                and self.points[1] == other_linear_element.points[0])
             
     def length(self):
         return self.points[1].point_distance(self.points[0])
@@ -61,10 +64,15 @@ class LinearElement(DessiaObject):
         if width is None:
             width=1
         if plot_points:
-            ax.plot([self.points[0][0], self.points[1][0]], [self.points[0][1], self.points[1][1]], color=color, marker='o', linewidth=width)
+            ax.plot([self.points[0][0], self.points[1][0]],
+                    [self.points[0][1], self.points[1][1]],
+                    color=color, marker='o', linewidth=width)
         else:
-            ax.plot([self.points[0][0], self.points[1][0]], [self.points[0][1], self.points[1][1]], color=color, linewidth=width)
+            ax.plot([self.points[0][0], self.points[1][0]],
+                    [self.points[0][1], self.points[1][1]],
+                    color=color, linewidth=width)
         return ax
+
 
 class TriangularElement(DessiaObject):
     _standalone_in_db = False
@@ -72,6 +80,7 @@ class TriangularElement(DessiaObject):
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
     _generic_eq = True
+
     def __init__(self, points:Tuple[vm.Point2D, vm.Point2D, vm.Point2D]):
         self.points = points
         
@@ -100,9 +109,12 @@ class TriangularElement(DessiaObject):
             normal2 = - normal2
         if normal3.Dot(vec1) < 0:
             normal3 = - normal3
-        linear_element_1 = LinearElement([self.points[0], self.points[1]], normal1)
-        linear_element_2 = LinearElement([self.points[1], self.points[2]], normal2)
-        linear_element_3 = LinearElement([self.points[2], self.points[0]], normal3)
+        linear_element_1 = LinearElement([self.points[0], self.points[1]],
+                                         normal1)
+        linear_element_2 = LinearElement([self.points[1], self.points[2]],
+                                         normal2)
+        linear_element_3 = LinearElement([self.points[2], self.points[0]],
+                                         normal3)
         return [linear_element_1, linear_element_2, linear_element_3]
     
     def _form_functions(self):
@@ -119,27 +131,34 @@ class TriangularElement(DessiaObject):
         x3 = inv_a.vector_multiplication(vm.Z3D)
        
         return x1, x2, x3
+
     def quadratic_form_functions(self):
-        a = [[1, self.points[0][0], self.points[0][1],self.points[0][0]**2,self.points[0][0]*self.points[0][1],self.points[0][1]**2],
-              [1, self.points[1][0], self.points[1][1],self.points[1][0]**2,self.points[1][0]*self.points[1][1],self.points[1][1]**2],
-              [1, self.points[2][0], self.points[2][1],self.points[2][0]**2,self.points[2][0]*self.points[2][1],self.points[2][1]**2],
-              [1, self.points[3][0], self.points[3][1],self.points[3][0]**2,self.points[3][0]*self.points[3][1],self.points[3][1]**2],
-              [1, self.points[4][0], self.points[4][1],self.points[4][0]**2,self.points[4][0]*self.points[4][1],self.points[4][1]**2],
-              [1, self.points[5][0], self.points[5][1],self.points[5][0]**2,self.points[5][0]*self.points[5][1],self.points[5][1]**2]]
-                     
-    
-        try :
+        a = [[1, self.points[0][0], self.points[0][1], self.points[0][0]**2,
+              self.points[0][0]*self.points[0][1], self.points[0][1]**2],
+             [1, self.points[1][0], self.points[1][1], self.points[1][0]**2,
+              self.points[1][0]*self.points[1][1], self.points[1][1]**2],
+             [1, self.points[2][0], self.points[2][1], self.points[2][0]**2,
+              self.points[2][0]*self.points[2][1], self.points[2][1]**2],
+             [1, self.points[3][0], self.points[3][1], self.points[3][0]**2,
+              self.points[3][0]*self.points[3][1], self.points[3][1]**2],
+             [1, self.points[4][0], self.points[4][1], self.points[4][0]**2,
+              self.points[4][0]*self.points[4][1], self.points[4][1]**2],
+             [1, self.points[5][0], self.points[5][1], self.points[5][0]**2,
+              self.points[5][0]*self.points[5][1], self.points[5][1]**2]]
+
+        try:
             inv_a = a.inverse()
         except ValueError:
             self.plot()
             print(self._area())
             raise FlatElementError('form function bug')
-        x1 = inv_a.dot([1,0,0,0,0,0])
-        x2 = inv_a.dot([1,0,0,0,0,0])
-        x3 = inv_a.dot([1,0,0,0,0,0])
-        x4=inv_a.dot([1,0,0,0,0,0])
+        x1 = inv_a.dot([1, 0, 0, 0, 0, 0])
+        x2 = inv_a.dot([1, 0, 0, 0, 0, 0])
+        x3 = inv_a.dot([1, 0, 0, 0, 0, 0])
+        x4 = inv_a.dot([1, 0, 0, 0, 0, 0])
         
         return x1, x2, x3
+
     def _area(self):
         u = self.points[1] - self.points[0]
         v = self.points[2] - self.points[0]
@@ -179,18 +198,19 @@ class TriangularElement(DessiaObject):
             for i, point in enumerate(self.points):
                 point = symmetric_points[i]
            
-    def line_equation(self,P0:vm.Point2D,P1:vm.Point2D,M:vm.Point2D):
-    
-        return (P1[0]-P0[0])*(M[1]-P0[1])-(P1[1]-P0[1])*(M[0]-P0[0])  
-        
- 
-    def is_inside_triangle(self,M:vm.Point2D):
-        P0=self.points[0]
-        P1=self.points[1]
-        P2=self.points[2]
-        return self.line_equation(P0,P1,M)> 0 and self.line_equation(P1,P2,M) > 0 and self.line_equation(P2,P0,M) > 0
+    def line_equation(self, P0: vm.Point2D, P1: vm.Point2D, M: vm.Point2D):
+        return (P1[0]-P0[0])*(M[1]-P0[1])-(P1[1]-P0[1])*(M[0]-P0[0])
+
+    def is_inside_triangle(self, M: vm.Point2D):
+        P0 = self.points[0]
+        P1 = self.points[1]
+        P2 = self.points[2]
+        return self.line_equation(P0, P1, M) > 0 and \
+               self.line_equation(P1, P2, M) > 0 and \
+               self.line_equation(P2, P0, M) > 0
                 
-    def plot(self, ax=None, color='k', width=None, plot_points=False, fill=False):
+    def plot(self, ax=None, color='k', width=None,
+             plot_points=False, fill=False):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -201,13 +221,15 @@ class TriangularElement(DessiaObject):
             plt.fill(x, y, facecolor=color, edgecolor="k")
             return ax
         
-        for p1, p2 in zip(self.points, self.points[1:]+[self.points[0]]):
+        for p1, p2 in zip(self.points, list(self.points[1:])+[self.points[0]]):
             if width is None:
-                width=1
+                width = 1
             if plot_points:
-                ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color, marker='o', linewidth=width)
+                ax.plot([p1[0], p2[0]], [p1[1], p2[1]],
+                        color=color, marker='o', linewidth=width)
             else:
-                ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color, linewidth=width)
+                ax.plot([p1[0], p2[0]], [p1[1], p2[1]],
+                        color=color, linewidth=width)
         return ax
     
     
@@ -217,7 +239,8 @@ class ElementsGroup(DessiaObject):
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
     _generic_eq = True
-    def __init__(self, elements:List[TriangularElement], name:str):
+
+    def __init__(self, elements: List[TriangularElement], name: str):
         self.elements = elements
         self.name = name
 
@@ -231,14 +254,16 @@ class ElementsGroup(DessiaObject):
         
     def rotation(self, center, angle, copy=True):
         if copy:
-            return Mesh([elem.rotation(center, angle, copy=True) for elem in self.elements])
+            return Mesh([elem.rotation(center, angle, copy=True)
+                         for elem in self.elements])
         else:
             for elem in self.elements:
                 elem.rotation(center, angle, copy=False)
                 
     def translation(self, offset, copy=True):
         if copy:
-            return Mesh([elem.translation(offset, copy=True) for elem in self.elements])
+            return Mesh([elem.translation(offset, copy=True)
+                         for elem in self.elements])
         else:
             for elem in self.elements:
                 elem.translation(offset, copy=False)
@@ -258,7 +283,8 @@ class Mesh(DessiaObject):
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
     _generic_eq = True
-    def __init__(self, elements_groups:List[ElementsGroup]):
+
+    def __init__(self, elements_groups: List[ElementsGroup]):
         self.elements_groups = elements_groups
         self.nodes = self._set_nodes_number()
         self.node_to_index = {self.nodes[i]:i for i in range(len(self.nodes))}
@@ -282,10 +308,10 @@ class Mesh(DessiaObject):
         return None
     
     def set_node_displacement_index(self):
-        indexes={}
+        indexes = {}
         for node in self.nodes:
-           
-                indexes[node]=[2*self.node_to_index[node],2*self.node_to_index[node]+1]
+            indexes[node] = [2*self.node_to_index[node],
+                             2*self.node_to_index[node]+1]
         return indexes
     
     def boundary_dict(self):
@@ -302,15 +328,12 @@ class Mesh(DessiaObject):
                 boundary_dict[(elements_group1, elements_group2)] = duplicate_linear_elements
         return boundary_dict
    
-        
-   
-        
-    def plot(self, ax=None):
+    def plot(self, ax=None, fill=False):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
         for elements_group in self.elements_groups:
-            elements_group.plot(ax=ax)
+            elements_group.plot(ax=ax, fill=fill)
         return ax
     
     def plot_data(self, pos=0, quote=True, constructor=True, direction=1):
@@ -325,22 +348,16 @@ class Mesh(DessiaObject):
                 plot_datas.append(c3.plot_data())
                 # plot_datas.extend([c1, c2, c3])
         return plot_datas
-    
-    
-    
-    def plot_displaced_mesh(self,node_displacement:Dict[vm.Point2D,List[float]],ax=None,amplification=0.5):
+
+    def plot_displaced_mesh(self, node_displacement: Dict[vm.Point2D, List[float]],ax=None,amplification=0.5):
         deformed_mesh=self.copy()
         nodes=deformed_mesh.nodes
-  
         for node in nodes:
-           for displaced_node in node_displacement:
-               if node==displaced_node:
-                   node[0]+=amplification*node_displacement[displaced_node][0]
-                   node[1]+=amplification*node_displacement[displaced_node][1]
-            
-        ax = deformed_mesh.plot(ax=ax) 
-                     
-    
+            for displaced_node in node_displacement:
+                if node == displaced_node:
+                    node[0] += amplification*node_displacement[displaced_node][0]
+                    node[1] += amplification*node_displacement[displaced_node][1]
+        ax = deformed_mesh.plot(ax=ax)
         return ax
     
 class Mesher(DessiaObject):
@@ -353,7 +370,7 @@ class Mesher(DessiaObject):
                 
         
         
-    def  neighbour_edge(self,n:int,i:int,di:int):
+    def neighbour_edge(self,n:int,i:int,di:int):
         return (i+di)%n  
    
     
