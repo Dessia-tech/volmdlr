@@ -1699,8 +1699,9 @@ class Arc2D(Primitive2D):
                    
              arc_to_nodes[self]=nodes
              
-             for point in arc_to_nodes[self]:
-                 point.MPLPlot(ax=ax,color='r')
+        if ax is not None:
+           for point in arc_to_nodes[self]:
+               point.MPLPlot(ax=ax,color='r')
                
             
         return arc_to_nodes[self] 
@@ -2061,9 +2062,9 @@ class Circle2D(Contour2D):
               # nodes.insert(len(nodes),self.end)
               # nodes.insert(len(nodes),self.center)    
               circle_to_nodes[self]=nodes
-              if ax is not None :
-                  for point in circle_to_nodes[self]:
-                      point.MPLPlot(ax=ax,color='r')
+        if ax is not None :
+           for point in circle_to_nodes[self]:
+               point.MPLPlot(ax=ax,color='r')
                
             
         return circle_to_nodes[self]
@@ -2082,7 +2083,8 @@ class Circle2D(Contour2D):
     def copy(self) :
         return Circle2D(self.center.copy(), self.radius)
         
-
+class InadaptedOffsetError(Exception):
+    pass
 class Polygon2D(Contour2D):
     # TODO: inherit from contour?
     def __init__(self,points, name=''):
@@ -2192,7 +2194,27 @@ class Polygon2D(Contour2D):
         if return_other_point:
             return d_min, other_point_min
         return d_min
-
+    def bounding_rectangle(self):
+        X=[]
+        Y=[]
+    
+        for point in self.points:
+            X.append(point[0])
+            Y.append(point[1])  
+        index_x_min= X.index(min(X))
+        index_x_max=X.index(max(X))
+        index_y_min=Y.index(min(Y))
+        index_y_max=Y.index(max(Y))
+        p_1=Point2D([X[index_x_min],Y[index_y_min]])
+        p_2=Point2D([X[index_x_min],Y[index_y_max]])
+        p_3=Point2D([X[index_x_max],Y[index_y_max]])
+        p_4=Point2D([X[index_x_max],Y[index_y_min]])
+        rectangle=Polygon2D([p_1,p_2,p_3,p_4])
+        return rectangle
+    
+    
+    
+    
     def SelfIntersect(self):
         epsilon = 0
         # BENTLEY-OTTMANN ALGORITHM
@@ -2329,9 +2351,6 @@ class Polygon2D(Contour2D):
     def repair_intersections(self,all_polygons:List['Polygon2D']):
         reapaired_intersection=self.repair_single_intersection()
         
-     
-       
-        
         if len(reapaired_intersection)>1:
             polygon_1=reapaired_intersection[0]
             polygon_2=reapaired_intersection[1]
@@ -2381,13 +2400,14 @@ class Polygon2D(Contour2D):
        
     def  is_intersecting(self,line:LineSegment2D):
          intersection=[]
-         for linear_element in self.linear_elements:
+         for linear_element in self.line_segments:
             point=linear_element.line_intersection(line)
-            if point !=None :
+            if point is not None :
                 intersection.append(point)
-         if len(intersection)>1:
+         if len(intersection)>=2:
             return True
-         return False
+         else :
+            return False
  
     def ccw(self,A:Point2D, B:Point2D, C:Point2D):
    
@@ -2415,6 +2435,16 @@ class Polygon2D(Contour2D):
    
         
     def Offset(self, offset):
+        bound=self.bounding_rectangle()
+        max_offset_len=bound.min_length()
+        
+        try :
+             offset < max_offset_len/2
+        except ValueError:
+            
+            print('inadapted offset, polygon might turn itself over')
+            raise InadaptedOffsetError('inadapted offset')
+            
         nb = len(self.points)
         vectors = []
         for i in range(nb-1):
@@ -2433,7 +2463,6 @@ class Polygon2D(Contour2D):
         vectors.append(v1)
         vectors.append(v2)
 
-        correct_points=[]
         offset_vectors = []
         new_radii = {}
         offset_points = []
@@ -2640,10 +2669,10 @@ class Triangle2D(Polygon2D):
         h=min(H)
         
         return E/h
+    
+    
     def discretise(self,n:float,ax):
         segment_to_nodes={}
-    
-         
         nodes=[]
         for segment in self.line_segments:
             # if n*segment.Length() < 1 :
@@ -2655,19 +2684,19 @@ class Triangle2D(Polygon2D):
                         
        
                  for k in range(n0):
-                          
-                                 
+                                     
                      node=segment.PointAtCurvilinearAbscissa(k*l0)
                     
-                     
                      # node=Point2D([(1-k/l0)*segment.point1[0]+segment.point2[0]*k/l0,(1-k/l0)*segment.point1[1]+segment.point2[1]*k/l0])
                            
                      nodes.append(node)
                  nodes.insert(len(nodes),segment.point2)
                        
                  segment_to_nodes[segment]=nodes
-                 for point in segment_to_nodes[segment]:
-                     point.MPLPlot(ax=ax,color='r')
+                 if ax is not None :
+                     for point in segment_to_nodes[segment]:
+                         point.MPLPlot(ax=ax,color='r')
+                     
         return segment_to_nodes
     
     # def mesh_triangle(self,segment_to_nodes:Dict[LineSegment2D,List[Point2D]],n:float,ax):
@@ -2961,7 +2990,7 @@ class Triangle2D(Polygon2D):
         interior_segments=[]
         interior_segment_nodes={}
         all_triangles=[]
-        all_aspect_ratios=[]
+        all_aspect_ratios={}
        
         nodes_0=[]
         nodes_1=[]
@@ -3060,7 +3089,7 @@ class Triangle2D(Polygon2D):
                
        
         if len(nodes_0)==2 and len(nodes_1)==2:
-            all_aspect_ratios.append(self.aspect_ratio())
+            all_aspect_ratios[self]=self.aspect_ratio()
             all_triangles.append(self)
             return [all_triangles,all_aspect_ratios]
       
@@ -3106,14 +3135,14 @@ class Triangle2D(Polygon2D):
                                 if new_triangle_1 not in all_triangles:
                                   
                                           all_triangles.append(new_triangle_1)
-                                          all_aspect_ratios.append(new_triangle_1.aspect_ratio())
+                                          all_aspect_ratios[new_triangle_1]=new_triangle_1.aspect_ratio()
                                 if interior_segment_nodes[interior_segments[k]][v-1]!=interior_segment_nodes[interior_segments[k+1]][v-1]:
                                    
                                     new_triangle_2=Triangle2D([interior_segment_nodes[interior_segments[k]][j+1],interior_segment_nodes[interior_segments[k+1]][j],interior_segment_nodes[interior_segments[k+1]][j+1]])
                                     if new_triangle_2 not in all_triangles:
                                   
                                           all_triangles.append(new_triangle_2)
-                                          all_aspect_ratios.append(new_triangle_2.aspect_ratio())
+                                          all_aspect_ratios[new_triangle_2]=new_triangle_2.aspect_ratio()
                             # if  interior_segment_nodes[interior_segments[k]][v-1]!=interior_segment_nodes[interior_segments[k+1]][v-1]:        
                             for  j in range(v-1,u-1):
                                     
@@ -3122,14 +3151,8 @@ class Triangle2D(Polygon2D):
                                         if new_triangle_1 not in all_triangles:
                                                    
                                                         all_triangles.append(new_triangle_1)   
-                                                        all_aspect_ratios.append(new_triangle_1.aspect_ratio()) 
-                            # else :
-                            #      for  j in range(v-1,u-1):
-                            #         new_triangle_1=Triangle2D([interior_segment_nodes[interior_segments[k]][j],interior_segment_nodes[interior_segments[k+1]][v-1],interior_segment_nodes[interior_segments[k]][j+1]])
-                            #         if new_triangle_1 not in all_triangles:
-                                               
-                            #                         all_triangles.append(new_triangle_1)   
-                            #                         all_aspect_ratios.append(new_triangle_1.aspect_ratio())
+                                                        all_aspect_ratios[new_triangle_1]=new_triangle_1.aspect_ratio()
+                          
                 else :
                       for j in range(v-1):
                            
@@ -3140,7 +3163,7 @@ class Triangle2D(Polygon2D):
                              
                            
                                     all_triangles.append(new_triangle_1)
-                                    all_aspect_ratios.append(new_triangle_1.aspect_ratio())
+                                    all_aspect_ratios[new_triangle_1]=new_triangle_1.aspect_ratio()
                            
                         
             if (u<v and v>2):
@@ -3150,12 +3173,12 @@ class Triangle2D(Polygon2D):
                                 for j in range(u-1):
                                     
                                
-                                    new_triangle_1=Triangle2D([interior_segment_nodes[interior_segments[k+1]][j+1],interior_segment_nodes[interior_segments[k]][j],interior_segment_nodes[interior_segments[k+1]][j+1]])
+                                    new_triangle_1=Triangle2D([interior_segment_nodes[interior_segments[k+1]][j],interior_segment_nodes[interior_segments[k]][j],interior_segment_nodes[interior_segments[k+1]][j+1]])
                      
                            
                                     if new_triangle_1 not in all_triangles:
                                             all_triangles.append(new_triangle_1)
-                                            all_aspect_ratios.append(new_triangle_1.aspect_ratio())
+                                            all_aspect_ratios[new_triangle_1]=new_triangle_1.aspect_ratio()
                                     if interior_segment_nodes[interior_segments[k+1]][u-1]!=interior_segment_nodes[interior_segments[k]][u-1]:
                                        
                                        new_triangle_2=Triangle2D([interior_segment_nodes[interior_segments[k+1]][j+1],interior_segment_nodes[interior_segments[k]][j],interior_segment_nodes[interior_segments[k]][j+1]])
@@ -3163,7 +3186,7 @@ class Triangle2D(Polygon2D):
                            
                                     if new_triangle_2 not in all_triangles:
                                             all_triangles.append(new_triangle_2)
-                                            all_aspect_ratios.append(new_triangle_2.aspect_ratio()) 
+                                            all_aspect_ratios[new_triangle_2]=new_triangle_2.aspect_ratio() 
                                         
                                     for j in range(u-1,v-1):
                                         if interior_segment_nodes[interior_segments[k+1]][j+1]!=interior_segment_nodes[interior_segments[k]][u-1]:
@@ -3171,13 +3194,8 @@ class Triangle2D(Polygon2D):
                                             if new_triangle_2 not in all_triangles:
                                                    
                                                           all_triangles.append(new_triangle_2)
-                                                          all_aspect_ratios.append(new_triangle_2.aspect_ratio())       
-                                    # new_triangle_1=Triangle2D([interior_segment_nodes[interior_segments[k+1]][j+1],interior_segment_nodes[interior_segments[k]][j],interior_segment_nodes[interior_segments[k+1]][j]])
-                                    # if new_triangle_1 not in all_triangles:
-                                       
-                                    #                    all_triangles.append(new_triangle_1)
-                                    #                    all_aspect_ratios.append(new_triangle_1.aspect_ratio())            
-                                    
+                                                          all_aspect_ratios[new_triangle_2]=new_triangle_2.aspect_ratio()       
+                                
                         
                       else :
                                     for j in range (v-2):
@@ -3185,32 +3203,39 @@ class Triangle2D(Polygon2D):
                              
                                         if new_triangle_2 not in all_triangles:
                                                 all_triangles.append(new_triangle_2)
-                                                all_aspect_ratios.append(new_triangle_2.aspect_ratio())
+                                                all_aspect_ratios[new_triangle_2]=new_triangle_2.aspect_ratio()
                     
             if (u==2 and v==2):
              
               if interior_segment_nodes[interior_segments[k]][0]!=interior_segment_nodes[interior_segments[k+1]][0]:
-                  new_triangle_1=Triangle2D([interior_segment_nodes[interior_segments[k+1]][0],interior_segment_nodes[interior_segments[k]][0],interior_segment_nodes[interior_segments[k]][1]])
-                  if new_triangle_1 not in all_triangles:
-                                      
-                                          all_triangles.append(new_triangle_1)
-                                          all_aspect_ratios.append(new_triangle_1.aspect_ratio())
-                  if interior_segment_nodes[interior_segments[k]][1]!=interior_segment_nodes[interior_segments[k+1]][1] :                       
+                  
+                  if interior_segment_nodes[interior_segments[k]][1]!=interior_segment_nodes[interior_segments[k+1]][1] :  
+                      new_triangle_1=Triangle2D([interior_segment_nodes[interior_segments[k+1]][0],interior_segment_nodes[interior_segments[k]][0],interior_segment_nodes[interior_segments[k]][1]])
+                      if new_triangle_1 not in all_triangles:
+                                          
+                         all_triangles.append(new_triangle_1)
+                         all_aspect_ratios[new_triangle_1]=new_triangle_1.aspect_ratio()
                       new_triangle_2=Triangle2D([interior_segment_nodes[interior_segments[k+1]][0],interior_segment_nodes[interior_segments[k+1]][1],interior_segment_nodes[interior_segments[k]][1]])
                       if new_triangle_2 not in all_triangles:
                                        
-                                              all_triangles.append(new_triangle_2)
-                                              all_aspect_ratios.append(new_triangle_2.aspect_ratio())
+                            all_triangles.append(new_triangle_2)
+                            all_aspect_ratios[new_triangle_2]=new_triangle_2.aspect_ratio()
+                  else :
+                         
+                         new_triangle_2=Triangle2D([interior_segment_nodes[interior_segments[k]][1],interior_segment_nodes[interior_segments[k+1]][0],interior_segment_nodes[interior_segments[k]][0]])
+                        
+                                       
+                         all_triangles.append(new_triangle_2)
+                         all_aspect_ratios[new_triangle_2]=new_triangle_2.aspect_ratio()                              
+                                          
               else : 
                     new_triangle=Triangle2D([interior_segment_nodes[interior_segments[k+1]][0],interior_segment_nodes[interior_segments[k+1]][1],interior_segment_nodes[interior_segments[k]][1]])
                     if new_triangle not in all_triangles:
                                    
                                           all_triangles.append(new_triangle)
-                                          all_aspect_ratios.append(new_triangle.aspect_ratio())  
+                                          all_aspect_ratios[new_triangle]=new_triangle.aspect_ratio() 
              
-    
-    
-    
+              
     
     
     
@@ -3224,7 +3249,7 @@ class Triangle2D(Polygon2D):
                                     if new_triangle not in all_triangles:
                               
                                         all_triangles.append(new_triangle)
-                                        all_aspect_ratios.append(new_triangle.aspect_ratio())
+                                        all_aspect_ratios[new_triangle]=new_triangle.aspect_ratio()
                 
         if len(nodes_1)>len(nodes_0):
         
@@ -3238,18 +3263,35 @@ class Triangle2D(Polygon2D):
                      
                                   
                                       all_triangles.append(new_triangle)
-                                      all_aspect_ratios.append(new_triangle.aspect_ratio())
+                                      all_aspect_ratios[new_triangle]=new_triangle.aspect_ratio()
         if len(nodes_0)==len(nodes_1):
      
             new_triangle=Triangle2D([nodes_0[len(nodes_0)-2],nodes_1[len(nodes_1)-2],nodes_0[len(nodes_0)-1]])
             if new_triangle not in all_triangles:
                      
                 all_triangles.append(new_triangle)
-                all_aspect_ratios.append(new_triangle.aspect_ratio())
+                all_aspect_ratios[new_triangle]=new_triangle.aspect_ratio()
       
         return [all_triangles,all_aspect_ratios]
     
-               
+    def plot(self, ax, color='k', width=None, plot_points=False, fill=False):
+        if ax is None:
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
+        if fill:
+            x = [p[0] for p in self.points]
+            y = [p[1] for p in self.points]
+            plt.fill(x, y, facecolor=color, edgecolor="k")
+            return ax
+        
+        for p1, p2 in zip(self.points, self.points[1:]+[self.points[0]]):
+            if width is None:
+                width=1
+            if plot_points:
+                ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color, marker='o', linewidth=width)
+            else:
+                ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color, linewidth=width)
+        return ax                  
         
     
 class Primitive3D(dc.DessiaObject):

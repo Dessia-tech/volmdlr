@@ -35,26 +35,28 @@ stator_external_contour = vm.Contour2D.dict_to_object({'name': '', 'package_vers
 # ax=circle.MPLPlot()
 # circle.discretise(40,ax)
 
-# print(list(combinations(range(3),3)))
-rotor_contour=rotor_magnet_contours+[rotor_external_contour]
+# print(list(com
+# all_triangle_elements=rotor.mesh()
+
+
+# offset=rotor_external_contour.polygon.Offset(-0.025)
+# offset.MPLPlot()binations(range(3),3)))
+exterior_rotor_contour=rotor_magnet_contours+[rotor_external_contour]
 rotor_magnet=[rotor_magnet_contours[0]]
 all_rotor=[rotor_internal_contour,rotor_external_contour]
 rotor_external=[rotor_external_contour]
 rotor_internal=[rotor_internal_contour]
 
-# all_triangle_elements=rotor.mesh()
-
-
-# offset=rotor_external_contour.polygon.Offset(-0.025)
-# offset.MPLPlot()
 # polygon=offset.select_reapaired_polygon([])
 # polygon.MPLPlot()
 ax=rotor_external_contour.MPLPlot()
 # rotor=vmmesh.Mesher(rotor_magnet,[],40)
-all_rotor=[rotor_internal_contour,rotor_external_contour]
-rotor_external=[rotor_external_contour]
-rotor=vmmesh.Mesher(rotor_external,[],40)
-all_triangle_elements=rotor.mesh(None)
+# all_rotor=[rotor_internal_contour,rotor_external_contour]
+rotor_magnet=[rotor_external_contour]
+rotor_magnet=[rotor_magnet_contours[0]]
+rotor=vmmesh.Mesher(rotor_internal,exterior_rotor_contour,[],70)
+
+all_triangle_elements=rotor.generate_mesh(6)
 element_group=vmmesh.ElementsGroup(all_triangle_elements,'element_group')
 mesh=vmmesh.Mesh([element_group])
 mesh.plot()
@@ -63,45 +65,19 @@ mesh.plot()
         
   
 # ax=rotor_external_contour.MPLPlot()
-offset=rotor_external_contour.polygon.Offset(-0.005)
-offset.MPLPlot()
-# offset.MPLPlot(ax=ax)
-# # repairs=offset.repair_single_intersection()
-# # # for polygon in repairs:
-# # #     polygon.MPLPlot()
-# # polygons_1= repairs[0].repair_single_intersection()
-
-# # # for polygon in polygons_1:
-# # #     polygon.MPLPlot()
-
-# # polygons_2= polygons_1[1].repair_single_intersection()
-# # # for polygon in polygons_2:
-# # #     polygon.MPLPlot()
-# # polygons_3= polygons_2[0].repair_single_intersection()
-
-# # # for polygon in polygons_3:
-# # #     polygon.MPLPlot()
-# repairs = offset.repair_intersections([])
-# print(len(repairs))
-# for polygon in repairs :
-#     polygon.MPLPlot()
+# offset=rotor_external_contour.polygon.Offset(-0.02)
+# print(len(offset.points))
+# offset.MPLPlot()
+rec=rotor_external_contour.polygon.bounding_rectangle()
+rec.MPLPlot()
+print(rec.min_length())
+ax=rotor_external_contour.polygon.MPLPlot()     
+offset=rotor_external_contour.polygon.Offset(-8*rec.min_length()/40)
+offset.select_reapaired_polygon([]).MPLPlot()
+print(len(offset.points))
+offset.MPLPlot(ax=ax)
 
  
-
-  
-    
-
-    
-#     new_offset=offset.repair()
-    # new_offset.MPLPlot(ax=ax)
-# p1 = vm.Point2D([1,1])
-# p2 = vm.Point2D([2,1])
-# p3 = vm.Point2D([2.5,2])
-# p4 = vm.Point2D([1.5,3])
-# p5 =  vm.Point2D([1,2])
-# p6 =  vm.Point2D([1.6666666666666667, 2.3333333333333335])
-# all_triangle_elements=mesher.mesh()
-
 
 
 p1 = vm.Point2D([2,2])
@@ -132,15 +108,6 @@ l4 = vm.LineSegment2D(p4,p5)
 l5 = vm.LineSegment2D(p5,p6)
 l6 = vm.LineSegment2D(p6,p1)
 contour=vm.Contour2D([l1,l2,l3,l4,l5,l6])
-
-# L=[p1,p2]
-# M=[p3,p4]
-# print(list(product(L,M))[0][0])
-
-
-
-# polygon=contour.polygon
-# all_points=polygon.points
 
 
 mesher=vmmesh.Mesher([contour],[],1.5)
