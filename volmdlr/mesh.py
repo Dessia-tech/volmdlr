@@ -630,18 +630,18 @@ class Mesher(DessiaObject):
      
     
     def alternative_triangulation(self,polygon:vm.Polygon2D):
-       
+        # ax=plt.subplot()
         segment_to_nodes={}
         polygon_offsets=[]
         polygon_offsets+=[polygon]
         offset_triangles=[]
         repair = False
-        k=1
+        k=8
         bound=polygon.bounding_rectangle()
         offset_len=bound.min_length()
         while repair is False :
      
-            new_polygon=polygon.Offset(-k*offset_len/4)
+            new_polygon=polygon.Offset(-k*offset_len/40)
           
             if not new_polygon.SelfIntersect()[0] :
                 polygon_offsets.append(new_polygon)
@@ -693,19 +693,20 @@ class Mesher(DessiaObject):
                  offset_triangles+=self.mesh_in_between(polygon_offsets[k+1],
                                                         polygon_offsets[k])
                  
-              
-        # offset_triangles+=self.earclip(polygon_offsets[-1])
+        
+            
+        offset_triangles+=polygon_offsets[-1].delaunay_triangulation()
         return offset_triangles     
 
     def mesh_in_between(self,in_polygon:vm.Polygon2D,out_polygon:vm.Polygon2D):
         
-        ax=plt.subplot()
+        # ax=plt.subplot()
         projection_points=[]
         segment_to_nodes={}
         closest_segment={}
         all_triangles=[]
         out_point_image={}
-        
+       
         
         
         for segment in out_polygon.line_segments:
@@ -803,26 +804,29 @@ class Mesher(DessiaObject):
                                         projection_points[index_0].insert(index_point,new_proj)
                     else :
                         if out_point_image[point]==[]:
-                         
-                        
-                          l = in_segment.Length()/2
-                          if projection.point_distance(new_proj) > l :
-                                out_point_image[point].append([index_0,projection]) 
-                                projection_points[index_0].insert(index_point,projection)
+                          i=0
+                          if projection.point_distance(near_segment.point1) > projection.point_distance(near_segment.point2) :
+                             i+=1
+                          l = near_segment.Length()/10
+                          if projection.point_distance(near_segment.points[i]) >= l :
+                           
+                            out_point_image[point].append([index_0,projection]) 
+                            projection_points[index_0].insert(index_point,projection)
                           else :
+                               
                                if new_proj not in projection_points[index_0]:     
                                    projection_points[index_0].insert(index_point,new_proj)
                                       
-                        
+                        else :
+                             if new_proj not in projection_points[index_0]:     
+                                   projection_points[index_0].insert(index_point,new_proj)
                   
         for out_segment in out_polygon.line_segments:
             
             index_0=out_polygon.line_segments.index(out_segment)
-            
             v=len(segment_to_nodes[out_segment])
             u=len(projection_points[index_0])
-          
-           
+
             if u>=v and u>2:
               
                 for j in range(v-1):
@@ -846,34 +850,34 @@ class Mesher(DessiaObject):
                       
            
             if u<v :
-                  for j in range(u-1):
-                    
-                     new_triangle=vm.Triangle2D([projection_points[index_0][j],segment_to_nodes[out_segment][j+1],
-                                        segment_to_nodes[out_segment][j]])   
-                                  
-                     all_triangles.append(new_triangle)
-                     new_triangle_0=vm.Triangle2D([projection_points[index_0][j+1],projection_points[index_0][j],
-                                         segment_to_nodes[out_segment][j+1]])   
-                     # new_triangle_0=vm.Triangle2D([projection_points[index_0][j],segment_to_nodes[out_segment][j],
-                     #                    segment_to_nodes[out_segment][j+1]]) 
-                     
-                     all_triangles.append(new_triangle_0)
+                for j in range(u-1):
+                  
+                   new_triangle=vm.Triangle2D([projection_points[index_0][j],segment_to_nodes[out_segment][j+1],
+                                      segment_to_nodes[out_segment][j]])   
+                                
+                   all_triangles.append(new_triangle)
+                   new_triangle_0=vm.Triangle2D([projection_points[index_0][j+1],projection_points[index_0][j],
+                                       segment_to_nodes[out_segment][j+1]])   
+                   # new_triangle_0=vm.Triangle2D([projection_points[index_0][j],segment_to_nodes[out_segment][j],
+                   #                    segment_to_nodes[out_segment][j+1]]) 
                    
-                  for j in  range(u-1,v-1):
-                     new_triangle=vm.Triangle2D([segment_to_nodes[out_segment][j],  segment_to_nodes[out_segment][j+1],
-                                    projection_points[index_0][u-1]])   
-                     all_triangles.append(new_triangle)
-                     
+                   all_triangles.append(new_triangle_0)
+                   
+                for j in  range(u-1,v-1):
+                   new_triangle=vm.Triangle2D([segment_to_nodes[out_segment][j],  segment_to_nodes[out_segment][j+1],
+                                  projection_points[index_0][u-1]])   
+                   all_triangles.append(new_triangle)
+                   
             if u==2 and v==2:
-                    if projection_points[index_0][1] != projection_points[index_0][0] :
-                        new_triangle_1=vm.Triangle2D([projection_points[index_0][0],projection_points[index_0][1],
-                                           segment_to_nodes[out_segment][1]]) 
-                        all_triangles.append(new_triangle_1)
-                      
-                    new_triangle_2=vm.Triangle2D([projection_points[index_0][0],segment_to_nodes[out_segment][0],
-                                        segment_to_nodes[out_segment][1]]) 
-                   
-                    all_triangles.append(new_triangle_2)
+                if projection_points[index_0][1] != projection_points[index_0][0] :
+                    new_triangle_1=vm.Triangle2D([projection_points[index_0][0],projection_points[index_0][1],
+                                       segment_to_nodes[out_segment][1]]) 
+                    all_triangles.append(new_triangle_1)
+                  
+                new_triangle_2=vm.Triangle2D([projection_points[index_0][0],segment_to_nodes[out_segment][0],
+                                    segment_to_nodes[out_segment][1]]) 
+               
+                all_triangles.append(new_triangle_2)
            
                 
            
@@ -881,8 +885,8 @@ class Mesher(DessiaObject):
   
         
         # for triangle in all_triangles:
-               
-        #        print(triangle.area==0)
+        #        for point in triangle.points:
+        #            point.MPLPlot(ax=ax,color='r')
         # ax.set_aspect('equal')
         return all_triangles         
   
@@ -895,7 +899,14 @@ class Mesher(DessiaObject):
             return triangles
 
               
-          
+    def triangulation_max_aspect_ratio(self,triangles:List[vm.Triangle2D]):
+        all_aspect_ratios=[]
+        for triangle in triangles:
+            all_aspect_ratios.append(triangle.aspect_ratio())
+        index=all_aspect_ratios.index(max(all_aspect_ratios))
+        
+        return all_aspect_ratios[index]
+    
     def generate_mesh(self,min_aspect_ratio:float):
         
         ax=plt.subplot()
@@ -910,27 +921,29 @@ class Mesher(DessiaObject):
         exterior_polygon
         
         """
-        for contour in self.interior_contours:
-            polygon_points=[]
-            if  isinstance(contour,vm.Circle2D):
-                for point in contour.discretise(self.nodes_len,None):
-                    if point not in polygon_points:
-                       polygon_points.append(point)
-                polygon=vm.Polygon2D(polygon_points)          
-                interior_polygons.append(polygon)
-            else :
-                for primitive in contour.primitives:
-                    if isinstance(primitive,vm.LineSegment2D):
-                        
-                        if primitive.point1 not in polygon_points:
-                            polygon_points.append(primitive.point1)
+        if self.interior_contours : 
+            for contour in self.interior_contours:
+                polygon_points=[]
+                if  isinstance(contour,vm.Circle2D):
+                    for point in contour.discretise(self.nodes_len,None):
+                        if point not in polygon_points:
+                           polygon_points.append(point)
+                    polygon=vm.Polygon2D(polygon_points)          
+                    interior_polygons.append(polygon)
+                else :
+                    for primitive in contour.primitives:
+                        if isinstance(primitive,vm.LineSegment2D):
                             
-                    else :
-                          for point in primitive.discretise(self.nodes_len,None):
-                              if point not in polygon_points:
-                                  polygon_points.append(point)
-                polygon=vm.Polygon2D(polygon_points)          
-                interior_polygons.append(polygon) 
+                            if primitive.point1 not in polygon_points:
+                                polygon_points.append(primitive.point1)
+                                
+                        else :
+                              for point in primitive.discretise(self.nodes_len,None):
+                                  if point not in polygon_points:
+                                      polygon_points.append(point)
+                    polygon=vm.Polygon2D(polygon_points)          
+                    interior_polygons.append(polygon) 
+                    
         for contour in self.exterior_contours:
           polygon_points=[]
           if  isinstance(contour,vm.Circle2D):
@@ -947,7 +960,7 @@ class Mesher(DessiaObject):
                           polygon_points.append(primitive.point1)
                           
                   else :
-                        for point in primitive.discretise(self.nodes_len,ax):
+                        for point in primitive.discretise(self.nodes_len,None):
                             if point not in polygon_points:
                                 polygon_points.append(point)
               polygon=vm.Polygon2D(polygon_points)          
@@ -969,42 +982,44 @@ class Mesher(DessiaObject):
         # offset.select_reapaired_polygon([]).MPLPlot()
         # polygon=offset.select_reapaired_polygon([])
         # triangles+=self.alternative_triangulation(all_polygons[0])
-        triangles+=self.mesh_in_between(interior_polygons[-1],exterior_polygons[-1])
+        if interior_polygons :
+            triangles+=self.mesh_in_between(interior_polygons[-1],
+                                            exterior_polygons[-1])
 
         for polygon in exterior_polygons:
             if polygon != exterior_polygons[-1]:
                 polygon_1=polygon.copy()
-           
-            possible_triangles=self.earclip(polygon)
-            
-            """For one polygon,earclip created a LineSegment2D as an instance of Triangle2D
-            for unknown reasons,hence the area test below """
-            
-            for triangle in possible_triangles:
-                if triangle.area==0:
-                    possible_triangles.remove(triangle)
-                    
-                    
-            if min_aspect_ratio == None:
-              triangles+=possible_triangles
-             
-            else: 
-                Next=True
-                k=0
-                while Next is True and k < len(possible_triangles):
-                 
-                      triangle=possible_triangles[k]    
-                     
-                      if triangle.aspect_ratio() > min_aspect_ratio:
-                        Next=False
-                        triangles+=self.alternative_triangulation(polygon_1)
+               
+                possible_triangles=self.earclip(polygon)
+                
+                """For one polygon,earclip created a LineSegment2D as an instance of Triangle2D
+                for unknown reasons,hence the area test below """
+                
+                for triangle in possible_triangles:
+                    if triangle.area==0:
+                        possible_triangles.remove(triangle)
                         
-                      else :
-                      
-                          k=k+1
-                          
-                if Next==True :
+                        
+                if min_aspect_ratio == None:
                   triangles+=possible_triangles
+                 
+                else: 
+                    Next=True
+                    k=0
+                    while Next is True and k < len(possible_triangles):
+                     
+                          triangle=possible_triangles[k]    
+                         
+                          if triangle.aspect_ratio() > min_aspect_ratio:
+                            Next=False
+                            triangles+=self.alternative_triangulation(polygon_1)
+                            
+                          else :
+                          
+                              k=k+1
+                              
+                    if Next==True :
+                      triangles+=possible_triangles
 
 
         all_triangles=[]
@@ -1022,24 +1037,33 @@ class Mesher(DessiaObject):
             
    
         for segment in all_segments:
-          
+            
             segment_to_nodes[segment]=segment.discretise(self.nodes_len,ax)
-           
+            
+          
                 
         for triangle in triangles :
-              meshing=triangle.mesh_triangle(segment_to_nodes,self.nodes_len,ax)
-              plot_aspect_ratio_triangles+=meshing[0]
-              all_triangles+=meshing[0]
-              all_aspect_ratios.update(meshing[1])
-             
-       
-
+            # if triangle.aspect_ratio() =< self.triangulation_max_aspect_ratio(triangles) :
+            if triangle.aspect_ratio() < self.triangulation_max_aspect_ratio(all_triangles) :
+                meshing=triangle.mesh_triangle(segment_to_nodes,self.nodes_len,ax)
+                plot_aspect_ratio_triangles+=meshing[0]
+                all_triangles+=meshing[0]
+                all_aspect_ratios.update(meshing[1])
+           
+            else :
+                plot_aspect_ratio_triangles.append(triangle)
+                all_aspect_ratios.update({triangle : triangle.aspect_ratio()})
+            
+            # else :
+            #     plot_aspect_ratio_triangles.append(triangle)
+            #     all_aspect_ratios.update({triangle : triangle.aspect_ratio()})
+                
       
         for triangle in all_triangles:
-            triangle.MPLPlot(ax=ax)
+            # triangle.MPLPlot(ax=ax)
             triangular_element=TriangularElement(triangle.points)
-           
             all_triangle_elements.append(triangular_element)
+            
         self.plot_aspect_ratio(plot_aspect_ratio_triangles,all_aspect_ratios,ax)
         ax.set_aspect('equal')
         return all_triangle_elements

@@ -1374,23 +1374,22 @@ class LineSegment2D(Line2D):
              n0= int(math.ceil(n*self.Length()))
              l0=self.Length()/n0
                     
-   
              for k in range(n0):
-                      
-                             
-                 node=self.PointAtCurvilinearAbscissa(k*l0)
-                
-                 
-                 # node=Point2D([(1-k/l0)*self.point1[0]+self.point2[0]*k/l0,(1-k/l0)*self.point1[1]+self.point2[1]*k/l0])
-                       
+                                 
+                 node=self.PointAtCurvilinearAbscissa(k*l0)                 
                  nodes.append(node)
-             nodes.insert(len(nodes),self.point2)
-                   
+                 
+             if self.point2 not in nodes :
+                nodes.append(self.point2)
+                 
+             if self.point1 not in nodes :
+                nodes.insert(0,self.point1)
+                
              segment_to_nodes[self]=nodes
 
-             if ax is not None :
-                 for point in segment_to_nodes[self]:
-                     point.MPLPlot(ax=ax,color='r')
+         if ax is not None :
+            for point in segment_to_nodes[self]:
+                point.MPLPlot(ax=ax,color='r')
 
            
             
@@ -2209,7 +2208,9 @@ class Polygon2D(Contour2D):
         p_2=Point2D([X[index_x_min],Y[index_y_max]])
         p_3=Point2D([X[index_x_max],Y[index_y_max]])
         p_4=Point2D([X[index_x_max],Y[index_y_min]])
+        
         rectangle=Polygon2D([p_1,p_2,p_3,p_4])
+        
         return rectangle
     
     
@@ -2308,15 +2309,10 @@ class Polygon2D(Contour2D):
             p= d==0 and c==len(self.points)-1
            
             
-            # if w[1]!=w[0]+1 :
-               
                
             if m or n or o or p :
-                  
+
                
-               
-                # polygon_1_points=[self.points[x[0]]]+[inter]+[self.points[x[1]]]
-                # polygon_2_points=self.points[w[0]:w[1]+1]+[inter] 
                 polygon_1_points=[inter]+self.points[w[1]+1:]
                 polygon_2_points=self.points[w[0]:w[1]+1]+[inter]
               
@@ -2325,19 +2321,8 @@ class Polygon2D(Contour2D):
                 polygon_1_points=self.points[:w[0]+1]+[inter]+self.points[w[1]+1:]
                 polygon_2_points=self.points[w[0]+1:w[1]+1]+[inter]
                 
-            # else :
-            #     print('zob')
-            #     print(a)
-            #     print(b)
-            #     print(c)
-            #     print(d)
-              
-            #     polygon_1_points=[inter]+self.points[w[1]+1:]
-            #     polygon_2_points=self.points[w[0]:w[1]+1]+[inter]
-               
             
-     
-            
+       
             new_polygon_1=Polygon2D(polygon_1_points)
             new_polygon_2=Polygon2D(polygon_2_points)
             # new_polygon_1.MPLPlot()
@@ -2442,7 +2427,7 @@ class Polygon2D(Contour2D):
              offset < max_offset_len/2
         except ValueError:
             
-            print('inadapted offset, polygon might turn itself over')
+            print('inadapted offset, polygon might turn  over')
             raise InadaptedOffsetError('inadapted offset')
             
         nb = len(self.points)
@@ -2670,7 +2655,7 @@ class Triangle2D(Polygon2D):
         
         return E/h
     
-    
+   
     def discretise(self,n:float,ax):
         segment_to_nodes={}
         nodes=[]

@@ -54,9 +54,10 @@ ax=rotor_external_contour.MPLPlot()
 # all_rotor=[rotor_internal_contour,rotor_external_contour]
 rotor_magnet=[rotor_external_contour]
 rotor_magnet=[rotor_magnet_contours[0]]
-rotor=vmmesh.Mesher(rotor_internal,exterior_rotor_contour,[],70)
 
+rotor=vmmesh.Mesher(rotor_internal,exterior_rotor_contour,[],50)
 all_triangle_elements=rotor.generate_mesh(6)
+
 element_group=vmmesh.ElementsGroup(all_triangle_elements,'element_group')
 mesh=vmmesh.Mesh([element_group])
 mesh.plot()
@@ -93,9 +94,10 @@ p7=vm.Point2D([1.45,4.5])
 # print(a1.mesh_arc(40,ax))
 
 
+ax=plt.subplot()
+l1 = vm.LineSegment2D(p1,p2)
+l1.discretise(1,ax)
 
-
-# l1 = vm.LineSegment2D(p1,p2)
 # l2 = vm.LineSegment2D(p2,p3)
 # l3=vm.LineSegment2D(p3,p4)
 # l4 = vm.LineSegment2D(p4,p5) 
