@@ -311,7 +311,7 @@ class Line2D(Line):
             # Perpendicular segments: 2 solution
             line_AB = Line2D(volmdlr.Point2D(new_A), volmdlr.Point2D(new_B))
             line_CD = Line2D(Pvolmdlr.oint2D(new_C), volmdlr.Point2D(new_D))
-            new_pt_K = volmdlr.Point2D.LinesIntersection(line_AB, line_CD)
+            new_pt_K = volmdlr.Point2D.line_intersection(line_AB, line_CD)
 
             r = abs(new_pt_K[0])
             new_circle_center1 = volmdlr.Point2D((0, r))
@@ -331,7 +331,7 @@ class Line2D(Line):
 
             line_AB = Line2D(volmdlr.Point2D(new_A), volmdlr.Point2D(new_B))
             line_CD = Line2D(volmdlr.Point2D(new_C), volmdlr.Point2D(new_D))
-            new_pt_K = volmdlr.Point2D.LinesIntersection(line_AB, line_CD)
+            new_pt_K = volmdlr.Point2D.line_intersection(line_AB, line_CD)
             pt_K = volmdlr.Point2D(new_basis.OldCoordinates(new_pt_K))
 
             if pt_K == I:
@@ -500,13 +500,13 @@ class LineSegment2D(LineSegment):
         """
         If the projection falls outside the LineSegment2D, returns None.
         """
-        point, curv_abs = Line2D.point_projection(self, point)
+        point, curv_abs = Line2D.point_projection(Line2D(self.start, self.end), point)
         if curv_abs < 0 or curv_abs > self.length():
             return None, curv_abs
         return point, curv_abs
 
     def line_intersections(self, line):
-        point = Point2D.LinesIntersection(self, line)
+        point = volmdlr.Point2D.line_intersection(self, line)
         if point is not None:
             point_projection1, _ = self.point_projection(point)
             if point_projection1 is None:
@@ -608,8 +608,8 @@ class LineSegment2D(LineSegment):
     def plot_data(self, marker=None, color='black', stroke_width=1,
                   dash=False, opacity=1, arrow=False):
         return {'type': 'line',
-                'data': [self.points[0].vector[0], self.points[0].vector[1],
-                         self.end.vector[0], self.end.vector[1]],
+                'data': [self.start.x, self.start.y,
+                         self.end.x, self.end.y],
                 'color': color,
                 'marker': marker,
                 'size': stroke_width,

@@ -529,14 +529,14 @@ class Point2D(Vector2D):
 
     @classmethod
     def line_intersection(cls,line1, line2, curvilinear_abscissa=False):
-        x1 = line1.points[0].x
-        y1 = line1.points[0].y
-        x2 = line1.points[1].x
-        y2 = line1.points[1].y
-        x3 = line2.points[0].x
-        y3 = line2.points[0].y
-        x4 = line2.points[1].x
-        y4 = line2.points[1].y
+        x1 = line1.start.x
+        y1 = line1.start.y
+        x2 = line1.end.x
+        y2 = line1.end.y
+        x3 = line2.start.x
+        y3 = line2.start.y
+        x4 = line2.end.x
+        y4 = line2.end.y
 
         denominateur = (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4)
         if math.isclose(denominateur, 0, abs_tol=1e-6):
@@ -550,13 +550,13 @@ class Point2D(Vector2D):
             y = (x1*y2-y1*x2)*(y3-y4)-(y1-y2)*(x3*y4-y3*x4)
             y = y / denominateur
             if not curvilinear_abscissa:
-                return cls((x,y))
+                return cls(x,y)
             else:
                 t = (x1-x3)*(y3-y4)-(y1-y3)*(x3-x4)
                 t = t / denominateur
                 u = (x1-x2)*(y1-y3)-(y1-y2)*(x1-x3)
                 u = -u / denominateur
-                return (cls((x,y)), t, u)
+                return (cls(x,y), t, u)
             
     @classmethod
     def segment_intersection(cls, segment1, segment2,
