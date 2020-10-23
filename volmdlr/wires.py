@@ -458,8 +458,8 @@ class Contour2D(Wire2D):
         if len(intersections) < 2:
             return [self]
         elif len(intersections) == 2:
-            if intersections[0][0].__class__.__name__ == 'volmdlr.Point2D' and \
-                    intersections[1][0].__class__.__name__ == 'volmdlr.Point2D':
+            if isinstance(intersections[0][0], volmdlr.Point2D) and \
+                    isinstance(intersections[1][0], volmdlr.Point2D):
                 ip1, ip2 = sorted([self.primitives.index(intersections[0][1]),
                                    self.primitives.index(intersections[1][1])])
 

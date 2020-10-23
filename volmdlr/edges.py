@@ -486,12 +486,12 @@ class LineSegment2D(LineSegment):
         """
         Computes the distance of a point to segment of line
         """
-        if self.point1 == self.point2:
+        if self.start == self.end:
             if return_other_point:
                 return 0, Point2D(point)
             return 0
-        distance, point = LineSegment2DPointDistance(
-            [p.vector for p in self.points], point.vector)
+        distance, point = volmdlr.core.LineSegment2DPointDistance(
+            [(self.start.x, self.start.y), (self.end.x, self.end.y)], (point.x, point.y))
         if return_other_point:
             return distance, Point2D(point)
         return distance
@@ -1731,7 +1731,6 @@ class LineSegment3D(LineSegment):
                 inner_contours3d=inner_contours3d)
 
         elif d1 != d2:
-            print(d1, d2)
             # Conical
             v = axis.cross(u)
             w = axis.cross(v)
