@@ -694,15 +694,23 @@ class Polygon2D(Contour2D):
                 p.translation(offset, copy=False)
 
     def offset(self, offset):
-        nb = len(self.points)
-        vectors = []
-        for i in range(nb - 1):
-            v1 = self.points[i + 1] - self.points[i]
-            v2 = self.points[i] - self.points[i + 1]
-            v1.normalize()
-            v2.normalize()
-            vectors.append(v1)
-            vectors.append(v2)
+        bound = self.bounding_rectangle2()
+        max_offset_len = bound.min_length() / 2
+        if offset <= -max_offset_len:
+            print('Inadapted offset, '
+                  'polygon might turn over. Offset must be greater than',
+                  -max_offset_len)
+            raise ValueError('inadapted offset')
+        else:
+            nb = len(self.points)
+            vectors = []
+            for i in range(nb - 1):
+                v1 = self.points[i + 1] - self.points[i]
+                v2 = self.points[i] - self.points[i + 1]
+                v1.normalize()
+                v2.normalize()
+                vectors.append(v1)
+                vectors.append(v2)
 
         v1 = self.points[0] - self.points[-1]
         v2 = self.points[-1] - self.points[0]
