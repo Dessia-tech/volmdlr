@@ -251,7 +251,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
             return None
         return 1
 
-    def distance_to_shell(self, shell2, add_to_volumemodel=None):
+    def minimum_distance_points(self, shell2, add_to_volumemodel=None):
         """
         Returns a Mesure object if the distance is not zero, otherwise returns None
         """
@@ -277,12 +277,18 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                     elif distance < distance_min:
                         distance_min, point1_min, point2_min = distance, point1, point2
 
-        mesure = Measure3D(point1_min, point2_min)
+        return point1_min, point2_min
 
-        if add_to_volumemodel is not None:
-            add_to_volumemodel.primitives.append(mesure)
+    def distance_to_shell(self, other_shell):
+        p1, p2 = self.minimum_distance_points(other_shell)
+        return p1.point_distance(p2)
 
-        return mesure
+        # mesure = volmdlr.measures.Measure3D(point1_min, point2_min)
+        #
+        # if add_to_volumemodel is not None:
+        #     add_to_volumemodel.primitives.append(mesure)
+        #
+        # return mesure
 
     def distance_to_point(self, point, add_to_volumemodel=None):
         """

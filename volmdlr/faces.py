@@ -1599,7 +1599,7 @@ class PlaneFace3D(Face3D):
                                projection_distance ** 2 + border_distance ** 2) ** 0.5, other_point
         return (projection_distance ** 2 + border_distance ** 2) ** 0.5
 
-    def distance_to_face(self, face2, return_points=False):
+    def minimum_distance_points_plane(self, other_plane_face, return_points=False):
         ## """
         ## Only works if the surface is planar
         ## TODO : this function does not take into account if Face has holes
@@ -1608,45 +1608,59 @@ class PlaneFace3D(Face3D):
         # On calcule la distance entre la face 1 et chaque point de la face 2
         # On calcule la distance entre la face 2 et chaque point de la face 1
 
-        if self.face_intersection(face2) is not None:
-            return 0, None, None
+        # if self.face_intersection(other_plane_face) is not None:
+        #     return 0, None, None
+        #
+        # polygon1_points_3D = [volmdlr.Point3D(p.vector) for p in
+        #                       self.contours3d[0].tessel_points]
+        # polygon2_points_3D = [volmdlr.Point3D(p.vector) for p in
+        #                       other_plane_face.contours3d[0].tessel_points]
+        #
+        # distances = []
+        # if not return_points:
+        #     d_min = other_plane_face.distance_to_point(polygon1_points_3D[0])
+        #     for point1 in polygon1_points_3D[1:]:
+        #         d = other_plane_face.distance_to_point(point1)
+        #         if d < d_min:
+        #             d_min = d
+        #     for point2 in polygon2_points_3D:
+        #         d = self.distance_to_point(point2)
+        #         if d < d_min:
+        #             d_min = d
+        #     return d_min
+        #
+        # else:
+        #     for point1 in polygon1_points_3D:
+        #         d, other_point = other_plane_face.distance_to_point(
+        #             point1,
+        #             return_other_point=True)
+        #         distances.append((d, point1, other_point))
+        #     for point2 in polygon2_points_3D:
+        #         d, other_point = self.distance_to_point(
+        #             point2,
+        #             return_other_point=True
+        #         )
+        #         distances.append((d, point2, other_point))
+        #
+        # d_min, point_min, other_point_min = distances[0]
+        # for distance in distances[1:]:
+        #     if distance[0] < d_min:
+        #         d_min = distance[0]
+        #         point_min = distance[1]
+        #         other_point_min = distance[2]
+        #
+        # return point_min, other_point_min
 
-        polygon1_points_3D = [volmdlr.Point3D(p.vector) for p in
-                              self.contours3d[0].tessel_points]
-        polygon2_points_3D = [volmdlr.Point3D(p.vector) for p in
-                              face2.contours3d[0].tessel_points]
+        min_distance = math.inf
+        for edge1 in self.outer_contour3d.primitives:
+            for edge2 in other_plane_face.outer_contour3d.primitives:
+                p1, p2 = edge1.minimum_distance_points(edge2)
+                d12 = p1.point_distance(p2)
+                if d12 < min_distance:
+                    min_points = (p1, p2)
+                    min_distance = d12
+        return min_points
 
-        distances = []
-        if not return_points:
-            d_min = face2.distance_to_point(polygon1_points_3D[0])
-            for point1 in polygon1_points_3D[1:]:
-                d = face2.distance_to_point(point1)
-                if d < d_min:
-                    d_min = d
-            for point2 in polygon2_points_3D:
-                d = self.distance_to_point(point2)
-                if d < d_min:
-                    d_min = d
-            return d_min
-
-        else:
-            for point1 in polygon1_points_3D:
-                d, other_point = face2.distance_to_point(point1,
-                                                         return_other_point=True)
-                distances.append((d, point1, other_point))
-            for point2 in polygon2_points_3D:
-                d, other_point = self.distance_to_point(point2,
-                                                        return_other_point=True)
-                distances.append((d, point2, other_point))
-
-        d_min, point_min, other_point_min = distances[0]
-        for distance in distances[1:]:
-            if distance[0] < d_min:
-                d_min = distance[0]
-                point_min = distance[1]
-                other_point_min = distance[2]
-
-        return d_min, point_min, other_point_min
 
     def point_on_face(self, point):
         """
@@ -1783,8 +1797,7 @@ class PlaneFace3D(Face3D):
                 return p1.point_distance(p2)
 
         if other_face.__class__ is PlaneFace3D:
-            dmin, p1, p2 = self.distance_to_face(other_face,
-                                                 return_points=True)
+            p1, p2 = self.minimum_distance_points_plane(other_face)
             if return_points:
                 return p1.point_distance(p2), p1, p2
             else:
@@ -2934,7 +2947,7 @@ class ToroidalFace3D(Face3D):
 
     def minimum_distance_points_plane(self,
                                       planeface):  # Planeface with contour2D
-        #### ADD THE FACT THAT PLANEFACE.CONTOURS : [0] = contours totale, le reste = trous
+        # TODO: check that it takes into account holes
 
         poly2d = planeface.polygon2D
         pfpoints = poly2d.points

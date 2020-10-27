@@ -6,6 +6,7 @@
 from packaging import version
 import math
 import numpy as npy
+import scipy as scp
 
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import __version__ as _mpl_version
@@ -310,7 +311,7 @@ class Line2D(Line):
                 other_line.DirectionVector(unit=True)), 0, abs_tol=1e-06):
             # Perpendicular segments: 2 solution
             line_AB = Line2D(volmdlr.Point2D(new_A), volmdlr.Point2D(new_B))
-            line_CD = Line2D(Pvolmdlr.oint2D(new_C), volmdlr.Point2D(new_D))
+            line_CD = Line2D(volmdlr.Point2D(new_C), volmdlr.Point2D(new_D))
             new_pt_K = volmdlr.Point2D.line_intersection(line_AB, line_CD)
 
             r = abs(new_pt_K[0])
@@ -421,7 +422,7 @@ class BSplineCurve2D(Edge):
         curve_points = curve.evalpts
 
         self.curve = curve
-        self.points = [Point2D((p[0], p[1])) for p in curve_points]
+        self.points = [volmdlr.Point2D((p[0], p[1])) for p in curve_points]
 
     def length(self):
         # Approximately
@@ -488,12 +489,12 @@ class LineSegment2D(LineSegment):
         """
         if self.start == self.end:
             if return_other_point:
-                return 0, Point2D(point)
+                return 0, volmdlr.Point2D(point)
             return 0
         distance, point = volmdlr.core.LineSegment2DPointDistance(
             [(self.start.x, self.start.y), (self.end.x, self.end.y)], (point.x, point.y))
         if return_other_point:
-            return distance, Point2D(point)
+            return distance, volmdlr.Point2D(point)
         return distance
 
     def point_projection(self, point):
@@ -679,7 +680,7 @@ class Arc2D(Edge):
                            [2 * (xs - xe), 2 * (ys - ye)]])
             b = - npy.array([xi ** 2 + yi ** 2 - xs ** 2 - ys ** 2,
                              xe ** 2 + ye ** 2 - xs ** 2 - ys ** 2])
-            self.center = Point2D(solve(A, b))
+            self.center = volmdlr.Point2D(npy.linalg.solve(A, b))
 
         r1 = self.start - self.center
         r2 = self.end - self.center
@@ -1162,11 +1163,11 @@ class Line3D(Line):
             ax.plot([x1, x2], [y1, y2], [z1, z2], color=color)
         return ax
 
-    def PlaneProjection2D(self, center, x, y):
-        return Line2D(self.points[0].PlaneProjection2D(center, x, y),
-                      self.point2.PlaneProjection2D(center, x, y))
+    def plane_projection2d(self, center, x, y):
+        return Line2D(self.points[0].plane_projection2d(center, x, y),
+                      self.point2.plane_projection2d(center, x, y))
 
-    def MinimumDistancePoints(self, other_line):
+    def minimum_distance_points(self, other_line):
         """
         Returns the points on this line and the other line that are the closest
         of lines
@@ -1231,7 +1232,7 @@ class Line3D(Line):
         point2 = point1 + direction
         return cls(point1, point2, arguments[0][1:-1])
 
-    def Intersection(self, line2):
+    def intersection(self, line2):
 
         x1 = self.point1.x
         y1 = self.point1.y
@@ -1349,11 +1350,11 @@ class LineSegment3D(LineSegment):
         l = self.length()
         return self.point_at_abscissa(0.5 * l)
 
-    def PlaneProjection2D(self, center, x, y):
-        return LineSegment2D(self.start.PlaneProjection2D(center, x, y),
-                             self.point2.PlaneProjection2D(center, x, y))
+    def plane_projection2d(self, center, x, y):
+        return LineSegment2D(self.start.plane_projection2d(center, x, y),
+                             self.point2.plane_projection2d(center, x, y))
 
-    def Intersection(self, segment2):
+    def intersection(self, segment2):
         x1 = self.start.vector[0]
         y1 = self.start.vector[1]
         z1 = self.start.vector[2]
@@ -1495,13 +1496,13 @@ class LineSegment3D(LineSegment):
         else:
             fig = ax.figure
 
-        edge2D = self.PlaneProjection2D(volmdlr.O3D, x_3D, y_3D)
+        edge2D = self.plane_projection2d(volmdlr.O3D, x_3D, y_3D)
         edge2D.plot(ax=ax, color=color, width=width)
         return ax
 
     def plot_data(self, x_3D, y_3D, marker=None, color='black', stroke_width=1,
                   dash=False, opacity=1, arrow=False):
-        edge2D = self.PlaneProjection2D(volmdlr.O3D, x_3D, y_3D)
+        edge2D = self.plane_projection2d(volmdlr.O3D, x_3D, y_3D)
         return edge2D.plot_data(marker, color, stroke_width,
                                 dash, opacity, arrow)
 
@@ -1556,13 +1557,13 @@ class LineSegment3D(LineSegment):
     def reverse(self):
         return LineSegment3D(self.end.copy(), self.start.copy())
 
-    def MinimumDistancePoints(self, other_line):
+    def minimum_distance_points(self, other_line):
         """
         Returns the points on this line and the other line that are the closest
         of lines
         """
         u = self.end - self.start
-        v = other_line.end_point - other_line.start
+        v = other_line.end - other_line.start
         w = self.start - other_line.start
         a = u.dot(u)
         b = u.dot(v)
@@ -1574,9 +1575,9 @@ class LineSegment3D(LineSegment):
             t = (a * e - b * d) / (a * c - b ** 2)
             p1 = self.start + s * u
             p2 = other_line.start + t * v
-            return p1, p2, s, t
+            return p1, p2
         else:
-            return None, None, -1, -1
+            return self.start, other_line.start
 
     def Matrix_distance(self, other_line):
         u = self.direction_vector()
@@ -1973,7 +1974,7 @@ class Arc3D(Edge):
         l2 = Line3D(p21, p22)
 
         try:
-            c1, _ = l1.MinimumDistancePoints(l2)
+            c1, _ = l1.minimum_distance_points(l2)
         except ZeroDivisionError:
             raise ValueError(
                 'Start, end and interior points  of an arc must be distincts')
@@ -2118,7 +2119,7 @@ class Arc3D(Edge):
         y = []
         for i in range(30):
             p = self.point_at_abscissa(i / (29.) * l)
-            xi, yi = p.PlaneProjection2D(center, volmdlr.X3D, volmdlr.Y3D)
+            xi, yi = p.plane_projection2d(center, volmdlr.X3D, volmdlr.Y3D)
             x.append(xi)
             y.append(yi)
         ax.plot(x, y, color=color)
@@ -2409,15 +2410,15 @@ class ArcEllipse3D(Edge):
         # Angle pour start
         u1, u2 = start_new.vector[0] / self.Gradius, start_new.vector[
             1] / self.Sradius
-        angle1 = sin_cos_angle(u1, u2)
+        angle1 = volmdlr.sin_cos_angle(u1, u2)
         # Angle pour end
         u3, u4 = end_new.vector[0] / self.Gradius, end_new.vector[
             1] / self.Sradius
-        angle2 = sin_cos_angle(u3, u4)
+        angle2 = volmdlr.sin_cos_angle(u3, u4)
         # Angle pour interior
         u5, u6 = interior_new.vector[0] / self.Gradius, interior_new.vector[
             1] / self.Sradius
-        anglei = sin_cos_angle(u5, u6)
+        anglei = volmdlr.sin_cos_angle(u5, u6)
 
         # Going trigo/clock wise from start to interior
         if anglei < angle1:
@@ -2451,7 +2452,7 @@ class ArcEllipse3D(Edge):
         else:
             self.offset_angle = angle2
 
-        Primitive3D.__init__(self, basis_primitives=self.tessellation_points(),
+        volmdlr.core.Primitive3D.__init__(self, basis_primitives=self.tessellation_points(),
                              name=name)
 
     def _get_points(self):
@@ -2465,10 +2466,10 @@ class ArcEllipse3D(Edge):
 
         plane3d = volmdlr.faces.Plane3D(self.center, self.major_dir, self.minor_dir,
                           self.normal)
-        frame3d = Frame3D(self.center, plane3d.vectors[0], plane3d.vectors[1],
+        frame3d = volmdlr.Frame3D(self.center, plane3d.vectors[0], plane3d.vectors[1],
                           plane3d.normal)
 
-        tessellation_points_3D = [Point3D((self.Gradius * math.cos(
+        tessellation_points_3D = [volmdlr.Point3D((self.Gradius * math.cos(
             self.offset_angle + self.angle * i / (number_points_tesselation)),
                                            self.Sradius * math.sin(
                                                self.offset_angle + self.angle * i / (
@@ -2539,7 +2540,7 @@ class ArcEllipse3D(Edge):
         y = []
         for i in range(30):
             p = self.point_at_abscissa(i / (29.) * l)
-            xi, yi = p.PlaneProjection2D(X3D, Y3D)
+            xi, yi = p.plane_projection2d(volmdlr.X3D, volmdlr.Y3D)
             x.append(xi)
             y.append(yi)
         ax.plot(x, y, color=color)
