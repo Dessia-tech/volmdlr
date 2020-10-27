@@ -122,27 +122,27 @@ cdef (double, double, double) C_vector3D_rotation(double vx, double vy, double v
                                                   double center_x, double center_y, double center_z,
                                                   double axis_x, double axis_y, double axis_z,
                                                   double angle):
-    
+
     cdef double ux = vx - center_x
     cdef double uy = vy - center_y
     cdef double uz = vz - center_z
-    
+
     cdef double cos_angle = math.cos(angle)
     cdef double sin_angle = math.sin(angle)
-    
+
     cdef double rv1_x = cos_angle*ux
     cdef double rv1_y = cos_angle*uy
     cdef double rv1_z = cos_angle*uz
-    
+
     rv2_x, rv2_y, rv2_z = Cmul3D(axis_x, axis_y, axis_z,
                                  (1-cos_angle)*CVector3DDot(
                                          ux, uy, uz,
                                          axis_x, axis_y, axis_z)
                                  )
-    
+
     rv3_x, rv3_y, rv3_z = CVector3D_cross(axis_x, axis_y, axis_z,
                                            ux, uy, uz)
-    
+
     return (rv1_x + rv2_x + rv3_x*sin_angle + center_x,
             rv1_y + rv2_y + rv3_y*sin_angle + center_y,
             rv1_z + rv2_z + rv3_z*sin_angle + center_z)
@@ -152,9 +152,9 @@ def vector3D_rotation(vector, center, axis, angle):
                                    center.x, center.y, center.z,
                                    axis.x, axis.y, axis.z,
                                    angle)
-        
-    
-    
+
+
+
 cdef (double, double, double) C_matrix_vector_multiplication3(double M11, double M12, double M13,
                                                               double M21, double M22, double M23,
                                                               double M31, double M32, double M33,
@@ -183,7 +183,7 @@ cdef (double, double, double,
             A31*B11 + A32*B21 + A33*B31,
             A31*B12 + A32*B22 + A33*B32,
             A31*B13 + A32*B23 + A33*B33)
-    
+
 
 # =============================================================================
 
@@ -215,12 +215,12 @@ cdef (double, (double, double)) CLineSegment2DPointDistance((double, double) p1,
     cdef double t
     cdef (double, double) u, projection
 
-    u = p2 - p1
-    ppx, ppy = Csub2D(point.x, point.y, p1.x, p1.y)
-    t = max(0, min(1, CVector2DDot(ppx, ppy, u.x, u.y) / CVector2Dnorm(u.x, u.y)**2))
-    vx, vy  = Cmul2D(u.x, u.y, t)
-    projection = Cadd2D(p1.x, p1.y, vx, vy)
-    ppx, ppy = projection-point
+    u = (p2[0] - p1[0], p2[1] - p1[1])
+    ppx, ppy = Csub2D(point[0], point[1], p1[0], p1[1])
+    t = max(0, min(1, CVector2DDot(ppx, ppy, u[0], u[1]) / CVector2Dnorm(u[0], u[1])**2))
+    vx, vy  = Cmul2D(u[0], u[1], t)
+    projection = Cadd2D(p1[0], p1[1], vx, vy)
+    ppx, ppy = projection[0]-point[0], projection[1]-point[1]
     return CVector2Dnorm(ppx, ppy), projection
 
 def LineSegment2DPointDistance(points, point):
@@ -421,7 +421,7 @@ class Vector2D(Vector):
         if unit:
             n.normalize()
         return n
-    
+
     def deterministic_unit_normal_vector(self):
         return self.normal_vector(unit=True)
 
@@ -444,12 +444,12 @@ class Vector2D(Vector):
             point = origin.copy()
             point.plot(ax=ax, color=color)
             return ax
-        
+
         if width is None:
             width = 0.001*5*amplitude
         if head_width is None:
             head_width = 0.3*amplitude
-        
+
         if not normalize:
             ax.add_patch(FancyArrow(origin[0], origin[1],
                                     self.x*amplitude, self.y*amplitude,
@@ -467,7 +467,7 @@ class Vector2D(Vector):
                                     head_width=head_width,
                                     length_includes_head=True,
                                     color=color))
-            
+
         if line:
             style='-'+color
             linestyle = '-.'
@@ -482,7 +482,7 @@ class Vector2D(Vector):
             ax.text(*(origin+self*amplitude), label)
 
         return ax
-    
+
 
 X2D = Vector2D(1, 0)
 Y2D = Vector2D(0, 1)
@@ -529,14 +529,14 @@ class Point2D(Vector2D):
 
     @classmethod
     def line_intersection(cls,line1, line2, curvilinear_abscissa=False):
-        x1 = line1.points[0].x
-        y1 = line1.points[0].y
-        x2 = line1.points[1].x
-        y2 = line1.points[1].y
-        x3 = line2.points[0].x
-        y3 = line2.points[0].y
-        x4 = line2.points[1].x
-        y4 = line2.points[1].y
+        x1 = line1.start.x
+        y1 = line1.start.y
+        x2 = line1.end.x
+        y2 = line1.end.y
+        x3 = line2.start.x
+        y3 = line2.start.y
+        x4 = line2.end.x
+        y4 = line2.end.y
 
         denominateur = (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4)
         if math.isclose(denominateur, 0, abs_tol=1e-6):
@@ -550,14 +550,14 @@ class Point2D(Vector2D):
             y = (x1*y2-y1*x2)*(y3-y4)-(y1-y2)*(x3*y4-y3*x4)
             y = y / denominateur
             if not curvilinear_abscissa:
-                return cls((x,y))
+                return cls(x,y)
             else:
                 t = (x1-x3)*(y3-y4)-(y1-y3)*(x3-x4)
                 t = t / denominateur
                 u = (x1-x2)*(y1-y3)-(y1-y2)*(x1-x3)
                 u = -u / denominateur
-                return (cls((x,y)), t, u)
-            
+                return (cls(x,y), t, u)
+
     @classmethod
     def segment_intersection(cls, segment1, segment2,
                              curvilinear_abscissa=False):
@@ -576,7 +576,7 @@ class Point2D(Vector2D):
                 return None
             else:
                 return None, None, None
-            
+
         t = (x1-x3)*(y3-y4)-(y1-y3)*(x3-x4)
         t = t / denominateur
         u = (x1-x2)*(y1-y3)-(y1-y2)*(x1-x3)
@@ -850,7 +850,7 @@ class Vector3D(Vector):
         v = v - v.dot(self)*self/(self.norm()**2)
         v.normalize()
         return v
-    
+
     def deterministic_unit_normal_vector(self):
         """
         Returns a deterministic normal vector
@@ -867,7 +867,7 @@ class Vector3D(Vector):
 
     def copy(self):
         return Vector3D(self.x, self.y, self.z)
-    
+
     @classmethod
     def random(cls, xmin, xmax, ymin, ymax, zmin, zmax):
         return cls(random.uniform(xmin, xmax),
@@ -978,7 +978,7 @@ O3D = Point3D(0, 0, 0)
 # =============================================================================
 #  Basis, Frames
 # =============================================================================
-    
+
 class Matrix22:
     def __init__(self, M11:float, M12:float, M21:float, M22:float):
         self.M11 = M11
@@ -998,10 +998,10 @@ class Matrix22:
                         self.M11*other_matrix.M12 + self.M12*other_matrix.M22,
                         self.M21*other_matrix.M11 + self.M22*other_matrix.M21,
                         self.M21*other_matrix.M12 + self.M22*other_matrix.M22)
-    
+
     def determinent(self):
         return self.M11 * self.M22 - self.M12 * self.M21
-    
+
     def inverse(self):
         det = self.determinent()
         if not math.isclose(det, 0, abs_tol=1e-10):
@@ -1010,7 +1010,7 @@ class Matrix22:
                             -det_inv*self.M21, det_inv*self.M11)
         else:
             raise ValueError('The matrix is singular')
-    
+
     def vector_multiplication(self, vector):
         return vector.__class__(self.M11*vector.x + self.M12*vector.y,
                                 self.M21*vector.x + self.M22*vector.y)
@@ -1049,9 +1049,9 @@ class Matrix33:
                                                                                other_matrix.M11, other_matrix.M12, other_matrix.M13,
                                                                                other_matrix.M21, other_matrix.M22, other_matrix.M23,
                                                                                other_matrix.M31, other_matrix.M32, other_matrix.M33)
-        
+
         return Matrix33(M11, M12, M13, M21, M22, M23, M31, M32, M33)
-            
+
 
     def __repr__(self):
         s = '[{} {} {}]\n[{} {} {}]\n[{} {} {}]\n'.format(self.M11, self.M12, self.M13,
@@ -1070,7 +1070,7 @@ class Matrix33:
                                                      self.M21, self.M22, self.M23,
                                                      self.M31, self.M32, self.M33,
                                                      vector.x, vector.y, vector.z)
-        
+
         return vector.__class__(u1, u2, u3)
 
     def determinent(self):
@@ -1359,8 +1359,8 @@ class Basis3D(Basis):
 
     def copy(self):
         return Basis3D(self.u, self.v, self.w)
-    
-    
+
+
 class Frame2D(Basis2D):
     """
     Defines a 2D basis
@@ -1436,11 +1436,11 @@ class Frame2D(Basis2D):
 
     def Copy(self):
         return Frame2D(self.origin, self.u, self.v)
-    
-    
+
+
 OXY = Frame2D(O2D, X2D, Y2D)
 
-    
+
 class Frame3D(Basis3D):
     """
     Defines a 3D frame
@@ -1507,7 +1507,7 @@ class Frame3D(Basis3D):
         """ You have to give coordinates in the global landmark """
         return Basis3D.new_coordinates(self, vector - self.origin)
 
-    def old_coordinates(self, vector): 
+    def old_coordinates(self, vector):
         """ You have to give coordinates in the local landmark """
         return Basis3D.old_coordinates(self, vector) + self.origin
 

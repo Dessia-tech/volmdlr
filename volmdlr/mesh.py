@@ -32,7 +32,7 @@ def find_duplicate_linear_element(linear_elements1, linear_elements2):
     return duplicates
 
 
-class LinearElement(vm.LineSegment2D):
+class LinearElement(vm.edges.LineSegment2D):
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
@@ -42,7 +42,7 @@ class LinearElement(vm.LineSegment2D):
 
         self.interior_normal = interior_normal
         
-        vm.LineSegment2D.__init__(self,point1=point1,point2=point2,name=name)
+        vm.edges.LineSegment2D.__init__(self,point1=point1,point2=point2,name=name)
         
     def __hash__(self):
         return self.point1.__hash__() + self.point2.__hash__()

@@ -25,3 +25,4 @@ vol1.primitives.extend(vol2.primitives)
 # vol1.babylonjs()
 
 print(vol.primitives[0].faces[0]==vol.primitives[0].faces[0])
+print(vol.primitives[0].distance_to_shell(vol1.primitives[0]))
