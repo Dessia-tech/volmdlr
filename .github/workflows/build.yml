@@ -25,11 +25,11 @@ jobs:
       - uses: actions/setup-python@v2
         name: Install Python
         with:
-          python-version: ${{ matrix.py_version }}
+          python-version: 3.8
 
       - name: Install cibuildwheel
         run: |
-          python -m pip install cibuildwheel==1.6.3
+          python -m pip install cibuildwheel
 
       - name: Install Visual C++ for Python
         if: runner.os == 'Windows'
