@@ -34,7 +34,7 @@ jobs:
       - name: Install Visual C++ for Python
         if: runner.os == 'Windows'
         run: |
-          choco install vcpython34 -f -y
+          choco install vcpython27 -f -y
 
       - name: Build wheels
         run: |
