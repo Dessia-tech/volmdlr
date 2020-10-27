@@ -956,43 +956,39 @@ class Circle2D(Contour2D):
         return point.point_distance(self.center) <= self.radius + tolerance
 
     def line_intersections(self, line):
-        V = volmdlr.Vector2D((line.points[1] - line.points[0]).vector)
         Q = volmdlr.Vector2D(self.center.vector)
-        P1 = volmdlr.Vector2D(line.points[0].vector)
-
-        a = V.dot(V)
-        b = 2 * V.dot(P1 - Q)
-        c = P1.dot(P1) + Q.dot(Q) - 2 * P1.dot(Q) - self.radius ** 2
-
+        if line.points[0].vector == self.center.vector:
+            P1 = volmdlr.Vector2D(line.points[1].vector)
+            V = volmdlr.Vector2D((line.points[0] - line.points[1]).vector)
+        else:
+            P1 = volmdlr.Vector2D(line.points[0].vector)
+            V = volmdlr.Vector2D((line.points[1] - line.points[0]).vector)
+        a = V.Dot(V)
+        b = 2 * V.Dot(P1 - Q)
+        c = P1.Dot(P1) + Q.Dot(Q) - 2 * P1.Dot(Q) - self.radius ** 2
         disc = b ** 2 - 4 * a * c
         if disc < 0:
             return []
-
-        if math.isclose(disc, 0, abs_tol=1e-8):
-            t = -b / (2 * a)
-            if line.__class__ is volmdlr.edges.Line2D:
-                return [volmdlr.Point2D((P1 + t * V).vector)]
-            else:
-                if 0 <= t <= 1:
-                    return [volmdlr.Point2D((P1 + t * V).vector)]
-                else:
-                    return []
 
         sqrt_disc = math.sqrt(disc)
         t1 = (-b + sqrt_disc) / (2 * a)
         t2 = (-b - sqrt_disc) / (2 * a)
         if line.__class__ is volmdlr.edges.Line2D:
-            return [volmdlr.Point2D((P1 + t1 * V).vector),
-                    volmdlr.Point2D((P1 + t2 * V).vector)]
+            if t1 == t2:
+                return [volmdlr.Point2D((P1 + t1 * V).vector)]
+            else:
+                return [volmdlr.Point2D((P1 + t1 * V).vector),
+                        volmdlr.Point2D((P1 + t2 * V).vector)]
         else:
-            if not (0 <= t1 <= 1 or 0 <= t2 <= 1):
-                return []
+            if not 0 <= t1 <= 1 and not 0 <= t2 <= 1:
+                return None
             elif 0 <= t1 <= 1 and not 0 <= t2 <= 1:
                 return [volmdlr.Point2D((P1 + t1 * V).vector)]
             elif not 0 <= t1 <= 1 and 0 <= t2 <= 1:
                 return [volmdlr.Point2D((P1 + t2 * V).vector)]
             else:
-                [volmdlr.Point2D((P1 + t1 * V).vector), volmdlr.Point2D((P1 + t2 * V).vector)]
+                return [volmdlr.Point2D((P1 + t1 * V).vector),
+                        volmdlr.Point2D((P1 + t2 * V).vector)]
 
     def length(self):
         return volmdlr.TWO_PI * self.radius
