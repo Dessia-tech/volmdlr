@@ -12,12 +12,12 @@ on: [push, pull_request]
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }} python 3.${{ matrix.py_major }}
+    name: Build wheels on ${{ matrix.os }} python ${{ matrix.py_version }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [windows-latest, macos-latest]
-        py_major: [7, 8]
+        py_version: [3.7, 3.8]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -26,7 +26,7 @@ jobs:
       - uses: actions/setup-python@v2
         name: Install Python
         with:
-          python-version: '3.'${{ $py_major }}'
+          python-version: ${{ $py_version }}
 
       - name: Install cibuildwheel
         run: |
@@ -35,7 +35,7 @@ jobs:
       - name: Install Visual C++ for Python
         if: runner.os == 'Windows'
         run: |
-          choco install vcpython3${{ matrix.py_major }} -f -y
+          choco install vcpython${{ py_version//. }} -f -y
 
       - name: Build wheels
         run: |
