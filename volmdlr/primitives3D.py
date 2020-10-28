@@ -34,7 +34,6 @@ class OpenedRoundedLineSegments3D(volmdlr.Wire3D, RoundedLineSegments):
 
     def ArcFeatures(self, ipoint):
         ipoint=int(ipoint)
-        print(self.radius, ipoint)
         radius = self.radius[ipoint]
         if self.closed:
             if ipoint == 0:
