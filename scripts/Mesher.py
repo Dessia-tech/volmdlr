@@ -65,7 +65,7 @@ all_rotor_triangle_elements=rotor_mesh.generate_mesh(6,False)
 ax=stator_external_contour.MPLPlot()
 print(isinstance(stator_external_contour,vm.Circle2D))
 stator_internal_contour.MPLPlot(ax=ax)
-stator_mesh=vmmesh.Mesher(stator_internal,stator_external,[],10)
+stator_mesh=vmmesh.Mesher(stator_internal,stator_external,[],20)
 all_stator_triangle_elements=stator_mesh.generate_mesh(None,True)
 
 
