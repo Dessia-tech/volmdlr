@@ -19,6 +19,8 @@ vol1 = vol.frame_mapping(vm.Frame3D(vm.Point3D(0, 1, 0), vm.Vector3D(1, 0, 0),
                          vm.Vector3D(0, 1, 0), vm.Vector3D(0, 0, 1)), 'new', copy=True)
 vol2 = vol.frame_mapping(vm.Frame3D(vm.Point3D(0, 0.5, 0), vm.Vector3D(1, 0, 0),
                          vm.Vector3D(0, 1, 0), vm.Vector3D(0, 0, 1)), 'old', copy=True)
+vol3 = vol.frame_mapping(vm.Frame3D(vm.Point3D(0, 0.7, 0), vm.Vector3D(1, 0, 0),
+                         vm.Vector3D(0, 1, 0), vm.Vector3D(0, 0, 1)), 'old', copy=True)
 
 vol1.primitives.extend(vol.primitives)
 vol1.primitives.extend(vol2.primitives)
@@ -26,3 +28,7 @@ vol1.primitives.extend(vol2.primitives)
 
 print(vol.primitives[0].faces[0]==vol.primitives[0].faces[0])
 print(vol.primitives[0].distance_to_shell(vol1.primitives[0]))
+
+print(vol2.primitives[0].shell_intersection(vol3.primitives[0]))
+print(vol2.primitives[0].intersection_internal_aabb_volume(vol3.primitives[0]))
+print(vol2.primitives[0].intersection_external_aabb_volume(vol3.primitives[0]))

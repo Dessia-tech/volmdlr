@@ -1459,7 +1459,7 @@ class Circle3D(Contour3D):
         l2 = volmdlr.edges.Line3D(p21, p21 + v2)
 
         try:
-            center, _ = l1.MinimumDistancePoints(l2)
+            center, _ = l1.minimum_distance_points(l2)
         except ZeroDivisionError:
             raise ValueError(
                 'Start, end and interior points  of an arc must be distincts')
