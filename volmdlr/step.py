@@ -8,8 +8,12 @@
 import matplotlib.pyplot as plt
 import networkx as nx
 import volmdlr
-import volmdlr.primitives3D
-import volmdlr.surfaces3d
+import volmdlr.core
+import volmdlr.primitives3d
+import volmdlr.edges
+import volmdlr.wires
+import volmdlr.faces
+import volmdlr.shells
 
 
 def step_split_arguments(function_arg):
@@ -129,7 +133,7 @@ class Step:
 
             for i, argument in enumerate(arguments):
                 if argument[:2] == '(#' and argument[-1] == ')':
-                    arg_list = volmdlr.set_to_list(argument)
+                    arg_list = volmdlr.core.set_to_list(argument)
                     arguments[i] = arg_list
 
             function = StepFunction(function_id, function_name, arguments)
@@ -364,7 +368,7 @@ class Step:
             if node != '#0' and (self.functions[node].name == 'CLOSED_SHELL' or
                                  self.functions[node].name == "OPEN_SHELL"):
                 shells.append(object_dict[node])
-        return volmdlr.VolumeModel([shells])
+        return volmdlr.core.VolumeModel([shells])
 
     def to_scatter_volume_model(self, name):
         object_dict = {}
@@ -380,7 +384,7 @@ class Step:
                 volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
                     arguments, object_dict)
                 points3d.append(volmdlr_object)
-        return volmdlr.VolumeModel(points3d)
+        return volmdlr.core.VolumeModel(points3d)
 
 
 
@@ -394,54 +398,54 @@ STEP_TO_VOLMDLR = {
     'AXIS2_PLACEMENT_2D': None,  # ??????????????????
     'AXIS2_PLACEMENT_3D': volmdlr.Frame3D,
 
-    'LINE': volmdlr.primitives3D.Line3D,  # LineSegment3D,
-    'CIRCLE': volmdlr.primitives3D.Circle3D,
-    'ELLIPSE': volmdlr.primitives3D.Ellipse3D,
+    'LINE': volmdlr.edges.Line3D,  # LineSegment3D,
+    'CIRCLE': volmdlr.wires.Circle3D,
+    'ELLIPSE': volmdlr.wires.Ellipse3D,
     'PARABOLA': None,
     'HYPERBOLA': None,
     #        'PCURVE': None,
     'CURVE_REPLICA': None,
     'OFFSET_CURVE_3D': None,
     'TRIMMED_CURVE': None,  # BSplineCurve3D cannot be trimmed on FreeCAD
-    'B_SPLINE_CURVE': volmdlr.primitives3D.BSplineCurve3D,
-    'B_SPLINE_CURVE_WITH_KNOTS': volmdlr.primitives3D.BSplineCurve3D,
-    'BEZIER_CURVE': volmdlr.primitives3D.BSplineCurve3D,
-    'RATIONAL_B_SPLINE_CURVE': volmdlr.primitives3D.BSplineCurve3D,
-    'UNIFORM_CURVE': volmdlr.primitives3D.BSplineCurve3D,
-    'QUASI_UNIFORM_CURVE': volmdlr.primitives3D.BSplineCurve3D,
+    'B_SPLINE_CURVE': volmdlr.edges.BSplineCurve3D,
+    'B_SPLINE_CURVE_WITH_KNOTS': volmdlr.edges.BSplineCurve3D,
+    'BEZIER_CURVE': volmdlr.edges.BSplineCurve3D,
+    'RATIONAL_B_SPLINE_CURVE': volmdlr.edges.BSplineCurve3D,
+    'UNIFORM_CURVE': volmdlr.edges.BSplineCurve3D,
+    'QUASI_UNIFORM_CURVE': volmdlr.edges.BSplineCurve3D,
     'SURFACE_CURVE': None,  # TOPOLOGICAL EDGE
     'SEAM_CURVE': None,
     # LineSegment3D, # TOPOLOGICAL EDGE ############################
     'COMPOSITE_CURVE_SEGMENT': None,  # TOPOLOGICAL EDGE
-    'COMPOSITE_CURVE': volmdlr.Wire3D,  # TOPOLOGICAL WIRE
-    'COMPOSITE_CURVE_ON_SURFACE': volmdlr.Wire3D,  # TOPOLOGICAL WIRE
-    'BOUNDARY_CURVE': volmdlr.Wire3D,  # TOPOLOGICAL WIRE
+    'COMPOSITE_CURVE': volmdlr.wires.Wire3D,  # TOPOLOGICAL WIRE
+    'COMPOSITE_CURVE_ON_SURFACE': volmdlr.wires.Wire3D,  # TOPOLOGICAL WIRE
+    'BOUNDARY_CURVE': volmdlr.wires.Wire3D,  # TOPOLOGICAL WIRE
 
-    'PLANE': volmdlr.surfaces3d.Plane3D,
-    'CYLINDRICAL_SURFACE': volmdlr.surfaces3d.CylindricalSurface3D,
-    'CONICAL_SURFACE': volmdlr.surfaces3d.ConicalSurface3D,
-    'SPHERICAL_SURFACE': volmdlr.surfaces3d.SphericalSurface3D,
-    'TOROIDAL_SURFACE': volmdlr.surfaces3d.ToroidalSurface3D,
+    'PLANE': volmdlr.faces.Plane3D,
+    'CYLINDRICAL_SURFACE': volmdlr.faces.CylindricalSurface3D,
+    'CONICAL_SURFACE': volmdlr.faces.ConicalSurface3D,
+    'SPHERICAL_SURFACE': volmdlr.faces.SphericalSurface3D,
+    'TOROIDAL_SURFACE': volmdlr.faces.ToroidalSurface3D,
     'DEGENERATE_TOROIDAL_SURFACE': None,
-    'B_SPLINE_SURFACE_WITH_KNOTS': volmdlr.surfaces3d.BSplineSurface3D,
-    'B_SPLINE_SURFACE': volmdlr.surfaces3d.BSplineSurface3D,
-    'BEZIER_SURFACE': volmdlr.surfaces3d.BSplineSurface3D,
+    'B_SPLINE_SURFACE_WITH_KNOTS': volmdlr.faces.BSplineSurface3D,
+    'B_SPLINE_SURFACE': volmdlr.faces.BSplineSurface3D,
+    'BEZIER_SURFACE': volmdlr.faces.BSplineSurface3D,
     'OFFSET_SURFACE': None,
     'SURFACE_REPLICA': None,
-    'RATIONAL_B_SPLINE_SURFACE': volmdlr.surfaces3d.BSplineSurface3D,
+    'RATIONAL_B_SPLINE_SURFACE': volmdlr.faces.BSplineSurface3D,
     'RECTANGULAR_TRIMMED_SURFACE': None,
-    'SURFACE_OF_LINEAR_EXTRUSION': volmdlr.primitives3D.BSplineExtrusion,
+    'SURFACE_OF_LINEAR_EXTRUSION': volmdlr.primitives3d.BSplineExtrusion,
     # CAN BE A BSplineSurface3D
     'SURFACE_OF_REVOLUTION': None,
-    'UNIFORM_SURFACE': volmdlr.surfaces3d.BSplineSurface3D,
-    'QUASI_UNIFORM_SURFACE': volmdlr.surfaces3d.BSplineSurface3D,
-    'RECTANGULAR_COMPOSITE_SURFACE': volmdlr.surfaces3d.PlaneFace3D,  # TOPOLOGICAL FACES
-    'CURVE_BOUNDED_SURFACE': volmdlr.surfaces3d.PlaneFace3D,  # TOPOLOGICAL FACE
+    'UNIFORM_SURFACE': volmdlr.faces.BSplineSurface3D,
+    'QUASI_UNIFORM_SURFACE': volmdlr.faces.BSplineSurface3D,
+    'RECTANGULAR_COMPOSITE_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACES
+    'CURVE_BOUNDED_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACE
 
     # TOPOLOGICAL ENTITIES
     'VERTEX_POINT': None,
 
-    'EDGE_CURVE': volmdlr.Edge,  # LineSegment3D, # TOPOLOGICAL EDGE
+    'EDGE_CURVE': volmdlr.edges.Edge,  # LineSegment3D, # TOPOLOGICAL EDGE
     'ORIENTED_EDGE': None,  # TOPOLOGICAL EDGE
     # The one above can influence the direction with their last argument
     # TODO : maybe take them into consideration
@@ -450,16 +454,16 @@ STEP_TO_VOLMDLR = {
     'FACE_OUTER_BOUND': None,  # TOPOLOGICAL WIRE
     # Both above can influence the direction with their last argument
     # TODO : maybe take them into consideration
-    'EDGE_LOOP': volmdlr.Contour3D,  # TOPOLOGICAL WIRE
-    'POLY_LOOP': volmdlr.Contour3D,  # TOPOLOGICAL WIRE
+    'EDGE_LOOP': volmdlr.wires.Contour3D,  # TOPOLOGICAL WIRE
+    'POLY_LOOP': volmdlr.wires.Contour3D,  # TOPOLOGICAL WIRE
     'VERTEX_LOOP': None,  # TOPOLOGICAL WIRE
 
-    'ADVANCED_FACE': volmdlr.surfaces3d.Face3D,
-    'FACE_SURFACE': volmdlr.surfaces3d.Face3D,
+    'ADVANCED_FACE': volmdlr.faces.Face3D,
+    'FACE_SURFACE': volmdlr.faces.Face3D,
 
-    'CLOSED_SHELL': volmdlr.Shell3D,
-    'OPEN_SHELL': volmdlr.Shell3D,
+    'CLOSED_SHELL': volmdlr.shells.Shell3D,
+    'OPEN_SHELL': volmdlr.shells.Shell3D,
     #        'ORIENTED_CLOSED_SHELL': None,
-    'CONNECTED_FACE_SET': volmdlr.Shell3D,
+    'CONNECTED_FACE_SET': volmdlr.shells.Shell3D,
 
 }

@@ -7,8 +7,9 @@
 import volmdlr as vm
 import volmdlr.step
 
-step = volmdlr.step.Step('tore1.step')
-step = volmdlr.step.Step('cylindre.step')
-model = step.to_volume_model()
+step1 = volmdlr.step.Step('tore1.step')
+step2 = volmdlr.step.Step('cylindre.step')
+step3 = volmdlr.step.Step('block.step')
+model = step3.to_volume_model()
 
 model.babylonjs()
