@@ -153,7 +153,7 @@ class Contour2D(Wire2D):
     def __init__(self, primitives, name=''):
         Wire2D.__init__(self, primitives, name)
         self._utd_analysis = False
-        self.tessel_points = self.clean_points()
+        # self.tessel_points = self.clean_points()
 
     def _primitives_analysis(self):
         """
