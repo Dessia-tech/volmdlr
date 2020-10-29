@@ -8,8 +8,12 @@
 import matplotlib.pyplot as plt
 import networkx as nx
 import volmdlr
+import volmdlr.core
 import volmdlr.primitives3d
+import volmdlr.edges
+import volmdlr.wires
 import volmdlr.faces
+import volmdlr.shells
 
 
 def step_split_arguments(function_arg):
@@ -366,6 +370,7 @@ class Step:
                 shells.append(object_dict[node])
         return volmdlr.core.VolumeModel(shells)
 
+
     def to_scatter_volume_model(self, name):
         object_dict = {}
         points3d = []
@@ -380,7 +385,7 @@ class Step:
                 volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
                     arguments, object_dict)
                 points3d.append(volmdlr_object)
-        return volmdlr.VolumeModel(points3d)
+        return volmdlr.core.VolumeModel(points3d)
 
 
 
