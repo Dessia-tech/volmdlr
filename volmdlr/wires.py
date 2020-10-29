@@ -458,8 +458,8 @@ class Contour2D(Wire2D):
         if len(intersections) < 2:
             return [self]
         elif len(intersections) == 2:
-            if intersections[0][0].__class__.__name__ == 'volmdlr.Point2D' and \
-                    intersections[1][0].__class__.__name__ == 'volmdlr.Point2D':
+            if isinstance(intersections[0][0], volmdlr.Point2D) and \
+                    isinstance(intersections[1][0], volmdlr.Point2D):
                 ip1, ip2 = sorted([self.primitives.index(intersections[0][1]),
                                    self.primitives.index(intersections[1][1])])
 
@@ -693,6 +693,62 @@ class Polygon2D(Contour2D):
             for p in self.points:
                 p.translation(offset, copy=False)
 
+    def offset(self, offset):
+        bound = self.bounding_rectangle2()
+        max_offset_len = bound.min_length() / 2
+        if offset <= -max_offset_len:
+            print('Inadapted offset, '
+                  'polygon might turn over. Offset must be greater than',
+                  -max_offset_len)
+            raise ValueError('inadapted offset')
+        else:
+            nb = len(self.points)
+            vectors = []
+            for i in range(nb - 1):
+                v1 = self.points[i + 1] - self.points[i]
+                v2 = self.points[i] - self.points[i + 1]
+                v1.normalize()
+                v2.normalize()
+                vectors.append(v1)
+                vectors.append(v2)
+
+        v1 = self.points[0] - self.points[-1]
+        v2 = self.points[-1] - self.points[0]
+        v1.normalize()
+        v2.normalize()
+        vectors.append(v1)
+        vectors.append(v2)
+
+        offset_vectors = []
+        offset_points = []
+
+        for i in range(nb):
+
+            check = False
+            ni = vectors[2 * i - 1] + vectors[2 * i]
+            if ni == volmdlr.Vector2D(0, 0):
+                ni = vectors[2 * i]
+                ni = ni.normalVector()
+                offset_vectors.append(ni)
+            else:
+                ni.normalize()
+                if ni.dot(vectors[2 * i - 1].normal_vector()) > 0:
+                    ni = - ni
+                    check = True
+                offset_vectors.append(ni)
+
+            normal_vector1 = - vectors[2 * i - 1].normal_vector()
+            normal_vector2 = vectors[2 * i].normal_vector()
+            normal_vector1.normalize()
+            normal_vector2.normalize()
+            alpha = math.acos(normal_vector1.dot(normal_vector2))
+
+            offset_point = self.points[i] + offset / math.cos(alpha / 2) * \
+                offset_vectors[i]
+            offset_points.append(offset_point)
+
+        return self.__class__(offset_points)
+
     def PointBorderDistance(self, point, return_other_point=False):
         """
         Compute the distance to the border distance of polygon
@@ -900,43 +956,39 @@ class Circle2D(Contour2D):
         return point.point_distance(self.center) <= self.radius + tolerance
 
     def line_intersections(self, line):
-        V = volmdlr.Vector2D((line.points[1] - line.points[0]).vector)
         Q = volmdlr.Vector2D(self.center.vector)
-        P1 = volmdlr.Vector2D(line.points[0].vector)
-
-        a = V.dot(V)
-        b = 2 * V.dot(P1 - Q)
-        c = P1.dot(P1) + Q.dot(Q) - 2 * P1.dot(Q) - self.radius ** 2
-
+        if line.points[0].vector == self.center.vector:
+            P1 = volmdlr.Vector2D(line.points[1].vector)
+            V = volmdlr.Vector2D((line.points[0] - line.points[1]).vector)
+        else:
+            P1 = volmdlr.Vector2D(line.points[0].vector)
+            V = volmdlr.Vector2D((line.points[1] - line.points[0]).vector)
+        a = V.Dot(V)
+        b = 2 * V.Dot(P1 - Q)
+        c = P1.Dot(P1) + Q.Dot(Q) - 2 * P1.Dot(Q) - self.radius ** 2
         disc = b ** 2 - 4 * a * c
         if disc < 0:
             return []
-
-        if math.isclose(disc, 0, abs_tol=1e-8):
-            t = -b / (2 * a)
-            if line.__class__ is volmdlr.edges.Line2D:
-                return [volmdlr.Point2D((P1 + t * V).vector)]
-            else:
-                if 0 <= t <= 1:
-                    return [volmdlr.Point2D((P1 + t * V).vector)]
-                else:
-                    return []
 
         sqrt_disc = math.sqrt(disc)
         t1 = (-b + sqrt_disc) / (2 * a)
         t2 = (-b - sqrt_disc) / (2 * a)
         if line.__class__ is volmdlr.edges.Line2D:
-            return [volmdlr.Point2D((P1 + t1 * V).vector),
-                    volmdlr.Point2D((P1 + t2 * V).vector)]
+            if t1 == t2:
+                return [volmdlr.Point2D((P1 + t1 * V).vector)]
+            else:
+                return [volmdlr.Point2D((P1 + t1 * V).vector),
+                        volmdlr.Point2D((P1 + t2 * V).vector)]
         else:
-            if not (0 <= t1 <= 1 or 0 <= t2 <= 1):
-                return []
+            if not 0 <= t1 <= 1 and not 0 <= t2 <= 1:
+                return None
             elif 0 <= t1 <= 1 and not 0 <= t2 <= 1:
                 return [volmdlr.Point2D((P1 + t1 * V).vector)]
             elif not 0 <= t1 <= 1 and 0 <= t2 <= 1:
                 return [volmdlr.Point2D((P1 + t2 * V).vector)]
             else:
-                [volmdlr.Point2D((P1 + t1 * V).vector), volmdlr.Point2D((P1 + t2 * V).vector)]
+                return [volmdlr.Point2D((P1 + t1 * V).vector),
+                        volmdlr.Point2D((P1 + t2 * V).vector)]
 
     def length(self):
         return volmdlr.TWO_PI * self.radius
