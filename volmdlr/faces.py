@@ -104,7 +104,43 @@ class Surface3D():
 
         self.SURFACE_TO_FACE[self.__class__](self, surface2d)
 
+    def cut_by_contours3d(self,
+                          contours3d: volmdlr.wires.Contour3D,
+                          name: str = ''):
+        """
+        """
+
+        # ocl = contours3d[0].length()
+
+        # points = [contours3d[0].point_at_abscissa(i*ocl/3.) for i in range(3)]
+        # plane3d = Plane3D.from_3_points(*points)
+
+        area = 0
+        inner_contours2d = []
+        for contour3d in contours3d:
+            contour2d = self.contour3d_to_2d(contour3d)
+            inner_contours2d.append(contour2d)
+            contour_area = contour2d.area()
+            if contour_area > area:
+                area = contour_area
+                outer_contour2d = contour2d
+
+        inner_contours2d.remove(outer_contour2d)
+
+        outer_contour2d
+
+        if isinstance(self.face_class , str):
+            class_ = locals()[self.face_class]
+        else:
+            class_ = self.face_class
+
+        return class_(self,
+                      surface2d=Surface2D(outer_contour=outer_contour2d,
+                                          inner_contours=inner_contours2d),
+                      name=name)
+
 class Plane3D(Surface3D):
+    face_class = 'PlaneFace3D'
     def __init__(self, frame: volmdlr.Frame3D, name: str = ''):
         """
         :param frame: u and v of frame describe the plane, w is the normal
@@ -358,12 +394,14 @@ class Plane3D(Surface3D):
         surface = Surface2D(outer_contour, [])
         return Face3D(self, surface, name)
 
+
+
 PLANE3D_OXY = Plane3D(volmdlr.OXYZ)
 PLANE3D_OYZ = Plane3D(volmdlr.OYZX)
 PLANE3D_OZX = Plane3D(volmdlr.OZXY)
 
 class CylindricalSurface3D(Surface3D):
-    # face_class = CylindricalFace3D
+    face_class = 'CylindricalFace3D'
     """
     :param frame: frame.w is axis, frame.u is theta=0 frame.v theta=pi/2
     :type frame: volmdlr.Frame3D
@@ -377,9 +415,9 @@ class CylindricalSurface3D(Surface3D):
         self.name = name
 
     def point2d_to_3d(self, point2d):
-        p = volmdlr.Point3D(self.radius * math.cos(point2d[0]),
-                            self.radius * math.sin(point2d[0]),
-                            point2d[1])
+        p = volmdlr.Point3D(self.radius * math.cos(point2d.x),
+                            self.radius * math.sin(point2d.x),
+                            point2d.y)
         return self.frame.old_coordinates(p)
 
     def point3d_to_2d(self, point3d):
@@ -440,7 +478,7 @@ class CylindricalSurface3D(Surface3D):
 
 
 class ToroidalSurface3D(Surface3D):
-    # face_class = volmdlr.faces3d.ToroidalFace3D
+    face_class = 'ToroidalFace3D'
     """
     :param frame: Tore's frame: origin is thet center, u is pointing at
                     theta=0
@@ -586,14 +624,14 @@ class ToroidalSurface3D(Surface3D):
 
         return volmdlr.Contour3D(edges3d)
 
-    def contour3d_to_2d(self, contour3d, toroidalsurface3d):
-        frame = toroidalsurface3d.frame
+    def contour3d_to_2d(self, contour3d):
+        frame = self.frame
         n = frame.w
         # center = frame.origin
-        rcenter, rcircle = toroidalsurface3d.rcenter, toroidalsurface3d.rcircle
+        rcenter, rcircle = self.R, self.r
 
         primitives, start_end, all_points = [], [], []
-        for edge in contour3d.edges:
+        for edge in contour3d.primitives:
             new_points = [frame.new_coordinates(pt) for pt in edge.points]
             if edge.__class__ is volmdlr.Arc3D:
                 if edge.normal == n or edge.normal == -n:
@@ -606,15 +644,15 @@ class ToroidalSurface3D(Surface3D):
                         if start2d == end2d:
                             if math.isclose(start2d.vector[0], volmdlr.TWO_PI,
                                             abs_tol=1e-6):
-                                end2d = end2d - volmdlr.volmdlr.Point2D((volmdlr.TWO_PI, 0))
+                                end2d = end2d - volmdlr.volmdlr.Point2D(volmdlr.TWO_PI, 0)
                             else:
-                                end2d = end2d + volmdlr.volmdlr.Point2D((volmdlr.TWO_PI, 0))
+                                end2d = end2d + volmdlr.volmdlr.Point2D(volmdlr.TWO_PI, 0)
                     elif not (math.isclose(edge.angle, angle2d, abs_tol=1e-2)):
                         # if math.isclose(angle2d, volmdlr.TWO_PI, abs_tol=1e-2) :
                         if start2d[0] < end2d[0]:
-                            end2d = start2d + volmdlr.volmdlr.Point2D((edge.angle, 0))
+                            end2d = start2d + volmdlr.volmdlr.Point2D(edge.angle, 0)
                         else:
-                            end2d = start2d - volmdlr.volmdlr.Point2D((edge.angle, 0))
+                            end2d = start2d - volmdlr.volmdlr.Point2D(edge.angle, 0)
                     #####################
 
                     ls_toadd = volmdlr.volmdlr.LineSegment2D(start2d, end2d)
@@ -858,9 +896,12 @@ class ToroidalSurface3D(Surface3D):
         contour2d = [volmdlr.Contour2D(primitives)]
         return contour2d
 
+    def triangulation(self):
+        face = self.rectangular_cut(0, volmdlr.TWO_PI, 0, volmdlr.TWO_PI)
+        return face.triangulation()
 
 class ConicalSurface3D(Surface3D):
-    # face_class = volmdlr.faces3d.ConicalFace3D
+    face_class = 'ConicalFace3D'
     """
     :param frame: Cone's frame to position it: frame.w is axis of cone
     :type frame: volmdlr.Frame3D
@@ -941,7 +982,7 @@ class ConicalSurface3D(Surface3D):
 
 
 class SphericalSurface3D(Surface3D):
-    # face_class = volmdlr.faces3d.SphericalFace3D
+    face_class = 'SphericalFace3D'
     """
     :param frame: Sphere's frame to position it
     :type frame: volmdlr.Frame3D
@@ -999,7 +1040,7 @@ class SphericalSurface3D(Surface3D):
         return volmdlr.volmdlr.Point2D((theta, phi))
 
 class RuledSurface3D(Surface3D):
-    # face_class = CylindricalFace3D
+    face_class = 'RuledFace3D'
     """
     :param frame: frame.w is axis, frame.u is theta=0 frame.v theta=pi/2
     :type frame: volmdlr.Frame3D
@@ -1273,39 +1314,42 @@ class Face3D(volmdlr.core.Primitive3D):
         contours = []
         contours.append(object_dict[int(arguments[1][0][1:])])
 
-        if object_dict[int(arguments[2])].__class__ is Plane3D:
-            return PlaneFace3D.from_contours3d(contours,
-                                               name=arguments[0][1:-1])
+        # Detecting inner and outer contours
+        name = arguments[0][1:-1]
+        surface = object_dict[int(arguments[2])]
+        # surface_class_name = surface.__class__.__name__
 
-        elif object_dict[int(arguments[2])].__class__ is CylindricalSurface3D:
-            return CylindricalFace3D.from_contour3d(contours, object_dict[
-                int(arguments[2])], name=arguments[0][1:-1])
+        if hasattr(surface, 'face_from_contours3d'):
+            print(contours)
+            if (len(contours) == 1) and isinstance(contours[0], volmdlr.Point3D):
+                return surface
+            return surface.cut_by_contours3d(contours)
 
-        elif object_dict[int(arguments[2])].__class__ is volmdlr.primitives3D.BSplineExtrusion:
-            return BSplineFace3D(contours, object_dict[int(arguments[2])],
-                                 name=arguments[0][1:-1])
-
-        elif object_dict[int(arguments[2])].__class__ is volmdlr.faces.BSplineSurface3D:
-            # print(object_dict[int(arguments[2])])
-            return BSplineFace3D(contours, object_dict[int(arguments[2])],
-                                 name=arguments[0][1:-1])
-
-        elif object_dict[int(arguments[2])].__class__ is volmdlr.faces.ToroidalSurface3D:
-            return ToroidalFace3D.face_from_contours3d(contours, object_dict[
-                int(arguments[2])], name=arguments[0][1:-1])
-
-        elif object_dict[int(arguments[2])].__class__ is volmdlr.faces.ConicalSurface3D:
-            return ConicalFace3D.face_from_contours3d(contours,
-                                                object_dict[int(arguments[2])],
-                                                name=arguments[0][1:-1])
-
-        elif object_dict[int(arguments[2])].__class__ is SphericalSurface3D:
-            return SphericalFace3D.from_contour3d(contours, object_dict[
-                int(arguments[2])], name=arguments[0][1:-1])
+        # if surface_class_name == 'Plane3D':
+        #     return PlaneFace3D.from_contours3d(contours,
+        #                                        name=name)
+        #
+        # elif surface_class_name == 'CylindricalSurface3D':
+        #     return CylindricalFace3D.from_contours3d(contours, surface, name=name)
+        #
+        # elif surface_class_name == 'BSplineExtrusion':
+        #     return BSplineFace3D(contours, surface, name=name)
+        #
+        # elif surface_class_name == 'BSplineSurface3D':
+        #     return BSplineFace3D(contours, surface, name=name)
+        #
+        # elif surface_class_name == 'ToroidalSurface3D':
+        #     return ToroidalFace3D.from_contours3d(contours, surface, name=name)
+        #
+        # elif surface_class_name == 'ConicalSurface3D':
+        #     return ConicalFace3D.from_contours3d(contours, surface, name=name)
+        #
+        # elif surface_class_name == 'SphericalSurface3D':
+        #     return SphericalFace3D.from_contour3d(contours, surface, name=name)
 
         else:
             print('arguments', arguments)
-            raise NotImplementedError(object_dict[int(arguments[2])])
+            raise NotImplementedError(surface)
 
     def delete_double(self, Le):
         Ls = []
@@ -1514,42 +1558,6 @@ class PlaneFace3D(Face3D):
                 polygon_points = polygon_points[:-1]
             polygon2D = volmdlr.Polygon2D(polygon_points)
         return repaired_points, polygon2D
-
-    @classmethod
-    def from_contours3d(cls,
-                        outer_contour3d: volmdlr.wires.Contour3D,
-                        inner_contours3d: List[volmdlr.wires.Contour3D]=None,
-                        name: str = ''):
-        """
-        :param outer_contour3d: The face's contour3D
-        :param inner_contours3d: A list of the face's inner contours3D
-        """
-        if outer_contour3d.__class__ == volmdlr.wires.Circle3D:
-            u = outer_contour3d.normal.deterministic_unit_normal_vector()
-            v = outer_contour3d.normal.cross(u)
-            plane3d = Plane3D(frame=volmdlr.Frame3D(outer_contour3d.center,
-                                            u, v,
-                                            outer_contour3d.normal))
-        else:
-            ocl = outer_contour3d.length()
-
-            points = [outer_contour3d.point_at_abscissa(i*ocl/3.) for i in range(3)]
-            plane3d = Plane3D.from_3_points(*points)
-
-        outer_contour2d = plane3d.contour3d_to_2d(outer_contour3d)
-
-        inner_contours2d = []
-        if inner_contours3d is not None:
-            for contour in inner_contours3d:
-                inner_contours2d.append(contour.to_2d(plane3d.frame.origin,
-                                                      plane3d.frame.u,
-                                                      plane3d.frame.v,
-                                                      ))
-
-        return cls(plane3d=plane3d,
-                   surface2d=Surface2D(outer_contour=outer_contour2d,
-                                       inner_contours=inner_contours2d),
-                   name=name)
 
 
     def average_center_point(self):
@@ -1842,7 +1850,7 @@ class CylindricalFace3D(Face3D):
                         name=name)
 
     @classmethod
-    def from_contour3d(cls, contours3d, cylindricalsurface3d, name=''):
+    def from_contours3d(cls, contours3d, cylindricalsurface3d, name=''):
         """
         :param contours3d: The cylinder's contour3D
         :type contours3d: Contour3D
@@ -1855,16 +1863,16 @@ class CylindricalFace3D(Face3D):
 
         frame = cylindricalsurface3d.frame
         radius = cylindricalsurface3d.radius
-        size = len(contours3d[0].edges)
+        size = len(contours3d[0].primitives)
 
-        if contours3d[0].edges[0].__class__ is volmdlr.LineSegment3D and \
-                contours3d[0].edges[1].__class__ is Arc3D:
-            return CylindricalFace3D.from_arc3d(contours3d[0].edges[0],
-                                                contours3d[0].edges[1],
+        if contours3d[0].primitives[0].__class__ is volmdlr.edges.LineSegment3D and \
+                contours3d[0].primitives[1].__class__ is volmdlr.edges.Arc3D:
+            return CylindricalFace3D.from_arc3d(contours3d[0].primitives[0],
+                                                contours3d[0].primitives[1],
                                                 cylindricalsurface3d)
 
-        if contours3d[0].edges[0].__class__ is Arc3D and contours3d[0].edges[
-            2].__class__ is Arc3D and size <= 4:
+        if contours3d[0].edges[0].__class__ is volmdlr.edges.Arc3D and contours3d[0].edges[
+            2].__class__ is volmdlr.edges.Arc3D and size <= 4:
 
             arc1, arc2 = contours3d[0].edges[0], contours3d[0].edges[2]
             c1, c2 = frame.new_coordinates(arc1.center), frame.new_coordinates(
@@ -1876,7 +1884,7 @@ class CylindricalFace3D(Face3D):
                 arc1.setup_arc(arc1.start, arc1.interior, arc1.end,
                                -arc1.normal)
             start1, end1 = arc1.start, arc1.end
-            theta1_1, theta1_2 = posangle_arc(start1, end1, radius, frame)
+            theta1_1, theta1_2 = volmdlr.posangle_arc(start1, end1, radius, frame)
             if not (
             math.isclose(arc1.angle, abs(theta1_1 - theta1_2), abs_tol=1e-4)):
                 if math.isclose(theta1_1, 0, abs_tol=1e-4):
@@ -1892,7 +1900,7 @@ class CylindricalFace3D(Face3D):
                     print('theta1_1, theta1_2', theta1_1, theta1_2)
                     raise NotImplementedError
 
-            offset1, angle1 = offset_angle(arc1.is_trigo, theta1_1, theta1_2)
+            offset1, angle1 = volmdlr.offset_angle(arc1.is_trigo, theta1_1, theta1_2)
             pt1, pt2, pt3, pt4 = volmdlr.Point2D((offset1, hmin)), volmdlr.Point2D(
                 (offset1, hmax)), volmdlr.Point2D((offset1 + angle1, hmax)), volmdlr.Point2D(
                 (offset1 + angle1, hmin))
@@ -1940,11 +1948,11 @@ class CylindricalFace3D(Face3D):
                 # Using it to put arc.start at the same height
             point13d = point12d.to_3d(center, frame.u, frame.v)
             if arc.start.__class__ is volmdlr.Point2D:
-                u_g2d = Vector2D((arc.start - arc.center).vector)
+                u_g2d = volmdlr.Vector2D((arc.start - arc.center).vector)
                 u = u_g2d.to_3d(center, frame.u, frame.v)
                 u.normalize()
             else:
-                u = Vector3D((point13d - center).vector)
+                u = point13d - center
                 u.normalize()
             v = normal.cross(u)
             v.normalize()
@@ -1953,7 +1961,7 @@ class CylindricalFace3D(Face3D):
             if point_last.__class__ is volmdlr.Point3D:
                 point_last = point_last.to_2d(center, u, v)
 
-            x, y = point_last.vector[0], point_last.vector[1]
+            x, y = point_last.x, point_last.y
 
             theta = math.atan2(y, x)
             if theta < 0 or math.isclose(theta, 0, abs_tol=1e-9):
@@ -1966,17 +1974,18 @@ class CylindricalFace3D(Face3D):
             frame_adapt = volmdlr.Frame3D(center, u, v, normal)
 
         cylindersurface3d = CylindricalSurface3D(frame_adapt, radius)
-        segbh = volmdlr.LineSegment2D(volmdlr.Point2D((offset, 0)),
-                              volmdlr.Point2D((offset, lineseg.Length())))
-        circlestart = volmdlr.LineSegment2D(segbh.points[1],
-                                    segbh.points[1] + volmdlr.Point2D((theta, 0)))
-        seghb = volmdlr.LineSegment2D(circlestart.points[1],
-                              circlestart.points[1] - segbh.points[1] +
-                              segbh.points[0])
-        circlend = volmdlr.LineSegment2D(seghb.points[1], segbh.points[0])
+        segbh = volmdlr.edges.LineSegment2D(volmdlr.Point2D(offset, 0),
+                              volmdlr.Point2D(offset, lineseg.length()))
+        circlestart = volmdlr.edges.LineSegment2D(segbh.end,
+                                    segbh.end + volmdlr.Point2D(theta, 0))
+        seghb = volmdlr.edges.LineSegment2D(circlestart.end,
+                              circlestart.end - segbh.end +
+                              segbh.start)
+        circlend = volmdlr.edges.LineSegment2D(seghb.end, segbh.start)
 
         edges = [segbh, circlestart, seghb, circlend]
-        return cls(cylindersurface3d, volmdlr.Contour2D(edges), [], name='')
+        return cls(cylindersurface3d,
+                   Surface2D(volmdlr.wires.Contour2D(edges), []), name='')
 
     def contours3d_to2d(contours3d, cylindricalsurface3d):
         frame = cylindricalsurface3d.frame
@@ -1986,7 +1995,7 @@ class CylindricalFace3D(Face3D):
         primitives, start_end, all_points = [], [], []
         for edge in contours3d[0].edges:
             new_points = [frame.new_coordinates(pt) for pt in edge.points]
-            if edge.__class__ is Arc3D:
+            if edge.__class__ is volmdlr.edges.Arc3D:
                 if edge.normal == n or edge.normal == -n:
                     start2d, end2d = CylindricalFace3D.points3d_to2d(
                         new_points, radius)
@@ -2095,7 +2104,7 @@ class CylindricalFace3D(Face3D):
                 if math.isclose(start, end, abs_tol=5e-2):
                     intersect = min(start, end)
                     if math.isclose(intersect, math.pi, abs_tol=5e-2):
-                        points_sing = check_singularity(all_points)
+                        points_sing = volmdlr.check_singularity(all_points)
                         pt0, pt2pi = 0, 0
                         for pt in points_sing:
                             if math.isclose(pt.vector[0], 0, abs_tol=1e-2):
@@ -2117,9 +2126,9 @@ class CylindricalFace3D(Face3D):
                                                                     volmdlr.TWO_PI,
                                                                     abs_tol=1e-6) or (
                             not check1 or not check2):
-                        all_points = check_singularity(all_points)
+                        all_points = volmdlr.check_singularity(all_points)
 
-                        points_cleaned = delete_double_point(all_points)
+                        points_cleaned = volmdlr.delete_double_point(all_points)
                         all_points = [pt.copy() for pt in points_cleaned]
                         all_points.sort(key=lambda pt: pt[0])
                         d1, d2 = (all_points[0] - all_points[-1]).Norm(), (
@@ -2160,11 +2169,11 @@ class CylindricalFace3D(Face3D):
                                 else:
                                     points.extend(prim.points)
                                     continue
-                        points_cleaned = delete_double_point(points)
+                        points_cleaned = volmdlr.delete_double_point(points)
                         all_points = Face3D.range_trigo(points_cleaned)
                     solve = True
                 else:
-                    points_cleaned = delete_double_point(all_points)
+                    points_cleaned = volmdlr.delete_double_point(all_points)
                     all_points = [pt.copy() for pt in points_cleaned]
                     all_points.sort(key=lambda pt: pt[0])
                     d1, d2 = (all_points[0] - all_points[-1]).Norm(), (
@@ -2174,7 +2183,7 @@ class CylindricalFace3D(Face3D):
                         all_points[-1] = all_points[-2].copy()
                         all_points[-2] = last
         else:
-            points_cleaned = delete_double_point(all_points)
+            points_cleaned = volmdlr.delete_double_point(all_points)
             all_points = [pt.copy() for pt in points_cleaned]
             all_points.sort(key=lambda pt: pt[0])
             d1, d2 = (all_points[0] - all_points[-1]).Norm(), (
@@ -2221,7 +2230,7 @@ class CylindricalFace3D(Face3D):
                             points.extend(prim.points)
                             continue
                     solve = True
-                    points_cleaned = delete_double_point(points)
+                    points_cleaned = volmdlr.delete_double_point(points)
                     all_points = Face3D.range_trigo(points_cleaned)
                     primitives = Face3D.create_primitives(all_points)
 
@@ -2229,7 +2238,7 @@ class CylindricalFace3D(Face3D):
         return contour2d
 
     def range_closest(list_point, radius, frame):
-        points_set = delete_double_point(list_point)
+        points_set = volmdlr.delete_double_point(list_point)
         points_set3D = CylindricalFace3D.points2d_to3d(None, [points_set],
                                                        radius, frame)
 

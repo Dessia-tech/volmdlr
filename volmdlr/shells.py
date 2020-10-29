@@ -353,7 +353,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         if len(intersections_points + shell1_points_outside_shell2) == 0:
             return 0
-        bbox = BoundingBox.from_points(
+        bbox = volmdlr.BoundingBox.from_points(
             intersections_points + shell1_points_outside_shell2)
         return bbox.volume()
 

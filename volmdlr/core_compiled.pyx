@@ -882,10 +882,10 @@ class Vector3D(Vector):
     def from_step(cls, arguments, object_dict):
         if type(arguments[1]) is int:
         # VECTOR
-            return cls(object_dict[arguments[1]], arguments[0][1:-1])
+            return cls(*object_dict[arguments[1]], arguments[0][1:-1])
         else:
         # DIRECTION
-            return cls([float(i)/1000 for i in arguments[1][1:-1].split(",")],
+            return cls(*[float(i)/1000 for i in arguments[1][1:-1].split(",")],
                         arguments[0][1:-1])
 
     def plot(self, ax=None, starting_point=None, color=''):
@@ -1558,7 +1558,7 @@ class Frame3D(Basis3D):
         if u is None or v is None:
             w = None
         else:
-            w = u.Cross(v)
+            w = u.cross(v)
         return cls(origin, u, v, w, arguments[0][1:-1])
 
 

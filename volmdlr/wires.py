@@ -1143,7 +1143,7 @@ class Contour3D(Wire3D):
             # print(arguments[1])
             edges.append(object_dict[int(edge[1:])])
 
-        return cls(edges, point_inside_contour=None, name=arguments[0][1:-1])
+        return cls(edges, name=arguments[0][1:-1])
 
     def clean_points(self):
         """
@@ -1411,8 +1411,7 @@ class Circle3D(Contour3D):
             normal = object_dict[arguments[1]].v  ### ou w
             other_vec = None
         normal.normalize()
-
-        return cls(center, radius, normal, arguments[0][1:-1], other_vec)
+        return cls.from_center_normal(center, normal, radius, arguments[0][1:-1])
 
     def _bounding_box(self):
         """
@@ -1430,6 +1429,15 @@ class Circle3D(Contour3D):
         z = x.cross(y)
         plane3d = volmdlr.faces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
         return Circle2D(plane3d.point3d_to_2d(self.center), self.radius)
+
+    @classmethod
+    def from_center_normal(cls, center: volmdlr.Point3D,
+                           normal: volmdlr.Vector3D,
+                           radius: float,
+                           name: str = ''):
+        u = normal.deterministic_unit_normal_vector()
+        v = normal.cross(u)
+        return cls(volmdlr.Frame3D(center, u, v, normal), radius, name)
 
     @classmethod
     def from_3_points(cls, point1, point2, point3):

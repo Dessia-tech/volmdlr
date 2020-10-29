@@ -287,12 +287,12 @@ def posangle_arc(start, end, radius, frame=None):
     if frame is None:
         p1_new, p2_new = start, end
     else:
-        p1_new, p2_new = frame.NewCoordinates(start), frame.NewCoordinates(end)
+        p1_new, p2_new = frame.new_coordinates(start), frame.new_coordinates(end)
     # Angle pour le p1
-    u1, u2 = p1_new.vector[0] / radius, p1_new.vector[1] / radius
+    u1, u2 = p1_new.x / radius, p1_new.y / radius
     theta1 = sin_cos_angle(u1, u2)
     # Angle pour le p2
-    u3, u4 = p2_new.vector[0] / radius, p2_new.vector[1] / radius
+    u3, u4 = p2_new.x / radius, p2_new.y / radius
     theta2 = sin_cos_angle(u3, u4)
 
     if math.isclose(theta1, theta2, abs_tol=1e-6):
@@ -1017,7 +1017,7 @@ class BoundingBox(dc.DessiaObject):
                         and a > 0 and a < 1 and b > 0 and b < 1:
                     break
             edge_intersection_point2 = Point2D(
-                frame.NewCoordinates(edge_intersection_point2))
+                frame.new_coordinates(edge_intersection_point2))
             offset_indice, offset, indice1, indice2 = vertex_to_3d_dict[
                 face_point2]
             disordered_coordinate = [

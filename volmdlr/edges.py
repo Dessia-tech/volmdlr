@@ -26,49 +26,52 @@ class Edge(dc.DessiaObject):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
-        if object_dict[arguments[3]].__class__ is Line3D:
+        if object_dict[arguments[3]].__class__.__name__ is 'Line3D':
             return LineSegment3D(object_dict[arguments[1]],
                                  object_dict[arguments[2]], arguments[0][1:-1])
 
-        elif object_dict[arguments[3]].__class__ is volmdlr.primitives3D.Circle3D:
+        elif object_dict[arguments[3]].__class__.__name__ is 'Circle3D':
             # We supposed that STEP file is reading on trigo way
-            center = object_dict[arguments[3]].center
-            normal = object_dict[arguments[3]].normal
-            normal.normalize()
-            radius = object_dict[arguments[3]].radius
+            circle = object_dict[arguments[3]]
+            # center = object_dict[arguments[3]].center
+            # normal = object_dict[arguments[3]].normal
+            # normal.normalize()
+            # radius = object_dict[arguments[3]].radius
             p1 = object_dict[arguments[1]]
             p2 = object_dict[arguments[2]]
-            other_vec = object_dict[arguments[3]].other_vec
-            if other_vec is None:
-                other_vec = p1 - center
-            other_vec.normalize()
-            frame = volmdlr.core.Frame3D(center, other_vec, normal.cross(other_vec), normal)
+            # other_vec = object_dict[arguments[3]].other_vec
+
+            # if other_vec is None:
+            #     other_vec = p1 - center
+            # other_vec.normalize()
+            # frame = volmdlr.Frame3D(center, other_vec, normal.cross(other_vec), normal)
             if p1 == p2:
                 angle = math.pi
             else:
-                theta1, theta2 = volmdlr.core.posangle_arc(p1, p2, radius, frame)
+                theta1, theta2 = volmdlr.core.posangle_arc(p1, p2,
+                                                           circle.radius,
+                                                           circle.frame)
                 if theta1 > theta2:  # sens trigo
                     angle = math.pi + (theta1 + theta2) / 2
                 else:
                     angle = (theta1 + theta2) / 2
-            p_3 = volmdlr.core.Point3D(radius * math.cos(angle),
-                                       radius * math.sin(angle),
+            p_3 = volmdlr.Point3D(circle.radius * math.cos(angle),
+                                       circle.radius * math.sin(angle),
                                        0)
-            p3 = frame.OldCoordinates(p_3)
+            p3 = circle.frame.old_coordinates(p_3)
             if p1 == p3 or p2 == p3:
-                p_3 = volmdlr.core.Point3D(radius * math.cos(0), radius * math.sin(0), 0)
-                p3 = frame.OldCoordinates(p_3)
-            arc = volmdlr.primitives3D.Arc3D(p1, p3, p2, normal, arguments[0][1:-1], other_vec)
+                p_3 = volmdlr.Point3D(circle.radius * math.cos(0), circle.radius * math.sin(0), 0)
+                p3 = circle.frame.old_coordinates(p_3)
+            arc = volmdlr.edges.Arc3D(p1, p3, p2, name=arguments[0][1:-1])
             if math.isclose(arc.radius, 0, abs_tol=1e-9):
                 if p1 == p2:
                     p_3 = volmdlr.Point3D(
-                        (radius * math.cos(0), radius * math.sin(0), 0))
-                    p3 = frame.OldCoordinates(p_3)
-                    arc = volmdlr.primitives3D.Arc3D(p1, p3, p2, normal, arguments[0][1:-1],
-                                other_vec)
+                        (circle.radius * math.cos(0), circle.radius * math.sin(0), 0))
+                    p3 = circle.frame.old_coordinates(p_3)
+                    arc = volmdlr.edges.Arc3D(p1, p3, p2, name=arguments[0][1:-1])
             return arc
 
-        elif object_dict[arguments[3]].__class__ is volmdlr.primitives3D.Ellipse3D:
+        elif object_dict[arguments[3]].__class__ is volmdlr.wires.Ellipse3D:
             majorax = object_dict[arguments[3]].major_axis
             minorax = object_dict[arguments[3]].minor_axis
             center = object_dict[arguments[3]].center
@@ -86,7 +89,7 @@ class Edge(dc.DessiaObject):
                 angle = 5 * math.pi / 4
                 xtra = volmdlr.Point3D((majorax * math.cos(math.pi / 2),
                                 minorax * math.sin(math.pi / 2), 0))
-                extra = frame.OldCoordinates(xtra)
+                extra = frame.old_coordinates(xtra)
             else:
                 extra = None
                 ## Positionnement des points dans leur frame
@@ -106,21 +109,20 @@ class Edge(dc.DessiaObject):
 
             p_3 = volmdlr.Point3D(
                 (majorax * math.cos(angle), minorax * math.sin(angle), 0))
-            p3 = frame.OldCoordinates(p_3)
+            p3 = frame.old_coordinates(p_3)
 
             arcellipse = ArcEllipse3D(p1, p3, p2, center, majordir, normal,
                                       arguments[0][1:-1], extra)
 
             return arcellipse
 
-        elif object_dict[arguments[3]].__class__ is volmdlr.primitives3D.BSplineCurve3D:
+        elif object_dict[arguments[3]].__class__ is volmdlr.edges.BSplineCurve3D:
             # print(object_dict[arguments[1]], object_dict[arguments[2]])
             # BSplineCurve3D à couper à gauche et à droite avec les points ci dessus ?
             return object_dict[arguments[3]]
 
         else:
-            print(object_dict[arguments[3]])
-            raise NotImplementedError
+            raise NotImplementedError('Unsupported: {}'.format(object_dict[arguments[3]]))
 
 class Line(dc.DessiaObject):
     """
@@ -302,7 +304,7 @@ class Line2D(Line):
             segments_distance = abs(new_C[1] - new_A[1])
             r = segments_distance / 2
             new_circle_center = volmdlr.Point2D((0, npy.sign(new_C[1] - new_A[1]) * r))
-            circle_center = new_basis.OldCoordinates(new_circle_center)
+            circle_center = new_basis.old_coordinates(new_circle_center)
             circle = volmdlr.wires.Circle2D(circle_center, r)
 
             return circle, None
@@ -317,8 +319,8 @@ class Line2D(Line):
             r = abs(new_pt_K[0])
             new_circle_center1 = volmdlr.Point2D((0, r))
             new_circle_center2 = volmdlr.Point2D((0, -r))
-            circle_center1 = new_basis.OldCoordinates(new_circle_center1)
-            circle_center2 = new_basis.OldCoordinates(new_circle_center2)
+            circle_center1 = new_basis.old_coordinates(new_circle_center1)
+            circle_center2 = new_basis.old_coordinates(new_circle_center2)
             circle1 = volmdlr.wires.Circle2D(circle_center1, r)
             circle2 = volmdlr.wires.Circle2D(circle_center2, r)
 
@@ -333,7 +335,7 @@ class Line2D(Line):
             line_AB = Line2D(volmdlr.Point2D(new_A), volmdlr.Point2D(new_B))
             line_CD = Line2D(volmdlr.Point2D(new_C), volmdlr.Point2D(new_D))
             new_pt_K = volmdlr.Point2D.line_intersection(line_AB, line_CD)
-            pt_K = volmdlr.Point2D(new_basis.OldCoordinates(new_pt_K))
+            pt_K = volmdlr.Point2D(new_basis.old_coordinates(new_pt_K))
 
             if pt_K == I:
                 return None, None
@@ -375,8 +377,8 @@ class Line2D(Line):
             new_circle_center1 = volmdlr.Point2D(0, -r1)
             new_circle_center2 = volmdlr.Point2D(0, r2)
 
-            circle_center1 = new_basis2.OldCoordinates(new_circle_center1)
-            circle_center2 = new_basis2.OldCoordinates(new_circle_center2)
+            circle_center1 = new_basis2.old_coordinates(new_circle_center1)
+            circle_center2 = new_basis2.old_coordinates(new_circle_center2)
 
             if new_basis.NewCoordinates(circle_center1)[1] > 0:
                 circle1 = volmdlr.wires.Circle2D(circle_center1, r1)
@@ -596,9 +598,9 @@ class LineSegment2D(LineSegment):
         if side == 'old':
             if copy:
                 return LineSegment2D(
-                    *[frame.OldCoordinates(p) for p in self.points])
+                    *[frame.old_coordinates(p) for p in self.points])
             else:
-                self.points = [frame.OldCoordinates(p) for p in self.points]
+                self.points = [frame.old_coordinates(p) for p in self.points]
         if side == 'new':
             if copy:
                 return LineSegment2D(
@@ -1062,7 +1064,7 @@ class ArcEllipse2D(Edge):
 
         global_points = []
         for pt in tessellation_points_2D:
-            global_points.append(frame2d.OldCoordinates(pt))
+            global_points.append(frame2d.old_coordinates(pt))
 
         return global_points
 
@@ -1209,10 +1211,10 @@ class Line3D(Line):
         """
         if side == 'old':
             if copy:
-                return Line3D(*[frame.OldCoordinates(p) for p in self.points])
+                return Line3D(*[frame.old_coordinates(p) for p in self.points])
             else:
                 for p in self.points:
-                    self.points = [frame.OldCoordinates(p) for p in
+                    self.points = [frame.old_coordinates(p) for p in
                                    self.points]
         if side == 'new':
             if copy:
@@ -1460,7 +1462,7 @@ class LineSegment3D(LineSegment):
         if side == 'old':
             if copy:
                 return LineSegment3D(
-                    *[frame.OldCoordinates(p) for p in self.points])
+                    *[frame.old_coordinates(p) for p in self.points])
             else:
                 Edge.frame_mapping(self, frame, side, copy=False)
                 self.bounding_box = self._bounding_box()
@@ -2141,9 +2143,9 @@ class Arc3D(Edge):
         side = 'old' or 'new'
         """
         if side == 'old':
-            new_start = frame.OldCoordinates(self.start.copy())
-            new_interior = frame.OldCoordinates(self.interior.copy())
-            new_end = frame.OldCoordinates(self.end.copy())
+            new_start = frame.old_coordinates(self.start.copy())
+            new_interior = frame.old_coordinates(self.interior.copy())
+            new_end = frame.old_coordinates(self.end.copy())
             if copy:
                 return Arc3D(new_start, new_interior, new_end, normal=None,
                              name=self.name)
@@ -2479,7 +2481,7 @@ class ArcEllipse3D(Edge):
 
         global_points = []
         for pt in tessellation_points_3D:
-            global_points.append(frame3d.OldCoordinates(pt))
+            global_points.append(frame3d.old_coordinates(pt))
 
         return global_points
 
