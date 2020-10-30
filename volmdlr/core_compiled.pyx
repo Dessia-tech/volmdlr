@@ -236,11 +236,23 @@ class Arrow3D(FancyArrowPatch):
         FancyArrowPatch.__init__(self, (0,0), (0,0), *args, **kwargs)
         self._verts3d = xs, ys, zs
 
-    def draw(self, renderer):
+    def plot2d(self, renderer):
         xs3d, ys3d, zs3d = self._verts3d
         xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, renderer.M)
         self.set_positions((xs[0],ys[0]),(xs[1],ys[1]))
         FancyArrowPatch.draw(self, renderer)
+
+    def plot(self, ax=None, color='b'):
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+
+        points = [self.start, self.end]
+        x = [p.x for p in points]
+        y = [p.y for p in points]
+        z = [p.z for p in points]
+        ax.plot(x, y, z, 'o-k')
+        return ax
 
 class Vector(DessiaObject):
     """
@@ -704,7 +716,7 @@ class Vector3D(Vector):
         return CVector3Dnorm(self.x, self.y, self.z)
 
 
-    def normalize(self) -> 'Vector3D':
+    def normalize(self) -> None:
         """
         normalize the vector modifying its coordinates
         """
@@ -1128,6 +1140,8 @@ class Basis(DessiaObject):
     def copy(self):
         return self.__class__(*self.vectors)
 
+
+
 class Basis2D(Basis):
     """
     Defines a 2D basis
@@ -1140,7 +1154,7 @@ class Basis2D(Basis):
         self.name = name
 
     def __neg__(self):
-        Pinv = self.InverseTransferMatrix()
+        Pinv = self.Inversetransfer_matrix()
         return Basis2D(Vector3D(Pinv[:, 0]),
                        Vector3D(Pinv[:, 1]))
 
@@ -1157,11 +1171,11 @@ class Basis2D(Basis):
         return Frame2D(origin, self.u, self.v)
 
 
-    def TransferMatrix(self):
+    def transfer_matrix(self):
         return npy.array([[self.u[0], self.v[0]],
                           [self.u[1], self.v[1]]])
 
-    def InverseTransferMatrix(self):
+    def Inversetransfer_matrix(self):
         det = self.u[0]*self.v[1] - self.v[0]*self.u[1]
         if not math.isclose(det, 0, abs_tol=1e-10):
             return 1/det * npy.array([[self.v[1], -self.v[0]],
@@ -1170,12 +1184,12 @@ class Basis2D(Basis):
             raise ZeroDivisionError
 
     def new_coordinates(self, vector):
-        matrix = self.InverseTransferMatrix()
+        matrix = self.Inversetransfer_matrix()
         return Point2D((matrix[0][0]*vector.x + matrix[0][1]*vector.y,
                          matrix[1][0]*vector.x + matrix[1][1]*vector.y))
 
     def old_coordinates(self, vector):
-        matrix = self.TransferMatrix()
+        matrix = self.transfer_matrix()
         return Point2D((matrix[0][0]*vector.x + matrix[0][1]*vector.y,
                          matrix[1][0]*vector.x + matrix[1][1]*vector.y))
 
@@ -1189,8 +1203,16 @@ class Basis2D(Basis):
         self.u = new_u
         self.v = new_v
 
-    def Copy(self):
+    def copy(self):
         return Basis2D(self.u, self.v)
+
+    def normalize(self):
+        """
+        normalize the basis modifying its coordinates in place
+        """
+        self.u.normalize()
+        self.v.normalize()
+        
 
 XY = Basis2D(X2D, Y2D)
 
@@ -1215,21 +1237,21 @@ class Basis3D(Basis):
         return hash(self.u) + hash(self.v) + hash(self.w)
 
     def __add__(self, other_basis):
-        M = self.TransferMatrix()*other_basis.TransferMatrix()
+        M = self.transfer_matrix()*other_basis.transfer_matrix()
         return Basis3D(Vector3D((M.M11, M.M21, M.M31)),
                        Vector3D((M.M12, M.M22, M.M32)),
                        Vector3D((M.M13, M.M23, M.M33)))
 
 
     def __neg__(self):
-        M = self.InverseTransferMatrix()
+        M = self.Inversetransfer_matrix()
         return Basis3D(Vector3D((M.M11, M.M21, M.M31)),
                        Vector3D((M.M12, M.M22, M.M32)),
                        Vector3D((M.M13, M.M23, M.M33)))
 
     def __sub__(self, other_frame):
-        P1inv = other_frame.InverseTransferMatrix()
-        P2 = self.TransferMatrix()
+        P1inv = other_frame.Inversetransfer_matrix()
+        P2 = self.transfer_matrix()
         M = P1inv * P2
         return Basis3D(Vector3D((M.M11, M.M21, M.M31)),
                        Vector3D((M.M12, M.M22, M.M32)),
@@ -1319,9 +1341,9 @@ class Basis3D(Basis):
         psi, theta, phi = angles
         center = O3D
 
-        vect_u = self.u.Copy()
-        vect_v = self.v.Copy()
-        vect_w = self.w.Copy()
+        vect_u = self.u.copy()
+        vect_v = self.v.copy()
+        vect_w = self.w.copy()
 
         # rotation around w
         vect_u.rotation(center, vect_w, psi, False)
@@ -1341,25 +1363,32 @@ class Basis3D(Basis):
         self.v = vect_v
         self.w = vect_w
 
-    def TransferMatrix(self):
+    def transfer_matrix(self):
         return Matrix33(self.u.x, self.v.x, self.w.x,
                         self.u.y, self.v.y, self.w.y,
                         self.u.z, self.v.z, self.w.z)
 
-    def InverseTransferMatrix(self):
-        return self.TransferMatrix().inverse()
+    def inverse_transfer_matrix(self):
+        return self.transfer_matrix().inverse()
 
     def new_coordinates(self, vector):
-        matrix = self.InverseTransferMatrix()
+        matrix = self.inverse_transfer_matrix()
         return matrix.vector_multiplication(vector)
 
     def old_coordinates(self, point):
-        matrix = self.TransferMatrix()
+        matrix = self.transfer_matrix()
         return matrix.vector_multiplication(point)
 
     def copy(self):
         return Basis3D(self.u, self.v, self.w)
 
+    def normalize(self):
+        """
+        normalize the basis modifying its coordinates in place
+        """
+        self.u.normalize()
+        self.v.normalize()
+        self.w.normalize()
 
 class Frame2D(Basis2D):
     """
@@ -1376,7 +1405,7 @@ class Frame2D(Basis2D):
         return '{}: O={} U={}, V={}'.format(self.__class__.__name__, self.origin, self.u, self.v)
 
     def __neg__(self):
-        Pinv = self.InverseTransferMatrix()
+        Pinv = self.Inversetransfer_matrix()
         new_origin = Point2D(npy.dot(Pinv, self.origin))
         return Frame2D(new_origin,
                        Vector2D(Pinv[:, 0]),
@@ -1384,17 +1413,17 @@ class Frame2D(Basis2D):
 
 
     def __add__(self, other_frame):
-        P1 = self.TransferMatrix()
+        P1 = self.transfer_matrix()
         new_origin = Point2D(npy.dot(P1, other_frame.origin) + self.origin)
-        M = npy.dot(P1, other_frame.TransferMatrix())
+        M = npy.dot(P1, other_frame.transfer_matrix())
         return Frame2D(new_origin,
                        Vector2D(M[:, 0]),
                        Vector2D(M[:, 1]))
 
 
     def __sub__(self, other_frame):
-        P1inv = other_frame.InverseTransferMatrix()
-        P2 = self.TransferMatrix()
+        P1inv = other_frame.Inversetransfer_matrix()
+        P2 = self.transfer_matrix()
         new_origin = Point2D(npy.dot(P1inv, (self.origin - other_frame.origin)))
         M = npy.dot(P1inv, P2)
         return Frame2D(new_origin,
@@ -1434,9 +1463,15 @@ class Frame2D(Basis2D):
         self.v.plot(origin=self.origin, ax=ax, color='g')
         ax.axis('equal')
 
-    def Copy(self):
+    def copy(self):
         return Frame2D(self.origin, self.u, self.v)
 
+    def normalize(self):
+        """
+        normalize the basis modifying its coordinates in place
+        """
+        Basis2D.normalize(self)
+        self.origin.normalize()
 
 OXY = Frame2D(O2D, X2D, Y2D)
 
@@ -1461,7 +1496,7 @@ class Frame3D(Basis3D):
 
 
     def __neg__(self):
-        M = self.InverseTransferMatrix()
+        M = self.Inversetransfer_matrix()
         new_origin = M.vector_multiplication(self.origin)
         return Frame3D(new_origin,
                        Vector3D(M.M11, M.M21, M.M31),
@@ -1470,11 +1505,11 @@ class Frame3D(Basis3D):
 
 
     def __add__(self, other_frame):
-        P1 = self.TransferMatrix()
+        P1 = self.transfer_matrix()
         new_origin = P1.vector_multiplication(other_frame.origin) + self.origin
 
 
-        M = P1 * other_frame.TransferMatrix()
+        M = P1 * other_frame.transfer_matrix()
         return Frame3D(new_origin,
                        Vector3D(M.M11, M.M21, M.M31),
                        Vector3D(M.M12, M.M22, M.M32),
@@ -1482,8 +1517,8 @@ class Frame3D(Basis3D):
 
 
     def __sub__(self, other_frame):
-        P1inv = other_frame.InverseTransferMatrix()
-        P2 = self.TransferMatrix()
+        P1inv = other_frame.Inversetransfer_matrix()
+        P2 = self.transfer_matrix()
         new_origin = P1inv.vector_multiplication(self.origin - other_frame.origin)
         M = P1inv * P2
         return Frame3D(new_origin,
@@ -1500,7 +1535,7 @@ class Frame3D(Basis3D):
     def __hash__(self):
         return hash(self.u) + hash(self.v) + hash(self.w) + hash(self.origin)
 
-    def Basis(self):
+    def basis(self):
         return Basis3D(self.u, self.v, self.w)
 
     def new_coordinates(self, vector):
@@ -1528,6 +1563,13 @@ class Frame3D(Basis3D):
     def copy(self):
         return Frame3D(self.origin.copy(), self.u.copy(), self.v.copy(), self.w.copy())
 
+    def normalize(self):
+        """
+        normalize the basis modifying its coordinates in place
+        """
+        Basis3D.normalize(self)
+        self.origin.normalize()
+
     def plot2d(self, x=X3D, y=Y3D, ax=None, color='k'):
         if ax is None:
             fig, ax = plt.subplots()
@@ -1543,6 +1585,27 @@ class Frame3D(Basis3D):
 
         return fig, ax
 
+
+    def plot(self, ax=None, color='b'):
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+
+        x1 = [p.x for p in (self.origin, self.origin + self.u)]
+        y1 = [p.y for p in (self.origin, self.origin + self.u)]
+        z1 = [p.z for p in (self.origin, self.origin + self.u)]
+        ax.plot(x1, y1, z1, 'r')
+
+        x2 = [p.x for p in (self.origin, self.origin + self.v)]
+        y2 = [p.y for p in (self.origin, self.origin + self.v)]
+        z2 = [p.z for p in (self.origin, self.origin + self.v)]
+        ax.plot(x2, y2, z2, 'g')
+
+        x3 = [p.x for p in (self.origin, self.origin + self.w)]
+        y3 = [p.y for p in (self.origin, self.origin + self.w)]
+        z3 = [p.z for p in (self.origin, self.origin + self.w)]
+        ax.plot(x3, y3, z3, 'b')
+        return ax
 
     @classmethod
     def from_step(cls, arguments, object_dict):

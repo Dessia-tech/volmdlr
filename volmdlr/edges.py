@@ -33,18 +33,9 @@ class Edge(dc.DessiaObject):
         elif object_dict[arguments[3]].__class__.__name__ is 'Circle3D':
             # We supposed that STEP file is reading on trigo way
             circle = object_dict[arguments[3]]
-            # center = object_dict[arguments[3]].center
-            # normal = object_dict[arguments[3]].normal
-            # normal.normalize()
-            # radius = object_dict[arguments[3]].radius
             p1 = object_dict[arguments[1]]
             p2 = object_dict[arguments[2]]
-            # other_vec = object_dict[arguments[3]].other_vec
 
-            # if other_vec is None:
-            #     other_vec = p1 - center
-            # other_vec.normalize()
-            # frame = volmdlr.Frame3D(center, other_vec, normal.cross(other_vec), normal)
             if p1 == p2:
                 angle = math.pi
             else:
@@ -55,20 +46,17 @@ class Edge(dc.DessiaObject):
                     angle = math.pi + (theta1 + theta2) / 2
                 else:
                     angle = (theta1 + theta2) / 2
-            p_3 = volmdlr.Point3D(circle.radius * math.cos(angle),
-                                       circle.radius * math.sin(angle),
-                                       0)
-            p3 = circle.frame.old_coordinates(p_3)
-            if p1 == p3 or p2 == p3:
-                p_3 = volmdlr.Point3D(circle.radius * math.cos(0), circle.radius * math.sin(0), 0)
-                p3 = circle.frame.old_coordinates(p_3)
-            arc = volmdlr.edges.Arc3D(p1, p3, p2, name=arguments[0][1:-1])
-            if math.isclose(arc.radius, 0, abs_tol=1e-9):
-                if p1 == p2:
-                    p_3 = volmdlr.Point3D(
-                        (circle.radius * math.cos(0), circle.radius * math.sin(0), 0))
-                    p3 = circle.frame.old_coordinates(p_3)
-                    arc = volmdlr.edges.Arc3D(p1, p3, p2, name=arguments[0][1:-1])
+
+
+            middle_angle = theta1+0.5*angle
+            middle_point = volmdlr.Point3D(circle.radius * math.cos(middle_angle),
+                                  circle.radius * math.sin(middle_angle),
+                                  0.)
+
+            middle_point3d = circle.frame.old_coordinates(middle_point)
+
+            arc = volmdlr.edges.Arc3D(p1, middle_point3d, p2,
+                                      name=arguments[0][1:-1])
             return arc
 
         elif object_dict[arguments[3]].__class__ is volmdlr.wires.Ellipse3D:

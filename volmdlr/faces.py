@@ -86,34 +86,29 @@ class Surface3D():
     """
     Abstract class
     """
-    def face_from_contours3d(self, contours3d):
-        contours2d = []
-        max_area = 0.
+    # def face_from_contours3d(self, contours3d):
+    #     contours2d = []
+    #     max_area = 0.
+    #
+    #     for ic, contour3d in contours3d:
+    #         contour2d = self.contour3d_to_2d(contour3d)
+    #         contour_area = contour2d.Area()
+    #         if contour_area > max_area:
+    #             max_area = contour_area
+    #             outer_contour_index = ic
+    #         contours2d.append(contour2d)
+    #
+    #     outer_contour = contour2d[outer_contour_index]
+    #     del contour2d[outer_contour_index]
+    #     surface2d = (outer_contour, contours2d)
+    #
+    #     self.SURFACE_TO_FACE[self.__class__](self, surface2d)
 
-        for ic, contour3d in contours3d:
-            contour2d = self.contour3d_to_2d(contour3d)
-            contour_area = contour2d.Area()
-            if contour_area > max_area:
-                max_area = contour_area
-                outer_contour_index = ic
-            contours2d.append(contour2d)
-
-        outer_contour = contour2d[outer_contour_index]
-        del contour2d[outer_contour_index]
-        surface2d = (outer_contour, contours2d)
-
-        self.SURFACE_TO_FACE[self.__class__](self, surface2d)
-
-    def cut_by_contours3d(self,
-                          contours3d: volmdlr.wires.Contour3D,
-                          name: str = ''):
+    def face_from_contours3d(self,
+                             contours3d: volmdlr.wires.Contour3D,
+                             name: str = ''):
         """
         """
-
-        # ocl = contours3d[0].length()
-
-        # points = [contours3d[0].point_at_abscissa(i*ocl/3.) for i in range(3)]
-        # plane3d = Plane3D.from_3_points(*points)
 
         area = 0
         inner_contours2d = []
@@ -130,7 +125,7 @@ class Surface3D():
         outer_contour2d
 
         if isinstance(self.face_class , str):
-            class_ = locals()[self.face_class]
+            class_ = globals()[self.face_class]
         else:
             class_ = self.face_class
 
@@ -167,7 +162,10 @@ class Plane3D(Surface3D):
     def from_step(cls, arguments, object_dict):
         frame3d = object_dict[arguments[1]]
 
-        return cls(frame3d, arguments[0][1:-1])
+        frame3d.normalize()
+        frame = volmdlr.Frame3D(frame3d.origin,
+                                frame3d.v, frame3d.w, frame3d.u)
+        return cls(frame, arguments[0][1:-1])
 
     @classmethod
     def from_3_points(cls, point1, point2, point3):
@@ -1320,32 +1318,9 @@ class Face3D(volmdlr.core.Primitive3D):
         # surface_class_name = surface.__class__.__name__
 
         if hasattr(surface, 'face_from_contours3d'):
-            print(contours)
             if (len(contours) == 1) and isinstance(contours[0], volmdlr.Point3D):
                 return surface
-            return surface.cut_by_contours3d(contours)
-
-        # if surface_class_name == 'Plane3D':
-        #     return PlaneFace3D.from_contours3d(contours,
-        #                                        name=name)
-        #
-        # elif surface_class_name == 'CylindricalSurface3D':
-        #     return CylindricalFace3D.from_contours3d(contours, surface, name=name)
-        #
-        # elif surface_class_name == 'BSplineExtrusion':
-        #     return BSplineFace3D(contours, surface, name=name)
-        #
-        # elif surface_class_name == 'BSplineSurface3D':
-        #     return BSplineFace3D(contours, surface, name=name)
-        #
-        # elif surface_class_name == 'ToroidalSurface3D':
-        #     return ToroidalFace3D.from_contours3d(contours, surface, name=name)
-        #
-        # elif surface_class_name == 'ConicalSurface3D':
-        #     return ConicalFace3D.from_contours3d(contours, surface, name=name)
-        #
-        # elif surface_class_name == 'SphericalSurface3D':
-        #     return SphericalFace3D.from_contour3d(contours, surface, name=name)
+            return surface.face_from_contours3d(contours)
 
         else:
             print('arguments', arguments)
@@ -1892,12 +1867,6 @@ class CylindricalFace3D(Face3D):
                 elif math.isclose(theta1_2, 0, abs_tol=1e-4):
                     theta1_2 = volmdlr.TWO_PI
                 else:
-                    # if theta1_2 > theta1_1 :
-                    #     theta1_2 -= math.pi
-                    # else :
-                    #     theta1_1 -= math.pi
-                    print('arc1.angle', arc1.angle)
-                    print('theta1_1, theta1_2', theta1_1, theta1_2)
                     raise NotImplementedError
 
             offset1, angle1 = volmdlr.offset_angle(arc1.is_trigo, theta1_1, theta1_2)
@@ -3248,8 +3217,7 @@ class SphericalFace3D(Face3D):
             phi = max(pt[1] for pt in contours2d[0].tessel_points) - min(
                 pt[1] for pt in contours2d[0].tessel_points)
             points = [theta, phi]
-            # print('contours3d edges', contours3d[0].edges)
-            # raise NotImplementedError
+
 
         return cls(contours2d, sphericalsurface3d, points, name=name)
 
@@ -3281,8 +3249,3 @@ class BSplineFace3D(Face3D):
                         inner_contours2d=inner_contours2d,
                         name=name)
 
-
-SURFACE_TO_FACE = {Plane3D: PlaneFace3D,
-                   CylindricalSurface3D: CylindricalFace3D,
-                   ToroidalSurface3D: ToroidalFace3D,
-                   ConicalSurface3D: ConicalFace3D}
