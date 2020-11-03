@@ -15,6 +15,7 @@ import volmdlr.wires
 import volmdlr.faces
 import volmdlr.shells
 
+import webbrowser
 
 def step_split_arguments(function_arg):
     """
@@ -87,7 +88,6 @@ class Step:
         functions = {}
 
         for line in f:
-
             line = line.replace(" ", "")
             line = line.replace("\n", "")
 

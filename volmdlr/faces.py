@@ -57,7 +57,6 @@ class Surface2D(volmdlr.core.Primitive2D):
             rpi = inner_contour.random_point_inside()
             holes.append((rpi.x, rpi.y))
 
-
         tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
                'segments': npy.array(segments).reshape((-1, 2)),
                }
@@ -66,6 +65,8 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         t = triangle.triangulate(tri, 'p')
         triangles = t['triangles'].tolist()
+        np = t['vertices'].shape[0]
+        points = [volmdlr.Point2D(*t['vertices'][i,:]) for i in range(np)]
 
         return volmdlr.display.DisplayMesh2D(points, triangles=triangles, edges=None)
 
@@ -134,6 +135,26 @@ class Surface3D():
                                           inner_contours=inner_contours2d),
                       name=name)
 
+    def contour3d_to_2d(self, contour3d):
+        primitives2d = []
+        for primitive3d in contour3d.primitives:
+            method_name = '{}_to_2d'.format(primitive3d.__class__.__name__.lower())
+            if hasattr(self, method_name):
+                primitives2d.append(getattr(self, method_name)(primitive3d))
+            else:
+                raise NotImplementedError('Class {} does not implement {}'.format(self.__class__.__name__,
+                                                                                  method_name))
+
+        return volmdlr.wires.Contour2D(primitives2d)
+    
+    
+    def linesegment3d_to_2d(self, linesegment3d):
+        """
+        a line segment on a surface will be in any case a line in 2D?
+        """
+        return volmdlr.edges.LineSegment2D(self.point3d_to_2d(linesegment3d.start),
+                                           self.point3d_to_2d(linesegment3d.end))
+
 class Plane3D(Surface3D):
     face_class = 'PlaneFace3D'
     def __init__(self, frame: volmdlr.Frame3D, name: str = ''):
@@ -161,7 +182,6 @@ class Plane3D(Surface3D):
     @classmethod
     def from_step(cls, arguments, object_dict):
         frame3d = object_dict[arguments[1]]
-
         frame3d.normalize()
         frame = volmdlr.Frame3D(frame3d.origin,
                                 frame3d.v, frame3d.w, frame3d.u)
@@ -420,8 +440,13 @@ class CylindricalSurface3D(Surface3D):
 
     def point3d_to_2d(self, point3d):
         u1, u2 = point3d.x / self.radius, point3d.y / self.radius
-        theta = volmdlr.sin_cos_angle(u1, u2)
+        theta = volmdlr.core.sin_cos_angle(u1, u2)
         return volmdlr.Point2D(theta, point3d.z)
+
+    def arc3d_to_2d(self, arc3d):
+        start = self.point3d_to_2d(arc3d.start)
+        end = self.point3d_to_2d(arc3d.end)
+        return volmdlr.edges.LineSegment2D(start, end)
 
     @classmethod
     def from_step(cls, arguments, object_dict):

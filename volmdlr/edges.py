@@ -26,11 +26,11 @@ class Edge(dc.DessiaObject):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
-        if object_dict[arguments[3]].__class__.__name__ is 'Line3D':
+        if object_dict[arguments[3]].__class__.__name__ == 'Line3D':
             return LineSegment3D(object_dict[arguments[1]],
                                  object_dict[arguments[2]], arguments[0][1:-1])
 
-        elif object_dict[arguments[3]].__class__.__name__ is 'Circle3D':
+        elif object_dict[arguments[3]].__class__.__name__ == 'Circle3D':
             # We supposed that STEP file is reading on trigo way
             circle = object_dict[arguments[3]]
             p1 = object_dict[arguments[1]]

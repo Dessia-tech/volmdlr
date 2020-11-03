@@ -358,10 +358,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         return bbox.volume()
 
     def triangulation(self):
-        positions = []
-        indices = []
 
-        nb_points = 0
         mesh = volmdlr.display.DisplayMesh3D([], [])
         for i, face in enumerate(self.faces):
             face_mesh = face.triangulation()

@@ -425,10 +425,6 @@ class CompositePrimitive2D(Primitive2D):
 
 
 
-
-
-
-
 class Primitive3D(dc.DessiaObject):
     def __init__(self, color=None, alpha=0.5, name=''):
         self.color = color
