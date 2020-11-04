@@ -1075,8 +1075,8 @@ class Circle2D(Contour2D):
     def plot_data(self, marker=None, color='black', stroke_width=1, opacity=1,
                   fill=None):
         return {'type': 'circle',
-                'cx': self.center.vector[0],
-                'cy': self.center.vector[1],
+                'cx': self.center.x,
+                'cy': self.center.y,
                 'r': self.radius,
                 'color': color,
                 'opacity': opacity,

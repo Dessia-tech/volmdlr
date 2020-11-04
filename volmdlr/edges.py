@@ -574,10 +574,9 @@ class LineSegment2D(LineSegment):
     def translation(self, offset, copy=True):
         if copy:
             return LineSegment2D(
-                *[p.translation(offset, copy=True) for p in self.points])
+                *[p.translation(offset, copy=True) for p in [self.start, self.end]])
         else:
-            for p in self.points:
-                p.translation(offset, copy=False)
+            self.start.translation(offset, copy=False)
 
     def frame_mapping(self, frame, side, copy=True):
         """
