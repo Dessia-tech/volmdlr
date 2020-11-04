@@ -7,6 +7,8 @@ from packaging import version
 import math
 import numpy as npy
 import scipy as scp
+from geomdl import BSpline
+from geomdl import utilities
 
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import __version__ as _mpl_version
@@ -26,18 +28,18 @@ class Edge(dc.DessiaObject):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
-        if object_dict[arguments[3]].__class__.__name__ is 'Line3D':
+        if object_dict[arguments[3]].__class__.__name__ == 'Line3D':
             return LineSegment3D(object_dict[arguments[1]],
                                  object_dict[arguments[2]], arguments[0][1:-1])
 
-        elif object_dict[arguments[3]].__class__.__name__ is 'Circle3D':
+        elif object_dict[arguments[3]].__class__.__name__ == 'Circle3D':
             # We supposed that STEP file is reading on trigo way
             circle = object_dict[arguments[3]]
             p1 = object_dict[arguments[1]]
             p2 = object_dict[arguments[2]]
 
             if p1 == p2:
-                angle = math.pi
+                return circle
             else:
                 theta1, theta2 = volmdlr.core.posangle_arc(p1, p2,
                                                            circle.radius,
@@ -48,16 +50,15 @@ class Edge(dc.DessiaObject):
                     angle = (theta1 + theta2) / 2
 
 
-            middle_angle = theta1+0.5*angle
-            middle_point = volmdlr.Point3D(circle.radius * math.cos(middle_angle),
-                                  circle.radius * math.sin(middle_angle),
-                                  0.)
+                middle_angle = theta1+0.5*angle
+                middle_point = volmdlr.Point3D(circle.radius * math.cos(middle_angle),
+                                      circle.radius * math.sin(middle_angle),
+                                      0.)
 
-            middle_point3d = circle.frame.old_coordinates(middle_point)
+                middle_point3d = circle.frame.old_coordinates(middle_point)
 
-            arc = volmdlr.edges.Arc3D(p1, middle_point3d, p2,
-                                      name=arguments[0][1:-1])
-            return arc
+                return volmdlr.edges.Arc3D(p1, middle_point3d, p2,
+                                            name=arguments[0][1:-1])
 
         elif object_dict[arguments[3]].__class__ is volmdlr.wires.Ellipse3D:
             majorax = object_dict[arguments[3]].major_axis
@@ -104,7 +105,7 @@ class Edge(dc.DessiaObject):
 
             return arcellipse
 
-        elif object_dict[arguments[3]].__class__ is volmdlr.edges.BSplineCurve3D:
+        elif object_dict[arguments[3]].__class__.__name__ == 'BSplineCurve3D':
             # print(object_dict[arguments[1]], object_dict[arguments[2]])
             # BSplineCurve3D à couper à gauche et à droite avec les points ci dessus ?
             return object_dict[arguments[3]]
@@ -1685,40 +1686,42 @@ class LineSegment3D(LineSegment):
             # Planar face
             v = axis.cross(u)
             surface = volmdlr.faces.Plane3D(volmdlr.Frame3D(p1_proj, u, v, axis))
+            r, R = sorted([d1, d2])
             if angle == volmdlr.TWO_PI:
                 # Only 2 circles as countours
-                r, R = sorted([d1, d2])
-                # v1 = axis.cross(u)
-                outer_contour3d = volmdlr.wires.Circle3D(volmdlr.Frame3D(p1_proj, u, v, axis),
-                                           R)
+                outer_contour2d = volmdlr.wires.Circle2D(volmdlr.O2D, R)
                 if not math.isclose(r, 0, abs_tol=1e-9):
-                    inner_contours3d = [volmdlr.wires.Circle3D(volmdlr.Frame3D(p1_proj, u, v, axis)
-                                                 , r)]
+                    inner_contours2d = [volmdlr.wires.Circle2D(volmdlr.O2D, r)]
                 else:
-                    inner_contours3d = []
+                    inner_contours2d = []
             else:
                 # Two arcs and lines
-                arc1_i = self.end.rotation(axis=axis,
-                                                 axis_point=axis_point,
-                                                 angle=0.5 * angle)
-                arc1_e = self.end.rotation(axis=axis,
-                                           axis_point=axis_point,
-                                           angle=angle)
-                arc2_i = self.start.rotation(axis=axis,
-                                                 axis_point=axis_point,
-                                                 angle=0.5 * angle)
-                arc2_s = self.start.rotation(axis=axis,
-                                                 axis_point=axis_point,
-                                                 angle=angle)
+                arc1_s = volmdlr.Point2D(0, r)
+                arc1_i = arc1_s.rotation(center=volmdlr.O2D, angle=0.5*angle)
+                arc1_e = arc1_s.rotation(center=volmdlr.O2D, angle=angle)
+                arc1 = Arc2D(self.end, arc1_i, arc1_e)
 
-                arc1 = Arc3D(self.end, arc1_i, arc1_e)
+                arc2_e = volmdlr.Point2D(0, R)
+                arc2_i = arc2_e.rotation(center=volmdlr.O2D, angle=0.5 * angle)
+                arc2_s = arc2_e.rotation(center=volmdlr.O2D, angle=angle)
+                arc2 = Arc2D(arc2_s, arc1_i, self.start)
+
+                line1 = LineSegment2D(arc1_e, arc2_s)
+                line2 = LineSegment2D(arc2_e, arc1_s)
+
+
+
                 arc2 = Arc3D(arc2_s, arc1_i, self.start)
                 line2 = LineSegment3D(arc1_e, arc2_s)
-                outer_contour3d = volmdlr.wires.Contour3D([self, arc1, line2, arc2])
-                inner_contours3d = []
-            return volmdlr.faces.PlaneFace3D.from_contours3d(
-                outer_contour3d=outer_contour3d,
-                inner_contours3d=inner_contours3d)
+                outer_contour2d = volmdlr.wires.Contour2D([arc1, line1,
+                                                           arc2, line2])
+                inner_contours2d = []
+            return volmdlr.faces.PlaneFace3D(surface,
+                                             volmdlr.faces.Surface2D(
+                                                 outer_contour2d,
+                                                 inner_contours2d
+                                             ))
+
 
         elif d1 != d2:
             # Conical
@@ -1736,10 +1739,10 @@ class LineSegment3D(LineSegment):
                                            0, (self.end-self.start).dot(axis))
 
 
-class BSplineCurve3D(volmdlr.core.Primitive3D):
+class BSplineCurve3D(Edge):
     def __init__(self, degree, control_points, knot_multiplicities, knots,
                  weights=None, periodic=False, name=''):
-        volmdlr.core.Primitive3D.__init__(self, basis_primitives=control_points, name=name)
+        volmdlr.core.Primitive3D.__init__(self, name=name)
         self.control_points = control_points
         self.degree = degree
         knots = volmdlr.core.standardize_knot_vector(knots)
@@ -1769,7 +1772,9 @@ class BSplineCurve3D(volmdlr.core.Primitive3D):
         curve_points = curve.evalpts
 
         self.curve = curve
-        self.points = [volmdlr.Point3D((p[0], p[1], p[2])) for p in curve_points]
+        self.points = [volmdlr.Point3D(p[0], p[1], p[2]) for p in curve_points]
+        Edge.__init__(self, start=self.points [0], end=self.points [-1])
+
 
     def length(self):
         # Approximately
@@ -1888,9 +1893,9 @@ class BSplineCurve3D(volmdlr.core.Primitive3D):
         else:
             fig = ax.figure
 
-        x = [p.vector[0] for p in self.points]
-        y = [p.vector[1] for p in self.points]
-        z = [p.vector[2] for p in self.points]
+        x = [p.x for p in self.points]
+        y = [p.y for p in self.points]
+        z = [p.z for p in self.points]
         ax.plot(x, y, z, 'o-k')
         return ax
 

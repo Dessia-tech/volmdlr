@@ -897,8 +897,11 @@ class Vector3D(Vector):
             return cls(*object_dict[arguments[1]], arguments[0][1:-1])
         else:
         # DIRECTION
-            return cls(*[float(i)/1000 for i in arguments[1][1:-1].split(",")],
+            # return cls(*[float(i)/1000 for i in arguments[1][1:-1].split(",")],
+            #             arguments[0][1:-1])
+            return cls(*[float(i) for i in arguments[1][1:-1].split(",")],
                         arguments[0][1:-1])
+
 
     def plot(self, ax=None, starting_point=None, color=''):
         if starting_point is None:
@@ -1466,12 +1469,6 @@ class Frame2D(Basis2D):
     def copy(self):
         return Frame2D(self.origin, self.u, self.v)
 
-    def normalize(self):
-        """
-        normalize the basis modifying its coordinates in place
-        """
-        Basis2D.normalize(self)
-        self.origin.normalize()
 
 OXY = Frame2D(O2D, X2D, Y2D)
 
@@ -1563,12 +1560,6 @@ class Frame3D(Basis3D):
     def copy(self):
         return Frame3D(self.origin.copy(), self.u.copy(), self.v.copy(), self.w.copy())
 
-    def normalize(self):
-        """
-        normalize the basis modifying its coordinates in place
-        """
-        Basis3D.normalize(self)
-        self.origin.normalize()
 
     def plot2d(self, x=X3D, y=Y3D, ax=None, color='k'):
         if ax is None:
@@ -1622,6 +1613,7 @@ class Frame3D(Basis3D):
             w = None
         else:
             w = u.cross(v)
+            
         return cls(origin, u, v, w, arguments[0][1:-1])
 
 

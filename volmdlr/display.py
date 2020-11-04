@@ -17,6 +17,15 @@ class DisplayMesh(dc.DessiaObject):
             edges = []
         self.edges = edges
         self.name = name
+        
+        
+    def check(self):
+        npoints = len(self.points)
+        for triangle in self.triangles:
+            if max(triangle) >= npoints:
+                return False
+        return True
+            
 
     def __add__(self, other_mesh):
         new_points = self.points[:]
@@ -28,7 +37,7 @@ class DisplayMesh(dc.DessiaObject):
                 ip += 1
                 new_points.append(point)
 
-        new_triangles = self.triangles.copy()
+        new_triangles = self.triangles[:]
         for i1, i2, i3 in other_mesh.triangles:
             p1 = other_mesh.points[i1]
             p2 = other_mesh.points[i2]

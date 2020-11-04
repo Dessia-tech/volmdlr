@@ -130,7 +130,7 @@ def clockwise_angle(vector1, vector2):
     if cross < 0:
         return inner_angle
 
-    return volmdlr.two_pi - inner_angle
+    return volmdlr.TWO_PI - inner_angle
 
 
 def vectors3d_angle(vector1, vector2):
@@ -156,12 +156,12 @@ def sin_cos_angle(u1, u2):
         if u2 >= 0:
             theta = math.acos(u1)
         else:
-            theta = volmdlr.two_pi + math.asin(u2)
+            theta = volmdlr.TWO_PI + math.asin(u2)
     else:
         if u2 >= 0:
             theta = math.acos(u1)
         else:
-            theta = volmdlr.two_pi - math.acos(u1)
+            theta = volmdlr.TWO_PI - math.acos(u1)
     return theta
 
 
@@ -257,25 +257,25 @@ def check_singularity(all_points):
 
     if len(moins_pi) <= 2 and len(all_points) > 4:
         for pos in moins_pi:
-            new_pt = all_points[pos].copy() + volmdlr.Point2D((volmdlr.two_pi, 0))
-            if new_pt.vector[0] > two_pi:
-                new_pt.vector[0] = two_pi
+            new_pt = all_points[pos].copy() + volmdlr.Point2D((volmdlr.TWO_PI, 0))
+            if new_pt.vector[0] > TWO_PI:
+                new_pt.vector[0] = TWO_PI
             all_points[pos] = new_pt
     elif len(plus_pi) <= 2 and len(all_points) > 4:
         for pos in plus_pi:
-            new_pt = all_points[pos].copy() - volmdlr.Point2D((volmdlr.two_pi, 0))
+            new_pt = all_points[pos].copy() - volmdlr.Point2D((volmdlr.TWO_PI, 0))
             if new_pt.vector[0] < 0:
                 new_pt.vector[0] = 0
             all_points[pos] = new_pt
     if 3 * len(moins_pi) <= len(plus_pi) and len(all_points) > 4:
         for pos in moins_pi:
-            new_pt = all_points[pos].copy() + volmdlr.Point2D((volmdlr.two_pi, 0))
-            if new_pt.vector[0] > two_pi:
-                new_pt.vector[0] = two_pi
+            new_pt = all_points[pos].copy() + volmdlr.Point2D((volmdlr.TWO_PI, 0))
+            if new_pt.vector[0] > TWO_PI:
+                new_pt.vector[0] = TWO_PI
             all_points[pos] = new_pt
     elif 3 * len(plus_pi) <= len(moins_pi) and len(all_points) > 4:
         for pos in plus_pi:
-            new_pt = all_points[pos].copy() - volmdlr.Point2D((volmdlr.two_pi, 0))
+            new_pt = all_points[pos].copy() - volmdlr.Point2D((volmdlr.TWO_PI, 0))
             if new_pt.vector[0] < 0:
                 new_pt.vector[0] = 0
             all_points[pos] = new_pt
@@ -297,9 +297,9 @@ def posangle_arc(start, end, radius, frame=None):
 
     if math.isclose(theta1, theta2, abs_tol=1e-6):
         if math.isclose(theta2, 0, abs_tol=1e-6):
-            theta2 += volmdlr.two_pi
-        elif math.isclose(theta1, volmdlr.two_pi, abs_tol=1e-6):
-            theta1 -= volmdlr.two_pi
+            theta2 += volmdlr.TWO_PI
+        elif math.isclose(theta1, volmdlr.TWO_PI, abs_tol=1e-6):
+            theta1 -= volmdlr.TWO_PI
 
     return theta1, theta2
 
@@ -320,8 +320,8 @@ def angle_principal_measure(angle, min_angle=-math.pi):
     """
     returns angle between O and 2 pi
     """
-    max_angle = min_angle + volmdlr.two_pi
-    angle = angle % (volmdlr.two_pi)
+    max_angle = min_angle + volmdlr.TWO_PI
+    angle = angle % (volmdlr.TWO_PI)
 
     if math.isclose(angle, min_angle, abs_tol=1e-9):
         return min_angle
@@ -422,10 +422,6 @@ class CompositePrimitive2D(Primitive2D):
                                                          stroke_width=stroke_width,
                                                          opacity=opacity))
         return plot_data
-
-
-
-
 
 
 

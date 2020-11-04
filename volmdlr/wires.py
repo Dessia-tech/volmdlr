@@ -1142,7 +1142,10 @@ class Contour3D(Wire3D):
         for edge in arguments[1]:
             # print(arguments[1])
             edges.append(object_dict[int(edge[1:])])
-
+        if (len(edges)) == 1 and isinstance(edges[0], cls):
+            # Case of a circle...
+            print('cirble?', edges[0])
+            return edges[0]
         return cls(edges, name=arguments[0][1:-1])
 
     def clean_points(self):
@@ -1335,10 +1338,10 @@ class Circle3D(Contour3D):
 
         tessellation_points_3D = [self.center
                                   + self.radius * math.cos(
-            teta) * self.surface.frame.u
+            teta) * self.frame.u
                                   + self.radius * math.sin(
-            teta) * self.surface.frame.v \
-                                  for teta in npy.linspace(0, TWO_PI,
+            teta) * self.frame.v \
+                                  for teta in npy.linspace(0, volmdlr.TWO_PI,
                                                            resolution + 1)][
                                  :-1]
         return tessellation_points_3D

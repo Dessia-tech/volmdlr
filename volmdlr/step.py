@@ -15,6 +15,7 @@ import volmdlr.wires
 import volmdlr.faces
 import volmdlr.shells
 
+import webbrowser
 
 def step_split_arguments(function_arg):
     """
@@ -87,7 +88,6 @@ class Step:
         functions = {}
 
         for line in f:
-
             line = line.replace(" ", "")
             line = line.replace("\n", "")
 
@@ -466,5 +466,4 @@ STEP_TO_VOLMDLR = {
     'OPEN_SHELL': volmdlr.shells.Shell3D,
     #        'ORIENTED_CLOSED_SHELL': None,
     'CONNECTED_FACE_SET': volmdlr.shells.Shell3D,
-
 }
