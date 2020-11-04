@@ -5,7 +5,7 @@ name: default
 
 steps:
 - name: install, build doc run scripts
-  image: python:3.7
+  image: python:3.8
   commands:
   - git fetch --tags 
   - pip install Cython sphinx sphinx_rtd_theme
@@ -36,13 +36,13 @@ steps:
   - python tore_tore.py
 
 - name: develop
-  image: python:3.7
+  image: python:3.8
   commands:
   - pip install Cython
   - python setup.py develop
 
 - name: sdist, bdist, wheel
-  image: python:3.7
+  image: python:3.8
   commands:
   - pip install Cython wheel
   - python setup.py sdist

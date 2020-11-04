@@ -123,7 +123,6 @@ class Surface3D():
 
         inner_contours2d.remove(outer_contour2d)
 
-        outer_contour2d
 
         if isinstance(self.face_class , str):
             class_ = globals()[self.face_class]
@@ -207,6 +206,14 @@ class Plane3D(Surface3D):
         v1 = normal.deterministic_unit_normal_vector()
         v2 = v1.cross(normal)
         return cls(volmdlr.Frame3D(point, v1, v2, normal))
+
+    @classmethod
+    def from_plane_vectors(cls, plane_origin:volmdlr.Point3D,
+                           plane_x:volmdlr.Vector3D,
+                           plane_y:volmdlr.Vector3D):
+        normal = plane_x.cross(plane_y)
+        return cls(volmdlr.Frame3D(plane_origin, plane_x, plane_y, normal))
+
 
     @classmethod
     def from_points(cls, points):

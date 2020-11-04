@@ -373,8 +373,14 @@ class ExtrudedProfile(volmdlr.shells.Shell3D):
         volmdlr.shells.Shell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
 
     def shell_faces(self):
-        lower_face = volmdlr.faces.PlaneFace3D.from_contours3d(self.outer_contour3d,
-                                                         self.inner_contours3d)
+        lower_plane = volmdlr.faces.Plane3D.from_plane_vectors(self.plane_origin,
+                                                               self.x,
+                                                               self.y)
+        lower_face = volmdlr.faces.PlaneFace3D(lower_plane,
+                                               volmdlr.faces.Surface2D(
+                                                    self.outer_contour2d,
+                                                    self.inner_contours2d)
+                                               )
 
         upper_face = lower_face.translation(self.extrusion_vector)
         lateral_faces = [p.extrusion(self.extrusion_vector)
