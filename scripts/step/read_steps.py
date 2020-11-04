@@ -8,6 +8,7 @@ import volmdlr as vm
 import volmdlr.step
 
 for step_file in [#'tore1.step',
+                  'iso4162M16x55.step',
                   'cylindre.step',
                   'block.step',
                   ]:
@@ -16,4 +17,3 @@ for step_file in [#'tore1.step',
     print(model.primitives)
     
     model.babylonjs()
-    del model

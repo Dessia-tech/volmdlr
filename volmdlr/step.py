@@ -466,5 +466,4 @@ STEP_TO_VOLMDLR = {
     'OPEN_SHELL': volmdlr.shells.Shell3D,
     #        'ORIENTED_CLOSED_SHELL': None,
     'CONNECTED_FACE_SET': volmdlr.shells.Shell3D,
-
 }

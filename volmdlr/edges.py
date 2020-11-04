@@ -7,6 +7,8 @@ from packaging import version
 import math
 import numpy as npy
 import scipy as scp
+from geomdl import BSpline
+from geomdl import utilities
 
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import __version__ as _mpl_version
@@ -37,7 +39,7 @@ class Edge(dc.DessiaObject):
             p2 = object_dict[arguments[2]]
 
             if p1 == p2:
-                angle = math.pi
+                return circle
             else:
                 theta1, theta2 = volmdlr.core.posangle_arc(p1, p2,
                                                            circle.radius,
@@ -48,16 +50,15 @@ class Edge(dc.DessiaObject):
                     angle = (theta1 + theta2) / 2
 
 
-            middle_angle = theta1+0.5*angle
-            middle_point = volmdlr.Point3D(circle.radius * math.cos(middle_angle),
-                                  circle.radius * math.sin(middle_angle),
-                                  0.)
+                middle_angle = theta1+0.5*angle
+                middle_point = volmdlr.Point3D(circle.radius * math.cos(middle_angle),
+                                      circle.radius * math.sin(middle_angle),
+                                      0.)
 
-            middle_point3d = circle.frame.old_coordinates(middle_point)
+                middle_point3d = circle.frame.old_coordinates(middle_point)
 
-            arc = volmdlr.edges.Arc3D(p1, middle_point3d, p2,
-                                      name=arguments[0][1:-1])
-            return arc
+                return volmdlr.edges.Arc3D(p1, middle_point3d, p2,
+                                            name=arguments[0][1:-1])
 
         elif object_dict[arguments[3]].__class__ is volmdlr.wires.Ellipse3D:
             majorax = object_dict[arguments[3]].major_axis
@@ -104,7 +105,7 @@ class Edge(dc.DessiaObject):
 
             return arcellipse
 
-        elif object_dict[arguments[3]].__class__ is volmdlr.edges.BSplineCurve3D:
+        elif object_dict[arguments[3]].__class__.__name__ == 'BSplineCurve3D':
             # print(object_dict[arguments[1]], object_dict[arguments[2]])
             # BSplineCurve3D à couper à gauche et à droite avec les points ci dessus ?
             return object_dict[arguments[3]]
@@ -1739,10 +1740,10 @@ class LineSegment3D(LineSegment):
                                            0, (self.end-self.start).dot(axis))
 
 
-class BSplineCurve3D(volmdlr.core.Primitive3D):
+class BSplineCurve3D(Edge):
     def __init__(self, degree, control_points, knot_multiplicities, knots,
                  weights=None, periodic=False, name=''):
-        volmdlr.core.Primitive3D.__init__(self, basis_primitives=control_points, name=name)
+        volmdlr.core.Primitive3D.__init__(self, name=name)
         self.control_points = control_points
         self.degree = degree
         knots = volmdlr.core.standardize_knot_vector(knots)
@@ -1772,7 +1773,9 @@ class BSplineCurve3D(volmdlr.core.Primitive3D):
         curve_points = curve.evalpts
 
         self.curve = curve
-        self.points = [volmdlr.Point3D((p[0], p[1], p[2])) for p in curve_points]
+        self.points = [volmdlr.Point3D(p[0], p[1], p[2]) for p in curve_points]
+        Edge.__init__(self, start=self.points [0], end=self.points [-1])
+
 
     def length(self):
         # Approximately
@@ -1891,9 +1894,9 @@ class BSplineCurve3D(volmdlr.core.Primitive3D):
         else:
             fig = ax.figure
 
-        x = [p.vector[0] for p in self.points]
-        y = [p.vector[1] for p in self.points]
-        z = [p.vector[2] for p in self.points]
+        x = [p.x for p in self.points]
+        y = [p.y for p in self.points]
+        z = [p.z for p in self.points]
         ax.plot(x, y, z, 'o-k')
         return ax
 
