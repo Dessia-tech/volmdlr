@@ -152,7 +152,7 @@ class Block(volmdlr.shells.Shell3D):
     # def __hash__(self):
     #     return hash(self.frame)
 
-    def Vertices(self):
+    def vertices(self):
         return [self.frame.origin - 0.5*self.frame.u - 0.5*self.frame.v - 0.5*self.frame.w,
                 self.frame.origin - 0.5*self.frame.u + 0.5*self.frame.v - 0.5*self.frame.w,
                 self.frame.origin + 0.5*self.frame.u + 0.5*self.frame.v - 0.5*self.frame.w,
@@ -162,8 +162,8 @@ class Block(volmdlr.shells.Shell3D):
                 self.frame.origin + 0.5*self.frame.u + 0.5*self.frame.v + 0.5*self.frame.w,
                 self.frame.origin + 0.5*self.frame.u - 0.5*self.frame.v + 0.5*self.frame.w]
 
-    def Edges(self):
-        p1, p2, p3, p4, p5, p6, p7, p8 = self.Vertices()
+    def edges(self):
+        p1, p2, p3, p4, p5, p6, p7, p8 = self.vertices()
         return [volmdlr.edges.LineSegment3D(p1.copy(), p2.copy()),
                 volmdlr.edges.LineSegment3D(p2.copy(), p3.copy()),
                 volmdlr.edges.LineSegment3D(p3.copy(), p4.copy()),
@@ -177,8 +177,8 @@ class Block(volmdlr.shells.Shell3D):
                 volmdlr.edges.LineSegment3D(p3.copy(), p7.copy()),
                 volmdlr.edges.LineSegment3D(p4.copy(), p8.copy())]
 
-    def face_contours(self):
-        e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11, e12 = self.Edges()
+    def face_contours3d(self):
+        e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11, e12 = self.edges()
         e5_switch = e5.reverse()
         e6_switch = e6.reverse()
         e7_switch = e7.reverse()
@@ -199,13 +199,40 @@ class Block(volmdlr.shells.Shell3D):
                 volmdlr.wires.Contour3D([e4.copy(), e9.copy(), e8_switch.copy(), e12_switch.copy()])]
 
     def shell_faces(self):
-        c1, c2, c3, c4, c5, c6 = self.face_contours()
-        return [volmdlr.faces.PlaneFace3D.from_contours3d(c1),
-                volmdlr.faces.PlaneFace3D.from_contours3d(c2),
-                volmdlr.faces.PlaneFace3D.from_contours3d(c3),
-                volmdlr.faces.PlaneFace3D.from_contours3d(c4),
-                volmdlr.faces.PlaneFace3D.from_contours3d(c5),
-                volmdlr.faces.PlaneFace3D.from_contours3d(c6)]
+        hlx = 0.5*self.frame.u.norm()
+        hly = 0.5*self.frame.v.norm()
+        hlz = 0.5*self.frame.w.norm()
+        frame = self.frame.copy()
+        frame.normalize()
+        print(frame)
+        print(hlx, hly, hlz)
+        xm_frame = volmdlr.Frame3D(frame.origin-0.5*self.frame.u,
+                                   frame.v, frame.w, frame.u)
+        xp_frame = volmdlr.Frame3D(frame.origin+0.5*self.frame.u,
+                                   frame.v, frame.w, frame.u)
+        ym_frame = volmdlr.Frame3D(frame.origin-0.5*self.frame.v,
+                                   frame.w, frame.u, frame.v)
+        yp_frame = volmdlr.Frame3D(frame.origin+0.5*self.frame.v,
+                                   frame.w, frame.u, frame.v)
+        zm_frame = volmdlr.Frame3D(frame.origin-0.5*self.frame.w,
+                                   frame.u, frame.v, frame.w)
+        zp_frame = volmdlr.Frame3D(frame.origin+0.5*self.frame.w,
+                                   frame.u, frame.v, frame.w)
+
+        xm_face = volmdlr.faces.Plane3D(xm_frame)\
+                    .rectangular_cut(-hly, hly, -hlz, hlz)
+        xp_face = volmdlr.faces.Plane3D(xp_frame)\
+                    .rectangular_cut(-hly, hly, -hlz, hlz)
+        ym_face = volmdlr.faces.Plane3D(ym_frame)\
+                    .rectangular_cut(-hlz, hlz, -hlx, hlx)
+        yp_face = volmdlr.faces.Plane3D(yp_frame)\
+                    .rectangular_cut(-hlz, hlz, -hlx, hlx)
+        zm_face = volmdlr.faces.Plane3D(zm_frame)\
+                    .rectangular_cut(-hlx, hlx, -hly, hly)
+        zp_face = volmdlr.faces.Plane3D(zp_frame)\
+                    .rectangular_cut(-hlx, hlx, -hly, hly)
+
+        return [xm_face, xp_face, ym_face, yp_face, zm_face, zp_face]
 
     def rotation(self, center, axis, angle, copy=True):
         if copy:
@@ -227,7 +254,7 @@ class Block(volmdlr.shells.Shell3D):
         """
         side = 'old' or 'new'
         """
-        basis = frame.Basis()
+        basis = frame.basis()
         if side == 'new':
             new_origin = frame.new_coordinates(self.frame.origin)
             new_u = basis.new_coordinates(self.frame.u)
