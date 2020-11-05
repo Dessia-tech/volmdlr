@@ -389,8 +389,8 @@ class CompositePrimitive2D(Primitive2D):
             self.UpdateBasisPrimitives()
 
 
-    def plot(self, ax=None, color='k', arrow=False, width=None,
-                plot_points=False):
+    def plot(self, ax=None, color='k', alpha=1, arrow=False, width=None,
+             plot_points=False):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -399,11 +399,14 @@ class CompositePrimitive2D(Primitive2D):
 
         for element in self.primitives:
             if element.__class__.__name__ == 'LineSegment2D':
-                element.plot(ax, color, arrow, width,
-                                plot_points=plot_points)
+                element.plot(ax=ax,
+                             color=color, 
+                             alpha=alpha, 
+                             arrow=arrow,
+                             width=width,
+                             plot_points=plot_points)
             else:
-
-                element.plot(ax, color=color)
+                element.plot(ax, color=color, alpha=alpha)
 
         ax.margins(0.1)
         plt.show()
