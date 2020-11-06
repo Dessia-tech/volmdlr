@@ -54,18 +54,7 @@ from typing import List, Tuple
 # import volmdlr.surfaces3d as surfaces3d
 # import volmdlr.primitives3D
 
-def standardize_knot_vector(knot_vector):
-    u0 = knot_vector[0]
-    u1 = knot_vector[-1]
-    standard_u_knots = []
-    if u0 != 0 or u1 != 1:
-        x = 1 / (u1 - u0)
-        y = u0 / (u0 - u1)
-        for u in knot_vector:
-            standard_u_knots.append(u * x + y)
-        return standard_u_knots
-    else:
-        return knot_vector
+
 
 def find_and_replace(string, find, replace):
     """

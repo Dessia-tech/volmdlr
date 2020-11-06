@@ -20,11 +20,40 @@ import volmdlr.core
 # import volmdlr.primitives3D
 
 
+def standardize_knot_vector(knot_vector):
+    u0 = knot_vector[0]
+    u1 = knot_vector[-1]
+    standard_u_knots = []
+    if u0 != 0 or u1 != 1:
+        x = 1 / (u1 - u0)
+        y = u0 / (u0 - u1)
+        for u in knot_vector:
+            standard_u_knots.append(u * x + y)
+        return standard_u_knots
+    else:
+        return knot_vector
+
 class Edge(dc.DessiaObject):
     def __init__(self, start, end, name=''):
         self.start = start
         self.end = end
         dc.DessiaObject.__init__(self, name=name)
+
+    def polygon_points(self, min_x_density=None, min_y_density=None):
+        n = 0  # Number of points to insert between start and end
+        if min_x_density:
+            dx = abs(self.start[0] - self.end[0])
+            n = max(n, math.floor(dx * min_x_density))
+        if min_y_density:
+            dy = abs(self.start[1] - self.end[1])
+            n = max(n, math.floor(dy * min_y_density))
+
+        if n:
+            l = self.length()
+            return [self.point_at_abscissa(i * l / (n + 1)) for i in
+                    range(n + 2)]
+        else:
+            return [self.start, self.end]
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -39,7 +68,7 @@ class Edge(dc.DessiaObject):
             p2 = object_dict[arguments[2]]
 
             if p1 == p2:
-                return circle
+                return FullArc3D(circle.frame.origin, p1, circle.frame.w)
             else:
                 theta1, theta2 = volmdlr.core.posangle_arc(p1, p2,
                                                            circle.radius,
@@ -384,15 +413,12 @@ class BSplineCurve2D(Edge):
                  weights=None, periodic=False, name=''):
         self.control_points = control_points
         self.degree = degree
-        knots = volmdlr.standardize_knot_vector(knots)
+        knots = standardize_knot_vector(knots)
         self.knots = knots
         self.knot_multiplicities = knot_multiplicities
         self.weights = weights
         self.periodic = periodic
-        start = self.point_at_abscissa(0)
-        end = self.point_at_abscissa(self.length())
 
-        Edge.__init__(self, start, end, name=name)
 
         curve = BSpline.Curve()
         curve.degree = degree
@@ -413,7 +439,9 @@ class BSplineCurve2D(Edge):
         curve_points = curve.evalpts
 
         self.curve = curve
-        self.points = [volmdlr.Point2D((p[0], p[1])) for p in curve_points]
+        self.points = [volmdlr.Point2D(p[0], p[1]) for p in curve_points]
+
+        Edge.__init__(self, self.points[0], self.points[-1], name=name)
 
     def length(self):
         # Approximately
@@ -438,15 +466,15 @@ class BSplineCurve2D(Edge):
         # Outside of length
         raise ValueError
 
-    def plot(self, ax=None):
+    def plot(self, ax=None, color='k'):
         if ax is None:
             fig, ax = plt.subplots()
         else:
             fig = ax.figure
 
-        x = [p.vector[0] for p in self.points]
-        y = [p.vector[1] for p in self.points]
-        ax.plot(x, y, 'o-k')
+        x = [p.x for p in self.points]
+        y = [p.y for p in self.points]
+        ax.plot(x, y, color=color)
         return fig, ax
 
     def to_3d(self, plane_origin, x1, x2):
@@ -458,6 +486,7 @@ class BSplineCurve2D(Edge):
 
     def tessellation_points(self):
         return self.points
+
 
 
 class LineSegment2D(LineSegment):
@@ -932,6 +961,61 @@ class Arc2D(Edge):
         return [self.point_at_abscissa(i * l / number_points) \
                 for i in range(number_points + 1)]
 
+class FullArc2D(Edge):
+    """
+    An edge that starts at start_end, ends at the same point after having described
+    a circle
+    """
+    def __init__(self, center: volmdlr.Point2D, start_end: volmdlr.Point2D,
+                 name: str = ''):
+        self.center = center
+        self.radius = center.point_distance(start_end)
+        self.angle = volmdlr.TWO_PI
+
+
+        Edge.__init__(self, start_end, start_end, name=name)  # !!! this is dangerous
+
+    def __hash__(self):
+        return hash(self.center) + 5*hash(self.start_end)
+
+    def __eq__(self, other_arc):
+        return (self.center == other_arc.center)\
+                and (self.start_end == other_arc.start_end)
+
+    def area(self):
+        return math.pi*self.radius**2
+
+    def to_3d(self, plane_origin, x, y):
+        center = self.center.to_3d(plane_origin, x, y)
+        start = self.start.to_3d(plane_origin, x, y)
+        z = x.cross(y)
+        z.normalize()
+
+        return FullArc3D(center, start, z)
+
+    def length(self):
+        return volmdlr.TWO_PI*self.radius
+
+    def point_at_abscissa(self, abscissa):
+        angle = abscissa/self.radius
+        return self.start.rotation(self.center, angle)
+
+    def plot(self, ax=None, linestyle='-', color='k', linewidth=1):
+        if ax is None:
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
+
+        if self.radius > 0:
+            ax.add_patch(matplotlib.patches.Arc((self.center.x, self.center.y),
+                             2 * self.radius,
+                             2 * self.radius,
+                             angle=0,
+                             theta1=0,
+                             theta2=360,
+                             color=color,
+                             linestyle=linestyle,
+                             linewidth=linewidth))
+        return ax
 
 class ArcEllipse2D(Edge):
     """
@@ -1745,7 +1829,7 @@ class BSplineCurve3D(Edge):
         volmdlr.core.Primitive3D.__init__(self, name=name)
         self.control_points = control_points
         self.degree = degree
-        knots = volmdlr.core.standardize_knot_vector(knots)
+        knots = standardize_knot_vector(knots)
         self.knots = knots
         self.knot_multiplicities = knot_multiplicities
         self.weights = weights
@@ -2324,7 +2408,39 @@ class Arc3D(Edge):
         return surface.rectangular_cut(0, angle,
                                        arc2d.angle1, arc2d.angle2)
 
+class FullArc3D(Edge):
+    """
+    An edge that starts at start_end, ends at the same point after having described
+    a circle
+    """
+    def __init__(self, center: volmdlr.Point3D, start_end: volmdlr.Point3D,
+                 normal:volmdlr.Vector3D,
+                 name: str = ''):
+        self.center = center
+        self.normal = normal
+        self.radius = center.point_distance(start_end)
+        self.angle = volmdlr.TWO_PI
 
+        Edge.__init__(self, start_end, start_end, name=name)  # !!! this is dangerous
+
+    def __hash__(self):
+        return hash(self.center) + 5*hash(self.start_end)
+
+    def __eq__(self, other_arc):
+        return (self.center == other_arc.center)\
+                and (self.start == other_arc.start)
+
+    def to_2d(self, plane_origin, x1, x2):
+        center = self.center.to_2d(plane_origin, x1, x2)
+        start_end = self.start.to_2d(plane_origin, x1, x2)
+        return FullArc2D(center, start_end)
+
+    def length(self):
+        return volmdlr.TWO_PI*self.radius
+
+    def point_at_abscissa(self, abscissa):
+        angle = abscissa/self.radius
+        return self.start.rotation(self.center, self.normal, angle)
 
 class ArcEllipse3D(Edge):
     """

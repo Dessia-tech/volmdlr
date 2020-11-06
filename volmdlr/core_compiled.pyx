@@ -740,7 +740,7 @@ class Vector3D(Vector):
 #        u = self - center
 #        vector2 = (math.cos(angle)*u
 #                   + (1-math.cos(angle))*(u.Dot(axis))*axis
-#                   + math.sin(angle)*axis.Cross(u)
+#                   + math.sin(angle)*axis.cross(u)
 #                   + center)
         vector2 = vector3D_rotation(self, center, axis, angle)
 
@@ -835,12 +835,12 @@ class Vector3D(Vector):
                 self.z = new_vector.z
 
     def plane_projection3d(self, plane_origin, x, y):
-        z = x.Cross(y)
+        z = x.cross(y)
         z.normalize()
         return self - z.dot(self-plane_origin)*z
 
     def plane_projection2d(self, plane_origin, x, y):
-        z = x.Cross(y)
+        z = x.cross(y)
         z.normalize()
         p3d = self - (self-plane_origin).dot(z)*z
         u1 = p3d.dot(x)
@@ -1284,7 +1284,7 @@ class Basis3D(Basis):
         u.normalize()
         v = vector2 - vector2.dot(vector1)*vector1
         v.normalize()
-        w = u.Cross(v)
+        w = u.cross(v)
 
         return Basis3D(u, v, w)
 

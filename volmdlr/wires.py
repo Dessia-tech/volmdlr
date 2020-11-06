@@ -141,6 +141,7 @@ class Wire3D(volmdlr.core.CompositePrimitive3D):
             primitives_copy.append(primitive.copy())
         return Wire3D(primitives_copy)
 
+# TODO: define an edge as an opened polygon and allow to compute area from this reference
 class Contour2D(Wire2D):
     """
     A collection of 2D primitives forming a closed wire2D
@@ -153,7 +154,7 @@ class Contour2D(Wire2D):
     def __init__(self, primitives, name=''):
         Wire2D.__init__(self, primitives, name)
         self._utd_analysis = False
-        self.tessel_points = self.clean_points()
+        # self.tessel_points = self.clean_points()
 
     def _primitives_analysis(self):
         """
@@ -190,17 +191,20 @@ class Contour2D(Wire2D):
                         points_polygon.append(prim.start)
                         points_polygon.append(prim.end)
                         arcs.append(prim)
+            elif primitive.__class__.__name__ == 'BSplineCurve2D':
+                points_polygon.extend(primitive.control_points)
+                points_straight_line_contour.extend(primitive.control_points)
             else:
                 raise NotImplementedError(
                     'primitive of type {} is not handled'.format(primitive))
 
         # points_polygon = list(set(points_polygon))
-        polygon = Polygon2D(points_polygon)
+        polygon = ClosedPolygon2D(points_polygon)
         points_straight_line_contour = list(set(points_straight_line_contour))
-        straight_line_contour_polygon = Polygon2D(points_straight_line_contour)
+        straight_line_contour_polygon = ClosedPolygon2D(points_straight_line_contour)
 
         for arc in arcs:
-            if polygon.PointBelongs(arc.interior):
+            if polygon.point_belongs(arc.interior):
                 internal_arcs.append(arc)
             else:
                 external_arcs.append(arc)
@@ -259,7 +263,7 @@ class Contour2D(Wire2D):
         for arc in self.internal_arcs:
             if arc.point_belongs(point):
                 return False
-        if self.polygon.PointBelongs(point):
+        if self.polygon.point_belongs(point):
             return True
         for arc in self.external_arcs:
             if arc.point_belongs(point):
@@ -298,10 +302,10 @@ class Contour2D(Wire2D):
         A = self.polygon.area()
 
         for arc in self.internal_arcs:
-            triangle = Polygon2D([arc.start, arc.center, arc.end])
+            triangle = ClosedPolygon2D([arc.start, arc.center, arc.end])
             A = A - arc.area() + triangle.area()
         for arc in self.external_arcs:
-            triangle = Polygon2D([arc.start, arc.center, arc.end])
+            triangle = ClosedPolygon2D([arc.start, arc.center, arc.end])
             A = A + arc.area() - triangle.area()
 
         return A
@@ -367,55 +371,55 @@ class Contour2D(Wire2D):
         y = npy.sum([p[1] for p in self.tessel_points]) / nb
         return volmdlr.Point2D((x, y))
 
-    def clean_points(self):
-        """
-        This method is copy from Contour3D, if changes are done there or here,
-        please change both method
-        Be aware about primitives = 2D, edges = 3D
-        """
-        if hasattr(self.primitives[0], 'endpoints'):
-            points = self.primitives[0].endpoints[:]
-        else:
-            points = self.primitives[0].tessellation_points()
-        for primitive in self.primitives[1:]:
-            if hasattr(primitive, 'endpoints'):
-                points_to_add = primitive.endpoints[:]
-            else:
-                points_to_add = primitive.tessellation_points()
-            if points[0] == points[
-                -1]:  # Dans le cas où le (dernier) edge relie deux fois le même point
-                points.extend(points_to_add[::-1])
-
-            elif points_to_add[0] == points[-1]:
-                points.extend(points_to_add[1:])
-            elif points_to_add[-1] == points[-1]:
-                points.extend(points_to_add[-2::-1])
-            elif points_to_add[0] == points[0]:
-                points = points[::-1]
-                points.extend(points_to_add[1:])
-            elif points_to_add[-1] == points[0]:
-                points = points[::-1]
-                points.extend(points_to_add[-2::-1])
-            else:
-                d1, d2 = (points_to_add[0] - points[0]).norm(), (
-                            points_to_add[0] - points[-1]).norm()
-                d3, d4 = (points_to_add[-1] - points[0]).norm(), (
-                            points_to_add[-1] - points[-1]).norm()
-                if math.isclose(d2, 0, abs_tol=1e-3):
-                    points.extend(points_to_add[1:])
-                elif math.isclose(d4, 0, abs_tol=1e-3):
-                    points.extend(points_to_add[-2::-1])
-                elif math.isclose(d1, 0, abs_tol=1e-3):
-                    points = points[::-1]
-                    points.extend(points_to_add[1:])
-                elif math.isclose(d3, 0, abs_tol=1e-3):
-                    points = points[::-1]
-                    points.extend(points_to_add[-2::-1])
-
-        if len(points) > 1:
-            if points[0] == points[-1]:
-                points.pop()
-        return points
+    # def clean_points(self):
+    #     """
+    #     This method is copy from Contour3D, if changes are done there or here,
+    #     please change both method
+    #     Be aware about primitives = 2D, edges = 3D
+    #     """
+    #     if hasattr(self.primitives[0], 'endpoints'):
+    #         points = self.primitives[0].endpoints[:]
+    #     else:
+    #         points = self.primitives[0].tessellation_points()
+    #     for primitive in self.primitives[1:]:
+    #         if hasattr(primitive, 'endpoints'):
+    #             points_to_add = primitive.endpoints[:]
+    #         else:
+    #             points_to_add = primitive.tessellation_points()
+    #         if points[0] == points[
+    #             -1]:  # Dans le cas où le (dernier) edge relie deux fois le même point
+    #             points.extend(points_to_add[::-1])
+    #
+    #         elif points_to_add[0] == points[-1]:
+    #             points.extend(points_to_add[1:])
+    #         elif points_to_add[-1] == points[-1]:
+    #             points.extend(points_to_add[-2::-1])
+    #         elif points_to_add[0] == points[0]:
+    #             points = points[::-1]
+    #             points.extend(points_to_add[1:])
+    #         elif points_to_add[-1] == points[0]:
+    #             points = points[::-1]
+    #             points.extend(points_to_add[-2::-1])
+    #         else:
+    #             d1, d2 = (points_to_add[0] - points[0]).norm(), (
+    #                         points_to_add[0] - points[-1]).norm()
+    #             d3, d4 = (points_to_add[-1] - points[0]).norm(), (
+    #                         points_to_add[-1] - points[-1]).norm()
+    #             if math.isclose(d2, 0, abs_tol=1e-3):
+    #                 points.extend(points_to_add[1:])
+    #             elif math.isclose(d4, 0, abs_tol=1e-3):
+    #                 points.extend(points_to_add[-2::-1])
+    #             elif math.isclose(d1, 0, abs_tol=1e-3):
+    #                 points = points[::-1]
+    #                 points.extend(points_to_add[1:])
+    #             elif math.isclose(d3, 0, abs_tol=1e-3):
+    #                 points = points[::-1]
+    #                 points.extend(points_to_add[-2::-1])
+    #
+    #     if len(points) > 1:
+    #         if points[0] == points[-1]:
+    #             points.pop()
+    #     return points
 
     def bounding_rectangle(self):
         # bounding rectangle
@@ -540,7 +544,7 @@ class Contour2D(Wire2D):
             points.extend(primitive.polygon_points(min_x_density=min_x_density,
                                                    min_y_density=min_y_density)[1:])
 
-        return Polygon2D(points)
+        return ClosedPolygon2D(points)
 
     def grid_triangulation(self, x_density: float = None,
                            y_density: float = None,
@@ -600,17 +604,17 @@ class Contour2D(Wire2D):
 
         return volmdlr.display_mesh.DisplayMesh2D(points, triangles)
 
-class Polygon2D(Contour2D):
+class ClosedPolygon2D(Contour2D):
 
     def __init__(self, points, name=''):
         self.points = points
-        self.line_segments = self._LineSegments()
+        self.line_segments = self._line_segments()
 
         Contour2D.__init__(self, self.line_segments, name)
 
     def copy(self):
         points = [p.copy() for p in self.points]
-        return Polygon2D(points, self.name)
+        return ClosedPolygon2D(points, self.name)
 
     def __hash__(self):
         return sum([hash(p) for p in self.points])
@@ -649,7 +653,7 @@ class Polygon2D(Contour2D):
         else:
             raise NotImplementedError
 
-    def PointBelongs(self, point):
+    def point_belongs(self, point):
         """
         Ray casting algorithm copied from internet...
         """
@@ -671,7 +675,7 @@ class Polygon2D(Contour2D):
             Ixy = - Ixy
         return npy.array([[Ix / 12., Ixy / 24.], [Ixy / 24., Iy / 12.]])
 
-    def _LineSegments(self):
+    def _line_segments(self):
         lines = []
         for p1, p2 in zip(self.points, self.points[1:] + [self.points[0]]):
             lines.append(volmdlr.edges.LineSegment2D(p1, p2))
@@ -679,7 +683,7 @@ class Polygon2D(Contour2D):
 
     def rotation(self, center, angle, copy=True):
         if copy:
-            return Polygon2D(
+            return ClosedPolygon2D(
                 [p.rotation(center, angle, copy=True) for p in self.points])
         else:
             for p in self.points:
@@ -687,7 +691,7 @@ class Polygon2D(Contour2D):
 
     def translation(self, offset, copy=True):
         if copy:
-            return Polygon2D(
+            return ClosedPolygon2D(
                 [p.translation(offset, copy=True) for p in self.points])
         else:
             for p in self.points:
@@ -749,7 +753,7 @@ class Polygon2D(Contour2D):
 
         return self.__class__(offset_points)
 
-    def PointBorderDistance(self, point, return_other_point=False):
+    def point_border_distance(self, point, return_other_point=False):
         """
         Compute the distance to the border distance of polygon
         Output is always positive, even if the point belongs to the polygon
@@ -766,7 +770,7 @@ class Polygon2D(Contour2D):
             return d_min, other_point_min
         return d_min
 
-    def SelfIntersect(self):
+    def self_intersects(self):
         epsilon = 0
         # BENTLEY-OTTMANN ALGORITHM
         # Sort the points along ascending x for the Sweep Line method
@@ -928,9 +932,8 @@ class Circle2D(Contour2D):
         self.center = center
         self.radius = radius
         self.angle = volmdlr.TWO_PI
-        self.utd_geo_points = False
 
-        self.points = self.tessellation_points()
+        # self.points = self.tessellation_points()
 
         Contour2D.__init__(self, [self], name=name)  # !!! this is dangerous
 
@@ -1003,10 +1006,8 @@ class Circle2D(Contour2D):
             ax.set_aspect('equal')
         # else:
         #     fig = ax.figure
-
-        pc = self.center.vector
         if self.radius > 0:
-            ax.add_patch(Arc(pc,
+            ax.add_patch(matplotlib.patches.Arc((self.center.x, self.center.y),
                              2 * self.radius,
                              2 * self.radius,
                              angle=0,
@@ -1029,7 +1030,6 @@ class Circle2D(Contour2D):
                             self.radius)
         else:
             self.center.rotation(center, angle, copy=False)
-            self.utd_geo_points = False
 
     def translation(self, offset, copy=True):
         if copy:
@@ -1037,7 +1037,7 @@ class Circle2D(Contour2D):
                             self.radius)
         else:
             self.center.translation(offset, copy=False)
-            self.utd_geo_points = False
+
 
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -1144,7 +1144,6 @@ class Contour3D(Wire3D):
             edges.append(object_dict[int(edge[1:])])
         if (len(edges)) == 1 and isinstance(edges[0], cls):
             # Case of a circle...
-            print('cirble?', edges[0])
             return edges[0]
         return cls(edges, name=arguments[0][1:-1])
 

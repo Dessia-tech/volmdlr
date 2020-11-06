@@ -217,10 +217,10 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         # Check if any point of the first shell is in the second shell
         points1 = []
         for face in self.faces:
-            points1.extend(face.contours3d[0].tessel_points)
+            points1.extend(face.outer_contour3d.polygon.points)
         points2 = []
         for face in shell2.faces:
-            points2.extend(face.contours3d[0].tessel_points)
+            points2.extend(face.outer_contour3d.polygon.points)
 
         nb_pts1 = len(points1)
         nb_pts2 = len(points2)
@@ -361,6 +361,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         mesh = volmdlr.display.DisplayMesh3D([], [])
         for i, face in enumerate(self.faces):
+
             face_mesh = face.triangulation()
             mesh += face_mesh
         return mesh
