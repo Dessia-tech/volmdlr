@@ -55,6 +55,7 @@ import random
 
 import scipy as scp
 import scipy.optimize 
+import itertools
 from itertools import product
 from itertools import combinations
 from itertools import permutations
@@ -657,7 +658,15 @@ class Contour2D(Wire2D):
             if arc.point_belongs(point):
                 return True
         return False
-
+    def Rotation(self,center,angle,copy=True):
+        
+        if copy:
+            return Contour2D([p.Rotation(center,angle,copy=True) for p in self.primitives])
+        else:
+            for p in self.primitives:
+                p.Rotation(center,angle,copy=False)
+            
+            
     def point_distance(self, point):
         min_distance = self.primitives[0].point_distance(point)
         for primitive in self.primitives[1:]:
@@ -675,7 +684,54 @@ class Contour2D(Wire2D):
         ymin = min([p[1] for p in points])
         ymax = max([p[1] for p in points])
         return xmin,xmax,ymin,ymax
-
+    def get_pattern(self):
+        xmin, xmax, ymin, ymax = self.bounding_points()
+      
+        xi = xmin*(xmax - xmin)/2
+        ax=plt.subplot() 
+        # line = Line2D(Point2D([xi, 0]),Point2D([xi,1])) 
+        line = Line2D(Point2D([0, -0.17]),Point2D([0,0.17])) 
+        line_2=line.Rotation(self.CenterOfMass(),0.26)
+        line_3=line.Rotation(self.CenterOfMass(),-0.26)
+        
+    
+        intersections=[]
+        
+        intersections+= self.line_intersections(line_2)
+        intersections+= self.line_intersections(line_3)
+        if isinstance(intersections[0][0],Point2D) and \
+                isinstance(intersections[1][0],Point2D):
+            ip1, ip2 = sorted([self.primitives.index(intersections[0][1]),
+                               self.primitives.index(intersections[1][1])])  
+            
+            ip3, ip4 = sorted([self.primitives.index(intersections[2][1]),
+                               self.primitives.index(intersections[3][1])])  
+            
+            sp11, sp12 = intersections[1][1].split(intersections[1][0])
+            sp22, sp21 = intersections[2][1].split(intersections[2][0])
+         
+      
+            primitives=[]
+           
+            a=Arc2D(sp12.end,sp12.interior,sp12.start)
+            primitives.append(a)
+            primitives.extend(self.primitives[:ip3])
+            primitives.append(sp22) 
+            l=LineSegment2D(sp22.start,sp12.end)
+            interior=l.PointAtCurvilinearAbscissa(l.Length()/2)
+            primitives.append(Arc2D(sp22.start,interior,sp12.end))
+   
+        return Contour2D(primitives)  
+    
+    def contour_from_pattern(self):
+        pattern=self.get_pattern()
+        pattern_rotations=[]
+        # pattern_rotations.append(self)
+        for k in range(1,13):
+            new_pattern=pattern.Rotation(self.CenterOfMass(),k*math.pi/6)
+            pattern_rotations.append(new_pattern)
+   
+        return pattern_rotations        
     def To3D(self, plane_origin, x, y, name=None):
         if name is None:
             name = '3D of {}'.format(self.name)
@@ -962,7 +1018,11 @@ class Surface2D(Primitive2D):
                     raise NotImplementedError('{} intersections not supported yet'.format(len(intersections))) 
                     
         return all_polygons 
+  
                     
+                    
+                    
+                                         
     def plot(self, ax=None):
         if ax is None:
             fig, ax = plt.subplots()
@@ -2421,10 +2481,13 @@ class Polygon2D(Contour2D):
         return sum([hash(p) for p in self.points])
 
     def __eq__(self, other_):
-        equal = True
-        for point, other_point in zip(self.points, other_.points):
-            equal = (equal and point == other_point)
-        return equal
+        if other_.__class__ != self.__class__:
+            return False
+        else :
+            equal = True
+            for point, other_point in zip(self.points, other_.points):
+                equal = (equal and point == other_point)
+            return equal
 
     def Area(self):
 
@@ -2549,7 +2612,13 @@ class Polygon2D(Contour2D):
         
         return rectangle
     
-    
+    def polygon_distance(self,polygon:'Polygon2D'):
+        p=self.points[0]
+        d=[]
+        for point in polygon.points:
+            d.append(p.point_distance(point))
+        index=d.index(min(d))
+        return d[index]
     def SelfIntersect(self):
         epsilon = 0
         # BENTLEY-OTTMANN ALGORITHM
@@ -2667,7 +2736,7 @@ class Polygon2D(Contour2D):
         
         reapaired_intersection=self.repair_single_intersection()
         
-        if len(reapaired_intersection)>1:
+        if len(reapaired_intersection)==2:
             polygon_1=reapaired_intersection[0]
             polygon_2=reapaired_intersection[1]
            
@@ -2682,6 +2751,7 @@ class Polygon2D(Contour2D):
             if not lines_1[0] and lines_2[0]  :
                 
                  all_polygons.append(polygon_1)
+                 
                  return  polygon_2.repair_intersections(all_polygons)
             if  lines_1[0] and not lines_2[0]:
                
@@ -2689,8 +2759,9 @@ class Polygon2D(Contour2D):
                 return  polygon_1.repair_intersections(all_polygons)
             if  lines_1[0] and lines_2[0]:
                
-                return polygon_1.repair_intersections(all_polygons),polygon_2.repair_intersections(all_polygons)
-                
+                return [polygon_1.repair_intersections(all_polygons),polygon_2.repair_intersections(all_polygons)]
+        
+            
         else :
             polygon=reapaired_intersection[0]
             lines =polygon.SelfIntersect()
@@ -2699,25 +2770,37 @@ class Polygon2D(Contour2D):
                all_polygons.append(polygon)
                return all_polygons
           
-               
+         
+        
+        
     def select_reapaired_polygon(self,all_polygons:List['Polygon2D']):
         reapaired_polygons=self.repair_intersections(all_polygons) 
-        print(reapaired_polygons)
+        list_polygons=[]
         good_polygons=[]
         polygons=[]
-        if not isinstance(reapaired_polygons[0],list) :
-           polygons+=reapaired_polygons
-        else :  
-            for l in reapaired_polygons :
-                for polygon in l : 
-                    if not isinstance(polygon,list):
-                            
-                        polygons.append(polygon)
+        b=[]
+        for p in reapaired_polygons:
+            if isinstance(p,list):
+                b.append(True)
+            else :
+                b.append(False)
+        if any(b):
+            
+            w=list(itertools.chain.from_iterable(reapaired_polygons))   
+            if isinstance(w[0],list):             
+                list_polygons=list(itertools.chain.from_iterable(w))
+                
+                for p in list_polygons :
+                    if isinstance(p,list):
+                        for polygon in p:
+                           polygons.append(p)
                     else :
-                         for  p in polygon :
-                            polygons.append(p)
-                            
-                            
+                           polygons.append(p)
+            else :
+                polygons+=w                    
+        else :
+              polygons+=reapaired_polygons
+                     
         for polygon in polygons:
             if len(polygon.points)>3:
                 good_polygons.append(polygon)           

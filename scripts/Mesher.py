@@ -1,8 +1,8 @@
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
+import matplotlib.tri as tri
 import numpy as npy
-import matplotlib.tri as mtri
 import volmdlr as vm
 import volmdlr.mesh as vmmesh
 import finite_elements.elasticity as els
@@ -58,7 +58,6 @@ stator_external=[stator_external_contour]
 ax=rotor_external_contour.MPLPlot()
 # rotor=vmmesh.Mesher(rotor_magnet,[],40)
 # all_rotor=[rotor_internal_contour,rotor_external_contour]
-
 exterior_rotor_contour=rotor_magnet_contours+[rotor_external_contour]
 rotor_mesh=vmmesh.Mesher(rotor_internal,exterior_rotor_contour,[],60)
 all_rotor_triangle_elements=rotor_mesh.generate_mesh(6,False)
@@ -67,16 +66,28 @@ print(isinstance(stator_external_contour,vm.Circle2D))
 stator_internal_contour.MPLPlot(ax=ax)
 stator_mesh=vmmesh.Mesher(stator_internal,stator_external,[],20)
 all_stator_triangle_elements=stator_mesh.generate_mesh(None,True)
+stator_internal_contour.MPLPlot()
+stator_internal_contour.get_pattern().MPLPlot()
+pattern=stator_internal_contour.get_pattern()
+# pattern.Rotation(pattern.CenterOfMass(),math.pi).MPLPlot()
+all_patterns=pattern.contour_from_pattern(stator_internal_contour.CenterOfMass())
+print(len(all_patterns))
+ax=plt.subplot()
+for p in all_patterns:
+    p.MPLPlot()
 
 
+# pattern=stator_internal_contour.get_pattern()
+# pattern.Rotation(pattern.CenterOfMass(),math.pi).MPLPlot()
+all_patterns=stator_internal_contour.contour_from_pattern()
 
-element_group=vmmesh.ElementsGroup(all_triangle_elements,'element_group')
-mesh=vmmesh.Mesh([element_group])
+pattern_mesh=vmmesh.Mesher([],all_patterns,[],40)
+pattern_tri=pattern_mesh.generate_mesh(None,False)
+
+elements_group_0=vmmesh.ElementsGroup(pattern_tri,'first_elements_group')
+mesh=vmmesh.Mesh([elements_group_0])
 mesh.plot()
-
-
-        
-  
+       
 # ax=rotor_external_contour.MPLPlot()
 # offset=rotor_external_contour.polygon.Offset(-0.02)
 # print(len(offset.points))
@@ -99,6 +110,8 @@ p5 =  vm.Point2D([1.9,5])
 p6 =  vm.Point2D([1,4])
 p7=vm.Point2D([1.45,4.5])
 triangle=vm.Triangle2D([p1,p2,p3])
+
+
 print(triangle.area)
 print(triangle.Area())
 # a1=vm.Arc2D(vm.Point2D([0.1,0.1]),vm.Point2D([0.2,0.6]),vm.Point2D([0.8,0.1]))
