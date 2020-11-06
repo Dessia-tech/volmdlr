@@ -7,6 +7,7 @@ Script checking offset and Curvilinear absissa of roundedline2D
 import math
 import numpy as npy
 import matplotlib.pyplot as plt
+import matplotlib.patches
 from mpl_toolkits.mplot3d import Axes3D
 
 import volmdlr
@@ -1003,7 +1004,6 @@ class Circle2D(Contour2D):
     def plot(self, ax=None, linestyle='-', color='k', linewidth=1):
         if ax is None:
             fig, ax = plt.subplots()
-            ax.set_aspect('equal')
         # else:
         #     fig = ax.figure
         if self.radius > 0:
