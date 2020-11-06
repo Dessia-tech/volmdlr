@@ -87,6 +87,8 @@ class Surface2D(volmdlr.core.Primitive2D):
 
 
 class Surface3D():
+    x_periodicity = None
+    y_periodicity = None
     """
     Abstract class
     """
@@ -116,7 +118,16 @@ class Surface3D():
 
         area = -1
         inner_contours2d = []
+        # fig, ax = plt.subplots()
         for contour3d in contours3d:
+            print(self.__class__.__name__)
+            if self.__class__.__name__ != 'Plane3D':
+                ax = contour3d.plot()
+                ax.set_title(self.__class__.__name__)
+                if hasattr(self, 'frame'):
+                    print('ff', self.frame.origin)
+                    self.frame.origin.plot(ax=ax, color='r')
+
             contour2d = self.contour3d_to_2d(contour3d)
             inner_contours2d.append(contour2d)
             contour_area = contour2d.area()
@@ -126,7 +137,9 @@ class Surface3D():
 
         inner_contours2d.remove(outer_contour2d)
 
-
+        if self.__class__.__name__ != 'Plane3D':
+            ax = outer_contour2d.plot(equal_aspect=False, plot_points=True)
+            ax.set_title(self.__class__.__name__)
         if isinstance(self.face_class , str):
             class_ = globals()[self.face_class]
         else:
@@ -139,11 +152,29 @@ class Surface3D():
 
     def contour3d_to_2d(self, contour3d):
         primitives2d = []
+        last_primitive = None
+        should_study_periodicity = self.x_periodicity or self.y_periodicity
         for primitive3d in contour3d.primitives:
             method_name = '{}_to_2d'.format(primitive3d.__class__.__name__.lower())
             if hasattr(self, method_name):
-                print(method_name)
-                primitives2d.extend(getattr(self, method_name)(primitive3d))
+                primitives = getattr(self, method_name)(primitive3d)
+                # if should_study_periodicity and last_primitive:
+                #     delta_x = primitives[0].start.x - last_primitive.end.x
+                #     if delta_x != 0 and abs(delta_x) == self.x_periodicity:
+                #         primitives = [p.translation(delta_x*volmdlr.X2D)\
+                #                       for p in primitives[:]]
+                #     else:
+                #         raise ValueError('Primitives not following each other in contour: deltax={}'.format(delta_x))
+                #     delta_y = primitives[0].start.y - last_primitive.end.y
+                #     if delta_y != 0 and abs(delta_y) == self.y_periodicity:
+                #         primitives = [p.translation(delta_y*volmdlr.Y2D)\
+                #                       for p in primitives[:]]
+                #     else:
+                #         # contour3d.plot()
+                #         raise ValueError('Primitives not following each other in contour: deltay={}'.format(delta_y))
+                # if primitives:
+                #     last_primitive = primitives[-1]
+                primitives2d.extend(primitives)
             else:
                 raise NotImplementedError('Class {} does not implement {}'.format(self.__class__.__name__,
                                                                                   method_name))
@@ -465,11 +496,11 @@ PLANE3D_OZX = Plane3D(volmdlr.OZXY)
 
 class CylindricalSurface3D(Surface3D):
     face_class = 'CylindricalFace3D'
+    x_periodicity = volmdlr.TWO_PI
     """
+    The local plane is defined by (theta, z)
     :param frame: frame.w is axis, frame.u is theta=0 frame.v theta=pi/2
-    :type frame: volmdlr.Frame3D
     :param radius: Cylinder's radius
-    :type radius: float
     """
 
     def __init__(self, frame, radius, name=''):
@@ -521,7 +552,7 @@ class CylindricalSurface3D(Surface3D):
             p1 = self.point3d_to_2d(fullarc3d.start)
             return [volmdlr.edges.LineSegment2D(p1, p1+volmdlr.TWO_PI*volmdlr.X2D)]
         else:
-            fullarc3d.plot()
+            # fullarc3d.plot()
             raise ValueError('Impossible!')
 
     def circle3d_to_2d(self, circle3d):
@@ -584,14 +615,16 @@ class CylindricalSurface3D(Surface3D):
 
 class ToroidalSurface3D(Surface3D):
     face_class = 'ToroidalFace3D'
+    x_periodicity = volmdlr.TWO_PI
+    y_periodicity = volmdlr.TWO_PI
     """
-    :param frame: Tore's frame: origin is thet center, u is pointing at
+    The local plane is defined by (theta, phi)
+    theta is the angle around the big (R) circle and phi around the small(r)
+
+    :param frame: Tore's frame: origin is the center, u is pointing at
                     theta=0
-    :type frame: volmdlr.Frame3D
     :param R: Tore's radius
-    :type R: float
     :param r: Circle to revolute radius
-    :type r: float
     Definitions of R and r according to https://en.wikipedia.org/wiki/Torus
     """
 
@@ -739,7 +772,7 @@ class ToroidalSurface3D(Surface3D):
             return [volmdlr.edges.LineSegment2D(p1,
                                                p1 + volmdlr.TWO_PI * volmdlr.Y2D)]
         else:
-            fullarc3d.plot()
+            # fullarc3d.plot()
             raise ValueError('Impossible!')
 
     def circle3d_to_2d(self, circle3d):
@@ -802,17 +835,16 @@ class ToroidalSurface3D(Surface3D):
 
 class ConicalSurface3D(Surface3D):
     face_class = 'ConicalFace3D'
+    x_periodicity = volmdlr.TWO_PI
     """
+    The local plane is defined by (theta, z)
     :param frame: Cone's frame to position it: frame.w is axis of cone
                     frame.origin is at the angle of the cone
-    :type frame: volmdlr.Frame3D
     :param r: Cone's bottom radius
-    :type r: float
     :param semi_angle: Cone's semi-angle
-    :type semi_angle: float
     """
 
-    def __init__(self, frame, semi_angle, name=''):
+    def __init__(self, frame:volmdlr.Frame3D, semi_angle:float, name:str=''):
         self.frame = frame
         self.semi_angle = semi_angle
         self.name = name
@@ -820,12 +852,19 @@ class ConicalSurface3D(Surface3D):
     @classmethod
     def from_step(cls, arguments, object_dict):
         frame3d = object_dict[arguments[1]]
+        print(frame3d)
         U, W = frame3d.v, frame3d.u
         U.normalize()
         W.normalize()
         V = W.cross(U)
-        frame_direct = volmdlr.Frame3D(frame3d.origin, U, V, W)
+        radius = float(arguments[2]) / 1000
         semi_angle = float(arguments[3])
+        print(semi_angle, radius, radius/math.tan(semi_angle))
+        origin = frame3d.origin - radius/math.tan(semi_angle)*W
+
+
+        frame_direct = volmdlr.Frame3D(origin, U, V, W)
+        print(frame_direct)
         return cls(frame_direct, semi_angle, arguments[0][1:-1])
 
     def frame_mapping(self, frame, side, copy=True):
@@ -864,6 +903,7 @@ class ConicalSurface3D(Surface3D):
         z = self.frame.w.dot(point)
         x, y = point.plane_projection2d(self.frame.origin, self.frame.u,
                                         self.frame.v)
+        print(x, y)
         theta = math.atan2(y, x)
         return volmdlr.Point2D(theta, z)
 
@@ -885,9 +925,9 @@ class ConicalSurface3D(Surface3D):
     def fullarc3d_to_2d(self, fullarc3d):
         if self.frame.w.is_colinear_to(fullarc3d.normal):
             p1 = self.point3d_to_2d(fullarc3d.start)
-            return [volmdlr.edges.LineSegment2D(p1, p1+volmdlr.TWO_PI*volmdlr.Y2D)]
+            return [volmdlr.edges.LineSegment2D(p1, p1+volmdlr.TWO_PI*volmdlr.X2D)]
         else:
-            fullarc3d.plot()
+            # fullarc3d.plot()
             raise ValueError('Impossible!')
 
     def circle3d_to_2d(self, circle3d):
@@ -896,7 +936,8 @@ class ConicalSurface3D(Surface3D):
     def linesegment2d_to_3d(self, linesegment2d):
         theta1, z1 = linesegment2d.start
         theta2, z2 = linesegment2d.end
-        if theta1 == theta2:
+        print('r', theta1, theta2, (theta1 - theta2)//volmdlr.TWO_PI)
+        if math.isclose((theta1 - theta2)//volmdlr.TWO_PI, 0., abs_tol=1e-9):
             return [volmdlr.edges.LineSegment3D(
                         self.point2d_to_3d(linesegment2d.start),
                         self.point2d_to_3d(linesegment2d.end),
@@ -1625,25 +1666,10 @@ class PlaneFace3D(Face3D):
         point_2D = point.to_2d(self.plane.origin, self.plane.vectors[0],
                               self.plane.vectors[1])
 
-        ### PLOT ###
-        #        ax = self.polygon2D.plot()
-        #        point_2D.plot(ax)
-        ############
 
         if not self.polygon2D.PointBelongs(point_2D):
-            ### PLOT ###
-            #            ax = self.polygon2D.plot()
-            #            point_2D.plot(ax)
-            #            ax.set_title('DEHORS')
-            #            ax.set_aspect('equal')
-            ############
             return False
-        ### PLOT ###
-        #        ax = self.polygon2D.plot()
-        #        point_2D.plot(ax)
-        #        ax.set_title('DEDANS')
-        #        ax.set_aspect('equal')
-        ############
+
         return True
 
     def edge_intersection(self, edge):
