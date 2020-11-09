@@ -5641,10 +5641,10 @@ class CylindricalFace3D(Face3D):
                 
         else :
             point12d = arc.start
-            if point12d.__class__ is Point3D :
+            if point12d.__class__.__name__ in ['Point3D', 'Vector3D']:
                 point12d = point12d.To2D(center, frame.u, frame.v) #Using it to put arc.start at the same height 
             point13d = point12d.To3D(center, frame.u, frame.v)
-            if arc.start.__class__ is Point2D :
+            if arc.start.__class__.__name__ == 'Point2D':
                 u_g2d = Vector2D((arc.start - arc.center).vector)
                 u = u_g2d.To3D(center, frame.u, frame.v)
                 u.Normalize()
