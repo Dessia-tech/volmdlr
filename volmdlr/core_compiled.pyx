@@ -541,15 +541,15 @@ class Point2D(Vector2D):
 
 
     @classmethod
-    def line_intersection(cls,line1, line2, curvilinear_abscissa=False):
-        x1 = line1.start.x
-        y1 = line1.start.y
-        x2 = line1.end.x
-        y2 = line1.end.y
-        x3 = line2.start.x
-        y3 = line2.start.y
-        x4 = line2.end.x
-        y4 = line2.end.y
+    def line_intersection(cls, line1, line2, curvilinear_abscissa=False):
+        x1 = line1[0].x
+        y1 = line1[0].y
+        x2 = line1[1].x
+        y2 = line1[1].y
+        x3 = line2[0].x
+        y3 = line2[0].y
+        x4 = line2[1].x
+        y4 = line2[1].y
 
         denominateur = (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4)
         if math.isclose(denominateur, 0, abs_tol=1e-6):
@@ -625,7 +625,7 @@ class Point2D(Vector2D):
 
     @classmethod
     def line_projection(cls, point, line):
-        p1, p2 = line.points
+        p1, p2 = line[0], line[1]
         n = line.normalVector(unit=True)
         pp1 = point - p1
         return  pp1 - pp1.dot(n)*n + p1
@@ -1111,7 +1111,6 @@ class Matrix33:
                             det_inv*(self.M11*self.M22 - self.M21*self.M12) # a11a22−a21a12
                             )
         else:
-            # print(self.__dict__, det)
             raise ValueError('The matrix is singular')
 
     @classmethod

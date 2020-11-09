@@ -204,8 +204,6 @@ class Block(volmdlr.shells.Shell3D):
         hlz = 0.5*self.frame.w.norm()
         frame = self.frame.copy()
         frame.normalize()
-        print(frame)
-        print(hlx, hly, hlz)
         xm_frame = volmdlr.Frame3D(frame.origin-0.5*self.frame.u,
                                    frame.v, frame.w, frame.u)
         xp_frame = volmdlr.Frame3D(frame.origin+0.5*self.frame.u,

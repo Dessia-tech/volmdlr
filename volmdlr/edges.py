@@ -39,6 +39,14 @@ class Edge(dc.DessiaObject):
         self.end = end
         dc.DessiaObject.__init__(self, name=name)
 
+    def __getitem__(self, key):
+        if key == 0:
+            return self.start
+        elif key == 1:
+            return self.end
+        else:
+            raise IndexError
+
     def polygon_points(self, min_x_density=None, min_y_density=None):
         n = 0  # Number of points to insert between start and end
         if min_x_density:
@@ -150,6 +158,14 @@ class Line(dc.DessiaObject):
         self.point1 = point1
         self.point2 = point2
 
+    def __getitem__(self, key):
+        if key == 0:
+            return self.point1
+        elif key == 1:
+            return self.point2
+        else:
+            raise IndexError
+
     def unit_direction_vector(self):
         u = self.direction_vector()
         u.normalize()
@@ -185,6 +201,9 @@ class LineSegment(Edge):
         return u
 
     def direction_vector(self):
+        '''
+        Returns end - start, not normalized
+        '''
         return self.end - self.start
 
     def normal_vector(self):
@@ -1825,16 +1844,26 @@ class LineSegment3D(LineSegment):
 
         elif d1 != d2:
             # Conical
-            # print('cone')
             v = axis.cross(u)
-            w = axis.cross(v)
-            u1 = self.direction_vector()
-            semi_angle = math.asin(u1.cross(axis).norm())
+            dv = self.direction_vector()
+            dv.normalize()
+
+            semi_angle = math.acos(dv.dot(axis))
             cone_origin = p1_proj - d1/math.tan(semi_angle) * axis
-            surface = volmdlr.faces.ConicalSurface3D(
-                volmdlr.Frame3D(cone_origin, axis, v, w),
-                semi_angle)
-            return surface.rectangular_cut(0, angle, d1, d2)
+            if semi_angle > 0.5*math.pi:
+                semi_angle = math.pi - semi_angle
+
+                cone_frame = volmdlr.Frame3D(cone_origin, u, -v, -axis)
+            elif semi_angle < 0:
+                raise NotImplementedError
+            else:
+                cone_frame = volmdlr.Frame3D(cone_origin, u, v, axis)
+
+            surface = volmdlr.faces.ConicalSurface3D(cone_frame,
+                                                     semi_angle)
+            z1 = d1 / math.tan(semi_angle)
+            z2 = d2 / math.tan(semi_angle)
+            return surface.rectangular_cut(0, angle, z1, z2)
         else:
             v = axis.cross(u)
             surface = volmdlr.faces.CylindricalSurface3D(volmdlr.Frame3D(p1_proj, u, v, axis), d1)

@@ -699,8 +699,9 @@ class ClosedPolygon2D(Contour2D):
                 p.translation(offset, copy=False)
 
     def offset(self, offset):
-        bound = self.bounding_rectangle2()
-        max_offset_len = bound.min_length() / 2
+        xmin, xmax, ymin, ymax = self.bounding_rectangle()
+
+        max_offset_len = min(xmax-xmin, ymax-ymin) / 2
         if offset <= -max_offset_len:
             print('Inadapted offset, '
                   'polygon might turn over. Offset must be greater than',

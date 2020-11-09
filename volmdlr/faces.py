@@ -864,7 +864,6 @@ class ConicalSurface3D(Surface3D):
 
 
         frame_direct = volmdlr.Frame3D(origin, U, V, W)
-        print(frame_direct)
         return cls(frame_direct, semi_angle, arguments[0][1:-1])
 
     def frame_mapping(self, frame, side, copy=True):
@@ -893,10 +892,10 @@ class ConicalSurface3D(Surface3D):
 
     def point2d_to_3d(self, point):
         theta, z = point
-        new_point = volmdlr.Point3D(z * self.semi_angle * math.cos(theta),
-                             z * self.semi_angle * math.sin(theta),
-                             z,
-                             )
+        r = math.tan(self.semi_angle) * z
+        new_point = volmdlr.Point3D(r * math.cos(theta),
+                                    r * math.sin(theta),
+                                    z)
         return self.frame.old_coordinates(new_point)
 
     def point3d_to_2d(self, point):
@@ -936,7 +935,6 @@ class ConicalSurface3D(Surface3D):
     def linesegment2d_to_3d(self, linesegment2d):
         theta1, z1 = linesegment2d.start
         theta2, z2 = linesegment2d.end
-        # print('r', theta1, theta2, abs(theta1 - theta2), (abs(theta1 - theta2))//volmdlr.TWO_PI)
         if math.isclose((abs(theta1 - theta2))//volmdlr.TWO_PI, 0., abs_tol=1e-9):
             return [volmdlr.edges.LineSegment3D(
                         self.point2d_to_3d(linesegment2d.start),
