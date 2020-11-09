@@ -608,7 +608,7 @@ class CylindricalSurface3D(Surface3D):
         p2 = volmdlr.Point2D(theta2, z1)
         p3 = volmdlr.Point2D(theta2, z2)
         p4 = volmdlr.Point2D(theta1, z2)
-        outer_contour = volmdlr.wires.Polygon2D([p1, p2, p3, p4])
+        outer_contour = volmdlr.wires.ClosedPolygon2D([p1, p2, p3, p4])
         surface2d = Surface2D(outer_contour, [])
         return volmdlr.faces.CylindricalFace3D(self, surface2d, name)
 
