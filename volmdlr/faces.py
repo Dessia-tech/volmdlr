@@ -398,9 +398,9 @@ class Plane3D(Surface3D):
         """
         if side == 'old':
             new_origin = frame.old_coordinates(self.frame.origin)
-            new_vector1 = frame.Basis().old_coordinates(self.frame.u)
-            new_vector2 = frame.Basis().old_coordinates(self.frame.v)
-            new_vector3 = frame.Basis().old_coordinates(self.frame.w)
+            new_vector1 = frame.basis().old_coordinates(self.frame.u)
+            new_vector2 = frame.basis().old_coordinates(self.frame.v)
+            new_vector3 = frame.basis().old_coordinates(self.frame.w)
             if copy:
                 return Plane3D(volmdlr.Frame3D(new_origin, new_vector1, new_vector2, new_vector3), self.name)
             else:
@@ -415,9 +415,9 @@ class Plane3D(Surface3D):
 
         if side == 'new':
             new_origin = frame.new_coordinates(self.frame.origin)
-            new_vector1 = frame.Basis().new_coordinates(self.frame.u)
-            new_vector2 = frame.Basis().new_coordinates(self.frame.v)
-            new_vector3 = frame.Basis().new_coordinates(self.frame.w)
+            new_vector1 = frame.basis().new_coordinates(self.frame.u)
+            new_vector2 = frame.basis().new_coordinates(self.frame.v)
+            new_vector3 = frame.basis().new_coordinates(self.frame.w)
             if copy:
                 return Plane3D(volmdlr.Frame3D(new_origin, new_vector1, new_vector2, new_vector3), self.name)
             else:
@@ -608,7 +608,7 @@ class CylindricalSurface3D(Surface3D):
         p2 = volmdlr.Point2D(theta2, z1)
         p3 = volmdlr.Point2D(theta2, z2)
         p4 = volmdlr.Point2D(theta1, z2)
-        outer_contour = volmdlr.wires.Polygon2D([p1, p2, p3, p4])
+        outer_contour = volmdlr.wires.ClosedPolygon2D([p1, p2, p3, p4])
         surface2d = Surface2D(outer_contour, [])
         return volmdlr.faces.CylindricalFace3D(self, surface2d, name)
 
@@ -918,7 +918,7 @@ class ConicalSurface3D(Surface3D):
         p2 = volmdlr.Point2D(theta2, z1)
         p3 = volmdlr.Point2D(theta2, z2)
         p4 = volmdlr.Point2D(theta1, z2)
-        outer_contour = volmdlr.wires.Polygon2D([p1, p2, p3, p4])
+        outer_contour = volmdlr.wires.ClosedPolygon2D([p1, p2, p3, p4])
         return ConicalFace3D(self, Surface2D(outer_contour, []), name)
 
 

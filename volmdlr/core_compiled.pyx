@@ -1157,7 +1157,7 @@ class Basis2D(Basis):
         self.name = name
 
     def __neg__(self):
-        Pinv = self.Inversetransfer_matrix()
+        Pinv = self.inverse_transfer_matrix()
         return Basis2D(Vector3D(Pinv[:, 0]),
                        Vector3D(Pinv[:, 1]))
 
@@ -1178,7 +1178,7 @@ class Basis2D(Basis):
         return npy.array([[self.u[0], self.v[0]],
                           [self.u[1], self.v[1]]])
 
-    def Inversetransfer_matrix(self):
+    def inverse_transfer_matrix(self):
         det = self.u[0]*self.v[1] - self.v[0]*self.u[1]
         if not math.isclose(det, 0, abs_tol=1e-10):
             return 1/det * npy.array([[self.v[1], -self.v[0]],
@@ -1187,7 +1187,7 @@ class Basis2D(Basis):
             raise ZeroDivisionError
 
     def new_coordinates(self, vector):
-        matrix = self.Inversetransfer_matrix()
+        matrix = self.inverse_transfer_matrix()
         return Point2D((matrix[0][0]*vector.x + matrix[0][1]*vector.y,
                          matrix[1][0]*vector.x + matrix[1][1]*vector.y))
 
@@ -1247,13 +1247,13 @@ class Basis3D(Basis):
 
 
     def __neg__(self):
-        M = self.Inversetransfer_matrix()
+        M = self.inverse_transfer_matrix()
         return Basis3D(Vector3D((M.M11, M.M21, M.M31)),
                        Vector3D((M.M12, M.M22, M.M32)),
                        Vector3D((M.M13, M.M23, M.M33)))
 
     def __sub__(self, other_frame):
-        P1inv = other_frame.Inversetransfer_matrix()
+        P1inv = other_frame.inverse_transfer_matrix()
         P2 = self.transfer_matrix()
         M = P1inv * P2
         return Basis3D(Vector3D((M.M11, M.M21, M.M31)),
@@ -1408,7 +1408,7 @@ class Frame2D(Basis2D):
         return '{}: O={} U={}, V={}'.format(self.__class__.__name__, self.origin, self.u, self.v)
 
     def __neg__(self):
-        Pinv = self.Inversetransfer_matrix()
+        Pinv = self.inverse_transfer_matrix()
         new_origin = Point2D(npy.dot(Pinv, self.origin))
         return Frame2D(new_origin,
                        Vector2D(Pinv[:, 0]),
@@ -1425,7 +1425,7 @@ class Frame2D(Basis2D):
 
 
     def __sub__(self, other_frame):
-        P1inv = other_frame.Inversetransfer_matrix()
+        P1inv = other_frame.inverse_transfer_matrix()
         P2 = self.transfer_matrix()
         new_origin = Point2D(npy.dot(P1inv, (self.origin - other_frame.origin)))
         M = npy.dot(P1inv, P2)
@@ -1493,7 +1493,7 @@ class Frame3D(Basis3D):
 
 
     def __neg__(self):
-        M = self.Inversetransfer_matrix()
+        M = self.inverse_transfer_matrix()
         new_origin = M.vector_multiplication(self.origin)
         return Frame3D(new_origin,
                        Vector3D(M.M11, M.M21, M.M31),
@@ -1514,7 +1514,7 @@ class Frame3D(Basis3D):
 
 
     def __sub__(self, other_frame):
-        P1inv = other_frame.Inversetransfer_matrix()
+        P1inv = other_frame.inverse_transfer_matrix()
         P2 = self.transfer_matrix()
         new_origin = P1inv.vector_multiplication(self.origin - other_frame.origin)
         M = P1inv * P2
