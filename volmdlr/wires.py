@@ -896,11 +896,15 @@ class Polygon2D(Contour2D):
         return cls(hull)
 
     def plot(self, ax=None, color='k',
-                plot_points=False, point_numbering=False):
+                plot_points=False, point_numbering=False,
+                fill=False, fill_color='w'):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
 
+        if fill:
+            ax.fill([p[0] for p in self.points], [p[1] for p in self.points],
+                    facecolor=fill_color)
         for ls in self.line_segments:
             ls.plot(ax=ax ,color=color)
 
