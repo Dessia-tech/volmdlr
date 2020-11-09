@@ -602,7 +602,7 @@ class LineSegment2D(LineSegment):
     def to_3d(self, plane_origin, x1, x2):
         start = self.start.to_3d(plane_origin, x1, x2)
         end = self.end.to_3d(plane_origin, x1, x2)
-        return LineSegment3D(start, end, self.name)
+        return LineSegment3D(start, end, name=self.name)
 
     def reverse(self):
         return LineSegment2D(self.end.copy(), self.points[0].copy())
@@ -1401,7 +1401,7 @@ class LineSegment3D(LineSegment):
     Define a line segment limited by two points
     """
 
-    def __init__(self, start, end, name=''):
+    def __init__(self, start, end, name:str=''):
         LineSegment.__init__(self, start, end, name)
         self.bounding_box = self._bounding_box()
 
@@ -1811,8 +1811,8 @@ class LineSegment3D(LineSegment):
 
 
 
-                arc2 = Arc3D(arc2_s, arc1_i, self.start)
-                line2 = LineSegment3D(arc1_e, arc2_s)
+                # arc2 = Arc2D(arc2_s, arc1_i, self.start)
+                # line2 = LineSegment3D(arc1_e, arc2_s)
                 outer_contour2d = volmdlr.wires.Contour2D([arc1, line1,
                                                            arc2, line2])
                 inner_contours2d = []
@@ -1825,13 +1825,16 @@ class LineSegment3D(LineSegment):
 
         elif d1 != d2:
             # Conical
+            # print('cone')
             v = axis.cross(u)
             w = axis.cross(v)
             u1 = self.direction_vector()
             semi_angle = math.asin(u1.cross(axis).norm())
-            surface = volmdlr.faces.ConicalSurface3D(volmdlr.Frame3D(p1_proj, axis, v, w),
-                                       semi_angle)
-            return surface.rectangular_cut(0, self.length(), 0, angle)
+            cone_origin = p1_proj - d1/math.tan(semi_angle) * axis
+            surface = volmdlr.faces.ConicalSurface3D(
+                volmdlr.Frame3D(cone_origin, axis, v, w),
+                semi_angle)
+            return surface.rectangular_cut(0, angle, d1, d2)
         else:
             v = axis.cross(u)
             surface = volmdlr.faces.CylindricalSurface3D(volmdlr.Frame3D(p1_proj, u, v, axis), d1)

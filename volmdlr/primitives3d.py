@@ -751,7 +751,7 @@ class Cylinder(RevolvedProfile):
 class HollowCylinder(Cylinder):
     def __init__(self, position, axis, inner_radius, outer_radius, length,
                  color=None, alpha=1, name=''):
-        volmdlr.Primitive3D.__init__(self, name=name)
+        volmdlr.core.Primitive3D.__init__(self, name=name)
         self.position = position
         axis.normalize()
         self.axis = axis
@@ -760,23 +760,23 @@ class HollowCylinder(Cylinder):
         self.length = length
         
         # Revolved Profile
-        p1 = volmdlr.Point2D((-0.5*self.length, self.inner_radius))
-        p2 = volmdlr.Point2D((0.5*self.length, self.inner_radius))
-        p3 = volmdlr.Point2D((0.5*self.length, self.outer_radius))
-        p4 = volmdlr.Point2D((-0.5*self.length, self.outer_radius))
-        l1 = volmdlr.LineSegment2D(p1, p2)
-        l2 = volmdlr.LineSegment2D(p2, p3)
-        l3 = volmdlr.LineSegment2D(p3, p4)
-        l4 = volmdlr.LineSegment2D(p4, p1)
-        contour = volmdlr.Contour2D([l1, l2, l3, l4])
-        y = axis.RandomUnitnormalVector()
+        p1 = volmdlr.Point2D(-0.5*self.length, self.inner_radius)
+        p2 = volmdlr.Point2D(0.5*self.length, self.inner_radius)
+        p3 = volmdlr.Point2D(0.5*self.length, self.outer_radius)
+        p4 = volmdlr.Point2D(-0.5*self.length, self.outer_radius)
+        l1 = volmdlr.edges.LineSegment2D(p1, p2)
+        l2 = volmdlr.edges.LineSegment2D(p2, p3)
+        l3 = volmdlr.edges.LineSegment2D(p3, p4)
+        l4 = volmdlr.edges.LineSegment2D(p4, p1)
+        contour = volmdlr.wires.Contour2D([l1, l2, l3, l4])
+        y = axis.random_unit_normal_vector()
         # contour.plot()
         RevolvedProfile.__init__(self, position, axis, y, contour, position, axis,
                                  color=color, alpha=alpha, name=name)
 
         
 
-    def Volume(self):
+    def volume(self):
         return self.length * math.pi* (self.outer_radius**2 - self.inner_radius**2)
 
 

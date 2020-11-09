@@ -422,7 +422,8 @@ class Vector2D(Vector):
                 self.x = new_vector.x
                 self.y = new_vector.y
 
-    def to3d(self, plane_origin, vx, vy):
+
+    def to_3d(self, plane_origin, vx, vy):
         return Vector3D(plane_origin.x + vx.x*self.x + vy.x*self.y,
                         plane_origin.y + vx.y*self.x + vy.y*self.y,
                         plane_origin.z + vx.z*self.x + vy.z*self.y,
@@ -1188,13 +1189,13 @@ class Basis2D(Basis):
 
     def new_coordinates(self, vector):
         matrix = self.Inversetransfer_matrix()
-        return Point2D((matrix[0][0]*vector.x + matrix[0][1]*vector.y,
-                         matrix[1][0]*vector.x + matrix[1][1]*vector.y))
+        return Point2D(matrix[0][0]*vector.x + matrix[0][1]*vector.y,
+                       matrix[1][0]*vector.x + matrix[1][1]*vector.y)
 
     def old_coordinates(self, vector):
         matrix = self.transfer_matrix()
-        return Point2D((matrix[0][0]*vector.x + matrix[0][1]*vector.y,
-                         matrix[1][0]*vector.x + matrix[1][1]*vector.y))
+        return Point2D(matrix[0][0]*vector.x + matrix[0][1]*vector.y,
+                       matrix[1][0]*vector.x + matrix[1][1]*vector.y)
 
     def rotation(self, angle:float, copy=True):
         center = O2D
@@ -1241,24 +1242,24 @@ class Basis3D(Basis):
 
     def __add__(self, other_basis):
         M = self.transfer_matrix()*other_basis.transfer_matrix()
-        return Basis3D(Vector3D((M.M11, M.M21, M.M31)),
-                       Vector3D((M.M12, M.M22, M.M32)),
-                       Vector3D((M.M13, M.M23, M.M33)))
+        return Basis3D(Vector3D(M.M11, M.M21, M.M31),
+                       Vector3D(M.M12, M.M22, M.M32),
+                       Vector3D(M.M13, M.M23, M.M33))
 
 
     def __neg__(self):
         M = self.Inversetransfer_matrix()
-        return Basis3D(Vector3D((M.M11, M.M21, M.M31)),
-                       Vector3D((M.M12, M.M22, M.M32)),
-                       Vector3D((M.M13, M.M23, M.M33)))
+        return Basis3D(Vector3D(M.M11, M.M21, M.M31),
+                       Vector3D(M.M12, M.M22, M.M32),
+                       Vector3D(M.M13, M.M23, M.M33))
 
     def __sub__(self, other_frame):
         P1inv = other_frame.Inversetransfer_matrix()
         P2 = self.transfer_matrix()
         M = P1inv * P2
-        return Basis3D(Vector3D((M.M11, M.M21, M.M31)),
-                       Vector3D((M.M12, M.M22, M.M32)),
-                       Vector3D((M.M13, M.M23, M.M33)))
+        return Basis3D(Vector3D(M.M11, M.M21, M.M31),
+                       Vector3D(M.M12, M.M22, M.M32),
+                       Vector3D(M.M13, M.M23, M.M33))
 
     def __round__(self, ndigits:int=6):
         return self.__class__((round(self.u, ndigits),

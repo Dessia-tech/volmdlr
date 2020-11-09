@@ -32,7 +32,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         outer_polygon = self.outer_contour.polygonization(min_x_density=15, min_y_density=12)
         # ax2 = outer_polygon.plot(color='r', point_numbering=True)
         points = outer_polygon.points
-        outer_polygon.plot(plot_points=True, point_numbering=True)
+        # outer_polygon.plot(plot_points=True, point_numbering=True)
         vertices = [(p.x, p.y) for p in points]
         n = len(outer_polygon.points)
         segments = [(i, i+1) for i in range(n-1)]
@@ -120,12 +120,12 @@ class Surface3D():
         inner_contours2d = []
         # fig, ax = plt.subplots()
         for contour3d in contours3d:
-            print(self.__class__.__name__)
+            # print(self.__class__.__name__)
             if self.__class__.__name__ != 'Plane3D':
                 ax = contour3d.plot()
                 ax.set_title(self.__class__.__name__)
                 if hasattr(self, 'frame'):
-                    print('ff', self.frame.origin)
+                    # print('ff', self.frame.origin)
                     self.frame.origin.plot(ax=ax, color='r')
 
             contour2d = self.contour3d_to_2d(contour3d)
@@ -608,7 +608,7 @@ class CylindricalSurface3D(Surface3D):
         p2 = volmdlr.Point2D(theta2, z1)
         p3 = volmdlr.Point2D(theta2, z2)
         p4 = volmdlr.Point2D(theta1, z2)
-        outer_contour = volmdlr.wires.Polygon2D([p1, p2, p3, p4])
+        outer_contour = volmdlr.wires.ClosedPolygon2D([p1, p2, p3, p4])
         surface2d = Surface2D(outer_contour, [])
         return volmdlr.faces.CylindricalFace3D(self, surface2d, name)
 
@@ -734,7 +734,7 @@ class ToroidalSurface3D(Surface3D):
         p2 = volmdlr.Point2D(theta1, phi2)
         p3 = volmdlr.Point2D(theta2, phi2)
         p4 = volmdlr.Point2D(theta2, phi1)
-        outer_contour = volmdlr.wires.Polygon2D([p1, p2, p3, p4])
+        outer_contour = volmdlr.wires.ClosedPolygon2D([p1, p2, p3, p4])
         return ToroidalFace3D(self,
                               Surface2D(outer_contour, []),
                               name)
@@ -852,14 +852,14 @@ class ConicalSurface3D(Surface3D):
     @classmethod
     def from_step(cls, arguments, object_dict):
         frame3d = object_dict[arguments[1]]
-        print(frame3d)
+        # print(frame3d)
         U, W = frame3d.v, frame3d.u
         U.normalize()
         W.normalize()
         V = W.cross(U)
         radius = float(arguments[2]) / 1000
         semi_angle = float(arguments[3])
-        print(semi_angle, radius, radius/math.tan(semi_angle))
+        # print(semi_angle, radius, radius/math.tan(semi_angle))
         origin = frame3d.origin - radius/math.tan(semi_angle)*W
 
 
@@ -903,7 +903,7 @@ class ConicalSurface3D(Surface3D):
         z = self.frame.w.dot(point)
         x, y = point.plane_projection2d(self.frame.origin, self.frame.u,
                                         self.frame.v)
-        print(x, y)
+        # print(x, y)
         theta = math.atan2(y, x)
         return volmdlr.Point2D(theta, z)
 
@@ -918,7 +918,7 @@ class ConicalSurface3D(Surface3D):
         p2 = volmdlr.Point2D(theta2, z1)
         p3 = volmdlr.Point2D(theta2, z2)
         p4 = volmdlr.Point2D(theta1, z2)
-        outer_contour = volmdlr.wires.Polygon2D([p1, p2, p3, p4])
+        outer_contour = volmdlr.wires.ClosedPolygon2D([p1, p2, p3, p4])
         return ConicalFace3D(self, Surface2D(outer_contour, []), name)
 
 
@@ -936,13 +936,13 @@ class ConicalSurface3D(Surface3D):
     def linesegment2d_to_3d(self, linesegment2d):
         theta1, z1 = linesegment2d.start
         theta2, z2 = linesegment2d.end
-        print('r', theta1, theta2, (theta1 - theta2)//volmdlr.TWO_PI)
-        if math.isclose((theta1 - theta2)//volmdlr.TWO_PI, 0., abs_tol=1e-9):
+        # print('r', theta1, theta2, abs(theta1 - theta2), (abs(theta1 - theta2))//volmdlr.TWO_PI)
+        if math.isclose((abs(theta1 - theta2))//volmdlr.TWO_PI, 0., abs_tol=1e-9):
             return [volmdlr.edges.LineSegment3D(
                         self.point2d_to_3d(linesegment2d.start),
                         self.point2d_to_3d(linesegment2d.end),
             )]
-        elif z1 == z2:
+        elif math.isclose(z1, z2, abs_tol=1e-9):
             if abs(theta1 - theta2) == volmdlr.TWO_PI:
                 return [volmdlr.edges.FullArc3D(center=self.frame.origin+z1*self.frame.w,
                                                start_end=self.point2d_to_3d(linesegment2d.start),
@@ -1053,7 +1053,7 @@ class RuledSurface3D(Surface3D):
         p2 = volmdlr.Point2D(x2, y1)
         p3 = volmdlr.Point2D(x2, y2)
         p4 = volmdlr.Point2D(x1, y2)
-        outer_contour = volmdlr.wires.Polygon2D([p1, p2, p3, p4])
+        outer_contour = volmdlr.wires.ClosedPolygon2D([p1, p2, p3, p4])
         surface2d = Surface2D(outer_contour, [])
         return volmdlr.faces.RuledFace3D(self, surface2d, name)
 
@@ -1229,7 +1229,6 @@ class Face3D(volmdlr.core.Primitive3D):
                  name: str = ''):
         self.surface3d = surface3d
         self.surface2d = surface2d
-
         self.bounding_box = self._bounding_box()
 
         volmdlr.core.Primitive3D.__init__(self, name=name)
@@ -1444,7 +1443,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return same
 
     def triangulation(self):
-        print(self.surface2d.outer_contour.area())
+        # print(self.surface2d.outer_contour.area())
 
         mesh2d = self.surface2d.triangulation(min_x_density=self.min_x_density,
                                               min_y_density=self.min_y_density)
@@ -1527,7 +1526,7 @@ class PlaneFace3D(Face3D):
             p.to_2d(plane.origin, plane.vectors[0], plane.vectors[1]) for p in
             points]
         repaired_points = [p.copy() for p in points]
-        polygon2D = volmdlr.Polygon2D(polygon_points)
+        polygon2D = volmdlr.ClosedPolygon2D(polygon_points)
         if polygon2D.SelfIntersect()[0]:
             repaired_points = [repaired_points[1]] + [
                 repaired_points[0]] + repaired_points[2:]
@@ -1536,7 +1535,7 @@ class PlaneFace3D(Face3D):
             if polygon_points[0] == polygon_points[-1]:
                 repaired_points = repaired_points[:-1]
                 polygon_points = polygon_points[:-1]
-            polygon2D = volmdlr.Polygon2D(polygon_points)
+            polygon2D = volmdlr.ClosedPolygon2D(polygon_points)
         return repaired_points, polygon2D
 
 
@@ -2392,7 +2391,7 @@ class CylindricalFace3D(Face3D):
             # Find the closest one
             points_contours1 = self.contours2d[0].tessel_points
 
-            poly1 = volmdlr.Polygon2D(points_contours1)
+            poly1 = volmdlr.ClosedPolygon2D(points_contours1)
             d1, new_pt1_2d = poly1.PointBorderDistance(pt1_2d,
                                                        return_other_point=True)
             pt1 = volmdlr.Point3D((r1 * math.cos(new_pt1_2d.vector[0]),
@@ -2404,7 +2403,7 @@ class CylindricalFace3D(Face3D):
             # Find the closest one
             points_contours2 = other_cyl.contours2d[0].tessel_points
 
-            poly2 = volmdlr.Polygon2D(points_contours2)
+            poly2 = volmdlr.ClosedPolygon2D(points_contours2)
             d2, new_pt2_2d = poly2.PointBorderDistance(pt2_2d,
                                                        return_other_point=True)
             pt2 = volmdlr.Point3D((r2 * math.cos(new_pt2_2d.vector[0]),
@@ -2494,7 +2493,7 @@ class CylindricalFace3D(Face3D):
             # Find the closest one
             points_contours1 = self.contours2d[0].tessel_points
 
-            poly1 = volmdlr.Polygon2D(points_contours1)
+            poly1 = volmdlr.ClosedPolygon2D(points_contours1)
             d1, new_pt1_2d = poly1.PointBorderDistance(pt1_2d,
                                                        return_other_point=True)
             pt1 = volmdlr.Point3D((r * math.cos(new_pt1_2d.vector[0]),
@@ -2747,7 +2746,7 @@ class ToroidalFace3D(Face3D):
             # Find the closest one
             points_contours1 = self.contours2d[0].tessel_points
 
-            poly1 = volmdlr.Polygon2D(points_contours1)
+            poly1 = volmdlr.ClosedPolygon2D(points_contours1)
             d1, new_pt1_2d = poly1.PointBorderDistance(pt1_2d,
                                                        return_other_point=True)
 
@@ -2758,7 +2757,7 @@ class ToroidalFace3D(Face3D):
             # Find the closest one
             points_contours2 = other_tore.contours2d[0].tessel_points
 
-            poly2 = volmdlr.Polygon2D(points_contours2)
+            poly2 = volmdlr.ClosedPolygon2D(points_contours2)
             d2, new_pt2_2d = poly2.PointBorderDistance(pt2_2d,
                                                        return_other_point=True)
 
@@ -2894,7 +2893,7 @@ class ToroidalFace3D(Face3D):
             # Find the closest one
             points_contours2 = self.contours2d[0].tessel_points
 
-            poly2 = volmdlr.Polygon2D(points_contours2)
+            poly2 = volmdlr.ClosedPolygon2D(points_contours2)
             d2, new_pt2_2d = poly2.PointBorderDistance(pt2_2d,
                                                        return_other_point=True)
 
@@ -2905,7 +2904,7 @@ class ToroidalFace3D(Face3D):
             # Find the closest one
             points_contours1 = cyl.contours2d[0].tessel_points
 
-            poly1 = volmdlr.Polygon2D(points_contours1)
+            poly1 = volmdlr.ClosedPolygon2D(points_contours1)
             d1, new_pt1_2d = poly1.PointBorderDistance(pt1_2d,
                                                        return_other_point=True)
 
@@ -3009,7 +3008,7 @@ class ToroidalFace3D(Face3D):
             # Find the closest one
             points_contours1 = self.contours2d[0].tessel_points
 
-            poly1 = volmdlr.Polygon2D(points_contours1)
+            poly1 = volmdlr.ClosedPolygon2D(points_contours1)
             d1, new_pt1_2d = poly1.PointBorderDistance(pt1_2d,
                                                        return_other_point=True)
 

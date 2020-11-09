@@ -7,17 +7,14 @@ Demo of cylinders
 """
 
 import volmdlr as vm
-import volmdlr.primitives3D as primitives3D
+import volmdlr.primitives3d as primitives3d
 
-cylinder1 = primitives3D.Cylinder(vm.Vector3D((0.,0.,0.)), vm.Vector3D((1.,0.,0.)),
+cylinder1 = primitives3d.Cylinder(vm.O3D, vm.X3D,
                                 0.03, 0.02, 'cylinder1')
-cylinder2 = primitives3D.HollowCylinder(vm.Vector3D((0,0.1,0.)), vm.Vector3D((1.,0.,0.)),
+cylinder2 = primitives3d.HollowCylinder(vm.Y3D, vm.X3D,
                                       0.02, 0.06, 0.03,'cylinder2')
-#profile=primitives3D.ExtrudedProfile((0,0,0),(1,0,0),(0,1,0),[(0,0),(0.1,0.),(0.15,0.4),(0.,0.3)],{0:0.05,2:0.01},(0,0,0.2))
 
-model=vm.VolumeModel([cylinder1, cylinder2])
+model=vm.core.VolumeModel([cylinder1, cylinder2])
 
-#profile.MPLPlot((0,0,0),(1,0,0),(0,1,0))
 
-model.FreeCADExport('cylinders')
-model.babylonjs()
+model.babylonjs(debug=True)
