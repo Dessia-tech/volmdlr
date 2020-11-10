@@ -1842,7 +1842,8 @@ class LineSegment3D(LineSegment):
                                              ))
 
 
-        elif d1 != d2:
+
+        elif not math.isclose(d1, d2, abs_tol=1e-9):
             # Conical
             v = axis.cross(u)
             dv = self.direction_vector()
