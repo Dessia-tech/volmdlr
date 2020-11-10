@@ -39,6 +39,14 @@ class Edge(dc.DessiaObject):
         self.end = end
         dc.DessiaObject.__init__(self, name=name)
 
+    def __getitem__(self, key):
+        if key == 0:
+            return self.start
+        elif key == 1:
+            return self.end
+        else:
+            raise IndexError
+
     def polygon_points(self, min_x_density=None, min_y_density=None):
         n = 0  # Number of points to insert between start and end
         if min_x_density:
@@ -150,6 +158,14 @@ class Line(dc.DessiaObject):
         self.point1 = point1
         self.point2 = point2
 
+    def __getitem__(self, key):
+        if key == 0:
+            return self.point1
+        elif key == 1:
+            return self.point2
+        else:
+            raise IndexError
+
     def unit_direction_vector(self):
         u = self.direction_vector()
         u.normalize()
@@ -185,6 +201,9 @@ class LineSegment(Edge):
         return u
 
     def direction_vector(self):
+        '''
+        Returns end - start, not normalized
+        '''
         return self.end - self.start
 
     def normal_vector(self):
@@ -602,7 +621,7 @@ class LineSegment2D(LineSegment):
     def to_3d(self, plane_origin, x1, x2):
         start = self.start.to_3d(plane_origin, x1, x2)
         end = self.end.to_3d(plane_origin, x1, x2)
-        return LineSegment3D(start, end, self.name)
+        return LineSegment3D(start, end, name=self.name)
 
     def reverse(self):
         return LineSegment2D(self.end.copy(), self.points[0].copy())
@@ -1401,7 +1420,7 @@ class LineSegment3D(LineSegment):
     Define a line segment limited by two points
     """
 
-    def __init__(self, start, end, name=''):
+    def __init__(self, start, end, name:str=''):
         LineSegment.__init__(self, start, end, name)
         self.bounding_box = self._bounding_box()
 
@@ -1811,8 +1830,8 @@ class LineSegment3D(LineSegment):
 
 
 
-                arc2 = Arc3D(arc2_s, arc1_i, self.start)
-                line2 = LineSegment3D(arc1_e, arc2_s)
+                # arc2 = Arc2D(arc2_s, arc1_i, self.start)
+                # line2 = LineSegment3D(arc1_e, arc2_s)
                 outer_contour2d = volmdlr.wires.Contour2D([arc1, line1,
                                                            arc2, line2])
                 inner_contours2d = []
@@ -1826,12 +1845,25 @@ class LineSegment3D(LineSegment):
         elif d1 != d2:
             # Conical
             v = axis.cross(u)
-            w = axis.cross(v)
-            u1 = self.direction_vector()
-            semi_angle = math.asin(u1.cross(axis).norm())
-            surface = volmdlr.faces.ConicalSurface3D(volmdlr.Frame3D(p1_proj, axis, v, w),
-                                       semi_angle)
-            return surface.rectangular_cut(0, self.length(), 0, angle)
+            dv = self.direction_vector()
+            dv.normalize()
+
+            semi_angle = math.acos(dv.dot(axis))
+            cone_origin = p1_proj - d1/math.tan(semi_angle) * axis
+            if semi_angle > 0.5*math.pi:
+                semi_angle = math.pi - semi_angle
+
+                cone_frame = volmdlr.Frame3D(cone_origin, u, -v, -axis)
+            elif semi_angle < 0:
+                raise NotImplementedError
+            else:
+                cone_frame = volmdlr.Frame3D(cone_origin, u, v, axis)
+
+            surface = volmdlr.faces.ConicalSurface3D(cone_frame,
+                                                     semi_angle)
+            z1 = d1 / math.tan(semi_angle)
+            z2 = d2 / math.tan(semi_angle)
+            return surface.rectangular_cut(0, angle, z1, z2)
         else:
             v = axis.cross(u)
             surface = volmdlr.faces.CylindricalSurface3D(volmdlr.Frame3D(p1_proj, u, v, axis), d1)
