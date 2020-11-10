@@ -422,11 +422,20 @@ class Vector2D(Vector):
             else:
                 self.vector = new_vector.vector
 
+<<<<<<< HEAD
     def To3D(self, plane_origin, vx, vy):
         return Vector3D([plane_origin.vector[0] + vx.vector[0]*self.vector[0] + vy.vector[0]*self.vector[1],
                          plane_origin.vector[1] + vx.vector[1]*self.vector[0] + vy.vector[1]*self.vector[1],
                          plane_origin.vector[2] + vx.vector[2]*self.vector[0] + vy.vector[2]*self.vector[1],
                          ])
+=======
+
+    def to_3d(self, plane_origin, vx, vy):
+        return Vector3D(plane_origin.x + vx.x*self.x + vy.x*self.y,
+                        plane_origin.y + vx.y*self.x + vy.y*self.y,
+                        plane_origin.z + vx.z*self.x + vy.z*self.y,
+                        )
+>>>>>>> 6bf533cf93fdc7cc06380c0fe9946ac30a19f460
 
     def NormalVector(self, unit=False):
         n = Vector2D((-self.vector[1], self.vector[0]))
@@ -551,6 +560,7 @@ class Point2D(Vector2D):
 
 
     @classmethod
+<<<<<<< HEAD
     def LinesIntersection(cls,line1,line2,curvilinear_abscissa=False):
         x1 = line1.points[0].vector[0]
         y1 = line1.points[0].vector[1]
@@ -560,6 +570,17 @@ class Point2D(Vector2D):
         y3 = line2.points[0].vector[1]
         x4 = line2.points[1].vector[0]
         y4 = line2.points[1].vector[1]
+=======
+    def line_intersection(cls, line1, line2, curvilinear_abscissa=False):
+        x1 = line1[0].x
+        y1 = line1[0].y
+        x2 = line1[1].x
+        y2 = line1[1].y
+        x3 = line2[0].x
+        y3 = line2[0].y
+        x4 = line2[1].x
+        y4 = line2[1].y
+>>>>>>> 6bf533cf93fdc7cc06380c0fe9946ac30a19f460
 
         denominateur = (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4)
         if math.isclose(denominateur, 0, abs_tol=1e-6):
@@ -633,9 +654,15 @@ class Point2D(Vector2D):
         return (point1 + point2)*0.5
 
     @classmethod
+<<<<<<< HEAD
     def LineProjection(cls, point, line):
         p1, p2 = line.points
         n = line.NormalVector(unit=True)
+=======
+    def line_projection(cls, point, line):
+        p1, p2 = line[0], line[1]
+        n = line.normalVector(unit=True)
+>>>>>>> 6bf533cf93fdc7cc06380c0fe9946ac30a19f460
         pp1 = point - p1
         return  pp1 - pp1.Dot(n)*n + p1
 
@@ -1137,7 +1164,6 @@ class Matrix33:
                             det_inv*(self.M11*self.M22 - self.M21*self.M12) # a11a22−a21a12
                             )
         else:
-            # print(self.__dict__, det)
             raise ValueError('The matrix is singular')
 
     @classmethod
@@ -1216,6 +1242,7 @@ class Basis2D(Basis):
         else:
             raise ZeroDivisionError
 
+<<<<<<< HEAD
     def NewCoordinates(self, vector):
         matrix = self.InverseTransferMatrix()
         return Point2D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1],
@@ -1225,6 +1252,17 @@ class Basis2D(Basis):
         matrix = self.TransferMatrix()
         return Point2D((matrix[0][0]*vector[0] + matrix[0][1]*vector[1],
                          matrix[1][0]*vector[0] + matrix[1][1]*vector[1]))
+=======
+    def new_coordinates(self, vector):
+        matrix = self.Inversetransfer_matrix()
+        return Point2D(matrix[0][0]*vector.x + matrix[0][1]*vector.y,
+                       matrix[1][0]*vector.x + matrix[1][1]*vector.y)
+
+    def old_coordinates(self, vector):
+        matrix = self.transfer_matrix()
+        return Point2D(matrix[0][0]*vector.x + matrix[0][1]*vector.y,
+                       matrix[1][0]*vector.x + matrix[1][1]*vector.y)
+>>>>>>> 6bf533cf93fdc7cc06380c0fe9946ac30a19f460
 
     def Rotation(self, angle:float, copy=True):
         center = O2D
@@ -1262,6 +1300,7 @@ class Basis3D(Basis):
         return hash(self.u) + hash(self.v) + hash(self.w)
 
     def __add__(self, other_basis):
+<<<<<<< HEAD
         M = self.TransferMatrix()*other_basis.TransferMatrix()
         return Basis3D(Vector3D((M.M11, M.M21, M.M31)),
                        Vector3D((M.M12, M.M22, M.M32)),
@@ -1273,14 +1312,27 @@ class Basis3D(Basis):
         return Basis3D(Vector3D((M.M11, M.M21, M.M31)),
                        Vector3D((M.M12, M.M22, M.M32)),
                        Vector3D((M.M13, M.M23, M.M33)))
+=======
+        M = self.transfer_matrix()*other_basis.transfer_matrix()
+        return Basis3D(Vector3D(M.M11, M.M21, M.M31),
+                       Vector3D(M.M12, M.M22, M.M32),
+                       Vector3D(M.M13, M.M23, M.M33))
+
+
+    def __neg__(self):
+        M = self.Inversetransfer_matrix()
+        return Basis3D(Vector3D(M.M11, M.M21, M.M31),
+                       Vector3D(M.M12, M.M22, M.M32),
+                       Vector3D(M.M13, M.M23, M.M33))
+>>>>>>> 6bf533cf93fdc7cc06380c0fe9946ac30a19f460
 
     def __sub__(self, other_frame):
         P1inv = other_frame.InverseTransferMatrix()
         P2 = self.TransferMatrix()
         M = P1inv * P2
-        return Basis3D(Vector3D((M.M11, M.M21, M.M31)),
-                       Vector3D((M.M12, M.M22, M.M32)),
-                       Vector3D((M.M13, M.M23, M.M33)))
+        return Basis3D(Vector3D(M.M11, M.M21, M.M31),
+                       Vector3D(M.M12, M.M22, M.M32),
+                       Vector3D(M.M13, M.M23, M.M33))
 
     def __round__(self, ndigits:int=6):
         return self.__class__((round(self.u, ndigits),

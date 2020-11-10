@@ -8,6 +8,7 @@ import math
 import numpy as npy
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.patches
 from mpl_toolkits.mplot3d import Axes3D
 import volmdlr.geometry as geometry 
 import volmdlr
@@ -1017,8 +1018,9 @@ class ClosedPolygon2D(Contour2D):
         
         return rectangle
     def offset(self, offset):
-        bound = self.bounding_rectangle2()
-        max_offset_len = bound.min_length() / 2
+        xmin, xmax, ymin, ymax = self.bounding_rectangle()
+
+        max_offset_len = min(xmax-xmin, ymax-ymin) / 2
         if offset <= -max_offset_len:
             print('Inadapted offset, '
                   'polygon might turn over. Offset must be greater than',
@@ -1886,7 +1888,6 @@ class Circle2D(Contour2D):
     def plot(self, ax=None, linestyle='-', color='k', linewidth=1):
         if ax is None:
             fig, ax = plt.subplots()
-            ax.set_aspect('equal')
         # else:
         #     fig = ax.figure
         if self.radius > 0:
