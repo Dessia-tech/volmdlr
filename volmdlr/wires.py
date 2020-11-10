@@ -687,7 +687,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         iteration_polygons = []
         for i in range(n - 1):
             # print(i)
-            xi = xmin + (i + 1+1) * (xmax - xmin) / n
+            xi = xmin + (i + 1) * (xmax - xmin) / n
             # print(xi)
             cut_line = edges.Line2D(Point2D(xi, 0),Point2D(xi,1))  
             # ax=self.outer_contour.MPLPlot()
