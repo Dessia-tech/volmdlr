@@ -13,7 +13,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import volmdlr.geometry as geometry 
 import volmdlr
 import volmdlr.core
-from volmdlr.core_compiled import polygon_point_belongs
+from volmdlr.core_compiled import PolygonPointBelongs
 from volmdlr.core_compiled import (Vector2D, Vector3D, Point2D, Point3D,
                    O2D, X2D, Y2D, OXY,
                    Basis2D, Basis3D, Frame2D, Frame3D,
@@ -989,10 +989,10 @@ class ClosedPolygon2D(Contour2D):
         index_x_max=X.index(max(X))
         index_y_min=Y.index(min(Y))
         index_y_max=Y.index(max(Y))
-        p_1=Point2D([X[index_x_min],Y[index_y_min]])
-        p_2=Point2D([X[index_x_min],Y[index_y_max]])
-        p_3=Point2D([X[index_x_max],Y[index_y_max]])
-        p_4=Point2D([X[index_x_max],Y[index_y_min]])
+        p_1=Point2D(X[index_x_min],Y[index_y_min])
+        p_2=Point2D(X[index_x_min],Y[index_y_max])
+        p_3=Point2D(X[index_x_max],Y[index_y_max])
+        p_4=Point2D(X[index_x_max],Y[index_y_min])
         
         
         

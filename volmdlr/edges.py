@@ -590,7 +590,8 @@ class LineSegment2D(LineSegment):
         else:
             return point
     def line_intersections(self, line):
-        point = volmdlr.Point2D.line_intersection(self, line)
+        to_line=Line2D(self.start,self.end)
+        point = volmdlr.Point2D.line_intersection(to_line, line)
         if point is not None:
             point_projection1, _ = self.point_projection(point)
             if point_projection1 is None:
