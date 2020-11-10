@@ -28,6 +28,13 @@ from volmdlr.core_compiled import (
                             polygon_point_belongs, Matrix22
                             )
 
+from volmdlr.core_compiled import (Vector2D, Vector3D, Point2D, Point3D,
+                   O2D, X2D, Y2D, OXY,
+                   Basis2D, Basis3D, Frame2D, Frame3D,
+                   O3D, X3D, Y3D, Z3D,
+                   LineSegment2DPointDistance,
+                    Matrix22
+                   )
 from scipy.linalg import solve
 from scipy.spatial import Delaunay
 

@@ -7,14 +7,14 @@ from packaging import version
 import math
 import numpy as npy
 import scipy as scp
-from geomdl import BSpline
+from geomdl import BSplines
 from geomdl import utilities
 
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import __version__ as _mpl_version
 import matplotlib.pyplot as plt
 import matplotlib.patches
-
+import volmdlr.wires as wires
 import dessia_common as dc
 import volmdlr.core
 # import volmdlr.primitives3D
@@ -420,7 +420,7 @@ class BSplineCurve2D(Edge):
         self.periodic = periodic
 
 
-        curve = BSpline.Curve()
+        curve = wires.BSpline.Curve()
         curve.degree = degree
         if weights is None:
             P = [(control_points[i][0], control_points[i][1]) for i in
@@ -541,7 +541,41 @@ class LineSegment2D(LineSegment):
             return [point_projection1]
         else:
             return []
+    def discretise(self,n:float,ax):
+        
+        
+         segment_to_nodes={}
+    
+         
+         nodes=[]
+         if n*self.Length() < 1 :
+            segment_to_nodes[self]=[self.start,self.end]
+         else :
+             n0= int(math.ceil(n*self.Length()))
+             l0=self.Length()/n0
+                    
+             for k in range(n0):
+                                 
+                 node=self.point_at_abscissa(k*l0)                 
+                 nodes.append(node)
+                 
+             if self.start not in nodes :
+                nodes.append(self.end)
+                 
+             if self.start not in nodes :
+                nodes.insert(0,self.start)
+                
+             segment_to_nodes[self]=nodes
 
+         if ax is not None :
+            for point in segment_to_nodes[self]:
+                point.plot(ax=ax,color='r')
+
+
+         return segment_to_nodes[self]
+     
+        
+     
     def plot(self, ax=None, color='k', arrow=False, width=None,
                 plot_points=False):
         if ax is None:
@@ -900,25 +934,54 @@ class Arc2D(Edge):
         Ic = npy.array([[Ix, Ixy], [Ixy, Iy]])
         return volmdlr.geometry.Huygens2D(Ic, self.Area(), self.center, point)
 
-    def Discretise(self, num=10):
-        list_node = []
-        if (self.angle1 < 0) and (self.angle2 > 0):
-            delta_angle = -self.angle1 + self.angle2
-        elif (self.angle1 > 0) and (self.angle2 < 0):
-            delta_angle = (2 * npy.pi + self.angle2) - self.angle1
-        else:
-            delta_angle = self.angle2 - self.angle1
-        for angle in npy.arange(self.angle1, self.angle1 + delta_angle,
-                                delta_angle / (num * 1.)):
-            list_node.append(volmdlr.Point2D(self.center + self.radius * volmdlr.Vector2D(
-                (npy.cos(angle), npy.sin(angle)))))
-        list_node.append(volmdlr.Point2D(self.center + self.radius * volmdlr.Vector2D((npy.cos(
-            self.angle1 + delta_angle), npy.sin(self.angle1 + delta_angle)))))
-        if list_node[0] == self.start:
-            return list_node
-        else:
-            return list_node[::-1]
-
+    # def Discretise(self, num=10):
+    #     list_node = []
+    #     if (self.angle1 < 0) and (self.angle2 > 0):
+    #         delta_angle = -self.angle1 + self.angle2
+    #     elif (self.angle1 > 0) and (self.angle2 < 0):
+    #         delta_angle = (2 * npy.pi + self.angle2) - self.angle1
+    #     else:
+    #         delta_angle = self.angle2 - self.angle1
+    #     for angle in npy.arange(self.angle1, self.angle1 + delta_angle,
+    #                             delta_angle / (num * 1.)):
+    #         list_node.append(volmdlr.Point2D(self.center + self.radius * volmdlr.Vector2D(
+    #             (npy.cos(angle), npy.sin(angle)))))
+    #     list_node.append(volmdlr.Point2D(self.center + self.radius * volmdlr.Vector2D((npy.cos(
+    #         self.angle1 + delta_angle), npy.sin(self.angle1 + delta_angle)))))
+    #     if list_node[0] == self.start:
+    #         return list_node
+    #     else:
+    #         return list_node[::-1]
+    def discretise(self,n:float,ax):
+        
+        arc_to_nodes={}
+        nodes=[]
+        if n*self.Length() < 1 :
+            arc_to_nodes[self]=[self.start,self.end]
+        else :
+             n0= int(math.ceil(n*self.Length()))
+             l0=self.Length()/n0
+                    
+   
+             for k in range(n0):
+                      
+                             
+                 node=self.point_at_abscissa(k*l0)
+                
+                 
+                 # node=Point2D([(1-k/l0)*self.point1[0]+self.point2[0]*k/l0,(1-k/l0)*self.point1[1]+self.point2[1]*k/l0])
+                       
+                 nodes.append(node)
+             nodes.insert(len(nodes),self.end)
+                   
+             arc_to_nodes[self]=nodes
+             
+        if ax is not None:
+           for point in arc_to_nodes[self]:
+               point.MPLPlot(ax=ax,color='r')
+               
+            
+        return arc_to_nodes[self] 
     def plot_data(self, marker=None, color='black', stroke_width=1, dash=False,
                   opacity=1):
         list_node = self.Discretise()
@@ -1837,7 +1900,7 @@ class BSplineCurve3D(Edge):
         self.periodic = periodic
         self.name = name
 
-        curve = BSpline.Curve()
+        curve = wires.BSpline.Curve()
         curve.degree = degree
         if weights is None:
             P = [(control_points[i][0], control_points[i][1],
@@ -2352,7 +2415,7 @@ class Arc3D(Edge):
         return p1, p2
 
     def minimum_distance(self, element, return_points=False):
-        if element.__class__ is Arc3D or element.__class__ is Circle3D:
+        if element.__class__ is wires.Arc3D or element.__class__ is wires.Circle3D:
             p1, p2 = self.minimum_distance_points_arc(element)
             if return_points:
                 return p1.point_distance(p2), p1, p2
