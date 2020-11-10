@@ -7,6 +7,9 @@ Common abstract primitives
 from scipy.optimize import linprog
 import math
 from numpy import zeros
+import dessia_common as dc
+
+
 
 class RoundedLineSegments:
     def __init__(self, points, radius, line_class, arc_class,
@@ -18,7 +21,7 @@ class RoundedLineSegments:
         self.adapt_radius = adapt_radius
         self.name = name
         self.npoints = len(points)
-        primitives = self.Primitives(line_class, arc_class)
+        primitives = self._primitives(line_class, arc_class)
         
         return primitives
     
@@ -35,7 +38,7 @@ class RoundedLineSegments:
             for p in self.points:
                 p.frame_mapping(frame, side, copy=False)
                     
-    def Primitives(self, line_class, arc_class):
+    def _primitives(self, line_class, arc_class):
         alpha = {}
         dist = {}
         lines_length = {}
@@ -48,19 +51,19 @@ class RoundedLineSegments:
         
         if self.radius != {}:
             group = [rounded_points_indices[0]]
-            _, _, _, dist0, alpha0 = self.ArcFeatures(rounded_points_indices[0])
+            _, _, _, dist0, alpha0 = self.arc_features(rounded_points_indices[0])
             dist[rounded_points_indices[0]] = dist0
             alpha[rounded_points_indices[0]] = alpha0
             
             for i in rounded_points_indices[1:]:
                 # Computing the arc
-                ps2, pi2, pe2, dist2, alpha2 = self.ArcFeatures(i)
+                ps2, pi2, pe2, dist2, alpha2 = self.arc_features(i)
                 dist[i] = dist2
                 alpha[i] = alpha2
                 if i-1 in self.radius:
                     p1 = self.points[i-1]
                     p2 = self.points[i]
-                    l = (p2 - p1).Norm()
+                    l = (p2 - p1).norm()
                     lines_length[i-1] = l
                     dist1 = dist[i-1]
 
@@ -159,7 +162,7 @@ class RoundedLineSegments:
             # Creating geometry
             # Creating arcs
             for ipoint, r in self.radius.items():
-                ps, pi, pe, _, _ = self.ArcFeatures(ipoint)
+                ps, pi, pe, _, _ = self.arc_features(ipoint)
                 arcs[ipoint] = arc_class(ps, pi, pe)
         
         # Creating lines
