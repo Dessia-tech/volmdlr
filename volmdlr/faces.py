@@ -612,6 +612,12 @@ class CylindricalSurface3D(Surface3D):
         surface2d = Surface2D(outer_contour, [])
         return volmdlr.faces.CylindricalFace3D(self, surface2d, name)
 
+    def translation(self, offset:volmdlr.Vector3D, copy=True):
+        if copy:
+            return self.__class__(self.frame.translation(offset, copy=True),
+                                  self.radius)
+        else:
+            self.frame.translation(offset, copy=False)
 
 class ToroidalSurface3D(Surface3D):
     face_class = 'ToroidalFace3D'
@@ -1810,6 +1816,8 @@ class CylindricalFace3D(Face3D):
         Face3D.__init__(self, surface3d=cylindricalsurface3d,
                         surface2d=surface2d,
                         name=name)
+
+
 
     # @classmethod
     # def from_contours3d(cls, contours3d, cylindricalsurface3d, name=''):
