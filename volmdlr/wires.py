@@ -636,8 +636,8 @@ class ClosedPolygon2D(Contour2D):
 
     def center_of_mass(self):
 
-        x = [point.vector[0] for point in self.points]
-        y = [point.vector[1] for point in self.points]
+        x = [point.x for point in self.points]
+        y = [point.y for point in self.points]
 
         xi_xi1 = x + npy.roll(x, -1)
         yi_yi1 = y + npy.roll(y, -1)
@@ -649,7 +649,7 @@ class ClosedPolygon2D(Contour2D):
         if not math.isclose(a, 0, abs_tol=1e-08):
             cx = npy.sum(npy.multiply(xi_xi1, (xi_yi1 - xi1_yi))) / 6. / a
             cy = npy.sum(npy.multiply(yi_yi1, (xi_yi1 - xi1_yi))) / 6. / a
-            return volmdlr.Point2D((cx, cy))
+            return volmdlr.Point2D(cx, cy)
 
         else:
             raise NotImplementedError
