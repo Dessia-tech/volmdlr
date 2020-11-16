@@ -14,12 +14,12 @@ p3 = vm.Point2D(0.0, 0.04)
 p4 = vm.Point2D(0.01, 0.04)
 p5 = vm.Point2D(0.01, 0.)
 p6 = vm.Point2D(-0.06, 0.0)
-p7 = vm.Point2D(-0.06, 0.04)
-p8 = vm.Point2D(-0.08, 0.04)
+# p7 = vm.Point2D(-0.06, 0.04)
+p8 = vm.Point2D(-0.08, 0.06)
 
-points1 = [p1, p2, p3, p4, p5, p6, p7, p8]
+points1 = [p1, p2, p3, p4, p5, p6, p8]
 
-c1 = vm.wires.Polygon2D(points1)
+c1 = vm.wires.ClosedPolygon2D(points1)
 c2 = ClosedRoundedLineSegments2D(points1, {0: 0.002, 1: 0.002, 3: 0.002}) 
 
 # c1.MPLPlot(plot_points=True)
@@ -36,13 +36,13 @@ p27 = vm.Point2D(0.04, 0.05)
 p28 = vm.Point2D(0.04, 0.)
 
 points2 = [p21, p22, p23, p24, p25, p26, p27, p28]
-c3 = vm.wires.Polygon2D(points2)
+c3 = vm.wires.ClosedPolygon2D(points2)
 c4 = ClosedRoundedLineSegments2D(points2, {0: 0.002, 1: 0.002, 3: 0.002})
 
 # c3.MPLPlot(plot_points=True)
 # c4.MPLPlot(plot_points=True)
 
-# profile1 = RevolvedProfile(vm.O3D, vm.Y3D, vm.Z3D, c1, vm.O3D, vm.Y3D)
+profile1 = RevolvedProfile(vm.Y3D, vm.Y3D, vm.Z3D, c1, vm.O3D, vm.Y3D)
 # profile2 = RevolvedProfile(0.5*vm.X3D, vm.Y3D, vm.Z3D, c2, 0.5*vm.X3D, vm.Y3D)
 # profile3 = RevolvedProfile(-0.5*vm.X3D, vm.Y3D, vm.Z3D, c1, -0.5*vm.X3D, vm.Y3D)
 # profile4 = RevolvedProfile(vm.X3D, vm.Y3D, vm.Z3D, c2, vm.X3D, vm.Y3D)
@@ -84,7 +84,7 @@ z = vm.X3D.cross(y)
 profile5 = RevolvedProfile(0.15*vm.Y3D, vm.X3D, z, c5, 0.15*vm.Y3D, vm.X3D)
 
 # model = vm.VolumeModel([profile1, profile2, profile3, profile4, profile5])
-model = vm.core.VolumeModel([profile5])
+model = vm.core.VolumeModel([profile1, profile5])
 model.babylonjs()
 
 

@@ -10,7 +10,7 @@ import volmdlr as vm
 import numpy as npy
 
 #for i in range(20):
-triangle_points=[vm.Point2D(npy.random.random(2)) for i in range(3)]
+triangle_points=[vm.Point2D.random(0, 1, 0, 1) for i in range(3)]
 triangle=vm.Polygon2D(triangle_points)
 
 
@@ -18,11 +18,11 @@ cog_triangle=triangle.CenterOfMass()
 c1 = vm.CompositePrimitive2D([triangle, cog_triangle])
 c1.MPLPlot()
 
-print(triangle.Area())
+print(triangle.area())
 
-p0=vm.Point2D((-1,0))
-p1=vm.Point2D((-npy.cos(npy.pi/4),npy.sin(npy.pi/4)))
-p2=vm.Point2D((0,1))
+p0=vm.Point2D(-1,0)
+p1=vm.Point2D(-npy.cos(npy.pi/4),npy.sin(npy.pi/4)))
+p2=vm.Point2D(0,1)
 
 a = vm.Arc2D(p2,p1,p0)
 l = vm.LineSegment2D(p2,a.center)
