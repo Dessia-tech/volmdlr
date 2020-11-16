@@ -7,14 +7,14 @@ from packaging import version
 import math
 import numpy as npy
 import scipy as scp
-from geomdl import BSplines
+# from geomdl import BSplines
 from geomdl import utilities
 
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import __version__ as _mpl_version
 import matplotlib.pyplot as plt
 import matplotlib.patches
-import volmdlr.wires as wires
+
 import dessia_common as dc
 import volmdlr.core
 # import volmdlr.primitives3D
@@ -211,6 +211,7 @@ class Line2D(Line):
     """
 
     def __init__(self, point1, point2, *, name=''):
+        self.points=[point1,point2]
         Line.__init__(self, point1, point2, name=name)
 
     def to_3d(self, plane_origin, x1, x2):
@@ -420,7 +421,7 @@ class BSplineCurve2D(Edge):
         self.periodic = periodic
 
 
-        curve = wires.BSpline.Curve()
+        curve = BSpline.Curve()
         curve.degree = degree
         if weights is None:
             P = [(control_points[i][0], control_points[i][1]) for i in
@@ -495,6 +496,7 @@ class LineSegment2D(LineSegment):
     """
 
     def __init__(self, start, end, *, name=''):
+        self.points=[start,end]
         Edge.__init__(self, start, end, name=name)
 
     def length(self):
@@ -548,18 +550,18 @@ class LineSegment2D(LineSegment):
     
          
          nodes=[]
-         if n*self.Length() < 1 :
+         if n*self.length() < 1 :
             segment_to_nodes[self]=[self.start,self.end]
          else :
-             n0= int(math.ceil(n*self.Length()))
-             l0=self.Length()/n0
+             n0= int(math.ceil(n*self.length()))
+             l0=self.length()/n0
                     
              for k in range(n0):
                                  
                  node=self.point_at_abscissa(k*l0)                 
                  nodes.append(node)
                  
-             if self.start not in nodes :
+             if self.end not in nodes :
                 nodes.append(self.end)
                  
              if self.start not in nodes :
@@ -799,8 +801,8 @@ class Arc2D(Edge):
         vector_end = self.end - self.center
         if self.is_trigo:
             vector_start, vector_end = vector_end, vector_start
-        arc_angle = volmdlr.clockwise_angle(vector_start, vector_end)
-        point_angle = volmdlr.clockwise_angle(vector_start, vector_point)
+        arc_angle = volmdlr.core.clockwise_angle(vector_start, vector_end)
+        point_angle = volmdlr.core.clockwise_angle(vector_start, vector_point)
         if point_angle <= arc_angle:
             return True
 
@@ -956,11 +958,11 @@ class Arc2D(Edge):
         
         arc_to_nodes={}
         nodes=[]
-        if n*self.Length() < 1 :
+        if n*self.length() < 1 :
             arc_to_nodes[self]=[self.start,self.end]
         else :
-             n0= int(math.ceil(n*self.Length()))
-             l0=self.Length()/n0
+             n0= int(math.ceil(n*self.length()))
+             l0=self.length()/n0
                     
    
              for k in range(n0):
@@ -1006,9 +1008,11 @@ class Arc2D(Edge):
                      self.interior.copy(),
                      self.end.copy())
 
-    def split(self, split_point: volmdlr.Point2D):
-        raise NotImplementedError
-        return [Arc2D(self.start, self.split_point)]
+    def split(self, split_point):
+        interior_1=self.point_at_abscissa(self.length()/4)
+        interior_2=self.point_at_abscissa(2*self.length()/3)
+        return [Arc2D(split_point,interior_1,self.start),
+                Arc2D(self.end,interior_2,split_point)]
 
     def polygon_points(self, points_per_radian=10, min_x_density=None,
                        min_y_density=None):

@@ -426,104 +426,104 @@ class Mesher(DessiaObject):
         self.triangles=triangles
     
         
-    # def  neighbour_edge(self,n:int,i:int,di:int):
-    #     return (i+di)%n  
+    def  neighbour_edge(self,n:int,i:int,di:int):
+        return (i+di)%n  
    
     
-    # def edge_max_distance(self,polygone:vm.Polygon2D,P0:vm.Point2D,P1:vm.Point2D,P2:vm.Point2D,indexes:List[float]):
-    #     n=len(polygone.points)
-    #     distance=0
-    #     j=None
-    #     triangle=vm.Triangle2D([P0,P1,P2])
-    #     for i in range(n):
-    #         if not (i in indexes):
-    #             M=polygone.points[i]
-    #             if triangle.is_inside_triangle(M):
-    #                 d=abs(triangle.line_equation(P1,P2,M))
-    #                 if d > distance:
-    #                     distance=d
-    #                     j=i
+    def edge_max_distance(self,polygone:wires.ClosedPolygon2D,P0:Point2D,P1:Point2D,P2:Point2D,indexes:List[float]):
+        n=len(polygone.points)
+        distance=0
+        j=None
+        triangle=wires.Triangle2D([P0,P1,P2])
+        for i in range(n):
+            if not (i in indexes):
+                M=polygone.points[i]
+                if triangle.is_inside_triangle(M):
+                    d=abs(triangle.line_equation(P1,P2,M))
+                    if d > distance:
+                        distance=d
+                        j=i
        
-    #     return j
+        return j
     
     
     
     
-    # def left_edge(self,polygone:vm.Polygon2D):
-    #     n=len(polygone.points)
-    #     x=polygone.points[0][0]
-    #     j=0
-    #     for i in range (1,n):
-    #         if polygone.points[i][0] < x:
-    #             x=polygone.points[i][0]
-    #             j=i
-    #     return j
+    def left_edge(self,polygone:wires.ClosedPolygon2D):
+        n=len(polygone.points)
+        x=polygone.points[0].x
+        j=0
+        for i in range (1,n):
+            if polygone.points[i].x < x:
+                x=polygone.points[i].x
+                j=i
+        return j
             
-    # def new_polygon(self,polygone:vm.Polygon2D,i_beg:int,i_end=int):
-    #     n=len(polygone.points)
-    #     u=[]
-    #     i=i_beg
-    #     while i!=i_end:
-    #         u.append(polygone.points[i])
-    #         i=self.neighbour_edge(n,i,1)
-    #     u.append(polygone.points[i_end])
-    #     p=vm.Polygon2D(u)
+    def new_polygon(self,polygone:wires.ClosedPolygon2D,i_beg:int,i_end=int):
+        n=len(polygone.points)
+        u=[]
+        i=i_beg
+        while i!=i_end:
+            u.append(polygone.points[i])
+            i=self.neighbour_edge(n,i,1)
+        u.append(polygone.points[i_end])
+        p=wires.ClosedPolygon2D(u)
         
-    #     return p
+        return p
     
-    # def triangulation_polygone_recursive(self,polygone:vm.Polygon2D):
+    def triangulation_polygone_recursive(self,polygone:wires.ClosedPolygon2D,triangles:List[wires.Triangle2D]):
         
-    #     n=len(polygone.points)
-    #     j0=self.left_edge(polygone)
+        n=len(polygone.points)
+        j0=self.left_edge(polygone)
       
        
-    #     j1=self.neighbour_edge(n,j0,1)
+        j1=self.neighbour_edge(n,j0,1)
        
-    #     j2=self.neighbour_edge(n,j0,-1)
+        j2=self.neighbour_edge(n,j0,-1)
         
-    #     P0=polygone.points[j0]
-    #     P1=polygone.points[j1]
-    #     P2=polygone.points[j2]
-    #     j=self.edge_max_distance(polygone,P0,P1,P2,[j0,j1,j2])
+        P0=polygone.points[j0]
+        P1=polygone.points[j1]
+        P2=polygone.points[j2]
+        j=self.edge_max_distance(polygone,P0,P1,P2,[j0,j1,j2])
         
-    #     if j==None:
-    #         triangle=vm.Triangle2D([P0,P1,P2])
-    #         self.triangles.append(triangle)
-    #         polygone_1=self.new_polygon(polygone,j1,j2)
+        if j==None:
+            triangle=wires.Triangle2D([P0,P1,P2])
+            triangles.append(triangle)
+            polygone_1=self.new_polygon(polygone,j1,j2)
                             
-    #         if len(polygone_1.points)==3:
+            if len(polygone_1.points)==3:
                     
-    #                 new_triangle=vm.Triangle2D([polygone_1.points[0],polygone_1.points[1],
-    #                                             polygone_1.points[2]])    
-    #                 self.triangles.append(new_triangle)  
+                    new_triangle=wires.Triangle2D([polygone_1.points[0],polygone_1.points[1],
+                                                polygone_1.points[2]])    
+                    triangles.append(new_triangle)  
                                           
-    #         else :
+            else :
              
-    #              self.triangulation_polygone_recursive(polygone_1)
+                  self.triangulation_polygone_recursive(polygone_1,triangles)
      
-    #     else : 
+        else : 
             
-    #         polygone_1=self.new_polygon(polygone,j0,j)
-    #         polygone_2=self.new_polygon(polygone,j,j0)    
+            polygone_1=self.new_polygon(polygone,j0,j)
+            polygone_2=self.new_polygon(polygone,j,j0)    
             
-    #         if len(polygone_1.points)==3:
-    #             new_triangle=vm.Triangle2D([polygone_1.points[0],polygone_1.points[1],
-    #                                         polygone_1.points[2]])                
-    #             self.triangles.append(new_triangle)
+            if len(polygone_1.points)==3:
+                new_triangle=wires.Triangle2D([polygone_1.points[0],polygone_1.points[1],
+                                            polygone_1.points[2]])                
+                triangles.append(new_triangle)
                
-    #         else :
-    #             self.triangulation_polygone_recursive(polygone_1)
+            else :
+                self.triangulation_polygone_recursive(polygone_1,triangles)
                 
-    #         if len(polygone_2.points)==3:
-    #             new_triangle=vm.Triangle2D([polygone_2.points[0],polygone_2.points[1],
-    #                                         polygone_2.points[2]])                    
-    #             self.triangles.append(new_triangle)
+            if len(polygone_2.points)==3:
+                new_triangle=wires.Triangle2D([polygone_2.points[0],polygone_2.points[1],
+                                            polygone_2.points[2]])                    
+                triangles.append(new_triangle)
 
-    #         else :
+            else :
                     
-    #             self.triangulation_polygone_recursive(polygone_2)
+                self.triangulation_polygone_recursive(polygone_2,triangles)
             
-    #     return self.triangles 
+        return triangles 
     
     
     
@@ -669,7 +669,7 @@ class Mesher(DessiaObject):
                              
         return triangles                            
     
-    def alternative_triangulation(self,polygon:wires.ClosedPolygon2D,interior_polygon:wires.ClosedPolygon2D,empty:bool,split:bool,far:bool):
+    def alternative_triangulation(self,polygon:wires.ClosedPolygon2D,interior_polygon:wires.ClosedPolygon2D,empty:bool,far:bool):
         # ax=plt.subplot()
         all_aspect_ratios=[]
         segment_to_nodes={}
@@ -684,7 +684,7 @@ class Mesher(DessiaObject):
         offset_len=bound.min_length()
         # while  k<8 :
         
-        while k<8:
+        while k<12:
             repair = False
             polygon_offsets=[]
             polygon_offsets+=[polygon]
@@ -706,7 +706,7 @@ class Mesher(DessiaObject):
                     
                 if new_polygon.self_intersects()[0] :
                     
-                    polygon_offsets.append(new_polygon.select_reapaired_polygon([]))
+                    # polygon_offsets.append(new_polygon.select_reapaired_polygon([]))
                     # new_polygon.select_reapaired_polygon([]).MPLPlot()
                     repair=True
                   
@@ -748,41 +748,30 @@ class Mesher(DessiaObject):
                     last_polygon=wires.ClosedPolygon2D(last_points)
                     ear=self.earclip(last_polygon)
                     for triangle in ear : 
-                          if triangle.area<10e-9:
-                             ear.remove(triangle)
+                     
+                        if triangle.area<10e-9:
+                           ear.remove(triangle)
                              
                     offset_triangles+=ear
                else :
                     if far :
                         offset_triangles+=self.mesh_in_between(interior_polygon,polygon_offsets[-1],True)
                                
-                  
-                                 
-                        
-                         
+     
             else:
                 offset_triangles+=self.mesh_in_between(polygon_offsets[-1],polygon_offsets[l-2],empty)                
               
             all_meshes.append(offset_triangles)                             
          
-       
+        
+        
         for mesh in all_meshes:
             if self.triangulation_max_aspect_ratio(mesh)!=0:
+                
                 all_aspect_ratios.append(self.triangulation_max_aspect_ratio(mesh))
                 good_meshes.append(mesh)
-            
-            
-        index=all_aspect_ratios.index(min(all_aspect_ratios))
-        
        
-        # plt.plot(offset_values, all_aspect_ratios) 
-          
-        # plt.xlabel('offset values') 
-        # plt.xlim(-1,1) 
-        # plt.ylabel(' maximum aspect ratio') 
-
-        
-        # plt.show() 
+        index=all_aspect_ratios.index(min(all_aspect_ratios))
         
         return good_meshes[index]
 
@@ -1046,8 +1035,6 @@ class Mesher(DessiaObject):
                         if point not in polygon_points:
                             polygon_points.append(point)
                     polygon=wires.ClosedPolygon2D(polygon_points)  
-                    print(polygon)
-                    polygon.plot(ax=ax)
                     interior_polygons.append(polygon)
                     
                 else :
@@ -1098,8 +1085,8 @@ class Mesher(DessiaObject):
         
         if split is True :
           
-            Surface=vm.Surface2D(self.exterior_contours[-1],self.interior_contours)
-            split_contours = Surface.split_regularly(2)
+            Surface=wires.Surface2D(self.exterior_contours[-1],self.interior_contours)
+            split_contours = Surface.split_regularly2(2)
              
             if self.interior_contours : 
                 for contour in split_contours:
@@ -1114,26 +1101,30 @@ class Mesher(DessiaObject):
                         for primitive in contour.primitives:
                             if isinstance(primitive,edges.LineSegment2D):
                                 
-                                if primitive.point1 not in polygon_points:
-                                    polygon_points.append(primitive.point1)
-                                
-                                if primitive.point2 not in polygon_points:
-                                    polygon_points.append(primitive.point2)
+                                # if primitive.start not in polygon_points:
+                                polygon_points.append(primitive.start)
+                                primitive.start.plot(ax=ax,color='r')
+                                if primitive.end not in polygon_points:
+                                    polygon_points.append(primitive.end)
+                               
                             else :
                                   for point in primitive.discretise(self.nodes_len,None):
                                       if point not in polygon_points:
                                           polygon_points.append(point)
                         polygon=wires.ClosedPolygon2D(polygon_points)          
                         split_polygons.append(polygon) 
-            # split_polygons[0].MPLPlot(ax=ax)
-            # rec=split_polygons[0].bounding_rectangle2()
-            # offset_len=rec.min_length()
-        
-            # offset=split_polygons[0].Offset(offset_len/15)
-            # print(offset.SelfIntersect()[0])
-            # offset.select_reapaired_polygon([]).MPLPlot()            
+          
+            rec=split_polygons[0].bounding_rectangle2()
+            offset_len=rec.min_length()
+            # offset=split_polygons[0].offset(-offset_len/5).plot()
+            # for k in range(2,13):
+            #    print(-9*offset_len/(k*10))
+            #    offset=split_polygons[1].offset(-9*offset_len/(k*10)).plot()
+                
+            
             for s in split_polygons :
-                triangles+=self.alternative_triangulation(split_polygons[0],None,True,True,False)
+                  s.plot()
+                  # triangles+=self.alternative_triangulation(s,None,True,False)
                 
             
         else :
@@ -1146,19 +1137,11 @@ class Mesher(DessiaObject):
             
             """ 
              
-            
-            # rec=exterior_polygons[0].bounding_rectangle2()
-            # offset_len=rec.min_length()
-            # offset=exterior_polygons[0].Offset(offset_len/40)
-            # offset.MPLPlot()
-            # w=[exterior_polygons[0],exterior_polygons[1]]
-            # for p in w:
          
-            #     triangles+=self.alternative_triangulation(p,None,False,False,False)
             if self.interior_contours:
                 if exterior_polygons[-1].polygon_distance(interior_polygons[-1]) > exterior_polygons[-1].max_length()/3 :
                     
-                    triangles+=self.alternative_triangulation(exterior_polygons[-1],interior_polygons[-1],True,False,True)
+                    triangles+=self.alternative_triangulation(exterior_polygons[-1],interior_polygons[-1],True,True)
                 else :                
                     
                     triangles+=self.mesh_in_between(interior_polygons[-1],exterior_polygons[-1],True)
@@ -1192,7 +1175,7 @@ class Mesher(DessiaObject):
                                      
                                       if triangle.aspect_ratio() > min_aspect_ratio:
                                         Next=False
-                                        triangles+=self.alternative_triangulation(polygon_1,None,False,False,False)
+                                        triangles+=self.alternative_triangulation(polygon_1,None,False,False)
                                         
                                       else :
                                       
@@ -1245,29 +1228,29 @@ class Mesher(DessiaObject):
         plot_aspect_ratio_triangles=[]
         all_aspect_ratios={}
         
-        # for triangle in all_triangles:
-        #       triangle.plot(ax=ax)
-
-        for triangle in triangles:
-            
-            all_segments= all_segments.union(triangle.line_segments)
-            
-        for segment in all_segments:
-            
-            segment_to_nodes[segment]=segment.discretise(self.nodes_len,None)
-                
-        for triangle in triangles :
-            
-            meshing=triangle.mesh_triangle(segment_to_nodes,self.nodes_len,None)
-            plot_aspect_ratio_triangles+=meshing[0]
-            all_triangles+=meshing[0]
-            all_aspect_ratios.update(meshing[1])
-            
         for triangle in all_triangles:
+              triangle.plot(ax=ax)
+
+        # for triangle in triangles:
             
-            # triangle.MPLPlot(ax=ax)
-            triangular_element=TriangularElement(triangle.points)
-            all_triangle_elements.append(triangular_element)
+        #     all_segments= all_segments.union(triangle.line_segments)
+            
+        # for segment in all_segments:
+            
+        #     segment_to_nodes[segment]=segment.discretise(self.nodes_len,None)
+                
+        # for triangle in triangles :
+            
+        #     meshing=triangle.mesh_triangle(segment_to_nodes,self.nodes_len,None)
+        #     plot_aspect_ratio_triangles+=meshing[0]
+        #     all_triangles+=meshing[0]
+        #     all_aspect_ratios.update(meshing[1])
+            
+        # for triangle in all_triangles:
+            
+        #     # triangle.MPLPlot(ax=ax)
+        #     triangular_element=TriangularElement(triangle.points)
+        #     all_triangle_elements.append(triangular_element)
             
         # self.plot_aspect_ratio(plot_aspect_ratio_triangles,all_aspect_ratios,ax)
         ax.set_aspect('equal')
