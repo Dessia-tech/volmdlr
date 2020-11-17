@@ -85,6 +85,12 @@ class Surface2D(volmdlr.core.Primitive2D):
         ax.margins(0.1)
         return ax
 
+    def cut_by_line(self, line:volmdlr.edges.Line2D):
+        outer_contour_cuts = self.outer_contour.cut_by_line(line)
+        if len(outer_contour_cuts) == 1:
+            return [self]
+
+        inner_contours_cuts = [c.cut_by_line(line) for c in self.inner_contours]
 
 class Surface3D():
     x_periodicity = None

@@ -455,44 +455,80 @@ class Contour2D(Wire2D):
     #     else:
     #         raise NotImplementedError('Non convex contour not supported yet')
 
-    def cut_by_line(self, line):
+    def cut_by_line(self, line:volmdlr.edges.Line2D):
         intersections = self.line_intersections(line)
+        n_inter = len(intersections)
         if not intersections:
             return [self]
-
-        if len(intersections) < 2:
+        if n_inter < 2:
             return [self]
-        elif len(intersections) == 2:
-            if isinstance(intersections[0][0], volmdlr.Point2D) and \
-                    isinstance(intersections[1][0], volmdlr.Point2D):
-                ip1, ip2 = sorted([self.primitives.index(intersections[0][1]),
-                                   self.primitives.index(intersections[1][1])])
+        elif n_inter % 2 == 0:
+            contours =[]
+            primitives_split = [primitive.split(point)\
+                                for point, primitive in intersections]
+            x = [(ip, line.abscissa(point))\
+                 for ip, (point, _) in enumerate(intersections)]
+            print(x)
+            sorted_inter_index = [x[0] for x in sorted(x, key=lambda x:x[1])]
+            print(sorted_inter_index)
 
-                sp11, sp12 = intersections[0][1].split(intersections[0][0])
-                sp21, sp22 = intersections[1][1].split(intersections[1][0])
+            # Side 1: start of contour to first intersect (i=0) and  i odd to i+1 even
 
-                primitives1 = self.primitives[:ip1]
-                primitives1.append(sp11)
-                primitives1.append(volmdlr.edges.LineSegment2D(intersections[0][0],
-                                                 intersections[1][0]))
-                primitives1.append(sp22)
-                primitives1.extend(self.primitives[ip2 + 1:])
+            # Side 2: opposite side of begining of contour
+            remaining_transitions1 = [i for i in range(n_inter//2)]
+            # print(remaining_transitions1)
+            enclosing_transitions = {}
+            while len(remaining_transitions1) > 0:
+                nb_max_enclosed_transitions = -1
+                for it in remaining_transitions1:
+                    # print(2*it)
+                    i1 = sorted_inter_index.index(2*it)
+                    i2 = sorted_inter_index.index(2*it+1)
 
-                primitives2 = self.primitives[ip1 + 1:ip2]
-                primitives2.append(sp21)
-                primitives2.append(volmdlr.edges.LineSegment2D(intersections[1][0],
-                                                 intersections[0][0]))
-                primitives2.append(sp12)
+                    net = abs(i2-i1) -1
+                    if net > nb_max_enclosed_transitions:
+                        nb_max_enclosed_transitions = net
+                        best_transition = it
 
-                return Contour2D(primitives1), Contour2D(primitives2)
+                        enclosed_transitions = [i1:i2]
 
-            else:
-                print(intersections)
-                raise NotImplementedError(
-                    'Non convex contour not supported yet')
+                remaining_transitions1.remove(best_transition)
+
+                print('bt', best_transition)
+
+
+
+            # if not (isinstance(intersections[0][0], volmdlr.Point2D) and \
+            #         isinstance(intersections[1][0], volmdlr.Point2D)):
+
+                # ip1, ip2 = sorted([self.primitives.index(intersections[0][1]),
+                #                    self.primitives.index(intersections[1][1])])
+                #
+                # sp11, sp12 = intersections[0][1].split(intersections[0][0])
+                # sp21, sp22 = intersections[1][1].split(intersections[1][0])
+                #
+                # primitives1 = self.primitives[:ip1]
+                # primitives1.append(sp11)
+                # primitives1.append(volmdlr.edges.LineSegment2D(intersections[0][0],
+                #                                  intersections[1][0]))
+                # primitives1.append(sp22)
+                # primitives1.extend(self.primitives[ip2 + 1:])
+                #
+                # primitives2 = self.primitives[ip1 + 1:ip2]
+                # primitives2.append(sp21)
+                # primitives2.append(volmdlr.edges.LineSegment2D(intersections[1][0],
+                #                                  intersections[0][0]))
+                # primitives2.append(sp12)
+                #
+                # return Contour2D(primitives1), Contour2D(primitives2)
+
+            # else:
+            #     print(intersections)
+            #     raise NotImplementedError(
+            #         'Non convex contour not supported yet')
 
         raise NotImplementedError(
-            '{} intersections not supported yet'.format(len(intersections)))
+            '{} intersections not supported yet'.format(n_inter))
 
     def simple_triangulation(self):
         lpp = len(self.polygon.points)
@@ -636,8 +672,8 @@ class ClosedPolygon2D(Contour2D):
 
     def center_of_mass(self):
 
-        x = [point.vector[0] for point in self.points]
-        y = [point.vector[1] for point in self.points]
+        x = [point.x for point in self.points]
+        y = [point.y for point in self.points]
 
         xi_xi1 = x + npy.roll(x, -1)
         yi_yi1 = y + npy.roll(y, -1)
@@ -649,7 +685,7 @@ class ClosedPolygon2D(Contour2D):
         if not math.isclose(a, 0, abs_tol=1e-08):
             cx = npy.sum(npy.multiply(xi_xi1, (xi_yi1 - xi1_yi))) / 6. / a
             cy = npy.sum(npy.multiply(yi_yi1, (xi_yi1 - xi1_yi))) / 6. / a
-            return volmdlr.Point2D((cx, cy))
+            return volmdlr.Point2D(cx, cy)
 
         else:
             raise NotImplementedError
@@ -960,10 +996,13 @@ class Circle2D(Contour2D):
     def point_belongs(self, point, tolerance=1e-9):
         return point.point_distance(self.center) <= self.radius + tolerance
 
+    def circle2d_intersection(self, other_circle):
+        raise NotImplementedError
+
     def line_intersections(self, line):
-        V = volmdlr.Vector2D((line.points[1] - line.points[0]).vector)
-        Q = volmdlr.Vector2D(self.center.vector)
-        P1 = volmdlr.Vector2D(line.points[0].vector)
+        V = line.point2 - line.point1
+        Q = self.center
+        P1 = line.point1
 
         a = V.dot(V)
         b = 2 * V.dot(P1 - Q)
@@ -987,17 +1026,16 @@ class Circle2D(Contour2D):
         t1 = (-b + sqrt_disc) / (2 * a)
         t2 = (-b - sqrt_disc) / (2 * a)
         if line.__class__ is volmdlr.edges.Line2D:
-            return [volmdlr.Point2D((P1 + t1 * V).vector),
-                    volmdlr.Point2D((P1 + t2 * V).vector)]
+            return [P1 + t1 * V, P1 + t2 * V]
         else:
             if not (0 <= t1 <= 1 or 0 <= t2 <= 1):
                 return []
             elif 0 <= t1 <= 1 and not 0 <= t2 <= 1:
-                return [volmdlr.Point2D((P1 + t1 * V).vector)]
+                return [P1 + t1 * V]
             elif not 0 <= t1 <= 1 and 0 <= t2 <= 1:
-                return [volmdlr.Point2D((P1 + t2 * V).vector)]
+                return [P1 + t2 * V]
             else:
-                [volmdlr.Point2D((P1 + t1 * V).vector), volmdlr.Point2D((P1 + t2 * V).vector)]
+                [P1 + t1 * V, P1 + t2 * V]
 
     def length(self):
         return volmdlr.TWO_PI * self.radius
