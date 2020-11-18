@@ -335,9 +335,11 @@ class CompositePrimitive2D(Primitive2D):
     def __init__(self, primitives, name=''):
         Primitive2D.__init__(self, name)
         self.primitives = primitives
-        self.UpdateBasisPrimitives()
+        self.update_basis_primitives()
 
-    def UpdateBasisPrimitives(self):
+        self.primitive_to_index = {p: ip for ip, p in enumerate(self.primitives)}
+    
+    def update_basis_primitives(self):
         basis_primitives = []
         for primitive in self.primitives:
             if hasattr(primitive, 'basis_primitives'):
@@ -346,6 +348,7 @@ class CompositePrimitive2D(Primitive2D):
                 basis_primitives.append(primitive)
 
         self.basis_primitives = basis_primitives
+        
 
     def rotation(self, center, angle, copy=True):
         if copy:

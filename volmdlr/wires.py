@@ -14,22 +14,14 @@ import volmdlr
 import volmdlr.core
 from volmdlr.core_compiled import polygon_point_belongs
 
-
-class Wire2D(volmdlr.core.CompositePrimitive2D):
-    """
-    A collection of simple primitives, following each other making a wire
-    """
-
-    def __init__(self, primitives, name=''):
-        volmdlr.core.CompositePrimitive2D.__init__(self, primitives, name)
-
-    # TODO: method to check if it is a wire
+class Wire:
 
     def length(self):
         length = 0.
         for primitive in self.primitives:
             length += primitive.length()
         return length
+    
 
     def point_at_abscissa(self, curvilinear_abscissa: float):
         length = 0.
@@ -40,6 +32,34 @@ class Wire2D(volmdlr.core.CompositePrimitive2D):
                     curvilinear_abscissa - length)
             length += primitive_length
         return ValueError
+
+    def extract_primitives(self, point1, primitive1, point2, primitive2):
+        primitives = []
+        ip1 = self.primitive_to_index[primitive1]
+        ip2 = self.primitive_to_index[primitive2]
+        
+        primitives.append(primitive1.split(point1)[1])
+        primitives.extend(self.primitives[ip1+1:ip2])
+        primitives.append(primitive2.split(point2)[0])
+        return primitives
+        
+        
+
+class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
+    """
+    A collection of simple primitives, following each other making a wire
+    """
+    
+
+    def __init__(self, primitives, name=''):
+        volmdlr.core.CompositePrimitive2D.__init__(self, primitives, name)
+
+
+    def extract(self, point1, primitive1, point2, primitive2):
+        return Wire2D(self.extract_primitives(self, point1, primitive1, point2, primitive2))        
+
+
+    # TODO: method to check if it is a wire
 
     def plot_data(self, name: str = '', fill=None, color='black',
                   stroke_width: float = 1, opacity: float = 1):
@@ -71,30 +91,18 @@ class Wire2D(volmdlr.core.CompositePrimitive2D):
         return points
 
 
-class Wire3D(volmdlr.core.CompositePrimitive3D):
+class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
     """
     A collection of simple primitives, following each other making a wire
     """
+    
 
     def __init__(self, primitives, name=''):
         volmdlr.core.CompositePrimitive3D.__init__(self, primitives, name)
 
-    def length(self):
-        length = 0.
-        for primitive in self.primitives:
-            length += primitive.length()
-        return length
+    def extract(self, point1, primitive1, point2, primitive2):
+        return Wire3D(self.extract_primitives(self, point1, primitive1, point2, primitive2))        
 
-    def point_at_abscissa(self, curvilinear_abscissa):
-        length = 0.
-        for primitive in self.primitives:
-            primitive_length = primitive.length()
-            if length + primitive_length >= curvilinear_abscissa:
-                return primitive.point_at_abscissa(
-                    curvilinear_abscissa - length)
-            length += primitive_length
-        # Outside of length
-        raise ValueError
 
     # TODO: method to check if it is a wire
     def FreeCADExport(self, ip):
@@ -467,10 +475,24 @@ class Contour2D(Wire2D):
             primitives_split = [primitive.split(point)\
                                 for point, primitive in intersections]
             x = [(ip, line.abscissa(point))\
-                 for ip, (point, _) in enumerate(intersections)]
+                  for ip, (point, _) in enumerate(intersections)]
             print(x)
+            intersection_to_primitives_index = {i: self.primitives.index(primitive)\
+                                                for i, (_, primitive) in enumerate(intersections)}
             sorted_inter_index = [x[0] for x in sorted(x, key=lambda x:x[1])]
             print(sorted_inter_index)
+            
+            # x = {ip: line.abscissa(point)\
+            #       for ip, (point, _) in enumerate(intersections)}
+            # x[n_inter] = x[0]
+                
+            # transistion_ranges1 = []
+            # transistion_ranges2 = []
+            # for i in range(n_inter//2):
+            #     transistion_ranges1.append(sorted((x[i], x[i+1])))
+            #     transistion_ranges2.append(sorted((x[i+1], x[i+2])))
+
+            # print(transistion_ranges1, transistion_ranges2)
 
             # Side 1: start of contour to first intersect (i=0) and  i odd to i+1 even
 
@@ -479,24 +501,54 @@ class Contour2D(Wire2D):
             # print(remaining_transitions1)
             enclosing_transitions = {}
             while len(remaining_transitions1) > 0:
+                print('remaining_transitions1', remaining_transitions1)
                 nb_max_enclosed_transitions = -1
+                enclosed_transitions = {}
                 for it in remaining_transitions1:
+                    
+
                     # print(2*it)
                     i1 = sorted_inter_index.index(2*it)
                     i2 = sorted_inter_index.index(2*it+1)
+
 
                     net = abs(i2-i1) -1
                     if net > nb_max_enclosed_transitions:
                         nb_max_enclosed_transitions = net
                         best_transition = it
-
-                        enclosed_transitions = [i1:i2]
-
+                        # print('i12', i1, i2)
+                        if i1 < i2:
+                            # print(sorted_inter_index[i1+1:i2:2])
+                            enclosed_transitions[it] = [(i+1)//2 for i in sorted_inter_index[i1+1:i2:2]]
+                        else:
+                            print(sorted_inter_index[i1:i2+1:-2])
+                            enclosed_transitions[it] = sorted([(i+1)//2 for i in sorted_inter_index[i1:i2+1:-2]])
+                            
+                        # for it2 in remaining_transitions1:
+                            
                 remaining_transitions1.remove(best_transition)
+                print('bt', best_transition, enclosed_transitions[best_transition])
+                point_start, primitive1 = intersections[2*best_transition]
+                point2, primitive2 = intersections[2*best_transition+1]
+                # ip1 = intersection_to_primitives_index[2*best_transition]
+                # ip2 = intersection_to_primitives_index[2*best_transition+1]
+                primitives = self.extract_primitives(point_start, primitive1, point2, primitive2)
+                last_point = point2
+                for transition in enclosed_transitions[best_transition]:
+                    point1, primitive1 = intersections[2*transition]
+                    point2, primitive2 = intersections[2*transition+1]
+                    primitives.append(volmdlr.edges.LineSegment2D(last_point, point1))
+                    primitives.extend(self.extract_primitives(point1, primitive1, point2, primitive2))
+                    last_point = point2
+                    remaining_transitions1.remove(transition)
+                        
+                primitives.append(volmdlr.edges.LineSegment2D(last_point, point_start))
+                contour = Contour2D(primitives)                
+                contours.append(contour)
 
-                print('bt', best_transition)
+            
 
-
+            return contours
 
             # if not (isinstance(intersections[0][0], volmdlr.Point2D) and \
             #         isinstance(intersections[1][0], volmdlr.Point2D)):
@@ -976,8 +1028,7 @@ class Circle2D(Contour2D):
         Contour2D.__init__(self, [self], name=name)  # !!! this is dangerous
 
     def __hash__(self):
-        return int(round(1e6 * (self.center.vector[0] + self.center.vector[
-            1] + self.radius)))
+        return int(round(1e6 * (self.center.x + self.center.y + self.radius)))
 
     def __eq__(self, other_circle):
         return math.isclose(self.center.vector[0],

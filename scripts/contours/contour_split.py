@@ -29,9 +29,10 @@ contour =p2d.ClosedRoundedLineSegments2D(
 
 ax = contour.plot()
 line = edges.Line2D(vm.O2D, u)
-line.plot(ax=ax, color='b')
+# 
+ax2 = line.plot(ax=ax, color='b')
 
 split_contours = contour.cut_by_line(line)
 for c in split_contours:
-    c.plot(ax=ax, color='r')
+    c.plot(color='r')
 
