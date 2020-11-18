@@ -192,6 +192,12 @@ class Line(dc.DessiaObject):
 
         return projection, t * norm_u
 
+    def abscissa(self, point):
+        u = self.point2 - self.point1
+        norm_u = u.norm()
+        t = (point - self.point1).dot(u) / norm_u
+        return t
+
     def split(self, split_point):
         return [self.__class__(self.point1, split_point),
                 self.__class__(split_point, self.point2)]
@@ -262,17 +268,19 @@ class Line2D(Line):
         if ax is None:
             fig, ax = plt.subplots()
 
-        p1, p2 = self.points
+        # p1, p2 = self.points
 
         if version.parse(_mpl_version) >= version.parse('3.3.2'):
             if dashed:
-                ax.axline(p1.vector, p2.vector, dashes=[30, 5, 10, 5])
+                ax.axline((self.point1.x, self.point1.y),
+                          (self.point2.x, self.point2.y), dashes=[30, 5, 10, 5])
             else:
-                ax.axline(p1.vector, p2.vector)
+                ax.axline((self.point1.x, self.point1.y),
+                          (self.point2.x, self.point2.y))
         else:
-            u = p2 - p1
-            p3 = p1 - 3 * u
-            p4 = p2 + 4 * u
+            u = self.direction_vector()
+            p3 = self.point1 - 3 * u
+            p4 = self.point2 + 4 * u
             if dashed:
                 ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color,
                         dashes=[30, 5, 10, 5])
@@ -797,8 +805,8 @@ class Arc2D(Edge):
         vector_end = self.end - self.center
         if self.is_trigo:
             vector_start, vector_end = vector_end, vector_start
-        arc_angle = volmdlr.clockwise_angle(vector_start, vector_end)
-        point_angle = volmdlr.clockwise_angle(vector_start, vector_point)
+        arc_angle = volmdlr.core.clockwise_angle(vector_start, vector_end)
+        point_angle = volmdlr.core.clockwise_angle(vector_start, vector_point)
         if point_angle <= arc_angle:
             return True
 
@@ -842,6 +850,16 @@ class Arc2D(Edge):
             return self.start.rotation(self.center,
                                        -curvilinear_abscissa / self.radius)
             # return self.start.rotation(self.center, -curvilinear_abscissa*self.angle)
+
+    def abscissa(self, point2d:volmdlr.Point2D):
+        theta = volmdlr.core.clockwise_angle(self.start - self.center,
+                                             point2d - self.center)
+        print(theta)
+        print(self.is_trigo)
+        if self.is_trigo:
+            theta = volmdlr.TWO_PI - theta
+        print('theta2', theta)
+        return self.radius*abs(theta)
 
     def middle_point(self):
         l = self.length()
@@ -968,8 +986,15 @@ class Arc2D(Edge):
                      self.end.copy())
 
     def split(self, split_point: volmdlr.Point2D):
-        raise NotImplementedError
-        return [Arc2D(self.start, self.split_point)]
+        abscissa = self.abscissa(split_point)
+
+        return [Arc2D(self.start,
+                      self.point_at_abscissa(0.5*abscissa),
+                      split_point),
+                Arc2D(split_point,
+                      self.point_at_abscissa(1.5 * abscissa),
+                      self.end)
+                ]
 
     def polygon_points(self, points_per_radian=10, min_x_density=None,
                        min_y_density=None):

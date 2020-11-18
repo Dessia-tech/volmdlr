@@ -85,6 +85,12 @@ class Surface2D(volmdlr.core.Primitive2D):
         ax.margins(0.1)
         return ax
 
+    def cut_by_line(self, line:volmdlr.edges.Line2D):
+        outer_contour_cuts = self.outer_contour.cut_by_line(line)
+        if len(outer_contour_cuts) == 1:
+            return [self]
+
+        inner_contours_cuts = [c.cut_by_line(line) for c in self.inner_contours]
 
 class Surface3D():
     x_periodicity = None
@@ -612,6 +618,12 @@ class CylindricalSurface3D(Surface3D):
         surface2d = Surface2D(outer_contour, [])
         return volmdlr.faces.CylindricalFace3D(self, surface2d, name)
 
+    def translation(self, offset:volmdlr.Vector3D, copy=True):
+        if copy:
+            return self.__class__(self.frame.translation(offset, copy=True),
+                                  self.radius)
+        else:
+            self.frame.translation(offset, copy=False)
 
 class ToroidalSurface3D(Surface3D):
     face_class = 'ToroidalFace3D'
@@ -1810,6 +1822,8 @@ class CylindricalFace3D(Face3D):
         Face3D.__init__(self, surface3d=cylindricalsurface3d,
                         surface2d=surface2d,
                         name=name)
+
+
 
     # @classmethod
     # def from_contours3d(cls, contours3d, cylindricalsurface3d, name=''):

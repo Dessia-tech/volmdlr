@@ -100,15 +100,15 @@ def clockwise_angle(vector1, vector2):
     """
     Return the clockwise angle in radians between vector1 and vector2.
     """
-    vector0 = volmdlr.Vector2D((0, 0))
+    vector0 = volmdlr.O2D
     if vector0 in (vector1, vector2):
         return 0
 
-    dot = vector1.Dot(vector2)
-    norm_vec_1 = vector1.Norm()
-    norm_vec_2 = vector2.Norm()
+    dot = vector1.dot(vector2)
+    norm_vec_1 = vector1.norm()
+    norm_vec_2 = vector2.norm()
     sol = dot / (norm_vec_1 * norm_vec_2)
-    cross = vector1.Cross(vector2)
+    cross = vector1.cross(vector2)
     if math.isclose(sol, 1, abs_tol=1e-6):
         inner_angle = 0
     elif math.isclose(sol, -1, abs_tol=1e-6):
@@ -123,8 +123,8 @@ def clockwise_angle(vector1, vector2):
 
 
 def vectors3d_angle(vector1, vector2):
-    dot = vector1.Dot(vector2)
-    theta = math.acos(dot / (vector1.Norm() * vector2.Norm()))
+    dot = vector1.dot(vector2)
+    theta = math.acos(dot / (vector1.norm() * vector2.norm()))
 
     return theta
 
@@ -335,9 +335,11 @@ class CompositePrimitive2D(Primitive2D):
     def __init__(self, primitives, name=''):
         Primitive2D.__init__(self, name)
         self.primitives = primitives
-        self.UpdateBasisPrimitives()
+        self.update_basis_primitives()
 
-    def UpdateBasisPrimitives(self):
+        self.primitive_to_index = {p: ip for ip, p in enumerate(self.primitives)}
+    
+    def update_basis_primitives(self):
         basis_primitives = []
         for primitive in self.primitives:
             if hasattr(primitive, 'basis_primitives'):
@@ -346,6 +348,7 @@ class CompositePrimitive2D(Primitive2D):
                 basis_primitives.append(primitive)
 
         self.basis_primitives = basis_primitives
+        
 
     def rotation(self, center, angle, copy=True):
         if copy:

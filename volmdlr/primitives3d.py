@@ -348,7 +348,7 @@ class Cone(volmdlr.core.Primitive3D):
 
         return volmdlr.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
-    def Volume(self):
+    def volume(self):
         return self.length * math.pi * self.radius**2 / 3
 
     def babylon_script(self):
@@ -464,7 +464,7 @@ class ExtrudedProfile(volmdlr.shells.Shell3D):
         #     area-=self.contours2D[i].Area()
         return areas
 
-    def Volume(self):
+    def volume(self):
         z = self.x.cross(self.y)
         z.normalize()
         coeff = npy.dot(self.extrusion_vector, z)
@@ -562,7 +562,7 @@ class RevolvedProfile(volmdlr.shells.Shell3D):
         s += '{} = F.revolve(fc.Vector({},{},{}), fc.Vector({},{},{}),{})\n'.format(name, ap1,ap2,ap3,a1,a2,a3,angle)
         return s
 
-    def Volume(self):
+    def volume(self):
         p1 = self.axis_point.PlaneProjection3D(self.plane_origin,self.x,self.y)
         p1_2D = p1.To2D(self.axis_point,self.x,self.y)
         p2_3D = self.axis_point+volmdlr.Point3D(self.axis.vector)
@@ -672,7 +672,7 @@ class Cylinder(RevolvedProfile):
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
-    def Volume(self):
+    def volume(self):
         return self.length * math.pi * self.radius**2
 
     def FreeCADExport(self, ip):
@@ -920,31 +920,32 @@ class Sweep(volmdlr.shells.Shell3D):
 # class Sphere(volmdlr.Primitive3D):
 class Sphere(RevolvedProfile):
     def __init__(self, center, radius, color=None, alpha=1., name=''):
-        volmdlr.Primitive3D.__init__(self, name=name)
+        volmdlr.core.Primitive3D.__init__(self, name=name)
         self.center = center
         self.radius = radius
         self.position = center
         
         # Revolved Profile for complete sphere
-        s = volmdlr.Point2D((-self.radius, 0.01*self.radius))
-        i = volmdlr.Point2D((0, 1.01*self.radius))
-        e = volmdlr.Point2D((self.radius, 0.01*self.radius)) #Not coherent but it works at first, to change !!
+        s = volmdlr.Point2D(-self.radius, 0.01*self.radius)
+        i = volmdlr.Point2D(0, 1.01*self.radius)
+        e = volmdlr.Point2D(self.radius, 0.01*self.radius) #Not coherent but it works at first, to change !!
         
         # s = volmdlr.Point2D((-self.radius, 0))
         # i = volmdlr.Point2D(((math.sqrt(2)/2)*self.radius,(math.sqrt(2)/2)*self.radius))
         # e = volmdlr.Point2D(((-math.sqrt(2)/2)*self.radius,(-math.sqrt(2)/2)*self.radius)) 
         
-        contour = volmdlr.Contour2D([volmdlr.Arc2D(s, i , e), volmdlr.LineSegment2D(s, e)])
+        contour = volmdlr.wires.Contour2D([
+            volmdlr.edges.Arc2D(s, i , e), volmdlr.edges.LineSegment2D(s, e)])
         # fig, ax = plt.subplots()
         # c.plot(ax=ax)
         
         # contour = volmdlr.Contour2D([c])
         axis = volmdlr.X3D
-        y = axis.RandomUnitnormalVector()
+        y = axis.random_unit_normal_vector()
         RevolvedProfile.__init__(self, center, axis, y, contour, center, axis,
                                  color=color, alpha=alpha, name=name)
 
-    def Volume(self):
+    def volume(self):
         return 4/3*math.pi*self.radius**3
 
     def FreeCADExport(self, ip, ndigits=3):
