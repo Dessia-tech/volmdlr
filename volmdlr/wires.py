@@ -14,6 +14,8 @@ from mpl_toolkits.mplot3d import Axes3D
 import volmdlr
 import volmdlr.core
 from volmdlr.core_compiled import polygon_point_belongs
+import volmdlr.edges
+
 
 class Wire:
 

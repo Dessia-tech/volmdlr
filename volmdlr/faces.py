@@ -65,7 +65,6 @@ class Surface2D(volmdlr.core.Primitive2D):
         if holes:
             tri['holes'] = npy.array(holes).reshape((-1, 2))
 
-
         t = triangle.triangulate(tri, 'p')
         triangles = t['triangles'].tolist()
         np = t['vertices'].shape[0]
@@ -164,22 +163,22 @@ class Surface3D():
             method_name = '{}_to_2d'.format(primitive3d.__class__.__name__.lower())
             if hasattr(self, method_name):
                 primitives = getattr(self, method_name)(primitive3d)
-                # if should_study_periodicity and last_primitive:
-                #     delta_x = primitives[0].start.x - last_primitive.end.x
-                #     if delta_x != 0 and abs(delta_x) == self.x_periodicity:
-                #         primitives = [p.translation(delta_x*volmdlr.X2D)\
-                #                       for p in primitives[:]]
-                #     else:
-                #         raise ValueError('Primitives not following each other in contour: deltax={}'.format(delta_x))
-                #     delta_y = primitives[0].start.y - last_primitive.end.y
-                #     if delta_y != 0 and abs(delta_y) == self.y_periodicity:
-                #         primitives = [p.translation(delta_y*volmdlr.Y2D)\
-                #                       for p in primitives[:]]
-                #     else:
-                #         # contour3d.plot()
-                #         raise ValueError('Primitives not following each other in contour: deltay={}'.format(delta_y))
-                # if primitives:
-                #     last_primitive = primitives[-1]
+                if should_study_periodicity and last_primitive:
+                    delta_x = primitives[0].start.x - last_primitive.end.x
+                    if delta_x != 0 and abs(delta_x) == self.x_periodicity:
+                        primitives = [p.translation(delta_x*volmdlr.X2D)\
+                                      for p in primitives[:]]
+                    else:
+                        raise ValueError('Primitives not following each other in contour: deltax={}'.format(delta_x))
+                    delta_y = primitives[0].start.y - last_primitive.end.y
+                    if delta_y != 0 and abs(delta_y) == self.y_periodicity:
+                        primitives = [p.translation(delta_y*volmdlr.Y2D)\
+                                      for p in primitives[:]]
+                    else:
+                        # contour3d.plot()
+                        raise ValueError('Primitives not following each other in contour: deltay={}'.format(delta_y))
+                if primitives:
+                    last_primitive = primitives[-1]
                 primitives2d.extend(primitives)
             else:
                 raise NotImplementedError('Class {} does not implement {}'.format(self.__class__.__name__,

@@ -1040,7 +1040,7 @@ class FullArc2D(Edge):
         Edge.__init__(self, start_end, start_end, name=name)  # !!! this is dangerous
 
     def __hash__(self):
-        return hash(self.center) + 5*hash(self.start_end)
+        return hash(self.center) + 5*hash(self.start)
 
     def __eq__(self, other_arc):
         return (self.center == other_arc.center)\
