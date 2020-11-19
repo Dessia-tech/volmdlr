@@ -10,10 +10,12 @@ import numpy as npy
 import matplotlib.pyplot as plt
 import matplotlib.patches
 from mpl_toolkits.mplot3d import Axes3D
+from typing import List
 
 import volmdlr
 import volmdlr.core
 from volmdlr.core_compiled import polygon_point_belongs
+import plot_data
 
 class Wire:
 
@@ -381,19 +383,13 @@ class Contour2D(Contour, Wire2D):
 
         return A
 
-    def plot_data(self, name='', fill=None, marker=None, color='black',
-                  stroke_width=1, dash=False, opacity=1):
-
-        plot_data = {}
-        plot_data['fill'] = fill
-        plot_data['name'] = name
-        plot_data['type'] = 'contour'
-        plot_data['plot_data'] = []
-        for item in self.primitives:
-            plot_data['plot_data'].append(item.plot_data(color=color,
-                                                         stroke_width=stroke_width,
-                                                         opacity=opacity))
-        return plot_data
+    def plot_data(self, plot_data_states: List[plot_data.PlotDataState] = None):
+        if plot_data_states is None:
+            plot_data_states = [plot_data.PlotDataState()]
+        plot_data_primitives = [item.plot_data(plot_data_states=plot_data_states) for item in self.primitives]
+        return plot_data.PlotDataContour2D(plot_data_primitives=plot_data_primitives,
+                                           plot_data_states=plot_data_states,
+                                           name=self.name)
 
     def copy(self):
         primitives_copy = []
@@ -1180,17 +1176,11 @@ class Circle2D(Contour2D):
         center = 2 * point - self.center
         return Circle2D(center, self.radius)
 
-    def plot_data(self, marker=None, color='black', stroke_width=1, opacity=1,
-                  fill=None):
-        return {'type': 'circle',
-                'cx': self.center.vector[0],
-                'cy': self.center.vector[1],
-                'r': self.radius,
-                'color': color,
-                'opacity': opacity,
-                'size': stroke_width,
-                'dash': None,
-                'fill': fill}
+    def plot_data(self, plot_data_states: List[plot_data.PlotDataState] = None):
+        return plot_data.PlotDataCircle2D(cx=self.center.x,
+                                          cy=self.center.y,
+                                          r=self.radius,
+                                          plot_data_states=plot_data_states)
 
     def copy(self):
         return Circle2D(self.center.copy(), self.radius)
