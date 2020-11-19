@@ -444,6 +444,8 @@ class Line2D(Line):
 
 
 class BSplineCurve2D(Edge):
+    _non_serializable_attributes = ['curve']
+
     def __init__(self, degree, control_points, knot_multiplicities, knots,
                  weights=None, periodic=False, name=''):
         self.control_points = control_points
@@ -639,7 +641,7 @@ class LineSegment2D(LineSegment):
         return LineSegment3D(start, end, name=self.name)
 
     def reverse(self):
-        return LineSegment2D(self.end.copy(), self.points[0].copy())
+        return LineSegment2D(self.end.copy(), self.start.copy())
 
     def to_line(self):
         return Line2D(*self.points)
@@ -677,10 +679,10 @@ class LineSegment2D(LineSegment):
             else:
                 self.points = [frame.NewCoordinates(p) for p in self.points]
 
-    def plot_data(self, plot_data_states: List[plot_data.PlotDataState] = None):
-        return plot_data.PlotDataLine2D(data=[self.start.x, self.start.y,
-                                              self.end.x, self.end.y],
-                                        plot_data_states=plot_data_states)
+    # def plot_data(self, plot_data_states: List[plot_data.PlotDataState] = None):
+    #     return plot_data.PlotDataLine2D(data=[self.start.x, self.start.y,
+    #                                           self.end.x, self.end.y],
+    #                                     plot_data_states=plot_data_states)
 
     def CreateTangentCircle(self, point, other_line):
         circle1, circle2 = Line2D.CreateTangentCircle(other_line, point, self)
@@ -1601,7 +1603,7 @@ class LineSegment3D(LineSegment):
     def copy(self):
         return LineSegment3D(self.start.copy(), self.end.copy())
 
-    def plot(self, ax=None):
+    def plot(self, ax=None, color='k'):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -1612,7 +1614,7 @@ class LineSegment3D(LineSegment):
         x = [p.x for p in points]
         y = [p.y for p in points]
         z = [p.z for p in points]
-        ax.plot(x, y, z, 'o-k')
+        ax.plot(x, y, z, color=color)
         return ax
 
     def plot2D(self, x_3D, y_3D, ax=None, color='k', width=None):
@@ -1888,6 +1890,8 @@ class LineSegment3D(LineSegment):
 
 
 class BSplineCurve3D(Edge):
+    _non_serializable_attributes = ['curve']
+
     def __init__(self, degree, control_points, knot_multiplicities, knots,
                  weights=None, periodic=False, name=''):
         volmdlr.core.Primitive3D.__init__(self, name=name)

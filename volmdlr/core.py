@@ -485,7 +485,8 @@ class CompositePrimitive3D(Primitive3D):
             ax.set_aspect('equal')
 
         for primitive in self.primitives:
-            primitive.plot(ax)
+
+            primitive.plot(ax=ax)
 
 
 

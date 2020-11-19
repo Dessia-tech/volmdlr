@@ -28,6 +28,9 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         volmdlr.core.Primitive2D.__init__(self, name=name)
 
+    def area(self):
+        return self.outer_contour.area() - sum([c.area() for c in self.inner_contours])
+
     def triangulation(self, min_x_density=None, min_y_density=None):
         outer_polygon = self.outer_contour.polygonization(min_x_density=15, min_y_density=12)
         # ax2 = outer_polygon.plot(color='r', point_numbering=True)
@@ -126,12 +129,12 @@ class Surface3D():
         # fig, ax = plt.subplots()
         for contour3d in contours3d:
             # print(self.__class__.__name__)
-            if self.__class__.__name__ != 'Plane3D':
-                ax = contour3d.plot()
-                ax.set_title(self.__class__.__name__)
-                if hasattr(self, 'frame'):
-                    # print('ff', self.frame.origin)
-                    self.frame.origin.plot(ax=ax, color='r')
+            # if self.__class__.__name__ != 'Plane3D':
+            #     ax = contour3d.plot()
+            #     ax.set_title(self.__class__.__name__)
+            #     if hasattr(self, 'frame'):
+            #         # print('ff', self.frame.origin)
+            #         self.frame.origin.plot(ax=ax, color='r')
 
             contour2d = self.contour3d_to_2d(contour3d)
             inner_contours2d.append(contour2d)
@@ -142,17 +145,21 @@ class Surface3D():
 
         inner_contours2d.remove(outer_contour2d)
 
-        if self.__class__.__name__ != 'Plane3D':
-            ax = outer_contour2d.plot(equal_aspect=False, plot_points=True)
-            ax.set_title(self.__class__.__name__)
+        # if self.__class__.__name__ != 'Plane3D':
+        # ax = outer_contour2d.plot(equal_aspect=False, plot_points=True)
+        # ax.set_title(self.__class__.__name__)
+
         if isinstance(self.face_class , str):
             class_ = globals()[self.face_class]
         else:
             class_ = self.face_class
 
+        surface2d = Surface2D(outer_contour=outer_contour2d,
+                              inner_contours=inner_contours2d)
+        # ax2=surface2d.plot()
+        # ax2.set_title(self.__class__.__name__+' Surface')
         return class_(self,
-                      surface2d=Surface2D(outer_contour=outer_contour2d,
-                                          inner_contours=inner_contours2d),
+                      surface2d=surface2d,
                       name=name)
 
     def contour3d_to_2d(self, contour3d):
@@ -163,27 +170,37 @@ class Surface3D():
             method_name = '{}_to_2d'.format(primitive3d.__class__.__name__.lower())
             if hasattr(self, method_name):
                 primitives = getattr(self, method_name)(primitive3d)
+                print('p', primitives)
                 if should_study_periodicity and last_primitive:
                     delta_x = primitives[0].start.x - last_primitive.end.x
-                    if delta_x != 0 and abs(delta_x) == self.x_periodicity:
-                        primitives = [p.translation(delta_x*volmdlr.X2D)\
-                                      for p in primitives[:]]
-                    else:
-                        raise ValueError('Primitives not following each other in contour: deltax={}'.format(delta_x))
+                    if not math.isclose(delta_x, 0., abs_tol=1e-9):
+                        if abs(delta_x) == self.x_periodicity:
+                            # primitives = [p.translation(-delta_x*volmdlr.X2D)\
+                            #               for p in primitives[:]]
+                            primitives[0].start.translation(
+                                -delta_x * volmdlr.X2D, copy=False)
+                        else:
+                            raise ValueError('Primitives not following each other in contour: deltax={}'.format(delta_x))
+
                     delta_y = primitives[0].start.y - last_primitive.end.y
-                    if delta_y != 0 and abs(delta_y) == self.y_periodicity:
-                        primitives = [p.translation(delta_y*volmdlr.Y2D)\
-                                      for p in primitives[:]]
-                    else:
-                        # contour3d.plot()
-                        raise ValueError('Primitives not following each other in contour: deltay={}'.format(delta_y))
+                    if not math.isclose(delta_y, 0., abs_tol=1e-9):
+                        if abs(delta_y) == self.y_periodicity:
+                            # primitives = [p.translation(-delta_y*volmdlr.Y2D)\
+                            #               for p in primitives[:]]
+                            primitives[0].start.translation(
+                                -delta_y*volmdlr.Y2D, copy=False)
+                        else:
+                            contour3d.plot()
+                            print(primitives[0].start, last_primitive.end)
+                            print(delta_y)
+                            raise ValueError('Primitives not following each other in contour: deltay={}'.format(delta_y))
+
                 if primitives:
                     last_primitive = primitives[-1]
                 primitives2d.extend(primitives)
             else:
                 raise NotImplementedError('Class {} does not implement {}'.format(self.__class__.__name__,
                                                                                   method_name))
-
         return volmdlr.wires.Contour2D(primitives2d)
 
     def contour2d_to_3d(self, contour2d):
@@ -946,7 +963,8 @@ class ConicalSurface3D(Surface3D):
     def linesegment2d_to_3d(self, linesegment2d):
         theta1, z1 = linesegment2d.start
         theta2, z2 = linesegment2d.end
-        if math.isclose((abs(theta1 - theta2))//volmdlr.TWO_PI, 0., abs_tol=1e-9):
+        # print(theta1, theta2, abs(theta1 - theta2), abs(theta1 - theta2)//volmdlr.TWO_PI)
+        if math.isclose(abs(theta1 - theta2)%volmdlr.TWO_PI, 0., abs_tol=1e-9):
             return [volmdlr.edges.LineSegment3D(
                         self.point2d_to_3d(linesegment2d.start),
                         self.point2d_to_3d(linesegment2d.end),

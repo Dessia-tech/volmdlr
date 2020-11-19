@@ -384,13 +384,13 @@ class Contour2D(Contour, Wire2D):
 
         return A
 
-    def plot_data(self, plot_data_states: List[plot_data.PlotDataState] = None):
-        if plot_data_states is None:
-            plot_data_states = [plot_data.PlotDataState()]
-        plot_data_primitives = [item.plot_data(plot_data_states=plot_data_states) for item in self.primitives]
-        return plot_data.PlotDataContour2D(plot_data_primitives=plot_data_primitives,
-                                           plot_data_states=plot_data_states,
-                                           name=self.name)
+    # def plot_data(self, plot_data_states: List[plot_data.PlotDataState] = None):
+    #     if plot_data_states is None:
+    #         plot_data_states = [plot_data.PlotDataState()]
+    #     plot_data_primitives = [item.plot_data(plot_data_states=plot_data_states) for item in self.primitives]
+    #     return plot_data.PlotDataContour2D(plot_data_primitives=plot_data_primitives,
+    #                                        plot_data_states=plot_data_states,
+    #                                        name=self.name)
 
     def copy(self):
         primitives_copy = []
@@ -1168,7 +1168,7 @@ class Circle2D(Contour2D):
         """
         I = math.pi * self.radius ** 4 / 4
         Ic = npy.array([[I, 0], [0, I]])
-        return geometry.Huygens2D(Ic, self.area(), self.center, point)
+        return volmdlr.geometry.Huygens2D(Ic, self.area(), self.center, point)
 
     def center_of_mass(self):
         return self.center
@@ -1238,12 +1238,50 @@ class Contour3D(Contour, Wire3D):
     @classmethod
     def from_step(cls, arguments, object_dict):
         edges = []
-        for edge in arguments[1]:
+        raw_edges = []
+        edge_ends = {}
+        for ie, edge_id in enumerate(arguments[1]):
             # print(arguments[1])
-            edges.append(object_dict[int(edge[1:])])
-        if (len(edges)) == 1 and isinstance(edges[0], cls):
-            # Case of a circle...
-            return edges[0]
+            edge = object_dict[int(edge_id[1:])]
+            raw_edges.append(edge)
+
+            if edge.start in edge_ends:
+                edge_ends[edge.start].append((ie, 0))
+            else:
+                edge_ends[edge.start] = [(ie, 0)]
+
+            if edge.end in edge_ends:
+                edge_ends[edge.end].append((ie, 1))
+            else:
+                edge_ends[edge.end] = [(ie, 1)]
+
+
+        if (len(raw_edges)) == 1 and isinstance(raw_edges[0], cls):
+            # Case of a circle, ellipse...
+            return raw_edges[0]
+
+        edges = [raw_edges[0]]
+        last_edge = raw_edges[0]
+        last_edge_index = 0
+        last_edge_direction = 1
+        remaining_edges_indices = [i+1 for i in range(len(raw_edges)-1)]
+        while remaining_edges_indices:
+            connected_points = edge_ends[last_edge.end]
+            if len(connected_points) > 2:
+                raise NotImplementedError('3 or more edges have a point in common')
+            connected_points.remove((last_edge_index, last_edge_direction))
+            new_edge_index, new_edge_direction = connected_points[0]
+            edge = raw_edges[new_edge_index]
+            if new_edge_direction:
+                edge = edge.reverse()
+            edges.append(edge)
+
+            last_edge_index = new_edge_index
+            last_edge_direction = not new_edge_direction
+            remaining_edges_indices.remove(new_edge_index)
+            last_edge = edge
+
+
         return cls(edges, name=arguments[0][1:-1])
 
     def clean_points(self):
