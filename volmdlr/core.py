@@ -381,8 +381,9 @@ class CompositePrimitive2D(Primitive2D):
             self.UpdateBasisPrimitives()
 
 
-    def plot(self, ax=None, color='k',
+    def plot(self, ax=None, color='k', alpha=1,
              plot_points=False, equal_aspect=True):
+
         if ax is None:
             fig, ax = plt.subplots()
 
@@ -390,7 +391,8 @@ class CompositePrimitive2D(Primitive2D):
             ax.set_aspect('equal')
 
         for element in self.primitives:
-            element.plot(ax=ax, color=color, plot_points=plot_points)
+            element.plot(ax=ax, color=color, alpha=alpha, plot_points=plot_points)
+
 
         ax.margins(0.1)
         plt.show()

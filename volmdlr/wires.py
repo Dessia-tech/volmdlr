@@ -1005,11 +1005,15 @@ class ClosedPolygon2D(Contour2D):
         return cls(hull)
 
     def plot(self, ax=None, color='k',
-                plot_points=False, point_numbering=False):
+                plot_points=False, point_numbering=False,
+                fill=False, fill_color='w'):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
 
+        if fill:
+            ax.fill([p[0] for p in self.points], [p[1] for p in self.points],
+                    facecolor=fill_color)
         for ls in self.line_segments:
             ls.plot(ax=ax ,color=color)
 
@@ -1066,42 +1070,42 @@ class Circle2D(Contour2D):
         raise NotImplementedError
 
     def line_intersections(self, line):
-        V = line.point2 - line.point1
-        Q = self.center
-        P1 = line.point1
 
-        a = V.dot(V)
-        b = 2 * V.dot(P1 - Q)
-        c = P1.dot(P1) + Q.dot(Q) - 2 * P1.dot(Q) - self.radius ** 2
+        Q = self.center
+        if line.points[0] == self.center:
+            P1 = line.points[1]
+            V = line.points[0] - line.points[1]
+        else:
+            P1 = line.points[0]
+            V = line.points[1] - line.points[0]
+        a = V.Dot(V)
+        b = 2 * V.Dot(P1 - Q)
+        c = P1.Dot(P1) + Q.Dot(Q) - 2 * P1.Dot(Q) - self.radius ** 2
 
         disc = b ** 2 - 4 * a * c
         if disc < 0:
             return []
 
-        if math.isclose(disc, 0, abs_tol=1e-8):
-            t = -b / (2 * a)
-            if line.__class__ is volmdlr.edges.Line2D:
-                return [volmdlr.Point2D((P1 + t * V).vector)]
-            else:
-                if 0 <= t <= 1:
-                    return [volmdlr.Point2D((P1 + t * V).vector)]
-                else:
-                    return []
-
         sqrt_disc = math.sqrt(disc)
         t1 = (-b + sqrt_disc) / (2 * a)
         t2 = (-b - sqrt_disc) / (2 * a)
         if line.__class__ is volmdlr.edges.Line2D:
-            return [P1 + t1 * V, P1 + t2 * V]
+
+            if t1 == t2:
+                return [P1 + t1 * V]
+            else:
+                return [P1 + t1 * V,
+                        P1 + t2 * V]
         else:
-            if not (0 <= t1 <= 1 or 0 <= t2 <= 1):
-                return []
+            if not 0 <= t1 <= 1 and not 0 <= t2 <= 1:
+                return None
             elif 0 <= t1 <= 1 and not 0 <= t2 <= 1:
                 return [P1 + t1 * V]
             elif not 0 <= t1 <= 1 and 0 <= t2 <= 1:
                 return [P1 + t2 * V]
             else:
                 [P1 + t1 * V, P1 + t2 * V]
+
 
     def length(self):
         return volmdlr.TWO_PI * self.radius
@@ -1340,7 +1344,7 @@ class Contour3D(Contour, Wire3D):
         x = npy.sum([p[0] for p in self.points]) / nb
         y = npy.sum([p[1] for p in self.points]) / nb
         z = npy.sum([p[2] for p in self.points]) / nb
-        return Point3D((x, y, z))
+        return volmdlr.Point3D(x, y, z)
 
     def rotation(self, center, axis, angle, copy=True):
         if copy:

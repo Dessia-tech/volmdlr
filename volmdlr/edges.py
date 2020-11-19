@@ -598,8 +598,9 @@ class LineSegment2D(LineSegment):
         else:
             return []
 
-    def plot(self, ax=None, color='k', arrow=False, width=None,
-             plot_points=False):
+
+    def plot(self, ax=None, color='k', alpha=1, arrow=False, width=None,
+                plot_points=False):
         if ax is None:
             fig, ax = plt.subplots()
 
@@ -607,9 +608,10 @@ class LineSegment2D(LineSegment):
         if arrow:
             if plot_points:
                 ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color,
-                        style='o-')
+                        alpha=alpha, style='o-')
             else:
-                ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color)
+                ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color, 
+                        alpha=alpha)
 
             length = ((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2) ** 0.5
             if width is None:
@@ -629,10 +631,10 @@ class LineSegment2D(LineSegment):
                 width = 1
             if plot_points:
                 ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color,
-                        marker='o', linewidth=width)
+                        marker='o', linewidth=width, alpha=alpha)
             else:
                 ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=color,
-                        linewidth=width)
+                        linewidth=width, alpha=alpha)
         return ax
 
     def to_3d(self, plane_origin, x1, x2):

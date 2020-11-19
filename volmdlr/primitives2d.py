@@ -230,12 +230,6 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
                 if math.isclose(math.cos(alpha1), 0,
                                 abs_tol=1e-9) or math.isclose(math.cos(alpha2),
                                                               0, abs_tol=1e-9):
-                    print('ca sort direct')
-                    print('direction vector', dir_vec_1, dir_vec_2)
-                    print('normal vector', normal_vector)
-                    print('alpha', alpha1 * 180 / math.pi,
-                          alpha2 * 180 / math.pi)
-                    print(point, self.points[i + 1])
                     return self
                 #                    distance_dir1 = offset
                 #                    distance_dir2 = offset
