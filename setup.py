@@ -123,6 +123,7 @@ setup(name='volmdlr',
                         'geomdl',
                         'jsonschema',
                         'networkx',
-                        'triangle'],
+                        'triangle',
+                        'plot_data'],
       classifiers=['Topic :: Scientific/Engineering','Development Status :: 3 - Alpha'],
       ext_modules = cythonize(["volmdlr/core_compiled.pyx"]))

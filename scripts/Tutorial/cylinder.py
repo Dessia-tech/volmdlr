@@ -7,17 +7,14 @@ Created on Thu Apr  2 10:51:54 2020
 
 
 import volmdlr as vm
+import volmdlr.primitives3d as primitives3d
 import math
 import matplotlib.pyplot as plt
 
 radius = 5e-3 #Choose the radius
-center = vm.Point3D([0,0,0]) #Choose the coordinate of the center
-normal = vm.Vector3D([1,1,1]) #Choose the normal
-normal.Normalize() #Normalize the normal if it is not the case
-plane = vm.Plane3D.from_normal(center, normal) #Create a plane to give us two others vector
-
-frame = vm.Frame3D(center, plane.vectors[0], plane.vectors[1], normal) #Frame in the center of the cylinder
-cylindersurface3d = vm.CylindricalSurface3D(frame, radius)
+center = vm.Point3D(0,0,0) #Choose the coordinate of the center
+normal = vm.Vector3D(1,1,1) #Choose the normal
+cylindersurface3d = primitives3d.Cylinder(center, normal, radius, length=0.1)
 
 h = 10e-3 #Height of cylinder
 angle = 3*math.pi/2 #Arc's angle 
