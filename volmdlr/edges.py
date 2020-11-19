@@ -267,10 +267,13 @@ class Line2D(Line):
         if version.parse(_mpl_version) >= version.parse('3.3.2'):
             if dashed:
                 ax.axline((self.point1.x, self.point1.y),
-                          (self.point2.x, self.point2.y), dashes=[30, 5, 10, 5])
+                          (self.point2.x, self.point2.y),
+                          dashes=[30, 5, 10, 5],
+                          color=color)
             else:
                 ax.axline((self.point1.x, self.point1.y),
-                          (self.point2.x, self.point2.y))
+                          (self.point2.x, self.point2.y),
+                          color=color)
         else:
             u = self.direction_vector()
             p3 = self.point1 - 3 * u

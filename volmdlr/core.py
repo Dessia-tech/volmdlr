@@ -458,7 +458,7 @@ class CompositePrimitive3D(Primitive3D):
 
 
 
-    def UpdateBasisPrimitives(self):
+    def update_basis_primitives(self):
         # TODO: This is a copy/paste from CompositePrimitive2D, in the future make a Common abstract class
         basis_primitives = []
         for primitive in self.primitives:
@@ -467,7 +467,7 @@ class CompositePrimitive3D(Primitive3D):
             else:
                 basis_primitives.append(primitive)
 
-        self.primitives = basis_primitives
+        self.basis_primitives = basis_primitives
 
     # def to_2d(self, plane_origin, x, y):
     #     if name is None:
