@@ -4,7 +4,7 @@
 
 """
 import triangle
-from typing import List
+from typing import List, Tuple
 import math
 import numpy as npy
 import matplotlib.pyplot as plt
@@ -30,6 +30,16 @@ class Surface2D(volmdlr.core.Primitive2D):
 
     def area(self):
         return self.outer_contour.area() - sum([c.area() for c in self.inner_contours])
+
+    def point_belongs(self, point:volmdlr.Point2D):
+        if not self.outer_contour.point_belongs(point):
+            return False
+
+        for inner_contour in self.inner_contours:
+            if inner_contour.point_belongs(point):
+                return False
+
+        return True
 
     def triangulation(self, min_x_density=None, min_y_density=None):
         outer_polygon = self.outer_contour.polygonization(min_x_density=15, min_y_density=12)
@@ -353,23 +363,19 @@ class Plane3D(Surface3D):
         intersection_abscissea = - self.frame.w.dot(w) / self.frame.w.dot(u)
         return [line.points[0] + intersection_abscissea * u]
 
-    def linesegment_intersection(self, linesegment, abscissea=False):
-        u = linesegment.points[1] - linesegment.points[0]
-        w = linesegment.points[0] - self.frame.origin
+    def linesegment_intersection(self, linesegment:volmdlr.edges.LineSegment3D)\
+                    -> List[volmdlr.Point3D]:
+        u = linesegment.end - linesegment.start
+        w = linesegment.start - self.frame.origin
         normaldotu = self.frame.w.dot(u)
         if math.isclose(normaldotu, 0, abs_tol=1e-08):
-            if abscissea:
-                return None, None
-            return None
+
+            return []
         intersection_abscissea = - self.frame.w.dot(w) / normaldotu
         if intersection_abscissea < 0 or intersection_abscissea > 1:
-            if abscissea:
-                return None, None
-            return None
-        if abscissea:
-            return linesegment.points[
-                       0] + intersection_abscissea * u, intersection_abscissea
-        return linesegment.points[0] + intersection_abscissea * u
+            return []
+
+        return [linesegment.start + intersection_abscissea * u]
 
     def equation_coefficients(self):
         """
@@ -1268,6 +1274,18 @@ class Face3D(volmdlr.core.Primitive3D):
                  and self.surface2d == other_.surface2d)
         return equal
 
+    def point_belongs(self, point3d:volmdlr.Point3D):
+        """
+        Tells you if a point is on the 3D face and inside its contour
+        """
+        point2d = self.surface3d.point3d_to_2d(point3d)
+        check_point3d = self.surface3d.point3d_to_2d(point3d)
+        if check_point3d.point_distance(point3d) > 1e-6:
+            return False
+
+        return self.surface2d.point_belongs(point2d)
+
+
     @property
     def outer_contour3d(self):
         """
@@ -1524,6 +1542,18 @@ class Face3D(volmdlr.core.Primitive3D):
         return PlaneFace3D(new_contours, new_plane, new_points,
                            self.polygon2D.copy(), self.name)
 
+    def linesegment_intersection(self,
+                                 linesegment: volmdlr.edges.LineSegment3D,
+                                 ) -> List[volmdlr.Point3D]:
+
+        intersections = []
+        for intersection in  self.surface3d.linesegment_intersection(
+            linesegment):
+            if self.surface2d.point_belongs(intersection):
+                intersections.append(intersections)
+
+        return intersections
+
 class PlaneFace3D(Face3D):
     """
     :param contours: The face's contour2D
@@ -1676,27 +1706,7 @@ class PlaneFace3D(Face3D):
         return min_points
 
 
-    def point_on_face(self, point):
-        """
-        Tells you if a point is on the 3D face and inside its contour
-        """
-        ## Only works if the surface is planar
-        ## TODO : this function does not take into account if Face has holes
 
-        point_on_plane = self.plane.point_on_plane(point)
-        # The point is not in the same plane
-        if not point_on_plane:
-            print('point not on plane so not on face')
-            return False
-
-        point_2D = point.to_2d(self.plane.origin, self.plane.vectors[0],
-                              self.plane.vectors[1])
-
-
-        if not self.polygon2D.PointBelongs(point_2D):
-            return False
-
-        return True
 
     def edge_intersection(self, edge):
         linesegment = volmdlr.LineSegment3D(*edge.points)
@@ -1711,29 +1721,6 @@ class PlaneFace3D(Face3D):
 
         return intersection_point
 
-    def linesegment_intersection(self, linesegment, abscissea=False):
-        if abscissea:
-            intersection_point, intersection_abscissea = self.plane.linesegment_intersection(
-                linesegment, True)
-        else:
-            intersection_point = self.plane.linesegment_intersection(
-                linesegment)
-
-        if intersection_point is None:
-            if abscissea:
-                return None, None
-            return None
-
-        point_on_face_boo = self.point_on_face(intersection_point)
-
-        if not point_on_face_boo:
-            if abscissea:
-                return None, None
-            return None
-
-        if abscissea:
-            return intersection_point, intersection_abscissea
-        return intersection_point
 
     def face_intersection(self, face2):
         ## """

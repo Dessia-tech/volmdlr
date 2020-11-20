@@ -25,7 +25,11 @@ class Wire:
         for primitive in self.primitives:
             length += primitive.length()
         return length
-    
+
+    def tesselation_points(self, resolution:float):
+        length = self.length()
+        n = int(length/resolution)
+        return [self.point_at_abscissa(i/n*length) for i in range(n+1)]
 
     def point_at_abscissa(self, curvilinear_abscissa: float):
         length = 0.
