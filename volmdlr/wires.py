@@ -1061,6 +1061,10 @@ class Circle2D(Contour2D):
                and math.isclose(self.radius, other_circle.radius,
                                 abs_tol=1e-06)
 
+    def polygonization(self, min_x_density=None, min_y_density=None):
+
+        return ClosedPolygon2D(self.tesselation_points())
+
     def tessellation_points(self, resolution=40):
         return [(self.center
                  + self.radius * math.cos(teta) * volmdlr.X2D
@@ -1261,7 +1265,6 @@ class Contour3D(Contour, Wire3D):
                 return cls(raw_edges, name=name)
 
         # Making things right for first 2 primitives
-        print(len(raw_edges))
         if raw_edges[0].end == raw_edges[1].start:
             edges = [raw_edges[0], raw_edges[1]]
         elif raw_edges[0].start == raw_edges[1].start:

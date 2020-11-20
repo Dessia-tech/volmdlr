@@ -1066,8 +1066,18 @@ class FullArc2D(Edge):
         angle = abscissa / self.radius
         return self.start.rotation(self.center, angle)
 
+    def tessellation_points(self, resolution=40):
+        return [(self.center
+                 + self.radius * math.cos(teta) * volmdlr.X2D
+                 + self.radius * math.sin(teta) * volmdlr.Y2D)\
+                for teta in npy.linspace(0, volmdlr.TWO_PI, resolution + 1)][:-1]
+
+    def polygonization(self, min_x_density=None, min_y_density=None):
+
+        return ClosedPolygon2D(self.tesselation_points())
+
     def plot(self, ax=None, color='k', plot_points=False,
-             linestyle='-', linewidth=1):
+             linestyle='-', linewidth=1, alpha=1):
         if ax is None:
             fig, ax = plt.subplots()
 
@@ -1082,7 +1092,7 @@ class FullArc2D(Edge):
                                                 linestyle=linestyle,
                                                 linewidth=linewidth))
         if plot_points:
-            ax.plot([self.start.x], [self.start.y], 'o', color=color)
+            ax.plot([self.start.x], [self.start.y], 'o', color=color, alpha=alpha)
         return ax
 
 

@@ -156,8 +156,8 @@ class Surface3D():
         inner_contours2d.remove(outer_contour2d)
 
         # if self.__class__.__name__ != 'Plane3D':
-        # ax = outer_contour2d.plot(equal_aspect=False, plot_points=True)
-        # ax.set_title(self.__class__.__name__)
+        ax = outer_contour2d.plot(equal_aspect=False, plot_points=True)
+        ax.set_title(self.__class__.__name__)
 
         if isinstance(self.face_class , str):
             class_ = globals()[self.face_class]
@@ -180,7 +180,6 @@ class Surface3D():
             method_name = '{}_to_2d'.format(primitive3d.__class__.__name__.lower())
             if hasattr(self, method_name):
                 primitives = getattr(self, method_name)(primitive3d)
-                print('p', primitives)
                 if should_study_periodicity and last_primitive:
                     delta_x = primitives[0].start.x - last_primitive.end.x
                     if not math.isclose(delta_x, 0., abs_tol=1e-9):
