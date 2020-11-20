@@ -556,7 +556,7 @@ class Mesher(DessiaObject):
         all_meshes=[]
         offset_values=[]
         good_meshes=[]
-        p=1
+        p=9
         k=3
         xmin,xmax,ymin,ymax=polygon.bounding_rectangle()
         offset_len=min(xmax-xmin, ymax-ymin)
@@ -680,7 +680,7 @@ class Mesher(DessiaObject):
                     offset_triangles+=self.mesh_in_between(polygon_offsets[-1],polygon_offsets[l-2],empty)                
                   
                 all_meshes.append(offset_triangles)                             
-         
+     
         
         
         for mesh in all_meshes:
