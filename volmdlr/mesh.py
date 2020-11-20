@@ -1,27 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Jan 28 10:05:56 2020
 
-@author: ringhausen
+@author: Gasmi
 """
 
 import matplotlib.pyplot as plt
-import volmdlr.core as vm
-import volmdlr.core_compiled as vmc
+import volmdlr
+import volmdlr.core
+from volmdlr.core_compiled import Matrix33
 from itertools import combinations
 import numpy as npy
 import volmdlr.edges as edges
 import volmdlr.wires as wires 
-from volmdlr.core_compiled import (Point2D,Matrix33,Vector2D)
+import volmdlr.faces
 import math
 from dessia_common import DessiaObject
 from typing import TypeVar, List, Tuple,Dict
 import matplotlib
-from matplotlib.patches import Polygon
-from matplotlib.collections import PatchCollection
 import random
-from scipy.spatial import Delaunay
 from itertools import product 
 from matplotlib.colors import LinearSegmentedColormap
 cdict = {'red':  [(0.0, 0.0, 0.0),
@@ -49,7 +46,7 @@ class LinearElement(edges.LineSegment2D):
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
     _generic_eq = True
-    def __init__(self, start:Point2D,end:Point2D, interior_normal:Vector2D,name=''):
+    def __init__(self, start:volmdlr.Point2D,end:volmdlr.Point2D, interior_normal:volmdlr.Vector2D,name=''):
         self.points=[start, end]
         self.interior_normal = interior_normal
         
@@ -64,33 +61,6 @@ class LinearElement(edges.LineSegment2D):
         return (self.start == other_linear_element.start and self.end == other_linear_element.end) \
             or (self.start== other_linear_element.end and self.end == other_linear_element.start)
             
-
-    
-    # def closest_middle(self,points:List[vm.Point2D]):
-        
-    #     mid=vm.Point2D([(self.point1[0]+self.point2[0])/2,(self.point1[1]+self.point2[1])/2])
-    #     d=[]
-    #     u=[]
-    #     for point in points :
-    #         if d!=0:
-    #             d.append(math.sqrt((mid[0]-point[0])**2+(mid[1]-point[1])**2))
-    #             u.append(point)
-        
-    #     index=d.index((min(d)))
-    #     return index
-    
-    
-        
-    # def common_edge(self,nodes_1:List[vm.Point2D],nodes_2:List[vm.Point2D]):
-    #     common_edge=[]
-    #     for point_1 in nodes_1:
-    #         for point_2 in nodes_2:
-    #             if point_1==point_2:
-    #                 common_edge.append(point_1)
-    #     if len(common_edge)==1:
-    #         return True
-    #     return False
-    
     
     def plot(self, ax=None, color='k', width=None, plot_points=False):
         if ax is None:
@@ -122,12 +92,12 @@ class TriangularElement(wires.Triangle2D):
         wires.Triangle2D.__init__(self,points=points, name='')
         
     def _to_linear_elements(self):
-        vec1 = vm.Vector2D(self.points[1].x - self.points[0].x,self.points[1].y - self.points[0].y)
-        vec2 = vm.Vector2D(self.points[2].x - self.points[1].x,self.points[2].y - self.points[1].y)
-        vec3 = vm.Vector2D(self.points[0].x - self.points[2].x,self.points[0].y - self.points[2].y)
-        normal1 = vm.Vector2D(-vec1.y, vec1.x)
-        normal2 = vm.Vector2D(-vec2.y, vec2.x)
-        normal3 = vm.Vector2D(-vec3.y, vec3.x)
+        vec1 = volmdlr.Vector2D(self.points[1].x - self.points[0].x,self.points[1].y - self.points[0].y)
+        vec2 = volmdlr.Vector2D(self.points[2].x - self.points[1].x,self.points[2].y - self.points[1].y)
+        vec3 = volmdlr.Vector2D(self.points[0].x - self.points[2].x,self.points[0].y - self.points[2].y)
+        normal1 = volmdlr.Vector2D(-vec1.y, vec1.x)
+        normal2 = volmdlr.Vector2D(-vec2.y, vec2.x)
+        normal3 = volmdlr.Vector2D(-vec3.y, vec3.x)
         normal1.normalize()
         normal2.normalize()
         normal3.normalize()
@@ -150,11 +120,11 @@ class TriangularElement(wires.Triangle2D):
             inv_a = a.inverse()
         except ValueError:
             self.plot()
-            print('buggy element area', self._area())
+            print('buggy element area', self.area)
             raise FlatElementError('form function bug')
-        x1 = inv_a.vector_multiplication(vm.X3D)
-        x2 = inv_a.vector_multiplication(vm.Y3D)
-        x3 = inv_a.vector_multiplication(vm.Z3D)
+        x1 = inv_a.vector_multiplication(volmdlr.X3D)
+        x2 = inv_a.vector_multiplication(volmdlr.Y3D)
+        x3 = inv_a.vector_multiplication(volmdlr.Z3D)
        
         return x1, x2, x3
     # def _quadratic_form_functions(self):
@@ -178,104 +148,11 @@ class TriangularElement(wires.Triangle2D):
     #     x4=inv_a.dot([1,0,0,0,0,0])
         
     #     return x1, x2, x3
-    def _area(self):
-        u = self.points[1] - self.points[0]
-        v = self.points[2] - self.points[0]
-        return abs(u.cross(v)) / 2
-        
-    def rotation(self, center, angle, copy=True):
-        if copy:
-            return TriangularElement([pt.rotation(center, angle, copy=True) for pt in self.points])
-        else:
-            for pt in self.points:
-                pt.Rotation(center, angle, copy=False)
-                
-    def translation(self, offset, copy=True):
-        if copy:
-            return TriangularElement([pt.Translation(offset, copy=True) for pt in self.points])
-        else:
-            for pt in self.points:
-                pt.Translation(offset, copy=False)
-                
-    def axial_symmetry(self, line, copy=True):
-        p1, p2 = line.points
-        symmetric_points = []
-        for point in self.points:
-            u = p2 - p1
-            t = (point-p1).Dot(u) / u.Norm()**2
-            projection = p1 + t * u
-            symmetric_point = Point2D((2 * projection - point).vector)
-            symmetric_points.append(symmetric_point)
-        if copy: 
-            return TriangularElement(symmetric_points)
-        else:
-            for i, point in enumerate(self.points):
-                point = symmetric_points[i]
-           
-    def line_equation(self,P0:Point2D,P1:Point2D,M:Point2D):
-    
-        return (P1.x-P0.x)*(M.y-P0.y)-(P1.x-P0.y)*(M.x-P0.x)  
-        
- 
-    def is_inside_triangle(self,M:Point2D):
-        P0=self.points[0]
-        P1=self.points[1]
-        P2=self.points[2]
-        return self.line_equation(P0,P1,M)> 0 and self.line_equation(P1,P2,M) > 0 and self.line_equation(P2,P0,M) > 0
-    
-    
+
     def triangle_to_polygon(self):
         points=self.points
-        return vm.Polygon2D(points)
-    
-    def common_edge(self,triangle:'TriangularElement'):
-        common_edge=[]
-        for point_1 in self.points:
-            for point_2 in triangle.points:
-                if point_1==point_2:
-                    common_edge.append(point_1)
-        if len(common_edge)==2:
-            return True
-        return False
-    
-    
-           
-    def common_vertice(self,triangle:'TriangularElement'):
-        linear_elements_1=self.linear_elements
-        linear_elements_2=triangle.linear_elements
-        common_vertice=[]
-        for linear_1 in linear_elements_1:
-            for linear_2 in linear_elements_2:
-                if linear_1==linear_2:
-                    common_vertice.append(linear_1)
-        if common_vertice!=[]:
-            
-            return common_vertice[0]
-        return None
-    
-    
-
-           
-    def plot(self, ax=None, color='k', width=None, plot_points=False, fill=False):
-        if ax is None:
-            fig, ax = plt.subplots()
-            ax.set_aspect('equal')
-            
-        if fill:
-            x = [p[0] for p in self.points]
-            y = [p[1] for p in self.points]
-            plt.fill(x, y, facecolor=color, edgecolor="k")
-            return ax
-        
-        for p1, p2 in zip(self.points, self.points[1:]+[self.points[0]]):
-            if width is None:
-                width=1
-            if plot_points:
-                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color, marker='o', linewidth=width)
-            else:
-                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color, linewidth=width)
-        return ax
-    
+        return wires.ClosedPolygon2D(points)
+       
     
 class ElementsGroup(DessiaObject):
     _standalone_in_db = False
@@ -390,9 +267,9 @@ class Mesh(DessiaObject):
         plot_datas = []
         for element_group in self.elements_groups:
             for element in element_group.elements:
-                c1 = vm.Contour2D([vm.LineSegment2D(element.points[0], element.points[1])])
-                c2 = vm.Contour2D([vm.LineSegment2D(element.points[1], element.points[2])])
-                c3 = vm.Contour2D([vm.LineSegment2D(element.points[2], element.points[0])])
+                c1 = wires.Contour2D([edges.LineSegment2D(element.points[0], element.points[1])])
+                c2 = wires.Contour2D([edges.LineSegment2D(element.points[1], element.points[2])])
+                c3 = wires.Contour2D([edges.LineSegment2D(element.points[2], element.points[0])])
                 plot_datas.append(c1.plot_data())
                 plot_datas.append(c2.plot_data())
                 plot_datas.append(c3.plot_data())
@@ -401,7 +278,8 @@ class Mesh(DessiaObject):
     
     
     
-    def plot_displaced_mesh(self,node_displacement:Dict[Point2D,List[float]],ax=None,amplification=0.5):
+    def plot_displaced_mesh(self,node_displacement:Dict[volmdlr.Point2D,List[float]],
+                            ax=None,amplification=0.5):
         
         deformed_mesh=self.copy()
         nodes=deformed_mesh.nodes
@@ -430,7 +308,7 @@ class Mesher(DessiaObject):
         return (i+di)%n  
    
     
-    def edge_max_distance(self,polygone:wires.ClosedPolygon2D,P0:Point2D,P1:Point2D,P2:Point2D,indexes:List[float]):
+    def edge_max_distance(self,polygone:wires.ClosedPolygon2D,P0:volmdlr.Point2D,P1:volmdlr.Point2D,P2:volmdlr.Point2D,indexes:List[float]):
         n=len(polygone.points)
         distance=0
         j=None
@@ -527,7 +405,7 @@ class Mesher(DessiaObject):
     
     
     
-    def _is_convex(self,p1:Point2D, p2:Point2D, p3:Point2D):
+    def _is_convex(self,p1:volmdlr.Point2D, p2:volmdlr.Point2D, p3:volmdlr.Point2D):
         return self._triangle_sum(p1.x, p1.y, p2.x, p2.y, p3.x,p3.y) < 0
     
     def _is_clockwise(self,polygon:wires.ClosedPolygon2D):
@@ -542,7 +420,7 @@ class Mesher(DessiaObject):
     def _triangle_sum(self,x1, y1, x2, y2, x3, y3):
         return x1 * (y3 - y2) + x2 * (y1 - y3) + x3 * (y2 - y1)
     
-    def _contains_no_points(self,p1:Point2D,p2:Point2D,p3:Point2D, polygon:wires.ClosedPolygon2D):
+    def _contains_no_points(self,p1:volmdlr.Point2D,p2:volmdlr.Point2D,p3:volmdlr.Point2D, polygon:wires.ClosedPolygon2D):
        triangle=wires.Triangle2D([p1,p2,p3])
        for pn in polygon.points:
             if pn in [p1, p2, p3]:
@@ -551,7 +429,7 @@ class Mesher(DessiaObject):
                 return False
        return True
 
-    def _is_ear(self,p1:Point2D,p2:Point2D,p3:Point2D, polygon:wires.ClosedPolygon2D):
+    def _is_ear(self,p1:volmdlr.Point2D,p2:volmdlr.Point2D,p3:volmdlr.Point2D, polygon:wires.ClosedPolygon2D):
         triangle=wires.Triangle2D([p1,p2,p3])
         ear = self._contains_no_points(p1, p2, p3, polygon) and \
             self._is_convex(p1, p2, p3) and \
@@ -595,9 +473,9 @@ class Mesher(DessiaObject):
             polygon.points.remove(ear)
             point_count -= 1
             
-            p1=vm.Point2D(prev_point[0], prev_point[1])
-            p2=vm.Point2D(ear[0], ear[1])
-            p3= vm.Point2D(next_point[0], next_point[1])
+            p1=volmdlr.Point2D(prev_point[0], prev_point[1])
+            p2=volmdlr.Point2D(ear[0], ear[1])
+            p3= volmdlr.Point2D(next_point[0], next_point[1])
             triangle=wires.Triangle2D([p1,p2,p3])  
             possible_triangles.append(triangle)
              
@@ -624,7 +502,7 @@ class Mesher(DessiaObject):
                                  
         
     def basic_triangulation(self,polygon1:wires.ClosedPolygon2D,polygon2:wires.ClosedPolygon2D,
-                           segment_to_nodes:Dict[edges.LineSegment2D,List[Point2D]]):
+                           segment_to_nodes:Dict[edges.LineSegment2D,List[volmdlr.Point2D]]):
         triangles=[]
         
         for j in range(len(polygon1.line_segments)):
@@ -678,11 +556,11 @@ class Mesher(DessiaObject):
         all_meshes=[]
         offset_values=[]
         good_meshes=[]
-        p=9
+        p=1
         k=3
-        bound=polygon.bounding_rectangle2()
-        offset_len=bound.min_length()
-        # while  k<8 :
+        xmin,xmax,ymin,ymax=polygon.bounding_rectangle()
+        offset_len=min(xmax-xmin, ymax-ymin)
+       
         
         while k<12:
             repair = False
@@ -694,74 +572,114 @@ class Mesher(DessiaObject):
                 
                 if not new_polygon.self_intersects()[0] :
                     if new_polygon.area() > polygon.area():
-                        polygon_offsets.append(polygon.offset(p*offset_len/(10*k)))
-                        offset_values.append(p*offset_len/(10*k))
+                        good_offset=polygon.offset(p*offset_len/(10*k))
+                        if not good_offset.self_intersects()[0]:
+                           polygon_offsets.append(good_offset)
+                             
+                        else :
+                            
+                        
+                            offset_values.append(p*offset_len/(10*k))
                         # polygon.Offset(9*offset_len/(10*k)).MPLPlot()
                     else :
-                         offset_values.append(-p*offset_len/(10*k))
-                         polygon_offsets.append(new_polygon)
-                         
+                          offset_values.append(-p*offset_len/(10*k))
+                          polygon_offsets.append(new_polygon)
+                        
+                    # xmin_2,xmax_2,ymin_2,ymax_2=polygon_offsets[-1].bounding_rectangle()
+                    # offset_len2=min(xmax_2-xmin_2, ymax_2-ymin_2)
+                    # offset2=polygon_offsets[-1].offset(-p*offset_len2/(10*k))
+            
+                    # if offset2.self_intersects()[0]:
+                    #     polygon_offsets.append(offset2.select_reapaired_polygon([]))
+                    # else:
+                    #     if offset2.area() > polygon_offsets[-1].area() :
+                    #         good_offset_2=polygon_offsets[-1].offset(p*offset_len2/(10*k))
+                          
+                    #         if not good_offset_2.self_intersects()[0]: 
+                    #             polygon_offsets.append(good_offset_2) 
+                    #         else :
+                    #             polygon_offsets.append(good_offset_2.select_reapaired_polygon([])) 
+                    #     else :                           
+                    #         polygon_offsets.append(offset2)    
                     repair=True
                     
                     
                 if new_polygon.self_intersects()[0] :
                     
                     # polygon_offsets.append(new_polygon.select_reapaired_polygon([]))
+                    # new_polygon.select_reapaired_polygon([]).plot()
                     # new_polygon.select_reapaired_polygon([]).MPLPlot()
+                
+                    
+                    # rec2=polygon_offsets[-1].bounding_rectangle2()
+                    # offset_len2=rec2.min_length()
+                    # offset2=polygon_offsets[-1].offset(-p*offset_len2/(10*k))
+                    
+                    # if offset2.self_intersects()[0]:
+                    #     polygon_offsets.append(offset2.select_reapaired_polygon([]))
+                       
+                    # else:
+                    #     if offset2.area> polygon_offsets[-1].area :
+                    #         polygon_offsets.append(p*offset_len2/(10*k)) 
+                    #     else :                           
+                    #         polygon_offsets.append(offset2)
+                          
                     repair=True
-                  
+             
             all_offsets.append(polygon_offsets)        
             k=k+1
                     
         for polygon_offsets in all_offsets:
-            offset_triangles=[]  
-            for polygon in polygon_offsets:
-               
-                for segment in polygon.line_segments:
-                    segment_to_nodes[segment]=segment.discretise(self.nodes_len,None)
+           if len(polygon_offsets)>1:
+                offset_triangles=[]  
+                for polygon in polygon_offsets:
+                   
+                    for segment in polygon.line_segments:
+                        segment_to_nodes[segment]=segment.discretise(self.nodes_len)
+                        
+                        
+                if len(polygon_offsets)>2:      
+                    for k in range(len(polygon_offsets)-2):
                     
-                    
-            if len(polygon_offsets)>2:      
-                for k in range(len(polygon_offsets)-2):
-                
-                    if len(polygon_offsets[k].line_segments)==len(polygon_offsets[k+1].line_segments):
-                        offset_triangles+=self.basic_triangulation(polygon_offsets[k],
-                                                            polygon_offsets[k+1],segment_to_nodes)
-                  
-                    else :
-                    
-                        offset_triangles+=self.mesh_in_between(polygon_offsets[k+1],
-                                                            polygon_offsets[k],True)
-                    
-                     
-            l=len(polygon_offsets)
-          
-            if len(polygon_offsets[-1].line_segments)==len(polygon_offsets[l-2].line_segments):
-               offset_triangles+=self.basic_triangulation(polygon_offsets[l-2],polygon_offsets[-1],segment_to_nodes)
-               if  not empty :
-                    
-                    last_points=[]
-                    for segment in polygon_offsets[-1].line_segments:
-                        for point in segment_to_nodes[segment]:
-                            if point not in last_points:
-                                last_points.append(point)
-                    last_polygon=wires.ClosedPolygon2D(last_points)
-                    ear=self.earclip(last_polygon)
-                    for triangle in ear : 
-                     
-                        if triangle.area<10e-9:
-                           ear.remove(triangle)
-                             
-                    offset_triangles+=ear
-               else :
-                    if far :
-                        offset_triangles+=self.mesh_in_between(interior_polygon,polygon_offsets[-1],True)
-                               
-     
-            else:
-                offset_triangles+=self.mesh_in_between(polygon_offsets[-1],polygon_offsets[l-2],empty)                
+                        if len(polygon_offsets[k].line_segments)==len(polygon_offsets[k+1].line_segments):
+                            offset_triangles+=self.basic_triangulation(polygon_offsets[k],
+                                                                polygon_offsets[k+1],segment_to_nodes)
+                      
+                        else :
+                        
+                            offset_triangles+=self.mesh_in_between(polygon_offsets[k+1],
+                                                                polygon_offsets[k],True)
+                        
+                         
+                l=len(polygon_offsets)
               
-            all_meshes.append(offset_triangles)                             
+                if len(polygon_offsets[-1].line_segments)==len(polygon_offsets[l-2].line_segments):
+                   offset_triangles+=self.basic_triangulation(polygon_offsets[l-2],polygon_offsets[-1],segment_to_nodes)
+                   if  not empty :
+                        
+                        last_points=[]
+                        for segment in polygon_offsets[-1].line_segments:
+                            for point in segment_to_nodes[segment]:
+                                if point not in last_points:
+                                    last_points.append(point)
+                        last_polygon=wires.ClosedPolygon2D(last_points)
+                        ear=self.earclip(last_polygon)
+                        for triangle in ear : 
+                            
+                            if triangle.area>10E-9:
+                               offset_triangles.append(triangle)
+                        #        ear.remove(triangle)
+                        # offset_triangles+=ear
+                        
+                   else :
+                        if far :
+                            offset_triangles+=self.mesh_in_between(interior_polygon,polygon_offsets[-1],True)
+                                   
+         
+                else:
+                    offset_triangles+=self.mesh_in_between(polygon_offsets[-1],polygon_offsets[l-2],empty)                
+                  
+                all_meshes.append(offset_triangles)                             
          
         
         
@@ -770,9 +688,10 @@ class Mesher(DessiaObject):
                 
                 all_aspect_ratios.append(self.triangulation_max_aspect_ratio(mesh))
                 good_meshes.append(mesh)
-       
+    
         index=all_aspect_ratios.index(min(all_aspect_ratios))
-        
+        # print(all_offsets[index])   
+        # all_offsets[index][-1].plot()
         return good_meshes[index]
 
     def mesh_in_between(self,in_polygon:wires.ClosedPolygon2D,out_polygon:wires.ClosedPolygon2D,empty:bool):
@@ -785,7 +704,7 @@ class Mesher(DessiaObject):
         out_point_image={}
 
         for segment in out_polygon.line_segments:
-            segment_to_nodes[segment]=segment.discretise(self.nodes_len,None)
+            segment_to_nodes[segment]=segment.discretise(self.nodes_len)
          
                 
         for segment in out_polygon.line_segments:
@@ -796,7 +715,7 @@ class Mesher(DessiaObject):
             
         for segment in in_polygon.line_segments:
            
-            segment_to_nodes[segment]=segment.discretise(0, None)
+            segment_to_nodes[segment]=segment.discretise(0)
        
                                 
         for out_segment in out_polygon.line_segments:
@@ -922,14 +841,11 @@ class Mesher(DessiaObject):
                     
                     new_triangle=wires.Triangle2D([projection_points[index_0][j],projection_points[index_0][j+1],
                                         segment_to_nodes[out_segment][j]])   
-                    # new_triangle=vm.Triangle2D([projection_points[index_0][j],segment_to_nodes[out_segment][j+1],
-                    #                     segment_to_nodes[out_segment][j]])   
-          
+                
                     all_triangles.append(new_triangle)
                     new_triangle_0=wires.Triangle2D([projection_points[index_0][j+1],segment_to_nodes[out_segment][j],
                                         segment_to_nodes[out_segment][j+1]])   
-                    # new_triangle_0=vm.Triangle2D([projection_points[index_0][j+1],projection_points[index_0][j],
-                    #                     segment_to_nodes[out_segment][j+1]])
+                
                     all_triangles.append(new_triangle_0)
                     
                 for j in  range(v-1,u-1):
@@ -947,9 +863,7 @@ class Mesher(DessiaObject):
                    all_triangles.append(new_triangle)
                    new_triangle_0=wires.Triangle2D([projection_points[index_0][j+1],projection_points[index_0][j],
                                        segment_to_nodes[out_segment][j+1]])   
-                   # new_triangle_0=vm.Triangle2D([projection_points[index_0][j],segment_to_nodes[out_segment][j],
-                   #                    segment_to_nodes[out_segment][j+1]]) 
-                   
+               
                    all_triangles.append(new_triangle_0)
                    
                 for j in  range(u-1,v-1):
@@ -993,13 +907,14 @@ class Mesher(DessiaObject):
     def polygon_to_triangles(self,polygons:List[wires.ClosedPolygon2D]):
         triangles=[]
         for polygon in polygons:
-            triangles.append(vm.Triangle2D(polygon.points))
+            triangles.append(wires.Triangle2D(polygon.points))
         return triangles
 
     
     def triangulation_max_aspect_ratio(self,triangles:List[wires.Triangle2D]):
         all_aspect_ratios=[]
         for triangle in triangles:
+           
             if triangle.area<10E-9:
                 return 0
             else :
@@ -1027,105 +942,44 @@ class Mesher(DessiaObject):
         if self.interior_contours :
             
             for contour in self.interior_contours:
+                   
+                interior_polygons.append(contour.polygonization(self.nodes_len))  
                 
-                polygon_points=[]
-                if contour.primitives[0].__class__.__name__ == 'Circle2D':
-                    
-                    for point in contour.primitives[0].discretise(self.nodes_len,None):
-                        if point not in polygon_points:
-                            polygon_points.append(point)
-                    polygon=wires.ClosedPolygon2D(polygon_points)  
-                    interior_polygons.append(polygon)
-                    
-                else :
-                    
-                    for primitive in contour.primitives:
-                        if isinstance(primitive,edges.LineSegment2D):
-                            
-                            if primitive.start not in polygon_points:
-                                polygon_points.append(primitive.point1)
-                            
-                            # if primitive.point2 not in polygon_points:
-                            #     polygon_points.append(primitive.point2)
-                        else :
-                              print(primitive)
-                              for point in primitive.discretise(self.nodes_len,None):
-                                  if point not in polygon_points:
-                                      polygon_points.append(point)
-                    polygon=wires.ClosedPolygon2D(polygon_points)          
-                    interior_polygons.append(polygon) 
-                     
-      
        
         for contour in self.exterior_contours:
-          polygon_points=[]
-          if contour.primitives[0].__class__.__name__ == 'Circle2D':
-              for point in contour.discretise(self.nodes_len,None):
-                  if point not in polygon_points:
-                      polygon_points.append(point)
-              polygon=wires.ClosedPolygon2D(polygon_points)          
-              exterior_polygons.append(polygon)
-          else :
-              for primitive in contour.primitives:
-                  if isinstance(primitive,edges.LineSegment2D):
-                      
-                      if primitive.start not in polygon_points:
-                          polygon_points.append(primitive.start)
-                      if primitive.end not in polygon_points:
-                          polygon_points.append(primitive.end)   
-                  else :
-                        for point in primitive.discretise(self.nodes_len,None):
-                            if point not in polygon_points:
-                                polygon_points.append(point)
-              polygon=wires.ClosedPolygon2D(polygon_points)          
-              exterior_polygons.append(polygon)   
+                 
+              exterior_polygons.append(contour.polygonization(self.nodes_len))   
               
     
          
         
         if split is True :
           
-            Surface=wires.Surface2D(self.exterior_contours[-1],self.interior_contours)
-            split_contours = Surface.split_regularly2(2)
+            Surface=volmdlr.faces.Surface2D(self.exterior_contours[-1],self.interior_contours)
+            split_contours = Surface.split_at_centers()
              
             if self.interior_contours : 
                 for contour in split_contours:
-                    polygon_points=[]
-                    if contour.primitives[0].__class__.__name__ == 'Circle2D':
-                        for point in contour.discretise(self.nodes_len,None):
-                            if point not in polygon_points:
-                                polygon_points.append(point)
-                        polygon=wires.ClosedPolygon2D(polygon_points)          
-                        split_polygons.append(polygon)
-                    else :
-                        for primitive in contour.primitives:
-                            if isinstance(primitive,edges.LineSegment2D):
-                                
-                                # if primitive.start not in polygon_points:
-                                polygon_points.append(primitive.start)
-                                primitive.start.plot(ax=ax,color='r')
-                                if primitive.end not in polygon_points:
-                                    polygon_points.append(primitive.end)
-                               
-                            else :
-                                  for point in primitive.discretise(self.nodes_len,None):
-                                      if point not in polygon_points:
-                                          polygon_points.append(point)
-                        polygon=wires.ClosedPolygon2D(polygon_points)          
-                        split_polygons.append(polygon) 
+                          
+                    split_polygons.append(contour.polygonization(self.nodes_len))
           
-            rec=split_polygons[0].bounding_rectangle2()
-            offset_len=rec.min_length()
-            # offset=split_polygons[0].offset(-offset_len/5).plot()
-            # for k in range(2,13):
-            #    print(-9*offset_len/(k*10))
-            #    offset=split_polygons[1].offset(-9*offset_len/(k*10)).plot()
+            # rec=split_polygons[0].bounding_rectangle2()
+            # offset_len=rec.min_length()
+            # offset=split_polygons[0].offset(-3*offset_len/60)
+            # offset.plot()
+            # rec2=split_polygons[0].bounding_rectangle2()
+            # offset_len2=rec2.min_length()
+            # offset2=offset.offset(-3*offset_len2/40)
+            # offset2.select_reapaired_polygon([]).plot()
+            
+            # for k in range(1,13):
+               
+            #     offset=split_polygons[0].offset(-offset_len/(k*10)).plot()
                 
             
-            for s in split_polygons :
-                  s.plot()
-                  # triangles+=self.alternative_triangulation(s,None,True,False)
-                
+            for s in split_polygons:
+                s.plot()
+                triangles+=self.alternative_triangulation(s,None,False,False)
             
         else :
                       
@@ -1187,8 +1041,6 @@ class Mesher(DessiaObject):
             else :
                 for polygon in exterior_polygons:
                       
-               
-                    
                     polygon_1=polygon.copy()
                    
                     possible_triangles=self.earclip(polygon)
@@ -1228,31 +1080,36 @@ class Mesher(DessiaObject):
         plot_aspect_ratio_triangles=[]
         all_aspect_ratios={}
         
-        for triangle in all_triangles:
-              triangle.plot(ax=ax)
-
-        # for triangle in triangles:
-            
-        #     all_segments= all_segments.union(triangle.line_segments)
-            
-        # for segment in all_segments:
-            
-        #     segment_to_nodes[segment]=segment.discretise(self.nodes_len,None)
-                
-        # for triangle in triangles :
-            
-        #     meshing=triangle.mesh_triangle(segment_to_nodes,self.nodes_len,None)
-        #     plot_aspect_ratio_triangles+=meshing[0]
-        #     all_triangles+=meshing[0]
-        #     all_aspect_ratios.update(meshing[1])
-            
         # for triangle in all_triangles:
+        # #       triangle.plot(ax=ax)
+        #       plot_aspect_ratio_triangles.append(triangle)
+        #       all_aspect_ratios.update({triangle:triangle.aspect_ratio()})
+        for triangle in triangles:
             
-        #     # triangle.MPLPlot(ax=ax)
-        #     triangular_element=TriangularElement(triangle.points)
-        #     all_triangle_elements.append(triangular_element)
+            all_segments= all_segments.union(triangle.line_segments)
             
-        # self.plot_aspect_ratio(plot_aspect_ratio_triangles,all_aspect_ratios,ax)
+        for segment in all_segments:
+            
+            segment_to_nodes[segment]=segment.discretise(self.nodes_len)
+                
+        for triangle in triangles :
+            
+            meshing=triangle.mesh_triangle(segment_to_nodes,self.nodes_len)
+            plot_aspect_ratio_triangles+=meshing[0]
+            all_triangles+=meshing[0]
+            all_aspect_ratios.update(meshing[1])
+           
+        # for triangle in all_triangles:
+        #     for point in triangle.points:
+        #         point.plot(ax=ax,color='r')
+                
+                
+        for triangle in all_triangles:
+  
+            triangular_element=TriangularElement(triangle.points)
+            all_triangle_elements.append(triangular_element)
+            
+        self.plot_aspect_ratio(plot_aspect_ratio_triangles,all_aspect_ratios,ax)
         ax.set_aspect('equal')
         return all_triangle_elements
     

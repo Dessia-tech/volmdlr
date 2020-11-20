@@ -9,7 +9,7 @@ import numpy as npy
 import scipy as scp
 # from geomdl import BSplines
 from geomdl import utilities
-
+from geomdl import BSpline
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import __version__ as _mpl_version
 import matplotlib.pyplot as plt
@@ -17,6 +17,7 @@ import matplotlib.patches
 
 import dessia_common as dc
 import volmdlr.core
+
 # import volmdlr.primitives3D
 
 
@@ -582,13 +583,11 @@ class LineSegment2D(LineSegment):
             return [point_projection1]
         else:
             return []
-    def discretise(self,n:float,ax):
-        
-        
+    def discretise(self,n:float):
+
          segment_to_nodes={}
-    
-         
          nodes=[]
+         
          if n*self.length() < 1 :
             segment_to_nodes[self]=[self.start,self.end]
          else :
@@ -607,10 +606,6 @@ class LineSegment2D(LineSegment):
                 nodes.insert(0,self.start)
                 
              segment_to_nodes[self]=nodes
-
-         if ax is not None :
-            for point in segment_to_nodes[self]:
-                point.plot(ax=ax,color='r')
 
 
          return segment_to_nodes[self]
@@ -872,7 +867,15 @@ class Arc2D(Edge):
 
     def length(self):
         return self.radius * abs(self.angle)
-
+    def abscissa(self, point2d:volmdlr.Point2D):
+        
+        theta = volmdlr.core.clockwise_angle(self.start - self.center,
+                                             point2d - self.center)
+        if self.is_trigo:
+            theta = volmdlr.TWO_PI - theta
+        
+        return self.radius*abs(theta)
+    
     def point_at_abscissa(self, curvilinear_abscissa):
         if self.is_trigo:
             return self.start.rotation(self.center,
@@ -971,25 +974,8 @@ class Arc2D(Edge):
         Ic = npy.array([[Ix, Ixy], [Ixy, Iy]])
         return volmdlr.geometry.Huygens2D(Ic, self.Area(), self.center, point)
 
-    # def Discretise(self, num=10):
-    #     list_node = []
-    #     if (self.angle1 < 0) and (self.angle2 > 0):
-    #         delta_angle = -self.angle1 + self.angle2
-    #     elif (self.angle1 > 0) and (self.angle2 < 0):
-    #         delta_angle = (2 * npy.pi + self.angle2) - self.angle1
-    #     else:
-    #         delta_angle = self.angle2 - self.angle1
-    #     for angle in npy.arange(self.angle1, self.angle1 + delta_angle,
-    #                             delta_angle / (num * 1.)):
-    #         list_node.append(volmdlr.Point2D(self.center + self.radius * volmdlr.Vector2D(
-    #             (npy.cos(angle), npy.sin(angle)))))
-    #     list_node.append(volmdlr.Point2D(self.center + self.radius * volmdlr.Vector2D((npy.cos(
-    #         self.angle1 + delta_angle), npy.sin(self.angle1 + delta_angle)))))
-    #     if list_node[0] == self.start:
-    #         return list_node
-    #     else:
-    #         return list_node[::-1]
-    def discretise(self,n:float,ax):
+ 
+    def discretise(self,n:float):
         
         arc_to_nodes={}
         nodes=[]
@@ -999,26 +985,20 @@ class Arc2D(Edge):
              n0= int(math.ceil(n*self.length()))
              l0=self.length()/n0
                     
-   
              for k in range(n0):
-                      
-                             
+                                 
                  node=self.point_at_abscissa(k*l0)
                 
-                 
-                 # node=Point2D([(1-k/l0)*self.point1[0]+self.point2[0]*k/l0,(1-k/l0)*self.point1[1]+self.point2[1]*k/l0])
-                       
                  nodes.append(node)
-             nodes.insert(len(nodes),self.end)
+             if self.end not in nodes :
+                 nodes.insert(len(nodes),self.end)
                    
-             arc_to_nodes[self]=nodes
-             
-        if ax is not None:
-           for point in arc_to_nodes[self]:
-               point.MPLPlot(ax=ax,color='r')
-               
+             arc_to_nodes[self]=nodes      
             
         return arc_to_nodes[self] 
+    
+    
+    
     def plot_data(self, marker=None, color='black', stroke_width=1, dash=False,
                   opacity=1):
         list_node = self.Discretise()
@@ -1043,12 +1023,24 @@ class Arc2D(Edge):
                      self.interior.copy(),
                      self.end.copy())
 
-    def split(self, split_point):
-        interior_1=self.point_at_abscissa(self.length()/4)
-        interior_2=self.point_at_abscissa(2*self.length()/3)
-        return [Arc2D(split_point,interior_1,self.start),
-                Arc2D(self.end,interior_2,split_point)]
+    # def split(self, split_point):
+    #     interior_1=self.point_at_abscissa(self.length()/4)
+    #     interior_2=self.point_at_abscissa(2*self.length()/3)
+    #     return [Arc2D(split_point,interior_1,self.start),
+    #             Arc2D(self.end,interior_2,split_point)]
+    
+    def split(self, split_point: volmdlr.Point2D):
+        abscissa = self.abscissa(split_point)
 
+        return [Arc2D(split_point,
+                      self.point_at_abscissa(0.5*abscissa),
+                      self.start),
+                Arc2D(self.end,
+                      self.point_at_abscissa(1.5 * abscissa),
+                      split_point)]
+    
+    
+    
     def polygon_points(self, points_per_radian=10, min_x_density=None,
                        min_y_density=None):
 
@@ -1951,7 +1943,7 @@ class BSplineCurve3D(Edge):
         self.periodic = periodic
         self.name = name
 
-        curve = wires.BSpline.Curve()
+        curve = BSpline.Curve()
         curve.degree = degree
         if weights is None:
             P = [(control_points[i][0], control_points[i][1],

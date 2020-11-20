@@ -542,16 +542,7 @@ class Point2D(Vector2D):
 
     @classmethod
 
-    def line_intersection(cls,line1, line2, curvilinear_abscissa=False):
-        x1 = line1.points[0].x
-        y1 = line1.points[0].y
-        x2 = line1.points[1].x
-        y2 = line1.points[1].y
-        x3 = line2.points[0].x
-        y3 = line2.points[0].y
-        x4 = line2.points[1].x
-        y4 = line2.points[1].y
-
+   
     def line_intersection(cls, line1, line2, curvilinear_abscissa=False):
         x1 = line1.points[0].x
         y1 = line1.points[0].y
