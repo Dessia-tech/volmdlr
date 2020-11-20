@@ -388,13 +388,13 @@ class Contour2D(Contour, Wire2D):
 
         return A
 
-    # def plot_data(self, plot_data_states: List[plot_data.PlotDataState] = None):
-    #     if plot_data_states is None:
-    #         plot_data_states = [plot_data.PlotDataState()]
-    #     plot_data_primitives = [item.plot_data(plot_data_states=plot_data_states) for item in self.primitives]
-    #     return plot_data.PlotDataContour2D(plot_data_primitives=plot_data_primitives,
-    #                                        plot_data_states=plot_data_states,
-    #                                        name=self.name)
+    def plot_data(self, plot_data_states: List[plot_data.PlotDataState] = None):
+        if plot_data_states is None:
+            plot_data_states = [plot_data.PlotDataState()]
+        plot_data_primitives = [item.plot_data(plot_data_states=plot_data_states) for item in self.primitives]
+        return plot_data.PlotDataContour2D(plot_data_primitives=plot_data_primitives,
+                                           plot_data_states=plot_data_states,
+                                           name=self.name)
 
     def copy(self):
         primitives_copy = []
