@@ -21,7 +21,7 @@ c1.MPLPlot()
 print(triangle.area())
 
 p0=vm.Point2D(-1,0)
-p1=vm.Point2D(-npy.cos(npy.pi/4),npy.sin(npy.pi/4)))
+p1=vm.Point2D(-npy.cos(npy.pi/4),npy.sin(npy.pi/4))
 p2=vm.Point2D(0,1)
 
 a = vm.Arc2D(p2,p1,p0)
