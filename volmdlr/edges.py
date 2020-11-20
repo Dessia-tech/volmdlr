@@ -163,6 +163,7 @@ class Line(dc.DessiaObject):
     def __init__(self, point1, point2, name=''):
         self.point1 = point1
         self.point2 = point2
+        dc.DessiaObject.__init__(self, name=name)
 
     def __getitem__(self, key):
         if key == 0:
@@ -681,10 +682,10 @@ class LineSegment2D(LineSegment):
             else:
                 self.points = [frame.NewCoordinates(p) for p in self.points]
 
-    # def plot_data(self, plot_data_states: List[plot_data.PlotDataState] = None):
-    #     return plot_data.PlotDataLine2D(data=[self.start.x, self.start.y,
-    #                                           self.end.x, self.end.y],
-    #                                     plot_data_states=plot_data_states)
+    def plot_data(self, plot_data_states: List[plot_data.PlotDataState] = None):
+        return plot_data.PlotDataLine2D(data=[self.start.x, self.start.y,
+                                              self.end.x, self.end.y],
+                                        plot_data_states=plot_data_states)
 
     def CreateTangentCircle(self, point, other_line):
         circle1, circle2 = Line2D.CreateTangentCircle(other_line, point, self)
