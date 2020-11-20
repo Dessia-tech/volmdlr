@@ -342,6 +342,9 @@ class Vector2D(Vector):
                               round(self.y, ndigits))
 
     def __hash__(self):
+        return 0
+        raise NotImplementedError('Vectors and points are unhashable')
+
         return int(round(1e6*(self.x+self.y)))
 
     def __eq__(self, other_vector):
@@ -694,6 +697,10 @@ class Vector3D(Vector):
                               round(self.z, ndigits))
 
     def __hash__(self):
+        return 0
+        raise NotImplementedError('Vectors and points are unhashable')
+
+
         return int(round(1e6*(self.x+self.y+self.z)))
 
     def __eq__(self, other_vector:'Vector3D'):

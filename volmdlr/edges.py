@@ -8,7 +8,9 @@ import math
 import numpy as npy
 import scipy as scp
 from geomdl import BSpline
-from geomdl import utilities
+
+from geomdl.operations import length_curve
+# from geomdl import utilities
 
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import __version__ as _mpl_version
@@ -481,10 +483,13 @@ class BSplineCurve2D(Edge):
 
     def length(self):
         # Approximately
-        length = 0
-        for k in range(0, len(self.points) - 1):
-            length += (self.points[k] - self.points[k + 1]).norm()
-        return length
+        # length = 0
+        # for k in range(0, len(self.points) - 1):
+        #     length += (self.points[k] - self.points[k + 1]).norm()
+        # return length
+        return length_curve(self.curve)
+
+
 
     def point_at_abscissa(self, curvilinear_abscissa):
         # copy paste from wire3D
@@ -1034,7 +1039,8 @@ class FullArc2D(Edge):
         Edge.__init__(self, start_end, start_end, name=name)  # !!! this is dangerous
 
     def __hash__(self):
-        return hash(self.center) + 5*hash(self.start)
+        return hash(self.radius)
+        # return hash(self.center) + 5*hash(self.start)
 
 
     def __eq__(self, other_arc):
@@ -1929,28 +1935,40 @@ class BSplineCurve3D(Edge):
         self.points = [volmdlr.Point3D(p[0], p[1], p[2]) for p in curve_points]
         Edge.__init__(self, start=self.points[0], end=self.points[-1])
 
+    def reverse(self):
+        return self.__class__(degree=self.degree,
+                              control_points=self.control_points[::-1],
+                              knot_multiplicities=self.knot_multiplicities[::-1],
+                              knots=self.knots[::-1],
+                              weights=self.weights,
+                              periodic=self.periodic)
+
     def length(self):
-        # Approximately
-        length = 0
-        for k in range(0, len(self.points) - 1):
-            length += (self.points[k] - self.points[k + 1]).norm()
-        return length
+        """
+
+        """
+        # length = 0
+        # for k in range(0, len(self.points) - 1):
+        #     length += (self.points[k] - self.points[k + 1]).norm()
+        # return length
+        return length_curve(self.curve)
 
     def point_at_abscissa(self, curvilinear_abscissa):
-        # copy paste from wire3D
-        length = 0.
-        primitives = []
-        for k in range(0, len(self.points) - 1):
-            primitives.append(
-                LineSegment3D(self.points[k], self.points[k + 1]))
-        for primitive in primitives:
-            primitive_length = primitive.length()
-            if length + primitive_length >= curvilinear_abscissa:
-                return primitive.point_at_abscissa(
-                    curvilinear_abscissa - length)
-            length += primitive_length
-        # Outside of length
-        raise ValueError
+        self.evaluate_single(curvilinear_abscissa)
+        # # copy paste from wire3D
+        # length = 0.
+        # primitives = []
+        # for k in range(0, len(self.points) - 1):
+        #     primitives.append(
+        #         LineSegment3D(self.points[k], self.points[k + 1]))
+        # for primitive in primitives:
+        #     primitive_length = primitive.length()
+        #     if length + primitive_length >= curvilinear_abscissa:
+        #         return primitive.point_at_abscissa(
+        #             curvilinear_abscissa - length)
+        #     length += primitive_length
+        # # Outside of length
+        # raise ValueError
 
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive{}'.format(ip)

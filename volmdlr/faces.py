@@ -536,7 +536,7 @@ class CylindricalSurface3D(Surface3D):
         self.radius = radius
         self.name = name
 
-    def point2d_to_3d(self, point2d):
+    def point2d_to_3d(self, point2d:volmdlr.Point2D):
         p = volmdlr.Point3D(self.radius * math.cos(point2d.x),
                             self.radius * math.sin(point2d.x),
                             point2d.y)
@@ -683,7 +683,7 @@ class ToroidalSurface3D(Surface3D):
 
         return volmdlr.core.BoundingBox.from_points([p1, p2, p3, p4, p5, p6, p7, p8])
 
-    def point2d_to_3d(self, point2d):
+    def point2d_to_3d(self, point2d:volmdlr.Point2D):
         theta, phi = point2d
         x = (self.R + self.r * math.cos(phi)) * math.cos(theta)
         y = (self.R + self.r * math.cos(phi)) * math.sin(theta)
@@ -924,8 +924,8 @@ class ConicalSurface3D(Surface3D):
             else:
                 self.frame = new_frame
 
-    def point2d_to_3d(self, point):
-        theta, z = point
+    def point2d_to_3d(self, point2d:volmdlr.Point2D):
+        theta, z = point2d
         r = math.tan(self.semi_angle) * z
         new_point = volmdlr.Point3D(r * math.cos(theta),
                                     r * math.sin(theta),
@@ -1068,7 +1068,7 @@ class RuledSurface3D(Surface3D):
         self.length2 = wire2.length()
         self.name = name
 
-    def point2d_to_3d(self, point2d):
+    def point2d_to_3d(self, point2d:volmdlr.Point2D):
         x, y = point2d
         point1 = self.wire1.point_at_abscissa(x*self.length1)
         point2 = self.wire2.point_at_abscissa(x*self.length2)
@@ -1094,14 +1094,13 @@ class BSplineSurface3D(Surface3D):
     def __init__(self, degree_u, degree_v, control_points, nb_u, nb_v,
                  u_multiplicities, v_multiplicities, u_knots, v_knots,
                  weights=None, name=''):
-        volmdlr.Primitive3D.__init__(self, basis_primitives=control_points, name=name)
         self.control_points = control_points
         self.degree_u = degree_u
         self.degree_v = degree_v
         self.nb_u = nb_u
         self.nb_v = nb_v
-        u_knots = standardize_knot_vector(u_knots)
-        v_knots = standardize_knot_vector(v_knots)
+        u_knots = volmdlr.edges.standardize_knot_vector(u_knots)
+        v_knots = volmdlr.edges.standardize_knot_vector(v_knots)
         self.u_knots = u_knots
         self.v_knots = v_knots
         self.u_multiplicities = u_multiplicities
@@ -1144,7 +1143,12 @@ class BSplineSurface3D(Surface3D):
         surface_points = surface.evalpts
 
         self.surface = surface
-        self.points = [volmdlr.Point3D((p[0], p[1], p[2])) for p in surface_points]
+        self.points = [volmdlr.Point3D(*p) for p in surface_points]
+        volmdlr.core.Primitive3D.__init__(self, name=name)
+
+    def point2d_to_3d(self, point2d:volmdlr.Point2D):
+        x, y = point2d
+        return volmdlr.Point3D(*self.evaluate_single(x, y))
 
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive{}'.format(ip)

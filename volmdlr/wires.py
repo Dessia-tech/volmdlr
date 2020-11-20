@@ -1245,7 +1245,7 @@ class Contour3D(Contour, Wire3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
-        edges = []
+        name = arguments[0][1:-1]
         raw_edges = []
         edge_ends = {}
         for ie, edge_id in enumerate(arguments[1]):
@@ -1253,44 +1253,80 @@ class Contour3D(Contour, Wire3D):
             edge = object_dict[int(edge_id[1:])]
             raw_edges.append(edge)
 
-            if edge.start in edge_ends:
-                edge_ends[edge.start].append((ie, 0))
-            else:
-                edge_ends[edge.start] = [(ie, 0)]
-
-            if edge.end in edge_ends:
-                edge_ends[edge.end].append((ie, 1))
-            else:
-                edge_ends[edge.end] = [(ie, 1)]
-
-
-        if (len(raw_edges)) == 1 and isinstance(raw_edges[0], cls):
+        if (len(raw_edges)) == 1:  #
+            if isinstance(raw_edges[0], cls):
             # Case of a circle, ellipse...
-            return raw_edges[0]
+                return raw_edges[0]
+            else:
+                return cls(raw_edges, name=name)
 
-        edges = [raw_edges[0]]
-        last_edge = raw_edges[0]
-        last_edge_index = 0
-        last_edge_direction = 1
-        remaining_edges_indices = [i+1 for i in range(len(raw_edges)-1)]
-        while remaining_edges_indices:
-            connected_points = edge_ends[last_edge.end]
-            if len(connected_points) > 2:
-                raise NotImplementedError('3 or more edges have a point in common')
-            connected_points.remove((last_edge_index, last_edge_direction))
-            new_edge_index, new_edge_direction = connected_points[0]
-            edge = raw_edges[new_edge_index]
-            if new_edge_direction:
-                edge = edge.reverse()
-            edges.append(edge)
-
-            last_edge_index = new_edge_index
-            last_edge_direction = not new_edge_direction
-            remaining_edges_indices.remove(new_edge_index)
-            last_edge = edge
+        # Making things right for first 2 primitives
+        print(len(raw_edges))
+        if raw_edges[0].end == raw_edges[1].start:
+            edges = [raw_edges[0], raw_edges[1]]
+        elif raw_edges[0].start == raw_edges[1].start:
+            edges = [raw_edges[0].reverse(), raw_edges[1]]
+        elif raw_edges[0].end == raw_edges[1].end:
+            edges = [raw_edges[0], raw_edges[1].reverse()]
+        elif raw_edges[0].start == raw_edges[1].end:
+            edges = [raw_edges[0].reverse(), raw_edges[1].reverse()]
+        else:
+            raise NotImplementedError('First 2 edges of contour not follwing each other')
 
 
-        return cls(edges, name=arguments[0][1:-1])
+        last_edge = edges[-1]
+        for raw_edge in raw_edges[2:]:
+            if raw_edge.start == last_edge.end:
+                last_edge = raw_edge
+            elif raw_edge.end == last_edge.end:
+                last_edge = raw_edge.reverse()
+            else:
+                raise NotImplementedError(
+                    'First 2 edges of contour not follwing each other')
+
+            edges.append(last_edge)
+
+        #     if edge.start in edge_ends:
+        #         edge_ends[edge.start].append((ie, 0))
+        #     else:
+        #         edge_ends[edge.start] = [(ie, 0)]
+        #
+        #     if edge.end in edge_ends:
+        #         edge_ends[edge.end].append((ie, 1))
+        #     else:
+        #         edge_ends[edge.end] = [(ie, 1)]
+        #
+        # print(edge_ends)
+        # if (len(raw_edges)) == 1:#
+        #     if not isinstance(raw_edges[0], cls):
+        #         raise NotImplementedError(
+        #             'A single primitive in a contour must inherit from contour: {}'.format(raw_edges[0]))
+        #     # Case of a circle, ellipse...
+        #     return raw_edges[0]
+        #
+        # edges = [raw_edges[0]]
+        # last_edge = raw_edges[0]
+        # last_edge_index = 0
+        # last_edge_direction = 1
+        # remaining_edges_indices = [i+1 for i in range(len(raw_edges)-1)]
+        # while remaining_edges_indices:
+        #     connected_points = edge_ends[last_edge.end]
+        #     if len(connected_points) > 2:
+        #         raise NotImplementedError('3 or more edges have a point in common')
+        #     connected_points.remove((last_edge_index, last_edge_direction))
+        #     new_edge_index, new_edge_direction = connected_points[0]
+        #     edge = raw_edges[new_edge_index]
+        #     if new_edge_direction:
+        #         edge = edge.reverse()
+        #     edges.append(edge)
+        #
+        #     last_edge_index = new_edge_index
+        #     last_edge_direction = not new_edge_direction
+        #     remaining_edges_indices.remove(new_edge_index)
+        #     last_edge = edge
+
+
+        return cls(edges, name=name)
 
     def clean_points(self):
         """
