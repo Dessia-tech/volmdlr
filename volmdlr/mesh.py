@@ -1042,7 +1042,7 @@ class Mesher(DessiaObject):
                 polygon_points=[]
                 if contour.primitives[0].__class__.__name__ == 'Circle2D':
                     
-                    for point in contour.primitives[0].discretise(self.nodes_len,None):
+                    for point in contour.primitives[0].discretise(self.nodes_len):
                         if point not in polygon_points:
                             polygon_points.append(point)
                     polygon=wires.ClosedPolygon2D(polygon_points)  
