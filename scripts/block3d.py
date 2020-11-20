@@ -8,6 +8,7 @@ Created on Wed Sep 11 23:39:42 2020
 import math
 import volmdlr as vm
 import volmdlr.primitives3d as primitives3d
+resolution = 0.010
 
 bx0 = primitives3d.Block(
     vm.Frame3D(vm.Point3D(0, 0, 0), vm.Vector3D(0.3, 0, 0), vm.Vector3D(0, 0.3, 0), vm.Vector3D(0, 0, 0.3)),
@@ -24,12 +25,14 @@ vol3 = vol.frame_mapping(vm.Frame3D(vm.Point3D(0, 0.7, 0), vm.Vector3D(1, 0, 0),
 
 vol1.primitives.extend(vol.primitives)
 vol1.primitives.extend(vol2.primitives)
-vol1.babylonjs()
+
 
 print(vol.primitives[0].faces[0]==vol.primitives[0].faces[0])
-print(vol.primitives[0].is_inside_shell(vol1.primitives[0]))
+print(vol.primitives[0].is_inside_shell(vol1.primitives[0], resolution))
 
-print(vol.primitives[0].distance_to_shell(vol1.primitives[0]))
-print(vol2.primitives[0].shell_intersection(vol3.primitives[0]))
-print(vol2.primitives[0].intersection_internal_aabb_volume(vol3.primitives[0]))
-print(vol2.primitives[0].intersection_external_aabb_volume(vol3.primitives[0]))
+print(vol.primitives[0].distance_to_shell(vol1.primitives[0], resolution))
+print(vol2.primitives[0].shell_intersection(vol3.primitives[0], resolution))
+print(vol2.primitives[0].intersection_internal_aabb_volume(vol3.primitives[0], resolution))
+print(vol2.primitives[0].intersection_external_aabb_volume(vol3.primitives[0], resolution))
+
+vol1.babylonjs()

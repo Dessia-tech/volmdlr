@@ -141,7 +141,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                                                             0, epsilon,
                                                             0, epsilon)))
 
-        rays = sorted(rays, key=lambda ray: ray.Length())
+        rays = sorted(rays, key=lambda ray: ray.length())
 
         rays_intersections = []
         tests = []
@@ -167,10 +167,11 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         return tests[0]
 
-    def is_inside_shell(self, shell2):
+    def is_inside_shell(self, shell2, resolution:float):
         """
         Returns True if all the points of self are inside shell2 and no face \
         are intersecting
+        This method is not exact
         """
         bbox1 = self.bounding_box
         bbox2 = shell2.bounding_box
@@ -179,7 +180,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         points = []
         for face in self.faces:
-            points.extend(face.contours3d[0].tessel_points)
+            points.extend(face.outer_contour3d.tesselation_points(resolution))
 
         for point in points:
             if not shell2.point_belongs(point):
@@ -195,7 +196,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         return True
 
-    def shell_intersection(self, shell2):
+    def shell_intersection(self, shell2:'Shell3D', resolution:float):
         """
         Return None if disjointed
         Return (1, 0) or (0, 1) if one is inside the other
@@ -217,10 +218,10 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         # Check if any point of the first shell is in the second shell
         points1 = []
         for face in self.faces:
-            points1.extend(face.outer_contour3d.polygon.points)
+            points1.extend(face.outer_contour3d.tesselation_points(resolution))
         points2 = []
         for face in shell2.faces:
-            points2.extend(face.outer_contour3d.polygon.points)
+            points2.extend(face.outer_contour3d.tesselation_points(resolution))
 
         nb_pts1 = len(points1)
         nb_pts2 = len(points2)
@@ -251,13 +252,12 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
             return None
         return 1
 
-    def minimum_distance_points(self, shell2, add_to_volumemodel=None):
+    def minimum_distance_points(self, shell2, resolution):
         """
         Returns a Mesure object if the distance is not zero, otherwise returns None
         """
-
-        if self.shell_intersection(
-                shell2) is not None and self.shell_intersection(shell2) != 1:
+        shell2_inter = self.shell_intersection(shell2, resolution)
+        if shell2_inter is not None and shell2_inter != 1:
             return None
 
         # distance_min, point1_min, point2_min = self.faces[0].distance_to_face(shell2.faces[0], return_points=True)
@@ -279,8 +279,8 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         return point1_min, point2_min
 
-    def distance_to_shell(self, other_shell):
-        p1, p2 = self.minimum_distance_points(other_shell)
+    def distance_to_shell(self, other_shell:'Shell3D', resolution:float):
+        p1, p2 = self.minimum_distance_points(other_shell, resolution)
         return p1.point_distance(p2)
 
         # mesure = volmdlr.measures.Measure3D(point1_min, point2_min)
@@ -311,7 +311,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         return mesure
 
-    def intersection_internal_aabb_volume(self, shell2):
+    def intersection_internal_aabb_volume(self, shell2, resolution):
         """
         aabb made of the intersection points and the points of self internal to shell2
         """
@@ -324,7 +324,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         shell1_points_inside_shell2 = []
         for face in self.faces:
-            for point in face.contours3d[0].tessel_points:
+            for point in face.outer_contour3d.tesselation_points(resolution):
                 if shell2.point_belongs(point):
                     shell1_points_inside_shell2.append(point)
 
@@ -334,7 +334,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
             intersections_points + shell1_points_inside_shell2)
         return bbox.volume()
 
-    def intersection_external_aabb_volume(self, shell2):
+    def intersection_external_aabb_volume(self, shell2, resolution):
         """
         aabb made of the intersection points and the points of self external to shell2
         """
@@ -347,13 +347,13 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         shell1_points_outside_shell2 = []
         for face in self.faces:
-            for point in face.contours3d[0].tessel_points:
+            for point in face.outer_contour3d.tesselation_points(resolution):
                 if not shell2.point_belongs(point):
                     shell1_points_outside_shell2.append(point)
 
         if len(intersections_points + shell1_points_outside_shell2) == 0:
             return 0
-        bbox = volmdlr.BoundingBox.from_points(
+        bbox = volmdlr.core.BoundingBox.from_points(
             intersections_points + shell1_points_outside_shell2)
         return bbox.volume()
 
