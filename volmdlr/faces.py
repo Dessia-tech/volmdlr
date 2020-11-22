@@ -156,8 +156,8 @@ class Surface3D():
         inner_contours2d.remove(outer_contour2d)
 
         # if self.__class__.__name__ != 'Plane3D':
-        ax = outer_contour2d.plot(equal_aspect=False, plot_points=True)
-        ax.set_title(self.__class__.__name__)
+        # ax = outer_contour2d.plot(equal_aspect=False, plot_points=True)
+        # ax.set_title(self.__class__.__name__)
 
         if isinstance(self.face_class , str):
             class_ = globals()[self.face_class]
