@@ -20,7 +20,7 @@ from typing import List
 
 import dessia_common as dc
 import volmdlr.core
-import plot_data
+import plot_data.core as plot_data
 
 
 # import volmdlr.primitives3D
@@ -659,7 +659,7 @@ class LineSegment2D(LineSegment):
         return LineSegment2D(self.end.copy(), self.start.copy())
 
     def to_line(self):
-        return Line2D(*self.points)
+        return Line2D(self.start, self.end)
 
     def rotation(self, center, angle, copy=True):
         if copy:
@@ -694,8 +694,8 @@ class LineSegment2D(LineSegment):
             else:
                 self.points = [frame.NewCoordinates(p) for p in self.points]
 
-    def plot_data(self, plot_data_states: List[plot_data.PlotDataState] = None):
-        return plot_data.PlotDataLine2D(data=[self.start.x, self.start.y,
+    def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
+        return plot_data.Line2D(data=[self.start.x, self.start.y,
                                               self.end.x, self.end.y],
                                         plot_data_states=plot_data_states)
 
@@ -987,12 +987,12 @@ class Arc2D(Edge):
     #     else:
     #         return list_node[::-1]
 
-    def plot_data(self, plot_data_states: List[plot_data.PlotDataState] = None):
+    def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
         list_node = self.Discretise()
         data = []
         for nd in list_node:
             data.append({'x': nd.x, 'y': nd.y})
-        return plot_data.PlotDataArc2D(cx=self.center.x,
+        return plot_data.Arc2D(cx=self.center.x,
                                        cy=self.center.y,
                                        data=data,
                                        r=self.radius,

@@ -361,6 +361,7 @@ class Step:
         for edge_nb, edge in enumerate(edges):
             instanciate_id = edge[1]
             volmdlr_object = self.instanciate(instanciate_id, object_dict)
+
             object_dict[instanciate_id] = volmdlr_object
 
         shells = []
