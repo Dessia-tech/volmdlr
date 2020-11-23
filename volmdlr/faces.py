@@ -143,7 +143,6 @@ class Surface3D():
             #     ax = contour3d.plot()
             #     ax.set_title(self.__class__.__name__)
             #     if hasattr(self, 'frame'):
-            #         # print('ff', self.frame.origin)
             #         self.frame.origin.plot(ax=ax, color='r')
 
             contour2d = self.contour3d_to_2d(contour3d)
@@ -156,8 +155,8 @@ class Surface3D():
         inner_contours2d.remove(outer_contour2d)
 
         # if self.__class__.__name__ != 'Plane3D':
-        ax = outer_contour2d.plot(equal_aspect=False, plot_points=True)
-        ax.set_title(self.__class__.__name__)
+        # ax = outer_contour2d.plot(equal_aspect=False, plot_points=True)
+        # ax.set_title(self.__class__.__name__)
 
         if isinstance(self.face_class , str):
             class_ = globals()[self.face_class]
@@ -183,7 +182,7 @@ class Surface3D():
                 if should_study_periodicity and last_primitive:
                     delta_x = primitives[0].start.x - last_primitive.end.x
                     if not math.isclose(delta_x, 0., abs_tol=1e-9):
-                        if abs(delta_x) == self.x_periodicity:
+                        if math.isclose(abs(delta_x), self.x_periodicity, abs_tol=1e-9):
                             # primitives = [p.translation(-delta_x*volmdlr.X2D)\
                             #               for p in primitives[:]]
                             primitives[0].start.translation(

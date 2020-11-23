@@ -26,7 +26,7 @@ class Wire:
             length += primitive.length()
         return length
 
-    def tesselation_points(self, resolution:float):
+    def discretization_points(self, resolution:float):
         length = self.length()
         n = int(length/resolution)
         return [self.point_at_abscissa(i/n*length) for i in range(n+1)]
@@ -98,11 +98,11 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                 intersection_points.append((p, primitive))
         return intersection_points
 
-    def tesselation_points(self):
-        points = []
-        for p in self.primitives:
-            points.extend(p.tessellation_points())
-        return points
+    # def discretization_points(self):
+    #     points = []
+    #     for p in self.primitives:
+    #         points.extend(p.tessellation_points())
+    #     return points
 
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
@@ -460,7 +460,7 @@ class Contour2D(Contour, Wire2D):
 
     def bounding_rectangle(self):
         # bounding rectangle
-        tp = self.tesselation_points()
+        tp = self.polygonization().points
         xmin = tp[0][0]
         xmax = tp[0][0]
         ymin = tp[0][1]
@@ -1062,7 +1062,7 @@ class Circle2D(Contour2D):
 
     def polygonization(self):
 
-        return ClosedPolygon2D(self.tesselation_points())
+        return ClosedPolygon2D(self.discretization_points())
 
     def tessellation_points(self, resolution=40):
         return [(self.center

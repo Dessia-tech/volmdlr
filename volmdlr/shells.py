@@ -180,10 +180,12 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         points = []
         for face in self.faces:
-            points.extend(face.outer_contour3d.tesselation_points(resolution))
+            points.extend(face.outer_contour3d.discretization_points(resolution))
 
         for point in points:
+            print(point)
             if not shell2.point_belongs(point):
+                print('False')
                 return False
 
         # Check if any faces are intersecting
@@ -218,10 +220,10 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         # Check if any point of the first shell is in the second shell
         points1 = []
         for face in self.faces:
-            points1.extend(face.outer_contour3d.tesselation_points(resolution))
+            points1.extend(face.outer_contour3d.discretization_points(resolution))
         points2 = []
         for face in shell2.faces:
-            points2.extend(face.outer_contour3d.tesselation_points(resolution))
+            points2.extend(face.outer_contour3d.discretization_points(resolution))
 
         nb_pts1 = len(points1)
         nb_pts2 = len(points2)
@@ -324,7 +326,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         shell1_points_inside_shell2 = []
         for face in self.faces:
-            for point in face.outer_contour3d.tesselation_points(resolution):
+            for point in face.outer_contour3d.discretization_points(resolution):
                 if shell2.point_belongs(point):
                     shell1_points_inside_shell2.append(point)
 
@@ -347,7 +349,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         shell1_points_outside_shell2 = []
         for face in self.faces:
-            for point in face.outer_contour3d.tesselation_points(resolution):
+            for point in face.outer_contour3d.discretization_points(resolution):
                 if not shell2.point_belongs(point):
                     shell1_points_outside_shell2.append(point)
 

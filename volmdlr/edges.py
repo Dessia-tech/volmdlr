@@ -508,13 +508,20 @@ class BSplineCurve2D(Edge):
         # Outside of length
         raise ValueError
 
-    def plot(self, ax=None, color='k', plot_points=False):
+
+    def plot(self, ax=None, color='k', alpha=1, plot_points=False):
         if ax is None:
             _, ax = plt.subplots()
 
-        x = [p.x for p in self.points]
-        y = [p.y for p in self.points]
-        ax.plot(x, y, color=color)
+        xp = [p.x for p in self.points]
+        yp = [p.y for p in self.points]
+        ax.plot(xp, yp, color='r', marker='x', alpha=alpha)
+
+        poly_points = self.polygon_points()
+        x = [p.x for p in poly_points]
+        y = [p.y for p in poly_points]
+
+        ax.plot(x, y, color=color, alpha=alpha)
 
         return ax
 
@@ -806,6 +813,7 @@ class Arc2D(Edge):
             i / (number_points_tesselation - 1) * l) for i in
             range(number_points_tesselation)]
 
+
     def point_belongs(self, point):
         """
         Computes if the point belongs to the pizza slice drawn by the arc and its center
@@ -867,11 +875,10 @@ class Arc2D(Edge):
     def abscissa(self, point2d:volmdlr.Point2D):
         theta = volmdlr.core.clockwise_angle(self.start - self.center,
                                              point2d - self.center)
-        print(theta)
-        print(self.is_trigo)
+        # print(theta)
+        # print(self.is_trigo)
         if self.is_trigo:
             theta = volmdlr.TWO_PI - theta
-        print('theta2', theta)
         return self.radius*abs(theta)
 
     def middle_point(self):
@@ -962,23 +969,23 @@ class Arc2D(Edge):
         Ic = npy.array([[Ix, Ixy], [Ixy, Iy]])
         return volmdlr.geometry.Huygens2D(Ic, self.Area(), self.center, point)
 
-    def Discretise(self, num=10):
-        list_node = []
-        if (self.angle1 < 0) and (self.angle2 > 0):
-            delta_angle = -self.angle1 + self.angle2
-        elif (self.angle1 > 0) and (self.angle2 < 0):
-            delta_angle = (2 * npy.pi + self.angle2) - self.angle1
-        else:
-            delta_angle = self.angle2 - self.angle1
-        for angle in npy.arange(self.angle1, self.angle1 + delta_angle,
-                                delta_angle / (num * 1.)):
-            list_node.append(self.center + self.radius * volmdlr.Vector2D(npy.cos(angle), npy.sin(angle)))
-        list_node.append(self.center + self.radius * volmdlr.Vector2D(npy.cos(
-            self.angle1 + delta_angle), npy.sin(self.angle1 + delta_angle)))
-        if list_node[0] == self.start:
-            return list_node
-        else:
-            return list_node[::-1]
+    # def Discretise(self, num=10):
+    #     list_node = []
+    #     if (self.angle1 < 0) and (self.angle2 > 0):
+    #         delta_angle = -self.angle1 + self.angle2
+    #     elif (self.angle1 > 0) and (self.angle2 < 0):
+    #         delta_angle = (2 * npy.pi + self.angle2) - self.angle1
+    #     else:
+    #         delta_angle = self.angle2 - self.angle1
+    #     for angle in npy.arange(self.angle1, self.angle1 + delta_angle,
+    #                             delta_angle / (num * 1.)):
+    #         list_node.append(self.center + self.radius * volmdlr.Vector2D(npy.cos(angle), npy.sin(angle)))
+    #     list_node.append(self.center + self.radius * volmdlr.Vector2D(npy.cos(
+    #         self.angle1 + delta_angle), npy.sin(self.angle1 + delta_angle)))
+    #     if list_node[0] == self.start:
+    #         return list_node
+    #     else:
+    #         return list_node[::-1]
 
     def plot_data(self, plot_data_states: List[plot_data.PlotDataState] = None):
         list_node = self.Discretise()
@@ -1972,7 +1979,7 @@ class BSplineCurve3D(Edge):
         return length_curve(self.curve)
 
     def point_at_abscissa(self, curvilinear_abscissa):
-        self.evaluate_single(curvilinear_abscissa)
+        return volmdlr.Point3D(*self.curve.evaluate_single(curvilinear_abscissa))
         # # copy paste from wire3D
         # length = 0.
         # primitives = []
@@ -2212,6 +2219,9 @@ class Arc3D(Edge):
     @property
     def points(self):
         return [self.start, self.interior, self.end]
+
+    def reverse(self):
+        return self.__class__(self.end, self.interior, self.start)
 
     def polygon_points(self, resolution_for_circle=40):
         number_points_tesselation = resolution_for_circle

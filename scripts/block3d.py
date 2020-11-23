@@ -11,13 +11,20 @@ import volmdlr.primitives3d as primitives3d
 resolution = 0.010
 
 bx0 = primitives3d.Block(
-    vm.Frame3D(vm.Point3D(0, 0, 0), vm.Vector3D(0.3, 0, 0), vm.Vector3D(0, 0.3, 0), vm.Vector3D(0, 0, 0.3)),
+    vm.Frame3D(vm.Point3D(0, 0, 0), vm.Vector3D(0.3, 0, 0),
+               vm.Vector3D(0, 0.3, 0), vm.Vector3D(0, 0, 0.3)),
     color=(0.2, 1, 0.1), alpha=0.6)
 vol = vm.core.VolumeModel([bx0])
+
 vol1 = vol.frame_mapping(vm.Frame3D(vm.Point3D(0, 0, 0), vm.Vector3D(0.9, 0, 0),
                          vm.Vector3D(0, 0.9, 0), vm.Vector3D(0, 0, 0.9)), 'new', copy=True)
+
+vol1.primitives[0].color = (0.1, 0.1, 1)
+vol1.name = 'vol1'
+
 vol2 = vol.frame_mapping(vm.Frame3D(vm.Point3D(0, 0.8, 0), vm.Vector3D(1, 0, 0),
                          vm.Vector3D(0, 1, 0), vm.Vector3D(0, 0, 1)), 'new', copy=True)
+
 vol3 = vol.frame_mapping(vm.Frame3D(vm.Point3D(0, 0.2, 0), vm.Vector3D(1, 0, 0),
                          vm.Vector3D(0, 1, 0), vm.Vector3D(0, 0, 1)), 'old', copy=True)
 
@@ -29,7 +36,7 @@ print(vol2.primitives[0].intersection_internal_aabb_volume(vol3.primitives[0], r
 print(vol2.primitives[0].intersection_external_aabb_volume(vol3.primitives[0], resolution))
 
 model = vm.core.VolumeModel(vol.primitives + vol1.primitives)
-model.babylonjs('usecase 1')
+model.babylonjs('usecase 1', debug=True)
 assert vol.primitives[0].is_inside_shell(vol1.primitives[0], resolution) == False
 assert vol1.primitives[0].is_inside_shell(vol.primitives[0], resolution) == True
 
