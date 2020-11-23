@@ -1768,7 +1768,7 @@ class Circle2D(Contour2D):
             else:
                 
                 [P1 + t1 * V,P1 + t2 * V]
-    def circle_intersections(self,circle):
+    def circle_intersections(self,other_circle):
         x0,y0=self.center
         x1,y1=circle.center
         r0=self.radius
