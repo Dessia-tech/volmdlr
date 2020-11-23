@@ -1087,9 +1087,9 @@ class Circle2D(Contour2D):
                and math.isclose(self.radius, other_circle.radius,
                                 abs_tol=1e-06)
 
-    def polygonization(self):
+    def polygonization(self, resolution=10):
 
-        return ClosedPolygon2D(self.discretization_points())
+        return ClosedPolygon2D(self.discretization_points(resolution))
 
     def tessellation_points(self, resolution=40):
         return [(self.center

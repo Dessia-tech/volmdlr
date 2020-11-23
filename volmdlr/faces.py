@@ -453,10 +453,8 @@ class Plane3D(Surface3D):
                 self.frame.w = new_vector3
 
     def copy(self):
-        new_origin = self.origin.copy()
-        new_vector1 = self.vectors[0].copy()
-        new_vector2 = self.vectors[1].copy()
-        return Plane3D(new_origin, new_vector1, new_vector2, self.name)
+        new_frame = self.frame.copy()
+        return Plane3D(new_frame, self.name)
 
     def plot(self, ax=None):
         if ax is None:
@@ -1532,17 +1530,12 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         if copy:
             new_surface = self.surface3d.frame_mapping(frame, side, copy=True)
-            return self.__class__(new_surface, self.outer_contour,
-                                  self.inner_contours)
+            return self.__class__(new_surface, self.surface2d.copy(), self.name)
         else:
             self.surface3d.frame_mapping(frame, side, copy=False)
 
     def copy(self):
-        new_contours = [contour.copy() for contour in self.contours]
-        new_plane = self.plane.copy()
-        new_points = [p.copy() for p in self.points]
-        return PlaneFace3D(new_contours, new_plane, new_points,
-                           self.polygon2D.copy(), self.name)
+        return Face3D(self.surface3d.copy(), self.surface2d.copy(), self.name)
 
     def linesegment_intersection(self,
                                  linesegment: volmdlr.edges.LineSegment3D,

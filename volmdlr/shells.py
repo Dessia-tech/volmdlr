@@ -7,6 +7,7 @@
 import volmdlr.core
 import volmdlr.display
 
+
 class Shell3D(volmdlr.core.CompositePrimitive3D):
     _standalone_in_db = True
     _generic_eq = True
@@ -74,7 +75,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
     def copy(self):
         new_faces = [face.copy() for face in self.faces]
-        return Shell3D(new_faces, name=self.name)
+        return Shell3D(new_faces, color=self.color, alpha=self.alpha, name=self.name)
 
     def union(self, shell2):
         new_faces = [face for face in self.faces + shell2.faces]
@@ -101,7 +102,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                 v213 = point2[0] * point1[1] * point3[2]
                 v123 = point1[0] * point2[1] * point3[2]
                 volume_tetraedre = 1 / 6 * (
-                            -v321 + v231 + v312 - v132 - v213 + v123)
+                        -v321 + v231 + v312 - v132 - v213 + v123)
 
                 volume += volume_tetraedre
 
@@ -138,8 +139,8 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         for k in range(0, nb_rays):
             rays.append(volmdlr.edges.LineSegment3D(point,
                                                     volmdlr.Point3D.random(0, epsilon,
-                                                            0, epsilon,
-                                                            0, epsilon)))
+                                                                           0, epsilon,
+                                                                           0, epsilon)))
 
         rays = sorted(rays, key=lambda ray: ray.length())
 
@@ -167,7 +168,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         return tests[0]
 
-    def is_inside_shell(self, shell2, resolution:float):
+    def is_inside_shell(self, shell2, resolution: float):
         """
         Returns True if all the points of self are inside shell2 and no face \
         are intersecting
@@ -198,7 +199,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         return True
 
-    def shell_intersection(self, shell2:'Shell3D', resolution:float):
+    def shell_intersection(self, shell2: 'Shell3D', resolution: float):
         """
         Return None if disjointed
         Return (1, 0) or (0, 1) if one is inside the other
@@ -281,7 +282,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         return point1_min, point2_min
 
-    def distance_to_shell(self, other_shell:'Shell3D', resolution:float):
+    def distance_to_shell(self, other_shell: 'Shell3D', resolution: float):
         p1, p2 = self.minimum_distance_points(other_shell, resolution)
         return p1.point_distance(p2)
 
@@ -363,7 +364,6 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         mesh = volmdlr.display.DisplayMesh3D([], [])
         for i, face in enumerate(self.faces):
-
             face_mesh = face.triangulation()
             mesh += face_mesh
         return mesh

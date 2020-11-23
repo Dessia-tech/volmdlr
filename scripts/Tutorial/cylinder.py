@@ -11,9 +11,9 @@ import volmdlr.primitives3d as primitives3d
 import math
 import matplotlib.pyplot as plt
 
-radius = 5e-3 #Choose the radius
-center = vm.Point3D(0,0,0) #Choose the coordinate of the center
-normal = vm.Vector3D(1,1,1) #Choose the normal
+radius = 5e-2 #Choose the radius
+center = vm.Point3D(0.1,0,0) #Choose the coordinate of the center
+normal = vm.Vector3D(0,1,1) #Choose the normal
 cylindersurface3d = primitives3d.Cylinder(center, normal, radius, length=0.1)
 
 h = 10e-3 #Height of cylinder
