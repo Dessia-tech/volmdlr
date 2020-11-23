@@ -16,7 +16,7 @@ import volmdlr
 import volmdlr.core
 from volmdlr.core_compiled import polygon_point_belongs
 import volmdlr.edges
-import plot_data
+import plot_data.core as plot_data
 
 class Wire:
 
@@ -388,11 +388,11 @@ class Contour2D(Contour, Wire2D):
 
         return A
 
-    def plot_data(self, plot_data_states: List[plot_data.PlotDataState] = None):
+    def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
         if plot_data_states is None:
-            plot_data_states = [plot_data.PlotDataState()]
+            plot_data_states = [plot_data.Settings()]
         plot_data_primitives = [item.plot_data(plot_data_states=plot_data_states) for item in self.primitives]
-        return plot_data.PlotDataContour2D(plot_data_primitives=plot_data_primitives,
+        return plot_data.Contour2D(plot_data_primitives=plot_data_primitives,
                                            plot_data_states=plot_data_states,
                                            name=self.name)
 
@@ -490,6 +490,33 @@ class Contour2D(Contour, Wire2D):
     #         return [LineSegment2D(*intersection_points)]
     #     else:
     #         raise NotImplementedError('Non convex contour not supported yet')
+
+    def cut_by_linesegments(self, lines: List[volmdlr.edges.LineSegment2D]):
+        for c in lines:
+            if not isinstance(c, volmdlr.edges.LineSegment2D):
+                raise KeyError('contour must be a list of LineSegment2D object')
+
+        cut_lines = []
+        for p in lines:
+            cut_lines.append(p.to_line())
+
+        contour_to_cut = [self]
+        for l in cut_lines:
+            new_contour_to_cut = []
+            for c in contour_to_cut:
+                cs = c.cut_by_line(l)
+                new_contour_to_cut.extend(cs)
+            contour_to_cut.extend(new_contour_to_cut)
+
+        p1 = volmdlr.wires.Contour2D(lines).center_of_mass()
+        dist_min = math.inf
+        for c in contour_to_cut:
+            if c.area() > 1e-10:
+                p0 = c.center_of_mass()
+                if p0.point_distance(p1) < dist_min:
+                    c_opti = c
+                    dist_min = p0.point_distance(p1)
+        return c_opti
 
     def cut_by_line(self, line:volmdlr.edges.Line2D)->List['Contour2D']:
         """
@@ -1188,8 +1215,8 @@ class Circle2D(Contour2D):
         center = 2 * point - self.center
         return Circle2D(center, self.radius)
 
-    def plot_data(self, plot_data_states: List[plot_data.PlotDataState] = None):
-        return plot_data.PlotDataCircle2D(cx=self.center.x,
+    def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
+        return plot_data.Circle2D(cx=self.center.x,
                                           cy=self.center.y,
                                           r=self.radius,
                                           plot_data_states=plot_data_states)
