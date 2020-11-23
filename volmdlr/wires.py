@@ -491,16 +491,13 @@ class Contour2D(Contour, Wire2D):
     #     else:
     #         raise NotImplementedError('Non convex contour not supported yet')
 
-    def cut_by_simple_contour(self, contour: 'Contour2D'):
-        for c in self.primitives:
+    def cut_by_linesegments(self, lines: List[volmdlr.edges.LineSegment2D]):
+        for c in lines:
             if not isinstance(c, volmdlr.edges.LineSegment2D):
-                raise KeyError('Main contour is not simple')
-        for c in contour.primitives:
-            if not isinstance(c, volmdlr.edges.LineSegment2D):
-                raise KeyError('Salve contour is not simple')
+                raise KeyError('contour must be a list of LineSegment2D object')
 
         cut_lines = []
-        for p in contour.primitives:
+        for p in lines:
             cut_lines.append(p.to_line())
 
         contour_to_cut = [self]
@@ -511,7 +508,7 @@ class Contour2D(Contour, Wire2D):
                 new_contour_to_cut.extend(cs)
             contour_to_cut.extend(new_contour_to_cut)
 
-        p1 = contour.center_of_mass()
+        p1 = volmdlr.wires.Contour2D(lines).center_of_mass()
         dist_min = math.inf
         for c in contour_to_cut:
             if c.area() > 1e-10:
