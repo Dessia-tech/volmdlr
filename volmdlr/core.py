@@ -28,13 +28,7 @@ from volmdlr.core_compiled import (
                             polygon_point_belongs, Matrix22
                             )
 
-from volmdlr.core_compiled import (Vector2D, Vector3D, Point2D, Point3D,
-                   O2D, X2D, Y2D, OXY,
-                   Basis2D, Basis3D, Frame2D, Frame3D,
-                   O3D, X3D, Y3D, Z3D,
-                   LineSegment2DPointDistance,
-                    Matrix22
-                   )
+
 from scipy.linalg import solve
 from scipy.spatial import Delaunay
 
@@ -107,15 +101,15 @@ def clockwise_angle(vector1, vector2):
     """
     Return the clockwise angle in radians between vector1 and vector2.
     """
-    vector0 = volmdlr.Vector2D((0, 0))
+    vector0 = volmdlr.O2D
     if vector0 in (vector1, vector2):
         return 0
 
-    dot = vector1.Dot(vector2)
-    norm_vec_1 = vector1.Norm()
-    norm_vec_2 = vector2.Norm()
+    dot = vector1.dot(vector2)
+    norm_vec_1 = vector1.norm()
+    norm_vec_2 = vector2.norm()
     sol = dot / (norm_vec_1 * norm_vec_2)
-    cross = vector1.Cross(vector2)
+    cross = vector1.cross(vector2)
     if math.isclose(sol, 1, abs_tol=1e-6):
         inner_angle = 0
     elif math.isclose(sol, -1, abs_tol=1e-6):
@@ -130,8 +124,8 @@ def clockwise_angle(vector1, vector2):
 
 
 def vectors3d_angle(vector1, vector2):
-    dot = vector1.Dot(vector2)
-    theta = math.acos(dot / (vector1.Norm() * vector2.Norm()))
+    dot = vector1.dot(vector2)
+    theta = math.acos(dot / (vector1.norm() * vector2.norm()))
 
     return theta
 
@@ -342,9 +336,11 @@ class CompositePrimitive2D(Primitive2D):
     def __init__(self, primitives, name=''):
         Primitive2D.__init__(self, name)
         self.primitives = primitives
-        self.UpdateBasisPrimitives()
+        self.update_basis_primitives()
 
-    def UpdateBasisPrimitives(self):
+        self.primitive_to_index = {p: ip for ip, p in enumerate(self.primitives)}
+    
+    def update_basis_primitives(self):
         basis_primitives = []
         for primitive in self.primitives:
             if hasattr(primitive, 'basis_primitives'):
@@ -353,6 +349,7 @@ class CompositePrimitive2D(Primitive2D):
                 basis_primitives.append(primitive)
 
         self.basis_primitives = basis_primitives
+        
 
     def rotation(self, center, angle, copy=True):
         if copy:
@@ -385,8 +382,9 @@ class CompositePrimitive2D(Primitive2D):
             self.UpdateBasisPrimitives()
 
 
-    def plot(self, ax=None, color='k',
+    def plot(self, ax=None, color='k', alpha=1,
              plot_points=False, equal_aspect=True):
+
         if ax is None:
             fig, ax = plt.subplots()
 
@@ -394,7 +392,8 @@ class CompositePrimitive2D(Primitive2D):
             ax.set_aspect('equal')
 
         for element in self.primitives:
-            element.plot(ax=ax, color=color, plot_points=plot_points)
+            element.plot(ax=ax, color=color, alpha=alpha, plot_points=plot_points)
+
 
         ax.margins(0.1)
         plt.show()
@@ -462,7 +461,7 @@ class CompositePrimitive3D(Primitive3D):
 
 
 
-    def UpdateBasisPrimitives(self):
+    def update_basis_primitives(self):
         # TODO: This is a copy/paste from CompositePrimitive2D, in the future make a Common abstract class
         basis_primitives = []
         for primitive in self.primitives:
@@ -471,7 +470,7 @@ class CompositePrimitive3D(Primitive3D):
             else:
                 basis_primitives.append(primitive)
 
-        self.primitives = basis_primitives
+        self.basis_primitives = basis_primitives
 
     # def to_2d(self, plane_origin, x, y):
     #     if name is None:
@@ -489,7 +488,8 @@ class CompositePrimitive3D(Primitive3D):
             ax.set_aspect('equal')
 
         for primitive in self.primitives:
-            primitive.plot(ax)
+
+            primitive.plot(ax=ax)
 
 
 
@@ -567,12 +567,12 @@ class BoundingBox(dc.DessiaObject):
     def from_points(cls, points):
         # if len(points) == 0:
         #     return (0, 0, 0, 0, 0, 0)
-        xmin = min([pt[0] for pt in points])
-        xmax = max([pt[0] for pt in points])
-        ymin = min([pt[1] for pt in points])
-        ymax = max([pt[1] for pt in points])
-        zmin = min([pt[2] for pt in points])
-        zmax = max([pt[2] for pt in points])
+        xmin = min([pt.x for pt in points])
+        xmax = max([pt.x for pt in points])
+        ymin = min([pt.y for pt in points])
+        ymax = max([pt.y for pt in points])
+        zmin = min([pt.z for pt in points])
+        zmax = max([pt.z for pt in points])
         return cls(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def volume(self):
