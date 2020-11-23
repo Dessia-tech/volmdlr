@@ -9,7 +9,7 @@ import numpy as npy
 import scipy as scp
 # from geomdl import BSplines
 from geomdl import utilities
-
+from geomdl import BSpline
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import __version__ as _mpl_version
 import matplotlib.pyplot as plt
@@ -169,7 +169,21 @@ class Line(dc.DessiaObject):
         projection = self.point1 + t * u
 
         return projection, t * norm_u
+    def line_intersections(self, line):
+        point = volmdlr.Point2D.line_intersection(self, line)
+        if point is not None:
+            point_projection1, _ = self.point_projection(point)
+            if point_projection1 is None:
+                return []
 
+            if line.__class__.__name__ == 'Line2D':
+                point_projection2, _ = line.point_projection(point)
+                if point_projection2 is None:
+                    return []
+
+            return [point_projection1]
+        else:
+            return []
     def split(self, split_point):
         return [self.__class__(self.point1, split_point),
                 self.__class__(split_point, self.point2)]
@@ -543,7 +557,7 @@ class LineSegment2D(LineSegment):
             return [point_projection1]
         else:
             return []
-    def discretise(self,n:float,ax):
+    def discretise(self,n:float):
         
         
          segment_to_nodes={}
@@ -569,9 +583,7 @@ class LineSegment2D(LineSegment):
                 
              segment_to_nodes[self]=nodes
 
-         if ax is not None :
-            for point in segment_to_nodes[self]:
-                point.plot(ax=ax,color='r')
+        
 
 
          return segment_to_nodes[self]
@@ -954,7 +966,7 @@ class Arc2D(Edge):
     #         return list_node
     #     else:
     #         return list_node[::-1]
-    def discretise(self,n:float,ax):
+    def discretise(self,n:float):
         
         arc_to_nodes={}
         nodes=[]
@@ -978,9 +990,7 @@ class Arc2D(Edge):
                    
              arc_to_nodes[self]=nodes
              
-        if ax is not None:
-           for point in arc_to_nodes[self]:
-               point.MPLPlot(ax=ax,color='r')
+        
                
             
         return arc_to_nodes[self] 
