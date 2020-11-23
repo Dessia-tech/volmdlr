@@ -42,7 +42,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         return True
 
     def triangulation(self, min_x_density=None, min_y_density=None):
-        outer_polygon = self.outer_contour.polygonization(min_x_density=15, min_y_density=12)
+        outer_polygon = self.outer_contour.polygonization()
         # ax2 = outer_polygon.plot(color='r', point_numbering=True)
         points = outer_polygon.points
         # outer_polygon.plot(plot_points=True, point_numbering=True)

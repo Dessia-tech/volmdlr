@@ -525,7 +525,7 @@ class BSplineCurve2D(Edge):
                               self.knot_multiplicities, self.knots,
                               self.weights, self.periodic)
 
-    def tessellation_points(self):
+    def polygon_points(self):
         return self.points
 
     def rotation(self, center, angle, copy=True):
@@ -704,7 +704,7 @@ class LineSegment2D(LineSegment):
                 circle2 = None
         return circle1, circle2
 
-    def tessellation_points(self):
+    def polygon_points(self):
         return [self.start, self.end]
 
     def polygon_points(self, min_x_density=None, min_y_density=None):
@@ -797,7 +797,7 @@ class Arc2D(Edge):
 
     points = property(_get_points)
 
-    def tessellation_points(self, resolution_for_circle=40):
+    def polygon_points(self, resolution_for_circle=40):
         number_points_tesselation = math.ceil(
             resolution_for_circle * abs(self.angle) / 2 / math.pi)
         number_points_tesselation = max(number_points_tesselation, 5)
@@ -1009,17 +1009,16 @@ class Arc2D(Edge):
                       self.end)
                 ]
 
-    def polygon_points(self, points_per_radian=10, min_x_density=None,
-                       min_y_density=None):
+    def polygon_points(self, points_per_radian=10):
 
+        # densities = []
+        # for d in [min_x_density, min_y_density]:
+        #     if d:
+        #         densities.append(d)
+        # if densities:
+        #     number_points = max(number_points,
+        #                         min(densities) * self.angle * self.radius)
         number_points = math.ceil(self.angle * points_per_radian)
-        densities = []
-        for d in [min_x_density, min_y_density]:
-            if d:
-                densities.append(d)
-        if densities:
-            number_points = max(number_points,
-                                min(densities) * self.angle * self.radius)
         l = self.length()
         return [self.point_at_abscissa(i * l / number_points) \
                 for i in range(number_points + 1)]
@@ -1066,15 +1065,23 @@ class FullArc2D(Edge):
         angle = abscissa / self.radius
         return self.start.rotation(self.center, angle)
 
-    def tessellation_points(self, resolution=40):
-        return [(self.center
-                 + self.radius * math.cos(teta) * volmdlr.X2D
-                 + self.radius * math.sin(teta) * volmdlr.Y2D)\
-                for teta in npy.linspace(0, volmdlr.TWO_PI, resolution + 1)][:-1]
+    def polygon_points(self, points_per_radian=10):
+        number_points = math.ceil(self.angle * points_per_radian)
+        l = self.length()
+        return [self.point_at_abscissa(i * l / number_points) \
+                for i in range(number_points + 1)]
 
     def polygonization(self, min_x_density=None, min_y_density=None):
+        # def polygon_points(self, points_per_radian=10):
+            # densities = []
+            # for d in [min_x_density, min_y_density]:
+            #     if d:
+            #         densities.append(d)
+            # if densities:
+            #     number_points = max(number_points,
+            #                         min(densities) * self.angle * self.radius)
 
-        return ClosedPolygon2D(self.tesselation_points())
+        return volmdlr.wires.ClosedPolygon2D(self.polygon_points())
 
     def plot(self, ax=None, color='k', plot_points=False,
              linestyle='-', linewidth=1, alpha=1):
@@ -1194,17 +1201,17 @@ class ArcEllipse2D(Edge):
             self.offset_angle = angle2
 
     def _get_points(self):
-        return self.tessellation_points()
+        return self.polygon_points()
 
     points = property(_get_points)
 
-    def tessellation_points(self, resolution_for_ellipse=40):
+    def polygon_points(self, resolution_for_ellipse=40):
         number_points_tesselation = math.ceil(
             resolution_for_ellipse * abs(0.5 * self.angle / math.pi))
 
         frame2d = volmdlr.Frame2D(self.center, self.major_dir, self.minor_dir)
 
-        tessellation_points_2D = [(volmdlr.Point2D((self.Gradius * math.cos(
+        polygon_points_2D = [(volmdlr.Point2D((self.Gradius * math.cos(
             self.offset_angle + self.angle * i / (number_points_tesselation)),
                                                     self.Sradius * math.sin(
                                                         self.offset_angle + self.angle * i / (
@@ -1213,7 +1220,7 @@ class ArcEllipse2D(Edge):
                                   range(number_points_tesselation + 1)]
 
         global_points = []
-        for pt in tessellation_points_2D:
+        for pt in polygon_points_2D:
             global_points.append(frame2d.old_coordinates(pt))
 
         return global_points
@@ -1250,7 +1257,7 @@ class ArcEllipse2D(Edge):
 
         x = []
         y = []
-        for px, py in self.tessellation_points():
+        for px, py in self.polygon_points():
             x.append(px)
             y.append(py)
 
@@ -2090,7 +2097,7 @@ class BSplineCurve3D(Edge):
                               self.knot_multiplicities, self.knots,
                               self.weights, self.periodic, self.name)
 
-    def tessellation_points(self):
+    def polygon_points(self):
         return self.points
 
 
@@ -2206,13 +2213,13 @@ class Arc3D(Edge):
     def points(self):
         return [self.start, self.interior, self.end]
 
-    def tessellation_points(self, resolution_for_circle=40):
+    def polygon_points(self, resolution_for_circle=40):
         number_points_tesselation = resolution_for_circle
         l = self.length()
-        tessellation_points_3D = [self.point_at_abscissa(
+        polygon_points_3D = [self.point_at_abscissa(
             l * i / (number_points_tesselation)) for i in
             range(number_points_tesselation + 1)]
-        return tessellation_points_3D
+        return polygon_points_3D
 
     def length(self):
         return self.radius * abs(self.angle)
@@ -2274,7 +2281,7 @@ class Arc3D(Edge):
         x = []
         y = []
         z = []
-        for px, py, pz in self.tessellation_points():
+        for px, py, pz in self.polygon_points():
             x.append(px)
             y.append(py)
             z.append(pz)
@@ -2543,14 +2550,14 @@ class FullArc3D(Edge):
         angle = abscissa / self.radius
         return self.start.rotation(self.center, self.normal, angle)
 
-    def tessellation_points(self, resolution=40):
+    def polygon_points(self, resolution=40):
 
-        tessellation_points_3D = [self.start.rotation(self.center,
+        polygon_points_3D = [self.start.rotation(self.center,
                                                       self.normal,
                                                       volmdlr.TWO_PI / (resolution - 1) * i
                                                       ) \
                                   for i in range(resolution)]
-        return tessellation_points_3D
+        return polygon_points_3D
 
     def plot(self, ax=None, color='k'):
         if ax is None:
@@ -2560,7 +2567,7 @@ class FullArc3D(Edge):
         x = []
         y = []
         z = []
-        for px, py, pz in self.tessellation_points():
+        for px, py, pz in self.polygon_points():
             x.append(px)
             y.append(py)
             z.append(pz)
@@ -2691,15 +2698,15 @@ class ArcEllipse3D(Edge):
         else:
             self.offset_angle = angle2
 
-        volmdlr.core.Primitive3D.__init__(self, basis_primitives=self.tessellation_points(),
+        volmdlr.core.Primitive3D.__init__(self, basis_primitives=self.polygon_points(),
                                           name=name)
 
     def _get_points(self):
-        return self.tessellation_points()
+        return self.polygon_points()
 
     points = property(_get_points)
 
-    def tessellation_points(self, resolution_for_ellipse=40):
+    def polygon_points(self, resolution_for_ellipse=40):
         number_points_tesselation = math.ceil(
             resolution_for_ellipse * abs(0.5 * self.angle / math.pi))
 
@@ -2708,7 +2715,7 @@ class ArcEllipse3D(Edge):
         frame3d = volmdlr.Frame3D(self.center, plane3d.vectors[0], plane3d.vectors[1],
                                   plane3d.normal)
 
-        tessellation_points_3D = [volmdlr.Point3D((self.Gradius * math.cos(
+        polygon_points_3D = [volmdlr.Point3D((self.Gradius * math.cos(
             self.offset_angle + self.angle * i / (number_points_tesselation)),
                                                    self.Sradius * math.sin(
                                                        self.offset_angle + self.angle * i / (
@@ -2717,7 +2724,7 @@ class ArcEllipse3D(Edge):
                                   range(number_points_tesselation + 1)]
 
         global_points = []
-        for pt in tessellation_points_3D:
+        for pt in polygon_points_3D:
             global_points.append(frame3d.old_coordinates(pt))
 
         return global_points
@@ -2758,7 +2765,7 @@ class ArcEllipse3D(Edge):
         x = []
         y = []
         z = []
-        for px, py, pz in self.tessellation_points():
+        for px, py, pz in self.polygon_points():
             x.append(px)
             y.append(py)
             z.append(pz)
