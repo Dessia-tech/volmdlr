@@ -42,6 +42,9 @@ class Surface2D(volmdlr.core.Primitive2D):
         return True
 
     def triangulation(self, min_x_density=None, min_y_density=None):
+        if self.area() == 0.:
+            return volmdlr.display.DisplayMesh2D([], triangles=[])
+
         outer_polygon = self.outer_contour.polygonization()
         # ax2 = outer_polygon.plot(color='r', point_numbering=True)
         points = outer_polygon.points
@@ -85,15 +88,17 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         return volmdlr.display.DisplayMesh2D(points, triangles=triangles, edges=None)
 
-    def plot(self, ax=None):
+    def plot(self, ax=None, equal_aspect=True):
         if ax is None:
             fig, ax = plt.subplots()
-            ax.set_aspect('equal')
+
         self.outer_contour.plot(ax=ax)
         for inner_contour in self.inner_contours:
             inner_contour.plot(ax=ax)
 
-        ax.set_aspect('equal')
+        if equal_aspect:
+            ax.set_aspect('equal')
+
         ax.margins(0.1)
         return ax
 
@@ -872,7 +877,6 @@ class ConicalSurface3D(Surface3D):
     The local plane is defined by (theta, z)
     :param frame: Cone's frame to position it: frame.w is axis of cone
                     frame.origin is at the angle of the cone
-    :param r: Cone's bottom radius
     :param semi_angle: Cone's semi-angle
     """
 
@@ -934,7 +938,6 @@ class ConicalSurface3D(Surface3D):
         z = self.frame.w.dot(point)
         x, y = point.plane_projection2d(self.frame.origin, self.frame.u,
                                         self.frame.v)
-        # print(x, y)
         theta = math.atan2(y, x)
         return volmdlr.Point2D(theta, z)
 
@@ -967,22 +970,24 @@ class ConicalSurface3D(Surface3D):
     def linesegment2d_to_3d(self, linesegment2d):
         theta1, z1 = linesegment2d.start
         theta2, z2 = linesegment2d.end
-        # print(theta1, theta2, abs(theta1 - theta2), abs(theta1 - theta2)//volmdlr.TWO_PI)
-        if math.isclose(abs(theta1 - theta2)%volmdlr.TWO_PI, 0., abs_tol=1e-9):
+        if math.isclose(z1, z2, abs_tol=1e-9) and  math.isclose(z1, 0., abs_tol=1e-9):
+            return []
+        elif math.isclose(abs(theta1 - theta2)%volmdlr.TWO_PI, 0., abs_tol=1e-9):
             return [volmdlr.edges.LineSegment3D(
                         self.point2d_to_3d(linesegment2d.start),
                         self.point2d_to_3d(linesegment2d.end),
             )]
         elif math.isclose(z1, z2, abs_tol=1e-9):
-            if abs(theta1 - theta2) == volmdlr.TWO_PI:
+
+            if abs(theta1 - theta2)%volmdlr.TWO_PI == 0.:
                 return [volmdlr.edges.FullArc3D(center=self.frame.origin+z1*self.frame.w,
                                                start_end=self.point2d_to_3d(linesegment2d.start),
                                                normal=self.frame.w)]
             else:
-                interior = self.point2d_to_3d(linesegment2d.point_at_abscissa(linesegment2d.length()*0.5))
+                interior = self.point2d_to_3d(linesegment2d.point_at_abscissa(linesegment2d.length()*0.3))
                 return [volmdlr.edges.Arc3D(
                     self.point2d_to_3d(linesegment2d.start),
-                    self.point2d_to_3d(interior),
+                    interior,
                     self.point2d_to_3d(linesegment2d.end),
                 )]
         else:
@@ -1293,62 +1298,8 @@ class Face3D(volmdlr.core.Primitive3D):
         """
 
         """
-        # self.surface2d.plot()
         return self.surface3d.contour2d_to_3d(self.surface2d.outer_contour)
-    #     if self.surface2d.outer_contour.__class__.__name__ == 'Circle2D':
-    #         return volmdlr.wires.Circle3D.from_3_points(
-    #             self.surface3d.point2d_to_3d(
-    #                 self.surface2d.outer_contour.point_at_abscissa(0.)),
-    #             self.surface3d.point2d_to_3d(
-    #                 self.surface2d.outer_contour.point_at_abscissa(
-    #                     self.surface2d.outer_contour.radius)),
-    #             self.surface3d.point2d_to_3d(
-    #                 self.surface2d.outer_contour.point_at_abscissa(
-    #                     2 * self.surface2d.outer_contour.radius)),
-    #         )
-    #
-    #     primitives3d = []
-    #     for primitive2d in self.surface2d.outer_contour.primitives:
-    #         if primitive2d.__class__ == volmdlr.edges.LineSegment2D:
-    #             p1 = self.surface3d.point2d_to_3d(primitive2d.start)
-    #             p2 = self.surface3d.point2d_to_3d(primitive2d.end)
-    #             primitive3d = volmdlr.edges.LineSegment3D(p1, p2)
-    #         elif primitive2d.__class__ == volmdlr.edges.Arc2D:
-    #             start = self.surface3d.point2d_to_3d(primitive2d.start)
-    #             interior = self.surface3d.point2d_to_3d(primitive2d.interior)
-    #             end = self.surface3d.point2d_to_3d(primitive2d.end)
-    #             primitive3d = volmdlr.edges.Arc3D(start, interior, end)
-    #         elif primitive2d.__class__ == volmdlr.edges.FullArc2D:
-    #             center = self.surface3d.point2d_to_3d(primitive2d.center)
-    #             start = self.surface3d.point2d_to_3d(primitive2d.start)
-    #             u = start - center
-    #             p2 = primitive2d.point_at_abscissa(0.5*math.pi*primitive2d.radius)
-    #             v = self.surface3d.point2d_to_3d(p2) - center
-    #             normal = u.cross(v)
-    #             normal.normalize()
-    #             primitive3d = volmdlr.edges.FullArc3D(
-    #                 center=center,
-    #                 start_end=start,
-    #                 normal=normal
-    #             )
-    #         elif primitive2d.__class__ == volmdlr.edges.BSplineCurve2D:
-    #             control_points = [self.surface3d.point2d_to_3d(p)\
-    #                               for p in primitive2d.control_points]
-    #             primitive3d = volmdlr.edges.BSplineCurve3D(
-    #                 degree=primitive2d.degree,
-    #                 control_points=control_points,
-    #                 knot_multiplicities=primitive2d.knot_multiplicities,
-    #                 knots=primitive2d.knots,
-    #                 weights=primitive2d.weights,
-    #                 periodic=primitive2d.periodic)
-    #         else:
-    #             print(self.surface2d.outer_contour.primitives)
-    #             raise NotImplementedError('Unsupported primitive {}' \
-    #                                       .format(
-    #                 primitive2d.__class__.__name__))
-    #
-    #         primitives3d.append(primitive3d)
-    #     return volmdlr.wires.Contour3D(primitives3d)
+
 
     def _bounding_box(self):
         """
@@ -1375,119 +1326,119 @@ class Face3D(volmdlr.core.Primitive3D):
             print('arguments', arguments)
             raise NotImplementedError(surface)
 
-    def delete_double(self, Le):
-        Ls = []
-        for i in Le:
-            if i not in Ls:
-                Ls.append(i)
-        return Ls
-
-    def min_max(self, Le, pos):
-        Ls = []
-        for i in range(0, len(Le)):
-            Ls.append(Le[i][pos])
-        return (min(Ls), max(Ls))
-
-    def range_trigo(list_point):
-        points_set = delete_double_point(list_point)
-        xmax, xmin = max(pt[0] for pt in points_set), min(
-            pt[0] for pt in points_set)
-        ymax, ymin = max(pt[1] for pt in points_set), min(
-            pt[1] for pt in points_set)
-        center = volmdlr.Point2D(((xmax + xmin) / 2, (ymax + ymin) / 2))
-        frame2d = Frame2D(center, X2D, Y2D)
-        points_test = [frame2d.new_coordinates(pt) for pt in points_set]
-
-        points_2dint = []
-        s = 0
-        for k in range(0, len(points_test)):
-            closest = points_test[s]
-            while closest is None:
-                s += 1
-                closest = points_test[s]
-            angle_min = math.atan2(closest.vector[1],
-                                   closest.vector[0]) + math.pi
-            pos = s
-            for i in range(s + 1, len(points_test)):
-                close_test = points_test[i]
-                if close_test is None:
-                    continue
-                else:
-                    angle_test = math.atan2(close_test.vector[1],
-                                            close_test.vector[0]) + math.pi
-                    if angle_test < angle_min:  # and dist_test <= dist_min:
-                        angle_min = angle_test
-                        closest = close_test
-                        pos = i
-            points_2dint.append(closest)
-            points_test[pos] = None
-
-        points_old = [frame2d.old_coordinates(pt) for pt in points_2dint]
-        return points_old
-
-    def range_closest(list_point, r1=None, r2=None):
-        # use r1, r2 to compare h and r1*angle or r1*angle and r2*angle
-        points_set = delete_double_point(list_point)
-        if r1 is not None:
-            for k in range(0, len(points_set)):
-                points_set[k].vector[0] = points_set[k].vector[0] * r1
-        if r2 is not None:
-            for k in range(0, len(points_set)):
-                points_set[k].vector[1] = points_set[k].vector[1] * r2
-
-        points_2dint = [points_set[0]]
-        s = 1
-        for k in range(1, len(points_set)):
-            closest = points_set[s]
-            while closest is None:
-                s += 1
-                closest = points_set[s]
-            dist_min = (points_2dint[-1] - closest).Norm()
-            pos = s
-            for i in range(s + 1, len(points_set)):
-                close_test = points_set[i]
-                if close_test is None:
-                    continue
-                else:
-                    dist_test = (points_2dint[-1] - close_test).Norm()
-                    if dist_test <= dist_min:
-                        dist_min = dist_test
-                        closest = close_test
-                        pos = i
-            points_2dint.append(closest)
-            points_set[pos] = None
-
-        if r1 is not None:
-            for k in range(0, len(points_2dint)):
-                points_2dint[k].vector[0] = points_2dint[k].vector[0] / r1
-        if r2 is not None:
-            for k in range(0, len(points_2dint)):
-                points_2dint[k].vector[1] = points_2dint[k].vector[1] / r2
-
-        return points_2dint
-
-    def create_primitives(points):
-        primitives = []
-        for k in range(0, len(points)):
-            if k == len(points) - 1:
-                primitives.append(volmdlr.LineSegment2D(points[k], points[0]))
-            else:
-                primitives.append(volmdlr.LineSegment2D(points[k], points[k + 1]))
-        return primitives
-
-    def LS2D_inprimitives(ls_toadd, primitives):
-        same = False
-        for list_prim in primitives:
-            for prim in list_prim:
-                if ls_toadd.points[0] == prim.points[0] and ls_toadd.points[
-                    -1] == prim.points[-1]:
-                    same = True
-                elif ls_toadd.points[0] == prim.points[-1] and ls_toadd.points[
-                    -1] == prim.points[0]:
-                    same = True
-                else:
-                    continue
-        return same
+    # def delete_double(self, Le):
+    #     Ls = []
+    #     for i in Le:
+    #         if i not in Ls:
+    #             Ls.append(i)
+    #     return Ls
+    #
+    # def min_max(self, Le, pos):
+    #     Ls = []
+    #     for i in range(0, len(Le)):
+    #         Ls.append(Le[i][pos])
+    #     return (min(Ls), max(Ls))
+    #
+    # def range_trigo(list_point):
+    #     points_set = delete_double_point(list_point)
+    #     xmax, xmin = max(pt[0] for pt in points_set), min(
+    #         pt[0] for pt in points_set)
+    #     ymax, ymin = max(pt[1] for pt in points_set), min(
+    #         pt[1] for pt in points_set)
+    #     center = volmdlr.Point2D(((xmax + xmin) / 2, (ymax + ymin) / 2))
+    #     frame2d = Frame2D(center, X2D, Y2D)
+    #     points_test = [frame2d.new_coordinates(pt) for pt in points_set]
+    #
+    #     points_2dint = []
+    #     s = 0
+    #     for k in range(0, len(points_test)):
+    #         closest = points_test[s]
+    #         while closest is None:
+    #             s += 1
+    #             closest = points_test[s]
+    #         angle_min = math.atan2(closest.vector[1],
+    #                                closest.vector[0]) + math.pi
+    #         pos = s
+    #         for i in range(s + 1, len(points_test)):
+    #             close_test = points_test[i]
+    #             if close_test is None:
+    #                 continue
+    #             else:
+    #                 angle_test = math.atan2(close_test.vector[1],
+    #                                         close_test.vector[0]) + math.pi
+    #                 if angle_test < angle_min:  # and dist_test <= dist_min:
+    #                     angle_min = angle_test
+    #                     closest = close_test
+    #                     pos = i
+    #         points_2dint.append(closest)
+    #         points_test[pos] = None
+    #
+    #     points_old = [frame2d.old_coordinates(pt) for pt in points_2dint]
+    #     return points_old
+    #
+    # def range_closest(list_point, r1=None, r2=None):
+    #     # use r1, r2 to compare h and r1*angle or r1*angle and r2*angle
+    #     points_set = delete_double_point(list_point)
+    #     if r1 is not None:
+    #         for k in range(0, len(points_set)):
+    #             points_set[k].vector[0] = points_set[k].vector[0] * r1
+    #     if r2 is not None:
+    #         for k in range(0, len(points_set)):
+    #             points_set[k].vector[1] = points_set[k].vector[1] * r2
+    #
+    #     points_2dint = [points_set[0]]
+    #     s = 1
+    #     for k in range(1, len(points_set)):
+    #         closest = points_set[s]
+    #         while closest is None:
+    #             s += 1
+    #             closest = points_set[s]
+    #         dist_min = (points_2dint[-1] - closest).Norm()
+    #         pos = s
+    #         for i in range(s + 1, len(points_set)):
+    #             close_test = points_set[i]
+    #             if close_test is None:
+    #                 continue
+    #             else:
+    #                 dist_test = (points_2dint[-1] - close_test).Norm()
+    #                 if dist_test <= dist_min:
+    #                     dist_min = dist_test
+    #                     closest = close_test
+    #                     pos = i
+    #         points_2dint.append(closest)
+    #         points_set[pos] = None
+    #
+    #     if r1 is not None:
+    #         for k in range(0, len(points_2dint)):
+    #             points_2dint[k].vector[0] = points_2dint[k].vector[0] / r1
+    #     if r2 is not None:
+    #         for k in range(0, len(points_2dint)):
+    #             points_2dint[k].vector[1] = points_2dint[k].vector[1] / r2
+    #
+    #     return points_2dint
+    #
+    # def create_primitives(points):
+    #     primitives = []
+    #     for k in range(0, len(points)):
+    #         if k == len(points) - 1:
+    #             primitives.append(volmdlr.LineSegment2D(points[k], points[0]))
+    #         else:
+    #             primitives.append(volmdlr.LineSegment2D(points[k], points[k + 1]))
+    #     return primitives
+    #
+    # def LS2D_inprimitives(ls_toadd, primitives):
+    #     same = False
+    #     for list_prim in primitives:
+    #         for prim in list_prim:
+    #             if ls_toadd.points[0] == prim.points[0] and ls_toadd.points[
+    #                 -1] == prim.points[-1]:
+    #                 same = True
+    #             elif ls_toadd.points[0] == prim.points[-1] and ls_toadd.points[
+    #                 -1] == prim.points[0]:
+    #                 same = True
+    #             else:
+    #                 continue
+    #     return same
 
     def triangulation(self):
         # print(self.surface2d.outer_contour.area())
