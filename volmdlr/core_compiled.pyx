@@ -342,6 +342,9 @@ class Vector2D(Vector):
                               round(self.y, ndigits))
 
     def __hash__(self):
+        return 0
+        raise NotImplementedError('Vectors and points are unhashable')
+
         return int(round(1e6*(self.x+self.y)))
 
     def __eq__(self, other_vector):
@@ -422,7 +425,8 @@ class Vector2D(Vector):
                 self.x = new_vector.x
                 self.y = new_vector.y
 
-    def to3d(self, plane_origin, vx, vy):
+
+    def to_3d(self, plane_origin, vx, vy):
         return Vector3D(plane_origin.x + vx.x*self.x + vy.x*self.y,
                         plane_origin.y + vx.y*self.x + vy.y*self.y,
                         plane_origin.z + vx.z*self.x + vy.z*self.y,
@@ -540,7 +544,9 @@ class Point2D(Vector2D):
 
 
     @classmethod
-    def line_intersection(cls,line1, line2, curvilinear_abscissa=False):
+
+   
+    def line_intersection(cls, line1, line2, curvilinear_abscissa=False):
         x1 = line1.points[0].x
         y1 = line1.points[0].y
         x2 = line1.points[1].x
@@ -549,6 +555,7 @@ class Point2D(Vector2D):
         y3 = line2.points[0].y
         x4 = line2.points[1].x
         y4 = line2.points[1].y
+
 
         denominateur = (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4)
         if math.isclose(denominateur, 0, abs_tol=1e-6):
@@ -624,7 +631,7 @@ class Point2D(Vector2D):
 
     @classmethod
     def line_projection(cls, point, line):
-        p1, p2 = line.points
+        p1, p2 = line[0], line[1]
         n = line.normalVector(unit=True)
         pp1 = point - p1
         return  pp1 - pp1.dot(n)*n + p1
@@ -693,6 +700,10 @@ class Vector3D(Vector):
                               round(self.z, ndigits))
 
     def __hash__(self):
+        return 0
+        raise NotImplementedError('Vectors and points are unhashable')
+
+
         return int(round(1e6*(self.x+self.y+self.z)))
 
     def __eq__(self, other_vector:'Vector3D'):
@@ -1110,7 +1121,6 @@ class Matrix33:
                             det_inv*(self.M11*self.M22 - self.M21*self.M12) # a11a22−a21a12
                             )
         else:
-            # print(self.__dict__, det)
             raise ValueError('The matrix is singular')
 
     @classmethod
@@ -1157,7 +1167,7 @@ class Basis2D(Basis):
         self.name = name
 
     def __neg__(self):
-        Pinv = self.Inversetransfer_matrix()
+        Pinv = self.inverse_transfer_matrix()
         return Basis2D(Vector3D(Pinv[:, 0]),
                        Vector3D(Pinv[:, 1]))
 
@@ -1178,7 +1188,7 @@ class Basis2D(Basis):
         return npy.array([[self.u[0], self.v[0]],
                           [self.u[1], self.v[1]]])
 
-    def Inversetransfer_matrix(self):
+    def inverse_transfer_matrix(self):
         det = self.u[0]*self.v[1] - self.v[0]*self.u[1]
         if not math.isclose(det, 0, abs_tol=1e-10):
             return 1/det * npy.array([[self.v[1], -self.v[0]],
@@ -1187,14 +1197,15 @@ class Basis2D(Basis):
             raise ZeroDivisionError
 
     def new_coordinates(self, vector):
-        matrix = self.Inversetransfer_matrix()
+        matrix = self.inverse_transfer_matrix()
         return Point2D((matrix[0][0]*vector.x + matrix[0][1]*vector.y,
                          matrix[1][0]*vector.x + matrix[1][1]*vector.y))
 
+
     def old_coordinates(self, vector):
         matrix = self.transfer_matrix()
-        return Point2D((matrix[0][0]*vector.x + matrix[0][1]*vector.y,
-                         matrix[1][0]*vector.x + matrix[1][1]*vector.y))
+        return Point2D(matrix[0][0]*vector.x + matrix[0][1]*vector.y,
+                       matrix[1][0]*vector.x + matrix[1][1]*vector.y)
 
     def rotation(self, angle:float, copy=True):
         center = O2D
@@ -1241,24 +1252,25 @@ class Basis3D(Basis):
 
     def __add__(self, other_basis):
         M = self.transfer_matrix()*other_basis.transfer_matrix()
-        return Basis3D(Vector3D((M.M11, M.M21, M.M31)),
-                       Vector3D((M.M12, M.M22, M.M32)),
-                       Vector3D((M.M13, M.M23, M.M33)))
+        return Basis3D(Vector3D(M.M11, M.M21, M.M31),
+                       Vector3D(M.M12, M.M22, M.M32),
+                       Vector3D(M.M13, M.M23, M.M33))
 
 
     def __neg__(self):
-        M = self.Inversetransfer_matrix()
+        M = self.inverse_transfer_matrix()
         return Basis3D(Vector3D((M.M11, M.M21, M.M31)),
                        Vector3D((M.M12, M.M22, M.M32)),
                        Vector3D((M.M13, M.M23, M.M33)))
 
+
     def __sub__(self, other_frame):
-        P1inv = other_frame.Inversetransfer_matrix()
+        P1inv = other_frame.inverse_transfer_matrix()
         P2 = self.transfer_matrix()
         M = P1inv * P2
-        return Basis3D(Vector3D((M.M11, M.M21, M.M31)),
-                       Vector3D((M.M12, M.M22, M.M32)),
-                       Vector3D((M.M13, M.M23, M.M33)))
+        return Basis3D(Vector3D(M.M11, M.M21, M.M31),
+                       Vector3D(M.M12, M.M22, M.M32),
+                       Vector3D(M.M13, M.M23, M.M33))
 
     def __round__(self, ndigits:int=6):
         return self.__class__((round(self.u, ndigits),
@@ -1408,7 +1420,7 @@ class Frame2D(Basis2D):
         return '{}: O={} U={}, V={}'.format(self.__class__.__name__, self.origin, self.u, self.v)
 
     def __neg__(self):
-        Pinv = self.Inversetransfer_matrix()
+        Pinv = self.inverse_transfer_matrix()
         new_origin = Point2D(npy.dot(Pinv, self.origin))
         return Frame2D(new_origin,
                        Vector2D(Pinv[:, 0]),
@@ -1425,7 +1437,7 @@ class Frame2D(Basis2D):
 
 
     def __sub__(self, other_frame):
-        P1inv = other_frame.Inversetransfer_matrix()
+        P1inv = other_frame.inverse_transfer_matrix()
         P2 = self.transfer_matrix()
         new_origin = Point2D(npy.dot(P1inv, (self.origin - other_frame.origin)))
         M = npy.dot(P1inv, P2)
@@ -1493,7 +1505,7 @@ class Frame3D(Basis3D):
 
 
     def __neg__(self):
-        M = self.Inversetransfer_matrix()
+        M = self.inverse_transfer_matrix()
         new_origin = M.vector_multiplication(self.origin)
         return Frame3D(new_origin,
                        Vector3D(M.M11, M.M21, M.M31),
@@ -1514,7 +1526,7 @@ class Frame3D(Basis3D):
 
 
     def __sub__(self, other_frame):
-        P1inv = other_frame.Inversetransfer_matrix()
+        P1inv = other_frame.inverse_transfer_matrix()
         P2 = self.transfer_matrix()
         new_origin = P1inv.vector_multiplication(self.origin - other_frame.origin)
         M = P1inv * P2

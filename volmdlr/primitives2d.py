@@ -223,19 +223,13 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
                     normal_vector = volmdlr.Vector2D(
                         self.points[i + 1] - point).normalVector(unit=True)
 
-                alpha1 = math.acos(dir_vec_1.Dot(normal_vector))
-                alpha2 = math.acos(dir_vec_2.Dot(normal_vector))
+                alpha1 = math.acos(dir_vec_1.dot(normal_vector))
+                alpha2 = math.acos(dir_vec_2.dot(normal_vector))
 
                 # If 3 segments are aligned and the middle one have to be offset
                 if math.isclose(math.cos(alpha1), 0,
                                 abs_tol=1e-9) or math.isclose(math.cos(alpha2),
                                                               0, abs_tol=1e-9):
-                    print('ca sort direct')
-                    print('direction vector', dir_vec_1, dir_vec_2)
-                    print('normal vector', normal_vector)
-                    print('alpha', alpha1 * 180 / math.pi,
-                          alpha2 * 180 / math.pi)
-                    print(point, self.points[i + 1])
                     return self
                 #                    distance_dir1 = offset
                 #                    distance_dir2 = offset
@@ -288,8 +282,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         if line_indexes[0] == 0 and not self.closed:
             pass
         else:
-            dir_vec_1 = volmdlr.Vector2D((self.points[line_indexes[0]] -
-                                          self.points[line_indexes[0] - 1]))
+            dir_vec_1 = self.points[line_indexes[0]] - self.points[line_indexes[0] - 1]
 
         if line_indexes[-1] == len(self.points) - (2 - self.closed):
             if not self.closed:
@@ -300,8 +293,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
             dir_vec_2 = volmdlr.Vector2D(
                 (self.points[line_indexes[-1] + 1] - self.points[0]))
         else:
-            dir_vec_2 = volmdlr.Vector2D((self.points[line_indexes[-1] + 1] -
-                                          self.points[line_indexes[-1] + 2]))
+            dir_vec_2 = self.points[line_indexes[-1] + 1] - self.points[line_indexes[-1] + 2]
 
         if dir_vec_1 is None:
             dir_vec_1 = dir_vec_2
@@ -322,32 +314,32 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
                     self.points[0] - self.points[index]).normalVector(
                     unit=True))
             else:
-                normal_vectors.append(volmdlr.Vector2D(
-                    self.points[index + 1] - self.points[index]).normalVector(
-                    unit=True))
+                normal_vectors.append(
+                    (self.points[index + 1] - self.points[index]).normal_vector(
+                        unit=True))
 
-        dot1 = dir_vec_1.Dot(normal_vectors[0])
-        dot2 = dir_vec_2.Dot(normal_vectors[-1])
+        dot1 = dir_vec_1.dot(normal_vectors[0])
+        dot2 = dir_vec_2.dot(normal_vectors[-1])
 
         if math.isclose(dot1, 0, abs_tol=1e-9):
             # call function considering the line before, because the latter and
             # the first offset segment are parallel
-            return self.OffsetLines([line_indexes[0] - 1] + line_indexes,
+            return self.offset_lines([line_indexes[0] - 1] + line_indexes,
                                     offset)
         if math.isclose(dot2, 0, abs_tol=1e-9):
             # call function considering the line after, because the latter and
             # the last offset segment are parallel
-            return self.OffsetLines(line_indexes + [line_indexes[-1] + 1],
+            return self.offset_lines(line_indexes + [line_indexes[-1] + 1],
                                     offset)
 
         distance_dir1 = offset / dot1
         distance_dir2 = offset / dot2
 
         if len(line_indexes) > 1:
-            intersection = volmdlr.Point2D.LinesIntersection(
-                volmdlr.Line2D(self.points[line_indexes[0]],
+            intersection = volmdlr.Point2D.line_intersection(
+                volmdlr.edges.Line2D(self.points[line_indexes[0]],
                                self.points[line_indexes[0]] + dir_vec_1),
-                volmdlr.Line2D(self.points[line_indexes[-1] + 1],
+                volmdlr.edges.Line2D(self.points[line_indexes[-1] + 1],
                                self.points[line_indexes[-1] + 1] + dir_vec_2))
             vec1 = intersection.point_distance(
                 self.points[line_indexes[0]]) * dir_vec_1
@@ -369,12 +361,12 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
                 self.points[line_indexes[0]],
                 self.points[line_indexes[-1] + 1])
             coeff_vec_1 = 1 - coeff_vec_2
-            if dir_vec_1.Dot(normal_vectors[nb + 1]) < 0:
+            if dir_vec_1.dot(normal_vectors[nb + 1]) < 0:
                 coeff_vec_1 = - coeff_vec_1
-            if dir_vec_2.Dot(normal_vectors[nb + 1]) < 0:
+            if dir_vec_2.dot(normal_vectors[nb + 1]) < 0:
                 coeff_vec_2 = - coeff_vec_2
             index_dir_vector = coeff_vec_1 * vec1 + coeff_vec_2 * vec2
-            index_dot = index_dir_vector.Dot(normal_vectors[nb + 1])
+            index_dot = index_dir_vector.dot(normal_vectors[nb + 1])
             index_distance_dir = offset / index_dot
             new_points[index] = self.points[
                                     index] + index_distance_dir * index_dir_vector

@@ -10,12 +10,12 @@ import math
 from scipy.linalg import norm
 
 
-def PointProjectionPlane(point, plane_origin, plane_normal):
-    """
-    Plane is defined by (plane_point,plane_normal)
-    :returns : coordinates in global coordinate system
-    """
-    return vm.Point2D(point-dot(point-plane_origin,plane_normal)*plane_normal)
+# def PointProjectionPlane(point, plane_origin, plane_normal):
+#     """
+#     Plane is defined by (plane_point,plane_normal)
+#     :returns : coordinates in global coordinate system
+#     """
+#     return vm.Point2D(point-dot(point-plane_origin,plane_normal)*plane_normal)
 
 #def PointLocalProjectionPlane(point, plane_origin, x1, x2):
 #    """
@@ -30,7 +30,7 @@ def PointProjectionPlane(point, plane_origin, plane_normal):
 #    xp = point-dot(point-plane_origin,plane_normal)*plane_normal-plane_origin# projeted point
 #    return vm.Point2D((dot(xp,x1),dot(xp,x2)))
 
-def Euler2TransferMatrix(psi, theta, phi):
+def euler_angles_to_transfer_matrix(psi, theta, phi):
     """
     Give Transition Matrix from euler angles
     Angles in radians
@@ -48,7 +48,7 @@ def Euler2TransferMatrix(psi, theta, phi):
     return P
     
 
-def TransferMatrix2Euler(R):
+def transfer_matrix_to_euler_angles(R):
     if ((R[2,2]!=1)&(R[2,2]!=-1)):
         theta=math.acos(R[2,2])
         psi=math.atan2(R[2,0]/math.sin(theta),R[2,1]/math.sin(theta))
@@ -61,10 +61,10 @@ def TransferMatrix2Euler(R):
         else:
             theta=math.pi
             psi=-math.atan2(R[1,0],R[0,0])
-    return(array([psi,theta,phi]))
+    return psi, theta, phi
 
     
-def Direction2Euler(u, v=random.random(3)):
+def direction_to_euler_angles(u, v=random.random(3)):
 #    u=npy.array([ux,uy,uz])
     u = u/norm(u)
     R = zeros((3,3))
@@ -78,7 +78,7 @@ def Direction2Euler(u, v=random.random(3)):
     return euler
 
 
-def Huygens2D(I1, area, point1, point2):
+def huygens2d(I1, area, point1, point2):
     """
     area acts the same way as the mass in 3D
     """

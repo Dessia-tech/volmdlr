@@ -7,16 +7,17 @@ Created on Fri Mar 10 17:02:36 2017
 """
 
 import volmdlr as vm
-import volmdlr.primitives2D as primitives2D
+import volmdlr.wires as wires
+import volmdlr.primitives2d as primitives2d
 import time
-p1=vm.Point2D((0, 0))
-p2=vm.Point2D((1, 0))
-p3=vm.Point2D((2, 1))
-p4=vm.Point2D((1, 0.5))
-p5=vm.Point2D((-0.5, 1))
+p1 = vm.Point2D(0, 0)
+p2 = vm.Point2D(1, 0)
+p3 = vm.Point2D(2, 1)
+p4 = vm.Point2D(1, 0.5)
+p5 = vm.Point2D(-0.5, 1)
 
-polygon = vm.Polygon2D([p1, p2, p3, p4, p5])
-a = polygon.SelfIntersect()
+polygon = vm.wires.ClosedPolygon2D([p1, p2, p3, p4, p5])
+a = polygon.self_intersects()
 print(a)
 #print(c.Area())
 #print(c.SecondMomentArea(p1))
