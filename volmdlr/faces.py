@@ -258,6 +258,9 @@ class Surface3D():
                     weights=bspline_curve2d.weights,
                     periodic=bspline_curve2d.periodic)]
 
+
+
+
 class Plane3D(Surface3D):
     face_class = 'PlaneFace3D'
     def __init__(self, frame: volmdlr.Frame3D, name: str = ''):
@@ -366,13 +369,12 @@ class Plane3D(Surface3D):
         intersection_abscissea = - self.frame.w.dot(w) / self.frame.w.dot(u)
         return [line.points[0] + intersection_abscissea * u]
 
-    def linesegment_intersection(self, linesegment:volmdlr.edges.LineSegment3D)\
+    def linesegment_intersections(self, linesegment:volmdlr.edges.LineSegment3D)\
                     -> List[volmdlr.Point3D]:
         u = linesegment.end - linesegment.start
         w = linesegment.start - self.frame.origin
         normaldotu = self.frame.w.dot(u)
         if math.isclose(normaldotu, 0, abs_tol=1e-08):
-
             return []
         intersection_abscissea = - self.frame.w.dot(w) / normaldotu
         if intersection_abscissea < 0 or intersection_abscissea > 1:
@@ -934,10 +936,10 @@ class ConicalSurface3D(Surface3D):
                                     z)
         return self.frame.old_coordinates(new_point)
 
-    def point3d_to_2d(self, point):
-        z = self.frame.w.dot(point)
-        x, y = point.plane_projection2d(self.frame.origin, self.frame.u,
-                                        self.frame.v)
+    def point3d_to_2d(self, point3d: volmdlr.Point3D):
+        z = self.frame.w.dot(point3d)
+        x, y = point3d.plane_projection2d(self.frame.origin, self.frame.u,
+                                          self.frame.v)
         theta = math.atan2(y, x)
         return volmdlr.Point2D(theta, z)
 
@@ -1495,17 +1497,22 @@ class Face3D(volmdlr.core.Primitive3D):
         return PlaneFace3D(new_contours, new_plane, new_points,
                            self.polygon2D.copy(), self.name)
 
-    def linesegment_intersection(self,
+    def linesegment_intersections(self,
                                  linesegment: volmdlr.edges.LineSegment3D,
                                  ) -> List[volmdlr.Point3D]:
 
         intersections = []
-        for intersection in  self.surface3d.linesegment_intersection(
+        for intersection in self.surface3d.linesegment_intersections(
             linesegment):
             if self.surface2d.point_belongs(intersection):
-                intersections.append(intersections)
+                intersections.append(intersection)
 
         return intersections
+
+    def plot(self, ax=None, color='k', alpha=1):
+        if not ax:
+            ax = plt.figure().add_subplot(111, projection='3d')
+        self.outer_contour3d.plot(ax=ax, color=color, alpha=alpha)
 
 class PlaneFace3D(Face3D):
     """
@@ -1702,30 +1709,6 @@ class PlaneFace3D(Face3D):
 
         return intersection_points
 
-    def plot(self, ax=None):
-        fig = plt.figure()
-        if ax is None:
-            ax = fig.add_subplot(111, projection='3d')
-
-        x = [p[0] for p in self.contours[0].tessel_points]
-        y = [p[1] for p in self.contours[0].tessel_points]
-        z = [p[2] for p in self.contours[0].tessel_points]
-
-        ax.scatter(x, y, z)
-        ax.set_xlabel('X Label')
-        ax.set_ylabel('Y Label')
-        ax.set_zlabel('Z Label')
-        for edge in self.contours[0].edges:
-            for point1, point2 in (
-            edge.points, edge.points[1:] + [edge.points[0]]):
-                xs = [point1[0], point2[0]]
-                ys = [point1[1], point2[1]]
-                zs = [point1[2], point2[2]]
-                line = mpl_toolkits.mplot3d.art3d.Line3D(xs, ys, zs)
-                ax.add_line(line)
-
-        plt.show()
-        return ax
 
     def minimum_distance(self, other_face, return_points=False):
         if other_face.__class__ is CylindricalFace3D:
