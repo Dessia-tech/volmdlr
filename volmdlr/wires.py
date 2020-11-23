@@ -26,7 +26,7 @@ class Wire:
             length += primitive.length()
         return length
 
-    def tesselation_points(self, resolution:float):
+    def discretization_points(self, resolution:float):
         length = self.length()
         n = int(length/resolution)
         return [self.point_at_abscissa(i/n*length) for i in range(n+1)]
@@ -98,11 +98,11 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                 intersection_points.append((p, primitive))
         return intersection_points
 
-    def tesselation_points(self):
-        points = []
-        for p in self.primitives:
-            points.extend(p.tessellation_points())
-        return points
+    # def discretization_points(self):
+    #     points = []
+    #     for p in self.primitives:
+    #         points.extend(p.tessellation_points())
+    #     return points
 
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
@@ -460,7 +460,7 @@ class Contour2D(Contour, Wire2D):
 
     def bounding_rectangle(self):
         # bounding rectangle
-        tp = self.tesselation_points()
+        tp = self.polygonization().points
         xmin = tp[0][0]
         xmax = tp[0][0]
         ymin = tp[0][1]
@@ -672,12 +672,11 @@ class Contour2D(Contour, Wire2D):
         return self.grid_triangulation(number_points_x=20,
                                        number_points_y=20)
 
-    def polygonization(self, min_x_density=None, min_y_density=None):
+    def polygonization(self):
         # points = self.primitives[0].polygon_points()
         points = []
         for primitive in self.primitives:
-            points.extend(primitive.polygon_points(min_x_density=min_x_density,
-                                                   min_y_density=min_y_density)[1:])
+            points.extend(primitive.polygon_points()[1:])
 
         return ClosedPolygon2D(points)
 
@@ -1088,9 +1087,9 @@ class Circle2D(Contour2D):
                and math.isclose(self.radius, other_circle.radius,
                                 abs_tol=1e-06)
 
-    def polygonization(self, min_x_density=None, min_y_density=None):
+    def polygonization(self):
 
-        return ClosedPolygon2D(self.tesselation_points())
+        return ClosedPolygon2D(self.discretization_points())
 
     def tessellation_points(self, resolution=40):
         return [(self.center
@@ -1237,11 +1236,8 @@ class Circle2D(Contour2D):
         triangles = [(i, i + 1, n) for i in range(n - 1)] + [(n - 1, 0, n)]
         return volmdlr.display_mesh.DisplayMesh(points, triangles)
 
-    def polygon_points(self, points_per_radian=10, min_x_density=None,
-                       min_y_density=None):
-        return volmdlr.edges.Arc2D.polygon_points(self, points_per_radian=points_per_radian,
-                                    min_x_density=min_x_density,
-                                    min_y_density=min_y_density)
+    def polygon_points(self, points_per_radian=10):
+        return volmdlr.edges.Arc2D.polygon_points(self, points_per_radian=points_per_radian)
 
 
 

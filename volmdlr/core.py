@@ -566,12 +566,12 @@ class BoundingBox(dc.DessiaObject):
     def from_points(cls, points):
         # if len(points) == 0:
         #     return (0, 0, 0, 0, 0, 0)
-        xmin = min([pt[0] for pt in points])
-        xmax = max([pt[0] for pt in points])
-        ymin = min([pt[1] for pt in points])
-        ymax = max([pt[1] for pt in points])
-        zmin = min([pt[2] for pt in points])
-        zmax = max([pt[2] for pt in points])
+        xmin = min([pt.x for pt in points])
+        xmax = max([pt.x for pt in points])
+        ymin = min([pt.y for pt in points])
+        ymax = max([pt.y for pt in points])
+        zmin = min([pt.z for pt in points])
+        zmax = max([pt.z for pt in points])
         return cls(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def volume(self):
