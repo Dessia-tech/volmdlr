@@ -545,15 +545,18 @@ class Point2D(Vector2D):
 
 
     @classmethod
+
+   
     def line_intersection(cls, line1, line2, curvilinear_abscissa=False):
-        x1 = line1[0].x
-        y1 = line1[0].y
-        x2 = line1[1].x
-        y2 = line1[1].y
-        x3 = line2[0].x
-        y3 = line2[0].y
-        x4 = line2[1].x
-        y4 = line2[1].y
+        x1 = line1.points[0].x
+        y1 = line1.points[0].y
+        x2 = line1.points[1].x
+        y2 = line1.points[1].y
+        x3 = line2.points[0].x
+        y3 = line2.points[0].y
+        x4 = line2.points[1].x
+        y4 = line2.points[1].y
+
 
         denominateur = (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4)
         if math.isclose(denominateur, 0, abs_tol=1e-6):

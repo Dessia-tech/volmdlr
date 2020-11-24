@@ -7,10 +7,11 @@ from packaging import version
 import math
 import numpy as npy
 import scipy as scp
+
+from geomdl import utilities
 from geomdl import BSpline
 
 from geomdl.operations import length_curve
-# from geomdl import utilities
 
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import __version__ as _mpl_version
@@ -21,9 +22,6 @@ from typing import List
 import dessia_common as dc
 import volmdlr.core
 import plot_data.core as plot_data
-
-
-# import volmdlr.primitives3D
 
 
 def standardize_knot_vector(knot_vector):
@@ -194,12 +192,29 @@ class Line(dc.DessiaObject):
         projection = self.point1 + t * u
 
         return projection, t * norm_u
+    def line_intersections(self, line):
+        point = volmdlr.Point2D.line_intersection(self, line)
+        if point is not None:
+            point_projection1, _ = self.point_projection(point)
+            if point_projection1 is None:
+                return []
+
+            if line.__class__.__name__ == 'Line2D':
+                point_projection2, _ = line.point_projection(point)
+                if point_projection2 is None:
+                    return []
+
+
+            return [point_projection1]
+        else:
+            return []
 
     def abscissa(self, point):
         u = self.point2 - self.point1
         norm_u = u.norm()
         t = (point - self.point1).dot(u) / norm_u
         return t
+
 
     def split(self, split_point):
         return [self.__class__(self.point1, split_point),
@@ -245,6 +260,7 @@ class Line2D(Line):
     """
 
     def __init__(self, point1, point2, *, name=''):
+        self.points=[point1,point2]
         Line.__init__(self, point1, point2, name=name)
 
     def to_3d(self, plane_origin, x1, x2):
@@ -562,6 +578,7 @@ class LineSegment2D(LineSegment):
     """
 
     def __init__(self, start, end, *, name=''):
+        self.points=[start,end]
         Edge.__init__(self, start, end, name=name)
 
     def length(self):
@@ -609,8 +626,44 @@ class LineSegment2D(LineSegment):
         else:
             return []
 
+    def discretise(self,n:float):
+        
+        
+         segment_to_nodes={}
+    
+         
+         nodes=[]
+         if n*self.length() < 1 :
+            segment_to_nodes[self]=[self.start,self.end]
+         else :
+             n0= int(math.ceil(n*self.length()))
+             l0=self.length()/n0
+                    
+             for k in range(n0):
+                                 
+                 node=self.point_at_abscissa(k*l0)                 
+                 nodes.append(node)
+                 
+             if self.end not in nodes :
+                nodes.append(self.end)
+                 
+             if self.start not in nodes :
+                nodes.insert(0,self.start)
+                
+             segment_to_nodes[self]=nodes
+
+        
+
+
+         return segment_to_nodes[self]
+     
+        
+     
+
+
 
     def plot(self, ax=None, color='k', alpha=1, arrow=False, width=None,
+
                 plot_points=False):
         if ax is None:
             fig, ax = plt.subplots()
@@ -692,8 +745,10 @@ class LineSegment2D(LineSegment):
             else:
                 self.points = [frame.NewCoordinates(p) for p in self.points]
 
+
     def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
         return plot_data.Line2D(data=[self.start.x, self.start.y,
+
                                               self.end.x, self.end.y],
                                         plot_data_states=plot_data_states)
 
@@ -986,11 +1041,38 @@ class Arc2D(Edge):
     #     else:
     #         return list_node[::-1]
 
+
+    def discretise(self,n:float):
+        
+        arc_to_nodes={}
+        nodes=[]
+        if n*self.length() < 1 :
+            arc_to_nodes[self]=[self.start,self.end]
+        else :
+             n0= int(math.ceil(n*self.length()))
+             l0=self.length()/n0
+                    
+             for k in range(n0):
+                               
+                 node=self.point_at_abscissa(k*l0)
+                                       
+                 nodes.append(node)
+             nodes.insert(len(nodes),self.end)
+                   
+             arc_to_nodes[self]=nodes
+             
+        
+        return arc_to_nodes[self] 
+ 
+
+   
     def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
+
         list_node = self.Discretise()
         data = []
         for nd in list_node:
             data.append({'x': nd.x, 'y': nd.y})
+
         return plot_data.Arc2D(cx=self.center.x,
                                        cy=self.center.y,
                                        data=data,
@@ -998,6 +1080,7 @@ class Arc2D(Edge):
                                        angle1=self.angle1,
                                        angle2=self.angle2,
                                        plot_data_states=plot_data_states)
+
 
     def copy(self):
         return Arc2D(self.start.copy(),
