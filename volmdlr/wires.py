@@ -15,28 +15,17 @@ from typing import List
 import volmdlr
 import volmdlr.core
 from volmdlr.core_compiled import polygon_point_belongs
-import volmdlr.edges
-import plot_data
-
-
+import volmdlr.plot_data
 from volmdlr.core_compiled import (
                             LineSegment2DPointDistance,
                             polygon_point_belongs, Matrix22
                             )
-import volmdlr.edges as edges
+import volmdlr.edges 
 import itertools
 from typing import List, Tuple,Dict
 from scipy.spatial import Delaunay
 
-class Wire2D(volmdlr.core.CompositePrimitive2D):
-    """
-    A collection of simple primitives, following each other making a wire
-    """
 
-    def __init__(self, primitives, name=''):
-        volmdlr.core.CompositePrimitive2D.__init__(self, primitives, name)
-
-    # TODO: method to check if it is a wire
 
 class Wire:
 
@@ -102,8 +91,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         offset_intersections=[]
         
         for primitive in self.primitives:
-            if isinstance(primitive,edges.LineSegment2D):
-                infinite_primitive=edges.Line2D(primitive.start,primitive.end).translation(volmdlr.Vector2D(offset,-offset))
+            if isinstance(primitive,volmdlr.edges.LineSegment2D):
+                infinite_primitive=volmdlr.edges.Line2D(primitive.start,primitive.end).translation(volmdlr.Vector2D(offset,-offset))
                 infinite_primitives.append(infinite_primitive)
             else :
                 infinite_primitive=Circle2D(primitive.center,primitive.radius-offset)
@@ -111,8 +100,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         nb=len(infinite_primitives)
         for i in range(nb-1):
             if infinite_primitives[i].__class__.__name__=='Line2D' and infinite_primitives[i+1].__class__.__name__=='Line2D':
-               intersection=infinite_primitives[i].line_intersections(infinite_primitives[i+1])[0]
-               offset_intersections.append(([intersection,intersection],'Line2D'))
+                intersection=infinite_primitives[i].line_intersections(infinite_primitives[i+1])[0]
+                offset_intersections.append(([intersection,intersection],'Line2D'))
             if infinite_primitives[i].__class__.__name__=='Line2D' and infinite_primitives[i+1].__class__.__name__=='Circle2D':   
                 
                 intersections=infinite_primitives[i+1].line_intersections(infinite_primitives[i])
@@ -123,30 +112,30 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                 intersections=infinite_primitives[i].line_intersections(infinite_primitives[i+1])
                 intersections.reverse()
                 offset_intersections.append((intersections,'Line2D'))
-            # if infinite_primitives[i+1].__class__.__name__=='Circle2D' and infinite_primitives[i].__class__.__name__=='Circle2D':    
-            #    intersections=infinite_primitives[i].circle_intersections(infinite_primitives[i+1])
-            #    offset_intersections.append((intersections,'Circle2D')) 
+            if infinite_primitives[i+1].__class__.__name__=='Circle2D' and infinite_primitives[i].__class__.__name__=='Circle2D':    
+                intersections=infinite_primitives[i].circle_intersections(infinite_primitives[i+1])
+                offset_intersections.append((intersections,'Circle2D')) 
                 
         if self.primitives[0].__class__.__name__=='LineSegment2D':
-            offset_primitives.append(edges.LineSegment2D(infinite_primitives[0].point1,offset_intersections[0][0][0]))
+            offset_primitives.append(volmdlr.edges.LineSegment2D(infinite_primitives[0].point1,offset_intersections[0][0][0]))
         else :
             new_arc=self.primitives[0].translation(volmdlr.Vector2D(offset,-offset))
-            a=edges.Arc2D(new_arc.start,new_arc.interior,offset_intersections[0][0][1])
+            a=volmdlr.edges.Arc2D(new_arc.start,new_arc.interior,offset_intersections[0][0][1])
             offset_primitives.append(a)
         if self.primitives[-1].__class__.__name__=='LineSegment2D':
-            offset_primitives.append(edges.LineSegment2D(offset_intersections[-1][0][0],infinite_primitives[-1].point2))
+            offset_primitives.append(volmdlr.edges.LineSegment2D(offset_intersections[-1][0][0],infinite_primitives[-1].point2))
         else :
             new_arc=self.primitives[-1].translation(volmdlr.Vector2D(offset,-offset))
-            a=edges.Arc2D(new_arc.start,new_arc.interior,offset_intersections[0][0][0])  
+            a=volmdlr.edges.Arc2D(offset_intersections[-1][0][1],new_arc.interior,new_arc.end)  
             offset_primitives.append(a)
         for j in range(len(offset_intersections)-1):
             if offset_intersections[j][1]=='Line2D':
-                offset_primitives.append(edges.LineSegment2D(offset_intersections[j][0][1],
+                offset_primitives.append(volmdlr.edges.LineSegment2D(offset_intersections[j][0][1],
                                                       offset_intersections[j+1][0][1]))
             else :
                 
                 interior=infinite_primitives[offset_intersections[j][2]].border_points()[0]
-                a=edges.Arc2D(offset_intersections[j][0][0],interior,offset_intersections[j+1][0][0])
+                a=volmdlr.edges.Arc2D(offset_intersections[j][0][0],interior,offset_intersections[j+1][0][0])
                 offset_primitives.append(a)
         return Wire2D(offset_primitives)
 
@@ -162,7 +151,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                                                          opacity=opacity))
         return plot_data
 
-    def line_intersections(self, line: 'Line2D'):
+    def line_intersections(self, line: 'volmdlr.edges.Line2D'):
         """
         Returns a list of intersection in ther form of a tuple (point, primitive)
         of the wire primitives intersecting with the line
@@ -463,13 +452,13 @@ class Contour2D(Contour, Wire2D):
 
         return A
 
-    def plot_data(self, plot_data_states: List[plot_data.PlotDataState] = None):
-        if plot_data_states is None:
-            plot_data_states = [plot_data.PlotDataState()]
-        plot_data_primitives = [item.plot_data(plot_data_states=plot_data_states) for item in self.primitives]
-        return plot_data.PlotDataContour2D(plot_data_primitives=plot_data_primitives,
-                                           plot_data_states=plot_data_states,
-                                           name=self.name)
+    # def plot_data(self, plot_data_states: List[volmdlr.plot_data.PlotDataState] = None):
+    #     if plot_data_states is None:
+    #         plot_data_states = [volmdlr.plot_data.PlotDataState()]
+    #     plot_data_primitives = [item.plot_data(plot_data_states=plot_data_states) for item in self.primitives]
+    #     return volmdlr.plot_data.PlotDataContour2D(plot_data_primitives=plot_data_primitives,
+    #                                         plot_data_states=plot_data_states,
+    #                                         name=self.name)
 
     def copy(self):
         primitives_copy = []
@@ -534,26 +523,21 @@ class Contour2D(Contour, Wire2D):
     #     return points
 
     def bounding_rectangle(self):
-        # bounding rectangle
-        tp = self.polygonization().points
-        xmin = tp[0][0]
-        xmax = tp[0][0]
-        ymin = tp[0][1]
-        ymax = tp[0][1]
-        for point in tp[1:]:
-            xmin = min(point[0], xmin)
-            xmax = max(point[0], xmax)
-            ymin = min(point[1], ymin)
-            ymax = max(point[1], ymax)
+        points = self.straight_line_contour_polygon.points[:]
+        for arc in self.internal_arcs + self.external_arcs:
+            points.extend(arc.tessellation_points())
+        xmin = min([p[0] for p in points])
+        xmax = max([p[0] for p in points])
+        ymin = min([p[1] for p in points])
+        ymax = max([p[1] for p in points])
         return xmin, xmax, ymin, ymax
-<<<<<<< HEAD
+
     
  
     
-=======
 
 
->>>>>>> merge_mesh_dev
+
     def random_point_inside(self):
         xmin, xmax, ymin, ymax = self.bounding_rectangle()
         for i in range(1000):
@@ -680,7 +664,7 @@ class Contour2D(Contour, Wire2D):
             return contours
 
         raise NotImplementedError(
-<<<<<<< HEAD
+
             '{} intersections not supported yet'.format(len(intersections)))
     def get_pattern(self):
         """ A pattern is portion of the contour from which the contour can be 
@@ -713,13 +697,13 @@ class Contour2D(Contour, Wire2D):
       
             primitives=[]
            
-            a=edges.Arc2D(sp12.end,sp12.interior,sp12.start)
+            a=volmdlr.edges.Arc2D(sp12.end,sp12.interior,sp12.start)
             primitives.append(a)
             primitives.extend(self.primitives[:ip3])
             primitives.append(sp22) 
-            l=edges.LineSegment2D(sp22.start,sp12.end)
+            l=volmdlr.edges.LineSegment2D(sp22.start,sp12.end)
             interior=l.PointAtCurvilinearAbscissa(l.Length()/2)
-            primitives.append(edges.Arc2D(sp22.start,interior,sp12.end))
+            primitives.append(volmdlr.edges.Arc2D(sp22.start,interior,sp12.end))
    
         return Contour2D(primitives)  
     
@@ -732,10 +716,8 @@ class Contour2D(Contour, Wire2D):
             pattern_rotations.append(new_pattern)
    
         return pattern_rotations 
-=======
-            '{} intersections not supported yet'.format(n_inter))
 
->>>>>>> merge_mesh_dev
+
     def simple_triangulation(self):
         lpp = len(self.polygon.points)
         if lpp == 3:
@@ -780,39 +762,35 @@ class Contour2D(Contour, Wire2D):
         return self.grid_triangulation(number_points_x=20,
                                        number_points_y=20)
 
-<<<<<<< HEAD
-    def polygonization(self,n:float):
+
+    def to_polygon(self,n:float):
        
         polygon_points=[]
-        if self.primitives[0].__class__.__name__ == 'Circle2D':
-            for point in self.discretise(n):
-                if point not in polygon_points:
-                    polygon_points.append(point)
+        # if self.primitives[0].__class__.__name__ == 'Circle2D':
+        #     for point in self.discretise(n):
+        #         if point not in polygon_points:
+        #             polygon_points.append(point)
            
-        else :
-            for primitive in self.primitives:
-                if isinstance(primitive,edges.LineSegment2D):
-                    
-                    if primitive.start not in polygon_points:
-                        polygon_points.append(primitive.start)
-                     
-                    if primitive.end not in polygon_points:
-                        polygon_points.append(primitive.end)
-                   
-                else :
-                      for point in primitive.discretise(n):
-                          if point not in polygon_points:
-                              polygon_points.append(point)
+       
+        for primitive in self.primitives:
+            if isinstance(primitive,volmdlr.edges.LineSegment2D):
+                
+                if primitive.start not in polygon_points:
+                    polygon_points.append(primitive.start)
+                 
+                if primitive.end not in polygon_points:
+                    polygon_points.append(primitive.end)
+               
+            else :
+                  for point in primitive.discretise(n):
+                      if point not in polygon_points:
+                          polygon_points.append(point)
               
 
         return ClosedPolygon2D(polygon_points)
-=======
-    def polygonization(self):
-        # points = self.primitives[0].polygon_points()
-        points = []
-        for primitive in self.primitives:
-            points.extend(primitive.polygon_points()[1:])
->>>>>>> merge_mesh_dev
+
+
+
 
         
 
@@ -873,10 +851,8 @@ class Contour2D(Contour, Wire2D):
                     triangles.append([point_index[p] for p in points_in])
 
         return volmdlr.display_mesh.DisplayMesh2D(points, triangles)
-<<<<<<< HEAD
-    
-=======
->>>>>>> merge_mesh_dev
+
+
 
 class ClosedPolygon2D(Contour2D):
 
@@ -970,7 +946,7 @@ class ClosedPolygon2D(Contour2D):
         else:
             for p in self.points:
                 p.translation(offset, copy=False)
-<<<<<<< HEAD
+
     def polygon_distance(self,polygon:'ClosedPolygon2D'):
         p=self.points[0]
         d=[]
@@ -1005,24 +981,19 @@ class ClosedPolygon2D(Contour2D):
         
         tri=Delaunay(delaunay)
         
-       
-       
-        
+
       
         for simplice in delaunay[tri.simplices]:
         
             triangle=Triangle2D([volmdlr.Point2D(simplice[0]),volmdlr.Point2D(simplice[1]),volmdlr.Point2D(simplice[2])])
             delaunay_triangles.append(triangle)
-            # triangle.MPLPlot(ax=ax,color='g')
+           
      
             
             
             
         return delaunay_triangles         
-  
-=======
 
->>>>>>> merge_mesh_dev
     def offset(self, offset):
         xmin, xmax, ymin, ymax = self.bounding_rectangle()
 
@@ -1150,19 +1121,16 @@ class ClosedPolygon2D(Contour2D):
                     if segment1[0] != segment2[0] and segment1[1] != segment2[
                         1] and segment1[0] != segment2[1] and segment1[1] != \
                             segment2[0]:
-
+                        
                         line1 = volmdlr.edges.LineSegment2D(
-                            volmdlr.Point2D(self.points[segment1[0]]),
-                            volmdlr.Point2D(self.points[segment1[1]]))
+                            self.points[segment1[0]],
+                            self.points[segment1[1]])
                         line2 = volmdlr.edges.LineSegment2D(
-                            volmdlr.Point2D(self.points[segment2[0]]),
-                            volmdlr.Point2D(self.points[segment2[1]]))
+                            self.points[segment2[0]],
+                            self.points[segment2[1]])
 
-<<<<<<< HEAD
+
                         p, a, b = volmdlr.Point2D.line_intersection(line1, line2, True)
-=======
-                        p, a, b = volmdlr.Point2D.LinesIntersection(line1, line2, True)
->>>>>>> merge_mesh_dev
 
                         if p is not None:
                             if a >= 0 + epsilon and a <= 1 - epsilon and b >= 0 + epsilon and b <= 1 - epsilon:
@@ -1201,10 +1169,10 @@ class ClosedPolygon2D(Contour2D):
         vec1 = point_start - barycenter
         for pt in remaining_points:
             vec2 = pt - point_start
-            theta_i = -clockwise_angle(vec1, vec2)
+            theta_i = -volmdlr.core.clockwise_angle(vec1, vec2)
             theta.append(theta_i)
 
-        min_theta, posmin_theta = min_pos(theta)
+        min_theta, posmin_theta = volmdlr.core.min_pos(theta)
         thetac += min_theta
         next_point = remaining_points[posmin_theta]
         hull.append(next_point)
@@ -1217,10 +1185,10 @@ class ClosedPolygon2D(Contour2D):
             theta = []
             for pt in remaining_points:
                 vec2 = pt - next_point
-                theta_i = -clockwise_angle(vec1, vec2)
+                theta_i = -volmdlr.core.clockwise_angle(vec1, vec2)
                 theta.append(theta_i)
 
-            min_theta, posmin_theta = min_pos(theta)
+            min_theta, posmin_theta = volmdlr.core.min_pos(theta)
             thetac += min_theta
             next_point = remaining_points[posmin_theta]
             hull.append(next_point)
@@ -1257,7 +1225,7 @@ class ClosedPolygon2D(Contour2D):
 
         return ax
 
-<<<<<<< HEAD
+
 class Triangle2D(ClosedPolygon2D):
     
     
@@ -1318,7 +1286,7 @@ class Triangle2D(ClosedPolygon2D):
         return E/h
     
     
-    def mesh_triangle(self,segment_to_nodes:Dict[edges.LineSegment2D,List[volmdlr.Point2D]],n:float):
+    def mesh_triangle(self,segment_to_nodes:Dict[volmdlr.edges.LineSegment2D,List[volmdlr.Point2D]],n:float):
   
         segments=self.line_segments
         min_segment=None
@@ -1390,19 +1358,19 @@ class Triangle2D(ClosedPolygon2D):
          
             for k in range(0,len(nodes_1)-1):
               
-                interior_segment=edges.LineSegment2D(nodes_0[k+1],nodes_1[k])
+                interior_segment=volmdlr.edges.LineSegment2D(nodes_0[k+1],nodes_1[k])
                 interior_segments.append(interior_segment)
                 
             for k in range(len(nodes_1),len(nodes_0)-1):
-                interior_segment=edges.LineSegment2D(nodes_0[k],nodes_1[len(nodes_1)-2])
+                interior_segment=volmdlr.edges.LineSegment2D(nodes_0[k],nodes_1[len(nodes_1)-2])
                 interior_segments.append(interior_segment)  
         if len(nodes_1)>len(nodes_0):
             for k in range(0,len(nodes_0)-1):
-                interior_segment=edges.LineSegment2D(nodes_1[k+1],nodes_0[k])
+                interior_segment=volmdlr.edges.LineSegment2D(nodes_1[k+1],nodes_0[k])
                 interior_segments.append(interior_segment)
                 
             for k in range(len(nodes_0),len(nodes_1)-1):
-                interior_segment=edges.LineSegment2D(nodes_1[k],nodes_0[len(nodes_0)-2])
+                interior_segment=volmdlr.edges.LineSegment2D(nodes_1[k],nodes_0[len(nodes_0)-2])
                 interior_segments.append(interior_segment) 
            
                
@@ -1410,7 +1378,7 @@ class Triangle2D(ClosedPolygon2D):
 
             for k in range(1,len(nodes_0)-1):
              
-                interior_segment=edges.LineSegment2D(nodes_1[k],nodes_0[k])
+                interior_segment=volmdlr.edges.LineSegment2D(nodes_1[k],nodes_0[k])
                 interior_segments.append(interior_segment)
                 
         if len(nodes_0)==2 and len(nodes_1)==2:
@@ -1440,7 +1408,7 @@ class Triangle2D(ClosedPolygon2D):
             u=len(interior_segment_nodes[interior_segments[k]])
             v=len(interior_segment_nodes[interior_segments[k+1]])
           
-            line=edges.Line2D(interior_segment_nodes[interior_segments[k]][0],interior_segment_nodes[interior_segments[k+1]][0])
+            line=volmdlr.edges.Line2D(interior_segment_nodes[interior_segments[k]][0],interior_segment_nodes[interior_segments[k+1]][0])
            
             projection, _= line.point_projection(edge)
             if projection !=edge:
@@ -1719,7 +1687,9 @@ class Circle2D(Contour2D):
                                 other_circle.center.y, abs_tol=1e-06) \
                and math.isclose(self.radius, other_circle.radius,
                                 abs_tol=1e-06)
-
+    def to_polygon(self,n:float):
+        return ClosedPolygon2D(self.discretise(n))
+        
     def polygonization(self):
 
         return ClosedPolygon2D(self.discretization_points())
@@ -1761,9 +1731,9 @@ class Circle2D(Contour2D):
         else:
             P1 = line.points[0]
             V = line.points[1] - line.points[0]
-        a = V.Dot(V)
-        b = 2 * V.Dot(P1 - Q)
-        c = P1.Dot(P1) + Q.Dot(Q) - 2 * P1.Dot(Q) - self.radius ** 2
+        a = V.dot(V)
+        b = 2 * V.dot(P1 - Q)
+        c = P1.dot(P1) + Q.dot(Q) - 2 * P1.dot(Q) - self.radius ** 2
 
         disc = b ** 2 - 4 * a * c
         if disc < 0:
@@ -1816,17 +1786,9 @@ class Circle2D(Contour2D):
             x4=x2-h*(y1-y0)/d
             y4=y2+h*(x1-x0)/d
             
-            return (volmdlr.Point2D(x3, y3), volmdlr.Point2D(x4, y4))   
+        return (volmdlr.Point2D(x3, y3), volmdlr.Point2D(x4, y4))   
          
-=======
-                return [P1 + t1 * V]
-            elif not 0 <= t1 <= 1 and 0 <= t2 <= 1:
-                return [P1 + t2 * V]
-            else:
-                [P1 + t1 * V, P1 + t2 * V]
 
-
->>>>>>> merge_mesh_dev
     def length(self):
         return volmdlr.TWO_PI * self.radius
 
@@ -1901,11 +1863,11 @@ class Circle2D(Contour2D):
         center = 2 * point - self.center
         return Circle2D(center, self.radius)
 
-    def plot_data(self, plot_data_states: List[plot_data.PlotDataState] = None):
-        return plot_data.PlotDataCircle2D(cx=self.center.x,
-                                          cy=self.center.y,
-                                          r=self.radius,
-                                          plot_data_states=plot_data_states)
+    # def plot_data(self, plot_data_states: List[volmdlr.plot_data.PlotDataState] = None):
+    #     return volmdlr.plot_data.PlotDataCircle2D(cx=self.center.x,
+    #                                       cy=self.center.y,
+    #                                       r=self.radius,
+    #                                       plot_data_states=plot_data_states)
 
     def copy(self):
         return Circle2D(self.center.copy(), self.radius)
@@ -1923,8 +1885,8 @@ class Circle2D(Contour2D):
 
     def split(self, split_point1,split_point2):
         
-        return [edges.Arc2D(split_point1,self.border_points()[0],split_point2),
-                edges.Arc2D(split_point2,self.border_points()[1], split_point1)] 
+        return [volmdlr.edges.Arc2D(split_point1,self.border_points()[0],split_point2),
+                volmdlr.edges.Arc2D(split_point2,self.border_points()[1], split_point1)] 
     def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
         start = self.center + self.radius * volmdlr.X3D
         return start.rotation(self.center,
@@ -1954,7 +1916,7 @@ class Circle2D(Contour2D):
         return circle_to_nodes[self]
     def polygon_points(self, points_per_radian=10, min_x_density=None,
                        min_y_density=None):
-        return edges.Arc2D.polygon_points(self, points_per_radian=points_per_radian,
+        return volmdlr.edges.Arc2D.polygon_points(self, points_per_radian=points_per_radian,
                                     min_x_density=min_x_density,
                                     min_y_density=min_y_density)
 

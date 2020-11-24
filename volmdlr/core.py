@@ -924,13 +924,13 @@ class BoundingBox(dc.DessiaObject):
             net_point2 = frame.OldCoordinates(point2_2d)
 
             # Computes the 3D intersection between the net_line and the edges of the face_point1
-            net_line = LineSegment2D(point1_2d, net_point2)
+            net_line = edges.LineSegment2D(point1_2d, net_point2)
             vertex_points = vertex_2d_coordinate_dict[face_point1]
-            edge_lines = [LineSegment2D(p1, p2) for p1, p2 in
+            edge_lines = [edges.LineSegment2D(p1, p2) for p1, p2 in
                           zip(vertex_points,
                               vertex_points[1:] + [vertex_points[0]])]
             for line in edge_lines:
-                edge_intersection_point, a, b = Point2D.LinesIntersection(
+                edge_intersection_point, a, b = volmdlr.Point2D.LinesIntersection(
                     net_line, line, curvilinear_abscissa=True)
                 if edge_intersection_point is not None \
                         and a > 0 and a < 1 and b > 0 and b < 1:

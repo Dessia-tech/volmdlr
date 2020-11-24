@@ -1550,13 +1550,9 @@ class BSplineSurface3D(Surface3D):
         self.degree_v = degree_v
         self.nb_u = nb_u
         self.nb_v = nb_v
-<<<<<<< HEAD
-        u_knots = volmdlr.core.standardize_knot_vector(u_knots)
-        v_knots = volmdlr.core.standardize_knot_vector(v_knots)
-=======
+
         u_knots = volmdlr.edges.standardize_knot_vector(u_knots)
         v_knots = volmdlr.edges.standardize_knot_vector(v_knots)
->>>>>>> merge_mesh_dev
         self.u_knots = u_knots
         self.v_knots = v_knots
         self.u_multiplicities = u_multiplicities

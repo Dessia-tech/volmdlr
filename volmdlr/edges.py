@@ -7,17 +7,12 @@ from packaging import version
 import math
 import numpy as npy
 import scipy as scp
-<<<<<<< HEAD
-# from geomdl import BSplines
+
 from geomdl import utilities
-from geomdl import BSpline
-=======
 from geomdl import BSpline
 
 from geomdl.operations import length_curve
-# from geomdl import utilities
 
->>>>>>> merge_mesh_dev
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import __version__ as _mpl_version
 import matplotlib.pyplot as plt
@@ -26,10 +21,10 @@ from typing import List
 
 import dessia_common as dc
 import volmdlr.core
-import plot_data
+import volmdlr.plot_data
 
 
-# import volmdlr.primitives3D
+
 
 
 def standardize_knot_vector(knot_vector):
@@ -212,18 +207,18 @@ class Line(dc.DessiaObject):
                 if point_projection2 is None:
                     return []
 
-<<<<<<< HEAD
+
             return [point_projection1]
         else:
             return []
-=======
+
     def abscissa(self, point):
         u = self.point2 - self.point1
         norm_u = u.norm()
         t = (point - self.point1).dot(u) / norm_u
         return t
 
->>>>>>> merge_mesh_dev
+
     def split(self, split_point):
         return [self.__class__(self.point1, split_point),
                 self.__class__(split_point, self.point2)]
@@ -268,6 +263,7 @@ class Line2D(Line):
     """
 
     def __init__(self, point1, point2, *, name=''):
+        self.points=[point1,point2]
         Line.__init__(self, point1, point2, name=name)
 
     def to_3d(self, plane_origin, x1, x2):
@@ -587,6 +583,7 @@ class LineSegment2D(LineSegment):
     """
 
     def __init__(self, start, end, *, name=''):
+        self.points=[start,end]
         Edge.__init__(self, start, end, name=name)
 
     def length(self):
@@ -633,7 +630,7 @@ class LineSegment2D(LineSegment):
             return [point_projection1]
         else:
             return []
-<<<<<<< HEAD
+
     def discretise(self,n:float):
         
         
@@ -667,12 +664,11 @@ class LineSegment2D(LineSegment):
      
         
      
-    def plot(self, ax=None, color='k', arrow=False, width=None,
-=======
+
 
 
     def plot(self, ax=None, color='k', alpha=1, arrow=False, width=None,
->>>>>>> merge_mesh_dev
+
                 plot_points=False):
         if ax is None:
             fig, ax = plt.subplots()
@@ -754,10 +750,10 @@ class LineSegment2D(LineSegment):
             else:
                 self.points = [frame.NewCoordinates(p) for p in self.points]
 
-    def plot_data(self, plot_data_states: List[plot_data.PlotDataState] = None):
-        return plot_data.PlotDataLine2D(data=[self.start.x, self.start.y,
-                                              self.end.x, self.end.y],
-                                        plot_data_states=plot_data_states)
+    # def plot_data(self, plot_data_states: List[volmdlr.plot_data.PlotDataState] = None):
+    #     return volmdlr.plot_data.PlotDataLine2D(data=[self.start.x, self.start.y,
+    #                                           self.end.x, self.end.y],
+    #                                     plot_data_states=plot_data_states)
 
     def CreateTangentCircle(self, point, other_line):
         circle1, circle2 = Line2D.CreateTangentCircle(other_line, point, self)
@@ -1046,7 +1042,7 @@ class Arc2D(Edge):
     #         return list_node
     #     else:
     #         return list_node[::-1]
-<<<<<<< HEAD
+
     def discretise(self,n:float):
         
         arc_to_nodes={}
@@ -1057,41 +1053,32 @@ class Arc2D(Edge):
              n0= int(math.ceil(n*self.length()))
              l0=self.length()/n0
                     
-   
              for k in range(n0):
-                      
-                             
+                               
                  node=self.point_at_abscissa(k*l0)
-                
-                 
-                 # node=Point2D([(1-k/l0)*self.point1[0]+self.point2[0]*k/l0,(1-k/l0)*self.point1[1]+self.point2[1]*k/l0])
-                       
+                                       
                  nodes.append(node)
              nodes.insert(len(nodes),self.end)
                    
              arc_to_nodes[self]=nodes
              
         
-               
-            
         return arc_to_nodes[self] 
-    def plot_data(self, marker=None, color='black', stroke_width=1, dash=False,
-                  opacity=1):
-=======
+ 
 
-    def plot_data(self, plot_data_states: List[plot_data.PlotDataState] = None):
->>>>>>> merge_mesh_dev
-        list_node = self.Discretise()
-        data = []
-        for nd in list_node:
-            data.append({'x': nd.x, 'y': nd.y})
-        return plot_data.PlotDataArc2D(cx=self.center.x,
-                                       cy=self.center.y,
-                                       data=data,
-                                       r=self.radius,
-                                       angle1=self.angle1,
-                                       angle2=self.angle2,
-                                       plot_data_states=plot_data_states)
+    # def plot_data(self, plot_data_states: List[volmdlr.plot_data.PlotDataState] = None):
+
+    #     list_node = self.Discretise()
+    #     data = []
+    #     for nd in list_node:
+    #         data.append({'x': nd.x, 'y': nd.y})
+    #     return volmdlr.plot_data.PlotDataArc2D(cx=self.center.x,
+    #                                     cy=self.center.y,
+    #                                     data=data,
+    #                                     r=self.radius,
+    #                                     angle1=self.angle1,
+    #                                     angle2=self.angle2,
+    #                                     plot_data_states=plot_data_states)
 
     def copy(self):
         return Arc2D(self.start.copy(),
