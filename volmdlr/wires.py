@@ -89,14 +89,16 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         offset_primitives=[]
         infinite_primitives=[]
         offset_intersections=[]
-        
+        ax=self.plot()
         for primitive in self.primitives:
             if isinstance(primitive,volmdlr.edges.LineSegment2D):
                 infinite_primitive=volmdlr.edges.Line2D(primitive.start,primitive.end).translation(volmdlr.Vector2D(offset,-offset))
                 infinite_primitives.append(infinite_primitive)
+                infinite_primitive.plot(ax=ax)
             else :
                 infinite_primitive=Circle2D(primitive.center,primitive.radius-offset)
                 infinite_primitives.append(infinite_primitive)
+                infinite_primitive.plot(ax=ax)
         nb=len(infinite_primitives)
         for i in range(nb-1):
             if infinite_primitives[i].__class__.__name__=='Line2D' and infinite_primitives[i+1].__class__.__name__=='Line2D':
@@ -110,32 +112,36 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
             if infinite_primitives[i+1].__class__.__name__=='Line2D' and infinite_primitives[i].__class__.__name__=='Circle2D':  
                 
                 intersections=infinite_primitives[i].line_intersections(infinite_primitives[i+1])
-                intersections.reverse()
+                # intersections.reverse()
+                intersections[0].plot(ax=ax,color='r')
                 offset_intersections.append((intersections,'Line2D'))
             if infinite_primitives[i+1].__class__.__name__=='Circle2D' and infinite_primitives[i].__class__.__name__=='Circle2D':    
                 intersections=infinite_primitives[i].circle_intersections(infinite_primitives[i+1])
-                offset_intersections.append((intersections,'Circle2D')) 
+                intersections.reverse()
+                offset_intersections.append((intersections,'Circle2D',i+1)) 
                 
+                intersections[0].plot(ax=ax,color='g')
+                intersections[1].plot(ax=ax,color='b')
         if self.primitives[0].__class__.__name__=='LineSegment2D':
             offset_primitives.append(volmdlr.edges.LineSegment2D(infinite_primitives[0].point1,offset_intersections[0][0][0]))
         else :
             new_arc=self.primitives[0].translation(volmdlr.Vector2D(offset,-offset))
-            a=volmdlr.edges.Arc2D(new_arc.start,new_arc.interior,offset_intersections[0][0][1])
+            a=volmdlr.edges.Arc2D(new_arc.start,new_arc.interior,offset_intersections[0][0][0])
             offset_primitives.append(a)
         if self.primitives[-1].__class__.__name__=='LineSegment2D':
-            offset_primitives.append(volmdlr.edges.LineSegment2D(offset_intersections[-1][0][0],infinite_primitives[-1].point2))
+            offset_primitives.append(volmdlr.edges.LineSegment2D(offset_intersections[-1][0][1],infinite_primitives[-1].point2))
         else :
             new_arc=self.primitives[-1].translation(volmdlr.Vector2D(offset,-offset))
             a=volmdlr.edges.Arc2D(offset_intersections[-1][0][1],new_arc.interior,new_arc.end)  
             offset_primitives.append(a)
         for j in range(len(offset_intersections)-1):
             if offset_intersections[j][1]=='Line2D':
-                offset_primitives.append(volmdlr.edges.LineSegment2D(offset_intersections[j][0][1],
+                offset_primitives.append(volmdlr.edges.LineSegment2D(offset_intersections[j][0][0],
                                                       offset_intersections[j+1][0][1]))
             else :
                 
                 interior=infinite_primitives[offset_intersections[j][2]].border_points()[0]
-                a=volmdlr.edges.Arc2D(offset_intersections[j][0][0],interior,offset_intersections[j+1][0][0])
+                a=volmdlr.edges.Arc2D(offset_intersections[j][0][0],interior,offset_intersections[j+1][0][1])
                 offset_primitives.append(a)
         return Wire2D(offset_primitives)
 
@@ -1718,8 +1724,6 @@ class Circle2D(Contour2D):
     
 
 
-    def circle2d_intersection(self, other_circle):
-        raise NotImplementedError
 
 
     def line_intersections(self, line):
@@ -1786,7 +1790,7 @@ class Circle2D(Contour2D):
             x4=x2-h*(y1-y0)/d
             y4=y2+h*(x1-x0)/d
             
-        return (volmdlr.Point2D(x3, y3), volmdlr.Point2D(x4, y4))   
+        return [volmdlr.Point2D(x3, y3), volmdlr.Point2D(x4, y4)]  
          
 
     def length(self):
