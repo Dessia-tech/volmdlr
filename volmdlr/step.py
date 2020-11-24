@@ -13,7 +13,6 @@ import volmdlr.primitives3d
 import volmdlr.edges
 import volmdlr.wires
 import volmdlr.faces
-import volmdlr.shells
 
 import webbrowser
 
@@ -463,8 +462,8 @@ STEP_TO_VOLMDLR = {
     'ADVANCED_FACE': volmdlr.faces.Face3D,
     'FACE_SURFACE': volmdlr.faces.Face3D,
 
-    'CLOSED_SHELL': volmdlr.shells.Shell3D,
-    'OPEN_SHELL': volmdlr.shells.Shell3D,
+    'CLOSED_SHELL': volmdlr.faces.Shell3D,
+    'OPEN_SHELL': volmdlr.faces.Shell3D,
     #        'ORIENTED_CLOSED_SHELL': None,
-    'CONNECTED_FACE_SET': volmdlr.shells.Shell3D,
+    'CONNECTED_FACE_SET': volmdlr.faces.Shell3D,
 }
