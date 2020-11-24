@@ -24,7 +24,7 @@ import volmdlr.edges
 import itertools
 from typing import List, Tuple,Dict
 from scipy.spatial import Delaunay
-
+import plot_data.core as plot_data
 
 
 class Wire:
@@ -458,13 +458,13 @@ class Contour2D(Contour, Wire2D):
 
         return A
 
-    # def plot_data(self, plot_data_states: List[volmdlr.plot_data.PlotDataState] = None):
-    #     if plot_data_states is None:
-    #         plot_data_states = [volmdlr.plot_data.PlotDataState()]
-    #     plot_data_primitives = [item.plot_data(plot_data_states=plot_data_states) for item in self.primitives]
-    #     return volmdlr.plot_data.PlotDataContour2D(plot_data_primitives=plot_data_primitives,
-    #                                         plot_data_states=plot_data_states,
-    #                                         name=self.name)
+    def plot_data(self, plot_data_states: List[plot_data.PlotDataState] = None):
+        if plot_data_states is None:
+            plot_data_states = [volmdlr.plot_data.PlotDataState()]
+        plot_data_primitives = [item.plot_data(plot_data_states=plot_data_states) for item in self.primitives]
+        return volmdlr.plot_data.PlotDataContour2D(plot_data_primitives=plot_data_primitives,
+                                            plot_data_states=plot_data_states,
+                                            name=self.name)
 
     def copy(self):
         primitives_copy = []
@@ -1867,11 +1867,11 @@ class Circle2D(Contour2D):
         center = 2 * point - self.center
         return Circle2D(center, self.radius)
 
-    # def plot_data(self, plot_data_states: List[volmdlr.plot_data.PlotDataState] = None):
-    #     return volmdlr.plot_data.PlotDataCircle2D(cx=self.center.x,
-    #                                       cy=self.center.y,
-    #                                       r=self.radius,
-    #                                       plot_data_states=plot_data_states)
+    def plot_data(self, plot_data_states: List[plot_data.PlotDataState] = None):
+        return plot_data.PlotDataCircle2D(cx=self.center.x,
+                                          cy=self.center.y,
+                                          r=self.radius,
+                                          plot_data_states=plot_data_states)
 
     def copy(self):
         return Circle2D(self.center.copy(), self.radius)
