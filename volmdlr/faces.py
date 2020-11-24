@@ -3323,16 +3323,17 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
             return False
 
         min_ray_length = 2*max((bbox.xmax - bbox.xmin,
-                                bbox.ymax - bbox.ymin,
-                                bbox.zmax - bbox.zmin))
+                                 bbox.ymax - bbox.ymin,
+                                 bbox.zmax - bbox.zmin))
+        two_min_ray_length = 2*min_ray_length
 
         rays = []
         for k in range(0, nb_rays):
             rays.append(volmdlr.edges.LineSegment3D(
                 point3d,
-                point3d+volmdlr.Point3D.random(0., min_ray_length,
-                                               0., min_ray_length,
-                                               0., min_ray_length)))
+                point3d+volmdlr.Point3D.random(min_ray_length, two_min_ray_length,
+                                               min_ray_length, two_min_ray_length,
+                                               min_ray_length, two_min_ray_length)))
         rays = sorted(rays, key=lambda ray: ray.length())
 
         rays_intersections = []
@@ -3346,8 +3347,6 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
             is_inside = True
             for face, point_inters in self.linesegment_intersections(ray):
                 count += len(point_inters)
-                # if intersection_point is not None:
-                #     ray_intersection.append(intersection_point)
 
 
             if count % 2 == 0:
@@ -3358,7 +3357,6 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         for test1, test2 in zip(tests[:-1], tests[1:]):
             if test1 != test2:
                 raise ValueError
-
         return tests[0]
 
     def is_inside_shell(self, shell2, resolution:float):
@@ -3380,7 +3378,6 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
             # print(point)
             # point.plot(ax=ax)
             if not shell2.point_belongs(point):
-                # print('False')
                 return False
 
         # Check if any faces are intersecting
