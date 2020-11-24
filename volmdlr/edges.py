@@ -1066,19 +1066,22 @@ class Arc2D(Edge):
         return arc_to_nodes[self] 
  
 
-    def plot_data(self, plot_data_states: List[plot_data.PlotDataState] = None):
+    def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
 
         list_node = self.Discretise()
         data = []
         for nd in list_node:
             data.append({'x': nd.x, 'y': nd.y})
-        return plot_data.PlotDataArc2D(cx=self.center.x,
-                                        cy=self.center.y,
-                                        data=data,
-                                        r=self.radius,
-                                        angle1=self.angle1,
-                                        angle2=self.angle2,
-                                        plot_data_states=plot_data_states)
+
+
+        return plot_data.Arc2D(cx=self.center.x,
+                                       cy=self.center.y,
+                                       data=data,
+                                       r=self.radius,
+                                       angle1=self.angle1,
+                                       angle2=self.angle2,
+                                       plot_data_states=plot_data_states)
+
 
     def copy(self):
         return Arc2D(self.start.copy(),
