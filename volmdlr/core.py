@@ -478,18 +478,17 @@ class CompositePrimitive3D(Primitive3D):
     #     primitives2d = [p.to_2d(plane_origin, x, y) for p in self.primitives]
     #     return CompositePrimitive2D(primitives2d, name)
 
-    def plot(self, ax=None, equal_aspect=True):
+    def plot(self, ax=None, equal_aspect=True, color='k', alpha=1):
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
         else:
             fig = None
-        if equal_aspect:
-            ax.set_aspect('equal')
+        # if equal_aspect:
+        #     ax.set_aspect('equal')
 
         for primitive in self.primitives:
-
-            primitive.plot(ax=ax)
+            primitive.plot(ax=ax, color=color, alpha=alpha)
 
 
 

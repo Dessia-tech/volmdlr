@@ -24,9 +24,6 @@ import volmdlr.core
 import plot_data.core as plot_data
 
 
-
-
-
 def standardize_knot_vector(knot_vector):
     u0 = knot_vector[0]
     u1 = knot_vector[-1]
@@ -289,8 +286,6 @@ class Line2D(Line):
     def plot(self, ax=None, color='k', dashed=True):
         if ax is None:
             fig, ax = plt.subplots()
-
-        # p1, p2 = self.points
 
         if version.parse(_mpl_version) >= version.parse('3.3.2'):
             if dashed:
@@ -715,7 +710,7 @@ class LineSegment2D(LineSegment):
         return LineSegment2D(self.end.copy(), self.start.copy())
 
     def to_line(self):
-        return Line2D(*self.points)
+        return Line2D(self.start, self.end)
 
     def rotation(self, center, angle, copy=True):
         if copy:
@@ -750,8 +745,10 @@ class LineSegment2D(LineSegment):
             else:
                 self.points = [frame.NewCoordinates(p) for p in self.points]
 
-    def plot_data(self, plot_data_states: List[plot_data.PlotDataState] = None):
-        return volmdlr.plot_data.PlotDataLine2D(data=[self.start.x, self.start.y,
+
+    def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
+        return plot_data.Line2D(data=[self.start.x, self.start.y,
+
                                               self.end.x, self.end.y],
                                         plot_data_states=plot_data_states)
 
@@ -956,7 +953,7 @@ class Arc2D(Edge):
         return self.center + 4 / (3 * alpha) * self.radius * math.sin(
             alpha * 0.5) * u
 
-    def plot(self, ax=None, color='k', plot_points=False):
+    def plot(self, ax=None, color='k', alpha=1, plot_points=False):
         if ax is None:
             fig, ax = plt.subplots()
 
@@ -967,7 +964,8 @@ class Arc2D(Edge):
         ax.add_patch(matplotlib.patches.Arc(self.center, 2 * self.radius, 2 * self.radius, angle=0,
                                             theta1=self.angle1 * 0.5 / math.pi * 360,
                                             theta2=self.angle2 * 0.5 / math.pi * 360,
-                                            color=color))
+                                            color=color,
+                                            alpha=alpha))
 
         return ax
 
@@ -1043,6 +1041,7 @@ class Arc2D(Edge):
     #     else:
     #         return list_node[::-1]
 
+
     def discretise(self,n:float):
         
         arc_to_nodes={}
@@ -1066,13 +1065,13 @@ class Arc2D(Edge):
         return arc_to_nodes[self] 
  
 
+   
     def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
 
         list_node = self.Discretise()
         data = []
         for nd in list_node:
             data.append({'x': nd.x, 'y': nd.y})
-
 
         return plot_data.Arc2D(cx=self.center.x,
                                        cy=self.center.y,
@@ -1173,8 +1172,8 @@ class FullArc2D(Edge):
 
         return volmdlr.wires.ClosedPolygon2D(self.polygon_points())
 
-    def plot(self, ax=None, color='k', plot_points=False,
-             linestyle='-', linewidth=1, alpha=1):
+    def plot(self, ax=None, color='k', alpha=1, plot_points=False,
+             linestyle='-', linewidth=1):
         if ax is None:
             fig, ax = plt.subplots()
 
@@ -1189,7 +1188,8 @@ class FullArc2D(Edge):
                                                 linestyle=linestyle,
                                                 linewidth=linewidth))
         if plot_points:
-            ax.plot([self.start.x], [self.start.y], 'o', color=color, alpha=alpha)
+            ax.plot([self.start.x], [self.start.y], 'o',
+                    color=color, alpha=alpha)
         return ax
 
 
@@ -1336,7 +1336,7 @@ class ArcEllipse2D(Edge):
         return ArcEllipse3D(ps, pi, pe, pc, major_dir, normal=n,
                             name=self.name, extra=pextra)
 
-    def plot(self, ax=None):
+    def plot(self, ax=None, color='k', alpha=1):
         if ax is None:
             _, ax = plt.subplots()
 
@@ -1351,7 +1351,7 @@ class ArcEllipse2D(Edge):
             x.append(px)
             y.append(py)
 
-        plt.plot(x, y, 'k')
+        plt.plot(x, y, color=color, alpha=alpha)
         return ax
 
 
@@ -1383,18 +1383,16 @@ class Line3D(Line):
         return self.point1 + (
                 self.point2 - self.point1) * curvilinear_abscissa
 
-    def plot(self, ax=None, color='k', dashed=True):
+    def plot(self, ax=None, color='k', alpha=1, dashed=True):
         if ax is None:
-            fig = plt.figure()
-            ax = Axes3D(fig)
-        else:
-            fig = ax.figure
+            ax = Axes3D(plt.figure())
+
 
         # Line segment
         x = [self.point1.x, self.point2.x]
         y = [self.point1.y, self.point2.y]
         z = [self.point1.z, self.point2.z]
-        ax.plot(x, y, z, 'ok')
+        ax.plot(x, y, z, color=color, alpha=alpha)
 
         # Drawing 3 times length of segment on each side
         u = self.point2 - self.points[0]
@@ -1719,7 +1717,7 @@ class LineSegment3D(LineSegment):
     def copy(self):
         return LineSegment3D(self.start.copy(), self.end.copy())
 
-    def plot(self, ax=None, color='k'):
+    def plot(self, ax=None, color='k', alpha=1):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -1730,7 +1728,7 @@ class LineSegment3D(LineSegment):
         x = [p.x for p in points]
         y = [p.y for p in points]
         z = [p.z for p in points]
-        ax.plot(x, y, z, color=color)
+        ax.plot(x, y, z, color=color, alpha=alpha)
         return ax
 
     def plot2D(self, x_3D, y_3D, ax=None, color='k', width=None):

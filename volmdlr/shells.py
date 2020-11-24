@@ -3,18 +3,19 @@
 """
 
 """
-
+from typing import List, Tuple
 import volmdlr.core
 import volmdlr.display
 
 class Shell3D(volmdlr.core.CompositePrimitive3D):
     _standalone_in_db = True
-    _generic_eq = True
     _non_serializable_attributes = ['bounding_box']
-    _non_eq_attributes = ['name', 'color', 'alpha' 'bounding_box', 'contours']
+    _non_eq_attributes = ['name', 'color', 'alpha' 'bounding_box']
     _non_hash_attributes = []
 
-    def __init__(self, faces, color=None, alpha=1., name=''):
+    def __init__(self, faces:List[volmdlr.faces.Face3D],
+                 color:Tuple[float, float, float]=None,
+                 alpha:float=1., name:str=''):
         self.faces = faces
         self.name = name
         self.color = color
@@ -119,45 +120,56 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         return bbox
 
-    def point_belongs(self, point, nb_rays=1):
+    def point_belongs(self, point3d:volmdlr.Point3D, nb_rays:int=1):
         """
         Ray Casting algorithm
         Returns True if the point is inside the Shell, False otherwise
         """
-        epsilon = 10
+
 
         bbox = self.bounding_box
-        if point[0] < bbox.xmin or point[0] > bbox.xmax:
+        if not bbox.point_belongs(point3d):
+            print('bbox')
+            print(bbox.xmin, point3d.x, bbox.xmax)
+            print(bbox.ymin, point3d.y, bbox.ymax)
+            print(bbox.zmin, point3d.z, bbox.zmax)
+            print(point3d)
+
             return False
-        if point[1] < bbox.ymin or point[1] > bbox.ymax:
-            return False
-        if point[2] < bbox.zmin or point[2] > bbox.zmax:
-            return False
+
+        min_ray_length = 2*max((bbox.xmax - bbox.xmin,
+                                bbox.ymax - bbox.ymin,
+                                bbox.zmax - bbox.zmin))
 
         rays = []
         for k in range(0, nb_rays):
-            rays.append(volmdlr.edges.LineSegment3D(point,
-                                                    volmdlr.Point3D.random(0, epsilon,
-                                                            0, epsilon,
-                                                            0, epsilon)))
-
-        rays = sorted(rays, key=lambda ray: ray.length())
+            rays.append(volmdlr.edges.LineSegment3D(
+                point3d,
+                point3d+volmdlr.Point3D.random(0., min_ray_length,
+                                               0., min_ray_length,
+                                               0., min_ray_length)))
+        print('rays', rays[0].start, rays[0].end)
+        # rays = sorted(rays, key=lambda ray: ray.length())
 
         rays_intersections = []
         tests = []
 
         # for ray in rays[:3]:
         for ray in rays[:nb_rays]:
+            #
             count = 0
             ray_intersection = []
             is_inside = True
-            for face in self.faces:
-                intersection_point = face.linesegment_intersection(ray)
-                if intersection_point is not None:
-                    ray_intersection.append(intersection_point)
-                    count += 1
+            intersections = self.linesegment_intersections(ray)
+                # if intersection_point is not None:
+                #     ray_intersection.append(intersection_point)
+            count += len(intersections)
             if count % 2 == 0:
                 is_inside = False
+                print('count', count)
+                print('is_inside', is_inside)
+                # ax = point3d.plot()
+                # ray.plot(ax=ax)
             tests.append(is_inside)
             rays_intersections.append(ray_intersection)
 
@@ -181,9 +193,10 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         points = []
         for face in self.faces:
             points.extend(face.outer_contour3d.discretization_points(resolution))
-
+        ax = points[0].plot()
         for point in points:
-            print(point)
+            # print(point)
+            point.plot(ax=ax)
             if not shell2.point_belongs(point):
                 print('False')
                 return False
@@ -197,6 +210,16 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                     return False
 
         return True
+
+    def linesegment_intersections(self,
+                                 linesegment3d:volmdlr.edges.LineSegment3D):
+        intersections = []
+        for face in self.faces:
+            face_intersections = face.linesegment_intersections(linesegment3d)
+            print(face_intersections)
+            if face_intersections:
+                intersections.extend(face_intersections)
+        return intersections
 
     def shell_intersection(self, shell2:'Shell3D', resolution:float):
         """
@@ -397,3 +420,13 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
             s += 'mat.diffuseColor = new BABYLON.Color3({}, {}, {});\n'.format(
                 *self.color)
         return s
+
+    def plot(self, ax=None, equal_aspect=True, color='k', alpha=1):
+        if ax is None:
+            ax = Axes3D(plt.figure())
+
+
+        for face in self.faces:
+            face.plot(ax=ax, color=color, alpha=alpha)
+
+        return ax
