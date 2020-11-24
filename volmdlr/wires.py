@@ -754,6 +754,8 @@ class ClosedPolygon2D(Contour2D):
         return sum([hash(p) for p in self.points])
 
     def __eq__(self, other_):
+        if not isinstance(other_, self.__class__):
+            return False
         equal = True
         for point, other_point in zip(self.points, other_.points):
             equal = (equal and point == other_point)

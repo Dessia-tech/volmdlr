@@ -987,7 +987,7 @@ class Arc2D(Edge):
     #         return list_node[::-1]
 
     def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
-        list_node = self.Discretise()
+        list_node = self.polygon_points()
         data = []
         for nd in list_node:
             data.append({'x': nd.x, 'y': nd.y})
