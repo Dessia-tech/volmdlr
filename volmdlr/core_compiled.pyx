@@ -447,7 +447,8 @@ class Vector2D(Vector):
                    random.uniform(ymin, ymax))
 
 
-    def plot(self, amplitude=0.5, width=None, head_width=None, origin=None, ax=None, color='k', line=False, label=None, normalize=False):
+    def plot(self, amplitude=0.5, width=None, head_width=None, origin=None,
+             ax=None, color='k', line=False, label=None, normalize=False):
         if origin is None:
             origin = Vector2D(0., 0.)
 
@@ -969,19 +970,18 @@ class Point3D(Vector3D):
         return Point3D(self.x, self.y, self.z)
 
 
-    def plot(self, ax=None, color='k'):
+    def plot(self, ax=None, color='k', alpha=1):
 
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-        else:
-            fig = ax.figure
 
-        ax.scatter(self.x, self.y, color=color)
+        ax.plot([self.x], [self.y], [self.z], color=color, alpha=alpha,
+                marker='o')
         return ax
 
 
-    def To2D(self, plane_origin, x, y):
+    def to_2d(self, plane_origin, x, y):
         x2d = self.dot(x) - plane_origin.dot(x)
         y2d = self.dot(y) - plane_origin.dot(y)
         return Point2D(x2d,y2d)
@@ -1579,10 +1579,10 @@ class Frame3D(Basis3D):
         else:
             fig = ax.figure
 
-        origin2d = self.origin.To2D(O3D, x, y)
+        origin2d = self.origin.to_2d(O3D, x, y)
 
         for iv, vector in enumerate(self.vectors):
-            vector2D = vector.To2D(O3D, x, y)
+            vector2D = vector.to_2d(O3D, x, y)
             if vector2D.norm() > 1e-8:
                 vector2D.plot(origin=origin2d, ax=ax, color=color, label=str(iv+1))
 
