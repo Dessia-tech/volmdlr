@@ -16,7 +16,7 @@ import volmdlr
 import volmdlr.core
 from volmdlr.core_compiled import polygon_point_belongs
 
-import volmdlr.plot_data
+# from volmdlr.plot_data import plot_data
 from volmdlr.core_compiled import (
                             LineSegment2DPointDistance,
                             polygon_point_belongs, Matrix22
@@ -25,11 +25,11 @@ import volmdlr.edges
 import itertools
 from typing import List, Tuple,Dict
 from scipy.spatial import Delaunay
-import plot_data.core as plot_data
+# import plot_data.core as plot_data
 
 
 import volmdlr.edges
-import plot_data.core as plot_data
+# import plot_data.core as plot_data
 
 
 class Wire:
@@ -97,11 +97,39 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         ax=self.plot()
         for primitive in self.primitives:
             if isinstance(primitive,volmdlr.edges.LineSegment2D):
-                infinite_primitive=volmdlr.edges.Line2D(primitive.start,primitive.end).translation(volmdlr.Vector2D(offset,-offset))
+                vector=primitive.end-primitive.start
+                vector.normalize()
+                n=vector.normal_vector()
+               
+                    
+                offset_point_1 = primitive.points[0] + offset * \
+                n
+                
+                
+                offset_point_2 = primitive.points[-1] + offset * \
+                n
+            
+                   
+
+                # infinite_primitive=volmdlr.edges.Line2D(primitive.start,primitive.end).translation(volmdlr.Vector2D(offset,-offset))
+                infinite_primitive=volmdlr.edges.Line2D(offset_point_1,offset_point_2)
                 infinite_primitives.append(infinite_primitive)
                 infinite_primitive.plot(ax=ax)
             else :
-                infinite_primitive=Circle2D(primitive.center,primitive.radius-offset)
+                if not primitive.is_trigo :
+                    if offset > 0 :
+                        radius=primitive.radius+abs(offset) 
+                    
+                    else :
+                
+                        radius = primitive.radius-abs(offset)
+                   
+                else :
+                    if offset>0:
+                        radius=primitive.radius-abs(offset)
+                    else :
+                        radius=primitive.radius+abs(offset)
+                infinite_primitive=Circle2D(primitive.center,radius)
                 infinite_primitives.append(infinite_primitive)
                 infinite_primitive.plot(ax=ax)
         nb=len(infinite_primitives)
@@ -119,35 +147,55 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                 intersections=infinite_primitives[i].line_intersections(infinite_primitives[i+1])
                 # intersections.reverse()
                 intersections[0].plot(ax=ax,color='r')
-                offset_intersections.append((intersections,'Line2D'))
+                offset_intersections.append((intersections,'Line2D',i))
             if infinite_primitives[i+1].__class__.__name__=='Circle2D' and infinite_primitives[i].__class__.__name__=='Circle2D':    
                 intersections=infinite_primitives[i].circle_intersections(infinite_primitives[i+1])
                 intersections.reverse()
-                offset_intersections.append((intersections,'Circle2D',i+1)) 
+                offset_intersections.append((intersections,'Circles',i)) 
                 
                 intersections[0].plot(ax=ax,color='g')
                 intersections[1].plot(ax=ax,color='b')
         if self.primitives[0].__class__.__name__=='LineSegment2D':
             offset_primitives.append(volmdlr.edges.LineSegment2D(infinite_primitives[0].point1,offset_intersections[0][0][0]))
         else :
-            new_arc=self.primitives[0].translation(volmdlr.Vector2D(offset,-offset))
-            a=volmdlr.edges.Arc2D(new_arc.start,new_arc.interior,offset_intersections[0][0][0])
+            
+            interior=infinite_primitives[offset_intersections[0][2]].circle_projection(self.primitives[0].interior)
+            start=infinite_primitives[offset_intersections[0][2]].circle_projection(self.primitives[0].start)
+            # new_arc=self.primitives[0].translation(volmdlr.Vector2D(-offset,offset))
+            a=volmdlr.edges.Arc2D(start,interior,offset_intersections[0][0][0])
             offset_primitives.append(a)
         if self.primitives[-1].__class__.__name__=='LineSegment2D':
             offset_primitives.append(volmdlr.edges.LineSegment2D(offset_intersections[-1][0][1],infinite_primitives[-1].point2))
         else :
-            new_arc=self.primitives[-1].translation(volmdlr.Vector2D(offset,-offset))
-            a=volmdlr.edges.Arc2D(offset_intersections[-1][0][1],new_arc.interior,new_arc.end)  
+            if offset_intersections[-1][1]=='Circles':
+               
+                interior=infinite_primitives[offset_intersections[-1][2]+1].circle_projection(self.primitives[-1].interior)
+                end=infinite_primitives[offset_intersections[-1][2]+1].circle_projection(self.primitives[-1].end)
+                a=volmdlr.edges.Arc2D(offset_intersections[-1][0][0],interior,end)  
+            else :
+                interior=infinite_primitives[offset_intersections[-1][2]].circle_projection(self.primitives[-1].interior)
+                end=infinite_primitives[offset_intersections[-1][2]].circle_projection(self.primitives[-1].end)
+                a=volmdlr.edges.Arc2D(offset_intersections[-1][0][1],interior,end)  
             offset_primitives.append(a)
         for j in range(len(offset_intersections)-1):
             if offset_intersections[j][1]=='Line2D':
                 offset_primitives.append(volmdlr.edges.LineSegment2D(offset_intersections[j][0][0],
                                                       offset_intersections[j+1][0][1]))
+            elif offset_intersections[j][1]=='Circle2D':
+                i=offset_intersections[j][2]
+                interior=infinite_primitives[i].circle_projection(self.primitives[i].interior)
+                if self.primitives[i].interior.point_distance(offset_intersections[j+1][0][0])<self.primitives[i].interior.point_distance(offset_intersections[j+1][0][1]):
+                   end =   offset_intersections[j+1][0][0]
+                else :
+                     end =offset_intersections[j+1][0][1]
+                a=volmdlr.edges.Arc2D(offset_intersections[j][0][0],interior,end)
+                offset_primitives.append(a)
             else :
-                
-                interior=infinite_primitives[offset_intersections[j][2]].border_points()[0]
+                i=offset_intersections[j][2]+1
+                interior=infinite_primitives[i].circle_projection(self.primitives[i].interior)
                 a=volmdlr.edges.Arc2D(offset_intersections[j][0][0],interior,offset_intersections[j+1][0][1])
                 offset_primitives.append(a)
+     
         return Wire2D(offset_primitives)
 
     def plot_data(self, name: str = '', fill=None, color='black',
@@ -464,15 +512,15 @@ class Contour2D(Contour, Wire2D):
         return A
 
 
-    def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
+    # def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
 
-        if plot_data_states is None:
+    #     if plot_data_states is None:
 
-            plot_data_states = [plot_data.Settings()]
-        plot_data_primitives = [item.plot_data(plot_data_states=plot_data_states) for item in self.primitives]
-        return plot_data.Contour2D(plot_data_primitives=plot_data_primitives,
-                                           plot_data_states=plot_data_states,
-                                           name=self.name)
+    #         plot_data_states = [plot_data.Settings()]
+    #     plot_data_primitives = [item.plot_data(plot_data_states=plot_data_states) for item in self.primitives]
+    #     return plot_data.Contour2D(plot_data_primitives=plot_data_primitives,
+    #                                        plot_data_states=plot_data_states,
+    #                                        name=self.name)
 
     def copy(self):
         primitives_copy = []
@@ -708,8 +756,8 @@ class Contour2D(Contour, Wire2D):
 
             '{} intersections not supported yet'.format(len(intersections)))
     def get_pattern(self):
-        """ A pattern is portion of the contour from which the contour can be 
-        reconstructed by rotations of this portion"""
+        """ A pattern is a portion of the contour from which it can be 
+        reconstructed by rotations"""
         xmin, xmax, ymin, ymax = self.bounding_rectangle()
       
         
@@ -807,12 +855,7 @@ class Contour2D(Contour, Wire2D):
     def to_polygon(self,n:float):
        
         polygon_points=[]
-        # if self.primitives[0].__class__.__name__ == 'Circle2D':
-        #     for point in self.discretise(n):
-        #         if point not in polygon_points:
-        #             polygon_points.append(point)
-           
-       
+     
         for primitive in self.primitives:
             if isinstance(primitive,volmdlr.edges.LineSegment2D):
                 
@@ -1071,7 +1114,7 @@ class ClosedPolygon2D(Contour2D):
             ni = vectors[2 * i - 1] + vectors[2 * i]
             if ni == volmdlr.Vector2D(0, 0):
                 ni = vectors[2 * i]
-                ni = ni.normalVector()
+                ni = ni.normal_vector()
                 offset_vectors.append(ni)
             else:
                 ni.normalize()
@@ -1827,7 +1870,16 @@ class Circle2D(Contour2D):
             
         return [volmdlr.Point2D(x3, y3), volmdlr.Point2D(x4, y4)]  
          
-
+    def circle_projection(self,point):
+        line=volmdlr.edges.Line2D(self.center,point)
+        circle_points=self.line_intersections(line)
+        d=[p.point_distance(point) for p in circle_points]
+        projection_point=circle_points[d.index(min(d))]
+        # center_line=volmdlr.edges.Line2D(self.center,tangent_point)
+        # tangent_vector=center_line.normal_vector()
+        # tangent_line=volmdlr.edges.Line2D((tangent_vector.y*tangent_point.x-tangent_vector.x*tangent_point.y)/tangent_vector.y,0)
+        # projection=tangent_line.point_projection(point)[0]
+        return projection_point
     def length(self):
         return volmdlr.TWO_PI * self.radius
 
@@ -1902,11 +1954,11 @@ class Circle2D(Contour2D):
         center = 2 * point - self.center
         return Circle2D(center, self.radius)
 
-    def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
-        return plot_data.Circle2D(cx=self.center.x,
-                                          cy=self.center.y,
-                                          r=self.radius,
-                                          plot_data_states=plot_data_states)
+    # def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
+    #     return plot_data.Circle2D(cx=self.center.x,
+    #                                       cy=self.center.y,
+    #                                       r=self.radius,
+    #                                       plot_data_states=plot_data_states)
 
     def copy(self):
         return Circle2D(self.center.copy(), self.radius)

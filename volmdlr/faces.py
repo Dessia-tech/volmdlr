@@ -14,8 +14,8 @@ import volmdlr.core
 import volmdlr.core_compiled
 import volmdlr.wires
 import volmdlr.edges
-import volmdlr.primitives2d
-import volmdlr.primitives3d
+# import volmdlr.primitives2d
+# import volmdlr.primitives3d
 
 class Surface2D(volmdlr.core.Primitive2D):
     """

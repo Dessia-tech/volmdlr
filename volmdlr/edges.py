@@ -21,8 +21,8 @@ from typing import List
 
 import dessia_common as dc
 import volmdlr.core
-import plot_data.core as plot_data
-
+# import plot_data.core as plot_data
+# from volmdlr.plot_data import plot_data
 
 def standardize_knot_vector(knot_vector):
     u0 = knot_vector[0]
@@ -746,11 +746,11 @@ class LineSegment2D(LineSegment):
                 self.points = [frame.NewCoordinates(p) for p in self.points]
 
 
-    def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
-        return plot_data.Line2D(data=[self.start.x, self.start.y,
+    # def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
+    #     return plot_data.Line2D(data=[self.start.x, self.start.y,
 
-                                              self.end.x, self.end.y],
-                                        plot_data_states=plot_data_states)
+    #                                           self.end.x, self.end.y],
+    #                                     plot_data_states=plot_data_states)
 
     def CreateTangentCircle(self, point, other_line):
         circle1, circle2 = Line2D.CreateTangentCircle(other_line, point, self)
@@ -1066,20 +1066,20 @@ class Arc2D(Edge):
  
 
    
-    def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
+    # def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
 
-        list_node = self.Discretise()
-        data = []
-        for nd in list_node:
-            data.append({'x': nd.x, 'y': nd.y})
+    #     list_node = self.Discretise()
+    #     data = []
+    #     for nd in list_node:
+    #         data.append({'x': nd.x, 'y': nd.y})
 
-        return plot_data.Arc2D(cx=self.center.x,
-                                       cy=self.center.y,
-                                       data=data,
-                                       r=self.radius,
-                                       angle1=self.angle1,
-                                       angle2=self.angle2,
-                                       plot_data_states=plot_data_states)
+    #     return plot_data.Arc2D(cx=self.center.x,
+    #                                    cy=self.center.y,
+    #                                    data=data,
+    #                                    r=self.radius,
+    #                                    angle1=self.angle1,
+    #                                    angle2=self.angle2,
+    #                                    plot_data_states=plot_data_states)
 
 
     def copy(self):

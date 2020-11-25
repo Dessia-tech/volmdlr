@@ -6,6 +6,7 @@
 from typing import List, Tuple
 import volmdlr.core
 import volmdlr.display
+import volmdlr.faces
 
 class Shell3D(volmdlr.core.CompositePrimitive3D):
     _standalone_in_db = True
