@@ -1383,6 +1383,14 @@ class Line3D(Line):
         return self.point1 + (
                 self.point2 - self.point1) * curvilinear_abscissa
 
+    def point_belongs(self, point3d):
+        if point3d == self.point1:
+            v = point3d - self.point2
+        else:
+            v = point3d - self.point1
+
+        return self.direction_vector().is_colinear_to(v)
+
     def plot(self, ax=None, color='k', alpha=1, dashed=True):
         if ax is None:
             ax = Axes3D(plt.figure())
@@ -1565,7 +1573,8 @@ class LineSegment3D(LineSegment):
     def __eq__(self, other_linesegment3d):
         if other_linesegment3d.__class__ != self.__class__:
             return False
-        return
+        return (self.start == other_linesegment3d.start)\
+               and (self.end == other_linesegment3d.end)
 
     def _bounding_box(self):
         points = [self.start, self.end]
@@ -1681,7 +1690,7 @@ class LineSegment3D(LineSegment):
 
     def __contains__(self, point):
         point1, point2 = self.start, self.end
-        axis = volmdlr.Vector3D(point2 - point1)
+        axis = point2 - point1
         test = point.rotation(point1, axis, math.pi)
         if test == point:
             return True
@@ -1921,6 +1930,8 @@ class LineSegment3D(LineSegment):
 
     def revolution(self, axis_point, axis, angle):
         axis_line3d = Line3D(axis_point, axis_point + axis)
+        if axis_line3d.point_belongs(self.start) and axis_line3d.point_belongs(self.end):
+            return None
 
         p1_proj, _ = axis_line3d.point_projection(self.start)
         p2_proj, _ = axis_line3d.point_projection(self.end)

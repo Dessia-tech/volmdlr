@@ -1178,7 +1178,7 @@ class VolumeModel(dc.DessiaObject):
 
         return ax
 
-    def plot(self,equal_aspect=True):
+    def plot(self, equal_aspect=True):
         """
         Matplotlib plot of model.
         To use for debug.

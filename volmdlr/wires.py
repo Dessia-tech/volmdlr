@@ -1108,6 +1108,9 @@ class ClosedPolygon2D(Contour2D):
             return d_min, other_point_min
         return d_min
 
+    def polygonization(self):
+        return self
+
     def self_intersects(self):
         epsilon = 0
         # BENTLEY-OTTMANN ALGORITHM
@@ -1267,7 +1270,7 @@ class ClosedPolygon2D(Contour2D):
 
 
 class Triangle2D(ClosedPolygon2D):
-    
+
     
     def __init__(self,points,name=''):
         self.points=points
@@ -1730,9 +1733,9 @@ class Circle2D(Contour2D):
     def to_polygon(self,n:float):
         return ClosedPolygon2D(self.discretise(n))
         
-    def polygonization(self):
+    def polygonization(self, resolution=0.010):
 
-        return ClosedPolygon2D(self.discretization_points())
+        return ClosedPolygon2D(self.discretization_points(resolution))
 
     def tessellation_points(self, resolution=40):
         return [(self.center
@@ -1849,6 +1852,7 @@ class Circle2D(Contour2D):
 
     def to_3d(self, plane_origin, x, y):
         normal = x.cross(y)
+        # print(normal)
         center3d = self.center.to_3d(plane_origin, x, y)
         return Circle3D(volmdlr.Frame3D(center3d, x, y, normal),
                         self.radius, self.name)

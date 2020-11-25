@@ -838,7 +838,7 @@ class Plane3D(Surface3D):
     def plane_intersection(self, other_plane):
         line_direction = self.frame.w.cross(other_plane.frame.w)
 
-        if line_direction.Norm() < 1e-6:
+        if line_direction.norm() < 1e-6:
             return None
 
         a1, b1, c1, d1 = self.equation_coefficients()
@@ -1749,7 +1749,7 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         this error is raised to enforce overloading of this method
         """
-        raise NotImplementedError('_bounding_box method must be overloaded in face')
+        raise NotImplementedError('_bounding_box method must be overloaded by {}'.format(self.__class__.__name__))
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -1837,14 +1837,14 @@ class Face3D(volmdlr.core.Primitive3D):
     #         while closest is None:
     #             s += 1
     #             closest = points_set[s]
-    #         dist_min = (points_2dint[-1] - closest).Norm()
+    #         dist_min = (points_2dint[-1] - closest).norm()
     #         pos = s
     #         for i in range(s + 1, len(points_set)):
     #             close_test = points_set[i]
     #             if close_test is None:
     #                 continue
     #             else:
-    #                 dist_test = (points_2dint[-1] - close_test).Norm()
+    #                 dist_test = (points_2dint[-1] - close_test).norm()
     #                 if dist_test <= dist_min:
     #                     dist_min = dist_test
     #                     closest = close_test
@@ -2491,8 +2491,8 @@ class CylindricalFace3D(Face3D):
     #                     points_cleaned = volmdlr.delete_double_point(all_points)
     #                     all_points = [pt.copy() for pt in points_cleaned]
     #                     all_points.sort(key=lambda pt: pt[0])
-    #                     d1, d2 = (all_points[0] - all_points[-1]).Norm(), (
-    #                                 all_points[0] - all_points[-2]).Norm()
+    #                     d1, d2 = (all_points[0] - all_points[-1]).norm(), (
+    #                                 all_points[0] - all_points[-2]).norm()
     #                     if d2 < d1:
     #                         last = all_points[-1].copy()
     #                         all_points[-1] = all_points[-2].copy()
@@ -2536,8 +2536,8 @@ class CylindricalFace3D(Face3D):
     #                 points_cleaned = volmdlr.delete_double_point(all_points)
     #                 all_points = [pt.copy() for pt in points_cleaned]
     #                 all_points.sort(key=lambda pt: pt[0])
-    #                 d1, d2 = (all_points[0] - all_points[-1]).Norm(), (
-    #                             all_points[0] - all_points[-2]).Norm()
+    #                 d1, d2 = (all_points[0] - all_points[-1]).norm(), (
+    #                             all_points[0] - all_points[-2]).norm()
     #                 if d2 < d1:
     #                     last = all_points[-1].copy()
     #                     all_points[-1] = all_points[-2].copy()
@@ -2546,8 +2546,8 @@ class CylindricalFace3D(Face3D):
     #         points_cleaned = volmdlr.delete_double_point(all_points)
     #         all_points = [pt.copy() for pt in points_cleaned]
     #         all_points.sort(key=lambda pt: pt[0])
-    #         d1, d2 = (all_points[0] - all_points[-1]).Norm(), (
-    #                     all_points[0] - all_points[-2]).Norm()
+    #         d1, d2 = (all_points[0] - all_points[-1]).norm(), (
+    #                     all_points[0] - all_points[-2]).norm()
     #         if d2 < d1:
     #             last = all_points[-1].copy()
     #             all_points[-1] = all_points[-2].copy()
@@ -2598,7 +2598,37 @@ class CylindricalFace3D(Face3D):
     #     return contour2d
 
 
+    def _bounding_box(self):
+        theta_min, theta_max, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle()
 
+        xp = (volmdlr.X3D.dot(self.surface3d.frame.u)*self.surface3d.frame.u
+              + volmdlr.X3D.dot(self.surface3d.frame.v)*self.surface3d.frame.v)
+        xp.normalize()
+        yp = (volmdlr.Y3D.dot(self.surface3d.frame.u)*self.surface3d.frame.u
+              + volmdlr.Y3D.dot(self.surface3d.frame.v)*self.surface3d.frame.v)
+        yp.normalize()
+        zp = (volmdlr.Z3D.dot(self.surface3d.frame.u)*self.surface3d.frame.u
+              + volmdlr.Z3D.dot(self.surface3d.frame.v)*self.surface3d.frame.v)
+        zp.normalize()
+
+        lower_center = self.surface3d.frame.origin + zmin*self.surface3d.frame.w
+        upper_center = self.surface3d.frame.origin + zmax*self.surface3d.frame.w
+
+        points = [lower_center - self.surface3d.radius * xp,
+                  lower_center + self.surface3d.radius * xp,
+                  lower_center - self.surface3d.radius * yp,
+                  lower_center + self.surface3d.radius * yp,
+                  lower_center - self.surface3d.radius * zp,
+                  lower_center + self.surface3d.radius * zp,
+                  upper_center - self.surface3d.radius * xp,
+                  upper_center + self.surface3d.radius * xp,
+                  upper_center - self.surface3d.radius * yp,
+                  upper_center + self.surface3d.radius * yp,
+                  upper_center - self.surface3d.radius * zp,
+                  upper_center + self.surface3d.radius * zp,
+                  ]
+
+        return volmdlr.core.BoundingBox.from_points(points)
 
     def range_closest(list_point, radius, frame):
         points_set = volmdlr.delete_double_point(list_point)
@@ -2613,14 +2643,14 @@ class CylindricalFace3D(Face3D):
             while closest is None:
                 s += 1
                 closest = points_set3D[s]
-            dist_min = (points_3dint[-1] - closest).Norm()
+            dist_min = (points_3dint[-1] - closest).norm()
             pos = s
             for i in range(s + 1, len(points_set3D)):
                 close_test = points_set3D[i]
                 if close_test is None:
                     continue
                 else:
-                    dist_test = (points_3dint[-1] - close_test).Norm()
+                    dist_test = (points_3dint[-1] - close_test).norm()
                     if dist_test <= dist_min:
                         dist_min = dist_test
                         closest = close_test
@@ -3472,6 +3502,41 @@ class ConicalFace3D(Face3D):
                         surface3d=conicalsurface3d,
                         surface2d=surface2d,
                         name=name)
+
+    def _bounding_box(self):
+        theta_min, theta_max, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle()
+
+        xp = (volmdlr.X3D.dot(self.surface3d.frame.u)*self.surface3d.frame.u
+              + volmdlr.X3D.dot(self.surface3d.frame.v)*self.surface3d.frame.v)
+        xp.normalize()
+        yp = (volmdlr.Y3D.dot(self.surface3d.frame.u)*self.surface3d.frame.u
+              + volmdlr.Y3D.dot(self.surface3d.frame.v)*self.surface3d.frame.v)
+        yp.normalize()
+        zp = (volmdlr.Z3D.dot(self.surface3d.frame.u)*self.surface3d.frame.u
+              + volmdlr.Z3D.dot(self.surface3d.frame.v)*self.surface3d.frame.v)
+        zp.normalize()
+
+        lower_center = self.surface3d.frame.origin + zmin*self.surface3d.frame.w
+        upper_center = self.surface3d.frame.origin + zmax*self.surface3d.frame.w
+        lower_radius = math.tan(self.surface3d.semi_angle)*zmin
+        upper_radius = math.tan(self.surface3d.semi_angle)*zmax
+
+        points = [lower_center - lower_radius * xp,
+                  lower_center + lower_radius * xp,
+                  lower_center - lower_radius * yp,
+                  lower_center + lower_radius * yp,
+                  lower_center - lower_radius * zp,
+                  lower_center + lower_radius * zp,
+                  upper_center - upper_radius * xp,
+                  upper_center + upper_radius * xp,
+                  upper_center - upper_radius * yp,
+                  upper_center + upper_radius * yp,
+                  upper_center - upper_radius * zp,
+                  upper_center + upper_radius * zp,
+                  ]
+
+        return volmdlr.core.BoundingBox.from_points(points)
+
 
     def create_triangle(self, all_contours_points, part):
         Triangles, ts = [], []
