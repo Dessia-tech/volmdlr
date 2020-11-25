@@ -152,67 +152,6 @@ class TriangularElement(volmdlr.wires.Triangle2D):
         
     #     return x1, x2, x3
 
-    def _area(self):
-        u = self.points[1] - self.points[0]
-        v = self.points[2] - self.points[0]
-        return abs(u.cross(v)) / 2
-        
-    def rotation(self, center, angle, copy=True):
-        if copy:
-            return TriangularElement([pt.rotation(center, angle, copy=True) for pt in self.points])
-        else:
-            for pt in self.points:
-                pt.Rotation(center, angle, copy=False)
-                
-    def translation(self, offset, copy=True):
-        if copy:
-            return TriangularElement([pt.Translation(offset, copy=True) for pt in self.points])
-        else:
-            for pt in self.points:
-                pt.Translation(offset, copy=False)
-                
-    def axial_symmetry(self, line, copy=True):
-        p1, p2 = line.points
-        symmetric_points = []
-        for point in self.points:
-            u = p2 - p1
-            t = (point-p1).Dot(u) / u.Norm()**2
-            projection = p1 + t * u
-            symmetric_point = volmdlr.Point2D((2 * projection - point).vector)
-            symmetric_points.append(symmetric_point)
-        if copy: 
-            return TriangularElement(symmetric_points)
-        else:
-            for i, point in enumerate(self.points):
-                point = symmetric_points[i]
-   
- 
-  
-    
-    
-
-           
-    def plot(self, ax=None, color='k', width=None, plot_points=False, fill=False):
-        if ax is None:
-            fig, ax = plt.subplots()
-            ax.set_aspect('equal')
-            
-        if fill:
-            x = [p[0] for p in self.points]
-            y = [p[1] for p in self.points]
-            plt.fill(x, y, facecolor=color, edgecolor="k")
-            return ax
-        
-        for p1, p2 in zip(self.points, self.points[1:]+[self.points[0]]):
-            if width is None:
-                width=1
-            if plot_points:
-                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color, marker='o', linewidth=width)
-            else:
-                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color, linewidth=width)
-        return ax
-    
-
 
     def triangle_to_polygon(self):
         points=self.points
@@ -366,113 +305,12 @@ class Mesh(DessiaObject):
     
 class Mesher(DessiaObject):
     
-    def __init__(self,interior_contours:List[volmdlr.wires.Contour2D],exterior_contours:List[volmdlr.wires.Contour2D],triangles:List[TriangularElement],nodes_len:float):
+    def __init__(self,interior_contours:List[volmdlr.wires.Contour2D],exterior_contours:List[volmdlr.wires.Contour2D],nodes_len:float):
         self.nodes_len=nodes_len
         self.interior_contours=interior_contours
         self.exterior_contours=exterior_contours
-        self.triangles=triangles
-    
         
-    def  neighbour_edge(self,n:int,i:int,di:int):
-        return (i+di)%n  
-   
-    
-    def edge_max_distance(self,polygone:volmdlr.wires.ClosedPolygon2D,P0:volmdlr.Point2D,P1:volmdlr.Point2D,P2:volmdlr.Point2D,indexes:List[float]):
-        n=len(polygone.points)
-        distance=0
-        j=None
-        triangle=volmdlr.wires.Triangle2D([P0,P1,P2])
-        for i in range(n):
-            if not (i in indexes):
-                M=polygone.points[i]
-                if triangle.is_inside_triangle(M):
-                    d=abs(triangle.line_equation(P1,P2,M))
-                    if d > distance:
-                        distance=d
-                        j=i
-       
-        return j
-    
-    
-    
-    
-    def left_edge(self,polygone:volmdlr.wires.ClosedPolygon2D):
-        n=len(polygone.points)
-        x=polygone.points[0].x
-        j=0
-        for i in range (1,n):
-            if polygone.points[i].x < x:
-                x=polygone.points[i].x
-                j=i
-        return j
-            
-    def new_polygon(self,polygone:volmdlr.wires.ClosedPolygon2D,i_beg:int,i_end=int):
-        n=len(polygone.points)
-        u=[]
-        i=i_beg
-        while i!=i_end:
-            u.append(polygone.points[i])
-            i=self.neighbour_edge(n,i,1)
-        u.append(polygone.points[i_end])
-        p=volmdlr.wires.ClosedPolygon2D(u)
-        
-        return p
-    
-    def triangulation_polygone_recursive(self,polygone:volmdlr.wires.ClosedPolygon2D,triangles:List[volmdlr.wires.Triangle2D]):
-        
-        n=len(polygone.points)
-        j0=self.left_edge(polygone)
-      
-       
-        j1=self.neighbour_edge(n,j0,1)
-       
-        j2=self.neighbour_edge(n,j0,-1)
-        
-        P0=polygone.points[j0]
-        P1=polygone.points[j1]
-        P2=polygone.points[j2]
-        j=self.edge_max_distance(polygone,P0,P1,P2,[j0,j1,j2])
-        
-        if j==None:
-            triangle=volmdlr.wires.Triangle2D([P0,P1,P2])
-            triangles.append(triangle)
-            polygone_1=self.new_polygon(polygone,j1,j2)
-                            
-            if len(polygone_1.points)==3:
-                    
-                    new_triangle=volmdlr.wires.Triangle2D([polygone_1.points[0],polygone_1.points[1],
-                                                polygone_1.points[2]])    
-                    triangles.append(new_triangle)  
-                                          
-            else :
-             
-                  self.triangulation_polygone_recursive(polygone_1,triangles)
-     
-        else : 
-            
-            polygone_1=self.new_polygon(polygone,j0,j)
-            polygone_2=self.new_polygon(polygone,j,j0)    
-            
-            if len(polygone_1.points)==3:
-                new_triangle=volmdlr.wires.Triangle2D([polygone_1.points[0],polygone_1.points[1],
-                                            polygone_1.points[2]])                
-                triangles.append(new_triangle)
-               
-            else :
-                self.triangulation_polygone_recursive(polygone_1,triangles)
-                
-            if len(polygone_2.points)==3:
-                new_triangle=volmdlr.wires.Triangle2D([polygone_2.points[0],polygone_2.points[1],
-                                            polygone_2.points[2]])                    
-                triangles.append(new_triangle)
 
-            else :
-                    
-                self.triangulation_polygone_recursive(polygone_2,triangles)
-            
-        return triangles 
-    
-    
     
     def _is_convex(self,p1:volmdlr.Point2D, p2:volmdlr.Point2D, p3:volmdlr.Point2D):
         return self._triangle_sum(p1.x, p1.y, p2.x, p2.y, p3.x,p3.y) < 0

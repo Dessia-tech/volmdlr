@@ -109,30 +109,26 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                 offset_point_2 = primitive.points[-1] + offset * \
                 n
             
-                   
-
                 # infinite_primitive=volmdlr.edges.Line2D(primitive.start,primitive.end).translation(volmdlr.Vector2D(offset,-offset))
                 infinite_primitive=volmdlr.edges.Line2D(offset_point_1,offset_point_2)
                 infinite_primitives.append(infinite_primitive)
                 infinite_primitive.plot(ax=ax)
             else :
                 if not primitive.is_trigo :
-                    if offset > 0 :
-                        radius=primitive.radius+abs(offset) 
-                    
-                    else :
-                
-                        radius = primitive.radius-abs(offset)
                    
+                        radius=primitive.radius+offset 
+
                 else :
-                    if offset>0:
-                        radius=primitive.radius-abs(offset)
-                    else :
-                        radius=primitive.radius+abs(offset)
+                    
+                        radius=primitive.radius-offset
                 infinite_primitive=Circle2D(primitive.center,radius)
                 infinite_primitives.append(infinite_primitive)
                 infinite_primitive.plot(ax=ax)
+                
+                
         nb=len(infinite_primitives)
+        
+        
         for i in range(nb-1):
             if infinite_primitives[i].__class__.__name__=='Line2D' and infinite_primitives[i+1].__class__.__name__=='Line2D':
                 intersection=infinite_primitives[i].line_intersections(infinite_primitives[i+1])[0]
@@ -155,6 +151,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                 
                 intersections[0].plot(ax=ax,color='g')
                 intersections[1].plot(ax=ax,color='b')
+                
+                
+                
         if self.primitives[0].__class__.__name__=='LineSegment2D':
             offset_primitives.append(volmdlr.edges.LineSegment2D(infinite_primitives[0].point1,offset_intersections[0][0][0]))
         else :
@@ -177,6 +176,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                 end=infinite_primitives[offset_intersections[-1][2]].circle_projection(self.primitives[-1].end)
                 a=volmdlr.edges.Arc2D(offset_intersections[-1][0][1],interior,end)  
             offset_primitives.append(a)
+            
+            
         for j in range(len(offset_intersections)-1):
             if offset_intersections[j][1]=='Line2D':
                 offset_primitives.append(volmdlr.edges.LineSegment2D(offset_intersections[j][0][0],
@@ -1323,7 +1324,38 @@ class Triangle2D(ClosedPolygon2D):
         u = self.points[1] - self.points[0]
         v = self.points[2] - self.points[0]
         return abs(u.cross(v))/2
-    
+     
+        
+    def rotation(self, center, angle, copy=True):
+        if copy:
+            return Triangle2D([pt.rotation(center, angle, copy=True) for pt in self.points])
+        else:
+            for pt in self.points:
+                pt.Rotation(center, angle, copy=False)
+                
+    def translation(self, offset, copy=True):
+        if copy:
+            return Triangle2D([pt.Translation(offset, copy=True) for pt in self.points])
+        else:
+            for pt in self.points:
+                pt.Translation(offset, copy=False)
+                
+                 
+    def axial_symmetry(self, line, copy=True):
+        p1, p2 = line.points
+        symmetric_points = []
+        for point in self.points:
+            u = p2 - p1
+            t = (point-p1).Dot(u) / u.Norm()**2
+            projection = p1 + t * u
+            symmetric_point = volmdlr.Point2D((2 * projection - point).vector)
+            symmetric_points.append(symmetric_point)
+        if copy: 
+            return Triangle2D(symmetric_points)
+        else:
+            for i, point in enumerate(self.points):
+                point = symmetric_points[i]
+   
     def common_edge(self,nodes_0:List[volmdlr.Point2D],nodes_1:List[volmdlr.Point2D]):
         common_edge=None
         for point1 in nodes_0:
