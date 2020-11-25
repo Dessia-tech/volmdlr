@@ -1,8 +1,15 @@
+
+import os
+import pkg_resources
+from string import Template
+
+
+babylon_unpacker_cdn_header = Template('''
 <!doctype html>
 <html>
 <head>
    <meta charset="utf-8">
-   <title>{{name}}</title>
+   <title>$name</title>
    <style>
       html, body {
          overflow: hidden;
@@ -17,22 +24,51 @@
          touch-action: none;
       }
    </style>
-    {% if use_cdn %}
       <script src="https://preview.babylonjs.com/babylon.js"></script>
       <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
       <script src="https://code.jquery.com/pep/0.4.3/pep.js"></script>
       <script src='https://unpkg.com/earcut@2.1.1/dist/earcut.min.js'></script>
       <script src='https://preview.babylonjs.com/gui/babylon.gui.min.js'></script>
-    {% else %}
-        <script type="text/javascript" >{% include 'babylon.js' %}</script>
-        <script type="text/javascript" >{% include 'babylonjs.loaders.min.js' %}</script>
-        <script type="text/javascript" >{% include 'earcut.min.js' %}</script>
-        <script type="text/javascript" >{% include 'pep.js' %}</script>
-    {% endif %}
-
-
-
 </head>
+''')
+
+babylon_unpacker_embedded_header = '''
+<!doctype html>
+<html>
+<head>
+   <meta charset="utf-8">
+   <title>$name</title>
+   <style>
+      html, body {
+         overflow: hidden;
+         width: 100%;
+         height: 100%;
+         margin: 0;
+         padding: 0;
+      }
+      #renderCanvas {
+         width: 100%;
+         height: 100%;
+         touch-action: none;
+      }
+   </style>'''
+
+for filename in ['babylon.js', 'babylonjs.loaders.min.js', 'earcut.min.js', 'pep.js']:
+    with pkg_resources.resource_stream(
+            pkg_resources.Requirement('volmdlr'),
+            os.path.join('assets/js/', filename)) as fjs:
+        babylon_unpacker_embedded_header += fjs.read().decode('utf-8')
+# print(type(babylon_js_libs), len(babylon_js_libs))
+# print(babylon_js_libs)
+babylon_unpacker_embedded_header += '''
+      {}
+</head>
+'''
+babylon_unpacker_embedded_header_template = Template(babylon_unpacker_embedded_header)
+
+
+babylon_unpacker_body_template = Template(
+'''
 <body>
    <canvas id="renderCanvas"></canvas>
    <script type="text/javascript">
@@ -41,8 +77,8 @@
       // Load the BABYLON 3D engine
       var engine = new BABYLON.Engine(canvas, true);
 
-      var babylon_data = {{babylon_data | safe}};
-      var max_length = {{babylon_data['max_length']}}
+      var babylon_data = $babylon_data;
+      var max_length = babylon_data['max_length'];
 
       // -------------------------------------------------------------
       // Here begins a function that we will 'call' just after it's built
@@ -52,14 +88,14 @@
         scene.useRightHandedSystem = true;
         scene.clearColor = new BABYLON.Color4(.9, .9, .9, .9);
       	var cam = new BABYLON.ArcRotateCamera("ArcRotateCamera",
-                                              0, 0, 2*{{babylon_data['max_length']}},
-                                              new BABYLON.Vector3({{babylon_data['center'][0]}},
-                                                                  {{babylon_data['center'][1]}},
-                                                                  {{babylon_data['center'][2]}}), scene);
-      	cam.wheelPrecision=50./{{babylon_data['max_length']}}
-      	cam.pinchPrecision=50./{{babylon_data['max_length']}}
-      	cam.panningSensibility=800./{{babylon_data['max_length']}};
-      	cam.minZ=0.01*{{babylon_data['max_length']}};
+                                              0, 0, 2*babylon_data['max_length'],
+                                              new BABYLON.Vector3(babylon_data['center'][0],
+                                                                  babylon_data['center'][1],
+                                                                  babylon_data['center'][2]), scene);
+      	cam.wheelPrecision=50./babylon_data['max_length']
+      	cam.pinchPrecision=50./babylon_data['max_length']
+      	cam.panningSensibility=800./babylon_data['max_length'];
+      	cam.minZ=0.01*babylon_data['max_length'];
       	cam.attachControl(canvas);
       	cam.inertia = 0;
       	cam.panningInertia = 0;
@@ -156,12 +192,9 @@
         }
 
 
-        {% if babylon_data['steps'] %}
+        if (babylon_data['steps']){
 
-          // var positions = {{positions}};
-          // var orientations = {{orientations}};
-          //
-          //
+
           var n_primitives = babylon_data['meshes'].length;
           var n_steps = babylon_data['steps'].length;
 
@@ -279,7 +312,7 @@
                   }
 
           });
-          {% endif %}
+          }
 
 
     	return scene;	  };
@@ -295,11 +328,12 @@
          engine.resize();
       });
 
-      {% if debug %}
-        scene.debugLayer.show();
-      {% endif %}
+        //scene.debugLayer.show();
 
    </script>
 </body>
 
 </html>
+
+'''
+)
