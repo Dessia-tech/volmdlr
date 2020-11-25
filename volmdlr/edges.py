@@ -1554,8 +1554,9 @@ class LineSegment3D(LineSegment):
     Define a line segment limited by two points
     """
 
-    def __init__(self, start, end, name: str = ''):
-        LineSegment.__init__(self, start, end, name)
+    def __init__(self, start:volmdlr.Point3D, end:volmdlr.Point3D,
+                 name: str = ''):
+        LineSegment.__init__(self, start=start, end=end, name=name)
         self.bounding_box = self._bounding_box()
 
     def __hash__(self):

@@ -320,7 +320,6 @@ class Contour2D(Contour, Wire2D):
     def __init__(self, primitives, name=''):
         Wire2D.__init__(self, primitives, name)
         self._utd_analysis = False
-        # self.tessel_points = self.clean_points()
 
     def _primitives_analysis(self):
         """
@@ -2032,16 +2031,14 @@ class Contour3D(Contour, Wire3D):
         Wire3D.__init__(self, primitives=primitives, name=name)
 
     def __hash__(self):
-        return sum([hash(e) for e in self.primitives]) + sum(
-            [hash(p) for p in self.tessel_points])
+        return sum([hash(e) for e in self.primitives])
 
     def __eq__(self, other_):
+        if self.__class__.__name__ != other_.__class__.__name__:
+            return False
         equal = True
         for edge, other_edge in zip(self.primitives, other_.edges):
             equal = (equal and edge == other_edge)
-        # for point, other_point in zip(self.points, other_.points):
-        #     equal = (equal and point == other_point)
-        #     print('contour', equal, point.vector, other_point.vector)
         return equal
 
     @classmethod

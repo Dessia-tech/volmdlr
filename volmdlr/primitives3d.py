@@ -12,7 +12,6 @@ npy.seterr(divide='raise')
 import volmdlr
 import volmdlr.primitives
 import volmdlr.faces
-import volmdlr.shells
 from typing import Tuple
 
 import matplotlib.pyplot as plt
@@ -127,7 +126,7 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
 
 
 
-class Block(volmdlr.shells.Shell3D):
+class Block(volmdlr.faces.Shell3D):
     _standalone_in_db = True
     _generic_eq = True
     _non_serializable_attributes  = ['size']
@@ -147,7 +146,7 @@ class Block(volmdlr.shells.Shell3D):
         self.size = (self.frame.u.norm(), self.frame.v.norm(), self.frame.w.norm())
 
         faces = self.shell_faces()
-        volmdlr.shells.Shell3D.__init__(self, faces,  color=color, alpha=alpha, name=name)
+        volmdlr.faces.Shell3D.__init__(self, faces,  color=color, alpha=alpha, name=name)
 
     # def __hash__(self):
     #     return hash(self.frame)
@@ -238,7 +237,7 @@ class Block(volmdlr.shells.Shell3D):
             return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
         else:
             self.frame.rotation(center, axis, angle, copy=False)
-            volmdlr.shells.Shell3D.rotation(self, center, axis, angle, copy=False)
+            volmdlr.faces.Shell3D.rotation(self, center, axis, angle, copy=False)
 
     def translation(self, offset, copy=True):
         if copy:
@@ -246,7 +245,7 @@ class Block(volmdlr.shells.Shell3D):
             return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
         else:
             self.frame.translation(offset, copy=False)
-            volmdlr.shells.Shell3D.translation(self, offset, copy=False)
+            volmdlr.faces.Shell3D.translation(self, offset, copy=False)
 
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -263,7 +262,7 @@ class Block(volmdlr.shells.Shell3D):
                 return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
             else:
                 self.frame = new_frame
-                volmdlr.shells.Shell3D.frame_mapping(self, frame, side, copy=False)
+                volmdlr.faces.Shell3D.frame_mapping(self, frame, side, copy=False)
 
         if side == 'old':
             new_origin = frame.old_coordinates(self.frame.origin)
@@ -275,7 +274,7 @@ class Block(volmdlr.shells.Shell3D):
                 return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
             else:
                 self.frame = new_frame
-                volmdlr.shells.Shell3D.frame_mapping(self, frame, side, copy=False)
+                volmdlr.faces.Shell3D.frame_mapping(self, frame, side, copy=False)
 
     def copy(self):
         new_origin = self.frame.origin.copy()
@@ -365,7 +364,7 @@ class Cone(volmdlr.core.Primitive3D):
         return s
 
 
-class ExtrudedProfile(volmdlr.shells.Shell3D):
+class ExtrudedProfile(volmdlr.faces.Shell3D):
     """
     
     """
@@ -395,7 +394,7 @@ class ExtrudedProfile(volmdlr.shells.Shell3D):
             raise ValueError('At least one inner contour is not contained in outer_contour.')
 
         faces = self.shell_faces()
-        volmdlr.shells.Shell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
+        volmdlr.faces.Shell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
 
     def shell_faces(self):
         lower_plane = volmdlr.faces.Plane3D.from_plane_vectors(self.plane_origin,
@@ -503,7 +502,7 @@ class ExtrudedProfile(volmdlr.shells.Shell3D):
                           extrusion_vector)
 
 
-class RevolvedProfile(volmdlr.shells.Shell3D):
+class RevolvedProfile(volmdlr.faces.Shell3D):
     """
 
     """
@@ -522,7 +521,7 @@ class RevolvedProfile(volmdlr.shells.Shell3D):
         self.contour3d = self.contour2d.to_3d(plane_origin, x, y)
 
         faces = self.shell_faces()
-        volmdlr.shells.Shell3D.__init__(self, faces, color=color,
+        volmdlr.faces.Shell3D.__init__(self, faces, color=color,
                                  alpha=alpha, name=name)
 
     def shell_faces(self):
@@ -844,7 +843,7 @@ class HollowCylinder(Cylinder):
             self.axis = axis
 
 
-class Sweep(volmdlr.shells.Shell3D):
+class Sweep(volmdlr.faces.Shell3D):
     """
     Sweep a 2D contour along a Wire3D
     """
@@ -855,7 +854,7 @@ class Sweep(volmdlr.shells.Shell3D):
         self.frames = []
         
         faces = self.shell_faces()
-        volmdlr.shells.Shell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
+        volmdlr.faces.Shell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
 
 
     def shell_faces(self):
