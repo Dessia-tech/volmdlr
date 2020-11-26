@@ -661,7 +661,21 @@ class LineSegment2D(LineSegment):
      
 
 
-
+    def infinite_primitive(self,offset):
+        vector=self.end-self.start
+        vector.normalize()
+        n=vector.normal_vector()
+       
+            
+        offset_point_1 = self.points[0] + offset * \
+        n
+        
+        
+        offset_point_2 = self.points[-1] + offset * \
+        n
+    
+        
+        return(Line2D(offset_point_1,offset_point_2))
     def plot(self, ax=None, color='k', alpha=1, arrow=False, width=None,
 
                 plot_points=False):
@@ -1065,7 +1079,18 @@ class Arc2D(Edge):
         return arc_to_nodes[self] 
  
 
-   
+    def infinite_primitive(self,offset):
+     
+        if not self.is_trigo :
+           
+                radius=self.radius+offset 
+    
+        else :
+            
+                radius=self.radius-offset
+        return(volmdlr.wires.Circle2D(self.center,radius))
+    
+    
     # def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
 
     #     list_node = self.Discretise()
