@@ -4,12 +4,12 @@ import pkg_resources
 from string import Template
 
 
-babylon_unpacker_cdn_header = Template('''
+babylon_unpacker_cdn_header = '''
 <!doctype html>
 <html>
 <head>
    <meta charset="utf-8">
-   <title>$name</title>
+   <title>Babylon from volmdlr</title>
    <style>
       html, body {
          overflow: hidden;
@@ -30,14 +30,14 @@ babylon_unpacker_cdn_header = Template('''
       <script src='https://unpkg.com/earcut@2.1.1/dist/earcut.min.js'></script>
       <script src='https://preview.babylonjs.com/gui/babylon.gui.min.js'></script>
 </head>
-''')
+'''
 
 babylon_unpacker_embedded_header = '''
 <!doctype html>
 <html>
 <head>
    <meta charset="utf-8">
-   <title>$name</title>
+   <title>Babylon from volmdlr</title>
    <style>
       html, body {
          overflow: hidden;
@@ -51,7 +51,9 @@ babylon_unpacker_embedded_header = '''
          height: 100%;
          touch-action: none;
       }
-   </style>'''
+   </style>
+   <script>
+   '''
 
 for filename in ['babylon.js', 'babylonjs.loaders.min.js', 'earcut.min.js', 'pep.js']:
     with pkg_resources.resource_stream(
@@ -61,10 +63,10 @@ for filename in ['babylon.js', 'babylonjs.loaders.min.js', 'earcut.min.js', 'pep
 # print(type(babylon_js_libs), len(babylon_js_libs))
 # print(babylon_js_libs)
 babylon_unpacker_embedded_header += '''
-      {}
+      </script>
 </head>
 '''
-babylon_unpacker_embedded_header_template = Template(babylon_unpacker_embedded_header)
+# babylon_unpacker_embedded_header_template = Template(babylon_unpacker_embedded_header)
 
 
 babylon_unpacker_body_template = Template(

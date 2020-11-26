@@ -11,8 +11,16 @@ import volmdlr.faces
 
 R = 0.32
 
-ts = volmdlr.faces.CylindricalSurface3D(volmdlr.OXYZ, R)
+surface = volmdlr.faces.CylindricalSurface3D(volmdlr.OXYZ, R)
 
-tf = ts.rectangular_cut(-0.01, 1.3, -0.1, 0.3)
-# tf.outer_contour2d.plot()
-tf.babylonjs(debug=True, use_cdn=False)
+face = surface.rectangular_cut(-0.01, 1.3, -0.1, 0.3)
+face.babylonjs(debug=True, use_cdn=False)
+
+lines_x, lines_y = face.triangulation_lines()
+ax = face.surface2d.plot()
+for line in lines_x+lines_y:
+    line.plot(ax=ax, color='r')
+
+ax2 = face.surface2d.plot()
+for surface in face.surface2d.split_by_lines(lines_x):
+    surface.plot(ax=ax2, color='b')

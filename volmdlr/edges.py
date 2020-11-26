@@ -147,7 +147,6 @@ class Edge(dc.DessiaObject):
             return arcellipse
 
         elif object_dict[arguments[3]].__class__.__name__ == 'BSplineCurve3D':
-            # print(object_dict[arguments[1]], object_dict[arguments[2]])
             # BSplineCurve3D à couper à gauche et à droite avec les points ci dessus ?
             return object_dict[arguments[3]]
 
@@ -225,6 +224,13 @@ class LineSegment(Edge):
     """
     Abstract class
     """
+    def abscissa(self, point):
+        u = self.end - self.start
+        length = u.norm()
+        t = (point - self.start).dot(u) / length
+        if t < -1e-9 or t > length+1e-9:
+            raise ValueError('Point is not on linesegment: abscissa={}'.format(t))
+        return t
 
     def unit_direction_vector(self):
         u = self.direction_vector()
@@ -764,7 +770,7 @@ class LineSegment2D(LineSegment):
                 circle2 = None
         return circle1, circle2
 
-    def polygon_points(self):
+    def polygon_points(self, angle_resolution=0):
         return [self.start, self.end]
 
     def polygon_points(self, min_x_density=None, min_y_density=None):
@@ -801,7 +807,7 @@ class Arc2D(Edge):
         xe, ye = end.x, end.y
         xs, ys = start.x, start.y
         try:
-            A = volmdlr.core.Matrix22(2 * (xs - xi), 2 * (ys - yi),
+            A = volmdlr.Matrix22(2 * (xs - xi), 2 * (ys - yi),
                                       2 * (xs - xe), 2 * (ys - ye))
             b = - volmdlr.Vector2D(xi ** 2 + yi ** 2 - xs ** 2 - ys ** 2,
                                    xe ** 2 + ye ** 2 - xs ** 2 - ys ** 2)
@@ -857,9 +863,9 @@ class Arc2D(Edge):
 
     points = property(_get_points)
 
-    def polygon_points(self, resolution_for_circle=40):
+    def polygon_points(self, angle_resolution=10):
         number_points_tesselation = math.ceil(
-            resolution_for_circle * abs(self.angle) / 2 / math.pi)
+            angle_resolution * abs(self.angle) / 2 / math.pi)
         number_points_tesselation = max(number_points_tesselation, 5)
         l = self.length()
         return [self.point_at_abscissa(
@@ -928,8 +934,6 @@ class Arc2D(Edge):
     def abscissa(self, point2d:volmdlr.Point2D):
         theta = volmdlr.core.clockwise_angle(self.start - self.center,
                                              point2d - self.center)
-        # print(theta)
-        # print(self.is_trigo)
         if self.is_trigo:
             theta = volmdlr.TWO_PI - theta
         return self.radius*abs(theta)
@@ -1098,7 +1102,7 @@ class Arc2D(Edge):
                       self.end)
                 ]
 
-    def polygon_points(self, points_per_radian=10):
+    def polygon_points(self, angle_resolution=10):
 
         # densities = []
         # for d in [min_x_density, min_y_density]:
@@ -1107,7 +1111,7 @@ class Arc2D(Edge):
         # if densities:
         #     number_points = max(number_points,
         #                         min(densities) * self.angle * self.radius)
-        number_points = math.ceil(self.angle * points_per_radian)
+        number_points = math.ceil(self.angle * angle_resolution)
         l = self.length()
         return [self.point_at_abscissa(i * l / number_points) \
                 for i in range(number_points + 1)]
@@ -1154,7 +1158,7 @@ class FullArc2D(Edge):
         angle = abscissa / self.radius
         return self.start.rotation(self.center, angle)
 
-    def polygon_points(self, points_per_radian=10):
+    def polygon_points(self, angle_resolution=10):
         number_points = math.ceil(self.angle * points_per_radian)
         l = self.length()
         return [self.point_at_abscissa(i * l / number_points) \
@@ -1295,7 +1299,7 @@ class ArcEllipse2D(Edge):
 
     points = property(_get_points)
 
-    def polygon_points(self, resolution_for_ellipse=40):
+    def polygon_points(self, angle_resolution=40):
         number_points_tesselation = math.ceil(
             resolution_for_ellipse * abs(0.5 * self.angle / math.pi))
 
@@ -1579,12 +1583,12 @@ class LineSegment3D(LineSegment):
     def _bounding_box(self):
         points = [self.start, self.end]
 
-        xmin = min([pt[0] for pt in points])
-        xmax = max([pt[0] for pt in points])
-        ymin = min([pt[1] for pt in points])
-        ymax = max([pt[1] for pt in points])
-        zmin = min([pt[2] for pt in points])
-        zmax = max([pt[2] for pt in points])
+        xmin = min(self.start.x, self.end.x)
+        xmax = max(self.start.x, self.end.x)
+        ymin = min(self.start.y, self.end.y)
+        ymax = max(self.start.y, self.end.y)
+        zmin = min(self.start.z, self.end.z)
+        zmax = max(self.start.z, self.end.z)
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
@@ -1937,15 +1941,14 @@ class LineSegment3D(LineSegment):
         p2_proj, _ = axis_line3d.point_projection(self.end)
         d1 = self.start.point_distance(p1_proj)
         d2 = self.end.point_distance(p2_proj)
-        if d1 != 0.:
+        if not math.isclose(d1, 0., abs_tol=1e-9):
             u = (self.start - p1_proj)  # Unit vector from p1_proj to p1
             u.normalize()
-        elif d2 != 0.:
+        elif not math.isclose(d2, 0., abs_tol=1e-9):
             u = (self.end - p2_proj)  # Unit vector from p1_proj to p1
             u.normalize()
         else:
             return None
-
         if u.is_colinear_to(self.direction_vector()):
             # Planar face
             v = axis.cross(u)
@@ -2316,12 +2319,12 @@ class Arc3D(Edge):
     def reverse(self):
         return self.__class__(self.end, self.interior, self.start)
 
-    def polygon_points(self, resolution_for_circle=40):
-        number_points_tesselation = resolution_for_circle
+    def polygon_points(self, angle_resolution=40):
+        number_points = int(angle_resolution * self.angle +1)
         l = self.length()
         polygon_points_3D = [self.point_at_abscissa(
-            l * i / (number_points_tesselation)) for i in
-            range(number_points_tesselation + 1)]
+            l * i / (number_points)) for i in
+            range(number_points + 1)]
         return polygon_points_3D
 
     def length(self):
@@ -2368,19 +2371,19 @@ class Arc3D(Edge):
             self.end.translation(offset, False)
             [p.translation(offset, False) for p in self.primitives]
 
-    def plot(self, ax=None):
+    def plot(self, ax=None, color='k', alpha=1, plot_points=False):
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
         else:
             fig = None
-
-        ax.plot([self.interior[0]], [self.interior[1]], [self.interior[2]],
-                color='b')
-        ax.plot([self.start[0]], [self.start[1]], [self.start[2]], c='r')
-        ax.plot([self.end[0]], [self.end[1]], [self.end[2]], c='r')
-        ax.plot([self.interior[0]], [self.interior[1]], [self.interior[2]],
-                c='g')
+        if plot_points:
+            ax.plot([self.interior[0]], [self.interior[1]], [self.interior[2]],
+                    color='b')
+            ax.plot([self.start[0]], [self.start[1]], [self.start[2]], c='r')
+            ax.plot([self.end[0]], [self.end[1]], [self.end[2]], c='r')
+            ax.plot([self.interior[0]], [self.interior[1]], [self.interior[2]],
+                    c='g')
         x = []
         y = []
         z = []
@@ -2389,7 +2392,7 @@ class Arc3D(Edge):
             y.append(py)
             z.append(pz)
 
-        ax.plot(x, y, z, 'k')
+        ax.plot(x, y, z, color=color, alpha=alpha)
         return ax
 
     def plot2D(self, center=volmdlr.O3D,
@@ -2653,13 +2656,13 @@ class FullArc3D(Edge):
         angle = abscissa / self.radius
         return self.start.rotation(self.center, self.normal, angle)
 
-    def polygon_points(self, resolution=40):
-
+    def polygon_points(self, angle_resolution=10):
+        npoints = angle_resolution*volmdlr.TWO_PI + 2
         polygon_points_3D = [self.start.rotation(self.center,
                                                       self.normal,
-                                                      volmdlr.TWO_PI / (resolution - 1) * i
+                                                      volmdlr.TWO_PI / (npoints - 1) * i
                                                       ) \
-                                  for i in range(resolution)]
+                                  for i in range(npoints)]
         return polygon_points_3D
 
     def plot(self, ax=None, color='k'):
