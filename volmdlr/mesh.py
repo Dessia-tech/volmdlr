@@ -908,7 +908,7 @@ class Mesher(DessiaObject):
             
             for s in split_polygons:
                 s.plot()
-                triangles+=self.alternative_triangulation(s,None,False,False)
+                # triangles+=self.alternative_triangulation(s,None,False,False)
             
         else :
                       
@@ -1018,35 +1018,35 @@ class Mesher(DessiaObject):
         #       plot_aspect_ratio_triangles.append(triangle)
         #       all_aspect_ratios.update({triangle:triangle.aspect_ratio()})
 
-        for triangle in triangles:
+        # for triangle in triangles:
             
-            all_segments= all_segments.union(triangle.line_segments)
+        #     all_segments= all_segments.union(triangle.line_segments)
             
-        for segment in all_segments:
+        # for segment in all_segments:
             
-            segment_to_nodes[segment]=segment.discretise(self.nodes_len)
+        #     segment_to_nodes[segment]=segment.discretise(self.nodes_len)
                 
-        for triangle in triangles :
+        # for triangle in triangles :
             
-            meshing=triangle.mesh_triangle(segment_to_nodes,self.nodes_len)
-            plot_aspect_ratio_triangles+=meshing[0]
-            all_triangles+=meshing[0]
-            all_aspect_ratios.update(meshing[1])
+        #     meshing=triangle.mesh_triangle(segment_to_nodes,self.nodes_len)
+        #     plot_aspect_ratio_triangles+=meshing[0]
+        #     all_triangles+=meshing[0]
+        #     all_aspect_ratios.update(meshing[1])
 
-        for triangle in all_triangles : 
-            for point in triangle.points:
-                point.plot(ax=ax,color='r')
+        # for triangle in all_triangles : 
+        #     for point in triangle.points:
+        #         point.plot(ax=ax,color='r')
         
                 
                 
-        for triangle in all_triangles:
+        # for triangle in all_triangles:
   
-            triangular_element=TriangularElement(triangle.points)
-            all_triangle_elements.append(triangular_element)
+        #     triangular_element=TriangularElement(triangle.points)
+        #     all_triangle_elements.append(triangular_element)
             
 
-        self.plot_aspect_ratio(plot_aspect_ratio_triangles,all_aspect_ratios,ax)
-        ax.set_aspect('equal')
+        # self.plot_aspect_ratio(plot_aspect_ratio_triangles,all_aspect_ratios,ax)
+        # ax.set_aspect('equal')
         return all_triangle_elements
     
     def plot_aspect_ratio(self,all_triangles:List[volmdlr.wires.Triangle2D],
