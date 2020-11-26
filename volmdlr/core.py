@@ -4,55 +4,25 @@
 
 """
 
-from packaging import version
-import warnings
 import math
 import numpy as npy
 
+
 npy.seterr(divide='raise')
 
-# from geomdl import NURBS
-from geomdl import BSpline
-from geomdl import utilities
 import matplotlib.pyplot as plt
-import mpl_toolkits
-from matplotlib.patches import Arc, FancyArrowPatch
 from mpl_toolkits.mplot3d import Axes3D
-# from mpl_toolkits.mplot3d import proj3d
-from matplotlib import __version__ as _mpl_version
 
-import networkx as nx
-
-from volmdlr.core_compiled import (
-                            LineSegment2DPointDistance,
-                            polygon_point_belongs, Matrix22
-                            )
-
-from scipy.linalg import solve
-from scipy.spatial import Delaunay
-
-import volmdlr.geometry as geometry
 import volmdlr
-# from volmdlr import triangulation as tri
-import triangle  # doc : https://rufat.be/triangle/
+import volmdlr.templates
+
 
 import dessia_common as dc
-from jinja2 import Environment, PackageLoader, select_autoescape
 
 import webbrowser
 import os
 import tempfile
 import subprocess
-import random
-
-import scipy as scp
-import scipy.optimize
-
-from typing import List, Tuple
-
-# import volmdlr.faces3d
-# import volmdlr.surfaces3d as surfaces3d
-# import volmdlr.primitives3D
 
 
 
@@ -391,7 +361,7 @@ class CompositePrimitive2D(Primitive2D):
             ax.set_aspect('equal')
 
         for element in self.primitives:
-            element.plot(ax=ax, color=color, alpha=alpha, plot_points=plot_points)
+            element.plot(ax=ax, color=color, plot_points=plot_points)
 
 
         ax.margins(0.1)
@@ -922,13 +892,13 @@ class BoundingBox(dc.DessiaObject):
             net_point2 = frame.OldCoordinates(point2_2d)
 
             # Computes the 3D intersection between the net_line and the edges of the face_point1
-            net_line = LineSegment2D(point1_2d, net_point2)
+            net_line = edges.LineSegment2D(point1_2d, net_point2)
             vertex_points = vertex_2d_coordinate_dict[face_point1]
-            edge_lines = [LineSegment2D(p1, p2) for p1, p2 in
+            edge_lines = [edges.LineSegment2D(p1, p2) for p1, p2 in
                           zip(vertex_points,
                               vertex_points[1:] + [vertex_points[0]])]
             for line in edge_lines:
-                edge_intersection_point, a, b = Point2D.LinesIntersection(
+                edge_intersection_point, a, b = volmdlr.Point2D.LinesIntersection(
                     net_line, line, curvilinear_abscissa=True)
                 if edge_intersection_point is not None \
                         and a > 0 and a < 1 and b > 0 and b < 1:
@@ -1177,7 +1147,7 @@ class VolumeModel(dc.DessiaObject):
 
         return ax
 
-    def plot(self,equal_aspect=True):
+    def plot(self, equal_aspect=True):
         """
         Matplotlib plot of model.
         To use for debug.
@@ -1290,45 +1260,45 @@ class VolumeModel(dc.DessiaObject):
         os.remove(f.name)
         return output
 
-    def babylon_script(self, use_cdn=True, debug=False):
-
-        env = Environment(loader=PackageLoader('volmdlr', 'templates'),
-                          autoescape=select_autoescape(['html', 'xml']))
-
-        template = env.get_template('babylon.html')
-
-        bbox = self._bounding_box()
-        center = bbox.center
-        max_length = max([bbox.xmax - bbox.xmin,
-                          bbox.ymax - bbox.ymin,
-                          bbox.zmax - bbox.zmin])
-
-        primitives_strings = []
-        for primitive in self.primitives:
-            if hasattr(primitive, 'babylon_script'):
-                primitives_strings.append(primitive.babylon_script())
-
-        return template.render(name=self.name,
-                               center=tuple(center),
-                               length=2 * max_length,
-                               primitives_strings=primitives_strings,
-                               use_cdn=use_cdn,
-                               debug=debug)
-
-    def babylonjs_from_script(self, page_name=None, use_cdn=True, debug=False):
-        script = self.babylon_script(use_cdn=use_cdn, debug=debug)
-
-        if page_name is None:
-            with tempfile.NamedTemporaryFile(suffix=".html",
-                                             delete=False) as file:
-                file.write(bytes(script, 'utf8'))
-            page_name = file.name
-        else:
-            page_name += '.html'
-            with open(page_name, 'w')  as file:
-                file.write(script)
-
-        webbrowser.open('file://' + os.path.realpath(page_name))
+    # def babylon_script(self, use_cdn=True, debug=False):
+    #
+    #     # env = Environment(loader=PackageLoader('volmdlr', 'templates'),
+    #     #                   autoescape=select_autoescape(['html', 'xml']))
+    #     #
+    #     # template = env.get_template('babylon.html')
+    #
+    #     bbox = self._bounding_box()
+    #     center = bbox.center
+    #     max_length = max([bbox.xmax - bbox.xmin,
+    #                       bbox.ymax - bbox.ymin,
+    #                       bbox.zmax - bbox.zmin])
+    #
+    #     primitives_strings = []
+    #     for primitive in self.primitives:
+    #         if hasattr(primitive, 'babylon_script'):
+    #             primitives_strings.append(primitive.babylon_script())
+    #
+    #     return template.render(name=self.name,
+    #                            center=tuple(center),
+    #                            length=2 * max_length,
+    #                            primitives_strings=primitives_strings,
+    #                            use_cdn=use_cdn,
+    #                            debug=debug)
+    #
+    # def babylonjs_from_script(self, page_name=None, use_cdn=True, debug=False):
+    #     script = self.babylon_script(use_cdn=use_cdn, debug=debug)
+    #
+    #     if page_name is None:
+    #         with tempfile.NamedTemporaryFile(suffix=".html",
+    #                                          delete=False) as file:
+    #             file.write(bytes(script, 'utf8'))
+    #         page_name = file.name
+    #     else:
+    #         page_name += '.html'
+    #         with open(page_name, 'w')  as file:
+    #             file.write(script)
+    #
+    #     webbrowser.open('file://' + os.path.realpath(page_name))
 
     def babylon_data(self):
         meshes = []
@@ -1347,17 +1317,17 @@ class VolumeModel(dc.DessiaObject):
         return babylon_data
 
     @classmethod
-    def babylonjs_from_babylon_data(cls, babylon_data, page_name=None,
+    def babylonjs_from_babylon_data(cls, babylon_data, page_name='Volmdlr model',
                                     use_cdn=True, debug=False):
-        env = Environment(loader=PackageLoader('volmdlr', 'templates'),
-                          autoescape=select_autoescape(['html', 'xml']))
 
-        template = env.get_template('babylon_unpacker.html')
+        if use_cdn:
+            script = volmdlr.templates.babylon_unpacker_cdn_header.substitute(name=page_name)
+        else:
+            script = volmdlr.templates.babylon_unpacker_embedded_header.substitute(name=page_name)
 
-        script = template.render(babylon_data=babylon_data,
-                                 use_cdn=use_cdn,
-                                 debug=debug
-                                 )
+        script += volmdlr.templates.babylon_unpacker_body_template.substitute(
+                        babylon_data=babylon_data)
+
         if page_name is None:
             with tempfile.NamedTemporaryFile(suffix=".html",
                                              delete=False) as file:
@@ -1371,7 +1341,6 @@ class VolumeModel(dc.DessiaObject):
         webbrowser.open('file://' + os.path.realpath(page_name))
 
     def babylonjs(self, page_name=None, use_cdn=True, debug=False):
-        # print('self.primitives', self.primitives)
         babylon_data = self.babylon_data()
         self.babylonjs_from_babylon_data(babylon_data, page_name=page_name,
                                          use_cdn=use_cdn, debug=debug)

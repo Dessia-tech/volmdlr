@@ -22,6 +22,8 @@ box_red = primitives3d.Block(
 
 p1_ray = vm.Point3D(-0.15, -0.15, -0.15)
 p2_ray = vm.Point3D(0.009855980224206917, 0.6250574317556334, -0.1407142090413507)
+# p1_ray = vm.Point3D(-0.15, -0.12999999999999992, 0.15)
+# p2_ray = vm.Point3D(0.09377883804318171, 0.17764785706502192, 0.19256693676483136)
 ray = vm.edges.LineSegment3D(p1_ray, p2_ray)
 
 
@@ -58,7 +60,7 @@ print(box_green.intersection_internal_aabb_volume(box_blue, resolution))
 print(box_green.intersection_external_aabb_volume(box_blue, resolution))
 model = vm.core.VolumeModel([box, box_red, box_green, box_blue])
 model.babylonjs(debug=True)
-print('\n\n@@@@@@@\n')
+# print('\n\n@@@@@@@\n')
 assert box.is_inside_shell(box_red, resolution) == True
 assert box_red.is_inside_shell(box, resolution) == False
 

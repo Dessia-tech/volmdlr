@@ -6,17 +6,18 @@ Created on Wed Mar 14 15:32:37 2018
 @author: Steven Masfaraud masfaraud@dessia.tech
 """
 import volmdlr as vm
+import volmdlr.wires as vmw
 #import volmdlr.primitives2D as primitives2D
 import numpy as npy
 
 #for i in range(20):
 triangle_points=[vm.Point2D.random(0, 1, 0, 1) for i in range(3)]
-triangle=vm.Polygon2D(triangle_points)
+triangle = vmw.ClosedPolygon2D(triangle_points)
 
 
-cog_triangle=triangle.CenterOfMass()
-c1 = vm.CompositePrimitive2D([triangle, cog_triangle])
-c1.MPLPlot()
+cog_triangle = triangle.center_of_mass()
+c1 = vm.core.CompositePrimitive2D([triangle, cog_triangle])
+c1.plot()
 
 print(triangle.area())
 
