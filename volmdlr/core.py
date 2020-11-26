@@ -1321,9 +1321,9 @@ class VolumeModel(dc.DessiaObject):
                                     use_cdn=True, debug=False):
 
         if use_cdn:
-            script = volmdlr.templates.babylon_unpacker_cdn_header.substitute(name=page_name)
+            script = volmdlr.templates.babylon_unpacker_cdn_header#.substitute(name=page_name)
         else:
-            script = volmdlr.templates.babylon_unpacker_embedded_header.substitute(name=page_name)
+            script = volmdlr.templates.babylon_unpacker_embedded_header#.substitute(name=page_name)
 
         script += volmdlr.templates.babylon_unpacker_body_template.substitute(
                         babylon_data=babylon_data)

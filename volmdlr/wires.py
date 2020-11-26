@@ -54,7 +54,10 @@ class Wire:
                 return primitive.point_at_abscissa(
                     curvilinear_abscissa - length)
             length += primitive_length
-        return ValueError
+
+        if curvilinear_abscissa < length + 1e-9:
+            return self.primitives[-1].end
+        raise ValueError('abscissa over length: {}>{}'.format(curvilinear_abscissa, length))
 
 
     def extract_primitives(self, point1, primitive1, point2, primitive2):
@@ -294,7 +297,6 @@ class Contour2D(Contour, Wire2D):
                 # points_polygon.append(primitive.end)
                 arcs.append(primitive)
             elif primitive.__class__.__name__ == 'Circle2D':
-                print(self.primitives)
                 raise ValueError(
                     'Circle2D primitives should not be inserted in a contour, as a circle is already a contour. Use directcly the circle')
                 # return None
@@ -538,7 +540,7 @@ class Contour2D(Contour, Wire2D):
     def bounding_rectangle(self):
         points = self.straight_line_contour_polygon.points[:]
         for arc in self.internal_arcs + self.external_arcs:
-            points.extend(arc.tessellation_points())
+            points.extend(arc.polygon_points())
         xmin = min([p[0] for p in points])
         xmax = max([p[0] for p in points])
         ymin = min([p[1] for p in points])
@@ -742,7 +744,7 @@ class Contour2D(Contour, Wire2D):
             primitives.extend(self.primitives[:ip3])
             primitives.append(sp22) 
             l=volmdlr.edges.LineSegment2D(sp22.start,sp12.end)
-            interior=l.PointAtCurvilinearAbscissa(l.Length()/2)
+            interior=l.point_at_abscissa(l.Length()/2)
             primitives.append(volmdlr.edges.Arc2D(sp22.start,interior,sp12.end))
    
         return Contour2D(primitives)  
@@ -778,9 +780,7 @@ class Contour2D(Contour, Wire2D):
         cutted_contours = []
         iteration_contours = [self]
         for i in range(n - 1):
-            # print(i)
             xi = xmin + (i + 1) * (xmax - xmin) / n
-            # print(xi)
             cut_line = volmdlr.edges.Line2D(volmdlr.Point2D(xi, 0),
                                             volmdlr.Point2D(xi, 1))
 
@@ -788,7 +788,6 @@ class Contour2D(Contour, Wire2D):
             for c in iteration_contours:
                 sc = c.cut_by_line(cut_line)
                 lsc = len(sc)
-                # print('lsc', lsc)
                 if lsc == 1:
                     cutted_contours.append(c)
                 else:
@@ -1243,7 +1242,7 @@ class ClosedPolygon2D(Contour2D):
 
         return cls(hull)
 
-    def plot(self, ax=None, color='k',
+    def plot(self, ax=None, color='k', alpha=1,
                 plot_points=False, point_numbering=False,
                 fill=False, fill_color='w'):
         if ax is None:
@@ -1254,11 +1253,11 @@ class ClosedPolygon2D(Contour2D):
             ax.fill([p[0] for p in self.points], [p[1] for p in self.points],
                     facecolor=fill_color)
         for ls in self.line_segments:
-            ls.plot(ax=ax ,color=color)
+            ls.plot(ax=ax ,color=color, alpha=alpha)
 
         if plot_points or point_numbering:
             for point in self.points:
-                point.plot(ax=ax, color=color)
+                point.plot(ax=ax, color=color, alpha=alpha)
 
         if point_numbering:
             for ip, point in enumerate(self.points):
@@ -1733,7 +1732,7 @@ class Circle2D(Contour2D):
                and math.isclose(self.radius, other_circle.radius,
                                 abs_tol=1e-06)
     def to_polygon(self,n:float):
-        return ClosedPolygon2D(self.discretise(n))
+        return ClosedPolygon2D(self.polygon_points())
         
     def polygonization(self, resolution=0.010):
 
@@ -1854,7 +1853,6 @@ class Circle2D(Contour2D):
 
     def to_3d(self, plane_origin, x, y):
         normal = x.cross(y)
-        # print(normal)
         center3d = self.center.to_3d(plane_origin, x, y)
         return Circle3D(volmdlr.Frame3D(center3d, x, y, normal),
                         self.radius, self.name)
@@ -1931,12 +1929,13 @@ class Circle2D(Contour2D):
         
         return [volmdlr.edges.Arc2D(split_point1,self.border_points()[0],split_point2),
                 volmdlr.edges.Arc2D(split_point2,self.border_points()[1], split_point1)] 
-    def PointAtCurvilinearAbscissa(self, curvilinear_abscissa):
+    def point_at_abscissa(self, curvilinear_abscissa):
         start = self.center + self.radius * volmdlr.X3D
         return start.rotation(self.center,
-                              curvilinear_abscissa / self.radius)     
-    def discretise(self,n:float):
-         
+                              curvilinear_abscissa / self.radius)
+
+    def discretise(self, n:float):
+        # BUGGED: returns method
         circle_to_nodes={}
         nodes=[]
         if n*self.length() < 1 :
@@ -1954,17 +1953,13 @@ class Circle2D(Contour2D):
                   nodes.append(node)
                
               circle_to_nodes[self]=nodes
-       
-               
-            
+
         return circle_to_nodes[self]
-    def polygon_points(self, points_per_radian=10, min_x_density=None,
-                       min_y_density=None):
-        return volmdlr.edges.Arc2D.polygon_points(self, points_per_radian=points_per_radian,
-                                    min_x_density=min_x_density,
-                                    min_y_density=min_y_density)
 
 
+    def polygon_points(self, angle_resolution=10):
+        return volmdlr.edges.Arc2D.polygon_points(
+                    self, angle_resolution=angle_resolution)
 
 
 class Contour3D(Contour, Wire3D):
@@ -2001,7 +1996,6 @@ class Contour3D(Contour, Wire3D):
         raw_edges = []
         edge_ends = {}
         for ie, edge_id in enumerate(arguments[1]):
-            # print(arguments[1])
             edge = object_dict[int(edge_id[1:])]
             raw_edges.append(edge)
 
@@ -2037,98 +2031,57 @@ class Contour3D(Contour, Wire3D):
 
             edges.append(last_edge)
 
-        #     if edge.start in edge_ends:
-        #         edge_ends[edge.start].append((ie, 0))
-        #     else:
-        #         edge_ends[edge.start] = [(ie, 0)]
-        #
-        #     if edge.end in edge_ends:
-        #         edge_ends[edge.end].append((ie, 1))
-        #     else:
-        #         edge_ends[edge.end] = [(ie, 1)]
-        #
-        # print(edge_ends)
-        # if (len(raw_edges)) == 1:#
-        #     if not isinstance(raw_edges[0], cls):
-        #         raise NotImplementedError(
-        #             'A single primitive in a contour must inherit from contour: {}'.format(raw_edges[0]))
-        #     # Case of a circle, ellipse...
-        #     return raw_edges[0]
-        #
-        # edges = [raw_edges[0]]
-        # last_edge = raw_edges[0]
-        # last_edge_index = 0
-        # last_edge_direction = 1
-        # remaining_edges_indices = [i+1 for i in range(len(raw_edges)-1)]
-        # while remaining_edges_indices:
-        #     connected_points = edge_ends[last_edge.end]
-        #     if len(connected_points) > 2:
-        #         raise NotImplementedError('3 or more edges have a point in common')
-        #     connected_points.remove((last_edge_index, last_edge_direction))
-        #     new_edge_index, new_edge_direction = connected_points[0]
-        #     edge = raw_edges[new_edge_index]
-        #     if new_edge_direction:
-        #         edge = edge.reverse()
-        #     edges.append(edge)
-        #
-        #     last_edge_index = new_edge_index
-        #     last_edge_direction = not new_edge_direction
-        #     remaining_edges_indices.remove(new_edge_index)
-        #     last_edge = edge
-
-
         return cls(edges, name=name)
 
-    def clean_points(self):
-        """
-        TODO : verifier si le dernier point est toujours le meme que le premier point
-        lors d'un import step par exemple
-        """
-        # print('!' , self.primitives)
-        if hasattr(self.primitives[0], 'points'):
-            points = self.primitives[0].points[:]
-        else:
-            points = self.primitives[0].tessellation_points()
-        for edge in self.primitives[1:]:
-            if hasattr(edge, 'points'):
-                points_to_add = edge.points[:]
-            else:
-                points_to_add = edge.tessellation_points()
-            if points[0] == points[
-                -1]:  # Dans le cas où le (dernier) edge relie deux fois le même point
-                points.extend(points_to_add[::-1])
-
-            elif points_to_add[0] == points[-1]:
-                points.extend(points_to_add[1:])
-            elif points_to_add[-1] == points[-1]:
-                points.extend(points_to_add[-2::-1])
-            elif points_to_add[0] == points[0]:
-                points = points[::-1]
-                points.extend(points_to_add[1:])
-            elif points_to_add[-1] == points[0]:
-                points = points[::-1]
-                points.extend(points_to_add[-2::-1])
-            else:
-                d1, d2 = (points_to_add[0] - points[0]).norm(), (
-                            points_to_add[0] - points[-1]).norm()
-                d3, d4 = (points_to_add[-1] - points[0]).norm(), (
-                            points_to_add[-1] - points[-1]).norm()
-                if math.isclose(d2, 0, abs_tol=1e-3):
-                    points.extend(points_to_add[1:])
-                elif math.isclose(d4, 0, abs_tol=1e-3):
-                    points.extend(points_to_add[-2::-1])
-                elif math.isclose(d1, 0, abs_tol=1e-3):
-                    points = points[::-1]
-                    points.extend(points_to_add[1:])
-                elif math.isclose(d3, 0, abs_tol=1e-3):
-                    points = points[::-1]
-                    points.extend(points_to_add[-2::-1])
-
-        if len(points) > 1:
-            if points[0] == points[-1]:
-                points.pop()
-
-        return points
+    # def clean_points(self):
+    #     """
+    #     TODO : verifier si le dernier point est toujours le meme que le premier point
+    #     lors d'un import step par exemple
+    #     """
+    #     if hasattr(self.primitives[0], 'points'):
+    #         points = self.primitives[0].points[:]
+    #     else:
+    #         points = self.primitives[0].tessellation_points()
+    #     for edge in self.primitives[1:]:
+    #         if hasattr(edge, 'points'):
+    #             points_to_add = edge.points[:]
+    #         else:
+    #             points_to_add = edge.tessellation_points()
+    #         if points[0] == points[
+    #             -1]:  # Dans le cas où le (dernier) edge relie deux fois le même point
+    #             points.extend(points_to_add[::-1])
+    #
+    #         elif points_to_add[0] == points[-1]:
+    #             points.extend(points_to_add[1:])
+    #         elif points_to_add[-1] == points[-1]:
+    #             points.extend(points_to_add[-2::-1])
+    #         elif points_to_add[0] == points[0]:
+    #             points = points[::-1]
+    #             points.extend(points_to_add[1:])
+    #         elif points_to_add[-1] == points[0]:
+    #             points = points[::-1]
+    #             points.extend(points_to_add[-2::-1])
+    #         else:
+    #             d1, d2 = (points_to_add[0] - points[0]).norm(), (
+    #                         points_to_add[0] - points[-1]).norm()
+    #             d3, d4 = (points_to_add[-1] - points[0]).norm(), (
+    #                         points_to_add[-1] - points[-1]).norm()
+    #             if math.isclose(d2, 0, abs_tol=1e-3):
+    #                 points.extend(points_to_add[1:])
+    #             elif math.isclose(d4, 0, abs_tol=1e-3):
+    #                 points.extend(points_to_add[-2::-1])
+    #             elif math.isclose(d1, 0, abs_tol=1e-3):
+    #                 points = points[::-1]
+    #                 points.extend(points_to_add[1:])
+    #             elif math.isclose(d3, 0, abs_tol=1e-3):
+    #                 points = points[::-1]
+    #                 points.extend(points_to_add[-2::-1])
+    #
+    #     if len(points) > 1:
+    #         if points[0] == points[-1]:
+    #             points.pop()
+    #
+    #     return points
 
     def average_center_point(self):
         nb = len(self.tessel_points)

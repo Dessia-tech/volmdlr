@@ -69,7 +69,7 @@ class OpenedRoundedLineSegments3D(volmdlr.wires.Wire3D, volmdlr.primitives.Round
 
         l1 = volmdlr.edges.Line3D(p3, p3+v1)
         l2 = volmdlr.edges.Line3D(p4, p4+v2)
-        c, _ = l1.MinimumDistancePoints(l2)
+        c, _ = l1.minimum_distance_points(l2)
 
         u3 = u1 + u2# mean of v1 and v2
         u3 /= u3.norm()
@@ -532,7 +532,7 @@ class RevolvedProfile(volmdlr.faces.Shell3D):
                                          self.axis, self.angle)
             if face:# Can be None
                 faces.append(face)
-                    
+
         return faces
 
     def plot(self, ax=None):
