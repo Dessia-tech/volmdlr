@@ -55,11 +55,11 @@ babylon_unpacker_embedded_header = '''
    <script>
    '''
 
-for filename in ['babylon.js', 'babylonjs.loaders.min.js', 'earcut.min.js', 'pep.js']:
-    with pkg_resources.resource_stream(
-            pkg_resources.Requirement('volmdlr'),
-            os.path.join('assets/js/', filename)) as fjs:
-        babylon_unpacker_embedded_header += fjs.read().decode('utf-8')
+# for filename in ['babylon.js', 'babylonjs.loaders.min.js', 'earcut.min.js', 'pep.js']:
+#     with pkg_resources.resource_stream(
+#             pkg_resources.Requirement('volmdlr'),
+#             os.path.join('assets/js/', filename)) as fjs:
+#         babylon_unpacker_embedded_header += fjs.read().decode('utf-8')
 # print(type(babylon_js_libs), len(babylon_js_libs))
 # print(babylon_js_libs)
 babylon_unpacker_embedded_header += '''
