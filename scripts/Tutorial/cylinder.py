@@ -43,5 +43,7 @@ angle = 3*math.pi/2 #Arc's angle
 # p1.MPLPlot(ax=ax, color='r')
 
 # shell = vm.Shell3D([cylinder])
-m = vm.core.VolumeModel([cylinder])
-m.babylonjs()
+model = vm.core.VolumeModel([cylinder])
+model.babylonjs()
+
+print(model.to_step())

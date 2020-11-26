@@ -14,7 +14,6 @@ from typing import List
 
 import volmdlr
 import volmdlr.core
-from volmdlr.core_compiled import polygon_point_belongs
 
 import volmdlr.plot_data
 from volmdlr.core_compiled import (

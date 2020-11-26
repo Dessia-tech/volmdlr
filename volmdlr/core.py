@@ -16,7 +16,6 @@ from mpl_toolkits.mplot3d import Axes3D
 import volmdlr
 import volmdlr.templates
 
-
 import dessia_common as dc
 
 import webbrowser
@@ -24,7 +23,16 @@ import os
 import tempfile
 import subprocess
 
+STEP_HEADER = '''ISO-10303-21;
+HEADER;
+FILE_SCHEMA(('AUTOMOTIVE_DESIGN { 1 0 10303 214 1 1 1 1 }'));
+ENDSEC;
+DATA;
+'''
 
+STEP_FOOTER = '''ENDSEC;
+END-ISO-10303-21;
+'''
 
 def find_and_replace(string, find, replace):
     """
@@ -1344,6 +1352,16 @@ class VolumeModel(dc.DessiaObject):
         babylon_data = self.babylon_data()
         self.babylonjs_from_babylon_data(babylon_data, page_name=page_name,
                                          use_cdn=use_cdn, debug=debug)
+
+    def to_step(self):
+        step_content = STEP_HEADER
+        current_id = 1
+        for primitive in self.primitives:
+            primitive_content, last_used_id = primitive.to_step(current_id)
+            current_id = last_used_id + 1
+            step_content += primitive_content
+        step_content += STEP_FOOTER
+        return step_content
 
 
 class MovingVolumeModel(VolumeModel):

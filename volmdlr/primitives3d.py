@@ -10,6 +10,7 @@ import numpy as npy
 npy.seterr(divide='raise')
 
 import volmdlr
+import volmdlr.core
 import volmdlr.primitives
 import volmdlr.faces
 from typing import Tuple

@@ -1572,6 +1572,11 @@ class Face3D(volmdlr.core.Primitive3D):
             print('arguments', arguments)
             raise NotImplementedError(surface)
 
+    def to_step(self, current_id):
+        step_content = ''
+        
+        return step_content, current_id
+
     # def delete_double(self, Le):
     #     Ls = []
     #     for i in Le:
@@ -3613,6 +3618,14 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         for face in arguments[1]:
             faces.append(object_dict[int(face[1:])])
         return cls(faces, name=arguments[0][1:-1])
+
+    def to_step(self, current_id):
+        step_content = ''
+        for face in self.faces:
+            face_content, current_id = face.to_step(current_id)
+            current_id += 1
+            step_content += face_content
+        return step_content, current_id
 
     def rotation(self, center, axis, angle, copy=True):
         if copy:
