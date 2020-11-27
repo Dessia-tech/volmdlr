@@ -465,10 +465,16 @@ STEP_TO_VOLMDLR = {
     'ADVANCED_FACE': volmdlr.faces.Face3D,
     'FACE_SURFACE': volmdlr.faces.Face3D,
 
-    'CLOSED_SHELL': volmdlr.faces.Shell3D,
-    'OPEN_SHELL': volmdlr.faces.Shell3D,
+    'CLOSED_SHELL': volmdlr.faces.ClosedShell3D,
+    'OPEN_SHELL': volmdlr.faces.OpenShell3D,
     #        'ORIENTED_CLOSED_SHELL': None,
-    'CONNECTED_FACE_SET': volmdlr.faces.Shell3D,
+    'CONNECTED_FACE_SET': volmdlr.faces.OpenShell3D,
 }
 
-
+VOLMDLR_TO_STEP = {}
+for k,v in STEP_TO_VOLMDLR.items():
+    if v:
+        if v in VOLMDLR_TO_STEP:
+            VOLMDLR_TO_STEP[v].append(k)
+        else:
+            VOLMDLR_TO_STEP[v] = [k]
