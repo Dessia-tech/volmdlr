@@ -915,6 +915,13 @@ class Vector3D(Vector):
                         arguments[0][1:-1])
 
 
+    def to_step(self, current_id):
+        content = "#{} = VECTOR('{}', {}, {}, {})\n"\
+                        .format(current_id, self.name, 1000*self.x,
+                                1000*self.y, 1000*self.z)
+        return content, current_id
+
+
     def plot(self, ax=None, starting_point=None, color=''):
         if starting_point is None:
             starting_point = Point3D(0, 0, 0)
@@ -990,6 +997,13 @@ class Point3D(Vector3D):
     def from_step(cls, arguments, object_dict):
         return cls(*[float(i)/1000 for i in arguments[1][1:-1].split(",")],
                     arguments[0][1:-1])
+    
+    def to_step(self, current_id):
+        content = "#{} = CARTESIAN_POINT('{}', {}, {}, {})\n"\
+                        .format(current_id, self.name, 1000*self.x,
+                                1000*self.y, 1000*self.z)
+        return content, current_id
+
 
     def babylon_script(self):
         s = 'var sphere = BABYLON.MeshBuilder.CreateSphere("point", {diameter: 0.05}, scene);\n'
@@ -1571,6 +1585,21 @@ class Frame3D(Basis3D):
 
     def copy(self):
         return Frame3D(self.origin.copy(), self.u.copy(), self.v.copy(), self.w.copy())
+
+    def to_step(self, current_id):
+        
+        content, origin_id = self.origin.to_step(current_id)
+        current_id = origin_id + 1
+        u_content, origin_id = self.u.to_step(current_id)
+        u_id = origin_id + 1
+        v_content, origin_id = self.v.to_step(current_id)
+        v_id = origin_id + 2
+        current_id = v_id + 1
+        content += u_content
+        content += v_content
+        content += "#{} = AXIS2_PLACEMENT_3D('{}', #{}, {}, {})\n"\
+                        .format(current_id, self.name, origin_id, u_id, v_id)
+        return content, current_id
 
 
     def plot2d(self, x=X3D, y=Y3D, ax=None, color='k'):

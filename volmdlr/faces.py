@@ -45,7 +45,8 @@ class Surface2D(volmdlr.core.Primitive2D):
         if self.area() == 0.:
             return volmdlr.display.DisplayMesh2D([], triangles=[])
 
-        outer_polygon = self.outer_contour.to_polygon(n=10)
+        outer_polygon = self.outer_contour.to_polygon(angle_resolution=10)
+        
         # ax2 = outer_polygon.plot(color='r', point_numbering=True)
         points = outer_polygon.points
         # outer_polygon.plot(plot_points=True, point_numbering=True)
@@ -1545,6 +1546,13 @@ class Face3D(volmdlr.core.Primitive3D):
         return self.surface3d.contour2d_to_3d(self.surface2d.outer_contour)
 
 
+    @property
+    def inner_contours3d(self):
+        """
+
+        """
+        return [self.surface3d.contour2d_to_3d(c) for c in self.surface2d.inner_contours]
+
     def _bounding_box(self):
         """
         this error is raised to enforce overloading of this method
@@ -1569,6 +1577,18 @@ class Face3D(volmdlr.core.Primitive3D):
         else:
             print('arguments', arguments)
             raise NotImplementedError(surface)
+
+    def to_step(self, current_id):
+        outer_contour_content, outer_contour_id = self.outer_contour3d.to_step(current_id)
+        contours_ids = [outer_contour_id]
+        current_id = outer_contour_id + 1
+        for inner_contour3d in self.inner_contours3d:
+            inner_contour_content, inner_contour_id = inner_contour3d.to_step(current_id)
+            contours_ids.append(inner_contour_id)
+            current_id = inner_contour_id + 1
+        step_content = '#{}=FACE_SURFACE({})'.format(current_id, volmdlr.core.step_ids_to_str(contours_ids))
+        
+        return step_content, current_id
 
     # def delete_double(self, Le):
     #     Ls = []
@@ -3573,8 +3593,7 @@ class BSplineFace3D(Face3D):
                         inner_contours2d=inner_contours2d,
                         name=name)
 
-
-class Shell3D(volmdlr.core.CompositePrimitive3D):
+class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     _standalone_in_db = True
     _non_serializable_attributes = ['bounding_box']
     _non_eq_attributes = ['name', 'color', 'alpha' 'bounding_box']
@@ -3606,6 +3625,14 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         for face in arguments[1]:
             faces.append(object_dict[int(face[1:])])
         return cls(faces, name=arguments[0][1:-1])
+
+    def to_step(self, current_id):
+        step_content = ''
+        for face in self.faces:
+            face_content, current_id = face.to_step(current_id)
+            current_id += 1
+            step_content += face_content
+        return step_content, current_id
 
     def rotation(self, center, axis, angle, copy=True):
         if copy:
@@ -3687,80 +3714,6 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         return bbox
 
-    def point_belongs(self, point3d:volmdlr.Point3D, nb_rays:int=1):
-        """
-        Ray Casting algorithm
-        Returns True if the point is inside the Shell, False otherwise
-        """
-
-
-        bbox = self.bounding_box
-        if not bbox.point_belongs(point3d):
-            return False
-
-        min_ray_length = 2*max((bbox.xmax - bbox.xmin,
-                                 bbox.ymax - bbox.ymin,
-                                 bbox.zmax - bbox.zmin))
-        two_min_ray_length = 2*min_ray_length
-
-        rays = []
-        for k in range(0, nb_rays):
-            rays.append(volmdlr.edges.LineSegment3D(
-                point3d,
-                point3d+volmdlr.Point3D.random(min_ray_length, two_min_ray_length,
-                                               min_ray_length, two_min_ray_length,
-                                               min_ray_length, two_min_ray_length)))
-        rays = sorted(rays, key=lambda ray: ray.length())
-
-        rays_intersections = []
-        tests = []
-
-        # for ray in rays[:3]:
-        for ray in rays[:nb_rays]:
-            #
-            count = 0
-            ray_intersection = []
-            is_inside = True
-            for face, point_inters in self.linesegment_intersections(ray):
-                count += len(point_inters)
-
-
-            if count % 2 == 0:
-                is_inside = False
-            tests.append(is_inside)
-            rays_intersections.append(ray_intersection)
-
-        for test1, test2 in zip(tests[:-1], tests[1:]):
-            if test1 != test2:
-                raise ValueError
-        return tests[0]
-
-    def is_inside_shell(self, shell2, resolution:float):
-        """
-        Returns True if all the points of self are inside shell2 and no face \
-        are intersecting
-        This method is not exact
-        """
-        bbox1 = self.bounding_box
-        bbox2 = shell2.bounding_box
-        if not bbox1.is_inside_bbox(bbox2):
-            return False
-
-        points = []
-        for face in self.faces:
-            points.extend(face.outer_contour3d.discretization_points(resolution))
-        for point in points:
-            if not shell2.point_belongs(point):
-                return False
-
-        # Check if any faces are intersecting
-        for face1 in self.faces:
-            for face2 in shell2.faces:
-                intersection_points = face1.face_intersection(face2)
-                if intersection_points is not None:
-                    return False
-
-        return True
 
     def linesegment_intersections(self,
                                  linesegment3d:volmdlr.edges.LineSegment3D)\
@@ -3772,56 +3725,6 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                 intersections.append((face, face_intersections))
         return intersections
 
-    def shell_intersection(self, shell2:'Shell3D', resolution:float):
-        """
-        Return None if disjointed
-        Return (1, 0) or (0, 1) if one is inside the other
-        Return (n1, n2) if intersection
-
-        4 cases :
-            (n1, n2) with face intersection             => (n1, n2)
-            (0, 0) with face intersection               => (0, 0)
-            (0, 0) with no face intersection            => None
-            (1, 0) or (0, 1) with no face intersection  => 1
-        """
-        # Check if boundary boxes don't intersect
-        bbox1 = self.bounding_box
-        bbox2 = shell2.bounding_box
-        if not bbox1.bbox_intersection(bbox2):
-            #            print("No intersection of shells' BBox")
-            return None
-
-        # Check if any point of the first shell is in the second shell
-        points1 = []
-        for face in self.faces:
-            points1.extend(face.outer_contour3d.discretization_points(resolution))
-        points2 = []
-        for face in shell2.faces:
-            points2.extend(face.outer_contour3d.discretization_points(resolution))
-
-        nb_pts1 = len(points1)
-        nb_pts2 = len(points2)
-        compteur1 = 0
-        compteur2 = 0
-        for point1 in points1:
-            if shell2.point_belongs(point1):
-                compteur1 += 1
-        for point2 in points2:
-            if self.point_belongs(point2):
-                compteur2 += 1
-
-        inter1 = compteur1 / nb_pts1
-        inter2 = compteur2 / nb_pts2
-
-
-        for face1 in self.faces:
-            for face2 in shell2.faces:
-                intersection_points = face1.face_intersection(face2)
-                if intersection_points is not None:
-                    return inter1, inter2
-        if (inter1, inter2) == (0, 0):
-            return None
-        return 1
 
     def minimum_distance_points(self, shell2, resolution):
         """
@@ -3976,3 +3879,133 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
             face.plot(ax=ax, color=color, alpha=alpha)
 
         return ax
+
+class ClosedShell3D(OpenShell3D):
+    
+    def shell_intersection(self, shell2:'Shell3D', resolution:float):
+        """
+        Return None if disjointed
+        Return (1, 0) or (0, 1) if one is inside the other
+        Return (n1, n2) if intersection
+
+        4 cases :
+            (n1, n2) with face intersection             => (n1, n2)
+            (0, 0) with face intersection               => (0, 0)
+            (0, 0) with no face intersection            => None
+            (1, 0) or (0, 1) with no face intersection  => 1
+        """
+        # Check if boundary boxes don't intersect
+        bbox1 = self.bounding_box
+        bbox2 = shell2.bounding_box
+        if not bbox1.bbox_intersection(bbox2):
+            #            print("No intersection of shells' BBox")
+            return None
+
+        # Check if any point of the first shell is in the second shell
+        points1 = []
+        for face in self.faces:
+            points1.extend(face.outer_contour3d.discretization_points(resolution))
+        points2 = []
+        for face in shell2.faces:
+            points2.extend(face.outer_contour3d.discretization_points(resolution))
+
+        nb_pts1 = len(points1)
+        nb_pts2 = len(points2)
+        compteur1 = 0
+        compteur2 = 0
+        for point1 in points1:
+            if shell2.point_belongs(point1):
+                compteur1 += 1
+        for point2 in points2:
+            if self.point_belongs(point2):
+                compteur2 += 1
+
+        inter1 = compteur1 / nb_pts1
+        inter2 = compteur2 / nb_pts2
+
+
+        for face1 in self.faces:
+            for face2 in shell2.faces:
+                intersection_points = face1.face_intersection(face2)
+                if intersection_points is not None:
+                    return inter1, inter2
+        if (inter1, inter2) == (0, 0):
+            return None
+        return 1
+
+    
+    def point_belongs(self, point3d:volmdlr.Point3D, nb_rays:int=1):
+        """
+        Ray Casting algorithm
+        Returns True if the point is inside the Shell, False otherwise
+        """
+
+
+        bbox = self.bounding_box
+        if not bbox.point_belongs(point3d):
+            return False
+
+        min_ray_length = 2*max((bbox.xmax - bbox.xmin,
+                                 bbox.ymax - bbox.ymin,
+                                 bbox.zmax - bbox.zmin))
+        two_min_ray_length = 2*min_ray_length
+
+        rays = []
+        for k in range(0, nb_rays):
+            rays.append(volmdlr.edges.LineSegment3D(
+                point3d,
+                point3d+volmdlr.Point3D.random(min_ray_length, two_min_ray_length,
+                                               min_ray_length, two_min_ray_length,
+                                               min_ray_length, two_min_ray_length)))
+        rays = sorted(rays, key=lambda ray: ray.length())
+
+        rays_intersections = []
+        tests = []
+
+        # for ray in rays[:3]:
+        for ray in rays[:nb_rays]:
+            #
+            count = 0
+            ray_intersection = []
+            is_inside = True
+            for face, point_inters in self.linesegment_intersections(ray):
+                count += len(point_inters)
+
+
+            if count % 2 == 0:
+                is_inside = False
+            tests.append(is_inside)
+            rays_intersections.append(ray_intersection)
+
+        for test1, test2 in zip(tests[:-1], tests[1:]):
+            if test1 != test2:
+                raise ValueError
+        return tests[0]
+
+    def is_inside_shell(self, shell2, resolution:float):
+        """
+        Returns True if all the points of self are inside shell2 and no face \
+        are intersecting
+        This method is not exact
+        """
+        bbox1 = self.bounding_box
+        bbox2 = shell2.bounding_box
+        if not bbox1.is_inside_bbox(bbox2):
+            return False
+
+        points = []
+        for face in self.faces:
+            points.extend(face.outer_contour3d.discretization_points(resolution))
+        for point in points:
+            if not shell2.point_belongs(point):
+                return False
+
+        # Check if any faces are intersecting
+        for face1 in self.faces:
+            for face2 in shell2.faces:
+                intersection_points = face1.face_intersection(face2)
+                if intersection_points is not None:
+                    return False
+
+        return True
+    

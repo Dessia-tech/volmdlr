@@ -10,6 +10,7 @@ import numpy as npy
 npy.seterr(divide='raise')
 
 import volmdlr
+import volmdlr.core
 import volmdlr.primitives
 import volmdlr.faces
 from typing import Tuple
@@ -17,7 +18,7 @@ from typing import Tuple
 import matplotlib.pyplot as plt
 
 
-class OpenedRoundedLineSegments3D(volmdlr.wires.Wire3D, volmdlr.primitives.RoundedLineSegments):
+class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D, volmdlr.primitives.RoundedLineSegments):
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
@@ -100,7 +101,7 @@ class OpenedRoundedLineSegments3D(volmdlr.wires.Wire3D, volmdlr.primitives.Round
 
 
 class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
-                                  OpenedRoundedLineSegments3D):
+                                  OpenRoundedLineSegments3D):
     """
     :param points: Points used to draw the wire 
     :type points: List of Point3D
@@ -126,7 +127,7 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
 
 
 
-class Block(volmdlr.faces.Shell3D):
+class Block(volmdlr.faces.ClosedShell3D):
     _standalone_in_db = True
     _generic_eq = True
     _non_serializable_attributes  = ['size']
@@ -364,7 +365,7 @@ class Cone(volmdlr.core.Primitive3D):
         return s
 
 
-class ExtrudedProfile(volmdlr.faces.Shell3D):
+class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     """
     
     """
@@ -502,7 +503,7 @@ class ExtrudedProfile(volmdlr.faces.Shell3D):
                           extrusion_vector)
 
 
-class RevolvedProfile(volmdlr.faces.Shell3D):
+class RevolvedProfile(volmdlr.faces.ClosedShell3D):
     """
 
     """
@@ -521,7 +522,7 @@ class RevolvedProfile(volmdlr.faces.Shell3D):
         self.contour3d = self.contour2d.to_3d(plane_origin, x, y)
 
         faces = self.shell_faces()
-        volmdlr.faces.Shell3D.__init__(self, faces, color=color,
+        volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
                                  alpha=alpha, name=name)
 
     def shell_faces(self):
@@ -843,7 +844,7 @@ class HollowCylinder(Cylinder):
             self.axis = axis
 
 
-class Sweep(volmdlr.faces.Shell3D):
+class Sweep(volmdlr.faces.ClosedShell3D):
     """
     Sweep a 2D contour along a Wire3D
     """

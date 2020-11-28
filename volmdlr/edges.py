@@ -1158,12 +1158,12 @@ class FullArc2D(Edge):
         return self.start.rotation(self.center, angle)
 
     def polygon_points(self, angle_resolution=10):
-        number_points = math.ceil(self.angle * points_per_radian)
+        number_points = math.ceil(self.angle * angle_resolution)
         l = self.length()
         return [self.point_at_abscissa(i * l / number_points) \
                 for i in range(number_points + 1)]
 
-    def polygonization(self, min_x_density=None, min_y_density=None):
+    def polygonization(self):
         # def polygon_points(self, points_per_radian=10):
             # densities = []
             # for d in [min_x_density, min_y_density]:
@@ -1300,7 +1300,7 @@ class ArcEllipse2D(Edge):
 
     def polygon_points(self, angle_resolution=40):
         number_points_tesselation = math.ceil(
-            resolution_for_ellipse * abs(0.5 * self.angle / math.pi))
+            angle_resolution * abs(0.5 * self.angle / math.pi))
 
         frame2d = volmdlr.Frame2D(self.center, self.major_dir, self.minor_dir)
 
@@ -2663,6 +2663,13 @@ class FullArc3D(Edge):
                                                       ) \
                                   for i in range(npoints)]
         return polygon_points_3D
+
+    def to_step(self, current_id):
+        content, frame_id = self.frame.to_step(current_id)
+        current_id = frame_id+1
+        content += "#{} = CIRCLE('{}', #{}, {})\n".format(current_id, self.name,
+                                                    frame_id, self.radius*1000)
+        return content, current_id
 
     def plot(self, ax=None, color='k'):
         if ax is None:

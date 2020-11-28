@@ -14,9 +14,8 @@ from typing import List
 
 import volmdlr
 import volmdlr.core
-from volmdlr.core_compiled import polygon_point_belongs
 
-import volmdlr.plot_data
+# import volmdlr.plot_data
 from volmdlr.core_compiled import (
                             LineSegment2DPointDistance,
                             polygon_point_belongs, Matrix22
@@ -802,30 +801,12 @@ class Contour2D(Contour, Wire2D):
                                        number_points_y=20)
 
 
-    def to_polygon(self,n:float):
+    def to_polygon(self, angle_resolution):
        
-        polygon_points=[]
-        # if self.primitives[0].__class__.__name__ == 'Circle2D':
-        #     for point in self.discretise(n):
-        #         if point not in polygon_points:
-        #             polygon_points.append(point)
-           
+        polygon_points = []
        
         for primitive in self.primitives:
-            if isinstance(primitive,volmdlr.edges.LineSegment2D):
-                
-                if primitive.start not in polygon_points:
-                    polygon_points.append(primitive.start)
-                 
-                if primitive.end not in polygon_points:
-                    polygon_points.append(primitive.end)
-               
-            else :
-                  for point in primitive.discretise(n):
-                      if point not in polygon_points:
-                          polygon_points.append(point)
-              
-
+            polygon_points.extend(primitive.polygon_points()[:-1])
         return ClosedPolygon2D(polygon_points)
 
 
@@ -1109,7 +1090,7 @@ class ClosedPolygon2D(Contour2D):
             return d_min, other_point_min
         return d_min
 
-    def polygonization(self):
+    def to_polygon(self):
         return self
 
     def self_intersects(self):
@@ -1731,12 +1712,12 @@ class Circle2D(Contour2D):
                                 other_circle.center.y, abs_tol=1e-06) \
                and math.isclose(self.radius, other_circle.radius,
                                 abs_tol=1e-06)
-    def to_polygon(self,n:float):
-        return ClosedPolygon2D(self.polygon_points())
+    def to_polygon(self,angle_resolution:float):
+        return ClosedPolygon2D(self.polygon_points(angle_resolution=angle_resolution))
         
-    def polygonization(self, resolution=0.010):
+    # def to_polygon(self, resolution=0.010):
 
-        return ClosedPolygon2D(self.discretization_points(resolution))
+        return ClosedPolygon2D(self.polygon_points(angle_resolution))
 
     def tessellation_points(self, resolution=40):
         return [(self.center
@@ -2033,55 +2014,17 @@ class Contour3D(Contour, Wire3D):
 
         return cls(edges, name=name)
 
-    # def clean_points(self):
-    #     """
-    #     TODO : verifier si le dernier point est toujours le meme que le premier point
-    #     lors d'un import step par exemple
-    #     """
-    #     if hasattr(self.primitives[0], 'points'):
-    #         points = self.primitives[0].points[:]
-    #     else:
-    #         points = self.primitives[0].tessellation_points()
-    #     for edge in self.primitives[1:]:
-    #         if hasattr(edge, 'points'):
-    #             points_to_add = edge.points[:]
-    #         else:
-    #             points_to_add = edge.tessellation_points()
-    #         if points[0] == points[
-    #             -1]:  # Dans le cas où le (dernier) edge relie deux fois le même point
-    #             points.extend(points_to_add[::-1])
-    #
-    #         elif points_to_add[0] == points[-1]:
-    #             points.extend(points_to_add[1:])
-    #         elif points_to_add[-1] == points[-1]:
-    #             points.extend(points_to_add[-2::-1])
-    #         elif points_to_add[0] == points[0]:
-    #             points = points[::-1]
-    #             points.extend(points_to_add[1:])
-    #         elif points_to_add[-1] == points[0]:
-    #             points = points[::-1]
-    #             points.extend(points_to_add[-2::-1])
-    #         else:
-    #             d1, d2 = (points_to_add[0] - points[0]).norm(), (
-    #                         points_to_add[0] - points[-1]).norm()
-    #             d3, d4 = (points_to_add[-1] - points[0]).norm(), (
-    #                         points_to_add[-1] - points[-1]).norm()
-    #             if math.isclose(d2, 0, abs_tol=1e-3):
-    #                 points.extend(points_to_add[1:])
-    #             elif math.isclose(d4, 0, abs_tol=1e-3):
-    #                 points.extend(points_to_add[-2::-1])
-    #             elif math.isclose(d1, 0, abs_tol=1e-3):
-    #                 points = points[::-1]
-    #                 points.extend(points_to_add[1:])
-    #             elif math.isclose(d3, 0, abs_tol=1e-3):
-    #                 points = points[::-1]
-    #                 points.extend(points_to_add[-2::-1])
-    #
-    #     if len(points) > 1:
-    #         if points[0] == points[-1]:
-    #             points.pop()
-    #
-    #     return points
+    def to_step(self, current_id):
+        content = ''
+        edge_ids = []
+        for primitive in self.primitives:
+            primitive_content, primitive_id = primitive.to_step(current_id)
+            current_id = primitive_id +1
+            content += primitive_content
+            edge_ids.append(primitive_id)
+        content += "#{} = EDGE_LOOP('{}', ({}))\n".format(current_id, self.name,
+                                                      volmdlr.core.step_ids_to_str(edge_ids))
+        return content, current_id
 
     def average_center_point(self):
         nb = len(self.tessel_points)
@@ -2238,6 +2181,13 @@ class Circle3D(Contour3D):
         xn, yn, zn = round(self.normal, ndigits)
         return '{} = Part.Circle(fc.Vector({},{},{}),fc.Vector({},{},{}),{})\n'.format(
             name, xc, yc, zc, xn, yn, zn, 1000 * self.radius)
+
+    def to_step(self, current_id):
+        content, frame_id = self.frame.to_step(current_id)
+        current_id = frame_id+1
+        content += "#{} = CIRCLE('{}', #{}, {})\n".format(current_id, self.name,
+                                                    frame_id, self.radius*1000)
+        return content, current_id
 
     def rotation(self, rot_center, axis, angle, copy=True):
         new_center = self.center.rotation(rot_center, axis, angle, True)
