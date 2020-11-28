@@ -1831,6 +1831,9 @@ class PlaneFace3D(Face3D):
     #         polygon2D = volmdlr.ClosedPolygon2D(polygon_points)
     #     return repaired_points, polygon2D
 
+    def copy(self):
+        return PlaneFace3D(self.surface3d.copy(), self.surface2d.copy(), self.name)
+
     def _bounding_box(self):
         """
         Non method, to be enforced by overloading
@@ -3661,7 +3664,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         if copy:
             new_faces = [face.frame_mapping(frame, side, copy=True) for face in
                          self.faces]
-            return Shell3D(new_faces, name=self.name)
+            return OpenShell3D(new_faces, name=self.name)
         else:
             for face in self.faces:
                 face.frame_mapping(frame, side, copy=False)
@@ -3669,13 +3672,13 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def copy(self):
         new_faces = [face.copy() for face in self.faces]
-        return Shell3D(new_faces, name=self.name)
+        return OpenShell3D(new_faces, name=self.name)
 
     def union(self, shell2):
         new_faces = [face for face in self.faces + shell2.faces]
         new_name = self.name + ' union ' + shell2.name
         new_color = self.color
-        return Shell3D(new_faces, name=new_name, color=new_color)
+        return OpenShell3D(new_faces, name=new_name, color=new_color)
 
     def volume(self):
         """
@@ -3881,6 +3884,10 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         return ax
 
 class ClosedShell3D(OpenShell3D):
+
+    def copy(self):
+        new_faces = [face.copy() for face in self.faces]
+        return ClosedShell3D(new_faces, name=self.name)
     
     def shell_intersection(self, shell2:'Shell3D', resolution:float):
         """

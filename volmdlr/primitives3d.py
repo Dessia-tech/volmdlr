@@ -147,7 +147,7 @@ class Block(volmdlr.faces.ClosedShell3D):
         self.size = (self.frame.u.norm(), self.frame.v.norm(), self.frame.w.norm())
 
         faces = self.shell_faces()
-        volmdlr.faces.Shell3D.__init__(self, faces,  color=color, alpha=alpha, name=name)
+        volmdlr.faces.OpenShell3D.__init__(self, faces,  color=color, alpha=alpha, name=name)
 
     # def __hash__(self):
     #     return hash(self.frame)
@@ -263,7 +263,7 @@ class Block(volmdlr.faces.ClosedShell3D):
                 return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
             else:
                 self.frame = new_frame
-                volmdlr.faces.Shell3D.frame_mapping(self, frame, side, copy=False)
+                volmdlr.faces.ClosedShell3D.frame_mapping(self, frame, side, copy=False)
 
         if side == 'old':
             new_origin = frame.old_coordinates(self.frame.origin)
@@ -275,7 +275,7 @@ class Block(volmdlr.faces.ClosedShell3D):
                 return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
             else:
                 self.frame = new_frame
-                volmdlr.faces.Shell3D.frame_mapping(self, frame, side, copy=False)
+                volmdlr.faces.ClosedShell3D.frame_mapping(self, frame, side, copy=False)
 
     def copy(self):
         new_origin = self.frame.origin.copy()
