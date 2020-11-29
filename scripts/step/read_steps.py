@@ -19,5 +19,7 @@ for step_file in [#'tore1.step',
     print(model.primitives)
     
     model.babylonjs()
+    
+model2 = model.copy()
 
-assert model == model.copy()
+assert model == model2

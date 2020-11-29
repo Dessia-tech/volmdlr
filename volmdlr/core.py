@@ -1148,7 +1148,7 @@ class VolumeModel(dc.DessiaObject):
             return BoundingBox(-1, 1, -1, 1, 1 - 1, 1)
         return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
-    def plot(self, ax=None, color=None):
+    def plot2d(self, ax=None, color=None):
         fig = plt.figure()
         if ax is None:
             ax = fig.add_subplot(111, projection='3d')

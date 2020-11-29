@@ -268,9 +268,12 @@ class Contour2D(Contour, Wire2D):
     TODO : center_of_mass and second_moment_area should be changed accordingly to
     area considering the triangle drawn by the arcs
     """
-    _non_serializable_attributes = ['internal_arcs', 'external_arcs',
-                                    'polygon', 'straight_line_contour_polygon', 'primitive_to_index',
-                                    'basis_primitives']
+    _non_data_hash_attributes = ['_internal_arcs', '_external_arcs',
+                                    '_polygon', '_straight_line_contour_polygon', 'primitive_to_index',
+                                    'basis_primitives', '_utd_analysis']
+    _non_serializable_attributes = ['_internal_arcs', '_external_arcs',
+                                    '_polygon', '_straight_line_contour_polygon', 'primitive_to_index',
+                                    'basis_primitives', '_utd_analysis']
 
 
     def __init__(self, primitives, name=''):
