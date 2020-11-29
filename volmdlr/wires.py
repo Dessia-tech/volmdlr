@@ -269,7 +269,8 @@ class Contour2D(Contour, Wire2D):
     area considering the triangle drawn by the arcs
     """
     _non_serializable_attributes = ['internal_arcs', 'external_arcs',
-                                    'polygon', 'straight_line_contour_polygon', 'primitive_to_index']
+                                    'polygon', 'straight_line_contour_polygon', 'primitive_to_index',
+                                    'basis_primitives']
 
 
     def __init__(self, primitives, name=''):
