@@ -855,7 +855,7 @@ class Sweep(volmdlr.faces.ClosedShell3D):
         self.frames = []
         
         faces = self.shell_faces()
-        volmdlr.faces.Shell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
+        volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
 
 
     def shell_faces(self):
