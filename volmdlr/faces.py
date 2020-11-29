@@ -1954,17 +1954,17 @@ class PlaneFace3D(Face3D):
 
 
     def edge_intersection(self, edge):
-        linesegment = volmdlr.LineSegment3D(*edge.points)
-        intersection_point = self.plane.linesegment_intersection(linesegment)
+        linesegment = volmdlr.edges.LineSegment3D(edge.start, edge.end)
+        intersection_points = self.surface3d.linesegment_intersections(linesegment)
 
-        if intersection_point is None:
+        if intersection_points == []:
             return None
 
-        point_on_face_boo = self.point_on_face(intersection_point)
+        point_on_face_boo = self.point_belongs(intersection_points[0])
         if not point_on_face_boo:
             return None
 
-        return intersection_point
+        return intersection_points[0]
 
 
     def face_intersection(self, face2):
@@ -1979,12 +1979,12 @@ class PlaneFace3D(Face3D):
 
         intersection_points = []
 
-        for edge2 in face2.contours3d[0].edges:
+        for edge2 in face2.outer_contour3d.primitives:
             intersection_point = self.edge_intersection(edge2)
             if intersection_point is not None:
                 intersection_points.append(intersection_point)
 
-        for edge1 in self.contours3d[0].edges:
+        for edge1 in self.outer_contour3d.primitives:
             intersection_point = face2.edge_intersection(edge1)
             if intersection_point is not None:
                 intersection_points.append(intersection_point)
@@ -3672,7 +3672,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def copy(self):
         new_faces = [face.copy() for face in self.faces]
-        return OpenShell3D(new_faces, name=self.name)
+        return OpenShell3D(new_faces, color=self.color, alpha=self.alpha, name=self.name)
 
     def union(self, shell2):
         new_faces = [face for face in self.faces + shell2.faces]
@@ -3887,7 +3887,7 @@ class ClosedShell3D(OpenShell3D):
 
     def copy(self):
         new_faces = [face.copy() for face in self.faces]
-        return ClosedShell3D(new_faces, name=self.name)
+        return ClosedShell3D(new_faces, color=self.color, alpha=self.alpha, name=self.name)
     
     def shell_intersection(self, shell2:'Shell3D', resolution:float):
         """

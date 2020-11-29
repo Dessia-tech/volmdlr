@@ -1090,7 +1090,7 @@ class ClosedPolygon2D(Contour2D):
             return d_min, other_point_min
         return d_min
 
-    def to_polygon(self):
+    def to_polygon(self, angle_resolution=None):
         return self
 
     def self_intersects(self):
