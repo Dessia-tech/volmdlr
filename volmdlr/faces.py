@@ -1581,16 +1581,17 @@ class Face3D(volmdlr.core.Primitive3D):
             raise NotImplementedError(surface)
 
     def to_step(self, current_id):
-        outer_contour_content, outer_contour_id = self.outer_contour3d.to_step(current_id)
+        content, outer_contour_id = self.outer_contour3d.to_step(current_id)
         contours_ids = [outer_contour_id]
         current_id = outer_contour_id + 1
         for inner_contour3d in self.inner_contours3d:
             inner_contour_content, inner_contour_id = inner_contour3d.to_step(current_id)
+            content += inner_contour_content
             contours_ids.append(inner_contour_id)
             current_id = inner_contour_id + 1
-        step_content = '#{}=FACE_SURFACE({})'.format(current_id, volmdlr.core.step_ids_to_str(contours_ids))
+        content += '#{} = FACE_SURFACE({})\n'.format(current_id, volmdlr.core.step_ids_to_str(contours_ids))
         
-        return step_content, current_id
+        return content, current_id
 
     # def delete_double(self, Le):
     #     Ls = []

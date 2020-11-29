@@ -2017,6 +2017,14 @@ class LineSegment3D(LineSegment):
             return surface.rectangular_cut(0, angle,
                                            0, (self.end - self.start).dot(axis))
 
+    def to_step(self, current_id):
+        start_content, start_id = self.start.to_step(current_id)
+        end_content, end_id = self.end.to_step(current_id+1)
+        current_id += 2
+        content = start_content + end_content
+        content += "#{} = LINE('{}', #{}, #{})\n".format(current_id, self.name,
+                                                    start_id, end_id)
+        return content, current_id
 
 class BSplineCurve3D(Edge):
     _non_serializable_attributes = ['curve']
@@ -2666,7 +2674,11 @@ class FullArc3D(Edge):
         return polygon_points_3D
 
     def to_step(self, current_id):
-        content, frame_id = self.frame.to_step(current_id)
+        u = self.start - self.center
+        u.normalize()
+        v = self.normal.cross(u)
+        frame = volmdlr.Frame3D(self.center, u, v, self.normal)
+        content, frame_id = frame.to_step(current_id)
         current_id = frame_id+1
         content += "#{} = CIRCLE('{}', #{}, {})\n".format(current_id, self.name,
                                                     frame_id, self.radius*1000)
