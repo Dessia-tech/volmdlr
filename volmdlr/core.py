@@ -1067,8 +1067,8 @@ class VolumeModel(dc.DessiaObject):
         # else:
         #     self.bounding_box = BoundingBox(-1, 1, -1, 1, -1, 1)
 
-    # def __hash__(self):
-    #     return sum([hash(p) for p in self.primitives])
+    def __hash__(self):
+        return sum([hash(p) for p in self.primitives])
 
     # def _extract_shells(self):
     #     shells = []

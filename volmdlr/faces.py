@@ -230,7 +230,6 @@ class Surface2D(volmdlr.core.Primitive2D):
                    
             
             else:
-                print(intersections)
                 raise NotImplementedError('Non convex contour not supported yet')  
                       
                 raise NotImplementedError('{} intersections not supported yet'.format(len(intersections))) 
