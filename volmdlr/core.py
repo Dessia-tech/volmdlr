@@ -312,6 +312,7 @@ class CompositePrimitive2D(Primitive2D):
     """
     A collection of simple primitives
     """
+    _non_serializable_attributes = ['name', 'primitives_to_index']
 
     def __init__(self, primitives, name=''):
         Primitive2D.__init__(self, name)

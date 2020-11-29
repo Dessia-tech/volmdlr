@@ -271,6 +271,7 @@ class Contour2D(Contour, Wire2D):
     _non_serializable_attributes = ['internal_arcs', 'external_arcs',
                                     'polygon', 'straight_line_contour_polygon', 'primitive_to_index']
 
+
     def __init__(self, primitives, name=''):
         Wire2D.__init__(self, primitives, name)
         self._utd_analysis = False
