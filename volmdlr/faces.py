@@ -375,7 +375,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         return ax
 
 
-class Surface3D():
+class Surface3D(dc.DessiaObject):
     x_periodicity = None
     y_periodicity = None
     """
@@ -1797,13 +1797,13 @@ class PlaneFace3D(Face3D):
     :param plane: Plane used to place your face
     :type plane: Plane3D
     """
-    _standalone_in_db = True
+    _standalone_in_db = False
     _generic_eq = True
     _non_serializable_attributes = ['bounding_box', 'polygon2D']
     _non_eq_attributes = ['name', 'bounding_box']
     _non_hash_attributes = []
 
-    def __init__(self, plane3d, surface2d, name=''):
+    def __init__(self, plane3d:Plane3D, surface2d:Surface2D, name:str=''):
         # if not isinstance(outer_contour2d, volmdlr.Contour2D):
         #     raise ValueError('Not a contour2D: {}'.format(outer_contour2d))
         Face3D.__init__(self,
@@ -1830,6 +1830,12 @@ class PlaneFace3D(Face3D):
     #             polygon_points = polygon_points[:-1]
     #         polygon2D = volmdlr.ClosedPolygon2D(polygon_points)
     #     return repaired_points, polygon2D
+
+    @classmethod
+    def dict_to_object(cls, dict_):
+        plane3d = Plane3D.dict_to_object(dict_['surface3d'])
+        surface2d = Surface2D.dict_to_object(dict_['surface2d'])
+        return cls(plane3d, surface2d, dict_['name'])
 
     def copy(self):
         return PlaneFace3D(self.surface3d.copy(), self.surface2d.copy(), self.name)
