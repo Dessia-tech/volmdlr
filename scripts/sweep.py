@@ -60,10 +60,8 @@ sweep = primitives3d.Sweep(contour, rl, name = 'Random pipe')
 
 # frame_mapping = sweepy.frame_mapping(frame0, 'new', True)
 
-m = vm.core.VolumeModel([sweep])
-# m = vm.VolumeModel([frame_mapping])
-m.babylonjs()
-# m.FreeCADExport('sweep')
+model = vm.core.VolumeModel([sweep])
+model.babylonjs()
 
 
 

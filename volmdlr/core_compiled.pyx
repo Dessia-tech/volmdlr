@@ -343,9 +343,7 @@ class Vector2D(Vector):
 
     def __hash__(self):
         return 0
-        raise NotImplementedError('Vectors and points are unhashable')
 
-        return int(round(1e6*(self.x+self.y)))
 
     def __eq__(self, other_vector):
         if other_vector.__class__.__name__ not in ['Vector2D', 'Point2D']:
@@ -702,10 +700,6 @@ class Vector3D(Vector):
 
     def __hash__(self):
         return 0
-        raise NotImplementedError('Vectors and points are unhashable')
-
-
-        return int(round(1e6*(self.x+self.y+self.z)))
 
     def __eq__(self, other_vector:'Vector3D'):
         if other_vector.__class__.__name__ not in ['Vector3D', 'Point3D']:

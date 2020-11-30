@@ -247,8 +247,8 @@ class Contour():
 
     def extract_primitives(self, point1, primitive1, point2, primitive2):
         primitives = []
-        ip1 = self.primitive_to_index[primitive1]
-        ip2 = self.primitive_to_index[primitive2]
+        ip1 = self.primitive_to_index(primitive1)
+        ip2 = self.primitive_to_index(primitive2)
 
         if ip1 < ip2:
             primitives.append(primitive1.split(point1)[1])

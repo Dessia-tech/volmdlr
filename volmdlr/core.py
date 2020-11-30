@@ -312,14 +312,26 @@ class CompositePrimitive2D(Primitive2D):
     """
     A collection of simple primitives
     """
-    _non_serializable_attributes = ['name', 'primitives_to_index']
+    _non_serializable_attributes = ['name', '_utd_primitives_to_index',
+                                    '_primitives_to_index']   
+    _non_hash_attributes = ['name', '_utd_primitives_to_index',
+                            '_primitives_to_index']
 
     def __init__(self, primitives, name=''):
         Primitive2D.__init__(self, name)
         self.primitives = primitives
         self.update_basis_primitives()
 
-        self.primitive_to_index = {p: ip for ip, p in enumerate(self.primitives)}
+        self._utd_primitives_to_index = False
+
+
+    def primitive_to_index(self, primitive):
+        if not self._utd_primitives_to_index:
+            self._primitives_to_index = {p: ip for ip, p in enumerate(self.primitives)}
+            self._utd_primitives_to_index = True
+        return self._primitives_to_index[primitive]
+        
+    
     
     def update_basis_primitives(self):
         basis_primitives = []
