@@ -58,7 +58,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         holes = []
 
         for inner_contour in self.inner_contours:
-            inner_polygon = inner_contour.to_polygon(n=10)
+            inner_polygon = inner_contour.to_polygon(angle_resolution=10)
 
 
             for point in inner_polygon.points:
