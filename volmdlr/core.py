@@ -312,13 +312,26 @@ class CompositePrimitive2D(Primitive2D):
     """
     A collection of simple primitives
     """
+    _non_serializable_attributes = ['name', '_utd_primitives_to_index',
+                                    '_primitives_to_index']   
+    _non_hash_attributes = ['name', '_utd_primitives_to_index',
+                            '_primitives_to_index']
 
     def __init__(self, primitives, name=''):
         Primitive2D.__init__(self, name)
         self.primitives = primitives
         self.update_basis_primitives()
 
-        self.primitive_to_index = {p: ip for ip, p in enumerate(self.primitives)}
+        self._utd_primitives_to_index = False
+
+
+    def primitive_to_index(self, primitive):
+        if not self._utd_primitives_to_index:
+            self._primitives_to_index = {p: ip for ip, p in enumerate(self.primitives)}
+            self._utd_primitives_to_index = True
+        return self._primitives_to_index[primitive]
+        
+    
     
     def update_basis_primitives(self):
         basis_primitives = []
@@ -426,7 +439,7 @@ class Primitive3D(dc.DessiaObject):
 
 class CompositePrimitive3D(Primitive3D):
     _standalone_in_db = True
-    _generic_eq = True
+    _eq_is_data_eq = True
     _non_serializable_attributes = ['basis_primitives']
     _non_eq_attributes = ['name', 'basis_primitives']
     _non_hash_attributes = []
@@ -1044,11 +1057,12 @@ class BoundingBox(dc.DessiaObject):
 
 class VolumeModel(dc.DessiaObject):
     _standalone_in_db = True
-    _generic_eq = True
+    _eq_is_data_eq = True
     _non_serializable_attributes = ['shells', 'bounding_box']
     _non_eq_attributes = ['name', 'shells', 'bounding_box', 'contours',
                           'faces']
-    _non_hash_attributes = []
+    _non_hash_attributes = ['name', 'shells', 'bounding_box', 'contours',
+                          'faces']
     """
     :param groups: A list of two element tuple. The first element is a string naming the group and the second element is a list of primitives of the group
     """
@@ -1065,8 +1079,8 @@ class VolumeModel(dc.DessiaObject):
         # else:
         #     self.bounding_box = BoundingBox(-1, 1, -1, 1, -1, 1)
 
-    # def __hash__(self):
-    #     return sum([hash(p) for p in self.primitives])
+    def __hash__(self):
+        return sum([hash(p) for p in self.primitives])
 
     # def _extract_shells(self):
     #     shells = []
@@ -1074,6 +1088,14 @@ class VolumeModel(dc.DessiaObject):
     #         if isinstance(primitive, Shell3D):
     #             shells.append(primitive)
     #     return shells
+
+    def __eq__(self, other):
+        equ = True
+        if len(self.primitives) != len(other.primitives):
+            return False
+        for p1, p2 in zip(self.primitives, other.primitives):
+            equ = equ and p1 == p2
+        return equ
 
     def volume(self):
         volume = 0
@@ -1147,7 +1169,7 @@ class VolumeModel(dc.DessiaObject):
             return BoundingBox(-1, 1, -1, 1, 1 - 1, 1)
         return BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
-    def plot(self, ax=None, color=None):
+    def plot2d(self, ax=None, color=None):
         fig = plt.figure()
         if ax is None:
             ax = fig.add_subplot(111, projection='3d')

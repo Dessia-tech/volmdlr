@@ -247,8 +247,8 @@ class Contour():
 
     def extract_primitives(self, point1, primitive1, point2, primitive2):
         primitives = []
-        ip1 = self.primitive_to_index[primitive1]
-        ip2 = self.primitive_to_index[primitive2]
+        ip1 = self.primitive_to_index(primitive1)
+        ip2 = self.primitive_to_index(primitive2)
 
         if ip1 < ip2:
             primitives.append(primitive1.split(point1)[1])
@@ -268,8 +268,13 @@ class Contour2D(Contour, Wire2D):
     TODO : center_of_mass and second_moment_area should be changed accordingly to
     area considering the triangle drawn by the arcs
     """
-    _non_serializable_attributes = ['internal_arcs', 'external_arcs',
-                                    'polygon', 'straight_line_contour_polygon']
+    _non_data_hash_attributes = ['_internal_arcs', '_external_arcs',
+                                    '_polygon', '_straight_line_contour_polygon', 'primitive_to_index',
+                                    'basis_primitives', '_utd_analysis']
+    _non_serializable_attributes = ['_internal_arcs', '_external_arcs',
+                                    '_polygon', '_straight_line_contour_polygon', 'primitive_to_index',
+                                    'basis_primitives', '_utd_analysis']
+
 
     def __init__(self, primitives, name=''):
         Wire2D.__init__(self, primitives, name)
@@ -890,6 +895,8 @@ class ClosedPolygon2D(Contour2D):
         return sum([hash(p) for p in self.points])
 
     def __eq__(self, other_):
+        if not isinstance(other_, self.__class__):
+            return False
         equal = True
         for point, other_point in zip(self.points, other_.points):
             equal = (equal and point == other_point)
@@ -1088,7 +1095,7 @@ class ClosedPolygon2D(Contour2D):
             return d_min, other_point_min
         return d_min
 
-    def to_polygon(self):
+    def to_polygon(self, angle_resolution=None):
         return self
 
     def self_intersects(self):
