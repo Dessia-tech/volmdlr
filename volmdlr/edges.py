@@ -2627,7 +2627,17 @@ class Arc3D(Edge):
         return surface.rectangular_cut(0, angle,
                                        arc2d.angle1, arc2d.angle2)
 
-
+    def to_step(self, current_id):
+        raise NotImplementedError('Not yet!, WIP')
+        start_content, start_id = self.start.to_step(current_id)
+        end_content, end_id = self.end.to_step(current_id+1)
+        current_id += 2
+        content = start_content + end_content
+        content += "#{} = ('{}', #{}, #{})\n".format(current_id, self.name,
+                                                    start_id, end_id)
+        return content, current_id
+    
+    
 class FullArc3D(Edge):
     """
     An edge that starts at start_end, ends at the same point after having described

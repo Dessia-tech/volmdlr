@@ -1378,7 +1378,7 @@ class VolumeModel(dc.DessiaObject):
         self.babylonjs_from_babylon_data(babylon_data, page_name=page_name,
                                          use_cdn=use_cdn, debug=debug)
 
-    def to_step(self):
+    def to_step(self, filename:str=None):
         step_content = STEP_HEADER
         current_id = 1
         for primitive in self.primitives:
@@ -1386,7 +1386,12 @@ class VolumeModel(dc.DessiaObject):
             current_id = last_used_id + 1
             step_content += primitive_content
         step_content += STEP_FOOTER
-        return step_content
+        
+        if filename:
+            with open(filename, 'w') as f:
+                f.write(step_content)
+        else:
+            return step_content
 
 
 class MovingVolumeModel(VolumeModel):

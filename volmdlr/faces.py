@@ -879,7 +879,7 @@ class CylindricalSurface3D(Surface3D):
                         z1:float, z2:float, name:str=''):
 
         if theta1 == theta2:
-            theta2 += volmdlr.volmdlr.TWO_PI
+            theta2 += volmdlr.TWO_PI
 
         p1 = volmdlr.Point2D(theta1, z1)
         p2 = volmdlr.Point2D(theta2, z1)
@@ -1025,17 +1025,17 @@ class ToroidalSurface3D(Surface3D):
     def contour2d_to_3d(self, contour2d):
         edges3d = []
         for edge in contour2d.primitives:
-            if isinstance(edge, volmdlr.volmdlr.LineSegment2D):
+            if isinstance(edge, volmdlr.edges.LineSegment2D):
                 if (edge.points[0][0] == edge.points[1][0]) \
                         or (edge.points[0][1] == edge.points[1][1]):
                     # Y progression: it's an arc
-                    edges3d.append(volmdlr.Arc3D(self.point2d_to_3d(edge.points[0]),
+                    edges3d.append(volmdlr.edges.Arc3D(self.point2d_to_3d(edge.points[0]),
                                          self.point2d_to_3d(
                                              0.5 * (edge.points[0] \
                                                     + edge.points[1])),
                                          self.point2d_to_3d(edge.points[1])))
                 else:
-                    edges3d.append(volmdlr.Arc3D(self.point2d_to_3d(edge.points[0]),
+                    edges3d.append(volmdlr.edges.Arc3D(self.point2d_to_3d(edge.points[0]),
                                          self.point2d_to_3d(
                                              0.5 * (edge.points[0] \
                                                     + edge.points[1])),
@@ -1044,7 +1044,7 @@ class ToroidalSurface3D(Surface3D):
                 raise NotImplementedError(
                     'The primitive {} is not supported in 2D->3D'.format(edge))
 
-        return volmdlr.Contour3D(edges3d)
+        return volmdlr.wires.Contour3D(edges3d)
 
     def fullarc3d_to_2d(self, fullarc3d):
         if self.frame.w.is_colinear_to(fullarc3d.normal):
@@ -1059,57 +1059,6 @@ class ToroidalSurface3D(Surface3D):
 
     def circle3d_to_2d(self, circle3d):
         return []
-    # def contour3d_to_2d(self, contour3d):
-    #
-    #
-    #     primitives = []
-    #     for edge in contour3d.primitives:
-    #         if edge.__class__.__name__ == 'Circle3D':
-    #             continue
-    #
-    #         start2d = self.point3d_to_2d(
-    #             self.frame.new_coordinates(edge.start))
-    #         end2d = self.point3d_to_2d(self.frame.new_coordinates(edge.end))
-    #
-    #
-    #         if edge.__class__.__name__ == 'Arc3D':
-    #
-    #
-    #
-    #             angle2d = abs(end2d[0] - start2d[0])
-    #             if math.isclose(edge.angle, volmdlr.TWO_PI, abs_tol=1e-6):
-    #                 if start2d == end2d:
-    #                     if math.isclose(start2d.vector[0], volmdlr.TWO_PI,
-    #                                     abs_tol=1e-6):
-    #                         end2d = end2d - volmdlr.volmdlr.Point2D(volmdlr.TWO_PI, 0)
-    #                     else:
-    #                         end2d = end2d + volmdlr.volmdlr.Point2D(volmdlr.TWO_PI, 0)
-    #             elif not (math.isclose(edge.angle, angle2d, abs_tol=1e-2)):
-    #                 # if math.isclose(angle2d, volmdlr.TWO_PI, abs_tol=1e-2) :
-    #                 if start2d[0] < end2d[0]:
-    #                     end2d = start2d + volmdlr.volmdlr.Point2D(edge.angle, 0)
-    #                 else:
-    #                     end2d = start2d - volmdlr.volmdlr.Point2D(edge.angle, 0)
-    #
-    #             primitives.append(volmdlr.volmdlr.edges.LineSegment2D(start2d, end2d))
-    #
-    #
-    #         elif edge.__class__.__name__  == 'LineSegment3D':
-    #             primitives.append(volmdlr.edges.LineSegment2D(start2d, end2d))
-    #
-    #         elif edge.__class__.__name__  == 'LineSegment3D':
-    #             primitives.append(volmdlr.edges.LineSegment2D(start2d, end2d))
-    #
-    #         elif edge.__class__.__name__  == 'BSplineCurve3D':
-    #             # TODO: enhance this, this is ugly!!!
-    #             primitives.append(volmdlr.edges.LineSegment2D(start2d, end2d))
-    #
-    #         else:
-    #             raise NotImplementedError('Unsupported class {} in {} contour3d to 2d'.format(
-    #                 edge.__class__.__name__, self.__class__.__name__
-    #             ))
-    #
-    #     return volmdlr.wires.Contour2D(primitives)
 
     def triangulation(self):
         face = self.rectangular_cut(0, volmdlr.TWO_PI, 0, volmdlr.TWO_PI)
@@ -1273,7 +1222,7 @@ class SphericalSurface3D(Surface3D):
         x = self.radius * math.cos(phi) * math.cos(theta)
         y = self.radius * math.cos(phi) * math.sin(theta)
         z = self.radius * math.sin(phi)
-        return self.frame3d.old_coordinates(volmdlr.Point3D([x, y, z]))
+        return self.frame3d.old_coordinates(volmdlr.Point3D(x, y, z))
 
     def point3d_to2d(self, point3d):
         x, y, z = point3d
@@ -1291,7 +1240,7 @@ class SphericalSurface3D(Surface3D):
         else:
             u1, u2 = round(x / u, 5), round(y / u, 5)
         theta = volmdlr.sin_cos_angle(u1, u2)
-        return volmdlr.volmdlr.Point2D((theta, phi))
+        return volmdlr.Point2D(theta, phi)
 
 class RuledSurface3D(Surface3D):
     face_class = 'RuledFace3D'

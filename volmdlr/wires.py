@@ -235,11 +235,11 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
 
         return min(distance)
 
-    def copy(self):
-        primitives_copy = []
-        for primitive in self.primitives:
-            primitives_copy.append(primitive.copy())
-        return Wire3D(primitives_copy)
+    # def copy(self):
+    #     primitives_copy = []
+    #     for primitive in self.primitives:
+    #         primitives_copy.append(primitive.copy())
+    #     return Wire3D(primitives_copy)
 
 # TODO: define an edge as an opened polygon and allow to compute area from this reference
 
@@ -479,11 +479,11 @@ class Contour2D(Contour, Wire2D):
                                            plot_data_states=plot_data_states,
                                            name=self.name)
 
-    def copy(self):
-        primitives_copy = []
-        for primitive in self.primitives:
-            primitives_copy.append(primitive.copy())
-        return Contour2D(primitives_copy)
+    # def copy(self):
+    #     primitives_copy = []
+    #     for primitive in self.primitives:
+    #         primitives_copy.append(primitive.copy())
+    #     return Contour2D(primitives_copy)
 
     def average_center_point(self):
         nb = len(self.tessel_points)
@@ -1720,9 +1720,6 @@ class Circle2D(Contour2D):
     def to_polygon(self,angle_resolution:float):
         return ClosedPolygon2D(self.polygon_points(angle_resolution=angle_resolution))
         
-    # def to_polygon(self, resolution=0.010):
-
-        return ClosedPolygon2D(self.polygon_points(angle_resolution))
 
     def tessellation_points(self, resolution=40):
         return [(self.center
