@@ -208,12 +208,47 @@ class Line(dc.DessiaObject):
             return [point_projection1]
         else:
             return []
+    # def circle_intersections(self, circle):
+       
+    #     Q = circle.center
+    #     if self.points[0] == circle.center:
+    #         P1 = self.points[1]
+    #         V = self.points[0] - self.points[1]
+    #     else:
+    #         P1 = self.points[0]
+    #         V = self.points[1] - self.points[0]
+    #     a = V.dot(V)
+    #     b = 2 * V.dot(P1 - Q)
+    #     c = P1.dot(P1) + Q.dot(Q) - 2 * P1.dot(Q) - circle.radius ** 2
 
-    def abscissa(self, point):
-        u = self.point2 - self.point1
-        norm_u = u.norm()
-        t = (point - self.point1).dot(u) / norm_u
-        return t
+    #     disc = b ** 2 - 4 * a * c
+    #     if disc < 0:
+    #         return []
+
+    #     sqrt_disc = math.sqrt(disc)
+    #     t1 = (-b + sqrt_disc) / (2 * a)
+    #     t2 = (-b - sqrt_disc) / (2 * a)
+    #     if self.__class__ is volmdlr.edges.Line2D:
+
+    #         if t1 == t2:
+    #             return [P1 + t1 * V]
+    #         else:
+    #             return [P1 + t1 * V,
+    #                     P1 + t2 * V]
+    #     else:
+    #         if not 0 <= t1 <= 1 and not 0 <= t2 <= 1:
+    #             return None
+    #         elif 0 <= t1 <= 1 and not 0 <= t2 <= 1:
+    #             return [P1 + t1 * V]
+    #         elif not 0 <= t1 <= 1 and 0 <= t2 <= 1:
+    #             return [P1 + t2 * V]
+    #         else:
+    #             [P1 + t1 * V, P1 + t2 * V]
+    # def abscissa(self, point):
+    #     u = self.point2 - self.point1
+    #     norm_u = u.norm()
+    #     t = (point - self.point1).dot(u) / norm_u
+    #     return t
 
 
     def split(self, split_point):
@@ -282,7 +317,9 @@ class Line2D(Line):
         else:
             for p in self.points:
                 p.translation(offset, copy=False)
-
+    def cut_between_two_points(self,line,point,other_point):
+        return LineSegment2D(point,other_point)
+        
     def plot(self, ax=None, color='k', dashed=True):
         if ax is None:
             fig, ax = plt.subplots()
@@ -625,7 +662,7 @@ class LineSegment2D(LineSegment):
             return [point_projection1]
         else:
             return []
-
+    
     def discretise(self,n:float):
         
         
@@ -658,9 +695,14 @@ class LineSegment2D(LineSegment):
          return segment_to_nodes[self]
      
         
-     
+    def inverse_primitive(self):
+        return LineSegment2D(self.end,self.start)
 
-
+    def border_primitive(self,infinite_primitive:volmdlr.core.Primitive2D,intersection,position):
+        if position == 0 :
+            return LineSegment2D(infinite_primitive.point1,intersection)
+        else :
+            return LineSegment2D(intersection,infinite_primitive.point2)
     def infinite_primitive(self,offset):
         vector=self.end-self.start
         vector.normalize()
@@ -675,7 +717,7 @@ class LineSegment2D(LineSegment):
         n
     
         
-        return(Line2D(offset_point_1,offset_point_2))
+        return Line2D(offset_point_1,offset_point_2)
     def plot(self, ax=None, color='k', alpha=1, arrow=False, width=None,
 
                 plot_points=False):
@@ -912,7 +954,9 @@ class Arc2D(Edge):
         else:
             return min(LineSegment2D(point, self.start).length(),
                        LineSegment2D(point, self.end).length())
-
+    
+        
+        
     def line_intersections(self, line):
         circle = volmdlr.wires.Circle2D(self.center, self.radius)
         circle_intersection_points = circle.line_intersections(line)
@@ -925,7 +969,19 @@ class Arc2D(Edge):
             if self.point_belongs(pt):
                 intersection_points.append(pt)
         return intersection_points
-
+    
+    def border_primitive(self,infinite_primitive:volmdlr.core.Primitive2D,intersection,position):
+            interior=infinite_primitive.circle_projection(self.interior)
+            if position == 0:
+                
+                start=infinite_primitive.circle_projection(self.start)
+                return(Arc2D(start,interior,intersection))
+            else :
+                end=infinite_primitive.circle_projection(self.end)
+                return(Arc2D(intersection,interior,end))
+            
+    def inverse_primitive(self):
+        return Arc2D(self.end,self.interior,self.start)        
     def length(self):
         return self.radius * abs(self.angle)
 
@@ -1088,7 +1144,8 @@ class Arc2D(Edge):
         else :
             
                 radius=self.radius-offset
-        return(volmdlr.wires.Circle2D(self.center,radius))
+                
+        return volmdlr.wires.Circle2D(self.center,radius)
     
     
     # def plot_data(self, plot_data_states: List[plot_data.Settings] = None):

@@ -584,7 +584,8 @@ class Mesher(DessiaObject):
             l=len(polygon_offsets)
           
             if len(polygon_offsets[-1].line_segments)==len(polygon_offsets[l-2].line_segments):
-               offset_triangles+=self.basic_triangulation(polygon_offsets[l-2],polygon_offsets[-1],segment_to_nodes)
+               offset_triangles+=self.basic_triangulation(polygon_offsets[l-2],polygon_offsets[-1],
+                                                          segment_to_nodes)
                if  not empty :
                     
                     last_points=[]
@@ -617,32 +618,19 @@ class Mesher(DessiaObject):
     
         index=all_aspect_ratios.index(min(all_aspect_ratios))
         return good_meshes[index]
-
-    def mesh_in_between(self,in_polygon:volmdlr.wires.ClosedPolygon2D,
-                        out_polygon:volmdlr.wires.ClosedPolygon2D,empty:bool):
+    
+    def projection_points(self,in_polygon,out_polygon,segment_to_nodes):
         
-        # ax=plt.subplot()
         projection_points=[]
-        segment_to_nodes={}
         closest_segment={}
-        all_triangles=[]
         out_point_image={}
-
-        for segment in out_polygon.line_segments:
-            segment_to_nodes[segment]=segment.discretise(self.nodes_len)
-         
-                
+      
         for segment in out_polygon.line_segments:
             for point in segment_to_nodes[segment]:
                 out_point_image[point]=[]
         for segment in out_polygon.line_segments:
             projection_points.append([]) 
-            
-        for segment in in_polygon.line_segments:
-           
-            segment_to_nodes[segment]=segment.discretise(0)
-       
-                                
+                             
         for out_segment in out_polygon.line_segments:
             
             index_0=out_polygon.line_segments.index(out_segment)
@@ -656,14 +644,11 @@ class Mesher(DessiaObject):
                   l=in_segment.point_distance(mid)
                   d.append(l)
             index=d.index(min(d))
-            
-               
             near_segment=in_polygon.line_segments[index]
             
             closest_segment[out_segment]=near_segment
             for point in segment_to_nodes[out_segment]:
-                # point.plot(ax=ax,color='r')
-               
+
                 i=[]
                 d_1=[]
                 index_point=segment_to_nodes[out_segment].index(point)
@@ -700,34 +685,31 @@ class Mesher(DessiaObject):
                             
                           if new_proj not in projection_points[index_0]:
                               projection_points[index_0].insert(index_point,new_proj)
-                  
-                                 
-                           
-                          
+                                          
                 else:                                               
                     if projection is None :
                             
                            
-                            if out_point_image[point]==[]:
+                        if out_point_image[point]==[]:
+                          
+                            out_point_image[point].append([index_0,new_proj])
                               
-                                out_point_image[point].append([index_0,new_proj])
+                            if new_proj not in projection_points[index_0]:
+                               
+                                projection_points[index_0].insert(index_point,new_proj)
+                            
+                        else :
+                             
+                             if out_point_image[point][0][1] != new_proj :
                                   
-                                if new_proj not in projection_points[index_0]:
-                                   
-                                    projection_points[index_0].insert(index_point,new_proj)
-                                
-                            else :
-                                 
-                                 if out_point_image[point][0][1] != new_proj :
-                                      
-                                      projection_points[out_point_image[point][0][0]].remove(out_point_image[point][0][1])
-                                      projection_points[out_point_image[point][0][0]].append(new_proj)
-                                      if new_proj not in projection_points[index_0]:
-                                            projection_points[index_0].insert(index_point,new_proj)
-                                     
-                                 else :
-                                     if new_proj not in projection_points[index_0]:
+                                  projection_points[out_point_image[point][0][0]].remove(out_point_image[point][0][1])
+                                  projection_points[out_point_image[point][0][0]].append(new_proj)
+                                  if new_proj not in projection_points[index_0]:
                                         projection_points[index_0].insert(index_point,new_proj)
+                                 
+                             else :
+                                 if new_proj not in projection_points[index_0]:
+                                    projection_points[index_0].insert(index_point,new_proj)
                     else :
                         x=0
                         if out_point_image[point]==[]:
@@ -753,7 +735,11 @@ class Mesher(DessiaObject):
                         else :
                              if new_proj not in projection_points[index_0]:     
                                    projection_points[index_0].insert(index_point,new_proj)
-                  
+                                   
+        return projection_points  
+    
+    def in_between_triangulation(self,out_polygon,projection_points,segment_to_nodes):
+        all_triangles=[]
         for out_segment in out_polygon.line_segments:
             
             index_0=out_polygon.line_segments.index(out_segment)
@@ -766,27 +752,18 @@ class Mesher(DessiaObject):
                     
                     new_triangle=volmdlr.wires.Triangle2D([projection_points[index_0][j],projection_points[index_0][j+1],
                                         segment_to_nodes[out_segment][j]])   
-
-                      
-          
+    
                     all_triangles.append(new_triangle)
-                    new_triangle_0=volmdlr.wires.Triangle2D([projection_points[index_0][j+1],segment_to_nodes[out_segment][j],
-                                        segment_to_nodes[out_segment][j+1]])   
-                   
-
-                
-                    all_triangles.append(new_triangle)
+                    
                     new_triangle_0=volmdlr.wires.Triangle2D([projection_points[index_0][j+1],segment_to_nodes[out_segment][j],
                                         segment_to_nodes[out_segment][j+1]])   
                 
-
                     all_triangles.append(new_triangle_0)
                     
                 for j in  range(v-1,u-1):
-                      new_triangle=volmdlr.wires.Triangle2D([projection_points[index_0][j],projection_points[index_0][j+1],
-                                      segment_to_nodes[out_segment][v-1]])   
-                      all_triangles.append(new_triangle)
-                      
+                    new_triangle=volmdlr.wires.Triangle2D([projection_points[index_0][j],projection_points[index_0][j+1],
+                                    segment_to_nodes[out_segment][v-1]])   
+                    all_triangles.append(new_triangle) 
            
             if u<v :
                 for j in range(u-1):
@@ -815,11 +792,29 @@ class Mesher(DessiaObject):
                                     segment_to_nodes[out_segment][1]]) 
                
                 all_triangles.append(new_triangle_2)
-           
                 
+                
+        return all_triangles    
+    
+    def mesh_in_between(self,in_polygon:volmdlr.wires.ClosedPolygon2D,
+                        out_polygon:volmdlr.wires.ClosedPolygon2D,empty:bool):
+        
+        # ax=plt.subplot()
+        segment_to_nodes={}
+        all_triangles=[]
+
+        for segment in out_polygon.line_segments:
+            segment_to_nodes[segment]=segment.discretise(self.nodes_len)
+            
+        for segment in in_polygon.line_segments:
+            segment_to_nodes[segment]=segment.discretise(0)
+
+        projection_points=self.projection_points(in_polygon,out_polygon,
+                                                 segment_to_nodes)  
+        
+        all_triangles+=self.in_between_triangulation(out_polygon,projection_points,
+                                                     segment_to_nodes)
            
-                                
-  
         if empty is False:
             
             last_points=[]
@@ -830,9 +825,9 @@ class Mesher(DessiaObject):
             last_polygon=volmdlr.wires.ClosedPolygon2D(last_points)
             ear=self.earclip(last_polygon)
             for triangle in ear : 
-                if triangle.area<10e-9:
-                    ear.remove(triangle)
-            all_triangles+=ear
+                if triangle.area>10e-9:
+                   all_triangles.append(triangle)
+           
         
         return all_triangles
   
@@ -1046,7 +1041,7 @@ class Mesher(DessiaObject):
             
 
         # self.plot_aspect_ratio(plot_aspect_ratio_triangles,all_aspect_ratios,ax)
-        # ax.set_aspect('equal')
+        ax.set_aspect('equal')
         return all_triangle_elements
     
     def plot_aspect_ratio(self,all_triangles:List[volmdlr.wires.Triangle2D],
