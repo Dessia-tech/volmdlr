@@ -3637,8 +3637,12 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         return point1_min, point2_min
 
     def distance_to_shell(self, other_shell:'OpenShell3D', resolution:float):
-        p1, p2 = self.minimum_distance_points(other_shell, resolution)
-        return p1.point_distance(p2)
+        min_dist = self.minimum_distance_points(other_shell, resolution)
+        if min_dist is not None:
+            p1, p2 = min_dist
+            return p1.point_distance(p2)
+        else:
+            return None
 
 
     def minimum_distance_point(self, point:volmdlr.Point3D)->volmdlr.Point3D:
@@ -3800,7 +3804,7 @@ class ClosedShell3D(OpenShell3D):
         inter1 = compteur1 / nb_pts1
         inter2 = compteur2 / nb_pts2
 
-
+        print(len(self.faces), len(shell2.faces))
         for face1 in self.faces:
             for face2 in shell2.faces:
                 intersection_points = face1.face_intersection(face2)

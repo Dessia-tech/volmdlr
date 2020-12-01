@@ -8,7 +8,7 @@ Created on Wed Sep 11 23:39:42 2020
 import math
 import volmdlr as vm
 import volmdlr.primitives3d as primitives3d
-resolution = 0.010
+resolution = 0.0010
 
 box = primitives3d.Block(
     vm.Frame3D(vm.Point3D(0, 0, 0), vm.Vector3D(0.3, 0, 0),
@@ -71,3 +71,30 @@ assert box.is_inside_shell(box_blue, resolution) == False
 assert box_blue.is_inside_shell(box, resolution) == False
 
 
+
+# box = primitives3d.Block(
+#     vm.Frame3D(vm.Point3D(0, 0, 0), vm.Vector3D(0.3, 0, 0),
+#                vm.Vector3D(0, 0.3, 0), vm.Vector3D(0, 0, 0.3)),
+#     alpha=0.6)
+# box_red = primitives3d.Block(
+#     vm.Frame3D(vm.Point3D(0, 0, 0), vm.Vector3D(0.1, 0, 0),
+#                vm.Vector3D(0, 0.1, 0), vm.Vector3D(0, 0, 0.1)),
+#     color=(0.2, 1, 0.4), alpha=0.6)
+#
+# for i in range(30):
+#     print('----NEW STEP----', box_red.is_inside_shell(box, resolution))
+#     print('distance_to_shell', box.distance_to_shell(box_red, resolution))
+#     # print('shell_intersection', box.shell_intersection(box_red, resolution))
+#     print('volume', box_red.bounding_box.volume(), box.bounding_box.volume())
+#     print('intersection_internal_aabb_volume', box.intersection_internal_aabb_volume(box_red, resolution), box_red.intersection_internal_aabb_volume(box, resolution))
+#     print('intersection_external_aabb_volume', box.intersection_external_aabb_volume(box_red, resolution), box_red.intersection_external_aabb_volume(box, resolution))
+#     # print('is_inside_shell', box.is_inside_shell(box_red, resolution), box_red.is_inside_shell(box, resolution))
+#     if not box_red.is_inside_shell(box, resolution):
+#         model = vm.core.VolumeModel([box, box_red])
+#         model.babylonjs(debug=True)
+#         raise
+#     box_red = box_red.translation(vm.Vector3D(0.01, 0, 0), copy=True)
+#
+#
+# model = vm.core.VolumeModel([box, box_red])
+# model.babylonjs(debug=True)
