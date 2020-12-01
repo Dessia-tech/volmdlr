@@ -430,6 +430,9 @@ class Vector2D(Vector):
                         plane_origin.z + vx.z*self.x + vy.z*self.y,
                         )
 
+    def to_point(self):
+        return Point2D(self.x, self.y)
+
     def normal_vector(self, unit=False):
         n = Vector2D(-self.y, self.x)
         if unit:
@@ -531,6 +534,9 @@ class Point2D(Vector2D):
                        plane_origin.y + vx.y*self.x + vy.y*self.y,
                        plane_origin.z + vx.z*self.x + vy.z*self.y)
 
+    def to_vector(self):
+        return Vector2D(self.x, self.y, self.z)
+
     def plot(self, ax=None, color='k'):
         if ax is None:
             fig, ax = plt.subplots()
@@ -538,13 +544,11 @@ class Point2D(Vector2D):
         ax.plot([self.x], [self.y], color=color, marker='o')
         return ax
 
-    def point_distance(self, point2):
+    def point_distance(self, point2:'Point2D'):
         return (self-point2).norm()
 
 
     @classmethod
-
-   
     def line_intersection(cls, line1, line2, curvilinear_abscissa=False):
         x1 = line1.points[0].x
         y1 = line1.points[0].y
@@ -892,9 +896,8 @@ class Vector3D(Vector):
                    random.uniform(ymin, ymax),
                    random.uniform(zmin, zmax))
 
-#    @classmethod
-#    def DictToObject(cls, dict_):
-#        return cls(dict_['vector'])
+    def to_point(self):
+        return Point3D(self.x, self.y, self.z)
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -908,13 +911,13 @@ class Vector3D(Vector):
             return cls(*[float(i) for i in arguments[1][1:-1].split(",")],
                         arguments[0][1:-1])
 
-
     def to_step(self, current_id):
-        content = "#{} = VECTOR('{}', {}, {}, {})\n"\
-                        .format(current_id, self.name, 1000*self.x,
-                                1000*self.y, 1000*self.z)
+        content = "#{} = DIRECTION('{}', ({}, {}, {}));\n"\
+                        .format(current_id, self.name,
+                                round(self.x, 6),
+                                round(self.y, 6),
+                                round(self.z, 6))
         return content, current_id
-
 
     def plot(self, ax=None, starting_point=None, color=''):
         if starting_point is None:
@@ -991,11 +994,16 @@ class Point3D(Vector3D):
     def from_step(cls, arguments, object_dict):
         return cls(*[float(i)/1000 for i in arguments[1][1:-1].split(",")],
                     arguments[0][1:-1])
-    
+
+    def to_vector(self):
+        return Vector3D(self.x, self.y, self.z)
+
     def to_step(self, current_id):
-        content = "#{} = CARTESIAN_POINT('{}', {}, {}, {})\n"\
-                        .format(current_id, self.name, 1000*self.x,
-                                1000*self.y, 1000*self.z)
+        content = "#{} = CARTESIAN_POINT('{}', ({}, {}, {}));\n"\
+                        .format(current_id, self.name,
+                                round(1000*self.x, 3),
+                                round(1000*self.y, 3),
+                                round(1000*self.z, 3))
         return content, current_id
 
 
@@ -1584,14 +1592,12 @@ class Frame3D(Basis3D):
         
         content, origin_id = self.origin.to_step(current_id)
         current_id = origin_id + 1
-        u_content, origin_id = self.u.to_step(current_id)
-        u_id = origin_id + 1
-        v_content, origin_id = self.v.to_step(current_id)
-        v_id = origin_id + 2
+        u_content, u_id = Vector3D.to_step(self.u, current_id)
+        current_id = u_id + 1
+        v_content, v_id = Vector3D.to_step(self.v, current_id)
         current_id = v_id + 1
-        content += u_content
-        content += v_content
-        content += "#{} = AXIS2_PLACEMENT_3D('{}', #{}, {}, {})\n"\
+        content += u_content + v_content
+        content += "#{} = AXIS2_PLACEMENT_3D('{}', (#{}, #{}, #{}));\n"\
                         .format(current_id, self.name, origin_id, u_id, v_id)
         return content, current_id
 

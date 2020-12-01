@@ -2024,7 +2024,7 @@ class Contour3D(Contour, Wire3D):
             current_id = primitive_id +1
             content += primitive_content
             edge_ids.append(primitive_id)
-        content += "#{} = EDGE_LOOP('{}', ({}))\n".format(current_id, self.name,
+        content += "#{} = EDGE_LOOP('{}', ({}));\n".format(current_id, self.name,
                                                       volmdlr.core.step_ids_to_str(edge_ids))
         return content, current_id
 
@@ -2187,8 +2187,9 @@ class Circle3D(Contour3D):
     def to_step(self, current_id):
         content, frame_id = self.frame.to_step(current_id)
         current_id = frame_id+1
-        content += "#{} = CIRCLE('{}', #{}, {})\n".format(current_id, self.name,
-                                                    frame_id, self.radius*1000)
+        content += "#{} = CIRCLE('{}', #{}, {});\n".format(current_id, self.name,
+                                                           frame_id,
+                                                           round(self.radius*1000, 3))
         return content, current_id
 
     def rotation(self, rot_center, axis, angle, copy=True):

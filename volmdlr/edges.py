@@ -2021,7 +2021,7 @@ class LineSegment3D(LineSegment):
         end_content, end_id = self.end.to_step(current_id+1)
         current_id += 2
         content = start_content + end_content
-        content += "#{} = LINE('{}', #{}, #{})\n".format(current_id, self.name,
+        content += "#{} = LINE('{}', #{}, #{});\n".format(current_id, self.name,
                                                     start_id, end_id)
         return content, current_id
 
@@ -2628,12 +2628,13 @@ class Arc3D(Edge):
                                        arc2d.angle1, arc2d.angle2)
 
     def to_step(self, current_id):
-        raise NotImplementedError('Not yet!, WIP')
         start_content, start_id = self.start.to_step(current_id)
         end_content, end_id = self.end.to_step(current_id+1)
         current_id += 2
         content = start_content + end_content
-        content += "#{} = ('{}', #{}, #{})\n".format(current_id, self.name,
+        circle = Circle3D(self.center, self.radius, self.normal)
+        circle_content, circle_id = circle.to_step(current_id)
+        content += "#{} = EDGE_CURVE('{}', #{}, #{});\n".format(current_id, self.name,
                                                     start_id, end_id)
         return content, current_id
     
@@ -2683,15 +2684,26 @@ class FullArc3D(Edge):
         return polygon_points_3D
 
     def to_step(self, current_id):
+        # Not calling Circle3D.to_step because of circular imports
         u = self.start - self.center
         u.normalize()
         v = self.normal.cross(u)
         frame = volmdlr.Frame3D(self.center, u, v, self.normal)
         content, frame_id = frame.to_step(current_id)
-        current_id = frame_id+1
-        content += "#{} = CIRCLE('{}', #{}, {})\n".format(current_id, self.name,
-                                                    frame_id, self.radius*1000)
-        return content, current_id
+        circle_id = frame_id+1
+        # Not calling Circle3D.to_step because of circular imports
+        content += "#{} = CIRCLE('{}', #{}, {});\n".format(circle_id, self.name,
+                                                    frame_id,
+                                                    round(self.radius*1000, 3))
+        start_content, start_id = self.start.to_step(circle_id+1)
+        end_content, end_id  = self.start.to_step(circle_id+2)
+        content += start_content + end_content
+        arc_id = end_id + 1
+        content += "#{} = EDGE_CURVE('{}', #{}, #{}, #{});\n".format(arc_id, self.name,
+                                                                    start_id, end_id,
+                                                                    circle_id)
+
+        return content, arc_id
 
     def plot(self, ax=None, color='k'):
         if ax is None:

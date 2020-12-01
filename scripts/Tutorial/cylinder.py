@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 radius = 5e-3 #Choose the radius
 center = vm.Point3D(0,0,0) #Choose the coordinate of the center
 normal = vm.Vector3D(1,1,1) #Choose the normal
-cylinder = primitives3d.Cylinder(center, normal, radius, length=0.1)
+cylinder = primitives3d.Cylinder(center, normal, radius, length=0.1, name='Cylinder')
 
 h = 10e-3 #Height of cylinder
 angle = 3*math.pi/2 #Arc's angle 
@@ -43,8 +43,8 @@ angle = 3*math.pi/2 #Arc's angle
 # p1.MPLPlot(ax=ax, color='r')
 
 # shell = vm.Shell3D([cylinder])
-model = vm.core.VolumeModel([cylinder])
+model = vm.core.VolumeModel([cylinder], name='cylinder model')
 
-print(model.to_step())
+print(model.to_step('cylinder.step'))
 
-model.babylonjs()
+# model.babylonjs()

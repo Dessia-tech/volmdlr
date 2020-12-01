@@ -17,8 +17,6 @@ import volmdlr.faces
 import webbrowser
 
 
-
-
 def step_split_arguments(function_arg):
     """
     Split the arguments of a function that doesn't start with '(' but end with ')'

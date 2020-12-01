@@ -768,6 +768,11 @@ class Plane3D(Surface3D):
         surface = Surface2D(outer_contour, [])
         return PlaneFace3D(self, surface, name)
 
+    def to_step(self, current_id):
+        content, frame_id = self.frame.to_step(current_id)
+        plane_id = frame_id + 1
+        content += "#{} = PLANE('{}',#{});\n".format(plane_id, self.name, frame_id)
+        return content, plane_id
 
 
 PLANE3D_OXY = Plane3D(volmdlr.OXYZ)
@@ -895,6 +900,14 @@ class CylindricalSurface3D(Surface3D):
                                   self.radius)
         else:
             self.frame.translation(offset, copy=False)
+
+    def to_step(self, current_id):
+        content, frame_id = self.frame.to_step(current_id)
+        current_id = frame_id + 1
+        content += "#{} = CYLINDRICAL_SURFACE('{}',#{}, {});\n"\
+            .format(current_id, self.name, frame_id,
+                    round(1000*self.radius, 3))
+        return content, current_id
 
 class ToroidalSurface3D(Surface3D):
     face_class = 'ToroidalFace3D'
@@ -1533,10 +1546,19 @@ class Face3D(volmdlr.core.Primitive3D):
         for inner_contour3d in self.inner_contours3d:
             inner_contour_content, inner_contour_id = inner_contour3d.to_step(current_id)
             content += inner_contour_content
-            contours_ids.append(inner_contour_id)
-            current_id = inner_contour_id + 1
-        content += '#{} = FACE_SURFACE({})\n'.format(current_id, volmdlr.core.step_ids_to_str(contours_ids))
-        
+            face_bound_id = inner_contour_id + 1
+            content += '#{}=FACE_BOUND('',#{},.T.);\n'.format(inner_contour_id+1)
+            contours_ids.append(face_bound_id)
+            current_id = face_bound_id + 1
+
+        surface3d_content, surface3d_id = self.surface3d.to_step(current_id)
+        content += surface3d_content
+        current_id = surface3d_id + 1
+        content += "#{} = ADVANCED_FACE('{}',({}),#{},.T.);\n".format(current_id,
+                                                            self.name,
+                                                            volmdlr.core.step_ids_to_str(contours_ids),
+                                                            surface3d_id
+                                                            )
         return content, current_id
 
     # def delete_double(self, Le):
@@ -3482,6 +3504,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     _non_serializable_attributes = ['bounding_box']
     _non_eq_attributes = ['name', 'color', 'alpha' 'bounding_box']
     _non_hash_attributes = []
+    STEP_FUNCTION = 'OPEN_SHELL'
 
     def __init__(self, faces:List[Face3D],
                  color:Tuple[float, float, float]=None,
@@ -3512,10 +3535,28 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def to_step(self, current_id):
         step_content = ''
+        face_ids = []
         for face in self.faces:
             face_content, current_id = face.to_step(current_id)
-            current_id += 1
             step_content += face_content
+            face_ids.append(current_id)
+            current_id += 1
+
+        shell_id = current_id
+        step_content += "#{} = {}('{}' ({}));\n".format(current_id, self.STEP_FUNCTION,
+                                                   self.name, volmdlr.core.step_ids_to_str(face_ids))
+        manifold_id = shell_id + 1
+        step_content += "#{} = MANIFOLD_SOLID_BREP('{}' #{});\n".format(manifold_id,
+                                                        self.name,
+                                                        shell_id)
+
+        frame_content, frame_id = volmdlr.OXYZ.to_step(manifold_id+1)
+        step_content += frame_content
+        brep_id = frame_id + 1
+        step_content += "#{} = ADVANCED_BREP_SHAPE_REPRESENTATION('',(#{},#{}),#7);\n".format(brep_id, frame_id, brep_id)
+
+        current_id = brep_id + 1
+
         return step_content, current_id
 
     def rotation(self, center, axis, angle, copy=True):
@@ -3754,6 +3795,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         return ax
 
 class ClosedShell3D(OpenShell3D):
+    STEP_FUNCTION = 'CLOSED_SHELL'
 
     def copy(self):
         new_faces = [face.copy() for face in self.faces]
