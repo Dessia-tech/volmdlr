@@ -3884,7 +3884,7 @@ class ClosedShell3D(OpenShell3D):
         for face1 in self.faces:
             for face2 in shell2.faces:
                 intersection_points = face1.face_intersections(face2)
-                if intersection_points is not None:
+                if intersection_points != []:
                     return False
 
         return True
