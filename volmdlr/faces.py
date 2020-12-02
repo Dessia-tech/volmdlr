@@ -1696,6 +1696,8 @@ class Face3D(volmdlr.core.Primitive3D):
         else:
             self.surface.rotation(center, axis,
                                   angle, copy=False)
+            self.bounding_box = self._bounding_box()
+
 
 
 
@@ -1705,6 +1707,7 @@ class Face3D(volmdlr.core.Primitive3D):
             return self.__class__(new_surface3d, self.surface2d)
         else:
             self.surface.translation(offset=offset, copy=False)
+            self.bounding_box = self._bounding_box()
 
 
     def frame_mapping(self, frame, side, copy=True):
@@ -1716,6 +1719,8 @@ class Face3D(volmdlr.core.Primitive3D):
             return self.__class__(new_surface, self.surface2d.copy(), self.name)
         else:
             self.surface3d.frame_mapping(frame, side, copy=False)
+            self.bounding_box = self._bounding_box()
+
 
     def copy(self):
         return Face3D(self.surface3d.copy(), self.surface2d.copy(), self.name)
@@ -1791,7 +1796,6 @@ class PlaneFace3D(Face3D):
 
     def _bounding_box(self):
         """
-        Non method, to be enforced by overloading
         """
         return self.outer_contour3d._bounding_box()
 
@@ -1908,21 +1912,17 @@ class PlaneFace3D(Face3D):
 
 
 
-    def edge_intersection(self, edge):
+    def edge_intersections(self, edge):
+        intersections = []
         linesegment = volmdlr.edges.LineSegment3D(edge.start, edge.end)
-        intersection_points = self.surface3d.linesegment_intersections(linesegment)
+        for surface3d_inter in self.surface3d.linesegment_intersections(linesegment):
+            point2d = self.surface3d.point3d_to_2d(surface3d_inter)
+            if self.surface2d.point_belongs(point2d):
+                intersections.append(surface3d_inter)
+                
+        return intersections
 
-        if intersection_points == []:
-            return None
-
-        point_on_face_boo = self.point_belongs(intersection_points[0])
-        if not point_on_face_boo:
-            return None
-
-        return intersection_points[0]
-
-
-    def face_intersection(self, face2):
+    def face_intersections(self, face2):
         ## """
         ## Only works if the surface is planar
         ## TODO : this function does not take into account if Face has holes
@@ -1930,24 +1930,23 @@ class PlaneFace3D(Face3D):
         bbox1 = self.bounding_box
         bbox2 = face2.bounding_box
         if not bbox1.bbox_intersection(bbox2):
-            return None
+            return []
 
-        intersection_points = []
+        intersections = []
+
 
         for edge2 in face2.outer_contour3d.primitives:
-            intersection_point = self.edge_intersection(edge2)
-            if intersection_point is not None:
-                intersection_points.append(intersection_point)
+            intersection_points = self.edge_intersections(edge2)
+            if intersection_points:
+                intersections.extend(intersection_points)
+                
 
         for edge1 in self.outer_contour3d.primitives:
-            intersection_point = face2.edge_intersection(edge1)
-            if intersection_point is not None:
-                intersection_points.append(intersection_point)
+            intersection_points = face2.edge_intersections(edge1)
+            if intersection_points:
+                intersections.extend(intersection_points)
 
-        if not intersection_points:
-            return None
-
-        return intersection_points
+        return intersections
 
 
     def minimum_distance(self, other_face, return_points=False):
@@ -3779,7 +3778,7 @@ class ClosedShell3D(OpenShell3D):
         bbox1 = self.bounding_box
         bbox2 = shell2.bounding_box
         if not bbox1.bbox_intersection(bbox2):
-            #            print("No intersection of shells' BBox")
+            # print("No intersection of shells' BBox")
             return None
 
         # Check if any point of the first shell is in the second shell
@@ -3804,13 +3803,13 @@ class ClosedShell3D(OpenShell3D):
         inter1 = compteur1 / nb_pts1
         inter2 = compteur2 / nb_pts2
 
-        print(len(self.faces), len(shell2.faces))
         for face1 in self.faces:
             for face2 in shell2.faces:
-                intersection_points = face1.face_intersection(face2)
-                if intersection_points is not None:
+                intersection_points = face1.face_intersections(face2)
+                if intersection_points:
                     return inter1, inter2
-        if (inter1, inter2) == (0, 0):
+                
+        if inter1 == 0. and inter2 == 0.:
             return None
         return 1
 
