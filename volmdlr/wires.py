@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches
 from mpl_toolkits.mplot3d import Axes3D
 from typing import List
+import collections
 
 import volmdlr
 import volmdlr.core
@@ -96,15 +97,17 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         """
         returns a list  that contains: 
         the intersections between a succession of infinite primitives (line, circle).
+        There must be a method implemented to intersect the two infinite primitives.
         
         """
         offset_intersections=[]
         
         for primitive_1,primitive_2 in zip(infinite_primitives,infinite_primitives[1:]):
-            
+           
             i=infinite_primitives.index(primitive_1)
             k=infinite_primitives.index(primitive_2)
-           
+            print(i)
+            print(k)
             primitive_name=primitive_1.__class__.__name__.lower().replace('2d','')
             intersection_method_name='{}_intersections'.format(primitive_name)
             next_primitive_name=primitive_2.__class__.__name__.lower().replace('2d','')
@@ -113,9 +116,10 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
             if hasattr(primitive_1,next_intersection_method_name):             
                 intersections=getattr(primitive_1,next_intersection_method_name)(primitive_2)
                 end=self.primitives[i].end
-              
+                
                 if len(intersections)==1:
                      offset_intersections.append(intersections[0])
+                     
                 else :
                     end=self.primitives[i].end
                     if intersections[0].point_distance(end)>intersections[1].point_distance(end):
@@ -133,10 +137,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                     offset_intersections.append(intersections[0])     
             
             else :
-                  raise NotImplementedError('{} : No intersection method between those 2 primitives'.format((primitive_1.__class__.__name__,
+                  raise NotImplementedError('No intersection method between {}'.format((primitive_1.__class__.__name__,
                                                                  primitive_2.__class__.__name__)))  
-                
-                           
+              
         return offset_intersections 
 
         
@@ -156,7 +159,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
             infinite_primitive.plot(ax=ax)
                
         offset_intersections+=self.infinite_intersections(infinite_primitives)
-        
+        print(offset_intersections)
         for i in offset_intersections:
             i.plot(ax=ax,color='r')
             
@@ -173,7 +176,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
             cutted_primitive=infinite_primitives[j+1].cut_between_two_points(self.primitives[j+1],
                                                                        i_1,i_2)
             offset_primitives.append(cutted_primitive)  
-  
+            
+      
      
         return Wire2D(offset_primitives)
 
@@ -272,8 +276,10 @@ class Contour():
 
     def extract_primitives(self, point1, primitive1, point2, primitive2):
         primitives = []
-        ip1 = self.primitive_to_index[primitive1]
-        ip2 = self.primitive_to_index[primitive2]
+       
+        # ip1 = self.primitive_to_index[primitive1]
+        ip1=self.primitives.index(primitive1)
+        ip2=self.primitives.index(primitive2)
 
         if ip1 < ip2:
             primitives.append(primitive1.split(point1)[1])
@@ -299,7 +305,16 @@ class Contour2D(Contour, Wire2D):
     def __init__(self, primitives, name=''):
         Wire2D.__init__(self, primitives, name)
         self._utd_analysis = False
+        
+    def __hash__(self):
+        return sum([hash(e) for e in self.primitives])
 
+    def __eq__(self, other_):
+        if self.__class__ is not  other_.__class__:
+            return False
+        return collections.Counter(self.primitives) == collections.Counter(other_.primitives)
+            
+       
     def _primitives_analysis(self):
         """
         An internal arc is an arc that has his interior point inside the polygon
@@ -573,28 +588,107 @@ class Contour2D(Contour, Wire2D):
         return xmin, xmax, ymin, ymax
 
     
- 
+    def self_intersections(self):
+        all_edges=[]
+        all_intersections=[]
+        self_intersections=[]
+        added_intersections=[]
+        for p in self.primitives:
+            all_edges+=[p.start,p.end]
+            
+        for primitive_1 in self.primitives:
+            for primitive_2 in self.primitives:
+                if primitive_2 != primitive_1:
+                    
+                    primitive_name=primitive_1.__class__.__name__.lower().replace('2d','')
+                    intersection_method_name='{}_intersections'.format(primitive_name)
+                    next_primitive_name=primitive_2.__class__.__name__.lower().replace('2d','')
+                    next_intersection_method_name='{}_intersections'.format(next_primitive_name)
+                    
+                    if hasattr(primitive_1,next_intersection_method_name):     
+                       
+                        intersections=getattr(primitive_1,next_intersection_method_name)(primitive_2)
+                        if intersections : 
+                            all_intersections.append((intersections[0],primitive_1,primitive_2))
+                        
+                    elif hasattr(primitive_2,intersection_method_name): 
+                        
+                        intersections=getattr(primitive_2,intersection_method_name)(primitive_1)
+                        if intersections : 
+                            all_intersections.append((intersections[0],primitive_1,primitive_2))
+                    
+                    else :
+                        raise NotImplementedError('No intersection method between {}'.format((primitive_1.__class__.__name__,
+                                                                         primitive_2.__class__.__name__))) 
+        
+        for inter in all_intersections:
+           
+            if inter[0] not in all_edges:
+                if inter[0] not in added_intersections:
+                    added_intersections.append(inter[0])
+                    self_intersections.append([inter[0],inter[1],inter[2]])
+               
+        return self_intersections               
+       
+                        
     
+    def repair_single_intersection(self,intersection):
+        
+        all_contours=[]
+        
+        primitive_1= intersection[1]
+        primitive_2=intersection[2]
+        inter= intersection[0]
+        
+        extract=self.extract_primitives(inter,primitive_1,inter,primitive_2)
+        
+        all_contours.append(Contour2D(extract))
+        
+        extract_2=self.extract_primitives(inter,primitive_2,inter,primitive_1)
+        all_contours.append(Contour2D(extract_2))
+        
+         
+        return all_contours
+    
+    def repair_intersections(self,to_be_repaired:List['Contour2D'],repaired_contours:List['Contour2D']):
 
-
-
+        new_to_be_repaired=[]
+        
+        if not to_be_repaired:
+            return repaired_contours
+        else :
+            for broken in to_be_repaired:
+                self_intersections=broken.self_intersections()
+               
+                for intersection in self_intersections:
+                     contours=broken.repair_single_intersection(intersection)
+                     if contours[0].self_intersections():
+                       
+                        if contours[1] not in repaired_contours:
+                            repaired_contours.append(contours[1])
+                        
+                        new_to_be_repaired.append(contours[0])
+                        
+                     elif contours[1].self_intersections():
+                       
+                        if contours[0] not in repaired_contours:
+                            repaired_contours.append(contours[0])
+                       
+                        new_to_be_repaired.append(contours[1])
+                     else :
+                          if contours[0] not in repaired_contours:
+                              repaired_contours.append(contours[0])
+                          if contours[1] not in repaired_contours:
+                              repaired_contours.append(contours[1])
+                              
+            return self.repair_intersections(new_to_be_repaired,repaired_contours)  
+   
     def random_point_inside(self):
         xmin, xmax, ymin, ymax = self.bounding_rectangle()
         for i in range(1000):
             p = volmdlr.Point2D.random(xmin, xmax, ymin, ymax)
             if self.point_belongs(p):
                 return p
-    # def line_intersections(self, line:Line2D) -> List[Tuple[volmdlr.Point2D, Primitive2D]]:
-    #     """
-    #     Returns a list of points and lines of intersection with the contour
-    #     """
-    #     intersection_points = Wire2D.line_intersections(self, line)
-    #     if not intersection_points:
-    #         return []
-    #     elif len(intersection_points) == 2:
-    #         return [LineSegment2D(*intersection_points)]
-    #     else:
-    #         raise NotImplementedError('Non convex contour not supported yet')
 
     def cut_by_linesegments(self, lines: List[volmdlr.edges.LineSegment2D]):
         for c in lines:
@@ -741,7 +835,7 @@ class Contour2D(Contour, Wire2D):
         
         ax=plt.subplot() 
         # line = Line2D(Point2D([xi, 0]),Point2D([xi,1])) 
-        line = edges.Line2D(volmdlr.Point2D([0, -0.17]),volmdlr.Point2D([0,0.17])) 
+        line = volmdlr.edges.Line2D(volmdlr.Point2D([0, -0.17]),volmdlr.Point2D([0,0.17])) 
         line_2=line.Rotation(self.center_of_mass(),0.26)
         line_3=line.Rotation(self.center_of_mass(),-0.26)
         
@@ -784,6 +878,101 @@ class Contour2D(Contour, Wire2D):
    
         return pattern_rotations 
 
+    def infinite_intersections(self,infinite_primitives):
+        """
+        returns a list  that contains: 
+        the intersections between a succession of infinite primitives (line, circle).
+        There must be a method implemented to intersect the two infinite primitives.
+        
+        """
+        offset_intersections=[]
+       
+        for primitive_1,primitive_2 in zip(infinite_primitives+[infinite_primitives[-1]],infinite_primitives[1:]+[infinite_primitives[0]]):
+           
+            i=infinite_primitives.index(primitive_1)
+            k=infinite_primitives.index(primitive_2)
+            
+            primitive_name=primitive_1.__class__.__name__.lower().replace('2d','')
+            intersection_method_name='{}_intersections'.format(primitive_name)
+            next_primitive_name=primitive_2.__class__.__name__.lower().replace('2d','')
+            next_intersection_method_name='{}_intersections'.format(next_primitive_name)
+            
+            if hasattr(primitive_1,next_intersection_method_name):             
+                intersections=getattr(primitive_1,next_intersection_method_name)(primitive_2)
+                
+                if intersections :
+                    if len(intersections)==1:
+                        
+                         print(intersections)
+                         offset_intersections.append(intersections[0])
+                         
+                    else :
+                        end=self.primitives[i].end
+                        
+                        if intersections[0].point_distance(end)>intersections[1].point_distance(end):
+                            intersections.reverse()
+                        
+                        offset_intersections.append(intersections[0])
+                    
+            elif hasattr(primitive_2,intersection_method_name):
+                intersections=getattr(primitive_2,intersection_method_name)(primitive_1)
+                if intersections :
+                    if len(intersections)==1:
+                         
+                        offset_intersections.append(intersections[0])
+                    else:
+                        end=self.primitives[i].end
+                        
+                       
+                        if intersections[0].point_distance(end)>intersections[1].point_distance(end):
+                           intersections.reverse()
+                      
+                        offset_intersections.append(intersections[0])     
+                
+            else :
+                  raise NotImplementedError('No intersection method between {}'.format((primitive_1.__class__.__name__,
+                                                                 primitive_2.__class__.__name__)))  
+              
+        return offset_intersections 
+
+        
+    def offset(self,offset):
+        """"
+        generates an offset of a Contour2D 
+        
+        """
+        ax=self.plot()
+        offset_primitives=[]
+        infinite_primitives=[]
+        offset_intersections=[]
+       
+        for primitive in self.primitives:
+          
+            infinite_primitive=primitive.infinite_primitive(offset)
+            infinite_primitive.plot(ax=ax)
+            infinite_primitives.append(infinite_primitive)
+           
+        offset_intersections+=self.infinite_intersections(infinite_primitives)
+        for i in offset_intersections:
+            i.plot(ax=ax,color='r')
+            
+        for j in range(len(offset_intersections)-1):
+
+            i_1=offset_intersections[j]
+            i_2=offset_intersections[j+1]
+            
+            cutted_primitive=infinite_primitives[j+1].cut_between_two_points(self.primitives[j+1],
+                                                                        i_1,i_2)
+            
+            offset_primitives.append(cutted_primitive)  
+            
+        last_cutted_primitive=infinite_primitives[0].cut_between_two_points(self.primitives[0],
+                                                                      offset_intersections[-1],offset_intersections[0])
+      
+        
+        offset_primitives.append(last_cutted_primitive)  
+     
+        return Contour2D(offset_primitives)
 
     def simple_triangulation(self):
         lpp = len(self.polygon.points)
@@ -1200,7 +1389,135 @@ class ClosedPolygon2D(Contour2D):
 
         return False, None, None
 
+    def repair_single_intersection(self):
+        
+        all_polygons=[]
+        polygon_1_points=[]
+        polygon_2_points=[]
+        
+        
+        lines=self.self_intersects()
+        
+        if not lines[0] :
+            all_polygons.append(self)
+                        
+        else :
+          
+            line1= lines[1]
+            line2=lines[2]
+            inter=line1.line_intersections(line2)[0]
+            a=self.points.index(line1.start)
+            b=self.points.index(line1.end)
+            c=self.points.index(line2.start)
+            d=self.points.index(line2.end)
+            alpha=min(a,b)
+            beta=min(c,d)
+            gamma=max(a,b)
+            zeta=max(c,d)
+            w=sorted([alpha,beta])
+            x=sorted([gamma,zeta])
+            m= a==0 and b==len(self.points)-1
+            n= b==0 and a==len(self.points)-1
+            o= c==0 and d==len(self.points)-1
+            p= d==0 and c==len(self.points)-1
+           
+            if m or n or o or p :
 
+                polygon_1_points=[inter]+self.points[w[1]+1:]
+                polygon_2_points=self.points[w[0]:w[1]+1]+[inter]
+              
+            else :
+             
+                polygon_1_points=self.points[:w[0]+1]+[inter]+self.points[w[1]+1:]
+                polygon_2_points=self.points[w[0]+1:w[1]+1]+[inter]
+                
+            
+            new_polygon_1=ClosedPolygon2D(polygon_1_points)
+            new_polygon_2=ClosedPolygon2D(polygon_2_points)
+            # new_polygon_1.MPLPlot()
+            # new_polygon_2.MPLPlot()
+            all_polygons.append(new_polygon_1)
+            all_polygons.append(new_polygon_2)
+      
+        return all_polygons  
+    def repair_intersections(self,all_polygons:List['ClosedPolygon2D']):
+        
+        reapaired_intersection=self.repair_single_intersection()
+        
+        if len(reapaired_intersection)==2:
+            polygon_1=reapaired_intersection[0]
+            polygon_2=reapaired_intersection[1]
+           
+           
+            lines_1=polygon_1.SelfIntersect()
+            lines_2=polygon_2.SelfIntersect()
+            
+            if not lines_1[0] and not lines_2[0] :
+                
+                all_polygons.extend([polygon_1,polygon_2])
+                return all_polygons
+            if not lines_1[0] and lines_2[0]  :
+                
+                 all_polygons.append(polygon_1)
+                 
+                 return  polygon_2.repair_intersections(all_polygons)
+            if  lines_1[0] and not lines_2[0]:
+               
+                all_polygons.append(polygon_2)
+                return  polygon_1.repair_intersections(all_polygons)
+            if  lines_1[0] and lines_2[0]:
+               
+                return [polygon_1.repair_intersections(all_polygons),polygon_2.repair_intersections(all_polygons)]
+        
+            
+        else :
+            polygon=reapaired_intersection[0]
+            lines =polygon.SelfIntersect()
+            if not lines[0]  :
+               
+               all_polygons.append(polygon)
+               return all_polygons
+          
+         
+        
+        
+    def select_reapaired_polygon(self,all_polygons:List['ClosedPolygon2D']):
+        reapaired_polygons=self.repair_intersections(all_polygons) 
+        list_polygons=[]
+        good_polygons=[]
+        polygons=[]
+        b=[]
+        for p in reapaired_polygons:
+            if isinstance(p,list):
+                b.append(True)
+            else :
+                b.append(False)
+        if any(b):
+            
+            w=list(itertools.chain.from_iterable(reapaired_polygons))   
+            if isinstance(w[0],list):             
+                list_polygons=list(itertools.chain.from_iterable(w))
+                
+                for p in list_polygons :
+                    if isinstance(p,list):
+                        for polygon in p:
+                           polygons.append(p)
+                    else :
+                           polygons.append(p)
+            else :
+                polygons+=w                    
+        else :
+              polygons+=reapaired_polygons
+                     
+        for polygon in polygons:
+            if len(polygon.points)>3:
+                good_polygons.append(polygon)           
+        A=[]
+        for polygon in good_polygons:
+           A.append(polygon.Area())
+           
+        index=A.index(max(A))
+        return good_polygons[index]
     def plot_data(self, marker=None, color='black', stroke_width=1, opacity=1):
         data = []
         for nd in self.points:
@@ -1450,7 +1767,7 @@ class Triangle2D(ClosedPolygon2D):
         if len(nodes_0)>len(nodes_1):
           
          
-            for k in range(0,len(nodes_1)-1):
+            for k in range(len(nodes_1)-1):
               
                 interior_segment=volmdlr.edges.LineSegment2D(nodes_0[k+1],nodes_1[k])
                 interior_segments.append(interior_segment)
@@ -1459,7 +1776,7 @@ class Triangle2D(ClosedPolygon2D):
                 interior_segment=volmdlr.edges.LineSegment2D(nodes_0[k],nodes_1[len(nodes_1)-2])
                 interior_segments.append(interior_segment)  
         if len(nodes_1)>len(nodes_0):
-            for k in range(0,len(nodes_0)-1):
+            for k in range(len(nodes_0)-1):
                 interior_segment=volmdlr.edges.LineSegment2D(nodes_1[k+1],nodes_0[k])
                 interior_segments.append(interior_segment)
                 
@@ -1821,7 +2138,7 @@ class Circle2D(Contour2D):
         return volmdlr.edges.Arc2D(point1,interior,point2)
 
     def line_intersections(self, line):
-
+         
         Q = self.center
         if line.points[0] == self.center:
             P1 = line.points[1]
@@ -1835,6 +2152,7 @@ class Circle2D(Contour2D):
 
         disc = b ** 2 - 4 * a * c
         if disc < 0:
+            
             return []
 
         sqrt_disc = math.sqrt(disc)
@@ -1849,6 +2167,7 @@ class Circle2D(Contour2D):
                         P1 + t2 * V]
         else:
             if not 0 <= t1 <= 1 and not 0 <= t2 <= 1:
+                
                 return None
             elif 0 <= t1 <= 1 and not 0 <= t2 <= 1:
                 return [P1 + t1 * V]
@@ -1856,6 +2175,8 @@ class Circle2D(Contour2D):
                 return [P1 + t2 * V]
             else:
                 [P1 + t1 * V, P1 + t2 * V]
+                
+                
     def circle_intersections(self,circle):
         x0,y0=self.center
         x1,y1=circle.center
@@ -1888,6 +2209,9 @@ class Circle2D(Contour2D):
          
     def circle_projection(self,point):
         line=volmdlr.edges.Line2D(self.center,point)
+        # border_line=volmdlr.edges.Line2D(self.border_points()[0],self.border_points()[1])
+        # direction_vector=border_line.normal_vector()
+        # line=volmdlr.edges.Line2D(volmdlr.Point2D((direction_vector.y*point.x-direction_vector.x*point.y)/direction_vector.y,0),point)
         circle_points=self.line_intersections(line)
         d=[p.point_distance(point) for p in circle_points]
         projection_point=circle_points[d.index(min(d))]

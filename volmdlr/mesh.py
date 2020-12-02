@@ -54,16 +54,7 @@ class LinearElement(volmdlr.edges.LineSegment2D):
         self.interior_normal = interior_normal
         
         volmdlr.edges.LineSegment2D.__init__(self,start=start,end=end,name=name)
-        
-    def __hash__(self):
-        return self.start.__hash__() + self.end.__hash__()
-        
-    def __eq__(self, other_linear_element):
-        if self.__class__ != other_linear_element.__class__:
-            return False
-        return (self.start == other_linear_element.start and self.end == other_linear_element.end) \
-            or (self.start== other_linear_element.end and self.end == other_linear_element.start)
-            
+
     
     def plot(self, ax=None, color='k', width=None, plot_points=False):
         if ax is None:
@@ -412,10 +403,10 @@ class Mesher(DessiaObject):
                            segment_to_nodes:Dict[volmdlr.edges.LineSegment2D,List[volmdlr.Point2D]]):
         triangles=[]
         
-        for j in range(len(polygon1.line_segments)):
+        for segment1,segment2 in zip(polygon1.line_segments,polygon2.line_segments):
                     
-            pj=segment_to_nodes[polygon1.line_segments[j]]
-            qj=segment_to_nodes[polygon2.line_segments[j]]
+            pj=segment_to_nodes[segment1]
+            qj=segment_to_nodes[segment2]
             u=len(pj)
             v=len(qj)
             if u==2 and v==2 : 
@@ -1041,7 +1032,7 @@ class Mesher(DessiaObject):
             
 
         # self.plot_aspect_ratio(plot_aspect_ratio_triangles,all_aspect_ratios,ax)
-        ax.set_aspect('equal')
+        # ax.set_aspect('equal')
         return all_triangle_elements
     
     def plot_aspect_ratio(self,all_triangles:List[volmdlr.wires.Triangle2D],

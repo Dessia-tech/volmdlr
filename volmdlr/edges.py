@@ -192,63 +192,8 @@ class Line(dc.DessiaObject):
         projection = self.point1 + t * u
 
         return projection, t * norm_u
-    def line_intersections(self, line):
-        point = volmdlr.Point2D.line_intersection(self, line)
-        if point is not None:
-            point_projection1, _ = self.point_projection(point)
-            if point_projection1 is None:
-                return []
+  
 
-            if line.__class__.__name__ == 'Line2D':
-                point_projection2, _ = line.point_projection(point)
-                if point_projection2 is None:
-                    return []
-
-
-            return [point_projection1]
-        else:
-            return []
-    # def circle_intersections(self, circle):
-       
-    #     Q = circle.center
-    #     if self.points[0] == circle.center:
-    #         P1 = self.points[1]
-    #         V = self.points[0] - self.points[1]
-    #     else:
-    #         P1 = self.points[0]
-    #         V = self.points[1] - self.points[0]
-    #     a = V.dot(V)
-    #     b = 2 * V.dot(P1 - Q)
-    #     c = P1.dot(P1) + Q.dot(Q) - 2 * P1.dot(Q) - circle.radius ** 2
-
-    #     disc = b ** 2 - 4 * a * c
-    #     if disc < 0:
-    #         return []
-
-    #     sqrt_disc = math.sqrt(disc)
-    #     t1 = (-b + sqrt_disc) / (2 * a)
-    #     t2 = (-b - sqrt_disc) / (2 * a)
-    #     if self.__class__ is volmdlr.edges.Line2D:
-
-    #         if t1 == t2:
-    #             return [P1 + t1 * V]
-    #         else:
-    #             return [P1 + t1 * V,
-    #                     P1 + t2 * V]
-    #     else:
-    #         if not 0 <= t1 <= 1 and not 0 <= t2 <= 1:
-    #             return None
-    #         elif 0 <= t1 <= 1 and not 0 <= t2 <= 1:
-    #             return [P1 + t1 * V]
-    #         elif not 0 <= t1 <= 1 and 0 <= t2 <= 1:
-    #             return [P1 + t2 * V]
-    #         else:
-    #             [P1 + t1 * V, P1 + t2 * V]
-    # def abscissa(self, point):
-    #     u = self.point2 - self.point1
-    #     norm_u = u.norm()
-    #     t = (point - self.point1).dot(u) / norm_u
-    #     return t
 
 
     def split(self, split_point):
@@ -319,7 +264,23 @@ class Line2D(Line):
                 p.translation(offset, copy=False)
     def cut_between_two_points(self,line,point,other_point):
         return LineSegment2D(point,other_point)
-        
+    def line_intersections(self, line):
+      
+        point = volmdlr.Point2D.line_intersection(self, line)
+        if point is not None:
+            point_projection1, _ = self.point_projection(point)
+            if point_projection1 is None:
+                return []
+
+            if line.__class__.__name__ == 'Line2D':
+                point_projection2, _ = line.point_projection(point)
+                if point_projection2 is None:
+                    return []
+
+
+            return [point_projection1]
+        else:
+            return []   
     def plot(self, ax=None, color='k', dashed=True):
         if ax is None:
             fig, ax = plt.subplots()
@@ -339,10 +300,10 @@ class Line2D(Line):
             p3 = self.point1 - 3 * u
             p4 = self.point2 + 4 * u
             if dashed:
-                ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color,
+                ax.plot([p3.x, p4.x], [p3.y, p4.y], color=color,
                         dashes=[30, 5, 10, 5])
             else:
-                ax.plot([p3[0], p4[0]], [p3[1], p4[1]], color=color)
+                ax.plot([p3.x, p4.x], [p3.y, p4.y], color=color)
 
         return ax
 
@@ -617,7 +578,16 @@ class LineSegment2D(LineSegment):
     def __init__(self, start, end, *, name=''):
         self.points=[start,end]
         Edge.__init__(self, start, end, name=name)
-
+                
+    def __hash__(self):
+        return self.start.__hash__() + self.end.__hash__()
+        
+    def __eq__(self, other_line):
+        if self.__class__ is not other_line.__class__:
+            return False
+        return (self.start == other_line.start and self.end == other_line.end) \
+            or (self.start== other_line.end and self.end == other_line.start)
+            
     def length(self):
         return self.end.point_distance(self.start)
 
@@ -707,7 +677,7 @@ class LineSegment2D(LineSegment):
         vector=self.end-self.start
         vector.normalize()
         n=vector.normal_vector()
-       
+        n.normalize()
             
         offset_point_1 = self.points[0] + offset * \
         n
@@ -715,7 +685,7 @@ class LineSegment2D(LineSegment):
         
         offset_point_2 = self.points[-1] + offset * \
         n
-    
+       
         
         return Line2D(offset_point_1,offset_point_2)
     def plot(self, ax=None, color='k', alpha=1, arrow=False, width=None,
@@ -907,7 +877,14 @@ class Arc2D(Edge):
             self.angle1 = angle2
             self.angle2 = angle1
             self.angle = clockwise_path
-
+    def __hash__(self):
+        return self.start.__hash__() +self.interior.__hash__()+self.end.__hash__()       
+    def __eq__(self, other_):
+      if self.__class__ is not other_.__class__:
+          return False
+      return (self.start == other_.start and self.interior==other_.interior and self.end == other_.end) \
+          or (self.start== other_.end and self.interior==other_.interior and self.end == other_.start)
+    
     def _get_points(self):
         return [self.start, self.interior, self.end]
 
@@ -956,12 +933,31 @@ class Arc2D(Edge):
                        LineSegment2D(point, self.end).length())
     
         
+    def linesegment_intersections(self, segment): 
+         
+         line = volmdlr.edges.Line2D(segment.start,segment.end)
+         circle = volmdlr.wires.Circle2D(self.center, self.radius)
         
-    def line_intersections(self, line):
-        circle = volmdlr.wires.Circle2D(self.center, self.radius)
-        circle_intersection_points = circle.line_intersections(line)
+         circle_intersection_points = circle.line_intersections(line)
+        
+         if circle_intersection_points is None:
+            
+            return None
 
+         intersection_points = []
+         for pt in circle_intersection_points:
+            if self.point_belongs(pt):
+                intersection_points.append(pt)
+         return intersection_points
+         
+    def line_intersections(self, line):
+        
+        circle = volmdlr.wires.Circle2D(self.center, self.radius)
+        
+        circle_intersection_points = circle.line_intersections(line)
+        
         if circle_intersection_points is None:
+            
             return None
 
         intersection_points = []
@@ -969,7 +965,55 @@ class Arc2D(Edge):
             if self.point_belongs(pt):
                 intersection_points.append(pt)
         return intersection_points
+    def arc_intersections(self,arc):
+      
+       
+        x0,y0=self.center
+        x1,y1=arc.center
+        r0=self.radius
+        r1=arc.radius
+        intersections=[]
+        
+        d=math.sqrt((x1-x0)**2 + (y1-y0)**2)
+        
+        # non intersecting
+        if d > r0 + r1 :
+            return None
+        # One circle within other
+        if d < abs(r0-r1):
+            return None
+        # coincident circles
+        if d == 0 and r0 == r1:
+            return None
+        else:
+            a=(r0**2-r1**2+d**2)/(2*d)
+            h=math.sqrt(r0**2-a**2)
+            x2=x0+a*(x1-x0)/d   
+            y2=y0+a*(y1-y0)/d   
+            x3=x2+h*(y1-y0)/d     
+            y3=y2-h*(x1-x0)/d 
     
+            x4=x2-h*(y1-y0)/d
+            y4=y2+h*(x1-x0)/d
+            point1=volmdlr.Point2D(x4, y4)
+            point2=volmdlr.Point2D(x3, y3)
+            # point1.plot(ax=ax,color='r')
+            # point2.plot(ax=ax,color='g')
+            if point1 == self.start or point1 == arc.start:
+              intersections+=[point1]
+            elif point1 == self.end or point1 == arc.end:
+              intersections+=[point1]
+            else :
+                if self.point_belongs(point1) and arc.point_belongs(point1) :
+                   intersections+=[point1]
+            if point2 == self.start or point2 == arc.start:
+              intersections+=[point2]
+            elif point2 == self.end or point2 == arc.end:
+              intersections+=[point2]
+            else :
+                   if self.point_belongs(point2) and arc.point_belongs(point2) :
+                       intersections+=[point2]
+            return intersections            
     def border_primitive(self,infinite_primitive:volmdlr.core.Primitive2D,intersection,position):
             interior=infinite_primitive.circle_projection(self.interior)
             if position == 0:
@@ -1142,7 +1186,7 @@ class Arc2D(Edge):
                 radius=self.radius+offset 
     
         else :
-            
+             
                 radius=self.radius-offset
                 
         return volmdlr.wires.Circle2D(self.center,radius)
@@ -1176,7 +1220,7 @@ class Arc2D(Edge):
                       self.point_at_abscissa(0.5*abscissa),
                       split_point),
                 Arc2D(split_point,
-                      self.point_at_abscissa(1.5 * abscissa),
+                      self.point_at_abscissa(1.1 * abscissa),
                       self.end)
                 ]
 
