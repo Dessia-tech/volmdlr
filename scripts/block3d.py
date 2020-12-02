@@ -7,6 +7,7 @@ Created on Wed Sep 11 23:39:42 2020
 """
 import math
 import volmdlr as vm
+import volmdlr.step as vm_step
 import volmdlr.primitives3d as primitives3d
 resolution = 0.010
 
@@ -70,4 +71,8 @@ assert box_green.is_inside_shell(box, resolution) == False
 assert box.is_inside_shell(box_blue, resolution) == False
 assert box_blue.is_inside_shell(box, resolution) == False
 
+model = vm.core.VolumeModel([box_red])
+model.to_step('block.step')
 
+step = vm_step.Step('block.step')
+model2 = step.to_volume_model()

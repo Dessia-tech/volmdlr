@@ -36,12 +36,8 @@ DATA;
 #3 = ( LENGTH_UNIT() NAMED_UNIT(*) SI_UNIT(.MILLI.,.METRE.) );
 #4 = ( NAMED_UNIT(*) PLANE_ANGLE_UNIT() SI_UNIT($,.RADIAN.) );
 #5 = ( NAMED_UNIT(*) SI_UNIT($,.STERADIAN.) SOLID_ANGLE_UNIT() );
-#6 = UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(1.E-07),#3,
-  'distance_accuracy_value','confusion accuracy');
-#7 = ( GEOMETRIC_REPRESENTATION_CONTEXT(3) 
-GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((#6)) GLOBAL_UNIT_ASSIGNED_CONTEXT
-((#3,#4,#5)) REPRESENTATION_CONTEXT('Context #1',
-  '3D Context with UNIT and UNCERTAINTY') );
+#6 = UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(1.E-07),#3,'distance_accuracy_value','confusion accuracy');
+#7 = ( GEOMETRIC_REPRESENTATION_CONTEXT(3) GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((#6)) GLOBAL_UNIT_ASSIGNED_CONTEXT ((#3,#4,#5)) REPRESENTATION_CONTEXT('Context #1','3D Context with UNIT and UNCERTAINTY') );
 '''
 
 STEP_FOOTER = '''ENDSEC;
@@ -1425,8 +1421,55 @@ class VolumeModel(dc.DessiaObject):
                                                                                       product_definition_shape_id,
                                                                                       primitive_id
                                                                                       )
+            product_related_category = shape_definition_repr_id + 1
+            step_content += "#{} = PRODUCT_RELATED_PRODUCT_CATEGORY('part',$,(#{}));\n".format(
+                product_related_category,
+                product_id
+                )
+            draughting_id = product_related_category + 1
+            step_content += "#{} = DRAUGHTING_PRE_DEFINED_CURVE_FONT('continuous');\n".format(
+                draughting_id)
+            color_id = draughting_id + 1
+            step_content += "#{} = COLOUR_RGB('',{}, {}, {});\n".format(
+                color_id,
+                round(primitive.color[0], 4),
+                round(primitive.color[1], 4),
+                round(primitive.color[2], 4)
+            )
 
-            current_id = shape_definition_repr_id + 1
+            fill_area_color_id = color_id + 1
+            step_content += "#{} = FILL_AREA_STYLE_COLOUR('',#{});\n".format(
+                    fill_area_color_id, color_id)
+
+            fill_area_id = fill_area_color_id + 1
+            step_content += "#{} = FILL_AREA_STYLE('',#{});\n".format(
+                    fill_area_id, fill_area_color_id)
+
+            suface_fill_area_id = fill_area_id + 1
+            step_content += "#{} = SURFACE_STYLE_FILL_AREA('',#{});\n".format(
+                    suface_fill_area_id, fill_area_id)
+
+            suface_side_style_id = suface_fill_area_id + 1
+            step_content += "#{} = SURFACE_SIDE_STYLE('',#{});\n".format(
+                    suface_side_style_id, suface_fill_area_id)
+
+            suface_style_usage_id = suface_side_style_id + 1
+            step_content += "#{} = SURFACE_STYLE_USAGE(.BOTH.,#{});\n".format(
+                    suface_style_usage_id, suface_side_style_id)
+
+            presentation_style_id = suface_style_usage_id + 1
+            curve_style_id = presentation_style_id + 1
+            step_content += "#{} = CURVE_STYLE('',#{},POSITIVE_LENGTH_MEASURE(0.1),#{});\n".format(
+                    curve_style_id, draughting_id, color_id)
+
+            step_content += "#{} = PRESENTATION_STYLE_ASSIGNMENT((#{},#{}));\n".format(
+                    presentation_style_id, suface_style_usage_id, curve_style_id)
+
+            styled_item_id = curve_style_id + 1
+            step_content += "#{} = STYLED_ITEM('color',(#{}),#{});\n".format(
+                    styled_item_id, presentation_style_id, primitive_id)
+
+            current_id = styled_item_id + 1
 
         step_content += STEP_FOOTER
         

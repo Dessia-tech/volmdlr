@@ -2021,10 +2021,12 @@ class Contour3D(Contour, Wire3D):
         edge_ids = []
         for primitive in self.primitives:
             primitive_content, primitive_id = primitive.to_step(current_id)
-            current_id = primitive_id +1
             content += primitive_content
-            edge_ids.append(primitive_id)
-        content += "#{} = EDGE_LOOP('{}', ({}));\n".format(current_id, self.name,
+            current_id = primitive_id +1
+            content += "#{} = ORIENTED_EDGE('{}',*,*,#{},.T.);\n".format(current_id, primitive.name, primitive_id)
+            edge_ids.append(current_id)
+            current_id += 1
+        content += "#{} = EDGE_LOOP('{}',({}));\n".format(current_id, self.name,
                                                       volmdlr.core.step_ids_to_str(edge_ids))
         return content, current_id
 
@@ -2184,14 +2186,6 @@ class Circle3D(Contour3D):
         return '{} = Part.Circle(fc.Vector({},{},{}),fc.Vector({},{},{}),{})\n'.format(
             name, xc, yc, zc, xn, yn, zn, 1000 * self.radius)
 
-    def to_step(self, current_id):
-        content, frame_id = self.frame.to_step(current_id)
-        current_id = frame_id+1
-        content += "#{} = CIRCLE('{}', #{}, {});\n".format(current_id, self.name,
-                                                           frame_id,
-                                                           round(self.radius*1000, 3))
-        return content, current_id
-
     def rotation(self, rot_center, axis, angle, copy=True):
         new_center = self.center.rotation(rot_center, axis, angle, True)
         new_normal = self.normal.rotation(rot_center, axis, angle, True)
@@ -2252,6 +2246,14 @@ class Circle3D(Contour3D):
             other_vec = None
         normal.normalize()
         return cls.from_center_normal(center, normal, radius, arguments[0][1:-1])
+
+    def to_step(self, current_id):
+        content, frame_id = self.frame.to_step(current_id)
+        current_id = frame_id+1
+        content += "#{} = CIRCLE('{}', #{}, {});\n".format(current_id, self.name,
+                                                           frame_id,
+                                                           round(self.radius*1000, 3))
+        return content, current_id
 
     def _bounding_box(self):
         """

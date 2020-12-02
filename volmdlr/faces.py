@@ -543,6 +543,13 @@ class Plane3D(Surface3D):
                                 frame3d.v, frame3d.w, frame3d.u)
         return cls(frame, arguments[0][1:-1])
 
+    def to_step(self, current_id):
+        frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u, self.frame.v)
+        content, frame_id = frame.to_step(current_id)
+        plane_id = frame_id + 1
+        content += "#{} = PLANE('{}',#{});\n".format(plane_id, self.name, frame_id)
+        return content, plane_id
+
     @classmethod
     def from_3_points(cls, point1, point2, point3):
         """
@@ -767,12 +774,6 @@ class Plane3D(Surface3D):
         outer_contour = volmdlr.wires.ClosedPolygon2D([p1, p2, p3, p4])
         surface = Surface2D(outer_contour, [])
         return PlaneFace3D(self, surface, name)
-
-    def to_step(self, current_id):
-        content, frame_id = self.frame.to_step(current_id)
-        plane_id = frame_id + 1
-        content += "#{} = PLANE('{}',#{});\n".format(plane_id, self.name, frame_id)
-        return content, plane_id
 
 
 PLANE3D_OXY = Plane3D(volmdlr.OXYZ)
@@ -1541,13 +1542,16 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def to_step(self, current_id):
         content, outer_contour_id = self.outer_contour3d.to_step(current_id)
-        contours_ids = [outer_contour_id]
-        current_id = outer_contour_id + 1
+        content += "#{} = FACE_BOUND('{}',#{},.T.);\n".format(outer_contour_id+1,
+                                                          self.name,
+                                                          outer_contour_id)
+        contours_ids = [outer_contour_id+1]
+        current_id = outer_contour_id + 2
         for inner_contour3d in self.inner_contours3d:
             inner_contour_content, inner_contour_id = inner_contour3d.to_step(current_id)
             content += inner_contour_content
             face_bound_id = inner_contour_id + 1
-            content += '#{}=FACE_BOUND('',#{},.T.);\n'.format(inner_contour_id+1)
+            content += "#{} = FACE_BOUND('{}',#{},.T.);\n".format(inner_contour_id+1)
             contours_ids.append(face_bound_id)
             current_id = face_bound_id + 1
 
@@ -3511,7 +3515,10 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                  alpha:float=1., name:str=''):
         self.faces = faces
         self.name = name
-        self.color = color
+        if not color:
+            self.color = (0.8, 0.8, 0.8)
+        else:
+            self.color = color
         self.alpha = alpha
         self.bounding_box = self._bounding_box()
 
@@ -3543,7 +3550,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             current_id += 1
 
         shell_id = current_id
-        step_content += "#{} = {}('{}' ({}));\n".format(current_id, self.STEP_FUNCTION,
+        step_content += "#{} = {}('{}',({}));\n".format(current_id, self.STEP_FUNCTION,
                                                    self.name, volmdlr.core.step_ids_to_str(face_ids))
         manifold_id = shell_id + 1
         step_content += "#{} = MANIFOLD_SOLID_BREP('{}' #{});\n".format(manifold_id,
@@ -3553,11 +3560,9 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         frame_content, frame_id = volmdlr.OXYZ.to_step(manifold_id+1)
         step_content += frame_content
         brep_id = frame_id + 1
-        step_content += "#{} = ADVANCED_BREP_SHAPE_REPRESENTATION('',(#{},#{}),#7);\n".format(brep_id, frame_id, brep_id)
+        step_content += "#{} = ADVANCED_BREP_SHAPE_REPRESENTATION('',(#{},#{}),#7);\n".format(brep_id, frame_id, manifold_id)
 
-        current_id = brep_id + 1
-
-        return step_content, current_id
+        return step_content, brep_id
 
     def rotation(self, center, axis, angle, copy=True):
         if copy:
@@ -3795,7 +3800,11 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         return ax
 
 class ClosedShell3D(OpenShell3D):
+    _standalone_in_db = True
+    _non_serializable_attributes = ['bounding_box']
+    _non_eq_attributes = ['name', 'color', 'alpha' 'bounding_box']
     STEP_FUNCTION = 'CLOSED_SHELL'
+
 
     def copy(self):
         new_faces = [face.copy() for face in self.faces]
