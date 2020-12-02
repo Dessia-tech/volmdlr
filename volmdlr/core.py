@@ -9,6 +9,7 @@ import numpy as npy
 
 
 npy.seterr(divide='raise')
+from datetime import datetime
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -26,8 +27,8 @@ import subprocess
 # TODO: put voldmlr metadata in this freecad header
 STEP_HEADER = '''ISO-10303-21;
 HEADER;
-FILE_DESCRIPTION(('FreeCAD Model'),'2;1');
-FILE_NAME('{filename}','2020-12-01T16:03:32',('Author'),(''),'Open CASCADE STEP processor 7.3','FreeCAD','Unknown');
+FILE_DESCRIPTION(('{name}'),'2;1');
+FILE_NAME('{filename}','{timestamp}',('Author'),(''),'Volmdlr v{version}','','Unknown');
 FILE_SCHEMA(('AUTOMOTIVE_DESIGN {{ 1 0 10303 214 1 1 1 1 }}'));
 ENDSEC;
 DATA;
@@ -1389,7 +1390,10 @@ class VolumeModel(dc.DessiaObject):
                                          use_cdn=use_cdn, debug=debug)
 
     def to_step(self, filename:str=None):
-        step_content = STEP_HEADER.format(filename=filename)
+        step_content = STEP_HEADER.format(name=self.name,
+                                          filename=filename,
+                                          timestamp=datetime.now().isoformat(),
+                                          version=volmdlr.__version__)
         current_id = 8
 
         for primitive in self.primitives:
@@ -1432,12 +1436,16 @@ class VolumeModel(dc.DessiaObject):
             color_id = draughting_id + 1
             step_content += "#{} = COLOUR_RGB('',{}, {}, {});\n".format(
                 color_id,
-                round(primitive.color[0], 4),
-                round(primitive.color[1], 4),
-                round(primitive.color[2], 4)
+                round(float(primitive.color[0]), 4),
+                round(float(primitive.color[1]), 4),
+                round(float(primitive.color[2]), 4)
             )
 
-            fill_area_color_id = color_id + 1
+            curve_style_id = color_id + 1
+            step_content += "#{} = CURVE_STYLE('',#{},POSITIVE_LENGTH_MEASURE(0.1),#{});\n".format(
+                    curve_style_id, draughting_id, color_id)
+
+            fill_area_color_id = curve_style_id + 1
             step_content += "#{} = FILL_AREA_STYLE_COLOUR('',#{});\n".format(
                     fill_area_color_id, color_id)
 
@@ -1446,11 +1454,11 @@ class VolumeModel(dc.DessiaObject):
                     fill_area_id, fill_area_color_id)
 
             suface_fill_area_id = fill_area_id + 1
-            step_content += "#{} = SURFACE_STYLE_FILL_AREA('',#{});\n".format(
+            step_content += "#{} = SURFACE_STYLE_FILL_AREA(#{});\n".format(
                     suface_fill_area_id, fill_area_id)
 
             suface_side_style_id = suface_fill_area_id + 1
-            step_content += "#{} = SURFACE_SIDE_STYLE('',#{});\n".format(
+            step_content += "#{} = SURFACE_SIDE_STYLE('',(#{}));\n".format(
                     suface_side_style_id, suface_fill_area_id)
 
             suface_style_usage_id = suface_side_style_id + 1
@@ -1458,14 +1466,11 @@ class VolumeModel(dc.DessiaObject):
                     suface_style_usage_id, suface_side_style_id)
 
             presentation_style_id = suface_style_usage_id + 1
-            curve_style_id = presentation_style_id + 1
-            step_content += "#{} = CURVE_STYLE('',#{},POSITIVE_LENGTH_MEASURE(0.1),#{});\n".format(
-                    curve_style_id, draughting_id, color_id)
 
             step_content += "#{} = PRESENTATION_STYLE_ASSIGNMENT((#{},#{}));\n".format(
                     presentation_style_id, suface_style_usage_id, curve_style_id)
 
-            styled_item_id = curve_style_id + 1
+            styled_item_id = presentation_style_id + 1
             step_content += "#{} = STYLED_ITEM('color',(#{}),#{});\n".format(
                     styled_item_id, presentation_style_id, primitive_id)
 

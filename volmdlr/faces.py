@@ -838,6 +838,7 @@ class CylindricalSurface3D(Surface3D):
             p1 = self.point3d_to_2d(fullarc3d.start)
             return [volmdlr.edges.LineSegment2D(p1, p1+volmdlr.TWO_PI*volmdlr.X2D)]
         else:
+            print(fullarc3d.normal, self.frame.w)
             raise ValueError('Impossible!')
 
 
@@ -854,6 +855,15 @@ class CylindricalSurface3D(Surface3D):
         frame_direct = volmdlr.Frame3D(frame3d.origin, U, V, W)
         radius = float(arguments[2]) / 1000
         return cls(frame_direct, radius, arguments[0][1:-1])
+
+    def to_step(self, current_id):
+        frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u, self.frame.v)
+        content, frame_id = frame.to_step(current_id)
+        current_id = frame_id + 1
+        content += "#{} = CYLINDRICAL_SURFACE('{}',#{},{});\n"\
+            .format(current_id, self.name, frame_id,
+                    round(1000*self.radius, 3))
+        return content, current_id
 
     def frame_mapping(self, frame, side, copy=True):
         basis = frame.Basis()
@@ -902,13 +912,6 @@ class CylindricalSurface3D(Surface3D):
         else:
             self.frame.translation(offset, copy=False)
 
-    def to_step(self, current_id):
-        content, frame_id = self.frame.to_step(current_id)
-        current_id = frame_id + 1
-        content += "#{} = CYLINDRICAL_SURFACE('{}',#{}, {});\n"\
-            .format(current_id, self.name, frame_id,
-                    round(1000*self.radius, 3))
-        return content, current_id
 
 class ToroidalSurface3D(Surface3D):
     face_class = 'ToroidalFace3D'
@@ -3553,7 +3556,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         step_content += "#{} = {}('{}',({}));\n".format(current_id, self.STEP_FUNCTION,
                                                    self.name, volmdlr.core.step_ids_to_str(face_ids))
         manifold_id = shell_id + 1
-        step_content += "#{} = MANIFOLD_SOLID_BREP('{}' #{});\n".format(manifold_id,
+        step_content += "#{} = MANIFOLD_SOLID_BREP('{}',#{});\n".format(manifold_id,
                                                         self.name,
                                                         shell_id)
 

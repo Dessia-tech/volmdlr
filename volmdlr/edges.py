@@ -2654,7 +2654,7 @@ class Arc3D(Edge):
                                                            round(self.radius*1000, 3))
         current_id = circle_id + 1
         start_content, start_id = self.start.to_step(current_id, vertex=True)
-        end_content, end_id = self.end.to_step(current_id+1, vertex=True)
+        end_content, end_id = self.end.to_step(start_id+1, vertex=True)
         content = start_content + end_content
         current_id = end_id + 1
         content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(current_id, self.name,
@@ -2711,7 +2711,7 @@ class FullArc3D(Edge):
         u = self.start - self.center
         u.normalize()
         v = self.normal.cross(u)
-        frame = volmdlr.Frame3D(self.center, u, v, self.normal)
+        frame = volmdlr.Frame3D(self.center, self.normal, u, v)
         content, frame_id = frame.to_step(current_id)
         circle_id = frame_id+1
         # Not calling Circle3D.to_step because of circular imports
@@ -2719,7 +2719,7 @@ class FullArc3D(Edge):
                                                     frame_id,
                                                     round(self.radius*1000, 3))
         start_content, start_id = self.start.to_step(circle_id+1, vertex=True)
-        end_content, end_id  = self.start.to_step(circle_id+2, vertex=True)
+        end_content, end_id  = self.start.to_step(start_id+1, vertex=True)
         content += start_content + end_content
         arc_id = end_id + 1
         content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc_id, self.name,
@@ -2727,6 +2727,7 @@ class FullArc3D(Edge):
                                                                     circle_id)
 
         return content, arc_id
+
 
     def plot(self, ax=None, color='k'):
         if ax is None:

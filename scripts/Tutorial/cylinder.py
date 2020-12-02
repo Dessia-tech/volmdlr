@@ -52,4 +52,5 @@ print(model.to_step('cylinder.step'))
 
 # Reading own step
 step = volmdlr.step.Step('cylinder.step')
-model = step.to_volume_model()
+model2 = step.to_volume_model()
+model2.babylonjs()
