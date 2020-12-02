@@ -21,6 +21,7 @@ from typing import List
 
 import dessia_common as dc
 import volmdlr.core
+import volmdlr.geometry
 import plot_data.core as plot_data
 
 
@@ -896,8 +897,8 @@ class Arc2D(Edge):
         vector_end = self.end - self.center
         if self.is_trigo:
             vector_start, vector_end = vector_end, vector_start
-        arc_angle = volmdlr.clockwise_angle(vector_start, vector_end)
-        point_angle = volmdlr.clockwise_angle(vector_start, vector_point)
+        arc_angle = volmdlr.core.clockwise_angle(vector_start, vector_end)
+        point_angle = volmdlr.core.clockwise_angle(vector_start, vector_point)
         if point_angle <= arc_angle:
             return abs(
                 LineSegment2D(point, self.center).length() - self.radius)
@@ -1025,7 +1026,7 @@ class Arc2D(Edge):
         Ixy = self.radius ** 4 / 8 * (
                 math.cos(angle1) ** 2 - math.cos(angle2) ** 2)
         Ic = npy.array([[Ix, Ixy], [Ixy, Iy]])
-        return volmdlr.geometry.Huygens2D(Ic, self.Area(), self.center, point)
+        return volmdlr.geometry.huygens2d(Ic, self.area(), self.center, point)
 
     # def Discretise(self, num=10):
     #     list_node = []

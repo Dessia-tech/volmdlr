@@ -82,7 +82,7 @@ def huygens2d(I1, area, point1, point2):
     """
     area acts the same way as the mass in 3D
     """
-    a, b = (point1-point2).vector
+    a, b = (point1-point2)
     I2 = I1+area*array([[b**2,-a*b],[-a*b,a**2]])
     return I2
 

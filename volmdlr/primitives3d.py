@@ -395,7 +395,8 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
             raise ValueError('At least one inner contour is not contained in outer_contour.')
 
         faces = self.shell_faces()
-        volmdlr.faces.Shell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
+        volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
+                                             alpha=alpha, name=name)
 
     def shell_faces(self):
         lower_plane = volmdlr.faces.Plane3D.from_plane_vectors(self.plane_origin,

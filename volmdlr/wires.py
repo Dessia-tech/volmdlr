@@ -20,14 +20,13 @@ from volmdlr.core_compiled import (
                             LineSegment2DPointDistance,
                             polygon_point_belongs, Matrix22
                             )
-import volmdlr.edges 
+import volmdlr.edges
+import volmdlr.geometry as vmgeo
 import itertools
 from typing import List, Tuple,Dict
 from scipy.spatial import Delaunay
 import plot_data.core as plot_data
 
-
-import volmdlr.edges
 import plot_data.core as plot_data
 
 
@@ -404,12 +403,12 @@ class Contour2D(Contour, Wire2D):
     def bounding_points(self):
         points = self.straight_line_contour_polygon.points[:]
         for arc in self.internal_arcs + self.external_arcs:
-            points.extend(arc.tessellation_points())
+            points.extend(arc.polygon_points())
         xmin = min([p[0] for p in points])
         xmax = max([p[0] for p in points])
         ymin = min([p[1] for p in points])
         ymax = max([p[1] for p in points])
-        return (volmdlr.Point2D((xmin, ymin)), volmdlr.Point2D((xmax, ymax)))
+        return (volmdlr.Point2D(xmin, ymin), volmdlr.Point2D(xmax, ymax))
 
 
     # def To3D(self, plane_origin, x, y, name=None):
@@ -462,9 +461,9 @@ class Contour2D(Contour, Wire2D):
 
         A = self.polygon.second_moment_area(point)
         for arc in self.internal_arcs:
-            A -= arc.second_moment_area(point)
+            A -= arc.SecondMomentArea(point)
         for arc in self.external_arcs:
-            A += arc.second_moment_area(point)
+            A += arc.SecondMomentArea(point)
 
         return A
 
@@ -940,8 +939,8 @@ class ClosedPolygon2D(Contour2D):
     def second_moment_area(self, point):
         Ix, Iy, Ixy = 0, 0, 0
         for pi, pj in zip(self.points, self.points[1:] + [self.points[0]]):
-            xi, yi = (pi - point).vector
-            xj, yj = (pj - point).vector
+            xi, yi = (pi - point)
+            xj, yj = (pj - point)
             Ix += (yi ** 2 + yi * yj + yj ** 2) * (xi * yj - xj * yi)
             Iy += (xi ** 2 + xi * xj + xj ** 2) * (xi * yj - xj * yi)
             Ixy += (xi * yj + 2 * xi * yi + 2 * xj * yj + xj * yi) * (
@@ -954,7 +953,7 @@ class ClosedPolygon2D(Contour2D):
 
     def _line_segments(self):
         lines = []
-        for p1, p2 in zip(self.points, self.points[1:] + [self.points[0]]):
+        for p1, p2 in zip(self.points, list(self.points[1:]) + [self.points[0]]):
             lines.append(volmdlr.edges.LineSegment2D(p1, p2))
         return lines
 
@@ -1879,7 +1878,7 @@ class Circle2D(Contour2D):
         """
         I = math.pi * self.radius ** 4 / 4
         Ic = npy.array([[I, 0], [0, I]])
-        return volmdlr.geometry.Huygens2D(Ic, self.area(), self.center, point)
+        return volmdlr.geometry.huygens2d(Ic, self.area(), self.center, point)
 
     def center_of_mass(self):
         return self.center
