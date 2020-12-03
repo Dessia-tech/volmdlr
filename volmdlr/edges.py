@@ -2040,7 +2040,7 @@ class LineSegment3D(LineSegment):
         current_id = end_id + 1
         content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(current_id, self.name,
                                                     start_id, end_id, line_id)
-        return content, current_id
+        return content, [current_id]
 
 
 
@@ -2716,18 +2716,45 @@ class FullArc3D(Edge):
         content, frame_id = frame.to_step(current_id)
         circle_id = frame_id+1
         # Not calling Circle3D.to_step because of circular imports
-        content += "#{} = CIRCLE('{}', #{}, {});\n".format(circle_id, self.name,
+        content += "#{} = CIRCLE('{}',#{},{});\n".format(circle_id, self.name,
                                                     frame_id,
                                                     round(self.radius*1000, 3))
-        start_content, start_id = self.start.to_step(circle_id+1, vertex=True)
-        end_content, end_id  = self.start.to_step(start_id+1, vertex=True)
-        content += start_content + end_content
-        arc_id = end_id + 1
-        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc_id, self.name,
-                                                                    start_id, end_id,
+
+        p1 = self.center + u*self.radius
+        p2 = self.center + v*self.radius
+        p3 = self.center - u*self.radius
+        p4 = self.center - v*self.radius
+
+        p1_content, p1_id = p1.to_step(circle_id+1, vertex=True)
+        p2_content, p2_id = p2.to_step(p1_id+1, vertex=True)
+        p3_content, p3_id = p3.to_step(p2_id+1, vertex=True)
+        p4_content, p4_id = p4.to_step(p3_id+1, vertex=True)
+        content += p1_content + p2_content + p3_content + p4_content 
+
+        arc1_id = p4_id + 1
+        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc1_id, self.name,
+                                                                    p1_id, p2_id,
                                                                     circle_id)
 
-        return content, arc_id
+        arc2_id = arc1_id + 1
+        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc2_id, self.name,
+                                                                    p2_id, p3_id,
+                                                                    circle_id)
+
+        arc3_id = arc2_id + 1
+        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc3_id, self.name,
+                                                                    p3_id, p4_id,
+                                                                    circle_id)
+
+        arc4_id = arc3_id + 1
+        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc4_id, self.name,
+                                                                    p4_id, p1_id,
+                                                                    circle_id)
+
+
+        return content, [arc1_id, arc2_id, arc3_id, arc4_id]
+
+
 
 
     def plot(self, ax=None, color='k', alpha=1.):

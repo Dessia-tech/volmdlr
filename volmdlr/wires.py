@@ -2019,12 +2019,18 @@ class Contour3D(Contour, Wire3D):
         content = ''
         edge_ids = []
         for primitive in self.primitives:
-            primitive_content, primitive_id = primitive.to_step(current_id)
+            # edges may return several ids in step
+            primitive_content, primitive_ids = primitive.to_step(current_id)
             content += primitive_content
-            current_id = primitive_id +1
-            content += "#{} = ORIENTED_EDGE('{}',*,*,#{},.T.);\n".format(current_id, primitive.name, primitive_id)
-            edge_ids.append(current_id)
-            current_id += 1
+            current_id = primitive_ids[-1] +1
+            for primitive_id in primitive_ids: 
+                content += "#{} = ORIENTED_EDGE('{}',*,*,#{},.T.);\n".format(current_id,
+                                                                             primitive.name,
+                                                                             primitive_id)
+                edge_ids.append(current_id)
+
+                current_id += 1
+
         content += "#{} = EDGE_LOOP('{}',({}));\n".format(current_id, self.name,
                                                       volmdlr.core.step_ids_to_str(edge_ids))
         return content, current_id
