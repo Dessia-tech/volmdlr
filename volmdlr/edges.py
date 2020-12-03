@@ -194,8 +194,13 @@ class Line(dc.DessiaObject):
         return projection, t * norm_u
   
 
-
-
+    def abscissa(self, point):
+        u = self.point2 - self.point1
+        norm_u = u.norm()
+        t = (point - self.point1).dot(u) / norm_u
+        return t
+    def center_of_mass(self):
+        return self.point1
     def split(self, split_point):
         return [self.__class__(self.point1, split_point),
                 self.__class__(split_point, self.point2)]
@@ -607,7 +612,9 @@ class LineSegment2D(LineSegment):
         if return_other_point:
             return distance, volmdlr.Point2D(point)
         return distance
-
+    def center_of_mass(self):
+       
+        return self.point_at_abscissa(self.length()/2)
     def point_projection(self, point):
         """
         If the projection falls outside the LineSegment2D, returns None.
@@ -616,7 +623,22 @@ class LineSegment2D(LineSegment):
         if curv_abs < 0 or curv_abs > self.length():
             return None, curv_abs
         return point, curv_abs
+    def linesegment_intersections(self,line):
+          
+        point = volmdlr.Point2D.line_intersection(self, line)
+        if point is not None:
+            point_projection1, _ = self.point_projection(point)
+            if point_projection1 is None:
+                return []
 
+            if line.__class__.__name__ == 'LineSegment2D':
+                point_projection2, _ = line.point_projection(point)
+                if point_projection2 is None:
+                    return []
+
+            return [point_projection1]
+        else:
+            return []
     def line_intersections(self, line):
         point = volmdlr.Point2D.line_intersection(self, line)
         if point is not None:
@@ -932,7 +954,12 @@ class Arc2D(Edge):
             return min(LineSegment2D(point, self.start).length(),
                        LineSegment2D(point, self.end).length())
     
+    def center_of_mass(self):
         
+        u = self.middle_point() - self.center
+        u.normalize()
+        alpha = abs(self.angle)
+        return self.center + 4   
     def linesegment_intersections(self, segment): 
          
          line = volmdlr.edges.Line2D(segment.start,segment.end)

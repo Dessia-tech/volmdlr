@@ -214,16 +214,15 @@ class Surface2D(volmdlr.core.Primitive2D):
                 
                 
                 primitives2=[]
-                primitives2.append(volmdlr.edges.LineSegment2D(intersections[0][0],intersections[3][0]))
-                primitives2.append(sp21)
-                primitives2.extend(self.outer_contour.primitives[ip3+1:ip4])
+                primitives2.append(volmdlr.edges.LineSegment2D(intersections[3][0],intersections[0][0]))
+                primitives2.append(new_inner.primitives[ip2])
+                primitives2.append(volmdlr.edges.LineSegment2D(intersections[1][0],intersections[2][0]))
                 primitives2.append(sp12)
-                primitives2.append(volmdlr.edges.LineSegment2D(intersections[2][0],intersections[1][0])) 
-                a=volmdlr.edges.Arc2D(new_inner.primitives[ip2].end,new_inner.primitives[ip2].interior,
-                              new_inner.primitives[ip2].start)
-                primitives2.append(a) 
+                primitives2.extend(self.outer_contour.primitives[ip3+1:ip4])
+                primitives2.append(sp21)
+               
+      
               
-                
 
                 all_contours.extend([volmdlr.wires.Contour2D(primitives1),volmdlr.wires.Contour2D(primitives2)])
                    
@@ -290,8 +289,8 @@ class Surface2D(volmdlr.core.Primitive2D):
            all_contours.extend(self.outer_contour.cut_by_line_outer_circle(self.inner_contours[0],line)) 
            
         else :
-             if self.inner_contours[0].primitive[0].__class__.__name__ == 'Circle2D':
-                 all_contours.extend(self.cut_by_line_inner_circle(self.outer_contour,self.inner_contour[0],line))
+             if self.inner_contours[0].__class__.__name__ == 'Circle2D':
+                 all_contours.extend(self.cut_by_line_inner_circle(self.outer_contour,self.inner_contours[0],line))
          
              else :
                     
@@ -304,20 +303,22 @@ class Surface2D(volmdlr.core.Primitive2D):
         center of mass
         """
         xmin, xmax, ymin, ymax = self.outer_contour.bounding_rectangle()
-      
+        p= len(self.inner_contours)
              
         cutted_contours = []
         iteration_contours = []
-        c1=self.inner_contours[0].center_of_mass()
-        c2=self.inner_contours[1].center_of_mass()
-        cut_line=volmdlr.edges.Line2D(c1,c2)
-        
-        
+        if p==1:
+            xi = xmin + (xmax - xmin) / 2
+            cut_line = volmdlr.edges.Line2D(volmdlr.Point2D(xi, 0),volmdlr.Point2D(xi,1))  
+            sc = self.cut_by_line(cut_line)
+        else :  
+            c1=self.inner_contours[0].center_of_mass()
+            c2=self.inner_contours[1].center_of_mass()
+            cut_line=volmdlr.edges.Line2D(c1,c2)
+            cut_method_name='cut_by_line{}'.format(p)
+            sc=getattr(self,cut_method_name)(cut_line)
+            
         iteration_contours2 = []
-       
-        sc = self.cut_by_line3(cut_line)
-        # lsc = len(sc)
-        # print('lsc', lsc)
     
         iteration_contours2.extend(sc)  
             
@@ -325,7 +326,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         cutted_contours.extend(iteration_contours)
     
         return cutted_contours               
-  
+      
     
     def cut_by_line2(self,line):
         all_contours=[]
@@ -372,36 +373,44 @@ class Surface2D(volmdlr.core.Primitive2D):
          
                 
                 primitives1=[]
-                primitives1.append(volmdlr.edges.LineSegment2D(intersections[6][0],intersections[0][0]))
-                a=volmdlr.edges.Arc2D(new_inner_1.primitives[ip1].end,new_inner_1.primitives[ip1].interior,
-                                     new_inner_1.primitives[ip1].start)
-                
-                primitives1.append(a) 
-                primitives1.append(volmdlr.edges.LineSegment2D(intersections[1][0],intersections[5][0]))
-                primitives1.append(new_inner_2.primitives[ip5])
-                primitives1.append(volmdlr.edges.LineSegment2D(intersections[4][0],intersections[7][0]))
                 primitives1.append(sp44)
-                primitives1.extend(self.outer_contour.primitives[ip3+1:ip4])
+                primitives1.append(volmdlr.edges.LineSegment2D(intersections[7][0],intersections[4][0]))
+                primitives1.append(new_inner_2.primitives[ip5].inverse_primitive())
+                primitives1.append(volmdlr.edges.LineSegment2D(intersections[5][0],intersections[1][0]))
+                primitives1.append(new_inner_1.primitives[ip1])
+                primitives1.append(volmdlr.edges.LineSegment2D(intersections[0][0],intersections[6][0]))
                 primitives1.append(sp34)
+                primitives1.extend(self.outer_contour.primitives[ip3+1:ip4])
+               
+                
+                
+                
+                
+                # primitives1.append(volmdlr.edges.LineSegment2D(intersections[6][0],intersections[0][0]))
+                # a=volmdlr.edges.Arc2D(new_inner_1.primitives[ip1].end,new_inner_1.primitives[ip1].interior,
+                #                      new_inner_1.primitives[ip1].start)
+                
+                # primitives1.append(a) 
+                # primitives1.append(volmdlr.edges.LineSegment2D(intersections[1][0],intersections[5][0]))
+                # primitives1.append(new_inner_2.primitives[ip5])
+                # primitives1.append(volmdlr.edges.LineSegment2D(intersections[4][0],intersections[7][0]))
+                # primitives1.append(sp44)
+                # primitives1.extend(self.outer_contour.primitives[ip3+1:ip4])
+                # # primitives1.append(sp34)
                 
            
                 primitives2=[]
-                primitives2.append(volmdlr.edges.LineSegment2D(intersections[7][0],intersections[4][0]))
-                primitives2.append(new_inner_2.primitives[ip6])
-                primitives2.append(volmdlr.edges.LineSegment2D(intersections[5][0],intersections[1][0]))
-                b=volmdlr.edges.Arc2D(new_inner_1.primitives[ip2].end,new_inner_1.primitives[ip2].interior,
-                                     new_inner_1.primitives[ip2].start)
-                primitives2.append(b)
-                primitives2.append(volmdlr.edges.LineSegment2D(intersections[0][0],intersections[6][0]))
                 primitives2.append(sp33)
-                a=self.outer_contour.primitives[:ip3]
-                a.reverse()
-                primitives2.extend(a)
+                primitives2.append(volmdlr.edges.LineSegment2D(intersections[6][0],intersections[0][0]))
+                primitives2.append(new_inner_1.primitives[ip2])
+                primitives2.append(volmdlr.edges.LineSegment2D(intersections[1][0],intersections[5][0]))
+                primitives2.append(new_inner_2.primitives[ip6].inverse_primitive())
+                primitives2.append(volmdlr.edges.LineSegment2D(intersections[4][0],intersections[7][0]))
                 primitives2.append(sp43)
-         
+                primitives2.extend(self.outer_contour.primitives[:ip3])
                 
-    
-                all_contours.extend([volmdlr.wires.Contour2D(primitives2)])
+              
+                all_contours.extend([volmdlr.wires.Contour2D(primitives1)])
                    
             
             else:
