@@ -2432,6 +2432,7 @@ class CylindricalFace3D(Face3D):
         try:
             zp.normalize()
         except ZeroDivisionError:
+            print(zp)
             pass
 
         lower_center = self.surface3d.frame.origin + zmin*self.surface3d.frame.w

@@ -166,19 +166,19 @@ class TriangularElement(volmdlr.wires.Triangle2D):
                 
     def translation(self, offset, copy=True):
         if copy:
-            return TriangularElement([pt.Translation(offset, copy=True) for pt in self.points])
+            return TriangularElement([pt.translation(offset, copy=True) for pt in self.points])
         else:
             for pt in self.points:
-                pt.Translation(offset, copy=False)
+                pt.translation(offset, copy=False)
                 
     def axial_symmetry(self, line, copy=True):
         p1, p2 = line.points
         symmetric_points = []
         for point in self.points:
             u = p2 - p1
-            t = (point-p1).Dot(u) / u.Norm()**2
+            t = (point-p1).dot(u) / u.norm()**2
             projection = p1 + t * u
-            symmetric_point = volmdlr.Point2D((2 * projection - point).vector)
+            symmetric_point = volmdlr.Point2D(*(2 * projection - point))
             symmetric_points.append(symmetric_point)
         if copy: 
             return TriangularElement(symmetric_points)
@@ -186,12 +186,6 @@ class TriangularElement(volmdlr.wires.Triangle2D):
             for i, point in enumerate(self.points):
                 point = symmetric_points[i]
    
- 
-  
-    
-    
-
-           
     def plot(self, ax=None, color='k', width=None, plot_points=False, fill=False):
         if ax is None:
             fig, ax = plt.subplots()
