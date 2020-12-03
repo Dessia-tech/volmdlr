@@ -77,12 +77,14 @@ class LinearElement(volmdlr.edges.LineSegment2D):
             ax.plot([self.start.x, self.end.x], [self.start.y, self.end.y], color=color, linewidth=width)
         return ax
 
+
 class TriangularElement(volmdlr.wires.Triangle2D):
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
     _generic_eq = True
+
     def __init__(self, points):
         self.points = points
         self.linear_elements = self._to_linear_elements()
@@ -95,9 +97,12 @@ class TriangularElement(volmdlr.wires.Triangle2D):
         volmdlr.wires.Triangle2D.__init__(self,points=points, name='')
         
     def _to_linear_elements(self):
-        vec1 = volmdlr.Vector2D(self.points[1].x - self.points[0].x,self.points[1].y - self.points[0].y)
-        vec2 = volmdlr.Vector2D(self.points[2].x - self.points[1].x,self.points[2].y - self.points[1].y)
-        vec3 = volmdlr.Vector2D(self.points[0].x - self.points[2].x,self.points[0].y - self.points[2].y)
+        vec1 = volmdlr.Vector2D(self.points[1].x - self.points[0].x,
+                                self.points[1].y - self.points[0].y)
+        vec2 = volmdlr.Vector2D(self.points[2].x - self.points[1].x,
+                                self.points[2].y - self.points[1].y)
+        vec3 = volmdlr.Vector2D(self.points[0].x - self.points[2].x,
+                                self.points[0].y - self.points[2].y)
         normal1 = volmdlr.Vector2D(-vec1.y, vec1.x)
         normal2 = volmdlr.Vector2D(-vec2.y, vec2.x)
         normal3 = volmdlr.Vector2D(-vec3.y, vec3.x)
@@ -110,16 +115,19 @@ class TriangularElement(volmdlr.wires.Triangle2D):
             normal2 = - normal2
         if normal3.dot(vec1) < 0:
             normal3 = - normal3
-        linear_element_1 = LinearElement(self.points[0], self.points[1], normal1)
-        linear_element_2 = LinearElement(self.points[1], self.points[2], normal2)
-        linear_element_3 = LinearElement(self.points[2], self.points[0], normal3)
+        linear_element_1 = LinearElement(self.points[0], self.points[1],
+                                         normal1)
+        linear_element_2 = LinearElement(self.points[1], self.points[2],
+                                         normal2)
+        linear_element_3 = LinearElement(self.points[2], self.points[0],
+                                         normal3)
         return [linear_element_1, linear_element_2, linear_element_3]
     
     def _form_functions(self):
         a = Matrix33(1, self.points[0].x, self.points[0].y,
                      1, self.points[1].x, self.points[1].y,
                      1, self.points[2].x, self.points[2].y)
-        try :
+        try:
             inv_a = a.inverse()
         except ValueError:
             self.plot()
@@ -130,6 +138,7 @@ class TriangularElement(volmdlr.wires.Triangle2D):
         x3 = inv_a.vector_multiplication(volmdlr.Z3D)
        
         return x1, x2, x3
+
     # def _quadratic_form_functions(self):
     #     a = [[1, self.points[0][0], self.points[0][1],self.points[0][0]**2,self.points[0][0]*self.points[0][1],self.points[0][1]**2],
     #           [1, self.points[1][0], self.points[1][1],self.points[1][0]**2,self.points[1][0]*self.points[1][1],self.points[1][1]**2],
@@ -137,8 +146,7 @@ class TriangularElement(volmdlr.wires.Triangle2D):
     #           [1, self.points[3][0], self.points[3][1],self.points[3][0]**2,self.points[3][0]*self.points[3][1],self.points[3][1]**2],
     #           [1, self.points[4][0], self.points[4][1],self.points[4][0]**2,self.points[4][0]*self.points[4][1],self.points[4][1]**2],
     #           [1, self.points[5][0], self.points[5][1],self.points[5][0]**2,self.points[5][0]*self.points[5][1],self.points[5][1]**2]]
-                     
-    
+
     #     try :
     #         inv_a = a.inverse()
     #     except ValueError:
@@ -156,17 +164,24 @@ class TriangularElement(volmdlr.wires.Triangle2D):
         u = self.points[1] - self.points[0]
         v = self.points[2] - self.points[0]
         return abs(u.cross(v)) / 2
-        
+
+    def point_belongs(self, point):
+        polygon = volmdlr.wires.ClosedPolygon2D(self.points)
+        point_belongs = polygon.point_belongs(point)
+        return point_belongs
+
     def rotation(self, center, angle, copy=True):
         if copy:
-            return TriangularElement([pt.rotation(center, angle, copy=True) for pt in self.points])
+            return TriangularElement([pt.rotation(center, angle, copy=True)
+                                      for pt in self.points])
         else:
             for pt in self.points:
                 pt.Rotation(center, angle, copy=False)
                 
     def translation(self, offset, copy=True):
         if copy:
-            return TriangularElement([pt.translation(offset, copy=True) for pt in self.points])
+            return TriangularElement([pt.translation(offset, copy=True)
+                                      for pt in self.points])
         else:
             for pt in self.points:
                 pt.translation(offset, copy=False)
@@ -186,7 +201,8 @@ class TriangularElement(volmdlr.wires.Triangle2D):
             for i, point in enumerate(self.points):
                 point = symmetric_points[i]
    
-    def plot(self, ax=None, color='k', width=None, plot_points=False, fill=False):
+    def plot(self, ax=None, color='k', width=None,
+             plot_points=False, fill=False):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -199,43 +215,51 @@ class TriangularElement(volmdlr.wires.Triangle2D):
         
         for p1, p2 in zip(self.points, self.points[1:]+[self.points[0]]):
             if width is None:
-                width=1
+                width = 1
             if plot_points:
-                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color, marker='o', linewidth=width)
+                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color,
+                        marker='o', linewidth=width)
             else:
-                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color, linewidth=width)
+                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color,
+                        linewidth=width)
         return ax
-    
-
 
     def triangle_to_polygon(self):
-        points=self.points
+        points = self.points
         return volmdlr.wires.ClosedPolygon2D(points)
        
 
-    
 class ElementsGroup(DessiaObject):
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
     _generic_eq = True
+
     def __init__(self, elements:List[TriangularElement], name:str):
         self.elements = elements
         self.name = name
 
         DessiaObject.__init__(self, name=name)
-        
+
+    def point_to_element(self, point):
+        for element in self.elements:
+            if element.point_belongs(point):
+                return element
+        return None
+
     def rotation(self, center, angle, copy=True):
         if copy:
-            return Mesh([elem.rotation(center, angle, copy=True) for elem in self.elements])
+            return Mesh([elem.rotation(center, angle, copy=True)
+                         for elem in self.elements])
         else:
             for elem in self.elements:
                 elem.rotation(center, angle, copy=False)
                 
     def translation(self, offset, copy=True):
         if copy:
-            return Mesh([elem.translation(offset, copy=True) for elem in self.elements])
+            return Mesh([elem.translation(offset, copy=True)
+                         for elem in self.elements])
         else:
             for elem in self.elements:
                 elem.translation(offset, copy=False)
@@ -255,18 +279,20 @@ class Mesh(DessiaObject):
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
     _generic_eq = True
-    def __init__(self, elements_groups:List[ElementsGroup]):
+
+    def __init__(self, elements_groups: List[ElementsGroup]):
         self.elements_groups = elements_groups
         self.nodes = self._set_nodes_number()
-        self.node_to_index = {self.nodes[i]:i for i in range(len(self.nodes))}
+        self.node_to_index = {self.nodes[i]: i for i in range(len(self.nodes))}
         
         DessiaObject.__init__(self, name='')
+
     def __add__(self, other_mesh):
-        new_nodes= self.nodes[:]
+        new_nodes = self.nodes[:]
         new_nodes_index = {p: i for i, p in enumerate(self.points)}
         ip = len(new_nodes)
         for point in other_mesh.nodes:
-            if not point in new_nodes_index:
+            if point not in new_nodes_index:
                 new_nodes_index[point] = ip
                 ip += 1
                 new_nodes.append(point)
@@ -277,9 +303,8 @@ class Mesh(DessiaObject):
             p2 = other_mesh.nodes[i2]
             p3 = other_mesh.nodes[i3]
             new_elements_groups.append((new_nodes_index[p1],
-                                  new_nodes_index[p2],
-                                  new_nodes_index[p3]))
-
+                                        new_nodes_index[p2],
+                                        new_nodes_index[p3]))
         return self.__class__(new_elements_groups)
 
     def _set_nodes_number(self):
@@ -290,31 +315,38 @@ class Mesh(DessiaObject):
                 nodes.add(element.points[1])
                 nodes.add(element.points[2])
         return tuple(nodes)
+
+    def point_to_element(self, point):
+        for element_group in self.elements_groups:
+            element = element_group.point_to_element(point)
+            if element is not None:
+                return element
+        return None
     
     def set_node_displacement_index(self):
-        indexes={}
+        indexes = {}
         for node in self.nodes:
-           
-                indexes[node]=[2*self.node_to_index[node],2*self.node_to_index[node]+1]
+            indexes[node] = [2*self.node_to_index[node],
+                             2*self.node_to_index[node]+1]
         return indexes
     
     def boundary_dict(self):
         boundary_dict = {}
-        for elements_group1, elements_group2 in combinations(self.elements_groups, 2):
+        for elements_group1, elements_group2 in combinations(
+                self.elements_groups, 2):
             linear_elements1 = []
             linear_elements2 = []
             for element in elements_group1.elements:
                 linear_elements1.extend(element.linear_elements)
             for element in elements_group2.elements:
                 linear_elements2.extend(element.linear_elements)
-            duplicate_linear_elements = find_duplicate_linear_element(linear_elements1, linear_elements2)
+            duplicate_linear_elements = find_duplicate_linear_element(
+                linear_elements1, linear_elements2)
             if duplicate_linear_elements:
-                boundary_dict[(elements_group1, elements_group2)] = duplicate_linear_elements
+                boundary_dict[(elements_group1,
+                               elements_group2)] = duplicate_linear_elements
         return boundary_dict
    
-        
-   
-        
     def plot(self, ax=None):
         if ax is None:
             fig, ax = plt.subplots()
@@ -327,37 +359,40 @@ class Mesh(DessiaObject):
         plot_datas = []
         for element_group in self.elements_groups:
             for element in element_group.elements:
-                c1 = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(element.points[0], element.points[1])])
-                c2 = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(element.points[1], element.points[2])])
-                c3 = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(element.points[2], element.points[0])])
+                c1 = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(
+                    element.points[0], element.points[1])])
+                c2 = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(
+                    element.points[1], element.points[2])])
+                c3 = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(
+                    element.points[2], element.points[0])])
                 plot_datas.append(c1.plot_data())
                 plot_datas.append(c2.plot_data())
                 plot_datas.append(c3.plot_data())
                 # plot_datas.extend([c1, c2, c3])
         return plot_datas
-    
-    
-    
 
+    def plot_displaced_mesh(self,
+                            node_displacement: Dict[volmdlr.Point2D,
+                                                    List[float]],
+                            ax=None, amplification=0.5):
 
-    def plot_displaced_mesh(self,node_displacement:Dict[volmdlr.Point2D,List[float]],
-                            ax=None,amplification=0.5):
-
-        
-        deformed_mesh=self.copy()
-        nodes=deformed_mesh.nodes
+        deformed_mesh = self.copy()
+        nodes = deformed_mesh.nodes
   
         for node in nodes:
-           for displaced_node in node_displacement:
-               if node==displaced_node:
-                   node.x+=amplification*node_displacement[displaced_node][0]
-                   node.y+=amplification*node_displacement[displaced_node][1]
+            for displaced_node in node_displacement:
+                if node == displaced_node:
+                    node.x += amplification*node_displacement[
+                        displaced_node][0]
+                    node.y += amplification*node_displacement[
+                        displaced_node][1]
             
         ax = deformed_mesh.plot(ax=ax) 
         ax.set_aspect('equal')           
     
         return ax
-    
+
+
 class Mesher(DessiaObject):
     
     def __init__(self,interior_contours:List[volmdlr.wires.Contour2D],exterior_contours:List[volmdlr.wires.Contour2D],triangles:List[TriangularElement],nodes_len:float):

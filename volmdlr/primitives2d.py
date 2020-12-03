@@ -11,27 +11,23 @@ import matplotlib.patches
 import volmdlr
 from volmdlr.core_compiled import polygon_point_belongs
 from volmdlr.primitives import RoundedLineSegments
-import volmdlr.edges
-import volmdlr.wires
+import volmdlr.edges as vmedges
+import volmdlr.wires as vmwires
 import matplotlib.pyplot as plt
 
 
-
-
-
-
-class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
+class OpenedRoundedLineSegments2D(RoundedLineSegments, vmwires.Wire2D):
     closed = False
 
     def __init__(self, points, radius, adapt_radius=False, name=''):
         primitives = RoundedLineSegments.__init__(self, points, radius,
-                                                  volmdlr.edges.LineSegment2D,
-                                                  volmdlr.edges.Arc2D,
+                                                  vmedges.LineSegment2D,
+                                                  vmedges.Arc2D,
                                                   closed=False,
                                                   adapt_radius=adapt_radius,
                                                   name='')
 
-        volmdlr.wires.Wire2D.__init__(self, primitives, name)
+        vmwires.Wire2D.__init__(self, primitives, name)
 
     def arc_features(self, ipoint):
         radius = self.radius[ipoint]
@@ -337,9 +333,9 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
         if len(line_indexes) > 1:
             intersection = volmdlr.Point2D.line_intersection(
-                volmdlr.edges.Line2D(self.points[line_indexes[0]],
+                vmedges.Line2D(self.points[line_indexes[0]],
                                self.points[line_indexes[0]] + dir_vec_1),
-                volmdlr.edges.Line2D(self.points[line_indexes[-1] + 1],
+                vmedges.Line2D(self.points[line_indexes[-1] + 1],
                                self.points[line_indexes[-1] + 1] + dir_vec_2))
             vec1 = intersection.point_distance(
                 self.points[line_indexes[0]]) * dir_vec_1
@@ -394,7 +390,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
     
 class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
-                                  volmdlr.wires.Contour2D):
+                                  vmwires.Contour2D):
     """
     :param points: Points used to draw the wire 
     :type points: List of Point2D
@@ -404,21 +400,21 @@ class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
     closed = True
     def __init__(self, points, radius, adapt_radius=False, name=''):
         primitives = RoundedLineSegments.__init__(self, points, radius,
-                                                  volmdlr.edges.LineSegment2D,
-                                                  volmdlr.edges.Arc2D,
+                                                  vmedges.LineSegment2D,
+                                                  vmedges.Arc2D,
                                                   closed=True,
                                                   adapt_radius=adapt_radius, name='')
 
-        volmdlr.wires.Contour2D.__init__(self, primitives, name)
+        vmwires.Contour2D.__init__(self, primitives, name)
 
-class Measure2D(volmdlr.edges.LineSegment2D):
+class Measure2D(vmedges.LineSegment2D):
     def __init__(self, point1, point2, label='', unit='mm', type_='distance'):
         """
         :param unit: 'mm', 'm' or None. If None, the distance won't be in the label
 
         """
         # TODO: offset parameter
-        volmdlr.edges.LineSegment2D.__init__(self, point1, point2)
+        vmedges.LineSegment2D.__init__(self, point1, point2)
         self.label = label
         self.unit = unit
         self.type_ = type_
