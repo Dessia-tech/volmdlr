@@ -9,7 +9,7 @@ import math
 import numpy as npy
 import matplotlib.patches
 import volmdlr
-from volmdlr.core_compiled import polygon_point_belongs
+# from volmdlr.core_compiled import polygon_point_belongs
 from volmdlr.primitives import RoundedLineSegments
 import volmdlr.edges as vmedges
 import volmdlr.wires as vmwires
