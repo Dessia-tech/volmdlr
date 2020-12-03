@@ -911,12 +911,17 @@ class Vector3D(Vector):
             return cls(*[float(i) for i in arguments[1][1:-1].split(",")],
                         arguments[0][1:-1])
 
-    def to_step(self, current_id):
-        content = "#{} = DIRECTION('{}', ({}, {}, {}));\n"\
+    def to_step(self, current_id, vector=False):
+        content = "#{} = DIRECTION('{}',({},{},{}));\n"\
                         .format(current_id, self.name,
                                 round(self.x, 6),
                                 round(self.y, 6),
                                 round(self.z, 6))
+        if vector:
+            content += "#{} = VECTOR('{}',#{},1.);\n".format(current_id+1,
+                                                           self.name,
+                                                           current_id)
+            current_id += 1
         return content, current_id
 
     def plot(self, ax=None, starting_point=None, color=''):
@@ -998,12 +1003,18 @@ class Point3D(Vector3D):
     def to_vector(self):
         return Vector3D(self.x, self.y, self.z)
 
-    def to_step(self, current_id):
-        content = "#{} = CARTESIAN_POINT('{}', ({}, {}, {}));\n"\
+    def to_step(self, current_id, vertex=False):
+        content = "#{} = CARTESIAN_POINT('{}',({},{},{}));\n"\
                         .format(current_id, self.name,
-                                round(1000*self.x, 3),
-                                round(1000*self.y, 3),
-                                round(1000*self.z, 3))
+                                round(1000.*self.x, 3),
+                                round(1000.*self.y, 3),
+                                round(1000.*self.z, 3))
+        if vertex:
+            content += "#{} = VERTEX_POINT('{}',#{});\n".format(current_id+1,
+                                                                self.name,
+                                                                current_id)
+            current_id += 1
+
         return content, current_id
 
 
@@ -1597,7 +1608,7 @@ class Frame3D(Basis3D):
         v_content, v_id = Vector3D.to_step(self.v, current_id)
         current_id = v_id + 1
         content += u_content + v_content
-        content += "#{} = AXIS2_PLACEMENT_3D('{}', (#{}, #{}, #{}));\n"\
+        content += "#{} = AXIS2_PLACEMENT_3D('{}',#{},#{},#{});\n"\
                         .format(current_id, self.name, origin_id, u_id, v_id)
         return content, current_id
 

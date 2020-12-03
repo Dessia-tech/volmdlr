@@ -543,6 +543,13 @@ class Plane3D(Surface3D):
                                 frame3d.v, frame3d.w, frame3d.u)
         return cls(frame, arguments[0][1:-1])
 
+    def to_step(self, current_id):
+        frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u, self.frame.v)
+        content, frame_id = frame.to_step(current_id)
+        plane_id = frame_id + 1
+        content += "#{} = PLANE('{}',#{});\n".format(plane_id, self.name, frame_id)
+        return content, plane_id
+
     @classmethod
     def from_3_points(cls, point1, point2, point3):
         """
@@ -768,12 +775,6 @@ class Plane3D(Surface3D):
         surface = Surface2D(outer_contour, [])
         return PlaneFace3D(self, surface, name)
 
-    def to_step(self, current_id):
-        content, frame_id = self.frame.to_step(current_id)
-        plane_id = frame_id + 1
-        content += "#{} = PLANE('{}',#{});\n".format(plane_id, self.name, frame_id)
-        return content, plane_id
-
 
 PLANE3D_OXY = Plane3D(volmdlr.OXYZ)
 PLANE3D_OYZ = Plane3D(volmdlr.OYZX)
@@ -837,6 +838,7 @@ class CylindricalSurface3D(Surface3D):
             p1 = self.point3d_to_2d(fullarc3d.start)
             return [volmdlr.edges.LineSegment2D(p1, p1+volmdlr.TWO_PI*volmdlr.X2D)]
         else:
+            print(fullarc3d.normal, self.frame.w)
             raise ValueError('Impossible!')
 
 
@@ -853,6 +855,15 @@ class CylindricalSurface3D(Surface3D):
         frame_direct = volmdlr.Frame3D(frame3d.origin, U, V, W)
         radius = float(arguments[2]) / 1000
         return cls(frame_direct, radius, arguments[0][1:-1])
+
+    def to_step(self, current_id):
+        frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u, self.frame.v)
+        content, frame_id = frame.to_step(current_id)
+        current_id = frame_id + 1
+        content += "#{} = CYLINDRICAL_SURFACE('{}',#{},{});\n"\
+            .format(current_id, self.name, frame_id,
+                    round(1000*self.radius, 3))
+        return content, current_id
 
     def frame_mapping(self, frame, side, copy=True):
         basis = frame.Basis()
@@ -901,13 +912,6 @@ class CylindricalSurface3D(Surface3D):
         else:
             self.frame.translation(offset, copy=False)
 
-    def to_step(self, current_id):
-        content, frame_id = self.frame.to_step(current_id)
-        current_id = frame_id + 1
-        content += "#{} = CYLINDRICAL_SURFACE('{}',#{}, {});\n"\
-            .format(current_id, self.name, frame_id,
-                    round(1000*self.radius, 3))
-        return content, current_id
 
 class ToroidalSurface3D(Surface3D):
     face_class = 'ToroidalFace3D'
@@ -1541,13 +1545,16 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def to_step(self, current_id):
         content, outer_contour_id = self.outer_contour3d.to_step(current_id)
-        contours_ids = [outer_contour_id]
-        current_id = outer_contour_id + 1
+        content += "#{} = FACE_BOUND('{}',#{},.T.);\n".format(outer_contour_id+1,
+                                                          self.name,
+                                                          outer_contour_id)
+        contours_ids = [outer_contour_id+1]
+        current_id = outer_contour_id + 2
         for inner_contour3d in self.inner_contours3d:
             inner_contour_content, inner_contour_id = inner_contour3d.to_step(current_id)
             content += inner_contour_content
             face_bound_id = inner_contour_id + 1
-            content += '#{}=FACE_BOUND('',#{},.T.);\n'.format(inner_contour_id+1)
+            content += "#{} = FACE_BOUND('{}',#{},.T.);\n".format(inner_contour_id+1)
             contours_ids.append(face_bound_id)
             current_id = face_bound_id + 1
 
@@ -1718,6 +1725,8 @@ class Face3D(volmdlr.core.Primitive3D):
         else:
             self.surface.rotation(center, axis,
                                   angle, copy=False)
+            self.bounding_box = self._bounding_box()
+
 
 
 
@@ -1727,6 +1736,7 @@ class Face3D(volmdlr.core.Primitive3D):
             return self.__class__(new_surface3d, self.surface2d)
         else:
             self.surface.translation(offset=offset, copy=False)
+            self.bounding_box = self._bounding_box()
 
 
     def frame_mapping(self, frame, side, copy=True):
@@ -1738,6 +1748,8 @@ class Face3D(volmdlr.core.Primitive3D):
             return self.__class__(new_surface, self.surface2d.copy(), self.name)
         else:
             self.surface3d.frame_mapping(frame, side, copy=False)
+            self.bounding_box = self._bounding_box()
+
 
     def copy(self):
         return Face3D(self.surface3d.copy(), self.surface2d.copy(), self.name)
@@ -1813,7 +1825,6 @@ class PlaneFace3D(Face3D):
 
     def _bounding_box(self):
         """
-        Non method, to be enforced by overloading
         """
         return self.outer_contour3d._bounding_box()
 
@@ -1930,21 +1941,17 @@ class PlaneFace3D(Face3D):
 
 
 
-    def edge_intersection(self, edge):
+    def edge_intersections(self, edge):
+        intersections = []
         linesegment = volmdlr.edges.LineSegment3D(edge.start, edge.end)
-        intersection_points = self.surface3d.linesegment_intersections(linesegment)
+        for surface3d_inter in self.surface3d.linesegment_intersections(linesegment):
+            point2d = self.surface3d.point3d_to_2d(surface3d_inter)
+            if self.surface2d.point_belongs(point2d):
+                intersections.append(surface3d_inter)
+                
+        return intersections
 
-        if intersection_points == []:
-            return None
-
-        point_on_face_boo = self.point_belongs(intersection_points[0])
-        if not point_on_face_boo:
-            return None
-
-        return intersection_points[0]
-
-
-    def face_intersection(self, face2):
+    def face_intersections(self, face2):
         ## """
         ## Only works if the surface is planar
         ## TODO : this function does not take into account if Face has holes
@@ -1952,24 +1959,23 @@ class PlaneFace3D(Face3D):
         bbox1 = self.bounding_box
         bbox2 = face2.bounding_box
         if not bbox1.bbox_intersection(bbox2):
-            return None
+            return []
 
-        intersection_points = []
+        intersections = []
+
 
         for edge2 in face2.outer_contour3d.primitives:
-            intersection_point = self.edge_intersection(edge2)
-            if intersection_point is not None:
-                intersection_points.append(intersection_point)
+            intersection_points = self.edge_intersections(edge2)
+            if intersection_points:
+                intersections.extend(intersection_points)
+                
 
         for edge1 in self.outer_contour3d.primitives:
-            intersection_point = face2.edge_intersection(edge1)
-            if intersection_point is not None:
-                intersection_points.append(intersection_point)
+            intersection_points = face2.edge_intersections(edge1)
+            if intersection_points:
+                intersections.extend(intersection_points)
 
-        if not intersection_points:
-            return None
-
-        return intersection_points
+        return intersections
 
 
     def minimum_distance(self, other_face, return_points=False):
@@ -3512,7 +3518,10 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                  alpha:float=1., name:str=''):
         self.faces = faces
         self.name = name
-        self.color = color
+        if not color:
+            self.color = (0.8, 0.8, 0.8)
+        else:
+            self.color = color
         self.alpha = alpha
         self.bounding_box = self._bounding_box()
 
@@ -3544,21 +3553,19 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             current_id += 1
 
         shell_id = current_id
-        step_content += "#{} = {}('{}' ({}));\n".format(current_id, self.STEP_FUNCTION,
+        step_content += "#{} = {}('{}',({}));\n".format(current_id, self.STEP_FUNCTION,
                                                    self.name, volmdlr.core.step_ids_to_str(face_ids))
         manifold_id = shell_id + 1
-        step_content += "#{} = MANIFOLD_SOLID_BREP('{}' #{});\n".format(manifold_id,
+        step_content += "#{} = MANIFOLD_SOLID_BREP('{}',#{});\n".format(manifold_id,
                                                         self.name,
                                                         shell_id)
 
         frame_content, frame_id = volmdlr.OXYZ.to_step(manifold_id+1)
         step_content += frame_content
         brep_id = frame_id + 1
-        step_content += "#{} = ADVANCED_BREP_SHAPE_REPRESENTATION('',(#{},#{}),#7);\n".format(brep_id, frame_id, brep_id)
+        step_content += "#{} = ADVANCED_BREP_SHAPE_REPRESENTATION('',(#{},#{}),#7);\n".format(brep_id, frame_id, manifold_id)
 
-        current_id = brep_id + 1
-
-        return step_content, current_id
+        return step_content, brep_id
 
     def rotation(self, center, axis, angle, copy=True):
         if copy:
@@ -3679,8 +3686,12 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         return point1_min, point2_min
 
     def distance_to_shell(self, other_shell:'OpenShell3D', resolution:float):
-        p1, p2 = self.minimum_distance_points(other_shell, resolution)
-        return p1.point_distance(p2)
+        min_dist = self.minimum_distance_points(other_shell, resolution)
+        if min_dist is not None:
+            p1, p2 = min_dist
+            return p1.point_distance(p2)
+        else:
+            return None
 
 
     def minimum_distance_point(self, point:volmdlr.Point3D)->volmdlr.Point3D:
@@ -3708,7 +3719,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         intersections_points = []
         for face1 in self.faces:
             for face2 in shell2.faces:
-                intersection_points = face1.face_intersection(face2)
+                intersection_points = face1.face_intersections(face2)
                 if intersection_points is not None:
                     intersections_points.extend(intersection_points)
 
@@ -3732,7 +3743,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         intersections_points = []
         for face1 in self.faces:
             for face2 in shell2.faces:
-                intersection_points = face1.face_intersection(face2)
+                intersection_points = face1.face_intersections(face2)
                 if intersection_points is not None:
                     intersections_points.extend(intersection_points)
 
@@ -3796,7 +3807,11 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         return ax
 
 class ClosedShell3D(OpenShell3D):
+    _standalone_in_db = True
+    _non_serializable_attributes = ['bounding_box']
+    _non_eq_attributes = ['name', 'color', 'alpha' 'bounding_box']
     STEP_FUNCTION = 'CLOSED_SHELL'
+
 
     def copy(self):
         new_faces = [face.copy() for face in self.faces]
@@ -3818,7 +3833,7 @@ class ClosedShell3D(OpenShell3D):
         bbox1 = self.bounding_box
         bbox2 = shell2.bounding_box
         if not bbox1.bbox_intersection(bbox2):
-            #            print("No intersection of shells' BBox")
+            # print("No intersection of shells' BBox")
             return None
 
         # Check if any point of the first shell is in the second shell
@@ -3843,13 +3858,13 @@ class ClosedShell3D(OpenShell3D):
         inter1 = compteur1 / nb_pts1
         inter2 = compteur2 / nb_pts2
 
-
         for face1 in self.faces:
             for face2 in shell2.faces:
-                intersection_points = face1.face_intersection(face2)
-                if intersection_points is not None:
+                intersection_points = face1.face_intersections(face2)
+                if intersection_points:
                     return inter1, inter2
-        if (inter1, inter2) == (0, 0):
+                
+        if inter1 == 0. and inter2 == 0.:
             return None
         return 1
 
@@ -3923,8 +3938,8 @@ class ClosedShell3D(OpenShell3D):
         # Check if any faces are intersecting
         for face1 in self.faces:
             for face2 in shell2.faces:
-                intersection_points = face1.face_intersection(face2)
-                if intersection_points is not None:
+                intersection_points = face1.face_intersections(face2)
+                if intersection_points != []:
                     return False
 
         return True
