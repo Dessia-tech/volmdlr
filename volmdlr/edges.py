@@ -2698,7 +2698,7 @@ class FullArc3D(Edge):
         return self.start.rotation(self.center, self.normal, angle)
 
     def polygon_points(self, angle_resolution=10):
-        npoints = angle_resolution*volmdlr.TWO_PI + 2
+        npoints = int(angle_resolution*volmdlr.TWO_PI) + 2
         polygon_points_3D = [self.start.rotation(self.center,
                                                       self.normal,
                                                       volmdlr.TWO_PI / (npoints - 1) * i
@@ -2729,7 +2729,7 @@ class FullArc3D(Edge):
         return content, arc_id
 
 
-    def plot(self, ax=None, color='k'):
+    def plot(self, ax=None, color='k', alpha=1.):
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
@@ -2744,7 +2744,7 @@ class FullArc3D(Edge):
         x.append(x[0])
         y.append(y[0])
         z.append(z[0])
-        ax.plot(x, y, z, color)
+        ax.plot(x, y, z, color=color, alpha=alpha)
         return ax
 
 

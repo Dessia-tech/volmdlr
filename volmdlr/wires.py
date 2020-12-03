@@ -2112,6 +2112,7 @@ class Contour3D(Contour, Wire3D):
             ax = Axes3D(plt.figure())
 
         for edge in self.primitives:
+            print('edge', edge)
             edge.plot(ax=ax, color=color, alpha=alpha)
 
         return ax
@@ -2248,11 +2249,44 @@ class Circle3D(Contour3D):
         return cls.from_center_normal(center, normal, radius, arguments[0][1:-1])
 
     def to_step(self, current_id):
-        content, frame_id = self.frame.to_step(current_id)
-        current_id = frame_id+1
-        content += "#{} = CIRCLE('{}', #{}, {});\n".format(current_id, self.name,
+        circle_frame = volmdlr.Frame3D(self.center, self.frame.w, self.frame.u, self.frame.v)
+        content, frame_id = circle_frame.to_step(current_id)
+        circle_id = frame_id+1
+        content += "#{} = CIRCLE('{}',#{},{});\n".format(circle_id, self.name,
                                                            frame_id,
                                                            round(self.radius*1000, 3))
+        p1 = self.frame.origin + self.frame.u*self.radius
+        p2 = self.frame.origin + self.frame.v*self.radius
+        p3 = self.frame.origin - self.frame.u*self.radius
+        p4 = self.frame.origin - self.frame.v*self.radius
+
+        p1_content, p1_id = p1.to_step(circle_id+1, vertex=True)
+        # p2_content, p2_id = p2.to_step(p1_id+1, vertex=True)
+        p3_content, p3_id = p3.to_step(p1_id+1, vertex=True)
+        # p4_content, p4_id = p4.to_step(p3_id+1, vertex=True)
+        content += p1_content + p3_content
+
+        arc1_id = p3_id + 1
+        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc1_id, self.name,
+                                                                    p1_id, p3_id,
+                                                                    circle_id)
+        oriented_edge1_id = arc1_id + 1
+        content += "#{} = ORIENTED_EDGE('',*,*,#{},.T.);\n".format(oriented_edge1_id,
+                                                                     arc1_id)
+
+        arc2_id = oriented_edge1_id + 1
+        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc2_id, self.name,
+                                                                    p3_id, p1_id,
+                                                                    circle_id)
+        oriented_edge2_id = arc2_id + 1
+        content += "#{} = ORIENTED_EDGE('',*,*,#{},.T.);\n".format(oriented_edge2_id,
+                                                                     arc2_id)
+
+        current_id = oriented_edge2_id + 1
+        content += "#{} = EDGE_LOOP('{}',(#{},#{}));\n".format(current_id, self.name,
+                                                           oriented_edge1_id,
+                                                           oriented_edge2_id)
+
         return content, current_id
 
     def _bounding_box(self):

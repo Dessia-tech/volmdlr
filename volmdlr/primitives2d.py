@@ -16,10 +16,6 @@ import volmdlr.wires
 import matplotlib.pyplot as plt
 
 
-
-
-
-
 class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
     closed = False
 
