@@ -21,6 +21,7 @@ from typing import List
 
 import dessia_common as dc
 import volmdlr.core
+import volmdlr.geometry
 import plot_data.core as plot_data
 
 
@@ -896,8 +897,8 @@ class Arc2D(Edge):
         vector_end = self.end - self.center
         if self.is_trigo:
             vector_start, vector_end = vector_end, vector_start
-        arc_angle = volmdlr.clockwise_angle(vector_start, vector_end)
-        point_angle = volmdlr.clockwise_angle(vector_start, vector_point)
+        arc_angle = volmdlr.core.clockwise_angle(vector_start, vector_end)
+        point_angle = volmdlr.core.clockwise_angle(vector_start, vector_point)
         if point_angle <= arc_angle:
             return abs(
                 LineSegment2D(point, self.center).length() - self.radius)
@@ -1025,7 +1026,7 @@ class Arc2D(Edge):
         Ixy = self.radius ** 4 / 8 * (
                 math.cos(angle1) ** 2 - math.cos(angle2) ** 2)
         Ic = npy.array([[Ix, Ixy], [Ixy, Iy]])
-        return volmdlr.geometry.Huygens2D(Ic, self.Area(), self.center, point)
+        return volmdlr.geometry.huygens2d(Ic, self.area(), self.center, point)
 
     # def Discretise(self, num=10):
     #     list_node = []
@@ -1559,6 +1560,18 @@ class Line3D(Line):
 
         return None
 
+    def to_step(self, current_id):
+        p1_content, p1_id = self.point1.to_step(current_id)
+        # p2_content, p2_id = self.point2.to_step(current_id+1)
+        current_id = p1_id + 1
+        u_content, u_id = volmdlr.Vector3D.to_step(self.unit_direction_vector(),
+                                                   current_id,
+                                                   vector=True)
+        current_id = u_id + 1
+        content = p1_content + u_content
+        content += "#{} = LINE('{}',#{},#{});\n".format(current_id, self.name,
+                                                    p1_id, u_id)
+        return content, current_id
 
 class LineSegment3D(LineSegment):
     """
@@ -1769,7 +1782,7 @@ class LineSegment3D(LineSegment):
             name, x1, y1, z1, x2, y2, z2)
 
     def to_line(self):
-        return Line3D(*self.points)
+        return Line3D(self.start, self.end)
 
     def babylon_script(self, color=(1, 1, 1), name='line', type_='line',
                        parent=None):
@@ -2017,13 +2030,19 @@ class LineSegment3D(LineSegment):
                                            0, (self.end - self.start).dot(axis))
 
     def to_step(self, current_id):
-        start_content, start_id = self.start.to_step(current_id)
-        end_content, end_id = self.end.to_step(current_id+1)
-        current_id += 2
-        content = start_content + end_content
-        content += "#{} = LINE('{}', #{}, #{})\n".format(current_id, self.name,
-                                                    start_id, end_id)
-        return content, current_id
+        line = self.to_line()
+        content, line_id = line.to_step(current_id)
+        current_id = line_id + 1
+        start_content, start_id = self.start.to_step(current_id, vertex=True)
+        current_id = start_id + 1
+        end_content, end_id = self.end.to_step(current_id+1, vertex=True)
+        content += start_content + end_content
+        current_id = end_id + 1
+        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(current_id, self.name,
+                                                    start_id, end_id, line_id)
+        return content, [current_id]
+
+
 
 class BSplineCurve3D(Edge):
     _non_serializable_attributes = ['curve']
@@ -2628,13 +2647,19 @@ class Arc3D(Edge):
                                        arc2d.angle1, arc2d.angle2)
 
     def to_step(self, current_id):
-        raise NotImplementedError('Not yet!, WIP')
-        start_content, start_id = self.start.to_step(current_id)
-        end_content, end_id = self.end.to_step(current_id+1)
-        current_id += 2
+
+        content, frame_id = self.frame.to_step(current_id)
+        circle_id = frame_id + 1
+        content += "#{} = CIRCLE('{}', #{}, {});\n".format(circle_id, self.name,
+                                                           frame_id,
+                                                           round(self.radius*1000, 3))
+        current_id = circle_id + 1
+        start_content, start_id = self.start.to_step(current_id, vertex=True)
+        end_content, end_id = self.end.to_step(start_id+1, vertex=True)
         content = start_content + end_content
-        content += "#{} = ('{}', #{}, #{})\n".format(current_id, self.name,
-                                                    start_id, end_id)
+        current_id = end_id + 1
+        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(current_id, self.name,
+                                                    start_id, end_id, circle_id)
         return content, current_id
     
     
@@ -2674,7 +2699,7 @@ class FullArc3D(Edge):
         return self.start.rotation(self.center, self.normal, angle)
 
     def polygon_points(self, angle_resolution=10):
-        npoints = angle_resolution*volmdlr.TWO_PI + 2
+        npoints = int(angle_resolution*volmdlr.TWO_PI) + 2
         polygon_points_3D = [self.start.rotation(self.center,
                                                       self.normal,
                                                       volmdlr.TWO_PI / (npoints - 1) * i
@@ -2683,17 +2708,56 @@ class FullArc3D(Edge):
         return polygon_points_3D
 
     def to_step(self, current_id):
+        # Not calling Circle3D.to_step because of circular imports
         u = self.start - self.center
         u.normalize()
         v = self.normal.cross(u)
-        frame = volmdlr.Frame3D(self.center, u, v, self.normal)
+        frame = volmdlr.Frame3D(self.center, self.normal, u, v)
         content, frame_id = frame.to_step(current_id)
-        current_id = frame_id+1
-        content += "#{} = CIRCLE('{}', #{}, {})\n".format(current_id, self.name,
-                                                    frame_id, self.radius*1000)
-        return content, current_id
+        circle_id = frame_id+1
+        # Not calling Circle3D.to_step because of circular imports
+        content += "#{} = CIRCLE('{}',#{},{});\n".format(circle_id, self.name,
+                                                    frame_id,
+                                                    round(self.radius*1000, 3))
 
-    def plot(self, ax=None, color='k'):
+        p1 = self.center + u*self.radius
+        p2 = self.center + v*self.radius
+        p3 = self.center - u*self.radius
+        p4 = self.center - v*self.radius
+
+        p1_content, p1_id = p1.to_step(circle_id+1, vertex=True)
+        p2_content, p2_id = p2.to_step(p1_id+1, vertex=True)
+        p3_content, p3_id = p3.to_step(p2_id+1, vertex=True)
+        p4_content, p4_id = p4.to_step(p3_id+1, vertex=True)
+        content += p1_content + p2_content + p3_content + p4_content 
+
+        arc1_id = p4_id + 1
+        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc1_id, self.name,
+                                                                    p1_id, p2_id,
+                                                                    circle_id)
+
+        arc2_id = arc1_id + 1
+        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc2_id, self.name,
+                                                                    p2_id, p3_id,
+                                                                    circle_id)
+
+        arc3_id = arc2_id + 1
+        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc3_id, self.name,
+                                                                    p3_id, p4_id,
+                                                                    circle_id)
+
+        arc4_id = arc3_id + 1
+        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc4_id, self.name,
+                                                                    p4_id, p1_id,
+                                                                    circle_id)
+
+
+        return content, [arc1_id, arc2_id, arc3_id, arc4_id]
+
+
+
+
+    def plot(self, ax=None, color='k', alpha=1.):
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
@@ -2708,7 +2772,7 @@ class FullArc3D(Edge):
         x.append(x[0])
         y.append(y[0])
         z.append(z[0])
-        ax.plot(x, y, z, color)
+        ax.plot(x, y, z, color=color, alpha=alpha)
         return ax
 
 
