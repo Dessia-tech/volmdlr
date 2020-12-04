@@ -382,22 +382,7 @@ class Surface2D(volmdlr.core.Primitive2D):
                 primitives1.append(sp34)
                 primitives1.extend(self.outer_contour.primitives[ip3+1:ip4])
                
-                
-                
-                
-                
-                # primitives1.append(volmdlr.edges.LineSegment2D(intersections[6][0],intersections[0][0]))
-                # a=volmdlr.edges.Arc2D(new_inner_1.primitives[ip1].end,new_inner_1.primitives[ip1].interior,
-                #                      new_inner_1.primitives[ip1].start)
-                
-                # primitives1.append(a) 
-                # primitives1.append(volmdlr.edges.LineSegment2D(intersections[1][0],intersections[5][0]))
-                # primitives1.append(new_inner_2.primitives[ip5])
-                # primitives1.append(volmdlr.edges.LineSegment2D(intersections[4][0],intersections[7][0]))
-                # primitives1.append(sp44)
-                # primitives1.extend(self.outer_contour.primitives[ip3+1:ip4])
-                # # primitives1.append(sp34)
-                
+      
            
                 primitives2=[]
                 primitives2.append(sp33)
@@ -410,7 +395,7 @@ class Surface2D(volmdlr.core.Primitive2D):
                 primitives2.extend(self.outer_contour.primitives[:ip3])
                 
               
-                all_contours.extend([volmdlr.wires.Contour2D(primitives1)])
+                all_contours.extend([volmdlr.wires.Contour2D(primitives2)])
                    
             
             else:
