@@ -754,7 +754,7 @@ class LineSegment2D(LineSegment):
 
 
     def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
-        return plot_data.Line2D(data=[self.start.x, self.start.y,
+        return plot_data.LineSegment(data=[self.start.x, self.start.y,
 
                                               self.end.x, self.end.y],
                                         plot_data_states=plot_data_states)
@@ -1623,18 +1623,18 @@ class LineSegment3D(LineSegment):
                              self.point2.plane_projection2d(center, x, y))
 
     def intersection(self, segment2):
-        x1 = self.start.vector[0]
-        y1 = self.start.vector[1]
-        z1 = self.start.vector[2]
-        x2 = self.point2.vector[0]
-        y2 = self.point2.vector[1]
-        z2 = self.point2.vector[2]
-        x3 = segment2.start.vector[0]
-        y3 = segment2.start.vector[1]
-        z3 = segment2.start.vector[2]
-        x4 = segment2.end_point.vector[0]
-        y4 = segment2.end_point.vector[1]
-        z4 = segment2.end_point.vector[2]
+        x1 = self.start.x
+        y1 = self.start.y
+        z1 = self.start.z
+        x2 = self.end.x
+        y2 = self.end.y
+        z2 = self.end.z
+        x3 = segment2.start.x
+        y3 = segment2.start.y
+        z3 = segment2.start.z
+        x4 = segment2.end.x
+        y4 = segment2.end.y
+        z4 = segment2.end.z
 
         if x3 == 0 and x4 == 0 and y4 - y3 == 0:
             x5, y5, z5 = x3, y3, z3
@@ -1690,8 +1690,8 @@ class LineSegment3D(LineSegment):
             if math.isclose(res1, res2,
                             abs_tol=1e-7):  # if there is an intersection point
                 if t1 >= 0 or t1 <= 1:
-                    return volmdlr.Point3D([x1 + (x2 - x1) * t1, y1 + (y2 - y1) * t1,
-                                            z1 + (z2 - z1) * t1])
+                    return volmdlr.Point3D(x1 + (x2 - x1) * t1, y1 + (y2 - y1) * t1,
+                                            z1 + (z2 - z1) * t1)
 
         return None
 
