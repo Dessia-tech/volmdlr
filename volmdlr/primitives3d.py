@@ -24,7 +24,7 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D, volmdlr.primitives.Rounded
     _non_hash_attributes = ['name']
     _generic_eq = True
     
-    def __init__(self, points:List[volmdlr.Point3D], radius:Dict[int, float],
+    def __init__(self, points:List[volmdlr.Point3D], radius:Dict[str, float],
                  adapt_radius:bool=False, name:str=''):
         primitives = volmdlr.primitives.RoundedLineSegments.__init__(self, points, radius,
                                                   volmdlr.edges.LineSegment3D,

@@ -13,7 +13,7 @@ import volmdlr
 
 
 class RoundedLineSegments:
-    def __init__(self, points: List[volmdlr.Point3D], radius: Dict[int, float], line_class: str, arc_class: str,
+    def __init__(self, points: List[volmdlr.Point3D], radius: Dict[str, float], line_class: str, arc_class: str,
                  closed: bool = False, adapt_radius: bool = False, name: str = ''):
 
         self.points = points
