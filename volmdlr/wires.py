@@ -849,7 +849,7 @@ class Contour2D(Contour, Wire2D):
         triangles = []
         for xi in x:
             for yi in y:
-                p = volmdlr.Point2D((xi, yi))
+                p = volmdlr.Point2D(xi, yi)
                 if self.point_belongs(p):
                     point_index[p] = ip
                     points.append(p)
@@ -857,10 +857,10 @@ class Contour2D(Contour, Wire2D):
 
         for i in range(n):
             for j in range(m):
-                p1 = volmdlr.Point2D((x[i], y[j]))
-                p2 = volmdlr.Point2D((x[i + 1], y[j]))
-                p3 = volmdlr.Point2D((x[i + 1], y[j + 1]))
-                p4 = volmdlr.Point2D((x[i], y[j + 1]))
+                p1 = volmdlr.Point2D(x[i], y[j])
+                p2 = volmdlr.Point2D(x[i + 1], y[j])
+                p3 = volmdlr.Point2D(x[i + 1], y[j + 1])
+                p4 = volmdlr.Point2D(x[i], y[j + 1])
                 points_in = []
                 for p in [p1, p2, p3, p4]:
                     if p in point_index:
@@ -2117,7 +2117,6 @@ class Contour3D(Contour, Wire3D):
             ax = Axes3D(plt.figure())
 
         for edge in self.primitives:
-            print('edge', edge)
             edge.plot(ax=ax, color=color, alpha=alpha)
 
         return ax

@@ -69,16 +69,16 @@ cut_line.plot(ax=ax3, color='red')
 
 cutted_contours = rl2D_c2.cut_by_line(cut_line)
 # for c in cutted_contours:
-cutted_contours[0].translation(-0.05*cut_line.NormalVector()).MPLPlot(ax=ax3, color='g')
-cutted_contours[1].translation(+0.05*cut_line.NormalVector()).MPLPlot(ax=ax3, color='blue')
+cutted_contours[0].translation(-0.05*cut_line.normal_vector()).plot(ax=ax3, color='g')
+cutted_contours[1].translation(+0.05*cut_line.normal_vector()).plot(ax=ax3, color='blue')
 
-assert math.isclose(cutted_contours[0].Area()+cutted_contours[1].Area(),
-                    rl2D_c2.Area(), abs_tol=1e-12)
+assert math.isclose(cutted_contours[0].area()+cutted_contours[1].area(),
+                    rl2D_c2.area(), abs_tol=1e-12)
 
 
-ax4 = rl2D_c2.plot()
-mesh = rl2D_c2.grid_triangulation(25, 10)
-mesh.plot(ax=ax4)
+# ax4 = rl2D_c2.plot()
+# mesh = rl2D_c2.grid_triangulation(25, 10)
+# mesh.plot(ax=ax4)
 
 
 # =============================================================================

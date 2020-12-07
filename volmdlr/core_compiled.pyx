@@ -537,7 +537,7 @@ class Point2D(Vector2D):
     def to_vector(self):
         return Vector2D(self.x, self.y, self.z)
 
-    def plot(self, ax=None, color='k'):
+    def plot(self, ax=None, color='k', plot_points=True):
         if ax is None:
             fig, ax = plt.subplots()
 
@@ -1629,7 +1629,7 @@ class Frame3D(Basis3D):
         return fig, ax
 
 
-    def plot(self, ax=None, color='b'):
+    def plot(self, ax=None, color='b', alpha=1., plot_points=True):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')

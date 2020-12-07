@@ -13,28 +13,7 @@ steps:
   - cd doc
   - make html
   - cd ../scripts
-  - python arcs2D.py
-  - python arcs3D.py
-  - python block3d.py
-  - python simple_shapes.py
-  - python roundedlines.py
-  - python polygon2D.py
-  - python polygon2D_2.py
-  - python extrusion.py
-  - python demo2D.py
-  - python casing.py
-  - python sweep.py
-  - python revolved_profile.py
-  - cd distance
-  - python arc3D_arc3D.py
-  - python arc3D_ls3D.py
-  - python cyl_cyl.py
-  - python cyl_pf.py
-  - python ls3D_ls3D.py
-  - python sweep_sweep.py
-  - python tore_cyl.py
-  - python tore_pf.py
-  - python tore_tore.py
+  - python ci_scripts.py
 
 - name: develop
   image: python:3.8
