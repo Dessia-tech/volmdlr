@@ -8,7 +8,8 @@ scripts = ['arcs2D.py', 'arcs3D.py', 'block3d.py', 'simple_shapes.py',
 
 for script_name in scripts:
     print('Executing script {}'.format(script_name))
-    execfile(script_name)
+
+    exec(open(script_name).read())
 
 distance_scripts: ['arc3D_arc3D.py','arc3D_ls3D.py', 'cyl_cyl.py', 'cyl_pf.py',
                    'ls3D_ls3D.py', 'sweep_sweep.py', 'tore_cyl.py','tore_pf.py'
@@ -17,4 +18,4 @@ distance_scripts: ['arc3D_arc3D.py','arc3D_ls3D.py', 'cyl_cyl.py', 'cyl_pf.py',
 for script_name in distance_scripts:
     print('Executing script {}'.format(script_name))
 
-    execfile(os.path.join('distance', script_name))
+    exec(os.path.join('distance', script_name))
