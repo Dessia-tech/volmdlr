@@ -700,15 +700,14 @@ class Contour2D(Contour, Wire2D):
         else :
               contours+=reapaired_contours
                      
-        for contour in contours:
-            if len(contour.primitives)>3:
-                good_contours.append(contour)           
+        
+                     
         A=[]
-        for contour in good_contours:
+        for contour in contours:
            A.append(contour.area())
            
         index=A.index(max(A))
-        return good_contours[index]
+        return contours[index]
    
     def random_point_inside(self):
         xmin, xmax, ymin, ymax = self.bounding_rectangle()
@@ -1283,7 +1282,8 @@ class ClosedPolygon2D(Contour2D):
       
         for simplice in delaunay[tri.simplices]:
         
-            triangle=Triangle2D([volmdlr.Point2D(simplice[0]),volmdlr.Point2D(simplice[1]),volmdlr.Point2D(simplice[2])])
+            triangle=Triangle2D([volmdlr.Point2D(simplice[0][0],simplice[0][1]),volmdlr.Point2D(simplice[1][0],simplice[1][1]),
+                                 volmdlr.Point2D(simplice[2][0],simplice[2][1])])
             delaunay_triangles.append(triangle)
            
      
@@ -1291,7 +1291,32 @@ class ClosedPolygon2D(Contour2D):
             
             
         return delaunay_triangles         
-
+    def is_convex(self):
+    
+      if  len(self.line_segments)<4:
+          return False
+    
+    
+      res = 0;
+      for i in range(len(self.points)):
+      
+        p = self.points[i];
+        tmp = self.points[(i+1) % len(self.points)]
+        v =volmdlr.Point2D(tmp.x - p.x,tmp.y - p.y)
+      
+        u = self.points[(i+2) % len(self.points)]
+    
+        if i == 0:
+          res = u.x * v.y - u.y * v.x + v.x * p.y - v.y * p.x;
+        else:
+        
+          newres = u.x * v.y - u.y * v.x + v.x * p.y - v.y * p.x;
+          if ((newres > 0 and res < 0) or (newres < 0 and res > 0)):
+            return False
+        
+      
+      return True
+    
     def offset(self, offset):
         xmin, xmax, ymin, ymax = self.bounding_rectangle()
 

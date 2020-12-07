@@ -395,7 +395,7 @@ class Surface2D(volmdlr.core.Primitive2D):
                 primitives2.extend(self.outer_contour.primitives[:ip3])
                 
               
-                all_contours.extend([volmdlr.wires.Contour2D(primitives2)])
+                all_contours.extend([volmdlr.wires.Contour2D(primitives1),volmdlr.wires.Contour2D(primitives2)])
                    
             
             else:

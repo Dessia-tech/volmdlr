@@ -392,7 +392,7 @@ class CompositePrimitive2D(Primitive2D):
             ax.set_aspect('equal')
 
         for element in self.primitives:
-            element.plot(ax=ax, color=color, plot_points=plot_points)
+            element.plot(ax=ax, color=color)
 
 
         ax.margins(0.1)
