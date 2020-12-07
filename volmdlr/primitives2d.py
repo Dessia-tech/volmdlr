@@ -311,8 +311,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
                     unit=True))
             else:
                 normal_vectors.append(
-                    (self.points[index + 1] - self.points[index]).normal_vector(
-                        unit=True))
+                    (self.points[index + 1] - self.points[index]).unit_normal_vector())
 
         dot1 = dir_vec_1.dot(normal_vectors[0])
         dot2 = dir_vec_2.dot(normal_vectors[-1])

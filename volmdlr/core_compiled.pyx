@@ -433,14 +433,18 @@ class Vector2D(Vector):
     def to_point(self):
         return Point2D(self.x, self.y)
 
-    def normal_vector(self, unit=False):
+    def normal_vector(self):
         n = Vector2D(-self.y, self.x)
-        if unit:
-            n.normalize()
         return n
 
+    def unit_normal_vector(self):
+        n = self.normal_vector()
+        n.normalize()
+        return n
+
+
     def deterministic_unit_normal_vector(self):
-        return self.normal_vector(unit=True)
+        return self.unit_normal_vector()
 
     @classmethod
     def random(cls, xmin, xmax, ymin, ymax):
@@ -635,7 +639,7 @@ class Point2D(Vector2D):
     @classmethod
     def line_projection(cls, point, line):
         p1, p2 = line[0], line[1]
-        n = line.normalVector(unit=True)
+        n = line.unit_normal_vector()
         pp1 = point - p1
         return  pp1 - pp1.dot(n)*n + p1
 
