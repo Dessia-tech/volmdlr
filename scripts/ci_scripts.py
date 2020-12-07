@@ -17,4 +17,4 @@ distance_scripts = ['arc3D_arc3D.py','arc3D_ls3D.py', 'cyl_cyl.py', 'cyl_pf.py',
 
 for script_name in distance_scripts:
     print('Executing script {}'.format(script_name))
-    exec((open(os.path.join('distance', script_name)))
+    exec(open(os.path.join('distance', script_name)))
