@@ -849,7 +849,7 @@ class Contour2D(Contour, Wire2D):
         triangles = []
         for xi in x:
             for yi in y:
-                p = volmdlr.Point2D((xi, yi))
+                p = volmdlr.Point2D(xi, yi)
                 if self.point_belongs(p):
                     point_index[p] = ip
                     points.append(p)
@@ -857,10 +857,10 @@ class Contour2D(Contour, Wire2D):
 
         for i in range(n):
             for j in range(m):
-                p1 = volmdlr.Point2D((x[i], y[j]))
-                p2 = volmdlr.Point2D((x[i + 1], y[j]))
-                p3 = volmdlr.Point2D((x[i + 1], y[j + 1]))
-                p4 = volmdlr.Point2D((x[i], y[j + 1]))
+                p1 = volmdlr.Point2D(x[i], y[j])
+                p2 = volmdlr.Point2D(x[i + 1], y[j])
+                p3 = volmdlr.Point2D(x[i + 1], y[j + 1])
+                p4 = volmdlr.Point2D(x[i], y[j + 1])
                 points_in = []
                 for p in [p1, p2, p3, p4]:
                     if p in point_index:
@@ -2019,11 +2019,19 @@ class Contour3D(Contour, Wire3D):
         content = ''
         edge_ids = []
         for primitive in self.primitives:
-            primitive_content, primitive_id = primitive.to_step(current_id)
-            current_id = primitive_id +1
+            # edges may return several ids in step
+            primitive_content, primitive_ids = primitive.to_step(current_id)
             content += primitive_content
-            edge_ids.append(primitive_id)
-        content += "#{} = EDGE_LOOP('{}', ({}));\n".format(current_id, self.name,
+            current_id = primitive_ids[-1] +1
+            for primitive_id in primitive_ids: 
+                content += "#{} = ORIENTED_EDGE('{}',*,*,#{},.T.);\n".format(current_id,
+                                                                             primitive.name,
+                                                                             primitive_id)
+                edge_ids.append(current_id)
+
+                current_id += 1
+
+        content += "#{} = EDGE_LOOP('{}',({}));\n".format(current_id, self.name,
                                                       volmdlr.core.step_ids_to_str(edge_ids))
         return content, current_id
 
@@ -2183,14 +2191,6 @@ class Circle3D(Contour3D):
         return '{} = Part.Circle(fc.Vector({},{},{}),fc.Vector({},{},{}),{})\n'.format(
             name, xc, yc, zc, xn, yn, zn, 1000 * self.radius)
 
-    def to_step(self, current_id):
-        content, frame_id = self.frame.to_step(current_id)
-        current_id = frame_id+1
-        content += "#{} = CIRCLE('{}', #{}, {});\n".format(current_id, self.name,
-                                                           frame_id,
-                                                           round(self.radius*1000, 3))
-        return content, current_id
-
     def rotation(self, rot_center, axis, angle, copy=True):
         new_center = self.center.rotation(rot_center, axis, angle, True)
         new_normal = self.normal.rotation(rot_center, axis, angle, True)
@@ -2208,7 +2208,7 @@ class Circle3D(Contour3D):
         else:
             self.frame = new_frame
 
-    def plot(self, ax=None, color='k'):
+    def plot(self, ax=None, color='k', alpha=1):
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
@@ -2225,7 +2225,7 @@ class Circle3D(Contour3D):
         x.append(x[0])
         y.append(y[0])
         z.append(z[0])
-        ax.plot(x, y, z, color)
+        ax.plot(x, y, z, color=color, alpha=alpha)
         return ax
 
     def point_at_abscissa(self, curvilinear_abscissa):
@@ -2251,6 +2251,47 @@ class Circle3D(Contour3D):
             other_vec = None
         normal.normalize()
         return cls.from_center_normal(center, normal, radius, arguments[0][1:-1])
+
+    def to_step(self, current_id):
+        circle_frame = volmdlr.Frame3D(self.center, self.frame.w, self.frame.u, self.frame.v)
+        content, frame_id = circle_frame.to_step(current_id)
+        circle_id = frame_id+1
+        content += "#{} = CIRCLE('{}',#{},{});\n".format(circle_id, self.name,
+                                                           frame_id,
+                                                           round(self.radius*1000, 3))
+        p1 = self.frame.origin + self.frame.u*self.radius
+        p2 = self.frame.origin + self.frame.v*self.radius
+        p3 = self.frame.origin - self.frame.u*self.radius
+        p4 = self.frame.origin - self.frame.v*self.radius
+
+        p1_content, p1_id = p1.to_step(circle_id+1, vertex=True)
+        # p2_content, p2_id = p2.to_step(p1_id+1, vertex=True)
+        p3_content, p3_id = p3.to_step(p1_id+1, vertex=True)
+        # p4_content, p4_id = p4.to_step(p3_id+1, vertex=True)
+        content += p1_content + p3_content
+
+        arc1_id = p3_id + 1
+        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc1_id, self.name,
+                                                                    p1_id, p3_id,
+                                                                    circle_id)
+        oriented_edge1_id = arc1_id + 1
+        content += "#{} = ORIENTED_EDGE('',*,*,#{},.T.);\n".format(oriented_edge1_id,
+                                                                     arc1_id)
+
+        arc2_id = oriented_edge1_id + 1
+        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc2_id, self.name,
+                                                                    p3_id, p1_id,
+                                                                    circle_id)
+        oriented_edge2_id = arc2_id + 1
+        content += "#{} = ORIENTED_EDGE('',*,*,#{},.T.);\n".format(oriented_edge2_id,
+                                                                     arc2_id)
+
+        current_id = oriented_edge2_id + 1
+        content += "#{} = EDGE_LOOP('{}',(#{},#{}));\n".format(current_id, self.name,
+                                                           oriented_edge1_id,
+                                                           oriented_edge2_id)
+
+        return content, current_id
 
     def _bounding_box(self):
         """

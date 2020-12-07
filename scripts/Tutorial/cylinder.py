@@ -7,13 +7,14 @@ Created on Thu Apr  2 10:51:54 2020
 
 
 import volmdlr as vm
+import volmdlr.step
 import volmdlr.primitives3d as primitives3d
 import math
 import matplotlib.pyplot as plt
 
 radius = 5e-3 #Choose the radius
 center = vm.Point3D(0,0,0) #Choose the coordinate of the center
-normal = vm.Vector3D(1,1,1) #Choose the normal
+normal = vm.Vector3D(0,0,1) #Choose the normal
 cylinder = primitives3d.Cylinder(center, normal, radius, length=0.1, name='Cylinder')
 
 h = 10e-3 #Height of cylinder
@@ -48,3 +49,8 @@ model = vm.core.VolumeModel([cylinder], name='cylinder model')
 print(model.to_step('cylinder.step'))
 
 # model.babylonjs()
+
+# Reading own step
+step = volmdlr.step.Step('cylinder.step')
+model2 = step.to_volume_model()
+model2.babylonjs()

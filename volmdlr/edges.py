@@ -754,7 +754,7 @@ class LineSegment2D(LineSegment):
 
 
     def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
-        return plot_data.Line2D(data=[self.start.x, self.start.y,
+        return plot_data.LineSegment(data=[self.start.x, self.start.y,
 
                                               self.end.x, self.end.y],
                                         plot_data_states=plot_data_states)
@@ -1560,6 +1560,18 @@ class Line3D(Line):
 
         return None
 
+    def to_step(self, current_id):
+        p1_content, p1_id = self.point1.to_step(current_id)
+        # p2_content, p2_id = self.point2.to_step(current_id+1)
+        current_id = p1_id + 1
+        u_content, u_id = volmdlr.Vector3D.to_step(self.unit_direction_vector(),
+                                                   current_id,
+                                                   vector=True)
+        current_id = u_id + 1
+        content = p1_content + u_content
+        content += "#{} = LINE('{}',#{},#{});\n".format(current_id, self.name,
+                                                    p1_id, u_id)
+        return content, current_id
 
 class LineSegment3D(LineSegment):
     """
@@ -1611,18 +1623,18 @@ class LineSegment3D(LineSegment):
                              self.point2.plane_projection2d(center, x, y))
 
     def intersection(self, segment2):
-        x1 = self.start.vector[0]
-        y1 = self.start.vector[1]
-        z1 = self.start.vector[2]
-        x2 = self.point2.vector[0]
-        y2 = self.point2.vector[1]
-        z2 = self.point2.vector[2]
-        x3 = segment2.start.vector[0]
-        y3 = segment2.start.vector[1]
-        z3 = segment2.start.vector[2]
-        x4 = segment2.end_point.vector[0]
-        y4 = segment2.end_point.vector[1]
-        z4 = segment2.end_point.vector[2]
+        x1 = self.start.x
+        y1 = self.start.y
+        z1 = self.start.z
+        x2 = self.end.x
+        y2 = self.end.y
+        z2 = self.end.z
+        x3 = segment2.start.x
+        y3 = segment2.start.y
+        z3 = segment2.start.z
+        x4 = segment2.end.x
+        y4 = segment2.end.y
+        z4 = segment2.end.z
 
         if x3 == 0 and x4 == 0 and y4 - y3 == 0:
             x5, y5, z5 = x3, y3, z3
@@ -1678,8 +1690,8 @@ class LineSegment3D(LineSegment):
             if math.isclose(res1, res2,
                             abs_tol=1e-7):  # if there is an intersection point
                 if t1 >= 0 or t1 <= 1:
-                    return volmdlr.Point3D([x1 + (x2 - x1) * t1, y1 + (y2 - y1) * t1,
-                                            z1 + (z2 - z1) * t1])
+                    return volmdlr.Point3D(x1 + (x2 - x1) * t1, y1 + (y2 - y1) * t1,
+                                            z1 + (z2 - z1) * t1)
 
         return None
 
@@ -1770,7 +1782,7 @@ class LineSegment3D(LineSegment):
             name, x1, y1, z1, x2, y2, z2)
 
     def to_line(self):
-        return Line3D(*self.points)
+        return Line3D(self.start, self.end)
 
     def babylon_script(self, color=(1, 1, 1), name='line', type_='line',
                        parent=None):
@@ -2018,13 +2030,19 @@ class LineSegment3D(LineSegment):
                                            0, (self.end - self.start).dot(axis))
 
     def to_step(self, current_id):
-        start_content, start_id = self.start.to_step(current_id)
-        end_content, end_id = self.end.to_step(current_id+1)
-        current_id += 2
-        content = start_content + end_content
-        content += "#{} = LINE('{}', #{}, #{});\n".format(current_id, self.name,
-                                                    start_id, end_id)
-        return content, current_id
+        line = self.to_line()
+        content, line_id = line.to_step(current_id)
+        current_id = line_id + 1
+        start_content, start_id = self.start.to_step(current_id, vertex=True)
+        current_id = start_id + 1
+        end_content, end_id = self.end.to_step(current_id+1, vertex=True)
+        content += start_content + end_content
+        current_id = end_id + 1
+        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(current_id, self.name,
+                                                    start_id, end_id, line_id)
+        return content, [current_id]
+
+
 
 class BSplineCurve3D(Edge):
     _non_serializable_attributes = ['curve']
@@ -2629,14 +2647,19 @@ class Arc3D(Edge):
                                        arc2d.angle1, arc2d.angle2)
 
     def to_step(self, current_id):
-        start_content, start_id = self.start.to_step(current_id)
-        end_content, end_id = self.end.to_step(current_id+1)
-        current_id += 2
+
+        content, frame_id = self.frame.to_step(current_id)
+        circle_id = frame_id + 1
+        content += "#{} = CIRCLE('{}', #{}, {});\n".format(circle_id, self.name,
+                                                           frame_id,
+                                                           round(self.radius*1000, 3))
+        current_id = circle_id + 1
+        start_content, start_id = self.start.to_step(current_id, vertex=True)
+        end_content, end_id = self.end.to_step(start_id+1, vertex=True)
         content = start_content + end_content
-        circle = Circle3D(self.center, self.radius, self.normal)
-        circle_content, circle_id = circle.to_step(current_id)
-        content += "#{} = EDGE_CURVE('{}', #{}, #{});\n".format(current_id, self.name,
-                                                    start_id, end_id)
+        current_id = end_id + 1
+        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(current_id, self.name,
+                                                    start_id, end_id, circle_id)
         return content, current_id
     
     
@@ -2676,7 +2699,7 @@ class FullArc3D(Edge):
         return self.start.rotation(self.center, self.normal, angle)
 
     def polygon_points(self, angle_resolution=10):
-        npoints = angle_resolution*volmdlr.TWO_PI + 2
+        npoints = int(angle_resolution*volmdlr.TWO_PI) + 2
         polygon_points_3D = [self.start.rotation(self.center,
                                                       self.normal,
                                                       volmdlr.TWO_PI / (npoints - 1) * i
@@ -2689,24 +2712,52 @@ class FullArc3D(Edge):
         u = self.start - self.center
         u.normalize()
         v = self.normal.cross(u)
-        frame = volmdlr.Frame3D(self.center, u, v, self.normal)
+        frame = volmdlr.Frame3D(self.center, self.normal, u, v)
         content, frame_id = frame.to_step(current_id)
         circle_id = frame_id+1
         # Not calling Circle3D.to_step because of circular imports
-        content += "#{} = CIRCLE('{}', #{}, {});\n".format(circle_id, self.name,
+        content += "#{} = CIRCLE('{}',#{},{});\n".format(circle_id, self.name,
                                                     frame_id,
                                                     round(self.radius*1000, 3))
-        start_content, start_id = self.start.to_step(circle_id+1)
-        end_content, end_id  = self.start.to_step(circle_id+2)
-        content += start_content + end_content
-        arc_id = end_id + 1
-        content += "#{} = EDGE_CURVE('{}', #{}, #{}, #{});\n".format(arc_id, self.name,
-                                                                    start_id, end_id,
+
+        p1 = self.center + u*self.radius
+        p2 = self.center + v*self.radius
+        p3 = self.center - u*self.radius
+        p4 = self.center - v*self.radius
+
+        p1_content, p1_id = p1.to_step(circle_id+1, vertex=True)
+        p2_content, p2_id = p2.to_step(p1_id+1, vertex=True)
+        p3_content, p3_id = p3.to_step(p2_id+1, vertex=True)
+        p4_content, p4_id = p4.to_step(p3_id+1, vertex=True)
+        content += p1_content + p2_content + p3_content + p4_content 
+
+        arc1_id = p4_id + 1
+        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc1_id, self.name,
+                                                                    p1_id, p2_id,
                                                                     circle_id)
 
-        return content, arc_id
+        arc2_id = arc1_id + 1
+        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc2_id, self.name,
+                                                                    p2_id, p3_id,
+                                                                    circle_id)
 
-    def plot(self, ax=None, color='k'):
+        arc3_id = arc2_id + 1
+        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc3_id, self.name,
+                                                                    p3_id, p4_id,
+                                                                    circle_id)
+
+        arc4_id = arc3_id + 1
+        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc4_id, self.name,
+                                                                    p4_id, p1_id,
+                                                                    circle_id)
+
+
+        return content, [arc1_id, arc2_id, arc3_id, arc4_id]
+
+
+
+
+    def plot(self, ax=None, color='k', alpha=1.):
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
@@ -2721,7 +2772,7 @@ class FullArc3D(Edge):
         x.append(x[0])
         y.append(y[0])
         z.append(z[0])
-        ax.plot(x, y, z, color)
+        ax.plot(x, y, z, color=color, alpha=alpha)
         return ax
 
 

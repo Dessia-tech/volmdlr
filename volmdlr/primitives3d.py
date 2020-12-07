@@ -13,7 +13,7 @@ import volmdlr
 import volmdlr.core
 import volmdlr.primitives
 import volmdlr.faces
-from typing import Tuple
+from typing import Tuple, List, Dict
 
 import matplotlib.pyplot as plt
 
@@ -24,7 +24,8 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D, volmdlr.primitives.Rounded
     _non_hash_attributes = ['name']
     _generic_eq = True
     
-    def __init__(self, points, radius, adapt_radius=False, name=''):
+    def __init__(self, points:List[volmdlr.Point3D], radius:Dict[str, float],
+                 adapt_radius:bool=False, name:str=''):
         primitives = volmdlr.primitives.RoundedLineSegments.__init__(self, points, radius,
                                                   volmdlr.edges.LineSegment3D,
                                                   volmdlr.edges.Arc3D,
@@ -40,7 +41,7 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D, volmdlr.primitives.Rounded
             if ipoint == 0:
                 pt1 = self.points[-1]
             else:
-                pt1 = self.points[ipoint -1]
+                pt1 = self.points[(ipoint) -1]
             pti = self.points[ipoint]
             if ipoint < self.npoints-1:
                 pt2 = self.points[ipoint+1]
@@ -395,8 +396,10 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
             raise ValueError('At least one inner contour is not contained in outer_contour.')
 
         faces = self.shell_faces()
+
         volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
                                              alpha=alpha, name=name)
+
 
     def shell_faces(self):
         lower_plane = volmdlr.faces.Plane3D.from_plane_vectors(self.plane_origin,
