@@ -182,6 +182,9 @@ class Line(dc.DessiaObject):
         return self.point2 - self.point1
 
     def normal_vector(self):
+        return self.direction_vector().normal_vector()
+
+    def unit_normal_vector(self):
         return self.unit_direction_vector().normal_vector()
 
     def point_projection(self, point):
