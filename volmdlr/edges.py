@@ -2650,8 +2650,12 @@ class Arc3D(Edge):
                                        arc2d.angle1, arc2d.angle2)
 
     def to_step(self, current_id):
+        u = self.start - self.center
+        u.normalize()
+        v = self.normal.cross(u)
+        frame = volmdlr.Frame3D(self.center, self.normal, u, v)
 
-        content, frame_id = self.frame.to_step(current_id)
+        content, frame_id = frame.to_step(current_id)
         circle_id = frame_id + 1
         content += "#{} = CIRCLE('{}', #{}, {});\n".format(circle_id, self.name,
                                                            frame_id,
@@ -2663,7 +2667,7 @@ class Arc3D(Edge):
         current_id = end_id + 1
         content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(current_id, self.name,
                                                     start_id, end_id, circle_id)
-        return content, current_id
+        return content, [current_id]
     
     
 class FullArc3D(Edge):
