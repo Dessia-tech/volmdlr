@@ -362,7 +362,7 @@ class CompositePrimitive2D(Primitive2D):
         else:
             for p in self.primitives:
                 p.rotation(center, angle, copy=False)
-            self.UpdateBasisPrimitives()
+            self.update_basis_primitives()
 
     def translation(self, offset, copy=True):
         if copy:
@@ -371,7 +371,7 @@ class CompositePrimitive2D(Primitive2D):
         else:
             for p in self.primitives:
                 p.translation(offset, copy=False)
-            self.UpdateBasisPrimitives()
+            self.update_basis_primitives()
 
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -383,7 +383,7 @@ class CompositePrimitive2D(Primitive2D):
         else:
             for p in self.primitives:
                 p.frame_mapping(frame, side, copy=False)
-            self.UpdateBasisPrimitives()
+            self.update_basis_primitives()
 
 
     def plot(self, ax=None, color='k', alpha=1,
