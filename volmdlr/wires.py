@@ -1171,7 +1171,7 @@ class ClosedPolygon2D(Contour2D):
     def plot_data(self, marker=None, color='black', stroke_width=1, opacity=1):
         data = []
         for nd in self.points:
-            data.append({'x': nd.vector[0], 'y': nd.vector[1]})
+            data.append({'x': nd[0], 'y': nd[1]})
         return {'type': 'wire',
                 'data': data,
                 'color': color,
