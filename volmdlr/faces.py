@@ -286,7 +286,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         all_contours=[]
   
         if self.outer_contour.primitives[0].__class__.__name__ == 'Circle2D':
-           all_contours.extend(self.outer_contour.cut_by_line_outer_circle(self.inner_contours[0],line)) 
+           all_contours.extend(self.cut_by_line_outer_circle(self.outer_contour,self.inner_contours[0],line)) 
            
         else :
              if self.inner_contours[0].__class__.__name__ == 'Circle2D':
