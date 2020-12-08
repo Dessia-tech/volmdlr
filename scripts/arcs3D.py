@@ -28,8 +28,8 @@ s = volmdlr.Point3D.random(-1,1,-1,1,-1,1)
 a = volmdlr.edges.Arc3D(s, i, e)
 ax = a.plot()
 
-for p in a.tessellation_points():
-    p.plot(ax=ax)
+# for p in a.polygon_points():
+#     p.plot(ax=ax)
     
 s.plot(ax=ax, color='r')
 e.plot(ax=ax, color='g')
@@ -42,14 +42,14 @@ arc1 = volmdlr.edges.Arc3D(volmdlr.Point3D(-0.03096, 0.001162, -0.02),
                 volmdlr.Vector3D(0.0, 0.0, 0.001))
 
 ax = arc1.plot()
-for p in arc1.tessellation_points():
-    p.plot(ax=ax)
+# for p in arc1.polygon_points():
+#     p.plot(ax=ax)
 
 
 arc1.start.plot(ax=ax, color='r')
-arc1.end.plot(ax=ax, color='m')
+arc1.end.plot(ax=ax, color='g')
 arc1.interior.plot(ax=ax, color='b')
-arc1.center.plot(ax=ax, color='g')
+arc1.center.plot(ax=ax, color='m')
 
 
 print(arc1.center)
