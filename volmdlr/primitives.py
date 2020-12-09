@@ -45,7 +45,6 @@ class RoundedLineSegments:
         lines_length = {}
         # Computing optimal radii
         rounded_points_indices = [int(i) for i in sorted(self.radius.keys())]
-        print(rounded_points_indices)
         groups = []
         arcs = {}
         primitives = []
