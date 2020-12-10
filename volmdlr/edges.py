@@ -2537,10 +2537,10 @@ class Arc3D(Edge):
 
     def minimum_distance_points_line(self, other_line):
 
-        u = other_line.DirectionVector()
+        u = other_line.direction_vector()
         k = self.start - self.center
         k.normalize()
-        w = self.center - other_line.points[0]
+        w = self.center - other_line.start
         v = self.normal.cross(k)
 
         r = self.radius
