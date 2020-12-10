@@ -58,3 +58,5 @@ assert surface2d.point_belongs(plane_inter_2_2d) == False
 p1_2dto3d = plane.point2d_to_3d(plane_inter_1_2d)
 p1_2dto3d.plot(ax=ax, color='b')
 assert p1_2dto3d == plane_inter_1[0]
+
+face.babylonjs()

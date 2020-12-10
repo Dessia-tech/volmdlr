@@ -16,6 +16,7 @@ import volmdlr.faces
 
 import webbrowser
 
+
 def step_split_arguments(function_arg):
     """
     Split the arguments of a function that doesn't start with '(' but end with ')'
@@ -177,57 +178,58 @@ class Step:
             F.remove_node(node)
             G.remove_node(node)
 
-        if draw:
-            # ----------------PLOT----------------
-            pos = nx.kamada_kawai_layout(G)
-            plt.figure()
-            nx.draw_networkx_nodes(F, pos)
-            nx.draw_networkx_edges(F, pos)
-            nx.draw_networkx_labels(F, pos, labels)
-            # ------------------------------------
-
-        if html:
-
-            env = Environment(
-                loader=PackageLoader('powertransmission', 'templates'),
-                autoescape=select_autoescape(['html', 'xml']))
-            template = env.get_template('graph_visJS.html')
-
-            nodes = []
-            edges = []
-            for label in list(labels.values()):
-                nodes.append({'name': label, 'shape': 'circular'})
-
-            for edge in G.edges:
-                edge_dict = {}
-                edge_dict['inode1'] = int(edge[0]) - 1
-                edge_dict['inode2'] = int(edge[1]) - 1
-                edges.append(edge_dict)
-
-            options = {}
-            s = template.render(
-                name=self.stepfile,
-                nodes=nodes,
-                edges=edges,
-                options=options)
-
-            with open('graph_visJS.html', 'wb') as file:
-                file.write(s.encode('utf-8'))
-
-            webbrowser.open('file://' + os.path.realpath('graph_visJS.html'))
+        # if draw:
+        #     # ----------------PLOT----------------
+        #     pos = nx.kamada_kawai_layout(G)
+        #     plt.figure()
+        #     nx.draw_networkx_nodes(F, pos)
+        #     nx.draw_networkx_edges(F, pos)
+        #     nx.draw_networkx_labels(F, pos, labels)
+        #     # ------------------------------------
+        #
+        # if html:
+        #
+        #     env = Environment(
+        #         loader=PackageLoader('powertransmission', 'templates'),
+        #         autoescape=select_autoescape(['html', 'xml']))
+        #     template = env.get_template('graph_visJS.html')
+        #
+        #     nodes = []
+        #     edges = []
+        #     for label in list(labels.values()):
+        #         nodes.append({'name': label, 'shape': 'circular'})
+        #
+        #     for edge in G.edges:
+        #         edge_dict = {}
+        #         edge_dict['inode1'] = int(edge[0]) - 1
+        #         edge_dict['inode2'] = int(edge[1]) - 1
+        #         edges.append(edge_dict)
+        #
+        #     options = {}
+        #     s = template.render(
+        #         name=self.stepfile,
+        #         nodes=nodes,
+        #         edges=edges,
+        #         options=options)
+        #
+        #     with open('graph_visJS.html', 'wb') as file:
+        #         file.write(s.encode('utf-8'))
+        #
+        #     webbrowser.open('file://' + os.path.realpath('graph_visJS.html'))
 
         return F
 
     def draw_graph(self):
-        self.graph = self.create_graph()
+        graph = self.create_graph()
         labels = {}
         for id_nb, function in self.functions.items():
-            labels[id_nb] = str(id_nb) + ' ' + function.name
-        pos = nx.kamada_kawai_layout(self.graph)
+            if id_nb in graph.nodes:
+                labels[id_nb] = str(id_nb) + ' ' + function.name
+        pos = nx.kamada_kawai_layout(graph)
         plt.figure()
-        nx.draw_networkx_nodes(self.graph, pos)
-        nx.draw_networkx_edges(self.graph, pos)
-        nx.draw_networkx_labels(self.graph, pos, labels)
+        nx.draw_networkx_nodes(graph, pos)
+        nx.draw_networkx_edges(graph, pos)
+        nx.draw_networkx_labels(graph, pos, labels)
 
     def step_subfunctions(self, subfunctions):
         subfunctions = subfunctions[0]
@@ -329,6 +331,7 @@ class Step:
 
         elif name in STEP_TO_VOLMDLR and hasattr(
                 STEP_TO_VOLMDLR[name], "from_step"):
+            # print(object_dict)
             volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
                 arguments, object_dict)
 
@@ -462,8 +465,16 @@ STEP_TO_VOLMDLR = {
     'ADVANCED_FACE': volmdlr.faces.Face3D,
     'FACE_SURFACE': volmdlr.faces.Face3D,
 
-    'CLOSED_SHELL': volmdlr.faces.Shell3D,
-    'OPEN_SHELL': volmdlr.faces.Shell3D,
+    'CLOSED_SHELL': volmdlr.faces.ClosedShell3D,
+    'OPEN_SHELL': volmdlr.faces.OpenShell3D,
     #        'ORIENTED_CLOSED_SHELL': None,
-    'CONNECTED_FACE_SET': volmdlr.faces.Shell3D,
+    'CONNECTED_FACE_SET': volmdlr.faces.OpenShell3D,
 }
+
+VOLMDLR_TO_STEP = {}
+for k,v in STEP_TO_VOLMDLR.items():
+    if v:
+        if v in VOLMDLR_TO_STEP:
+            VOLMDLR_TO_STEP[v].append(k)
+        else:
+            VOLMDLR_TO_STEP[v] = [k]

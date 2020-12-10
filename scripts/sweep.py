@@ -32,7 +32,7 @@ for i in range(4):
 # c = vm.Circle3D(p1, 0.008, p2-p1)
 c = wires.Circle2D(vm.O2D, 0.008)
 
-rl = primitives3d.OpenedRoundedLineSegments3D(points, radius, adapt_radius=True, name='wire')
+rl = primitives3d.OpenRoundedLineSegments3D(points, radius, adapt_radius=True, name='wire')
 contour = wires.Contour2D([c])
 
 fig = plt.figure()
@@ -42,7 +42,7 @@ for prim in rl.primitives :
     
 
 r1 = rl.to_dict()
-r2 = primitives3d.OpenedRoundedLineSegments3D.dict_to_object(r1)
+r2 = primitives3d.OpenRoundedLineSegments3D.dict_to_object(r1)
 c1 = c.to_dict()
 c2 = vm.wires.Circle2D.dict_to_object(c1)
 
@@ -60,9 +60,10 @@ sweep = primitives3d.Sweep(contour, rl, name = 'Random pipe')
 
 # frame_mapping = sweepy.frame_mapping(frame0, 'new', True)
 
-m = vm.core.VolumeModel([sweep])
-# m = vm.VolumeModel([frame_mapping])
-m.babylonjs()
-# m.FreeCADExport('sweep')
+model = vm.core.VolumeModel([sweep])
+model.babylonjs()
+
+# model.to_step()
+
 
 
