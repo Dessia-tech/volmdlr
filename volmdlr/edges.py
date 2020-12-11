@@ -195,22 +195,7 @@ class Line(dc.DessiaObject):
         projection = self.point1 + t * u
 
         return projection, t * norm_u
-    def line_intersections(self, line):
-        point = volmdlr.Point2D.line_intersection(self, line)
-        if point is not None:
-            point_projection1, _ = self.point_projection(point)
-            if point_projection1 is None:
-                return []
-
-            if line.__class__.__name__ == 'Line2D':
-                point_projection2, _ = line.point_projection(point)
-                if point_projection2 is None:
-                    return []
-
-
-            return [point_projection1]
-        else:
-            return []
+    
 
     def abscissa(self, point):
         u = self.point2 - self.point1
@@ -620,7 +605,8 @@ class LineSegment2D(LineSegment):
             return None, curv_abs
         return point, curv_abs
 
-    def line_intersections(self, line):
+
+    def line_intersections(self, line:Line2D):
         point = volmdlr.Point2D.line_intersection(self, line)
         if point is not None:
             point_projection1, _ = self.point_projection(point)
@@ -636,9 +622,35 @@ class LineSegment2D(LineSegment):
         else:
             return []
 
-    def discretise(self,n:float):
+
+    def linesegment_intersections(self, linesegment:'LineSegment2D'):
+        point = volmdlr.Point2D.line_intersection(self, linesegment)
+        if point is not None:
+            point_projection1, _ = self.point_projection(point)
+            if point_projection1 is None:
+                return []
+
+            point_projection2, _ = linesegment.point_projection(point)
+            if point_projection2 is None:
+                return []
+
+            return [point_projection1]
+        else:
+            return []
+
+    def line_crossings(self, line:'Line2D'):
+        if self.direction_vector().is_colinear_to(line.direction_vector()):
+            return []
+        else:
+            return self.line_intersections(line)
+
+    def linesegment_crossings(self, linesegment:'LineSegment2D'):
+        if self.direction_vector().is_colinear_to(linesegment.direction_vector()):
+            return []
+        else:
+            return self.linesegment_intersections(linesegment)
         
-        
+    def discretise(self, n:float):
          segment_to_nodes={}
     
          

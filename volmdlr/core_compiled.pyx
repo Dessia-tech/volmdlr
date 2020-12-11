@@ -278,9 +278,13 @@ class Vector(DessiaObject):
 
 
     def is_colinear_to(self, other_vector):
-        return math.isclose(abs(self.dot(other_vector))/self.norm()/other_vector.norm(),
-                            1,
-                            abs_tol=1e-5)
+        try:
+            return math.isclose(abs(self.dot(other_vector))/self.norm()/other_vector.norm(),
+                                1,
+                                abs_tol=1e-5)
+            
+        except ZeroDivisionError:
+            return False
 
     @classmethod
     def mean_point(cls, points):

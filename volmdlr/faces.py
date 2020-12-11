@@ -410,6 +410,8 @@ class Surface3D(dc.DessiaObject):
         for contour3d in contours3d:
             contour2d = self.contour3d_to_2d(contour3d)
             inner_contours2d.append(contour2d)
+            print('c2d', contour2d)
+            contour2d.plot()
             contour_area = contour2d.area()
             if contour_area > area:
                 area = contour_area
@@ -1532,11 +1534,14 @@ class Face3D(volmdlr.core.Primitive3D):
         # Detecting inner and outer contours
         name = arguments[0][1:-1]
         surface = object_dict[int(arguments[2])]
+        print('surf', surface)
         # surface_class_name = surface.__class__.__name__
 
         if hasattr(surface, 'face_from_contours3d'):
             if (len(contours) == 1) and isinstance(contours[0], volmdlr.Point3D):
                 return surface
+            print(contours)
+            contours[0].plot()
             return surface.face_from_contours3d(contours)
 
         else:

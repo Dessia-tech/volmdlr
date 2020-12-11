@@ -174,11 +174,18 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                 intersection_points.append((p, primitive))
         return intersection_points
 
-    # def discretization_points(self):
-    #     points = []
-    #     for p in self.primitives:
-    #         points.extend(p.tessellation_points())
-    #     return points
+
+    def line_crossings(self, line: 'volmdlr.edges.Line2D'):
+        """
+        Returns a list of crossings with in ther form of a tuple (point, primitive)
+        of the wire primitives intersecting with the line
+        """
+        intersection_points = []
+        for primitive in self.primitives:
+            for p in primitive.line_crossings(line):
+                intersection_points.append((p, primitive))
+        return intersection_points
+
 
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
@@ -606,10 +613,12 @@ class Contour2D(Contour, Wire2D):
         Cut a contours
         """
         # TODO: there are some copy/paste in this function but refactoring is not trivial
-        intersections = self.line_intersections(line)
+        intersections = self.line_crossings(line)
         n_inter = len(intersections)
         if not intersections:
             return [self]
+                
+        
         if n_inter < 2:
             return [self]
         elif n_inter % 2 == 0:
@@ -708,9 +717,15 @@ class Contour2D(Contour, Wire2D):
 
             return contours
 
-        raise NotImplementedError(
 
+        # ax = self.plot(equal_aspect=False)
+        # # line.plot(ax=ax, color='b')
+        # for point, prim in intersections:
+        #     point.plot(ax=ax, color='r')
+        raise NotImplementedError(
             '{} intersections not supported yet'.format(len(intersections)))
+
+
     def get_pattern(self):
         """ A pattern is portion of the contour from which the contour can be 
         reconstructed by rotations of this portion"""
@@ -953,8 +968,9 @@ class ClosedPolygon2D(Contour2D):
 
     def _line_segments(self):
         lines = []
-        for p1, p2 in zip(self.points, list(self.points[1:]) + [self.points[0]]):
-            lines.append(volmdlr.edges.LineSegment2D(p1, p2))
+        if len(self.points) > 1:
+            for p1, p2 in zip(self.points, list(self.points[1:]) + [self.points[0]]):
+                lines.append(volmdlr.edges.LineSegment2D(p1, p2))
         return lines
 
     def rotation(self, center, angle, copy=True):
