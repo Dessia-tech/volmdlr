@@ -396,7 +396,7 @@ class CompositePrimitive2D(Primitive2D):
             ax.set_aspect('equal')
 
         for element in self.primitives:
-            element.plot(ax=ax, color=color)  # , plot_points=plot_points)
+            element.plot(ax=ax, color=color) #, plot_points=plot_points)
 
         ax.margins(0.1)
         plt.show()
@@ -419,7 +419,7 @@ class CompositePrimitive2D(Primitive2D):
 
 
 class Primitive3D(dc.DessiaObject):
-    def __init__(self, color=None, alpha=0.5, name=''):
+    def __init__(self, color=None, alpha=1, name=''):
         self.color = color
         self.alpha = alpha
 
