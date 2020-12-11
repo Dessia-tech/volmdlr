@@ -1865,9 +1865,9 @@ class Circle2D(Contour2D):
                 self.center = frame.old_coordinates(self.center)
         if side == 'new':
             if copy:
-                return Circle2D(frame.NewCoordinates(self.center), self.radius)
+                return Circle2D(frame.new_coordinates(self.center), self.radius)
             else:
-                self.points = frame.NewCoordinates(self.center)
+                self.points = frame.new_coordinates(self.center)
 
     def area(self):
         return math.pi * self.radius ** 2
