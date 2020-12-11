@@ -603,12 +603,12 @@ class LineSegment2D(LineSegment):
         """
         if self.start == self.end:
             if return_other_point:
-                return 0, volmdlr.Point2D(point)
+                return 0, point
             return 0
         distance, point = volmdlr.core_compiled.LineSegment2DPointDistance(
             [(self.start.x, self.start.y), (self.end.x, self.end.y)], (point.x, point.y))
         if return_other_point:
-            return distance, volmdlr.Point2D(point)
+            return distance, point
         return distance
 
     def point_projection(self, point):
@@ -2537,10 +2537,10 @@ class Arc3D(Edge):
 
     def minimum_distance_points_line(self, other_line):
 
-        u = other_line.DirectionVector()
+        u = other_line.direction_vector()
         k = self.start - self.center
         k.normalize()
-        w = self.center - other_line.points[0]
+        w = self.center - other_line.start
         v = self.normal.cross(k)
 
         r = self.radius
@@ -2650,8 +2650,12 @@ class Arc3D(Edge):
                                        arc2d.angle1, arc2d.angle2)
 
     def to_step(self, current_id):
+        u = self.start - self.center
+        u.normalize()
+        v = self.normal.cross(u)
+        frame = volmdlr.Frame3D(self.center, self.normal, u, v)
 
-        content, frame_id = self.frame.to_step(current_id)
+        content, frame_id = frame.to_step(current_id)
         circle_id = frame_id + 1
         content += "#{} = CIRCLE('{}', #{}, {});\n".format(circle_id, self.name,
                                                            frame_id,
@@ -2663,7 +2667,7 @@ class Arc3D(Edge):
         current_id = end_id + 1
         content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(current_id, self.name,
                                                     start_id, end_id, circle_id)
-        return content, current_id
+        return content, [current_id]
     
     
 class FullArc3D(Edge):
