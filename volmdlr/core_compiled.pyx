@@ -1290,9 +1290,9 @@ class Basis3D(Basis):
 
     def __neg__(self):
         M = self.inverse_transfer_matrix()
-        return Basis3D(Vector3D((M.M11, M.M21, M.M31)),
-                       Vector3D((M.M12, M.M22, M.M32)),
-                       Vector3D((M.M13, M.M23, M.M33)))
+        return Basis3D(Vector3D(M.M11, M.M21, M.M31),
+                       Vector3D(M.M12, M.M22, M.M32),
+                       Vector3D(M.M13, M.M23, M.M33))
 
 
     def __sub__(self, other_frame):

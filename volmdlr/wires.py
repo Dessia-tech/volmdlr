@@ -1622,6 +1622,7 @@ class ClosedPolygon2D(Contour2D):
                 'marker': marker,
                 'opacity': opacity}
 
+
     @classmethod
     def points_convex_hull(cls, points):
         ymax, pos_ymax = volmdlr.max_pos([pt.vector[1] for pt in points])
