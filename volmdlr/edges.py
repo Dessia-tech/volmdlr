@@ -617,12 +617,12 @@ class LineSegment2D(LineSegment):
         """
         if self.start == self.end:
             if return_other_point:
-                return 0, volmdlr.Point2D(point)
+                return 0, point
             return 0
         distance, point = volmdlr.core_compiled.LineSegment2DPointDistance(
             [(self.start.x, self.start.y), (self.end.x, self.end.y)], (point.x, point.y))
         if return_other_point:
-            return distance, volmdlr.Point2D(point)
+            return distance, point
         return distance
     def center_of_mass(self):
        
