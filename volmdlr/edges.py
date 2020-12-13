@@ -1943,10 +1943,12 @@ class LineSegment3D(LineSegment):
                 dist = p1.point_distance(p2)
                 if dist < dist_min:
                     dist_min = dist
-            if not return_points:
-                return dist_min
+                    min_points = (p1, p2)
+            if return_points:
+                p1, p2 = min_points
+                return dist_min, p1, p2
             else:
-                return NotImplementedError
+                return dist_min
 
         else:
             return NotImplementedError

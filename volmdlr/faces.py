@@ -1950,8 +1950,6 @@ class PlaneFace3D(Face3D):
             return min_distance
 
 
-
-
     def edge_intersections(self, edge):
         intersections = []
         linesegment = volmdlr.edges.LineSegment3D(edge.start, edge.end)
