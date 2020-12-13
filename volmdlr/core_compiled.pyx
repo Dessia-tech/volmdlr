@@ -1172,12 +1172,6 @@ class Basis(DessiaObject):
     def __contains__(self, vector):
         return vector in self.vectors
 
-    def __eq__(self, other_basis):
-        all_equal = all([other_vector == vector\
-                         for other_vector, vector\
-                         in zip(other_basis.vectors, self.vectors)])
-        return all_equal
-
     def __hash__(self):
         return hash(self.vectors)
 
@@ -1196,6 +1190,14 @@ class Basis2D(Basis):
         self.u = u
         self.v = v
         self.name = name
+
+    def __eq__(self, other_basis):
+        if other_basis.__class__.__name__ != self.__class__.__name__:
+            return False
+        all_equal = all([other_vector == vector\
+                         for other_vector, vector\
+                         in zip([other_basis.u, other_basis.v], [self.u, self.v])])
+        return all_equal
 
     def __neg__(self):
         Pinv = self.inverse_transfer_matrix()
@@ -1257,7 +1259,7 @@ class Basis2D(Basis):
         """
         self.u.normalize()
         self.v.normalize()
-        
+
 
 XY = Basis2D(X2D, Y2D)
 
@@ -1277,6 +1279,14 @@ class Basis3D(Basis):
         self.v = v
         self.w = w
         self.name = name
+
+    def __eq__(self, other_basis):
+        if other_basis.__class__.__name__ != self.__class__.__name__:
+            return False
+        all_equal = all([other_vector == vector\
+                         for other_vector, vector\
+                         in zip([other_basis.u, other_basis.v, other_basis.w], [self.u, self.v, self.w])])
+        return all_equal
 
     def __hash__(self):
         return hash(self.u) + hash(self.v) + hash(self.w)
@@ -1604,7 +1614,7 @@ class Frame3D(Basis3D):
         return Frame3D(self.origin.copy(), self.u.copy(), self.v.copy(), self.w.copy())
 
     def to_step(self, current_id):
-        
+
         content, origin_id = self.origin.to_step(current_id)
         current_id = origin_id + 1
         u_content, u_id = Vector3D.to_step(self.u, current_id)
@@ -1669,7 +1679,7 @@ class Frame3D(Basis3D):
             w = None
         else:
             w = u.cross(v)
-            
+
         return cls(origin, u, v, w, arguments[0][1:-1])
 
 

@@ -524,6 +524,8 @@ class Plane3D(Surface3D):
         return hash(self.frame)
 
     def __eq__(self, other_plane):
+        if other_plane.__class__.__name__ != self.__class__.__name__:
+            return False
         return (self.frame.origin == other_plane.frame.origin and \
                 self.frame.w.is_colinear_to(other_plane.frame.w))
 
@@ -1487,6 +1489,8 @@ class Face3D(volmdlr.core.Primitive3D):
         return hash(self.surface3d) + hash(self.surface2d)
 
     def __eq__(self, other_):
+        if other_.__class__.__name__ != self.__class__.__name__:
+            return False
         equal = (self.surface3d == other_.surface3d
                  and self.surface2d == other_.surface2d)
         return equal
@@ -1786,11 +1790,11 @@ class PlaneFace3D(Face3D):
     _non_eq_attributes = ['name', 'bounding_box', 'outer_contour3d', 'inner_contours3d']
     _non_hash_attributes = []
 
-    def __init__(self, plane3d:Plane3D, surface2d:Surface2D, name:str=''):
+    def __init__(self, surface3d:Plane3D, surface2d:Surface2D, name:str=''):
         # if not isinstance(outer_contour2d, volmdlr.Contour2D):
         #     raise ValueError('Not a contour2D: {}'.format(outer_contour2d))
         Face3D.__init__(self,
-                        surface3d=plane3d,
+                        surface3d=surface3d,
                         surface2d=surface2d,
                         name=name)
 
