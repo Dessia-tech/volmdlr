@@ -1609,7 +1609,7 @@ class Frame3D(Basis3D):
 
     def to_step(self, current_id):
         
-        content, origin_id = self.origin.to_step(current_id)
+        content, origin_id = self.origin.to_point().to_step(current_id)
         current_id = origin_id + 1
         u_content, u_id = Vector3D.to_step(self.u, current_id)
         current_id = u_id + 1

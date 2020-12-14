@@ -1989,32 +1989,40 @@ class LineSegment3D(LineSegment):
                 else:
                     inner_contours2d = []
             else:
-                # Two arcs and lines
-                arc1_s = volmdlr.Point2D(0, r)
-                arc1_i = arc1_s.rotation(center=volmdlr.O2D, angle=0.5 * angle)
-                arc1_e = arc1_s.rotation(center=volmdlr.O2D, angle=angle)
-                arc1 = Arc2D(self.end, arc1_i, arc1_e)
-
-                arc2_e = volmdlr.Point2D(0, R)
-                arc2_i = arc2_e.rotation(center=volmdlr.O2D, angle=0.5 * angle)
-                arc2_s = arc2_e.rotation(center=volmdlr.O2D, angle=angle)
-                arc2 = Arc2D(arc2_s, arc1_i, self.start)
-
-                line1 = LineSegment2D(arc1_e, arc2_s)
-                line2 = LineSegment2D(arc2_e, arc1_s)
-
-                # arc2 = Arc2D(arc2_s, arc1_i, self.start)
-                # line2 = LineSegment3D(arc1_e, arc2_s)
-                outer_contour2d = volmdlr.wires.Contour2D([arc1, line1,
-                                                           arc2, line2])
                 inner_contours2d = []
+                if math.isclose(r, 0, abs_tol=1e-9):
+                    # One arc and 2 lines (pizza slice)
+                    arc2_e = volmdlr.Point2D(R, 0)
+                    arc2_i = arc2_e.rotation(center=volmdlr.O2D, angle=0.5 * angle)
+                    arc2_s = arc2_e.rotation(center=volmdlr.O2D, angle=angle)
+                    arc2 = Arc2D(arc2_s, arc2_i, arc2_e) 
+                    line1 = LineSegment2D(arc2_e, volmdlr.O2D)
+                    line2 = LineSegment2D(volmdlr.O2D, arc2_s)
+                    outer_contour2d = volmdlr.wires.Contour2D([arc2, line1,
+                                                               line2])
+    
+                else:
+                    # Two arcs and lines
+                    arc1_s = volmdlr.Point2D(r, 0)
+                    arc1_i = arc1_s.rotation(center=volmdlr.O2D, angle=0.5 * angle)
+                    arc1_e = arc1_s.rotation(center=volmdlr.O2D, angle=angle)
+                    arc1 = Arc2D(arc1_s, arc1_i, arc1_e)
+    
+                    arc2_e = volmdlr.Point2D(R, 0)
+                    arc2_i = arc2_e.rotation(center=volmdlr.O2D, angle=0.5 * angle)
+                    arc2_s = arc2_e.rotation(center=volmdlr.O2D, angle=angle)
+                    arc2 = Arc2D(arc2_s, arc2_i, arc2_e)
+    
+                    line1 = LineSegment2D(arc1_e, arc2_s)
+                    line2 = LineSegment2D(arc2_e, arc1_s)
+
+                    outer_contour2d = volmdlr.wires.Contour2D([arc1, line1,
+                                                               arc2, line2])
+
             return volmdlr.faces.PlaneFace3D(surface,
                                              volmdlr.faces.Surface2D(
                                                  outer_contour2d,
-                                                 inner_contours2d
-                                             ))
-
-
+                                                 inner_contours2d))
 
         elif not math.isclose(d1, d2, abs_tol=1e-9):
             # Conical
@@ -2024,14 +2032,14 @@ class LineSegment3D(LineSegment):
 
             semi_angle = math.acos(dv.dot(axis))
             cone_origin = p1_proj - d1 / math.tan(semi_angle) * axis
-            if semi_angle > 0.5 * math.pi:
-                semi_angle = math.pi - semi_angle
+            # if semi_angle > 0.5 * math.pi:
+            #     semi_angle = math.pi - semi_angle
 
-                cone_frame = volmdlr.Frame3D(cone_origin, u, -v, -axis)
-            elif semi_angle < 0:
-                raise NotImplementedError
-            else:
-                cone_frame = volmdlr.Frame3D(cone_origin, u, v, axis)
+            #     cone_frame = volmdlr.Frame3D(cone_origin, u, -v, -axis)
+            # elif semi_angle < 0:
+            #     raise NotImplementedError
+            # else:
+            cone_frame = volmdlr.Frame3D(cone_origin, u, v, axis)
 
             surface = volmdlr.faces.ConicalSurface3D(cone_frame,
                                                      semi_angle)
@@ -2044,9 +2052,14 @@ class LineSegment3D(LineSegment):
             return surface.rectangular_cut(0, angle,
                                            0, (self.end - self.start).dot(axis))
 
-    def to_step(self, current_id):
+    def to_step(self, current_id, surface_id=None):
         line = self.to_line()
         content, line_id = line.to_step(current_id)
+        
+        if surface_id:        
+            content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(line_id+1, line_id, surface_id)
+            line_id += 1
+
         current_id = line_id + 1
         start_content, start_id = self.start.to_step(current_id, vertex=True)
         current_id = start_id + 1
@@ -2661,24 +2674,30 @@ class Arc3D(Edge):
         return surface.rectangular_cut(0, angle,
                                        arc2d.angle1, arc2d.angle2)
 
-    def to_step(self, current_id):
+    def to_step(self, current_id, surface_id=None):
         u = self.start - self.center
         u.normalize()
         v = self.normal.cross(u)
         frame = volmdlr.Frame3D(self.center, self.normal, u, v)
 
         content, frame_id = frame.to_step(current_id)
-        circle_id = frame_id + 1
-        content += "#{} = CIRCLE('{}', #{}, {});\n".format(circle_id, self.name,
+        curve_id = frame_id + 1
+        content += "#{} = CIRCLE('{}', #{}, {});\n".format(curve_id, self.name,
                                                            frame_id,
                                                            round(self.radius*1000, 3))
-        current_id = circle_id + 1
+        
+        if surface_id:
+            content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(curve_id+1, curve_id, surface_id)
+            curve_id += 1
+
+        
+        current_id = curve_id + 1
         start_content, start_id = self.start.to_step(current_id, vertex=True)
         end_content, end_id = self.end.to_step(start_id+1, vertex=True)
-        content = start_content + end_content
+        content += start_content + end_content
         current_id = end_id + 1
         content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(current_id, self.name,
-                                                    start_id, end_id, circle_id)
+                                                    start_id, end_id, curve_id)
         return content, [current_id]
     
     
@@ -2726,52 +2745,63 @@ class FullArc3D(Edge):
                                   for i in range(npoints)]
         return polygon_points_3D
 
-    def to_step(self, current_id):
+    def to_step(self, current_id, surface_id=None):
         # Not calling Circle3D.to_step because of circular imports
         u = self.start - self.center
         u.normalize()
         v = self.normal.cross(u)
         frame = volmdlr.Frame3D(self.center, self.normal, u, v)
         content, frame_id = frame.to_step(current_id)
-        circle_id = frame_id+1
+        curve_id = frame_id+1
         # Not calling Circle3D.to_step because of circular imports
-        content += "#{} = CIRCLE('{}',#{},{});\n".format(circle_id, self.name,
+        content += "#{} = CIRCLE('{}',#{},{});\n".format(curve_id, self.name,
                                                     frame_id,
                                                     round(self.radius*1000, 3))
+        
+        if surface_id:
+            content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(curve_id+1, curve_id, surface_id)
+            curve_id += 1
 
-        p1 = self.center + u*self.radius
-        p2 = self.center + v*self.radius
-        p3 = self.center - u*self.radius
-        p4 = self.center - v*self.radius
+        p1 = (self.center + u*self.radius).to_point()
+        # p2 = self.center + v*self.radius
+        # p3 = self.center - u*self.radius
+        # p4 = self.center - v*self.radius
 
-        p1_content, p1_id = p1.to_step(circle_id+1, vertex=True)
-        p2_content, p2_id = p2.to_step(p1_id+1, vertex=True)
-        p3_content, p3_id = p3.to_step(p2_id+1, vertex=True)
-        p4_content, p4_id = p4.to_step(p3_id+1, vertex=True)
-        content += p1_content + p2_content + p3_content + p4_content 
+        p1_content, p1_id = p1.to_step(curve_id+1, vertex=True)
+        content += p1_content
+        # p2_content, p2_id = p2.to_step(p1_id+1, vertex=True)
+        # p3_content, p3_id = p3.to_step(p2_id+1, vertex=True)
+        # p4_content, p4_id = p4.to_step(p3_id+1, vertex=True)
+        # content += p1_content + p2_content + p3_content + p4_content 
 
-        arc1_id = p4_id + 1
-        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc1_id, self.name,
-                                                                    p1_id, p2_id,
-                                                                    circle_id)
+        # arc1_id = p4_id + 1
+        # content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc1_id, self.name,
+        #                                                             p1_id, p2_id,
+        #                                                             circle_id)
 
-        arc2_id = arc1_id + 1
-        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc2_id, self.name,
-                                                                    p2_id, p3_id,
-                                                                    circle_id)
+        # arc2_id = arc1_id + 1
+        # content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc2_id, self.name,
+        #                                                             p2_id, p3_id,
+        #                                                             circle_id)
 
-        arc3_id = arc2_id + 1
-        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc3_id, self.name,
-                                                                    p3_id, p4_id,
-                                                                    circle_id)
+        # arc3_id = arc2_id + 1
+        # content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc3_id, self.name,
+        #                                                             p3_id, p4_id,
+        #                                                             circle_id)
 
-        arc4_id = arc3_id + 1
-        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc4_id, self.name,
-                                                                    p4_id, p1_id,
-                                                                    circle_id)
+        # arc4_id = arc3_id + 1
+        # content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc4_id, self.name,
+        #                                                             p4_id, p1_id,
+        #                                                             circle_id)
 
+        edge_curve = p1_id + 1
+        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(edge_curve, self.name,
+                                                                    p1_id, p1_id,
+                                                                    curve_id)
+        curve_id += 1
 
-        return content, [arc1_id, arc2_id, arc3_id, arc4_id]
+        # return content, [arc1_id, arc2_id, arc3_id, arc4_id]
+        return content, [edge_curve]
 
 
 

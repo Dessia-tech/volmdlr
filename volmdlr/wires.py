@@ -722,6 +722,7 @@ class Contour2D(Contour, Wire2D):
         # # line.plot(ax=ax, color='b')
         # for point, prim in intersections:
         #     point.plot(ax=ax, color='r')
+            
         raise NotImplementedError(
             '{} intersections not supported yet'.format(len(intersections)))
 
@@ -2030,12 +2031,16 @@ class Contour3D(Contour, Wire3D):
 
         return cls(edges, name=name)
 
-    def to_step(self, current_id):
+    def to_step(self, current_id, surface_id=None):
+        
         content = ''
         edge_ids = []
         for primitive in self.primitives:
+            # print('p', primitive)
             # edges may return several ids in step
-            primitive_content, primitive_ids = primitive.to_step(current_id)
+            primitive_content, primitive_ids = primitive.to_step(current_id,
+                                                                 surface_id=surface_id)
+            # print(primitive_content)
             content += primitive_content
             current_id = primitive_ids[-1] +1
             for primitive_id in primitive_ids: 
@@ -2267,19 +2272,24 @@ class Circle3D(Contour3D):
         normal.normalize()
         return cls.from_center_normal(center, normal, radius, arguments[0][1:-1])
 
-    def to_step(self, current_id):
+    def to_step(self, current_id, surface_id=None):
         circle_frame = volmdlr.Frame3D(self.center, self.frame.w, self.frame.u, self.frame.v)
         content, frame_id = circle_frame.to_step(current_id)
-        circle_id = frame_id+1
-        content += "#{} = CIRCLE('{}',#{},{});\n".format(circle_id, self.name,
+        curve_id = frame_id+1
+        content += "#{} = CIRCLE('{}',#{},{});\n".format(curve_id, self.name,
                                                            frame_id,
                                                            round(self.radius*1000, 3))
+        
+        if surface_id:
+            content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(curve_id+1, curve_id, surface_id)
+            curve_id += 1
+        
         p1 = self.frame.origin + self.frame.u*self.radius
-        p2 = self.frame.origin + self.frame.v*self.radius
+        # p2 = self.frame.origin + self.frame.v*self.radius
         p3 = self.frame.origin - self.frame.u*self.radius
-        p4 = self.frame.origin - self.frame.v*self.radius
+        # p4 = self.frame.origin - self.frame.v*self.radius
 
-        p1_content, p1_id = p1.to_step(circle_id+1, vertex=True)
+        p1_content, p1_id = p1.to_step(curve_id+1, vertex=True)
         # p2_content, p2_id = p2.to_step(p1_id+1, vertex=True)
         p3_content, p3_id = p3.to_step(p1_id+1, vertex=True)
         # p4_content, p4_id = p4.to_step(p3_id+1, vertex=True)
@@ -2288,7 +2298,7 @@ class Circle3D(Contour3D):
         arc1_id = p3_id + 1
         content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc1_id, self.name,
                                                                     p1_id, p3_id,
-                                                                    circle_id)
+                                                                    curve_id)
         oriented_edge1_id = arc1_id + 1
         content += "#{} = ORIENTED_EDGE('',*,*,#{},.T.);\n".format(oriented_edge1_id,
                                                                      arc1_id)
@@ -2296,7 +2306,7 @@ class Circle3D(Contour3D):
         arc2_id = oriented_edge1_id + 1
         content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc2_id, self.name,
                                                                     p3_id, p1_id,
-                                                                    circle_id)
+                                                                    curve_id)
         oriented_edge2_id = arc2_id + 1
         content += "#{} = ORIENTED_EDGE('',*,*,#{},.T.);\n".format(oriented_edge2_id,
                                                                      arc2_id)

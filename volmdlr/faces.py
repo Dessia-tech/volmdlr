@@ -127,8 +127,11 @@ class Surface2D(volmdlr.core.Primitive2D):
         """
         This method makes inner contour disappear for now
         """
-
+        # try:
         splitted_outer_contours = self.outer_contour.cut_by_line(line)
+        # except IndexError:
+        #     ax = self.outer_contour.plot()
+        #     line.plot(ax=ax, color='r')
         return [Surface2D(oc, []) for oc in splitted_outer_contours]
   
     def split_at_centers(self):
@@ -671,7 +674,7 @@ class Plane3D(Surface3D):
 
     def rotation(self, center, axis, angle, copy=True):
         if copy:
-            new_frame = self.frame.rotation(center, axis, angle, copy=True)
+            new_frame = self.frame.rotation(axis=axis, angle=angle, copy=True)
             return Plane3D(new_frame)
         else:
             self.frame.rotation(center, axis, angle, copy=False)
@@ -989,6 +992,17 @@ class ToroidalSurface3D(Surface3D):
         rcircle = float(arguments[3]) / 1000
         return cls(frame_direct, rcenter, rcircle, arguments[0][1:-1])
 
+
+    def to_step(self, current_id):
+        frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u, self.frame.v)
+        content, frame_id = frame.to_step(current_id)
+        current_id = frame_id + 1
+        content += "#{} = TOROIDAL_SURFACE('{}',#{},{},{});\n"\
+            .format(current_id, self.name, frame_id,
+                    round(1000*self.R, 3),
+                    round(1000*self.r, 3))
+        return content, current_id
+
     def frame_mapping(self, frame, side, copy=True):
         basis = frame.Basis()
         if side == 'new':
@@ -1045,20 +1059,21 @@ class ToroidalSurface3D(Surface3D):
         edges3d = []
         for edge in contour2d.primitives:
             if isinstance(edge, volmdlr.edges.LineSegment2D):
-                if (edge.points[0][0] == edge.points[1][0]) \
-                        or (edge.points[0][1] == edge.points[1][1]):
-                    # Y progression: it's an arc
-                    edges3d.append(volmdlr.edges.Arc3D(self.point2d_to_3d(edge.points[0]),
-                                         self.point2d_to_3d(
-                                             0.5 * (edge.points[0] \
-                                                    + edge.points[1])),
-                                         self.point2d_to_3d(edge.points[1])))
+                if (edge.start.x == edge.end.x) \
+                        or (edge.start.y == edge.end.y):
+                    # X or Y progression: it's an arc
+                    if edge.length() != 0.:
+                        edges3d.append(volmdlr.edges.Arc3D(self.point2d_to_3d(edge.start),
+                                             self.point2d_to_3d(
+                                                 0.25 * (edge.start \
+                                                        + edge.end)),
+                                             self.point2d_to_3d(edge.end)))
                 else:
-                    edges3d.append(volmdlr.edges.Arc3D(self.point2d_to_3d(edge.points[0]),
+                    edges3d.append(volmdlr.edges.Arc3D(self.point2d_to_3d(edge.start),
                                          self.point2d_to_3d(
-                                             0.5 * (edge.points[0] \
-                                                    + edge.points[1])),
-                                         self.point2d_to_3d(edge.points[1])))
+                                             0.25 * (edge.start \
+                                                    + edge.end)),
+                                         self.point2d_to_3d(edge.end)))
             else:
                 raise NotImplementedError(
                     'The primitive {} is not supported in 2D->3D'.format(edge))
@@ -1112,6 +1127,16 @@ class ConicalSurface3D(Surface3D):
 
         frame_direct = volmdlr.Frame3D(origin, U, V, W)
         return cls(frame_direct, semi_angle, arguments[0][1:-1])
+
+    def to_step(self, current_id):
+        frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u, self.frame.v)
+        content, frame_id = frame.to_step(current_id)
+        current_id = frame_id + 1
+        content += "#{} = CONICAL_SURFACE('{}',#{},{},{});\n"\
+            .format(current_id, self.name, frame_id,
+                    0.,
+                    round(1000*self.semi_angle, 3))
+        return content, current_id
 
     def frame_mapping(self, frame, side, copy=True):
         basis = frame.Basis()
@@ -1549,23 +1574,27 @@ class Face3D(volmdlr.core.Primitive3D):
             raise NotImplementedError(surface)
 
     def to_step(self, current_id):
-        content, outer_contour_id = self.outer_contour3d.to_step(current_id)
+        content, surface3d_id = self.surface3d.to_step(current_id)
+        current_id = surface3d_id + 1
+
+        outer_contour_content, outer_contour_id = self.outer_contour3d.to_step(current_id,
+                                                                 surface_id=surface3d_id)
+        content += outer_contour_content
         content += "#{} = FACE_BOUND('{}',#{},.T.);\n".format(outer_contour_id+1,
                                                           self.name,
                                                           outer_contour_id)
         contours_ids = [outer_contour_id+1]
         current_id = outer_contour_id + 2
         for inner_contour3d in self.inner_contours3d:
-            inner_contour_content, inner_contour_id = inner_contour3d.to_step(current_id)
+            inner_contour_content, inner_contour_id = inner_contour3d.to_step(current_id,
+                                                                              surface_id=surface3d_id)
             content += inner_contour_content
             face_bound_id = inner_contour_id + 1
-            content += "#{} = FACE_BOUND('{}',#{},.T.);\n".format(inner_contour_id+1)
+            content += "#{} = FACE_BOUND('',#{},.T.);\n".format(face_bound_id,
+                                                                inner_contour_id)
             contours_ids.append(face_bound_id)
             current_id = face_bound_id + 1
 
-        surface3d_content, surface3d_id = self.surface3d.to_step(current_id)
-        content += surface3d_content
-        current_id = surface3d_id + 1
         content += "#{} = ADVANCED_FACE('{}',({}),#{},.T.);\n".format(current_id,
                                                             self.name,
                                                             volmdlr.core.step_ids_to_str(contours_ids),
@@ -1723,13 +1752,12 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def rotation(self, center, axis, angle, copy=True):
         if copy:
-            new_surface = self.surface.rotation(center, axis,
-                                                angle, copy=True)
-            return self.__class__(new_surface, self.outer_contour2d,
-                                  self.inner_contours2d)
+            new_surface = self.surface3d.rotation(center=center, axis=axis,
+                                                  angle=angle, copy=True)
+            return self.__class__(new_surface, self.surface2d)
         else:
-            self.surface.rotation(center, axis,
-                                  angle, copy=False)
+            self.surface.rotation(center=center, axis=axis,
+                                  angle=angle, copy=False)
             self.bounding_box = self._bounding_box()
 
 
@@ -2460,7 +2488,7 @@ class CylindricalFace3D(Face3D):
 
         return volmdlr.core.BoundingBox.from_points(points)
 
-    def triangulation_lines(self, angle_resolution=7):
+    def triangulation_lines(self, angle_resolution=5):
         theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle()
         delta_theta = theta_max - theta_min
         nlines = int(delta_theta*angle_resolution)
@@ -2837,7 +2865,7 @@ class ToroidalFace3D(Face3D):
     def _bounding_box(self):
         return self.surface3d._bounding_box()
 
-    def triangulation_lines(self, angle_resolution=10):
+    def triangulation_lines(self, angle_resolution=4):
         theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle()
 
         delta_theta = theta_max - theta_min
@@ -2854,7 +2882,7 @@ class ToroidalFace3D(Face3D):
             phi = phi_min + (i + 1) / (nlines_y + 1) * delta_phi
             lines_y.append(volmdlr.edges.Line2D(volmdlr.Point2D(theta_min, phi),
                                               volmdlr.Point2D(theta_max, phi)))
-
+        
         return lines_x, lines_y
 
     def minimum_maximum_tore(self, contour2d):
@@ -3371,7 +3399,7 @@ class ConicalFace3D(Face3D):
 
         return volmdlr.core.BoundingBox.from_points(points)
 
-    def triangulation_lines(self, angle_resolution=10):
+    def triangulation_lines(self, angle_resolution=5):
         theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle()
         delta_theta = theta_max - theta_min
         nlines = int(delta_theta*angle_resolution)

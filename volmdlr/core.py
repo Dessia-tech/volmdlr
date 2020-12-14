@@ -1480,6 +1480,7 @@ class VolumeModel(dc.DessiaObject):
         if filename:
             with open(filename, 'w') as f:
                 f.write(step_content)
+                print('file written to {}'.format(os.path.abspath(filename)))
         else:
             return step_content
 
