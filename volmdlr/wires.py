@@ -1110,18 +1110,39 @@ class Contour2D(Contour, Wire2D):
                                        number_points_y=20)
 
 
-    def to_polygon(self, angle_resolution):
+    # def to_polygon(self, angle_resolution):
 
-        polygon_points = []
+    #     polygon_points = []
        
 
+    #     for primitive in self.primitives:
+    #         polygon_points.extend(primitive.polygon_points()[:-1])
+    #     return ClosedPolygon2D(polygon_points)
+
+   
+
+    def to_polygon2(self,n):
+         
+       
+        polygon_points=[]
+     
         for primitive in self.primitives:
-            polygon_points.extend(primitive.polygon_points()[:-1])
+            if isinstance(primitive,volmdlr.edges.LineSegment2D):
+                
+                if primitive.start not in polygon_points:
+                    polygon_points.append(primitive.start)
+                 
+                if primitive.end not in polygon_points:
+                    polygon_points.append(primitive.end)
+               
+            else :
+                  for point in primitive.discretise(n):
+                      if point not in polygon_points:
+                          polygon_points.append(point)
+              
+
         return ClosedPolygon2D(polygon_points)
-
-
-
-
+        
         
 
     def grid_triangulation(self, x_density: float = None,
