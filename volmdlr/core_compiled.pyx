@@ -278,9 +278,9 @@ class Vector(DessiaObject):
 
 
     def is_colinear_to(self, other_vector):
-        return math.isclose(abs(self.dot(other_vector)),
-                            self.norm()*other_vector.norm(),
-                            abs_tol=1e-9)
+        return math.isclose(abs(self.dot(other_vector))/self.norm()/other_vector.norm(),
+                            1,
+                            abs_tol=1e-5)
 
     @classmethod
     def mean_point(cls, points):
@@ -343,9 +343,7 @@ class Vector2D(Vector):
 
     def __hash__(self):
         return 0
-        raise NotImplementedError('Vectors and points are unhashable')
 
-        return int(round(1e6*(self.x+self.y)))
 
     def __eq__(self, other_vector):
         if other_vector.__class__.__name__ not in ['Vector2D', 'Point2D']:
@@ -432,14 +430,21 @@ class Vector2D(Vector):
                         plane_origin.z + vx.z*self.x + vy.z*self.y,
                         )
 
-    def normal_vector(self, unit=False):
+    def to_point(self):
+        return Point2D(self.x, self.y)
+
+    def normal_vector(self):
         n = Vector2D(-self.y, self.x)
-        if unit:
-            n.normalize()
         return n
 
+    def unit_normal_vector(self):
+        n = self.normal_vector()
+        n.normalize()
+        return n
+
+
     def deterministic_unit_normal_vector(self):
-        return self.normal_vector(unit=True)
+        return self.unit_normal_vector()
 
     @classmethod
     def random(cls, xmin, xmax, ymin, ymax):
@@ -533,29 +538,30 @@ class Point2D(Vector2D):
                        plane_origin.y + vx.y*self.x + vy.y*self.y,
                        plane_origin.z + vx.z*self.x + vy.z*self.y)
 
-    def plot(self, ax=None, color='k'):
+    def to_vector(self):
+        return Vector2D(self.x, self.y, self.z)
+
+    def plot(self, ax=None, color='k', plot_points=True):
         if ax is None:
             fig, ax = plt.subplots()
 
         ax.plot([self.x], [self.y], color=color, marker='o')
         return ax
 
-    def point_distance(self, point2):
+    def point_distance(self, point2:'Point2D'):
         return (self-point2).norm()
 
 
     @classmethod
-
-   
     def line_intersection(cls, line1, line2, curvilinear_abscissa=False):
-        x1 = line1.points[0].x
-        y1 = line1.points[0].y
-        x2 = line1.points[1].x
-        y2 = line1.points[1].y
-        x3 = line2.points[0].x
-        y3 = line2.points[0].y
-        x4 = line2.points[1].x
-        y4 = line2.points[1].y
+        x1 = line1.points[0][0]
+        y1 = line1.points[0][1]
+        x2 = line1.points[1][0]
+        y2 = line1.points[1][1]
+        x3 = line2.points[0][0]
+        y3 = line2.points[0][1]
+        x4 = line2.points[1][0]
+        y4 = line2.points[1][1]
 
 
         denominateur = (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4)
@@ -633,7 +639,7 @@ class Point2D(Vector2D):
     @classmethod
     def line_projection(cls, point, line):
         p1, p2 = line[0], line[1]
-        n = line.normalVector(unit=True)
+        n = line.unit_normal_vector()
         pp1 = point - p1
         return  pp1 - pp1.dot(n)*n + p1
 
@@ -702,10 +708,6 @@ class Vector3D(Vector):
 
     def __hash__(self):
         return 0
-        raise NotImplementedError('Vectors and points are unhashable')
-
-
-        return int(round(1e6*(self.x+self.y+self.z)))
 
     def __eq__(self, other_vector:'Vector3D'):
         if other_vector.__class__.__name__ not in ['Vector3D', 'Point3D']:
@@ -898,9 +900,8 @@ class Vector3D(Vector):
                    random.uniform(ymin, ymax),
                    random.uniform(zmin, zmax))
 
-#    @classmethod
-#    def DictToObject(cls, dict_):
-#        return cls(dict_['vector'])
+    def to_point(self):
+        return Point3D(self.x, self.y, self.z)
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -914,6 +915,18 @@ class Vector3D(Vector):
             return cls(*[float(i) for i in arguments[1][1:-1].split(",")],
                         arguments[0][1:-1])
 
+    def to_step(self, current_id, vector=False):
+        content = "#{} = DIRECTION('{}',({},{},{}));\n"\
+                        .format(current_id, self.name,
+                                round(self.x, 6),
+                                round(self.y, 6),
+                                round(self.z, 6))
+        if vector:
+            content += "#{} = VECTOR('{}',#{},1.);\n".format(current_id+1,
+                                                           self.name,
+                                                           current_id)
+            current_id += 1
+        return content, current_id
 
     def plot(self, ax=None, starting_point=None, color=''):
         if starting_point is None:
@@ -990,6 +1003,24 @@ class Point3D(Vector3D):
     def from_step(cls, arguments, object_dict):
         return cls(*[float(i)/1000 for i in arguments[1][1:-1].split(",")],
                     arguments[0][1:-1])
+
+    def to_vector(self):
+        return Vector3D(self.x, self.y, self.z)
+
+    def to_step(self, current_id, vertex=False):
+        content = "#{} = CARTESIAN_POINT('{}',({},{},{}));\n"\
+                        .format(current_id, self.name,
+                                round(1000.*self.x, 3),
+                                round(1000.*self.y, 3),
+                                round(1000.*self.z, 3))
+        if vertex:
+            content += "#{} = VERTEX_POINT('{}',#{});\n".format(current_id+1,
+                                                                self.name,
+                                                                current_id)
+            current_id += 1
+
+        return content, current_id
+
 
     def babylon_script(self):
         s = 'var sphere = BABYLON.MeshBuilder.CreateSphere("point", {diameter: 0.05}, scene);\n'
@@ -1259,9 +1290,9 @@ class Basis3D(Basis):
 
     def __neg__(self):
         M = self.inverse_transfer_matrix()
-        return Basis3D(Vector3D((M.M11, M.M21, M.M31)),
-                       Vector3D((M.M12, M.M22, M.M32)),
-                       Vector3D((M.M13, M.M23, M.M33)))
+        return Basis3D(Vector3D(M.M11, M.M21, M.M31),
+                       Vector3D(M.M12, M.M22, M.M32),
+                       Vector3D(M.M13, M.M23, M.M33))
 
 
     def __sub__(self, other_frame):
@@ -1572,6 +1603,19 @@ class Frame3D(Basis3D):
     def copy(self):
         return Frame3D(self.origin.copy(), self.u.copy(), self.v.copy(), self.w.copy())
 
+    def to_step(self, current_id):
+        
+        content, origin_id = self.origin.to_step(current_id)
+        current_id = origin_id + 1
+        u_content, u_id = Vector3D.to_step(self.u, current_id)
+        current_id = u_id + 1
+        v_content, v_id = Vector3D.to_step(self.v, current_id)
+        current_id = v_id + 1
+        content += u_content + v_content
+        content += "#{} = AXIS2_PLACEMENT_3D('{}',#{},#{},#{});\n"\
+                        .format(current_id, self.name, origin_id, u_id, v_id)
+        return content, current_id
+
 
     def plot2d(self, x=X3D, y=Y3D, ax=None, color='k'):
         if ax is None:
@@ -1589,7 +1633,7 @@ class Frame3D(Basis3D):
         return fig, ax
 
 
-    def plot(self, ax=None, color='b'):
+    def plot(self, ax=None, color='b', alpha=1., plot_points=True):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')

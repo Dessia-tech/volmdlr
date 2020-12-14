@@ -19,7 +19,7 @@ s = volmdlr.Point2D.random(-1,1,-1,1)
 a = volmdlr.edges.Arc2D(s, i, e)
 ax = a.plot()
 
-for p in a.tessellation_points():
+for p in a.polygon_points():
     p.plot(ax=ax)
     
 s.plot(ax=ax, color='r')
