@@ -962,10 +962,10 @@ class Arc2D(Edge):
         return self.center + 4   
     def linesegment_intersections(self, segment): 
          
-         line = volmdlr.edges.Line2D(segment.start,segment.end)
+         # line = volmdlr.edges.Line2D(segment.start,segment.end)
          circle = volmdlr.wires.Circle2D(self.center, self.radius)
         
-         circle_intersection_points = circle.line_intersections(line)
+         circle_intersection_points = circle.line_intersections(segment)
         
          if circle_intersection_points is None:
             
@@ -1014,32 +1014,36 @@ class Arc2D(Edge):
             return None
         else:
             a=(r0**2-r1**2+d**2)/(2*d)
-            h=math.sqrt(r0**2-a**2)
-            x2=x0+a*(x1-x0)/d   
-            y2=y0+a*(y1-y0)/d   
-            x3=x2+h*(y1-y0)/d     
-            y3=y2-h*(x1-x0)/d 
-    
-            x4=x2-h*(y1-y0)/d
-            y4=y2+h*(x1-x0)/d
-            point1=volmdlr.Point2D(x4, y4)
-            point2=volmdlr.Point2D(x3, y3)
-            # point1.plot(ax=ax,color='r')
-            # point2.plot(ax=ax,color='g')
-            if point1 == self.start or point1 == arc.start:
-              intersections+=[point1]
-            elif point1 == self.end or point1 == arc.end:
-              intersections+=[point1]
+            if r0**2-a**2 < 0:
+                return None
             else :
-                if self.point_belongs(point1) and arc.point_belongs(point1) :
-                   intersections+=[point1]
-            if point2 == self.start or point2 == arc.start:
-              intersections+=[point2]
-            elif point2 == self.end or point2 == arc.end:
-              intersections+=[point2]
-            else :
-                   if self.point_belongs(point2) and arc.point_belongs(point2) :
-                       intersections+=[point2]
+                h=math.sqrt(r0**2-a**2)
+                
+                x2=x0+a*(x1-x0)/d   
+                y2=y0+a*(y1-y0)/d   
+                x3=x2+h*(y1-y0)/d     
+                y3=y2-h*(x1-x0)/d 
+        
+                x4=x2-h*(y1-y0)/d
+                y4=y2+h*(x1-x0)/d
+                point1=volmdlr.Point2D(x4, y4)
+                point2=volmdlr.Point2D(x3, y3)
+                # point1.plot(ax=ax,color='r')
+                # point2.plot(ax=ax,color='g')
+                if point1 == self.start or point1 == arc.start:
+                  intersections+=[point1]
+                elif point1 == self.end or point1 == arc.end:
+                  intersections+=[point1]
+                else :
+                    if self.point_belongs(point1) and arc.point_belongs(point1) :
+                       intersections+=[point1]
+                if point2 == self.start or point2 == arc.start:
+                  intersections+=[point2]
+                elif point2 == self.end or point2 == arc.end:
+                  intersections+=[point2]
+                else :
+                       if self.point_belongs(point2) and arc.point_belongs(point2) :
+                           intersections+=[point2]
             return intersections            
     def border_primitive(self,infinite_primitive:volmdlr.core.Primitive2D,intersection,position):
             interior=infinite_primitive.circle_projection(self.interior)
@@ -1198,7 +1202,10 @@ class Arc2D(Edge):
                  node=self.point_at_abscissa(k*l0)
                                        
                  nodes.append(node)
-             nodes.insert(len(nodes),self.end)
+             if self.end not in nodes :
+                 nodes.append(self.end)
+             if self.start not in nodes :
+                 nodes.insert(0,self.start)
                    
              arc_to_nodes[self]=nodes
              

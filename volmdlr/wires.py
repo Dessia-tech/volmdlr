@@ -150,18 +150,16 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         offset_primitives=[]
         infinite_primitives=[]
         offset_intersections=[]
-        # ax=self.plot()
+       
         for primitive in self.primitives:
           
             infinite_primitive=primitive.infinite_primitive(offset)
             infinite_primitives.append(infinite_primitive)
-            # infinite_primitive.plot(ax=ax)
+        
                
         offset_intersections+=self.infinite_intersections(infinite_primitives)
        
-        # for i in offset_intersections:
-        #     i.plot(ax=ax,color='r')
-            
+
           
         offset_primitives.append(self.primitives[0].border_primitive(infinite_primitives[0],
                                                           offset_intersections[0],0)) 
@@ -435,8 +433,20 @@ class Contour2D(Contour, Wire2D):
             if distance < min_distance:
                 min_distance = distance
         return min_distance
-
+    
     def bounding_rectangle(self):
+        points = self.straight_line_contour_polygon.points[:]
+        for arc in self.internal_arcs + self.external_arcs:
+            points.extend(arc.polygon_points())
+        xmin = min([p[0] for p in points])
+        xmax = max([p[0] for p in points])
+        ymin = min([p[1] for p in points])
+        ymax = max([p[1] for p in points])
+        return (volmdlr.Point2D(xmin, ymin), volmdlr.Point2D(xmax, ymax))
+    
+    
+    
+    def bounding_points(self):
         points = self.straight_line_contour_polygon.points[:]
         for arc in self.internal_arcs + self.external_arcs:
             points.extend(arc.polygon_points())
@@ -578,6 +588,8 @@ class Contour2D(Contour, Wire2D):
 
 
     def self_intersections(self):
+        # ax=plt.subplot()
+        # self.plot(ax=ax)
         all_edges=[]
         all_intersections=[]
         self_intersections=[]
@@ -611,7 +623,7 @@ class Contour2D(Contour, Wire2D):
                                                                          primitive_2.__class__.__name__))) 
         
         for inter in all_intersections:
-           
+          
             if inter[0] not in all_edges:
                 if inter[0] not in added_intersections:
                     added_intersections.append(inter[0])
@@ -750,12 +762,10 @@ class Contour2D(Contour, Wire2D):
         # TODO: there are some copy/paste in this function but refactoring is not trivial
         intersections = self.line_intersections(line)
         intersection_points=[]
-        for i in intersections : 
-            if i[0] not in intersection_points:
-                intersection_points.append(i[0])
+       
        
         n_inter = len(intersections)
-        n_points=len(intersection_points)
+        
         if not intersections:
             return [self]
         if n_inter < 2:
@@ -874,11 +884,12 @@ class Contour2D(Contour, Wire2D):
         xmin, xmax, ymin, ymax = self.bounding_rectangle()
       
         
-        ax=plt.subplot() 
+        # ax=plt.subplot() 
+        # self.plot(ax=ax)
         # line = Line2D(Point2D([xi, 0]),Point2D([xi,1])) 
-        line = volmdlr.edges.Line2D(volmdlr.Point2D([0, -0.17]),volmdlr.Point2D([0,0.17])) 
-        line_2=line.Rotation(self.center_of_mass(),0.26)
-        line_3=line.Rotation(self.center_of_mass(),-0.26)
+        line = volmdlr.edges.Line2D(volmdlr.Point2D(0,-0.17),volmdlr.Point2D(0,0.17)) 
+        line_2=line.rotation(self.center_of_mass(),0.26)
+        line_3=line.rotation(self.center_of_mass(),-0.26)
         
     
         intersections=[]
@@ -899,13 +910,16 @@ class Contour2D(Contour, Wire2D):
       
             primitives=[]
            
-            a=volmdlr.edges.Arc2D(sp12.end,sp12.interior,sp12.start)
+            a=volmdlr.edges.Arc2D(sp12.start,sp12.interior,sp12.end)
             primitives.append(a)
             primitives.extend(self.primitives[:ip3])
             primitives.append(sp22) 
             l=volmdlr.edges.LineSegment2D(sp22.start,sp12.end)
-            interior=l.PointAtCurvilinearAbscissa(l.Length()/2)
-            primitives.append(volmdlr.edges.Arc2D(sp22.start,interior,sp12.end))
+            interior=l.point_at_abscissa(l.length()/2)
+            # sp22.end.plot(ax=ax,color='r')
+            # sp12.start.plot(ax=ax,color='b')
+            # interior.plot(ax=ax,color='g')
+            primitives.append(volmdlr.edges.Arc2D(sp22.end,interior,sp12.start))
    
         return Contour2D(primitives)  
     
@@ -914,7 +928,7 @@ class Contour2D(Contour, Wire2D):
         pattern_rotations=[]
         # pattern_rotations.append(self)
         for k in range(1,13):
-            new_pattern=pattern.Rotation(self.CenterOfMass(),k*math.pi/6)
+            new_pattern=pattern.rotation(self.center_of_mass(),k*math.pi/6)
             pattern_rotations.append(new_pattern)
    
         return pattern_rotations 
@@ -1031,7 +1045,7 @@ class Contour2D(Contour, Wire2D):
         """
         Split in n slices
         """
-        xmin, xmax, ymin, ymax = self.bounding_rectangle()
+        xmin, xmax, ymin, ymax = self.bounding_points()
         cutted_contours = []
         iteration_contours = [self]
         for i in range(n - 1):
@@ -1290,7 +1304,14 @@ class ClosedPolygon2D(Contour2D):
             
         return delaunay_triangles  
 
-        
+    def discretise(self,n:float):
+        segment_to_nodes={}
+        for segment in self.line_segments:
+            segment_to_nodes[segment]=segment.discretise(n)
+        return segment_to_nodes
+    
+    
+    
     def is_convex(self):
     
       if  len(self.line_segments)<4:
@@ -2187,7 +2208,16 @@ class Triangle2D(ClosedPolygon2D):
             all_aspect_ratios.update(completion[1])
       
         return all_triangles,all_aspect_ratios
-    
+    def plot_triangle_points(self,ax):
+        
+        if ax is None:
+          fig, ax = plt.subplots()
+          ax.set_aspect('equal')
+        self.plot(ax=ax)
+        for point in self.points:
+            point.plot(ax=ax,color='r')
+        return ax 
+        
     def plot(self, ax, color='k', width=None, plot_points=False, fill=False):
         if ax is None:
             fig, ax = plt.subplots()
@@ -2254,8 +2284,8 @@ class Circle2D(Contour2D):
         start=self.center-self.radius*volmdlr.Point2D(1,0)
         end=self.center+self.radius*volmdlr.Point2D(1,0)
         return[start,end]
-   
-    def bounding_rectangle(self):
+ 
+    def bounding_points(self):
         
         xmin = self.center.x-self.radius
         xmax =self.center.x+self.radius
@@ -2265,9 +2295,10 @@ class Circle2D(Contour2D):
     
 
 
-    def cut_between_two_points(self,arc,point1,point2):
-        
-        interior=self.circle_projection(arc.interior)
+    def cut_between_two_points(self,primitive,point1,point2):
+      
+        mid=primitive.point_at_abscissa(primitive.length()/2)
+        interior=self.circle_projection(mid)
         return volmdlr.edges.Arc2D(point1,interior,point2)
 
     def line_intersections(self, line):

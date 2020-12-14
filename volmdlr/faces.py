@@ -101,7 +101,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         """
        
        
-        xmin, xmax, ymin, ymax = self.outer_contour.bounding_rectangle()
+        xmin, xmax, ymin, ymax = self.outer_contour.bounding_points()
       
              
         cutted_contours = []
@@ -302,7 +302,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         Split the surface by parrallel lines passing by each inner contour's
         center of mass
         """
-        xmin, xmax, ymin, ymax = self.outer_contour.bounding_rectangle()
+        xmin, xmax, ymin, ymax = self.outer_contour.bounding_points()
         p= len(self.inner_contours)
              
         cutted_contours = []
@@ -520,9 +520,6 @@ class Surface2D(volmdlr.core.Primitive2D):
             primitives4.append(new_inner.primitives[ip2])
             
          
-        
-            # ,volmdlr.wires.Contour2D(primitives2),
-            #                        volmdlr.wires.Contour2D(primitives3),volmdlr.wires.Contour2D(primitives4)  
             all_contours.extend([volmdlr.wires.Contour2D(primitives1),volmdlr.wires.Contour2D(primitives2),
                                    volmdlr.wires.Contour2D(primitives3),volmdlr.wires.Contour2D(primitives4)])
             
@@ -535,7 +532,94 @@ class Surface2D(volmdlr.core.Primitive2D):
         return all_contours               
                    
    
-
+    def get_pattern_single_inner(self):
+        """ A pattern is a portion of the contour from which it can be 
+        reconstructed by rotations"""
+        outer=self.outer_contour
+        inner=self.inner_contours[0]
+        # ax=plt.subplot()
+        # ax=self.plot()
+        line = volmdlr.edges.Line2D(volmdlr.Point2D(0,-0.17),volmdlr.Point2D(0,0.17)) 
+        line_2=line.rotation(inner.center_of_mass(),0.52)
+        line_3=line.rotation(inner.center_of_mass(),-0.52)
+        # line_2.plot(ax=ax)
+        # line_3.plot(ax=ax)
+        outer_intersections_1=outer.line_intersections(line_2)
+        Arc1, Arc2=outer.split(outer_intersections_1[1],outer_intersections_1[0])
+        outer_intersections_2=outer.line_intersections(line_3)
+        Arc3, Arc4=outer.split(outer_intersections_2[1],outer_intersections_2[0])
+        intersections=[]
+        
+        intersections+= inner.line_intersections(line_2)
+        intersections.append((outer_intersections_1[0],Arc1))
+        intersections.append((outer_intersections_1[1],Arc2))
+        intersections+= inner.line_intersections(line_3)
+        intersections.append((outer_intersections_2[0],Arc3))
+        intersections.append((outer_intersections_2[1],Arc4))
+     
+        if isinstance(intersections[0][0],volmdlr.Point2D) and \
+                isinstance(intersections[1][0],volmdlr.Point2D):
+            ip1, ip2 = sorted([inner.primitives.index(intersections[0][1]),
+                               inner.primitives.index(intersections[1][1])])  
+            
+            ip3, ip4 = sorted([inner.primitives.index(intersections[4][1]),
+                               inner.primitives.index(intersections[5][1])]) 
+         
+            
+            sp11, sp12 = intersections[1][1].split(intersections[1][0])
+            sp22, sp21 = intersections[4][1].split(intersections[4][0])
+        
+      
+            primitives=[]
+            
+            
+            primitives.append(volmdlr.edges.LineSegment2D(intersections[6][0],sp22.end))
+            primitives.append(sp22)
+            a=inner.primitives[:ip3]
+            a.reverse()
+            primitives.extend(a)
+            primitives.extend(inner.primitives[ip2+1:])
+            primitives.append(sp12)
+            primitives.append(volmdlr.edges.LineSegment2D(sp12.start,intersections[2][0]))
+            primitives.append(outer.cut_between_two_points(sp12,intersections[2][0],
+                                                              intersections[6][0]))
+            contour=volmdlr.wires.Contour2D(primitives) 
+            xmin, xmax, ymin, ymax = contour.bounding_points()
+            xi = xmin + (xmax - xmin) / 2
+            cut_line = volmdlr.edges.Line2D(volmdlr.Point2D(xi, 0),volmdlr.Point2D(xi,1)) 
+            new_intersections=contour.line_intersections(cut_line)
+            sp33,sp44=new_intersections[0][1].split(new_intersections[0][0])
+            pattern_primitives=[]
+            pattern_primitives.append(volmdlr.edges.LineSegment2D(new_intersections[1][0],new_intersections[0][0]))
+            pattern_primitives.append(sp44)
+            # pattern_primitives.append(inner.primitives[ip3])
+            pattern_primitives.extend(inner.primitives[4:ip3])
+            pattern_primitives.append(sp22)
+            pattern_primitives.append(volmdlr.edges.LineSegment2D(sp22.end,intersections[6][0]))
+            pattern_primitives.append(outer.cut_between_two_points(sp44,intersections[6][0],
+                                                             new_intersections[1][0]))
+            # pattern_primitives.append(sp22)
+            # a=inner.primitives[4:ip3]
+            # a.reverse()
+            # pattern_primitives.extend(a)
+            # pattern_primitives.append(sp44)
+            # pattern_primitives.append(volmdlr.edges.LineSegment2D(new_intersections[1][0],new_intersections[0][0]))
+            # pattern_primitives.append(outer.cut_between_two_points(sp44,intersections[6][0],
+            #                                                 new_intersections[1][0]))
+            pattern=volmdlr.wires.Contour2D(pattern_primitives) 
+         
+                              
+        return pattern
+    def contour_from_pattern(self):
+        
+        pattern=self.get_pattern_single_inner()
+        pattern_rotations=[]
+        # pattern_rotations.append(self)
+        for k in range(1,13):
+            new_pattern=pattern.rotation(self.inner_contours[0].center_of_mass(),k*math.pi/6)
+            pattern_rotations.append(new_pattern)
+   
+        return pattern_rotations 
     def plot(self, ax=None, equal_aspect=True):
 
         if ax is None:
