@@ -734,7 +734,7 @@ class Mesher(DessiaObject):
         
         last_polygon=volmdlr.wires.ClosedPolygon2D(all_points)  
         if polygon.is_convex():
-            
+          
             return last_polygon.delaunay_triangulation()
         else :
             ear=self.earclip(last_polygon)
@@ -757,7 +757,7 @@ class Mesher(DessiaObject):
                     last_points.append(point)
         last_polygon=volmdlr.wires.ClosedPolygon2D(last_points)
         if polygon.is_convex():
-           
+            
             triangles+=last_polygon.delaunay_triangulation()
         else :
             ear=self.earclip(last_polygon)
@@ -853,7 +853,7 @@ class Mesher(DessiaObject):
         for mesh in all_meshes:
             if self.triangulation_max_aspect_ratio(mesh)!=0:
                 
-                all_aspect_ratios.append(self.triangulation_max_aspect_ratio(mesh))
+                all_aspect_ratios.append(self.triangulation_min_aspect_ratio(mesh))
                 p=all_meshes.index(mesh)
                 good_meshes.append(mesh)
                 good_offsets.append(all_offsets[p])
@@ -982,23 +982,28 @@ class Mesher(DessiaObject):
                                   
                                   if projection.point_distance(near_segment.start) > projection.point_distance(near_segment.end) :
                                      i+=1
-                                  l = near_segment.length()/projection.point_distance(near_segment.points[i])
-                                  
-                                  if out_segment.length()/projection.point_distance(near_segment.points[i])<3:
-                                     x=10
-                                  else :
-                                      x=2
-                                  if l <= x :
-                                   
-                                      out_point_image[point].append([index_0,projection]) 
-                                      projection_points[index_0].insert(index_point,projection)
-                                  else :
+                                  if projection != near_segment.points[i]:
+                                      l = near_segment.length()/projection.point_distance(near_segment.points[i])
+                                      
+                                      if out_segment.length()/projection.point_distance(near_segment.points[i])<3:
+                                         x=10
+                                      else :
+                                          x=2
+                                      if l <= x :
                                        
-                                        if new_proj not in projection_points[index_0]:     
-                                            projection_points[index_0].insert(index_point,new_proj)
+                                          out_point_image[point].append([index_0,projection]) 
+                                          projection_points[index_0].insert(index_point,projection)
+                                      else :
+                                           
+                                            if new_proj not in projection_points[index_0]:     
+                                                projection_points[index_0].insert(index_point,new_proj)
+                                  else :
+                                      out_point_image[point].append([index_0,projection]) 
+                                      projection_points[index_0].insert(index_point,projection) 
                               else :
                                       out_point_image[point].append([index_0,projection]) 
-                                      projection_points[index_0].insert(index_point,projection)  
+                                      projection_points[index_0].insert(index_point,projection) 
+                                
                         else :
                             if out_point_image[point][0][1] != projection :
                             
@@ -1161,7 +1166,7 @@ class Mesher(DessiaObject):
                   Next=False
                   
                   triangles+=self.alternative_triangulation(contour,
-                                                            None,True,False,1)
+                                                            None,False,False,1)
                   
                 else :
                 
@@ -1266,8 +1271,8 @@ class Mesher(DessiaObject):
         mesh_triangles,all_aspect_ratios,plot_aspect_ratio_triangles=self.mesh_triangulation(triangulation)
       
         for triangle in mesh_triangles:
-            triangle.plot(ax=ax)
-            # triangle.plot_triangle_points(ax=ax)      
+            # triangle.plot(ax=ax)
+            triangle.plot_triangle_points(ax=ax)      
             triangular_element=TriangularElement(triangle.points)
             mesh_triangle_elements.append(triangular_element)
             

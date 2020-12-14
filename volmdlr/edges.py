@@ -23,7 +23,7 @@ import dessia_common as dc
 import volmdlr.core
 
 import volmdlr.geometry
-import plot_data.core as plot_data
+# import plot_data.core as plot_data
 
 
 
@@ -807,10 +807,10 @@ class LineSegment2D(LineSegment):
 
 
 
-    def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
-        return plot_data.LineSegment(data=[self.start.x, self.start.y,
-                                               self.end.x, self.end.y],
-                                         plot_data_states=plot_data_states)
+    # def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
+    #     return plot_data.LineSegment(data=[self.start.x, self.start.y,
+    #                                            self.end.x, self.end.y],
+    #                                      plot_data_states=plot_data_states)
 
     def CreateTangentCircle(self, point, other_line):
         circle1, circle2 = Line2D.CreateTangentCircle(other_line, point, self)
@@ -1239,11 +1239,11 @@ class Arc2D(Edge):
     
 
    
-    def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
-        list_node = self.polygon_points()
-        data = []
-        for nd in list_node:
-            data.append({'x': nd.x, 'y': nd.y})
+    # def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
+    #     list_node = self.polygon_points()
+    #     data = []
+    #     for nd in list_node:
+    #         data.append({'x': nd.x, 'y': nd.y})
 
 
     #     return plot_data.Arc2D(cx=self.center.x,

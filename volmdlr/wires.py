@@ -37,7 +37,7 @@ from scipy.spatial import Delaunay
 import volmdlr.edges
 # import plot_data.core as plot_data
 
-import plot_data.core as plot_data
+# import plot_data.core as plot_data
 
 
 
@@ -290,8 +290,8 @@ class Contour():
         ip1=self.primitives.index(primitive1)
         ip2=self.primitives.index(primitive2)
 
-        ip1 = self.primitive_to_index(primitive1)
-        ip2 = self.primitive_to_index(primitive2)
+        # ip1 = self.primitive_to_index(primitive1)
+        # ip2 = self.primitive_to_index(primitive2)
 
 
         if ip1 < ip2:
@@ -462,7 +462,7 @@ class Contour2D(Contour, Wire2D):
         xmax = max([p[0] for p in points])
         ymin = min([p[1] for p in points])
         ymax = max([p[1] for p in points])
-<<<<<<< HEAD
+
         return (volmdlr.Point2D(xmin, ymin), volmdlr.Point2D(xmax, ymax))
     
     
@@ -476,11 +476,11 @@ class Contour2D(Contour, Wire2D):
         ymin = min([p[1] for p in points])
         ymax = max([p[1] for p in points])
         return xmin, xmax, ymin, ymax
-=======
 
-        return (volmdlr.Point2D(xmin, ymin), volmdlr.Point2D(xmax, ymax))
 
->>>>>>> d692ad087843972b1ed3a9d2f47582fd78412dc2
+
+
+
 
 
     # def To3D(self, plane_origin, x, y, name=None):
@@ -952,17 +952,14 @@ class Contour2D(Contour, Wire2D):
             primitives.extend(self.primitives[:ip3])
             primitives.append(sp22) 
             l=volmdlr.edges.LineSegment2D(sp22.start,sp12.end)
-<<<<<<< HEAD
+
             interior=l.point_at_abscissa(l.length()/2)
-            # sp22.end.plot(ax=ax,color='r')
-            # sp12.start.plot(ax=ax,color='b')
-            # interior.plot(ax=ax,color='g')
+         
             primitives.append(volmdlr.edges.Arc2D(sp22.end,interior,sp12.start))
-=======
+
             interior=l.point_at_abscissa(l.Length()/2)
             primitives.append(volmdlr.edges.Arc2D(sp22.start,interior,sp12.end))
->>>>>>> d692ad087843972b1ed3a9d2f47582fd78412dc2
-   
+
         return Contour2D(primitives)  
     
     def contour_from_pattern(self):
