@@ -195,22 +195,7 @@ class Line(dc.DessiaObject):
         projection = self.point1 + t * u
 
         return projection, t * norm_u
-    def line_intersections(self, line):
-        point = volmdlr.Point2D.line_intersection(self, line)
-        if point is not None:
-            point_projection1, _ = self.point_projection(point)
-            if point_projection1 is None:
-                return []
-
-            if line.__class__.__name__ == 'Line2D':
-                point_projection2, _ = line.point_projection(point)
-                if point_projection2 is None:
-                    return []
-
-
-            return [point_projection1]
-        else:
-            return []
+    
 
     def abscissa(self, point):
         u = self.point2 - self.point1
@@ -620,7 +605,8 @@ class LineSegment2D(LineSegment):
             return None, curv_abs
         return point, curv_abs
 
-    def line_intersections(self, line):
+
+    def line_intersections(self, line:Line2D):
         point = volmdlr.Point2D.line_intersection(self, line)
         if point is not None:
             point_projection1, _ = self.point_projection(point)
@@ -636,9 +622,35 @@ class LineSegment2D(LineSegment):
         else:
             return []
 
-    def discretise(self,n:float):
+
+    def linesegment_intersections(self, linesegment:'LineSegment2D'):
+        point = volmdlr.Point2D.line_intersection(self, linesegment)
+        if point is not None:
+            point_projection1, _ = self.point_projection(point)
+            if point_projection1 is None:
+                return []
+
+            point_projection2, _ = linesegment.point_projection(point)
+            if point_projection2 is None:
+                return []
+
+            return [point_projection1]
+        else:
+            return []
+
+    def line_crossings(self, line:'Line2D'):
+        if self.direction_vector().is_colinear_to(line.direction_vector()):
+            return []
+        else:
+            return self.line_intersections(line)
+
+    def linesegment_crossings(self, linesegment:'LineSegment2D'):
+        if self.direction_vector().is_colinear_to(linesegment.direction_vector()):
+            return []
+        else:
+            return self.linesegment_intersections(linesegment)
         
-        
+    def discretise(self, n:float):
          segment_to_nodes={}
     
          
@@ -1995,32 +2007,40 @@ class LineSegment3D(LineSegment):
                 else:
                     inner_contours2d = []
             else:
-                # Two arcs and lines
-                arc1_s = volmdlr.Point2D(0, r)
-                arc1_i = arc1_s.rotation(center=volmdlr.O2D, angle=0.5 * angle)
-                arc1_e = arc1_s.rotation(center=volmdlr.O2D, angle=angle)
-                arc1 = Arc2D(self.end, arc1_i, arc1_e)
-
-                arc2_e = volmdlr.Point2D(0, R)
-                arc2_i = arc2_e.rotation(center=volmdlr.O2D, angle=0.5 * angle)
-                arc2_s = arc2_e.rotation(center=volmdlr.O2D, angle=angle)
-                arc2 = Arc2D(arc2_s, arc1_i, self.start)
-
-                line1 = LineSegment2D(arc1_e, arc2_s)
-                line2 = LineSegment2D(arc2_e, arc1_s)
-
-                # arc2 = Arc2D(arc2_s, arc1_i, self.start)
-                # line2 = LineSegment3D(arc1_e, arc2_s)
-                outer_contour2d = volmdlr.wires.Contour2D([arc1, line1,
-                                                           arc2, line2])
                 inner_contours2d = []
+                if math.isclose(r, 0, abs_tol=1e-9):
+                    # One arc and 2 lines (pizza slice)
+                    arc2_e = volmdlr.Point2D(R, 0)
+                    arc2_i = arc2_e.rotation(center=volmdlr.O2D, angle=0.5 * angle)
+                    arc2_s = arc2_e.rotation(center=volmdlr.O2D, angle=angle)
+                    arc2 = Arc2D(arc2_s, arc2_i, arc2_e) 
+                    line1 = LineSegment2D(arc2_e, volmdlr.O2D)
+                    line2 = LineSegment2D(volmdlr.O2D, arc2_s)
+                    outer_contour2d = volmdlr.wires.Contour2D([arc2, line1,
+                                                               line2])
+    
+                else:
+                    # Two arcs and lines
+                    arc1_s = volmdlr.Point2D(r, 0)
+                    arc1_i = arc1_s.rotation(center=volmdlr.O2D, angle=0.5 * angle)
+                    arc1_e = arc1_s.rotation(center=volmdlr.O2D, angle=angle)
+                    arc1 = Arc2D(arc1_s, arc1_i, arc1_e)
+    
+                    arc2_e = volmdlr.Point2D(R, 0)
+                    arc2_i = arc2_e.rotation(center=volmdlr.O2D, angle=0.5 * angle)
+                    arc2_s = arc2_e.rotation(center=volmdlr.O2D, angle=angle)
+                    arc2 = Arc2D(arc2_s, arc2_i, arc2_e)
+    
+                    line1 = LineSegment2D(arc1_e, arc2_s)
+                    line2 = LineSegment2D(arc2_e, arc1_s)
+
+                    outer_contour2d = volmdlr.wires.Contour2D([arc1, line1,
+                                                               arc2, line2])
+
             return volmdlr.faces.PlaneFace3D(surface,
                                              volmdlr.faces.Surface2D(
                                                  outer_contour2d,
-                                                 inner_contours2d
-                                             ))
-
-
+                                                 inner_contours2d))
 
         elif not math.isclose(d1, d2, abs_tol=1e-9):
             # Conical
@@ -2034,17 +2054,20 @@ class LineSegment3D(LineSegment):
                 semi_angle = math.pi - semi_angle
 
                 cone_frame = volmdlr.Frame3D(cone_origin, u, -v, -axis)
+                angle2 = -angle
             elif semi_angle < 0:
                 raise NotImplementedError
             else:
+                angle2 = angle
                 cone_frame = volmdlr.Frame3D(cone_origin, u, v, axis)
 
             surface = volmdlr.faces.ConicalSurface3D(cone_frame,
                                                      semi_angle)
             z1 = d1 / math.tan(semi_angle)
             z2 = d2 / math.tan(semi_angle)
-            return surface.rectangular_cut(0, angle, z1, z2)
+            return surface.rectangular_cut(0, angle2, z1, z2)
         else:
+            # Cylindrical face
             v = axis.cross(u)
             surface = volmdlr.faces.CylindricalSurface3D(volmdlr.Frame3D(p1_proj, u, v, axis), d1)
             return surface.rectangular_cut(0, angle,
@@ -2672,24 +2695,30 @@ class Arc3D(Edge):
         return surface.rectangular_cut(0, angle,
                                        arc2d.angle1, arc2d.angle2)
 
-    def to_step(self, current_id):
+    def to_step(self, current_id, surface_id=None):
         u = self.start - self.center
         u.normalize()
         v = self.normal.cross(u)
         frame = volmdlr.Frame3D(self.center, self.normal, u, v)
 
         content, frame_id = frame.to_step(current_id)
-        circle_id = frame_id + 1
-        content += "#{} = CIRCLE('{}', #{}, {});\n".format(circle_id, self.name,
+        curve_id = frame_id + 1
+        content += "#{} = CIRCLE('{}', #{}, {});\n".format(curve_id, self.name,
                                                            frame_id,
                                                            round(self.radius*1000, 3))
-        current_id = circle_id + 1
+        
+        if surface_id:
+            content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(curve_id+1, curve_id, surface_id)
+            curve_id += 1
+
+        
+        current_id = curve_id + 1
         start_content, start_id = self.start.to_step(current_id, vertex=True)
         end_content, end_id = self.end.to_step(start_id+1, vertex=True)
-        content = start_content + end_content
+        content += start_content + end_content
         current_id = end_id + 1
         content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(current_id, self.name,
-                                                    start_id, end_id, circle_id)
+                                                    start_id, end_id, curve_id)
         return content, [current_id]
     
     
@@ -2751,11 +2780,10 @@ class FullArc3D(Edge):
                                                     round(self.radius*1000, 3))
         
         if surface_id:
-            
             content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(curve_id+1, curve_id, surface_id)
             curve_id += 1
 
-        p1 = self.center + u*self.radius
+        p1 = (self.center + u*self.radius).to_point()
         # p2 = self.center + v*self.radius
         # p3 = self.center - u*self.radius
         # p4 = self.center - v*self.radius
