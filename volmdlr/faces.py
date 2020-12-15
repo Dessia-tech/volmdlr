@@ -532,6 +532,8 @@ class Plane3D(Surface3D):
         return hash(self.frame)
 
     def __eq__(self, other_plane):
+        if other_plane.__class__.__name__ != self.__class__.__name__:
+            return False
         return (self.frame.origin == other_plane.frame.origin and \
                 self.frame.w.is_colinear_to(other_plane.frame.w))
 
@@ -687,7 +689,7 @@ class Plane3D(Surface3D):
             new_frame = self.frame.translation(offset, True)
             return Plane3D(new_frame)
         else:
-            self.origin.translation(offset, False)
+            self.frame.translation(offset, False)
 
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -1536,6 +1538,8 @@ class Face3D(volmdlr.core.Primitive3D):
         return hash(self.surface3d) + hash(self.surface2d)
 
     def __eq__(self, other_):
+        if other_.__class__.__name__ != self.__class__.__name__:
+            return False
         equal = (self.surface3d == other_.surface3d
                  and self.surface2d == other_.surface2d)
         return equal
@@ -1792,7 +1796,7 @@ class Face3D(volmdlr.core.Primitive3D):
             new_surface3d = self.surface3d.translation(offset=offset, copy=True)
             return self.__class__(new_surface3d, self.surface2d)
         else:
-            self.surface.translation(offset=offset, copy=False)
+            self.surface3d.translation(offset=offset, copy=False)
             self.bounding_box = self._bounding_box()
 
 
@@ -1843,11 +1847,11 @@ class PlaneFace3D(Face3D):
     _non_eq_attributes = ['name', 'bounding_box', 'outer_contour3d', 'inner_contours3d']
     _non_hash_attributes = []
 
-    def __init__(self, plane3d:Plane3D, surface2d:Surface2D, name:str=''):
+    def __init__(self, surface3d:Plane3D, surface2d:Surface2D, name:str=''):
         # if not isinstance(outer_contour2d, volmdlr.Contour2D):
         #     raise ValueError('Not a contour2D: {}'.format(outer_contour2d))
         Face3D.__init__(self,
-                        surface3d=plane3d,
+                        surface3d=surface3d,
                         surface2d=surface2d,
                         name=name)
 
@@ -1988,14 +1992,19 @@ class PlaneFace3D(Face3D):
         min_distance = math.inf
         for edge1 in self.outer_contour3d.primitives:
             for edge2 in other_plane_face.outer_contour3d.primitives:
-                p1, p2 = edge1.minimum_distance_points(edge2)
-                d12 = p1.point_distance(p2)
-                if d12 < min_distance:
-                    min_points = (p1, p2)
-                    min_distance = d12
-        return min_points
-
-
+                dist = edge1.minimum_distance(edge2, return_points=return_points)
+                if return_points:
+                    if dist[0] < min_distance:
+                        min_distance = dist[0]
+                        p1, p2 = dist[1], dist[2]
+                else:
+                    print(dist, min_distance, edge1, edge2)
+                    if dist < min_distance:
+                        min_distance = dist
+        if return_points:
+            return min_distance, p1, p2
+        else:
+            return min_distance
 
 
     def edge_intersections(self, edge):
@@ -2044,11 +2053,12 @@ class PlaneFace3D(Face3D):
                 return p1.point_distance(p2)
 
         if other_face.__class__ is PlaneFace3D:
-            p1, p2 = self.minimum_distance_points_plane(other_face)
             if return_points:
-                return p1.point_distance(p2), p1, p2
+                dist, p1, p2 = self.minimum_distance_points_plane(other_face, return_points=return_points)
+                return dist, p1, p2
             else:
-                return p1.point_distance(p2)
+                dist = self.minimum_distance_points_plane(other_face, return_points=return_points)
+                return dist
 
         if other_face.__class__ is ToroidalFace3D:
             p1, p2 = other_face.minimum_distance_points_plane(self)

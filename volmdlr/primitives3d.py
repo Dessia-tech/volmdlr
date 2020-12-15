@@ -247,7 +247,7 @@ class Block(volmdlr.faces.ClosedShell3D):
             return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
         else:
             self.frame.translation(offset, copy=False)
-            volmdlr.faces.Shell3D.translation(self, offset, copy=False)
+            volmdlr.faces.OpenShell3D.translation(self, offset, copy=False)
 
     def frame_mapping(self, frame, side, copy=True):
         """

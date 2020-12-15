@@ -1944,6 +1944,24 @@ class LineSegment3D(LineSegment):
             else:
                 return p1.point_distance(p2)
 
+        elif element.__class__ is BSplineCurve3D:
+            points = element.points
+            lines = []
+            dist_min = math.inf
+            for p1, p2 in zip(points[0:-1], points[1:]):
+                lines.append(LineSegment3D(p1, p2))
+            for l in lines:
+                p1, p2 = self.Matrix_distance(l)
+                dist = p1.point_distance(p2)
+                if dist < dist_min:
+                    dist_min = dist
+                    min_points = (p1, p2)
+            if return_points:
+                p1, p2 = min_points
+                return dist_min, p1, p2
+            else:
+                return dist_min
+
         else:
             return NotImplementedError
 
