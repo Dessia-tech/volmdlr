@@ -332,7 +332,6 @@ class Step:
         elif name in STEP_TO_VOLMDLR and hasattr(
                 STEP_TO_VOLMDLR[name], "from_step"):
             # print(object_dict)
-            print(name)
             volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
                 arguments, object_dict)
 

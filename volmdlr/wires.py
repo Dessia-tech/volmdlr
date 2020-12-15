@@ -95,16 +95,16 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         offset_primitives=[]
         infinite_primitives=[]
         offset_intersections=[]
-        ax=self.plot()
+        # ax=self.plot()
         for primitive in self.primitives:
             if isinstance(primitive,volmdlr.edges.LineSegment2D):
                 infinite_primitive=volmdlr.edges.Line2D(primitive.start,primitive.end).translation(volmdlr.Vector2D(offset,-offset))
                 infinite_primitives.append(infinite_primitive)
-                infinite_primitive.plot(ax=ax)
+                # infinite_primitive.plot(ax=ax)
             else :
                 infinite_primitive=Circle2D(primitive.center,primitive.radius-offset)
                 infinite_primitives.append(infinite_primitive)
-                infinite_primitive.plot(ax=ax)
+                # infinite_primitive.plot(ax=ax)
         nb=len(infinite_primitives)
         for i in range(nb-1):
             if infinite_primitives[i].__class__.__name__=='Line2D' and infinite_primitives[i+1].__class__.__name__=='Line2D':
@@ -119,15 +119,15 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                 
                 intersections=infinite_primitives[i].line_intersections(infinite_primitives[i+1])
                 # intersections.reverse()
-                intersections[0].plot(ax=ax,color='r')
+                # intersections[0].plot(ax=ax,color='r')
                 offset_intersections.append((intersections,'Line2D'))
             if infinite_primitives[i+1].__class__.__name__=='Circle2D' and infinite_primitives[i].__class__.__name__=='Circle2D':    
                 intersections=infinite_primitives[i].circle_intersections(infinite_primitives[i+1])
                 intersections.reverse()
                 offset_intersections.append((intersections,'Circle2D',i+1)) 
                 
-                intersections[0].plot(ax=ax,color='g')
-                intersections[1].plot(ax=ax,color='b')
+                # intersections[0].plot(ax=ax,color='g')
+                # intersections[1].plot(ax=ax,color='b')
         if self.primitives[0].__class__.__name__=='LineSegment2D':
             offset_primitives.append(volmdlr.edges.LineSegment2D(infinite_primitives[0].point1,offset_intersections[0][0][0]))
         else :
@@ -1245,7 +1245,7 @@ class ClosedPolygon2D(Contour2D):
 
     def plot(self, ax=None, color='k', alpha=1,
                 plot_points=False, point_numbering=False,
-                fill=False, fill_color='w'):
+                fill=False, fill_color='w', equal_aspect=True):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -1264,6 +1264,11 @@ class ClosedPolygon2D(Contour2D):
             for ip, point in enumerate(self.points):
                 ax.text(*point, 'point {}'.format(ip+1),
                         ha='center', va='top')
+
+        if equal_aspect:
+            ax.set_aspect('equal')
+        else:
+            ax.set_aspect('auto')
 
         ax.margins(0.1)
         plt.show()

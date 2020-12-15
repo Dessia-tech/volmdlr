@@ -2042,7 +2042,6 @@ class LineSegment3D(LineSegment):
             else:
                 angle2 = angle
                 cone_frame = volmdlr.Frame3D(cone_origin, u, v, axis)
-            print(cone_frame)
 
             surface = volmdlr.faces.ConicalSurface3D(cone_frame,
                                                      semi_angle)
