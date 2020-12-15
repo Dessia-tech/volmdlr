@@ -63,7 +63,8 @@ sweep = primitives3d.Sweep(contour, rl, name = 'Random pipe')
 model = vm.core.VolumeModel([sweep])
 model.babylonjs()
 
-# model.to_step()
+
+model.to_step('sweep.step')
 
 
 

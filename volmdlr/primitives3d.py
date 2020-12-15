@@ -247,7 +247,7 @@ class Block(volmdlr.faces.ClosedShell3D):
             return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
         else:
             self.frame.translation(offset, copy=False)
-            volmdlr.faces.Shell3D.translation(self, offset, copy=False)
+            volmdlr.faces.OpenShell3D.translation(self, offset, copy=False)
 
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -538,13 +538,28 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
             if face:# Can be None
                 faces.append(face)
 
+        if not math.isclose(self.angle, volmdlr.TWO_PI, abs_tol=1e-9):
+            # Adding contours face to close
+            w = self.x.cross(self.y)
+            plane1 = volmdlr.faces.Plane3D(volmdlr.Frame3D(self.plane_origin,
+                                                           self.x,
+                                                           self.y,
+                                                           w))
+            face1 = volmdlr.faces.PlaneFace3D(plane1,
+                                              volmdlr.faces.Surface2D(self.contour2d,
+                                                                      []))
+            face2 = face1.rotation(self.axis_point, self.axis, self.angle)
+            faces.append(face1)
+            faces.append(face2)
+            
+
         return faces
 
     def plot(self, ax=None):
-        if ax is None:
-            fig, ax = plt.subplots()
-        for contour in self.contours3D:
-            contour.plot(ax)
+        # if ax is None:
+        #     fig, ax = plt.subplots()
+        # for contour in self.contours3d:
+        ax = self.contour3d.plot(ax)
 
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive'+str(ip)
