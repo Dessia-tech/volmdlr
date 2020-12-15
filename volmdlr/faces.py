@@ -1548,23 +1548,27 @@ class Face3D(volmdlr.core.Primitive3D):
             raise NotImplementedError(surface)
 
     def to_step(self, current_id):
-        content, outer_contour_id = self.outer_contour3d.to_step(current_id)
+        content, surface3d_id = self.surface3d.to_step(current_id)
+        current_id = surface3d_id + 1
+
+        outer_contour_content, outer_contour_id = self.outer_contour3d.to_step(current_id,
+                                                                 surface_id=surface3d_id)
+        content += outer_contour_content
         content += "#{} = FACE_BOUND('{}',#{},.T.);\n".format(outer_contour_id+1,
                                                           self.name,
                                                           outer_contour_id)
         contours_ids = [outer_contour_id+1]
         current_id = outer_contour_id + 2
         for inner_contour3d in self.inner_contours3d:
-            inner_contour_content, inner_contour_id = inner_contour3d.to_step(current_id)
+            inner_contour_content, inner_contour_id = inner_contour3d.to_step(current_id,
+                                                                              surface_id=surface3d_id)
             content += inner_contour_content
             face_bound_id = inner_contour_id + 1
-            content += "#{} = FACE_BOUND('{}',#{},.T.);\n".format(inner_contour_id+1)
+            content += "#{} = FACE_BOUND('',#{},.T.);\n".format(face_bound_id,
+                                                                inner_contour_id)
             contours_ids.append(face_bound_id)
             current_id = face_bound_id + 1
 
-        surface3d_content, surface3d_id = self.surface3d.to_step(current_id)
-        content += surface3d_content
-        current_id = surface3d_id + 1
         content += "#{} = ADVANCED_FACE('{}',({}),#{},.T.);\n".format(current_id,
                                                             self.name,
                                                             volmdlr.core.step_ids_to_str(contours_ids),
