@@ -1389,6 +1389,11 @@ class VolumeModel(dc.DessiaObject):
                                          use_cdn=use_cdn, debug=debug)
 
     def to_step(self, filename:str=None):
+        
+        if filename and not (filename.endswith('.step') or filename.endswith('.stp')):
+            print('Adding .step extension to filename')
+            filename += '.step'
+        
         step_content = STEP_HEADER.format(name=self.name,
                                           filename=filename,
                                           timestamp=datetime.now().isoformat(),
@@ -1480,6 +1485,7 @@ class VolumeModel(dc.DessiaObject):
         if filename:
             with open(filename, 'w') as f:
                 f.write(step_content)
+                print('file written to {}'.format(os.path.abspath(filename)))
         else:
             return step_content
 

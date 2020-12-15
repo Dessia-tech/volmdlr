@@ -278,9 +278,13 @@ class Vector(DessiaObject):
 
 
     def is_colinear_to(self, other_vector):
-        return math.isclose(abs(self.dot(other_vector))/self.norm()/other_vector.norm(),
-                            1,
-                            abs_tol=1e-5)
+        try:
+            return math.isclose(abs(self.dot(other_vector))/self.norm()/other_vector.norm(),
+                                1,
+                                abs_tol=1e-5)
+            
+        except ZeroDivisionError:
+            return False
 
     @classmethod
     def mean_point(cls, points):
@@ -1605,7 +1609,7 @@ class Frame3D(Basis3D):
 
     def to_step(self, current_id):
         
-        content, origin_id = self.origin.to_step(current_id)
+        content, origin_id = self.origin.to_point().to_step(current_id)
         current_id = origin_id + 1
         u_content, u_id = Vector3D.to_step(self.u, current_id)
         current_id = u_id + 1
