@@ -42,6 +42,7 @@ steps:
   image: appleboy/drone-scp
   when:
     branch: master
+    event: push
   settings:
     host: austerlitz.dessia.tech
     target: /var/www/documentation/volmdlr/
@@ -61,6 +62,6 @@ steps:
     host: mail.dessia.tech
     username: technical@dessia.tech
     password:
-     from_secret: email_password
+      from_secret: email_password
     from: technical@dessia.tech
     recipients: [ root@dessia.tech ]
