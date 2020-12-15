@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
@@ -19,3 +20,6 @@ pattern_triangle_elements=pattern_mesh.generate_mesh(4)
 
 stator_mesh=stator_mesher
 stator_triangle_elements=stator_mesh.generate_mesh(4)
+
+
+
