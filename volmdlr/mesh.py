@@ -502,14 +502,12 @@ class Mesher(DessiaObject):
         
         
         for segment in polygon1.line_segments:
-            index_0=polygon1.line_segments.index(segment)
             
             mid=segment.point_at_abscissa(segment.length()/2)
-            
             d=[]
+            
             for in_segment in polygon2.line_segments:
                   
-      
                   l=in_segment.point_distance(mid)
                   d.append(l)
             index=d.index(min(d))
@@ -741,9 +739,9 @@ class Mesher(DessiaObject):
             for triangle in ear :
                
                 if triangle.area>10e-9:
-                    # if triangle.aspect_ratio()<20:
+
                         all_triangles.append(triangle)
-            return all_triangles
+        return all_triangles
     
     def complete_mesh(self,contour):
         triangles=[]
@@ -824,20 +822,7 @@ class Mesher(DessiaObject):
                     contour_last_offset=contour_offsets[-1]
                     offset_triangles+=self.complete_mesh(contour_last_offset)  
                 else :
-                    # if cut : 
-                    #     contour_last_offset=contour_offsets[-1]
-                    #     xmin, xmax, ymin, ymax = contour_last_offset.bounding_points()
-            
-                    #     xi = xmin +  (xmax - xmin) / 2
-               
-                    #     cut_line = volmdlr.edges.Line2D(volmdlr.Point2D(xi, 0),
-                    #                             volmdlr.Point2D(xi, 1))
-                    #     cutted = contour_last_offset.cut_by_line(cut_line)
-                    #     for c in cutted :
-                    #         cutted_polygon=c.to_polygon(self.nodes_len)
-                    #         p=self.projection_points(cutted_polygon,polygon_offsets[l-2],segment_to_nodes)  
-                    #         offset_triangles+=self.continuous_earclip(c,p)
-                    # else :   
+                      
                     last_continuity_points=self.projection_points(polygon_offsets[-1],polygon_offsets[l-2],segment_to_nodes)
                     offset_triangles+=self.continuous_earclip(polygon_offsets[-1],last_continuity_points)
             else :
@@ -959,12 +944,11 @@ class Mesher(DessiaObject):
                             
                         else :
                            
-                             # out_point_image[point][0][1].plot(ax=ax,color='b')
+                            
                              
                              if out_point_image[point][0][1] != new_proj :
                                 
-                                  # projection_points[out_point_image[point][0][0]].appebd(out_point_image[point][0][1])
-                                  # out_point_image[point][0][1].plot(ax=ax,color='r')
+                                
                                   # projection_points[index_0].insert(index_point,out_point_image[point][0][1])
                                    projection_points[out_point_image[point][0][0]].append(new_proj)
                                    if new_proj not in projection_points[index_0]:
@@ -1054,10 +1038,10 @@ class Mesher(DessiaObject):
                     all_triangles.append(new_triangle_0)
                     
                 for j in  range(v-1,u-1):
-                    # projection_points[index_0][j+1].plot(ax=ax,color='b')
+                   
                     new_triangle=volmdlr.wires.Triangle2D([projection_points[index_0][j],projection_points[index_0][j+1],
                                     segment_to_nodes[out_segment][v-1]])  
-                    # new_triangle.plot(ax=ax,color='r')
+                   
                     all_triangles.append(new_triangle) 
            
             if u<v :
@@ -1166,7 +1150,7 @@ class Mesher(DessiaObject):
                   Next=False
                   
                   triangles+=self.alternative_triangulation(contour,
-                                                            None,True,False,1)
+                                                            None,False,False,1)
                   
                 else :
                 
@@ -1280,6 +1264,37 @@ class Mesher(DessiaObject):
         ax.set_aspect('equal')
         return mesh_triangle_elements
     
+    def check_conformity(self,mesh_triangle_elements):
+        
+        for triangle1 in mesh_triangle_elements:
+            for triangle2 in mesh_triangle_elements:
+                if triangle1 != triangle2:
+                    inter=triangle1.triangle_intersection(triangle2)
+                    if inter is not None :
+                        if inter is False :
+                            return False             
+        return True
+                        
+                        
+                
+    def check_mesh(self,exterior_contours,interior_contours,mesh_triangles,
+                    spec_aspect_ratio):
+        total_contour_area=0
+        mesh_area=0
+        if interior_contours:
+            for contour in interior_contours:
+                total_contour_area+=contour.to_polygon2(self.nodes_len).area()
+               
+        for contour in exterior_contours:
+            total_contour_area+=contour.to_polygon2(self.nodes_len).area()
+            
+        for triangle in mesh_triangles:
+            mesh_area+=triangle.area()
+        
+        return (self.triangulation_max_aspect_ratio(mesh_triangles) <= spec_aspect_ratio 
+                and total_contour_area==mesh_area and self.check_conformity(mesh_triangles))
+            
+        
     def plot_aspect_ratio(self,all_triangles:List[volmdlr.wires.Triangle2D],
                           all_aspect_ratios:Dict[volmdlr.wires.Triangle2D,float],
                           ax,min_aspect_ratio=None,max_aspect_ratio=None):

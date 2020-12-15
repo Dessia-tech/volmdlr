@@ -8,8 +8,6 @@ Created on Fri Dec 11 17:26:59 2020
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap
-import numpy as npy
 import volmdlr.edges as edges
 import volmdlr.wires as wires
 import volmdlr.faces as faces
@@ -26,9 +24,10 @@ rotor_internal=rotor_internal.primitives[0]
 stator_external=stator_external.primitives[0]
 
 
-all_rotor_mesh=vmmesh.Mesher([rotor_internal],[rotor_magnet,rotor_external],60)
+rotor_mesher=vmmesh.Mesher([rotor_internal],[rotor_magnet,rotor_external],60)
 
 surface=faces.Surface2D(stator_external,[stator_internal])
 pattern=surface.get_pattern_single_inner()
+pattern_mesher=vmmesh.Mesher([],[pattern],60)
 all_patterns=surface.contour_from_pattern()
-stator_mesh=vmmesh.Mesher([],all_patterns,60)
+stator_mesher=vmmesh.Mesher([],all_patterns,60)

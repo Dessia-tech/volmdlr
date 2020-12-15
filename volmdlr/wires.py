@@ -1110,14 +1110,14 @@ class Contour2D(Contour, Wire2D):
                                        number_points_y=20)
 
 
-    # def to_polygon(self, angle_resolution):
+    def to_polygon(self, angle_resolution):
 
-    #     polygon_points = []
+        polygon_points = []
        
 
-    #     for primitive in self.primitives:
-    #         polygon_points.extend(primitive.polygon_points()[:-1])
-    #     return ClosedPolygon2D(polygon_points)
+        for primitive in self.primitives:
+            polygon_points.extend(primitive.polygon_points()[:-1])
+        return ClosedPolygon2D(polygon_points)
 
    
 
@@ -1835,6 +1835,17 @@ class Triangle2D(ClosedPolygon2D):
         h=min(H)
         
         return E/h
+    def triangle_intersection(self,triangle):
+        intersections=[]
+        for segment in triangle.line_segments:
+            intersections+=self.line_intersections(segment)
+        if intersections :
+            for inter in intersections :
+                if inter[0] in self.points and inter[0] in triangle.points:
+                    return True
+            return False
+        else :
+            return None 
     def max_density_vertices(self,segment_to_nodes):
         
         segments=self.line_segments
