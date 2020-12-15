@@ -2032,21 +2032,25 @@ class LineSegment3D(LineSegment):
 
             semi_angle = math.acos(dv.dot(axis))
             cone_origin = p1_proj - d1 / math.tan(semi_angle) * axis
-            # if semi_angle > 0.5 * math.pi:
-            #     semi_angle = math.pi - semi_angle
+            if semi_angle > 0.5 * math.pi:
+                semi_angle = math.pi - semi_angle
 
-            #     cone_frame = volmdlr.Frame3D(cone_origin, u, -v, -axis)
-            # elif semi_angle < 0:
-            #     raise NotImplementedError
-            # else:
-            cone_frame = volmdlr.Frame3D(cone_origin, u, v, axis)
+                cone_frame = volmdlr.Frame3D(cone_origin, u, -v, -axis)
+                angle2 = -angle
+            elif semi_angle < 0:
+                raise NotImplementedError
+            else:
+                angle2 = angle
+                cone_frame = volmdlr.Frame3D(cone_origin, u, v, axis)
+            print(cone_frame)
 
             surface = volmdlr.faces.ConicalSurface3D(cone_frame,
                                                      semi_angle)
             z1 = d1 / math.tan(semi_angle)
             z2 = d2 / math.tan(semi_angle)
-            return surface.rectangular_cut(0, angle, z1, z2)
+            return surface.rectangular_cut(0, angle2, z1, z2)
         else:
+            # Cylindrical face
             v = axis.cross(u)
             surface = volmdlr.faces.CylindricalSurface3D(volmdlr.Frame3D(p1_proj, u, v, axis), d1)
             return surface.rectangular_cut(0, angle,
