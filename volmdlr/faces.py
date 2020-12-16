@@ -627,20 +627,12 @@ class Surface2D(volmdlr.core.Primitive2D):
             pattern_primitives=[]
             pattern_primitives.append(volmdlr.edges.LineSegment2D(new_intersections[1][0],new_intersections[0][0]))
             pattern_primitives.append(sp44)
-            # pattern_primitives.append(inner.primitives[ip3])
             pattern_primitives.extend(inner.primitives[4:ip3])
             pattern_primitives.append(sp22)
             pattern_primitives.append(volmdlr.edges.LineSegment2D(sp22.end,intersections[6][0]))
             pattern_primitives.append(outer.cut_between_two_points(sp44,intersections[6][0],
                                                              new_intersections[1][0]))
-            # pattern_primitives.append(sp22)
-            # a=inner.primitives[4:ip3]
-            # a.reverse()
-            # pattern_primitives.extend(a)
-            # pattern_primitives.append(sp44)
-            # pattern_primitives.append(volmdlr.edges.LineSegment2D(new_intersections[1][0],new_intersections[0][0]))
-            # pattern_primitives.append(outer.cut_between_two_points(sp44,intersections[6][0],
-            #                                                 new_intersections[1][0]))
+          
             pattern=volmdlr.wires.Contour2D(pattern_primitives) 
          
                               
@@ -649,7 +641,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         
         pattern=self.get_pattern_single_inner()
         pattern_rotations=[]
-        # pattern_rotations.append(self)
+       
         for k in range(1,13):
             new_pattern=pattern.rotation(self.inner_contours[0].center_of_mass(),k*math.pi/6)
             pattern_rotations.append(new_pattern)

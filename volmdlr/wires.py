@@ -1791,7 +1791,11 @@ class Triangle2D(ClosedPolygon2D):
         else:
             for i, point in enumerate(self.points):
                 point = symmetric_points[i]
-   
+    def _triangle_sum(self):
+        x1,y1=self.points[0].x,self.points[0].y
+        x2,y2=self.points[1].x,self.points[1].y
+        x3,y3=self.points[2].x,self.points[2].y
+        return x1 * (y3 - y2) + x2 * (y1 - y3) + x3 * (y2 - y1)
     def common_edge(self,nodes_0:List[volmdlr.Point2D],nodes_1:List[volmdlr.Point2D]):
         common_edge=None
         for point1 in nodes_0:
