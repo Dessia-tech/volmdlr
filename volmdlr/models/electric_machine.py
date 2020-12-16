@@ -3,7 +3,7 @@
 """
 Created on Fri Dec 11 17:26:59 2020
 
-@author: milan gasmi
+@author: mgasmi
 """
 
 import matplotlib as mpl

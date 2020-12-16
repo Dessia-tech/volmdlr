@@ -322,13 +322,13 @@ class Surface2D(volmdlr.core.Primitive2D):
 
            
     
-    def cut_by_line(self, line:volmdlr.edges.Line2D):
-        """
-        This method makes inner contour disappear for now
-        """
+    # def cut_by_line(self, line:volmdlr.edges.Line2D):
+    #     """
+    #     This method makes inner contour disappear for now
+    #     """
 
-        splitted_outer_contours = self.outer_contour.cut_by_line(line)
-        return [Surface2D(oc, []) for oc in splitted_outer_contours]
+    #     splitted_outer_contours = self.outer_contour.cut_by_line(line)
+    #     return [Surface2D(oc, []) for oc in splitted_outer_contours]
 
   
     def split_at_centers(self):
@@ -355,7 +355,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         iteration_contours2 = []
 
        
-        sc = self.cut_by_line2(cut_line)
+        # sc = self.cut_by_line2(cut_line)
 
 
         iteration_contours2.extend(sc)  
@@ -575,8 +575,8 @@ class Surface2D(volmdlr.core.Primitive2D):
         # ax=plt.subplot()
         # ax=self.plot()
         line = volmdlr.edges.Line2D(volmdlr.Point2D(0,-0.17),volmdlr.Point2D(0,0.17)) 
-        line_2=line.rotation(inner.center_of_mass(),0.52)
-        line_3=line.rotation(inner.center_of_mass(),-0.52)
+        line_2=line.rotation(inner.center_of_mass(),math.pi/6)
+        line_3=line.rotation(inner.center_of_mass(),-math.pi/6)
         # line_2.plot(ax=ax)
         # line_3.plot(ax=ax)
         outer_intersections_1=outer.line_intersections(line_2)
