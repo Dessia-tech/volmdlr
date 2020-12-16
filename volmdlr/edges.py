@@ -18,7 +18,7 @@ from typing import List
 
 import dessia_common as dc
 import volmdlr.core
-import plot_data.core as core
+import plot_data
 
 
 # import volmdlr.primitives3D
@@ -681,10 +681,11 @@ class LineSegment2D(LineSegment):
             else:
                 self.points = [frame.NewCoordinates(p) for p in self.points]
 
-    def plot_data(self, plot_data_states: List[core.Settings] = None):
-        return core.LineSegment(data=[self.start.x, self.start.y,
+    def plot_data(self, edge_style: plot_data.EdgeStyle = None):
+        return plot_data.LineSegment(data=[self.start.x, self.start.y,
+
                                               self.end.x, self.end.y],
-                                        plot_data_states=plot_data_states)
+                                        edge_style=edge_style)
 
     def CreateTangentCircle(self, point, other_line):
         circle1, circle2 = Line2D.CreateTangentCircle(other_line, point, self)
@@ -974,18 +975,19 @@ class Arc2D(Edge):
         else:
             return list_node[::-1]
 
-    def plot_data(self, plot_data_states: List[core.Settings] = None):
-        list_node = self.Discretise()
+    def plot_data(self, edge_style: plot_data.EdgeStyle = None):
+        list_node = self.polygon_points()
         data = []
         for nd in list_node:
             data.append({'x': nd.x, 'y': nd.y})
-        return core.Arc2D(cx=self.center.x,
+
+        return plot_data.Arc2D(cx=self.center.x,
                                        cy=self.center.y,
                                        data=data,
                                        r=self.radius,
                                        angle1=self.angle1,
                                        angle2=self.angle2,
-                                       plot_data_states=plot_data_states)
+                                       edge_style=edge_style)
 
     def copy(self):
         return Arc2D(self.start.copy(),

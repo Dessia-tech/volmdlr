@@ -16,7 +16,7 @@ import volmdlr
 import volmdlr.core
 from volmdlr.core_compiled import polygon_point_belongs
 import volmdlr.edges
-import plot_data.core as core
+import plot_data
 
 class Wire:
 
@@ -388,12 +388,11 @@ class Contour2D(Contour, Wire2D):
 
         return A
 
-    def plot_data(self, plot_data_states: List[core.Settings] = None):
-        if core is None:
-            plot_data_states = [core.Settings()]
-        plot_data_primitives = [item.plot_data(plot_data_states=plot_data_states) for item in self.primitives]
-        return core.Contour2D(plot_data_primitives=plot_data_primitives,
-                                           plot_data_states=plot_data_states,
+    def plot_data(self, edge_style: plot_data.EdgeStyle = None, surface_style:plot_data.SurfaceStyle = None):
+        plot_data_primitives = [item.plot_data() for item in self.primitives]
+        return plot_data.Contour2D(plot_data_primitives=plot_data_primitives,
+                                           edge_style=edge_style,
+                                           surface_style=surface_style,
                                            name=self.name)
 
     def copy(self):
@@ -1185,11 +1184,12 @@ class Circle2D(Contour2D):
         center = 2 * point - self.center
         return Circle2D(center, self.radius)
 
-    def plot_data(self, plot_data_states: List[core.Settings] = None):
-        return core.PlotDataCircle2D(cx=self.center.x,
+    def plot_data(self, edge_style:plot_data.EdgeStyle=None, surface_style:plot_data.SurfaceStyle=None):
+        return plot_data.Circle2D(cx=self.center.x,
                                           cy=self.center.y,
                                           r=self.radius,
-                                          plot_data_states=plot_data_states)
+                                          edge_style=edge_style,
+                                          surface_style=surface_style)
 
     def copy(self):
         return Circle2D(self.center.copy(), self.radius)
