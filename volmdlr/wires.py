@@ -481,15 +481,6 @@ class Contour2D(Contour, Wire2D):
                                            surface_style=surface_style,
                                            name=self.name)
 
-    def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
-
-        if plot_data_states is None:
-
-            plot_data_states = [plot_data.Settings()]
-        plot_data_primitives = [item.plot_data(plot_data_states=plot_data_states) for item in self.primitives]
-        return plot_data.Contour2D(plot_data_primitives=plot_data_primitives,
-                                           plot_data_states=plot_data_states,
-                                           name=self.name)
 
     # def copy(self):
     #     primitives_copy = []
