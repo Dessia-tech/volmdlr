@@ -8,6 +8,15 @@ import matplotlib.pyplot as plt
 import dessia_common as dc
 import volmdlr.edges
 
+class Node2D(volmdlr.Point2D):
+    def __hash__(self):
+        return int(1e6*(self.x+self.y))
+
+class Node3D(volmdlr.Point3D):
+    def __hash__(self):
+        return int(1e6*(self.x+self.y+self.z))
+
+
 class DisplayMesh(dc.DessiaObject):
     def __init__(self, points, triangles, edges=None, name=''):
 
@@ -29,6 +38,7 @@ class DisplayMesh(dc.DessiaObject):
 
     def __add__(self, other_mesh):
         new_points = self.points[:]
+        # print(self.points[0].__class__.__name__)
         new_point_index = {p: i for i, p in enumerate(self.points)}
         ip = len(new_points)
         for point in other_mesh.points:
@@ -73,6 +83,7 @@ class DisplayMesh(dc.DessiaObject):
 
         return ax
 
+        
 
 class DisplayMesh2D(DisplayMesh):
     _linesegment_class = volmdlr.edges.LineSegment2D

@@ -10,21 +10,22 @@ import numpy as npy
 npy.seterr(divide='raise')
 
 import volmdlr
+import volmdlr.core
 import volmdlr.primitives
 import volmdlr.faces
-import volmdlr.shells
-from typing import Tuple
+from typing import Tuple, List, Dict
 
 import matplotlib.pyplot as plt
 
 
-class OpenedRoundedLineSegments3D(volmdlr.wires.Wire3D, volmdlr.primitives.RoundedLineSegments):
+class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D, volmdlr.primitives.RoundedLineSegments):
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
     _generic_eq = True
     
-    def __init__(self, points, radius, adapt_radius=False, name=''):
+    def __init__(self, points:List[volmdlr.Point3D], radius:Dict[str, float],
+                 adapt_radius:bool=False, name:str=''):
         primitives = volmdlr.primitives.RoundedLineSegments.__init__(self, points, radius,
                                                   volmdlr.edges.LineSegment3D,
                                                   volmdlr.edges.Arc3D,
@@ -40,7 +41,7 @@ class OpenedRoundedLineSegments3D(volmdlr.wires.Wire3D, volmdlr.primitives.Round
             if ipoint == 0:
                 pt1 = self.points[-1]
             else:
-                pt1 = self.points[ipoint -1]
+                pt1 = self.points[(ipoint) -1]
             pti = self.points[ipoint]
             if ipoint < self.npoints-1:
                 pt2 = self.points[ipoint+1]
@@ -70,7 +71,7 @@ class OpenedRoundedLineSegments3D(volmdlr.wires.Wire3D, volmdlr.primitives.Round
 
         l1 = volmdlr.edges.Line3D(p3, p3+v1)
         l2 = volmdlr.edges.Line3D(p4, p4+v2)
-        c, _ = l1.MinimumDistancePoints(l2)
+        c, _ = l1.minimum_distance_points(l2)
 
         u3 = u1 + u2# mean of v1 and v2
         u3 /= u3.norm()
@@ -101,7 +102,7 @@ class OpenedRoundedLineSegments3D(volmdlr.wires.Wire3D, volmdlr.primitives.Round
 
 
 class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
-                                  OpenedRoundedLineSegments3D):
+                                  OpenRoundedLineSegments3D):
     """
     :param points: Points used to draw the wire 
     :type points: List of Point3D
@@ -127,7 +128,7 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
 
 
 
-class Block(volmdlr.shells.Shell3D):
+class Block(volmdlr.faces.ClosedShell3D):
     _standalone_in_db = True
     _generic_eq = True
     _non_serializable_attributes  = ['size']
@@ -147,7 +148,7 @@ class Block(volmdlr.shells.Shell3D):
         self.size = (self.frame.u.norm(), self.frame.v.norm(), self.frame.w.norm())
 
         faces = self.shell_faces()
-        volmdlr.shells.Shell3D.__init__(self, faces,  color=color, alpha=alpha, name=name)
+        volmdlr.faces.OpenShell3D.__init__(self, faces,  color=color, alpha=alpha, name=name)
 
     # def __hash__(self):
     #     return hash(self.frame)
@@ -238,7 +239,7 @@ class Block(volmdlr.shells.Shell3D):
             return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
         else:
             self.frame.rotation(center, axis, angle, copy=False)
-            volmdlr.shells.Shell3D.rotation(self, center, axis, angle, copy=False)
+            volmdlr.faces.Shell3D.rotation(self, center, axis, angle, copy=False)
 
     def translation(self, offset, copy=True):
         if copy:
@@ -246,7 +247,7 @@ class Block(volmdlr.shells.Shell3D):
             return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
         else:
             self.frame.translation(offset, copy=False)
-            volmdlr.shells.Shell3D.translation(self, offset, copy=False)
+            volmdlr.faces.OpenShell3D.translation(self, offset, copy=False)
 
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -263,7 +264,7 @@ class Block(volmdlr.shells.Shell3D):
                 return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
             else:
                 self.frame = new_frame
-                volmdlr.shells.Shell3D.frame_mapping(self, frame, side, copy=False)
+                volmdlr.faces.ClosedShell3D.frame_mapping(self, frame, side, copy=False)
 
         if side == 'old':
             new_origin = frame.old_coordinates(self.frame.origin)
@@ -275,7 +276,7 @@ class Block(volmdlr.shells.Shell3D):
                 return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
             else:
                 self.frame = new_frame
-                volmdlr.shells.Shell3D.frame_mapping(self, frame, side, copy=False)
+                volmdlr.faces.ClosedShell3D.frame_mapping(self, frame, side, copy=False)
 
     def copy(self):
         new_origin = self.frame.origin.copy()
@@ -365,7 +366,7 @@ class Cone(volmdlr.core.Primitive3D):
         return s
 
 
-class ExtrudedProfile(volmdlr.shells.Shell3D):
+class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     """
     
     """
@@ -395,7 +396,10 @@ class ExtrudedProfile(volmdlr.shells.Shell3D):
             raise ValueError('At least one inner contour is not contained in outer_contour.')
 
         faces = self.shell_faces()
-        volmdlr.shells.Shell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
+
+        volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
+                                             alpha=alpha, name=name)
+
 
     def shell_faces(self):
         lower_plane = volmdlr.faces.Plane3D.from_plane_vectors(self.plane_origin,
@@ -503,7 +507,7 @@ class ExtrudedProfile(volmdlr.shells.Shell3D):
                           extrusion_vector)
 
 
-class RevolvedProfile(volmdlr.shells.Shell3D):
+class RevolvedProfile(volmdlr.faces.ClosedShell3D):
     """
 
     """
@@ -522,7 +526,7 @@ class RevolvedProfile(volmdlr.shells.Shell3D):
         self.contour3d = self.contour2d.to_3d(plane_origin, x, y)
 
         faces = self.shell_faces()
-        volmdlr.shells.Shell3D.__init__(self, faces, color=color,
+        volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
                                  alpha=alpha, name=name)
 
     def shell_faces(self):
@@ -533,14 +537,29 @@ class RevolvedProfile(volmdlr.shells.Shell3D):
                                          self.axis, self.angle)
             if face:# Can be None
                 faces.append(face)
-                    
+
+        if not math.isclose(self.angle, volmdlr.TWO_PI, abs_tol=1e-9):
+            # Adding contours face to close
+            w = self.x.cross(self.y)
+            plane1 = volmdlr.faces.Plane3D(volmdlr.Frame3D(self.plane_origin,
+                                                           self.x,
+                                                           self.y,
+                                                           w))
+            face1 = volmdlr.faces.PlaneFace3D(plane1,
+                                              volmdlr.faces.Surface2D(self.contour2d,
+                                                                      []))
+            face2 = face1.rotation(self.axis_point, self.axis, self.angle)
+            faces.append(face1)
+            faces.append(face2)
+            
+
         return faces
 
     def plot(self, ax=None):
-        if ax is None:
-            fig, ax = plt.subplots()
-        for contour in self.contours3D:
-            contour.plot(ax)
+        # if ax is None:
+        #     fig, ax = plt.subplots()
+        # for contour in self.contours3d:
+        ax = self.contour3d.plot(ax)
 
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive'+str(ip)
@@ -844,7 +863,7 @@ class HollowCylinder(Cylinder):
             self.axis = axis
 
 
-class Sweep(volmdlr.shells.Shell3D):
+class Sweep(volmdlr.faces.ClosedShell3D):
     """
     Sweep a 2D contour along a Wire3D
     """
@@ -855,7 +874,7 @@ class Sweep(volmdlr.shells.Shell3D):
         self.frames = []
         
         faces = self.shell_faces()
-        volmdlr.shells.Shell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
+        volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color, alpha=alpha, name=name)
 
 
     def shell_faces(self):

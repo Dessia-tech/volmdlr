@@ -4,8 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [v0.2.1]
 
-## [Unreleased]
+### Added
+- step export
+
+
+## [v0.2]
 
 ### Changed
 - modules *2D or *3D renamed in *2d, *3d
@@ -14,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PEP8: method names
 - PointAtCurvilinearAbscissa changed to point_at_abscissa
 - MPLPlot changed to plot()
-- MPLPlot now returns only ax instead of fig, ax 
+- plot now returns only ax instead of fig, ax 
 
 ## [v0.1.11]
 
