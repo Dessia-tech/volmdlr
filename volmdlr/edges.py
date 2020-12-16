@@ -1043,7 +1043,7 @@ class Arc2D(Edge):
         
         return volmdlr.geometry.huygens2d(Ic, self.area(), self.center, point)
       
-      def discretise(self,n:float):
+    def discretise(self,n:float):
         
         arc_to_nodes={}
         nodes=[]
