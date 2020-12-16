@@ -388,14 +388,16 @@ class Mesh(DessiaObject):
 
 class Mesher(DessiaObject):
     
-    def __init__(self,interior_contours:List[volmdlr.wires.Contour2D],exterior_contours:List[volmdlr.wires.Contour2D],nodes_len:float):
-        self.nodes_len=nodes_len
+    def __init__(self,interior_contours:List[volmdlr.wires.Contour2D],
+                 exterior_contours:List[volmdlr.wires.Contour2D],nodes_len:float):
+        self.nodes_len=nodes_len # What is node len?
         self.interior_contours=interior_contours
         self.exterior_contours=exterior_contours
         
 
     
     def _is_convex(self,p1:volmdlr.Point2D, p2:volmdlr.Point2D, p3:volmdlr.Point2D):
+        # FIXME Why not using a triangle as input?
         return self._triangle_sum(p1.x, p1.y, p2.x, p2.y, p3.x,p3.y) < 0
     
     def _is_clockwise(self,polygon:volmdlr.wires.ClosedPolygon2D):
@@ -408,9 +410,13 @@ class Mesher(DessiaObject):
         return s > 0
     
     def _triangle_sum(self,x1, y1, x2, y2, x3, y3):
+        #? Why not in triangle class?
         return x1 * (y3 - y2) + x2 * (y1 - y3) + x3 * (y2 - y1)
     
-    def _contains_no_points(self,p1:volmdlr.Point2D,p2:volmdlr.Point2D,p3:volmdlr.Point2D, polygon:volmdlr.wires.ClosedPolygon2D):
+    def _contains_no_points(self,p1:volmdlr.Point2D,
+                            p2:volmdlr.Point2D,p3:volmdlr.Point2D,
+                            polygon:volmdlr.wires.ClosedPolygon2D):
+        # FIXME Why not using a triangle
        triangle=volmdlr.wires.Triangle2D([p1,p2,p3])
        for pn in polygon.points:
             if pn in [p1, p2, p3]:
@@ -421,13 +427,13 @@ class Mesher(DessiaObject):
 
     def _is_ear(self,p1:volmdlr.Point2D,p2:volmdlr.Point2D,p3:volmdlr.Point2D, polygon:volmdlr.wires.ClosedPolygon2D):
         triangle=volmdlr.wires.Triangle2D([p1,p2,p3])
+        # FIXME why not triangle
         ear = self._contains_no_points(p1, p2, p3, polygon) and \
             self._is_convex(p1, p2, p3) and \
             triangle.area > 0
         return ear
     
     def earclip(self,polygon:volmdlr.wires.ClosedPolygon2D):
-       
         possible_triangles=[]
         ear_vertex =[]
        
@@ -491,16 +497,17 @@ class Mesher(DessiaObject):
                  
                                  
         
-    def basic_triangulation(self,polygon1:volmdlr.wires.ClosedPolygon2D,polygon2:volmdlr.wires.ClosedPolygon2D,
+    def basic_triangulation(self,polygon1:volmdlr.wires.ClosedPolygon2D,
+                            polygon2:volmdlr.wires.ClosedPolygon2D,
                            segment_to_nodes:Dict[volmdlr.edges.LineSegment2D,List[volmdlr.Point2D]]):
         """
         basic triangulation that simply links the points of the two polygons
         
         """
-        
+        # FIXME maybe rename to sew contour or something like this
         triangles=[]
-        
-        
+
+
         for segment in polygon1.line_segments:
             
             mid=segment.point_at_abscissa(segment.length()/2)
@@ -1276,13 +1283,13 @@ class Mesher(DessiaObject):
         return True
                         
                         
-                
+    # FIXME: use self.exterior contours and int
     def check_mesh(self,exterior_contours,interior_contours,mesh_triangles,
                     spec_aspect_ratio):
         total_contour_area=0
         mesh_area=0
         if interior_contours:
-            for contour in interior_contours:
+            for contour in interior_contours:# FIXME: why +?
                 total_contour_area+=contour.to_polygon2(self.nodes_len).area()
                
         for contour in exterior_contours:
