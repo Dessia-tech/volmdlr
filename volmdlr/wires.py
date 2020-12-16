@@ -474,16 +474,13 @@ class Contour2D(Contour, Wire2D):
 
         return A
 
-
-    def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
-
-        if plot_data_states is None:
-
-            plot_data_states = [plot_data.Settings()]
-        plot_data_primitives = [item.plot_data(plot_data_states=plot_data_states) for item in self.primitives]
+    def plot_data(self, edge_style: plot_data.EdgeStyle = None, surface_style:plot_data.SurfaceStyle = None):
+        plot_data_primitives = [item.plot_data() for item in self.primitives]
         return plot_data.Contour2D(plot_data_primitives=plot_data_primitives,
-                                           plot_data_states=plot_data_states,
+                                           edge_style=edge_style,
+                                           surface_style=surface_style,
                                            name=self.name)
+
 
     # def copy(self):
     #     primitives_copy = []
@@ -1907,11 +1904,12 @@ class Circle2D(Contour2D):
         center = 2 * point - self.center
         return Circle2D(center, self.radius)
 
-    def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
+    def plot_data(self, edge_style:plot_data.EdgeStyle=None, surface_style:plot_data.SurfaceStyle=None):
         return plot_data.Circle2D(cx=self.center.x,
                                           cy=self.center.y,
                                           r=self.radius,
-                                          plot_data_states=plot_data_states)
+                                          edge_style=edge_style,
+                                          surface_style=surface_style)
 
     def copy(self):
         return Circle2D(self.center.copy(), self.radius)
