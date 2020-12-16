@@ -388,15 +388,16 @@ class Mesh(DessiaObject):
 
 class Mesher(DessiaObject):
     
-    def __init__(self,interior_contours:List[volmdlr.wires.Contour2D],exterior_contours:List[volmdlr.wires.Contour2D],nodes_len:float):
-        self.nodes_len=nodes_len
+    def __init__(self,interior_contours:List[volmdlr.wires.Contour2D],
+                 exterior_contours:List[volmdlr.wires.Contour2D],nodes_len:float):
+        self.nodes_len=nodes_len # What is node len?
         self.interior_contours=interior_contours
         self.exterior_contours=exterior_contours
         
 
-    
     def _is_convex(self,triangle):
         return triangle._triangle_sum() < 0
+
     
     def _is_clockwise(self,polygon:volmdlr.wires.ClosedPolygon2D):
         s = 0
@@ -407,7 +408,7 @@ class Mesher(DessiaObject):
             s += (point2.x - point.x) * (point2.y + point.y)
         return s > 0
     
-   
+ 
     
     def _contains_no_points(self,triangle,polygon):
        
@@ -418,6 +419,7 @@ class Mesher(DessiaObject):
                 return False
        return True
 
+
     def _is_ear(self,triangle,polygon):
         
         ear = self._contains_no_points(triangle, polygon) and \
@@ -426,7 +428,6 @@ class Mesher(DessiaObject):
         return ear
     
     def earclip(self,polygon:volmdlr.wires.ClosedPolygon2D):
-       
         possible_triangles=[]
         ear_vertex =[]
        
@@ -489,17 +490,17 @@ class Mesher(DessiaObject):
         return possible_triangles   
                  
                                  
-        
+
     def sew_contours(self,polygon1:volmdlr.wires.ClosedPolygon2D,polygon2:volmdlr.wires.ClosedPolygon2D,
-                           segment_to_nodes:Dict[volmdlr.edges.LineSegment2D,List[volmdlr.Point2D]]):
+                     segment_to_nodes:Dict[volmdlr.edges.LineSegment2D,List[volmdlr.Point2D]]):
         """
         basic triangulation that simply links the points of the two polygons
         
         """
         
         triangles=[]
-        
-        
+
+
         for segment in polygon1.line_segments:
             
             mid=segment.point_at_abscissa(segment.length()/2)
@@ -1275,12 +1276,15 @@ class Mesher(DessiaObject):
         return True
                         
                         
+
                 
+
     def check_mesh(self,mesh_triangles,spec_aspect_ratio):
         total_contour_area=0
         mesh_area=0
-        
+     
         for contour in self.exterior_contours:
+
             total_contour_area+=contour.to_polygon2(self.nodes_len).area()
             
         for triangle in mesh_triangles:

@@ -22,4 +22,3 @@ stator_mesh=stator_mesher
 stator_triangle_elements=stator_mesh.generate_mesh(4)
 
 
-
