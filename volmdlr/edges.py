@@ -1626,8 +1626,6 @@ class LineSegment3D(LineSegment):
         return self.start + curvilinear_abscissa * (
                 self.end - self.start) / self.length()
 
-    def frenet(self, curvilinear_abscissa):
-        return self.unit_direction_vector(), None
 
     def middle_point(self):
         l = self.length()
@@ -1758,7 +1756,8 @@ class LineSegment3D(LineSegment):
     def copy(self):
         return LineSegment3D(self.start.copy(), self.end.copy())
 
-    def plot(self, ax=None, color='k', alpha=1):
+    def plot(self, ax=None, color='k', alpha=1,
+             edge_ends=False, edge_direction=False):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -1769,10 +1768,18 @@ class LineSegment3D(LineSegment):
         x = [p.x for p in points]
         y = [p.y for p in points]
         z = [p.z for p in points]
-        ax.plot(x, y, z, color=color, alpha=alpha)
+        if edge_ends:
+            ax.plot(x, y, z, color=color, alpha=alpha, marker='o')
+        else:
+            ax.plot(x, y, z, color=color, alpha=alpha)
+        if edge_direction:
+            x, y, z = self.point_at_abscissa(0.5*self.length())
+            u, v, w = 0.05*self.direction_vector()
+            ax.quiver(x, y, z, u, v, w, length=0.15*self.length(),
+                      pivot='tip')
         return ax
 
-    def plot2D(self, x_3D, y_3D, ax=None, color='k', width=None):
+    def plot2d(self, x_3D, y_3D, ax=None, color='k', width=None):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -2410,13 +2417,12 @@ class Arc3D(Edge):
                                    curvilinear_abscissa / self.radius,
                                    copy=True)
 
-    def frenet(self, curvilinear_abscissa):
+    def unit_direction_vector(self, curvilinear_abscissa):
         theta = curvilinear_abscissa / self.radius
         t0 = self.normal.cross(self.start - self.center)
         t0.normalize()
         tangent = t0.rotation(self.center, self.normal, theta, copy=True)
-        normal = -self.normal.cross(tangent)
-        return tangent, normal
+        return tangent
 
     def rotation(self, rot_center, axis, angle, copy=True):
         if copy:
@@ -2446,7 +2452,8 @@ class Arc3D(Edge):
             self.end.translation(offset, False)
             [p.translation(offset, False) for p in self.primitives]
 
-    def plot(self, ax=None, color='k', alpha=1, plot_points=False):
+    def plot(self, ax=None, color='k', alpha=1, plot_points=False,
+             edge_ends=False, edge_direction=False):
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
@@ -2467,10 +2474,18 @@ class Arc3D(Edge):
             y.append(py)
             z.append(pz)
 
-        ax.plot(x, y, z, color=color, alpha=alpha)
+        if edge_ends:
+            ax.plot(x, y, z, color=color, alpha=alpha, style='o-')
+        else:
+            ax.plot(x, y, z, color=color, alpha=alpha)
+        if edge_direction:
+            x, y, z = self.point_at_abscissa(0.5*self.length())
+            u, v, w = 0.05*self.direction_vector()
+            ax.quiver(x, y, z, u, v, w, length=0.1, normalize=True)
+
         return ax
 
-    def plot2D(self, center=volmdlr.O3D,
+    def plot2d(self, center=volmdlr.O3D,
                x3d=volmdlr.X3D, y3D=volmdlr.Y3D,
                ax=None, color='k'):
         if ax is None:
@@ -2757,6 +2772,13 @@ class FullArc3D(Edge):
         angle = abscissa / self.radius
         return self.start.rotation(self.center, self.normal, angle)
 
+    def unit_direction_vector(self, curvilinear_abscissa):
+        theta = curvilinear_abscissa / self.radius
+        t0 = self.normal.cross(self.start - self.center)
+        t0.normalize()
+        tangent = t0.rotation(self.center, self.normal, theta, copy=True)
+        return tangent
+
     def polygon_points(self, angle_resolution=10):
         npoints = int(angle_resolution*volmdlr.TWO_PI) + 2
         polygon_points_3D = [self.start.rotation(self.center,
@@ -2827,7 +2849,8 @@ class FullArc3D(Edge):
 
 
 
-    def plot(self, ax=None, color='k', alpha=1.):
+    def plot(self, ax=None, color='k', alpha=1., edge_ends=False,
+             edge_direction=False):
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
@@ -2843,6 +2866,20 @@ class FullArc3D(Edge):
         y.append(y[0])
         z.append(z[0])
         ax.plot(x, y, z, color=color, alpha=alpha)
+
+        if edge_ends:
+            self.start.plot(ax=ax)
+            self.end.plot(ax=ax)
+
+        if edge_direction:
+            s = 0.5*self.length()
+            print(s)
+            x, y, z = self.point_at_abscissa(s)
+            tangent = self.unit_direction_vector(s)
+            arrow_length = 0.15*s
+            ax.quiver(x, y, z, *arrow_length*tangent,
+                      pivot='tip')
+
         return ax
 
 
@@ -3041,7 +3078,7 @@ class ArcEllipse3D(Edge):
         ax.plot(x, y, z, 'k')
         return ax
 
-    def plot2D(self, x3d, y3D, ax, color='k'):
+    def plot2d(self, x3d, y3D, ax, color='k'):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')

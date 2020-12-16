@@ -2132,12 +2132,14 @@ class Contour3D(Contour, Wire3D):
             return primitive.point_at_abscissa(primitive_length)
         raise ValueError('abscissa out of contour length')
 
-    def plot(self, ax=None, color='k', alpha=1):
+    def plot(self, ax=None, color='k', alpha=1, edge_details=False):
         if ax is None:
             ax = Axes3D(plt.figure())
 
         for edge in self.primitives:
-            edge.plot(ax=ax, color=color, alpha=alpha)
+            print(edge)
+            edge.plot(ax=ax, color=color, alpha=alpha,
+                      edge_ends=edge_details, edge_direction=edge_details)
 
         return ax
 
