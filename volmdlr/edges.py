@@ -1065,7 +1065,7 @@ class Arc2D(Edge):
         
         return arc_to_nodes[self] 
       
-      def plot_data(self, edge_style: plot_data.EdgeStyle = None):
+    def plot_data(self, edge_style: plot_data.EdgeStyle = None):
         list_node = self.polygon_points()
         data = []
         for nd in list_node:
