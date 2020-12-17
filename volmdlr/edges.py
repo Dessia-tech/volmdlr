@@ -768,11 +768,9 @@ class LineSegment2D(LineSegment):
                 self.points = [frame.NewCoordinates(p) for p in self.points]
 
 
-    def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
+    def plot_data(self):
         return plot_data.LineSegment(data=[self.start.x, self.start.y,
-
-                                              self.end.x, self.end.y],
-                                        plot_data_states=plot_data_states)
+                                              self.end.x, self.end.y])
 
     def CreateTangentCircle(self, point, other_line):
         circle1, circle2 = Line2D.CreateTangentCircle(other_line, point, self)
@@ -1086,7 +1084,7 @@ class Arc2D(Edge):
  
 
    
-    def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
+    def plot_data(self):
         list_node = self.polygon_points()
         data = []
         for nd in list_node:
@@ -1097,8 +1095,7 @@ class Arc2D(Edge):
                                        data=data,
                                        r=self.radius,
                                        angle1=self.angle1,
-                                       angle2=self.angle2,
-                                       plot_data_states=plot_data_states)
+                                       angle2=self.angle2)
 
 
     def copy(self):

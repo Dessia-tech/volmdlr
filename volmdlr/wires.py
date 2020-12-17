@@ -475,15 +475,14 @@ class Contour2D(Contour, Wire2D):
         return A
 
 
-    def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
+    def plot_data(self):
 
         if plot_data_states is None:
 
             plot_data_states = [plot_data.Settings()]
-        plot_data_primitives = [item.plot_data(plot_data_states=plot_data_states) for item in self.primitives]
+        plot_data_primitives = [item.plot_data() for item in self.primitives]
         return plot_data.Contour2D(plot_data_primitives=plot_data_primitives,
-                                           plot_data_states=plot_data_states,
-                                           name=self.name)
+                                   name=self.name)
 
     # def copy(self):
     #     primitives_copy = []
@@ -556,11 +555,6 @@ class Contour2D(Contour, Wire2D):
         ymin = min([p[1] for p in points])
         ymax = max([p[1] for p in points])
         return xmin, xmax, ymin, ymax
-
-    
- 
-    
-
 
 
     def random_point_inside(self):
@@ -1907,11 +1901,10 @@ class Circle2D(Contour2D):
         center = 2 * point - self.center
         return Circle2D(center, self.radius)
 
-    def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
+    def plot_data(self):
         return plot_data.Circle2D(cx=self.center.x,
                                           cy=self.center.y,
-                                          r=self.radius,
-                                          plot_data_states=plot_data_states)
+                                          r=self.radius)
 
     def copy(self):
         return Circle2D(self.center.copy(), self.radius)

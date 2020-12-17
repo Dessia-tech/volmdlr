@@ -85,7 +85,7 @@ profile5 = RevolvedProfile(0.15*vm.Y3D, vm.X3D, z, c5, 0.15*vm.Y3D, vm.X3D,
                            angle=0.7, name='strange part')
 
 # model = vm.VolumeModel([profile1, profile2, profile3, profile4, profile5])
-model = vm.core.VolumeModel([profile5])
+model = vm.core.VolumeModel([profile1, profile5])
 model.babylonjs()
 model.to_step('revolved_profile.step')
 

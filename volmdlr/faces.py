@@ -2899,7 +2899,7 @@ class ToroidalFace3D(Face3D):
     def _bounding_box(self):
         return self.surface3d._bounding_box()
 
-    def triangulation_lines(self, angle_resolution=4):
+    def triangulation_lines(self, angle_resolution=7):
         theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle()
 
         delta_theta = theta_max - theta_min
@@ -2910,13 +2910,12 @@ class ToroidalFace3D(Face3D):
             lines_x.append(volmdlr.edges.Line2D(volmdlr.Point2D(theta, phi_min),
                                               volmdlr.Point2D(theta, phi_max)))
         delta_phi = phi_max - phi_min
-        nlines_y = int(delta_theta * angle_resolution)
+        nlines_y = int(delta_phi * angle_resolution)
         lines_y = []
         for i in range(nlines_y):
             phi = phi_min + (i + 1) / (nlines_y + 1) * delta_phi
             lines_y.append(volmdlr.edges.Line2D(volmdlr.Point2D(theta_min, phi),
                                               volmdlr.Point2D(theta_max, phi)))
-        
         return lines_x, lines_y
 
     def minimum_maximum_tore(self, contour2d):
