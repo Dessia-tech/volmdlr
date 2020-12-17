@@ -151,7 +151,123 @@ class TriangularElement(volmdlr.wires.Triangle2D):
         
     #     return x1, x2, x3
 
+    def heat_2D_element_matrix(self,mesh,v_poisson,e_young,Lambda):
+        row_ind=[]
+        col_ind=[]
+        data=[]
+        element_form_functions = self.form_functions
+        indexes = [mesh.mesh.node_to_index[self.points[0]],
+                   mesh.mesh.node_to_index[self.points[1]],
+                   mesh.mesh.node_to_index[self.points[2]]]
+      
+        b1 = element_form_functions[0][1]
+        c1 = element_form_functions[0][2]
+        b2 = element_form_functions[1][1]
+        c2 = element_form_functions[1][2]
+        b3 = element_form_functions[2][1]
+        c3 = element_form_functions[2][2]
+      
 
+        row_ind.extend((indexes[0], indexes[0], indexes[0], 
+                        indexes[1], indexes[1], indexes[1], indexes[2], indexes[2], indexes[2]))
+        col_ind.extend((indexes[0], indexes[1], indexes[2], 
+                        indexes[0], indexes[1], indexes[2], indexes[0], indexes[1], indexes[2]))
+     
+        data.extend((Lambda*(b1**2 + c1**2) * self.area, 
+                     Lambda*(b1*b2+c1*c2)* self.area,
+                     Lambda*(b1*b3 + c1*c3) * self.area,
+                     Lambda* (b1*b2 + c1*c2) * self.area,
+                     Lambda * (b2**2 + c2**2) * self.area,
+                     Lambda * (b2*b3 + c2*c3) * self.area,
+                     Lambda * (b1*b3 + c1*c3) * self.area,
+                     Lambda * (b2*b3 + c2*c3) * self.area,
+                     Lambda * (b3**2 + c3**2) * self.area))
+  
+        return data,row_ind,col_ind
+    def elascicity_2D_element_matrix(self,mesh,v_poisson,e_young,Lambda):
+        row_ind=[]
+        col_ind=[]
+        data = []       
+
+        alpha=e_young/((1-v_poisson**2))
+        beta=(1-v_poisson)/2
+        gamma=(1+v_poisson)/2
+
+        indexes=[]
+        element_form_functions = self.form_functions
+        for point in self.points:
+    
+          indexes.append(mesh.set_node_displacement_index()[point][0])
+          indexes.append(mesh.set_node_displacement_index()[point][1])
+      
+       
+        b1 = element_form_functions[0][1] 
+        c1 = element_form_functions[0][2]
+        b2 = element_form_functions[1][1]
+        c2 = element_form_functions[1][2]
+        b3 = element_form_functions[2][1]
+        c3 = element_form_functions[2][2]
+       
+        
+        
+        for k in range(len(indexes)):
+            
+            col_ind.extend((indexes[k])for k in range(len(indexes)))
+            
+        for k,u in enumerate(list(product(indexes,repeat=2))):
+            
+            row_ind.append(u[0])
+        
+        
+       
+        data.extend((self.area*(b1**2+beta*c1**2)*alpha,
+                     self.area*gamma*b1*c1*alpha,
+                     self.area*(b1*b2+beta*c2*c1)*alpha,
+                     self.area*(c2*b1*v_poisson+beta*b2*c1)*alpha,
+                     self.area*(b1*b3+beta*c3*c1)*alpha,
+                     self.area*(v_poisson*c3*b1+beta*b3*c1)*alpha,
+                     
+                     self.area*gamma*b1*c1*alpha,
+                     self.area*(c1**2+beta*b1**2)*alpha,
+                     self.area*(v_poisson*c1*b2+beta*c2*b1)*alpha,
+                     self.area*(c2*c1+beta*b2*b1)*alpha,
+                     self.area*(v_poisson*c1*b3+beta*c3*b1)*alpha,
+                     self.area*(c1*c3+beta*b3*b1)*alpha,
+                     
+                     
+                     self.area*(b1*b2+beta*c1*c2)*alpha,
+                     self.area*(v_poisson*c1*b2+beta*b1*c2)*alpha,
+                     self.area*(b2**2+beta*c2**2)*alpha,
+                     self.area*b2*c2*gamma*alpha,
+                     self.area*(b3*b2+beta*c3*c2)*alpha,  
+                     self.area*(v_poisson*c3*b2+beta*c2*b3)*alpha,   
+                     
+                     self.area*(c2*b1*v_poisson+beta*b2*c1)*alpha,
+                     self.area*(c2*c1+beta*b2*b1)*alpha,
+                     self.area*b2*c2*gamma*alpha,
+                     self.area*(c2**2+beta*b2**2)*alpha,
+                     self.area*(v_poisson*b3*c2+beta*c3*b2)*alpha,  
+                     self.area*(c3*c2+beta*b3*b2)*alpha,   
+                     
+                     self.area*(b1*b3+beta*c1*c3)*alpha,
+                     self.area*(v_poisson*c1*b3+beta*b1*c3)*alpha,
+                     self.area*(b3*b2+beta*c3*c2)*alpha,
+                     self.area*(v_poisson*b3*c2+beta*c3*b2)*alpha, 
+                     self.area*(b3**2+beta*c3**2)*alpha,
+                     self.area*b3*c3*gamma*alpha,
+                     
+                     self.area*(v_poisson*b1*c3+beta*b3*c1)*alpha,
+                     self.area*(beta*b1*b3+c1*c3)*alpha,
+                     self.area*(v_poisson*c3*b2+beta*b3*c2)*alpha,
+                     self.area*(c2*c3+beta*b2*b3)*alpha, 
+                     self.area*b3*c3*gamma**alpha,
+                     self.area*(c3**2+beta*b3**2)*alpha))
+        
+        return data, row_ind,col_ind
+    
+    
+        
+                             
     def _area(self):
         u = self.points[1] - self.points[0]
         v = self.points[2] - self.points[0]
@@ -1276,9 +1392,6 @@ class Mesher(DessiaObject):
         return True
                         
                         
-
-                
-
     def check_mesh(self,mesh_triangles,spec_aspect_ratio):
         total_contour_area=0
         mesh_area=0

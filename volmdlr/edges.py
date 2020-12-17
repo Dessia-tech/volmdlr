@@ -10,7 +10,7 @@ import scipy as scp
 
 from geomdl import utilities
 from geomdl import BSpline
-
+import plot_data
 from geomdl.operations import length_curve
 
 from mpl_toolkits.mplot3d import Axes3D
@@ -807,10 +807,10 @@ class LineSegment2D(LineSegment):
 
 
 
-    # def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
-    #     return plot_data.LineSegment(data=[self.start.x, self.start.y,
-    #                                            self.end.x, self.end.y],
-    #                                      plot_data_states=plot_data_states)
+    def plot_data(self, edge_style: plot_data.EdgeStyle = None):
+        return plot_data.LineSegment(data=[self.start.x, self.start.y,
+                                          self.end.x, self.end.y],
+                                    edge_style=edge_style)
 
     def CreateTangentCircle(self, point, other_line):
         circle1, circle2 = Line2D.CreateTangentCircle(other_line, point, self)
