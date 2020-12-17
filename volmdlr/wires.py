@@ -488,11 +488,11 @@ class Contour2D(Contour, Wire2D):
     #         primitives_copy.append(primitive.copy())
     #     return Contour2D(primitives_copy)
 
-    def average_center_point(self):
-        nb = len(self.tessel_points)
-        x = npy.sum([p[0] for p in self.tessel_points]) / nb
-        y = npy.sum([p[1] for p in self.tessel_points]) / nb
-        return volmdlr.Point2D((x, y))
+    # def average_center_point(self):
+    #     nb = len(self.tessel_points)
+    #     x = npy.sum([p[0] for p in self.tessel_points]) / nb
+    #     y = npy.sum([p[1] for p in self.tessel_points]) / nb
+    #     return volmdlr.Point2D(x, y)
 
     # def clean_points(self):
     #     """
