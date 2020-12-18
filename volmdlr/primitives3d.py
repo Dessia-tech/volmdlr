@@ -881,8 +881,36 @@ class Sweep(volmdlr.faces.ClosedShell3D):
         """
         For now it does not take into account rotation of sections
         """
-        faces = []
-        last_n = None
+
+        # End  planar faces
+        w = self.wire3d.primitives[0].unit_direction_vector(0.)
+        u = self.wire3d.primitives[0].unit_normal_vector(0.)
+        if not u:
+            u = w.deterministic_unit_normal_vector()
+        v = w.cross(u)
+
+        start_plane = volmdlr.faces.Plane3D(
+            volmdlr.Frame3D(self.wire3d.point_at_abscissa(0.), u, v, w)
+        )
+
+        l_last_primitive = self.wire3d.primitives[-1].length()
+        w = self.wire3d.primitives[-1].unit_direction_vector(l_last_primitive)
+        u = self.wire3d.primitives[-1].unit_normal_vector(l_last_primitive)
+        if not u:
+            u = w.deterministic_unit_normal_vector()
+        v = w.cross(u)
+
+        end_plane = volmdlr.faces.Plane3D(
+            volmdlr.Frame3D(self.wire3d.primitives[-1].point_at_abscissa(l_last_primitive),
+                            u, v, w))
+
+        faces = [volmdlr.faces.PlaneFace3D(start_plane,
+                                           volmdlr.faces.Surface2D(self.contour2d, [])),
+                 volmdlr.faces.PlaneFace3D(end_plane,
+                                           volmdlr.faces.Surface2D(self.contour2d,
+                                                             [])),
+                 ]
+
         for wire_primitive in self.wire3d.primitives :
             # tangent, normal = wire_primitive.frenet(0.)
             tangent = wire_primitive.unit_direction_vector(0.)

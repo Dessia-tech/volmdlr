@@ -769,11 +769,6 @@ class LineSegment2D(LineSegment):
             else:
                 self.points = [frame.NewCoordinates(p) for p in self.points]
 
-
-    def plot_data(self):
-        return plot_data.LineSegment(data=[self.start.x, self.start.y,
-                                              self.end.x, self.end.y])
-
     def plot_data(self, edge_style: plot_data.EdgeStyle = None):
         return plot_data.LineSegment(data=[self.start.x, self.start.y,
                                            self.end.x, self.end.y],
