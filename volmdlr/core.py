@@ -362,7 +362,7 @@ class CompositePrimitive2D(Primitive2D):
         else:
             for p in self.primitives:
                 p.rotation(center, angle, copy=False)
-            self.UpdateBasisPrimitives()
+            self.update_basis_primitives()
 
     def translation(self, offset, copy=True):
         if copy:
@@ -371,7 +371,7 @@ class CompositePrimitive2D(Primitive2D):
         else:
             for p in self.primitives:
                 p.translation(offset, copy=False)
-            self.UpdateBasisPrimitives()
+            self.update_basis_primitives()
 
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -383,7 +383,7 @@ class CompositePrimitive2D(Primitive2D):
         else:
             for p in self.primitives:
                 p.frame_mapping(frame, side, copy=False)
-            self.UpdateBasisPrimitives()
+            self.update_basis_primitives()
 
 
     def plot(self, ax=None, color='k', alpha=1,
@@ -396,8 +396,7 @@ class CompositePrimitive2D(Primitive2D):
             ax.set_aspect('equal')
 
         for element in self.primitives:
-            element.plot(ax=ax, color=color, plot_points=plot_points)
-
+            element.plot(ax=ax, color=color) #, plot_points=plot_points)
 
         ax.margins(0.1)
         plt.show()
@@ -420,7 +419,7 @@ class CompositePrimitive2D(Primitive2D):
 
 
 class Primitive3D(dc.DessiaObject):
-    def __init__(self, color=None, alpha=0.5, name=''):
+    def __init__(self, color=None, alpha=1, name=''):
         self.color = color
         self.alpha = alpha
 
@@ -1390,6 +1389,11 @@ class VolumeModel(dc.DessiaObject):
                                          use_cdn=use_cdn, debug=debug)
 
     def to_step(self, filename:str=None):
+        
+        if filename and not (filename.endswith('.step') or filename.endswith('.stp')):
+            print('Adding .step extension to filename')
+            filename += '.step'
+        
         step_content = STEP_HEADER.format(name=self.name,
                                           filename=filename,
                                           timestamp=datetime.now().isoformat(),
@@ -1481,6 +1485,7 @@ class VolumeModel(dc.DessiaObject):
         if filename:
             with open(filename, 'w') as f:
                 f.write(step_content)
+                print('file written to {}'.format(os.path.abspath(filename)))
         else:
             return step_content
 

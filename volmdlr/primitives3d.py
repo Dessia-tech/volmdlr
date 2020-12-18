@@ -13,7 +13,7 @@ import volmdlr
 import volmdlr.core
 import volmdlr.primitives
 import volmdlr.faces
-from typing import Tuple
+from typing import Tuple, List, Dict
 
 import matplotlib.pyplot as plt
 
@@ -24,7 +24,8 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D, volmdlr.primitives.Rounded
     _non_hash_attributes = ['name']
     _generic_eq = True
     
-    def __init__(self, points, radius, adapt_radius=False, name=''):
+    def __init__(self, points:List[volmdlr.Point3D], radius:Dict[str, float],
+                 adapt_radius:bool=False, name:str=''):
         primitives = volmdlr.primitives.RoundedLineSegments.__init__(self, points, radius,
                                                   volmdlr.edges.LineSegment3D,
                                                   volmdlr.edges.Arc3D,
@@ -40,7 +41,7 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D, volmdlr.primitives.Rounded
             if ipoint == 0:
                 pt1 = self.points[-1]
             else:
-                pt1 = self.points[ipoint -1]
+                pt1 = self.points[(ipoint) -1]
             pti = self.points[ipoint]
             if ipoint < self.npoints-1:
                 pt2 = self.points[ipoint+1]
@@ -246,7 +247,7 @@ class Block(volmdlr.faces.ClosedShell3D):
             return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
         else:
             self.frame.translation(offset, copy=False)
-            volmdlr.faces.Shell3D.translation(self, offset, copy=False)
+            volmdlr.faces.OpenShell3D.translation(self, offset, copy=False)
 
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -538,13 +539,28 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
             if face:# Can be None
                 faces.append(face)
 
+        if not math.isclose(self.angle, volmdlr.TWO_PI, abs_tol=1e-9):
+            # Adding contours face to close
+            w = self.x.cross(self.y)
+            plane1 = volmdlr.faces.Plane3D(volmdlr.Frame3D(self.plane_origin,
+                                                           self.x,
+                                                           self.y,
+                                                           w))
+            face1 = volmdlr.faces.PlaneFace3D(plane1,
+                                              volmdlr.faces.Surface2D(self.contour2d,
+                                                                      []))
+            face2 = face1.rotation(self.axis_point, self.axis, self.angle)
+            faces.append(face1)
+            faces.append(face2)
+            
+
         return faces
 
     def plot(self, ax=None):
-        if ax is None:
-            fig, ax = plt.subplots()
-        for contour in self.contours3D:
-            contour.plot(ax)
+        # if ax is None:
+        #     fig, ax = plt.subplots()
+        # for contour in self.contours3d:
+        ax = self.contour3d.plot(ax)
 
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive'+str(ip)
@@ -866,10 +882,41 @@ class Sweep(volmdlr.faces.ClosedShell3D):
         """
         For now it does not take into account rotation of sections
         """
-        faces = []
-        last_n = None
+
+        # End  planar faces
+        w = self.wire3d.primitives[0].unit_direction_vector(0.)
+        u = self.wire3d.primitives[0].unit_normal_vector(0.)
+        if not u:
+            u = w.deterministic_unit_normal_vector()
+        v = w.cross(u)
+
+        start_plane = volmdlr.faces.Plane3D(
+            volmdlr.Frame3D(self.wire3d.point_at_abscissa(0.), u, v, w)
+        )
+
+        l_last_primitive = self.wire3d.primitives[-1].length()
+        w = self.wire3d.primitives[-1].unit_direction_vector(l_last_primitive)
+        u = self.wire3d.primitives[-1].unit_normal_vector(l_last_primitive)
+        if not u:
+            u = w.deterministic_unit_normal_vector()
+        v = w.cross(u)
+
+        end_plane = volmdlr.faces.Plane3D(
+            volmdlr.Frame3D(self.wire3d.primitives[-1].point_at_abscissa(l_last_primitive),
+                            u, v, w))
+
+        faces = [volmdlr.faces.PlaneFace3D(start_plane,
+                                           volmdlr.faces.Surface2D(self.contour2d, [])),
+                 volmdlr.faces.PlaneFace3D(end_plane,
+                                           volmdlr.faces.Surface2D(self.contour2d,
+                                                             [])),
+                 ]
+
         for wire_primitive in self.wire3d.primitives :
-            tangent, normal = wire_primitive.frenet(0.)
+            # tangent, normal = wire_primitive.frenet(0.)
+            tangent = wire_primitive.unit_direction_vector(0.)
+            normal = wire_primitive.unit_normal_vector(0.)
+
             if normal is None:
                 normal = tangent.deterministic_unit_normal_vector()
             n2 = tangent.cross(normal)

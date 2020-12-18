@@ -30,10 +30,9 @@ for i in range(4):
     radius[4+i] = 0.01 + 0.03 * random.random()
 #print(radius)
 # c = vm.Circle3D(p1, 0.008, p2-p1)
-c = wires.Circle2D(vm.O2D, 0.008)
+contour = wires.Circle2D(vm.O2D, 0.008)
 
 rl = primitives3d.OpenRoundedLineSegments3D(points, radius, adapt_radius=True, name='wire')
-contour = wires.Contour2D([c])
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
@@ -43,7 +42,7 @@ for prim in rl.primitives :
 
 r1 = rl.to_dict()
 r2 = primitives3d.OpenRoundedLineSegments3D.dict_to_object(r1)
-c1 = c.to_dict()
+c1 = contour.to_dict()
 c2 = vm.wires.Circle2D.dict_to_object(c1)
 
 # c1 = contour.to_dict()
@@ -63,7 +62,8 @@ sweep = primitives3d.Sweep(contour, rl, name = 'Random pipe')
 model = vm.core.VolumeModel([sweep])
 model.babylonjs()
 
-model.to_step()
+
+model.to_step('sweep.step')
 
 
 

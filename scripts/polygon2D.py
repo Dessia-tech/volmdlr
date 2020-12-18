@@ -29,9 +29,9 @@ points_inside=[]
 points_outside=[]
 
 for i in range(100):
-    pt=vm.Point2D(2*npy.random.random(2) - 0.3)
+    pt=vm.Point2D.random(-0.5, 2, -0.1, 1.1)
 #    print(p.PointDistance(pt))
-    if polygon.PointBelongs(pt):
+    if polygon.point_belongs(pt):
         points_inside.append(pt)
     else:
         points_outside.append(pt)
@@ -41,11 +41,11 @@ for i in range(100):
 #points_inside.MPLPlot()
 #c1=vm.CompositePrimitive2D([polygon, *points_inside])
 #c1.MPLPlot()
-a = polygon.MPLPlot()
+a = polygon.plot()
 for point in points_inside:
-    point.MPLPlot(a, color='b')
+    point.plot(a, color='b')
 for point in points_outside:
-    point.MPLPlot(a, color = 'r')
+    point.plot(a, color = 'r')
 #
 #c2=vm.CompositePrimitive2D([polygon, *points_outside])
 #c2.MPLPlot()
@@ -58,8 +58,8 @@ for point in points_outside:
 t = time.time()
 n = 100000
 for i in range(n):
-    pt=vm.Point2D(2*npy.random.random(2) - 0.3)
+    pt=vm.Point2D.random(-0.3, 0.7, -0.3, 0.7)
 #    print(p.PointDistance(pt))
-    polygon.PointBelongs(pt)
+    polygon.point_belongs(pt)
 t= time.time() - t 
 print('time spent: {}s, {}s/eval'.format(t, t/n))   

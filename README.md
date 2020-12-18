@@ -1,6 +1,6 @@
 # Volmdlr
 
-A python VOLume MoDeLeR computations-oriented including FreeCAD exports
+A python VOLume MoDeLeR computations-oriented with STEP support for import/export
 
 ![badge](https://drone-opensource.dessia.tech/api/badges/Dessia-tech/volmdlr/status.svg?branch=master)
 

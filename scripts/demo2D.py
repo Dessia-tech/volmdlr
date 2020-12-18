@@ -23,5 +23,6 @@ p6 = vm.Point2D.middle_point(p1,p3)
 p7 = vm.Point2D.line_projection(p6, l1)
 p8 = vm.Point2D.line_projection(p6, l2)
 
-c=vm.CompositePrimitive2D([l1, l2, p5, p6, p7 ,p8])
-c.plot()
+ax = l1.plot()
+for p in [l2, p5, p6, p7 ,p8]:
+    p.plot(ax=ax)
