@@ -774,6 +774,12 @@ class LineSegment2D(LineSegment):
         return plot_data.LineSegment(data=[self.start.x, self.start.y,
                                               self.end.x, self.end.y])
 
+    def plot_data(self, edge_style: plot_data.EdgeStyle = None):
+        return plot_data.LineSegment(data=[self.start.x, self.start.y,
+                                           self.end.x, self.end.y],
+                                        edge_style=edge_style)
+
+
     def CreateTangentCircle(self, point, other_line):
         circle1, circle2 = Line2D.CreateTangentCircle(other_line, point, self)
         if circle1 is not None:
@@ -1041,27 +1047,9 @@ class Arc2D(Edge):
         Ixy = self.radius ** 4 / 8 * (
                 math.cos(angle1) ** 2 - math.cos(angle2) ** 2)
         Ic = npy.array([[Ix, Ixy], [Ixy, Iy]])
+        
         return volmdlr.geometry.huygens2d(Ic, self.area(), self.center, point)
-
-    # def Discretise(self, num=10):
-    #     list_node = []
-    #     if (self.angle1 < 0) and (self.angle2 > 0):
-    #         delta_angle = -self.angle1 + self.angle2
-    #     elif (self.angle1 > 0) and (self.angle2 < 0):
-    #         delta_angle = (2 * npy.pi + self.angle2) - self.angle1
-    #     else:
-    #         delta_angle = self.angle2 - self.angle1
-    #     for angle in npy.arange(self.angle1, self.angle1 + delta_angle,
-    #                             delta_angle / (num * 1.)):
-    #         list_node.append(self.center + self.radius * volmdlr.Vector2D(npy.cos(angle), npy.sin(angle)))
-    #     list_node.append(self.center + self.radius * volmdlr.Vector2D(npy.cos(
-    #         self.angle1 + delta_angle), npy.sin(self.angle1 + delta_angle)))
-    #     if list_node[0] == self.start:
-    #         return list_node
-    #     else:
-    #         return list_node[::-1]
-
-
+      
     def discretise(self,n:float):
         
         arc_to_nodes={}
@@ -1083,10 +1071,9 @@ class Arc2D(Edge):
              
         
         return arc_to_nodes[self] 
- 
+      
+    def plot_data(self, edge_style: plot_data.EdgeStyle = None):
 
-   
-    def plot_data(self):
         list_node = self.polygon_points()
         data = []
         for nd in list_node:
@@ -1098,6 +1085,9 @@ class Arc2D(Edge):
                                        r=self.radius,
                                        angle1=self.angle1,
                                        angle2=self.angle2)
+                                       angle2=self.angle2,
+                                       edge_style=edge_style)
+
 
 
     def copy(self):

@@ -474,15 +474,13 @@ class Contour2D(Contour, Wire2D):
 
         return A
 
-
-    def plot_data(self):
-
-        if plot_data_states is None:
-
-            plot_data_states = [plot_data.Settings()]
+    def plot_data(self, edge_style: plot_data.EdgeStyle = None, surface_style:plot_data.SurfaceStyle = None):
         plot_data_primitives = [item.plot_data() for item in self.primitives]
         return plot_data.Contour2D(plot_data_primitives=plot_data_primitives,
-                                   name=self.name)
+                                           edge_style=edge_style,
+                                           surface_style=surface_style,
+                                           name=self.name)
+
 
     # def copy(self):
     #     primitives_copy = []
@@ -490,11 +488,11 @@ class Contour2D(Contour, Wire2D):
     #         primitives_copy.append(primitive.copy())
     #     return Contour2D(primitives_copy)
 
-    def average_center_point(self):
-        nb = len(self.tessel_points)
-        x = npy.sum([p[0] for p in self.tessel_points]) / nb
-        y = npy.sum([p[1] for p in self.tessel_points]) / nb
-        return volmdlr.Point2D((x, y))
+    # def average_center_point(self):
+    #     nb = len(self.tessel_points)
+    #     x = npy.sum([p[0] for p in self.tessel_points]) / nb
+    #     y = npy.sum([p[1] for p in self.tessel_points]) / nb
+    #     return volmdlr.Point2D(x, y)
 
     # def clean_points(self):
     #     """
@@ -1901,10 +1899,12 @@ class Circle2D(Contour2D):
         center = 2 * point - self.center
         return Circle2D(center, self.radius)
 
-    def plot_data(self):
+    def plot_data(self, edge_style:plot_data.EdgeStyle=None, surface_style:plot_data.SurfaceStyle=None):
         return plot_data.Circle2D(cx=self.center.x,
                                           cy=self.center.y,
-                                          r=self.radius)
+                                          r=self.radius,
+                                          edge_style=edge_style,
+                                          surface_style=surface_style)
 
     def copy(self):
         return Circle2D(self.center.copy(), self.radius)
