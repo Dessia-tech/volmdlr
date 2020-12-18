@@ -1014,9 +1014,9 @@ class Point3D(Vector3D):
     def to_step(self, current_id, vertex=False):
         content = "#{} = CARTESIAN_POINT('{}',({},{},{}));\n"\
                         .format(current_id, self.name,
-                                round(1000.*self.x, 3),
-                                round(1000.*self.y, 3),
-                                round(1000.*self.z, 3))
+                                round(1000.*self.x, 6),
+                                round(1000.*self.y, 6),
+                                round(1000.*self.z, 6))
         if vertex:
             content += "#{} = VERTEX_POINT('{}',#{});\n".format(current_id+1,
                                                                 self.name,

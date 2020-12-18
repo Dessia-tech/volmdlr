@@ -46,7 +46,7 @@ angle = 3*math.pi/2 #Arc's angle
 # shell = vm.Shell3D([cylinder])
 model = vm.core.VolumeModel([cylinder], name='cylinder model')
 
-print(model.to_step('cylinder.step'))
+model.to_step('cylinder.step')
 
 # model.babylonjs()
 
