@@ -1084,7 +1084,6 @@ class Arc2D(Edge):
                                        data=data,
                                        r=self.radius,
                                        angle1=self.angle1,
-                                       angle2=self.angle2)
                                        angle2=self.angle2,
                                        edge_style=edge_style)
 
