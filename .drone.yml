@@ -21,12 +21,11 @@ steps:
   - pip install Cython
   - python setup.py develop
 
-- name: sdist, bdist, wheel
+- name: sdist
   image: python:3.8
   commands:
   - pip install Cython wheel
   - python setup.py sdist
-  - python setup.py bdist_wheel
 
 - name: upload to pypi
   image: plugins/pypi

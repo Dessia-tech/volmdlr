@@ -488,11 +488,11 @@ class Contour2D(Contour, Wire2D):
     #         primitives_copy.append(primitive.copy())
     #     return Contour2D(primitives_copy)
 
-    def average_center_point(self):
-        nb = len(self.tessel_points)
-        x = npy.sum([p[0] for p in self.tessel_points]) / nb
-        y = npy.sum([p[1] for p in self.tessel_points]) / nb
-        return volmdlr.Point2D((x, y))
+    # def average_center_point(self):
+    #     nb = len(self.tessel_points)
+    #     x = npy.sum([p[0] for p in self.tessel_points]) / nb
+    #     y = npy.sum([p[1] for p in self.tessel_points]) / nb
+    #     return volmdlr.Point2D(x, y)
 
     # def clean_points(self):
     #     """
@@ -553,11 +553,6 @@ class Contour2D(Contour, Wire2D):
         ymin = min([p[1] for p in points])
         ymax = max([p[1] for p in points])
         return xmin, xmax, ymin, ymax
-
-    
- 
-    
-
 
 
     def random_point_inside(self):
@@ -2026,8 +2021,10 @@ class Contour3D(Contour, Wire3D):
             elif raw_edge.end == last_edge.end:
                 last_edge = raw_edge.reverse()
             else:
+                ax = last_edge.plot(color='b')
+                ax = raw_edge.plot(ax=ax, color='r')
                 raise NotImplementedError(
-                    'First 2 edges of contour not follwing each other')
+                    'Edges of contour not follwing each other')
 
             edges.append(last_edge)
 
@@ -2130,12 +2127,13 @@ class Contour3D(Contour, Wire3D):
             return primitive.point_at_abscissa(primitive_length)
         raise ValueError('abscissa out of contour length')
 
-    def plot(self, ax=None, color='k', alpha=1):
+    def plot(self, ax=None, color='k', alpha=1, edge_details=False):
         if ax is None:
             ax = Axes3D(plt.figure())
 
         for edge in self.primitives:
-            edge.plot(ax=ax, color=color, alpha=alpha)
+            edge.plot(ax=ax, color=color, alpha=alpha,
+                      edge_ends=edge_details, edge_direction=edge_details)
 
         return ax
 

@@ -42,7 +42,7 @@ c4 = ClosedRoundedLineSegments2D(points2, {0: 0.002, 1: 0.002, 3: 0.002})
 # c3.MPLPlot(plot_points=True)
 # c4.MPLPlot(plot_points=True)
 
-profile1 = RevolvedProfile(vm.Y3D, vm.Y3D, vm.Z3D, c1, vm.O3D, vm.Y3D, 0.5)
+profile1 = RevolvedProfile(vm.Y3D, vm.Y3D, vm.Z3D, c1, vm.O3D, vm.Y3D, 3)
 # profile2 = RevolvedProfile(0.5*vm.X3D, vm.Y3D, vm.Z3D, c2, 0.5*vm.X3D, vm.Y3D)
 # profile3 = RevolvedProfile(-0.5*vm.X3D, vm.Y3D, vm.Z3D, c1, -0.5*vm.X3D, vm.Y3D)
 # profile4 = RevolvedProfile(vm.X3D, vm.Y3D, vm.Z3D, c2, vm.X3D, vm.Y3D)
@@ -85,8 +85,7 @@ profile5 = RevolvedProfile(0.15*vm.Y3D, vm.X3D, z, c5, 0.15*vm.Y3D, vm.X3D,
                            angle=0.7, name='strange part')
 
 # model = vm.VolumeModel([profile1, profile2, profile3, profile4, profile5])
-model = vm.core.VolumeModel([profile5])
+model = vm.core.VolumeModel([profile1, profile5])
 model.babylonjs()
 model.to_step('revolved_profile.step')
-
 
