@@ -884,7 +884,10 @@ class Sweep(volmdlr.faces.ClosedShell3D):
         faces = []
         last_n = None
         for wire_primitive in self.wire3d.primitives :
-            tangent, normal = wire_primitive.frenet(0.)
+            # tangent, normal = wire_primitive.frenet(0.)
+            tangent = wire_primitive.unit_direction_vector(0.)
+            normal = wire_primitive.unit_normal_vector(0.)
+
             if normal is None:
                 normal = tangent.deterministic_unit_normal_vector()
             n2 = tangent.cross(normal)

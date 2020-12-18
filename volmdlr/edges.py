@@ -173,7 +173,7 @@ class Line(dc.DessiaObject):
         else:
             raise IndexError
 
-    def unit_direction_vector(self):
+    def unit_direction_vector(self, abscissa=0.):
         u = self.direction_vector()
         u.normalize()
         return u
@@ -181,7 +181,7 @@ class Line(dc.DessiaObject):
     def direction_vector(self):
         return self.point2 - self.point1
 
-    def normal_vector(self):
+    def normal_vector(self, abscissa=0.):
         return self.direction_vector().normal_vector()
 
     def unit_normal_vector(self):
@@ -221,12 +221,12 @@ class LineSegment(Edge):
             raise ValueError('Point is not on linesegment: abscissa={}'.format(t))
         return t
 
-    def unit_direction_vector(self):
+    def unit_direction_vector(self, abscissa=0.):
         u = self.direction_vector()
         u.normalize()
         return u
 
-    def direction_vector(self):
+    def direction_vector(self, s=0):
         '''
         Returns end - start, not normalized
         '''
@@ -234,6 +234,8 @@ class LineSegment(Edge):
 
     def normal_vector(self):
         return self.unit_direction_vector().normal_vector()
+
+
 
     def point_projection(self, point):
         p1, p2 = self.points
@@ -1623,6 +1625,11 @@ class LineSegment3D(LineSegment):
         return self.start + curvilinear_abscissa * (
                 self.end - self.start) / self.length()
 
+    def normal_vector(self, abscissa=0.):
+        return None
+
+    def unit_normal_vector(self, abscissa=0.):
+        return None
 
     def middle_point(self):
         l = self.length()
@@ -2025,12 +2032,12 @@ class LineSegment3D(LineSegment):
     
                 else:
                     # Two arcs and lines
-                    arc1_s = volmdlr.Point2D(r, 0)
+                    arc1_s = volmdlr.Point2D(R, 0)
                     arc1_i = arc1_s.rotation(center=volmdlr.O2D, angle=0.5 * angle)
                     arc1_e = arc1_s.rotation(center=volmdlr.O2D, angle=angle)
                     arc1 = Arc2D(arc1_s, arc1_i, arc1_e)
     
-                    arc2_e = volmdlr.Point2D(R, 0)
+                    arc2_e = volmdlr.Point2D(r, 0)
                     arc2_i = arc2_e.rotation(center=volmdlr.O2D, angle=0.5 * angle)
                     arc2_s = arc2_e.rotation(center=volmdlr.O2D, angle=angle)
                     arc2 = Arc2D(arc2_s, arc2_i, arc2_e)
@@ -2040,6 +2047,7 @@ class LineSegment3D(LineSegment):
 
                     outer_contour2d = volmdlr.wires.Contour2D([arc1, line1,
                                                                arc2, line2])
+
 
             return volmdlr.faces.PlaneFace3D(surface,
                                              volmdlr.faces.Surface2D(
@@ -2329,6 +2337,7 @@ class Arc3D(Edge):
             u2 = self.normal.cross(u1)
             u2.normalize()
 
+
         v1 = self.normal.cross(u1)  # v1 is normal, equal u2
         v2 = self.normal.cross(u2)  # equal -u1
 
@@ -2354,6 +2363,8 @@ class Arc3D(Edge):
         vec1 = (self.start - self.center)
         vec1.normalize()
         vec2 = self.normal.cross(vec1)
+        self.frame = volmdlr.Frame3D(self.center, vec1, vec2, self.normal)
+
 
         r1 = self.start.to_2d(self.center, vec1, vec2)
         r2 = self.end.to_2d(self.center, vec1, vec2)
@@ -2387,9 +2398,11 @@ class Arc3D(Edge):
             self.is_trigo = False
             self.angle = clockwise_path
 
-        if self.angle > math.pi:
-            # Inverting normal to be sure to have a right defined normal for rotation
-            self.normal = -self.normal
+        # if self.angle > math.pi:
+        #     # Inverting normal to be sure to have a right defined normal for rotation
+        #     self.normal = -self.normal
+
+
 
     @property
     def points(self):
@@ -2414,12 +2427,16 @@ class Arc3D(Edge):
                                    curvilinear_abscissa / self.radius,
                                    copy=True)
 
-    def unit_direction_vector(self, curvilinear_abscissa):
-        theta = curvilinear_abscissa / self.radius
+    def unit_direction_vector(self, abscissa):
+        theta = abscissa / self.radius
         t0 = self.normal.cross(self.start - self.center)
         t0.normalize()
         tangent = t0.rotation(self.center, self.normal, theta, copy=True)
         return tangent
+
+    def unit_normal_vector(self, abscissa):
+        return self.normal.cross(self.unit_direction_vector(abscissa))
+
 
     def rotation(self, rot_center, axis, angle, copy=True):
         if copy:
@@ -2449,20 +2466,20 @@ class Arc3D(Edge):
             self.end.translation(offset, False)
             [p.translation(offset, False) for p in self.primitives]
 
-    def plot(self, ax=None, color='k', alpha=1, plot_points=False,
+    def plot(self, ax=None, color='k', alpha=1,
              edge_ends=False, edge_direction=False):
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
         else:
             fig = None
-        if plot_points:
-            ax.plot([self.interior[0]], [self.interior[1]], [self.interior[2]],
-                    color='b')
-            ax.plot([self.start[0]], [self.start[1]], [self.start[2]], c='r')
-            ax.plot([self.end[0]], [self.end[1]], [self.end[2]], c='r')
-            ax.plot([self.interior[0]], [self.interior[1]], [self.interior[2]],
-                    c='g')
+        # if plot_points:
+        #     ax.plot([self.interior[0]], [self.interior[1]], [self.interior[2]],
+        #             color='b')
+        #     ax.plot([self.start[0]], [self.start[1]], [self.start[2]], c='r')
+        #     ax.plot([self.end[0]], [self.end[1]], [self.end[2]], c='r')
+        #     ax.plot([self.interior[0]], [self.interior[1]], [self.interior[2]],
+        #             c='g')
         x = []
         y = []
         z = []
@@ -2471,13 +2488,14 @@ class Arc3D(Edge):
             y.append(py)
             z.append(pz)
 
+        ax.plot(x, y, z, color=color, alpha=alpha)
         if edge_ends:
-            ax.plot(x, y, z, color=color, alpha=alpha, style='o-')
-        else:
-            ax.plot(x, y, z, color=color, alpha=alpha)
+            self.start.plot(ax=ax)
+            self.end.plot(ax=ax)
+
         if edge_direction:
             x, y, z = self.point_at_abscissa(0.5*self.length())
-            u, v, w = 0.05*self.direction_vector()
+            u, v, w = 0.05*self.unit_direction_vector(0.5*self.length())
             ax.quiver(x, y, z, u, v, w, length=0.1, normalize=True)
 
         return ax
@@ -2539,6 +2557,25 @@ class Arc3D(Edge):
             else:
                 self.start, self.interior, self.end = new_start, new_interior, new_end
                 self.setup_arc(self.start, self.interior, self.end)
+
+    def abscissa(self, point3d:volmdlr.Point3D):
+        x, y, z = self.frame.new_coordinates(point3d)
+        u1 = x / self.radius
+        u2 = y / self.radius
+        theta = volmdlr.core.sin_cos_angle(u1, u2)
+
+        return self.radius*abs(theta)
+
+    def split(self, split_point: volmdlr.Point3D):
+        abscissa = self.abscissa(split_point)
+
+        return [Arc3D(self.start,
+                      self.point_at_abscissa(0.5*abscissa),
+                      split_point),
+                Arc3D(split_point,
+                      self.point_at_abscissa(1.5 * abscissa),
+                      self.end)
+                ]
 
     def to_2d(self, plane_origin, x, y):
         ps = self.start.to_2d(plane_origin, x, y)
@@ -2707,7 +2744,20 @@ class Arc3D(Edge):
         return surface.rectangular_cut(0, angle,
                                        arc2d.angle1, arc2d.angle2)
 
-    def to_step(self, current_id, surface_id=None):
+    def to_step(self, current_id):
+        if self.angle >= math.pi:
+            l = self.length()
+            arc1, arc2 = self.split(self.point_at_abscissa(0.33*l))
+            arc2, arc3 = arc2.split(self.point_at_abscissa(0.66*l))
+            content, arcs1_id = arc1.to_step_without_splitting(current_id)
+            arc2_content, arcs2_id = arc2.to_step_without_splitting(arcs1_id[0]+1)
+            arc3_content, arcs3_id = arc3.to_step_without_splitting(arcs2_id[0]+1)
+            content += arc2_content + arc3_content
+            return content, [arcs1_id[0], arcs2_id[0], arcs3_id[0]]
+        else:
+            return self.to_step_without_splitting(current_id)
+
+    def to_step_without_splitting(self, current_id, surface_id=None):
         u = self.start - self.center
         u.normalize()
         v = self.normal.cross(u)
@@ -2870,7 +2920,6 @@ class FullArc3D(Edge):
 
         if edge_direction:
             s = 0.5*self.length()
-            print(s)
             x, y, z = self.point_at_abscissa(s)
             tangent = self.unit_direction_vector(s)
             arrow_length = 0.15*s

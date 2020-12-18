@@ -2021,8 +2021,10 @@ class Contour3D(Contour, Wire3D):
             elif raw_edge.end == last_edge.end:
                 last_edge = raw_edge.reverse()
             else:
+                ax = last_edge.plot(color='b')
+                ax = raw_edge.plot(ax=ax, color='r')
                 raise NotImplementedError(
-                    'First 2 edges of contour not follwing each other')
+                    'Edges of contour not follwing each other')
 
             edges.append(last_edge)
 
@@ -2130,7 +2132,6 @@ class Contour3D(Contour, Wire3D):
             ax = Axes3D(plt.figure())
 
         for edge in self.primitives:
-            print(edge)
             edge.plot(ax=ax, color=color, alpha=alpha,
                       edge_ends=edge_details, edge_direction=edge_details)
 

@@ -1244,6 +1244,7 @@ class ConicalSurface3D(Surface3D):
                                                start_end=self.point2d_to_3d(linesegment2d.start),
                                                normal=self.frame.w)]
             else:
+                print(abs(theta1 - theta2))
                 return [volmdlr.edges.Arc3D(
                     self.point2d_to_3d(linesegment2d.start),
                     self.point2d_to_3d(volmdlr.Point2D(0.5*(theta1+theta2),z1)),
@@ -1602,6 +1603,48 @@ class Face3D(volmdlr.core.Primitive3D):
             raise NotImplementedError(surface)
 
     def to_step(self, current_id):
+        xmin, xmax, ymin, ymax = self.surface2d.bounding_rectangle()
+        subsurfaces2d = [self.surface2d]
+        line_x = None
+        if self.surface3d.x_periodicity and (xmax-xmin) >= 0.45*self.surface3d.x_periodicity:
+            line_x = volmdlr.edges.Line2D(volmdlr.Point2D(0.5*(xmin+xmax), 0),
+                                            volmdlr.Point2D(
+                                                0.5 * (xmin + xmax), 1))
+
+        line_y = None
+        if self.surface3d.y_periodicity and (
+                ymax - ymin) >= 0.45 * self.surface3d.y_periodicity:
+            line_y = volmdlr.edges.Line2D(
+                volmdlr.Point2D(0., 0.5 * (ymin + ymax)),
+                volmdlr.Point2D(1,
+                    0.5 * (ymin + ymax)))
+
+        if line_x:
+            subsurfaces2 = []
+            for subsurface2d in subsurfaces2d:
+                subsurfaces2.extend(subsurface2d.cut_by_line(line_x))
+            subsurfaces2d = subsurfaces2
+
+        if line_y:
+            subsurfaces2 = []
+            for subsurface2d in subsurfaces2d:
+                subsurfaces2.extend(subsurface2d.cut_by_line(line_y))
+            subsurfaces2d = subsurfaces2
+
+        if len(subsurfaces2d) > 1:
+            content = ''
+            face_ids = []
+            for subsurface2d in subsurfaces2d:
+                face = self.__class__(self.surface3d, subsurface2d)
+                face_content, face_id = face.to_step_without_splitting(current_id)
+                face_ids.append(face_id[0])
+                content += face_content
+                current_id = face_id[0]+1
+            return content, face_ids
+        else:
+            return self.to_step_without_splitting(current_id)
+
+    def to_step_without_splitting(self, current_id):
         content, surface3d_id = self.surface3d.to_step(current_id)
         current_id = surface3d_id + 1
 
@@ -1628,7 +1671,7 @@ class Face3D(volmdlr.core.Primitive3D):
                                                             volmdlr.core.step_ids_to_str(contours_ids),
                                                             surface3d_id
                                                             )
-        return content, current_id
+        return content, [current_id]
 
     # def delete_double(self, Le):
     #     Ls = []
@@ -3608,10 +3651,10 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         step_content = ''
         face_ids = []
         for face in self.faces:
-            face_content, current_id = face.to_step(current_id)
+            face_content, face_sub_ids = face.to_step(current_id)
             step_content += face_content
-            face_ids.append(current_id)
-            current_id += 1
+            face_ids.extend(face_sub_ids)
+            current_id = max(face_sub_ids) + 1
 
         shell_id = current_id
         step_content += "#{} = {}('{}',({}));\n".format(current_id, self.STEP_FUNCTION,
