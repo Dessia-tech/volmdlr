@@ -26,7 +26,6 @@ steps:
   commands:
   - pip install Cython wheel
   - python setup.py sdist
-  - python setup.py bdist_wheel
 
 - name: upload to pypi
   image: plugins/pypi
