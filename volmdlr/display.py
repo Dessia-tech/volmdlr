@@ -4,6 +4,7 @@
 
 """
 from typing import List, Tuple
+import math
 import matplotlib.pyplot as plt
 import dessia_common as dc
 import volmdlr.edges
@@ -12,10 +13,25 @@ class Node2D(volmdlr.Point2D):
     def __hash__(self):
         return int(1e6*(self.x+self.y))
 
+    def __eq__(self, other_node:'Node2D'):
+        if other_node.__class__.__name__ not in ['Vector2D', 'Point2D',
+                                                 'Node2D']:
+            return False
+        return math.isclose(self.x, other_node.x, abs_tol=1e-06) \
+        and math.isclose(self.y, other_node.y, abs_tol=1e-06)
+
+
 class Node3D(volmdlr.Point3D):
     def __hash__(self):
         return int(1e6*(self.x+self.y+self.z))
 
+    def __eq__(self, other_node:'Node3D'):
+        if other_node.__class__.__name__ not in ['Vector3D', 'Point3D',
+                                                 'Node3D']:
+            return False
+        return math.isclose(self.x, other_node.x, abs_tol=1e-06) \
+        and math.isclose(self.y, other_node.y, abs_tol=1e-06) \
+        and math.isclose(self.z, other_node.z, abs_tol=1e-06)
 
 class DisplayMesh(dc.DessiaObject):
     def __init__(self, points, triangles, edges=None, name=''):
@@ -59,12 +75,11 @@ class DisplayMesh(dc.DessiaObject):
         return self.__class__(new_points, new_triangles)
 
     def plot(self, ax=None, numbering=False):
-        if ax is None:
-            fig, ax = plt.subplots()
-            ax.set_aspect('equal')
-
-        for p in self.points:
-            p.plot(ax=ax)
+        for ip, point in enumerate(self.points):
+            ax = point.plot(ax=ax)
+            if numbering:
+                ax.text(*point, 'node {}'.format(ip+1),
+                        ha='center', va='center')
 
         for i1, i2, i3 in self.triangles:
             self._linesegment_class(self.points[i1], self.points[i2]).plot(
@@ -74,12 +89,12 @@ class DisplayMesh(dc.DessiaObject):
             self._linesegment_class(self.points[i1], self.points[i3]).plot(
                 ax=ax)
 
-        for i, (i1, i2) in enumerate(self.edges):
-            self._linesegment_class(self.points[i1], self.points[i2]).plot(
-                ax=ax)
-            if numbering:
-                ax.text(*0.5*(self.points[i1]+self.points[i2]), 'edge {}'.format(i+1),
-                        ha='center', va='center')
+        # for i, (i1, i2) in enumerate(self.edges):
+        #     self._linesegment_class(self.points[i1], self.points[i2]).plot(
+        #         ax=ax)
+        #     if numbering:
+        #         ax.text(*0.5*(self.points[i1]+self.points[i2]), 'edge {}'.format(i+1),
+        #                 ha='center', va='center')
 
         return ax
 

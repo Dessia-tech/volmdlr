@@ -474,16 +474,13 @@ class Contour2D(Contour, Wire2D):
 
         return A
 
-
-    def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
-
-        if plot_data_states is None:
-
-            plot_data_states = [plot_data.Settings()]
-        plot_data_primitives = [item.plot_data(plot_data_states=plot_data_states) for item in self.primitives]
+    def plot_data(self, edge_style: plot_data.EdgeStyle = None, surface_style:plot_data.SurfaceStyle = None):
+        plot_data_primitives = [item.plot_data() for item in self.primitives]
         return plot_data.Contour2D(plot_data_primitives=plot_data_primitives,
-                                           plot_data_states=plot_data_states,
+                                           edge_style=edge_style,
+                                           surface_style=surface_style,
                                            name=self.name)
+
 
     # def copy(self):
     #     primitives_copy = []
@@ -491,11 +488,11 @@ class Contour2D(Contour, Wire2D):
     #         primitives_copy.append(primitive.copy())
     #     return Contour2D(primitives_copy)
 
-    def average_center_point(self):
-        nb = len(self.tessel_points)
-        x = npy.sum([p[0] for p in self.tessel_points]) / nb
-        y = npy.sum([p[1] for p in self.tessel_points]) / nb
-        return volmdlr.Point2D((x, y))
+    # def average_center_point(self):
+    #     nb = len(self.tessel_points)
+    #     x = npy.sum([p[0] for p in self.tessel_points]) / nb
+    #     y = npy.sum([p[1] for p in self.tessel_points]) / nb
+    #     return volmdlr.Point2D(x, y)
 
     # def clean_points(self):
     #     """
@@ -556,11 +553,6 @@ class Contour2D(Contour, Wire2D):
         ymin = min([p[1] for p in points])
         ymax = max([p[1] for p in points])
         return xmin, xmax, ymin, ymax
-
-    
- 
-    
-
 
 
     def random_point_inside(self):
@@ -1907,11 +1899,12 @@ class Circle2D(Contour2D):
         center = 2 * point - self.center
         return Circle2D(center, self.radius)
 
-    def plot_data(self, plot_data_states: List[plot_data.Settings] = None):
+    def plot_data(self, edge_style:plot_data.EdgeStyle=None, surface_style:plot_data.SurfaceStyle=None):
         return plot_data.Circle2D(cx=self.center.x,
                                           cy=self.center.y,
                                           r=self.radius,
-                                          plot_data_states=plot_data_states)
+                                          edge_style=edge_style,
+                                          surface_style=surface_style)
 
     def copy(self):
         return Circle2D(self.center.copy(), self.radius)
@@ -2028,8 +2021,10 @@ class Contour3D(Contour, Wire3D):
             elif raw_edge.end == last_edge.end:
                 last_edge = raw_edge.reverse()
             else:
+                ax = last_edge.plot(color='b')
+                ax = raw_edge.plot(ax=ax, color='r')
                 raise NotImplementedError(
-                    'First 2 edges of contour not follwing each other')
+                    'Edges of contour not follwing each other')
 
             edges.append(last_edge)
 
@@ -2132,12 +2127,13 @@ class Contour3D(Contour, Wire3D):
             return primitive.point_at_abscissa(primitive_length)
         raise ValueError('abscissa out of contour length')
 
-    def plot(self, ax=None, color='k', alpha=1):
+    def plot(self, ax=None, color='k', alpha=1, edge_details=False):
         if ax is None:
             ax = Axes3D(plt.figure())
 
         for edge in self.primitives:
-            edge.plot(ax=ax, color=color, alpha=alpha)
+            edge.plot(ax=ax, color=color, alpha=alpha,
+                      edge_ends=edge_details, edge_direction=edge_details)
 
         return ax
 
