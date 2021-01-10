@@ -682,7 +682,7 @@ class Plane3D(Surface3D):
             new_frame = self.frame.rotation(axis=axis, angle=angle, copy=True)
             return Plane3D(new_frame)
         else:
-            self.frame.rotation(center, axis, angle, copy=False)
+            self.frame.rotation(axis, angle, copy=False)
 
     def translation(self, offset, copy=True):
         if copy:
@@ -1594,7 +1594,7 @@ class Face3D(volmdlr.core.Primitive3D):
                 return surface
             # print(contours)
             if surface.__class__.__name__ != 'Plane3D':
-                contours[0].plot()
+                # contours[0].plot()
                 surface.face_from_contours3d(contours).surface2d.plot(equal_aspect=False)
             return surface.face_from_contours3d(contours)
 
@@ -1827,7 +1827,7 @@ class Face3D(volmdlr.core.Primitive3D):
                                                   angle=angle, copy=True)
             return self.__class__(new_surface, self.surface2d)
         else:
-            self.surface.rotation(center=center, axis=axis,
+            self.surface3d.rotation(center=center, axis=axis,
                                   angle=angle, copy=False)
             self.bounding_box = self._bounding_box()
 
@@ -3675,7 +3675,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         if copy:
             new_faces = [face.rotation(center, axis, angle, copy=True) for face
                          in self.faces]
-            return self.__class__(new_faces, name=self.name)
+            return self.__class__(new_faces, color=self.color, alpha=self.alpha, name=self.name)
         else:
             for face in self.faces:
                 face.rotation(center, axis, angle, copy=False)
@@ -3685,7 +3685,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         if copy:
             new_faces = [face.translation(offset, copy=True) for face in
                          self.faces]
-            return self.__class__(new_faces, name=self.name)
+            return self.__class__(new_faces, color=self.color, alpha=self.alpha, name=self.name)
         else:
             for face in self.faces:
                 face.translation(offset, copy=False)
@@ -3778,6 +3778,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             for face2 in shell2.faces:
                 bbox2 = face2.bounding_box
                 bbox_distance = bbox1.distance_to_bbox(bbox2)
+
                 if bbox_distance < distance_min:
                     # distance, point1, point2 = face1.distance_to_face(face2, return_points=True)
                     distance, point1, point2 = face1.minimum_distance(face2,
@@ -3862,6 +3863,11 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         bbox = volmdlr.core.BoundingBox.from_points(
             intersections_points + shell1_points_outside_shell2)
         return bbox.volume()
+
+    def primitive_inside_bbox(self, bounding_box:volmdlr.core.BoundingBox):
+        for primitive in self.primitives:
+            bbox = primitive.bounding_box
+
 
     def triangulation(self):
         mesh = volmdlr.display.DisplayMesh3D([], [])
