@@ -1413,7 +1413,44 @@ class BSplineSurface3D(Surface3D):
 
     def point2d_to_3d(self, point2d:volmdlr.Point2D):
         x, y = point2d
-        return volmdlr.Point3D(*self.evaluate_single(x, y))
+        # print(self.surface.evaluate_single(x, y))
+        return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
+
+    def point3d_to_2d(self, point3d:volmdlr.Point3D):
+        # x, y, z = point3d
+        def f(x):
+            return (point3d - self.point2d_to_3d(volmdlr.Point2D(x[0], x[1]))).norm()
+        
+        for i in range(20):
+            x0 = npy.random.random(2)
+            sol = scp.optimize.minimize(f, x0=x0, bounds=[(0, 1), (0, 1)])
+            print(sol.fun)
+            if sol.fun < 1e-5:
+                return volmdlr.Point2D(*sol.x)
+            
+        print(point3d, sol.x)
+        raise RuntimeError('No convergence in point3d to 2d of bspline surface')
+    
+    def linesegment2d_to_3d(self, linesegment2d):
+        # TODO: this is a non exact method!
+        l = linesegment2d.length()
+        points = [self.point2d_to_3d(linesegment2d.point_at_abscissa(i/l/10.)) for i in range(11)]
+        
+        return [volmdlr.edges.LineSegment3D(p1, p2)\
+                for p1, p2 in zip(points[:-1], points[1:])]
+        
+    
+    def rectangular_cut(self, u1:float, u2:float,
+                        v1:float, v2:float, name:str=''):
+
+        p1 = volmdlr.Point2D(u1, v1)
+        p2 = volmdlr.Point2D(u2, v1)
+        p3 = volmdlr.Point2D(u2, v2)
+        p4 = volmdlr.Point2D(u1, v2)
+        outer_contour = volmdlr.wires.ClosedPolygon2D([p1, p2, p3, p4])
+        surface = Surface2D(outer_contour, [])
+        return PlaneFace3D(self, surface, name)
+    
 
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive{}'.format(ip)
@@ -1474,6 +1511,11 @@ class BSplineSurface3D(Surface3D):
             self.control_points = new_control_points
             self.curve = new_BSplineSurface3D.curve
             self.points = new_BSplineSurface3D.points
+
+    def plot(self, ax=None):
+        for p in self.control_points:
+            ax = p.plot(ax=ax)
+        
 
     @classmethod
     def from_step(cls, arguments, object_dict):

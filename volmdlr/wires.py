@@ -2132,6 +2132,7 @@ class Contour3D(Contour, Wire3D):
             ax = Axes3D(plt.figure())
 
         for edge in self.primitives:
+            print(edge)
             edge.plot(ax=ax, color=color, alpha=alpha,
                       edge_ends=edge_details, edge_direction=edge_details)
 

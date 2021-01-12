@@ -460,7 +460,11 @@ class Line2D(Line):
 class BSplineCurve2D(Edge):
     _non_serializable_attributes = ['curve']
 
-    def __init__(self, degree, control_points, knot_multiplicities, knots,
+    def __init__(self,
+                 degree:int,
+                 control_points:List[volmdlr.Point2D],
+                 knot_multiplicities:List[int],
+                 knots:List[float],
                  weights=None, periodic=False, name=''):
         self.control_points = control_points
         self.degree = degree
@@ -485,14 +489,14 @@ class BSplineCurve2D(Edge):
         for i, knot in enumerate(knots):
             knot_vector.extend([knot] * knot_multiplicities[i])
         curve.knotvector = knot_vector
-        curve.delta = 0.1
-        curve_points = curve.evalpts
 
         self.curve = curve
-        self.points = [volmdlr.Point2D(p[0], p[1]) for p in curve_points]
+        start = self.point_at_abscissa(0.)
+        end = self.point_at_abscissa(self.length())
 
-        Edge.__init__(self, self.points[0], self.points[-1], name=name)
+        Edge.__init__(self, start, end, name=name)
 
+        
     def length(self):
         # Approximately
         # length = 0
@@ -504,35 +508,19 @@ class BSplineCurve2D(Edge):
 
 
     def point_at_abscissa(self, curvilinear_abscissa):
-        # copy paste from wire3D
-        length = 0.
-        primitives = []
-        for k in range(0, len(self.points) - 1):
-            primitives.append(
-                LineSegment2D(self.points[k], self.points[k + 1]))
-        for primitive in primitives:
-            primitive_length = primitive.length()
-            if length + primitive_length >= curvilinear_abscissa:
-                return primitive.point_at_abscissa(
-                    curvilinear_abscissa - length)
-            length += primitive_length
-        # Outside of length
-        raise ValueError
-
+        adim_abs = curvilinear_abscissa/self.length()
+        return self.curve.evaluate_single(adim_abs)
 
     def plot(self, ax=None, color='k', alpha=1, plot_points=False):
         if ax is None:
             _, ax = plt.subplots()
 
-        xp = [p.x for p in self.points]
-        yp = [p.y for p in self.points]
-        ax.plot(xp, yp, color='r', marker='x', alpha=alpha)
+        self.curve.delta = 0.01
+        points = [volmdlr.Point2D(px, py) for (px, py) in self.curve.evalpts]
 
-        poly_points = self.polygon_points()
-        x = [p.x for p in poly_points]
-        y = [p.y for p in poly_points]
-
-        ax.plot(x, y, color=color, alpha=alpha)
+        xp = [p.x for p in points]
+        yp = [p.y for p in points]
+        ax.plot(xp, yp, color=color, alpha=alpha)
 
         return ax
 
@@ -2249,7 +2237,7 @@ class BSplineCurve3D(Edge):
             self.points = new_BSplineCurve3D.points
 
     # Copy paste du LineSegment3D
-    def plot(self, ax=None, plot_points=False, color='k'):
+    def plot(self, ax=None, edge_ends=False, color='k', alpha=1, edge_direction=False):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -2259,9 +2247,9 @@ class BSplineCurve3D(Edge):
         x = [p.x for p in self.points]
         y = [p.y for p in self.points]
         z = [p.z for p in self.points]
-        ax.plot(x, y, z, color=color)
-        if plot_points:
-            ax.plot(x, y, z, 'o', color=color)
+        ax.plot(x, y, z, color=color, alpha=alpha)
+        if edge_ends:
+            ax.plot(x, y, z, 'o', color=color, alpha=alpha)
         return ax
 
     def to_2d(self, plane_origin, x1, x2):
