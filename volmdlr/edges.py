@@ -532,7 +532,7 @@ class BSplineCurve2D(Edge):
                               self.weights, self.periodic)
 
     def polygon_points(self):
-        return self.points
+        return self.control_points
 
     def rotation(self, center, angle, copy=True):
         if copy:
@@ -675,7 +675,6 @@ class LineSegment2D(LineSegment):
 
 
     def plot(self, ax=None, color='k', alpha=1, arrow=False, width=None,
-
                 plot_points=False):
         if ax is None:
             fig, ax = plt.subplots()
@@ -968,7 +967,7 @@ class Arc2D(Edge):
 
         if plot_points:
             for p in [self.center, self.start, self.interior, self.end]:
-                p.plot(ax=ax)
+                p.plot(ax=ax, color=color, alpha=alpha)
 
         ax.add_patch(matplotlib.patches.Arc(self.center, 2 * self.radius, 2 * self.radius, angle=0,
                                             theta1=self.angle1 * 0.5 / math.pi * 360,
@@ -2134,7 +2133,8 @@ class BSplineCurve3D(Edge):
         return length_curve(self.curve)
 
     def point_at_abscissa(self, curvilinear_abscissa):
-        return volmdlr.Point3D(*self.curve.evaluate_single(curvilinear_abscissa))
+        unit_abscissa = curvilinear_abscissa/self.length()
+        return volmdlr.Point3D(*self.curve.evaluate_single(unit_abscissa))
         # # copy paste from wire3D
         # length = 0.
         # primitives = []
