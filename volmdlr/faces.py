@@ -1646,9 +1646,10 @@ class BSplineSurface3D(Surface3D):
                    u_multiplicities, v_multiplicities, u_knots, v_knots,
                    weight_data, name)
 
+
 class Face3D(volmdlr.core.Primitive3D):
-    min_x_density=1
-    min_y_density=1
+    min_x_density = 1
+    min_y_density = 1
 
     def __init__(self, surface3d, surface2d: Surface2D,
                  name: str = ''):
@@ -1679,14 +1680,12 @@ class Face3D(volmdlr.core.Primitive3D):
 
         return self.surface2d.point_belongs(point2d)
 
-
     @property
     def outer_contour3d(self):
         """
 
         """
         return self.surface3d.contour2d_to_3d(self.surface2d.outer_contour)
-
 
     @property
     def inner_contours3d(self):
@@ -1703,8 +1702,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
-        contours = []
-        contours.append(object_dict[int(arguments[1][0][1:])])
+        contours = [object_dict[int(arguments[1][0][1:])]]
 
         # Detecting inner and outer contours
         name = arguments[0][1:-1]
@@ -1723,7 +1721,7 @@ class Face3D(volmdlr.core.Primitive3D):
         line_x = None
         if self.surface3d.x_periodicity and (xmax-xmin) >= 0.45*self.surface3d.x_periodicity:
             line_x = volmdlr.edges.Line2D(volmdlr.Point2D(0.5*(xmin+xmax), 0),
-                                            volmdlr.Point2D(
+                                          volmdlr.Point2D(
                                                 0.5 * (xmin + xmax), 1))
 
         line_y = None
@@ -1731,8 +1729,7 @@ class Face3D(volmdlr.core.Primitive3D):
                 ymax - ymin) >= 0.45 * self.surface3d.y_periodicity:
             line_y = volmdlr.edges.Line2D(
                 volmdlr.Point2D(0., 0.5 * (ymin + ymax)),
-                volmdlr.Point2D(1,
-                    0.5 * (ymin + ymax)))
+                volmdlr.Point2D(1, 0.5 * (ymin + ymax)))
 
         if line_x:
             subsurfaces2 = []
@@ -1763,29 +1760,30 @@ class Face3D(volmdlr.core.Primitive3D):
         content, surface3d_id = self.surface3d.to_step(current_id)
         current_id = surface3d_id + 1
 
-        outer_contour_content, outer_contour_id = self.outer_contour3d.to_step(current_id)
-                                                                 # surface_id=surface3d_id)
+        outer_contour_content, outer_contour_id = self.outer_contour3d.to_step(
+            current_id)
+            # surface_id=surface3d_id)
         content += outer_contour_content
-        content += "#{} = FACE_BOUND('{}',#{},.T.);\n".format(outer_contour_id+1,
-                                                          self.name,
-                                                          outer_contour_id)
+        content += "#{} = FACE_BOUND('{}',#{},.T.);\n".format(
+            outer_contour_id+1, self.name, outer_contour_id)
         contours_ids = [outer_contour_id+1]
         current_id = outer_contour_id + 2
         for inner_contour3d in self.inner_contours3d:
-            inner_contour_content, inner_contour_id = inner_contour3d.to_step(current_id)
-                                                                              # surface_id=surface3d_id)
+            inner_contour_content, inner_contour_id = inner_contour3d.to_step(
+                current_id)
+                # surface_id=surface3d_id)
             content += inner_contour_content
             face_bound_id = inner_contour_id + 1
-            content += "#{} = FACE_BOUND('',#{},.T.);\n".format(face_bound_id,
-                                                                inner_contour_id)
+            content += "#{} = FACE_BOUND('',#{},.T.);\n".format(
+                face_bound_id, inner_contour_id)
             contours_ids.append(face_bound_id)
             current_id = face_bound_id + 1
 
-        content += "#{} = ADVANCED_FACE('{}',({}),#{},.T.);\n".format(current_id,
-                                                            self.name,
-                                                            volmdlr.core.step_ids_to_str(contours_ids),
-                                                            surface3d_id
-                                                            )
+        content += "#{} = ADVANCED_FACE('{}',({}),#{},.T.);\n".format(
+            current_id,
+            self.name,
+            volmdlr.core.step_ids_to_str(contours_ids),
+            surface3d_id)
         return content, [current_id]
 
     # def delete_double(self, Le):
@@ -1920,7 +1918,6 @@ class Face3D(volmdlr.core.Primitive3D):
         else:
             surfaces = [self.surface2d]
 
-
         mesh2d = surfaces[0].triangulation()
         for subsurface in surfaces[1:]:
             mesh2d += subsurface.triangulation()
@@ -1935,7 +1932,6 @@ class Face3D(volmdlr.core.Primitive3D):
 
         self.outer_contour.plot()
 
-
     def rotation(self, center, axis, angle, copy=True):
         if copy:
             new_surface = self.surface3d.rotation(center=center, axis=axis,
@@ -1946,9 +1942,6 @@ class Face3D(volmdlr.core.Primitive3D):
                                   angle=angle, copy=False)
             self.bounding_box = self._bounding_box()
 
-
-
-
     def translation(self, offset, copy=True):
         if copy:
             new_surface3d = self.surface3d.translation(offset=offset, copy=True)
@@ -1956,7 +1949,6 @@ class Face3D(volmdlr.core.Primitive3D):
         else:
             self.surface3d.translation(offset=offset, copy=False)
             self.bounding_box = self._bounding_box()
-
 
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -1969,17 +1961,16 @@ class Face3D(volmdlr.core.Primitive3D):
             self.surface3d.frame_mapping(frame, side, copy=False)
             self.bounding_box = self._bounding_box()
 
-
     def copy(self):
         return Face3D(self.surface3d.copy(), self.surface2d.copy(), self.name)
 
     def linesegment_intersections(self,
-                                 linesegment: volmdlr.edges.LineSegment3D,
-                                 ) -> List[volmdlr.Point3D]:
+                                  linesegment: volmdlr.edges.LineSegment3D,
+                                  ) -> List[volmdlr.Point3D]:
 
         intersections = []
         for intersection in self.surface3d.linesegment_intersections(
-            linesegment):
+                linesegment):
             if self.point_belongs(intersection):
                 intersections.append(intersection)
 
@@ -2002,10 +1993,12 @@ class PlaneFace3D(Face3D):
     _standalone_in_db = False
     _generic_eq = True
     _non_serializable_attributes = ['bounding_box', 'polygon2D']
-    _non_eq_attributes = ['name', 'bounding_box', 'outer_contour3d', 'inner_contours3d']
+    _non_eq_attributes = ['name', 'bounding_box', 'outer_contour3d',
+                          'inner_contours3d']
     _non_hash_attributes = []
 
-    def __init__(self, surface3d:Plane3D, surface2d:Surface2D, name:str=''):
+    def __init__(self, surface3d: Plane3D, surface2d: Surface2D,
+                 name: str = ''):
         # if not isinstance(outer_contour2d, volmdlr.Contour2D):
         #     raise ValueError('Not a contour2D: {}'.format(outer_contour2d))
         Face3D.__init__(self,
@@ -2040,13 +2033,13 @@ class PlaneFace3D(Face3D):
         return cls(plane3d, surface2d, dict_['name'])
 
     def copy(self):
-        return PlaneFace3D(self.surface3d.copy(), self.surface2d.copy(), self.name)
+        return PlaneFace3D(self.surface3d.copy(), self.surface2d.copy(),
+                           self.name)
 
     def _bounding_box(self):
         """
         """
         return self.outer_contour3d._bounding_box()
-
 
     # def average_center_point(self):
     #     """
@@ -2060,15 +2053,18 @@ class PlaneFace3D(Face3D):
     #     return volmdlr.Point3D((x, y, z))
 
     def distance_to_point(self, point, return_other_point=False):
-        ## """
-        ## Only works if the surface is planar
-        ## TODO : this function does not take into account if Face has holes
-        ## """
+        # """
+        # Only works if the surface is planar
+        # TODO : this function does not take into account if Face has holes
+        # """
         # On projette le point sur la surface plane
-        # Si le point est à l'intérieur de la face, on retourne la distance de projection
+        # Si le point est à l'intérieur de la face,
+        # on retourne la distance de projection
         # Si le point est à l'extérieur, on projette le point sur le plan
-        # On calcule en 2D la distance entre la projection et le polygone contour
-        # On utilise le theroeme de Pytagore pour calculer la distance minimale entre le point et le contour
+        # On calcule en 2D la distance entre la projection
+        # et le polygone contour
+        # On utilise le theroeme de Pythagore pour calculer
+        # la distance minimale entre le point et le contour
 
         projected_pt = point.PlaneProjection3D(self.plane.origin,
                                                self.plane.vectors[0],
@@ -2081,7 +2077,7 @@ class PlaneFace3D(Face3D):
             return projection_distance
 
         point_2D = point.to_2d(self.plane.origin, self.plane.vectors[0],
-                              self.plane.vectors[1])
+                               self.plane.vectors[1])
 
         border_distance, other_point = self.polygon2D.PointBorderDistance(
             point_2D, return_other_point=True)
@@ -2091,11 +2087,12 @@ class PlaneFace3D(Face3D):
                                        self.plane.vectors[1])
 
         if return_other_point:
-            return (
-                               projection_distance ** 2 + border_distance ** 2) ** 0.5, other_point
+            return (projection_distance ** 2 + border_distance ** 2) ** 0.5,\
+                   other_point
         return (projection_distance ** 2 + border_distance ** 2) ** 0.5
 
-    def minimum_distance_points_plane(self, other_plane_face, return_points=False):
+    def minimum_distance_points_plane(self, other_plane_face,
+                                      return_points=False):
         ## """
         ## Only works if the surface is planar
         ## TODO : this function does not take into account if Face has holes
@@ -2150,7 +2147,8 @@ class PlaneFace3D(Face3D):
         min_distance = math.inf
         for edge1 in self.outer_contour3d.primitives:
             for edge2 in other_plane_face.outer_contour3d.primitives:
-                dist = edge1.minimum_distance(edge2, return_points=return_points)
+                dist = edge1.minimum_distance(edge2,
+                                              return_points=return_points)
                 if return_points:
                     if dist[0] < min_distance:
                         min_distance = dist[0]
@@ -2162,7 +2160,6 @@ class PlaneFace3D(Face3D):
             return min_distance, p1, p2
         else:
             return min_distance
-
 
     def edge_intersections(self, edge):
         intersections = []
@@ -2186,12 +2183,10 @@ class PlaneFace3D(Face3D):
 
         intersections = []
 
-
         for edge2 in face2.outer_contour3d.primitives:
             intersection_points = self.edge_intersections(edge2)
             if intersection_points:
                 intersections.extend(intersection_points)
-                
 
         for edge1 in self.outer_contour3d.primitives:
             intersection_points = face2.edge_intersections(edge1)
@@ -2199,7 +2194,6 @@ class PlaneFace3D(Face3D):
                 intersections.extend(intersection_points)
 
         return intersections
-
 
     def minimum_distance(self, other_face, return_points=False):
         if other_face.__class__ is CylindricalFace3D:

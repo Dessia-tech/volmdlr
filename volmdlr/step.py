@@ -46,6 +46,7 @@ def step_split_arguments(function_arg):
                 break
     return arguments
 
+
 class StepFunction:
     def __init__(self, function_id, function_name, function_arg):
         self.id = function_id
@@ -72,6 +73,7 @@ class StepFunction:
 
         self.name = new_name
         self.arg = arguments
+
 
 class Step:
     def __init__(self, stepfile):
@@ -130,6 +132,10 @@ class Step:
             arguments = step_split_arguments(function_arg)
             if function_name == "":
                 arguments = self.step_subfunctions(arguments)
+                for argument in arguments:
+                    function_name += argument[0] + ', '
+                function_name = function_name[:-2]
+                arguments = [arg[1] for arg in arguments]
 
             for i, argument in enumerate(arguments):
                 if argument[:2] == '(#' and argument[-1] == ')':
@@ -151,6 +157,7 @@ class Step:
 
         for function in self.functions.values():
             if function.name in STEP_TO_VOLMDLR:
+                print(function.name)
                 G.add_node(function.id)
                 F.add_node(function.id)
                 labels[function.id] = str(function.id) + ' ' + function.name
@@ -159,8 +166,8 @@ class Step:
         node_list = list(F.nodes())
         delete_connection = []
         for connection in self.all_connections:
-            if connection[0] not in node_list or connection[
-                1] not in node_list:
+            if connection[0] not in node_list \
+                    or connection[1] not in node_list:
                 delete_connection.append(connection)
         for delete in delete_connection:
             self.all_connections.remove(delete)
@@ -175,6 +182,7 @@ class Step:
             if F.degree(node) == 0:
                 delete_nodes.append(node)
         for node in delete_nodes:
+            print(node)
             F.remove_node(node)
             G.remove_node(node)
 
@@ -261,19 +269,22 @@ class Step:
 
             else:
                 subfunction_arg += char
-
         return [
             (subfunction_names[i], step_split_arguments(subfunction_args[i]))
             for i in range(len(subfunction_names))]
 
-    def instanciate(self, instanciate_id, object_dict):
+    # def instanciate(self, instanciate_id, object_dict):
+    def instanciate(self, name, arguments, object_dict):
         """
         Returns None if the object was instanciate
         """
+        # name = self.functions[instanciate_id].name
+        # arguments = self.functions[instanciate_id].arg[:]
 
-
-        name = self.functions[instanciate_id].name
-        arguments = self.functions[instanciate_id].arg[:]
+        # if step subfunctions
+        # print(name)
+        if name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP':
+            print('*********')
 
         for i, arg in enumerate(arguments):
             if type(arg) == str and arg[0] == '#':
@@ -292,45 +303,46 @@ class Step:
                 arguments[i] = list(argument)
 
         if name == 'VERTEX_POINT':
-            #            object_dict[instanciate_id] = object_dict[arguments[1]]
+            # object_dict[instanciate_id] = object_dict[arguments[1]]
             volmdlr_object = object_dict[arguments[1]]
 
         # elif name == 'LINE':
         #     pass
 
         elif name == 'ORIENTED_EDGE':
-            #            object_dict[instanciate_id] = object_dict[arguments[3]]
+            # object_dict[instanciate_id] = object_dict[arguments[3]]
             volmdlr_object = object_dict[arguments[3]]
 
         elif name == 'FACE_OUTER_BOUND':
-            #            object_dict[instanciate_id] = object_dict[arguments[1]]
+            # object_dict[instanciate_id] = object_dict[arguments[1]]
             volmdlr_object = object_dict[arguments[1]]
 
         elif name == 'FACE_BOUND':
-            #            object_dict[instanciate_id] = object_dict[arguments[1]]
+            # object_dict[instanciate_id] = object_dict[arguments[1]]
             volmdlr_object = object_dict[arguments[1]]
 
         elif name == 'SURFACE_CURVE':
-            #            object_dict[instanciate_id] = object_dict[arguments[1]]
+            # object_dict[instanciate_id] = object_dict[arguments[1]]
             volmdlr_object = object_dict[arguments[1]]
 
         elif name == 'SEAM_CURVE':
-            #            object_dict[instanciate_id] = object_dict[arguments[1]]
+            # object_dict[instanciate_id] = object_dict[arguments[1]]
             volmdlr_object = object_dict[arguments[1]]
         # elif name == 'EDGE_CURVE':
         #     object_dict[instanciate_id] = object_dict[arguments[3]]
 
         elif name == 'VERTEX_LOOP':
-            #            object_dict[instanciate_id] = object_dict[arguments[1]]
+            # object_dict[instanciate_id] = object_dict[arguments[1]]
             volmdlr_object = object_dict[arguments[1]]
 
         elif name == 'PCURVE':
-            #     # object_dict[instanciate_id] = object_dict[arguments[1]]
+            # TODO : Pas besoin de mettre PCURVE ici s'il n'est pas dans STEP_TO_VOLMDLR
+            # object_dict[instanciate_id] = object_dict[arguments[1]]
             volmdlr_object = object_dict[arguments[1]]
 
         elif name in STEP_TO_VOLMDLR and hasattr(
                 STEP_TO_VOLMDLR[name], "from_step"):
-            # print(object_dict)
+            # print(name, arguments)
             volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
                 arguments, object_dict)
 
@@ -339,7 +351,9 @@ class Step:
         #                primitives.append(volmdlr_object.primitive)primitives
 
         else:
-            raise NotImplementedError('Dont know how to interpret {} with args {}'.format(name, arguments))
+            raise NotImplementedError(
+                'Dont know how to interpret {} with args {}'.format(name,
+                                                                    arguments))
 
         return volmdlr_object
 
@@ -359,17 +373,19 @@ class Step:
                                                                    "#0"))[::-1]
         for edge_nb, edge in enumerate(edges):
             instanciate_id = edge[1]
-            volmdlr_object = self.instanciate(instanciate_id, object_dict)
+            volmdlr_object = self.instanciate(
+                self.functions[instanciate_id].name,
+                self.functions[instanciate_id].arg[:],
+                object_dict)
 
             object_dict[instanciate_id] = volmdlr_object
 
         shells = []
         for node in list(self.graph.nodes):
-            if node != '#0' and (self.functions[node].name == 'CLOSED_SHELL' or
+            if node != '#0' and (self.functions[node].name == "CLOSED_SHELL" or
                                  self.functions[node].name == "OPEN_SHELL"):
                 shells.append(object_dict[node])
         return volmdlr.core.VolumeModel(shells)
-
 
     def to_scatter_volume_model(self, name):
         object_dict = {}
@@ -388,7 +404,6 @@ class Step:
         return volmdlr.core.VolumeModel(points3d)
 
 
-
 STEP_TO_VOLMDLR = {
     # GEOMETRICAL ENTITIES
     'CARTESIAN_POINT': volmdlr.Point3D,
@@ -404,7 +419,7 @@ STEP_TO_VOLMDLR = {
     'ELLIPSE': volmdlr.wires.Ellipse3D,
     'PARABOLA': None,
     'HYPERBOLA': None,
-    #        'PCURVE': None,
+    # 'PCURVE': None,
     'CURVE_REPLICA': None,
     'OFFSET_CURVE_3D': None,
     'TRIMMED_CURVE': None,  # BSplineCurve3D cannot be trimmed on FreeCAD
@@ -466,10 +481,16 @@ STEP_TO_VOLMDLR = {
     'OPEN_SHELL': volmdlr.faces.OpenShell3D,
     #        'ORIENTED_CLOSED_SHELL': None,
     'CONNECTED_FACE_SET': volmdlr.faces.OpenShell3D,
+
+    # step subfunctions
+    'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP': volmdlr.faces.OpenShell3D.translation,
+    'SHELL_BASED_SURFACE_MODEL': None,
+    'MANIFOLD_SURFACE_SHAPE_REPRESENTATION': None,
+    'ITEM_DEFINED_TRANSFORMATION': None
 }
 
 VOLMDLR_TO_STEP = {}
-for k,v in STEP_TO_VOLMDLR.items():
+for k, v in STEP_TO_VOLMDLR.items():
     if v:
         if v in VOLMDLR_TO_STEP:
             VOLMDLR_TO_STEP[v].append(k)
