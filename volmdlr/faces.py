@@ -4001,6 +4001,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         mesh = volmdlr.display.DisplayMesh3D([], [])
         for i, face in enumerate(self.faces):
             try:
+                print(face)
                 face_mesh = face.triangulation()
                 mesh += face_mesh
             except NotImplementedError:
