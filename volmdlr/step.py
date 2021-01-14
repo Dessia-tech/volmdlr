@@ -271,7 +271,6 @@ class Step:
         Returns None if the object was instanciate
         """
 
-        # print('instanciate_id', instanciate_id)
 
         name = self.functions[instanciate_id].name
         arguments = self.functions[instanciate_id].arg[:]
@@ -340,9 +339,7 @@ class Step:
         #                primitives.append(volmdlr_object.primitive)primitives
 
         else:
-            print('name', name)
-            print('arguments', arguments)
-            raise NotImplementedError
+            raise NotImplementedError('Dont know how to interpret {} with args {}'.format(name, arguments))
 
         return volmdlr_object
 
