@@ -119,8 +119,10 @@ def vectors3d_angle(vector1, vector2):
 
 
 def sin_cos_angle(u1, u2):
-    # You have to give cos(theta)=u1, sin(theta)=u2
-    # return an angle between 0 and 2pi
+    """
+    cos(theta)=u1, sin(theta)=u2
+    returns an angle between 0 and 2pi
+    """
     if u1 < -1:
         u1 = -1
     elif u1 > 1:
@@ -140,6 +142,8 @@ def sin_cos_angle(u1, u2):
             theta = math.acos(u1)
         else:
             theta = volmdlr.TWO_PI - math.acos(u1)
+    if math.isclose(theta, volmdlr.TWO_PI, abs_tol=1e-9):
+        return 0.
     return theta
 
 

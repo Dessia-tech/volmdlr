@@ -714,7 +714,10 @@ class Contour2D(Contour, Wire2D):
         # # line.plot(ax=ax, color='b')
         # for point, prim in intersections:
         #     point.plot(ax=ax, color='r')
-            
+        ax = self.plot()
+        for p in intersections:
+            p[0].plot(ax=ax, color='r')
+        ax.set_aspect('auto')
         raise NotImplementedError(
             '{} intersections not supported yet'.format(len(intersections)))
 
@@ -1385,7 +1388,7 @@ class Triangle2D(ClosedPolygon2D):
        
         edge=self.common_edge(nodes_0,nodes_1)   
       
-        if edge!=None:
+        if edge is not None:
             if nodes_0[0]==edge:
                 nodes_0.reverse()
             
@@ -2027,7 +2030,6 @@ class Contour3D(Contour, Wire3D):
                     'Edges of contour not follwing each other')
 
             edges.append(last_edge)
-
         return cls(edges, name=name)
 
     def to_step(self, current_id, surface_id=None):
