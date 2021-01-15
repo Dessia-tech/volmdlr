@@ -2700,19 +2700,43 @@ class Arc3D(Edge):
                    angle: float):
         line3d = Line3D(axis_point, axis_point + axis)
         tore_center, _ = line3d.point_projection(self.center)
-        u = self.center - tore_center
-        u.normalize()
-        v = axis.cross(u)
-        if not math.isclose(self.normal.dot(u), 0., abs_tol=1e-9):
-            raise NotImplementedError(
-                'Outside of plane revolution not supported')
+        if math.isclose(tore_center.point_distance(self.center), 0., abs_tol=1e-9):
+            # Sphere
+            start_p, _ = line3d.point_projection(self.start)
+            u = self.start - start_p
 
-        R = tore_center.point_distance(self.center)
-        surface = volmdlr.faces.ToroidalSurface3D(volmdlr.Frame3D(tore_center, u, v, axis), R,
-                                                  self.radius)
-        arc2d = self.to_2d(tore_center, u, axis)
-        return surface.rectangular_cut(0, angle,
-                                       arc2d.angle1, arc2d.angle2)
+            if math.isclose(u.norm(), 0, abs_tol=1e-9):
+                end_p, _ = line3d.point_projection(self.end)
+                u = self.end - end_p
+                if math.isclose(u.norm(), 0, abs_tol=1e-9):
+                    interior_p, _ = line3d.point_projection(self.interior)
+                    u = self.interior - interior_p
+
+            u.normalize()
+            v = axis.cross(u)
+            arc2d = self.to_2d(self.center, u, axis)
+
+            surface = volmdlr.faces.SphericalSurface3D(
+                volmdlr.Frame3D(self.center, u, v, axis), self.radius)
+            surface.plot()
+            return surface.rectangular_cut(0, angle,
+                                           arc2d.angle1, arc2d.angle2)
+
+        else:
+            # Toroidal
+            u = self.center - tore_center
+            u.normalize()
+            v = axis.cross(u)
+            if not math.isclose(self.normal.dot(u), 0., abs_tol=1e-9):
+                raise NotImplementedError(
+                    'Outside of plane revolution not supported')
+
+            R = tore_center.point_distance(self.center)
+            surface = volmdlr.faces.ToroidalSurface3D(volmdlr.Frame3D(tore_center, u, v, axis), R,
+                                                      self.radius)
+            arc2d = self.to_2d(tore_center, u, axis)
+            return surface.rectangular_cut(0, angle,
+                                           arc2d.angle1, arc2d.angle2)
 
     def to_step(self, current_id):
         if self.angle >= math.pi:
