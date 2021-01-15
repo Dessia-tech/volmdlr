@@ -578,12 +578,16 @@ class LineSegment2D(LineSegment):
         """
         if self.start == self.end:
             if return_other_point:
+
                 return 0, point
+
             return 0
         distance, point = volmdlr.core_compiled.LineSegment2DPointDistance(
             [(self.start.x, self.start.y), (self.end.x, self.end.y)], (point.x, point.y))
         if return_other_point:
+
             return distance, point
+
         return distance
 
     def point_projection(self, point):

@@ -153,6 +153,16 @@ class Block(volmdlr.faces.ClosedShell3D):
     # def __hash__(self):
     #     return hash(self.frame)
 
+    @classmethod
+    def from_bounding_box(cls, bounding_box):
+        bb = bounding_box
+        xmin, xmax, ymin, ymax, zmin, zmax = bb.xmin, bb.xmax, bb.ymin, bb.ymax, bb.zmin, bb.zmax
+        origin = bb.center
+        sx, sy, sz = xmax - xmin, ymax - ymin, zmax - zmin
+        frame = volmdlr.Frame3D(origin, sx * volmdlr.Vector3D(1, 0, 0),
+                           sy * volmdlr.Vector3D(0, 1, 0), sz * volmdlr.Vector3D(0, 0, 1))
+        return cls(frame = frame)
+
     def vertices(self):
         return [self.frame.origin - 0.5*self.frame.u - 0.5*self.frame.v - 0.5*self.frame.w,
                 self.frame.origin - 0.5*self.frame.u + 0.5*self.frame.v - 0.5*self.frame.w,
@@ -401,6 +411,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
                                              alpha=alpha, name=name)
 
 
+
     def shell_faces(self):
         lower_plane = volmdlr.faces.Plane3D.from_plane_vectors(self.plane_origin,
                                                                self.x,
@@ -458,9 +469,9 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
         s+='{} = Fo.extrude(fc.Vector({}, {}, {}))\n'.format(name,e1,e2,e3)
         return s
 
-    def Area(self):
-        areas = self.outer_contour2d.Area()
-        areas -= sum([c.Area() for c in self.inner_contours2d])
+    def area(self):
+        areas = self.outer_contour2d.area()
+        areas -= sum([c.area() for c in self.inner_contours2d])
         # sic=list(npy.argsort(areas))[::-1]# sorted indices of contours
         # area=areas[sic[0]]
 
