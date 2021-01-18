@@ -1424,8 +1424,10 @@ class RuledSurface3D(Surface3D):
         surface2d = Surface2D(outer_contour, [])
         return volmdlr.faces.RuledFace3D(self, surface2d, name)
 
+
 class BSplineSurface3D(Surface3D):
     face_class = 'BSplineFace3D'
+
     def __init__(self, degree_u, degree_v, control_points, nb_u, nb_v,
                  u_multiplicities, v_multiplicities, u_knots, v_knots,
                  weights=None, name=''):
@@ -1491,10 +1493,10 @@ class BSplineSurface3D(Surface3D):
         def f(x):
             return (point3d - self.point2d_to_3d(volmdlr.Point2D(x[0], x[1]))).norm()
         
-        for x0 in [(0,0), (0,1), (1,0), (1,1), (0.5,0.5)]:
+        for x0 in [(0, 0), (0, 1), (1, 0), (1, 1), (0.5, 0.5)]:
             sol = scp.optimize.minimize(f, x0=x0,
                                         bounds=[(0, 1), (0, 1)],
-                                        options={'eps':1e-12})
+                                        options={'eps': 1e-12})
             if sol.fun < 1e-3:
                 return volmdlr.Point2D(*sol.x)
 
@@ -1505,7 +1507,7 @@ class BSplineSurface3D(Surface3D):
         l = linesegment2d.length()
         points = [self.point2d_to_3d(linesegment2d.point_at_abscissa(i/l/10.)) for i in range(11)]
         
-        return [volmdlr.edges.LineSegment3D(p1, p2)\
+        return [volmdlr.edges.LineSegment3D(p1, p2)
                 for p1, p2 in zip(points[:-1], points[1:])]
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
@@ -1513,17 +1515,14 @@ class BSplineSurface3D(Surface3D):
         l = bspline_curve3d.length()
         points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i/10*l))\
                   for i in range(11)]
-        return [volmdlr.edges.LineSegment2D(p1, p2)\
+        return [volmdlr.edges.LineSegment2D(p1, p2)
                 for p1, p2 in zip(points[:-1], points[1:])]
 
     def _bounding_box(self):
-
         return volmdlr.core.BoundingBox.from_points(self.control_points)
 
-    
-    def rectangular_cut(self, u1:float, u2:float,
-                        v1:float, v2:float, name:str=''):
-
+    def rectangular_cut(self, u1: float, u2: float,
+                        v1: float, v2: float, name: str = ''):
         p1 = volmdlr.Point2D(u1, v1)
         p2 = volmdlr.Point2D(u2, v1)
         p3 = volmdlr.Point2D(u2, v2)
@@ -1531,7 +1530,6 @@ class BSplineSurface3D(Surface3D):
         outer_contour = volmdlr.wires.ClosedPolygon2D([p1, p2, p3, p4])
         surface = Surface2D(outer_contour, [])
         return PlaneFace3D(self, surface, name)
-    
 
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive{}'.format(ip)
@@ -1573,7 +1571,7 @@ class BSplineSurface3D(Surface3D):
             return new_BSplineSurface3D
         else:
             self.control_points = new_control_points
-            self.curve = new_BSplineSurface3D.curve
+            self.surface = new_BSplineSurface3D.surface
             self.points = new_BSplineSurface3D.points
 
     def translation(self, offset, copy=True):
@@ -1590,7 +1588,24 @@ class BSplineSurface3D(Surface3D):
             return new_BSplineSurface3D
         else:
             self.control_points = new_control_points
-            self.curve = new_BSplineSurface3D.curve
+            self.surface = new_BSplineSurface3D.surface
+            self.points = new_BSplineSurface3D.points
+
+    def frame_mapping(self, frame, side, copy=True):
+        new_control_points = [p.frame_mapping(frame, side, True) for p in
+                              self.control_points]
+        new_BSplineSurface3D = BSplineSurface3D(self.degree_u, self.degree_v,
+                                                new_control_points, self.nb_u,
+                                                self.nb_v,
+                                                self.u_multiplicities,
+                                                self.v_multiplicities,
+                                                self.u_knots, self.v_knots,
+                                                self.weights, self.name)
+        if copy:
+            return new_BSplineSurface3D
+        else:
+            self.control_points = new_control_points
+            self.surface = new_BSplineSurface3D.surface
             self.points = new_BSplineSurface3D.points
 
     def plot(self, ax=None):

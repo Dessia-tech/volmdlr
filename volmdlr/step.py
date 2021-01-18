@@ -53,6 +53,7 @@ class StepFunction:
         self.name = function_name
         self.arg = function_arg
 
+        # TODO : Modifier ce qui suit et simplify
         if self.name == "":
             if self.arg[1][0] == 'B_SPLINE_SURFACE':
                 self.simplify('B_SPLINE_SURFACE')
@@ -80,6 +81,89 @@ class Step:
         self.stepfile = stepfile
 
         self.functions, self.all_connections = self.read_functions()
+
+    # def read_functions(self):
+    #     f = open(self.stepfile, "r", encoding="ISO-8859-1")
+    #
+    #     all_connections = []
+    #
+    #     previous_line = ""
+    #     functions = {}
+    #
+    #     for line in f:
+    #         line = line.replace(" ", "")
+    #         line = line.replace("\n", "")
+    #
+    #         # SKIP EMPTY LINE
+    #         if not line:
+    #             continue
+    #
+    #         # ASSEMBLE LINES IF THEY ARE SEPARATED
+    #         if line[-1] != ';':
+    #             previous_line = previous_line + line
+    #             continue
+    #
+    #         line = previous_line + line
+    #
+    #         # SKIP HEADER
+    #         if line[0] != "#":
+    #             previous_line = str()
+    #             continue
+    #
+    #         function = line.split("=")
+    #         function_id = int(function[0][1:])
+    #         function_name_arg = function[1].split("(", 1)
+    #         function_name = function_name_arg[0]
+    #         function_arg = function_name_arg[1].split("#")
+    #
+    #         arguments = step_split_arguments(function_arg)
+    #
+    #         print()
+    #         print(function_name_arg)
+    #
+    #         # Subfunctions
+    #         if function_name == "":
+    #             function_arg = function_name_arg[1]
+    #
+    #             arguments = self.step_subfunctions(arguments)
+    #             assembled_arguments = []
+    #             for argument in arguments:
+    #                 function_name += argument[0] + ', '
+    #                 assembled_arguments.extend(argument[1])
+    #             function_name = function_name[:-2]
+    #             # arguments = [arg[1] for arg in arguments]
+    #             print('=', assembled_arguments)
+    #             function_arg = assembled_arguments
+    #
+    #         print('fc arg', function_arg)
+    #         function_connections = []
+    #         for connec in function_arg[1:]:
+    #             print('connec', connec)
+    #             connec = connec.split(",")
+    #             connec = connec[0].split(")")
+    #             if len(connec[0]) != 0 and connec[0][-1] != "'":
+    #                 try:
+    #                     function_connection = int(connec[0])
+    #                     function_connections.append(
+    #                         (function_id, function_connection))
+    #                 except ValueError:
+    #                     continue
+    #
+    #         all_connections.extend(function_connections)
+    #
+    #         previous_line = str()
+    #
+    #         for i, argument in enumerate(arguments):
+    #             if argument[:2] == '(#' and argument[-1] == ')':
+    #                 arg_list = volmdlr.core.set_to_list(argument)
+    #                 arguments[i] = arg_list
+    #
+    #         function = StepFunction(function_id, function_name, arguments)
+    #         functions[function_id] = function
+    #
+    #     f.close()
+    #
+    #     return functions, all_connections
 
     def read_functions(self):
         f = open(self.stepfile, "r", encoding="ISO-8859-1")
@@ -130,12 +214,20 @@ class Step:
             # FUNCTION ARGUMENTS
             function_arg = function_name_arg[1]
             arguments = step_split_arguments(function_arg)
+            new_name = ''
+            new_arguments = []
             if function_name == "":
-                arguments = self.step_subfunctions(arguments)
-                for argument in arguments:
-                    function_name += argument[0] + ', '
-                function_name = function_name[:-2]
-                arguments = [arg[1] for arg in arguments]
+                name_arg = self.step_subfunctions(arguments)
+                for name, arg in name_arg:
+                    new_name += name + ', '
+                    new_arguments.extend(arg)
+                new_name = new_name[:-2]
+                function_name = new_name
+                arguments = new_arguments
+                for arg in arguments:
+                    if arg[0] == '#':
+                        function_connections.append(
+                            (function_id, int(arg[1:])))
 
             for i, argument in enumerate(arguments):
                 if argument[:2] == '(#' and argument[-1] == ')':
@@ -157,7 +249,6 @@ class Step:
 
         for function in self.functions.values():
             if function.name in STEP_TO_VOLMDLR:
-                print(function.name)
                 G.add_node(function.id)
                 F.add_node(function.id)
                 labels[function.id] = str(function.id) + ' ' + function.name
@@ -182,7 +273,6 @@ class Step:
             if F.degree(node) == 0:
                 delete_nodes.append(node)
         for node in delete_nodes:
-            print(node)
             F.remove_node(node)
             G.remove_node(node)
 
@@ -276,15 +366,9 @@ class Step:
     # def instanciate(self, instanciate_id, object_dict):
     def instanciate(self, name, arguments, object_dict):
         """
-        Returns None if the object was instanciate
         """
         # name = self.functions[instanciate_id].name
         # arguments = self.functions[instanciate_id].arg[:]
-
-        # if step subfunctions
-        # print(name)
-        if name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP':
-            print('*********')
 
         for i, arg in enumerate(arguments):
             if type(arg) == str and arg[0] == '#':
@@ -328,6 +412,7 @@ class Step:
         elif name == 'SEAM_CURVE':
             # object_dict[instanciate_id] = object_dict[arguments[1]]
             volmdlr_object = object_dict[arguments[1]]
+
         # elif name == 'EDGE_CURVE':
         #     object_dict[instanciate_id] = object_dict[arguments[3]]
 
@@ -340,9 +425,42 @@ class Step:
             # object_dict[instanciate_id] = object_dict[arguments[1]]
             volmdlr_object = object_dict[arguments[1]]
 
+        elif name == 'SHELL_BASED_SURFACE_MODEL':
+            volmdlr_object = object_dict[int(arguments[1][0][1:])]
+            # print('1', volmdlr_object, volmdlr_object.__dict__)
+            # Shell3D
+
+        elif name == 'ITEM_DEFINED_TRANSFORMATION':
+            volmdlr_object1 = object_dict[arguments[2]]
+            volmdlr_object2 = object_dict[arguments[3]]
+            # volmdlr_object = volmdlr_object2 - volmdlr_object1
+            volmdlr_object = volmdlr_object2
+            print(volmdlr_object1.__dict__)
+            print(volmdlr_object2.__dict__)
+            print(volmdlr_object.__dict__)
+            print()
+            # print('2', volmdlr_object, volmdlr_object.__dict__)
+            # Frame3D
+
+        elif name == 'MANIFOLD_SURFACE_SHAPE_REPRESENTATION':
+            volmdlr_object = object_dict[int(arguments[1][1][1:])]
+            # print('3', volmdlr_object, volmdlr_object.__dict__)
+            # Shell3D
+
+        elif name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP':
+            # Peut pointer sur SHAPE_REPRESENTATION au lieu de
+            # MANIFOLD_SURFACE_SHAPE_REPRESENTATION. Dans ce cas il n'y a pas
+            # de Shell3D à déplacer.
+            if arguments[2] in object_dict:
+                shell3d = object_dict[arguments[2]]
+                frame3d = object_dict[arguments[4]]
+                shell3d.frame_mapping(frame3d, 'old', copy=False)
+                volmdlr_object = shell3d
+            else:
+                volmdlr_object = None
+
         elif name in STEP_TO_VOLMDLR and hasattr(
                 STEP_TO_VOLMDLR[name], "from_step"):
-            # print(name, arguments)
             volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
                 arguments, object_dict)
 
@@ -364,8 +482,11 @@ class Step:
 
         self.graph.add_node("#0")
         for node in self.graph.nodes:
-            if node != '#0' and (self.functions[node].name == "CLOSED_SHELL" or
-                                 self.functions[node].name == "OPEN_SHELL"):
+            # if node != '#0' and (self.functions[node].name == "CLOSED_SHELL"
+            #                      or
+            #                      self.functions[node].name == "OPEN_SHELL"):
+            #     self.graph.add_edge("#0", node)
+            if node != '#0' and (self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP'):
                 self.graph.add_edge("#0", node)
 
         edges = list(
@@ -373,6 +494,7 @@ class Step:
                                                                    "#0"))[::-1]
         for edge_nb, edge in enumerate(edges):
             instanciate_id = edge[1]
+            # print('instanciate_id', instanciate_id)
             volmdlr_object = self.instanciate(
                 self.functions[instanciate_id].name,
                 self.functions[instanciate_id].arg[:],
@@ -382,8 +504,10 @@ class Step:
 
         shells = []
         for node in list(self.graph.nodes):
-            if node != '#0' and (self.functions[node].name == "CLOSED_SHELL" or
-                                 self.functions[node].name == "OPEN_SHELL"):
+            # if node != '#0' and (self.functions[node].name == "CLOSED_SHELL" or
+            #                      self.functions[node].name == "OPEN_SHELL"):
+            if node != '#0' and (self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP'):
+
                 shells.append(object_dict[node])
         return volmdlr.core.VolumeModel(shells)
 
