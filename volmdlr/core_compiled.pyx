@@ -987,14 +987,14 @@ class Point3D(Vector3D):
         return Point3D(self.x, self.y, self.z)
 
 
-    def plot(self, ax=None, color='k', alpha=1):
+    def plot(self, ax=None, color='k', alpha=1, marker='o'):
 
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
         ax.plot([self.x], [self.y], [self.z], color=color, alpha=alpha,
-                marker='o')
+                marker=marker)
         return ax
 
 
