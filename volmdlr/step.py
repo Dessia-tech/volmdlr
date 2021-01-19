@@ -395,7 +395,33 @@ class Step:
 
         elif name == 'ORIENTED_EDGE':
             # object_dict[instanciate_id] = object_dict[arguments[3]]
-            volmdlr_object = object_dict[arguments[3]]
+            if arguments[4] == '.T.':
+                volmdlr_object = object_dict[arguments[3]]
+            else:
+                volmdlr_object = object_dict[arguments[3]]
+                try:
+                    volmdlr_object.is_trigo
+                    ax = volmdlr_object.plot(color='r')
+                    volmdlr_object.frame.plot(ax=ax)
+                except:
+                    pass
+                # volmdlr_object.change_orientation()
+                try:
+                    volmdlr_object.is_trigo
+                    volmdlr_object.plot(ax=ax, color='b')
+                    volmdlr_object.frame.plot(ax=ax)
+                except:
+                    pass
+            print(volmdlr_object)
+            try:
+                print(volmdlr_object.is_trigo)
+                print('angle', volmdlr_object.angle)
+                print('rayon', volmdlr_object.radius)
+                print('frame', volmdlr_object.frame)
+            except:
+                pass
+            print(arguments[4])
+            print()
 
         elif name == 'FACE_OUTER_BOUND':
             # object_dict[instanciate_id] = object_dict[arguments[1]]

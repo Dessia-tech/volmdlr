@@ -87,15 +87,18 @@ class Edge(dc.DessiaObject):
                 theta1, theta2 = volmdlr.core.posangle_arc(p1, p2,
                                                            circle.radius,
                                                            circle.frame)
+                # theta1, theta2 = volmdlr.core.posangle_arc(p1, p2,
+                #                                            circle.radius)
                 if theta1 > theta2:  # sens trigo
                     angle = math.pi + (theta1 + theta2) / 2
                 else:
                     angle = (theta1 + theta2) / 2
 
                 middle_angle = theta1 + 0.5 * angle
-                middle_point = volmdlr.Point3D(circle.radius * math.cos(middle_angle),
-                                               circle.radius * math.sin(middle_angle),
-                                               0.)
+                middle_point = volmdlr.Point3D(
+                    circle.radius * math.cos(middle_angle),
+                    circle.radius * math.sin(middle_angle),
+                    0.)
 
                 middle_point3d = circle.frame.old_coordinates(middle_point)
 
@@ -1558,12 +1561,13 @@ class Line3D(Line):
                                                     p1_id, u_id)
         return content, current_id
 
+
 class LineSegment3D(LineSegment):
     """
     Define a line segment limited by two points
     """
 
-    def __init__(self, start:volmdlr.Point3D, end:volmdlr.Point3D,
+    def __init__(self, start: volmdlr.Point3D, end: volmdlr.Point3D,
                  name: str = ''):
         LineSegment.__init__(self, start=start, end=end, name=name)
         self.bounding_box = self._bounding_box()
@@ -1574,8 +1578,8 @@ class LineSegment3D(LineSegment):
     def __eq__(self, other_linesegment3d):
         if other_linesegment3d.__class__ != self.__class__:
             return False
-        return (self.start == other_linesegment3d.start)\
-               and (self.end == other_linesegment3d.end)
+        return (self.start == other_linesegment3d.start
+                and self.end == other_linesegment3d.end)
 
     def _bounding_box(self):
         points = [self.start, self.end]
@@ -1588,6 +1592,9 @@ class LineSegment3D(LineSegment):
         zmax = max(self.start.z, self.end.z)
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+
+    def change_orientation(self):
+        self.start, self.end = self.end, self.start
 
     def length(self):
         return self.end.point_distance(self.start)
@@ -2075,7 +2082,6 @@ class LineSegment3D(LineSegment):
         return content, [current_id]
 
 
-
 class BSplineCurve3D(Edge):
     _non_serializable_attributes = ['curve']
 
@@ -2113,6 +2119,20 @@ class BSplineCurve3D(Edge):
         self.curve = curve
         self.points = [volmdlr.Point3D(p[0], p[1], p[2]) for p in curve_points]
         Edge.__init__(self, start=self.points[0], end=self.points[-1])
+
+    def change_orientation(self):
+        new_bsplinecurve3d = BSplineCurve3D(
+            degree=self.degree,
+            control_points=self.control_points[::-1],
+            knot_multiplicities=self.knot_multiplicities[::-1],
+            knots=self.knots[::-1],
+            weights=self.weights,
+            periodic=self.periodic)
+        self.control_points = new_bsplinecurve3d.control_points
+        self.knot_multiplicities = new_bsplinecurve3d.knot_multiplicities
+        self.knots = new_bsplinecurve3d.knots
+        self.curve = new_bsplinecurve3d.curve
+        self.points = new_bsplinecurve3d.points
 
     def reverse(self):
         return self.__class__(degree=self.degree,
@@ -2277,6 +2297,37 @@ class Arc3D(Edge):
         Edge.__init__(self, start=start, end=end, name=name)
         self.setup_arc(start, interior, end, name=name)
 
+    def change_orientation(self):
+        self.frame.v = - self.frame.v
+        self.frame.w = - self.frame.w
+        theta1, theta2 = volmdlr.core.posangle_arc(self.start, self.end,
+                                                   self.radius,
+                                                   self.frame)
+        if theta1 > theta2:  # sens trigo
+            angle = math.pi + (theta1 + theta2) / 2
+        else:
+            angle = (theta1 + theta2) / 2
+
+        middle_angle = theta1 + 0.5 * angle
+        middle_point = volmdlr.Point3D(
+            self.radius * math.cos(middle_angle),
+            self.radius * math.sin(middle_angle),
+            0.)
+
+        middle_point3d = self.frame.old_coordinates(middle_point)
+
+        # new_arc3d = volmdlr.edges.Arc3D(self.end, middle_point3d, self.start,
+        #                                 name=self.name)
+        new_arc3d = volmdlr.edges.Arc3D(self.start, middle_point3d, self.end,
+                                        name=self.name)
+        self.start = new_arc3d.start
+        self.interior = new_arc3d.interior
+        self.end = new_arc3d.end
+        self.normal = new_arc3d.normal
+        self.frame = new_arc3d.frame
+        self.is_trigo = new_arc3d.is_trigo
+        self.angle = new_arc3d.angle
+
     @classmethod
     def from_angle(cls, start: volmdlr.Point3D, angle: float,
                    axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D):
@@ -2308,7 +2359,6 @@ class Arc3D(Edge):
         if u1 == u2:
             u2 = self.normal.cross(u1)
             u2.normalize()
-
 
         v1 = self.normal.cross(u1)  # v1 is normal, equal u2
         v2 = self.normal.cross(u2)  # equal -u1
@@ -2373,8 +2423,6 @@ class Arc3D(Edge):
         # if self.angle > math.pi:
         #     # Inverting normal to be sure to have a right defined normal for rotation
         #     self.normal = -self.normal
-
-
 
     @property
     def points(self):
