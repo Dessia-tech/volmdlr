@@ -13,6 +13,7 @@ import dessia_common as dc
 from geomdl import BSpline
 import volmdlr.core
 import volmdlr.core_compiled
+import volmdlr.edges as vme
 import volmdlr.wires
 import volmdlr.display
 
@@ -119,11 +120,11 @@ class Surface2D(volmdlr.core.Primitive2D):
         lines = []
         for i in range(n - 1):
             xi = xmin + (i + 1) * (xmax - xmin) / n
-            lines.append(volmdlr.edges.Line2D(volmdlr.Point2D(xi, 0),
+            lines.append(vme.Line2D(volmdlr.Point2D(xi, 0),
                                               volmdlr.Point2D(xi, 1)))
         return self.split_by_lines(lines)
     
-    def cut_by_line(self, line:volmdlr.edges.Line2D):
+    def cut_by_line(self, line:vme.Line2D):
         """
         This method makes inner contour disappear for now
         """
@@ -145,7 +146,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         iteration_contours = []
         c1=self.inner_contours[0].center_of_mass()
         c2=self.inner_contours[1].center_of_mass()
-        cut_line=volmdlr.edges.Line2D(c1,c2)
+        cut_line=vme.Line2D(c1,c2)
         
         
         iteration_contours2 = []
@@ -205,22 +206,22 @@ class Surface2D(volmdlr.core.Primitive2D):
          
                 
                 primitives1=[]
-                primitives1.append(volmdlr.edges.LineSegment2D(intersections[6][0],intersections[1][0]))
+                primitives1.append(vme.LineSegment2D(intersections[6][0],intersections[1][0]))
                 primitives1.append(new_inner_1.primitives[ip1]) 
-                primitives1.append(volmdlr.edges.LineSegment2D(intersections[0][0],intersections[5][0]))
+                primitives1.append(vme.LineSegment2D(intersections[0][0],intersections[5][0]))
                 primitives1.append(new_inner_2.primitives[ip5])
-                primitives1.append(volmdlr.edges.LineSegment2D(intersections[4][0],intersections[7][0]))
+                primitives1.append(vme.LineSegment2D(intersections[4][0],intersections[7][0]))
                 primitives1.append(sp44)
                 primitives1.extend(self.outer_contour.primitives[ip3+1:ip4])
                 primitives1.append(sp34)
                 
            
                 primitives2=[]
-                primitives2.append(volmdlr.edges.LineSegment2D(intersections[7][0],intersections[4][0]))
+                primitives2.append(vme.LineSegment2D(intersections[7][0],intersections[4][0]))
                 primitives2.append(new_inner_2.primitives[ip6])
-                primitives2.append(volmdlr.edges.LineSegment2D(intersections[5][0],intersections[0][0]))
+                primitives2.append(vme.LineSegment2D(intersections[5][0],intersections[0][0]))
                 primitives2.append(new_inner_1.primitives[ip2])
-                primitives2.append(volmdlr.edges.LineSegment2D(intersections[1][0],intersections[6][0]))
+                primitives2.append(vme.LineSegment2D(intersections[1][0],intersections[6][0]))
                 primitives2.append(sp33)
                 a=self.outer_contour.primitives[:ip3]
                 a.reverse()
@@ -251,10 +252,10 @@ class Surface2D(volmdlr.core.Primitive2D):
         c_2=inner_2.center_of_mass()
         c_3=inner_3.center_of_mass()
         direction_vector=line.normal_vector()
-        direction_line=volmdlr.edges.Line2D(c,volmdlr.Point2D((direction_vector.y*c.x-direction_vector.x*c.y)/(direction_vector.y),0))     
-        direction_line_2=volmdlr.edges.Line2D(c_2,volmdlr.Point2D((direction_vector.y*c_2.x-direction_vector.x*c_2.y)/(direction_vector.y),0))
+        direction_line=vme.Line2D(c,volmdlr.Point2D((direction_vector.y*c.x-direction_vector.x*c.y)/(direction_vector.y),0))     
+        direction_line_2=vme.Line2D(c_2,volmdlr.Point2D((direction_vector.y*c_2.x-direction_vector.x*c_2.y)/(direction_vector.y),0))
        
-        direction_line_3=volmdlr.edges.Line2D(c_3,volmdlr.Point2D((direction_vector.y*c_3.x-direction_vector.x*c_3.y)/(direction_vector.y),0))
+        direction_line_3=vme.Line2D(c_3,volmdlr.Point2D((direction_vector.y*c_3.x-direction_vector.x*c_3.y)/(direction_vector.y),0))
         inner_intersections=inner.line_intersections(direction_line)
         inner_intersections_2=inner_2.line_intersections(direction_line_2)
         inner_intersections_3=inner_3.line_intersections(direction_line_3)
@@ -312,40 +313,40 @@ class Surface2D(volmdlr.core.Primitive2D):
             sp66, sp65 = intersections[11][1].split(intersections[11][0]) 
             
             primitives1=[]
-            primitives1.append(volmdlr.edges.LineSegment2D(intersections[7][0],intersections[5][0]))  
+            primitives1.append(vme.LineSegment2D(intersections[7][0],intersections[5][0]))  
             primitives1.append(new_inner_2.primitives[ip5]) 
-            primitives1.append(volmdlr.edges.LineSegment2D(intersections[6][0],intersections[4][0])) 
+            primitives1.append(vme.LineSegment2D(intersections[6][0],intersections[4][0])) 
             primitives1.append(sp33)
             primitives1.append(sp43)
             
             primitives2=[]
-            primitives2.append(volmdlr.edges.LineSegment2D(intersections[6][0],intersections[4][0]))
+            primitives2.append(vme.LineSegment2D(intersections[6][0],intersections[4][0]))
             primitives2.append(new_inner_2.primitives[ip6])
-            primitives2.append(volmdlr.edges.LineSegment2D(intersections[5][0],intersections[7][0])) 
-            primitives2.append(volmdlr.edges.LineSegment2D(intersections[7][0],intersections[11][0]))
-            primitives2.append(volmdlr.edges.LineSegment2D(intersections[11][0],intersections[9][0]))
+            primitives2.append(vme.LineSegment2D(intersections[5][0],intersections[7][0])) 
+            primitives2.append(vme.LineSegment2D(intersections[7][0],intersections[11][0]))
+            primitives2.append(vme.LineSegment2D(intersections[11][0],intersections[9][0]))
             primitives2.append(new_inner_3.primitives[ip7])
-            primitives2.append(volmdlr.edges.LineSegment2D(intersections[8][0],intersections[10][0]))
+            primitives2.append(vme.LineSegment2D(intersections[8][0],intersections[10][0]))
             primitives2.append(sp34)
             
 
             
             primitives3=[]
-            primitives3.append(volmdlr.edges.LineSegment2D(intersections[10][0],intersections[8][0]))
+            primitives3.append(vme.LineSegment2D(intersections[10][0],intersections[8][0]))
             primitives3.append(new_inner_3.primitives[ip8])
-            primitives3.append(volmdlr.edges.LineSegment2D(intersections[9][0],intersections[11][0]))
+            primitives3.append(vme.LineSegment2D(intersections[9][0],intersections[11][0]))
             primitives3.append(sp22)
-            primitives3.append(volmdlr.edges.LineSegment2D(intersections[3][0],intersections[1][0]))
+            primitives3.append(vme.LineSegment2D(intersections[3][0],intersections[1][0]))
             primitives3.append(new_inner.primitives[ip1])
-            primitives3.append(volmdlr.edges.LineSegment2D(intersections[0][0],intersections[2][0]))
-            primitives3.append(volmdlr.edges.LineSegment2D(intersections[2][0],intersections[10][0]))
+            primitives3.append(vme.LineSegment2D(intersections[0][0],intersections[2][0]))
+            primitives3.append(vme.LineSegment2D(intersections[2][0],intersections[10][0]))
       
             
             primitives4=[]
-            primitives4.append(volmdlr.edges.LineSegment2D(intersections[3][0],intersections[1][0]))
-            a=volmdlr.edges.Arc2D(new_inner.primitives[ip2].end,new_inner.primitives[ip2].interior,new_inner.primitives[ip2].start)
+            primitives4.append(vme.LineSegment2D(intersections[3][0],intersections[1][0]))
+            a=vme.Arc2D(new_inner.primitives[ip2].end,new_inner.primitives[ip2].interior,new_inner.primitives[ip2].start)
             primitives4.append(a)
-            primitives4.append(volmdlr.edges.LineSegment2D(intersections[0][0],intersections[2][0]))
+            primitives4.append(vme.LineSegment2D(intersections[0][0],intersections[2][0]))
             primitives4.append(sp12)
             primitives4.append(sp21)
          
@@ -549,7 +550,7 @@ class Surface3D(dc.DessiaObject):
         """
         a line segment on a surface will be in any case a line in 2D?
         """
-        return [volmdlr.edges.LineSegment2D(self.point3d_to_2d(linesegment3d.start),
+        return [vme.LineSegment2D(self.point3d_to_2d(linesegment3d.start),
                                             self.point3d_to_2d(linesegment3d.end))]
 
 
@@ -674,7 +675,7 @@ class Plane3D(Surface3D):
         intersection_abscissea = - self.frame.w.dot(w) / self.frame.w.dot(u)
         return [line.points[0] + intersection_abscissea * u]
 
-    def linesegment_intersections(self, linesegment:volmdlr.edges.LineSegment3D)\
+    def linesegment_intersections(self, linesegment:vme.LineSegment3D)\
                     -> List[volmdlr.Point3D]:
         u = linesegment.end - linesegment.start
         w = linesegment.start - self.frame.origin
@@ -814,7 +815,7 @@ class Plane3D(Surface3D):
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         control_points = [self.point3d_to_2d(p)\
                           for p in bspline_curve3d.control_points]
-        return [volmdlr.edges.BSplineCurve2D(
+        return [vme.BSplineCurve2D(
                     bspline_curve3d.degree,
                     control_points=control_points,
                     knot_multiplicities=bspline_curve3d.knot_multiplicities,
@@ -825,7 +826,7 @@ class Plane3D(Surface3D):
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         control_points = [self.point2d_to_3d(p)\
                           for p in bspline_curve2d.control_points]
-        return [volmdlr.edges.BSplineCurve3D(
+        return [vme.BSplineCurve3D(
                     bspline_curve2d.degree,
                     control_points=control_points,
                     knot_multiplicities=bspline_curve2d.knot_multiplicities,
@@ -891,25 +892,25 @@ class CylindricalSurface3D(Surface3D):
         #     end = start + volmdlr.Point2D(arc3d.angle, 0)
         # else:
         #     end = start - volmdlr.Point2D(arc3d.angle, 0)
-        return [volmdlr.edges.LineSegment2D(start, end)]
+        return [vme.LineSegment2D(start, end)]
 
 
     def linesegment2d_to_3d(self, linesegment2d):
         theta1, z1 = linesegment2d.start
         theta2, z2 = linesegment2d.end
         if theta1 == theta2:
-            return [volmdlr.edges.LineSegment3D(
+            return [vme.LineSegment3D(
                         self.point2d_to_3d(linesegment2d.start),
                         self.point2d_to_3d(linesegment2d.end),
             )]
         elif z1 == z2:
             if abs(theta1 - theta2) == volmdlr.TWO_PI:
-                return [volmdlr.edges.FullArc3D(center=self.frame.origin+z1*self.frame.w,
+                return [vme.FullArc3D(center=self.frame.origin+z1*self.frame.w,
                                                start_end=self.point2d_to_3d(linesegment2d.start),
                                                normal=self.frame.w)]
             else:
                 interior = self.point2d_to_3d(linesegment2d.point_at_abscissa(linesegment2d.length()*0.5))
-                return [volmdlr.edges.Arc3D(
+                return [vme.Arc3D(
                     self.point2d_to_3d(linesegment2d.start),
                     self.point2d_to_3d(volmdlr.Point2D(0.5*(theta1+theta2), z1)),
                     self.point2d_to_3d(linesegment2d.end),
@@ -920,7 +921,7 @@ class CylindricalSurface3D(Surface3D):
     def fullarc3d_to_2d(self, fullarc3d):
         if self.frame.w.is_colinear_to(fullarc3d.normal):
             p1 = self.point3d_to_2d(fullarc3d.start)
-            return [volmdlr.edges.LineSegment2D(p1, p1+volmdlr.TWO_PI*volmdlr.X2D)]
+            return [vme.LineSegment2D(p1, p1+volmdlr.TWO_PI*volmdlr.X2D)]
         else:
             print(fullarc3d.normal, self.frame.w)
             raise ValueError('Impossible!')
@@ -934,7 +935,7 @@ class CylindricalSurface3D(Surface3D):
         l = bspline_curve3d.length()
         points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i/10*l))\
                   for i in range(11)]
-        return [volmdlr.edges.LineSegment2D(p1, p2)\
+        return [vme.LineSegment2D(p1, p2)\
                 for p1, p2 in zip(points[:-1], points[1:])]
 
     @classmethod
@@ -1151,11 +1152,11 @@ class ToroidalSurface3D(Surface3D):
                 v = self.frame.u.rotation(self.frame.origin, self.frame.w,
                                           theta1)
                 center = self.frame.origin+self.R*u
-                return [volmdlr.edges.FullArc3D(center=center,
+                return [vme.FullArc3D(center=center,
                                                 start_end=center+self.r*u,
                                                 normal=v)]
             else:
-                return [volmdlr.edges.Arc3D(
+                return [vme.Arc3D(
                             self.point2d_to_3d(linesegment2d.start),
                             self.point2d_to_3d(volmdlr.Point2D(theta1, 0.5*(phi1+phi2))),
                             self.point2d_to_3d(linesegment2d.end),
@@ -1164,11 +1165,11 @@ class ToroidalSurface3D(Surface3D):
             if abs(theta1 - theta2) == volmdlr.TWO_PI:
                 center = self.frame.origin+self.r*math.sin(phi1)*self.frame.w
                 start_end = center + self.frame.u*(self.r+self.R)
-                return [volmdlr.edges.FullArc3D(center=center,
+                return [vme.FullArc3D(center=center,
                                                 start_end=start_end,
                                                 normal=self.frame.w)]
             else:
-                return [volmdlr.edges.Arc3D(
+                return [vme.Arc3D(
                             self.point2d_to_3d(linesegment2d.start),
                             self.point2d_to_3d(volmdlr.Point2D(0.5*(theta1+theta2), phi1)),
                             self.point2d_to_3d(linesegment2d.end),
@@ -1179,10 +1180,10 @@ class ToroidalSurface3D(Surface3D):
     def fullarc3d_to_2d(self, fullarc3d):
         if self.frame.w.is_colinear_to(fullarc3d.normal):
             p1 = self.point3d_to_2d(fullarc3d.start)
-            return [volmdlr.edges.LineSegment2D(p1, p1+volmdlr.TWO_PI*volmdlr.X2D)]
+            return [vme.LineSegment2D(p1, p1+volmdlr.TWO_PI*volmdlr.X2D)]
         elif fullarc3d.normal.dot(self.frame.w):
             p1 = self.point3d_to_2d(fullarc3d.start)
-            return [volmdlr.edges.LineSegment2D(p1,
+            return [vme.LineSegment2D(p1,
                                                p1 + volmdlr.TWO_PI * volmdlr.Y2D)]
         else:
             raise ValueError('Impossible!')
@@ -1291,7 +1292,7 @@ class ConicalSurface3D(Surface3D):
     def fullarc3d_to_2d(self, fullarc3d):
         if self.frame.w.is_colinear_to(fullarc3d.normal):
             p1 = self.point3d_to_2d(fullarc3d.start)
-            return [volmdlr.edges.LineSegment2D(p1, p1+volmdlr.TWO_PI*volmdlr.X2D)]
+            return [vme.LineSegment2D(p1, p1+volmdlr.TWO_PI*volmdlr.X2D)]
         else:
             raise ValueError('Impossible!')
 
@@ -1304,18 +1305,18 @@ class ConicalSurface3D(Surface3D):
         if math.isclose(z1, z2, abs_tol=1e-9) and  math.isclose(z1, 0., abs_tol=1e-9):
             return []
         elif math.isclose(abs(theta1 - theta2)%volmdlr.TWO_PI, 0., abs_tol=1e-9):
-            return [volmdlr.edges.LineSegment3D(
+            return [vme.LineSegment3D(
                         self.point2d_to_3d(linesegment2d.start),
                         self.point2d_to_3d(linesegment2d.end),
             )]
         elif math.isclose(z1, z2, abs_tol=1e-9):
 
             if abs(theta1 - theta2)%volmdlr.TWO_PI == 0.:
-                return [volmdlr.edges.FullArc3D(center=self.frame.origin+z1*self.frame.w,
+                return [vme.FullArc3D(center=self.frame.origin+z1*self.frame.w,
                                                start_end=self.point2d_to_3d(linesegment2d.start),
                                                normal=self.frame.w)]
             else:
-                return [volmdlr.edges.Arc3D(
+                return [vme.Arc3D(
                     self.point2d_to_3d(linesegment2d.start),
                     self.point2d_to_3d(volmdlr.Point2D(0.5*(theta1+theta2),z1)),
                     self.point2d_to_3d(linesegment2d.end))
@@ -1406,7 +1407,7 @@ class RuledSurface3D(Surface3D):
         x, y = point2d
         point1 = self.wire1.point_at_abscissa(x*self.length1)
         point2 = self.wire2.point_at_abscissa(x*self.length2)
-        joining_line = volmdlr.edges.LineSegment3D(point1, point2)
+        joining_line = vme.LineSegment3D(point1, point2)
         point = joining_line.point_at_abscissa(y*joining_line.length())
         return point
 
@@ -1435,8 +1436,8 @@ class BSplineSurface3D(Surface3D):
         self.nb_u = nb_u
         self.nb_v = nb_v
 
-        u_knots = volmdlr.edges.standardize_knot_vector(u_knots)
-        v_knots = volmdlr.edges.standardize_knot_vector(v_knots)
+        u_knots = vme.standardize_knot_vector(u_knots)
+        v_knots = vme.standardize_knot_vector(v_knots)
         self.u_knots = u_knots
         self.v_knots = v_knots
         self.u_multiplicities = u_multiplicities
@@ -1505,7 +1506,7 @@ class BSplineSurface3D(Surface3D):
         l = linesegment2d.length()
         points = [self.point2d_to_3d(linesegment2d.point_at_abscissa(i/l/10.)) for i in range(11)]
         
-        return [volmdlr.edges.LineSegment3D(p1, p2)\
+        return [vme.LineSegment3D(p1, p2)\
                 for p1, p2 in zip(points[:-1], points[1:])]
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
@@ -1513,7 +1514,15 @@ class BSplineSurface3D(Surface3D):
         l = bspline_curve3d.length()
         points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i/10*l))\
                   for i in range(11)]
-        return [volmdlr.edges.LineSegment2D(p1, p2)\
+        return [vme.LineSegment2D(p1, p2)\
+                for p1, p2 in zip(points[:-1], points[1:])]
+
+    def arc3d_to_2d(self, arc3d):
+        number_points = math.ceil(arc3d.angle*7)+1 # 7 points per radian
+        l = arc3d.length()
+        points = [self.point3d_to_2d(arc3d.point_at_abscissa(i*l/(number_points-1)))\
+                  for i in range(number_points)]
+        return [vme.LineSegment2D(p1, p2)\
                 for p1, p2 in zip(points[:-1], points[1:])]
 
     def _bounding_box(self):
@@ -1723,14 +1732,14 @@ class Face3D(volmdlr.core.Primitive3D):
         subsurfaces2d = [self.surface2d]
         line_x = None
         if self.surface3d.x_periodicity and (xmax-xmin) >= 0.45*self.surface3d.x_periodicity:
-            line_x = volmdlr.edges.Line2D(volmdlr.Point2D(0.5*(xmin+xmax), 0),
+            line_x = vme.Line2D(volmdlr.Point2D(0.5*(xmin+xmax), 0),
                                             volmdlr.Point2D(
                                                 0.5 * (xmin + xmax), 1))
 
         line_y = None
         if self.surface3d.y_periodicity and (
                 ymax - ymin) >= 0.45 * self.surface3d.y_periodicity:
-            line_y = volmdlr.edges.Line2D(
+            line_y = vme.Line2D(
                 volmdlr.Point2D(0., 0.5 * (ymin + ymax)),
                 volmdlr.Point2D(1,
                     0.5 * (ymin + ymax)))
@@ -1861,7 +1870,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return Face3D(self.surface3d.copy(), self.surface2d.copy(), self.name)
 
     def linesegment_intersections(self,
-                                 linesegment: volmdlr.edges.LineSegment3D,
+                                 linesegment: vme.LineSegment3D,
                                  ) -> List[volmdlr.Point3D]:
 
         intersections = []
@@ -2053,7 +2062,7 @@ class PlaneFace3D(Face3D):
 
     def edge_intersections(self, edge):
         intersections = []
-        linesegment = volmdlr.edges.LineSegment3D(edge.start, edge.end)
+        linesegment = vme.LineSegment3D(edge.start, edge.end)
         for surface3d_inter in self.surface3d.linesegment_intersections(linesegment):
             point2d = self.surface3d.point3d_to_2d(surface3d_inter)
             if self.surface2d.point_belongs(point2d):
@@ -2160,14 +2169,14 @@ class CylindricalFace3D(Face3D):
     #     radius = cylindricalsurface3d.radius
     #     size = len(contours3d[0].primitives)
     #
-    #     if contours3d[0].primitives[0].__class__ is volmdlr.edges.LineSegment3D and \
-    #             contours3d[0].primitives[1].__class__ is volmdlr.edges.Arc3D:
+    #     if contours3d[0].primitives[0].__class__ is vme.LineSegment3D and \
+    #             contours3d[0].primitives[1].__class__ is vme.Arc3D:
     #         return CylindricalFace3D.from_arc3d(contours3d[0].primitives[0],
     #                                             contours3d[0].primitives[1],
     #                                             cylindricalsurface3d)
     #
-    #     if contours3d[0].edges[0].__class__ is volmdlr.edges.Arc3D and contours3d[0].edges[
-    #         2].__class__ is volmdlr.edges.Arc3D and size <= 4:
+    #     if contours3d[0].edges[0].__class__ is vme.Arc3D and contours3d[0].edges[
+    #         2].__class__ is vme.Arc3D and size <= 4:
     #
     #         arc1, arc2 = contours3d[0].edges[0], contours3d[0].edges[2]
     #         c1, c2 = frame.new_coordinates(arc1.center), frame.new_coordinates(
@@ -2263,14 +2272,14 @@ class CylindricalFace3D(Face3D):
     #         frame_adapt = volmdlr.Frame3D(center, u, v, normal)
     #
     #     cylindersurface3d = CylindricalSurface3D(frame_adapt, radius)
-    #     segbh = volmdlr.edges.LineSegment2D(volmdlr.Point2D(offset, 0),
+    #     segbh = vme.LineSegment2D(volmdlr.Point2D(offset, 0),
     #                           volmdlr.Point2D(offset, lineseg.length()))
-    #     circlestart = volmdlr.edges.LineSegment2D(segbh.end,
+    #     circlestart = vme.LineSegment2D(segbh.end,
     #                                 segbh.end + volmdlr.Point2D(theta, 0))
-    #     seghb = volmdlr.edges.LineSegment2D(circlestart.end,
+    #     seghb = vme.LineSegment2D(circlestart.end,
     #                           circlestart.end - segbh.end +
     #                           segbh.start)
-    #     circlend = volmdlr.edges.LineSegment2D(seghb.end, segbh.start)
+    #     circlend = vme.LineSegment2D(seghb.end, segbh.start)
     #
     #     edges = [segbh, circlestart, seghb, circlend]
     #     return cls(cylindersurface3d,
@@ -2284,7 +2293,7 @@ class CylindricalFace3D(Face3D):
     #     primitives, start_end, all_points = [], [], []
     #     for edge in contours3d[0].edges:
     #         new_points = [frame.new_coordinates(pt) for pt in edge.points]
-    #         if edge.__class__ is volmdlr.edges.Arc3D:
+    #         if edge.__class__ is vme.Arc3D:
     #             if edge.normal == n or edge.normal == -n:
     #                 start2d, end2d = CylindricalFace3D.points3d_to2d(
     #                     new_points, radius)
@@ -2573,7 +2582,7 @@ class CylindricalFace3D(Face3D):
         lines = []
         for i in range(nlines):
             theta = theta_min + (i+1)/(nlines+1)*delta_theta
-            lines.append(volmdlr.edges.Line2D(volmdlr.Point2D(theta, zmin),
+            lines.append(vme.Line2D(volmdlr.Point2D(theta, zmin),
                                               volmdlr.Point2D(theta, zmax)))
         return lines, []
 
@@ -2951,14 +2960,14 @@ class ToroidalFace3D(Face3D):
         lines_x = []
         for i in range(nlines_x):
             theta = theta_min + (i+1)/(nlines_x+1)*delta_theta
-            lines_x.append(volmdlr.edges.Line2D(volmdlr.Point2D(theta, phi_min),
+            lines_x.append(vme.Line2D(volmdlr.Point2D(theta, phi_min),
                                               volmdlr.Point2D(theta, phi_max)))
         delta_phi = phi_max - phi_min
         nlines_y = int(delta_phi * angle_resolution)
         lines_y = []
         for i in range(nlines_y):
             phi = phi_min + (i + 1) / (nlines_y + 1) * delta_phi
-            lines_y.append(volmdlr.edges.Line2D(volmdlr.Point2D(theta_min, phi),
+            lines_y.append(vme.Line2D(volmdlr.Point2D(theta_min, phi),
                                               volmdlr.Point2D(theta_max, phi)))
         return lines_x, lines_y
 
@@ -3483,12 +3492,12 @@ class ConicalFace3D(Face3D):
         lines_x = []
         for i in range(nlines):
             theta = theta_min + (i+1)/(nlines+1)*delta_theta
-            lines_x.append(volmdlr.edges.Line2D(volmdlr.Point2D(theta, zmin),
+            lines_x.append(vme.Line2D(volmdlr.Point2D(theta, zmin),
                                               volmdlr.Point2D(theta, zmax)))
 
         if zmin < 1e-9:
             delta_z = zmax - zmin
-            lines_y = [volmdlr.edges.Line2D(volmdlr.Point2D(theta_min, zmin+0.1*delta_z),
+            lines_y = [vme.Line2D(volmdlr.Point2D(theta_min, zmin+0.1*delta_z),
                                           volmdlr.Point2D(theta_max, zmin+0.1*delta_z))]
         else:
             lines_y = []
@@ -3595,7 +3604,7 @@ class RuledFace3D(Face3D):
         lines = []
         for i in range(nlines):
             x = xmin + (i+1)/(nlines+1)*delta_x
-            lines.append(volmdlr.edges.Line2D(volmdlr.Point2D(x, ymin),
+            lines.append(vme.Line2D(volmdlr.Point2D(x, ymin),
                                               volmdlr.Point2D(x, ymax)))
         return lines, []
 
@@ -3620,14 +3629,14 @@ class BSplineFace3D(Face3D):
         lines_x = []
         for i in range(nlines_x):
             u = u_min + (i+1)/(nlines_x+1)*delta_u
-            lines_x.append(volmdlr.edges.Line2D(volmdlr.Point2D(u, v_min),
+            lines_x.append(vme.Line2D(volmdlr.Point2D(u, v_min),
                                               volmdlr.Point2D(u, v_max)))
         delta_v = v_max - v_min
         nlines_y = int(delta_v * resolution)
         lines_y = []
         for i in range(nlines_y):
             v = v_min + (i + 1) / (nlines_y + 1) * delta_v
-            lines_y.append(volmdlr.edges.Line2D(volmdlr.Point2D(v_min, v),
+            lines_y.append(vme.Line2D(volmdlr.Point2D(v_min, v),
                                                 volmdlr.Point2D(v_max, v)))
         return lines_x, lines_y
 
@@ -3773,7 +3782,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
 
     def linesegment_intersections(self,
-                                 linesegment3d:volmdlr.edges.LineSegment3D)\
+                                 linesegment3d:vme.LineSegment3D)\
             -> List[Tuple[Face3D, List[volmdlr.Point3D]]]:
         intersections = []
         for face in self.faces:
@@ -4021,7 +4030,7 @@ class ClosedShell3D(OpenShell3D):
 
         rays = []
         for k in range(0, nb_rays):
-            rays.append(volmdlr.edges.LineSegment3D(
+            rays.append(vme.LineSegment3D(
                 point3d,
                 point3d+volmdlr.Point3D.random(min_ray_length, two_min_ray_length,
                                                min_ray_length, two_min_ray_length,
