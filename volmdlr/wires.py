@@ -890,7 +890,7 @@ class Contour2D(Contour, Wire2D):
 
 class ClosedPolygon2D(Contour2D):
 
-    def __init__(self, points, name=''):
+    def __init__(self, points:List[volmdlr.Point2D], name=''):
         self.points = points
         self.line_segments = self._line_segments()
 
@@ -2517,3 +2517,39 @@ class Ellipse3D(Contour3D):
         minor_axis = float(arguments[3]) / 1000
         return cls(major_axis, minor_axis, center, normal, major_dir,
                    arguments[0][1:-1])
+
+class ClosedPolygon3D(Contour3D):
+
+    def __init__(self, points:List[volmdlr.Point3D], name:str=''):
+        self.points = points
+        self.line_segments = self._line_segments()
+
+        Contour2D.__init__(self, self.line_segments, name)
+
+    def _line_segments(self):
+        lines = []
+        if len(self.points) > 1:
+            for p1, p2 in zip(self.points, list(self.points[1:]) + [self.points[0]]):
+                lines.append(volmdlr.edges.LineSegment3D(p1, p2))
+        return lines
+
+
+    def copy(self):
+        points = [p.copy() for p in self.points]
+        return ClosedPolygon2D(points, self.name)
+
+    def __hash__(self):
+        return sum([hash(p) for p in self.points])
+
+    def __eq__(self, other_):
+        if not isinstance(other_, self.__class__):
+            return False
+        equal = True
+        for point, other_point in zip(self.points, other_.points):
+            equal = (equal and point == other_point)
+        return equal
+
+    def plot(self, ax=None, color='k', alpha=1):
+        for line_segment in self.line_segments:
+            ax = line_segment.plot(ax=ax, color=color, alpha=alpha)
+        return ax
