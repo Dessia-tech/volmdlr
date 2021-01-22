@@ -2021,15 +2021,13 @@ class LineSegment3D(LineSegment):
             dv = self.direction_vector()
             dv.normalize()
 
-            semi_angle = math.acos(dv.dot(axis))
+            semi_angle = math.atan2(dv.dot(u), dv.dot(axis))
             cone_origin = p1_proj - d1 / math.tan(semi_angle) * axis
             if semi_angle > 0.5 * math.pi:
                 semi_angle = math.pi - semi_angle
 
                 cone_frame = volmdlr.Frame3D(cone_origin, u, -v, -axis)
                 angle2 = -angle
-            elif semi_angle < 0:
-                raise NotImplementedError
             else:
                 angle2 = angle
                 cone_frame = volmdlr.Frame3D(cone_origin, u, v, axis)
