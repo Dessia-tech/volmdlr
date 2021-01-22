@@ -1647,24 +1647,25 @@ class Frame3D(Basis3D):
         return fig, ax
 
 
-    def plot(self, ax=None, color='b', alpha=1., plot_points=True):
+    def plot(self, ax=None, color='b', alpha=1., plot_points=True,
+             ratio=1):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
-        x1 = [p.x for p in (self.origin, self.origin + self.u)]
-        y1 = [p.y for p in (self.origin, self.origin + self.u)]
-        z1 = [p.z for p in (self.origin, self.origin + self.u)]
+        x1 = [p.x for p in (self.origin, self.origin + self.u*ratio)]
+        y1 = [p.y for p in (self.origin, self.origin + self.u*ratio)]
+        z1 = [p.z for p in (self.origin, self.origin + self.u*ratio)]
         ax.plot(x1, y1, z1, 'r')
 
-        x2 = [p.x for p in (self.origin, self.origin + self.v)]
-        y2 = [p.y for p in (self.origin, self.origin + self.v)]
-        z2 = [p.z for p in (self.origin, self.origin + self.v)]
+        x2 = [p.x for p in (self.origin, self.origin + self.v*ratio)]
+        y2 = [p.y for p in (self.origin, self.origin + self.v*ratio)]
+        z2 = [p.z for p in (self.origin, self.origin + self.v*ratio)]
         ax.plot(x2, y2, z2, 'g')
 
-        x3 = [p.x for p in (self.origin, self.origin + self.w)]
-        y3 = [p.y for p in (self.origin, self.origin + self.w)]
-        z3 = [p.z for p in (self.origin, self.origin + self.w)]
+        x3 = [p.x for p in (self.origin, self.origin + self.w*ratio)]
+        y3 = [p.y for p in (self.origin, self.origin + self.w*ratio)]
+        z3 = [p.z for p in (self.origin, self.origin + self.w*ratio)]
         ax.plot(x3, y3, z3, 'b')
         return ax
 

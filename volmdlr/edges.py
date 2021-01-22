@@ -84,22 +84,11 @@ class Edge(dc.DessiaObject):
             if p1 == p2:
                 return FullArc3D(circle.frame.origin, p1, circle.frame.w)
             else:
-                theta1, theta2 = volmdlr.core.posangle_arc(p1, p2,
-                                                           circle.radius,
-                                                           circle.frame)
-                if theta1 > theta2:  # sens trigo
-                    angle = math.pi + (theta1 + theta2) / 2
-                else:
-                    angle = (theta1 + theta2) / 2
-
-                middle_angle = theta1 + 0.5 * angle
-                middle_point = volmdlr.Point3D(circle.radius * math.cos(middle_angle),
-                                               circle.radius * math.sin(middle_angle),
-                                               0.)
-
-                middle_point3d = circle.frame.old_coordinates(middle_point)
-
-                return volmdlr.edges.Arc3D(p1, middle_point3d, p2,
+                p1, p2 = p2, p1
+                circle.frame.normalize()
+                interior3d = volmdlr.core.clockwise_interior_from_circle3d(
+                    p1, p2, circle)
+                return volmdlr.edges.Arc3D(p1, interior3d, p2,
                                            name=arguments[0][1:-1])
 
         elif object_dict[arguments[3]].__class__ is volmdlr.wires.Ellipse3D:
@@ -1562,12 +1551,13 @@ class Line3D(Line):
                                                     p1_id, u_id)
         return content, current_id
 
+
 class LineSegment3D(LineSegment):
     """
     Define a line segment limited by two points
     """
 
-    def __init__(self, start:volmdlr.Point3D, end:volmdlr.Point3D,
+    def __init__(self, start: volmdlr.Point3D, end: volmdlr.Point3D,
                  name: str = ''):
         LineSegment.__init__(self, start=start, end=end, name=name)
         self.bounding_box = self._bounding_box()
@@ -1578,8 +1568,8 @@ class LineSegment3D(LineSegment):
     def __eq__(self, other_linesegment3d):
         if other_linesegment3d.__class__ != self.__class__:
             return False
-        return (self.start == other_linesegment3d.start)\
-               and (self.end == other_linesegment3d.end)
+        return (self.start == other_linesegment3d.start
+                and self.end == other_linesegment3d.end)
 
     def _bounding_box(self):
         points = [self.start, self.end]
@@ -2077,7 +2067,6 @@ class LineSegment3D(LineSegment):
         return content, [current_id]
 
 
-
 class BSplineCurve3D(Edge):
     _non_serializable_attributes = ['curve']
 
@@ -2311,7 +2300,6 @@ class Arc3D(Edge):
             u2 = self.normal.cross(u1)
             u2.normalize()
 
-
         v1 = self.normal.cross(u1)  # v1 is normal, equal u2
         v2 = self.normal.cross(u2)  # equal -u1
 
@@ -2376,14 +2364,14 @@ class Arc3D(Edge):
         #     # Inverting normal to be sure to have a right defined normal for rotation
         #     self.normal = -self.normal
 
-
-
     @property
     def points(self):
         return [self.start, self.interior, self.end]
 
     def reverse(self):
-        return self.__class__(self.end, self.interior, self.start)
+        return self.__class__(self.end.copy(),
+                              self.interior.copy(),
+                              self.start.copy())
 
     def polygon_points(self, angle_resolution=40):
         number_points = int(angle_resolution * self.angle +1)
@@ -2470,7 +2458,8 @@ class Arc3D(Edge):
         if edge_direction:
             x, y, z = self.point_at_abscissa(0.5*self.length())
             u, v, w = 0.05*self.unit_direction_vector(0.5*self.length())
-            ax.quiver(x, y, z, u, v, w, length=0.1, normalize=True)
+            ax.quiver(x, y, z, u, v, w, length=0.1,
+                      arrow_length_ratio=0.01, normalize=True)
 
         return ax
 
