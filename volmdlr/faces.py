@@ -795,7 +795,7 @@ class Plane3D(Surface3D):
             new_frame = self.frame.rotation(axis=axis, angle=angle, copy=True)
             return Plane3D(new_frame)
         else:
-            self.frame.rotation(center, axis, angle, copy=False)
+            self.frame.rotation(axis, angle, copy=False)
 
     def translation(self, offset, copy=True):
         if copy:
@@ -1826,6 +1826,7 @@ class Face3D(volmdlr.core.Primitive3D):
             if (len(contours) == 1) and isinstance(contours[0],
                                                    volmdlr.Point3D):
                 return surface
+
             return surface.face_from_contours3d(contours)
         else:
             raise NotImplementedError(
@@ -1905,120 +1906,6 @@ class Face3D(volmdlr.core.Primitive3D):
             surface3d_id)
         return content, [current_id]
 
-    # def delete_double(self, Le):
-    #     Ls = []
-    #     for i in Le:
-    #         if i not in Ls:
-    #             Ls.append(i)
-    #     return Ls
-    #
-    # def min_max(self, Le, pos):
-    #     Ls = []
-    #     for i in range(0, len(Le)):
-    #         Ls.append(Le[i][pos])
-    #     return (min(Ls), max(Ls))
-    #
-    # def range_trigo(list_point):
-    #     points_set = delete_double_point(list_point)
-    #     xmax, xmin = max(pt[0] for pt in points_set), min(
-    #         pt[0] for pt in points_set)
-    #     ymax, ymin = max(pt[1] for pt in points_set), min(
-    #         pt[1] for pt in points_set)
-    #     center = volmdlr.Point2D(((xmax + xmin) / 2, (ymax + ymin) / 2))
-    #     frame2d = Frame2D(center, X2D, Y2D)
-    #     points_test = [frame2d.new_coordinates(pt) for pt in points_set]
-    #
-    #     points_2dint = []
-    #     s = 0
-    #     for k in range(0, len(points_test)):
-    #         closest = points_test[s]
-    #         while closest is None:
-    #             s += 1
-    #             closest = points_test[s]
-    #         angle_min = math.atan2(closest.vector[1],
-    #                                closest.vector[0]) + math.pi
-    #         pos = s
-    #         for i in range(s + 1, len(points_test)):
-    #             close_test = points_test[i]
-    #             if close_test is None:
-    #                 continue
-    #             else:
-    #                 angle_test = math.atan2(close_test.vector[1],
-    #                                         close_test.vector[0]) + math.pi
-    #                 if angle_test < angle_min:  # and dist_test <= dist_min:
-    #                     angle_min = angle_test
-    #                     closest = close_test
-    #                     pos = i
-    #         points_2dint.append(closest)
-    #         points_test[pos] = None
-    #
-    #     points_old = [frame2d.old_coordinates(pt) for pt in points_2dint]
-    #     return points_old
-    #
-    # def range_closest(list_point, r1=None, r2=None):
-    #     # use r1, r2 to compare h and r1*angle or r1*angle and r2*angle
-    #     points_set = delete_double_point(list_point)
-    #     if r1 is not None:
-    #         for k in range(0, len(points_set)):
-    #             points_set[k].vector[0] = points_set[k].vector[0] * r1
-    #     if r2 is not None:
-    #         for k in range(0, len(points_set)):
-    #             points_set[k].vector[1] = points_set[k].vector[1] * r2
-    #
-    #     points_2dint = [points_set[0]]
-    #     s = 1
-    #     for k in range(1, len(points_set)):
-    #         closest = points_set[s]
-    #         while closest is None:
-    #             s += 1
-    #             closest = points_set[s]
-    #         dist_min = (points_2dint[-1] - closest).norm()
-    #         pos = s
-    #         for i in range(s + 1, len(points_set)):
-    #             close_test = points_set[i]
-    #             if close_test is None:
-    #                 continue
-    #             else:
-    #                 dist_test = (points_2dint[-1] - close_test).norm()
-    #                 if dist_test <= dist_min:
-    #                     dist_min = dist_test
-    #                     closest = close_test
-    #                     pos = i
-    #         points_2dint.append(closest)
-    #         points_set[pos] = None
-    #
-    #     if r1 is not None:
-    #         for k in range(0, len(points_2dint)):
-    #             points_2dint[k].vector[0] = points_2dint[k].vector[0] / r1
-    #     if r2 is not None:
-    #         for k in range(0, len(points_2dint)):
-    #             points_2dint[k].vector[1] = points_2dint[k].vector[1] / r2
-    #
-    #     return points_2dint
-    #
-    # def create_primitives(points):
-    #     primitives = []
-    #     for k in range(0, len(points)):
-    #         if k == len(points) - 1:
-    #             primitives.append(volmdlr.LineSegment2D(points[k], points[0]))
-    #         else:
-    #             primitives.append(volmdlr.LineSegment2D(points[k], points[k + 1]))
-    #     return primitives
-    #
-    # def LS2D_inprimitives(ls_toadd, primitives):
-    #     same = False
-    #     for list_prim in primitives:
-    #         for prim in list_prim:
-    #             if ls_toadd.points[0] == prim.points[0] and ls_toadd.points[
-    #                 -1] == prim.points[-1]:
-    #                 same = True
-    #             elif ls_toadd.points[0] == prim.points[-1] and ls_toadd.points[
-    #                 -1] == prim.points[0]:
-    #                 same = True
-    #             else:
-    #                 continue
-    #     return same
-
     def triangulation_lines(self):
         return [], []
 
@@ -2058,7 +1945,7 @@ class Face3D(volmdlr.core.Primitive3D):
                                                   angle=angle, copy=True)
             return self.__class__(new_surface, self.surface2d)
         else:
-            self.surface.rotation(center=center, axis=axis,
+            self.surface3d.rotation(center=center, axis=axis,
                                   angle=angle, copy=False)
             self.bounding_box = self._bounding_box()
 
@@ -3946,7 +3833,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         if copy:
             new_faces = [face.rotation(center, axis, angle, copy=True) for face
                          in self.faces]
-            return self.__class__(new_faces, name=self.name)
+            return self.__class__(new_faces, color=self.color, alpha=self.alpha, name=self.name)
         else:
             for face in self.faces:
                 face.rotation(center, axis, angle, copy=False)
@@ -3956,7 +3843,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         if copy:
             new_faces = [face.translation(offset, copy=True) for face in
                          self.faces]
-            return self.__class__(new_faces, name=self.name)
+            return self.__class__(new_faces, color=self.color, alpha=self.alpha, name=self.name)
         else:
             for face in self.faces:
                 face.translation(offset, copy=False)
@@ -4048,6 +3935,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             for face2 in shell2.faces:
                 bbox2 = face2.bounding_box
                 bbox_distance = bbox1.distance_to_bbox(bbox2)
+
                 if bbox_distance < distance_min:
                     # distance, point1, point2 = face1.distance_to_face(face2, return_points=True)
                     distance, point1, point2 = face1.minimum_distance(face2,
@@ -4134,10 +4022,16 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             intersections_points + shell1_points_outside_shell2)
         return bbox.volume()
 
+    def primitive_inside_bbox(self, bounding_box:volmdlr.core.BoundingBox):
+        for primitive in self.primitives:
+            bbox = primitive.bounding_box
+
+
     def triangulation(self):
         mesh = volmdlr.display.DisplayMesh3D([], [])
         for i, face in enumerate(self.faces):
             try:
+                print(face)
                 face_mesh = face.triangulation()
                 mesh += face_mesh
             except NotImplementedError:
