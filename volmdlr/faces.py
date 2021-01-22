@@ -1041,7 +1041,7 @@ class CylindricalSurface3D(Surface3D):
         return content, current_id
 
     def frame_mapping(self, frame, side, copy=True):
-        basis = frame.Basis()
+        basis = frame.basis()
         if side == 'new':
             new_origin = frame.new_coordinates(self.frame.origin)
             new_u = basis.new_coordinates(self.frame.u)

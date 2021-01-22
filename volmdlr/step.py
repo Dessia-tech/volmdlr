@@ -343,15 +343,35 @@ class Step:
             volmdlr_object = object_dict[int(arguments[1][1][1:])]
             # Shell3D
 
+        elif name == 'MANIFOLD_SOLID_BREP':
+            volmdlr_object = object_dict[arguments[1]]
+
+        elif name == 'SHAPE_REPRESENTATION':
+            shells = []
+            for arg in arguments[1]:
+                if int(arg[1:]) in object_dict and \
+                        isinstance(object_dict[int(arg[1:])],
+                                   volmdlr.faces.OpenShell3D):
+                    shells.append(object_dict[int(arg[1:])])
+            volmdlr_object = shells
+
+        elif name == 'ADVANCED_BREP_SHAPE_REPRESENTATION':
+            volmdlr_object = object_dict[int(arguments[1][1][1:])]
+
         elif name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP':
-            # Peut pointer sur SHAPE_REPRESENTATION au lieu de
-            # MANIFOLD_SURFACE_SHAPE_REPRESENTATION. Dans ce cas il n'y a pas
-            # de Shell3D à déplacer.
             if arguments[2] in object_dict:
-                shell3d = object_dict[arguments[2]]
-                frame3d = object_dict[arguments[4]]
-                shell3d.frame_mapping(frame3d, 'old', copy=False)
-                volmdlr_object = shell3d
+                if type(object_dict[arguments[2]]) is list:
+                    for shell3d in object_dict[arguments[2]]:
+                        frame3d = object_dict[arguments[4]]
+                        shell3d.frame_mapping(frame3d, 'old', copy=False)
+                        # volmdlr_object = shell3d
+                    volmdlr_object = None
+                else:
+                    shell3d = object_dict[arguments[2]]
+                    frame3d = object_dict[arguments[4]]
+                    shell3d.frame_mapping(frame3d, 'old', copy=False)
+                    # volmdlr_object = shell3d
+                    volmdlr_object = None
             else:
                 volmdlr_object = None
 
@@ -385,7 +405,6 @@ class Step:
                                                                    "#0"))[::-1]
         for edge_nb, edge in enumerate(edges):
             instanciate_id = edge[1]
-            # print('instanciate_id', instanciate_id)
             volmdlr_object = self.instanciate(
                 self.functions[instanciate_id].name,
                 self.functions[instanciate_id].arg[:],
@@ -395,10 +414,11 @@ class Step:
 
         shells = []
         for node in list(self.graph.nodes):
-            # if node != '#0' and (self.functions[node].name == "CLOSED_SHELL" or
-            #                      self.functions[node].name == "OPEN_SHELL"):
-            if node != '#0' and (self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP'):
-
+            if node != '#0' and (self.functions[node].name == "CLOSED_SHELL" or
+                                 self.functions[node].name == "OPEN_SHELL"):
+            # if node != '#0' and (self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP'
+            #                      or self.functions[node].name == "CLOSED_SHELL"
+            #                      or self.functions[node].name == "OPEN_SHELL"):
                 shells.append(object_dict[node])
         return volmdlr.core.VolumeModel(shells)
 
@@ -501,6 +521,9 @@ STEP_TO_VOLMDLR = {
     'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP': volmdlr.faces.OpenShell3D.translation,
     'SHELL_BASED_SURFACE_MODEL': None,
     'MANIFOLD_SURFACE_SHAPE_REPRESENTATION': None,
+    'MANIFOLD_SOLID_BREP': None,
+    'SHAPE_REPRESENTATION': None,
+    'ADVANCED_BREP_SHAPE_REPRESENTATION': None,
     'ITEM_DEFINED_TRANSFORMATION': None
 }
 
