@@ -392,6 +392,7 @@ class Step:
         object_dict = {}
 
         self.graph.add_node("#0")
+        flag = False
         for node in self.graph.nodes:
             # if node != '#0' and (self.functions[node].name == "CLOSED_SHELL"
             #                      or
@@ -401,10 +402,11 @@ class Step:
             #                      or self.functions[node].name == "CLOSED_SHELL"
             #                      or self.functions[node].name == "OPEN_SHELL"):
             #     self.graph.add_edge("#0", node)
-            try:
-                if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP':
-                    self.graph.add_edge("#0", node)
-            except KeyError:
+            if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP':
+                flag = True
+                self.graph.add_edge("#0", node)
+        if not flag:
+            for node in self.graph.nodes:
                 if node != '#0' and (self.functions[node].name == "CLOSED_SHELL"
                                      or
                                      self.functions[node].name == "OPEN_SHELL"):
