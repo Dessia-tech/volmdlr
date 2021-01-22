@@ -82,89 +82,6 @@ class Step:
 
         self.functions, self.all_connections = self.read_functions()
 
-    # def read_functions(self):
-    #     f = open(self.stepfile, "r", encoding="ISO-8859-1")
-    #
-    #     all_connections = []
-    #
-    #     previous_line = ""
-    #     functions = {}
-    #
-    #     for line in f:
-    #         line = line.replace(" ", "")
-    #         line = line.replace("\n", "")
-    #
-    #         # SKIP EMPTY LINE
-    #         if not line:
-    #             continue
-    #
-    #         # ASSEMBLE LINES IF THEY ARE SEPARATED
-    #         if line[-1] != ';':
-    #             previous_line = previous_line + line
-    #             continue
-    #
-    #         line = previous_line + line
-    #
-    #         # SKIP HEADER
-    #         if line[0] != "#":
-    #             previous_line = str()
-    #             continue
-    #
-    #         function = line.split("=")
-    #         function_id = int(function[0][1:])
-    #         function_name_arg = function[1].split("(", 1)
-    #         function_name = function_name_arg[0]
-    #         function_arg = function_name_arg[1].split("#")
-    #
-    #         arguments = step_split_arguments(function_arg)
-    #
-    #         print()
-    #         print(function_name_arg)
-    #
-    #         # Subfunctions
-    #         if function_name == "":
-    #             function_arg = function_name_arg[1]
-    #
-    #             arguments = self.step_subfunctions(arguments)
-    #             assembled_arguments = []
-    #             for argument in arguments:
-    #                 function_name += argument[0] + ', '
-    #                 assembled_arguments.extend(argument[1])
-    #             function_name = function_name[:-2]
-    #             # arguments = [arg[1] for arg in arguments]
-    #             print('=', assembled_arguments)
-    #             function_arg = assembled_arguments
-    #
-    #         print('fc arg', function_arg)
-    #         function_connections = []
-    #         for connec in function_arg[1:]:
-    #             print('connec', connec)
-    #             connec = connec.split(",")
-    #             connec = connec[0].split(")")
-    #             if len(connec[0]) != 0 and connec[0][-1] != "'":
-    #                 try:
-    #                     function_connection = int(connec[0])
-    #                     function_connections.append(
-    #                         (function_id, function_connection))
-    #                 except ValueError:
-    #                     continue
-    #
-    #         all_connections.extend(function_connections)
-    #
-    #         previous_line = str()
-    #
-    #         for i, argument in enumerate(arguments):
-    #             if argument[:2] == '(#' and argument[-1] == ')':
-    #                 arg_list = volmdlr.core.set_to_list(argument)
-    #                 arguments[i] = arg_list
-    #
-    #         function = StepFunction(function_id, function_name, arguments)
-    #         functions[function_id] = function
-    #
-    #     f.close()
-    #
-    #     return functions, all_connections
-
     def read_functions(self):
         f = open(self.stepfile, "r", encoding="ISO-8859-1")
 
@@ -363,13 +280,9 @@ class Step:
             (subfunction_names[i], step_split_arguments(subfunction_args[i]))
             for i in range(len(subfunction_names))]
 
-    # def instanciate(self, instanciate_id, object_dict):
     def instanciate(self, name, arguments, object_dict):
         """
         """
-        # name = self.functions[instanciate_id].name
-        # arguments = self.functions[instanciate_id].arg[:]
-
         for i, arg in enumerate(arguments):
             if type(arg) == str and arg[0] == '#':
                 arguments[i] = int(arg[1:])
@@ -387,73 +300,36 @@ class Step:
                 arguments[i] = list(argument)
 
         if name == 'VERTEX_POINT':
-            # object_dict[instanciate_id] = object_dict[arguments[1]]
             volmdlr_object = object_dict[arguments[1]]
 
-        # elif name == 'LINE':
-        #     pass
-
         elif name == 'ORIENTED_EDGE':
-            # object_dict[instanciate_id] = object_dict[arguments[3]]
-            if arguments[4] == '.T.':
-                volmdlr_object = object_dict[arguments[3]]
-            else:
-                volmdlr_object = object_dict[arguments[3]]
-                try:
-                    volmdlr_object.is_trigo
-                    ax = volmdlr_object.plot(color='r')
-                    volmdlr_object.frame.plot(ax=ax)
-                except:
-                    pass
-                # volmdlr_object.change_orientation()
-                try:
-                    volmdlr_object.is_trigo
-                    volmdlr_object.plot(ax=ax, color='b')
-                    volmdlr_object.frame.plot(ax=ax)
-                except:
-                    pass
-            print(volmdlr_object)
-            try:
-                print(volmdlr_object.is_trigo)
-                print('angle', volmdlr_object.angle)
-                print('rayon', volmdlr_object.radius)
-                print('frame', volmdlr_object.frame)
-            except:
-                pass
-            print(arguments[4])
-            print()
+            # arguments[4] is the orientation, not taken into account
+            volmdlr_object = object_dict[arguments[3]]
 
         elif name == 'FACE_OUTER_BOUND':
-            # object_dict[instanciate_id] = object_dict[arguments[1]]
             volmdlr_object = object_dict[arguments[1]]
 
         elif name == 'FACE_BOUND':
-            # object_dict[instanciate_id] = object_dict[arguments[1]]
             volmdlr_object = object_dict[arguments[1]]
 
         elif name == 'SURFACE_CURVE':
-            # object_dict[instanciate_id] = object_dict[arguments[1]]
             volmdlr_object = object_dict[arguments[1]]
 
         elif name == 'SEAM_CURVE':
-            # object_dict[instanciate_id] = object_dict[arguments[1]]
             volmdlr_object = object_dict[arguments[1]]
 
         # elif name == 'EDGE_CURVE':
         #     object_dict[instanciate_id] = object_dict[arguments[3]]
 
         elif name == 'VERTEX_LOOP':
-            # object_dict[instanciate_id] = object_dict[arguments[1]]
             volmdlr_object = object_dict[arguments[1]]
 
         elif name == 'PCURVE':
             # TODO : Pas besoin de mettre PCURVE ici s'il n'est pas dans STEP_TO_VOLMDLR
-            # object_dict[instanciate_id] = object_dict[arguments[1]]
             volmdlr_object = object_dict[arguments[1]]
 
         elif name == 'SHELL_BASED_SURFACE_MODEL':
             volmdlr_object = object_dict[int(arguments[1][0][1:])]
-            # print('1', volmdlr_object, volmdlr_object.__dict__)
             # Shell3D
 
         elif name == 'ITEM_DEFINED_TRANSFORMATION':
@@ -461,16 +337,10 @@ class Step:
             volmdlr_object2 = object_dict[arguments[3]]
             # volmdlr_object = volmdlr_object2 - volmdlr_object1
             volmdlr_object = volmdlr_object2
-            print(volmdlr_object1.__dict__)
-            print(volmdlr_object2.__dict__)
-            print(volmdlr_object.__dict__)
-            print()
-            # print('2', volmdlr_object, volmdlr_object.__dict__)
             # Frame3D
 
         elif name == 'MANIFOLD_SURFACE_SHAPE_REPRESENTATION':
             volmdlr_object = object_dict[int(arguments[1][1][1:])]
-            # print('3', volmdlr_object, volmdlr_object.__dict__)
             # Shell3D
 
         elif name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP':
@@ -490,15 +360,10 @@ class Step:
             volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
                 arguments, object_dict)
 
-        #            object_dict[instanciate_id] = volmdlr_object
-        #            if hasattr(volmdlr_object, "primitive"):
-        #                primitives.append(volmdlr_object.primitive)primitives
-
         else:
             raise NotImplementedError(
                 'Dont know how to interpret {} with args {}'.format(name,
                                                                     arguments))
-
         return volmdlr_object
 
     def to_volume_model(self):

@@ -542,8 +542,7 @@ class Surface3D(dc.DessiaObject):
                     elif (math.isclose(delta_x2, 0., abs_tol=5e-5) and
                           math.isclose(delta_y2, 0., abs_tol=5e-5)):
                         end_match = True
-                        print('pas par la')
-                        # primitives = [p.reverse() for p in primitives[::-1]]
+                        primitives = [p.reverse() for p in primitives[::-1]]
                     else:
                         print('sn', self.__class__.__name__)
                         print(method_name)

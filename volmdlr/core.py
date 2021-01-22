@@ -286,6 +286,40 @@ def posangle_arc(start, end, radius, frame=None):
     return theta1, theta2
 
 
+def clockwise_interior_from_circle3d(start, end, circle):
+    """
+    Returns the clockwise interior point between start and end on the circle
+    """
+    start2d = start.to_2d(plane_origin=circle.frame.origin,
+                          x=circle.frame.u, y=circle.frame.v)
+    end2d = end.to_2d(plane_origin=circle.frame.origin,
+                      x=circle.frame.u, y=circle.frame.v)
+
+    # Angle pour le p1
+    u1, u2 = start2d.x / circle.radius, start2d.y / circle.radius
+    theta1 = sin_cos_angle(u1, u2)
+    # Angle pour le p2
+    u3, u4 = end2d.x / circle.radius, end2d.y / circle.radius
+    theta2 = sin_cos_angle(u3, u4)
+
+    if theta1 > theta2:
+        theta3 = (theta1 + theta2) / 2
+    elif theta2 > theta1:
+        theta3 = (theta1 + theta2) / 2 + volmdlr.TWO_PI / 2
+    else:
+        raise NotImplementedError
+
+    if theta3 > volmdlr.TWO_PI:
+        theta3 -= volmdlr.TWO_PI
+
+    interior2d = volmdlr.Point2D(circle.radius*math.cos(theta3),
+                                 circle.radius*math.sin(theta3))
+    interior3d = interior2d.to_3d(plane_origin=circle.frame.origin,
+                                  vx=circle.frame.u, vy=circle.frame.v)
+    return interior3d
+
+
+
 def offset_angle(trigo, angle_start, angle_end):
     if trigo:
         offset = angle_start

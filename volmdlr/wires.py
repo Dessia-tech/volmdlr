@@ -1997,9 +1997,9 @@ class Contour3D(Contour, Wire3D):
             edge = object_dict[int(edge_id[1:])]
             raw_edges.append(edge)
 
-        if (len(raw_edges)) == 1:  #
+        if (len(raw_edges)) == 1:
             if isinstance(raw_edges[0], cls):
-            # Case of a circle, ellipse...
+                # Case of a circle, ellipse...
                 return raw_edges[0]
             else:
                 return cls(raw_edges, name=name)
@@ -2016,7 +2016,6 @@ class Contour3D(Contour, Wire3D):
         else:
             raise NotImplementedError('First 2 edges of contour not follwing each other')
 
-
         last_edge = edges[-1]
         for raw_edge in raw_edges[2:]:
             if raw_edge.start == last_edge.end:
@@ -2030,8 +2029,7 @@ class Contour3D(Contour, Wire3D):
                     'Edges of contour not follwing each other')
 
             edges.append(last_edge)
-        # return cls(edges, name=name)
-        return cls(raw_edges, name=name)
+        return cls(edges, name=name)
 
     def to_step(self, current_id, surface_id=None):
         
