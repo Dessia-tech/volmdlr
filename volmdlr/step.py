@@ -397,8 +397,19 @@ class Step:
             #                      or
             #                      self.functions[node].name == "OPEN_SHELL"):
             #     self.graph.add_edge("#0", node)
-            if node != '#0' and (self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP'):
-                self.graph.add_edge("#0", node)
+            # if node != '#0' and (self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP'
+            #                      or self.functions[node].name == "CLOSED_SHELL"
+            #                      or self.functions[node].name == "OPEN_SHELL"):
+            #     self.graph.add_edge("#0", node)
+            try:
+                if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP':
+                    self.graph.add_edge("#0", node)
+            except KeyError:
+                if node != '#0' and (self.functions[node].name == "CLOSED_SHELL"
+                                     or
+                                     self.functions[node].name == "OPEN_SHELL"):
+                    self.graph.add_edge("#0", node)
+
 
         edges = list(
             nx.algorithms.traversal.breadth_first_search.bfs_edges(self.graph,
