@@ -357,11 +357,20 @@ class Step:
 
         elif name == 'SHAPE_REPRESENTATION':
             shells = []
+            # frames = []
             for arg in arguments[1]:
                 if int(arg[1:]) in object_dict and \
                         isinstance(object_dict[int(arg[1:])],
                                    volmdlr.faces.OpenShell3D):
                     shells.append(object_dict[int(arg[1:])])
+                elif int(arg[1:]) in object_dict and \
+                        isinstance(object_dict[int(arg[1:])],
+                                   volmdlr.Frame3D):
+                    # TODO: Is there something to read here ?
+                    pass
+                    # frames.append(object_dict[int(arg[1:])])
+                else:
+                    raise NotImplementedError
             volmdlr_object = shells
 
         elif name == 'ADVANCED_BREP_SHAPE_REPRESENTATION':
@@ -588,6 +597,7 @@ STEP_TO_VOLMDLR = {
     'SHAPE_REPRESENTATION': None,
     'ADVANCED_BREP_SHAPE_REPRESENTATION': None,
     'ITEM_DEFINED_TRANSFORMATION': None
+    # TODO : A ajouter : SHAPE_REPRESENTATION_RELATIONSHIP
 }
 
 VOLMDLR_TO_STEP = {}
