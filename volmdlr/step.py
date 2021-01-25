@@ -171,11 +171,11 @@ class Step:
             if function.name in STEP_TO_VOLMDLR:
                 G.add_node(function.id,
                            color='rgb(0, 0, 0)',
-                           shape='o',
+                           shape='.',
                            name=str(function.id))
                 F.add_node(function.id,
                            color='rgb(0, 0, 0)',
-                           shape='o',
+                           shape='.',
                            name=str(function.id))
                 labels[function.id] = str(function.id) + ' ' + function.name
 
@@ -344,8 +344,8 @@ class Step:
         elif name == 'ITEM_DEFINED_TRANSFORMATION':
             volmdlr_object1 = object_dict[arguments[2]]
             volmdlr_object2 = object_dict[arguments[3]]
-            # volmdlr_object = volmdlr_object2 - volmdlr_object1
-            volmdlr_object = volmdlr_object2
+            volmdlr_object = volmdlr_object2 - volmdlr_object1
+            # volmdlr_object = volmdlr_object2
             # Frame3D
 
         elif name == 'MANIFOLD_SURFACE_SHAPE_REPRESENTATION':
@@ -369,6 +369,9 @@ class Step:
 
         elif name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP':
             if arguments[2] in object_dict:
+                print(arguments)
+                print(object_dict[arguments[2]])
+                print()
                 if type(object_dict[arguments[2]]) is list:
                     for shell3d in object_dict[arguments[2]]:
                         frame3d = object_dict[arguments[4]]
@@ -494,7 +497,8 @@ class Step:
 
         graph.remove_nodes_from([stepfunction.id for stepfunction
                                  in self.functions.values()
-                                 if stepfunction.name == 'CARTESIAN_POINT'])
+                                 if stepfunction.name == 'CARTESIAN_POINT'
+                                 or stepfunction.name == 'DIRECTION'])
         return [plot_data.graph.NetworkxGraph(graph=graph)]
 
 
