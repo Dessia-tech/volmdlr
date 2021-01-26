@@ -1290,7 +1290,7 @@ class Basis3D(Basis):
 
         for other_vector, vector in zip([other_basis.u,
                                          other_basis.v, other_basis.w],
-                                        [self.u, self.v, self.w])])
+                                        [self.u, self.v, self.w]):
             if other_vector != vector:
                 return False
         return True
@@ -1552,8 +1552,7 @@ class Frame3D(Basis3D):
                                                   self.u, self.v, self.w)
 
     def __hash__(self):
-        return (5*hash(self.origin)
-                + hash(self.u) + hash(self.v) + hash(self.w)
+        return 5*hash(self.origin) + hash(self.u) + hash(self.v) + hash(self.w)
 
     def __eq__(self, other_frame):
         if other_frame.__class__.__name__ != self.__class__.__name__:
@@ -1561,7 +1560,7 @@ class Frame3D(Basis3D):
 
         for other_vector, vector in zip([other_frame.origin, other_frame.u,
                                          other_frame.v, other_frame.w],
-                                        [self.origin, self.u, self.v, self.w])])
+                                        [self.origin, self.u, self.v, self.w]):
             if other_vector != vector:
                 return False
         return True
