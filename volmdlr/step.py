@@ -168,7 +168,20 @@ class Step:
         labels = {}
 
         for function in self.functions.values():
-            if function.name in STEP_TO_VOLMDLR:
+
+            if function.name == 'SHAPE_REPRESENTATION_RELATIONSHIP':
+                id1 = int(function.arg[2][1:])
+                id2 = int(function.arg[3][1:])
+                elem1 = (function.id, id1)
+                elem2 = (function.id, id2)
+                self.all_connections.remove(elem1)
+                self.all_connections.remove(elem2)
+                self.all_connections.append((elem1[1], elem2[1]))
+
+                print(id1, self.functions[id1].arg)
+                self.functions[id1].arg.append('#{}'.format(id2))
+
+            elif function.name in STEP_TO_VOLMDLR:
                 G.add_node(function.id,
                            color='rgb(0, 0, 0)',
                            shape='.',
@@ -178,6 +191,7 @@ class Step:
                            shape='.',
                            name=str(function.id))
                 labels[function.id] = str(function.id) + ' ' + function.name
+
 
         # Delete connection if node not found
         node_list = list(F.nodes())
@@ -349,37 +363,59 @@ class Step:
             # Frame3D
 
         elif name == 'MANIFOLD_SURFACE_SHAPE_REPRESENTATION':
-            volmdlr_object = object_dict[int(arguments[1][1][1:])]
+            shells = []
+            for arg in arguments[1]:
+                shell = object_dict[int(arg[1:])]
+                shells.append(shell)
+            volmdlr_object = shells
+            print('MANIFOLD_SURFACE_SHAPE_REPRESENTATION')
+            print('shells', shells)
+            print()
             # Shell3D
 
         elif name == 'MANIFOLD_SOLID_BREP':
             volmdlr_object = object_dict[arguments[1]]
 
         elif name == 'SHAPE_REPRESENTATION':
-            shells = []
-            # frames = []
-            for arg in arguments[1]:
-                if int(arg[1:]) in object_dict and \
-                        isinstance(object_dict[int(arg[1:])],
-                                   volmdlr.faces.OpenShell3D):
-                    shells.append(object_dict[int(arg[1:])])
-                elif int(arg[1:]) in object_dict and \
-                        isinstance(object_dict[int(arg[1:])],
-                                   volmdlr.Frame3D):
-                    # TODO: Is there something to read here ?
-                    pass
-                    # frames.append(object_dict[int(arg[1:])])
-                else:
-                    raise NotImplementedError
-            volmdlr_object = shells
+            # does it have the extra argument comming from
+            # SHAPE_REPRESENTATION_RELATIONSHIP ?
+            if len(arguments) == 4:
+                shells = object_dict[int(arguments[3])]
+                volmdlr_object = shells
+            else:
+                shells = []
+                # frames = []
+                for arg in arguments[1]:
+                    if int(arg[1:]) in object_dict and \
+                            isinstance(object_dict[int(arg[1:])],
+                                       volmdlr.faces.OpenShell3D):
+                        shells.append(object_dict[int(arg[1:])])
+                    elif int(arg[1:]) in object_dict and \
+                            isinstance(object_dict[int(arg[1:])],
+                                       volmdlr.Frame3D):
+                        # TODO: Is there something to read here ?
+                        pass
+                        # frames.append(object_dict[int(arg[1:])])
+                    else:
+                        raise NotImplementedError
+                volmdlr_object = shells
+            print('SHAPE_REPRESENTATION')
+            print('shells', shells)
+            print()
 
         elif name == 'ADVANCED_BREP_SHAPE_REPRESENTATION':
-            volmdlr_object = object_dict[int(arguments[1][1][1:])]
+            shells = []
+            for arg in arguments[1]:
+                if isinstance(object_dict[int(arg[1:])],
+                              volmdlr.faces.OpenShell3D):
+                    shells.append(object_dict[int(arg[1:])])
+            volmdlr_object = shells
 
         elif name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP':
             if arguments[2] in object_dict:
+                print('TRANSFORMATION')
                 print(arguments)
-                print(object_dict[arguments[2]])
+                print('shells', object_dict[arguments[2]])
                 print()
                 if type(object_dict[arguments[2]]) is list:
                     for shell3d in object_dict[arguments[2]]:
@@ -596,8 +632,9 @@ STEP_TO_VOLMDLR = {
     'MANIFOLD_SOLID_BREP': None,
     'SHAPE_REPRESENTATION': None,
     'ADVANCED_BREP_SHAPE_REPRESENTATION': None,
-    'ITEM_DEFINED_TRANSFORMATION': None
+    'ITEM_DEFINED_TRANSFORMATION': None,
     # TODO : A ajouter : SHAPE_REPRESENTATION_RELATIONSHIP
+    'SHAPE_REPRESENTATION_RELATIONSHIP': None
 }
 
 VOLMDLR_TO_STEP = {}
