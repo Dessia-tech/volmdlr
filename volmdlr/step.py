@@ -365,8 +365,10 @@ class Step:
         elif name == 'MANIFOLD_SURFACE_SHAPE_REPRESENTATION':
             shells = []
             for arg in arguments[1]:
-                shell = object_dict[int(arg[1:])]
-                shells.append(shell)
+                if isinstance(object_dict[int(arg[1:])],
+                              volmdlr.faces.OpenShell3D):
+                    shell = object_dict[int(arg[1:])]
+                    shells.append(shell)
             volmdlr_object = shells
             # Shell3D
 
@@ -395,7 +397,7 @@ class Step:
                         pass
                         # frames.append(object_dict[int(arg[1:])])
                     else:
-                        raise NotImplementedError
+                        pass
                 volmdlr_object = shells
 
         elif name == 'ADVANCED_BREP_SHAPE_REPRESENTATION':
