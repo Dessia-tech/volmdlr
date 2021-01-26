@@ -1287,10 +1287,13 @@ class Basis3D(Basis):
     def __eq__(self, other_basis):
         if other_basis.__class__.__name__ != self.__class__.__name__:
             return False
-        all_equal = all([other_vector == vector\
-                         for other_vector, vector\
-                         in zip([other_basis.u, other_basis.v, other_basis.w], [self.u, self.v, self.w])])
-        return all_equal
+
+        for other_vector, vector in zip([other_basis.u,
+                                         other_basis.v, other_basis.w],
+                                        [self.u, self.v, self.w])])
+            if other_vector != vector:
+                return False
+        return True
 
     def __hash__(self):
         return hash(self.u) + hash(self.v) + hash(self.w)
@@ -1548,6 +1551,20 @@ class Frame3D(Basis3D):
                                                   self.origin,
                                                   self.u, self.v, self.w)
 
+    def __hash__(self):
+        return (5*hash(self.origin)
+                + hash(self.u) + hash(self.v) + hash(self.w)
+
+    def __eq__(self, other_frame):
+        if other_frame.__class__.__name__ != self.__class__.__name__:
+            return False
+
+        for other_vector, vector in zip([other_frame.origin, other_frame.u,
+                                         other_frame.v, other_frame.w],
+                                        [self.origin, self.u, self.v, self.w])])
+            if other_vector != vector:
+                return False
+        return True
 
     def __neg__(self):
         M = self.inverse_transfer_matrix()
