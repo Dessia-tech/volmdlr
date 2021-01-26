@@ -1138,6 +1138,8 @@ class VolumeModel(dc.DessiaObject):
     #     return shells
 
     def __eq__(self, other):
+        if self.__class__.__name__ != other.__class__.__name__:
+            return False
         equ = True
         if len(self.primitives) != len(other.primitives):
             return False
