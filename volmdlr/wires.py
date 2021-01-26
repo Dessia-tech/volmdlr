@@ -890,7 +890,7 @@ class Contour2D(Contour, Wire2D):
 
 class ClosedPolygon2D(Contour2D):
 
-    def __init__(self, points, name=''):
+    def __init__(self, points:List[volmdlr.Point2D], name=''):
         self.points = points
         self.line_segments = self._line_segments()
 
@@ -1997,9 +1997,9 @@ class Contour3D(Contour, Wire3D):
             edge = object_dict[int(edge_id[1:])]
             raw_edges.append(edge)
 
-        if (len(raw_edges)) == 1:  #
+        if (len(raw_edges)) == 1:
             if isinstance(raw_edges[0], cls):
-            # Case of a circle, ellipse...
+                # Case of a circle, ellipse...
                 return raw_edges[0]
             else:
                 return cls(raw_edges, name=name)
@@ -2015,7 +2015,6 @@ class Contour3D(Contour, Wire3D):
             edges = [raw_edges[0].reverse(), raw_edges[1].reverse()]
         else:
             raise NotImplementedError('First 2 edges of contour not follwing each other')
-
 
         last_edge = edges[-1]
         for raw_edge in raw_edges[2:]:
@@ -2155,6 +2154,7 @@ class Contour3D(Contour, Wire3D):
                   for i in range(n)]
         return volmdlr.core.BoundingBox.from_points(points)
 
+
 class Circle3D(Contour3D):
     _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']
     _non_eq_attributes = ['name']
@@ -2268,15 +2268,19 @@ class Circle3D(Contour3D):
             normal = object_dict[arguments[1]].v  ### ou w
             other_vec = None
         normal.normalize()
-        return cls.from_center_normal(center, normal, radius, arguments[0][1:-1])
+        return cls.from_center_normal(center, normal, radius,
+                                      arguments[0][1:-1])
 
     def to_step(self, current_id, surface_id=None):
-        circle_frame = volmdlr.Frame3D(self.center, self.frame.w, self.frame.u, self.frame.v)
+        circle_frame = volmdlr.Frame3D(self.center, self.frame.w, self.frame.u,
+                                       self.frame.v)
         content, frame_id = circle_frame.to_step(current_id)
         curve_id = frame_id+1
         content += "#{} = CIRCLE('{}',#{},{});\n".format(curve_id, self.name,
-                                                           frame_id,
-                                                           round(self.radius*1000, 3))
+                                                         frame_id,
+                                                         round(
+                                                             self.radius*1000,
+                                                             3))
         
         if surface_id:
             content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(curve_id+1, curve_id, surface_id)
@@ -2513,3 +2517,39 @@ class Ellipse3D(Contour3D):
         minor_axis = float(arguments[3]) / 1000
         return cls(major_axis, minor_axis, center, normal, major_dir,
                    arguments[0][1:-1])
+
+class ClosedPolygon3D(Contour3D):
+
+    def __init__(self, points:List[volmdlr.Point3D], name:str=''):
+        self.points = points
+        self.line_segments = self._line_segments()
+
+        Contour2D.__init__(self, self.line_segments, name)
+
+    def _line_segments(self):
+        lines = []
+        if len(self.points) > 1:
+            for p1, p2 in zip(self.points, list(self.points[1:]) + [self.points[0]]):
+                lines.append(volmdlr.edges.LineSegment3D(p1, p2))
+        return lines
+
+
+    def copy(self):
+        points = [p.copy() for p in self.points]
+        return ClosedPolygon2D(points, self.name)
+
+    def __hash__(self):
+        return sum([hash(p) for p in self.points])
+
+    def __eq__(self, other_):
+        if not isinstance(other_, self.__class__):
+            return False
+        equal = True
+        for point, other_point in zip(self.points, other_.points):
+            equal = (equal and point == other_point)
+        return equal
+
+    def plot(self, ax=None, color='k', alpha=1):
+        for line_segment in self.line_segments:
+            ax = line_segment.plot(ax=ax, color=color, alpha=alpha)
+        return ax
