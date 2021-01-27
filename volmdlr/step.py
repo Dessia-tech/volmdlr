@@ -154,6 +154,8 @@ class Step:
                     arg_list = volmdlr.core.set_to_list(argument)
                     arguments[i] = arg_list
 
+            if function_id == 918:
+                print(function_name, arguments)
             function = StepFunction(function_id, function_name, arguments)
             functions[function_id] = function
 
@@ -170,7 +172,7 @@ class Step:
         for function in self.functions.values():
 
             if function.name == 'SHAPE_REPRESENTATION_RELATIONSHIP':
-                # Create of short cut from id1 to id2
+                # Create short cut from id1 to id2
                 id1 = int(function.arg[2][1:])
                 id2 = int(function.arg[3][1:])
                 elem1 = (function.id, id1)
@@ -425,6 +427,13 @@ class Step:
             else:
                 volmdlr_object = None
 
+        elif name == 'BOUNDED_CURVE, B_SPLINE_CURVE, B_SPLINE_CURVE_WITH_KNOTS, CURVE, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_CURVE, REPRESENTATION_ITEM':
+            modified_arguments = ['']+arguments
+            if modified_arguments[-1] == "''":
+                modified_arguments.pop()
+            volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
+                modified_arguments, object_dict)
+
         elif name in STEP_TO_VOLMDLR and hasattr(
                 STEP_TO_VOLMDLR[name], "from_step"):
             volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
@@ -597,7 +606,9 @@ STEP_TO_VOLMDLR = {
     'SHAPE_REPRESENTATION': None,
     'ADVANCED_BREP_SHAPE_REPRESENTATION': None,
     'ITEM_DEFINED_TRANSFORMATION': None,
-    'SHAPE_REPRESENTATION_RELATIONSHIP': None
+    'SHAPE_REPRESENTATION_RELATIONSHIP': None,
+
+    'BOUNDED_CURVE, B_SPLINE_CURVE, B_SPLINE_CURVE_WITH_KNOTS, CURVE, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_CURVE, REPRESENTATION_ITEM': volmdlr.edges.BSplineCurve3D
 }
 
 VOLMDLR_TO_STEP = {}
