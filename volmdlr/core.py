@@ -1158,8 +1158,8 @@ class VolumeModel(dc.DessiaObject):
                 primitive in self.primitives]
             return VolumeModel(new_primitives, self.name)
         else:
-            for primitives in self.primitives:
-                primitives.translation(center, axis, angle, copy=False)
+            for primitive in self.primitives:
+                primitive.rotation(center, axis, angle, copy=False)
             self.bounding_box = self._bounding_box()
 
     def translation(self, offset, copy=True):
