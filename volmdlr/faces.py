@@ -787,11 +787,15 @@ class Plane3D(Surface3D):
         return volmdlr.Line3D(point1, point2)
 
     def rotation(self, center, axis, angle, copy=True):
+        center_frame = self.frame.origin.copy()
+        center_frame.rotation(center, axis, angle, copy=False)
         if copy:
             new_frame = self.frame.rotation(axis=axis, angle=angle, copy=True)
+            new_frame.origin = center_frame
             return Plane3D(new_frame)
         else:
             self.frame.rotation(axis, angle, copy=False)
+            self.frame.origin = center_frame
 
     def translation(self, offset, copy=True):
         if copy:
