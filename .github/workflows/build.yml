@@ -1,22 +1,21 @@
 name: Build and upload to PyPI
 
 # Build on every branch push, tag push, and pull request change:
-on: [push, pull_request]
+#on: [push]
 # Alternatively, to publish when a (published) GitHub Release is created, use the following:
-# on:
-#   push:
-#   pull_request:
-#   release:
-#     types:
-#       - published
+on:
+   release:
+     types:
+       - published
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }} python 3.8
+    name: Build wheels on ${{ matrix.os }} python ${{ matrix.python_version }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [windows-latest, macos-latest]
+        python_version: [3.7, 3.8, 3.9]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -25,7 +24,7 @@ jobs:
       - uses: actions/setup-python@v2
         name: Install Python
         with:
-          python-version: 3.8
+          python-version: ${{ matrix.python_version }}
 
       - name: Install cibuildwheel
         run: |
@@ -48,9 +47,8 @@ jobs:
     needs: [build_wheels]
     runs-on: ubuntu-latest
     # upload to PyPI on every tag starting with 'v'
-    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
+    #if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     # alternatively, to publish when a GitHub Release is created, use the following rule:
-    # if: github.event_name == 'release' && github.event.action == 'published'
     steps:
       - uses: actions/download-artifact@v2
         with:

@@ -5,6 +5,8 @@
 """
 
 import volmdlr as vm
+import volmdlr.wires as vmw
+
 from volmdlr.primitives2d import ClosedRoundedLineSegments2D, OpenedRoundedLineSegments2D
 from volmdlr.primitives3d import RevolvedProfile
 
@@ -42,7 +44,7 @@ c4 = ClosedRoundedLineSegments2D(points2, {0: 0.002, 1: 0.002, 3: 0.002})
 # c3.MPLPlot(plot_points=True)
 # c4.MPLPlot(plot_points=True)
 
-profile1 = RevolvedProfile(vm.Y3D, vm.Y3D, vm.Z3D, c1, vm.O3D, vm.Y3D)
+profile1 = RevolvedProfile(vm.Y3D, vm.Y3D, vm.Z3D, c1, vm.O3D, vm.Y3D, 3)
 # profile2 = RevolvedProfile(0.5*vm.X3D, vm.Y3D, vm.Z3D, c2, 0.5*vm.X3D, vm.Y3D)
 # profile3 = RevolvedProfile(-0.5*vm.X3D, vm.Y3D, vm.Z3D, c1, -0.5*vm.X3D, vm.Y3D)
 # profile4 = RevolvedProfile(vm.X3D, vm.Y3D, vm.Z3D, c2, vm.X3D, vm.Y3D)
@@ -81,10 +83,33 @@ c5 = vm.wires.Contour2D([cbi1] + bi1.primitives)
 
 y = vm.X3D.random_unit_normal_vector()
 z = vm.X3D.cross(y)
-profile5 = RevolvedProfile(0.15*vm.Y3D, vm.X3D, z, c5, 0.15*vm.Y3D, vm.X3D)
+profile5 = RevolvedProfile(0.15*vm.Y3D, vm.X3D, z, c5, 0.15*vm.Y3D, vm.X3D,
+                           angle=0.7, name='strange part')
 
 # model = vm.VolumeModel([profile1, profile2, profile3, profile4, profile5])
-model = vm.core.VolumeModel([profile1, profile5])
+
+r = 0.15
+R = 0.2
+Rb = 0.25
+w = 0.2
+wb = 0.02
+th = 0.008
+
+rim_contour = vmw.ClosedPolygon2D([vm.Point2D(-0.5*w, Rb),
+                                   vm.Point2D(-0.5*w+wb, Rb),
+                                   vm.Point2D(-0.5*w+wb, R),
+                                   vm.Point2D(-0.05 * w , r),
+                                   vm.Point2D(0, r),
+                                   vm.Point2D(0, r-th),
+                                   vm.Point2D(-0.05 * w , r - th),
+                                   vm.Point2D(-0.5*w, R-th),
+                                   ])
+
+rim_contour.plot()
+conical_rim = RevolvedProfile(0.5*vm.X3D, vm.X3D, z, rim_contour, 0.5*vm.X3D, vm.X3D,
+                              angle=3.14, name='conical rim')
+
+
+model = vm.core.VolumeModel([profile1, profile5, conical_rim])
 model.babylonjs()
-
-
+model.to_step('revolved_profile.step')

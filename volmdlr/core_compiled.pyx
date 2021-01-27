@@ -278,9 +278,13 @@ class Vector(DessiaObject):
 
 
     def is_colinear_to(self, other_vector):
-        return math.isclose(abs(self.dot(other_vector))/self.norm()/other_vector.norm(),
-                            1,
-                            abs_tol=1e-5)
+        try:
+            return math.isclose(abs(self.dot(other_vector))/self.norm()/other_vector.norm(),
+                                1,
+                                abs_tol=1e-5)
+            
+        except ZeroDivisionError:
+            return False
 
     @classmethod
     def mean_point(cls, points):
@@ -983,14 +987,14 @@ class Point3D(Vector3D):
         return Point3D(self.x, self.y, self.z)
 
 
-    def plot(self, ax=None, color='k', alpha=1):
+    def plot(self, ax=None, color='k', alpha=1, marker='o'):
 
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
         ax.plot([self.x], [self.y], [self.z], color=color, alpha=alpha,
-                marker='o')
+                marker=marker)
         return ax
 
 
@@ -1010,9 +1014,9 @@ class Point3D(Vector3D):
     def to_step(self, current_id, vertex=False):
         content = "#{} = CARTESIAN_POINT('{}',({},{},{}));\n"\
                         .format(current_id, self.name,
-                                round(1000.*self.x, 3),
-                                round(1000.*self.y, 3),
-                                round(1000.*self.z, 3))
+                                round(1000.*self.x, 6),
+                                round(1000.*self.y, 6),
+                                round(1000.*self.z, 6))
         if vertex:
             content += "#{} = VERTEX_POINT('{}',#{});\n".format(current_id+1,
                                                                 self.name,
@@ -1172,12 +1176,6 @@ class Basis(DessiaObject):
     def __contains__(self, vector):
         return vector in self.vectors
 
-    def __eq__(self, other_basis):
-        all_equal = all([other_vector == vector\
-                         for other_vector, vector\
-                         in zip(other_basis.vectors, self.vectors)])
-        return all_equal
-
     def __hash__(self):
         return hash(self.vectors)
 
@@ -1196,6 +1194,14 @@ class Basis2D(Basis):
         self.u = u
         self.v = v
         self.name = name
+
+    def __eq__(self, other_basis):
+        if other_basis.__class__.__name__ != self.__class__.__name__:
+            return False
+        all_equal = all([other_vector == vector\
+                         for other_vector, vector\
+                         in zip([other_basis.u, other_basis.v], [self.u, self.v])])
+        return all_equal
 
     def __neg__(self):
         Pinv = self.inverse_transfer_matrix()
@@ -1257,7 +1263,7 @@ class Basis2D(Basis):
         """
         self.u.normalize()
         self.v.normalize()
-        
+
 
 XY = Basis2D(X2D, Y2D)
 
@@ -1278,6 +1284,17 @@ class Basis3D(Basis):
         self.w = w
         self.name = name
 
+    def __eq__(self, other_basis):
+        if other_basis.__class__.__name__ != self.__class__.__name__:
+            return False
+
+        for other_vector, vector in zip([other_basis.u,
+                                         other_basis.v, other_basis.w],
+                                        [self.u, self.v, self.w]):
+            if other_vector != vector:
+                return False
+        return True
+
     def __hash__(self):
         return hash(self.u) + hash(self.v) + hash(self.w)
 
@@ -1290,9 +1307,9 @@ class Basis3D(Basis):
 
     def __neg__(self):
         M = self.inverse_transfer_matrix()
-        return Basis3D(Vector3D((M.M11, M.M21, M.M31)),
-                       Vector3D((M.M12, M.M22, M.M32)),
-                       Vector3D((M.M13, M.M23, M.M33)))
+        return Basis3D(Vector3D(M.M11, M.M21, M.M31),
+                       Vector3D(M.M12, M.M22, M.M32),
+                       Vector3D(M.M13, M.M23, M.M33))
 
 
     def __sub__(self, other_frame):
@@ -1534,6 +1551,19 @@ class Frame3D(Basis3D):
                                                   self.origin,
                                                   self.u, self.v, self.w)
 
+    def __hash__(self):
+        return 5*hash(self.origin) + hash(self.u) + hash(self.v) + hash(self.w)
+
+    def __eq__(self, other_frame):
+        if other_frame.__class__.__name__ != self.__class__.__name__:
+            return False
+
+        for other_vector, vector in zip([other_frame.origin, other_frame.u,
+                                         other_frame.v, other_frame.w],
+                                        [self.origin, self.u, self.v, self.w]):
+            if other_vector != vector:
+                return False
+        return True
 
     def __neg__(self):
         M = self.inverse_transfer_matrix()
@@ -1604,8 +1634,8 @@ class Frame3D(Basis3D):
         return Frame3D(self.origin.copy(), self.u.copy(), self.v.copy(), self.w.copy())
 
     def to_step(self, current_id):
-        
-        content, origin_id = self.origin.to_step(current_id)
+
+        content, origin_id = self.origin.to_point().to_step(current_id)
         current_id = origin_id + 1
         u_content, u_id = Vector3D.to_step(self.u, current_id)
         current_id = u_id + 1
@@ -1633,24 +1663,25 @@ class Frame3D(Basis3D):
         return fig, ax
 
 
-    def plot(self, ax=None, color='b', alpha=1., plot_points=True):
+    def plot(self, ax=None, color='b', alpha=1., plot_points=True,
+             ratio=1):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
-        x1 = [p.x for p in (self.origin, self.origin + self.u)]
-        y1 = [p.y for p in (self.origin, self.origin + self.u)]
-        z1 = [p.z for p in (self.origin, self.origin + self.u)]
+        x1 = [p.x for p in (self.origin, self.origin + self.u*ratio)]
+        y1 = [p.y for p in (self.origin, self.origin + self.u*ratio)]
+        z1 = [p.z for p in (self.origin, self.origin + self.u*ratio)]
         ax.plot(x1, y1, z1, 'r')
 
-        x2 = [p.x for p in (self.origin, self.origin + self.v)]
-        y2 = [p.y for p in (self.origin, self.origin + self.v)]
-        z2 = [p.z for p in (self.origin, self.origin + self.v)]
+        x2 = [p.x for p in (self.origin, self.origin + self.v*ratio)]
+        y2 = [p.y for p in (self.origin, self.origin + self.v*ratio)]
+        z2 = [p.z for p in (self.origin, self.origin + self.v*ratio)]
         ax.plot(x2, y2, z2, 'g')
 
-        x3 = [p.x for p in (self.origin, self.origin + self.w)]
-        y3 = [p.y for p in (self.origin, self.origin + self.w)]
-        z3 = [p.z for p in (self.origin, self.origin + self.w)]
+        x3 = [p.x for p in (self.origin, self.origin + self.w*ratio)]
+        y3 = [p.y for p in (self.origin, self.origin + self.w*ratio)]
+        z3 = [p.z for p in (self.origin, self.origin + self.w*ratio)]
         ax.plot(x3, y3, z3, 'b')
         return ax
 
@@ -1669,7 +1700,7 @@ class Frame3D(Basis3D):
             w = None
         else:
             w = u.cross(v)
-            
+
         return cls(origin, u, v, w, arguments[0][1:-1])
 
 

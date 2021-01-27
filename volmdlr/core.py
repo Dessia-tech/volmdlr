@@ -119,8 +119,10 @@ def vectors3d_angle(vector1, vector2):
 
 
 def sin_cos_angle(u1, u2):
-    # You have to give cos(theta)=u1, sin(theta)=u2
-    # return an angle between 0 and 2pi
+    """
+    cos(theta)=u1, sin(theta)=u2
+    returns an angle between 0 and 2pi
+    """
     if u1 < -1:
         u1 = -1
     elif u1 > 1:
@@ -140,6 +142,8 @@ def sin_cos_angle(u1, u2):
             theta = math.acos(u1)
         else:
             theta = volmdlr.TWO_PI - math.acos(u1)
+    if math.isclose(theta, volmdlr.TWO_PI, abs_tol=1e-9):
+        return 0.
     return theta
 
 
@@ -282,6 +286,40 @@ def posangle_arc(start, end, radius, frame=None):
     return theta1, theta2
 
 
+def clockwise_interior_from_circle3d(start, end, circle):
+    """
+    Returns the clockwise interior point between start and end on the circle
+    """
+    start2d = start.to_2d(plane_origin=circle.frame.origin,
+                          x=circle.frame.u, y=circle.frame.v)
+    end2d = end.to_2d(plane_origin=circle.frame.origin,
+                      x=circle.frame.u, y=circle.frame.v)
+
+    # Angle pour le p1
+    u1, u2 = start2d.x / circle.radius, start2d.y / circle.radius
+    theta1 = sin_cos_angle(u1, u2)
+    # Angle pour le p2
+    u3, u4 = end2d.x / circle.radius, end2d.y / circle.radius
+    theta2 = sin_cos_angle(u3, u4)
+
+    if theta1 > theta2:
+        theta3 = (theta1 + theta2) / 2
+    elif theta2 > theta1:
+        theta3 = (theta1 + theta2) / 2 + volmdlr.TWO_PI / 2
+    else:
+        raise NotImplementedError
+
+    if theta3 > volmdlr.TWO_PI:
+        theta3 -= volmdlr.TWO_PI
+
+    interior2d = volmdlr.Point2D(circle.radius*math.cos(theta3),
+                                 circle.radius*math.sin(theta3))
+    interior3d = interior2d.to_3d(plane_origin=circle.frame.origin,
+                                  vx=circle.frame.u, vy=circle.frame.v)
+    return interior3d
+
+
+
 def offset_angle(trigo, angle_start, angle_end):
     if trigo:
         offset = angle_start
@@ -362,7 +400,7 @@ class CompositePrimitive2D(Primitive2D):
         else:
             for p in self.primitives:
                 p.rotation(center, angle, copy=False)
-            self.UpdateBasisPrimitives()
+            self.update_basis_primitives()
 
     def translation(self, offset, copy=True):
         if copy:
@@ -371,7 +409,7 @@ class CompositePrimitive2D(Primitive2D):
         else:
             for p in self.primitives:
                 p.translation(offset, copy=False)
-            self.UpdateBasisPrimitives()
+            self.update_basis_primitives()
 
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -383,7 +421,7 @@ class CompositePrimitive2D(Primitive2D):
         else:
             for p in self.primitives:
                 p.frame_mapping(frame, side, copy=False)
-            self.UpdateBasisPrimitives()
+            self.update_basis_primitives()
 
 
     def plot(self, ax=None, color='k', alpha=1,
@@ -396,8 +434,7 @@ class CompositePrimitive2D(Primitive2D):
             ax.set_aspect('equal')
 
         for element in self.primitives:
-            element.plot(ax=ax, color=color, plot_points=plot_points)
-
+            element.plot(ax=ax, color=color) #, plot_points=plot_points)
 
         ax.margins(0.1)
         plt.show()
@@ -420,7 +457,7 @@ class CompositePrimitive2D(Primitive2D):
 
 
 class Primitive3D(dc.DessiaObject):
-    def __init__(self, color=None, alpha=0.5, name=''):
+    def __init__(self, color=None, alpha=1, name=''):
         self.color = color
         self.alpha = alpha
 
@@ -1390,6 +1427,11 @@ class VolumeModel(dc.DessiaObject):
                                          use_cdn=use_cdn, debug=debug)
 
     def to_step(self, filename:str=None):
+        
+        if filename and not (filename.endswith('.step') or filename.endswith('.stp')):
+            print('Adding .step extension to filename')
+            filename += '.step'
+        
         step_content = STEP_HEADER.format(name=self.name,
                                           filename=filename,
                                           timestamp=datetime.now().isoformat(),
@@ -1481,6 +1523,7 @@ class VolumeModel(dc.DessiaObject):
         if filename:
             with open(filename, 'w') as f:
                 f.write(step_content)
+                print('file written to {}'.format(os.path.abspath(filename)))
         else:
             return step_content
 

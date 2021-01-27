@@ -21,12 +21,11 @@ steps:
   - pip install Cython
   - python setup.py develop
 
-- name: sdist, bdist, wheel
+- name: sdist
   image: python:3.8
   commands:
   - pip install Cython wheel
   - python setup.py sdist
-  - python setup.py bdist_wheel
 
 - name: upload to pypi
   image: plugins/pypi
@@ -42,6 +41,7 @@ steps:
   image: appleboy/drone-scp
   when:
     branch: master
+    event: push
   settings:
     host: austerlitz.dessia.tech
     target: /var/www/documentation/volmdlr/
@@ -61,6 +61,6 @@ steps:
     host: mail.dessia.tech
     username: technical@dessia.tech
     password:
-     from_secret: email_password
+      from_secret: email_password
     from: technical@dessia.tech
     recipients: [ root@dessia.tech ]
