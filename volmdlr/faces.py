@@ -3528,7 +3528,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         if copy:
             new_faces = [face.frame_mapping(frame, side, copy=True) for face in
                          self.faces]
-            return OpenShell3D(new_faces, name=self.name)
+            return self.__class__(new_faces, name=self.name)
         else:
             for face in self.faces:
                 face.frame_mapping(frame, side, copy=False)
