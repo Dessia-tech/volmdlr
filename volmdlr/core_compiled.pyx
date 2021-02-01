@@ -1287,10 +1287,13 @@ class Basis3D(Basis):
     def __eq__(self, other_basis):
         if other_basis.__class__.__name__ != self.__class__.__name__:
             return False
-        all_equal = all([other_vector == vector\
-                         for other_vector, vector\
-                         in zip([other_basis.u, other_basis.v, other_basis.w], [self.u, self.v, self.w])])
-        return all_equal
+
+        for other_vector, vector in zip([other_basis.u,
+                                         other_basis.v, other_basis.w],
+                                        [self.u, self.v, self.w]):
+            if other_vector != vector:
+                return False
+        return True
 
     def __hash__(self):
         return hash(self.u) + hash(self.v) + hash(self.w)
@@ -1548,6 +1551,19 @@ class Frame3D(Basis3D):
                                                   self.origin,
                                                   self.u, self.v, self.w)
 
+    def __hash__(self):
+        return 5*hash(self.origin) + hash(self.u) + hash(self.v) + hash(self.w)
+
+    def __eq__(self, other_frame):
+        if other_frame.__class__.__name__ != self.__class__.__name__:
+            return False
+
+        for other_vector, vector in zip([other_frame.origin, other_frame.u,
+                                         other_frame.v, other_frame.w],
+                                        [self.origin, self.u, self.v, self.w]):
+            if other_vector != vector:
+                return False
+        return True
 
     def __neg__(self):
         M = self.inverse_transfer_matrix()
@@ -1647,24 +1663,25 @@ class Frame3D(Basis3D):
         return fig, ax
 
 
-    def plot(self, ax=None, color='b', alpha=1., plot_points=True):
+    def plot(self, ax=None, color='b', alpha=1., plot_points=True,
+             ratio=1):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
-        x1 = [p.x for p in (self.origin, self.origin + self.u)]
-        y1 = [p.y for p in (self.origin, self.origin + self.u)]
-        z1 = [p.z for p in (self.origin, self.origin + self.u)]
+        x1 = [p.x for p in (self.origin, self.origin + self.u*ratio)]
+        y1 = [p.y for p in (self.origin, self.origin + self.u*ratio)]
+        z1 = [p.z for p in (self.origin, self.origin + self.u*ratio)]
         ax.plot(x1, y1, z1, 'r')
 
-        x2 = [p.x for p in (self.origin, self.origin + self.v)]
-        y2 = [p.y for p in (self.origin, self.origin + self.v)]
-        z2 = [p.z for p in (self.origin, self.origin + self.v)]
+        x2 = [p.x for p in (self.origin, self.origin + self.v*ratio)]
+        y2 = [p.y for p in (self.origin, self.origin + self.v*ratio)]
+        z2 = [p.z for p in (self.origin, self.origin + self.v*ratio)]
         ax.plot(x2, y2, z2, 'g')
 
-        x3 = [p.x for p in (self.origin, self.origin + self.w)]
-        y3 = [p.y for p in (self.origin, self.origin + self.w)]
-        z3 = [p.z for p in (self.origin, self.origin + self.w)]
+        x3 = [p.x for p in (self.origin, self.origin + self.w*ratio)]
+        y3 = [p.y for p in (self.origin, self.origin + self.w*ratio)]
+        z3 = [p.z for p in (self.origin, self.origin + self.w*ratio)]
         ax.plot(x3, y3, z3, 'b')
         return ax
 
