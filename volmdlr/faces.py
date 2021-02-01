@@ -471,7 +471,7 @@ class Surface3D(dc.DessiaObject):
     #     self.SURFACE_TO_FACE[self.__class__](self, surface2d)
 
     def face_from_contours3d(self,
-                             contours3d: volmdlr.wires.Contour3D,
+                             contours3d: List[volmdlr.wires.Contour3D],
                              name: str = ''):
         """
         """
@@ -623,7 +623,7 @@ class Surface3D(dc.DessiaObject):
         a line segment on a surface will be in any case a line in 2D?
         """
         return [vme.LineSegment2D(self.point3d_to_2d(linesegment3d.start),
-                                            self.point3d_to_2d(linesegment3d.end))]
+                                  self.point3d_to_2d(linesegment3d.end))]
 
 
 class Plane3D(Surface3D):
@@ -1294,7 +1294,6 @@ class ConicalSurface3D(Surface3D):
         radius = float(arguments[2]) / 1000
         semi_angle = float(arguments[3])
         origin = frame3d.origin - radius / math.tan(semi_angle) * W
-
         frame_direct = volmdlr.Frame3D(origin, U, V, W)
         return cls(frame_direct, semi_angle, arguments[0][1:-1])
 
@@ -1341,8 +1340,15 @@ class ConicalSurface3D(Surface3D):
                                     z)
         return self.frame.old_coordinates(new_point)
 
+    # def point3d_to_2d(self, point3d: volmdlr.Point3D):
+    #     z = self.frame.w.dot(point3d)
+    #     x, y = point3d.plane_projection2d(self.frame.origin, self.frame.u,
+    #                                       self.frame.v)
+    #     theta = math.atan2(y, x)
+    #     return volmdlr.Point2D(theta, z+0.003)
+
     def point3d_to_2d(self, point3d: volmdlr.Point3D):
-        z = self.frame.w.dot(point3d)
+        _, _, z = self.frame.new_coordinates(point3d)
         x, y = point3d.plane_projection2d(self.frame.origin, self.frame.u,
                                           self.frame.v)
         theta = math.atan2(y, x)
@@ -1869,7 +1875,7 @@ class Face3D(volmdlr.core.Primitive3D):
                                                    volmdlr.Point3D):
                 return surface
 
-            return surface.face_from_contours3d(contours)
+            return surface.face_from_contours3d(contours, name)
         else:
             raise NotImplementedError(
                 'Not implemented :face_from_contours3d in {}'.format(surface))

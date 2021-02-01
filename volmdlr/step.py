@@ -13,6 +13,7 @@ import volmdlr.primitives3d
 import volmdlr.edges
 import volmdlr.wires
 import volmdlr.faces
+import plot_data.graph
 
 import webbrowser
 
@@ -66,7 +67,7 @@ class StepFunction:
                 (len(subfun[1]) != 0 or i == 0)]
         arguments = []
         for arg in args:
-            if arg == []:
+            if not arg:
                 arguments.append("''")
             else:
                 arguments.extend(arg)
@@ -81,6 +82,8 @@ class Step:
         self.stepfile = stepfile
 
         self.functions, self.all_connections = self.read_functions()
+
+        self.upd_graph = False
 
     def read_functions(self):
         f = open(self.stepfile, "r", encoding="ISO-8859-1")
@@ -151,6 +154,8 @@ class Step:
                     arg_list = volmdlr.core.set_to_list(argument)
                     arguments[i] = arg_list
 
+            if function_id == 918:
+                print(function_name, arguments)
             function = StepFunction(function_id, function_name, arguments)
             functions[function_id] = function
 
@@ -165,9 +170,28 @@ class Step:
         labels = {}
 
         for function in self.functions.values():
-            if function.name in STEP_TO_VOLMDLR:
-                G.add_node(function.id)
-                F.add_node(function.id)
+
+            if function.name == 'SHAPE_REPRESENTATION_RELATIONSHIP':
+                # Create short cut from id1 to id2
+                id1 = int(function.arg[2][1:])
+                id2 = int(function.arg[3][1:])
+                elem1 = (function.id, id1)
+                elem2 = (function.id, id2)
+                self.all_connections.remove(elem1)
+                self.all_connections.remove(elem2)
+                self.all_connections.append((elem1[1], elem2[1]))
+
+                self.functions[id1].arg.append('#{}'.format(id2))
+
+            elif function.name in STEP_TO_VOLMDLR:
+                G.add_node(function.id,
+                           color='rgb(0, 0, 0)',
+                           shape='.',
+                           name=str(function.id))
+                F.add_node(function.id,
+                           color='rgb(0, 0, 0)',
+                           shape='.',
+                           name=str(function.id))
                 labels[function.id] = str(function.id) + ' ' + function.name
 
         # Delete connection if node not found
@@ -335,28 +359,56 @@ class Step:
         elif name == 'ITEM_DEFINED_TRANSFORMATION':
             volmdlr_object1 = object_dict[arguments[2]]
             volmdlr_object2 = object_dict[arguments[3]]
+            # TODO : how to frame map properly from these two Frame3D ?
             # volmdlr_object = volmdlr_object2 - volmdlr_object1
             volmdlr_object = volmdlr_object2
             # Frame3D
 
         elif name == 'MANIFOLD_SURFACE_SHAPE_REPRESENTATION':
-            volmdlr_object = object_dict[int(arguments[1][1][1:])]
+            shells = []
+            for arg in arguments[1]:
+                if isinstance(object_dict[int(arg[1:])],
+                              volmdlr.faces.OpenShell3D):
+                    shell = object_dict[int(arg[1:])]
+                    shells.append(shell)
+            volmdlr_object = shells
             # Shell3D
 
         elif name == 'MANIFOLD_SOLID_BREP':
             volmdlr_object = object_dict[arguments[1]]
 
         elif name == 'SHAPE_REPRESENTATION':
-            shells = []
-            for arg in arguments[1]:
-                if int(arg[1:]) in object_dict and \
-                        isinstance(object_dict[int(arg[1:])],
-                                   volmdlr.faces.OpenShell3D):
-                    shells.append(object_dict[int(arg[1:])])
-            volmdlr_object = shells
+            # does it have the extra argument comming from
+            # SHAPE_REPRESENTATION_RELATIONSHIP ? In this cas return
+            # them
+            if len(arguments) == 4:
+                shells = object_dict[int(arguments[3])]
+                volmdlr_object = shells
+            else:
+                shells = []
+                # frames = []
+                for arg in arguments[1]:
+                    if int(arg[1:]) in object_dict and \
+                            isinstance(object_dict[int(arg[1:])],
+                                       volmdlr.faces.OpenShell3D):
+                        shells.append(object_dict[int(arg[1:])])
+                    elif int(arg[1:]) in object_dict and \
+                            isinstance(object_dict[int(arg[1:])],
+                                       volmdlr.Frame3D):
+                        # TODO: Is there something to read here ?
+                        pass
+                        # frames.append(object_dict[int(arg[1:])])
+                    else:
+                        pass
+                volmdlr_object = shells
 
         elif name == 'ADVANCED_BREP_SHAPE_REPRESENTATION':
-            volmdlr_object = object_dict[int(arguments[1][1][1:])]
+            shells = []
+            for arg in arguments[1]:
+                if isinstance(object_dict[int(arg[1:])],
+                              volmdlr.faces.OpenShell3D):
+                    shells.append(object_dict[int(arg[1:])])
+            volmdlr_object = shells
 
         elif name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP':
             if arguments[2] in object_dict:
@@ -375,6 +427,13 @@ class Step:
             else:
                 volmdlr_object = None
 
+        elif name == 'BOUNDED_CURVE, B_SPLINE_CURVE, B_SPLINE_CURVE_WITH_KNOTS, CURVE, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_CURVE, REPRESENTATION_ITEM':
+            modified_arguments = ['']+arguments
+            if modified_arguments[-1] == "''":
+                modified_arguments.pop()
+            volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
+                modified_arguments, object_dict)
+
         elif name in STEP_TO_VOLMDLR and hasattr(
                 STEP_TO_VOLMDLR[name], "from_step"):
             volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
@@ -387,31 +446,33 @@ class Step:
         return volmdlr_object
 
     def to_volume_model(self):
-        self.graph = self.create_graph()
+        if not self.upd_graph:
+            self.graph = self.create_graph()
 
         object_dict = {}
 
         self.graph.add_node("#0")
-        flag = False
+        frame_mapping_nodes = []
+        shell_nodes = []
         for node in self.graph.nodes:
-            # if node != '#0' and (self.functions[node].name == "CLOSED_SHELL"
-            #                      or
-            #                      self.functions[node].name == "OPEN_SHELL"):
-            #     self.graph.add_edge("#0", node)
-            # if node != '#0' and (self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP'
-            #                      or self.functions[node].name == "CLOSED_SHELL"
-            #                      or self.functions[node].name == "OPEN_SHELL"):
-            #     self.graph.add_edge("#0", node)
             if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP':
-                flag = True
-                self.graph.add_edge("#0", node)
-        if not flag:
-            for node in self.graph.nodes:
-                if node != '#0' and (self.functions[node].name == "CLOSED_SHELL"
-                                     or
-                                     self.functions[node].name == "OPEN_SHELL"):
-                    self.graph.add_edge("#0", node)
+                frame_mapping_nodes.append(node)
+            if node != '#0' and (self.functions[node].name == "CLOSED_SHELL"
+                                 or
+                                 self.functions[node].name == "OPEN_SHELL"):
+                shell_nodes.append(node)
 
+        frame_mapped_shell_node = []
+        for s_node in shell_nodes:
+            for fm_node in frame_mapping_nodes:
+                if nx.has_path(self.graph, source=fm_node, target=s_node):
+                    frame_mapped_shell_node.append(s_node)
+                    break
+        shell_nodes_copy = shell_nodes.copy()
+        [shell_nodes.remove(node) for node in frame_mapped_shell_node]
+
+        for node in shell_nodes + frame_mapping_nodes:
+            self.graph.add_edge('#0', node)
 
         edges = list(
             nx.algorithms.traversal.breadth_first_search.bfs_edges(self.graph,
@@ -426,13 +487,9 @@ class Step:
             object_dict[instanciate_id] = volmdlr_object
 
         shells = []
-        for node in list(self.graph.nodes):
-            if node != '#0' and (self.functions[node].name == "CLOSED_SHELL" or
-                                 self.functions[node].name == "OPEN_SHELL"):
-            # if node != '#0' and (self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP'
-            #                      or self.functions[node].name == "CLOSED_SHELL"
-            #                      or self.functions[node].name == "OPEN_SHELL"):
-                shells.append(object_dict[node])
+        for node in shell_nodes_copy:
+            shells.append(object_dict[node])
+
         return volmdlr.core.VolumeModel(shells)
 
     def to_scatter_volume_model(self, name):
@@ -450,6 +507,17 @@ class Step:
                     arguments, object_dict)
                 points3d.append(volmdlr_object)
         return volmdlr.core.VolumeModel(points3d)
+
+    def plot_data(self):
+        if not self.upd_graph:
+            self.graph = self.create_graph()
+        graph = self.graph.copy()
+
+        graph.remove_nodes_from([stepfunction.id for stepfunction
+                                 in self.functions.values()
+                                 if stepfunction.name == 'CARTESIAN_POINT'
+                                 or stepfunction.name == 'DIRECTION'])
+        return [plot_data.graph.NetworkxGraph(graph=graph)]
 
 
 STEP_TO_VOLMDLR = {
@@ -537,7 +605,10 @@ STEP_TO_VOLMDLR = {
     'MANIFOLD_SOLID_BREP': None,
     'SHAPE_REPRESENTATION': None,
     'ADVANCED_BREP_SHAPE_REPRESENTATION': None,
-    'ITEM_DEFINED_TRANSFORMATION': None
+    'ITEM_DEFINED_TRANSFORMATION': None,
+    'SHAPE_REPRESENTATION_RELATIONSHIP': None,
+
+    'BOUNDED_CURVE, B_SPLINE_CURVE, B_SPLINE_CURVE_WITH_KNOTS, CURVE, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_CURVE, REPRESENTATION_ITEM': volmdlr.edges.BSplineCurve3D
 }
 
 VOLMDLR_TO_STEP = {}
