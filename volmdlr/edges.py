@@ -549,7 +549,7 @@ class BezierCurve2D(BSplineCurve2D):
                  name: str = ''):
         knotvector = utilities.generate_knot_vector(degree,
                                                     len(control_points))
-        knot_multiplicity = [1] * len(control_points)
+        knot_multiplicity = [1] * len(knotvector)
 
         BSplineCurve2D.__init__(self, degree, control_points,
                                 knot_multiplicity, knotvector,
@@ -2270,7 +2270,7 @@ class BezierCurve3D(BSplineCurve3D):
                  name: str = ''):
         knotvector = utilities.generate_knot_vector(degree,
                                                     len(control_points))
-        knot_multiplicity = [1] * len(control_points)
+        knot_multiplicity = [1] * len(knotvector)
 
         BSplineCurve3D.__init__(self, degree, control_points,
                                 knot_multiplicity, knotvector,
