@@ -450,10 +450,10 @@ class BSplineCurve2D(Edge):
     _non_serializable_attributes = ['curve']
 
     def __init__(self,
-                 degree:int,
-                 control_points:List[volmdlr.Point2D],
-                 knot_multiplicities:List[int],
-                 knots:List[float],
+                 degree: int,
+                 control_points: List[volmdlr.Point2D],
+                 knot_multiplicities: List[int],
+                 knots: List[float],
                  weights=None, periodic=False, name=''):
         self.control_points = control_points
         self.degree = degree
@@ -485,7 +485,6 @@ class BSplineCurve2D(Edge):
 
         Edge.__init__(self, start, end, name=name)
 
-        
     def length(self):
         # Approximately
         # length = 0
@@ -493,8 +492,6 @@ class BSplineCurve2D(Edge):
         #     length += (self.points[k] - self.points[k + 1]).norm()
         # return length
         return length_curve(self.curve)
-
-
 
     def point_at_abscissa(self, curvilinear_abscissa):
         adim_abs = curvilinear_abscissa/self.length()
@@ -544,6 +541,19 @@ class BSplineCurve2D(Edge):
         else:
             for p in self.control_points:
                 p.translation(offset, copy=False)
+
+
+class BezierCurve2D(BSplineCurve2D):
+
+    def __init__(self, degree: int, control_points: List[volmdlr.Point2D],
+                 name: str = ''):
+        knotvector = utilities.generate_knot_vector(degree,
+                                                    len(control_points))
+        knot_multiplicity = [1] * len(knotvector)
+
+        BSplineCurve2D.__init__(self, degree, control_points,
+                                knot_multiplicity, knotvector,
+                                None, False, name)
 
 
 class LineSegment2D(LineSegment):
@@ -2252,6 +2262,19 @@ class BSplineCurve3D(Edge):
 
     def polygon_points(self):
         return self.points
+
+
+class BezierCurve3D(BSplineCurve3D):
+
+    def __init__(self, degree: int, control_points: List[volmdlr.Point3D],
+                 name: str = ''):
+        knotvector = utilities.generate_knot_vector(degree,
+                                                    len(control_points))
+        knot_multiplicity = [1] * len(knotvector)
+
+        BSplineCurve3D.__init__(self, degree, control_points,
+                                knot_multiplicity, knotvector,
+                                None, False, name)
 
 
 class Arc3D(Edge):
