@@ -787,15 +787,16 @@ class Plane3D(Surface3D):
         return volmdlr.Line3D(point1, point2)
 
     def rotation(self, center, axis, angle, copy=True):
-        center_frame = self.frame.origin.copy()
-        center_frame.rotation(center, axis, angle, copy=False)
+        # center_frame = self.frame.origin.copy()
+        # center_frame.rotation(center, axis, angle, copy=False)
         if copy:
-            new_frame = self.frame.rotation(axis=axis, angle=angle, copy=True)
-            new_frame.origin = center_frame
+            new_frame = self.frame.rotation(center=center, axis=axis,
+                                            angle=angle, copy=True)
+            # new_frame.origin = center_frame
             return Plane3D(new_frame)
         else:
-            self.frame.rotation(axis, angle, copy=False)
-            self.frame.origin = center_frame
+            self.frame.rotation(center=center, axis=axis, angle=angle, copy=False)
+            # self.frame.origin = center_frame
 
     def translation(self, offset, copy=True):
         if copy:
@@ -1083,6 +1084,13 @@ class CylindricalSurface3D(Surface3D):
         else:
             self.frame.translation(offset, copy=False)
 
+    def rotation(self, center, axis, angle, copy=True):
+        if copy:
+            new_frame = self.frame.rotation(center=center, axis=axis,
+                                            angle=angle, copy=True)
+            return self.__class__(new_frame, self.radius)
+        else:
+            self.frame.rotation(center, axis, angle, copy=False)
 
 class ToroidalSurface3D(Surface3D):
     face_class = 'ToroidalFace3D'
@@ -1105,7 +1113,6 @@ class ToroidalSurface3D(Surface3D):
         self.R = R
         self.r = r
         self.name = name
-        self.frame = frame
 
     def _bounding_box(self):
         d = self.R + self.r
@@ -1219,11 +1226,11 @@ class ToroidalSurface3D(Surface3D):
         theta1, phi1 = linesegment2d.start
         theta2, phi2 = linesegment2d.end
         if theta1 == theta2:
-            if abs(phi1 - phi2) == volmdlr.TWO_PI:
+            if math.isclose(phi1 - phi2, volmdlr.TWO_PI, abs_tol=1e-9):
                 u = self.frame.u.rotation(self.frame.origin, self.frame.w,
-                                          theta1)
+                                          angle=theta1)
                 v = self.frame.u.rotation(self.frame.origin, self.frame.w,
-                                          theta1)
+                                          angle=theta1)
                 center = self.frame.origin+self.R*u
                 return [vme.FullArc3D(center=center,
                                                 start_end=center+self.r*u,
@@ -1234,7 +1241,7 @@ class ToroidalSurface3D(Surface3D):
                             self.point2d_to_3d(volmdlr.Point2D(theta1, 0.5*(phi1+phi2))),
                             self.point2d_to_3d(linesegment2d.end),
                 )]
-        elif phi1 == phi2:
+        elif math.isclose(phi1, phi2, abs_tol=1e-9):
             if abs(theta1 - theta2) == volmdlr.TWO_PI:
                 center = self.frame.origin+self.r*math.sin(phi1)*self.frame.w
                 start_end = center + self.frame.u*(self.r+self.R)
@@ -1267,6 +1274,13 @@ class ToroidalSurface3D(Surface3D):
         face = self.rectangular_cut(0, volmdlr.TWO_PI, 0, volmdlr.TWO_PI)
         return face.triangulation()
 
+    def translation(self, offset: volmdlr.Vector3D, copy=True):
+        if copy:
+            return self.__class__(self.frame.translation(offset, copy=True),
+                                  self.R,
+                                  self.r)
+        else:
+            self.frame.translation(offset, copy=False)
 
 class ConicalSurface3D(Surface3D):
     face_class = 'ConicalFace3D'
@@ -1405,6 +1419,19 @@ class ConicalSurface3D(Surface3D):
         else:
             raise NotImplementedError('Ellipse?')
 
+    def translation(self, offset: volmdlr.Vector3D, copy=True):
+        if copy:
+            return self.__class__(self.frame.translation(offset, copy=True),
+                                  self.semi_angle)
+        else:
+            self.frame.translation(offset, copy=False)
+
+    def rotation(self, center, axis, angle, copy=True):
+        if copy:
+            new_frame = self.frame.rotation(center=center, axis=axis, angle=angle, copy=True)
+            return self.__class__(new_frame, self.semi_angle)
+        else:
+            self.frame.rotation(center, axis, angle, copy=False)
 
 class SphericalSurface3D(Surface3D):
     face_class = 'SphericalFace3D'
@@ -1702,7 +1729,7 @@ class BSplineSurface3D(Surface3D):
         return script
 
     def rotation(self, center, axis, angle, copy=True):
-        new_control_points = [p.rotation(center, axis, angle, True) for p in
+        new_control_points = [p.rotation(center, axis, angle, copy=True) for p in
                               self.control_points]
         new_bsplinesurface3d = BSplineSurface3D(self.degree_u, self.degree_v,
                                                 new_control_points, self.nb_u,

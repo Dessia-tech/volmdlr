@@ -649,6 +649,32 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
                           axis,
                           self.angle)
 
+    def translation(self, offset: volmdlr.Vector3D, copy=True):
+        if copy:
+
+            return self.__class__(plane_origin=self.plane_origin.translation(offset, copy=True),
+                                  x=self.x, y=self.y, contour2d=self.contour2d,
+                                  axis_point=self.axis_point.translation(offset, copy=True),
+                                  axis=self.axis,
+                                  angle=self.angle)
+        else:
+            self.plane_origin.translation(offset, copy=False)
+            self.axis_point.translation(offset, copy=False)
+
+    def rotation(self, center, axis, angle, copy=True):
+        if copy:
+
+            return self.__class__(plane_origin=self.plane_origin.rotation(center, axis, angle, copy=True),
+                                  x=self.x.rotation(center=volmdlr.O3D, axis=axis, angle=angle, copy=True),
+                                  y=self.y.rotation(center=volmdlr.O3D, axis=axis, angle=angle, copy=True),
+                                  contour2d=self.contour2d,
+                                  axis_point=self.axis_point.rotation(center, axis, angle, copy=True),
+                                  axis=self.axis.rotation(volmdlr.O3D, axis, angle, copy=True),
+                                  angle=self.angle)
+        else:
+            self.plane_origin.translation(offset, copy=False)
+            self.axis_point.translation(offset, copy=False)
+
 class Cylinder(RevolvedProfile):
     """
     Creates a full cylinder with the position, the axis of revolution, the radius and the length.
@@ -896,7 +922,7 @@ class Sweep(volmdlr.faces.ClosedShell3D):
     """
 
     def __init__(self, contour2d:List[volmdlr.wires.Contour2D],
-                 wire3d:volmdlr.Wire3D, *,
+                 wire3d:volmdlr.wires.Wire3D, *,
                  color:Tuple[float, float, float]=None, alpha:float=1,
                  name:str=''):
         self.contour2d = contour2d
