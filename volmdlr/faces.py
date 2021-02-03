@@ -1282,6 +1282,14 @@ class ToroidalSurface3D(Surface3D):
         else:
             self.frame.translation(offset, copy=False)
 
+    def rotation(self, center, axis, angle, copy=True):
+        if copy:
+            new_frame = self.frame.rotation(center=center, axis=axis,
+                                            angle=angle, copy=True)
+            return self.__class__(new_frame, self.R, self.r)
+        else:
+            self.frame.rotation(center, axis, angle, copy=False)
+
 class ConicalSurface3D(Surface3D):
     face_class = 'ConicalFace3D'
     x_periodicity = volmdlr.TWO_PI
@@ -3538,7 +3546,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         if copy:
             new_faces = [face.rotation(center, axis, angle, copy=True) for face
                          in self.faces]
-            return self.__class__(new_faces, color=self.color, alpha=self.alpha, name=self.name)
+            return OpenShell3D(new_faces, color=self.color, alpha=self.alpha, name=self.name)
         else:
             for face in self.faces:
                 face.rotation(center, axis, angle, copy=False)
@@ -3548,7 +3556,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         if copy:
             new_faces = [face.translation(offset, copy=True) for face in
                          self.faces]
-            return self.__class__(new_faces, color=self.color, alpha=self.alpha, name=self.name)
+            return OpenShell3D(new_faces, color=self.color, alpha=self.alpha, name=self.name)
         else:
             for face in self.faces:
                 face.translation(offset, copy=False)
@@ -3787,6 +3795,39 @@ class ClosedShell3D(OpenShell3D):
     _non_serializable_attributes = ['bounding_box']
     _non_eq_attributes = ['name', 'color', 'alpha' 'bounding_box']
     STEP_FUNCTION = 'CLOSED_SHELL'
+
+    def rotation(self, center, axis, angle, copy=True):
+        if copy:
+            new_faces = [face.rotation(center, axis, angle, copy=True) for face
+                         in self.faces]
+            return ClosedShell3D(new_faces, color=self.color, alpha=self.alpha, name=self.name)
+        else:
+            for face in self.faces:
+                face.rotation(center, axis, angle, copy=False)
+            self.bounding_box = self._bounding_box()
+
+    def translation(self, offset, copy=True):
+        if copy:
+            new_faces = [face.translation(offset, copy=True) for face in
+                         self.faces]
+            return ClosedShell3D(new_faces, color=self.color, alpha=self.alpha, name=self.name)
+        else:
+            for face in self.faces:
+                face.translation(offset, copy=False)
+            self.bounding_box = self._bounding_box()
+
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        if copy:
+            new_faces = [face.frame_mapping(frame, side, copy=True) for face in
+                         self.faces]
+            return ClosedShell3D(new_faces, name=self.name)
+        else:
+            for face in self.faces:
+                face.frame_mapping(frame, side, copy=False)
+            self.bounding_box = self._bounding_box()
 
     def copy(self):
         new_faces = [face.copy() for face in self.faces]

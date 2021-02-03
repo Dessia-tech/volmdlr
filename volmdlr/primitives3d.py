@@ -663,17 +663,23 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
 
     def rotation(self, center, axis, angle, copy=True):
         if copy:
-
             return self.__class__(plane_origin=self.plane_origin.rotation(center, axis, angle, copy=True),
                                   x=self.x.rotation(center=volmdlr.O3D, axis=axis, angle=angle, copy=True),
                                   y=self.y.rotation(center=volmdlr.O3D, axis=axis, angle=angle, copy=True),
                                   contour2d=self.contour2d,
                                   axis_point=self.axis_point.rotation(center, axis, angle, copy=True),
-                                  axis=self.axis.rotation(volmdlr.O3D, axis, angle, copy=True),
+                                  axis=self.axis.rotation(center=volmdlr.O3D,
+                                                          axis=axis,
+                                                          angle=angle, copy=True),
                                   angle=self.angle)
         else:
-            self.plane_origin.translation(offset, copy=False)
-            self.axis_point.translation(offset, copy=False)
+            self.plane_origin.rotation(center, axis, angle, copy=False)
+            self.x.rotation(center=volmdlr.O3D, axis=axis, angle=angle,
+                            copy=False)
+            self.y.rotation(center=volmdlr.O3D, axis=axis, angle=angle,
+                            copy=False)
+            self.axis_point.rotation(center, axis, angle, copy=False)
+            self.axis.rotation(volmdlr.O3D, axis, angle, copy=False)
 
 class Cylinder(RevolvedProfile):
     """
