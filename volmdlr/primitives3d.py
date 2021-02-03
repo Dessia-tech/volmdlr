@@ -250,7 +250,7 @@ class Block(volmdlr.faces.ClosedShell3D):
             return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
         else:
             self.frame.rotation(center, axis, angle, copy=False)
-            volmdlr.faces.Shell3D.rotation(self, center, axis, angle, copy=False)
+            self.faces = self.shell_faces()
 
     def translation(self, offset, copy=True):
         if copy:
@@ -258,7 +258,7 @@ class Block(volmdlr.faces.ClosedShell3D):
             return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
         else:
             self.frame.translation(offset, copy=False)
-            volmdlr.faces.OpenShell3D.translation(self, offset, copy=False)
+            self.faces = self.shell_faces()
 
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -275,7 +275,7 @@ class Block(volmdlr.faces.ClosedShell3D):
                 return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
             else:
                 self.frame = new_frame
-                volmdlr.faces.ClosedShell3D.frame_mapping(self, frame, side, copy=False)
+                self.faces = self.shell_faces()
 
         if side == 'old':
             new_origin = frame.old_coordinates(self.frame.origin)
@@ -287,7 +287,7 @@ class Block(volmdlr.faces.ClosedShell3D):
                 return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
             else:
                 self.frame = new_frame
-                volmdlr.faces.ClosedShell3D.frame_mapping(self, frame, side, copy=False)
+                self.faces = self.shell_faces()
 
     def copy(self):
         new_origin = self.frame.origin.copy()
@@ -522,6 +522,34 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
                           self.inner_contours2d,
                           extrusion_vector)
 
+    def translation(self, offset: volmdlr.Vector3D, copy=True):
+        if copy:
+
+            return self.__class__(plane_origin=self.plane_origin.translation(offset, copy=True),
+                                  x=self.x, y=self.y,
+                                  outer_contour2d=self.outer_contour2d,
+                                  inner_contours2d=self.inner_contours2d,
+                                  extrusion_vector=self.extrusion_vector,
+                                  color=self.color, alpha=self.alpha)
+        else:
+            self.plane_origin.translation(offset, copy=False)
+            self.axis_point.translation(offset, copy=False)
+
+    def rotation(self, center, axis, angle, copy=True):
+        if copy:
+
+            return self.__class__(plane_origin=self.plane_origin.rotation(center, axis, angle, copy=True),
+                                  x=self.x.rotation(vm.O3D, axis, angle, copy=True),
+                                  y=self.y.rotation(vm.O3D, axis, angle, copy=False),
+                                  outer_contour2d=self.outer_contour2d,
+                                  inner_contours2d=self.inner_contours2d,
+                                  extrusion_vector=self.extrusion_vector.rotation(vm.O3D, axis, angle, copy=True),
+                                  color=self.color, alpha=self.alpha)
+        else:
+            self.plane_origin.rotation(center, axis, angle, copy=False)
+            self.x.rotation(vm.O3D, axis, angle, copy=False)
+            self.y.rotation(vm.O3D, axis, angle, copy=False)
+            self.extrusion_vector.rotation(vm.O3D, axis, angle, copy=False)
 
 class RevolvedProfile(volmdlr.faces.ClosedShell3D):
     """
@@ -656,7 +684,8 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
                                   x=self.x, y=self.y, contour2d=self.contour2d,
                                   axis_point=self.axis_point.translation(offset, copy=True),
                                   axis=self.axis,
-                                  angle=self.angle)
+                                  angle=self.angle,
+                                  color=self.color, alpha=self.alpha)
         else:
             self.plane_origin.translation(offset, copy=False)
             self.axis_point.translation(offset, copy=False)
@@ -671,7 +700,8 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
                                   axis=self.axis.rotation(center=volmdlr.O3D,
                                                           axis=axis,
                                                           angle=angle, copy=True),
-                                  angle=self.angle)
+                                  angle=self.angle,
+                                  color=self.color, alpha=self.alpha)
         else:
             self.plane_origin.rotation(center, axis, angle, copy=False)
             self.x.rotation(center=volmdlr.O3D, axis=axis, angle=angle,
@@ -814,7 +844,27 @@ class Cylinder(RevolvedProfile):
             self.axis = axis
             Cylinder.__init__(self, self.position, self.axis, self.radius, 
                               self.length, color=self.color, alpha=self.alpha)
-            
+
+
+    def translation(self, offset: volmdlr.Vector3D, copy=True):
+        if copy:
+
+            return self.__class__(position=self.position.translation(offset, copy=True),
+                                  axis=self.axis,
+                                  length=self.length, radius=self.radius)
+        else:
+            self.position.translation(offset, copy=False)
+
+    def rotation(self, center, axis, angle, copy=True):
+        if copy:
+            return self.__class__(position=self.position.translation(offset, copy=True),
+                                  axis=self.axis.rotation(volmdlr.O3D, axis,
+                                                          angle,copy=True),
+                                  length=self.length, radius=self.radius)
+        else:
+            self.position.rotation(center, axis, angle, copy=False)
+            self.axis.rotation(volmdlr.O3D, axis, angle, copy=False)
+
     def copy(self):
         new_position = self.position.copy()
         new_axis = self.axis.copy()
@@ -921,6 +971,29 @@ class HollowCylinder(Cylinder):
             self.position.frame_mapping(frame, side, copy)
             self.axis = axis
 
+    def translation(self, offset: volmdlr.Vector3D, copy=True):
+        if copy:
+
+            return self.__class__(position=self.position.translation(offset, copy=True),
+                                  axis=self.axis,
+                                  length=self.length,
+                                  inner_radius=self.inner_radius,
+                                  outer_radius=self.outer_radius)
+        else:
+            self.position.translation(offset, copy=False)
+
+    def rotation(self, center, axis, angle, copy=True):
+        if copy:
+            return self.__class__(position=self.position.translation(offset,
+                                                                     copy=True),
+                                  axis=self.axis.rotation(volmdlr.O3D, axis,
+                                                          angle,copy=True),
+                                  length=self.length,
+                                  inner_radius=self.inner_radius,
+                                  outer_radius=self.outer_radius)
+        else:
+            self.position.rotation(center, axis, angle, copy=False)
+            self.axis.rotation(volmdlr.O3D, axis, angle, copy=False)
 
 class Sweep(volmdlr.faces.ClosedShell3D):
     """
