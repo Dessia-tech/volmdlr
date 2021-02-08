@@ -153,6 +153,9 @@ class Block(volmdlr.faces.ClosedShell3D):
     # def __hash__(self):
     #     return hash(self.frame)
 
+    def volume(self):
+        return self.size[0]*self.size[1]*self.size[2]
+
     @classmethod
     def from_bounding_box(cls, bounding_box):
         bb = bounding_box
@@ -258,6 +261,30 @@ class Block(volmdlr.faces.ClosedShell3D):
         else:
             self.frame.translation(offset, copy=False)
             volmdlr.faces.OpenShell3D.translation(self, offset, copy=False)
+
+    def cut_by_orthogonal_plane(self, plane_3d: volmdlr.faces.Plane3D):
+        bb = self.bounding_box
+        if plane_3d.frame.w.dot(volmdlr.Vector3D(1, 0, 0)) == 1:
+            pass
+        elif plane_3d.frame.w.dot(volmdlr.Vector3D(0, 1, 0)) == 1:
+            pass
+        elif plane_3d.frame.w.dot(volmdlr.Vector3D(0, 0, 1)) == 1:
+            pass
+        else:
+            raise KeyError('plane is not orthogonal either with x, y or z')
+
+        dir1 = plane_3d.frame.u
+        dir2 = plane_3d.frame.v
+        center2d = volmdlr.Point2D(bb.center.dot(dir1), bb.center.dot(dir2))
+        point_min = volmdlr.Point3D(bb.xmin, bb.ymin, bb.zmin)
+        point_max = volmdlr.Point3D(bb.xmax, bb.ymax, bb.zmax)
+        points = [-center2d + volmdlr.Point2D(point_min.dot(dir1), point_min.dot(dir2)),
+                  -center2d + volmdlr.Point2D(point_min.dot(dir1), point_max.dot(dir2)),
+                  -center2d + volmdlr.Point2D(point_max.dot(dir1), point_max.dot(dir2)),
+                  -center2d + volmdlr.Point2D(point_max.dot(dir1), point_min.dot(dir2))]
+        contour_2d = volmdlr.faces.Surface2D(volmdlr.wires.ClosedPolygon2D(points), [])
+
+        return volmdlr.faces.PlaneFace3D(plane_3d, contour_2d)
 
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -490,7 +517,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
         """
         side = 'old' or 'new'
         """
-        basis = frame.Basis()
+        basis = frame.basis()
         if side == 'old':
             extrusion_vector = basis.old_coordinates(self.extrusion_vector)
             x = basis.old_coordinates(self.x)
@@ -510,7 +537,8 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
                                    self.inner_contours2d,
                                    extrusion_vector)
         else:
-            self.__init__(self.plane_origin.frame_mapping(frame, side, copy),
+            self.plane_origin.frame_mapping(frame, side, copy)
+            self.__init__(self.plane_origin,
                           x,
                           y,
                           self.outer_contour2d,

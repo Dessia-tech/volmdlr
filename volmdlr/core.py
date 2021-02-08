@@ -615,6 +615,12 @@ class BoundingBox(dc.DessiaObject):
         zmax = max([pt.z for pt in points])
         return cls(xmin, xmax, ymin, ymax, zmin, zmax)
 
+    def to_frame(self):
+        x = volmdlr.Vector3D((self.xmax - self.xmin), 0, 0)
+        y = volmdlr.Vector3D(0, (self.ymax - self.ymin), 0)
+        z = volmdlr.Vector3D(0, 0, (self.zmax - self.zmin))
+        return volmdlr.Frame3D(self.center, x, y, z)
+
     def volume(self):
         return (self.xmax - self.xmin) * (self.ymax - self.ymin) * (
                     self.zmax - self.zmin)
