@@ -2,10 +2,10 @@ import volmdlr as vm
 import volmdlr.edges as vme
 import matplotlib.pyplot as plt
 
-degree = 2
+degree = 3
 points = [vm.Point2D(0, 0),
           vm.Point2D(1, 1),
-          vm.Point2D(2, 1),
+          vm.Point2D(2, 0),
           vm.Point2D(3, 0)]
 bezier_curve2d = vme.BezierCurve2D(degree=degree,
                                    control_points=points,
