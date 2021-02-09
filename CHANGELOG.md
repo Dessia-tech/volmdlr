@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Frame3D rotation takes also into account origin
+
 ## [v0.2.4]
 ### Added
 - handle spherical surfaces
