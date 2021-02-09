@@ -46,14 +46,13 @@ class Surface2D(volmdlr.core.Primitive2D):
         return True
 
     def triangulation(self, min_x_density=None, min_y_density=None):
+
         if self.area() == 0.:
             return volmdlr.display.DisplayMesh2D([], triangles=[])
 
         outer_polygon = self.outer_contour.to_polygon(angle_resolution=10)
 
-        # ax2 = outer_polygon.plot(color='r', point_numbering=True)
         points = [volmdlr.display.Node2D(*p) for p in outer_polygon.points]
-        # outer_polygon.plot(plot_points=True, point_numbering=True)
         vertices = [(p.x, p.y) for p in points]
         n = len(outer_polygon.points)
         segments = [(i, i + 1) for i in range(n - 1)]
@@ -84,7 +83,6 @@ class Surface2D(volmdlr.core.Primitive2D):
                }
         if holes:
             tri['holes'] = npy.array(holes).reshape((-1, 2))
-        # self.plot(equal_aspect=False)
         t = triangle.triangulate(tri, 'p')
         triangles = t['triangles'].tolist()
         np = t['vertices'].shape[0]
@@ -93,6 +91,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         return volmdlr.display.DisplayMesh2D(points, triangles=triangles,
                                              edges=None)
+        return volmdlr.display.DisplayMesh2D([], [])
 
     def split_by_lines(self, lines):
         cutted_surfaces = []
@@ -625,6 +624,19 @@ class Surface3D(dc.DessiaObject):
         return [vme.LineSegment2D(self.point3d_to_2d(linesegment3d.start),
                                   self.point3d_to_2d(linesegment3d.end))]
 
+    def bsplinecurve3d_to_2d(self, bspline_curve3d):
+        """
+        Is this right?
+        """
+        control_points = [self.point3d_to_2d(p) \
+                          for p in bspline_curve3d.control_points]
+        return [vme.BSplineCurve2D(
+                    bspline_curve3d.degree,
+                    control_points=control_points,
+                    knot_multiplicities=bspline_curve3d.knot_multiplicities,
+                    knots=bspline_curve3d.knots,
+                    weights=bspline_curve3d.weights,
+                    periodic=bspline_curve3d.periodic)]
 
 class Plane3D(Surface3D):
     face_class = 'PlaneFace3D'
@@ -1370,9 +1382,9 @@ class ConicalSurface3D(Surface3D):
     #     return volmdlr.Point2D(theta, z+0.003)
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D):
-        _, _, z = self.frame.new_coordinates(point3d)
-        x, y = point3d.plane_projection2d(self.frame.origin, self.frame.u,
-                                          self.frame.v)
+        x, y, z = self.frame.new_coordinates(point3d)
+        # x, y = point3d.plane_projection2d(self.frame.origin, self.frame.u,
+        #                                   self.frame.v)
         theta = math.atan2(y, x)
         return volmdlr.Point2D(theta, z)
 

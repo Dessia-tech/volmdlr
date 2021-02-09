@@ -296,6 +296,7 @@ class Contour2D(Contour, Wire2D):
         points_polygon = []
         points_straight_line_contour = []
         for primitive in self.primitives:
+            # TODO: change this!!!
             if primitive.__class__.__name__ == 'LineSegment2D':
                 points_polygon.append(primitive.start)
                 points_straight_line_contour.append(primitive.start)
@@ -321,8 +322,8 @@ class Contour2D(Contour, Wire2D):
                         points_polygon.append(prim.end)
                         arcs.append(prim)
             elif primitive.__class__.__name__ == 'BSplineCurve2D':
-                points_polygon.extend(primitive.control_points)
-                points_straight_line_contour.extend(primitive.control_points)
+                points_polygon.extend(primitive.polygon_points()[:-1])
+                points_straight_line_contour.extend(primitive.polygon_points()[:-1])
             else:
                 raise NotImplementedError(
                     'primitive of type {} is not handled'.format(primitive))
