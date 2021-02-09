@@ -749,7 +749,8 @@ class Vector3D(Vector):
     def point_distance(self, point2:'Vector3D') -> float:
         return (self-point2).norm()
 
-    def rotation(self, center:'Point3D', axis:'Vector3D', angle:float, copy:bool=True):
+    def rotation(self, center:'Point3D', axis:'Vector3D', angle:float,
+                 copy:bool=True):
         """
         rotation of angle around axis.
         Used Rodrigues Formula:
@@ -1616,22 +1617,30 @@ class Frame3D(Basis3D):
         """ You have to give coordinates in the local landmark """
         return Basis3D.old_coordinates(self, vector) + self.origin
 
-    def rotation(self, axis, angle, copy=True):
+    def rotation(self, center, axis, angle, copy=True):
+        """
+        Rotate the center as a point and vectors as directions (calling Basis)
+        """
         new_base = Basis3D.rotation(self, axis, angle, copy=True)
+        new_origin = self.origin.rotation(center, axis, angle, copy=True)
         if copy:
-            new_frame = Frame3D(self.origin.copy(), new_base.u, new_base.v, new_base.w, self.name)
-            return new_frame
+            return Frame3D(new_origin,
+                           new_base.u, new_base.v, new_base.w,
+                           self.name)
+        self.origin = new_origin
         self.u = new_base.u
         self.v = new_base.v
         self.w = new_base.w
 
     def translation(self, offset, copy=True):
         if copy:
-            return Frame3D(self.origin.translation(offset, copy=True), self.u, self.v, self.w, self.name)
+            return Frame3D(self.origin.translation(offset, copy=True),
+                           self.u, self.v, self.w, self.name)
         self.origin.translation(offset, copy=False)
 
     def copy(self):
-        return Frame3D(self.origin.copy(), self.u.copy(), self.v.copy(), self.w.copy())
+        return Frame3D(self.origin.copy(),
+                       self.u.copy(), self.v.copy(), self.w.copy())
 
     def to_step(self, current_id):
 
