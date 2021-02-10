@@ -1185,7 +1185,7 @@ class ToroidalSurface3D(Surface3D):
             .format(current_id, self.name, frame_id,
                     round(1000 * self.R, 3),
                     round(1000 * self.r, 3))
-        return content, current_id
+        return content, [current_id]
 
     def frame_mapping(self, frame, side, copy=True):
         basis = frame.Basis()
@@ -1970,6 +1970,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def to_step_without_splitting(self, current_id):
         content, surface3d_id = self.surface3d.to_step(current_id)
+        print(self.surface3d, surface3d_id)
         current_id = surface3d_id + 1
 
         outer_contour_content, outer_contour_id = self.outer_contour3d.to_step(
@@ -2397,7 +2398,7 @@ class CylindricalFace3D(Face3D):
     def triangulation_lines(self, angle_resolution=5):
         theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle()
         delta_theta = theta_max - theta_min
-        nlines = int(delta_theta * angle_resolution)
+        nlines = math.ceil(delta_theta * angle_resolution)
         lines = []
         for i in range(nlines):
             theta = theta_min + (i+1)/(nlines+1)*delta_theta
@@ -3531,6 +3532,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         for face in self.faces:
             face_content, face_sub_ids = face.to_step(current_id)
             step_content += face_content
+            print(face)
             face_ids.extend(face_sub_ids)
             current_id = max(face_sub_ids) + 1
 

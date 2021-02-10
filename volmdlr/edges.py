@@ -2018,12 +2018,12 @@ class LineSegment3D(LineSegment):
         # outer_contour = Polygon2D([O2D, Point2D((l1, 0.)),
         #                            Point2D((l1, l2)), Point2D((0., l2))])
         plane = volmdlr.faces.Plane3D(volmdlr.Frame3D(self.start, u, v, w))
-        return plane.rectangular_cut(0, l1, 0, l2)
+        return [plane.rectangular_cut(0, l1, 0, l2)]
 
     def revolution(self, axis_point, axis, angle):
         axis_line3d = Line3D(axis_point, axis_point + axis)
         if axis_line3d.point_belongs(self.start) and axis_line3d.point_belongs(self.end):
-            return None
+            return []
 
         p1_proj, _ = axis_line3d.point_projection(self.start)
         p2_proj, _ = axis_line3d.point_projection(self.end)
@@ -2036,7 +2036,7 @@ class LineSegment3D(LineSegment):
             u = (self.end - p2_proj)  # Unit vector from p1_proj to p1
             u.normalize()
         else:
-            return None
+            return []
         if u.is_colinear_to(self.direction_vector()):
             # Planar face
             v = axis.cross(u)
@@ -2081,10 +2081,10 @@ class LineSegment3D(LineSegment):
                                                                arc2, line2])
 
 
-            return volmdlr.faces.PlaneFace3D(surface,
-                                             volmdlr.faces.Surface2D(
+            return [volmdlr.faces.PlaneFace3D(surface,
+                                              volmdlr.faces.Surface2D(
                                                  outer_contour2d,
-                                                 inner_contours2d))
+                                                 inner_contours2d))]
 
         elif not math.isclose(d1, d2, abs_tol=1e-9):
             # Conical
@@ -2107,13 +2107,13 @@ class LineSegment3D(LineSegment):
                                                      semi_angle)
             z1 = d1 / math.tan(semi_angle)
             z2 = d2 / math.tan(semi_angle)
-            return surface.rectangular_cut(0, angle2, z1, z2)
+            return [surface.rectangular_cut(0, angle2, z1, z2)]
         else:
             # Cylindrical face
             v = axis.cross(u)
             surface = volmdlr.faces.CylindricalSurface3D(volmdlr.Frame3D(p1_proj, u, v, axis), d1)
-            return surface.rectangular_cut(0, angle,
-                                           0, (self.end - self.start).dot(axis))
+            return [surface.rectangular_cut(0, angle,
+                                            0, (self.end - self.start).dot(axis))]
 
     def to_step(self, current_id, surface_id=None):
         line = self.to_line()
@@ -2761,9 +2761,9 @@ class Arc3D(Edge):
                                                                           w),
                                                           self.radius
                                                           )
-            return cylinder.rectangular_cut(arc2d.angle1,
+            return [cylinder.rectangular_cut(arc2d.angle1,
                                             arc2d.angle2,
-                                            0, extrusion_vector.norm())
+                                            0, extrusion_vector.norm())]
         else:
             raise NotImplementedError('Elliptic faces not handled: dot={}'.format(
                 self.normal.dot(extrusion_vector)
@@ -2792,8 +2792,8 @@ class Arc3D(Edge):
             surface = volmdlr.faces.SphericalSurface3D(
                 volmdlr.Frame3D(self.center, u, v, axis), self.radius)
             surface.plot()
-            return surface.rectangular_cut(0, angle,
-                                           arc2d.angle1, arc2d.angle2)
+            return [surface.rectangular_cut(0, angle,
+                                           arc2d.angle1, arc2d.angle2)]
 
         else:
             # Toroidal
@@ -2808,8 +2808,8 @@ class Arc3D(Edge):
             surface = volmdlr.faces.ToroidalSurface3D(volmdlr.Frame3D(tore_center, u, v, axis), R,
                                                       self.radius)
             arc2d = self.to_2d(tore_center, u, axis)
-            return surface.rectangular_cut(0, angle,
-                                           arc2d.angle1, arc2d.angle2)
+            return [surface.rectangular_cut(0, angle,
+                                           arc2d.angle1, arc2d.angle2)]
 
     def to_step(self, current_id):
         if self.angle >= math.pi:

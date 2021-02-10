@@ -428,12 +428,13 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
                                                )
 
         upper_face = lower_face.translation(self.extrusion_vector)
-        lateral_faces = [p.extrusion(self.extrusion_vector)
-                         for p in self.outer_contour3d.primitives]
-
+        lateral_faces = []
+        for p in self.outer_contour3d.primitives:
+            lateral_faces.extend(p.extrusion(self.extrusion_vector))
+         
         for inner_contour in self.inner_contours3d:
-            lateral_faces.extend([p.extrusion(self.extrusion_vector)
-                                  for p in inner_contour.primitives])
+            for p in inner_contour.primitives:
+                lateral_faces.extend(p.extrusion(self.extrusion_vector))
 
         return [lower_face]+[upper_face]+lateral_faces
 
@@ -582,10 +583,8 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         faces = []
                         
         for edge in self.contour3d.primitives:
-            face = edge.revolution(self.axis_point,
-                                         self.axis, self.angle)
-            if face:# Can be None
-                faces.append(face)
+            faces.extend(edge.revolution(self.axis_point,
+                                         self.axis, self.angle))
 
         if not math.isclose(self.angle, volmdlr.TWO_PI, abs_tol=1e-9):
             # Adding contours face to close
