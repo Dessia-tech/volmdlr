@@ -451,24 +451,6 @@ class Surface3D(dc.DessiaObject):
     Abstract class
     """
 
-    # def face_from_contours3d(self, contours3d):
-    #     contours2d = []
-    #     max_area = 0.
-    #
-    #     for ic, contour3d in contours3d:
-    #         contour2d = self.contour3d_to_2d(contour3d)
-    #         contour_area = contour2d.Area()
-    #         if contour_area > max_area:
-    #             max_area = contour_area
-    #             outer_contour_index = ic
-    #         contours2d.append(contour2d)
-    #
-    #     outer_contour = contour2d[outer_contour_index]
-    #     del contour2d[outer_contour_index]
-    #     surface2d = (outer_contour, contours2d)
-    #
-    #     self.SURFACE_TO_FACE[self.__class__](self, surface2d)
-
     def face_from_contours3d(self,
                              contours3d: List[volmdlr.wires.Contour3D],
                              name: str = ''):
@@ -1185,7 +1167,7 @@ class ToroidalSurface3D(Surface3D):
             .format(current_id, self.name, frame_id,
                     round(1000 * self.R, 3),
                     round(1000 * self.r, 3))
-        return content, [current_id]
+        return content, current_id
 
     def frame_mapping(self, frame, side, copy=True):
         basis = frame.Basis()
@@ -1972,8 +1954,8 @@ class Face3D(volmdlr.core.Primitive3D):
             return self.to_step_without_splitting(current_id)
 
     def to_step_without_splitting(self, current_id):
+        
         content, surface3d_id = self.surface3d.to_step(current_id)
-        print(self.surface3d, surface3d_id)
         current_id = surface3d_id + 1
 
         outer_contour_content, outer_contour_id = self.outer_contour3d.to_step(
@@ -3535,7 +3517,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         for face in self.faces:
             face_content, face_sub_ids = face.to_step(current_id)
             step_content += face_content
-            print(face)
             face_ids.extend(face_sub_ids)
             current_id = max(face_sub_ids) + 1
 
