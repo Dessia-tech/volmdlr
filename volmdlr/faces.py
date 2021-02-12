@@ -1959,11 +1959,14 @@ class Face3D(volmdlr.core.Primitive3D):
             face_ids = []
             for subsurface2d in subsurfaces2d:
                 face = self.__class__(self.surface3d, subsurface2d)
-                face_content, face_id = face.to_step_without_splitting(
-                    current_id)
-                face_ids.append(face_id[0])
-                content += face_content
-                current_id = face_id[0] + 1
+                try:
+                    face_content, face_id = face.to_step_without_splitting(
+                        current_id)
+                    face_ids.append(face_id[0])
+                    content += face_content
+                    current_id = face_id[0] + 1
+                except NotImplementedError:
+                    print('warning a face of class {} has not been exported due to NotImplementedError'.format(face.__class__.__name__))
             return content, face_ids
         else:
             return self.to_step_without_splitting(current_id)
