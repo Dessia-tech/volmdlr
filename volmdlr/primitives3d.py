@@ -1068,9 +1068,9 @@ class Sphere(RevolvedProfile):
 
 class Measure3D(volmdlr.edges.Line3D):
     def __init__(self, point1, point2, color=(1, 0, 0)):
-        self.points = [point1, point2]
+        self.point1, self.point2 = point1, point2
         self.color = color
-        self.distance = volmdlr.Vector3D(self.points[0] - self.points[1]).norm()
+        self.distance = (point1 - point2).norm()
         self.bounding_box = self._bounding_box()
 
     # !!! no eq defined!

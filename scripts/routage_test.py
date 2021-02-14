@@ -11,7 +11,7 @@ import volmdlr.primitives3d as p3d
 
 
 ### BLOCK DE DEPART ###
-origin = vm.Point3D(-2,1,0)
+origin = vm.Point3D(0, 0 ,0)
 u = vm.Vector3D(0.2,0,0)
 v = vm.Vector3D(0,0.2,0)
 w = vm.Vector3D(0,0,0.2)
@@ -20,7 +20,7 @@ block_depart = p3d.Block(frame, name='test', color=(0,0.5,0))
 
 
 ### BLOCK D'ARIVEE ###
-origin = vm.Point3D(2,-1,0)
+origin = vm.Point3D(1, 1, 1)
 u = vm.Vector3D(0.2,0,0)
 v = vm.Vector3D(0,0.2,0)
 w = vm.Vector3D(0,0,0.2)
@@ -29,14 +29,14 @@ block_arrivee = p3d.Block(frame, name='test',  color=(0,0,0.5))
 
 
 ### BLOCKS OBSTACLES ###
-origin = vm.Point3D(-0.5,-0.4,0)
-u = vm.Vector3D(1,0,0)
-v = vm.Vector3D(0,0.9,0)
-w = vm.Vector3D(0,0,0.6)
+origin = vm.Point3D(0.51, 0.51, 0.53)
+u = vm.Vector3D(0.2,0,0)
+v = vm.Vector3D(0,0.2,0)
+w = vm.Vector3D(0,0,0.2)
 frame = vm.Frame3D(origin, u, v, w)
 block_obstacle1 = p3d.Block(frame, name='test',  color=(0.5,0,0))
 
-origin = vm.Point3D(0.7,-0.5,0)
+origin = vm.Point3D(-0.3,0.4,0)
 u = vm.Vector3D(3,0,0)
 v = vm.Vector3D(0,0.5,0)
 w = vm.Vector3D(0,0,2)
@@ -45,14 +45,14 @@ block_obstacle2 = p3d.Block(frame, name='test',  color=(0.5,0,0))
 
 
 ### POINT DE DEPART ET D'ARRIVEE DU ROUTAGE
-x1 = block_depart.frame.origin[0] + block_depart.frame.u[0]/2
-y1 = block_depart.frame.origin[1] - 0.8
+x1 = block_depart.frame.origin[0]
+y1 = block_depart.frame.origin[1]
 z1 = block_depart.frame.origin[2]
 point_depart = vm.Point3D(x1, y1, z1)
 
-x2 = block_arrivee.frame.origin[0] - block_arrivee.frame.u[0]/2
+x2 = block_arrivee.frame.origin[0]
 y2 = block_arrivee.frame.origin[1] 
-z2 = block_arrivee.frame.origin[2]+0.2
+z2 = block_arrivee.frame.origin[2]
 point_arrivee = vm.Point3D(x2, y2, z2)
 
 
@@ -65,7 +65,8 @@ volumemodel = vm.core.VolumeModel(primitives, 'test')
 
 
 ### CREATION DU ROUTAGE ###
-routage = vm.Routing(point_depart, point_arrivee, volumemodel=volumemodel)
+import layout_3d as l3d
+routage = l3d.core.Routing(point_depart, point_arrivee, volumemodel=vm.core.VolumeModel([block_obstacle1, block_obstacle2]))
 ### ALGORITHME 1 ###
 #good_mesures, bad_mesures = routage.straight_line()
 ### AJOUT DANS LES PRIMITIVES POUR LE BABYLONSHOW ###
@@ -80,4 +81,4 @@ mesures = routage.straight_line2()
 ### AJOUT DANS LES PRIMITIVES POUR LE BABYLONSHOW ###
 volumemodel.primitives.extend(mesures)
 
-volumemodel.BabylonShow()
+volumemodel.babylonjs()
