@@ -15,6 +15,7 @@ import volmdlr.primitives
 import volmdlr.faces
 from typing import Tuple, List, Dict
 
+# import dessia_common.typings as dct
 import matplotlib.pyplot as plt
 
 
@@ -252,7 +253,7 @@ class Block(volmdlr.faces.ClosedShell3D):
             return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
         else:
             self.frame.rotation(center, axis, angle, copy=False)
-            volmdlr.faces.Shell3D.rotation(self, center, axis, angle, copy=False)
+            self.faces = self.shell_faces()
 
     def translation(self, offset, copy=True):
         if copy:
@@ -260,7 +261,7 @@ class Block(volmdlr.faces.ClosedShell3D):
             return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
         else:
             self.frame.translation(offset, copy=False)
-            volmdlr.faces.OpenShell3D.translation(self, offset, copy=False)
+            self.faces = self.shell_faces()
 
     def cut_by_orthogonal_plane(self, plane_3d: volmdlr.faces.Plane3D):
         bb = self.bounding_box
@@ -301,7 +302,7 @@ class Block(volmdlr.faces.ClosedShell3D):
                 return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
             else:
                 self.frame = new_frame
-                volmdlr.faces.ClosedShell3D.frame_mapping(self, frame, side, copy=False)
+                self.faces = self.shell_faces()
 
         if side == 'old':
             new_origin = frame.old_coordinates(self.frame.origin)
@@ -313,7 +314,7 @@ class Block(volmdlr.faces.ClosedShell3D):
                 return Block(new_frame, color=self.color, alpha=self.alpha, name=self.name)
             else:
                 self.frame = new_frame
-                volmdlr.faces.ClosedShell3D.frame_mapping(self, frame, side, copy=False)
+                self.faces = self.shell_faces()
 
     def copy(self):
         new_origin = self.frame.origin.copy()
@@ -408,8 +409,12 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     
     """
     _non_serializable_attributes  = ['faces', 'inner_contours3d', 'outer_contour3d']
-    def __init__(self, plane_origin, x, y, outer_contour2d, inner_contours2d,
-                 extrusion_vector, color=None, alpha=1., name=''):
+    def __init__(self, plane_origin:volmdlr.Point3D,
+                 x:volmdlr.Vector3D, y:volmdlr.Vector3D,
+                 outer_contour2d:volmdlr.wires.Contour2D,
+                 inner_contours2d:List[volmdlr.wires.Contour2D],
+                 extrusion_vector:volmdlr.Vector3D,
+                 color:Tuple[float, float, float]=None, alpha=1., name=''):
         self.plane_origin = plane_origin
         
         self.outer_contour2d = outer_contour2d
@@ -545,6 +550,34 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
                           self.inner_contours2d,
                           extrusion_vector)
 
+    def translation(self, offset: volmdlr.Vector3D, copy=True):
+        if copy:
+
+            return self.__class__(plane_origin=self.plane_origin.translation(offset, copy=True),
+                                  x=self.x, y=self.y,
+                                  outer_contour2d=self.outer_contour2d,
+                                  inner_contours2d=self.inner_contours2d,
+                                  extrusion_vector=self.extrusion_vector,
+                                  color=self.color, alpha=self.alpha)
+        else:
+            self.plane_origin.translation(offset, copy=False)
+            self.axis_point.translation(offset, copy=False)
+
+    def rotation(self, center, axis, angle, copy=True):
+        if copy:
+
+            return self.__class__(plane_origin=self.plane_origin.rotation(center, axis, angle, copy=True),
+                                  x=self.x.rotation(vm.O3D, axis, angle, copy=True),
+                                  y=self.y.rotation(vm.O3D, axis, angle, copy=False),
+                                  outer_contour2d=self.outer_contour2d,
+                                  inner_contours2d=self.inner_contours2d,
+                                  extrusion_vector=self.extrusion_vector.rotation(vm.O3D, axis, angle, copy=True),
+                                  color=self.color, alpha=self.alpha)
+        else:
+            self.plane_origin.rotation(center, axis, angle, copy=False)
+            self.x.rotation(vm.O3D, axis, angle, copy=False)
+            self.y.rotation(vm.O3D, axis, angle, copy=False)
+            self.extrusion_vector.rotation(vm.O3D, axis, angle, copy=False)
 
 class RevolvedProfile(volmdlr.faces.ClosedShell3D):
     """
@@ -552,8 +585,13 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
     """
     _non_serializable_attributes  = ['faces', 'contour3D']
 
-    def __init__(self, plane_origin, x, y, contour2d, axis_point,
-                 axis, angle=2*math.pi, *, color=None, alpha=1, name=''):
+    def __init__(self, plane_origin:volmdlr.Point3D,
+                 x:volmdlr.Vector3D, y:volmdlr.Vector3D,
+                 contour2d:volmdlr.wires.Contour2D,
+                 axis_point:volmdlr.Point3D, axis:volmdlr.Vector3D,
+                 angle:float=2*math.pi, *,
+                 color:Tuple[float, float, float]=None, alpha:float=1,
+                 name:str=''):
 
         self.contour2d = contour2d
         self.axis_point = axis_point
@@ -667,11 +705,49 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
                           axis,
                           self.angle)
 
+    def translation(self, offset: volmdlr.Vector3D, copy=True):
+        if copy:
+
+            return self.__class__(plane_origin=self.plane_origin.translation(offset, copy=True),
+                                  x=self.x, y=self.y, contour2d=self.contour2d,
+                                  axis_point=self.axis_point.translation(offset, copy=True),
+                                  axis=self.axis,
+                                  angle=self.angle,
+                                  color=self.color, alpha=self.alpha)
+        else:
+            self.plane_origin.translation(offset, copy=False)
+            self.axis_point.translation(offset, copy=False)
+
+    def rotation(self, center, axis, angle, copy=True):
+        if copy:
+            return self.__class__(plane_origin=self.plane_origin.rotation(center, axis, angle, copy=True),
+                                  x=self.x.rotation(center=volmdlr.O3D, axis=axis, angle=angle, copy=True),
+                                  y=self.y.rotation(center=volmdlr.O3D, axis=axis, angle=angle, copy=True),
+                                  contour2d=self.contour2d,
+                                  axis_point=self.axis_point.rotation(center, axis, angle, copy=True),
+                                  axis=self.axis.rotation(center=volmdlr.O3D,
+                                                          axis=axis,
+                                                          angle=angle, copy=True),
+                                  angle=self.angle,
+                                  color=self.color, alpha=self.alpha)
+        else:
+            self.plane_origin.rotation(center, axis, angle, copy=False)
+            self.x.rotation(center=volmdlr.O3D, axis=axis, angle=angle,
+                            copy=False)
+            self.y.rotation(center=volmdlr.O3D, axis=axis, angle=angle,
+                            copy=False)
+            self.axis_point.rotation(center, axis, angle, copy=False)
+            self.axis.rotation(volmdlr.O3D, axis, angle, copy=False)
+
 class Cylinder(RevolvedProfile):
     """
     Creates a full cylinder with the position, the axis of revolution, the radius and the length.
     """
-    def __init__(self, position, axis, radius, length, color=None, alpha=1., name=''):
+    def __init__(self, position:volmdlr.Point3D, axis:volmdlr.Vector3D,
+                 radius:float, length:float,
+                 color:Tuple[float, float, float]=None, alpha:float=1.,
+                 name:str=''):
+
         self.position = position
         axis.normalize()
         self.axis = axis
@@ -796,7 +872,27 @@ class Cylinder(RevolvedProfile):
             self.axis = axis
             Cylinder.__init__(self, self.position, self.axis, self.radius, 
                               self.length, color=self.color, alpha=self.alpha)
-            
+
+
+    def translation(self, offset: volmdlr.Vector3D, copy=True):
+        if copy:
+
+            return self.__class__(position=self.position.translation(offset, copy=True),
+                                  axis=self.axis,
+                                  length=self.length, radius=self.radius)
+        else:
+            self.position.translation(offset, copy=False)
+
+    def rotation(self, center, axis, angle, copy=True):
+        if copy:
+            return self.__class__(position=self.position.translation(offset, copy=True),
+                                  axis=self.axis.rotation(volmdlr.O3D, axis,
+                                                          angle,copy=True),
+                                  length=self.length, radius=self.radius)
+        else:
+            self.position.rotation(center, axis, angle, copy=False)
+            self.axis.rotation(volmdlr.O3D, axis, angle, copy=False)
+
     def copy(self):
         new_position = self.position.copy()
         new_axis = self.axis.copy()
@@ -805,8 +901,10 @@ class Cylinder(RevolvedProfile):
         
 
 class HollowCylinder(Cylinder):
-    def __init__(self, position, axis, inner_radius, outer_radius, length,
-                 color=None, alpha=1, name=''):
+    def __init__(self, position:volmdlr.Point3D, axis:volmdlr.Vector3D,
+                 inner_radius:float, outer_radius:float, length:float,
+                 color:Tuple[float, float, float]=None, alpha:float=1,
+                 name:str=''):
         volmdlr.core.Primitive3D.__init__(self, name=name)
         self.position = position
         axis.normalize()
@@ -901,13 +999,39 @@ class HollowCylinder(Cylinder):
             self.position.frame_mapping(frame, side, copy)
             self.axis = axis
 
+    def translation(self, offset: volmdlr.Vector3D, copy=True):
+        if copy:
+
+            return self.__class__(position=self.position.translation(offset, copy=True),
+                                  axis=self.axis,
+                                  length=self.length,
+                                  inner_radius=self.inner_radius,
+                                  outer_radius=self.outer_radius)
+        else:
+            self.position.translation(offset, copy=False)
+
+    def rotation(self, center, axis, angle, copy=True):
+        if copy:
+            return self.__class__(position=self.position.translation(offset,
+                                                                     copy=True),
+                                  axis=self.axis.rotation(volmdlr.O3D, axis,
+                                                          angle,copy=True),
+                                  length=self.length,
+                                  inner_radius=self.inner_radius,
+                                  outer_radius=self.outer_radius)
+        else:
+            self.position.rotation(center, axis, angle, copy=False)
+            self.axis.rotation(volmdlr.O3D, axis, angle, copy=False)
 
 class Sweep(volmdlr.faces.ClosedShell3D):
     """
     Sweep a 2D contour along a Wire3D
     """
 
-    def __init__(self, contour2d, wire3d, *, color=None, alpha=1, name=''):
+    def __init__(self, contour2d:List[volmdlr.wires.Contour2D],
+                 wire3d:volmdlr.wires.Wire3D, *,
+                 color:Tuple[float, float, float]=None, alpha:float=1,
+                 name:str=''):
         self.contour2d = contour2d
         self.wire3d = wire3d
         self.frames = []
@@ -1008,7 +1132,8 @@ class Sweep(volmdlr.faces.ClosedShell3D):
     
 # class Sphere(volmdlr.Primitive3D):
 class Sphere(RevolvedProfile):
-    def __init__(self, center, radius, color=None, alpha=1., name=''):
+    def __init__(self, center, radius,
+                 color:Tuple[float, float, float]=None, alpha=1., name=''):
         volmdlr.core.Primitive3D.__init__(self, name=name)
         self.center = center
         self.radius = radius
