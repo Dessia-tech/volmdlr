@@ -111,5 +111,18 @@ conical_rim = RevolvedProfile(0.5*vm.X3D, vm.X3D, z, rim_contour, 0.5*vm.X3D, vm
 
 
 model = vm.core.VolumeModel([profile1, profile5, conical_rim])
+
+translated_model = model.translation(vm.Point3D.random(0, 1, 0, 1, 0, 1))
+turned_model = model.rotation(0.3*vm.X3D, vm.Z3D, 0.4)
+
+# model.primitives.extend(translated_model.primitives+turned_model.primitives)
 model.babylonjs()
+translated_model.babylonjs()
+turned_model.babylonjs()
 model.to_step('revolved_profile.step')
+
+# ax = None
+# for primitive in turned_model.primitives:
+#     for face in primitive.faces:
+#         if hasattr(face.surface3d, 'frame'):
+#             ax = face.surface3d.frame.plot(ax=ax)
