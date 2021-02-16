@@ -1948,7 +1948,12 @@ class Face3D(volmdlr.core.Primitive3D):
                     content += face_content
                     current_id = face_id[0] + 1
                 except NotImplementedError:
-                    print('warning a face of class {} has not been exported due to NotImplementedError'.format(face.__class__.__name__))
+                    print('Warning: a face of class {} has not been exported due to NotImplementedError'.format(
+                        face.__class__.__name__))
+                except AttributeError:
+                    print(
+                        'Warning: a face of class {} has not been exported due to AttributeError'.format(
+                         face.__class__.__name__))
             return content, face_ids
         else:
             return self.to_step_without_splitting(current_id)
