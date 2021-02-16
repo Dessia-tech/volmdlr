@@ -754,9 +754,9 @@ class LineSegment2D(LineSegment):
                 self.points = [frame.NewCoordinates(p) for p in self.points]
 
     def plot_data(self, edge_style: plot_data.EdgeStyle = None):
-        return plot_data.LineSegment(data=[self.start.x, self.start.y,
-                                           self.end.x, self.end.y],
-                                     edge_style=edge_style)
+        return plot_data.LineSegment2D(data=[self.start.x, self.start.y,
+                                             self.end.x, self.end.y],
+                                       edge_style=edge_style)
 
     def CreateTangentCircle(self, point, other_line):
         circle1, circle2 = Line2D.CreateTangentCircle(other_line, point, self)
@@ -1050,12 +1050,18 @@ class Arc2D(Edge):
 
     def plot_data(self, edge_style: plot_data.EdgeStyle = None,
                   anticlockwise: bool = None):
+
+        list_node = self.polygon_points()
+        data = []
+        for nd in list_node:
+            data.append({'x': nd.x, 'y': nd.y})
         return plot_data.Arc2D(cx=self.center.x,
                                cy=self.center.y,
                                r=self.radius,
                                start_angle=self.angle1,
                                end_angle=self.angle2,
                                edge_style=edge_style,
+                               data=data,
                                anticlockwise=anticlockwise,
                                name=self.name)
 
@@ -2700,7 +2706,7 @@ class Arc3D(Edge):
                                 v,
                                 w),
                 self.radius
-                )
+            )
             return cylinder.rectangular_cut(arc2d.angle1,
                                             arc2d.angle2,
                                             0, extrusion_vector.norm())
@@ -2847,7 +2853,7 @@ class FullArc3D(Edge):
         polygon_points_3D = [self.start.rotation(self.center,
                                                  self.normal,
                                                  volmdlr.TWO_PI / (
-                                                             npoints - 1) * i
+                                                         npoints - 1) * i
                                                  ) \
                              for i in range(npoints)]
         return polygon_points_3D
