@@ -295,22 +295,11 @@ class Line2D(Line):
 
         return ax
 
-    def plot_data(self, marker=None, color='black', stroke_width=1,
-                  dash=False, opacity=1, arrow=False):
-        p1, p2 = self.points
-        u = p2 - p1
-        p3 = p1 - 3 * u
-        p4 = p2 + 4 * u
-        return {'type': 'line',
-                'data': [p3[0], p3[1],
-                         p4[0], p4[1]],
-                'color': color,
-                'marker': marker,
-                'size': stroke_width,
-                'dash': dash,
-                'opacity': opacity,
-                'arrow': arrow
-                }
+    def plot_data(self, edge_style: plot_data.EdgeStyle = None):
+
+        return plot_data.LineSegment(data=[self.point1.x, self.point1.y,
+                                    self.point2.x, self.point2.y],
+                                     edge_style=edge_style)
 
     def create_tangent_circle(self, point, other_line):
         """
