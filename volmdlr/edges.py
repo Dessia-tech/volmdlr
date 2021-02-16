@@ -11,7 +11,7 @@ import scipy as scp
 from geomdl import utilities
 from geomdl import BSpline
 
-from geomdl.operations import length_curve
+from geomdl.operations import length_curve, split_curve
 
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import __version__ as _mpl_version
@@ -113,8 +113,8 @@ class Edge(dc.DessiaObject):
             else:
                 extra = None
                 ## Positionnement des points dans leur frame
-                p1_new, p2_new = frame.NewCoordinates(
-                    p1), frame.NewCoordinates(p2)
+                p1_new, p2_new = frame.new_coordinates(
+                    p1), frame.new_coordinates(p2)
                 # Angle pour le p1
                 u1, u2 = p1_new.vector[0] / majorax, p1_new.vector[1] / minorax
                 theta1 = volmdlr.sin_cos_angle(u1, u2)
@@ -295,24 +295,13 @@ class Line2D(Line):
 
         return ax
 
-    def plot_data(self, marker=None, color='black', stroke_width=1,
-                  dash=False, opacity=1, arrow=False):
-        p1, p2 = self.points
-        u = p2 - p1
-        p3 = p1 - 3 * u
-        p4 = p2 + 4 * u
-        return {'type': 'line',
-                'data': [p3[0], p3[1],
-                         p4[0], p4[1]],
-                'color': color,
-                'marker': marker,
-                'size': stroke_width,
-                'dash': dash,
-                'opacity': opacity,
-                'arrow': arrow
-                }
+    def plot_data(self, edge_style: plot_data.EdgeStyle = None):
 
-    def CreateTangentCircle(self, point, other_line):
+        return plot_data.LineSegment(data=[self.point1.x, self.point1.y,
+                                    self.point2.x, self.point2.y],
+                                     edge_style=edge_style)
+
+    def create_tangent_circle(self, point, other_line):
         """
         Computes the two circles that are tangent to 2 lines and intersect
         a point located on one of the two lines.
@@ -341,20 +330,20 @@ class Line2D(Line):
         # CHANGEMENT DE REPAIRE
         new_u = volmdlr.Vector2D((B - A))
         new_u.normalize()
-        new_v = new_u.normalVector(unit=True)
+        new_v = new_u.unit_normal_vector()
         new_basis = volmdlr.Frame2D(I, new_u, new_v)
 
-        new_A = new_basis.NewCoordinates(A)
-        new_B = new_basis.NewCoordinates(B)
-        new_C = new_basis.NewCoordinates(C)
-        new_D = new_basis.NewCoordinates(D)
+        new_A = new_basis.new_coordinates(A)
+        new_B = new_basis.new_coordinates(B)
+        new_C = new_basis.new_coordinates(C)
+        new_D = new_basis.new_coordinates(D)
 
         if new_C[1] == 0 and new_D[1] == 0:
             # Segments are on the same line: no solution
             return None, None
 
-        elif math.isclose(self.DirectionVector(unit=True).dot(
-                other_line.normalVector(unit=True)), 0, abs_tol=1e-06):
+        elif math.isclose(self.unit_direction_vector().dot(
+                other_line.unit_normal_vector()), 0, abs_tol=1e-06):
             # Parallel segments: one solution
 
             segments_distance = abs(new_C[1] - new_A[1])
@@ -365,8 +354,8 @@ class Line2D(Line):
 
             return circle, None
 
-        elif math.isclose(self.DirectionVector(unit=True).dot(
-                other_line.DirectionVector(unit=True)), 0, abs_tol=1e-06):
+        elif math.isclose(self.unit_direction_vector().dot(
+                other_line.unit_direction_vector()), 0, abs_tol=1e-06):
             # Perpendicular segments: 2 solution
             line_AB = Line2D(volmdlr.Point2D(new_A), volmdlr.Point2D(new_B))
             line_CD = Line2D(volmdlr.Point2D(new_C), volmdlr.Point2D(new_D))
@@ -402,11 +391,11 @@ class Line2D(Line):
             new_v2 = new_u2.normalVector(unit=True)
             new_basis2 = volmdlr.Frame2D(I, new_u2, new_v2)
 
-            new_A = new_basis2.NewCoordinates(A)
-            new_B = new_basis2.NewCoordinates(B)
-            new_C = new_basis2.NewCoordinates(C)
-            new_D = new_basis2.NewCoordinates(D)
-            new_pt_K = new_basis2.NewCoordinates(pt_K)
+            new_A = new_basis2.new_coordinates(A)
+            new_B = new_basis2.new_coordinates(B)
+            new_C = new_basis2.new_coordinates(C)
+            new_D = new_basis2.new_coordinates(D)
+            new_pt_K = new_basis2.new_coordinates(pt_K)
 
             teta1 = math.atan2(new_C[1], new_C[0] - new_pt_K[0])
             teta2 = math.atan2(new_D[1], new_D[0] - new_pt_K[0])
@@ -436,7 +425,7 @@ class Line2D(Line):
             circle_center1 = new_basis2.old_coordinates(new_circle_center1)
             circle_center2 = new_basis2.old_coordinates(new_circle_center2)
 
-            if new_basis.NewCoordinates(circle_center1)[1] > 0:
+            if new_basis.new_coordinates(circle_center1)[1] > 0:
                 circle1 = volmdlr.wires.Circle2D(circle_center1, r1)
                 circle2 = volmdlr.wires.Circle2D(circle_center2, r2)
             else:
@@ -485,24 +474,64 @@ class BSplineCurve2D(Edge):
 
         Edge.__init__(self, start, end, name=name)
 
+    @classmethod
+    def from_geomdl_curve(cls, curve):
+        knots = list(sorted(set(curve.knotvector)))
+        knot_multiplicities = [curve.knotvector.count(k) for k in knots]
+        return BSplineCurve2D(degree=curve.degree,
+                              control_points=curve.ctrlpts,
+                              knots=knots,
+                              knot_multiplicities=knot_multiplicities
+                              )
+
+
     def length(self):
-        # Approximately
-        # length = 0
-        # for k in range(0, len(self.points) - 1):
-        #     length += (self.points[k] - self.points[k + 1]).norm()
-        # return length
         return length_curve(self.curve)
 
     def point_at_abscissa(self, curvilinear_abscissa):
-        adim_abs = curvilinear_abscissa/self.length()
-        return self.curve.evaluate_single(adim_abs)
+        l = self.length()
+        adim_abs = curvilinear_abscissa/l
+        if adim_abs > 1:
+            adim_abs = 1
+        if adim_abs < 0:
+            adim_abs = 0.
+        return volmdlr.Point2D(*self.curve.evaluate_single(adim_abs))
+
+    def abscissa(self, point2d):
+        l = self.length()
+        res = scp.optimize.minimize_scalar(
+            # f,
+            lambda u:(point2d-self.point_at_abscissa(u)).norm(),
+            method='bounded',
+            bounds = (0., l)
+        )
+        if res.fun > 1e-4:
+            print(res.fun)
+            ax = self.plot()
+            point2d.plot(ax=ax)
+            best_point = self.point_at_abscissa(res.x)
+            best_point.plot(ax=ax, color='r')
+            raise ValueError('abscissa not found')
+
+
+        return res.x
+
+    def split(self, point2d):
+        adim_abscissa = self.abscissa(point2d)/self.length()
+        curve1, curve2 = split_curve(self.curve, adim_abscissa)
+
+        return [BSplineCurve2D.from_geomdl_curve(curve1),
+                BSplineCurve2D.from_geomdl_curve(curve2)]
+
 
     def plot(self, ax=None, color='k', alpha=1, plot_points=False):
         if ax is None:
             _, ax = plt.subplots()
 
-        self.curve.delta = 0.01
-        points = [volmdlr.Point2D(px, py) for (px, py) in self.curve.evalpts]
+        # self.curve.delta = 0.01
+        # points = [volmdlr.Point2D(px, py) for (px, py) in self.curve.evalpts]
+        l = self.length()
+        points = [self.point_at_abscissa(l*i/50) for i in range(51)]
 
         xp = [p.x for p in points]
         yp = [p.y for p in points]
@@ -518,7 +547,8 @@ class BSplineCurve2D(Edge):
                               self.weights, self.periodic)
 
     def polygon_points(self):
-        return self.control_points
+        l = self.length()
+        return [self.point_at_abscissa(i*l/10) for i in range(11)]
 
     def rotation(self, center, angle, copy=True):
         if copy:
@@ -542,6 +572,22 @@ class BSplineCurve2D(Edge):
             for p in self.control_points:
                 p.translation(offset, copy=False)
 
+
+    def line_intersections(self, line2d:Line2D):
+        polygon_points = self.polygon_points()
+        intersections = []
+        for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
+            l = LineSegment2D(p1, p2)
+            intersections.extend(l.line_intersections(line2d))
+        return intersections
+    
+    def line_crossings(self, line2d:Line2D):
+        polygon_points = self.polygon_points()
+        crossings = []
+        for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
+            l = LineSegment2D(p1, p2)
+            crossings.extend(l.line_crossings(line2d))
+        return crossings
 
 class BezierCurve2D(BSplineCurve2D):
 
@@ -755,9 +801,9 @@ class LineSegment2D(LineSegment):
         if side == 'new':
             if copy:
                 return LineSegment2D(
-                    *[frame.NewCoordinates(p) for p in self.points])
+                    *[frame.new_coordinates(p) for p in self.points])
             else:
-                self.points = [frame.NewCoordinates(p) for p in self.points]
+                self.points = [frame.new_coordinates(p) for p in self.points]
 
     def plot_data(self, edge_style: plot_data.EdgeStyle = None):
         return plot_data.LineSegment(data=[self.start.x, self.start.y,
@@ -1200,10 +1246,10 @@ class ArcEllipse2D(Edge):
         self.minor_dir = self.major_dir.deterministic_unit_normal_vector()
 
         frame = volmdlr.Frame2D(self.center, self.major_dir, self.minor_dir)
-        start_new, end_new = frame.NewCoordinates(
-            self.start), frame.NewCoordinates(self.end)
-        interior_new, center_new = frame.NewCoordinates(
-            self.interior), frame.NewCoordinates(self.center)
+        start_new, end_new = frame.new_coordinates(
+            self.start), frame.new_coordinates(self.end)
+        interior_new, center_new = frame.new_coordinates(
+            self.interior), frame.new_coordinates(self.center)
 
         #### from : https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
         def theta_A_B(s, i, e,
@@ -1226,7 +1272,7 @@ class ArcEllipse2D(Edge):
             return theta, gdaxe, ptax
 
         if start == end:
-            extra_new = frame.NewCoordinates(self.extra)
+            extra_new = frame.new_coordinates(self.extra)
             theta, A, B = theta_A_B(start_new, extra_new, interior_new,
                                     center_new)
         else:
@@ -1458,10 +1504,10 @@ class Line3D(Line):
                                    self.points]
         if side == 'new':
             if copy:
-                return Line3D(*[frame.NewCoordinates(p) for p in self.points])
+                return Line3D(*[frame.new_coordinates(p) for p in self.points])
             else:
                 for p in self.points:
-                    self.points = [frame.NewCoordinates(p) for p in
+                    self.points = [frame.new_coordinates(p) for p in
                                    self.points]
 
     def copy(self):
@@ -1727,7 +1773,7 @@ class LineSegment3D(LineSegment):
         if side == 'new':
             if copy:
                 return LineSegment3D(
-                    *[frame.NewCoordinates(p) for p in self.points])
+                    *[frame.new_coordinates(p) for p in self.points])
             else:
                 Edge.frame_mapping(self, frame, side, copy=False)
                 self.bounding_box = self._bounding_box()
@@ -1961,12 +2007,12 @@ class LineSegment3D(LineSegment):
         # outer_contour = Polygon2D([O2D, Point2D((l1, 0.)),
         #                            Point2D((l1, l2)), Point2D((0., l2))])
         plane = volmdlr.faces.Plane3D(volmdlr.Frame3D(self.start, u, v, w))
-        return plane.rectangular_cut(0, l1, 0, l2)
+        return [plane.rectangular_cut(0, l1, 0, l2)]
 
     def revolution(self, axis_point, axis, angle):
         axis_line3d = Line3D(axis_point, axis_point + axis)
         if axis_line3d.point_belongs(self.start) and axis_line3d.point_belongs(self.end):
-            return None
+            return []
 
         p1_proj, _ = axis_line3d.point_projection(self.start)
         p2_proj, _ = axis_line3d.point_projection(self.end)
@@ -1979,7 +2025,7 @@ class LineSegment3D(LineSegment):
             u = (self.end - p2_proj)  # Unit vector from p1_proj to p1
             u.normalize()
         else:
-            return None
+            return []
         if u.is_colinear_to(self.direction_vector()):
             # Planar face
             v = axis.cross(u)
@@ -2024,10 +2070,10 @@ class LineSegment3D(LineSegment):
                                                                arc2, line2])
 
 
-            return volmdlr.faces.PlaneFace3D(surface,
-                                             volmdlr.faces.Surface2D(
+            return [volmdlr.faces.PlaneFace3D(surface,
+                                              volmdlr.faces.Surface2D(
                                                  outer_contour2d,
-                                                 inner_contours2d))
+                                                 inner_contours2d))]
 
         elif not math.isclose(d1, d2, abs_tol=1e-9):
             # Conical
@@ -2050,13 +2096,13 @@ class LineSegment3D(LineSegment):
                                                      semi_angle)
             z1 = d1 / math.tan(semi_angle)
             z2 = d2 / math.tan(semi_angle)
-            return surface.rectangular_cut(0, angle2, z1, z2)
+            return [surface.rectangular_cut(0, angle2, z1, z2)]
         else:
             # Cylindrical face
             v = axis.cross(u)
             surface = volmdlr.faces.CylindricalSurface3D(volmdlr.Frame3D(p1_proj, u, v, axis), d1)
-            return surface.rectangular_cut(0, angle,
-                                           0, (self.end - self.start).dot(axis))
+            return [surface.rectangular_cut(0, angle,
+                                            0, (self.end - self.start).dot(axis))]
 
     def to_step(self, current_id, surface_id=None):
         line = self.to_line()
@@ -2534,9 +2580,9 @@ class Arc3D(Edge):
                 self.setup_arc(self.start, self.interior, self.end)
 
         if side == 'new':
-            new_start = frame.NewCoordinates(self.start.copy())
-            new_interior = frame.NewCoordinates(self.interior.copy())
-            new_end = frame.NewCoordinates(self.end.copy())
+            new_start = frame.new_coordinates(self.start.copy())
+            new_interior = frame.new_coordinates(self.interior.copy())
+            new_end = frame.new_coordinates(self.end.copy())
             if copy:
                 return Arc3D(new_start, new_interior, new_end, normal=None,
                              name=self.name)
@@ -2704,9 +2750,9 @@ class Arc3D(Edge):
                                                                           w),
                                                           self.radius
                                                           )
-            return cylinder.rectangular_cut(arc2d.angle1,
+            return [cylinder.rectangular_cut(arc2d.angle1,
                                             arc2d.angle2,
-                                            0, extrusion_vector.norm())
+                                            0, extrusion_vector.norm())]
         else:
             raise NotImplementedError('Elliptic faces not handled: dot={}'.format(
                 self.normal.dot(extrusion_vector)
@@ -2735,8 +2781,8 @@ class Arc3D(Edge):
             surface = volmdlr.faces.SphericalSurface3D(
                 volmdlr.Frame3D(self.center, u, v, axis), self.radius)
             surface.plot()
-            return surface.rectangular_cut(0, angle,
-                                           arc2d.angle1, arc2d.angle2)
+            return [surface.rectangular_cut(0, angle,
+                                           arc2d.angle1, arc2d.angle2)]
 
         else:
             # Toroidal
@@ -2751,8 +2797,8 @@ class Arc3D(Edge):
             surface = volmdlr.faces.ToroidalSurface3D(volmdlr.Frame3D(tore_center, u, v, axis), R,
                                                       self.radius)
             arc2d = self.to_2d(tore_center, u, axis)
-            return surface.rectangular_cut(0, angle,
-                                           arc2d.angle1, arc2d.angle2)
+            return [surface.rectangular_cut(0, angle,
+                                           arc2d.angle1, arc2d.angle2)]
 
     def to_step(self, current_id):
         if self.angle >= math.pi:
@@ -2977,10 +3023,10 @@ class ArcEllipse3D(Edge):
 
         frame = volmdlr.Frame3D(self.center, self.major_dir, self.minor_dir,
                                 self.normal)
-        start_new, end_new = frame.NewCoordinates(
-            self.start), frame.NewCoordinates(self.end)
-        interior_new, center_new = frame.NewCoordinates(
-            self.interior), frame.NewCoordinates(self.center)
+        start_new, end_new = frame.new_coordinates(
+            self.start), frame.new_coordinates(self.end)
+        interior_new, center_new = frame.new_coordinates(
+            self.interior), frame.new_coordinates(self.center)
 
         #### from : https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
         def theta_A_B(s, i, e,
@@ -3003,7 +3049,7 @@ class ArcEllipse3D(Edge):
             return theta, gdaxe, ptax
 
         if start == end:
-            extra_new = frame.NewCoordinates(self.extra)
+            extra_new = frame.new_coordinates(self.extra)
             theta, A, B = theta_A_B(start_new, extra_new, interior_new,
                                     center_new)
         else:

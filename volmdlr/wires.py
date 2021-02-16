@@ -85,6 +85,12 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
     def __init__(self, primitives, name=''):
         volmdlr.core.CompositePrimitive2D.__init__(self, primitives, name)
 
+    def to_3d(self, plane_origin, x, y):
+        primitives3d = []
+        for edge in self.primitives:
+            primitives3d.append(edge.to_3d(plane_origin, x, y))
+
+        return Wire3D(primitives3d)
 
     def extract(self, point1, primitive1, point2, primitive2):
         return Wire2D(self.extract_primitives(self, point1, primitive1, point2, primitive2))        
@@ -200,7 +206,6 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
     def extract(self, point1, primitive1, point2, primitive2):
         return Wire3D(self.extract_primitives(self, point1, primitive1, point2, primitive2))        
 
-
     # TODO: method to check if it is a wire
     def FreeCADExport(self, ip):
         name = 'primitive' + str(ip)
@@ -240,6 +245,12 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
                 distance.append(element.minimum_distance(element2))
 
         return min(distance)
+
+    def extrusion(self, extrusion_vector):
+        faces = []
+        for primitive in self.primitives:
+            faces.extend(primitive.extrusion(extrusion_vector))
+        return faces
 
     # def copy(self):
     #     primitives_copy = []
@@ -296,6 +307,7 @@ class Contour2D(Contour, Wire2D):
         points_polygon = []
         points_straight_line_contour = []
         for primitive in self.primitives:
+            # TODO: change this!!!
             if primitive.__class__.__name__ == 'LineSegment2D':
                 points_polygon.append(primitive.start)
                 points_straight_line_contour.append(primitive.start)
@@ -321,8 +333,8 @@ class Contour2D(Contour, Wire2D):
                         points_polygon.append(prim.end)
                         arcs.append(prim)
             elif primitive.__class__.__name__ == 'BSplineCurve2D':
-                points_polygon.extend(primitive.control_points)
-                points_straight_line_contour.extend(primitive.control_points)
+                points_polygon.extend(primitive.polygon_points()[:-1])
+                points_straight_line_contour.extend(primitive.polygon_points()[:-1])
             else:
                 raise NotImplementedError(
                     'primitive of type {} is not handled'.format(primitive))
@@ -822,9 +834,6 @@ class Contour2D(Contour, Wire2D):
         for primitive in self.primitives:
             polygon_points.extend(primitive.polygon_points()[:-1])
         return ClosedPolygon2D(polygon_points)
-
-
-
 
         
 
@@ -1831,7 +1840,8 @@ class Circle2D(Contour2D):
     def length(self):
         return volmdlr.TWO_PI * self.radius
 
-    def plot(self, ax=None, linestyle='-', color='k', linewidth=1):
+    def plot(self, ax=None, linestyle='-', color='k', linewidth=1, alpha=1.,
+             equal_aspect=True):
         if ax is None:
             fig, ax = plt.subplots()
         # else:
@@ -1844,8 +1854,12 @@ class Circle2D(Contour2D):
                              theta1=0,
                              theta2=360,
                              color=color,
+                             alpha=alpha,
                              linestyle=linestyle,
                              linewidth=linewidth))
+        if equal_aspect:
+            ax.set_aspect('equal')
+            
         return ax
 
     def to_3d(self, plane_origin, x, y):
@@ -2226,7 +2240,7 @@ class Circle3D(Contour3D):
         else:
             self.frame = new_frame
 
-    def plot(self, ax=None, color='k', alpha=1):
+    def plot(self, ax=None, color='k', alpha=1.):
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
@@ -2393,8 +2407,8 @@ class Circle3D(Contour3D):
                                                     self.normal),
                                             self.radius
                                             )
-            return cylinder.rectangular_cut(0, volmdlr.TWO_PI,
-                                            0, extrusion_vector.norm())
+            return [cylinder.rectangular_cut(0, volmdlr.TWO_PI,
+                                            0, extrusion_vector.norm())]
         else:
             raise NotImplementedError('Elliptic faces not handled: dot={}'.format(
                 self.normal.dot(extrusion_vector)
@@ -2414,7 +2428,7 @@ class Circle3D(Contour3D):
         R = tore_center.point_distance(self.center)
         surface = volmdlr.faces.ToroidalSurface3D(volmdlr.Frame3D(tore_center, u, v, axis),
                                     R, self.radius)
-        return surface.rectangular_cut(0, angle, 0, volmdlr.TWO_PI)
+        return [surface.rectangular_cut(0, angle, 0, volmdlr.TWO_PI)]
 
 
 class Ellipse3D(Contour3D):
