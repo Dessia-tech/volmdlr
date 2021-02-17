@@ -294,22 +294,24 @@ class Line2D(Line):
 
         return ax
 
-    def plot_data(self, marker=None, color='black', stroke_width=1,
-                  dash=False, opacity=1, arrow=False):
-        p1, p2 = self.points
-        u = p2 - p1
-        p3 = p1 - 3 * u
-        p4 = p2 + 4 * u
-        return {'type': 'line',
-                'data': [p3[0], p3[1],
-                         p4[0], p4[1]],
-                'color': color,
-                'marker': marker,
-                'size': stroke_width,
-                'dash': dash,
-                'opacity': opacity,
-                'arrow': arrow
-                }
+    # def plot_data(self, marker=None, color='black', stroke_width=1,
+    #               dash=False, opacity=1, arrow=False):
+    #     p1, p2 = self.points
+    #     u = p2 - p1
+    #     p3 = p1 - 3 * u
+    #     p4 = p2 + 4 * u
+    #     return {'type': 'line',
+    #             'data': [p3[0], p3[1],
+    #                      p4[0], p4[1]],
+    #             'color': color,
+    #             'marker': marker,
+    #             'size': stroke_width,
+    #             'dash': dash,
+    #             'opacity': opacity,
+    #             'arrow': arrow
+    #             }
+    def plot_data(self, edge_style=None):
+        return plot_data.Line2D()
 
     def CreateTangentCircle(self, point, other_line):
         """
