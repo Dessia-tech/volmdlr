@@ -749,7 +749,8 @@ class Vector3D(Vector):
     def point_distance(self, point2:'Vector3D') -> float:
         return (self-point2).norm()
 
-    def rotation(self, center:'Point3D', axis:'Vector3D', angle:float, copy:bool=True):
+    def rotation(self, center:'Point3D', axis:'Vector3D', angle:float,
+                 copy:bool=True):
         """
         rotation of angle around axis.
         Used Rodrigues Formula:
@@ -1287,10 +1288,13 @@ class Basis3D(Basis):
     def __eq__(self, other_basis):
         if other_basis.__class__.__name__ != self.__class__.__name__:
             return False
-        all_equal = all([other_vector == vector\
-                         for other_vector, vector\
-                         in zip([other_basis.u, other_basis.v, other_basis.w], [self.u, self.v, self.w])])
-        return all_equal
+
+        for other_vector, vector in zip([other_basis.u,
+                                         other_basis.v, other_basis.w],
+                                        [self.u, self.v, self.w]):
+            if other_vector != vector:
+                return False
+        return True
 
     def __hash__(self):
         return hash(self.u) + hash(self.v) + hash(self.w)
@@ -1548,6 +1552,19 @@ class Frame3D(Basis3D):
                                                   self.origin,
                                                   self.u, self.v, self.w)
 
+    def __hash__(self):
+        return 5*hash(self.origin) + hash(self.u) + hash(self.v) + hash(self.w)
+
+    def __eq__(self, other_frame):
+        if other_frame.__class__.__name__ != self.__class__.__name__:
+            return False
+
+        for other_vector, vector in zip([other_frame.origin, other_frame.u,
+                                         other_frame.v, other_frame.w],
+                                        [self.origin, self.u, self.v, self.w]):
+            if other_vector != vector:
+                return False
+        return True
 
     def __neg__(self):
         M = self.inverse_transfer_matrix()
@@ -1600,22 +1617,30 @@ class Frame3D(Basis3D):
         """ You have to give coordinates in the local landmark """
         return Basis3D.old_coordinates(self, vector) + self.origin
 
-    def rotation(self, axis, angle, copy=True):
+    def rotation(self, center, axis, angle, copy=True):
+        """
+        Rotate the center as a point and vectors as directions (calling Basis)
+        """
         new_base = Basis3D.rotation(self, axis, angle, copy=True)
+        new_origin = self.origin.rotation(center, axis, angle, copy=True)
         if copy:
-            new_frame = Frame3D(self.origin.copy(), new_base.u, new_base.v, new_base.w, self.name)
-            return new_frame
+            return Frame3D(new_origin,
+                           new_base.u, new_base.v, new_base.w,
+                           self.name)
+        self.origin = new_origin
         self.u = new_base.u
         self.v = new_base.v
         self.w = new_base.w
 
     def translation(self, offset, copy=True):
         if copy:
-            return Frame3D(self.origin.translation(offset, copy=True), self.u, self.v, self.w, self.name)
+            return Frame3D(self.origin.translation(offset, copy=True),
+                           self.u, self.v, self.w, self.name)
         self.origin.translation(offset, copy=False)
 
     def copy(self):
-        return Frame3D(self.origin.copy(), self.u.copy(), self.v.copy(), self.w.copy())
+        return Frame3D(self.origin.copy(),
+                       self.u.copy(), self.v.copy(), self.w.copy())
 
     def to_step(self, current_id):
 
@@ -1647,24 +1672,25 @@ class Frame3D(Basis3D):
         return fig, ax
 
 
-    def plot(self, ax=None, color='b', alpha=1., plot_points=True):
+    def plot(self, ax=None, color='b', alpha=1., plot_points=True,
+             ratio=1):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
-        x1 = [p.x for p in (self.origin, self.origin + self.u)]
-        y1 = [p.y for p in (self.origin, self.origin + self.u)]
-        z1 = [p.z for p in (self.origin, self.origin + self.u)]
+        x1 = [p.x for p in (self.origin, self.origin + self.u*ratio)]
+        y1 = [p.y for p in (self.origin, self.origin + self.u*ratio)]
+        z1 = [p.z for p in (self.origin, self.origin + self.u*ratio)]
         ax.plot(x1, y1, z1, 'r')
 
-        x2 = [p.x for p in (self.origin, self.origin + self.v)]
-        y2 = [p.y for p in (self.origin, self.origin + self.v)]
-        z2 = [p.z for p in (self.origin, self.origin + self.v)]
+        x2 = [p.x for p in (self.origin, self.origin + self.v*ratio)]
+        y2 = [p.y for p in (self.origin, self.origin + self.v*ratio)]
+        z2 = [p.z for p in (self.origin, self.origin + self.v*ratio)]
         ax.plot(x2, y2, z2, 'g')
 
-        x3 = [p.x for p in (self.origin, self.origin + self.w)]
-        y3 = [p.y for p in (self.origin, self.origin + self.w)]
-        z3 = [p.z for p in (self.origin, self.origin + self.w)]
+        x3 = [p.x for p in (self.origin, self.origin + self.w*ratio)]
+        y3 = [p.y for p in (self.origin, self.origin + self.w*ratio)]
+        z3 = [p.z for p in (self.origin, self.origin + self.w*ratio)]
         ax.plot(x3, y3, z3, 'b')
         return ax
 
