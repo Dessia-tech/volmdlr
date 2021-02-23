@@ -311,7 +311,8 @@ class Line2D(Line):
     #             'arrow': arrow
     #             }
     def plot_data(self, edge_style=None):
-        return plot_data.Line2D()
+        return plot_data.Line2D([self.point1.x, self.point1.y,
+                                 self.point2.x, self.point2.y], edge_style=edge_style)
 
     def CreateTangentCircle(self, point, other_line):
         """
@@ -937,6 +938,9 @@ class Arc2D(Edge):
                                              point2d - self.center)
         if self.is_trigo:
             theta = volmdlr.TWO_PI - theta
+
+        if theta < 0 or theta > self.angle:
+            raise ValueError('Point in not in arc')
         return self.radius * abs(theta)
 
     def middle_point(self):
