@@ -47,14 +47,13 @@ class Surface2D(volmdlr.core.Primitive2D):
         return True
 
     def triangulation(self, min_x_density=None, min_y_density=None):
+
         if self.area() == 0.:
             return volmdlr.display.DisplayMesh2D([], triangles=[])
 
         outer_polygon = self.outer_contour.to_polygon(angle_resolution=10)
 
-        # ax2 = outer_polygon.plot(color='r', point_numbering=True)
         points = [volmdlr.display.Node2D(*p) for p in outer_polygon.points]
-        # outer_polygon.plot(plot_points=True, point_numbering=True)
         vertices = [(p.x, p.y) for p in points]
         n = len(outer_polygon.points)
         segments = [(i, i + 1) for i in range(n - 1)]
@@ -85,7 +84,6 @@ class Surface2D(volmdlr.core.Primitive2D):
                }
         if holes:
             tri['holes'] = npy.array(holes).reshape((-1, 2))
-        # self.plot(equal_aspect=False)
         t = triangle.triangulate(tri, 'p')
         triangles = t['triangles'].tolist()
         np = t['vertices'].shape[0]
@@ -94,6 +92,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         return volmdlr.display.DisplayMesh2D(points, triangles=triangles,
                                              edges=None)
+        return volmdlr.display.DisplayMesh2D([], [])
 
     def split_by_lines(self, lines):
         cutted_surfaces = []
@@ -453,24 +452,6 @@ class Surface3D(dc.DessiaObject):
     Abstract class
     """
 
-    # def face_from_contours3d(self, contours3d):
-    #     contours2d = []
-    #     max_area = 0.
-    #
-    #     for ic, contour3d in contours3d:
-    #         contour2d = self.contour3d_to_2d(contour3d)
-    #         contour_area = contour2d.Area()
-    #         if contour_area > max_area:
-    #             max_area = contour_area
-    #             outer_contour_index = ic
-    #         contours2d.append(contour2d)
-    #
-    #     outer_contour = contour2d[outer_contour_index]
-    #     del contour2d[outer_contour_index]
-    #     surface2d = (outer_contour, contours2d)
-    #
-    #     self.SURFACE_TO_FACE[self.__class__](self, surface2d)
-
     def face_from_contours3d(self,
                              contours3d: List[volmdlr.wires.Contour3D],
                              name: str = ''):
@@ -626,6 +607,19 @@ class Surface3D(dc.DessiaObject):
         return [vme.LineSegment2D(self.point3d_to_2d(linesegment3d.start),
                                   self.point3d_to_2d(linesegment3d.end))]
 
+    def bsplinecurve3d_to_2d(self, bspline_curve3d):
+        """
+        Is this right?
+        """
+        control_points = [self.point3d_to_2d(p) \
+                          for p in bspline_curve3d.control_points]
+        return [vme.BSplineCurve2D(
+                    bspline_curve3d.degree,
+                    control_points=control_points,
+                    knot_multiplicities=bspline_curve3d.knot_multiplicities,
+                    knots=bspline_curve3d.knots,
+                    weights=bspline_curve3d.weights,
+                    periodic=bspline_curve3d.periodic)]
 
 class Plane3D(Surface3D):
     face_class = 'PlaneFace3D'
@@ -1371,9 +1365,9 @@ class ConicalSurface3D(Surface3D):
     #     return volmdlr.Point2D(theta, z+0.003)
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D):
-        _, _, z = self.frame.new_coordinates(point3d)
-        x, y = point3d.plane_projection2d(self.frame.origin, self.frame.u,
-                                          self.frame.v)
+        x, y, z = self.frame.new_coordinates(point3d)
+        # x, y = point3d.plane_projection2d(self.frame.origin, self.frame.u,
+        #                                   self.frame.v)
         theta = math.atan2(y, x)
         return volmdlr.Point2D(theta, z)
 
@@ -1966,16 +1960,25 @@ class Face3D(volmdlr.core.Primitive3D):
             face_ids = []
             for subsurface2d in subsurfaces2d:
                 face = self.__class__(self.surface3d, subsurface2d)
-                face_content, face_id = face.to_step_without_splitting(
-                    current_id)
-                face_ids.append(face_id[0])
-                content += face_content
-                current_id = face_id[0] + 1
+                try:
+                    face_content, face_id = face.to_step_without_splitting(
+                        current_id)
+                    face_ids.append(face_id[0])
+                    content += face_content
+                    current_id = face_id[0] + 1
+                except NotImplementedError:
+                    print('Warning: a face of class {} has not been exported due to NotImplementedError'.format(
+                        face.__class__.__name__))
+                except AttributeError:
+                    print(
+                        'Warning: a face of class {} has not been exported due to AttributeError'.format(
+                         face.__class__.__name__))
             return content, face_ids
         else:
             return self.to_step_without_splitting(current_id)
 
     def to_step_without_splitting(self, current_id):
+        
         content, surface3d_id = self.surface3d.to_step(current_id)
         current_id = surface3d_id + 1
 
@@ -2404,7 +2407,7 @@ class CylindricalFace3D(Face3D):
     def triangulation_lines(self, angle_resolution=5):
         theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle()
         delta_theta = theta_max - theta_min
-        nlines = int(delta_theta * angle_resolution)
+        nlines = math.ceil(delta_theta * angle_resolution)
         lines = []
         for i in range(nlines):
             theta = theta_min + (i+1)/(nlines+1)*delta_theta
