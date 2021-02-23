@@ -8,6 +8,7 @@ import volmdlr as vm
 import volmdlr.primitives2d as primitives2d
 import volmdlr.primitives3d as primitives3d
 import matplotlib.pyplot as plt
+import plot_data
 
 thickness = 0.005
 height = 0.080
@@ -75,10 +76,10 @@ ax = belt.outer_contour3d.plot()
 
 model = vm.core.VolumeModel([bottom, sides, belt], name='Casing')
 model.babylonjs()
-
+#
 # model = vm.VolumeModel([sides])
 # model.babylonjs('sides')
-
+#
 # model = vm.VolumeModel([belt])
 # model.babylonjs('belt')
 
@@ -89,3 +90,8 @@ model.babylonjs()
 #model = vm.VolumeModel([casing])
 ##model.FreeCADExport('casing')
 #model.BabylonShow()
+
+contour = screw_holes_rl.plot_data()
+primitive_group = plot_data.PrimitiveGroup(primitives=[contour])
+plot_data.plot_canvas(plot_data_object=primitive_group, debug_mode=True)
+
