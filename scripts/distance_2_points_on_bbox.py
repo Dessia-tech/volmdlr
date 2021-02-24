@@ -7,7 +7,7 @@ Created on Tue Oct 29 14:35:43 2019
 """
 
 import volmdlr as vm
-import volmdlr.primitives3D as p3d
+import volmdlr.primitives3d as p3d
 
 #bbox = vm.BoundingBox(-1, 1, -1, 1, -1, 1)
 ##point1 = vm.Point3D((-0.8, 1, -0.8))

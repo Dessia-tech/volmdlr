@@ -10,6 +10,7 @@ import volmdlr as vm
 import volmdlr.edges as edges
 import volmdlr.wires as wires
 import math
+import plot_data
 
 r = 0.23
 
@@ -24,6 +25,7 @@ c = wires.Contour2D([a, l])
 ax = c.plot()
 cog = c.center_of_mass()
 cog.plot(ax)
+
 
 assert math.isclose(a.radius, r)
 assert math.isclose(c.area(), math.pi*r**2/2.)
