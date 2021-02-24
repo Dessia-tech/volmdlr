@@ -124,6 +124,6 @@ setup(name='volmdlr',
                         'jsonschema',
                         'networkx',
                         'triangle',
-                        'plot_data>=0.5.3'],
+                        'plot_data>=0.5.4'],
       classifiers=['Topic :: Scientific/Engineering','Development Status :: 3 - Alpha'],
       ext_modules = cythonize(["volmdlr/core_compiled.pyx"]))
