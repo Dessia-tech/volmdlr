@@ -1651,7 +1651,7 @@ class LineSegment3D(LineSegment):
 
     def plane_projection2d(self, center, x, y):
         return LineSegment2D(self.start.plane_projection2d(center, x, y),
-                             self.point2.plane_projection2d(center, x, y))
+                             self.end.plane_projection2d(center, x, y))
 
     def intersection(self, segment2):
         x1 = self.start.x
