@@ -2067,7 +2067,7 @@ class LineSegment3D(LineSegment):
                     outer_contour2d = volmdlr.wires.Contour2D([arc1, line1,
                                                                arc2, line2])
 
-            return volmdlr.faces.PlaneFace3D(surface,
+            return [volmdlr.faces.PlaneFace3D(surface,
                                              volmdlr.faces.Surface2D(
                                                  outer_contour2d,
                                                  inner_contours2d))]
