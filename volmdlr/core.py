@@ -570,6 +570,9 @@ class BoundingBox(dc.DessiaObject):
                            min(self.zmin, other_bbox.zmin),
                            max(self.zmax, other_bbox.zmax))
 
+    def __iter__(self):
+        return [self.xmin, self.xmax, self.ymin, self.ymax, self.zmin, self.zmax]
+
     def plot(self, ax=None, color=''):
         fig = plt.figure()
         if ax is None:
