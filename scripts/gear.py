@@ -8,8 +8,8 @@ Created on Mon Mar  6 14:51:21 2017
 
 import numpy as npy
 import volmdlr as vm
-import volmdlr.primitives3D as primitives3D
-import volmdlr.primitives2D as primitives2D
+import volmdlr.primitives3d as primitives3D
+import volmdlr.primitives2d as primitives2D
 
 import math
 

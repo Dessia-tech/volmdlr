@@ -7,8 +7,8 @@ Created on Wed Nov  6 10:25:22 2019
 """
 
 import volmdlr as vm
-import volmdlr.primitives3D as p3d
-import volmdlr.primitives2D as p2d
+import volmdlr.primitives3d as p3d
+import volmdlr.primitives2d as p2d
 import math
 
 #%%
