@@ -1432,9 +1432,11 @@ class Line3D(Line):
         ax.plot(x, y, z, color=color, alpha=alpha)
 
         # Drawing 3 times length of segment on each side
-        u = self.point2 - self.points[0]
-        x1, y1, z1 = (self.points[0] - 3 * u).vector
-        x2, y2, z2 = (self.point2 + 3 * u).vector
+        u = self.point2 - self.point1
+        v1 = (self.point1 - 3 * u)
+        x1, y1, z1 = v1.x, v1.y, v1.z
+        v2 = (self.point2 - 3 * u)
+        x2, y2, z2 = v2.x, v2.y, v2.z
         if dashed:
             ax.plot([x1, x2], [y1, y2], [z1, z2], color=color,
                     dashes=[30, 5, 10, 5])
