@@ -939,6 +939,9 @@ class Arc2D(Edge):
                                              point2d - self.center)
         if self.is_trigo:
             theta = volmdlr.TWO_PI - theta
+
+        if theta < 0 or theta > self.angle:
+            raise ValueError('Point in not in arc')
         return self.radius * abs(theta)
 
     def middle_point(self):
