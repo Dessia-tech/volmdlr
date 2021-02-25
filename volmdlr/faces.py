@@ -11,6 +11,7 @@ import scipy as scp
 import matplotlib.pyplot as plt
 import dessia_common as dc
 from geomdl import BSpline
+from geomdl import utilities
 import volmdlr.core
 import volmdlr.core_compiled
 import volmdlr.edges as vme
@@ -1835,6 +1836,24 @@ class BSplineSurface3D(Surface3D):
         return cls(degree_u, degree_v, control_points, nb_u, nb_v,
                    u_multiplicities, v_multiplicities, u_knots, v_knots,
                    weight_data, name)
+
+
+class BezierSurface3D(BSplineSurface3D):
+
+    def __init__(self, degree_u: int, degree_v: int,
+                 control_points: List[List[volmdlr.Point3D]],
+                 nb_u: int, nb_v: int, name=''):
+
+        u_knots = utilities.generate_knot_vector(degree_u, nb_u)
+        v_knots = utilities.generate_knot_vector(degree_v, nb_v)
+
+        u_multiplicities = [1] * len(u_knots)
+        v_multiplicities = [1] * len(v_knots)
+
+        BSplineSurface3D.__init__(self, degree_u, degree_v,
+                                  control_points, nb_u, nb_v,
+                                  u_multiplicities, v_multiplicities,
+                                  u_knots, v_knots, None, name)
 
 
 class Face3D(volmdlr.core.Primitive3D):
