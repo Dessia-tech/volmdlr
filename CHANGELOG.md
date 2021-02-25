@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- translation and rotation for various primitives
 ### Changed
 - Frame3D rotation takes also into account origin
+- following plot_data v0.5.3
 
 ## [v0.2.4]
 ### Added
