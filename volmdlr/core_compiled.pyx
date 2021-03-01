@@ -164,6 +164,13 @@ cdef (double, double, double) C_matrix_vector_multiplication3(double M11, double
             M21*v1 + M22*v2 + M23*v3,
             M31*v1 + M32*v2 + M33*v3)
 
+cdef (double, double) C_matrix_vector_multiplication2(double M11, double M12,
+                                                      double M21, double M22,
+                                                      double v1, double v2):
+
+    return (M11*v1 + M12*v2,
+            M21*v1 + M22*v2)
+
 
 cdef (double, double, double,
       double, double, double,
@@ -282,7 +289,7 @@ class Vector(DessiaObject):
             return math.isclose(abs(self.dot(other_vector))/self.norm()/other_vector.norm(),
                                 1,
                                 abs_tol=1e-5)
-            
+
         except ZeroDivisionError:
             return False
 
@@ -1012,6 +1019,10 @@ class Point3D(Vector3D):
     def to_vector(self):
         return Vector3D(self.x, self.y, self.z)
 
+    @classmethod
+    def middle_point(cls, point1, point2):
+        return (point1 + point2) * 0.5
+
     def to_step(self, current_id, vertex=False):
         content = "#{} = CARTESIAN_POINT('{}',({},{},{}));\n"\
                         .format(current_id, self.name,
@@ -1060,6 +1071,13 @@ class Matrix22:
                         self.M11*other_matrix.M12 + self.M12*other_matrix.M22,
                         self.M21*other_matrix.M11 + self.M22*other_matrix.M21,
                         self.M21*other_matrix.M12 + self.M22*other_matrix.M22)
+
+    def vector_multiplication(self, vector):
+        u1, u2 = C_matrix_vector_multiplication2(self.M11, self.M12,
+                                                 self.M21, self.M22,
+                                                 vector.x, vector.y)
+
+        return vector.__class__(u1, u2)
 
     def determinent(self):
         return self.M11 * self.M22 - self.M12 * self.M21
@@ -1223,27 +1241,39 @@ class Basis2D(Basis):
 
 
     def transfer_matrix(self):
-        return npy.array([[self.u[0], self.v[0]],
-                          [self.u[1], self.v[1]]])
+        return Matrix22(self.u.x, self.v.x,
+                        self.u.y, self.v.y)
+        # return npy.array([[self.u[0], self.v[0]],
+        #                   [self.u[1], self.v[1]]])
 
+    # def inverse_transfer_matrix(self):
+    #     det = self.u[0]*self.v[1] - self.v[0]*self.u[1]
+    #     if not math.isclose(det, 0, abs_tol=1e-10):
+    #         return 1/det * npy.array([[self.v[1], -self.v[0]],
+    #                                  [-self.u[1], self.u[0]]])
+    #     else:
+    #         raise ZeroDivisionError
     def inverse_transfer_matrix(self):
-        det = self.u[0]*self.v[1] - self.v[0]*self.u[1]
-        if not math.isclose(det, 0, abs_tol=1e-10):
-            return 1/det * npy.array([[self.v[1], -self.v[0]],
-                                     [-self.u[1], self.u[0]]])
-        else:
-            raise ZeroDivisionError
+        return self.transfer_matrix().inverse()
 
     def new_coordinates(self, vector):
         matrix = self.inverse_transfer_matrix()
-        return Point2D((matrix[0][0]*vector.x + matrix[0][1]*vector.y,
-                         matrix[1][0]*vector.x + matrix[1][1]*vector.y))
+        return matrix.vector_multiplication(vector)
 
-
-    def old_coordinates(self, vector):
+    def old_coordinates(self, point):
         matrix = self.transfer_matrix()
-        return Point2D(matrix[0][0]*vector.x + matrix[0][1]*vector.y,
-                       matrix[1][0]*vector.x + matrix[1][1]*vector.y)
+        return matrix.vector_multiplication(point)
+
+    # def new_coordinates(self, vector):
+    #     matrix = self.inverse_transfer_matrix()
+    #     return Point2D((matrix[0][0]*vector.x + matrix[0][1]*vector.y,
+    #                      matrix[1][0]*vector.x + matrix[1][1]*vector.y))
+    #
+    #
+    # def old_coordinates(self, vector):
+    #     matrix = self.transfer_matrix()
+    #     return Point2D(matrix[0][0]*vector.x + matrix[0][1]*vector.y,
+    #                    matrix[1][0]*vector.x + matrix[1][1]*vector.y)
 
     def rotation(self, angle:float, copy=True):
         center = O2D
@@ -1478,11 +1508,16 @@ class Frame2D(Basis2D):
 
     def __add__(self, other_frame):
         P1 = self.transfer_matrix()
-        new_origin = Point2D(npy.dot(P1, other_frame.origin) + self.origin)
-        M = npy.dot(P1, other_frame.transfer_matrix())
+        new_origin = P1.vector_multiplication(other_frame.origin) + self.origin
+        M = P1 * other_frame.transfer_matrix()
         return Frame2D(new_origin,
-                       Vector2D(M[:, 0]),
-                       Vector2D(M[:, 1]))
+                       Vector2D(M.M11, M.M21),
+                       Vector2D(M.M12, M.M22))
+        # new_origin = Point2D(npy.dot(P1, other_frame.origin) + self.origin)
+        # M = npy.dot(P1, other_frame.transfer_matrix())
+        # return Frame2D(new_origin,
+        #                Vector2D(M[:, 0]),
+        #                Vector2D(M[:, 1]))
 
 
     def __sub__(self, other_frame):
