@@ -106,6 +106,14 @@ babylon_unpacker_body_template = Template(
         cam.checkCollisions = false;
 
 
+        cam.onViewMatrixChangedObservable.add(() => {
+            for (mesh of scene.meshes){
+                var dist = BABYLON.Vector3.Distance(cam.position, mesh.position);
+                console.log(dist);
+                mesh.edgesWidth = dist*0.1;
+            }
+         })
+
       	var light1 = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(-1, -1, -1), scene);
       	light1.intensity=0.5;
       	light1.specular = new BABYLON.Color3(0, 0, 0);
@@ -175,7 +183,7 @@ babylon_unpacker_body_template = Template(
           vertexData.normals = normals;
           vertexData.applyToMesh(mesh);
           mesh.enableEdgesRendering(0.9);
-          mesh.edgesWidth = max_length*0.3;
+          mesh.edgesWidth = max_length*0.1;
           mesh.edgesColor = new BABYLON.Color4(0, 0, 0, 0.6);
           var mat = new BABYLON.StandardMaterial("material", scene);
           // mat.diffuseColor = BABYLON.Color3.Green();
