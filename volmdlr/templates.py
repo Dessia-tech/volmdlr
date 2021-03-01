@@ -109,7 +109,6 @@ babylon_unpacker_body_template = Template(
         cam.onViewMatrixChangedObservable.add(() => {
             for (mesh of scene.meshes){
                 var dist = BABYLON.Vector3.Distance(cam.position, mesh.position);
-                console.log(dist);
                 mesh.edgesWidth = dist*0.1;
             }
          })
