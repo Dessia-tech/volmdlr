@@ -614,6 +614,22 @@ class LineSegment2D(LineSegment):
         self.points = [start, end]
         Edge.__init__(self, start, end, name=name)
 
+    def __hash__(self):
+        return self._data_hash()
+    
+    def _data_hash(self):
+        return self.start._data_hash() + self.end._data_hash() 
+    
+    def _data_eq(self, other_object):
+        if self.__class__.__name__ != other_object.__class__.__name__:
+                return False
+        return self.start == other_object.start and self.end == other_object.end
+
+    def __eq__(self, other_object):
+        if self.__class__.__name__ != other_object.__class__.__name__:
+                return False
+        return self.start == other_object.start and self.end == other_object.end
+
     def length(self):
         return self.end.point_distance(self.start)
 

@@ -104,13 +104,17 @@ babylon_unpacker_body_template = Template(
       	camera.lowerBetaLimit = null;
         camera.upperBetaLimit = null;
         camera.checkCollisions = false;
-        camera.lowerRadiusLimit = 0.01*babylon_data['max_length']
+        camera.lowerRadiusLimit = 0.01*babylon_data['max_length'];
+        scene.lastEdgewidthUpdate = Date.now();
 
 
         camera.onViewMatrixChangedObservable.add(() => {
-            for (mesh of scene.meshes){
-                var dist = BABYLON.Vector3.Distance(camera.position, mesh.position);
-                mesh.edgesWidth = dist*0.1;
+            if ((Date.now() - scene.lastEdgewidthUpdate) > 1000){
+                scene.lastEdgewidthUpdate = Date.now();
+                for (mesh of scene.meshes){
+                    var dist = BABYLON.Vector3.Distance(camera.position, mesh.position);
+                    mesh.edgesWidth = dist*0.1;
+                }
             }
          })
 

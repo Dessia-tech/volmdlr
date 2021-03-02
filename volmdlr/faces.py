@@ -2785,7 +2785,7 @@ class ToroidalFace3D(Face3D):
     def _bounding_box(self):
         return self.surface3d._bounding_box()
 
-    def triangulation_lines(self, angle_resolution=7):
+    def triangulation_lines(self, angle_resolution=5):
         theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle()
 
         delta_theta = theta_max - theta_min
