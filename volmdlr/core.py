@@ -570,6 +570,9 @@ class BoundingBox(dc.DessiaObject):
                            min(self.zmin, other_bbox.zmin),
                            max(self.zmax, other_bbox.zmax))
 
+    def __iter__(self):
+        return [self.xmin, self.xmax, self.ymin, self.ymax, self.zmin, self.zmax]
+
     def plot(self, ax=None, color=''):
         fig = plt.figure()
         if ax is None:
@@ -614,6 +617,12 @@ class BoundingBox(dc.DessiaObject):
         zmin = min([pt.z for pt in points])
         zmax = max([pt.z for pt in points])
         return cls(xmin, xmax, ymin, ymax, zmin, zmax)
+
+    def to_frame(self):
+        x = volmdlr.Vector3D((self.xmax - self.xmin), 0, 0)
+        y = volmdlr.Vector3D(0, (self.ymax - self.ymin), 0)
+        z = volmdlr.Vector3D(0, 0, (self.zmax - self.zmin))
+        return volmdlr.Frame3D(self.center, x, y, z)
 
     def volume(self):
         return (self.xmax - self.xmin) * (self.ymax - self.ymin) * (

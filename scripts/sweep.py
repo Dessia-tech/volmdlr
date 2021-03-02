@@ -24,7 +24,7 @@ radius = {1: 0.015, 2: 0.020, 3: 0.005}
 current_point = p5
 #points = [p1, p2]
 #radius = {1: 0.010}
-for i in range(4):
+for i in range(6):
     current_point += vm.Point3D.random(-0.1, 0.3, -0.1, 0.3, -0.1, 0.3)
     points.append(current_point)
     radius[4+i] = 0.01 + 0.03 * random.random()

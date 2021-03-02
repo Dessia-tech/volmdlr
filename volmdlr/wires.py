@@ -955,9 +955,13 @@ class ClosedPolygon2D(Contour2D):
         x = [point.x for point in self.points]
         y = [point.y for point in self.points]
 
-        return 0.5 * npy.abs(
-            npy.dot(x, npy.roll(y, 1)) - npy.dot(y, npy.roll(x, 1)))
-
+        x1 = [x[-1]] + x[0:-1]
+        y1 = [y[-1]] + y[0:-1]
+        return 0.5*abs(sum([i*j for i, j in zip(x, y1)])
+                       - sum([i*j for i, j in zip(y, x1)]))
+        # return 0.5 * npy.abs(
+        #     npy.dot(x, npy.roll(y, 1)) - npy.dot(y, npy.roll(x, 1)))
+        
     def center_of_mass(self):
 
         x = [point.x for point in self.points]

@@ -87,24 +87,36 @@ babylon_unpacker_body_template = Template(
         var scene = new BABYLON.Scene(engine);
         scene.useRightHandedSystem = true;
         scene.clearColor = new BABYLON.Color4(.9, .9, .9, .9);
-      	var cam = new BABYLON.ArcRotateCamera("ArcRotateCamera",
+      	var camera = new BABYLON.ArcRotateCamera("ArcRotateCamera",
                                               0, 0, 2*babylon_data['max_length'],
                                               new BABYLON.Vector3(babylon_data['center'][0],
                                                                   babylon_data['center'][1],
                                                                   babylon_data['center'][2]), scene);
-      	cam.wheelPrecision=50./babylon_data['max_length']
-      	cam.pinchPrecision=50./babylon_data['max_length']
-      	cam.panningSensibility=800./babylon_data['max_length'];
-      	cam.minZ=0.01*babylon_data['max_length'];
-      	cam.attachControl(canvas);
-      	cam.inertia = 0;
-      	cam.panningInertia = 0;
+      	camera.wheelPrecision=50./babylon_data['max_length']
+      	camera.pinchPrecision=50./babylon_data['max_length']
+      	camera.panningSensibility=800./babylon_data['max_length'];
+      	camera.minZ=0.01*babylon_data['max_length'];
+      	camera.attachControl(canvas);
+      	camera.inertia = 0;
+      	camera.panningInertia = 0;
       	// cam.mode = BABYLON.Camera.ORTHOGRAPHIC_CAMERA;
-      	cam.upVector = new BABYLON.Vector3(0, 0, 1);
-      	cam.lowerBetaLimit = null;
-        cam.upperBetaLimit = null;
-        cam.checkCollisions = false;
+      	camera.upVector = new BABYLON.Vector3(0, 0, 1);
+      	camera.lowerBetaLimit = null;
+        camera.upperBetaLimit = null;
+        camera.checkCollisions = false;
+        camera.lowerRadiusLimit = 0.01*babylon_data['max_length'];
+        scene.lastEdgewidthUpdate = Date.now();
 
+
+        camera.onViewMatrixChangedObservable.add(() => {
+            if ((Date.now() - scene.lastEdgewidthUpdate) > 1000){
+                scene.lastEdgewidthUpdate = Date.now();
+                for (mesh of scene.meshes){
+                    var dist = BABYLON.Vector3.Distance(camera.position, mesh.position);
+                    mesh.edgesWidth = dist*0.1;
+                }
+            }
+         })
 
       	var light1 = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(-1, -1, -1), scene);
       	light1.intensity=0.5;
@@ -116,7 +128,7 @@ babylon_unpacker_body_template = Template(
         var light2 = new BABYLON.PointLight("light2", new BABYLON.Vector3(0, 0, 0), scene);
         light2.specular = new BABYLON.Color3(0, 0, 0);
         light2.intensity = 0.3;
-        light2.parent = cam;
+        light2.parent = camera;
 
         var light3 = new BABYLON.HemisphericLight("light3", new BABYLON.Vector3(1, 1, 1), scene);
         light3.specular = new BABYLON.Color3(0, 0, 0);
@@ -175,7 +187,7 @@ babylon_unpacker_body_template = Template(
           vertexData.normals = normals;
           vertexData.applyToMesh(mesh);
           mesh.enableEdgesRendering(0.9);
-          mesh.edgesWidth = max_length*0.3;
+          mesh.edgesWidth = max_length*0.1;
           mesh.edgesColor = new BABYLON.Color4(0, 0, 0, 0.6);
           var mat = new BABYLON.StandardMaterial("material", scene);
           // mat.diffuseColor = BABYLON.Color3.Green();

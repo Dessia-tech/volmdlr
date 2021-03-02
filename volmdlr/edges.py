@@ -296,7 +296,8 @@ class Line2D(Line):
 
     def plot_data(self, edge_style=None):
         return plot_data.Line2D([self.point1.x, self.point1.y,
-                                 self.point2.x, self.point2.y], edge_style=edge_style)
+                                 self.point2.x, self.point2.y],
+                                edge_style=edge_style)
 
     def create_tangent_circle(self, point, other_line):
         """
@@ -612,6 +613,22 @@ class LineSegment2D(LineSegment):
     def __init__(self, start, end, *, name=''):
         self.points = [start, end]
         Edge.__init__(self, start, end, name=name)
+
+    def __hash__(self):
+        return self._data_hash()
+    
+    def _data_hash(self):
+        return self.start._data_hash() + self.end._data_hash() 
+    
+    def _data_eq(self, other_object):
+        if self.__class__.__name__ != other_object.__class__.__name__:
+                return False
+        return self.start == other_object.start and self.end == other_object.end
+
+    def __eq__(self, other_object):
+        if self.__class__.__name__ != other_object.__class__.__name__:
+                return False
+        return self.start == other_object.start and self.end == other_object.end
 
     def length(self):
         return self.end.point_distance(self.start)
@@ -1432,9 +1449,11 @@ class Line3D(Line):
         ax.plot(x, y, z, color=color, alpha=alpha)
 
         # Drawing 3 times length of segment on each side
-        u = self.point2 - self.points[0]
-        x1, y1, z1 = (self.points[0] - 3 * u).vector
-        x2, y2, z2 = (self.point2 + 3 * u).vector
+        u = self.point2 - self.point1
+        v1 = (self.point1 - 3 * u)
+        x1, y1, z1 = v1.x, v1.y, v1.z
+        v2 = (self.point2 - 3 * u)
+        x2, y2, z2 = v2.x, v2.y, v2.z
         if dashed:
             ax.plot([x1, x2], [y1, y2], [z1, z2], color=color,
                     dashes=[30, 5, 10, 5])
