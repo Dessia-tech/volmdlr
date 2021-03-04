@@ -29,6 +29,12 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
         volmdlr.wires.Wire2D.__init__(self, primitives, name)
 
+    def polygon_points(self, angle_resolution=5):
+        points = []
+        for primitive in self.primitives:
+            points.extend(primitive.polygon_points())
+        return points
+
     def arc_features(self, ipoint):
         radius = self.radius[ipoint]
         if self.closed:

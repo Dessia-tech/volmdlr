@@ -7,8 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.2.6]
+
+### Changed
+- debugs on frame 2D 
+
+### Optimized
+- babylon data generation speed up
+
+## [v0.2.5]
+
+### Added
+- translation and rotation for various primitives
 ### Changed
 - Frame3D rotation takes also into account origin
+- following plot_data v0.5.3
 
 ## [v0.2.4]
 ### Added
