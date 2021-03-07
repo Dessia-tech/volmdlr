@@ -592,7 +592,10 @@ class Surface3D(dc.DessiaObject):
             method_name = '{}_to_3d'.format(
                 primitive2d.__class__.__name__.lower())
             if hasattr(self, method_name):
-                primitives3d.extend(getattr(self, method_name)(primitive2d))
+                try:
+                    primitives3d.extend(getattr(self, method_name)(primitive2d))
+                except NotImplementedError:
+                    print('Error NotImplementedError')
             else:
                 raise NotImplementedError(
                     'Class {} does not implement {}'.format(
@@ -2362,6 +2365,10 @@ class CylindricalFace3D(Face3D):
         Face3D.__init__(self, surface3d=cylindricalsurface3d,
                         surface2d=surface2d,
                         name=name)
+
+    def copy(self):
+        return CylindricalFace3D(self.surface3d.copy(), self.surface2d.copy(),
+                           self.name)
 
     def _bounding_box(self):
         theta_min, theta_max, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle()
