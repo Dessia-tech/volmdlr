@@ -1911,6 +1911,7 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         this error is raised to enforce overloading of this method
         """
+        print(self)
         raise NotImplementedError(
             '_bounding_box method must be overloaded by {}'.format(
                 self.__class__.__name__))
@@ -2770,6 +2771,10 @@ class ToroidalFace3D(Face3D):
                         surface3d=toroidalsurface3d,
                         surface2d=surface2d,
                         name=name)
+
+    def copy(self):
+        return ToroidalFace3D(self.surface3d.copy(), self.surface2d.copy(),
+                              self.name)
 
     def points_resolution(self, line, pos,
                           resolution):  # With a resolution wished
@@ -3893,6 +3898,7 @@ class ClosedShell3D(OpenShell3D):
             self.bounding_box = self._bounding_box()
 
     def copy(self):
+        print(self.faces)
         new_faces = [face.copy() for face in self.faces]
         return ClosedShell3D(new_faces, color=self.color, alpha=self.alpha,
                              name=self.name)
