@@ -643,7 +643,7 @@ class LineSegment2D(LineSegment):
     def straight_line_area(self):
         return 0.
 
-    def straight_line_second_moment_area(self):
+    def straight_line_second_moment_area(self, point:volmdlr.Point2D):
         return 0, 0, 0
 
     def point_distance(self, point, return_other_point=False):
@@ -1036,7 +1036,7 @@ class Arc2D(Edge):
                 self.center.y-self.radius, self.center.y+self.radius)
 
     def straight_line_area(self):
-        return 0.5*self.radius**2*(self.angle-math.sin(theta))
+        return 0.5*self.radius**2*(self.angle-math.sin(self.angle))
 
     def straight_line_second_moment_area(self, point:volmdlr.Point2D):
 
@@ -1055,9 +1055,9 @@ class Arc2D(Edge):
                 math.cos(angle1) ** 2 - math.cos(angle2) ** 2)
 
         
-        Ic = npy.array([[Ix, Ixy], [Ixy, Iy]])
+        # Ic = npy.array([[Ix, Ixy], [Ixy, Iy]])
 
-        return volmdlr.geometry.huygens2d(Ic, self.area(), self.center,
+        return volmdlr.geometry.huygens2d(Ix, Iy, Ixy, self.area(), self.center,
                                           point)
 
 

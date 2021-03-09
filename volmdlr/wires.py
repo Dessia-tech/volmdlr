@@ -491,11 +491,14 @@ class Contour2D(Contour, Wire2D):
 
     def second_moment_area(self, point):
 
-        A = self.edge_polygon.second_moment_area(point)
+        Ix, Iy, Ixy = self.edge_polygon.second_moment_area(point)
         for edge in self.primitives:
-            A += edge.straight_line_second_moment_area(point)
-
-        return A
+            Ix_e, Iy_e, Ixy_e = edge.straight_line_second_moment_area(point)
+            Ix += Ix_e
+            Iy += Iy_e
+            Ixy += Ixy_e
+            
+        return Ix, Iy, Ixy
 
     def plot_data(self, edge_style: plot_data.EdgeStyle = None,
                   surface_style: plot_data.SurfaceStyle = None):
@@ -976,7 +979,7 @@ class ClosedPolygon2D(Contour2D):
                                      [(p.x, p.y) for p in self.points])
 
     def second_moment_area(self, point):
-        Ix, Iy, Ixy = 0, 0, 0
+        Ix, Iy, Ixy = 0., 0., 0.
         for pi, pj in zip(self.points, self.points[1:] + [self.points[0]]):
             xi, yi = (pi - point)
             xj, yj = (pj - point)
@@ -988,7 +991,7 @@ class ClosedPolygon2D(Contour2D):
             Ix = - Ix
             Iy = - Iy
             Ixy = - Ixy
-        return npy.array([[Ix / 12., Ixy / 24.], [Ixy / 24., Iy / 12.]])
+        return Ix/12., Iy/12., Ixy/24.
 
     def _line_segments(self):
         lines = []
@@ -1351,10 +1354,10 @@ class Circle2D(Contour2D):
     def point_belongs(self, point, tolerance=1e-9):
         return point.point_distance(self.center) <= self.radius + tolerance
 
-    def border_points(self):
-        start = self.center - self.radius * volmdlr.Point2D(1, 0)
-        end = self.center + self.radius * volmdlr.Point2D(1, 0)
-        return [start, end]
+    # def border_points(self):
+    #     start = self.center - self.radius * volmdlr.Point2D(1, 0)
+    #     end = self.center + self.radius * volmdlr.Point2D(1, 0)
+    #     return [start, end]
 
     def bounding_rectangle(self):
 
@@ -1513,7 +1516,7 @@ class Circle2D(Contour2D):
         """
         I = math.pi * self.radius ** 4 / 4
         Ic = npy.array([[I, 0], [0, I]])
-        return volmdlr.geometry.huygens2d(Ic, self.area(), self.center, point)
+        return volmdlr.geometry.huygens2d(I, I, 0, self.area(), self.center, point)
 
     def center_of_mass(self):
         return self.center
@@ -1545,10 +1548,28 @@ class Circle2D(Contour2D):
         triangles = [(i, i + 1, n) for i in range(n - 1)] + [(n - 1, 0, n)]
 
     def split(self, split_point1, split_point2):
-
-        return [vme.Arc2D(split_point1, self.border_points()[0],
+        ax = self.plot()
+        split_point1.plot(ax=ax, color='r')
+        split_point2.plot(ax=ax, color='g')
+        x1, y1 = split_point1-self.center
+        x2, y2 = split_point2-self.center
+        print(x1, y1)
+        print(x2, y2)
+        
+        angle1 = math.atan2(y1, x1)
+        angle2 = math.atan2(y2, x2)
+        angle_i1 = 0.5*(angle2 - angle1)
+        angle_i2 = angle_i1 + math.pi
+        print(math.degrees(angle1), math.degrees(angle2), math.degrees(angle_i1))
+        interior_point1 = split_point1.rotation(self.center, angle1)
+        interior_point2 = split_point1.rotation(self.center, angle2)
+        interior_point1.plot(ax=ax, color='b')
+        interior_point2.plot(ax=ax, color='grey')
+        
+        
+        return [vme.Arc2D(split_point1, interior_point1,
                                     split_point2),
-                vme.Arc2D(split_point2, self.border_points()[1],
+                vme.Arc2D(split_point2, interior_point2,
                                     split_point1)]
 
     def point_at_abscissa(self, curvilinear_abscissa):
