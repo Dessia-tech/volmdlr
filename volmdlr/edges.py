@@ -636,6 +636,16 @@ class LineSegment2D(LineSegment):
     def point_at_abscissa(self, curvilinear_abscissa):
         return self.start + self.unit_direction_vector() * curvilinear_abscissa
 
+    def bounding_rectangle(self):
+        return (min(self.start.x, self.end.x), max(self.start.x, self.end.x),
+                min(self.start.y, self.end.y), max(self.start.y, self.end.y))
+
+    def straight_line_area(self):
+        return 0.
+
+    def straight_line_second_moment_area(self):
+        return 0, 0, 0
+
     def point_distance(self, point, return_other_point=False):
         """
         Computes the distance of a point to segment of line
@@ -1020,6 +1030,37 @@ class Arc2D(Edge):
         return self.center + 4 / (3 * alpha) * self.radius * math.sin(
             alpha * 0.5) * u
 
+    def bounding_rectangle(self):
+        # Enhance this!!!
+        return (self.center.x-self.radius, self.center.x+self.radius,
+                self.center.y-self.radius, self.center.y+self.radius)
+
+    def straight_line_area(self):
+        return 0.5*self.radius**2*(self.angle-math.sin(theta))
+
+    def straight_line_second_moment_area(self, point:volmdlr.Point2D):
+
+        if self.angle2 < self.angle1:
+            angle2 = self.angle2 + volmdlr.TWO_PI
+
+        else:
+            angle2 = self.angle2
+        angle1 = self.angle1
+
+        Ix = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
+                math.sin(2 * angle1) - math.sin(2 * angle2)))
+        Iy = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
+                math.sin(2 * angle2) - math.sin(2 * angle1)))
+        Ixy = self.radius ** 4 / 8 * (
+                math.cos(angle1) ** 2 - math.cos(angle2) ** 2)
+
+        
+        Ic = npy.array([[Ix, Ixy], [Ixy, Iy]])
+
+        return volmdlr.geometry.huygens2d(Ic, self.area(), self.center,
+                                          point)
+
+
     def plot(self, ax=None, color='k', alpha=1, plot_points=False):
         if ax is None:
             fig, ax = plt.subplots()
@@ -1071,12 +1112,12 @@ class Arc2D(Edge):
             self.__init__(*[p.frame_mapping(frame, side, copy=True) for p in
                             [self.start, self.interior, self.end]])
 
-    def SecondMomentArea(self, point):
+    def second_moment_area(self, point):
         """
         Second moment area of part of disk
         """
         if self.angle2 < self.angle1:
-            angle2 = self.angle2 + volmdlr.volmdlr.TWO_PI
+            angle2 = self.angle2 + volmdlr.TWO_PI
 
         else:
             angle2 = self.angle2

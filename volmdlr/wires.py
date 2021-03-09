@@ -320,104 +320,116 @@ class Contour2D(Contour, Wire2D):
 
     def __init__(self, primitives, name=''):
         Wire2D.__init__(self, primitives, name)
-        self._utd_analysis = False
+        self._utd_edge_polygon = False
 
-    def _primitives_analysis(self):
-        """
-        An internal arc is an arc that has his interior point inside the polygon
-        """
-        arcs = []
-        internal_arcs = []
-        external_arcs = []
-        points_polygon = []
-        points_straight_line_contour = []
-        for primitive in self.primitives:
-            # TODO: change this!!!
-            if primitive.__class__.__name__ == 'LineSegment2D':
-                points_polygon.append(primitive.start)
-                points_straight_line_contour.append(primitive.start)
-                points_straight_line_contour.append(primitive.end)
-            elif primitive.__class__.__name__ == 'Arc2D':
-                points_polygon.append(primitive.start)
-                points_polygon.append(primitive.center)
+    @property
+    def edge_polygon(self):
+        if not self._utd_edge_polygon:
+            self._edge_polygon = self._get_edge_polygon()
+            self._utd_edge_polygon = True
+        return self._edge_polygon
 
-                # points_polygon.append(primitive.end)
-                arcs.append(primitive)
-            elif primitive.__class__.__name__ == 'Circle2D':
-                raise ValueError(
-                    'Circle2D primitives should not be inserted in a contour, as a circle is already a contour. Use directcly the circle')
-                # return None
-            elif primitive.__class__.__name__ == 'OpenedRoundedLineSegments2D':
-                for prim in primitive.primitives:
-                    if prim.__class__.__name__ == 'LineSegment2D':
-                        points_polygon.extend(prim.points)
-                        points_straight_line_contour.extend(prim.points)
-                    elif prim.__class__.__name__ == 'Arc2D':
-                        #                points_polygon.append(primitive.center)
-                        points_polygon.append(prim.start)
-                        points_polygon.append(prim.end)
-                        arcs.append(prim)
-            elif primitive.__class__.__name__ == 'BSplineCurve2D':
-                points_polygon.extend(primitive.polygon_points()[:-1])
-                points_straight_line_contour.extend(primitive.polygon_points()[:-1])
-            else:
-                raise NotImplementedError(
-                    'primitive of type {} is not handled'.format(primitive))
-
-        # points_polygon = list(set(points_polygon))
-        polygon = ClosedPolygon2D(points_polygon)
-        points_straight_line_contour = list(set(points_straight_line_contour))
-        straight_line_contour_polygon = ClosedPolygon2D(
-            points_straight_line_contour)
-
-        for arc in arcs:
-            if polygon.point_belongs(arc.interior):
-                internal_arcs.append(arc)
-            else:
-                external_arcs.append(arc)
-
-        return internal_arcs, external_arcs, polygon, straight_line_contour_polygon
-
-    def _get_internal_arcs(self):
-        if not self._utd_analysis:
-            (self._internal_arcs, self._external_arcs,
-             self._polygon,
-             self._straight_line_contour_polygon) = self._primitives_analysis()
-            self._utd_analysis = True
-        return self._internal_arcs
-
-    internal_arcs = property(_get_internal_arcs)
-
-    def _get_external_arcs(self):
-        if not self._utd_analysis:
-            (self._internal_arcs, self._external_arcs,
-             self._polygon,
-             self._straight_line_contour_polygon) = self._primitives_analysis()
-            self._utd_analysis = True
-        return self._external_arcs
-
-    external_arcs = property(_get_external_arcs)
-
-    def _get_polygon(self):
-        if not self._utd_analysis:
-            (self._internal_arcs, self._external_arcs,
-             self._polygon,
-             self._straight_line_contour_polygon) = self._primitives_analysis()
-            self._utd_analysis = True
-        return self._polygon
-
-    polygon = property(_get_polygon)
-
-    def _get_straight_line_contour_polygon(self):
-        if not self._utd_analysis:
-            (self._internal_arcs, self._external_arcs,
-             self._polygon,
-             self._straight_line_contour_polygon) = self._primitives_analysis()
-            self._utd_analysis = True
-        return self._straight_line_contour_polygon
-
-    straight_line_contour_polygon = property(
-        _get_straight_line_contour_polygon)
+    def _get_edge_polygon(self):
+        points = []
+        for edge in self.primitives:
+            points.append(edge.start)
+        return ClosedPolygon2D(points)
+    # def _primitives_analysis(self):
+    #     """
+    #     An internal arc is an arc that has his interior point inside the polygon
+    #     """
+    #     arcs = []
+    #     internal_arcs = []
+    #     external_arcs = []
+    #     points_polygon = []
+    #     points_straight_line_contour = []
+    #     for primitive in self.primitives:
+    #         # TODO: change this!!!
+    #         if primitive.__class__.__name__ == 'LineSegment2D':
+    #             points_polygon.append(primitive.start)
+    #             points_straight_line_contour.append(primitive.start)
+    #             points_straight_line_contour.append(primitive.end)
+    #         elif primitive.__class__.__name__ == 'Arc2D':
+    #             points_polygon.append(primitive.start)
+    #             points_polygon.append(primitive.center)
+    #
+    #             # points_polygon.append(primitive.end)
+    #             arcs.append(primitive)
+    #         elif primitive.__class__.__name__ == 'Circle2D':
+    #             raise ValueError(
+    #                 'Circle2D primitives should not be inserted in a contour, as a circle is already a contour. Use directcly the circle')
+    #             # return None
+    #         elif primitive.__class__.__name__ == 'OpenedRoundedLineSegments2D':
+    #             for prim in primitive.primitives:
+    #                 if prim.__class__.__name__ == 'LineSegment2D':
+    #                     points_polygon.extend(prim.points)
+    #                     points_straight_line_contour.extend(prim.points)
+    #                 elif prim.__class__.__name__ == 'Arc2D':
+    #                     #                points_polygon.append(primitive.center)
+    #                     points_polygon.append(prim.start)
+    #                     points_polygon.append(prim.end)
+    #                     arcs.append(prim)
+    #         elif primitive.__class__.__name__ == 'BSplineCurve2D':
+    #             points_polygon.extend(primitive.polygon_points()[:-1])
+    #             points_straight_line_contour.extend(primitive.polygon_points()[:-1])
+    #         else:
+    #             raise NotImplementedError(
+    #                 'primitive of type {} is not handled'.format(primitive))
+    #
+    #     # points_polygon = list(set(points_polygon))
+    #     polygon = ClosedPolygon2D(points_polygon)
+    #     points_straight_line_contour = list(set(points_straight_line_contour))
+    #     straight_line_contour_polygon = ClosedPolygon2D(
+    #         points_straight_line_contour)
+    #
+    #     for arc in arcs:
+    #         if polygon.point_belongs(arc.interior):
+    #             internal_arcs.append(arc)
+    #         else:
+    #             external_arcs.append(arc)
+    #
+    #     return internal_arcs, external_arcs, polygon, straight_line_contour_polygon
+    #
+    # def _get_internal_arcs(self):
+    #     if not self._utd_analysis:
+    #         (self._internal_arcs, self._external_arcs,
+    #          self._polygon,
+    #          self._straight_line_contour_polygon) = self._primitives_analysis()
+    #         self._utd_analysis = True
+    #     return self._internal_arcs
+    #
+    # internal_arcs = property(_get_internal_arcs)
+    #
+    # def _get_external_arcs(self):
+    #     if not self._utd_analysis:
+    #         (self._internal_arcs, self._external_arcs,
+    #          self._polygon,
+    #          self._straight_line_contour_polygon) = self._primitives_analysis()
+    #         self._utd_analysis = True
+    #     return self._external_arcs
+    #
+    # external_arcs = property(_get_external_arcs)
+    #
+    # def _get_polygon(self):
+    #     if not self._utd_analysis:
+    #         (self._internal_arcs, self._external_arcs,
+    #          self._polygon,
+    #          self._straight_line_contour_polygon) = self._primitives_analysis()
+    #         self._utd_analysis = True
+    #     return self._polygon
+    #
+    # polygon = property(_get_polygon)
+    #
+    # def _get_straight_line_contour_polygon(self):
+    #     if not self._utd_analysis:
+    #         (self._internal_arcs, self._external_arcs,
+    #          self._polygon,
+    #          self._straight_line_contour_polygon) = self._primitives_analysis()
+    #         self._utd_analysis = True
+    #     return self._straight_line_contour_polygon
+    #
+    # straight_line_contour_polygon = property(
+    #     _get_straight_line_contour_polygon)
 
     def to_3d(self, plane_origin, x, y):
         p3d = []
@@ -462,52 +474,26 @@ class Contour2D(Contour, Wire2D):
     #     return Contour3D(primitives=primitives3D, name=name)
 
     def area(self):
-        if len(self.primitives) == 1:
-            return self.primitives[0].area()
+        area = self.edge_polygon.area()
 
-        A = self.polygon.area()
+        for edge in self.primitives:
+            area += edge.straight_line_area()
 
-        for arc in self.internal_arcs:
-            triangle = ClosedPolygon2D([arc.start, arc.center, arc.end])
-            A = A - arc.area() + triangle.area()
-        for arc in self.external_arcs:
-            triangle = ClosedPolygon2D([arc.start, arc.center, arc.end])
-            A = A + arc.area() - triangle.area()
-
-        return A
+        return area
 
     def center_of_mass(self):
-        if len(self.primitives) == 1:
-            return self.primitives[0].center_of_mass()
+        center = self.edge_polygon.area() * self.edge_polygon.center_of_mass()
+        for edge in self.primitives:
+            center += edge.straight_line_center_of_mass()
 
-        area = self.polygon.area()
-        if area > 0.:
-            c = area * self.polygon.center_of_mass()
-        else:
-            c = volmdlr.O2D
+        return center/self.area()
 
-        for arc in self.internal_arcs:
-            arc_area = arc.area()
-            c -= arc_area * arc.center_of_mass()
-            area -= arc_area
-        for arc in self.external_arcs:
-            arc_area = arc.area()
-            c += arc_area * arc.center_of_mass()
-            area += arc_area
-        if area != 0:
-            return c / area
-        else:
-            return False
 
     def second_moment_area(self, point):
-        if len(self.primitives) == 1:
-            return self.primitives[0].second_moment_area(point)
 
-        A = self.polygon.second_moment_area(point)
-        for arc in self.internal_arcs:
-            A -= arc.SecondMomentArea(point)
-        for arc in self.external_arcs:
-            A += arc.SecondMomentArea(point)
+        A = self.edge_polygon.second_moment_area(point)
+        for edge in self.primitives:
+            A += edge.straight_line_second_moment_area(point)
 
         return A
 
@@ -582,13 +568,13 @@ class Contour2D(Contour, Wire2D):
     #     return points
 
     def bounding_rectangle(self):
-        points = self.straight_line_contour_polygon.points[:]
-        for arc in self.internal_arcs + self.external_arcs:
-            points.extend(arc.polygon_points())
-        xmin = min([p[0] for p in points])
-        xmax = max([p[0] for p in points])
-        ymin = min([p[1] for p in points])
-        ymax = max([p[1] for p in points])
+        xmin, xmax, ymin, ymax = self.primitives[0].bounding_rectangle()
+        for edge in self.primitives[1:]:
+            xmin_edge, xmax_edge, ymin_edge, ymax_edge = edge.bounding_rectangle()
+            xmin = min(xmin, xmin_edge)
+            xmax = max(xmax, xmax_edge)
+            ymin = min(ymin, ymin_edge)
+            ymax = max(ymax, ymax_edge)
         return xmin, xmax, ymin, ymax
 
     def random_point_inside(self):
@@ -1316,715 +1302,14 @@ class Triangle2D(ClosedPolygon2D):
 
     def __init__(self, points, name=''):
         self.points = points
-
-        self.area = self._area()
-
         ClosedPolygon2D.__init__(self, points=points, name=name)
 
-    def _area(self):
+    def area(self):
         u = self.points[1] - self.points[0]
         v = self.points[2] - self.points[0]
         return abs(u.cross(v)) / 2
 
-    def common_edge(self, nodes_0: List[volmdlr.Point2D],
-                    nodes_1: List[volmdlr.Point2D]):
-        common_edge = None
-        for point1 in nodes_0:
-            for point2 in nodes_1:
-                if point1 == point2:
-                    common_edge = point1
-        if common_edge is not None:
-            return common_edge
-        else:
-            return None
 
-    def min_length(self):
-        L = []
-
-        for k in range(len(self.line_segments)):
-            L.append(self.line_segments[k].Length())
-
-        return min(L)
-
-    def max_length(self):
-        L = []
-
-        for k in range(len(self.line_segments)):
-            L.append(self.line_segments[k].length())
-
-        return max(L)
-
-    def line_equation(self, P0: volmdlr.Point2D, P1: volmdlr.Point2D,
-                      M: volmdlr.Point2D):
-
-        return (P1.x - P0.x) * (M.y - P0.y) - (P1.y - P0.y) * (M.x - P0.x)
-
-    def is_inside_triangle(self, M: volmdlr.Point2D):
-        P0 = self.points[0]
-        P1 = self.points[1]
-        P2 = self.points[2]
-        return self.line_equation(P0, P1, M) > 0 and self.line_equation(P1, P2,
-                                                                        M) > 0 and self.line_equation(
-            P2, P0, M) > 0
-
-    def aspect_ratio(self):
-
-        H = []
-        for k in range(len(self.line_segments)):
-            H.append(2 * self.area / self.line_segments[k].length())
-
-        E = self.max_length()
-        h = min(H)
-
-        return E / h
-
-    def mesh_triangle(self, segment_to_nodes: Dict[
-        vme.LineSegment2D, List[volmdlr.Point2D]], n: float):
-
-        segments = self.line_segments
-        min_segment = None
-        interior_segments = []
-        interior_segment_nodes = {}
-        all_triangles = []
-        all_aspect_ratios = {}
-
-        nodes_0 = []
-        nodes_1 = []
-
-        if len(segment_to_nodes[segments[1]]) >= len(
-                segment_to_nodes[segments[0]]):
-            if len(segment_to_nodes[segments[0]]) > len(
-                    segment_to_nodes[segments[2]]):
-                nodes_0 = segment_to_nodes[segments[0]]
-                nodes_1 = segment_to_nodes[segments[1]]
-                min_segment = segments[2]
-
-            else:
-                nodes_0 = segment_to_nodes[segments[1]]
-                nodes_1 = segment_to_nodes[segments[2]]
-                min_segment = segments[0]
-
-        if len(segment_to_nodes[segments[0]]) >= len(
-                segment_to_nodes[segments[1]]):
-            if len(segment_to_nodes[segments[2]]) > len(
-                    segment_to_nodes[segments[1]]):
-                nodes_0 = segment_to_nodes[segments[0]]
-                nodes_1 = segment_to_nodes[segments[2]]
-                min_segment = segments[1]
-            else:
-                nodes_0 = segment_to_nodes[segments[0]]
-                nodes_1 = segment_to_nodes[segments[1]]
-                min_segment = segments[2]
-
-        if len(segment_to_nodes[segments[0]]) >= len(
-                segment_to_nodes[segments[2]]):
-            if len(segment_to_nodes[segments[2]]) > len(
-                    segment_to_nodes[segments[1]]):
-                nodes_0 = segment_to_nodes[segments[0]]
-                nodes_1 = segment_to_nodes[segments[2]]
-                min_segment = segments[1]
-            else:
-                nodes_0 = segment_to_nodes[segments[0]]
-                nodes_1 = segment_to_nodes[segments[1]]
-                min_segment = segments[2]
-
-        if len(segment_to_nodes[segments[2]]) >= len(
-                segment_to_nodes[segments[0]]):
-            if len(segment_to_nodes[segments[0]]) > len(
-                    segment_to_nodes[segments[1]]):
-                nodes_0 = segment_to_nodes[segments[0]]
-                nodes_1 = segment_to_nodes[segments[2]]
-                min_segment = segments[1]
-            else:
-                nodes_0 = segment_to_nodes[segments[1]]
-                nodes_1 = segment_to_nodes[segments[2]]
-                min_segment = segments[0]
-
-        # min_segment=min_segment[0]  
-
-        edge = self.common_edge(nodes_0, nodes_1)
-
-        if edge is not None:
-            if nodes_0[0] == edge:
-                nodes_0.reverse()
-
-            if nodes_1[0] == edge:
-                nodes_1.reverse()
-
-        l0 = min(len(nodes_0), len(nodes_1))
-
-        if len(nodes_0) > len(nodes_1):
-
-            for k in range(0, len(nodes_1) - 1):
-                interior_segment = vme.LineSegment2D(nodes_0[k + 1],
-                                                               nodes_1[k])
-                interior_segments.append(interior_segment)
-
-            for k in range(len(nodes_1), len(nodes_0) - 1):
-                interior_segment = vme.LineSegment2D(nodes_0[k],
-                                                               nodes_1[len(
-                                                                   nodes_1) - 2])
-                interior_segments.append(interior_segment)
-        if len(nodes_1) > len(nodes_0):
-            for k in range(0, len(nodes_0) - 1):
-                interior_segment = vme.LineSegment2D(nodes_1[k + 1],
-                                                               nodes_0[k])
-                interior_segments.append(interior_segment)
-
-            for k in range(len(nodes_0), len(nodes_1) - 1):
-                interior_segment = vme.LineSegment2D(nodes_1[k],
-                                                               nodes_0[len(
-                                                                   nodes_0) - 2])
-                interior_segments.append(interior_segment)
-
-        if len(nodes_0) == len(nodes_1):
-
-            for k in range(1, len(nodes_0) - 1):
-                interior_segment = vme.LineSegment2D(nodes_1[k],
-                                                               nodes_0[k])
-                interior_segments.append(interior_segment)
-
-        if len(nodes_0) == 2 and len(nodes_1) == 2:
-            all_aspect_ratios[self] = self.aspect_ratio()
-            all_triangles.append(self)
-            return [all_triangles, all_aspect_ratios]
-
-        for seg in interior_segments:
-            interior_segment_nodes[seg] = seg.discretise(n)
-
-        if min_segment.point_distance(
-                interior_segments[0].points[0]) < min_segment.point_distance(
-                interior_segments[len(interior_segments) - 1].points[0]):
-
-            interior_segments.insert(0, min_segment)
-            interior_segment_nodes[interior_segments[0]] = segment_to_nodes[
-                interior_segments[0]]
-
-
-        else:
-
-            interior_segments.insert(len(interior_segments), min_segment)
-            interior_segment_nodes[
-                interior_segments[len(interior_segments) - 1]] = \
-            segment_to_nodes[interior_segments[len(interior_segments) - 1]]
-
-        for k in range(len(interior_segments) - 1):
-
-            u = len(interior_segment_nodes[interior_segments[k]])
-            v = len(interior_segment_nodes[interior_segments[k + 1]])
-
-            line = vme.Line2D(
-                interior_segment_nodes[interior_segments[k]][0],
-                interior_segment_nodes[interior_segments[k + 1]][0])
-
-            projection, _ = line.point_projection(edge)
-            if projection != edge:
-                interior_segment_nodes[interior_segments[k]].reverse()
-
-            if (u >= v and u > 2):
-
-                if interior_segment_nodes[interior_segments[k]][0] != \
-                        interior_segment_nodes[interior_segments[k + 1]][0]:
-                    if interior_segment_nodes[interior_segments[k + 1]][-1] != \
-                            interior_segment_nodes[interior_segments[k]][-1]:
-                        for j in range(v - 1):
-                            new_triangle_1 = Triangle2D([
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k]][j + 1],
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k]][j],
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k + 1]][
-                                                                j]])
-                            if new_triangle_1 not in all_triangles:
-                                all_triangles.append(new_triangle_1)
-                                all_aspect_ratios[
-                                    new_triangle_1] = new_triangle_1.aspect_ratio()
-
-                            if interior_segment_nodes[interior_segments[k]][
-                                v - 1] != interior_segment_nodes[
-                                interior_segments[k + 1]][v - 1]:
-
-                                new_triangle_2 = Triangle2D([
-                                                                interior_segment_nodes[
-                                                                    interior_segments[
-                                                                        k]][
-                                                                    j + 1],
-                                                                interior_segment_nodes[
-                                                                    interior_segments[
-                                                                        k + 1]][
-                                                                    j],
-                                                                interior_segment_nodes[
-                                                                    interior_segments[
-                                                                        k + 1]][
-                                                                    j + 1]])
-
-                                if new_triangle_2 not in all_triangles:
-                                    all_triangles.append(new_triangle_2)
-                                    all_aspect_ratios[
-                                        new_triangle_2] = new_triangle_2.aspect_ratio()
-
-                        for j in range(v - 1, u - 1):
-
-                            new_triangle_1 = Triangle2D([
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k]][j],
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k + 1]][
-                                                                v - 1],
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k]][
-                                                                j + 1]])
-
-                            if new_triangle_1 not in all_triangles:
-                                all_triangles.append(new_triangle_1)
-                                all_aspect_ratios[
-                                    new_triangle_1] = new_triangle_1.aspect_ratio()
-
-                    else:
-
-                        if u != v:
-
-                            for j in range(v - 1):
-
-                                new_triangle_1 = Triangle2D([
-                                                                interior_segment_nodes[
-                                                                    interior_segments[
-                                                                        k]][j],
-                                                                interior_segment_nodes[
-                                                                    interior_segments[
-                                                                        k + 1]][
-                                                                    j],
-                                                                interior_segment_nodes[
-                                                                    interior_segments[
-                                                                        k]][
-                                                                    j + 1]])
-
-                                if new_triangle_1 not in all_triangles:
-                                    all_triangles.append(new_triangle_1)
-                                    all_aspect_ratios[
-                                        new_triangle_1] = new_triangle_1.aspect_ratio()
-
-                                new_triangle_2 = Triangle2D([
-                                                                interior_segment_nodes[
-                                                                    interior_segments[
-                                                                        k + 1]][
-                                                                    j],
-                                                                interior_segment_nodes[
-                                                                    interior_segments[
-                                                                        k + 1]][
-                                                                    j + 1],
-                                                                interior_segment_nodes[
-                                                                    interior_segments[
-                                                                        k]][
-                                                                    j + 1]])
-
-                                if new_triangle_2 not in all_triangles:
-                                    all_triangles.append(new_triangle_2)
-                                    all_aspect_ratios[
-                                        new_triangle_2] = new_triangle_2.aspect_ratio()
-
-                                for j in range(v - 1, u - 1):
-                                    new_triangle_1 = Triangle2D([
-                                                                    interior_segment_nodes[
-                                                                        interior_segments[
-                                                                            k]][
-                                                                        j],
-                                                                    interior_segment_nodes[
-                                                                        interior_segments[
-                                                                            k + 1]][
-                                                                        v - 2],
-                                                                    interior_segment_nodes[
-                                                                        interior_segments[
-                                                                            k]][
-                                                                        j + 1]])
-
-                                    if new_triangle_1 not in all_triangles:
-                                        all_triangles.append(new_triangle_1)
-                                        all_aspect_ratios[
-                                            new_triangle_1] = new_triangle_1.aspect_ratio()
-                        else:
-                            for j in range(v - 2):
-
-                                new_triangle_1 = Triangle2D([
-                                                                interior_segment_nodes[
-                                                                    interior_segments[
-                                                                        k]][j],
-                                                                interior_segment_nodes[
-                                                                    interior_segments[
-                                                                        k + 1]][
-                                                                    j],
-                                                                interior_segment_nodes[
-                                                                    interior_segments[
-                                                                        k]][
-                                                                    j + 1]])
-
-                                if new_triangle_1 not in all_triangles:
-                                    all_triangles.append(new_triangle_1)
-                                    all_aspect_ratios[
-                                        new_triangle_1] = new_triangle_1.aspect_ratio()
-
-                                new_triangle_2 = Triangle2D([
-                                                                interior_segment_nodes[
-                                                                    interior_segments[
-                                                                        k + 1]][
-                                                                    j],
-                                                                interior_segment_nodes[
-                                                                    interior_segments[
-                                                                        k + 1]][
-                                                                    j + 1],
-                                                                interior_segment_nodes[
-                                                                    interior_segments[
-                                                                        k]][
-                                                                    j + 1]])
-
-                                if new_triangle_2 not in all_triangles:
-                                    all_triangles.append(new_triangle_2)
-                                    all_aspect_ratios[
-                                        new_triangle_2] = new_triangle_2.aspect_ratio()
-
-                            new_triangle_1 = Triangle2D([
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k]][v - 1],
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k + 1]][
-                                                                v - 2],
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k]][
-                                                                v - 2]])
-
-                            if new_triangle_1 not in all_triangles:
-                                all_triangles.append(new_triangle_1)
-                                all_aspect_ratios[
-                                    new_triangle_1] = new_triangle_1.aspect_ratio()
-
-                else:
-
-                    for j in range(v - 1):
-
-                        new_triangle_1 = Triangle2D([interior_segment_nodes[
-                                                         interior_segments[k]][
-                                                         j + 1],
-                                                     interior_segment_nodes[
-                                                         interior_segments[
-                                                             k + 1]][j],
-                                                     interior_segment_nodes[
-                                                         interior_segments[
-                                                             k + 1]][j + 1]])
-                        if new_triangle_1 not in all_triangles:
-                            all_triangles.append(new_triangle_1)
-                            all_aspect_ratios[
-                                new_triangle_1] = new_triangle_1.aspect_ratio()
-                        new_triangle_2 = Triangle2D([interior_segment_nodes[
-                                                         interior_segments[
-                                                             k + 1]][j + 1],
-                                                     interior_segment_nodes[
-                                                         interior_segments[k]][
-                                                         j],
-                                                     interior_segment_nodes[
-                                                         interior_segments[k]][
-                                                         j + 1]])
-                        if new_triangle_2 not in all_triangles:
-                            all_triangles.append(new_triangle_2)
-                            all_aspect_ratios[
-                                new_triangle_2] = new_triangle_2.aspect_ratio()
-                    for j in range(v - 1, u - 1):
-                        new_triangle = Triangle2D([interior_segment_nodes[
-                                                       interior_segments[k]][
-                                                       j + 1],
-                                                   interior_segment_nodes[
-                                                       interior_segments[
-                                                           k + 1]][v - 1],
-                                                   interior_segment_nodes[
-                                                       interior_segments[
-                                                           k + 1]][j]])
-                        if new_triangle not in all_triangles:
-                            all_triangles.append(new_triangle)
-                            all_aspect_ratios[
-                                new_triangle] = new_triangle.aspect_ratio()
-
-            if (u < v and v > 2):
-
-                if interior_segment_nodes[interior_segments[k]][0] != \
-                        interior_segment_nodes[interior_segments[k + 1]][0]:
-                    if interior_segment_nodes[interior_segments[k + 1]][-1] != \
-                            interior_segment_nodes[interior_segments[k]][-1]:
-                        for j in range(u - 1):
-
-                            new_triangle_1 = Triangle2D([
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k + 1]][j],
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k]][j + 1],
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k + 1]][
-                                                                j + 1]])
-
-                            if new_triangle_1 not in all_triangles:
-                                all_triangles.append(new_triangle_1)
-                                all_aspect_ratios[
-                                    new_triangle_1] = new_triangle_1.aspect_ratio()
-
-                            new_triangle_2 = Triangle2D([
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k + 1]][j],
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k]][j],
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k]][
-                                                                j + 1]])
-
-                            if new_triangle_2 not in all_triangles:
-                                all_triangles.append(new_triangle_2)
-                                all_aspect_ratios[
-                                    new_triangle_2] = new_triangle_2.aspect_ratio()
-
-                        for j in range(u - 1, v - 1):
-
-                            new_triangle_2 = Triangle2D([
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k + 1]][j],
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k]][u - 1],
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k + 1]][
-                                                                j + 1]])
-                            if new_triangle_2 not in all_triangles:
-                                all_triangles.append(new_triangle_2)
-                                all_aspect_ratios[
-                                    new_triangle_2] = new_triangle_2.aspect_ratio()
-
-                    else:
-
-                        for j in range(u - 1):
-
-                            new_triangle_1 = Triangle2D([
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k + 1]][j],
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k]][j],
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k + 1]][
-                                                                j + 1]])
-
-                            if new_triangle_1 not in all_triangles:
-                                all_triangles.append(new_triangle_1)
-                                all_aspect_ratios[
-                                    new_triangle_1] = new_triangle_1.aspect_ratio()
-
-                            new_triangle_2 = Triangle2D([
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k]][j],
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k]][j + 1],
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k + 1]][
-                                                                j + 1]])
-
-                            if new_triangle_2 not in all_triangles:
-                                all_triangles.append(new_triangle_2)
-                                all_aspect_ratios[
-                                    new_triangle_2] = new_triangle_2.aspect_ratio()
-                        for j in range(u - 1, v - 1):
-                            new_triangle_1 = Triangle2D([
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k + 1]][j],
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k]][u - 2],
-                                                            interior_segment_nodes[
-                                                                interior_segments[
-                                                                    k + 1]][
-                                                                j + 1]])
-
-                            if new_triangle_1 not in all_triangles:
-                                all_triangles.append(new_triangle_1)
-                                all_aspect_ratios[
-                                    new_triangle_1] = new_triangle_1.aspect_ratio()
-                else:
-
-                    for j in range(u - 1):
-
-                        new_triangle_1 = Triangle2D([interior_segment_nodes[
-                                                         interior_segments[k]][
-                                                         j + 1],
-                                                     interior_segment_nodes[
-                                                         interior_segments[k]][
-                                                         j],
-                                                     interior_segment_nodes[
-                                                         interior_segments[
-                                                             k + 1]][j + 1]])
-                        if new_triangle_1 not in all_triangles:
-                            all_triangles.append(new_triangle_1)
-                            all_aspect_ratios[
-                                new_triangle_1] = new_triangle_1.aspect_ratio()
-
-                        new_triangle_2 = Triangle2D(
-                            [interior_segment_nodes[interior_segments[k]][j],
-                             interior_segment_nodes[interior_segments[k + 1]][
-                                 j],
-                             interior_segment_nodes[interior_segments[k + 1]][
-                                 j + 1]])
-                        if new_triangle_2 not in all_triangles:
-                            all_triangles.append(new_triangle_2)
-                            all_aspect_ratios[
-                                new_triangle_2] = new_triangle_2.aspect_ratio()
-
-                    for j in range(u - 1, v - 1):
-                        new_triangle = Triangle2D([interior_segment_nodes[
-                                                       interior_segments[
-                                                           k + 1]][j + 1],
-                                                   interior_segment_nodes[
-                                                       interior_segments[k]][
-                                                       u - 1],
-                                                   interior_segment_nodes[
-                                                       interior_segments[
-                                                           k + 1]][j]])
-                        if new_triangle not in all_triangles:
-                            all_triangles.append(new_triangle)
-                            all_aspect_ratios[
-                                new_triangle] = new_triangle.aspect_ratio()
-
-            if (u == 2 and v == 2):
-
-                if interior_segment_nodes[interior_segments[k]][0] != \
-                        interior_segment_nodes[interior_segments[k + 1]][0]:
-
-                    if interior_segment_nodes[interior_segments[k]][1] != \
-                            interior_segment_nodes[interior_segments[k + 1]][
-                                1]:
-                        new_triangle_1 = Triangle2D([interior_segment_nodes[
-                                                         interior_segments[
-                                                             k + 1]][0],
-                                                     interior_segment_nodes[
-                                                         interior_segments[k]][
-                                                         0],
-                                                     interior_segment_nodes[
-                                                         interior_segments[k]][
-                                                         1]])
-
-                        if new_triangle_1 not in all_triangles:
-                            all_triangles.append(new_triangle_1)
-                            all_aspect_ratios[
-                                new_triangle_1] = new_triangle_1.aspect_ratio()
-
-                        new_triangle_2 = Triangle2D([interior_segment_nodes[
-                                                         interior_segments[
-                                                             k + 1]][0],
-                                                     interior_segment_nodes[
-                                                         interior_segments[
-                                                             k + 1]][1],
-                                                     interior_segment_nodes[
-                                                         interior_segments[k]][
-                                                         1]])
-
-                        if new_triangle_2 not in all_triangles:
-                            all_triangles.append(new_triangle_2)
-                            all_aspect_ratios[
-                                new_triangle_2] = new_triangle_2.aspect_ratio()
-
-                    else:
-
-                        new_triangle_2 = Triangle2D(
-                            [interior_segment_nodes[interior_segments[k]][1],
-                             interior_segment_nodes[interior_segments[k + 1]][
-                                 0],
-                             interior_segment_nodes[interior_segments[k]][0]])
-
-                        if new_triangle_2 not in all_triangles:
-                            all_triangles.append(new_triangle_2)
-                            all_aspect_ratios[
-                                new_triangle_2] = new_triangle_2.aspect_ratio()
-
-                else:
-                    new_triangle = Triangle2D(
-                        [interior_segment_nodes[interior_segments[k + 1]][0],
-                         interior_segment_nodes[interior_segments[k + 1]][1],
-                         interior_segment_nodes[interior_segments[k]][1]])
-                    if new_triangle not in all_triangles:
-                        all_triangles.append(new_triangle)
-                        all_aspect_ratios[
-                            new_triangle] = new_triangle.aspect_ratio()
-
-        if len(nodes_0) > len(nodes_1):
-
-            for k in range(l0 - 1, len(nodes_0) - 1):
-
-                new_triangle = Triangle2D(
-                    [nodes_0[k], nodes_0[k + 1], nodes_1[len(nodes_1) - 2]])
-                if new_triangle not in all_triangles:
-                    all_triangles.append(new_triangle)
-                    all_aspect_ratios[
-                        new_triangle] = new_triangle.aspect_ratio()
-
-        if len(nodes_1) > len(nodes_0):
-
-            for k in range(l0 - 1, len(nodes_1) - 1):
-
-                new_triangle = Triangle2D(
-                    [nodes_1[k], nodes_1[k + 1], nodes_0[len(nodes_0) - 2]])
-                if new_triangle not in all_triangles:
-                    all_triangles.append(new_triangle)
-                    all_aspect_ratios[
-                        new_triangle] = new_triangle.aspect_ratio()
-
-        if len(nodes_0) == len(nodes_1):
-
-            new_triangle = Triangle2D(
-                [nodes_0[len(nodes_0) - 2], nodes_1[len(nodes_1) - 2],
-                 nodes_0[len(nodes_0) - 1]])
-
-            if new_triangle not in all_triangles:
-                all_triangles.append(new_triangle)
-                all_aspect_ratios[new_triangle] = new_triangle.aspect_ratio()
-
-        return [all_triangles, all_aspect_ratios]
-
-    def plot(self, ax, color='k', width=None, plot_points=False, fill=False):
-        if ax is None:
-            fig, ax = plt.subplots()
-            ax.set_aspect('equal')
-        if fill:
-            x = [p.x for p in self.points]
-            y = [p.y for p in self.points]
-            plt.fill(x, y, facecolor=color, edgecolor="k")
-            return ax
-
-        for p1, p2 in zip(self.points, self.points[1:] + [self.points[0]]):
-            if width is None:
-                width = 1
-            if plot_points:
-                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color, marker='o',
-                        linewidth=width)
-            else:
-                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color,
-                        linewidth=width)
-        return ax
 
 
 class Circle2D(Contour2D):
