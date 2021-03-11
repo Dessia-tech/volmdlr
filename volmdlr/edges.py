@@ -2804,14 +2804,17 @@ class Arc3D(Edge):
             w.normalize()
             v = w.cross(u)
             arc2d = self.to_2d(self.center, u, v)
+            angle1, angle2 = arc2d.angle1, arc2d.angle2
+            if angle2 < angle1:
+                angle2 += volmdlr.TWO_PI
             cylinder = volmdlr.faces.CylindricalSurface3D(volmdlr.Frame3D(self.center,
                                                                           u,
                                                                           v,
                                                                           w),
                                                           self.radius
                                                           )
-            return [cylinder.rectangular_cut(arc2d.angle1,
-                                             arc2d.angle2,
+            return [cylinder.rectangular_cut(angle1,
+                                             angle2,
                                              0, extrusion_vector.norm())]
         else:
             raise NotImplementedError(

@@ -1549,24 +1549,16 @@ class Circle2D(Contour2D):
         triangles = [(i, i + 1, n) for i in range(n - 1)] + [(n - 1, 0, n)]
 
     def split(self, split_point1, split_point2):
-        ax = self.plot()
-        split_point1.plot(ax=ax, color='r')
-        split_point2.plot(ax=ax, color='g')
         x1, y1 = split_point1-self.center
         x2, y2 = split_point2-self.center
-        print(x1, y1)
-        print(x2, y2)
-        
+
         angle1 = math.atan2(y1, x1)
         angle2 = math.atan2(y2, x2)
         angle_i1 = 0.5*(angle2 - angle1)
         angle_i2 = angle_i1 + math.pi
-        print(math.degrees(angle1), math.degrees(angle2), math.degrees(angle_i1))
-        interior_point1 = split_point1.rotation(self.center, angle1)
-        interior_point2 = split_point1.rotation(self.center, angle2)
-        interior_point1.plot(ax=ax, color='b')
-        interior_point2.plot(ax=ax, color='grey')
-        
+        interior_point1 = split_point1.rotation(self.center, angle_i1)
+        interior_point2 = split_point1.rotation(self.center, angle_i2)
+
         
         return [vme.Arc2D(split_point1, interior_point1,
                                     split_point2),
@@ -2035,20 +2027,23 @@ class Circle3D(Contour3D):
                    radius=radius)
 
     def extrusion(self, extrusion_vector):
+
         if self.normal.is_colinear_to(extrusion_vector):
             u = self.normal.deterministic_unit_normal_vector()
             v = self.normal.cross(u)
+            w = extrusion_vector.copy()
+            w.normalize()
             cylinder = volmdlr.faces.CylindricalSurface3D(volmdlr.Frame3D(self.center,
                                                     u,
                                                     v,
-                                                    self.normal),
+                                                    w),
                                             self.radius
                                             )
             return [cylinder.rectangular_cut(0, volmdlr.TWO_PI,
                                             0, extrusion_vector.norm())]
         else:
             raise NotImplementedError(
-                'Elliptic faces not handled: dot={}'.format(
+                'Extrusion along vector not colinar to normal for circle not handled yet: dot={}'.format(
                     self.normal.dot(extrusion_vector)
                 ))
 
