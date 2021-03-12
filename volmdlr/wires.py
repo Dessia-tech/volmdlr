@@ -439,14 +439,9 @@ class Contour2D(Contour, Wire2D):
         return Contour3D(p3d)
 
     def point_belongs(self, point):
-        for arc in self.internal_arcs:
-            if arc.point_belongs(point):
-                return False
-        if self.polygon.point_belongs(point):
+        if self.edge_polygon.point_belongs(point):
             return True
-        for arc in self.external_arcs:
-            if arc.point_belongs(point):
-                return True
+        # TODO: This is incomplete!!!
         return False
 
     def point_distance(self, point):
@@ -1025,6 +1020,16 @@ class ClosedPolygon2D(Contour2D):
             d.append(p.point_distance(point))
         index = d.index(min(d))
         return d[index]
+
+    def is_trigo(self):
+        angle = 0.
+        for ls1, ls2 in zip(self.line_segments, self.line_segments[1:]+[self.line_segments[0]]):
+            l1 = ls1.to_line()            
+            u = ls2.unit_direction_vector()
+            x = u.dot(ls1.unit_direction_vector())
+            y = u.dot(ls1.normal_vector())
+            angle += math.atan2(y, x)
+        return angle > 0
 
     def min_length(self):
         L = []

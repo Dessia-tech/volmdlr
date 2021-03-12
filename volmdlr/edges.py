@@ -646,6 +646,9 @@ class LineSegment2D(LineSegment):
     def straight_line_second_moment_area(self, point:volmdlr.Point2D):
         return 0, 0, 0
 
+    def straight_line_center_of_mass(self):
+        return 0.5*(self.start + self.end)
+
     def point_distance(self, point, return_other_point=False):
         """
         Computes the distance of a point to segment of line
@@ -1060,6 +1063,8 @@ class Arc2D(Edge):
         return volmdlr.geometry.huygens2d(Ix, Iy, Ixy, self.area(), self.center,
                                           point)
 
+    def straight_line_center_of_mass(self):
+        raise NotImplementedError
 
     def plot(self, ax=None, color='k', alpha=1, plot_points=False):
         if ax is None:

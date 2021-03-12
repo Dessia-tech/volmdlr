@@ -552,11 +552,11 @@ class Point2D(Vector2D):
     def to_vector(self):
         return Vector2D(self.x, self.y, self.z)
 
-    def plot(self, ax=None, color='k', plot_points=True):
+    def plot(self, ax=None, color='k', alpha=1, plot_points=True):
         if ax is None:
             fig, ax = plt.subplots()
 
-        ax.plot([self.x], [self.y], color=color, marker='o')
+        ax.plot([self.x], [self.y], color=color, alpha=alpha, marker='o')
         return ax
 
     def point_distance(self, point2:'Point2D'):
