@@ -1553,22 +1553,22 @@ class Circle2D(Contour2D):
         points.append(self.center)
         triangles = [(i, i + 1, n) for i in range(n - 1)] + [(n - 1, 0, n)]
 
-    def split(self, split_point1, split_point2):
-        x1, y1 = split_point1-self.center
-        x2, y2 = split_point2-self.center
+    def split(self, split_start, split_end):
+        x1, y1 = split_start-self.center
+        x2, y2 = split_end-self.center
 
         angle1 = math.atan2(y1, x1)
         angle2 = math.atan2(y2, x2)
         angle_i1 = 0.5*(angle2 - angle1)
         angle_i2 = angle_i1 + math.pi
-        interior_point1 = split_point1.rotation(self.center, angle_i1)
-        interior_point2 = split_point1.rotation(self.center, angle_i2)
+        interior_point1 = split_start.rotation(self.center, angle_i1)
+        interior_point2 = split_start.rotation(self.center, angle_i2)
 
         
-        return [vme.Arc2D(split_point1, interior_point1,
-                                    split_point2),
-                vme.Arc2D(split_point2, interior_point2,
-                                    split_point1)]
+        return [vme.Arc2D(split_start, interior_point1,
+                                    split_end),
+                vme.Arc2D(split_start, interior_point2,
+                                    split_end)]
 
     def point_at_abscissa(self, curvilinear_abscissa):
         start = self.center + self.radius * volmdlr.X3D
