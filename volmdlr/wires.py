@@ -470,16 +470,23 @@ class Contour2D(Contour, Wire2D):
 
     def area(self):
         area = self.edge_polygon.area()
-
+        if self.edge_polygon.is_trigo():
+            trigo = 1
+        else:
+            trigo = -1
         for edge in self.primitives:
-            area += edge.straight_line_area()
+            area += trigo*edge.straight_line_area()
 
         return area
 
     def center_of_mass(self):
         center = self.edge_polygon.area() * self.edge_polygon.center_of_mass()
+        if self.edge_polygon.is_trigo():
+            trigo = 1
+        else:
+            trigo = -1
         for edge in self.primitives:
-            center += edge.straight_line_center_of_mass()
+            center += trigo*edge.straight_line_area()*edge.straight_line_center_of_mass()
 
         return center/self.area()
 
@@ -487,8 +494,12 @@ class Contour2D(Contour, Wire2D):
     def second_moment_area(self, point):
 
         Ix, Iy, Ixy = self.edge_polygon.second_moment_area(point)
+        if self.edge_polygon.is_trigo():
+            trigo = 1
+        else:
+            trigo = -1
         for edge in self.primitives:
-            Ix_e, Iy_e, Ixy_e = edge.straight_line_second_moment_area(point)
+            Ix_e, Iy_e, Ixy_e = trigo*edge.straight_line_second_moment_area(point)
             Ix += Ix_e
             Iy += Iy_e
             Ixy += Ixy_e

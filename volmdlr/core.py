@@ -1158,7 +1158,7 @@ class VolumeModel(dc.DessiaObject):
     def volume(self):
         volume = 0
         for primitive in self.primitives:
-            volume += primitive.Volume()
+            volume += primitive.volume()
         return volume
 
     def rotation(self, center, axis, angle, copy=True):

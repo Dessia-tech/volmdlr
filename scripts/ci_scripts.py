@@ -4,7 +4,7 @@ import os
 scripts = ['arcs2D.py', 'arcs3D.py', 'block3d.py', 'simple_shapes.py',
            'roundedlines.py','polygon2D.py', 'polygon2D_2.py',
            'extrusion.py', 'demo2D.py', 'casing.py', 'sweep.py',
-           'revolved_profile.py']
+           'revolved_profile.py', 'edges/second_moment_area_check.py']
 
 for script_name in scripts:
     print('Executing script {}'.format(script_name))

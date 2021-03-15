@@ -1034,12 +1034,16 @@ class Arc2D(Edge):
             alpha * 0.5) * u
 
     def bounding_rectangle(self):
-        # Enhance this!!!
+        # TODO: Enhance this!!!
         return (self.center.x-self.radius, self.center.x+self.radius,
                 self.center.y-self.radius, self.center.y+self.radius)
 
     def straight_line_area(self):
-        return 0.5*self.radius**2*(self.angle-math.sin(self.angle))
+        if self.is_trigo:
+            return 0.5*self.radius**2*(self.angle-math.sin(self.angle))
+        else:
+            return -0.5 * self.radius ** 2 * (self.angle - math.sin(self.angle))
+
 
     def straight_line_second_moment_area(self, point:volmdlr.Point2D):
 
@@ -1050,17 +1054,35 @@ class Arc2D(Edge):
             angle2 = self.angle2
         angle1 = self.angle1
 
-        Ix = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
+        # Full arc section
+        Ix1 = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
                 math.sin(2 * angle1) - math.sin(2 * angle2)))
-        Iy = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
+        Iy1 = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
                 math.sin(2 * angle2) - math.sin(2 * angle1)))
-        Ixy = self.radius ** 4 / 8 * (
+        Ixy1 = self.radius ** 4 / 8 * (
                 math.cos(angle1) ** 2 - math.cos(angle2) ** 2)
 
-        
-        # Ic = npy.array([[Ix, Ixy], [Ixy, Iy]])
+        # Triangle
+        xi, yi = (self.start - self.center)
+        xj, yj = (self.end - self.center)
+        Ix2 = (yi ** 2 + yi * yj + yj ** 2) * (xi * yj - xj * yi)/12.
+        Iy2 = (xi ** 2 + xi * xj + xj ** 2) * (xi * yj - xj * yi)/12.
+        Ixy2 = (xi * yj + 2 * xi * yi + 2 * xj * yj + xj * yi) * (
+                xi * yj - xj * yi)/24.
+        if Ix2 < 0.:
+            Ix2, Iy2, Ixy2 = -Ix2, -Iy2, -Ixy2
+        if self.is_trigo:
+            Ix = Ix1 - Ix2
+            Iy = Iy1 - Iy2
+            Ixy = Ixy1 - Ixy2
+        else:
+            Ix = Ix2 - Ix1
+            Iy = Iy2 - Iy1
+            Ixy = Ixy2 - Ixy1
 
-        return volmdlr.geometry.huygens2d(Ix, Iy, Ixy, self.area(), self.center,
+
+        return volmdlr.geometry.huygens2d(Ix, Iy, Ixy,
+                                          self.straight_line_area(), self.center,
                                           point)
 
     def straight_line_center_of_mass(self):
@@ -1136,7 +1158,8 @@ class Arc2D(Edge):
                 math.cos(angle1) ** 2 - math.cos(angle2) ** 2)
         Ic = npy.array([[Ix, Ixy], [Ixy, Iy]])
 
-        return volmdlr.geometry.huygens2d(Ic, self.area(), self.center, point)
+        # Must be computed at center, so huygens related to center
+        return volmdlr.geometry.huygens2d(Ix, Iy, Ixy, self.area(), self.center, point)
 
     def discretise(self, n: float):
 
