@@ -606,7 +606,6 @@ class BezierCurve2D(BSplineCurve2D):
 
 
 class LineSegment2D(LineSegment):
-    _non_serializable_attributes = ['points']
     """
     Define a line segment limited by two points
     """
