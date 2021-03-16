@@ -611,7 +611,6 @@ class LineSegment2D(LineSegment):
     """
 
     def __init__(self, start, end, *, name=''):
-        self.points = [start, end]
         Edge.__init__(self, start, end, name=name)
 
     def __hash__(self):
@@ -795,17 +794,16 @@ class LineSegment2D(LineSegment):
 
     def rotation(self, center, angle, copy=True):
         if copy:
-            return LineSegment2D(
-                *[p.rotation(center, angle, copy=True) for p in self.points])
+            return LineSegment2D(self.start.rotation(center, angle, copy=True),
+                                 self.end.rotation(center, angle, copy=True))
         else:
-            for p in self.points:
+            for p in [self.start, self.end]:
                 p.rotation(center, angle, copy=False)
 
     def translation(self, offset, copy=True):
         if copy:
-            return LineSegment2D(
-                *[p.translation(offset, copy=True) for p in
-                  [self.start, self.end]])
+            return LineSegment2D(self.start.translation(offset, copy=True),
+                                 self.end.translation(offset, copy=True))
         else:
             for p in [self.start, self.end]:
                 p.translation(offset, copy=False)
@@ -816,16 +814,18 @@ class LineSegment2D(LineSegment):
         """
         if side == 'old':
             if copy:
-                return LineSegment2D(
-                    *[frame.old_coordinates(p) for p in self.points])
+                return LineSegment2D(frame.old_coordinates(self.start),
+                                     frame.old_coordinates(self.end))
             else:
-                self.points = [frame.old_coordinates(p) for p in self.points]
+                self.start = frame.old_coordinates(self.start)
+                self.end = frame.old_coordinates(self.end)
         if side == 'new':
             if copy:
-                return LineSegment2D(
-                    *[frame.new_coordinates(p) for p in self.points])
+                return LineSegment2D(frame.new_coordinates(self.start),
+                                     frame.new_coordinates(self.end))
             else:
-                self.points = [frame.new_coordinates(p) for p in self.points]
+                self.start = frame.new_coordinates(self.start)
+                self.end = frame.new_coordinates(self.end)
 
     def plot_data(self, edge_style: plot_data.EdgeStyle = None):
         return plot_data.LineSegment2D(data=[self.start.x, self.start.y,
@@ -1019,11 +1019,7 @@ class Arc2D(Edge):
         return self.point_at_abscissa(0.5 * l)
 
     def area(self):
-        if self.angle2 < self.angle1:
-            angle = self.angle2 + volmdlr.TWO_PI - self.angle1
-        else:
-            angle = self.angle2 - self.angle1
-        return self.radius ** 2 * angle / 2
+        return self.radius ** 2 * self.angle / 2
 
     def center_of_mass(self):
         #        u=self.middle.vector-self.center.vector
@@ -1039,10 +1035,16 @@ class Arc2D(Edge):
                 self.center.y-self.radius, self.center.y+self.radius)
 
     def straight_line_area(self):
-        if self.is_trigo:
-            return 0.5*self.radius**2*(self.angle-math.sin(self.angle))
+        if self.angle >= math.pi:
+            angle = volmdlr.TWO_PI - self.angle
         else:
-            return -0.5 * self.radius ** 2 * (self.angle - math.sin(self.angle))
+            angle = self.angle
+
+        area = 0.5*self.radius**2*(angle-math.sin(angle))
+        if self.is_trigo:
+            return area
+        else:
+            return -area
 
 
     def straight_line_second_moment_area(self, point:volmdlr.Point2D):
@@ -1086,7 +1088,34 @@ class Arc2D(Edge):
                                           point)
 
     def straight_line_center_of_mass(self):
-        raise NotImplementedError
+        if self.angle == math.pi:
+            return self.center_of_mass()
+
+        u = self.middle_point() - self.center
+        u.normalize()
+        bissec = Line2D(self.center, self.center+u)
+        string = Line2D(self.start, self.end)
+        p = volmdlr.Point2D.line_intersection(bissec, string)
+        a = p.point_distance(self.start)
+        h = p.point_distance(self.center)
+        triangle_area = h*a
+        alpha = abs(self.angle)
+        triangle_cog = self.center + 2/3. * h * u
+
+        cog = (self.center_of_mass()*self.area()-triangle_area*triangle_cog)/abs(self.straight_line_area())
+        # ax = self.plot()
+        # bissec.plot(ax=ax, color='grey')
+        # self.center.plot(ax=ax)
+        # string.plot(ax=ax, color='grey')
+        # triangle_cog.plot(ax=ax, color='green')
+        # self.center_of_mass().plot(ax=ax, color='red')
+        #
+        # cog_line = Line2D(volmdlr.O2D, self.center_of_mass()*self.area()-triangle_area*triangle_cog)
+        # cog_line.plot(ax=ax)
+        #
+        # cog.plot(ax=ax, color='b')
+        # ax.set_aspect('equal')
+        return cog
 
     def plot(self, ax=None, color='k', alpha=1, plot_points=False):
         if ax is None:

@@ -3,11 +3,11 @@ import os
 
 scripts = ['arcs2D.py', 'arcs3D.py', 'block3d.py', 'simple_shapes.py',
            'roundedlines.py','polygon2D.py', 'polygon2D_2.py',
-           'extrusion.py', 'demo2D.py', 'casing.py', 'sweep.py',
-           'revolved_profile.py', 'edges/second_moment_area_check.py']
+           'primitives/extrusion.py', 'demo2D.py', 'showcases/casing.py', 'sweep.py',
+           'primitives/revolved_profile.py', 'edges/areas_moment_cog_check.py']
 
 for script_name in scripts:
-    print('Executing script {}'.format(script_name))
+    print('\n## Executing script {}'.format(script_name))
 
     exec(open(script_name).read())
 
@@ -19,5 +19,5 @@ distance_scripts = ['arc3D_arc3D.py','arc3D_ls3D.py',
                     ]
 
 for script_name in distance_scripts:
-    print('Executing script {}'.format(script_name))
+    print('\n## Executing script {}'.format(script_name))
     exec(open(os.path.join('distance', script_name)).read())
