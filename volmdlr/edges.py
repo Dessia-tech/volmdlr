@@ -545,6 +545,13 @@ class BSplineCurve2D(Edge):
         return [BSplineCurve2D.from_geomdl_curve(curve1),
                 BSplineCurve2D.from_geomdl_curve(curve2)]
 
+    def straight_line_area(self):
+        l = self.length()
+        n = 20
+        points = [self.point_at_abscissa(i*l/n) for i in range(n+1)]
+        polygon = volmdlr.wires.ClosedPolygon2D(points)
+
+        return polygon.area()
 
     def plot(self, ax=None, color='k', alpha=1, plot_points=False):
         if ax is None:
