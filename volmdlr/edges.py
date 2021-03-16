@@ -222,7 +222,7 @@ class LineSegment(Edge):
         '''
         return self.end - self.start
 
-    def normal_vector(self):
+    def normal_vector(self, abscissa=0.):
         return self.unit_direction_vector().normal_vector()
 
     def point_projection(self, point):
@@ -298,6 +298,23 @@ class Line2D(Line):
         return plot_data.Line2D([self.point1.x, self.point1.y,
                                  self.point2.x, self.point2.y],
                                 edge_style=edge_style)
+
+    def line_intersections(self, line):
+
+        point = volmdlr.Point2D.line_intersection(self, line)
+        if point is not None:
+            point_projection1, _ = self.point_projection(point)
+            if point_projection1 is None:
+                return []
+
+            if line.__class__.__name__ == 'Line2D':
+                point_projection2, _ = line.point_projection(point)
+                if point_projection2 is None:
+                    return []
+
+            return [point_projection1]
+        else:
+            return []
 
     def create_tangent_circle(self, point, other_line):
         """
@@ -437,6 +454,8 @@ class Line2D(Line):
 
             return circle1, circle2
 
+    def cut_between_two_points(self,point1, point2):
+        return LineSegment2D(point1, point2)
 
 class BSplineCurve2D(Edge):
     _non_serializable_attributes = ['curve']
@@ -863,6 +882,21 @@ class LineSegment2D(LineSegment):
         else:
             return [self.start, self.end]
 
+    def infinite_primitive(self, offset):
+        n = self.normal_vector()
+        offset_point_1 = self.start + offset * \
+                         n
+
+        offset_point_2 = self.end + offset * \
+                         n
+
+        return Line2D(offset_point_1, offset_point_2)
+
+    # def border_primitive(self,infinite_primitive:volmdlr.core.Primitive2D,intersection,position):
+    #     if position == 0 :
+    #         return LineSegment2D(infinite_primitive.point1,intersection)
+    #     else :
+    #         return LineSegment2D(intersection,infinite_primitive.point2)
 
 class Arc2D(Edge):
     """
@@ -1257,6 +1291,20 @@ class Arc2D(Edge):
         return [self.point_at_abscissa(i * l / number_points) \
                 for i in range(number_points + 1)]
 
+    def infinite_primitive(self, offset):
+
+        if not self.is_trigo:
+            radius = self.radius + offset
+        else:
+            radius = self.radius - offset
+
+        return FullArc2D(self.center, self.center+radius*volmdlr.Point2D(1, 0.),
+                         is_trigo = self.is_trigo)
+
+    def complementary(self):
+
+        interior = self.middle_point().rotation(self.center, math.pi)
+        return Arc2D(self.start, interior, self.end)
 
 class FullArc2D(Edge):
     """
@@ -1265,10 +1313,12 @@ class FullArc2D(Edge):
     """
 
     def __init__(self, center: volmdlr.Point2D, start_end: volmdlr.Point2D,
+                 is_trigo=True,
                  name: str = ''):
         self.center = center
         self.radius = center.point_distance(start_end)
         self.angle = volmdlr.TWO_PI
+        self.is_trigo = is_trigo
 
         Edge.__init__(self, start_end, start_end,
                       name=name)  # !!! this is dangerous
@@ -1278,6 +1328,8 @@ class FullArc2D(Edge):
         # return hash(self.center) + 5*hash(self.start)
 
     def __eq__(self, other_arc):
+        if self.__class__.__name__ != other_arc.__class__.__name__:
+            return False
         return (self.center == other_arc.center) \
                and (self.start_end == other_arc.start_end)
 
@@ -1336,6 +1388,50 @@ class FullArc2D(Edge):
             ax.plot([self.start.x], [self.start.y], 'o',
                     color=color, alpha=alpha)
         return ax
+
+    def cut_between_two_points(self, point1, point2):
+
+        x1, y1 = point1 - self.center
+        x2, y2 = point2 - self.center
+
+        angle1 = math.atan2(y1, x1)
+        angle2 = math.atan2(y2, x2)
+        if angle2 < angle1:
+            angle2 += volmdlr.TWO_PI
+        angle_i = 0.5*(angle1+angle2)
+        interior = point1.rotation(self.center, angle_i)
+        arc = Arc2D(point1, interior, point2)
+        if self.is_trigo != arc.is_trigo:
+            arc = arc.complementary()
+
+        return arc
+
+    def line_intersections(self, line2d:Line2D):
+        # This is an awfull copypaste
+        Q = self.center
+        if line2d.points[0] == self.center:
+            P1 = line2d.points[1]
+            V = line2d.points[0] - line2d.points[1]
+        else:
+            P1 = line2d.points[0]
+            V = line2d.points[1] - line2d.points[0]
+        a = V.dot(V)
+        b = 2 * V.dot(P1 - Q)
+        c = P1.dot(P1) + Q.dot(Q) - 2 * P1.dot(Q) - self.radius ** 2
+
+        disc = b ** 2 - 4 * a * c
+        if disc < 0:
+            return []
+
+        sqrt_disc = math.sqrt(disc)
+        t1 = (-b + sqrt_disc) / (2 * a)
+        t2 = (-b - sqrt_disc) / (2 * a)
+
+        if t1 == t2:
+            return [P1 + t1 * V]
+        else:
+            return [P1 + t1 * V,
+                    P1 + t2 * V]
 
 
 class ArcEllipse2D(Edge):

@@ -98,88 +98,105 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
 
         # TODO: method to check if it is a wire
 
+    def infinite_intersections(self, infinite_primitives):
+        """
+        returns a list  that contains:
+        the intersections between a succession of infinite primitives (line, circle).
+        There must be a method implemented to intersect the two infinite primitives.
+
+        """
+        offset_intersections = []
+
+        for primitive_1, primitive_2 in zip(infinite_primitives,
+                                            infinite_primitives[1:]):
+
+            i = infinite_primitives.index(primitive_1)
+            k = infinite_primitives.index(primitive_2)
+
+            primitive_name = primitive_1.__class__.__name__.lower().replace(
+                '2d', '')
+            intersection_method_name = '{}_intersections'.format(
+                primitive_name)
+            next_primitive_name = primitive_2.__class__.__name__.lower().replace(
+                '2d', '')
+            next_intersection_method_name = '{}_intersections'.format(
+                next_primitive_name)
+
+            if hasattr(primitive_1, next_intersection_method_name):
+                intersections = getattr(primitive_1,
+                                        next_intersection_method_name)(
+                    primitive_2)
+                end = self.primitives[i].end
+
+                if len(intersections) == 1:
+                    offset_intersections.append(intersections[0])
+
+                else:
+                    end = self.primitives[i].end
+                    if intersections[0].point_distance(end) > intersections[
+                        1].point_distance(end):
+                        intersections.reverse()
+                    offset_intersections.append(intersections[0])
+
+            elif hasattr(primitive_2, intersection_method_name):
+                intersections = getattr(primitive_2, intersection_method_name)(
+                    primitive_1)
+                if len(intersections) == 1:
+                    offset_intersections.append(intersections[0])
+                else:
+                    end = self.primitives[i].end
+                    if intersections[0].point_distance(end) > intersections[
+                        1].point_distance(end):
+                        intersections.reverse()
+                    offset_intersections.append(intersections[0])
+
+            else:
+                raise NotImplementedError(
+                    'No intersection method between {} and {}. Define {} on {} or {} on {}'.format(
+                        primitive_1.__class__.__name__,
+                        primitive_2.__class__.__name__,
+                        next_intersection_method_name,
+                        primitive_1.__class__.__name__,
+                        intersection_method_name,
+                        primitive_2.__class__.__name__
+                    ))
+
+        return offset_intersections
+
     def offset(self, offset):
+        """"
+        generates an offset of a Wire2D
+
+        """
         offset_primitives = []
         infinite_primitives = []
         offset_intersections = []
-        # ax=self.plot()
+        # ax = self.plot()
         for primitive in self.primitives:
-            if isinstance(primitive, volmdlr.edges.LineSegment2D):
-                infinite_primitive = volmdlr.edges.Line2D(primitive.start,
-                                                          primitive.end).translation(
-                    volmdlr.Vector2D(offset, -offset))
-                infinite_primitives.append(infinite_primitive)
-                # infinite_primitive.plot(ax=ax)
-            else:
-                infinite_primitive = Circle2D(primitive.center,
-                                              primitive.radius - offset)
-                infinite_primitives.append(infinite_primitive)
-                # infinite_primitive.plot(ax=ax)
-        nb = len(infinite_primitives)
-        for i in range(nb - 1):
-            if infinite_primitives[i].__class__.__name__ == 'Line2D' and \
-                    infinite_primitives[i + 1].__class__.__name__ == 'Line2D':
-                intersection = infinite_primitives[i].line_intersections(
-                    infinite_primitives[i + 1])[0]
-                offset_intersections.append(
-                    ([intersection, intersection], 'Line2D'))
-            if infinite_primitives[i].__class__.__name__ == 'Line2D' and \
-                    infinite_primitives[
-                        i + 1].__class__.__name__ == 'Circle2D':
-                intersections = infinite_primitives[i + 1].line_intersections(
-                    infinite_primitives[i])
-                intersections.reverse()
-                offset_intersections.append((intersections, 'Circle2D', i + 1))
-            if infinite_primitives[i + 1].__class__.__name__ == 'Line2D' and \
-                    infinite_primitives[i].__class__.__name__ == 'Circle2D':
-                intersections = infinite_primitives[i].line_intersections(
-                    infinite_primitives[i + 1])
-                # intersections.reverse()
-                # intersections[0].plot(ax=ax,color='r')
-                offset_intersections.append((intersections, 'Line2D'))
-            if infinite_primitives[i + 1].__class__.__name__ == 'Circle2D' and \
-                    infinite_primitives[i].__class__.__name__ == 'Circle2D':
-                intersections = infinite_primitives[i].circle_intersections(
-                    infinite_primitives[i + 1])
-                intersections.reverse()
-                offset_intersections.append((intersections, 'Circle2D', i + 1))
+            infinite_primitive = primitive.infinite_primitive(offset)
+            infinite_primitives.append(infinite_primitive)
+            # infinite_primitive.plot(ax=ax, color='grey')
 
-                # intersections[0].plot(ax=ax,color='g')
-                # intersections[1].plot(ax=ax,color='b')
-        if self.primitives[0].__class__.__name__ == 'LineSegment2D':
-            offset_primitives.append(
-                volmdlr.edges.LineSegment2D(infinite_primitives[0].point1,
-                                            offset_intersections[0][0][0]))
-        else:
-            new_arc = self.primitives[0].translation(
-                volmdlr.Vector2D(offset, -offset))
-            a = volmdlr.edges.Arc2D(new_arc.start, new_arc.interior,
-                                    offset_intersections[0][0][0])
-            offset_primitives.append(a)
-        if self.primitives[-1].__class__.__name__ == 'LineSegment2D':
-            offset_primitives.append(
-                volmdlr.edges.LineSegment2D(offset_intersections[-1][0][1],
-                                            infinite_primitives[-1].point2))
-        else:
-            new_arc = self.primitives[-1].translation(
-                volmdlr.Vector2D(offset, -offset))
-            a = volmdlr.edges.Arc2D(offset_intersections[-1][0][1],
-                                    new_arc.interior, new_arc.end)
-            offset_primitives.append(a)
+        offset_intersections += self.infinite_intersections(
+            infinite_primitives)
+
+        # [p.plot(ax=ax, color='r') for p in offset_intersections]
+
+        # offset_primitives.append(
+        #     self.primitives[0].border_primitive(infinite_primitives[0],
+        #                                         offset_intersections[0], 0))
+
+        # offset_primitives.append(
+        #     self.primitives[-1].border_primitive(infinite_primitives[-1],
+        #                                          offset_intersections[-1], -1))
+
         for j in range(len(offset_intersections) - 1):
-            if offset_intersections[j][1] == 'Line2D':
-                offset_primitives.append(
-                    volmdlr.edges.LineSegment2D(offset_intersections[j][0][0],
-                                                offset_intersections[j + 1][0][
-                                                    1]))
-            else:
+            p1 = offset_intersections[j]
+            p2 = offset_intersections[j + 1]
+            cutted_primitive = infinite_primitives[
+                j + 1].cut_between_two_points(p1, p2)
+            offset_primitives.append(cutted_primitive)
 
-                interior = infinite_primitives[
-                    offset_intersections[j][2]].border_points()[0]
-                a = volmdlr.edges.Arc2D(offset_intersections[j][0][0],
-                                        interior,
-                                        offset_intersections[j + 1][0][1])
-                offset_primitives.append(a)
         return Wire2D(offset_primitives)
 
     def plot_data(self, name: str = '', fill=None, color='black',
@@ -1371,6 +1388,9 @@ class Circle2D(Contour2D):
         return int(round(1e6 * (self.center.x + self.center.y + self.radius)))
 
     def __eq__(self, other_circle):
+        if self.__class__.__name__ != other_circle.__class__.__name__:
+            return False
+
         return math.isclose(self.center.x,
                             other_circle.center.x, abs_tol=1e-06) \
                and math.isclose(self.center.y,
@@ -1629,6 +1649,7 @@ class Circle2D(Contour2D):
     def polygon_points(self, angle_resolution=10):
         return volmdlr.edges.Arc2D.polygon_points(
             self, angle_resolution=angle_resolution)
+
 
 
 class Contour3D(Contour, Wire3D):
