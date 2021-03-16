@@ -515,8 +515,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     def volume(self):
         z = self.x.cross(self.y)
         z.normalize()
-        coeff = npy.dot(self.extrusion_vector, z)
-        return self.Area()*coeff
+        return self.area()*self.extrusion_vector.dot(z)
 
 
     def frame_mapping(self, frame, side, copy=True):

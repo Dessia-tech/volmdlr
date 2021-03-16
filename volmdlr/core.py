@@ -349,7 +349,6 @@ def angle_principal_measure(angle, min_angle=-math.pi):
 def step_ids_to_str(ids):
     return ','.join(['#{}'.format(i) for i in ids])
 
-
 class Primitive2D(dc.DessiaObject):
     def __init__(self, name=''):
         self.name = name

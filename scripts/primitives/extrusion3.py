@@ -28,5 +28,6 @@ for i in range(1, number_holes):
 extrusion = ExtrudedProfile(vm.O3D, vm.Y3D, vm.Z3D, outer_circle,
                                             circles, vm.X3D*0.1)
 
+print(extrusion.volume())
 model = vmc.VolumeModel([extrusion])
 model.babylonjs()
