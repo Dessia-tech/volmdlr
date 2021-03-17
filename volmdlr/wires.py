@@ -14,7 +14,7 @@ from typing import List
 
 import volmdlr
 import volmdlr.core
-# import volmdlr.edges
+import volmdlr.edges
 # import volmdlr.faces
 import volmdlr.geometry as vmgeo
 
