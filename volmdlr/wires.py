@@ -171,11 +171,11 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         offset_primitives = []
         infinite_primitives = []
         offset_intersections = []
-        # ax = self.plot()
+        ax = self.plot()
         for primitive in self.primitives:
             infinite_primitive = primitive.infinite_primitive(offset)
             infinite_primitives.append(infinite_primitive)
-            # infinite_primitive.plot(ax=ax, color='grey')
+            infinite_primitive.plot(ax=ax, color='grey')
 
         offset_intersections += self.infinite_intersections(
             infinite_primitives)

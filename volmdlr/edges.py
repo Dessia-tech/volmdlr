@@ -174,7 +174,7 @@ class Line(dc.DessiaObject):
     def normal_vector(self, abscissa=0.):
         return self.direction_vector().normal_vector()
 
-    def unit_normal_vector(self):
+    def unit_normal_vector(self, abscissa=0.):
         return self.unit_direction_vector().normal_vector()
 
     def point_projection(self, point):
@@ -211,16 +211,18 @@ class LineSegment(Edge):
                 'Point is not on linesegment: abscissa={}'.format(t))
         return t
 
+
     def unit_direction_vector(self, abscissa=0.):
-        u = self.direction_vector()
+
+        u = self.end - self.start
         u.normalize()
         return u
 
     def direction_vector(self, s=0):
         '''
-        Returns end - start, not normalized
         '''
-        return self.end - self.start
+        return self.unit_direction_vector()
+        # return self.end - self.start
 
     def normal_vector(self, abscissa=0.):
         return self.unit_direction_vector().normal_vector()
@@ -2687,6 +2689,9 @@ class Arc3D(Edge):
         return tangent
 
     def unit_normal_vector(self, abscissa):
+        return self.normal.cross(self.unit_direction_vector(abscissa))
+
+    def normal_vector(self, abscissa):
         return self.normal.cross(self.unit_direction_vector(abscissa))
 
     def rotation(self, rot_center, axis, angle, copy=True):
