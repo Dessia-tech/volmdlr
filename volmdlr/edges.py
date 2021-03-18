@@ -1081,9 +1081,9 @@ class Arc2D(Edge):
         #        u=self.middle.vector-self.center.vector
         u = self.middle_point() - self.center
         u.normalize()
-        alpha = abs(self.angle)
-        return self.center + 4 / (3 * alpha) * self.radius * math.sin(
-            alpha * 0.5) * u
+        # alpha = abs(self.angle)
+        return self.center + 4 / (3 * self.angle) * self.radius * math.sin(
+            self.angle * 0.5) * u
 
     def bounding_rectangle(self):
         # TODO: Enhance this!!!
@@ -1093,10 +1093,12 @@ class Arc2D(Edge):
     def straight_line_area(self):
         if self.angle >= math.pi:
             angle = volmdlr.TWO_PI - self.angle
+            area = math.pi*self.radius**2 - 0.5*self.radius**2*(angle-math.sin(angle))
         else:
             angle = self.angle
+            area = 0.5 * self.radius ** 2 * (angle - math.sin(angle))
 
-        area = 0.5*self.radius**2*(angle-math.sin(angle))
+
         if self.is_trigo:
             return area
         else:
@@ -1129,15 +1131,25 @@ class Arc2D(Edge):
                 xi * yj - xj * yi)/24.
         if Ix2 < 0.:
             Ix2, Iy2, Ixy2 = -Ix2, -Iy2, -Ixy2
-        if self.is_trigo:
-            Ix = Ix1 - Ix2
-            Iy = Iy1 - Iy2
-            Ixy = Ixy1 - Ixy2
+        if self.angle < math.pi:
+            if self.is_trigo:
+                Ix = Ix1 - Ix2
+                Iy = Iy1 - Iy2
+                Ixy = Ixy1 - Ixy2
+            else:
+                Ix = Ix2 - Ix1
+                Iy = Iy2 - Iy1
+                Ixy = Ixy2 - Ixy1
         else:
-            Ix = Ix2 - Ix1
-            Iy = Iy2 - Iy1
-            Ixy = Ixy2 - Ixy1
-
+            print('Ixy12', Ixy1, Ixy2)
+            if self.is_trigo:
+                Ix = Ix1 + Ix2
+                Iy = Iy1 + Iy2
+                Ixy = Ixy1 + Ixy2
+            else:
+                Ix = -Ix2 - Ix1
+                Iy = -Iy2 - Iy1
+                Ixy = -Ixy2 - Ixy1
 
         return volmdlr.geometry.huygens2d(Ix, Iy, Ixy,
                                           self.straight_line_area(), self.center,
@@ -1149,6 +1161,8 @@ class Arc2D(Edge):
 
         u = self.middle_point() - self.center
         u.normalize()
+        if self.angle >= math.pi:
+            u = -u
         bissec = Line2D(self.center, self.center+u)
         string = Line2D(self.start, self.end)
         p = volmdlr.Point2D.line_intersection(bissec, string)
@@ -1157,8 +1171,11 @@ class Arc2D(Edge):
         triangle_area = h*a
         alpha = abs(self.angle)
         triangle_cog = self.center + 2/3. * h * u
+        if self.angle < math.pi:
+            cog = (self.center_of_mass()*self.area()-triangle_area*triangle_cog)/abs(self.straight_line_area())
+        else:
+            cog = (self.center_of_mass()*self.area()+triangle_area*triangle_cog)/abs(self.straight_line_area())
 
-        cog = (self.center_of_mass()*self.area()-triangle_area*triangle_cog)/abs(self.straight_line_area())
         # ax = self.plot()
         # bissec.plot(ax=ax, color='grey')
         # self.center.plot(ax=ax)

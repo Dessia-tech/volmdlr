@@ -505,11 +505,14 @@ class Contour2D(Contour, Wire2D):
 
     def center_of_mass(self):
         center = self.edge_polygon.area() * self.edge_polygon.center_of_mass()
+        # ax = self.plot()
+        # self.edge_polygon.center_of_mass().plot(ax=ax, color='b')
         if self.edge_polygon.is_trigo():
             trigo = 1
         else:
             trigo = -1
         for edge in self.primitives:
+            # edge.straight_line_center_of_mass().plot(ax=ax, color='g')
             center += trigo*edge.straight_line_area()*edge.straight_line_center_of_mass()
 
         return center/self.area()
