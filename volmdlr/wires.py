@@ -171,11 +171,11 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         offset_primitives = []
         infinite_primitives = []
         offset_intersections = []
-        ax = self.plot()
+        # ax = self.plot()
         for primitive in self.primitives:
             infinite_primitive = primitive.infinite_primitive(offset)
             infinite_primitives.append(infinite_primitive)
-            infinite_primitive.plot(ax=ax, color='grey')
+            # infinite_primitive.plot(ax=ax, color='grey')
 
         offset_intersections += self.infinite_intersections(
             infinite_primitives)
@@ -1425,42 +1425,32 @@ class Circle2D(Contour2D):
         ymax = self.center.y + self.radius
         return xmin, xmax, ymin, ymax
 
-    def line_intersections(self, line):
-
+    def line_intersections(self, line2d:volmdlr.edges.Line2D, tol=1e-9):
+        # Duplicate from ffull arc
         Q = self.center
-        if line.points[0] == self.center:
-            P1 = line.points[1]
-            V = line.points[0] - line.points[1]
+        if line2d.points[0] == self.center:
+            P1 = line2d.points[1]
+            V = line2d.points[0] - line2d.points[1]
         else:
-            P1 = line.points[0]
-            V = line.points[1] - line.points[0]
+            P1 = line2d.points[0]
+            V = line2d.points[1] - line2d.points[0]
         a = V.dot(V)
         b = 2 * V.dot(P1 - Q)
         c = P1.dot(P1) + Q.dot(Q) - 2 * P1.dot(Q) - self.radius ** 2
 
         disc = b ** 2 - 4 * a * c
-        if disc < 0:
-            return []
+        if math.isclose(disc, 0., abs_tol=tol):
+            t1 = -b  / (2 * a)
+            return [P1 + t1 * V]
 
-        sqrt_disc = math.sqrt(disc)
-        t1 = (-b + sqrt_disc) / (2 * a)
-        t2 = (-b - sqrt_disc) / (2 * a)
-        if line.__class__ is volmdlr.edges.Line2D:
-
-            if t1 == t2:
-                return [P1 + t1 * V]
-            else:
-                return [P1 + t1 * V,
-                        P1 + t2 * V]
+        elif disc > 0:
+            sqrt_disc = math.sqrt(disc)
+            t1 = (-b + sqrt_disc) / (2 * a)
+            t2 = (-b - sqrt_disc) / (2 * a)
+            return [P1 + t1 * V,
+                    P1 + t2 * V]
         else:
-            if not 0 <= t1 <= 1 and not 0 <= t2 <= 1:
-                return None
-            elif 0 <= t1 <= 1 and not 0 <= t2 <= 1:
-                return [P1 + t1 * V]
-            elif not 0 <= t1 <= 1 and 0 <= t2 <= 1:
-                return [P1 + t2 * V]
-            else:
-                [P1 + t1 * V, P1 + t2 * V]
+            return []
 
     def circle_intersections(self, circle: 'Circle2D'):
         x0, y0 = self.center

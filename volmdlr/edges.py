@@ -168,7 +168,7 @@ class Line(dc.DessiaObject):
         u.normalize()
         return u
 
-    def direction_vector(self):
+    def direction_vector(self, abscissa=0.):
         return self.point2 - self.point1
 
     def normal_vector(self, abscissa=0.):
@@ -1047,6 +1047,7 @@ class Arc2D(Edge):
                                        -curvilinear_abscissa / self.radius)
             # return self.start.rotation(self.center, -curvilinear_abscissa*self.angle)
 
+
     def abscissa(self, point2d: volmdlr.Point2D):
         theta = volmdlr.core.clockwise_angle(self.start - self.center,
                                              point2d - self.center)
@@ -1056,6 +1057,18 @@ class Arc2D(Edge):
         if theta < 0 or theta > self.angle:
             raise ValueError('Point in not in arc')
         return self.radius * abs(theta)
+
+    def direction_vector(self, abscissa:float):
+        return -self.normal_vector(abscissa=abscissa).normal_vector()
+
+    def normal_vector(self, abscissa:float):
+        point = self.point_at_abscissa(abscissa)
+        if self.is_trigo:
+            u = self.center - point
+        else:
+            u = point - self.center
+        u.normalize()
+        return u
 
     def middle_point(self):
         l = self.length()
@@ -1415,8 +1428,8 @@ class FullArc2D(Edge):
 
         return arc
 
-    def line_intersections(self, line2d:Line2D):
-        # This is an awfull copypaste
+    def line_intersections(self, line2d:Line2D, tol=1e-9):
+        # Duplicate from circle
         Q = self.center
         if line2d.points[0] == self.center:
             P1 = line2d.points[1]
@@ -1429,19 +1442,19 @@ class FullArc2D(Edge):
         c = P1.dot(P1) + Q.dot(Q) - 2 * P1.dot(Q) - self.radius ** 2
 
         disc = b ** 2 - 4 * a * c
-        if disc < 0:
-            return []
-
-        sqrt_disc = math.sqrt(disc)
-        t1 = (-b + sqrt_disc) / (2 * a)
-        t2 = (-b - sqrt_disc) / (2 * a)
-
-        if t1 == t2:
+        if math.isclose(disc, 0., abs_tol=tol):
+            t1 = -b  / (2 * a)
             return [P1 + t1 * V]
-        else:
+
+        elif disc > 0:
+            sqrt_disc = math.sqrt(disc)
+            t1 = (-b + sqrt_disc) / (2 * a)
+            t2 = (-b - sqrt_disc) / (2 * a)
             return [P1 + t1 * V,
                     P1 + t2 * V]
-
+        else:
+            return []
+ 
 
 class ArcEllipse2D(Edge):
     """
