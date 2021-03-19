@@ -508,6 +508,13 @@ class BSplineCurve2D(Edge):
                               knot_multiplicities=knot_multiplicities
                               )
 
+    def bounding_rectangle(self):
+        points = self.polygon_points()
+        points_x = [p.x for p in points]
+        points_y = [p.y for p in points]
+
+        return (min(points_x), max(points_x),
+                min(points_y), max(points_y))
 
     def length(self):
         return length_curve(self.curve)
@@ -549,8 +556,7 @@ class BSplineCurve2D(Edge):
 
     def straight_line_area(self):
         l = self.length()
-        n = 20
-        points = [self.point_at_abscissa(i*l/n) for i in range(n+1)]
+        points = self.polygon_points()
         polygon = volmdlr.wires.ClosedPolygon2D(points)
 
         return polygon.area()
@@ -577,9 +583,9 @@ class BSplineCurve2D(Edge):
                               self.knot_multiplicities, self.knots,
                               self.weights, self.periodic)
 
-    def polygon_points(self):
+    def polygon_points(self, n=15):
         l = self.length()
-        return [self.point_at_abscissa(i*l/10) for i in range(11)]
+        return [self.point_at_abscissa(i*l/n) for i in range(n+1)]
 
     def rotation(self, center, angle, copy=True):
         if copy:
@@ -1372,8 +1378,23 @@ class FullArc2D(Edge):
         return (self.center == other_arc.center) \
                and (self.start_end == other_arc.start_end)
 
+    def bounding_rectangle(self):
+
+        xmin = self.center.x - self.radius
+        xmax = self.center.x + self.radius
+        ymin = self.center.y - self.radius
+        ymax = self.center.y + self.radius
+        return xmin, xmax, ymin, ymax
+
     def area(self):
         return math.pi * self.radius ** 2
+
+    def straight_line_area(self):
+        area = self.area()
+        if self.is_trigo:
+            return area
+        else:
+            return -area
 
     def to_3d(self, plane_origin, x, y):
         center = self.center.to_3d(plane_origin, x, y)
@@ -2499,6 +2520,41 @@ class BSplineCurve3D(Edge):
         closed_curve = False
         return cls(degree, points, knot_multiplicities, knots, weight_data,
                    closed_curve, name)
+
+    def to_step(self, current_id, surface_id=None):
+
+        points_ids = []
+        content = ''
+        for point in self.points:
+            point_content, point_id = point.to_step(current_id,
+                                                    vertex=True)
+            content += point_content
+            points_ids.append(point_id)
+
+        curve_id = point_id + 1
+        content += "#{} = B_SPLINE_CURVE_WITH_KNOTS('{}',{},({})," \
+                   ".UNSPECIFIED.,.F.,.F.,({}),{}," \
+                   ".PIECEWISE_BEZIER_KNOTS.);\n".format(curve_id,
+            self.name, self.degree, volmdlr.core.step_ids_to_str(points_ids),
+            volmdlr.core.step_ids_to_str(self.knot_multiplicities),
+            tuple(self.knots)
+        )
+
+        if surface_id:
+            content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(
+                curve_id + 1, curve_id, surface_id)
+            curve_id += 1
+
+        current_id = curve_id + 1
+        start_content, start_id = self.start.to_step(current_id, vertex=True)
+        current_id = start_id + 1
+        end_content, end_id = self.end.to_step(current_id + 1, vertex=True)
+        content += start_content + end_content
+        current_id = end_id + 1
+        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(
+            current_id, self.name,
+            start_id, end_id, curve_id)
+        return content, [current_id]
 
     def point_distance(self, pt1):
         distances = []
