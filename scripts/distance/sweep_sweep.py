@@ -7,8 +7,8 @@ Created on Fri May 22 11:16:18 2020
 
 import numpy as npy
 import volmdlr as volmdlr
-import volmdlr.primitives3D as primitives3D
-import volmdlr.primitives2D as primitives2D
+import volmdlr.primitives3d as primitives3d
+import volmdlr.primitives2d as primitives2d
 import matplotlib.pyplot as plt
 import random
 
