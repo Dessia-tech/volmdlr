@@ -24,11 +24,11 @@ babylon_unpacker_cdn_header = '''
          touch-action: none;
       }
    </style>
-      <script src="https://preview.babylonjs.com/babylon.js"></script>
-      <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+      <script src="https://cdn.babylonjs.com/babylon.js"></script>
+      <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
       <script src="https://code.jquery.com/pep/0.4.3/pep.js"></script>
       <script src='https://unpkg.com/earcut@2.1.1/dist/earcut.min.js'></script>
-      <script src='https://preview.babylonjs.com/gui/babylon.gui.min.js'></script>
+      <script src='https://cdn.babylonjs.com/gui/babylon.gui.min.js'></script>
 </head>
 '''
 
