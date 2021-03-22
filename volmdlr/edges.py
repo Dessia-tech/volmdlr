@@ -990,7 +990,7 @@ class Arc2D(Edge):
 
     points = property(_get_points)
 
-    def polygon_points(self, angle_resolution=10):
+    def polygon_points(self, angle_resolution:float=10.):
         number_points_tesselation = math.ceil(
             angle_resolution * abs(self.angle) / 2 / math.pi)
         number_points_tesselation = max(number_points_tesselation, 5)
@@ -999,22 +999,30 @@ class Arc2D(Edge):
             i / (number_points_tesselation - 1) * l) for i in
             range(number_points_tesselation)]
 
-    def point_belongs(self, point):
+    def point_belongs(self, point2d:volmdlr.Point2D, tol:float=1e-9)->bool:
         """
         Computes if the point belongs to the pizza slice drawn by the arc and its center
         """
-        circle = volmdlr.wires.Circle2D(self.center, self.radius)
-        if not circle.point_belongs(point):
+        radius = self.center.point_distance(point2d)
+        if radius > self.radius+tol:
             return False
-        vector_start = self.start - self.center
-        vector_point = point - self.center
-        vector_end = self.end - self.center
+
+        theta_tol = tol/radius*self.radius
+        p = point2d - self.center
+        u = self.start-self.center
+        u.normalize()
         if self.is_trigo:
-            vector_start, vector_end = vector_end, vector_start
-        arc_angle = volmdlr.core.clockwise_angle(vector_start, vector_end)
-        point_angle = volmdlr.core.clockwise_angle(vector_start, vector_point)
-        if point_angle <= arc_angle:
-            return True
+            v = u.normal_vector()
+        else:
+            v = -u.normal_vector()
+
+        x, y = p.dot(u), p.dot(v)
+        theta = math.atan2(y, x)
+        if theta < -theta_tol or theta > self.angle+theta_tol:
+            return False
+
+        return True
+
 
     def point_distance(self, point):
         vector_start = self.start - self.center
@@ -1031,13 +1039,14 @@ class Arc2D(Edge):
             return min(LineSegment2D(point, self.start).length(),
                        LineSegment2D(point, self.end).length())
 
-    def line_intersections(self, line):
-        circle = volmdlr.wires.Circle2D(self.center, self.radius)
-        circle_intersection_points = circle.line_intersections(line)
+    def to_circle(self):
+        return volmdlr.wires.Circle2D(self.center, self.radius)
 
-        if circle_intersection_points is None:
-            return None
+    def line_intersections(self, line2d:Line2D):
+        circle = self.to_circle()
+        circle_intersection_points = circle.line_intersections(line2d)
 
+        # print(circle_intersection_points)
         intersection_points = []
         for pt in circle_intersection_points:
             if self.point_belongs(pt):
@@ -1058,15 +1067,27 @@ class Arc2D(Edge):
             # return self.start.rotation(self.center, -curvilinear_abscissa*self.angle)
 
 
-    def abscissa(self, point2d: volmdlr.Point2D):
-        theta = volmdlr.core.clockwise_angle(self.start - self.center,
-                                             point2d - self.center)
+    def abscissa(self, point2d: volmdlr.Point2D, tol=1e-9):
+        p = point2d - self.center
+        u = self.start-self.center
+        u.normalize()
         if self.is_trigo:
-            theta = volmdlr.TWO_PI - theta
+            v = u.normal_vector()
+        else:
+            v = -u.normal_vector()
 
-        if theta < 0 or theta > self.angle:
+        x, y = p.dot(u), p.dot(v)
+        theta = math.atan2(y, x)
+        if theta < -tol or theta > self.angle+tol:
             raise ValueError('Point in not in arc')
-        return self.radius * abs(theta)
+
+        if theta < 0:
+            return 0.
+        if theta > self.angle:
+            return self.angle*self.radius
+
+        return self.radius * theta
+
 
     def direction_vector(self, abscissa:float):
         return -self.normal_vector(abscissa=abscissa).normal_vector()
@@ -3144,11 +3165,10 @@ class Arc3D(Edge):
 
         content, frame_id = frame.to_step(current_id)
         curve_id = frame_id + 1
-        content += "#{} = CIRCLE('{}', #{}, {});\n".format(curve_id, self.name,
+        content += "#{} = CIRCLE('{}', #{}, {:.6f});\n".format(curve_id, self.name,
                                                            frame_id,
-                                                           round(
-                                                               self.radius * 1000,
-                                                               3))
+                                                           self.radius * 1000,
+                                                           )
 
         if surface_id:
             content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(
@@ -3228,11 +3248,10 @@ class FullArc3D(Edge):
         content, frame_id = frame.to_step(current_id)
         curve_id = frame_id + 1
         # Not calling Circle3D.to_step because of circular imports
-        content += "#{} = CIRCLE('{}',#{},{});\n".format(curve_id, self.name,
+        content += "#{} = CIRCLE('{}',#{},{:.6f});\n".format(curve_id, self.name,
                                                          frame_id,
-                                                         round(
-                                                             self.radius * 1000,
-                                                             3))
+                                                         self.radius * 1000,
+                                                         )
 
         if surface_id:
             content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(
