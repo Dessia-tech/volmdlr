@@ -11,9 +11,9 @@ for step_file in [
                   # 'tore1.step',
                   # 'cone1.step',
                   # 'cone2.step',
-                  'iso4162M16x55.step',
                   'cylinder.step',
                   'block.step',
+                  'iso4162M16x55.step',
                   ]:
     print('filename: ', step_file)
     step = volmdlr.step.Step(step_file)

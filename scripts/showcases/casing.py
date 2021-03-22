@@ -76,6 +76,7 @@ ax = belt.outer_contour3d.plot()
 
 model = vm.core.VolumeModel([bottom, sides, belt], name='Casing')
 model.babylonjs()
+model.to_step('casing')
 #
 # model = vm.VolumeModel([sides])
 # model.babylonjs('sides')
