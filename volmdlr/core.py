@@ -1486,11 +1486,14 @@ class VolumeModel(dc.DessiaObject):
             step_content += "#{} = DRAUGHTING_PRE_DEFINED_CURVE_FONT('continuous');\n".format(
                 draughting_id)
             color_id = draughting_id + 1
+            primitive_color = (1, 1, 1)
+            if hasattr(primitive, 'color'):
+                primitive_color = primitive.color
             step_content += "#{} = COLOUR_RGB('',{}, {}, {});\n".format(
                 color_id,
-                round(float(primitive.color[0]), 4),
-                round(float(primitive.color[1]), 4),
-                round(float(primitive.color[2]), 4)
+                round(float(primitive_color[0]), 4),
+                round(float(primitive_color[1]), 4),
+                round(float(primitive_color[2]), 4)
             )
 
             curve_style_id = color_id + 1

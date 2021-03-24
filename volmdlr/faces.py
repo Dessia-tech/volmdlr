@@ -607,7 +607,10 @@ class Surface3D(dc.DessiaObject):
             method_name = '{}_to_3d'.format(
                 primitive2d.__class__.__name__.lower())
             if hasattr(self, method_name):
-                primitives3d.extend(getattr(self, method_name)(primitive2d))
+                try:
+                    primitives3d.extend(getattr(self, method_name)(primitive2d))
+                except NotImplementedError:
+                    print('Error NotImplementedError')
             else:
                 raise NotImplementedError(
                     'Class {} does not implement {}'.format(
@@ -749,12 +752,12 @@ class Plane3D(Surface3D):
         return False
 
     def line_intersections(self, line):
-        u = line.points[1] - line.points[0]
-        w = line.points[0] - self.frame.origin
+        u = line.point2 - line.point1
+        w = line.point1 - self.frame.origin
         if math.isclose(self.frame.w.dot(u), 0, abs_tol=1e-08):
             return []
         intersection_abscissea = - self.frame.w.dot(w) / self.frame.w.dot(u)
-        return [line.points[0] + intersection_abscissea * u]
+        return [line.point1 + intersection_abscissea * u]
 
     def linesegment_intersections(self, linesegment: vme.LineSegment3D) \
             -> List[volmdlr.Point3D]:
@@ -2092,6 +2095,16 @@ class Face3D(volmdlr.core.Primitive3D):
     def copy(self):
         return Face3D(self.surface3d.copy(), self.surface2d.copy(), self.name)
 
+    def line_intersections(self,
+                                  line: vme.Line3D,
+                                  ) -> List[volmdlr.Point3D]:
+        intersections = []
+        for intersection in self.surface3d.line_intersections(line):
+            if self.point_belongs(intersection):
+                intersections.append(intersection)
+
+        return intersections
+
     def linesegment_intersections(self,
                                   linesegment: vme.LineSegment3D,
                                   ) -> List[volmdlr.Point3D]:
@@ -2377,6 +2390,10 @@ class CylindricalFace3D(Face3D):
         Face3D.__init__(self, surface3d=cylindricalsurface3d,
                         surface2d=surface2d,
                         name=name)
+
+    def copy(self):
+        return CylindricalFace3D(self.surface3d.copy(), self.surface2d.copy(),
+                           self.name)
 
     def _bounding_box(self):
         theta_min, theta_max, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle()
@@ -2778,6 +2795,10 @@ class ToroidalFace3D(Face3D):
                         surface3d=toroidalsurface3d,
                         surface2d=surface2d,
                         name=name)
+
+    def copy(self):
+        return ToroidalFace3D(self.surface3d.copy(), self.surface2d.copy(),
+                              self.name)
 
     def points_resolution(self, line, pos,
                           resolution):  # With a resolution wished
@@ -3679,6 +3700,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 graph.add_edges_from([(inters[0], inters[1])])
                 intersections.append(inters)
         pts = list(nx.dfs_edges(graph, intersections[0][0]))
+        print(pts)
+        print(intersections)
         points = []
         u = plane_3d.frame.u
         v = plane_3d.frame.v
@@ -3700,6 +3723,16 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         intersections = []
         for face in self.faces:
             face_intersections = face.linesegment_intersections(linesegment3d)
+            if face_intersections:
+                intersections.append((face, face_intersections))
+        return intersections
+
+    def line_intersections(self,
+                                  line3d: vme.Line3D) \
+            -> List[Tuple[Face3D, List[volmdlr.Point3D]]]:
+        intersections = []
+        for face in self.faces:
+            face_intersections = face.line_intersections(line3d)
             if face_intersections:
                 intersections.append((face, face_intersections))
         return intersections

@@ -512,6 +512,9 @@ class BSplineCurve2D(Edge):
     def length(self):
         return length_curve(self.curve)
 
+    def straight_line_area(self):
+        return 0.
+
     def point_at_abscissa(self, curvilinear_abscissa):
         l = self.length()
         adim_abs = curvilinear_abscissa/l
@@ -631,6 +634,7 @@ class BezierCurve2D(BSplineCurve2D):
         BSplineCurve2D.__init__(self, degree, control_points,
                                 knot_multiplicity, knotvector,
                                 None, False, name)
+
 
 
 class LineSegment2D(LineSegment):
