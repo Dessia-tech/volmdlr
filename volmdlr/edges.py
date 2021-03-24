@@ -168,13 +168,13 @@ class Line(dc.DessiaObject):
         u.normalize()
         return u
 
-    def direction_vector(self):
+    def direction_vector(self, abscissa=0.):
         return self.point2 - self.point1
 
     def normal_vector(self, abscissa=0.):
         return self.direction_vector().normal_vector()
 
-    def unit_normal_vector(self):
+    def unit_normal_vector(self, abscissa=0.):
         return self.unit_direction_vector().normal_vector()
 
     def point_projection(self, point):
@@ -211,16 +211,18 @@ class LineSegment(Edge):
                 'Point is not on linesegment: abscissa={}'.format(t))
         return t
 
+
     def unit_direction_vector(self, abscissa=0.):
-        u = self.direction_vector()
+
+        u = self.end - self.start
         u.normalize()
         return u
 
     def direction_vector(self, s=0):
         '''
-        Returns end - start, not normalized
         '''
-        return self.end - self.start
+        return self.unit_direction_vector()
+        # return self.end - self.start
 
     def normal_vector(self, abscissa=0.):
         return self.unit_direction_vector().normal_vector()
@@ -1049,6 +1051,7 @@ class Arc2D(Edge):
                                        -curvilinear_abscissa / self.radius)
             # return self.start.rotation(self.center, -curvilinear_abscissa*self.angle)
 
+
     def abscissa(self, point2d: volmdlr.Point2D):
         theta = volmdlr.core.clockwise_angle(self.start - self.center,
                                              point2d - self.center)
@@ -1058,6 +1061,18 @@ class Arc2D(Edge):
         if theta < 0 or theta > self.angle:
             raise ValueError('Point in not in arc')
         return self.radius * abs(theta)
+
+    def direction_vector(self, abscissa:float):
+        return -self.normal_vector(abscissa=abscissa).normal_vector()
+
+    def normal_vector(self, abscissa:float):
+        point = self.point_at_abscissa(abscissa)
+        if self.is_trigo:
+            u = self.center - point
+        else:
+            u = point - self.center
+        u.normalize()
+        return u
 
     def middle_point(self):
         l = self.length()
@@ -1070,9 +1085,9 @@ class Arc2D(Edge):
         #        u=self.middle.vector-self.center.vector
         u = self.middle_point() - self.center
         u.normalize()
-        alpha = abs(self.angle)
-        return self.center + 4 / (3 * alpha) * self.radius * math.sin(
-            alpha * 0.5) * u
+        # alpha = abs(self.angle)
+        return self.center + 4 / (3 * self.angle) * self.radius * math.sin(
+            self.angle * 0.5) * u
 
     def bounding_rectangle(self):
         # TODO: Enhance this!!!
@@ -1082,10 +1097,12 @@ class Arc2D(Edge):
     def straight_line_area(self):
         if self.angle >= math.pi:
             angle = volmdlr.TWO_PI - self.angle
+            area = math.pi*self.radius**2 - 0.5*self.radius**2*(angle-math.sin(angle))
         else:
             angle = self.angle
+            area = 0.5 * self.radius ** 2 * (angle - math.sin(angle))
 
-        area = 0.5*self.radius**2*(angle-math.sin(angle))
+
         if self.is_trigo:
             return area
         else:
@@ -1118,15 +1135,25 @@ class Arc2D(Edge):
                 xi * yj - xj * yi)/24.
         if Ix2 < 0.:
             Ix2, Iy2, Ixy2 = -Ix2, -Iy2, -Ixy2
-        if self.is_trigo:
-            Ix = Ix1 - Ix2
-            Iy = Iy1 - Iy2
-            Ixy = Ixy1 - Ixy2
+        if self.angle < math.pi:
+            if self.is_trigo:
+                Ix = Ix1 - Ix2
+                Iy = Iy1 - Iy2
+                Ixy = Ixy1 - Ixy2
+            else:
+                Ix = Ix2 - Ix1
+                Iy = Iy2 - Iy1
+                Ixy = Ixy2 - Ixy1
         else:
-            Ix = Ix2 - Ix1
-            Iy = Iy2 - Iy1
-            Ixy = Ixy2 - Ixy1
-
+            print('Ixy12', Ixy1, Ixy2)
+            if self.is_trigo:
+                Ix = Ix1 + Ix2
+                Iy = Iy1 + Iy2
+                Ixy = Ixy1 + Ixy2
+            else:
+                Ix = -Ix2 - Ix1
+                Iy = -Iy2 - Iy1
+                Ixy = -Ixy2 - Ixy1
 
         return volmdlr.geometry.huygens2d(Ix, Iy, Ixy,
                                           self.straight_line_area(), self.center,
@@ -1138,6 +1165,8 @@ class Arc2D(Edge):
 
         u = self.middle_point() - self.center
         u.normalize()
+        if self.angle >= math.pi:
+            u = -u
         bissec = Line2D(self.center, self.center+u)
         string = Line2D(self.start, self.end)
         p = volmdlr.Point2D.line_intersection(bissec, string)
@@ -1146,8 +1175,11 @@ class Arc2D(Edge):
         triangle_area = h*a
         alpha = abs(self.angle)
         triangle_cog = self.center + 2/3. * h * u
+        if self.angle < math.pi:
+            cog = (self.center_of_mass()*self.area()-triangle_area*triangle_cog)/abs(self.straight_line_area())
+        else:
+            cog = (self.center_of_mass()*self.area()+triangle_area*triangle_cog)/abs(self.straight_line_area())
 
-        cog = (self.center_of_mass()*self.area()-triangle_area*triangle_cog)/abs(self.straight_line_area())
         # ax = self.plot()
         # bissec.plot(ax=ax, color='grey')
         # self.center.plot(ax=ax)
@@ -1417,8 +1449,8 @@ class FullArc2D(Edge):
 
         return arc
 
-    def line_intersections(self, line2d:Line2D):
-        # This is an awfull copypaste
+    def line_intersections(self, line2d:Line2D, tol=1e-9):
+        # Duplicate from circle
         Q = self.center
         if line2d.points[0] == self.center:
             P1 = line2d.points[1]
@@ -1431,19 +1463,19 @@ class FullArc2D(Edge):
         c = P1.dot(P1) + Q.dot(Q) - 2 * P1.dot(Q) - self.radius ** 2
 
         disc = b ** 2 - 4 * a * c
-        if disc < 0:
-            return []
-
-        sqrt_disc = math.sqrt(disc)
-        t1 = (-b + sqrt_disc) / (2 * a)
-        t2 = (-b - sqrt_disc) / (2 * a)
-
-        if t1 == t2:
+        if math.isclose(disc, 0., abs_tol=tol):
+            t1 = -b  / (2 * a)
             return [P1 + t1 * V]
-        else:
+
+        elif disc > 0:
+            sqrt_disc = math.sqrt(disc)
+            t1 = (-b + sqrt_disc) / (2 * a)
+            t2 = (-b - sqrt_disc) / (2 * a)
             return [P1 + t1 * V,
                     P1 + t2 * V]
-
+        else:
+            return []
+ 
 
 class ArcEllipse2D(Edge):
     """
@@ -2691,6 +2723,9 @@ class Arc3D(Edge):
         return tangent
 
     def unit_normal_vector(self, abscissa):
+        return self.normal.cross(self.unit_direction_vector(abscissa))
+
+    def normal_vector(self, abscissa):
         return self.normal.cross(self.unit_direction_vector(abscissa))
 
     def rotation(self, rot_center, axis, angle, copy=True):

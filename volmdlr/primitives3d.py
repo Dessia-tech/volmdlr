@@ -1088,7 +1088,7 @@ class Sweep(volmdlr.faces.ClosedShell3D):
             if wire_primitive.__class__ is volmdlr.edges.LineSegment3D:
                 for contour_primitive in contour3d.primitives:
                     faces.extend(contour_primitive.extrusion(
-                        wire_primitive.direction_vector()))
+                        wire_primitive.length()*wire_primitive.direction_vector()))
             elif wire_primitive.__class__ is volmdlr.edges.Arc3D:
                 for contour_primitive in contour3d.primitives:
                     faces.extend(contour_primitive.revolution(

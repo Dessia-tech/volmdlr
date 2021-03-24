@@ -37,6 +37,21 @@ class Surface2D(volmdlr.core.Primitive2D):
         return self.outer_contour.area() - sum(
             [c.area() for c in self.inner_contours])
 
+    def second_moment_area(self, point:volmdlr.Point2D):
+        Ix, Iy, Ixy = self.outer_contour.second_moment_area(point)
+        for contour in self.inner_contours:
+            Ixc, Iyc, Ixyc = contour.second_moment_area(point)
+            Ix -= Ixc
+            Iy -= Iyc
+            Ixy -= Ixyc
+        return Ix, Iy, Ixy
+
+    def center_of_mass(self):
+        center = self.outer_contour.area() * self.outer_contour.center_of_mass()
+        for contour in self.inner_contours:
+            center -= contour.area() * contour.center_of_mass()
+        return center/self.area()
+
     def point_belongs(self, point2d: volmdlr.Point2D):
         if not self.outer_contour.point_belongs(point2d):
             return False
