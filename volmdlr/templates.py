@@ -340,7 +340,7 @@ babylon_unpacker_body_template = Template(
          engine.resize();
       });
 
-      scene.debugLayer.show();
+      //scene.debugLayer.show();
 
    </script>
 </body>
