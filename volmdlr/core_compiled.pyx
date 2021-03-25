@@ -932,7 +932,9 @@ class Vector3D(Vector):
             return cls(*[float(i) for i in arguments[1][1:-1].split(",")],
                         arguments[0][1:-1])
 
-    def to_step(self, current_id, vector=False):
+    def to_step(self, current_id, vector=False, vertex=False):
+        if vertex:
+            return self.to_point().to_step(current_id=current_id, vertex=True)
         content = "#{} = DIRECTION('{}',({},{},{}));\n"\
                         .format(current_id, self.name,
                                 round(self.x, 6),

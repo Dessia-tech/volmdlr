@@ -3572,7 +3572,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             face_content, face_sub_ids = face.to_step(current_id)
             step_content += face_content
             face_ids.extend(face_sub_ids)
-            print(face, face_sub_ids)
             current_id = max(face_sub_ids) + 1
 
         shell_id = current_id
