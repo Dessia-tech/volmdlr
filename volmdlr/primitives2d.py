@@ -162,12 +162,12 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
             offset_points.append(offset_point)
 
         if not self.closed:
-            n1 = vectors[0].normalVector(unit=True)
+            n1 = vectors[0].normal_vector()
             offset_vectors.insert(0, n1)
             offset_points.insert(0,
                                  self.points[0] + offset * offset_vectors[0])
 
-            n_last = vectors[-1].normalVector(unit=True)
+            n_last = vectors[-1].normal_vector()
             n_last = - n_last
             offset_vectors.append(n_last)
             offset_points.append(self.points[-1] + offset * offset_vectors[-1])
