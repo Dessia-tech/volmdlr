@@ -146,11 +146,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         """
         This method makes inner contour disappear for now
         """
-        # try:
         splitted_outer_contours = self.outer_contour.cut_by_line(line)
-        # except IndexError:
-        #     ax = self.outer_contour.plot()
-        #     line.plot(ax=ax, color='r')
         return [Surface2D(oc, []) for oc in splitted_outer_contours]
 
     def split_at_centers(self):
@@ -640,6 +636,21 @@ class Surface3D(dc.DessiaObject):
                     weights=bspline_curve3d.weights,
                     periodic=bspline_curve3d.periodic)]
 
+    def bsplinecurve2d_to_3d(self, bspline_curve2d):
+        """
+        Is this right?
+        """
+        control_points = [self.point2d_to_3d(p) \
+                          for p in bspline_curve2d.control_points]
+        return [vme.BSplineCurve3D(
+                    bspline_curve2d.degree,
+                    control_points=control_points,
+                    knot_multiplicities=bspline_curve2d.knot_multiplicities,
+                    knots=bspline_curve2d.knots,
+                    weights=bspline_curve2d.weights,
+                    periodic=bspline_curve2d.periodic)]
+
+
 class Plane3D(Surface3D):
     face_class = 'PlaneFace3D'
 
@@ -990,12 +1001,12 @@ class CylindricalSurface3D(Surface3D):
     def linesegment2d_to_3d(self, linesegment2d):
         theta1, z1 = linesegment2d.start
         theta2, z2 = linesegment2d.end
-        if theta1 == theta2:
+        if math.isclose(theta1, theta2, abs_tol=1e-9):
             return [vme.LineSegment3D(
                 self.point2d_to_3d(linesegment2d.start),
                 self.point2d_to_3d(linesegment2d.end),
             )]
-        elif z1 == z2:
+        elif math.isclose(z1, z2, abs_tol=1e-9):
             if abs(theta1 - theta2) == volmdlr.TWO_PI:
                 return [vme.FullArc3D(center=self.frame.origin + z1 * self.frame.w,
                                       start_end=self.point2d_to_3d(linesegment2d.start),
@@ -1009,7 +1020,7 @@ class CylindricalSurface3D(Surface3D):
                     self.point2d_to_3d(linesegment2d.end),
                 )]
         else:
-            raise NotImplementedError('Ellipse?')
+            raise NotImplementedError('Ellipse? delta_theta={} delta_z={}'.format(abs(theta2-theta1), abs(z1-z2)))
 
     def fullarc3d_to_2d(self, fullarc3d):
         if self.frame.w.is_colinear_to(fullarc3d.normal):
@@ -1980,19 +1991,20 @@ class Face3D(volmdlr.core.Primitive3D):
             face_ids = []
             for subsurface2d in subsurfaces2d:
                 face = self.__class__(self.surface3d, subsurface2d)
-                try:
-                    face_content, face_id = face.to_step_without_splitting(
-                        current_id)
-                    face_ids.append(face_id[0])
-                    content += face_content
-                    current_id = face_id[0] + 1
-                except NotImplementedError:
-                    print('Warning: a face of class {} has not been exported due to NotImplementedError'.format(
-                        face.__class__.__name__))
-                except AttributeError:
-                    print(
-                        'Warning: a face of class {} has not been exported due to AttributeError'.format(
-                         face.__class__.__name__))
+                # try:
+
+                face_content, face_id = face.to_step_without_splitting(
+                    current_id)
+                face_ids.append(face_id[0])
+                content += face_content
+                current_id = face_id[0] + 1
+                # except NotImplementedError:
+                #     print('Warning: a face of class {} has not been exported due to NotImplementedError'.format(
+                #         face.__class__.__name__))
+                # except AttributeError:
+                #     print(
+                #         'Warning: a face of class {} has not been exported due to AttributeError'.format(
+                #          face.__class__.__name__))
             return content, face_ids
         else:
             return self.to_step_without_splitting(current_id)

@@ -932,12 +932,12 @@ class Vector3D(Vector):
             return cls(*[float(i) for i in arguments[1][1:-1].split(",")],
                         arguments[0][1:-1])
 
-    def to_step(self, current_id, vector=False):
-        content = "#{} = DIRECTION('{}',({},{},{}));\n"\
+    def to_step(self, current_id, vector=False, vertex=False):
+        if vertex:
+            return self.to_point().to_step(current_id=current_id, vertex=True)
+        content = "#{} = DIRECTION('{}',({:.6f},{:.6f},{:.6f}));\n"\
                         .format(current_id, self.name,
-                                round(self.x, 6),
-                                round(self.y, 6),
-                                round(self.z, 6))
+                                self.x, self.y, self.z)
         if vector:
             content += "#{} = VECTOR('{}',#{},1.);\n".format(current_id+1,
                                                            self.name,
@@ -1029,11 +1029,11 @@ class Point3D(Vector3D):
         return (point1 + point2) * 0.5
 
     def to_step(self, current_id, vertex=False):
-        content = "#{} = CARTESIAN_POINT('{}',({},{},{}));\n"\
+        content = "#{} = CARTESIAN_POINT('{}',({:.6f},{:.6f},{:.6f}));\n"\
                         .format(current_id, self.name,
-                                round(1000.*self.x, 6),
-                                round(1000.*self.y, 6),
-                                round(1000.*self.z, 6))
+                                1000.*self.x,
+                                1000.*self.y,
+                                1000.*self.z)
         if vertex:
             content += "#{} = VERTEX_POINT('{}',#{});\n".format(current_id+1,
                                                                 self.name,
