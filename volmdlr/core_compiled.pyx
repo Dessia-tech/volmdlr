@@ -552,11 +552,11 @@ class Point2D(Vector2D):
     def to_vector(self):
         return Vector2D(self.x, self.y, self.z)
 
-    def plot(self, ax=None, color='k', plot_points=True):
+    def plot(self, ax=None, color='k', alpha=1, plot_points=True):
         if ax is None:
             fig, ax = plt.subplots()
 
-        ax.plot([self.x], [self.y], color=color, marker='o')
+        ax.plot([self.x], [self.y], color=color, alpha=alpha, marker='o')
         return ax
 
     def point_distance(self, point2:'Point2D'):
@@ -565,14 +565,19 @@ class Point2D(Vector2D):
 
     @classmethod
     def line_intersection(cls, line1, line2, curvilinear_abscissa=False):
-        x1 = line1.points[0][0]
-        y1 = line1.points[0][1]
-        x2 = line1.points[1][0]
-        y2 = line1.points[1][1]
-        x3 = line2.points[0][0]
-        y3 = line2.points[0][1]
-        x4 = line2.points[1][0]
-        y4 = line2.points[1][1]
+#        point11, point12 = line1
+#        point21, point22 = line2
+        (x1, y1), (x2, y2) = line1
+        (x3, y3), (x4, y4) = line2
+
+#        x1 = line1.points[0][0]
+#        y1 = line1.points[0][1]
+#        x2 = line1.points[1][0]
+#        y2 = line1.points[1][1]
+#        x3 = line2.points[0][0]
+#        y3 = line2.points[0][1]
+#        x4 = line2.points[1][0]
+#        y4 = line2.points[1][1]
 
 
         denominateur = (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4)
@@ -927,12 +932,12 @@ class Vector3D(Vector):
             return cls(*[float(i) for i in arguments[1][1:-1].split(",")],
                         arguments[0][1:-1])
 
-    def to_step(self, current_id, vector=False):
-        content = "#{} = DIRECTION('{}',({},{},{}));\n"\
+    def to_step(self, current_id, vector=False, vertex=False):
+        if vertex:
+            return self.to_point().to_step(current_id=current_id, vertex=True)
+        content = "#{} = DIRECTION('{}',({:.6f},{:.6f},{:.6f}));\n"\
                         .format(current_id, self.name,
-                                round(self.x, 6),
-                                round(self.y, 6),
-                                round(self.z, 6))
+                                self.x, self.y, self.z)
         if vector:
             content += "#{} = VECTOR('{}',#{},1.);\n".format(current_id+1,
                                                            self.name,
@@ -1024,11 +1029,11 @@ class Point3D(Vector3D):
         return (point1 + point2) * 0.5
 
     def to_step(self, current_id, vertex=False):
-        content = "#{} = CARTESIAN_POINT('{}',({},{},{}));\n"\
+        content = "#{} = CARTESIAN_POINT('{}',({:.6f},{:.6f},{:.6f}));\n"\
                         .format(current_id, self.name,
-                                round(1000.*self.x, 6),
-                                round(1000.*self.y, 6),
-                                round(1000.*self.z, 6))
+                                1000.*self.x,
+                                1000.*self.y,
+                                1000.*self.z)
         if vertex:
             content += "#{} = VERTEX_POINT('{}',#{});\n".format(current_id+1,
                                                                 self.name,

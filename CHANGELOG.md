@@ -6,6 +6,68 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+* direction vector of linesegments are now normalized
+
+#### New Features
+
+* straight line area for BsplineCurve2D
+* split of circleby start end
+* closedpolygon2d is_trigo
+* Auto-adaptative camera/edge width babylonjs
+* splitting of bsplinecurve2d
+* BezierSurface3D implemented
+* added rotation and translation for faces
+* new classes BezierCurve2D and BezierCurve3D
+* spherical surface
+* (core): update plot_data method
+* update plot_data methods in wires and edges
+* step almost working for cylindrical, conical toroidal
+* difference between intersections and crossings
+* plot_data version set to 0.3.8 or above
+
+#### Fixes
+
+* support of mixed vector point in to step
+* remove debug mode babylonjs
+* remove sci notation in step export
+* use stable cdn for babylonjs
+* sweep extrusion length
+* line circle intersection with tolerance, normal and dir vector for arc
+* offset of wire
+* remove useless non serializable attr
+* secondmoment area from straight lines
+* reversed faces in extrusion correction
+* enhancement of rotation/translation of shells
+* bug fix BezierCurve2D and 3D
+* eq and hash for basis and frames
+* shell and frame mapped shell correctly read
+* small try except added for step reading
+* all SHAPE_REPRESENTATION are now read
+* Arc3D from step full debug
+* arc3d to 2d in bspline3d surface
+* missing faces at end of sweep
+* splitting faces and arcs
+* perf in display nodes and toroidal aspect
+* setup.py requires plot_data>=0.3.9
+* (primitives2d): serialization
+* debug of shell method
+* porting shells methods
+* Debug of conical faces
+* Porting cylinders and hollow
+* porting from missing from_contour3d for planeface
+* reading steps, but artefact on faces
+* Correcting arc from_step
+
+#### Performance improvements
+
+* LineSegment2D.points is non serializable attribute
+* ClosedPolygon2D.line_segment is non_serializable_attributes
+* Optimization of mesh generation
+
+#### Refactorings
+* (edges): put data argument back into Arc2D.plot_data()
+* (edges): redefined Arc2D.plot_data()
 
 ## [v0.2.6]
 

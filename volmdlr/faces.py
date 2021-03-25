@@ -37,6 +37,21 @@ class Surface2D(volmdlr.core.Primitive2D):
         return self.outer_contour.area() - sum(
             [c.area() for c in self.inner_contours])
 
+    def second_moment_area(self, point:volmdlr.Point2D):
+        Ix, Iy, Ixy = self.outer_contour.second_moment_area(point)
+        for contour in self.inner_contours:
+            Ixc, Iyc, Ixyc = contour.second_moment_area(point)
+            Ix -= Ixc
+            Iy -= Iyc
+            Ixy -= Ixyc
+        return Ix, Iy, Ixy
+
+    def center_of_mass(self):
+        center = self.outer_contour.area() * self.outer_contour.center_of_mass()
+        for contour in self.inner_contours:
+            center -= contour.area() * contour.center_of_mass()
+        return center/self.area()
+
     def point_belongs(self, point2d: volmdlr.Point2D):
         if not self.outer_contour.point_belongs(point2d):
             return False
@@ -131,11 +146,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         """
         This method makes inner contour disappear for now
         """
-        # try:
         splitted_outer_contours = self.outer_contour.cut_by_line(line)
-        # except IndexError:
-        #     ax = self.outer_contour.plot()
-        #     line.plot(ax=ax, color='r')
         return [Surface2D(oc, []) for oc in splitted_outer_contours]
 
     def split_at_centers(self):
@@ -592,7 +603,10 @@ class Surface3D(dc.DessiaObject):
             method_name = '{}_to_3d'.format(
                 primitive2d.__class__.__name__.lower())
             if hasattr(self, method_name):
-                primitives3d.extend(getattr(self, method_name)(primitive2d))
+                try:
+                    primitives3d.extend(getattr(self, method_name)(primitive2d))
+                except NotImplementedError:
+                    print('Error NotImplementedError')
             else:
                 raise NotImplementedError(
                     'Class {} does not implement {}'.format(
@@ -621,6 +635,21 @@ class Surface3D(dc.DessiaObject):
                     knots=bspline_curve3d.knots,
                     weights=bspline_curve3d.weights,
                     periodic=bspline_curve3d.periodic)]
+
+    def bsplinecurve2d_to_3d(self, bspline_curve2d):
+        """
+        Is this right?
+        """
+        control_points = [self.point2d_to_3d(p) \
+                          for p in bspline_curve2d.control_points]
+        return [vme.BSplineCurve3D(
+                    bspline_curve2d.degree,
+                    control_points=control_points,
+                    knot_multiplicities=bspline_curve2d.knot_multiplicities,
+                    knots=bspline_curve2d.knots,
+                    weights=bspline_curve2d.weights,
+                    periodic=bspline_curve2d.periodic)]
+
 
 class Plane3D(Surface3D):
     face_class = 'PlaneFace3D'
@@ -734,12 +763,12 @@ class Plane3D(Surface3D):
         return False
 
     def line_intersections(self, line):
-        u = line.points[1] - line.points[0]
-        w = line.points[0] - self.frame.origin
+        u = line.point2 - line.point1
+        w = line.point1 - self.frame.origin
         if math.isclose(self.frame.w.dot(u), 0, abs_tol=1e-08):
             return []
         intersection_abscissea = - self.frame.w.dot(w) / self.frame.w.dot(u)
-        return [line.points[0] + intersection_abscissea * u]
+        return [line.point1 + intersection_abscissea * u]
 
     def linesegment_intersections(self, linesegment: vme.LineSegment3D) \
             -> List[volmdlr.Point3D]:
@@ -972,12 +1001,12 @@ class CylindricalSurface3D(Surface3D):
     def linesegment2d_to_3d(self, linesegment2d):
         theta1, z1 = linesegment2d.start
         theta2, z2 = linesegment2d.end
-        if theta1 == theta2:
+        if math.isclose(theta1, theta2, abs_tol=1e-9):
             return [vme.LineSegment3D(
                 self.point2d_to_3d(linesegment2d.start),
                 self.point2d_to_3d(linesegment2d.end),
             )]
-        elif z1 == z2:
+        elif math.isclose(z1, z2, abs_tol=1e-9):
             if abs(theta1 - theta2) == volmdlr.TWO_PI:
                 return [vme.FullArc3D(center=self.frame.origin + z1 * self.frame.w,
                                       start_end=self.point2d_to_3d(linesegment2d.start),
@@ -991,7 +1020,7 @@ class CylindricalSurface3D(Surface3D):
                     self.point2d_to_3d(linesegment2d.end),
                 )]
         else:
-            raise NotImplementedError('Ellipse?')
+            raise NotImplementedError('Ellipse? delta_theta={} delta_z={}'.format(abs(theta2-theta1), abs(z1-z2)))
 
     def fullarc3d_to_2d(self, fullarc3d):
         if self.frame.w.is_colinear_to(fullarc3d.normal):
@@ -1962,19 +1991,20 @@ class Face3D(volmdlr.core.Primitive3D):
             face_ids = []
             for subsurface2d in subsurfaces2d:
                 face = self.__class__(self.surface3d, subsurface2d)
-                try:
-                    face_content, face_id = face.to_step_without_splitting(
-                        current_id)
-                    face_ids.append(face_id[0])
-                    content += face_content
-                    current_id = face_id[0] + 1
-                except NotImplementedError:
-                    print('Warning: a face of class {} has not been exported due to NotImplementedError'.format(
-                        face.__class__.__name__))
-                except AttributeError:
-                    print(
-                        'Warning: a face of class {} has not been exported due to AttributeError'.format(
-                         face.__class__.__name__))
+                # try:
+
+                face_content, face_id = face.to_step_without_splitting(
+                    current_id)
+                face_ids.append(face_id[0])
+                content += face_content
+                current_id = face_id[0] + 1
+                # except NotImplementedError:
+                #     print('Warning: a face of class {} has not been exported due to NotImplementedError'.format(
+                #         face.__class__.__name__))
+                # except AttributeError:
+                #     print(
+                #         'Warning: a face of class {} has not been exported due to AttributeError'.format(
+                #          face.__class__.__name__))
             return content, face_ids
         else:
             return self.to_step_without_splitting(current_id)
@@ -2076,6 +2106,16 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def copy(self):
         return Face3D(self.surface3d.copy(), self.surface2d.copy(), self.name)
+
+    def line_intersections(self,
+                                  line: vme.Line3D,
+                                  ) -> List[volmdlr.Point3D]:
+        intersections = []
+        for intersection in self.surface3d.line_intersections(line):
+            if self.point_belongs(intersection):
+                intersections.append(intersection)
+
+        return intersections
 
     def linesegment_intersections(self,
                                   linesegment: vme.LineSegment3D,
@@ -2362,6 +2402,10 @@ class CylindricalFace3D(Face3D):
         Face3D.__init__(self, surface3d=cylindricalsurface3d,
                         surface2d=surface2d,
                         name=name)
+
+    def copy(self):
+        return CylindricalFace3D(self.surface3d.copy(), self.surface2d.copy(),
+                           self.name)
 
     def _bounding_box(self):
         theta_min, theta_max, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle()
@@ -2763,6 +2807,10 @@ class ToroidalFace3D(Face3D):
                         surface3d=toroidalsurface3d,
                         surface2d=surface2d,
                         name=name)
+
+    def copy(self):
+        return ToroidalFace3D(self.surface3d.copy(), self.surface2d.copy(),
+                              self.name)
 
     def points_resolution(self, line, pos,
                           resolution):  # With a resolution wished
@@ -3664,6 +3712,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 graph.add_edges_from([(inters[0], inters[1])])
                 intersections.append(inters)
         pts = list(nx.dfs_edges(graph, intersections[0][0]))
+        print(pts)
+        print(intersections)
         points = []
         u = plane_3d.frame.u
         v = plane_3d.frame.v
@@ -3685,6 +3735,16 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         intersections = []
         for face in self.faces:
             face_intersections = face.linesegment_intersections(linesegment3d)
+            if face_intersections:
+                intersections.append((face, face_intersections))
+        return intersections
+
+    def line_intersections(self,
+                                  line3d: vme.Line3D) \
+            -> List[Tuple[Face3D, List[volmdlr.Point3D]]]:
+        intersections = []
+        for face in self.faces:
+            face_intersections = face.line_intersections(line3d)
             if face_intersections:
                 intersections.append((face, face_intersections))
         return intersections

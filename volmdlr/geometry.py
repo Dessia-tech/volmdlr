@@ -74,15 +74,15 @@ def direction_to_euler_angles(u, v=random.random(3)):
     w = cross(u,v)
     R[:,1] = v
     R[:,2] = w
-    euler = TransferMatrix2Euler(R)
+    euler = transfer_matrix_to_euler_angles(R)
     return euler
 
 
-def huygens2d(I1, area, point1, point2):
+def huygens2d(Ix, Iy, Ixy, area, point1, point2):
     """
     area acts the same way as the mass in 3D
     """
     a, b = (point1-point2)
-    I2 = I1+area*array([[b**2,-a*b],[-a*b,a**2]])
-    return I2
-
+    # I2 = I1+area*array([[b**2,-a*b],[-a*b,a**2]])
+    # return I2
+    return Ix+area*b**2, Iy+area*a**2, Ixy-area*a*b

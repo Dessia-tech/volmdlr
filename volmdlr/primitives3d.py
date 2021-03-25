@@ -515,8 +515,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     def volume(self):
         z = self.x.cross(self.y)
         z.normalize()
-        coeff = npy.dot(self.extrusion_vector, z)
-        return self.Area()*coeff
+        return self.area()*self.extrusion_vector.dot(z)
 
 
     def frame_mapping(self, frame, side, copy=True):
@@ -1089,7 +1088,7 @@ class Sweep(volmdlr.faces.ClosedShell3D):
             if wire_primitive.__class__ is volmdlr.edges.LineSegment3D:
                 for contour_primitive in contour3d.primitives:
                     faces.extend(contour_primitive.extrusion(
-                        wire_primitive.direction_vector()))
+                        wire_primitive.length()*wire_primitive.direction_vector()))
             elif wire_primitive.__class__ is volmdlr.edges.Arc3D:
                 for contour_primitive in contour3d.primitives:
                     faces.extend(contour_primitive.revolution(
