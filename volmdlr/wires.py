@@ -521,15 +521,16 @@ class Contour2D(Contour, Wire2D):
     def second_moment_area(self, point):
 
         Ix, Iy, Ixy = self.edge_polygon.second_moment_area(point)
-        if self.edge_polygon.is_trigo():
-            trigo = 1
-        else:
-            trigo = -1
         for edge in self.primitives:
-            Ix_e, Iy_e, Ixy_e = trigo*edge.straight_line_second_moment_area(point)
-            Ix += Ix_e
-            Iy += Iy_e
-            Ixy += Ixy_e
+            Ix_e, Iy_e, Ixy_e = edge.straight_line_second_moment_area(point)
+            if self.edge_polygon.is_trigo():
+                Ix += Ix_e
+                Iy += Iy_e
+                Ixy += Ixy_e
+            else:
+                Ix -= Ix_e
+                Iy -= Iy_e
+                Ixy -= Ixy_e
             
         return Ix, Iy, Ixy
 
