@@ -17,6 +17,7 @@ import volmdlr.core_compiled
 import volmdlr.edges as vme
 import volmdlr.wires
 import volmdlr.display
+import volmdlr.geometry
 import networkx as nx
 
 
@@ -2434,19 +2435,38 @@ class CylindricalFace3D(Face3D):
         lower_center = self.surface3d.frame.origin + zmin * self.surface3d.frame.w
         upper_center = self.surface3d.frame.origin + zmax * self.surface3d.frame.w
 
-        points = [lower_center - self.surface3d.radius * xp,
-                  lower_center + self.surface3d.radius * xp,
-                  lower_center - self.surface3d.radius * yp,
-                  lower_center + self.surface3d.radius * yp,
-                  lower_center - self.surface3d.radius * zp,
-                  lower_center + self.surface3d.radius * zp,
-                  upper_center - self.surface3d.radius * xp,
-                  upper_center + self.surface3d.radius * xp,
-                  upper_center - self.surface3d.radius * yp,
-                  upper_center + self.surface3d.radius * yp,
-                  upper_center - self.surface3d.radius * zp,
-                  upper_center + self.surface3d.radius * zp,
+        xmin, xmax = volmdlr.geometry.cos_image(theta_min, theta_max)
+        ymin, ymax = volmdlr.geometry.sin_image(theta_min, theta_max)
+
+        # points = [lower_center - self.surface3d.radius * xp,
+        #           lower_center + self.surface3d.radius * xp,
+        #           lower_center - self.surface3d.radius * yp,
+        #           lower_center + self.surface3d.radius * yp,
+        #           lower_center - self.surface3d.radius * zp,
+        #           lower_center + self.surface3d.radius * zp,
+        #           upper_center - self.surface3d.radius * xp,
+        #           upper_center + self.surface3d.radius * xp,
+        #           upper_center - self.surface3d.radius * yp,
+        #           upper_center + self.surface3d.radius * yp,
+        #           upper_center - self.surface3d.radius * zp,
+        #           upper_center + self.surface3d.radius * zp,
+        #           ]
+        #
+        # print('XYZp', xp, yp, zp)
+        points = [lower_center + xmin * self.surface3d.radius * self.surface3d.frame.u,
+                  lower_center + xmax * self.surface3d.radius * self.surface3d.frame.u,
+                  lower_center + ymin * self.surface3d.radius * self.surface3d.frame.v,
+                  lower_center + ymax * self.surface3d.radius * self.surface3d.frame.v,
+                  upper_center + xmin * self.surface3d.radius * self.surface3d.frame.u,
+                  upper_center + xmax * self.surface3d.radius * self.surface3d.frame.u,
+                  upper_center + ymin * self.surface3d.radius * self.surface3d.frame.v,
+                  upper_center + ymax * self.surface3d.radius * self.surface3d.frame.v,
                   ]
+
+
+        ax = self.plot()
+        for p in points:
+            p.plot(ax=ax, color='r')
 
         return volmdlr.core.BoundingBox.from_points(points)
 

@@ -1205,9 +1205,20 @@ class VolumeModel(dc.DessiaObject):
         for primitive in self.primitives:
             if hasattr(primitive, 'bounding_box'):
                 bboxes.append(primitive.bounding_box)
+                print('x')
+                print(primitive.bounding_box.xmin)
+                print(primitive.bounding_box.xmax)
+                print('y')
+                print(primitive.bounding_box.ymin)
+                print(primitive.bounding_box.ymax)
+                print('z')
+                print(primitive.bounding_box.zmin)
+                print(primitive.bounding_box.zmax)
             else:
                 if primitive.__class__.__name__ == 'volmdlr.Point3D':
                     points.append(primitive)
+        print(bboxes)
+        print(points)
         if bboxes:
             xmin = min([box.xmin for box in bboxes])
             xmax = max([box.xmax for box in bboxes])

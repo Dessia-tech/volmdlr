@@ -4,6 +4,7 @@
 
 
 """
+from typing import Tuple
 from numpy import dot, cross, array, zeros, random
 import volmdlr as vm
 import math
@@ -49,7 +50,7 @@ def euler_angles_to_transfer_matrix(psi, theta, phi):
     
 
 def transfer_matrix_to_euler_angles(R):
-    if ((R[2,2]!=1)&(R[2,2]!=-1)):
+    if ((R[2,2]!=1) and (R[2,2]!=-1)):
         theta=math.acos(R[2,2])
         psi=math.atan2(R[2,0]/math.sin(theta),R[2,1]/math.sin(theta))
         phi=math.atan2(R[0,2]/math.sin(theta),-R[1,2]/math.sin(theta))
@@ -86,3 +87,24 @@ def huygens2d(Ix, Iy, Ixy, area, point1, point2):
     # I2 = I1+area*array([[b**2,-a*b],[-a*b,a**2]])
     # return I2
     return Ix+area*b**2, Iy+area*a**2, Ixy-area*a*b
+
+def cos_image(x1:float, x2:float)->Tuple[float, float]:
+    interval_min = x1 // 0.5*math.pi
+    interval_max = x2 // 0.5 * math.pi
+    nb_interval = interval_max - interval_min
+    if nb_interval>= 2:
+        return -1, 1
+    elif nb_interval == 1:
+        if interval_min // 2 == 0.:
+            # Decreasing
+            return -1, math.cos(max(x1, x2))
+        else:
+            return math.cos(min(x1, x2)), 1
+    else:
+        return sorted((math.cos(x1), math.cos(x2)))
+
+def sin_image(x1:float, x2:float)->Tuple[float, float]:
+    x1 = -0.5 * math.pi + x1
+    x2 = -0.5 * math.pi + x2
+    return cos_image(x1, x2)
+
