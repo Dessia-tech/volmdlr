@@ -89,22 +89,22 @@ def huygens2d(Ix, Iy, Ixy, area, point1, point2):
     return Ix+area*b**2, Iy+area*a**2, Ixy-area*a*b
 
 def cos_image(x1:float, x2:float)->Tuple[float, float]:
-    interval_min = x1 // 0.5*math.pi
-    interval_max = x2 // 0.5 * math.pi
+    interval_min = x1 // math.pi
+    interval_max = x2 // math.pi
     nb_interval = interval_max - interval_min
     if nb_interval>= 2:
         return -1, 1
-    elif nb_interval == 1:
-        if interval_min // 2 == 0.:
+    elif nb_interval == 1.:
+        if abs(interval_min) % 2 == 0.:
             # Decreasing
-            return -1, math.cos(max(x1, x2))
+            return -1, max(math.cos(x1), math.cos(x2))
         else:
-            return math.cos(min(x1, x2)), 1
+            return min(math.cos(x1), math.cos(x2)), 1
     else:
         return sorted((math.cos(x1), math.cos(x2)))
 
 def sin_image(x1:float, x2:float)->Tuple[float, float]:
-    x1 = -0.5 * math.pi + x1
-    x2 = -0.5 * math.pi + x2
+    x1 = x1 - 0.5 * math.pi
+    x2 = x2 - 0.5 * math.pi
     return cos_image(x1, x2)
 

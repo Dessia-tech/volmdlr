@@ -10,18 +10,19 @@ for (x1, x2, cos_min, cos_max) in [(0., 0.1, math.cos(0.1), 1),
 
 
 # Visual test
-x = [i/200.*3*math.pi-2*math.pi for i in range(200)]
+x = [i/200.*4*math.pi-2*math.pi for i in range(200)]
 cosx = [math.cos(xi) for xi in x]
 sinx = [math.sin(xi) for xi in x]
 
 import matplotlib.pyplot as plt
 
-fig, (ax1, ax2) = plt.subplots(2)
-ax1.plot(x, cosx)
-ax2.plot(x, sinx)
 
 
-for i in range(1):
+for i in range(3):
+    fig, (ax1, ax2) = plt.subplots(2)
+    ax1.plot(x, cosx)
+    ax2.plot(x, sinx)
+
     x1 = random.uniform(-2*math.pi, 2*math.pi)
     x2 = random.uniform(-2 * math.pi, 2 * math.pi)
     x1, x2 = sorted([x1,x2])
@@ -30,4 +31,4 @@ for i in range(1):
 
     ax1.plot([x1, x2, x2, x1, x1], [cos_min, cos_min, cos_max, cos_max, cos_min], color='r')
     ax2.plot([x1, x2, x2, x1, x1], [sin_min, sin_min, sin_max, sin_max, sin_min], color='r')
-    print(x1, x2)
+    # print(x1, x2)
