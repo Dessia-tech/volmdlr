@@ -946,7 +946,7 @@ class Arc2D(Edge):
                            [2 * (xs - xe), 2 * (ys - ye)]])
             b = - npy.array([xi ** 2 + yi ** 2 - xs ** 2 - ys ** 2,
                              xe ** 2 + ye ** 2 - xs ** 2 - ys ** 2])
-            self.center = volmdlr.Point2D(npy.linalg.solve(A, b))
+            self.center = volmdlr.Point2D(*npy.linalg.solve(A, b))
 
         r1 = self.start - self.center
         r2 = self.end - self.center
