@@ -1172,7 +1172,7 @@ class Arc2D(Edge):
                 Iy = Iy2 - Iy1
                 Ixy = Ixy2 - Ixy1
         else:
-            print('Ixy12', Ixy1, Ixy2)
+            # print('Ixy12', Ixy1, Ixy2)
             if self.is_trigo:
                 Ix = Ix1 + Ix2
                 Iy = Iy1 + Iy2
