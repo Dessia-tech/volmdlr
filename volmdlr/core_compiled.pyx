@@ -550,7 +550,7 @@ class Point2D(Vector2D):
                        plane_origin.z + vx.z*self.x + vy.z*self.y)
 
     def to_vector(self):
-        return Vector2D(self.x, self.y, self.z)
+        return Vector2D(self.x, self.y)
 
     def plot(self, ax=None, color='k', alpha=1, plot_points=True):
         if ax is None:
