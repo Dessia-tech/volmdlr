@@ -1436,14 +1436,18 @@ class VolumeModel(dc.DessiaObject):
         self.babylonjs_from_babylon_data(babylon_data, page_name=page_name,
                                          use_cdn=use_cdn, debug=debug)
 
-    def to_step(self, filename:str=None):
+    def to_step(self, filepath):
         
-        if filename and not (filename.endswith('.step') or filename.endswith('.stp')):
-            print('Adding .step extension to filename')
-            filename += '.step'
+        
+        if isinstance(filepath, str):
+            if not (filepath.endswith('.step') or filepath.endswith('.stp')):
+                filepath += '.step'
+            file = open(filepath, 'w')
+        else:
+            file = filepath
         
         step_content = STEP_HEADER.format(name=self.name,
-                                          filename=filename,
+                                          filename='',
                                           timestamp=datetime.now().isoformat(),
                                           version=volmdlr.__version__)
         current_id = 8
@@ -1533,13 +1537,9 @@ class VolumeModel(dc.DessiaObject):
 
         step_content += STEP_FOOTER
         
-        if filename:
-            with open(filename, 'w') as f:
-                f.write(step_content)
-                print('file written to {}'.format(os.path.abspath(filename)))
-        else:
-            return step_content
-
+        file.write(step_content)
+        if isinstance(filepath, str):
+            file.close()
 
 class MovingVolumeModel(VolumeModel):
     def __init__(self, primitives, step_frames, name=''):
