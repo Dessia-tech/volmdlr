@@ -851,10 +851,10 @@ class Contour2D(Contour, Wire2D):
         # # line.plot(ax=ax, color='b')
         # for point, prim in intersections:
         #     point.plot(ax=ax, color='r')
-        ax = self.plot()
-        for p in intersections:
-            p[0].plot(ax=ax, color='r')
-        ax.set_aspect('auto')
+        # ax = self.plot()
+        # for p in intersections:
+        #     p[0].plot(ax=ax, color='r')
+        # ax.set_aspect('auto')
         raise NotImplementedError(
             '{} intersections not supported yet'.format(len(intersections)))
 
