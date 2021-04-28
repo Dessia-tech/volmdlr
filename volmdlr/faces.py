@@ -17,6 +17,7 @@ import volmdlr.core_compiled
 import volmdlr.edges as vme
 import volmdlr.wires
 import volmdlr.display
+import volmdlr.geometry
 import networkx as nx
 
 
@@ -2410,44 +2411,66 @@ class CylindricalFace3D(Face3D):
     def _bounding_box(self):
         theta_min, theta_max, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle()
 
-        xp = (volmdlr.X3D.dot(self.surface3d.frame.u) * self.surface3d.frame.u
-              + volmdlr.X3D.dot(
-                    self.surface3d.frame.v) * self.surface3d.frame.v)
-        xp_norm = xp.norm()
-        if xp_norm != 0:
-            xp = xp / xp_norm
+        # xp = (volmdlr.X3D.dot(self.surface3d.frame.u) * self.surface3d.frame.u
+        #       + volmdlr.X3D.dot(
+        #             self.surface3d.frame.v) * self.surface3d.frame.v)
+        # xp_norm = xp.norm()
+        # if xp_norm != 0:
+        #     xp = xp / xp_norm
 
-        yp = (volmdlr.Y3D.dot(self.surface3d.frame.u) * self.surface3d.frame.u
-              + volmdlr.Y3D.dot(
-                    self.surface3d.frame.v) * self.surface3d.frame.v)
-        yp_norm = yp.norm()
-        if yp_norm != 0:
-            yp = yp / yp_norm
+        # yp = (volmdlr.Y3D.dot(self.surface3d.frame.u) * self.surface3d.frame.u
+        #       + volmdlr.Y3D.dot(
+        #             self.surface3d.frame.v) * self.surface3d.frame.v)
+        # yp_norm = yp.norm()
+        # if yp_norm != 0:
+        #     yp = yp / yp_norm
 
-        zp = (volmdlr.Z3D.dot(self.surface3d.frame.u) * self.surface3d.frame.u
-              + volmdlr.Z3D.dot(
-                    self.surface3d.frame.v) * self.surface3d.frame.v)
-        zp_norm = zp.norm()
-        if zp_norm != 0:
-            zp = zp / zp_norm
+        # zp = (volmdlr.Z3D.dot(self.surface3d.frame.u) * self.surface3d.frame.u
+        #       + volmdlr.Z3D.dot(
+        #             self.surface3d.frame.v) * self.surface3d.frame.v)
+        # zp_norm = zp.norm()
+        # if zp_norm != 0:
+        #     zp = zp / zp_norm
 
         lower_center = self.surface3d.frame.origin + zmin * self.surface3d.frame.w
         upper_center = self.surface3d.frame.origin + zmax * self.surface3d.frame.w
 
-        points = [lower_center - self.surface3d.radius * xp,
-                  lower_center + self.surface3d.radius * xp,
-                  lower_center - self.surface3d.radius * yp,
-                  lower_center + self.surface3d.radius * yp,
-                  lower_center - self.surface3d.radius * zp,
-                  lower_center + self.surface3d.radius * zp,
-                  upper_center - self.surface3d.radius * xp,
-                  upper_center + self.surface3d.radius * xp,
-                  upper_center - self.surface3d.radius * yp,
-                  upper_center + self.surface3d.radius * yp,
-                  upper_center - self.surface3d.radius * zp,
-                  upper_center + self.surface3d.radius * zp,
-                  ]
+        xmin, xmax = volmdlr.geometry.cos_image(theta_min, theta_max)
+        ymin, ymax = volmdlr.geometry.sin_image(theta_min, theta_max)
+        
+        points = [(lower_center
+                   + xmin * self.surface3d.radius * self.surface3d.frame.u
+                   + ymin * self.surface3d.radius * self.surface3d.frame.v),
+                  (lower_center
+                   + xmax * self.surface3d.radius * self.surface3d.frame.u
+                   + ymin * self.surface3d.radius * self.surface3d.frame.v),
+                  (lower_center
+                   + xmin * self.surface3d.radius * self.surface3d.frame.u
+                   + ymax * self.surface3d.radius * self.surface3d.frame.v),
+                  (lower_center
+                   + xmax * self.surface3d.radius * self.surface3d.frame.u
+                   + ymax * self.surface3d.radius * self.surface3d.frame.v),
+                  (upper_center
+                   + xmin * self.surface3d.radius * self.surface3d.frame.u
+                   + ymin * self.surface3d.radius * self.surface3d.frame.v),
+                  (upper_center
+                   + xmax * self.surface3d.radius * self.surface3d.frame.u
+                   + ymin * self.surface3d.radius * self.surface3d.frame.v),
+                  (upper_center
+                   + xmin * self.surface3d.radius * self.surface3d.frame.u
+                   + ymax * self.surface3d.radius * self.surface3d.frame.v),
+                  (upper_center
+                   + xmax * self.surface3d.radius * self.surface3d.frame.u
+                   + ymax * self.surface3d.radius * self.surface3d.frame.v)]
 
+
+        # ax = self.plot()
+        # lower_center.plot(ax=ax, color='g')
+        # upper_center.plot(ax=ax, color='b')
+        # for p in points:
+        #     p.plot(ax=ax, color='r')
+        # volmdlr.core.BoundingBox.from_points(points).plot(ax=ax)
+        
         return volmdlr.core.BoundingBox.from_points(points)
 
     def triangulation_lines(self, angle_resolution=5):
