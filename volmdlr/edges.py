@@ -1694,14 +1694,20 @@ class Line3D(Line):
         self.bounding_box = self._bounding_box()
 
     def _bounding_box(self):
-        points = [self.point1, self.point2]
-
-        xmin = min([pt[0] for pt in points])
-        xmax = max([pt[0] for pt in points])
-        ymin = min([pt[1] for pt in points])
-        ymax = max([pt[1] for pt in points])
-        zmin = min([pt[2] for pt in points])
-        zmax = max([pt[2] for pt in points])
+        # points = [self.point1, self.point2]
+        # xmin = min([pt[0] for pt in points])
+        # xmax = max([pt[0] for pt in points])
+        # ymin = min([pt[1] for pt in points])
+        # ymax = max([pt[1] for pt in points])
+        # zmin = min([pt[2] for pt in points])
+        # zmax = max([pt[2] for pt in points])
+        
+        xmin = min([self.point1[0], self.point2[0]])
+        xmax = max([self.point1[0], self.point2[0]])
+        ymin = min([self.point1[1], self.point2[1]])
+        ymax = max([self.point1[1], self.point2[1]])
+        zmin = min([self.point1[2], self.point2[2]])
+        zmax = max([self.point1[2], self.point2[2]])
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
