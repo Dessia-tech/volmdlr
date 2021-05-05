@@ -349,7 +349,6 @@ def angle_principal_measure(angle, min_angle=-math.pi):
 def step_ids_to_str(ids):
     return ','.join(['#{}'.format(i) for i in ids])
 
-
 class Primitive2D(dc.DessiaObject):
     def __init__(self, name=''):
         self.name = name
@@ -570,6 +569,9 @@ class BoundingBox(dc.DessiaObject):
                            min(self.zmin, other_bbox.zmin),
                            max(self.zmax, other_bbox.zmax))
 
+    def __iter__(self):
+        return [self.xmin, self.xmax, self.ymin, self.ymax, self.zmin, self.zmax]
+
     def plot(self, ax=None, color=''):
         fig = plt.figure()
         if ax is None:
@@ -614,6 +616,12 @@ class BoundingBox(dc.DessiaObject):
         zmin = min([pt.z for pt in points])
         zmax = max([pt.z for pt in points])
         return cls(xmin, xmax, ymin, ymax, zmin, zmax)
+
+    def to_frame(self):
+        x = volmdlr.Vector3D((self.xmax - self.xmin), 0, 0)
+        y = volmdlr.Vector3D(0, (self.ymax - self.ymin), 0)
+        z = volmdlr.Vector3D(0, 0, (self.zmax - self.zmin))
+        return volmdlr.Frame3D(self.center, x, y, z)
 
     def volume(self):
         return (self.xmax - self.xmin) * (self.ymax - self.ymin) * (
@@ -1150,7 +1158,7 @@ class VolumeModel(dc.DessiaObject):
     def volume(self):
         volume = 0
         for primitive in self.primitives:
-            volume += primitive.Volume()
+            volume += primitive.volume()
         return volume
 
     def rotation(self, center, axis, angle, copy=True):
@@ -1428,14 +1436,18 @@ class VolumeModel(dc.DessiaObject):
         self.babylonjs_from_babylon_data(babylon_data, page_name=page_name,
                                          use_cdn=use_cdn, debug=debug)
 
-    def to_step(self, filename:str=None):
+    def to_step(self, filepath):
         
-        if filename and not (filename.endswith('.step') or filename.endswith('.stp')):
-            print('Adding .step extension to filename')
-            filename += '.step'
+        
+        if isinstance(filepath, str):
+            if not (filepath.endswith('.step') or filepath.endswith('.stp')):
+                filepath += '.step'
+            file = open(filepath, 'w')
+        else:
+            file = filepath
         
         step_content = STEP_HEADER.format(name=self.name,
-                                          filename=filename,
+                                          filename='',
                                           timestamp=datetime.now().isoformat(),
                                           version=volmdlr.__version__)
         current_id = 8
@@ -1478,11 +1490,14 @@ class VolumeModel(dc.DessiaObject):
             step_content += "#{} = DRAUGHTING_PRE_DEFINED_CURVE_FONT('continuous');\n".format(
                 draughting_id)
             color_id = draughting_id + 1
+            primitive_color = (1, 1, 1)
+            if hasattr(primitive, 'color'):
+                primitive_color = primitive.color
             step_content += "#{} = COLOUR_RGB('',{}, {}, {});\n".format(
                 color_id,
-                round(float(primitive.color[0]), 4),
-                round(float(primitive.color[1]), 4),
-                round(float(primitive.color[2]), 4)
+                round(float(primitive_color[0]), 4),
+                round(float(primitive_color[1]), 4),
+                round(float(primitive_color[2]), 4)
             )
 
             curve_style_id = color_id + 1
@@ -1522,13 +1537,9 @@ class VolumeModel(dc.DessiaObject):
 
         step_content += STEP_FOOTER
         
-        if filename:
-            with open(filename, 'w') as f:
-                f.write(step_content)
-                print('file written to {}'.format(os.path.abspath(filename)))
-        else:
-            return step_content
-
+        file.write(step_content)
+        if isinstance(filepath, str):
+            file.close()
 
 class MovingVolumeModel(VolumeModel):
     def __init__(self, primitives, step_frames, name=''):

@@ -55,7 +55,7 @@ rl2D_o2.plot(ax=ax)
 
 
 rl2D_c = primitives2d.ClosedRoundedLineSegments2D([p0, p1, p2, p3, p4, p5, p6, p7, p8], {},
-#                                        {0:1, 1:0.05, 2:0.05, 3:1},
+                                       # {0:1, 1:0.05, 2:0.05, 3:1},
                                         adapt_radius=True)
 rl2D_c2 = rl2D_c.offset_lines([2], 0.2)
 ax2 = rl2D_c.plot()
@@ -63,14 +63,21 @@ rl2D_c2.plot(ax=ax2)
 
 
 com = rl2D_c2.center_of_mass()
-cut_line = vm.edges.Line2D(com, com+ vm.Point2D.random(0, 1, 0, 1))
+cut_line = vm.edges.Line2D(com, com+ vm.Point2D.random(-1, 1, 0, 1))
 ax3 = rl2D_c2.plot()
 cut_line.plot(ax=ax3, color='red')
+com.plot(color='b', ax=ax3)
 
-cutted_contours = rl2D_c2.cut_by_line(cut_line)
+cutted_contour1, cutted_contour2  = rl2D_c2.cut_by_line(cut_line)
+
 # for c in cutted_contours:
-cutted_contours[0].translation(-0.05*cut_line.normal_vector()).plot(ax=ax3, color='g')
-cutted_contours[1].translation(+0.05*cut_line.normal_vector()).plot(ax=ax3, color='blue')
+com1 = cutted_contour1.center_of_mass()
+com2 = cutted_contour2.center_of_mass()
+
+u1 = cut_line.point_projection(com1)[0] - com1
+u1.normalize()
+cutted_contour1.translation(-0.05*u1).plot(ax=ax3, color='g')
+cutted_contour2.translation(+0.05*u1).plot(ax=ax3, color='blue')
 
 # assert math.isclose(cutted_contours[0].area()+cutted_contours[1].area(),
 #                     rl2D_c2.area(), abs_tol=1e-12)
