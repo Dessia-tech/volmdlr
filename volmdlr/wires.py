@@ -479,9 +479,10 @@ class Contour2D(Contour, Wire2D):
         return min_distance
 
     def bounding_points(self):
-        points = self.straight_line_contour_polygon.points[:]
-        for arc in self.internal_arcs + self.external_arcs:
-            points.extend(arc.polygon_points())
+        points = self.edge_polygon.points[:]
+        for primitive in self.primitives:
+            if hasattr(primitive, 'polygon_points'):
+                points.extend(primitive.polygon_points())
         xmin = min([p[0] for p in points])
         xmax = max([p[0] for p in points])
         ymin = min([p[1] for p in points])
