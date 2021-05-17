@@ -116,23 +116,24 @@ class Edge(dc.DessiaObject):
                 p1_new, p2_new = frame.new_coordinates(
                     p1), frame.new_coordinates(p2)
                 # Angle pour le p1
-                u1, u2 = p1_new.vector[0] / majorax, p1_new.vector[1] / minorax
-                theta1 = volmdlr.sin_cos_angle(u1, u2)
+                u1, u2 = p1_new.x / majorax, p1_new.y / minorax
+                theta1 = volmdlr.core.sin_cos_angle(u1, u2)
                 # Angle pour le p2
-                u3, u4 = p2_new.vector[0] / majorax, p2_new.vector[1] / minorax
-                theta2 = volmdlr.sin_cos_angle(u3, u4)
+                u3, u4 = p2_new.x / majorax, p2_new.y / minorax
+                theta2 = volmdlr.core.sin_cos_angle(u3, u4)
 
                 if theta1 > theta2:  # sens trigo
                     angle = math.pi + (theta1 + theta2) / 2
                 else:
                     angle = (theta1 + theta2) / 2
 
-            p_3 = volmdlr.Point3D(
-                (majorax * math.cos(angle), minorax * math.sin(angle), 0))
+            p_3 = volmdlr.Point3D(majorax * math.cos(angle), minorax * math.sin(angle), 0)
             p3 = frame.old_coordinates(p_3)
 
-            arcellipse = ArcEllipse3D(p1, p3, p2, center, majordir, normal,
-                                      arguments[0][1:-1], extra)
+            # arcellipse = ArcEllipse3D(p1, p3, p2, center, majordir, normal,
+            #                           arguments[0][1:-1]), extra)
+            arcellipse = ArcEllipse3D(p1, p3, p2, center, normal,
+                                      arguments[0][1:-1])
 
             return arcellipse
 
