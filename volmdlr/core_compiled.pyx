@@ -726,11 +726,14 @@ class Vector3D(Vector):
         return 0
 
     def __eq__(self, other_vector:'Vector3D'):
+        return self.isclose(other_vector, tol=1e-06)       
+    
+    def isclose(self, other_vector:'Vector3D', tol=1e-06):
         if other_vector.__class__.__name__ not in ['Vector3D', 'Point3D']:
             return False
-        return math.isclose(self.x, other_vector.x, abs_tol=1e-06) \
-        and math.isclose(self.y, other_vector.y, abs_tol=1e-06) \
-        and math.isclose(self.z, other_vector.z, abs_tol=1e-06)
+        return math.isclose(self.x, other_vector.x, abs_tol=tol) \
+        and math.isclose(self.y, other_vector.y, abs_tol=tol) \
+        and math.isclose(self.z, other_vector.z, abs_tol=tol)
 
     def dot(self, other_vector):
         return CVector3DDot(self.x, self.y, self.z,

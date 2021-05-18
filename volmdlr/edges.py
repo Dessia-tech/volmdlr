@@ -132,7 +132,7 @@ class Edge(dc.DessiaObject):
 
             # arcellipse = ArcEllipse3D(p1, p3, p2, center, majordir, normal,
             #                           arguments[0][1:-1]), extra)
-            arcellipse = ArcEllipse3D(p1, p3, p2, center, normal,
+            arcellipse = ArcEllipse3D(p1, p3, p2, center, majordir,
                                       arguments[0][1:-1])
 
             return arcellipse
@@ -2459,11 +2459,13 @@ class BSplineCurve3D(Edge):
             knot_vector.extend([knot] * knot_multiplicities[i])
         curve.knotvector = knot_vector
         curve.delta = 0.1
-        curve_points = curve.evalpts
+        # curve_points = curve.evalpts
 
         self.curve = curve
-        self.points = [volmdlr.Point3D(p[0], p[1], p[2]) for p in curve_points]
-        Edge.__init__(self, start=self.points[0], end=self.points[-1])
+        # self.points = [volmdlr.Point3D(p[0], p[1], p[2]) for p in curve_points]
+        start = volmdlr.Point3D(*self.curve.evaluate_single(0))
+        end = volmdlr.Point3D(*self.curve.evaluate_single(1))
+        Edge.__init__(self, start=start, end=end)
 
     def reverse(self):
         return self.__class__(degree=self.degree,
@@ -2486,6 +2488,10 @@ class BSplineCurve3D(Edge):
 
     def point_at_abscissa(self, curvilinear_abscissa):
         unit_abscissa = curvilinear_abscissa / self.length()
+        if unit_abscissa > 1 :
+            unit_abscissa = 1
+        elif unit_abscissa < 0 :
+            unit_abscissa = 0
         return volmdlr.Point3D(*self.curve.evaluate_single(unit_abscissa))
         # # copy paste from wire3D
         # length = 0.
@@ -2631,10 +2637,11 @@ class BSplineCurve3D(Edge):
             ax = fig.add_subplot(111, projection='3d')
         else:
             fig = ax.figure
-
-        x = [p.x for p in self.points]
-        y = [p.y for p in self.points]
-        z = [p.z for p in self.points]
+        
+        points = self.polygon_points()
+        x = [p.x for p in points]
+        y = [p.y for p in points]
+        z = [p.z for p in points]
         ax.plot(x, y, z, color=color, alpha=alpha)
         if edge_ends:
             ax.plot(x, y, z, 'o', color=color, alpha=alpha)
@@ -2648,8 +2655,12 @@ class BSplineCurve3D(Edge):
                               self.weights, self.periodic, self.name)
 
     def polygon_points(self):
-        return self.points
-
+        number_points = 20
+        l = self.length()
+        polygon_points_3D = [self.point_at_abscissa(
+            l * i / (number_points)) for i in
+            range(number_points + 1)]
+        return polygon_points_3D
 
 class BezierCurve3D(BSplineCurve3D):
 
@@ -3416,17 +3427,14 @@ class ArcEllipse3D(Edge):
         self.theta = theta
 
         # Angle pour start
-        u1, u2 = start_new.vector[0] / self.Gradius, start_new.vector[
-            1] / self.Sradius
-        angle1 = volmdlr.sin_cos_angle(u1, u2)
+        u1, u2 = start_new.x / self.Gradius, start_new.y / self.Sradius
+        angle1 = volmdlr.core.sin_cos_angle(u1, u2)
         # Angle pour end
-        u3, u4 = end_new.vector[0] / self.Gradius, end_new.vector[
-            1] / self.Sradius
-        angle2 = volmdlr.sin_cos_angle(u3, u4)
+        u3, u4 = end_new.x / self.Gradius, end_new.y / self.Sradius
+        angle2 = volmdlr.core.sin_cos_angle(u3, u4)
         # Angle pour interior
-        u5, u6 = interior_new.vector[0] / self.Gradius, interior_new.vector[
-            1] / self.Sradius
-        anglei = volmdlr.sin_cos_angle(u5, u6)
+        u5, u6 = interior_new.x / self.Gradius, interior_new.y / self.Sradius
+        anglei = volmdlr.core.sin_cos_angle(u5, u6)
 
         # Going trigo/clock wise from start to interior
         if anglei < angle1:
@@ -3459,10 +3467,12 @@ class ArcEllipse3D(Edge):
             self.offset_angle = angle1
         else:
             self.offset_angle = angle2
+            
+        Edge.__init__(self, start=start, end=end, name=name)
 
-        volmdlr.core.Primitive3D.__init__(self,
-                                          basis_primitives=self.polygon_points(),
-                                          name=name)
+        # volmdlr.core.Primitive3D.__init__(self,
+        #                                   basis_primitives=self.polygon_points(),
+        #                                   name=name)
 
     def _get_points(self):
         return self.polygon_points()
@@ -3473,19 +3483,18 @@ class ArcEllipse3D(Edge):
         number_points_tesselation = math.ceil(
             resolution_for_ellipse * abs(0.5 * self.angle / math.pi))
 
-        plane3d = volmdlr.faces.Plane3D(self.center, self.major_dir,
-                                        self.minor_dir,
-                                        self.normal)
-        frame3d = volmdlr.Frame3D(self.center, plane3d.vectors[0],
-                                  plane3d.vectors[1],
-                                  plane3d.normal)
+        frame3d = volmdlr.Frame3D(self.center, self.major_dir,
+                                  self.minor_dir,
+                                  self.normal)
+        
+        # plane3d = volmdlr.faces.Plane3D(frame3d)
 
-        polygon_points_3D = [volmdlr.Point3D((self.Gradius * math.cos(
+        polygon_points_3D = [volmdlr.Point3D(self.Gradius * math.cos(
             self.offset_angle + self.angle * i / (number_points_tesselation)),
                                               self.Sradius * math.sin(
                                                   self.offset_angle + self.angle * i / (
                                                       number_points_tesselation)),
-                                              0)) for i in
+                                              0) for i in
                              range(number_points_tesselation + 1)]
 
         global_points = []
@@ -3493,6 +3502,13 @@ class ArcEllipse3D(Edge):
             global_points.append(frame3d.old_coordinates(pt))
 
         return global_points
+    
+    def reverse(self):
+        return self.__class__(self.end.copy(),
+                              self.interior.copy(),
+                              self.start.copy(),
+                              self.center.copy(),
+                              self.major_dir.copy())
 
     def to_2d(self, plane_origin, x, y):
         ps = self.start.to_2d(plane_origin, x, y)

@@ -1679,9 +1679,11 @@ class Contour3D(Contour, Wire3D):
         name = arguments[0][1:-1]
         raw_edges = []
         edge_ends = {}
+        # ax=None
         for ie, edge_id in enumerate(arguments[1]):
             edge = object_dict[int(edge_id[1:])]
             raw_edges.append(edge)
+            # ax = edge.plot(ax=ax)
 
         if (len(raw_edges)) == 1:
             if isinstance(raw_edges[0], cls):
@@ -1691,29 +1693,59 @@ class Contour3D(Contour, Wire3D):
                 return cls(raw_edges, name=name)
 
         # Making things right for first 2 primitives
-        if raw_edges[0].end == raw_edges[1].start:
+        if raw_edges[0].end.isclose(raw_edges[1].start, tol=9e-5):
             edges = [raw_edges[0], raw_edges[1]]
-        elif raw_edges[0].start == raw_edges[1].start:
+        elif raw_edges[0].start.isclose(raw_edges[1].start, tol=9e-5):
             edges = [raw_edges[0].reverse(), raw_edges[1]]
-        elif raw_edges[0].end == raw_edges[1].end:
+        elif raw_edges[0].end.isclose(raw_edges[1].end, tol=9e-5):
             edges = [raw_edges[0], raw_edges[1].reverse()]
-        elif raw_edges[0].start == raw_edges[1].end:
+        elif raw_edges[0].start.isclose(raw_edges[1].end, tol=9e-5):
             edges = [raw_edges[0].reverse(), raw_edges[1].reverse()]
+        # if raw_edges[0].end == raw_edges[1].start:
+        #     edges = [raw_edges[0], raw_edges[1]]
+        # elif raw_edges[0].start == raw_edges[1].start:
+        #     edges = [raw_edges[0].reverse(), raw_edges[1]]
+        # elif raw_edges[0].end == raw_edges[1].end:
+        #     edges = [raw_edges[0], raw_edges[1].reverse()]
+        # elif raw_edges[0].start == raw_edges[1].end:
+        #     edges = [raw_edges[0].reverse(), raw_edges[1].reverse()]
         else:
+            print('raw_edges[0] START END', raw_edges[0].start, raw_edges[0].end)
+            print('raw_edges[1] START END', raw_edges[1].start, raw_edges[1].end)
             raise NotImplementedError(
-                'First 2 edges of contour not follwing each other')
+                'First 2 edges of contour not following each other')
 
         last_edge = edges[-1]
         for raw_edge in raw_edges[2:]:
-            if raw_edge.start == last_edge.end:
+            if raw_edge.start.isclose(last_edge.end, tol=9e-5):#tol=9e-5):
                 last_edge = raw_edge
-            elif raw_edge.end == last_edge.end:
+            elif raw_edge.end.isclose(last_edge.end, tol=9e-5):#tol=9e-5):
                 last_edge = raw_edge.reverse()
+            # if math.isclose(raw_edge.start.norm(), last_edge.end.norm(), abs_tol=9e-5):
+            #     last_edge = raw_edge
+            # elif math.isclose(raw_edge.end.norm(), last_edge.end.norm(), abs_tol=9e-5):
+            #     last_edge = raw_edge.reverse()
             else:
                 ax = last_edge.plot(color='b')
+                ax = last_edge.start.plot(ax=ax, color='b', marker='x')
+                ax = last_edge.end.plot(ax=ax, color='b', marker='x')
                 ax = raw_edge.plot(ax=ax, color='r')
+                ax = raw_edge.start.plot(ax=ax, color='r')
+                ax = raw_edge.end.plot(ax=ax, color='r')
+                print('last_edge', last_edge)
+                print('last_edge.start', last_edge.start)
+                print('last_edge.end', last_edge.end)
+                print('raw_edge', raw_edge)
+                print('raw_edge.start', raw_edge.start)
+                print('raw_edge.end', raw_edge.end)
+                # print('-------> START last_edge - raw_edge', last_edge.start - raw_edge.start)
+                # print('-------> END last_edge - raw_edge', last_edge.end - raw_edge.end)
+                # print('-------> START last_edge - raw_edge.reverse()', last_edge.start - raw_edge.reverse().start)
+                # print('-------> END last_edge - raw_edge.reverse()', last_edge.end - raw_edge.reverse().end)
+                print('-----------> case1 ', raw_edge.start.isclose(last_edge.end, tol=5e-4))
+                print('-----------> case2 ', raw_edge.end.isclose(last_edge.end, tol=5e-4))
                 raise NotImplementedError(
-                    'Edges of contour not follwing each other')
+                    'Edges of contour not following each other')
 
             edges.append(last_edge)
         return cls(edges, name=name)
