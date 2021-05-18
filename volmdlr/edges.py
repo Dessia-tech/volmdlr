@@ -12,13 +12,14 @@ from geomdl import utilities
 from geomdl import BSpline
 
 from geomdl.operations import length_curve, split_curve
+from geomdl import fitting
 
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import __version__ as _mpl_version
 import matplotlib.pyplot as plt
 import matplotlib.patches
 from typing import List
-
+import scipy.optimize
 import dessia_common as dc
 import volmdlr.core
 import volmdlr.geometry
@@ -139,7 +140,16 @@ class Edge(dc.DessiaObject):
 
         elif object_dict[arguments[3]].__class__.__name__ == 'BSplineCurve3D':
             # BSplineCurve3D à couper à gauche et à droite avec les points ci dessus ?
-            return object_dict[arguments[3]]
+            bspline = object_dict[arguments[3]]
+            point1 = object_dict[arguments[1]]
+            point2 = object_dict[arguments[2]]
+            u1, u2 = sorted((bspline.abscissa(point1), bspline.abscissa(point2)))
+            if u1 > 0:
+                _, bspline = bspline.split(point1)
+            if u2 < 1:
+                bspline, _ = bspline.split(point2)
+            
+            return bspline
 
         else:
             raise NotImplementedError(
@@ -2458,7 +2468,7 @@ class BSplineCurve3D(Edge):
         for i, knot in enumerate(knots):
             knot_vector.extend([knot] * knot_multiplicities[i])
         curve.knotvector = knot_vector
-        curve.delta = 0.1
+        # curve.delta = 0.1
         # curve_points = curve.evalpts
 
         self.curve = curve
@@ -2466,6 +2476,17 @@ class BSplineCurve3D(Edge):
         start = volmdlr.Point3D(*self.curve.evaluate_single(0))
         end = volmdlr.Point3D(*self.curve.evaluate_single(1))
         Edge.__init__(self, start=start, end=end)
+
+
+    @classmethod
+    def from_geomodl_curve(cls, curve):
+        
+        knots = sorted(list(set(curve.knotvector)))
+        knot_multiplicities = [curve.knotvector.count(k) for k in knots]
+        return cls(degree=curve.degree,
+                   control_points=curve.ctrlpts,
+                   knot_multiplicities=knot_multiplicities,
+                   knots=knots)
 
     def reverse(self):
         return self.__class__(degree=self.degree,
@@ -2486,12 +2507,22 @@ class BSplineCurve3D(Edge):
         # return length
         return length_curve(self.curve)
 
+    def abscissa(self, point3d):
+        length = self.length()
+        res = scipy.optimize.minimize_scalar(lambda x:(self.point_at_abscissa(x)-point3d).norm(),
+                                           bounds=(0, length),
+                                           method='bounded',
+                                           options={'xopt':5e-7*length})
+        if res.fun > 2e-6:
+            raise ValueError('Point not on Bsline curve3D')
+        return res.x
+
     def point_at_abscissa(self, curvilinear_abscissa):
         unit_abscissa = curvilinear_abscissa / self.length()
-        if unit_abscissa > 1 :
-            unit_abscissa = 1
-        elif unit_abscissa < 0 :
-            unit_abscissa = 0
+        if unit_abscissa > 1.:
+            return self.end
+        elif unit_abscissa < 0.:
+            return self.start
         return volmdlr.Point3D(*self.curve.evaluate_single(unit_abscissa))
         # # copy paste from wire3D
         # length = 0.
@@ -2508,6 +2539,19 @@ class BSplineCurve3D(Edge):
         # # Outside of length
         # raise ValueError
 
+    def split(self, point3d):
+        u = self.abscissa(point3d)
+        return self.split_at_abscissa(u)
+    
+    def split_at_abscissa(self, abscissa:float):
+        admin_abscissa = abscissa / self.length()
+        if abscissa < 0 or abscissa > 1:
+            raise ValueError('Absissa must between 0 and length of curve {}, got: {}'.format(self.length(), abscissa))
+            
+        curve1, curve2 = split_curve(self.curve, admin_abscissa)
+        return self.from_geomodl_curve(curve1), self.from_geomodl_curve(curve2)
+    
+    
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive{}'.format(ip)
         points = '['
@@ -2661,6 +2705,11 @@ class BSplineCurve3D(Edge):
             l * i / (number_points)) for i in
             range(number_points + 1)]
         return polygon_points_3D
+
+    @classmethod
+    def interpolate(cls, points, degree):
+        points2 = [(p.x, p.y, p.z) for p in points]
+        return cls.from_geomodl_curve(fitting.interpolate_curve(points2, degree))
 
 class BezierCurve3D(BSplineCurve3D):
 
