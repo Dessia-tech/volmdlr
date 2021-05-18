@@ -3972,8 +3972,16 @@ class ClosedShell3D(OpenShell3D):
         return ClosedShell3D(new_faces, color=self.color, alpha=self.alpha,
                              name=self.name)
 
-
-
+    @classmethod
+    def union(cls, shell1, shell2):
+        shell1_p = sheel_substract(shell1, shell2)
+        shell2_p = sheel_substract(shell2, shell1)
+        for f in shell1_p.faces:
+            f.alpha = 0.2
+        for f in shell2_p.faces:
+            f.alpha = 0.5
+            f.color = (1, 0, 0)
+        return cls(shell1_p.faces + shell2_p.faces)
 
 
     def shell_intersection(self, shell2: 'OpenShell3D', resolution: float):
@@ -4106,15 +4114,6 @@ class ClosedShell3D(OpenShell3D):
 
         return True
 
-def union(shell1, shell2):
-    shell1_p = sheel_substract(shell1, shell2)
-    shell2_p = sheel_substract(shell2, shell1)
-    for f in shell1_p.faces:
-        f.alpha = 0.2
-    for f in shell2_p.faces:
-        f.alpha = 0.5
-        f.color = (1, 0, 0)
-    return ClosedShell3D(shell1_p.faces + shell2_p.faces)
 
 def sheel_substract(shell1, shell2):
     faces = []
