@@ -144,9 +144,10 @@ class Edge(dc.DessiaObject):
             point1 = object_dict[arguments[1]]
             point2 = object_dict[arguments[2]]
             u1, u2 = sorted((bspline.abscissa(point1), bspline.abscissa(point2)))
-            if u1 > 0:
+            length = bspline.length()
+            if u1 > 2e-6:
                 _, bspline = bspline.split(point1)
-            if u2 < 1:
+            if u2 < length-2e-6:
                 bspline, _ = bspline.split(point2)
             
             return bspline
@@ -2511,10 +2512,17 @@ class BSplineCurve3D(Edge):
         length = self.length()
         res = scipy.optimize.minimize_scalar(lambda x:(self.point_at_abscissa(x)-point3d).norm(),
                                            bounds=(0, length),
-                                           method='bounded',
-                                           options={'xopt':5e-7*length})
+                                            method='bounded',
+                                           options={'xatol':5e-7*length,
+                                                    'disp':3})
         if res.fun > 2e-6:
-            raise ValueError('Point not on Bsline curve3D')
+            print(res.fun)
+            print(res.x)
+            best_point = self.point_at_abscissa(res.x)
+            ax = self.plot()
+            point3d.plot(ax=ax, color='b', marker='x')
+            best_point.plot(ax=ax, color='r')
+            raise ValueError('Point not on Bsline curve3D: distance {}m'.format(res.fun))
         return res.x
 
     def point_at_abscissa(self, curvilinear_abscissa):
@@ -2524,20 +2532,7 @@ class BSplineCurve3D(Edge):
         elif unit_abscissa < 0.:
             return self.start
         return volmdlr.Point3D(*self.curve.evaluate_single(unit_abscissa))
-        # # copy paste from wire3D
-        # length = 0.
-        # primitives = []
-        # for k in range(0, len(self.points) - 1):
-        #     primitives.append(
-        #         LineSegment3D(self.points[k], self.points[k + 1]))
-        # for primitive in primitives:
-        #     primitive_length = primitive.length()
-        #     if length + primitive_length >= curvilinear_abscissa:
-        #         return primitive.point_at_abscissa(
-        #             curvilinear_abscissa - length)
-        #     length += primitive_length
-        # # Outside of length
-        # raise ValueError
+
 
     def split(self, point3d):
         u = self.abscissa(point3d)
@@ -2547,8 +2542,10 @@ class BSplineCurve3D(Edge):
         admin_abscissa = abscissa / self.length()
         if abscissa < 0 or abscissa > 1:
             raise ValueError('Absissa must between 0 and length of curve {}, got: {}'.format(self.length(), abscissa))
-            
+        print('admin_abscissa', admin_abscissa)
+        # if admin_abscissa 
         curve1, curve2 = split_curve(self.curve, admin_abscissa)
+
         return self.from_geomodl_curve(curve1), self.from_geomodl_curve(curve2)
     
     
