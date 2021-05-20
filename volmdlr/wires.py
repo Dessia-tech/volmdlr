@@ -952,7 +952,8 @@ class Contour2D(Contour, Wire2D):
 
 
 class ClosedPolygon2D(Contour2D):
-    _non_serializable_attributes = ['line_segments']
+    _non_serializable_attributes = ['line_segments', 'primitives',
+                                    'basis_primitives']
 
     def __init__(self, points: List[volmdlr.Point2D], name=''):
         self.points = points
