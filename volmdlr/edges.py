@@ -139,15 +139,15 @@ class Edge(dc.DessiaObject):
             return arcellipse
 
         elif object_dict[arguments[3]].__class__.__name__ == 'BSplineCurve3D':
-            # BSplineCurve3D à couper à gauche et à droite avec les points ci dessus ?
+            # BSplineCurve3D reduced by ending points
             bspline = object_dict[arguments[3]]
             point1 = object_dict[arguments[1]]
             point2 = object_dict[arguments[2]]
             u1, u2 = sorted((bspline.abscissa(point1), bspline.abscissa(point2)))
             length = bspline.length()
-            if u1 > 2e-6:
+            if u1 > 5e-6:
                 _, bspline = bspline.split(point1)
-            if u2 < length-2e-6:
+            if u2 < length-5e-6:
                 bspline, _ = bspline.split(point2)
             
             return bspline
@@ -552,7 +552,6 @@ class BSplineCurve2D(Edge):
             bounds = (0., l)
         )
         if res.fun > 1e-4:
-            print(res.fun)
             ax = self.plot()
             point2d.plot(ax=ax)
             best_point = self.point_at_abscissa(res.x)
@@ -1058,7 +1057,6 @@ class Arc2D(Edge):
         circle = self.to_circle()
         circle_intersection_points = circle.line_intersections(line2d)
 
-        # print(circle_intersection_points)
         intersection_points = []
         for pt in circle_intersection_points:
             if self.point_belongs(pt):
@@ -2515,9 +2513,9 @@ class BSplineCurve3D(Edge):
                                             method='bounded',
                                            options={'xatol':5e-7*length,
                                                     'disp':3})
-        if res.fun > 2e-6:
-            print(res.fun)
-            print(res.x)
+        if res.fun > 1e-5:
+            # print(res.fun)
+            # print(res.x)
             best_point = self.point_at_abscissa(res.x)
             ax = self.plot()
             point3d.plot(ax=ax, color='b', marker='x')
@@ -2542,9 +2540,22 @@ class BSplineCurve3D(Edge):
         admin_abscissa = abscissa / self.length()
         if abscissa < 0 or abscissa > 1:
             raise ValueError('Absissa must between 0 and length of curve {}, got: {}'.format(self.length(), abscissa))
-        print('admin_abscissa', admin_abscissa)
+        # print('admin_abscissa', admin_abscissa)
         # if admin_abscissa 
-        curve1, curve2 = split_curve(self.curve, admin_abscissa)
+        try:
+            curve1, curve2 = split_curve(self.curve, admin_abscissa)
+        except ValueError:
+            # TODO: this is a quickfix
+            split_point = self.point_at_abscissa(abscissa)
+            if admin_abscissa < 0.5:
+                curve2 = self.copy()
+                curve2.control_points[0] = split_point
+                return LineSegment3D(self.start, split_point), curve2
+            else:
+                curve1 = self.copy()
+                curve1.control_points[-1] = split_point
+                return curve1, LineSegment3D(split_point, self.end)
+                
 
         return self.from_geomodl_curve(curve1), self.from_geomodl_curve(curve2)
     
