@@ -7,7 +7,6 @@
 import math
 import numpy as npy
 
-
 npy.seterr(divide='raise')
 from datetime import datetime
 
@@ -24,7 +23,7 @@ import os
 import tempfile
 import subprocess
 
-# TODO: put voldmlr metadata in this freecad header
+# TODO: put volmdlr metadata in this freecad header
 STEP_HEADER = '''ISO-10303-21;
 HEADER;
 FILE_DESCRIPTION(('{name}'),'2;1');
@@ -45,6 +44,7 @@ STEP_FOOTER = '''ENDSEC;
 END-ISO-10303-21;
 '''
 
+
 def find_and_replace(string, find, replace):
     """
     Finds a string in a string and replace it
@@ -61,7 +61,6 @@ def find_and_replace(string, find, replace):
             return string[:index] + find_and_replace(string[index + len(find)],
                                                      find, replace)
     return string
-
 
 
 def set_to_list(step_set):
@@ -312,12 +311,11 @@ def clockwise_interior_from_circle3d(start, end, circle):
     if theta3 > volmdlr.TWO_PI:
         theta3 -= volmdlr.TWO_PI
 
-    interior2d = volmdlr.Point2D(circle.radius*math.cos(theta3),
-                                 circle.radius*math.sin(theta3))
+    interior2d = volmdlr.Point2D(circle.radius * math.cos(theta3),
+                                 circle.radius * math.sin(theta3))
     interior3d = interior2d.to_3d(plane_origin=circle.frame.origin,
                                   vx=circle.frame.u, vy=circle.frame.v)
     return interior3d
-
 
 
 def offset_angle(trigo, angle_start, angle_end):
@@ -346,8 +344,10 @@ def angle_principal_measure(angle, min_angle=-math.pi):
 
     return angle
 
+
 def step_ids_to_str(ids):
     return ','.join(['#{}'.format(i) for i in ids])
+
 
 class Primitive2D(dc.DessiaObject):
     def __init__(self, name=''):
@@ -361,7 +361,7 @@ class CompositePrimitive2D(Primitive2D):
     A collection of simple primitives
     """
     _non_serializable_attributes = ['name', '_utd_primitives_to_index',
-                                    '_primitives_to_index']   
+                                    '_primitives_to_index']
     _non_hash_attributes = ['name', '_utd_primitives_to_index',
                             '_primitives_to_index']
 
@@ -372,15 +372,12 @@ class CompositePrimitive2D(Primitive2D):
 
         self._utd_primitives_to_index = False
 
-
     def primitive_to_index(self, primitive):
         if not self._utd_primitives_to_index:
             self._primitives_to_index = {p: ip for ip, p in enumerate(self.primitives)}
             self._utd_primitives_to_index = True
         return self._primitives_to_index[primitive]
-        
-    
-    
+
     def update_basis_primitives(self):
         basis_primitives = []
         for primitive in self.primitives:
@@ -390,7 +387,6 @@ class CompositePrimitive2D(Primitive2D):
                 basis_primitives.append(primitive)
 
         self.basis_primitives = basis_primitives
-        
 
     def rotation(self, center, angle, copy=True):
         if copy:
@@ -422,7 +418,6 @@ class CompositePrimitive2D(Primitive2D):
                 p.frame_mapping(frame, side, copy=False)
             self.update_basis_primitives()
 
-
     def plot(self, ax=None, color='k', alpha=1,
              plot_points=False, equal_aspect=True):
 
@@ -433,7 +428,7 @@ class CompositePrimitive2D(Primitive2D):
             ax.set_aspect('equal')
 
         for element in self.primitives:
-            element.plot(ax=ax, color=color) #, plot_points=plot_points)
+            element.plot(ax=ax, color=color)  # , plot_points=plot_points)
 
         ax.margins(0.1)
         plt.show()
@@ -452,7 +447,6 @@ class CompositePrimitive2D(Primitive2D):
                                                          stroke_width=stroke_width,
                                                          opacity=opacity))
         return plot_data
-
 
 
 class Primitive3D(dc.DessiaObject):
@@ -483,7 +477,6 @@ class Primitive3D(dc.DessiaObject):
         return [babylon_mesh]
 
 
-
 class CompositePrimitive3D(Primitive3D):
     _standalone_in_db = True
     _eq_is_data_eq = True
@@ -498,8 +491,6 @@ class CompositePrimitive3D(Primitive3D):
         self.primitives = primitives
 
         Primitive3D.__init__(self, name=name)
-
-
 
     def update_basis_primitives(self):
         # TODO: This is a copy/paste from CompositePrimitive2D, in the future make a Common abstract class
@@ -529,8 +520,6 @@ class CompositePrimitive3D(Primitive3D):
 
         for primitive in self.primitives:
             primitive.plot(ax=ax, color=color, alpha=alpha)
-
-
 
         return ax
 
@@ -625,7 +614,7 @@ class BoundingBox(dc.DessiaObject):
 
     def volume(self):
         return (self.xmax - self.xmin) * (self.ymax - self.ymin) * (
-                    self.zmax - self.zmin)
+                self.zmax - self.zmin)
 
     def bbox_intersection(self, bbox2):
         return (self.xmin < bbox2.xmax and self.xmax > bbox2.xmin \
@@ -1109,8 +1098,6 @@ class BoundingBox(dc.DessiaObject):
         return s
 
 
-
-
 class VolumeModel(dc.DessiaObject):
     _standalone_in_db = True
     _eq_is_data_eq = True
@@ -1118,7 +1105,7 @@ class VolumeModel(dc.DessiaObject):
     _non_eq_attributes = ['name', 'shells', 'bounding_box', 'contours',
                           'faces']
     _non_hash_attributes = ['name', 'shells', 'bounding_box', 'contours',
-                          'faces']
+                            'faces']
     """
     :param groups: A list of two element tuple. The first element is a string naming the group and the second element is a list of primitives of the group
     """
@@ -1254,10 +1241,10 @@ class VolumeModel(dc.DessiaObject):
         return ax
 
     def freecad_script(self, fcstd_filepath,
-                      freecad_lib_path='/usr/lib/freecad/lib',
-                      export_types=('fcstd',),
-                      save_to='',
-                      tolerance=0.0001):
+                       freecad_lib_path='/usr/lib/freecad/lib',
+                       export_types=('fcstd',),
+                       save_to='',
+                       tolerance=0.0001):
         """
         Generate python a FreeCAD definition of model
         :param fcstd_filename: a filename without extension to give the name at the fcstd part written in python code
@@ -1320,10 +1307,10 @@ class VolumeModel(dc.DessiaObject):
         return s
 
     def freecad_export(self, fcstd_filepath,
-                      python_path='python3',
-                      freecad_lib_path='/usr/lib/freecad/lib',
-                      export_types=('fcstd',),
-                      tolerance=0.0001):
+                       python_path='python3',
+                       freecad_lib_path='/usr/lib/freecad/lib',
+                       export_types=('fcstd',),
+                       tolerance=0.0001):
         """
         Export model to .fcstd FreeCAD standard
 
@@ -1338,9 +1325,9 @@ class VolumeModel(dc.DessiaObject):
         """
         fcstd_filepath = os.path.abspath(fcstd_filepath)
         s = self.freecad_script(fcstd_filepath,
-                               freecad_lib_path=freecad_lib_path,
-                               export_types=export_types,
-                               tolerance=tolerance)
+                                freecad_lib_path=freecad_lib_path,
+                                export_types=export_types,
+                                tolerance=tolerance)
         with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as f:
             f.write(bytes(s, 'utf8'))
 
@@ -1412,12 +1399,12 @@ class VolumeModel(dc.DessiaObject):
                                     use_cdn=True, debug=False):
 
         if use_cdn:
-            script = volmdlr.templates.babylon_unpacker_cdn_header#.substitute(name=page_name)
+            script = volmdlr.templates.babylon_unpacker_cdn_header  # .substitute(name=page_name)
         else:
-            script = volmdlr.templates.babylon_unpacker_embedded_header#.substitute(name=page_name)
+            script = volmdlr.templates.babylon_unpacker_embedded_header  # .substitute(name=page_name)
 
         script += volmdlr.templates.babylon_unpacker_body_template.substitute(
-                        babylon_data=babylon_data)
+            babylon_data=babylon_data)
 
         if page_name is None:
             with tempfile.NamedTemporaryFile(suffix=".html",
@@ -1437,15 +1424,14 @@ class VolumeModel(dc.DessiaObject):
                                          use_cdn=use_cdn, debug=debug)
 
     def to_step(self, filepath):
-        
-        
+
         if isinstance(filepath, str):
             if not (filepath.endswith('.step') or filepath.endswith('.stp')):
                 filepath += '.step'
             file = open(filepath, 'w')
         else:
             file = filepath
-        
+
         step_content = STEP_HEADER.format(name=self.name,
                                           filename='',
                                           timestamp=datetime.now().isoformat(),
@@ -1458,7 +1444,7 @@ class VolumeModel(dc.DessiaObject):
             step_content += primitive_content
 
             product_definition_context_id = primitive_id + 1
-            step_content += "#{} = PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');\n"\
+            step_content += "#{} = PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');\n" \
                 .format(product_definition_context_id)
 
             product_context_id = product_definition_context_id + 1
@@ -1469,23 +1455,25 @@ class VolumeModel(dc.DessiaObject):
                                                                           primitive.name,
                                                                           product_context_id)
             product_definition_formation_id = product_id + 1
-            step_content += "#{} = PRODUCT_DEFINITION_FORMATION('','',#{});\n".format(product_definition_formation_id, product_id)
+            step_content += "#{} = PRODUCT_DEFINITION_FORMATION('','',#{});\n".format(product_definition_formation_id,
+                                                                                      product_id)
             product_definition_id = product_definition_formation_id + 1
             step_content += "#{} = PRODUCT_DEFINITION('design','',#{},#{});\n".format(product_definition_id,
-                                                                                    product_definition_formation_id,
-                                                                                    product_definition_context_id)
+                                                                                      product_definition_formation_id,
+                                                                                      product_definition_context_id)
             product_definition_shape_id = product_definition_id + 1
-            step_content += "#{} = PRODUCT_DEFINITION_SHAPE('','',#{});\n".format(product_definition_shape_id, product_definition_id)
+            step_content += "#{} = PRODUCT_DEFINITION_SHAPE('','',#{});\n".format(product_definition_shape_id,
+                                                                                  product_definition_id)
             shape_definition_repr_id = product_definition_shape_id + 1
             step_content += "#{} = SHAPE_DEFINITION_REPRESENTATION(#{},#{});\n".format(shape_definition_repr_id,
-                                                                                      product_definition_shape_id,
-                                                                                      primitive_id
-                                                                                      )
+                                                                                       product_definition_shape_id,
+                                                                                       primitive_id
+                                                                                       )
             product_related_category = shape_definition_repr_id + 1
             step_content += "#{} = PRODUCT_RELATED_PRODUCT_CATEGORY('part',$,(#{}));\n".format(
                 product_related_category,
                 product_id
-                )
+            )
             draughting_id = product_related_category + 1
             step_content += "#{} = DRAUGHTING_PRE_DEFINED_CURVE_FONT('continuous');\n".format(
                 draughting_id)
@@ -1502,44 +1490,45 @@ class VolumeModel(dc.DessiaObject):
 
             curve_style_id = color_id + 1
             step_content += "#{} = CURVE_STYLE('',#{},POSITIVE_LENGTH_MEASURE(0.1),#{});\n".format(
-                    curve_style_id, draughting_id, color_id)
+                curve_style_id, draughting_id, color_id)
 
             fill_area_color_id = curve_style_id + 1
             step_content += "#{} = FILL_AREA_STYLE_COLOUR('',#{});\n".format(
-                    fill_area_color_id, color_id)
+                fill_area_color_id, color_id)
 
             fill_area_id = fill_area_color_id + 1
             step_content += "#{} = FILL_AREA_STYLE('',#{});\n".format(
-                    fill_area_id, fill_area_color_id)
+                fill_area_id, fill_area_color_id)
 
             suface_fill_area_id = fill_area_id + 1
             step_content += "#{} = SURFACE_STYLE_FILL_AREA(#{});\n".format(
-                    suface_fill_area_id, fill_area_id)
+                suface_fill_area_id, fill_area_id)
 
             suface_side_style_id = suface_fill_area_id + 1
             step_content += "#{} = SURFACE_SIDE_STYLE('',(#{}));\n".format(
-                    suface_side_style_id, suface_fill_area_id)
+                suface_side_style_id, suface_fill_area_id)
 
             suface_style_usage_id = suface_side_style_id + 1
             step_content += "#{} = SURFACE_STYLE_USAGE(.BOTH.,#{});\n".format(
-                    suface_style_usage_id, suface_side_style_id)
+                suface_style_usage_id, suface_side_style_id)
 
             presentation_style_id = suface_style_usage_id + 1
 
             step_content += "#{} = PRESENTATION_STYLE_ASSIGNMENT((#{},#{}));\n".format(
-                    presentation_style_id, suface_style_usage_id, curve_style_id)
+                presentation_style_id, suface_style_usage_id, curve_style_id)
 
             styled_item_id = presentation_style_id + 1
             step_content += "#{} = STYLED_ITEM('color',(#{}),#{});\n".format(
-                    styled_item_id, presentation_style_id, primitive_id)
+                styled_item_id, presentation_style_id, primitive_id)
 
             current_id = styled_item_id + 1
 
         step_content += STEP_FOOTER
-        
+
         file.write(step_content)
         if isinstance(filepath, str):
             file.close()
+
 
 class MovingVolumeModel(VolumeModel):
     def __init__(self, primitives, step_frames, name=''):

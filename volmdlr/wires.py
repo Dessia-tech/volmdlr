@@ -358,6 +358,7 @@ class Contour2D(Contour, Wire2D):
             else:
                 points.append(edge.start)
         return ClosedPolygon2D(points)
+
     # def _primitives_analysis(self):
     #     """
     #     An internal arc is an arc that has his interior point inside the polygon
@@ -500,7 +501,7 @@ class Contour2D(Contour, Wire2D):
         else:
             trigo = -1
         for edge in self.primitives:
-            area += trigo*edge.straight_line_area()
+            area += trigo * edge.straight_line_area()
 
         return area
 
@@ -514,10 +515,9 @@ class Contour2D(Contour, Wire2D):
             trigo = -1
         for edge in self.primitives:
             # edge.straight_line_center_of_mass().plot(ax=ax, color='g')
-            center += trigo*edge.straight_line_area()*edge.straight_line_center_of_mass()
+            center += trigo * edge.straight_line_area() * edge.straight_line_center_of_mass()
 
-        return center/self.area()
-
+        return center / self.area()
 
     def second_moment_area(self, point):
 
@@ -532,7 +532,7 @@ class Contour2D(Contour, Wire2D):
                 Ix -= Ix_e
                 Iy -= Iy_e
                 Ixy -= Ixy_e
-            
+
         return Ix, Iy, Ixy
 
     def plot_data(self, edge_style: plot_data.EdgeStyle = None,
@@ -985,11 +985,11 @@ class ClosedPolygon2D(Contour2D):
 
         x1 = [x[-1]] + x[0:-1]
         y1 = [y[-1]] + y[0:-1]
-        return 0.5*abs(sum([i*j for i, j in zip(x, y1)])
-                       - sum([i*j for i, j in zip(y, x1)]))
+        return 0.5 * abs(sum([i * j for i, j in zip(x, y1)])
+                         - sum([i * j for i, j in zip(y, x1)]))
         # return 0.5 * npy.abs(
         #     npy.dot(x, npy.roll(y, 1)) - npy.dot(y, npy.roll(x, 1)))
-        
+
     def center_of_mass(self):
         lp = len(self.points)
         if lp == 0:
@@ -997,7 +997,7 @@ class ClosedPolygon2D(Contour2D):
         elif lp == 1:
             return self.points[0]
         elif lp == 2:
-            return 0.5*(self.points[0] + self.points[1])
+            return 0.5 * (self.points[0] + self.points[1])
 
         x = [point.x for point in self.points]
         y = [point.y for point in self.points]
@@ -1038,7 +1038,7 @@ class ClosedPolygon2D(Contour2D):
             Ix = - Ix
             Iy = - Iy
             Ixy = - Ixy
-        return Ix/12., Iy/12., Ixy/24.
+        return Ix / 12., Iy / 12., Ixy / 24.
 
     def _line_segments(self):
         lines = []
@@ -1077,8 +1077,8 @@ class ClosedPolygon2D(Contour2D):
             return True
 
         angle = 0.
-        for ls1, ls2 in zip(self.line_segments, self.line_segments[1:]+[self.line_segments[0]]):
-            l1 = ls1.to_line()            
+        for ls1, ls2 in zip(self.line_segments, self.line_segments[1:] + [self.line_segments[0]]):
+            l1 = ls1.to_line()
             u = ls2.unit_direction_vector()
             x = u.dot(ls1.unit_direction_vector())
             y = u.dot(ls1.normal_vector())
@@ -1373,15 +1373,16 @@ class Triangle2D(ClosedPolygon2D):
         return abs(u.cross(v)) / 2
 
 
-
-
 class Circle2D(Contour2D):
     _non_serializable_attributes = ['internal_arcs', 'external_arcs',
                                     'polygon', 'straight_line_contour_polygon',
                                     'primitives', 'basis_primitives']
 
-    def __init__(self, center: volmdlr.Point2D, radius: float, name: str = ''):
-        self.center = center
+    def __init__(self, center, radius: float, name: str = ''):
+        if str(type(center)) == "<class 'list'>":
+            self.center = volmdlr.Point2D(center[0], center[1])
+        else:
+            self.center = center
         self.radius = radius
         self.angle = volmdlr.TWO_PI
 
@@ -1430,7 +1431,7 @@ class Circle2D(Contour2D):
         ymax = self.center.y + self.radius
         return xmin, xmax, ymin, ymax
 
-    def line_intersections(self, line2d:volmdlr.edges.Line2D, tol=1e-9):
+    def line_intersections(self, line2d: volmdlr.edges.Line2D, tol=1e-9):
         # Duplicate from ffull arc
         Q = self.center
         if line2d.points[0] == self.center:
@@ -1445,7 +1446,7 @@ class Circle2D(Contour2D):
 
         disc = b ** 2 - 4 * a * c
         if math.isclose(disc, 0., abs_tol=tol):
-            t1 = -b  / (2 * a)
+            t1 = -b / (2 * a)
             return [P1 + t1 * V]
 
         elif disc > 0:
@@ -1510,15 +1511,15 @@ class Circle2D(Contour2D):
         #     fig = ax.figure
         if self.radius > 0:
             ax.add_patch(matplotlib.patches.Arc((self.center.x, self.center.y),
-                             2 * self.radius,
-                             2 * self.radius,
-                             angle=0,
-                             theta1=0,
-                             theta2=360,
-                             color=color,
-                             alpha=alpha,
-                             linestyle=linestyle,
-                             linewidth=linewidth))
+                                                2 * self.radius,
+                                                2 * self.radius,
+                                                angle=0,
+                                                theta1=0,
+                                                theta2=360,
+                                                color=color,
+                                                alpha=alpha,
+                                                linestyle=linestyle,
+                                                linewidth=linewidth))
         if equal_aspect:
             ax.set_aspect('equal')
         return ax
@@ -1601,17 +1602,16 @@ class Circle2D(Contour2D):
         triangles = [(i, i + 1, n) for i in range(n - 1)] + [(n - 1, 0, n)]
 
     def split(self, split_start, split_end):
-        x1, y1 = split_start-self.center
-        x2, y2 = split_end-self.center
+        x1, y1 = split_start - self.center
+        x2, y2 = split_end - self.center
 
         angle1 = math.atan2(y1, x1)
         angle2 = math.atan2(y2, x2)
-        angle_i1 = 0.5*(angle2 - angle1)
+        angle_i1 = 0.5 * (angle2 - angle1)
         angle_i2 = angle_i1 + math.pi
         interior_point1 = split_start.rotation(self.center, angle_i1)
         interior_point2 = split_start.rotation(self.center, angle_i2)
 
-        
         return [volmdlr.edges.Arc2D(split_start, interior_point1,
                                     split_end),
                 volmdlr.edges.Arc2D(split_start, interior_point2,
@@ -1644,7 +1644,6 @@ class Circle2D(Contour2D):
     def polygon_points(self, angle_resolution=10):
         return volmdlr.edges.Arc2D.polygon_points(
             self, angle_resolution=angle_resolution)
-
 
 
 class Contour3D(Contour, Wire3D):
@@ -2089,13 +2088,13 @@ class Circle3D(Contour3D):
             w = extrusion_vector.copy()
             w.normalize()
             cylinder = volmdlr.faces.CylindricalSurface3D(volmdlr.Frame3D(self.center,
-                                                    u,
-                                                    v,
-                                                    w),
-                                            self.radius
-                                            )
+                                                                          u,
+                                                                          v,
+                                                                          w),
+                                                          self.radius
+                                                          )
             return [cylinder.rectangular_cut(0, volmdlr.TWO_PI,
-                                            0, extrusion_vector.norm())]
+                                             0, extrusion_vector.norm())]
         else:
             raise NotImplementedError(
                 'Extrusion along vector not colinar to normal for circle not handled yet: dot={}'.format(
@@ -2115,7 +2114,7 @@ class Circle3D(Contour3D):
 
         R = tore_center.point_distance(self.center)
         surface = volmdlr.faces.ToroidalSurface3D(volmdlr.Frame3D(tore_center, u, v, axis),
-                                    R, self.radius)
+                                                  R, self.radius)
         return [surface.rectangular_cut(0, angle, 0, volmdlr.TWO_PI)]
 
 
