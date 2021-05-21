@@ -154,8 +154,8 @@ class Step:
                     arg_list = volmdlr.core.set_to_list(argument)
                     arguments[i] = arg_list
 
-            if function_id == 918:
-                print(function_name, arguments)
+            # if function_id == 918:
+            #     print(function_name, arguments)
             function = StepFunction(function_id, function_name, arguments)
             functions[function_id] = function
 
@@ -434,6 +434,12 @@ class Step:
             volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
                 modified_arguments, object_dict)
 
+        elif name == 'BOUNDED_SURFACE, B_SPLINE_SURFACE, B_SPLINE_SURFACE_WITH_KNOTS, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM, SURFACE':
+            print(arguments)
+            volmdlr_object = STEP_TO_VOLMDLR['B_SPLINE_SURFACE'].from_step(
+                modified_arguments, object_dict)
+
+
         elif name in STEP_TO_VOLMDLR and hasattr(
                 STEP_TO_VOLMDLR[name], "from_step"):
             volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
@@ -577,7 +583,7 @@ STEP_TO_VOLMDLR = {
     # TOPOLOGICAL ENTITIES
     'VERTEX_POINT': None,
 
-    'EDGE_CURVE': volmdlr.edges.Edge,  # LineSegment3D, # TOPOLOGICAL EDGE
+    'EDGE_CURVE': volmdlr.edges.Edge,  # LineSegment3D, # TOPOLOGICALAL EDGE
     'ORIENTED_EDGE': None,  # TOPOLOGICAL EDGE
     # The one above can influence the direction with their last argument
     # TODO : maybe take them into consideration
@@ -592,6 +598,8 @@ STEP_TO_VOLMDLR = {
 
     'ADVANCED_FACE': volmdlr.faces.Face3D,
     'FACE_SURFACE': volmdlr.faces.Face3D,
+    'BOUNDED_SURFACE': volmdlr.faces.Face3D,
+
 
     'CLOSED_SHELL': volmdlr.faces.ClosedShell3D,
     'OPEN_SHELL': volmdlr.faces.OpenShell3D,

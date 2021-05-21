@@ -2511,8 +2511,8 @@ class BSplineCurve3D(Edge):
         res = scipy.optimize.minimize_scalar(lambda x:(self.point_at_abscissa(x)-point3d).norm(),
                                            bounds=(0, length),
                                             method='bounded',
-                                           options={'xatol':5e-7*length,
-                                                    'disp':3})
+                                           options={'xatol':5e-7*length})
+                                                    # 'disp':3})
         if res.fun > 1e-5:
             # print(res.fun)
             # print(res.x)

@@ -607,7 +607,7 @@ class Surface3D(dc.DessiaObject):
                 try:
                     primitives3d.extend(getattr(self, method_name)(primitive2d))
                 except NotImplementedError:
-                    print('Error NotImplementedError')
+                    print('NotImplementedError excepted in contour2d_to_3d')
             else:
                 raise NotImplementedError(
                     'Class {} does not implement {}'.format(
