@@ -245,9 +245,9 @@ class Line2D(Line):
     """
 
     def __init__(self, point1, point2, *, name=''):
-        if str(type(point1)) == "<class 'list'>":
+        if isinstance(point1, list):
             point1 = volmdlr.Point2D(point1[0], point1[1])
-        if str(type(point2)) == "<class 'list'>":
+        if isinstance(point2, list):
             point2 = volmdlr.Point2D(point2[0], point2[1])
         self.points = [point1, point2]
         Line.__init__(self, point1, point2, name=name)
@@ -650,9 +650,9 @@ class LineSegment2D(LineSegment):
     """
 
     def __init__(self, start, end, *, name=''):
-        if str(type(start)) == "<class 'list'>":
+        if isinstance(start, list):
             start = volmdlr.Point2D(start[0], start[1])
-        if str(type(end)) == "<class 'list'>":
+        if isinstance(end, list):
             end = volmdlr.Point2D(end[0], end[1])
         Edge.__init__(self, start, end, name=name)
 

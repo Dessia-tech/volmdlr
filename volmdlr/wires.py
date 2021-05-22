@@ -1379,7 +1379,7 @@ class Circle2D(Contour2D):
                                     'primitives', 'basis_primitives']
 
     def __init__(self, center, radius: float, name: str = ''):
-        if str(type(center)) == "<class 'list'>":
+        if isinstance(center, list):
             self.center = volmdlr.Point2D(center[0], center[1])
         else:
             self.center = center
