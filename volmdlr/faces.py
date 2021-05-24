@@ -3974,8 +3974,8 @@ class ClosedShell3D(OpenShell3D):
 
     @classmethod
     def unions(cls, shell1, shell2):
-        shell1_p = sheel_substract(shell1, shell2)
-        shell2_p = sheel_substract(shell2, shell1)
+        shell1_p = shell1.sheel_substract(shell2)
+        shell2_p = shell2.sheel_substract(shell1)
         for f in shell1_p.faces:
             f.alpha = 0.2
         for f in shell2_p.faces:
@@ -4114,85 +4114,84 @@ class ClosedShell3D(OpenShell3D):
 
         return True
 
-
-def sheel_substract(shell1, shell2):
-    faces = []
-    dist_limit = 1e-15
-    for face1 in shell1.faces:
-        if volmdlr.faces.ClosedShell3D([face1]).is_inside_shell(shell2, resolution=0.01):
-            continue
-        points_2d = []
-        points_2d_extreme = []
-        graph = nx.Graph()
-        for face2 in shell2.faces:
-            inters = face1.face_intersections(face2)
-            new_points_2d = [face1.surface3d.point3d_to_2d(i) for i in inters]
-            if new_points_2d:
-                for p in new_points_2d:
-                    if p not in points_2d:
-                        points_2d.append(p)
-                for p1, p2 in zip(new_points_2d[0:-1], new_points_2d[1:]):
-                    graph.add_edges_from([(p1, p2)])
-        if points_2d:
-            for pt in points_2d:
-                dist_min = math.inf
-                for line in face1.surface2d.outer_contour.primitives:
-                    dist = line.point_distance(pt)
-                    if dist < dist_min:
-                        dist_min = dist
-                if dist_min < dist_limit:
-                    points_2d_extreme.append(pt)
-            new_lines = []
-            non_check_point = []
-            for pt in points_2d_extreme:
-                pts = list(nx.dfs_edges(graph, pt))
-                if pt not in non_check_point:
-                    lns = [volmdlr.edges.LineSegment2D(p[0], p[1]) for p in pts]
-                    new_lines.append(lns)
-                non_check_point.extend([pt, pts[-1][-1]])
-            cut_contours = [face1.surface2d.outer_contour]
-            for new_line in new_lines:
-                start = new_line[0].start
-                end = new_line[-1].end
-                new_c = []
-                for c in cut_contours:
-                    cs = volmdlr.wires.Contour2D.extract_contours(c, start, end)
-                    if not cs:
-                        new_c.append(c)
-                    else:
-                        close_contours = []
-                        for c1 in cs:
-                            c1.primitives.extend(new_line)
-                            c1.order_contour()
-                            close_contours.append(c1)
-                        for c1 in close_contours:
-                            check = True
-                            for c2 in new_c:
-                                if c1 == c2:
-                                    check = False
-                            if check:
-                                new_c.append(c1)
-                cut_contours = [c.copy() for c in new_c]
-
-            for contour in cut_contours:
-                check = True
-                show_points = []
-                for primitive in contour.primitives:
-                    point_middle = volmdlr.Point2D.middle_point(primitive.start, primitive.end)
-                    pt3d = face1.surface3d.point2d_to_3d(point_middle)
-                    show_points.append(pt3d)
+    def sheel_substract(self, other_shell):
+        faces = []
+        dist_limit = 1e-15
+        for face1 in self.faces:
+            if volmdlr.faces.ClosedShell3D([face1]).is_inside_shell(other_shell, resolution=0.01):
+                continue
+            points_2d = []
+            points_2d_extreme = []
+            graph = nx.Graph()
+            for face2 in other_shell.faces:
+                inters = face1.face_intersections(face2)
+                new_points_2d = [face1.surface3d.point3d_to_2d(i) for i in inters]
+                if new_points_2d:
+                    for p in new_points_2d:
+                        if p not in points_2d:
+                            points_2d.append(p)
+                    for p1, p2 in zip(new_points_2d[0:-1], new_points_2d[1:]):
+                        graph.add_edges_from([(p1, p2)])
+            if points_2d:
+                for pt in points_2d:
                     dist_min = math.inf
-                    for face2 in shell2.faces:
-                        dist = face2.distance_to_point(pt3d)
+                    for line in face1.surface2d.outer_contour.primitives:
+                        dist = line.point_distance(pt)
                         if dist < dist_min:
                             dist_min = dist
-                    if shell2.point_belongs(pt3d) and dist_min > 1e-8:
-                        check = False
-                if check:
-                    surf3d = face1.surface3d
-                    surf2d = Surface2D(contour, [])
-                    new_plane = PlaneFace3D(surf3d, surf2d)
-                    faces.append(new_plane)
-        else:
-            faces.append(face1)
-    return OpenShell3D(faces)
+                    if dist_min < dist_limit:
+                        points_2d_extreme.append(pt)
+                new_lines = []
+                non_check_point = []
+                for pt in points_2d_extreme:
+                    pts = list(nx.dfs_edges(graph, pt))
+                    if pt not in non_check_point:
+                        lns = [volmdlr.edges.LineSegment2D(p[0], p[1]) for p in pts]
+                        new_lines.append(lns)
+                    non_check_point.extend([pt, pts[-1][-1]])
+                cut_contours = [face1.surface2d.outer_contour]
+                for new_line in new_lines:
+                    start = new_line[0].start
+                    end = new_line[-1].end
+                    new_c = []
+                    for c in cut_contours:
+                        cs = volmdlr.wires.Contour2D.extract_contours(c, start, end)
+                        if not cs:
+                            new_c.append(c)
+                        else:
+                            close_contours = []
+                            for c1 in cs:
+                                c1.primitives.extend(new_line)
+                                c1.order_contour()
+                                close_contours.append(c1)
+                            for c1 in close_contours:
+                                check = True
+                                for c2 in new_c:
+                                    if c1 == c2:
+                                        check = False
+                                if check:
+                                    new_c.append(c1)
+                    cut_contours = [c.copy() for c in new_c]
+
+                for contour in cut_contours:
+                    check = True
+                    show_points = []
+                    for primitive in contour.primitives:
+                        point_middle = volmdlr.Point2D.middle_point(primitive.start, primitive.end)
+                        pt3d = face1.surface3d.point2d_to_3d(point_middle)
+                        show_points.append(pt3d)
+                        dist_min = math.inf
+                        for face2 in other_shell.faces:
+                            dist = face2.distance_to_point(pt3d)
+                            if dist < dist_min:
+                                dist_min = dist
+                        if other_shell.point_belongs(pt3d) and dist_min > 1e-8:
+                            check = False
+                    if check:
+                        surf3d = face1.surface3d
+                        surf2d = Surface2D(contour, [])
+                        new_plane = PlaneFace3D(surf3d, surf2d)
+                        faces.append(new_plane)
+            else:
+                faces.append(face1)
+        return OpenShell3D(faces)
