@@ -3973,7 +3973,7 @@ class ClosedShell3D(OpenShell3D):
                              name=self.name)
 
     @classmethod
-    def union(cls, shell1, shell2):
+    def unions(cls, shell1, shell2):
         shell1_p = sheel_substract(shell1, shell2)
         shell2_p = sheel_substract(shell2, shell1)
         for f in shell1_p.faces:
