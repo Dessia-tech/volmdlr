@@ -2376,6 +2376,61 @@ class PlaneFace3D(Face3D):
         else:
             return NotImplementedError
 
+class Triangle3D(PlaneFace3D):
+    """
+    :param point1: The first point
+    :type point1: volmdlr.Point3D
+    :param point2: The second point
+    :type point2: volmdlr.Point3D
+    :param point3: The third point
+    :type point3: volmdlr.Point3D
+    """
+    _standalone_in_db = False
+    # _generic_eq = True
+    # _non_serializable_attributes = ['bounding_box', 'polygon2D']
+    # _non_eq_attributes = ['name', 'bounding_box', 'outer_contour3d',
+    #                       'inner_contours3d']
+    # _non_hash_attributes = []
+
+    def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
+                 point3: volmdlr.Point3D, name: str = ''):
+        self.point1 = point1
+        self.point2 = point2
+        self.point3 = point3
+        
+        plane3d = Plane3D.from_3_points(point1, point2, point3)
+        
+        contour3d = volmdlr.wires.Contour3D([vme.LineSegment3D(point1, point2),
+                                             vme.LineSegment3D(point2, point3),
+                                             vme.LineSegment3D(point3, point1)])
+        
+        contour2d = contour3d.to_2d(plane3d.frame.origin, 
+                                    plane3d.frame.u, plane3d.frame.v)
+        
+        surface2d = Surface2D(outer_contour=contour2d, inner_contours=[])
+        
+        Face3D.__init__(self,
+                        surface3d=plane3d,
+                        surface2d=surface2d,
+                        name=name)
+    
+    def area(self):
+        # Formula explained here: https://www.triangle-calculator.com/?what=vc
+        a = self.point1.point_distance(self.point2)
+        b = self.point2.point_distance(self.point3)
+        c = self.point3.point_distance(self.point1)
+           
+        semi_perimeter = (a + b + c)/2
+        
+        #Area with Heron's formula
+        area = math.sqrt(semi_perimeter*(semi_perimeter-a)*(semi_perimeter-b)*(semi_perimeter-c))
+        
+        return area
+    
+    def height(self):
+        # Formula explained here: https://www.triangle-calculator.com/?what=vc
+        # Basis = vector point1 to point2d
+        return 2*self.area()/self.point1.point_distance(self.point2)
 
 class CylindricalFace3D(Face3D):
     """

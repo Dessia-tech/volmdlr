@@ -1283,7 +1283,7 @@ class ClosedPolygon2D(Contour2D):
 
     @classmethod
     def points_convex_hull(cls, points):
-        ymax, pos_ymax = volmdlr.max_pos([pt.vector[1] for pt in points])
+        ymax, pos_ymax = volmdlr.core.max_pos([pt.y for pt in points])
         point_start = points[pos_ymax]
         hull, thetac = [point_start], 0  # thetac is the current theta
 
@@ -1327,6 +1327,10 @@ class ClosedPolygon2D(Contour2D):
         hull.pop()
 
         return cls(hull)
+    
+    def to_3d(self, plane_origin, x, y):
+        points3d = [point.to_3d(plane_origin, x, y) for point in self.points]
+        return ClosedPolygon3D(points3d)
 
     def plot(self, ax=None, color='k', alpha=1,
              plot_points=False, point_numbering=False,
@@ -1844,7 +1848,6 @@ class Contour3D(Contour, Wire3D):
                   for i in range(n)]
         return volmdlr.core.BoundingBox.from_points(points)
 
-
 class Circle3D(Contour3D):
     _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']
     _non_eq_attributes = ['name']
@@ -2256,3 +2259,124 @@ class ClosedPolygon3D(Contour3D):
         for line_segment in self.line_segments:
             ax = line_segment.plot(ax=ax, color=color, alpha=alpha)
         return ax
+    
+    # def sewing_with(self, other_poly3d):
+    #     triangles = []
+    #     #first loop
+    #     for point1, point2 in zip(self.points+[self.points[0]], self.points[1:]+self.points[:2]):
+    #         mean_pt = 0.5*(point1 + point2)
+    #         avg_dist_min, closestpoint = None, None
+    #         for pt_other in other_poly3d.points:
+    #             dist_min = mean_pt.point_distance(pt_other)
+    #             if avg_dist_min is None :
+    #                 avg_dist_min, closestpoint = dist_min, pt_other
+    #             else :
+    #                 if dist_min < avg_dist_min :
+    #                     avg_dist_min, closestpoint = dist_min, pt_other
+    #         triangles.append([point1, point2, closestpoint])
+    #     #second loop
+    #     for point1, point2 in zip(other_poly3d.points+[other_poly3d.points[0]], other_poly3d.points[1:]+other_poly3d.points[:2]):
+    #         mean_pt = 0.5*(point1 + point2)
+    #         avg_dist_min, closestpoint = None, None
+    #         for pt_self in self.points:
+    #             # already_exist = False
+    #             # for trio in triangles :
+    #             #     if point1 in trio and point2 in trio and pt_self in trio :
+    #             #         already_exist = True
+    #             #         break
+                    
+    #             # if not already_exist:
+    #             dist_min = mean_pt.point_distance(pt_self)
+    #             if avg_dist_min is None :
+    #                 avg_dist_min, closestpoint = dist_min, pt_self
+    #             else :
+    #                 if dist_min < avg_dist_min :
+    #                     avg_dist_min, closestpoint = dist_min, pt_self
+    #         triangles.append([point1, point2, closestpoint])
+           
+    #     return triangles
+    
+    def to_2d(self, plane_origin, x, y):
+        points2d = [point.to_2d(plane_origin, x, y) for point in self.points]
+        return ClosedPolygon2D(points2d)
+    
+    # def sewing_with(self, other_poly3d, x, y, normal):
+    #     poly1, other_poly2d = self.to_2d(volmdlr.O3D, x, y), other_poly3d.to_2d(volmdlr.O3D, x, y)
+    #     triangles = []
+    #     #first loop
+    #     for point1, point2, pt12d, pt22d in zip(self.points+[self.points[0]], 
+    #                                             self.points[1:]+self.points[:2],
+    #                                             poly1.points+[poly1.points[0]],
+    #                                             poly1.points[1:]+poly1.points[:2]):
+    #         mean_pt = 0.5*(point1 + point2)
+    #         pt12_vector = point2-point1
+    #         pt12_vector.normalize()
+    #         #if at least one point is in the other poly
+    #         if other_poly2d.point_belongs(pt12d) or other_poly2d.point_belongs(pt22d):
+    #             search_vector = pt12_vector.cross(normal)
+    #         else :
+    #             search_vector = -pt12_vector.cross(normal)
+                    
+    #         avg_dist_min, closestpoint = None, None
+    #         for pt_other in other_poly3d.points:
+    #             vect_min = pt_other-mean_pt
+    #             if vect_min.dot(search_vector)>0:
+    #                 dist_min = mean_pt.point_distance(pt_other)
+    #                 if avg_dist_min is None :
+    #                     avg_dist_min, closestpoint = dist_min, pt_other
+    #                 else :
+    #                     if dist_min < avg_dist_min :
+    #                         avg_dist_min, closestpoint = dist_min, pt_other
+    #         triangles.append([point1, point2, closestpoint])
+    #     #second loop
+    #     for point1, point2, pt12d, pt22d in zip(other_poly3d.points+[other_poly3d.points[0]],
+    #                                             other_poly3d.points[1:]+other_poly3d.points[:2],
+    #                                             other_poly3d.points+[other_poly3d.points[0]],
+    #                                             other_poly3d.points[1:]+other_poly3d.points[:2]):
+    #         mean_pt = 0.5*(point1 + point2)
+    #         pt12_vector = point2-point1
+    #         pt12_vector.normalize()
+    #         #if at least one point is in the other poly
+    #         if poly1.point_belongs(pt12d) or poly1.point_belongs(pt22d):
+    #             search_vector = pt12_vector.cross(normal)
+    #         else :
+    #             search_vector = -pt12_vector.cross(normal)
+            
+    #         avg_dist_min, closestpoint = None, None
+    #         for pt_self in self.points:
+    #             vect_min = pt_self-mean_pt
+    #             if vect_min.dot(search_vector)>0:
+    #                 dist_min = mean_pt.point_distance(pt_self)
+    #                 if avg_dist_min is None :
+    #                     avg_dist_min, closestpoint = dist_min, pt_self
+    #                 else :
+    #                     if dist_min < avg_dist_min :
+    #                         avg_dist_min, closestpoint = dist_min, pt_self
+    #         triangles.append([point1, point2, closestpoint])
+           
+    #     return triangles
+    def sewing_with(self, other_poly3d, resolution = 20):
+        primitives1 = [volmdlr.edges.LineSegment3D(point1, point2) for point1, point2 in 
+                       zip(self.points+[self.points[0]], 
+                           self.points[1:]+self.points[:2])]
+        primitives2 = [volmdlr.edges.LineSegment3D(point1, point2) for point1, point2 in 
+                       zip(other_poly3d.points+[other_poly3d.points[0]], 
+                           other_poly3d.points[1:]+other_poly3d.points[:2])]
+        contour1, contour2 = Contour3D(primitives1), Contour3D(primitives2)
+        new_point1 = [contour1.point_at_abscissa(contour1.length()*n/(resolution-1)) for n in range(resolution)]
+        new_point2 = [contour2.point_at_abscissa(contour2.length()*n/(resolution-1)) for n in range(resolution)]
+        
+        new_poly1, new_poly2 = ClosedPolygon3D(new_point1[:-1]), ClosedPolygon3D(new_point2[:-1])
+        
+        triangles = []
+        for point1, point2, other_point in zip(new_poly1.points+[new_poly1.points[0]], 
+                                               new_poly1.points[1:]+new_poly1.points[:2],
+                                               new_poly2.points+[new_poly2.points[0]]):
+            triangles.append([point1, point2, other_point])
+                
+        for point1, point2, other_point in zip(new_poly2.points+[new_poly2.points[0]],
+                                               new_poly2.points[1:]+new_poly2.points[:2],
+                                               new_poly1.points[1:]+new_poly1.points[:1]):
+            triangles.append([point1, point2, other_point])
+           
+        return triangles
