@@ -50,14 +50,22 @@ class PointCloud3D(dc.DessiaObject):
         return PointCloud3D(extracted_points)
         
     
-    def subdescription_2d(self, resolution = 10, u = None):
+    def subdescription_2d(self, resolution = 10, normal = None):
+        #normal has to be a fondamental vector : X3D, Y3D or Z3D
         bbox = self._bounding_box()
         xyz_bbox = [[bbox.xmin, bbox.xmax], [bbox.ymin,bbox.ymax], [bbox.zmin,bbox.zmax]]
         xyz_list = [l[1]-l[0] for l in xyz_bbox]
         absxyz_list, xyz_vect = [abs(length) for length in xyz_list], [vm.X3D, vm.Y3D, vm.Z3D]
 
-        posmax = xyz_list.index(max(absxyz_list))
-        normal = xyz_vect[posmax]
+        if normal is None :
+            posmax = xyz_list.index(max(absxyz_list))
+            normal = xyz_vect[posmax]
+            
+        else :
+            posmax = 0
+            for n, vect in enumerate(xyz_vect):
+                if vect == normal :
+                    posmax = n
         
         dist_between_plane = xyz_list[posmax]/(resolution-1)
         position_plane = [xyz_bbox[posmax][0] + n*dist_between_plane for n in range(resolution)]
@@ -68,9 +76,16 @@ class PointCloud3D(dc.DessiaObject):
         subcloud2d = [subcloud3d[n].to_2d(position_plane[n]*normal, vec1, vec2) for n in range(resolution)]
         
         polygon2d = [cloud2d.to_polygon() for cloud2d in subcloud2d]
-        polygon3d = [polygon2d[n].to_3d(position_plane[n]*normal, vec1, vec2) for n in range(resolution)]
         
+        polygon3d = []
+        for pos_plane, poly in zip(position_plane, polygon2d) :
+            if poly is None :
+                resolution -= 1
+            else :
+                polygon3d.append(poly.to_3d(pos_plane*normal, vec1, vec2))
+         
         faces = []
+        # max_poly_resolution = int(sum([len(poly.points) for poly in polygon3d])/len(polygon3d))+1
         for n in range(resolution):
             poly1 = polygon3d[n]
             if n == resolution-1 or n == 0:
@@ -79,11 +94,10 @@ class PointCloud3D(dc.DessiaObject):
                 faces.append(vmf.PlaneFace3D(plane3d, surf2d))
             if n != resolution-1:
                 poly2 = polygon3d[n+1]
-                coords = poly1.sewing_with(poly2)
+                coords = poly1.sewing_with(poly2)#, resolution = max_poly_resolution)
                 # coords = poly1.sewing_with2(poly2, vec1, vec2, normal)
                 for trio in coords :
-                    faces.append(vmf.Triangle3D(trio[0], trio[1], trio[2]))
-                
+                    faces.append(vmf.Triangle3D(trio[0], trio[1], trio[2]))   
         
         return faces
         
