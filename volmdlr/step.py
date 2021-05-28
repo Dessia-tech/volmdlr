@@ -492,7 +492,7 @@ class Step:
 
         return volmdlr.core.VolumeModel(shells)
 
-    def to_scatter_volume_model(self, name):
+    def to_points(self, name):
         object_dict = {}
         points3d = []
         for stepfunction in self.functions.values():
@@ -506,7 +506,7 @@ class Step:
                 volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
                     arguments, object_dict)
                 points3d.append(volmdlr_object)
-        return volmdlr.core.VolumeModel(points3d)
+        return points3d
 
     def plot_data(self):
         if not self.upd_graph:
