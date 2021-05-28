@@ -13,6 +13,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import volmdlr as vm
 import volmdlr.wires as vmw
 import volmdlr.faces as vmf
+import volmdlr.step as vstep
 
 import dessia_common as dc
 
@@ -100,7 +101,13 @@ class PointCloud3D(dc.DessiaObject):
                     faces.append(vmf.Triangle3D(trio[0], trio[1], trio[2]))   
         
         return faces
-        
+
+    @classmethod        
+    def from_step(cls, step_file:str):
+        step = vstep.Step(step_file)
+        points = step.to_points()
+        return cls(points)
+    
 class PointCloud2D(dc.DessiaObject):
     def __init__(self, points, name: str=''):
         self.points = points

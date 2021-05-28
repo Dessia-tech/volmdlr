@@ -6,6 +6,7 @@
 
 import volmdlr as vm
 import volmdlr.step
+import volmdlr.cloud as vmcd
 
 for step_file in [
                   # 'tore1.step',
@@ -22,6 +23,10 @@ for step_file in [
     # print(model.primitives)
 
     model.babylonjs()
+    
+    cloud = vmcd.PointCloud3D.from_step(step_file)
+    shell = cloud.subdescription_2d()
+    shell.babylonjs()
     
 model2 = model.copy()
 
