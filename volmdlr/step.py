@@ -304,9 +304,8 @@ class Step:
             (subfunction_names[i], step_split_arguments(subfunction_args[i]))
             for i in range(len(subfunction_names))]
 
-    def instanciate(self, name, arguments, object_dict):
-        """
-        """
+
+    def parse_arguments(self, arguments):
         for i, arg in enumerate(arguments):
             if type(arg) == str and arg[0] == '#':
                 arguments[i] = int(arg[1:])
@@ -321,7 +320,12 @@ class Step:
 
                     arg_id += char
                 argument.append(arg_id)
-                arguments[i] = list(argument)
+                arguments[i] = argument
+        
+    def instanciate(self, name, arguments, object_dict):
+        """
+        """
+        self.parse_arguments(arguments)
 
         if name == 'VERTEX_POINT':
             volmdlr_object = object_dict[arguments[1]]
@@ -492,7 +496,7 @@ class Step:
 
         return volmdlr.core.VolumeModel(shells)
 
-    def to_points(self, name):
+    def to_points(self):
         object_dict = {}
         points3d = []
         for stepfunction in self.functions.values():
@@ -500,12 +504,15 @@ class Step:
                 # INSTANCIATION
                 name = self.functions[stepfunction.id].name
                 arguments = self.functions[stepfunction.id].arg[:]
-                for i, arg in enumerate(arguments):
-                    if type(arg) == str and arg[0] == '#':
-                        arguments[i] = int(arg[1:])
-                volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
-                    arguments, object_dict)
-                points3d.append(volmdlr_object)
+                self.parse_arguments(arguments)
+                # for i, arg in enumerate(arguments):
+                #     if type(arg) == str and arg[0] == '#':
+                #         arguments[i] = int(arg[1:])
+                print(arguments)
+                if arguments[1].count(',') == 2:
+                    volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
+                        arguments, object_dict)
+                    points3d.append(volmdlr_object)
         return points3d
 
     def plot_data(self):
