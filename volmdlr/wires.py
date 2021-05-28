@@ -1283,6 +1283,8 @@ class ClosedPolygon2D(Contour2D):
 
     @classmethod
     def points_convex_hull(cls, points):
+        if len(points) < 3:
+            return
         ymax, pos_ymax = volmdlr.core.max_pos([pt.y for pt in points])
         point_start = points[pos_ymax]
         hull, thetac = [point_start], 0  # thetac is the current theta
@@ -2356,27 +2358,45 @@ class ClosedPolygon3D(Contour3D):
            
         return triangles
     def sewing_with(self, other_poly3d, resolution = 20):
-        primitives1 = [volmdlr.edges.LineSegment3D(point1, point2) for point1, point2 in 
-                       zip(self.points+[self.points[0]], 
-                           self.points[1:]+self.points[:2])]
-        primitives2 = [volmdlr.edges.LineSegment3D(point1, point2) for point1, point2 in 
-                       zip(other_poly3d.points+[other_poly3d.points[0]], 
-                           other_poly3d.points[1:]+other_poly3d.points[:2])]
-        contour1, contour2 = Contour3D(primitives1), Contour3D(primitives2)
-        new_point1 = [contour1.point_at_abscissa(contour1.length()*n/(resolution-1)) for n in range(resolution)]
-        new_point2 = [contour2.point_at_abscissa(contour2.length()*n/(resolution-1)) for n in range(resolution)]
+        # primitives1 = [volmdlr.edges.LineSegment3D(point1, point2) for point1, point2 in 
+        #                zip(self.points, 
+        #                    self.points[1:]+self.points[:1])]
+            
+        # primitives2 = [volmdlr.edges.LineSegment3D(point1, point2) for point1, point2 in 
+        #                zip(other_poly3d.points, 
+        #                    other_poly3d.points[1:]+other_poly3d.points[:1])]
+        # contour1, contour2 = Contour3D(primitives1), Contour3D(primitives2)
+        # new_point1 = [contour1.point_at_abscissa(contour1.length()*n/(resolution)) for n in range(resolution)]
+        # new_point2 = [contour2.point_at_abscissa(contour2.length()*n/(resolution)) for n in range(resolution)]
         
-        new_poly1, new_poly2 = ClosedPolygon3D(new_point1[:-1]), ClosedPolygon3D(new_point2[:-1])
+        new_point1 = [self.point_at_abscissa(self.length()*n/(resolution)) for n in range(resolution)]
+        new_point2 = [other_poly3d.point_at_abscissa(other_poly3d.length()*n/(resolution)) for n in range(resolution)]
+        
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111, projection='3d')
+        # self.plot(ax=ax)
+        # for pt in new_point1[:4] :
+        #     pt.plot(ax=ax, color='r')
+        # for pt in new_point1[-4:] :
+        #     pt.plot(ax=ax, color='g')
+            
+        # other_poly3d.plot(ax=ax)
+        # for pt in new_point2[:4] :
+        #     pt.plot(ax=ax, color='b')
+        # for pt in new_point2[-4:] :
+        #     pt.plot(ax=ax, color='y')
+        
+        new_poly1, new_poly2 = ClosedPolygon3D(new_point1), ClosedPolygon3D(new_point2)
         
         triangles = []
-        for point1, point2, other_point in zip(new_poly1.points+[new_poly1.points[0]], 
-                                               new_poly1.points[1:]+new_poly1.points[:2],
-                                               new_poly2.points+[new_poly2.points[0]]):
-            triangles.append([point1, point2, other_point])
+        for point1, point2, other_point in zip(new_poly1.points, 
+                                               new_poly1.points[1:]+new_poly1.points[:1],
+                                               new_poly2.points):
+            triangles.append([other_point, point2, point1])
                 
-        for point1, point2, other_point in zip(new_poly2.points+[new_poly2.points[0]],
-                                               new_poly2.points[1:]+new_poly2.points[:2],
-                                               new_poly1.points[1:]+new_poly1.points[:1]):
+        for point1, point2, other_point in zip(new_poly2.points,
+                                                new_poly2.points[1:]+new_poly2.points[:1],
+                                                new_poly1.points[1:]+new_poly1.points[:1]):
             triangles.append([point1, point2, other_point])
            
         return triangles
