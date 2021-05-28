@@ -2413,6 +2413,13 @@ class Triangle3D(PlaneFace3D):
                         surface3d=plane3d,
                         surface2d=surface2d,
                         name=name)
+        
+    @classmethod
+    def dict_to_object(cls, dict_):
+        point1 = volmdlr.Point3D.dict_to_object(dict_['point1'])
+        point2 = volmdlr.Point3D.dict_to_object(dict_['point2'])
+        point3 = volmdlr.Point3D.dict_to_object(dict_['point3'])
+        return cls(point1, point2, point3, dict_['name'])
     
     def area(self):
         # Formula explained here: https://www.triangle-calculator.com/?what=vc
