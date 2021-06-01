@@ -513,7 +513,9 @@ class Step:
                     volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
                         arguments, object_dict)
                     points3d.append(volmdlr_object)
-        return points3d
+                    
+        #remove first point because it refers to origin            
+        return points3d[1:]
 
     def plot_data(self):
         if not self.upd_graph:

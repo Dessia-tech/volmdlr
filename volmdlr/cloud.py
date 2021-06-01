@@ -76,15 +76,16 @@ class PointCloud3D(dc.DessiaObject):
         vec1, vec2 = xyz_vect[posmax-2], xyz_vect[posmax-1]
         subcloud2d = [subcloud3d[n].to_2d(position_plane[n]*normal, vec1, vec2) for n in range(resolution)]
         
-        polygon2d = [cloud2d.to_polygon() for cloud2d in subcloud2d]
+        initial_polygon2d = [cloud2d.to_polygon() for cloud2d in subcloud2d]
         
-        polygon3d = []
-        for pos_plane, poly in zip(position_plane, polygon2d) :
+        polygon2d, polygon3d = [], []
+        for pos_plane, poly in zip(position_plane, initial_polygon2d) :
             if poly is None :
                 resolution -= 1
             else :
+                polygon2d.append(poly)
                 polygon3d.append(poly.to_3d(pos_plane*normal, vec1, vec2))
-         
+                
         faces = []
         max_poly_resolution = int(sum([len(poly.points) for poly in polygon3d])/len(polygon3d))+1
         for n in range(resolution):
@@ -95,8 +96,9 @@ class PointCloud3D(dc.DessiaObject):
                 faces.append(vmf.PlaneFace3D(plane3d, surf2d))
             if n != resolution-1:
                 poly2 = polygon3d[n+1]
-                coords = poly1.sewing_with(poly2, resolution = max_poly_resolution)
+                # coords = poly1.sewing_with(poly2, resolution = max_poly_resolution)
                 # coords = poly1.sewing_with2(poly2, vec1, vec2, normal)
+                coords = poly1.sewing_with3(poly2, vec1, vec2, normal, resolution = max_poly_resolution)
                 for trio in coords :
                     faces.append(vmf.Triangle3D(trio[0], trio[1], trio[2]))   
         

@@ -1750,7 +1750,7 @@ class Contour3D(Contour, Wire3D):
         return content, current_id
 
     def average_center_point(self):
-        nb = len(self.tessel_points)
+        nb = len(self.points)
         x = npy.sum([p[0] for p in self.points]) / nb
         y = npy.sum([p[1] for p in self.points]) / nb
         z = npy.sum([p[2] for p in self.points]) / nb
@@ -1774,7 +1774,7 @@ class Contour3D(Contour, Wire3D):
             new_edges = [edge.translation(offset, copy=True) for edge in
                          self.primitives]
             # new_points = [p.translation(offset, copy=True) for p in self.points]
-            return Contour3D(new_edges, None, self.name)
+            return Contour3D(new_edges, self.name)
         else:
             for edge in self.primitives:
                 edge.translation(offset, copy=False)
@@ -2232,7 +2232,7 @@ class ClosedPolygon3D(Contour3D):
         self.points = points
         self.line_segments = self._line_segments()
 
-        Contour2D.__init__(self, self.line_segments, name)
+        Contour3D.__init__(self, self.line_segments, name)
 
     def _line_segments(self):
         lines = []
@@ -2261,6 +2261,16 @@ class ClosedPolygon3D(Contour3D):
         for line_segment in self.line_segments:
             ax = line_segment.plot(ax=ax, color=color, alpha=alpha)
         return ax
+    
+    def translation(self, offset, copy=True):
+        if copy:
+            new_points = [point.translation(offset, copy=True) for point in
+                          self.points]
+            return ClosedPolygon3D(new_points, self.name)
+        else:
+            for point in self.points:
+                point.translation(offset, copy=False)
+            
     
     # def sewing_with(self, other_poly3d):
     #     triangles = []
@@ -2373,5 +2383,74 @@ class ClosedPolygon3D(Contour3D):
                                                 new_poly2.points[1:]+new_poly2.points[:1],
                                                 new_poly1.points[1:]+new_poly1.points[:1]):
             triangles.append([point1, point2, other_point])
+           
+        return triangles
+    
+    def sewing_with3(self, other_poly3d, x, y, normal, resolution = 20):
+        self_center, other_center = self.average_center_point(), other_poly3d.average_center_point()
+        
+        self_poly2d, other_poly2d = self.to_2d(self_center, x, y), other_poly3d.to_2d(other_center, x, y)
+        self_center2d, other_center2d = self_poly2d.center_of_mass(), other_poly2d.center_of_mass()
+        self_poly2d.translation(-self_center2d,copy=False)
+        other_poly2d.translation(-other_center2d,copy=False)
+        
+        
+        bbox_self2d, bbox_other2d = self_poly2d.bounding_rectangle(), other_poly2d.bounding_rectangle()
+        position = [abs(value) for value in bbox_self2d] + [abs(value) for value in bbox_other2d]
+        max_scale = 2*max(position)
+        
+        lines = [volmdlr.edges.LineSegment2D(volmdlr.O2D, max_scale*(volmdlr.X2D*math.sin(n*2*math.pi/resolution) +
+                                             volmdlr.Y2D*math.cos(n*2*math.pi/resolution))
+                                             ) for n in range (resolution)]
+        
+        # fig, ax = plt.subplots()
+        # self_poly2d.plot(ax=ax)        
+        # other_poly2d.plot(ax=ax)
+        # volmdlr.O3D.plot(ax=ax, color='b')
+        # for l in lines :
+        #     l.plot(ax=ax)
+            
+        # lines[0].plot(ax=ax, color='r')
+        # lines[1].plot(ax=ax, color='b')
+        # lines[2].plot(ax=ax, color='y')
+        # lines[-1].plot(ax=ax, color='g')
+        
+        self_new_points, other_new_points = [], []
+        for l in lines :
+            for self_line in self_poly2d.line_segments:
+                intersect = l.linesegment_intersections(self_line)
+                if intersect :
+                    self_new_points.extend(intersect)
+                    break
+                
+            for other_line in other_poly2d.line_segments:
+                intersect = l.linesegment_intersections(other_line)
+                if intersect :
+                    other_new_points.extend(intersect)
+                    break
+                
+        # for pt in self_new_points :
+        #     pt.plot(ax=ax, color='m')
+            
+        # for pt in other_new_points :
+        #     pt.plot(ax=ax, color='r')
+                
+        new_self_poly2d, new_other_poly2d = ClosedPolygon2D(self_new_points), ClosedPolygon2D(other_new_points)
+        new_self_poly2d.translation(self_center2d,copy=False)
+        new_other_poly2d.translation(other_center2d,copy=False)
+        
+        new_poly1, new_poly2 = new_self_poly2d.to_3d(self_center, x, y), new_other_poly2d.to_3d(other_center, x, y)
+        
+            
+        triangles = []
+        for point1, point2, other_point in zip(new_poly1.points, 
+                                               new_poly1.points[1:]+new_poly1.points[:1],
+                                               new_poly2.points):
+            triangles.append([point1, point2, other_point])
+                
+        for point1, point2, other_point in zip(new_poly2.points,
+                                                new_poly2.points[1:]+new_poly2.points[:1],
+                                                new_poly1.points[1:]+new_poly1.points[:1]):
+            triangles.append([other_point, point2, point1])
            
         return triangles

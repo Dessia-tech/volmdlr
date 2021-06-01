@@ -105,34 +105,33 @@ class Edge(dc.DessiaObject):
             p1 = object_dict[
                 arguments[1]]  # on part du principe que p1 suivant majordir
             p2 = object_dict[arguments[2]]
-            if p1 == p2:
-                angle = 5 * math.pi / 4
-                xtra = volmdlr.Point3D((majorax * math.cos(math.pi / 2),
-                                        minorax * math.sin(math.pi / 2), 0))
-                extra = frame.old_coordinates(xtra)
+            # if p1 == p2:
+            #     angle = 5 * math.pi / 4
+            #     xtra = volmdlr.Point3D(majorax * math.cos(math.pi / 2),
+            #                            minorax * math.sin(math.pi / 2), 0)
+            #     extra = frame.old_coordinates(xtra)
+            # else:
+            #     extra = None
+            ## Positionnement des points dans leur frame
+            p1_new, p2_new = frame.new_coordinates(
+                p1), frame.new_coordinates(p2)
+            # Angle pour le p1
+            u1, u2 = p1_new.x / majorax, p1_new.y / minorax
+            theta1 = volmdlr.core.sin_cos_angle(u1, u2)
+            # Angle pour le p2
+            u3, u4 = p2_new.x / majorax, p2_new.y / minorax
+            theta2 = volmdlr.core.sin_cos_angle(u3, u4)
+
+            if theta1 > theta2:  # sens trigo
+                angle = math.pi + (theta1 + theta2) / 2
             else:
-                extra = None
-                ## Positionnement des points dans leur frame
-                p1_new, p2_new = frame.new_coordinates(
-                    p1), frame.new_coordinates(p2)
-                # Angle pour le p1
-                u1, u2 = p1_new.vector[0] / majorax, p1_new.vector[1] / minorax
-                theta1 = volmdlr.sin_cos_angle(u1, u2)
-                # Angle pour le p2
-                u3, u4 = p2_new.vector[0] / majorax, p2_new.vector[1] / minorax
-                theta2 = volmdlr.sin_cos_angle(u3, u4)
+                angle = (theta1 + theta2) / 2
 
-                if theta1 > theta2:  # sens trigo
-                    angle = math.pi + (theta1 + theta2) / 2
-                else:
-                    angle = (theta1 + theta2) / 2
-
-            p_3 = volmdlr.Point3D(
-                (majorax * math.cos(angle), minorax * math.sin(angle), 0))
+            p_3 = volmdlr.Point3D(majorax * math.cos(angle), 
+                                  minorax * math.sin(angle), 0)
             p3 = frame.old_coordinates(p_3)
 
-            arcellipse = ArcEllipse3D(p1, p3, p2, center, majordir, normal,
-                                      arguments[0][1:-1], extra)
+            arcellipse = ArcEllipse3D(p1, p3, p2, center, majordir, arguments[0][1:-1])
 
             return arcellipse
 
@@ -1572,16 +1571,13 @@ class ArcEllipse2D(Edge):
         self.theta = theta
 
         # Angle pour start
-        u1, u2 = start_new.vector[0] / self.Gradius, start_new.vector[
-            1] / self.Sradius
+        u1, u2 = start_new.x / self.Gradius, start_new.y / self.Sradius
         angle1 = volmdlr.core.sin_cos_angle(u1, u2)
         # Angle pour end
-        u3, u4 = end_new.vector[0] / self.Gradius, end_new.vector[
-            1] / self.Sradius
+        u3, u4 = end_new.x / self.Gradius, end_new.y / self.Sradius
         angle2 = volmdlr.core.sin_cos_angle(u3, u4)
         # Angle pour interior
-        u5, u6 = interior_new.vector[0] / self.Gradius, interior_new.vector[
-            1] / self.Sradius
+        u5, u6 = interior_new.x / self.Gradius, interior_new.y / self.Sradius
         anglei = volmdlr.core.sin_cos_angle(u5, u6)
 
         # Going trigo/clock wise from start to interior
@@ -1912,6 +1908,7 @@ class LineSegment3D(LineSegment):
 
     def __init__(self, start: volmdlr.Point3D, end: volmdlr.Point3D,
                  name: str = ''):
+        self.points = [start, end]
         LineSegment.__init__(self, start=start, end=end, name=name)
         self.bounding_box = self._bounding_box()
 
@@ -2223,8 +2220,8 @@ class LineSegment3D(LineSegment):
         # ptA = k*u + c*v + ptC
         res = (ptA - ptC).vector
         x, y, z = res[0], res[1], res[2]
-        u1, u2, u3 = u.vector[0], u.vector[1], u.vector[2]
-        v1, v2, v3 = v.vector[0], v.vector[1], v.vector[2]
+        u1, u2, u3 = u.x, u.y, u.z
+        v1, v2, v3 = v.x, v.y, v.z
 
         if (u1 * v2 - v1 * u2) != 0 and u1 != 0:
             c = (y * u1 - x * u2) / (u1 * v2 - v1 * u2)
@@ -3415,17 +3412,14 @@ class ArcEllipse3D(Edge):
         self.theta = theta
 
         # Angle pour start
-        u1, u2 = start_new.vector[0] / self.Gradius, start_new.vector[
-            1] / self.Sradius
-        angle1 = volmdlr.sin_cos_angle(u1, u2)
+        u1, u2 = start_new.x / self.Gradius, start_new.y / self.Sradius
+        angle1 = volmdlr.core.sin_cos_angle(u1, u2)
         # Angle pour end
-        u3, u4 = end_new.vector[0] / self.Gradius, end_new.vector[
-            1] / self.Sradius
-        angle2 = volmdlr.sin_cos_angle(u3, u4)
+        u3, u4 = end_new.x / self.Gradius, end_new.y / self.Sradius
+        angle2 = volmdlr.core.sin_cos_angle(u3, u4)
         # Angle pour interior
-        u5, u6 = interior_new.vector[0] / self.Gradius, interior_new.vector[
-            1] / self.Sradius
-        anglei = volmdlr.sin_cos_angle(u5, u6)
+        u5, u6 = interior_new.x / self.Gradius, interior_new.y / self.Sradius
+        anglei = volmdlr.core.sin_cos_angle(u5, u6)
 
         # Going trigo/clock wise from start to interior
         if anglei < angle1:
@@ -3459,9 +3453,8 @@ class ArcEllipse3D(Edge):
         else:
             self.offset_angle = angle2
 
-        volmdlr.core.Primitive3D.__init__(self,
-                                          basis_primitives=self.polygon_points(),
-                                          name=name)
+        volmdlr.core.CompositePrimitive3D.__init__(self, primitives=self.polygon_points(),
+                                                   name=name)
 
     def _get_points(self):
         return self.polygon_points()
@@ -3471,20 +3464,16 @@ class ArcEllipse3D(Edge):
     def polygon_points(self, resolution_for_ellipse=40):
         number_points_tesselation = math.ceil(
             resolution_for_ellipse * abs(0.5 * self.angle / math.pi))
+        
+        frame3d = volmdlr.Frame3D(self.center, self.major_dir,
+                                  self.minor_dir, self.normal)
 
-        plane3d = volmdlr.faces.Plane3D(self.center, self.major_dir,
-                                        self.minor_dir,
-                                        self.normal)
-        frame3d = volmdlr.Frame3D(self.center, plane3d.vectors[0],
-                                  plane3d.vectors[1],
-                                  plane3d.normal)
-
-        polygon_points_3D = [volmdlr.Point3D((self.Gradius * math.cos(
+        polygon_points_3D = [volmdlr.Point3D(self.Gradius * math.cos(
             self.offset_angle + self.angle * i / (number_points_tesselation)),
                                               self.Sradius * math.sin(
                                                   self.offset_angle + self.angle * i / (
                                                       number_points_tesselation)),
-                                              0)) for i in
+                                              0) for i in
                              range(number_points_tesselation + 1)]
 
         global_points = []
@@ -3499,15 +3488,9 @@ class ArcEllipse3D(Edge):
         pe = self.end.to_2d(plane_origin, x, y)
         center = self.center.to_2d(plane_origin, x, y)
 
-        if self.extra is None:
-            pextra = None
-        else:
-            pextra = self.extra.to_2d(plane_origin, x, y)
-
         maj_dir2d = self.major_dir.to_2d(plane_origin, x, y)
         maj_dir2d.normalize()
-        return ArcEllipse2D(ps, pi, pe, center, maj_dir2d, name=self.name,
-                            extra=pextra)
+        return ArcEllipse2D(ps, pi, pe, center, maj_dir2d, name=self.name)
 
     def length(self):
         return self.angle * math.sqrt(

@@ -119,6 +119,7 @@ class Surface2D(volmdlr.core.Primitive2D):
             iteration_surfaces2 = []
             for surface in iteration_surfaces:
                 line_cutted_surfaces = surface.cut_by_line(line)
+                
                 llcs = len(line_cutted_surfaces)
 
                 if llcs == 1:
@@ -2058,7 +2059,6 @@ class Face3D(volmdlr.core.Primitive3D):
             surfaces = self.surface2d.split_by_lines(lines_y)
         else:
             surfaces = [self.surface2d]
-
         mesh2d = surfaces[0].triangulation()
         for subsurface in surfaces[1:]:
             mesh2d += subsurface.triangulation()
@@ -2181,6 +2181,7 @@ class PlaneFace3D(Face3D):
 
     @classmethod
     def dict_to_object(cls, dict_):
+        print('>>>>>>>>>>>>>>>>', dict_)
         plane3d = Plane3D.dict_to_object(dict_['surface3d'])
         surface2d = Surface2D.dict_to_object(dict_['surface2d'])
         return cls(plane3d, surface2d, dict_['name'])
@@ -2598,7 +2599,7 @@ class CylindricalFace3D(Face3D):
         r1, r2 = self.radius, other_cyl.radius
         min_h1, min_theta1, max_h1, max_theta1 = self.minimum_maximum(
             self.contours2d[0], r1)
-
+        
         n1 = self.normal
         u1 = self.cylindricalsurface3d.frame.u
         v1 = self.cylindricalsurface3d.frame.v

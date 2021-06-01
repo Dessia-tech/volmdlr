@@ -13,7 +13,27 @@ import matplotlib.pyplot as plt
 
 
 ################### READ STL
+# cloud3d_assembly_forbidden = volmdlr.cloud.PointCloud3D.from_stl('E:\\RENAULT\\3D\\Moteur_STL\\assembly_forbidden.stl')
+# faces_assembly_forbidden = cloud3d_assembly_forbidden.subdescription_2d()
 
+# cloud3d_engine_body = volmdlr.cloud.PointCloud3D.from_stl('E:\\RENAULT\\3D\\Moteur_STL\\engine_body_sans_bdme8.stl')
+# faces_engine_body = cloud3d_engine_body.subdescription_2d()
+
+# cloud3d_side_part = volmdlr.cloud.PointCloud3D.from_stl('E:\\RENAULT\\3D\\Moteur_STL\\side_part.stl')
+# faces_side_part = cloud3d_side_part.subdescription_2d(resolution=20)
+
+# # cloud3d_wind_part = volmdlr.cloud.PointCloud3D.from_stl('E:\\RENAULT\\3D\\Moteur_STL\\wind_part.stl')
+# # faces_wind_part = cloud3d_wind_part.subdescription_2d(resolution=20)
+
+# # # volum = volmdlr.core.VolumeModel(faces_assembly_forbidden + #faces_engine_body +
+# # #                                   faces_side_part + faces_wind_part)
+# volum = volmdlr.core.VolumeModel(faces_side_part)
+
+# # volum.save_to_file('engine_body_sans_bdme8')
+
+# # new_volum = volmdlr.core.VolumeModel.load_from_file('wind_part.json')
+
+# volum.babylonjs()
 
 ################### DEBUG
 # points_poly0 = [vm.Point3D(-0.02785286331176758, 0.14365164184570312, 0.16285931396484374),
@@ -237,3 +257,20 @@ import matplotlib.pyplot as plt
     
 # volum = volmdlr.core.VolumeModel(faces)
 # volum.babylonjs()  
+
+
+
+
+
+
+
+# side_part = volmdlr.core.VolumeModel.load_from_file('side_part.json')
+
+assembly_forbidden = volmdlr.core.VolumeModel.load_from_file('assembly_forbidden.json')
+
+# wind_part = volmdlr.core.VolumeModel.load_from_file('wind_part.json')
+
+# all_volum = volmdlr.core.VolumeModel(side_part.primitives + assembly_forbidden.primitives)
+
+# all_volum.babylonjs()
+
