@@ -740,6 +740,12 @@ class Vector3D(Vector):
         and math.isclose(self.y, other_vector.y, abs_tol=1e-06) \
         and math.isclose(self.z, other_vector.z, abs_tol=1e-06)
 
+
+    @classmethod
+    def dict_to_object(cls, dict_):
+        return Vector3D(dict_['x'], dict_['y'], dict_['z'], dict_['name'])
+
+
     def dot(self, other_vector):
         return CVector3DDot(self.x, self.y, self.z,
                             other_vector.x, other_vector.y, other_vector.z)
@@ -1007,6 +1013,9 @@ class Point3D(Vector3D):
     def copy(self):
         return Point3D(self.x, self.y, self.z)
 
+    @classmethod
+    def dict_to_object(cls, dict_):
+        return Point3D(dict_['x'], dict_['y'], dict_['z'], dict_['name'])
 
     def plot(self, ax=None, color='k', alpha=1, marker='o'):
 
