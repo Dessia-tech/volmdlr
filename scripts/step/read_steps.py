@@ -14,13 +14,14 @@ for step_file in [
                   # 'cone1.step',
                   # 'cone2.step',
                   # 'cylinder.step',
-                    'STEP_test1.stp',
+                    # 'STEP_test1.stp',
                   # 'block.step',
                    # 'iso4162M16x55.step',
                    # 'aircraft_engine.step'
                    # 'OCIM0BDME8.stp',
                   # 'boite_vitesse.stp'
-                  'engine_body.stp'
+                  # 'engine_body.stp'
+                  'HS00000528568_SIEGE 1ERE_DOUBLE_DROITE.stp'
                   ]:
     print('filename: ', step_file)
     # step = volmdlr.step.Step(step_file)
