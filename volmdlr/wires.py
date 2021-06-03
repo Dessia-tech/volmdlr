@@ -2276,62 +2276,6 @@ class ClosedPolygon3D(Contour3D):
         points2d = [point.to_2d(plane_origin, x, y) for point in self.points]
         return ClosedPolygon2D(points2d)
     
-    # def sewing_with_different_points(self, other_poly3d, x, y, normal):
-    #     poly1, other_poly2d = self.to_2d(volmdlr.O3D, x, y), other_poly3d.to_2d(volmdlr.O3D, x, y)
-    #     triangles = []
-    #     #first loop
-    #     for point1, point2, pt12d, pt22d in zip(self.points+[self.points[0]], 
-    #                                             self.points[1:]+self.points[:2],
-    #                                             poly1.points+[poly1.points[0]],
-    #                                             poly1.points[1:]+poly1.points[:2]):
-    #         mean_pt = 0.5*(point1 + point2)
-    #         pt12_vector = point2-point1
-    #         pt12_vector.normalize()
-    #         #if at least one point is in the other poly
-    #         if other_poly2d.point_belongs(pt12d) or other_poly2d.point_belongs(pt22d):
-    #             search_vector = pt12_vector.cross(normal)
-    #         else :
-    #             search_vector = -pt12_vector.cross(normal)
-                    
-    #         avg_dist_min, closestpoint = None, None
-    #         for pt_other in other_poly3d.points:
-    #             vect_min = pt_other-mean_pt
-    #             if vect_min.dot(search_vector)>0:
-    #                 dist_min = mean_pt.point_distance(pt_other)
-    #                 if avg_dist_min is None :
-    #                     avg_dist_min, closestpoint = dist_min, pt_other
-    #                 else :
-    #                     if dist_min < avg_dist_min :
-    #                         avg_dist_min, closestpoint = dist_min, pt_other
-    #         triangles.append([point1, point2, closestpoint])
-    #     #second loop
-    #     for point1, point2, pt12d, pt22d in zip(other_poly3d.points+[other_poly3d.points[0]],
-    #                                             other_poly3d.points[1:]+other_poly3d.points[:2],
-    #                                             other_poly3d.points+[other_poly3d.points[0]],
-    #                                             other_poly3d.points[1:]+other_poly3d.points[:2]):
-    #         mean_pt = 0.5*(point1 + point2)
-    #         pt12_vector = point2-point1
-    #         pt12_vector.normalize()
-    #         #if at least one point is in the other poly
-    #         if poly1.point_belongs(pt12d) or poly1.point_belongs(pt22d):
-    #             search_vector = pt12_vector.cross(normal)
-    #         else :
-    #             search_vector = -pt12_vector.cross(normal)
-            
-    #         avg_dist_min, closestpoint = None, None
-    #         for pt_self in self.points:
-    #             vect_min = pt_self-mean_pt
-    #             if vect_min.dot(search_vector)>0:
-    #                 dist_min = mean_pt.point_distance(pt_self)
-    #                 if avg_dist_min is None :
-    #                     avg_dist_min, closestpoint = dist_min, pt_self
-    #                 else :
-    #                     if dist_min < avg_dist_min :
-    #                         avg_dist_min, closestpoint = dist_min, pt_self
-    #         triangles.append([point1, point2, closestpoint])
-           
-    #     return triangles
-    
     def sewing_with(self, other_poly3d, x, y, normal, resolution = 20):
         self_center, other_center = self.average_center_point(), other_poly3d.average_center_point()
         
@@ -2349,18 +2293,6 @@ class ClosedPolygon3D(Contour3D):
                                              volmdlr.Y2D*math.cos(n*2*math.pi/resolution))
                                              ) for n in range (resolution)]
         
-        # fig, ax = plt.subplots()
-        # self_poly2d.plot(ax=ax)        
-        # other_poly2d.plot(ax=ax)
-        # volmdlr.O3D.plot(ax=ax, color='b')
-        # for l in lines :
-        #     l.plot(ax=ax)
-            
-        # lines[0].plot(ax=ax, color='r')
-        # lines[1].plot(ax=ax, color='b')
-        # lines[2].plot(ax=ax, color='y')
-        # lines[-1].plot(ax=ax, color='g')
-        
         self_new_points, other_new_points = [], []
         for l in lines :
             for self_line in self_poly2d.line_segments:
@@ -2374,12 +2306,6 @@ class ClosedPolygon3D(Contour3D):
                 if intersect :
                     other_new_points.extend(intersect)
                     break
-                
-        # for pt in self_new_points :
-        #     pt.plot(ax=ax, color='m')
-            
-        # for pt in other_new_points :
-        #     pt.plot(ax=ax, color='r')
                 
         new_self_poly2d, new_other_poly2d = ClosedPolygon2D(self_new_points), ClosedPolygon2D(other_new_points)
         new_self_poly2d.translation(self_center2d,copy=False)

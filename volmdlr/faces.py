@@ -2181,7 +2181,6 @@ class PlaneFace3D(Face3D):
 
     @classmethod
     def dict_to_object(cls, dict_):
-        print('>>>>>>>>>>>>>>>>', dict_)
         plane3d = Plane3D.dict_to_object(dict_['surface3d'])
         surface2d = Surface2D.dict_to_object(dict_['surface2d'])
         return cls(plane3d, surface2d, dict_['name'])
