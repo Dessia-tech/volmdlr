@@ -92,8 +92,8 @@ babylon_unpacker_body_template = Template(
                                               new BABYLON.Vector3(babylon_data['center'][0],
                                                                   babylon_data['center'][1],
                                                                   babylon_data['center'][2]), scene);
-      	camera.wheelPrecision=50./babylon_data['max_length']
-      	camera.pinchPrecision=50./babylon_data['max_length']
+      	camera.wheelPrecision=100./babylon_data['max_length']
+      	camera.pinchPrecision=100./babylon_data['max_length']
       	camera.panningSensibility=800./babylon_data['max_length'];
       	camera.minZ=0.01*babylon_data['max_length'];
       	camera.attachControl(canvas);
