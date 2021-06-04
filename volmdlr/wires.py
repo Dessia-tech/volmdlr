@@ -201,14 +201,10 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
 
     def plot_data(self, name: str = '', fill=None, color='black',
                   stroke_width: float = 1, opacity: float = 1):
-        plot_data = {}
-        plot_data['name'] = name
-        plot_data['type'] = 'wire'
-        plot_data['plot_data'] = []
+        plot_data = []
+
         for item in self.primitives:
-            plot_data['plot_data'].append(item.plot_data(color=color,
-                                                         stroke_width=stroke_width,
-                                                         opacity=opacity))
+            plot_data.append(item.plot_data())
         return plot_data
 
     def line_intersections(self, line: 'volmdlr.edges.Line2D'):
