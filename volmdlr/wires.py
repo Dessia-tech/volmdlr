@@ -2326,3 +2326,30 @@ class ClosedPolygon3D(Contour3D):
             triangles.append([other_point, point2, point1])
            
         return triangles
+    def sewing(self,other_poly3d, x, y, normal):
+        self_center, other_center = self.average_center_point(), other_poly3d.average_center_point()
+        
+        self_poly2d, other_poly2d = self.to_2d(self_center, x, y), other_poly3d.to_2d(other_center, x, y)
+        self_center2d, other_center2d = self_poly2d.center_of_mass(), other_poly2d.center_of_mass()
+        self_poly2d.translation(-self_center2d,copy=False)
+        other_poly2d.translation(-other_center2d,copy=False)
+        
+        # poly1, poly2 = self_poly2d.to_3d(self_center, x, y), other_poly2d.to_3d(other_center, x, y)
+        triangles = []
+        # not_finished = True
+        
+        # while not_finished:
+            
+            
+        for i_point_poly1, point_poly1 in enumerate(self_poly2d.points):
+            if i_point_poly1==0:
+                list_dist = []
+                for point_other_poly2d in other_poly2d:
+                    l = point_other_poly2d-point_poly1
+                    if not 
+                    list_dist.append(point_other_poly2d.point_distance(point_poly1))
+                    
+            
+            
+        
+        
