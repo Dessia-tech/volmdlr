@@ -70,6 +70,10 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         outer_polygon = self.outer_contour.to_polygon(angle_resolution=10)
 
+        if not self.inner_contours:# No holes
+            return outer_polygon.triangulation()
+
+
         points = [volmdlr.display.Node2D(*p) for p in outer_polygon.points]
         vertices = [(p.x, p.y) for p in points]
         n = len(outer_polygon.points)
