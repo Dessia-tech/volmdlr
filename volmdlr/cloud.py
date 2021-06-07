@@ -45,7 +45,7 @@ class PointCloud3D(dc.DessiaObject):
         return PointCloud3D(extracted_points)
         
     
-    def subdescription_2d(self, resolution = 10, normal = None):
+    def to_shell(self, resolution = 10, normal = None):
         #normal has to be a fondamental vector : X3D, Y3D or Z3D
         bbox = self._bounding_box()
         xyz_bbox = [[bbox.xmin, bbox.xmax], [bbox.ymin,bbox.ymax], [bbox.zmin,bbox.zmax]]
@@ -94,7 +94,7 @@ class PointCloud3D(dc.DessiaObject):
                 for trio in coords :
                     faces.append(vmf.Triangle3D(trio[0], trio[1], trio[2]))   
         
-        return faces
+        return vmf.ClosedShell3D(faces)
 
     @classmethod        
     def from_step(cls, step_file:str):
