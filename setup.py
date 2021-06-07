@@ -125,6 +125,6 @@ setup(name='volmdlr',
                         'networkx',
                         'triangle',
                         'plot_data>=0.5.11',
-                        'numpy-stl'],
+                        'kaitaistruct'],
       classifiers=['Topic :: Scientific/Engineering','Development Status :: 3 - Alpha'],
       ext_modules = cythonize(["volmdlr/core_compiled.pyx"]))
