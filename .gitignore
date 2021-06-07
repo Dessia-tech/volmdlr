@@ -4,7 +4,6 @@
 # CAD files
 *.fcstd
 *.fcstd1
-*.stl
 
 
 # Python gitignore
