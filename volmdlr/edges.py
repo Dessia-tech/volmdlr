@@ -668,6 +668,9 @@ class LineSegment2D(LineSegment):
 
     def length(self):
         return self.end.point_distance(self.start)
+    
+    def middle_point(self):
+        return 0.5*(self.start + self.end)
 
     def point_at_abscissa(self, curvilinear_abscissa):
         return self.start + self.unit_direction_vector() * curvilinear_abscissa
@@ -729,8 +732,11 @@ class LineSegment2D(LineSegment):
             return []
 
     def linesegment_intersections(self, linesegment: 'LineSegment2D'):
+        """
+        touching linesegments does not intersect
+        """
         point = volmdlr.Point2D.line_intersection(self, linesegment)
-        if point is not None:
+        if point and (point != self.start) and (point != self.end):
             point_projection1, _ = self.point_projection(point)
             if point_projection1 is None:
                 return []
