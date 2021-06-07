@@ -2066,7 +2066,8 @@ class Face3D(volmdlr.core.Primitive3D):
             surfaces = [self.surface2d]
         mesh2d = surfaces[0].triangulation()
         for subsurface in surfaces[1:]:
-            mesh2d += subsurface.triangulation()
+            # mesh2d += subsurface.triangulation()
+            mesh2d.add_from_mesh(subsurface.triangulation())
 
         return vmd.DisplayMesh3D(
             [vmd.Node3D(*self.surface3d.point2d_to_3d(p)) for p in
@@ -3955,7 +3956,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         for i, face in enumerate(self.faces):
             try:
                 face_mesh = face.triangulation()
-                mesh += face_mesh
+                mesh.add_from_mesh(face_mesh)
             except NotImplementedError:
                 print('Warning: a face has been skipped in rendering')
         return mesh
