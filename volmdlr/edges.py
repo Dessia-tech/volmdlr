@@ -1916,7 +1916,15 @@ class LineSegment3D(LineSegment):
                  name: str = ''):
         self.points = [start, end]
         LineSegment.__init__(self, start=start, end=end, name=name)
-        self.bounding_box = self._bounding_box()
+        
+        self._utd_bounding_box = False
+
+    @property
+    def bounding_box(self):
+        if not self._utd_bounding_box:
+            self._bbox = self._bounding_box()
+            self._utd_bounding_box = True
+        return self._bbox
 
     def __hash__(self):
         return 2 + hash(self.start) + hash(self.end)
@@ -1928,7 +1936,6 @@ class LineSegment3D(LineSegment):
                 and self.end == other_linesegment3d.end)
 
     def _bounding_box(self):
-        points = [self.start, self.end]
 
         xmin = min(self.start.x, self.end.x)
         xmax = max(self.start.x, self.end.x)

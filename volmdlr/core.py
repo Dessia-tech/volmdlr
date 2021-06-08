@@ -547,14 +547,7 @@ class BoundingBox(dc.DessiaObject):
         self.ymax = ymax
         self.zmin = zmin
         self.zmax = zmax
-        self.points = [volmdlr.Point3D(self.xmin, self.ymin, self.zmin), \
-                       volmdlr.Point3D(self.xmax, self.ymin, self.zmin), \
-                       volmdlr.Point3D(self.xmax, self.ymax, self.zmin), \
-                       volmdlr.Point3D(self.xmin, self.ymax, self.zmin), \
-                       volmdlr.Point3D(self.xmin, self.ymin, self.zmax), \
-                       volmdlr.Point3D(self.xmax, self.ymin, self.zmax), \
-                       volmdlr.Point3D(self.xmax, self.ymax, self.zmax), \
-                       volmdlr.Point3D(self.xmin, self.ymax, self.zmax)]
+        
         self.center = (self.points[0] + self.points[-2]) / 2
         self.name = name
 
@@ -571,6 +564,17 @@ class BoundingBox(dc.DessiaObject):
 
     def __iter__(self):
         return [self.xmin, self.xmax, self.ymin, self.ymax, self.zmin, self.zmax]
+
+    @property
+    def points(self):
+        return [volmdlr.Point3D(self.xmin, self.ymin, self.zmin), \
+                volmdlr.Point3D(self.xmax, self.ymin, self.zmin), \
+                volmdlr.Point3D(self.xmax, self.ymax, self.zmin), \
+                volmdlr.Point3D(self.xmin, self.ymax, self.zmin), \
+                volmdlr.Point3D(self.xmin, self.ymin, self.zmax), \
+                volmdlr.Point3D(self.xmax, self.ymin, self.zmax), \
+                volmdlr.Point3D(self.xmax, self.ymax, self.zmax), \
+                volmdlr.Point3D(self.xmin, self.ymax, self.zmax)]
 
     def plot(self, ax=None, color=''):
         fig = plt.figure()

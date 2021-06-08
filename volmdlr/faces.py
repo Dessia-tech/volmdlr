@@ -2420,6 +2420,9 @@ class Triangle3D(PlaneFace3D):
                         surface2d=surface2d,
                         name=name)
         
+    def _bounding_box(self):
+        return volmdlr.core.BoundingBox.from_points([self.point1, self.point2, self.point3])
+        
     @classmethod
     def dict_to_object(cls, dict_):
         point1 = volmdlr.Point3D.dict_to_object(dict_['point1'])
@@ -2466,7 +2469,10 @@ class Triangle3D(PlaneFace3D):
 
 
     def triangulation(self):
-        return vmd.DisplayMesh3D([self.point1, self.point2, self.point3], [(0, 1, 2)])
+        return vmd.DisplayMesh3D([vmd.Node3D.from_point(self.point1),
+                                  vmd.Node3D.from_point(self.point2),
+                                  vmd.Node3D.from_point(self.point3)],
+                                 [(0, 1, 2)])
 
 class CylindricalFace3D(Face3D):
     """
@@ -3974,11 +3980,11 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         mesh = vmd.DisplayMesh3D([], [])
         nf = len(self.faces)
         for i, face in enumerate(self.faces):
-            if i % 500 == 0:
-                print(round(i/nf*100), '%')
+            if i % 1000 == 0:
+                print('triangulation', round(i/nf*100), '%')
             try:
                 face_mesh = face.triangulation()
-                mesh.add_from_mesh(face_mesh)
+                mesh.merge_mesh(face_mesh)
             except NotImplementedError:
                 print('Warning: a face has been skipped in rendering')
         return mesh

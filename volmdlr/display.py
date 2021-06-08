@@ -3,6 +3,7 @@
 """
 
 """
+import time# only for debu
 from typing import List, Tuple
 import math
 import matplotlib.pyplot as plt
@@ -20,6 +21,9 @@ class Node2D(volmdlr.Point2D):
         return math.isclose(self.x, other_node.x, abs_tol=1e-06) \
         and math.isclose(self.y, other_node.y, abs_tol=1e-06)
 
+    @classmethod
+    def from_point(cls, point2d):
+        return cls(point2d.x, point2d.y)
 
 class Node3D(volmdlr.Point3D):
     def __hash__(self):
@@ -33,6 +37,10 @@ class Node3D(volmdlr.Point3D):
         and math.isclose(self.y, other_node.y, abs_tol=1e-06) \
         and math.isclose(self.z, other_node.z, abs_tol=1e-06)
 
+    @classmethod
+    def from_point(cls, point3d):
+        return cls(point3d.x, point3d.y, point3d.z)
+
 class DisplayMesh(dc.DessiaObject):
     def __init__(self, points, triangles, name=''):
 
@@ -40,6 +48,7 @@ class DisplayMesh(dc.DessiaObject):
         self.triangles = triangles
         self.name = name
         self._utd_point_index = False
+        self._point_index = {p: i for i, p in enumerate(self.points)}
         
     def check(self):
         npoints = len(self.points)
@@ -55,27 +64,31 @@ class DisplayMesh(dc.DessiaObject):
             self._utd_point_index = True
         return self._point_index
 
-    def add_from_mesh(self, other_mesh):
+    def merge_mesh(self, other_mesh):
         # new_points = self.points[:]
-        new_point_index = self.point_index.copy()
+        # new_point_index = self.point_index.copy()
         ip = len(self.points)
         # point_index
+        # t1 = time.time()
         for point in other_mesh.points:
-            if not point in new_point_index:
-                new_point_index[point] = ip
+            if not point in self._point_index:
+                self._point_index[point] = ip
                 ip += 1
                 self.points.append(point)
 
         # new_triangles = self.triangles[:]
+        # t2 = time.time()
         for i1, i2, i3 in other_mesh.triangles:
             p1 = other_mesh.points[i1]
             p2 = other_mesh.points[i2]
             p3 = other_mesh.points[i3]
-            self.triangles.append((new_point_index[p1],
-                                   new_point_index[p2],
-                                   new_point_index[p3]))
-        self._point_index = new_point_index
-        # return self.__class__(new_points, new_triangles)
+            self.triangles.append((self._point_index[p1],
+                                   self._point_index[p2],
+                                   self._point_index[p3]))
+        # t3 = time.time()
+        # print('t', t2-t1, t3-t2)
+        # self._point_index = new_point_index
+        
 
     def __add__(self, other_mesh):
         new_points = self.points[:]
