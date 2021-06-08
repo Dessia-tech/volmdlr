@@ -2404,21 +2404,20 @@ class Triangle3D(PlaneFace3D):
         self.point2 = point2
         self.point3 = point3
         
-        plane3d = Plane3D.from_3_points(point1, point2, point3)
+        # plane3d = Plane3D.from_3_points(point1, point2, point3)
+        # contour3d = volmdlr.wires.Contour3D([vme.LineSegment3D(point1, point2),
+        #                                      vme.LineSegment3D(point2, point3),
+        #                                      vme.LineSegment3D(point3, point1)])
         
-        contour3d = volmdlr.wires.Contour3D([vme.LineSegment3D(point1, point2),
-                                             vme.LineSegment3D(point2, point3),
-                                             vme.LineSegment3D(point3, point1)])
+        # contour2d = contour3d.to_2d(plane3d.frame.origin, 
+        #                             plane3d.frame.u, plane3d.frame.v)
         
-        contour2d = contour3d.to_2d(plane3d.frame.origin, 
-                                    plane3d.frame.u, plane3d.frame.v)
+        # surface2d = Surface2D(outer_contour=contour2d, inner_contours=[])
         
-        surface2d = Surface2D(outer_contour=contour2d, inner_contours=[])
-        
-        Face3D.__init__(self,
-                        surface3d=plane3d,
-                        surface2d=surface2d,
-                        name=name)
+        # Face3D.__init__(self,
+        #                 surface3d=plane3d,
+        #                 surface2d=surface2d,
+        #                 name=name)
         
     def _bounding_box(self):
         return volmdlr.core.BoundingBox.from_points([self.point1, self.point2, self.point3])
