@@ -114,5 +114,8 @@ class PointCloud2D(dc.DessiaObject):
         return ax
     
     def to_polygon(self):
-        return vmw.ClosedPolygon2D.points_convex_hull(self.points)
-        
+        polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
+        if math.isclose(polygon.area(), 0, abs_tol = 1e-6) :
+            return None
+        else : 
+            return polygon
