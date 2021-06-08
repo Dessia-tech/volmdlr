@@ -2446,6 +2446,25 @@ class Triangle3D(PlaneFace3D):
         # Formula explained here: https://www.triangle-calculator.com/?what=vc
         # Basis = vector point1 to point2d
         return 2*self.area()/self.point1.point_distance(self.point2)
+    
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        if copy:
+            np1 = self.point1.frame_mapping(frame, side, copy=True)
+            np2 = self.point2.frame_mapping(frame, side, copy=True)
+            np3 = self.point3.frame_mapping(frame, side, copy=True)
+            return self.__class__(np1, np2, np3, self.name)
+        else:
+            self.point1.frame_mapping(frame, side, copy=False)
+            self.point2.frame_mapping(frame, side, copy=False)
+            self.point3.frame_mapping(frame, side, copy=False)
+            self.bounding_box = self._bounding_box()
+    
+    def copy(self):
+        return Triangle3D(self.point1.copy(), self.point2.copy(), self.point3.copy(),
+                           self.name)
 
 
     def triangulation(self):

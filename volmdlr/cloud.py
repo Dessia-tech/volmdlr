@@ -61,7 +61,6 @@ class PointCloud3D(dc.DessiaObject):
             for n, vect in enumerate(xyz_vect):
                 if vect == normal :
                     posmax = n
-        
         dist_between_plane = xyz_list[posmax]/(resolution-1)
         position_plane = [xyz_bbox[posmax][0] + n*dist_between_plane for n in range(resolution)]
         
@@ -83,6 +82,7 @@ class PointCloud3D(dc.DessiaObject):
         faces = []
         max_poly_resolution = int(sum([len(poly.points) for poly in polygon3d])/len(polygon3d))+1
         for n in range(resolution):
+            print('sewing polygon', round(n/resolution*100, 2), '%')
             poly1 = polygon3d[n]
             if n == resolution-1 or n == 0:
                 plane3d = vmf.Plane3D.from_plane_vectors(position_plane[n]*normal, vec1, vec2)
@@ -114,5 +114,8 @@ class PointCloud2D(dc.DessiaObject):
         return ax
     
     def to_polygon(self):
-        return vmw.ClosedPolygon2D.points_convex_hull(self.points)
-        
+        polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
+        if math.isclose(polygon.area(), 0, abs_tol = 1e-6) :
+            return None
+        else : 
+            return polygon

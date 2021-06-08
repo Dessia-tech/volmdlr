@@ -46,7 +46,7 @@ class Stl(dc.DessiaObject):
             # print(num_triangles)
             
             triangles = [None] * (num_triangles)
-
+            invalid_triangles = []
             for i in range(num_triangles):
                 if i % 5000 == 0:
                     print('reading stl', round(i/num_triangles*100, 2), '%')
@@ -62,10 +62,18 @@ class Stl(dc.DessiaObject):
                                 distance_multiplier*stream.read_f4le(),
                                 distance_multiplier*stream.read_f4le())
                 # print(p1, p2, p3)
-                triangles[i] = vmf.Triangle3D(p1, p2, p3)
+                try : 
+                    triangles[i] = vmf.Triangle3D(p1, p2, p3)
+                except ZeroDivisionError :
+                    invalid_triangles.append(i)
+                    
     
                 stream.read_u2le()
                 # print(abr)
+        if invalid_triangles :
+            print('invalid_triangles number: ', len(invalid_triangles))
+            for i in invalid_triangles[::-1] :
+                del triangles[i]
         return cls(triangles, name=name)
 
     def save_to_binary_file(self, filepath):
