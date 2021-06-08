@@ -15,6 +15,7 @@ from typing import List
 import volmdlr
 import volmdlr.core
 import volmdlr.edges
+# from volmdlr.faces import CylindricalSurface3D
 # import volmdlr.faces
 import volmdlr.geometry as vmgeo
 
@@ -2308,8 +2309,8 @@ class ClosedPolygon3D(Contour3D):
                     break
                 
         new_self_poly2d, new_other_poly2d = ClosedPolygon2D(self_new_points), ClosedPolygon2D(other_new_points)
-        new_self_poly2d.translation(self_center2d,copy=False)
-        new_other_poly2d.translation(other_center2d,copy=False)
+        new_self_poly2d.translation(self_center2d, copy=False)
+        new_other_poly2d.translation(other_center2d, copy=False)
         
         new_poly1, new_poly2 = new_self_poly2d.to_3d(self_center, x, y), new_other_poly2d.to_3d(other_center, x, y)
         
@@ -2333,23 +2334,80 @@ class ClosedPolygon3D(Contour3D):
         self_center2d, other_center2d = self_poly2d.center_of_mass(), other_poly2d.center_of_mass()
         self_poly2d.translation(-self_center2d,copy=False)
         other_poly2d.translation(-other_center2d,copy=False)
-        
-        # poly1, poly2 = self_poly2d.to_3d(self_center, x, y), other_poly2d.to_3d(other_center, x, y)
         triangles = []
-        # not_finished = True
         
-        # while not_finished:
-            
-            
-        for i_point_poly1, point_poly1 in enumerate(self_poly2d.points):
-            if i_point_poly1==0:
-                list_dist = []
-                for point_other_poly2d in other_poly2d:
-                    l = point_other_poly2d-point_poly1
-                    if not 
-                    list_dist.append(point_other_poly2d.point_distance(point_poly1))
+        dists = []
+        lines = [volmdlr.edges.LineSegment2D(self_poly2d.points[0], point_poly2) for point_poly2 in other_poly2d.points]
+        dict_distances = {(self_poly2d.points[0], point_poly2):self_poly2d.points[0].point_distance(point_poly2) for point_poly2 in other_poly2d.points}
+        for i_line, line in enumerate(lines):
+            for poly2_line in other_poly2d.line_segments:
+                if line.linesegment_intersections(poly2_line):
+                    continue
+                else:
+                    dists.append(list(dict_distances.values())[i_line])
+        min_dist = min(dists)
+        for item in list(dict_distances.items()):
+            if item[1] == min_dist:
+                poly2_start = item[0][1]
+        start_index = other_poly2d.points.index(poly2_start)
+        print(start_index)
+        print(poly2_start)
+        print(other_poly2d.points)
+        print(other_poly2d.points[start_index:]+other_poly2d.points[:start_index])
+        points_poly1 = self_poly2d.points + [self_poly2d.points[0]]
+        points_poly2 = other_poly2d.points[start_index:] + other_poly2d.points[:start_index] + [other_poly2d.points[start_index]]
+        for i, poly1_point in enumerate(points_poly1):
+            for j, poly2_point in enumerate(points_poly2):
+
+
+
+        curent_point_poly1 = 1
+        curent_point_poly2 = 1
+        finished_sewing = False
+        while not finished_sewing:
+            print(curent_point_poly1, curent_point_poly2)
+            triangle1 = ClosedPolygon2D([points_poly1[curent_point_poly1-1], points_poly1[curent_point_poly1],points_poly2[curent_point_poly2-1]], name = 'triangle1')
+            triangle2 = ClosedPolygon2D([points_poly1[curent_point_poly1-1], points_poly2[curent_point_poly2-1],points_poly2[curent_point_poly2]], name = 'triangle2')
+            valid_triangles = []
+            for trgl in [triangle1,triangle2]:
+                valid = True
+                for line in trgl.line_segments:
                     
+                    for poly1_line in self_poly2d.line_segments:
+                        intersection = line.linesegment_intersections(poly1_line)
+                        # print('intersection with poly1')
+                        # print('intersections1: \n', intersection)
+                        if len(intersection)>1:
+                            valid = False
+                            break
+                    for line_poly2 in other_poly2d.line_segments:
+                        intersection = line.linesegment_intersections(line_poly2)
+                        # print('intersection with poly2')
+                        # print('intersections2: \n', intersection)
+                        if len(intersection)>1:
+                            valid = False
+                            break
+                if valid:
+                    valid_triangles.append(trgl)
+            if len(valid_triangles)==1:
+                triangles.append(valid_triangles[0].points)
+                trgl_name = valid_triangles[0].name
+            else:
+                # print(len(valid_triangles))
+                if valid_triangles[0].area()>valid_triangles[1].area():
+                    triangles.append(valid_triangles[0].points)
+                    trgl_name = valid_triangles[0].name
+                else:
+                    triangles.append(valid_triangles[1].points)
+                    trgl_name = valid_triangles[1].name
+            if trgl_name == 'triangle1':
+                if curent_point_poly1<len(points_poly1)-1:
+                    curent_point_poly1 +=  1
+            else:
+                if curent_point_poly2<len(points_poly2)-1:
+                    curent_point_poly2 +=  1
             
+            if curent_point_poly1 == len(points_poly1)-1 and curent_point_poly2 == len(points_poly2)-1:
+                finished_sewing = True
             
-        
-        
+        return triangles

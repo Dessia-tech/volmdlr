@@ -43,8 +43,17 @@ vec1, vec2 = vm.X3D, vm.Y3D
 normal = vm.Z3D
 faces=[]
 coords = polygon1.sewing_with(polygon2, vec1, vec2, normal)
-for trio in coords :
-    faces.append(vmf.Triangle3D(trio[0], trio[1], trio[2]))
+# coords = polygon1.sewing(polygon2, vec1, vec2, normal)
+# for trio in coords :
+#     faces.append(vmf.Triangle3D(trio[0], trio[1], trio[2]))
 
-volum = volmdlr.core.VolumeModel(faces)
-volum.babylonjs()  
+# volum = volmdlr.core.VolumeModel(faces)
+# volum.babylonjs()  
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+polygon1.plot(ax=ax, color='g')
+polygon2.plot(ax=ax, color='r')
+    # volum = volmdlr.core.VolumeModel(cloud_faces)
+    # faces.extend(cloud_faces)
+    # volum.save_to_file(file)
