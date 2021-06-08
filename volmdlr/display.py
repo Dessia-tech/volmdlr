@@ -34,15 +34,12 @@ class Node3D(volmdlr.Point3D):
         and math.isclose(self.z, other_node.z, abs_tol=1e-06)
 
 class DisplayMesh(dc.DessiaObject):
-    def __init__(self, points, triangles, edges=None, name=''):
+    def __init__(self, points, triangles, name=''):
 
         self.points = points
         self.triangles = triangles
-        if edges is None:
-            edges = []
-        self.edges = edges
         self.name = name
-        
+        self._utd_point_index = False
         
     def check(self):
         npoints = len(self.points)
@@ -50,12 +47,39 @@ class DisplayMesh(dc.DessiaObject):
             if max(triangle) >= npoints:
                 return False
         return True
-            
+        
+    @property    
+    def point_index(self):
+        if not self._utd_point_index:
+            self._point_index = {p: i for i, p in enumerate(self.points)}
+            self._utd_point_index = True
+        return self._point_index
+
+    def add_from_mesh(self, other_mesh):
+        # new_points = self.points[:]
+        new_point_index = self.point_index.copy()
+        ip = len(self.points)
+        # point_index
+        for point in other_mesh.points:
+            if not point in new_point_index:
+                new_point_index[point] = ip
+                ip += 1
+                self.points.append(point)
+
+        # new_triangles = self.triangles[:]
+        for i1, i2, i3 in other_mesh.triangles:
+            p1 = other_mesh.points[i1]
+            p2 = other_mesh.points[i2]
+            p3 = other_mesh.points[i3]
+            self.triangles.append((new_point_index[p1],
+                                   new_point_index[p2],
+                                   new_point_index[p3]))
+        self._point_index = new_point_index
+        # return self.__class__(new_points, new_triangles)
 
     def __add__(self, other_mesh):
         new_points = self.points[:]
-        # print(self.points[0].__class__.__name__)
-        new_point_index = {p: i for i, p in enumerate(self.points)}
+        new_point_index = self.point_index.copy()
         ip = len(new_points)
         for point in other_mesh.points:
             if not point in new_point_index:
@@ -89,12 +113,6 @@ class DisplayMesh(dc.DessiaObject):
             self._linesegment_class(self.points[i1], self.points[i3]).plot(
                 ax=ax)
 
-        # for i, (i1, i2) in enumerate(self.edges):
-        #     self._linesegment_class(self.points[i1], self.points[i2]).plot(
-        #         ax=ax)
-        #     if numbering:
-        #         ax.text(*0.5*(self.points[i1]+self.points[i2]), 'edge {}'.format(i+1),
-        #                 ha='center', va='center')
 
         return ax
 
@@ -108,7 +126,7 @@ class DisplayMesh2D(DisplayMesh):
                  triangles: List[Tuple[int, int, int]],
                  edges: List[Tuple[int, int]]=None,
                  name: str=''):
-        DisplayMesh.__init__(self, points, triangles, edges, name=name)
+        DisplayMesh.__init__(self, points, triangles, name=name)
 
 
 

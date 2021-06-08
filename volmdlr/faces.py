@@ -9,6 +9,8 @@ import math
 import numpy as npy
 import scipy as scp
 import matplotlib.pyplot as plt
+import networkx as nx
+
 import dessia_common as dc
 from geomdl import BSpline
 from geomdl import utilities
@@ -16,9 +18,8 @@ import volmdlr.core
 import volmdlr.core_compiled
 import volmdlr.edges as vme
 import volmdlr.wires
-import volmdlr.display
+import volmdlr.display as vmd
 import volmdlr.geometry
-import networkx as nx
 
 
 class Surface2D(volmdlr.core.Primitive2D):
@@ -66,7 +67,7 @@ class Surface2D(volmdlr.core.Primitive2D):
     def triangulation(self, min_x_density=None, min_y_density=None):
 
         if self.area() == 0.:
-            return volmdlr.display.DisplayMesh2D([], triangles=[])
+            return vmd.DisplayMesh2D([], triangles=[])
 
         outer_polygon = self.outer_contour.to_polygon(angle_resolution=10)
 
@@ -74,7 +75,7 @@ class Surface2D(volmdlr.core.Primitive2D):
             return outer_polygon.triangulation()
 
 
-        points = [volmdlr.display.Node2D(*p) for p in outer_polygon.points]
+        points = [vmd.Node2D(*p) for p in outer_polygon.points]
         vertices = [(p.x, p.y) for p in points]
         n = len(outer_polygon.points)
         segments = [(i, i + 1) for i in range(n - 1)]
@@ -108,12 +109,12 @@ class Surface2D(volmdlr.core.Primitive2D):
         t = triangle.triangulate(tri, 'p')
         triangles = t['triangles'].tolist()
         np = t['vertices'].shape[0]
-        points = [volmdlr.display.Node2D(*t['vertices'][i, :]) for i in
+        points = [vmd.Node2D(*t['vertices'][i, :]) for i in
                   range(np)]
 
-        return volmdlr.display.DisplayMesh2D(points, triangles=triangles,
+        return vmd.DisplayMesh2D(points, triangles=triangles,
                                              edges=None)
-        return volmdlr.display.DisplayMesh2D([], [])
+        return vmd.DisplayMesh2D([], [])
 
     def split_by_lines(self, lines):
         cutted_surfaces = []
@@ -547,7 +548,7 @@ class Surface3D(dc.DessiaObject):
                     else:
                         ax2 = contour3d.plot()
                         primitive3d.plot(ax=ax2, color='r')
-                        last_primitive3d.plot(ax=ax2, color='b')
+                        # last_primitive3d.plot(ax=ax2, color='b')
                         ax = last_primitive.plot(color='b', plot_points=True)
                         # primitives[0].plot(ax=ax ,color='r', plot_points=True)
                         for p in primitives:
@@ -2065,10 +2066,11 @@ class Face3D(volmdlr.core.Primitive3D):
             surfaces = [self.surface2d]
         mesh2d = surfaces[0].triangulation()
         for subsurface in surfaces[1:]:
-            mesh2d += subsurface.triangulation()
+            # mesh2d += subsurface.triangulation()
+            mesh2d.add_from_mesh(subsurface.triangulation())
 
-        return volmdlr.display.DisplayMesh3D(
-            [volmdlr.display.Node3D(*self.surface3d.point2d_to_3d(p)) for p in
+        return vmd.DisplayMesh3D(
+            [vmd.Node3D(*self.surface3d.point2d_to_3d(p)) for p in
              mesh2d.points],
             mesh2d.triangles)
 
@@ -2461,6 +2463,10 @@ class Triangle3D(PlaneFace3D):
     def copy(self):
         return Triangle3D(self.point1.copy(), self.point2.copy(), self.point3.copy(),
                            self.name)
+
+
+    def triangulation(self):
+        return vmd.DisplayMesh3D([self.point1, self.point2, self.point3], [(0, 1, 2)])
 
 class CylindricalFace3D(Face3D):
     """
@@ -3965,11 +3971,11 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             bbox = primitive.bounding_box
 
     def triangulation(self):
-        mesh = volmdlr.display.DisplayMesh3D([], [])
+        mesh = vmd.DisplayMesh3D([], [])
         for i, face in enumerate(self.faces):
             try:
                 face_mesh = face.triangulation()
-                mesh += face_mesh
+                mesh.add_from_mesh(face_mesh)
             except NotImplementedError:
                 print('Warning: a face has been skipped in rendering')
         return mesh

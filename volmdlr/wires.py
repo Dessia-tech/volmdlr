@@ -1386,16 +1386,20 @@ class ClosedPolygon2D(Contour2D):
         
         remaining_points = self.points[:]
         
-        while len(remaining_points) > 2:
+
+        # inital_number_points = len(remaining_points)
+        number_remaining_points = len(remaining_points)
+        while number_remaining_points > 3:
             current_polygon = ClosedPolygon2D(remaining_points)
             # print('remaining_points')
-            # print(remaining_points)
+            # print(len(remaining_points))
             # pl2 = ClosedPolygon2D(remaining_points[1:]+remaining_points[0:1])
             # pl3 = ClosedPolygon2D(remaining_points[2:]+remaining_points[0:2])
             # current_polygon.plot(point_numbering=True)
             # pl2.plot(point_numbering=True)
             # pl3.plot(point_numbering=True)
-    
+            
+            found_ear = False
             for p1, p2, p3 in zip(remaining_points,
                                   remaining_points[1:]+remaining_points[0:1],
                                   remaining_points[2:]+remaining_points[0:2]):
@@ -1413,7 +1417,7 @@ class ClosedPolygon2D(Contour2D):
                 # print(current_polygon.linesegment_intersections(line_segment))
                 if not current_polygon.linesegment_intersections(line_segment):
                     # May be an ear
-                    
+                    # print('ear?')
                     # if current_polygon.point_belongs(line_segment.middle_point()):
                     #     line_segment.middle_point().plot(color='g', ax=ax)
                     # else:
@@ -1421,12 +1425,24 @@ class ClosedPolygon2D(Contour2D):
     
                     if current_polygon.point_belongs(line_segment.middle_point()):
                         # Confirmed as an ear
+                        # print('ear!')
                         triangles.append((initial_point_to_index[p1],
                                           initial_point_to_index[p2],
                                           initial_point_to_index[p3]))
                         remaining_points.remove(p2)
+                        number_remaining_points -= 1
+                        found_ear = True
                         break
         
+            if not found_ear:
+                ClosedPolygon2D(remaining_points).plot()
+                print(remaining_points)
+                raise ValueError
+        
+        p1, p2, p3 = remaining_points
+        triangles.append((initial_point_to_index[p1],
+                          initial_point_to_index[p2],
+                          initial_point_to_index[p3]))
         
         return vmd.DisplayMesh2D(points, triangles)
 

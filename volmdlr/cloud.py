@@ -14,6 +14,7 @@ import volmdlr as vm
 import volmdlr.wires as vmw
 import volmdlr.faces as vmf
 import volmdlr.step as vstep
+import volmdlr.stl as vmstl
 
 import dessia_common as dc
 
@@ -24,15 +25,8 @@ class PointCloud3D(dc.DessiaObject):
         
     @classmethod
     def from_stl(cls, file_path):
-        #100 000 000 triangles maximum can be read
-        from stl import mesh
-        mesh1 = mesh.Mesh.from_file(file_path)
-        list_points = []
-        for face in mesh1.points :
-            point1=vm.Point3D(face[0]/1000, face[1]/1000, face[2]/1000)
-            point2=vm.Point3D(face[3]/1000, face[4]/1000, face[5]/1000)
-            point3=vm.Point3D(face[6]/1000, face[7]/1000, face[8]/1000)
-            list_points.extend([point1, point2, point3])
+        list_points = vmstl.Stl.from_file(file_path).extract_points()
+        
         return cls(list_points, name='from_stl')
     
     def _bounding_box(self):
