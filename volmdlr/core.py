@@ -17,6 +17,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import volmdlr
 import volmdlr.templates
 
+        
 import dessia_common as dc
 
 import webbrowser
@@ -1440,6 +1441,15 @@ class VolumeModel(dc.DessiaObject):
         self.babylonjs_from_babylon_data(babylon_data, page_name=page_name,
                                          use_cdn=use_cdn, debug=debug)
 
+    def to_stl(self, filepath):
+        mesh = self.primitives[0].triangulation()
+        for primitive in self.primitives[1:]:
+            mesh.merge_mesh(primitive.triangulation())
+        import volmdlr.stl as vmstl
+        stl = vmstl.Stl.from_display_mesh(mesh)
+        stl.save_to_binary_file(filepath)
+        
+    
     def to_step(self, filepath):
         
         

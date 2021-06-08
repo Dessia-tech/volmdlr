@@ -9,6 +9,8 @@ import math
 import matplotlib.pyplot as plt
 import dessia_common as dc
 import volmdlr.edges
+# import volmdlr.faces as vmf
+# import volmdlr.stl as vmstl
 
 class Node2D(volmdlr.Point2D):
     def __hash__(self):
@@ -163,3 +165,4 @@ class DisplayMesh3D(DisplayMesh):
         for i in self.triangles:
             flatten_indices.extend(i)
         return positions, flatten_indices
+    

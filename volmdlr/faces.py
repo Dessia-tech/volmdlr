@@ -2067,7 +2067,7 @@ class Face3D(volmdlr.core.Primitive3D):
         mesh2d = surfaces[0].triangulation()
         for subsurface in surfaces[1:]:
             # mesh2d += subsurface.triangulation()
-            mesh2d.add_from_mesh(subsurface.triangulation())
+            mesh2d.merge_mesh(subsurface.triangulation())
 
         return vmd.DisplayMesh3D(
             [vmd.Node3D(*self.surface3d.point2d_to_3d(p)) for p in
