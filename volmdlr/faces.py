@@ -3972,7 +3972,10 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def triangulation(self):
         mesh = vmd.DisplayMesh3D([], [])
+        nf = len(self.faces)
         for i, face in enumerate(self.faces):
+            if i % 500 == 0:
+                print(round(i/nf*100), '%')
             try:
                 face_mesh = face.triangulation()
                 mesh.add_from_mesh(face_mesh)
