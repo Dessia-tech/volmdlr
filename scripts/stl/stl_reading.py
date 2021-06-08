@@ -32,6 +32,7 @@ for stl_file in [#'a320.stl',
     # print()
     
     stl = vmstl.Stl.from_file(stl_file)
+    stl.save_to_binary_file('reex')
     shell = stl.to_closed_shell()
     # shell.babylonjs()
     shells.append(shell)

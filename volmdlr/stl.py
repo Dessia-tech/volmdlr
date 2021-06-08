@@ -3,16 +3,15 @@
 """
 
 """
-import dessia_common as dc
-import volmdlr as vm
-import volmdlr.faces as vmf
-# from pkg_resources import parse_version
 import kaitaistruct
 from kaitaistruct import KaitaiStruct, KaitaiStream, BytesIO
 
+import struct
+import dessia_common as dc
+import volmdlr as vm
+import volmdlr.faces as vmf
 
-# if parse_version(kaitaistruct.__version__) < parse_version('0.9'):
-#     raise Exception("Incompatible Kaitai Struct Python API: 0.9 or later is required, but you have %s" % (kaitaistruct.__version__))
+
 
 class Stl(dc.DessiaObject):
     """STL files are used to represent simple 3D models, defined using
@@ -32,7 +31,7 @@ class Stl(dc.DessiaObject):
     There are two versions of the format (text and binary), this spec
     describes binary version.
     """
-    def __init__(self, triangles, name):
+    def __init__(self, triangles, name=''):
         self.triangles = triangles
         self.name = name
 
@@ -77,7 +76,29 @@ class Stl(dc.DessiaObject):
                 del triangles[i]
         return cls(triangles, name=name)
 
+    def save_to_binary_file(self, filepath):
+        BINARY_HEADER ="80sI"
+        BINARY_FACET = "12fH"
+        if not filepath.endswith('.stl'):
+            filepath += '.stl'
+            print('Adding .stl extension: ', filepath)
 
+        with open(filepath, 'wb') as file:
+            file.seek(0)
+            # counter = 0
+            file.write(struct.pack(BINARY_HEADER, self.name.encode('utf8'), len(self.triangles)))
+            # counter += 1
+            for triangle in self.triangles:
+                data = [
+                    0., 0., 0.,
+                    1000*triangle.point1.x, 1000*triangle.point1.y, 1000*triangle.point1.z,
+                    1000*triangle.point2.x, 1000*triangle.point2.y, 1000*triangle.point2.z,
+                    1000*triangle.point3.x, 1000*triangle.point3.y, 1000*triangle.point3.z,
+                    0
+                    ]
+                file.write(struct.pack(BINARY_FACET, *data))
+            file.close()
+            
     def to_closed_shell(self):
         return vmf.ClosedShell3D(self.triangles, name=self.name)
     
@@ -91,3 +112,12 @@ class Stl(dc.DessiaObject):
         points3 = [t.point3 for t in self.triangles]
         
         return list(set(points1 + points2 + points3))
+    
+    @classmethod
+    def from_display_mesh(cls, mesh):
+        triangles = []
+        for i1, i2, i3 in mesh.triangles:
+            triangles.append(vmf.Triangle3D(mesh.points[i1],
+                                            mesh.points[i2],
+                                            mesh.points[i3]))
+        return cls(triangles)
