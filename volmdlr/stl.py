@@ -50,7 +50,7 @@ class Stl(dc.DessiaObject):
 
             for i in range(num_triangles):
                 if i % 5000 == 0:
-                    print(round(i/num_triangles*100, 2), '%')
+                    print('reading stl', round(i/num_triangles*100, 2), '%')
                 normal = vm.Vector3D(stream.read_f4le(), stream.read_f4le(), stream.read_f4le())
                 # print(n)
                 p1 = vm.Point3D(distance_multiplier*stream.read_f4le(),
