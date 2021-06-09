@@ -2370,7 +2370,13 @@ class ClosedPolygon3D(Contour3D):
         #     poly2 = new_polygon1
         # for point_poly1 in poly1:
         #     for point_poly2 in poly2:
-        list_previous_closing_points = []
+        available_closing_points = []
+        dict_closing_pairs = {}
+        
+        # mean_point = 0.5*(new_polygon1.points[0] + new_polygon1.points[1])
+        # distances = [mean_point.point_distance(point_poly2) for point_poly2 in new_polygon2.points]
+        # closing_point = new_polygon2.points[distances.index(min(distances))]
+        # previous_closing_point = closing_point
         # list_1
         # privivous_closing_point 
         triangles = []
@@ -2379,20 +2385,43 @@ class ClosedPolygon3D(Contour3D):
                 mean_point = 0.5*(point_polygon1 + new_polygon1.points[i-1])
                 distances = [mean_point.point_distance(point_poly2) for point_poly2 in new_polygon2.points]
                 closing_point = new_polygon2.points[distances.index(min(distances))]
-                if len(list_previous_closing_points)==0:
+                if i==1:
                     previous_closing_point = closing_point
-                if previous_closing_point != closing_point:
-                    list_previous_closing_points.append(new_polygon1.points[i-1])
+                if closing_point != previous_closing_point:
+                    available_closing_points.append(new_polygon1.points[i-1])
+                    # dict_closing_pairs[closing_point] = (previous_closing_point, closing_point)
+                    dict_closing_pairs[new_polygon1.points[i-1]] = (new_polygon2.points.index(previous_closing_point), new_polygon2.points.index(closing_point))
+                if point_polygon1 == new_polygon1.points[0]:
+                    if list(dict_closing_pairs.values())[-1][-1] != list(dict_closing_pairs.values())[0][0]:
+                        dict_closing_pairs[new_polygon1.points[0]] = (list(dict_closing_pairs.values())[-1][-1],list(dict_closing_pairs.values())[0][0] )
+
                     
-                
                 triangles.append([point_polygon1, new_polygon1.points[i-1], closing_point])
                 previous_closing_point = closing_point
+        print(available_closing_points)
+        print(dict_closing_pairs)
+        # points = new_polygon2.points+[new_polygon2.points[0]]
         for i, point_polygon2 in enumerate(new_polygon2.points+[new_polygon2.points[0]]):
-            if i != 0:
-                mean_point = 0.5*(point_polygon2 + new_polygon2.points[i-1])
-                distances = [mean_point.point_distance(point_poly1) for point_poly1 in list_previous_closing_points]
-                closing_point = new_polygon1.points[distances.index(min(distances))]
-                triangles.append([point_polygon2, new_polygon2.points[i-1], closing_point])
+            
+            for j, index in enumerate(list(dict_closing_pairs.values())):
+                # if i != 0 and i :
+                if i != 0 :
+                     if i < len(new_polygon2.points+[new_polygon2.points[0]])-2:
+                        if i-1 >= index[0] and i <= index[1]:
+                            triangles.append([new_polygon2.points[i-1], point_polygon2, available_closing_points[j]])
+                     else:
+                         if index[1] == 0:
+                             triangles.append([new_polygon2.points[i-1], point_polygon2 , available_closing_points[j]])
+                
+            # if i != 0:
+            #     mean_point = 0.5*(point_polygon2 + new_polygon2.points[i-1])
+            #     # distances = [mean_point.point_distance(point_poly1) for point_poly1 in new_polygon1.points]
+            #     distances = [mean_point.point_distance(point_poly1) for point_poly1 in available_closing_points]
+            #     # closing_point = new_polygon1.points[distances.index(min(distances))]
+            #     closing_point = available_closing_points[distances.index(min(distances))]
+            #     # if closing_point not in available_closing_points:
+            #     #     distances = [closing_point.point_distance(point) for point in available_closing_points]
+                #     closing_point = available_closing_points[distances.index(min(distances))]
                 
         return triangles
                     

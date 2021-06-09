@@ -310,7 +310,7 @@ circle with Triangle
 # vm.Point3D(0.0052326183319091795, 0.2552791137695313, 0.3087467854817708),
 # vm.Point3D(0.002556457042694092, 0.2554306640625, 0.3087467854817708),
 # vm.Point3D(-7.359097152948379e-05, 0.25544367980957033, 0.3087467854817708)]
-points_poly1 = [vm.Point3D(-0.010337559700012208, 0.2539773406982422, 0.35737594265407985),
+points_poly2 = [vm.Point3D(-0.010337559700012208, 0.2539773406982422, 0.35737594265407985),
 vm.Point3D(-0.06056604766845703, 0.1809791259765625, 0.35737594265407985),
 vm.Point3D(-0.06264878845214844, 0.17779869079589844, 0.35737594265407985),
 vm.Point3D(-0.06454641723632812, 0.17449867248535156, 0.35737594265407985),
@@ -361,7 +361,7 @@ vm.Point3D(0.013010541915893554, 0.25225938415527344, 0.35737594265407985),
 vm.Point3D(0.011754136085510253, 0.25260917663574217, 0.35737594265407985),
 vm.Point3D(0.010459518432617188, 0.2528188171386719, 0.35737594265407985),
 vm.Point3D(0.006894575595855713, 0.2533437805175781, 0.35737594265407985)]
-points_poly2 = [vm.Point3D(-0.013217350006103516, 0.23776652526855468, 0.4060050998263889),
+points_poly1 = [vm.Point3D(-0.013217350006103516, 0.23776652526855468, 0.4060050998263889),
 vm.Point3D(-0.10356132507324219, 0.203, 0.4060050998263889),
 vm.Point3D(-0.10356132507324219, 0.103, 0.4060050998263889),
 vm.Point3D(-0.08557473754882812, -0.030014928817749024, 0.4060050998263889),
@@ -412,6 +412,7 @@ vec1, vec2 = vm.X3D, vm.Y3D
 normal = vm.Z3D
 faces=[]
 # coords = polygon1.sewing_with(polygon2, vec1, vec2, normal)
+# coords, list_previous_closing_points = polygon1.sewing2(polygon2, vec1, vec2, normal)
 coords = polygon1.sewing2(polygon2, vec1, vec2, normal)
 for trio in coords :
     faces.append(vmf.Triangle3D(trio[0], trio[1], trio[2]))
@@ -422,6 +423,13 @@ volum.babylonjs()
 # fig = plt.figure()
 # ax = fig.add_subplot(111, projection='3d')
 # polygon1.plot(ax=ax, color='g')
+# for face in faces :
+    # vme.LineSegment3D(face.point1, face.point2).plot(ax=ax, color='g')
+    # vme.LineSegment3D(face.point2, face.point3).plot(ax=ax,color='g')
+    # vme.LineSegment3D(face.point3, face.point1).plot(ax=ax, color='g')
+# 
+# for points in list_previous_closing_points :
+    # points.plot(ax=ax, color='b')
 # polygon2.plot(ax=ax, color='r')
     # volum = volmdlr.core.VolumeModel(cloud_faces)
     # faces.extend(cloud_faces)
