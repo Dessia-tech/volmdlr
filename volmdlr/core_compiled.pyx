@@ -353,6 +353,10 @@ class Vector2D(Vector):
                               round(self.y, ndigits))
 
     def __hash__(self):
+        """
+        hash returns 0 because points are difficult to hash if they are meant
+        to be equalized at a given tolerance
+        """
         return 0
 
 
@@ -723,6 +727,10 @@ class Vector3D(Vector):
                               round(self.z, ndigits))
 
     def __hash__(self):
+        """
+        hash returns 0 because points are difficult to hash if they are meant
+        to be equalized at a given tolerance
+        """
         return 0
 
     def __eq__(self, other_vector:'Vector3D'):
@@ -1201,7 +1209,11 @@ class Basis(DessiaObject):
         return vector in self.vectors
 
     def __hash__(self):
-        return hash(self.vectors)
+        """
+        hash returns 0 because points are difficult to hash if they are meant
+        to be equalized at a given tolerance
+        """
+        0
 
     def copy(self):
         return self.__class__(*self.vectors)
@@ -1332,7 +1344,11 @@ class Basis3D(Basis):
         return True
 
     def __hash__(self):
-        return hash(self.u) + hash(self.v) + hash(self.w)
+        """
+        hash returns 0 because points are difficult to hash if they are meant
+        to be equalized at a given tolerance
+        """
+        return 0
 
     def __add__(self, other_basis):
         M = self.transfer_matrix()*other_basis.transfer_matrix()
@@ -1593,7 +1609,11 @@ class Frame3D(Basis3D):
                                                   self.u, self.v, self.w)
 
     def __hash__(self):
-        return 5*hash(self.origin) + hash(self.u) + hash(self.v) + hash(self.w)
+        """
+        hash returns 0 because points are difficult to hash if they are meant
+        to be equalized at a given tolerance
+        """
+        return 0
 
     def __eq__(self, other_frame):
         if other_frame.__class__.__name__ != self.__class__.__name__:
@@ -1644,7 +1664,11 @@ class Frame3D(Basis3D):
                               round(self.w, ndigits))
 
     def __hash__(self):
-        return hash(self.u) + hash(self.v) + hash(self.w) + hash(self.origin)
+        """
+        hash returns 0 because points are difficult to hash if they are meant
+        to be equalized at a given tolerance
+        """
+        return 0
 
     def basis(self):
         return Basis3D(self.u, self.v, self.w)
