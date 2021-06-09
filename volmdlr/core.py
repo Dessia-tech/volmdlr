@@ -17,6 +17,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import volmdlr
 import volmdlr.templates
 
+        
 import dessia_common as dc
 
 import webbrowser
@@ -547,14 +548,7 @@ class BoundingBox(dc.DessiaObject):
         self.ymax = ymax
         self.zmin = zmin
         self.zmax = zmax
-        self.points = [volmdlr.Point3D(self.xmin, self.ymin, self.zmin), \
-                       volmdlr.Point3D(self.xmax, self.ymin, self.zmin), \
-                       volmdlr.Point3D(self.xmax, self.ymax, self.zmin), \
-                       volmdlr.Point3D(self.xmin, self.ymax, self.zmin), \
-                       volmdlr.Point3D(self.xmin, self.ymin, self.zmax), \
-                       volmdlr.Point3D(self.xmax, self.ymin, self.zmax), \
-                       volmdlr.Point3D(self.xmax, self.ymax, self.zmax), \
-                       volmdlr.Point3D(self.xmin, self.ymax, self.zmax)]
+        
         self.center = (self.points[0] + self.points[-2]) / 2
         self.name = name
 
@@ -571,6 +565,17 @@ class BoundingBox(dc.DessiaObject):
 
     def __iter__(self):
         return [self.xmin, self.xmax, self.ymin, self.ymax, self.zmin, self.zmax]
+
+    @property
+    def points(self):
+        return [volmdlr.Point3D(self.xmin, self.ymin, self.zmin), \
+                volmdlr.Point3D(self.xmax, self.ymin, self.zmin), \
+                volmdlr.Point3D(self.xmax, self.ymax, self.zmin), \
+                volmdlr.Point3D(self.xmin, self.ymax, self.zmin), \
+                volmdlr.Point3D(self.xmin, self.ymin, self.zmax), \
+                volmdlr.Point3D(self.xmax, self.ymin, self.zmax), \
+                volmdlr.Point3D(self.xmax, self.ymax, self.zmax), \
+                volmdlr.Point3D(self.xmin, self.ymax, self.zmax)]
 
     def plot(self, ax=None, color=''):
         fig = plt.figure()
@@ -1436,6 +1441,15 @@ class VolumeModel(dc.DessiaObject):
         self.babylonjs_from_babylon_data(babylon_data, page_name=page_name,
                                          use_cdn=use_cdn, debug=debug)
 
+    def to_stl(self, filepath):
+        mesh = self.primitives[0].triangulation()
+        for primitive in self.primitives[1:]:
+            mesh.merge_mesh(primitive.triangulation())
+        import volmdlr.stl as vmstl
+        stl = vmstl.Stl.from_display_mesh(mesh)
+        stl.save_to_binary_file(filepath)
+        
+    
     def to_step(self, filepath):
         
         

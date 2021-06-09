@@ -15,6 +15,7 @@ from typing import List
 import volmdlr
 import volmdlr.core
 import volmdlr.edges
+import volmdlr.display as vmd
 # import volmdlr.faces
 import volmdlr.geometry as vmgeo
 
@@ -219,6 +220,17 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         intersection_points = []
         for primitive in self.primitives:
             for p in primitive.line_intersections(line):
+                intersection_points.append((p, primitive))
+        return intersection_points
+
+    def linesegment_intersections(self, linesegment: 'volmdlr.edges.LineSegment2D'):
+        """
+        Returns a list of intersection in ther form of a tuple (point, primitive)
+        of the wire primitives intersecting with the line
+        """
+        intersection_points = []
+        for primitive in self.primitives:
+            for p in primitive.linesegment_intersections(linesegment):
                 intersection_points.append((p, primitive))
         return intersection_points
 
@@ -948,7 +960,7 @@ class Contour2D(Contour, Wire2D):
                 elif len(points_in) == 3:
                     triangles.append([point_index[p] for p in points_in])
 
-        return volmdlr.display_mesh.DisplayMesh2D(points, triangles)
+        return vmd.DisplayMesh2D(points, triangles)
 
 
 class ClosedPolygon2D(Contour2D):
@@ -1283,7 +1295,9 @@ class ClosedPolygon2D(Contour2D):
 
     @classmethod
     def points_convex_hull(cls, points):
-        ymax, pos_ymax = volmdlr.max_pos([pt.vector[1] for pt in points])
+        if len(points) < 3:
+            return
+        ymax, pos_ymax = volmdlr.core.max_pos([pt.y for pt in points])
         point_start = points[pos_ymax]
         hull, thetac = [point_start], 0  # thetac is the current theta
 
@@ -1327,6 +1341,10 @@ class ClosedPolygon2D(Contour2D):
         hull.pop()
 
         return cls(hull)
+    
+    def to_3d(self, plane_origin, x, y):
+        points3d = [point.to_3d(plane_origin, x, y) for point in self.points]
+        return ClosedPolygon3D(points3d)
 
     def plot(self, ax=None, color='k', alpha=1,
              plot_points=False, point_numbering=False,
@@ -1360,6 +1378,73 @@ class ClosedPolygon2D(Contour2D):
 
         return ax
 
+    def triangulation(self):
+        #ear clipping 
+        points = self.points[:]
+        initial_point_to_index = {p: i for i,p in enumerate(self.points)}
+        triangles = []
+        
+        remaining_points = self.points[:]
+        
+
+        # inital_number_points = len(remaining_points)
+        number_remaining_points = len(remaining_points)
+        while number_remaining_points > 3:
+            current_polygon = ClosedPolygon2D(remaining_points)
+            # print('remaining_points')
+            # print(len(remaining_points))
+            # pl2 = ClosedPolygon2D(remaining_points[1:]+remaining_points[0:1])
+            # pl3 = ClosedPolygon2D(remaining_points[2:]+remaining_points[0:2])
+            # current_polygon.plot(point_numbering=True)
+            # pl2.plot(point_numbering=True)
+            # pl3.plot(point_numbering=True)
+            
+            found_ear = False
+            for p1, p2, p3 in zip(remaining_points,
+                                  remaining_points[1:]+remaining_points[0:1],
+                                  remaining_points[2:]+remaining_points[0:2]):
+                # ax.text(*p2, '{}')
+                # ax = current_polygon.plot(point_numbering=True)
+                
+                line_segment = volmdlr.edges.LineSegment2D(p1, p3)
+                # line_segment.plot(color='grey', ax=ax)
+
+                
+                # ax2 = p1.plot(color='r')
+                # p2.plot(color='g', ax=ax2)
+                # p3.plot(color='b', ax=ax2)
+                
+                # print(current_polygon.linesegment_intersections(line_segment))
+                if not current_polygon.linesegment_intersections(line_segment):
+                    # May be an ear
+                    # print('ear?')
+                    # if current_polygon.point_belongs(line_segment.middle_point()):
+                    #     line_segment.middle_point().plot(color='g', ax=ax)
+                    # else:
+                    #     line_segment.middle_point().plot(color='r', ax=ax)
+    
+                    if current_polygon.point_belongs(line_segment.middle_point()):
+                        # Confirmed as an ear
+                        # print('ear!')
+                        triangles.append((initial_point_to_index[p1],
+                                          initial_point_to_index[p2],
+                                          initial_point_to_index[p3]))
+                        remaining_points.remove(p2)
+                        number_remaining_points -= 1
+                        found_ear = True
+                        break
+        
+            if not found_ear:
+                ClosedPolygon2D(remaining_points).plot()
+                print(remaining_points)
+                raise ValueError
+        
+        p1, p2, p3 = remaining_points
+        triangles.append((initial_point_to_index[p1],
+                          initial_point_to_index[p2],
+                          initial_point_to_index[p3]))
+        
+        return vmd.DisplayMesh2D(points, triangles)
 
 class Triangle2D(ClosedPolygon2D):
 
@@ -1744,7 +1829,7 @@ class Contour3D(Contour, Wire3D):
         return content, current_id
 
     def average_center_point(self):
-        nb = len(self.tessel_points)
+        nb = len(self.points)
         x = npy.sum([p[0] for p in self.points]) / nb
         y = npy.sum([p[1] for p in self.points]) / nb
         z = npy.sum([p[2] for p in self.points]) / nb
@@ -1768,7 +1853,7 @@ class Contour3D(Contour, Wire3D):
             new_edges = [edge.translation(offset, copy=True) for edge in
                          self.primitives]
             # new_points = [p.translation(offset, copy=True) for p in self.points]
-            return Contour3D(new_edges, None, self.name)
+            return Contour3D(new_edges, self.name)
         else:
             for edge in self.primitives:
                 edge.translation(offset, copy=False)
@@ -1843,7 +1928,6 @@ class Contour3D(Contour, Wire3D):
         points = [self.point_at_abscissa(i / n * l) \
                   for i in range(n)]
         return volmdlr.core.BoundingBox.from_points(points)
-
 
 class Circle3D(Contour3D):
     _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']
@@ -2227,7 +2311,7 @@ class ClosedPolygon3D(Contour3D):
         self.points = points
         self.line_segments = self._line_segments()
 
-        Contour2D.__init__(self, self.line_segments, name)
+        Contour3D.__init__(self, self.line_segments, name)
 
     def _line_segments(self):
         lines = []
@@ -2256,3 +2340,68 @@ class ClosedPolygon3D(Contour3D):
         for line_segment in self.line_segments:
             ax = line_segment.plot(ax=ax, color=color, alpha=alpha)
         return ax
+    
+    def translation(self, offset, copy=True):
+        if copy:
+            new_points = [point.translation(offset, copy=True) for point in
+                          self.points]
+            return ClosedPolygon3D(new_points, self.name)
+        else:
+            for point in self.points:
+                point.translation(offset, copy=False)
+            
+    
+    def to_2d(self, plane_origin, x, y):
+        points2d = [point.to_2d(plane_origin, x, y) for point in self.points]
+        return ClosedPolygon2D(points2d)
+    
+    def sewing_with(self, other_poly3d, x, y, normal, resolution = 20):
+        self_center, other_center = self.average_center_point(), other_poly3d.average_center_point()
+        
+        self_poly2d, other_poly2d = self.to_2d(self_center, x, y), other_poly3d.to_2d(other_center, x, y)
+        self_center2d, other_center2d = self_poly2d.center_of_mass(), other_poly2d.center_of_mass()
+        self_poly2d.translation(-self_center2d,copy=False)
+        other_poly2d.translation(-other_center2d,copy=False)
+        
+        
+        bbox_self2d, bbox_other2d = self_poly2d.bounding_rectangle(), other_poly2d.bounding_rectangle()
+        position = [abs(value) for value in bbox_self2d] + [abs(value) for value in bbox_other2d]
+        max_scale = 2*max(position)
+        
+        lines = [volmdlr.edges.LineSegment2D(volmdlr.O2D, max_scale*(volmdlr.X2D*math.sin(n*2*math.pi/resolution) +
+                                             volmdlr.Y2D*math.cos(n*2*math.pi/resolution))
+                                             ) for n in range (resolution)]
+        
+        self_new_points, other_new_points = [], []
+        for l in lines :
+            for self_line in self_poly2d.line_segments:
+                intersect = l.linesegment_intersections(self_line)
+                if intersect :
+                    self_new_points.extend(intersect)
+                    break
+                
+            for other_line in other_poly2d.line_segments:
+                intersect = l.linesegment_intersections(other_line)
+                if intersect :
+                    other_new_points.extend(intersect)
+                    break
+                
+        new_self_poly2d, new_other_poly2d = ClosedPolygon2D(self_new_points), ClosedPolygon2D(other_new_points)
+        new_self_poly2d.translation(self_center2d,copy=False)
+        new_other_poly2d.translation(other_center2d,copy=False)
+        
+        new_poly1, new_poly2 = new_self_poly2d.to_3d(self_center, x, y), new_other_poly2d.to_3d(other_center, x, y)
+        
+            
+        triangles = []
+        for point1, point2, other_point in zip(new_poly1.points, 
+                                               new_poly1.points[1:]+new_poly1.points[:1],
+                                               new_poly2.points):
+            triangles.append([point1, point2, other_point])
+                
+        for point1, point2, other_point in zip(new_poly2.points,
+                                                new_poly2.points[1:]+new_poly2.points[:1],
+                                                new_poly1.points[1:]+new_poly1.points[:1]):
+            triangles.append([other_point, point2, point1])
+           
+        return triangles
