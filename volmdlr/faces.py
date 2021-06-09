@@ -2399,10 +2399,14 @@ class Triangle3D(PlaneFace3D):
     # _non_hash_attributes = []
 
     def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
-                 point3: volmdlr.Point3D, name: str = ''):
+                 point3: volmdlr.Point3D, alpha=1, color=None, name: str = ''):
         self.point1 = point1
         self.point2 = point2
         self.point3 = point3
+        
+        self.color = color
+        self.alpha = alpha
+        self.name = name
         
         # plane3d = Plane3D.from_3_points(point1, point2, point3)
         # contour3d = volmdlr.wires.Contour3D([vme.LineSegment3D(point1, point2),
