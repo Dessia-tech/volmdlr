@@ -3,6 +3,7 @@
 """
 
 """
+from binaryornot.check import is_binary
 import kaitaistruct
 from kaitaistruct import KaitaiStruct, KaitaiStream, BytesIO
 
@@ -37,46 +38,65 @@ class Stl(dc.DessiaObject):
 
     @classmethod
     def from_file(cls, filename:str, distance_multiplier=0.001):
-        # TODO test binary
-        with open(filename, 'rb') as file:
-            stream = KaitaiStream(file)
-            name = stream.read_bytes(80).decode('utf8')
-            # print(name)
-            num_triangles = stream.read_u4le()
-            # print(num_triangles)
-            
-            triangles = [None] * (num_triangles)
-            invalid_triangles = []
-            for i in range(num_triangles):
-                if i % 5000 == 0:
-                    print('reading stl', round(i/num_triangles*100, 2), '%')
-                normal = vm.Vector3D(stream.read_f4le(), stream.read_f4le(), stream.read_f4le())
-                # print(n)
-                p1 = vm.Point3D(distance_multiplier*stream.read_f4le(),
-                                distance_multiplier*stream.read_f4le(),
-                                distance_multiplier*stream.read_f4le())
-                p2 = vm.Point3D(distance_multiplier*stream.read_f4le(),
-                                distance_multiplier*stream.read_f4le(), 
-                                distance_multiplier*stream.read_f4le())
-                p3 = vm.Point3D(distance_multiplier*stream.read_f4le(),
-                                distance_multiplier*stream.read_f4le(),
-                                distance_multiplier*stream.read_f4le())
-                # print(p1, p2, p3)
-                try : 
-                    triangles[i] = vmf.Triangle3D(p1, p2, p3)
-                except ZeroDivisionError :
-                    invalid_triangles.append(i)
-                    
-    
-                stream.read_u2le()
-                # print(abr)
-        if invalid_triangles :
-            print('invalid_triangles number: ', len(invalid_triangles))
-            for i in invalid_triangles[::-1] :
-                del triangles[i]
+        if is_binary(filename):       
+            with open(filename, 'rb') as file:
+                stream = KaitaiStream(file)
+                name = stream.read_bytes(80).decode('utf8')
+                # print(name)
+                num_triangles = stream.read_u4le()
+                # print(num_triangles)
+                
+                triangles = [None] * (num_triangles)
+                invalid_triangles = []
+                for i in range(num_triangles):
+                    if i % 5000 == 0:
+                        print('reading stl', round(i/num_triangles*100, 2), '%')
+                    normal = vm.Vector3D(stream.read_f4le(), stream.read_f4le(), stream.read_f4le())
+                    # print(n)
+                    p1 = vm.Point3D(distance_multiplier*stream.read_f4le(),
+                                    distance_multiplier*stream.read_f4le(),
+                                    distance_multiplier*stream.read_f4le())
+                    p2 = vm.Point3D(distance_multiplier*stream.read_f4le(),
+                                    distance_multiplier*stream.read_f4le(), 
+                                    distance_multiplier*stream.read_f4le())
+                    p3 = vm.Point3D(distance_multiplier*stream.read_f4le(),
+                                    distance_multiplier*stream.read_f4le(),
+                                    distance_multiplier*stream.read_f4le())
+                    # print(p1, p2, p3)
+                    try : 
+                        triangles[i] = vmf.Triangle3D(p1, p2, p3)
+                    except ZeroDivisionError :
+                        invalid_triangles.append(i)
+                        
+        
+                    stream.read_u2le()
+                    # print(abr)
+            if invalid_triangles :
+                print('invalid_triangles number: ', len(invalid_triangles))
+                for i in invalid_triangles[::-1] :
+                    del triangles[i]
+        else:
+            with open(filename, 'r') as file:
+                header = file.readline()
+                name = header[6:]
+                print(name)
+                triangles = []
+                points = []
+                for line in file.readlines():
+                    if 'vertex' in line:
+                        line = line.replace('vertex', '')
+                        line = line.lstrip(' ')
+                        x, y, z = line.split(' ')
+                        points.append(vm.Point3D(distance_multiplier*float(x), 
+                                                 distance_multiplier*float(y), 
+                                                 distance_multiplier*float(z)))
+                    if 'endfacet' in line:
+                        triangles.append(vmf.Triangle3D(*points))
+                        points = []
+
         return cls(triangles, name=name)
 
-    def save_to_binary_file(self, filepath):
+    def save_to_binary_file(self, filepath, distance_multiplier=1000):
         BINARY_HEADER ="80sI"
         BINARY_FACET = "12fH"
         if not filepath.endswith('.stl'):
@@ -91,9 +111,9 @@ class Stl(dc.DessiaObject):
             for triangle in self.triangles:
                 data = [
                     0., 0., 0.,
-                    1000*triangle.point1.x, 1000*triangle.point1.y, 1000*triangle.point1.z,
-                    1000*triangle.point2.x, 1000*triangle.point2.y, 1000*triangle.point2.z,
-                    1000*triangle.point3.x, 1000*triangle.point3.y, 1000*triangle.point3.z,
+                    distance_multiplier*triangle.point1.x, distance_multiplier*triangle.point1.y, distance_multiplier*triangle.point1.z,
+                    distance_multiplier*triangle.point2.x, distance_multiplier*triangle.point2.y, distance_multiplier*triangle.point2.z,
+                    distance_multiplier*triangle.point3.x, distance_multiplier*triangle.point3.y, distance_multiplier*triangle.point3.z,
                     0
                     ]
                 file.write(struct.pack(BINARY_FACET, *data))
