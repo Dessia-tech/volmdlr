@@ -79,7 +79,6 @@ class Stl(dc.DessiaObject):
             with open(filename, 'r') as file:
                 header = file.readline()
                 name = header[6:]
-                print(name)
                 triangles = []
                 points = []
                 for line in file.readlines():
@@ -91,7 +90,10 @@ class Stl(dc.DessiaObject):
                                                  distance_multiplier*float(y), 
                                                  distance_multiplier*float(z)))
                     if 'endfacet' in line:
-                        triangles.append(vmf.Triangle3D(*points))
+                        try: 
+                            triangles.append(vmf.Triangle3D(*points))
+                        except ZeroDivisionError :
+                            pass
                         points = []
 
         return cls(triangles, name=name)
