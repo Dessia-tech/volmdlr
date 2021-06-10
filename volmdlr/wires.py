@@ -31,7 +31,7 @@ from scipy.spatial import Delaunay
 import plot_data.core as plot_data
 
 import plot_data.core as plot_data
-import cv2
+# import cv2
 import numpy as np
 
 
@@ -2406,12 +2406,12 @@ class ClosedPolygon3D(Contour3D):
             for j, index in enumerate(list(dict_closing_pairs.values())):
                 # if i != 0 and i :
                 if i != 0 :
-                     if i < len(new_polygon2.points+[new_polygon2.points[0]])-2:
-                        if i-1 >= index[0] and i <= index[1]:
-                            triangles.append([new_polygon2.points[i-1], point_polygon2, available_closing_points[j]])
-                     else:
-                         if index[1] == 0:
-                             triangles.append([new_polygon2.points[i-1], point_polygon2 , available_closing_points[j]])
+                    if i-1 >= index[0] and i <= index[1]:
+                        triangles.append([new_polygon2.points[i-1], point_polygon2, list(dict_closing_pairs.keys())[j]])
+                    else:
+                        if index[0]>index[1]:
+                            if ((i-1 <= index[0] and i <= index[1]) or ((i-1 >= index[0]) and i >= index[1])):
+                                triangles.append([new_polygon2.points[i-1], point_polygon2 , list(dict_closing_pairs.keys())[j]])
                 
             # if i != 0:
             #     mean_point = 0.5*(point_polygon2 + new_polygon2.points[i-1])
