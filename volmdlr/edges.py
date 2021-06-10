@@ -668,6 +668,9 @@ class LineSegment2D(LineSegment):
 
     def length(self):
         return self.end.point_distance(self.start)
+    
+    def middle_point(self):
+        return 0.5*(self.start + self.end)
 
     def point_at_abscissa(self, curvilinear_abscissa):
         return self.start + self.unit_direction_vector() * curvilinear_abscissa
@@ -729,8 +732,11 @@ class LineSegment2D(LineSegment):
             return []
 
     def linesegment_intersections(self, linesegment: 'LineSegment2D'):
+        """
+        touching linesegments does not intersect
+        """
         point = volmdlr.Point2D.line_intersection(self, linesegment)
-        if point is not None:
+        if point and (point != self.start) and (point != self.end):
             point_projection1, _ = self.point_projection(point)
             if point_projection1 is None:
                 return []
@@ -1910,7 +1916,15 @@ class LineSegment3D(LineSegment):
                  name: str = ''):
         self.points = [start, end]
         LineSegment.__init__(self, start=start, end=end, name=name)
-        self.bounding_box = self._bounding_box()
+        
+        self._utd_bounding_box = False
+
+    @property
+    def bounding_box(self):
+        if not self._utd_bounding_box:
+            self._bbox = self._bounding_box()
+            self._utd_bounding_box = True
+        return self._bbox
 
     def __hash__(self):
         return 2 + hash(self.start) + hash(self.end)
@@ -1922,7 +1936,6 @@ class LineSegment3D(LineSegment):
                 and self.end == other_linesegment3d.end)
 
     def _bounding_box(self):
-        points = [self.start, self.end]
 
         xmin = min(self.start.x, self.end.x)
         xmax = max(self.start.x, self.end.x)

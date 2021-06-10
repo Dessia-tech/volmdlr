@@ -15,7 +15,9 @@ from typing import List
 import volmdlr
 import volmdlr.core
 import volmdlr.edges
-# from volmdlr.faces import CylindricalSurface3D
+
+import volmdlr.display as vmd
+
 # import volmdlr.faces
 import volmdlr.geometry as vmgeo
 
@@ -222,6 +224,17 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         intersection_points = []
         for primitive in self.primitives:
             for p in primitive.line_intersections(line):
+                intersection_points.append((p, primitive))
+        return intersection_points
+
+    def linesegment_intersections(self, linesegment: 'volmdlr.edges.LineSegment2D'):
+        """
+        Returns a list of intersection in ther form of a tuple (point, primitive)
+        of the wire primitives intersecting with the line
+        """
+        intersection_points = []
+        for primitive in self.primitives:
+            for p in primitive.linesegment_intersections(linesegment):
                 intersection_points.append((p, primitive))
         return intersection_points
 
@@ -951,7 +964,7 @@ class Contour2D(Contour, Wire2D):
                 elif len(points_in) == 3:
                     triangles.append([point_index[p] for p in points_in])
 
-        return volmdlr.display_mesh.DisplayMesh2D(points, triangles)
+        return vmd.DisplayMesh2D(points, triangles)
 
 
 class ClosedPolygon2D(Contour2D):
@@ -1369,6 +1382,73 @@ class ClosedPolygon2D(Contour2D):
 
         return ax
 
+    def triangulation(self):
+        #ear clipping 
+        points = self.points[:]
+        initial_point_to_index = {p: i for i,p in enumerate(self.points)}
+        triangles = []
+        
+        remaining_points = self.points[:]
+        
+
+        # inital_number_points = len(remaining_points)
+        number_remaining_points = len(remaining_points)
+        while number_remaining_points > 3:
+            current_polygon = ClosedPolygon2D(remaining_points)
+            # print('remaining_points')
+            # print(len(remaining_points))
+            # pl2 = ClosedPolygon2D(remaining_points[1:]+remaining_points[0:1])
+            # pl3 = ClosedPolygon2D(remaining_points[2:]+remaining_points[0:2])
+            # current_polygon.plot(point_numbering=True)
+            # pl2.plot(point_numbering=True)
+            # pl3.plot(point_numbering=True)
+            
+            found_ear = False
+            for p1, p2, p3 in zip(remaining_points,
+                                  remaining_points[1:]+remaining_points[0:1],
+                                  remaining_points[2:]+remaining_points[0:2]):
+                # ax.text(*p2, '{}')
+                # ax = current_polygon.plot(point_numbering=True)
+                
+                line_segment = volmdlr.edges.LineSegment2D(p1, p3)
+                # line_segment.plot(color='grey', ax=ax)
+
+                
+                # ax2 = p1.plot(color='r')
+                # p2.plot(color='g', ax=ax2)
+                # p3.plot(color='b', ax=ax2)
+                
+                # print(current_polygon.linesegment_intersections(line_segment))
+                if not current_polygon.linesegment_intersections(line_segment):
+                    # May be an ear
+                    # print('ear?')
+                    # if current_polygon.point_belongs(line_segment.middle_point()):
+                    #     line_segment.middle_point().plot(color='g', ax=ax)
+                    # else:
+                    #     line_segment.middle_point().plot(color='r', ax=ax)
+    
+                    if current_polygon.point_belongs(line_segment.middle_point()):
+                        # Confirmed as an ear
+                        # print('ear!')
+                        triangles.append((initial_point_to_index[p1],
+                                          initial_point_to_index[p2],
+                                          initial_point_to_index[p3]))
+                        remaining_points.remove(p2)
+                        number_remaining_points -= 1
+                        found_ear = True
+                        break
+        
+            if not found_ear:
+                ClosedPolygon2D(remaining_points).plot()
+                print(remaining_points)
+                raise ValueError
+        
+        p1, p2, p3 = remaining_points
+        triangles.append((initial_point_to_index[p1],
+                          initial_point_to_index[p2],
+                          initial_point_to_index[p3]))
+        
+        return vmd.DisplayMesh2D(points, triangles)
 
 class Triangle2D(ClosedPolygon2D):
 

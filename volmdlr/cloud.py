@@ -14,6 +14,7 @@ import volmdlr as vm
 import volmdlr.wires as vmw
 import volmdlr.faces as vmf
 import volmdlr.step as vstep
+import volmdlr.stl as vmstl
 
 import dessia_common as dc
 
@@ -24,15 +25,8 @@ class PointCloud3D(dc.DessiaObject):
         
     @classmethod
     def from_stl(cls, file_path):
-        #100 000 000 triangles maximum can be read
-        from stl import mesh
-        mesh1 = mesh.Mesh.from_file(file_path)
-        list_points = []
-        for face in mesh1.points :
-            point1=vm.Point3D(face[0]/1000, face[1]/1000, face[2]/1000)
-            point2=vm.Point3D(face[3]/1000, face[4]/1000, face[5]/1000)
-            point3=vm.Point3D(face[6]/1000, face[7]/1000, face[8]/1000)
-            list_points.extend([point1, point2, point3])
+        list_points = vmstl.Stl.from_file(file_path).extract_points()
+        
         return cls(list_points, name='from_stl')
     
     def _bounding_box(self):
@@ -51,7 +45,7 @@ class PointCloud3D(dc.DessiaObject):
         return PointCloud3D(extracted_points)
         
     
-    def subdescription_2d(self, resolution = 10, normal = None):
+    def to_shell(self, resolution = 10, normal = None):
         #normal has to be a fondamental vector : X3D, Y3D or Z3D
         bbox = self._bounding_box()
         xyz_bbox = [[bbox.xmin, bbox.xmax], [bbox.ymin,bbox.ymax], [bbox.zmin,bbox.zmax]]
@@ -67,7 +61,6 @@ class PointCloud3D(dc.DessiaObject):
             for n, vect in enumerate(xyz_vect):
                 if vect == normal :
                     posmax = n
-        
         dist_between_plane = xyz_list[posmax]/(resolution-1)
         position_plane = [xyz_bbox[posmax][0] + n*dist_between_plane for n in range(resolution)]
         
@@ -89,6 +82,7 @@ class PointCloud3D(dc.DessiaObject):
         faces = []
         max_poly_resolution = int(sum([len(poly.points) for poly in polygon3d])/len(polygon3d))+1
         for n in range(resolution):
+            print('sewing polygon', round(n/resolution*100, 2), '%')
             poly1 = polygon3d[n]
             if n == resolution-1 or n == 0:
                 plane3d = vmf.Plane3D.from_plane_vectors(position_plane[n]*normal, vec1, vec2)
@@ -100,7 +94,7 @@ class PointCloud3D(dc.DessiaObject):
                 for trio in coords :
                     faces.append(vmf.Triangle3D(trio[0], trio[1], trio[2]))   
         
-        return faces
+        return vmf.ClosedShell3D(faces)
 
     @classmethod        
     def from_step(cls, step_file:str):
@@ -120,5 +114,8 @@ class PointCloud2D(dc.DessiaObject):
         return ax
     
     def to_polygon(self):
-        return vmw.ClosedPolygon2D.points_convex_hull(self.points)
-        
+        polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
+        if math.isclose(polygon.area(), 0, abs_tol = 1e-6) :
+            return None
+        else : 
+            return polygon
