@@ -1474,6 +1474,14 @@ class ClosedPolygon2D(Contour2D):
             if i != 0:
                 distance = point.point_distance(points[-1])
                 if distance > mean_distance:
+                    # if distance > 10*mean_distance:
+                    #     mean_point = 0.5*(point+points[-1])
+                    #     mean_point2 = 0.5*(mean_point+points[-1])
+                    #     mean_point3 = 0.5*(point+mean_point)
+                    #     points.append(mean_point2)
+                    #     points.append(mean_point)
+                    #     points.append(mean_point3)
+                   
                     points.append(point)
                
         self.update_polygon(points)
@@ -2461,8 +2469,12 @@ class ClosedPolygon3D(Contour3D):
             if i != 0:
                 mean_point = 0.5*(point_polygon1 + new_polygon1.points[i-1])
                 distances = [mean_point.point_distance(point_poly2) for point_poly2 in new_polygon2.points]
+                # print('distaces :', distances)
                 closing_point = new_polygon2.points[distances.index(min(distances))]
                 real_closing_point = polygon2.points[distances.index(min(distances))]
+                # print('index', distances.index(min(distances)))
+                # print('min distance',min(distances))
+                # print('closing point', real_closing_point)
                 if i==1:
                     previous_closing_point = closing_point
                 if closing_point != previous_closing_point:
@@ -2476,19 +2488,19 @@ class ClosedPolygon3D(Contour3D):
                 triangles.append([self.points[new_polygon1.points.index(point_polygon1)],
                                   self.points[i-1], real_closing_point])
                 previous_closing_point = closing_point
-        # for i, point_polygon2 in enumerate(new_polygon2.points+[new_polygon2.points[0]]):
+        for i, point_polygon2 in enumerate(new_polygon2.points+[new_polygon2.points[0]]):
             
-        #     for j, index in enumerate(list(dict_closing_pairs.values())):
-        #         if i != 0 :
-        #             if i-1 >= index[0] and i <= index[1]:
-        #                 triangles.append([polygon2.points[i-1],
-        #                                   polygon2.points[new_polygon2.points.index(point_polygon2)],
-        #                                   list(dict_closing_pairs.keys())[j]])
-        #             else:
-        #                 if index[0]>index[1]:
-        #                     if ((i-1 <= index[0] and i <= index[1]) or ((i-1 >= index[0]) and i >= index[1])):
-        #                         triangles.append([polygon2.points[i-1], 
-        #                                           polygon2.points[new_polygon2.points.index(point_polygon2)], 
-        #                                           list(dict_closing_pairs.keys())[j]])
+            for j, index in enumerate(list(dict_closing_pairs.values())):
+                if i != 0 :
+                    if i-1 >= index[0] and i <= index[1]:
+                        triangles.append([polygon2.points[i-1],
+                                          polygon2.points[new_polygon2.points.index(point_polygon2)],
+                                          list(dict_closing_pairs.keys())[j]])
+                    else:
+                        if index[0]>index[1]:
+                            if ((i-1 <= index[0] and i <= index[1]) or ((i-1 >= index[0]) and i >= index[1])):
+                                triangles.append([polygon2.points[i-1], 
+                                                  polygon2.points[new_polygon2.points.index(point_polygon2)], 
+                                                  list(dict_closing_pairs.keys())[j]])
                 
         return triangles
