@@ -630,6 +630,9 @@ vec1, vec2 = vm.X3D, vm.Y3D
 normal = vm.Z3D
 polygon1.simplify_polygon3d(center1, vec1, vec2)
 polygon2.simplify_polygon3d(center2, vec1, vec2)
+print(polygon1.primitives)
+print(polygon1.line_segments)
+print(len(polygon1.points))
 
 # poly1_2d, poly2_2d = polygon1.to_2d(center1, vec1, vec2), polygon2.to_2d(center2,vec1,vec2)
 
@@ -650,28 +653,28 @@ polygon2.simplify_polygon3d(center2, vec1, vec2)
 #     # print(point)
 #     point.plot(ax= ax, color = 'g')
 
-faces=[]
-# coords = polygon1.sewing_with(polygon2, vec1, vec2, normal)
-# coords, list_previous_closing_points = polygon1.sewing2(polygon2, vec1, vec2, normal)
-coords = polygon1.sewing(polygon2)
-for trio in coords :
-    faces.append(vmf.Triangle3D(trio[0], trio[1], trio[2]))
+# faces=[]
+# # coords = polygon1.sewing_with(polygon2, vec1, vec2, normal)
+# # coords, list_previous_closing_points = polygon1.sewing2(polygon2, vec1, vec2, normal)
+# coords = polygon1.sewing(polygon2)
+# for trio in coords :
+#     faces.append(vmf.Triangle3D(trio[0], trio[1], trio[2]))
 
-volum = volmdlr.core.VolumeModel(faces)
-volum.babylonjs()  
+# volum = volmdlr.core.VolumeModel(faces)
+# volum.babylonjs()  
 
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-polygon1.plot(ax=ax, color='g')
-polygon2.plot(ax= ax, color = 'r')
-for point in polygon1.points + polygon2.points:
-    point.plot(ax= ax, color = 'b')
+# fig = plt.figure()
+# ax = fig.add_subplot(111, projection='3d')
+# polygon1.plot(ax=ax, color='g')
+# polygon2.plot(ax= ax, color = 'r')
+# for point in polygon1.points + polygon2.points:
+#     point.plot(ax= ax, color = 'b')
 
-# poly12d = polygon1.to_2d(plane_origin, x, y)
-for face in faces :
-    vme.LineSegment3D(face.point1, face.point2).plot(ax=ax, color='g')
-    vme.LineSegment3D(face.point2, face.point3).plot(ax=ax,color='g')
-    vme.LineSegment3D(face.point3, face.point1).plot(ax=ax, color='g')
+# # poly12d = polygon1.to_2d(plane_origin, x, y)
+# for face in faces :
+#     vme.LineSegment3D(face.point1, face.point2).plot(ax=ax, color='g')
+#     vme.LineSegment3D(face.point2, face.point3).plot(ax=ax,color='g')
+    # vme.LineSegment3D(face.point3, face.point1).plot(ax=ax, color='g')
 # # 
 # for points in list_previous_closing_points :
     # points.plot(ax=ax, color='b')
