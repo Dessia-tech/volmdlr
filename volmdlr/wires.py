@@ -15,7 +15,9 @@ from typing import List
 import volmdlr
 import volmdlr.core
 import volmdlr.edges
+
 import volmdlr.display as vmd
+
 # import volmdlr.faces
 import volmdlr.geometry as vmgeo
 
@@ -31,6 +33,9 @@ from scipy.spatial import Delaunay
 import plot_data.core as plot_data
 
 import plot_data.core as plot_data
+# import cv2
+import numpy as np
+from statistics import mean
 
 
 class Wire:
@@ -76,6 +81,18 @@ class Wire:
             primitives.append(primitive2.split(point2)[0])
 
         return primitives
+    def extract_without_primitives(self, point1, point2):
+        split_primitives  = []
+        primitives = self.primitives
+        for point in [point1, point2]:
+            dist_min = math.inf
+            for primitive in primitives:
+                dist = primitive.point_distance(point)
+                if dist < dist_min:
+                    dist_min = dist
+                    prim_opt = primitive
+            split_primitives.append(prim_opt)
+        return self.extract_primitives(point1, split_primitives[0], point2, split_primitives[1])
 
 
 class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
@@ -94,8 +111,25 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         return Wire3D(primitives3d)
 
     def extract(self, point1, primitive1, point2, primitive2):
-        return Wire2D(self.extract_primitives(self, point1, primitive1, point2,
-                                              primitive2))
+        return Wire2D(self.extract_primitives(point1, primitive1, point2, primitive2))
+    
+    def extract_with_points(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D):
+        return self.extract_without_primitives(point1, point2)
+        # split_primitives  = []
+        # # primitives = [p for p in contour.primitives]
+        # primitives = self.primitives
+        # print(len(primitives))
+        # for point in [point1, point2]:
+        #     dist_min = math.inf
+        #     for primitive in primitives:
+        #         # print(point)
+        #         dist = primitive.point_distance(point)
+        #         if dist < dist_min:
+        #             dist_min = dist
+        #             prim_opt = primitive
+        #     split_primitives.append(prim_opt)
+        # print(len(split_primitives))
+        # return self.extract(point1, split_primitives[0], point2, split_primitives[1])
 
         # TODO: method to check if it is a wire
 
@@ -236,7 +270,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
 
     def line_crossings(self, line: 'volmdlr.edges.Line2D'):
         """
-        Returns a list of crossings with in ther form of a tuple (point, primitive)
+        Returns a list of crossings with in the form of a tuple (point, primitive)
         of the wire primitives intersecting with the line
         """
         intersection_points = []
@@ -257,6 +291,8 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
     def extract(self, point1, primitive1, point2, primitive2):
         return Wire3D(self.extract_primitives(self, point1, primitive1, point2,
                                               primitive2))
+    def extract_with_points(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+        return self.extract_without_primitives(point1, point2)
 
     # TODO: method to check if it is a wire
     def FreeCADExport(self, ip):
@@ -331,6 +367,20 @@ class Contour():
             primitives.append(primitive2.split(point2)[0])
 
         return primitives
+    # def extract_without_primitives(self, point1, point2):
+    #     split_primitives  = []
+    #     # primitives = [p for p in contour.primitives]
+    #     primitives = self.primitives
+    #     for point in [point1, point2]:
+    #         dist_min = math.inf
+    #         for primitive in primitives:
+    #             # print(point)
+    #             dist = primitive.point_distance(point)
+    #             if dist < dist_min:
+    #                 dist_min = dist
+    #                 prim_opt = primitive
+    #         split_primitives.append(prim_opt)
+    #     return self.extract_primitives(point1, split_primitives[0], point2, split_primitives[1])
 
 
 class Contour2D(Contour, Wire2D):
@@ -961,9 +1011,75 @@ class Contour2D(Contour, Wire2D):
                     triangles.append([point_index[p] for p in points_in])
 
         return vmd.DisplayMesh2D(points, triangles)
+    # def extract_contours(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D):
+    #     split_primitives  = []
+    #     # primitives = [p for p in contour.primitives]
+    #     primitives = self.primitives
+    #     for point in [point1, point2]:
+    #         dist_min = math.inf
+    #         for primitive in primitives:
+    #             # print(point)
+    #             dist = primitive.point_distance(point)
+    #             if dist < dist_min:
+    #                 dist_min = dist
+    #                 prim_opt = primitive
+    #         split_primitives.append(prim_opt)
+    #     print(len(split_primitives))
+    #     return self.extract_primitives(point1, split_primitives[0], point2, split_primitives[1])
 
+class ClosedPolygon():
+    
+    def length(self):
+        L = []
+        for k in range(len(self.line_segments)):
+            L.append(self.line_segments[k].length())
+        return sum(L)
+    
+    
+    def min_length(self):
+        L = []
 
-class ClosedPolygon2D(Contour2D):
+        for k in range(len(self.line_segments)):
+            L.append(self.line_segments[k].length())
+
+        return min(L)
+
+    def max_length(self):
+        L = []
+
+        for k in range(len(self.line_segments)):
+            L.append(self.line_segments[k].length())
+    
+    def edge_statistics(self):
+        distances=[]
+        for i, point in enumerate(self.points):
+            if i!=0:
+                distances.append(point.point_distance(self.points[i-1]))
+        mean_distance = mean(distances)
+        std = npy.std(distances)
+        return mean_distance, std
+                
+    def simplify_polygon(self):
+        points = [self.points[0]]
+        mean_distance, _ = self.edge_statistics()
+        for i, point in enumerate(self.points):
+            if i != 0:
+                distance = point.point_distance(points[-1])
+                if distance > mean_distance:
+                    # if distance > 10*mean_distance:
+                    #     mean_point = 0.5*(point+points[-1])
+                    #     mean_point2 = 0.5*(mean_point+points[-1])
+                    #     mean_point3 = 0.5*(point+mean_point)
+                    #     points.append(mean_point2)
+                    #     points.append(mean_point)
+                    #     points.append(mean_point3)
+                   
+                    points.append(point)
+        # self.update_polygon(points)
+        return self.__class__(points)
+
+    
+class ClosedPolygon2D(Contour2D, ClosedPolygon):
     _non_serializable_attributes = ['line_segments']
 
     def __init__(self, points: List[volmdlr.Point2D], name=''):
@@ -1097,21 +1213,21 @@ class ClosedPolygon2D(Contour2D):
             angle += math.atan2(y, x)
         return angle > 0
 
-    def min_length(self):
-        L = []
+    # def min_length(self):
+    #     L = []
 
-        for k in range(len(self.line_segments)):
-            L.append(self.line_segments[k].length())
+    #     for k in range(len(self.line_segments)):
+    #         L.append(self.line_segments[k].length())
 
-        return min(L)
+    #     return min(L)
 
-    def max_length(self):
-        L = []
+    # def max_length(self):
+    #     L = []
 
-        for k in range(len(self.line_segments)):
-            L.append(self.line_segments[k].length())
+    #     for k in range(len(self.line_segments)):
+    #         L.append(self.line_segments[k].length())
 
-        return max(L)
+    #     return max(L)
 
     def delaunay_triangulation(self):
         points = self.points
@@ -1445,6 +1561,13 @@ class ClosedPolygon2D(Contour2D):
                           initial_point_to_index[p3]))
         
         return vmd.DisplayMesh2D(points, triangles)
+    
+                
+    def simplify(self):
+        return ClosedPolygon2D(self.simplify_polygon().points)
+        
+        
+        
 
 class Triangle2D(ClosedPolygon2D):
 
@@ -2305,7 +2428,7 @@ class Ellipse3D(Contour3D):
                    arguments[0][1:-1])
 
 
-class ClosedPolygon3D(Contour3D):
+class ClosedPolygon3D(Contour3D, ClosedPolygon):
 
     def __init__(self, points: List[volmdlr.Point3D], name: str = ''):
         self.points = points
@@ -2341,6 +2464,14 @@ class ClosedPolygon3D(Contour3D):
             ax = line_segment.plot(ax=ax, color=color, alpha=alpha)
         return ax
     
+    def rotation(self, center, axis,  angle, copy=True):
+        if copy:
+            return ClosedPolygon3D(
+                [p.rotation(center, axis, angle, copy=True) for p in self.points])
+        else:
+            for p in self.points:
+                p.rotation(center, axis, angle, copy=False)
+                
     def translation(self, offset, copy=True):
         if copy:
             new_points = [point.translation(offset, copy=True) for point in
@@ -2387,8 +2518,8 @@ class ClosedPolygon3D(Contour3D):
                     break
                 
         new_self_poly2d, new_other_poly2d = ClosedPolygon2D(self_new_points), ClosedPolygon2D(other_new_points)
-        new_self_poly2d.translation(self_center2d,copy=False)
-        new_other_poly2d.translation(other_center2d,copy=False)
+        new_self_poly2d.translation(self_center2d, copy=False)
+        new_other_poly2d.translation(other_center2d, copy=False)
         
         new_poly1, new_poly2 = new_self_poly2d.to_3d(self_center, x, y), new_other_poly2d.to_3d(other_center, x, y)
         
@@ -2404,4 +2535,51 @@ class ClosedPolygon3D(Contour3D):
                                                 new_poly1.points[1:]+new_poly1.points[:1]):
             triangles.append([other_point, point2, point1])
            
+        return triangles
+    def simplify(self):
+        return ClosedPolygon3D(self.simplify_polygon().points)
+        
+        
+
+    def sewing(self, polygon2):
+        center1, center2 = self.average_center_point(), polygon2.average_center_point()
+        center1, center2 = volmdlr.Point3D(center1.x, center1.y, 0), volmdlr.Point3D(center2.x, center2.y, 0)
+        new_polygon1, new_polygon2 =self.translation(-center1), polygon2.translation(-center2)
+        
+        dict_closing_pairs = {}
+        triangles = []
+        for i, point_polygon1 in enumerate(new_polygon1.points+[new_polygon1.points[0]]):
+            if i != 0:
+                mean_point = 0.5*(point_polygon1 + new_polygon1.points[i-1])
+                distances = [mean_point.point_distance(point_poly2) for point_poly2 in new_polygon2.points]
+                closing_point = new_polygon2.points[distances.index(min(distances))]
+                real_closing_point = polygon2.points[distances.index(min(distances))]
+                if i==1:
+                    previous_closing_point = closing_point
+                if closing_point != previous_closing_point:
+                    dict_closing_pairs[self.points[i-1]] = (new_polygon2.points.index(previous_closing_point),
+                                                            new_polygon2.points.index(closing_point))
+                if point_polygon1 == new_polygon1.points[0]:
+                    if list(dict_closing_pairs.values())[-1][-1] != list(dict_closing_pairs.values())[0][0]:
+                        dict_closing_pairs[self.points[0]] = (list(dict_closing_pairs.values())[-1][-1],
+                                                              list(dict_closing_pairs.values())[0][0] )
+
+                triangles.append([self.points[new_polygon1.points.index(point_polygon1)],
+                                  self.points[i-1], real_closing_point])
+                previous_closing_point = closing_point
+        for i, point_polygon2 in enumerate(new_polygon2.points+[new_polygon2.points[0]]):
+            
+            for j, index in enumerate(list(dict_closing_pairs.values())):
+                if i != 0 :
+                    if i-1 >= index[0] and i <= index[1]:
+                        triangles.append([polygon2.points[i-1],
+                                          polygon2.points[new_polygon2.points.index(point_polygon2)],
+                                          list(dict_closing_pairs.keys())[j]])
+                    else:
+                        if index[0]>index[1]:
+                            if ((i-1 <= index[0] and i <= index[1]) or ((i-1 >= index[0]) and i >= index[1])):
+                                triangles.append([polygon2.points[i-1], 
+                                                  polygon2.points[new_polygon2.points.index(point_polygon2)], 
+                                                  list(dict_closing_pairs.keys())[j]])
+                
         return triangles

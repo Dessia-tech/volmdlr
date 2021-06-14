@@ -1962,6 +1962,16 @@ class LineSegment3D(LineSegment):
     def middle_point(self):
         l = self.length()
         return self.point_at_abscissa(0.5 * l)
+    def point_distance(self, point):
+        
+        vector1 = point - self.start
+        vector1.to_vector()
+        vector2 = point - self.end
+        vector2.to_vector()
+        vector3 = self.end - self.start
+        vector3.to_vector()
+        return vector1.cross(vector2).norm()/vector3.norm()
+        
 
     def plane_projection2d(self, center, x, y):
         return LineSegment2D(self.start.plane_projection2d(center, x, y),
