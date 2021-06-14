@@ -1040,6 +1040,8 @@ class Point3D(Vector3D):
 
     def to_vector(self):
         return Vector3D(self.x, self.y, self.z)
+    def point_distance(self, point2:'Point3D') -> float:
+        return (self-point2).norm()
 
     @classmethod
     def middle_point(cls, point1, point2):
