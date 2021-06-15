@@ -2408,15 +2408,17 @@ class Triangle3D(PlaneFace3D):
         self.alpha = alpha
         self.name = name
         
-        # plane3d = Plane3D.from_3_points(point1, point2, point3)
-        # contour3d = volmdlr.wires.Contour3D([vme.LineSegment3D(point1, point2),
-        #                                      vme.LineSegment3D(point2, point3),
-        #                                      vme.LineSegment3D(point3, point1)])
+        plane3d = Plane3D.from_3_points(point1, point2, point3)
+        self.surface3d = plane3d
+        contour3d = volmdlr.wires.Contour3D([vme.LineSegment3D(point1, point2),
+                                              vme.LineSegment3D(point2, point3),
+                                              vme.LineSegment3D(point3, point1)])
         
-        # contour2d = contour3d.to_2d(plane3d.frame.origin, 
-        #                             plane3d.frame.u, plane3d.frame.v)
+        contour2d = contour3d.to_2d(plane3d.frame.origin, 
+                                    plane3d.frame.u, plane3d.frame.v)
         
-        # surface2d = Surface2D(outer_contour=contour2d, inner_contours=[])
+        surface2d = Surface2D(outer_contour=contour2d, inner_contours=[])
+        self.surface2d = surface2d
         
         # Face3D.__init__(self,
         #                 surface3d=plane3d,
