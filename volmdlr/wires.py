@@ -1066,13 +1066,16 @@ class ClosedPolygon():
             if i != 0:
                 distance = point.point_distance(points[-1])
                 if distance > mean_distance:
-                    # if distance > 10*mean_distance:
-                    #     mean_point = 0.5*(point+points[-1])
-                    #     mean_point2 = 0.5*(mean_point+points[-1])
-                    #     mean_point3 = 0.5*(point+mean_point)
-                    #     points.append(mean_point2)
-                    #     points.append(mean_point)
-                    #     points.append(mean_point3)
+                    if distance > 5*mean_distance and distance < 10*mean_distance:
+                        mean_point = 0.5*(point+points[-1])
+                        points.append(mean_point)
+                    elif distance > 10*mean_distance:
+                        mean_point = 0.5*(point+points[-1])
+                        mean_point2 = 0.5*(mean_point+points[-1])
+                        mean_point3 = 0.5*(point+mean_point)
+                        points.append(mean_point2)
+                        points.append(mean_point)
+                        points.append(mean_point3)
                    
                     points.append(point)
         # self.update_polygon(points)
@@ -2548,38 +2551,71 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
         
         dict_closing_pairs = {}
         triangles = []
+        list_closing_points = []
         for i, point_polygon1 in enumerate(new_polygon1.points+[new_polygon1.points[0]]):
             if i != 0:
                 mean_point = 0.5*(point_polygon1 + new_polygon1.points[i-1])
                 distances = [mean_point.point_distance(point_poly2) for point_poly2 in new_polygon2.points]
                 closing_point = new_polygon2.points[distances.index(min(distances))]
+                not_valid_point = True
+                while not_valid_point:
+                    
+                    if closing_point in list_closing_points:
+                        
+                        if closing_point!=list_closing_points[-1] and closing_point!=list_closing_points[0]:
+                            distances.remove(min(distances))
+                            closing_point = new_polygon2.points[distances.index(min(distances))]
+                            if new_polygon2.points.index(closing_point)<new_polygon2.points.index(list_closing_points[-1]):
+                                # print("yes")
+                                distances.remove(min(distances))
+                                closing_point = new_polygon2.points[distances.index(min(distances))]
+                                
+                        # elif new_polygon2.points.index(closing_point)<new_polygon2.points.index(list_closing_points[-1]):
+                        #         print("yes")
+                        #         distances.remove(min(distances))
+                        #         closing_point = new_polygon2.points[distances.index(min(distances))]
+                        else:
+                            not_valid_point = False
+                    # elif new_polygon2.points.index(closing_point)<new_polygon2.points.index(list_closing_points[-1]):
+                    #             print("yes")
+                    #             distances.remove(min(distances))
+                    #             closing_point = new_polygon2.points[distances.index(min(distances))]
+                    else:
+                        not_valid_point = False
+                    
+                    
+                list_closing_points.append(closing_point)
+                print(new_polygon2.points.index(closing_point))
                 real_closing_point = polygon2.points[distances.index(min(distances))]
                 if i==1:
                     previous_closing_point = closing_point
-                if closing_point != previous_closing_point:
-                    dict_closing_pairs[self.points[i-1]] = (new_polygon2.points.index(previous_closing_point),
-                                                            new_polygon2.points.index(closing_point))
-                if point_polygon1 == new_polygon1.points[0]:
+                
+                # if point_polygon1 == new_polygon1.points[0]:
+                if i == len(new_polygon1.points+[new_polygon1.points[0]])-1:
                     if list(dict_closing_pairs.values())[-1][-1] != list(dict_closing_pairs.values())[0][0]:
                         dict_closing_pairs[self.points[0]] = (list(dict_closing_pairs.values())[-1][-1],
                                                               list(dict_closing_pairs.values())[0][0] )
+                elif closing_point != previous_closing_point:
+                    dict_closing_pairs[self.points[i-1]] = (new_polygon2.points.index(previous_closing_point),
+                                                            new_polygon2.points.index(closing_point))
 
                 triangles.append([self.points[new_polygon1.points.index(point_polygon1)],
                                   self.points[i-1], real_closing_point])
                 previous_closing_point = closing_point
-        for i, point_polygon2 in enumerate(new_polygon2.points+[new_polygon2.points[0]]):
+        
+        # for i, point_polygon2 in enumerate(new_polygon2.points+[new_polygon2.points[0]]):
             
-            for j, index in enumerate(list(dict_closing_pairs.values())):
-                if i != 0 :
-                    if i-1 >= index[0] and i <= index[1]:
-                        triangles.append([polygon2.points[i-1],
-                                          polygon2.points[new_polygon2.points.index(point_polygon2)],
-                                          list(dict_closing_pairs.keys())[j]])
-                    else:
-                        if index[0]>index[1]:
-                            if ((i-1 <= index[0] and i <= index[1]) or ((i-1 >= index[0]) and i >= index[1])):
-                                triangles.append([polygon2.points[i-1], 
-                                                  polygon2.points[new_polygon2.points.index(point_polygon2)], 
-                                                  list(dict_closing_pairs.keys())[j]])
+        #     for j, index in enumerate(list(dict_closing_pairs.values())):
+        #         if i != 0 :
+        #             if i-1 >= index[0] and i <= index[1]:
+        #                 triangles.append([polygon2.points[i-1],
+        #                                   polygon2.points[new_polygon2.points.index(point_polygon2)],
+        #                                   list(dict_closing_pairs.keys())[j]])
+        #             else:
+        #                 if index[0]>index[1]:
+        #                     if ((i-1 <= index[0] and i <= index[1]) or ((i-1 >= index[0]) and i >= index[1])):
+        #                         triangles.append([polygon2.points[i-1], 
+        #                                           polygon2.points[new_polygon2.points.index(point_polygon2)], 
+        #                                           list(dict_closing_pairs.keys())[j]])
                 
-        return triangles
+        return triangles, dict_closing_pairs, list_closing_points

@@ -90,7 +90,8 @@ class PointCloud3D(dc.DessiaObject):
                 faces.append(vmf.PlaneFace3D(plane3d, surf2d))
             if n != resolution-1:
                 poly2 = polygon3d[n+1]
-                coords = poly1.sewing_with(poly2, vec1, vec2, normal, resolution = max_poly_resolution)
+                # coords = poly1.sewing_with(poly2, vec1, vec2, normal, resolution = max_poly_resolution)
+                coords = poly1.sewing(poly2)
                 for trio in coords :
                     faces.append(vmf.Triangle3D(trio[0], trio[1], trio[2]))   
         

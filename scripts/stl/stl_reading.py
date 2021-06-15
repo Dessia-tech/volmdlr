@@ -16,12 +16,13 @@ import os
 
 shells = []
 path = os.getcwd()
-for stl_file in ['a320.stl',
-                'a320_ENGINE_RIGHT.stl',
+for stl_file in [
+        # 'a320.stl',
+                # 'a320_ENGINE_RIGHT.stl',
                 'a320_FAN_RIGHT.stl',
-                'a320_RIGHT_WING.stl',
-                'a320_RUDDER.stl',
-                'a320_STABILO_RIGHT.stl'
+                # 'a320_RIGHT_WING.stl',
+                # 'a320_RUDDER.stl',
+                # 'a320_STABILO_RIGHT.stl'
                   ]:
     # print('start')
     # volum = volmdlr.core.VolumeModel(cloud_faces)
@@ -31,9 +32,11 @@ for stl_file in ['a320.stl',
     # faces.extend(cloud_faces)
     # print()
     
-    stl = vmstl.Stl.from_file(stl_file)
+    
+    stl = vmstl.Stl.from_file('/home/dasilva/volmdlr/scripts/stl/'+stl_file)
+    # print(stl)
     shell = stl.to_closed_shell()
-    # shell.babylonjs()
+    shell.babylonjs()
     shells.append(shell)
     # stl.extract_points()
 
@@ -44,5 +47,10 @@ for stl_file in ['a320.stl',
     
 volum = volmdlr.core.VolumeModel(shells)
 volum.babylonjs()
-        
+        # /home/dasilva/volmdlr/scripts/stl/a320.stl
 
+# stl = vmstl.Stl.from_file("/home/dasilva/Downloads/sewingclean_304011549R--A.stl")
+# stl = vmstl.Stl.from_file("/home/dasilva/volmdlr/scripts/stl/a320_ENGINE_RIGHT.stl")
+# shell = stl.to_closed_shell()
+# volum = volmdlr.core.VolumeModel([shell])
+# volum.babylonjs()
