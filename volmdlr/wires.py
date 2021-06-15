@@ -1553,7 +1553,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             if not found_ear:
                 ClosedPolygon2D(remaining_points).plot()
                 print(remaining_points)
-                raise ValueError
+                raise ValueError('There are no ear in the polygon, it seems malformed')
         
         p1, p2, p3 = remaining_points
         triangles.append((initial_point_to_index[p1],
