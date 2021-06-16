@@ -48,3 +48,5 @@ ptest.plot(ax=ax)
 cog_p.plot(ax=ax, color='r')
 
 
+mesh = border.triangulation()
+mesh.plot()
