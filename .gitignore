@@ -4,8 +4,8 @@
 # CAD files
 *.fcstd
 *.fcstd1
-*.stl
 
+*.json
 
 # Python gitignore
 # Byte-compiled / optimized / DLL files

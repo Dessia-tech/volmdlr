@@ -261,7 +261,7 @@ pts=[[-0.01,        0.23222834],
 
 points=[]
 for pt in pts:
-    points.append(vm.Point2D(tuple(pt)))
+    points.append(vm.Point2D(*pt))
 polygon = vm.Polygon2D(points)
 min_radius, min_circle, other_circle, min_point, min_seg1, min_seg2 = rolling_circle_in_polygon(polygon)
 print(min_radius)
