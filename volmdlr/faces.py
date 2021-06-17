@@ -2408,18 +2408,8 @@ class Triangle3D(PlaneFace3D):
         self.alpha = alpha
         self.name = name
         
-        plane3d = Plane3D.from_3_points(point1, point2, point3)
-        self.surface3d = plane3d
-        contour3d = volmdlr.wires.Contour3D([vme.LineSegment3D(point1, point2),
-                                              vme.LineSegment3D(point2, point3),
-                                              vme.LineSegment3D(point3, point1)])
         
-        contour2d = contour3d.to_2d(plane3d.frame.origin, 
-                                    plane3d.frame.u, plane3d.frame.v)
-        
-        surface2d = Surface2D(outer_contour=contour2d, inner_contours=[])
-        self.surface2d = surface2d
-        
+        # Don't use inheritence for performance: class method fakes face3D behavior
         # Face3D.__init__(self,
         #                 surface3d=plane3d,
         #                 surface2d=surface2d,
@@ -2428,6 +2418,23 @@ class Triangle3D(PlaneFace3D):
     def _bounding_box(self):
         return volmdlr.core.BoundingBox.from_points([self.point1, self.point2, self.point3])
         
+    @property
+    def surface3d(self):
+        return Plane3D.from_3_points(self.point1, self.point2, self.point3)
+
+
+    @property
+    def surface2d(self):
+        plane3d = self.surface3d
+        contour3d = volmdlr.wires.Contour3D([vme.LineSegment3D(self.point1, self.point2),
+                                              vme.LineSegment3D(self.point2, self.point3),
+                                              vme.LineSegment3D(self.point3, self.point1)])
+        
+        contour2d = contour3d.to_2d(plane3d.frame.origin, 
+                                    plane3d.frame.u, plane3d.frame.v)
+        
+        return Surface2D(outer_contour=contour2d, inner_contours=[])
+    
     @classmethod
     def dict_to_object(cls, dict_):
         point1 = volmdlr.Point3D.dict_to_object(dict_['point1'])
