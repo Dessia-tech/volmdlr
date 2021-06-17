@@ -70,6 +70,7 @@ class PointCloud3D(dc.DessiaObject):
         subcloud2d = [subcloud3d[n].to_2d(position_plane[n]*normal, vec1, vec2) for n in range(resolution)]
         
         initial_polygon2d = [cloud2d.to_polygon() for cloud2d in subcloud2d]
+        # initial_polygon2d = [subcloud2d[0].to_polygon()]
         
         polygon2d, polygon3d = [], []
         for pos_plane, poly in zip(position_plane, initial_polygon2d) :
@@ -82,15 +83,25 @@ class PointCloud3D(dc.DessiaObject):
         faces = []
         max_poly_resolution = int(sum([len(poly.points) for poly in polygon3d])/len(polygon3d))+1
         
-        # fig = plt.figure()
-        # ax = Axes3D(fig)
-        # for poly in polygon3d :
-        #     poly.plot(ax=ax)
+        fig = plt.figure()
+        ax = Axes3D(fig)
+        for poly in polygon3d :
+            poly.plot(ax=ax)
         
         for n in range(resolution):
             print('sewing polygon', round(n/resolution*100, 2), '%')
             poly1 = polygon3d[n]
             if n == resolution-1 or n == 0:
+                # fig, ax = plt.subplots()                
+                # polygon2d[n].plot(plot_points = True, ax=ax)
+                # polygon2d[n].points[0].plot(color='r', ax=ax)
+                # polygon2d[n].points[-1].plot(color='y', ax=ax)
+                # polygon2d[n].points[-2].plot(color='g', ax=ax)
+                # polygon2d[n].points[-3].plot(color='b', ax=ax)
+                # polygon2d[n].points[-4].plot(color='m', ax=ax)
+                # polygon2d[n].points[-5].plot(color='r', ax=ax)
+                # polygon2d[n].points[-6].plot(color='y', ax=ax)
+                
                 plane3d = vmf.Plane3D.from_plane_vectors(position_plane[n]*normal, vec1, vec2)
                 surf2d = vmf.Surface2D(polygon2d[n],[])
                 faces.append(vmf.PlaneFace3D(plane3d, surf2d))
@@ -122,7 +133,7 @@ class PointCloud2D(dc.DessiaObject):
     
     def to_polygon(self):
         polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
-        if math.isclose(polygon.area(), 0, abs_tol = 1e-6) :
+        if math.isclose(polygon.area(), 0, abs_tol = 1e-6) or polygon is None:
             return None
         else : 
             return polygon
