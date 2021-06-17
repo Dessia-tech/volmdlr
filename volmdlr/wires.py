@@ -236,14 +236,10 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
 
     def plot_data(self, name: str = '', fill=None, color='black',
                   stroke_width: float = 1, opacity: float = 1):
-        plot_data = {}
-        plot_data['name'] = name
-        plot_data['type'] = 'wire'
-        plot_data['plot_data'] = []
+        plot_data = []
+ 
         for item in self.primitives:
-            plot_data['plot_data'].append(item.plot_data(color=color,
-                                                         stroke_width=stroke_width,
-                                                         opacity=opacity))
+            plot_data.append(item.plot_data())
         return plot_data
 
     def line_intersections(self, line: 'volmdlr.edges.Line2D'):
@@ -1511,7 +1507,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         triangles = []
         
         remaining_points = self.points[:]
-        
+        # ax = ClosedPolygon2D(remaining_points).plot()
 
         # inital_number_points = len(remaining_points)
         number_remaining_points = len(remaining_points)
@@ -1521,7 +1517,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             # print(len(remaining_points))
             # pl2 = ClosedPolygon2D(remaining_points[1:]+remaining_points[0:1])
             # pl3 = ClosedPolygon2D(remaining_points[2:]+remaining_points[0:2])
-            # current_polygon.plot(point_numbering=True)
+            # current_polygon.plot(ax = ax)
             # pl2.plot(point_numbering=True)
             # pl3.plot(point_numbering=True)
             
@@ -1552,23 +1548,43 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                     if current_polygon.point_belongs(line_segment.middle_point()):
                         # Confirmed as an ear
                         # print('ear!')
+                        
                         triangles.append((initial_point_to_index[p1],
                                           initial_point_to_index[p2],
                                           initial_point_to_index[p3]))
                         remaining_points.remove(p2)
+                        # ax.text(*points[initial_point_to_index[p2]], str(number_remaining_points))
                         number_remaining_points -= 1
                         found_ear = True
                         break
         
             if not found_ear:
-                ClosedPolygon2D(remaining_points).plot()
-                print(remaining_points)
-                raise ValueError
-        
-        p1, p2, p3 = remaining_points
-        triangles.append((initial_point_to_index[p1],
-                          initial_point_to_index[p2],
-                          initial_point_to_index[p3]))
+                remaining_polygon = ClosedPolygon2D(remaining_points)
+                if remaining_polygon.area() > 0.:
+                    # Searching for a flat ear
+                    found_flat_ear = False
+                    for p1, p2, p3 in zip(remaining_points,
+                                  remaining_points[1:]+remaining_points[0:1],
+                                  remaining_points[2:]+remaining_points[0:2]):
+                        triangle = Triangle2D(p1, p2, p3)
+                        if triangle.area() == 0:
+                            remaining_points.remove(p2)
+                            found_flat_ear = True
+                            break
+                        
+                    if not found_flat_ear:
+                        remaining_polygon.plot(point_numbering=True, plot_points=True)     
+                        vmd.DisplayMesh2D(points, triangles).plot()
+                        print(remaining_points)
+                        raise ValueError('There are no ear in the polygon, it seems malformed')
+                else:
+                    return vmd.DisplayMesh2D(points, triangles)
+            
+        if len(remaining_points) == 3:
+            p1, p2, p3 = remaining_points
+            triangles.append((initial_point_to_index[p1],
+                              initial_point_to_index[p2],
+                              initial_point_to_index[p3]))
         
         return vmd.DisplayMesh2D(points, triangles)
     
@@ -1581,13 +1597,15 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
 
 class Triangle2D(ClosedPolygon2D):
 
-    def __init__(self, points, name=''):
-        self.points = points
-        ClosedPolygon2D.__init__(self, points=points, name=name)
+    def __init__(self, point1, point2, point3, name=''):
+        self.point1 = point1
+        self.point2 = point2
+        self.point3 = point3
+        ClosedPolygon2D.__init__(self, points=[point1, point2, point3], name=name)
 
     def area(self):
-        u = self.points[1] - self.points[0]
-        v = self.points[2] - self.points[0]
+        u = self.point2 - self.point1
+        v = self.point3 - self.point1
         return abs(u.cross(v)) / 2
 
 
