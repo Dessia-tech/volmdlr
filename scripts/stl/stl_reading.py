@@ -18,6 +18,7 @@ import os
 
 shells = []
 path = os.getcwd()
+
 for stl_file in [
                 # 'a320.stl',
                 # 'a320_ENGINE_RIGHT.stl',
