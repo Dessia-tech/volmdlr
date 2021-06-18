@@ -1410,7 +1410,6 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             return
         ymax, pos_ymax = volmdlr.core.max_pos([pt.y for pt in points])
         point_start = points[pos_ymax]
-        # hull, thetac = [point_start], 0  # thetac is the current theta
         hull = [point_start]
         
         barycenter = points[0]
@@ -1429,7 +1428,6 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             theta.append(theta_i)
 
         min_theta, posmin_theta = volmdlr.core.min_pos(theta)
-        # thetac += min_theta
         next_point = remaining_points[posmin_theta]
         hull.append(next_point)
         del remaining_points[posmin_theta]
@@ -1437,8 +1435,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         remaining_points.append(hull[0])
 
         while next_point != point_start:
-            past_vec1, past_min_theta = vec1, min_theta
-            vec1 = next_point - barycenter
+            vec1 = next_point - hull[-2]
             theta = []
             for pt in remaining_points:
                 vec2 = pt - next_point
@@ -1446,19 +1443,14 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                 theta.append(theta_i)
 
             min_theta, posmin_theta = volmdlr.core.min_pos(theta)
-            
-            vec1_angles = -volmdlr.core.clockwise_angle(vec1, past_vec1)
-            new_angle = vec1_angles + past_min_theta
-            if math.isclose(new_angle, min_theta, abs_tol=1e-6):
+            if math.isclose(min_theta, -2*math.pi, abs_tol=1e-6) or math.isclose(min_theta, 0, abs_tol=1e-6):
                 if remaining_points[posmin_theta] == point_start :
                     break
-                del remaining_points[posmin_theta]
-                min_theta, vec1 = past_min_theta, past_vec1
             else :
-                # thetac += min_theta
                 next_point = remaining_points[posmin_theta]
                 hull.append(next_point)
-                del remaining_points[posmin_theta]
+                
+            del remaining_points[posmin_theta]
 
         hull.pop()
 
