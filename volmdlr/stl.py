@@ -35,6 +35,33 @@ class Stl(dc.DessiaObject):
     def __init__(self, triangles, name=''):
         self.triangles = triangles
         self.name = name
+        
+    @classmethod
+    def points_from_file(cls, filename:str, distance_multiplier=0.001):
+        if is_binary(filename):       
+            with open(filename, 'rb') as file:
+                stream = KaitaiStream(file)
+                name = stream.read_bytes(80).decode('utf8')
+                num_triangles = stream.read_u4le()
+                
+                all_points = []
+                for i in range(num_triangles):
+                    if i % 5000 == 0:
+                        print('reading stl', round(i/num_triangles*100, 2), '%')
+                    normal = vm.Vector3D(stream.read_f4le(), stream.read_f4le(), stream.read_f4le())
+                    p1 = vm.Point3D(distance_multiplier*stream.read_f4le(),
+                                    distance_multiplier*stream.read_f4le(),
+                                    distance_multiplier*stream.read_f4le())
+                    p2 = vm.Point3D(distance_multiplier*stream.read_f4le(),
+                                    distance_multiplier*stream.read_f4le(), 
+                                    distance_multiplier*stream.read_f4le())
+                    p3 = vm.Point3D(distance_multiplier*stream.read_f4le(),
+                                    distance_multiplier*stream.read_f4le(),
+                                    distance_multiplier*stream.read_f4le())
+                    all_points.extend([p1, p2, p3])                        
+        
+                    stream.read_u2le()
+        return all_points
 
     @classmethod
     def from_file(cls, filename:str, distance_multiplier=0.001):
@@ -52,7 +79,6 @@ class Stl(dc.DessiaObject):
                     if i % 5000 == 0:
                         print('reading stl', round(i/num_triangles*100, 2), '%')
                     normal = vm.Vector3D(stream.read_f4le(), stream.read_f4le(), stream.read_f4le())
-                    # print(n)
                     p1 = vm.Point3D(distance_multiplier*stream.read_f4le(),
                                     distance_multiplier*stream.read_f4le(),
                                     distance_multiplier*stream.read_f4le())
@@ -62,7 +88,6 @@ class Stl(dc.DessiaObject):
                     p3 = vm.Point3D(distance_multiplier*stream.read_f4le(),
                                     distance_multiplier*stream.read_f4le(),
                                     distance_multiplier*stream.read_f4le())
-                    # print(p1, p2, p3)
                     try : 
                         triangles[i] = vmf.Triangle3D(p1, p2, p3)
                     except ZeroDivisionError :

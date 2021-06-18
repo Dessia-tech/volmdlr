@@ -1395,15 +1395,14 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
     #             'dash': None,
     #             'marker': marker,
     #             'opacity': opacity}
-
     @classmethod
     def points_convex_hull(cls, points):
         if len(points) < 3:
             return
         ymax, pos_ymax = volmdlr.core.max_pos([pt.y for pt in points])
         point_start = points[pos_ymax]
-        hull, thetac = [point_start], 0  # thetac is the current theta
-
+        hull = [point_start]
+        
         barycenter = points[0]
         for pt in points[1:]:
             barycenter += pt
@@ -1420,7 +1419,6 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             theta.append(theta_i)
 
         min_theta, posmin_theta = volmdlr.core.min_pos(theta)
-        thetac += min_theta
         next_point = remaining_points[posmin_theta]
         hull.append(next_point)
         del remaining_points[posmin_theta]
@@ -1428,7 +1426,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         remaining_points.append(hull[0])
 
         while next_point != point_start:
-            vec1 = next_point - barycenter
+            vec1 = next_point - hull[-2]
             theta = []
             for pt in remaining_points:
                 vec2 = pt - next_point
@@ -1436,9 +1434,13 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                 theta.append(theta_i)
 
             min_theta, posmin_theta = volmdlr.core.min_pos(theta)
-            thetac += min_theta
-            next_point = remaining_points[posmin_theta]
-            hull.append(next_point)
+            if math.isclose(min_theta, -2*math.pi, abs_tol=1e-6) or math.isclose(min_theta, 0, abs_tol=1e-6):
+                if remaining_points[posmin_theta] == point_start :
+                    break
+            else :
+                next_point = remaining_points[posmin_theta]
+                hull.append(next_point)
+                
             del remaining_points[posmin_theta]
 
         hull.pop()

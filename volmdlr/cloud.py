@@ -83,6 +83,12 @@ class PointCloud3D(dc.DessiaObject):
                 
         faces = []
         max_poly_resolution = int(sum([len(poly.points) for poly in polygon3d])/len(polygon3d))+1
+        
+        fig = plt.figure()
+        ax = Axes3D(fig)
+        for poly in polygon3d :
+            poly.plot(ax=ax)
+        
         for n in range(resolution):
             print('sewing polygon', round(n/resolution*100, 2), '%')
             poly1 = polygon3d[n]
