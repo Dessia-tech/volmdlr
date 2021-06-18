@@ -1,6 +1,8 @@
+
+import volmdlr.stl as vmstl
+import volmdlr.cloud
 # -*- coding: utf-8 -*-
 """
-
 """
 
 import volmdlr.stl as vmstl
@@ -16,11 +18,12 @@ import os
 
 shells = []
 path = os.getcwd()
-for stl_file in ['a320.stl',
-                'a320_ENGINE_RIGHT.stl',
-                'a320_FAN_RIGHT.stl',
-                'a320_RIGHT_WING.stl',
-                'a320_RUDDER.stl',
+for stl_file in [
+                # 'a320.stl',
+                # 'a320_ENGINE_RIGHT.stl',
+                # 'a320_FAN_RIGHT.stl',
+                # 'a320_RIGHT_WING.stl',
+                # 'a320_RUDDER.stl',
                 'a320_STABILO_RIGHT.stl'
                   ]:
     # print('start')
@@ -32,14 +35,18 @@ for stl_file in ['a320.stl',
     # print()
     
     stl = vmstl.Stl.from_file(stl_file)
-    shell = stl.to_closed_shell()
+    # shell = stl.to_closed_shell()
     # shell.babylonjs()
-    shells.append(shell)
+    # shells.append(shell)
     # stl.extract_points()
 
     # cloud = volmdlr.cloud.PointCloud3D.from_stl(path + "/" + stl_file)
     # cloud_faces = cloud.subdescription_2d()
     # cloud_faces.babylonjs()
+    
+    list_points = stl.extract_points_BIS()
+    pointcloud3d = volmdlr.cloud.PointCloud3D(list_points)
+    shells.append(pointcloud3d.to_shell())
 
     
 volum = volmdlr.core.VolumeModel(shells)
