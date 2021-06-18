@@ -42,7 +42,6 @@ class Stl(dc.DessiaObject):
             with open(filename, 'rb') as file:
                 stream = KaitaiStream(file)
                 name = stream.read_bytes(80).decode('utf8')
-                # print(name)
                 num_triangles = stream.read_u4le()
                 
                 all_points = []
@@ -80,7 +79,6 @@ class Stl(dc.DessiaObject):
                     if i % 5000 == 0:
                         print('reading stl', round(i/num_triangles*100, 2), '%')
                     normal = vm.Vector3D(stream.read_f4le(), stream.read_f4le(), stream.read_f4le())
-                    # print(n)
                     p1 = vm.Point3D(distance_multiplier*stream.read_f4le(),
                                     distance_multiplier*stream.read_f4le(),
                                     distance_multiplier*stream.read_f4le())
@@ -90,7 +88,6 @@ class Stl(dc.DessiaObject):
                     p3 = vm.Point3D(distance_multiplier*stream.read_f4le(),
                                     distance_multiplier*stream.read_f4le(),
                                     distance_multiplier*stream.read_f4le())
-                    # print(p1, p2, p3)
                     try : 
                         triangles[i] = vmf.Triangle3D(p1, p2, p3)
                     except ZeroDivisionError :
