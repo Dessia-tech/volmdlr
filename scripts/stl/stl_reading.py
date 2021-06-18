@@ -59,9 +59,21 @@ import volmdlr.core
 
 # stl_file = vmstl.Stl.from_file("/home/dasilva/Downloads/sewingclean_304011549R--A.stl")
 # stl_file = vmstl.Stl.from_file("a320_ENGINE_RIGHT.stl")
-points = volmdlr.stl.Stl.from_file_points('a320_ENGINE_RIGHT.stl')
-print('size', len(points))
-pointcloud3d = volmdlr.cloud.PointCloud3D(points)
+
+# points = volmdlr.stl.Stl.from_file_points('a320_ENGINE_RIGHT.stl')
+# print('size', len(points))
+# pointcloud3d = volmdlr.cloud.PointCloud3D(points)
+# shell3d = pointcloud3d.to_shell()
+# volum = volmdlr.core.VolumeModel([shell3d])
+# volum.babylonjs()
+
+# points = volmdlr.stl.Stl.from_file_points('a320_ENGINE_RIGHT.stl')
+triangles = volmdlr.stl.Stl.from_file('a320_ENGINE_RIGHT.stl')
+# stl = volmdlr.stl.Stl(triangles)
+# points1, points2, points3 = triangles.extract_points()
+list_points = triangles.extract_points_BIS()
+pointcloud3d = volmdlr.cloud.PointCloud3D(list_points)
+
 shell3d = pointcloud3d.to_shell()
 volum = volmdlr.core.VolumeModel([shell3d])
 volum.babylonjs()

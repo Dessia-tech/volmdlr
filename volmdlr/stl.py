@@ -95,7 +95,7 @@ class Stl(dc.DessiaObject):
                         except ZeroDivisionError :
                             pass
                         points = []
-
+        
         return cls(triangles, name=name)
     
     @classmethod
@@ -159,11 +159,45 @@ class Stl(dc.DessiaObject):
 
     
     def extract_points(self):
+            
         points1 = [t.point1 for t in self.triangles]
         points2 = [t.point2 for t in self.triangles]
         points3 = [t.point3 for t in self.triangles]
         
         return list(set(points1 + points2 + points3))
+    def extract_points_BIS(self, min_distance:float = 0.001):
+        
+        points = []
+        print(len(self.triangles))
+        for i, t in enumerate(self.triangles):
+            points.append(t.point1)
+            points.append(t.point2)
+            points.append(t.point3)
+            distance12 = t.point1.point_distance(t.point2)
+            distance13 = t.point1.point_distance(t.point3)
+            distance23 = t.point2.point_distance(t.point3)
+            if distance12 > min_distance:
+                n_div = int(distance12 / min_distance)
+                for n in range(n_div):
+                    new_point = (t.point1+t.point2)*(1/(n+1))
+                    points.append(new_point)
+                    
+            if distance13 > min_distance:
+                n_div = int(distance13 / min_distance)
+                for n in range(n_div):
+                    new_point = (t.point1+t.point3)*(1/(n+1))
+                    points.append(new_point)
+                   
+            if distance23 > min_distance:
+                n_div = int(distance23 / min_distance)
+                for n in range(n_div):
+                    new_point = (t.point2+t.point3)*(1/(n+1))
+                    points.append(new_point)
+            # print(i)
+        print('all_points available ',len(points))
+        valid_points = vm.Vector3D.remove_duplicate(points)
+        print('valid points: ', len(valid_points))
+        return valid_points
     
     @classmethod
     def from_display_mesh(cls, mesh):

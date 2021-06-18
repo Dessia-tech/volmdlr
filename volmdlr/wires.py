@@ -2607,34 +2607,50 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                                                   list(dict_closing_pairs.keys())[j]])
                 
         return triangles#, dict_closing_pairs, list_closing_points
-    def new_sewing(self, polygon2):
-        center1, center2 = self.average_center_point(), polygon2.average_center_point()
-        # center1, center2 = volmdlr.Point3D(center1.x, center1.y, 0), volmdlr.Point3D(center2.x, center2.y, 0)
-        # new_polygon1, new_polygon2 =self.translation(-center1), polygon2.translation(-center2)
-        # center1, center2 = new_polygon1.average_center_point(), new_polygon2.average_center_point()
-        # print(center1, center2)
-        list_lines = [[volmdlr.edges.LineSegment3D(center, 0.05*(volmdlr.Vector3D(1, 0, center.z)*math.sin(n*2*math.pi/4) +
-                                             volmdlr.Vector3D(0, 1, center.z)*math.cos(n*2*math.pi/4))
-                                             ) for n in range (4)] for center in [center1, center2]]
-        print(len(list_lines))
-        polygon1_intersection_points = []
-        polygon2_intersection_points = []
-        for lines in list_lines:
-            for line in lines:
-                for line_segment in self.line_segments:
-                    intersect = line.intersection(line_segment)
-                    # print(intersect)
-                    if intersect :
-                        polygon1_intersection_points.extend(intersect)
-                        break
-                    
-                for line_segment in polygon2.line_segments:
-                    intersect = line.intersection(line_segment)
-                    # print(intersect)
-                    if intersect :
-                        polygon2_intersection_points.extend(intersect)
-                        break
+    # def new_sewing(self, polygon2):
         
-        print(polygon1_intersection_points)
-        print(polygon2_intersection_points)
-        return list_lines
+    #     center1, center2 = self.average_center_point(), polygon2.average_center_point()
+    #     poly1_2d, poly2_2d = self.to_2d(center1, volmdlr.X3D, volmdlr.Y3D), polygon2.to_2d(center2, volmdlr.X3D, volmdlr.Y3D)
+    #     center1_2d, center2_2d = poly1_2d.center_of_mass(), poly2_2d.center_of_mass()
+    #     poly1_2d.translation(-center1_2d,copy=False)
+    #     poly2_2d.translation(-center2_2d,copy=False)
+        
+        
+    #     bbox1_2d, bbox2_2d = poly1_2d.bounding_rectangle(), poly2_2d.bounding_rectangle()
+    #     position = [abs(value) for value in bbox1_2d] + [abs(value) for value in bbox2_2d]
+    #     max_scale = 2*max(position)
+        
+    #     lines = [volmdlr.edges.LineSegment2D(volmdlr.O2D, max_scale*(volmdlr.X2D*math.sin(n*2*math.pi/4) +
+    #                                          volmdlr.Y2D*math.cos(n*2*math.pi/4))
+    #                                          ) for n in range (4)]
+        
+    #     # center1, center2 = volmdlr.Point3D(center1.x, center1.y, 0), volmdlr.Point3D(center2.x, center2.y, 0)
+    #     # new_polygon1, new_polygon2 =self.translation(-center1), polygon2.translation(-center2)
+    #     # center1, center2 = new_polygon1.average_center_point(), new_polygon2.average_center_point()
+    #     # print(center1, center2)
+        
+    #     list_lines = [[volmdlr.edges.LineSegment3D(center, 0.05*(volmdlr.Vector3D(1, 0, center.z)*math.sin(n*2*math.pi/4) +
+    #                                          volmdlr.Vector3D(0, 1, center.z)*math.cos(n*2*math.pi/4))
+    #                                          ) for n in range (4)] for center in [center1, center2]]
+    #     print(len(list_lines))
+    #     polygon1_intersection_points = []
+    #     polygon2_intersection_points = []
+    #     for lines in list_lines:
+    #         for line in lines:
+    #             for line_segment in self.line_segments:
+    #                 intersect = line.intersection(line_segment)
+    #                 # print(intersect)
+    #                 if intersect :
+    #                     polygon1_intersection_points.extend(intersect)
+    #                     break
+                    
+    #             for line_segment in polygon2.line_segments:
+    #                 intersect = line.intersection(line_segment)
+    #                 # print(intersect)
+    #                 if intersect :
+    #                     polygon2_intersection_points.extend(intersect)
+    #                     break
+        
+    #     print(polygon1_intersection_points)
+    #     print(polygon2_intersection_points)
+    #     return list_lines

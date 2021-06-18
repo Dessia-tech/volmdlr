@@ -25,7 +25,7 @@ class PointCloud3D(dc.DessiaObject):
         
     @classmethod
     def from_stl(cls, file_path):
-        list_points = vmstl.Stl.from_file(file_path).extract_points()
+        list_points = vmstl.Stl.from_file(file_path).extract_points_BIS()
         
         return cls(list_points, name='from_stl')
     
@@ -95,8 +95,8 @@ class PointCloud3D(dc.DessiaObject):
             if n != resolution-1:
                 poly2 = polygon3d[n+1]
                 poly2 = poly2.simplify()
-                coords = poly1.sewing_with(poly2, vec1, vec2, normal, resolution = max_poly_resolution)
-                # coords = poly1.sewing(poly2)
+                # coords = poly1.sewin1g_with(poly2, vec1, vec2, normal, resolution = max_poly_resolution)
+                coords = poly1.sewing(poly2)
                 for trio in coords :
                     faces.append(vmf.Triangle3D(trio[0], trio[1], trio[2]))   
         
