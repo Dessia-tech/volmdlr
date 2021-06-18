@@ -2403,7 +2403,7 @@ class Triangle3D(PlaneFace3D):
         self.point1 = point1
         self.point2 = point2
         self.point3 = point3
-        
+        self.points = [self.point1, self.point2, self.point3]
         self.color = color
         self.alpha = alpha
         self.name = name
