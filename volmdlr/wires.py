@@ -1503,6 +1503,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             # pl3.plot(point_numbering=True)
             
             found_ear = False
+            best_aspect_ratio = 0
             for p1, p2, p3 in zip(remaining_points,
                                   remaining_points[1:]+remaining_points[0:1],
                                   remaining_points[2:]+remaining_points[0:2]):
@@ -1529,16 +1530,26 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                     if current_polygon.point_belongs(line_segment.middle_point()):
                         # Confirmed as an ear
                         # print('ear!')
+                        triangle = Triangle2D(p1, p2, p3)
                         
-                        triangles.append((initial_point_to_index[p1],
-                                          initial_point_to_index[p2],
-                                          initial_point_to_index[p3]))
-                        remaining_points.remove(p2)
-                        # ax.text(*points[initial_point_to_index[p2]], str(number_remaining_points))
-                        number_remaining_points -= 1
+                        aspect_ratio = triangle.aspect_ratio()
                         found_ear = True
-                        break
+                        if aspect_ratio > 0.2:
+                            triangles.append((initial_point_to_index[p1],
+                                              initial_point_to_index[p2],
+                                              initial_point_to_index[p3]))
+                            remaining_points.remove(p2)
+                            # ax.text(*points[initial_point_to_index[p2]], str(number_remaining_points))
+                            number_remaining_points -= 1
+                            break
+                        else:
+                            if aspect_ratio > best_aspect_ratio:
+                                aspect_ratio = best_aspect_ratio
+                                best_triangle = (initial_point_to_index[p1],
+                                                 initial_point_to_index[p2],
+                                                 initial_point_to_index[p3])
         
+            
             if not found_ear:
                 remaining_polygon = ClosedPolygon2D(remaining_points)
                 if remaining_polygon.area() > 0.:
@@ -1589,7 +1600,13 @@ class Triangle2D(ClosedPolygon2D):
         v = self.point3 - self.point1
         return abs(u.cross(v)) / 2
 
-
+    def aspect_ratio(self):
+        a = self.point1.point_distance(self.point2)
+        b = self.point1.point_distance(self.point3)
+        c = self.point2.point_distance(self.point3)
+        s = 0.5*(a + b + c)
+        
+        return 0.125*a*b*c/(s-a)/(s-b)/(s-c)
 
 
 class Circle2D(Contour2D):
