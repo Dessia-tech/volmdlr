@@ -64,13 +64,13 @@ class PointCloud3D(dc.DessiaObject):
                     posmax = n
         dist_between_plane = xyz_list[posmax]/(resolution-1)
         position_plane = [xyz_bbox[posmax][0] + n*dist_between_plane for n in range(resolution)]
-        print('i have passed here 2')
+        
         subcloud3d = [self.extract(normal, pos_plane-dist_between_plane/2, pos_plane+dist_between_plane/2) for pos_plane in position_plane]
-        print('i have passed here 3')
+        print('subcloud3D CREATED')
         vec1, vec2 = xyz_vect[posmax-2], xyz_vect[posmax-1]
         subcloud2d = [subcloud3d[n].to_2d(position_plane[n]*normal, vec1, vec2) for n in range(resolution)]
-        print('i hqve passed here 4')
-        print(len(subcloud2d))
+        print('subcloud2D CREATED')
+        print('CREATING POLYGONS')
         initial_polygon2d = [cloud2d.to_polygon() for cloud2d in subcloud2d]
         
         polygon2d, polygon3d = [], []
@@ -108,6 +108,13 @@ class PointCloud3D(dc.DessiaObject):
         points = step.to_points()
         return cls(points)
     
+    def plot(self, ax = None):
+        ax = self.points[0].plot(ax = ax)
+        for point in self.points[1::1000]:
+            point.plot(ax = ax)
+            
+        return ax
+    
 class PointCloud2D(dc.DessiaObject):
     def __init__(self, points, name: str=''):
         self.points = points
@@ -121,7 +128,7 @@ class PointCloud2D(dc.DessiaObject):
     
     def to_polygon(self):
         polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
-        if math.isclose(polygon.area(), 0, abs_tol = 1e-6) :
+        if polygon is None or math.isclose(polygon.area(), 0, abs_tol = 1e-6) :
             return None
         else : 
             return polygon

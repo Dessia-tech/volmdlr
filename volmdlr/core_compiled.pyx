@@ -735,7 +735,7 @@ class Vector3D(Vector):
         return 0
     
     def approx_hash(self):
-        return int(1e6*(self.x+self.y+self.z))
+        return round(1e6*(self.x+self.y+self.z))
 
     def __eq__(self, other_vector:'Vector3D'):
         if other_vector.__class__.__name__ not in ['Vector3D', 'Point3D']:
@@ -745,7 +745,7 @@ class Vector3D(Vector):
         and math.isclose(self.z, other_vector.z, abs_tol=1e-06)
     @classmethod
     def remove_duplicate(cls, points):
-        dict_ = {p.approx_hash : p for p in points}
+        dict_ = {p.approx_hash() : p for p in points}
         return list(dict_.values())
 
 

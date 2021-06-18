@@ -193,7 +193,7 @@ class Stl(dc.DessiaObject):
                 for n in range(n_div):
                     new_point = (t.point2+t.point3)*(1/(n+1))
                     points.append(new_point)
-            # print(i)
+        
         print('all_points available ',len(points))
         valid_points = vm.Vector3D.remove_duplicate(points)
         print('valid points: ', len(valid_points))
