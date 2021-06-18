@@ -23,8 +23,8 @@ for stl_file in [
                 # 'a320_ENGINE_RIGHT.stl',
                 # 'a320_FAN_RIGHT.stl',
                 # 'a320_RIGHT_WING.stl',
-                # 'a320_RUDDER.stl',
-                'a320_STABILO_RIGHT.stl'
+                'a320_RUDDER.stl',
+                # 'a320_STABILO_RIGHT.stl'
                   ]:
     # print('start')
     # volum = volmdlr.core.VolumeModel(cloud_faces)
@@ -43,9 +43,10 @@ for stl_file in [
     # cloud = volmdlr.cloud.PointCloud3D.from_stl(path + "/" + stl_file)
     # cloud_faces = cloud.subdescription_2d()
     # cloud_faces.babylonjs()
-    
+    # list_points = vmstl.Stl.from_file_points(stl_file)
     list_points = stl.extract_points_BIS()
     pointcloud3d = volmdlr.cloud.PointCloud3D(list_points)
+    pointcloud3d.plot()
     shells.append(pointcloud3d.to_shell())
 
     
