@@ -1630,10 +1630,12 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                             break
                         
                     if not found_flat_ear:
-                        remaining_polygon.plot(point_numbering=True, plot_points=True)     
-                        vmd.DisplayMesh2D(points, triangles).plot()
-                        print(remaining_points)
-                        raise ValueError('There are no ear in the polygon, it seems malformed')
+                        # remaining_polygon.plot(point_numbering=True, plot_points=True)     
+                        # vmd.DisplayMesh2D(points, triangles).plot()
+                        # print(remaining_points)
+                        # raise ValueError('There are no ear in the polygon, it seems malformed')
+                        print('Warning : There are no ear in the polygon, it seems malformed: skipping triangulation')
+                        return vmd.DisplayMesh2D(points, triangles)
                 else:
                     return vmd.DisplayMesh2D(points, triangles)
             
@@ -1658,12 +1660,23 @@ class Triangle2D(ClosedPolygon2D):
         self.point1 = point1
         self.point2 = point2
         self.point3 = point3
-        ClosedPolygon2D.__init__(self, points=[point1, point2, point3], name=name)
+        # ClosedPolygon2D.__init__(self, points=[point1, point2, point3], name=name)
 
     def area(self):
         u = self.point2 - self.point1
         v = self.point3 - self.point1
         return abs(u.cross(v)) / 2
+
+    def aspect_ratio(self):
+        a = self.point1.point_distance(self.point2)
+        b = self.point1.point_distance(self.point3)
+        c = self.point2.point_distance(self.point3)
+        s = 0.5*(a + b + c)
+        try:
+            return 0.125*a*b*c/(s-a)/(s-b)/(s-c)
+        except ZeroDivisionError:
+            return 1000000.
+
 
 
 class Circle2D(Contour2D):
