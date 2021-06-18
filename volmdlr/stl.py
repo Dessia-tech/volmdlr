@@ -151,6 +151,7 @@ class Stl(dc.DessiaObject):
                     # print(p1, p2, p3)
                     all_points.extend([p1, p2, p3])                        
                     stream.read_u2le()
+        print('all points :', len(all_points))
         return all_points
 
     def save_to_binary_file(self, filepath, distance_multiplier=1000):
@@ -191,32 +192,26 @@ class Stl(dc.DessiaObject):
         
         return list(set(points1 + points2 + points3))
     def extract_points_BIS(self, min_distance:float = 0.001):
-        
         points = []
         print(len(self.triangles))
         for i, t in enumerate(self.triangles):
-            points.append(t.point1)
-            points.append(t.point2)
-            points.append(t.point3)
             distance12 = t.point1.point_distance(t.point2)
             distance13 = t.point1.point_distance(t.point3)
             distance23 = t.point2.point_distance(t.point3)
             if distance12 > min_distance:
                 n_div = int(distance12 / min_distance)
                 for n in range(n_div):
-                    new_point = (t.point1+t.point2)*(1/(n+1))
+                    new_point = t.point1 + (t.point2 - t.point1)*n/(n_div)
                     points.append(new_point)
-                    
             if distance13 > min_distance:
                 n_div = int(distance13 / min_distance)
                 for n in range(n_div):
-                    new_point = (t.point1+t.point3)*(1/(n+1))
+                    new_point = t.point1 + (t.point3 - t.point1)*(n+1)/(n_div)
                     points.append(new_point)
-                   
             if distance23 > min_distance:
                 n_div = int(distance23 / min_distance)
                 for n in range(n_div):
-                    new_point = (t.point2+t.point3)*(1/(n+1))
+                    new_point = t.point2 + (t.point3-t.point2)*n/(n_div)
                     points.append(new_point)
         
         print('all_points available ',len(points))

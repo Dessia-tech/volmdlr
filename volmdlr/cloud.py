@@ -46,7 +46,6 @@ class PointCloud3D(dc.DessiaObject):
         
     
     def to_shell(self, resolution = 10, normal = None):
-        print('i have passed here 1')
         #normal has to be a fondamental vector : X3D, Y3D or Z3D
         bbox = self._bounding_box()
         xyz_bbox = [[bbox.xmin, bbox.xmax], [bbox.ymin,bbox.ymax], [bbox.zmin,bbox.zmax]]
