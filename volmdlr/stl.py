@@ -35,6 +35,33 @@ class Stl(dc.DessiaObject):
     def __init__(self, triangles, name=''):
         self.triangles = triangles
         self.name = name
+        
+    @classmethod
+    def points_from_file(cls, filename:str, distance_multiplier=0.001):
+        if is_binary(filename):       
+            with open(filename, 'rb') as file:
+                stream = KaitaiStream(file)
+                name = stream.read_bytes(80).decode('utf8')
+                num_triangles = stream.read_u4le()
+                
+                all_points = []
+                for i in range(num_triangles):
+                    if i % 5000 == 0:
+                        print('reading stl', round(i/num_triangles*100, 2), '%')
+                    normal = vm.Vector3D(stream.read_f4le(), stream.read_f4le(), stream.read_f4le())
+                    p1 = vm.Point3D(distance_multiplier*stream.read_f4le(),
+                                    distance_multiplier*stream.read_f4le(),
+                                    distance_multiplier*stream.read_f4le())
+                    p2 = vm.Point3D(distance_multiplier*stream.read_f4le(),
+                                    distance_multiplier*stream.read_f4le(), 
+                                    distance_multiplier*stream.read_f4le())
+                    p3 = vm.Point3D(distance_multiplier*stream.read_f4le(),
+                                    distance_multiplier*stream.read_f4le(),
+                                    distance_multiplier*stream.read_f4le())
+                    all_points.extend([p1, p2, p3])                        
+        
+                    stream.read_u2le()
+        return all_points
 
     @classmethod
     def from_file(cls, filename:str, distance_multiplier=0.001):
@@ -52,7 +79,6 @@ class Stl(dc.DessiaObject):
                     if i % 5000 == 0:
                         print('reading stl', round(i/num_triangles*100, 2), '%')
                     normal = vm.Vector3D(stream.read_f4le(), stream.read_f4le(), stream.read_f4le())
-                    # print(n)
                     p1 = vm.Point3D(distance_multiplier*stream.read_f4le(),
                                     distance_multiplier*stream.read_f4le(),
                                     distance_multiplier*stream.read_f4le())
@@ -62,7 +88,6 @@ class Stl(dc.DessiaObject):
                     p3 = vm.Point3D(distance_multiplier*stream.read_f4le(),
                                     distance_multiplier*stream.read_f4le(),
                                     distance_multiplier*stream.read_f4le())
-                    # print(p1, p2, p3)
                     try : 
                         triangles[i] = vmf.Triangle3D(p1, p2, p3)
                     except ZeroDivisionError :
@@ -95,8 +120,39 @@ class Stl(dc.DessiaObject):
                         except ZeroDivisionError :
                             pass
                         points = []
-
+        
         return cls(triangles, name=name)
+    
+    @classmethod
+    def from_file_points(cls, filename:str, distance_multiplier=0.001):
+        all_points = []
+        if is_binary(filename):       
+            with open(filename, 'rb') as file:
+                stream = KaitaiStream(file)
+                name = stream.read_bytes(80).decode('utf8')
+                # print(name)
+                num_triangles = stream.read_u4le()
+                # print(num_triangles)
+                all_points = []
+                for i in range(num_triangles):
+                    if i % 5000 == 0:
+                        print('reading stl', round(i/num_triangles*100, 2), '%')
+                    normal = vm.Vector3D(stream.read_f4le(), stream.read_f4le(), stream.read_f4le())
+                    # print(n)
+                    p1 = vm.Point3D(distance_multiplier*stream.read_f4le(),
+                                    distance_multiplier*stream.read_f4le(),
+                                    distance_multiplier*stream.read_f4le())
+                    p2 = vm.Point3D(distance_multiplier*stream.read_f4le(),
+                                    distance_multiplier*stream.read_f4le(), 
+                                    distance_multiplier*stream.read_f4le())
+                    p3 = vm.Point3D(distance_multiplier*stream.read_f4le(),
+                                    distance_multiplier*stream.read_f4le(),
+                                    distance_multiplier*stream.read_f4le())
+                    # print(p1, p2, p3)
+                    all_points.extend([p1, p2, p3])                        
+                    stream.read_u2le()
+        print('all points :', len(all_points))
+        return all_points
 
     def save_to_binary_file(self, filepath, distance_multiplier=1000):
         BINARY_HEADER ="80sI"
@@ -129,11 +185,39 @@ class Stl(dc.DessiaObject):
 
     
     def extract_points(self):
+            
         points1 = [t.point1 for t in self.triangles]
         points2 = [t.point2 for t in self.triangles]
         points3 = [t.point3 for t in self.triangles]
         
         return list(set(points1 + points2 + points3))
+    def extract_points_BIS(self, min_distance:float = 0.001):
+        points = []
+        print(len(self.triangles))
+        for i, t in enumerate(self.triangles):
+            distance12 = t.point1.point_distance(t.point2)
+            distance13 = t.point1.point_distance(t.point3)
+            distance23 = t.point2.point_distance(t.point3)
+            if distance12 > min_distance:
+                n_div = int(distance12 / min_distance)
+                for n in range(n_div):
+                    new_point = t.point1 + (t.point2 - t.point1)*n/(n_div)
+                    points.append(new_point)
+            if distance13 > min_distance:
+                n_div = int(distance13 / min_distance)
+                for n in range(n_div):
+                    new_point = t.point1 + (t.point3 - t.point1)*(n+1)/(n_div)
+                    points.append(new_point)
+            if distance23 > min_distance:
+                n_div = int(distance23 / min_distance)
+                for n in range(n_div):
+                    new_point = t.point2 + (t.point3-t.point2)*n/(n_div)
+                    points.append(new_point)
+        
+        print('all_points available ',len(points))
+        valid_points = vm.Vector3D.remove_duplicate(points)
+        print('valid points: ', len(valid_points))
+        return valid_points
     
     @classmethod
     def from_display_mesh(cls, mesh):

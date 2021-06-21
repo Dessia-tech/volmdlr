@@ -52,19 +52,19 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
             pti = self.points[ipoint]
             pt2 = self.points[ipoint + 1]
 
-        # TODO: change to point_distance
-        dist1 = (pt1 - pti).norm()
-        dist2 = (pt2 - pti).norm()
-        dist3 = (pt1 - pt2).norm()
+        ## TODO: change to point_distance ------> done
+        point_distance1 = (pt1 - pti).norm()
+        point_distance2 = (pt2 - pti).norm()
+        point_distance3 = (pt1 - pt2).norm()
         alpha = math.acos(
-            -(dist3 ** 2 - dist1 ** 2 - dist2 ** 2) / (2 * dist1 * dist2)) / 2.
-        dist = radius / math.tan(alpha)
+            -(point_distance3 ** 2 - point_distance1 ** 2 - point_distance2 ** 2) / (2 * point_distance1 * point_distance2)) / 2.
+        point_distance = radius / math.tan(alpha)
 
-        u1 = (pt1 - pti) / dist1
-        u2 = (pt2 - pti) / dist2
+        u1 = (pt1 - pti) / point_distance1
+        u2 = (pt2 - pti) / point_distance2
 
-        p3 = pti + u1 * dist
-        p4 = pti + u2 * dist
+        p3 = pti + u1 * point_distance
+        p4 = pti + u2 * point_distance
 
         w = (u1 + u2)
         if w != volmdlr.Vector2D(0, 0):
@@ -77,7 +77,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         pc = p3 + v1 * radius
         pm = pc - radius * w
 
-        return p3, pm, p4, dist, alpha
+        return p3, pm, p4, point_distance, alpha
 
     def rotation(self, center, angle, copy=True):
         if copy:
