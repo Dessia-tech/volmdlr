@@ -72,10 +72,10 @@ profile_helical = primitives3D.HelicalExtrudedProfile(po, xp, yp,
                                                     name='helical')
 
 model = vm.VolumeModel([profile_helical, profile_straight])
-
+model.to_stl('gear.stl')
 
 #resp=model_straight.FreeCADExport('python','gear-straight','/usr/lib/freecad/lib/',['stl','fcstd'])
 #print(resp)
 
-resp=model.FreeCADExport('gear')
-print(resp)
+# resp=model.FreeCADExport('gear')
+# print(resp)

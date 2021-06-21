@@ -9,6 +9,8 @@ import math
 import numpy as npy
 import scipy as scp
 import matplotlib.pyplot as plt
+import networkx as nx
+
 import dessia_common as dc
 from geomdl import BSpline
 from geomdl import utilities
@@ -16,10 +18,9 @@ import volmdlr.core
 import volmdlr.core_compiled
 import volmdlr.edges as vme
 import volmdlr.wires
-import volmdlr.display
-import volmdlr.primitives3d
+
+import volmdlr.display as vmd
 import volmdlr.geometry
-import networkx as nx
 
 
 class Surface2D(volmdlr.core.Primitive2D):
@@ -67,11 +68,15 @@ class Surface2D(volmdlr.core.Primitive2D):
     def triangulation(self, min_x_density=None, min_y_density=None):
 
         if self.area() == 0.:
-            return volmdlr.display.DisplayMesh2D([], triangles=[])
+            return vmd.DisplayMesh2D([], triangles=[])
 
         outer_polygon = self.outer_contour.to_polygon(angle_resolution=10)
 
-        points = [volmdlr.display.Node2D(*p) for p in outer_polygon.points]
+        if not self.inner_contours:# No holes
+            return outer_polygon.triangulation()
+
+
+        points = [vmd.Node2D(*p) for p in outer_polygon.points]
         vertices = [(p.x, p.y) for p in points]
         n = len(outer_polygon.points)
         segments = [(i, i + 1) for i in range(n - 1)]
@@ -105,12 +110,12 @@ class Surface2D(volmdlr.core.Primitive2D):
         t = triangle.triangulate(tri, 'p')
         triangles = t['triangles'].tolist()
         np = t['vertices'].shape[0]
-        points = [volmdlr.display.Node2D(*t['vertices'][i, :]) for i in
+        points = [vmd.Node2D(*t['vertices'][i, :]) for i in
                   range(np)]
 
-        return volmdlr.display.DisplayMesh2D(points, triangles=triangles,
+        return vmd.DisplayMesh2D(points, triangles=triangles,
                                              edges=None)
-        return volmdlr.display.DisplayMesh2D([], [])
+        return vmd.DisplayMesh2D([], [])
 
     def split_by_lines(self, lines):
         cutted_surfaces = []
@@ -120,6 +125,7 @@ class Surface2D(volmdlr.core.Primitive2D):
             iteration_surfaces2 = []
             for surface in iteration_surfaces:
                 line_cutted_surfaces = surface.cut_by_line(line)
+                
                 llcs = len(line_cutted_surfaces)
 
                 if llcs == 1:
@@ -543,7 +549,7 @@ class Surface3D(dc.DessiaObject):
                     else:
                         ax2 = contour3d.plot()
                         primitive3d.plot(ax=ax2, color='r')
-                        last_primitive3d.plot(ax=ax2, color='b')
+                        # last_primitive3d.plot(ax=ax2, color='b')
                         ax = last_primitive.plot(color='b', plot_points=True)
                         # primitives[0].plot(ax=ax ,color='r', plot_points=True)
                         for p in primitives:
@@ -2059,13 +2065,13 @@ class Face3D(volmdlr.core.Primitive3D):
             surfaces = self.surface2d.split_by_lines(lines_y)
         else:
             surfaces = [self.surface2d]
-
         mesh2d = surfaces[0].triangulation()
         for subsurface in surfaces[1:]:
-            mesh2d += subsurface.triangulation()
+            # mesh2d += subsurface.triangulation()
+            mesh2d.merge_mesh(subsurface.triangulation())
 
-        return volmdlr.display.DisplayMesh3D(
-            [volmdlr.display.Node3D(*self.surface3d.point2d_to_3d(p)) for p in
+        return vmd.DisplayMesh3D(
+            [vmd.Node3D(*self.surface3d.point2d_to_3d(p)) for p in
              mesh2d.points],
             mesh2d.triangles)
 
@@ -2375,6 +2381,109 @@ class PlaneFace3D(Face3D):
         else:
             return NotImplementedError
 
+class Triangle3D(PlaneFace3D):
+    """
+    :param point1: The first point
+    :type point1: volmdlr.Point3D
+    :param point2: The second point
+    :type point2: volmdlr.Point3D
+    :param point3: The third point
+    :type point3: volmdlr.Point3D
+    """
+    _standalone_in_db = False
+    # _generic_eq = True
+    # _non_serializable_attributes = ['bounding_box', 'polygon2D']
+    # _non_eq_attributes = ['name', 'bounding_box', 'outer_contour3d',
+    #                       'inner_contours3d']
+    # _non_hash_attributes = []
+
+    def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
+                 point3: volmdlr.Point3D, alpha=1, color=None, name: str = ''):
+        self.point1 = point1
+        self.point2 = point2
+        self.point3 = point3
+        self.points = [self.point1, self.point2, self.point3]
+        self.color = color
+        self.alpha = alpha
+        self.name = name
+        
+        
+        # Don't use inheritence for performance: class method fakes face3D behavior
+        # Face3D.__init__(self,
+        #                 surface3d=plane3d,
+        #                 surface2d=surface2d,
+        #                 name=name)
+        
+    def _bounding_box(self):
+        return volmdlr.core.BoundingBox.from_points([self.point1, self.point2, self.point3])
+        
+    @property
+    def surface3d(self):
+        return Plane3D.from_3_points(self.point1, self.point2, self.point3)
+
+
+    @property
+    def surface2d(self):
+        plane3d = self.surface3d
+        contour3d = volmdlr.wires.Contour3D([vme.LineSegment3D(self.point1, self.point2),
+                                              vme.LineSegment3D(self.point2, self.point3),
+                                              vme.LineSegment3D(self.point3, self.point1)])
+        
+        contour2d = contour3d.to_2d(plane3d.frame.origin, 
+                                    plane3d.frame.u, plane3d.frame.v)
+        
+        return Surface2D(outer_contour=contour2d, inner_contours=[])
+    
+    @classmethod
+    def dict_to_object(cls, dict_):
+        point1 = volmdlr.Point3D.dict_to_object(dict_['point1'])
+        point2 = volmdlr.Point3D.dict_to_object(dict_['point2'])
+        point3 = volmdlr.Point3D.dict_to_object(dict_['point3'])
+        return cls(point1, point2, point3, dict_['name'])
+    
+    def area(self):
+        # Formula explained here: https://www.triangle-calculator.com/?what=vc
+        a = self.point1.point_distance(self.point2)
+        b = self.point2.point_distance(self.point3)
+        c = self.point3.point_distance(self.point1)
+           
+        semi_perimeter = (a + b + c)/2
+        
+        #Area with Heron's formula
+        area = math.sqrt(semi_perimeter*(semi_perimeter-a)*(semi_perimeter-b)*(semi_perimeter-c))
+        
+        return area
+    
+    def height(self):
+        # Formula explained here: https://www.triangle-calculator.com/?what=vc
+        # Basis = vector point1 to point2d
+        return 2*self.area()/self.point1.point_distance(self.point2)
+    
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        if copy:
+            np1 = self.point1.frame_mapping(frame, side, copy=True)
+            np2 = self.point2.frame_mapping(frame, side, copy=True)
+            np3 = self.point3.frame_mapping(frame, side, copy=True)
+            return self.__class__(np1, np2, np3, self.name)
+        else:
+            self.point1.frame_mapping(frame, side, copy=False)
+            self.point2.frame_mapping(frame, side, copy=False)
+            self.point3.frame_mapping(frame, side, copy=False)
+            self.bounding_box = self._bounding_box()
+    
+    def copy(self):
+        return Triangle3D(self.point1.copy(), self.point2.copy(), self.point3.copy(),
+                           self.name)
+
+
+    def triangulation(self):
+        return vmd.DisplayMesh3D([vmd.Node3D.from_point(self.point1),
+                                  vmd.Node3D.from_point(self.point2),
+                                  vmd.Node3D.from_point(self.point3)],
+                                 [(0, 1, 2)])
 
 class CylindricalFace3D(Face3D):
     """
@@ -2535,7 +2644,7 @@ class CylindricalFace3D(Face3D):
         r1, r2 = self.radius, other_cyl.radius
         min_h1, min_theta1, max_h1, max_theta1 = self.minimum_maximum(
             self.contours2d[0], r1)
-
+        
         n1 = self.normal
         u1 = self.cylindricalsurface3d.frame.u
         v1 = self.cylindricalsurface3d.frame.v
@@ -3879,11 +3988,14 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             bbox = primitive.bounding_box
 
     def triangulation(self):
-        mesh = volmdlr.display.DisplayMesh3D([], [])
+        mesh = vmd.DisplayMesh3D([], [])
+        nf = len(self.faces)
         for i, face in enumerate(self.faces):
+            if i % 5000 == 0:
+                print('triangulation', round(i/nf*100), '%')
             try:
                 face_mesh = face.triangulation()
-                mesh += face_mesh
+                mesh.merge_mesh(face_mesh)
             except NotImplementedError:
                 print('Warning: a face has been skipped in rendering')
         return mesh
