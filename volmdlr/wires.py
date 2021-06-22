@@ -29,7 +29,7 @@ from volmdlr.core_compiled import (
 
 import itertools
 from typing import List, Tuple, Dict
-from scipy.spatial import Delaunay
+from scipy.spatial import Delaunay, ConvexHull
 import plot_data.core as plot_data
 
 import plot_data.core as plot_data
@@ -1032,6 +1032,7 @@ class ClosedPolygon():
 
         for k in range(len(self.line_segments)):
             L.append(self.line_segments[k].length())
+        return max(L)
     
     def edge_statistics(self):
         distances=[]
@@ -1042,27 +1043,32 @@ class ClosedPolygon():
         std = npy.std(distances)
         return mean_distance, std
                 
-    def simplify_polygon(self):
+    def simplify_polygon(self, min_distance:float = 0.01, max_distance:float=0.05):
         points = [self.points[0]]
-        mean_distance, _ = self.edge_statistics()
-        for i, point in enumerate(self.points):
-            if i != 0:
-                distance = point.point_distance(points[-1])
-                if distance > mean_distance:
-                    if distance > 5*mean_distance and distance < 10*mean_distance:
-                        mean_point = 0.5*(point+points[-1])
-                        points.append(mean_point)
-                    elif distance > 10*mean_distance:
-                    # if distance > 10*mean_distance:
-                        mean_point = 0.5*(point+points[-1])
-                        mean_point2 = 0.5*(mean_point+points[-1])
-                        mean_point3 = 0.5*(point+mean_point)
-                        points.append(mean_point2)
-                        points.append(mean_point)
-                        points.append(mean_point3)
-                   
+        # mean_distance, _ = self.edge_statistics()
+        # print('mean: ', mean_distance)
+        # length_over_num_segtms = self.max_length()/len(self.line_segments)
+        # print('length_over_num_segtms: ', length_over_num_segtms)
+        for i, point in enumerate(self.points[1:]):
+            distance = point.point_distance(points[-1])
+            
+            if distance > min_distance:
+                print('distandce :', distance)
+                if distance > max_distance:
+                    number_segmnts = round(distance/min_distance)+2
+                    print(number_segmnts)
+                    for n in range(number_segmnts):
+                        new_point = points[-1] + (point - points[-1])*(n+1)/number_segmnts
+                        points.append(new_point)
+                else:
                     points.append(point)
-        # self.update_polygon(points)
+            # elif len(points)>1:
+            #     current_angle = volmdlr.core.vectors3d_angle(points[-2].to_vector(), points[-1].to_vector())
+            #     previous_angle = volmdlr.core.vectors3d_angle(points[-1].to_vector(), point.to_vector())
+            #     if abs(current_angle - previous_angle)*360/(2*math.pi) > 30:
+            #         points.append(point)
+            # else: 
+            #     points.append(point)
         return self.__class__(points)
 
     
@@ -1170,6 +1176,38 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         else:
             for p in self.points:
                 p.rotation(center, angle, copy=False)
+    
+    @classmethod
+    def polygon_from_segments(cls, list_point_pairs):
+        points = [list_point_pairs[0][0], list_point_pairs[0][1]]
+        list_point_pairs.remove((list_point_pairs[0][0], list_point_pairs[0][1]))
+        finished =  False
+        
+        while not finished:
+            for p1, p2 in list_point_pairs:
+                if p1 == points[-1]:
+                    points.append(p2)
+                    break
+                elif p2 == points[-1]:
+                    points.append(p1)
+                    break
+            list_point_pairs.remove((p1, p2))
+            if len(list_point_pairs)==0:
+                finished = True
+            
+            
+            
+        # for i, i_p1, i_p2 in enumerate(list_point_pairs):
+        #     for j, j_p1, j_p2 in enumerate(list_point_pairs):
+        #         if i != j:
+                    
+        #             if p1 == points[-1]:
+        #                 points.append(p2)
+        #             elif p2 == points[-1]:
+        #                 points.append(p1)
+        # print('points : ', points)
+        return cls(points)
+           
 
     def translation(self, offset, copy=True):
         if copy:
@@ -1444,7 +1482,113 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         hull.pop()
 
         return cls(hull)
+    @classmethod
+    def hull(cls, points, alpha, only_outer=True):
+        """
+    Compute the alpha shape (concave hull) of a set of points.
+    :param points: np.array of shape (n,2) points.
+    :param alpha: alpha value.
+    :param only_outer: boolean value to specify if we keep only the outer border or also inner edges.
+    :return: set of (i,j) pairs representing edges of the alpha-shape. (i,j) are the indices in the points array.
+    """
+        # assert len(points) > 3, "Need at least four points"
+        
+        assert len(points) > 3, "Need at least four points"
     
+        def add_edge(polygon, i, j):
+            """
+            Add a line between the i-th and j-th points,
+            if not in the list already
+            """
+            if (j, i) in polygon:
+                
+                # # already added
+                # assert (j, i) in polygon, "Can't go twice over same directed edge right?"
+                # if only_outer:
+                    # if both neighboring triangles are in shape, it's not a boundary edge
+                print('it passes here, yes')
+                polygon.remove((j, i))
+                return
+            elif (i, j) in polygon:
+                polygon.remove((i, j))
+                return
+            polygon.add((i, j))
+        
+        barycenter = points[0]
+        for pt in points[1:]:
+            barycenter += pt
+        barycenter = barycenter / (len(points))
+        xs, ys = [], []
+        for point in points:
+            xs.append(point[0])
+            ys.append(point[1])
+        # xmin, ymin, xmax, ymax = min(xs), min(ys), max(xs), max(ys)
+        # max_distance = abs(max([(xmax-xmin)/2, (ymax-ymin)/2]))
+        # bounding_box = [xmin, ymin, xmax, ymax]
+        # box_center = volmdlr.Point2D((xmax + xmin)/2, (ymax + ymin)/2)
+        # outside_points = []
+        # for n in range(90):
+        #     new_point = box_center + volmdlr.Point2D(1.5*max_distance*math.cos(math.radians(4*n)), 1.5*max_distance*math.sin(math.radians(4*n)))
+        #     outside_points.append(new_point)
+        # print(outside_points)
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111)
+        # for p in points+outside_points:
+        #     p.plot(ax=ax)
+    
+        # tri = Delaunay([[p.x, p.y] for p in points+outside_points])
+        tri = Delaunay([[p.x, p.y] for p in points])
+        polygon = set()
+        # Loop over triangles:
+        # ia, ib, ic = indices of corner points of the triangle
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        good_triangles = []
+        ratios = []
+        for point1, point2, point3 in tri.vertices:
+            pt1 = points[point1]
+            pt2 = points[point2]
+            pt3 = points[point3]
+            triangle = Triangle2D(pt1, pt2, pt3) 
+            for line in triangle.line_segments:
+                line.plot(ax = ax, color = 'r')
+            
+            # circum_r = triangle.circum_r()
+            # print(circum_r)
+            ratio_circumr_length = triangle.ratio_circumr_length()
+            ratio_incircler_length= triangle.ratio_incircler_length()
+            ratios.append((ratio_circumr_length, ratio_incircler_length))
+            # print(ratio_circumr_length, ratio_incircler_length)
+            # ratios.append(ratio)
+            # print(ratio)
+            if ratio_circumr_length > alpha:
+            # if ratio_incircler_length > alpha:
+                good_triangles.append(triangle)
+                # add_edge(polygon, pt1, pt2)
+                # add_edge(polygon, pt2, pt3)
+                # add_edge(polygon, pt3, pt2)
+        print(len(good_triangles))       
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        for triangle in good_triangles:
+            triangle.line_segments[0].plot(ax = ax, color = 'g')
+            triangle.line_segments[1].plot(ax = ax, color = 'g')
+            triangle.line_segments[2].plot(ax = ax, color = 'g')
+        # print('average ratio :', mean(ratios))
+        return ratios #polygon #cls.polygon_from_segments(list(polygon))
+    
+    
+    @classmethod
+    def convex_hull_points(cls, points):
+        numpy_points = np.array([(p.x, p.y) for p in points])
+        hull = ConvexHull(numpy_points)
+        polygon_points = []
+        for simplex in hull.simplices:
+            polygon_points.append((points[simplex[0]], points[simplex[1]]))
+            # polygon_points.appedn(points[simplex[1]])
+            # plt.plot(points[simplex,0], points[simplex,1], 'k-')
+        return cls.polygon_from_segments(polygon_points)
+        
     def to_3d(self, plane_origin, x, y):
         points3d = [point.to_3d(plane_origin, x, y) for point in self.points]
         return ClosedPolygon3D(points3d)
@@ -1570,8 +1714,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         return vmd.DisplayMesh2D(points, triangles)
     
                 
-    def simplify(self):
-        return ClosedPolygon2D(self.simplify_polygon().points)
+    def simplify(self, min_distance:float = 0.01, max_distance:float=0.05):
+        return ClosedPolygon2D(self.simplify_polygon(min_distance = min_distance, max_distance = max_distance).points)
         
         
         
@@ -1583,12 +1727,31 @@ class Triangle2D(ClosedPolygon2D):
         self.point2 = point2
         self.point3 = point3
         ClosedPolygon2D.__init__(self, points=[point1, point2, point3], name=name)
+        a = self.point1 - self.point2
+        self.a = a.norm()
+        b = self.point2 - self.point3
+        self.b = b.norm()
+        c = self.point3 - self.point1
+        self.c = c.norm()
+        
 
     def area(self):
         u = self.point2 - self.point1
         v = self.point3 - self.point1
         return abs(u.cross(v)) / 2
+    
+    def incircle_radius(self):
+        return 2*self.area()/(self.a + self.b + self.c)
+    
+    def circumcircle_radius(self):
+        return self.a * self.b * self.c / (self.area()*4.0)
+    
+    def ratio_circumr_length(self):
+        return self.circumcircle_radius()/self.length()
 
+    def ratio_incircler_length(self):
+        return self.incircle_radius()/self.length()
+    
 
 
 
@@ -2545,8 +2708,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
             triangles.append([other_point, point2, point1])
            
         return triangles
-    def simplify(self):
-        return ClosedPolygon3D(self.simplify_polygon().points)
+    def simplify(self, min_distance:float = 0.01, max_distance:float=0.05):
+        return ClosedPolygon3D(self.simplify_polygon(min_distance = min_distance, max_distance = max_distance).points)
         
         
 

@@ -359,12 +359,19 @@ class Vector2D(Vector):
         """
         return 0
 
-
     def __eq__(self, other_vector):
         if other_vector.__class__.__name__ not in ['Vector2D', 'Point2D']:
             return False
         return math.isclose(self.x, other_vector.x, abs_tol=1e-06) \
         and math.isclose(self.y, other_vector.y, abs_tol=1e-06)
+        
+    def approx_hash(self):
+        return round(1e6*(self.x+self.y))
+
+    @classmethod
+    def remove_duplicate(cls, points):
+        dict_ = {p.approx_hash() : p for p in points}
+        return list(dict_.values())
 
     def norm(self):
         """
