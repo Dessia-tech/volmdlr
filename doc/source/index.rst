@@ -17,6 +17,10 @@ to see what you can do with Volmdlr.
 
   intro
   usage
+  core
+  edges
+  wires
+  faces
   primitive2D
   primitive3D
   dev
