@@ -1561,6 +1561,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             # print(ratio_circumr_length, ratio_incircler_length)
             # ratios.append(ratio)
             # print(ratio)
+            # print(triangle.max_length())
             if ratio_circumr_length > alpha:
             # if ratio_incircler_length > alpha:
                 good_triangles.append(triangle)
@@ -1576,6 +1577,98 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             triangle.line_segments[2].plot(ax = ax, color = 'g')
         # print('average ratio :', mean(ratios))
         return ratios #polygon #cls.polygon_from_segments(list(polygon))
+    
+    @classmethod
+    def concave_hull(cls, points, concavity, scale_factor):
+        
+        def get_nearby_points(line, points, scale_factor):
+            print('i enter here')
+            nearby_points = []
+            tries = 0
+            while tries < 2 and len(nearby_points) == 0:
+                boundary = [ bounding / scale_factor for bounding in line.bounding_rectangle()]
+                # print('boundary: ', boundary)
+                for point in points:
+                    # print('point.x', point.x, 'line.start.x', line.start.x, 'point.y', point.y)
+                    if not ((point.x == line.start.x and point.y == line.start.y) or (point.x == line.end.x and point.y == line.end.y)):
+                        # print('point is inside boundary') 
+                        point_x_rel_pos = point.x / scale_factor
+                        point_y_rel_pos = point.y / scale_factor
+                        if point_x_rel_pos >= boundary[0] and point_x_rel_pos <= boundary[1] and point_y_rel_pos >=  boundary[2] and point_y_rel_pos <= boundary[3]:
+                            nearby_points.append(point)
+                            print('passed here: nearby points added')
+                scale_factor *= 4 / 3
+                tries += 1
+            return nearby_points
+        
+        def get_divided_line(line, nearby_points, hull_concave_edges, concavity):
+            print('passed here: get divided line')
+            divided_line = []
+            ok_middle_points = []
+            list_cossines = []
+            for midle_point in nearby_points:
+                print('passed here: get divided line for loop')
+                vect1 = line.start - midle_point
+                vect2 = line.end - midle_point
+                cos  = vect1.dot(vect2) / (vect1.norm() * vect2.norm())
+                print('cos:' , cos)
+                if cos < concavity:
+                    new_lineA = volmdlr.edges.LineSegment2D(start=line.start, end = midle_point)
+                    new_lineB = volmdlr.edges.LineSegment2D(start=midle_point, end = line.end)
+                    valid = True
+                    for line in hull_concave_edges:
+                        if line.line_intersections(new_lineA) or line.line_intersections(new_lineB):
+                            valid = False
+                            break
+                    if valid:
+                        ok_middle_points.append(midle_point)
+                        list_cossines.append(cos)
+            if len(list_cossines) > 0:
+                #  We want the middlepoint to be the one with widest angle (smallest cossine)
+                min_cossine_index = ok_middle_points.index(min(ok_middle_points))
+                divided_line.append(volmdlr.edges.LineSegment2D(line.start, ok_middle_points[min_cossine_index]))
+                divided_line.append(volmdlr.edges.LineSegment2D(ok_middle_points[min_cossine_index], line.end))
+            return divided_line
+                        
+        hull_convex_edges = cls.convex_hull_points(points).line_segments
+        hull_convex_edges.sort(key = lambda x : x.length())
+        # convex_edges_lengths = [line.legnth() for line in convex_edges]
+        # convex_edges_lengths_sorted = convex_edges_lengths.sort()
+        # convex_edges_sorted = []
+        # for l in convex_edges_lengths_sorted:
+        #     convex_edges_sorted.append(convex_edges[convex_edges_lengths.index(l)])
+        # hull_convex_edges = [(line.start, line.end) for line in convex_edges_sorted]
+        # hull_convex_edges = [line for line in convex_edges_sorted]
+        hull_concave_edges = []
+        hull_concave_edges.extend(hull_convex_edges)
+        hull_points = list(set([pt for line in hull_concave_edges for pt in [line[0], line[1]]]))
+        unused_points = []
+        # print(len(points))
+        for point in points:
+            if point not in hull_points:
+                unused_points.append(point)
+        # print('len', len(unused_points))
+        
+        aLineWasDividedInTheIteration = True
+        while aLineWasDividedInTheIteration:
+            aLineWasDividedInTheIteration = False
+            # print('passed here')
+            for line_position_hull in range(len(hull_concave_edges)):
+                # print('passed here 2')
+                line  = hull_concave_edges[line_position_hull]
+                nearby_points = get_nearby_points(line, unused_points, scale_factor)
+                print('nearby_points',len(nearby_points))
+                divided_line = get_divided_line(line, nearby_points, hull_concave_edges, concavity)
+                if len(divided_line) > 0:
+                    print('line divided')
+                    aLineWasDividedInTheIteration = True
+                    unused_points.remove(divided_line[0].end)
+                    hull_concave_edges.extend(divided_line)
+                    hull_concave_edges.remove(line)
+            hull_concave_edges.sort(key = lambda x : x.length())
+        
+        return cls.polygon_from_segments([(line.start, line.end) for line in hull_concave_edges])
+                
     
     
     @classmethod
