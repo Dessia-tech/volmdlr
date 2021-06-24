@@ -47,13 +47,13 @@ for stl_file in [
     # list_points = vmstl.Stl.from_file_points(stl_file)
     list_points = stl.extract_points_BIS()
     pointcloud3d = volmdlr.cloud.PointCloud3D(list_points)
-    polygons3d = pointcloud3d.to_shell()
+    # polygons3d = pointcloud3d.to_shell()
     # pointcloud3d.plot()
-#     shells.append(pointcloud3d.to_shell())
+    shells.append(pointcloud3d.to_shell())
 
     
-# volum = volmdlr.core.VolumeModel(shells)
-# volum.babylonjs()
+volum = volmdlr.core.VolumeModel(shells)
+volum.babylonjs()
         
 
 # points = [(p.x, p.y) for p in subcloud2d[0].points]

@@ -79,49 +79,48 @@ class PointCloud3D(dc.DessiaObject):
         initial_polygon2d = [cloud2d.to_polygon() for cloud2d in subcloud2d]
         
         polygon2d, polygon3d = [], []
-        print('almost there')
         for pos_plane, poly in zip(position_plane, initial_polygon2d) :
             if poly is None :
                 resolution -= 1
             else :
                 polygon2d.append(poly)
                 polygon3d.append(poly.to_3d(pos_plane*normal, vec1, vec2))
-        return polygon3d
+        # return polygon3d
                 
-        # faces = []
-        # max_poly_resolution = int(sum([len(poly.points) for poly in polygon3d])/len(polygon3d))+1
-        # for n in range(resolution):
-        #     print('sewing polygon', round(n/resolution*100, 2), '%')
-        #     poly1 = polygon3d[n]
-        #     poly1 = poly1.simplify(0.05, 0.1)
-        #     fig = plt.figure()
-        #     ax = fig.add_subplot(111, projection='3d')
-        #     for point in poly1.points:
-        #         point.plot(ax= ax, color = 'g')
-        #     for line in poly1.line_segments:
-        #         line.plot(ax= ax)
-        #     if n == resolution-1 or n == 0:
-        #         plane3d = vmf.Plane3D.from_plane_vectors(position_plane[n]*normal, vec1, vec2)
-        #         surf2d = vmf.Surface2D(polygon2d[n],[])
-        #         faces.append(vmf.PlaneFace3D(plane3d, surf2d))
-        #     if n != resolution-1:
-        #         poly2 = polygon3d[n+1]
-        #         poly2 = poly2.simplify(0.05, 0.1)
-        #         # coords = poly1.sewin1g_with(poly2, vec1, vec2, normal, resolution = max_poly_resolution)
-        #         coords = poly1.sewing(poly2)
-        #         for trio in coords :
-        #             faces.append(vmf.Triangle3D(trio[0], trio[1], trio[2]))
-        #         volum = volmdlr.core.VolumeModel(faces)
-        #         volum.babylonjs()
-        #         fig = plt.figure()
-        #         ax = fig.add_subplot(111, projection='3d')
-        #         poly1.plot(ax=ax, color='g')
-        #         poly2.plot(ax= ax, color = 'r')
-        #         for point in poly1.points + poly2.points:
-        #             point.plot(ax= ax, color = 'b')
+        faces = []
+        max_poly_resolution = int(sum([len(poly.points) for poly in polygon3d])/len(polygon3d))+1
+        for n in range(resolution):
+            print('sewing polygon', round(n/resolution*100, 2), '%')
+            poly1 = polygon3d[n]
+            poly1 = poly1.simplify(0.05, 0.1)
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+            for point in poly1.points:
+                point.plot(ax= ax, color = 'g')
+            for line in poly1.line_segments:
+                line.plot(ax= ax)
+            if n == resolution-1 or n == 0:
+                plane3d = vmf.Plane3D.from_plane_vectors(position_plane[n]*normal, vec1, vec2)
+                surf2d = vmf.Surface2D(polygon2d[n],[])
+                faces.append(vmf.PlaneFace3D(plane3d, surf2d))
+            if n != resolution-1:
+                poly2 = polygon3d[n+1]
+                poly2 = poly2.simplify(0.05, 0.1)
+                # coords = poly1.sewin1g_with(poly2, vec1, vec2, normal, resolution = max_poly_resolution)
+                coords = poly1.sewing(poly2)
+                for trio in coords :
+                    faces.append(vmf.Triangle3D(trio[0], trio[1], trio[2]))
+                volum = volmdlr.core.VolumeModel(faces)
+                volum.babylonjs()
+                fig = plt.figure()
+                ax = fig.add_subplot(111, projection='3d')
+                poly1.plot(ax=ax, color='g')
+                poly2.plot(ax= ax, color = 'r')
+                for point in poly1.points + poly2.points:
+                    point.plot(ax= ax, color = 'b')
                 
         
-        # return vmf.ClosedShell3D(faces)
+        return vmf.ClosedShell3D(faces)
 
     @classmethod        
     def from_step(cls, step_file:str):
@@ -150,12 +149,12 @@ class PointCloud2D(dc.DessiaObject):
     def to_polygon(self):
         # polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
         polygon = vmw.ClosedPolygon2D.convex_hull_points(self.points)
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        for point in polygon.points:
-            point.plot(ax= ax, color = 'g')
-        for line in polygon.line_segments:
-            line.plot(ax= ax)
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111)
+        # for point in polygon.points:
+        #     point.plot(ax= ax, color = 'g')
+        # for line in polygon.line_segments:
+        #     line.plot(ax= ax)
         # polygon.plot()
         # print('polygon:', polygon)
         if polygon is None or math.isclose(polygon.area(), 0, abs_tol = 1e-6) :
