@@ -13,7 +13,7 @@ import volmdlr.wires as vmw
 import volmdlr.primitives2d as primitives2d
 import time
 import matplotlib.pyplot as plt 
-n = 100
+n = 1000
 
 points = []
 for i in range(n):
@@ -30,11 +30,11 @@ fig = plt.figure()
 ax = fig.add_subplot(111)
 for pt in points + new_points:
     pt.plot(ax=ax)
-    
+# polygon = vm.wires.ClosedPolygon2D.points_convex_hull(points+new_points)
 # polygon = vm.wires.ClosedPolygon2D.convex_hull_points(points+new_points)
 # polygon = vm.wires.ClosedPolygon2D.hull(points+new_points, 0.06)
 # polygon = vm.wires.ClosedPolygon2D.hull(points+new_points, 0.3)
-polygon = vm.wires.ClosedPolygon2D.concave_hull(points+new_points, concavity=0.5, scale_factor=0.05)
+polygon = vm.wires.ClosedPolygon2D.concave_hull(points+new_points, concavity=0.5, scale_factor=0.0005)
 
 fig = plt.figure()
 ax = fig.add_subplot(111)
