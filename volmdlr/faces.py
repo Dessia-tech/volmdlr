@@ -2484,6 +2484,34 @@ class Triangle3D(PlaneFace3D):
                                   vmd.Node3D.from_point(self.point2),
                                   vmd.Node3D.from_point(self.point3)],
                                  [(0, 1, 2)])
+    
+    def translation(self, offset, copy=True):
+        new_point1 = self.point1.translation(offset, True)
+        new_point2 = self.point2.translation(offset, True)
+        new_point3 = self.point3.translation(offset, True)
+        
+        new_triangle = Triangle3D(new_point1, new_point2, new_point3,
+                                  self.alpha, self.color, self.name)
+        if copy:
+            return new_triangle
+        else:
+            self.point1 = new_point1
+            self.point2 = new_point2
+            self.point3 = new_point3
+            
+    def rotation(self, center, axis, angle, copy=True):
+        new_point1 = self.point1.rotation(center, axis, angle, copy=True)
+        new_point2 = self.point2.rotation(center, axis, angle, copy=True)
+        new_point3 = self.point3.rotation(center, axis, angle, copy=True)
+
+        new_triangle = Triangle3D(new_point1, new_point2, new_point3,
+                                  self.alpha, self.color, self.name)
+        if copy:
+            return new_triangle
+        else:
+            self.point1 = new_point1
+            self.point2 = new_point2
+            self.point3 = new_point3
 
 class CylindricalFace3D(Face3D):
     """
