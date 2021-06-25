@@ -110,14 +110,14 @@ class PointCloud3D(dc.DessiaObject):
                 coords = poly1.sewing(poly2)
                 for trio in coords :
                     faces.append(vmf.Triangle3D(trio[0], trio[1], trio[2]))
-                volum = volmdlr.core.VolumeModel(faces)
-                volum.babylonjs()
-                fig = plt.figure()
-                ax = fig.add_subplot(111, projection='3d')
-                poly1.plot(ax=ax, color='g')
-                poly2.plot(ax= ax, color = 'r')
-                for point in poly1.points + poly2.points:
-                    point.plot(ax= ax, color = 'b')
+                # volum = volmdlr.core.VolumeModel(faces)
+                # volum.babylonjs()
+                # fig = plt.figure()
+                # ax = fig.add_subplot(111, projection='3d')
+                # poly1.plot(ax=ax, color='g')
+                # poly2.plot(ax= ax, color = 'r')
+                # for point in poly1.points + poly2.points:
+                #     point.plot(ax= ax, color = 'b')
                 
         
         return vmf.ClosedShell3D(faces)
@@ -147,8 +147,9 @@ class PointCloud2D(dc.DessiaObject):
         return ax
     
     def to_polygon(self):
-        # polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
-        polygon = vmw.ClosedPolygon2D.convex_hull_points(self.points)
+        # polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)1
+        polygon = vmw.ClosedPolygon2D.concave_hull(self.points, 0.2, 0.000005)
+        # polygon = vmw.ClosedPolygon2D.convex_hull_points(self.points)
         # fig = plt.figure()
         # ax = fig.add_subplot(111)
         # for point in polygon.points:
