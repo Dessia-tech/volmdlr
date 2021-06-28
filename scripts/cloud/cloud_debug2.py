@@ -638,13 +638,13 @@ polygon1 = polygon1.simplify()
 polygon2 = polygon2.simplify()
 faces=[]
 
-# coords, _, __ = polygon1.sewing(polygon2)
-coords = polygon1.new_sewing(polygon2)
-# for trio in coords :
-#     faces.append(vmf.Triangle3D(trio[0], trio[1], trio[2]))
+# coords = polygon1.sewing(polygon2)
+coords = polygon1.sewing(polygon2)
+for trio in coords :
+    faces.append(vmf.Triangle3D(trio[0], trio[1], trio[2]))
 
-# volum = volmdlr.core.VolumeModel(faces)
-# volum.babylonjs()  
+volum = volmdlr.core.VolumeModel(faces)
+volum.babylonjs()  
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
@@ -652,9 +652,9 @@ polygon1.plot(ax=ax, color='g')
 polygon2.plot(ax= ax, color = 'r')
 for point in polygon1.points + polygon2.points:
     point.plot(ax= ax, color = 'b')
-for lines in coords:
-    for line in lines:
-        line.plot(ax=ax, color = 'r')
+# for lines in coords:
+#     for line in lines:
+#         line.plot(ax=ax, color = 'r')
 
 # for face in faces :
 #     vme.LineSegment3D(face.point1, face.point2).plot(ax=ax, color='g')
