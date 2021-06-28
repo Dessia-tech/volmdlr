@@ -19,6 +19,7 @@ import numpy as np
 from scipy.spatial import ConvexHull
 shells = []
 path = os.getcwd()
+
 for stl_file in [
                 # 'a320.stl',
                 # 'a320_ENGINE_RIGHT.stl',
