@@ -147,8 +147,8 @@ class PointCloud2D(dc.DessiaObject):
         return ax
     
     def to_polygon(self):
-        # polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)1
-        polygon = vmw.ClosedPolygon2D.concave_hull(self.points, 0.2, 0.000005)
+        polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
+        # polygon = vmw.ClosedPolygon2D.concave_hull(self.points, 0.2, 0.000005)
         # polygon = vmw.ClosedPolygon2D.convex_hull_points(self.points)
         # fig = plt.figure()
         # ax = fig.add_subplot(111)
