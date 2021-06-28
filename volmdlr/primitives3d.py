@@ -852,7 +852,7 @@ class Cylinder(RevolvedProfile):
         """
         side = 'old' or 'new'
         """
-        basis = frame.Basis()
+        basis = frame.basis()
         if side == 'old':
             axis = basis.old_coordinates(self.axis)
         elif side == 'new':
