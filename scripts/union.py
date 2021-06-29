@@ -52,15 +52,15 @@ p2_ray = vm.Point3D(0.009855980224206917, 0.6250574317556334, -0.140714209041350
 ray = vm.edges.LineSegment3D(p1_ray, p2_ray)
 
 
-ax = ray.plot(color='b')
-p1_ray.plot(ax=ax, color='b')
-p2_ray.plot(ax=ax, color='b')
-box_red.plot(ax=ax, color='r')
-for face, inter_points in box_red.linesegment_intersections(ray):
-    # print('ip', inter_point)
-    face.plot(ax=ax, color='b')
-    for inter_point in inter_points:
-        inter_point.plot(ax=ax, color='r')
+# ax = ray.plot(color='b')
+# p1_ray.plot(ax=ax, color='b')
+# p2_ray.plot(ax=ax, color='b')
+# box_red.plot(ax=ax, color='r')
+# for face, inter_points in box_red.linesegment_intersections(ray):
+#     # print('ip', inter_point)
+#     face.plot(ax=ax, color='b')
+#     for inter_point in inter_points:
+#         inter_point.plot(ax=ax, color='r')
 
 
 box_red.color = (1, 0.1, 0.1)
@@ -84,7 +84,7 @@ print(box_green.shell_intersection(box_blue, resolution))
 print(box_green.intersection_internal_aabb_volume(box_blue, resolution))
 print(box_green.intersection_external_aabb_volume(box_blue, resolution))
 model = vm.core.VolumeModel([box, box_red, box_green, box_blue])
-model.babylonjs(debug=True)
+# model.babylonjs(debug=True)
 
 assert box.is_inside_shell(box_red, resolution) == True
 assert box_red.is_inside_shell(box, resolution) == False
@@ -100,14 +100,20 @@ model.to_step('block.step')
 
 step = vm_step.Step('block.step')
 model2 = step.to_volume_model()
+# new_box = vm.faces.ClosedShell3D.unions(box_red, box_blue)
+# new_box.color = (1, 0.1, 0.1)
+# new_box.alpha = 0.6
+# # for face in new_box.face:
+# #     face.color = 
+# vm.core.VolumeModel([new_box]).babylonjs()
+
+box_blue.translation([0,0,0.1], False)
+model = vm.core.VolumeModel([box_red, box_blue])
+# model.babylonjs(debug=True)
 new_box = vm.faces.ClosedShell3D.unions(box_red, box_blue)
 new_box.color = (1, 0.1, 0.1)
 new_box.alpha = 0.6
-# for face in new_box.face:
-#     face.color = 
-vm.core.VolumeModel([new_box]).babylonjs()
-
-
+# vm.core.VolumeModel([new_box]).babylonjs()
 # ############################################################################### UNION 2
 # import volmdlr.wires as vmw
 # import volmdlr.faces as vmf

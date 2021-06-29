@@ -1252,36 +1252,36 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             for p in self.points:
                 p.rotation(center, angle, copy=False)
     
-    @classmethod
-    def polygon_from_segments(cls, list_point_pairs):
-        points = [list_point_pairs[0][0], list_point_pairs[0][1]]
-        list_point_pairs.remove((list_point_pairs[0][0], list_point_pairs[0][1]))
-        finished =  False
+    # @classmethod
+    # def polygon_from_segments(cls, list_point_pairs):
+    #     points = [list_point_pairs[0][0], list_point_pairs[0][1]]
+    #     list_point_pairs.remove((list_point_pairs[0][0], list_point_pairs[0][1]))
+    #     finished =  False
         
-        while not finished:
-            for p1, p2 in list_point_pairs:
-                if p1 == points[-1]:
-                    points.append(p2)
-                    break
-                elif p2 == points[-1]:
-                    points.append(p1)
-                    break
-            list_point_pairs.remove((p1, p2))
-            if len(list_point_pairs)==0:
-                finished = True
+    #     while not finished:
+    #         for p1, p2 in list_point_pairs:
+    #             if p1 == points[-1]:
+    #                 points.append(p2)
+    #                 break
+    #             elif p2 == points[-1]:
+    #                 points.append(p1)
+    #                 break
+    #         list_point_pairs.remove((p1, p2))
+    #         if len(list_point_pairs)==0:
+    #             finished = True
             
             
             
-        # for i, i_p1, i_p2 in enumerate(list_point_pairs):
-        #     for j, j_p1, j_p2 in enumerate(list_point_pairs):
-        #         if i != j:
+    #     # for i, i_p1, i_p2 in enumerate(list_point_pairs):
+    #     #     for j, j_p1, j_p2 in enumerate(list_point_pairs):
+    #     #         if i != j:
                     
-        #             if p1 == points[-1]:
-        #                 points.append(p2)
-        #             elif p2 == points[-1]:
-        #                 points.append(p1)
-        # print('points : ', points)
-        return cls(points)
+    #     #             if p1 == points[-1]:
+    #     #                 points.append(p2)
+    #     #             elif p2 == points[-1]:
+    #     #                 points.append(p1)
+    #     # print('points : ', points)
+    #     return cls(points)
            
 
     def translation(self, offset, copy=True):
@@ -1660,7 +1660,25 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         # print('points next the first line in the end: ', nearby_points)
         # divided_line = get_divided_line(line, nearby_points, hull_concave_edges, concavity)
         # print('len divided line :', len(divided_line))
-        return cls.polygon_from_segments([(line.start, line.end) for line in hull_concave_edges]), nearby_points
+        polygon_points = [(line.start, line.end) for line in hull_concave_edges]
+        
+        points = [polygon_points[0][0], polygon_points[0][1]]
+        polygon_points.remove((polygon_points[0][0], polygon_points[0][1]))
+        finished =  False
+        
+        while not finished:
+            for p1, p2 in polygon_points:
+                if p1 == points[-1]:
+                    points.append(p2)
+                    break
+                elif p2 == points[-1]:
+                    points.append(p1)
+                    break
+            polygon_points.remove((p1, p2))
+            if len(polygon_points)==0:
+                finished = True
+                
+        return cls(points), nearby_points
         
         
     @classmethod
@@ -1673,7 +1691,24 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         polygon_points = []
         for simplex in hull.simplices:
             polygon_points.append((points[simplex[0]], points[simplex[1]]))
-        return cls.polygon_from_segments(polygon_points)
+            
+        points = [polygon_points[0][0], polygon_points[0][1]]
+        polygon_points.remove((polygon_points[0][0], polygon_points[0][1]))
+        finished =  False
+        
+        while not finished:
+            for p1, p2 in polygon_points:
+                if p1 == points[-1]:
+                    points.append(p2)
+                    break
+                elif p2 == points[-1]:
+                    points.append(p1)
+                    break
+            polygon_points.remove((p1, p2))
+            if len(polygon_points)==0:
+                finished = True
+                
+        return cls(points)
         
     def to_3d(self, plane_origin, x, y):
         points3d = [point.to_3d(plane_origin, x, y) for point in self.points]
@@ -2319,6 +2354,13 @@ class Contour3D(Contour, Wire3D):
         points = [self.point_at_abscissa(i / n * l) \
                   for i in range(n)]
         return volmdlr.core.BoundingBox.from_points(points)
+    
+    @classmethod
+    def extract_contours(cls, contour, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+        
+        new_primitives = contour.extract_with_points(point1, point2)
+        contours = [cls(new_primitives)]
+        return contours 
 
 class Circle3D(Contour3D):
     _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']

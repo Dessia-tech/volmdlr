@@ -4116,15 +4116,17 @@ class ClosedShell3D(OpenShell3D):
 
     @classmethod
     def unions(cls, shell1, shell2):
-        shell1_p = shell1.sheel_substract(shell2)
-        shell2_p = shell2.sheel_substract(shell1)
+        # shell1_p = shell1.sheel_substract(shell2)
+        # shell2_p = shell2.sheel_substract(shell1)
+        shell1_p = shell1.shell_substract2(shell2)
+        # shell2_p = shell2.shell_substract2(shell1)
         for f in shell1_p.faces:
             f.alpha = 0.2
-        for f in shell2_p.faces:
-            f.alpha = 0.5
-            f.color = (1, 0, 0)
-        return cls(shell1_p.faces + shell2_p.faces)
-        # return cls(shell1_p.faces)
+        # for f in shell2_p.faces:
+        #     f.alpha = 0.5
+        #     f.color = (1, 0, 0)
+        # return cls(shell1_p.faces + shell2_p.faces)
+        return cls(shell1_p.faces)
 
 
 
@@ -4371,5 +4373,53 @@ class ClosedShell3D(OpenShell3D):
                 continue
             face_intersection_lines = []
             for face2 in shell_2.faces:
-                face_intersections = face1.face_intersections
-            
+                face_intersection = face1.face_intersections(face2)
+                print(face_intersection)
+                if face_intersection:
+                # if face_intersection not in face_intersection_lines:
+                    face_intersection_lines.append(face_intersection)
+            if face_intersection_lines:
+                print(face_intersection_lines)
+                contour_lines = [face_intersection_lines[0]]
+                print()
+                face_intersection_lines.remove(face_intersection_lines[0])
+                finished =  False
+                while not finished:
+                    for line in face_intersection_lines:
+                        for c_line in contour_lines:
+                            if c_line:
+                                print(c_line)
+                                if line.start == c_line.start or line.end == c_line.start:
+                                    contour_lines = contour_lines[0:contour_lines.index(c_line)] + [line] + contour_lines[contour_lines.index(c_line):]
+                                    face_intersection_lines.remove(line)
+                                    break
+                                elif line.start == c_line.end or line.end == c_line.end:
+                                    contour_lines.append(line)
+                                    face_intersection_lines.remove(line)
+                                    break
+                        if len(face_intersection_lines) == 0:
+                            finished = True
+                
+                print(contour_lines)
+                new_contour = volmdlr.wires.Contour3D(contour_lines)
+                face1.surface2d.outer_contour.plot()
+                
+                # ax = new_contour.plot(color = 'r')
+                
+                # extracted_contours = volmdlr.wires.Contour3D.extract_contours(face1.outer_contour3d, new_contour.primitives[0].start, new_contour.primitives[-1].end)
+                # extracted_contours[0].plot(ax = ax)
+                
+                # new_contour.primitives[0].start.plot(ax = ax, color='b')
+                # new_contour.primitives[-1].end.plot(ax = ax, color = 'b')
+                # print(face1.outer_contour3d.primitives)
+                # intersection_points = []
+                # for primitive1 in face1.outer_contour3d.primitives:
+                #     for primitive2 in new_contour.primitives:
+                #         line_intersection = primitive1.intersection(primitive2)
+                #         print(line_intersection)
+                #         if line_intersection:
+                #             ax = primitive1.plot(color= 'b')
+                #             primitive2.plot(ax = ax, color= 'r')
+                #             intersection_points.append(line_intersection)
+                # print(intersection_points)
+                            
