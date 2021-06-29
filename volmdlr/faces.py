@@ -2512,6 +2512,34 @@ class Triangle3D(PlaneFace3D):
             self.point1 = new_point1
             self.point2 = new_point2
             self.point3 = new_point3
+            
+    def subdescription(self, resolution = 0.01) :
+        frame = self.surface3d.frame
+        pts2d = [pt.to_2d(frame.origin, frame.u, frame.v) for pt in self.points]
+        t_poly2d = volmdlr.wires.ClosedPolygon2D(pts2d)
+        
+        xmin, xmax = min(pt.x for pt in pts2d), max(pt.x for pt in pts2d)
+        ymin, ymax = min(pt.y for pt in pts2d), max(pt.y for pt in pts2d)
+        
+        nx, ny = int(((xmax-xmin)/resolution)+2), int(((ymax-ymin)/resolution)+2)
+        points_box = []
+        for i in range(nx) :
+            x = xmin + i*resolution
+            if x > xmax :
+                x=xmax
+            for j in range(ny) :
+                y = ymin + j*resolution
+                if y > ymax :
+                    y=ymax
+                points_box.append(volmdlr.Point2D(x,y))
+         
+        points = self.points
+        for pt in points_box :
+            if t_poly2d.point_belongs(pt):
+                points.append(pt.to_3d(frame.origin, frame.u, frame.v))
+        
+        return points
+        
 
 class CylindricalFace3D(Face3D):
     """
