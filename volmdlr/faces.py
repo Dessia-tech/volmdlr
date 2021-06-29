@@ -2350,6 +2350,8 @@ class PlaneFace3D(Face3D):
             intersection_points = face2.edge_intersections(edge1)
             if intersection_points:
                 intersections.extend(intersection_points)
+        
+        intersections = volmdlr.edges.LineSegment3D(intersections[0], intersections[1])
 
         return intersections
 
@@ -4115,14 +4117,14 @@ class ClosedShell3D(OpenShell3D):
     @classmethod
     def unions(cls, shell1, shell2):
         shell1_p = shell1.sheel_substract(shell2)
-        # shell2_p = shell2.sheel_substract(shell1)
+        shell2_p = shell2.sheel_substract(shell1)
         for f in shell1_p.faces:
             f.alpha = 0.2
-        # for f in shell2_p.faces:
-        #     f.alpha = 0.5
-        #     f.color = (1, 0, 0)
-        # return cls(shell1_p.faces + shell2_p.faces)
-        return cls(shell1_p.faces)
+        for f in shell2_p.faces:
+            f.alpha = 0.5
+            f.color = (1, 0, 0)
+        return cls(shell1_p.faces + shell2_p.faces)
+        # return cls(shell1_p.faces)
 
 
 
@@ -4277,6 +4279,7 @@ class ClosedShell3D(OpenShell3D):
                             points_2d.append(p)
                     for p1, p2 in zip(new_points_2d[0:-1], new_points_2d[1:]):
                         graph.add_edges_from([(p1, p2)])
+            print(points_2d)
             if points_2d:
                 for pt in points_2d:
                     dist_min = math.inf
@@ -4350,10 +4353,8 @@ class ClosedShell3D(OpenShell3D):
                             primitives.append(volmdlr.edges.LineSegment2D(p1, p2))
                         print(len(primitives))
                         inner_contour =volmdlr.wires.Contour2D(primitives)
-                        print(inner_contour)
-                        print(inner_contour.order_contour())
                         surf3d = face1.surface3d
-                        surf2d = Surface2D(contour, [volmdlr.wires.Contour2D(primitives).order_contour()])
+                        surf2d = Surface2D(contour, [volmdlr.wires.Contour2D(primitives)])
                         print(surf2d)
                         # surf2d.plot()
                         new_plane = PlaneFace3D(surf3d, surf2d)
@@ -4363,3 +4364,12 @@ class ClosedShell3D(OpenShell3D):
             else:
                 faces.append(face1)
         return OpenShell3D(faces)
+    
+    def shell_substract2(self, shell_2):
+        for face1 in self.faces:
+            if volmdlr.faces.ClosedShell3D([face1]).is_inside_shell(shell_2, resolution=0.01):
+                continue
+            face_intersection_lines = []
+            for face2 in shell_2.faces:
+                face_intersections = face1.face_intersections
+            
