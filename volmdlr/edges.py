@@ -713,7 +713,7 @@ class LineSegment2D(LineSegment):
         """
         point, curv_abs = Line2D.point_projection(Line2D(self.start, self.end),
                                                   point)
-        print('curv_abs :', curv_abs, 'length :', self.length())
+        # print('curv_abs :', curv_abs, 'length :', self.length())
         if curv_abs < 0 or curv_abs > self.length():
             if abs(curv_abs) < 1e-6 or math.isclose(curv_abs, self.length(), abs_tol = 1e-6):
                 return point, curv_abs

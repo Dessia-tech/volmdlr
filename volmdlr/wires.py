@@ -766,10 +766,11 @@ class Contour2D(Contour, Wire2D):
         for p in self.primitives:
             graph.add_edges_from([(p.start, p.end)])
         pts = list(nx.dfs_edges(graph, pt_start))
-        print(pts)
+        print('points ordered :', pts)
         lns = [volmdlr.edges.LineSegment2D(p[0], p[1]) for p in pts]
         lns.append(volmdlr.edges.LineSegment2D(pts[-1][-1], pts[0][0]))
         self.primitives = lns
+        print('primitives points :', [(prim[0], prim[1]) for prim in self.primitives])
 
     # @classmethod
     # def extract_contours(cls, contour, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
