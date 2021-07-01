@@ -214,7 +214,9 @@ class LineSegment(Edge):
     def unit_direction_vector(self, abscissa=0.):
 
         u = self.end - self.start
+        # print(u)
         u.normalize()
+        
         return u
 
     def direction_vector(self, s=0):
@@ -712,6 +714,8 @@ class LineSegment2D(LineSegment):
         point, curv_abs = Line2D.point_projection(Line2D(self.start, self.end),
                                                   point)
         if curv_abs < 0 or curv_abs > self.length():
+            if abs(curv_abs) < 1e-9 or math.isclose(curv_abs, self.length(), abs_tol = 1e-9):
+                return point, curv_abs
             return None, curv_abs
         return point, curv_abs
 

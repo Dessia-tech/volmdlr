@@ -67,10 +67,37 @@ class Wire:
         raise ValueError(
             'abscissa over length: {}>{}'.format(curvilinear_abscissa, length))
 
-    def extract_primitives(self, point1, primitive1, point2, primitive2):
+    def extract_primitives(self, point1, primitive1, point2, primitive2, inter_points_contour):
         primitives = []
         ip1 = self.primitive_to_index[primitive1]
         ip2 = self.primitive_to_index[primitive2]
+        if inter_points_contour:
+            if ip1 < ip2:
+                pass
+            elif ip1 == ip2: #primitive1 == primitive2
+                if point1.point_distance(primitive1.start) < point2.point_distance(primitive1.start):
+                    pass
+                else:
+                    primitive1, primitive2 = primitive2, primitive1
+                    point1, point2 = point2, point1
+
+            else:
+                primitive1, primitive2 = primitive2, primitive1
+                point1, point2 = point2, point1
+        else:
+            print('passes here ')
+            print(ip1, ip2)
+            if ip1 > ip2:
+                pass
+            elif ip1 == ip2: #primitive1 == primitive2
+                if point1.point_distance(primitive1.start) > point2.point_distance(primitive1.start):
+                    pass
+                else:
+                    primitive1, primitive2 = primitive2, primitive1
+                    point1, point2 = point2, point1
+            else:
+                primitive1, primitive2 = primitive2, primitive1
+                point1, point2 = point2, point1
 
         if ip1 < ip2:
             primitives.append(primitive1.split(point1)[1])
@@ -82,7 +109,7 @@ class Wire:
             primitives.append(primitive2.split(point2)[0])
 
         return primitives
-    def extract_without_primitives(self, point1, point2):
+    def extract_without_primitives(self, point1, point2, inter_points_contour):
         split_primitives  = []
         primitives = self.primitives
         for point in [point1, point2]:
@@ -93,7 +120,7 @@ class Wire:
                     dist_min = dist
                     prim_opt = primitive
             split_primitives.append(prim_opt)
-        return self.extract_primitives(point1, split_primitives[0], point2, split_primitives[1])
+        return self.extract_primitives(point1, split_primitives[0], point2, split_primitives[1], inter_points_contour)
 
 
 class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
@@ -111,11 +138,11 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
 
         return Wire3D(primitives3d)
 
-    def extract(self, point1, primitive1, point2, primitive2):
-        return Wire2D(self.extract_primitives(point1, primitive1, point2, primitive2))
+    def extract(self, point1, primitive1, point2, primitive2, inter_points_contour):
+        return Wire2D(self.extract_primitives(point1, primitive1, point2, primitive2, inter_points_contour))
     
-    def extract_with_points(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D):
-        return self.extract_without_primitives(point1, point2)
+    def extract_with_points(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D, inter_points_contour):
+        return self.extract_without_primitives(point1, point2, inter_points_contour)
         # split_primitives  = []
         # # primitives = [p for p in contour.primitives]
         # primitives = self.primitives
@@ -348,10 +375,37 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
 
 class Contour():
 
-    def extract_primitives(self, point1, primitive1, point2, primitive2):
+    def extract_primitives(self, point1, primitive1, point2, primitive2, inter_points_contour):
         primitives = []
         ip1 = self.primitive_to_index(primitive1)
         ip2 = self.primitive_to_index(primitive2)
+        print(ip1, ip2)
+        if inter_points_contour:
+            if ip1 < ip2:
+                pass
+            elif ip1 == ip2: #primitive1 == primitive2
+                if point1.point_distance(primitive1.start) < point2.point_distance(primitive1.start):
+                    pass
+                else:
+                    primitive1, primitive2 = primitive2, primitive1
+                    point1, point2 = point2, point1
+
+            else:
+                print('passing here')
+                primitive1, primitive2 = primitive2, primitive1
+                point1, point2 = point2, point1
+        else:
+            if ip1 > ip2:
+                pass
+            elif ip1 == ip2: #primitive1 == primitive2
+                if point1.point_distance(primitive1.start) > point2.point_distance(primitive1.start):
+                    pass
+                else:
+                    primitive1, primitive2 = primitive2, primitive1
+                    point1, point2 = point2, point1
+            else:
+                primitive1, primitive2 = primitive2, primitive1
+                point1, point2 = point2, point1
 
         if ip1 < ip2:
             primitives.append(primitive1.split(point1)[1])
@@ -748,9 +802,9 @@ class Contour2D(Contour, Wire2D):
     #         return None
         
     @classmethod
-    def extract_contours(cls, contour, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+    def extract_contours(cls, contour, point1: volmdlr.Point3D, point2: volmdlr.Point3D, inter_points_contour = False):
         
-        new_primitives = contour.extract_with_points(point1, point2)
+        new_primitives = contour.extract_with_points(point1, point2, inter_points_contour)
         contours = [cls(new_primitives)]
         return contours 
 
@@ -1007,9 +1061,13 @@ class Contour2D(Contour, Wire2D):
     def to_polygon(self, angle_resolution):
 
         polygon_points = []
+        # print([(line.start, line.end) for line in self.primitives])
 
         for primitive in self.primitives:
             polygon_points.extend(primitive.polygon_points()[:-1])
+        #     print('1: ', primitive.polygon_points())
+        #     print('2 :', primitive.polygon_points()[:-1])
+        # print(polygon_points)
         return ClosedPolygon2D(polygon_points)
 
     def grid_triangulation(self, x_density: float = None,
@@ -1307,6 +1365,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         angle = 0.
         for ls1, ls2 in zip(self.line_segments, self.line_segments[1:] + [self.line_segments[0]]):
             l1 = ls1.to_line()
+            # print('bugging lines:', (ls1[0], ls1[1]), (ls2[0], ls2[1]))
             u = ls2.unit_direction_vector()
             x = u.dot(ls1.unit_direction_vector())
             y = u.dot(ls1.normal_vector())
@@ -2356,9 +2415,9 @@ class Contour3D(Contour, Wire3D):
         return volmdlr.core.BoundingBox.from_points(points)
     
     @classmethod
-    def extract_contours(cls, contour, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+    def extract_contours(cls, contour, point1: volmdlr.Point3D, point2: volmdlr.Point3D, inter_points_contour = False):
         
-        new_primitives = contour.extract_with_points(point1, point2)
+        new_primitives = contour.extract_with_points(point1, point2, inter_points_contour)
         contours = [cls(new_primitives)]
         return contours 
 
