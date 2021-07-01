@@ -2409,13 +2409,15 @@ class Triangle3D(PlaneFace3D):
         self.alpha = alpha
         self.name = name
         
+        self.bounding_box = self._bounding_box()
+        
         
         # Don't use inheritence for performance: class method fakes face3D behavior
         # Face3D.__init__(self,
         #                 surface3d=plane3d,
         #                 surface2d=surface2d,
         #                 name=name)
-        
+       
     def _bounding_box(self):
         return volmdlr.core.BoundingBox.from_points([self.point1, self.point2, self.point3])
         
