@@ -4386,41 +4386,48 @@ class ClosedShell3D(OpenShell3D):
                     face_intersection_points2d = [face1.surface3d.point3d_to_2d(i) for i in face_intersection_points]
                     # print(face_intersection_points2d)
                     list_point_pairs.append((face_intersection_points2d[0], face_intersection_points2d[1]))
+                    face_intersection_lines2d.append(volmdlr.edges.LineSegment2D(face_intersection_points2d[0], face_intersection_points2d[1]))
 
-            if list_point_pairs:
-
-                points = [list_point_pairs[0]]
-                list_point_pairs.remove((list_point_pairs[0][0], list_point_pairs[0][1]))
-                finished =  False
-                if len(list_point_pairs)==0:
-                        finished = True
-                while not finished:
-                    for p1, p2 in list_point_pairs:
-                        if p1 == points[-1][-1]:
-                            points.append((p1, p2))
-                            list_point_pairs.remove((p1, p2))
-                        elif p2 == points[-1][-1]:
-                            points.append((p2, p1))
-                            list_point_pairs.remove((p1, p2))
-                        elif p1 == points[0][0]:
-                            points = [(p2, p1)] + points
-                            list_point_pairs.remove((p1, p2))
-                        elif p2 == points[0][0]:
-                            points = [(p1, p2)] + points
-                            list_point_pairs.remove((p1, p2))
-                    if len(list_point_pairs)==0:
-                        finished = True
-                print('right ordered points :', points)
-
-                for p1, p2 in points:
-                    face_intersection_lines2d.append(volmdlr.edges.LineSegment2D(p1, p2))
-                print(face_intersection_lines2d)
+            if face_intersection_lines2d:
                 new_contour = volmdlr.wires.Contour2D(face_intersection_lines2d)
+                new_contour.order_contour()
+                if new_contour.primitives[0][0] != new_contour.primitives[-1][1]:
+                    print('is it a vector? :', new_contour.primitives[0][0] - new_contour.primitives[0][1])
+                    # new_contour.primitives[0][0].translation((new_contour.primitives[0][0] - new_contour.primitives[0][1])*1.1)
+                    # new_contour.primitives[-1][-1].translation((new_contour.primitives[-1][-1] - new_contour.primitives[-1][0])*1.1)
+
+                # points = [list_point_pairs[0]]
+                # list_point_pairs.remove((list_point_pairs[0][0], list_point_pairs[0][1]))
+                # finished =  False
+                # if len(list_point_pairs)==0:
+                #         finished = True
+                # while not finished:
+                #     for p1, p2 in list_point_pairs:
+                #         if p1 == points[-1][-1]:
+                #             points.append((p1, p2))
+                #             list_point_pairs.remove((p1, p2))
+                #         elif p2 == points[-1][-1]:
+                #             points.append((p2, p1))
+                #             list_point_pairs.remove((p1, p2))
+                #         elif p1 == points[0][0]:
+                #             points = [(p2, p1)] + points
+                #             list_point_pairs.remove((p1, p2))
+                #         elif p2 == points[0][0]:
+                #             points = [(p1, p2)] + points
+                #             list_point_pairs.remove((p1, p2))
+                #     if len(list_point_pairs)==0:
+                #         finished = True
+                # print('right ordered points :', points)
+
+                # for p1, p2 in points:
+                #     face_intersection_lines2d.append(volmdlr.edges.LineSegment2D(p1, p2))
+                print(face_intersection_lines2d)
+                # new_contour = volmdlr.wires.Contour2D(face_intersection_lines2d)
                 ax = new_contour.plot(color='r')
                 face1.surface2d.outer_contour.plot(ax =ax)
                 intersection_points = []
                 for primitive1 in face1.surface2d.outer_contour.primitives:
-                    for primitive2 in face_intersection_lines2d:
+                    for primitive2 in new_contour.primitives:
                         line_intersection = primitive1.linesegment_intersections(primitive2)
                         print(line_intersection)
                         if line_intersection:
@@ -4431,35 +4438,38 @@ class ClosedShell3D(OpenShell3D):
                 if intersection_points:
                     extracted_contour = volmdlr.wires.Contour2D.extract_contours(face1.surface2d.outer_contour, intersection_points[0], intersection_points[1], inter_points_contour)[0]
                     extracted_contour.plot(ax=ax)
-                    list_point_pairs = [(prim[0], prim[1]) for prim in extracted_contour.primitives + new_contour.primitives]
-                    points = [list_point_pairs[0]]
-                    list_point_pairs.remove((list_point_pairs[0][0], list_point_pairs[0][1]))
-                    finished =  False
-                    if len(list_point_pairs)==0:
-                            finished = True
-                    while not finished:
-                        for p1, p2 in list_point_pairs:
-                            if p1 == points[-1][-1]:
-                                points.append((p1, p2))
-                                list_point_pairs.remove((p1, p2))
-                            elif p2 == points[-1][-1]:
-                                points.append((p2, p1))
-                                list_point_pairs.remove((p1, p2))
-                            elif p1 == points[0][0]:
-                                points = [(p2, p1)] + points
-                                list_point_pairs.remove((p1, p2))
-                            elif p2 == points[0][0]:
-                                points = [(p1, p2)] + points
-                                list_point_pairs.remove((p1, p2))
-                        if len(list_point_pairs)==0:
-                            finished = True
-                    print('right ordered points :', points)
-                    new_primitives = []
+                    # list_point_pairs = [(prim[0], prim[1]) for prim in extracted_contour.primitives + new_contour.primitives]
+                    # print('point pairs', list_point_pairs)
+                    # points = [list_point_pairs[0]]
+                    # list_point_pairs.remove((list_point_pairs[0][0], list_point_pairs[0][1]))
+                    # finished =  False
+                    # if len(list_point_pairs)==0:
+                    #         finished = True
+                    # while not finished:
+                    #     for p1, p2 in list_point_pairs:
+                    #         if p1 == points[-1][-1]:
+                    #             points.append((p1, p2))
+                    #             list_point_pairs.remove((p1, p2))
+                    #         elif p2 == points[-1][-1]:
+                    #             points.append((p2, p1))
+                    #             list_point_pairs.remove((p1, p2))
+                    #         elif p1 == points[0][0]:
+                    #             points = [(p2, p1)] + points
+                    #             list_point_pairs.remove((p1, p2))
+                    #         elif p2 == points[0][0]:
+                    #             points = [(p1, p2)] + points
+                    #             list_point_pairs.remove((p1, p2))
+                    #     if len(list_point_pairs)==0:
+                    #         finished = True
+                    # print('right ordered points :', points)
+                    # new_primitives = []
     
-                    for p1, p2 in points:
-                        new_primitives.append(volmdlr.edges.LineSegment2D(p1, p2))
+                    # for p1, p2 in points:
+                    #     new_primitives.append(volmdlr.edges.LineSegment2D(p1, p2))
                     # print(face_intersection_lines2d)
+                    new_primitives = extracted_contour.primitives + new_contour.primitives
                     contour = volmdlr.wires.Contour2D(new_primitives)
+                    contour.order_contour()
                     # contour = volmdlr.wires.Contour2D(extracted_contour.primitives + new_contour.primitives)
                     contour.plot()
                     # print([(prim[0], prim[1]) for prim in contour.primitives])
