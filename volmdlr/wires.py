@@ -385,6 +385,8 @@ class Contour():
                 pass
             elif ip1 == ip2: #primitive1 == primitive2
                 if point1.point_distance(primitive1.start) < point2.point_distance(primitive1.start):
+                    print('passing here')
+                    ip2 += 1 #quick fix, maybe not the best 
                     pass
                 else:
                     primitive1, primitive2 = primitive2, primitive1
@@ -399,6 +401,7 @@ class Contour():
                 pass
             elif ip1 == ip2: #primitive1 == primitive2
                 if point1.point_distance(primitive1.start) > point2.point_distance(primitive1.start):
+                    ip1 +=1 #quick fix, maybe not the best 
                     pass
                 else:
                     primitive1, primitive2 = primitive2, primitive1
@@ -408,6 +411,7 @@ class Contour():
                 point1, point2 = point2, point1
 
         if ip1 < ip2:
+            print('yes it comes here but I am not solving the issue')
             primitives.append(primitive1.split(point1)[1])
             primitives.extend(self.primitives[ip1 + 1:ip2])
             primitives.append(primitive2.split(point2)[0])
