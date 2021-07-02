@@ -99,7 +99,7 @@ model = vm.core.VolumeModel([box_red])
 model.to_step('block.step')
 
 step = vm_step.Step('block.step')
-model2 = step.to_volume_model()
+# model2 = step.to_volume_model()
 # new_box = vm.faces.ClosedShell3D.unions(box_red, box_blue)
 # new_box.color = (1, 0.1, 0.1)
 # new_box.alpha = 0.6
@@ -173,15 +173,15 @@ faces_2 += [vmf.PlaneFace3D(plane3d_3, surf2d_3), vmf.PlaneFace3D(plane3d_4, sur
 shell2 = vmf.ClosedShell3D(faces_2)
 shell2.color = (0.1, 0.1, 1)
 shell2.alpha = 0.6
-vm.core.VolumeModel([shell1]).babylonjs()
+# vm.core.VolumeModel([shell1]).babylonjs()
 # vm.core.VolumeModel([shell2]).babylonjs()
-# model = vm.core.VolumeModel([shell1, shell2])
+model = vm.core.VolumeModel([shell1, shell2])
 # model.babylonjs(debug=True)
 
 new_shell = shell1.translation(vm.Vector3D(0.1,0.1,-0.1), True)
 new_shell.color = (0.1, 0.1, 1)
-vm.core.VolumeModel([new_shell]).babylonjs()
-vm.core.VolumeModel([shell1, new_shell]).babylonjs()
+# vm.core.VolumeModel([new_shell]).babylonjs()
+# vm.core.VolumeModel([shell1, new_shell]).babylonjs()
 new_box = vm.faces.ClosedShell3D.unions(shell1, new_shell)
 # new_box = vm.faces.ClosedShell3D.unions(shell1, shell2)
 new_box.color = (1, 0.1, 0.1)
