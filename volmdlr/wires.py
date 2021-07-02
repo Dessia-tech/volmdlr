@@ -385,15 +385,16 @@ class Contour():
                 pass
             elif ip1 == ip2: #primitive1 == primitive2
                 if point1.point_distance(primitive1.start) < point2.point_distance(primitive1.start):
-                    print('passing here')
-                    ip2 += 1 #quick fix, maybe not the best 
+                    print('same primitive inter points')
                     pass
                 else:
+                    print('it was inversed and they are equal' )
                     primitive1, primitive2 = primitive2, primitive1
                     point1, point2 = point2, point1
 
             else:
-                print('passing here')
+                print('not the same primitive but needs to be inversed')
+                print('it was inversed')
                 primitive1, primitive2 = primitive2, primitive1
                 point1, point2 = point2, point1
         else:
@@ -401,26 +402,39 @@ class Contour():
                 pass
             elif ip1 == ip2: #primitive1 == primitive2
                 if point1.point_distance(primitive1.start) > point2.point_distance(primitive1.start):
-                    ip1 +=1 #quick fix, maybe not the best 
+                    print('they are equal, outer_points contour, no changes needed')
                     pass
                 else:
                     primitive1, primitive2 = primitive2, primitive1
                     point1, point2 = point2, point1
             else:
+                print('it was inversed')
                 primitive1, primitive2 = primitive2, primitive1
                 point1, point2 = point2, point1
+        
+        ip1 = self.primitive_to_index(primitive1)
+        ip2 = self.primitive_to_index(primitive2)
 
         if ip1 < ip2:
-            print('yes it comes here but I am not solving the issue')
+            # print('yes it comes here but I am not solving the issue')
+            print('split prim 1: ', primitive1.split(point1)[1], 'point1 :', point1)
             primitives.append(primitive1.split(point1)[1])
             primitives.extend(self.primitives[ip1 + 1:ip2])
             primitives.append(primitive2.split(point2)[0])
-        else:
+            print('split prim 2: ', primitive2.split(point2)[0], 'point2 :', point2)
+            print('length prim :', len(primitives))
+        elif ip1 > ip2 or (ip1 == ip2 and point1.point_distance(primitive1.start) > point2.point_distance(primitive1.start)):
             primitives.append(primitive1.split(point1)[1])
             primitives.extend(self.primitives[ip1 + 1:])
             primitives.extend(self.primitives[:ip2])
             primitives.append(primitive2.split(point2)[0])
-
+        elif (ip1 == ip2 and point1.point_distance(primitive1.start) < point2.point_distance(primitive1.start)):
+            primitive = primitive1.split(point1)[1]
+            primitive = primitive.split(point2)[0]
+            primitives.append(primitive)
+            print('length prim :', len(primitives))
+        # elif (ip1 == ip2 and point1.point_distance(primitive1.start) > point2.point_distance(primitive1.start)):
+            
         return primitives
    
 
