@@ -2527,12 +2527,16 @@ class Triangle3D(PlaneFace3D):
             x = xmin + i*resolution
             if x > xmax :
                 x=xmax
+            if x == xmin :
+                x = xmin + 0.01*resolution
             for j in range(ny) :
                 y = ymin + j*resolution
                 if y > ymax :
                     y=ymax
+                if y == ymin : 
+                    y = ymin + 0.01*resolution
                 points_box.append(volmdlr.Point2D(x,y))
-         
+        
         points = self.points
         for pt in points_box :
             if t_poly2d.point_belongs(pt):

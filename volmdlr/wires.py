@@ -1659,7 +1659,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         # print('points next the first line in the end: ', nearby_points)
         # divided_line = get_divided_line(line, nearby_points, hull_concave_edges, concavity)
         # print('len divided line :', len(divided_line))
-        return cls.polygon_from_segments([(line.start, line.end) for line in hull_concave_edges]), nearby_points
+        return cls.polygon_from_segments([(line.start, line.end) for line in hull_concave_edges])#, nearby_points
         
         
     @classmethod
