@@ -1053,7 +1053,6 @@ class ClosedPolygon():
             distance = point.point_distance(points[-1])
             
             if distance > min_distance:
-                print('distandce :', distance)
                 if distance > max_distance:
                     number_segmnts = round(distance/min_distance)+2
                     print(number_segmnts)
@@ -1571,7 +1570,6 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                 vect1 = line.start - midle_point
                 vect2 = line.end - midle_point
                 cos  = round(vect1.dot(vect2) / (vect1.norm() * vect2.norm()),4)
-                print('cos: ', cos)
                 if cos < concavity:
                     new_lineA = volmdlr.edges.LineSegment2D(start=line.start, end = midle_point)
                     new_lineB = volmdlr.edges.LineSegment2D(start=midle_point, end = line.end)
@@ -1616,13 +1614,13 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                 
             hull_concave_edges.sort(key = lambda x : x.length(), reverse=True)
             # print([line.length()for line in hull_concave_edges])
-        line  = hull_concave_edges[0]
-        print('first line legth :', line.length())
-        nearby_points = get_nearby_points(line, unused_points, scale_factor)
-        print('points next the first line in the end: ', nearby_points)
-        divided_line = get_divided_line(line, nearby_points, hull_concave_edges, concavity)
-        print('len divided line :', len(divided_line))
-        return cls.polygon_from_segments([(line.start, line.end) for line in hull_concave_edges]), nearby_points
+        # line  = hull_concave_edges[0]
+        # print('first line legth :', line.length())
+        # nearby_points = get_nearby_points(line, unused_points, scale_factor)
+        # print('points next the first line in the end: ', nearby_points)
+        # divided_line = get_divided_line(line, nearby_points, hull_concave_edges, concavity)
+        # print('len divided line :', len(divided_line))
+        return cls.polygon_from_segments([(line.start, line.end) for line in hull_concave_edges])#, nearby_points
                 
     
     
