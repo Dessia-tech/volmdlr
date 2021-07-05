@@ -1205,7 +1205,7 @@ class ClosedPolygon():
             distance = point.point_distance(points[-1])
             
             if distance > min_distance:
-                print('distandce :', distance)
+                # print('distandce :', distance)
                 if distance > max_distance:
                     number_segmnts = round(distance/min_distance)+2
                     print(number_segmnts)
@@ -2982,7 +2982,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                 # if i == len(new_polygon1.points+[new_polygon1.points[0]])-1:
                     if list(dict_closing_pairs.values())[-1][-1] != list(dict_closing_pairs.values())[0][0]:
                         dict_closing_pairs[self.points[0]] = (list(dict_closing_pairs.values())[-1][-1],
-                                                              list(dict_closing_pairs.values())[0][0] )
+                                                              list(dict_closing_pairs.values())[0][0])
 
                 triangles.append([self.points[new_polygon1.points.index(point_polygon1)],
                                   self.points[i-1], real_closing_point])
