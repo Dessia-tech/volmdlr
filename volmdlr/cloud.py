@@ -66,7 +66,7 @@ class PointCloud3D(dc.DessiaObject):
         position_plane = [xyz_bbox[posmax][0] + n*dist_between_plane for n in range(resolution)]
         
         subcloud3d = [self.extract(normal, pos_plane-dist_between_plane/2, pos_plane+dist_between_plane/2) for pos_plane in position_plane]
-        print('subcloud3D CREATED')
+        # print('subcloud3D CREATED')
         vec1, vec2 = xyz_vect[posmax-2], xyz_vect[posmax-1]
         subcloud2d_tosimp = [subcloud3d[n].to_2d(position_plane[n]*normal, vec1, vec2) for n in range(resolution)]
         subcloud2d = [sub.simplify() for sub in subcloud2d_tosimp]
@@ -83,15 +83,9 @@ class PointCloud3D(dc.DessiaObject):
             else :
                 polygon2d.append(poly)
                 polygon3d.append(poly.to_3d(pos_plane*normal, vec1, vec2))
-        # return polygon3d
-                
+
         faces = []
-        max_poly_resolution = int(sum([len(poly.points) for poly in polygon3d])/len(polygon3d))+1
-        
-        # fig = plt.figure()
-        # ax = Axes3D(fig)
-        # for poly in polygon3d :
-        #     poly.plot(ax=ax)
+        # max_poly_resolution = int(sum([len(poly.points) for poly in polygon3d])/len(polygon3d))+1
         
         for n in range(resolution):
             print('sewing polygon', round(n/resolution*100, 2), '%')
@@ -140,8 +134,10 @@ class PointCloud2D(dc.DessiaObject):
         return ax
     
     def to_polygon(self):
+        if not self.points:
+            return None
         # polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
-        polygon = vmw.ClosedPolygon2D.concave_hull(self.points, 0.2, 0.0005)
+        polygon = vmw.ClosedPolygon2D.concave_hull(self.points, -0.5, 0.0005)
         # polygon = vmw.ClosedPolygon2D.convex_hull_points(self.points)
         if polygon is None or math.isclose(polygon.area(), 0, abs_tol = 1e-6) :
             return None
