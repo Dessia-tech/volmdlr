@@ -1127,10 +1127,10 @@ class ClosedPolygon():
             distance = point.point_distance(points[-1])
             
             if distance > min_distance:
-                print('distandce :', distance)
+                # print('distandce :', distance)
                 if distance > max_distance:
                     number_segmnts = round(distance/min_distance)+2
-                    print(number_segmnts)
+                    # print(number_segmnts)
                     for n in range(number_segmnts):
                         new_point = points[-1] + (point - points[-1])*(n+1)/number_segmnts
                         points.append(new_point)
@@ -1659,7 +1659,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         # print('points next the first line in the end: ', nearby_points)
         # divided_line = get_divided_line(line, nearby_points, hull_concave_edges, concavity)
         # print('len divided line :', len(divided_line))
-        return cls.polygon_from_segments([(line.start, line.end) for line in hull_concave_edges]), nearby_points
+        return cls.polygon_from_segments([(line.start, line.end) for line in hull_concave_edges])
         
         
     @classmethod
@@ -2803,10 +2803,9 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
             triangles.append([other_point, point2, point1])
            
         return triangles
+    
     def simplify(self, min_distance:float = 0.01, max_distance:float=0.05):
         return ClosedPolygon3D(self.simplify_polygon(min_distance = min_distance, max_distance = max_distance).points)
-        
-        
 
     def sewing(self, polygon2):
         center1, center2 = self.average_center_point(), polygon2.average_center_point()
