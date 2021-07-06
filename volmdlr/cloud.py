@@ -68,8 +68,8 @@ class PointCloud3D(dc.DessiaObject):
         subcloud3d = [self.extract(normal, pos_plane-dist_between_plane/2, pos_plane+dist_between_plane/2) for pos_plane in position_plane]
         print('subcloud3D CREATED')
         vec1, vec2 = xyz_vect[posmax-2], xyz_vect[posmax-1]
-        subcloud2d_toclean = [subcloud3d[n].to_2d(position_plane[n]*normal, vec1, vec2) for n in range(resolution)]
-        subcloud2d = [sub.clean_points() for sub in subcloud2d_toclean]
+        subcloud2d_tosimp = [subcloud3d[n].to_2d(position_plane[n]*normal, vec1, vec2) for n in range(resolution)]
+        subcloud2d = [sub.simplify() for sub in subcloud2d_tosimp]
         
         # return subcloud2d
         print('subcloud2D CREATED')
@@ -96,7 +96,7 @@ class PointCloud3D(dc.DessiaObject):
         for n in range(resolution):
             print('sewing polygon', round(n/resolution*100, 2), '%')
             poly1 = polygon3d[n]
-            poly1 = poly1.simplify(0.01, 0.05)
+            # poly1 = poly1.simplify(0.01, 0.05)
 
             if n == resolution-1 or n == 0:
                 plane3d = vmf.Plane3D.from_plane_vectors(position_plane[n]*normal, vec1, vec2)
@@ -104,7 +104,7 @@ class PointCloud3D(dc.DessiaObject):
                 faces.append(vmf.PlaneFace3D(plane3d, surf2d))
             if n != resolution-1:
                 poly2 = polygon3d[n+1]
-                poly2 = poly2.simplify(0.01, 0.05)
+                # poly2 = poly2.simplify(0.01, 0.05)
                 # coords = poly1.sewin1g_with(poly2, vec1, vec2, normal, resolution = max_poly_resolution)
                 print('poly1: ', len(poly1.points), 'points')
                 print('poly2: ', len(poly2.points), 'points')
@@ -148,7 +148,7 @@ class PointCloud2D(dc.DessiaObject):
         else : 
             return polygon
         
-    def clean_points(self, resolution = 4):
+    def simplify(self, resolution = 4):
         init_length = len(self.points)
         
         x_list, y_list = [pt.x for pt in self.points], [pt.y for pt in self.points]
