@@ -72,8 +72,8 @@ class PointCloud3D(dc.DessiaObject):
         subcloud2d = [sub.simplify() for sub in subcloud2d_tosimp]
         
         # return subcloud2d
-        print('subcloud2D CREATED')
-        print('CREATING POLYGONS')
+        # print('subcloud2D CREATED')
+        # print('CREATING POLYGONS')
         initial_polygon2d = [cloud2d.to_polygon() for cloud2d in subcloud2d]
         
         polygon2d, polygon3d = [], []
@@ -90,7 +90,7 @@ class PointCloud3D(dc.DessiaObject):
         for n in range(resolution):
             print('sewing polygon', round(n/resolution*100, 2), '%')
             poly1 = polygon3d[n]
-            # poly1 = poly1.simplify(0.01, 0.05)
+            poly1 = poly1.simplify(0.01, 0.05)
 
             if n == resolution-1 or n == 0:
                 plane3d = vmf.Plane3D.from_plane_vectors(position_plane[n]*normal, vec1, vec2)
@@ -98,11 +98,8 @@ class PointCloud3D(dc.DessiaObject):
                 faces.append(vmf.PlaneFace3D(plane3d, surf2d))
             if n != resolution-1:
                 poly2 = polygon3d[n+1]
-                # poly2 = poly2.simplify(0.01, 0.05)
-                # coords = poly1.sewin1g_with(poly2, vec1, vec2, normal, resolution = max_poly_resolution)
-                print('poly1: ', len(poly1.points), 'points')
-                print('poly2: ', len(poly2.points), 'points')
-                print()
+                poly2 = poly2.simplify(0.01, 0.05)
+                # coords = poly1.sewing_with(poly2, vec1, vec2, normal, resolution = max_poly_resolution)
                 coords = poly1.sewing(poly2)
                 for trio in coords :
                     faces.append(vmf.Triangle3D(trio[0], trio[1], trio[2]))
@@ -145,13 +142,11 @@ class PointCloud2D(dc.DessiaObject):
             return polygon
         
     def simplify(self, resolution = 4):
-        init_length = len(self.points)
+        # init_length = len(self.points)
         
         x_list, y_list = [pt.x for pt in self.points], [pt.y for pt in self.points]
         xmin, xmax = min(x_list), max(x_list)
         ymin, ymax = min(y_list), max(y_list)
-        # print('xmin, xmax', xmin, xmax)
-        # print('ymin, ymax', ymin, ymax)
         
         x_slide = [xmin + n*(xmax-xmin)/(resolution-1) for n in range(resolution)]
         y_slide = [ymin + n*(ymax-ymin)/(resolution-1) for n in range(resolution)]
@@ -173,14 +168,14 @@ class PointCloud2D(dc.DessiaObject):
                 clean_points += poly.points
         clean_cloud = PointCloud2D(clean_points, name=self.name + '_clean')
         
-        fig, ax = plt.subplots()
-        for list_pt in points :
-            for pt in list_pt :
-                pt.plot(ax=ax)
+        # fig, ax = plt.subplots()
+        # for list_pt in points :
+        #     for pt in list_pt :
+        #         pt.plot(ax=ax)
             
-        for poly in polys :
-            if poly is not None :
-                poly.plot(ax=ax, color='r', plot_points=True)
+        # for poly in polys :
+        #     if poly is not None :
+        #         poly.plot(ax=ax, color='r', plot_points=True)
                 
-        print('from', init_length, 'points to', len(clean_points))
+        # print('from', init_length, 'points to', len(clean_points))
         return clean_cloud
