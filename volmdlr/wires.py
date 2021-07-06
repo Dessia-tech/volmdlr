@@ -1127,10 +1127,8 @@ class ClosedPolygon():
             distance = point.point_distance(points[-1])
             
             if distance > min_distance:
-                print('distandce :', distance)
                 if distance > max_distance:
                     number_segmnts = round(distance/min_distance)+2
-                    print(number_segmnts)
                     for n in range(number_segmnts):
                         new_point = points[-1] + (point - points[-1])*(n+1)/number_segmnts
                         points.append(new_point)
