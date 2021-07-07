@@ -76,29 +76,46 @@ class PointCloud3D(dc.DessiaObject):
         # print('CREATING POLYGONS')
         initial_polygon2d = [cloud2d.to_polygon() for cloud2d in subcloud2d]
         
+        areas = [0]*len(initial_polygon2d)
+        for n, poly in enumerate(initial_polygon2d):
+            if poly is not None :
+                areas[n] = poly.area()
+        avg_area = sum(areas)/len(areas)        
+        
         polygon2d, polygon3d = [], []
-        for pos_plane, poly in zip(position_plane, initial_polygon2d) :
-            if poly is None :
+        banned = []
+        for n, poly in enumerate(initial_polygon2d) :
+            if poly is None or poly.area()<avg_area/10:
                 resolution -= 1
+                banned.append(n)
             else :
                 polygon2d.append(poly)
-                polygon3d.append(poly.to_3d(pos_plane*normal, vec1, vec2))
-
+                polygon3d.append(poly.to_3d(position_plane[n]*normal, vec1, vec2))
+        [position_plane.pop(k) for k in banned[::-1]]
+        
         faces = []
         # max_poly_resolution = int(sum([len(poly.points) for poly in polygon3d])/len(polygon3d))+1
         
         for n in range(resolution):
             print('sewing polygon', round(n/resolution*100, 2), '%')
             poly1 = polygon3d[n]
-            poly1 = poly1.simplify(0.01, 0.05)
-
+            # print('len(poly1.points)', len(poly1.points))
+            # ax = poly1.plot()
+            # poly1 = poly1.simplify(0.01, 0.05)
+            # poly1.plot(ax=ax, color ='r')
+            
+            
             if n == resolution-1 or n == 0:
                 plane3d = vmf.Plane3D.from_plane_vectors(position_plane[n]*normal, vec1, vec2)
                 surf2d = vmf.Surface2D(polygon2d[n],[])
                 faces.append(vmf.PlaneFace3D(plane3d, surf2d))
             if n != resolution-1:
                 poly2 = polygon3d[n+1]
-                poly2 = poly2.simplify(0.01, 0.05)
+                # print('len(poly2.points)', len(poly2.points), '\n')
+                # poly2.plot(ax=ax)
+                # poly2 = poly2.simplify(0.01, 0.05)
+                # polt2.plot(ax=ax, color ='g')
+                
                 # coords = poly1.sewing_with(poly2, vec1, vec2, normal, resolution = max_poly_resolution)
                 coords = poly1.sewing(poly2)
                 for trio in coords :
@@ -141,7 +158,10 @@ class PointCloud2D(dc.DessiaObject):
         else : 
             return polygon
         
-    def simplify(self, resolution = 4):
+    def simplify(self, resolution = 5):
+        if not self.points : 
+            return PointCloud2D(self.points, name=self.name + '_none')
+        
         # init_length = len(self.points)
         
         x_list, y_list = [pt.x for pt in self.points], [pt.y for pt in self.points]
