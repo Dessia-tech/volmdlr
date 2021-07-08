@@ -676,6 +676,11 @@ class LineSegment2D(LineSegment):
 
     def point_at_abscissa(self, curvilinear_abscissa):
         return self.start + self.unit_direction_vector() * curvilinear_abscissa
+    
+    def point_belongs(self, point):
+        if self.start.point_distance(point) + self.end.point_distance(point) == self.length():
+            return True
+        return False
 
     def bounding_rectangle(self):
         return (min(self.start.x, self.end.x), max(self.start.x, self.end.x),
@@ -1957,6 +1962,10 @@ class LineSegment3D(LineSegment):
     def point_at_abscissa(self, curvilinear_abscissa):
         return self.start + curvilinear_abscissa * (
                 self.end - self.start) / self.length()
+    def point_belongs(self, point):
+        if self.start.point_distance(point) + self.end.point_distance(point) == self.length():
+            return True
+        return False
 
     def normal_vector(self, abscissa=0.):
         return None
@@ -1967,8 +1976,8 @@ class LineSegment3D(LineSegment):
     def middle_point(self):
         l = self.length()
         return self.point_at_abscissa(0.5 * l)
+    
     def point_distance(self, point):
-        
         vector1 = point - self.start
         vector1.to_vector()
         vector2 = point - self.end
@@ -2056,6 +2065,70 @@ class LineSegment3D(LineSegment):
 
         return None
 
+    # def line_intersection2(self, linesegment2):
+    #     x1 = self.start.x
+    #     y1 = self.start.y
+    #     z1 = self.start.z
+    #     x2 = self.end.x
+    #     y2 = self.end.y
+    #     z2 = self.end.z
+    #     x3 = linesegment2.start.x
+    #     y3 = linesegment2.start.y
+    #     z3 = linesegment2.start.z
+    #     x4 = linesegment2.end.x
+    #     y4 = linesegment2.end.y
+    #     z4 = linesegment2.end.z
+
+    #     #z1 - z3 = [-z2, z4]
+
+    #     A = npy.array([[-x2, x4], [-y2, y4]])
+    #     B = npy.array([x1 - x3, y1 - y3])
+    #     # solution
+    #     solution = npy.linalg.inv(A).dot(B)
+    #     print('solution :', solution)
+
+    #     alpha = float(solution[0])
+    #     beta = float(solution[1])
+    #     print('final result :', z1 - z3 == alpha * (-z2) + beta * z4)
+
+    #     if z1 - z3 == alpha * (-z2) + beta * z4:
+    #         x = x1 + alpha * x2
+    #         y = y1 + alpha * y2
+    #         z = z1 + alpha * z2
+    #         return volmdlr.Point3D(x, y, z)
+    #     else:
+    #         return None
+
+    # def linesegment_intersection(self, linesegment2):
+    #     intersection = self.line_intersection2(linesegment2)
+    #     print('intersection :', intersection)
+    #     if intersection != None:
+    #         print('disance start to intersection point :', self.start.point_distance(intersection))
+    #         print('length :', self.length())
+    #         if self.start.point_distance(intersection) < self.length() :
+    #             return intersection
+    #         else:
+    #             return None
+    #     return None
+    def linesegment_intersection(self, linesegment):
+        intersection = self.intersection(linesegment)
+        if intersection != None:
+            if intersection == self.start or intersection == self.end:
+                return intersection
+            else:
+                vector1 = intersection - self.start
+                vector2 = intersection - linesegment.start
+                vector1.normalize()
+                vector2.normalize()
+                if vector1 == self.direction_vector() and vector2 == linesegment.direction_vector() and \
+                    self.start.point_distance(intersection)+ self.end.point_distance(intersection) == self.length() and\
+                       linesegment.start.point_distance(intersection) + linesegment.end.point_distance(intersection) == linesegment.length() :
+                    return intersection
+                else: 
+                    return None
+        return None
+            
+
     def rotation(self, center, axis, angle, copy=True):
         if copy:
             return LineSegment3D(
@@ -2066,6 +2139,7 @@ class LineSegment3D(LineSegment):
             self.bounding_box = self._bounding_box()
 
     def __contains__(self, point):
+        
         point1, point2 = self.start, self.end
         axis = point2 - point1
         test = point.rotation(point1, axis, math.pi)

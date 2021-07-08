@@ -315,8 +315,8 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
     def extract(self, point1, primitive1, point2, primitive2):
         return Wire3D(self.extract_primitives(self, point1, primitive1, point2,
                                               primitive2))
-    def extract_with_points(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
-        return self.extract_without_primitives(point1, point2)
+    def extract_with_points(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, inter_points_contour):
+        return self.extract_without_primitives(point1, point2, inter_points_contour )
 
     # TODO: method to check if it is a wire
     def FreeCADExport(self, ip):
@@ -379,22 +379,22 @@ class Contour():
         primitives = []
         ip1 = self.primitive_to_index(primitive1)
         ip2 = self.primitive_to_index(primitive2)
-        print(ip1, ip2)
+        # print(ip1, ip2)
         if inter_points_contour:
             if ip1 < ip2:
                 pass
             elif ip1 == ip2: #primitive1 == primitive2
                 if point1.point_distance(primitive1.start) < point2.point_distance(primitive1.start):
-                    print('same primitive inter points')
+                    # print('same primitive inter points')
                     pass
                 else:
-                    print('it was inversed and they are equal' )
+                    # print('it was inversed and they are equal' )
                     primitive1, primitive2 = primitive2, primitive1
                     point1, point2 = point2, point1
 
             else:
-                print('not the same primitive but needs to be inversed')
-                print('it was inversed')
+                # print('not the same primitive but needs to be inversed')
+                # print('it was inversed')
                 primitive1, primitive2 = primitive2, primitive1
                 point1, point2 = point2, point1
         else:
@@ -402,13 +402,13 @@ class Contour():
                 pass
             elif ip1 == ip2: #primitive1 == primitive2
                 if point1.point_distance(primitive1.start) > point2.point_distance(primitive1.start):
-                    print('they are equal, outer_points contour, no changes needed')
+                    # print('they are equal, outer_points contour, no changes needed')
                     pass
                 else:
                     primitive1, primitive2 = primitive2, primitive1
                     point1, point2 = point2, point1
             else:
-                print('it was inversed')
+                # print('it was inversed')
                 primitive1, primitive2 = primitive2, primitive1
                 point1, point2 = point2, point1
         
@@ -417,12 +417,12 @@ class Contour():
 
         if ip1 < ip2:
             # print('yes it comes here but I am not solving the issue')
-            print('split prim 1: ', primitive1.split(point1)[1], 'point1 :', point1)
+            # print('split prim 1: ', primitive1.split(point1)[1], 'point1 :', point1)
             primitives.append(primitive1.split(point1)[1])
             primitives.extend(self.primitives[ip1 + 1:ip2])
             primitives.append(primitive2.split(point2)[0])
-            print('split prim 2: ', primitive2.split(point2)[0], 'point2 :', point2)
-            print('length prim :', len(primitives))
+            # print('split prim 2: ', primitive2.split(point2)[0], 'point2 :', point2)
+            # print('length prim :', len(primitives))
         elif ip1 > ip2 or (ip1 == ip2 and point1.point_distance(primitive1.start) > point2.point_distance(primitive1.start)):
             primitives.append(primitive1.split(point1)[1])
             primitives.extend(self.primitives[ip1 + 1:])
@@ -432,10 +432,38 @@ class Contour():
             primitive = primitive1.split(point1)[1]
             primitive = primitive.split(point2)[0]
             primitives.append(primitive)
-            print('length prim :', len(primitives))
+            # print('length prim :', len(primitives))
         # elif (ip1 == ip2 and point1.point_distance(primitive1.start) > point2.point_distance(primitive1.start)):
             
         return primitives
+    
+    def ordering_contour(self):
+        list_point_pairs = [(prim[0], prim[1]) for prim in self.primitives]
+        points = [list_point_pairs[0]]
+        list_point_pairs.remove((list_point_pairs[0][0], list_point_pairs[0][1]))
+        finished =  False
+        if len(list_point_pairs)==0:
+                finished = True
+        while not finished:
+            for p1, p2 in list_point_pairs:
+                if p1 == points[-1][-1]:
+                    points.append((p1, p2))
+                    list_point_pairs.remove((p1, p2))
+                elif p2 == points[-1][-1]:
+                    points.append((p2, p1))
+                    list_point_pairs.remove((p1, p2))
+                elif p1 == points[0][0]:
+                    points = [(p2, p1)] + points
+                    list_point_pairs.remove((p1, p2))
+                elif p2 == points[0][0]:
+                    points = [(p1, p2)] + points
+                    list_point_pairs.remove((p1, p2))
+            if len(list_point_pairs)==0:
+                finished = True
+    
+        return points
+
+    
    
 
 
@@ -586,6 +614,13 @@ class Contour2D(Contour, Wire2D):
             return True
         # TODO: This is incomplete!!!
         return False
+    
+    def point_over_contour(self, point):
+        belongs = False
+        for primitive in self.primitives:
+            if primitive.point_belongs(point):
+                belongs = True
+        return belongs
 
     def point_distance(self, point):
         min_distance = self.primitives[0].point_distance(point)
@@ -778,17 +813,26 @@ class Contour2D(Contour, Wire2D):
     #         primitives = new_primitives
     #     return cls(primitives)
 
+    # def order_contour(self):
+    #     pt_start = self.primitives[0].start
+    #     graph = nx.Graph()
+    #     for p in self.primitives:
+    #         graph.add_edges_from([(p.start, p.end)])
+    #     pts = list(nx.dfs_edges(graph, pt_start))
+    #     print('points ordered :', pts)
+    #     lns = [volmdlr.edges.LineSegment2D(p[0], p[1]) for p in pts]
+    #     lns.append(volmdlr.edges.LineSegment2D(pts[-1][-1], pts[0][0]))
+    #     self.primitives = lns
+    #     print('primitives points :', [(prim[0], prim[1]) for prim in self.primitives])
+    
     def order_contour(self):
-        pt_start = self.primitives[0].start
-        graph = nx.Graph()
-        for p in self.primitives:
-            graph.add_edges_from([(p.start, p.end)])
-        pts = list(nx.dfs_edges(graph, pt_start))
-        print('points ordered :', pts)
-        lns = [volmdlr.edges.LineSegment2D(p[0], p[1]) for p in pts]
-        lns.append(volmdlr.edges.LineSegment2D(pts[-1][-1], pts[0][0]))
-        self.primitives = lns
-        print('primitives points :', [(prim[0], prim[1]) for prim in self.primitives])
+        new_primitives = []
+        points = self.ordering_contour()
+        for p1, p2 in points:
+            new_primitives.append(volmdlr.edges.LineSegment2D(p1, p2))
+        self.primitives = new_primitives
+
+    
 
     # @classmethod
     # def extract_contours(cls, contour, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
@@ -1161,7 +1205,16 @@ class Contour2D(Contour, Wire2D):
     #         split_primitives.append(prim_opt)
     #     print(len(split_primitives))
     #     return self.extract_primitives(point1, split_primitives[0], point2, split_primitives[1])
-
+    
+    def contour_intersections(self, contour2d):
+        intersecting_points = []
+        for primitive1 in self.primitives:
+            for primitive2 in contour2d.primitives:
+                line_intersection = primitive1.linesegment_intersections(primitive2)
+                if line_intersection:
+                    intersecting_points.extend(line_intersection)
+        return intersecting_points
+    
 class ClosedPolygon():
     
     def length(self):
@@ -2363,6 +2416,21 @@ class Contour3D(Contour, Wire3D):
                 edge.translation(offset, copy=False)
             for point in self.tessel_points:
                 point.translation(offset, copy=False)
+    
+    def order_contour(self):
+        new_primitives = []
+        points = self.ordering_contour()
+        for p1, p2 in points:
+            new_primitives.append(volmdlr.edges.LineSegment3D(p1, p2))
+        self.primitives = new_primitives
+        
+    def point_belongs(self, point):
+        belongs = False
+        for primitive in self.primitives:
+            if primitive.point_belongs(point):
+                belongs = True
+        return belongs
+                
 
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -2378,6 +2446,7 @@ class Contour3D(Contour, Wire3D):
                 edge.frame_mapping(frame, side, copy=False)
             for point in self.tessel_points:
                 point.frame_mapping(frame, side, copy=False)
+
 
     def copy(self):
         new_edges = [edge.copy() for edge in self.primitives]
@@ -2424,6 +2493,7 @@ class Contour3D(Contour, Wire3D):
         return Contour2D(primitives=primitives2d)
 
     def _bounding_box(self):
+        
         """
         Flawed method, to be enforced by overloading
         """
@@ -2439,6 +2509,23 @@ class Contour3D(Contour, Wire3D):
         new_primitives = contour.extract_with_points(point1, point2, inter_points_contour)
         contours = [cls(new_primitives)]
         return contours 
+    
+    def contour_intersection(self, contour3d):
+        dict_intersecting_points = {}
+        for primitive1 in self.primitives:
+            for primitive2 in contour3d.primitives:
+                intersecting_point = primitive1.linesegment_intersection(primitive2)
+                if intersecting_point != None:
+                    dict_intersecting_points[primitive2] = intersecting_point
+        if dict_intersecting_points:
+            return dict_intersecting_points
+        return None
+                
+    # def extract(self, contour2: volmdlr.wires.Countour3D):
+    #     for primitive1 in self.primitives:
+    #         for primitive2 in coutour2.primitives:
+                
+        
 
 class Circle3D(Contour3D):
     _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']

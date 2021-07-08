@@ -635,7 +635,7 @@ class BoundingBox(dc.DessiaObject):
         ax.set_xlabel('X Label')
         ax.set_ylabel('Y Label')
         ax.set_zlabel('Z Label')
-        plt.show()
+        # plt.show()
         return ax
 
     @classmethod
@@ -666,9 +666,9 @@ class BoundingBox(dc.DessiaObject):
                 and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin)
 
     def is_inside_bbox(self, bbox2):
-        return (self.xmin > bbox2.xmin and self.xmax < bbox2.xmax \
-                and self.ymin > bbox2.ymin and self.ymax < bbox2.ymax \
-                and self.zmin > bbox2.zmin and self.zmax < bbox2.zmax)
+        return (self.xmin >= round(bbox2.xmin, 6) and self.xmax <= round(bbox2.xmax, 6) \
+                and self.ymin >= round(bbox2.ymin, 6) and self.ymax <= round(bbox2.ymax, 6) \
+                and self.zmin >= round(bbox2.zmin, 6) and self.zmax <= round(bbox2.zmax, 6))
 
     def intersection_volume(self, bbox2):
         if not self.bbox_intersection(bbox2):
