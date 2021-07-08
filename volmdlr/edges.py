@@ -2477,7 +2477,7 @@ class BSplineCurve3D(Edge):
         for i, knot in enumerate(knots):
             knot_vector.extend([knot] * knot_multiplicities[i])
         curve.knotvector = knot_vector
-        curve.delta = 0.1
+        curve.delta = 0.01
         curve_points = curve.evalpts
 
         self.curve = curve
@@ -2668,6 +2668,15 @@ class BSplineCurve3D(Edge):
 
     def polygon_points(self):
         return self.points
+    
+    def tangent(self,num_point):
+        #num_point is between 0 and len(points)-1
+        if num_point == len(self.points)-1 :
+            num_point -= 1
+        tangent = self.points[num_point+1]-self.points[num_point]
+        tangent.normalize()
+        return tangent
+        # return self.curve.tangent(curvilinear_abscissa)
 
 
 class BezierCurve3D(BSplineCurve3D):

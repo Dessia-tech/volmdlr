@@ -1625,7 +1625,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                 divided_line.append(volmdlr.edges.LineSegment2D(ok_middle_points[min_cossine_index], line.end))
             return divided_line
                         
-        hull_convex_edges = cls.convex_hull_points(points).line_segments
+        hull_convex_edges = cls.points_convex_hull(points).line_segments
         hull_convex_edges.sort(key = lambda x : x.length(), reverse= True)
         hull_concave_edges = []
         hull_concave_edges.extend(hull_convex_edges)
