@@ -66,13 +66,13 @@ box_blue.name = 'box_blue'
 # new_box.alpha = 0.6
 # vm.core.VolumeModel([new_box]).babylonjs()
 
-# box_blue = box_blue.translation(vm.Point3D(0,0,0.1))
-# #model = vm.core.VolumeModel([box_red, box_blue])
-# # model.babylonjs(debug=True)
-# new_box = vm.faces.ClosedShell3D.unions2(box_red, box_blue)
-# new_box.color = (1, 0.1, 0.1)
-# new_box.alpha = 0.6
-# vm.core.VolumeModel([new_box]).babylonjs()
+box_blue = box_blue.translation(vm.Point3D(0,0,0.1))
+#model = vm.core.VolumeModel([box_red, box_blue])
+# model.babylonjs(debug=True)
+new_box = vm.faces.ClosedShell3D.unions2(box_red, box_blue)
+new_box.color = (1, 0.1, 0.1)
+new_box.alpha = 0.6
+vm.core.VolumeModel([new_box]).babylonjs()
 
 
 # ############################################################################### UNION 2
@@ -138,14 +138,14 @@ model = vm.core.VolumeModel([shell1, shell2])
 # model.babylonjs(debug=True)
 
 new_shell = shell1.translation(vm.Vector3D(0.1,0.1,-0.1), True)
-new_shell.color = (0.1, 0.1, 1)
-# vm.core.VolumeModel([new_shell]).babylonjs()
-# vm.core.VolumeModel([shell1, new_shell]).babylonjs()
-new_box = vm.faces.ClosedShell3D.unions2(shell1, new_shell)
-# new_box = vm.faces.ClosedShell3D.unions(shell1, shell2)
-new_box.color = (1, 0.1, 0.1)
-new_box.alpha = 0.6
-vm.core.VolumeModel([new_box]).babylonjs()
+# new_shell.color = (0.1, 0.1, 1)
+# # vm.core.VolumeModel([new_shell]).babylonjs()
+# # vm.core.VolumeModel([shell1, new_shell]).babylonjs()
+# new_box = vm.faces.ClosedShell3D.unions2(shell1, new_shell)
+# # new_box = vm.faces.ClosedShell3D.unions(shell1, shell2)
+# new_box.color = (1, 0.1, 0.1)
+# new_box.alpha = 0.6
+# vm.core.VolumeModel([new_box]).babylonjs()
 
 # shell3 = shell2.translation(0.1*vm.X3D)
 # shell3.color = (1, 0.1, 0.1)
