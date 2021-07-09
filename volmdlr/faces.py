@@ -4312,7 +4312,6 @@ class ClosedShell3D(OpenShell3D):
                 face.outer_contour3d.discretization_points(resolution))
         for point in points:
             if not shell2.point_belongs(point):
-                print('issue with resolution')
                 return False
 
         # Check if any faces are intersecting
@@ -4320,7 +4319,6 @@ class ClosedShell3D(OpenShell3D):
             for face2 in shell2.faces:
                 intersection_points = face1.face_intersections(face2)
                 if intersection_points != []:
-                    print('issue in face intersection')
                     return False
 
         return True
@@ -4741,6 +4739,37 @@ class ClosedShell3D(OpenShell3D):
             else:
                 faces.append(face1)
         return OpenShell3D(faces)
+
+    # def face_intersection_contours2d(self, edges):
+    #     list_cutting_contours = []
+    #     finished = False
+    #     contour = []
+    #     while not finished:
+    #         len1 = len(list_primitives)
+    #         for line in list_primitives:
+    #             points = [p for prim in contour for p in prim]
+    #             if not contour:
+    #                 contour.append(line)
+    #                 list_primitives.remove(line)
+    #                 break
+    #             elif line[0] in points or line[1] in points:
+    #                 contour.append(line)
+    #                 list_primitives.remove(line)
+    #                 break
+    #         if len(list_primitives) != 0 and len(list_primitives) == len1:
+    #             cutting_contour = volmdlr.wires.Contour2D(contour[:])
+    #             cutting_contour.order_contour()
+    #             list_cutting_contours.append(cutting_contour)
+    #             contour = []
+    #         elif len(list_primitives) == 0:
+    #             cutting_contour = volmdlr.wires.Contour2D(contour[:])
+    #             cutting_contour.order_contour()
+    #             list_cutting_contours.append(cutting_contour)
+    #             finished = True
+
+    #     return list_cutting_contours
+
+
     
     def shell_substract3(self, shell2):
         faces = []
@@ -4777,28 +4806,68 @@ class ClosedShell3D(OpenShell3D):
         #treating intersecting faces
         intersecting_lines = list(intersecting_combinations.values())
         intersecting_contour = volmdlr.wires.Contour3D([wire.primitives[0] for wire in intersecting_lines])
-        intersecting_contour.order_contour()
         ax = intersecting_contour.plot(color = 'r')
-        axf = faces[0].plot()
-        intersecting_contour.plot(ax =axf, color = 'r')
         for face in faces:
             face.plot(ax=ax)
-            face.plot(ax=axf)
-
         for face in intersecting_faces:
             face.plot(ax=ax,color='b')
+
+        # intersecting_lines = [wire.primitives[0] for wire in intersecting_lines]
+        # list_intersecting_contours = []
+        # finished = False
+        # intersecting_contour_primitives = []
+        # while not finished:
+        #     len1 = len(intersecting_lines)
+        #     for line in intersecting_lines:
+        #         points = [p for prim in intersecting_contour_primitives for p in [prim.start, prim.end]]
+        #         if not intersecting_contour_primitives:
+        #             intersecting_contour_primitives.append(line)
+        #             intersecting_lines.remove(line)
+        #             break
+        #         elif line.start in points or line.end in points:
+        #             intersecting_contour_primitives.append(line)
+        #             intersecting_lines.remove(line)
+        #             break
+
+        #     if len(intersecting_lines) != 0 and len(intersecting_lines) == len1:
+        #         intersecting_contour = volmdlr.wires.Contour3D(intersecting_contour_primitives[:])
+        #         intersecting_contour.plot(color = 'r')
+        #         intersecting_contour.order_contour()
+        #         list_intersecting_contours.append(intersecting_contour)
+        #         intersecting_contour_primitives = []
+        #     elif len(intersecting_lines) == 0:
+        #         intersecting_contour = volmdlr.wires.Contour3D(intersecting_contour_primitives[:])
+        #         intersecting_contour.order_contour()
+        #         list_intersecting_contours.append(intersecting_contour)
+        #         finished = True
+        # print('list_intersecrting_contours :', list_intersecting_contours)
+
+
+        # intersecting_contour = volmdlr.wires.Contour3D([wire.primitives[0] for wire in intersecting_lines])
+        # intersecting_contour.plot(color = 'r')
+
+        # intersecting_contour.order_contour()
+        # ax = intersecting_contour.plot(color = 'r')
+        # axf = faces[0].plot()
+        # intersecting_contour.plot(ax =axf, color = 'r')
+        # for face in faces:
+        #     face.plot(ax=ax)
+        #     face.plot(ax=axf)
+
+        # for face in intersecting_faces:
+        #     face.plot(ax=ax,color='b')
 
         for face in intersecting_faces:
             if face in shell2.faces:
                 inter_points_contour = True
                 bbox2 = self.bounding_box
                 shell_2 = self
-                print('self bounding box')
+                # print('self bounding box')
             else:
                 inter_points_contour = False
                 bbox2 = shell2.bounding_box
                 shell_2 = shell2
-                print('bbox2 shell2')
+                # print('bbox2 shell2')
             face_intersecting_primitives2d = []
             intersection_points = []
             dict_intersection_points = {}
@@ -4812,54 +4881,65 @@ class ClosedShell3D(OpenShell3D):
                     face_intersecting_primitives2d.append(primitive2_2d)
 
             new_contour = volmdlr.wires.Contour2D(face_intersecting_primitives2d[:])
-            if face_intersecting_primitives2d:
-                # print('face_intersecting_primitives2d :', face_intersecting_primitives2d)
-                list_cutting_contours = []
-                finished = False
-                contour = []
-                while not finished:
-                    len1 = len(face_intersecting_primitives2d)
-                    for line in face_intersecting_primitives2d:
-                        points = [p for prim in contour for p in prim]
-                        if not contour:
-                            contour.append(line)
-                            face_intersecting_primitives2d.remove(line)
-                            break
-                        elif line[0] in points or line[1] in points:
-                            contour.append(line)
-                            face_intersecting_primitives2d.remove(line)
-                            break
-                    if len(face_intersecting_primitives2d) != 0 and len(face_intersecting_primitives2d) == len1:
-                        cutting_contour = volmdlr.wires.Contour2D(contour[:])
-                        cutting_contour.order_contour()
-                        if cutting_contour.primitives[0].start != cutting_contour.primitives[-1].end:
-                            cutting_contour.primitives[0].start = cutting_contour.primitives[0].start.translation((cutting_contour.primitives[0].start - cutting_contour.primitives[0].end)*0.1)
-                            cutting_contour.primitives[-1].end = cutting_contour.primitives[-1].end.translation((cutting_contour.primitives[-1].end - cutting_contour.primitives[-1].start)*0.1)
-                        intersections = face_contour2d.contour_intersections(cutting_contour)
-                        if intersections:
-                            for intersection in intersections:
-                                if intersection not in intersection_points:
-                                    intersection_points.append(intersection)
-                        list_cutting_contours.append(cutting_contour)
-                        contour = []
-                    elif len(face_intersecting_primitives2d) == 0:
-                        # print('contour[:] :', contour[:])
-                        cutting_contour = volmdlr.wires.Contour2D(contour[:])
-                        cutting_contour.order_contour()
-                        # print('cutting_contour :', cutting_contour)
-                        if cutting_contour.primitives[0].start != cutting_contour.primitives[-1].end:
-                            cutting_contour.primitives[0].start = cutting_contour.primitives[0].start.translation((cutting_contour.primitives[0].start - cutting_contour.primitives[0].end)*0.1)
-                            cutting_contour.primitives[-1].end = cutting_contour.primitives[-1].end.translation((cutting_contour.primitives[-1].end - cutting_contour.primitives[-1].start)*0.1)
-                            # cutting_contour.primitives[0].start.plot(ax=ax1, color ='b')
-                            # cutting_contour.primitives[-1].end.plot(ax=ax1, color ='b')
-                        intersections = face_contour2d.contour_intersections(cutting_contour)
-                        if intersections:
-                            for intersection in intersections:
-                                if intersection not in intersection_points:
-                                    intersection_points.append(intersection)
-                        list_cutting_contours.append(cutting_contour)
-                        finished = True
-            print('list cutting contour :', list_cutting_contours)
+            list_cutting_contours = volmdlr.wires.Contour2D.contours_from_edges(face_intersecting_primitives2d)
+            for cutting_contour in list_cutting_contours:
+                if cutting_contour.primitives[0].start != cutting_contour.primitives[-1].end:
+                    cutting_contour.primitives[0].start = cutting_contour.primitives[0].start.translation((cutting_contour.primitives[0].start - cutting_contour.primitives[0].end)*0.1)
+                    cutting_contour.primitives[-1].end = cutting_contour.primitives[-1].end.translation((cutting_contour.primitives[-1].end - cutting_contour.primitives[-1].start)*0.1)
+                    intersections = face_contour2d.contour_intersections(cutting_contour)
+                    if intersections:
+                        for intersection in intersections:
+                            if intersection not in intersection_points:
+                                intersection_points.append(intersection)
+
+            # if face_intersecting_primitives2d:
+            #     # print('face_intersecting_primitives2d :', face_intersecting_primitives2d)
+            #     list_cutting_contours = []
+            #     finished = False
+            #     contour = []
+            #     while not finished:
+            #         len1 = len(face_intersecting_primitives2d)
+            #         for line in face_intersecting_primitives2d:
+            #             points = [p for prim in contour for p in prim]
+            #             if not contour:
+            #                 contour.append(line)
+            #                 face_intersecting_primitives2d.remove(line)
+            #                 break
+            #             elif line[0] in points or line[1] in points:
+            #                 contour.append(line)
+            #                 face_intersecting_primitives2d.remove(line)
+            #                 break
+            #         if len(face_intersecting_primitives2d) != 0 and len(face_intersecting_primitives2d) == len1:
+            #             cutting_contour = volmdlr.wires.Contour2D(contour[:])
+            #             cutting_contour.order_contour()
+            #             if cutting_contour.primitives[0].start != cutting_contour.primitives[-1].end:
+            #                 cutting_contour.primitives[0].start = cutting_contour.primitives[0].start.translation((cutting_contour.primitives[0].start - cutting_contour.primitives[0].end)*0.1)
+            #                 cutting_contour.primitives[-1].end = cutting_contour.primitives[-1].end.translation((cutting_contour.primitives[-1].end - cutting_contour.primitives[-1].start)*0.1)
+            #             intersections = face_contour2d.contour_intersections(cutting_contour)
+            #             if intersections:
+            #                 for intersection in intersections:
+            #                     if intersection not in intersection_points:
+            #                         intersection_points.append(intersection)
+            #             list_cutting_contours.append(cutting_contour)
+            #             contour = []
+            #         elif len(face_intersecting_primitives2d) == 0:
+            #             # print('contour[:] :', contour[:])
+            #             cutting_contour = volmdlr.wires.Contour2D(contour[:])
+            #             cutting_contour.order_contour()
+            #             # print('cutting_contour :', cutting_contour)
+            #             if cutting_contour.primitives[0].start != cutting_contour.primitives[-1].end:
+            #                 cutting_contour.primitives[0].start = cutting_contour.primitives[0].start.translation((cutting_contour.primitives[0].start - cutting_contour.primitives[0].end)*0.1)
+            #                 cutting_contour.primitives[-1].end = cutting_contour.primitives[-1].end.translation((cutting_contour.primitives[-1].end - cutting_contour.primitives[-1].start)*0.1)
+            #                 # cutting_contour.primitives[0].start.plot(ax=ax1, color ='b')
+            #                 # cutting_contour.primitives[-1].end.plot(ax=ax1, color ='b')
+            #             intersections = face_contour2d.contour_intersections(cutting_contour)
+            #             if intersections:
+            #                 for intersection in intersections:
+            #                     if intersection not in intersection_points:
+            #                         intersection_points.append(intersection)
+            #             list_cutting_contours.append(cutting_contour)
+            #             finished = True
+            # print('list cutting contour :', list_cutting_contours)
             if intersection_points:
                 new_base_contours = [face_contour2d]
                 list_faces = []
@@ -4919,21 +4999,29 @@ class ClosedShell3D(OpenShell3D):
                 for new_face in list_faces:
                     shell1 = volmdlr.faces.ClosedShell3D([new_face])
                     bbox1 = shell1.bounding_box
-                    is_inside = bbox1.is_inside_bbox(bbox2)
+
+                    center_of_mass_point = new_face.surface2d.outer_contour.center_of_mass()
+                    center_of_mass_point = face.surface3d.point2d_to_3d(center_of_mass_point)
+                    # print('center_of_mass_point :', center_of_mass_point)
+                    is_inside = shell_2.point_belongs(center_of_mass_point)
+
+                    # is_inside = bbox1.is_inside_bbox(bbox2)
+
                     # is_inside = shell1.is_inside_shell(shell_2, resolution=0.01)
+
                     print('is inside? ', is_inside)
                     # print('bbox1 point :', bbox1.__iter__())
                     # print('bbox2 point :', bbox2.__iter__())
-                    ax2=bbox1.plot(color='r')
-                    bbox2.plot(ax=ax2)
-                    new_face.plot(ax=ax2, color = 'b')
-                    # face.plot(ax=ax2, color ='g')
+                    # ax2=bbox1.plot(color='r')
+                    # bbox2.plot(ax=ax2)
+                    # new_face.plot(ax=ax2, color = 'b')
+                    # # face.plot(ax=ax2, color ='g')
                     # print('bbox2 :', bbox2)
                     
                     if not is_inside:
                         if new_face not in faces:
                             faces.append(new_face)
-                            new_face.plot(ax=axf, color = 'b')
+                            # new_face.plot(ax=axf, color = 'b')
 
                     
             else:
@@ -4942,7 +5030,7 @@ class ClosedShell3D(OpenShell3D):
                 # contour2d = surf3d.contour3d_to_2d(contour3d = new_contour)
                 surf2d = Surface2D(face.surface2d.outer_contour, [new_contour])
                 new_plane = PlaneFace3D(surf3d, surf2d)
-                new_plane.plot(ax=axf, color = 'b')
+                # new_plane.plot(ax=axf, color = 'b')
                 faces.append(new_plane)
 
 
