@@ -1257,7 +1257,7 @@ class Contour2D(Contour, Wire2D):
                 # base_contour.plot(ax=axc, color = 'b')
                 cutting_points = base_contour.contour_intersections(cutting_contour)
                 # for pt in cutting_points:
-                    # pt.plot(ax=axc)
+                #     pt.plot(ax=axc)
                 if cutting_points:
                     extracted_outerpoints_contour1 = volmdlr.wires.Contour2D.extract_contours(base_contour, cutting_points[0], cutting_points[1], inter_points_contour)[0]
                     extracted_innerpoints_contour1 = volmdlr.wires.Contour2D.extract_contours(base_contour, cutting_points[0], cutting_points[1], not inter_points_contour)[0]

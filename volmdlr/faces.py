@@ -2357,7 +2357,7 @@ class PlaneFace3D(Face3D):
                 intersections.extend(intersection_points)
         # if len(intersections)==2:
         if intersections:
-            print('len(intersections) :',  len(intersections))
+            # print('len(intersections) :',  len(intersections))
             try:
                 primitive = volmdlr.edges.LineSegment3D(intersections[0], intersections[1])
                 intersections = volmdlr.wires.Wire3D([primitive])
@@ -2558,8 +2558,10 @@ class Triangle3D(PlaneFace3D):
                 points.append(pt.to_3d(frame.origin, frame.u, frame.v))
         
         return points
-        
-
+    
+    def middle(self):
+        return (self.point1+self.point2+self.point3)/3
+    
 class CylindricalFace3D(Face3D):
     """
     :param contours2d: The cylinder's contour2D
@@ -4159,34 +4161,34 @@ class ClosedShell3D(OpenShell3D):
         return ClosedShell3D(new_faces, color=self.color, alpha=self.alpha,
                              name=self.name)
 
-    @classmethod
-    def unions(cls, shell1, shell2):
-        # shell1_p = shell1.sheel_substract(shell2)
-        # shell2_p = shell2.sheel_substract(shell1)
-        shell1_p = shell1.shell_substract2(shell2, False)
-        shell2_p = shell2.shell_substract2(shell1, True)
-        for f in shell1_p.faces:
-            f.alpha = 0.2
-        for f in shell2_p.faces:
-            f.alpha = 0.5
-            f.color = (1, 0, 0)
-        return cls(shell1_p.faces + shell2_p.faces)
-        # return cls(shell2_p.faces)
+    # @classmethod
+    # def unions(cls, shell1, shell2):
+    #     # shell1_p = shell1.sheel_substract(shell2)
+    #     # shell2_p = shell2.sheel_substract(shell1)
+    #     shell1_p = shell1.shell_substract2(shell2, False)
+    #     shell2_p = shell2.shell_substract2(shell1, True)
+    #     for f in shell1_p.faces:
+    #         f.alpha = 0.2
+    #     for f in shell2_p.faces:
+    #         f.alpha = 0.5
+    #         f.color = (1, 0, 0)
+    #     return cls(shell1_p.faces + shell2_p.faces)
+    #     # return cls(shell2_p.faces)
     
-    @classmethod
-    def unions2(cls, shell1, shell2):
-        # shell1_p = shell1.sheel_substract(shell2)
-        # shell2_p = shell2.sheel_substract(shell1)
-        shell1_p = shell1.shell_substract3(shell2)
-        return cls(shell1_p)
-        # shell2_p = shell2.shell_substract2(shell1, True)
-        # for f in shell1_p.faces:
-        #     f.alpha = 0.2
-        # for f in shell2_p.faces:
-        #     f.alpha = 0.5
-        #     f.color = (1, 0, 0)
-        # return cls(shell1_p.faces + shell2_p.faces)
-        # return cls(shell2_p.faces)
+    # @classmethod
+    # def unions2(cls, shell1, shell2):
+    #     # shell1_p = shell1.sheel_substract(shell2)
+    #     # shell2_p = shell2.sheel_substract(shell1)
+    #     shell1_p = shell1.shell_substract3(shell2)
+    #     return cls(shell1_p)
+    #     # shell2_p = shell2.shell_substract2(shell1, True)
+    #     # for f in shell1_p.faces:
+    #     #     f.alpha = 0.2
+    #     # for f in shell2_p.faces:
+    #     #     f.alpha = 0.5
+    #     #     f.color = (1, 0, 0)
+    #     # return cls(shell1_p.faces + shell2_p.faces)
+    #     # return cls(shell2_p.faces)
 
 
 
@@ -4765,24 +4767,56 @@ class ClosedShell3D(OpenShell3D):
     #             finished = True
 
     #     return list_cutting_contours
-
-
     
-    def shell_substract3(self, shell2):
+    def unions(self, shell2):
         # if she
         faces = []
         if not self.bounding_box.bbox_intersection(shell2.bounding_box):
-            return self.faces + shell2.faces
-        if self.bounding_box.is_inside_bbox(shell2.bounding_box):
-            return shell2.faces
-        if shell2.bounding_box.is_inside_bbox(self.bounding_box):
-            return self.faces
+            return [self, shell2]
+        if self.is_inside_shell(shell2, resolution = 0.01):
+            return [shell2]
+        if shell2.is_inside_shell(self, resolution = 0.01):
+            return [self]
+            
+        # face_combinations = list(product(self.faces, shell2.faces))
+        # print('face_combinations :', len(face_combinations))
+        # print('somme de faces :', len(self.faces+shell2.faces))
+        
         face_combinations = list(product(self.faces, shell2.faces))
+        
+        # self_triangles, shell2_triangles = [], []
+        # for self_face, shell2_face in zip(self.faces, shell2.faces) :
+        #     self_points = self_face.triangulation().points
+        #     shell2_points = shell2_face.triangulation().points
+        #     for self_three_pos in self_face.triangulation().triangles :
+        #         self_triangles.append(Triangle3D(self_points[self_three_pos[0]], 
+        #                                           self_points[self_three_pos[1]],
+        #                                           self_points[self_three_pos[2]]))
+        #     for shell2_three_pos in shell2_face.triangulation().triangles :
+        #         shell2_triangles.append(Triangle3D(shell2_points[shell2_three_pos[0]], 
+        #                                             shell2_points[shell2_three_pos[1]],
+        #                                             shell2_points[shell2_three_pos[2]]))
+         
+        # d_to_f = 0.1
+        # face_combinations = []
+        # for self_triangle in self_triangles :
+        #     self_middle = self_triangle.middle()
+        #     for shell2_triangle in shell2_triangles :
+        #         if self_middle.point_distance(shell2_triangle.middle()) <= d_to_f :
+        #             face_combinations.append((self_triangle, shell2_triangle))
+                    
         print('face_combinations :', len(face_combinations))
         print('somme de faces :', len(self.faces+shell2.faces))
+        # print(face_combinations)
+        # print('>>>>>>>>', len(face_combinations))
+        
+        
+        
+        
         intersecting_combinations = {}
         invalid_faces = []
-        for combination in face_combinations:
+        for k, combination in enumerate(face_combinations):
+            print(100*k/len(face_combinations), '% of face_combinations')
             if volmdlr.faces.ClosedShell3D([combination[0]]).is_inside_shell(shell2, resolution=0.01):
                 if combination[0] not in invalid_faces:
                     invalid_faces.append(combination[0])
@@ -4803,17 +4837,27 @@ class ClosedShell3D(OpenShell3D):
             if face[1] not in intersecting_faces:
                 intersecting_faces.append(face[1])
                 
-        # for combination in face_combinations:
+        # # for combination in face_combinations:
+        # #     if combination[0] not in intersecting_faces and combination[1] not in intersecting_faces:
+        # #         if combination[0] not in faces and combination[0] not in invalid_faces:
+        # #             faces.append(combination[0])
+        # #         if combination[1] not in faces and combination[1] not in invalid_faces:
+        # #             faces.append(combination[1])
+        for k, face in enumerate(self.faces + shell2.faces):
+            print(100*k/len(self.faces + shell2.faces), '% of total number of faces')
+            if face not in intersecting_faces:
+                if face not in faces and face not in invalid_faces:
+                    faces.append(face)
+                    
+        # # print('>>>> there are ', len(face_combinations), 'combinations')
+        # for k, combination in enumerate(face_combinations):
+        #     # print(100*k/len(face_combinations), '% of combination')
         #     if combination[0] not in intersecting_faces and combination[1] not in intersecting_faces:
         #         if combination[0] not in faces and combination[0] not in invalid_faces:
         #             faces.append(combination[0])
         #         if combination[1] not in faces and combination[1] not in invalid_faces:
         #             faces.append(combination[1])
-        for face in self.faces + shell2.faces:
-            if face not in intersecting_faces:
-                if face not in faces and face not in invalid_faces:
-                    faces.append(face)
-
+                    
         #treating intersecting faces
         intersecting_lines = list(intersecting_combinations.values())
         intersecting_contour = volmdlr.wires.Contour3D([wire.primitives[0] for wire in intersecting_lines])
@@ -4822,10 +4866,8 @@ class ClosedShell3D(OpenShell3D):
         #     face.plot(ax=ax, alpha = 0.3)
         # for face in intersecting_faces:
         #     if face in self.faces:
-        #         intersecting_shell1.append(face)
-        #         face.plot(ax=ax,alpha = 0.3)
+        #         face.plot(ax=ax, color = 'g', alpha = 0.3)
         #     else:
-        #         intersecting_shell2.append(face)
         #         face.plot(ax=ax,color='b',alpha = 0.3)
 
 
@@ -4874,7 +4916,8 @@ class ClosedShell3D(OpenShell3D):
         # for face in intersecting_faces:
         #     face.plot(ax=ax,color='b')
 
-        for face in intersecting_faces:
+        for k, face in enumerate(intersecting_faces):
+            print(100*k/len(intersecting_faces), '% of intersecting_faces')
             if face in shell2.faces:
                 inter_points_contour = True
                 bbox2 = self.bounding_box
@@ -5036,7 +5079,7 @@ class ClosedShell3D(OpenShell3D):
 
                     # is_inside = shell1.is_inside_shell(shell_2, resolution=0.01)
 
-                    print('is inside? ', is_inside)
+                    # print('is inside? ', is_inside)
                     # print('bbox1 point :', bbox1.__iter__())
                     # print('bbox2 point :', bbox2.__iter__())
                     # ax2=bbox1.plot(color='r')
@@ -5061,5 +5104,5 @@ class ClosedShell3D(OpenShell3D):
                 faces.append(new_plane)
 
 
-        return faces
+        return [ClosedShell3D(faces)]
                 
