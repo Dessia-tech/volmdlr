@@ -4777,12 +4777,6 @@ class ClosedShell3D(OpenShell3D):
             return [shell2]
         if shell2.is_inside_shell(self, resolution = 0.01):
             return [self]
-            
-        # face_combinations = list(product(self.faces, shell2.faces))
-        # print('face_combinations :', len(face_combinations))
-        # print('somme de faces :', len(self.faces+shell2.faces))
-        
-        face_combinations = list(product(self.faces, shell2.faces))
 
         
         self_triangles, shell2_triangles = [], []
@@ -4800,7 +4794,9 @@ class ClosedShell3D(OpenShell3D):
                                                     shell2_points[shell2_three_pos[2]]))
          
         face_combinations = []
+        face_ = []
         for self_triangle in self_triangles :
+            k = 0
             self_middle = self_triangle.middle()
             for shell2_triangle in shell2_triangles :
                 a = shell2_triangle.point1.point_distance(shell2_triangle.point2)
@@ -4809,15 +4805,19 @@ class ClosedShell3D(OpenShell3D):
                 d_to_f = max([a, b, c])
                 if self_middle.point_distance(shell2_triangle.middle()) <= d_to_f :
                     face_combinations.append((self_triangle, shell2_triangle))
-                
+                    face_.append(shell2_triangle)
+                    if k == 0 :
+                        face_.append(self_triangle)
+                        k += 1
+                    
         # print(face_combinations)
-        # print('>>>>>>>> second', len(face_combinations))
+        print('>>>>>>>> number combi', len(face_combinations))
         # print('somme de faces :', len(self.faces+shell2.faces))
 
         intersecting_combinations = {}
         invalid_faces = []
         for k, combination in enumerate(face_combinations):
-            print(100*k/len(face_combinations), '% of face_combinations')
+            # print(100*k/len(face_combinations), '% of face_combinations')
             if volmdlr.faces.ClosedShell3D([combination[0]]).is_inside_shell(shell2, resolution=0.01):
                 if combination[0] not in invalid_faces:
                     invalid_faces.append(combination[0])
@@ -4916,12 +4916,12 @@ class ClosedShell3D(OpenShell3D):
                             faces.append(new_face)
                     
             else:
-                if new_contour.primitives:
-                    print('>>>>', new_contour.primitives)
+                if len(new_contour.primitives) > 2:
+                    # print('>>>>', new_contour.primitives)
                     new_contour.order_contour()
                     
-                    ax = new_contour.plot()
-                    face.plot(ax=ax, color='r')
+                    # ax = new_contour.plot()
+                    # face.plot(ax=ax, color='r')
                     
                     surf3d = face.surface3d
                     # contour2d = surf3d.contour3d_to_2d(contour3d = new_contour)
