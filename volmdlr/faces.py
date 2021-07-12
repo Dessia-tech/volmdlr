@@ -4774,6 +4774,7 @@ class ClosedShell3D(OpenShell3D):
     def shell_substract3(self, shell2):
         faces = []
         # face_combinations = list(product(self.faces, shell2.faces))
+        print('first', len(list(product(self.faces, shell2.faces))))
         
         self_triangles, shell2_triangles = [], []
         for self_face, shell2_face in zip(self.faces, shell2.faces) :
@@ -4788,16 +4789,19 @@ class ClosedShell3D(OpenShell3D):
                                                    shell2_points[shell2_three_pos[1]],
                                                    shell2_points[shell2_three_pos[2]]))
          
-        d_to_f = 0.1
         face_combinations = []
         for self_triangle in self_triangles :
             self_middle = self_triangle.middle()
             for shell2_triangle in shell2_triangles :
+                a = shell2_triangle.point1.point_distance(shell2_triangle.point2)
+                b = shell2_triangle.point2.point_distance(shell2_triangle.point3)
+                c = shell2_triangle.point3.point_distance(shell2_triangle.point1)
+                d_to_f = max([a, b, c])
                 if self_middle.point_distance(shell2_triangle.middle()) <= d_to_f :
                     face_combinations.append((self_triangle, shell2_triangle))
                 
         # print(face_combinations)
-        # print('>>>>>>>>', len(face_combinations))
+        print('>>>>>>>> second', len(face_combinations))
         intersecting_combinations = {}
         invalid_faces = []
         for combination in face_combinations:
