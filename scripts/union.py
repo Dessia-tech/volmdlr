@@ -82,70 +82,89 @@ import volmdlr.wires as vmw
 import volmdlr.faces as vmf
 
 
-poly1_vol1 = vmw.ClosedPolygon3D([vm.Point3D(-0.1, -0.05, 0),
-                                  vm.Point3D(-0.15, 0.1, 0),
-                                  vm.Point3D(0.05, 0.2, 0),
-                                  vm.Point3D(0.12, 0.15, 0),
-                                  vm.Point3D(0.1, -0.02, 0)])
+# poly1_vol1 = vmw.ClosedPolygon3D([vm.Point3D(-0.1, -0.05, 0),
+#                                   vm.Point3D(-0.15, 0.1, 0),
+#                                   vm.Point3D(0.05, 0.2, 0),
+#                                   vm.Point3D(0.12, 0.15, 0),
+#                                   vm.Point3D(0.1, -0.02, 0)])
 
-poly2_vol1 = poly1_vol1.rotation(vm.O3D, vm.Z3D, math.pi).translation(0.2*vm.Z3D)
-poly3_vol1 = poly2_vol1.rotation(vm.O3D, vm.Z3D, math.pi/8).translation(0.1*(vm.Z3D+vm.X3D+vm.Y3D))
+# poly2_vol1 = poly1_vol1.rotation(vm.O3D, vm.Z3D, math.pi).translation(0.2*vm.Z3D)
+# poly3_vol1 = poly2_vol1.rotation(vm.O3D, vm.Z3D, math.pi/8).translation(0.1*(vm.Z3D+vm.X3D+vm.Y3D))
 
-point_triangles = poly1_vol1.sewing(poly2_vol1) + poly2_vol1.sewing(poly3_vol1)
-faces = [vmf.Triangle3D(trio[0], trio[1], trio[2]) for trio in point_triangles]
+# point_triangles = poly1_vol1.sewing(poly2_vol1) + poly2_vol1.sewing(poly3_vol1)
+# faces = [vmf.Triangle3D(trio[0], trio[1], trio[2]) for trio in point_triangles]
 
-plane3d_1 = vmf.Plane3D.from_plane_vectors(vm.O3D, vm.X3D, vm.Y3D)
-surf2d_1 = vmf.Surface2D(poly1_vol1.to_2d(vm.O3D, vm.X3D, vm.Y3D),[])
+# plane3d_1 = vmf.Plane3D.from_plane_vectors(vm.O3D, vm.X3D, vm.Y3D)
+# surf2d_1 = vmf.Surface2D(poly1_vol1.to_2d(vm.O3D, vm.X3D, vm.Y3D),[])
 
-plane3d_2 = vmf.Plane3D.from_plane_vectors(0.3*vm.Z3D, vm.X3D, vm.Y3D)
-surf2d_2 = vmf.Surface2D(poly3_vol1.to_2d(vm.O3D, vm.X3D, vm.Y3D),[])
-faces += [vmf.PlaneFace3D(plane3d_1, surf2d_1), vmf.PlaneFace3D(plane3d_2, surf2d_2)]
+# plane3d_2 = vmf.Plane3D.from_plane_vectors(0.3*vm.Z3D, vm.X3D, vm.Y3D)
+# surf2d_2 = vmf.Surface2D(poly3_vol1.to_2d(vm.O3D, vm.X3D, vm.Y3D),[])
+# faces += [vmf.PlaneFace3D(plane3d_1, surf2d_1), vmf.PlaneFace3D(plane3d_2, surf2d_2)]
 
-shell1 = vmf.ClosedShell3D(faces)
-shell1.color = (0.1, 1, 0.1)
-shell1.alpha = 0.6
-### Volume2.
+# shell1 = vmf.ClosedShell3D(faces)
+# shell1.color = (0.1, 1, 0.1)
+# shell1.alpha = 0.4
+# ### Volume2.
 
-poly1_vol2 = vmw.ClosedPolygon3D([vm.Point3D(-0.1, -0.1, -0.2),
-                                  vm.Point3D(-0.15, -0.1, -0.05),
-                                  vm.Point3D(0.05, -0.1, 0.2),
-                                  vm.Point3D(0.12, -0.1, 0.05),
-                                  vm.Point3D(0.1, -0.1, -0.02)])
+# poly1_vol2 = vmw.ClosedPolygon3D([vm.Point3D(-0.1, -0.1, -0.2),
+#                                   vm.Point3D(-0.15, -0.1, -0.05),
+#                                   vm.Point3D(0.05, -0.1, 0.2),
+#                                   vm.Point3D(0.12, -0.1, 0.05),
+#                                   vm.Point3D(0.1, -0.1, -0.02)])
 
-poly2_vol2 = poly1_vol2.rotation(vm.O3D, vm.Y3D, math.pi/2).translation(0.02*vm.Y3D)
-poly3_vol2 = poly2_vol2.rotation(vm.O3D, vm.Y3D, math.pi/8).translation(0.1*(vm.Z3D+vm.X3D+vm.Y3D))
-poly4_vol2 = poly3_vol2.rotation(vm.O3D, vm.Y3D, math.pi/4).translation(0.05*vm.Y3D)
-poly5_vol2 = poly4_vol2.rotation(vm.O3D, vm.Y3D, math.pi/10).translation(0.2*vm.Y3D)
+# # ax = poly1_vol2.plot()
 
-point_triangles_2 = poly1_vol2.sewing(poly2_vol2) + poly2_vol2.sewing(poly3_vol2) +\
-                    poly3_vol2.sewing(poly4_vol2) + poly4_vol2.sewing(poly5_vol2)
 
-faces_2 = [vmf.Triangle3D(trio[0], trio[1], trio[2]) for trio in point_triangles_2]
+# poly2_vol2 = poly1_vol2.rotation(vm.O3D, vm.Y3D, math.pi/2).translation(0.02*vm.Y3D)
+# # poly2_vol2.plot(ax=ax, color = 'b')
+# poly3_vol2 = poly2_vol2.rotation(vm.O3D, vm.Y3D, math.pi/8).translation(0.1*(vm.Z3D+vm.X3D+vm.Y3D))
+# # poly3_vol2.plot(ax=ax, color = 'g')
+# poly4_vol2 = poly3_vol2.rotation(vm.O3D, vm.Y3D, math.pi/4).translation(0.05*vm.Y3D)
+# # poly4_vol2.plot(ax=ax, color = 'r')
+# poly5_vol2 = poly4_vol2.rotation(vm.O3D, vm.Y3D, math.pi/10).translation(0.2*vm.Y3D)
+# # poly5_vol2.plot(ax=ax, color = 'y')
 
-plane3d_3 = vmf.Plane3D.from_plane_vectors(-0.1*vm.Y3D, vm.X3D, vm.Z3D)
-surf2d_3 = vmf.Surface2D(poly1_vol2.to_2d(vm.O3D, vm.X3D, vm.Z3D),[])
+# point_triangles_2 = poly1_vol2.sewing(poly2_vol2) + poly3_vol2.sewing(poly2_vol2) +\
+#                     poly3_vol2.sewing(poly4_vol2) + poly4_vol2.sewing(poly5_vol2)
 
-plane3d_4 = vmf.Plane3D.from_plane_vectors(0.27*vm.Y3D, vm.X3D, vm.Z3D)
-surf2d_4 = vmf.Surface2D(poly5_vol2.to_2d(vm.O3D, vm.X3D, vm.Z3D),[])
-faces_2 += [vmf.PlaneFace3D(plane3d_3, surf2d_3), vmf.PlaneFace3D(plane3d_4, surf2d_4)]
+# faces_2 = [vmf.Triangle3D(trio[0], trio[1], trio[2]) for trio in point_triangles_2]
 
-shell2 = vmf.ClosedShell3D(faces_2)
-shell2.color = (0.1, 0.1, 1)
-shell2.alpha = 0.6
-# vm.core.VolumeModel([shell1]).babylonjs()
-# vm.core.VolumeModel([shell2]).babylonjs()
-model = vm.core.VolumeModel([shell1, shell2])
-# model.babylonjs(debug=True)
+# plane3d_3 = vmf.Plane3D.from_plane_vectors(-0.1*vm.Y3D, vm.X3D, vm.Z3D)
+# surf2d_3 = vmf.Surface2D(poly1_vol2.to_2d(vm.O3D, vm.X3D, vm.Z3D),[])
 
-new_shell = shell1.translation(vm.Vector3D(0.1,0.1,-0.1), True)
-new_shell.color = (0.1, 0.1, 1)
-# vm.core.VolumeModel([new_shell]).babylonjs()
-# vm.core.VolumeModel([shell1, new_shell]).babylonjs()
-new_box = vm.faces.ClosedShell3D.unions2(shell1, new_shell)
-# new_box = vm.faces.ClosedShell3D.unions2(shell1, shell2)
-new_box.color = (1, 0.1, 0.1)
-new_box.alpha = 0.6
-vm.core.VolumeModel([new_box]).babylonjs()
+# plane3d_4 = vmf.Plane3D.from_plane_vectors(0.27*vm.Y3D, vm.X3D, vm.Z3D)
+# surf2d_4 = vmf.Surface2D(poly5_vol2.to_2d(vm.O3D, vm.X3D, vm.Z3D),[])
+# faces_2 += [vmf.PlaneFace3D(plane3d_3, surf2d_3), vmf.PlaneFace3D(plane3d_4, surf2d_4)]
+
+
+# shell2 = vmf.ClosedShell3D(faces_2)
+# # new_faces  = []
+# # for face in shell2.faces:
+# #     if not vmf.ClosedShell3D([face]).is_inside_shell(shell2, resolution=0.01):
+# #         new_faces.append(face)
+        
+# # shell2 = vmf.ClosedShell3D(new_faces)
+# # model = vm.core.VolumeModel([shell2])
+# # model.babylonjs(debug=True)
+# shell2.color = (0.1, 0.1, 1)
+# shell2.alpha = 0.4
+# # # vm.core.VolumeModel([shell1]).babylonjs()
+# # vm.core.VolumeModel([shell2]).babylonjs()
+# # model = vm.core.VolumeModel([shell1, shell2])
+# # model.babylonjs(debug=True)
+
+# # new_shell = shell1.translation(vm.Vector3D(0.1,0.1,-0.1), True)
+# # new_shell.color = (0.1, 0.1, 1)
+# # # vm.core.VolumeModel([new_shell]).babylonjs()
+# # # vm.core.VolumeModel([shell1, shell2]).babylonjs()
+# # # new_box = vm.faces.ClosedShell3D.unions2(shell1, new_shell)
+# new_box = shell1.unions(shell2)
+# for shell in new_box:
+#     shell.color = (1, 0.1, 0.1)
+#     shell.alpha = 0.6
+# # new_box.color = (1, 0.1, 0.1)
+# # new_box.alpha = 0.6
+# vm.core.VolumeModel(new_box).babylonjs()
 
 # shell3 = shell2.translation(0.1*vm.X3D)
 # shell3.color = (1, 0.1, 0.1)
@@ -169,80 +188,87 @@ vm.core.VolumeModel([new_box]).babylonjs()
 # USECASE 2
 # =============================================================================
 
-#Union between shell1 and shell2
-#Union between shell1 and shell3
-#Union between shell2 and shell3
-#Union between shell1, shell2 and shell3
+# # Union between shell1 and shell2
+# # Union between shell1 and shell3
+# # Union between shell2 and shell3
+# # Union between shell1, shell2 and shell3
 
-# number_points = 50
+number_points = 50
 
-# poly_1 = vmw.ClosedPolygon3D([vm.Point3D(-0.3, 0.05, -0.20),
-#                                vm.Point3D(0, 0.25, -0.20),
-#                                vm.Point3D(0.25, 0.1, -0.20),
-#                                vm.Point3D(0.2, -0.15, -0.20),
-#                                vm.Point3D(-0.2, -0.12, -0.20)])
+poly_1 = vmw.ClosedPolygon3D([vm.Point3D(-0.3, 0.05, -0.20),
+                                vm.Point3D(0, 0.25, -0.20),
+                                vm.Point3D(0.25, 0.1, -0.20),
+                                vm.Point3D(0.2, -0.15, -0.20),
+                                vm.Point3D(-0.2, -0.12, -0.20)])
 
-# length_poly_11 = poly_1.length()
+length_poly_11 = poly_1.length()
 
-# points_poly_11 = [poly_1.point_at_abscissa(k*length_poly_11/(number_points)) for k in range(number_points)]
+points_poly_11 = [poly_1.point_at_abscissa(k*length_poly_11/(number_points)) for k in range(number_points)]
 
-# new_poly_11 = vmw.ClosedPolygon3D(points_poly_11)
+new_poly_11 = vmw.ClosedPolygon3D(points_poly_11)
 
-# new_poly_12 = new_poly_11.translation(0.3*vm.Z3D).rotation(vm.O3D, vm.Z3D, math.pi/2)
+new_poly_12 = new_poly_11.translation(0.3*vm.Z3D).rotation(vm.O3D, vm.Z3D, math.pi/2)
 
-# new_poly_13 = new_poly_12.translation(0.05*vm.Z3D)
+new_poly_13 = new_poly_12.translation(0.05*vm.Z3D)
 
-# new_poly_14 = new_poly_13.translation(0.2*vm.Z3D).rotation(vm.O3D, vm.Z3D, math.pi/4)
+new_poly_14 = new_poly_13.translation(0.2*vm.Z3D).rotation(vm.O3D, vm.Z3D, math.pi/4)
 
-# points_triangles_1 = new_poly_11.sewing(new_poly_12) + new_poly_12.sewing(new_poly_13) + new_poly_13.sewing(new_poly_14)
-# faces1 = [vmf.Triangle3D(trio[0], trio[1], trio[2]) for trio in points_triangles_1]
+points_triangles_1 = new_poly_11.sewing(new_poly_12) + new_poly_12.sewing(new_poly_13) + new_poly_13.sewing(new_poly_14)
+faces1 = [vmf.Triangle3D(trio[0], trio[1], trio[2]) for trio in points_triangles_1]
 
-# plane3d_1 = vmf.Plane3D.from_plane_vectors(-0.2*vm.Z3D, vm.X3D, vm.Y3D)
-# surf2d_1 = vmf.Surface2D(new_poly_11.to_2d(vm.O3D, vm.X3D, vm.Y3D),[])
+plane3d_1 = vmf.Plane3D.from_plane_vectors(-0.2*vm.Z3D, vm.X3D, vm.Y3D)
+surf2d_1 = vmf.Surface2D(new_poly_11.to_2d(vm.O3D, vm.X3D, vm.Y3D),[])
 
-# plane3d_2 = vmf.Plane3D.from_plane_vectors(0.35*vm.Z3D, vm.X3D, vm.Y3D)
-# surf2d_2 = vmf.Surface2D(new_poly_14.to_2d(vm.O3D, vm.X3D, vm.Y3D),[])
-# faces1 += [vmf.PlaneFace3D(plane3d_1, surf2d_1), vmf.PlaneFace3D(plane3d_2, surf2d_2)]
+plane3d_2 = vmf.Plane3D.from_plane_vectors(0.35*vm.Z3D, vm.X3D, vm.Y3D)
+surf2d_2 = vmf.Surface2D(new_poly_14.to_2d(vm.O3D, vm.X3D, vm.Y3D),[])
+faces1 += [vmf.PlaneFace3D(plane3d_1, surf2d_1), vmf.PlaneFace3D(plane3d_2, surf2d_2)]
 
-# shell1 = vmf.ClosedShell3D(faces1)
-# # shell1.babylonjs()
+shell1 = vmf.ClosedShell3D(faces1)
+shell1.babylonjs()
 
-# poly_2 = vmw.ClosedPolygon3D([vm.Point3D(-0.10, 0.05, 0),
-#                                vm.Point3D(-0.07, 0.05, 0.05),
-#                                vm.Point3D(0, 0.05, 0.10),
-#                                vm.Point3D(0.05, 0.05, 0.07),
-#                                vm.Point3D(0.10, 0.05, 0)])
+poly_2 = vmw.ClosedPolygon3D([vm.Point3D(-0.10, 0.05, 0),
+                                vm.Point3D(-0.07, 0.05, 0.05),
+                                vm.Point3D(0, 0.05, 0.10),
+                                vm.Point3D(0.05, 0.05, 0.07),
+                                vm.Point3D(0.10, 0.05, 0)])
 
-# length_poly_2 = poly_2.length()
+length_poly_2 = poly_2.length()
 
-# points_poly_2 = [poly_2.point_at_abscissa(k*length_poly_2/(number_points)) for k in range(number_points)]
+points_poly_2 = [poly_2.point_at_abscissa(k*length_poly_2/(number_points)) for k in range(number_points)]
 
-# new_poly_21 = vmw.ClosedPolygon3D(points_poly_2)
+new_poly_21 = vmw.ClosedPolygon3D(points_poly_2)
 
-# new_poly_22 = new_poly_21.translation(0.1*vm.Y3D).rotation(vm.O3D, vm.Y3D, math.pi/2)
+new_poly_22 = new_poly_21.translation(0.1*vm.Y3D).rotation(vm.O3D, vm.Y3D, math.pi/2)
 
-# new_poly_23 = new_poly_22.translation(0.05*vm.Y3D)
+new_poly_23 = new_poly_22.translation(0.05*vm.Y3D)
 
-# new_poly_24 = new_poly_23.translation(0.2*vm.Y3D).rotation(vm.O3D, vm.Y3D, math.pi/4)
+new_poly_24 = new_poly_23.translation(0.2*vm.Y3D).rotation(vm.O3D, vm.Y3D, math.pi/4)
 
-# points_triangles_2 = new_poly_21.sewing(new_poly_22) + new_poly_22.sewing(new_poly_23) + new_poly_23.sewing(new_poly_24)
-# faces2 = [vmf.Triangle3D(trio[0], trio[1], trio[2]) for trio in points_triangles_2]
+points_triangles_2 = new_poly_21.sewing(new_poly_22) + new_poly_22.sewing(new_poly_23) + new_poly_23.sewing(new_poly_24)
+faces2 = [vmf.Triangle3D(trio[0], trio[1], trio[2]) for trio in points_triangles_2]
 
-# plane3d_3 = vmf.Plane3D.from_plane_vectors(0.05*vm.Y3D, vm.Z3D, vm.X3D)
-# surf2d_3 = vmf.Surface2D(new_poly_21.to_2d(vm.O3D, vm.Z3D, vm.X3D),[])
+plane3d_3 = vmf.Plane3D.from_plane_vectors(0.05*vm.Y3D, vm.Z3D, vm.X3D)
+surf2d_3 = vmf.Surface2D(new_poly_21.to_2d(vm.O3D, vm.Z3D, vm.X3D),[])
 
-# plane3d_4 = vmf.Plane3D.from_plane_vectors(0.4*vm.Y3D, vm.Z3D, vm.X3D)
-# surf2d_4 = vmf.Surface2D(new_poly_24.to_2d(vm.O3D, vm.Z3D, vm.X3D),[])
-# faces2 += [vmf.PlaneFace3D(plane3d_3, surf2d_3), vmf.PlaneFace3D(plane3d_4, surf2d_4)]
+plane3d_4 = vmf.Plane3D.from_plane_vectors(0.4*vm.Y3D, vm.Z3D, vm.X3D)
+surf2d_4 = vmf.Surface2D(new_poly_24.to_2d(vm.O3D, vm.Z3D, vm.X3D),[])
+faces2 += [vmf.PlaneFace3D(plane3d_3, surf2d_3), vmf.PlaneFace3D(plane3d_4, surf2d_4)]
 
-# shell2 = vmf.ClosedShell3D(faces2)
-# # shell2.babylonjs()
+shell2 = vmf.ClosedShell3D(faces2)
+# shell2.babylonjs()
+new_box = shell1.unions(shell2)
+for shell in new_box:
+    shell.color = (1, 0.1, 0.1)
+    shell.alpha = 0.6
+# new_box.color = (1, 0.1, 0.1)
+# new_box.alpha = 0.6
+vm.core.VolumeModel(new_box).babylonjs()
 # shell3 = shell2.rotation(vm.O3D, vm.Z3D, math.pi).translation(0.3*vm.Z3D-0.1*vm.Y3D)
 
 
 # volum_model = vm.core.VolumeModel([shell1, shell2, shell3])
 # volum_model.babylonjs()
 
-# # shell_union = vmf.ClosedShell3D.unions(shell1, shell2)
-# # shell_union = shell1.union(shell2)
-# # shell_union.babylonjs()
+# shell_union = vmf.ClosedShell3D.unions(shell1, shell2)
+# shell_union = shell1.union(shell2)
+# shell_union.babylonjs()
