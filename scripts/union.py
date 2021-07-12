@@ -33,32 +33,32 @@ import volmdlr.primitives3d as primitives3D
 import math
 import volmdlr.step as vm_step
 import volmdlr.primitives3d as primitives3d
-resolution = 0.0010
+# resolution = 0.0010
 
-box = primitives3d.Block(
-    vm.Frame3D(vm.Point3D(0, 0, 0), vm.Vector3D(0.3, 0, 0),
-                vm.Vector3D(0, 0.3, 0), vm.Vector3D(0, 0, 0.3)),
-    alpha=0.6)
+# box = primitives3d.Block(
+#     vm.Frame3D(vm.Point3D(0, 0, 0), vm.Vector3D(0.3, 0, 0),
+#                 vm.Vector3D(0, 0.3, 0), vm.Vector3D(0, 0, 0.3)),
+#     alpha=0.6)
 
-box_red = primitives3d.Block(
-    vm.Frame3D(vm.Point3D(0, 0, 0), vm.Vector3D(0.4, 0, 0),
-                vm.Vector3D(0, 0.4, 0), vm.Vector3D(0, 0, 0.4)),
-    color=(0.2, 1, 0.4), alpha=0.6)
+# box_red = primitives3d.Block(
+#     vm.Frame3D(vm.Point3D(0, 0, 0), vm.Vector3D(0.4, 0, 0),
+#                 vm.Vector3D(0, 0.4, 0), vm.Vector3D(0, 0, 0.4)),
+#     color=(0.2, 1, 0.4), alpha=0.6)
 
-box_red.color = (1, 0.1, 0.1)
-box_red.name = 'box_red'
+# box_red.color = (1, 0.1, 0.1)
+# box_red.name = 'box_red'
 
-box_green = box.frame_mapping(vm.Frame3D(vm.Point3D(0, 0.8, 0), vm.Vector3D(1, 0, 0),
-                          vm.Vector3D(0, 1, 0), vm.Vector3D(0, 0, 1)), 'new', copy=True)
+# box_green = box.frame_mapping(vm.Frame3D(vm.Point3D(0, 0.8, 0), vm.Vector3D(1, 0, 0),
+#                           vm.Vector3D(0, 1, 0), vm.Vector3D(0, 0, 1)), 'new', copy=True)
 
-box_green.color = (0.1, 1, 0.1)
-box_green.name = 'box_green'
+# box_green.color = (0.1, 1, 0.1)
+# box_green.name = 'box_green'
 
 
-box_blue = box.frame_mapping(vm.Frame3D(vm.Point3D(0, 0.2, 0), vm.Vector3D(1, 0, 0),
-                          vm.Vector3D(0, 1, 0), vm.Vector3D(0, 0, 1)), 'old', copy=True)
-box_blue.color = (0.1, 0.1, 1)
-box_blue.name = 'box_blue'
+# box_blue = box.frame_mapping(vm.Frame3D(vm.Point3D(0, 0.2, 0), vm.Vector3D(1, 0, 0),
+#                           vm.Vector3D(0, 1, 0), vm.Vector3D(0, 0, 1)), 'old', copy=True)
+# box_blue.color = (0.1, 0.1, 1)
+# box_blue.name = 'box_blue'
 
 
 # new_box = vm.faces.ClosedShell3D.unions2(box_red, box_blue)

@@ -2561,8 +2561,10 @@ class Triangle3D(PlaneFace3D):
                 points.append(pt.to_3d(frame.origin, frame.u, frame.v))
         
         return points
-        
-
+    
+    def middle(self):
+        return (self.point1+self.point2+self.point3)/3
+    
 class CylindricalFace3D(Face3D):
     """
     :param contours2d: The cylinder's contour2D
@@ -4769,11 +4771,33 @@ class ClosedShell3D(OpenShell3D):
 
     #     return list_cutting_contours
 
-
-    
     def shell_substract3(self, shell2):
         faces = []
-        face_combinations = list(product(self.faces, shell2.faces))
+        # face_combinations = list(product(self.faces, shell2.faces))
+        
+        self_triangles, shell2_triangles = [], []
+        for self_face, shell2_face in zip(self.faces, shell2.faces) :
+            self_points = self_face.triangulation().points
+            shell2_points = shell2_face.triangulation().points
+            for self_three_pos in self_face.triangulation().triangles :
+                self_triangles.append(Triangle3D(self_points[self_three_pos[0]], 
+                                                 self_points[self_three_pos[1]],
+                                                 self_points[self_three_pos[2]]))
+            for shell2_three_pos in shell2_face.triangulation().triangles :
+                shell2_triangles.append(Triangle3D(shell2_points[shell2_three_pos[0]], 
+                                                   shell2_points[shell2_three_pos[1]],
+                                                   shell2_points[shell2_three_pos[2]]))
+         
+        d_to_f = 0.1
+        face_combinations = []
+        for self_triangle in self_triangles :
+            self_middle = self_triangle.middle()
+            for shell2_triangle in shell2_triangles :
+                if self_middle.point_distance(shell2_triangle.middle()) <= d_to_f :
+                    face_combinations.append((self_triangle, shell2_triangle))
+                
+        # print(face_combinations)
+        # print('>>>>>>>>', len(face_combinations))
         intersecting_combinations = {}
         invalid_faces = []
         for combination in face_combinations:
@@ -4796,7 +4820,9 @@ class ClosedShell3D(OpenShell3D):
                 intersecting_faces.append(face[0])
             if face[1] not in intersecting_faces:
                 intersecting_faces.append(face[1])
-        for combination in face_combinations:
+        # print('>>>> there are ', len(face_combinations), 'combinations')
+        for k, combination in enumerate(face_combinations):
+            # print(100*k/len(face_combinations), '% of combination')
             if combination[0] not in intersecting_faces and combination[1] not in intersecting_faces:
                 if combination[0] not in faces and combination[0] not in invalid_faces:
                     faces.append(combination[0])
