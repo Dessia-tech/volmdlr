@@ -1254,6 +1254,11 @@ class Contour2D(Contour, Wire2D):
             cutting_contour = contours[0]
             # axc = cutting_contour.plot()
             for base_contour in new_base_contours:
+                cutting_points = base_contour.contour_intersections(cutting_contour)
+                axc = cutting_contour.plot()
+                base_contour.plot(ax=axc, color = 'b')
+                for pt in cutting_points:
+                    pt.plot(ax=axc)
                 # base_contour.plot(ax=axc, color = 'b')
                 cutting_points = base_contour.contour_intersections(cutting_contour)
                 # for pt in cutting_points:
