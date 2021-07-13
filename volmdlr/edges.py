@@ -520,8 +520,6 @@ class BSplineCurve2D(Edge):
     def length(self):
         return length_curve(self.curve)
 
-    def straight_line_area(self):
-        return 0.
 
     def point_at_abscissa(self, curvilinear_abscissa):
         l = self.length()
@@ -2556,7 +2554,7 @@ class BSplineCurve3D(Edge):
         for i, knot in enumerate(knots):
             knot_vector.extend([knot] * knot_multiplicities[i])
         curve.knotvector = knot_vector
-        curve.delta = 0.1
+        curve.delta = 0.01
         curve_points = curve.evalpts
 
         self.curve = curve
@@ -2747,8 +2745,7 @@ class BSplineCurve3D(Edge):
 
     def polygon_points(self):
         return self.points
-
-
+    
 class BezierCurve3D(BSplineCurve3D):
 
     def __init__(self, degree: int, control_points: List[volmdlr.Point3D],
