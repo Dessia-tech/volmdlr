@@ -2669,16 +2669,6 @@ class BSplineCurve3D(Edge):
     def polygon_points(self):
         return self.points
     
-    def tangent(self,num_point):
-        #num_point is between 0 and len(points)-1
-        if num_point == len(self.points)-1 :
-            num_point -= 1
-        tangent = self.points[num_point+1]-self.points[num_point]
-        tangent.normalize()
-        return tangent
-        # return self.curve.tangent(curvilinear_abscissa)
-
-
 class BezierCurve3D(BSplineCurve3D):
 
     def __init__(self, degree: int, control_points: List[volmdlr.Point3D],
