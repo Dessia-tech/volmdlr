@@ -71,7 +71,7 @@ import volmdlr.primitives3d as primitives3d
 # box_blue = box_blue.translation(vm.Point3D(0,0,0.1))
 # #model = vm.core.VolumeModel([box_red, box_blue])
 # # model.babylonjs(debug=True)
-# new_box = box_red.unions(box_blue)
+# new_box = box_red.union(box_blue)
 # for shell in new_box:
 #     shell.color = (1, 0.1, 0.1)
 #     shell.alpha = 0.6
@@ -160,7 +160,7 @@ import volmdlr.primitives3d as primitives3d
 # # # vm.core.VolumeModel([new_shell]).babylonjs()
 # # # vm.core.VolumeModel([shell1, shell2]).babylonjs()
 # # # new_box = vm.faces.ClosedShell3D.unions2(shell1, new_shell)
-# new_box = shell1.unions(shell2)
+# new_box = shell1.union(shell2)
 # for shell in new_box:
 #     shell.color = (1, 0.1, 0.1)
 #     shell.alpha = 0.6
@@ -279,7 +279,7 @@ faces2 += [vmf.PlaneFace3D(plane3d_3, surf2d_3), vmf.PlaneFace3D(plane3d_4, surf
 
 shell2 = vmf.ClosedShell3D(faces2)
 # shell2.babylonjs()
-new_box = shell1.unions(shell2)
+new_box = shell1.union(shell2)
 for shell in new_box:
     shell.color = (1, 0.1, 0.1)
     shell.alpha = 0.6
@@ -287,14 +287,14 @@ vm.core.VolumeModel(new_box).babylonjs()
 
 
 # shell3 = shell2.rotation(vm.O3D, vm.Z3D, math.pi).translation(0.3*vm.Z3D-0.1*vm.Y3D)
-# new_box = shell2.unions(shell3)
+# new_box = shell2.union(shell3)
 # for shell in new_box:
 #     shell.color = (1, 0.1, 0.1)
 #     shell.alpha = 0.6
 # vm.core.VolumeModel(new_box).babylonjs()
 # vm.core.VolumeModel([shell2, shell3]).babylonjs()
 
-# new_box = new_box[0].unions(shell3)
+# new_box = new_box[0].union(shell3)
 # for shell in new_box:
 #     shell.color = (1, 0.1, 0.1)
 #     shell.alpha = 0.6

@@ -442,8 +442,18 @@ class Contour():
         points = [list_point_pairs[0]]
         list_point_pairs.remove((list_point_pairs[0][0], list_point_pairs[0][1]))
         finished =  False
-        if len(list_point_pairs)==0:
-                finished = True
+        # print('>>>>>>>>', len(list_point_pairs))
+        
+        # if len(list_point_pairs)==0:
+        #         finished = True
+                
+        # if len(list_point_pairs)>2 :
+        #     ax = list_point_pairs[0][0].plot()
+        #     list_point_pairs[0][1].plot(ax=ax)
+        #     for pt1, pt2 in list_point_pairs[1:] :
+        #         pt1.plot(ax=ax)
+        #         pt2.plot(ax=ax)
+        
         while not finished:
             for p1, p2 in list_point_pairs:
                 if p1 == points[-1][-1]:
@@ -458,6 +468,10 @@ class Contour():
                 elif p2 == points[0][0]:
                     points = [(p1, p2)] + points
                     list_point_pairs.remove((p1, p2))
+                # else :
+                #     p1.plot(ax=ax, color='r')
+                #     p2.plot(ax=ax, color='r')
+                #     print(p1, p2)
             if len(list_point_pairs)==0:
                 finished = True
     
@@ -1254,6 +1268,7 @@ class Contour2D(Contour, Wire2D):
             cutting_contour = contours[0]
            
             for base_contour in new_base_contours:
+
                 cutting_points = base_contour.contour_intersections(cutting_contour)
                 # axc = cutting_contour.plot()
                 # base_contour.plot(ax=axc, color = 'b')
@@ -1271,14 +1286,14 @@ class Contour2D(Contour, Wire2D):
                     # cutting_points[0].plot(ax=axx)
                     # cutting_points[1].plot(ax=axx)
                     # extracted_contour2.plot(ax =axc, color='b')
-
+    
                     contour1  = volmdlr.wires.Contour2D(extracted_outerpoints_contour1.primitives + extracted_contour2.primitives)
                     contour1.order_contour()
                     contour2 = volmdlr.wires.Contour2D(extracted_innerpoints_contour1.primitives + extracted_contour2.primitives)
                     contour2.order_contour()
                     # contour2.plot(ax = axc, color = 'g')
                     for ct in [contour1, contour2]:
-#                         
+    #                         
                         new_contour_points = [point for prim in ct.primitives for point in prim]
                         valid = True
                         if list_contours:
@@ -1292,7 +1307,7 @@ class Contour2D(Contour, Wire2D):
                     for ct in list_contours:
                         if ct == base_contour:
                             list_contours.remove(ct)
-
+    
                     if new_base_contours[0] == self:
                         new_base_contours.remove(self)
                     new_base_contours.append(contour1)
@@ -1303,6 +1318,7 @@ class Contour2D(Contour, Wire2D):
 
             if len(contours) == 0:
                 finished = True
+            # finished = True
         return list_contours
         
     
@@ -1849,7 +1865,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                 divided_line.append(volmdlr.edges.LineSegment2D(ok_middle_points[min_cossine_index], line.end))
             return divided_line
                         
-        hull_convex_edges = cls.convex_hull_points(points).line_segments
+        hull_convex_edges = cls.points_convex_hull(points).line_segments
         hull_convex_edges.sort(key = lambda x : x.length(), reverse= True)
         hull_concave_edges = []
         hull_concave_edges.extend(hull_convex_edges)
@@ -3103,10 +3119,9 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
             triangles.append([other_point, point2, point1])
            
         return triangles
+    
     def simplify(self, min_distance:float = 0.01, max_distance:float=0.05):
         return ClosedPolygon3D(self.simplify_polygon(min_distance = min_distance, max_distance = max_distance).points)
-        
-        
 
     def sewing(self, polygon2):
         center1, center2 = self.average_center_point(), polygon2.average_center_point()

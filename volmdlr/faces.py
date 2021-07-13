@@ -749,14 +749,14 @@ class Plane3D(Surface3D):
             for index in indexes_to_del[::-1]:
                 del points[index + 1]
 
-            origin = volmdlr.Point3D(points[0].vector)
-            vector1 = volmdlr.Vector3D(points[1] - origin)
+            origin = points[0]
+            vector1 = points[1] - origin
             vector1.normalize()
-            vector2_min = volmdlr.Vector3D(points[2] - origin)
+            vector2_min = points[2] - origin
             vector2_min.normalize()
             dot_min = abs(vector1.dot(vector2_min))
             for point in points[3:]:
-                vector2 = volmdlr.Vector3D(point - origin)
+                vector2 = point - origin
                 vector2.normalize()
                 dot = abs(vector1.dot(vector2))
                 if dot < dot_min:
@@ -4768,7 +4768,7 @@ class ClosedShell3D(OpenShell3D):
 
     #     return list_cutting_contours
     
-    def unions(self, shell2):
+    def union(self, shell2):
         # if she
         faces = []
         if not self.bounding_box.bbox_intersection(shell2.bounding_box):
@@ -4777,6 +4777,7 @@ class ClosedShell3D(OpenShell3D):
             return [shell2]
         if shell2.is_inside_shell(self, resolution = 0.01):
             return [self]
+
             
         # face_combinations = list(product(self.faces, shell2.faces))
         invalid_faces = []
@@ -4790,12 +4791,53 @@ class ClosedShell3D(OpenShell3D):
                     
         print('face_combinations :', len(face_combinations))
         print('somme de faces :', len(self.faces+shell2.faces))
+
+
+        
+#         self_triangles, shell2_triangles = [], []
+#         for self_face in self.faces:
+#             self_points = self_face.triangulation().points
+#             for self_three_pos in self_face.triangulation().triangles :
+#                 self_triangles.append(Triangle3D(self_points[self_three_pos[0]], 
+#                                                   self_points[self_three_pos[1]],
+#                                                   self_points[self_three_pos[2]]))
+#         for shell2_face in shell2.faces:
+#             shell2_points = shell2_face.triangulation().points
+#             for shell2_three_pos in shell2_face.triangulation().triangles :
+#                 shell2_triangles.append(Triangle3D(shell2_points[shell2_three_pos[0]], 
+#                                                     shell2_points[shell2_three_pos[1]],
+#                                                     shell2_points[shell2_three_pos[2]]))
+         
+#         face_combinations = []
+#         face_ = []
+#         for self_triangle in self_triangles :
+#             k = 0
+#             self_middle = self_triangle.middle()
+#             for shell2_triangle in shell2_triangles :
+#                 a = shell2_triangle.point1.point_distance(shell2_triangle.point2)
+#                 b = shell2_triangle.point2.point_distance(shell2_triangle.point3)
+#                 c = shell2_triangle.point3.point_distance(shell2_triangle.point1)
+#                 d_to_f = max([a, b, c])
+#                 if self_middle.point_distance(shell2_triangle.middle()) <= d_to_f :
+#                     face_combinations.append((self_triangle, shell2_triangle))
+#                     face_.append(shell2_triangle)
+#                     if k == 0 :
+#                         face_.append(self_triangle)
+#                         k += 1
+                    
+#         # print(face_combinations)
+#         print('>>>>>>>> number combi', len(face_combinations))
+#         # print('somme de faces :', len(self.faces+shell2.faces))
+
+
         intersecting_combinations = {}
         for k, combination in enumerate(face_combinations):
+
             face_intersection = combination[0].face_intersections(combination[1])
             if face_intersection:
                 intersecting_combinations[combination] = face_intersection
                 
+
         #saving non intersecting faces
         intersecting_faces = []
         for face in list(intersecting_combinations.keys()):
@@ -4804,15 +4846,18 @@ class ClosedShell3D(OpenShell3D):
             if face[1] not in intersecting_faces:
                 intersecting_faces.append(face[1])
 
+
         for k, face in enumerate(self.faces + shell2.faces):
             # print(100*k/len(self.faces + shell2.faces), '% of total number of faces')
             if (face not in intersecting_faces) and (face not in faces) and (not volmdlr.faces.ClosedShell3D([face]).is_inside_shell(shell2, resolution=0.01)) and (not volmdlr.faces.ClosedShell3D([face]).is_inside_shell(self, resolution=0.01)):
                 faces.append(face)
        
+
                     
         #treating intersecting faces
         intersecting_lines = list(intersecting_combinations.values())
         intersecting_contour = volmdlr.wires.Contour3D([wire.primitives[0] for wire in intersecting_lines])
+
         ax = intersecting_contour.plot(color = 'r')
         for face in faces:
             face.plot(ax=ax, alpha = 0.3)
@@ -4865,6 +4910,7 @@ class ClosedShell3D(OpenShell3D):
                 new_faces_contours = face_contour2d.divide(list_cutting_contours, inter_points_contour)
                 for contour in new_faces_contours:
                     list_faces.append(PlaneFace3D(face.surface3d, Surface2D(contour, [])))
+
                 for new_face in list_faces:
                     shell1 = volmdlr.faces.ClosedShell3D([new_face])
                     point_inside_face = new_face.surface2d.outer_contour.random_point_inside()
