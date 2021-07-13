@@ -1625,7 +1625,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                 divided_line.append(volmdlr.edges.LineSegment2D(ok_middle_points[min_cossine_index], line.end))
             return divided_line
                         
-        hull_convex_edges = cls.convex_hull_points(points).line_segments
+        hull_convex_edges = cls.points_convex_hull(points).line_segments
         hull_convex_edges.sort(key = lambda x : x.length(), reverse= True)
         hull_concave_edges = []
         hull_concave_edges.extend(hull_convex_edges)
@@ -2801,10 +2801,9 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
             triangles.append([other_point, point2, point1])
            
         return triangles
+    
     def simplify(self, min_distance:float = 0.01, max_distance:float=0.05):
         return ClosedPolygon3D(self.simplify_polygon(min_distance = min_distance, max_distance = max_distance).points)
-        
-        
 
     def sewing(self, polygon2):
         center1, center2 = self.average_center_point(), polygon2.average_center_point()
