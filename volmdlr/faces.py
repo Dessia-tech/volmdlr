@@ -748,14 +748,14 @@ class Plane3D(Surface3D):
             for index in indexes_to_del[::-1]:
                 del points[index + 1]
 
-            origin = volmdlr.Point3D(points[0].vector)
-            vector1 = volmdlr.Vector3D(points[1] - origin)
+            origin = points[0]
+            vector1 = points[1] - origin
             vector1.normalize()
-            vector2_min = volmdlr.Vector3D(points[2] - origin)
+            vector2_min = points[2] - origin
             vector2_min.normalize()
             dot_min = abs(vector1.dot(vector2_min))
             for point in points[3:]:
-                vector2 = volmdlr.Vector3D(point - origin)
+                vector2 = point - origin
                 vector2.normalize()
                 dot = abs(vector1.dot(vector2))
                 if dot < dot_min:
