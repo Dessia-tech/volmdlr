@@ -2475,7 +2475,7 @@ class BSplineCurve3D(Edge):
         for i, knot in enumerate(knots):
             knot_vector.extend([knot] * knot_multiplicities[i])
         curve.knotvector = knot_vector
-        curve.delta = 0.1
+        curve.delta = 0.01
         curve_points = curve.evalpts
 
         self.curve = curve
