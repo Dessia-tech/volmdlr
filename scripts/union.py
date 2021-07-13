@@ -195,7 +195,7 @@ import volmdlr.primitives3d as primitives3d
 # # Union between shell2 and shell3
 # # Union between shell1, shell2 and shell3
 
-number_points = 20
+number_points = 50
 
 poly_1 = vmw.ClosedPolygon3D([vm.Point3D(-0.3, 0.05, -0.20),
                                 vm.Point3D(0, 0.25, -0.20),
@@ -250,15 +250,15 @@ length_poly_2 = poly_2.length()
 points_poly_2 = [poly_2.point_at_abscissa(k*length_poly_2/(number_points)) for k in range(number_points)]
 
 new_poly_21 = vmw.ClosedPolygon3D(points_poly_2)
-# ax = new_poly_21.plot()
-# for point in new_poly_21.points:
-#     point.plot(ax=ax)
-# print('2 before simplify :', len(new_poly_21.points))
-# new_poly_21 = new_poly_21.simplify(0.02, 0.05)
-# new_poly_21.plot(ax=ax, color = 'r')
-# for point in new_poly_21.points:
-#     point.plot(ax=ax, color = 'r')
-# print('2 after simplify :', len(new_poly_21.points))
+ax = new_poly_21.plot()
+for point in new_poly_21.points:
+    point.plot(ax=ax)
+print('2 before simplify :', len(new_poly_21.points))
+new_poly_21 = new_poly_21.simplify(0.05, 0.1)
+new_poly_21.plot(ax=ax, color = 'r')
+for point in new_poly_21.points:
+    point.plot(ax=ax, color = 'r')
+print('2 after simplify :', len(new_poly_21.points))
 new_poly_22 = new_poly_21.translation(0.1*vm.Y3D).rotation(vm.O3D, vm.Y3D, math.pi/2)
 
 new_poly_23 = new_poly_22.translation(0.05*vm.Y3D)
@@ -279,11 +279,11 @@ faces2 += [vmf.PlaneFace3D(plane3d_3, surf2d_3), vmf.PlaneFace3D(plane3d_4, surf
 
 shell2 = vmf.ClosedShell3D(faces2)
 # shell2.babylonjs()
-new_box = shell1.union(shell2)
-for shell in new_box:
-    shell.color = (1, 0.1, 0.1)
-    shell.alpha = 0.6
-vm.core.VolumeModel(new_box).babylonjs()
+# new_box = shell1.union(shell2)
+# for shell in new_box:
+#     shell.color = (1, 0.1, 0.1)
+#     shell.alpha = 0.6
+# vm.core.VolumeModel(new_box).babylonjs()
 
 
 # shell3 = shell2.rotation(vm.O3D, vm.Z3D, math.pi).translation(0.3*vm.Z3D-0.1*vm.Y3D)

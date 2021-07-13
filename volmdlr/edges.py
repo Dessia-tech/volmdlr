@@ -2116,14 +2116,7 @@ class LineSegment3D(LineSegment):
             if intersection == self.start or intersection == self.end:
                 return intersection
             else:
-                # vector1 = intersection - self.start
-                # vector2 = intersection - linesegment.start
-                # vector1.normalize()
-                # vector2.normalize()
                 if self.point_belongs(intersection) and linesegment.point_belongs(intersection):
-                # if vector1 == self.direction_vector() and vector2 == linesegment.direction_vector() and \
-                #     self.start.point_distance(intersection)+ self.end.point_distance(intersection) == self.length() and\
-                #        linesegment.start.point_distance(intersection) + linesegment.end.point_distance(intersection) == linesegment.length() :
                     return intersection
                 else: 
                     return None

@@ -1373,6 +1373,14 @@ class ClosedPolygon():
                         points.append(new_point)
                 else:
                     points.append(point)
+            elif len(points)>1:
+                vector1 = points[-1] - points[-2]
+                vector2 = point - points[-2]
+                cos = vector1.dot(vector2) / (vector1.norm() * vector2.norm())
+                # print('cos :', cos)
+                cos = math.degrees(math.acos(round(cos, 6)))
+                if abs(cos) >2:
+                    points.append(point)
             # elif len(points)>1:
             #     current_angle = volmdlr.core.vectors3d_angle(points[-2].to_vector(), points[-1].to_vector())
             #     previous_angle = volmdlr.core.vectors3d_angle(points[-1].to_vector(), point.to_vector())
