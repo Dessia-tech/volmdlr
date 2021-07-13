@@ -24,25 +24,25 @@ ax = bezier.plot()
 for pt in points :
     pt.plot(ax=ax)
     
-tangents = [bezier.tangent(k) for k in range(len(bezier.points))]
-x = [t.random_unit_normal_vector() for t in tangents]
+# tangents = [bezier.tangent(k) for k in range(len(bezier.points))]
+# x = [t.random_unit_normal_vector() for t in tangents]
 
-frames = [vm.Frame3D(bezier.points[k], x[k], x[k].cross(tangents[k]), tangents[k]) for k in range(len(x))]
-circles = [vmw.Circle3D(f,0.005) for f in frames]
+# frames = [vm.Frame3D(bezier.points[k], x[k], x[k].cross(tangents[k]), tangents[k]) for k in range(len(x))]
+# circles = [vmw.Circle3D(f,0.005) for f in frames]
 
-polys = [vmw.ClosedPolygon3D(c.tessellation_points()) for c in circles]
+# polys = [vmw.ClosedPolygon3D(c.tessellation_points()) for c in circles]
 
-for p in polys :
-    p.plot(ax=ax, color='r')
+# for p in polys :
+#     p.plot(ax=ax, color='r')
     
-list_tri = [polys[k].sewing(polys[k+1]) for k in range(len(polys)-1)]
-triangles = []
-for l in list_tri :
-    for trio in l:
-        triangles.append(vmf.Triangle3D(*trio))
+# list_tri = [polys[k].sewing(polys[k+1]) for k in range(len(polys)-1)]
+# triangles = []
+# for l in list_tri :
+#     for trio in l:
+#         triangles.append(vmf.Triangle3D(*trio))
         
-shell = vmf.ClosedShell3D(triangles)
-shell.babylonjs()
+# shell = vmf.ClosedShell3D(triangles)
+# shell.babylonjs()
 
 # bspline = vme.BSplineCurve3D(degree = 3, control_points = points,
 #                              knot_multiplicities=None,#bezier.knot_multiplicities,
