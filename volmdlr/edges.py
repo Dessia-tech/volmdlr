@@ -2667,14 +2667,23 @@ class BSplineCurve3D(Edge):
     def polygon_points(self):
         return self.points
 
-    def unit_direction_vector(self,num_point):
-        #num_point is between 0 and len(points)-1
-        if num_point == len(self.points)-1 :
-            num_point -= 1
-        tangent = self.points[num_point+1]-self.points[num_point]
+    def unit_direction_vector(self,abscissa=0.):
+        l = self.length()
+        if abscissa >= l :
+            abscissa2 = l
+            abscissa = abscissa2 - 0.001*l
+            
+        else :
+            abscissa2 = abscissa + 0.001*l
+            if abscissa2 > l:
+                abscissa2 = l
+            
+        tangent = self.point_at_abscissa(abscissa2)-self.point_at_abscissa(abscissa)
         tangent.normalize()
         return tangent
-        # return self.curve.tangent(curvilinear_abscissa)
+    
+    def unit_normal_vector(self, abscissa):
+        return None
 
 class BezierCurve3D(BSplineCurve3D):
 
