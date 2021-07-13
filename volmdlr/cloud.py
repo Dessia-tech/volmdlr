@@ -66,13 +66,12 @@ class PointCloud3D(dc.DessiaObject):
         position_plane = [xyz_bbox[posmax][0] + n*dist_between_plane for n in range(resolution)]
         
         subcloud3d = [self.extract(normal, pos_plane-dist_between_plane/2, pos_plane+dist_between_plane/2) for pos_plane in position_plane]
-        print('subcloud3D CREATED')
+        # print('subcloud3D CREATED')
         vec1, vec2 = xyz_vect[posmax-2], xyz_vect[posmax-1]
         subcloud2d_tosimp = [subcloud3d[n].to_2d(position_plane[n]*normal, vec1, vec2) for n in range(resolution)]
         subcloud2d = [sub.simplify() for sub in subcloud2d_tosimp]
         
-        # return subcloud2d
-        print('subcloud2D CREATED')
+        # print('subcloud2D CREATED')
         # print('CREATING POLYGONS')
         initial_polygon2d = [cloud2d.to_polygon() for cloud2d in subcloud2d]
         
@@ -96,18 +95,10 @@ class PointCloud3D(dc.DessiaObject):
         faces = []
         # max_poly_resolution = int(sum([len(poly.points) for poly in polygon3d])/len(polygon3d))+1
         
-        ax = polygon3d[0].plot()
-        for poly in polygon3d[1:]:
-            poly.plot(ax=ax)
-        
-        
         for n in range(resolution):
             print('sewing polygon', round(n/resolution*100, 2), '%')
             poly1 = polygon3d[n]
-            # print('len(poly1.points)', len(poly1.points))
-            # ax = poly1.plot()
             # poly1 = poly1.simplify(0.01, 0.05)
-            # poly1.plot(ax=ax, color ='r')
             
             
             if n == resolution-1 or n == 0:
@@ -116,10 +107,7 @@ class PointCloud3D(dc.DessiaObject):
                 faces.append(vmf.PlaneFace3D(plane3d, surf2d))
             if n != resolution-1:
                 poly2 = polygon3d[n+1]
-                # print('len(poly2.points)', len(poly2.points), '\n')
-                # poly2.plot(ax=ax)
                 # poly2 = poly2.simplify(0.01, 0.05)
-                # polt2.plot(ax=ax, color ='g')
                 
                 # coords = poly1.sewing_with(poly2, vec1, vec2, normal, resolution = max_poly_resolution)
                 coords = poly1.sewing(poly2)
@@ -167,8 +155,6 @@ class PointCloud2D(dc.DessiaObject):
         if not self.points : 
             return PointCloud2D(self.points, name=self.name + '_none')
         
-        # init_length = len(self.points)
-        
         x_list, y_list = [pt.x for pt in self.points], [pt.y for pt in self.points]
         xmin, xmax = min(x_list), max(x_list)
         ymin, ymax = min(y_list), max(y_list)
@@ -191,16 +177,5 @@ class PointCloud2D(dc.DessiaObject):
         for poly in polys :
             if poly is not None :
                 clean_points += poly.points
-        clean_cloud = PointCloud2D(clean_points, name=self.name + '_clean')
         
-        # fig, ax = plt.subplots()
-        # for list_pt in points :
-        #     for pt in list_pt :
-        #         pt.plot(ax=ax)
-            
-        # for poly in polys :
-        #     if poly is not None :
-        #         poly.plot(ax=ax, color='r', plot_points=True)
-                
-        # print('from', init_length, 'points to', len(clean_points))
-        return clean_cloud
+        return PointCloud2D(clean_points, name=self.name + '_clean')
