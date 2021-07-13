@@ -1252,10 +1252,11 @@ class Contour2D(Contour, Wire2D):
         while not finished:
             cutting_points = []
             cutting_contour = contours[0]
-            # axc = cutting_contour.plot()
+           
             for base_contour in new_base_contours:
-                # base_contour.plot(ax=axc, color = 'b')
                 cutting_points = base_contour.contour_intersections(cutting_contour)
+                # axc = cutting_contour.plot()
+                # base_contour.plot(ax=axc, color = 'b')
                 # for pt in cutting_points:
                 #     pt.plot(ax=axc)
                 if cutting_points:
@@ -1303,6 +1304,7 @@ class Contour2D(Contour, Wire2D):
             if len(contours) == 0:
                 finished = True
         return list_contours
+        
     
 class ClosedPolygon():
     
