@@ -19,6 +19,7 @@ import numpy as np
 from scipy.spatial import ConvexHull
 shells = []
 path = os.getcwd()
+
 for stl_file in [
                 # 'a320.stl',
                 # 'a320_ENGINE_RIGHT.stl',
@@ -47,21 +48,11 @@ for stl_file in [
     # list_points = vmstl.Stl.from_file_points(stl_file)
     list_points = stl.extract_points_BIS()
     pointcloud3d = volmdlr.cloud.PointCloud3D(list_points)
-    # polygons3d = pointcloud3d.to_shell()
+    # polygons2d = pointcloud3d.to_shell()
     # pointcloud3d.plot()
-    shells.append(pointcloud3d.to_shell())
+    shells.append(pointcloud3d.to_shell(resolution=20))
 
     
 volum = volmdlr.core.VolumeModel(shells)
 volum.babylonjs()
         
-
-# points = [(p.x, p.y) for p in subcloud2d[0].points]
-# points = np.array(points)
-# plt.plot(points[:,0], points[:,1], 'o')
-# hull = ConvexHull(points)
-# for simplex in hull.simplices:
-#     plt.plot(points[simplex,0], points[simplex,1], 'k-')
-# plt.show()
-
-#
