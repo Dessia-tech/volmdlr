@@ -442,18 +442,6 @@ class Contour():
         points = [list_point_pairs[0]]
         list_point_pairs.remove((list_point_pairs[0][0], list_point_pairs[0][1]))
         finished =  False
-        # print('>>>>>>>>', len(list_point_pairs))
-        
-        # if len(list_point_pairs)==0:
-        #         finished = True
-                
-        # if len(list_point_pairs)>2 :
-        #     ax = list_point_pairs[0][0].plot()
-        #     list_point_pairs[0][1].plot(ax=ax)
-        #     for pt1, pt2 in list_point_pairs[1:] :
-        #         pt1.plot(ax=ax)
-        #         pt2.plot(ax=ax)
-        
         while not finished:
             for p1, p2 in list_point_pairs:
                 if p1 == points[-1][-1]:
@@ -468,10 +456,6 @@ class Contour():
                 elif p2 == points[0][0]:
                     points = [(p1, p2)] + points
                     list_point_pairs.remove((p1, p2))
-                # else :
-                #     p1.plot(ax=ax, color='r')
-                #     p2.plot(ax=ax, color='r')
-                #     print(p1, p2)
             if len(list_point_pairs)==0:
                 finished = True
     
