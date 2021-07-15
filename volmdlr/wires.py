@@ -3162,20 +3162,20 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                                   self.points[i-1], real_closing_point])
                 previous_closing_point = closing_point
         
-        # for i, point_polygon2 in enumerate(new_polygon2.points+[new_polygon2.points[0]]):
+        for i, point_polygon2 in enumerate(new_polygon2.points+[new_polygon2.points[0]]):
             
-        #     for j, index in enumerate(list(dict_closing_pairs.values())):
-        #         if i != 0 :
-        #             if i-1 >= index[0] and i <= index[1]:
-        #                 triangles.append([polygon2.points[i-1],
-        #                                   polygon2.points[new_polygon2.points.index(point_polygon2)],
-        #                                   list(dict_closing_pairs.keys())[j]])
-        #             else:
-        #                 if index[0]>index[1]:
-        #                     if ((i-1 <= index[0] and i <= index[1]) or ((i-1 >= index[0]) and i >= index[1])):
-        #                         triangles.append([polygon2.points[i-1], 
-        #                                           polygon2.points[new_polygon2.points.index(point_polygon2)], 
-        #                                           list(dict_closing_pairs.keys())[j]])
+            for j, index in enumerate(list(dict_closing_pairs.values())):
+                if i != 0 :
+                    if i-1 >= index[0] and i <= index[1]:
+                        triangles.append([polygon2.points[i-1],
+                                          polygon2.points[new_polygon2.points.index(point_polygon2)],
+                                          list(dict_closing_pairs.keys())[j]])
+                    else:
+                        if index[0]>index[1]:
+                            if ((i-1 <= index[0] and i <= index[1]) or ((i-1 >= index[0]) and i >= index[1])):
+                                triangles.append([polygon2.points[i-1], 
+                                                  polygon2.points[new_polygon2.points.index(point_polygon2)], 
+                                                  list(dict_closing_pairs.keys())[j]])
                 
         return triangles#, dict_closing_pairs, list_closing_points
     # def new_sewing(self, polygon2):
