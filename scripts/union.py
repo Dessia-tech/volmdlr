@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import volmdlr.primitives3d as primitives3D
 import volmdlr.wires as vmw
 import volmdlr.faces as vmf
+import volmdlr.edges as vme
 # p1, p2, p3, p4 = vm.Point3D(-0.086, 0.11399999999999999, 0.21),vm.Point3D(-0.086, 0.114, 0.17), vm.Point3D(-0.086, -0.126, 0.2042857142857143), vm.Point3D(-0.086, 0.124, 0.2042857142857143)
 # l1=edges.Line3D(p1,p2)
 # l2=edges.Line3D(p3,p4)
@@ -209,15 +210,15 @@ points_poly_11 = [poly_1.point_at_abscissa(k*length_poly_11/(number_points)) for
 
 new_poly_11 = vmw.ClosedPolygon3D(points_poly_11)
 
-# ax = new_poly_11.plot()
-# for point in new_poly_11.points:
-#     point.plot(ax=ax)
-# print('1 before simplify :', len(new_poly_11.points))
-# new_poly_11 = new_poly_11.simplify(0.07, 0.1)
-# new_poly_11.plot(ax=ax, color = 'r')
-# for point in new_poly_11.points:
-#     point.plot(ax=ax, color = 'r')
-# print('1 after simplify :', len(new_poly_11.points))
+ax = new_poly_11.plot()
+for point in new_poly_11.points:
+    point.plot(ax=ax)
+print('1 before simplify :', len(new_poly_11.points))
+new_poly_11 = new_poly_11.simplify(0.07, 0.1)
+new_poly_11.plot(ax=ax, color = 'r')
+for point in new_poly_11.points:
+    point.plot(ax=ax, color = 'r')
+print('1 after simplify :', len(new_poly_11.points))
 
 
 new_poly_12 = new_poly_11.translation(0.3*vm.Z3D).rotation(vm.O3D, vm.Z3D, math.pi/2)
@@ -251,48 +252,68 @@ points_poly_2 = [poly_2.point_at_abscissa(k*length_poly_2/(number_points)) for k
 
 new_poly_21 = vmw.ClosedPolygon3D(points_poly_2)
 ax = new_poly_21.plot()
+ax1 = new_poly_21.plot()
 for point in new_poly_21.points:
     point.plot(ax=ax)
 print('2 before simplify :', len(new_poly_21.points))
-new_poly_21 = new_poly_21.simplify(0.05, 0.1)
+new_poly_21 = new_poly_21.simplify(0.02, 0.06)
 new_poly_21.plot(ax=ax, color = 'r')
 for point in new_poly_21.points:
     point.plot(ax=ax, color = 'r')
 print('2 after simplify :', len(new_poly_21.points))
 new_poly_22 = new_poly_21.translation(0.1*vm.Y3D).rotation(vm.O3D, vm.Y3D, math.pi/2)
-
+new_poly_22.plot(ax=ax1, color = 'y')
 new_poly_23 = new_poly_22.translation(0.05*vm.Y3D)
-
+new_poly_23.plot(ax=ax1, color = 'r')
 new_poly_24 = new_poly_23.translation(0.2*vm.Y3D).rotation(vm.O3D, vm.Y3D, math.pi/4)
-
-points_triangles_2 = new_poly_21.sewing(new_poly_22) + new_poly_22.sewing(new_poly_23) + new_poly_23.sewing(new_poly_24)
+new_poly_24.plot(ax=ax1, color = 'g')
+# points_triangles_2 = new_poly_21.sewing(new_poly_22) + new_poly_23.sewing(new_poly_22) + new_poly_23.sewing(new_poly_24)
+points_triangles_2 = new_poly_23.sewing(new_poly_22)
 faces2 = [vmf.Triangle3D(trio[0], trio[1], trio[2]) for trio in points_triangles_2]
+
 # volum = vm.core.VolumeModel(faces2)
 # volum.alpha = 0.4
+# volum.color = (1, 0.1, 0.1)
 # volum.babylonjs()  
-plane3d_3 = vmf.Plane3D.from_plane_vectors(0.05*vm.Y3D, vm.Z3D, vm.X3D)
-surf2d_3 = vmf.Surface2D(new_poly_21.to_2d(vm.O3D, vm.Z3D, vm.X3D),[])
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+new_poly_22.plot(ax=ax)
+new_poly_23.plot(ax=ax, color='r')
 
-plane3d_4 = vmf.Plane3D.from_plane_vectors(0.4*vm.Y3D, vm.Z3D, vm.X3D)
-surf2d_4 = vmf.Surface2D(new_poly_24.to_2d(vm.O3D, vm.Z3D, vm.X3D),[])
-faces2 += [vmf.PlaneFace3D(plane3d_3, surf2d_3), vmf.PlaneFace3D(plane3d_4, surf2d_4)]
+for point in new_poly_22.points + new_poly_23.points:
+    point.plot(ax= ax, color = 'b')
+for lines in points_triangles_2:
+    for line in lines:
+        line.plot(ax=ax, color = 'b')
 
-shell2 = vmf.ClosedShell3D(faces2)
-# shell2.babylonjs()
+for face in faces2 :
+    vme.LineSegment3D(face.point1, face.point2).plot(ax=ax, color='g')
+    vme.LineSegment3D(face.point2, face.point3).plot(ax=ax,color='g')
+    vme.LineSegment3D(face.point3, face.point1).plot(ax=ax, color='g')
+    
+# plane3d_3 = vmf.Plane3D.from_plane_vectors(0.05*vm.Y3D, vm.Z3D, vm.X3D)
+# surf2d_3 = vmf.Surface2D(new_poly_21.to_2d(vm.O3D, vm.Z3D, vm.X3D),[])
+
+# plane3d_4 = vmf.Plane3D.from_plane_vectors(0.4*vm.Y3D, vm.Z3D, vm.X3D)
+# surf2d_4 = vmf.Surface2D(new_poly_24.to_2d(vm.O3D, vm.Z3D, vm.X3D),[])
+# faces2 += [vmf.PlaneFace3D(plane3d_3, surf2d_3), vmf.PlaneFace3D(plane3d_4, surf2d_4)]
+
+# shell2 = vmf.ClosedShell3D(faces2)
+# # shell2.babylonjs()
 # new_box = shell1.union(shell2)
-# for shell in new_box:
-#     shell.color = (1, 0.1, 0.1)
-#     shell.alpha = 0.6
-# vm.core.VolumeModel(new_box).babylonjs()
+# # for shell in new_box:
+# #     shell.color = (1, 0.1, 0.1)
+# #     shell.alpha = 0.6
+# # vm.core.VolumeModel(new_box).babylonjs()
 
 
-shell3 = shell2.rotation(vm.O3D, vm.Z3D, math.pi).translation(0.3*vm.Z3D-0.1*vm.Y3D)
-new_box = shell2.union(shell3)
-for shell in new_box:
-    shell.color = (1, 0.1, 0.1)
-    shell.alpha = 0.6
-vm.core.VolumeModel(new_box).babylonjs()
-vm.core.VolumeModel([shell2, shell3]).babylonjs()
+# shell3 = shell2.rotation(vm.O3D, vm.Z3D, math.pi).translation(0.3*vm.Z3D-0.1*vm.Y3D)
+# # new_box = shell2.union(shell3)
+# # for shell in new_box:
+# #     shell.color = (1, 0.1, 0.1)
+# #     shell.alpha = 0.6
+# # vm.core.VolumeModel(new_box).babylonjs()
+# # vm.core.VolumeModel([shell2, shell3]).babylonjs()
 
 # new_box = new_box[0].union(shell3)
 # for shell in new_box:
