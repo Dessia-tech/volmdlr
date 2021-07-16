@@ -700,14 +700,14 @@ new_poly_24 = new_poly_23.translation(0.2*vm.Y3D).rotation(vm.O3D, vm.Y3D, math.
 # ax = fig.add_subplot(111, projection='3d')
 # new_poly_22.plot(ax=ax)
 # new_poly_23.plot(ax=ax, color='r')
-points_triangles1 = new_poly_23.sewing(new_poly_22, vm.X3D, vm.Y3D)
+points_triangles1 = new_poly_23.sewing(new_poly_22, vm.X3D, vm.Z3D)
 faces1 = [vmf.Triangle3D(trio[0], trio[1], trio[2]) for trio in points_triangles1 ]
-# # faces2 = [vmf.Triangle3D(trio[0], trio[1], trio[2]) for trio in  points_triangles2]
-# faces = faces1
-# volum = vm.core.VolumeModel(faces)
-# volum.alpha = 0.4
-# volum.color = (1, 0.1, 0.1)
-# volum.babylonjs()  
+# faces2 = [vmf.Triangle3D(trio[0], trio[1], trio[2]) for trio in  points_triangles2]
+faces = faces1
+volum = vm.core.VolumeModel(faces)
+volum.alpha = 0.4
+volum.color = (1, 0.1, 0.1)
+volum.babylonjs()  
 
 
 
