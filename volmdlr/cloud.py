@@ -110,7 +110,7 @@ class PointCloud3D(dc.DessiaObject):
                 # poly2 = poly2.simplify(0.01, 0.05)
                 
                 # coords = poly1.sewing_with(poly2, vec1, vec2, normal, resolution = max_poly_resolution)
-                coords = poly1.sewing(poly2)
+                coords = poly1.sewing(poly2, vec1, vec2)
                 for trio in coords :
                     faces.append(vmf.Triangle3D(*trio))
         return vmf.ClosedShell3D(faces)

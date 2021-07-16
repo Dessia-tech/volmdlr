@@ -1341,41 +1341,46 @@ class ClosedPolygon():
                 
     def simplify_polygon(self, min_distance:float = 0.01, max_distance:float=0.05):
         points = [self.points[0]]
-        # mean_distance, _ = self.edge_statistics()
-        # print('mean: ', mean_distance)
-        # length_over_num_segtms = self.max_length()/len(self.line_segments)
-        # print('length_over_num_segtms: ', length_over_num_segtms)
+
         previous_point = None
         for i, point in enumerate(self.points[1:]):
             distance = point.point_distance(points[-1])
-            
             if distance > min_distance:
 
                 if distance > max_distance:
-                    number_segmnts = round(distance/min_distance)+2
+                    number_segmnts = round(distance/max_distance)+2
                     for n in range(number_segmnts):
                         new_point = points[-1] + (point - points[-1])*(n+1)/number_segmnts
-                        points.append(new_point)
+                        distance1 = new_point.point_distance(points[-1])
+                        if distance1 > max_distance:
+                            points.append(new_point)
                 else:
-                    points.append(point)
+
+                    if point not in points:
+                        points.append(point)
             elif len(points)>1:
                 vector1 = points[-1] - points[-2]
                 vector2 = point - points[-2]
                 cos = vector1.dot(vector2) / (vector1.norm() * vector2.norm())
-                # print('cos :', cos)
+
                 cos = math.degrees(math.acos(round(cos, 6)))
-                if abs(cos) > 1:
-                    points.append(previous_point)
-                    points.append(point)
-                    
+                if abs(cos) > 2:
+                    if previous_point not in points:
+                        points.append(previous_point)
+                    if point not in points:
+                        points.append(point)
+            if len(points) > 2:
+                distance2 = points[-3].point_distance(points[-2])
+                vector1 = points[-2] - points[-3]
+                vector2 = points[-1] - points[-3]
+                cos = vector1.dot(vector2) / (vector1.norm() * vector2.norm())
+                cos = math.degrees(math.acos(round(cos, 6)))
+                if distance2 < min_distance and cos < 2:
+                    points = points[:-2] + [points[-1]]
             previous_point = point
-            # elif len(points)>1:
-            #     current_angle = volmdlr.core.vectors3d_angle(points[-2].to_vector(), points[-1].to_vector())
-            #     previous_angle = volmdlr.core.vectors3d_angle(points[-1].to_vector(), point.to_vector())
-            #     if abs(current_angle - previous_angle)*360/(2*math.pi) > 30:
-            #         points.append(point)
-            # else: 
-            #     points.append(point)
+        distance = points[0].point_distance(points[-1])
+        if distance < min_distance:
+            points.remove(points[-1])
         return self.__class__(points)
 
     
@@ -1436,6 +1441,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         xi1_yi = npy.multiply(npy.roll(x, -1), y)
 
         a = 0.5 * npy.sum(xi_yi1 - xi1_yi)  # signed area!
+        # print('a :', a)
         #        a=self.area()
         if not math.isclose(a, 0, abs_tol=1e-08):
             cx = npy.sum(npy.multiply(xi_xi1, (xi_yi1 - xi1_yi))) / 6. / a
@@ -1887,13 +1893,13 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                     break
                 
             hull_concave_edges.sort(key = lambda x : x.length(), reverse=True)
+
         # line  = hull_concave_edges[0]
         # print('first line legth :', line.length())
         # nearby_points = get_nearby_points(line, unused_points, scale_factor)
         # print('points next the first line in the end: ', nearby_points)
         # divided_line = get_divided_line(line, nearby_points, hull_concave_edges, concavity)
         # print('len divided line :', len(divided_line))
-
         polygon_points = [(line.start, line.end) for line in hull_concave_edges]
         
         points = [polygon_points[0][0], polygon_points[0][1]]
@@ -1914,8 +1920,6 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                 
         return cls(points), nearby_points
 
-        
-        
     @classmethod
     def convex_hull_points(cls, points):
         '''
@@ -3119,51 +3123,68 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
     def simplify(self, min_distance:float = 0.01, max_distance:float=0.05):
         return ClosedPolygon3D(self.simplify_polygon(min_distance = min_distance, max_distance = max_distance).points)
 
-    def sewing(self, polygon2):
+    def sewing(self, polygon2, x, y):
         center1, center2 = self.average_center_point(), polygon2.average_center_point()
-        center1, center2 = volmdlr.Point3D(center1.x, center1.y, 0), volmdlr.Point3D(center2.x, center2.y, 0)
-        new_polygon1, new_polygon2 =self.translation(-center1), polygon2.translation(-center2)
+        center1_, center2_ = volmdlr.Point3D(center1.x, center1.y, 0), volmdlr.Point3D(center2.x, center2.y, 0)
         
+        new_polygon1, new_polygon2 =self.translation(-center1_), polygon2.translation(-center2_)
+        new_center1, new_center2 = new_polygon1.average_center_point(), new_polygon2.average_center_point()
+        new_polygon1_2d, new_polygon2_2d = new_polygon1.to_2d(new_center1, x, y), new_polygon2.to_2d(new_center2, x, y)
+        
+        # ax2d= new_polygon1_2d.plot(color= 'r')
+        # new_polygon2_2d.plot(ax=ax2d, color= 'g')
+        # barycenter1_2d = new_polygon1_2d.points[0]
+        # for point in new_polygon1_2d.points[1:]:
+        #     barycenter1_2d += point
+        # barycenter1_2d = barycenter1_2d / len(new_polygon1_2d.points)
+        # barycenter1_2d.plot(ax=ax2d, color = 'y')
+        # barycenter2_2d = new_polygon2_2d.points[0]
+        # for point in new_polygon2_2d.points[1:]:
+        #     barycenter2_2d += point
+        # barycenter2_2d = barycenter2_2d / len(new_polygon2_2d.points)
+        # barycenter2_2d.plot(ax=ax2d, color = 'r')
+        
+
+        # ax3d= new_polygon1.plot(color= 'r')
+        # new_polygon2.plot(ax=ax3d, color= 'g')
+        # volmdlr.Point3D(0,0, center1.z).plot(ax=ax3d)
+        # volmdlr.Point3D(0,0, center2.z).plot(ax=ax3d, color = 'r')
+
         dict_closing_pairs = {}
         triangles = []
         list_closing_points = []
+        new_polygon1_2d_points = new_polygon1_2d.points + [new_polygon1_2d.points[0]]
         for i, point_polygon1 in enumerate(new_polygon1.points+[new_polygon1.points[0]]):
             if i != 0:
-                mean_point = 0.5*(point_polygon1 + new_polygon1.points[i-1])
-                distances = [mean_point.point_distance(point_poly2) for point_poly2 in new_polygon2.points]
-                closing_point = new_polygon2.points[distances.index(min(distances))]
-                not_valid_point = True
-                while not_valid_point:
-                    if closing_point in list_closing_points:
-                        if closing_point!=list_closing_points[-1] and closing_point!=list_closing_points[0]:
-                            distances.remove(min(distances))
-                            closing_point = new_polygon2.points[distances.index(min(distances))]
-                            if new_polygon2.points.index(closing_point)<new_polygon2.points.index(list_closing_points[-1]):
-                                distances.remove(min(distances))
-                                closing_point = new_polygon2.points[distances.index(min(distances))]
-                        else:
-                            not_valid_point = False
-                    else:
-                        not_valid_point = False
-                list_closing_points.append(closing_point)
-                # print(new_polygon2.points.index(closing_point))
-                real_closing_point = polygon2.points[distances.index(min(distances))]
+                mean_point2d = 0.5*(new_polygon1_2d_points[i] + new_polygon1_2d_points[i-1])
+                # mean_point2d.plot(ax=ax2d, color = 'b')
+                line = volmdlr.edges.LineSegment2D(volmdlr.O2D, (mean_point2d - volmdlr.O2D)*5)
+                # line.plot(ax=ax2d, color= 'r')
+                for line_segment in new_polygon2_2d.line_segments:
+                    point_intersection = line_segment.linesegment_intersections(line)
+                    if point_intersection:
+                        break
+                if point_intersection[0].point_distance(line_segment.start) < point_intersection[0].point_distance(line_segment.end):
+                    closing_point = line_segment.start
+                else:
+                    closing_point = line_segment.end
+                closing_point_index = new_polygon2_2d.points.index(closing_point)
+                real_closing_point = polygon2.points[closing_point_index]
+                # point_intersection[0].plot(ax=ax2d, color= 'g')
+
                 if i==1:
-                    previous_closing_point = closing_point
-                if closing_point != previous_closing_point:
-                    dict_closing_pairs[self.points[i-1]] = (new_polygon2.points.index(previous_closing_point),
-                                                            new_polygon2.points.index(closing_point))
+                    previous_closing_point_index = closing_point_index
+                if closing_point_index != previous_closing_point_index:
+                    dict_closing_pairs[self.points[i-1]] = (previous_closing_point_index,
+                                                            closing_point_index)
                 if point_polygon1 == new_polygon1.points[0]:
-                # if i == len(new_polygon1.points+[new_polygon1.points[0]])-1:
                     if list(dict_closing_pairs.values())[-1][-1] != list(dict_closing_pairs.values())[0][0]:
                         dict_closing_pairs[self.points[0]] = (list(dict_closing_pairs.values())[-1][-1],
-                                                              list(dict_closing_pairs.values())[0][0])
-                triangles.append([self.points[new_polygon1.points.index(point_polygon1)],
-                                  self.points[i-1], real_closing_point])
-                previous_closing_point = closing_point
-        
+                                                              list(dict_closing_pairs.values())[0][0] )
+                        
+                triangles.append([self.points[new_polygon1.points.index(point_polygon1)], self.points[i-1], real_closing_point])
+                previous_closing_point_index = closing_point_index
         for i, point_polygon2 in enumerate(new_polygon2.points+[new_polygon2.points[0]]):
-            
             for j, index in enumerate(list(dict_closing_pairs.values())):
                 if i != 0 :
                     if i-1 >= index[0] and i <= index[1]:
@@ -3176,52 +3197,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                                 triangles.append([polygon2.points[i-1], 
                                                   polygon2.points[new_polygon2.points.index(point_polygon2)], 
                                                   list(dict_closing_pairs.keys())[j]])
-                
-        return triangles#, dict_closing_pairs, list_closing_points
-    # def new_sewing(self, polygon2):
-        
-    #     center1, center2 = self.average_center_point(), polygon2.average_center_point()
-    #     poly1_2d, poly2_2d = self.to_2d(center1, volmdlr.X3D, volmdlr.Y3D), polygon2.to_2d(center2, volmdlr.X3D, volmdlr.Y3D)
-    #     center1_2d, center2_2d = poly1_2d.center_of_mass(), poly2_2d.center_of_mass()
-    #     poly1_2d.translation(-center1_2d,copy=False)
-    #     poly2_2d.translation(-center2_2d,copy=False)
-        
-        
-    #     bbox1_2d, bbox2_2d = poly1_2d.bounding_rectangle(), poly2_2d.bounding_rectangle()
-    #     position = [abs(value) for value in bbox1_2d] + [abs(value) for value in bbox2_2d]
-    #     max_scale = 2*max(position)
-        
-    #     lines = [volmdlr.edges.LineSegment2D(volmdlr.O2D, max_scale*(volmdlr.X2D*math.sin(n*2*math.pi/4) +
-    #                                          volmdlr.Y2D*math.cos(n*2*math.pi/4))
-    #                                          ) for n in range (4)]
-        
-    #     # center1, center2 = volmdlr.Point3D(center1.x, center1.y, 0), volmdlr.Point3D(center2.x, center2.y, 0)
-    #     # new_polygon1, new_polygon2 =self.translation(-center1), polygon2.translation(-center2)
-    #     # center1, center2 = new_polygon1.average_center_point(), new_polygon2.average_center_point()
-    #     # print(center1, center2)
-        
-    #     list_lines = [[volmdlr.edges.LineSegment3D(center, 0.05*(volmdlr.Vector3D(1, 0, center.z)*math.sin(n*2*math.pi/4) +
-    #                                          volmdlr.Vector3D(0, 1, center.z)*math.cos(n*2*math.pi/4))
-    #                                          ) for n in range (4)] for center in [center1, center2]]
-    #     print(len(list_lines))
-    #     polygon1_intersection_points = []
-    #     polygon2_intersection_points = []
-    #     for lines in list_lines:
-    #         for line in lines:
-    #             for line_segment in self.line_segments:
-    #                 intersect = line.intersection(line_segment)
-    #                 # print(intersect)
-    #                 if intersect :
-    #                     polygon1_intersection_points.extend(intersect)
-    #                     break
-                    
-    #             for line_segment in polygon2.line_segments:
-    #                 intersect = line.intersection(line_segment)
-    #                 # print(intersect)
-    #                 if intersect :
-    #                     polygon2_intersection_points.extend(intersect)
-    #                     break
-        
-    #     print(polygon1_intersection_points)
-    #     print(polygon2_intersection_points)
-    #     return list_lines
+        return triangles
+
+
+  
