@@ -3191,15 +3191,21 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
             for j, index in enumerate(list(dict_closing_pairs.values())):
                 if i != 0 :
                     if i-1 >= index[0] and i <= index[1]:
-                        triangles.append([polygon2.points[i-1],
-                                          polygon2.points[new_polygon2.points.index(point_polygon2)],
-                                          list(dict_closing_pairs.keys())[j]])
+                        if (polygon2.points[i-1] != polygon2.points[new_polygon2.points.index(point_polygon2)] \
+                            and polygon2.points[i-1] != list(dict_closing_pairs.keys())[j]\
+                            and polygon2.points[new_polygon2.points.index(point_polygon2)] != list(dict_closing_pairs.keys())[j]):
+                            triangles.append([polygon2.points[i-1],
+                                              polygon2.points[new_polygon2.points.index(point_polygon2)],
+                                              list(dict_closing_pairs.keys())[j]])
                     else:
                         if index[0]>index[1]:
                             if ((i-1 <= index[0] and i <= index[1]) or ((i-1 >= index[0]) and i >= index[1])):
-                                triangles.append([polygon2.points[i-1], 
-                                                  polygon2.points[new_polygon2.points.index(point_polygon2)], 
-                                                  list(dict_closing_pairs.keys())[j]])
+                                if (polygon2.points[i-1] != polygon2.points[new_polygon2.points.index(point_polygon2)] \
+                                    and polygon2.points[i-1] != list(dict_closing_pairs.keys())[j]\
+                                    and polygon2.points[new_polygon2.points.index(point_polygon2)] != list(dict_closing_pairs.keys())[j]):
+                                    triangles.append([polygon2.points[i-1], 
+                                                      polygon2.points[new_polygon2.points.index(point_polygon2)], 
+                                                      list(dict_closing_pairs.keys())[j]])
         return triangles
 
 
