@@ -21,7 +21,7 @@ import volmdlr.wires
 import volmdlr.display as vmd
 import volmdlr.geometry
 from itertools import product
-
+import random
 
 
 class Surface2D(volmdlr.core.Primitive2D):
@@ -4869,24 +4869,24 @@ class ClosedShell3D(OpenShell3D):
                 inter_points_contour = True
                 # bbox2 = self.bounding_box
                 shell_2 = self
-                # print('self bounding box')
+                print('self bounding box')
             else:
                 inter_points_contour = False
                 # bbox2 = shell2.bounding_box
                 shell_2 = shell2
-                # print('bbox2 shell2')
+                print('bbox2 shell2')
             face_intersecting_primitives2d = []
             intersection_points = []
             face_contour2d = face.surface2d.outer_contour
             
-            # axc = face.plot()
+            # axc = face_contour2d.plot()
             # intersecting_contour.plot(ax=axc, color='g')
             for intersecting_combination in intersecting_combinations.keys():
                 if face in intersecting_combination:
                     primitive2 = intersecting_combinations[intersecting_combination].primitives[0]
                     # primitive2.plot(ax=axc, color = 'r')
                     primitive2_2d = volmdlr.edges.LineSegment2D(face.surface3d.point3d_to_2d(primitive2.start), face.surface3d.point3d_to_2d(primitive2.end))
-                    # primitive2_2d.plot(ax=ax1)
+                    # primitive2_2d.plot(ax=axc, color = 'r') 
                     face_intersecting_primitives2d.append(primitive2_2d)
 
             new_contour = volmdlr.wires.Contour2D(face_intersecting_primitives2d[:])
@@ -4924,13 +4924,22 @@ class ClosedShell3D(OpenShell3D):
                     new_faces_contours = face_contour2d.divide(new_list_cutting_contours, inter_points_contour)
                     for contour in new_faces_contours:
                         list_faces.append(PlaneFace3D(face.surface3d, Surface2D(contour, [])))
-    
+                    if shell_2 == shell2:
+                        ax2 = face.plot()
+                         
                     for new_face in list_faces:
                         shell1 = volmdlr.faces.ClosedShell3D([new_face])
+                        points_inside = []
+                        for i in range(10):
+                            points_inside.append(new_face.surface2d.outer_contour.random_point_inside())
+                        is_inside = False
+                        for point in points_inside:
+                            point = face.surface3d.point2d_to_3d(point)
+                            if shell_2.point_belongs(point):
+                                is_inside = True
                         point_inside_face = new_face.surface2d.outer_contour.random_point_inside()
                         point_inside_face = face.surface3d.point2d_to_3d(point_inside_face)
                         is_inside = shell_2.point_belongs(point_inside_face)
-                        # print('is inside? ', is_inside)
                         if not is_inside:
                             if new_face not in faces:
                                 faces.append(new_face)
