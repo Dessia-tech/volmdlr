@@ -3184,22 +3184,30 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                     if list(dict_closing_pairs.values())[-1][-1] != list(dict_closing_pairs.values())[0][0]:
                         dict_closing_pairs[self.points[0]] = (list(dict_closing_pairs.values())[-1][-1],
                                                               list(dict_closing_pairs.values())[0][0] )
-                        
-                triangles.append([self.points[new_polygon1.points.index(point_polygon1)], self.points[i-1], real_closing_point])
+                if not volmdlr.edges.LineSegment3D(self.points[new_polygon1.points.index(point_polygon1)], real_closing_point).point_belongs(self.points[i-1]):
+                    triangles.append([self.points[new_polygon1.points.index(point_polygon1)], self.points[i-1], real_closing_point])
                 previous_closing_point_index = closing_point_index
         for i, point_polygon2 in enumerate(new_polygon2.points+[new_polygon2.points[0]]):
             for j, index in enumerate(list(dict_closing_pairs.values())):
                 if i != 0 :
                     if i-1 >= index[0] and i <= index[1]:
-                        triangles.append([polygon2.points[i-1],
-                                          polygon2.points[new_polygon2.points.index(point_polygon2)],
-                                          list(dict_closing_pairs.keys())[j]])
+                        a = polygon2.points[i-1]
+                        b = polygon2.points[new_polygon2.points.index(point_polygon2)]
+                        c = list(dict_closing_pairs.keys())[j]
+                        if (a != b and a != c and b != c and not volmdlr.edges.LineSegment3D(a, c).point_belongs(b)):
+                            triangles.append([polygon2.points[i-1],
+                                              polygon2.points[new_polygon2.points.index(point_polygon2)],
+                                              list(dict_closing_pairs.keys())[j]])
                     else:
                         if index[0]>index[1]:
                             if ((i-1 <= index[0] and i <= index[1]) or ((i-1 >= index[0]) and i >= index[1])):
-                                triangles.append([polygon2.points[i-1], 
-                                                  polygon2.points[new_polygon2.points.index(point_polygon2)], 
-                                                  list(dict_closing_pairs.keys())[j]])
+                                a = polygon2.points[i-1]
+                                b = polygon2.points[new_polygon2.points.index(point_polygon2)]
+                                c = list(dict_closing_pairs.keys())[j]
+                                if (a != b and a != c and b != c and not volmdlr.edges.LineSegment3D(a, c).point_belongs(b)):
+                                    triangles.append([polygon2.points[i-1], 
+                                                      polygon2.points[new_polygon2.points.index(point_polygon2)], 
+                                                      list(dict_closing_pairs.keys())[j]])
         return triangles
 
 

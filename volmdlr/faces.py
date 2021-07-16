@@ -4869,12 +4869,12 @@ class ClosedShell3D(OpenShell3D):
                 inter_points_contour = True
                 # bbox2 = self.bounding_box
                 shell_2 = self
-                print('self bounding box')
+                # print('self bounding box')
             else:
                 inter_points_contour = False
                 # bbox2 = shell2.bounding_box
                 shell_2 = shell2
-                print('bbox2 shell2')
+                # print('bbox2 shell2')
             face_intersecting_primitives2d = []
             intersection_points = []
             face_contour2d = face.surface2d.outer_contour
@@ -4924,13 +4924,11 @@ class ClosedShell3D(OpenShell3D):
                     new_faces_contours = face_contour2d.divide(new_list_cutting_contours, inter_points_contour)
                     for contour in new_faces_contours:
                         list_faces.append(PlaneFace3D(face.surface3d, Surface2D(contour, [])))
-                    if shell_2 == shell2:
-                        ax2 = face.plot()
                          
                     for new_face in list_faces:
                         shell1 = volmdlr.faces.ClosedShell3D([new_face])
                         points_inside = []
-                        for i in range(10):
+                        for i in range(50):
                             points_inside.append(new_face.surface2d.outer_contour.random_point_inside())
                         is_inside = False
                         for point in points_inside:
