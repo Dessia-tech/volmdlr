@@ -3184,8 +3184,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                     if list(dict_closing_pairs.values())[-1][-1] != list(dict_closing_pairs.values())[0][0]:
                         dict_closing_pairs[self.points[0]] = (list(dict_closing_pairs.values())[-1][-1],
                                                               list(dict_closing_pairs.values())[0][0] )
-                        
-                triangles.append([self.points[new_polygon1.points.index(point_polygon1)], self.points[i-1], real_closing_point])
+                if not volmdlr.edges.LineSegment3D(self.points[new_polygon1.points.index(point_polygon1)], real_closing_point).point_belogns(self.points[i-1]):
+                    triangles.append([self.points[new_polygon1.points.index(point_polygon1)], self.points[i-1], real_closing_point])
                 previous_closing_point_index = closing_point_index
         for i, point_polygon2 in enumerate(new_polygon2.points+[new_polygon2.points[0]]):
             for j, index in enumerate(list(dict_closing_pairs.values())):
