@@ -1918,7 +1918,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             if len(polygon_points)==0:
                 finished = True
                 
-        return cls(points), nearby_points
+        return cls(points)#, nearby_points
 
     @classmethod
     def convex_hull_points(cls, points):
@@ -3158,7 +3158,10 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
             if i != 0:
                 mean_point2d = 0.5*(new_polygon1_2d_points[i] + new_polygon1_2d_points[i-1])
                 # mean_point2d.plot(ax=ax2d, color = 'b')
-                line = volmdlr.edges.LineSegment2D(volmdlr.O2D, (mean_point2d - volmdlr.O2D)*5)
+                vec_dir = mean_point2d.copy()
+                vec_dir.normalize()
+                line = volmdlr.edges.LineSegment2D(volmdlr.O2D, mean_point2d +vec_dir*5)
+                # line = volmdlr.edges.LineSegment2D(volmdlr.O2D, (mean_point2d - volmdlr.O2D)*10)
                 # line.plot(ax=ax2d, color= 'r')
                 for line_segment in new_polygon2_2d.line_segments:
                     point_intersection = line_segment.linesegment_intersections(line)
