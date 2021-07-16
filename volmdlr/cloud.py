@@ -99,6 +99,7 @@ class PointCloud3D(dc.DessiaObject):
             print('sewing polygon', round(n/resolution*100, 2), '%')
             poly1 = polygon3d[n]
             # poly1 = poly1.simplify(0.01, 0.05)
+            ax = poly1.plot()
             
             
             if n == resolution-1 or n == 0:
@@ -107,6 +108,7 @@ class PointCloud3D(dc.DessiaObject):
                 faces.append(vmf.PlaneFace3D(plane3d, surf2d))
             if n != resolution-1:
                 poly2 = polygon3d[n+1]
+                poly2.plot(ax=ax, color='r')
                 # poly2 = poly2.simplify(0.01, 0.05)
                 
                 # coords = poly1.sewing_with(poly2, vec1, vec2, normal, resolution = max_poly_resolution)
