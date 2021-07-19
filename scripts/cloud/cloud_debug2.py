@@ -676,17 +676,17 @@ length_poly_2 = poly_2.length()
 points_poly_2 = [poly_2.point_at_abscissa(k*length_poly_2/(number_points)) for k in range(number_points)]
 
 new_poly_21 = vmw.ClosedPolygon3D(points_poly_2)
-# ax = new_poly_21.plot()
-# # ax1 = new_poly_21.plot()
-# for point in new_poly_21.points:
-#     point.plot(ax=ax)
-# print('2 before simplify :', len(new_poly_21.points))
-# # new_poly_21 = new_poly_21.simplify(0.05, 0.1)
+ax = new_poly_21.plot()
+# ax1 = new_poly_21.plot()
+for point in new_poly_21.points:
+    point.plot(ax=ax)
+print('2 before simplify :', len(new_poly_21.points))
 # new_poly_21 = new_poly_21.simplify(0.05, 0.1)
-# new_poly_21.plot(ax=ax, color = 'r')
-# for point in new_poly_21.points:
-#     point.plot(ax=ax, color = 'r')
-# print('2 after simplify :', len(new_poly_21.points))
+new_poly_21 = new_poly_21.simplify(0.05, 0.1)
+new_poly_21.plot(ax=ax, color = 'r')
+for point in new_poly_21.points:
+    point.plot(ax=ax, color = 'r')
+print('2 after simplify :', len(new_poly_21.points))
 new_poly_22 = new_poly_21.translation(0.1*vm.Y3D).rotation(vm.O3D, vm.Y3D, math.pi/2)
 
 # new_poly_22.plot(ax=ax1, color = 'y')

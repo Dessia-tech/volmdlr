@@ -214,7 +214,7 @@ class LineSegment(Edge):
     def unit_direction_vector(self, abscissa=0.):
 
         u = self.end - self.start
-        # print(u)
+        print(u)
         u.normalize()
         
         return u

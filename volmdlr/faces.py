@@ -4834,10 +4834,8 @@ class ClosedShell3D(OpenShell3D):
 
         intersecting_combinations = {}
         for k, combination in enumerate(face_combinations):
-
             face_intersection = combination[0].face_intersections(combination[1])
             if face_intersection:
-                
                 intersecting_combinations[combination] = face_intersection
                 
         #saving non intersecting faces
@@ -4867,12 +4865,10 @@ class ClosedShell3D(OpenShell3D):
             # print(100*k/len(intersecting_faces), '% of intersecting_faces')
             if face in shell2.faces:
                 inter_points_contour = True
-                # bbox2 = self.bounding_box
                 shell_2 = self
                 # print('self bounding box')
             else:
                 inter_points_contour = False
-                # bbox2 = shell2.bounding_box
                 shell_2 = shell2
                 # print('bbox2 shell2')
             face_intersecting_primitives2d = []
@@ -4947,7 +4943,6 @@ class ClosedShell3D(OpenShell3D):
                 surf2d = Surface2D(face.surface2d.outer_contour, [new_contour])
                 new_plane = PlaneFace3D(surf3d, surf2d)
                 faces.append(new_plane)
-
 
         return [ClosedShell3D(faces)]
                 

@@ -980,7 +980,7 @@ class Contour2D(Contour, Wire2D):
                 point_start, primitive1 = intersections[2 * best_transition]
                 point2, primitive2 = intersections[2 * best_transition + 1]
                 primitives = self.extract_primitives(point_start, primitive1,
-                                                     point2, primitive2)
+                                                     point2, primitive2, inter_points_contour=True)
                 last_point = point2
                 for transition in enclosed_transitions[best_transition]:
                     point1, primitive1 = intersections[2 * transition]
@@ -989,7 +989,7 @@ class Contour2D(Contour, Wire2D):
                         volmdlr.edges.LineSegment2D(last_point, point1))
                     primitives.extend(
                         self.extract_primitives(point1, primitive1, point2,
-                                                primitive2))
+                                                primitive2,inter_points_contour=True))
                     last_point = point2
                     remaining_transitions1.remove(transition)
 
@@ -1026,7 +1026,7 @@ class Contour2D(Contour, Wire2D):
                     2 * best_transition + 1]
                 point2, primitive2 = intersections[2 * best_transition + 2]
                 primitives = self.extract_primitives(point_start, primitive1,
-                                                     point2, primitive2)
+                                                     point2, primitive2, inter_points_contour=False)
                 last_point = point2
                 for transition in enclosed_transitions[best_transition]:
                     point1, primitive1 = intersections[2 * transition + 1]
@@ -1035,7 +1035,7 @@ class Contour2D(Contour, Wire2D):
                         volmdlr.edges.LineSegment2D(last_point, point1))
                     primitives.extend(
                         self.extract_primitives(point1, primitive1, point2,
-                                                primitive2))
+                                                primitive2, inter_points_contour= False))
                     last_point = point2
                     remaining_transitions2.remove(transition)
 
@@ -1339,14 +1339,12 @@ class ClosedPolygon():
         std = npy.std(distances)
         return mean_distance, std
                 
-    def simplify_polygon(self, min_distance:float = 0.01, max_distance:float=0.05):
+    def simplify_polygon(self, min_distance:float = 0.01, max_distance:float=0.05, angle:  float = 20):
         points = [self.points[0]]
-
         previous_point = None
         for i, point in enumerate(self.points[1:]):
             distance = point.point_distance(points[-1])
             if distance > min_distance:
-
                 if distance > max_distance:
                     number_segmnts = round(distance/max_distance)+2
                     for n in range(number_segmnts):
@@ -1362,9 +1360,8 @@ class ClosedPolygon():
                 vector1 = points[-1] - points[-2]
                 vector2 = point - points[-2]
                 cos = vector1.dot(vector2) / (vector1.norm() * vector2.norm())
-
                 cos = math.degrees(math.acos(round(cos, 6)))
-                if abs(cos) > 2:
+                if abs(cos) > angle:
                     if previous_point not in points:
                         points.append(previous_point)
                     if point not in points:
@@ -1375,7 +1372,7 @@ class ClosedPolygon():
                 vector2 = points[-1] - points[-3]
                 cos = vector1.dot(vector2) / (vector1.norm() * vector2.norm())
                 cos = math.degrees(math.acos(round(cos, 6)))
-                if distance2 < min_distance and cos < 2:
+                if distance2 < min_distance and cos < angle:
                     points = points[:-2] + [points[-1]]
             previous_point = point
         distance = points[0].point_distance(points[-1])
@@ -3163,11 +3160,23 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                 line = volmdlr.edges.LineSegment2D(volmdlr.O2D, mean_point2d +vec_dir*5)
                 # line = volmdlr.edges.LineSegment2D(volmdlr.O2D, (mean_point2d - volmdlr.O2D)*10)
                 # line.plot(ax=ax2d, color= 'r')
+                point_intersections = {}
                 for line_segment in new_polygon2_2d.line_segments:
                     point_intersection = line_segment.linesegment_intersections(line)
                     if point_intersection:
-                        break
-                if point_intersection[0].point_distance(line_segment.start) < point_intersection[0].point_distance(line_segment.end):
+                        point_intersections[line_segment] = point_intersection[0]
+                    # if point_intersection:
+                    #     break
+                point_distance = list(point_intersections.values())[0].point_distance(mean_point2d)
+                point_intersection = list(point_intersections.values())[0]
+                line_segment = list(point_intersections.keys())[0]
+                for line, point in list(point_intersections.items())[1:]:
+                    dist = mean_point2d.point_distance(point)
+                    if dist < point_distance:
+                        point_distance = dist
+                        point_intersection = point
+                        line_segment = line
+                if point_intersection.point_distance(line_segment.start) < point_intersection.point_distance(line_segment.end):
                     closing_point = line_segment.start
                 else:
                     closing_point = line_segment.end
