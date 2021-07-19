@@ -4021,7 +4021,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         for face1 in self.faces:
             for face2 in shell2.faces:
                 intersection_points = face1.face_intersections(face2)
-                if intersection_points is not None:
+                if intersection_points:
+                    intersection_points = [intersection_points.primitives[0].start, intersection_points.primitives[0].end]
                     intersections_points.extend(intersection_points)
 
         shell1_points_inside_shell2 = []
@@ -4046,7 +4047,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         for face1 in self.faces:
             for face2 in shell2.faces:
                 intersection_points = face1.face_intersections(face2)
-                if intersection_points is not None:
+                if intersection_points:
+                    intersection_points = [intersection_points.primitives[0].start, intersection_points.primitives[0].end]
                     intersections_points.extend(intersection_points)
 
         shell1_points_outside_shell2 = []
