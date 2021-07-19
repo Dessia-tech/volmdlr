@@ -85,8 +85,6 @@ class Wire:
                 primitive1, primitive2 = primitive2, primitive1
                 point1, point2 = point2, point1
         else:
-            print('passes here ')
-            print(ip1, ip2)
             if ip1 > ip2:
                 pass
             elif ip1 == ip2: #primitive1 == primitive2
