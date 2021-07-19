@@ -11,11 +11,12 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 import volmdlr as vm
+import volmdlr.core
 import volmdlr.wires as vmw
 import volmdlr.faces as vmf
 import volmdlr.step as vstep
 import volmdlr.stl as vmstl
-
+import volmdlr.edges as vme
 import dessia_common as dc
 
 class PointCloud3D(dc.DessiaObject):
@@ -46,7 +47,6 @@ class PointCloud3D(dc.DessiaObject):
         
     
     def to_shell(self, resolution = 10, normal = None):
-        print('i have passed here 1')
         #normal has to be a fondamental vector : X3D, Y3D or Z3D
         bbox = self._bounding_box()
         xyz_bbox = [[bbox.xmin, bbox.xmax], [bbox.ymin,bbox.ymax], [bbox.zmin,bbox.zmax]]
@@ -66,40 +66,53 @@ class PointCloud3D(dc.DessiaObject):
         position_plane = [xyz_bbox[posmax][0] + n*dist_between_plane for n in range(resolution)]
         
         subcloud3d = [self.extract(normal, pos_plane-dist_between_plane/2, pos_plane+dist_between_plane/2) for pos_plane in position_plane]
-        print('subcloud3D CREATED')
+        # print('subcloud3D CREATED')
         vec1, vec2 = xyz_vect[posmax-2], xyz_vect[posmax-1]
-        subcloud2d = [subcloud3d[n].to_2d(position_plane[n]*normal, vec1, vec2) for n in range(resolution)]
-        print('subcloud2D CREATED')
-        print('CREATING POLYGONS')
+        subcloud2d_tosimp = [subcloud3d[n].to_2d(position_plane[n]*normal, vec1, vec2) for n in range(resolution)]
+        subcloud2d = [sub.simplify() for sub in subcloud2d_tosimp]
+        
+        # print('subcloud2D CREATED')
+        # print('CREATING POLYGONS')
         initial_polygon2d = [cloud2d.to_polygon() for cloud2d in subcloud2d]
         
+        areas = [0]*len(initial_polygon2d)
+        for n, poly in enumerate(initial_polygon2d):
+            if poly is not None :
+                areas[n] = poly.area()
+        avg_area = sum(areas)/len(areas)        
+        
         polygon2d, polygon3d = [], []
-        print('almost there')
-        for pos_plane, poly in zip(position_plane, initial_polygon2d) :
-            if poly is None :
+        banned = []
+        for n, poly in enumerate(initial_polygon2d) :
+            if poly is None or poly.area()<avg_area/10:
                 resolution -= 1
+                banned.append(n)
             else :
                 polygon2d.append(poly)
-                polygon3d.append(poly.to_3d(pos_plane*normal, vec1, vec2))
-                
+                polygon3d.append(poly.to_3d(position_plane[n]*normal, vec1, vec2))
+        [position_plane.pop(k) for k in banned[::-1]]
+        
         faces = []
-        max_poly_resolution = int(sum([len(poly.points) for poly in polygon3d])/len(polygon3d))+1
+        # max_poly_resolution = int(sum([len(poly.points) for poly in polygon3d])/len(polygon3d))+1
+        
         for n in range(resolution):
             print('sewing polygon', round(n/resolution*100, 2), '%')
             poly1 = polygon3d[n]
-            poly1 = poly1.simplify()
+            # poly1 = poly1.simplify(0.01, 0.05)
+            
+            
             if n == resolution-1 or n == 0:
                 plane3d = vmf.Plane3D.from_plane_vectors(position_plane[n]*normal, vec1, vec2)
                 surf2d = vmf.Surface2D(polygon2d[n],[])
                 faces.append(vmf.PlaneFace3D(plane3d, surf2d))
             if n != resolution-1:
                 poly2 = polygon3d[n+1]
-                poly2 = poly2.simplify()
-                # coords = poly1.sewin1g_with(poly2, vec1, vec2, normal, resolution = max_poly_resolution)
+                # poly2 = poly2.simplify(0.01, 0.05)
+                
+                # coords = poly1.sewing_with(poly2, vec1, vec2, normal, resolution = max_poly_resolution)
                 coords = poly1.sewing(poly2)
                 for trio in coords :
-                    faces.append(vmf.Triangle3D(trio[0], trio[1], trio[2]))   
-        
+                    faces.append(vmf.Triangle3D(*trio))
         return vmf.ClosedShell3D(faces)
 
     @classmethod        
@@ -120,15 +133,49 @@ class PointCloud2D(dc.DessiaObject):
         self.points = points
         self.name = name
         
-    def plot(self):
-        fig, ax = plt.subplots()
+    def plot(self, ax=None, color='k'):
+        if ax is None :
+            fig, ax = plt.subplots()
         for pt in self.points :
-            pt.plot(ax=ax)
+            pt.plot(ax=ax, color=color)
         return ax
     
     def to_polygon(self):
-        polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
+        if not self.points:
+            return None
+        # polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
+        polygon = vmw.ClosedPolygon2D.concave_hull(self.points, -0.5, 0.0005)
+        # polygon = vmw.ClosedPolygon2D.convex_hull_points(self.points)
         if polygon is None or math.isclose(polygon.area(), 0, abs_tol = 1e-6) :
             return None
         else : 
             return polygon
+        
+    def simplify(self, resolution = 5):
+        if not self.points : 
+            return PointCloud2D(self.points, name=self.name + '_none')
+        
+        x_list, y_list = [pt.x for pt in self.points], [pt.y for pt in self.points]
+        xmin, xmax = min(x_list), max(x_list)
+        ymin, ymax = min(y_list), max(y_list)
+        
+        x_slide = [xmin + n*(xmax-xmin)/(resolution-1) for n in range(resolution)]
+        y_slide = [ymin + n*(ymax-ymin)/(resolution-1) for n in range(resolution)]
+        
+        points = []
+        for x1, x2 in zip(x_slide, x_slide[1:]+[x_slide[0]]) :
+            for y1, y2 in zip(y_slide, y_slide[1:]+[y_slide[0]]):
+                box_points = []
+                for pt in self.points :
+                    if pt.x >= x1 and pt.x <= x2 :
+                        if pt.y >= y1 and pt.y <= y2 :
+                            box_points.append(pt)
+                points.append(box_points)
+        
+        polys = [vmw.ClosedPolygon2D.points_convex_hull(pts) for pts in points]
+        clean_points = []
+        for poly in polys :
+            if poly is not None :
+                clean_points += poly.points
+        
+        return PointCloud2D(clean_points, name=self.name + '_clean')
