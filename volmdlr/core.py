@@ -577,7 +577,7 @@ class BoundingBox(dc.DessiaObject):
         self.zmin = zmin
         self.zmax = zmax
         
-        self.center = (self.points[0] + self.points[-2]) / 2
+        self.center = volmdlr.Point3D(0.5*(xmin+xmax),0.5*(ymin+ymax),0.5*(zmin+zmax))
         self.name = name
 
     def __hash__(self):

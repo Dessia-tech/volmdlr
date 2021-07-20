@@ -2423,6 +2423,8 @@ class Triangle3D(PlaneFace3D):
         self.alpha = alpha
         self.name = name
         
+        self._utd_surface3d = False
+        self._utd_surface2d = False
         self.bounding_box = self._bounding_box()
         
         # Don't use inheritence for performance: class method fakes face3D behavior
@@ -2435,21 +2437,28 @@ class Triangle3D(PlaneFace3D):
         return volmdlr.core.BoundingBox.from_points([self.point1, self.point2, self.point3])
         
     @property
-    def surface3d(self):# TODO : CACHE
-        return Plane3D.from_3_points(self.point1, self.point2, self.point3)
-
+    def surface3d(self):
+        if not self._utd_surface3d:
+            self._surface3d = Plane3D.from_3_points(self.point1, self.point2, self.point3)
+            self._utd_surface3d = True
+        return self._surface3d
 
     @property
-    def surface2d(self):# TODO : CACHE
-        plane3d = self.surface3d
-        contour3d = volmdlr.wires.Contour3D([vme.LineSegment3D(self.point1, self.point2),
-                                              vme.LineSegment3D(self.point2, self.point3),
-                                              vme.LineSegment3D(self.point3, self.point1)])
-        
-        contour2d = contour3d.to_2d(plane3d.frame.origin, 
-                                    plane3d.frame.u, plane3d.frame.v)
-        
-        return Surface2D(outer_contour=contour2d, inner_contours=[])
+    def surface2d(self):
+        if not self._utd_surface2d:
+            plane3d = self.surface3d
+            contour3d = volmdlr.wires.Contour3D([vme.LineSegment3D(self.point1, self.point2),
+                                                 vme.LineSegment3D(self.point2, self.point3),
+                                                 vme.LineSegment3D(self.point3, self.point1)])
+            
+            contour2d = contour3d.to_2d(plane3d.frame.origin, 
+                                        plane3d.frame.u, plane3d.frame.v)
+            
+            self._surface2d = Surface2D(outer_contour=contour2d, inner_contours=[])
+
+            self._utd_surface2d = True
+        return self._surface2d
+
     
     @classmethod
     def dict_to_object(cls, dict_):
