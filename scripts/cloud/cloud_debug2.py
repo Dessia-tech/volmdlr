@@ -155,7 +155,8 @@ circle with Triangle
 # vm.Point3D(-0.013386120796203613, 0.1855081329345703, 0.21148847113715277),
 # vm.Point3D(-0.019671663284301758, 0.1873011474609375, 0.21148847113715277),
 # vm.Point3D(-0.026080251693725586, 0.18848182678222655, 0.21148847113715277)],
-#   [vm.Point3D(-0.008207533836364746, 0.2508453674316406, 0.2601176283094618),
+
+#     [vm.Point3D(-0.008207533836364746, 0.2508453674316406, 0.2601176283094618),
 # vm.Point3D(-0.084091064453125, 0.16704635620117186, 0.2601176283094618),
 # vm.Point3D(-0.08809623718261719, 0.16201771545410157, 0.2601176283094618),
 # vm.Point3D(-0.09159443664550782, 0.15660951232910156, 0.2601176283094618),
@@ -360,6 +361,7 @@ circle with Triangle
 # vm.Point3D(0.011754136085510253, 0.25260917663574217, 0.35737594265407985),
 # vm.Point3D(0.010459518432617188, 0.2528188171386719, 0.35737594265407985),
 # vm.Point3D(0.006894575595855713, 0.2533437805175781, 0.35737594265407985)],
+ 
 #   [vm.Point3D(-0.013217350006103516, 0.23776652526855468, 0.4060050998263889),
 # vm.Point3D(-0.10356132507324219, 0.203, 0.4060050998263889),
 # vm.Point3D(-0.10356132507324219, 0.103, 0.4060050998263889),
@@ -403,7 +405,8 @@ circle with Triangle
 # vm.Point3D(0.02151949119567871, 0.23719499206542968, 0.4060050998263889),
 # vm.Point3D(0.02037856864929199, 0.2373074188232422, 0.4060050998263889),
 # vm.Point3D(0.02002399444580078, 0.2373179931640625, 0.4060050998263889)],
-#     [vm.Point3D(-0.011512272834777832, 0.23403472900390626, 0.45463425699869786),
+   
+#   [vm.Point3D(-0.011512272834777832, 0.23403472900390626, 0.45463425699869786),
 # vm.Point3D(-0.03077821922302246, 0.2310986633300781, 0.45463425699869786),
 # vm.Point3D(-0.08233112335205078, 0.203, 0.45463425699869786),
 # vm.Point3D(-0.08725215911865235, 0.19043856811523438, 0.45463425699869786),
@@ -465,21 +468,46 @@ circle with Triangle
 
 
 
-# vec1, vec2 = vm.X3D, vm.Y3D
-# normal = vm.Z3D
+# # vec1, vec2 = vm.X3D, vm.Y3D
+# # normal = vm.Z3D
 
-# # coords = polygon1.sewing_with(polygon2, vec1, vec2, normal)
-# # coords, list_previous_closing_points = polygon1.sewing2(polygon2, vec1, vec2, normal)
+# # # coords = polygon1.sewing_with(polygon2, vec1, vec2, normal)
+# # # coords, list_previous_closing_points = polygon1.sewing2(polygon2, vec1, vec2, normal)
+# dict_closing = []
+# list_closing_point = []
+# count = 0
 # for i, i_polygon in enumerate(polygons):
+#     i_polygon = i_polygon.simplify()
 #     for j, j_polygon in enumerate(polygons):
-#         if i != j:
+#         if i > j:
 #             faces=[]
-#             coords = i_polygon.sewing2(j_polygon, vec1, vec2, normal)
+#             j_polygon = j_polygon.simplify()
+#             coords, closing, closing_point = i_polygon.sewing(j_polygon)
+#             dict_closing.append(closing)
+#             list_closing_point.append(closing_point)
 #             for trio in coords :
 #                 faces.append(vmf.Triangle3D(trio[0], trio[1], trio[2]))
             
 #             volum = volmdlr.core.VolumeModel(faces)
-#             volum.babylonjs()  
+#             volum.babylonjs() 
+            
+#             fig = plt.figure()
+#             ax = fig.add_subplot(111, projection='3d')
+#             i_polygon.plot(ax=ax, color='g')
+#             j_polygon.plot(ax= ax, color = 'r')
+#             for point in j_polygon.points:
+#                 point.plot(ax= ax, color = 'b')
+            
+#             # poly12d = polygon1.to_2d(plane_origin, x, y)
+#             for face in faces :
+#                 vme.LineSegment3D(face.point1, face.point2).plot(ax=ax, color='g')
+#                 vme.LineSegment3D(face.point2, face.point3).plot(ax=ax,color='g')
+#                 vme.LineSegment3D(face.point3, face.point1).plot(ax=ax, color='g')
+#         #     count += 1
+#         #     break
+#         # if count > 0:
+#         #     break
+# #     vm
 
 
 
@@ -605,10 +633,40 @@ vm.Point3D(0.002556457042694092, 0.2554306640625, 0.3087467854817708),
 vm.Point3D(-7.359097152948379e-05, 0.25544367980957033, 0.3087467854817708)]
 polygon1 = vmw.ClosedPolygon3D(points_poly1)
 polygon2 = vmw.ClosedPolygon3D(points_poly2)
-center1, center2 = polygon1.average_center_point(), polygon2.average_center_point()
+
+polygon1 = polygon1.simplify()
+polygon2 = polygon2.simplify()
+faces=[]
+
+# coords = polygon1.sewing(polygon2)
+coords = polygon1.sewing(polygon2)
+for trio in coords :
+    faces.append(vmf.Triangle3D(trio[0], trio[1], trio[2]))
+
+volum = volmdlr.core.VolumeModel(faces)
+volum.babylonjs()  
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+polygon1.plot(ax=ax, color='g')
+polygon2.plot(ax= ax, color = 'r')
+for point in polygon1.points + polygon2.points:
+    point.plot(ax= ax, color = 'b')
+# for lines in coords:
+#     for line in lines:
+#         line.plot(ax=ax, color = 'r')
+
+# for face in faces :
+#     vme.LineSegment3D(face.point1, face.point2).plot(ax=ax, color='g')
+#     vme.LineSegment3D(face.point2, face.point3).plot(ax=ax,color='g')
+#     vme.LineSegment3D(face.point3, face.point1).plot(ax=ax, color='g')
+    
+    
+# center1, center2 = polygon1.average_center_point(), polygon2.average_center_point()
 # polygons = []
 # for polygon_points in polygons_points:
 #     polygons.append(vmw.ClosedPolygon3D(polygon_points))
+
 # vec1, vec2 = vm.X3D, vm.Y3D
 # polygons_2d = []
 # for polygon in polygons:
@@ -625,10 +683,10 @@ center1, center2 = polygon1.average_center_point(), polygon2.average_center_poin
 #     for point in polygon_2d.points:
 #         point.plot(ax= ax, color = 'g')
     
-vec1, vec2 = vm.X3D, vm.Y3D
-normal = vm.Z3D
-polygon1 = polygon1.simplify()
-polygon2 = polygon2.simplify()
+# vec1, vec2 = vm.X3D, vm.Y3D
+# normal = vm.Z3D
+# polygon1 = polygon1.simplify()
+# polygon2 = polygon2.simplify()
 
 # print(polygon1.primitives)
 # print(polygon1.line_segments)
@@ -636,23 +694,23 @@ polygon2 = polygon2.simplify()
 
 # poly1_2d, poly2_2d = polygon1.to_2d(center1, vec1, vec2), polygon2.to_2d(center2,vec1,vec2)
 # poly2_2d = polygon2.to_2d(center2,vec1,vec2)
-point1 = vm.Point3D(-0.030684173583984377, -0.05806710243225098, 0.3087467854817708)
-point2 = vm.Point3D(0.023140216827392576, 0.24822925567626952, 0.3087467854817708)
-points2d = []
-for point in points_poly2:
-    points2d.append(vm.Point2D(point.x, point.y))
-poly2_2d = vmw.ClosedPolygon2D(points2d)
+# point1 = vm.Point3D(-0.030684173583984377, -0.05806710243225098, 0.3087467854817708)
+# point2 = vm.Point3D(0.023140216827392576, 0.24822925567626952, 0.3087467854817708)
+# points2d = []
+# for point in points_poly2:
+#     points2d.append(vm.Point2D(point.x, point.y))
+# poly2_2d = vmw.ClosedPolygon2D(points2d)
 # point1 = vm.Point2D(-0.030684173583984377, -0.05806710243225098)
 # point2 = vm.Point2D(0.023140216827392576, 0.24822925567626952)
 
-contour = polygon2.extract_with_points(point2, point1)
+# contour = polygon2.extract_with_points(point2, point1)
 
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-for primitive in contour:
-    primitive.start.plot(ax=ax, color = 'b')
-    primitive.end.plot(ax=ax, color = 'b')
-    primitive.plot(ax = ax)
+# fig = plt.figure()
+# ax = fig.add_subplot(111, projection='3d')
+# for primitive in contour:
+#     primitive.start.plot(ax=ax, color = 'b')
+#     primitive.end.plot(ax=ax, color = 'b')
+#     primitive.plot(ax = ax)
 # for primitive in poly2_2d.primitives:
 #     primitive.plot(ax = ax, color = 'g')
 # for point in poly2_2d.points:
@@ -660,45 +718,24 @@ for primitive in contour:
 
 # poly1_2d.statistics()
 # poly2_2d.statistics()
-fig = plt.figure()
-ax = fig.add_subplot(111)
+# fig = plt.figure()
+# ax = fig.add_subplot(111)
 # poly1_2d.plot(ax=ax, color= 'g')
 # poly2_2d.plot(ax=ax, color = 'r')
 # for point in poly1_2d.points + poly2_2d.points:
 #     point.plot(ax= ax, color = 'b')
     
 # poly1_2d.simplify_polygon2d()
-poly2_2d = poly2_2d.simplify()
+# poly2_2d = poly2_2d.simplify()
 
 # poly1_2d.plot(ax=ax, color= 'orange')
-poly2_2d.plot(ax=ax, color = 'black')
-for point in poly2_2d.points:
-    # print(point)
-    point.plot(ax= ax, color = 'g')
+# poly2_2d.plot(ax=ax, color = 'black')
+# for point in poly2_2d.points:
+#     # print(point)
+#     point.plot(ax= ax, color = 'g')
 
-faces=[]
-# # coords = polygon1.sewing_with(polygon2, vec1, vec2, normal)
-# # coords, list_previous_closing_points = polygon1.sewing2(polygon2, vec1, vec2, normal)
-coords = polygon1.sewing(polygon2)
-for trio in coords :
-    faces.append(vmf.Triangle3D(trio[0], trio[1], trio[2]))
 
-# volum = volmdlr.core.VolumeModel(faces)
-# volum.babylonjs()  
-
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-polygon1.plot(ax=ax, color='g')
-polygon2.plot(ax= ax, color = 'r')
-for point in polygon1.points + polygon2.points:
-    point.plot(ax= ax, color = 'b')
-
-# poly12d = polygon1.to_2d(plane_origin, x, y)
-for face in faces :
-    vme.LineSegment3D(face.point1, face.point2).plot(ax=ax, color='g')
-    vme.LineSegment3D(face.point2, face.point3).plot(ax=ax,color='g')
-    vme.LineSegment3D(face.point3, face.point1).plot(ax=ax, color='g')
-# # 
+# 
 # for points in list_previous_closing_points :
     # points.plot(ax=ax, color='b')
 # polygon2.plot(ax=ax, color='r')

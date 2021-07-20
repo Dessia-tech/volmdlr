@@ -359,12 +359,19 @@ class Vector2D(Vector):
         """
         return 0
 
-
     def __eq__(self, other_vector):
         if other_vector.__class__.__name__ not in ['Vector2D', 'Point2D']:
             return False
         return math.isclose(self.x, other_vector.x, abs_tol=1e-06) \
         and math.isclose(self.y, other_vector.y, abs_tol=1e-06)
+        
+    def approx_hash(self):
+        return round(1e6*(self.x+self.y))
+
+    @classmethod
+    def remove_duplicate(cls, points):
+        dict_ = {p.approx_hash() : p for p in points}
+        return list(dict_.values())
 
     def norm(self):
         """
@@ -731,7 +738,11 @@ class Vector3D(Vector):
         hash returns 0 because points are difficult to hash if they are meant
         to be equalized at a given tolerance
         """
+        
         return 0
+    
+    def approx_hash(self):
+        return round(1e6*(self.x+self.y+self.z))
 
     def __eq__(self, other_vector:'Vector3D'):
         if other_vector.__class__.__name__ not in ['Vector3D', 'Point3D']:
@@ -739,6 +750,10 @@ class Vector3D(Vector):
         return math.isclose(self.x, other_vector.x, abs_tol=1e-06) \
         and math.isclose(self.y, other_vector.y, abs_tol=1e-06) \
         and math.isclose(self.z, other_vector.z, abs_tol=1e-06)
+    @classmethod
+    def remove_duplicate(cls, points):
+        dict_ = {p.approx_hash() : p for p in points}
+        return list(dict_.values())
 
 
     @classmethod
