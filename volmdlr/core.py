@@ -666,12 +666,9 @@ class BoundingBox(dc.DessiaObject):
                 and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin)
 
     def is_inside_bbox(self, bbox2):
-        return ((self.xmin >= bbox2.xmin or math.isclose(self.xmin, bbox2.xmin, abs_tol=10e-6))\
-                and (self.xmax <= bbox2.xmax or math.isclose(self.xmax, bbox2.xmax, abs_tol= 10e-6))\
-                and (self.ymin >=bbox2.ymin or math.isclose(self.ymin, bbox2.ymin, abs_tol= 10e-6))\
-                and (self.ymax <= bbox2.ymax or math.isclose(self.ymax, bbox2.ymax, abs_tol=10e-6)) \
-                and (self.zmin >= bbox2.zmin  or math.isclose(self.zmin, bbox2.zmin, abs_tol=10e-6))\
-                and (self.zmax <= bbox2.zmax or math.isclose(self.zmax, bbox2.zmax, abs_tol=10e-6)))
+        return ((self.xmin >= bbox2.xmin - 1e-6) and (self.xmax <= bbox2.xmax + 1e-6)\
+                and (self.ymin >=bbox2.ymin - 1e-6) and (self.ymax <= bbox2.ymax + 1e-6) \
+                and (self.zmin >= bbox2.zmin - 1e-6) and (self.zmax <= bbox2.zmax + 1e-6))
 
     def intersection_volume(self, bbox2):
         if not self.bbox_intersection(bbox2):
