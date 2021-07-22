@@ -918,6 +918,10 @@ class Plane3D(Surface3D):
     def point3d_to_2d(self, point3d):
         return point3d.to_2d(self.frame.origin, self.frame.u, self.frame.v)
 
+    def dimensioned_surface2d(dimensionless_surface2d:Surface2D):
+        return dimensionless_surface2d
+
+
     def contour2d_to_3d(self, contour2d):
         return contour2d.to_3d(self.frame.origin, self.frame.u, self.frame.v)
 
@@ -990,6 +994,12 @@ class CylindricalSurface3D(Surface3D):
         # theta = volmdlr.core.sin_cos_angle(u1, u2)
         theta = math.atan2(u2, u1)
         return volmdlr.Point2D(theta, z)
+    
+    def dimensioned_surface2d(self, dimensionless_surface2d:Surface2D):
+        frame = volmdlr.OXY.copy()
+        frame.u = self.radius
+        return dimensionless_surface2d.frame_mapping(frame, side='old')
+    
 
     def arc3d_to_2d(self, arc3d):
         start = self.point3d_to_2d(arc3d.start)
@@ -1184,6 +1194,13 @@ class ToroidalSurface3D(Surface3D):
         theta = volmdlr.core.sin_cos_angle(u1, u2)
 
         return volmdlr.Point2D(theta, phi)
+
+    def dimensioned_surface2d(self, dimensionless_surface2d:Surface2D):
+        frame = volmdlr.OXY.copy()
+        frame.u = self.R
+        frame.v = self.r
+        return dimensionless_surface2d.frame_mapping(frame, side='old')
+
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -1541,6 +1558,12 @@ class SphericalSurface3D(Surface3D):
             u1, u2 = round(x / u, 5), round(y / u, 5)
         theta = volmdlr.sin_cos_angle(u1, u2)
         return volmdlr.Point2D(theta, phi)
+
+    def dimensioned_surface2d(self, dimensionless_surface2d:Surface2D):
+        frame = volmdlr.OXY.copy()
+        frame.u = self.radius
+        frame.v = self.radius
+        return dimensionless_surface2d.frame_mapping(frame, side='old')
 
     def linesegment2d_to_3d(self, linesegment2d):
         start = self.point2d_to_3d(linesegment2d.start)
