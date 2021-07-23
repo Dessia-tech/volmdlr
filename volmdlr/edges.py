@@ -1092,7 +1092,7 @@ class Arc2D(Edge):
         x, y = p.dot(u), p.dot(v)
         theta = math.atan2(y, x)
         if theta < -tol or theta > self.angle+tol:
-            raise ValueError('Point in not in arc')
+            raise ValueError('Point not in arc')
 
         if theta < 0:
             return 0.
@@ -1962,7 +1962,7 @@ class LineSegment3D(LineSegment):
                 self.end - self.start) / self.length()
     def point_belongs(self, point):
         distance = self.start.point_distance(point) + self.end.point_distance(point)
-        if math.isclose(distance, self.length(), abs_tol = 1e-7 ):
+        if math.isclose(distance, self.length(), abs_tol = 1e-7):
             return True
         return False
 
