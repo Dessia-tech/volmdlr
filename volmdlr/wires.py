@@ -36,6 +36,8 @@ import plot_data.core as plot_data
 # import cv2
 import numpy as np
 from statistics import mean
+from shapely.geometry import Polygon as shapely_polygon
+from shapely.algorithms import polylabel
 
 
 class Wire:
@@ -3165,32 +3167,113 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
         center1, center2 = self.average_center_point(), polygon2.average_center_point()
         center1_, center2_ = volmdlr.Point3D(center1.x, center1.y, 0), volmdlr.Point3D(center2.x, center2.y, 0)
         new_polygon1, new_polygon2 =self.translation(-center1_), polygon2.translation(-center2_)
-        # new_center1, new_center2 = new_polygon1.average_center_point(), new_polygon2.average_center_point()
-        # new_polygon1_2d, new_polygon2_2d = new_polygon1.to_2d(new_center1, x, y), new_polygon2.to_2d(new_center2, x, y)
+        new_center1, new_center2 = new_polygon1.average_center_point(), new_polygon2.average_center_point()
+        new_polygon1_2d, new_polygon2_2d = new_polygon1.to_2d(new_center1, x, y), new_polygon2.to_2d(new_center2, x, y)
         
-        new_polygon1_2d, new_polygon2_2d = self.to_2d(center1, x, y), polygon2.to_2d(center2, x, y)
-        self_center2d, other_center2d = new_polygon1_2d.center_of_mass(), new_polygon2_2d.center_of_mass()
-        new_polygon1_2d.translation(-self_center2d,copy=False)
-        new_polygon2_2d.translation(-other_center2d,copy=False)
         
+        # bounding_rectangle1, bounding_rectangle2 = new_polygon1_2d.bounding_rectangle(), new_polygon2_2d.bounding_rectangle()
+        # x1, y1, h1 = bounding_rectangle1[0] + (bounding_rectangle1[1] - bounding_rectangle1[0])/2, bounding_rectangle1[2] + (bounding_rectangle1[3] - bounding_rectangle1[2])/2, max((bounding_rectangle1[1] - bounding_rectangle1[0])/2 ,(bounding_rectangle1[3] - bounding_rectangle1[2])/2)
+        # x2, y2, h2 = bounding_rectangle2[0] + (bounding_rectangle2[1] - bounding_rectangle2[0])/2, bounding_rectangle2[2] + (bounding_rectangle2[3] - bounding_rectangle2[2])/2, max((bounding_rectangle2[1] - bounding_rectangle2[0])/2 ,(bounding_rectangle2[3] - bounding_rectangle2[2])/2)  
+        # points1, points2 = [[point.x, point.y] for point in new_polygon1_2d.points],  [[point.x, point.y] for point in new_polygon2_2d.points]
+        # shapely_polygon1, shapely_polygon2 = shapely_polygon(points1), shapely_polygon(points2)
+        # # cell1,cell2 = polylabel.Cell(x1, y1, h1, shapely_polygon1), polylabel.Cell(x2, y2, h2, shapely_polygon2)
+        # pole_of_innaccessibility1, pole_of_innaccessibility2 =  polylabel.polylabel(shapely_polygon1), polylabel.polylabel(shapely_polygon2)
+        # print('pole_of_innaccessibility1, pole_of_innaccessibility2 :', ((pole_of_innaccessibility1.x, pole_of_innaccessibility1.y) , (pole_of_innaccessibility2.x, pole_of_innaccessibility2.y)))
+        # pole_of_innaccessibility1, pole_of_innaccessibility2 = volmdlr.Point2D(pole_of_innaccessibility1.x, pole_of_innaccessibility1.y), volmdlr.Point2D(pole_of_innaccessibility2.x, pole_of_innaccessibility2.y)
+        
+        # # new_polygon1_2d, new_polygon2_2d = self.to_2d(center1, x, y), polygon2.to_2d(center2, x, y)
+        # # self_center2d, other_center2d = new_polygon1_2d.center_of_mass(), new_polygon2_2d.center_of_mass()
+        # new_polygon1_2d.translation(-pole_of_innaccessibility1,copy=False)
+        # new_polygon2_2d.translation(-pole_of_innaccessibility2,copy=False)
+        
+        
+        # pole_of_innaccessibility1.plot(ax= ax2d, color = 'y')
+        # pole_of_innaccessibility2.plot(ax=ax2d, color = 'b')
+        def point_in_polygon(polygon):
+            barycenter= polygon.points[0]
+            for point in polygon.points[1:]:
+                barycenter += point
+            barycenter = barycenter / len(polygon.points)
+            intersetions1 = {}
+            linex_pos = volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.X2D*5)
+            linex_neg = volmdlr.edges.LineSegment2D(volmdlr.O2D, -volmdlr.X2D*5)
+            liney_pos = volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.Y2D*5)
+            liney_neg = volmdlr.edges.LineSegment2D(volmdlr.O2D, -volmdlr.Y2D*5)
+            for line in [linex_pos, linex_neg, liney_pos, liney_neg]:
+                intersections = []
+                for line_segment in polygon.line_segments:
+                    point_intersection = line_segment.linesegment_intersections(line)
+                    intersections.extend(point_intersection)
+                    if not point_intersection:
+                        if line.point_belongs(line_segment.start):
+                            intersections.append(line_segment.start)
+                        if line.point_belongs(line_segment.end):
+                            intersections.append(line_segment.start)
+                intersetions1[line] = intersections[:]
+            if not polygon.point_belongs(barycenter):
+                print('intersetions1.items() :', intersetions1.items())
+                for i, value in enumerate(intersetions1.values()):
+                    if not value:
+                        if i%2 == 0:
+                            if len(list(intersetions1.values())[i+1]) == 2:
+                                # vect1 = list(intersetions1.values())[i+1][0] - volmdlr.O2D
+                                # vect2 = list(intersetions1.values())[i+1][1] - volmdlr.O2D
+                                # if vect1.norm() > vect2.norm():
+                                #     vect = vect2
+                                # else:
+                                #     vect = vect1
+                                # translation1 = (list(intersetions1.values())[i+1][0] + list(intersetions1.values())[i+1][1])*0.5 - vect
+                                translation1 = (list(intersetions1.values())[i+1][0] + list(intersetions1.values())[i+1][1])*0.5 
+                                break
+                        if i%2 != 0:
+                            if len(list(intersetions1.values())[i-1]) == 2:
+                                # vect1 = list(intersetions1.values())[i+1][0] - volmdlr.O2D
+                                # vect2 = list(intersetions1.values())[i+1][1] - volmdlr.O2D
+                                # if vect1.norm() > vect2.norm():
+                                #     vect = vect2
+                                # else:
+                                #     vect = vect1
+                                # translation1 = (list(intersetions1.values())[i-1][0] + list(intersetions1.values())[i-1][1])*0.5 - vect
+                                translation1 = (list(intersetions1.values())[i-1][0] + list(intersetions1.values())[i-1][1])*0.5
+                                break
+            else:
+                x_mid_point = (list(intersetions1.values())[0][0] + list(intersetions1.values())[1][0])*0.5
+                print('x_mid_point :', x_mid_point)
+                print('barycenter :', barycenter)
+                if x_mid_point.point_distance(barycenter) > 2*1e-6:
+                    return x_mid_point
+                # if barycenter.point_distance(list(intersetions1.values())[0][0]) > 2*barycenter.point_distance(list(intersetions1.values())[1][0]) or\
+                #     2*barycenter.point_distance(list(intersetions1.values())[0][0]) < barycenter.point_distance(list(intersetions1.values())[1][0]):
+                #     return (list(intersetions1.values())[0][0] + list(intersetions1.values())[1][0])*0.5
+                return barycenter
+
+            return translation1
+        # new_barycenter1 = point_in_polygon(new_polygon1_2d)
+        # new_barycenter2 = point_in_polygon(new_polygon2_2d)
+        # new_polygon1_2d.translation(-new_barycenter1, False)
+        # new_polygon2_2d.translation(-new_barycenter2, False)
+        # new_barycenter1.translation(-new_barycenter1, False)
+        # new_barycenter2.translation(-new_barycenter2, False)
+
         ax2d= new_polygon1_2d.plot(color= 'r')
+        # new_barycenter1.plot(ax=ax2d, color = 'y')
         new_polygon2_2d.plot(ax=ax2d, color= 'g')
+        # new_barycenter2.plot(ax=ax2d, color = 'r')
         barycenter1_2d = new_polygon1_2d.points[0]
         for point in new_polygon1_2d.points[1:]:
             barycenter1_2d += point
-        barycenter1_2d = barycenter1_2d / len(new_polygon1_2d.points)
+        barycenter2_2d = barycenter1_2d / len(new_polygon1_2d.points)
         barycenter1_2d.plot(ax=ax2d, color = 'y')
         barycenter2_2d = new_polygon2_2d.points[0]
         for point in new_polygon2_2d.points[1:]:
             barycenter2_2d += point
         barycenter2_2d = barycenter2_2d / len(new_polygon2_2d.points)
         barycenter2_2d.plot(ax=ax2d, color = 'r')
-        
-
-        ax3d= new_polygon1.plot(color= 'r')
-        new_polygon2.plot(ax=ax3d, color= 'g')
-        volmdlr.Point3D(0,0, center1.z).plot(ax=ax3d)
-        volmdlr.Point3D(0,0, center2.z).plot(ax=ax3d, color = 'r')
+#         exit()
+#         # ax3d= new_polygon1.plot(color= 'r')
+#         # new_polygon2.plot(ax=ax3d, color= 'g')
+#         # volmdlr.Point3D(0,0, center1.z).plot(ax=ax3d)
+#         # volmdlr.Point3D(0,0, center2.z).plot(ax=ax3d, color = 'r')
 
         dict_closing_pairs = {}
         triangles = []
