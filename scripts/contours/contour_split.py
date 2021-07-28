@@ -46,3 +46,5 @@ split_contours2 = contour.cut_by_line(line2)
 for c in split_contours2:
     c.plot(ax=ax3, color='g')
 ax3.set_title('{} splitted contours'.format(len(split_contours2)))
+
+
