@@ -66,6 +66,25 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         return True
 
+    def random_point_inside(self):
+        '''
+             returns a random point inside surface2d. Considers if it has holes 
+        '''
+        valid_point = False
+        while not valid_point:
+            point_inside_outer_contour = self.outer_contour.random_point_inside()
+            inside_inner_contour = False
+            for inner_contour in self.inner_contours:
+                if inner_contour.point_belongs(point_inside_outer_contour):
+                    inside_inner_contour = True
+            if not inside_inner_contour:
+                valid_point = True
+
+        return point_inside_outer_contour
+
+
+
+
     def triangulation(self, min_x_density=None, min_y_density=None):
 
         if self.area() == 0.:
@@ -4478,7 +4497,7 @@ class ClosedShell3D(OpenShell3D):
             for new_face in list_faces:
                     points_inside = []
                     for i in range(5):
-                        points_inside.append(new_face.surface2d.outer_contour.random_point_inside())
+                        points_inside.append(new_face.surface2d.random_point_inside())
                     points_inside = [point for point in points_inside if point != None]
                     if not points_inside:
                         ax1 = face_contour2d.plot()
