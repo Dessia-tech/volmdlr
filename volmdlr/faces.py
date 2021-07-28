@@ -4399,27 +4399,6 @@ class ClosedShell3D(OpenShell3D):
                 intersecting_faces_shell2.append(face[1])
         return intersecting_faces_shell1, intersecting_faces_shell2
 
-    # def get_non_intersecting_faces(self, shell2, intersecting_faces):
-    #     '''
-    #         :param shell2: ClosedShell3D
-    #         :param intersecting_faces: 
-    #         returns a list of all the faces that never intersect any 
-    #         face of the other shell
-    #     '''
-    #     non_intersecting_faces = []
-    #     faces1 = []
-    #     faces2 = []
-
-    #     for face in self.faces:
-    #         if (face not in intersecting_faces) and (face not in non_intersecting_faces) and (not ClosedShell3D([face]).is_inside_shell(shell2, resolution=0.01)) :
-    #             non_intersecting_faces.append(face)
-                
-    #     for face in shell2.faces:
-    #         if (face not in intersecting_faces) and (face not in non_intersecting_faces) and (not ClosedShell3D([face]).is_inside_shell(self, resolution=0.01)):
-    #             non_intersecting_faces.append(face)
-
-    #     return non_intersecting_faces
-
     def get_non_intersecting_faces(self, shell2, intersecting_faces):
         '''
             :param shell2: ClosedShell3D
@@ -4514,12 +4493,6 @@ class ClosedShell3D(OpenShell3D):
             Given Two closed shells, it returns a new united ClosedShell3D object 
         '''
 
-        # if self.disjoint_shell(shell2):
-        #     return [self, shell2]
-        # if self.is_inside_shell(shell2, resolution = 0.01):
-        #     return [shell2]
-        # if shell2.is_inside_shell(self, resolution = 0.01):
-        #     return [self]
         validate_union_subtraction_operation = self.validate_union_subtraction_operation(shell2)
         if validate_union_subtraction_operation:
             return validate_union_subtraction_operation
