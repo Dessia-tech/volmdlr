@@ -480,6 +480,19 @@ class Contour():
                     contour.append(line)
                     edges.remove(line)
                     break
+                else:
+                    for point in points:
+                        if point.is_close(line.start, tol= 3e-6):
+                            line.start = point
+                            contour.append(line)
+                            edges.remove(line)
+                            break
+                        elif point.is_close(line.end, tol= 3e-6):
+                            line.end = point
+                            contour.append(line)
+                            edges.remove(line)
+                            break
+                    
             if len(edges) != 0 and len(edges) == len1:
                 contour_n = cls(contour[:])
                 contour_n.order_contour()
@@ -490,7 +503,6 @@ class Contour():
                 contour_n.order_contour()
                 list_contours.append(contour_n)
                 finished = True
-
         return list_contours
 
 class Contour2D(Contour, Wire2D):
@@ -1329,12 +1341,16 @@ class Contour2D(Contour, Wire2D):
                 finished = True
             counter += 1
             if counter >= 100:
-                axc = cutting_contour.plot()
+                axx  = cutting_contour.plot(color = 'g')
+                axc = cutting_contour.plot(color = 'r')
+                list_contour.remove(cutting_contour)
                 for ctr in list_contour:
                     ctr.plot(ax=axc, color = 'r')
                 base_contour.plot(ax=axc, color = 'b')
+                base_contour.plot(ax=axx)
                 for pt in cutting_points:
                     pt.plot(ax=axc)
+                # raise ValueError('There probably exists an open contour (two wires that could not be jointed), see graph generated')
                 finished = True
         if base_contour in list_contours:
             list_contours.remove(base_contour)

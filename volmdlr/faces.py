@@ -78,7 +78,6 @@ class Surface2D(volmdlr.core.Primitive2D):
         points = [vmd.Node2D(*p) for p in outer_polygon.points]
         vertices = [(p.x, p.y) for p in points]
         n = len(outer_polygon.points)
-        # print('len point of surface contour2d :', n)
         segments = [(i, i + 1) for i in range(n - 1)]
         segments.append((n - 1, 0))
         point_index = {p: i for i, p in enumerate(points)}
@@ -710,6 +709,7 @@ class Plane3D(Surface3D):
         """
         vector1 = point2 - point1
         vector2 = point3 - point1
+        
         vector1.normalize()
         vector2.normalize()
         normal = vector1.cross(vector2)
@@ -783,11 +783,9 @@ class Plane3D(Surface3D):
         u = linesegment.end - linesegment.start
         w = linesegment.start - self.frame.origin
         normaldotu = self.frame.w.dot(u)
-        # print('normaldotu: ', normaldotu)
         if math.isclose(normaldotu, 0, abs_tol=1e-08):
             return []
         intersection_abscissea = - self.frame.w.dot(w) / normaldotu
-        # print('intersection_abscissea :', intersection_abscissea)
         if intersection_abscissea < 0 or intersection_abscissea > 1:
             return []
         return [linesegment.start + intersection_abscissea * u]
@@ -2346,31 +2344,13 @@ class PlaneFace3D(Face3D):
         for edge2 in face2.outer_contour3d.primitives:
             intersection_points = self.edge_intersections(edge2)
             if intersection_points:
-                intersection_points = [volmdlr.Point3D(intersection_points[0].x, intersection_points[0].y, intersection_points[0].z)]
                 intersections.extend(intersection_points)
-
         for edge1 in self.outer_contour3d.primitives:
             intersection_points = face2.edge_intersections(edge1)
             if intersection_points:
-                intersection_points = [volmdlr.Point3D(intersection_points[0].x, intersection_points[0].y, intersection_points[0].z)]
                 intersections.extend(intersection_points)
-        # self_face_points = [point for prim in self.outer_contour3d.primitives for point in [prim.start, prim.end]]
         if intersections:
             primitive = volmdlr.edges.LineSegment3D(intersections[0], intersections[1])
-            # if intersections[0] in self_face_points and intersection_points[1] in self_face_points:
-            #     return []
-            # for prim in self.outer_contour3d.primitives:
-            #     if prim.point_belongs(intersections[0]) and prim.point_belongs(intersections[1]) and prim.direction_vector().is_colinear_to(primitive.direction_vector()):
-            #         print('line legth: ', prim.length())
-            #         print('line length with point 1 :', prim.start.point_distance(intersections[0]) + prim.end.point_distance(intersections[0]))
-            #         print('line length with point 2 :', prim.start.point_distance(intersections[1]) + prim.end.point_distance(intersections[1]))
-            #         print('primitive point distance 1 :', prim.point_distance(intersections[0]))
-            #         print('primitive point distance 2 :', prim.point_distance(intersections[1]))
-            #         return []
-        
-            
-            # if math.isclose(primitive.length(), 0, abs_tol=1e-6):
-            #     return []
             intersections = volmdlr.wires.Wire3D([primitive])
             return intersections
 
@@ -2403,6 +2383,63 @@ class PlaneFace3D(Face3D):
 
         else:
             return NotImplementedError
+        
+    def get_face_cutting_contours(self, dict_intersecting_combinations):
+        '''
+            :param face: A face object 
+            :param dict_intersecting_combinations: dictionary containing as keys the combination of intersecting faces 
+             and as the values the resulting primitive from the intersection of these two faces
+
+            return a list all contours cutting one particular face
+        '''
+        face_intersecting_primitives2d = []
+        for intersecting_combination in dict_intersecting_combinations.keys():
+            if self in intersecting_combination:
+                primitive2 = dict_intersecting_combinations[intersecting_combination].primitives[0]
+                primitive2_2d = volmdlr.edges.LineSegment2D(self.surface3d.point3d_to_2d(primitive2.start), self.surface3d.point3d_to_2d(primitive2.end))
+                face_intersecting_primitives2d.append(primitive2_2d)
+        
+        # new_contour = volmdlr.wires.Contour2D(face_intersecting_primitives2d[:])
+        list_cutting_contours = volmdlr.wires.Contour2D.contours_from_edges(face_intersecting_primitives2d[:])
+
+        return list_cutting_contours
+
+    def divide_face(self, list_cutting_contours, inter_points_contour):
+        '''
+            :param list_cutting_contours: list of contours cutting the face
+            :param inter_points_contour: when extracting a contour from another contour. It defines the extracted contour as being between the two points if True and outside these points if False
+            return a list new faces resulting from face division 
+        '''
+        list_faces = []
+        list_open_cutting_contours = []
+        list_closed_cutting_contours = []
+        for cutting_contour in list_cutting_contours:
+            if cutting_contour.primitives[0].start != cutting_contour.primitives[-1].end:
+                list_open_cutting_contours.append(cutting_contour)
+            else:
+                list_closed_cutting_contours.append(cutting_contour)
+        
+        if list_open_cutting_contours:
+            new_faces_contours = self.surface2d.outer_contour.divide(list_open_cutting_contours, inter_points_contour)
+            for contour in new_faces_contours:
+                list_faces.append(PlaneFace3D(self.surface3d, Surface2D(contour, [])))
+                    
+        if list_closed_cutting_contours:
+            new_contour = list_closed_cutting_contours[0]
+            if len(new_contour.primitives) >= 3 and new_contour.primitives[0].start == new_contour.primitives[-1].end:
+                surf3d = self.surface3d
+                surf2d = Surface2D(self.surface2d.outer_contour, [new_contour])
+                new_plane = PlaneFace3D(surf3d, surf2d)
+                list_faces.append(new_plane)
+                list_faces.append(PlaneFace3D(surf3d, Surface2D(new_contour, [])))
+            else:
+                surf3d = self.surface3d
+                surf2d = Surface2D(self.surface2d.outer_contour, [])
+                new_plane = PlaneFace3D(surf3d, surf2d)
+                list_faces.append(new_plane)
+
+        return list_faces
+
 
 class Triangle3D(PlaneFace3D):
     """
@@ -4310,49 +4347,120 @@ class ClosedShell3D(OpenShell3D):
                     return False
 
         return True
-    
-    def union(self, shell2):
-        faces = []
-        if not self.bounding_box.bbox_intersection(shell2.bounding_box):
-            return [self, shell2]
-        if self.is_inside_shell(shell2, resolution = 0.01):
-            return [shell2]
-        if shell2.is_inside_shell(self, resolution = 0.01):
-            return [self]
+    def disjoint_shell(self, shell2):
+        '''
+             verifies and rerturns a bool if two shells are disjointed or not. 
+        '''
+        disjoint = True
+        if self.bounding_box.bbox_intersection(shell2.bounding_box):
+            return False
+        return disjoint 
 
-            
+    def intersecting_faces_combinations(self, shell2):
+        '''
+            :param shell2: ClosedShell3D
+            for two closed shells, it calculates and return a list of face 
+            combinations (list = [(face_shell1, face_shell2),...])
+            for intersecting faces. if two faces can not be intersected, 
+            there is no combination for those
+        '''
         face_combinations = []
         for face1 in self.faces:
             for face2 in shell2.faces:
                 if volmdlr.faces.ClosedShell3D([face1]).bounding_box.bbox_intersection(volmdlr.faces.ClosedShell3D([face2]).bounding_box):
                     face_combinations.append((face1, face2))
 
+        return face_combinations
+
+    def dict_intersecting_combinations(self, intersecting_faces_combinations):
+        '''
+            :param intersecting_faces_combinations: list of face combinations (list = [(face_shell1, face_shell2),...]) for intersecting faces.
+            :type intersecting_faces_combinations: list of face objects combinaitons
+
+            returns a dictionary containing as keys the combination of intersecting faces
+            and as the values the resulting primitive from the two intersecting faces. 
+            It is done so it is not needed to calculate the same intersecting primitive twice. 
+        '''
         intersecting_combinations = {}
-        for k, combination in enumerate(face_combinations):
+        for k, combination in enumerate(intersecting_faces_combinations):
             face_intersection = combination[0].face_intersections(combination[1])
             if face_intersection:
                 intersecting_combinations[combination] = face_intersection
-                
-        #saving non intersecting faces
+
+        return intersecting_combinations
+
+    def get_intersecting_faces(self, dict_intersecting_combinations):
+        '''
+            :param dict_intersecting_combinations: dictionary containing as keys the combination of intersecting faces
+            and as the values the resulting primitive from the two intersecting faces
+    
+            returns a list containing all the faces that do intersect any face of the other shell.
+        '''
         intersecting_faces = []
-        for face in list(intersecting_combinations.keys()):
+        for face in list(dict_intersecting_combinations.keys()):
             if face[0] not in intersecting_faces:
                 intersecting_faces.append(face[0])
             if face[1] not in intersecting_faces:
                 intersecting_faces.append(face[1])
+        return intersecting_faces
+
+    def get_non_intersecting_faces(self, shell2, intersecting_faces):
+        '''
+            :param shell2: ClosedShell3D
+            :param intersecting_faces: 
+            returns a list of all the faces that never intersect any 
+            face of the other shell
+        '''
+        non_intersecting_faces = []
 
         for face in self.faces:
-            if (face not in intersecting_faces) and (face not in faces) and (not ClosedShell3D([face]).is_inside_shell(shell2, resolution=0.01)) :
-                faces.append(face)
+            if (face not in intersecting_faces) and (face not in non_intersecting_faces) and (not ClosedShell3D([face]).is_inside_shell(shell2, resolution=0.01)) :
+                non_intersecting_faces.append(face)
                 
         for face in shell2.faces:
-            if (face not in intersecting_faces) and (face not in faces) and (not ClosedShell3D([face]).is_inside_shell(self, resolution=0.01)):
-                faces.append(face)
-                
-        #treating intersecting faces
-        # intersecting_lines = list(intersecting_combinations.values())
-        # intersecting_contour = volmdlr.wires.Contour3D([wire.primitives[0] for wire in intersecting_lines])
-        
+            if (face not in intersecting_faces) and (face not in non_intersecting_faces) and (not ClosedShell3D([face]).is_inside_shell(self, resolution=0.01)):
+                non_intersecting_faces.append(face)
+
+        return non_intersecting_faces
+    
+    def two_shells_intersecting_contour(self, shell2, dict_intersecting_combinations=None):
+        '''
+            :param shell2: ClosedShell3D
+            :param dict_intersecting_combinations: dictionary containing as keys the combination of intersecting faces
+             and as the values the resulting primitive from the two intersecting faces
+
+            :returns: intersecting contour for two intersecting shells
+        '''
+        if dict_intersecting_combinations == None:
+            face_combinations = self.intersecting_faces_combinations(shell2)
+            dict_intersecting_combinations = self.dict_intersecting_combinations(face_combinations)
+        intersecting_lines = list(dict_intersecting_combinations.values())
+        intersecting_contour = volmdlr.wires.Contour3D([wire.primitives[0] for wire in intersecting_lines])
+        return intersecting_contour
+
+
+    def union(self, shell2):
+        '''
+            Given Two closed shells, it returns a new united ClosedShell3D object 
+        '''
+        faces = []
+        if self.disjoint_shell(shell2):
+            return [self, shell2]
+        if self.is_inside_shell(shell2, resolution = 0.01):
+            return [shell2]
+        if shell2.is_inside_shell(self, resolution = 0.01):
+            return [self]
+
+        face_combinations = self.intersecting_faces_combinations(shell2)
+
+        intersecting_combinations = self.dict_intersecting_combinations(face_combinations)
+
+        intersecting_faces = self.get_intersecting_faces(intersecting_combinations)
+
+        faces = self.get_non_intersecting_faces(shell2, intersecting_faces)
+
+        intersecting_contour = self.two_shells_intersecting_contour(shell2, intersecting_combinations)
+
         for k, face in enumerate(intersecting_faces):
             if face in shell2.faces:
                 inter_points_contour = True
@@ -4360,72 +4468,22 @@ class ClosedShell3D(OpenShell3D):
             else:
                 inter_points_contour = False
                 shell_2 = shell2
-            face_intersecting_primitives2d = []
             intersection_points = []
             face_contour2d = face.surface2d.outer_contour
             
-            for intersecting_combination in intersecting_combinations.keys():
-                if face in intersecting_combination:
-                    primitive2 = intersecting_combinations[intersecting_combination].primitives[0]
-                    primitive2_2d = volmdlr.edges.LineSegment2D(face.surface3d.point3d_to_2d(primitive2.start), face.surface3d.point3d_to_2d(primitive2.end))
-                    face_intersecting_primitives2d.append(primitive2_2d)
-            
-            new_contour = volmdlr.wires.Contour2D(face_intersecting_primitives2d[:])
-            list_cutting_contours = volmdlr.wires.Contour2D.contours_from_edges(face_intersecting_primitives2d[:])
+            list_cutting_contours = face.get_face_cutting_contours(intersecting_combinations)
 
-            # ax = face_contour2d.plot()
-            # print(face_contour2d)
-            # for prim in face_intersecting_primitives2d:
-            #     prim.plot(ax=ax, color = 'r')
-            #     print((prim.start, prim.end))
-            list_open_cutting_contours = []
-            list_closed_cutting_contours = []
-            for cutting_contour in list_cutting_contours:
-                if cutting_contour.primitives[0].start != cutting_contour.primitives[-1].end:
-                    # cutting_contour.primitives[0].start = cutting_contour.primitives[0].start.translation((cutting_contour.primitives[0].start - cutting_contour.primitives[0].end)*3)
-                    # cutting_contour.primitives[-1].end = cutting_contour.primitives[-1].end.translation((cutting_contour.primitives[-1].end - cutting_contour.primitives[-1].start)*3)
-                    list_open_cutting_contours.append(cutting_contour)
-                    # intersections = face_contour2d.contour_intersections(cutting_contour)
-                    # if intersections:
-                    #     for intersection in intersections:
-                    #         if intersection not in intersection_points:
-                    #             intersection_points.append(intersection)
-                else:
-                    list_closed_cutting_contours.append(cutting_contour)
+            list_faces = face.divide_face(list_cutting_contours, inter_points_contour)
 
-
-            if list_open_cutting_contours:
-                list_faces = []
-                
-                # new_list_cutting_contours = []
-                # for cut_contour in list_cutting_contours :
-                #     cut_pts = face_contour2d.contour_intersections(cut_contour)
-                #     if len(cut_pts)>= 2 :
-                #         new_list_cutting_contours.append(cut_contour)
-                        
-                #     else : 
-                #         print('distace start to face_contour2D :', face_contour2d.point_distance(cut_contour.primitives[0].start))
-                #         print('distace end to face_contour2D :', face_contour2d.point_distance(cut_contour.primitives[-1].end))
-                #         ax = face_contour2d.plot()
-                #         cut_contour.plot(ax=ax, color='g')
-                #         for pt in cut_pts : 
-                #             pt.plot(ax=ax, color='r')
-                        
-                
-                # if new_list_cutting_contours :
-                # new_faces_contours = face_contour2d.divide(list_cutting_contours, inter_points_contour)
-                new_faces_contours = face_contour2d.divide(list_open_cutting_contours, inter_points_contour)
-                for contour in new_faces_contours:
-                    list_faces.append(PlaneFace3D(face.surface3d, Surface2D(contour, [])))
-                        
-                for new_face in list_faces:
+            for new_face in list_faces:
                     points_inside = []
                     for i in range(5):
                         points_inside.append(new_face.surface2d.outer_contour.random_point_inside())
                     points_inside = [point for point in points_inside if point != None]
                     if not points_inside:
                         ax1 = face_contour2d.plot()
-                        print('bugging face :', face_contour2d)
+                        print('bugging face, maybe area is too small. No points have been found inside face. See graph generated :', face_contour2d)
+                        face_intersecting_primitives2d = [contour.primitives for contour in list_cutting_contours]
                         for prim in face_intersecting_primitives2d:
                             prim.plot(ax=ax1, color = 'r')
                             print((prim.start, prim.end))
@@ -4434,24 +4492,9 @@ class ClosedShell3D(OpenShell3D):
                         point = face.surface3d.point2d_to_3d(point)
                         if shell_2.point_belongs(point):
                             is_inside = True
-                    # point_inside_face = new_face.surface2d.outer_contour.random_point_inside()
-                    # point_inside_face = face.surface3d.point2d_to_3d(point_inside_face)
-                    # is_inside = shell_2.point_belongs(point_inside_face)
                     if not is_inside:
                         if new_face not in faces:
                             faces.append(new_face)
-            if list_closed_cutting_contours:
-                new_contour = list_closed_cutting_contours[0]
-                if len(new_contour.primitives) >= 3 and new_contour.primitives[0].start == new_contour.primitives[-1].end:
-                    surf3d = face.surface3d
-                    surf2d = Surface2D(face.surface2d.outer_contour, [new_contour])
-                    new_plane = PlaneFace3D(surf3d, surf2d)
-                    faces.append(new_plane)
-                else:
-                    surf3d = face.surface3d
-                    surf2d = Surface2D(face.surface2d.outer_contour, [])
-                    new_plane = PlaneFace3D(surf3d, surf2d)
-                    faces.append(new_plane)
 
 
         return [ClosedShell3D(faces)]
