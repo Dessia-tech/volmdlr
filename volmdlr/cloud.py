@@ -19,6 +19,8 @@ import volmdlr.stl as vmstl
 import volmdlr.edges as vme
 import dessia_common as dc
 
+import volmdlr.primitives3d as p3d
+
 class PointCloud3D(dc.DessiaObject):
     def __init__(self, points, name: str=''):
         self.points = points
@@ -127,6 +129,26 @@ class PointCloud3D(dc.DessiaObject):
             point.plot(ax = ax)
             
         return ax
+    
+    def extended_cloud(self, distance_extended : float): 
+        #it works id distance_extended >= 0
+        spheres, extended_points = [], []
+        for pt in self.points :
+            extended_zone = vm.p3d.Sphere(pt, distance_extended)
+            sphere_primitive = extended_zone.shell_faces[0]
+            
+            spheres.append(vmf.ClosedShell3D([sphere_primitive]))
+            
+            extended_points.extend(sphere_primitive.triangulation().points)
+            
+        for sphere in spheres:
+            clean_extended_zone = []
+            for point in extended_points :
+                if not sphere.point_belongs(point):
+                    clean_extended_zone.append(point)
+            extended_points = clean_extended_zone
+            
+        return extended_points
     
 class PointCloud2D(dc.DessiaObject):
     def __init__(self, points, name: str=''):
