@@ -8,8 +8,7 @@ import math
 import numpy as npy
 import scipy as scp
 
-from geomdl import utilities
-from geomdl import BSpline
+from geomdl import utilities, BSpline, fitting
 
 from geomdl.operations import length_curve, split_curve
 
@@ -553,6 +552,11 @@ class BSplineCurve2D(Edge):
 
         return [BSplineCurve2D.from_geomdl_curve(curve1),
                 BSplineCurve2D.from_geomdl_curve(curve2)]
+
+    @classmethod
+    def from_points_interpolation(cls, points, degree):
+        curve = fitting.interpolate_curve([(p.x, p.y) for p in points], degree)
+        return cls.from_geomdl_curve(curve)
 
     def straight_line_area(self):
         l = self.length()
@@ -2604,6 +2608,11 @@ class BSplineCurve3D(Edge):
             current_id, self.name,
             start_id, end_id, curve_id)
         return content, [current_id]
+
+    @classmethod
+    def from_points_interpolation(cls, points, degree):
+        curve = fitting.interpolate_curve([(p.x, p.y, p.z) for p in points], degree)
+        return cls.from_geomdl_curve(curve)
 
     def point_distance(self, pt1):
         distances = []
