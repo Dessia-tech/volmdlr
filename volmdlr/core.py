@@ -577,7 +577,7 @@ class BoundingBox(dc.DessiaObject):
         self.zmin = zmin
         self.zmax = zmax
         
-        self.center = (self.points[0] + self.points[-2]) / 2
+        self.center = volmdlr.Point3D(0.5*(xmin+xmax),0.5*(ymin+ymax),0.5*(zmin+zmax))
         self.name = name
 
     def __hash__(self):
@@ -635,7 +635,7 @@ class BoundingBox(dc.DessiaObject):
         ax.set_xlabel('X Label')
         ax.set_ylabel('Y Label')
         ax.set_zlabel('Z Label')
-        plt.show()
+        # plt.show()
         return ax
 
     @classmethod
@@ -666,9 +666,9 @@ class BoundingBox(dc.DessiaObject):
                 and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin)
 
     def is_inside_bbox(self, bbox2):
-        return (self.xmin > bbox2.xmin and self.xmax < bbox2.xmax \
-                and self.ymin > bbox2.ymin and self.ymax < bbox2.ymax \
-                and self.zmin > bbox2.zmin and self.zmax < bbox2.zmax)
+        return ((self.xmin >= bbox2.xmin - 1e-6) and (self.xmax <= bbox2.xmax + 1e-6)\
+                and (self.ymin >=bbox2.ymin - 1e-6) and (self.ymax <= bbox2.ymax + 1e-6) \
+                and (self.zmin >= bbox2.zmin - 1e-6) and (self.zmax <= bbox2.zmax + 1e-6))
 
     def intersection_volume(self, bbox2):
         if not self.bbox_intersection(bbox2):
