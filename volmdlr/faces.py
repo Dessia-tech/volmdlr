@@ -2537,8 +2537,11 @@ class Triangle3D(PlaneFace3D):
            
         semi_perimeter = (a + b + c)/2
         
+        try : 
         #Area with Heron's formula
-        area = math.sqrt(semi_perimeter*(semi_perimeter-a)*(semi_perimeter-b)*(semi_perimeter-c))
+            area = math.sqrt(semi_perimeter*(semi_perimeter-a)*(semi_perimeter-b)*(semi_perimeter-c))
+        except ValueError :
+            area = 0
         
         return area
     
