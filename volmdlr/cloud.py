@@ -20,6 +20,7 @@ import volmdlr.edges as vme
 import dessia_common as dc
 
 import volmdlr.primitives3d as p3d
+from typing import List
 
 class PointCloud3D(dc.DessiaObject):
     def __init__(self, points, name: str=''):
@@ -48,7 +49,7 @@ class PointCloud3D(dc.DessiaObject):
         return PointCloud3D(extracted_points)
         
     
-    def to_shell(self, resolution = 10, normal = None):
+    def to_shell(self, resolution: int = 10, normal = None, offset: float = 0):
         #normal has to be a fondamental vector : X3D, Y3D or Z3D
         bbox = self._bounding_box()
         xyz_bbox = [[bbox.xmin, bbox.xmax], [bbox.ymin,bbox.ymax], [bbox.zmin,bbox.zmax]]
@@ -76,6 +77,10 @@ class PointCloud3D(dc.DessiaObject):
         # print('subcloud2D CREATED')
         # print('CREATING POLYGONS')
         initial_polygon2d = [cloud2d.to_polygon() for cloud2d in subcloud2d]
+        
+        #Offsetting
+        if offset > 0 :
+            position_plane, initial_polygon2d = self.offset_to_shell(position_plane, initial_polygon2d, offset)
         
         areas = [0]*len(initial_polygon2d)
         for n, poly in enumerate(initial_polygon2d):
@@ -149,6 +154,27 @@ class PointCloud3D(dc.DessiaObject):
             extended_points = clean_extended_zone
             
         return extended_points
+    
+    def offset_to_shell(self, positions_plane: List[vmf.Plane3D], 
+                        polygons2D: List[vmw.ClosedPolygon2D], offset: float):
+        
+        origin_f, origin_l = positions_plane[0].frame.origin, positions_plane[-1].frame.origin
+        x,y,z = positions_plane[0].frame.u, positions_plane[0].frame.v, positions_plane[0].frame.w
+        dist_between_plane = (offset*2 + origin_f.point_distance(origin_l))/(len(positions_plane)-1)
+        
+        print('>>> initial', positions_plane)
+        
+        new_position_plane = [origin_f.dot(z) + n*dist_between_plane for n in range(len(positions_plane)-1)]
+        
+        print('>>> final', new_position_plane)
+        
+        new_poly = [poly.offset(offset) for poly in polygons2D]
+        
+        for poly1, poly2 in zip(polygons2D, new_poly):
+            ax = poly1.plot()
+            poly2.plot(ax=ax, color='r')
+        
+        return new_position_plane, new_poly
     
 class PointCloud2D(dc.DessiaObject):
     def __init__(self, points, name: str=''):
