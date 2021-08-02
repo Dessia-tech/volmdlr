@@ -1654,7 +1654,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
 
         offset_vectors = []
         offset_points = []
-
+        
         for i in range(nb):
 
             check = False
@@ -1677,9 +1677,21 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             alpha = math.acos(normal_vector1.dot(normal_vector2))
 
             offset_point = self.points[i] + offset / math.cos(alpha / 2) * \
-                           offset_vectors[i]
+                           (-offset_vectors[i])
+                           
+            # ax=self.plot()
+            # offset_point.plot(ax=ax, color='g')
+                           
+            # if self.point_belongs(offset_point):
+            #     offset_point = self.points[i] + offset / math.cos(alpha / 2) * \
+            #                    (-offset_vectors[i])
+            
             offset_points.append(offset_point)
-
+            
+           
+            # self.points[i].plot(ax=ax, color='b')
+            # offset_point.plot(ax=ax, color='r')
+            
         return self.__class__(offset_points)
 
     def point_border_distance(self, point, return_other_point=False):
