@@ -80,7 +80,7 @@ class PointCloud3D(dc.DessiaObject):
         initial_polygon2d = [cloud2d.to_polygon() for cloud2d in subcloud2d]
         
         #Offsetting
-        if offset > 0 :
+        if offset != 0 :
             position_plane, initial_polygon2d = self.offset_to_shell(position_plane, initial_polygon2d, offset)
         
         areas = [0]*len(initial_polygon2d)
@@ -170,12 +170,16 @@ class PointCloud3D(dc.DessiaObject):
         origin_f, origin_l = positions_plane[0], positions_plane[-1]
         dist_between_plane = (offset*2 + origin_l-origin_f)/(len(positions_plane)-1)
         
-        new_position_plane = [(origin_f-offset) + \
-                              n*dist_between_plane for n in range(len(positions_plane))]
+        # new_position_plane = [(origin_f-offset) + \
+                              # n*dist_between_plane for n in range(len(positions_plane))]
         
-        new_poly = [polygons2D[0]] + \
-            [poly.offset(offset) for poly in polygons2D[1:-1]] + [polygons2D[-1]]
+        new_position_plane = [origin_f-offset] + positions_plane[1:-1] + [origin_l+offset]
+        
+        # new_poly = [polygons2D[0]] + \
+        #     [poly.offset(offset) for poly in polygons2D[1:-1]] + [polygons2D[-1]]
             
+        new_poly = [poly.offset(offset) for poly in polygons2D]
+        
         return new_position_plane, new_poly
     
 class PointCloud2D(dc.DessiaObject):

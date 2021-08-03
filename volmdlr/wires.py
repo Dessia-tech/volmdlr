@@ -1661,7 +1661,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             ni = vectors[2 * i - 1] + vectors[2 * i]
             if ni == volmdlr.Vector2D(0, 0):
                 ni = vectors[2 * i]
-                ni = ni.normalVector()
+                ni = ni.normal_vector()
                 offset_vectors.append(ni)
             else:
                 ni.normalize()
