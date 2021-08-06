@@ -4364,8 +4364,9 @@ class ClosedShell3D(OpenShell3D):
 
 
         return face_combinations
-
-    def dict_intersecting_combinations(self, intersecting_faces_combinations):
+    
+    @staticmethod
+    def dict_intersecting_combinations(intersecting_faces_combinations):
         '''
             :param intersecting_faces_combinations: list of face combinations (list = [(face_shell1, face_shell2),...]) for intersecting faces.
             :type intersecting_faces_combinations: list of face objects combinaitons
@@ -4381,8 +4382,9 @@ class ClosedShell3D(OpenShell3D):
                 intersecting_combinations[combination] = face_intersection
 
         return intersecting_combinations
-
-    def get_intersecting_faces(self, dict_intersecting_combinations):
+    
+    @staticmethod
+    def get_intersecting_faces(dict_intersecting_combinations):
         '''
             :param dict_intersecting_combinations: dictionary containing as keys the combination of intersecting faces
             and as the values the resulting primitive from the two intersecting faces
