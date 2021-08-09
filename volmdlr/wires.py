@@ -1145,9 +1145,10 @@ class ClosedPolygon():
 
     
 class ClosedPolygon2D(Contour2D, ClosedPolygon):
-    _non_serializable_attributes = ['line_segments']
+    _non_serializable_attributes = ['line_segments', 'primitives',
+                                    'basis_primitives']
 
-    def __init__(self, points: List[volmdlr.Point2D], name=''):
+    def __init__(self, points: List[volmdlr.Point2D], name: str = ''):
         self.points = points
         self.line_segments = self._line_segments()
 
