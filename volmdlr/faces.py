@@ -748,14 +748,14 @@ class Plane3D(Surface3D):
             for index in indexes_to_del[::-1]:
                 del points[index + 1]
 
-            origin = volmdlr.Point3D(points[0].vector)
-            vector1 = volmdlr.Vector3D(points[1] - origin)
+            origin = points[0]
+            vector1 = points[1] - origin
             vector1.normalize()
-            vector2_min = volmdlr.Vector3D(points[2] - origin)
+            vector2_min = points[2] - origin
             vector2_min.normalize()
             dot_min = abs(vector1.dot(vector2_min))
             for point in points[3:]:
-                vector2 = volmdlr.Vector3D(point - origin)
+                vector2 = point - origin
                 vector2.normalize()
                 dot = abs(vector1.dot(vector2))
                 if dot < dot_min:
@@ -1709,9 +1709,8 @@ class BSplineSurface3D(Surface3D):
 
     def linesegment2d_to_3d(self, linesegment2d):
         # TODO: this is a non exact method!
-        l = linesegment2d.length()
-        points = [self.point2d_to_3d(linesegment2d.point_at_abscissa(i / l / 10.)) for i in range(11)]
-
+        l = linesegment2d.length()        
+        points = [self.point2d_to_3d(linesegment2d.point_at_abscissa(i * l/ 10.)) for i in range(11)]
         return [vme.LineSegment3D(p1, p2) \
                 for p1, p2 in zip(points[:-1], points[1:])]
 
@@ -2484,6 +2483,66 @@ class Triangle3D(PlaneFace3D):
                                   vmd.Node3D.from_point(self.point2),
                                   vmd.Node3D.from_point(self.point3)],
                                  [(0, 1, 2)])
+    
+    def translation(self, offset, copy=True):
+        new_point1 = self.point1.translation(offset, True)
+        new_point2 = self.point2.translation(offset, True)
+        new_point3 = self.point3.translation(offset, True)
+        
+        new_triangle = Triangle3D(new_point1, new_point2, new_point3,
+                                  self.alpha, self.color, self.name)
+        if copy:
+            return new_triangle
+        else:
+            self.point1 = new_point1
+            self.point2 = new_point2
+            self.point3 = new_point3
+            
+    def rotation(self, center, axis, angle, copy=True):
+        new_point1 = self.point1.rotation(center, axis, angle, copy=True)
+        new_point2 = self.point2.rotation(center, axis, angle, copy=True)
+        new_point3 = self.point3.rotation(center, axis, angle, copy=True)
+
+        new_triangle = Triangle3D(new_point1, new_point2, new_point3,
+                                  self.alpha, self.color, self.name)
+        if copy:
+            return new_triangle
+        else:
+            self.point1 = new_point1
+            self.point2 = new_point2
+            self.point3 = new_point3
+            
+    def subdescription(self, resolution = 0.01) :
+        frame = self.surface3d.frame
+        pts2d = [pt.to_2d(frame.origin, frame.u, frame.v) for pt in self.points]
+        t_poly2d = volmdlr.wires.ClosedPolygon2D(pts2d)
+        
+        xmin, xmax = min(pt.x for pt in pts2d), max(pt.x for pt in pts2d)
+        ymin, ymax = min(pt.y for pt in pts2d), max(pt.y for pt in pts2d)
+        
+        nx, ny = int(((xmax-xmin)/resolution)+2), int(((ymax-ymin)/resolution)+2)
+        points_box = []
+        for i in range(nx) :
+            x = xmin + i*resolution
+            if x > xmax :
+                x=xmax
+            if x == xmin :
+                x = xmin + 0.01*resolution
+            for j in range(ny) :
+                y = ymin + j*resolution
+                if y > ymax :
+                    y=ymax
+                if y == ymin : 
+                    y = ymin + 0.01*resolution
+                points_box.append(volmdlr.Point2D(x,y))
+        
+        points = self.points
+        for pt in points_box :
+            if t_poly2d.point_belongs(pt):
+                points.append(pt.to_3d(frame.origin, frame.u, frame.v))
+        
+        return points
+        
 
 class CylindricalFace3D(Face3D):
     """
@@ -2519,27 +2578,6 @@ class CylindricalFace3D(Face3D):
     def _bounding_box(self):
         theta_min, theta_max, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle()
 
-        # xp = (volmdlr.X3D.dot(self.surface3d.frame.u) * self.surface3d.frame.u
-        #       + volmdlr.X3D.dot(
-        #             self.surface3d.frame.v) * self.surface3d.frame.v)
-        # xp_norm = xp.norm()
-        # if xp_norm != 0:
-        #     xp = xp / xp_norm
-
-        # yp = (volmdlr.Y3D.dot(self.surface3d.frame.u) * self.surface3d.frame.u
-        #       + volmdlr.Y3D.dot(
-        #             self.surface3d.frame.v) * self.surface3d.frame.v)
-        # yp_norm = yp.norm()
-        # if yp_norm != 0:
-        #     yp = yp / yp_norm
-
-        # zp = (volmdlr.Z3D.dot(self.surface3d.frame.u) * self.surface3d.frame.u
-        #       + volmdlr.Z3D.dot(
-        #             self.surface3d.frame.v) * self.surface3d.frame.v)
-        # zp_norm = zp.norm()
-        # if zp_norm != 0:
-        #     zp = zp / zp_norm
-
         lower_center = self.surface3d.frame.origin + zmin * self.surface3d.frame.w
         upper_center = self.surface3d.frame.origin + zmax * self.surface3d.frame.w
 
@@ -2570,14 +2608,6 @@ class CylindricalFace3D(Face3D):
                   (upper_center
                    + xmax * self.surface3d.radius * self.surface3d.frame.u
                    + ymax * self.surface3d.radius * self.surface3d.frame.v)]
-
-
-        # ax = self.plot()
-        # lower_center.plot(ax=ax, color='g')
-        # upper_center.plot(ax=ax, color='b')
-        # for p in points:
-        #     p.plot(ax=ax, color='r')
-        # volmdlr.core.BoundingBox.from_points(points).plot(ax=ax)
         
         return volmdlr.core.BoundingBox.from_points(points)
 

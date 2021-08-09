@@ -8,8 +8,7 @@ import math
 import numpy as npy
 import scipy as scp
 
-from geomdl import utilities
-from geomdl import BSpline
+from geomdl import utilities, BSpline, fitting
 
 from geomdl.operations import length_curve, split_curve
 
@@ -518,8 +517,6 @@ class BSplineCurve2D(Edge):
     def length(self):
         return length_curve(self.curve)
 
-    def straight_line_area(self):
-        return 0.
 
     def point_at_abscissa(self, curvilinear_abscissa):
         l = self.length()
@@ -555,6 +552,11 @@ class BSplineCurve2D(Edge):
 
         return [BSplineCurve2D.from_geomdl_curve(curve1),
                 BSplineCurve2D.from_geomdl_curve(curve2)]
+
+    @classmethod
+    def from_points_interpolation(cls, points, degree):
+        curve = fitting.interpolate_curve([(p.x, p.y) for p in points], degree)
+        return cls.from_geomdl_curve(curve)
 
     def straight_line_area(self):
         l = self.length()
@@ -2477,7 +2479,7 @@ class BSplineCurve3D(Edge):
         for i, knot in enumerate(knots):
             knot_vector.extend([knot] * knot_multiplicities[i])
         curve.knotvector = knot_vector
-        curve.delta = 0.1
+        curve.delta = 0.01
         curve_points = curve.evalpts
 
         self.curve = curve
@@ -2607,6 +2609,11 @@ class BSplineCurve3D(Edge):
             start_id, end_id, curve_id)
         return content, [current_id]
 
+    @classmethod
+    def from_points_interpolation(cls, points, degree):
+        curve = fitting.interpolate_curve([(p.x, p.y, p.z) for p in points], degree)
+        return cls.from_geomdl_curve(curve)
+
     def point_distance(self, pt1):
         distances = []
         for point in self.points:
@@ -2668,8 +2675,7 @@ class BSplineCurve3D(Edge):
 
     def polygon_points(self):
         return self.points
-
-
+    
 class BezierCurve3D(BSplineCurve3D):
 
     def __init__(self, degree: int, control_points: List[volmdlr.Point3D],
