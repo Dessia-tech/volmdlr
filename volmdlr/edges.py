@@ -2684,6 +2684,19 @@ class BSplineCurve3D(Edge):
     
     def unit_normal_vector(self, abscissa):
         return None
+    
+    def minimum_curvature_radius(self, nb_eval: int = 21):
+        curve = self.curve
+        check = [i/(nb_eval-1) for i in range(nb_eval)]
+        
+        radius = []
+        for u in check :
+            ders = curve.derivatives(u,3) #3 first derivative
+            c1, c2 = volmdlr.Point3D(*ders[1]), volmdlr.Point3D(*ders[2])
+            denom = c1.cross(c2)
+            r_c = ((c1.norm())**3)/denom.norm()
+            radius.append(r_c)
+        return radius
 
 class BezierCurve3D(BSplineCurve3D):
 
