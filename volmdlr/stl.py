@@ -189,7 +189,9 @@ class Stl(dc.DessiaObject):
         points2 = [t.point2 for t in self.triangles]
         points3 = [t.point3 for t in self.triangles]
         
-        return list(set(points1 + points2 + points3))
+        valid_points = vm.Vector3D.remove_duplicate(points1 + points2 + points3)
+        return valid_points
+    
     def extract_points_BIS(self, min_distance:float = 0.001):
         points = []
         for i, t in enumerate(self.triangles):
