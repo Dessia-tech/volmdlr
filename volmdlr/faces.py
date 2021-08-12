@@ -1829,7 +1829,6 @@ class BSplineSurface3D(Surface3D):
     @classmethod
     def from_step(cls, arguments, object_dict):
         name = arguments[0][1:-1]
-
         degree_u = int(arguments[1])
         degree_v = int(arguments[2])
         points_sets = arguments[3][1:-1].split("),")
