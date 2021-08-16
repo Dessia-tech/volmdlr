@@ -135,10 +135,23 @@ class PointCloud3D(dc.DessiaObject):
 
         '''
         if alpha == None:
-            if len(self.points)<10000:
+            if len(self.points) < 10000:
                 alpha = 0.035
-            else:
+                if number_point_samples == None:
+                    number_point_samples = 100
+            elif len(self.points) < 100000:
+                alpha = 0.08
+                if number_point_samples == None:
+                    number_point_samples = 300
+            elif len(self.points) < 500000:
                 alpha = 0.2
+                if number_point_samples == None:
+                    number_point_samples = 3000
+            else:
+                alpha = 0.5
+                if number_point_samples == None:
+                    number_point_samples = 10000
+                
         points = [[p.x, p.y, p.z] for p in self.points]
         array = npy.array(points)
         points = open3d.cpu.pybind.utility.Vector3dVector(array)

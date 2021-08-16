@@ -39,29 +39,23 @@ for stl_file in [
     # print()
     
     stl = vmstl.Stl.from_file(stl_file)
+    stl.get_normals()
     # shell = stl.to_closed_shell()
     # shell.babylonjs()
     # shells.append(shell)
     # stl.extract_points()
 
-    # cloud = volmdlr.cloud.PointCloud3D.from_stl(path + "/" + stl_file)
-    # cloud_faces = cloud.subdescription_2d()
-    # cloud_faces.babylonjs()
-    # list_points = vmstl.Stl.from_file_points(stl_file)
-    list_points = stl.extract_points_BIS()
-    pointcloud3d = volmdlr.cloud.PointCloud3D(list_points)
-    shell = pointcloud3d.to_shell(resolution=10)
-    # shell.color = (1, 0.1, 0.1)
-    # shell.alpha = 0.6
-    # volum = volmdlr.core.VolumeModel([shell])
-    # volum.babylonjs()
-    # pointcloud3d.plot()
-    # print('pointcloud3d :', pointcloud3d)
-    # polygons2d = pointcloud3d.to_shell()
-    # pointcloud3d.plot()
-    shells.append(shell)
+#     # cloud = volmdlr.cloud.PointCloud3D.from_stl(path + "/" + stl_file)
+#     # cloud_faces = cloud.subdescription_2d()
+#     # cloud_faces.babylonjs()
+#     # list_points = vmstl.Stl.from_file_points(stl_file)
+#     list_points = stl.extract_points_BIS()
+#     pointcloud3d = volmdlr.cloud.PointCloud3D(list_points)
+#     # polygons2d = pointcloud3d.to_shell()
+#     # pointcloud3d.plot()
+#     shells.append(pointcloud3d.to_shell(resolution=20))
 
     
-volum = volmdlr.core.VolumeModel(shells)
-volum.babylonjs()
-        
+# volum = volmdlr.core.VolumeModel(shells)
+# volum.babylonjs()
+
