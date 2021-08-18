@@ -383,7 +383,7 @@ class Contour2D(Contour, Wire2D):
                                     'primitive_to_index',
                                     'basis_primitives', '_utd_analysis']
 
-    def __init__(self, primitives, name=''):
+    def __init__(self, primitives, name: str = ''):
         Wire2D.__init__(self, primitives, name)
         self._utd_edge_polygon = False
 
