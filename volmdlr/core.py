@@ -355,6 +355,7 @@ class CompositePrimitive(dc.DessiaObject):
         self.name = name
 
         dc.DessiaObject.__init__(self, name=name)
+        
     def primitive_to_index(self, primitive):
         if not self._utd_primitives_to_index:
             self._primitives_to_index = {p: ip for ip, p in enumerate(self.primitives)}
@@ -486,9 +487,14 @@ class Primitive3D(CompositePrimitive):
 
     def volmdlr_primitives(self):
         return [self]
+    
+    def triangulation(self):
+        return None
 
     def babylon_meshes(self):
         mesh = self.triangulation()
+        if mesh == None:
+            return []
         positions, indices = mesh.to_babylon()
 
         babylon_mesh = {'positions': positions,
@@ -503,8 +509,13 @@ class Primitive3D(CompositePrimitive):
             babylon_mesh['color'] = list(self.color)
 
         return [babylon_mesh]
-
-
+   
+    def babylon_lines(self):
+        points = [[self.primitives[0].start.x, self.primitives[0].start.y, self.primitives[0].start.z], [self.primitives[0].end.x, self.primitives[0].end.y, self.primitives[0].end.z]]
+        points += [[line.end.x,line.end.y,line.end.z] for line in self.primitives[1:]]
+        babylon_lines = {'points': points,
+                          'name': self.name}
+        return [babylon_lines]
 
 class CompositePrimitive3D(Primitive3D):
     _standalone_in_db = True
@@ -1426,18 +1437,24 @@ class VolumeModel(dc.DessiaObject):
 
     def babylon_data(self):
         meshes = []
+        lines = []
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
                 meshes.extend(primitive.babylon_meshes())
+            if hasattr(primitive, 'babylon_lines'):
+                lines.extend(primitive.babylon_lines())
         bbox = self._bounding_box()
         center = bbox.center
+        # print('primtives :', self.primitives)
         max_length = max([bbox.xmax - bbox.xmin,
                           bbox.ymax - bbox.ymin,
                           bbox.zmax - bbox.zmin])
-
+        
         babylon_data = {'meshes': meshes,
+                        'lines': lines,
                         'max_length': max_length,
                         'center': list(center)}
+        
         return babylon_data
 
     @classmethod

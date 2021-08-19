@@ -336,6 +336,8 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
         for primitive in self.primitives:
             faces.extend(primitive.extrusion(extrusion_vector))
         return faces
+    
+    
 
     # def copy(self):
     #     primitives_copy = []
@@ -2316,6 +2318,8 @@ class Contour3D(Contour, Wire3D):
         points = [self.point_at_abscissa(i / n * l) \
                   for i in range(n)]
         return volmdlr.core.BoundingBox.from_points(points)
+    
+   
 
 class Circle3D(Contour3D):
     _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']
