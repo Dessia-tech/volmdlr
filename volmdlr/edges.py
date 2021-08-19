@@ -8,7 +8,7 @@ import math
 import numpy as npy
 import scipy as scp
 
-from geomdl import utilities, BSpline, fitting
+from geomdl import utilities, BSpline, fitting, operations
 
 from geomdl.operations import length_curve, split_curve
 
@@ -2504,7 +2504,22 @@ class BSplineCurve3D(Edge):
         #     length += (self.points[k] - self.points[k + 1]).norm()
         # return length
         return length_curve(self.curve)
-
+    
+    def normal(self, position:float = 0.0):
+        point, normal = operations.normal(self.curve, position, normalize=True)
+        normal = volmdlr.Point3D(normal[0], normal[1], normal[2])
+        return normal
+    
+    def tangent(self, position:float = 0.0):
+        point, tangent = operations.tangent(self.curve, position, normalize=True)
+        tangent = volmdlr.Point3D(tangent[0], tangent[1], tangent[2])
+        return tangent
+    
+    def binormal(self, position:float = 0.0):
+        point, binormal = operations.binormal(self.curve, position, normalize=True)
+        binormal = volmdlr.Point3D(binormal[0], binormal[1], binormal[2])
+        return binormal
+    
     def point_at_abscissa(self, curvilinear_abscissa):
         unit_abscissa = curvilinear_abscissa / self.length()
         return volmdlr.Point3D(*self.curve.evaluate_single(unit_abscissa))
