@@ -2448,7 +2448,7 @@ class LineSegment3D(LineSegment):
         return content, [current_id]
 
 
-class BSplineCurve3D(Edge):
+class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
     _non_serializable_attributes = ['curve']
 
     def __init__(self, degree, control_points, knot_multiplicities, knots,
@@ -2675,6 +2675,11 @@ class BSplineCurve3D(Edge):
 
     def polygon_points(self):
         return self.points
+    
+    def babylon_curves(self):
+        points = self.babylon_points()
+        babylon_curves = self.babylon_lines(points)[0]
+        return babylon_curves
     
 class BezierCurve3D(BSplineCurve3D):
 
