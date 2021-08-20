@@ -2676,10 +2676,10 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
     def polygon_points(self):
         return self.points
     
-    def babylon_curves(self):
-        points = self.babylon_points()
-        babylon_curves = self.babylon_lines(points)[0]
-        return babylon_curves
+    # def babylon_curves(self):
+    #     points = self.babylon_points()
+    #     babylon_curves = self.babylon_lines(points)[0]
+    #     return babylon_curves
     
 class BezierCurve3D(BSplineCurve3D):
 

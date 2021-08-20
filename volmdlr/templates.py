@@ -218,7 +218,9 @@ babylon_unpacker_body_template = Template(
                     updatable: true
                     }
                 let lines = BABYLON.MeshBuilder.CreateLines("lines", options, scene);
-                lines.color = new BABYLON.Color3(0, 0, 0.6);
+                lines.color = new BABYLON.Color3(line_data['color'][0],
+                                                        line_data['color'][1],
+                                                        line_data['color'][2])
                 list_lines.push(lines)
                 }
         
