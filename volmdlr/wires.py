@@ -791,7 +791,7 @@ class Contour2D(Contour, Wire2D):
                 new_contour_to_cut.extend(cs)
             contour_to_cut.extend(new_contour_to_cut)
 
-        p1 = volmdlr.wires.Contour2D(lines).center_of_mass()
+        p1 = Contour2D(lines).center_of_mass()
         dist_min = math.inf
         for c in contour_to_cut:
             if c.area() > 1e-10:
@@ -1307,7 +1307,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             for p in self.points:
                 p.translation(offset, copy=False)
 
-    def polygon_distance(self, polygon: volmdlr.wires.ClosedPolygon2D):
+    def polygon_distance(self,
+                         polygon: 'volmdlr.wires.ClosedPolygon2D'):
         p = self.points[0]
         d = []
         for point in polygon.points:
@@ -1977,7 +1978,7 @@ class Circle2D(Contour2D):
         else:
             return []
 
-    def circle_intersections(self, circle: volmdlr.wires.Circle2D):
+    def circle_intersections(self, circle: 'volmdlr.wires.Circle2D'):
         x0, y0 = self.center
         x1, y1 = circle.center
         r0 = self.radius
