@@ -32,8 +32,8 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
     def __init__(self, points: List[volmdlr.Point3D], radius: Dict[str, float],
                  adapt_radius: bool = False, name: str = ''):
         primitives = volmdlr.primitives.RoundedLineSegments.__init__(
-            self, points, radius, 'volmdlr.edges.LineSegment3D',
-            'volmdlr.edges.Arc3D', closed=False, adapt_radius=adapt_radius,
+            self, points, radius, volmdlr.edges.LineSegment3D,
+            volmdlr.edges.Arc3D, closed=False, adapt_radius=adapt_radius,
             name='')
 
         volmdlr.wires.Wire3D.__init__(self, primitives, name)
