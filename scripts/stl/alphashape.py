@@ -32,7 +32,19 @@ for stl_file in os.listdir(stl_path):
             list_points = stl.extract_points()
             print("list_points :", len(list_points))
             pointcloud3d = volmdlr.cloud.PointCloud3D(list_points)
-            shell = pointcloud3d.alpha_shape()
+            if len(list_points) < 10000:
+                alpha = 0.035
+                number_point_samples = 100
+            elif len(list_points) < 100000:
+                alpha = 0.08
+                number_point_samples = 300
+            elif len(list_points) < 500000:
+                alpha = 0.2
+                number_point_samples = 3000
+            else:
+                alpha = 0.5
+                number_point_samples = 10000
+            shell = pointcloud3d.alpha_shape(alpha, number_point_samples)
             shell.color = (1, 0.1, 0.1)
             shell.alpha = 0.6
             volum = volmdlr.core.VolumeModel([shell])
@@ -42,13 +54,3 @@ for stl_file in os.listdir(stl_path):
     
 volum = volmdlr.core.VolumeModel(shells)
 volum.babylonjs()
-        
-# stl = volmdlr.stl.Stl.from_file('HR18 FDU PIECE TOURNANTE.stl')
-# stl.name = 'HR18 FDU PIECE TOURNANTE.stl'
-# list_points = stl.extract_points()
-# # list_points = stl.extract_points_BIS()
-# point_cloud = volmdlr.cloud.PointCloud3D(list_points)
-# shell = point_cloud.alpha_shape(alpha = 0.08, number_point_samples= 200)
-# shell.color = (1, 0.1, 0.1)
-# shell.alpha = 0.6
-# volmdlr.core.VolumeModel([shell]).babylonjs()

@@ -117,7 +117,7 @@ class PointCloud3D(dc.DessiaObject):
                     faces.append(vmf.Triangle3D(*trio))
         return vmf.ClosedShell3D(faces)
     
-    def alpha_shape(self, alpha=None, number_point_samples=None):
+    def alpha_shape(self, alpha:float, number_point_samples:int):
         '''
         Parameters
         ----------
@@ -134,23 +134,6 @@ class PointCloud3D(dc.DessiaObject):
         Returns a ClosedShell3D object
 
         '''
-        if alpha == None:
-            if len(self.points) < 10000:
-                alpha = 0.035
-                if number_point_samples == None:
-                    number_point_samples = 100
-            elif len(self.points) < 100000:
-                alpha = 0.08
-                if number_point_samples == None:
-                    number_point_samples = 300
-            elif len(self.points) < 500000:
-                alpha = 0.2
-                if number_point_samples == None:
-                    number_point_samples = 3000
-            else:
-                alpha = 0.5
-                if number_point_samples == None:
-                    number_point_samples = 10000
                 
         points = [[p.x, p.y, p.z] for p in self.points]
         array = npy.array(points)
