@@ -2690,8 +2690,12 @@ class BSplineCurve3D(Edge):
         curve = self.curve
         ders = curve.derivatives(u,3) #3 first derivative
         c1, c2 = volmdlr.Point3D(*ders[1]), volmdlr.Point3D(*ders[2])
+        if c2 == volmdlr.O3D:
+            return 1e6
         denom = c1.cross(c2)
+        
         r_c = ((c1.norm())**3)/denom.norm()
+        
         return r_c
     
     def minimum_curvature_radius(self, nb_eval: int = 21):
