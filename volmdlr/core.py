@@ -1454,7 +1454,6 @@ class VolumeModel(dc.DessiaObject):
     def babylon_data(self):
         meshes = []
         lines = []
-        curves = []
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
                 meshes.extend(primitive.babylon_meshes())
@@ -1464,14 +1463,12 @@ class VolumeModel(dc.DessiaObject):
                 lines.append(primitive.babylon_curves())
         bbox = self._bounding_box()
         center = bbox.center
-        # print('primtives :', self.primitives)
         max_length = max([bbox.xmax - bbox.xmin,
                           bbox.ymax - bbox.ymin,
                           bbox.zmax - bbox.zmin])
-        print('curves:', curves)
+        
         babylon_data = {'meshes': meshes,
                         'lines': lines,
-                        'curves': curves,
                         'max_length': max_length,
                         'center': list(center)}
         

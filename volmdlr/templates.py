@@ -224,22 +224,6 @@ babylon_unpacker_body_template = Template(
                 list_lines.push(lines)
                 }
         
-        
-        var list_curves = [];
-        for (let curve_data of babylon_data['curves']){
-                var path = [];
-                for (let point of curve_data['points']){
-                        var x = point[0];
-                        var y = point[1];
-                        var z = point[2];
-                        path.push(new BABYLON.Vector3(x, y, z));
-                        }
-                var curve = new BABYLON.Curve3(path)
-                curve = new BABYLON.Mesh.CreateLines("curves", curve.getPoints(), scene)
-                list_curves.push(curve)
-                }
-                
-        
 
         if (babylon_data['steps']){
           
