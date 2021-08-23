@@ -16,7 +16,7 @@ import volmdlr.edges as vme
 import math
 import volmdlr.step as vm_step
 
-# """########################################### UNION 1 #################################### """
+"""########################################### UNION 1 #################################### """
 # resolution = 0.0010
 
 # box = primitives3D.Block(
@@ -45,21 +45,23 @@ import volmdlr.step as vm_step
 # box_blue.name = 'box_blue'
 
 
-# new_box =box_red.union(box_blue)
+# # new_box =box_red.union(box_blue)
+# new_box =box_red.subtract(box_blue)
 # for shell in new_box:
 #     shell.color = (1, 0.1, 0.1)
 #     shell.alpha = 0.6
 # vm.core.VolumeModel(new_box).babylonjs()
 
 # box_blue = box_blue.translation(vm.Point3D(0,0,0.1))
-# new_box = box_red.union(box_blue)
+# # new_box = box_red.union(box_blue)
+# new_box =box_red.subtract(box_blue)
 # for shell in new_box:
 #     shell.color = (1, 0.1, 0.1)
 #     shell.alpha = 0.6
 # vm.core.VolumeModel(new_box).babylonjs()
 
 
-# """########################################### UNION 2 #################################### """
+"""########################################### UNION 2 #################################### """
 
 
 
@@ -114,21 +116,22 @@ import volmdlr.step as vm_step
 
 
 # shell2 = vmf.ClosedShell3D(faces_2)
-# new_box = shell1.union(shell2)
+# # new_box = shell1.union(shell2)
+# new_box = shell1.subtract(shell2)
 # for shell in new_box:
 #     shell.color = (1, 0.1, 0.1)
 #     shell.alpha = 0.6
 # vm.core.VolumeModel(new_box).babylonjs()
 
-"""# =============================================================================
-# USECASE 3
-# =============================================================================
+# """# =============================================================================
+# # USECASE 3
+# # =============================================================================
 
-# Union between shell1 and shell2
-# Union between shell1 and shell3
-# Union between shell2 and shell3
-# Union between shell1, shell2 and shell3
-"""
+# # Union between shell1 and shell2
+# # Union between shell1 and shell3
+# # Union between shell2 and shell3
+# # Union between shell1, shell2 and shell3
+# """
 
 number_points = 50
 
