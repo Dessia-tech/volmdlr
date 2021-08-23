@@ -66,14 +66,14 @@ class Wire:
         raise ValueError(
             'abscissa over length: {}>{}'.format(curvilinear_abscissa, length))
 
-    def extract_primitives(self, point1, primitive1, point2, primitive2, inter_points_contour:bool = True):
+    def extract_primitives(self, point1, primitive1, point2, primitive2, inside:bool = True):
         """
-        inter_points_contour: extracted contour is between the two points if True and outside these points if False
+        inside: extracted contour is between the two points if True and outside these points if False
         """
         primitives = []
         ip1 = self.primitive_to_index[primitive1]
         ip2 = self.primitive_to_index[primitive2]
-        if inter_points_contour:
+        if inside:
             if ip1 < ip2:
                 pass
             elif ip1 == ip2: #primitive1 == primitive2
@@ -110,9 +110,9 @@ class Wire:
 
         return primitives
     
-    def extract_without_primitives(self, point1, point2, inter_points_contour:bool = True):
+    def extract_without_primitives(self, point1, point2, inside:bool = True):
         """
-        inter_points_contour: extracted contour is between the two points if True and outside these points if False
+        inside: extracted contour is between the two points if True and outside these points if False
         """
         split_primitives  = []
         primitives = self.primitives
@@ -124,7 +124,7 @@ class Wire:
                     dist_min = dist
                     prim_opt = primitive
             split_primitives.append(prim_opt)
-        return self.extract_primitives(point1, split_primitives[0], point2, split_primitives[1], inter_points_contour)
+        return self.extract_primitives(point1, split_primitives[0], point2, split_primitives[1], inside)
 
 
 class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
@@ -142,17 +142,17 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
 
         return Wire3D(primitives3d)
 
-    def extract(self, point1, primitive1, point2, primitive2, inter_points_contour:bool = True):
+    def extract(self, point1, primitive1, point2, primitive2, inside:bool = True):
         """
-        inter_points_contour: extracted contour is between the two points if True and outside these points if False
+        inside: extracted contour is between the two points if True and outside these points if False
         """
-        return Wire2D(self.extract_primitives(point1, primitive1, point2, primitive2, inter_points_contour))
+        return Wire2D(self.extract_primitives(point1, primitive1, point2, primitive2, inside))
     
-    def extract_with_points(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D, inter_points_contour:bool = True):
+    def extract_with_points(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D, inside:bool = True):
         """
-        inter_points_contour: extracted contour is between the two points if True and outside these points if False
+        inside: extracted contour is between the two points if True and outside these points if False
         """
-        return self.extract_without_primitives(point1, point2, inter_points_contour)
+        return self.extract_without_primitives(point1, point2, inside)
 
         # TODO: method to check if it is a wire
 
@@ -310,8 +310,8 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
     def extract(self, point1, primitive1, point2, primitive2):
         return Wire3D(self.extract_primitives(self, point1, primitive1, point2,
                                               primitive2))
-    def extract_with_points(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, inter_points_contour):
-        return self.extract_without_primitives(point1, point2, inter_points_contour )
+    def extract_with_points(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, inside):
+        return self.extract_without_primitives(point1, point2, inside )
 
     # TODO: method to check if it is a wire
     def FreeCADExport(self, ip):
@@ -370,14 +370,14 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
 
 class Contour():
 
-    def extract_primitives(self, point1, primitive1, point2, primitive2, inter_points_contour:bool = True):
+    def extract_primitives(self, point1, primitive1, point2, primitive2, inside:bool = True):
         """
-        inter_points_contour: extracted contour is between the two points if True and outside these points if False
+        inside: extracted contour is between the two points if True and outside these points if False
         """
         primitives = []
         ip1 = self.primitive_to_index(primitive1)
         ip2 = self.primitive_to_index(primitive2)
-        if inter_points_contour:
+        if inside:
             if ip1 < ip2:
                 pass
             elif ip1 == ip2: #primitive1 == primitive2
@@ -902,9 +902,9 @@ class Contour2D(Contour, Wire2D):
     #         return None
         
     @classmethod
-    def extract_contours(cls, contour, point1: volmdlr.Point3D, point2: volmdlr.Point3D, inter_points_contour = False):
+    def extract_contours(cls, contour, point1: volmdlr.Point3D, point2: volmdlr.Point3D, inside = False):
         
-        new_primitives = contour.extract_with_points(point1, point2, inter_points_contour)
+        new_primitives = contour.extract_with_points(point1, point2, inside)
         contours = [cls(new_primitives)]
         return contours 
 
@@ -989,7 +989,7 @@ class Contour2D(Contour, Wire2D):
                 point_start, primitive1 = intersections[2 * best_transition]
                 point2, primitive2 = intersections[2 * best_transition + 1]
                 primitives = self.extract_primitives(point_start, primitive1,
-                                                     point2, primitive2, inter_points_contour=True)
+                                                     point2, primitive2, inside=True)
                 last_point = point2
                 for transition in enclosed_transitions[best_transition]:
                     point1, primitive1 = intersections[2 * transition]
@@ -998,7 +998,7 @@ class Contour2D(Contour, Wire2D):
                         volmdlr.edges.LineSegment2D(last_point, point1))
                     primitives.extend(
                         self.extract_primitives(point1, primitive1, point2,
-                                                primitive2,inter_points_contour=True))
+                                                primitive2,inside=True))
                     last_point = point2
                     remaining_transitions1.remove(transition)
 
@@ -1035,7 +1035,7 @@ class Contour2D(Contour, Wire2D):
                     2 * best_transition + 1]
                 point2, primitive2 = intersections[2 * best_transition + 2]
                 primitives = self.extract_primitives(point_start, primitive1,
-                                                     point2, primitive2, inter_points_contour=False)
+                                                     point2, primitive2, inside=False)
                 last_point = point2
                 for transition in enclosed_transitions[best_transition]:
                     point1, primitive1 = intersections[2 * transition + 1]
@@ -1044,7 +1044,7 @@ class Contour2D(Contour, Wire2D):
                         volmdlr.edges.LineSegment2D(last_point, point1))
                     primitives.extend(
                         self.extract_primitives(point1, primitive1, point2,
-                                                primitive2, inter_points_contour= False))
+                                                primitive2, inside= False))
                     last_point = point2
                     remaining_transitions2.remove(transition)
 
@@ -1261,7 +1261,7 @@ class Contour2D(Contour, Wire2D):
                 break
         return intersecting_points
     
-    def divide(self, contours, inter_points_contour):
+    def divide(self, contours, inside):
         new_base_contours = [self]
         list_contours = []
         finished = False
@@ -1285,9 +1285,9 @@ class Contour2D(Contour, Wire2D):
                 # for pt in cutting_points:
                 #     pt.plot(ax=axc)
                 if cutting_points:
-                    extracted_outerpoints_contour1 = volmdlr.wires.Contour2D.extract_contours(base_contour, cutting_points[0], cutting_points[1], inter_points_contour)[0]
-                    extracted_innerpoints_contour1 = volmdlr.wires.Contour2D.extract_contours(base_contour, cutting_points[0], cutting_points[1], not inter_points_contour)[0]
-                    # extracted_contour2 = volmdlr.wires.Contour2D.extract_contours(cutting_contour, cutting_points[0], cutting_points[1], inter_points_contour = True)[0]
+                    extracted_outerpoints_contour1 = volmdlr.wires.Contour2D.extract_contours(base_contour, cutting_points[0], cutting_points[1], inside)[0]
+                    extracted_innerpoints_contour1 = volmdlr.wires.Contour2D.extract_contours(base_contour, cutting_points[0], cutting_points[1], not inside)[0]
+                    # extracted_contour2 = volmdlr.wires.Contour2D.extract_contours(cutting_contour, cutting_points[0], cutting_points[1], inside = True)[0]
                    
                     # axx = extracted_outerpoints_contour1.plot(color = 'r')
                     # extracted_innerpoints_contour1.plot(ax = axx, color = 'b')
@@ -2663,9 +2663,9 @@ class Contour3D(Contour, Wire3D):
         return volmdlr.core.BoundingBox.from_points(points)
     
     @classmethod
-    def extract_contours(cls, contour, point1: volmdlr.Point3D, point2: volmdlr.Point3D, inter_points_contour = False):
+    def extract_contours(cls, contour, point1: volmdlr.Point3D, point2: volmdlr.Point3D, inside = False):
         
-        new_primitives = contour.extract_with_points(point1, point2, inter_points_contour)
+        new_primitives = contour.extract_with_points(point1, point2, inside)
         contours = [cls(new_primitives)]
         return contours 
     
