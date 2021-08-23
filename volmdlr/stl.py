@@ -97,7 +97,7 @@ class Stl(dc.DessiaObject):
                     stream.read_u2le()
                     # print(abr)
             if invalid_triangles :
-                print('invalid_triangles number: ', len(invalid_triangles))
+                # print('invalid_triangles number: ', len(invalid_triangles))
                 for i in invalid_triangles[::-1] :
                     del triangles[i]
         else:
@@ -151,7 +151,6 @@ class Stl(dc.DessiaObject):
                     # print(p1, p2, p3)
                     all_points.extend([p1, p2, p3])                        
                     stream.read_u2le()
-        print('all points :', len(all_points))
         return all_points
 
     def save_to_binary_file(self, filepath, distance_multiplier=1000):
@@ -193,7 +192,6 @@ class Stl(dc.DessiaObject):
         return list(set(points1 + points2 + points3))
     def extract_points_BIS(self, min_distance:float = 0.001):
         points = []
-        print(len(self.triangles))
         for i, t in enumerate(self.triangles):
             distance12 = t.point1.point_distance(t.point2)
             distance13 = t.point1.point_distance(t.point3)
@@ -214,9 +212,7 @@ class Stl(dc.DessiaObject):
                     new_point = t.point2 + (t.point3-t.point2)*n/(n_div)
                     points.append(new_point)
         
-        print('all_points available ',len(points))
         valid_points = vm.Vector3D.remove_duplicate(points)
-        print('valid points: ', len(valid_points))
         return valid_points
     
     @classmethod

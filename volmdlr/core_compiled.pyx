@@ -360,10 +360,14 @@ class Vector2D(Vector):
         return 0
 
     def __eq__(self, other_vector):
+        return self.is_close(other_vector)
+
+    def is_close(self, other_vector, tol = 1e-6):
         if other_vector.__class__.__name__ not in ['Vector2D', 'Point2D']:
             return False
-        return math.isclose(self.x, other_vector.x, abs_tol=1e-06) \
-        and math.isclose(self.y, other_vector.y, abs_tol=1e-06)
+        return math.isclose(self.x, other_vector.x, abs_tol=tol) \
+        and math.isclose(self.y, other_vector.y, abs_tol=tol)
+    
         
     def approx_hash(self):
         return round(1e6*(self.x+self.y))
@@ -745,11 +749,15 @@ class Vector3D(Vector):
         return round(1e6*(self.x+self.y+self.z))
 
     def __eq__(self, other_vector:'Vector3D'):
+        return self.is_close(other_vector)
+
+    def is_close(self, other_vector, tol = 1e-6):
         if other_vector.__class__.__name__ not in ['Vector3D', 'Point3D']:
             return False
-        return math.isclose(self.x, other_vector.x, abs_tol=1e-06) \
-        and math.isclose(self.y, other_vector.y, abs_tol=1e-06) \
-        and math.isclose(self.z, other_vector.z, abs_tol=1e-06)
+        return math.isclose(self.x, other_vector.x, abs_tol=tol) \
+        and math.isclose(self.y, other_vector.y, abs_tol=tol) \
+        and math.isclose(self.z, other_vector.z, abs_tol=tol)
+        
     @classmethod
     def remove_duplicate(cls, points):
         dict_ = {p.approx_hash() : p for p in points}
