@@ -2422,10 +2422,10 @@ class PlaneFace3D(Face3D):
 
         return list_cutting_contours
 
-    def divide_face(self, list_cutting_contours, inter_points_contour):
+    def divide_face(self, list_cutting_contours, inside):
         '''
             :param list_cutting_contours: list of contours cutting the face
-            :param inter_points_contour: when extracting a contour from another contour. It defines the extracted contour as being between the two points if True and outside these points if False
+            :param inside: when extracting a contour from another contour. It defines the extracted contour as being between the two points if True and outside these points if False
             return a list new faces resulting from face division 
         '''
         list_faces = []
@@ -2438,7 +2438,7 @@ class PlaneFace3D(Face3D):
                 list_closed_cutting_contours.append(cutting_contour)
         
         if list_open_cutting_contours:
-            new_faces_contours = self.surface2d.outer_contour.divide(list_open_cutting_contours, inter_points_contour)
+            new_faces_contours = self.surface2d.outer_contour.divide(list_open_cutting_contours, inside)
             for contour in new_faces_contours:
                 list_faces.append(PlaneFace3D(self.surface3d, Surface2D(contour, [])))
                     
@@ -4339,7 +4339,7 @@ class ClosedShell3D(OpenShell3D):
                     return False
 
         return True
-    def disjoint_shell(self, shell2):
+    def is_disjoint_from(self, shell2):
         '''
              verifies and rerturns a bool if two shells are disjointed or not. 
         '''
@@ -4443,17 +4443,17 @@ class ClosedShell3D(OpenShell3D):
         faces = []
         for k, face in enumerate(intersecting_faces):
             if face in shell2.faces:
-                inter_points_contour = True
+                inside = True
                 shell_2 = self
             else:
-                inter_points_contour = False
+                inside = False
                 shell_2 = shell2
             intersection_points = []
             face_contour2d = face.surface2d.outer_contour
             
             list_cutting_contours = face.get_face_cutting_contours(intersecting_combinations)
 
-            list_faces = face.divide_face(list_cutting_contours, inter_points_contour)
+            list_faces = face.divide_face(list_cutting_contours, inside)
 
             for new_face in list_faces:
                     points_inside = []
@@ -4484,7 +4484,7 @@ class ClosedShell3D(OpenShell3D):
         If it returns an empty list, it means the two shells are valid to continue the
         operation.
         '''
-        if self.disjoint_shell(shell2):
+        if self.is_disjoint_from(shell2):
             return [self, shell2]
         if self.is_inside_shell(shell2, resolution = 0.01):
             return [shell2]
