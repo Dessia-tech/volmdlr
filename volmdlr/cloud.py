@@ -67,16 +67,10 @@ class PointCloud3D(dc.DessiaObject):
                     posmax = n
         dist_between_plane = xyz_list[posmax]/(resolution-1)
         position_plane = [xyz_bbox[posmax][0] + n*dist_between_plane for n in range(resolution)]
-        # print('postion_plane :', position_plane)
         subcloud3d = [self.extract(normal, pos_plane-dist_between_plane/2, pos_plane+dist_between_plane/2) for pos_plane in position_plane]
-        # print('subcloud3D CREATED')
         vec1, vec2 = xyz_vect[posmax-2], xyz_vect[posmax-1]
-        # print('normal, vec1, vec2',(normal, vec1, vec2))
         subcloud2d_tosimp = [subcloud3d[n].to_2d(position_plane[n]*normal, vec1, vec2) for n in range(resolution)]
         subcloud2d = [sub.simplify(resolution=5) for sub in subcloud2d_tosimp]
-        
-        # print('subcloud2D CREATED')
-        # print('CREATING POLYGONS')
         initial_polygon2d = [cloud2d.to_polygon() for cloud2d in subcloud2d]
         
         #Offsetting
@@ -93,7 +87,6 @@ class PointCloud3D(dc.DessiaObject):
         banned = []
         for n, poly in enumerate(initial_polygon2d):
             if poly is None or (poly.area()<avg_area/10 and (n not in [0,len(initial_polygon2d)-1])):
-                print('>>>', n , len(initial_polygon2d)-1)
                 resolution -= 1
                 banned.append(n)
             else :
@@ -101,15 +94,11 @@ class PointCloud3D(dc.DessiaObject):
                 new_polygon = poly.to_3d(position_plane[n]*normal, vec1, vec2)
                 polygon3d.append(new_polygon)
         [position_plane.pop(k) for k in banned[::-1]]
-        # print([p.points for p in polygon3d])
         faces = []
-        # max_poly_resolution = int(sum([len(poly.points) for poly in polygon3d])/len(polygon3d))+1
         
         for n in range(resolution):
-            print('sewing polygon', round(n/resolution*100, 2), '%')
+            # print('sewing polygon', round(n/resolution*100, 2), '%')
             poly1 = polygon3d[n]
-            # poly1 = poly1.simplify(0.08, 0.1)
-            # ax = poly1.plot()
             poly1 = poly1.simplify()
             
             if n == resolution-1 or n == 0:
@@ -119,13 +108,8 @@ class PointCloud3D(dc.DessiaObject):
                 faces.append(vmf.PlaneFace3D(plane3d, surf2d))
             if n != resolution-1:
                 poly2 = polygon3d[n+1]
-                # poly2.plot(ax=ax, color='r')
-                # print('before simplify poly2.points :', poly2.points)
-                # poly2 = poly2.simplify(0.08, 0.1)
                 poly2 = poly2.simplify()
-                # print('after simplify poly2.points :', poly2.points)
                 
-                # coords = poly1.sewing_with(poly2, vec1, vec2, normal, resolution = max_poly_resolution)
                 coords = poly1.sewing(poly2, vec1, vec2)
                 for trio in coords :
                     faces.append(vmf.Triangle3D(*trio))
@@ -145,7 +129,7 @@ class PointCloud3D(dc.DessiaObject):
         return ax
     
     def extended_cloud(self, distance_extended : float): 
-        #it works id distance_extended >= 0
+        #it works if distance_extended >= 0
         spheres, extended_points = [], []
         for pt in self.points :
             extended_zone = vm.p3d.Sphere(pt, distance_extended)
@@ -168,16 +152,9 @@ class PointCloud3D(dc.DessiaObject):
                         polygons2D: List[vmw.ClosedPolygon2D], offset: float):
         
         origin_f, origin_l = positions_plane[0], positions_plane[-1]
-        dist_between_plane = (offset*2 + origin_l-origin_f)/(len(positions_plane)-1)
-        
-        # new_position_plane = [(origin_f-offset) + \
-                              # n*dist_between_plane for n in range(len(positions_plane))]
         
         new_position_plane = [origin_f-offset] + positions_plane[1:-1] + [origin_l+offset]
         
-        # new_poly = [polygons2D[0]] + \
-        #     [poly.offset(offset) for poly in polygons2D[1:-1]] + [polygons2D[-1]]
-            
         new_poly = [poly.offset(offset) for poly in polygons2D]
         
         return new_position_plane, new_poly
