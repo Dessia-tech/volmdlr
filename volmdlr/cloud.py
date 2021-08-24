@@ -5,7 +5,7 @@
 
 import math
 import numpy as npy
-
+import open3d
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -99,6 +99,7 @@ class PointCloud3D(dc.DessiaObject):
             print('sewing polygon', round(n/resolution*100, 2), '%')
             poly1 = polygon3d[n]
             # poly1 = poly1.simplify(0.01, 0.05)
+            # ax = poly1.plot()
             
             
             if n == resolution-1 or n == 0:
@@ -107,14 +108,54 @@ class PointCloud3D(dc.DessiaObject):
                 faces.append(vmf.PlaneFace3D(plane3d, surf2d))
             if n != resolution-1:
                 poly2 = polygon3d[n+1]
+                # poly2.plot(ax=ax, color='r')
                 # poly2 = poly2.simplify(0.01, 0.05)
                 
                 # coords = poly1.sewing_with(poly2, vec1, vec2, normal, resolution = max_poly_resolution)
-                coords = poly1.sewing(poly2)
+                coords = poly1.sewing(poly2, vec1, vec2)
                 for trio in coords :
                     faces.append(vmf.Triangle3D(*trio))
         return vmf.ClosedShell3D(faces)
+    
+    def alpha_shape(self, alpha:float, number_point_samples:int):
+        '''
+        Parameters
+        ----------
+        alpha : float
+            the parameter alpha determines how precise the object surface reconstruction is wanted to be. 
+            The bigger the value of alpha is, more convex the final object will be. If it is smaller, 
+            the algorigthm is able to find the concave parts of the object, giving a more precise object 
+            surface approximation
+        number_point_samples : int
+            denotes the number of points to be used from the point cloud to reconstruct the surface. It uses poisson disk sampling algorithm
 
+        Returns
+        -------
+        Returns a ClosedShell3D object
+
+        '''
+                
+        points = [[p.x, p.y, p.z] for p in self.points]
+        array = npy.array(points)
+        points = open3d.cpu.pybind.utility.Vector3dVector(array)
+        pcd = open3d.geometry.PointCloud()
+        pcd.points = points
+        mesh = open3d.geometry.TriangleMesh.create_from_point_cloud_alpha_shape(pcd, alpha)
+        mesh.compute_vertex_normals()
+        if number_point_samples != None:
+            pcd = mesh.sample_points_poisson_disk(number_point_samples)
+            # tetra_mesh, pt_map = open3d.geometry.TetraMesh.create_from_point_cloud(pcd)
+            mesh = open3d.geometry.TriangleMesh.create_from_point_cloud_alpha_shape(
+            pcd, alpha, 
+            # tetra_mesh, pt_map
+            )
+            mesh.compute_vertex_normals()
+        # open3d.visualization.draw_geometries([mesh], mesh_show_back_face=True)
+        vertices = [volmdlr.Point3D(float(x), float(y), float(z)) for x, y, z in list(npy.asarray(mesh.vertices))]
+        triangles = [vmf.Triangle3D(vertices[p1], vertices[p2], vertices[p3], color = (1, 0.1, 0.1), alpha = 0.6) for p1, p2, p3 in list(npy.asarray(mesh.triangles))]
+        
+        return vmf.ClosedShell3D(triangles)
+        
     @classmethod        
     def from_step(cls, step_file:str):
         step = vstep.Step(step_file)

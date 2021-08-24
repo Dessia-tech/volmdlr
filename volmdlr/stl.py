@@ -35,6 +35,7 @@ class Stl(dc.DessiaObject):
     def __init__(self, triangles, name=''):
         self.triangles = triangles
         self.name = name
+        self.normals = None
         
     @classmethod
     def points_from_file(cls, filename:str, distance_multiplier=0.001):
@@ -97,7 +98,7 @@ class Stl(dc.DessiaObject):
                     stream.read_u2le()
                     # print(abr)
             if invalid_triangles :
-                print('invalid_triangles number: ', len(invalid_triangles))
+                # print('invalid_triangles number: ', len(invalid_triangles))
                 for i in invalid_triangles[::-1] :
                     del triangles[i]
         else:
@@ -151,7 +152,6 @@ class Stl(dc.DessiaObject):
                     # print(p1, p2, p3)
                     all_points.extend([p1, p2, p3])                        
                     stream.read_u2le()
-        print('all points :', len(all_points))
         return all_points
 
     def save_to_binary_file(self, filepath, distance_multiplier=1000):
@@ -190,10 +190,11 @@ class Stl(dc.DessiaObject):
         points2 = [t.point2 for t in self.triangles]
         points3 = [t.point3 for t in self.triangles]
         
-        return list(set(points1 + points2 + points3))
+        valid_points = vm.Vector3D.remove_duplicate(points1 + points2 + points3)
+        return valid_points
+    
     def extract_points_BIS(self, min_distance:float = 0.001):
         points = []
-        print(len(self.triangles))
         for i, t in enumerate(self.triangles):
             distance12 = t.point1.point_distance(t.point2)
             distance13 = t.point1.point_distance(t.point3)
@@ -214,9 +215,7 @@ class Stl(dc.DessiaObject):
                     new_point = t.point2 + (t.point3-t.point2)*n/(n_div)
                     points.append(new_point)
         
-        print('all_points available ',len(points))
         valid_points = vm.Vector3D.remove_duplicate(points)
-        print('valid points: ', len(valid_points))
         return valid_points
     
     @classmethod
@@ -227,3 +226,27 @@ class Stl(dc.DessiaObject):
                                             mesh.points[i2],
                                             mesh.points[i3]))
         return cls(triangles)
+    
+    def get_normals(self):
+        '''
+        Returns
+        -------
+        points_normals : dictionary
+            returns a diction
+        '''
+        points_normals = {}
+        normals = []
+        for triangle in self.triangles:
+            normal = triangle.normal()
+            for point in triangle.points:
+                if point in list(points_normals.keys()):
+                    points_normals[point].append(normal)
+                else:
+                    points_normals[point] = [normal]
+        for key, value in points_normals.items():
+            point_normal = vm.O3D
+            for point in value:
+                point_normal += point
+            points_normals[key] = point_normal
+            normals.append(point_normal())
+        self.normals = normals
