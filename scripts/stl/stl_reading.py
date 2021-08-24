@@ -20,6 +20,7 @@ from scipy.spatial import ConvexHull
 shells = []
 path = os.getcwd()
 
+
 for stl_file in [
                 # 'a320.stl',
                 # 'a320_ENGINE_RIGHT.stl',
@@ -48,15 +49,12 @@ for stl_file in [
     # cloud_faces.babylonjs()
     # list_points = vmstl.Stl.from_file_points(stl_file)
     list_points = stl.extract_points_BIS()
-    # print('list_points :', list_points)
     pointcloud3d = volmdlr.cloud.PointCloud3D(list_points)
-    # pointcloud3d.plot()
-    # print('pointcloud3d :', pointcloud3d)
     # polygons2d = pointcloud3d.to_shell()
     # pointcloud3d.plot()
-    shells.append(pointcloud3d.to_shell(resolution=10))
+    shells.append(pointcloud3d.to_shell(resolution=20))
 
     
 volum = volmdlr.core.VolumeModel(shells)
 volum.babylonjs()
-        
+
