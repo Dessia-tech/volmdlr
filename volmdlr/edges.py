@@ -2773,10 +2773,9 @@ class BSplineCurve3D(Edge):
         curve = self.curve
         ders = curve.derivatives(u,3) #3 first derivative
         c1, c2 = volmdlr.Point3D(*ders[1]), volmdlr.Point3D(*ders[2])
-        if c1 == volmdlr.O3D or c2 == volmdlr.O3D:
+        if c1 == volmdlr.O3D or c2 == volmdlr.O3D or c1.cross(c2) == volmdlr.O3D:
             return 1e-12
         denom = c1.cross(c2)
-        
         r_c = ((c1.norm())**3)/denom.norm()
         
         return 1/r_c
