@@ -2633,10 +2633,24 @@ class Triangle3D(PlaneFace3D):
                 points.append(pt.to_3d(frame.origin, frame.u, frame.v))
         
         return points
-    
+
     def middle(self):
         return (self.point1+self.point2+self.point3)/3
-    
+
+    def normal(self):
+        '''
+        
+        Returns
+        -------
+        normal to the face
+
+        '''
+        normal = self.surface3d.frame.w
+        # vec12 = self.point2 - self.point1
+        # vec13 = self.point3 - self.point1
+        # normal  = vec12.cross(vec13)
+        return normal.normalize()
+
 class CylindricalFace3D(Face3D):
     """
     :param contours2d: The cylinder's contour2D
