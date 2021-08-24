@@ -8,8 +8,7 @@ import math
 import numpy as npy
 import scipy as scp
 
-from geomdl import utilities
-from geomdl import BSpline
+from geomdl import utilities, BSpline, fitting
 
 from geomdl.operations import length_curve, split_curve
 
@@ -215,6 +214,7 @@ class LineSegment(Edge):
 
         u = self.end - self.start
         u.normalize()
+        
         return u
 
     def direction_vector(self, s=0):
@@ -554,6 +554,11 @@ class BSplineCurve2D(Edge):
         return [BSplineCurve2D.from_geomdl_curve(curve1),
                 BSplineCurve2D.from_geomdl_curve(curve2)]
 
+    @classmethod
+    def from_points_interpolation(cls, points, degree):
+        curve = fitting.interpolate_curve([(p.x, p.y) for p in points], degree)
+        return cls.from_geomdl_curve(curve)
+
     def straight_line_area(self):
         l = self.length()
         points = self.polygon_points()
@@ -672,6 +677,12 @@ class LineSegment2D(LineSegment):
 
     def point_at_abscissa(self, curvilinear_abscissa):
         return self.start + self.unit_direction_vector() * curvilinear_abscissa
+    
+    def point_belongs(self, point):
+        distance = self.start.point_distance(point) + self.end.point_distance(point)
+        if math.isclose(distance, self.length(), abs_tol = 1e-7 ):
+            return True
+        return False
 
     def bounding_rectangle(self):
         return (min(self.start.x, self.end.x), max(self.start.x, self.end.x),
@@ -709,7 +720,10 @@ class LineSegment2D(LineSegment):
         """
         point, curv_abs = Line2D.point_projection(Line2D(self.start, self.end),
                                                   point)
+        # print('curv_abs :', curv_abs, 'length :', self.length())
         if curv_abs < 0 or curv_abs > self.length():
+            if abs(curv_abs) < 1e-6 or math.isclose(curv_abs, self.length(), abs_tol = 1e-6):
+                return point, curv_abs
             return None, curv_abs
         return point, curv_abs
 
@@ -1082,7 +1096,7 @@ class Arc2D(Edge):
         x, y = p.dot(u), p.dot(v)
         theta = math.atan2(y, x)
         if theta < -tol or theta > self.angle+tol:
-            raise ValueError('Point in not in arc')
+            raise ValueError('Point not in arc')
 
         if theta < 0:
             return 0.
@@ -1950,6 +1964,11 @@ class LineSegment3D(LineSegment):
     def point_at_abscissa(self, curvilinear_abscissa):
         return self.start + curvilinear_abscissa * (
                 self.end - self.start) / self.length()
+    def point_belongs(self, point):
+        distance = self.start.point_distance(point) + self.end.point_distance(point)
+        if math.isclose(distance, self.length(), abs_tol = 1e-7):
+            return True
+        return False
 
     def normal_vector(self, abscissa=0.):
         return None
@@ -1960,8 +1979,8 @@ class LineSegment3D(LineSegment):
     def middle_point(self):
         l = self.length()
         return self.point_at_abscissa(0.5 * l)
+    
     def point_distance(self, point):
-        
         vector1 = point - self.start
         vector1.to_vector()
         vector2 = point - self.end
@@ -2049,6 +2068,64 @@ class LineSegment3D(LineSegment):
 
         return None
 
+    # def line_intersection2(self, linesegment2):
+    #     x1 = self.start.x
+    #     y1 = self.start.y
+    #     z1 = self.start.z
+    #     x2 = self.end.x
+    #     y2 = self.end.y
+    #     z2 = self.end.z
+    #     x3 = linesegment2.start.x
+    #     y3 = linesegment2.start.y
+    #     z3 = linesegment2.start.z
+    #     x4 = linesegment2.end.x
+    #     y4 = linesegment2.end.y
+    #     z4 = linesegment2.end.z
+
+    #     #z1 - z3 = [-z2, z4]
+
+    #     A = npy.array([[-x2, x4], [-y2, y4]])
+    #     B = npy.array([x1 - x3, y1 - y3])
+    #     # solution
+    #     solution = npy.linalg.inv(A).dot(B)
+    #     print('solution :', solution)
+
+    #     alpha = float(solution[0])
+    #     beta = float(solution[1])
+    #     print('final result :', z1 - z3 == alpha * (-z2) + beta * z4)
+
+    #     if z1 - z3 == alpha * (-z2) + beta * z4:
+    #         x = x1 + alpha * x2
+    #         y = y1 + alpha * y2
+    #         z = z1 + alpha * z2
+    #         return volmdlr.Point3D(x, y, z)
+    #     else:
+    #         return None
+
+    # def linesegment_intersection(self, linesegment2):
+    #     intersection = self.line_intersection2(linesegment2)
+    #     print('intersection :', intersection)
+    #     if intersection != None:
+    #         print('disance start to intersection point :', self.start.point_distance(intersection))
+    #         print('length :', self.length())
+    #         if self.start.point_distance(intersection) < self.length() :
+    #             return intersection
+    #         else:
+    #             return None
+    #     return None
+    def linesegment_intersection(self, linesegment):
+        intersection = self.intersection(linesegment)
+        if intersection != None:
+            if intersection == self.start or intersection == self.end:
+                return intersection
+            else:
+                if self.point_belongs(intersection) and linesegment.point_belongs(intersection):
+                    return intersection
+                else: 
+                    return None
+        return None
+            
+
     def rotation(self, center, axis, angle, copy=True):
         if copy:
             return LineSegment3D(
@@ -2059,6 +2136,7 @@ class LineSegment3D(LineSegment):
             self.bounding_box = self._bounding_box()
 
     def __contains__(self, point):
+        
         point1, point2 = self.start, self.end
         axis = point2 - point1
         test = point.rotation(point1, axis, math.pi)
@@ -2604,6 +2682,11 @@ class BSplineCurve3D(Edge):
             current_id, self.name,
             start_id, end_id, curve_id)
         return content, [current_id]
+
+    @classmethod
+    def from_points_interpolation(cls, points, degree):
+        curve = fitting.interpolate_curve([(p.x, p.y, p.z) for p in points], degree)
+        return cls.from_geomdl_curve(curve)
 
     def point_distance(self, pt1):
         distances = []
