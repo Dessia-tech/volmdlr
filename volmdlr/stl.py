@@ -37,6 +37,7 @@ class Stl(dc.DessiaObject):
     def __init__(self, triangles: List[vmw.Triangle2D], name: str = ''):
         self.triangles = triangles
         self.name = name
+        self.normals = None
         
     @classmethod
     def points_from_file(cls, filename: str, distance_multiplier=0.001):
@@ -204,9 +205,10 @@ class Stl(dc.DessiaObject):
         points2 = [t.point2 for t in self.triangles]
         points3 = [t.point3 for t in self.triangles]
         
-        return list(set(points1 + points2 + points3))
-
-    def extract_points_BIS(self, min_distance: float = 0.001):
+        valid_points = vm.Vector3D.remove_duplicate(points1 + points2 + points3)
+        return valid_points
+    
+    def extract_points_BIS(self, min_distance:float = 0.001):
         points = []
         for i, t in enumerate(self.triangles):
             distance12 = t.point1.point_distance(t.point2)
@@ -239,3 +241,29 @@ class Stl(dc.DessiaObject):
                                             mesh.points[i2],
                                             mesh.points[i3]))
         return cls(triangles)
+
+    
+    def get_normals(self):
+        '''
+        Returns
+        -------
+        points_normals : dictionary
+            returns a diction
+        '''
+        points_normals = {}
+        normals = []
+        for triangle in self.triangles:
+            normal = triangle.normal()
+            for point in triangle.points:
+                if point in list(points_normals.keys()):
+                    points_normals[point].append(normal)
+                else:
+                    points_normals[point] = [normal]
+        for key, value in points_normals.items():
+            point_normal = vm.O3D
+            for point in value:
+                point_normal += point
+            points_normals[key] = point_normal
+            normals.append(point_normal())
+        self.normals = normals
+
