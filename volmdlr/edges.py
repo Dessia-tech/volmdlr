@@ -2690,7 +2690,46 @@ class BSplineCurve3D(Edge):
 
     def polygon_points(self):
         return self.points
+
+    def unit_direction_vector(self,abscissa=0.):
+        l = self.length()
+        if abscissa >= l :
+            abscissa2 = l
+            abscissa = abscissa2 - 0.001*l
+            
+        else :
+            abscissa2 = abscissa + 0.001*l
+            if abscissa2 > l:
+                abscissa2 = l
+            
+        tangent = self.point_at_abscissa(abscissa2)-self.point_at_abscissa(abscissa)
+        tangent.normalize()
+        return tangent
     
+    def unit_normal_vector(self, abscissa):
+        return None
+    
+    def minimum_curvature_radius_at_u(self, u: float):
+        #u should be in the interval [0,1]
+        curve = self.curve
+        ders = curve.derivatives(u,3) #3 first derivative
+        c1, c2 = volmdlr.Point3D(*ders[1]), volmdlr.Point3D(*ders[2])
+        if c2 == volmdlr.O3D:
+            return 1e6
+        denom = c1.cross(c2)
+        
+        r_c = ((c1.norm())**3)/denom.norm()
+        
+        return r_c
+    
+    def minimum_curvature_radius(self, nb_eval: int = 21):
+        check = [i/(nb_eval-1) for i in range(nb_eval)]
+        
+        radius = []
+        for u in check :
+            radius.append(self.minimum_curvature_radius_at_u(u))
+        return radius
+
 class BezierCurve3D(BSplineCurve3D):
 
     def __init__(self, degree: int, control_points: List[volmdlr.Point3D],

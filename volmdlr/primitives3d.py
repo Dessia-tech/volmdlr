@@ -1101,6 +1101,13 @@ class Sweep(volmdlr.faces.ClosedShell3D):
                         wire_primitive.center,
                         wire_primitive.normal,
                         volmdlr.TWO_PI))
+            # if wire_primitive.__class__ is volmdlr.edges.BezierCurve3D:
+            #     for contour_primitive in contour3d.primitives:
+            #         for pt1, pt2 in zip(wire_primitive.points[:-1], wire_primitive.points[1:]):
+            #             ls3d = 
+                    
+            #         faces.extend(contour_primitive.extrusion(
+            #             wire_primitive.length()*wire_primitive.direction_vector()))
             else:
                 raise NotImplementedError(
                     'Unimplemented primitive for sweep: {}'\
