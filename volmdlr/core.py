@@ -355,6 +355,7 @@ class CompositePrimitive(dc.DessiaObject):
         self.name = name
 
         dc.DessiaObject.__init__(self, name=name)
+        
     def primitive_to_index(self, primitive):
         if not self._utd_primitives_to_index:
             self._primitives_to_index = {p: ip for ip, p in enumerate(self.primitives)}
@@ -486,25 +487,51 @@ class Primitive3D(CompositePrimitive):
 
     def volmdlr_primitives(self):
         return [self]
-
+    
+    def babylon_param(self):
+        babylon_param = {'alpha': self.alpha,
+                          'name': self.name,
+                          }
+        if self.color is None:
+            babylon_param['color'] = [0.8, 0.8, 0.8]
+        else:
+            babylon_param['color'] = list(self.color)
+            
+        return babylon_param
+    
+    def triangulation(self):
+        return None
+    
     def babylon_meshes(self):
         mesh = self.triangulation()
+        if mesh == None:
+            return []
         positions, indices = mesh.to_babylon()
 
         babylon_mesh = {'positions': positions,
-                        'indices': indices,
-                        'alpha': self.alpha,
-                        'name': self.name
+                        'indices': indices
                         }
-
-        if self.color is None:
-            babylon_mesh['color'] = [0.8, 0.8, 0.8]
-        else:
-            babylon_mesh['color'] = list(self.color)
-
+        babylon_mesh.update(self.babylon_param())
         return [babylon_mesh]
-
-
+    
+    def babylon_points(self):
+         if hasattr(self, 'primitives'):
+             points = [[self.primitives[0].start.x, self.primitives[0].start.y, self.primitives[0].start.z], [self.primitives[0].end.x, self.primitives[0].end.y, self.primitives[0].end.z]]
+             points += [[line.end.x,line.end.y,line.end.z] for line in self.primitives[1:]]
+         elif hasattr(self, 'curve'):
+             points = self.curve.evalpts
+         return points
+    
+    def babylon_lines(self, points=None):
+        points = self.babylon_points()        
+        babylon_lines = {'points': points}
+        babylon_lines.update(self.babylon_param())
+        return [babylon_lines]
+    
+    def babylon_curves(self):
+        points = self.babylon_points()
+        babylon_curves = self.babylon_lines(points)[0]
+        return babylon_curves
 
 class CompositePrimitive3D(Primitive3D):
     _standalone_in_db = True
@@ -577,7 +604,7 @@ class BoundingBox(dc.DessiaObject):
         self.zmin = zmin
         self.zmax = zmax
         
-        self.center = (self.points[0] + self.points[-2]) / 2
+        self.center = volmdlr.Point3D(0.5*(xmin+xmax),0.5*(ymin+ymax),0.5*(zmin+zmax))
         self.name = name
 
     def __hash__(self):
@@ -635,7 +662,7 @@ class BoundingBox(dc.DessiaObject):
         ax.set_xlabel('X Label')
         ax.set_ylabel('Y Label')
         ax.set_zlabel('Z Label')
-        plt.show()
+        # plt.show()
         return ax
 
     @classmethod
@@ -666,9 +693,9 @@ class BoundingBox(dc.DessiaObject):
                 and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin)
 
     def is_inside_bbox(self, bbox2):
-        return (self.xmin > bbox2.xmin and self.xmax < bbox2.xmax \
-                and self.ymin > bbox2.ymin and self.ymax < bbox2.ymax \
-                and self.zmin > bbox2.zmin and self.zmax < bbox2.zmax)
+        return ((self.xmin >= bbox2.xmin - 1e-6) and (self.xmax <= bbox2.xmax + 1e-6)\
+                and (self.ymin >=bbox2.ymin - 1e-6) and (self.ymax <= bbox2.ymax + 1e-6) \
+                and (self.zmin >= bbox2.zmin - 1e-6) and (self.zmax <= bbox2.zmax + 1e-6))
 
     def intersection_volume(self, bbox2):
         if not self.bbox_intersection(bbox2):
@@ -1426,18 +1453,25 @@ class VolumeModel(dc.DessiaObject):
 
     def babylon_data(self):
         meshes = []
+        lines = []
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
                 meshes.extend(primitive.babylon_meshes())
+            if hasattr(primitive, 'babylon_lines'):
+                lines.extend(primitive.babylon_lines())
+            if hasattr(primitive,'babylon_curves'):
+                lines.append(primitive.babylon_curves())
         bbox = self._bounding_box()
         center = bbox.center
         max_length = max([bbox.xmax - bbox.xmin,
                           bbox.ymax - bbox.ymin,
                           bbox.zmax - bbox.zmin])
-
+        
         babylon_data = {'meshes': meshes,
+                        'lines': lines,
                         'max_length': max_length,
                         'center': list(center)}
+        
         return babylon_data
 
     @classmethod
