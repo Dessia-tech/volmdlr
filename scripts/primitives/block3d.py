@@ -76,12 +76,13 @@ model.to_step('block.step')
 
 step = vm_step.Step('block.step')
 model2 = step.to_volume_model()
-new_box = vm.faces.ClosedShell3D.unions(box_red, box_blue)
-new_box.color = (1, 0.1, 0.1)
-new_box.alpha = 0.6
+new_box = box_red.union(box_blue)
+for shell in new_box:
+    shell.color = (1, 0.1, 0.1)
+    shell.alpha = 0.6
 # for face in new_box.face:
 #     face.color = 
-vm.core.VolumeModel([new_box]).babylonjs()
+vm.core.VolumeModel(new_box).babylonjs()
 
 box = primitives3d.Block(
     vm.Frame3D(vm.Point3D(0, 0, 0), vm.Vector3D(0.3, 0, 0),
