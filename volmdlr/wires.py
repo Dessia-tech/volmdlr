@@ -2174,6 +2174,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
 
     def simplify(self, min_distance: float = 0.01, max_distance: float = 0.05):
         return ClosedPolygon2D(self.simplify_polygon(min_distance=min_distance,
+                                                     max_distance=max_distance).points)
 
 class Triangle2D(ClosedPolygon2D):
 
