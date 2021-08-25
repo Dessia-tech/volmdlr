@@ -173,10 +173,8 @@ def delete_double_pos(points, triangles):
     for face_triangles in triangles:
         if face_triangles is None:
             continue
-        # print('face_triangles', face_triangles)
         new_face_triangles = []
         for triangle_ in face_triangles:
-            # print('triangle', triangle)
             new_triangle = []
             for index in triangle_:
                 if index in index_to_new_index:
@@ -1434,7 +1432,6 @@ class VolumeModel(dc.DessiaObject):
         max_length = max([bbox.xmax - bbox.xmin,
                           bbox.ymax - bbox.ymin,
                           bbox.zmax - bbox.zmin])
-
         babylon_data = {'meshes': meshes,
                         'max_length': max_length,
                         'center': list(center)}
