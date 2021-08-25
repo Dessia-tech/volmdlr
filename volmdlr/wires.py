@@ -3199,18 +3199,18 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
         new_center1, new_center2 = new_polygon1.average_center_point(), new_polygon2.average_center_point()
         new_polygon1_2d, new_polygon2_2d = new_polygon1.to_2d(new_center1, x, y), new_polygon2.to_2d(new_center2, x, y)
         
-        # ax2d= new_polygon1_2d.plot(color= 'r')
-        # new_polygon2_2d.plot(ax=ax2d, color= 'g')
-        # barycenter1_2d = new_polygon1_2d.points[0]
-        # for point in new_polygon1_2d.points[1:]:
-        #     barycenter1_2d += point
-        # barycenter1_2d = barycenter1_2d / len(new_polygon1_2d.points)
-        # barycenter1_2d.plot(ax=ax2d, color = 'y')
-        # barycenter2_2d = new_polygon2_2d.points[0]
-        # for point in new_polygon2_2d.points[1:]:
-        #     barycenter2_2d += point
-        # barycenter2_2d = barycenter2_2d / len(new_polygon2_2d.points)
-        # barycenter2_2d.plot(ax=ax2d, color = 'r')
+        ax2d= new_polygon1_2d.plot(color= 'r')
+        new_polygon2_2d.plot(ax=ax2d, color= 'g')
+        barycenter1_2d = new_polygon1_2d.points[0]
+        for point in new_polygon1_2d.points[1:]:
+            barycenter1_2d += point
+        barycenter1_2d = barycenter1_2d / len(new_polygon1_2d.points)
+        barycenter1_2d.plot(ax=ax2d, color = 'y')
+        barycenter2_2d = new_polygon2_2d.points[0]
+        for point in new_polygon2_2d.points[1:]:
+            barycenter2_2d += point
+        barycenter2_2d = barycenter2_2d / len(new_polygon2_2d.points)
+        barycenter2_2d.plot(ax=ax2d, color = 'r')
         
 
         # ax3d= new_polygon1.plot(color= 'r')
@@ -3227,6 +3227,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                 vec_dir = mean_point2d.copy()
                 vec_dir.normalize()
                 line = volmdlr.edges.LineSegment2D(volmdlr.O2D, mean_point2d + vec_dir*5)
+                line.plot(ax=ax2d, color = 'b')
                 point_intersections = {}
                 for line_segment in new_polygon2_2d.line_segments:
                     point_intersection = line_segment.linesegment_intersections(line)
@@ -3241,6 +3242,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                         point_distance = dist
                         point_intersection = point
                         line_segment = line
+                point_intersection.plot(ax=ax2d)
                 if point_intersection.point_distance(line_segment.start) < point_intersection.point_distance(line_segment.end):
                     closing_point = line_segment.start
                 else:
@@ -3280,6 +3282,18 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                                 if (a != b and a != c and b != c and not volmdlr.edges.LineSegment3D(a, c).point_belongs(b)):
                                     triangles.append([polygon2.points[i-1], 
                                                       polygon2.points[new_polygon2.points.index(point_polygon2)], 
-                                                      list(dict_closing_pairs.keys())[j]])   
+                                                      list(dict_closing_pairs.keys())[j]])  
+        faces = []
+        coords = triangles
+        for trio in coords:
+            faces.append(volmdlr.faces.Triangle3D(trio[0], trio[1], trio[2]))
+        volum = volmdlr.core.VolumeModel(faces)
+        volum.babylonjs()
+        ax= self.plot()
+        polygon2.plot(ax=ax, color = 'y')
+        for face in faces:
+            volmdlr.edges.LineSegment3D(face.point1, face.point2).plot(ax=ax, color = 'b')
+            volmdlr.edges.LineSegment3D(face.point1, face.point3).plot(ax=ax, color = 'b')
+            volmdlr.edges.LineSegment3D(face.point2, face.point3).plot(ax=ax, color = 'b')
             
         return triangles
