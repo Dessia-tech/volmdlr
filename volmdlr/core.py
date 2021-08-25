@@ -1434,8 +1434,6 @@ class VolumeModel(dc.DessiaObject):
         max_length = max([bbox.xmax - bbox.xmin,
                           bbox.ymax - bbox.ymin,
                           bbox.zmax - bbox.zmin])
-        print('meshes :', meshes)
-        print('primitives :', self.primitives)
         babylon_data = {'meshes': meshes,
                         'max_length': max_length,
                         'center': list(center)}
