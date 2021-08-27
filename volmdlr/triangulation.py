@@ -1,11 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-<<<<<<< HEAD
 Created on Wed Oct 23 10:55:23 2019
-=======
-Created on Fri Oct 25 14:53:57 2019
->>>>>>> 45a9a2643a660a78f83893310fdfd943ab74b0a7
 
 @author: ringhausen
 """
@@ -22,9 +18,11 @@ EPSILON = math.sqrt(sys.float_info.epsilon)
 def earclip(polygon):
     """
     Simple earclipping algorithm for a given polygon p.
-    polygon is expected to be an array of 2-tuples of the cartesian points of the polygon
+    polygon is expected to be an array of 2-tuples of the cartesian points of
+    the polygon
     For a polygon with n points it will return n-2 triangles.
-    The triangles are returned as an array of 3-tuples where each item in the tuple is a 2-tuple of the cartesian point.
+    The triangles are returned as an array of 3-tuples where each item in the
+    tuple is a 2-tuple of the cartesian point.
     e.g
     >>> polygon = [(0,1), (-1, 0), (0, -1), (1, 0)]
     >>> triangles = tripy.earclip(polygon)
@@ -62,7 +60,8 @@ def earclip(polygon):
 
         polygon.remove(ear)
         point_count -= 1
-        triangles.append(((prev_point.x, prev_point.y), (ear.x, ear.y), (next_point.x, next_point.y)))
+        triangles.append(((prev_point.x, prev_point.y), (ear.x, ear.y),
+                          (next_point.x, next_point.y)))
 
         if point_count > 3:
             prev_prev_point = polygon[prev_index - 1]
