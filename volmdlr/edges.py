@@ -2522,7 +2522,7 @@ class LineSegment3D(LineSegment):
         return content, [current_id]
 
 
-class BSplineCurve3D(Edge):
+class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
     _non_serializable_attributes = ['curve']
 
     def __init__(self, degree, control_points, knot_multiplicities, knots,
