@@ -3214,25 +3214,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
         new_polygon1_2d, new_polygon2_2d = new_polygon1.to_2d(new_center1, x, y), new_polygon2.to_2d(new_center2, x, y)
         
         
-        # bounding_rectangle1, bounding_rectangle2 = new_polygon1_2d.bounding_rectangle(), new_polygon2_2d.bounding_rectangle()
-        # x1, y1, h1 = bounding_rectangle1[0] + (bounding_rectangle1[1] - bounding_rectangle1[0])/2, bounding_rectangle1[2] + (bounding_rectangle1[3] - bounding_rectangle1[2])/2, max((bounding_rectangle1[1] - bounding_rectangle1[0])/2 ,(bounding_rectangle1[3] - bounding_rectangle1[2])/2)
-        # x2, y2, h2 = bounding_rectangle2[0] + (bounding_rectangle2[1] - bounding_rectangle2[0])/2, bounding_rectangle2[2] + (bounding_rectangle2[3] - bounding_rectangle2[2])/2, max((bounding_rectangle2[1] - bounding_rectangle2[0])/2 ,(bounding_rectangle2[3] - bounding_rectangle2[2])/2)  
-        # points1, points2 = [[point.x, point.y] for point in new_polygon1_2d.points],  [[point.x, point.y] for point in new_polygon2_2d.points]
-        # shapely_polygon1, shapely_polygon2 = shapely_polygon(points1), shapely_polygon(points2)
-        # # cell1,cell2 = polylabel.Cell(x1, y1, h1, shapely_polygon1), polylabel.Cell(x2, y2, h2, shapely_polygon2)
-        # pole_of_innaccessibility1, pole_of_innaccessibility2 =  polylabel.polylabel(shapely_polygon1), polylabel.polylabel(shapely_polygon2)
-        # print('pole_of_innaccessibility1, pole_of_innaccessibility2 :', ((pole_of_innaccessibility1.x, pole_of_innaccessibility1.y) , (pole_of_innaccessibility2.x, pole_of_innaccessibility2.y)))
-        # pole_of_innaccessibility1, pole_of_innaccessibility2 = volmdlr.Point2D(pole_of_innaccessibility1.x, pole_of_innaccessibility1.y), volmdlr.Point2D(pole_of_innaccessibility2.x, pole_of_innaccessibility2.y)
-        
-        # # new_polygon1_2d, new_polygon2_2d = self.to_2d(center1, x, y), polygon2.to_2d(center2, x, y)
-        # # self_center2d, other_center2d = new_polygon1_2d.center_of_mass(), new_polygon2_2d.center_of_mass()
-        # new_polygon1_2d.translation(-pole_of_innaccessibility1,copy=False)
-        # new_polygon2_2d.translation(-pole_of_innaccessibility2,copy=False)
-        
-        
         # pole_of_innaccessibility1.plot(ax= ax2d, color = 'y')
         # pole_of_innaccessibility2.plot(ax=ax2d, color = 'b')
-        def point_in_polygon(polygon):
             barycenter= polygon.points[0]
             for point in polygon.points[1:]:
                 barycenter += point
