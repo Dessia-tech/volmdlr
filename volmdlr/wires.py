@@ -3216,64 +3216,6 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
         
         # pole_of_innaccessibility1.plot(ax= ax2d, color = 'y')
         # pole_of_innaccessibility2.plot(ax=ax2d, color = 'b')
-            barycenter= polygon.points[0]
-            for point in polygon.points[1:]:
-                barycenter += point
-            barycenter = barycenter / len(polygon.points)
-            intersetions1 = {}
-            linex_pos = volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.X2D*5)
-            linex_neg = volmdlr.edges.LineSegment2D(volmdlr.O2D, -volmdlr.X2D*5)
-            liney_pos = volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.Y2D*5)
-            liney_neg = volmdlr.edges.LineSegment2D(volmdlr.O2D, -volmdlr.Y2D*5)
-            for line in [linex_pos, linex_neg, liney_pos, liney_neg]:
-                intersections = []
-                for line_segment in polygon.line_segments:
-                    point_intersection = line_segment.linesegment_intersections(line)
-                    intersections.extend(point_intersection)
-                    if not point_intersection:
-                        if line.point_belongs(line_segment.start):
-                            intersections.append(line_segment.start)
-                        if line.point_belongs(line_segment.end):
-                            intersections.append(line_segment.start)
-                intersetions1[line] = intersections[:]
-            if not polygon.point_belongs(barycenter):
-                print('intersetions1.items() :', intersetions1.items())
-                for i, value in enumerate(intersetions1.values()):
-                    if not value:
-                        if i%2 == 0:
-                            if len(list(intersetions1.values())[i+1]) == 2:
-                                # vect1 = list(intersetions1.values())[i+1][0] - volmdlr.O2D
-                                # vect2 = list(intersetions1.values())[i+1][1] - volmdlr.O2D
-                                # if vect1.norm() > vect2.norm():
-                                #     vect = vect2
-                                # else:
-                                #     vect = vect1
-                                # translation1 = (list(intersetions1.values())[i+1][0] + list(intersetions1.values())[i+1][1])*0.5 - vect
-                                translation1 = (list(intersetions1.values())[i+1][0] + list(intersetions1.values())[i+1][1])*0.5 
-                                break
-                        if i%2 != 0:
-                            if len(list(intersetions1.values())[i-1]) == 2:
-                                # vect1 = list(intersetions1.values())[i+1][0] - volmdlr.O2D
-                                # vect2 = list(intersetions1.values())[i+1][1] - volmdlr.O2D
-                                # if vect1.norm() > vect2.norm():
-                                #     vect = vect2
-                                # else:
-                                #     vect = vect1
-                                # translation1 = (list(intersetions1.values())[i-1][0] + list(intersetions1.values())[i-1][1])*0.5 - vect
-                                translation1 = (list(intersetions1.values())[i-1][0] + list(intersetions1.values())[i-1][1])*0.5
-                                break
-            else:
-                x_mid_point = (list(intersetions1.values())[0][0] + list(intersetions1.values())[1][0])*0.5
-                print('x_mid_point :', x_mid_point)
-                print('barycenter :', barycenter)
-                if x_mid_point.point_distance(barycenter) > 2*1e-6:
-                    return x_mid_point
-                # if barycenter.point_distance(list(intersetions1.values())[0][0]) > 2*barycenter.point_distance(list(intersetions1.values())[1][0]) or\
-                #     2*barycenter.point_distance(list(intersetions1.values())[0][0]) < barycenter.point_distance(list(intersetions1.values())[1][0]):
-                #     return (list(intersetions1.values())[0][0] + list(intersetions1.values())[1][0])*0.5
-                return barycenter
-
-            return translation1
         # new_barycenter1 = point_in_polygon(new_polygon1_2d)
         # new_barycenter2 = point_in_polygon(new_polygon2_2d)
         # new_polygon1_2d.translation(-new_barycenter1, False)
