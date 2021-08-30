@@ -2799,10 +2799,10 @@ class BSplineCurve3D(Edge):
     def global_minimum_curvature(self, nb_eval: int = 21):
         check = [i/(nb_eval-1) for i in range(nb_eval)]
         
-        radius = []
+        curvatures = []
         for u in check :
-            radius.append(self.minimum_curvature(u))
-        return radius
+            curvatures.append(self.minimum_curvature(u))
+        return curvatures
 
 class BezierCurve3D(BSplineCurve3D):
 
