@@ -172,39 +172,61 @@ babylon_unpacker_body_template = Template(
 
         showAxis(1);
 
-
-        var meshes = []
+        
+        var meshes = [];
         for (let mesh_data of babylon_data['meshes']){
-          var mesh = new BABYLON.Mesh(mesh_data['name'], scene);
-          meshes.push(mesh);
-
-          var normals = [];
-          var vertexData = new BABYLON.VertexData();
-          BABYLON.VertexData.ComputeNormals(mesh_data['positions'], mesh_data['indices'], normals);
-
-          vertexData.positions = mesh_data['positions'];
-          vertexData.indices = mesh_data['indices'];
-          vertexData.normals = normals;
-          vertexData.applyToMesh(mesh);
-          mesh.enableEdgesRendering(0.9);
-          mesh.edgesWidth = max_length*0.1;
-          mesh.edgesColor = new BABYLON.Color4(0, 0, 0, 0.6);
-          var mat = new BABYLON.StandardMaterial("material", scene);
-          // mat.diffuseColor = BABYLON.Color3.Green();
-          // mat.specularColor = new BABYLON.Color3(0.5, 0.6, 0.87);
-          // mat.emissiveColor = new BABYLON.Color3(1, 1, 1);
-          // mat.ambientColor = new BABYLON.Color3(0.23, 0.98, 0.53);
-          mat.backFaceCulling = false;
-          mesh.material = mat;
-          mat.diffuseColor = new BABYLON.Color3(mesh_data['color'][0],
-                                                mesh_data['color'][1],
-                                                mesh_data['color'][2]);
-          mat.alpha = mesh_data['alpha'];
-
-        }
-
+                var mesh = new BABYLON.Mesh(mesh_data['name'], scene);
+                meshes.push(mesh);
+        
+                var normals = [];
+                var vertexData = new BABYLON.VertexData();
+                BABYLON.VertexData.ComputeNormals(mesh_data['positions'], mesh_data['indices'], normals);
+        
+                vertexData.positions = mesh_data['positions'];
+                vertexData.indices = mesh_data['indices'];
+                vertexData.normals = normals;
+                vertexData.applyToMesh(mesh);
+                mesh.enableEdgesRendering(0.9);
+                mesh.edgesWidth = max_length*0.1;
+                mesh.edgesColor = new BABYLON.Color4(0, 0, 0, 0.6);
+                var mat = new BABYLON.StandardMaterial("material", scene);
+                // mat.diffuseColor = BABYLON.Color3.Green();
+                // mat.specularColor = new BABYLON.Color3(0.5, 0.6, 0.87);
+                // mat.emissiveColor = new BABYLON.Color3(1, 1, 1);
+                // mat.ambientColor = new BABYLON.Color3(0.23, 0.98, 0.53);
+                mat.backFaceCulling = false;
+                mesh.material = mat;
+                mat.diffuseColor = new BABYLON.Color3(mesh_data['color'][0],
+                                                        mesh_data['color'][1],
+                                                        mesh_data['color'][2]);
+                mat.alpha = mesh_data['alpha'];
+                        
+                }
+        
+        var list_lines = [];
+        for (let line_data of babylon_data['lines']){
+                var path = [];
+                for (let point of line_data['points']){
+                        
+                        var x = point[0];
+                        var y = point[1];
+                        var z = point[2];
+                        path.push(new BABYLON.Vector3(x, y, z));
+                        }
+                var options = {
+                    points: path, //vec3 array,
+                    updatable: true
+                    }
+                let lines = BABYLON.MeshBuilder.CreateLines("lines", options, scene);
+                lines.color = new BABYLON.Color3(line_data['color'][0],
+                                                        line_data['color'][1],
+                                                        line_data['color'][2])
+                list_lines.push(lines)
+                }
+        
 
         if (babylon_data['steps']){
+          
 
 
           var n_primitives = babylon_data['meshes'].length;
