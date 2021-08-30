@@ -364,6 +364,8 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
         for primitive in self.primitives:
             faces.extend(primitive.extrusion(extrusion_vector))
         return faces
+    
+    
 
     # def copy(self):
     #     primitives_copy = []
@@ -2723,12 +2725,6 @@ class Contour3D(Contour, Wire3D):
         if dict_intersecting_points:
             return dict_intersecting_points
         return None
-                
-    # def extract(self, contour2: volmdlr.wires.Countour3D):
-    #     for primitive1 in self.primitives:
-    #         for primitive2 in coutour2.primitives:
-                
-        
 
 
 class Circle3D(Contour3D):
