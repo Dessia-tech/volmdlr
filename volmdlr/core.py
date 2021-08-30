@@ -513,12 +513,15 @@ class Primitive3D(CompositePrimitive):
         return [babylon_mesh]
     
     def babylon_points(self):
-         if hasattr(self, 'primitives'):
-             points = [[self.primitives[0].start.x, self.primitives[0].start.y, self.primitives[0].start.z], [self.primitives[0].end.x, self.primitives[0].end.y, self.primitives[0].end.z]]
-             points += [[line.end.x,line.end.y,line.end.z] for line in self.primitives[1:]]
-         elif hasattr(self, 'curve'):
-             points = self.curve.evalpts
-         return points
+
+        points = []
+        if hasattr(self, 'primitives'):
+            points = [[self.primitives[0].start.x, self.primitives[0].start.y, self.primitives[0].start.z], [self.primitives[0].end.x, self.primitives[0].end.y, self.primitives[0].end.z]]
+            points += [[line.end.x,line.end.y,line.end.z] for line in self.primitives[1:]]
+        elif hasattr(self, 'curve'):
+            points = self.curve.evalpts
+        return points
+
     
     def babylon_lines(self, points=None):
         points = self.babylon_points()        
