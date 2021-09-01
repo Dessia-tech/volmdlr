@@ -3220,6 +3220,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
 
         dict_closing_pairs = {}
         triangles = []
+        list_closing_points = []
         new_polygon1_2d_points = new_polygon1_2d.points + [new_polygon1_2d.points[0]]
         for i, point_polygon1 in enumerate(new_polygon1.points+[new_polygon1.points[0]]):
             if i != 0:
@@ -3249,6 +3250,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                     closing_point = line_segment.end
                 closing_point_index = new_polygon2_2d.points.index(closing_point)
                 real_closing_point = polygon2.points[closing_point_index]
+                
 
                 if i==1:
                     previous_closing_point_index = closing_point_index
