@@ -98,7 +98,7 @@ class PointCloud3D(dc.DessiaObject):
         for n in range(resolution):
             print('sewing polygon', round(n/resolution*100, 2), '%')
             poly1 = polygon3d[n]
-            # poly1 = poly1.simplify(0.01, 0.05)
+            poly1 = poly1.simplify(0.01, 0.05)
             # ax = poly1.plot()
             
             
@@ -109,7 +109,7 @@ class PointCloud3D(dc.DessiaObject):
             if n != resolution-1:
                 poly2 = polygon3d[n+1]
                 # poly2.plot(ax=ax, color='r')
-                # poly2 = poly2.simplify(0.01, 0.05)
+                poly2 = poly2.simplify(0.01, 0.05)
                 
                 # coords = poly1.sewing_with(poly2, vec1, vec2, normal, resolution = max_poly_resolution)
                 coords = poly1.sewing(poly2, vec1, vec2)
