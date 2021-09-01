@@ -2783,26 +2783,40 @@ class BSplineCurve3D(Edge):
     def unit_normal_vector(self, abscissa):
         return None
     
-    def minimum_curvature(self, u: float):
+    def curvature(self, u: float):
         #u should be in the interval [0,1]
         curve = self.curve
         ders = curve.derivatives(u,3) #3 first derivative
         c1, c2 = volmdlr.Point3D(*ders[1]), volmdlr.Point3D(*ders[2])
         if c1 == volmdlr.O3D or c2 == volmdlr.O3D:
-            return 1e-12
+            return 0.
         denom = c1.cross(c2)
         
         r_c = ((c1.norm())**3)/denom.norm()
-        
-        return 1/r_c
+        point = volmdlr.Point3D(*ders[0])
+        return 1/r_c, point
     
-    def global_minimum_curvature(self, nb_eval: int = 21):
+    def global_maximum_curvature(self, nb_eval: int = 21):
         check = [i/(nb_eval-1) for i in range(nb_eval)]
         
         curvatures = []
         for u in check :
-            curvatures.append(self.minimum_curvature(u))
+            curvatures.append(self.curvature(u))
         return curvatures
+    
+    def maximum_curvature(self):
+        '''
+        Returns the maximum curvature of a curve and the point where it is located
+        '''
+        maximum_curvarture, point = max(self.global_maximum_curvature())
+        return maximum_curvarture, point
+        
+    def minimum_radius(self):
+        '''
+        Returns the minimum curvature radius of a curve and the point where it is located
+        '''
+        maximum_curvarture, point = self.maximum_curvature()
+        return 1/maximum_curvarture, point
 
 class BezierCurve3D(BSplineCurve3D):
 
