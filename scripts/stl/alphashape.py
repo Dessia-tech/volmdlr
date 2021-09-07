@@ -28,6 +28,7 @@ for stl_file in os.listdir(stl_path):
         if stl_file.split('.')[1] == 'stl':
             stl = volmdlr.stl.Stl.from_file(stl_file)
             stl.name = stl_file
+            print('name :', stl.name)
             # list_points = stl.extract_points_BIS()
             list_points = stl.extract_points()
             print("list_points :", len(list_points))
@@ -38,9 +39,9 @@ for stl_file in os.listdir(stl_path):
             elif len(list_points) < 100000:
                 alpha = 0.08
                 number_point_samples = 300
-            elif len(list_points) < 500000:
+            elif len(list_points) < 200000:
                 alpha = 0.2
-                number_point_samples = 3000
+                number_point_samples = 500
             else:
                 alpha = 0.5
                 number_point_samples = 10000
@@ -50,7 +51,8 @@ for stl_file in os.listdir(stl_path):
             volum = volmdlr.core.VolumeModel([shell])
             volum.babylonjs()
             shells.append(shell)
+            break
 
     
-volum = volmdlr.core.VolumeModel(shells)
-volum.babylonjs()
+# volum = volmdlr.core.VolumeModel(shells)
+# volum.babylonjs()

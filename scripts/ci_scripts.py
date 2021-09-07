@@ -11,7 +11,8 @@ scripts = [
            'primitives/revolved_profile.py', 'edges/areas_moment_cog_check.py',
            'distance/arc3D_arc3D.py','distance/arc3D_ls3D.py',
            'primitives/block3d.py',
-           'faces/triangle3d.py']
+           'faces/triangle3d.py', 
+           'stl/alphashape.py']
 
 #  'cyl_cyl.py', 'cyl_pf.py',
 # 'ls3D_ls3D.py', 'sweep_sweep.py', 'tore_cyl.py','tore_pf.py'
