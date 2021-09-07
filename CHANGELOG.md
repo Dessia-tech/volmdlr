@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### New Features
 
+* union of shells (only with planeface for the moment 
 * Sewing of polygon3D
 * Concav hull of PointCloud2D
 
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * support STL import & export
 * point cloud2D & cloud3D
-
 
 ## [v0.2.8]
 
