@@ -35,6 +35,8 @@ import plot_data.core as plot_data
 # import cv2
 import numpy as np
 from statistics import mean
+# from shapely.geometry import Polygon as shapely_polygon
+# from shapely.algorithms import polylabel
 
 
 class Wire:
@@ -1414,28 +1416,28 @@ class ClosedPolygon:
 
                     if point not in points:
                         points.append(point)
-            elif len(points)>1:
-                vector1 = points[-1] - points[-2]
-                vector2 = point - points[-2]
-                cos = vector1.dot(vector2) / (vector1.norm() * vector2.norm())
-                cos = math.degrees(math.acos(round(cos, 6)))
-                if abs(cos) > angle:
-                    if previous_point not in points:
-                        points.append(previous_point)
-                    if point not in points:
-                        points.append(point)
-            if len(points) > 2:
-                distance2 = points[-3].point_distance(points[-2])
-                vector1 = points[-2] - points[-3]
-                vector2 = points[-1] - points[-3]
-                cos = vector1.dot(vector2) / (vector1.norm() * vector2.norm())
-                cos = math.degrees(math.acos(round(cos, 6)))
-                if distance2 < min_distance and cos < angle:
-                    points = points[:-2] + [points[-1]]
-            previous_point = point
-        distance = points[0].point_distance(points[-1])
-        if distance < min_distance:
-            points.remove(points[-1])
+        #     elif len(points)>1:
+        #         vector1 = points[-1] - points[-2]
+        #         vector2 = point - points[-2]
+        #         cos = vector1.dot(vector2) / (vector1.norm() * vector2.norm())
+        #         cos = math.degrees(math.acos(round(cos, 6)))
+        #         if abs(cos) > angle:
+        #             if previous_point not in points:
+        #                 points.append(previous_point)
+        #             if point not in points:
+        #                 points.append(point)
+        #     if len(points) > 2:
+        #         distance2 = points[-3].point_distance(points[-2])
+        #         vector1 = points[-2] - points[-3]
+        #         vector2 = points[-1] - points[-3]
+        #         cos = vector1.dot(vector2) / (vector1.norm() * vector2.norm())
+        #         cos = math.degrees(math.acos(round(cos, 6)))
+        #         if distance2 < min_distance and cos < angle:
+        #             points = points[:-2] + [points[-1]]
+        #     previous_point = point
+        # distance = points[0].point_distance(points[-1])
+        # if distance < min_distance:
+        #     points.remove(points[-1])
         return self.__class__(points)
 
 
@@ -1673,14 +1675,14 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
 
         offset_vectors = []
         offset_points = []
-
+        
         for i in range(nb):
 
             check = False
             ni = vectors[2 * i - 1] + vectors[2 * i]
             if ni == volmdlr.Vector2D(0, 0):
                 ni = vectors[2 * i]
-                ni = ni.normalVector()
+                ni = ni.normal_vector()
                 offset_vectors.append(ni)
             else:
                 ni.normalize()
@@ -1696,9 +1698,21 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             alpha = math.acos(normal_vector1.dot(normal_vector2))
 
             offset_point = self.points[i] + offset / math.cos(alpha / 2) * \
-                           offset_vectors[i]
+                           (-offset_vectors[i])
+                           
+            # ax=self.plot()
+            # offset_point.plot(ax=ax, color='g')
+                           
+            # if self.point_belongs(offset_point):
+            #     offset_point = self.points[i] + offset / math.cos(alpha / 2) * \
+            #                    (-offset_vectors[i])
+            
             offset_points.append(offset_point)
-
+            
+           
+            # self.points[i].plot(ax=ax, color='b')
+            # offset_point.plot(ax=ax, color='r')
+            
         return self.__class__(offset_points)
 
     def point_border_distance(self, point, return_other_point=False):
@@ -2158,10 +2172,10 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
 
         return vmd.DisplayMesh2D(points, triangles)
 
+
     def simplify(self, min_distance: float = 0.01, max_distance: float = 0.05):
         return ClosedPolygon2D(self.simplify_polygon(min_distance=min_distance,
                                                      max_distance=max_distance).points)
-
 
 class Triangle2D(ClosedPolygon2D):
 
@@ -3194,39 +3208,81 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
         new_center1, new_center2 = new_polygon1.average_center_point(), new_polygon2.average_center_point()
         new_polygon1_2d, new_polygon2_2d = new_polygon1.to_2d(new_center1, x, y), new_polygon2.to_2d(new_center2, x, y)
         
-        # ax2d= new_polygon1_2d.plot(color= 'r')
-        # new_polygon2_2d.plot(ax=ax2d, color= 'g')
-        # barycenter1_2d = new_polygon1_2d.points[0]
-        # for point in new_polygon1_2d.points[1:]:
-        #     barycenter1_2d += point
-        # barycenter1_2d = barycenter1_2d / len(new_polygon1_2d.points)
-        # barycenter1_2d.plot(ax=ax2d, color = 'y')
-        # barycenter2_2d = new_polygon2_2d.points[0]
-        # for point in new_polygon2_2d.points[1:]:
-        #     barycenter2_2d += point
-        # barycenter2_2d = barycenter2_2d / len(new_polygon2_2d.points)
-        # barycenter2_2d.plot(ax=ax2d, color = 'r')
         
+        # pole_of_innaccessibility1.plot(ax= ax2d, color = 'y')
+        # pole_of_innaccessibility2.plot(ax=ax2d, color = 'b')
+        # new_barycenter1 = point_in_polygon(new_polygon1_2d)
+        # new_barycenter2 = point_in_polygon(new_polygon2_2d)
+        # new_polygon1_2d.translation(-new_barycenter1, False)
+        # new_polygon2_2d.translation(-new_barycenter2, False)
+        # new_barycenter1.translation(-new_barycenter1, False)
+        # new_barycenter2.translation(-new_barycenter2, False)
 
-        # ax3d= new_polygon1.plot(color= 'r')
-        # new_polygon2.plot(ax=ax3d, color= 'g')
-        # volmdlr.Point3D(0,0, center1.z).plot(ax=ax3d)
-        # volmdlr.Point3D(0,0, center2.z).plot(ax=ax3d, color = 'r')
+        # ax2d= new_polygon1_2d.plot(color= 'r')
+        # new_barycenter1.plot(ax=ax2d, color = 'y')
+        # new_polygon2_2d.plot(ax=ax2d, color= 'g')
+        # new_barycenter2.plot(ax=ax2d, color = 'r')
+        barycenter1_2d = new_polygon1_2d.points[0]
+        for point in new_polygon1_2d.points[1:]:
+            barycenter1_2d += point
+        barycenter2_2d = barycenter1_2d / len(new_polygon1_2d.points)
+        # barycenter1_2d.plot(ax=ax2d, color = 'y')
+        barycenter2_2d = new_polygon2_2d.points[0]
+        for point in new_polygon2_2d.points[1:]:
+            barycenter2_2d += point
+        barycenter2_2d = barycenter2_2d / len(new_polygon2_2d.points)
+        # barycenter2_2d.plot(ax=ax2d, color = 'r')
+#         exit()
+#         # ax3d= new_polygon1.plot(color= 'r')
+#         # new_polygon2.plot(ax=ax3d, color= 'g')
+#         # volmdlr.Point3D(0,0, center1.z).plot(ax=ax3d)
+#         # volmdlr.Point3D(0,0, center2.z).plot(ax=ax3d, color = 'r')
 
         dict_closing_pairs = {}
         triangles = []
+        list_closing_points = []
         new_polygon1_2d_points = new_polygon1_2d.points + [new_polygon1_2d.points[0]]
         for i, point_polygon1 in enumerate(new_polygon1.points+[new_polygon1.points[0]]):
             if i != 0:
                 mean_point2d = 0.5*(new_polygon1_2d_points[i] + new_polygon1_2d_points[i-1])
                 vec_dir = mean_point2d.copy()
                 vec_dir.normalize()
+
                 line = volmdlr.edges.LineSegment2D(volmdlr.O2D, mean_point2d + vec_dir*5)
                 point_intersections = {}
                 for line_segment in new_polygon2_2d.line_segments:
                     point_intersection = line_segment.linesegment_intersections(line)
                     if point_intersection:
                         point_intersections[line_segment] = point_intersection[0]
+                        # point_intersection[0].plot(ax=ax2d, color = 'b')
+                    else:
+                        if line.point_belongs(line_segment.start):
+                            point_intersections[line_segment] = line_segment.start
+                            # line_segment.start.plot(ax=ax2d, color = 'b')
+                        if line.point_belongs(line_segment.end):
+                            point_intersections[line_segment] = line_segment.end
+                            # line_segment.end.plot(ax=ax2d, color = 'b')
+                if len(list(point_intersections.values())) ==0:
+                    # ax2d= new_polygon1_2d.plot(color= 'r')
+                    # new_polygon2_2d.plot(ax=ax2d, color= 'g')
+                    # barycenter1_2d = new_polygon1_2d.points[0]
+                    # for point in new_polygon1_2d.points[1:]:
+                    #     barycenter1_2d += point
+                    # barycenter1_2d = barycenter1_2d / len(new_polygon1_2d.points)
+                    # barycenter1_2d.plot(ax=ax2d, color = 'y')
+                    # barycenter2_2d = new_polygon2_2d.points[0]
+                    # for point in new_polygon2_2d.points[1:]:
+                    #     barycenter2_2d += point
+                    # barycenter2_2d = barycenter2_2d / len(new_polygon2_2d.points)
+                    # barycenter2_2d.plot(ax=ax2d, color = 'r')
+                    
+            
+                    # ax3d= new_polygon1.plot(color= 'r')
+                    # new_polygon2.plot(ax=ax3d, color= 'g')
+                    # volmdlr.Point3D(0,0, center1.z).plot(ax=ax3d)
+                    # volmdlr.Point3D(0,0, center2.z).plot(ax=ax3d, color = 'r')
+                    # line.plot(ax=ax2d, color = 'y')
+                    raise NotImplementedError
                 point_distance = list(point_intersections.values())[0].point_distance(mean_point2d)
                 point_intersection = list(point_intersections.values())[0]
                 line_segment = list(point_intersections.keys())[0]
