@@ -32,7 +32,6 @@ from typing import List, Tuple, Dict, Union
 from scipy.spatial import Delaunay, ConvexHull
 import plot_data.core as plot_data
 
-import plot_data.core as plot_data
 # import cv2
 import numpy as np
 from statistics import mean

@@ -296,8 +296,8 @@ class Line2D(Line):
         return ax
 
     def plot_data(self, edge_style=None):
-        return plot_data.Line2D([self.point1.x, self.point1.y,
-                                 self.point2.x, self.point2.y],
+        return plot_data.Line2D([self.point1.x, self.point1.y],
+                                [self.point2.x, self.point2.y],
                                 edge_style=edge_style)
 
     def line_intersections(self, line):
@@ -883,8 +883,8 @@ class LineSegment2D(LineSegment):
                 self.end = frame.new_coordinates(self.end)
 
     def plot_data(self, edge_style: plot_data.EdgeStyle = None):
-        return plot_data.LineSegment2D(data=[self.start.x, self.start.y,
-                                             self.end.x, self.end.y],
+        return plot_data.LineSegment2D([self.start.x, self.start.y],
+                                       [self.end.x, self.end.y],
                                        edge_style=edge_style)
 
     def CreateTangentCircle(self, point, other_line):
