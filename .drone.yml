@@ -5,9 +5,10 @@ name: default
 
 steps:
 - name: install, build doc run scripts
-  image: python:3.8
+  image: python:3.8-bullseye
   commands:
-  - git fetch --tags 
+  - git fetch --tags
+  - apt install libgl1 
   - pip install Cython sphinx sphinx_rtd_theme
   - python setup.py install
   - cd doc
