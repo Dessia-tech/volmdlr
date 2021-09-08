@@ -1140,7 +1140,7 @@ class Arc2D(Edge):
         if self.angle >= math.pi:
             angle = volmdlr.TWO_PI - self.angle
             area = math.pi * self.radius ** 2 - 0.5 * self.radius ** 2 * (
-                        angle - math.sin(angle))
+                    angle - math.sin(angle))
         else:
             angle = self.angle
             area = 0.5 * self.radius ** 2 * (angle - math.sin(angle))
@@ -1219,11 +1219,11 @@ class Arc2D(Edge):
         triangle_cog = self.center + 2 / 3. * h * u
         if self.angle < math.pi:
             cog = (
-                              self.center_of_mass() * self.area() - triangle_area * triangle_cog) / abs(
+                          self.center_of_mass() * self.area() - triangle_area * triangle_cog) / abs(
                 self.straight_line_area())
         else:
             cog = (
-                              self.center_of_mass() * self.area() + triangle_area * triangle_cog) / abs(
+                          self.center_of_mass() * self.area() + triangle_area * triangle_cog) / abs(
                 self.straight_line_area())
 
         # ax = self.plot()
@@ -2127,7 +2127,7 @@ class LineSegment3D(LineSegment):
             else:
                 if self.point_belongs(
                         intersection) and linesegment.point_belongs(
-                        intersection):
+                    intersection):
                     return intersection
                 else:
                     return None
@@ -2801,39 +2801,50 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
     def unit_normal_vector(self, abscissa):
         return None
 
-    def curvature(self, u: float):
+    def curvature(self, u: float, point_in_curve: bool = False):
         # u should be in the interval [0,1]
         curve = self.curve
         ders = curve.derivatives(u, 3)  # 3 first derivative
         c1, c2 = volmdlr.Point3D(*ders[1]), volmdlr.Point3D(*ders[2])
         denom = c1.cross(c2)
         if c1 == volmdlr.O3D or c2 == volmdlr.O3D or denom.norm() == 0.0:
-            return 0., volmdlr.Point3D(*ders[0])
+            if point_in_curve:
+                return 0., volmdlr.Point3D(*ders[0])
+            return 0.
         r_c = ((c1.norm()) ** 3) / denom.norm()
         point = volmdlr.Point3D(*ders[0])
-        return 1 / r_c, point
+        if point_in_curve:
+            return 1 / r_c, point
+        return 1 / r_c
 
-    def global_maximum_curvature(self, nb_eval: int = 21):
+    def global_maximum_curvature(self, nb_eval: int = 21, point_in_curve: bool = False):
         check = [i / (nb_eval - 1) for i in range(nb_eval)]
-
         curvatures = []
         for u in check:
-            curvatures.append(self.curvature(u))
+            curvatures.append(self.curvature(u, point_in_curve))
         return curvatures
 
-    def maximum_curvature(self):
-        '''
+    def maximum_curvature(self, point_in_curve: bool = False):
+        """
         Returns the maximum curvature of a curve and the point where it is located
-        '''
-        maximum_curvarture, point = max(self.global_maximum_curvature())
-        return maximum_curvarture, point
+        """
+        if point_in_curve:
+            maximum_curvarture, point = max(self.global_maximum_curvature(nb_eval=21, point_in_curve=point_in_curve))
+            return maximum_curvarture, point
+        print(self.global_maximum_curvature(point_in_curve))
+        maximum_curvarture = max(self.global_maximum_curvature(nb_eval=21, point_in_curve=point_in_curve))
+        return maximum_curvarture
 
-    def minimum_radius(self):
-        '''
+    def minimum_radius(self, point_in_curve=False):
+        """
         Returns the minimum curvature radius of a curve and the point where it is located
-        '''
-        maximum_curvarture, point = self.maximum_curvature()
-        return 1 / maximum_curvarture, point
+        """
+        if point_in_curve:
+            maximum_curvarture, point = self.maximum_curvature(point_in_curve)
+            return 1 / maximum_curvarture, point
+        maximum_curvarture = self.maximum_curvature(point_in_curve)
+        return 1 / maximum_curvarture
+
 
 class BezierCurve3D(BSplineCurve3D):
 
@@ -3280,7 +3291,7 @@ class Arc3D(Edge):
                                 v,
                                 w),
                 self.radius
-                )
+            )
             return [cylinder.rectangular_cut(angle1,
                                              angle2,
                                              0, extrusion_vector.norm())]
