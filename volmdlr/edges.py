@@ -2831,7 +2831,7 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         if point_in_curve:
             maximum_curvarture, point = max(self.global_maximum_curvature(nb_eval=21, point_in_curve=point_in_curve))
             return maximum_curvarture, point
-        print(self.global_maximum_curvature(point_in_curve))
+        # print(self.global_maximum_curvature(point_in_curve))
         maximum_curvarture = max(self.global_maximum_curvature(nb_eval=21, point_in_curve=point_in_curve))
         return maximum_curvarture
 
