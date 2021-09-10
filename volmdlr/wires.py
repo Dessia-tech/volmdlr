@@ -3257,18 +3257,18 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                                                               y), new_polygon2.to_2d(
             new_center2, x, y)
 
-        ax2d = new_polygon1_2d.plot(color='r')
-        new_polygon2_2d.plot(ax=ax2d, color='g')
+        # ax2d = new_polygon1_2d.plot(color='r')
+        # new_polygon2_2d.plot(ax=ax2d, color='g')
         barycenter1_2d = new_polygon1_2d.points[0]
         for point in new_polygon1_2d.points[1:]:
             barycenter1_2d += point
         barycenter1_2d = barycenter1_2d / len(new_polygon1_2d.points)
-        barycenter1_2d.plot(ax=ax2d, color='y')
+        # barycenter1_2d.plot(ax=ax2d, color='y')
         barycenter2_2d = new_polygon2_2d.points[0]
         for point in new_polygon2_2d.points[1:]:
             barycenter2_2d += point
         barycenter2_2d = barycenter2_2d / len(new_polygon2_2d.points)
-        barycenter2_2d.plot(ax=ax2d, color='r')
+        # barycenter2_2d.plot(ax=ax2d, color='r')
 
         # ax3d= new_polygon1.plot(color= 'r')
         # new_polygon2.plot(ax=ax3d, color= 'g')
@@ -3290,7 +3290,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                 vec_dir.normalize()
                 line = volmdlr.edges.LineSegment2D(volmdlr.O2D,
                                                    mean_point2d + vec_dir * 5)
-                line.plot(ax=ax2d, color='b')
+                # line.plot(ax=ax2d, color='b')
                 point_intersections = {}
                 for line_segment in new_polygon2_2d.line_segments:
                     point_intersection = line_segment.linesegment_intersections(
@@ -3308,7 +3308,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                         point_distance = dist
                         point_intersection = point
                         line_segment = line
-                point_intersection.plot(ax=ax2d)
+                # point_intersection.plot(ax=ax2d)
                 if point_intersection.point_distance(
                         line_segment.start) < point_intersection.point_distance(
                     line_segment.end):
@@ -3383,7 +3383,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                                                       list(
                                                           dict_closing_pairs.keys())[
                                                           j]])
-        print("list closing points indexes :", list_closing_point_indexes)
+        # print("list closing points indexes :", list_closing_point_indexes)
         # faces = []
         # coords = triangles
         # for trio in coords:
