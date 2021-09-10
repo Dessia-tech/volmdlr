@@ -80,7 +80,7 @@ class Wire:
             elif ip1 == ip2:  # primitive1 == primitive2
                 if point1.point_distance(
                         primitive1.start) < point2.point_distance(
-                        primitive1.start):
+                    primitive1.start):
                     pass
                 else:
                     primitive1, primitive2 = primitive2, primitive1
@@ -95,7 +95,7 @@ class Wire:
             elif ip1 == ip2:  # primitive1 == primitive2
                 if point1.point_distance(
                         primitive1.start) > point2.point_distance(
-                        primitive1.start):
+                    primitive1.start):
                     pass
                 else:
                     primitive1, primitive2 = primitive2, primitive1
@@ -400,7 +400,7 @@ class Contour:
             elif ip1 == ip2:  # primitive1 == primitive2
                 if point1.point_distance(
                         primitive1.start) < point2.point_distance(
-                        primitive1.start):
+                    primitive1.start):
                     pass
                 else:
                     primitive1, primitive2 = primitive2, primitive1
@@ -415,7 +415,7 @@ class Contour:
             elif ip1 == ip2:  # primitive1 == primitive2
                 if point1.point_distance(
                         primitive1.start) > point2.point_distance(
-                        primitive1.start):
+                    primitive1.start):
                     pass
                 else:
                     primitive1, primitive2 = primitive2, primitive1
@@ -1321,15 +1321,19 @@ class Contour2D(Contour, Wire2D):
                 #     pt.plot(ax=axc)
                 if cutting_points:
                     extracted_outerpoints_contour1 = \
-                    volmdlr.wires.Contour2D.extract_contours(base_contour,
-                                                             cutting_points[0],
-                                                             cutting_points[1],
-                                                             inside)[0]
+                        volmdlr.wires.Contour2D.extract_contours(base_contour,
+                                                                 cutting_points[
+                                                                     0],
+                                                                 cutting_points[
+                                                                     1],
+                                                                 inside)[0]
                     extracted_innerpoints_contour1 = \
-                    volmdlr.wires.Contour2D.extract_contours(base_contour,
-                                                             cutting_points[0],
-                                                             cutting_points[1],
-                                                             not inside)[0]
+                        volmdlr.wires.Contour2D.extract_contours(base_contour,
+                                                                 cutting_points[
+                                                                     0],
+                                                                 cutting_points[
+                                                                     1],
+                                                                 not inside)[0]
                     # extracted_contour2 = volmdlr.wires.Contour2D.extract_contours(cutting_contour, cutting_points[0], cutting_points[1], inside = True)[0]
 
                     # axx = extracted_outerpoints_contour1.plot(color = 'r')
@@ -1359,8 +1363,8 @@ class Contour2D(Contour, Wire2D):
                                                        point in prim]
                                 if len(self.primitives) == len(
                                         ct.primitives) and all(
-                                        point in self_contour_points for point
-                                        in new_contour_points):
+                                    point in self_contour_points for point
+                                    in new_contour_points):
                                     valid = False
                                     break
                         # if ct.area() < 1e-6:
@@ -1449,7 +1453,7 @@ class ClosedPolygon:
                     number_segmnts = round(distance / max_distance) + 2
                     for n in range(number_segmnts):
                         new_point = points[-1] + (point - points[-1]) * (
-                                    n + 1) / number_segmnts
+                                n + 1) / number_segmnts
                         distance1 = new_point.point_distance(points[-1])
                         if distance1 > max_distance:
                             points.append(new_point)
@@ -3280,8 +3284,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                 new_polygon1.points + [new_polygon1.points[0]]):
             if i != 0:
                 mean_point2d = 0.5 * (
-                            new_polygon1_2d_points[i] + new_polygon1_2d_points[
-                        i - 1])
+                        new_polygon1_2d_points[i] + new_polygon1_2d_points[
+                    i - 1])
                 vec_dir = mean_point2d.copy()
                 vec_dir.normalize()
                 line = volmdlr.edges.LineSegment2D(volmdlr.O2D,
@@ -3307,7 +3311,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                 point_intersection.plot(ax=ax2d)
                 if point_intersection.point_distance(
                         line_segment.start) < point_intersection.point_distance(
-                        line_segment.end):
+                    line_segment.end):
                     closing_point = line_segment.start
                 else:
                     closing_point = line_segment.end
@@ -3323,15 +3327,15 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                         closing_point_index = previous_closing_point_index
                     else:
                         dict_closing_pairs[self.points[i - 1]] = (
-                        previous_closing_point_index,
-                        closing_point_index)
+                            previous_closing_point_index,
+                            closing_point_index)
 
                 if point_polygon1 == new_polygon1.points[0]:
                     if list(dict_closing_pairs.values())[-1][-1] != \
                             list(dict_closing_pairs.values())[0][0]:
                         dict_closing_pairs[self.points[0]] = (
-                        list(dict_closing_pairs.values())[-1][-1],
-                        list(dict_closing_pairs.values())[0][0])
+                            list(dict_closing_pairs.values())[-1][-1],
+                            list(dict_closing_pairs.values())[0][0])
 
                 real_closing_point = polygon2.points[closing_point_index]
 
@@ -3360,7 +3364,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                                               polygon2.points[
                                                   new_polygon2.points.index(
                                                       point_polygon2)],
-                                              list(dict_closing_pairs.keys())[j]])
+                                              list(dict_closing_pairs.keys())[
+                                                  j]])
                     else:
                         if index[0] > index[1]:
                             if (i - 1 <= index[0] and i <= index[1]) or (
@@ -3396,3 +3401,90 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
         #                                                                color='b')
 
         return triangles
+
+    def sewing2(self, polygon2):
+        center1, center2 = self.average_center_point(), polygon2.average_center_point()
+        center1, center2 = volmdlr.Point3D(center1.x, center1.y,
+                                           0), volmdlr.Point3D(center2.x,
+                                                               center2.y, 0)
+        new_polygon1, new_polygon2 = self.translation(
+            -center1), polygon2.translation(-center2)
+        dict_closing_pairs = {}
+        triangles = []
+        list_closing_points = []
+        for i, point_polygon1 in enumerate(
+                new_polygon1.points + [new_polygon1.points[0]]):
+            if i != 0:
+                mean_point = 0.5 * (
+                        point_polygon1 + new_polygon1.points[i - 1])
+                distances = [mean_point.point_distance(point_poly2) for
+                             point_poly2 in new_polygon2.points]
+                closing_point = new_polygon2.points[
+                    distances.index(min(distances))]
+                not_valid_point = True
+                while not_valid_point:
+
+                    if closing_point in list_closing_points:
+
+                        if closing_point != list_closing_points[-1] and closing_point != list_closing_points[0]:
+                            distances.remove(min(distances))
+                            closing_point = new_polygon2.points[
+                                distances.index(min(distances))]
+                            if new_polygon2.points.index(
+                                    closing_point) < new_polygon2.points.index(list_closing_points[-1]):
+                                distances.remove(min(distances))
+                                closing_point = new_polygon2.points[
+                                    distances.index(min(distances))]
+                        else:
+                            not_valid_point = False
+                    else:
+                        not_valid_point = False
+
+                list_closing_points.append(closing_point)
+                real_closing_point = polygon2.points[
+                    distances.index(min(distances))]
+                if i == 1:
+                    previous_closing_point = closing_point
+
+                if closing_point != previous_closing_point:
+                    dict_closing_pairs[self.points[i - 1]] = (
+                        new_polygon2.points.index(previous_closing_point),
+                        new_polygon2.points.index(closing_point))
+                if point_polygon1 == new_polygon1.points[0]:
+                    if list(dict_closing_pairs.values())[-1][-1] != \
+                            list(dict_closing_pairs.values())[0][0]:
+                        dict_closing_pairs[self.points[0]] = (
+                            list(dict_closing_pairs.values())[-1][-1],
+                            list(dict_closing_pairs.values())[0][0])
+
+                triangles.append(
+                    [self.points[new_polygon1.points.index(point_polygon1)],
+                     self.points[i - 1], real_closing_point])
+                previous_closing_point = closing_point
+        for i, point_polygon2 in enumerate(
+                new_polygon2.points + [new_polygon2.points[0]]):
+
+            for j, index in enumerate(
+                    list(dict_closing_pairs.values())):
+                if i != 0:
+                    if i - 1 >= index[0] and i <= index[1]:
+                        triangles.append([polygon2.points[i - 1],
+                                          polygon2.points[
+                                              new_polygon2.points.index(
+                                                  point_polygon2)],
+                                          list(
+                                              dict_closing_pairs.keys())[
+                                              j]])
+                else:
+                    if index[0] > index[1]:
+                        if ((i - 1 <= index[0] and i <= index[1]) or (
+                                (i - 1 >= index[0]) and i >= index[1])):
+                            triangles.append([polygon2.points[i - 1],
+                                              polygon2.points[
+                                                  new_polygon2.points.index(
+                                                      point_polygon2)],
+                                              list(
+                                                  dict_closing_pairs.keys())[
+                                                  j]])
+
+                return triangles  # , dict_closing_pairs, list_closing_points
