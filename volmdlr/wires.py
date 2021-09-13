@@ -3490,21 +3490,21 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
         # print("len triangles :", len(triangles))
         # print("it should have ", len(new_polygon1.points) + len(new_polygon2.points) - 2, " triangles in the list")
 
-        faces = []
-        coords = triangles
-        for trio in coords:
-            faces.append(volmdlr.faces.Triangle3D(trio[0], trio[1], trio[2]))
-        volum = volmdlr.core.VolumeModel(faces)
-        volum.babylonjs()
-        ax = self.plot()
-        polygon2.plot(ax=ax, color='y')
-        self.points[0].plot(ax=ax, color = "r")
-        for face in faces:
-            volmdlr.edges.LineSegment3D(face.point1, face.point2).plot(ax=ax,
-                                                                       color='b')
-            volmdlr.edges.LineSegment3D(face.point1, face.point3).plot(ax=ax,
-                                                                       color='b')
-            volmdlr.edges.LineSegment3D(face.point2, face.point3).plot(ax=ax,
-                                                                       color='b')
+        # faces = []
+        # coords = triangles
+        # for trio in coords:
+        #     faces.append(volmdlr.faces.Triangle3D(trio[0], trio[1], trio[2]))
+        # volum = volmdlr.core.VolumeModel(faces)
+        # volum.babylonjs()
+        # ax = self.plot()
+        # polygon2.plot(ax=ax, color='y')
+        # self.points[0].plot(ax=ax, color = "r")
+        # for face in faces:
+        #     volmdlr.edges.LineSegment3D(face.point1, face.point2).plot(ax=ax,
+        #                                                                color='b')
+        #     volmdlr.edges.LineSegment3D(face.point1, face.point3).plot(ax=ax,
+        #                                                                color='b')
+        #     volmdlr.edges.LineSegment3D(face.point2, face.point3).plot(ax=ax,
+        #                                                                color='b')
 
         return triangles
