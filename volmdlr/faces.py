@@ -1760,7 +1760,7 @@ class BSplineSurface3D(Surface3D):
         p4 = volmdlr.Point2D(u1, v2)
         outer_contour = volmdlr.wires.ClosedPolygon2D([p1, p2, p3, p4])
         surface = Surface2D(outer_contour, [])
-        return PlaneFace3D(self, surface, name)
+        return BSplineFace3D(self, surface, name) #PlaneFace3D
 
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive{}'.format(ip)
@@ -1847,7 +1847,6 @@ class BSplineSurface3D(Surface3D):
     @classmethod
     def from_step(cls, arguments, object_dict):
         name = arguments[0][1:-1]
-
         degree_u = int(arguments[1])
         degree_v = int(arguments[2])
         points_sets = arguments[3][1:-1].split("),")
@@ -3811,11 +3810,13 @@ class BSplineFace3D(Face3D):
         delta_v = v_max - v_min
         nlines_y = int(delta_v * resolution)
         lines_y = []
+        print(nlines_x, nlines_y)
         for i in range(nlines_y):
             v = v_min + (i + 1) / (nlines_y + 1) * delta_v
             lines_y.append(vme.Line2D(volmdlr.Point2D(v_min, v),
                                       volmdlr.Point2D(v_max, v)))
         return lines_x, lines_y
+
 
 
 class OpenShell3D(volmdlr.core.CompositePrimitive3D):
