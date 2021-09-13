@@ -1868,7 +1868,6 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                 
                 vec_next_point = next_point - barycenter
                 total_angle += (2*math.pi - volmdlr.core.clockwise_angle(initial_vector, vec_next_point))
-                # print(total_angle)
                 
                 if total_angle > 2*math.pi :
                     break
