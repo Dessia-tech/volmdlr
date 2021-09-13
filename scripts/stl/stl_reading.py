@@ -61,5 +61,5 @@ path = os.getcwd()
 stl = vmstl.Stl.from_file(path + "/MOTEUR_HR18_Filtre295709_ETUDE HR18 FDU_CPOM0CB5FS_001_IN_WORK.stl")
 list_points = stl.extract_points_BIS()
 pointcloud3d = volmdlr.cloud.PointCloud3D(list_points)
-shell = pointcloud3d.to_shell(resolution=20)
+shell = pointcloud3d.to_shell(resolution=30)
 
