@@ -676,6 +676,12 @@ class Point2D(Vector2D):
 
 O2D = Point2D(0, 0)
 
+    def nearest_point(self, points):
+        distances = []
+        for p in points:
+            distances.append(self.point_distance(p))               
+        return points[distances.index(min(distances))] 
+
 class Vector3D(Vector):
 
     def __init__(self, x:float, y:float, z:float, name:Text=''):
@@ -1094,6 +1100,14 @@ class Point3D(Vector3D):
         return s
 
 O3D = Point3D(0, 0, 0)
+
+
+    def nearest_point(self, points):
+        distances = []
+        for p in points:
+            distances.append(self.point_distance(p))               
+        return points[distances.index(min(distances))] 
+
 
 # =============================================================================
 #  Basis, Frames

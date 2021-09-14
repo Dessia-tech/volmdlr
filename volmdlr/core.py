@@ -515,6 +515,7 @@ class Primitive3D(CompositePrimitive):
         return [babylon_mesh]
     
     def babylon_points(self):
+         points =[]
          if hasattr(self, 'primitives'):
              points = [[self.primitives[0].start.x, self.primitives[0].start.y, self.primitives[0].start.z], [self.primitives[0].end.x, self.primitives[0].end.y, self.primitives[0].end.z]]
              points += [[line.end.x,line.end.y,line.end.z] for line in self.primitives[1:]]

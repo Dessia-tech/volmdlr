@@ -22,7 +22,7 @@ import volmdlr.display as vmd
 import volmdlr.geometry
 from itertools import product
 import random
-
+import geomdl
 
 class Surface2D(volmdlr.core.Primitive2D):
     """
@@ -1706,11 +1706,196 @@ class BSplineSurface3D(Surface3D):
         # self.points = [volmdlr.Point3D(*p) for p in surface_points]
         volmdlr.core.Primitive3D.__init__(self, name=name)
 
+    def control_points_matrix(self, coordinates):
+        ''' define control points like a matrix, for each coordinate: x:0, y:1, z:2 '''
+        
+        P = npy.empty((self.nb_u, self.nb_v))
+        for i in range(0,self.nb_u):
+            for j in range(0,self.nb_v): 
+                P[i][j] = self.control_points_table[i][j][coordinates]
+        return P 
+    
+    #Knots_vector
+    def knots_vector_u(self): 
+        ''' compute the global knot vector (u direction) based on knot elements and multiplicities '''
+        
+        knots = self.u_knots
+        multiplicities = self.u_multiplicities
+        
+        knots_vec = []
+        for i in range(0,len(knots)):
+            for j in range(0,multiplicities[i]):
+                knots_vec.append(knots[i])
+        return knots_vec
+    
+    def knots_vector_v(self): 
+        ''' compute the global knot vector (v direction) based on knot elements and multiplicities '''
+        
+        knots = self.v_knots
+        multiplicities = self.v_multiplicities
+        
+        knots_vec = []
+        for i in range(0,len(knots)):
+            for j in range(0,multiplicities[i]):
+                knots_vec.append(knots[i])
+        return knots_vec
+
+ 
+    def knots_vector_inv(self, knots_vector):
+        ''' compute knot elements and multiplicities based on the global knot vector'''
+        
+        knots= []
+        multiplicities=[]
+
+        i=0
+        while i <= (len(knots_vector)-(knots_vector.count(knots_vector[0]))): 
+            knots.append(knots_vector[i])
+            multiplicities.append(knots_vector.count(knots_vector[i]))
+            i=i+(knots_vector.count(knots_vector[i]))
+            
+        return (knots,multiplicities)
+    
+    
+    def basis_functions_u(self, u, k, i):
+        ''' compute basis functions Bi in u direction for u=u and degree=k'''
+        # k = self.degree_u
+        t = self.knots_vector_u()
+        
+        if k == 0:
+            return 1.0 if t[i] <= u < t[i+1] else 0.0
+        if t[i+k] == t[i]:
+            c1 = 0.0
+        else:
+            c1 = (u - t[i])/(t[i+k] - t[i]) * self.basis_functions_u(u, k-1, i)
+        if t[i+k+1] == t[i+1]:
+            c2 = 0.0
+        else:
+            c2 = (t[i+k+1] - u)/(t[i+k+1] - t[i+1]) * self.basis_functions_u(u, k-1, i+1)
+        return c1 + c2
+    
+    def basis_functions_v(self, v, k, i):
+        ''' compute basis functions Bi in v direction for v=v and degree=k'''
+        # k = self.degree_u
+        t = self.knots_vector_v()
+        
+        if k == 0:
+            return 1.0 if t[i] <= v < t[i+1] else 0.0
+        if t[i+k] == t[i]:
+            c1 = 0.0
+        else:
+            c1 = (v - t[i])/(t[i+k] - t[i]) * self.basis_functions_v(v, k-1, i)
+        if t[i+k+1] == t[i+1]:
+            c2 = 0.0
+        else:
+            c2 = (t[i+k+1] - v)/(t[i+k+1] - t[i+1]) * self.basis_functions_v(v, k-1, i+1)
+        return c1 + c2
+
+        
+    def blending_vector_u (self, u):  
+        ''' compute a vector of basis_functions in u direction for u=u '''
+
+        blending_vect = npy.empty((1,self.nb_u))
+        for j in range(0,self.nb_u):
+            blending_vect[0][j] = self.basis_functions_u(u, self.degree_u, j)
+        
+        return blending_vect 
+
+    def blending_vector_v (self, v):  
+        ''' compute a vector of basis_functions in v direction for v=v '''
+
+        blending_vect = npy.empty((1,self.nb_v))
+        for j in range(0,self.nb_v):
+            blending_vect[0][j] = self.basis_functions_v(v, self.degree_v, j)
+        
+        return blending_vect
+    
+    
+    def blending_matrix_u (self, u):
+        ''' compute a matrix of basis_functions in u direction for a vector u like [0,1] '''
+
+        blending_mat = npy.empty((len(u), self.nb_u))
+        for i in range(0,len(u)):
+            for j in range(0,self.nb_u):
+                blending_mat[i][j] = self.basis_functions_u(u[i], self.degree_u, j)      
+        return blending_mat
+
+    def blending_matrix_v (self, v):
+        ''' compute a matrix of basis_functions in v direction for a vector v like [0,1] '''
+
+        blending_mat = npy.empty((len(v), self.nb_v))
+        for i in range(0,len(v)):
+            for j in range(0,self.nb_v):
+                blending_mat[i][j] = self.basis_functions_v(v[i], self.degree_v, j)      
+        return blending_mat    
+
+
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         x, y = point2d
         return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D):
+       
+        '''
+        P=[] #control points matrix 
+        P.append([self.control_points_matrix(0), self.control_points_matrix(1), self.control_points_matrix(2)])
+              
+        # def f(X):
+        #     F = npy.empty(3) 
+        #     F[0]=(((self.blending_vector_u(X[0])).dot(P[0][0])).dot((self.blending_vector_v(X[1])).transpose())) - point3d.x
+        #     F[1]=(((self.blending_vector_u(X[0])).dot(P[0][1])).dot((self.blending_vector_v(X[1])).transpose())) - point3d.y
+        #     F[2]=(((self.blending_vector_u(X[0])).dot(P[0][2])).dot((self.blending_vector_v(X[1])).transpose())) - point3d.z
+        #     return F
+        
+        def f(X):
+            F = npy.empty(3) 
+            F[0]=self.surface.evaluate_single((X[0],X[1]))[0]  - point3d.x
+            F[1]=self.surface.evaluate_single((X[0],X[1]))[1]  - point3d.y
+            F[2]=self.surface.evaluate_single((X[0],X[1]))[2]  - point3d.z
+            return F
+
+        
+       
+        # for x0 in [(0, 0), (0, 1), (0.5, 0.5), (1, 0), (1, 1)]:
+        # # for x0 in [(0.5, 0.5)]:
+
+        #     sol = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
+        #     print(sol.cost)
+        #     if sol.cost < 1e-2:
+        #         # print(sol.cost)
+        #         return (volmdlr.Point2D(sol.x[0], sol.x[1]))
+        
+        x = npy.linspace(0,1,5)
+        x_init=[]
+        for xi in x:
+            for yi in x:
+                x_init.append((xi,yi))
+
+        cost=[]
+        sol=[]
+    
+        for x0 in [(0, 0), (0, 1), (0.5, 0.5), (1, 0), (1, 1)]:  #x_init: # 
+        # for x0 in [(0.5, 0.5)]:
+            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
+            cost.append(z.cost)
+            # print(cost)
+            sol.append(z.x)
+            
+        solution=sol[cost.index(min(cost))]
+            
+        return (volmdlr.Point2D(solution[0], solution[1]))
+
+            '''
+            
+                
+                    
+
+            
+        #         # return sol.cost
+            # else:
+            #     return sol.cost
+        
+        # raise RuntimeError('No convergence in point3d to 2d of bspline surface')
+
         # x, y, z = point3d
         def f(x):
             return (point3d - self.point2d_to_3d(
@@ -1720,11 +1905,12 @@ class BSplineSurface3D(Surface3D):
             sol = scp.optimize.minimize(f, x0=x0,
                                         bounds=[(0, 1), (0, 1)],
                                         options={'eps': 1e-12})
-            if sol.fun < 1e-3:
+            if sol.fun < 1e-2:
                 return volmdlr.Point2D(*sol.x)
 
         raise RuntimeError(
             'No convergence in point3d to 2d of bspline surface')
+
 
     def linesegment2d_to_3d(self, linesegment2d):
         # TODO: this is a non exact method!
@@ -1844,6 +2030,726 @@ class BSplineSurface3D(Surface3D):
             ax = p.plot(ax=ax)
         return ax
 
+    
+    def contour3d_to_2d_with_dimension(self, contour3d:volmdlr.wires.Contour3D):
+        ''' compute a contour2d from BSpline Surface's contour3d and dimension it. 
+        It will not be defined in [0,1], but with the correct 3d dimensions '''
+        
+        import scipy.optimize as opt
+        self=merged_surface
+        contour3d=patron3d_initial
+        contour2d = self.contour3d_to_2d(contour3d)
+        
+        # #Grid points: "Geomdl"
+        points_x = 10 #number of points on x-axis
+        x = npy.linspace(0.05,1,points_x) 
+        points_y = 10 #number of points on y-axis
+        y = npy.linspace(0.25,1,points_y)    
+        
+        #Grid points: "Merge with"
+        points_x = 15 #number of points on x-axis
+        x = npy.linspace(0.25,1,points_x) 
+        points_y = 15 #number of points on y-axis
+        y = npy.linspace(0.1,1,points_y)    
+
+        ##2D Grid points
+        points_2d = [] 
+        for yi in y:
+            for xi in x:
+                points_2d.append(volmdlr.Point2D(xi, yi))   
+        
+        ax2= contour2d.plot()
+        for i in range(0,len(points_2d)):
+            points_2d[i].plot(ax=ax2)
+            
+        for edge in contour2d.primitives: 
+            edge.start.plot(ax=ax2, color='r')
+
+        
+        ##3D Grid points
+        points_3d = [] 
+        for j in range(0,len(points_2d)):
+            points_3d.append(self.point2d_to_3d(points_2d[j]))
+        
+        ax3= patron3d_initial.plot()
+        for i in range(0,len(points_3d)):
+            points_3d[i].plot(ax=ax3)
+            
+        for edge in patron3d_initial.primitives: 
+            edge.start.plot(ax=ax3, color='r')
+    
+
+        # Parameters
+        index_x = {} #grid point position(i,j), x coordinates position in X(unknown variable) 
+        index_y = {} #grid point position(i,j), y coordinates position in X(unknown variable) 
+        index_points = {} #grid point position(j,i), point position in points_2d (or points_3d)
+        k,p = 0,0
+        for i in range(0,points_x):
+            for j in range(0,points_y):
+                index_x.update({(j,i):k})  
+                index_y.update({(j,i):k+1})
+                index_points.update({(j,i):p})
+                k=k+2
+                p=p+1
+                
+        equation_points = [] #points combination to compute distances between 2D and 3D grid points
+        # for i in range(0,points_y): #row from (0,i)
+        #     for j in range(1,points_x):
+        #         equation_points.append(((0,i),(j,i)))
+        # for i in range(0,points_x): #column from (i,0)
+        #     for j in range(1,points_y):
+        #         equation_points.append(((i,0),(i,j)))
+        for i in range(0,points_y): #row
+            for j in range(0,points_x-1):
+                equation_points.append(((j,i),(j+1,i)))
+        for i in range(0,points_x): #column
+            for j in range(0,points_x-1):
+                equation_points.append(((i,j),(i,j+1)))
+        for i in range(0,points_y-1): #diagonal
+            for j in range(0,points_x-1):
+                equation_points.append(((j,i),(j+1,i+1)))
+                
+        for i in range(0,points_y): #row 2segments (before.point.after)
+            for j in range(1,points_x-1):
+                equation_points.append(((j-1,i),(j+1,i)))
+        
+        for i in range(0,points_x): #column 2segments (before.point.after)
+            for j in range(1,points_y-1):
+                equation_points.append(((i,j-1),(i,j+1)))
+
+
+        # D=[] # distances between 3D grid points (based on points combination [equation_points])
+        # for i in range(0, len(equation_points)):
+        #     D.append((points_3d[index_points[equation_points[i][0]]].point_distance(points_3d[index_points[equation_points[i][1]]]))**2)
+
+# =============================================================================
+#         # Geodesic distance
+# =============================================================================
+        
+        import matplotlib.tri as tri
+        xx=[]
+        for p in points_2d:
+            xx.append(p.x)
+        yy=[]
+        for p in points_2d:
+            yy.append(p.y)            
+            
+        triang = tri.Triangulation(xx, yy)
+        
+        
+        import pygeodesic.geodesic as geodesic
+
+        faces = triang.triangles           
+        points = npy.empty([len(points_3d),3])    
+        for i in range(0,len(points_3d)):
+            points[i] = npy.array([points_3d[i].x,points_3d[i].y,points_3d[i].z])
+            
+        geoalg = geodesic.PyGeodesicAlgorithmExact(points, faces)       
+        D=[] # geodesic distances between 3D grid points (based on points combination [equation_points])
+        for i in range(0, len(equation_points)):
+            D.append((geoalg.geodesicDistance(index_points[equation_points[i][0]], index_points[equation_points[i][1]])[0])**2)
+            
+        # # # 2D
+        # faces = triang.triangles           
+        # points = npy.empty([len(points_2d),3])    
+        # for i in range(0,len(points_2d)):
+        #     points[i] = npy.array([points_2d[i].x,points_2d[i].y,0])
+            
+        # geoalg = geodesic.PyGeodesicAlgorithmExact(points, faces)       
+        # D=[] # geodesic distances between 3D grid points (based on points combination [equation_points])
+        # for i in range(0, len(equation_points)):
+        #     D.append(geodesic.PyGeodesicAlgorithmExact(points, faces).geodesicDistance(index_points[equation_points[i][0]], index_points[equation_points[i][1]])[0])
+
+
+        # #System of nonlinear equations
+        # def non_linear_equations(X):
+        #     F = npy.empty(len(equation_points))              
+        #     for i in range(0, len(equation_points)):
+        #         F[i] = abs(X[index_x[equation_points[i][0]]]**2 + X[index_x[equation_points[i][1]]]**2 + X[index_y[equation_points[i][0]]]**2 + X[index_y[equation_points[i][1]]]**2 - 2*X[index_x[equation_points[i][0]]]*X[index_x[equation_points[i][1]]] -2*X[index_y[equation_points[i][0]]]*X[index_y[equation_points[i][1]]] - D[i])
+        #     return F
+
+
+        #System of nonlinear equations
+        def non_linear_equations(X):
+            F = npy.empty(len(equation_points))              
+            for i in range(0, len(equation_points)):
+                F[i] = abs((X[index_x[equation_points[i][0]]]**2 + X[index_x[equation_points[i][1]]]**2 + X[index_y[equation_points[i][0]]]**2 + X[index_y[equation_points[i][1]]]**2 - 2*X[index_x[equation_points[i][0]]]*X[index_x[equation_points[i][1]]] -2*X[index_y[equation_points[i][0]]]*X[index_y[equation_points[i][1]]] - D[i])/D[i])
+            # F[i+1] = X[0]*100
+            # F[i+2] = X[1]*100     
+
+            return F
+
+        ## Solution with "least_squares" 
+        x_init=[] #initial guess (2D grid points)
+        for i in range(0,len(points_2d)):
+            x_init.append(points_2d[i][0])
+            x_init.append(points_2d[i][1])
+        z = opt.least_squares(non_linear_equations, x_init)
+        
+        
+        plt.figure()
+        plt.plot(range(0,len(z.fun)),z.fun)
+
+        
+        points_2d_deformed=[] #deformed 2d grid points
+        for i in range(0,len(z.x),2):
+            points_2d_deformed.append(volmdlr.Point2D(z.x[i], z.x[i+1]))
+        
+        ax2= points_2d_deformed[0].plot()
+        for i in range(0,len(points_2d_deformed)):
+            points_2d_deformed[i].plot(ax=ax2)
+    
+        
+        #Displacement 
+        displacement = npy.ones(shape=(len(points_2d),2)) #2D grid points displacement
+        for i in range(0,len(displacement)):   
+            displacement[i][0]=points_2d_deformed[i][0]-points_2d[i][0]
+            displacement[i][1]=points_2d_deformed[i][1]-points_2d[i][1]
+
+        import matplotlib.tri as tri
+        xx=[]
+        for p in points_2d:
+            xx.append(p.x)
+        yy=[]
+        for p in points_2d:
+            yy.append(p.y)            
+            
+        triang = tri.Triangulation(xx, yy)
+        fig, ax = plt.subplots()
+        ax.set_aspect('equal')
+        ax.triplot(triang)
+        ax.tricontourf(triang, displacement[:,0])
+        tcf = ax.tricontourf(triang, displacement[:,0])
+        fig.colorbar(tcf)
+
+        fig, ax = plt.subplots()
+        ax.set_aspect('equal')
+        ax.triplot(triang)
+        tcf = ax.tricontourf(triang, displacement[:,1])
+        fig.colorbar(tcf)
+        # ax.tricontour(triang,  displacement[:,1], colors='k')
+
+
+
+
+
+        ##Form function "Finite Elements"
+        def form_function(s,t):
+            N = npy.empty(4)
+            N[0] = (1-s)*(1-t)/4
+            N[1] = (1+s)*(1-t)/4
+            N[2] = (1+s)*(1+t)/4
+            N[3] = (1-s)*(1+t)/4
+            return N
+
+   
+        
+        
+        
+        
+        # ****************************************
+
+        
+        ##Contour's displacement
+        finite_elements_points = [] #2D grid points index that define one  
+        for j in range(0,points_y-1): 
+            for i in range(0,points_x-1):
+                finite_elements_points.append(((i,j),(i+1,j),(i+1,j+1),(i,j+1)))        
+        finite_elements = [] #finite elements defined with closed polygon  
+        for i in range(0, len(finite_elements_points)):
+            finite_elements.append(volmdlr.wires.ClosedPolygon2D((points_2d[index_points[finite_elements_points[i][0]]],
+                                      points_2d[index_points[finite_elements_points[i][1]]],
+                                      points_2d[index_points[finite_elements_points[i][2]]],
+                                      points_2d[index_points[finite_elements_points[i][3]]])))
+        
+        displacement_contour = npy.empty((len(contour2d.primitives),2)) #contour's displacement 
+        for i in range(0,len(contour2d.primitives)):
+            for k in range(0, len(finite_elements_points)):
+                if (finite_elements[k].point_belongs(contour2d.primitives[i].start)
+                    or ((points_2d[index_points[finite_elements_points[k][0]]][0] < contour2d.primitives[i].start.x < points_2d[index_points[finite_elements_points[k][1]]][0]) 
+                        and contour2d.primitives[i].start.y == points_2d[index_points[finite_elements_points[k][0]]][1])
+                    or ((points_2d[index_points[finite_elements_points[k][1]]][1] < contour2d.primitives[i].start.y < points_2d[index_points[finite_elements_points[k][2]]][1]) 
+                        and contour2d.primitives[i].start.x == points_2d[index_points[finite_elements_points[k][1]]][0])
+                    or ((points_2d[index_points[finite_elements_points[k][3]]][0] < contour2d.primitives[i].start.x < points_2d[index_points[finite_elements_points[k][2]]][0])
+                        and contour2d.primitives[i].start.y == points_2d[index_points[finite_elements_points[k][1]]][1])
+                    or ((points_2d[index_points[finite_elements_points[k][0]]][1] < contour2d.primitives[i].start.y < points_2d[index_points[finite_elements_points[k][3]]][1])
+                        and contour2d.primitives[i].start.x == points_2d[index_points[finite_elements_points[k][0]]][0])):
+                    break     
+        
+        
+            x0=points_2d[index_points[finite_elements_points[k][0]]][0]
+            y0=points_2d[index_points[finite_elements_points[k][0]]][1]
+            x1=points_2d[index_points[finite_elements_points[k][1]]][0]
+            y2=points_2d[index_points[finite_elements_points[k][2]]][1]
+            x=contour2d.primitives[i].start.x
+            y=contour2d.primitives[i].start.y
+            s=2*((x-x0)/(x1-x0))-1
+            t=2*((y-y0)/(y2-y0))-1 
+            
+            N = form_function(s,t)
+            dx = npy.array([displacement[index_points[finite_elements_points[k][0]]][0],
+            displacement[index_points[finite_elements_points[k][1]]][0],
+            displacement[index_points[finite_elements_points[k][2]]][0],
+            displacement[index_points[finite_elements_points[k][3]]][0]])
+            dy = npy.array([displacement[index_points[finite_elements_points[k][0]]][1],
+            displacement[index_points[finite_elements_points[k][1]]][1],
+            displacement[index_points[finite_elements_points[k][2]]][1],
+            displacement[index_points[finite_elements_points[k][3]]][1]])
+               
+            displacement_contour[i][0]= npy.transpose(N).dot(dx)
+            displacement_contour[i][1]= npy.transpose(N).dot(dy)
+
+        # plt.figure()
+        # plt.plot(range(0,len(displacement_contour[:,0])),displacement_contour[:,0], 'ok')
+
+        # plt.figure()
+        # plt.plot(range(0,len(displacement_contour[:,1])),displacement_contour[:,1],'*r')
+
+
+
+
+
+
+        '''
+        
+# =============================================================================
+#         # % ##Contour's displacement Nearest points
+# =============================================================================
+        
+      
+        displacement_contour = npy.empty((len(contour2d.primitives),2)) #contour's displacement 
+        for i in range(0,len(contour2d.primitives)): 
+            distances = []
+            for p in points_3d:
+                distances.append(contour3d.primitives[i].start.point_distance(p))   
+               
+            distances_sorted = sorted(distances)    
+            
+            # nearest=[distances.index(distances_sorted[0]),distances.index(distances_sorted[1]),
+            #          distances.index(distances_sorted[2]),distances.index(distances_sorted[3])]
+            
+            displacement_contour[i][0]= (displacement[distances.index(distances_sorted[0])][0] + displacement[distances.index(distances_sorted[1])][0] + displacement[distances.index(distances_sorted[2])][0] + displacement[distances.index(distances_sorted[3])][0]) / 4
+
+            displacement_contour[i][1]= (displacement[distances.index(distances_sorted[0])][1] + displacement[distances.index(distances_sorted[1])][1] + displacement[distances.index(distances_sorted[2])][1] + displacement[distances.index(distances_sorted[3])][1]) / 4
+            
+        
+# =============================================================================
+#         ##Contour's displacement center of mass
+# =============================================================================
+        finite_elements_points = [] #2D grid points index that define one  
+        for j in range(0,points_y-1): 
+            for i in range(0,points_x-1):
+                finite_elements_points.append(((i,j),(i+1,j),(i+1,j+1),(i,j+1)))        
+        finite_elements_3d = [] #finite elements defined with closed polygon  
+        for i in range(0, len(finite_elements_points)):
+            finite_elements_3d.append(volmdlr.wires.ClosedPolygon3D((points_3d[index_points[finite_elements_points[i][0]]],
+                                      points_3d[index_points[finite_elements_points[i][1]]],
+                                      points_3d[index_points[finite_elements_points[i][2]]],
+                                      points_3d[index_points[finite_elements_points[i][3]]])))
+        
+        center_mass = []
+        for element in finite_elements_3d:
+            center_mass.append(element.average_center_point())
+        
+        displacement_contour = npy.empty((len(contour2d.primitives),2)) #contour's displacement 
+        for i in range(0,len(contour3d.primitives)):
+            distances = []
+
+            for k in range(0,len(center_mass)):
+                distances.append(contour3d.primitives[i].start.point_distance(center_mass[k]))   
+                   
+                distances_sorted = min(distances)    
+
+            k = distances.index(min(distances))
+            
+            x0=points_2d[index_points[finite_elements_points[k][0]]][0]
+            y0=points_2d[index_points[finite_elements_points[k][0]]][1]
+            x1=points_2d[index_points[finite_elements_points[k][1]]][0]
+            y2=points_2d[index_points[finite_elements_points[k][2]]][1]
+            x=contour2d.primitives[i].start.x
+            y=contour2d.primitives[i].start.y
+            s=2*((x-x0)/(x1-x0))-1
+            t=2*((y-y0)/(y2-y0))-1 
+            
+            N = form_function(s,t)
+            dx = npy.array([displacement[index_points[finite_elements_points[k][0]]][0],
+            displacement[index_points[finite_elements_points[k][1]]][0],
+            displacement[index_points[finite_elements_points[k][2]]][0],
+            displacement[index_points[finite_elements_points[k][3]]][0]])
+            dy = npy.array([displacement[index_points[finite_elements_points[k][0]]][1],
+            displacement[index_points[finite_elements_points[k][1]]][1],
+            displacement[index_points[finite_elements_points[k][2]]][1],
+            displacement[index_points[finite_elements_points[k][3]]][1]])
+               
+            displacement_contour[i][0]= npy.transpose(N).dot(dx)
+            displacement_contour[i][1]= npy.transpose(N).dot(dy)
+            
+            
+
+
+        '''
+        
+        
+        
+        
+        
+# =============================================================================
+#         # Contour2d with correct dimensions                                                
+# =============================================================================
+        contour_xy = npy.ones(shape=(len(contour2d.primitives),2))
+        for i in range(0,len(contour2d.primitives)):   
+            contour_xy[i][0]=contour2d.primitives[i].start.x + displacement_contour[i][0]
+            contour_xy[i][1]=contour2d.primitives[i].start.y + displacement_contour[i][1]
+        for i in range(0,len(contour2d.primitives)-1):   
+            contour2d.primitives[i].start.x = contour_xy[i][0]
+            contour2d.primitives[i].start.y = contour_xy[i][1]
+            contour2d.primitives[i].end.x = contour_xy[i+1][0]
+            contour2d.primitives[i].end.y = contour_xy[i+1][1]
+        
+        contour2d.primitives[-1].start.x = contour2d.primitives[i].end.x
+        contour2d.primitives[-1].start.y = contour2d.primitives[i].end.y
+        contour2d.primitives[-1].end.x = contour2d.primitives[0].start.x
+        contour2d.primitives[-1].end.y = contour2d.primitives[0].start.y
+
+        contour2d.plot(ax=ax2, color='r')
+        for edge in contour2d.primitives: 
+            edge.start.plot(ax=ax2, color='b')
+            
+            
+        contour2d.primitives[108].start.plot(ax=ax2, color='g')
+        contour2d.primitives[109].start.plot(ax=ax2, color='g')
+        contour2d.primitives[110].start.plot(ax=ax2, color='g')
+        
+        contour2d_primitives=contour2d.primitives
+
+        contour2d.primitives[107] = vm.edges.LineSegment2D(contour2d.primitives[107].start,contour2d.primitives[111].start)
+        contour2d_primitives.pop(110)
+        contour2d_primitives.pop(109)
+        contour2d_primitives.pop(108)
+
+        
+        ax=contour2d.plot()
+        for edge in contour2d_primitives:
+            edge.start.plot(ax=ax, color='b')
+
+        return contour2d
+     
+    
+    def merge_with(self, other_bspline_surface3d, merging_direction):
+        ''' merge two Bspline surfaces along a merging direction (u ou v)
+            Based on: Pungotra et al. Merging multiple B-spline surface patches in a virtual reality environment. 2010
+            Link: http://dx.doi.org/10.1016/j.cad.2010.05.006 '''
+            
+         
+        # #Bspline surface parameters
+        # u=[] #knot vector u direction 
+        # v=[] #knot vector v direction
+        # degree=[] #degree u & v directions
+        # r=[] #nbr points u direction 
+        # s=[] #nbr points v direction 
+        # A=[] #blending matrix
+        
+        # P=[] #control points
+        # M=[] #discretized points (x,y,z)
+        # M_point3d=[] #discretized points vlmdlr Point3D
+        
+        # steps=100
+        # surfaces_to_be_merged=[self,other_bspline_surface3d]
+        # n=0
+        
+        # xu = npy.linspace(0,1,steps)
+        # xv = npy.linspace(0,1,steps)
+        
+        # # xu = npy.linspace(0,0.99,steps)
+        # # xv = npy.linspace(0,0.99,steps)
+        
+        # # xu = npy.linspace(0.15,0.99,steps)
+        # # xv = npy.linspace(0,0.99,steps)
+
+
+        # for surface in surfaces_to_be_merged:
+            
+        #     u.append(surface.knots_vector_u())
+        #     v.append(surface.knots_vector_v())
+        #     degree.append([surface.degree_u,surface.degree_v])
+        #     r.append(surface.nb_u)
+        #     s.append(surface.nb_v)
+            
+        #     # if n==0: 
+        #     #     xu = npy.linspace(0,0.8,steps)
+        #     #     xv = npy.linspace(0,0.99,steps)
+        #     # else:
+        #     #     xu = npy.linspace(0.1,0.99,steps)
+        #     #     xv = npy.linspace(0,0.99,steps)
+            
+            
+        #     A.append([surface.blending_matrix_u(xu), surface.blending_matrix_v(xv)])
+        #     P.append([surface.control_points_matrix(0), 
+        #               surface.control_points_matrix(1),
+        #               surface.control_points_matrix(2)])
+
+        #     #Discretize the Bspline surface
+        #     M.append([(A[n][0].dot(P[n][0])).dot(A[n][1].transpose()),
+        #               (A[n][0].dot(P[n][1])).dot(A[n][1].transpose()),
+        #               (A[n][0].dot(P[n][2])).dot(A[n][1].transpose())])
+        #     M_points =[]
+        #     for i in range(0, len(M[n][0])):
+        #         M_0 = []
+        #         for j in range(0, len(M[n][0][0])):
+        #             M_0.append(volmdlr.Point3D(M[n][0][i][j], M[n][1][i][j], M[n][2][i][j]))
+        #         M_points.append(M_0)
+        #     M_point3d.append(M_points)
+        #     n=n+1
+
+        # #Concatenate discretized points of the two surfaces
+        # M_merge = []
+        # if merging_direction == 'u':
+        #     M_merge.append(npy.concatenate((M[0][0],M[1][0]),axis=1))
+        #     M_merge.append(npy.concatenate((M[0][1],M[1][1]),axis=1))
+        #     M_merge.append(npy.concatenate((M[0][2],M[1][2]),axis=1))        
+            
+        #     #Determine the revised number of control points in u,v (r,s) directions  
+        #     r_merged=max(r[0],r[1]) 
+        #     # r_merged=r[0]+r[1]
+        #     d=max(degree[0][0],degree[1][0]) - min(degree[0][0],degree[1][0])
+        #     s_merged=s[0]+s[1]-1 +d #d is added here to ajust the nbr of ctrl points if the degree of the two intial surfaces is not equal. here the maximum degree is kept
+
+        # elif merging_direction == 'v':
+        #     M_merge.append(npy.concatenate((M[0][0],M[1][0]),axis=0))
+        #     M_merge.append(npy.concatenate((M[0][1],M[1][1]),axis=0))
+        #     M_merge.append(npy.concatenate((M[0][2],M[1][2]),axis=0))
+            
+        #     M_merge[0]=M_merge[0].transpose()
+        #     M_merge[1]=M_merge[1].transpose()
+        #     M_merge[2]=M_merge[2].transpose()
+            
+        #     #Determine the revised number of control points in u,v (r,s) directions 
+        #     s_merged=max(s[0],s[1]) 
+        #     # s_merged=s[0]+s[1]
+        #     d=max(degree[0][1],degree[1][1]) - min(degree[0][1],degree[1][1])
+        #     r_merged=r[0]+r[1]-1 +d #d is added here to ajust the nbr of ctrl points if the degree of the two intial surfaces is not equal. here the maximum degree is kept
+            
+        # degree_merge_u = max(degree[0][0],degree[1][0])
+        # degree_merge_v = max(degree[0][1],degree[1][1])
+            
+        # #Determine the new knot vectors 
+        # u_merged = geomdl.knotvector.generate(degree_merge_u, r_merged)
+        # v_merged = geomdl.knotvector.generate(degree_merge_v, s_merged)
+        
+        # # m=len(M_merge[0])
+        # # n=len(M_merge[0][0]) #M_merge = m*n
+        
+        
+        # # (u_knots,u_multiplicities) = self.knots_vector_inv(u_merged)
+        # # (v_knots,v_multiplicities) = self.knots_vector_inv(v_merged)
+
+        # # control_points=[volmdlr.Point3D(0,0,0)] * (s_merged*r_merged)
+        # # merged_surface = volmdlr.faces.BSplineSurface3D(degree_merge_u, 
+        # #                                                 degree_merge_v, 
+        # #                                                 control_points,
+        # #                                                 r_merged, 
+        # #                                                 s_merged, 
+        # #                                                 u_multiplicities, 
+        # #                                                 v_multiplicities, 
+        # #                                                 u_knots, 
+        # #                                                 v_knots)
+        
+        # #Revise the blending matrices     
+        # ux = npy.linspace(0,0.99,m)    
+        # Au_merged = merged_surface.blending_matrix_u(ux)
+        
+        # vx = npy.linspace(0,0.99,n)
+        # Av_merged = merged_surface.blending_matrix_v(vx)
+
+        # #Determine the new control points
+        # mat_u = npy.linalg.inv((Au_merged.transpose()).dot(Au_merged))
+        # mat_v = npy.linalg.inv((Av_merged.transpose()).dot(Av_merged))
+        
+        # P_merged=[]
+        
+        # P_merged.append([(mat_u.dot((((Au_merged.transpose()).dot(M_merge[0])).dot(Av_merged)))).dot(mat_v)])
+        # P_merged.append([(mat_u.dot((((Au_merged.transpose()).dot(M_merge[1])).dot(Av_merged)))).dot(mat_v)])
+        # P_merged.append([(mat_u.dot((((Au_merged.transpose()).dot(M_merge[2])).dot(Av_merged)))).dot(mat_v)])
+        
+        # P_points =[] #new control points (x,y,z)
+        # for i in range(0, len(P_merged[0][0])):
+        #     P_0 = []
+        #     for j in range(0, len(P_merged[0][0][1])):
+        #         P_0.append(volmdlr.Point3D(P_merged[0][0][i][j], P_merged[1][0][i][j], P_merged[2][0][i][j]))
+        #     P_points.append(P_0) #new control points vlmdlr Point3D
+
+        # #Compute the merged surface
+        # control_points = []
+        # for i in range(0,len(P_points)):
+        #     for j in range(0,len(P_points[0])):
+        #         control_points.append(P_points[i][j])
+
+        # knots_u, multiplicities_u = merged_surface.knots_vector_inv(u_merged)
+        # knots_v, multiplicities_v = merged_surface.knots_vector_inv(v_merged)
+        
+        
+        # merged_surface = volmdlr.faces.BSplineSurface3D(degree_u=degree_merge_u,
+        #                                 degree_v=degree_merge_v,
+        #                                 control_points=control_points,
+        #                                 nb_u=r_merged,
+        #                                 nb_v=s_merged,
+        #                                 u_multiplicities=multiplicities_u,
+        #                                 v_multiplicities=multiplicities_v,
+        #                                 u_knots=knots_u,
+        #                                 v_knots=knots_v)
+
+        # return merged_surface 
+    
+        
+    
+    
+    # ****************************
+    
+        #Bspline surface parameters
+        u=[] #knot vector u direction 
+        v=[] #knot vector v direction
+        degree=[] #degree u & v directions
+        r=[] #nbr points u direction 
+        s=[] #nbr points v direction 
+        A=[] #blending matrix
+        
+        P=[] #control points
+        M=[] #discretized points (x,y,z)
+        M_point3d=[] #discretized points vlmdlr Point3D
+        
+        steps=1000
+        surfaces_to_be_merged=[self,other_bspline_surface3d]
+        n=0
+        for surface in surfaces_to_be_merged:
+            
+            u.append(surface.knots_vector_u())
+            v.append(surface.knots_vector_v())
+            degree.append([surface.degree_u,surface.degree_v])
+            r.append(surface.nb_u)
+            s.append(surface.nb_v)
+            
+            x = npy.linspace(0,0.99,steps)
+            A.append([surface.blending_matrix_u(x), surface.blending_matrix_v(x)])
+            P.append([surface.control_points_matrix(0), 
+                      surface.control_points_matrix(1),
+                      surface.control_points_matrix(2)])
+    
+            #Discretize the Bspline surface
+            M.append([(A[n][0].dot(P[n][0])).dot(A[n][1].transpose()),
+                      (A[n][0].dot(P[n][1])).dot(A[n][1].transpose()),
+                      (A[n][0].dot(P[n][2])).dot(A[n][1].transpose())])
+            M_points =[]
+            for i in range(0, len(M[n][0])):
+                M_0 = []
+                for j in range(0, len(M[n][0][0])):
+                    M_0.append(volmdlr.Point3D(M[n][0][i][j], M[n][1][i][j], M[n][2][i][j]))
+                M_points.append(M_0)
+            M_point3d.append(M_points)
+            n=n+1
+    
+        #Concatenate discretized points of the two surfaces
+        M_merge = []
+        if merging_direction == 'u':
+            M_merge.append(npy.concatenate((M[0][0],M[1][0]),axis=1))
+            M_merge.append(npy.concatenate((M[0][1],M[1][1]),axis=1))
+            M_merge.append(npy.concatenate((M[0][2],M[1][2]),axis=1))        
+            
+            #Determine the revised number of control points in u,v (r,s) directions  
+            r_merged=max(r[0],r[1]) 
+            d=max(degree[0][0],degree[1][0]) - min(degree[0][0],degree[1][0])
+            s_merged=s[0]+s[1]-1 +d #d is added here to ajust the nbr of ctrl points if the degree of the two intial surfaces is not equal. here the maximum degree is kept
+    
+        elif merging_direction == 'v':
+            M_merge.append(npy.concatenate((M[0][0],M[1][0]),axis=0))
+            M_merge.append(npy.concatenate((M[0][1],M[1][1]),axis=0))
+            M_merge.append(npy.concatenate((M[0][2],M[1][2]),axis=0))
+            
+            M_merge[0]=M_merge[0].transpose()
+            M_merge[1]=M_merge[1].transpose()
+            M_merge[2]=M_merge[2].transpose()
+            
+            #Determine the revised number of control points in u,v (r,s) directions 
+            s_merged=max(s[0],s[1]) 
+            d=max(degree[0][1],degree[1][1]) - min(degree[0][1],degree[1][1])
+            r_merged=r[0]+r[1]-1 +d #d is added here to ajust the nbr of ctrl points if the degree of the two intial surfaces is not equal. here the maximum degree is kept
+            
+        degree_merge_u = max(degree[0][0],degree[1][0])
+        degree_merge_v = max(degree[0][1],degree[1][1])
+            
+        #Determine the new knot vectors 
+        u_merged = geomdl.knotvector.generate(degree_merge_u, r_merged)
+        v_merged = geomdl.knotvector.generate(degree_merge_v, s_merged)
+        
+        m=len(M_merge[0])
+        n=len(M_merge[0][0]) #M_merge = m*n
+        
+        
+        (u_knots,u_multiplicities) = self.knots_vector_inv(u_merged)
+        (v_knots,v_multiplicities) = self.knots_vector_inv(v_merged)
+    
+        control_points=[volmdlr.Point3D(0,0,0)] * (s_merged*r_merged)
+        merged_surface = volmdlr.faces.BSplineSurface3D(degree_merge_u, 
+                                                        degree_merge_v, 
+                                                        control_points,
+                                                        r_merged, 
+                                                        s_merged, 
+                                                        u_multiplicities, 
+                                                        v_multiplicities, 
+                                                        u_knots, 
+                                                        v_knots)
+        
+        #Revise the blending matrices     
+        ux = npy.linspace(0,0.99,m)    
+        Au_merged = merged_surface.blending_matrix_u(ux)
+        
+        vx = npy.linspace(0,0.99,n)
+        Av_merged = merged_surface.blending_matrix_v(vx)
+    
+        #Determine the new control points
+        mat_u = npy.linalg.pinv((Au_merged.transpose()).dot(Au_merged))
+        mat_v = npy.linalg.pinv((Av_merged.transpose()).dot(Av_merged))
+        
+        P_merged=[]
+        
+        P_merged.append([(mat_u.dot((((Au_merged.transpose()).dot(M_merge[0])).dot(Av_merged)))).dot(mat_v)])
+        P_merged.append([(mat_u.dot((((Au_merged.transpose()).dot(M_merge[1])).dot(Av_merged)))).dot(mat_v)])
+        P_merged.append([(mat_u.dot((((Au_merged.transpose()).dot(M_merge[2])).dot(Av_merged)))).dot(mat_v)])
+        
+        P_points =[] #new control points (x,y,z)
+        for i in range(0, len(P_merged[0][0])):
+            P_0 = []
+            for j in range(0, len(P_merged[0][0][1])):
+                P_0.append(volmdlr.Point3D(P_merged[0][0][i][j], P_merged[1][0][i][j], P_merged[2][0][i][j]))
+            P_points.append(P_0) #new control points vlmdlr Point3D
+    
+        #Compute the merged surface
+        control_points = []
+        for i in range(0,len(P_points)):
+            for j in range(0,len(P_points[0])):
+                control_points.append(P_points[i][j])
+    
+        knots_u, multiplicities_u = merged_surface.knots_vector_inv(u_merged)
+        knots_v, multiplicities_v = merged_surface.knots_vector_inv(v_merged)
+        
+        
+        merged_surface = volmdlr.faces.BSplineSurface3D(degree_u=degree_merge_u,
+                                        degree_v=degree_merge_v,
+                                        control_points=control_points,
+                                        nb_u=r_merged,
+                                        nb_v=s_merged,
+                                        u_multiplicities=multiplicities_u,
+                                        v_multiplicities=multiplicities_v,
+                                        u_knots=knots_u,
+                                        v_knots=knots_v)
+    
+        return merged_surface 
+
+    
+
+    # ****************************
+    
+
+    
     @classmethod
     def from_step(cls, arguments, object_dict):
         name = arguments[0][1:-1]
