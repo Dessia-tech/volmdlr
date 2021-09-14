@@ -498,14 +498,22 @@ class Surface3D(dc.DessiaObject):
 
         area = -1
         inner_contours2d = []
+        
+        print(contours3d)
+        
         for contour3d in contours3d:
             contour2d = self.contour3d_to_2d(contour3d)
             inner_contours2d.append(contour2d)
             contour_area = contour2d.area()
+            
+            print(contour_area)
+            
             if contour_area > area:
                 area = contour_area
                 outer_contour2d = contour2d
-
+            
+            contour2d.plot()
+            
         inner_contours2d.remove(outer_contour2d)
 
         if isinstance(self.face_class, str):
@@ -1707,7 +1715,9 @@ class BSplineSurface3D(Surface3D):
         volmdlr.core.Primitive3D.__init__(self, name=name)
 
     def control_points_matrix(self, coordinates):
-        ''' define control points like a matrix, for each coordinate: x:0, y:1, z:2 '''
+        ''' 
+        define control points like a matrix, for each coordinate: x:0, y:1, z:2 
+        '''
         
         P = npy.empty((self.nb_u, self.nb_v))
         for i in range(0,self.nb_u):
@@ -1717,7 +1727,9 @@ class BSplineSurface3D(Surface3D):
     
     #Knots_vector
     def knots_vector_u(self): 
-        ''' compute the global knot vector (u direction) based on knot elements and multiplicities '''
+        '''
+        compute the global knot vector (u direction) based on knot elements and multiplicities 
+        '''
         
         knots = self.u_knots
         multiplicities = self.u_multiplicities
@@ -1729,7 +1741,9 @@ class BSplineSurface3D(Surface3D):
         return knots_vec
     
     def knots_vector_v(self): 
-        ''' compute the global knot vector (v direction) based on knot elements and multiplicities '''
+        ''' 
+        compute the global knot vector (v direction) based on knot elements and multiplicities 
+        '''
         
         knots = self.v_knots
         multiplicities = self.v_multiplicities
@@ -1740,14 +1754,15 @@ class BSplineSurface3D(Surface3D):
                 knots_vec.append(knots[i])
         return knots_vec
 
- 
     def knots_vector_inv(self, knots_vector):
-        ''' compute knot elements and multiplicities based on the global knot vector'''
+        ''' 
+        compute knot elements and multiplicities based on the global knot vector
+        '''
         
         knots= []
         multiplicities=[]
-
         i=0
+
         while i <= (len(knots_vector)-(knots_vector.count(knots_vector[0]))): 
             knots.append(knots_vector[i])
             multiplicities.append(knots_vector.count(knots_vector[i]))
@@ -1755,9 +1770,11 @@ class BSplineSurface3D(Surface3D):
             
         return (knots,multiplicities)
     
-    
     def basis_functions_u(self, u, k, i):
-        ''' compute basis functions Bi in u direction for u=u and degree=k'''
+        ''' 
+        compute basis functions Bi in u direction for u=u and degree=k
+        '''
+        
         # k = self.degree_u
         t = self.knots_vector_u()
         
@@ -1774,7 +1791,10 @@ class BSplineSurface3D(Surface3D):
         return c1 + c2
     
     def basis_functions_v(self, v, k, i):
-        ''' compute basis functions Bi in v direction for v=v and degree=k'''
+        ''' 
+        compute basis functions Bi in v direction for v=v and degree=k
+        '''
+        
         # k = self.degree_u
         t = self.knots_vector_v()
         
@@ -1790,9 +1810,10 @@ class BSplineSurface3D(Surface3D):
             c2 = (t[i+k+1] - v)/(t[i+k+1] - t[i+1]) * self.basis_functions_v(v, k-1, i+1)
         return c1 + c2
 
-        
     def blending_vector_u (self, u):  
-        ''' compute a vector of basis_functions in u direction for u=u '''
+        ''' 
+        compute a vector of basis_functions in u direction for u=u 
+        '''
 
         blending_vect = npy.empty((1,self.nb_u))
         for j in range(0,self.nb_u):
@@ -1801,7 +1822,9 @@ class BSplineSurface3D(Surface3D):
         return blending_vect 
 
     def blending_vector_v (self, v):  
-        ''' compute a vector of basis_functions in v direction for v=v '''
+        ''' 
+        compute a vector of basis_functions in v direction for v=v 
+        '''
 
         blending_vect = npy.empty((1,self.nb_v))
         for j in range(0,self.nb_v):
@@ -1809,10 +1832,11 @@ class BSplineSurface3D(Surface3D):
         
         return blending_vect
     
-    
     def blending_matrix_u (self, u):
-        ''' compute a matrix of basis_functions in u direction for a vector u like [0,1] '''
-
+        ''' 
+        compute a matrix of basis_functions in u direction for a vector u like [0,1] 
+        '''
+        
         blending_mat = npy.empty((len(u), self.nb_u))
         for i in range(0,len(u)):
             for j in range(0,self.nb_u):
@@ -1820,7 +1844,9 @@ class BSplineSurface3D(Surface3D):
         return blending_mat
 
     def blending_matrix_v (self, v):
-        ''' compute a matrix of basis_functions in v direction for a vector v like [0,1] '''
+        ''' 
+        compute a matrix of basis_functions in v direction for a vector v like [0,1] 
+        '''
 
         blending_mat = npy.empty((len(v), self.nb_v))
         for i in range(0,len(v)):
@@ -2422,7 +2448,7 @@ class BSplineSurface3D(Surface3D):
         
         contour2d_primitives=contour2d.primitives
 
-        contour2d.primitives[107] = vm.edges.LineSegment2D(contour2d.primitives[107].start,contour2d.primitives[111].start)
+        contour2d.primitives[107] = volmdlr.edges.LineSegment2D(contour2d.primitives[107].start,contour2d.primitives[111].start)
         contour2d_primitives.pop(110)
         contour2d_primitives.pop(109)
         contour2d_primitives.pop(108)
@@ -2436,9 +2462,11 @@ class BSplineSurface3D(Surface3D):
      
     
     def merge_with(self, other_bspline_surface3d, merging_direction):
-        ''' merge two Bspline surfaces along a merging direction (u ou v)
-            Based on: Pungotra et al. Merging multiple B-spline surface patches in a virtual reality environment. 2010
-            Link: http://dx.doi.org/10.1016/j.cad.2010.05.006 '''
+        ''' 
+        merge two Bspline surfaces along a merging direction (u ou v)
+        Based on: Pungotra et al. Merging multiple B-spline surface patches in a virtual reality environment. 2010
+        Link: http://dx.doi.org/10.1016/j.cad.2010.05.006 
+        '''
             
          
         # #Bspline surface parameters
@@ -2742,12 +2770,7 @@ class BSplineSurface3D(Surface3D):
                                         u_knots=knots_u,
                                         v_knots=knots_v)
     
-        return merged_surface 
-
-    
-
-    # ****************************
-    
+        return merged_surface     
 
     
     @classmethod
