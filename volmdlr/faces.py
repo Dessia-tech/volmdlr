@@ -496,25 +496,24 @@ class Surface3D(dc.DessiaObject):
         """
         """
 
-        area = -1
-        inner_contours2d = []
-        
-        print(contours3d)
-        
-        for contour3d in contours3d:
-            contour2d = self.contour3d_to_2d(contour3d)
-            inner_contours2d.append(contour2d)
-            contour_area = contour2d.area()
-            
-            print(contour_area)
-            
-            if contour_area > area:
-                area = contour_area
-                outer_contour2d = contour2d
-            
-            contour2d.plot()
-            
-        inner_contours2d.remove(outer_contour2d)
+        lc3d = len(contours3d)
+
+        if lc3d == 1:
+            outer_contour2d = self.contour3d_to_2d(contours3d[0])
+            inner_contours2d = []
+        elif lc3d > 1:
+            area = -1
+            inner_contours2d = []
+            for contour3d in contours3d:
+                contour2d = self.contour3d_to_2d(contour3d)
+                inner_contours2d.append(contour2d)
+                contour_area = contour2d.area()
+                if contour_area > area:
+                    area = contour_area
+                    outer_contour2d = contour2d
+            inner_contours2d.remove(outer_contour2d)
+        else:
+            raise ValueError('Must have at least one contour')
 
         if isinstance(self.face_class, str):
             class_ = globals()[self.face_class]
