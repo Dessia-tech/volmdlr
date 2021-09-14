@@ -1909,6 +1909,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         # Adding first point to close the loop at the end
         remaining_points.append(hull[0])
 
+        initial_vector = vec1.copy()
+        total_angle = 0
         while next_point != point_start:
             vec1 = next_point - hull[-2]
             theta = []
@@ -1916,14 +1918,24 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                 vec2 = pt - next_point
                 theta_i = -volmdlr.core.clockwise_angle(vec1, vec2)
                 theta.append(theta_i)
-
+                
             min_theta, posmin_theta = volmdlr.core.min_pos(theta)
             if math.isclose(min_theta, -2 * math.pi, abs_tol=1e-6) \
                     or math.isclose(min_theta, 0, abs_tol=1e-6):
                 if remaining_points[posmin_theta] == point_start:
                     break
+                
             else:
                 next_point = remaining_points[posmin_theta]
+                
+                vec_next_point = next_point - barycenter
+                total_angle += (2*math.pi - volmdlr.core.clockwise_angle(initial_vector, vec_next_point))
+                
+                if total_angle > 2*math.pi :
+                    break
+                else :
+                    initial_vector = vec_next_point
+                
                 hull.append(next_point)
 
             del remaining_points[posmin_theta]
