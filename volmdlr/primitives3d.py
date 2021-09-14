@@ -860,7 +860,6 @@ class Cone(RevolvedProfile):
                  color: Tuple[float, float, float] = None, alpha: float = 1.,
                  name: str = ''):
         
-        volmdlr.core.Primitive3D.__init__(self, name=name)
         self.position = position
         axis.normalize()
         self.axis = axis
