@@ -912,19 +912,6 @@ class Cone(RevolvedProfile):
     def volume(self):
         return self.length * math.pi * self.radius**2 / 3
 
-    def babylon_script(self, name='primitive_mesh'):
-        new_axis = volmdlr.Vector3D((self.axis[0], self.axis[1], self.axis[2]))
-        normal_vector1 = new_axis.RandomUnitnormalVector()
-        normal_vector2 = new_axis.cross(normal_vector1)
-        x, y, z = self.position
-        s = 'var cone = BABYLON.MeshBuilder.CreateCylinder("cone", {{diameterTop:0, diameterBottom:{}, height: {}, tessellation: 100}}, scene);\n'.format(2*self.radius, self.length)
-        s += 'cone.position = new BABYLON.Vector3({},{},{});\n;'.format(x, y, z)
-        s += 'var axis1 = new BABYLON.Vector3({},{},{});\n'.format(new_axis[0], new_axis[1], new_axis[2])
-        s += 'var axis2 = new BABYLON.Vector3({},{},{});\n'.format(normal_vector1[0], normal_vector1[1], normal_vector1[2])
-        s += 'var axis3 = new BABYLON.Vector3({},{},{});\n'.format(normal_vector2[0], normal_vector2[1], normal_vector2[2])
-        s += 'cone.rotation = BABYLON.Vector3.rotationFromAxis(axis3, axis1, axis2);\n'
-        return s
-
 
 class HollowCylinder(Cylinder):
     def __init__(self, position: volmdlr.Point3D, axis: volmdlr.Vector3D,
