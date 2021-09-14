@@ -47,10 +47,14 @@ class Wire:
             length += primitive.length()
         return length
 
-    def discretization_points(self, resolution: float):
+    def discretization_points(self, resolution: float): 
+        ''' 
+        resolution: distance between two discretized points 
+        '''
+        
         length = self.length()
-        n = int(length / resolution)
-        return [self.point_at_abscissa(i / (n + 1) * length) for i in
+        n = int(length / resolution)+1
+        return [self.point_at_abscissa(i / n * length) for i in
                 range(n + 1)]
 
     def point_at_abscissa(self, curvilinear_abscissa: float):
@@ -126,6 +130,14 @@ class Wire:
                     prim_opt = primitive
             split_primitives.append(prim_opt)
         return self.extract_primitives(point1, split_primitives[0], point2, split_primitives[1], inside)
+
+
+    def to_bspline(self, discretization_parameter, degree):
+        
+        discretized_points = self.discretization_points(discretization_parameter)  
+        bspline_curve = volmdlr.edges.BSplineCurve3D.from_points_interpolation(discretized_points, degree)
+        
+        return bspline_curve 
 
 
 class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
@@ -470,6 +482,52 @@ class Contour:
     
         return points
     
+   
+    def shared_edges_between2contours(self, contour):
+        ''' extract shared edges index between two contours and return it in a tuple form (edge_ind_1, edge_ind_2)''' 
+    
+        edges_index=[]
+        for edge1, edge2 in itertools.product(self.primitives,contour.primitives):
+            if ((edge1.start == edge2.start and edge1.end == edge2.end) or (edge1.start == edge2.end and edge2.start == edge1.end)):
+    
+                edges_index.append((self.primitives.index(edge1),contour.primitives.index(edge2)))
+        
+        return edges_index
+    
+    def shared_edges_by_contour(self, contour):
+        ''' extract shared edges with an adjacent contour '''
+        shared_edges_index = []
+        shared_edges = []
+        edges_index = self.shared_edges_between2contours(contour)
+        for i in range (0,2):
+            shared_edges = []
+            for j in range(0,len(edges_index)):
+                shared_edges.append(edges_index[j][i])
+            shared_edges_index.append(sorted(shared_edges))
+        
+        return shared_edges_index
+
+    def merged_contour_primitives(self,contour):
+        ''' merge two adjacent contours '''
+        
+        merged_primitives = []
+        shared_edges_index_by_contour = self.shared_edges_by_contour(contour)
+        contours = [self, contour]
+        for j in range(0,len(contours)):
+            for i in range(0,len(contours[j].primitives)):
+                if i not in shared_edges_index_by_contour[j]:
+                    merged_primitives.append(contours[j].primitives[i]) 
+        
+        contour_int = merged_primitives[:]
+        merged_primitives_order = [contour_int[0]]
+        while len(merged_primitives_order)<len(contour_int):
+            for n in range(0,len(contour_int)):
+                if contour_int[n].start == merged_primitives_order[-1].end:
+                    merged_primitives_order.append(contour_int[n])   
+                    
+        return merged_primitives_order
+
+    
     @classmethod
     def contours_from_edges(cls, edges):
         list_contours = []
@@ -511,6 +569,7 @@ class Contour:
                 list_contours.append(contour_n)
                 finished = True
         return list_contours
+
 
 class Contour2D(Contour, Wire2D):
     """
@@ -1367,7 +1426,10 @@ class Contour2D(Contour, Wire2D):
         return list_contours
 
     # def is_closed(self):
+        
 
+    def merge_contours(self, contour2d):
+        return  volmdlr.wires.Contour2D(self.merged_contour_primitives(contour2d))     
         
     
 class ClosedPolygon:
@@ -2724,6 +2786,9 @@ class Contour3D(Contour, Wire3D):
         if dict_intersecting_points:
             return dict_intersecting_points
         return None
+    
+    def merge_contours(self, contour3d):
+        return  volmdlr.wires.Contour3D(self.merged_contour_primitives(contour3d))     
 
 
 class Circle3D(Contour3D):
@@ -2786,9 +2851,15 @@ class Circle3D(Contour3D):
             self.normal = new_normal
 
     def translation(self, offset, copy=True):
-        new_frame = self.center.translation(offset, True)
+        # new_frame = self.center.translation(offset, True)
+        new_frame = self.frame.translation(offset, True)
+
         if copy:
-            return Circle3D(new_frame, self.radius, self.frame, self.name)
+
+            # return Circle3D(new_frame, self.radius, self.frame,
+            #                 self.name)
+            return Circle3D(new_frame, self.radius, self.name)
+
         else:
             self.frame = new_frame
 
