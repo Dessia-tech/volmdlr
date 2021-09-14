@@ -696,9 +696,7 @@ class Cylinder(RevolvedProfile):
     the radius and the length.
     """
     def __init__(self, position: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                 radius: float, length: float,
-                 color: Tuple[float, float, float] = None, alpha: float = 1.,
-                 name: str = ''):
+                 radius: float, length: float):
 
         self.position = position
         axis.normalize()
@@ -718,8 +716,7 @@ class Cylinder(RevolvedProfile):
         l4 = volmdlr.edges.LineSegment2D(p4, p1)
         contour = volmdlr.wires.Contour2D([l1, l2, l3, l4])
         y = axis.random_unit_normal_vector()
-        RevolvedProfile.__init__(self, position, axis, y, contour, position,
-                                 axis, color=color, alpha=alpha, name=name)
+        RevolvedProfile.__init__(self, position, axis, y, contour, position, axis)
 
     def _bounding_box(self):
 
@@ -860,7 +857,6 @@ class Cone(RevolvedProfile):
                  color: Tuple[float, float, float] = None, alpha: float = 1.,
                  name: str = ''):
         
-        volmdlr.core.Primitive3D.__init__(self, name=name)
         self.position = position
         axis.normalize()
         self.axis = axis
@@ -878,7 +874,7 @@ class Cone(RevolvedProfile):
         contour = volmdlr.wires.Contour2D([l1, l2, l3])
         y = axis.random_unit_normal_vector()
         RevolvedProfile.__init__(self, position, axis, y, contour, position,
-                                 axis, color=color, alpha=alpha, name=name)
+                axis)
 
     def _bounding_box(self):
         """
