@@ -362,7 +362,7 @@ class Block(volmdlr.faces.ClosedShell3D):
 class Cone(volmdlr.core.Primitive3D):
     def __init__(self, position: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  radius: float, length: float, name: str = ''):
-        volmdlr.Primitive3D.__init__(self, name=name)
+        volmdlr.core.Primitive3D.__init__(self, name=name)
         self.position = position
         axis.normalize()
         self.axis = axis
@@ -401,23 +401,33 @@ class Cone(volmdlr.core.Primitive3D):
         zmin = min(z_bound)
         zmax = max(z_bound)
 
-        return volmdlr.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+        return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def volume(self):
         return self.length * math.pi * self.radius**2 / 3
 
-    def babylon_script(self):
+    def babylon_script(self, name='primitive_mesh'):
         new_axis = volmdlr.Vector3D((self.axis[0], self.axis[1], self.axis[2]))
         normal_vector1 = new_axis.RandomUnitnormalVector()
-        normal_vector2 = new_axis.cross(normal_vector1)
-        x, y, z = self.position
-        s = 'var cone = BABYLON.MeshBuilder.CreateCylinder("cone", {{diameterTop:0, diameterBottom:{}, height: {}, tessellation: 100}}, scene);\n'.format(2*self.radius, self.length)
-        s += 'cone.position = new BABYLON.Vector3({},{},{});\n;'.format(x, y, z)
-        s += 'var axis1 = new BABYLON.Vector3({},{},{});\n'.format(new_axis[0], new_axis[1], new_axis[2])
-        s += 'var axis2 = new BABYLON.Vector3({},{},{});\n'.format(normal_vector1[0], normal_vector1[1], normal_vector1[2])
-        s += 'var axis3 = new BABYLON.Vector3({},{},{});\n'.format(normal_vector2[0], normal_vector2[1], normal_vector2[2])
-        s += 'cone.rotation = BABYLON.Vector3.rotationFromAxis(axis3, axis1, axis2);\n'
-        return s
+        # normal_vector2 = new_axis.cross(normal_vector1)
+        # x, y, z = self.position
+        # s = 'var cone = BABYLON.MeshBuilder.CreateCylinder("cone", {{diameterTop:0, diameterBottom:{}, height: {}, tessellation: 100}}, scene);\n'.format(2*self.radius, self.length)
+        # s += 'cone.position = new BABYLON.Vector3({},{},{});\n;'.format(x, y, z)
+        # s += 'var axis1 = new BABYLON.Vector3({},{},{});\n'.format(new_axis[0], new_axis[1], new_axis[2])
+        # s += 'var axis2 = new BABYLON.Vector3({},{},{});\n'.format(normal_vector1[0], normal_vector1[1], normal_vector1[2])
+        # s += 'var axis3 = new BABYLON.Vector3({},{},{});\n'.format(normal_vector2[0], normal_vector2[1], normal_vector2[2])
+        # s += 'cone.rotation = BABYLON.Vector3.rotationFromAxis(axis3, axis1, axis2);\n'
+        p1 = volmdlr.Point2D((0., 0.))
+        p2 = volmdlr.Point2D((0., self.radius))
+        p3 = volmdlr.Point2D((self.length, 0.))
+        l1 = volmdlr.LineSegment2D(p1, p2)
+        l2 = volmdlr.LineSegment2D(p2, p3)
+        l3 = volmdlr.LineSegment2D(p3, p1)
+        extruded_profile = RevolvedProfile(
+            self.position, self.axis, normal_vector1,
+            volmdlr.Contour2D([l1, l2, l3]),
+            self.position, self.axis, name=self.name)
+        return extruded_profile.babylon_script(name=name)
 
 
 class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
