@@ -463,4 +463,3 @@ for i, i_polygon in enumerate(polygons):
             
             volum = volmdlr.core.VolumeModel(faces)
             # volum.babylonjs()
-     

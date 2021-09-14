@@ -173,10 +173,8 @@ def delete_double_pos(points, triangles):
     for face_triangles in triangles:
         if face_triangles is None:
             continue
-        # print('face_triangles', face_triangles)
         new_face_triangles = []
         for triangle_ in face_triangles:
-            # print('triangle', triangle)
             new_triangle = []
             for index in triangle_:
                 if index in index_to_new_index:
@@ -515,6 +513,7 @@ class Primitive3D(CompositePrimitive):
         return [babylon_mesh]
     
     def babylon_points(self):
+
          points =[]
          if hasattr(self, 'primitives'):
              points = [[self.primitives[0].start.x, self.primitives[0].start.y, self.primitives[0].start.z], [self.primitives[0].end.x, self.primitives[0].end.y, self.primitives[0].end.z]]
@@ -522,6 +521,7 @@ class Primitive3D(CompositePrimitive):
          elif hasattr(self, 'curve'):
              points = self.curve.evalpts
          return points
+
     
     def babylon_lines(self, points=None):
         points = self.babylon_points()        
@@ -1467,7 +1467,7 @@ class VolumeModel(dc.DessiaObject):
         max_length = max([bbox.xmax - bbox.xmin,
                           bbox.ymax - bbox.ymin,
                           bbox.zmax - bbox.zmin])
-        
+
         babylon_data = {'meshes': meshes,
                         'lines': lines,
                         'max_length': max_length,
