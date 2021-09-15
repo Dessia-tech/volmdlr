@@ -20,7 +20,8 @@ import webbrowser
 
 def step_split_arguments(function_arg):
     """
-    Split the arguments of a function that doesn't start with '(' but end with ')'
+    Split the arguments of a function that doesn't start with '(' but end with
+    ')'
     ex: IN: '#123,#124,#125)'
        OUT: ['#123', '#124', '#125']
     """
@@ -304,7 +305,6 @@ class Step:
             (subfunction_names[i], step_split_arguments(subfunction_args[i]))
             for i in range(len(subfunction_names))]
 
-
     def parse_arguments(self, arguments):
         for i, arg in enumerate(arguments):
             if type(arg) == str and arg[0] == '#':
@@ -437,6 +437,13 @@ class Step:
                 modified_arguments.pop()
             volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
                 modified_arguments, object_dict)
+            
+        elif name == 'BOUNDED_SURFACE, B_SPLINE_SURFACE, B_SPLINE_SURFACE_WITH_KNOTS, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM, SURFACE':
+            modified_arguments = ['']+arguments
+            if modified_arguments[-1] == "''":
+                modified_arguments.pop()
+            volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
+                modified_arguments, object_dict)
 
         elif name in STEP_TO_VOLMDLR and hasattr(
                 STEP_TO_VOLMDLR[name], "from_step"):
@@ -514,7 +521,7 @@ class Step:
                         arguments, object_dict)
                     points3d.append(volmdlr_object)
                     
-        #remove first point because it refers to origin            
+        # remove first point because it refers to origin
         return points3d[1:]
 
     def plot_data(self):
@@ -582,6 +589,9 @@ STEP_TO_VOLMDLR = {
     'QUASI_UNIFORM_SURFACE': volmdlr.faces.BSplineSurface3D,
     'RECTANGULAR_COMPOSITE_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACES
     'CURVE_BOUNDED_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACE
+    
+    #added on 12/08/2021 by Mack in order to read BsplinePipe
+    'BOUNDED_SURFACE, B_SPLINE_SURFACE, B_SPLINE_SURFACE_WITH_KNOTS, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM, SURFACE': volmdlr.faces.BSplineSurface3D,
 
     # TOPOLOGICAL ENTITIES
     'VERTEX_POINT': None,
