@@ -673,8 +673,15 @@ class Point2D(Vector2D):
         n = line.unit_normal_vector()
         pp1 = point - p1
         return  pp1 - pp1.dot(n)*n + p1
+    
+    def nearest_point(self, points):
+        distances = []
+        for p in points:
+            distances.append(self.point_distance(p))               
+        return points[distances.index(min(distances))] 
 
 O2D = Point2D(0, 0)
+
 
 class Vector3D(Vector):
 
@@ -1093,7 +1100,15 @@ class Point3D(Vector3D):
         s += 'sphere.material = mat;\n'
         return s
 
+    def nearest_point(self, points):
+        distances = []
+        for p in points:
+            distances.append(self.point_distance(p))               
+        return points[distances.index(min(distances))] 
+
+
 O3D = Point3D(0, 0, 0)
+
 
 # =============================================================================
 #  Basis, Frames
