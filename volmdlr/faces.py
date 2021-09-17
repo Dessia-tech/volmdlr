@@ -2102,6 +2102,7 @@ class BSplineSurface3D(Surface3D):
         points_x = 20 #number of points on x-axis
         x = npy.linspace(contour2d.bounding_rectangle()[0],contour2d.bounding_rectangle()[1],points_x) 
         points_y = 20 #number of points on y-axis
+        y = npy.linspace(contour2d.bounding_rectangle()[2],contour2d.bounding_rectangle()[3],points_y)    
 
         ##2D Grid points
         points_2d = [] 
