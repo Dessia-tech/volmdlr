@@ -23,6 +23,7 @@ import volmdlr.geometry
 from itertools import product
 import random
 import geomdl
+import scipy.optimize as opt
 
 class Surface2D(volmdlr.core.Primitive2D):
     """
@@ -1054,7 +1055,9 @@ class CylindricalSurface3D(Surface3D):
                     self.point2d_to_3d(linesegment2d.end),
                 )]
         else:
-            raise NotImplementedError('Ellipse? delta_theta={} delta_z={}'.format(abs(theta2-theta1), abs(z1-z2)))
+            # TODO: this is a non exact method!
+            return [vme.LineSegment3D(self.point2d_to_3d(linesegment2d.start),self.point2d_to_3d(linesegment2d.end))]
+            # raise NotImplementedError('Ellipse? delta_theta={} delta_z={}'.format(abs(theta2-theta1), abs(z1-z2)))
 
     def fullarc3d_to_2d(self, fullarc3d):
         if self.frame.w.is_colinear_to(fullarc3d.normal):
@@ -1910,11 +1913,6 @@ class BSplineSurface3D(Surface3D):
         return (volmdlr.Point2D(solution[0], solution[1]))
 
             '''
-            
-                
-                    
-
-            
         #         # return sol.cost
             # else:
             #     return sol.cost
@@ -1926,15 +1924,36 @@ class BSplineSurface3D(Surface3D):
             return (point3d - self.point2d_to_3d(
                 volmdlr.Point2D(x[0], x[1]))).norm()
 
-        for x0 in [(0, 0), (0, 1), (1, 0), (1, 1), (0.5, 0.5)]:
-            sol = scp.optimize.minimize(f, x0=x0,
-                                        bounds=[(0, 1), (0, 1)],
-                                        options={'eps': 1e-12})
-            if sol.fun < 1e-2:
-                return volmdlr.Point2D(*sol.x)
+        # for x0 in [(0, 0), (0, 1), (1, 0), (1, 1), (0.5, 0.5)]:
+        #     sol = scp.optimize.minimize(f, x0=x0,
+        #                                 bounds=[(0, 1), (0, 1)],
+        #                                 options={'eps': 1e-12})
+        #     if sol.fun < 1e-5:
+        #         return volmdlr.Point2D(*sol.x)
 
-        raise RuntimeError(
-            'No convergence in point3d to 2d of bspline surface')
+        # raise RuntimeError(
+        #     'No convergence in point3d to 2d of bspline surface')
+        
+        x = npy.linspace(0,1,5)
+        x_init=[]
+        for xi in x:
+            for yi in x:
+                x_init.append((xi,yi))
+
+        cost=[]
+        sol=[]
+    
+        for x0 in x_init: 
+            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
+            cost.append(z.cost)
+            sol.append(z.x)
+            
+        solution=sol[cost.index(min(cost))]
+            
+        return (volmdlr.Point2D(solution[0], solution[1]))
+        
+        
+        
 
 
     def linesegment2d_to_3d(self, linesegment2d):
@@ -2057,8 +2076,10 @@ class BSplineSurface3D(Surface3D):
 
     
     def contour3d_to_2d_with_dimension(self, contour3d:volmdlr.wires.Contour3D):
-        ''' compute a contour2d from BSpline Surface's contour3d and dimension it. 
-        It will not be defined in [0,1], but with the correct 3d dimensions '''
+        ''' 
+        compute a contour2d from BSpline Surface's contour3d and dimension it. 
+        it will not be defined in [0,1], but with the correct 3d dimensions 
+        '''
         
         import scipy.optimize as opt
         self=merged_surface
@@ -2076,6 +2097,11 @@ class BSplineSurface3D(Surface3D):
         x = npy.linspace(0.25,1,points_x) 
         points_y = 15 #number of points on y-axis
         y = npy.linspace(0.1,1,points_y)    
+
+
+        points_x = 20 #number of points on x-axis
+        x = npy.linspace(contour2d.bounding_rectangle()[0],contour2d.bounding_rectangle()[1],points_x) 
+        points_y = 20 #number of points on y-axis
 
         ##2D Grid points
         points_2d = [] 

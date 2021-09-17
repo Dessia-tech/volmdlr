@@ -516,14 +516,16 @@ class Contour:
         for j in range(0,len(contours)):
             for i in range(0,len(contours[j].primitives)):
                 if i not in shared_edges_index_by_contour[j]:
-                    merged_primitives.append(contours[j].primitives[i]) 
+                    merged_primitives.append(contours[j].primitives[i])
         
         contour_int = merged_primitives[:]
         merged_primitives_order = [contour_int[0]]
         while len(merged_primitives_order)<len(contour_int):
             for n in range(0,len(contour_int)):
                 if contour_int[n].start == merged_primitives_order[-1].end:
-                    merged_primitives_order.append(contour_int[n])   
+                    merged_primitives_order.append(contour_int[n])
+                    if len(merged_primitives_order) == len(contour_int):
+                        break
                     
         return merged_primitives_order
 
