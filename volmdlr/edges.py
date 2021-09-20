@@ -2848,6 +2848,15 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         maximum_curvarture = self.maximum_curvature(point_in_curve)
         return 1 / maximum_curvarture
 
+    @classmethod
+    def from_geomdl_curve(cls, curve):
+        knots = list(sorted(set(curve.knotvector)))
+        knot_multiplicities = [curve.knotvector.count(k) for k in knots]
+        return BSplineCurve3D(degree=curve.degree,
+                              control_points=curve.ctrlpts,
+                              knots=knots,
+                              knot_multiplicities=knot_multiplicities
+                              )
 
 class BezierCurve3D(BSplineCurve3D):
 
