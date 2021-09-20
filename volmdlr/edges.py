@@ -2601,6 +2601,9 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         return tangent
 
     def binormal(self, position: float = 0.0):
+        
+        " The binormal vector is the cross product of unit tangent and unit normal vectors "
+
         point, binormal = operations.binormal(self.curve, position,
                                               normalize=True)
         binormal = volmdlr.Point3D(binormal[0], binormal[1], binormal[2])
