@@ -2780,6 +2780,19 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         
         return 1/r_c
     
+
+    @classmethod
+    def from_geomdl_curve(cls, curve):
+        knots = list(sorted(set(curve.knotvector)))
+        knot_multiplicities = [curve.knotvector.count(k) for k in knots]
+        return BSplineCurve3D(degree=curve.degree,
+                              control_points=curve.ctrlpts,
+                              knots=knots,
+                              knot_multiplicities=knot_multiplicities
+                              )
+
+    
+
     def global_minimum_curvature(self, nb_eval: int = 21):
         check = [i/(nb_eval-1) for i in range(nb_eval)]
         
@@ -2787,6 +2800,7 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         for u in check :
             radius.append(self.minimum_curvature(u))
         return radius
+
 
 class BezierCurve3D(BSplineCurve3D):
 

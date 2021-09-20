@@ -359,67 +359,6 @@ class Block(volmdlr.faces.ClosedShell3D):
         return fig, ax
 
 
-class Cone(volmdlr.core.Primitive3D):
-    def __init__(self, position: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                 radius: float, length: float, name: str = ''):
-        volmdlr.Primitive3D.__init__(self, name=name)
-        self.position = position
-        axis.normalize()
-        self.axis = axis
-        self.radius = radius
-        self.length = length
-        self.bounding_box = self._bounding_box()
-
-    def _bounding_box(self):
-        """
-        A is the point at the basis
-        B is the top
-        """
-        pointA = self.position - self.length/2 * self.axis
-        pointB = self.position + self.length/2 * self.axis
-
-        dx2 = (pointA[0]-pointB[0])**2
-        dy2 = (pointA[1]-pointB[1])**2
-        dz2 = (pointA[2]-pointB[2])**2
-
-        kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
-        ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
-        kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
-
-        x_bound = (pointA[0] - kx * self.radius,
-                   pointA[0] + kx * self.radius, pointB[0])
-        xmin = min(x_bound)
-        xmax = max(x_bound)
-
-        y_bound = (pointA[1] - ky * self.radius,
-                   pointA[1] + ky * self.radius, pointB[1])
-        ymin = min(y_bound)
-        ymax = max(y_bound)
-
-        z_bound = (pointA[2] - kz * self.radius,
-                   pointA[2] + kz * self.radius, pointB[2])
-        zmin = min(z_bound)
-        zmax = max(z_bound)
-
-        return volmdlr.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
-
-    def volume(self):
-        return self.length * math.pi * self.radius**2 / 3
-
-    def babylon_script(self):
-        new_axis = volmdlr.Vector3D((self.axis[0], self.axis[1], self.axis[2]))
-        normal_vector1 = new_axis.RandomUnitnormalVector()
-        normal_vector2 = new_axis.cross(normal_vector1)
-        x, y, z = self.position
-        s = 'var cone = BABYLON.MeshBuilder.CreateCylinder("cone", {{diameterTop:0, diameterBottom:{}, height: {}, tessellation: 100}}, scene);\n'.format(2*self.radius, self.length)
-        s += 'cone.position = new BABYLON.Vector3({},{},{});\n;'.format(x, y, z)
-        s += 'var axis1 = new BABYLON.Vector3({},{},{});\n'.format(new_axis[0], new_axis[1], new_axis[2])
-        s += 'var axis2 = new BABYLON.Vector3({},{},{});\n'.format(normal_vector1[0], normal_vector1[1], normal_vector1[2])
-        s += 'var axis3 = new BABYLON.Vector3({},{},{});\n'.format(normal_vector2[0], normal_vector2[1], normal_vector2[2])
-        s += 'cone.rotation = BABYLON.Vector3.rotationFromAxis(axis3, axis1, axis2);\n'
-        return s
-
-
 class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     """
     
@@ -914,6 +853,68 @@ class Cylinder(RevolvedProfile):
         return Cylinder(new_position, new_axis, self.radius, self.length,
                         color=self.color, alpha=self.alpha, name=self.name)
         
+
+class Cone(RevolvedProfile):
+    def __init__(self, position: volmdlr.Point3D, axis: volmdlr.Vector3D,
+                 radius: float, length: float, 
+                 color: Tuple[float, float, float] = None, alpha: float = 1.,
+                 name: str = ''):
+        
+        self.position = position
+        axis.normalize()
+        self.axis = axis
+        self.radius = radius
+        self.length = length
+        self.bounding_box = self._bounding_box()
+        
+        # Revolved Profile
+        p1 = volmdlr.Point2D(0., 0.)
+        p2 = volmdlr.Point2D(0., self.radius)
+        p3 = volmdlr.Point2D(self.length, 0.)
+        l1 = volmdlr.edges.LineSegment2D(p1, p2)
+        l2 = volmdlr.edges.LineSegment2D(p2, p3)
+        l3 = volmdlr.edges.LineSegment2D(p3, p1)
+        contour = volmdlr.wires.Contour2D([l1, l2, l3])
+        y = axis.random_unit_normal_vector()
+        RevolvedProfile.__init__(self, position, axis, y, contour, position,
+                                 axis, color=color, alpha=alpha, name=name)
+
+    def _bounding_box(self):
+        """
+        A is the point at the basis
+        B is the top
+        """
+        pointA = self.position - self.length/2 * self.axis
+        pointB = self.position + self.length/2 * self.axis
+
+        dx2 = (pointA[0]-pointB[0])**2
+        dy2 = (pointA[1]-pointB[1])**2
+        dz2 = (pointA[2]-pointB[2])**2
+
+        kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
+        ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
+        kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
+
+        x_bound = (pointA[0] - kx * self.radius,
+                   pointA[0] + kx * self.radius, pointB[0])
+        xmin = min(x_bound)
+        xmax = max(x_bound)
+
+        y_bound = (pointA[1] - ky * self.radius,
+                   pointA[1] + ky * self.radius, pointB[1])
+        ymin = min(y_bound)
+        ymax = max(y_bound)
+
+        z_bound = (pointA[2] - kz * self.radius,
+                   pointA[2] + kz * self.radius, pointB[2])
+        zmin = min(z_bound)
+        zmax = max(z_bound)
+
+        return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+
+    def volume(self):
+        return self.length * math.pi * self.radius**2 / 3
+
 
 class HollowCylinder(Cylinder):
     def __init__(self, position: volmdlr.Point3D, axis: volmdlr.Vector3D,
