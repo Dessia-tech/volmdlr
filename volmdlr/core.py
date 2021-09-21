@@ -24,8 +24,6 @@ import webbrowser
 import os
 import tempfile
 import subprocess
-import string
-import random
 
 # TODO: put voldmlr metadata in this freecad header
 STEP_HEADER = '''ISO-10303-21;
@@ -1500,17 +1498,20 @@ class VolumeModel(dc.DessiaObject):
             page_name = file.name
         webbrowser.open('file://' + os.path.realpath(page_name))
 
-    def babylonjs_to_filepath(self, filepath: str, file_name: str = None,
+    def babylonjs_to_filepath(self, filepath: str = None, file_name: str = None,
                               use_cdn=True, debug=False):
         babylon_data = self.babylon_data()
         script = self.babylonjs_from_babylon_data(babylon_data, use_cdn=use_cdn,
                                                   debug=debug)
+        if file_name is None or filepath in None:
+            with tempfile.NamedTemporaryFile(suffix=".html",
+                                             delete=False) as file:
+                file.write(bytes(script, 'utf8'))
+                return
         if filepath.endswith('.html'):
             with open(filepath, 'w') as file:
                 file.write(script)
             return
-        if file_name is None:
-            file_name = ''.join(random.choices(string.ascii_lowercase + string.digits, k=7))
         if not file_name.endswith('.html'):
             file_name += '.html'
         filepath = filepath + file_name
