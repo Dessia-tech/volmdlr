@@ -20,7 +20,8 @@ import webbrowser
 
 def step_split_arguments(function_arg):
     """
-    Split the arguments of a function that doesn't start with '(' but end with ')'
+    Split the arguments of a function that doesn't start with '(' but end with
+    ')'
     ex: IN: '#123,#124,#125)'
        OUT: ['#123', '#124', '#125']
     """
@@ -304,9 +305,7 @@ class Step:
             (subfunction_names[i], step_split_arguments(subfunction_args[i]))
             for i in range(len(subfunction_names))]
 
-    def instanciate(self, name, arguments, object_dict):
-        """
-        """
+    def parse_arguments(self, arguments):
         for i, arg in enumerate(arguments):
             if type(arg) == str and arg[0] == '#':
                 arguments[i] = int(arg[1:])
@@ -321,7 +320,12 @@ class Step:
 
                     arg_id += char
                 argument.append(arg_id)
-                arguments[i] = list(argument)
+                arguments[i] = argument
+        
+    def instanciate(self, name, arguments, object_dict):
+        """
+        """
+        self.parse_arguments(arguments)
 
         if name == 'VERTEX_POINT':
             volmdlr_object = object_dict[arguments[1]]
@@ -433,6 +437,13 @@ class Step:
                 modified_arguments.pop()
             volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
                 modified_arguments, object_dict)
+            
+        elif name == 'BOUNDED_SURFACE, B_SPLINE_SURFACE, B_SPLINE_SURFACE_WITH_KNOTS, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM, SURFACE':
+            modified_arguments = ['']+arguments
+            if modified_arguments[-1] == "''":
+                modified_arguments.pop()
+            volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
+                modified_arguments, object_dict)
 
         elif name in STEP_TO_VOLMDLR and hasattr(
                 STEP_TO_VOLMDLR[name], "from_step"):
@@ -492,7 +503,7 @@ class Step:
 
         return volmdlr.core.VolumeModel(shells)
 
-    def to_scatter_volume_model(self, name):
+    def to_points(self):
         object_dict = {}
         points3d = []
         for stepfunction in self.functions.values():
@@ -500,13 +511,18 @@ class Step:
                 # INSTANCIATION
                 name = self.functions[stepfunction.id].name
                 arguments = self.functions[stepfunction.id].arg[:]
-                for i, arg in enumerate(arguments):
-                    if type(arg) == str and arg[0] == '#':
-                        arguments[i] = int(arg[1:])
-                volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
-                    arguments, object_dict)
-                points3d.append(volmdlr_object)
-        return volmdlr.core.VolumeModel(points3d)
+                self.parse_arguments(arguments)
+                # for i, arg in enumerate(arguments):
+                #     if type(arg) == str and arg[0] == '#':
+                #         arguments[i] = int(arg[1:])
+                print(arguments)
+                if arguments[1].count(',') == 2:
+                    volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
+                        arguments, object_dict)
+                    points3d.append(volmdlr_object)
+                    
+        # remove first point because it refers to origin
+        return points3d[1:]
 
     def plot_data(self):
         if not self.upd_graph:
@@ -573,6 +589,9 @@ STEP_TO_VOLMDLR = {
     'QUASI_UNIFORM_SURFACE': volmdlr.faces.BSplineSurface3D,
     'RECTANGULAR_COMPOSITE_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACES
     'CURVE_BOUNDED_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACE
+    
+    #added on 12/08/2021 by Mack in order to read BsplinePipe
+    'BOUNDED_SURFACE, B_SPLINE_SURFACE, B_SPLINE_SURFACE_WITH_KNOTS, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM, SURFACE': volmdlr.faces.BSplineSurface3D,
 
     # TOPOLOGICAL ENTITIES
     'VERTEX_POINT': None,

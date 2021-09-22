@@ -7,7 +7,7 @@ Cython functions
 
 """
 # from __future__ import annotations
-from typing import TypeVar, List, Tuple
+from typing import TypeVar, List, Tuple, Text
 import math
 from dessia_common import DessiaObject
 import matplotlib.pyplot as plt
@@ -359,12 +359,23 @@ class Vector2D(Vector):
         """
         return 0
 
-
     def __eq__(self, other_vector):
+        return self.is_close(other_vector)
+
+    def is_close(self, other_vector, tol = 1e-6):
         if other_vector.__class__.__name__ not in ['Vector2D', 'Point2D']:
             return False
-        return math.isclose(self.x, other_vector.x, abs_tol=1e-06) \
-        and math.isclose(self.y, other_vector.y, abs_tol=1e-06)
+        return math.isclose(self.x, other_vector.x, abs_tol=tol) \
+        and math.isclose(self.y, other_vector.y, abs_tol=tol)
+    
+        
+    def approx_hash(self):
+        return round(1e6*(self.x+self.y))
+
+    @classmethod
+    def remove_duplicate(cls, points):
+        dict_ = {p.approx_hash() : p for p in points}
+        return list(dict_.values())
 
     def norm(self):
         """
@@ -526,7 +537,7 @@ Y2D = Vector2D(0, 1)
 
 
 class Point2D(Vector2D):
-    def __init__(self, x:float, y: float, name: str=''):
+    def __init__(self, x:float, y: float, name: Text=''):
         Vector2D.__init__(self, x=x, y=y, name=name)
 
     def __add__(self, other_vector):
@@ -662,12 +673,19 @@ class Point2D(Vector2D):
         n = line.unit_normal_vector()
         pp1 = point - p1
         return  pp1 - pp1.dot(n)*n + p1
+    
+    def nearest_point(self, points):
+        distances = []
+        for p in points:
+            distances.append(self.point_distance(p))               
+        return points[distances.index(min(distances))] 
 
 O2D = Point2D(0, 0)
 
+
 class Vector3D(Vector):
 
-    def __init__(self, x:float, y:float, z:float, name:str=''):
+    def __init__(self, x:float, y:float, z:float, name:Text=''):
         self.x = x
         self.y = y
         self.z = z
@@ -731,14 +749,32 @@ class Vector3D(Vector):
         hash returns 0 because points are difficult to hash if they are meant
         to be equalized at a given tolerance
         """
+        
         return 0
+    
+    def approx_hash(self):
+        return round(1e6*(self.x+self.y+self.z))
 
     def __eq__(self, other_vector:'Vector3D'):
+        return self.is_close(other_vector)
+
+    def is_close(self, other_vector, tol = 1e-6):
         if other_vector.__class__.__name__ not in ['Vector3D', 'Point3D']:
             return False
-        return math.isclose(self.x, other_vector.x, abs_tol=1e-06) \
-        and math.isclose(self.y, other_vector.y, abs_tol=1e-06) \
-        and math.isclose(self.z, other_vector.z, abs_tol=1e-06)
+        return math.isclose(self.x, other_vector.x, abs_tol=tol) \
+        and math.isclose(self.y, other_vector.y, abs_tol=tol) \
+        and math.isclose(self.z, other_vector.z, abs_tol=tol)
+        
+    @classmethod
+    def remove_duplicate(cls, points):
+        dict_ = {p.approx_hash() : p for p in points}
+        return list(dict_.values())
+
+
+    @classmethod
+    def dict_to_object(cls, dict_):
+        return Vector3D(dict_['x'], dict_['y'], dict_['z'], dict_['name'])
+
 
     def dot(self, other_vector):
         return CVector3DDot(self.x, self.y, self.z,
@@ -978,7 +1014,7 @@ Z3D = Vector3D(0, 0, 1)
 class Point3D(Vector3D):
     _standalone_in_db = False
 
-    def __init__(self, x: float, y: float, z: float, name:str=''):
+    def __init__(self, x: float, y: float, z: float, name:Text=''):
         Vector3D.__init__(self, x, y, z, name)
 
     def __add__(self, other_vector):
@@ -1007,6 +1043,9 @@ class Point3D(Vector3D):
     def copy(self):
         return Point3D(self.x, self.y, self.z)
 
+    @classmethod
+    def dict_to_object(cls, dict_):
+        return Point3D(dict_['x'], dict_['y'], dict_['z'], dict_['name'])
 
     def plot(self, ax=None, color='k', alpha=1, marker='o'):
 
@@ -1031,6 +1070,8 @@ class Point3D(Vector3D):
 
     def to_vector(self):
         return Vector3D(self.x, self.y, self.z)
+    def point_distance(self, point2:'Point3D') -> float:
+        return (self-point2).norm()
 
     @classmethod
     def middle_point(cls, point1, point2):
@@ -1059,7 +1100,15 @@ class Point3D(Vector3D):
         s += 'sphere.material = mat;\n'
         return s
 
+    def nearest_point(self, points):
+        distances = []
+        for p in points:
+            distances.append(self.point_distance(p))               
+        return points[distances.index(min(distances))] 
+
+
 O3D = Point3D(0, 0, 0)
+
 
 # =============================================================================
 #  Basis, Frames
@@ -1226,7 +1275,7 @@ class Basis2D(Basis):
     :param u:Vector2D: first vector of the basis
     :param v:Vector2D: second vector of the basis
     """
-    def __init__(self, u:Vector2D, v:Vector2D, name:str=''):
+    def __init__(self, u:Vector2D, v:Vector2D, name:Text=''):
         self.u = u
         self.v = v
         self.name = name
@@ -1326,7 +1375,7 @@ class Basis3D(Basis):
     _standalone_in_db = False
 
     # TODO: create a Basis and Frame class to mutualize between 2D and 2D
-    def __init__(self, u:Vector3D, v:Vector3D, w:Vector3D, name:str=''):
+    def __init__(self, u:Vector3D, v:Vector3D, w:Vector3D, name:Text=''):
         self.u = u
         self.v = v
         self.w = w
@@ -1512,7 +1561,7 @@ class Frame2D(Basis2D):
     :param u:Vector2D: first vector of the basis
     :param v:Vector2D: second vector of the basis
     """
-    def __init__(self, origin:Point2D, u:Vector2D, v:Vector2D, name:str=''):
+    def __init__(self, origin:Point2D, u:Vector2D, v:Vector2D, name:Text=''):
         self.origin = origin
         Basis2D.__init__(self, u, v, name=name)
 
@@ -1598,7 +1647,7 @@ class Frame3D(Basis3D):
     :param v:Vector3D: second vector of the basis
     :param w:Vector3D: third vector of the basis
     """
-    def __init__(self, origin:Point3D, u:Vector3D, v:Vector3D, w:Vector3D, name:str=''):
+    def __init__(self, origin:Point3D, u:Vector3D, v:Vector3D, w:Vector3D, name:Text=''):
         self.origin = origin
         Basis3D.__init__(self, u, v, w)
         self.name = name

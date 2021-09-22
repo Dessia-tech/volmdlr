@@ -17,6 +17,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import volmdlr
 import volmdlr.templates
 
+        
 import dessia_common as dc
 
 import webbrowser
@@ -172,10 +173,8 @@ def delete_double_pos(points, triangles):
     for face_triangles in triangles:
         if face_triangles is None:
             continue
-        # print('face_triangles', face_triangles)
         new_face_triangles = []
         for triangle_ in face_triangles:
-            # print('triangle', triangle)
             new_triangle = []
             for index in triangle_:
                 if index in index_to_new_index:
@@ -349,7 +348,29 @@ def angle_principal_measure(angle, min_angle=-math.pi):
 def step_ids_to_str(ids):
     return ','.join(['#{}'.format(i) for i in ids])
 
-class Primitive2D(dc.DessiaObject):
+class CompositePrimitive(dc.DessiaObject):
+    def __init__(self, name=''):
+        self.name = name
+
+        dc.DessiaObject.__init__(self, name=name)
+        
+    def primitive_to_index(self, primitive):
+        if not self._utd_primitives_to_index:
+            self._primitives_to_index = {p: ip for ip, p in enumerate(self.primitives)}
+            self._utd_primitives_to_index = True
+        return self._primitives_to_index[primitive]
+    
+    def update_basis_primitives(self):
+        basis_primitives = []
+        for primitive in self.primitives:
+            if hasattr(primitive, 'basis_primitives'):
+                basis_primitives.extend(primitive.basis_primitives)
+            else:
+                basis_primitives.append(primitive)
+
+        self.basis_primitives = basis_primitives
+
+class Primitive2D(CompositePrimitive):
     def __init__(self, name=''):
         self.name = name
 
@@ -373,23 +394,23 @@ class CompositePrimitive2D(Primitive2D):
         self._utd_primitives_to_index = False
 
 
-    def primitive_to_index(self, primitive):
-        if not self._utd_primitives_to_index:
-            self._primitives_to_index = {p: ip for ip, p in enumerate(self.primitives)}
-            self._utd_primitives_to_index = True
-        return self._primitives_to_index[primitive]
+    # def primitive_to_index(self, primitive):
+    #     if not self._utd_primitives_to_index:
+    #         self._primitives_to_index = {p: ip for ip, p in enumerate(self.primitives)}
+    #         self._utd_primitives_to_index = True
+    #     return self._primitives_to_index[primitive]
         
     
     
-    def update_basis_primitives(self):
-        basis_primitives = []
-        for primitive in self.primitives:
-            if hasattr(primitive, 'basis_primitives'):
-                basis_primitives.extend(primitive.basis_primitives)
-            else:
-                basis_primitives.append(primitive)
+    # def update_basis_primitives(self):
+    #     basis_primitives = []
+    #     for primitive in self.primitives:
+    #         if hasattr(primitive, 'basis_primitives'):
+    #             basis_primitives.extend(primitive.basis_primitives)
+    #         else:
+    #             basis_primitives.append(primitive)
 
-        self.basis_primitives = basis_primitives
+    #     self.basis_primitives = basis_primitives
         
 
     def rotation(self, center, angle, copy=True):
@@ -455,7 +476,7 @@ class CompositePrimitive2D(Primitive2D):
 
 
 
-class Primitive3D(dc.DessiaObject):
+class Primitive3D(CompositePrimitive):
     def __init__(self, color=None, alpha=1, name=''):
         self.color = color
         self.alpha = alpha
@@ -464,25 +485,54 @@ class Primitive3D(dc.DessiaObject):
 
     def volmdlr_primitives(self):
         return [self]
-
+    
+    def babylon_param(self):
+        babylon_param = {'alpha': self.alpha,
+                          'name': self.name,
+                          }
+        if self.color is None:
+            babylon_param['color'] = [0.8, 0.8, 0.8]
+        else:
+            babylon_param['color'] = list(self.color)
+            
+        return babylon_param
+    
+    def triangulation(self):
+        return None
+    
     def babylon_meshes(self):
         mesh = self.triangulation()
+        if mesh == None:
+            return []
         positions, indices = mesh.to_babylon()
 
         babylon_mesh = {'positions': positions,
-                        'indices': indices,
-                        'alpha': self.alpha,
-                        'name': self.name
+                        'indices': indices
                         }
-
-        if self.color is None:
-            babylon_mesh['color'] = [0.8, 0.8, 0.8]
-        else:
-            babylon_mesh['color'] = list(self.color)
-
+        babylon_mesh.update(self.babylon_param())
         return [babylon_mesh]
+    
+    def babylon_points(self):
+         
+        points = []
+        if hasattr(self, 'primitives'):
+            points = [[self.primitives[0].start.x, self.primitives[0].start.y, self.primitives[0].start.z], [self.primitives[0].end.x, self.primitives[0].end.y, self.primitives[0].end.z]]
+            points += [[line.end.x,line.end.y,line.end.z] for line in self.primitives[1:]]
+        elif hasattr(self, 'curve'):
+            points = self.curve.evalpts
+        return points
 
-
+    
+    def babylon_lines(self, points=None):
+        points = self.babylon_points()        
+        babylon_lines = {'points': points}
+        babylon_lines.update(self.babylon_param())
+        return [babylon_lines]
+    
+    def babylon_curves(self):
+        points = self.babylon_points()
+        babylon_curves = self.babylon_lines(points)[0]
+        return babylon_curves
 
 class CompositePrimitive3D(Primitive3D):
     _standalone_in_db = True
@@ -498,25 +548,32 @@ class CompositePrimitive3D(Primitive3D):
         self.primitives = primitives
 
         Primitive3D.__init__(self, name=name)
+        self._utd_primitives_to_index = False
+        
+    # def primitive_to_index(self, primitive):
+    #     if not self._utd_primitives_to_index:
+    #         self._primitives_to_index = {p: ip for ip, p in enumerate(self.primitives)}
+    #         self._utd_primitives_to_index = True
+    #     return self._primitives_to_index[primitive]
 
 
 
-    def update_basis_primitives(self):
-        # TODO: This is a copy/paste from CompositePrimitive2D, in the future make a Common abstract class
-        basis_primitives = []
-        for primitive in self.primitives:
-            if hasattr(primitive, 'basis_primitives'):
-                basis_primitives.extend(primitive.primitives)
-            else:
-                basis_primitives.append(primitive)
+    # def update_basis_primitives(self):
+    #     # TODO: This is a copy/paste from CompositePrimitive2D, in the future make a Common abstract class
+    #     basis_primitives = []
+    #     for primitive in self.primitives:
+    #         if hasattr(primitive, 'basis_primitives'):
+    #             basis_primitives.extend(primitive.primitives)
+    #         else:
+    #             basis_primitives.append(primitive)
 
-        self.basis_primitives = basis_primitives
+    #     self.basis_primitives = basis_primitives
 
-    # def to_2d(self, plane_origin, x, y):
-    #     if name is None:
-    #         name = '2D of {}'.format(self.name)
-    #     primitives2d = [p.to_2d(plane_origin, x, y) for p in self.primitives]
-    #     return CompositePrimitive2D(primitives2d, name)
+    # # def to_2d(self, plane_origin, x, y):
+    # #     if name is None:
+    # #         name = '2D of {}'.format(self.name)
+    # #     primitives2d = [p.to_2d(plane_origin, x, y) for p in self.primitives]
+    # #     return CompositePrimitive2D(primitives2d, name)
 
     def plot(self, ax=None, equal_aspect=True, color='k', alpha=1):
         if ax is None:
@@ -547,15 +604,8 @@ class BoundingBox(dc.DessiaObject):
         self.ymax = ymax
         self.zmin = zmin
         self.zmax = zmax
-        self.points = [volmdlr.Point3D(self.xmin, self.ymin, self.zmin), \
-                       volmdlr.Point3D(self.xmax, self.ymin, self.zmin), \
-                       volmdlr.Point3D(self.xmax, self.ymax, self.zmin), \
-                       volmdlr.Point3D(self.xmin, self.ymax, self.zmin), \
-                       volmdlr.Point3D(self.xmin, self.ymin, self.zmax), \
-                       volmdlr.Point3D(self.xmax, self.ymin, self.zmax), \
-                       volmdlr.Point3D(self.xmax, self.ymax, self.zmax), \
-                       volmdlr.Point3D(self.xmin, self.ymax, self.zmax)]
-        self.center = (self.points[0] + self.points[-2]) / 2
+        
+        self.center = volmdlr.Point3D(0.5*(xmin+xmax),0.5*(ymin+ymax),0.5*(zmin+zmax))
         self.name = name
 
     def __hash__(self):
@@ -571,6 +621,17 @@ class BoundingBox(dc.DessiaObject):
 
     def __iter__(self):
         return [self.xmin, self.xmax, self.ymin, self.ymax, self.zmin, self.zmax]
+
+    @property
+    def points(self):
+        return [volmdlr.Point3D(self.xmin, self.ymin, self.zmin), \
+                volmdlr.Point3D(self.xmax, self.ymin, self.zmin), \
+                volmdlr.Point3D(self.xmax, self.ymax, self.zmin), \
+                volmdlr.Point3D(self.xmin, self.ymax, self.zmin), \
+                volmdlr.Point3D(self.xmin, self.ymin, self.zmax), \
+                volmdlr.Point3D(self.xmax, self.ymin, self.zmax), \
+                volmdlr.Point3D(self.xmax, self.ymax, self.zmax), \
+                volmdlr.Point3D(self.xmin, self.ymax, self.zmax)]
 
     def plot(self, ax=None, color=''):
         fig = plt.figure()
@@ -602,7 +663,7 @@ class BoundingBox(dc.DessiaObject):
         ax.set_xlabel('X Label')
         ax.set_ylabel('Y Label')
         ax.set_zlabel('Z Label')
-        plt.show()
+        # plt.show()
         return ax
 
     @classmethod
@@ -633,9 +694,9 @@ class BoundingBox(dc.DessiaObject):
                 and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin)
 
     def is_inside_bbox(self, bbox2):
-        return (self.xmin > bbox2.xmin and self.xmax < bbox2.xmax \
-                and self.ymin > bbox2.ymin and self.ymax < bbox2.ymax \
-                and self.zmin > bbox2.zmin and self.zmax < bbox2.zmax)
+        return ((self.xmin >= bbox2.xmin - 1e-6) and (self.xmax <= bbox2.xmax + 1e-6)\
+                and (self.ymin >=bbox2.ymin - 1e-6) and (self.ymax <= bbox2.ymax + 1e-6) \
+                and (self.zmin >= bbox2.zmin - 1e-6) and (self.zmax <= bbox2.zmax + 1e-6))
 
     def intersection_volume(self, bbox2):
         if not self.bbox_intersection(bbox2):
@@ -1393,9 +1454,14 @@ class VolumeModel(dc.DessiaObject):
 
     def babylon_data(self):
         meshes = []
+        lines = []
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
                 meshes.extend(primitive.babylon_meshes())
+            if hasattr(primitive, 'babylon_lines'):
+                lines.extend(primitive.babylon_lines())
+            if hasattr(primitive,'babylon_curves'):
+                lines.append(primitive.babylon_curves())
         bbox = self._bounding_box()
         center = bbox.center
         max_length = max([bbox.xmax - bbox.xmin,
@@ -1403,8 +1469,10 @@ class VolumeModel(dc.DessiaObject):
                           bbox.zmax - bbox.zmin])
 
         babylon_data = {'meshes': meshes,
+                        'lines': lines,
                         'max_length': max_length,
                         'center': list(center)}
+        
         return babylon_data
 
     @classmethod
@@ -1436,6 +1504,15 @@ class VolumeModel(dc.DessiaObject):
         self.babylonjs_from_babylon_data(babylon_data, page_name=page_name,
                                          use_cdn=use_cdn, debug=debug)
 
+    def to_stl(self, filepath):
+        mesh = self.primitives[0].triangulation()
+        for primitive in self.primitives[1:]:
+            mesh.merge_mesh(primitive.triangulation())
+        import volmdlr.stl as vmstl
+        stl = vmstl.Stl.from_display_mesh(mesh)
+        stl.save_to_binary_file(filepath)
+        
+    
     def to_step(self, filepath):
         
         
