@@ -519,16 +519,29 @@ class Contour:
                     merged_primitives.append(contours[j].primitives[i])
         
         contour_int = merged_primitives[:]
+        start, end = [], []
+        for primitive in contour_int:
+            start.append(primitive.start)
+            end.append(primitive.end)
+            
         merged_primitives_order = [contour_int[0]]
-        while len(merged_primitives_order)<len(contour_int):
-            for n in range(0,len(contour_int)):
-                if contour_int[n].start == merged_primitives_order[-1].end:
-                    merged_primitives_order.append(contour_int[n])
-                    if len(merged_primitives_order) == len(contour_int):
-                        break
+        for i in range(0,len(contour_int)):
+            # i=i+1
+            merged_primitives_order.append(contour_int[start.index(merged_primitives_order[i].end)])
+            # merged_primitives_order[i].plot(ax=ax, color='g')
+            if len(merged_primitives_order) == merged_primitives:
+                break
+            
+            
+        # while len(merged_primitives_order)<len(contour_int):
+        #     for n in range(0,len(contour_int)):
+        #         if contour_int[n].start == merged_primitives_order[-1].end:
+        #             merged_primitives_order.append(contour_int[n])
+        #             if len(merged_primitives_order) == len(contour_int):
+        #                 break
                     
+        # return merged_primitives_order
         return merged_primitives_order
-
     
     @classmethod
     def contours_from_edges(cls, edges):
@@ -939,7 +952,8 @@ class Contour2D(Contour, Wire2D):
         for p1, p2 in points:
             new_primitives.append(volmdlr.edges.LineSegment2D(p1, p2))
         self.primitives = new_primitives
-
+        
+        return self
     
 
     # @classmethod
@@ -1431,7 +1445,8 @@ class Contour2D(Contour, Wire2D):
         
 
     def merge_contours(self, contour2d):
-        return  volmdlr.wires.Contour2D(self.merged_contour_primitives(contour2d))     
+        
+        return volmdlr.wires.Contour2D(self.merged_contour_primitives(contour2d)) 
         
     
 class ClosedPolygon:
@@ -2692,6 +2707,8 @@ class Contour3D(Contour, Wire3D):
             new_primitives.append(volmdlr.edges.LineSegment3D(p1, p2))
         self.primitives = new_primitives
         
+        return self
+        
     def point_over_contour(self, point):
         belongs = False
         for primitive in self.primitives:
@@ -2790,7 +2807,8 @@ class Contour3D(Contour, Wire3D):
         return None
     
     def merge_contours(self, contour3d):
-        return  volmdlr.wires.Contour3D(self.merged_contour_primitives(contour3d))     
+       
+        return volmdlr.wires.Contour3D(self.merged_contour_primitives(contour3d))  
 
 
 class Circle3D(Contour3D):
