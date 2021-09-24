@@ -531,16 +531,7 @@ class Contour:
             # merged_primitives_order[i].plot(ax=ax, color='g')
             if len(merged_primitives_order) == merged_primitives:
                 break
-            
-            
-        # while len(merged_primitives_order)<len(contour_int):
-        #     for n in range(0,len(contour_int)):
-        #         if contour_int[n].start == merged_primitives_order[-1].end:
-        #             merged_primitives_order.append(contour_int[n])
-        #             if len(merged_primitives_order) == len(contour_int):
-        #                 break
-                    
-        # return merged_primitives_order
+        
         return merged_primitives_order
     
     @classmethod
