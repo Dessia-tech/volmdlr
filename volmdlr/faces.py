@@ -1755,6 +1755,7 @@ class BSplineSurface3D(Surface3D):
         # Hidden Attributes
         self._displacements = {}
         self._grids2d = {}
+        self._grids2d_deformed = {}
         
 
     def control_points_matrix(self, coordinates):
@@ -3001,6 +3002,8 @@ class BSplineSurface3D(Surface3D):
         points_2d_deformed = [] #deformed 2d grid points
         for i in range(0,len(z.x),2):
             points_2d_deformed.append(volmdlr.Point2D(z.x[i], z.x[i+1]))
+            
+        self._grids2d_deformed[points_x, points_y, xmin, xmax, ymin, ymax] = points_2d_deformed
         
         return points_2d_deformed
     
@@ -3030,13 +3033,13 @@ class BSplineSurface3D(Surface3D):
         '''
         
         point2d = self.point3d_to_2d(point3d) 
-        points_2d = volmdlr.Point2D.grid2d(points_x, points_y, xmin, xmax, ymin, ymax)
+        # points_2d = volmdlr.Point2D.grid2d(points_x, points_y, xmin, xmax, ymin, ymax)
         
-        # if (points_x, points_y, xmin, xmax, ymin, ymax) in self._grids2d:
-        #     points_2d = self._grids2d[points_x, points_y, xmin, xmax, ymin, ymax]
-        # else:
-        #     points_2d = volmdlr.Point2D.grid2d(points_x, points_y, xmin, xmax, ymin, ymax)
-        #     self._grids2d[points_x, points_y, xmin, xmax, ymin, ymax] = points_2d
+        if (points_x, points_y, xmin, xmax, ymin, ymax) in self._grids2d:
+            points_2d = self._grids2d[points_x, points_y, xmin, xmax, ymin, ymax]
+        else:
+            points_2d = volmdlr.Point2D.grid2d(points_x, points_y, xmin, xmax, ymin, ymax)
+            self._grids2d[points_x, points_y, xmin, xmax, ymin, ymax] = points_2d
         
         if (points_x, points_y, xmin, xmax, ymin, ymax) in self._displacements:
             displacement = self._displacements[points_x, points_y, xmin, xmax, ymin, ymax]
@@ -3104,6 +3107,16 @@ class BSplineSurface3D(Surface3D):
                         displacement[index_points[finite_elements_points[k][3]]][1]])
            
         return volmdlr.Point2D(point2d.x + npy.transpose(N).dot(dx),  point2d.y + npy.transpose(N).dot(dy))
+    
+    def edge3d_to_2d_with_dimension(self, edge3d, points_x, points_y):
+        '''
+        '''
+        for edge3d in edges3d:
+            edge3d = volmdlr.edges.LineSegment2D(self.point3d_to_2d_with_dimension(edge3d.start, points_x, points_y, 0,1,0,1),
+                                                 self.point3d_to_2d_with_dimension(edge3d.end, points_x, points_y, 0,1,0,1))
+        return edges3d
+            
+            
         
     def contour3d_to_2d_with_dimension(self, contour3d:volmdlr.wires.Contour3D, points_x, points_y): 
         
@@ -3129,7 +3142,121 @@ class BSplineSurface3D(Surface3D):
         contour2d = volmdlr.wires.Contour2D.contours_from_edges(edges)
 
         return contour2d[0]
+    
+    def point2d_with_dimension_to_3d(self, point2d, points_x, points_y, xmin, xmax, ymin, ymax):
+                                                                                     
+        if (points_x, points_y, xmin, xmax, ymin, ymax) in self._grids2d_deformed:
+            points_2d_deformed = self._grids2d_deformed[points_x, points_y, xmin, xmax, ymin, ymax]
+        else:
+            points_2d_deformed = self.grid2d_deformed(points_x, points_y, xmin, xmax, ymin, ymax)
+            self._grids2d_deformed[points_x, points_y, xmin, xmax, ymin, ymax] = points_2d_deformed
+        
+        if (points_x, points_y, xmin, xmax, ymin, ymax) in self._displacements:
+            displacement = self._displacements[points_x, points_y, xmin, xmax, ymin, ymax]
+        else:
+            displacement = self.grid2d_deformation(points_x, points_y, xmin, xmax, ymin, ymax)
+            self._displacements[points_x, points_y, xmin, xmax, ymin, ymax] = displacement
+            
+        # Parameters
+        index_points = {} #grid point position(j,i), point position in points_2d (or points_3d)
+        p = 0
+        for i in range(0,points_x):
+            for j in range(0,points_y):
+                index_points.update({(j,i):p})
+                p=p+1
+        
+        #Form function "Finite Elements"
+        def form_function(s,t):
+            N = npy.empty(4)
+            N[0] = (1-s)*(1-t)/4
+            N[1] = (1+s)*(1-t)/4
+            N[2] = (1+s)*(1+t)/4
+            N[3] = (1-s)*(1+t)/4
+            return N
 
+        finite_elements_points = [] #2D grid points index that define one element  
+        for j in range(0,points_y-1): 
+            for i in range(0,points_x-1):
+                finite_elements_points.append(((i,j),(i+1,j),(i+1,j+1),(i,j+1)))        
+        finite_elements = [] #finite elements defined with closed polygon  
+        for i in range(0, len(finite_elements_points)):
+            finite_elements.append(volmdlr.wires.ClosedPolygon2D((points_2d_deformed[index_points[finite_elements_points[i][0]]],
+                                      points_2d_deformed[index_points[finite_elements_points[i][1]]],
+                                      points_2d_deformed[index_points[finite_elements_points[i][2]]],
+                                      points_2d_deformed[index_points[finite_elements_points[i][3]]])))
+        
+        for k in range(0, len(finite_elements_points)):
+            if (finite_elements[k].point_belongs(point2d)
+                or ((points_2d_deformed[index_points[finite_elements_points[k][0]]][0] < point2d.x < points_2d_deformed[index_points[finite_elements_points[k][1]]][0]) 
+                    and point2d.y == points_2d_deformed[index_points[finite_elements_points[k][0]]][1])
+                or ((points_2d_deformed[index_points[finite_elements_points[k][1]]][1] < point2d.y < points_2d_deformed[index_points[finite_elements_points[k][2]]][1]) 
+                    and point2d.x == points_2d_deformed[index_points[finite_elements_points[k][1]]][0])
+                or ((points_2d_deformed[index_points[finite_elements_points[k][3]]][0] < point2d.x < points_2d_deformed[index_points[finite_elements_points[k][2]]][0])
+                    and point2d.y == points_2d_deformed[index_points[finite_elements_points[k][1]]][1])
+                or ((points_2d_deformed[index_points[finite_elements_points[k][0]]][1] < point2d.y < points_2d_deformed[index_points[finite_elements_points[k][3]]][1])
+                    and point2d.x == points_2d_deformed[index_points[finite_elements_points[k][0]]][0])
+                or finite_elements[k].primitives[0].point_belongs(point2d) or finite_elements[k].primitives[1].point_belongs(point2d)
+                or finite_elements[k].primitives[2].point_belongs(point2d) or finite_elements[k].primitives[3].point_belongs(point2d)):
+
+                break     
+    
+        x0=points_2d_deformed[index_points[finite_elements_points[k][0]]][0]
+        y0=points_2d_deformed[index_points[finite_elements_points[k][0]]][1]
+        x1=points_2d_deformed[index_points[finite_elements_points[k][1]]][0]
+        y2=points_2d_deformed[index_points[finite_elements_points[k][2]]][1]
+        x=point2d.x
+        y=point2d.y
+        s=2*((x-x0)/(x1-x0))-1
+        t=2*((y-y0)/(y2-y0))-1 
+        
+        N = form_function(s,t)
+        dx = npy.array([displacement[index_points[finite_elements_points[k][0]]][0],
+                        displacement[index_points[finite_elements_points[k][1]]][0],
+                        displacement[index_points[finite_elements_points[k][2]]][0],
+                        displacement[index_points[finite_elements_points[k][3]]][0]])
+        dy = npy.array([displacement[index_points[finite_elements_points[k][0]]][1],
+                        displacement[index_points[finite_elements_points[k][1]]][1],
+                        displacement[index_points[finite_elements_points[k][2]]][1],
+                        displacement[index_points[finite_elements_points[k][3]]][1]])
+        
+        pt = volmdlr.Point2D(point2d.x - npy.transpose(N).dot(dx), point2d.y - npy.transpose(N).dot(dy))
+                
+        if pt.x>1:
+            pt.x=1
+        elif pt.x<0:
+            pt.x=0
+        if pt.y<0:
+            pt.y=0
+        elif pt.y>1:
+            pt.y=1
+                  
+        point3d = self.point2d_to_3d(pt) 
+        
+        return point3d
+    
+    
+    def contour2d_with_dimension_to_3d(self, contour2d):
+        '''
+        
+        '''
+                     
+        for cle in self._grids2d.keys(): 
+            [points_x, points_y, xmin, xmax, ymin, ymax] = cle
+                                                                 
+        new_start_points = []
+        for i in range(0,len(contour2d.primitives)):
+            point2d = contour2d.primitives[i].start
+            new_start_points.append(self.point2d_with_dimension_to_3d(point2d, points_x, points_y, xmin, xmax, ymin, ymax))
+        
+        edges = []
+        for i in range(0,len(new_start_points)-1):
+            edges.append(volmdlr.edges.LineSegment3D(new_start_points[i], new_start_points[i+1]))
+        edges.append(volmdlr.edges.LineSegment3D(new_start_points[-1], new_start_points[0]))
+            
+        contour3d = volmdlr.wires.Contour3D.contours_from_edges(edges)
+
+        return contour3d[0]
+        
     @classmethod
     def points_fitting_into_bspline_surface(cls, points_3d,size_u,size_v,degree_u,degree_v):
         '''
@@ -3345,22 +3472,78 @@ class BSplineSurface3D(Surface3D):
         
         return (self.error_with_point3d(edge3d.start) + self.error_with_point3d(edge3d.end)) / 2
 
-    def nearest_edges3d(self, contour3d, threshold: float):
+    def nearest_edges3d(self, contours3d, threshold: float):
         ''' 
         
         '''
         
         nearest_primitives = []
-        primitives = contour3d.primitives
-        for primitive in primitives:
-            if self.error_with_edge3d(primitive) <= threshold:
-                nearest_primitives.append(primitive)
+        for i in range(0,len(contours3d)):
+            # print(i)
+            # print(len(contours3d[i].primitives))
+            primitives = contours3d[i].primitives
+            nearest = []
+            for primitive in primitives:
+                # print(self.error_with_edge3d(primitive))
+                if self.error_with_edge3d(primitive) <= threshold:
+                    nearest.append(primitive)
+            nearest_primitives.append(volmdlr.wires.Wire3D(nearest))
 
         return nearest_primitives
+    
+    # def cadre3d_to_2d(self, cadres3d):
+    #     cadres2d = []
+    #     for cadre3d in cadres3d:
+    #         cadre2d = []
+    #         for i in range(0,len(cadre3d)):
+    #             cadre2d.append(volmdlr.edges.LineSegment2D(self.point3d_to_2d(cadre3d[i].start),
+    #                                                         self.point3d_to_2d(cadre3d[i].end)))
+    #         cadres2d.append(cadre2d)
+             
+        return cadres2d
+    
+    def wire3d_to_2d(self, wires3d):
+        wires2d = []
+        for wire3d in wires3d:
+            edges2d = []
+            for edge in wire3d.primitives:
+                edges2d.append(volmdlr.edges.LineSegment2D(self.point3d_to_2d(edge.start),
+                                                           self.point3d_to_2d(edge.end)))
+            wires2d.append(volmdlr.wires.Wire2D(edges2d))
+             
+        return wires2d
+ 
+    # def cadre3d_to_2d_with_dimension(self, cadres3d):
         
+    #     for cle in self._grids2d.keys(): 
+    #         [points_x, points_y, xmin, xmax, ymin, ymax] = cle
+        
+    #     cadres2d = []
+    #     for cadre3d in cadres3d:
+    #         cadre2d = []
+    #         for i in range(0,len(cadre3d)):
+    #             cadre2d.append(volmdlr.edges.LineSegment2D(self.point3d_to_2d_with_dimension(cadre3d[i].start, points_x, points_y, xmin, xmax, ymin, ymax),
+    #                                                        self.point3d_to_2d_with_dimension(cadre3d[i].end, points_x, points_y, xmin, xmax, ymin, ymax)))
+    #         cadres2d.append(cadre2d)
+
+    #     return cadres2d
     
-    
-    
+    def wire3d_to_2d_with_dimension(self, wires3d):
+        
+        for cle in self._grids2d.keys(): 
+            [points_x, points_y, xmin, xmax, ymin, ymax] = cle
+        
+        wires2d = []
+        for wire3d in wires3d:
+            wire2d = []
+            for edge in wire3d.primitives:
+                wire2d.append(volmdlr.edges.LineSegment2D(self.point3d_to_2d_with_dimension(edge.start, points_x, points_y, xmin, xmax, ymin, ymax),
+                                                          self.point3d_to_2d_with_dimension(edge.end, points_x, points_y, xmin, xmax, ymin, ymax)))
+            wires2d.append(volmdlr.wires.Wire2D(wire2d))
+
+        return wires2d
+
+
 class BezierSurface3D(BSplineSurface3D):
 
     def __init__(self, degree_u: int, degree_v: int,

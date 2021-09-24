@@ -680,7 +680,7 @@ class LineSegment2D(LineSegment):
     
     def point_belongs(self, point):
         distance = self.start.point_distance(point) + self.end.point_distance(point)
-        if math.isclose(distance, self.length(), abs_tol = 1e-7 ):
+        if math.isclose(distance, self.length(), abs_tol = 1e-4 ): #1e-7
             return True
         return False
 
