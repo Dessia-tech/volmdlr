@@ -2503,6 +2503,7 @@ class BSplineSurface3D(Surface3D):
         s=2*((x-x0)/(x1-x0))-1
         t=2*((y-y0)/(y2-y0))-1 
         
+       
         N = form_function(s,t)
         dx = npy.array([displacement[index_points[finite_elements_points[k][0]]][0],
                         displacement[index_points[finite_elements_points[k][1]]][0],
@@ -2552,17 +2553,18 @@ class BSplineSurface3D(Surface3D):
     
     def point2d_with_dimension_to_3d(self, point2d, points_x, points_y, xmin, xmax, ymin, ymax):
                                                                                      
+        if (points_x, points_y, xmin, xmax, ymin, ymax) in self._grids2d:
+            points_2d = self._grids2d[points_x, points_y, xmin, xmax, ymin, ymax]
+        else:
+            points_2d = volmdlr.Point2D.grid2d(points_x, points_y, xmin, xmax, ymin, ymax)
+            self._grids2d[points_x, points_y, xmin, xmax, ymin, ymax] = points_2d
+
         if (points_x, points_y, xmin, xmax, ymin, ymax) in self._grids2d_deformed:
             points_2d_deformed = self._grids2d_deformed[points_x, points_y, xmin, xmax, ymin, ymax]
         else:
             points_2d_deformed = self.grid2d_deformed(points_x, points_y, xmin, xmax, ymin, ymax)
             self._grids2d_deformed[points_x, points_y, xmin, xmax, ymin, ymax] = points_2d_deformed
         
-        if (points_x, points_y, xmin, xmax, ymin, ymax) in self._displacements:
-            displacement = self._displacements[points_x, points_y, xmin, xmax, ymin, ymax]
-        else:
-            displacement = self.grid2d_deformation(points_x, points_y, xmin, xmax, ymin, ymax)
-            self._displacements[points_x, points_y, xmin, xmax, ymin, ymax] = displacement
             
         # Parameters
         index_points = {} #grid point position(j,i), point position in points_2d (or points_3d)
@@ -2572,26 +2574,24 @@ class BSplineSurface3D(Surface3D):
                 index_points.update({(j,i):p})
                 p=p+1
         
-        #Form function "Finite Elements"
-        def form_function(s,t):
-            N = npy.empty(4)
-            N[0] = (1-s)*(1-t)/4
-            N[1] = (1+s)*(1-t)/4
-            N[2] = (1+s)*(1+t)/4
-            N[3] = (1-s)*(1+t)/4
-            return N
-
         finite_elements_points = [] #2D grid points index that define one element  
         for j in range(0,points_y-1): 
             for i in range(0,points_x-1):
                 finite_elements_points.append(((i,j),(i+1,j),(i+1,j+1),(i,j+1)))        
-        finite_elements = [] #finite elements defined with closed polygon  
+        finite_elements = [] #finite elements defined with closed polygon  DEFORMED
         for i in range(0, len(finite_elements_points)):
             finite_elements.append(volmdlr.wires.ClosedPolygon2D((points_2d_deformed[index_points[finite_elements_points[i][0]]],
-                                      points_2d_deformed[index_points[finite_elements_points[i][1]]],
-                                      points_2d_deformed[index_points[finite_elements_points[i][2]]],
-                                      points_2d_deformed[index_points[finite_elements_points[i][3]]])))
+                                                                  points_2d_deformed[index_points[finite_elements_points[i][1]]],
+                                                                  points_2d_deformed[index_points[finite_elements_points[i][2]]],
+                                                                  points_2d_deformed[index_points[finite_elements_points[i][3]]])))
         
+        finite_elements_initial = [] #finite elements defined with closed polygon  INITIAL
+        for i in range(0, len(finite_elements_points)):
+            finite_elements_initial.append(volmdlr.wires.ClosedPolygon2D((points_2d[index_points[finite_elements_points[i][0]]],
+                                                                          points_2d[index_points[finite_elements_points[i][1]]],
+                                                                          points_2d[index_points[finite_elements_points[i][2]]],
+                                                                          points_2d[index_points[finite_elements_points[i][3]]])))
+
         for k in range(0, len(finite_elements_points)):
             if (finite_elements[k].point_belongs(point2d)
                 or ((points_2d_deformed[index_points[finite_elements_points[k][0]]][0] < point2d.x < points_2d_deformed[index_points[finite_elements_points[k][1]]][0]) 
@@ -2606,41 +2606,27 @@ class BSplineSurface3D(Surface3D):
                 or finite_elements[k].primitives[2].point_belongs(point2d) or finite_elements[k].primitives[3].point_belongs(point2d)):
 
                 break     
-    
-        x0=points_2d_deformed[index_points[finite_elements_points[k][0]]][0]
-        y0=points_2d_deformed[index_points[finite_elements_points[k][0]]][1]
-        x1=points_2d_deformed[index_points[finite_elements_points[k][1]]][0]
-        y2=points_2d_deformed[index_points[finite_elements_points[k][2]]][1]
-        x=point2d.x
-        y=point2d.y
-        s=2*((x-x0)/(x1-x0))-1
-        t=2*((y-y0)/(y2-y0))-1 
         
-        N = form_function(s,t)
-        dx = npy.array([displacement[index_points[finite_elements_points[k][0]]][0],
-                        displacement[index_points[finite_elements_points[k][1]]][0],
-                        displacement[index_points[finite_elements_points[k][2]]][0],
-                        displacement[index_points[finite_elements_points[k][3]]][0]])
-        dy = npy.array([displacement[index_points[finite_elements_points[k][0]]][1],
-                        displacement[index_points[finite_elements_points[k][1]]][1],
-                        displacement[index_points[finite_elements_points[k][2]]][1],
-                        displacement[index_points[finite_elements_points[k][3]]][1]])
+        frame_deformed = volmdlr.Frame2D(finite_elements[k].center_of_mass(), 
+                                         volmdlr.Vector2D(finite_elements[k].primitives[1].middle_point()[0]-finite_elements[k].center_of_mass()[0],
+                                                          finite_elements[k].primitives[1].middle_point()[1]-finite_elements[k].center_of_mass()[1]),
+                                         volmdlr.Vector2D(finite_elements[k].primitives[0].middle_point()[0]-finite_elements[k].center_of_mass()[0],
+                                                          finite_elements[k].primitives[0].middle_point()[1]-finite_elements[k].center_of_mass()[1]))
         
-        pt = volmdlr.Point2D(point2d.x - npy.transpose(N).dot(dx), point2d.y - npy.transpose(N).dot(dy))
-                
-        if pt.x>1:
-            pt.x=1
-        elif pt.x<0:
-            pt.x=0
-        if pt.y<0:
-            pt.y=0
-        elif pt.y>1:
-            pt.y=1
-                  
-        point3d = self.point2d_to_3d(pt) 
+        point2d_frame_deformed = volmdlr.Point2D(point2d.frame_mapping(frame_deformed, 'new')[0],
+                                                 point2d.frame_mapping(frame_deformed, 'new')[1])
         
-        return point3d
-    
+               
+        frame_inital = volmdlr.Frame2D(finite_elements_initial[k].center_of_mass(), 
+                                       volmdlr.Vector2D(finite_elements_initial[k].primitives[1].middle_point()[0]-finite_elements_initial[k].center_of_mass()[0],
+                                                        finite_elements_initial[k].primitives[1].middle_point()[1]-finite_elements_initial[k].center_of_mass()[1]),
+                                       volmdlr.Vector2D(finite_elements_initial[k].primitives[0].middle_point()[0]-finite_elements_initial[k].center_of_mass()[0],
+                                                        finite_elements_initial[k].primitives[0].middle_point()[1]-finite_elements_initial[k].center_of_mass()[1]))
+        
+        
+        return self.point2d_to_3d(volmdlr.Point2D(point2d_frame_deformed.frame_mapping(frame_inital, 'old')[0],
+                                                  point2d_frame_deformed.frame_mapping(frame_inital, 'old')[1]))
+        
     
     def contour2d_with_dimension_to_3d(self, contour2d):
         '''
