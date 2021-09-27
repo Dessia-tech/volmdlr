@@ -2591,6 +2591,7 @@ class BSplineSurface3D(Surface3D):
                                                                           points_2d[index_points[finite_elements_points[i][1]]],
                                                                           points_2d[index_points[finite_elements_points[i][2]]],
                                                                           points_2d[index_points[finite_elements_points[i][3]]])))
+        
 
         for k in range(0, len(finite_elements_points)):
             if (finite_elements[k].point_belongs(point2d)
@@ -2623,9 +2624,18 @@ class BSplineSurface3D(Surface3D):
                                        volmdlr.Vector2D(finite_elements_initial[k].primitives[0].middle_point()[0]-finite_elements_initial[k].center_of_mass()[0],
                                                         finite_elements_initial[k].primitives[0].middle_point()[1]-finite_elements_initial[k].center_of_mass()[1]))
         
+        X = point2d_frame_deformed.frame_mapping(frame_inital, 'old')[0]
+        if X<0:
+            X=0
+        elif X>1:
+            X=1
+        Y = point2d_frame_deformed.frame_mapping(frame_inital, 'old')[1]
+        if Y<0:
+            Y=0
+        elif Y>1:
+            Y=1
         
-        return self.point2d_to_3d(volmdlr.Point2D(point2d_frame_deformed.frame_mapping(frame_inital, 'old')[0],
-                                                  point2d_frame_deformed.frame_mapping(frame_inital, 'old')[1]))
+        return self.point2d_to_3d(volmdlr.Point2D(X,Y))
         
     
     def contour2d_with_dimension_to_3d(self, contour2d):
