@@ -16,6 +16,8 @@ import volmdlr.faces
 import plot_data.graph
 
 import webbrowser
+from jinja2 import Environment, PackageLoader, select_autoescape
+import os
 
 
 def step_split_arguments(function_arg):
@@ -120,6 +122,7 @@ class Step:
             function_name = function_name_arg[0]
             function_arg = function_name_arg[1].split("#")
             function_connections = []
+            # print(function_id, function_name)
             for connec in function_arg[1:]:
                 connec = connec.split(",")
                 connec = connec[0].split(")")
@@ -127,6 +130,7 @@ class Step:
                     function_connection = int(connec[0])
                     function_connections.append(
                         (function_id, function_connection))
+            # print(function_connections)
 
             all_connections.extend(function_connections)
 
@@ -149,14 +153,13 @@ class Step:
                     if arg[0] == '#':
                         function_connections.append(
                             (function_id, int(arg[1:])))
+            # print('=', function_connections)
 
             for i, argument in enumerate(arguments):
                 if argument[:2] == '(#' and argument[-1] == ')':
                     arg_list = volmdlr.core.set_to_list(argument)
                     arguments[i] = arg_list
 
-            if function_id == 918:
-                print(function_name, arguments)
             function = StepFunction(function_id, function_name, arguments)
             functions[function_id] = function
 
@@ -171,7 +174,6 @@ class Step:
         labels = {}
 
         for function in self.functions.values():
-
             if function.name == 'SHAPE_REPRESENTATION_RELATIONSHIP':
                 # Create short cut from id1 to id2
                 id1 = int(function.arg[2][1:])
@@ -227,35 +229,34 @@ class Step:
         #     nx.draw_networkx_labels(F, pos, labels)
         #     # ------------------------------------
         #
-        # if html:
-        #
-        #     env = Environment(
-        #         loader=PackageLoader('powertransmission', 'templates'),
-        #         autoescape=select_autoescape(['html', 'xml']))
-        #     template = env.get_template('graph_visJS.html')
-        #
-        #     nodes = []
-        #     edges = []
-        #     for label in list(labels.values()):
-        #         nodes.append({'name': label, 'shape': 'circular'})
-        #
-        #     for edge in G.edges:
-        #         edge_dict = {}
-        #         edge_dict['inode1'] = int(edge[0]) - 1
-        #         edge_dict['inode2'] = int(edge[1]) - 1
-        #         edges.append(edge_dict)
-        #
-        #     options = {}
-        #     s = template.render(
-        #         name=self.stepfile,
-        #         nodes=nodes,
-        #         edges=edges,
-        #         options=options)
-        #
-        #     with open('graph_visJS.html', 'wb') as file:
-        #         file.write(s.encode('utf-8'))
-        #
-        #     webbrowser.open('file://' + os.path.realpath('graph_visJS.html'))
+        if html:
+
+            env = Environment(
+                loader=PackageLoader('powertransmission', 'templates'),
+                autoescape=select_autoescape(['html', 'xml']))
+            template = env.get_template('graph_visJS.html')
+
+            nodes = []
+            edges = []
+            for label in list(labels.values()):
+                nodes.append({'name': label, 'shape': 'circular'})
+
+            for edge in G.edges:
+                edge_dict = {'inode1': int(edge[0]) - 1,
+                             'inode2': int(edge[1]) - 1}
+                edges.append(edge_dict)
+
+            options = {}
+            s = template.render(
+                name=self.stepfile,
+                nodes=nodes,
+                edges=edges,
+                options=options)
+
+            with open('graph_visJS.html', 'wb') as file:
+                file.write(s.encode('utf-8'))
+
+            webbrowser.open('file://' + os.path.realpath('graph_visJS.html'))
 
         return F
 
@@ -346,6 +347,16 @@ class Step:
         elif name == 'SEAM_CURVE':
             volmdlr_object = object_dict[arguments[1]]
 
+        elif name == 'TRIMMED_CURVE':
+            # print(list(object_dict.keys()))
+            # print(arguments[2][0][1:], arguments[3][0][1:])
+            # print(object_dict[])
+            curve = object_dict[arguments[1]]
+            point1 = object_dict[int(arguments[2][0][1:])]
+            point2 = object_dict[int(arguments[3][0][1:])]
+            volmdlr_object = curve.trim(point1=point1, point2=point2)
+            print('==', volmdlr_object)
+
         # elif name == 'EDGE_CURVE':
         #     object_dict[instanciate_id] = object_dict[arguments[3]]
 
@@ -354,6 +365,9 @@ class Step:
 
         elif name == 'PCURVE':
             # TODO : Pas besoin de mettre PCURVE ici s'il n'est pas dans STEP_TO_VOLMDLR
+            volmdlr_object = object_dict[arguments[1]]
+
+        elif name == 'GEOMETRIC_CURVE_SET':
             volmdlr_object = object_dict[arguments[1]]
 
         elif name == 'SHELL_BASED_SURFACE_MODEL':
@@ -392,6 +406,7 @@ class Step:
                 shells = []
                 # frames = []
                 for arg in arguments[1]:
+                    print(object_dict[int(arg[1:])])
                     if int(arg[1:]) in object_dict and \
                             isinstance(object_dict[int(arg[1:])],
                                        volmdlr.faces.OpenShell3D):
@@ -471,6 +486,9 @@ class Step:
             if node != '#0' and (self.functions[node].name == "CLOSED_SHELL"
                                  or
                                  self.functions[node].name == "OPEN_SHELL"):
+                shell_nodes.append(node)
+            if node != '#0' and self.functions[node].name == 'SHAPE_REPRESENTATION':
+                # Really a shell node ?
                 shell_nodes.append(node)
 
         frame_mapped_shell_node = []
@@ -616,6 +634,7 @@ STEP_TO_VOLMDLR = {
     'OPEN_SHELL': volmdlr.faces.OpenShell3D,
     #        'ORIENTED_CLOSED_SHELL': None,
     'CONNECTED_FACE_SET': volmdlr.faces.OpenShell3D,
+    'GEOMETRIC_CURVE_SET': None,
 
     # step subfunctions
     'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP': volmdlr.faces.OpenShell3D.translation,

@@ -3058,6 +3058,23 @@ class Circle3D(Contour3D):
             R, self.radius)
         return [surface.rectangular_cut(0, angle, 0, volmdlr.TWO_PI)]
 
+    def point_on_circle(self, point: volmdlr.Point3D):
+        distance = point.point_distance(self.center)
+        vec = volmdlr.Vector3D(*point-self.center)
+        dot = self.normal.dot(vec)
+        if math.isclose(distance, self.radius, abs_tol=1e-6)\
+                and math.isclose(dot, 0, abs_tol=1e-6):
+            return True
+        return False
+
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+        if not self.point_on_circle(point1)\
+                or not self.point_on_circle(point2):
+            raise ValueError('Point not on circle for trim method')
+        interior = volmdlr.core.clockwise_interior_from_circle3d(
+            point1, point2, self)
+        return volmdlr.edges.Arc3D(point1, interior, point2)
+
 
 class Ellipse3D(Contour3D):
     """
