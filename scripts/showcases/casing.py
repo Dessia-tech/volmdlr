@@ -78,6 +78,7 @@ model = vm.core.VolumeModel([bottom, sides, belt], name='Casing')
 model.babylonjs()
 model.to_step('casing')
 model.to_stl('casing')
+model.save_babylonjs_to_file('casing')
 
 #
 # model = vm.VolumeModel([sides])
