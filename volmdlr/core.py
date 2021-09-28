@@ -1476,7 +1476,7 @@ class VolumeModel(dc.DessiaObject):
         return babylon_data
 
     @classmethod
-    def babylonjs_from_babylon_data(cls, babylon_data, use_cdn=True,
+    def babylonjs_script(cls, babylon_data, use_cdn=True,
                                     debug=False):
         if use_cdn:
             script = volmdlr.templates.babylon_unpacker_cdn_header  # .substitute(name=page_name)
@@ -1489,7 +1489,7 @@ class VolumeModel(dc.DessiaObject):
 
     def babylonjs(self, page_name=None, use_cdn=True, debug=False):
         babylon_data = self.babylon_data()
-        script = self.babylonjs_from_babylon_data(babylon_data, use_cdn=use_cdn,
+        script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
                                                   debug=debug)
         if page_name is None:
             with tempfile.NamedTemporaryFile(suffix=".html",
@@ -1498,27 +1498,24 @@ class VolumeModel(dc.DessiaObject):
             page_name = file.name
         webbrowser.open('file://' + os.path.realpath(page_name))
 
-    def babylonjs_to_filepath(self, filepath: str = None, file_name: str = None,
-                              use_cdn=True, debug=False):
+    def save_babylonjs_to_file(self, filename: str = None,
+                               use_cdn=True, debug=False):
         babylon_data = self.babylon_data()
-        script = self.babylonjs_from_babylon_data(babylon_data, use_cdn=use_cdn,
+        script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
                                                   debug=debug)
-        if file_name is None or filepath in None:
+        if filename is None:
             with tempfile.NamedTemporaryFile(suffix=".html",
                                              delete=False) as file:
                 file.write(bytes(script, 'utf8'))
-                return
-        if filepath.endswith('.html'):
-            with open(filepath, 'w') as file:
+                return file.name
+            
+        if not filename.endswith('.html'):
+            filename += '.html'
+            
+            with open(filename, 'w') as file:
                 file.write(script)
-            return
-        if not file_name.endswith('.html'):
-            file_name += '.html'
-        filepath = filepath + file_name
-        with open(filepath, 'w') as file:
-            file.write(script)
-        if isinstance(filepath, str):
-            file.close()
+            return filename
+
 
     def to_stl(self, filepath):
         mesh = self.primitives[0].triangulation()
