@@ -2750,7 +2750,6 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             self.points = new_BSplineCurve3D.points
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
-        print(self.__dict__)
         if not self.point_on_curve(point1)\
                 or not self.point_on_curve(point2):
             raise ValueError('Point not on circle for trim method')
@@ -2759,19 +2758,41 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         abscissa2 = self.abscissa_at_point(point2)
         return self.trim_between_abscissae(abscissa1, abscissa2)
 
-    def trim_between_abscissae(self, abscissa1: float, abscissa2: float):
-        abscissa1, abscissa2 = min([abscissa1, abscissa2]),\
-            max([abscissa1, abscissa2])
+    def trim_between_evaluation(self, norm_eval1: float, norm_eval2: float):
+        norm_eval1, norm_eval2 = min([norm_eval1, norm_eval2]), \
+                               max([norm_eval1, norm_eval2])
 
-        bspline_curve = self.cut_before(abscissa1)
-        bspline_curve = bspline_curve.cut_after(abscissa2-abscissa1)
-        # bspline_curve = self.cut_after(abscissa2)
-        # bspline_curve = bspline_curve.cut_before(abscissa1)
-        return bspline_curve
+        # Cut before
+        ratio1 = norm_eval1 / self.length()
+        bspline_curve = self.insert_knot(ratio1, num=self.degree)
+        if bspline_curve.weights is not None:
+            raise NotImplementedError
 
-    def cut_before(self, abscissa: float):
-        ratio = abscissa / self.length()
-        bspline_curve = self.insert_knot(ratio, num=self.degree)
+        # Cut after
+        ratio2 = norm_eval2 / self.length()
+        bspline_curve = bspline_curve.insert_knot(ratio2, num=self.degree)
+        if bspline_curve.weights is not None:
+            raise NotImplementedError
+
+        new_ctrlpts = bspline_curve.control_points[bspline_curve.degree:
+                                                   -bspline_curve.degree]
+        new_multiplicities = bspline_curve.knot_multiplicities[1:-1]
+        new_multiplicities[-1] += 1
+        new_multiplicities[0] += 1
+        new_knots = bspline_curve.knots[1:-1]
+        new_knots = standardize_knot_vector(new_knots)
+
+        return BSplineCurve3D(degree=bspline_curve.degree,
+                              control_points=new_ctrlpts,
+                              knot_multiplicities=new_multiplicities,
+                              knots=new_knots,
+                              weights=None,
+                              periodic=bspline_curve.periodic,
+                              name=bspline_curve.name)
+
+    def cut_before(self, norm_eval: float):
+        # ratio = abscissa / self.length()
+        bspline_curve = self.insert_knot(norm_eval, num=self.degree)
         if bspline_curve.weights is not None:
             raise NotImplementedError
 
@@ -2788,9 +2809,9 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
                               periodic=bspline_curve.periodic,
                               name=bspline_curve.name)
 
-    def cut_after(self, abscissa: float):
-        ratio = abscissa / self.length()
-        bspline_curve = self.insert_knot(ratio, num=self.degree)
+    def cut_after(self, norm_eval: float):
+        # ratio = abscissa / self.length()
+        bspline_curve = self.insert_knot(norm_eval, num=self.degree)
         if bspline_curve.weights is not None:
             raise NotImplementedError
 
