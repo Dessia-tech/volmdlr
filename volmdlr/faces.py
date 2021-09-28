@@ -191,6 +191,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         This method makes inner contour disappear for now
         """
         splitted_outer_contours = self.outer_contour.cut_by_line(line)
+           
         return [Surface2D(oc, []) for oc in splitted_outer_contours]
 
     def split_at_centers(self):
@@ -1695,6 +1696,7 @@ class RuledSurface3D(Surface3D):
 
 class BSplineSurface3D(Surface3D):
     face_class = 'BSplineFace3D'
+    _non_serializable_attributes = ['surface']
 
     def __init__(self, degree_u, degree_v, control_points, nb_u, nb_v,
                  u_multiplicities, v_multiplicities, u_knots, v_knots,
@@ -1756,7 +1758,6 @@ class BSplineSurface3D(Surface3D):
         self._displacements = {}
         self._grids2d = {}
         self._grids2d_deformed = {}
-        
 
     def control_points_matrix(self, coordinates):
         ''' 
@@ -2308,6 +2309,8 @@ class BSplineSurface3D(Surface3D):
         '''
         
         points_2d = volmdlr.Point2D.grid2d(points_x, points_y, xmin, xmax, ymin, ymax)
+        if self._grids2d == {} :
+            self._grids2d[points_x, points_y, xmin, xmax, ymin, ymax] = points_2d
         
         points_3d = [] 
         for j in range(0,len(points_2d)):
@@ -2424,7 +2427,13 @@ class BSplineSurface3D(Surface3D):
         '''
         
         points_2d = volmdlr.Point2D.grid2d(points_x, points_y, xmin, xmax, ymin, ymax)
-        points_2d_deformed = self.grid2d_deformed(points_x, points_y, xmin, xmax, ymin, ymax)
+        
+        if (points_x, points_y, xmin, xmax, ymin, ymax) in self._grids2d_deformed:
+            points_2d_deformed = self._grids2d_deformed[points_x, points_y, xmin, xmax, ymin, ymax]
+        else:
+            points_2d_deformed = self.grid2d_deformed(points_x, points_y, xmin, xmax, ymin, ymax)
+            self._grids2d_deformed[points_x, points_y, xmin, xmax, ymin, ymax] = points_2d_deformed
+
         
         #Displacement,Deformation dx/dy
         displacement = npy.ones(shape=(len(points_2d),2)) #2D grid points displacement
@@ -2648,17 +2657,16 @@ class BSplineSurface3D(Surface3D):
                                                                  
         new_start_points = []
         for i in range(0,len(contour2d.primitives)):
-            point2d = contour2d.primitives[i].start
+            point2d = contour2d.primitives[i].start       
             new_start_points.append(self.point2d_with_dimension_to_3d(point2d, points_x, points_y, xmin, xmax, ymin, ymax))
         
         edges = []
         for i in range(0,len(new_start_points)-1):
             edges.append(volmdlr.edges.LineSegment3D(new_start_points[i], new_start_points[i+1]))
-        edges.append(volmdlr.edges.LineSegment3D(new_start_points[-1], new_start_points[0]))
             
-        contour3d = volmdlr.wires.Contour3D.contours_from_edges(edges)
-
-        return contour3d[0]
+        edges.append(volmdlr.edges.LineSegment3D(new_start_points[-1], new_start_points[0]))
+               
+        return volmdlr.wires.Contour3D(edges)
         
     @classmethod
     def points_fitting_into_bspline_surface(cls, points_3d,size_u,size_v,degree_u,degree_v):
