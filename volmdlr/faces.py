@@ -3274,7 +3274,7 @@ class PlaneFace3D(Face3D):
 
         return intersections
 
-    def face_intersections(self, face2):
+    def face_intersections(self, face2) -> List[volmdlr.wires.Wire3D]:
         ## """
         ## Only works if the surface is planar
         ## TODO : this function does not take into account if Face has holes
