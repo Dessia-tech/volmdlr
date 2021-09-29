@@ -15,6 +15,7 @@ steps:
   - make html
   - cd ../scripts
   - coverage run ci_scripts.py
+  - coverage json
   - coverage json --include *volmdlr/volmdlr*
   - python coverage.py
 
