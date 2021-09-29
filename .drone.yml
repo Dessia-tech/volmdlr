@@ -9,24 +9,19 @@ steps:
   commands:
   - git fetch --tags
   - apt update && apt install -y libgl1 
-  - pip install Cython sphinx sphinx_rtd_theme
+  - pip install Cython sphinx sphinx_rtd_theme coverage
   - python setup.py install
   - cd doc
   - make html
   - cd ../scripts
-  - python ci_scripts.py
+  - coverage run ci_scripts.py
+  - python coverage.py
 
 - name: develop
   image: python:3.8
   commands:
   - pip install Cython
   - python setup.py develop
-
-- name: sdist
-  image: python:3.8
-  commands:
-  - pip install Cython wheel
-  - python setup.py sdist
 
 - name: upload to pypi
   image: plugins/pypi
