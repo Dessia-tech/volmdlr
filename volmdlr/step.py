@@ -348,14 +348,10 @@ class Step:
             volmdlr_object = object_dict[arguments[1]]
 
         elif name == 'TRIMMED_CURVE':
-            # print(list(object_dict.keys()))
-            # print(arguments[2][0][1:], arguments[3][0][1:])
-            # print(object_dict[])
             curve = object_dict[arguments[1]]
             point1 = object_dict[int(arguments[2][0][1:])]
             point2 = object_dict[int(arguments[3][0][1:])]
             volmdlr_object = curve.trim(point1=point1, point2=point2)
-            print('==', volmdlr_object)
 
         # elif name == 'EDGE_CURVE':
         #     object_dict[instanciate_id] = object_dict[arguments[3]]
@@ -368,7 +364,11 @@ class Step:
             volmdlr_object = object_dict[arguments[1]]
 
         elif name == 'GEOMETRIC_CURVE_SET':
-            volmdlr_object = object_dict[arguments[1]]
+            sub_objects = []
+            for arg in arguments[1]:
+                sub_obj = object_dict[int(arg[1:])]
+                sub_objects.append(sub_obj)
+            volmdlr_object = sub_objects
 
         elif name == 'SHELL_BASED_SURFACE_MODEL':
             volmdlr_object = object_dict[int(arguments[1][0][1:])]
@@ -406,7 +406,7 @@ class Step:
                 shells = []
                 # frames = []
                 for arg in arguments[1]:
-                    print(object_dict[int(arg[1:])])
+                    # print(object_dict[int(arg[1:])])
                     if int(arg[1:]) in object_dict and \
                             isinstance(object_dict[int(arg[1:])],
                                        volmdlr.faces.OpenShell3D):
@@ -533,7 +533,7 @@ class Step:
                 # for i, arg in enumerate(arguments):
                 #     if type(arg) == str and arg[0] == '#':
                 #         arguments[i] = int(arg[1:])
-                print(arguments)
+                # print(arguments)
                 if arguments[1].count(',') == 2:
                     volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
                         arguments, object_dict)

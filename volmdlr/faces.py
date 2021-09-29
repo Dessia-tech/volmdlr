@@ -579,8 +579,10 @@ class Surface3D(dc.DessiaObject):
                         # primitives[0].plot(ax=ax ,color='r', plot_points=True)
                         for p in primitives:
                             p.plot(ax=ax, color='r', plot_points=True)
+
                         raise ValueError(
-                            'Primitives not following each other in contour: delta={}, {}, {}, {}'.format(
+                            'Primitives not following each other in contour:',
+                            'delta={}, {}, {}, {}'.format(
                                 delta_x1, delta_x2, delta_y1, delta_y2))
 
                     # if not end_match and should_study_periodicity:
@@ -1656,6 +1658,7 @@ class RuledSurface3D(Surface3D):
 
 class BSplineSurface3D(Surface3D):
     face_class = 'BSplineFace3D'
+    _non_serializable_attributes = ['surface']
 
     def __init__(self, degree_u, degree_v, control_points, nb_u, nb_v,
                  u_multiplicities, v_multiplicities, u_knots, v_knots,
@@ -1936,21 +1939,29 @@ class BSplineSurface3D(Surface3D):
         raise RuntimeError(
             'No convergence in point3d to 2d of bspline surface')
 
-
     def linesegment2d_to_3d(self, linesegment2d):
         # TODO: this is a non exact method!
-        l = linesegment2d.length()        
-        points = [self.point2d_to_3d(linesegment2d.point_at_abscissa(i * l/ 10.)) for i in range(11)]
-        return [vme.LineSegment3D(p1, p2) \
+        lth = linesegment2d.length()
+        points = [self.point2d_to_3d(
+            linesegment2d.point_at_abscissa(i * lth / 10.)) for i in range(11)]
+        return [vme.LineSegment3D(p1, p2)
                 for p1, p2 in zip(points[:-1], points[1:])]
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
-        # TODO: enhance this, it is a non exact  method!
-        l = bspline_curve3d.length()
-        points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * l)) \
-                  for i in range(11)]
-        return [vme.LineSegment2D(p1, p2) \
-                for p1, p2 in zip(points[:-1], points[1:])]
+        # TODO: enhance this, it is a non exact method!
+        lth = bspline_curve3d.length()
+        if lth > 1e-5:
+            points = [self.point3d_to_2d(
+                bspline_curve3d.point_at_abscissa(i / 10 * lth))
+                for i in range(11)]
+            return [vme.LineSegment2D(p1, p2)
+                    for p1, p2 in zip(points[:-1], points[1:])]
+        elif 1e-6 < lth <= 1e-5:
+            return [vme.LineSegment2D(
+                self.point3d_to_2d(bspline_curve3d.start),
+                self.point3d_to_2d(bspline_curve3d.end))]
+        else:
+            print('BSplineCruve3D skipped because it is too small')
 
     def arc3d_to_2d(self, arc3d):
         number_points = math.ceil(arc3d.angle * 7) + 1  # 7 points per radian
@@ -3005,7 +3016,11 @@ class Face3D(volmdlr.core.Primitive3D):
                 surfaces.extend(surface.split_by_lines(lines_y))
 
         elif lines_x:
+            # try:
             surfaces = self.surface2d.split_by_lines(lines_x)
+            # except:
+            #     self.plot()
+            #     raise NotImplementedError
         elif lines_y:
             surfaces = self.surface2d.split_by_lines(lines_y)
         else:

@@ -647,6 +647,7 @@ class BSplineCurve2D(Edge):
             crossings.extend(l.line_crossings(line2d))
         return crossings
 
+
 class BezierCurve2D(BSplineCurve2D):
 
     def __init__(self, degree: int, control_points: List[volmdlr.Point2D],
@@ -660,13 +661,14 @@ class BezierCurve2D(BSplineCurve2D):
                                 None, False, name)
 
 
-
 class LineSegment2D(LineSegment):
     """
     Define a line segment limited by two points
     """
 
     def __init__(self, start, end, *, name=''):
+        if start == end:
+            raise NotImplementedError
         Edge.__init__(self, start, end, name=name)
 
     def __hash__(self):
@@ -1835,6 +1837,11 @@ class Line3D(Line):
                     self.points = [frame.new_coordinates(p) for p in
                                    self.points]
 
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+        if not self.point_belongs(point1) or not self.point_belongs(point2):
+            raise ValueError('Point not on curve')
+        return Line3D(point1, point2)
+
     def copy(self):
         return Line3D(*[p.copy() for p in self.points])
 
@@ -2750,6 +2757,8 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             self.points = new_BSplineCurve3D.points
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+        # TODO: this function is not operationnal
+        print('WARNING')
         if not self.point_on_curve(point1)\
                 or not self.point_on_curve(point2):
             raise ValueError('Point not on circle for trim method')

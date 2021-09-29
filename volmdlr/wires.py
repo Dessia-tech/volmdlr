@@ -2634,8 +2634,17 @@ class Contour3D(Contour, Wire3D):
             else:
                 ax = last_edge.plot(color='b')
                 ax = raw_edge.plot(ax=ax, color='r')
+                deltax1 = abs(raw_edge.start.x - last_edge.end.x)
+                deltax2 = abs(raw_edge.end.x - last_edge.end.x)
+                deltay1 = abs(raw_edge.start.y - last_edge.end.y)
+                deltay2 = abs(raw_edge.end.y - last_edge.end.y)
+                deltaz1 = abs(raw_edge.start.z - last_edge.end.z)
+                deltaz2 = abs(raw_edge.end.z - last_edge.end.z)
                 raise NotImplementedError(
-                    'Edges of contour not follwing each other')
+                    'Edges of contour not follwing each other',
+                'delta = {}, {}, {}, {}, {}, {}'.format(deltax1, deltax2,
+                                                        deltay1, deltay2,
+                                                        deltaz1, deltaz2))
 
             edges.append(last_edge)
         return cls(edges, name=name)
