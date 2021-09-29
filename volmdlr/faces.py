@@ -3296,7 +3296,7 @@ class PlaneFace3D(Face3D):
                 intersections.extend(intersection_points)
         if intersections:
             primitive = volmdlr.edges.LineSegment3D(intersections[0], intersections[1])
-            intersections = volmdlr.wires.Wire3D([primitive])
+            intersections = [volmdlr.wires.Wire3D([primitive])]
             return intersections
 
         return intersections
@@ -4907,8 +4907,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             face_3d = block.cut_by_orthogonal_plane(plane_3d)
             inters = face.face_intersections(face_3d)
             if inters:
-                graph.add_edges_from([(inters[0], inters[1])])
-                intersections.append(inters)
+                graph.add_edges_from([(inters[0].primitives[0].start, inters[0].primitives[0].start)])
+                intersections.append([inters[0].primitives[0].start, inters[0].primitives[0].start])
         pts = list(nx.dfs_edges(graph, intersections[0][0]))
         # print(pts)
         # print(intersections)
@@ -4925,7 +4925,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         contour_2d = volmdlr.faces.Surface2D(volmdlr.wires.ClosedPolygon2D(points_2d), [])
 
         return volmdlr.faces.PlaneFace3D(plane_3d, contour_2d)
-
 
     def linesegment_intersections(self,
                                   linesegment3d: vme.LineSegment3D) \
@@ -5010,7 +5009,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             for face2 in shell2.faces:
                 intersection_points = face1.face_intersections(face2)
                 if intersection_points:
-                    intersection_points = [intersection_points.primitives[0].start, intersection_points.primitives[0].end]
+                    intersection_points = [intersection_points[0].primitives[0].start, intersection_points[0].primitives[0].end]
                     intersections_points.extend(intersection_points)
 
         shell1_points_inside_shell2 = []
@@ -5036,7 +5035,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             for face2 in shell2.faces:
                 intersection_points = face1.face_intersections(face2)
                 if intersection_points:
-                    intersection_points = [intersection_points.primitives[0].start, intersection_points.primitives[0].end]
+                    intersection_points = [intersection_points[0].primitives[0].start, intersection_points[0].primitives[0].end]
                     intersections_points.extend(intersection_points)
 
         shell1_points_outside_shell2 = []
@@ -5274,8 +5273,8 @@ class ClosedShell3D(OpenShell3D):
         # Check if any faces are intersecting
         for face1 in self.faces:
             for face2 in shell2.faces:
-                intersection_points = face1.face_intersections(face2)
-                if intersection_points != []:
+                intersection = face1.face_intersections(face2)
+                if intersection:
                     return False
 
         return True
@@ -5322,7 +5321,7 @@ class ClosedShell3D(OpenShell3D):
         for k, combination in enumerate(intersecting_faces_combinations):
             face_intersection = combination[0].face_intersections(combination[1])
             if face_intersection:
-                intersecting_combinations[combination] = face_intersection
+                intersecting_combinations[combination] = face_intersection[0]
 
         return intersecting_combinations
     
