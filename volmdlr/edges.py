@@ -764,7 +764,10 @@ class LineSegment2D(LineSegment):
         if self.direction_vector().is_colinear_to(line.direction_vector()):
             return []
         else:
-            return self.line_intersections(line)
+            line_intersection = self.line_intersections(line)
+            if line_intersection and (line_intersection[0] == self.end or line_intersection[0] == self.start):
+                return []
+            return line_intersection
 
     def linesegment_crossings(self, linesegment: 'LineSegment2D'):
         if self.direction_vector().is_colinear_to(
