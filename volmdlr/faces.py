@@ -2103,8 +2103,7 @@ class BSplineSurface3D(Surface3D):
             ax = p.plot(ax=ax)
         return ax
 
-    
-     
+       
     
     def merge_with(self, other_bspline_surface3d, merging_direction):
         ''' 
@@ -2124,7 +2123,8 @@ class BSplineSurface3D(Surface3D):
         P=[] #control points
         M=[] #discretized points (x,y,z)
         M_point3d=[] #discretized points vlmdlr Point3D
-        
+                     
+
         steps=1000
         surfaces_to_be_merged=[self,other_bspline_surface3d]
         n=0
@@ -2192,8 +2192,8 @@ class BSplineSurface3D(Surface3D):
         n=len(M_merge[0][0]) #M_merge = m*n
         
         
-        (u_knots,u_multiplicities) = self.knots_vector_inv(u_merged)
-        (v_knots,v_multiplicities) = self.knots_vector_inv(v_merged)
+        (u_knots,u_multiplicities) = knots_vector_inv(u_merged)
+        (v_knots,v_multiplicities) = knots_vector_inv(v_merged)
     
         control_points=[volmdlr.Point3D(0,0,0)] * (s_merged*r_merged)
         merged_surface = volmdlr.faces.BSplineSurface3D(degree_merge_u, 
@@ -2236,8 +2236,8 @@ class BSplineSurface3D(Surface3D):
             for j in range(0,len(P_points[0])):
                 control_points.append(P_points[i][j])
     
-        knots_u, multiplicities_u = merged_surface.knots_vector_inv(u_merged)
-        knots_v, multiplicities_v = merged_surface.knots_vector_inv(v_merged)
+        knots_u, multiplicities_u = knots_vector_inv(u_merged)
+        knots_v, multiplicities_v = knots_vector_inv(v_merged)
         
         
         merged_surface = volmdlr.faces.BSplineSurface3D(degree_u=degree_merge_u,
@@ -2840,22 +2840,24 @@ class BSplineSurface3D(Surface3D):
         ''' 
         
         '''
-        
+
         nearest_primitives = []
         for i in range(0,len(contours3d)):
-            # print(i)
-            # print(len(contours3d[i].primitives))
             primitives = contours3d[i].primitives
             nearest = []
             for primitive in primitives:
-                # print(self.error_with_edge3d(primitive))
                 if self.error_with_edge3d(primitive) <= threshold:
                     nearest.append(primitive)
             nearest_primitives.append(volmdlr.wires.Wire3D(nearest))
 
         return nearest_primitives
+      
     
     def wire3d_to_2d(self, wires3d):
+        ''' 
+        
+        '''
+
         wires2d = []
         for wire3d in wires3d:
             edges2d = []
@@ -2868,7 +2870,10 @@ class BSplineSurface3D(Surface3D):
  
     
     def wire3d_to_2d_with_dimension(self, wires3d):
+        ''' 
         
+        '''
+
         for cle in self._grids2d.keys(): 
             [points_x, points_y, xmin, xmax, ymin, ymax] = cle
         
@@ -2880,7 +2885,8 @@ class BSplineSurface3D(Surface3D):
                                                           self.point3d_to_2d_with_dimension(edge.end, points_x, points_y, xmin, xmax, ymin, ymax)))
             wires2d.append(volmdlr.wires.Wire2D(wire2d))
 
-        return wires2d
+        return wires2d          
+            
 
 
 class BezierSurface3D(BSplineSurface3D):
