@@ -2123,9 +2123,9 @@ class BSplineSurface3D(Surface3D):
         P=[] #control points
         M=[] #discretized points (x,y,z)
         M_point3d=[] #discretized points vlmdlr Point3D
-                     
 
-        steps=1000
+
+        steps=1000 
         surfaces_to_be_merged=[self,other_bspline_surface3d]
         n=0
         for surface in surfaces_to_be_merged:
@@ -2136,8 +2136,26 @@ class BSplineSurface3D(Surface3D):
             r.append(surface.nb_u)
             s.append(surface.nb_v)
             
-            x = npy.linspace(0,0.99,steps)
-            A.append([surface.blending_matrix_u(x), surface.blending_matrix_v(x)])
+            if surface == self:
+                # find u,v parameters for supperposition points for the 1st surface 
+                uv_supperposition_parameters = self.supperposition_points_with(other_bspline_surface3d)
+                if (uv_supperposition_parameters[0][0][1]-uv_supperposition_parameters[0][0][0]) < (uv_supperposition_parameters[0][1][1]-uv_supperposition_parameters[0][1][0]):
+                    if uv_supperposition_parameters[0][1][0] < (1-uv_supperposition_parameters[0][1][0]):
+                        ux = npy.linspace(uv_supperposition_parameters[0][1][0] ,0.99,steps)
+                    else:
+                        ux = npy.linspace(0,uv_supperposition_parameters[0][1][0],steps)
+                    vx = npy.linspace(0,0.99,steps)
+                else: 
+                    ux = npy.linspace(0,0.99,steps)
+                    if uv_supperposition_parameters[0][1][1] < (1-uv_supperposition_parameters[0][1][1]):
+                        vx = npy.linspace(uv_supperposition_parameters[0][1][1] ,0.99,steps)
+                    else:
+                        vx = npy.linspace(0,uv_supperposition_parameters[0][1][0],steps)
+            else: 
+                ux = npy.linspace(0,0.99,steps)
+                vx = npy.linspace(0,0.99,steps)
+
+            A.append([surface.blending_matrix_u(ux), surface.blending_matrix_v(vx)])
             P.append([surface.control_points_matrix(0), 
                       surface.control_points_matrix(1),
                       surface.control_points_matrix(2)])
@@ -2797,8 +2815,8 @@ class BSplineSurface3D(Surface3D):
                     (self.surface.evaluate_single((X[0],X[1]))[2])*plane3d.equation_coefficients()[2] + 
                     plane3d.equation_coefficients()[3])
 
-        x_init = self.grid2d(20, 20, 0, 1, 0, 1)
-        
+        x_init = volmdlr.Point2D.grid2d(20, 20, 0, 1, 0, 1)
+                
         intersection_points = []
         
         for x0 in x_init: 
@@ -2886,7 +2904,51 @@ class BSplineSurface3D(Surface3D):
             wires2d.append(volmdlr.wires.Wire2D(wire2d))
 
         return wires2d          
+                        
             
+    def intersection_with(self, other_bspline_surface3d):
+        '''
+        compute intersection points between two Bspline surfaces 
+        return u,v parameters for intersection points for both surfaces
+        [[u1_min,u1_max],[v1_min,v1_max]] & [[u2_min,u2_max],[v2_min,v2_max]]
+        
+        '''
+        
+        def f(X):
+            return (self.point2d_to_3d(volmdlr.Point2D(X[0],X[1])) - other_bspline_surface3d.point2d_to_3d(volmdlr.Point2D(X[2],X[3]))).norm()
+   
+        x = npy.linspace(0,1,10)
+        x_init=[]
+        for xi in x:
+            for yi in x:
+                x_init.append((xi,yi, xi, yi))
+                x_init.append((xi,yi, yi, xi))
+
+        
+        intersection_points = []
+        u1, v1, u2, v2 = [], [], [], []
+        
+        for x0 in x_init: 
+            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
+            print(z.cost)
+            if z.cost<1e-5:
+                solution = z.x
+                u1.append(solution[0])
+                v1.append(solution[1])
+                u2.append(solution[2])
+                v2.append(solution[3])
+        
+        u1.sort()
+        v1.sort()
+        u2.sort()
+        v2.sort()
+
+        u1[0], u1[-1], v1[0], v1[-1]
+        u2[0], u2[-1], v2[0], v2[-1]
+
+                
+
+        return intersection_points
 
 
 class BezierSurface3D(BSplineSurface3D):

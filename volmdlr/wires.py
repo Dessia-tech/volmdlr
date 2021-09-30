@@ -2621,10 +2621,21 @@ class Contour3D(Contour, Wire3D):
                 return cls(raw_edges, name=name)
 
         # Making things right for first 2 primitives
-        if raw_edges[0].end == raw_edges[1].start:
-            edges = [raw_edges[0], raw_edges[1]]
-        elif raw_edges[0].start == raw_edges[1].start:
-            edges = [raw_edges[0].reverse(), raw_edges[1]]
+        if (raw_edges[0].end).point_distance(raw_edges[1].start) < 2e-5: 
+            edges = [raw_edges[0], raw_edges[1]]            
+        elif (raw_edges[0].start).point_distance(raw_edges[1].start) < 2e-5:
+            edges = [raw_edges[0].reverse(), raw_edges[1]]    
+            
+            
+            (raw_edges[0].end).point_distance(raw_edges[1].start) < 2e-5:
+                
+            
+            (raw_edges[0].end).point_distance(raw_edges[1].start) < 2e-5:
+            
+        
+        
+        
+        
         elif raw_edges[0].end == raw_edges[1].end:
             edges = [raw_edges[0], raw_edges[1].reverse()]
         elif raw_edges[0].start == raw_edges[1].end:
