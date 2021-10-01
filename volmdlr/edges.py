@@ -2604,13 +2604,53 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         # return length
         return length_curve(self.curve)
 
-    def point_at_abscissa(self, curvilinear_abscissa):
-        # TODO: change name to evaluate_[something] because if C(t) is the
-        # TODO: spline parametric curve, the function is an evaluation of
-        # TODO: C(curvilinear_abscissa/length) and doesn't return the point
-        # TODO: at the given abscissa along the curve.
-        unit_abscissa = curvilinear_abscissa / self.length()
-        return volmdlr.Point3D(*self.curve.evaluate_single(unit_abscissa))
+    def look_up_table(self, resolution=20, start_norm_eva: float = 0,
+                      end_norm_eval: float = 1):
+        """
+        Creates a table of equivalence between the parameter t (evaluation
+        of the BSplineCruve) and the cumulative distance.
+        """
+        points3d = []
+        ts = [start_norm_eva + i/resolution * (end_norm_eval - start_norm_eva)
+              for i in range(resolution+1)]
+        points = self.curve.evaluate_list(ts)
+        for pt in points:
+            points3d.append(volmdlr.Point3D(*pt))
+        linesegments = [volmdlr.edges.LineSegment3D(p1, p2)
+                        for p1, p2 in zip(points3d[:-1], points3d[1:])]
+        distances = [0]
+        for lineseg in linesegments:
+            distances.append(lineseg.length() + distances[-1])
+
+        return [(ts[i], distances[i]) for i in range(resolution+1)]
+
+    def point_at_abscissa(self, curvilinear_abscissa, resolution=100):
+        """
+        Returns the vm.Point3D at a given curvilinear abscissa.
+        This is an approximation. Resolution parameter can increased
+        for more accurate result.
+        """
+        lut = self.look_up_table(resolution=resolution)
+        if 0 < curvilinear_abscissa < self.length():
+            for i, (t, dist) in enumerate(lut):
+                if curvilinear_abscissa < dist:
+                    t1 = lut[i-1][0]
+                    t2 = t
+                    # dist1 = lut[i-1][1]
+                    # dist2 = dist
+                    return volmdlr.Point3D(
+                        *self.curve.evaluate_single((t1+t2)/2))
+        else:
+            raise ValueError('Curvilinear abscissa is bigger than length,'
+                             'or equal to 0, or negative')
+
+    # def point_at_abscissa(self, curvilinear_abscissa):
+    #     # TODO: change name to evaluate_[something] because if C(t) is the
+    #     # TODO: spline parametric curve, the function is an evaluation of
+    #     # TODO: C(curvilinear_abscissa/length) and doesn't return the point
+    #     # TODO: at the given abscissa along the curve.
+    #     unit_abscissa = curvilinear_abscissa / self.length()
+    #     return volmdlr.Point3D(*self.curve.evaluate_single(unit_abscissa))
         # # copy paste from wire3D
         # length = 0.
         # primitives = []
@@ -2625,6 +2665,50 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         #     length += primitive_length
         # # Outside of length
         # raise ValueError
+
+    def norm_eval_at_point(self, point: volmdlr.Point3D, resolution=20):
+        found = False
+        start_norm_eva = 0
+        end_norm_eval = 1
+        max_count = 50
+        count = 0
+
+        while not found and count < max_count:
+
+            ts = [start_norm_eva + i / resolution * (
+                        end_norm_eval - start_norm_eva)
+                  for i in range(resolution + 1)]
+
+            target_distances = []
+            for t in ts:
+                curve_point = volmdlr.Point3D(*self.curve.evaluate_single(t))
+                if curve_point == point:
+                    found = True
+                    t_res = t
+                    break
+                else:
+                    target_distances.append(curve_point.point_distance(point))
+
+            min_i = 0
+            min_distance = target_distances[0]
+            for i, target_distance in enumerate(target_distances[1:]):
+                if target_distance < min_distance:
+                    min_distance = target_distance
+                    min_i = i
+
+            if 0 < min_i < len(target_distances):
+                start_norm_eva = lut[min_i-1][0]
+                end_norm_eval = lut[min_i+1][0]
+            elif min_i == 0:
+                start_norm_eva = 0
+                end_norm_eval = lut[1][0]
+            else:
+                start_norm_eva = lut[-2][0]
+                end_norm_eval = 1
+
+            count += 1
+
+        return t_res
 
     def point_on_curve(self, point: volmdlr.Point3D):
         # TODO: complete ?
@@ -2757,15 +2841,13 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             self.points = new_BSplineCurve3D.points
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
-        # TODO: this function is not operationnal
-        print('WARNING')
         if not self.point_on_curve(point1)\
                 or not self.point_on_curve(point2):
             raise ValueError('Point not on circle for trim method')
 
-        abscissa1 = self.abscissa_at_point(point1)
-        abscissa2 = self.abscissa_at_point(point2)
-        return self.trim_between_abscissae(abscissa1, abscissa2)
+        norm_eval1 = self.norm_eval_at_point(point1, resolution=20)
+        norm_eval2 = self.norm_eval_at_point(point2, resolution=20)
+        return self.trim_between_evaluation(norm_eval1, norm_eval2)
 
     def trim_between_evaluation(self, norm_eval1: float, norm_eval2: float):
         norm_eval1, norm_eval2 = min([norm_eval1, norm_eval2]), \
