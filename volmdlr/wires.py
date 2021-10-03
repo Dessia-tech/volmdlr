@@ -488,8 +488,13 @@ class Contour:
     
         edges_index=[]
         for edge1, edge2 in itertools.product(self.primitives,contour.primitives):
-            if ((edge1.start == edge2.start and edge1.end == edge2.end) or (edge1.start == edge2.end and edge2.start == edge1.end)):
-    
+            if ((edge1.start == edge2.start and edge1.end == edge2.end) 
+                or (edge1.start == edge2.end and edge2.start == edge1.end)
+                or (((edge1.start).point_distance(edge2.start) < 1e-4) 
+                    and ((edge1.end).point_distance(edge2.end) < 1e-4))
+                or (((edge1.start).point_distance(edge2.end) < 1e-4) 
+                    and ((edge1.end).point_distance(edge2.start) < 1e-4))):
+                   
                 edges_index.append((self.primitives.index(edge1),contour.primitives.index(edge2)))
         
         return edges_index
@@ -527,7 +532,13 @@ class Contour:
         merged_primitives_order = [contour_int[0]]
         for i in range(0,len(contour_int)):
             # i=i+1
-            merged_primitives_order.append(contour_int[start.index(merged_primitives_order[i].end)])
+            # merged_primitives_order.append(contour_int[start.index(merged_primitives_order[i].end)])
+            distances=[]
+            for j in range(0,len(start)):
+                distances.append((merged_primitives_order[i].end).point_distance(start[j]))
+            
+            merged_primitives_order.append(contour_int[distances.index(min(distances))])
+
             # merged_primitives_order[i].plot(ax=ax, color='g')
             if len(merged_primitives_order) == merged_primitives:
                 break
@@ -2625,30 +2636,19 @@ class Contour3D(Contour, Wire3D):
             edges = [raw_edges[0], raw_edges[1]]            
         elif (raw_edges[0].start).point_distance(raw_edges[1].start) < 2e-5:
             edges = [raw_edges[0].reverse(), raw_edges[1]]    
-            
-            
-            (raw_edges[0].end).point_distance(raw_edges[1].start) < 2e-5:
-                
-            
-            (raw_edges[0].end).point_distance(raw_edges[1].start) < 2e-5:
-            
-        
-        
-        
-        
-        elif raw_edges[0].end == raw_edges[1].end:
+        elif (raw_edges[0].end).point_distance(raw_edges[1].end) < 2e-5:
             edges = [raw_edges[0], raw_edges[1].reverse()]
-        elif raw_edges[0].start == raw_edges[1].end:
-            edges = [raw_edges[0].reverse(), raw_edges[1].reverse()]
+        elif (raw_edges[0].start).point_distance(raw_edges[1].end) < 2e-5:
+            edges = [raw_edges[0].reverse(), raw_edges[1].reverse()]  
         else:
             raise NotImplementedError(
                 'First 2 edges of contour not follwing each other')
 
         last_edge = edges[-1]
         for raw_edge in raw_edges[2:]:
-            if raw_edge.start == last_edge.end:
+            if (raw_edge.start).point_distance(last_edge.end) < 2e-5: 
                 last_edge = raw_edge
-            elif raw_edge.end == last_edge.end:
+            elif (raw_edge.end).point_distance(last_edge.end) < 2e-5:
                 last_edge = raw_edge.reverse()
             else:
                 ax = last_edge.plot(color='b')

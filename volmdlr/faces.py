@@ -702,7 +702,7 @@ class Surface3D(dc.DessiaObject):
                     weights=bspline_curve2d.weights,
                     periodic=bspline_curve2d.periodic)]
 
-
+ 
 class Plane3D(Surface3D):
     face_class = 'PlaneFace3D'
 
@@ -2136,24 +2136,27 @@ class BSplineSurface3D(Surface3D):
             r.append(surface.nb_u)
             s.append(surface.nb_v)
             
-            if surface == self:
-                # find u,v parameters for supperposition points for the 1st surface 
-                uv_supperposition_parameters = self.supperposition_points_with(other_bspline_surface3d)
-                if (uv_supperposition_parameters[0][0][1]-uv_supperposition_parameters[0][0][0]) < (uv_supperposition_parameters[0][1][1]-uv_supperposition_parameters[0][1][0]):
-                    if uv_supperposition_parameters[0][1][0] < (1-uv_supperposition_parameters[0][1][0]):
-                        ux = npy.linspace(uv_supperposition_parameters[0][1][0] ,0.99,steps)
-                    else:
-                        ux = npy.linspace(0,uv_supperposition_parameters[0][1][0],steps)
-                    vx = npy.linspace(0,0.99,steps)
-                else: 
-                    ux = npy.linspace(0,0.99,steps)
-                    if uv_supperposition_parameters[0][1][1] < (1-uv_supperposition_parameters[0][1][1]):
-                        vx = npy.linspace(uv_supperposition_parameters[0][1][1] ,0.99,steps)
-                    else:
-                        vx = npy.linspace(0,uv_supperposition_parameters[0][1][0],steps)
-            else: 
-                ux = npy.linspace(0,0.99,steps)
-                vx = npy.linspace(0,0.99,steps)
+            # if surface == self:
+            #     # find u,v parameters for supperposition points for the 1st surface 
+            #     uv_supperposition_parameters = self.intersection_with(other_bspline_surface3d)
+            #     if (uv_supperposition_parameters[0][0][1]-uv_supperposition_parameters[0][0][0]) < (uv_supperposition_parameters[0][1][1]-uv_supperposition_parameters[0][1][0]):
+            #         if uv_supperposition_parameters[0][1][0] < (1-uv_supperposition_parameters[0][1][0]):
+            #             ux = npy.linspace(uv_supperposition_parameters[0][1][0] ,0.99,steps)
+            #         else:
+            #             ux = npy.linspace(0,uv_supperposition_parameters[0][1][0],steps)
+            #         vx = npy.linspace(0,0.99,steps)
+            #     else: 
+            #         ux = npy.linspace(0,0.99,steps)
+            #         if uv_supperposition_parameters[0][1][1] < (1-uv_supperposition_parameters[0][1][1]):
+            #             vx = npy.linspace(uv_supperposition_parameters[0][1][1] ,0.99,steps)
+            #         else:
+            #             vx = npy.linspace(0,uv_supperposition_parameters[0][1][0],steps)
+            # else: 
+            #     ux = npy.linspace(0,0.99,steps)
+            #     vx = npy.linspace(0,0.99,steps)
+
+            ux = npy.linspace(0,0.99,steps)
+            vx = npy.linspace(0,0.99,steps)
 
             A.append([surface.blending_matrix_u(ux), surface.blending_matrix_v(vx)])
             P.append([surface.control_points_matrix(0), 
@@ -2815,18 +2818,26 @@ class BSplineSurface3D(Surface3D):
                     (self.surface.evaluate_single((X[0],X[1]))[2])*plane3d.equation_coefficients()[2] + 
                     plane3d.equation_coefficients()[3])
 
-        x_init = volmdlr.Point2D.grid2d(20, 20, 0, 1, 0, 1)
+        x = npy.linspace(0,1,20)
+        x_init=[]
+        for xi in x:
+            for yi in x:
+                x_init.append((xi,yi))
+                              
+               
+        # x_init = volmdlr.Point2D.grid2d(20, 20, 0, 1, 0, 1)
                 
         intersection_points = []
         
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            if z.cost<1e-20:
+            # print(z.cost)
+            if z.cost<1e-10:
                 solution = z.x
                 intersection_points.append(volmdlr.Point3D(self.surface.evaluate_single((solution[0],solution[1]))[0],
                                                            self.surface.evaluate_single((solution[0],solution[1]))[1],
                                                            self.surface.evaluate_single((solution[0],solution[1]))[2]))
-        intersection_points.sort()
+        # intersection_points.sort()
 
         return intersection_points
     
@@ -2924,13 +2935,11 @@ class BSplineSurface3D(Surface3D):
                 x_init.append((xi,yi, xi, yi))
                 x_init.append((xi,yi, yi, xi))
 
-        
-        intersection_points = []
         u1, v1, u2, v2 = [], [], [], []
         
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            print(z.cost)
+            # print(z.cost)
             if z.cost<1e-5:
                 solution = z.x
                 u1.append(solution[0])
@@ -2938,17 +2947,40 @@ class BSplineSurface3D(Surface3D):
                 u2.append(solution[2])
                 v2.append(solution[3])
         
-        u1.sort()
-        v1.sort()
-        u2.sort()
-        v2.sort()
 
-        u1[0], u1[-1], v1[0], v1[-1]
-        u2[0], u2[-1], v2[0], v2[-1]
-
+        uv1 = [[min(u1),max(u1)],[min(v1),max(v1)]]
+        uv2 = [[min(u2),max(u2)],[min(v2),max(v2)]]
+            
+        return (uv1, uv2)
                 
+    @classmethod
+    def from_adjacent_bspline_surfaces(cls, surfaces, degree_u, degree_v):
+        '''  '''
+        
+        points_x, points_y  = 50, 50
+        
+        if len(surfaces) == 1:
+            
+            points_3d = surfaces[0].grid3d(points_x, points_y, 0, 1, 0, 1)
+            
+            return volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(points_3d,points_x,points_x,degree_u,degree_v)    
+        
+        elif len(surfaces) > 1:
+            points_3d = []
+            for surface in surfaces:
+                xmin, xmax, ymin, ymax = 0, 1, 0, 1
+                points_3d.append(surface.grid3d(points_x, points_y, xmin, xmax, ymin, ymax))
 
-        return intersection_points
+            points_3d_ordred = []
+            if points_3d[0][points_x-1].point_distance(points_3d[0][points_x]) < points_3d[0][points_x-1].point_distance(points_3d[1][0]):
+                for i in range(0,len(faces)):
+                    points_3d_ordred.extend(points_3d[i])    
+            else:
+                for j in range(0,len(points_3d[0]),points_x):
+                    for i in range(0,len(faces)):
+                        points_3d_ordred.extend(points_3d[i][j:j+points_x])
+                            
+        return cls.points_fitting_into_bspline_surface(points_3d_ordred,points_x,points_x*len(faces),degree_u,degree_v)    
 
 
 class BezierSurface3D(BSplineSurface3D):
