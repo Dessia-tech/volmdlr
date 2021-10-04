@@ -579,6 +579,23 @@ class Point2D(Vector2D):
 
 
     @classmethod
+    def grid2d(cls, points_x, points_y, xmin, xmax, ymin, ymax):
+        '''
+        generate 2d grid points with (xmin,xmax,points_x) limits and number of points in x, (ymin,ymax,points_y) limits and number of points in y
+        '''
+        
+        x = npy.linspace(xmin, xmax, points_x) 
+        y = npy.linspace(ymin, ymax, points_y) 
+        points_2d = [] 
+        
+        for yi in y:
+            for xi in x:
+                points_2d.append(cls(xi, yi)) 
+                
+        return points_2d
+
+    
+    @classmethod
     def line_intersection(cls, line1, line2, curvilinear_abscissa=False):
 #        point11, point12 = line1
 #        point21, point22 = line2
