@@ -1483,33 +1483,55 @@ class VolumeModel(dc.DessiaObject):
         return babylon_data
 
     @classmethod
-    def babylonjs_from_babylon_data(cls, babylon_data, page_name='Volmdlr model',
-                                    use_cdn=True, debug=False):
-
+    def babylonjs_script(cls, babylon_data, use_cdn=True,
+                                    debug=False):
         if use_cdn:
-            script = volmdlr.templates.babylon_unpacker_cdn_header#.substitute(name=page_name)
+            script = volmdlr.templates.babylon_unpacker_cdn_header  # .substitute(name=page_name)
         else:
-            script = volmdlr.templates.babylon_unpacker_embedded_header#.substitute(name=page_name)
+            script = volmdlr.templates.babylon_unpacker_embedded_header  # .substitute(name=page_name)
 
         script += volmdlr.templates.babylon_unpacker_body_template.substitute(
-                        babylon_data=babylon_data)
+            babylon_data=babylon_data)
+        return script
 
+    def babylonjs(self, page_name=None, use_cdn=True, debug=False):
+        babylon_data = self.babylon_data()
+        script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
+                                                  debug=debug)
         if page_name is None:
             with tempfile.NamedTemporaryFile(suffix=".html",
                                              delete=False) as file:
                 file.write(bytes(script, 'utf8'))
             page_name = file.name
         else:
-            page_name += '.html'
+            if not page_name.endswith('.html'):
+                page_name += '.html'
             with open(page_name, 'w') as file:
                 file.write(script)
-
+                            
         webbrowser.open('file://' + os.path.realpath(page_name))
 
-    def babylonjs(self, page_name=None, use_cdn=True, debug=False):
+        return page_name
+
+
+    def save_babylonjs_to_file(self, filename: str = None,
+                               use_cdn=True, debug=False):
         babylon_data = self.babylon_data()
-        self.babylonjs_from_babylon_data(babylon_data, page_name=page_name,
-                                         use_cdn=use_cdn, debug=debug)
+        script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
+                                                  debug=debug)
+        if filename is None:
+            with tempfile.NamedTemporaryFile(suffix=".html",
+                                             delete=False) as file:
+                file.write(bytes(script, 'utf8'))
+                return file.name
+            
+        if not filename.endswith('.html'):
+            filename += '.html'
+            
+            with open(filename, 'w') as file:
+                file.write(script)
+            return filename
+
 
     def to_stl(self, filepath):
         mesh = self.primitives[0].triangulation()
