@@ -516,15 +516,21 @@ class Primitive3D(CompositePrimitive):
          
         points = []
         if hasattr(self, 'primitives'):
-            points = [[self.primitives[0].start.x, self.primitives[0].start.y, self.primitives[0].start.z], [self.primitives[0].end.x, self.primitives[0].end.y, self.primitives[0].end.z]]
-            points += [[line.end.x,line.end.y,line.end.z] for line in self.primitives[1:]]
+            points = [[self.primitives[0].start.x,
+                       self.primitives[0].start.y,
+                       self.primitives[0].start.z],
+                      [self.primitives[0].end.x,
+                       self.primitives[0].end.y,
+                       self.primitives[0].end.z]]
+            points += [[line.end.x, line.end.y, line.end.z]
+                       for line in self.primitives[1:]]
         elif hasattr(self, 'curve'):
             points = self.curve.evalpts
         return points
 
-    
     def babylon_lines(self, points=None):
-        points = self.babylon_points()        
+        if points is None:
+            points = self.babylon_points()
         babylon_lines = {'points': points}
         babylon_lines.update(self.babylon_param())
         return [babylon_lines]
@@ -533,6 +539,7 @@ class Primitive3D(CompositePrimitive):
         points = self.babylon_points()
         babylon_curves = self.babylon_lines(points)[0]
         return babylon_curves
+
 
 class CompositePrimitive3D(Primitive3D):
     _standalone_in_db = True
@@ -1494,7 +1501,7 @@ class VolumeModel(dc.DessiaObject):
             page_name = file.name
         else:
             page_name += '.html'
-            with open(page_name, 'w')  as file:
+            with open(page_name, 'w') as file:
                 file.write(script)
 
         webbrowser.open('file://' + os.path.realpath(page_name))

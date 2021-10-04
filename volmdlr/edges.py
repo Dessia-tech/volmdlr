@@ -2582,8 +2582,15 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         curve_points = curve.evalpts
 
         self.curve = curve
+        self.bounding_box = self._bounding_box()
         self.points = [volmdlr.Point3D(p[0], p[1], p[2]) for p in curve_points]
         Edge.__init__(self, start=self.points[0], end=self.points[-1])
+
+    def _bounding_box(self):
+        bbox = self.curve.bbox
+        return volmdlr.core.BoundingBox(bbox[0][0], bbox[1][0],
+                                        bbox[0][1], bbox[1][1],
+                                        bbox[0][2], bbox[1][2])
 
     def reverse(self):
         return self.__class__(degree=self.degree,
@@ -2672,6 +2679,7 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         end_norm_eval = 1
         max_count = 50
         count = 0
+        t_res = None
 
         while not found and count < max_count:
 
@@ -2685,9 +2693,13 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
                 if curve_point == point:
                     found = True
                     t_res = t
+
                     break
                 else:
                     target_distances.append(curve_point.point_distance(point))
+
+            if found:
+                break
 
             min_i = 0
             min_distance = target_distances[0]
@@ -2841,12 +2853,14 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             self.points = new_BSplineCurve3D.points
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
-        if not self.point_on_curve(point1)\
-                or not self.point_on_curve(point2):
-            raise ValueError('Point not on circle for trim method')
+        if (point1 == self.start and point2 == self.end) \
+                or (point1 == self.end and point2 == self.start):
+            return self
 
         norm_eval1 = self.norm_eval_at_point(point1, resolution=20)
         norm_eval2 = self.norm_eval_at_point(point2, resolution=20)
+        if norm_eval1 is None or norm_eval2 is None:
+            raise ValueError('Point not on BSplineCurve for trim method')
         return self.trim_between_evaluation(norm_eval1, norm_eval2)
 
     def trim_between_evaluation(self, norm_eval1: float, norm_eval2: float):
@@ -3036,6 +3050,18 @@ class Arc3D(Edge):
         self.interior = interior
         Edge.__init__(self, start=start, end=end, name=name)
         self.setup_arc(start, interior, end, name=name)
+        self.bounding_box = self._bounding_box()
+
+    def _bounding_box(self):
+        # TODO: implement exact calculation
+        points = self.polygon_points()
+        xmin = min([p.x for p in points])
+        xmax = max([p.x for p in points])
+        ymin = min([p.y for p in points])
+        ymax = max([p.y for p in points])
+        zmin = min([p.z for p in points])
+        zmax = max([p.z for p in points])
+        return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     @classmethod
     def from_angle(cls, start: volmdlr.Point3D, angle: float,

@@ -260,8 +260,10 @@ class Step:
 
         return F
 
-    def draw_graph(self):
-        graph = self.create_graph()
+    def draw_graph(self, graph=None):
+        if graph is None:
+            graph = self.create_graph()
+
         labels = {}
         for id_nb, function in self.functions.items():
             if id_nb in graph.nodes:
@@ -406,8 +408,11 @@ class Step:
                 shells = []
                 # frames = []
                 for arg in arguments[1]:
-                    # print(object_dict[int(arg[1:])])
                     if int(arg[1:]) in object_dict and \
+                            isinstance(object_dict[int(arg[1:])], list) and \
+                            len(object_dict[int(arg[1:])]) == 1:
+                        shells.append(*object_dict[int(arg[1:])])
+                    elif int(arg[1:]) in object_dict and \
                             isinstance(object_dict[int(arg[1:])],
                                        volmdlr.faces.OpenShell3D):
                         shells.append(object_dict[int(arg[1:])])
@@ -416,7 +421,14 @@ class Step:
                                        volmdlr.Frame3D):
                         # TODO: Is there something to read here ?
                         pass
-                        # frames.append(object_dict[int(arg[1:])])
+                    elif int(arg[1:]) in object_dict and \
+                            isinstance(object_dict[int(arg[1:])],
+                                       volmdlr.edges.Arc3D):
+                        shells.append(object_dict[int(arg[1:])])
+                    elif int(arg[1:]) in object_dict and \
+                            isinstance(object_dict[int(arg[1:])],
+                                       volmdlr.edges.BSplineCurve3D):
+                        shells.append(object_dict[int(arg[1:])])
                     else:
                         pass
                 volmdlr_object = shells
@@ -517,7 +529,10 @@ class Step:
 
         shells = []
         for node in shell_nodes_copy:
-            shells.append(object_dict[node])
+            if isinstance(object_dict[node], list):
+                shells.extend(object_dict[node])
+            else:
+                shells.append(object_dict[node])
 
         return volmdlr.core.VolumeModel(shells)
 
