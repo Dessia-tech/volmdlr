@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Oct  4 12:24:49 2021
 
-@author: masfaraud
 """
 
 import volmdlr as vm

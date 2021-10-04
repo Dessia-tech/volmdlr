@@ -13,8 +13,8 @@ untracked_modules = ['volmdlr/templates.py',
                      'volmdlr/core_compiled.py',
                      'volmdlr/mesh.py',
                      'models/__init__.py',
-                     'models/workflows/__init__.py',
-                     'models/workflows/core.py',
+                     'workflows/__init__.py',
+                     'workflows/core.py',
                      'volmdlr/cloud.py']
 
 with open('coverage.json', 'r') as file:
