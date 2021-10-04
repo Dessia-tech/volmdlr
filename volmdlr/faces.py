@@ -2690,7 +2690,7 @@ class BSplineSurface3D(Surface3D):
         return volmdlr.wires.Contour3D(edges)
         
     @classmethod
-    def points_fitting_into_bspline_surface(cls, points_3d,size_u,size_v,degree_u,degree_v):
+    def points_fitting_into_bspline_surface(cls, points_3d, size_u,size_v,degree_u,degree_v):
         '''
         Bspline Surface interpolation through 3d points
         
@@ -2828,18 +2828,26 @@ class BSplineSurface3D(Surface3D):
         # x_init = volmdlr.Point2D.grid2d(20, 20, 0, 1, 0, 1)
                 
         intersection_points = []
+        solutions = []
+        u, v =[],  []
         
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            # print(z.cost)
-            if z.cost<1e-10:
+            if z.cost<1e-29:
+            #     cost.append(z.cost)
+            # # print(z.cost)
+            # if z.cost<1e-20:
                 solution = z.x
-                intersection_points.append(volmdlr.Point3D(self.surface.evaluate_single((solution[0],solution[1]))[0],
-                                                           self.surface.evaluate_single((solution[0],solution[1]))[1],
-                                                           self.surface.evaluate_single((solution[0],solution[1]))[2]))
+                # intersection_points.append(volmdlr.Point3D(self.surface.evaluate_single((solution[0],solution[1]))[0],
+                #                                            self.surface.evaluate_single((solution[0],solution[1]))[1],
+                #                                            self.surface.evaluate_single((solution[0],solution[1]))[2]))
         # intersection_points.sort()
-
-        return intersection_points
+                u.append(solution[0])        
+                v.append(solution[1])  
+                # solutions.append(solution)
+        
+        return (u,v)
+        # return intersection_points
     
     def error_with_point3d(self, point3d):
         '''
@@ -2973,14 +2981,14 @@ class BSplineSurface3D(Surface3D):
 
             points_3d_ordred = []
             if points_3d[0][points_x-1].point_distance(points_3d[0][points_x]) < points_3d[0][points_x-1].point_distance(points_3d[1][0]):
-                for i in range(0,len(faces)):
+                for i in range(0,len(surfaces)):
                     points_3d_ordred.extend(points_3d[i])    
             else:
                 for j in range(0,len(points_3d[0]),points_x):
-                    for i in range(0,len(faces)):
+                    for i in range(0,len(surfaces)):
                         points_3d_ordred.extend(points_3d[i][j:j+points_x])
                             
-        return cls.points_fitting_into_bspline_surface(points_3d_ordred,points_x,points_x*len(faces),degree_u,degree_v)    
+        return cls.points_fitting_into_bspline_surface(points_3d_ordred,points_x,points_x*len(surfaces),degree_u,degree_v)    
 
 
 class BezierSurface3D(BSplineSurface3D):
