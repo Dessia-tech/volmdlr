@@ -86,77 +86,20 @@ class Edge(dc.DessiaObject):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
-        if object_dict[arguments[3]].__class__.__name__ == 'Line3D':
-            return LineSegment3D(object_dict[arguments[1]],
-                                 object_dict[arguments[2]], arguments[0][1:-1])
-
-        elif object_dict[arguments[3]].__class__.__name__ == 'Circle3D':
-            # We supposed that STEP file is reading on trigo way
-            circle = object_dict[arguments[3]]
-            p1 = object_dict[arguments[1]]
-            p2 = object_dict[arguments[2]]
-
-            if p1 == p2:
-                return FullArc3D(circle.frame.origin, p1, circle.frame.w)
-            else:
-                p1, p2 = p2, p1
-                circle.frame.normalize()
-                interior3d = volmdlr.core.clockwise_interior_from_circle3d(
-                    p1, p2, circle)
-                return volmdlr.edges.Arc3D(p1, interior3d, p2,
-                                           name=arguments[0][1:-1])
-
-        elif object_dict[arguments[3]].__class__ is volmdlr.wires.Ellipse3D:
-            majorax = object_dict[arguments[3]].major_axis
-            minorax = object_dict[arguments[3]].minor_axis
-            center = object_dict[arguments[3]].center
-            normal = object_dict[arguments[3]].normal
-            normal.normalize()
-            majordir = object_dict[arguments[3]].major_dir
-            majordir.normalize()
-            minordir = normal.cross(majordir)
-            minordir.normalize()
-            frame = volmdlr.Frame3D(center, majordir, minordir, normal)
-            p1 = object_dict[
-                arguments[1]]  # on part du principe que p1 suivant majordir
-            p2 = object_dict[arguments[2]]
-            # if p1 == p2:
-            #     angle = 5 * math.pi / 4
-            #     xtra = volmdlr.Point3D(majorax * math.cos(math.pi / 2),
-            #                            minorax * math.sin(math.pi / 2), 0)
-            #     extra = frame.old_coordinates(xtra)
-            # else:
-            #     extra = None
-            ## Positionnement des points dans leur frame
-            p1_new, p2_new = frame.new_coordinates(
-                p1), frame.new_coordinates(p2)
-            # Angle pour le p1
-            u1, u2 = p1_new.x / majorax, p1_new.y / minorax
-            theta1 = volmdlr.core.sin_cos_angle(u1, u2)
-            # Angle pour le p2
-            u3, u4 = p2_new.x / majorax, p2_new.y / minorax
-            theta2 = volmdlr.core.sin_cos_angle(u3, u4)
-
-            if theta1 > theta2:  # sens trigo
-                angle = math.pi + (theta1 + theta2) / 2
-            else:
-                angle = (theta1 + theta2) / 2
-
-            p_3 = volmdlr.Point3D(majorax * math.cos(angle), 
-                                  minorax * math.sin(angle), 0)
-            p3 = frame.old_coordinates(p_3)
-
-            arcellipse = ArcEllipse3D(p1, p3, p2, center, majordir, arguments[0][1:-1])
-
-            return arcellipse
-
-        elif object_dict[arguments[3]].__class__.__name__ == 'BSplineCurve3D':
-            # BSplineCurve3D à couper à gauche et à droite avec les points ci dessus ?
-            return object_dict[arguments[3]]
-
+        obj = object_dict[arguments[3]]
+        p1 = object_dict[arguments[1]]
+        p2 = object_dict[arguments[2]]
+        if obj.__class__.__name__ == 'Line3D':
+            return LineSegment3D(p1, p2, arguments[0][1:-1])
         else:
-            raise NotImplementedError(
-                'Unsupported: {}'.format(object_dict[arguments[3]]))
+            if hasattr(obj, 'trim'):
+                if obj.__class__.__name__ == 'Circle3D':
+                    p1, p2 = p2, p1
+                return obj.trim(p1, p2)
+
+            else:
+                raise NotImplementedError(
+                    'Unsupported: {}'.format(object_dict[arguments[3]]))
 
 
 class Line(dc.DessiaObject):
