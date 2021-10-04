@@ -15,9 +15,9 @@ import volmdlr.wires
 import volmdlr.faces
 import plot_data.graph
 
-import webbrowser
-from jinja2 import Environment, PackageLoader, select_autoescape
-import os
+# import webbrowser
+# from jinja2 import Environment, PackageLoader, select_autoescape
+# import os
 
 
 def step_split_arguments(function_arg):
@@ -229,34 +229,34 @@ class Step:
         #     nx.draw_networkx_labels(F, pos, labels)
         #     # ------------------------------------
         #
-        if html:
-
-            env = Environment(
-                loader=PackageLoader('powertransmission', 'templates'),
-                autoescape=select_autoescape(['html', 'xml']))
-            template = env.get_template('graph_visJS.html')
-
-            nodes = []
-            edges = []
-            for label in list(labels.values()):
-                nodes.append({'name': label, 'shape': 'circular'})
-
-            for edge in G.edges:
-                edge_dict = {'inode1': int(edge[0]) - 1,
-                             'inode2': int(edge[1]) - 1}
-                edges.append(edge_dict)
-
-            options = {}
-            s = template.render(
-                name=self.stepfile,
-                nodes=nodes,
-                edges=edges,
-                options=options)
-
-            with open('graph_visJS.html', 'wb') as file:
-                file.write(s.encode('utf-8'))
-
-            webbrowser.open('file://' + os.path.realpath('graph_visJS.html'))
+        # if html:
+        #
+        #     env = Environment(
+        #         loader=PackageLoader('powertransmission', 'templates'),
+        #         autoescape=select_autoescape(['html', 'xml']))
+        #     template = env.get_template('graph_visJS.html')
+        #
+        #     nodes = []
+        #     edges = []
+        #     for label in list(labels.values()):
+        #         nodes.append({'name': label, 'shape': 'circular'})
+        #
+        #     for edge in G.edges:
+        #         edge_dict = {'inode1': int(edge[0]) - 1,
+        #                      'inode2': int(edge[1]) - 1}
+        #         edges.append(edge_dict)
+        #
+        #     options = {}
+        #     s = template.render(
+        #         name=self.stepfile,
+        #         nodes=nodes,
+        #         edges=edges,
+        #         options=options)
+        #
+        #     with open('graph_visJS.html', 'wb') as file:
+        #         file.write(s.encode('utf-8'))
+        #
+        #     webbrowser.open('file://' + os.path.realpath('graph_visJS.html'))
 
         return F
 
