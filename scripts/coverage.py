@@ -31,9 +31,9 @@ assert d['totals']['percent_covered'] > MIN_MODULE_COVERAGE
 
 for file_name, data in d['files'].items():
     print(file_name, data['summary']['percent_covered'], '%')
-    print('/'.join(file_name.split('/')[-2:])) 
+    # print('/'.join(file_name.split('/')[-2:])) 
     if '/'.join(file_name.split('/')[-2:]) in untracked_modules:
         print(file_name, '-> in untrack list')
     else:
-        print('Testing if {} is above {}'.format(file_name, MIN_FILE_COVERAGE))
+        # print('Testing if {} is above {}'.format(file_name, MIN_FILE_COVERAGE))
         assert(data['summary']['percent_covered']) > MIN_FILE_COVERAGE
