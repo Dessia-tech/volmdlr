@@ -488,8 +488,13 @@ class Contour:
     
         edges_index=[]
         for edge1, edge2 in itertools.product(self.primitives,contour.primitives):
-            if ((edge1.start == edge2.start and edge1.end == edge2.end) or (edge1.start == edge2.end and edge2.start == edge1.end)):
-    
+            if ((edge1.start == edge2.start and edge1.end == edge2.end) 
+                or (edge1.start == edge2.end and edge2.start == edge1.end)
+                or (((edge1.start).point_distance(edge2.start) < 1e-4) 
+                    and ((edge1.end).point_distance(edge2.end) < 1e-4))
+                or (((edge1.start).point_distance(edge2.end) < 1e-4) 
+                    and ((edge1.end).point_distance(edge2.start) < 1e-4))):
+                   
                 edges_index.append((self.primitives.index(edge1),contour.primitives.index(edge2)))
         
         return edges_index
@@ -516,17 +521,29 @@ class Contour:
         for j in range(0,len(contours)):
             for i in range(0,len(contours[j].primitives)):
                 if i not in shared_edges_index_by_contour[j]:
-                    merged_primitives.append(contours[j].primitives[i]) 
+                    merged_primitives.append(contours[j].primitives[i])
         
         contour_int = merged_primitives[:]
+        start, end = [], []
+        for primitive in contour_int:
+            start.append(primitive.start)
+            end.append(primitive.end)
+            
         merged_primitives_order = [contour_int[0]]
-        while len(merged_primitives_order)<len(contour_int):
-            for n in range(0,len(contour_int)):
-                if contour_int[n].start == merged_primitives_order[-1].end:
-                    merged_primitives_order.append(contour_int[n])   
-                    
-        return merged_primitives_order
+        for i in range(0,len(contour_int)):
+            # i=i+1
+            # merged_primitives_order.append(contour_int[start.index(merged_primitives_order[i].end)])
+            distances=[]
+            for j in range(0,len(start)):
+                distances.append((merged_primitives_order[i].end).point_distance(start[j]))
+            
+            merged_primitives_order.append(contour_int[distances.index(min(distances))])
 
+            # merged_primitives_order[i].plot(ax=ax, color='g')
+            if len(merged_primitives_order) == merged_primitives:
+                break
+        
+        return merged_primitives_order
     
     @classmethod
     def contours_from_edges(cls, edges):
@@ -937,7 +954,8 @@ class Contour2D(Contour, Wire2D):
         for p1, p2 in points:
             new_primitives.append(volmdlr.edges.LineSegment2D(p1, p2))
         self.primitives = new_primitives
-
+        
+        return self
     
 
     # @classmethod
@@ -1429,7 +1447,8 @@ class Contour2D(Contour, Wire2D):
         
 
     def merge_contours(self, contour2d):
-        return  volmdlr.wires.Contour2D(self.merged_contour_primitives(contour2d))     
+        
+        return volmdlr.wires.Contour2D(self.merged_contour_primitives(contour2d)) 
         
     
 class ClosedPolygon:
@@ -2613,23 +2632,23 @@ class Contour3D(Contour, Wire3D):
                 return cls(raw_edges, name=name)
 
         # Making things right for first 2 primitives
-        if raw_edges[0].end == raw_edges[1].start:
-            edges = [raw_edges[0], raw_edges[1]]
-        elif raw_edges[0].start == raw_edges[1].start:
-            edges = [raw_edges[0].reverse(), raw_edges[1]]
-        elif raw_edges[0].end == raw_edges[1].end:
+        if (raw_edges[0].end).point_distance(raw_edges[1].start) < 2e-5: 
+            edges = [raw_edges[0], raw_edges[1]]            
+        elif (raw_edges[0].start).point_distance(raw_edges[1].start) < 2e-5:
+            edges = [raw_edges[0].reverse(), raw_edges[1]]    
+        elif (raw_edges[0].end).point_distance(raw_edges[1].end) < 2e-5:
             edges = [raw_edges[0], raw_edges[1].reverse()]
-        elif raw_edges[0].start == raw_edges[1].end:
-            edges = [raw_edges[0].reverse(), raw_edges[1].reverse()]
+        elif (raw_edges[0].start).point_distance(raw_edges[1].end) < 2e-5:
+            edges = [raw_edges[0].reverse(), raw_edges[1].reverse()]  
         else:
             raise NotImplementedError(
                 'First 2 edges of contour not follwing each other')
 
         last_edge = edges[-1]
         for raw_edge in raw_edges[2:]:
-            if raw_edge.start == last_edge.end:
+            if (raw_edge.start).point_distance(last_edge.end) < 2e-5: 
                 last_edge = raw_edge
-            elif raw_edge.end == last_edge.end:
+            elif (raw_edge.end).point_distance(last_edge.end) < 2e-5:
                 last_edge = raw_edge.reverse()
             else:
                 ax = last_edge.plot(color='b')
@@ -2710,6 +2729,8 @@ class Contour3D(Contour, Wire3D):
         for p1, p2 in points:
             new_primitives.append(volmdlr.edges.LineSegment3D(p1, p2))
         self.primitives = new_primitives
+        
+        return self
         
     def point_over_contour(self, point):
         belongs = False
@@ -2809,7 +2830,8 @@ class Contour3D(Contour, Wire3D):
         return None
     
     def merge_contours(self, contour3d):
-        return  volmdlr.wires.Contour3D(self.merged_contour_primitives(contour3d))     
+       
+        return volmdlr.wires.Contour3D(self.merged_contour_primitives(contour3d))  
 
 
 class Circle3D(Contour3D):
