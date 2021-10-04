@@ -1496,7 +1496,16 @@ class VolumeModel(dc.DessiaObject):
                                              delete=False) as file:
                 file.write(bytes(script, 'utf8'))
             page_name = file.name
+        else:
+            if not page_name.endswith('.html'):
+                page_name += '.html'
+            with open(page_name, 'w') as file:
+                file.write(script)
+                            
         webbrowser.open('file://' + os.path.realpath(page_name))
+
+        return page_name
+
 
     def save_babylonjs_to_file(self, filename: str = None,
                                use_cdn=True, debug=False):
