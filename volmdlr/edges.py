@@ -2587,12 +2587,16 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
 
         return [(ts[i], distances[i]) for i in range(resolution+1)]
 
-    def point_at_abscissa(self, curvilinear_abscissa, resolution=100):
+    def point_at_abscissa(self, curvilinear_abscissa, resolution=1000):
         """
         Returns the vm.Point3D at a given curvilinear abscissa.
         This is an approximation. Resolution parameter can increased
         for more accurate result.
         """
+        if curvilinear_abscissa == 0:
+            return self.start
+        elif curvilinear_abscissa == self.length():
+            return self.end
         lut = self.look_up_table(resolution=resolution)
         if 0 < curvilinear_abscissa < self.length():
             for i, (t, dist) in enumerate(lut):
@@ -2605,7 +2609,7 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
                         *self.curve.evaluate_single((t1+t2)/2))
         else:
             raise ValueError('Curvilinear abscissa is bigger than length,'
-                             'or equal to 0, or negative')
+                             ' or negative')
 
     # def point_at_abscissa(self, curvilinear_abscissa):
     #     # TODO: change name to evaluate_[something] because if C(t) is the
@@ -2671,13 +2675,13 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
                     min_i = i
 
             if 0 < min_i < len(target_distances):
-                start_norm_eva = lut[min_i-1][0]
-                end_norm_eval = lut[min_i+1][0]
+                start_norm_eva = ts[min_i-1]
+                end_norm_eval = ts[min_i+1]
             elif min_i == 0:
                 start_norm_eva = 0
-                end_norm_eval = lut[1][0]
+                end_norm_eval = ts[1]
             else:
-                start_norm_eva = lut[-2][0]
+                start_norm_eva = ts[-2]
                 end_norm_eval = 1
 
             count += 1
@@ -2824,25 +2828,48 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
                 or (point1 == self.end and point2 == self.start):
             return self
 
+        elif point1 == self.start and point2 != self.end:
+            norm_eval2 = self.norm_eval_at_point(point2, resolution=20)
+            return self.cut_after(norm_eval2)
+
+        elif point2 == self.start and point1 != self.end:
+            norm_eval1 = self.norm_eval_at_point(point1, resolution=20)
+            return self.cut_after(norm_eval1)
+
+        elif point1 != self.start and point2 == self.end:
+            norm_eval1 = self.norm_eval_at_point(point1, resolution=20)
+            return self.cut_before(norm_eval1)
+
+        elif point2 != self.start and point1 == self.end:
+            norm_eval2 = self.norm_eval_at_point(point2, resolution=20)
+            return self.cut_before(norm_eval2)
+
         norm_eval1 = self.norm_eval_at_point(point1, resolution=20)
         norm_eval2 = self.norm_eval_at_point(point2, resolution=20)
         if norm_eval1 is None or norm_eval2 is None:
             raise ValueError('Point not on BSplineCurve for trim method')
-        return self.trim_between_evaluation(norm_eval1, norm_eval2)
+        return self.trim_between_evaluations(norm_eval1, norm_eval2)
 
-    def trim_between_evaluation(self, norm_eval1: float, norm_eval2: float):
+    # def trim_between_evaluations(self, norm_eval1: float, norm_eval2: float):
+    #     norm_eval1, norm_eval2 = min([norm_eval1, norm_eval2]), \
+    #         max([norm_eval1, norm_eval2])
+    #     curve = self.cut_before(norm_eval1)
+    #     final_curve = curve.cut_after(norm_eval2)
+    #     return final_curve
+
+    def trim_between_evaluations(self, norm_eval1: float, norm_eval2: float):
         norm_eval1, norm_eval2 = min([norm_eval1, norm_eval2]), \
                                max([norm_eval1, norm_eval2])
 
         # Cut before
-        ratio1 = norm_eval1 / self.length()
-        bspline_curve = self.insert_knot(ratio1, num=self.degree)
+        # ratio1 = norm_eval1 / self.length()
+        bspline_curve = self.insert_knot(norm_eval1, num=self.degree)
         if bspline_curve.weights is not None:
             raise NotImplementedError
 
         # Cut after
-        ratio2 = norm_eval2 / self.length()
-        bspline_curve = bspline_curve.insert_knot(ratio2, num=self.degree)
+        # ratio2 = norm_eval2 / self.length()
+        bspline_curve = bspline_curve.insert_knot(norm_eval2, num=self.degree)
         if bspline_curve.weights is not None:
             raise NotImplementedError
 
@@ -2863,59 +2890,58 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
                               name=bspline_curve.name)
 
     def cut_before(self, norm_eval: float):
-        # ratio = abscissa / self.length()
-        bspline_curve = self.insert_knot(norm_eval, num=self.degree)
-        if bspline_curve.weights is not None:
-            raise NotImplementedError
-
-        new_ctrlpts = bspline_curve.control_points[bspline_curve.degree:]
-        new_multiplicities = bspline_curve.knot_multiplicities[1:]
-        new_multiplicities[0] += 1
-        new_knots = bspline_curve.knots[1:]
-        new_knots = standardize_knot_vector(new_knots)
-        return BSplineCurve3D(degree=bspline_curve.degree,
-                              control_points=new_ctrlpts,
-                              knot_multiplicities=new_multiplicities,
-                              knots=new_knots,
-                              weights=None,
-                              periodic=bspline_curve.periodic,
-                              name=bspline_curve.name)
+        curves = operations.split_curve(self.curve, norm_eval)
+        return self.from_geomdl_curve(curves[1])
 
     def cut_after(self, norm_eval: float):
-        # ratio = abscissa / self.length()
-        bspline_curve = self.insert_knot(norm_eval, num=self.degree)
-        if bspline_curve.weights is not None:
-            raise NotImplementedError
+        curves = operations.split_curve(self.curve, norm_eval)
+        return self.from_geomdl_curve(curves[0])
 
-        new_ctrlpts = bspline_curve.control_points[:-bspline_curve.degree]
-        new_multiplicities = bspline_curve.knot_multiplicities[:-1]
-        new_multiplicities[-1] += 1
-        new_knots = bspline_curve.knots[:-1]
-        new_knots = standardize_knot_vector(new_knots)
-        return BSplineCurve3D(degree=bspline_curve.degree,
-                              control_points=new_ctrlpts,
-                              knot_multiplicities=new_multiplicities,
-                              knots=new_knots,
-                              weights=None,
-                              periodic=bspline_curve.periodic,
-                              name=bspline_curve.name)
+    # def cut_before(self, norm_eval: float):
+    #     # ratio = abscissa / self.length()
+    #     bspline_curve = self.insert_knot(norm_eval, num=self.degree)
+    #     if bspline_curve.weights is not None:
+    #         raise NotImplementedError
+    #
+    #     new_ctrlpts = bspline_curve.control_points[bspline_curve.degree:]
+    #     new_multiplicities = bspline_curve.knot_multiplicities[1:]
+    #     new_multiplicities[0] += 1
+    #     new_knots = bspline_curve.knots[1:]
+    #     new_knots = standardize_knot_vector(new_knots)
+    #     return BSplineCurve3D(degree=bspline_curve.degree,
+    #                           control_points=new_ctrlpts,
+    #                           knot_multiplicities=new_multiplicities,
+    #                           knots=new_knots,
+    #                           weights=None,
+    #                           periodic=bspline_curve.periodic,
+    #                           name=bspline_curve.name)
+
+    # def cut_after(self, norm_eval: float):
+    #     # ratio = abscissa / self.length()
+    #     bspline_curve = self.insert_knot(norm_eval, num=self.degree)
+    #     if bspline_curve.weights is not None:
+    #         raise NotImplementedError
+    #
+    #     new_ctrlpts = bspline_curve.control_points[:-bspline_curve.degree]
+    #     new_multiplicities = bspline_curve.knot_multiplicities[:-1]
+    #     new_multiplicities[-1] += 1
+    #     new_knots = bspline_curve.knots[:-1]
+    #     new_knots = standardize_knot_vector(new_knots)
+    #     return BSplineCurve3D(degree=bspline_curve.degree,
+    #                           control_points=new_ctrlpts,
+    #                           knot_multiplicities=new_multiplicities,
+    #                           knots=new_knots,
+    #                           weights=None,
+    #                           periodic=bspline_curve.periodic,
+    #                           name=bspline_curve.name)
 
     def insert_knot(self, knot: float, num: int = 1):
-        curve_copy = self.curve.__copy__()
-        curve_copy.insert_knot(knot, num=num)
-        if curve_copy.weights is not None:
-            raise NotImplementedError
-        new_control_points = [volmdlr.Point3D(*point) for point
-                              in curve_copy.ctrlpts]
-        new_knots, new_multiplicities, _ = insert_knots_and_mutiplicity(
-            self.knots, self.knot_multiplicities, knot, num)
-        return BSplineCurve3D(degree=self.degree,
-                              control_points=new_control_points,
-                              knot_multiplicities=new_multiplicities,
-                              knots=new_knots,
-                              weights=None,
-                              periodic=self.periodic,
-                              name=self.name)
+        """
+        Returns a new BSplineCurve3D
+        """
+        curve_copy = self.curve.__deepcopy__({})
+        modified_curve = operations.insert_knot(curve_copy, [knot], num=[num])
+        return self.from_geomdl_curve(modified_curve)
 
     # Copy paste du LineSegment3D
     def plot(self, ax=None, edge_ends=False, color='k', alpha=1,
