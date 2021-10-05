@@ -598,7 +598,14 @@ class Surface3D(dc.DessiaObject):
                         # primitives[0].plot(ax=ax ,color='r', plot_points=True)
                         for p in primitives:
                             p.plot(ax=ax, color='r', plot_points=True)
-
+                        print('Surface 3D:', self)
+                        print('3D primitive in red:', primitive3d)
+                        print('Previous 3D primitive:', last_primitive3d)
+                        dist1 = primitive3d.start.point_distance(last_primitive3d.start)
+                        dist2 = primitive3d.start.point_distance(last_primitive3d.end)
+                        dist3 = primitive3d.end.point_distance(last_primitive3d.start)
+                        dist4 = primitive3d.end.point_distance(last_primitive3d.end)
+                        print('distances:', dist1, dist2, dist3, dist4)
                         raise ValueError(
                             'Primitives not following each other in contour:',
                             'delta={}, {}, {}, {}'.format(
@@ -1964,17 +1971,17 @@ class BSplineSurface3D(Surface3D):
         # raise RuntimeError(
         #     'No convergence in point3d to 2d of bspline surface')
         
-        # x = npy.linspace(0,1,5)
-        # x_init=[]
-        # for xi in x:
-        #     for yi in x:
-        #         x_init.append((xi,yi))
+        x = npy.linspace(0,1,10)
+        x_init=[]
+        for xi in x:
+            for yi in x:
+                x_init.append((xi,yi))
 
         cost=[]
         sol=[]
     
-        # for x0 in x_init: 
-        for x0 in [(0, 0), (0, 1), (1, 0), (1, 1), (0.5, 0.5)]:
+        for x0 in x_init:
+        # for x0 in [(0, 0), (0, 1), (1, 0), (1, 1), (0.5, 0.5)]:
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
             cost.append(z.cost)
             sol.append(z.x)
@@ -2567,7 +2574,7 @@ class BSplineSurface3D(Surface3D):
             
         
     def contour3d_to_2d_with_dimension(self, contour3d:volmdlr.wires.Contour3D, points_x, points_y): 
-        
+
         contour2d = self.contour3d_to_2d(contour3d)
         xmin = contour2d.bounding_rectangle()[0]
         xmax = contour2d.bounding_rectangle()[1]
