@@ -2613,14 +2613,6 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             raise ValueError('Curvilinear abscissa is bigger than length,'
                              ' or negative')
 
-    # def point_at_abscissa(self, curvilinear_abscissa):
-    #     # TODO: change name to evaluate_[something] because if C(t) is the
-    #     # TODO: spline parametric curve, the function is an evaluation of
-    #     # TODO: C(curvilinear_abscissa/length) and doesn't return the point
-    #     # TODO: at the given abscissa along the curve.
-    #     unit_abscissa = curvilinear_abscissa / self.length()
-    #     return volmdlr.Point3D(*self.curve.evaluate_single(unit_abscissa))
-
     def normal(self, position: float = 0.0):
         point, normal = operations.normal(self.curve, position, normalize=True)
         normal = volmdlr.Point3D(normal[0], normal[1], normal[2])
