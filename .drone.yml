@@ -4,12 +4,16 @@ type: docker
 name: default
 
 steps:
-- name: install, build doc run scripts
-  image: python:3.8-bullseye
+- name: clone lfs
+  image: alpine/git
   commands:
   - git fetch --tags
   - git lfs install
   - git lfs pull
+
+- name: install, build doc run scripts
+  image: python:3.8-bullseye
+  commands:
   - apt update && apt install -y libgl1 
   - pip install Cython sphinx sphinx_rtd_theme coverage
   - python setup.py install
