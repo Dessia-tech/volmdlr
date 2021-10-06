@@ -2634,6 +2634,12 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         return binormal
 
     def norm_eval_at_point(self, point: volmdlr.Point3D, resolution=20):
+        """
+        'norm_eval_at_point' is short for 'normalized_evaluation_at_point',
+         and search for the value of the normalized evaluation parameter t
+         (between 0 and 1) that would return the given point when the
+         BSplineCurve3D is evaluated at the t value.
+        """
         found = False
         start_norm_eva = 0
         end_norm_eval = 1
