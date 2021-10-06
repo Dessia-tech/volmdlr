@@ -8,6 +8,7 @@ steps:
   image: python:3.8-bullseye
   commands:
   - git fetch --tags
+  - git lfs pull
   - apt update && apt install -y libgl1 
   - pip install Cython sphinx sphinx_rtd_theme coverage
   - python setup.py install
