@@ -16,10 +16,9 @@ for step_file in [
                     'aircraft_engine.step'
                   ]:
     print('filename: ', step_file)
-    step = volmdlr.step.Step(step_file)
+    step = volmdlr.step.Step('step/'+step_file)
     model = step.to_volume_model()
     model.to_step(step_file+'_reexport')
-    print(model.primitives)
 
     model.babylonjs()
     

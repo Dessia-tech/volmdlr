@@ -13,7 +13,7 @@ scripts = [
             'primitives/block3d.py',
             'faces/triangle3d.py',
             'faces/union.py',
-            'step/read_steps.py'
+            'read_steps.py'
             ]
 
 #  'cyl_cyl.py', 'cyl_pf.py',
