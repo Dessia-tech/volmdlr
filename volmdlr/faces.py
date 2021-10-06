@@ -5403,7 +5403,7 @@ class ClosedShell3D(OpenShell3D):
                     if not points_inside:
                         ax1 = face_contour2d.plot()
                         print('bugging face, maybe area is too small. No points have been found inside face. See graph generated :', face_contour2d)
-                        face_intersecting_primitives2d = [contour.primitives for contour in list_cutting_contours]
+                        face_intersecting_primitives2d = [prim for contour in list_cutting_contours for prim in contour.primitives]
                         for prim in face_intersecting_primitives2d:
                             prim.plot(ax=ax1, color = 'r')
                             print((prim.start, prim.end))
