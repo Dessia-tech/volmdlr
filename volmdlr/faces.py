@@ -24,6 +24,7 @@ from itertools import product
 import random
 import geomdl
 import scipy.optimize as opt
+import time
 
 
 def knots_vector_inv(knots_vector):
@@ -598,8 +599,17 @@ class Surface3D(dc.DessiaObject):
                         # primitives[0].plot(ax=ax ,color='r', plot_points=True)
                         for p in primitives:
                             p.plot(ax=ax, color='r', plot_points=True)
+                        print('Surface 3D:', self)
+                        print('3D primitive in red:', primitive3d)
+                        print('Previous 3D primitive:', last_primitive3d)
+                        dist1 = primitive3d.start.point_distance(last_primitive3d.start)
+                        dist2 = primitive3d.start.point_distance(last_primitive3d.end)
+                        dist3 = primitive3d.end.point_distance(last_primitive3d.start)
+                        dist4 = primitive3d.end.point_distance(last_primitive3d.end)
+                        print('distances:', dist1, dist2, dist3, dist4)
                         raise ValueError(
-                            'Primitives not following each other in contour: delta={}, {}, {}, {}'.format(
+                            'Primitives not following each other in contour:',
+                            'delta={}, {}, {}, {}'.format(
                                 delta_x1, delta_x2, delta_y1, delta_y2))
 
                     # if not end_match and should_study_periodicity:
@@ -1884,121 +1894,42 @@ class BSplineSurface3D(Surface3D):
                 blending_mat[i][j] = self.basis_functions_v(v[i], self.degree_v, j)      
         return blending_mat    
 
-
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         x, y = point2d
         return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D):
-       
-        '''
-        P=[] #control points matrix 
-        P.append([self.control_points_matrix(0), self.control_points_matrix(1), self.control_points_matrix(2)])
-              
-        # def f(X):
-        #     F = npy.empty(3) 
-        #     F[0]=(((self.blending_vector_u(X[0])).dot(P[0][0])).dot((self.blending_vector_v(X[1])).transpose())) - point3d.x
-        #     F[1]=(((self.blending_vector_u(X[0])).dot(P[0][1])).dot((self.blending_vector_v(X[1])).transpose())) - point3d.y
-        #     F[2]=(((self.blending_vector_u(X[0])).dot(P[0][2])).dot((self.blending_vector_v(X[1])).transpose())) - point3d.z
-        #     return F
-        
-        def f(X):
-            F = npy.empty(3) 
-            F[0]=self.surface.evaluate_single((X[0],X[1]))[0]  - point3d.x
-            F[1]=self.surface.evaluate_single((X[0],X[1]))[1]  - point3d.y
-            F[2]=self.surface.evaluate_single((X[0],X[1]))[2]  - point3d.z
-            return F
-
-        
-       
-        # for x0 in [(0, 0), (0, 1), (0.5, 0.5), (1, 0), (1, 1)]:
-        # # for x0 in [(0.5, 0.5)]:
-
-        #     sol = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-        #     print(sol.cost)
-        #     if sol.cost < 1e-2:
-        #         # print(sol.cost)
-        #         return (volmdlr.Point2D(sol.x[0], sol.x[1]))
-        
-        x = npy.linspace(0,1,5)
-        x_init=[]
-        for xi in x:
-            for yi in x:
-                x_init.append((xi,yi))
-
-        cost=[]
-        sol=[]
-    
-        for x0 in [(0, 0), (0, 1), (0.5, 0.5), (1, 0), (1, 1)]:  #x_init: # 
-        # for x0 in [(0.5, 0.5)]:
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            cost.append(z.cost)
-            # print(cost)
-            sol.append(z.x)
-            
-        solution=sol[cost.index(min(cost))]
-            
-        return (volmdlr.Point2D(solution[0], solution[1]))
-
-            '''
-        #         # return sol.cost
-            # else:
-            #     return sol.cost
-        
-        # raise RuntimeError('No convergence in point3d to 2d of bspline surface')
-
-        # x, y, z = point3d
         def f(x):
-            return (point3d - self.point2d_to_3d(
-                volmdlr.Point2D(x[0], x[1]))).norm()
-
-        # for x0 in [(0, 0), (0, 1), (1, 0), (1, 1), (0.5, 0.5)]:
-        #     sol = scp.optimize.minimize(f, x0=x0,
-        #                                 bounds=[(0, 1), (0, 1)],
-        #                                 options={'eps': 1e-12})
-        #     if sol.fun < 1e-5:
-        #         return volmdlr.Point2D(*sol.x)
-
-        # raise RuntimeError(
-        #     'No convergence in point3d to 2d of bspline surface')
+            p3d = self.point2d_to_3d(volmdlr.Point2D(x[0], x[1]))
+            return point3d.point_distance(p3d)
+        x0 = (0.5, 0.5)
+        res = scp.optimize.minimize(f, x0=x0, bounds=[(0, 1), (0, 1)],
+                                    tol=1e-7)
+        return volmdlr.Point2D(res.x[0], res.x[1])
         
-        # x = npy.linspace(0,1,5)
-        # x_init=[]
-        # for xi in x:
-        #     for yi in x:
-        #         x_init.append((xi,yi))
-
-        cost=[]
-        sol=[]
-    
-        # for x0 in x_init: 
-        for x0 in [(0, 0), (0, 1), (1, 0), (1, 1), (0.5, 0.5)]:
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            cost.append(z.cost)
-            sol.append(z.x)
-            
-        solution=sol[cost.index(min(cost))]
-            
-        return (volmdlr.Point2D(solution[0], solution[1]))
-        
-        
-        
-
-
     def linesegment2d_to_3d(self, linesegment2d):
         # TODO: this is a non exact method!
-        l = linesegment2d.length()        
-        points = [self.point2d_to_3d(linesegment2d.point_at_abscissa(i * l/ 10.)) for i in range(11)]
-        return [vme.LineSegment3D(p1, p2) \
+        lth = linesegment2d.length()
+        points = [self.point2d_to_3d(
+            linesegment2d.point_at_abscissa(i * lth / 10.)) for i in range(11)]
+        return [vme.LineSegment3D(p1, p2)
                 for p1, p2 in zip(points[:-1], points[1:])]
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
-        # TODO: enhance this, it is a non exact  method!
-        l = bspline_curve3d.length()
-        points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * l)) \
-                  for i in range(11)]
-        return [vme.LineSegment2D(p1, p2) \
-                for p1, p2 in zip(points[:-1], points[1:])]
+        # TODO: enhance this, it is a non exact method!
+        lth = bspline_curve3d.length()
+        if lth > 1e-5:
+            points = [self.point3d_to_2d(
+                bspline_curve3d.point_at_abscissa(i / 10 * lth))
+                for i in range(11)]
+            return [vme.LineSegment2D(p1, p2)
+                    for p1, p2 in zip(points[:-1], points[1:])]
+        elif 1e-6 < lth <= 1e-5:
+            return [vme.LineSegment2D(
+                self.point3d_to_2d(bspline_curve3d.start),
+                self.point3d_to_2d(bspline_curve3d.end))]
+        else:
+            print('BSplineCruve3D skipped because it is too small')
 
     def arc3d_to_2d(self, arc3d):
         number_points = math.ceil(arc3d.angle * 7) + 1  # 7 points per radian
@@ -2557,7 +2488,7 @@ class BSplineSurface3D(Surface3D):
             
         
     def contour3d_to_2d_with_dimension(self, contour3d:volmdlr.wires.Contour3D, points_x, points_y): 
-        
+
         contour2d = self.contour3d_to_2d(contour3d)
         xmin = contour2d.bounding_rectangle()[0]
         xmax = contour2d.bounding_rectangle()[1]
@@ -3168,7 +3099,11 @@ class Face3D(volmdlr.core.Primitive3D):
                 surfaces.extend(surface.split_by_lines(lines_y))
 
         elif lines_x:
+            # try:
             surfaces = self.surface2d.split_by_lines(lines_x)
+            # except:
+            #     self.plot()
+            #     raise NotImplementedError
         elif lines_y:
             surfaces = self.surface2d.split_by_lines(lines_y)
         else:
