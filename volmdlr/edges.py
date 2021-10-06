@@ -2569,14 +2569,14 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         # return length
         return length_curve(self.curve)
 
-    def look_up_table(self, resolution=20, start_norm_eva: float = 0,
-                      end_norm_eval: float = 1):
+    def look_up_table(self, resolution=20, start_parameter: float = 0,
+                      end_parameter: float = 1):
         """
         Creates a table of equivalence between the parameter t (evaluation
         of the BSplineCruve) and the cumulative distance.
         """
         points3d = []
-        ts = [start_norm_eva + i/resolution * (end_norm_eval - start_norm_eva)
+        ts = [start_parameter + i/resolution * (end_parameter - start_parameter)
               for i in range(resolution+1)]
         points = self.curve.evaluate_list(ts)
         for pt in points:
@@ -2633,16 +2633,15 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         binormal = volmdlr.Point3D(binormal[0], binormal[1], binormal[2])
         return binormal
 
-    def norm_eval_at_point(self, point: volmdlr.Point3D, resolution=20):
+    def point3d_to_parameter(self, point: volmdlr.Point3D, resolution=20):
         """
-        'norm_eval_at_point' is short for 'normalized_evaluation_at_point',
-         and search for the value of the normalized evaluation parameter t
-         (between 0 and 1) that would return the given point when the
-         BSplineCurve3D is evaluated at the t value.
+        Search for the value of the normalized evaluation parameter t
+        (between 0 and 1) that would return the given point when the
+        BSplineCurve3D is evaluated at the t value.
         """
         found = False
         start_norm_eva = 0
-        end_norm_eval = 1
+        end_parameter = 1
         max_count = 50
         count = 0
         t_res = None
@@ -2650,7 +2649,7 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         while not found and count < max_count:
 
             ts = [start_norm_eva + i / resolution * (
-                        end_norm_eval - start_norm_eva)
+                        end_parameter - start_norm_eva)
                   for i in range(resolution + 1)]
 
             target_distances = []
@@ -2676,13 +2675,13 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
 
             if 0 < min_i < len(target_distances):
                 start_norm_eva = ts[min_i-1]
-                end_norm_eval = ts[min_i+1]
+                end_parameter = ts[min_i+1]
             elif min_i == 0:
                 start_norm_eva = 0
-                end_norm_eval = ts[1]
+                end_parameter = ts[1]
             else:
                 start_norm_eva = ts[-2]
-                end_norm_eval = 1
+                end_parameter = 1
 
             count += 1
 
@@ -2829,47 +2828,38 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             return self
 
         elif point1 == self.start and point2 != self.end:
-            norm_eval2 = self.norm_eval_at_point(point2, resolution=20)
-            return self.cut_after(norm_eval2)
+            parameter2 = self.point3d_to_parameter(point2, resolution=20)
+            return self.cut_after(parameter2)
 
         elif point2 == self.start and point1 != self.end:
-            norm_eval1 = self.norm_eval_at_point(point1, resolution=20)
-            return self.cut_after(norm_eval1)
+            parameter1 = self.point3d_to_parameter(point1, resolution=20)
+            return self.cut_after(parameter1)
 
         elif point1 != self.start and point2 == self.end:
-            norm_eval1 = self.norm_eval_at_point(point1, resolution=20)
-            return self.cut_before(norm_eval1)
+            parameter1 = self.point3d_to_parameter(point1, resolution=20)
+            return self.cut_before(parameter1)
 
         elif point2 != self.start and point1 == self.end:
-            norm_eval2 = self.norm_eval_at_point(point2, resolution=20)
-            return self.cut_before(norm_eval2)
+            parameter2 = self.point3d_to_parameter(point2, resolution=20)
+            return self.cut_before(parameter2)
 
-        norm_eval1 = self.norm_eval_at_point(point1, resolution=20)
-        norm_eval2 = self.norm_eval_at_point(point2, resolution=20)
-        if norm_eval1 is None or norm_eval2 is None:
+        parameter1 = self.point3d_to_parameter(point1, resolution=20)
+        parameter2 = self.point3d_to_parameter(point2, resolution=20)
+        if parameter1 is None or parameter2 is None:
             raise ValueError('Point not on BSplineCurve for trim method')
-        return self.trim_between_evaluations(norm_eval1, norm_eval2)
+        return self.trim_between_evaluations(parameter1, parameter2)
 
-    # def trim_between_evaluations(self, norm_eval1: float, norm_eval2: float):
-    #     norm_eval1, norm_eval2 = min([norm_eval1, norm_eval2]), \
-    #         max([norm_eval1, norm_eval2])
-    #     curve = self.cut_before(norm_eval1)
-    #     final_curve = curve.cut_after(norm_eval2)
-    #     return final_curve
-
-    def trim_between_evaluations(self, norm_eval1: float, norm_eval2: float):
-        norm_eval1, norm_eval2 = min([norm_eval1, norm_eval2]), \
-                               max([norm_eval1, norm_eval2])
+    def trim_between_evaluations(self, parameter1: float, parameter2: float):
+        parameter1, parameter2 = min([parameter1, parameter2]), \
+                               max([parameter1, parameter2])
 
         # Cut before
-        # ratio1 = norm_eval1 / self.length()
-        bspline_curve = self.insert_knot(norm_eval1, num=self.degree)
+        bspline_curve = self.insert_knot(parameter1, num=self.degree)
         if bspline_curve.weights is not None:
             raise NotImplementedError
 
         # Cut after
-        # ratio2 = norm_eval2 / self.length()
-        bspline_curve = bspline_curve.insert_knot(norm_eval2, num=self.degree)
+        bspline_curve = bspline_curve.insert_knot(parameter2, num=self.degree)
         if bspline_curve.weights is not None:
             raise NotImplementedError
 
@@ -2889,51 +2879,13 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
                               periodic=bspline_curve.periodic,
                               name=bspline_curve.name)
 
-    def cut_before(self, norm_eval: float):
-        curves = operations.split_curve(self.curve, norm_eval)
+    def cut_before(self, parameter: float):
+        curves = operations.split_curve(self.curve, parameter)
         return self.from_geomdl_curve(curves[1])
 
-    def cut_after(self, norm_eval: float):
-        curves = operations.split_curve(self.curve, norm_eval)
+    def cut_after(self, parameter: float):
+        curves = operations.split_curve(self.curve, parameter)
         return self.from_geomdl_curve(curves[0])
-
-    # def cut_before(self, norm_eval: float):
-    #     # ratio = abscissa / self.length()
-    #     bspline_curve = self.insert_knot(norm_eval, num=self.degree)
-    #     if bspline_curve.weights is not None:
-    #         raise NotImplementedError
-    #
-    #     new_ctrlpts = bspline_curve.control_points[bspline_curve.degree:]
-    #     new_multiplicities = bspline_curve.knot_multiplicities[1:]
-    #     new_multiplicities[0] += 1
-    #     new_knots = bspline_curve.knots[1:]
-    #     new_knots = standardize_knot_vector(new_knots)
-    #     return BSplineCurve3D(degree=bspline_curve.degree,
-    #                           control_points=new_ctrlpts,
-    #                           knot_multiplicities=new_multiplicities,
-    #                           knots=new_knots,
-    #                           weights=None,
-    #                           periodic=bspline_curve.periodic,
-    #                           name=bspline_curve.name)
-
-    # def cut_after(self, norm_eval: float):
-    #     # ratio = abscissa / self.length()
-    #     bspline_curve = self.insert_knot(norm_eval, num=self.degree)
-    #     if bspline_curve.weights is not None:
-    #         raise NotImplementedError
-    #
-    #     new_ctrlpts = bspline_curve.control_points[:-bspline_curve.degree]
-    #     new_multiplicities = bspline_curve.knot_multiplicities[:-1]
-    #     new_multiplicities[-1] += 1
-    #     new_knots = bspline_curve.knots[:-1]
-    #     new_knots = standardize_knot_vector(new_knots)
-    #     return BSplineCurve3D(degree=bspline_curve.degree,
-    #                           control_points=new_ctrlpts,
-    #                           knot_multiplicities=new_multiplicities,
-    #                           knots=new_knots,
-    #                           weights=None,
-    #                           periodic=bspline_curve.periodic,
-    #                           name=bspline_curve.name)
 
     def insert_knot(self, knot: float, num: int = 1):
         """
