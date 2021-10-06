@@ -24,6 +24,7 @@ from itertools import product
 import random
 import geomdl
 import scipy.optimize as opt
+import time
 
 
 def knots_vector_inv(knots_vector):
@@ -1893,106 +1894,19 @@ class BSplineSurface3D(Surface3D):
                 blending_mat[i][j] = self.basis_functions_v(v[i], self.degree_v, j)      
         return blending_mat    
 
-
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         x, y = point2d
         return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D):
-       
-        '''
-        P=[] #control points matrix 
-        P.append([self.control_points_matrix(0), self.control_points_matrix(1), self.control_points_matrix(2)])
-              
-        # def f(X):
-        #     F = npy.empty(3) 
-        #     F[0]=(((self.blending_vector_u(X[0])).dot(P[0][0])).dot((self.blending_vector_v(X[1])).transpose())) - point3d.x
-        #     F[1]=(((self.blending_vector_u(X[0])).dot(P[0][1])).dot((self.blending_vector_v(X[1])).transpose())) - point3d.y
-        #     F[2]=(((self.blending_vector_u(X[0])).dot(P[0][2])).dot((self.blending_vector_v(X[1])).transpose())) - point3d.z
-        #     return F
-        
-        def f(X):
-            F = npy.empty(3) 
-            F[0]=self.surface.evaluate_single((X[0],X[1]))[0]  - point3d.x
-            F[1]=self.surface.evaluate_single((X[0],X[1]))[1]  - point3d.y
-            F[2]=self.surface.evaluate_single((X[0],X[1]))[2]  - point3d.z
-            return F
-
-        
-       
-        # for x0 in [(0, 0), (0, 1), (0.5, 0.5), (1, 0), (1, 1)]:
-        # # for x0 in [(0.5, 0.5)]:
-
-        #     sol = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-        #     print(sol.cost)
-        #     if sol.cost < 1e-2:
-        #         # print(sol.cost)
-        #         return (volmdlr.Point2D(sol.x[0], sol.x[1]))
-        
-        x = npy.linspace(0,1,5)
-        x_init=[]
-        for xi in x:
-            for yi in x:
-                x_init.append((xi,yi))
-
-        cost=[]
-        sol=[]
-    
-        for x0 in [(0, 0), (0, 1), (0.5, 0.5), (1, 0), (1, 1)]:  #x_init: # 
-        # for x0 in [(0.5, 0.5)]:
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            cost.append(z.cost)
-            # print(cost)
-            sol.append(z.x)
-            
-        solution=sol[cost.index(min(cost))]
-            
-        return (volmdlr.Point2D(solution[0], solution[1]))
-
-            '''
-        #         # return sol.cost
-            # else:
-            #     return sol.cost
-        
-        # raise RuntimeError('No convergence in point3d to 2d of bspline surface')
-
-        # x, y, z = point3d
         def f(x):
-            return (point3d - self.point2d_to_3d(
-                volmdlr.Point2D(x[0], x[1]))).norm()
-
-        # for x0 in [(0, 0), (0, 1), (1, 0), (1, 1), (0.5, 0.5)]:
-        #     sol = scp.optimize.minimize(f, x0=x0,
-        #                                 bounds=[(0, 1), (0, 1)],
-        #                                 options={'eps': 1e-12})
-        #     if sol.fun < 1e-5:
-        #         return volmdlr.Point2D(*sol.x)
-
-        # raise RuntimeError(
-        #     'No convergence in point3d to 2d of bspline surface')
+            p3d = self.point2d_to_3d(volmdlr.Point2D(x[0], x[1]))
+            return point3d.point_distance(p3d)
+        x0 = (0.5, 0.5)
+        res = scp.optimize.minimize(f, x0=x0, bounds=[(0, 1), (0, 1)],
+                                    tol=1e-7)
+        return volmdlr.Point2D(res.x[0], res.x[1])
         
-        x = npy.linspace(0,1,10)
-        x_init=[]
-        for xi in x:
-            for yi in x:
-                x_init.append((xi,yi))
-
-        cost=[]
-        sol=[]
-    
-        for x0 in x_init:
-        # for x0 in [(0, 0), (0, 1), (1, 0), (1, 1), (0.5, 0.5)]:
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            cost.append(z.cost)
-            sol.append(z.x)
-            
-        solution=sol[cost.index(min(cost))]
-            
-        return (volmdlr.Point2D(solution[0], solution[1]))
-        
-        
-        
-
     def linesegment2d_to_3d(self, linesegment2d):
         # TODO: this is a non exact method!
         lth = linesegment2d.length()

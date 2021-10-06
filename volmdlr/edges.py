@@ -1756,17 +1756,17 @@ class Line3D(Line):
     def rotation(self, center, axis, angle, copy=True):
         if copy:
             return Line3D(*[p.rotation(center, axis, angle, copy=True) for p in
-                            self.points])
+                            [self.point1, self.point2]])
         else:
-            for p in self.points:
+            for p in [self.point1, self.point2]:
                 p.rotation(center, axis, angle, copy=False)
 
     def translation(self, offset, copy=True):
         if copy:
-            return Line3D(
-                *[p.translation(offset, copy=True) for p in self.points])
+            return Line3D(*[p.translation(offset, copy=True) for p in
+                            [self.point1, self.point2]])
         else:
-            for p in self.points:
+            for p in [self.point1, self.point2]:
                 p.translation(offset, copy=False)
 
     def frame_mapping(self, frame, side, copy=True):
@@ -1775,18 +1775,20 @@ class Line3D(Line):
         """
         if side == 'old':
             if copy:
-                return Line3D(*[frame.old_coordinates(p) for p in self.points])
+                return Line3D(*[frame.old_coordinates(p) for p in
+                                [self.point1, self.point2]])
             else:
-                for p in self.points:
-                    self.points = [frame.old_coordinates(p) for p in
-                                   self.points]
+                self.point1 = frame.old_coordinates(self.point1)
+                self.point2 = frame.old_coordinates(self.point2)
+                self.bounding_box = self._bounding_box()
         if side == 'new':
             if copy:
-                return Line3D(*[frame.new_coordinates(p) for p in self.points])
+                return Line3D(*[frame.new_coordinates(p) for p in
+                                [self.point1, self.point2]])
             else:
-                for p in self.points:
-                    self.points = [frame.new_coordinates(p) for p in
-                                   self.points]
+                self.point1 = frame.new_coordinates(self.point1)
+                self.point2 = frame.new_coordinates(self.point2)
+                self.bounding_box = self._bounding_box()
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
         if not self.point_belongs(point1) or not self.point_belongs(point2):
