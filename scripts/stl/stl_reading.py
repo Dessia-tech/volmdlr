@@ -52,7 +52,10 @@ for stl_file in [
     pointcloud3d = volmdlr.cloud.PointCloud3D(list_points)
     # polygons2d = pointcloud3d.to_shell()
     # pointcloud3d.plot()
-    shells.append(pointcloud3d.to_shell(resolution=15))
+    shell = pointcloud3d.to_shell(resolution=15)
+    shell.alpha = 0.6
+    shell.color = (1, 0.1, 0.1)
+    shells.append(shell)
 
 
 # volum = volmdlr.core.VolumeModel(shells)
