@@ -1282,7 +1282,7 @@ class ToroidalSurface3D(Surface3D):
             .format(current_id, self.name, frame_id,
                     round(1000 * self.R, 3),
                     round(1000 * self.r, 3))
-        return content, current_id
+        return content, [current_id]
 
     def frame_mapping(self, frame, side, copy=True):
         basis = frame.Basis()
