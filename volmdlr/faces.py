@@ -1282,7 +1282,7 @@ class ToroidalSurface3D(Surface3D):
             .format(current_id, self.name, frame_id,
                     round(1000 * self.R, 3),
                     round(1000 * self.r, 3))
-        return content, [current_id]
+        return content, current_id
 
     def frame_mapping(self, frame, side, copy=True):
         basis = frame.Basis()
@@ -3057,7 +3057,6 @@ class Face3D(volmdlr.core.Primitive3D):
             return self.to_step_without_splitting(current_id)
 
     def to_step_without_splitting(self, current_id):
-        
         content, surface3d_id = self.surface3d.to_step(current_id)
         current_id = surface3d_id + 1
 
