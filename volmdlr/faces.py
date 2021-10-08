@@ -2598,7 +2598,7 @@ class BSplineSurface3D(Surface3D):
            
         return volmdlr.Point2D(point2d.x + npy.transpose(N).dot(dx),  point2d.y + npy.transpose(N).dot(dy))
     
-    def edge3d_to_2d_with_dimension(self, edge3d, points_x, points_y):
+    def edge3d_to_2d_with_dimension(self, edges3d, points_x, points_y):
         '''
         '''
         for edge3d in edges3d:
@@ -5175,6 +5175,150 @@ class BSplineFace3D(Face3D):
                                       volmdlr.Point2D(v_max, v)))
         return lines_x, lines_y
 
+
+    def uv_directions(self):
+        '''
+        find how the uv parametric frame is located compared to xy frame
+        '''
+        
+        points1 = []
+
+        for uv in [(0,0),(1,0),(1,1),(0,1)]:
+            points1.append(self.surface3d.point2d_to_3d(volmdlr.Point2D(uv[0],uv[1])))
+        
+            
+        bounding_box_points = self.bounding_box.points
+        
+        nearest = []
+        for p in points1:
+            nearest.append(p.nearest_point(bounding_box_points))
+        
+        
+        if (volmdlr.Point3D(self.bounding_box.xmin, self.bounding_box.ymin, self.bounding_box.zmin)) in nearest:
+            point_ext1_xmin = volmdlr.Point3D(self.bounding_box.xmin, self.bounding_box.ymin, self.bounding_box.zmin)
+        elif (volmdlr.Point3D(self.bounding_box.xmin, self.bounding_box.ymin, self.bounding_box.zmax)) in nearest:
+            point_ext1_xmin = volmdlr.Point3D(self.bounding_box.xmin, self.bounding_box.ymin, self.bounding_box.zmax)
+        elif (volmdlr.Point3D(self.bounding_box.xmin, self.bounding_box.ymax, self.bounding_box.zmin)) in nearest:
+            point_ext1_xmin = (volmdlr.Point3D(self.bounding_box.xmin, self.bounding_box.ymax, self.bounding_box.zmin))
+
+        nearest1_xmin = point_ext1_xmin.nearest_point(points1)
+        uv_x0y0 = self.surface3d.point3d_to_2d(points1[points1.index(nearest1_xmin)])
+
+
+        if volmdlr.Point3D(self.bounding_box.xmax, self.bounding_box.ymin, self.bounding_box.zmin) in nearest:
+            point_ext1_xmax = volmdlr.Point3D(self.bounding_box.xmax, self.bounding_box.ymin, self.bounding_box.zmin)
+        elif volmdlr.Point3D(self.bounding_box.xmax, self.bounding_box.ymin, self.bounding_box.zmax) in nearest: 
+            point_ext1_xmax = volmdlr.Point3D(self.bounding_box.xmax, self.bounding_box.ymin, self.bounding_box.zmax)
+
+        nearest1_xmax = point_ext1_xmax.nearest_point(points1)
+        uv_x1y0 = self.surface3d.point3d_to_2d(points1[points1.index(nearest1_xmax)])
+
+        
+        if volmdlr.Point3D(self.bounding_box.xmin, self.bounding_box.ymax, self.bounding_box.zmin) in nearest:
+            point_ext1_ymax = volmdlr.Point3D(self.bounding_box.xmin, self.bounding_box.ymax, self.bounding_box.zmin)
+        elif volmdlr.Point3D(self.bounding_box.xmin, self.bounding_box.ymax, self.bounding_box.zmax) in nearest:
+            point_ext1_ymax = volmdlr.Point3D(self.bounding_box.xmin, self.bounding_box.ymax, self.bounding_box.zmax)
+
+        nearest1_ymax = point_ext1_ymax.nearest_point(points1)
+        uv_x0y1 =self.surface3d.point3d_to_2d(points1[points1.index(nearest1_ymax)])
+        
+        
+        
+        
+        # x, y, z = [], [], []
+        # for p in points1:
+        #     x.append(p.x)
+        #     y.append(p.y)
+        #     z.append(p.z)
+        
+        # bounding_box = self.bounding_box
+        # ymin = []
+        # for p in points1:
+        #     ymin.append(abs(p.y - bounding_box.ymin))
+        
+        # if ymin.count(min(ymin)) == 1:
+        #     index1 = ymin.index(min(ymin))
+        # else: 
+        #     index1 = xmin.index(min(xmin))
+        #     index2 = xmin.index(min(xmin), index1+1)
+        
+        # if y[index1]<y[index2]:
+        #     uv_x0y0 = self.surface3d.point3d_to_2d(points1[index1])
+        # else:
+        #     uv_x0y0 = self.surface3d.point3d_to_2d(points1[index2])
+
+        directions = []
+        
+        if math.isclose((uv_x1y0 - uv_x0y0)[0], 1) and -1e-5<(abs((uv_x0y1 - uv_x0y0)[0]))<1e5:
+            directions.append('+x')
+        elif math.isclose((uv_x1y0 - uv_x0y0)[0], -1) and -1e-5<(abs((uv_x0y1 - uv_x0y0)[0]))<1e5:
+            directions.append('-x')
+        elif -1e-5<(abs((uv_x1y0 - uv_x0y0)[0]))<1e5 and math.isclose((uv_x0y1 - uv_x0y0)[0], 1):
+            directions.append('+y')
+        elif -1e-5<(abs((uv_x1y0 - uv_x0y0)[0]))<1e5 and math.isclose((uv_x0y1 - uv_x0y0)[0], -1):
+            directions.append('-y')
+        else:
+            directions.append('-')
+            
+        if -1e-5<(abs((uv_x1y0 - uv_x0y0)[1]))<1e5 and math.isclose((uv_x0y1 - uv_x0y0)[1], 1):
+            directions.append('+y')
+        elif -1e-5<(abs((uv_x1y0 - uv_x0y0)[1]))<1e5 and math.isclose((uv_x0y1 - uv_x0y0)[1], -1):
+            directions.append('-y')
+        elif math.isclose((uv_x1y0 - uv_x0y0)[1], 1) and -1e-5<(abs((uv_x0y1 - uv_x0y0)[1]))<1e5:
+            directions.append('+x')
+        elif math.isclose((uv_x1y0 - uv_x0y0)[1], -1) and -1e-5<(abs((uv_x0y1 - uv_x0y0)[1]))<1e5:
+            directions.append('-x')
+        else:
+            directions.append('-')
+
+        # if math.isclose((uv_x1y0 - uv_x0y0)[0], 1) and math.isclose((uv_x0y1 - uv_x0y0)[0], 0):
+        #     directions.append('+x')
+        # elif math.isclose((uv_x1y0 - uv_x0y0)[0], -1) and math.isclose((uv_x0y1 - uv_x0y0)[0], 0):
+        #     directions.append('-x')
+        # elif math.isclose((uv_x1y0 - uv_x0y0)[0], 0) and math.isclose((uv_x0y1 - uv_x0y0)[0], 1):
+        #     directions.append('+y')
+        # elif math.isclose((uv_x1y0 - uv_x0y0)[0], 0) and math.isclose((uv_x0y1 - uv_x0y0)[0], -1):
+        #     directions.append('-y')
+        # else:
+        #     directions.append('-')
+            
+        # if math.isclose((uv_x1y0 - uv_x0y0)[1], 0) and math.isclose((uv_x0y1 - uv_x0y0)[1], 1):
+        #     directions.append('+y')
+        # elif math.isclose((uv_x1y0 - uv_x0y0)[1], 0) and math.isclose((uv_x0y1 - uv_x0y0)[1], -1):
+        #     directions.append('-y')
+        # elif math.isclose((uv_x1y0 - uv_x0y0)[1], 1) and math.isclose((uv_x0y1 - uv_x0y0)[1], 0):
+        #     directions.append('+x')
+        # elif math.isclose((uv_x1y0 - uv_x0y0)[1], -1) and math.isclose((uv_x0y1 - uv_x0y0)[1], 0):
+        #     directions.append('-x')
+        # else:
+        #     directions.append('-')
+        
+        # =============================================================================
+        #         
+        # =============================================================================
+        
+        point = self.surface3d.point2d_to_3d(volmdlr.Point2D(0.5,0.5))
+        point_delta_u = self.surface3d.point2d_to_3d(volmdlr.Point2D(0.5+0.05,0.5))
+        point_delta_v = self.surface3d.point2d_to_3d(volmdlr.Point2D(0.5,0.5+0.05))
+        
+        if (point_delta_u.x - point.x)>0 and (point_delta_u.x - point.x)>(point_delta_u.y - point.y):
+            directions.append('+x')
+            
+            
+            
+        
+        
+                                     
+        points1 = []
+
+        for uv in [(0,0),(1,0),(1,1),(0,1)]:
+            points1.append(self.surface3d.point2d_to_3d(volmdlr.Point2D(uv[0],uv[1])))
+
+        
+    
+ 
+    
+        return directions
 
 
 class OpenShell3D(volmdlr.core.CompositePrimitive3D):
