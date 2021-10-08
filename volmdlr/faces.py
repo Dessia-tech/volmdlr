@@ -3057,7 +3057,6 @@ class Face3D(volmdlr.core.Primitive3D):
             return self.to_step_without_splitting(current_id)
 
     def to_step_without_splitting(self, current_id):
-        print(self.surface3d)
         content, surface3d_ids = self.surface3d.to_step(current_id)
         current_id = max(surface3d_ids) + 1
 
