@@ -2629,9 +2629,9 @@ class BSplineSurface3D(Surface3D):
             edges.append(volmdlr.edges.LineSegment2D(new_start_points[i], new_start_points[i+1]))
         edges.append(volmdlr.edges.LineSegment2D(new_start_points[-1], new_start_points[0]))
             
-        contour2d = volmdlr.wires.Contour2D.contours_from_edges(edges)
+        contour2d = volmdlr.wires.Contour2D(edges)
 
-        return contour2d[0]
+        return contour2d
     
     def point2d_with_dimension_to_3d(self, point2d, points_x, points_y, xmin, xmax, ymin, ymax):
                                                                                      
@@ -5319,6 +5319,50 @@ class BSplineFace3D(Face3D):
  
     
         return directions
+
+
+    def uv_directions_(self):
+        '''
+        find how the uv parametric frame is located compared to xy frame
+        '''
+        
+        points1 = []
+
+        for uv in [(0,0),(1,0),(1,1),(0,1)]:
+            points1.append(self.surface3d.point2d_to_3d(volmdlr.Point2D(uv[0],uv[1])))
+            
+        contour3d = volmdlr.wires.Contour3D.contours_from_edges([volmdlr.edges.LineSegment3D(points1[0],points1[1]),
+                                                                 volmdlr.edges.LineSegment3D(points1[1],points1[2]),
+                                                                 volmdlr.edges.LineSegment3D(points1[2],points1[3]),
+                                                                 volmdlr.edges.LineSegment3D(points1[3],points1[0])])[0]
+        
+        vector0 = volmdlr.edges.LineSegment3D(points1[0],points1[1]).direction_vector().to_vector()
+        vector1 = volmdlr.edges.LineSegment3D(points1[1],points1[2]).direction_vector().to_vector()
+        vector2 = volmdlr.edges.LineSegment3D(points1[2],points1[3]).direction_vector().to_vector()
+        vector3 = volmdlr.edges.LineSegment3D(points1[3],points1[0]).direction_vector().to_vector()
+        
+        
+        volmdlr.core.vectors3d_angle(vector0, vector3)
+        volmdlr.core.vectors3d_angle(vector2, vector1)
+        
+        
+
+        
+        
+    
+        
+        return 
+    
+    def clockwise_angle(vector1, vector2):
+        x1, y1, z1 = vector1.x, vector1.y, vector1.z
+        x2, y2, z2 = vector2.x, vector2.y, vector2.z
+
+        dot = x1*x2 + y1*y2 + z1*z2    #between [x1, y1, z1] and [x2, y2, z2]
+        lenSq1 = x1*x1 + y1*y1 + z1*z1
+        lenSq2 = x2*x2 + y2*y2 + z2*z2
+        angle = math.acos(dot/math.sqrt(lenSq1 * lenSq2))
+    
+
 
 
 class OpenShell3D(volmdlr.core.CompositePrimitive3D):
