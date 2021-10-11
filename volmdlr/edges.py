@@ -3,6 +3,7 @@
 """
 
 """
+import scipy.optimize
 from packaging import version
 import math
 import numpy as npy
@@ -495,7 +496,7 @@ class BSplineCurve2D(Edge):
             bounds=(0., l)
         )
         if res.fun > 1e-4:
-            print(res.fun)
+            # print(res.fun)
             ax = self.plot()
             point2d.plot(ax=ax)
             best_point = self.point_at_abscissa(res.x)
@@ -2633,59 +2634,77 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         binormal = volmdlr.Point3D(binormal[0], binormal[1], binormal[2])
         return binormal
 
-    def point3d_to_parameter(self, point: volmdlr.Point3D, resolution=20):
+    def point3d_to_parameter(self, point: volmdlr.Point3D):
         """
         Search for the value of the normalized evaluation parameter t
         (between 0 and 1) that would return the given point when the
         BSplineCurve3D is evaluated at the t value.
         """
-        found = False
-        start_norm_eva = 0
-        end_parameter = 1
-        max_count = 50
-        count = 0
-        t_res = None
+        def f(param):
+            p3d = volmdlr.Point3D(*self.curve.evaluate_single(param))
+            return point.point_distance(p3d)
+        res = scipy.optimize.minimize(fun=f, x0=(0.5), bounds=[(0, 1)],
+                                      tol=1e-9)
+        return res.x[0]
 
-        while not found and count < max_count:
-
-            ts = [start_norm_eva + i / resolution * (
-                        end_parameter - start_norm_eva)
-                  for i in range(resolution + 1)]
-
-            target_distances = []
-            for t in ts:
-                curve_point = volmdlr.Point3D(*self.curve.evaluate_single(t))
-                if curve_point == point:
-                    found = True
-                    t_res = t
-
-                    break
-                else:
-                    target_distances.append(curve_point.point_distance(point))
-
-            if found:
-                break
-
-            min_i = 0
-            min_distance = target_distances[0]
-            for i, target_distance in enumerate(target_distances[1:]):
-                if target_distance < min_distance:
-                    min_distance = target_distance
-                    min_i = i
-
-            if 0 < min_i < len(target_distances):
-                start_norm_eva = ts[min_i-1]
-                end_parameter = ts[min_i+1]
-            elif min_i == 0:
-                start_norm_eva = 0
-                end_parameter = ts[1]
-            else:
-                start_norm_eva = ts[-2]
-                end_parameter = 1
-
-            count += 1
-
-        return t_res
+        # found = False
+        # start_norm_eva = 0
+        # end_parameter = 1
+        # max_count = 100
+        # count = 0
+        # t_res = None
+        #
+        # if point == self.start:
+        #     return 0
+        # elif point == self.end:
+        #     return 1
+        #
+        # while not found and count < max_count:
+        #
+        #     ts = [start_norm_eva + i / resolution * (
+        #                 end_parameter - start_norm_eva)
+        #           for i in range(resolution + 1)]
+        #
+        #     target_distances = []
+        #     for t in ts:
+        #         curve_point = volmdlr.Point3D(*self.curve.evaluate_single(t))
+        #         if curve_point == point:
+        #             found = True
+        #             t_res = t
+        #
+        #             break
+        #         else:
+        #             target_distances.append(curve_point.point_distance(point))
+        #
+        #     if found:
+        #         break
+        #
+        #     min_i = 0
+        #     min_distance = target_distances[0]
+        #     for i, target_distance in enumerate(target_distances[1:]):
+        #         if target_distance < min_distance:
+        #             min_distance = target_distance
+        #             min_i = i
+        #
+        #     if 0 < min_i < len(target_distances):
+        #         start_norm_eva = ts[min_i-1]
+        #         end_parameter = ts[min_i+1]
+        #     elif min_i == 0:
+        #         start_norm_eva = 0
+        #         end_parameter = ts[1]
+        #     else:
+        #         start_norm_eva = ts[-2]
+        #         end_parameter = 1
+        #
+        #     count += 1
+        #
+        # if t_res is None:
+        #     ax = self.plot()
+        #     point.plot(ax=ax, color='r')
+        #     print(point.point_distance(self.start), point.point_distance(self.end))
+        #     raise ValueError('Point3D not found on BSplineCurve3D')
+        #
+        # return t_res
 
     def point_on_curve(self, point: volmdlr.Point3D):
         # TODO: complete ?
@@ -2828,23 +2847,23 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             return self
 
         elif point1 == self.start and point2 != self.end:
-            parameter2 = self.point3d_to_parameter(point2, resolution=20)
+            parameter2 = self.point3d_to_parameter(point2)
             return self.cut_after(parameter2)
 
         elif point2 == self.start and point1 != self.end:
-            parameter1 = self.point3d_to_parameter(point1, resolution=20)
+            parameter1 = self.point3d_to_parameter(point1)
             return self.cut_after(parameter1)
 
         elif point1 != self.start and point2 == self.end:
-            parameter1 = self.point3d_to_parameter(point1, resolution=20)
+            parameter1 = self.point3d_to_parameter(point1)
             return self.cut_before(parameter1)
 
         elif point2 != self.start and point1 == self.end:
-            parameter2 = self.point3d_to_parameter(point2, resolution=20)
+            parameter2 = self.point3d_to_parameter(point2)
             return self.cut_before(parameter2)
 
-        parameter1 = self.point3d_to_parameter(point1, resolution=20)
-        parameter2 = self.point3d_to_parameter(point2, resolution=20)
+        parameter1 = self.point3d_to_parameter(point1)
+        parameter2 = self.point3d_to_parameter(point2)
         if parameter1 is None or parameter2 is None:
             raise ValueError('Point not on BSplineCurve for trim method')
         return self.trim_between_evaluations(parameter1, parameter2)
@@ -2852,6 +2871,14 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
     def trim_between_evaluations(self, parameter1: float, parameter2: float):
         parameter1, parameter2 = min([parameter1, parameter2]), \
                                max([parameter1, parameter2])
+
+        if math.isclose(parameter1, 0, abs_tol=1e-7) \
+                and math.isclose(parameter2, 1, abs_tol=1e-7):
+            return self
+        elif math.isclose(parameter1, 0, abs_tol=1e-7):
+            return self.cut_after(parameter2)
+        elif math.isclose(parameter2, 1, abs_tol=1e-7):
+            return self.cut_before(parameter1)
 
         # Cut before
         bspline_curve = self.insert_knot(parameter1, num=self.degree)
@@ -2880,10 +2907,22 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
                               name=bspline_curve.name)
 
     def cut_before(self, parameter: float):
+        # if parameter == 0:
+        if math.isclose(parameter, 0, abs_tol=1e-6):
+            return self
+        # elif parameter == 1:
+        elif math.isclose(parameter, 1, abs_tol=1e-6):
+            raise ValueError('Nothing will be left from the BSplineCurve3D')
         curves = operations.split_curve(self.curve, parameter)
         return self.from_geomdl_curve(curves[1])
 
     def cut_after(self, parameter: float):
+        # if parameter == 0.:
+        if math.isclose(parameter, 0, abs_tol=1e-6):
+            raise ValueError('Nothing will be left from the BSplineCurve3D')
+        # elif parameter == 1.:
+        elif math.isclose(parameter, 1, abs_tol=1e-6):
+            return self
         curves = operations.split_curve(self.curve, parameter)
         return self.from_geomdl_curve(curves[0])
 
@@ -3866,6 +3905,14 @@ class ArcEllipse3D(Edge):
     def length(self):
         return self.angle * math.sqrt(
             (self.Gradius ** 2 + self.Sradius ** 2) / 2)
+
+    def reverse(self):
+        return self.__class__(self.end.copy(),
+                              self.interior.copy(),
+                              self.start.copy(),
+                              self.center.copy(),
+                              self.major_dir.copy(),
+                              self.name)
 
     def plot(self, ax=None):
         if ax is None:
