@@ -260,19 +260,27 @@ class Step:
 
         return F
 
-    def draw_graph(self, graph=None):
+    def draw_graph(self, graph=None, reduced=False):
+        delete = ['CARTESIAN_POINT', 'DIRECTION']
         if graph is None:
-            graph = self.create_graph()
+            new_graph = self.create_graph()
+
+        new_graph = graph.copy()
 
         labels = {}
         for id_nb, function in self.functions.items():
-            if id_nb in graph.nodes:
+            if id_nb in new_graph.nodes and not reduced:
                 labels[id_nb] = str(id_nb) + ' ' + function.name
-        pos = nx.kamada_kawai_layout(graph)
+            elif id_nb in new_graph.nodes and reduced:
+                if function.name not in delete:
+                    labels[id_nb] = str(id_nb) + ' ' + function.name
+                else:
+                    new_graph.remove_node(id_nb)
+        pos = nx.kamada_kawai_layout(new_graph)
         plt.figure()
-        nx.draw_networkx_nodes(graph, pos)
-        nx.draw_networkx_edges(graph, pos)
-        nx.draw_networkx_labels(graph, pos, labels)
+        nx.draw_networkx_nodes(new_graph, pos)
+        nx.draw_networkx_edges(new_graph, pos)
+        nx.draw_networkx_labels(new_graph, pos, labels)
 
     def step_subfunctions(self, subfunctions):
         subfunctions = subfunctions[0]
@@ -518,6 +526,7 @@ class Step:
         edges = list(
             nx.algorithms.traversal.breadth_first_search.bfs_edges(self.graph,
                                                                    "#0"))[::-1]
+        # self.draw_graph(self.graph, reduced=True)
         for edge_nb, edge in enumerate(edges):
             instanciate_id = edge[1]
             volmdlr_object = self.instanciate(
