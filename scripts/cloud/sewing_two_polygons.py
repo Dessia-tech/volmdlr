@@ -457,18 +457,5 @@ for i, i_polygon in enumerate(polygons):
             coords = i_polygon.sewing(j_polygon, vm.X3D, vm.Y3D)
             for trio in coords:
                 faces.append(vmf.Triangle3D(trio[0], trio[1], trio[2]))
-            #
             # volum = volmdlr.core.VolumeModel(faces)
             # volum.babylonjs()
-            # ax = i_polygon.plot()
-            # j_polygon.plot(ax=ax, color='y')
-            # for face in faces:
-            #     volmdlr.edges.LineSegment3D(face.point1, face.point2).plot(
-            #         ax=ax,
-            #         color='b')
-            #     volmdlr.edges.LineSegment3D(face.point1, face.point3).plot(
-            #         ax=ax,
-            #         color='b')
-            #     volmdlr.edges.LineSegment3D(face.point2, face.point3).plot(
-            #         ax=ax,
-            #         color='b')
