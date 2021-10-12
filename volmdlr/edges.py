@@ -3226,8 +3226,9 @@ class Arc3D(Edge):
             self.start.rotation(rot_center, axis, angle, False)
             self.interior.rotation(rot_center, axis, angle, False)
             self.end.rotation(rot_center, axis, angle, False)
-            [p.rotation(rot_center, axis, angle, False) for p in
-             self.primitives]
+            self.frame.rotation(rot_center, axis, angle, False)
+            # [p.rotation(rot_center, axis, angle, False) for p in
+            #  self.primitives]
 
     def translation(self, offset, copy=True):
         if copy:
@@ -3240,7 +3241,8 @@ class Arc3D(Edge):
             self.start.translation(offset, False)
             self.interior.translation(offset, False)
             self.end.translation(offset, False)
-            [p.translation(offset, False) for p in self.primitives]
+            self.frame.translation(offset, False)
+            # [p.translation(offset, False) for p in self.primitives]
 
     def plot(self, ax=None, color='k', alpha=1,
              edge_ends=False, edge_direction=False):

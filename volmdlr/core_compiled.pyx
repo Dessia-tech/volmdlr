@@ -9,6 +9,8 @@ Cython functions
 # from __future__ import annotations
 from typing import TypeVar, List, Tuple, Text
 import math
+
+import volmdlr
 from dessia_common import DessiaObject
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyArrow, FancyArrowPatch
@@ -1738,6 +1740,39 @@ class Frame3D(Basis3D):
 
     def basis(self):
         return Basis3D(self.u, self.v, self.w)
+
+    def rotation_axis_and_angle(self, other_frame: 'Frame3D'):
+        rot_mat_0_2 = Matrix33(
+            other_frame.u.x, other_frame.u.y, other_frame.u.z,
+            other_frame.v.x, other_frame.v.y, other_frame.v.z,
+            other_frame.w.x, other_frame.w.y, other_frame.w.z)
+        rot_mat_1_0 = Matrix33(
+            self.u.x, self.v.x, self.w.x,
+            self.u.y, self.v.y, self.w.y,
+            self.u.z, self.v.z, self.w.z)
+        rot_mat_1_2 = rot_mat_1_0 * rot_mat_0_2
+        delta1 = rot_mat_1_2.M32 - rot_mat_1_2.M23
+        delta2 = rot_mat_1_2.M13 - rot_mat_1_2.M31
+        delta3 = rot_mat_1_2.M21 - rot_mat_1_2.M12
+        y = (delta1**2 + delta2**2 + delta3**2)**0.5
+        x = rot_mat_1_2.M11 + rot_mat_1_2.M22 + rot_mat_1_2.M33 - 1
+        theta = math.atan2(y, x)
+        # print(self)
+        # print(other_frame)
+        # print(rot_mat_1_2)
+        # print('arctan(', y,'/', x, ') =', theta)
+        # print()
+        if not math.isclose(theta, 0, abs_tol=1e-6):
+            u_x = npy.sign(delta1) * ((rot_mat_1_2.M11 - math.cos(theta))
+                                     / (1 - math.cos(theta)))**0.5
+            u_y = npy.sign(delta2) * ((rot_mat_1_2.M22 - math.cos(theta))
+                                     / (1 - math.cos(theta)))**0.5
+            u_z = npy.sign(delta3) * ((rot_mat_1_2.M33 - math.cos(theta))
+                                     / (1 - math.cos(theta)))**0.5
+            vector = volmdlr.Vector3D(u_x, u_y, u_z)
+        else:
+            vector = None
+        return vector, theta
 
     def new_coordinates(self, vector):
         """ You have to give coordinates in the global landmark """

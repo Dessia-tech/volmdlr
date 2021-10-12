@@ -116,7 +116,7 @@ class Step:
                 previous_line = str()
                 continue
 
-            function = line.split("=")
+            function = line.split("=", maxsplit=1)
             function_id = int(function[0][1:])
             function_name_arg = function[1].split("(", 1)
             function_name = function_name_arg[0]
@@ -130,7 +130,6 @@ class Step:
                     function_connection = int(connec[0])
                     function_connections.append(
                         (function_id, function_connection))
-            # print(function_connections)
 
             all_connections.extend(function_connections)
 
@@ -260,7 +259,23 @@ class Step:
 
         return F
 
-    def draw_graph(self, graph=None, reduced=False):
+    def raw_graph(self):
+        G = nx.DiGraph()
+        labels = {}
+        for id, function in self.functions.items():
+            G.add_node(id,
+                       color='rgb(0, 0, 0)',
+                       shape='.',
+                       name=str(id) + function.name)
+            labels[function.id] = str(id) + ' ' + function.name
+        G.add_edges_from(self.all_connections)
+        # pos = nx.kamada_kawai_layout(G)
+        # nx.draw_networkx_nodes(G, pos)
+        # nx.draw_networkx_edges(G, pos)
+        # nx.draw_networkx_labels(G, pos, labels)
+        return G
+
+    def draw_graph(self, graph=None, reduced=False, html=False):
         delete = ['CARTESIAN_POINT', 'DIRECTION']
         if graph is None:
             new_graph = self.create_graph()
@@ -276,11 +291,46 @@ class Step:
                     labels[id_nb] = str(id_nb) + ' ' + function.name
                 else:
                     new_graph.remove_node(id_nb)
-        pos = nx.kamada_kawai_layout(new_graph)
-        plt.figure()
-        nx.draw_networkx_nodes(new_graph, pos)
-        nx.draw_networkx_edges(new_graph, pos)
-        nx.draw_networkx_labels(new_graph, pos, labels)
+
+        if not html:
+            pos = nx.kamada_kawai_layout(new_graph)
+            plt.figure()
+            nx.draw_networkx_nodes(new_graph, pos)
+            nx.draw_networkx_edges(new_graph, pos)
+            nx.draw_networkx_labels(new_graph, pos, labels)
+
+        else:
+            import webbrowser
+            from jinja2 import Environment, PackageLoader, select_autoescape
+            import os
+            env = Environment(
+                loader=PackageLoader('powertransmission', 'templates'),
+                autoescape=select_autoescape(['html', 'xml']))
+            template = env.get_template('graph_visJS.html')
+
+            nodes = []
+            edges = []
+            for label in list(labels.values()):
+                nodes.append({'name': label, 'shape': 'circular'})
+
+            for edge in new_graph.edges:
+                if edge[0] != '#0' and edge[1] != '#0':
+                    edge_dict = {'inode1': int(edge[0]) - 1,
+                                 'inode2': int(edge[1]) - 1,
+                                 'arrows': 'to'}
+                    edges.append(edge_dict)
+
+            options = {}
+            s = template.render(
+                name=self.stepfile,
+                nodes=nodes,
+                edges=edges,
+                options=options)
+
+            with open('graph_visJS.html', 'wb') as file:
+                file.write(s.encode('utf-8'))
+
+            webbrowser.open('file://' + os.path.realpath('graph_visJS.html'))
 
     def step_subfunctions(self, subfunctions):
         subfunctions = subfunctions[0]
@@ -389,7 +439,10 @@ class Step:
             volmdlr_object2 = object_dict[arguments[3]]
             # TODO : how to frame map properly from these two Frame3D ?
             # volmdlr_object = volmdlr_object2 - volmdlr_object1
-            volmdlr_object = volmdlr_object2
+            print(volmdlr_object1)
+            print(volmdlr_object2)
+            print()
+            volmdlr_object = (volmdlr_object1, volmdlr_object2)
             # Frame3D
 
         elif name == 'MANIFOLD_SURFACE_SHAPE_REPRESENTATION':
@@ -409,6 +462,7 @@ class Step:
             # does it have the extra argument comming from
             # SHAPE_REPRESENTATION_RELATIONSHIP ? In this cas return
             # them
+            print('shape rpz', arguments)
             if len(arguments) == 4:
                 shells = object_dict[int(arguments[3])]
                 volmdlr_object = shells
@@ -428,7 +482,8 @@ class Step:
                             isinstance(object_dict[int(arg[1:])],
                                        volmdlr.Frame3D):
                         # TODO: Is there something to read here ?
-                        pass
+                        print('passed', object_dict[int(arg[1:])])
+                        shells.append(object_dict[int(arg[1:])])
                     elif int(arg[1:]) in object_dict and \
                             isinstance(object_dict[int(arg[1:])],
                                        volmdlr.edges.Arc3D):
@@ -439,6 +494,8 @@ class Step:
                         shells.append(object_dict[int(arg[1:])])
                     else:
                         pass
+                print('returned', shells)
+                print()
                 volmdlr_object = shells
 
         elif name == 'ADVANCED_BREP_SHAPE_REPRESENTATION':
@@ -450,17 +507,61 @@ class Step:
             volmdlr_object = shells
 
         elif name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP':
+            print(arguments)
             if arguments[2] in object_dict:
+                print('arg2', object_dict[arguments[2]])
+                print('arg3', object_dict[arguments[3]])
+                print('arg4', object_dict[arguments[4]])
                 if type(object_dict[arguments[2]]) is list:
                     for shell3d in object_dict[arguments[2]]:
-                        frame3d = object_dict[arguments[4]]
-                        shell3d.frame_mapping(frame3d, 'old', copy=False)
+                        # if isinstance(shell3d, volmdlr.faces.ClosedShell3D)\
+                        #         or isinstance(shell3d, volmdlr.faces.OpenShell3D):
+                        #     # Tres tres sketchy
+                        #     frame3d1 = object_dict[arguments[4]][1]
+                        #     frame3d2 = object_dict[arguments[4]][0]
+                        # else:
+                        frame3d1 = object_dict[arguments[4]][0]
+                        frame3d2 = object_dict[arguments[4]][1]
+                        axis, theta = frame3d1.rotation_axis_and_angle(
+                            frame3d2)
+                        print('1translation, rotation', shell3d.__dict__)
+                        print(frame3d1)
+                        print(frame3d2)
+                        print()
+                        # shell3d.frame_mapping(frame3d, 'old', copy=False)
+                        if frame3d2.origin != frame3d1.origin:
+                            shell3d.translation(
+                                (frame3d2.origin - frame3d1.origin),
+                                copy=False)
+                        if axis is not None:
+                            shell3d.rotation(frame3d2.origin, axis, theta,
+                                             copy=False)
                         # volmdlr_object = shell3d
                     volmdlr_object = None
                 else:
                     shell3d = object_dict[arguments[2]]
-                    frame3d = object_dict[arguments[4]]
-                    shell3d.frame_mapping(frame3d, 'old', copy=False)
+                    # if isinstance(shell3d, volmdlr.faces.ClosedShell3D) \
+                    #         or isinstance(shell3d, volmdlr.faces.OpenShell3D):
+                    #     # Tres tres sketchy
+                    #     frame3d1 = object_dict[arguments[4]][1]
+                    #     frame3d2 = object_dict[arguments[4]][0]
+                    # else:
+                    frame3d1 = object_dict[arguments[4]][0]
+                    frame3d2 = object_dict[arguments[4]][1]
+                    axis, theta = frame3d1.rotation_axis_and_angle(
+                        frame3d2)
+                    print('2translation, rotation', shell3d.__dict__)
+                    print(frame3d1)
+                    print(frame3d2)
+                    print()
+                    # shell3d.frame_mapping(frame3d, 'old', copy=False)
+                    if frame3d2.origin != frame3d1.origin:
+                        shell3d.translation(
+                            (frame3d2.origin - frame3d1.origin),
+                            copy=False)
+                    if axis is not None:
+                        shell3d.rotation(frame3d2.origin, axis, theta,
+                                         copy=False)
                     # volmdlr_object = shell3d
                     volmdlr_object = None
             else:
@@ -479,6 +580,13 @@ class Step:
                 modified_arguments.pop()
             volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
                 modified_arguments, object_dict)
+
+        elif name == 'CONTEXT_DEPENDENT_SHAPE_REPRESENTATION':
+            volmdlr_object = object_dict[arguments[1]]
+
+        elif name == 'NEXT_ASSEMBLY_USAGE_OCCURENCE':
+            shells = [object_dict[arguments[3]], object_dict[arguments[4]]]
+            volmdlr_object = shells
 
         elif name in STEP_TO_VOLMDLR and hasattr(
                 STEP_TO_VOLMDLR[name], "from_step"):
@@ -526,7 +634,7 @@ class Step:
         edges = list(
             nx.algorithms.traversal.breadth_first_search.bfs_edges(self.graph,
                                                                    "#0"))[::-1]
-        # self.draw_graph(self.graph, reduced=True)
+        self.draw_graph(self.graph, reduced=True, html=True)
         for edge_nb, edge in enumerate(edges):
             instanciate_id = edge[1]
             volmdlr_object = self.instanciate(
@@ -669,6 +777,8 @@ STEP_TO_VOLMDLR = {
     'ADVANCED_BREP_SHAPE_REPRESENTATION': None,
     'ITEM_DEFINED_TRANSFORMATION': None,
     'SHAPE_REPRESENTATION_RELATIONSHIP': None,
+    'CONTEXT_DEPENDENT_SHAPE_REPRESENTATION': None,
+    'NEXT_ASSEMBLY_USAGE_OCCURENCE': None,
 
     'BOUNDED_CURVE, B_SPLINE_CURVE, B_SPLINE_CURVE_WITH_KNOTS, CURVE, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_CURVE, REPRESENTATION_ITEM': volmdlr.edges.BSplineCurve3D
 }
