@@ -747,7 +747,7 @@ class LineSegment2D(LineSegment):
         touching linesegments does not intersect
         """
         point = volmdlr.Point2D.line_intersection(self, linesegment)
-        if point and (point != self.start) and (point != self.end):
+        if point: # and (point != self.start) and (point != self.end): # TODO: May be these commented conditions should be used for linesegment_crossings
             point_projection1, _ = self.point_projection(point)
             if point_projection1 is None:
                 return []
