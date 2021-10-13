@@ -3393,6 +3393,8 @@ class PlaneFace3D(Face3D):
             if intersection_points:
                 intersections.extend(intersection_points)
         if intersections:
+            if intersections[0] == intersections[1]:
+                return []
             primitive = volmdlr.edges.LineSegment3D(intersections[0], intersections[1])
             intersections = [volmdlr.wires.Wire3D([primitive])]
             return intersections

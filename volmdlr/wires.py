@@ -2068,20 +2068,22 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             divided_line = []
             ok_middle_points = []
             list_cossines = []
-            for midle_point in nearby_points:
-                vect1 = line.start - midle_point
-                vect2 = line.end - midle_point
+            for middle_point in nearby_points:
+                vect1 = line.start - middle_point
+                vect2 = line.end - middle_point
+                if line.start == middle_point or line.end == middle_point:
+                    continue
                 cos = round(vect1.dot(vect2) / (vect1.norm() * vect2.norm()),
                             4)
                 if cos < concavity:
                     new_lineA = volmdlr.edges.LineSegment2D(start=line.start,
-                                                            end=midle_point)
-                    new_lineB = volmdlr.edges.LineSegment2D(start=midle_point,
+                                                            end=middle_point)
+                    new_lineB = volmdlr.edges.LineSegment2D(start=middle_point,
                                                             end=line.end)
                     if not (line_colides_with_hull(line=new_lineA,
                                                    concave_hull=hull_concave_edges) and line_colides_with_hull(
                         line=new_lineB, concave_hull=hull_concave_edges)):
-                        ok_middle_points.append(midle_point)
+                        ok_middle_points.append(middle_point)
                         list_cossines.append(cos)
             if len(ok_middle_points) > 0:
                 #  We want the middlepoint to be the one with widest angle (smallest cossine)
