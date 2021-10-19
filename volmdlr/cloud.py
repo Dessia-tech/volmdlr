@@ -99,8 +99,10 @@ class PointCloud3D(dc.DessiaObject):
         for n in range(resolution):
             # print('sewing polygon', round(n/resolution*100, 2), '%')
             poly1 = polygon3d[n]
-            poly1 = poly1.simplify()
-            
+
+            poly1 = poly1.simplify(0.01, 0.05)
+            # ax = poly1.plot()
+
             if n == resolution-1 or n == 0:
                 plane3d = vmf.Plane3D.from_plane_vectors(position_plane[n]*normal, vec1, vec2)
                 surf2d = vmf.Surface2D(polygon2d[n],[])
@@ -108,10 +110,14 @@ class PointCloud3D(dc.DessiaObject):
                 faces.append(vmf.PlaneFace3D(plane3d, surf2d))
             if n != resolution-1:
                 poly2 = polygon3d[n+1]
-                poly2 = poly2.simplify()
-                
+
+                # poly2.plot(ax=ax, color='r')
+                poly2 = poly2.simplify(0.01, 0.05)
+                # try:
+                #     coords = poly1.sewing(poly2, vec1, vec2)
+                # except IndexError:
                 coords = poly1.sewing(poly2, vec1, vec2)
-                for trio in coords :
+                for trio in coords:
                     faces.append(vmf.Triangle3D(*trio))
         return vmf.ClosedShell3D(faces)
     
@@ -213,8 +219,8 @@ class PointCloud2D(dc.DessiaObject):
     def to_polygon(self):
         if not self.points:
             return None
-        polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
-        # polygon = vmw.ClosedPolygon2D.concave_hull(self.points, -0.5, 0.0005)
+        # polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
+        polygon = vmw.ClosedPolygon2D.concave_hull(self.points, -0.7, 0.00005)
         # polygon = vmw.ClosedPolygon2D.convex_hull_points(self.points)
         if polygon is None or math.isclose(polygon.area(), 0, abs_tol = 1e-6) :
             return None

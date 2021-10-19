@@ -37,7 +37,7 @@ for stl_file in [
     # # print('len(cloud_faces)', len(cloud_faces))
     # faces.extend(cloud_faces)
     # print()
-    
+
     stl = vmstl.Stl.from_file(stl_file)
     # shell = stl.to_closed_shell()
     # shell.babylonjs()
@@ -52,9 +52,14 @@ for stl_file in [
     pointcloud3d = volmdlr.cloud.PointCloud3D(list_points)
     # polygons2d = pointcloud3d.to_shell()
     # pointcloud3d.plot()
-    shells.append(pointcloud3d.to_shell(resolution=20))
+    shell = pointcloud3d.to_shell(resolution=15)
+    shell.alpha = 0.6
+    shell.color = (1, 0.1, 0.1)
+    shells.append(shell)
 
-    
-volum = volmdlr.core.VolumeModel(shells)
-volum.babylonjs()
+
+# volum = volmdlr.core.VolumeModel(shells)
+# volum.babylonjs()
+
+
 
