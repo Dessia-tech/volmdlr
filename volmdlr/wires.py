@@ -2641,8 +2641,19 @@ class Contour3D(Contour, Wire3D):
         elif (raw_edges[0].start).point_distance(raw_edges[1].end) < 2e-5:
             edges = [raw_edges[0].reverse(), raw_edges[1].reverse()]  
         else:
+            ax = raw_edges[0].plot()
+            raw_edges[1].plot(ax=ax)
+            deltax1 = abs(raw_edges[0].start.x - raw_edges[1].end.x)
+            deltax2 = abs(raw_edges[0].end.x - raw_edges[1].end.x)
+            deltay1 = abs(raw_edges[0].start.y - raw_edges[1].end.y)
+            deltay2 = abs(raw_edges[0].end.y - raw_edges[1].end.y)
+            deltaz1 = abs(raw_edges[0].start.z - raw_edges[1].end.z)
+            deltaz2 = abs(raw_edges[0].end.z - raw_edges[1].end.z)
             raise NotImplementedError(
-                'First 2 edges of contour not follwing each other')
+                'First 2 edges of contour not follwing each other',
+                'delta = {}, {}, {}, {}, {}, {}'.format(deltax1, deltax2,
+                                                        deltay1, deltay2,
+                                                        deltaz1, deltaz2))
 
         last_edge = edges[-1]
         for raw_edge in raw_edges[2:]:

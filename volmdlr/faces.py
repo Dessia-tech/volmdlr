@@ -594,7 +594,8 @@ class Surface3D(dc.DessiaObject):
                     else:
                         ax2 = contour3d.plot()
                         primitive3d.plot(ax=ax2, color='r')
-                        # last_primitive3d.plot(ax=ax2, color='b')
+                        last_primitive3d.plot(ax=ax2, color='b')
+
                         ax = last_primitive.plot(color='b', plot_points=True)
                         # primitives[0].plot(ax=ax ,color='r', plot_points=True)
                         for p in primitives:
@@ -607,6 +608,7 @@ class Surface3D(dc.DessiaObject):
                         dist3 = primitive3d.end.point_distance(last_primitive3d.start)
                         dist4 = primitive3d.end.point_distance(last_primitive3d.end)
                         print('distances:', dist1, dist2, dist3, dist4)
+
                         raise ValueError(
                             'Primitives not following each other in contour:',
                             'delta={}, {}, {}, {}'.format(
@@ -1922,6 +1924,7 @@ class BSplineSurface3D(Surface3D):
             points = [self.point3d_to_2d(
                 bspline_curve3d.point_at_abscissa(i / 10 * lth))
                 for i in range(11)]
+            points = list(set(points))
             return [vme.LineSegment2D(p1, p2)
                     for p1, p2 in zip(points[:-1], points[1:])]
         elif 1e-6 < lth <= 1e-5:
