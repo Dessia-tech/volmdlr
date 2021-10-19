@@ -1904,10 +1904,15 @@ class BSplineSurface3D(Surface3D):
         def f(x):
             p3d = self.point2d_to_3d(volmdlr.Point2D(x[0], x[1]))
             return point3d.point_distance(p3d)
-        x0 = (0.5, 0.5)
-        res = scp.optimize.minimize(f, x0=x0, bounds=[(0, 1), (0, 1)],
-                                    tol=1e-7)
-        return volmdlr.Point2D(res.x[0], res.x[1])
+        all_res = []
+        # x0 = (0.5, 0.5)
+        x0s = [(0., 0.), (0., 1.), (1., 0.), (1., 1.), (0.5, 0.5)]
+        for x0 in x0s:
+            res = scp.optimize.minimize(f, x0=x0, bounds=[(0, 1), (0, 1)],
+                                        tol=1e-7)
+            all_res.append(res)
+        all_res.sort(key=lambda x: x.fun)
+        return volmdlr.Point2D(all_res[0].x[0], all_res[0].x[1])
         
     def linesegment2d_to_3d(self, linesegment2d):
         # TODO: this is a non exact method!
