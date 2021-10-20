@@ -557,12 +557,14 @@ class Surface3D(dc.DessiaObject):
             if hasattr(self, method_name):
                 primitives = getattr(self, method_name)(primitive3d)
                 if last_primitive:
-                    delta_x1 = abs(
-                        primitives[0].start.x - last_primitive.end.x)
-                    delta_x2 = abs(primitives[-1].end.x - last_primitive.end.x)
-                    delta_y1 = abs(
-                        primitives[0].start.y - last_primitive.end.y)
-                    delta_y2 = abs(primitives[0].end.y - last_primitive.end.y)
+                    delta_x1 = abs(primitives[0].start.x
+                                   - last_primitive.end.x)
+                    delta_x2 = abs(primitives[-1].end.x
+                                   - last_primitive.end.x)
+                    delta_y1 = abs(primitives[0].start.y
+                                   - last_primitive.end.y)
+                    delta_y2 = abs(primitives[0].end.y
+                                   - last_primitive.end.y)
                     if self.x_periodicity:
                         delta_x1 = delta_x1 % self.x_periodicity
                         delta_x2 = delta_x2 % self.x_periodicity
@@ -2212,7 +2214,6 @@ class BSplineSurface3D(Surface3D):
     
         return merged_surface     
 
-    
     @classmethod
     def from_step(cls, arguments, object_dict):
         name = arguments[0][1:-1]
@@ -2249,17 +2250,20 @@ class BSplineSurface3D(Surface3D):
         knot_spec = arguments[12]
 
         if 13 in range(len(arguments)):
-            weight_data = [float(i) for i in
-                           arguments[13][1:-1].replace("(", "").replace(")",
-                                                                        "").split(
-                               ",")]
+            weight_data = [
+                float(i) for i in
+                arguments[13][1:-1].replace("(", "").replace(")", "").split(",")
+            ]
         else:
             weight_data = None
-
-        return cls(degree_u, degree_v, control_points, nb_u, nb_v,
-                   u_multiplicities, v_multiplicities, u_knots, v_knots,
-                   weight_data, name)
-
+        bsplinesurface = cls(degree_u, degree_v, control_points, nb_u, nb_v,
+                             u_multiplicities, v_multiplicities, u_knots,
+                             v_knots, weight_data, name)
+        if u_closed:
+            bsplinesurface.x_periodicity = 1
+        if v_closed:
+            bsplinesurface.y_periodicity = 1
+        return bsplinesurface
 
     def grid3d(self, points_x, points_y, xmin, xmax, ymin, ymax):
         '''
