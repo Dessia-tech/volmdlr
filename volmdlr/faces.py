@@ -3259,7 +3259,7 @@ class BSplineSurface3D(Surface3D):
         
         return geomdl.operations.normal(self.surface, params=(point2d.x,point2d.y))
     
-    
+     
     
        
     
