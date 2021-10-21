@@ -15,7 +15,9 @@ import volmdlr.wires
 import volmdlr.faces
 import plot_data.graph
 
-import webbrowser
+# import webbrowser
+# from jinja2 import Environment, PackageLoader, select_autoescape
+# import os
 
 
 def step_split_arguments(function_arg):
@@ -120,6 +122,7 @@ class Step:
             function_name = function_name_arg[0]
             function_arg = function_name_arg[1].split("#")
             function_connections = []
+            # print(function_id, function_name)
             for connec in function_arg[1:]:
                 connec = connec.split(",")
                 connec = connec[0].split(")")
@@ -127,6 +130,7 @@ class Step:
                     function_connection = int(connec[0])
                     function_connections.append(
                         (function_id, function_connection))
+            # print(function_connections)
 
             all_connections.extend(function_connections)
 
@@ -149,14 +153,13 @@ class Step:
                     if arg[0] == '#':
                         function_connections.append(
                             (function_id, int(arg[1:])))
+            # print('=', function_connections)
 
             for i, argument in enumerate(arguments):
                 if argument[:2] == '(#' and argument[-1] == ')':
                     arg_list = volmdlr.core.set_to_list(argument)
                     arguments[i] = arg_list
 
-            if function_id == 918:
-                print(function_name, arguments)
             function = StepFunction(function_id, function_name, arguments)
             functions[function_id] = function
 
@@ -171,7 +174,6 @@ class Step:
         labels = {}
 
         for function in self.functions.values():
-
             if function.name == 'SHAPE_REPRESENTATION_RELATIONSHIP':
                 # Create short cut from id1 to id2
                 id1 = int(function.arg[2][1:])
@@ -240,9 +242,8 @@ class Step:
         #         nodes.append({'name': label, 'shape': 'circular'})
         #
         #     for edge in G.edges:
-        #         edge_dict = {}
-        #         edge_dict['inode1'] = int(edge[0]) - 1
-        #         edge_dict['inode2'] = int(edge[1]) - 1
+        #         edge_dict = {'inode1': int(edge[0]) - 1,
+        #                      'inode2': int(edge[1]) - 1}
         #         edges.append(edge_dict)
         #
         #     options = {}
@@ -259,17 +260,27 @@ class Step:
 
         return F
 
-    def draw_graph(self):
-        graph = self.create_graph()
+    def draw_graph(self, graph=None, reduced=False):
+        delete = ['CARTESIAN_POINT', 'DIRECTION']
+        if graph is None:
+            new_graph = self.create_graph()
+
+        new_graph = graph.copy()
+
         labels = {}
         for id_nb, function in self.functions.items():
-            if id_nb in graph.nodes:
+            if id_nb in new_graph.nodes and not reduced:
                 labels[id_nb] = str(id_nb) + ' ' + function.name
-        pos = nx.kamada_kawai_layout(graph)
+            elif id_nb in new_graph.nodes and reduced:
+                if function.name not in delete:
+                    labels[id_nb] = str(id_nb) + ' ' + function.name
+                else:
+                    new_graph.remove_node(id_nb)
+        pos = nx.kamada_kawai_layout(new_graph)
         plt.figure()
-        nx.draw_networkx_nodes(graph, pos)
-        nx.draw_networkx_edges(graph, pos)
-        nx.draw_networkx_labels(graph, pos, labels)
+        nx.draw_networkx_nodes(new_graph, pos)
+        nx.draw_networkx_edges(new_graph, pos)
+        nx.draw_networkx_labels(new_graph, pos, labels)
 
     def step_subfunctions(self, subfunctions):
         subfunctions = subfunctions[0]
@@ -346,6 +357,12 @@ class Step:
         elif name == 'SEAM_CURVE':
             volmdlr_object = object_dict[arguments[1]]
 
+        elif name == 'TRIMMED_CURVE':
+            curve = object_dict[arguments[1]]
+            point1 = object_dict[int(arguments[2][0][1:])]
+            point2 = object_dict[int(arguments[3][0][1:])]
+            volmdlr_object = curve.trim(point1=point1, point2=point2)
+
         # elif name == 'EDGE_CURVE':
         #     object_dict[instanciate_id] = object_dict[arguments[3]]
 
@@ -355,6 +372,13 @@ class Step:
         elif name == 'PCURVE':
             # TODO : Pas besoin de mettre PCURVE ici s'il n'est pas dans STEP_TO_VOLMDLR
             volmdlr_object = object_dict[arguments[1]]
+
+        elif name == 'GEOMETRIC_CURVE_SET':
+            sub_objects = []
+            for arg in arguments[1]:
+                sub_obj = object_dict[int(arg[1:])]
+                sub_objects.append(sub_obj)
+            volmdlr_object = sub_objects
 
         elif name == 'SHELL_BASED_SURFACE_MODEL':
             volmdlr_object = object_dict[int(arguments[1][0][1:])]
@@ -393,6 +417,10 @@ class Step:
                 # frames = []
                 for arg in arguments[1]:
                     if int(arg[1:]) in object_dict and \
+                            isinstance(object_dict[int(arg[1:])], list) and \
+                            len(object_dict[int(arg[1:])]) == 1:
+                        shells.append(*object_dict[int(arg[1:])])
+                    elif int(arg[1:]) in object_dict and \
                             isinstance(object_dict[int(arg[1:])],
                                        volmdlr.faces.OpenShell3D):
                         shells.append(object_dict[int(arg[1:])])
@@ -401,7 +429,14 @@ class Step:
                                        volmdlr.Frame3D):
                         # TODO: Is there something to read here ?
                         pass
-                        # frames.append(object_dict[int(arg[1:])])
+                    elif int(arg[1:]) in object_dict and \
+                            isinstance(object_dict[int(arg[1:])],
+                                       volmdlr.edges.Arc3D):
+                        shells.append(object_dict[int(arg[1:])])
+                    elif int(arg[1:]) in object_dict and \
+                            isinstance(object_dict[int(arg[1:])],
+                                       volmdlr.edges.BSplineCurve3D):
+                        shells.append(object_dict[int(arg[1:])])
                     else:
                         pass
                 volmdlr_object = shells
@@ -472,6 +507,9 @@ class Step:
                                  or
                                  self.functions[node].name == "OPEN_SHELL"):
                 shell_nodes.append(node)
+            if node != '#0' and self.functions[node].name == 'SHAPE_REPRESENTATION':
+                # Really a shell node ?
+                shell_nodes.append(node)
 
         frame_mapped_shell_node = []
         for s_node in shell_nodes:
@@ -488,6 +526,7 @@ class Step:
         edges = list(
             nx.algorithms.traversal.breadth_first_search.bfs_edges(self.graph,
                                                                    "#0"))[::-1]
+        # self.draw_graph(self.graph, reduced=True)
         for edge_nb, edge in enumerate(edges):
             instanciate_id = edge[1]
             volmdlr_object = self.instanciate(
@@ -499,7 +538,10 @@ class Step:
 
         shells = []
         for node in shell_nodes_copy:
-            shells.append(object_dict[node])
+            if isinstance(object_dict[node], list):
+                shells.extend(object_dict[node])
+            else:
+                shells.append(object_dict[node])
 
         return volmdlr.core.VolumeModel(shells)
 
@@ -515,7 +557,7 @@ class Step:
                 # for i, arg in enumerate(arguments):
                 #     if type(arg) == str and arg[0] == '#':
                 #         arguments[i] = int(arg[1:])
-                print(arguments)
+                # print(arguments)
                 if arguments[1].count(',') == 2:
                     volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
                         arguments, object_dict)
@@ -616,6 +658,7 @@ STEP_TO_VOLMDLR = {
     'OPEN_SHELL': volmdlr.faces.OpenShell3D,
     #        'ORIENTED_CLOSED_SHELL': None,
     'CONNECTED_FACE_SET': volmdlr.faces.OpenShell3D,
+    'GEOMETRIC_CURVE_SET': None,
 
     # step subfunctions
     'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP': volmdlr.faces.OpenShell3D.translation,

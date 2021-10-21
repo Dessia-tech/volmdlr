@@ -3,6 +3,7 @@
 """
 
 """
+import scipy.optimize
 from packaging import version
 import math
 import numpy as npy
@@ -38,6 +39,22 @@ def standardize_knot_vector(knot_vector):
         return knot_vector
 
 
+def insert_knots_and_mutiplicity(knots, knot_mutiplicities, knot_to_add, num):
+    new_knots = []
+    new_knot_mutiplicities = []
+    i = 0
+    for i, knot in enumerate(knots):
+        if knot > knot_to_add:
+            new_knots.extend([knot_to_add])
+            new_knot_mutiplicities.append(num)
+            new_knots.extend(knots[i:])
+            new_knot_mutiplicities.extend(knot_mutiplicities[i:])
+            break
+        new_knots.append(knot)
+        new_knot_mutiplicities.append(knot_mutiplicities[i])
+    return new_knots, new_knot_mutiplicities, i
+
+
 class Edge(dc.DessiaObject):
     def __init__(self, start, end, name=''):
         self.start = start
@@ -70,78 +87,21 @@ class Edge(dc.DessiaObject):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
-        if object_dict[arguments[3]].__class__.__name__ == 'Line3D':
-            return LineSegment3D(object_dict[arguments[1]],
-                                 object_dict[arguments[2]], arguments[0][1:-1])
-
-        elif object_dict[arguments[3]].__class__.__name__ == 'Circle3D':
-            # We supposed that STEP file is reading on trigo way
-            circle = object_dict[arguments[3]]
-            p1 = object_dict[arguments[1]]
-            p2 = object_dict[arguments[2]]
-
-            if p1 == p2:
-                return FullArc3D(circle.frame.origin, p1, circle.frame.w)
-            else:
-                p1, p2 = p2, p1
-                circle.frame.normalize()
-                interior3d = volmdlr.core.clockwise_interior_from_circle3d(
-                    p1, p2, circle)
-                return volmdlr.edges.Arc3D(p1, interior3d, p2,
-                                           name=arguments[0][1:-1])
-
-        elif object_dict[arguments[3]].__class__ is volmdlr.wires.Ellipse3D:
-            majorax = object_dict[arguments[3]].major_axis
-            minorax = object_dict[arguments[3]].minor_axis
-            center = object_dict[arguments[3]].center
-            normal = object_dict[arguments[3]].normal
-            normal.normalize()
-            majordir = object_dict[arguments[3]].major_dir
-            majordir.normalize()
-            minordir = normal.cross(majordir)
-            minordir.normalize()
-            frame = volmdlr.Frame3D(center, majordir, minordir, normal)
-            p1 = object_dict[
-                arguments[1]]  # on part du principe que p1 suivant majordir
-            p2 = object_dict[arguments[2]]
-            # if p1 == p2:
-            #     angle = 5 * math.pi / 4
-            #     xtra = volmdlr.Point3D(majorax * math.cos(math.pi / 2),
-            #                            minorax * math.sin(math.pi / 2), 0)
-            #     extra = frame.old_coordinates(xtra)
-            # else:
-            #     extra = None
-            ## Positionnement des points dans leur frame
-            p1_new, p2_new = frame.new_coordinates(
-                p1), frame.new_coordinates(p2)
-            # Angle pour le p1
-            u1, u2 = p1_new.x / majorax, p1_new.y / minorax
-            theta1 = volmdlr.core.sin_cos_angle(u1, u2)
-            # Angle pour le p2
-            u3, u4 = p2_new.x / majorax, p2_new.y / minorax
-            theta2 = volmdlr.core.sin_cos_angle(u3, u4)
-
-            if theta1 > theta2:  # sens trigo
-                angle = math.pi + (theta1 + theta2) / 2
-            else:
-                angle = (theta1 + theta2) / 2
-
-            p_3 = volmdlr.Point3D(majorax * math.cos(angle),
-                                  minorax * math.sin(angle), 0)
-            p3 = frame.old_coordinates(p_3)
-
-            arcellipse = ArcEllipse3D(p1, p3, p2, center, majordir,
-                                      arguments[0][1:-1])
-
-            return arcellipse
-
-        elif object_dict[arguments[3]].__class__.__name__ == 'BSplineCurve3D':
-            # BSplineCurve3D à couper à gauche et à droite avec les points ci dessus ?
-            return object_dict[arguments[3]]
+        obj = object_dict[arguments[3]]
+        p1 = object_dict[arguments[1]]
+        p2 = object_dict[arguments[2]]
+        if obj.__class__.__name__ == 'Line3D':
+            return LineSegment3D(p1, p2, arguments[0][1:-1])
 
         else:
-            raise NotImplementedError(
-                'Unsupported: {}'.format(object_dict[arguments[3]]))
+            if hasattr(obj, 'trim'):
+                if obj.__class__.__name__ == 'Circle3D':
+                    p1, p2 = p2, p1
+                return obj.trim(p1, p2)
+
+            else:
+                raise NotImplementedError(
+                    'Unsupported: {}'.format(object_dict[arguments[3]]))
 
 
 class Line(dc.DessiaObject):
@@ -536,7 +496,7 @@ class BSplineCurve2D(Edge):
             bounds=(0., l)
         )
         if res.fun > 1e-4:
-            print(res.fun)
+            # print(res.fun)
             ax = self.plot()
             point2d.plot(ax=ax)
             best_point = self.point_at_abscissa(res.x)
@@ -648,6 +608,8 @@ class LineSegment2D(LineSegment):
     """
 
     def __init__(self, start, end, *, name=''):
+        if start == end:
+            raise NotImplementedError
         Edge.__init__(self, start, end, name=name)
 
     def __hash__(self):
@@ -1795,17 +1757,17 @@ class Line3D(Line):
     def rotation(self, center, axis, angle, copy=True):
         if copy:
             return Line3D(*[p.rotation(center, axis, angle, copy=True) for p in
-                            self.points])
+                            [self.point1, self.point2]])
         else:
-            for p in self.points:
+            for p in [self.point1, self.point2]:
                 p.rotation(center, axis, angle, copy=False)
 
     def translation(self, offset, copy=True):
         if copy:
-            return Line3D(
-                *[p.translation(offset, copy=True) for p in self.points])
+            return Line3D(*[p.translation(offset, copy=True) for p in
+                            [self.point1, self.point2]])
         else:
-            for p in self.points:
+            for p in [self.point1, self.point2]:
                 p.translation(offset, copy=False)
 
     def frame_mapping(self, frame, side, copy=True):
@@ -1814,18 +1776,25 @@ class Line3D(Line):
         """
         if side == 'old':
             if copy:
-                return Line3D(*[frame.old_coordinates(p) for p in self.points])
+                return Line3D(*[frame.old_coordinates(p) for p in
+                                [self.point1, self.point2]])
             else:
-                for p in self.points:
-                    self.points = [frame.old_coordinates(p) for p in
-                                   self.points]
+                self.point1 = frame.old_coordinates(self.point1)
+                self.point2 = frame.old_coordinates(self.point2)
+                self.bounding_box = self._bounding_box()
         if side == 'new':
             if copy:
-                return Line3D(*[frame.new_coordinates(p) for p in self.points])
+                return Line3D(*[frame.new_coordinates(p) for p in
+                                [self.point1, self.point2]])
             else:
-                for p in self.points:
-                    self.points = [frame.new_coordinates(p) for p in
-                                   self.points]
+                self.point1 = frame.new_coordinates(self.point1)
+                self.point2 = frame.new_coordinates(self.point2)
+                self.bounding_box = self._bounding_box()
+
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+        if not self.point_belongs(point1) or not self.point_belongs(point2):
+            raise ValueError('Point not on curve')
+        return Line3D(point1, point2)
 
     def copy(self):
         return Line3D(*[p.copy() for p in self.points])
@@ -2538,8 +2507,10 @@ class LineSegment3D(LineSegment):
 class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
     _non_serializable_attributes = ['curve']
 
-    def __init__(self, degree, control_points, knot_multiplicities, knots,
-                 weights=None, periodic=False, name=''):
+    def __init__(self, degree: int, control_points: List[volmdlr.Point3D],
+                 knot_multiplicities: List[int], knots: List[float],
+                 weights: List[float] = None, periodic: bool = False,
+                 name: str = ''):
         volmdlr.core.Primitive3D.__init__(self, name=name)
         self.control_points = control_points
         self.degree = degree
@@ -2570,8 +2541,15 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         curve_points = curve.evalpts
 
         self.curve = curve
+        self.bounding_box = self._bounding_box()
         self.points = [volmdlr.Point3D(p[0], p[1], p[2]) for p in curve_points]
         Edge.__init__(self, start=self.points[0], end=self.points[-1])
+
+    def _bounding_box(self):
+        bbox = self.curve.bbox
+        return volmdlr.core.BoundingBox(bbox[0][0], bbox[1][0],
+                                        bbox[0][1], bbox[1][1],
+                                        bbox[0][2], bbox[1][2])
 
     def reverse(self):
         return self.__class__(degree=self.degree,
@@ -2591,6 +2569,50 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         #     length += (self.points[k] - self.points[k + 1]).norm()
         # return length
         return length_curve(self.curve)
+
+    def look_up_table(self, resolution=20, start_parameter: float = 0,
+                      end_parameter: float = 1):
+        """
+        Creates a table of equivalence between the parameter t (evaluation
+        of the BSplineCruve) and the cumulative distance.
+        """
+        points3d = []
+        ts = [start_parameter + i/resolution * (end_parameter - start_parameter)
+              for i in range(resolution+1)]
+        points = self.curve.evaluate_list(ts)
+        for pt in points:
+            points3d.append(volmdlr.Point3D(*pt))
+        linesegments = [volmdlr.edges.LineSegment3D(p1, p2)
+                        for p1, p2 in zip(points3d[:-1], points3d[1:])]
+        distances = [0]
+        for lineseg in linesegments:
+            distances.append(lineseg.length() + distances[-1])
+
+        return [(ts[i], distances[i]) for i in range(resolution+1)]
+
+    def point_at_abscissa(self, curvilinear_abscissa, resolution=1000):
+        """
+        Returns the vm.Point3D at a given curvilinear abscissa.
+        This is an approximation. Resolution parameter can increased
+        for more accurate result.
+        """
+        if curvilinear_abscissa == 0:
+            return self.start
+        elif curvilinear_abscissa == self.length():
+            return self.end
+        lut = self.look_up_table(resolution=resolution)
+        if 0 < curvilinear_abscissa < self.length():
+            for i, (t, dist) in enumerate(lut):
+                if curvilinear_abscissa < dist:
+                    t1 = lut[i-1][0]
+                    t2 = t
+                    # dist1 = lut[i-1][1]
+                    # dist2 = dist
+                    return volmdlr.Point3D(
+                        *self.curve.evaluate_single((t1+t2)/2))
+        else:
+            raise ValueError('Curvilinear abscissa is bigger than length,'
+                             ' or negative')
 
     def normal(self, position: float = 0.0):
         point, normal = operations.normal(self.curve, position, normalize=True)
@@ -2612,23 +2634,81 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         binormal = volmdlr.Point3D(binormal[0], binormal[1], binormal[2])
         return binormal
 
-    def point_at_abscissa(self, curvilinear_abscissa):
-        unit_abscissa = curvilinear_abscissa / self.length()
-        return volmdlr.Point3D(*self.curve.evaluate_single(unit_abscissa))
-        # # copy paste from wire3D
-        # length = 0.
-        # primitives = []
-        # for k in range(0, len(self.points) - 1):
-        #     primitives.append(
-        #         LineSegment3D(self.points[k], self.points[k + 1]))
-        # for primitive in primitives:
-        #     primitive_length = primitive.length()
-        #     if length + primitive_length >= curvilinear_abscissa:
-        #         return primitive.point_at_abscissa(
-        #             curvilinear_abscissa - length)
-        #     length += primitive_length
-        # # Outside of length
-        # raise ValueError
+    def point3d_to_parameter(self, point: volmdlr.Point3D):
+        """
+        Search for the value of the normalized evaluation parameter t
+        (between 0 and 1) that would return the given point when the
+        BSplineCurve3D is evaluated at the t value.
+        """
+        def f(param):
+            p3d = volmdlr.Point3D(*self.curve.evaluate_single(param))
+            return point.point_distance(p3d)
+        res = scipy.optimize.minimize(fun=f, x0=(0.5), bounds=[(0, 1)],
+                                      tol=1e-9)
+        return res.x[0]
+
+        # found = False
+        # start_norm_eva = 0
+        # end_parameter = 1
+        # max_count = 100
+        # count = 0
+        # t_res = None
+        #
+        # if point == self.start:
+        #     return 0
+        # elif point == self.end:
+        #     return 1
+        #
+        # while not found and count < max_count:
+        #
+        #     ts = [start_norm_eva + i / resolution * (
+        #                 end_parameter - start_norm_eva)
+        #           for i in range(resolution + 1)]
+        #
+        #     target_distances = []
+        #     for t in ts:
+        #         curve_point = volmdlr.Point3D(*self.curve.evaluate_single(t))
+        #         if curve_point == point:
+        #             found = True
+        #             t_res = t
+        #
+        #             break
+        #         else:
+        #             target_distances.append(curve_point.point_distance(point))
+        #
+        #     if found:
+        #         break
+        #
+        #     min_i = 0
+        #     min_distance = target_distances[0]
+        #     for i, target_distance in enumerate(target_distances[1:]):
+        #         if target_distance < min_distance:
+        #             min_distance = target_distance
+        #             min_i = i
+        #
+        #     if 0 < min_i < len(target_distances):
+        #         start_norm_eva = ts[min_i-1]
+        #         end_parameter = ts[min_i+1]
+        #     elif min_i == 0:
+        #         start_norm_eva = 0
+        #         end_parameter = ts[1]
+        #     else:
+        #         start_norm_eva = ts[-2]
+        #         end_parameter = 1
+        #
+        #     count += 1
+        #
+        # if t_res is None:
+        #     ax = self.plot()
+        #     point.plot(ax=ax, color='r')
+        #     print(point.point_distance(self.start), point.point_distance(self.end))
+        #     raise ValueError('Point3D not found on BSplineCurve3D')
+        #
+        # return t_res
+
+    def point_on_curve(self, point: volmdlr.Point3D):
+        # TODO: complete ?
+        pass
 
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive{}'.format(ip)
@@ -2761,6 +2841,99 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             self.curve = new_BSplineCurve3D.curve
             self.points = new_BSplineCurve3D.points
 
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+        if (point1 == self.start and point2 == self.end) \
+                or (point1 == self.end and point2 == self.start):
+            return self
+
+        elif point1 == self.start and point2 != self.end:
+            parameter2 = self.point3d_to_parameter(point2)
+            return self.cut_after(parameter2)
+
+        elif point2 == self.start and point1 != self.end:
+            parameter1 = self.point3d_to_parameter(point1)
+            return self.cut_after(parameter1)
+
+        elif point1 != self.start and point2 == self.end:
+            parameter1 = self.point3d_to_parameter(point1)
+            return self.cut_before(parameter1)
+
+        elif point2 != self.start and point1 == self.end:
+            parameter2 = self.point3d_to_parameter(point2)
+            return self.cut_before(parameter2)
+
+        parameter1 = self.point3d_to_parameter(point1)
+        parameter2 = self.point3d_to_parameter(point2)
+        if parameter1 is None or parameter2 is None:
+            raise ValueError('Point not on BSplineCurve for trim method')
+        return self.trim_between_evaluations(parameter1, parameter2)
+
+    def trim_between_evaluations(self, parameter1: float, parameter2: float):
+        parameter1, parameter2 = min([parameter1, parameter2]), \
+                               max([parameter1, parameter2])
+
+        if math.isclose(parameter1, 0, abs_tol=1e-7) \
+                and math.isclose(parameter2, 1, abs_tol=1e-7):
+            return self
+        elif math.isclose(parameter1, 0, abs_tol=1e-7):
+            return self.cut_after(parameter2)
+        elif math.isclose(parameter2, 1, abs_tol=1e-7):
+            return self.cut_before(parameter1)
+
+        # Cut before
+        bspline_curve = self.insert_knot(parameter1, num=self.degree)
+        if bspline_curve.weights is not None:
+            raise NotImplementedError
+
+        # Cut after
+        bspline_curve = bspline_curve.insert_knot(parameter2, num=self.degree)
+        if bspline_curve.weights is not None:
+            raise NotImplementedError
+
+        new_ctrlpts = bspline_curve.control_points[bspline_curve.degree:
+                                                   -bspline_curve.degree]
+        new_multiplicities = bspline_curve.knot_multiplicities[1:-1]
+        new_multiplicities[-1] += 1
+        new_multiplicities[0] += 1
+        new_knots = bspline_curve.knots[1:-1]
+        new_knots = standardize_knot_vector(new_knots)
+
+        return BSplineCurve3D(degree=bspline_curve.degree,
+                              control_points=new_ctrlpts,
+                              knot_multiplicities=new_multiplicities,
+                              knots=new_knots,
+                              weights=None,
+                              periodic=bspline_curve.periodic,
+                              name=bspline_curve.name)
+
+    def cut_before(self, parameter: float):
+        # if parameter == 0:
+        if math.isclose(parameter, 0, abs_tol=1e-6):
+            return self
+        # elif parameter == 1:
+        elif math.isclose(parameter, 1, abs_tol=1e-6):
+            raise ValueError('Nothing will be left from the BSplineCurve3D')
+        curves = operations.split_curve(self.curve, parameter)
+        return self.from_geomdl_curve(curves[1])
+
+    def cut_after(self, parameter: float):
+        # if parameter == 0.:
+        if math.isclose(parameter, 0, abs_tol=1e-6):
+            raise ValueError('Nothing will be left from the BSplineCurve3D')
+        # elif parameter == 1.:
+        elif math.isclose(parameter, 1, abs_tol=1e-6):
+            return self
+        curves = operations.split_curve(self.curve, parameter)
+        return self.from_geomdl_curve(curves[0])
+
+    def insert_knot(self, knot: float, num: int = 1):
+        """
+        Returns a new BSplineCurve3D
+        """
+        curve_copy = self.curve.__deepcopy__({})
+        modified_curve = operations.insert_knot(curve_copy, [knot], num=[num])
+        return self.from_geomdl_curve(modified_curve)
+
     # Copy paste du LineSegment3D
     def plot(self, ax=None, edge_ends=False, color='k', alpha=1,
              edge_direction=False):
@@ -2779,9 +2952,9 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         return ax
 
     def to_2d(self, plane_origin, x1, x2):
-        control_points2D = [p.to_2d(plane_origin, x1, x2) for p in
+        control_points2d = [p.to_2d(plane_origin, x1, x2) for p in
                             self.control_points]
-        return BSplineCurve2D(self.degree, control_points2D,
+        return BSplineCurve2D(self.degree, control_points2d,
                               self.knot_multiplicities, self.knots,
                               self.weights, self.periodic, self.name)
 
@@ -2855,12 +3028,19 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
     def from_geomdl_curve(cls, curve):
         knots = list(sorted(set(curve.knotvector)))
         knot_multiplicities = [curve.knotvector.count(k) for k in knots]
-        return BSplineCurve3D(degree=curve.degree,
-                              control_points=curve.ctrlpts,
-                              knots=knots,
-                              knot_multiplicities=knot_multiplicities
-                              )
+        return cls(degree=curve.degree,
+                   control_points=curve.ctrlpts,
+                   knots=knots,
+                   knot_multiplicities=knot_multiplicities)
 
+    def global_minimum_curvature(self, nb_eval: int = 21):
+        check = [i/(nb_eval-1) for i in range(nb_eval)]
+        radius = []
+        for u in check :
+            radius.append(self.minimum_curvature(u))
+        return radius
+
+      
 class BezierCurve3D(BSplineCurve3D):
 
     def __init__(self, degree: int, control_points: List[volmdlr.Point3D],
@@ -2887,6 +3067,18 @@ class Arc3D(Edge):
         self.interior = interior
         Edge.__init__(self, start=start, end=end, name=name)
         self.setup_arc(start, interior, end, name=name)
+        self.bounding_box = self._bounding_box()
+
+    def _bounding_box(self):
+        # TODO: implement exact calculation
+        points = self.polygon_points()
+        xmin = min([p.x for p in points])
+        xmax = max([p.x for p in points])
+        ymin = min([p.y for p in points])
+        ymax = max([p.y for p in points])
+        zmin = min([p.z for p in points])
+        zmax = max([p.z for p in points])
+        return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     @classmethod
     def from_angle(cls, start: volmdlr.Point3D, angle: float,
@@ -3713,6 +3905,14 @@ class ArcEllipse3D(Edge):
     def length(self):
         return self.angle * math.sqrt(
             (self.Gradius ** 2 + self.Sradius ** 2) / 2)
+
+    def reverse(self):
+        return self.__class__(self.end.copy(),
+                              self.interior.copy(),
+                              self.start.copy(),
+                              self.center.copy(),
+                              self.major_dir.copy(),
+                              self.name)
 
     def plot(self, ax=None):
         if ax is None:

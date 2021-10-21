@@ -3147,8 +3147,8 @@ class Contour3D(Contour, Wire3D):
                 return cls(raw_edges, name=name)
 
         # Making things right for first 2 primitives
-        if (raw_edges[0].end).point_distance(raw_edges[1].start) < 1e-4: 
-            edges = [raw_edges[0], raw_edges[1]]            
+        if (raw_edges[0].end).point_distance(raw_edges[1].start) < 1e-4:
+            edges = [raw_edges[0], raw_edges[1]]
         elif (raw_edges[0].start).point_distance(raw_edges[1].start) < 1e-4:
             edges = [raw_edges[0].reverse(), raw_edges[1]]    
         elif (raw_edges[0].end).point_distance(raw_edges[1].end) < 1e-4:
@@ -3156,20 +3156,40 @@ class Contour3D(Contour, Wire3D):
         elif (raw_edges[0].start).point_distance(raw_edges[1].end) < 1e-4:
             edges = [raw_edges[0].reverse(), raw_edges[1].reverse()]  
         else:
+            ax = raw_edges[0].plot()
+            raw_edges[1].plot(ax=ax)
+            deltax1 = abs(raw_edges[0].start.x - raw_edges[1].end.x)
+            deltax2 = abs(raw_edges[0].end.x - raw_edges[1].end.x)
+            deltay1 = abs(raw_edges[0].start.y - raw_edges[1].end.y)
+            deltay2 = abs(raw_edges[0].end.y - raw_edges[1].end.y)
+            deltaz1 = abs(raw_edges[0].start.z - raw_edges[1].end.z)
+            deltaz2 = abs(raw_edges[0].end.z - raw_edges[1].end.z)
             raise NotImplementedError(
-                'First 2 edges of contour not follwing each other')
+                'First 2 edges of contour not follwing each other',
+                'delta = {}, {}, {}, {}, {}, {}'.format(deltax1, deltax2,
+                                                        deltay1, deltay2,
+                                                        deltaz1, deltaz2))
 
         last_edge = edges[-1]
         for raw_edge in raw_edges[2:]:
-            if (raw_edge.start).point_distance(last_edge.end) < 1e-4: 
+            if (raw_edge.start).point_distance(last_edge.end) < 1e-4:
                 last_edge = raw_edge
             elif (raw_edge.end).point_distance(last_edge.end) < 1e-4:
                 last_edge = raw_edge.reverse()
             else:
                 ax = last_edge.plot(color='b')
                 ax = raw_edge.plot(ax=ax, color='r')
+                deltax1 = abs(raw_edge.start.x - last_edge.end.x)
+                deltax2 = abs(raw_edge.end.x - last_edge.end.x)
+                deltay1 = abs(raw_edge.start.y - last_edge.end.y)
+                deltay2 = abs(raw_edge.end.y - last_edge.end.y)
+                deltaz1 = abs(raw_edge.start.z - last_edge.end.z)
+                deltaz2 = abs(raw_edge.end.z - last_edge.end.z)
                 raise NotImplementedError(
-                    'Edges of contour not follwing each other')
+                    'Edges of contour not follwing each other',
+                'delta = {}, {}, {}, {}, {}, {}'.format(deltax1, deltax2,
+                                                        deltay1, deltay2,
+                                                        deltaz1, deltaz2))
 
             edges.append(last_edge)
         return cls(edges, name=name)
@@ -3595,6 +3615,29 @@ class Circle3D(Contour3D):
             R, self.radius)
         return [surface.rectangular_cut(0, angle, 0, volmdlr.TWO_PI)]
 
+    def point_on_circle(self, point: volmdlr.Point3D):
+        distance = point.point_distance(self.center)
+        vec = volmdlr.Vector3D(*point-self.center)
+        dot = self.normal.dot(vec)
+        if math.isclose(distance, self.radius, abs_tol=1e-6)\
+                and math.isclose(dot, 0, abs_tol=5e-6):
+            return True
+        return False
+
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+        if not self.point_on_circle(point1)\
+                or not self.point_on_circle(point2):
+            ax = self.plot()
+            point1.plot(ax=ax, color='r')
+            point2.plot(ax=ax, color='b')
+            raise ValueError('Point not on circle for trim method')
+        if point1 == point2:
+            return volmdlr.edges.FullArc3D(self.frame.origin, point1,
+                                           self.frame.w)
+        interior = volmdlr.core.clockwise_interior_from_circle3d(
+            point1, point2, self)
+        return volmdlr.edges.Arc3D(point1, interior, point2)
+
 
 class Ellipse3D(Contour3D):
     """
@@ -3631,6 +3674,32 @@ class Ellipse3D(Contour3D):
                 self.normal) for teta in npy.linspace(0, volmdlr.TWO_PI,
                                                       resolution + 1)][:-1]
         return tessellation_points_3d
+
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+        minor_dir = self.normal.cross(self.major_dir)
+        frame = volmdlr.Frame3D(self.center, self.major_dir,
+                                minor_dir, self.normal)
+        # Positionnement des points dans leur frame
+        p1_new, p2_new = frame.new_coordinates(
+            point1), frame.new_coordinates(point2)
+        # Angle pour le p1
+        u1, u2 = p1_new.x / self.major_axis, p1_new.y / self.minor_axis
+        theta1 = volmdlr.core.sin_cos_angle(u1, u2)
+        # Angle pour le p2
+        u3, u4 = p2_new.x / self.major_axis, p2_new.y / self.minor_axis
+        theta2 = volmdlr.core.sin_cos_angle(u3, u4)
+
+        if theta1 > theta2:  # sens trigo
+            angle = math.pi + (theta1 + theta2) / 2
+        else:
+            angle = (theta1 + theta2) / 2
+
+        p_3 = volmdlr.Point3D(self.major_axis * math.cos(angle),
+                              self.minor_axis * math.sin(angle), 0)
+        p3 = frame.old_coordinates(p_3)
+
+        return volmdlr.edges.ArcEllipse3D(point1, p3, point2, self.center,
+                                          self.major_dir)
 
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive{}'.format(ip)
