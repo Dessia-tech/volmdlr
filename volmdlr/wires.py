@@ -820,20 +820,26 @@ class Contour:
                 finished = True
         return list_contours
 
-
     def discretized_primitives(self, n: float):
+        # edges = []
+        # for primitive in self.primitives:
+        #     points = primitive.discretise(n)
+        #     print(primitive.__dict__)
+        #     print(n, points)
+        #     line_segment = primitive
+        #     for p in points[1:-1]:
+        #         r = line_segment.split(p)
+        #         edges.append(r[0])
+        #         line_segment = r[1]
+        #         if p == points[-2]:
+        #             edges.append(r[1])
+
         edges = []
-        
         for primitive in self.primitives:
             points = primitive.discretise(n)
-            line_segment=primitive
-            for p in points[1:-1]:
-                r = line_segment.split(p)
-                edges.append(r[0])
-                line_segment = r[1]
-                if p == points[-2]:
-                    edges.append(r[1])
-            
+            for p1, p2 in zip(points[:-1], points[1:]):
+                edges.append(volmdlr.edges.LineSegment2D(p1, p2))
+
         return edges
     
     def merge_with(self, contour2d):
@@ -1368,14 +1374,19 @@ class Contour2D(Contour, Wire2D):
         """
         Cut a contours
         """
-        if len(self.primitives) <=4:
-            self = self.discretized_contour(2)
-        
+        # if len(self.primitives) <=4:
+        #     self = self.discretized_contour(2)
+        ax = self.plot()
+        line.plot(ax=ax, color='r')
         # TODO: there are some copy/paste in this function but refactoring is not trivial
         intersections = self.line_crossings(line)
         n_inter = len(intersections)
         if not intersections:
             return [self]
+
+        for inter in intersections:
+            print(inter)
+            inter[0].plot(ax=ax)
 
         if n_inter < 2:
             return [self]
@@ -1932,31 +1943,25 @@ class Contour2D(Contour, Wire2D):
         
     #     else:
     #         raise NotImplementedError('Not Implemented Yet')
-            
-        
-        
+
     def discretized_contour(self, n: float):
-            
-        contour = volmdlr.wires.Contour2D((self.discretized_primitives(n))) 
-        
+        contour = volmdlr.wires.Contour2D((self.discretized_primitives(n)))
         return contour.order_contour()
     
     @classmethod
     def from_bounding_rectangle(cls, xmin, xmax, ymin, ymax):
-        
-        edge0=volmdlr.edges.LineSegment2D(volmdlr.Point2D(xmin, ymin), volmdlr.Point2D(xmax, ymin))
-        edge1=volmdlr.edges.LineSegment2D(volmdlr.Point2D(xmax, ymin), volmdlr.Point2D(xmax, ymax))
-        edge2=volmdlr.edges.LineSegment2D(volmdlr.Point2D(xmax, ymax), volmdlr.Point2D(xmin, ymax))
-        edge3=volmdlr.edges.LineSegment2D(volmdlr.Point2D(xmin, ymax), volmdlr.Point2D(xmin, ymin))
-        
+        edge0 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(xmin, ymin),
+                                            volmdlr.Point2D(xmax, ymin))
+        edge1 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(xmax, ymin),
+                                            volmdlr.Point2D(xmax, ymax))
+        edge2 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(xmax, ymax),
+                                            volmdlr.Point2D(xmin, ymax))
+        edge3 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(xmin, ymax),
+                                            volmdlr.Point2D(xmin, ymin))
         edges = [edge0, edge1, edge2, edge3]
-        
         return volmdlr.wires.Contour2D(edges)
     
 
-    
-
-    
 class ClosedPolygon:
     
     def length(self):

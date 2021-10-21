@@ -2677,7 +2677,7 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             weight_data = None
 
         # FORCING CLOSED_CURVE = FALSE:
-        closed_curve = False
+        # closed_curve = False
         return cls(degree, points, knot_multiplicities, knots, weight_data,
                    closed_curve, name)
 

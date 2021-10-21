@@ -556,12 +556,14 @@ class Surface3D(dc.DessiaObject):
             if hasattr(self, method_name):
                 primitives = getattr(self, method_name)(primitive3d)
                 if last_primitive:
-                    delta_x1 = abs(
-                        primitives[0].start.x - last_primitive.end.x)
-                    delta_x2 = abs(primitives[-1].end.x - last_primitive.end.x)
-                    delta_y1 = abs(
-                        primitives[0].start.y - last_primitive.end.y)
-                    delta_y2 = abs(primitives[0].end.y - last_primitive.end.y)
+                    delta_x1 = abs(primitives[0].start.x
+                                   - last_primitive.end.x)
+                    delta_x2 = abs(primitives[-1].end.x
+                                   - last_primitive.end.x)
+                    delta_y1 = abs(primitives[0].start.y
+                                   - last_primitive.end.y)
+                    delta_y2 = abs(primitives[-1].end.y
+                                   - last_primitive.end.y)
                     if self.x_periodicity:
                         delta_x1 = delta_x1 % self.x_periodicity
                         delta_x2 = delta_x2 % self.x_periodicity
@@ -595,7 +597,8 @@ class Surface3D(dc.DessiaObject):
                         primitive3d.plot(ax=ax2, color='r')
                         # last_primitive3d.plot(ax=ax2, color='b')
                         ax = last_primitive.plot(color='b', plot_points=True)
-                        # primitives[0].plot(ax=ax ,color='r', plot_points=True)
+                        # primitives[0].plot(ax=ax, color='r', plot_points=True)
+                        # primitives[-1].plot(ax=ax, color='r', plot_points=True)
                         for p in primitives:
                             p.plot(ax=ax, color='r', plot_points=True)
                         raise ValueError(
@@ -2020,44 +2023,83 @@ class BSplineSurface3D(Surface3D):
         #     for yi in x:
         #         x_init.append((xi,yi))
 
-        cost=[]
-        sol=[]
-    
+        cost = []
+        sol = []
+        x0s = [(0.1, 0.1), (0.1, 0.9), (0.9, 0.1), (0.9, 0.9), (0.5, 0.5)]
         # for x0 in x_init: 
-        for x0 in [(0, 0), (0, 1), (1, 0), (1, 1), (0.5, 0.5)]:
+        for x0 in x0s:
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
             cost.append(z.cost)
             sol.append(z.x)
-            
-        solution=sol[cost.index(min(cost))]
+
+            res = scp.optimize.minimize(f, x0=x0, bounds=[(0, 1), (0, 1)],
+                                        tol=1e-7)
+            cost.append(res.fun)
+            sol.append(res.x)
+
+        solution = sol[cost.index(min(cost))]
             
         return (volmdlr.Point2D(solution[0], solution[1]))
-        
-        
-        
-
 
     def linesegment2d_to_3d(self, linesegment2d):
         # TODO: this is a non exact method!
         l = linesegment2d.length()        
-        points = [self.point2d_to_3d(linesegment2d.point_at_abscissa(i * l/ 10.)) for i in range(11)]
-        return [vme.LineSegment3D(p1, p2) \
+        points = [self.point2d_to_3d(linesegment2d.point_at_abscissa(
+            i * l/ 10.)) for i in range(11)]
+        return [vme.LineSegment3D(p1, p2)
                 for p1, p2 in zip(points[:-1], points[1:])]
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
-        # TODO: enhance this, it is a non exact  method!
-        l = bspline_curve3d.length()
-        points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(i / 10 * l)) \
-                  for i in range(11)]
-        return [vme.LineSegment2D(p1, p2) \
-                for p1, p2 in zip(points[:-1], points[1:])]
+        # TODO: enhance this, it is a non exact method!
+        # TODO: bsplinecurve can be periodic but not around the bsplinesurface
+        ax = self.plot()
+        bspline_curve3d.plot(ax=ax, color='r')
+        print(self.x_periodicity, self.y_periodicity)
+        bsc_linesegment = vme.LineSegment3D(bspline_curve3d.points[0],
+                                            bspline_curve3d.points[-1])
+        flag = True
+        for pt in bspline_curve3d.points:
+            if not bsc_linesegment.point_belongs(pt):
+                flag = False
+                break
+
+        if self.x_periodicity and not self.y_periodicity \
+                and bspline_curve3d.periodic:
+            p1 = self.point3d_to_2d(bspline_curve3d.points[0])
+            linesegments = [vme.LineSegment2D(volmdlr.Point2D(0, p1.y),
+                                              volmdlr.Point2D(1, p1.y))]
+            # return [vme.LineSegment2D(p1, p1 + volmdlr.Y2D)]
+        elif self.y_periodicity and not self.x_periodicity \
+                and bspline_curve3d.periodic:
+            p1 = self.point3d_to_2d(bspline_curve3d.points[0])
+            linesegments = [vme.LineSegment2D(volmdlr.Point2D(p1.x, 0),
+                                              volmdlr.Point2D(p1.x, 1))]
+            # return [vme.LineSegment2D(p1, p1 + volmdlr.X2D)]
+        elif self.x_periodicity and self.y_periodicity \
+                and bspline_curve3d.periodic:
+            raise NotImplementedError
+        elif flag:
+            print('*** AH OUI ***')
+            p1 = self.point3d_to_2d(bspline_curve3d.points[0])
+            p2 = self.point3d_to_2d(bspline_curve3d.points[-1])
+            linesegments = [vme.LineSegment2D(p1, p2)]
+        else:
+            l = bspline_curve3d.length()
+            points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(
+                i / 10 * l)) for i in range(11)]
+            linesegments = [vme.LineSegment2D(p1, p2)
+                            for p1, p2 in zip(points[:-1], points[1:])]
+        ax = linesegments[0].plot(plot_points=True)
+        for l in linesegments[1:]:
+            l.plot(ax=ax, plot_points=True)
+        return linesegments
 
     def arc3d_to_2d(self, arc3d):
         number_points = math.ceil(arc3d.angle * 7) + 1  # 7 points per radian
         l = arc3d.length()
-        points = [self.point3d_to_2d(arc3d.point_at_abscissa(i * l / (number_points - 1))) \
-                  for i in range(number_points)]
-        return [vme.LineSegment2D(p1, p2) \
+        points = [self.point3d_to_2d(arc3d.point_at_abscissa(
+            i * l / (number_points - 1))) for i in range(number_points)]
+        return [vme.LineSegment2D(p1, p2)
                 for p1, p2 in zip(points[:-1], points[1:])]
 
     def _bounding_box(self):
@@ -2369,9 +2411,17 @@ class BSplineSurface3D(Surface3D):
         else:
             weight_data = None
 
-        return cls(degree_u, degree_v, control_points, nb_u, nb_v,
-                   u_multiplicities, v_multiplicities, u_knots, v_knots,
-                   weight_data, name)
+        bsplinesurface = cls(degree_u, degree_v, control_points, nb_u, nb_v,
+                             u_multiplicities, v_multiplicities, u_knots,
+                             v_knots, weight_data, name)
+        if u_closed:
+            bsplinesurface.x_periodicity = 1
+        if v_closed:
+            bsplinesurface.y_periodicity = 1
+        return bsplinesurface
+        # return cls(degree_u, degree_v, control_points, nb_u, nb_v,
+        #            u_multiplicities, v_multiplicities, u_knots, v_knots,
+        #            weight_data, name)
 
 
     def grid3d(self, points_x, points_y, xmin, xmax, ymin, ymax):
