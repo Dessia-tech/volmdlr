@@ -1963,9 +1963,8 @@ class BSplineSurface3D(Surface3D):
         cost = []
         sol = []
         x0s = [(0.1, 0.1), (0.1, 0.9), (0.9, 0.1), (0.9, 0.9), (0.5, 0.5)]
-        # for x0 in x_init: 
         for x0 in x0s:
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
+            z = scp.optimize.least_squares(f, x0=x0, bounds=([0, 1]))
             cost.append(z.cost)
             sol.append(z.x)
 
@@ -1975,8 +1974,8 @@ class BSplineSurface3D(Surface3D):
             sol.append(res.x)
 
         solution = sol[cost.index(min(cost))]
-            
-        return (volmdlr.Point2D(solution[0], solution[1]))
+
+        return (volmdlr.Point2D(*solution))
 
     def linesegment2d_to_3d(self, linesegment2d):
         # TODO: this is a non exact method!
@@ -1989,9 +1988,6 @@ class BSplineSurface3D(Surface3D):
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         # TODO: enhance this, it is a non exact method!
         # TODO: bsplinecurve can be periodic but not around the bsplinesurface
-        ax = self.plot()
-        bspline_curve3d.plot(ax=ax, color='r')
-        print(self.x_periodicity, self.y_periodicity)
         bsc_linesegment = vme.LineSegment3D(bspline_curve3d.points[0],
                                             bspline_curve3d.points[-1])
         flag = True
@@ -2003,20 +1999,29 @@ class BSplineSurface3D(Surface3D):
         if self.x_periodicity and not self.y_periodicity \
                 and bspline_curve3d.periodic:
             p1 = self.point3d_to_2d(bspline_curve3d.points[0])
+            p2 = self.point3d_to_2d(bspline_curve3d.points[-1])
+
+            # Focing periodicity
+            self.x_periodicity = p2.x
+
             linesegments = [vme.LineSegment2D(volmdlr.Point2D(0, p1.y),
-                                              volmdlr.Point2D(1, p1.y))]
+                                              volmdlr.Point2D(p2.x, p1.y))]
             # return [vme.LineSegment2D(p1, p1 + volmdlr.Y2D)]
         elif self.y_periodicity and not self.x_periodicity \
                 and bspline_curve3d.periodic:
             p1 = self.point3d_to_2d(bspline_curve3d.points[0])
+            p2 = self.point3d_to_2d(bspline_curve3d.points[-1])
+
+            # Focing periodicity
+            self.x_periodicity = p2.y
+
             linesegments = [vme.LineSegment2D(volmdlr.Point2D(p1.x, 0),
-                                              volmdlr.Point2D(p1.x, 1))]
+                                              volmdlr.Point2D(p1.x, p2.y))]
             # return [vme.LineSegment2D(p1, p1 + volmdlr.X2D)]
         elif self.x_periodicity and self.y_periodicity \
                 and bspline_curve3d.periodic:
             raise NotImplementedError
         elif flag:
-            print('*** AH OUI ***')
             p1 = self.point3d_to_2d(bspline_curve3d.points[0])
             p2 = self.point3d_to_2d(bspline_curve3d.points[-1])
             linesegments = [vme.LineSegment2D(p1, p2)]
@@ -2024,7 +2029,7 @@ class BSplineSurface3D(Surface3D):
             lth = bspline_curve3d.length()
             if lth > 1e-5:
                 points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(
-                    i / 10 * l)) for i in range(11)]
+                    i / 10 * lth)) for i in range(11)]
                 linesegments = [vme.LineSegment2D(p1, p2)
                                 for p1, p2 in zip(points[:-1], points[1:])]
             elif 1e-6 < lth <= 1e-5:
@@ -2035,9 +2040,6 @@ class BSplineSurface3D(Surface3D):
                 print('BSplineCruve3D skipped because it is too small')
                 linesegments = None
 
-        ax = linesegments[0].plot(plot_points=True)
-        for l in linesegments[1:]:
-            l.plot(ax=ax, plot_points=True)
         return linesegments
 
     def arc3d_to_2d(self, arc3d):

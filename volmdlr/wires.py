@@ -1376,17 +1376,11 @@ class Contour2D(Contour, Wire2D):
         """
         # if len(self.primitives) <=4:
         #     self = self.discretized_contour(2)
-        ax = self.plot()
-        line.plot(ax=ax, color='r')
         # TODO: there are some copy/paste in this function but refactoring is not trivial
         intersections = self.line_crossings(line)
         n_inter = len(intersections)
         if not intersections:
             return [self]
-
-        for inter in intersections:
-            print(inter)
-            inter[0].plot(ax=ax)
 
         if n_inter < 2:
             return [self]
