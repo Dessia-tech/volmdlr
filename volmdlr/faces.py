@@ -662,6 +662,10 @@ class Surface3D(dc.DessiaObject):
                     'Class {} does not implement {}'.format(
                         self.__class__.__name__,
                         method_name))
+
+        print(primitives2d)
+        volmdlr.wires.Contour2D(primitives2d).plot(plot_points=True)
+
         return volmdlr.wires.Contour2D(primitives2d)
 
     def contour2d_to_3d(self, contour2d):
@@ -2013,7 +2017,7 @@ class BSplineSurface3D(Surface3D):
             p2 = self.point3d_to_2d(bspline_curve3d.points[-1])
 
             # Focing periodicity
-            self.x_periodicity = p2.y
+            self.y_periodicity = p2.y
 
             linesegments = [vme.LineSegment2D(volmdlr.Point2D(p1.x, 0),
                                               volmdlr.Point2D(p1.x, p2.y))]
