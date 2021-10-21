@@ -3407,7 +3407,7 @@ class PlaneFace3D(Face3D):
             else:
                 return p1.point_distance(p2)
 
-        if other_face.__class__ is PlaneFace3D:
+        if other_face.__class__ is PlaneFace3D or other_face.__class__ is Triangle3D:
             if return_points:
                 dist, p1, p2 = self.minimum_distance_points_plane(other_face,
                                                                   return_points=return_points)
@@ -5072,11 +5072,15 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         return point1_min, point2_min
 
-    def distance_to_shell(self, other_shell: 'OpenShell3D', resolution: float):
+    def distance_to_shell(self, other_shell: 'OpenShell3D', resolution: float,
+                          return_points: bool = False):
         min_dist = self.minimum_distance_points(other_shell, resolution)
         if min_dist is not None:
             p1, p2 = min_dist
-            return p1.point_distance(p2)
+            if return_points:
+                return p1.point_distance(p2), p1, p2
+            else:
+                return p1.point_distance(p2)
         else:
             return None
 

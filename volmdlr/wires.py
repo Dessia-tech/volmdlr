@@ -1366,7 +1366,6 @@ class Contour2D(Contour, Wire2D):
                 if base_contour.point_over_contour(point1) and base_contour.point_over_contour(point2):
                     cutting_points = [point1, point2]
 
-                # cutting_points = [cutting_contour.primitives[0].start,cutting_contour.primitives[-1].end]
                 # axc = cutting_contour.plot()
                 # base_contour.plot(ax=axc, color = 'b')
                 # for pt in cutting_points:
@@ -1443,14 +1442,11 @@ class Contour2D(Contour, Wire2D):
             list_contours.remove(base_contour)
         return list_contours
 
-    # def is_closed(self):
-        
-
     def merge_contours(self, contour2d):
         
-        return volmdlr.wires.Contour2D(self.merged_contour_primitives(contour2d)) 
-        
-    
+        return volmdlr.wires.Contour2D(self.merged_contour_primitives(contour2d))
+
+
 class ClosedPolygon:
     
     def length(self):
