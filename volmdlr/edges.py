@@ -462,7 +462,7 @@ class BSplineCurve2D(Edge):
         knots = list(sorted(set(curve.knotvector)))
         knot_multiplicities = [curve.knotvector.count(k) for k in knots]
         return BSplineCurve2D(degree=curve.degree,
-                              control_points=curve.ctrlpts,
+                              control_points=[volmdlr.Point2D(p[0], p[1]) for p in curve.ctrlpts],
                               knots=knots,
                               knot_multiplicities=knot_multiplicities
                               )
