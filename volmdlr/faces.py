@@ -2958,23 +2958,19 @@ class BSplineSurface3D(Surface3D):
         return nearest_primitives
       
     
-    def wire3d_to_2d(self, wires3d):
+    def wire3d_to_2d(self, wire3d):
         ''' 
         
         '''
-
-        wires2d = []
-        for wire3d in wires3d:
-            edges2d = []
-            for edge in wire3d.primitives:
-                edges2d.append(volmdlr.edges.LineSegment2D(self.point3d_to_2d(edge.start),
-                                                           self.point3d_to_2d(edge.end)))
-            wires2d.append(volmdlr.wires.Wire2D(edges2d))
-             
-        return wires2d
+        edges2d = []
+        for edge in wire3d.primitives:
+            edges2d.append(volmdlr.edges.LineSegment2D(self.point3d_to_2d(edge.start),
+                                                       self.point3d_to_2d(edge.end)))
+        
+        return volmdlr.wires.Wire2D(edges2d)
  
     
-    def wire3d_to_2d_with_dimension(self, wires3d):
+    def wire3d_to_2d_with_dimension(self, wire3d):
         ''' 
         
         '''
@@ -2982,16 +2978,13 @@ class BSplineSurface3D(Surface3D):
         for cle in self._grids2d.keys(): 
             [points_x, points_y, xmin, xmax, ymin, ymax] = cle
         
-        wires2d = []
-        for wire3d in wires3d:
-            wire2d = []
-            for edge in wire3d.primitives:
-                wire2d.append(volmdlr.edges.LineSegment2D(self.point3d_to_2d_with_dimension(edge.start, points_x, points_y, xmin, xmax, ymin, ymax),
-                                                          self.point3d_to_2d_with_dimension(edge.end, points_x, points_y, xmin, xmax, ymin, ymax)))
-            wires2d.append(volmdlr.wires.Wire2D(wire2d))
+        edges2d = []
+        for edge in wire3d.primitives:
+            edges2d.append(volmdlr.edges.LineSegment2D(self.point3d_to_2d_with_dimension(edge.start, points_x, points_y, xmin, xmax, ymin, ymax),
+                                                      self.point3d_to_2d_with_dimension(edge.end, points_x, points_y, xmin, xmax, ymin, ymax)))
+        
+        return volmdlr.wires.Wire2D(edges2d)
 
-        return wires2d          
-                        
             
     def intersection_with(self, other_bspline_surface3d):
         '''
