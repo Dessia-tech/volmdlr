@@ -556,7 +556,7 @@ class Surface3D(dc.DessiaObject):
                 primitive3d.__class__.__name__.lower())
             if hasattr(self, method_name):
                 primitives = getattr(self, method_name)(primitive3d)
-                if last_primitive:
+                if last_primitive and primitives:
                     delta_x1 = abs(
                         primitives[0].start.x - last_primitive.end.x)
                     delta_x2 = abs(primitives[-1].end.x - last_primitive.end.x)
@@ -681,8 +681,11 @@ class Surface3D(dc.DessiaObject):
         """
         a line segment on a surface will be in any case a line in 2D?
         """
-        return [vme.LineSegment2D(self.point3d_to_2d(linesegment3d.start),
-                                  self.point3d_to_2d(linesegment3d.end))]
+        start = self.point3d_to_2d(linesegment3d.start)
+        end = self.point3d_to_2d(linesegment3d.end)
+        if start != end:
+            return [vme.LineSegment2D(start, end)]
+        return []
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         """
@@ -2571,8 +2574,10 @@ class BSplineSurface3D(Surface3D):
         
         edges = []
         for i in range(0,len(new_start_points)-1):
-            edges.append(volmdlr.edges.LineSegment2D(new_start_points[i], new_start_points[i+1]))
-        edges.append(volmdlr.edges.LineSegment2D(new_start_points[-1], new_start_points[0]))
+            if new_start_points[i] != new_start_points[i+1]:
+                edges.append(volmdlr.edges.LineSegment2D(new_start_points[i], new_start_points[i+1]))
+        if  new_start_points[-1] != new_start_points[0]:
+            edges.append(volmdlr.edges.LineSegment2D(new_start_points[-1], new_start_points[0]))
             
         contour2d = volmdlr.wires.Contour2D(edges)
 
