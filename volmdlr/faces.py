@@ -2003,28 +2003,29 @@ class BSplineSurface3D(Surface3D):
         def f(x):
             return (point3d - self.point2d_to_3d(
                 volmdlr.Point2D(x[0], x[1]))).norm()
+        # 
+        # # for x0 in [(0, 0), (0, 1), (1, 0), (1, 1), (0.5, 0.5)]:
+        # #     sol = scp.optimize.minimize(f, x0=x0,
+        # #                                 bounds=[(0, 1), (0, 1)],
+        # #                                 options={'eps': 1e-12})
+        # #     if sol.fun < 1e-5:
+        # #         return volmdlr.Point2D(*sol.x)
 
-        # for x0 in [(0, 0), (0, 1), (1, 0), (1, 1), (0.5, 0.5)]:
-        #     sol = scp.optimize.minimize(f, x0=x0,
-        #                                 bounds=[(0, 1), (0, 1)],
-        #                                 options={'eps': 1e-12})
-        #     if sol.fun < 1e-5:
-        #         return volmdlr.Point2D(*sol.x)
-
-        # raise RuntimeError(
-        #     'No convergence in point3d to 2d of bspline surface')
+        # # raise RuntimeError(
+        # #     'No convergence in point3d to 2d of bspline surface')
         
-        # x = npy.linspace(0,1,5)
-        # x_init=[]
-        # for xi in x:
-        #     for yi in x:
-        #         x_init.append((xi,yi))
-
+        # # x = npy.linspace(0,1,5)
+        # # x_init=[]
+        # # for xi in x:
+        # #     for yi in x:
+        # #         x_init.append((xi,yi))
+        # 
+        
         cost=[]
         sol=[]
     
         # for x0 in x_init: 
-        for x0 in [(0, 0), (0, 1), (1, 0), (1, 1), (0.5, 0.5)]:
+        for x0 in [(0, 0), (0, 1), (1, 0), (1, 1), (0.5, 0.5)]: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
             cost.append(z.cost)
             sol.append(z.x)
@@ -2033,7 +2034,11 @@ class BSplineSurface3D(Surface3D):
             
         return (volmdlr.Point2D(solution[0], solution[1]))
         
+        # x0 = (0.5, 0.5)
+        # res = scp.optimize.minimize(f, x0=x0, bounds=[(0, 1), (0, 1)],
+        #                             tol=1e-7)
         
+        # return volmdlr.Point2D(res.x[0], res.x[1])
         
 
 
