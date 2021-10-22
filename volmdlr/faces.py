@@ -565,7 +565,11 @@ class Surface3D(dc.DessiaObject):
                                    - last_primitive.end.y)
                     delta_y2 = abs(primitives[-1].end.y
                                    - last_primitive.end.y)
-                    if self.x_periodicity:
+                    if self.x_periodicity \
+                            and not (math.isclose(delta_x1, 0,
+                                                  abs_tol=5e-5)
+                                     or math.isclose(delta_x2, 0,
+                                                     abs_tol=5e-5)):
                         delta_x1 = delta_x1 % self.x_periodicity
                         delta_x2 = delta_x2 % self.x_periodicity
                         if math.isclose(delta_x1, self.x_periodicity,
@@ -574,8 +578,17 @@ class Surface3D(dc.DessiaObject):
                         if math.isclose(delta_x2, self.x_periodicity,
                                         abs_tol=1e-4):
                             delta_x2 = 0.
+                        for prim in primitives:
+                            prim.start.x = abs(self.x_periodicity
+                                               - prim.start.x)
+                            prim.end.x = abs(self.x_periodicity
+                                             - prim.end.x)
 
-                    if self.y_periodicity:
+                    if self.y_periodicity \
+                            and not (math.isclose(delta_y1, 0,
+                                                  abs_tol=5e-5)
+                                     or math.isclose(delta_y2, 0,
+                                                     abs_tol=5e-5)):
                         delta_y1 = delta_y1 % self.y_periodicity
                         delta_y2 = delta_y2 % self.y_periodicity
                         if math.isclose(delta_y1, self.y_periodicity,
@@ -584,6 +597,11 @@ class Surface3D(dc.DessiaObject):
                         if math.isclose(delta_y2, self.y_periodicity,
                                         abs_tol=1e-4):
                             delta_y2 = 0.
+                        for prim in primitives:
+                            prim.start.y = abs(self.y_periodicity
+                                               - prim.start.y)
+                            prim.end.y = abs(self.y_periodicity
+                                             - prim.end.y)
 
                     end_match = False
                     if (math.isclose(delta_x1, 0., abs_tol=5e-5)
@@ -663,7 +681,8 @@ class Surface3D(dc.DessiaObject):
                         self.__class__.__name__,
                         method_name))
 
-        print(primitives2d)
+        for p in primitives2d:
+            print(p.__dict__)
         volmdlr.wires.Contour2D(primitives2d).plot(plot_points=True)
 
         return volmdlr.wires.Contour2D(primitives2d)
@@ -1957,6 +1976,14 @@ class BSplineSurface3D(Surface3D):
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         x, y = point2d
+        if -1e-6 < x < 0:
+            x = 0.
+        elif 1 < x < 1+1e-6:
+            x = 1
+        if -1e-6 < y < 0:
+            y = 0
+        elif 1 < y < 1+1e-6:
+            y = 1
         return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D):
