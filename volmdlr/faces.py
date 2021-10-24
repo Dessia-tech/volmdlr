@@ -3294,12 +3294,12 @@ class PlaneFace3D(Face3D):
             intersection_points = face2.edge_intersections(edge1)
             if intersection_points:
                 intersections.extend(intersection_points)
-        if intersections:
+        if len(intersections)>1:
             primitive = volmdlr.edges.LineSegment3D(intersections[0], intersections[1])
             intersections = volmdlr.wires.Wire3D([primitive])
             return intersections
 
-        return intersections
+        return []
 
     def minimum_distance(self, other_face, return_points=False):
         if other_face.__class__ is CylindricalFace3D:
