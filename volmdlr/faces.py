@@ -3677,7 +3677,8 @@ class Triangle3D(PlaneFace3D):
         # vec12 = self.point2 - self.point1
         # vec13 = self.point3 - self.point1
         # normal  = vec12.cross(vec13)
-        return normal.normalize()
+        normal.normalize()
+        return normal
 
 class CylindricalFace3D(Face3D):
     """
