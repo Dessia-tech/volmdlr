@@ -681,9 +681,13 @@ class Surface3D(dc.DessiaObject):
                         self.__class__.__name__,
                         method_name))
 
-        for p in primitives2d:
-            print(p.__dict__)
-        volmdlr.wires.Contour2D(primitives2d).plot(plot_points=True)
+        # for p in primitives2d:
+        #     print(p.__dict__)
+        #     if math.isclose(p.start.x, 0, abs_tol=1e-5):
+        #         p.start.x = 0.15
+        #     if math.isclose(p.end.x, 0, abs_tol=1e-5):
+        #         p.end.x = 0.15
+        # volmdlr.wires.Contour2D(primitives2d).plot(plot_points=True)
 
         return volmdlr.wires.Contour2D(primitives2d)
 

@@ -2716,14 +2716,29 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                 # p2.plot(color='g', ax=ax2)
                 # p3.plot(color='b', ax=ax2)
 
-                # print(current_polygon.linesegment_intersections(line_segment))
-                if not current_polygon.linesegment_intersections(line_segment):
+                # Checking if intersections does not contrain the verticies
+                # of line_segment
+                intersect = False
+                intersections = current_polygon.linesegment_intersections(
+                    line_segment)
+                if intersections:
+                    for inter in intersections:
+                        if inter[0] not in [line_segment.start,
+                                            line_segment.end]:
+                            intersect = True
+                            break
+
+                if not intersect:
+                # if not current_polygon.linesegment_intersections(line_segment):
                     # May be an ear
                     # print('ear?')
                     # if current_polygon.point_belongs(line_segment.middle_point()):
                     #     line_segment.middle_point().plot(color='g', ax=ax)
                     # else:
                     #     line_segment.middle_point().plot(color='r', ax=ax)
+                    # print(current_polygon.point_belongs(
+                    #         line_segment.middle_point()))
+
 
                     if current_polygon.point_belongs(
                             line_segment.middle_point()):
