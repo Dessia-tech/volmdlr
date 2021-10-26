@@ -621,7 +621,7 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
 # TODO: define an edge as an opened polygon and allow to compute area from this reference
 
 class Contour:
-
+        
     def extract_primitives(self, point1, primitive1, point2, primitive2, inside:bool = True):
         """
         inside: extracted contour is between the two points if True and outside these points if False
@@ -799,12 +799,12 @@ class Contour:
                     break
                 else:
                     for point in points:
-                        if point.is_close(line.start, tol= 3e-6):
+                        if point.is_close(line.start, tol= 3e-5):
                             line.start = point
                             contour.append(line)
                             edges.remove(line)
                             break
-                        elif point.is_close(line.end, tol= 3e-6):
+                        elif point.is_close(line.end, tol= 3e-5):
                             line.end = point
                             contour.append(line)
                             edges.remove(line)
@@ -1976,9 +1976,6 @@ class Contour2D(Contour, Wire2D):
         edges = [edge0, edge1, edge2, edge3]
         
         return volmdlr.wires.Contour2D(edges)
-    
-
-    
 
     
 class ClosedPolygon:
