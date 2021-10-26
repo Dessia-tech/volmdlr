@@ -621,6 +621,10 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
 # TODO: define an edge as an opened polygon and allow to compute area from this reference
 
 class Contour:
+    
+    def __inti__(self):
+
+        raise TypeError ('It cannot be instantiated') 
         
     def extract_primitives(self, point1, primitive1, point2, primitive2, inside:bool = True):
         """
