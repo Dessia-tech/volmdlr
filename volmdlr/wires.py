@@ -727,10 +727,10 @@ class Contour:
         for edge1, edge2 in itertools.product(self.primitives,contour.primitives):
             if ((edge1.start == edge2.start and edge1.end == edge2.end) 
                 or (edge1.start == edge2.end and edge2.start == edge1.end)
-                or (((edge1.start).point_distance(edge2.start) < 1e-4) 
-                    and ((edge1.end).point_distance(edge2.end) < 1e-4))
-                or (((edge1.start).point_distance(edge2.end) < 1e-4) 
-                    and ((edge1.end).point_distance(edge2.start) < 1e-4))):
+                or (((edge1.start).point_distance(edge2.start) < 1e-2) 
+                    and ((edge1.end).point_distance(edge2.end) < 1e-2))
+                or (((edge1.start).point_distance(edge2.end) < 1e-2) 
+                    and ((edge1.end).point_distance(edge2.start) < 1e-2))):
                    
                 edges_index.append((self.primitives.index(edge1),contour.primitives.index(edge2)))
         
@@ -3375,10 +3375,14 @@ class Contour3D(Contour, Wire3D):
         return None
     
     def merge_contours(self, contour3d):
-       
-        contour = volmdlr.wires.Contour3D(self.merged_contour_primitives(contour3d)) 
+               
+        # contour = volmdlr.wires.Contour3D(self.merged_contour_primitives(contour3d)) 
         
-        return contour.order_contour()
+        # return contour.order_contour()
+    
+        primitives = self.merged_contour_primitives(contour3d)
+        
+        return volmdlr.wires.Contour3D.contours_from_edges(primitives)
 
 
 class Circle3D(Contour3D):
