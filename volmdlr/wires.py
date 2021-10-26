@@ -1297,7 +1297,26 @@ class Contour2D(Contour, Wire2D):
         for p1, p2 in points:
             new_primitives.append(volmdlr.edges.LineSegment2D(p1, p2))
         self.primitives = new_primitives
+        
+        initial_points = []
+        for p in self.primitives:
+            initial_points.append((p.start, p.end))
+        
+        new_primitives = []
+        points = self.ordering_contour()
+        for p1, p2 in points:
+            try:
+                index = initial_points.index((p1, p2))
+            except ValueError:
+                index = initial_points.index((p2, p1))
             
+            if type(self.primitives[index]) == volmdlr.edges.LineSegment2D:
+                new_primitives.append(volmdlr.edges.LineSegment2D(p1, p2))
+            elif type(self.primitives[index]) == volmdlr.edges.Arc3D :
+                new_primitives.append(volmdlr.edges.Arc2D(p1, self.primitives[index].interior, p2)) 
+                
+                
+        self.primitives = new_primitives
         
         return self
     
@@ -3230,12 +3249,31 @@ class Contour3D(Contour, Wire3D):
                 point.translation(offset, copy=False)
     
     def order_contour(self):
+        # new_primitives = []
+        # points = self.ordering_contour()
+        # for p1, p2 in points:
+        #     new_primitives.append(volmdlr.edges.LineSegment3D(p1, p2))
+        # self.primitives = new_primitives
+
+        initial_points = []
+        for p in self.primitives:
+            initial_points.append((p.start, p.end))
+        
         new_primitives = []
         points = self.ordering_contour()
         for p1, p2 in points:
-            new_primitives.append(volmdlr.edges.LineSegment3D(p1, p2))
+            try:
+                index = initial_points.index((p1, p2))
+            except ValueError:
+                index = initial_points.index((p2, p1))
+            
+            if type(self.primitives[index]) == volmdlr.edges.LineSegment3D:
+                new_primitives.append(volmdlr.edges.LineSegment3D(p1, p2))
+            elif type(self.primitives[index]) == volmdlr.edges.Arc3D :
+                new_primitives.append(volmdlr.edges.Arc3D(p1, self.primitives[index].interior, p2))    
+                
         self.primitives = new_primitives
-        
+
         return self
         
     def point_over_contour(self, point):
