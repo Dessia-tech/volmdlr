@@ -34,6 +34,7 @@ for step_file in [
     print('filename: ', step_file)
     step = volmdlr.step.Step('step/'+step_file)
     model = step.to_volume_model()
+    assert len(model.primitives) > 0.
     model.to_step(step_file+'_reexport')
 
     model.babylonjs()
