@@ -1292,11 +1292,11 @@ class Contour2D(Contour, Wire2D):
     #     print('primitives points :', [(prim[0], prim[1]) for prim in self.primitives])
     
     def order_contour(self):
-        new_primitives = []
-        points = self.ordering_contour()
-        for p1, p2 in points:
-            new_primitives.append(volmdlr.edges.LineSegment2D(p1, p2))
-        self.primitives = new_primitives
+        # new_primitives = []
+        # points = self.ordering_contour()
+        # for p1, p2 in points:
+        #     new_primitives.append(volmdlr.edges.LineSegment2D(p1, p2))
+        # self.primitives = new_primitives
         
         initial_points = []
         for p in self.primitives:
