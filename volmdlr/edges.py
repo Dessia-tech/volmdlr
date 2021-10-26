@@ -462,7 +462,7 @@ class BSplineCurve2D(Edge):
         knots = list(sorted(set(curve.knotvector)))
         knot_multiplicities = [curve.knotvector.count(k) for k in knots]
         return BSplineCurve2D(degree=curve.degree,
-                              control_points=curve.ctrlpts,
+                              control_points=[volmdlr.Point2D(p[0], p[1]) for p in curve.ctrlpts],
                               knots=knots,
                               knot_multiplicities=knot_multiplicities
                               )
@@ -587,6 +587,24 @@ class BSplineCurve2D(Edge):
             l = LineSegment2D(p1, p2)
             crossings.extend(l.line_crossings(line2d))
         return crossings
+
+    def point_belongs(self, point):
+        polygon_points = self.polygon_points()
+        for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
+            line = LineSegment2D(p1, p2)
+            if line.point_belongs(point):
+                return True
+        return False
+
+    def point_distance(self, point):
+        distance = math.inf
+        polygon_points = self.polygon_points(n=20)
+        for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
+            line = LineSegment2D(p1, p2)
+            dist = line.point_distance(point)
+            if dist < distance:
+                distance = dist
+        return distance
 
 
 class BezierCurve2D(BSplineCurve2D):
