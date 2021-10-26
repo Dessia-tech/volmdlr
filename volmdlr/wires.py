@@ -1297,6 +1297,7 @@ class Contour2D(Contour, Wire2D):
         for p1, p2 in points:
             new_primitives.append(volmdlr.edges.LineSegment2D(p1, p2))
         self.primitives = new_primitives
+            
         
         return self
     
