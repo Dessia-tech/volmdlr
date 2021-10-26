@@ -3336,7 +3336,9 @@ class Contour3D(Contour, Wire3D):
     
     def merge_contours(self, contour3d):
        
-        return volmdlr.wires.Contour3D(self.merged_contour_primitives(contour3d)) 
+        contour = volmdlr.wires.Contour3D(self.merged_contour_primitives(contour3d)) 
+        
+        return contour.order_contour()
 
 
 class Circle3D(Contour3D):
