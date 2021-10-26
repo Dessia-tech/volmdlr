@@ -1825,7 +1825,9 @@ class Contour2D(Contour, Wire2D):
 
     def merge_contours(self, contour2d):
         
-        return volmdlr.wires.Contour2D(self.merged_contour_primitives(contour2d)) 
+        contour = volmdlr.wires.Contour2D(self.merged_contour_primitives(contour2d))
+        
+        return contour.order_contour()
     
     def cut_by_linesegments_two_contours_results(self, lines: List[volmdlr.edges.LineSegment2D]):
 
