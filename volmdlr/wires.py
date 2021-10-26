@@ -756,27 +756,29 @@ class Contour:
                 if i not in shared_edges_index_by_contour[j]:
                     merged_primitives.append(contours[j].primitives[i])
         
-        contour_int = merged_primitives[:]
-        start, end = [], []
-        for primitive in contour_int:
-            start.append(primitive.start)
-            end.append(primitive.end)
+        return merged_primitives
+    
+        # contour_int = merged_primitives[:]
+        # start, end = [], []
+        # for primitive in contour_int:
+        #     start.append(primitive.start)
+        #     end.append(primitive.end)
             
-        merged_primitives_order = [contour_int[0]]
-        for i in range(0,len(contour_int)):
-            # i=i+1
-            # merged_primitives_order.append(contour_int[start.index(merged_primitives_order[i].end)])
-            distances=[]
-            for j in range(0,len(start)):
-                distances.append((merged_primitives_order[i].end).point_distance(start[j]))
+        # merged_primitives_order = [contour_int[0]]
+        # for i in range(0,len(contour_int)):
+        #     # i=i+1
+        #     # merged_primitives_order.append(contour_int[start.index(merged_primitives_order[i].end)])
+        #     distances=[]
+        #     for j in range(0,len(start)):
+        #         distances.append((merged_primitives_order[i].end).point_distance(start[j]))
             
-            merged_primitives_order.append(contour_int[distances.index(min(distances))])
+        #     merged_primitives_order.append(contour_int[distances.index(min(distances))])
 
-            # merged_primitives_order[i].plot(ax=ax, color='g')
-            if len(merged_primitives_order) == merged_primitives:
-                break
+        #     # merged_primitives_order[i].plot(ax=ax, color='g')
+        #     if len(merged_primitives_order) == merged_primitives:
+        #         break
         
-        return merged_primitives_order
+        # return merged_primitives_order
     
     @classmethod
     def contours_from_edges(cls, edges):
@@ -3332,7 +3334,7 @@ class Contour3D(Contour, Wire3D):
     
     def merge_contours(self, contour3d):
        
-        return volmdlr.wires.Contour3D(self.merged_contour_primitives(contour3d))  
+        return volmdlr.wires.Contour3D(self.merged_contour_primitives(contour3d)) 
 
 
 class Circle3D(Contour3D):
