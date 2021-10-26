@@ -2021,18 +2021,46 @@ class BSplineSurface3D(Surface3D):
         # #         x_init.append((xi,yi))
         # 
         
-        cost=[]
-        sol=[]
+        # cost=[]
+        # sol=[]
+        
+        # # (0.25, 0.25), (0.75,0.25), (0.25, 0.75), (0.75,0.25),
     
-        # for x0 in x_init: 
-        for x0 in [(0, 0), (0, 1), (1, 0), (1, 1), (0.5, 0.5)]: 
+        # # # for x0 in x_init: 
+        # for x0 in [(0.5, 0.5), (0, 0), (0, 1), (1, 0), (1, 1)]: 
+        #     z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
+        #     cost.append(z.cost)
+        #     sol.append(z.x)
+        # solution=sol[cost.index(min(cost))]
+        
+            # if min(cost) < 1e-7: 
+            #     solution=sol[cost.index(min(cost))]
+            #     return (volmdlr.Point2D(solution[0], solution[1]))
+            # else:
+            #     # print(min(cost))
+            #     raise ValueError ('Error > 1e-7')
+        
+        # print(min(cost))
+            
+        # return (volmdlr.Point2D(solution[0], solution[1]))
+        
+        cost = math.inf
+        for x0 in [(0.5, 0.5), (0.25, 0.25), (0.75,0.25), (0.25, 0.75), (0.75,0.25), (0, 0), (0, 1), (1, 0), (1, 1)]: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            cost.append(z.cost)
-            sol.append(z.x)
+            if z.cost < cost:
+                cost = z.cost
+                sol = z.x
+            if cost < 1e-10:
+                # print(cost)
+                return (volmdlr.Point2D(sol[0], sol[1]))
+        # print(cost, sol)
+        if cost > 1e-4:
+            # print(cost)
+            raise ValueError ('Error > 1e-4')
+        else:
+            return (volmdlr.Point2D(sol[0], sol[1]))
             
-        solution=sol[cost.index(min(cost))]
             
-        return (volmdlr.Point2D(solution[0], solution[1]))
         
         # x0 = (0.5, 0.5)
         # res = scp.optimize.minimize(f, x0=x0, bounds=[(0, 1), (0, 1)],
