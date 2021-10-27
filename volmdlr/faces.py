@@ -3370,6 +3370,13 @@ class PlaneFace3D(Face3D):
             if self.surface2d.point_belongs(point2d):
                 intersections.append(surface3d_inter)
 
+        if not intersections:
+            for edge1 in self.outer_contour3d.primitives:
+                linesegment1 = vme.LineSegment3D(edge1.start, edge1.end)
+                inters = linesegment1.linesegment_intersection(linesegment)
+                if inters is not None:
+                    intersections.append(inters)
+
         return intersections
 
     def face_intersections(self, face2) -> List[volmdlr.wires.Wire3D]:
@@ -3393,11 +3400,20 @@ class PlaneFace3D(Face3D):
             if intersection_points:
                 intersections.extend(intersection_points)
         if intersections:
-            if intersections[0] == intersections[1]:
-                return []
-            primitive = volmdlr.edges.LineSegment3D(intersections[0], intersections[1])
-            intersections = [volmdlr.wires.Wire3D([primitive])]
-            return intersections
+            if len(intersections) == 2:
+                if intersections[0] == intersections[1]:
+                    return []
+                primitive = volmdlr.edges.LineSegment3D(intersections[0], intersections[1])
+                intersections = [volmdlr.wires.Wire3D([primitive])]
+                return intersections
+            else:
+
+                prim1 = volmdlr.edges.LineSegment3D(intersections[0], intersections[1])
+                prim2 = volmdlr.edges.LineSegment3D(intersections[1], intersections[3])
+                prim3 = volmdlr.edges.LineSegment3D(intersections[3], intersections[2])
+                prim4 = volmdlr.edges.LineSegment3D(intersections[2], intersections[0])
+                primitives = [prim1, prim2, prim3, prim4]
+                intersections = [volmdlr.wires.Wire3D([primitives])]
 
         return intersections
 
@@ -5542,14 +5558,13 @@ class ClosedShell3D(OpenShell3D):
         if validate_union_subtraction_operation:
             return validate_union_subtraction_operation
 
-
         face_combinations = self.intersecting_faces_combinations(shell2)
 
         intersecting_combinations = self.dict_intersecting_combinations(face_combinations)
 
         intersecting_faces1, intersecting_faces2 = self.get_intersecting_faces(intersecting_combinations)
         intersecting_faces = intersecting_faces1 + intersecting_faces2
-        faces  = self.new_valid_faces(shell2, intersecting_faces, intersecting_combinations)
+        faces = self.new_valid_faces(shell2, intersecting_faces, intersecting_combinations)
         faces += self.get_non_intersecting_faces(shell2, intersecting_faces) + shell2.get_non_intersecting_faces(self, intersecting_faces)
 
         # intersecting_contour = self.two_shells_intersecting_contour(shell2, intersecting_combinations)
@@ -5575,5 +5590,6 @@ class ClosedShell3D(OpenShell3D):
 
         faces += self.get_non_intersecting_faces(shell2, intersecting_faces)
 
-        # intersecting_contour = self.two_shells_intersecting_contour(shell2, intersecting_combinations)
+        intersecting_contour = self.two_shells_intersecting_contour(shell2, intersecting_combinations)
+        intersecting_contour.plot()
         return [OpenShell3D(faces)]
