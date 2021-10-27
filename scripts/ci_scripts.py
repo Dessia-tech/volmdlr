@@ -13,9 +13,9 @@ scripts = [
             'primitives/block3d.py',
             'faces/triangle3d.py',
             'faces/union.py',
+            'cloud/sewing_two_polygons.py',
             'read_steps.py'
             ]
-
 #  'cyl_cyl.py', 'cyl_pf.py',
 # 'ls3D_ls3D.py', 'sweep_sweep.py', 'tore_cyl.py','tore_pf.py'
 # 'tore_tore.py'

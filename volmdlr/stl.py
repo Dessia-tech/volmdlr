@@ -34,7 +34,7 @@ class Stl(dc.DessiaObject):
     There are two versions of the format (text and binary), this spec
     describes binary version.
     """
-    def __init__(self, triangles: List[vmw.Triangle2D], name: str = ''):
+    def __init__(self, triangles: List[vmf.Triangle3D], name: str = ''):
         self.triangles = triangles
         self.name = name
         self.normals = None
@@ -242,14 +242,13 @@ class Stl(dc.DessiaObject):
                                             mesh.points[i3]))
         return cls(triangles)
 
-    
     def get_normals(self):
-        '''
+        """
         Returns
         -------
         points_normals : dictionary
             returns a diction
-        '''
+        """
         points_normals = {}
         normals = []
         for triangle in self.triangles:
@@ -264,6 +263,8 @@ class Stl(dc.DessiaObject):
             for point in value:
                 point_normal += point
             points_normals[key] = point_normal
-            normals.append(point_normal())
+            normals.append(point_normal)
         self.normals = normals
+
+        return points_normals
 

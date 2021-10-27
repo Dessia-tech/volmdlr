@@ -3679,6 +3679,8 @@ class PlaneFace3D(Face3D):
             if intersection_points:
                 intersections.extend(intersection_points)
         if intersections:
+            if intersections[0] == intersections[1]:
+                return []
             primitive = volmdlr.edges.LineSegment3D(intersections[0], intersections[1])
             intersections = [volmdlr.wires.Wire3D([primitive])]
             return intersections
@@ -3961,7 +3963,8 @@ class Triangle3D(PlaneFace3D):
         # vec12 = self.point2 - self.point1
         # vec13 = self.point3 - self.point1
         # normal  = vec12.cross(vec13)
-        return normal.normalize()
+        normal.normalize()
+        return normal
 
 class CylindricalFace3D(Face3D):
     """
@@ -5974,7 +5977,7 @@ class ClosedShell3D(OpenShell3D):
                     if not points_inside:
                         ax1 = face_contour2d.plot()
                         print('bugging face, maybe area is too small. No points have been found inside face. See graph generated :', face_contour2d)
-                        face_intersecting_primitives2d = [contour.primitives for contour in list_cutting_contours]
+                        face_intersecting_primitives2d = [prim for contour in list_cutting_contours for prim in contour.primitives]
                         for prim in face_intersecting_primitives2d:
                             prim.plot(ax=ax1, color = 'r')
                             print((prim.start, prim.end))
@@ -6013,18 +6016,19 @@ class ClosedShell3D(OpenShell3D):
         if validate_union_subtraction_operation:
             return validate_union_subtraction_operation
 
-
         face_combinations = self.intersecting_faces_combinations(shell2)
 
         intersecting_combinations = self.dict_intersecting_combinations(face_combinations)
 
         intersecting_faces1, intersecting_faces2 = self.get_intersecting_faces(intersecting_combinations)
         intersecting_faces = intersecting_faces1 + intersecting_faces2
-        faces  = self.new_valid_faces(shell2, intersecting_faces, intersecting_combinations)
+        faces = self.new_valid_faces(shell2, intersecting_faces,
+                                     intersecting_combinations)
+        if len(faces) == 0:
+            return [self, shell2]
+
         faces += self.get_non_intersecting_faces(shell2, intersecting_faces) + shell2.get_non_intersecting_faces(self, intersecting_faces)
-
         # intersecting_contour = self.two_shells_intersecting_contour(shell2, intersecting_combinations)
-
 
         return [ClosedShell3D(faces)]
 
