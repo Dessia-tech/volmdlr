@@ -516,7 +516,7 @@ class Surface3D(dc.DessiaObject):
         """
 
         lc3d = len(contours3d)
-
+        
         if lc3d == 1:
             outer_contour2d = self.contour3d_to_2d(contours3d[0])
             inner_contours2d = []
@@ -2444,21 +2444,21 @@ class BSplineSurface3D(Surface3D):
             
         #System of nonlinear equations
         def non_linear_equations(X):
-            F = npy.empty(len(equation_points)+points_x+1)              
+            F = npy.empty(len(equation_points)+2)              
             for i in range(0, len(equation_points)):
                 F[i] = abs((X[index_x[equation_points[i][0]]]**2 + X[index_x[equation_points[i][1]]]**2 + X[index_y[equation_points[i][0]]]**2 + X[index_y[equation_points[i][1]]]**2 - 2*X[index_x[equation_points[i][0]]]*X[index_x[equation_points[i][1]]] -2*X[index_y[equation_points[i][0]]]*X[index_y[equation_points[i][1]]] - D[i]) / D[i]) 
                 
             F[i+1] = X[0]*1000
             F[i+2] = X[1]*1000
-            i=i+2
-            # F[i+3] = X[(len(points_2d)-points_x)*2]
-            l= 3
-            for f in range(1, points_x):
-                F[i+f] = X[l]*1000
-                l = l+2
-            # F[i+3] = X[3]*1000
-            # F[i+4] = X[5]*1000
-            # F[i+4] = X[points_x*2]*1000
+            # i=i+2
+            # # F[i+3] = X[(len(points_2d)-points_x)*2]
+            # l= 3
+            # for f in range(1, points_x):
+            #     F[i+f] = X[l]*1000
+            #     l = l+2
+            ## F[i+3] = X[3]*1000
+            ## F[i+4] = X[5]*1000
+            ## F[i+4] = X[points_x*2]*1000
 
                 
             return F
