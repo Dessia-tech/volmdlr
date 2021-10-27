@@ -681,14 +681,6 @@ class Surface3D(dc.DessiaObject):
                         self.__class__.__name__,
                         method_name))
 
-        # for p in primitives2d:
-        #     print(p.__dict__)
-        #     if math.isclose(p.start.x, 0, abs_tol=1e-5):
-        #         p.start.x = 0.15
-        #     if math.isclose(p.end.x, 0, abs_tol=1e-5):
-        #         p.end.x = 0.15
-        # volmdlr.wires.Contour2D(primitives2d).plot(plot_points=True)
-
         return volmdlr.wires.Contour2D(primitives2d)
 
     def contour2d_to_3d(self, contour2d):
@@ -1990,20 +1982,33 @@ class BSplineSurface3D(Surface3D):
             y = 1
         return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
-    def point3d_to_2d(self, point3d: volmdlr.Point3D):
+    def point3d_to_2d(self, point3d: volmdlr.Point3D, min_bound_x: float = 0.,
+                      max_bound_x: float = 1., min_bound_y: float = 0.,
+                      max_bound_y: float = 1.):
         def f(x):
             p3d = self.point2d_to_3d(volmdlr.Point2D(x[0], x[1]))
             return point3d.point_distance(p3d)
 
         cost = []
         sol = []
-        x0s = [(0.1, 0.1), (0.1, 0.9), (0.9, 0.1), (0.9, 0.9), (0.5, 0.5)]
+        delta_bound_x = max_bound_x - min_bound_x
+        delta_bound_y = max_bound_y - min_bound_y
+        x0s = [(min_bound_x+delta_bound_x/10, min_bound_y+delta_bound_y/10),
+               (min_bound_x+delta_bound_x/10, max_bound_y-delta_bound_y/10),
+               (max_bound_x-delta_bound_x/10, min_bound_y+delta_bound_y/10),
+               (max_bound_x-delta_bound_x/10, max_bound_y-delta_bound_y/10),
+               ((min_bound_x+max_bound_x)/2, (min_bound_y+max_bound_y)/2)]
         for x0 in x0s:
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0, 1]))
+            z = scp.optimize.least_squares(f, x0=x0, bounds=([min_bound_x,
+                                                              min_bound_y],
+                                                             [max_bound_x,
+                                                              max_bound_y]))
             cost.append(z.cost)
             sol.append(z.x)
 
-            res = scp.optimize.minimize(f, x0=x0, bounds=[(0, 1), (0, 1)],
+            res = scp.optimize.minimize(f, x0=x0,
+                                        bounds=[(min_bound_x, max_bound_x),
+                                                (min_bound_y, max_bound_y)],
                                         tol=1e-7)
             cost.append(res.fun)
             sol.append(res.x)
@@ -2030,41 +2035,68 @@ class BSplineSurface3D(Surface3D):
             if not bsc_linesegment.point_belongs(pt):
                 flag = False
                 break
-
         if self.x_periodicity and not self.y_periodicity \
                 and bspline_curve3d.periodic:
-            p1 = self.point3d_to_2d(bspline_curve3d.points[0])
-            p2 = self.point3d_to_2d(bspline_curve3d.points[-1])
+            p1 = self.point3d_to_2d(bspline_curve3d.points[0], min_bound_x=0.,
+                                    max_bound_x=self.x_periodicity)
+            p1_sup = self.point3d_to_2d(bspline_curve3d.points[0],
+                                        min_bound_x=1 - self.x_periodicity)
+            linesegments = [
+                vme.LineSegment2D(
+                    volmdlr.Point2D(p1.x-p1_sup.x+self.x_periodicity, p1.y),
+                    volmdlr.Point2D(self.x_periodicity, p1.y))]
 
-            # Focing periodicity
-            self.x_periodicity = p2.x
-
-            linesegments = [vme.LineSegment2D(volmdlr.Point2D(0, p1.y),
-                                              volmdlr.Point2D(p2.x, p1.y))]
-            # return [vme.LineSegment2D(p1, p1 + volmdlr.Y2D)]
         elif self.y_periodicity and not self.x_periodicity \
                 and bspline_curve3d.periodic:
-            p1 = self.point3d_to_2d(bspline_curve3d.points[0])
-            p2 = self.point3d_to_2d(bspline_curve3d.points[-1])
+            p1 = self.point3d_to_2d(bspline_curve3d.points[0], min_bound_y=0.,
+                                    max_bound_y=self.y_periodicity)
+            p1_sup = self.point3d_to_2d(bspline_curve3d.points[0],
+                                        min_bound_y=1 - self.y_periodicity)
+            linesegments = [
+                vme.LineSegment2D(
+                    volmdlr.Point2D(p1.x, p1-p1_sup.x+self.y_periodicity),
+                    volmdlr.Point2D(p1.x, self.y_periodicity))]
 
-            # Focing periodicity
-            self.y_periodicity = p2.y
-
-            linesegments = [vme.LineSegment2D(volmdlr.Point2D(p1.x, 0),
-                                              volmdlr.Point2D(p1.x, p2.y))]
-            # return [vme.LineSegment2D(p1, p1 + volmdlr.X2D)]
         elif self.x_periodicity and self.y_periodicity \
                 and bspline_curve3d.periodic:
             raise NotImplementedError
+
         elif flag:
-            p1 = self.point3d_to_2d(bspline_curve3d.points[0])
-            p2 = self.point3d_to_2d(bspline_curve3d.points[-1])
+            x_perio = self.x_periodicity
+            y_perio = self.y_periodicity
+            if self.x_periodicity is None:
+                x_perio = 1.
+            if self.y_periodicity is None:
+                y_perio = 1.
+            p1 = self.point3d_to_2d(bspline_curve3d.points[0],
+                                    max_bound_x=x_perio,
+                                    max_bound_y=y_perio)
+            p2 = self.point3d_to_2d(bspline_curve3d.points[-1],
+                                    max_bound_x=x_perio,
+                                    max_bound_y=y_perio)
+            p1_sup = self.point3d_to_2d(bspline_curve3d.points[0],
+                                    min_bound_x=1-x_perio,
+                                    min_bound_y=1-y_perio)
+            p2_sup = self.point3d_to_2d(bspline_curve3d.points[-1],
+                                    min_bound_x=1-x_perio,
+                                    min_bound_y=1-y_perio)
+            if self.x_periodicity:
+                p1.x -= p1_sup.x-x_perio
+                p2.x -= p2_sup.x - x_perio
+            if self.y_periodicity:
+                p1.y -= p1_sup.y-y_perio
+                p2.y -= p2_sup.y-y_perio
             linesegments = [vme.LineSegment2D(p1, p2)]
+            # How to check if end of surface overlaps start or the opposite ?
         else:
             lth = bspline_curve3d.length()
             if lth > 1e-5:
-                points = [self.point3d_to_2d(bspline_curve3d.point_at_abscissa(
-                    i / 10 * lth)) for i in range(11)]
+                points = [
+                    self.point3d_to_2d(
+                        bspline_curve3d.point_at_abscissa(i / 10 * lth),
+                        # max_bound_x=self.x_periodicity,
+                        # max_bound_y=self.y_periodicity
+                    ) for i in range(11)]
                 linesegments = [vme.LineSegment2D(p1, p2)
                                 for p1, p2 in zip(points[:-1], points[1:])]
             elif 1e-6 < lth <= 1e-5:
@@ -2397,10 +2429,20 @@ class BSplineSurface3D(Surface3D):
                              u_multiplicities, v_multiplicities, u_knots,
                              v_knots, weight_data, name)
         if u_closed:
-            bsplinesurface.x_periodicity = 1
+            bsplinesurface.x_periodicity = bsplinesurface.get_x_periodicity()
         if v_closed:
-            bsplinesurface.y_periodicity = 1
+            bsplinesurface.y_periodicity = bsplinesurface.get_y_periodicity()
         return bsplinesurface
+
+    def get_x_periodicity(self):
+        p3d_x1 = self.point2d_to_3d(volmdlr.Point2D(1., 0.5))
+        p2d_x0 = self.point3d_to_2d(p3d_x1, 0., 0.5)
+        return 1-p2d_x0.x
+
+    def get_y_periodicity(self):
+        p3d_y1 = self.point2d_to_3d(volmdlr.Point2D(0.5, 1))
+        p2d_y0 = self.point3d_to_2d(p3d_y1, 0., 0.5)
+        return 1-p2d_y0.y
 
     def grid3d(self, points_x, points_y, xmin, xmax, ymin, ymax):
         '''
@@ -5195,7 +5237,7 @@ class BSplineFace3D(Face3D):
     def _bounding_box(self):
         return self.surface3d._bounding_box()
 
-    def triangulation_lines(self, resolution=10):
+    def triangulation_lines(self, resolution=50):
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle()
 
         delta_u = u_max - u_min
@@ -5208,7 +5250,6 @@ class BSplineFace3D(Face3D):
         delta_v = v_max - v_min
         nlines_y = int(delta_v * resolution)
         lines_y = []
-        print(nlines_x, nlines_y)
         for i in range(nlines_y):
             v = v_min + (i + 1) / (nlines_y + 1) * delta_v
             lines_y.append(vme.Line2D(volmdlr.Point2D(v_min, v),
