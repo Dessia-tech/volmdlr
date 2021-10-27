@@ -679,10 +679,10 @@ class Contour:
         returns the points of the contour ordered
         """
         list_point_pairs = [(prim.start, prim.end) for prim in self.primitives]
-        # print('fisrt list point pairs :', list_point_pairs)
+
         points = [list_point_pairs[0]]
         list_point_pairs.remove((list_point_pairs[0][0], list_point_pairs[0][1]))
-        finished =  False
+        finished = False
         counter = 0
         while not finished:
             for p1, p2 in list_point_pairs:
@@ -712,7 +712,6 @@ class Contour:
                     raise NotImplementedError
             #     finished = True
             # counter += 1
-    
         return points
     
    
@@ -1822,8 +1821,14 @@ class Contour2D(Contour, Wire2D):
         
 
     def merge_contours(self, contour2d):
-        
-        return volmdlr.wires.Contour2D(self.merged_contour_primitives(contour2d)) 
+        for primitive1 in self.primitives:
+            for prim2 in contour2d.primitives:
+                line1 = volmdlr.edges.LineSegment2D(primitive1.start, primitive1.end)
+                line2 = volmdlr.edges.LineSegment2D(prim2.start, prim2.end)
+                if line1.direction_vector().is_colinear_to(line2.direction_vector()):
+                    if line1.point_belongs(line2.start) or line1.point_belongs(line2.end):
+                        return volmdlr.wires.Contour2D(self.merged_contour_primitives(contour2d))
+        return None
     
     def cut_by_linesegments_two_contours_results(self, lines: List[volmdlr.edges.LineSegment2D]):
 
@@ -1952,11 +1957,106 @@ class Contour2D(Contour, Wire2D):
         edges = [edge0, edge1, edge2, edge3]
         
         return volmdlr.wires.Contour2D(edges)
-    
 
-    
+    def integrate_contour(self, contour2d):
+        primitive_pairs = []
+        list_coincident_primitives = []
+        for primitive1 in self.primitives:
+            for prim2 in contour2d.primitives:
+                line1 = volmdlr.edges.LineSegment2D(primitive1.start, primitive1.end)
+                line2 = volmdlr.edges.LineSegment2D(prim2.start, prim2.end)
+                if line1.direction_vector().is_colinear_to(line2.direction_vector()):
+                    if (line1.point_belongs(line2.start) and
+                            (line1.start != line2.start or line1.end != line2.start)) or \
+                            (line1.point_belongs(line2.end) and
+                             (line1.start != line2.end or line1.end != line2.end)):
+                        # ax = line1.plot()
+                        # line2.plot(ax=ax, color='r')
+                        primitive_pairs.append((primitive1, prim2))
+                        if primitive1 not in list_coincident_primitives:
+                            list_coincident_primitives.append(primitive1)
+                        if prim2 not in list_coincident_primitives:
+                            list_coincident_primitives.append(prim2)
 
-    
+        if not list_coincident_primitives:
+            return None
+
+        valid_primitives = []
+        for primitive1 in self.primitives:
+            if primitive1 not in list_coincident_primitives:
+                valid_primitives.append(primitive1)
+            for prim2 in contour2d.primitives:
+                if prim2 not in list_coincident_primitives:
+                    valid_primitives.append(prim2)
+
+        #treating coincident primitives
+        for prim_pair in primitive_pairs:
+            l1, l2 = prim_pair
+            if l1.point_belongs(l2.start) and l2.point_belongs(l2.end):
+                if l1.start.point_distance(l2.start) < l1.start.point_distance(l2.end):
+                    if l1.start != l2.start:
+                        valid_primitives.append(volmdlr.edges.LineSegment2D(l1.start, l2.start))
+                    if l1.end != l2.end:
+                        valid_primitives.append(volmdlr.edges.LineSegment2D(l2.end, l1.end))
+                else:
+                    if l1.start != l2.end:
+                        valid_primitives.append(
+                            volmdlr.edges.LineSegment2D(l1.start, l2.end))
+                    if l1.end != l2.start:
+                        valid_primitives.append(
+                            volmdlr.edges.LineSegment2D(l2.start, l1.end))
+            elif (l1.point_belongs(l2.start) and not l2.point_belongs(l2.end)) or \
+                    (l1.point_belongs(l2.end) and not l2.point_belongs(l2.start)):
+                if l1.start.point_distance(l2.start) > l1.start.point_distance(l2.end):
+                    if l1.start != l2.end:
+                        valid_primitives.append(
+                            volmdlr.edges.LineSegment2D(l1.start, l2.end))
+                    if l1.end != l2.start:
+                        valid_primitives.append(
+                            volmdlr.edges.LineSegment2D(l2.start, l1.end))
+                else:
+                    if l1.start != l2.start:
+                        valid_primitives.append(
+                            volmdlr.edges.LineSegment2D(l1.start, l2.start))
+                    if l1.end != l2.end:
+                        valid_primitives.append(
+                            volmdlr.edges.LineSegment2D(l2.end, l1.end))
+
+        contour = self.__class__(valid_primitives)
+        # try:
+        #     contour.order_contour()
+        # except NotImplementedError:
+        #     ax = self.plot()
+        #     contour2d.plot(ax=ax, color='r')
+        #     raise NotImplementedError
+
+        return contour
+
+    def fusionate_contours(self, list_contours):
+        final_contour = self
+        # self.plot()
+        finished = False
+        counter = 0
+        while not finished:
+            for cont in list_contours:
+                new_contour = final_contour.integrate_contour(cont)
+                if new_contour is not None:
+                    final_contour = new_contour
+                    # new_contour.plot(color='g')
+                    list_contours.remove(cont)
+                    break
+                else:
+                    ax = final_contour.plot()
+                    cont.plot(ax=ax, color='r')
+                    raise NotImplementedError
+            counter += 1
+            if counter > 100:
+                raise NotImplementedError
+            if len(list_contours) == 0:
+                finished = True
+        return final_contour
+
+
 class ClosedPolygon:
     
     def length(self):
@@ -2124,7 +2224,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         if len(self.points) > 1:
             for p1, p2 in zip(self.points,
                               list(self.points[1:]) + [self.points[0]]):
-                lines.append(volmdlr.edges.LineSegment2D(p1, p2))
+                if p1 != p2:
+                    lines.append(volmdlr.edges.LineSegment2D(p1, p2))
         return lines
 
     def rotation(self, center, angle, copy=True):
