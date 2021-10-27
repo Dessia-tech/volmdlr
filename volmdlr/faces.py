@@ -3449,7 +3449,7 @@ class PlaneFace3D(Face3D):
 
         return list_cutting_contours
 
-    def divide_face(self, list_cutting_contours, inside):
+    def divide_face(self, list_cutting_contours, inside, intersection_method = True):
         '''
             :param list_cutting_contours: list of contours cutting the face
             :param inside: when extracting a contour from another contour. It defines the extracted contour as being between the two points if True and outside these points if False
@@ -5444,7 +5444,8 @@ class ClosedShell3D(OpenShell3D):
                 intersecting_faces_shell2.append(face[1])
         return intersecting_faces_shell1, intersecting_faces_shell2
 
-    def get_non_intersecting_faces(self, shell2, intersecting_faces):
+    def get_non_intersecting_faces(self, shell2, intersecting_faces,
+                                   intersection_method= False):
         '''
             :param shell2: ClosedShell3D
             :param intersecting_faces: 
@@ -5456,11 +5457,29 @@ class ClosedShell3D(OpenShell3D):
         faces2 = []
 
         for face in self.faces:
-            if (face not in intersecting_faces) and (face not in non_intersecting_faces) and (not ClosedShell3D([face]).is_inside_shell(shell2, resolution=0.01)) :
-                non_intersecting_faces.append(face)
+            if (face not in intersecting_faces) and (face not in non_intersecting_faces):
+                if not intersection_method:
+                    if not ClosedShell3D([face]).is_inside_shell(shell2, resolution=0.01):
+                        non_intersecting_faces.append(face)
+                else:
+                    if ClosedShell3D([face]).is_inside_shell(shell2, resolution=0.01):
+                        non_intersecting_faces.append(face)
 
         return non_intersecting_faces
-    
+
+    def get_non_intersecting_faces_inside(self, shell2, intersecting_faces):
+        """
+        :param shell2: ClosedShell3D
+            :param intersecting_faces:
+            returns a list of all the faces that never intersect any
+            face of the other shell and is inside the other shelll
+        """
+        non_intersecting_faces = []
+        for face in self.faces:
+            if (face not in intersecting_faces) and (face not in non_intersecting_faces) and (ClosedShell3D([face]).is_inside_shell(shell2, resolution=0.01)) :
+                non_intersecting_faces.append(face)
+        return non_intersecting_faces
+
     def two_shells_intersecting_contour(self, shell2, dict_intersecting_combinations=None):
         '''
             :param shell2: ClosedShell3D
@@ -5476,7 +5495,8 @@ class ClosedShell3D(OpenShell3D):
         intersecting_contour = volmdlr.wires.Contour3D([wire.primitives[0] for wire in intersecting_lines])
         return intersecting_contour
 
-    def new_valid_faces(self, shell2, intersecting_faces, intersecting_combinations):
+    def new_valid_faces(self, shell2, intersecting_faces,
+                        intersecting_combinations, intersection_method= False):
         '''
         During calculation of shells union or subtraction, it returns a list of the new faces generated from the two shells intersection
         '''
@@ -5496,23 +5516,28 @@ class ClosedShell3D(OpenShell3D):
             list_faces = face.divide_face(list_cutting_contours, inside)
 
             for new_face in list_faces:
-                    points_inside = []
-                    for i in range(5):
-                        points_inside.append(new_face.surface2d.random_point_inside())
-                    points_inside = [point for point in points_inside if point != None]
-                    if not points_inside:
-                        ax1 = face_contour2d.plot()
-                        print('bugging face, maybe area is too small. No points have been found inside face. See graph generated :', face_contour2d)
-                        face_intersecting_primitives2d = [prim for contour in list_cutting_contours for prim in contour.primitives]
-                        for prim in face_intersecting_primitives2d:
-                            prim.plot(ax=ax1, color = 'r')
-                            print((prim.start, prim.end))
-                    is_inside = False
-                    for point in points_inside:
-                        point = face.surface3d.point2d_to_3d(point)
-                        if shell_2.point_belongs(point):
-                            is_inside = True
+                points_inside = []
+                for i in range(5):
+                    points_inside.append(new_face.surface2d.random_point_inside())
+                points_inside = [point for point in points_inside if point != None]
+                if not points_inside:
+                    ax1 = face_contour2d.plot()
+                    print('bugging face, maybe area is too small. No points have been found inside face. See graph generated :', face_contour2d)
+                    face_intersecting_primitives2d = [prim for contour in list_cutting_contours for prim in contour.primitives]
+                    for prim in face_intersecting_primitives2d:
+                        prim.plot(ax=ax1, color='r')
+                        print((prim.start, prim.end))
+                is_inside = False
+                for point in points_inside:
+                    point = face.surface3d.point2d_to_3d(point)
+                    if shell_2.point_belongs(point):
+                        is_inside = True
+                if not intersection_method:
                     if not is_inside:
+                        if new_face not in faces:
+                            faces.append(new_face)
+                else:
+                    if is_inside:
                         if new_face not in faces:
                             faces.append(new_face)
         return faces
@@ -5577,3 +5602,28 @@ class ClosedShell3D(OpenShell3D):
 
         # intersecting_contour = self.two_shells_intersecting_contour(shell2, intersecting_combinations)
         return [OpenShell3D(faces)]
+
+    def intersection(self, shell2):
+        """
+        Given two ClosedShell3D, it returns the new objet resulting
+         from the intersection of the two
+        """
+        validate_union_subtraction_operation = self.validate_union_subtraction_operation(
+            shell2)
+        if validate_union_subtraction_operation:
+            return validate_union_subtraction_operation
+
+        face_combinations = self.intersecting_faces_combinations(shell2)
+
+        intersecting_combinations = self.dict_intersecting_combinations(
+            face_combinations)
+        intersecting_faces1, intersecting_faces2 = self.get_intersecting_faces(
+            intersecting_combinations)
+        intersecting_faces = intersecting_faces1 + intersecting_faces2
+        faces = self.new_valid_faces(shell2, intersecting_faces,
+                                     intersecting_combinations,
+                                     intersection_method=True)
+        faces += self.get_non_intersecting_faces(shell2, intersecting_faces, intersection_method=True) + shell2.get_non_intersecting_faces(self, intersecting_faces, intersection_method=True)
+
+        return [ClosedShell3D(faces)]
+
