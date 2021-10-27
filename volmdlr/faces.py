@@ -1943,109 +1943,117 @@ class BSplineSurface3D(Surface3D):
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D):
        
-        '''
-        P=[] #control points matrix 
-        P.append([self.control_points_matrix(0), self.control_points_matrix(1), self.control_points_matrix(2)])
+        
+        # =============================================================================
+        # Solution 1 #
+        # =============================================================================
+        
+        # P=[] #control points matrix 
+        # P.append([self.control_points_matrix(0), self.control_points_matrix(1), self.control_points_matrix(2)])
               
+        # # def f(X):
+        # #     F = npy.empty(3) 
+        # #     F[0]=(((self.blending_vector_u(X[0])).dot(P[0][0])).dot((self.blending_vector_v(X[1])).transpose())) - point3d.x
+        # #     F[1]=(((self.blending_vector_u(X[0])).dot(P[0][1])).dot((self.blending_vector_v(X[1])).transpose())) - point3d.y
+        # #     F[2]=(((self.blending_vector_u(X[0])).dot(P[0][2])).dot((self.blending_vector_v(X[1])).transpose())) - point3d.z
+        # #     return F
+        
         # def f(X):
         #     F = npy.empty(3) 
-        #     F[0]=(((self.blending_vector_u(X[0])).dot(P[0][0])).dot((self.blending_vector_v(X[1])).transpose())) - point3d.x
-        #     F[1]=(((self.blending_vector_u(X[0])).dot(P[0][1])).dot((self.blending_vector_v(X[1])).transpose())) - point3d.y
-        #     F[2]=(((self.blending_vector_u(X[0])).dot(P[0][2])).dot((self.blending_vector_v(X[1])).transpose())) - point3d.z
+        #     F[0]=self.surface.evaluate_single((X[0],X[1]))[0]  - point3d.x
+        #     F[1]=self.surface.evaluate_single((X[0],X[1]))[1]  - point3d.y
+        #     F[2]=self.surface.evaluate_single((X[0],X[1]))[2]  - point3d.z
         #     return F
-        
-        def f(X):
-            F = npy.empty(3) 
-            F[0]=self.surface.evaluate_single((X[0],X[1]))[0]  - point3d.x
-            F[1]=self.surface.evaluate_single((X[0],X[1]))[1]  - point3d.y
-            F[2]=self.surface.evaluate_single((X[0],X[1]))[2]  - point3d.z
-            return F
 
+        # # for x0 in [(0, 0), (0, 1), (0.5, 0.5), (1, 0), (1, 1)]:
+        # #     sol = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
+        # #     print(sol.cost)
+        # #     if sol.cost < 1e-5:
+        # #         # print(sol.cost)
+        # #         return (volmdlr.Point2D(sol.x[0], sol.x[1]))
         
-       
-        # for x0 in [(0, 0), (0, 1), (0.5, 0.5), (1, 0), (1, 1)]:
-        # # for x0 in [(0.5, 0.5)]:
+        # x = npy.linspace(0,1,5)
+        # x_init=[]
+        # for xi in x:
+        #     for yi in x:
+        #         x_init.append((xi,yi))
 
-        #     sol = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-        #     print(sol.cost)
-        #     if sol.cost < 1e-2:
-        #         # print(sol.cost)
-        #         return (volmdlr.Point2D(sol.x[0], sol.x[1]))
+        # cost=[]
+        # sol=[]
         
-        x = npy.linspace(0,1,5)
-        x_init=[]
-        for xi in x:
-            for yi in x:
-                x_init.append((xi,yi))
-
-        cost=[]
-        sol=[]
-    
-        for x0 in [(0, 0), (0, 1), (0.5, 0.5), (1, 0), (1, 1)]:  #x_init: # 
-        # for x0 in [(0.5, 0.5)]:
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            cost.append(z.cost)
-            # print(cost)
-            sol.append(z.x)
+        # for x0 in x_init:
+        # # for x0 in [(0, 0), (0, 1), (0.5, 0.5), (1, 0), (1, 1)]:  
+        #     z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
+        #     cost.append(z.cost)
+        #     # print(cost)
+        #     sol.append(z.x)
             
-        solution=sol[cost.index(min(cost))]
+        # solution=sol[cost.index(min(cost))]
             
-        return (volmdlr.Point2D(solution[0], solution[1]))
-
-            '''
-        #         # return sol.cost
-            # else:
-            #     return sol.cost
+        # return (volmdlr.Point2D(solution[0], solution[1]))
         
-        # raise RuntimeError('No convergence in point3d to 2d of bspline surface')
+        # =============================================================================
+        # Solution 2 #
+        # =============================================================================
+        
+        # def f(x):
+        #     return (point3d - self.point2d_to_3d(
+        #         volmdlr.Point2D(x[0], x[1]))).norm()
 
-        # x, y, z = point3d
-        def f(x):
-            return (point3d - self.point2d_to_3d(
-                volmdlr.Point2D(x[0], x[1]))).norm()
-        # 
-        # # for x0 in [(0, 0), (0, 1), (1, 0), (1, 1), (0.5, 0.5)]:
-        # #     sol = scp.optimize.minimize(f, x0=x0,
-        # #                                 bounds=[(0, 1), (0, 1)],
-        # #                                 options={'eps': 1e-12})
-        # #     if sol.fun < 1e-5:
-        # #         return volmdlr.Point2D(*sol.x)
+        # for x0 in [(0, 0), (0, 1), (1, 0), (1, 1), (0.5, 0.5)]:
+        #     sol = scp.optimize.minimize(f, x0=x0,
+        #                                 bounds=[(0, 1), (0, 1)],
+        #                                 options={'eps': 1e-12})
+        #     if sol.fun < 1e-5:
+        #         return volmdlr.Point2D(*sol.x)
 
-        # # raise RuntimeError(
-        # #     'No convergence in point3d to 2d of bspline surface')
+        # raise RuntimeError(
+        #     'No convergence in point3d to 2d of bspline surface')
+        
+        
+        # =============================================================================
+        # Solution 3 #
+        # =============================================================================
+        
+        # def f(x):
+        #     return (point3d - self.point2d_to_3d(
+        #         volmdlr.Point2D(x[0], x[1]))).norm()
         
         # # x = npy.linspace(0,1,5)
         # # x_init=[]
         # # for xi in x:
         # #     for yi in x:
         # #         x_init.append((xi,yi))
-        # 
         
         # cost=[]
         # sol=[]
-        
-        # # (0.25, 0.25), (0.75,0.25), (0.25, 0.75), (0.75,0.25),
-    
-        # # # for x0 in x_init: 
-        # for x0 in [(0.5, 0.5), (0, 0), (0, 1), (1, 0), (1, 1)]: 
+            
+        # # for x0 in x_init: 
+        # for x0 in [(0.5, 0.5), (0.25, 0.25), (0.75,0.25), (0.25, 0.75), (0.75, 0.25), (0, 0), (0, 1), (1, 0), (1, 1)]:
         #     z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
         #     cost.append(z.cost)
         #     sol.append(z.x)
+        
+        # # if min(cost) < 1e-5: 
+        # #     solution=sol[cost.index(min(cost))]
+        # #     return (volmdlr.Point2D(solution[0], solution[1]))
+        # # else:
+        # #     raise ValueError ('Error > 1e-5')
+        
         # solution=sol[cost.index(min(cost))]
-        
-            # if min(cost) < 1e-7: 
-            #     solution=sol[cost.index(min(cost))]
-            #     return (volmdlr.Point2D(solution[0], solution[1]))
-            # else:
-            #     # print(min(cost))
-            #     raise ValueError ('Error > 1e-7')
-        
-        # print(min(cost))
-            
         # return (volmdlr.Point2D(solution[0], solution[1]))
         
+        
+        # =============================================================================
+        # Solution 4 #
+        # =============================================================================
+        
+        def f(x):
+            return (point3d - self.point2d_to_3d(
+                volmdlr.Point2D(x[0], x[1]))).norm()
+        
         cost = math.inf
-        for x0 in [(0.5, 0.5), (0.25, 0.25), (0.75,0.25), (0.25, 0.75), (0.75,0.25), (0, 0), (0, 1), (1, 0), (1, 1)]: 
+        for x0 in [(0.5, 0.5), (0.25, 0.25), (0.75, 0.25), (0.25, 0.75), (0.75,0.25), (0, 0), (0, 1), (1, 0), (1, 1)]: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
             if z.cost < cost:
                 cost = z.cost
@@ -2060,7 +2068,9 @@ class BSplineSurface3D(Surface3D):
         else:
             return (volmdlr.Point2D(sol[0], sol[1]))
             
-            
+        # =============================================================================
+        # Solution 5 #
+        # =============================================================================   
         
         # x0 = (0.5, 0.5)
         # res = scp.optimize.minimize(f, x0=x0, bounds=[(0, 1), (0, 1)],
@@ -2068,7 +2078,6 @@ class BSplineSurface3D(Surface3D):
         
         # return volmdlr.Point2D(res.x[0], res.x[1])
         
-
 
     def linesegment2d_to_3d(self, linesegment2d):
         # TODO: this is a non exact method!
