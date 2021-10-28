@@ -930,6 +930,25 @@ class Contour:
             
     #     if len(set(edges_index))    
                 
+    
+    def edges_order_with_adjacent_contour(self, contour):
+        """
+        check if the shared edges between two adjacent contours are traversed with two different directions along each contour
+        """
+        
+        contour1 = self
+        contour2 = contour
+        
+        shared_tuple = contour1.shared_edges_between2contours(contour2)
+
+        p1_start = contour1.primitives[shared_tuple[0][0]].start
+        p2_start = contour2.primitives[shared_tuple[0][1]].start
+        p2_end = contour2.primitives[shared_tuple[0][1]].end
+
+        if (p1_start.point_distance(p2_start)) < (p1_start.point_distance(p2_end)):
+            return False
+        else:
+            return True
 
 
         
@@ -3383,7 +3402,7 @@ class Contour3D(Contour, Wire3D):
         primitives = self.merged_contour_primitives(contour3d)
         
         return volmdlr.wires.Contour3D.contours_from_edges(primitives)
-
+    
 
 class Circle3D(Contour3D):
     _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']
