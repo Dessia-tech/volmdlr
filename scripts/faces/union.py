@@ -21,7 +21,7 @@ resolution = 0.0010
 
 box = primitives3D.Block(
     vm.Frame3D(vm.Point3D(0, 0, 0), vm.Vector3D(0.4, 0, 0),
-                vm.Vector3D(0, 0.4, 0), vm.Vector3D(0, 0, 0.4)),
+                vm.Vector3D(0, 0.1, 0), vm.Vector3D(0, 0, 0.8)),
     alpha=0.6)
 
 box_red = primitives3D.Block(
@@ -39,8 +39,8 @@ box_green.color = (0.1, 1, 0.1)
 box_green.name = 'box_green'
 
 
-box_blue = box.frame_mapping(vm.Frame3D(vm.Point3D(0, 0.3, 0.2), vm.Vector3D(0.5, 0, 0),
-                          vm.Vector3D(0, 0.5, 0), vm.Vector3D(0, 0, 0.5)), 'old', copy=True)
+box_blue = box.frame_mapping(vm.Frame3D(vm.Point3D(0, 0, 0), vm.Vector3D(1, 0, 0),
+                          vm.Vector3D(0, 1, 0), vm.Vector3D(0, 0, 1)), 'old', copy=True)
 box_blue.color = (0.1, 0.1, 1)
 box_blue.name = 'box_blue'
 
@@ -53,7 +53,7 @@ for shell in new_box:
 vm.core.VolumeModel(new_box).babylonjs()
 
 # box_blue = box_blue.translation(vm.Point3D(0,0,0.3))
-vm.core.VolumeModel([box_blue, box_red]).babylonjs()
+# vm.core.VolumeModel([box_blue, box_red]).babylonjs()
 # new_box = box_red.union(box_blue)
 # new_box =box_red.subtract(box_blue)
 # for shell in new_box:

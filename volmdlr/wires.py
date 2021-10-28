@@ -443,19 +443,44 @@ class Contour:
         ip2 = self.primitive_to_index(primitive2)
 
         if ip1 < ip2:
-            primitives.append(primitive1.split(point1)[1])
+            if primitive1.start == point1:
+                primitives.append(primitive1)
+            elif primitive1.end == point1:
+                pass
+            else:
+                primitives.append(primitive1.split(point1)[1])
             primitives.extend(self.primitives[ip1 + 1:ip2])
-            primitives.append(primitive2.split(point2)[0])
+            if primitive2.start == point2:
+                pass
+            elif primitive2.end == point2:
+                primitives.append(primitive2)
+            else:
+                primitives.append(primitive2.split(point2)[0])
         elif ip1 > ip2 or (ip1 == ip2 and point1.point_distance(
                 primitive1.start) > point2.point_distance(primitive1.start)):
-            primitives.append(primitive1.split(point1)[1])
+            if primitive1.start == point1:
+                primitives.append(primitive1)
+            elif primitive1.end == point1:
+                pass
+            else:
+                primitives.append(primitive1.split(point1)[1])
+            # primitives.append(primitive1.split(point1)[1])
             primitives.extend(self.primitives[ip1 + 1:])
             primitives.extend(self.primitives[:ip2])
-            primitives.append(primitive2.split(point2)[0])
+            if primitive2.start == point2:
+                pass
+            elif primitive2.end == point2:
+                primitives.append(primitive2)
+            else:
+                primitives.append(primitive2.split(point2)[0])
         elif (ip1 == ip2 and point1.point_distance(
                 primitive1.start) < point2.point_distance(primitive1.start)):
-            primitive = primitive1.split(point1)[1]
-            primitive = primitive.split(point2)[0]
+            if primitive1.start != point1:
+                primitive = primitive1.split(point1)[1]
+                primitive = primitive.split(point2)[0]
+            else:
+                primitive = primitive1.split(point2)[0]
+
             primitives.append(primitive)
 
         return primitives
@@ -1436,6 +1461,8 @@ class Contour2D(Contour, Wire2D):
                         new_contour_points = [point for prim in ct.primitives
                                               for point in prim]
                         valid = True
+                        if ct.area() == 0.0:
+                            valid = False
                         if list_contours:
                             for contour in list_contours:
                                 self_contour_points = [point for prim in
