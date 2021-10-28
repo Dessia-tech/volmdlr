@@ -35,6 +35,7 @@ import plot_data.core as plot_data
 # import cv2
 import numpy as np
 from statistics import mean
+import warnings
 
 
 # from shapely.geometry import Polygon as shapely_polygon
@@ -496,7 +497,10 @@ class Contour:
                 counter += 1
                 if counter > 3:
                     finished = True
-                    self.plot()
+                    warnings.warn('There may exist a problem with this'
+                                  ' contour, it seems it cannot be reordered.'
+                                  'Please, verify it points')
+                    # self.plot()
                     raise NotImplementedError
             #     finished = True
             # counter += 1

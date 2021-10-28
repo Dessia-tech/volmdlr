@@ -5567,18 +5567,19 @@ class ClosedShell3D(OpenShell3D):
         if validate_union_subtraction_operation:
             return validate_union_subtraction_operation
 
-
         face_combinations = self.intersecting_faces_combinations(shell2)
 
         intersecting_combinations = self.dict_intersecting_combinations(face_combinations)
 
         intersecting_faces1, intersecting_faces2 = self.get_intersecting_faces(intersecting_combinations)
         intersecting_faces = intersecting_faces1 + intersecting_faces2
-        faces  = self.new_valid_faces(shell2, intersecting_faces, intersecting_combinations)
+        faces = self.new_valid_faces(shell2, intersecting_faces,
+                                     intersecting_combinations)
+        if len(faces) == 0:
+            return [self, shell2]
+
         faces += self.get_non_intersecting_faces(shell2, intersecting_faces) + shell2.get_non_intersecting_faces(self, intersecting_faces)
-
         # intersecting_contour = self.two_shells_intersecting_contour(shell2, intersecting_combinations)
-
 
         return [ClosedShell3D(faces)]
 
