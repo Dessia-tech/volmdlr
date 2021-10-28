@@ -5345,7 +5345,171 @@ class BSplineFace3D(Face3D):
         lenSq2 = x2*x2 + y2*y2 + z2*z2
         angle = math.acos(dot/math.sqrt(lenSq1 * lenSq2))
     
+    def pair_with(self, other_bspline_face3d):
+        """
+        find out how the uv parametric frames are located compared to each other (return: corresponding_directions)
+        and find how grid3d can be defined respected to these directions (return: grid2d_direction)
+        """
+        
+        # bspline1 = self.surface3d
+        # bspline2 = other_bspline_face3d.surface3d
 
+        contour1 = self.outer_contour3d
+        contour2 = other_bspline_face3d.outer_contour3d
+        contours_3d = [contour1, contour2]
+        for j in range(0,len(contours_3d)):
+            contours_3d_primitives = []
+            for k in range(0,len(contours_3d[j].primitives),10):
+                contours_3d_primitives.append(volmdlr.edges.LineSegment3D(contours_3d[j].primitives[k].start, contours_3d[j].primitives[k+9].end))
+            contours_3d[j]=volmdlr.wires.Contour3D(contours_3d_primitives) 
+
+        contour1 = contours_3d[0]
+        contour2 = contours_3d[1]
+        
+        contour1_2d = self.surface2d.outer_contour
+        contour2_2d = other_bspline_face3d.surface2d.outer_contour
+        
+        shared = contour1.shared_edges_between2contours(contour2)
+
+        if contour1.edges_order_with_adjacent_contour(contour2):
+            start1 = contour1_2d.primitives[shared[0][0]].start
+            end1 = contour1_2d.primitives[shared[-1][0]].end
+            
+            start2 = contour2_2d.primitives[shared[0][1]].start
+            end2 = contour2_2d.primitives[shared[-1][1]].end
+
+        else:
+            start1 = contour1_2d.primitives[shared[0][0]].start
+            end1 = contour1_2d.primitives[shared[-1][0]].end
+            
+            start2 = contour2_2d.primitives[shared[0][1]].end
+            end2 = contour2_2d.primitives[shared[-1][1]].start
+            
+        du1 = abs((end1-start1)[0])
+        dv1 = abs((end1-start1)[1])
+
+        if du1<dv1:
+            adjacent_direction1 = 'v'
+            diff1 = (end1 - start1)[1]
+        else:
+            adjacent_direction1 = 'u'
+            diff1 = (end1 - start1)[0]
+
+        du2 = abs((end2-start2)[0])
+        dv2 = abs((end2-start2)[1])
+
+        if du2<dv2:
+            adjacent_direction2 = 'v'
+            diff2 = (end2 - start2)[1]
+        else:
+            adjacent_direction2 = 'u'
+            diff2 = (end2 - start2)[0]
+            
+        corresponding_directions = []
+        if (diff1 > 0 and diff2 > 0) or (diff1 < 0 and diff2 < 0):
+            corresponding_directions.append(('+' + adjacent_direction1, '+' + adjacent_direction2))
+        else:
+            corresponding_directions.append(('+' + adjacent_direction1, '-' + adjacent_direction2))
+          
+        borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0), 
+                          volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)]
+                     
+        # TODO: compute nearest_point in 'bounding_box points' instead of borders_points
+        nearest_start1 = start1.nearest_point(borders_points)
+        # nearest_end1 = end1.nearest_point(borders_points)
+        nearest_start2 = start2.nearest_point(borders_points)
+        # nearest_end2 = end2.nearest_point(borders_points)
+        
+        if adjacent_direction1 == 'u' and adjacent_direction2 == 'u':
+            v1 = nearest_start1[1] 
+            v2 = nearest_start2[1]
+            
+            if (v1 == 0 and v2 == 0):
+               corresponding_directions.append(('+v', '-v'))
+               grid2d_direction = [['+x','-y'], ['+x','+y']]
+            
+            elif (v1 == 1 and v2 == 1): 
+                corresponding_directions.append(('+v', '-v'))
+                grid2d_direction = [ ['+x','+y'], ['+x','-y']]
+            
+            
+            elif (v1 == 1 and v2 == 0):
+               corresponding_directions.append(('+v', '+v'))
+               grid2d_direction = [['+x','+y'], ['+x','+y']]
+               
+               
+            elif (v1 == 0 and v2 == 1):
+               corresponding_directions.append(('+v', '+v'))
+               grid2d_direction = [['+x','-y'], ['+x','-y']]
+                             
+               
+        elif adjacent_direction1 == 'v' and adjacent_direction2 == 'v':
+            u1 = nearest_start1[0]
+            u2 = nearest_start2[0]
+            
+            if (u1 == 0 and u2 == 0):
+               corresponding_directions.append(('+u', '-v'))
+               grid2d_direction = [['-y','-x'], ['-y','+x']]
+            
+            elif (u1 == 1 and u2 == 1):
+                corresponding_directions.append(('+u', '-v'))
+                grid2d_direction = [['+y','+x'], ['+y','-x']]
+              
+            elif (u1 == 0 and u2 == 1):
+               corresponding_directions.append(('+u', '+u'))
+               grid2d_direction = [['+y','-x'], ['+y','-x']]
+               
+            elif (u1 == 1 and u2 == 0):
+               corresponding_directions.append(('+u', '+u'))
+               grid2d_direction = [['+y','+x'], ['+y','+x']]
+
+
+        elif adjacent_direction1 == 'u' and adjacent_direction2 == 'v':
+            v1 = nearest_start1[1]
+            u2 = nearest_start2[0]
+            
+            if (v1 == 1 and u2 == 0):
+               corresponding_directions.append(('+v', '+u'))
+               grid2d_direction = [['+x','+y'], ['+y','+x']]
+              
+            elif (v1 == 0 and u2 == 1):
+                corresponding_directions.append(('+v', '+u'))
+                grid2d_direction = [['-x','-y'], ['-y','-x']]
+
+
+            elif (v1 == 1 and u2 == 1):
+               corresponding_directions.append(('+v', '-u'))
+               grid2d_direction = [['+x','+y'], ['-y','-x']]
+               
+            elif (v1 == 0 and u2 == 0):
+               corresponding_directions.append(('+v', '-u'))
+               grid2d_direction = [['-x','-y'], ['-y','+x']]
+               
+            
+        elif adjacent_direction1 == 'v' and adjacent_direction2 == 'u':
+            u1 = nearest_start1[0]
+            v2 = nearest_start2[1]
+            
+            if (u1 == 1 and v2 == 0):
+               corresponding_directions.append(('+u', '+v'))
+               grid2d_direction = [['+y','+x'], ['+x','+y']]
+               
+            elif (u1 == 0 and v2 == 1):
+               corresponding_directions.append(('+u', '+v'))
+               grid2d_direction = [['-y','-x'], ['+x','-y']]
+               
+               
+            elif (u1 == 0 and v2 == 0):  
+               corresponding_directions.append(('+u', '-v'))
+               grid2d_direction = [['+y','-x'], ['+x','+y']]
+               
+               
+            elif (u1 == 1 and v2 == 1):
+               corresponding_directions.append(('+u', '-v'))
+               grid2d_direction = [['+y','+x'], ['+x','-y']]
+
+        
+        return (corresponding_directions, grid2d_direction)
 
 
 class OpenShell3D(volmdlr.core.CompositePrimitive3D):
