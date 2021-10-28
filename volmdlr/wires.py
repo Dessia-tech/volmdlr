@@ -1376,53 +1376,34 @@ class Contour2D(Contour, Wire2D):
 
     def divide(self, contours, inside):
         new_base_contours = [self]
-        list_contours = []
         finished = False
         counter = 0
         list_contour = contours[:]
+        list_cutting_contours = contours[:]
+        list_valid_contours = []
         while not finished:
             cutting_points = []
             cutting_contour = contours[0]
 
             for base_contour in new_base_contours:
 
-                # cutting_points = base_contour.contour_intersections(cutting_contour)
                 cutting_points = []
                 point1, point2 = [cutting_contour.primitives[0].start,
                                   cutting_contour.primitives[-1].end]
                 if base_contour.point_over_contour(
                         point1) and base_contour.point_over_contour(point2):
                     cutting_points = [point1, point2]
-
-                # cutting_points = [cutting_contour.primitives[0].start,cutting_contour.primitives[-1].end]
-                # axc = cutting_contour.plot()
-                # base_contour.plot(ax=axc, color = 'b')
-                # for pt in cutting_points:
-                #     pt.plot(ax=axc)
                 if cutting_points:
                     extracted_outerpoints_contour1 = \
                         volmdlr.wires.Contour2D.extract_contours(base_contour,
-                                                                 cutting_points[
-                                                                     0],
-                                                                 cutting_points[
-                                                                     1],
+                                                                 cutting_points[0],
+                                                                 cutting_points[1],
                                                                  inside)[0]
                     extracted_innerpoints_contour1 = \
                         volmdlr.wires.Contour2D.extract_contours(base_contour,
-                                                                 cutting_points[
-                                                                     0],
-                                                                 cutting_points[
-                                                                     1],
+                                                                 cutting_points[0],
+                                                                 cutting_points[1],
                                                                  not inside)[0]
-                    # extracted_contour2 = volmdlr.wires.Contour2D.extract_contours(cutting_contour, cutting_points[0], cutting_points[1], inside = True)[0]
-
-                    # axx = extracted_outerpoints_contour1.plot(color = 'r')
-                    # extracted_innerpoints_contour1.plot(ax = axx, color = 'b')
-                    # extracted_contour2.plot(ax =axx, color='g')
-                    # cutting_contour.plot(ax=axx)
-                    # cutting_points[0].plot(ax=axx)
-                    # cutting_points[1].plot(ax=axx)
-                    # extracted_contour2.plot(ax =axc, color='b')
 
                     contour1 = volmdlr.wires.Contour2D(
                         extracted_outerpoints_contour1.primitives + cutting_contour.primitives)
@@ -1430,47 +1411,19 @@ class Contour2D(Contour, Wire2D):
                     contour2 = volmdlr.wires.Contour2D(
                         extracted_innerpoints_contour1.primitives + cutting_contour.primitives)
                     contour2.order_contour()
-                    # contour2.plot(ax = axc, color = 'g')
-                    for ct in [contour1, contour2]:
-                        #
-                        new_contour_points = [point for prim in ct.primitives
-                                              for point in prim]
-                        valid = True
-                        if list_contours:
-                            for contour in list_contours:
-                                self_contour_points = [point for prim in
-                                                       self.primitives for
-                                                       point in prim]
-                                if len(self.primitives) == len(
-                                        ct.primitives) and all(
-                                    point in self_contour_points for point
-                                    in new_contour_points):
-                                    valid = False
-                                    break
-                        # if ct.area() < 1e-6:
-                        #     valid = False
-
-                        if valid:
-                            list_contours.append(ct)
-                    for ct in list_contours:
-                        if ct == base_contour:
-                            list_contours.remove(ct)
-
-                    if new_base_contours[0] == self:
-                        new_base_contours.remove(self)
-                    new_base_contours.append(contour1)
-                    new_base_contours.append(contour2)
-                    # print('new_base_contours :', new_base_contours)
+                    new_base_contours.remove(base_contour)
+                    for cntr in [contour1, contour2]:
+                        valid_contour = True
+                        for cut_contour in list_cutting_contours:
+                            point_at_abs = cut_contour.point_at_abscissa(cut_contour.length() / 2)
+                            if cntr.point_belongs(point_at_abs) and not cntr.point_over_contour(point_at_abs):
+                                valid_contour = False
+                        if valid_contour:
+                            list_valid_contours.append(cntr)
+                        else:
+                            new_base_contours.append(cntr)
                     contours.remove(cutting_contour)
                     break
-                # else:
-                #     contours.remove(cutting_contour)
-                #     axc = cutting_contour.plot()
-                #     base_contour.plot(ax=axc, color = 'b')
-                #     for pt in cutting_points:
-                #         pt.plot(ax=axc)
-                #     break
-
             if len(contours) == 0:
                 finished = True
             counter += 1
@@ -1484,16 +1437,14 @@ class Contour2D(Contour, Wire2D):
                 base_contour.plot(ax=axx)
                 for pt in cutting_points:
                     pt.plot(ax=axc)
-                # raise ValueError('There probably exists an open contour (two wires that could not be jointed), see graph generated')
-                finished = True
-        if base_contour in list_contours:
-            list_contours.remove(base_contour)
-        return list_contours
+                raise ValueError('There probably exists an open contour (two wires that could not be jointed), see graph generated')
 
-    # def is_closed(self):
+        return list_valid_contours
 
     def merge_contours(self, contour2d):
         return volmdlr.wires.Contour2D(self.merged_contour_primitives(contour2d))
+
+
 class ClosedPolygon:
 
     def length(self):
