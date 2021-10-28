@@ -1484,8 +1484,8 @@ class Contour2D(Contour, Wire2D):
                 base_contour.plot(ax=axx)
                 for pt in cutting_points:
                     pt.plot(ax=axc)
-                # raise ValueError('There probably exists an open contour (two wires that could not be jointed), see graph generated')
-                finished = True
+                raise ValueError('There probably exists an open contour (two wires that could not be jointed), see graph generated')
+                # finished = True
         if base_contour in list_contours:
             list_contours.remove(base_contour)
         return list_contours
