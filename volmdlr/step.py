@@ -540,16 +540,33 @@ class Step:
             self.graph.add_edge('#0', node)
 
         edges = list(
-            nx.algorithms.traversal.breadth_first_search.bfs_edges(self.graph,
-                                                                   "#0"))[::-1]
+            nx.algorithms.traversal.breadth_first_search.bfs_edges(
+                self.graph, "#0"))[::-1]
+
+        # edges = list(
+        #     nx.algorithms.traversal.edge_bfs(self.graph, "#0"))[::-1]
+
         # self.draw_graph(self.graph, reduced=True)
-        # print(edges)
         for edge_nb, edge in enumerate(edges):
             instanciate_id = edge[1]
-            volmdlr_object = self.instanciate(
-                self.functions[instanciate_id].name,
-                self.functions[instanciate_id].arg[:],
-                object_dict)
+            try:
+                volmdlr_object = self.instanciate(
+                    self.functions[instanciate_id].name,
+                    self.functions[instanciate_id].arg[:],
+                    object_dict)
+            except KeyError as key:
+                # Sometimes the bfs search don't instanciate the nodes of a
+                # depth in the right order, leading to error
+                missed_volmdlr_object = self.instanciate(
+                    self.functions[key.args[0]].name,
+                    self.functions[key.args[0]].arg[:],
+                    object_dict)
+                object_dict[key.args[0]] = missed_volmdlr_object
+
+                volmdlr_object = self.instanciate(
+                    self.functions[instanciate_id].name,
+                    self.functions[instanciate_id].arg[:],
+                    object_dict)
 
             object_dict[instanciate_id] = volmdlr_object
 
