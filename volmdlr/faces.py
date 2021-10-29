@@ -2137,7 +2137,7 @@ class BSplineSurface3D(Surface3D):
         Based on: Pungotra et al. Merging multiple B-spline surface patches in a virtual reality environment. 2010
         Link: http://dx.doi.org/10.1016/j.cad.2010.05.006 
         '''
-    
+        
         # #Bspline surface parameters
         # u=[] #knot vector u direction 
         # v=[] #knot vector v direction
