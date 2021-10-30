@@ -3392,14 +3392,14 @@ class PlaneFace3D(Face3D):
             intersection_points = face2.edge_intersections(edge1)
             if intersection_points:
                 intersections.extend(intersection_points)
-        if intersections:
+        if len(intersections)>1:
             if intersections[0] == intersections[1]:
                 return []
             primitive = volmdlr.edges.LineSegment3D(intersections[0], intersections[1])
             intersections = [volmdlr.wires.Wire3D([primitive])]
             return intersections
 
-        return intersections
+        return []
 
     def minimum_distance(self, other_face, return_points=False):
         if other_face.__class__ is CylindricalFace3D:
@@ -4964,11 +4964,12 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         """
         volume = 0
         for i, face in enumerate(self.faces):
-            points_3D, triangles_indexes = face.triangulation()
-            for triangle_indexes in triangles_indexes[0]:
-                point1 = points_3D[triangle_indexes[0]]
-                point2 = points_3D[triangle_indexes[1]]
-                point3 = points_3D[triangle_indexes[2]]
+            display3d = face.triangulation()
+            points_3D, triangles_indexes = display3d.points, display3d.triangles
+            for triangle_index in triangles_indexes:
+                point1 = points_3D[triangle_index[0]]
+                point2 = points_3D[triangle_index[1]]
+                point3 = points_3D[triangle_index[2]]
 
                 v321 = point3[0] * point2[1] * point1[2]
                 v231 = point2[0] * point3[1] * point1[2]
