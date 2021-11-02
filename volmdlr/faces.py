@@ -1947,58 +1947,58 @@ class BSplineSurface3D(Surface3D):
         # Solution 1 #
         # =============================================================================
         
-        # def f(x):
-        #     return (point3d - self.point2d_to_3d(
-        #         volmdlr.Point2D(x[0], x[1]))).norm()
+        def f(x):
+            return (point3d - self.point2d_to_3d(
+                volmdlr.Point2D(x[0], x[1]))).norm()
         
-        # # x = npy.linspace(0,1,5)
-        # # x_init=[]
-        # # for xi in x:
-        # #     for yi in x:
-        # #         x_init.append((xi,yi))
+        x = npy.linspace(0,1,5)
+        x_init=[]
+        for xi in x:
+            for yi in x:
+                x_init.append((xi,yi))
         
-        # cost=[]
-        # sol=[]
+        cost=[]
+        sol=[]
             
-        # # for x0 in x_init: 
+        for x0 in x_init: 
         # for x0 in [(0.5, 0.5), (0.25, 0.25), (0.75,0.25), (0.25, 0.75), (0.75, 0.25), (0, 0), (0, 1), (1, 0), (1, 1)]:
-        #     z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-        #     cost.append(z.cost)
-        #     sol.append(z.x)
+            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
+            cost.append(z.cost)
+            sol.append(z.x)
         
-        # # if min(cost) < 1e-5: 
-        # #     solution=sol[cost.index(min(cost))]
-        # #     return (volmdlr.Point2D(solution[0], solution[1]))
-        # # else:
-        # #     raise ValueError ('Error > 1e-5')
+        # if min(cost) < 1e-5: 
+        #     solution=sol[cost.index(min(cost))]
+        #     return (volmdlr.Point2D(solution[0], solution[1]))
+        # else:
+        #     raise ValueError ('Error > 1e-5')
         
-        # solution=sol[cost.index(min(cost))]
-        # return (volmdlr.Point2D(solution[0], solution[1]))
+        solution=sol[cost.index(min(cost))]
+        return (volmdlr.Point2D(solution[0], solution[1]))
         
         
         # =============================================================================
         # Solution 2 #
         # =============================================================================
         
-        def f(x):
-            return (point3d - self.point2d_to_3d(
-                volmdlr.Point2D(x[0], x[1]))).norm()
+        # def f(x):
+        #     return (point3d - self.point2d_to_3d(
+        #         volmdlr.Point2D(x[0], x[1]))).norm()
         
-        cost = math.inf
-        for x0 in [(0.5, 0.5), (0.25, 0.25), (0.75, 0.25), (0.25, 0.75), (0.75,0.25), (0, 0), (0, 1), (1, 0), (1, 1)]: 
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            if z.cost < cost:
-                cost = z.cost
-                sol = z.x
-            if cost < 1e-12:
-                # print(cost)
-                return (volmdlr.Point2D(sol[0], sol[1]))
-        # print(cost, sol)
-        if cost > 1e-4:
-            # print(cost)
-            raise ValueError ('Error > 1e-4')
-        else:
-            return (volmdlr.Point2D(sol[0], sol[1]))
+        # cost = math.inf
+        # for x0 in [(0.5, 0.5), (0.25, 0.25), (0.75, 0.25), (0.25, 0.75), (0.75,0.25), (0, 0), (0, 1), (1, 0), (1, 1)]: 
+        #     z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
+        #     if z.cost < cost:
+        #         cost = z.cost
+        #         sol = z.x
+        #     if cost < 1e-12:
+        #         # print(cost)
+        #         return (volmdlr.Point2D(sol[0], sol[1]))
+        # # print(cost, sol)
+        # if cost > 1e-4:
+        #     # print(cost)
+        #     raise ValueError ('Error > 1e-4')
+        # else:
+        #     return (volmdlr.Point2D(sol[0], sol[1]))
             
         # =============================================================================
         # Solution 3 #
