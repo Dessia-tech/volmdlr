@@ -818,6 +818,14 @@ class Contour2D(Contour, Wire2D):
                 belongs = True
         return belongs
 
+    def primitive_over_contour(self, primitive):
+        for prim in self.primitives:
+            if prim.unit_direction_vector().is_colinear_to(primitive.unit_direction_vector()):
+                mid_point = primitive.middle_point()
+                if self.point_over_contour(mid_point):
+                    return True
+        return False
+
     def point_distance(self, point):
         min_distance = self.primitives[0].point_distance(point)
         for primitive in self.primitives[1:]:
@@ -955,16 +963,16 @@ class Contour2D(Contour, Wire2D):
     #             points.pop()
     #     return points
 
-    # def is_inside_contour(self, contour2):
-    #     """
-    #     verifies if a contour is inside another contour perimiter,
-    #     including the edges
-    #     return True or False
-    #     """
-    #     c1_xmin, c1_xmax, c1_ymin, c1_ymax = self.bounding_rectangle()
-    #     c2_xmin, c2_xmax, c2_ymin, c2_ymax = contour2.bounding_rectangle()
-    #     return ((c1_xmin >= c2_xmin - 1e-6) and (c1_xmax <= c2_xmax + 1e-6)\
-    #             and (c1_ymin >= c2_ymin - 1e-6) and (c1_ymax <= c2_ymax + 1e-6))
+    def is_inside_contour(self, contour2):
+        """
+        verifies if a contour is inside another contour perimiter,
+        including the edges
+        return True or False
+        """
+        c1_xmin, c1_xmax, c1_ymin, c1_ymax = self.bounding_rectangle()
+        c2_xmin, c2_xmax, c2_ymin, c2_ymax = contour2.bounding_rectangle()
+        return ((c1_xmin >= c2_xmin - 1e-6) and (c1_xmax <= c2_xmax + 1e-6)\
+                and (c1_ymin >= c2_ymin - 1e-6) and (c1_ymax <= c2_ymax + 1e-6))
 
     def bounding_rectangle(self):
         xmin, xmax, ymin, ymax = self.primitives[0].bounding_rectangle()
@@ -1440,9 +1448,11 @@ class Contour2D(Contour, Wire2D):
         return intersecting_points
 
     def divide(self, contours, inside):
-        ax=self.plot()
-        for cnt in contours:
-            cnt.plot(ax=ax, color='y')
+        # ax=self.plot()
+        # print('face area: ', self.area())
+        # print('contours AT START :', len(contours))
+        # for cnt in contours:
+        #     cnt.plot(ax=ax, color='r')
 
         new_base_contours = [self]
         finished = False
@@ -1510,7 +1520,8 @@ class Contour2D(Contour, Wire2D):
                 base_contour.plot(ax=axc, color='b')
                 base_contour.plot(ax=axx)
                 for pt in cutting_points:
-                    pt.plot(ax=axc)
+                    pt.plot(ax=axc, color='r')
+                # print('contours BEFORE bug :', len(contours))
                 raise ValueError('There probably exists an open contour (two wires that could not be jointed), see graph generated')
 
         return list_valid_contours
