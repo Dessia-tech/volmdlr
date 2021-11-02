@@ -842,81 +842,81 @@ class Contour:
             
         return edges
     
-    def merge_with(self, contour2d):
+    # def merge_with(self, contour2d):
         
-        # edges_index=[]
-        # for edge1, edge2 in itertools.product(self.primitives,contour2d.primitives):
+    #     # edges_index=[]
+    #     # for edge1, edge2 in itertools.product(self.primitives,contour2d.primitives):
             
-        #     if edge1.linesegment_intersections(edge2): # or edge1.linesegment_crossings(edge2):
-        #         edges_index.append((self.primitives.index(edge1),contour2d.primitives.index(edge2)))
+    #     #     if edge1.linesegment_intersections(edge2): # or edge1.linesegment_crossings(edge2):
+    #     #         edges_index.append((self.primitives.index(edge1),contour2d.primitives.index(edge2)))
         
-        # edges_index=[]
-        # for edge1, edge2 in itertools.product(self.primitives,contour2d.primitives):
-        #     # print(self.primitives.index(edge1))
-        #     # print(contour2d.primitives.index(edge2))
+    #     # edges_index=[]
+    #     # for edge1, edge2 in itertools.product(self.primitives,contour2d.primitives):
+    #     #     # print(self.primitives.index(edge1))
+    #     #     # print(contour2d.primitives.index(edge2))
             
-        #     # print((edge1.start).point_distance(edge2.start))
-        #     # print((edge1.end).point_distance(edge2.end))
-        #     # print((edge1.start).point_distance(edge2.end))
-        #     # print((edge1.end).point_distance(edge2.start))
+    #     #     # print((edge1.start).point_distance(edge2.start))
+    #     #     # print((edge1.end).point_distance(edge2.end))
+    #     #     # print((edge1.start).point_distance(edge2.end))
+    #     #     # print((edge1.end).point_distance(edge2.start))
                                                 
-        #     # if (edge1.start == edge2.end) or (edge2.start == edge1.end)  or ((edge1.start).point_distance(edge2.end) < 1e-4) or ((edge1.end).point_distance(edge2.start) < 1e-4) and edge1.linesegment_crossings(edge2):
-        #     if (edge1.start == edge2.end) or (edge2.start == edge1.end)  or ((edge1.start).point_distance(edge2.end) < 1e-4) or ((edge1.end).point_distance(edge2.start) < 1e-4): # and edge1.linesegment_crossings(edge2):
+    #     #     # if (edge1.start == edge2.end) or (edge2.start == edge1.end)  or ((edge1.start).point_distance(edge2.end) < 1e-4) or ((edge1.end).point_distance(edge2.start) < 1e-4) and edge1.linesegment_crossings(edge2):
+    #     #     if (edge1.start == edge2.end) or (edge2.start == edge1.end)  or ((edge1.start).point_distance(edge2.end) < 1e-4) or ((edge1.end).point_distance(edge2.start) < 1e-4): # and edge1.linesegment_crossings(edge2):
     
-        #         print(self.primitives.index(edge1))
-        #         print(contour2d.primitives.index(edge2))
+    #     #         print(self.primitives.index(edge1))
+    #     #         print(contour2d.primitives.index(edge2))
 
-        #         edges_index.append((self.primitives.index(edge1),contour2d.primitives.index(edge2)))
+    #     #         edges_index.append((self.primitives.index(edge1),contour2d.primitives.index(edge2)))
         
-        # start_points = []
-        # for primitive in contour2d.primitives:
-        #     start_points.append(primitive.start)
+    #     # start_points = []
+    #     # for primitive in contour2d.primitives:
+    #     #     start_points.append(primitive.start)
         
-        # for edge in self.primitives: 
-        #     edge
+    #     # for edge in self.primitives: 
+    #     #     edge
         
-        # edges_index1=[]
-        # edges_index2=[]
+    #     # edges_index1=[]
+    #     # edges_index2=[]
         
-        edges_index=[]
+    #     edges_index=[]
         
-        for edge1, edge2 in itertools.product(self.primitives,contour2d.primitives):
-            if edge1.point_belongs(edge2.start):
+    #     for edge1, edge2 in itertools.product(self.primitives,contour2d.primitives):
+    #         if edge1.point_belongs(edge2.start):
                 
-                edges_index.append(contour2d.primitives.index(edge2))
-                edges_index.sort()
+    #             edges_index.append(contour2d.primitives.index(edge2))
+    #             edges_index.sort()
         
-        point1 = contour2d.primitives[edges_index[0]].start
-        point2 = contour2d.primitives[edges_index[-1]].start
+    #     point1 = contour2d.primitives[edges_index[0]].start
+    #     point2 = contour2d.primitives[edges_index[-1]].start
                 
-        shared_primitives_1 = self.extract_without_primitives(point1, point2)
-        shared_primitives_2 = contour2d.extract_without_primitives(point1, point2)        
+    #     shared_primitives_1 = self.extract_without_primitives(point1, point2)
+    #     shared_primitives_2 = contour2d.extract_without_primitives(point1, point2)        
 
-        primitives = self.primitives
-        index_1 = []
-        for primitive in shared_primitives_1:
-            if primitive in primitives:
-                index_1.append(primitives.index(primitive))
+    #     primitives = self.primitives
+    #     index_1 = []
+    #     for primitive in shared_primitives_1:
+    #         if primitive in primitives:
+    #             index_1.append(primitives.index(primitive))
 
-        primitives = contour2d.primitives
-        index_2 = []
-        for primitive in shared_primitives_2:
-            if primitive in primitives:
-                index_2.append(primitives.index(primitive))
+    #     primitives = contour2d.primitives
+    #     index_2 = []
+    #     for primitive in shared_primitives_2:
+    #         if primitive in primitives:
+    #             index_2.append(primitives.index(primitive))
        
-        primitives_merged = []
-        for i in range(0, len(self.primitives)):
-            if i not in index_1:
-                primitives_merged.append(self.primitives[i])
+    #     primitives_merged = []
+    #     for i in range(0, len(self.primitives)):
+    #         if i not in index_1:
+    #             primitives_merged.append(self.primitives[i])
                 
-        for i in range(0, len(contour2d.primitives)):
-            if i not in index_2:
-                primitives_merged.append(contour2d.primitives[i])
+    #     for i in range(0, len(contour2d.primitives)):
+    #         if i not in index_2:
+    #             primitives_merged.append(contour2d.primitives[i])
         
-        contour = volmdlr.wires.Contour2D(primitives_merged)
+    #     contour = volmdlr.wires.Contour2D(primitives_merged)
         
     
-        return contour.order_contour()
+    #     return contour.order_contour()
     
     # def shares_primitives_with(self, contour2d):
         
@@ -1999,6 +1999,62 @@ class Contour2D(Contour, Wire2D):
         edges = [edge0, edge1, edge2, edge3]
         
         return volmdlr.wires.Contour2D(edges)
+    
+    def merge_with(self, contour2d):
+        
+        edges_index2 = []
+        edges_index1 = []
+
+        for edge1 in self.primitives:
+            for edge2 in contour2d.primitives:
+                
+                if (edge1.point_belongs(edge2.start) or edge1.point_belongs(edge2.end) 
+                    or edge2.point_belongs(edge1.start) or edge2.point_belongs(edge1.end)
+                    or (edge1.start == edge2.start and edge1.end == edge2.end) 
+                    or (edge1.start == edge2.end and edge2.start == edge1.end)
+                    or (((edge1.start).point_distance(edge2.start) < 1e-2) 
+                        and ((edge1.end).point_distance(edge2.end) < 1e-2))
+                    or (((edge1.start).point_distance(edge2.end) < 1e-2) 
+                        and ((edge1.end).point_distance(edge2.start) < 1e-2))): 
+
+                    ind2 = contour2d.primitives.index(edge2)
+                    ind1 = self.primitives.index(edge1)
+            
+                    if ind2 not in edges_index2:
+                        edges_index2.append(ind2)
+                    if ind1 not in edges_index1:
+                        edges_index1.append(ind1)
+
+        prim1 = []
+        for i in edges_index1: 
+            prim1.append(self.primitives[i])
+        c1 = volmdlr.wires.Contour2D(prim1)
+        c1 = c1.order_contour()
+
+        prim2 = []
+        for i in edges_index2: 
+            prim2.append(contour2d.primitives[i])
+        c2 = volmdlr.wires.Contour2D(prim2)
+        c2 = c2.order_contour()
+
+        if c2.primitives[1].linesegment_crossings(c1.primitives[0]) != []:
+            point1 = c2.primitives[1].linesegment_crossings(c1.primitives[0])[0]
+        else:
+            point1 = c2.primitives[1].linesegment_crossings(c1.primitives[-1])[0]
+
+        if c2.primitives[-2].linesegment_crossings(c1.primitives[-1]) != []:
+            point2 = c2.primitives[-2].linesegment_crossings(c1.primitives[-1])[0]
+        else:
+            point2 = c2.primitives[-2].linesegment_crossings(c1.primitives[0])[0]    
+
+        primitives = []
+        primitives.extend(self.extract_without_primitives(point1, point2, inside= False))
+        primitives.extend(contour2d.extract_without_primitives(point1, point2, inside= False))
+        
+        contour = volmdlr.wires.Contour2D(primitives)
+        contour = contour.order_contour()
+        
+        return contour
 
     
 class ClosedPolygon:
