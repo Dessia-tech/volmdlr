@@ -35,6 +35,7 @@ import plot_data.core as plot_data
 # import cv2
 import numpy as np
 from statistics import mean
+import warnings
 
 
 # from shapely.geometry import Polygon as shapely_polygon
@@ -496,7 +497,10 @@ class Contour:
                 counter += 1
                 if counter > 3:
                     finished = True
-                    self.plot()
+                    warnings.warn('There may exist a problem with this'
+                                  ' contour, it seems it cannot be reordered.'
+                                  'Please, verify it points')
+                    # self.plot()
                     raise NotImplementedError
             #     finished = True
             # counter += 1
@@ -1475,22 +1479,22 @@ class Contour2D(Contour, Wire2D):
                 finished = True
             counter += 1
             if counter >= 100:
-                axx = cutting_contour.plot(color='g')
-                axc = cutting_contour.plot(color='r')
-                list_contour.remove(cutting_contour)
-                for ctr in list_contour:
-                    ctr.plot(ax=axc, color='r')
-                base_contour.plot(ax=axc, color='b')
-                base_contour.plot(ax=axx)
-                for pt in cutting_points:
-                    pt.plot(ax=axc)
+                # axx = cutting_contour.plot(color='g')
+                # axc = cutting_contour.plot(color='r')
+                # list_contour.remove(cutting_contour)
+                # for ctr in list_contour:
+                #     ctr.plot(ax=axc, color='r')
+                # base_contour.plot(ax=axc, color='b')
+                # base_contour.plot(ax=axx)
+                # for pt in cutting_points:
+                #     pt.plot(ax=axc)
+                warnings.warn('There probably exists an open contour (two wires that could not be connected)')
                 # raise ValueError('There probably exists an open contour (two wires that could not be jointed), see graph generated')
                 finished = True
+
         if base_contour in list_contours:
             list_contours.remove(base_contour)
         return list_contours
-
-    # def is_closed(self):
 
     def merge_contours(self, contour2d):
         return volmdlr.wires.Contour2D(self.merged_contour_primitives(contour2d))
