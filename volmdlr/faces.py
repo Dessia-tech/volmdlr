@@ -2004,6 +2004,10 @@ class BSplineSurface3D(Surface3D):
         # Solution 3 #
         # =============================================================================   
         
+        # def f(x):
+        #     return (point3d - self.point2d_to_3d(
+        #         volmdlr.Point2D(x[0], x[1]))).norm()
+
         # x0 = (0.5, 0.5)
         # res = scp.optimize.minimize(f, x0=x0, bounds=[(0, 1), (0, 1)],
         #                             tol=1e-7)
