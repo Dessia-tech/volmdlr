@@ -679,20 +679,48 @@ class Contour:
         ip2 = self.primitive_to_index(primitive2)
 
         if ip1 < ip2:
-            primitives.append(primitive1.split(point1)[1])
+            if primitive1.start == point1:
+                primitives.append(primitive1)
+            elif primitive1.end == point1:
+                pass
+            else:
+                primitives.append(primitive1.split(point1)[1])
             primitives.extend(self.primitives[ip1 + 1:ip2])
-            primitives.append(primitive2.split(point2)[0])
+            if primitive2.start == point2:
+                pass
+            elif primitive2.end == point2:
+                primitives.append(primitive2)
+            else:
+                primitives.append(primitive2.split(point2)[0])
         elif ip1 > ip2 or (ip1 == ip2 and point1.point_distance(
                 primitive1.start) > point2.point_distance(primitive1.start)):
-            primitives.append(primitive1.split(point1)[1])
+            if primitive1.start == point1:
+                primitives.append(primitive1)
+            elif primitive1.end == point1:
+                pass
+            else:
+                primitives.append(primitive1.split(point1)[1])
+            # primitives.append(primitive1.split(point1)[1])
             primitives.extend(self.primitives[ip1 + 1:])
             primitives.extend(self.primitives[:ip2])
-            primitives.append(primitive2.split(point2)[0])
+            if primitive2.start == point2:
+                pass
+            elif primitive2.end == point2:
+                primitives.append(primitive2)
+            else:
+                primitives.append(primitive2.split(point2)[0])
         elif (ip1 == ip2 and point1.point_distance(
                 primitive1.start) < point2.point_distance(primitive1.start)):
-            primitive = primitive1.split(point1)[1]
-            primitive = primitive.split(point2)[0]
-            primitives.append(primitive)
+            if primitive1.start != point1:
+                primitive = primitive1.split(point1)[1]
+                primitive = primitive.split(point2)[0]
+                primitives.append(primitive)
+            elif primitive1.end != point2:
+                primitive = primitive1.split(point2)[0]
+                primitives.append(primitive)
+            else:
+                print('spliting here')
+                primitives.append(primitive2)
 
         return primitives
 
@@ -700,14 +728,16 @@ class Contour:
         """
         returns the points of the contour ordered
         """
+        list_points = [(prim.start, prim.end) for prim in self.primitives]
         list_point_pairs = [(prim.start, prim.end) for prim in self.primitives]
-
+        len_list_points = len(list_point_pairs)
         points = [list_point_pairs[0]]
 
         list_point_pairs.remove(
             (list_point_pairs[0][0], list_point_pairs[0][1]))
         finished = False
         counter = 0
+        counter1 = 0
         while not finished:
             for p1, p2 in list_point_pairs:
                 if p1 == p2:
@@ -726,6 +756,12 @@ class Contour:
                     list_point_pairs.remove((p1, p2))
             if len(list_point_pairs) == 0:
                 finished = True
+            counter1 += 1
+            if counter1 > 1000*len_list_points:
+                self.plot(color='r')
+                print('len list start point pairs :', len(list_points))
+                print(' len remaining points: ', len(list_point_pairs))
+                raise NotImplementedError
             # if counter >= max_interations:
             if len(list_point_pairs) == 1:
                 # print('list_point_pairs :', list_point_pairs)
@@ -735,7 +771,7 @@ class Contour:
                     finished = True
                     warnings.warn('There may exist a problem with this'
                                   ' contour, it seems it cannot be reordered.'
-                                  'Please, verify it points')
+                                  'Please, verify its points')
                     # self.plot()
                     raise NotImplementedError
             #     finished = True
@@ -2210,7 +2246,7 @@ class Contour2D(Contour, Wire2D):
         primitives.extend(contour2d.extract_without_primitives(point1, point2, inside= False))
         
         contour = volmdlr.wires.Contour2D(primitives)
-        contour = contour.order_contour()
+        # contour = contour.order_contour()
         
         return contour
 
