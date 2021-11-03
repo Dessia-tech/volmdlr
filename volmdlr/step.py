@@ -548,27 +548,22 @@ class Step:
 
         # self.draw_graph(self.graph, reduced=True)
         for edge_nb, edge in enumerate(edges):
-            instanciate_id = edge[1]
-            try:
-                volmdlr_object = self.instanciate(
-                    self.functions[instanciate_id].name,
-                    self.functions[instanciate_id].arg[:],
-                    object_dict)
-            except KeyError as key:
-                # Sometimes the bfs search don't instanciate the nodes of a
-                # depth in the right order, leading to error
-                missed_volmdlr_object = self.instanciate(
-                    self.functions[key.args[0]].name,
-                    self.functions[key.args[0]].arg[:],
-                    object_dict)
-                object_dict[key.args[0]] = missed_volmdlr_object
+            instanciate_ids = [edge[1]]
+            error = True
+            while error:
+                try:
+                    for instanciate_id in instanciate_ids[::-1]:
+                        volmdlr_object = self.instanciate(
+                            self.functions[instanciate_id].name,
+                            self.functions[instanciate_id].arg[:],
+                            object_dict)
+                        object_dict[instanciate_id] = volmdlr_object
 
-                volmdlr_object = self.instanciate(
-                    self.functions[instanciate_id].name,
-                    self.functions[instanciate_id].arg[:],
-                    object_dict)
-
-            object_dict[instanciate_id] = volmdlr_object
+                    error = False
+                except KeyError as key:
+                    # Sometimes the bfs search don't instanciate the nodes of a
+                    # depth in the right order, leading to error
+                    instanciate_ids.append(key.args[0])
 
         shells = []
         for node in shell_nodes_copy:

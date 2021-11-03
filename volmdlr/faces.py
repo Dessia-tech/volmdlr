@@ -565,6 +565,11 @@ class Surface3D(dc.DessiaObject):
                                    - last_primitive.end.y)
                     delta_y2 = abs(primitives[-1].end.y
                                    - last_primitive.end.y)
+
+                    dist1 = primitive3d.start.point_distance(
+                        last_primitive3d.end)
+                    dist2 = primitive3d.end.point_distance(
+                        last_primitive3d.end)
                     if self.x_periodicity \
                             and not (math.isclose(delta_x1, 0,
                                                   abs_tol=5e-5)
@@ -604,11 +609,13 @@ class Surface3D(dc.DessiaObject):
                                              - prim.end.y)
 
                     end_match = False
-                    if (math.isclose(delta_x1, 0., abs_tol=5e-5)
-                            and math.isclose(delta_y1, 0., abs_tol=5e-5)):
+                    if (math.isclose(delta_x1, 0., abs_tol=1e-3)
+                            and math.isclose(delta_y1, 0., abs_tol=1e-3)
+                            and math.isclose(dist1, 0, abs_tol=1e-6)):
                         end_match = True
-                    elif (math.isclose(delta_x2, 0., abs_tol=5e-5) and
-                          math.isclose(delta_y2, 0., abs_tol=5e-5)):
+                    elif (math.isclose(delta_x2, 0., abs_tol=1e-3)
+                            and math.isclose(delta_y2, 0., abs_tol=1e-3)
+                            and math.isclose(dist2, 0, abs_tol=1e-6)):
                         end_match = True
                         primitives = [p.reverse() for p in primitives[::-1]]
                     else:
@@ -621,14 +628,14 @@ class Surface3D(dc.DessiaObject):
                         # primitives[-1].plot(ax=ax, color='r', plot_points=True)
                         for p in primitives:
                             p.plot(ax=ax, color='r', plot_points=True)
+                        dist3 = primitive3d.start.point_distance(
+                            last_primitive3d.start)
+                        dist4 = primitive3d.end.point_distance(
+                            last_primitive3d.start)
                         print('Surface 3D:', self)
                         print('3D primitive in red:', primitive3d)
                         print('Previous 3D primitive:', last_primitive3d)
-                        dist1 = primitive3d.start.point_distance(last_primitive3d.start)
-                        dist2 = primitive3d.start.point_distance(last_primitive3d.end)
-                        dist3 = primitive3d.end.point_distance(last_primitive3d.start)
-                        dist4 = primitive3d.end.point_distance(last_primitive3d.end)
-                        print('distances:', dist1, dist2, dist3, dist4)
+                        print('distances 3D:', dist1, dist2, dist3, dist4)
 
                         raise ValueError(
                             'Primitives not following each other in contour:',
@@ -1993,6 +2000,7 @@ class BSplineSurface3D(Surface3D):
             if not bsc_linesegment.point_belongs(pt):
                 flag = False
                 break
+
         if self.x_periodicity and not self.y_periodicity \
                 and bspline_curve3d.periodic:
             p1 = self.point3d_to_2d(bspline_curve3d.points[0], min_bound_x=0.,
@@ -2033,11 +2041,11 @@ class BSplineSurface3D(Surface3D):
                                     max_bound_x=x_perio,
                                     max_bound_y=y_perio)
             p1_sup = self.point3d_to_2d(bspline_curve3d.points[0],
-                                    min_bound_x=1-x_perio,
-                                    min_bound_y=1-y_perio)
+                                        min_bound_x=1-x_perio,
+                                        min_bound_y=1-y_perio)
             p2_sup = self.point3d_to_2d(bspline_curve3d.points[-1],
-                                    min_bound_x=1-x_perio,
-                                    min_bound_y=1-y_perio)
+                                        min_bound_x=1-x_perio,
+                                        min_bound_y=1-y_perio)
             if self.x_periodicity:
                 p1.x -= p1_sup.x-x_perio
                 p2.x -= p2_sup.x - x_perio
@@ -2049,8 +2057,7 @@ class BSplineSurface3D(Surface3D):
         else:
             lth = bspline_curve3d.length()
             if lth > 1e-5:
-                points = [
-                    self.point3d_to_2d(
+                points = [self.point3d_to_2d(
                         bspline_curve3d.point_at_abscissa(i / 10 * lth),
                         # max_bound_x=self.x_periodicity,
                         # max_bound_y=self.y_periodicity
@@ -2065,6 +2072,9 @@ class BSplineSurface3D(Surface3D):
                 print('BSplineCruve3D skipped because it is too small')
                 linesegments = None
 
+        # print(bspline_curve3d.start, bspline_curve3d.end)
+        # print([(l.start, l.end) for l in linesegments])
+        # print()
         return linesegments
 
     def arc3d_to_2d(self, arc3d):
