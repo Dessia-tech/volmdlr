@@ -56,9 +56,9 @@ shell2 = box_blue.union(box_blue2)[0]
 shell2.color = (0.5, 0.5, 0.5)
 shell2.alpha = 0.6
 # vm.core.VolumeModel([shell2]).babylonjs()
-new_box = shell1.union(shell2)
+# new_box = shell1.union(shell2)
 # # new_box = shell1.subtract(shell2)
-# new_box = shell1.intersection(shell2)
+new_box = shell1.intersection(shell2)
 
 
 # # new_box =box_red.union(box_blue)

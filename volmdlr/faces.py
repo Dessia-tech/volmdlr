@@ -3259,8 +3259,8 @@ class PlaneFace3D(Face3D):
             self_conotur2d = self.outer_contour3d.to_2d(self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
             face2_contour2d = face2.outer_contour3d.to_2d(self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
             if self_conotur2d.is_inside_contour(face2_contour2d):
-                ax = self_conotur2d.plot()
-                face2_contour2d.plot(ax=ax, color='b')
+                # ax = self_conotur2d.plot()
+                # face2_contour2d.plot(ax=ax, color='b')
                 return True
         return False
 
@@ -5724,18 +5724,20 @@ class ClosedShell3D(OpenShell3D):
                             if valid:
                                 faces.append(new_face)
                     else:
-                        
+
                         for coin_f1, coin_f2 in list_coicident_faces:
-                            if coin_f1.face_inside(new_face) and coin_f2.face_inside(new_face):
+                            if new_face.face_inside(coin_f1) and new_face.face_inside(coin_f2):
                                 faces.append(new_face)
+                            # if coin_f1.face_inside(new_face) and coin_f2.face_inside(new_face):
+                            #     faces.append(new_face)
         valid_faces = []
         for i, fc1 in enumerate(faces):
             valid_face = True
             for j, fc2 in enumerate(faces):
                 if i != j:
                     if fc1.face_inside(fc2):
-                        ax = fc1.bounding_box.plot()
-                        fc2.bounding_box.plot(ax=ax, color='r')
+                        # ax = fc1.bounding_box.plot()
+                        # fc2.bounding_box.plot(ax=ax, color='r')
                         valid_face = False
             if valid_face and valid_face not in valid_faces:
                 valid_faces.append(fc1)
@@ -5782,13 +5784,13 @@ class ClosedShell3D(OpenShell3D):
         faces = self.get_non_intersecting_faces(shell2, intersecting_faces) + shell2.get_non_intersecting_faces(self, intersecting_faces)
         intersecting_contour = self.two_shells_intersecting_contour(shell2,
                                                                     intersecting_combinations)
-        ax = intersecting_contour.plot(color='r')
-        for face in faces:
-            for prim in face.outer_contour3d.primitives:
-                prim.plot(ax=ax, color='b')
-        intersecting_contour.plot(color='g')
-        for int_fc in intersecting_faces[1:]:
-            int_fc.outer_contour3d.plot(ax=ax, color='c')
+        # ax = intersecting_contour.plot(color='r')
+        # for face in faces:
+        #     for prim in face.outer_contour3d.primitives:
+        #         prim.plot(ax=ax, color='b')
+        # intersecting_contour.plot(color='g')
+        # for int_fc in intersecting_faces[1:]:
+        #     int_fc.outer_contour3d.plot(ax=ax, color='c')
         new_valid_faces = self.new_valid_faces(shell2, intersecting_faces,
                                      intersecting_combinations)
         # print('len new valid faces :', len(new_valid_faces))
@@ -5828,13 +5830,13 @@ class ClosedShell3D(OpenShell3D):
         faces = self.get_non_intersecting_faces(shell2, intersecting_faces)
         intersecting_contour = self.two_shells_intersecting_contour(shell2,
                                                                     intersecting_combinations)
-        ax = intersecting_contour.plot(color='r')
-        for face in faces:
-            for prim in face.outer_contour3d.primitives:
-                prim.plot(ax=ax, color='b')
+        # ax = intersecting_contour.plot(color='r')
+        # for face in faces:
+        #     for prim in face.outer_contour3d.primitives:
+        #         prim.plot(ax=ax, color='b')
 
-        for int_fc in intersecting_faces:
-            int_fc.outer_contour3d.plot(ax=ax, color='g')
+        # for int_fc in intersecting_faces:
+        #     int_fc.outer_contour3d.plot(ax=ax, color='g')
 
         faces += self.new_valid_faces(shell2, intersecting_faces,
                                      intersecting_combinations)
