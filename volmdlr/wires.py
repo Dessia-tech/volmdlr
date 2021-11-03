@@ -1449,8 +1449,8 @@ class Contour2D(Contour, Wire2D):
 
     def divide(self, contours, inside):
         # ax=self.plot()
-        # print('face area: ', self.area())
-        # print('contours AT START :', len(contours))
+        # # print('face area: ', self.area())
+        # # print('contours AT START :', len(contours))
         # for cnt in contours:
         #     cnt.plot(ax=ax, color='r')
 

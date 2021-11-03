@@ -876,8 +876,8 @@ class Plane3D(Surface3D):
 
     def is_coincident(self, plane2):
         line_direction = self.frame.w.cross(plane2.frame.w)
-
-        if line_direction.norm() < 1e-6:
+        if self.frame.w.is_colinear_to(plane2.frame.w):
+        # if line_direction.norm() < 1e-6:
             if plane2.point_on_plane(self.frame.origin):
                 return True
 
@@ -3253,6 +3253,17 @@ class PlaneFace3D(Face3D):
         """
         return self.outer_contour3d._bounding_box()
 
+    def face_inside(self, face2):
+
+        if self.surface3d.is_coincident(face2.surface3d):
+            self_conotur2d = self.outer_contour3d.to_2d(self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
+            face2_contour2d = face2.outer_contour3d.to_2d(self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
+            if self_conotur2d.is_inside_contour(face2_contour2d):
+                ax = self_conotur2d.plot()
+                face2_contour2d.plot(ax=ax, color='b')
+                return True
+        return False
+
     # def average_center_point(self):
     #     """
     #     excluding holes
@@ -3431,22 +3442,21 @@ class PlaneFace3D(Face3D):
 
                 print('len intersection points :', len(intersections))
                 print('intersection_points :', intersections)
-                ax = self.outer_contour3d.plot()
-                primitive = volmdlr.edges.LineSegment3D(intersections[0],
-                                                        intersections[1])
-                face2.outer_contour3d.plot(ax=ax, color='b')
-                for p in intersections:
-                    # p = self.surface3d.point3d_to_2d(p)
-                    p.plot(ax=ax, color='r')
-                primitive.plot(ax=ax, color='g')
+
                 return []
             primitive = volmdlr.edges.LineSegment3D(intersections[0], intersections[1])
             mid_point = primitive.middle_point()
             # primitive.plot(ax=ax, color='g')
             # mid_point.plot(ax=ax, color='y')
+            # ax = self.outer_contour3d.plot()
+            # face2.outer_contour3d.plot(ax=ax, color='b')
+            # for p in intersections:
+            #     # p = self.surface3d.point3d_to_2d(p)
+            #     p.plot(ax=ax, color='r')
+            # primitive.plot(ax=ax, color='g')
+
             if self.outer_contour3d.point_over_contour(mid_point) and\
                     face2.outer_contour3d.point_over_contour(mid_point):
-
                 return []
 
             intersections = [volmdlr.wires.Wire3D([primitive])]
@@ -3458,6 +3468,10 @@ class PlaneFace3D(Face3D):
         #     # p = self.surface3d.point3d_to_2d(p)
         #     p.plot(ax=ax, color='r')
         return []
+
+    # def coincident_face_intersections(self, face2):
+    #     for prim1 in self.surface2d.outer_contour.primitives
+    #         for prim2
 
     def minimum_distance(self, other_face, return_points=False):
         if other_face.__class__ is CylindricalFace3D:
@@ -5332,6 +5346,12 @@ class ClosedShell3D(OpenShell3D):
         return ClosedShell3D(new_faces, color=self.color, alpha=self.alpha,
                              name=self.name)
 
+    def face_on_shell(self, face):
+        for fc in self.faces:
+            if fc.face_inside(face):
+                return True
+        return False
+
     def shell_intersection(self, shell2: 'OpenShell3D', resolution: float):
         """
         Return None if disjointed
@@ -5482,13 +5502,15 @@ class ClosedShell3D(OpenShell3D):
         '''
         intersecting_faces_shell1 = []
         intersecting_faces_shell2 = []
+        list_coicident_faces = self.get_coincident_faces(shell2)
         face_combinations = []
         for face1 in self.faces:
             for face2 in shell2.faces:
-                if volmdlr.faces.ClosedShell3D([face1]).bounding_box.bbox_intersection(volmdlr.faces.ClosedShell3D([face2]).bounding_box) or \
+                if (volmdlr.faces.ClosedShell3D([face1]).bounding_box.bbox_intersection(volmdlr.faces.ClosedShell3D([face2]).bounding_box) or \
                         volmdlr.faces.ClosedShell3D(
                             [face1]).bounding_box.distance_to_bbox(
-                            volmdlr.faces.ClosedShell3D([face2]).bounding_box) == 0.0:
+                            volmdlr.faces.ClosedShell3D([face2]).bounding_box) == 0.0) and \
+                        (face1, face2) not in list_coicident_faces:
                     face_combinations.append((face1, face2))
 
         # for face1, face2 in face_combinations:
@@ -5589,6 +5611,16 @@ class ClosedShell3D(OpenShell3D):
                 non_intersecting_faces.append(face)
         return non_intersecting_faces
 
+    def get_coincident_faces(self, shell2):
+        list_coincident_faces = []
+        for face1 in self.faces:
+            for face2 in shell2.faces:
+                if face1.surface3d.is_coincident(face2.surface3d):
+                    list_coincident_faces.append((face1, face2))
+
+        return list_coincident_faces
+
+
     def two_shells_intersecting_contour(self, shell2, dict_intersecting_combinations=None):
         '''
             :param shell2: ClosedShell3D
@@ -5605,11 +5637,12 @@ class ClosedShell3D(OpenShell3D):
         return intersecting_contour
 
     def new_valid_faces(self, shell2, intersecting_faces,
-                        intersecting_combinations, intersection_method= False):
+                        intersecting_combinations, intersection_method=False):
         '''
         During calculation of shells union or subtraction, it returns a list of the new faces generated from the two shells intersection
         '''
         faces = []
+        list_coicident_faces = self.get_coincident_faces(shell2)
         for k, face in enumerate(intersecting_faces):
             if face in shell2.faces:
                 inside = True
@@ -5621,6 +5654,10 @@ class ClosedShell3D(OpenShell3D):
             face_contour2d = face.surface2d.outer_contour
 
             list_cutting_contours = face.get_face_cutting_contours(intersecting_combinations)
+            # if len(list_cutting_contours) >= 3:
+            #     ax=face.surface2d.outer_contour.plot()
+            #     for c in list_cutting_contours:
+            #         c.plot(ax=ax, color='g')
             if not list_cutting_contours:
                 list_faces = [face]
             else:
@@ -5648,12 +5685,14 @@ class ClosedShell3D(OpenShell3D):
                         if new_face not in faces:
                             valid = True
                             for fc in faces:
-                                if new_face.surface3d.is_coincident(
-                                        fc.surface3d) and \
-                                        ClosedShell3D([new_face]).bounding_box.is_inside_bbox(
-                                            ClosedShell3D(
-                                                [fc]).bounding_box) and\
-                                        new_face.surface2d.outer_contour.area() == fc.surface2d.outer_contour.area():
+                                if fc.face_inside(new_face) and \
+                                    new_face.surface2d.outer_contour.area() == fc.surface2d.outer_contour.area():
+                                # if new_face.surface3d.is_coincident(
+                                #         fc.surface3d) and \
+                                #         ClosedShell3D([fc]).bounding_box.is_inside_bbox(
+                                #             ClosedShell3D(
+                                #                 [new_face]).bounding_box) and\
+                                #          new_face.surface2d.outer_contour.area() == fc.surface2d.outer_contour.area():
                                     # ax=new_face.plot()
                                     # fc.plot(ax=ax, color='r')
                                     # ClosedShell3D([new_face]).bounding_box.plot(ax=ax, color='g')
@@ -5663,6 +5702,7 @@ class ClosedShell3D(OpenShell3D):
                             #     if ClosedShell3D(
                             #                 [new_face]).bounding_box.is_inside_bbox(
                             #                     ClosedShell3D([fc]).bounding_box):
+
                                     print('invalidates a face')
                                     valid = False
                                     faces.remove(fc)
@@ -5673,18 +5713,35 @@ class ClosedShell3D(OpenShell3D):
                     if is_inside:
                         if new_face not in faces:
                             valid = True
-                            for fc in faces:
-                                if new_face.surface2d.outer_contour.area() == fc.surface2d.outer_contour.area() and\
-                                ClosedShell3D([new_face]).bounding_box.is_inside_bbox(
-                                    ClosedShell3D([fc]).bounding_box):
-                                    print('invalidates a face')
-                                    valid = False
-                                    faces.remove(fc)
-                                    break
+                            # for fc in faces:
+                            #     if new_face.surface2d.outer_contour.area() == fc.surface2d.outer_contour.area() and\
+                            #     ClosedShell3D([new_face]).bounding_box.is_inside_bbox(
+                            #         ClosedShell3D([fc]).bounding_box):
+                            #         print('invalidates a face')
+                            #         valid = False
+                            #         faces.remove(fc)
+                            #         break
                             if valid:
                                 faces.append(new_face)
-                            # faces.append(new_face)
-        return faces
+                    else:
+                        
+                        for coin_f1, coin_f2 in list_coicident_faces:
+                            if coin_f1.face_inside(new_face) and coin_f2.face_inside(new_face):
+                                faces.append(new_face)
+        valid_faces = []
+        for i, fc1 in enumerate(faces):
+            valid_face = True
+            for j, fc2 in enumerate(faces):
+                if i != j:
+                    if fc1.face_inside(fc2):
+                        ax = fc1.bounding_box.plot()
+                        fc2.bounding_box.plot(ax=ax, color='r')
+                        valid_face = False
+            if valid_face and valid_face not in valid_faces:
+                valid_faces.append(fc1)
+
+        return valid_faces
+        # return faces
 
     def validate_union_subtraction_operation(self, shell2):
         '''
