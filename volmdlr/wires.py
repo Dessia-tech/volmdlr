@@ -2016,6 +2016,76 @@ class Contour2D(Contour, Wire2D):
                         and ((edge1.end).point_distance(edge2.end) < 1e-2))
                     or (((edge1.start).point_distance(edge2.end) < 1e-2) 
                         and ((edge1.end).point_distance(edge2.start) < 1e-2))): 
+                    
+                    if edge1.direction_vector().is_colinear_to(edge2.direction_vector()):
+                        # print(edge1.direction_vector().is_colinear_to(edge2.direction_vector()))
+                        ind2 = contour2d.primitives.index(edge2)
+                        ind1 = self.primitives.index(edge1)
+            
+                        if ind2 not in edges_index2:
+                            edges_index2.append(ind2)
+                        if ind1 not in edges_index1:
+                            edges_index1.append(ind1)
+        
+        prim1 = []
+        for i in edges_index1: 
+            prim1.append(self.primitives[i])
+        c1 = volmdlr.wires.Contour2D(prim1)
+        c1 = c1.order_contour()        
+        
+        prim2 = []
+        for i in edges_index2: 
+            prim2.append(contour2d.primitives[i])
+        c2 = volmdlr.wires.Contour2D(prim2)
+        c2 = c2.order_contour()
+        
+        point1 = c1.linesegment_intersections(c2.primitives[0])[0][0]
+        p11 = c1.linesegment_intersections(c2.primitives[0])[0][1] 
+        point2 = c1.linesegment_intersections(c2.primitives[-1])[0][0]
+        p21 = c1.linesegment_intersections(c2.primitives[-1])[0][1]  
+        
+        primitives = []
+        primitives.extend(self.extract_without_primitives(point1, point2, inside= False))
+        # ax2 = primitives[0].plot()
+        for p in primitives:
+            p.plot(ax=ax2, color='m', width=2)
+        primitives.extend(contour2d.extract_without_primitives(point1, point2, inside= False))
+        # ax2 = primitives[0].plot()
+        for p in primitives:
+            p.plot(ax=ax2, color='m', width=2)
+            
+        contour = volmdlr.wires.Contour2D(primitives)
+        ax2 = self.plot()
+        contour2d.plot(ax=ax2)
+        
+        contour.plot(ax=ax2, color='b')
+        contour = contour.order_contour()
+        
+        
+        
+        
+
+ax2 = self.plot()
+contour2d.plot(ax=ax2)
+
+
+
+    def merge_with(self, contour2d):
+        
+        edges_index2 = []
+        edges_index1 = []
+
+        for edge1 in self.primitives:
+            for edge2 in contour2d.primitives:
+                
+                if (edge1.point_belongs(edge2.start) or edge1.point_belongs(edge2.end) 
+                    or edge2.point_belongs(edge1.start) or edge2.point_belongs(edge1.end)
+                    or (edge1.start == edge2.start and edge1.end == edge2.end) 
+                    or (edge1.start == edge2.end and edge2.start == edge1.end)
+                    or (((edge1.start).point_distance(edge2.start) < 1e-2) 
+                        and ((edge1.end).point_distance(edge2.end) < 1e-2))
+                    or (((edge1.start).point_distance(edge2.end) < 1e-2) 
+                        and ((edge1.end).point_distance(edge2.start) < 1e-2))): 
 
                     ind2 = contour2d.primitives.index(edge2)
                     ind1 = self.primitives.index(edge1)
@@ -2024,34 +2094,123 @@ class Contour2D(Contour, Wire2D):
                         edges_index2.append(ind2)
                     if ind1 not in edges_index1:
                         edges_index1.append(ind1)
-
+        
+        ax2 = self.plot()
+        contour2d.plot(ax=ax2)
+        
         prim1 = []
         for i in edges_index1: 
             prim1.append(self.primitives[i])
         c1 = volmdlr.wires.Contour2D(prim1)
         c1 = c1.order_contour()
-
+        
+        # for p in prim1:
+        #     p.plot(ax=ax2, color='r')
+        
+        c1.plot(ax=ax2, color='r')
+        
         prim2 = []
         for i in edges_index2: 
             prim2.append(contour2d.primitives[i])
         c2 = volmdlr.wires.Contour2D(prim2)
         c2 = c2.order_contour()
-
+        
+        # for p in prim2:
+        #     p.plot(ax=ax2, color='b')
+            
+        c2.plot(ax=ax2, color='b')
+        
         if c2.primitives[1].linesegment_crossings(c1.primitives[0]) != []:
             point1 = c2.primitives[1].linesegment_crossings(c1.primitives[0])[0]
+            p11 = c1.primitives[0]
+            p12 = c2.primitives[1]
+            # p11 = c1.primitives[0]
+            # p12 = c2.primitives[0]
         else:
             point1 = c2.primitives[1].linesegment_crossings(c1.primitives[-1])[0]
-
+            p11 = c1.primitives[-1]
+            p12 = c2.primitives[1]
+            # p11 = c1.primitives[-1]
+            # p12 = c2.primitives[0]
+            
+        point1.plot(ax=ax2)
+        
         if c2.primitives[-2].linesegment_crossings(c1.primitives[-1]) != []:
             point2 = c2.primitives[-2].linesegment_crossings(c1.primitives[-1])[0]
+            p21 = c1.primitives[-1]
+            p22 = c2.primitives[-2]
+            # p21 = c1.primitives[-1]
+            # p22 = c2.primitives[-1]
+            
         else:
-            point2 = c2.primitives[-2].linesegment_crossings(c1.primitives[0])[0]    
-
-        primitives = []
-        primitives.extend(self.extract_without_primitives(point1, point2, inside= False))
-        primitives.extend(contour2d.extract_without_primitives(point1, point2, inside= False))
+            point2 = c2.primitives[-2].linesegment_crossings(c1.primitives[0])[0]   
+            p21 = c1.primitives[0]
+            p22 = c2.primitives[-2]
+            # p21 = c1.primitives[0]
+            # p22 = c2.primitives[-1]
+            
+        point2.plot(ax=ax2)    
+            
+        # primitives = []
+        # primitives.extend(self.extract_without_primitives(point1, point2, inside= False))
+        # ax2 = primitives[0].plot()
+        # for p in primitives:
+        #     p.plot(ax=ax2, color='b', width=2)
+        # primitives.extend(contour2d.extract_without_primitives(point1, point2, inside= False))
         
+        # if c2.primitives[0].linesegment_crossings(c1.primitives[0]) != []:
+        #     point1 = c2.primitives[0].linesegment_crossings(c1.primitives[0])[0]
+        #     # p11 = c1.primitives[0]
+        #     # p12 = c2.primitives[1]
+        #     p11 = c1.primitives[0]
+        #     p12 = c2.primitives[0]
+        # elif c2.primitives[-1].linesegment_crossings(c1.primitives[0]) != []:
+        #     point1 = c2.primitives[-1].linesegment_crossings(c1.primitives[0])[0] 
+        #     p11 = c1.primitives[0]
+        #     p12 = c2.primitives[-1]
+            
+        # elif c2.primitives[1].linesegment_crossings(c1.primitives[0]) != []:
+        #     point1 = c2.primitives[1].linesegment_crossings(c1.primitives[0])[0]
+        #     p11 = c1.primitives[0]
+        #     p12 = c2.primitives[1]
+
+        point1.plot(ax=ax2)
+        p11.plot(ax=ax2, color='b', width=2)
+        p12.plot(ax=ax2, color='r', width=2)
+        
+        # if c2.primitives[0].linesegment_crossings(c1.primitives[-1]) != []:
+        #     point2 = c2.primitives[0].linesegment_crossings(c1.primitives[0])[0]
+        #     p21 = c1.primitives[0]
+        #     p22 = c2.primitives[0]
+        # elif c2.primitives[-1].linesegment_crossings(c1.primitives[-1]) != []:
+        #     point2 = c2.primitives[-1].linesegment_crossings(c1.primitives[0])[0]
+        #     p21 = c1.primitives[0]
+        #     p22 = c2.primitives[-1]
+            
+        # elif c2.primitives[-2].linesegment_crossings(c1.primitives[-1]) != []:
+        #     point2 = c2.primitives[-2].linesegment_crossings(c1.primitives[0])[0]
+        #     p21 = c1.primitives[0]
+        #     p22 = c2.primitives[-2]
+        
+        point2.plot(ax=ax2)
+        p21.plot(ax=ax2, color='b', width=2)
+        p22.plot(ax=ax2, color='r', width=2)
+
+        contour2d.order_contour()
+        self.order_contour()
+        
+        primitives = []
+        primitives.extend(self.extract_primitives(point1, p11, point2, p21, inside= False))
+        # ax2 = primitives[0].plot()
+        for p in primitives:
+            p.plot(ax=ax2, color='m', width=2)
+        primitives.extend(contour2d.extract_primitives(point1, p12, point2, p22, inside= False))
+        # ax2 = primitives[0].plot()
+        for p in primitives:
+            p.plot(ax=ax2, color='m', width=2)
+            
         contour = volmdlr.wires.Contour2D(primitives)
+        contour.plot(ax=ax2, color='b')
         contour = contour.order_contour()
         
         return contour
