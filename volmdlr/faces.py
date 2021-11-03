@@ -611,11 +611,11 @@ class Surface3D(dc.DessiaObject):
                     end_match = False
                     if (math.isclose(delta_x1, 0., abs_tol=1e-3)
                             and math.isclose(delta_y1, 0., abs_tol=1e-3)
-                            and math.isclose(dist1, 0, abs_tol=1e-6)):
+                            and math.isclose(dist1, 0, abs_tol=1e-5)):
                         end_match = True
                     elif (math.isclose(delta_x2, 0., abs_tol=1e-3)
                             and math.isclose(delta_y2, 0., abs_tol=1e-3)
-                            and math.isclose(dist2, 0, abs_tol=1e-6)):
+                            and math.isclose(dist2, 0, abs_tol=1e-5)):
                         end_match = True
                         primitives = [p.reverse() for p in primitives[::-1]]
                     else:
