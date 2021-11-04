@@ -26,6 +26,7 @@ import geomdl
 import scipy.optimize as opt
 import time
 
+from geomdl.fitting import interpolate_surface
 
 def knots_vector_inv(knots_vector):
     ''' 
@@ -2913,6 +2914,25 @@ class BSplineSurface3D(Surface3D):
                             
         return cls.points_fitting_into_bspline_surface(points_3d_ordred,points_x,points_x*len(faces),degree_u,degree_v)    
 
+    @classmethod
+    def from_geomdl_surface(cls, surface):
+        u_knots = list(sorted(set(surface.knotvector_u)))
+        v_knots = list(sorted(set(surface.knotvector_v)))
+        u_multiplicities = [surface.knotvector_u.count(k) for k in u_knots]
+        v_multiplicities = [surface.knotvector_v.count(k) for k in v_knots]
+        crtl_points = [volmdlr.Point3D(*p) for p in surface.ctrlpts]
+        return cls(surface.degree_u, surface.degree_v,
+                   crtl_points, surface.ctrlpts_size_u, surface.ctrlpts_size_v,
+                     u_multiplicities, v_multiplicities, u_knots, v_knots,
+                     weights=None, name='')
+
+    @classmethod
+    def from_pointgrid(cls, grid:List[volmdlr.Point3D], size_u:int, size_v:int, degree_u:int, degree_v:int):
+        grid_geomdl = [(p.x, p.y, p.z) for p in grid]
+        geomdl_surface = interpolate_surface(grid_geomdl, size_u, size_v, degree_u, degree_v)
+        return cls.from_geomdl_surface(geomdl_surface)
+        
+        
 
 class BezierSurface3D(BSplineSurface3D):
 
