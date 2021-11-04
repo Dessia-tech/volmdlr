@@ -1971,10 +1971,10 @@ class BSplineSurface3D(Surface3D):
             cost.append(z.cost)
             sol.append(z.x)
 
-            res = scp.optimize.minimize(f, x0=x0,
+            res = scp.optimize.minimize(f, x0=npy.array(x0),
                                         bounds=[(min_bound_x, max_bound_x),
                                                 (min_bound_y, max_bound_y)],
-                                        tol=1e-7)
+                                        tol=1e-9)
             cost.append(res.fun)
             sol.append(res.x)
 
@@ -1987,8 +1987,34 @@ class BSplineSurface3D(Surface3D):
         lth = linesegment2d.length()
         points = [self.point2d_to_3d(
             linesegment2d.point_at_abscissa(i * lth / 10.)) for i in range(11)]
-        return [vme.LineSegment3D(p1, p2)
-                for p1, p2 in zip(points[:-1], points[1:])]
+
+        linesegment = vme.LineSegment3D(points[0], points[-1])
+        flag = True
+        for pt in points:
+            if not linesegment.point_belongs(pt):
+                flag = False
+                break
+
+        if flag:
+            # All the points are on the same LineSegment3D
+            linesegments = [linesegment]
+        else:
+            linesegments = [vme.LineSegment3D(p1, p2)
+                            for p1, p2 in zip(points[:-1], points[1:])]
+        return linesegments
+
+    def linesegment3d_to_2d(self, linesegment3d):
+        """
+        a line segment on a BSplineSurface3D will be in any case a line in 2D?
+        """
+        x_perio = self.x_periodicity if self.x_periodicity is not None else 1.
+        y_perio = self.y_periodicity if self.y_periodicity is not None else 1.
+        return [vme.LineSegment2D(self.point3d_to_2d(linesegment3d.start,
+                                                     max_bound_x=x_perio,
+                                                     max_bound_y=y_perio),
+                                  self.point3d_to_2d(linesegment3d.end,
+                                                     max_bound_x=x_perio,
+                                                     max_bound_y=y_perio))]
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         # TODO: enhance this, it is a non exact method!
@@ -2028,12 +2054,10 @@ class BSplineSurface3D(Surface3D):
             raise NotImplementedError
 
         elif flag:
-            x_perio = self.x_periodicity
-            y_perio = self.y_periodicity
-            if self.x_periodicity is None:
-                x_perio = 1.
-            if self.y_periodicity is None:
-                y_perio = 1.
+            x_perio = self.x_periodicity if self.x_periodicity is not None\
+                else 1.
+            y_perio = self.y_periodicity if self.y_periodicity is not None\
+                else 1.
             p1 = self.point3d_to_2d(bspline_curve3d.points[0],
                                     max_bound_x=x_perio,
                                     max_bound_y=y_perio)
