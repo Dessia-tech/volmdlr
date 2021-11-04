@@ -685,22 +685,6 @@ class Contour2D(Contour, Wire2D):
                 points.append(edge.start)
         return ClosedPolygon2D(points)
 
-    def contour_equal_to(self, contour2):
-
-        if len(self.primitives) != len(contour2.primitives):
-            return False
-        # equal = False
-        for prim1 in self.primitives:
-            # equal = (equal and prim1 == prim2)
-            one_equal = False
-            for prim2 in contour2.primitives:
-                if prim1.start == prim2.start and prim1.end == prim2.end or \
-                    prim1.end == prim2.start and prim1.start == prim2.end:
-                    one_equal = True
-            if not one_equal:
-                return False
-        return True
-
     # def _primitives_analysis(self):
     #     """
     #     An internal arc is an arc that has his interior point inside the polygon
@@ -969,10 +953,21 @@ class Contour2D(Contour, Wire2D):
         including the edges
         return True or False
         """
-        c1_xmin, c1_xmax, c1_ymin, c1_ymax = self.bounding_rectangle()
-        c2_xmin, c2_xmax, c2_ymin, c2_ymax = contour2.bounding_rectangle()
-        return ((c1_xmin >= c2_xmin - 1e-6) and (c1_xmax <= c2_xmax + 1e-6)\
-                and (c1_ymin >= c2_ymin - 1e-6) and (c1_ymax <= c2_ymax + 1e-6))
+        points_contour2 = []
+        for prim in contour2.primitives:
+            if prim.start not in points_contour2:
+                points_contour2.append(prim.start)
+            if prim.end not in points_contour2:
+                points_contour2.append(prim.end)
+        for point in points_contour2:
+            if not self.point_belongs(point) and not self.point_over_contour(point):
+                return False
+        return True
+
+        # c1_xmin, c1_xmax, c1_ymin, c1_ymax = self.bounding_rectangle()
+        # c2_xmin, c2_xmax, c2_ymin, c2_ymax = contour2.bounding_rectangle()
+        # return ((c1_xmin >= c2_xmin - 1e-6) and (c1_xmax <= c2_xmax + 1e-6)\
+        #         and (c1_ymin >= c2_ymin - 1e-6) and (c1_ymax <= c2_ymax + 1e-6))
 
     def bounding_rectangle(self):
         xmin, xmax, ymin, ymax = self.primitives[0].bounding_rectangle()
