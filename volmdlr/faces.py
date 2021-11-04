@@ -628,19 +628,19 @@ class Surface3D(dc.DessiaObject):
                         # primitives[-1].plot(ax=ax, color='r', plot_points=True)
                         for p in primitives:
                             p.plot(ax=ax, color='r', plot_points=True)
-                        dist3 = primitive3d.start.point_distance(
-                            last_primitive3d.start)
-                        dist4 = primitive3d.end.point_distance(
-                            last_primitive3d.start)
+                        if self.x_periodicity:
+                            vme.Line2D(volmdlr.Point2D(self.x_periodicity, 0),
+                                       volmdlr.Point2D(self.x_periodicity, 1))\
+                                .plot(ax=ax)
                         print('Surface 3D:', self)
                         print('3D primitive in red:', primitive3d)
                         print('Previous 3D primitive:', last_primitive3d)
-                        print('distances 3D:', dist1, dist2, dist3, dist4)
-
                         raise ValueError(
                             'Primitives not following each other in contour:',
-                            'delta={}, {}, {}, {}'.format(
-                                delta_x1, delta_x2, delta_y1, delta_y2))
+                            'delta1={}, {}, {} ; '
+                            'delta2={}, {}, {}'.format(
+                                delta_x1, delta_y1, dist1,
+                                delta_x2, delta_y2, dist2))
 
                     # if not end_match and should_study_periodicity:
                     #     # Study if translating does the trick
@@ -1999,8 +1999,10 @@ class BSplineSurface3D(Surface3D):
             # All the points are on the same LineSegment3D
             linesegments = [linesegment]
         else:
-            linesegments = [vme.LineSegment3D(p1, p2)
-                            for p1, p2 in zip(points[:-1], points[1:])]
+            linesegments = [vme.BSplineCurve3D.from_points_interpolation(
+                points, max(self.degree_u, self.degree_v), periodic=True)]
+            # linesegments = [vme.LineSegment3D(p1, p2)
+            #                 for p1, p2 in zip(points[:-1], points[1:])]
         return linesegments
 
     def linesegment3d_to_2d(self, linesegment3d):
@@ -2033,10 +2035,21 @@ class BSplineSurface3D(Surface3D):
                                     max_bound_x=self.x_periodicity)
             p1_sup = self.point3d_to_2d(bspline_curve3d.points[0],
                                         min_bound_x=1 - self.x_periodicity)
+            new_x = p1.x-p1_sup.x+self.x_periodicity
+            new_x = new_x if 0 <= new_x else 0
+            reverse = False
+            if new_x < 0:
+                new_x = 0
+            elif math.isclose(new_x, self.x_periodicity, abs_tol=1e-5):
+                new_x = 0
+                reverse = True
+
             linesegments = [
                 vme.LineSegment2D(
-                    volmdlr.Point2D(p1.x-p1_sup.x+self.x_periodicity, p1.y),
+                    volmdlr.Point2D(new_x, p1.y),
                     volmdlr.Point2D(self.x_periodicity, p1.y))]
+            if reverse:
+                linesegments[0] = linesegments[0].reverse()
 
         elif self.y_periodicity and not self.x_periodicity \
                 and bspline_curve3d.periodic:
@@ -2044,10 +2057,21 @@ class BSplineSurface3D(Surface3D):
                                     max_bound_y=self.y_periodicity)
             p1_sup = self.point3d_to_2d(bspline_curve3d.points[0],
                                         min_bound_y=1 - self.y_periodicity)
+            new_y = p1.y - p1_sup.y + self.y_periodicity
+            new_y = new_y if 0 <= new_y else 0
+            reverse = False
+            if new_y < 0:
+                new_y = 0
+            elif math.isclose(new_y, self.y_periodicity, abs_tol=1e-5):
+                new_y = 0
+                reverse = True
+
             linesegments = [
                 vme.LineSegment2D(
-                    volmdlr.Point2D(p1.x, p1-p1_sup.x+self.y_periodicity),
+                    volmdlr.Point2D(p1.x, new_y),
                     volmdlr.Point2D(p1.x, self.y_periodicity))]
+            if reverse:
+                linesegments[0] = linesegments[0].reverse()
 
         elif self.x_periodicity and self.y_periodicity \
                 and bspline_curve3d.periodic:
