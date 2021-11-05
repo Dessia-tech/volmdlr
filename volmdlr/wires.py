@@ -2885,16 +2885,12 @@ class Contour3D(Contour, Wire3D):
             else:
                 return cls(raw_edges, name=name)
 
-        # Making things right for first 2 primitives
-        if (raw_edges[0].end).point_distance(raw_edges[1].start) < 5e-4:
-            edges = [raw_edges[0], raw_edges[1]]
-        elif (raw_edges[0].start).point_distance(raw_edges[1].start) < 5e-4:
-            edges = [raw_edges[0].reverse(), raw_edges[1]]    
-        elif (raw_edges[0].end).point_distance(raw_edges[1].end) < 5e-4:
-            edges = [raw_edges[0], raw_edges[1].reverse()]
-        elif (raw_edges[0].start).point_distance(raw_edges[1].end) < 5e-4:
-            edges = [raw_edges[0].reverse(), raw_edges[1].reverse()]  
-        else:
+        distances = [raw_edges[0].end.point_distance(raw_edges[1].start),
+                     raw_edges[0].start.point_distance(raw_edges[1].start),
+                     raw_edges[0].end.point_distance(raw_edges[1].end),
+                     raw_edges[0].start.point_distance(raw_edges[1].end)]
+        index = distances.index(min(distances))
+        if min(distances) > 5e-4:
             ax = raw_edges[0].plot()
             raw_edges[1].plot(ax=ax)
             deltax1 = abs(raw_edges[0].start.x - raw_edges[1].end.x)
@@ -2908,16 +2904,28 @@ class Contour3D(Contour, Wire3D):
                 'delta = {}, {}, {}, {}, {}, {}'.format(deltax1, deltax2,
                                                         deltay1, deltay2,
                                                         deltaz1, deltaz2))
+        # Making things right for first 2 primitives
+        if index == 0:
+            edges = [raw_edges[0], raw_edges[1]]
+        elif index == 1:
+            edges = [raw_edges[0].reverse(), raw_edges[1]]
+        elif index == 2:
+            edges = [raw_edges[0], raw_edges[1].reverse()]
+        elif index == 3:
+            edges = [raw_edges[0].reverse(), raw_edges[1].reverse()]
+        else:
+            raise NotImplementedError
 
         last_edge = edges[-1]
         for raw_edge in raw_edges[2:]:
-            if (raw_edge.start).point_distance(last_edge.end) < 5e-4:
-                last_edge = raw_edge
-            elif (raw_edge.end).point_distance(last_edge.end) < 5e-4:
-                last_edge = raw_edge.reverse()
-            else:
+            distances = [raw_edge.start.point_distance(last_edge.end),
+                         raw_edge.end.point_distance(last_edge.end)]
+            index = distances.index(min(distances))
+            if min(distances) > 5e-4:
                 ax = last_edge.plot(color='b')
-                ax = raw_edge.plot(ax=ax, color='r')
+                raw_edge.plot(ax=ax, color='r')
+                last_edge.end.plot(ax=ax, color='b')
+                raw_edges[0].plot(ax=ax, color='g')
                 deltax1 = abs(raw_edge.start.x - last_edge.end.x)
                 deltax2 = abs(raw_edge.end.x - last_edge.end.x)
                 deltay1 = abs(raw_edge.start.y - last_edge.end.y)
@@ -2926,9 +2934,13 @@ class Contour3D(Contour, Wire3D):
                 deltaz2 = abs(raw_edge.end.z - last_edge.end.z)
                 raise NotImplementedError(
                     'Edges of contour not follwing each other',
-                'delta = {}, {}, {}, {}, {}, {}'.format(deltax1, deltax2,
-                                                        deltay1, deltay2,
-                                                        deltaz1, deltaz2))
+                    'delta = {}, {}, {}, {}, {}, {}'.format(deltax1, deltax2,
+                                                            deltay1, deltay2,
+                                                            deltaz1, deltaz2))
+            if index == 0:
+                last_edge = raw_edge
+            elif index == 1:
+                last_edge = raw_edge.reverse()
 
             edges.append(last_edge)
         return cls(edges, name=name)
