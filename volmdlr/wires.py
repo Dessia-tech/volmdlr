@@ -2886,13 +2886,13 @@ class Contour3D(Contour, Wire3D):
                 return cls(raw_edges, name=name)
 
         # Making things right for first 2 primitives
-        if (raw_edges[0].end).point_distance(raw_edges[1].start) < 1e-4:
+        if (raw_edges[0].end).point_distance(raw_edges[1].start) < 5e-4:
             edges = [raw_edges[0], raw_edges[1]]
-        elif (raw_edges[0].start).point_distance(raw_edges[1].start) < 1e-4:
+        elif (raw_edges[0].start).point_distance(raw_edges[1].start) < 5e-4:
             edges = [raw_edges[0].reverse(), raw_edges[1]]    
-        elif (raw_edges[0].end).point_distance(raw_edges[1].end) < 1e-4:
+        elif (raw_edges[0].end).point_distance(raw_edges[1].end) < 5e-4:
             edges = [raw_edges[0], raw_edges[1].reverse()]
-        elif (raw_edges[0].start).point_distance(raw_edges[1].end) < 1e-4:
+        elif (raw_edges[0].start).point_distance(raw_edges[1].end) < 5e-4:
             edges = [raw_edges[0].reverse(), raw_edges[1].reverse()]  
         else:
             ax = raw_edges[0].plot()
@@ -2911,9 +2911,9 @@ class Contour3D(Contour, Wire3D):
 
         last_edge = edges[-1]
         for raw_edge in raw_edges[2:]:
-            if (raw_edge.start).point_distance(last_edge.end) < 1e-4:
+            if (raw_edge.start).point_distance(last_edge.end) < 5e-4:
                 last_edge = raw_edge
-            elif (raw_edge.end).point_distance(last_edge.end) < 1e-4:
+            elif (raw_edge.end).point_distance(last_edge.end) < 5e-4:
                 last_edge = raw_edge.reverse()
             else:
                 ax = last_edge.plot(color='b')

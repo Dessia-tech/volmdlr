@@ -611,11 +611,11 @@ class Surface3D(dc.DessiaObject):
                     end_match = False
                     if (math.isclose(delta_x1, 0., abs_tol=1e-3)
                             and math.isclose(delta_y1, 0., abs_tol=1e-3)
-                            and math.isclose(dist1, 0, abs_tol=1e-5)):
+                            and math.isclose(dist1, 0, abs_tol=5e-5)):
                         end_match = True
                     elif (math.isclose(delta_x2, 0., abs_tol=1e-3)
                             and math.isclose(delta_y2, 0., abs_tol=1e-3)
-                            and math.isclose(dist2, 0, abs_tol=1e-5)):
+                            and math.isclose(dist2, 0, abs_tol=5e-5)):
                         end_match = True
                         primitives = [p.reverse() for p in primitives[::-1]]
                     else:
@@ -1995,12 +1995,24 @@ class BSplineSurface3D(Surface3D):
                 flag = False
                 break
 
+        periodic = False
+        if self.x_periodicity is not None and \
+                math.isclose(lth, self.x_periodicity, abs_tol=1e-6) and \
+                math.isclose(linesegment2d.start.y, linesegment2d.end.y,
+                             abs_tol=1e-6):
+            periodic = True
+        elif self.y_periodicity is not None and \
+                math.isclose(lth, self.y_periodicity, abs_tol=1e-6) and \
+                math.isclose(linesegment2d.start.x, linesegment2d.end.x,
+                             abs_tol=1e-6):
+            periodic = True
+
         if flag:
             # All the points are on the same LineSegment3D
             linesegments = [linesegment]
         else:
             linesegments = [vme.BSplineCurve3D.from_points_interpolation(
-                points, max(self.degree_u, self.degree_v), periodic=True)]
+                points, max(self.degree_u, self.degree_v), periodic=periodic)]
             # linesegments = [vme.LineSegment3D(p1, p2)
             #                 for p1, p2 in zip(points[:-1], points[1:])]
         return linesegments
