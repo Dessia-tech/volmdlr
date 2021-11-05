@@ -3395,13 +3395,6 @@ class PlaneFace3D(Face3D):
                 if surface3d_inter not in intersections:
                     intersections.append(surface3d_inter)
 
-        # if not intersections:
-        #     for edge1 in self.outer_contour3d.primitives:
-        #         linesegment1 = vme.LineSegment3D(edge1.start, edge1.end)
-        #         inters = linesegment1.linesegment_intersection(linesegment)
-        #         if inters is not None:
-        #             intersections.append(inters)
-
         return intersections
 
     def face_intersections(self, face2) -> List[volmdlr.wires.Wire3D]:
@@ -3432,14 +3425,6 @@ class PlaneFace3D(Face3D):
                 return []
             primitive = volmdlr.edges.LineSegment3D(intersections[0], intersections[1])
             mid_point = primitive.middle_point()
-            # primitive.plot(ax=ax, color='g')
-            # mid_point.plot(ax=ax, color='y')
-            # ax = self.outer_contour3d.plot()
-            # face2.outer_contour3d.plot(ax=ax, color='b')
-            # for p in intersections:
-            #     # p = self.surface3d.point3d_to_2d(p)
-            #     p.plot(ax=ax, color='r')
-            # primitive.plot(ax=ax, color='g')
 
             if self.outer_contour3d.point_over_contour(mid_point) and\
                     face2.outer_contour3d.point_over_contour(mid_point):
@@ -3447,17 +3432,7 @@ class PlaneFace3D(Face3D):
 
             intersections = [volmdlr.wires.Wire3D([primitive])]
             return intersections
-        # if not intersections:
-        # ax = self.outer_contour3d.plot()
-        # face2.outer_contour3d.plot(ax=ax, color='b')
-        # for p in intersections:
-        #     # p = self.surface3d.point3d_to_2d(p)
-        #     p.plot(ax=ax, color='r')
         return []
-
-    # def coincident_face_intersections(self, face2):
-    #     for prim1 in self.surface2d.outer_contour.primitives
-    #         for prim2
 
     def minimum_distance(self, other_face, return_points=False):
         if other_face.__class__ is CylindricalFace3D:
@@ -3495,31 +3470,18 @@ class PlaneFace3D(Face3D):
 
             return a list all contours cutting one particular face
         '''
-        list_all_conturs = []
         face_intersecting_primitives2d = []
         for intersecting_combination in dict_intersecting_combinations.keys():
             if self in intersecting_combination:
                 primitive2 = dict_intersecting_combinations[intersecting_combination].primitives[0]
                 primitive2_2d = volmdlr.edges.LineSegment2D(self.surface3d.point3d_to_2d(primitive2.start), self.surface3d.point3d_to_2d(primitive2.end))
-                # mid_point = primitive2_2d.middle_point()
-                # if not self.surface2d.outer_contour.point_over_contour(mid_point) and \
-                #         not self.surface2d.outer_contour.point_over_contour(primitive2_2d.start) and\
-                #         not self.surface2d.outer_contour.point_over_contour(primitive2_2d.end):
+
                 if not self.surface2d.outer_contour.primitive_over_contour(primitive2_2d):
                     face_intersecting_primitives2d.append(primitive2_2d)
-                # else:
-                #     ax = self.surface2d.outer_contour.plot()
-                #     primitive2_2d.plot(ax=ax, color='b')
-        #         list_all_conturs.append(primitive2)
-        # ax = self.outer_contour3d.plot()
-        # for prim in list_all_conturs:
-        #     prim.plot(ax=ax, color='b')
 
         if not face_intersecting_primitives2d:
-            print('passing here!! it is breaking everything')
             return []
 
-        # new_contour = volmdlr.wires.Contour2D(face_intersecting_primitives2d[:])
         list_cutting_contours = volmdlr.wires.Contour2D.contours_from_edges(face_intersecting_primitives2d[:])
 
         return list_cutting_contours
@@ -3542,12 +3504,6 @@ class PlaneFace3D(Face3D):
         if list_open_cutting_contours:
             new_faces_contours = self.surface2d.outer_contour.divide(list_open_cutting_contours, inside)
             for contour in new_faces_contours:
-                # new_origin = self.surface3d.point2d_to_3d(contour.center_of_mass())
-                # new_frame = volmdlr.Frame3D(new_origin, self.surface3d.frame.u,
-                #                             self.surface3d.frame.v,
-                #                             self.surface3d.frame.w)
-                # new_surface3d = Plane3D(new_frame)
-                # list_faces.append(PlaneFace3D(new_surface3d, Surface2D(contour, [])))
                 list_faces.append(
                     PlaneFace3D(self.surface3d, Surface2D(contour, [])))
 
@@ -5523,9 +5479,6 @@ class ClosedShell3D(OpenShell3D):
             face_intersection = combination[0].face_intersections(combination[1])
             if face_intersection:
                 intersecting_combinations[combination] = face_intersection[0]
-            # else:
-            #     ax = combination[0].outer_contour3d.plot()
-            #     combination[1].outer_contour3d.plot(ax, color='r')
 
         return intersecting_combinations
 
