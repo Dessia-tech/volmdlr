@@ -875,10 +875,12 @@ class Plane3D(Surface3D):
         return volmdlr.Line3D(point1, point2)
 
     def is_coincident(self, plane2):
+        """
+        Verifies if two planes are parallel and coincident
+        """
         if self.frame.w.is_colinear_to(plane2.frame.w):
             if plane2.point_on_plane(self.frame.origin):
                 return True
-
         return False
 
     def rotation(self, center, axis, angle, copy=True):
@@ -3252,6 +3254,10 @@ class PlaneFace3D(Face3D):
         return self.outer_contour3d._bounding_box()
 
     def face_inside(self, face2):
+        """
+        verifies if a face is inside another face.
+        It returns True if face2 is inside or False if the opposite
+        """
 
         if self.surface3d.is_coincident(face2.surface3d):
             self_contour2d = self.outer_contour3d.to_2d(self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
@@ -5327,6 +5333,9 @@ class ClosedShell3D(OpenShell3D):
                              name=self.name)
 
     def face_on_shell(self, face):
+        """
+        Verifies if a face lies on the shell's surface
+        """
         for fc in self.faces:
             if fc.face_inside(face):
                 return True
@@ -5585,6 +5594,12 @@ class ClosedShell3D(OpenShell3D):
     #     return non_intersecting_faces
 
     def get_coincident_faces(self, shell2):
+        """
+        Finds all pairs of faces that are coincidents faces, that is,
+        faces lying on the same plane
+
+        returns a List of tuples with the face pairs
+        """
         list_coincident_faces = []
         for face1 in self.faces:
             for face2 in shell2.faces:
@@ -5741,8 +5756,8 @@ class ClosedShell3D(OpenShell3D):
         intersecting_faces, _ = self.get_intersecting_faces(intersecting_combinations)
 
         faces = self.get_non_intersecting_faces(shell2, intersecting_faces)
-        intersecting_contour = self.two_shells_intersecting_contour(shell2,
-                                                                    intersecting_combinations)
+        # intersecting_contour = self.two_shells_intersecting_contour(shell2,
+        #                                                             intersecting_combinations)
 
         faces += self.new_valid_faces(shell2, intersecting_faces,
                                      intersecting_combinations)

@@ -964,10 +964,6 @@ class Contour2D(Contour, Wire2D):
                 return False
         return True
 
-        # c1_xmin, c1_xmax, c1_ymin, c1_ymax = self.bounding_rectangle()
-        # c2_xmin, c2_xmax, c2_ymin, c2_ymax = contour2.bounding_rectangle()
-        # return ((c1_xmin >= c2_xmin - 1e-6) and (c1_xmax <= c2_xmax + 1e-6)\
-        #         and (c1_ymin >= c2_ymin - 1e-6) and (c1_ymax <= c2_ymax + 1e-6))
 
     def bounding_rectangle(self):
         xmin, xmax, ymin, ymax = self.primitives[0].bounding_rectangle()

@@ -13,6 +13,7 @@ scripts = [
             'primitives/block3d.py',
             'faces/triangle3d.py',
             'faces/union.py',
+            'faces/blocks_set_operations',
             'cloud/sewing_two_polygons.py',
             'read_steps.py'
             ]
