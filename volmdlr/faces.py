@@ -5692,6 +5692,7 @@ class ClosedShell3D(OpenShell3D):
                                      intersecting_combinations)
         faces += new_valid_faces
 
+
         return [ClosedShell3D(faces)]
 
     def subtract(self, shell2):
