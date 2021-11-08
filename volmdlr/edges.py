@@ -2861,6 +2861,32 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
                               knot_multiplicities=knot_multiplicities
                               )
 
+    def point_belongs(self, point3d):
+        '''
+        check if a point3d belongs to the bspline_curve or not 
+        '''
+        def f(x):
+            return (point3d - volmdlr.Point3D(*self.curve.evaluate_single(x))).norm()
+
+        x = npy.linspace(0,1,10)
+        x_init=[]
+        for xi in x:
+            x_init.append(xi)
+        
+        cost=[]
+        sol=[]
+            
+        for x0 in x_init: 
+            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
+            cost.append(z.cost)
+            sol.append(z.x)
+                
+        if min(cost) < 1e-10: 
+            return True
+        else: 
+            return False
+        
+    
 class BezierCurve3D(BSplineCurve3D):
 
     def __init__(self, degree: int, control_points: List[volmdlr.Point3D],
