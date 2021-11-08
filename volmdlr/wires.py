@@ -3550,7 +3550,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
         return ClosedPolygon3D(self.simplify_polygon(
             min_distance=min_distance, max_distance=max_distance).points)
 
-    def sewing(self, polygon2, x, y):
+    def sewing0(self, polygon2, x, y):
         """
         x and y are used for plane projection to make sure it is being projected in the right plane
         """
@@ -3678,24 +3678,32 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
 
         return triangles
 
-    def sewing2(self, polygon2, x, y):
+    def sewing(self, polygon2, x, y):
         """
         x and y are used for plane projection to make sure it is being
         projected in the right plane
         """
 
         def get_furthest_polygon_intersection(polygon, line):
+            # axs=line.plot()
+            # polygon.plot(ax=axs, color='r')
             line_inters = []
             for primit in polygon.line_segments:
                 inter_line = primit.linesegment_intersections(line)
-                if inter_line and inter_line[0] not in line_inters:
-                    line_inters.append(inter_line[0])
+                if inter_line:
+                    if inter_line[0] not in line_inters:
+                        line_inters.append(inter_line[0])
+                elif line.point_belongs(primit.start):
+                    line_inters.append(primit.start)
+                elif line.point_belongs(primit.end):
+                    line_inters.append(primit.end)
 
             if len(line_inters) > 1:
                 list_distance = [volmdlr.O2D.point_distance(p) for p in
                                  line_inters]
                 max_distance_index = list_distance.index(max(list_distance))
                 return line_inters[max_distance_index]
+
             return line_inters[0]
 
         def get_sewing_contour_portion(line_1, line_2, polygon):
@@ -3830,7 +3838,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                 volmdlr.X2D * math.sin(n * 2 * math.pi / resolution) +
                 volmdlr.Y2D * math.cos(n * 2 * math.pi / resolution))
                                              ) for n in range(resolution)]
-        ax = lines[0].plot()
+        # ax = lines[0].plot()
         # ax1 = lines[0].plot()
         for line1, line2 in zip(lines, lines[1:] + [lines[0]]):
             random_color = list(npy.random.choice(range(255), size=3))
@@ -3893,17 +3901,16 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
             cutted_contour1 = get_sewing_contour_portion(line1, line2, new_polygon1_2d)
             cutted_contour2 = get_sewing_contour_portion(line1, line2, new_polygon2_2d)
 
-            # ax=line1.plot()
-            line1.plot(ax=ax, color=random_color)
-            line2.plot(ax=ax, color=random_color)
-            cutted_contour1.plot(ax=ax, color=random_color)
-            cutted_contour2.plot(ax=ax, color=random_color)
-            # line1.plot(ax=ax1, color=random_color)
-            # line2.plot(ax=ax1, color=random_color)
+            # # ax=line1.plot()
+            # line1.plot(ax=ax, color=random_color)
+            # line2.plot(ax=ax, color=random_color)
+            # cutted_contour1.plot(ax=ax, color=random_color)
+            # cutted_contour2.plot(ax=ax, color=random_color)
+            # # line1.plot(ax=ax1, color=random_color)
+            # # line2.plot(ax=ax1, color=random_color)
 
 
             list_contours1.append(cutted_contour1)
-
             list_contours2.append(cutted_contour2)
 
             # axis = line1.plot()
@@ -3914,8 +3921,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
 
 
 
-        print('len contours 1: ', len(list_contours1))
-        print('len contours 2: ', len(list_contours2))
+        # print('len contours 1: ', len(list_contours1))
+        # print('len contours 2: ', len(list_contours2))
         # ax1=list_contours1[0].plot()
         # for c in list_contours1:
         #     random_color = list(npy.random.choice(range(255), size=3))
@@ -4013,7 +4020,9 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
 
                 list_closing_point_indexes.append(closing_point_index)
                 previous_closing_point_index = closing_point_index
-            print('aadict_closing_pairs :', dict_closing_pairs)
+            if not dict_closing_pairs:
+                dict_closing_pairs[contour1.primitives[0].end.to_3d(center1 + way_back1, x, y)] = (0, wire2_points.index(wire2_points[-1]))
+            # print('dict_closing_pairs :', dict_closing_pairs)
             for k, point_wire2 in enumerate(wire2_points):
                 for key, index in dict_closing_pairs.items():
                     if k > 0:
@@ -4023,4 +4032,21 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                                               key])
             list_triangles.extend(triangles)
 
+            # faces=[]
+            # coords = triangles
+            # for trio in coords:
+            #     faces.append(volmdlr.faces.Triangle3D(trio[0], trio[1], trio[2]))
+            # # volum = volmdlr.core.VolumeModel(faces)
+            # # volum.babylonjs()
+            # ax=contour1.to_3d(center1 + way_back1, x, y).plot()
+            # contour2.to_3d(center2+way_back2, x, y).plot(ax=ax, color='y')
+            # # ax = self.plot()
+            # # polygon2.plot(ax=ax, color='y')
+            # for face in faces:
+            #     volmdlr.edges.LineSegment3D(face.point1, face.point2).plot(ax=ax,
+            #                                                                color='b')
+            #     volmdlr.edges.LineSegment3D(face.point1, face.point3).plot(ax=ax,
+            #                                                                color='b')
+            #     volmdlr.edges.LineSegment3D(face.point2, face.point3).plot(ax=ax,
+            #                                                                color='b')
         return list_triangles
