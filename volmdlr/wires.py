@@ -731,6 +731,8 @@ class Contour:
                     and ((edge1.end).point_distance(edge2.end) < 1e-2))
                 or (((edge1.start).point_distance(edge2.end) < 1e-2) 
                     and ((edge1.end).point_distance(edge2.start) < 1e-2))):
+                # or (edge1.point_belongs(edge2.start) and edge1.point_belongs(edge2.end))
+                # or (edge2.point_belongs(edge1.start) and edge2.point_belongs(edge1.end))): 
                    
                 edges_index.append((self.primitives.index(edge1),contour.primitives.index(edge2)))
         
@@ -803,12 +805,12 @@ class Contour:
                     break
                 else:
                     for point in points:
-                        if point.is_close(line.start, tol= 3e-5):
+                        if point.is_close(line.start, tol= 3e-4):
                             line.start = point
                             contour.append(line)
                             edges.remove(line)
                             break
-                        elif point.is_close(line.end, tol= 3e-5):
+                        elif point.is_close(line.end, tol= 3e-4):
                             line.end = point
                             contour.append(line)
                             edges.remove(line)
