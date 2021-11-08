@@ -2868,7 +2868,7 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         def f(x):
             return (point3d - volmdlr.Point3D(*self.curve.evaluate_single(x))).norm()
 
-        x = npy.linspace(0,1,10)
+        x = npy.linspace(0,1,5)
         x_init=[]
         for xi in x:
             x_init.append(xi)
@@ -3429,6 +3429,31 @@ class Arc3D(Edge):
             current_id, self.name,
             start_id, end_id, curve_id)
         return content, [current_id]
+
+    def point_belongs(self, point3d):
+        '''
+        check if a point3d belongs to the arc_3d or not 
+        '''
+        def f(x):
+            return (point3d - self.point_at_abscissa(x)).norm()
+    
+        x = npy.linspace(0,self.length(),5)
+        x_init=[]
+        for xi in x:
+            x_init.append(xi)
+        
+        cost=[]
+        sol=[]
+            
+        for x0 in x_init: 
+            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,self.length()]))
+            cost.append(z.cost)
+            sol.append(z.x)
+                
+        if min(cost) < 1e-10: 
+            return True
+        else: 
+            return False
 
 
 class FullArc3D(Edge):
