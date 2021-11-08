@@ -457,6 +457,6 @@ for i, i_polygon in enumerate(polygons):
             coords = i_polygon.sewing2(j_polygon, vm.X3D, vm.Y3D)
             for trio in coords:
                 faces.append(vmf.Triangle3D(trio[0], trio[1], trio[2]))
-            # volum = volmdlr.core.VolumeModel(faces)
-            # volum.babylonjs()
+            volum = volmdlr.core.VolumeModel(faces)
+            volum.babylonjs()
             break
