@@ -35,6 +35,7 @@ import plot_data.core as plot_data
 # import cv2
 import numpy as np
 from statistics import mean
+import warnings
 
 
 # from shapely.geometry import Polygon as shapely_polygon
@@ -524,7 +525,10 @@ class Contour:
                 counter += 1
                 if counter > 3:
                     finished = True
-                    self.plot()
+                    warnings.warn('There may exist a problem with this'
+                                  ' contour, it seems it cannot be reordered.'
+                                  'Please, verify it points')
+                    # self.plot()
                     raise NotImplementedError
             #     finished = True
             # counter += 1
@@ -684,22 +688,6 @@ class Contour2D(Contour, Wire2D):
             else:
                 points.append(edge.start)
         return ClosedPolygon2D(points)
-
-    def contour_equal_to(self, contour2):
-
-        if len(self.primitives) != len(contour2.primitives):
-            return False
-        # equal = False
-        for prim1 in self.primitives:
-            # equal = (equal and prim1 == prim2)
-            one_equal = False
-            for prim2 in contour2.primitives:
-                if prim1.start == prim2.start and prim1.end == prim2.end or \
-                    prim1.end == prim2.start and prim1.start == prim2.end:
-                    one_equal = True
-            if not one_equal:
-                return False
-        return True
 
     # def _primitives_analysis(self):
     #     """
@@ -969,10 +957,17 @@ class Contour2D(Contour, Wire2D):
         including the edges
         return True or False
         """
-        c1_xmin, c1_xmax, c1_ymin, c1_ymax = self.bounding_rectangle()
-        c2_xmin, c2_xmax, c2_ymin, c2_ymax = contour2.bounding_rectangle()
-        return ((c1_xmin >= c2_xmin - 1e-6) and (c1_xmax <= c2_xmax + 1e-6)\
-                and (c1_ymin >= c2_ymin - 1e-6) and (c1_ymax <= c2_ymax + 1e-6))
+        points_contour2 = []
+        for prim in contour2.primitives:
+            if prim.start not in points_contour2:
+                points_contour2.append(prim.start)
+            if prim.end not in points_contour2:
+                points_contour2.append(prim.end)
+        for point in points_contour2:
+            if not self.point_belongs(point) and not self.point_over_contour(point):
+                return False
+        return True
+
 
     def bounding_rectangle(self):
         xmin, xmax, ymin, ymax = self.primitives[0].bounding_rectangle()
@@ -1448,11 +1443,6 @@ class Contour2D(Contour, Wire2D):
         return intersecting_points
 
     def divide(self, contours, inside):
-        # ax=self.plot()
-        # # print('face area: ', self.area())
-        # # print('contours AT START :', len(contours))
-        # for cnt in contours:
-        #     cnt.plot(ax=ax, color='r')
 
         new_base_contours = [self]
         finished = False
@@ -1490,10 +1480,6 @@ class Contour2D(Contour, Wire2D):
                     contour2 = volmdlr.wires.Contour2D(
                         extracted_innerpoints_contour1.primitives + cutting_contour.primitives)
                     contour2.order_contour()
-                    # ax1 = base_contour.plot()
-                    # cutting_contour.plot(ax=ax1, color='r')
-                    # ax1 = contour1.plot(color='b')
-                    # contour2.plot(ax=ax1, color='g')
 
                     new_base_contours.remove(base_contour)
                     for cntr in [contour1, contour2]:
@@ -1512,18 +1498,19 @@ class Contour2D(Contour, Wire2D):
                 finished = True
             counter += 1
             if counter >= 100:
-                axx = cutting_contour.plot(color='g')
-                axc = cutting_contour.plot(color='r')
-                list_contour.remove(cutting_contour)
-                for ctr in list_contour:
-                    ctr.plot(ax=axc, color='r')
-                base_contour.plot(ax=axc, color='b')
-                base_contour.plot(ax=axx)
-                for pt in cutting_points:
-                    pt.plot(ax=axc, color='r')
-                # print('contours BEFORE bug :', len(contours))
-                raise ValueError('There probably exists an open contour (two wires that could not be jointed), see graph generated')
-
+                # axx = cutting_contour.plot(color='g')
+                # axc = cutting_contour.plot(color='r')
+                # list_contour.remove(cutting_contour)
+                # for ctr in list_contour:
+                #     ctr.plot(ax=axc, color='r')
+                # base_contour.plot(ax=axc, color='b')
+                # base_contour.plot(ax=axx)
+                # for pt in cutting_points:
+                #     pt.plot(ax=axc)
+                warnings.warn('There probably exists an open contour (two wires that could not be connected)')
+                # raise ValueError('There probably exists an open contour (two wires that could not be jointed), see graph generated')
+                finished = True
+                
         return list_valid_contours
 
     def merge_contours(self, contour2d):
