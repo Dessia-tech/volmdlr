@@ -3310,8 +3310,13 @@ class Contour3D(Contour, Wire3D):
             if type(self.primitives[index]) == volmdlr.edges.LineSegment3D:
                 new_primitives.append(volmdlr.edges.LineSegment3D(p1, p2))
             elif type(self.primitives[index]) == volmdlr.edges.Arc3D :
-                new_primitives.append(volmdlr.edges.Arc3D(p1, self.primitives[index].interior, p2))    
-                
+                new_primitives.append(volmdlr.edges.Arc3D(p1, self.primitives[index].interior, p2))
+            elif type(self.primitives[index]) == volmdlr.edges.BSplineCurve3D:
+                if (self.primitives[index].start == p1 and self.primitives[index].end == p2):
+                    new_primitives.append(self.primitives[index])
+                else:
+                    new_primitives.append(self.primitives[index].reverse())
+ 
         self.primitives = new_primitives
 
         return self
