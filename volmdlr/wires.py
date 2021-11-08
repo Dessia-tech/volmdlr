@@ -2194,61 +2194,25 @@ class Contour2D(Contour, Wire2D):
 #
 # =======
     
+    
     def merge_with(self, contour2d):
+        '''
+        merge two adjacent contours
+        '''
         
-        edges_index2 = []
-        edges_index1 = []
+        primitives = []
 
         for edge1 in self.primitives:
-            for edge2 in contour2d.primitives:
+            if not contour2d.point_over_contour(edge1.start) or not contour2d.point_over_contour(edge1.end):
+                primitives.append(edge1)
                 
-                if (edge1.point_belongs(edge2.start) or edge1.point_belongs(edge2.end) 
-                    or edge2.point_belongs(edge1.start) or edge2.point_belongs(edge1.end)
-                    or (edge1.start == edge2.start and edge1.end == edge2.end) 
-                    or (edge1.start == edge2.end and edge2.start == edge1.end)
-                    or (((edge1.start).point_distance(edge2.start) < 1e-2) 
-                        and ((edge1.end).point_distance(edge2.end) < 1e-2))
-                    or (((edge1.start).point_distance(edge2.end) < 1e-2) 
-                        and ((edge1.end).point_distance(edge2.start) < 1e-2))): 
-
-                    ind2 = contour2d.primitives.index(edge2)
-                    ind1 = self.primitives.index(edge1)
-            
-                    if ind2 not in edges_index2:
-                        edges_index2.append(ind2)
-                    if ind1 not in edges_index1:
-                        edges_index1.append(ind1)
-
-        prim1 = []
-        for i in edges_index1: 
-            prim1.append(self.primitives[i])
-        c1 = volmdlr.wires.Contour2D(prim1)
-        c1 = c1.order_contour()
-
-        prim2 = []
-        for i in edges_index2: 
-            prim2.append(contour2d.primitives[i])
-        c2 = volmdlr.wires.Contour2D(prim2)
-        c2 = c2.order_contour()
-
-        if c2.primitives[1].linesegment_crossings(c1.primitives[0]) != []:
-            point1 = c2.primitives[1].linesegment_crossings(c1.primitives[0])[0]
-        else:
-            point1 = c2.primitives[1].linesegment_crossings(c1.primitives[-1])[0]
-
-        if c2.primitives[-2].linesegment_crossings(c1.primitives[-1]) != []:
-            point2 = c2.primitives[-2].linesegment_crossings(c1.primitives[-1])[0]
-        else:
-            point2 = c2.primitives[-2].linesegment_crossings(c1.primitives[0])[0]    
-
-        primitives = []
-        primitives.extend(self.extract_without_primitives(point1, point2, inside= False))
-        primitives.extend(contour2d.extract_without_primitives(point1, point2, inside= False))
-        
+        for edge2 in contour2d.primitives:
+            if not self.point_over_contour(edge2.start) or not self.point_over_contour(edge2.end):
+                primitives.append(edge2)
+   
         contour = volmdlr.wires.Contour2D(primitives)
-        # contour = contour.order_contour()
-        
         return contour
+
 
 class ClosedPolygon:
 
