@@ -2602,7 +2602,7 @@ class BSplineSurface3D(Surface3D):
         
     def contour3d_to_2d_with_dimension(self, contour3d:volmdlr.wires.Contour3D, points_x, points_y): 
         
-        contour2d = self.contour3d_to_2d(contour3d)
+        # contour2d = self.contour3d_to_2d(contour3d)
         # xmin = contour2d.bounding_rectangle()[0]
         # xmax = contour2d.bounding_rectangle()[1]
         # ymin = contour2d.bounding_rectangle()[2]
