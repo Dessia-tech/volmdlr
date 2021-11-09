@@ -2718,10 +2718,10 @@ class BSplineSurface3D(Surface3D):
         '''
         
         '''
-                     
+        
         for cle in self._grids2d.keys(): 
             [points_x, points_y, xmin, xmax, ymin, ymax] = cle
-                                                                 
+                    
         new_start_points = []
         for i in range(0,len(contour2d.primitives)):
             point2d = contour2d.primitives[i].start       
