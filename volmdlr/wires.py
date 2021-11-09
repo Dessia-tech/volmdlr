@@ -2022,7 +2022,26 @@ class Contour2D(Contour, Wire2D):
 
         return contour
 
-    
+    @classmethod
+    def from_points(cls, points: List[volmdlr.Point2D]):
+        '''
+        create a contour2d from points with line_segments2D
+        '''
+        
+        if len(points)<3:
+            raise ValueError('contour is defined at least with three points')
+        else:
+            edges = []
+            for i in range(0, len(points)-1):
+                edges.append(volmdlr.edges.LineSegment2D(points[i], points[i+1]))
+            
+            edges.append(volmdlr.edges.LineSegment2D(points[-1], points[0]))
+            
+            contour = volmdlr.wires.Contour2D(edges)
+            
+            return contour
+        
+        
 class ClosedPolygon:
     
     def length(self):
@@ -3430,6 +3449,26 @@ class Contour3D(Contour, Wire3D):
         
         return volmdlr.wires.Contour3D.contours_from_edges(primitives)
     
+    
+    @classmethod
+    def from_points(cls, points: List[volmdlr.Point3D]):
+        '''
+        create a contour3d from points with line_segments3D  
+        '''
+        
+        if len(points)<3:
+            raise ValueError('contour is defined at least with three points')
+        else:
+            edges = []
+            for i in range(0, len(points)-1):
+                edges.append(volmdlr.edges.LineSegment3D(points[i], points[i+1]))
+            
+            edges.append(volmdlr.edges.LineSegment3D(points[len(points)], points[0]))
+            
+            contour = volmdlr.wires.Contour3D(edges)
+            
+            return contour
+        
 
 class Circle3D(Contour3D):
     _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']
