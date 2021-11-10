@@ -627,6 +627,11 @@ class BSplineCurve2D(Edge):
             l = LineSegment2D(p1, p2)
             crossings.extend(l.line_crossings(line2d))
         return crossings
+    
+    @classmethod
+    def from_points_approximation(cls, points, degree):
+        curve = fitting.approximate_curve([(p.x, p.y) for p in points], degree)
+        return cls.from_geomdl_curve(curve)
 
 
 class BezierCurve2D(BSplineCurve2D):
