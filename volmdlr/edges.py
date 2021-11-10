@@ -969,9 +969,11 @@ class LineSegment2D(LineSegment):
         points = []
         step = self.length()/(n-1)
         abscissa = 0
-        while abscissa <= self.length():
+        while abscissa < self.length():
             points.append(self.point_at_abscissa(abscissa))
             abscissa = abscissa + step
+        if points[-1] != self.end:
+            points.append(self.end)
         
         return points
 
