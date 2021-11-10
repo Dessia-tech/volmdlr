@@ -961,6 +961,19 @@ class LineSegment2D(LineSegment):
     #     else :
     #         return LineSegment2D(intersection,infinite_primitive.point2)
 
+    def discretization_points(self, n: int):
+        ''' 
+        discretize a LineSegment2D to have "n" points (including start and end points)
+        '''
+        
+        points = []
+        step = self.length()/(n-1)
+        abscissa = 0
+        while abscissa <= self.length():
+            points.append(self.point_at_abscissa(abscissa))
+            abscissa = abscissa + step
+        
+        return points
 
 class Arc2D(Edge):
     """
