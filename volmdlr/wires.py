@@ -1041,7 +1041,8 @@ class Contour2D(Contour, Wire2D):
         new_primitives = []
         points = self.ordering_contour()
         for p1, p2 in points:
-            new_primitives.append(volmdlr.edges.LineSegment2D(p1, p2))
+            if p1 != p2:
+                new_primitives.append(volmdlr.edges.LineSegment2D(p1, p2))
         self.primitives = new_primitives
 
         return self
@@ -1462,7 +1463,25 @@ class Contour2D(Contour, Wire2D):
                 if base_contour.point_over_contour(
                         point1) and base_contour.point_over_contour(point2):
                     cutting_points = [point1, point2]
-                if cutting_points:
+                else:
+                    for prim1 in [cutting_contour.primitives[0],
+                                  cutting_contour.primitives[-1]]:
+                        for prim2 in base_contour.primitives:
+                            inter = prim2.linesegment_intersections(prim1)
+                            if inter:
+                                cutting_points.extend(inter)
+                            elif prim2.point_belongs(prim1.start):
+                                cutting_points.append(prim1.start)
+                            elif prim2.point_belongs(prim1.end):
+                                cutting_points.append(prim1.end)
+                    print('cutting_points :', cutting_points)
+                    axc = cutting_contour.plot(color='r')
+                    base_contour.plot(ax=axc, color='b')
+                    if len(cutting_points) == 2:
+                        cutting_contour.primitives[0].start = cutting_points[0]
+                        cutting_contour.primitives[-1].end = cutting_points[1]
+
+                if len(cutting_points) == 2:
                     extracted_outerpoints_contour1 = \
                         volmdlr.wires.Contour2D.extract_contours(base_contour,
                                                                  cutting_points[0],
@@ -1501,14 +1520,14 @@ class Contour2D(Contour, Wire2D):
                 # axx = cutting_contour.plot(color='g')
                 axc = cutting_contour.plot(color='r')
                 # list_contour.remove(cutting_contour)
-                for ctr in list_contour:
-                    ctr.plot(ax=axc, color='r')
+                # for ctr in list_contour:
+                #     ctr.plot(ax=axc, color='r')
                 base_contour.plot(ax=axc, color='b')
                 # base_contour.plot(ax=axx)
                 # for pt in cutting_points:
                 #     pt.plot(ax=axc)
                 warnings.warn('There probably exists an open contour (two wires that could not be connected)')
-                raise ValueError('There probably exists an open contour (two wires that could not be jointed), see graph generated')
+                # raise ValueError('There probably exists an open contour (two wires that could not be jointed), see graph generated')
                 finished = True
                 
         return list_valid_contours
@@ -3866,7 +3885,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                                               point_wire2.to_3d(center2+way_back2, x, y),
                                               key])
             list_triangles.extend(triangles)
-
+        #
         # faces=[]
         # coords = list_triangles
         # for trio in coords:
