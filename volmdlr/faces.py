@@ -3000,7 +3000,7 @@ class BSplineSurface3D(Surface3D):
         uv1 = [[min(u1),max(u1)],[min(v1),max(v1)]]
         uv2 = [[min(u2),max(u2)],[min(v2),max(v2)]]
             
-        return (uv1, uv2)
+        return (uv1, uv2) # ((u1,v1), (u2,v2)) #
     
     @classmethod 
     def from_geomdl_surface(cls, surface):

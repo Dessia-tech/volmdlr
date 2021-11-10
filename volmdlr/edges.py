@@ -632,7 +632,7 @@ class BSplineCurve2D(Edge):
     def from_points_approximation(cls, points, degree, **kwargs):
         '''
         Bspline Curve approximation through 2d points using least squares method
-        It is better to choose the number of control points
+        It is better to specify the number of control points
         
         Parameters
         ----------
