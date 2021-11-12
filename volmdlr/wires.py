@@ -2057,8 +2057,7 @@ class Contour2D(Contour, Wire2D):
         '''
         # TODO: BsplineCurve is descretized and defined with a wire. To be improved! 
         
-        contours = self.cut_by_wire(bspline_curve2d.to_wire())
-        
+        contours = self.cut_by_wire(bspline_curve2d.to_wire(20))
         
         return contours
         
