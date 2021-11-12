@@ -185,7 +185,7 @@ class Wire:
             length += primitive.length()
 
         return length
-
+    
 
 class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
     """
@@ -544,8 +544,18 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         raise NotImplementedError(
             '{} intersections not supported yet'.format(len(intersections)))
 
+
+    @classmethod
+    def from_points(cls, points: List[volmdlr.Point2D]):
+        ''' 
+        define a wire based on points2d with line_segments2d
+        '''
         
+        edges = []
+        for i in range(0, len(points)-1):
+            edges.append(volmdlr.edges.LineSegment2D(points[i], points[i+1]))       
         
+        return cls(edges)        
         
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
@@ -2040,6 +2050,15 @@ class Contour2D(Contour, Wire2D):
             contour = cls(edges)
             
             return contour
+    
+    def cut_by_bspline_curve(self, bspline_curve2d: volmdlr.edges.BSplineCurve2D):
+        '''
+        cut a contou2d with bspline_curve2d to define two different contours
+        '''
+        
+        
+        
+        return contours
         
         
 class ClosedPolygon:
