@@ -3000,7 +3000,7 @@ class BSplineSurface3D(Surface3D):
         uv1 = [[min(u1),max(u1)],[min(v1),max(v1)]]
         uv2 = [[min(u2),max(u2)],[min(v2),max(v2)]]
             
-        return (uv1, uv2) # ((u1,v1), (u2,v2)) #
+        return ((u1,v1), (u2,v2)) #(uv1, uv2) # 
     
     @classmethod 
     def from_geomdl_surface(cls, surface):
@@ -3270,6 +3270,84 @@ class BSplineSurface3D(Surface3D):
         
         return surfaces    
     
+    def split_surface_with_bspline_curve(self, bspline_curve3d: volmdlr.edges.BSplineCurve3D):
+        '''
+        Cut the surface into two pieces with a bspline curve
+
+        Parameters
+        ----------
+        bspline_curve : volmdlr.edges.BSplineCurve3D
+            
+
+        Returns
+        -------
+        surfaces : TYPE
+            DESCRIPTION.
+
+        '''
+        
+        surfaces = []
+        bspline_curve2d = self.bsplinecurve3d_to_2d(bspline_curve3d)
+        contour = self.rectangular_cut(0,1,0,1).surface2d.outer_contour
+        contours = contour.cut_by_bspline_curve(bspline_curve2d)
+        
+        du, dv = bspline_curve2d.end - bspline_curve2d.start
+        resolution = 8
+        
+        for j in range(0, len(contours)): 
+            u_min, u_max, v_min, v_max = contours[j].bounding_rectangle()
+            if du>dv:
+                delta_u = u_max - u_min
+                nlines_x = int(delta_u * resolution)
+                lines_x = []
+                lines_x.append(vme.Line2D(volmdlr.Point2D(u_min, v_min),
+                                              volmdlr.Point2D(u_min, v_max)))
+                for i in range(nlines_x):
+                    u = u_min + (i + 1) / (nlines_x + 1) * delta_u
+                    lines_x.append(vme.Line2D(volmdlr.Point2D(u, v_min),
+                                              volmdlr.Point2D(u, v_max)))
+                lines_x.append(vme.Line2D(volmdlr.Point2D(u_max, v_min),
+                                          volmdlr.Point2D(u_max, v_max)))
+                lines = lines_x
+                
+            else:
+                delta_v = v_max - v_min
+                nlines_y = int(delta_v * resolution)
+                lines_y = []
+                lines_y.append(vme.Line2D(volmdlr.Point2D(v_min, v_min),
+                                              volmdlr.Point2D(v_max, v_min)))
+                for i in range(nlines_y):
+                    v = v_min + (i + 1) / (nlines_y + 1) * delta_v
+                    lines_y.append(vme.Line2D(volmdlr.Point2D(v_min, v),
+                                              volmdlr.Point2D(v_max, v)))
+                lines_y.append(vme.Line2D(volmdlr.Point2D(v_min, v_max),
+                                          volmdlr.Point2D(v_max, v_max)))
+                lines = lines_y
+        
+            
+            pt0 = volmdlr.Point2D(0,0)
+            points=[]
+            
+            for l in lines:
+                inter = contours[j].line_intersections(l)
+                if inter != []:
+                    pt = [inter[0][0], inter[1][0]]
+                
+                pt = sorted(pt, key=lambda p: pt0.point_distance(p))
+                pt0 = pt[0]
+                edge = volmdlr.edges.LineSegment2D(pt[0], pt[1])
+                
+                points.extend(edge.discretization_points(10))
+                
+            points3d = []
+            for p in points:
+                points3d.append(self.point2d_to_3d(p))
+
+            size_u, size_v, degree_u, degree_v = 10, 10, self.degree_u, self.degree_v
+            surfaces.append(volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(points3d, size_u, size_v, degree_u, degree_v))
+
+        return surfaces
+        
 
 class BezierSurface3D(BSplineSurface3D):
 
