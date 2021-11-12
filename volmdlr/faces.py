@@ -5629,19 +5629,18 @@ class BSplineFace3D(Face3D):
     
     def merge_two_adjacent_surfaces(self, other_bspline_face3d):
         '''
-        
+        merge two adjacent surfaces based on their faces 
 
         Parameters
         ----------
-        other_bspline_face3d : TYPE
-            DESCRIPTION.
+        other_bspline_face3d : volmdlr.faces.BSplineFace3D
 
         Returns
         -------
-        merged_surface : TYPE
-            DESCRIPTION.
+        merged_surface : volmdlr.faces.BSplineSurface3D
 
         '''
+        
         corresponding_directions, grid2d_direction = self.pair_with(other_bspline_face3d)
         
         bspline1 = self.surface3d
@@ -5678,7 +5677,7 @@ class BSplineFace3D(Face3D):
         for p in grid2d2: 
             grid3d2.append(bspline2.point2d_to_3d(p))
             
-        points = []
+        points = [] 
         points.extend(grid3d1)
         points.extend(grid3d2)
         
