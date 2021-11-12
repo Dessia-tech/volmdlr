@@ -3224,6 +3224,51 @@ class BSplineSurface3D(Surface3D):
         
     #     return bspline_surface
          
+    def split_surface_u(self, u: float):
+        '''
+        Splits the surface at the input parametric coordinate on the u-direction
+
+        Parameters
+        ----------
+        u : float
+            Parametric coordinate u choosen between 0 and 1
+
+        Returns
+        -------
+        surfaces : list
+            Two splitted surfaces
+
+        '''
+        
+        surfaces_geo = geomdl.operations.split_surface_u(self.surface, u)
+        surfaces = []
+        for s in surfaces_geo:
+            surfaces.append(volmdlr.faces.BSplineSurface3D.from_geomdl_surface(s))
+        
+        return surfaces
+    
+    def split_surface_v(self, v: float):
+        '''
+        Splits the surface at the input parametric coordinate on the v-direction
+
+        Parameters
+        ----------
+        v : float
+            Parametric coordinate v choosen between 0 and 1
+
+        Returns
+        -------
+        surfaces : list
+            Two splitted surfaces
+
+        '''
+        
+        surfaces_geo = geomdl.operations.split_surface_v(self.surface, v)
+        surfaces = []
+        for s in surfaces_geo:
+            surfaces.append(volmdlr.faces.BSplineSurface3D.from_geomdl_surface(s))
+        
+        return surfaces    
     
 
 class BezierSurface3D(BSplineSurface3D):
@@ -5506,7 +5551,20 @@ class BSplineFace3D(Face3D):
 
     
     def merge_two_adjacent_surfaces(self, other_bspline_face3d):
+        '''
         
+
+        Parameters
+        ----------
+        other_bspline_face3d : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        merged_surface : TYPE
+            DESCRIPTION.
+
+        '''
         corresponding_directions, grid2d_direction = self.pair_with(other_bspline_face3d)
         
         bspline1 = self.surface3d
