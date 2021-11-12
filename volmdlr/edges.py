@@ -653,6 +653,18 @@ class BSplineCurve2D(Edge):
         curve = fitting.approximate_curve([(p.x, p.y) for p in points], degree, **kwargs)
         return cls.from_geomdl_curve(curve)
 
+    def to_wire(self, n: int):
+        '''
+        convert a bspline curve to a wire2d defined with 'n' line_segments 
+        '''
+        
+        u = npy.linspace(0, 1, num=n+1).tolist()
+        points = []
+        for u0 in u:
+            p = self.curve.evaluate_single(u0)
+            points.append(volmdlr.Point2D(p[0], p[1]))
+
+        return volmdlr.wires.Wire2D.from_points(points)
 
 class BezierCurve2D(BSplineCurve2D):
 
