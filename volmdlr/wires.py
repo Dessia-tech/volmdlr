@@ -1752,6 +1752,9 @@ class ClosedPolygon:
         if distance < min_distance:
             points.remove(points[-1])
 
+        if volmdlr.wires.ClosedPolygon2D(points).area() == 0.0:
+            return self
+
         return self.__class__(points)
 
 
@@ -1851,7 +1854,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         if len(self.points) > 1:
             for p1, p2 in zip(self.points,
                               list(self.points[1:]) + [self.points[0]]):
-                lines.append(volmdlr.edges.LineSegment2D(p1, p2))
+                if p1 != p2:
+                    lines.append(volmdlr.edges.LineSegment2D(p1, p2))
         return lines
 
     def rotation(self, center, angle, copy=True):
@@ -3643,365 +3647,327 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
         return ClosedPolygon3D(self.simplify_polygon(
             min_distance=min_distance, max_distance=max_distance).points)
 
-    # def sewing(self, polygon2, x, y):
-    #     """
-    #     x and y are used for plane projection to make sure it is being projected in the right plane
-    #     """
-    #     # print("polygon 1:", self.points)
-    #     # print("polygon 2: ", polygon2.points)
-    #     center1, center2 = self.average_center_point(), polygon2.average_center_point()
-    #     center1_, center2_ = volmdlr.Point3D(center1.x, center1.y,0), volmdlr.Point3D(center2.x,center2.y, 0)
-    #     new_polygon1, new_polygon2 = self.translation(-center1_), polygon2.translation(-center2_)
-    #     new_center1, new_center2 = new_polygon1.average_center_point(), new_polygon2.average_center_point()
-    #
-    #     new_polygon1_2d, new_polygon2_2d = new_polygon1.to_2d(new_center1, x,y), new_polygon2.to_2d(new_center2, x, y)
-    #
-    #     # ax2d = new_polygon1_2d.plot(color='r')
-    #     # new_polygon2_2d.plot(ax=ax2d, color='g')
-    #     barycenter1_2d = new_polygon1_2d.points[0]
-    #     for point in new_polygon1_2d.points[1:]:
-    #         barycenter1_2d += point
-    #     barycenter1_2d = barycenter1_2d / len(new_polygon1_2d.points)
-    #     # barycenter1_2d.plot(ax=ax2d, color='y')
-    #
-    #     barycenter2_2d = new_polygon2_2d.points[0]
-    #     for point in new_polygon2_2d.points[1:]:
-    #         barycenter2_2d += point
-    #     barycenter2_2d = barycenter2_2d / len(new_polygon2_2d.points)
-    #
-    #     # barycenter2_2d.plot(ax=ax2d, color='r')
-    #
-    #     # ax3d= new_polygon1.plot(color= 'r')
-    #     # new_polygon2.plot(ax=ax3d, color= 'g')
-    #     # volmdlr.Point3D(0,0, center1.z).plot(ax=ax3d)
-    #     # volmdlr.Point3D(0,0, center2.z).plot(ax=ax3d, color = 'r')
-    #
-    #     dict_closing_pairs = {}
-    #     triangles = []
-    #     list_closing_point_indexes = []
-    #     new_polygon1_2d_points = new_polygon1_2d.points + [
-    #         new_polygon1_2d.points[0]]
-    #     for i, point_polygon1 in enumerate(
-    #             new_polygon1.points + [new_polygon1.points[0]]):
-    #
-    #         if i != 0:
-    #             mean_point2d = 0.5 * (
-    #                     new_polygon1_2d_points[i] + new_polygon1_2d_points[
-    #                 i - 1])
-    #             vec_dir = mean_point2d.copy()
-    #             vec_dir.normalize()
-    #
-    #             line = volmdlr.edges.LineSegment2D(volmdlr.O2D,
-    #                                                mean_point2d + vec_dir * 5)
-    #             # line.plot(ax=ax2d, color='b')
-    #
-    #             point_intersections = {}
-    #             for line_segment in new_polygon2_2d.line_segments:
-    #                 point_intersection = line_segment.linesegment_intersections(
-    #                     line)
-    #                 if point_intersection:
-    #                     point_intersections[line_segment] = point_intersection[
-    #                         0]
-    #                 else:
-    #                     if line.point_belongs(line_segment.start):
-    #                         point_intersections[line_segment] = line_segment.start
-    #                     if line.point_belongs(line_segment.end):
-    #                         point_intersections[line_segment] = line_segment.end
-    #             point_distance = list(point_intersections.values())[
-    #                 0].point_distance(mean_point2d)
-    #             point_intersection = list(point_intersections.values())[0]
-    #             line_segment = list(point_intersections.keys())[0]
-    #             for line, point in list(point_intersections.items())[1:]:
-    #                 dist = mean_point2d.point_distance(point)
-    #                 if dist < point_distance:
-    #                     point_distance = dist
-    #                     point_intersection = point
-    #                     line_segment = line
-    #
-    #             # point_intersection.plot(ax=ax2d)
-    #
-    #             if point_intersection.point_distance(
-    #                     line_segment.start) < point_intersection.point_distance(line_segment.end):
-    #                 closing_point = line_segment.start
-    #             else:
-    #                 closing_point = line_segment.end
-    #             closing_point_index = new_polygon2_2d.points.index(
-    #                 closing_point)
-    #
-    #             # if real_closing_point != list_closing_points[-1] and real_closing_point in list_closing_points:
-    #
-    #             if i == 1:
-    #                 previous_closing_point_index = closing_point_index
-    #             if closing_point_index != previous_closing_point_index:
-    #                 if closing_point_index in list_closing_point_indexes:
-    #                     closing_point_index = previous_closing_point_index
-    #                 else:
-    #                     dict_closing_pairs[self.points[i - 1]] = (
-    #                         previous_closing_point_index,
-    #                         closing_point_index)
-    #
-    #             if point_polygon1 == new_polygon1.points[0]:
-    #                 if list(dict_closing_pairs.values())[-1][-1] != \
-    #                         list(dict_closing_pairs.values())[0][0]:
-    #                     dict_closing_pairs[self.points[0]] = (
-    #                         list(dict_closing_pairs.values())[-1][-1],
-    #                         list(dict_closing_pairs.values())[0][0])
-    #
-    #             real_closing_point = polygon2.points[closing_point_index]
-    #
-    #             if not volmdlr.edges.LineSegment3D(
-    #                     self.points[new_polygon1.points.index(point_polygon1)],
-    #                     real_closing_point).point_belongs(self.points[i - 1]):
-    #                 triangles.append([self.points[new_polygon1.points.index(
-    #                     point_polygon1)], self.points[i - 1],
-    #                                   real_closing_point])
-    #
-    #             list_closing_point_indexes.append(closing_point_index)
-    #             previous_closing_point_index = closing_point_index
-    #
-    #     for i, point_polygon2 in enumerate(
-    #             new_polygon2.points + [new_polygon2.points[0]]):
-    #         for j, index in enumerate(list(dict_closing_pairs.values())):
-    #             if i != 0:
-    #                 if i - 1 >= index[0] and i <= index[1]:
-    #                     a = polygon2.points[i - 1]
-    #                     b = polygon2.points[
-    #                         new_polygon2.points.index(point_polygon2)]
-    #                     c = list(dict_closing_pairs.keys())[j]
-    #                     if a != b and a != c and b != c and not volmdlr.edges.LineSegment3D(
-    #                             a, c).point_belongs(b):
-    #                         triangles.append([polygon2.points[i - 1],
-    #                                           polygon2.points[
-    #                                               new_polygon2.points.index(
-    #                                                   point_polygon2)],
-    #                                           list(dict_closing_pairs.keys())[
-    #                                               j]])
-    #                 else:
-    #                     if index[0] > index[1]:
-    #                         if (i - 1 <= index[0] and i <= index[1]) or (
-    #                                 (i - 1 >= index[0]) and i >= index[1]):
-    #                             a = polygon2.points[i - 1]
-    #                             b = polygon2.points[
-    #                                 new_polygon2.points.index(point_polygon2)]
-    #                             c = list(dict_closing_pairs.keys())[j]
-    #                             if a != b and a != c and b != c and not volmdlr.edges.LineSegment3D(
-    #                                     a, c).point_belongs(b):
-    #                                 triangles.append([polygon2.points[i - 1],
-    #                                                   polygon2.points[
-    #                                                       new_polygon2.points.index(
-    #                                                           point_polygon2)],
-    #                                                   list(
-    #                                                       dict_closing_pairs.keys())[
-    #                                                       j]])
-    #     # print("list closing points indexes :", list_closing_point_indexes)
-    #     # faces = []
-    #     # coords = triangles
-    #     # for trio in coords:
-    #     #     faces.append(volmdlr.faces.Triangle3D(trio[0], trio[1], trio[2]))
-    #     # # volum = volmdlr.core.VolumeModel(faces)
-    #     # # volum.babylonjs()
-    #     # ax = self.plot()
-    #     # polygon2.plot(ax=ax, color='y')
-    #     # for face in faces:
-    #     #     volmdlr.edges.LineSegment3D(face.point1, face.point2).plot(ax=ax,
-    #     #                                                                color='b')
-    #     #     volmdlr.edges.LineSegment3D(face.point1, face.point3).plot(ax=ax,
-    #     #                                                                color='b')
-    #     #     volmdlr.edges.LineSegment3D(face.point2, face.point3).plot(ax=ax,
-    #     #                                                                color='b')
-    #
-    #     return triangles
-
     def sewing(self, polygon2, x, y):
         """
-        x and y are used for plane projection to make sure it is being
-        projected in the right plane
+        x and y are used for plane projection to make sure it is being projected in the right plane
         """
-        center1 = self.average_center_point()
-        center2 = polygon2.average_center_point()
+        center1, center2 = self.average_center_point(), polygon2.average_center_point()
+        center1_, center2_ = volmdlr.Point3D(center1.x, center1.y,0), volmdlr.Point3D(center2.x,center2.y, 0)
+        new_polygon1, new_polygon2 = self.translation(-center1_), polygon2.translation(-center2_)
+        new_center1, new_center2 = new_polygon1.average_center_point(), new_polygon2.average_center_point()
 
-        new_polygon1 = self.translation(-center1)
-        new_polygon2 = polygon2.translation(-center2)
+        new_polygon1_2d, new_polygon2_2d = new_polygon1.to_2d(new_center1, x,y), new_polygon2.to_2d(new_center2, x, y)
 
-        new_center1 = new_polygon1.average_center_point()
-        new_center2 = new_polygon2.average_center_point()
-
-        new_polygon1_2d = new_polygon1.to_2d(new_center1, x, y)
-        new_polygon2_2d = new_polygon2.to_2d(new_center2, x, y)
-
+        # ax2d = new_polygon1_2d.plot(color='r')
+        # new_polygon2_2d.plot(ax=ax2d, color='g')
         barycenter1_2d = new_polygon1_2d.points[0]
         for point in new_polygon1_2d.points[1:]:
             barycenter1_2d += point
         barycenter1_2d = barycenter1_2d / len(new_polygon1_2d.points)
+        # barycenter1_2d.plot(ax=ax2d, color='y')
 
         barycenter2_2d = new_polygon2_2d.points[0]
         for point in new_polygon2_2d.points[1:]:
             barycenter2_2d += point
         barycenter2_2d = barycenter2_2d / len(new_polygon2_2d.points)
 
-        def point_in_polygon(polygon):
-            intersetions1 = {}
-            linex_pos = volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.X2D * 5)
-            linex_neg = volmdlr.edges.LineSegment2D(volmdlr.O2D, -volmdlr.X2D * 5)
-            liney_pos = volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.Y2D * 5)
-            liney_neg = volmdlr.edges.LineSegment2D(volmdlr.O2D, -volmdlr.Y2D * 5)
-            for line in [linex_pos, linex_neg, liney_pos, liney_neg]:
-                intersections = []
-                for line_segment in polygon.line_segments:
+        # barycenter2_2d.plot(ax=ax2d, color='r')
+
+        dict_closing_pairs = {}
+        triangles = []
+        list_closing_point_indexes = []
+        new_polygon1_2d_points = new_polygon1_2d.points + [
+            new_polygon1_2d.points[0]]
+        for i, point_polygon1 in enumerate(
+                new_polygon1.points + [new_polygon1.points[0]]):
+
+            if i != 0:
+                mean_point2d = 0.5 * (
+                        new_polygon1_2d_points[i] + new_polygon1_2d_points[
+                    i - 1])
+                vec_dir = mean_point2d.copy()
+                vec_dir.normalize()
+
+                line = volmdlr.edges.LineSegment2D(volmdlr.O2D,
+                                                   mean_point2d + vec_dir * 5)
+                # line.plot(ax=ax2d, color='b')
+
+                point_intersections = {}
+                for line_segment in new_polygon2_2d.line_segments:
                     point_intersection = line_segment.linesegment_intersections(
                         line)
-                    intersections.extend(point_intersection)
-                    if not point_intersection:
+                    if point_intersection:
+                        point_intersections[line_segment] = point_intersection[
+                            0]
+                    else:
                         if line.point_belongs(line_segment.start):
-                            intersections.append(line_segment.start)
+                            point_intersections[line_segment] = line_segment.start
                         if line.point_belongs(line_segment.end):
-                            intersections.append(line_segment.end)
-                intersetions1[line] = intersections[:]
-            for i, value in enumerate(intersetions1.values()):
-                if not value:
-                    if i % 2 == 0:
-                        if len(list(intersetions1.values())[i + 1]) == 2:
-                            translation1 = (list(intersetions1.values())[
-                                                i + 1][0] +
-                                            list(intersetions1.values())[
-                                                i + 1][1]) * 0.5
-                            break
-                    if i % 2 != 0:
-                        if len(list(intersetions1.values())[i - 1]) == 2:
-                            translation1 = (list(intersetions1.values())[
-                                                i - 1][0] +
-                                            list(intersetions1.values())[
-                                                i - 1][1]) * 0.5
-                            break
+                            point_intersections[line_segment] = line_segment.end
+                point_distance = list(point_intersections.values())[
+                    0].point_distance(mean_point2d)
+                point_intersection = list(point_intersections.values())[0]
+                line_segment = list(point_intersections.keys())[0]
+                for line, point in list(point_intersections.items())[1:]:
+                    dist = mean_point2d.point_distance(point)
+                    if dist < point_distance:
+                        point_distance = dist
+                        point_intersection = point
+                        line_segment = line
 
-            return translation1
+                # point_intersection.plot(ax=ax2d)
 
-        linex = volmdlr.edges.LineSegment2D(-x.to_2d(volmdlr.O2D, x, y), x.to_2d(volmdlr.O2D, x, y))
-        # liney = volmdlr.edges.LineSegment2D(-y.to_2d(volmdlr.O2D, x, y), y.to_2d(volmdlr.O2D, x, y))
-        way_back1 = volmdlr.O3D
-        way_back2 = volmdlr.O3D
-        if not new_polygon1_2d.point_belongs(barycenter1_2d):
-            barycenter1_2d = point_in_polygon(new_polygon1_2d)
-            new_polygon1_2d.translation(-barycenter1_2d, False)
-            way_back1 = barycenter1_2d.to_3d(volmdlr.O3D, x, y)
-        else:
-            inters = new_polygon1_2d.linesegment_intersections(linex)
-            distance = inters[0][0].point_distance(inters[-1][0])
-            if distance / 2 > 3*min(barycenter1_2d.point_distance(inters[0][0]), barycenter1_2d.point_distance(inters[-1][0])):
-                mid_point = (inters[0][0] + inters[-1][0])*0.5
-                new_polygon1_2d.translation(-mid_point, False)
-                way_back1 = mid_point.to_3d(volmdlr.O3D, x, y)
+                if point_intersection.point_distance(
+                        line_segment.start) < point_intersection.point_distance(line_segment.end):
+                    closing_point = line_segment.start
+                else:
+                    closing_point = line_segment.end
+                closing_point_index = new_polygon2_2d.points.index(
+                    closing_point)
 
-        if not new_polygon2_2d.point_belongs(barycenter2_2d):
-            barycenter2_2d = point_in_polygon(new_polygon2_2d)
-            new_polygon2_2d.translation(-barycenter2_2d, False)
-            way_back2 = barycenter2_2d.to_3d(volmdlr.O3D, x, y)
-        else:
-            inters = new_polygon2_2d.linesegment_intersections(linex)
-            distance = inters[0][0].point_distance(inters[-1][0])
-            if distance / 2 > 3 * min(
-                    barycenter2_2d.point_distance(inters[0][0]),
-                    barycenter2_2d.point_distance(inters[-1][0])):
-                mid_point = (inters[0][0] + inters[-1][0])*0.5
-                new_polygon2_2d.translation(-mid_point, False)
-                way_back2 = mid_point.to_3d(volmdlr.O3D, x, y)
-
-        list_contours1 = new_polygon1_2d.cut_by_line(linex)
-        list_contours2 = new_polygon2_2d.cut_by_line(linex)
-
-        # list_contours1, list_contours2 = [], []
-        # for contour1, contour2 in zip(new_polygon1_2d.cut_by_line(linex), new_polygon2_2d.cut_by_line(linex)):
-        #     list_contours1.extend(contour1.cut_by_line(liney))
-        #     list_contours2.extend(contour2.cut_by_line(liney))
-        # ax2d = new_polygon1_2d.plot(color='r')
-        # new_polygon2_2d.plot(ax=ax2d, color='g')
-        # volmdlr.O2D.plot(ax=ax2d, color="r")
-        # linex.plot(ax=ax2d, color = 'b')
-        # liney.plot(ax=ax2d, color = 'b')
-        # list_contours1 = new_polygon1_2d.cut_by_line(linex)
-        # list_contours2 = new_polygon1_2d.cut_by_line(linex)
-        # axc = list_contours1[0].plot(color="r")
-        # list_contours1[0].primitives[-2].plot(ax=axc, color = 'b')
-        # list_contours1[0].primitives[-1].plot(ax=axc, color='b')
-
-        tol = 0.2
-        list_triangles = []
-        for contour1 in list_contours1:
-            for contour2 in list_contours2:
-                pt1 = contour1.primitives[1].start
-                pt2 = contour2.primitives[1].start
-                if list(np.sign([pt1.x, pt1.y])) == list(np.sign([pt2.x, pt2.y])):
-                    break
-
-            triangles = []
-            dict_closing_pairs = {}
-            list_closing_point_indexes = []
-
-            wire1 = Wire2D([prim for prim in contour1.primitives if not prim.point_belongs(volmdlr.O2D)])
-            wire1_points = []
-            for prim in wire1.primitives:
-                if prim.start not in wire1_points:
-                    wire1_points.append(prim.start)
-                if prim.end not in wire1_points:
-                    wire1_points.append(prim.end)
-            wire1_length = wire1.length()
-            wire2 = Wire2D([prim for prim in contour2.primitives if not prim.point_belongs(volmdlr.O2D)])
-            wire2_length = wire2.length()
-            wire2_points = []
-            for prim in wire2.primitives:
-                if prim.start not in wire2_points:
-                    wire2_points.append(prim.start)
-                if prim.end not in wire2_points:
-                    wire2_points.append(prim.end)
-
-            # contour1.plot(ax=axc, color='r')
-            # contour2.plot(ax=axc, color='b')
-
-            len_wire1 = 0
-            for i, prim_wire1 in enumerate(wire1.primitives):
-                len_wire1 += prim_wire1.length()
-                len_wire2 = 0
-                for j, prim_wire2 in enumerate(wire2.primitives):
-                    len_wire2 += prim_wire2.length()
-                    if i == 0 and j == 0:
-                        closing_point = prim_wire2.start
-                        closing_point
-                        closing_point_index = wire2_points.index(closing_point)
-                        previous_closing_point_index = closing_point_index
-                        break
-                    elif prim_wire1 == wire1.primitives[-1]:
-                        closing_point = wire2.primitives[-1].end
-                        break
-                    elif len_wire1*(1-tol)/wire1_length <= len_wire2/wire2_length <= len_wire1*(1 + tol)/wire1_length:
-                        mid_point = (prim_wire1.start + prim_wire1.end) / 2
-                        if mid_point.point_distance(prim_wire2.start) < mid_point.point_distance(prim_wire2.end):
-                            closing_point = prim_wire2.start
-                            break
-                        else:
-                            closing_point = prim_wire2.end
-                            break
-
-                closing_point_index = wire2_points.index(closing_point)
+                if i == 1:
+                    previous_closing_point_index = closing_point_index
                 if closing_point_index != previous_closing_point_index:
                     if closing_point_index in list_closing_point_indexes:
-                        closing_point = wire2_points[previous_closing_point_index]
+                        closing_point_index = previous_closing_point_index
                     else:
-                        dict_closing_pairs[wire1.primitives[i].start.to_3d(center1 + way_back1, x, y)] = (previous_closing_point_index, closing_point_index)
+                        dict_closing_pairs[self.points[i - 1]] = (
+                            previous_closing_point_index,
+                            closing_point_index)
 
-                triangles.append(
-                    [prim_wire1.start.to_3d(center1+way_back1, x, y),
-                     prim_wire1.end.to_3d(center1+way_back1, x, y),
-                     closing_point.to_3d(center2+way_back2, x, y)])
+                if point_polygon1 == new_polygon1.points[0]:
+                    if list(dict_closing_pairs.values())[-1][-1] != \
+                            list(dict_closing_pairs.values())[0][0]:
+                        dict_closing_pairs[self.points[0]] = (
+                            list(dict_closing_pairs.values())[-1][-1],
+                            list(dict_closing_pairs.values())[0][0])
+
+                real_closing_point = polygon2.points[closing_point_index]
+
+                if not volmdlr.edges.LineSegment3D(
+                        self.points[new_polygon1.points.index(point_polygon1)],
+                        real_closing_point).point_belongs(self.points[i - 1]):
+                    triangles.append([self.points[new_polygon1.points.index(
+                        point_polygon1)], self.points[i - 1],
+                                      real_closing_point])
 
                 list_closing_point_indexes.append(closing_point_index)
                 previous_closing_point_index = closing_point_index
-            for k, point_wire2 in enumerate(wire2_points):
-                for key, index in dict_closing_pairs.items():
-                    if k > 0:
-                        if k - 1 >= index[0] and k <= index[1]:
-                            triangles.append([wire2_points[k - 1].to_3d(center2+way_back2, x, y),
-                                              point_wire2.to_3d(center2+way_back2, x, y),
-                                              key])
-            list_triangles.extend(triangles)
 
-        return list_triangles
+        for i, point_polygon2 in enumerate(
+                new_polygon2.points + [new_polygon2.points[0]]):
+            for j, index in enumerate(list(dict_closing_pairs.values())):
+                if i != 0:
+                    if i - 1 >= index[0] and i <= index[1]:
+                        triangles.append([polygon2.points[i - 1],
+                                          polygon2.points[new_polygon2.points.index(point_polygon2)],
+                                          list(dict_closing_pairs.keys())[j]])
+                    else:
+                        if index[0] > index[1]:
+                            if (i - 1 <= index[0] and i <= index[1]) or ((i - 1 >= index[0]) and i >= index[1]):
+                                triangles.append([polygon2.points[i - 1],
+                                                  polygon2.points[new_polygon2.points.index(point_polygon2)],
+                                                  list(dict_closing_pairs.keys())[j]])
+
+        return triangles
+
+    # def sewing(self, polygon2, x, y):
+    #     """
+    #     x and y are used for plane projection to make sure it is being
+    #     projected in the right plane
+    #     """
+    #     center1 = self.average_center_point()
+    #     center2 = polygon2.average_center_point()
+    #
+    #     new_polygon1 = self.translation(-center1)
+    #     new_polygon2 = polygon2.translation(-center2)
+    #
+    #     new_center1 = new_polygon1.average_center_point()
+    #     new_center2 = new_polygon2.average_center_point()
+    #
+    #     new_polygon1_2d = new_polygon1.to_2d(new_center1, x, y)
+    #     new_polygon2_2d = new_polygon2.to_2d(new_center2, x, y)
+    #
+    #     barycenter1_2d = new_polygon1_2d.points[0]
+    #     for point in new_polygon1_2d.points[1:]:
+    #         barycenter1_2d += point
+    #     barycenter1_2d = barycenter1_2d / len(new_polygon1_2d.points)
+    #
+    #     barycenter2_2d = new_polygon2_2d.points[0]
+    #     for point in new_polygon2_2d.points[1:]:
+    #         barycenter2_2d += point
+    #     barycenter2_2d = barycenter2_2d / len(new_polygon2_2d.points)
+    #
+    #     # print('polygon1 area: ', new_polygon1_2d.area())
+    #     # print('polygon2 area: ', new_polygon2_2d.area())
+    #     # ax = new_polygon1_2d.plot()
+    #     # new_polygon2_2d.plot(ax=ax, color='r')
+    #     # barycenter1_2d.plot(ax=ax, color='b')
+    #     # barycenter2_2d.plot(ax=ax, color='y')
+    #
+    #     def point_in_polygon(polygon):
+    #         intersetions1 = {}
+    #         linex_pos = volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.X2D * 5)
+    #         linex_neg = volmdlr.edges.LineSegment2D(volmdlr.O2D, -volmdlr.X2D * 5)
+    #         liney_pos = volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.Y2D * 5)
+    #         liney_neg = volmdlr.edges.LineSegment2D(volmdlr.O2D, -volmdlr.Y2D * 5)
+    #         for line in [linex_pos, linex_neg, liney_pos, liney_neg]:
+    #             intersections = []
+    #             for line_segment in polygon.line_segments:
+    #                 point_intersection = line_segment.linesegment_intersections(
+    #                     line)
+    #                 intersections.extend(point_intersection)
+    #                 if not point_intersection:
+    #                     if line.point_belongs(line_segment.start):
+    #                         intersections.append(line_segment.start)
+    #                     if line.point_belongs(line_segment.end):
+    #                         intersections.append(line_segment.end)
+    #             intersetions1[line] = intersections[:]
+    #         for i, value in enumerate(intersetions1.values()):
+    #             if not value:
+    #                 if i % 2 == 0:
+    #                     if len(list(intersetions1.values())[i + 1]) == 2:
+    #                         translation1 = (list(intersetions1.values())[
+    #                                             i + 1][0] +
+    #                                         list(intersetions1.values())[
+    #                                             i + 1][1]) * 0.5
+    #                         break
+    #                 if i % 2 != 0:
+    #                     if len(list(intersetions1.values())[i - 1]) == 2:
+    #                         translation1 = (list(intersetions1.values())[
+    #                                             i - 1][0] +
+    #                                         list(intersetions1.values())[
+    #                                             i - 1][1]) * 0.5
+    #                         break
+    #
+    #         return translation1
+    #
+    #     linex = volmdlr.edges.LineSegment2D(-x.to_2d(volmdlr.O2D, x, y), x.to_2d(volmdlr.O2D, x, y))
+    #     # liney = volmdlr.edges.LineSegment2D(-y.to_2d(volmdlr.O2D, x, y), y.to_2d(volmdlr.O2D, x, y))
+    #     way_back1 = volmdlr.O3D
+    #     way_back2 = volmdlr.O3D
+    #     if not new_polygon1_2d.point_belongs(barycenter1_2d):
+    #         barycenter1_2d = point_in_polygon(new_polygon1_2d)
+    #         new_polygon1_2d.translation(-barycenter1_2d, False)
+    #         way_back1 = barycenter1_2d.to_3d(volmdlr.O3D, x, y)
+    #     else:
+    #         inters = new_polygon1_2d.linesegment_intersections(linex)
+    #         distance = inters[0][0].point_distance(inters[-1][0])
+    #         if distance / 2 > 3*min(barycenter1_2d.point_distance(inters[0][0]), barycenter1_2d.point_distance(inters[-1][0])):
+    #             mid_point = (inters[0][0] + inters[-1][0])*0.5
+    #             new_polygon1_2d.translation(-mid_point, False)
+    #             way_back1 = mid_point.to_3d(volmdlr.O3D, x, y)
+    #
+    #     if not new_polygon2_2d.point_belongs(barycenter2_2d):
+    #         barycenter2_2d = point_in_polygon(new_polygon2_2d)
+    #         new_polygon2_2d.translation(-barycenter2_2d, False)
+    #         way_back2 = barycenter2_2d.to_3d(volmdlr.O3D, x, y)
+    #     else:
+    #         inters = new_polygon2_2d.linesegment_intersections(linex)
+    #         distance = inters[0][0].point_distance(inters[-1][0])
+    #         if distance / 2 > 3 * min(
+    #                 barycenter2_2d.point_distance(inters[0][0]),
+    #                 barycenter2_2d.point_distance(inters[-1][0])):
+    #             mid_point = (inters[0][0] + inters[-1][0])*0.5
+    #             new_polygon2_2d.translation(-mid_point, False)
+    #             way_back2 = mid_point.to_3d(volmdlr.O3D, x, y)
+    #
+    #     list_contours1 = new_polygon1_2d.cut_by_line(linex)
+    #     list_contours2 = new_polygon2_2d.cut_by_line(linex)
+    #
+    #     # list_contours1, list_contours2 = [], []
+    #     # for contour1, contour2 in zip(new_polygon1_2d.cut_by_line(linex), new_polygon2_2d.cut_by_line(linex)):
+    #     #     list_contours1.extend(contour1.cut_by_line(liney))
+    #     #     list_contours2.extend(contour2.cut_by_line(liney))
+    #     # ax2d = new_polygon1_2d.plot(color='r')
+    #     # new_polygon2_2d.plot(ax=ax2d, color='g')
+    #     # volmdlr.O2D.plot(ax=ax2d, color="r")
+    #     # linex.plot(ax=ax2d, color = 'b')
+    #     # liney.plot(ax=ax2d, color = 'b')
+    #     # list_contours1 = new_polygon1_2d.cut_by_line(linex)
+    #     # list_contours2 = new_polygon1_2d.cut_by_line(linex)
+    #     # axc = list_contours1[0].plot(color="r")
+    #     # list_contours1[0].primitives[-2].plot(ax=axc, color = 'b')
+    #     # list_contours1[0].primitives[-1].plot(ax=axc, color='b')
+    #
+    #     tol = 0.2
+    #     list_triangles = []
+    #     for contour1 in list_contours1:
+    #         for contour2 in list_contours2:
+    #             pt1 = contour1.primitives[1].start
+    #             pt2 = contour2.primitives[1].start
+    #             if list(np.sign([pt1.x, pt1.y])) == list(np.sign([pt2.x, pt2.y])):
+    #                 break
+    #
+    #         triangles = []
+    #         dict_closing_pairs = {}
+    #         list_closing_point_indexes = []
+    #
+    #         wire1 = Wire2D([prim for prim in contour1.primitives if not prim.point_belongs(volmdlr.O2D)])
+    #         wire1_points = []
+    #         for prim in wire1.primitives:
+    #             if prim.start not in wire1_points:
+    #                 wire1_points.append(prim.start)
+    #             if prim.end not in wire1_points:
+    #                 wire1_points.append(prim.end)
+    #         wire1_length = wire1.length()
+    #         wire2 = Wire2D([prim for prim in contour2.primitives if not prim.point_belongs(volmdlr.O2D)])
+    #         wire2_length = wire2.length()
+    #         wire2_points = []
+    #         for prim in wire2.primitives:
+    #             if prim.start not in wire2_points:
+    #                 wire2_points.append(prim.start)
+    #             if prim.end not in wire2_points:
+    #                 wire2_points.append(prim.end)
+    #
+    #         # contour1.plot(ax=axc, color='r')
+    #         # contour2.plot(ax=axc, color='b')
+    #
+    #         len_wire1 = 0
+    #         for i, prim_wire1 in enumerate(wire1.primitives):
+    #             len_wire1 += prim_wire1.length()
+    #             len_wire2 = 0
+    #             for j, prim_wire2 in enumerate(wire2.primitives):
+    #                 len_wire2 += prim_wire2.length()
+    #                 if i == 0 and j == 0:
+    #                     closing_point = prim_wire2.start
+    #                     closing_point
+    #                     closing_point_index = wire2_points.index(closing_point)
+    #                     previous_closing_point_index = closing_point_index
+    #                     break
+    #                 elif prim_wire1 == wire1.primitives[-1]:
+    #                     closing_point = wire2.primitives[-1].end
+    #                     break
+    #                 elif len_wire1*(1-tol)/wire1_length <= len_wire2/wire2_length <= len_wire1*(1 + tol)/wire1_length:
+    #                     mid_point = (prim_wire1.start + prim_wire1.end) / 2
+    #                     if mid_point.point_distance(prim_wire2.start) < mid_point.point_distance(prim_wire2.end):
+    #                         closing_point = prim_wire2.start
+    #                         break
+    #                     else:
+    #                         closing_point = prim_wire2.end
+    #                         break
+    #
+    #             closing_point_index = wire2_points.index(closing_point)
+    #             if closing_point_index != previous_closing_point_index:
+    #                 if closing_point_index in list_closing_point_indexes:
+    #                     closing_point = wire2_points[previous_closing_point_index]
+    #                 else:
+    #                     dict_closing_pairs[wire1.primitives[i].start.to_3d(center1 + way_back1, x, y)] = (previous_closing_point_index, closing_point_index)
+    #
+    #             triangles.append(
+    #                 [prim_wire1.start.to_3d(center1+way_back1, x, y),
+    #                  prim_wire1.end.to_3d(center1+way_back1, x, y),
+    #                  closing_point.to_3d(center2+way_back2, x, y)])
+    #
+    #             list_closing_point_indexes.append(closing_point_index)
+    #             previous_closing_point_index = closing_point_index
+    #         for k, point_wire2 in enumerate(wire2_points):
+    #             for key, index in dict_closing_pairs.items():
+    #                 if k > 0:
+    #                     if k - 1 >= index[0] and k <= index[1]:
+    #                         triangles.append([wire2_points[k - 1].to_3d(center2+way_back2, x, y),
+    #                                           point_wire2.to_3d(center2+way_back2, x, y),
+    #                                           key])
+    #         list_triangles.extend(triangles)
+    #
+    #     return list_triangles
