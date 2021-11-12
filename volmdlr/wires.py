@@ -552,7 +552,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         '''
         
         edges = []
-        for i in range(0, len(points)):
+        for i in range(0, len(points)-1):
             edges.append(volmdlr.edges.LineSegment2D(points[i], points[i+1]))       
         
         return cls(edges)        
