@@ -2055,7 +2055,9 @@ class Contour2D(Contour, Wire2D):
         '''
         cut a contou2d with bspline_curve2d to define two different contours
         '''
+        # TODO: BsplineCurve is descretized and defined with a wire. To be improved! 
         
+        contours = self.cut_by_wire(bspline_curve2d.to_wire())
         
         
         return contours
