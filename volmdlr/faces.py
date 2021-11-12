@@ -3281,8 +3281,8 @@ class BSplineSurface3D(Surface3D):
 
         Returns
         -------
-        surfaces : TYPE
-            DESCRIPTION.
+        surfaces : list
+            Two splitted surfaces
 
         '''
         
@@ -3323,8 +3323,7 @@ class BSplineSurface3D(Surface3D):
                 lines_y.append(vme.Line2D(volmdlr.Point2D(v_min, v_max),
                                           volmdlr.Point2D(v_max, v_max)))
                 lines = lines_y
-        
-            
+ 
             pt0 = volmdlr.Point2D(0,0)
             points=[]
             
