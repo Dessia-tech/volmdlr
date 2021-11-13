@@ -118,9 +118,9 @@ class PointCloud3D(dc.DessiaObject):
                 # try:
                 #     coords = poly1.sewing(poly2, vec1, vec2)
                 # except IndexError:
-                coords = poly1.sewing(poly2, vec1, vec2)
-                for trio in coords:
-                    faces.append(vmf.Triangle3D(*trio))
+                faces.extend(poly1.sewing3(poly2, vec1, vec2))
+                # for trio in coords:
+                #     faces.append(vmf.Triangle3D(*trio))
         return vmf.ClosedShell3D(faces)
     
     # def alpha_shape(self, alpha:float, number_point_samples:int):
@@ -222,7 +222,7 @@ class PointCloud2D(dc.DessiaObject):
         if not self.points:
             return None
         # polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
-        polygon = vmw.ClosedPolygon2D.concave_hull(self.points, -0.7, 0.000005)
+        polygon = vmw.ClosedPolygon2D.concave_hull(self.points, -0.5, 0.00005)
         # polygon = vmw.ClosedPolygon2D.convex_hull_points(self.points)
         if polygon is None or math.isclose(polygon.area(), 0, abs_tol = 1e-6) :
             return None
