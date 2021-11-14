@@ -5272,202 +5272,22 @@ class BSplineFace3D(Face3D):
                                       volmdlr.Point2D(v_max, v)))
         return lines_x, lines_y
 
-
-    def uv_directions(self):
-        '''
-        find how the uv parametric frame is located compared to xy frame
-        '''
-        
-        points1 = []
-
-        for uv in [(0,0),(1,0),(1,1),(0,1)]:
-            points1.append(self.surface3d.point2d_to_3d(volmdlr.Point2D(uv[0],uv[1])))
-        
-            
-        bounding_box_points = self.bounding_box.points
-        
-        nearest = []
-        for p in points1:
-            nearest.append(p.nearest_point(bounding_box_points))
-        
-        
-        if (volmdlr.Point3D(self.bounding_box.xmin, self.bounding_box.ymin, self.bounding_box.zmin)) in nearest:
-            point_ext1_xmin = volmdlr.Point3D(self.bounding_box.xmin, self.bounding_box.ymin, self.bounding_box.zmin)
-        elif (volmdlr.Point3D(self.bounding_box.xmin, self.bounding_box.ymin, self.bounding_box.zmax)) in nearest:
-            point_ext1_xmin = volmdlr.Point3D(self.bounding_box.xmin, self.bounding_box.ymin, self.bounding_box.zmax)
-        elif (volmdlr.Point3D(self.bounding_box.xmin, self.bounding_box.ymax, self.bounding_box.zmin)) in nearest:
-            point_ext1_xmin = (volmdlr.Point3D(self.bounding_box.xmin, self.bounding_box.ymax, self.bounding_box.zmin))
-
-        nearest1_xmin = point_ext1_xmin.nearest_point(points1)
-        uv_x0y0 = self.surface3d.point3d_to_2d(points1[points1.index(nearest1_xmin)])
-
-
-        if volmdlr.Point3D(self.bounding_box.xmax, self.bounding_box.ymin, self.bounding_box.zmin) in nearest:
-            point_ext1_xmax = volmdlr.Point3D(self.bounding_box.xmax, self.bounding_box.ymin, self.bounding_box.zmin)
-        elif volmdlr.Point3D(self.bounding_box.xmax, self.bounding_box.ymin, self.bounding_box.zmax) in nearest: 
-            point_ext1_xmax = volmdlr.Point3D(self.bounding_box.xmax, self.bounding_box.ymin, self.bounding_box.zmax)
-
-        nearest1_xmax = point_ext1_xmax.nearest_point(points1)
-        uv_x1y0 = self.surface3d.point3d_to_2d(points1[points1.index(nearest1_xmax)])
-
-        
-        if volmdlr.Point3D(self.bounding_box.xmin, self.bounding_box.ymax, self.bounding_box.zmin) in nearest:
-            point_ext1_ymax = volmdlr.Point3D(self.bounding_box.xmin, self.bounding_box.ymax, self.bounding_box.zmin)
-        elif volmdlr.Point3D(self.bounding_box.xmin, self.bounding_box.ymax, self.bounding_box.zmax) in nearest:
-            point_ext1_ymax = volmdlr.Point3D(self.bounding_box.xmin, self.bounding_box.ymax, self.bounding_box.zmax)
-
-        nearest1_ymax = point_ext1_ymax.nearest_point(points1)
-        uv_x0y1 =self.surface3d.point3d_to_2d(points1[points1.index(nearest1_ymax)])
-        
-        
-        
-        
-        # x, y, z = [], [], []
-        # for p in points1:
-        #     x.append(p.x)
-        #     y.append(p.y)
-        #     z.append(p.z)
-        
-        # bounding_box = self.bounding_box
-        # ymin = []
-        # for p in points1:
-        #     ymin.append(abs(p.y - bounding_box.ymin))
-        
-        # if ymin.count(min(ymin)) == 1:
-        #     index1 = ymin.index(min(ymin))
-        # else: 
-        #     index1 = xmin.index(min(xmin))
-        #     index2 = xmin.index(min(xmin), index1+1)
-        
-        # if y[index1]<y[index2]:
-        #     uv_x0y0 = self.surface3d.point3d_to_2d(points1[index1])
-        # else:
-        #     uv_x0y0 = self.surface3d.point3d_to_2d(points1[index2])
-
-        directions = []
-        
-        if math.isclose((uv_x1y0 - uv_x0y0)[0], 1) and -1e-5<(abs((uv_x0y1 - uv_x0y0)[0]))<1e5:
-            directions.append('+x')
-        elif math.isclose((uv_x1y0 - uv_x0y0)[0], -1) and -1e-5<(abs((uv_x0y1 - uv_x0y0)[0]))<1e5:
-            directions.append('-x')
-        elif -1e-5<(abs((uv_x1y0 - uv_x0y0)[0]))<1e5 and math.isclose((uv_x0y1 - uv_x0y0)[0], 1):
-            directions.append('+y')
-        elif -1e-5<(abs((uv_x1y0 - uv_x0y0)[0]))<1e5 and math.isclose((uv_x0y1 - uv_x0y0)[0], -1):
-            directions.append('-y')
-        else:
-            directions.append('-')
-            
-        if -1e-5<(abs((uv_x1y0 - uv_x0y0)[1]))<1e5 and math.isclose((uv_x0y1 - uv_x0y0)[1], 1):
-            directions.append('+y')
-        elif -1e-5<(abs((uv_x1y0 - uv_x0y0)[1]))<1e5 and math.isclose((uv_x0y1 - uv_x0y0)[1], -1):
-            directions.append('-y')
-        elif math.isclose((uv_x1y0 - uv_x0y0)[1], 1) and -1e-5<(abs((uv_x0y1 - uv_x0y0)[1]))<1e5:
-            directions.append('+x')
-        elif math.isclose((uv_x1y0 - uv_x0y0)[1], -1) and -1e-5<(abs((uv_x0y1 - uv_x0y0)[1]))<1e5:
-            directions.append('-x')
-        else:
-            directions.append('-')
-
-        # if math.isclose((uv_x1y0 - uv_x0y0)[0], 1) and math.isclose((uv_x0y1 - uv_x0y0)[0], 0):
-        #     directions.append('+x')
-        # elif math.isclose((uv_x1y0 - uv_x0y0)[0], -1) and math.isclose((uv_x0y1 - uv_x0y0)[0], 0):
-        #     directions.append('-x')
-        # elif math.isclose((uv_x1y0 - uv_x0y0)[0], 0) and math.isclose((uv_x0y1 - uv_x0y0)[0], 1):
-        #     directions.append('+y')
-        # elif math.isclose((uv_x1y0 - uv_x0y0)[0], 0) and math.isclose((uv_x0y1 - uv_x0y0)[0], -1):
-        #     directions.append('-y')
-        # else:
-        #     directions.append('-')
-            
-        # if math.isclose((uv_x1y0 - uv_x0y0)[1], 0) and math.isclose((uv_x0y1 - uv_x0y0)[1], 1):
-        #     directions.append('+y')
-        # elif math.isclose((uv_x1y0 - uv_x0y0)[1], 0) and math.isclose((uv_x0y1 - uv_x0y0)[1], -1):
-        #     directions.append('-y')
-        # elif math.isclose((uv_x1y0 - uv_x0y0)[1], 1) and math.isclose((uv_x0y1 - uv_x0y0)[1], 0):
-        #     directions.append('+x')
-        # elif math.isclose((uv_x1y0 - uv_x0y0)[1], -1) and math.isclose((uv_x0y1 - uv_x0y0)[1], 0):
-        #     directions.append('-x')
-        # else:
-        #     directions.append('-')
-        
-        # =============================================================================
-        #         
-        # =============================================================================
-        
-        point = self.surface3d.point2d_to_3d(volmdlr.Point2D(0.5,0.5))
-        point_delta_u = self.surface3d.point2d_to_3d(volmdlr.Point2D(0.5+0.05,0.5))
-        point_delta_v = self.surface3d.point2d_to_3d(volmdlr.Point2D(0.5,0.5+0.05))
-        
-        if (point_delta_u.x - point.x)>0 and (point_delta_u.x - point.x)>(point_delta_u.y - point.y):
-            directions.append('+x')
-            
-            
-            
-        
-        
-                                     
-        points1 = []
-
-        for uv in [(0,0),(1,0),(1,1),(0,1)]:
-            points1.append(self.surface3d.point2d_to_3d(volmdlr.Point2D(uv[0],uv[1])))
-
-        
-    
- 
-    
-        return directions
-
-
-    def uv_directions_(self):
-        '''
-        find how the uv parametric frame is located compared to xy frame
-        '''
-        
-        points1 = []
-
-        for uv in [(0,0),(1,0),(1,1),(0,1)]:
-            points1.append(self.surface3d.point2d_to_3d(volmdlr.Point2D(uv[0],uv[1])))
-            
-        contour3d = volmdlr.wires.Contour3D.contours_from_edges([volmdlr.edges.LineSegment3D(points1[0],points1[1]),
-                                                                 volmdlr.edges.LineSegment3D(points1[1],points1[2]),
-                                                                 volmdlr.edges.LineSegment3D(points1[2],points1[3]),
-                                                                 volmdlr.edges.LineSegment3D(points1[3],points1[0])])[0]
-        
-        vector0 = volmdlr.edges.LineSegment3D(points1[0],points1[1]).direction_vector().to_vector()
-        vector1 = volmdlr.edges.LineSegment3D(points1[1],points1[2]).direction_vector().to_vector()
-        vector2 = volmdlr.edges.LineSegment3D(points1[2],points1[3]).direction_vector().to_vector()
-        vector3 = volmdlr.edges.LineSegment3D(points1[3],points1[0]).direction_vector().to_vector()
-        
-        
-        volmdlr.core.vectors3d_angle(vector0, vector3)
-        volmdlr.core.vectors3d_angle(vector2, vector1)
-        
-        
-
-        
-        
-    
-        
-        return 
-    
-    def clockwise_angle(vector1, vector2):
-        x1, y1, z1 = vector1.x, vector1.y, vector1.z
-        x2, y2, z2 = vector2.x, vector2.y, vector2.z
-
-        dot = x1*x2 + y1*y2 + z1*z2    #between [x1, y1, z1] and [x2, y2, z2]
-        lenSq1 = x1*x1 + y1*y1 + z1*z1
-        lenSq2 = x2*x2 + y2*y2 + z2*z2
-        angle = math.acos(dot/math.sqrt(lenSq1 * lenSq2))
     
     def pair_with(self, other_bspline_face3d):
-        """
-        find out how the uv parametric frames are located compared to each other (return: corresponding_directions)
-        and find how grid3d can be defined respected to these directions (return: grid2d_direction)
-        """
+        '''
+        find out how the uv parametric frames are located compared to each other, and also how grid3d can be defined respected to these directions
         
-        # bspline1 = self.surface3d
-        # bspline2 = other_bspline_face3d.surface3d
+        Parameters
+        ----------
+        other_bspline_face3d : volmdlr.faces.BSplineFace3D
 
+        Returns
+        -------
+        corresponding_direction
+        grid2d_direction
+
+        '''
+        
         contour1 = self.outer_contour3d
         contour2 = other_bspline_face3d.outer_contour3d
         contours_3d = [contour1, contour2]
