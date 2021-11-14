@@ -2923,7 +2923,7 @@ class BSplineSurface3D(Surface3D):
 
     def nearest_edges3d(self, contours3d, threshold: float):
         ''' 
-        
+        compute the nearest edges of a contour3d to a Bspline_surface3d based on a threshold 
         '''
 
         nearest_primitives = []
@@ -2940,8 +2940,9 @@ class BSplineSurface3D(Surface3D):
     
     def wire3d_to_2d(self, wire3d):
         ''' 
-        
+        compute the 2d of a wire3d, on a Bspline surface
         '''
+        
         edges2d = []
         for edge in wire3d.primitives:
             edges2d.append(volmdlr.edges.LineSegment2D(self.point3d_to_2d(edge.start),
@@ -2952,7 +2953,7 @@ class BSplineSurface3D(Surface3D):
     
     def wire3d_to_2d_with_dimension(self, wire3d):
         ''' 
-        
+        compute the 2d of a wire3d, on a Bspline surface, in the dimensioned frame
         '''
 
         for cle in self._grids2d.keys(): 
@@ -2969,9 +2970,7 @@ class BSplineSurface3D(Surface3D):
     def intersection_with(self, other_bspline_surface3d):
         '''
         compute intersection points between two Bspline surfaces 
-        return u,v parameters for intersection points for both surfaces
-        # [[u1_min,u1_max],[v1_min,v1_max]] & [[u2_min,u2_max],[v2_min,v2_max]]
-        
+        return u,v parameters for intersection points for both surfaces      
         '''
         
         def f(X):
@@ -3003,6 +3002,9 @@ class BSplineSurface3D(Surface3D):
     
     @classmethod 
     def from_geomdl_surface(cls, surface):
+        ''' 
+        create a volmdlr's BSpline_Surface3D from a geomdl's one 
+        '''
         
         control_points=[]
         for i in range(0,len(surface.ctrlpts)):
@@ -3048,9 +3050,10 @@ class BSplineSurface3D(Surface3D):
     
         Returns
         -------
-        B-spline surface
+        B-spline surface: volmdlr.faces.BSplineSurface3D
     
         ''' 
+        
         # Keyword arguments
         num_cpts_u = kwargs.get('ctrlpts_size_u', size_u - 1)  # number of datapts, r + 1 > number of ctrlpts, n + 1
         num_cpts_v = kwargs.get('ctrlpts_size_v', size_v - 1)  # number of datapts, s + 1 > number of ctrlpts, m + 1
@@ -3063,169 +3066,10 @@ class BSplineSurface3D(Surface3D):
 
         return volmdlr.faces.BSplineSurface3D.from_geomdl_surface(surface) 
 
-            
-    @classmethod
-    def from_adjacent_bspline_surfaces(cls, surfaces, degree_u, degree_v, **kwargs):
-        '''  
-        create a bspline surface based on adjacent bspline surfaces        
-        keyword Arguments:
-            * ``plan3d``: 3d plan used for intersection. *Default: 'plan yz'*
-            * ``ctrlpts_size_u``: number of control points on the u-direction. *Default: size_u - 1*
-            * ``ctrlpts_size_v``: number of control points on the v-direction. *Default: size_v - 1*
-
-        '''
-        faces = surfaces
-        
-        points_x, points_y  = 50, 50
-        if len(surfaces) == 1:
-            
-            points_3d = surfaces[0].grid3d(points_x, points_y, 0, 1, 0, 1)
-            
-            return volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(points_3d,points_x,points_x,degree_u,degree_v)    
-        
-        elif len(surfaces) > 1:
-            
-            bounding_box = (volmdlr.faces.OpenShell3D(faces)).bounding_box
-
-
-            plan_choice = kwargs.get('plan3d', 'plan yz')  # number of datapts, r + 1 > number of ctrlpts, n + 1
-            if plan_choice == 'plan yz':
-                plane3d = volmdlr.faces.Plane3D.from_3_points(volmdlr.Point3D(bounding_box.xmax, bounding_box.ymin, bounding_box.zmin),
-                                                              volmdlr.Point3D(bounding_box.xmax, bounding_box.ymax, bounding_box.zmin),
-                                                              volmdlr.Point3D(bounding_box.xmax, bounding_box.ymin, bounding_box.zmax))
-
-            l = ((bounding_box.xmax) - bounding_box.xmin)
-            size = 20
-            step = l / size
-
-            intersection_points = []
-
-            while step <= l:
-                points = []
-
-                for face in faces:
-                    points.extend((face.surface3d).plane_intersection(plane3d.translation(volmdlr.Vector3D(-step,0,0))))
-                    
-                if len(points) >= 10:
-                    pt = volmdlr.Point3D(bounding_box.xmax - step, bounding_box.ymin, bounding_box.zmin)
-                    points = sorted(points, key=lambda p: pt.point_distance(p))
-                    
-                    # for point in points:
-                    #     point.plot(ax=ax3, color='r')
-
-                    points3d = []
-                    for p in points:
-                        points3d.append([p.x, p.y, p.z])
-                    
-                    curve = volmdlr.edges.BSplineCurve3D.from_geomdl_curve(geomdl.fitting.approximate_curve(points3d, 2, ctrlpts_size = 10))
-                    
-                    curve.plot(ax=ax3, color='k')
  
-                    pas = curve.length() / 100
-                    points = []
-                    for i in npy.arange(0,curve.length(),pas):
-                        points.append(curve.point_at_abscissa(i))
-                    if i != curve.length(): 
-                        # points.append(curve.point_at_abscissa(curve.length()))
-                        points[-1] = curve.point_at_abscissa(curve.length())
-                
-                    intersection_points.append(points)
-                    
-                    # for point in points:
-                    #     point.plot(ax=ax3, color='m')
-                    
-                    step = step + (l / size)
-
-                else:
-                      step = step + (l / size)
-
-            points3d = []
-            for points in intersection_points:
-                points3d.extend(points)
-
-            # Fitting 
-            # surface = volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(points3d, 
-            #                                                                              len(intersection_points), 
-            #                                                                              len(intersection_points[0]), 
-            #                                                                              degree_u, degree_v)
-            # Approximation 
-            surface = volmdlr.faces.BSplineSurface3D.points_approximate_into_bspline_surface(points3d, len(intersection_points), len(intersection_points[0]), 
-                                                                                             degree_u, degree_v, ctrlpts_size_u = 10, ctrlpts_size_v = 40)
-         
-            return surface
-        
-    # @classmethod
-    # def from_adjacent_surfaces(cls, surfaces, degree_u, degree_v, **kwargs):
-    #     '''  
-    #     create a bspline surface based on adjacent surfaces
-    #     # keyword Arguments:
-    #     #     * ``plan3d``: 3d plan used for intersection. *Default: 'plan yz'*
-    #     #     * ``ctrlpts_size_u``: number of control points on the u-direction. *Default: size_u - 1*
-    #     #     * ``ctrlpts_size_v``: number of control points on the v-direction. *Default: size_v - 1*
-    #     '''
-        
-    #     for surface in surfaces:
-    #         if type(surface) == volmdlr.faces.CylindricalSurface3D:
-        #             degree_u, degree_v, direction = 3, 3, 'x' #Paramètres pour la définition de la surface Bspline à partir de surfaces cylindriques
-        #             surface = vm.faces.BSplineSurface3D.from_cylindrical_surfaces(faces_cylindrical, degree_u,degree_v, direction)
-
-        
-            
-    #         for face in faces:
-    #             if type(face) == vm.faces.CylindricalFace3D: 
-    #                 faces_cylindrical.append(face)
-    #             elif type(face) == vm.faces.BSplineFace3D:
-    #                 faces_bspline.append(face)
-            
-    #         if faces_cylindrical != []: 
-    #             degree_u, degree_v, direction = 3, 3, 'x' #Paramètres pour la définition de la surface Bspline à partir de surfaces cylindriques
-    #             surface = vm.faces.BSplineSurface3D.from_cylindrical_surfaces(faces_cylindrical, degree_u,degree_v, direction)
-    #             if len(faces_cylindrical) == len(faces):
-    #                 return surface
-
-        
-    # @classmethod
-    # def from_points(cls, points):
-        
-    #     def bspline_equations(U,V,X,Y,Z):
-            
-    #         F = npy.empty(3)
-            
-    #         F[i] = (self.blending_vector_u(U[i]))*X[i][j]
-            
-            
-            
-    #         ((self.blending_vector_u(U[i])).dot(X)).dot(self.blending_vector_u(V[i])) - points[i].x
-            
-    #         ((self.blending_vector_u(U[i])).dot(Y)).dot(self.blending_vector_u(V[i])) - points[i].y
-    #         ((self.blending_vector_u(U[i])).dot(Z)).dot(self.blending_vector_u(V[i])) - points[i].z
-            
-            
-            
-    #         F[0]=(((self.blending_vector_u(X[0])).dot(P[0][0])).dot((self.blending_vector_v(X[1])).transpose())) - point3d.x
-            
-            
-            
-            
-    #         F = npy.empty(len(equation_points))              
-    #         for i in range(0, len(equation_points)):
-    #             F[i] = abs((X[index_x[equation_points[i][0]]]**2 + X[index_x[equation_points[i][1]]]**2 + X[index_y[equation_points[i][0]]]**2 + X[index_y[equation_points[i][1]]]**2 - 2*X[index_x[equation_points[i][0]]]*X[index_x[equation_points[i][1]]] -2*X[index_y[equation_points[i][0]]]*X[index_y[equation_points[i][1]]] - D[i]) / D[i]) 
-    #         return F
-
-    #     ## Solution with "least_squares" 
-    #     x_init=[] #initial guess (2D grid points)
-    #     for i in range(0,len(points_2d)):
-    #         x_init.append(points_2d[i][0])
-    #         x_init.append(points_2d[i][1])
-    #     z = opt.least_squares(non_linear_equations, x_init)
-
-
-        
-    #     return bspline_surface
-         
     def split_surface_u(self, u: float):
         '''
-        Splits the surface at the input parametric coordinate on the u-direction
+        split the surface at the input parametric coordinate on the u-direction
 
         Parameters
         ----------
@@ -3248,7 +3092,7 @@ class BSplineSurface3D(Surface3D):
     
     def split_surface_v(self, v: float):
         '''
-        Splits the surface at the input parametric coordinate on the v-direction
+        split the surface at the input parametric coordinate on the v-direction
 
         Parameters
         ----------
@@ -3271,11 +3115,11 @@ class BSplineSurface3D(Surface3D):
     
     def split_surface_with_bspline_curve(self, bspline_curve3d: volmdlr.edges.BSplineCurve3D):
         '''
-        Cut the surface into two pieces with a bspline curve
+        cuts the surface into two pieces with a bspline curve
 
         Parameters
         ----------
-        bspline_curve : volmdlr.edges.BSplineCurve3D
+        bspline_curve3d : volmdlr.edges.BSplineCurve3D
             
 
         Returns
