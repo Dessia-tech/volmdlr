@@ -5641,51 +5641,40 @@ class BSplineFace3D(Face3D):
         '''
         
         corresponding_directions, grid2d_direction = self.pair_with(other_bspline_face3d)
+        bsplines = [self.surface3d, other_bspline_face3d.surface3d]
+        center = [self.surface2d.outer_contour.center_of_mass(), other_bspline_face3d.surface2d.outer_contour.center_of_mass()]
+        intersection_results = bsplines[0].intersection_with(bsplines[1])
+        points3d = []
         
-        bspline1 = self.surface3d
-        bspline2 = other_bspline_face3d.surface3d
-        
-        uv_supperposition_parameters = bspline1.intersection_with(bspline2)
-        if (uv_supperposition_parameters[0][0][1]-uv_supperposition_parameters[0][0][0]) < (uv_supperposition_parameters[0][1][1]-uv_supperposition_parameters[0][1][0]):
-            if uv_supperposition_parameters[0][1][0] < (1-uv_supperposition_parameters[0][1][0]):
-                umin = uv_supperposition_parameters[0][1][0]
-                umax = 1
-            else:
-                umax = uv_supperposition_parameters[0][1][0]
-                umin = 0
-            vmin, vmax = 0, 1
+        for i in range(0, len(intersection_results)):
+            ru = intersection_results[i][0][:]
+            rv = intersection_results[i][1][:]
+            points = []
             
-        else: 
-            umin, umax = 0, 1
-            if uv_supperposition_parameters[0][1][1] < (1-uv_supperposition_parameters[0][1][1]):
-                vmin = uv_supperposition_parameters[0][1][1]
-                vmax = 1
-
-            else:
-                vmin = 0
-                vmax = uv_supperposition_parameters[0][1][0]
-
+            for i in range(0, len(ru)):
+                j = ru.index(min(ru))
+                points.append(volmdlr.Point2D(ru[j], rv[j]))
+                ru[j] = math.inf     
     
-        grid2d1 = volmdlr.Point2D.grid2d_with_direction(10,10, umin, umax, vmin, vmax, grid2d_direction[0])[0]
-        grid3d1 = []
-        for p in grid2d1: 
-            grid3d1.append(bspline1.point2d_to_3d(p))
+            curve = volmdlr.edges.BSplineCurve2D.from_points_approximation(points, 2, ctrlpts_size = 10)
+            surfaces = bsplines[i].split_surface_with_bspline_curve(bsplines[i].bsplinecurve2d_to_3d(curve))
 
-        grid2d2 = volmdlr.Point2D.grid2d_with_direction(10,10,0,1,0,1, grid2d_direction[1])[0]
-        grid3d2 = []
-        for p in grid2d2: 
-            grid3d2.append(bspline2.point2d_to_3d(p))
+            errors = []
+            for s in surfaces: 
+                errors.append(s.error_with_point3d(bsplines[i].point2d_to_3d(center[i])))
+        
+            bsplines_new = surfaces[errors.index(min(errors))]
             
-        points = [] 
-        points.extend(grid3d1)
-        points.extend(grid3d2)
+            grid2d = volmdlr.Point2D.grid2d_with_direction(10, 10, 0, 1, 0, 1, grid2d_direction[i])[0]
+            grid3d = []
+            for p in grid2d: 
+                grid3d.append(bsplines_new.point2d_to_3d(p))
+            
+            points3d.extend(grid3d)
         
-        size_u = 20
-        size_v = 10
-        degree_u = max(bspline1.degree_u, bspline2.degree_u)
-        degree_v  = max(bspline1.degree_v, bspline2.degree_v)
+        size_u, size_v, degree_u, degree_v = 20, 10, max(bsplines[0].degree_u, bsplines[1].degree_u), max(bsplines[0].degree_v, bsplines[1].degree_v)
         
-        merged_surface = volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(points, size_u, size_v, degree_u, degree_v)
+        merged_surface = volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(points3d, size_u, size_v, degree_u, degree_v)
                 
         return merged_surface
 
