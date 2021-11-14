@@ -2970,7 +2970,7 @@ class BSplineSurface3D(Surface3D):
         '''
         compute intersection points between two Bspline surfaces 
         return u,v parameters for intersection points for both surfaces
-        [[u1_min,u1_max],[v1_min,v1_max]] & [[u2_min,u2_max],[v2_min,v2_max]]
+        # [[u1_min,u1_max],[v1_min,v1_max]] & [[u2_min,u2_max],[v2_min,v2_max]]
         
         '''
         
@@ -2996,9 +2996,8 @@ class BSplineSurface3D(Surface3D):
                 u2.append(solution[2])
                 v2.append(solution[3])
         
-
-        uv1 = [[min(u1),max(u1)],[min(v1),max(v1)]]
-        uv2 = [[min(u2),max(u2)],[min(v2),max(v2)]]
+        # uv1 = [[min(u1),max(u1)],[min(v1),max(v1)]]
+        # uv2 = [[min(u2),max(u2)],[min(v2),max(v2)]]
             
         return ((u1,v1), (u2,v2)) #(uv1, uv2) # 
     
