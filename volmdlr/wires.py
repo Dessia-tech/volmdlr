@@ -40,7 +40,21 @@ from statistics import mean
 
 
 def bounding_rectangle_adjacent_contours(contours: List):
+    '''
+    compute the bounding_box of a list of adjacent contours
 
+    Parameters
+    ----------
+    contours : List[volmdlr.wires.Contour2D]
+
+    Returns
+    -------
+    xmin : float
+    xmax : float
+    ymin : float
+    ymax : float
+
+    '''
     xmin, xmax, ymin, ymax = contours[0].bounding_rectangle()
     
     for i in range(1, len(contours)):
@@ -91,15 +105,11 @@ class Wire:
         """
         primitives = []
         # TODO: Check if it is: self.primitive_to_index[primitive1] OR self.primitive_to_index(primitive1)
-        # ip1 = self.primitive_to_index[primitive1]
-        # ip2 = self.primitive_to_index[primitive2]
-        
-        ip1 = self.primitive_to_index(primitive1)
-        ip2 = self.primitive_to_index(primitive2)
+        ip1 = self.primitive_to_index[primitive1]
+        ip2 = self.primitive_to_index[primitive2]
         
         # ip1 = self.primitives.index(primitive1)
         # ip2 = self.primitives.index(primitive2)
-
         
         if inside:
             if ip1 < ip2:
@@ -163,9 +173,10 @@ class Wire:
         return bspline_curve 
     
     def point_belongs(self, point):
-        """
-        Find if a point is on the wire or not. If it belongs, we return the primitive's index
-        """
+        '''
+        find out if a point is on the wire or not. If it belongs, we return the primitive's index
+        '''
+        
         belongs = []
         for primitive in self.primitives:
             belongs.append(primitive.point_belongs(point))
@@ -177,6 +188,9 @@ class Wire:
 
 
     def abscissa(self, point):
+        ''' 
+        compute the curvilinear abscisse of a point on a wire
+        '''
         
         index = self.point_belongs(point)
    
@@ -363,30 +377,30 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
     
     def wire_intersections(self, wire):
         '''
-        
+        compute intersections between two wire2d. 
+
+        Parameters
+        ----------
+        wire : volmdlr.wires.Wire2D
+
+        Returns
+        -------
+        intersections : List[(volmdlr.Point2D, volmdlr.Primitive2D)]
+
         '''
         
         intersections = []
-        for primitive in wire.primitives: 
-            if self.linesegment_intersections(primitive) != []:
-                a = self.linesegment_intersections(primitive)
+        for primitive in wire.primitives:
+            a = self.linesegment_intersections(primitive)
+            if a != []:
                 intersections.append([a[0][0], a[0][1]])
-                
-        # intersections_points = []
-        # edges = []
-        
-        # for primitive in self.primitives: 
-        #     if wire.linesegment_intersections(primitive) != []: #line_intersections: TO BE CHANGED WITH linesegment_intersections (line_intersections)
-        #         intersections_points.append(wire.line_intersections(primitive)[0][0])
-        #         edges.append(primitive)
-
-                
+                               
         return intersections
 
     def cut_by_wire(self, wire):
-        """
-        Cut a wire2d (contour2d) with a wire2d
-        """
+        ''' 
+        cut a wire2d (contour2d) with a wire2d
+        ''' 
         # TODO: To be checked: it is an adapted version of 'cut_by_line'
                 
         intersections = self.wire_intersections(wire)
