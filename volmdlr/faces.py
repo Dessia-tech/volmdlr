@@ -5524,6 +5524,7 @@ class ClosedShell3D(OpenShell3D):
                                     ClosedShell3D([face]).bounding_box.is_inside_bbox(
                                     ClosedShell3D([face2]).bounding_box):
                                 coincident_plane = True
+                                print('passing here')
                                 break
                         if not coincident_plane:
                             non_intersecting_faces.append(face)
@@ -5630,7 +5631,13 @@ class ClosedShell3D(OpenShell3D):
                                     else:
                                         valid = False
                             if valid:
-                                faces.append(new_face)
+                                for coin_f1, coin_f2 in list_coicident_faces:
+                                    if coin_f1.face_inside(
+                                            new_face) and coin_f2.face_inside(
+                                            new_face):
+                                        valid = False
+                                if valid:
+                                    faces.append(new_face)
                 else:
                     if is_inside:
                         if new_face not in faces:
