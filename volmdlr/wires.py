@@ -1517,8 +1517,13 @@ class Contour2D(Contour, Wire2D):
                             # axc = cutting_contour.plot(color='r')
                             # cutting_contour.plot(color='r')
                             # base_contour.plot(ax=axc, color='b')
-                            if cntr.point_belongs(point_at_abs) and not all([cntr.primitive_over_contour(prim) for prim in cut_contour.primitives]) is True:
-                                valid_contour = False
+                            if cntr.point_belongs(point_at_abs):
+                                over_contour = True
+                                for prim in cut_contour.primitives:
+                                    if not cntr.primitive_over_contour(prim):
+                                        over_contour = False
+                                if over_contour:
+                                    valid_contour = False
                         if valid_contour and cntr.area() != 0.0:
                             # ax=cntr.plot()
                             # for cut_contour in list_cutting_contours:
@@ -1532,13 +1537,15 @@ class Contour2D(Contour, Wire2D):
                 finished = True
             counter += 1
             if counter >= 1000 and contours[-1] == cutting_contour:
-                # axx = cutting_contour.plot(color='g')
-                axc = cutting_contour.plot(color='r')
+                axx = self.plot(color='c')
+                axc = cutting_contour.plot()
                 # print('cutting_contour_points :', [(p.start, p.end) for p in cutting_contour.primitives])
                 # list_contour.remove(cutting_contour)
-                # for ctr in list_contour:
-                #     ctr.plot(ax=axc, color='r')
+                for ctr in list_contour:
+                    ctr.plot(ax=axc, color='r')
+                    ctr.plot(ax=axx, color='r')
                 base_contour.plot(ax=axc, color='b')
+                base_contour.plot(ax=axx, color='b')
                 # print('base_contour_points :', [(p.start, p.end) for p in
                 #                            base_contour.primitives])
                 # base_contour.plot(ax=axx)
@@ -3596,7 +3603,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
         return ClosedPolygon3D(self.simplify_polygon(
             min_distance=min_distance, max_distance=max_distance).points)
 
-    def sewing0(self, polygon2, x, y):
+    def sewing(self, polygon2, x, y):
         """
         x and y are used for plane projection to make sure it is being projected in the right plane
         """
@@ -3724,7 +3731,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
 
         return triangles
 
-    def sewing(self, polygon2, x, y):
+    def sewing1(self, polygon2, x, y):
         """
         x and y are used for plane projection to make sure it is being
         projected in the right plane
@@ -3935,21 +3942,22 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
             polygon2_3d = self
 
             # print('passes here')
-        ax=polygon1_2d.plot()
-        polygon2_2d.plot(ax=ax, color='r')
+        # ax=polygon1_2d.plot()
+        # polygon2_2d.plot(ax=ax, color='r')
         dict_closing_pairs = {}
         triangles = []
         list_closing_point_indexes = []
         closing_point = volmdlr.O2D
+        passed_by_zero_index = False
         for i, primitive1 in enumerate(polygon1_2d.line_segments):
             # primitive1.plot(ax=ax, color='r')
             middle_point = primitive1.middle_point()
-            middle_point.plot(ax=ax, color='r')
+            # middle_point.plot(ax=ax, color='r')
             normal_vector = primitive1.normal_vector()
             line_segment1 = volmdlr.edges.LineSegment2D(middle_point-normal_vector, middle_point)
             line_segment2 = volmdlr.edges.LineSegment2D(middle_point, middle_point + normal_vector)
-            line_segment1.plot(ax=ax, color='y')
-            line_segment2.plot(ax=ax, color='b')
+            # line_segment1.plot(ax=ax, color='y')
+            # line_segment2.plot(ax=ax, color='b')
             # print('angle in radians :', primitive1.unit_direction_vector().dot(normal_vector))
             # print('vector1 :', primitive1.unit_direction_vector())
             # print('normal: ', normal_vector)
@@ -3976,14 +3984,15 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                 distance = math.inf
                 for intr_list in line_intersections[line_segment1]:
                     # if intr_list[0] not in polygon1_2d.points:
-                    dist = intr_list[0].point_distance(line_segment1.start)
-                    if dist < distance:
-                        distance = dist
-                        if intr_list[0].point_distance(intr_list[1].start) < \
-                                intr_list[0].point_distance(intr_list[1].end):
-                            closing_point = intr_list[1].start
-                        else:
-                            closing_point = intr_list[1].end
+                    if intr_list[1] not in polygon1_2d.line_segments:
+                        dist = intr_list[0].point_distance(line_segment1.start)
+                        if dist < distance:
+                            distance = dist
+                            if intr_list[0].point_distance(intr_list[1].start) < \
+                                    intr_list[0].point_distance(intr_list[1].end):
+                                closing_point = intr_list[1].start
+                            else:
+                                closing_point = intr_list[1].end
             else:
                 # print('last passed here, sure of it ')
                 distance = math.inf
@@ -3995,43 +4004,59 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                             distance = dist
                             if intr_list[0].point_distance(intr_list[1].start) < \
                                     intr_list[0].point_distance(intr_list[1].end):
-                                closing_point2 = intr_list[1].start
+                                closing_point = intr_list[1].start
                             else:
-                                closing_point2 = intr_list[1].end
-                    else:
-                        dist = intr_list[0].point_distance(line_segment1.start)
-                        if dist < distance1:
-                            distance1 = dist
+                                closing_point = intr_list[1].end
+                    # else:
+                    #     dist = intr_list[0].point_distance(line_segment1.start)
+                    #     if dist < distance1:
+                    #         distance1 = dist
                             # if intr_list[0].point_distance(intr_list[1].start) < \
                             #         intr_list[0].point_distance(intr_list[1].end):
                             #     closing_point1 = intr_list[1].start
                             # else:
                             #     closing_point1 = intr_list[1].end
-                if distance1 > distance:
-                    closing_point=closing_point2
-            closing_point.plot(ax=ax, color='y')
+                # if distance1 > distance:
+                #     closing_point=closing_point2
+            # closing_point.plot(ax=ax, color='y')
             closing_point_index = polygon2_2d.points.index(closing_point)
+
             if i == 0:
                 previous_closing_point_index = closing_point_index
             else:
                 if closing_point_index != previous_closing_point_index:
-
+                    ratio = (previous_closing_point_index - closing_point_index) / len(
+                        polygon2_2d.points)
+                    # print('ratio :', ratio)
                     if closing_point_index < previous_closing_point_index:
-                        ratio = (previous_closing_point_index - closing_point_index) / len(
-                            polygon2_2d.points)
-                        if math.isclose(ratio, 0, abs_tol=0.2):
+                        print((previous_closing_point_index, closing_point_index))
+                        # ratio = (previous_closing_point_index - closing_point_index) / len(
+                        #     polygon2_2d.points)
+                        #
+                        if math.isclose(ratio, 0, abs_tol=0.3):
                             closing_point_index = previous_closing_point_index
                         else:
-                            dict_closing_pairs[
-                                polygon1_3d.line_segments[i].start] = (
-                            previous_closing_point_index, closing_point_index)
+                            print('passing here')
+                            passed_by_zero_index = True
+                            if closing_point_index > list_closing_point_indexes[0]:
+                                closing_point_index = list_closing_point_indexes[0]
+                                dict_closing_pairs[polygon1_3d.line_segments[i].start] = (
+                                    previous_closing_point_index,
+                                    closing_point_index)
+                            else:
+                                dict_closing_pairs[
+                                    polygon1_3d.line_segments[i].start] = (
+                                    previous_closing_point_index, closing_point_index)
                     elif closing_point_index in list_closing_point_indexes:
                         closing_point = polygon2_2d.points[previous_closing_point_index]
                         closing_point_index = previous_closing_point_index
                     elif len(list_closing_point_indexes) > 2 and list_closing_point_indexes[0] < closing_point_index < list_closing_point_indexes[-1]:
                         closing_point_index = previous_closing_point_index
-                    elif list_closing_point_indexes[0] != 0 and 0 in list_closing_point_indexes and closing_point_index > list_closing_point_indexes[0]:
+                    elif passed_by_zero_index and closing_point_index > list_closing_point_indexes[0]:
                         closing_point_index = previous_closing_point_index
+                    elif list_closing_point_indexes[0] == 0 and math.isclose(ratio, -1, abs_tol=0.3):
+                        closing_point_index = previous_closing_point_index
+                        # print('ITs also coming here ')
                     # elif list_closing_point_indexes[-1] - list_closing_point_indexes[-2] > 0 \
                     #         and closing_point_index > list_closing_point_indexes[-1]:
                     #     closing_point_index = previous_closing_point_index
@@ -4063,6 +4088,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
             if closing_point_index not in list_closing_point_indexes:
                 list_closing_point_indexes.append(closing_point_index)
             previous_closing_point_index = closing_point_index
+        # print('list closing indexes :', list_closing_point_indexes)
         print('dict_closing_pairs :', dict_closing_pairs)
         for i, point_polygon2 in enumerate(
                 polygon2_3d.points + [polygon2_3d.points[0]]):
@@ -4087,35 +4113,35 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                                 alpha=0.9,
                                 color=(1, 0.1, 0.1))
                             triangles.append(face)
-        #
-        # print('p1 3d points :', self.points)
-        # print('p2 3d points :', polygon2.points)
-        faces=triangles
-        # coords = triangles
-        # for trio in coords:
-        #     faces.append(volmdlr.faces.Triangle3D(trio[0], trio[1], trio[2], alpha=0.9, color=(1, 0.1, 0.1)))
-        volum = volmdlr.core.VolumeModel(faces)
-        volum.babylonjs()
-        # ax=contour1.to_3d(center1 + way_back1, x, y).plot()
-        # contour2.to_3d(center2+way_back2, x, y).plot(ax=ax, color='y')
-        ax = self.plot()
-        polygon2.plot(ax=ax, color='y')
-        for i, face in enumerate(faces):
-            if i < 3:
-                color='r'
-            else:
-                color='b'
-            volmdlr.edges.LineSegment3D(face.point1, face.point2).plot(ax=ax,
-                                                                       color=color)
-            volmdlr.edges.LineSegment3D(face.point1, face.point3).plot(ax=ax,
-                                                                       color=color)
-            volmdlr.edges.LineSegment3D(face.point2, face.point3).plot(ax=ax,
-                                                                       color=color)
 
-        self.plot(ax=ax, color='r')
-        polygon2.plot(ax=ax, color='y')
-        self.points[0].plot(ax=ax)
-        polygon2.points[0].plot(ax=ax, color='g')
+        print('p1 3d points :', self.points)
+        print('p2 3d points :', polygon2.points)
+        # faces=triangles
+        # # coords = triangles
+        # # for trio in coords:
+        # #     faces.append(volmdlr.faces.Triangle3D(trio[0], trio[1], trio[2], alpha=0.9, color=(1, 0.1, 0.1)))
+        # volum = volmdlr.core.VolumeModel(faces)
+        # volum.babylonjs()
+        # # ax=contour1.to_3d(center1 + way_back1, x, y).plot()
+        # # contour2.to_3d(center2+way_back2, x, y).plot(ax=ax, color='y')
+        # ax = self.plot()
+        # polygon2.plot(ax=ax, color='y')
+        # for i, face in enumerate(faces):
+        #     if i < 3:
+        #         color='r'
+        #     else:
+        #         color='b'
+        #     volmdlr.edges.LineSegment3D(face.point1, face.point2).plot(ax=ax,
+        #                                                                color=color)
+        #     volmdlr.edges.LineSegment3D(face.point1, face.point3).plot(ax=ax,
+        #                                                                color=color)
+        #     volmdlr.edges.LineSegment3D(face.point2, face.point3).plot(ax=ax,
+        #                                                                color=color)
+        #
+        # self.plot(ax=ax, color='r')
+        # polygon2.plot(ax=ax, color='y')
+        # self.points[0].plot(ax=ax)
+        # polygon2.points[0].plot(ax=ax, color='g')
         return triangles
 
 
