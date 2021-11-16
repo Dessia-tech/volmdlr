@@ -1468,27 +1468,27 @@ class Contour2D(Contour, Wire2D):
                         point1) and base_contour.point_over_contour(point2):
                     cutting_points = [point1, point2]
 
-                else:
-                    for prim1 in [cutting_contour.primitives[0],
-                                  cutting_contour.primitives[-1]]:
-                        for prim2 in base_contour.primitives:
-                            inter = prim2.linesegment_intersections(prim1)
-                            if inter:
-                                cutting_points.extend(inter)
-                            elif prim2.point_belongs(prim1.start):
-                                cutting_points.append(prim1.start)
-                            elif prim2.point_belongs(prim1.end):
-                                cutting_points.append(prim1.end)
-
-                    # print('cutting_points :', cutting_points)
-                    # axc = cutting_contour.plot(color='r')
-                    # base_contour.plot(ax=axc, color='b')
-                    if len(cutting_points) == 2:
-                        cutting_contour.primitives[0].start = cutting_points[0]
-                        cutting_contour.primitives[-1].end = cutting_points[1]
-                # ax=cutting_points[0].plot()
-                # cutting_points[1].plot(ax=ax, color='r')
-                # base_contour.plot(ax=ax, color='b')
+                # else:
+                #     for prim1 in [cutting_contour.primitives[0],
+                #                   cutting_contour.primitives[-1]]:
+                #         for prim2 in base_contour.primitives:
+                #             inter = prim2.linesegment_intersections(prim1)
+                #             if inter:
+                #                 cutting_points.extend(inter)
+                #             elif prim2.point_belongs(prim1.start):
+                #                 cutting_points.append(prim1.start)
+                #             elif prim2.point_belongs(prim1.end):
+                #                 cutting_points.append(prim1.end)
+                #
+                #     # print('cutting_points :', cutting_points)
+                #     # axc = cutting_contour.plot(color='r')
+                #     # base_contour.plot(ax=axc, color='b')
+                #     if len(cutting_points) == 2:
+                #         cutting_contour.primitives[0].start = cutting_points[0]
+                #         cutting_contour.primitives[-1].end = cutting_points[1]
+                # # ax=cutting_points[0].plot()
+                # # cutting_points[1].plot(ax=ax, color='r')
+                # # base_contour.plot(ax=ax, color='b')
 
                 if len(cutting_points) == 2:
                     extracted_outerpoints_contour1 = \
@@ -1513,23 +1513,15 @@ class Contour2D(Contour, Wire2D):
                     for cntr in [contour1, contour2]:
                         valid_contour = True
                         for cut_contour in list_cutting_contours:
-                            point_at_abs = cut_contour.point_at_abscissa(cut_contour.length() / 2)
-                            # axc = cutting_contour.plot(color='r')
-                            # cutting_contour.plot(color='r')
-                            # base_contour.plot(ax=axc, color='b')
-                            if cntr.point_belongs(point_at_abs):
-                                over_contour = True
-                                for prim in cut_contour.primitives:
-                                    if not cntr.primitive_over_contour(prim):
-                                        over_contour = False
-                                if over_contour:
-                                    valid_contour = False
+                            point_at_abs = cut_contour.point_at_abscissa(
+                                cut_contour.length() / 2)
+                            if cntr.point_belongs(
+                                    point_at_abs) and not cntr.point_over_contour(
+                                    point_at_abs):
+                                valid_contour = False
                         if valid_contour and cntr.area() != 0.0:
-                            # ax=cntr.plot()
-                            # for cut_contour in list_cutting_contours:
-                            #     cut_contour.plot(ax=ax, color='b')
                             list_valid_contours.append(cntr)
-                        elif not valid_contour:
+                        else:
                             new_base_contours.append(cntr)
                     contours.remove(cutting_contour)
                     break
@@ -1546,8 +1538,8 @@ class Contour2D(Contour, Wire2D):
                     ctr.plot(ax=axx, color='r')
                 base_contour.plot(ax=axc, color='b')
                 base_contour.plot(ax=axx, color='b')
-                # print('base_contour_points :', [(p.start, p.end) for p in
-                #                            base_contour.primitives])
+                print('base_contour_points :', [(p.start, p.end) for p in
+                                           base_contour.primitives])
                 # base_contour.plot(ax=axx)
                 # for pt in cutting_points:
                 #     pt.plot(ax=axc)
