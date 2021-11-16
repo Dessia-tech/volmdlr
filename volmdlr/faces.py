@@ -5293,7 +5293,8 @@ class ClosedShell3D(OpenShell3D):
         Verifies if a face lies on the shell's surface
         """
         for fc in self.faces:
-            if fc.face_inside(face):
+            if fc.face_inside(face) and \
+                    fc.surface2d.outer_contour.area() == fc.surface2d.outer_contour.area():
                 return True
         return False
 
@@ -5632,12 +5633,14 @@ class ClosedShell3D(OpenShell3D):
                                         valid = False
                             if valid:
                                 for coin_f1, coin_f2 in list_coicident_faces:
-                                    if coin_f1.face_inside(
-                                            new_face) and coin_f2.face_inside(
-                                            new_face):
+                                    if coin_f1.face_inside(new_face) and \
+                                            new_face.surface2d.outer_contour.area() == coin_f1.surface2d.outer_contour.area():
                                         valid = False
-                                if valid:
-                                    faces.append(new_face)
+                                    elif coin_f2.face_inside(new_face) and \
+                                            new_face.surface2d.outer_contour.area() == coin_f2.surface2d.outer_contour.area():
+                                        valid = False
+                            if valid:
+                                faces.append(new_face)
                 else:
                     if is_inside:
                         if new_face not in faces:
@@ -5674,8 +5677,25 @@ class ClosedShell3D(OpenShell3D):
             return [self, shell2]
         if self.is_inside_shell(shell2, resolution = 0.01):
             return [shell2]
+        else:
+            valid = True
+            for face1 in self.faces:
+                if not ClosedShell3D([face1]).is_inside_shell(shell2, 0.01) and not shell2.face_on_shell(face1):
+                    valid = False
+                    break
+            if valid:
+                return [shell2]
+
         if shell2.is_inside_shell(self, resolution = 0.01):
             return [self]
+        else:
+            valid = True
+            for face2 in shell2.faces:
+                if not ClosedShell3D([face2]).is_inside_shell(self, 0.01) and not self.face_on_shell(face2):
+                    valid = False
+                    break
+            if valid:
+                return [self]
 
         return []
 
