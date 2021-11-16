@@ -167,6 +167,13 @@ class Step:
 
         return functions, all_connections
 
+    def not_implemented(self):
+        not_implemented = []
+        for _, fun in self.functions.items():
+            if fun.name not in STEP_TO_VOLMDLR:
+                not_implemented.append(fun.name)
+        return list(set(not_implemented))
+
     def create_graph(self, draw=False, html=False):
 
         G = nx.Graph()
@@ -405,6 +412,9 @@ class Step:
         elif name == 'MANIFOLD_SOLID_BREP':
             volmdlr_object = object_dict[arguments[1]]
 
+        elif name == 'BREP_WITH_VOIDS':
+            volmdlr_object = object_dict[arguments[1]]
+
         elif name == 'SHAPE_REPRESENTATION':
             # does it have the extra argument comming from
             # SHAPE_REPRESENTATION_RELATIONSHIP ? In this cas return
@@ -500,6 +510,7 @@ class Step:
         self.graph.add_node("#0")
         frame_mapping_nodes = []
         shell_nodes = []
+        not_shell_nodes = []
         for node in self.graph.nodes:
             if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP':
                 frame_mapping_nodes.append(node)
@@ -510,6 +521,9 @@ class Step:
             if node != '#0' and self.functions[node].name == 'SHAPE_REPRESENTATION':
                 # Really a shell node ?
                 shell_nodes.append(node)
+            if node != '#0' and self.functions[node].name == 'BREP_WITH_VOIDS':
+                shell_nodes.append(node)
+                not_shell_nodes.append(int(self.functions[node].arg[1][1:]))
 
         frame_mapped_shell_node = []
         for s_node in shell_nodes:
@@ -520,21 +534,36 @@ class Step:
         shell_nodes_copy = shell_nodes.copy()
         [shell_nodes.remove(node) for node in frame_mapped_shell_node]
 
+        [shell_nodes.remove(node) for node in not_shell_nodes]
+
         for node in shell_nodes + frame_mapping_nodes:
             self.graph.add_edge('#0', node)
 
         edges = list(
-            nx.algorithms.traversal.breadth_first_search.bfs_edges(self.graph,
-                                                                   "#0"))[::-1]
+            nx.algorithms.traversal.breadth_first_search.bfs_edges(
+                self.graph, "#0"))[::-1]
+
+        # edges = list(
+        #     nx.algorithms.traversal.edge_bfs(self.graph, "#0"))[::-1]
+
         # self.draw_graph(self.graph, reduced=True)
         for edge_nb, edge in enumerate(edges):
-            instanciate_id = edge[1]
-            volmdlr_object = self.instanciate(
-                self.functions[instanciate_id].name,
-                self.functions[instanciate_id].arg[:],
-                object_dict)
+            instanciate_ids = [edge[1]]
+            error = True
+            while error:
+                try:
+                    for instanciate_id in instanciate_ids[::-1]:
+                        volmdlr_object = self.instanciate(
+                            self.functions[instanciate_id].name,
+                            self.functions[instanciate_id].arg[:],
+                            object_dict)
+                        object_dict[instanciate_id] = volmdlr_object
 
-            object_dict[instanciate_id] = volmdlr_object
+                    error = False
+                except KeyError as key:
+                    # Sometimes the bfs search don't instanciate the nodes of a
+                    # depth in the right order, leading to error
+                    instanciate_ids.append(key.args[0])
 
         shells = []
         for node in shell_nodes_copy:
@@ -665,6 +694,7 @@ STEP_TO_VOLMDLR = {
     'SHELL_BASED_SURFACE_MODEL': None,
     'MANIFOLD_SURFACE_SHAPE_REPRESENTATION': None,
     'MANIFOLD_SOLID_BREP': None,
+    'BREP_WITH_VOIDS': None,
     'SHAPE_REPRESENTATION': None,
     'ADVANCED_BREP_SHAPE_REPRESENTATION': None,
     'ITEM_DEFINED_TRANSFORMATION': None,
