@@ -727,7 +727,7 @@ class LineSegment2D(LineSegment):
         touching linesegments does not intersect
         """
         point = volmdlr.Point2D.line_intersection(self, linesegment)
-        if point and (point != self.start) and (point != self.end):
+        if point: # and (point != self.start) and (point != self.end): # TODO: May be these commented conditions should be used for linesegment_crossings
             point_projection1, _ = self.point_projection(point)
             if point_projection1 is None:
                 return []
@@ -2775,7 +2775,7 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             weight_data = None
 
         # FORCING CLOSED_CURVE = FALSE:
-        closed_curve = False
+        # closed_curve = False
         return cls(degree, points, knot_multiplicities, knots, weight_data,
                    closed_curve, name)
 
@@ -2819,10 +2819,15 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         return content, [current_id]
 
     @classmethod
-    def from_points_interpolation(cls, points, degree):
+    def from_points_interpolation(cls, points, degree, periodic=False):
         curve = fitting.interpolate_curve([(p.x, p.y, p.z) for p in points],
                                           degree)
-        return cls.from_geomdl_curve(curve)
+        bsplinecurve3d = cls.from_geomdl_curve(curve)
+        if not periodic:
+            return bsplinecurve3d
+        else:
+            bsplinecurve3d.periodic = True
+            return bsplinecurve3d
 
     def point_distance(self, pt1):
         distances = []
