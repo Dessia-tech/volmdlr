@@ -5624,10 +5624,18 @@ class ClosedShell3D(OpenShell3D):
                             for fc in faces:
                                 if fc.face_inside(new_face):
                                     if new_face.surface2d.outer_contour.area() == fc.surface2d.outer_contour.area():
-                                        print('invalidates a face')
-                                        valid = False
-                                        faces.remove(fc)
-                                        break
+                                        centroide = new_face.surface2d.outer_contour.center_of_mass()
+                                        normal1 = new_face.surface3d.point2d_to_3d(centroide) - 0.01*new_face.surface3d.frame.w
+                                        normal2 = new_face.surface3d.point2d_to_3d(centroide) + 0.01*new_face.surface3d.frame.w
+                                        if (self.point_belongs(normal1) and
+                                            shell2.point_belongs(normal2)) or \
+                                                (shell2.point_belongs(normal1) and
+                                                 self.point_belongs(normal2)):
+                                            valid = False
+                                            faces.remove(fc)
+                                            break
+                                        else:
+                                            valid = False
                                     else:
                                         valid = False
                             if valid:
