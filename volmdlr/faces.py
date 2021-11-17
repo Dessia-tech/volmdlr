@@ -5293,8 +5293,7 @@ class ClosedShell3D(OpenShell3D):
         Verifies if a face lies on the shell's surface
         """
         for fc in self.faces:
-            if fc.face_inside(face) and \
-                    fc.surface2d.outer_contour.area() == fc.surface2d.outer_contour.area():
+            if fc.face_inside(face):
                 return True
         return False
 
@@ -5673,20 +5672,22 @@ class ClosedShell3D(OpenShell3D):
         operation.
         '''
         if self.is_disjoint_from(shell2, tol):
-            print('are disjointe objects')
             return [self, shell2]
         if self.is_inside_shell(shell2, resolution = 0.01):
+
             return [shell2]
         else:
             valid = True
             for face1 in self.faces:
-                if not ClosedShell3D([face1]).is_inside_shell(shell2, 0.01) and not shell2.face_on_shell(face1):
+                if not ClosedShell3D([face1]).bounding_box.is_inside_bbox(shell2.bounding_box) and not shell2.face_on_shell(face1):
                     valid = False
                     break
             if valid:
+                print('passes here 0')
                 return [shell2]
 
         if shell2.is_inside_shell(self, resolution = 0.01):
+
             return [self]
         else:
             valid = True
