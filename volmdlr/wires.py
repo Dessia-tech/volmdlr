@@ -16,7 +16,6 @@ import networkx as nx
 import volmdlr
 import volmdlr.core
 import volmdlr.edges
-
 import volmdlr.display as vmd
 
 import volmdlr.geometry as vmgeo
@@ -3934,22 +3933,22 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
             polygon2_3d = self
 
             # print('passes here')
-        # ax=polygon1_2d.plot()
-        # polygon2_2d.plot(ax=ax, color='r')
+        ax=polygon1_2d.plot()
+        polygon2_2d.plot(ax=ax, color='r')
         dict_closing_pairs = {}
         triangles = []
         list_closing_point_indexes = []
         closing_point = volmdlr.O2D
         passed_by_zero_index = False
-        for i, primitive1 in enumerate(polygon1_2d.line_segments):
+        for i, primitive1 in enumerate(polygon1_2d.line_segments[:25]):
             # primitive1.plot(ax=ax, color='r')
             middle_point = primitive1.middle_point()
-            # middle_point.plot(ax=ax, color='r')
+            middle_point.plot(ax=ax, color='r')
             normal_vector = primitive1.normal_vector()
             line_segment1 = volmdlr.edges.LineSegment2D(middle_point-normal_vector, middle_point)
             line_segment2 = volmdlr.edges.LineSegment2D(middle_point, middle_point + normal_vector)
-            # line_segment1.plot(ax=ax, color='y')
-            # line_segment2.plot(ax=ax, color='b')
+            line_segment1.plot(ax=ax, color='y')
+            line_segment2.plot(ax=ax, color='b')
             # print('angle in radians :', primitive1.unit_direction_vector().dot(normal_vector))
             # print('vector1 :', primitive1.unit_direction_vector())
             # print('normal: ', normal_vector)
@@ -3999,18 +3998,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                                 closing_point = intr_list[1].start
                             else:
                                 closing_point = intr_list[1].end
-                    # else:
-                    #     dist = intr_list[0].point_distance(line_segment1.start)
-                    #     if dist < distance1:
-                    #         distance1 = dist
-                            # if intr_list[0].point_distance(intr_list[1].start) < \
-                            #         intr_list[0].point_distance(intr_list[1].end):
-                            #     closing_point1 = intr_list[1].start
-                            # else:
-                            #     closing_point1 = intr_list[1].end
-                # if distance1 > distance:
-                #     closing_point=closing_point2
-            # closing_point.plot(ax=ax, color='y')
+            closing_point.plot(ax=ax, color='y')
             closing_point_index = polygon2_2d.points.index(closing_point)
 
             if i == 0:
@@ -4019,26 +4007,65 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                 if closing_point_index != previous_closing_point_index:
                     ratio = (previous_closing_point_index - closing_point_index) / len(
                         polygon2_2d.points)
-                    # print('ratio :', ratio)
+                    print('ratio :', ratio)
+                    # print((previous_closing_point_index, closing_point_index))
                     if closing_point_index < previous_closing_point_index:
                         print((previous_closing_point_index, closing_point_index))
                         # ratio = (previous_closing_point_index - closing_point_index) / len(
                         #     polygon2_2d.points)
-                        #
-                        if math.isclose(ratio, 0, abs_tol=0.3):
-                            closing_point_index = previous_closing_point_index
-                        else:
+                        if len(list_closing_point_indexes) > 2 and \
+                                list(set(list_closing_point_indexes))[-2] < closing_point_index < previous_closing_point_index - 1:
                             print('passing here')
-                            passed_by_zero_index = True
-                            if closing_point_index > list_closing_point_indexes[0]:
-                                closing_point_index = list_closing_point_indexes[0]
-                                dict_closing_pairs[polygon1_3d.line_segments[i].start] = (
-                                    previous_closing_point_index,
-                                    closing_point_index)
+
+                            dict_closing_pairs[list(dict_closing_pairs.keys())[-1]] = (list(set(list_closing_point_indexes))[-2], closing_point_index)
+                            list_closing_point_indexes.remove(previous_closing_point_index)
+                            list_closing_point_indexes.append(closing_point_index)
+                            previous_closing_point_index = closing_point_index
+                            new_face = volmdlr.faces.Triangle3D(
+                                triangles[-1].point1,
+                                triangles[-1].point2,
+                                polygon2_3d.points[closing_point_index],
+                                alpha=0.9,
+                                color=(1, 0.1, 0.1))
+                            triangles.remove(triangles[-1])
+                            triangles.append(new_face)
+
+                        elif math.isclose(ratio, 0, abs_tol=0.3):
+                            closing_point_index = previous_closing_point_index
+                            print('passing hereeeeeee')
+                        else:
+                            if passed_by_zero_index:
+                                ratio1 = (list_closing_point_indexes[0] - list_closing_point_indexes[1]) / len(polygon2_2d.points)
+                                if math.isclose(ratio1, 1, abs_tol=0.3):
+                                    dict_closing_pairs[
+                                        polygon1_3d.line_segments[i].start] = (
+                                        previous_closing_point_index,
+                                        list_closing_point_indexes[0])
+
+                                    closing_point_index = list_closing_point_indexes[0]
                             else:
-                                dict_closing_pairs[
-                                    polygon1_3d.line_segments[i].start] = (
-                                    previous_closing_point_index, closing_point_index)
+                                # print('passing here')
+
+
+                                if closing_point_index > list_closing_point_indexes[0]:
+                                    ratio1 = (closing_point_index -
+                                              list_closing_point_indexes[
+                                                  0]) / len(polygon2_2d.points)
+                                    if math.isclose(ratio1, 0, abs_tol=0.3):
+                                        # print('ratio1 :', ratio1)
+                                        # print('passing here 1')
+                                        passed_by_zero_index = True
+                                        closing_point_index = list_closing_point_indexes[0]
+                                        dict_closing_pairs[polygon1_3d.line_segments[i].start] = (
+                                            previous_closing_point_index,
+                                            closing_point_index)
+                                    else:
+                                        closing_point_index = previous_closing_point_index
+                                else:
+                                    passed_by_zero_index = True
+                                    dict_closing_pairs[
+                                        polygon1_3d.line_segments[i].start] = (
+                                        previous_closing_point_index, closing_point_index)
                     elif closing_point_index in list_closing_point_indexes:
                         closing_point = polygon2_2d.points[previous_closing_point_index]
                         closing_point_index = previous_closing_point_index
@@ -4047,6 +4074,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                     elif passed_by_zero_index and closing_point_index > list_closing_point_indexes[0]:
                         closing_point_index = previous_closing_point_index
                     elif list_closing_point_indexes[0] == 0 and math.isclose(ratio, -1, abs_tol=0.3):
+
                         closing_point_index = previous_closing_point_index
                         # print('ITs also coming here ')
                     # elif list_closing_point_indexes[-1] - list_closing_point_indexes[-2] > 0 \
@@ -4056,15 +4084,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                     #         and closing_point_index < list_closing_point_indexes[-1]:
                     #     closing_point_index = previous_closing_point_index
                     else:
-                        # print('IT PASSES HERE')
                         dict_closing_pairs[polygon1_3d.line_segments[i].start] = (previous_closing_point_index, closing_point_index)
 
-            if primitive1 == polygon1_2d.line_segments[-1]:
-                if list(dict_closing_pairs.values())[-1][-1] != \
-                        list(dict_closing_pairs.values())[0][0]:
-                    dict_closing_pairs[polygon1_3d.points[0]] = (
-                        list(dict_closing_pairs.values())[-1][-1],
-                        list(dict_closing_pairs.values())[0][0])
             face = volmdlr.faces.Triangle3D(polygon1_3d.line_segments[i].start,
                               polygon1_3d.line_segments[i].end,
                               polygon2_3d.points[closing_point_index], alpha=0.9, color=(1, 0.1, 0.1))
@@ -4077,63 +4098,90 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                                                         previous_closing_point_index],
                                                     alpha=0.9, color=(1, 0.1, 0.1))
             triangles.append(face)
-            if closing_point_index not in list_closing_point_indexes:
-                list_closing_point_indexes.append(closing_point_index)
+            # if closing_point_index not in list_closing_point_indexes:
+            list_closing_point_indexes.append(closing_point_index)
             previous_closing_point_index = closing_point_index
-        # print('list closing indexes :', list_closing_point_indexes)
-        print('dict_closing_pairs :', dict_closing_pairs)
-        for i, point_polygon2 in enumerate(
-                polygon2_3d.points + [polygon2_3d.points[0]]):
-            for j, index in enumerate(list(dict_closing_pairs.values())):
-                if i != 0:
-                    if i - 1 >= index[0] and i <= index[1]:
-                        face = volmdlr.faces.Triangle3D(polygon2_3d.points[i - 1],
-                                                        point_polygon2,
-                                                        list(
-                                                            dict_closing_pairs.keys())[
-                                                            j],
-                                                        alpha=0.9,
-                                                        color=(1, 0.1, 0.1))
-                        triangles.append(face)
-                    elif index[0] > index[1]:
-                        if (i - 1 <= index[0] and i <= index[1]) or (
-                                (i - 1 >= index[0]) and i >= index[1]):
-                            face = volmdlr.faces.Triangle3D(
-                                polygon2_3d.points[i - 1],
-                                point_polygon2,
-                                list(dict_closing_pairs.keys())[j],
-                                alpha=0.9,
-                                color=(1, 0.1, 0.1))
-                            triangles.append(face)
+            if primitive1 == polygon1_2d.line_segments[-1]:
+                if list_closing_point_indexes[-1] != \
+                        list_closing_point_indexes[0]:
+                    ratio = (list_closing_point_indexes[-1] -
+                             list_closing_point_indexes[0]) / len(
+                        polygon2_2d.points)
 
-        print('p1 3d points :', self.points)
-        print('p2 3d points :', polygon2.points)
-        # faces=triangles
-        # # coords = triangles
-        # # for trio in coords:
-        # #     faces.append(volmdlr.faces.Triangle3D(trio[0], trio[1], trio[2], alpha=0.9, color=(1, 0.1, 0.1)))
-        # volum = volmdlr.core.VolumeModel(faces)
-        # volum.babylonjs()
-        # # ax=contour1.to_3d(center1 + way_back1, x, y).plot()
-        # # contour2.to_3d(center2+way_back2, x, y).plot(ax=ax, color='y')
-        # ax = self.plot()
-        # polygon2.plot(ax=ax, color='y')
-        # for i, face in enumerate(faces):
-        #     if i < 3:
-        #         color='r'
-        #     else:
-        #         color='b'
-        #     volmdlr.edges.LineSegment3D(face.point1, face.point2).plot(ax=ax,
-        #                                                                color=color)
-        #     volmdlr.edges.LineSegment3D(face.point1, face.point3).plot(ax=ax,
-        #                                                                color=color)
-        #     volmdlr.edges.LineSegment3D(face.point2, face.point3).plot(ax=ax,
-        #                                                                color=color)
-        #
-        # self.plot(ax=ax, color='r')
-        # polygon2.plot(ax=ax, color='y')
-        # self.points[0].plot(ax=ax)
-        # polygon2.points[0].plot(ax=ax, color='g')
+                    if math.isclose(ratio, -1,
+                                    abs_tol=0.2) and passed_by_zero_index:
+                        # print('ratio000000 :', ratio)
+                        dict_closing_pairs[
+                            polygon1_3d.points[0]] = (
+                            list_closing_point_indexes[-2],
+                            list_closing_point_indexes[0])
+                        new_face = volmdlr.faces.Triangle3D(
+                            triangles[-1].point1,
+                            triangles[-1].point2,
+                            polygon2_3d.points[list_closing_point_indexes[-2]],
+                            alpha=0.9,
+                            color=(1, 0.1, 0.1))
+                        triangles.remove(triangles[-1])
+                        triangles.append(new_face)
+                    else:
+                        dict_closing_pairs[polygon1_3d.points[0]] = (
+                            list(dict_closing_pairs.values())[-1][-1],
+                            list(dict_closing_pairs.values())[0][0])
+            #
+        print('list closing indexes :', list_closing_point_indexes)
+        print('dict_closing_pairs :', dict_closing_pairs)
+        # for i, point_polygon2 in enumerate(
+        #         polygon2_3d.points + [polygon2_3d.points[0]]):
+        #     for j, index in enumerate(list(dict_closing_pairs.values())):
+        #         if i != 0:
+        #             if i - 1 >= index[0] and i <= index[1]:
+        #                 face = volmdlr.faces.Triangle3D(polygon2_3d.points[i - 1],
+        #                                                 point_polygon2,
+        #                                                 list(
+        #                                                     dict_closing_pairs.keys())[
+        #                                                     j],
+        #                                                 alpha=0.9,
+        #                                                 color=(1, 0.1, 0.1))
+        #                 triangles.append(face)
+        #             elif index[0] > index[1]:
+        #                 if (i - 1 <= index[0] and i <= index[1]) or (
+        #                         (i - 1 >= index[0]) and i >= index[1]):
+        #                     face = volmdlr.faces.Triangle3D(
+        #                         polygon2_3d.points[i - 1],
+        #                         point_polygon2,
+        #                         list(dict_closing_pairs.keys())[j],
+        #                         alpha=0.9,
+        #                         color=(1, 0.1, 0.1))
+        #                     triangles.append(face)
+
+        # print('p1 3d points :', self.points)
+        # print('p2 3d points :', polygon2.points)
+        faces=triangles
+        # coords = triangles
+        # for trio in coords:
+        #     faces.append(volmdlr.faces.Triangle3D(trio[0], trio[1], trio[2], alpha=0.9, color=(1, 0.1, 0.1)))
+        volum = volmdlr.core.VolumeModel(faces)
+        volum.babylonjs()
+        # ax=contour1.to_3d(center1 + way_back1, x, y).plot()
+        # contour2.to_3d(center2+way_back2, x, y).plot(ax=ax, color='y')
+        ax = self.plot()
+        polygon2.plot(ax=ax, color='y')
+        for i, face in enumerate(faces):
+            if i < 3:
+                color='r'
+            else:
+                color='b'
+            volmdlr.edges.LineSegment3D(face.point1, face.point2).plot(ax=ax,
+                                                                       color=color)
+            volmdlr.edges.LineSegment3D(face.point1, face.point3).plot(ax=ax,
+                                                                       color=color)
+            volmdlr.edges.LineSegment3D(face.point2, face.point3).plot(ax=ax,
+                                                                       color=color)
+
+        self.plot(ax=ax, color='r')
+        polygon2.plot(ax=ax, color='y')
+        self.points[0].plot(ax=ax)
+        polygon2.points[0].plot(ax=ax, color='g')
         return triangles
 
 
