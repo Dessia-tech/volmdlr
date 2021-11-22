@@ -5296,11 +5296,12 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         """
         volume = 0
         for i, face in enumerate(self.faces):
-            points_3D, triangles_indexes = face.triangulation()
-            for triangle_indexes in triangles_indexes[0]:
-                point1 = points_3D[triangle_indexes[0]]
-                point2 = points_3D[triangle_indexes[1]]
-                point3 = points_3D[triangle_indexes[2]]
+            display3d = face.triangulation()
+            points_3D, triangles_indexes = display3d.points, display3d.triangles
+            for triangle_index in triangles_indexes:
+                point1 = points_3D[triangle_index[0]]
+                point2 = points_3D[triangle_index[1]]
+                point3 = points_3D[triangle_index[2]]
 
                 v321 = point3[0] * point2[1] * point1[2]
                 v231 = point2[0] * point3[1] * point1[2]
@@ -5827,6 +5828,7 @@ class ClosedShell3D(OpenShell3D):
 
         return non_intersecting_faces
 
+
     # def get_non_intersecting_faces_inside(self, shell2, intersecting_faces):
     #     """
     #     :param shell2: ClosedShell3D
@@ -6016,6 +6018,7 @@ class ClosedShell3D(OpenShell3D):
 
         return [OpenShell3D(faces)]
 
+
     def intersection(self, shell2, tol=1e-8):
         """
         Given two ClosedShell3D, it returns the new objet resulting
@@ -6036,7 +6039,6 @@ class ClosedShell3D(OpenShell3D):
         faces = self.new_valid_faces(shell2, intersecting_faces,
                                      intersecting_combinations,
                                      intersection_method=True)
-
         faces += self.get_non_intersecting_faces(shell2, intersecting_faces, intersection_method=True) + shell2.get_non_intersecting_faces(self, intersecting_faces, intersection_method=True)
 
         return [ClosedShell3D(faces)]

@@ -1660,6 +1660,7 @@ class Contour2D(Contour, Wire2D):
                             point_at_abs = cut_contour.point_at_abscissa(cut_contour.length() / 2)
                             if cntr.point_belongs(point_at_abs) and not cntr.point_over_contour(point_at_abs):
                                 valid_contour = False
+
                         if valid_contour and cntr.area() != 0.0:
                             list_valid_contours.append(cntr)
                         else:
@@ -1688,6 +1689,7 @@ class Contour2D(Contour, Wire2D):
     def merge_contours(self, contour2d):
         return volmdlr.wires.Contour2D(self.merged_contour_primitives(contour2d))
 
+      
 class ClosedPolygon:
 
     def length(self):
