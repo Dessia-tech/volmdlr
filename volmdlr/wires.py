@@ -375,7 +375,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                 intersection_points.append((p, primitive))
         return intersection_points
     
-    def wire_intersections(self, wire):
+    def wire_intersections(self, wire: volmdlr.wires.Wire2D):
         '''
         compute intersections between two wire2d. 
 
