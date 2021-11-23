@@ -16,5 +16,6 @@ p3 = vm.Point3D.random(0, 0.1, 0, 0.1, -0.1, 0)
 
 tri = faces.Triangle3D(p1, p2, p3)
 tri.babylonjs()
+# tri.subdescription()
 
-vmc.VolumeModel([faces.OpenShell3D([tri])])
+# vmc.VolumeModel([faces.OpenShell3D([tri])])

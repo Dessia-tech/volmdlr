@@ -3968,6 +3968,7 @@ class Triangle3D(PlaneFace3D):
     def subdescription(self, resolution = 0.01) :
         frame = self.surface3d.frame
         pts2d = [pt.to_2d(frame.origin, frame.u, frame.v) for pt in self.points]
+        
         t_poly2d = volmdlr.wires.ClosedPolygon2D(pts2d)
 
         xmin, xmax = min(pt.x for pt in pts2d), max(pt.x for pt in pts2d)
@@ -3979,22 +3980,88 @@ class Triangle3D(PlaneFace3D):
             x = xmin + i*resolution
             if x > xmax :
                 x=xmax
-            if x == xmin :
-                x = xmin + 0.01*resolution
             for j in range(ny) :
                 y = ymin + j*resolution
                 if y > ymax :
                     y=ymax
-                if y == ymin :
-                    y = ymin + 0.01*resolution
                 points_box.append(volmdlr.Point2D(x,y))
 
-        points = self.points
+        points = [pt.copy() for pt in self.points]
+        
         for pt in points_box :
             if t_poly2d.point_belongs(pt):
                 points.append(pt.to_3d(frame.origin, frame.u, frame.v))
+            elif t_poly2d.point_over_contour(pt):  
+                points.append(pt.to_3d(frame.origin, frame.u, frame.v))
+                
+        return volmdlr.Vector3D.remove_duplicate(points)
+    
+    def subdescription_to_triangles(self, resolution = 0.01) :
+        frame = self.surface3d.frame
+        pts2d = [pt.to_2d(frame.origin, frame.u, frame.v) for pt in self.points]
+        
+        t_poly2d = volmdlr.wires.ClosedPolygon2D(pts2d)
 
-        return points
+        xmin, xmax = min(pt.x for pt in pts2d), max(pt.x for pt in pts2d)
+        ymin, ymax = min(pt.y for pt in pts2d), max(pt.y for pt in pts2d)
+
+        nx, ny = int(((xmax-xmin)/resolution)+2), int(((ymax-ymin)/resolution)+2)
+        points_box = []
+        for i in range(nx) :
+            x = xmin + i*resolution
+            if x > xmax :
+                x=xmax
+            for j in range(ny) :
+                y = ymin + j*resolution
+                if y > ymax :
+                    y=ymax
+                points_box.append(volmdlr.Point2D(x,y))
+
+        triangles2d = [t_poly2d.copy()]
+        
+        for pt in points_box :
+            if pt in pts2d :
+                next
+            
+            elif t_poly2d.point_belongs(pt) or t_poly2d.point_over_contour(pt):
+                for t , tri in enumerate(triangles2d) :
+                    create = False
+                    for ls in tri.line_segments :
+                        if ls.point_belongs(pt):
+                            p1, p2 = ls.start, ls.end
+                            p3 = list(set(tri.points) - set([p1, p2]))[0]
+                            new_triangles2d = [volmdlr.wires.ClosedPolygon2D([p1, pt, p3]),
+                                               volmdlr.wires.ClosedPolygon2D([p2, pt, p3])]
+                            del triangles2d[t]
+                            triangles2d.extend(new_triangles2d)
+                            create = True
+                            break
+                    if create :
+                        break
+                    else :
+                        if tri.point_belongs(pt) :
+                            p1, p2, p3 = tri.points
+                            new_triangles2d = [volmdlr.wires.ClosedPolygon2D([p1, pt, p3]),
+                                               volmdlr.wires.ClosedPolygon2D([p2, pt, p3]),
+                                               volmdlr.wires.ClosedPolygon2D([p2, pt, p1])]
+                            del triangles2d[t]
+                            triangles2d.extend(new_triangles2d)
+                            break
+        
+        triangles3d = [Triangle3D(tri.points[0].to_3d(frame.origin, frame.u, frame.v),
+                                  tri.points[1].to_3d(frame.origin, frame.u, frame.v),
+                                  tri.points[2].to_3d(frame.origin, frame.u, frame.v)) for tri in triangles2d]
+        
+        # ax1 = t_poly2d.plot()
+        # ax2 = t_poly2d.plot()
+        # for tri in triangles2d :
+        #     tri.plot(ax=ax2, color='b')
+        #     for pt in tri.points :
+        #         pt.plot(ax=ax1, color='r')
+        #         pt.plot(ax=ax2, color='r')
+                
+        
+        return triangles3d
 
     def middle(self):
         return (self.point1+self.point2+self.point3)/3
