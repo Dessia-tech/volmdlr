@@ -1817,6 +1817,9 @@ class Contour2D(Contour, Wire2D):
 
         
     def discretized_contour(self, n: float):
+        """ 
+        discretize each contour's primitive and return a new contour with teses discretized primitives
+        """
             
         contour = volmdlr.wires.Contour2D((self.discretized_primitives(n))) 
         
@@ -1824,6 +1827,9 @@ class Contour2D(Contour, Wire2D):
     
     @classmethod
     def from_bounding_rectangle(cls, xmin, xmax, ymin, ymax):
+        """ 
+        create a contour2d with bounding_box parameters, using linesegments2d
+        """
         
         edge0=volmdlr.edges.LineSegment2D(volmdlr.Point2D(xmin, ymin), volmdlr.Point2D(xmax, ymin))
         edge1=volmdlr.edges.LineSegment2D(volmdlr.Point2D(xmax, ymin), volmdlr.Point2D(xmax, ymax))
