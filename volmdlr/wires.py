@@ -39,7 +39,7 @@ from statistics import mean
 # from shapely.algorithms import polylabel
 
 
-def bounding_rectangle_adjacent_contours(contours: List[volmdlr.wires.Contour2D]):
+def bounding_rectangle_adjacent_contours(contours: List):
     '''
     compute the bounding_box of a list of adjacent contours2d
 
@@ -375,7 +375,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                 intersection_points.append((p, primitive))
         return intersection_points
     
-    def wire_intersections(self, wire: volmdlr.wires.Wire2D):
+    def wire_intersections(self, wire):
         '''
         compute intersections between two wire2d. 
 
