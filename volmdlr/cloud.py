@@ -100,25 +100,49 @@ class PointCloud3D(dc.DessiaObject):
             # print('sewing polygon', round(n/resolution*100, 2), '%')
             poly1 = polygon3d[n]
 
-            poly1 = poly1.simplify(0.01, 0.05)
+            poly1_simplified = poly1.simplify(0.01, 0.03)
+
+            if 1 - poly1_simplified.to_2d(position_plane[n] * normal, vec1,
+                                         vec2).area() / poly1.to_2d(position_plane[n] * normal, vec1, vec2).area() > 0.3:
+                poly1_simplified = poly1
+            # print('original area :', poly1.to_2d(position_plane[n]*normal, vec1, vec2).area())
+            # print('simplified area :', poly1_simplified.to_2d(position_plane[n]*normal, vec1, vec2).area())
+
+            # if poly1_siimplified.area()
             # ax = poly1.plot()
+            # poly1_simplified.plot(ax=ax, color= 'r')
 
             if n == resolution-1 or n == 0:
                 plane3d = vmf.Plane3D.from_plane_vectors(position_plane[n]*normal, vec1, vec2)
                 surf2d = vmf.Surface2D(polygon2d[n],[])
-                surf2d = vmf.Surface2D(poly1.to_2d(position_plane[n]*normal, vec1, vec2),[])
+                surf2d = vmf.Surface2D(poly1_simplified.to_2d(position_plane[n]*normal, vec1, vec2),[])
                 faces.append(vmf.PlaneFace3D(plane3d, surf2d))
             if n != resolution-1:
                 poly2 = polygon3d[n+1]
 
                 # poly2.plot(ax=ax, color='r')
-                poly2 = poly2.simplify(0.01, 0.05)
+                poly2_simplified = poly2.simplify(0.01, 0.03)
+
+                if 1 - poly2_simplified.to_2d(position_plane[n] * normal, vec1,
+                                              vec2).area() / poly2.to_2d(
+                        position_plane[n] * normal, vec1, vec2).area() > 0.3:
+                    poly2_simplified = poly2
+
+                # print('original area :',
+                #      poly2.to_2d(position_plane[n] * normal, vec1,
+                #                  vec2).area())
+                # print('simplified area :',
+                #       poly2_simplified.to_2d(position_plane[n] * normal, vec1,
+                #                              vec2).area())
+                # ax1 = poly2.plot()
+                # poly2_simplified.plot(ax=ax1, color='b')
                 # ax=poly1.plot()
                 # poly2.plot(ax=ax, color='r')
                 # try:
                 #     coords = poly1.sewing(poly2, vec1, vec2)
                 # except IndexError:
-                faces.extend(poly1.sewing3(poly2, vec1, vec2))
+                faces.extend(poly1_simplified.sewing3(poly2_simplified,
+                                                      vec1, vec2))
                 # for trio in coords:
                 #     faces.append(vmf.Triangle3D(*trio))
         return vmf.ClosedShell3D(faces)
@@ -222,7 +246,7 @@ class PointCloud2D(dc.DessiaObject):
         if not self.points:
             return None
         # polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
-        polygon = vmw.ClosedPolygon2D.concave_hull(self.points, -0.3, 0.0005)
+        polygon = vmw.ClosedPolygon2D.concave_hull(self.points, -0.3, 0.000005)
         # polygon = vmw.ClosedPolygon2D.convex_hull_points(self.points)
         if polygon is None or math.isclose(polygon.area(), 0, abs_tol = 1e-6) :
             return None
