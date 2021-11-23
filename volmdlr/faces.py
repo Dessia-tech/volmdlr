@@ -2472,6 +2472,29 @@ class BSplineSurface3D(Surface3D):
             bsplinesurface.y_periodicity = bsplinesurface.get_y_periodicity()
         return bsplinesurface
 
+    def to_step(self, current_id):
+        point_matrix_ids = '('
+        for points in self.control_points_table:
+            point_ids = '('
+            for point in points:
+                content, point_id = point.to_step(current_id)
+                point_ids += '#{},'.format(point_id)
+                current_id = point_id + 1
+            point_ids = point_ids[:-1]
+            point_ids += '),'
+            point_matrix_ids += point_ids
+        point_matrix_ids = point_matrix_ids[:-1]
+        point_matrix_ids += ')'
+
+        u_close = '.T.' if self.x_periodicity else '.F.'
+        v_close = '.T.' if self.y_periodicity else '.F.'
+
+        content += "#{} = B_SPLINE_SURFACE_WITH_KNOTS('{}',{},{},{},.UNSPECIFIED.,{},{},.U.,{},{},{},{},.UNSPECIFIED.);\n" \
+            .format(current_id, self.name, self.degree_u, self.degree_v,
+                    point_matrix_ids, u_close, v_close, self.u_multiplicities,
+                    self.v_multiplicities, self.u_knots, self.v_knots)
+        return content, [current_id]
+
     def get_x_periodicity(self):
         p3d_x1 = self.point2d_to_3d(volmdlr.Point2D(1., 0.5))
         p2d_x0 = self.point3d_to_2d(p3d_x1, 0., 0.5)
