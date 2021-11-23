@@ -39,9 +39,9 @@ from statistics import mean
 # from shapely.algorithms import polylabel
 
 
-def bounding_rectangle_adjacent_contours(contours: List):
+def bounding_rectangle_adjacent_contours(contours: List[volmdlr.wires.Contour2D]):
     '''
-    compute the bounding_box of a list of adjacent contours
+    compute the bounding_box of a list of adjacent contours2d
 
     Parameters
     ----------
