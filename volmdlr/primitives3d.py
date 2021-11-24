@@ -1245,7 +1245,7 @@ class BSplineExtrusion(volmdlr.core.Primitive3D):
         self.obj = obj
         vectorextru.normalize()
         self.vectorextru = vectorextru
-        if obj.__class__ is volmdlr.edges.Ellipse3D:
+        if obj.__class__ is volmdlr.wires.Ellipse3D:
             self.points = obj.tessel_points
         else:
             self.points = obj.points
