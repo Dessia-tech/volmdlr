@@ -2681,14 +2681,13 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
     def get_closing_point(self, polygon2_2d, primitive, ax=None):
         closing_point = volmdlr.O2D
         middle_point = primitive.middle_point()
-        middle_point.plot(ax=ax, color='r')
+
         normal_vector = primitive.normal_vector()
         line_segment1 = volmdlr.edges.LineSegment2D(
             middle_point - normal_vector, middle_point)
         line_segment2 = volmdlr.edges.LineSegment2D(middle_point,
                                                     middle_point + normal_vector)
-        line_segment1.plot(ax=ax, color='y')
-        line_segment2.plot(ax=ax, color='b')
+
         # print('angle in radians :', primitive.unit_direction_vector().dot(normal_vector))
         # print('vector1 :', primitive.unit_direction_vector())
         # print('normal: ', normal_vector)
@@ -2742,7 +2741,12 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                             closing_point = intr_list[1].start
                         else:
                             closing_point = intr_list[1].end
-        closing_point.plot(ax=ax)
+        if ax is not None:
+            middle_point.plot(ax=ax, color='r')
+            line_segment1.plot(ax=ax, color='y')
+            line_segment2.plot(ax=ax, color='b')
+            closing_point.plot(ax=ax)
+
         return closing_point
 
 
