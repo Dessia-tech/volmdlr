@@ -109,7 +109,7 @@ class Stl(dc.DessiaObject):
                 for i in invalid_triangles[::-1] :
                     del triangles[i]
         else:
-            with open(filename, 'r') as file:
+            with open(filename, 'r', errors='ignore') as file:
                 header = file.readline()
                 name = header[6:]
                 triangles = []
