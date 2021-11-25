@@ -501,7 +501,7 @@ class Step:
                                                                     arguments))
         return volmdlr_object
 
-    def to_volume_model(self):
+    def to_volume_model(self, no_bug_mode=False):
         if not self.upd_graph:
             self.graph = self.create_graph()
 
@@ -518,9 +518,9 @@ class Step:
                                  or
                                  self.functions[node].name == "OPEN_SHELL"):
                 shell_nodes.append(node)
-            if node != '#0' and self.functions[node].name == 'SHAPE_REPRESENTATION':
-                # Really a shell node ?
-                shell_nodes.append(node)
+            # if node != '#0' and self.functions[node].name == 'SHAPE_REPRESENTATION':
+            #     # Really a shell node ?
+            #     shell_nodes.append(node)
             if node != '#0' and self.functions[node].name == 'BREP_WITH_VOIDS':
                 shell_nodes.append(node)
                 not_shell_nodes.append(int(self.functions[node].arg[1][1:]))
@@ -546,24 +546,32 @@ class Step:
         # edges = list(
         #     nx.algorithms.traversal.edge_bfs(self.graph, "#0"))[::-1]
 
-        # self.draw_graph(self.graph, reduced=True)
-        for edge_nb, edge in enumerate(edges):
-            instanciate_ids = [edge[1]]
-            error = True
-            while error:
-                try:
-                    for instanciate_id in instanciate_ids[::-1]:
-                        volmdlr_object = self.instanciate(
-                            self.functions[instanciate_id].name,
-                            self.functions[instanciate_id].arg[:],
-                            object_dict)
-                        object_dict[instanciate_id] = volmdlr_object
-
-                    error = False
-                except KeyError as key:
-                    # Sometimes the bfs search don't instanciate the nodes of a
-                    # depth in the right order, leading to error
-                    instanciate_ids.append(key.args[0])
+        # self.draw_graph(self.graph, reduced=True, save=True)
+        if no_bug_mode:
+            for edge_nb, edge in enumerate(edges):
+                instanciate_ids = [edge[1]]
+                error = True
+                while error:
+                    try:
+                        for instanciate_id in instanciate_ids[::-1]:
+                            volmdlr_object = self.instanciate(
+                                self.functions[instanciate_id].name,
+                                self.functions[instanciate_id].arg[:],
+                                object_dict)
+                            object_dict[instanciate_id] = volmdlr_object
+                        error = False
+                    except KeyError as key:
+                        # Sometimes the bfs search don't instanciate the nodes of a
+                        # depth in the right order, leading to error
+                        instanciate_ids.append(key.args[0])
+        else:
+            for edge_nb, edge in enumerate(edges):
+                instanciate_id = edge[1]
+                volmdlr_object = self.instanciate(
+                    self.functions[instanciate_id].name,
+                    self.functions[instanciate_id].arg[:],
+                    object_dict)
+                object_dict[instanciate_id] = volmdlr_object
 
         shells = []
         for node in shell_nodes_copy:
