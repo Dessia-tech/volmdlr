@@ -1457,7 +1457,6 @@ class Contour2D(Contour, Wire2D):
         list_cutting_contours = contours[:]
         list_valid_contours = []
         while not finished:
-            cutting_points = []
             cutting_contour = contours[0]
             for base_contour in new_base_contours:
                 cutting_points = []
@@ -1466,28 +1465,6 @@ class Contour2D(Contour, Wire2D):
                 if base_contour.point_over_contour(
                         point1) and base_contour.point_over_contour(point2):
                     cutting_points = [point1, point2]
-
-                # else:
-                #     for prim1 in [cutting_contour.primitives[0],
-                #                   cutting_contour.primitives[-1]]:
-                #         for prim2 in base_contour.primitives:
-                #             inter = prim2.linesegment_intersections(prim1)
-                #             if inter:
-                #                 cutting_points.extend(inter)
-                #             elif prim2.point_belongs(prim1.start):
-                #                 cutting_points.append(prim1.start)
-                #             elif prim2.point_belongs(prim1.end):
-                #                 cutting_points.append(prim1.end)
-                #
-                #     # print('cutting_points :', cutting_points)
-                #     # axc = cutting_contour.plot(color='r')
-                #     # base_contour.plot(ax=axc, color='b')
-                #     if len(cutting_points) == 2:
-                #         cutting_contour.primitives[0].start = cutting_points[0]
-                #         cutting_contour.primitives[-1].end = cutting_points[1]
-                # # ax=cutting_points[0].plot()
-                # # cutting_points[1].plot(ax=ax, color='r')
-                # # base_contour.plot(ax=ax, color='b')
 
                 if len(cutting_points) == 2:
                     extracted_outerpoints_contour1 = \
@@ -1511,26 +1488,15 @@ class Contour2D(Contour, Wire2D):
                     new_base_contours.remove(base_contour)
                     for cntr in [contour1, contour2]:
                         valid_contour = True
-                        # a = cntr.plot()
                         for cut_contour in list_cutting_contours:
                             point_at_abs = cut_contour.point_at_abscissa(
                                 cut_contour.length() / 2)
-                            # cut_contour.plot(ax=a, color = 'r')
-                            # print('cntr.prim over contour(cut_contour.prim[0]):',
-                            #       cntr.primitive_over_contour(cut_contour.primitives[0]))
-                            # print('cntr.point_belongs(point_at_abs):',
-                            #       cntr.point_belongs(point_at_abs))
-                            # print('cntr.point_over_contour(point_at_abs) :',
-                            #       cntr.point_over_contour(point_at_abs))
                             if cntr.point_belongs(
                                     point_at_abs) and (not cntr.point_over_contour(
                                     point_at_abs) or True not in [
                                     cntr.primitive_over_contour(
                                         prim) for prim in cut_contour.primitives]):
-                                # print('coming here')
                                 valid_contour = False
-                        # print('valid contour :', valid_contour)
-                        # print('cntr.area():', cntr.area())
                         if valid_contour and cntr.area() != 0.0:
                             list_valid_contours.append(cntr)
                         else:
@@ -1541,21 +1507,21 @@ class Contour2D(Contour, Wire2D):
             if len(contours) == 0:
                 finished = True
             counter += 1
-            if counter >= 1000 and contours[-1] == cutting_contour:
-                axx = self.plot(color='c')
-                axc = cutting_contour.plot()
-                # print('cutting_contour_points :', [(p.start, p.end) for p in cutting_contour.primitives])
-                # list_contour.remove(cutting_contour)
-                # ax1 = list_contour[0].plot()
-                for ctr in list_contour:
-                    # if ctr != list_contour[0]:
-                    #     ctr.plot(ax=ax1, color = 'g')
-                    # print('list_contour_points :', [(p.start, p.end) for p in
-                    #                                 ctr.primitives])
-                    ctr.plot(ax=axc, color='r')
-                    ctr.plot(ax=axx, color='r')
-                base_contour.plot(ax=axc, color='b')
-                base_contour.plot(ax=axx, color='b')
+            if counter >= 100*len(list_contour) and contours[-1] == cutting_contour:
+                # axx = self.plot(color='c')
+                # axc = cutting_contour.plot()
+                # # print('cutting_contour_points :', [(p.start, p.end) for p in cutting_contour.primitives])
+                # # list_contour.remove(cutting_contour)
+                # # ax1 = list_contour[0].plot()
+                # for ctr in list_contour:
+                #     # if ctr != list_contour[0]:
+                #     #     ctr.plot(ax=ax1, color = 'g')
+                #     # print('list_contour_points :', [(p.start, p.end) for p in
+                #     #                                 ctr.primitives])
+                #     ctr.plot(ax=axc, color='r')
+                #     ctr.plot(ax=axx, color='r')
+                # base_contour.plot(ax=axc, color='b')
+                # base_contour.plot(ax=axx, color='b')
                 # print('base_contour area:', base_contour.area())
                 # print('base_contour_points :', [(p.start, p.end) for p in
                 #                            base_contour.primitives])
@@ -1567,7 +1533,7 @@ class Contour2D(Contour, Wire2D):
                 # for pt in cutting_points:
                 #     pt.plot(ax=axc)
                 warnings.warn('There probably exists an open contour (two wires that could not be connected)')
-                raise ValueError('There probably exists an open contour (two wires that could not be jointed), see graph generated')
+                # raise ValueError('There probably exists an open contour (two wires that could not be jointed), see graph generated')
                 finished = True
 
         return list_valid_contours
@@ -4011,17 +3977,44 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
         # polygon2.plot(ax=ax, color='y')
         return list_triangles
 
+    def close_sewing(self, dict_closing_pairs):
+        triangles = []
+        for i, point_polygon2 in enumerate(
+                self.points + [self.points[0]]):
+            for j, index in enumerate(list(dict_closing_pairs.values())):
+                if i != 0:
+                    if i - 1 >= index[0] and i <= index[1]:
+                        face = volmdlr.faces.Triangle3D(self.points[i - 1],
+                                                        point_polygon2,
+                                                        list(
+                                                            dict_closing_pairs.keys())[
+                                                            j],
+                                                        alpha=0.9,
+                                                        color=(1, 0.1, 0.1))
+                        triangles.append(face)
+                    elif index[0] > index[1]:
+                        if (i - 1 <= index[0] and i <= index[1]) or (
+                                (i - 1 >= index[0]) and i >= index[1]):
+                            face = volmdlr.faces.Triangle3D(
+                                self.points[i - 1],
+                                point_polygon2,
+                                list(dict_closing_pairs.keys())[j],
+                                alpha=0.9,
+                                color=(1, 0.1, 0.1))
+                            triangles.append(face)
+        return triangles
+
     @staticmethod
     def validate_closing_point(closing_point_index, list_closing_point_indexes,
                                passed_by_zero_index, ratio_denom):
-        print('ratio_denom :', ratio_denom)
+        # print('ratio_denom :', ratio_denom)
         if closing_point_index == list_closing_point_indexes[-1]:
             return closing_point_index, [], passed_by_zero_index
         list_remove_closing_points = []
         ratio = (list_closing_point_indexes[-1] - closing_point_index) / ratio_denom
         # print('ratio :', ratio)
         if closing_point_index < list_closing_point_indexes[-1]:
-            print((list_closing_point_indexes[-1], closing_point_index))
+            # print((list_closing_point_indexes[-1], closing_point_index))
             if len(list_closing_point_indexes) > 2 and \
                     list_closing_point_indexes[
                         -2] < closing_point_index < list_closing_point_indexes[-1] - 1:
@@ -4041,9 +4034,9 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                 closing_point_index = list_closing_point_indexes[-1]
             elif math.isclose(ratio, 0, abs_tol=0.3):
                 # print('passing here')
-                if ratio_denom / 100 > 0.25:
+                # if ratio_denom / 100 > 0.25:
                     # print('passing hereeeeee')
-                    closing_point_index = list_closing_point_indexes[-1]
+                closing_point_index = list_closing_point_indexes[-1]
             else:
                 if passed_by_zero_index:
                     ratio = (list_closing_point_indexes[
@@ -4090,8 +4083,6 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
         return closing_point_index, list_remove_closing_points, passed_by_zero_index
 
     def sewing3(self, polygon2, x, y):
-        # def validate_closing_point(closing_pt, previous_closing_pt):
-
         polygon1_2d = self.to_2d(volmdlr.O2D, x, y)
         polygon2_2d = polygon2.to_2d(volmdlr.O2D, x, y)
         polygon1_3d = self
@@ -4103,7 +4094,6 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
             polygon1_3d = polygon2
             polygon2_3d = self
 
-            # print('passes here')
         # ax=polygon1_2d.plot()
         # polygon2_2d.plot(ax=ax, color='r')
         dict_closing_pairs = {}
@@ -4111,7 +4101,6 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
         list_closing_point_indexes = []
         passed_by_zero_index = False
         ratio_denom = len(polygon2_2d.points)
-        # print('ratio_denom :', ratio_denom)
         for i, primitive1 in enumerate(polygon1_2d.line_segments):
             list_remove_closing_points = []
             closing_point = polygon1_2d.get_closing_point(polygon2_2d, primitive1)
@@ -4165,10 +4154,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                     ratio = (list_closing_point_indexes[-1] -
                              list_closing_point_indexes[0]) / len(
                         polygon2_2d.points)
-
                     if math.isclose(ratio, -1,
                                     abs_tol=0.2) and passed_by_zero_index:
-                        # print('ratio000000 :', ratio)
                         dict_closing_pairs[
                             polygon1_3d.points[0]] = (
                             list_closing_point_indexes[-2],
@@ -4185,32 +4172,32 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                         dict_closing_pairs[polygon1_3d.points[0]] = (
                             list(dict_closing_pairs.values())[-1][-1],
                             list(dict_closing_pairs.values())[0][0])
-            #
-        print('list closing indexes :', list_closing_point_indexes)
-        print('dict_closing_pairs :', dict_closing_pairs)
-        for i, point_polygon2 in enumerate(
-                polygon2_3d.points + [polygon2_3d.points[0]]):
-            for j, index in enumerate(list(dict_closing_pairs.values())):
-                if i != 0:
-                    if i - 1 >= index[0] and i <= index[1]:
-                        face = volmdlr.faces.Triangle3D(polygon2_3d.points[i - 1],
-                                                        point_polygon2,
-                                                        list(
-                                                            dict_closing_pairs.keys())[
-                                                            j],
-                                                        alpha=0.9,
-                                                        color=(1, 0.1, 0.1))
-                        triangles.append(face)
-                    elif index[0] > index[1]:
-                        if (i - 1 <= index[0] and i <= index[1]) or (
-                                (i - 1 >= index[0]) and i >= index[1]):
-                            face = volmdlr.faces.Triangle3D(
-                                polygon2_3d.points[i - 1],
-                                point_polygon2,
-                                list(dict_closing_pairs.keys())[j],
-                                alpha=0.9,
-                                color=(1, 0.1, 0.1))
-                            triangles.append(face)
+        # print('list closing indexes :', list_closing_point_indexes)
+        # print('dict_closing_pairs :', dict_closing_pairs)
+        triangles += polygon2_3d.close_sewing(dict_closing_pairs)
+        # for i, point_polygon2 in enumerate(
+        #         polygon2_3d.points + [polygon2_3d.points[0]]):
+        #     for j, index in enumerate(list(dict_closing_pairs.values())):
+        #         if i != 0:
+        #             if i - 1 >= index[0] and i <= index[1]:
+        #                 face = volmdlr.faces.Triangle3D(polygon2_3d.points[i - 1],
+        #                                                 point_polygon2,
+        #                                                 list(
+        #                                                     dict_closing_pairs.keys())[
+        #                                                     j],
+        #                                                 alpha=0.9,
+        #                                                 color=(1, 0.1, 0.1))
+        #                 triangles.append(face)
+        #             elif index[0] > index[1]:
+        #                 if (i - 1 <= index[0] and i <= index[1]) or (
+        #                         (i - 1 >= index[0]) and i >= index[1]):
+        #                     face = volmdlr.faces.Triangle3D(
+        #                         polygon2_3d.points[i - 1],
+        #                         point_polygon2,
+        #                         list(dict_closing_pairs.keys())[j],
+        #                         alpha=0.9,
+        #                         color=(1, 0.1, 0.1))
+        #                     triangles.append(face)
 
         # print('p1 3d points :', self.points)
         # print('p2 3d points :', polygon2.points)
