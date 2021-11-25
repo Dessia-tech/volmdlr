@@ -82,7 +82,7 @@ class PointCloud3D(dc.DessiaObject):
             if poly is not None :
                 areas[n] = poly.area()
         avg_area = sum(areas)/len(areas)        
-        
+
         polygon2d, polygon3d = [], []
         banned = []
         for n, poly in enumerate(initial_polygon2d):
@@ -94,6 +94,15 @@ class PointCloud3D(dc.DessiaObject):
                 new_polygon = poly.to_3d(position_plane[n]*normal, vec1, vec2)
                 polygon3d.append(new_polygon)
         [position_plane.pop(k) for k in banned[::-1]]
+
+        return self.generate_shell(polygon3d, normal, vec1, vec2)
+
+    @classmethod
+    def generate_shell(cls, polygon3d: List[vm.wires.ClosedPolygon3D],
+                       normal: vm.Vector3D, vec1: vm.Vector3D, vec2: vm.Vector3D):
+        position_plane = [p.points[0].dot(normal) for p in polygon3d]
+        resolution = len(polygon3d)
+
         faces = []
         
         for n in range(resolution):
@@ -116,11 +125,12 @@ class PointCloud3D(dc.DessiaObject):
                 plane3d = vmf.Plane3D.from_plane_vectors(position_plane[n]*normal, vec1, vec2)
                 surf2d = vmf.Surface2D(polygon2d[n],[])
                 surf2d = vmf.Surface2D(poly1_simplified.to_2d(position_plane[n]*normal, vec1, vec2),[])
+
                 faces.append(vmf.PlaneFace3D(plane3d, surf2d))
             if n != resolution-1:
                 poly2 = polygon3d[n+1]
 
-                # poly2.plot(ax=ax, color='r')
+
                 poly2_simplified = poly2.simplify(0.01, 0.03)
 
                 if 1 - poly2_simplified.to_2d(position_plane[n] * normal, vec1,
@@ -128,19 +138,6 @@ class PointCloud3D(dc.DessiaObject):
                         position_plane[n] * normal, vec1, vec2).area() > 0.3:
                     poly2_simplified = poly2
 
-                # print('original area :',
-                #      poly2.to_2d(position_plane[n] * normal, vec1,
-                #                  vec2).area())
-                # print('simplified area :',
-                #       poly2_simplified.to_2d(position_plane[n] * normal, vec1,
-                #                              vec2).area())
-                # ax1 = poly2.plot()
-                # poly2_simplified.plot(ax=ax1, color='b')
-                # ax=poly1.plot()
-                # poly2.plot(ax=ax, color='r')
-                # try:
-                #     coords = poly1.sewing(poly2, vec1, vec2)
-                # except IndexError:
                 faces.extend(poly1_simplified.sewing3(poly2_simplified,
                                                       vec1, vec2))
                 # for trio in coords:
