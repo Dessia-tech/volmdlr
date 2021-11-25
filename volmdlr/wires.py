@@ -340,7 +340,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         intersection_points = []
         for primitive in self.primitives:
             for p in primitive.line_crossings(line):
-                intersection_points.append((p, primitive))
+                if (p, primitive) not in intersection_points:
+                    intersection_points.append((p, primitive))
         return intersection_points
     
     def wire_intersections(self, wire):
@@ -1342,6 +1343,7 @@ class Contour2D(Contour, Wire2D):
                 #         primitives.append(r[1])
                 
                 contour = Contour2D(primitives)
+                contour.order_contour()
                 contours.append(contour)
 
             # Side 2: start of contour to first intersect (i=0) and  i odd to i+1 even
@@ -1384,7 +1386,8 @@ class Contour2D(Contour, Wire2D):
                         self.extract_primitives(point1, primitive1, point2,
                                                 primitive2, inside=False))
                     last_point = point2
-                    remaining_transitions2.remove(transition)
+                    if transition in remaining_transitions2:
+                        remaining_transitions2.remove(transition)
 
                 primitives.append(
                     volmdlr.edges.LineSegment2D(last_point, point_start))
@@ -1400,6 +1403,7 @@ class Contour2D(Contour, Wire2D):
                 
 
                 contour = Contour2D(primitives)
+                contour.order_contour()
                 contours.append(contour)
 
             return contours
@@ -1412,6 +1416,11 @@ class Contour2D(Contour, Wire2D):
         # for p in intersections:
         #     p[0].plot(ax=ax, color='r')
         # ax.set_aspect('auto')
+        # ax = self.plot()
+        # line.plot(ax=ax, color='r')
+        # for point, line_seg in intersections:
+        #     point.plot(ax=ax, color='b')
+        #     line_seg.plot(ax=ax, color='b')
         raise NotImplementedError(
             '{} intersections not supported yet'.format(len(intersections)))
 
