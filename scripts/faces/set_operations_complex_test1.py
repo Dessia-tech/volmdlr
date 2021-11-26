@@ -55,9 +55,10 @@ faces_2 += [vmf.PlaneFace3D(plane3d_3, surf2d_3), vmf.PlaneFace3D(plane3d_4, sur
 shell2 = vmf.ClosedShell3D(faces_2)
 union_box = shell1.union(shell2)
 subtraction_box = shell1.subtract(shell2)
+subtraction_closedbox = shell1.subtract_to_closed_shell(shell2)
 intersection_box = shell1.intersection(shell2)
 
-for new_box in [union_box, subtraction_box, intersection_box]:
+for new_box in [union_box, subtraction_box, subtraction_closedbox, intersection_box]:
     for shell in new_box:
         shell.color = (1, 0.1, 0.1)
         shell.alpha = 0.6

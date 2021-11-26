@@ -70,11 +70,12 @@ faces2 += [vmf.PlaneFace3D(plane3d_3, surf2d_3), vmf.PlaneFace3D(plane3d_4, surf
 
 shell2 = vmf.ClosedShell3D(faces2)
 new_box = shell1.union(shell2)
+subtract_to_closed_shell = shell1.subtract_to_closed_shell(shell2)
 # new_box = shell1.intersection(shell2)
-# for shell in new_box:
-#     shell.color = (1, 0.1, 0.1)
-#     shell.alpha = 0.6
-# vm.core.VolumeModel(new_box).babylonjs()
+for shell in [new_box, subtract_to_closed_shell]:
+    shell[0].color = (1, 0.1, 0.1)
+    shell[0].alpha = 0.6
+    vm.core.VolumeModel(shell).babylonjs()
 
 
 shell3 = shell2.rotation(vm.O3D, vm.Z3D, math.pi).translation(0.3*vm.Z3D-0.1*vm.Y3D)
@@ -85,8 +86,9 @@ shell3 = shell2.rotation(vm.O3D, vm.Z3D, math.pi).translation(0.3*vm.Z3D-0.1*vm.
 # # vm.core.VolumeModel(new_box).babylonjs()
 
 new_box = new_box[0].union(shell3)
+subtract_to_closed_shell = subtract_to_closed_shell[0].subtract_to_closed_shell(shell3)
 # new_box = new_box[0].intersection(shell3)
-for shell in new_box:
-    shell.color = (1, 0.1, 0.1)
-    shell.alpha = 0.6
-vm.core.VolumeModel(new_box).babylonjs()
+for shell in [new_box, subtract_to_closed_shell]:
+    shell[0].color = (1, 0.1, 0.1)
+    shell[0].alpha = 0.6
+    vm.core.VolumeModel(shell).babylonjs()
