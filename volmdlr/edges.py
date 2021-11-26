@@ -2775,7 +2775,7 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             weight_data = None
 
         # FORCING CLOSED_CURVE = FALSE:
-        closed_curve = False
+        # closed_curve = False
         return cls(degree, points, knot_multiplicities, knots, weight_data,
                    closed_curve, name)
 
@@ -2819,10 +2819,15 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         return content, [current_id]
 
     @classmethod
-    def from_points_interpolation(cls, points, degree):
+    def from_points_interpolation(cls, points, degree, periodic=False):
         curve = fitting.interpolate_curve([(p.x, p.y, p.z) for p in points],
                                           degree)
-        return cls.from_geomdl_curve(curve)
+        bsplinecurve3d = cls.from_geomdl_curve(curve)
+        if not periodic:
+            return bsplinecurve3d
+        else:
+            bsplinecurve3d.periodic = True
+            return bsplinecurve3d
 
     def point_distance(self, pt1):
         distances = []
