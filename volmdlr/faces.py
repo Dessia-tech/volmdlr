@@ -26,6 +26,7 @@ import geomdl
 import scipy.optimize as opt
 import time
 
+from geomdl.fitting import interpolate_surface
 
 def knots_vector_inv(knots_vector):
     ''' 
@@ -3145,6 +3146,25 @@ class BSplineSurface3D(Surface3D):
                     for i in range(0,len(faces)):
                         points_3d_ordred.extend(points_3d[i][j:j+points_x])
 
+    @classmethod
+    def from_geomdl_surface(cls, surface):
+        u_knots = list(sorted(set(surface.knotvector_u)))
+        v_knots = list(sorted(set(surface.knotvector_v)))
+        u_multiplicities = [surface.knotvector_u.count(k) for k in u_knots]
+        v_multiplicities = [surface.knotvector_v.count(k) for k in v_knots]
+        crtl_points = [volmdlr.Point3D(*p) for p in surface.ctrlpts]
+        return cls(surface.degree_u, surface.degree_v,
+                   crtl_points, surface.ctrlpts_size_u, surface.ctrlpts_size_v,
+                     u_multiplicities, v_multiplicities, u_knots, v_knots,
+                     weights=None, name='')
+
+    @classmethod
+    def from_pointgrid(cls, grid:List[volmdlr.Point3D], size_u:int, size_v:int, degree_u:int, degree_v:int):
+        grid_geomdl = [(p.x, p.y, p.z) for p in grid]
+        geomdl_surface = interpolate_surface(grid_geomdl, size_u, size_v, degree_u, degree_v)
+        return cls.from_geomdl_surface(geomdl_surface)
+        
+        
         return cls.points_fitting_into_bspline_surface(points_3d_ordred,points_x,points_x*len(faces),degree_u,degree_v)
     
     @classmethod 
@@ -3207,6 +3227,7 @@ class BSplineSurface3D(Surface3D):
         surface = geomdl.fitting.approximate_surface(points, size_u, size_v, degree_u, degree_v, ctrlpts_size_u = num_cpts_u, num_cpts_v = num_cpts_v)
 
         return volmdlr.faces.BSplineSurface3D.from_geomdl_surface(surface) 
+
 
     def normal_from_point2d(self, point2d):
         """ 
@@ -5819,6 +5840,7 @@ class ClosedShell3D(OpenShell3D):
                                     ClosedShell3D([face]).bounding_box.is_inside_bbox(
                                     ClosedShell3D([face2]).bounding_box):
                                 coincident_plane = True
+                                print('passing here')
                                 break
                         if not coincident_plane:
                             non_intersecting_faces.append(face)
@@ -5874,13 +5896,19 @@ class ClosedShell3D(OpenShell3D):
         return intersecting_contour
 
     def new_valid_faces(self, shell2, intersecting_faces,
-                        intersecting_combinations, intersection_method=False):
+                        intersecting_combinations, intersection_method=False,
+                        closed_subtract=False):
         '''
         During calculation of shells union or subtraction, it returns a list of the new faces generated from the two shells intersection
         '''
         faces = []
         list_coicident_faces = self.get_coincident_faces(shell2)
         for k, face in enumerate(intersecting_faces):
+            if closed_subtract:
+                intersection_method = False
+                if face in shell2.faces:
+                    intersection_method = True
+
             if face in shell2.faces:
                 inside = True
                 shell_2 = self
@@ -5919,11 +5947,27 @@ class ClosedShell3D(OpenShell3D):
                             for fc in faces:
                                 if fc.face_inside(new_face):
                                     if new_face.surface2d.outer_contour.area() == fc.surface2d.outer_contour.area():
-                                        print('invalidates a face')
-                                        valid = False
-                                        faces.remove(fc)
-                                        break
+                                        centroide = new_face.surface2d.outer_contour.center_of_mass()
+                                        normal1 = new_face.surface3d.point2d_to_3d(centroide) - 0.01*new_face.surface3d.frame.w
+                                        normal2 = new_face.surface3d.point2d_to_3d(centroide) + 0.01*new_face.surface3d.frame.w
+                                        if (self.point_belongs(normal1) and
+                                            shell2.point_belongs(normal2)) or \
+                                                (shell2.point_belongs(normal1) and
+                                                 self.point_belongs(normal2)):
+                                            valid = False
+                                            faces.remove(fc)
+                                            break
+                                        else:
+                                            valid = False
                                     else:
+                                        valid = False
+                            if valid:
+                                for coin_f1, coin_f2 in list_coicident_faces:
+                                    if coin_f1.face_inside(new_face) and \
+                                            new_face.surface2d.outer_contour.area() == coin_f1.surface2d.outer_contour.area():
+                                        valid = False
+                                    elif coin_f2.face_inside(new_face) and \
+                                            new_face.surface2d.outer_contour.area() == coin_f2.surface2d.outer_contour.area():
                                         valid = False
                             if valid:
                                 faces.append(new_face)
@@ -5959,12 +6003,31 @@ class ClosedShell3D(OpenShell3D):
         operation.
         '''
         if self.is_disjoint_from(shell2, tol):
-            print('are disjointe objects')
             return [self, shell2]
         if self.is_inside_shell(shell2, resolution = 0.01):
+
             return [shell2]
+        else:
+            valid = True
+            for face1 in self.faces:
+                if not ClosedShell3D([face1]).bounding_box.is_inside_bbox(shell2.bounding_box) and not shell2.face_on_shell(face1):
+                    valid = False
+                    break
+            if valid:
+                print('passes here 0')
+                return [shell2]
+
         if shell2.is_inside_shell(self, resolution = 0.01):
+
             return [self]
+        else:
+            valid = True
+            for face2 in shell2.faces:
+                if not ClosedShell3D([face2]).is_inside_shell(self, 0.01) and not self.face_on_shell(face2):
+                    valid = False
+                    break
+            if valid:
+                return [self]
 
         return []
 
@@ -6018,6 +6081,46 @@ class ClosedShell3D(OpenShell3D):
 
         return [OpenShell3D(faces)]
 
+    def subtract_to_closed_shell(self, shell2, tol=1e-8):
+        '''
+            Given Two closed shells, it returns a new subtracted ClosedShell3D object
+        '''
+        validate_union_subtraction_operation = self.validate_union_subtraction_operation(shell2, tol)
+        if validate_union_subtraction_operation:
+            return validate_union_subtraction_operation
+
+        face_combinations = self.intersecting_faces_combinations(shell2, tol)
+
+        intersecting_combinations = self.dict_intersecting_combinations(face_combinations, tol)
+
+        intersecting_faces1, intersecting_faces2 = self.get_intersecting_faces(
+            intersecting_combinations)
+        intersecting_faces = intersecting_faces1 + intersecting_faces2
+
+        faces = self.get_non_intersecting_faces(shell2, intersecting_faces)
+        faces += shell2.get_non_intersecting_faces(self, intersecting_faces,
+                                                   intersection_method=True)
+        # intersecting_contour = self.two_shells_intersecting_contour(shell2,
+        #                                                             intersecting_combinations)
+        new_valid_faces = self.new_valid_faces(shell2, intersecting_faces,
+                                     intersecting_combinations, closed_subtract=True)
+        faces += new_valid_faces
+        # shell = ClosedShell3D(faces)
+        # invalid_faces = []
+        # for fc in new_valid_faces:
+        #     centroide = fc.surface2d.outer_contour.center_of_mass()
+        #     normal1 = fc.surface3d.point2d_to_3d(
+        #         centroide) - 0.01 * fc.surface3d.frame.w
+        #     normal2 = fc.surface3d.point2d_to_3d(
+        #         centroide) + 0.01 * fc.surface3d.frame.w
+        #     if (not shell.point_belongs(normal1) and
+        #             not shell.point_belongs(normal2)):
+        #         invalid_faces.append(fc)
+        # print('invalid_faces :', invalid_faces)
+        # for fc in invalid_faces:
+        #     faces.remove(fc)
+
+        return [ClosedShell3D(faces)]
 
     def intersection(self, shell2, tol=1e-8):
         """
