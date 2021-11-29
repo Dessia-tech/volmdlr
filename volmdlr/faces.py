@@ -1200,48 +1200,6 @@ class CylindricalSurface3D(Surface3D):
         
         return points_3d
 
-    # def plane_intersection(self, plane3d):
-    #     '''
-    #     compute intersection points between a Cylindrical surface and a plane3d
-    #     '''
-        
-    #     def f(X):
-    #         return ((X[0])*plane3d.equation_coefficients()[0] +
-    #                 (self.surface.evaluate_single((X[0],X[1]))[1])*plane3d.equation_coefficients()[1] + 
-    #                 (self.surface.evaluate_single((X[0],X[1]))[2])*plane3d.equation_coefficients()[2] + 
-    #                 plane3d.equation_coefficients()[3])
-
-    #     x = npy.linspace(0,1,20)
-    #     x_init=[]
-    #     for xi in x:
-    #         for yi in x:
-    #             x_init.append((xi,yi))
-                              
-               
-    #     # x_init = volmdlr.Point2D.grid2d(20, 20, 0, 1, 0, 1)
-                
-    #     intersection_points = []
-    #     solutions = []
-    #     u, v =[],  []
-        
-    #     for x0 in x_init: 
-    #         z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-    #         if z.cost<1e-20:
-    #         #     cost.append(z.cost)
-    #         # # print(z.cost)
-    #         # if z.cost<1e-20:
-    #             solution = z.x
-    #             intersection_points.append(volmdlr.Point3D(self.surface.evaluate_single((solution[0],solution[1]))[0],
-    #                                                         self.surface.evaluate_single((solution[0],solution[1]))[1],
-    #                                                         self.surface.evaluate_single((solution[0],solution[1]))[2]))
-    #     # intersection_points.sort()
-    #             # u.append(solution[0])        
-    #             # v.append(solution[1])  
-    #             # solutions.append(solution)
-        
-    #     # return (u,v)
-    #     return intersection_points
-
 
 class ToroidalSurface3D(Surface3D):
     face_class = 'ToroidalFace3D'
