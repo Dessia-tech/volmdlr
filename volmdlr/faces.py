@@ -2584,7 +2584,7 @@ class BSplineSurface3D(Surface3D):
 
         return contour2d
     
-    def point2d_with_dimension_parametric_frame(self, point2d, points_x, points_y, xmin, xmax, ymin, ymax):
+    def point2d_with_dimension_to_parametric_frame(self, point2d, points_x, points_y, xmin, xmax, ymin, ymax):
                                                                                      
         if (points_x, points_y, xmin, xmax, ymin, ymax) in self._grids2d:
             points_2d = self._grids2d[points_x, points_y, xmin, xmax, ymin, ymax]
@@ -2672,7 +2672,7 @@ class BSplineSurface3D(Surface3D):
         
     def point2d_with_dimension_to_3d(self, point2d, points_x, points_y, xmin, xmax, ymin, ymax):
         
-        point2d_01 = self.point2d_with_dimension_parametric_frame(point2d, points_x, points_y, xmin, xmax, ymin, ymax)
+        point2d_01 = self.point2d_with_dimension_to_parametric_frame(point2d, points_x, points_y, xmin, xmax, ymin, ymax)
         
         return self.point2d_to_3d(point2d_01)
     
@@ -2689,7 +2689,7 @@ class BSplineSurface3D(Surface3D):
         new_start_points = []
         for i in range(0,len(contour2d.primitives)):
             point2d = contour2d.primitives[i].start       
-            new_start_points.append(self.point2d_with_dimension_parametric_frame(point2d, points_x, points_y, xmin, xmax, ymin, ymax))
+            new_start_points.append(self.point2d_with_dimension_to_parametric_frame(point2d, points_x, points_y, xmin, xmax, ymin, ymax))
         
         #Avoid to have primitives with start=end
         start_points = []
