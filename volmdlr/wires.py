@@ -2456,8 +2456,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                                                          0:2]):
                 # ax.text(*p2, '{}')
                 # ax = current_polygon.plot(point_numbering=True)
-
-                line_segment = volmdlr.edges.LineSegment2D(p1, p3)
+                if p1 != p3:
+                    line_segment = volmdlr.edges.LineSegment2D(p1, p3)
                 # line_segment.plot(color='grey', ax=ax)
 
                 # ax2 = p1.plot(color='r')
