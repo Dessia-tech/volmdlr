@@ -646,7 +646,7 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
 
 class Contour:
     
-    def __inti__(self):
+    def __init__(self):
 
         raise TypeError ('It cannot be instantiated') 
         
