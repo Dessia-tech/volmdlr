@@ -2548,16 +2548,15 @@ class BSplineSurface3D(Surface3D):
            
         return volmdlr.Point2D(point2d.x + npy.transpose(N).dot(dx),  point2d.y + npy.transpose(N).dot(dy))
     
-    def edge3d_to_2d_with_dimension(self, edges3d, points_x, points_y):
+    def edge3d_to_2d_with_dimension(self, edge3d, points_x, points_y):
         '''
+        compute the edge2d of a edge3d, on a Bspline surface, in the dimensioned frame  
         '''
-        for edge3d in edges3d:
-            edge3d = volmdlr.edges.LineSegment2D(self.point3d_to_2d_with_dimension(edge3d.start, points_x, points_y, 0,1,0,1),
-                                                 self.point3d_to_2d_with_dimension(edge3d.end, points_x, points_y, 0,1,0,1))
-        return edges3d
-            
-            
-        
+
+        return volmdlr.edges.LineSegment2D(self.point3d_to_2d_with_dimension(edge3d.start, points_x, points_y, 0,1,0,1),
+                                           self.point3d_to_2d_with_dimension(edge3d.end, points_x, points_y, 0,1,0,1))
+
+
     def contour3d_to_2d_with_dimension(self, contour3d:volmdlr.wires.Contour3D, points_x, points_y): 
         
         # contour2d = self.contour3d_to_2d(contour3d)
