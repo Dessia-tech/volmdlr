@@ -3951,7 +3951,6 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                 list_closing_point_indexes.append(closing_point_index)
                 previous_closing_point_index = closing_point_index
         triangles += polygon2.close_sewing(dict_closing_pairs)
-        self.check_sewing(polygon2, triangles)
         # for i, point_polygon2 in enumerate(
         #         new_polygon2.points + [new_polygon2.points[0]]):
         #     for j, index in enumerate(list(dict_closing_pairs.values())):
@@ -4229,9 +4228,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
 
     def check_sewing(self, polygon2, sewing_faces):
         if not len(self.line_segments) + len(polygon2.line_segments) == len(sewing_faces):
-            volum = volmdlr.core.VolumeModel(sewing_faces)
-            volum.babylonjs()
-            raise NotImplementedError('sewing has not been well done')
+            return False
+        return True
 
     @staticmethod
     def validate_closing_point(closing_point_index, list_closing_point_indexes,
@@ -4398,8 +4396,6 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
         # print('list closing indexes :', list_closing_point_indexes)
         # print('dict_closing_pairs :', dict_closing_pairs)
         triangles += polygon2_3d.close_sewing(dict_closing_pairs)
-
-        self.check_sewing(polygon2, triangles)
         # volum = volmdlr.core.VolumeModel(triangles)
         # volum.babylonjs()
         # print('p1 3d points :', self.points)

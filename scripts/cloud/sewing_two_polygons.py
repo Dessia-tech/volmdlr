@@ -456,6 +456,7 @@ for i, i_polygon in enumerate(polygons):
             j_polygon = j_polygon.simplify()
             # faces = i_polygon.sewing(j_polygon, vm.X3D, vm.Y3D)
             faces = i_polygon.sewing3(j_polygon, vm.X3D, vm.Y3D)
+            assert i_polygon.check_sewing(j_polygon, faces)
             # for trio in coords:
             #     faces.append(vmf.Triangle3D(trio[0], trio[1], trio[2]))
             # volum = volmdlr.core.VolumeModel(faces)
