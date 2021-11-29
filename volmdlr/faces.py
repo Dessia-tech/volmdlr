@@ -2713,7 +2713,12 @@ class BSplineSurface3D(Surface3D):
         
         return volmdlr.Point2D(X,Y) 
         
+    def point2d_with_dimension_to_3d(self, point2d, points_x, points_y, xmin, xmax, ymin, ymax):
         
+        point2d_01 = self.point2d_with_dimension_parametric_frame(point2d, points_x, points_y, xmin, xmax, ymin, ymax)
+        
+        return self.point2d_to_3d(point2d_01)
+    
     def contour2d_with_dimension_to_3d(self, contour2d):
         '''
         
