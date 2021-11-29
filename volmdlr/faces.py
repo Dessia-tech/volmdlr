@@ -2726,21 +2726,25 @@ class BSplineSurface3D(Surface3D):
         
         for cle in self._grids2d.keys(): 
             [points_x, points_y, xmin, xmax, ymin, ymax] = cle
-                    
+        
+        contour2d = contour2d.order_contour()
+        
         new_start_points = []
         for i in range(0,len(contour2d.primitives)):
             point2d = contour2d.primitives[i].start       
-            new_start_points.append(self.point2d_with_dimension_to_3d(point2d, points_x, points_y, xmin, xmax, ymin, ymax))
+            new_start_points.append(self.point2d_with_dimension_parametric_frame(point2d, points_x, points_y, xmin, xmax, ymin, ymax))
         
-        edges = []
-        for i in range(0,len(new_start_points)-1):
-            edges.append(volmdlr.edges.LineSegment3D(new_start_points[i], new_start_points[i+1]))
-            
-        edges.append(volmdlr.edges.LineSegment3D(new_start_points[-1], new_start_points[0]))
+        #Avoid to have primitives with start=end
+        start_points = []
+        for i in range(0, len(new_start_points)-1):
+            if new_start_points[i] != new_start_points[i+1]:
+                start_points.append(new_start_points[i])
+        if new_start_points[-1] != new_start_points[0]:
+            start_points.append(new_start_points[-1])
         
-        
-               
-        return volmdlr.wires.Contour3D(edges)
+        contour01 = volmdlr.wires.Contour2D.from_points(start_points)
+   
+        return self.contour3d_to_2d(contour01)
         
     @classmethod
     def points_fitting_into_bspline_surface(cls, points_3d, size_u,size_v,degree_u,degree_v):
