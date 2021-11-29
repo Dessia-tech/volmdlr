@@ -2466,6 +2466,13 @@ class BSplineSurface3D(Surface3D):
 
         return displacement
     
+    def point2d_parametric_to_dimension(self, point2d: volmdlr.Point3D, points_x, points_y, xmin, xmax, ymin, ymax):
+        ''' 
+        '''
+        
+        return point2d
+        
+    
     def point3d_to_2d_with_dimension(self, point3d: volmdlr.Point3D, points_x, points_y, xmin, xmax, ymin, ymax):
         '''
         compute the point2d of a point3d, on a Bspline surface, in the dimensioned frame  
@@ -2558,12 +2565,9 @@ class BSplineSurface3D(Surface3D):
 
 
     def contour3d_to_2d_with_dimension(self, contour3d:volmdlr.wires.Contour3D, points_x, points_y): 
-        
-        # contour2d = self.contour3d_to_2d(contour3d)
-        # xmin = contour2d.bounding_rectangle()[0]
-        # xmax = contour2d.bounding_rectangle()[1]
-        # ymin = contour2d.bounding_rectangle()[2]
-        # ymax = contour2d.bounding_rectangle()[3]
+        '''
+        compute the contou2d of a contour3d, on a Bspline surface, in the dimensioned frame  
+        '''
         
         xmin, xmax, ymin, ymax = 0, 1, 0, 1
                
@@ -2701,7 +2705,7 @@ class BSplineSurface3D(Surface3D):
         
         contour01 = volmdlr.wires.Contour2D.from_points(start_points)
    
-        return self.contour3d_to_2d(contour01)
+        return self.contour2d_to_3d(contour01)
         
     @classmethod
     def points_fitting_into_bspline_surface(cls, points_3d, size_u,size_v,degree_u,degree_v):
