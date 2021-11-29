@@ -665,6 +665,19 @@ class BSplineCurve2D(Edge):
             points.append(volmdlr.Point2D(p[0], p[1]))
 
         return volmdlr.wires.Wire2D.from_points(points)
+    
+    def reverse(self):
+        ''' 
+        reverse the bspline's direction by reversing its start and end points
+        '''
+        
+        return self.__class__(degree=self.degree,
+                              control_points=self.control_points[::-1],
+                              knot_multiplicities=self.knot_multiplicities[::-1],
+                              knots=self.knots[::-1],
+                              weights=self.weights,
+                              periodic=self.periodic)
+
 
 class BezierCurve2D(BSplineCurve2D):
 
