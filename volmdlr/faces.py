@@ -782,7 +782,7 @@ class Plane3D(Surface3D):
         dict_ = dc.DessiaObject.base_dict(self)
         dict_['frame'] = self.frame.to_dict()
         dict_['name'] = self.name
-        dict_['object_class'] = 'volmdlr.core.Plane3D'
+        dict_['object_class'] = 'volmdlr.faces.Plane3D'
         return dict_
 
     @classmethod
