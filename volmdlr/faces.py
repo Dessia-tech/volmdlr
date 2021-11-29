@@ -2627,7 +2627,7 @@ class BSplineSurface3D(Surface3D):
 
         return contour2d
     
-    def point2d_with_dimension_to_3d(self, point2d, points_x, points_y, xmin, xmax, ymin, ymax):
+    def point2d_with_dimension_parametric_frame(self, point2d, points_x, points_y, xmin, xmax, ymin, ymax):
                                                                                      
         if (points_x, points_y, xmin, xmax, ymin, ymax) in self._grids2d:
             points_2d = self._grids2d[points_x, points_y, xmin, xmax, ymin, ymax]
@@ -2711,9 +2711,9 @@ class BSplineSurface3D(Surface3D):
         elif Y>1:
             Y=1
         
-        return self.point2d_to_3d(volmdlr.Point2D(X,Y))
+        return volmdlr.Point2D(X,Y) 
         
-    
+        
     def contour2d_with_dimension_to_3d(self, contour2d):
         '''
         
@@ -2732,6 +2732,8 @@ class BSplineSurface3D(Surface3D):
             edges.append(volmdlr.edges.LineSegment3D(new_start_points[i], new_start_points[i+1]))
             
         edges.append(volmdlr.edges.LineSegment3D(new_start_points[-1], new_start_points[0]))
+        
+        
                
         return volmdlr.wires.Contour3D(edges)
         
