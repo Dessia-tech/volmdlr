@@ -893,9 +893,6 @@ class Contour:
             return True
 
 
-        
-    
-
 class Contour2D(Contour, Wire2D):
     """
     A collection of 2D primitives forming a closed wire2D
@@ -1892,7 +1889,19 @@ class Contour2D(Contour, Wire2D):
         contours = self.cut_by_wire(bspline_curve2d.to_wire(20))
         
         return contours
+     
+    def clean_primitives(self):
+        ''' 
+        delete primitives with start=end, and return a new contour
+        '''
         
+        new_primitives = []
+        for p in self.primitives:
+            if p.start != p.end:
+                new_primitives.append(p)
+        
+        return Contour2D(new_primitives)
+    
         
 class ClosedPolygon:
     
@@ -3316,7 +3325,19 @@ class Contour3D(Contour, Wire3D):
             contour = cls(edges)
             
             return contour
+    
+    def clean_primitives(self):
+        ''' 
+        delete primitives with start=end, and return a new contour
+        '''
         
+        new_primitives = []
+        for p in self.primitives:
+            if p.start != p.end:
+                new_primitives.append(p)
+        
+        return Contour3D(new_primitives)
+    
 
 class Circle3D(Contour3D):
     _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']
