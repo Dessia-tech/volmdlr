@@ -2566,31 +2566,30 @@ class BSplineSurface3D(Surface3D):
         return volmdlr.edges.LineSegment2D(self.point3d_to_2d_with_dimension(edge3d.start, points_x, points_y, 0,1,0,1),
                                            self.point3d_to_2d_with_dimension(edge3d.end, points_x, points_y, 0,1,0,1))
 
-
+    def contour2d_parametric_to_dimension(self, contour2d:volmdlr.wires.Contour2D, points_x, points_y):
+        ''' 
+        convert a contour2d from the parametric to the dimensioned frame
+        '''
+        
+        xmin, xmax, ymin, ymax = 0, 1, 0, 1
+        point2d_dim = []
+        for primitive in contour2d.primitives:
+            point2d_dim.append(self.point2d_parametric_to_dimension(primitive.start, points_x, points_y, xmin, xmax, ymin, ymax))
+            if type(primitive) == volmdlr.edges.Arc2D:
+                point2d_dim.append(self.point2d_parametric_to_dimension(primitive.interior, points_x, points_y, xmin, xmax, ymin, ymax))
+        
+        return volmdlr.wires.Contour2D.from_points(point2d_dim)
+        
     def contour3d_to_2d_with_dimension(self, contour3d:volmdlr.wires.Contour3D, points_x, points_y): 
         '''
         compute the contou2d of a contour3d, on a Bspline surface, in the dimensioned frame  
         '''
         
         xmin, xmax, ymin, ymax = 0, 1, 0, 1
-               
-        new_start_points = []
-        for i in range(0,len(contour3d.primitives)):
-            point3d = contour3d.primitives[i].start
-            new_start_points.append(self.point3d_to_2d_with_dimension(point3d, points_x, points_y, xmin, xmax, ymin, ymax))
-            if type(contour3d.primitives[i]) == volmdlr.edges.Arc3D:
-                point3d = contour3d.primitives[i].interior
-                new_start_points.append(self.point3d_to_2d_with_dimension(point3d, points_x, points_y, xmin, xmax, ymin, ymax))
+        contour2d_01 = self.contour3d_to_2d(contour3d)
         
-        edges = []
-        for i in range(0,len(new_start_points)-1):
-            edges.append(volmdlr.edges.LineSegment2D(new_start_points[i], new_start_points[i+1]))
-        edges.append(volmdlr.edges.LineSegment2D(new_start_points[-1], new_start_points[0]))
-            
-        contour2d = volmdlr.wires.Contour2D(edges)
-
-        return contour2d
-    
+        return self.contour2d_parametric_to_dimension(contour2d_01)
+                   
     def point2d_with_dimension_to_parametric_frame(self, point2d, points_x, points_y, xmin, xmax, ymin, ymax):
         ''' 
         convert a point2d from the dimensioned to the parametric frame
