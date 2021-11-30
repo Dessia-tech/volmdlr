@@ -2491,7 +2491,7 @@ class BSplineSurface3D(Surface3D):
         u_close = '.T.' if self.x_periodicity else '.F.'
         v_close = '.T.' if self.y_periodicity else '.F.'
 
-        content += "#{} = B_SPLINE_SURFACE_WITH_KNOTS('{}',{},{},{},.UNSPECIFIED.,{},{},.U.,{},{},{},{},.UNSPECIFIED.);\n" \
+        content += "#{} = B_SPLINE_SURFACE_WITH_KNOTS('{}',{},{},{},.UNSPECIFIED.,{},{},.F.,{},{},{},{},.UNSPECIFIED.);\n" \
             .format(current_id, self.name, self.degree_u, self.degree_v,
                     point_matrix_ids, u_close, v_close,
                     tuple(self.u_multiplicities), tuple(self.v_multiplicities),
