@@ -2585,10 +2585,9 @@ class BSplineSurface3D(Surface3D):
         compute the contou2d of a contour3d, on a Bspline surface, in the dimensioned frame  
         '''
         
-        xmin, xmax, ymin, ymax = 0, 1, 0, 1
         contour2d_01 = self.contour3d_to_2d(contour3d)
         
-        return self.contour2d_parametric_to_dimension(contour2d_01)
+        return self.contour2d_parametric_to_dimension(contour2d_01, points_x, points_y)
                    
     def point2d_with_dimension_to_parametric_frame(self, point2d, points_x, points_y, xmin, xmax, ymin, ymax):
         ''' 
