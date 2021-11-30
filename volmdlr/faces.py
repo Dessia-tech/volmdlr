@@ -2592,7 +2592,10 @@ class BSplineSurface3D(Surface3D):
         return contour2d
     
     def point2d_with_dimension_to_parametric_frame(self, point2d, points_x, points_y, xmin, xmax, ymin, ymax):
-                                                                                     
+        ''' 
+        convert a point2d from the dimensioned to the parametric frame
+        '''
+                                                                             
         if (points_x, points_y, xmin, xmax, ymin, ymax) in self._grids2d:
             points_2d = self._grids2d[points_x, points_y, xmin, xmax, ymin, ymax]
         else:
@@ -2678,14 +2681,17 @@ class BSplineSurface3D(Surface3D):
         return volmdlr.Point2D(X,Y) 
         
     def point2d_with_dimension_to_3d(self, point2d, points_x, points_y, xmin, xmax, ymin, ymax):
+        '''
+        compute the point3d, on a Bspline surface, of a point2d define in the dimensioned frame
+        '''
         
         point2d_01 = self.point2d_with_dimension_to_parametric_frame(point2d, points_x, points_y, xmin, xmax, ymin, ymax)
         
         return self.point2d_to_3d(point2d_01)
     
-    def contour2d_with_dimension_to_3d(self, contour2d):
-        '''
-        
+    def contour2d_with_dimension_to_parametric_frame(self, contour2d):
+        ''' 
+        convert a contour2d from the dimensioned to the parametric frame
         '''
         
         for cle in self._grids2d.keys(): 
@@ -2707,6 +2713,16 @@ class BSplineSurface3D(Surface3D):
             start_points.append(new_start_points[-1])
         
         contour01 = volmdlr.wires.Contour2D.from_points(start_points)
+        
+        return contour01
+        
+    
+    def contour2d_with_dimension_to_3d(self, contour2d):
+        '''
+        compute the contour3d, on a Bspline surface, of a contour2d define in the dimensioned frame
+        '''
+        
+        contour01 = self.contour2d_with_dimension_to_parametric_frame(contour2d)
    
         return self.contour2d_to_3d(contour01)
         
