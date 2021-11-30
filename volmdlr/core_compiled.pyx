@@ -920,6 +920,9 @@ class Vector3D(Vector):
         dict_ = {p.approx_hash() : p for p in points}
         return list(dict_.values())
 
+    def to_dict(self):
+        return {'object_class':'volmdlr.core.Point2D',
+                'x': self.x, 'y': self.y, 'z': self.z}
 
     @classmethod
     def dict_to_object(cls, dict_):
@@ -1192,6 +1195,11 @@ class Point3D(Vector3D):
 
     def copy(self):
         return Point3D(self.x, self.y, self.z)
+
+    def to_dict(self):
+        return {'object_class':'volmdlr.core.Point3D',
+                'x': self.x, 'y': self.y}
+
 
     @classmethod
     def dict_to_object(cls, dict_):

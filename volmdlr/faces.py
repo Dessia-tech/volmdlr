@@ -3556,9 +3556,13 @@ class PlaneFace3D(Face3D):
     #     return repaired_points, polygon2D
 
     @classmethod
-    def dict_to_object(cls, dict_):
-        plane3d = Plane3D.dict_to_object(dict_['surface3d'])
-        surface2d = Surface2D.dict_to_object(dict_['surface2d'])
+    def dict_to_object(cls, dict_, global_dict=None, pointers_memo=None):
+        plane3d = Plane3D.dict_to_object(dict_['surface3d'],
+                                         global_dict=global_dict,
+                                         pointers_memo=pointers_memo)
+        surface2d = Surface2D.dict_to_object(dict_['surface2d'],
+                                             global_dict=global_dict,
+                                             pointers_memo=pointers_memo)
         return cls(plane3d, surface2d, dict_['name'])
 
     def copy(self):
@@ -3903,6 +3907,11 @@ class Triangle3D(PlaneFace3D):
             self._utd_surface2d = True
         return self._surface2d
 
+    def to_dict(self):
+        return {'object_class': 'volmdlr.faces.Triangle3D',
+                'point1': self.point1.to_dict(),
+                'point2': self.point2.to_dict(),
+                'point3': self.point3.to_dict()}
 
     @classmethod
     def dict_to_object(cls, dict_):
