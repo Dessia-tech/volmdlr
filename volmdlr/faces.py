@@ -2468,18 +2468,8 @@ class BSplineSurface3D(Surface3D):
     
     def point2d_parametric_to_dimension(self, point2d: volmdlr.Point3D, points_x, points_y, xmin, xmax, ymin, ymax):
         ''' 
+        convert a point2d from the parametric to the dimensioned frame
         '''
-        
-        return point2d
-        
-    
-    def point3d_to_2d_with_dimension(self, point3d: volmdlr.Point3D, points_x, points_y, xmin, xmax, ymin, ymax):
-        '''
-        compute the point2d of a point3d, on a Bspline surface, in the dimensioned frame  
-        '''
-        
-        point2d = self.point3d_to_2d(point3d) 
-        # points_2d = volmdlr.Point2D.grid2d(points_x, points_y, xmin, xmax, ymin, ymax)
         
         if (points_x, points_y, xmin, xmax, ymin, ymax) in self._grids2d:
             points_2d = self._grids2d[points_x, points_y, xmin, xmax, ymin, ymax]
@@ -2554,6 +2544,19 @@ class BSplineSurface3D(Surface3D):
                         displacement[index_points[finite_elements_points[k][3]]][1]])
            
         return volmdlr.Point2D(point2d.x + npy.transpose(N).dot(dx),  point2d.y + npy.transpose(N).dot(dy))
+
+    
+    def point3d_to_2d_with_dimension(self, point3d: volmdlr.Point3D, points_x, points_y, xmin, xmax, ymin, ymax):
+        '''
+        compute the point2d of a point3d, on a Bspline surface, in the dimensioned frame  
+        '''
+        
+        point2d = self.point3d_to_2d(point3d) 
+        
+        point2d_with_dimension = self.point2d_parametric_to_dimension(point2d)
+
+        return point2d_with_dimension
+    
     
     def edge3d_to_2d_with_dimension(self, edge3d, points_x, points_y):
         '''
