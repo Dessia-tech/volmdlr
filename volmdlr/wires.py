@@ -956,7 +956,19 @@ class Contour2D(Contour, Wire2D):
 
     def primitive_over_contour(self, primitive):
         for prim in self.primitives:
-            if prim.unit_direction_vector().is_colinear_to(primitive.unit_direction_vector()):
+            if not hasattr(prim, 'unit_direction_vector') and \
+                    hasattr(prim, 'tangent'):
+                vector1 = prim.tangent(0.5)
+            else:
+                vector1 = prim.unit_direction_vector()
+
+            if not hasattr(primitive, 'unit_direction_vector') and \
+                    hasattr(primitive, 'tangent'):
+                vector2 = primitive.tangent(0.5)
+            else:
+                vector2 = primitive.unit_direction_vector()
+
+            if vector1.is_colinear_to(vector2):
                 mid_point = primitive.middle_point()
                 if self.point_over_contour(mid_point):
                     return True

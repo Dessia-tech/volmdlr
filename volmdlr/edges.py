@@ -487,6 +487,15 @@ class BSplineCurve2D(Edge):
             adim_abs = 0.
         return volmdlr.Point2D(*self.curve.evaluate_single(adim_abs))
 
+    def tangent(self, position: float = 0.0):
+        point, tangent = operations.tangent(self.curve, position,
+                                            normalize=True)
+        tangent = volmdlr.Point2D(tangent[0], tangent[1])
+        return tangent
+
+    def middle_point(self):
+        return self.point_at_abscissa(0.5)
+
     def abscissa(self, point2d):
         l = self.length()
         res = scp.optimize.minimize_scalar(
