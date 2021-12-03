@@ -130,7 +130,6 @@ class PointCloud3D(dc.DessiaObject):
             if n != resolution-1:
                 poly2 = polygon3d[n+1]
 
-
                 poly2_simplified = poly2.simplify(0.01, 0.03)
 
                 if 1 - poly2_simplified.to_2d(position_plane[n] * normal, vec1,
