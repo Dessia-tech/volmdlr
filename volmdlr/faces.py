@@ -31,14 +31,10 @@ def knots_vector_inv(knots_vector):
     compute knot elements and multiplicities based on the global knot vector
     '''
     
-    knots= []
-    multiplicities=[]
-    i=0
-
-    while i <= (len(knots_vector)-(knots_vector.count(knots_vector[0]))): 
-        knots.append(knots_vector[i])
-        multiplicities.append(knots_vector.count(knots_vector[i]))
-        i=i+(knots_vector.count(knots_vector[i]))
+    knots = list(set(knots_vector))
+    multiplicities = []
+    for knot in knots:
+        multiplicities.append(knots_vector.count(knot))
         
     return (knots,multiplicities)
 
