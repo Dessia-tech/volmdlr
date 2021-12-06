@@ -123,7 +123,6 @@ class PointCloud3D(dc.DessiaObject):
 
             if n == resolution-1 or n == 0:
                 plane3d = vmf.Plane3D.from_plane_vectors(position_plane[n]*normal, vec1, vec2)
-                surf2d = vmf.Surface2D(polygon2d[n],[])
                 surf2d = vmf.Surface2D(poly1_simplified.to_2d(position_plane[n]*normal, vec1, vec2),[])
 
                 faces.append(vmf.PlaneFace3D(plane3d, surf2d))
