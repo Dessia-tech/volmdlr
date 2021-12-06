@@ -2439,7 +2439,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             if len(polygon_points) == 0:
                 finished = True
 
-        return cls(points)
+        return cls(points[0:-1])
 
     def to_3d(self, plane_origin, x, y):
         points3d = [point.to_3d(plane_origin, x, y) for point in self.points]
