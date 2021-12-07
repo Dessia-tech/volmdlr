@@ -726,12 +726,12 @@ class BoxesWrap(GiftWrap):
                 primitives.append(vm.primitives3d.ExtrudedProfile(origin, face_dir, line_dir,
                                                                   contour, [], propagation_step * propagation_dir))
 
-        # primitive_merge = primitives[0]
-        # for i, s in enumerate(primitives[1:]):
-        #     print(i)
-        #     output = primitive_merge.union(s, tol=1e-10)
-        #     print('number volume', len(output))
-        #     primitive_merge = output[0]
+        primitive_merge = primitives[0]
+        for i, s in enumerate(primitives[1:]):
+            print(i)
+            output = primitive_merge.union(s, tol=1e-10)
+            print('number volume', len(output))
+            primitive_merge = output[0]
         return primitives
 
     def _define_order_edges(self, graph, polygons):
