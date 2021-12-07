@@ -18,11 +18,11 @@ for step_file in [
     print('filename: ', step_file)
     step = volmdlr.step.Step(step_file)
     model = step.to_volume_model()
-    model.to_step(step_file+'_reexport')
-    print(model.primitives)
+#     model.to_step(step_file+'_reexport')
+#     print(model.primitives)
 
-    model.babylonjs()
+#     model.babylonjs()
     
-model2 = model.copy()
+# model2 = model.copy()
 
-assert model == model2
+# assert model == model2

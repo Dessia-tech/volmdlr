@@ -1665,7 +1665,7 @@ class Contour2D(Contour, Wire2D):
 
                 elif len(points_in) == 3:
                     triangles.append([point_index[p] for p in points_in])
-
+        
         return vmd.DisplayMesh2D(points, triangles)
     # def extract_contours(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D):
     #     split_primitives  = []
