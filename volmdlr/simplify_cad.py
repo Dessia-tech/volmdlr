@@ -74,7 +74,6 @@ class Boxes(DessiaObject):
         for i, (node1, node2) in enumerate(list_dfs_tree):
             output = boxe_cumul.union(node2, tol=1e-6)
             boxe_cumul = output[0]
-            print(i)
         return boxe_cumul
 
     def define_block(self, adresse: Tuple[int, int, int]):
@@ -216,7 +215,6 @@ class GiftWrap(Boxes, DessiaObject):
             poly2d = poly.to_2d(g[0], plane.surface3d.frame.u, plane.surface3d.frame.v)
             areas.append(poly2d.area())
             polys.append(poly)
-        print('areas', areas)
         areas_sort = np.argsort(np.array(areas))
         if polys != [] and areas[areas_sort[-1]] > 1e-4:
             return polys[areas_sort[-1]]
@@ -258,12 +256,10 @@ class GiftWrap(Boxes, DessiaObject):
             next_available_indice = list(range(len(points2)))
             if previous_connection_points:
                 all_indice = [points2.index(e) for e in previous_connection_points]
-                print('all_indice', all_indice)
                 previous_indice = points2.index(previous_connection_points[-1])
                 next_available_indice = []
                 if all_indice[-1] > all_indice[0] or len(all_indice) == 1:
                     next_available_indice += list(range(previous_indice, len(points2)))
-                print(1, next_available_indice)
                 if len(all_indice) > 1:
                     if all_indice[-1] > all_indice[0]:
                         next_available_indice += list(range(all_indice[0]))
@@ -271,11 +267,9 @@ class GiftWrap(Boxes, DessiaObject):
                         next_available_indice += list(range(all_indice[-1], all_indice[0]))
                 if len(all_indice) == 1:
                     next_available_indice += list(range(all_indice[0]))
-                print(2, next_available_indice)
                 for i in all_indice[0:-1]:
                     if i in next_available_indice:
                         next_available_indice.remove(i)
-            print('next_available_indice', next_available_indice)
             if not next_available_indice:
                 break
 
@@ -305,7 +299,6 @@ class GiftWrap(Boxes, DessiaObject):
             if pt2 in graph.nodes():
                 continue
             points_without_connection.append(pt2)
-        print([points2.index(i) for i in points_without_connection])
 
         graph_points2 = nx.Graph()
         for p1, p2 in zip(points2, points2[1:] + points2[0:1]):
@@ -330,10 +323,8 @@ class GiftWrap(Boxes, DessiaObject):
                 check_graph.add_edges_from([(points2[0], points2[-1])])
             for g in nx.connected_components(check_graph):
                 all_indice = list(g)
-                print([points2.index(i) for i in all_indice])
                 if len(all_indice) > 1:
                     for indice in all_indice:
-                        print(check_graph.degree[indice])
                         if check_graph.degree[indice] == 1:
                             extreme = indice
                     oriented_graph = nx.dfs_tree(check_graph, source=extreme)
@@ -343,10 +334,8 @@ class GiftWrap(Boxes, DessiaObject):
                 else:
                     new_list = all_indice
                 group_without_connection.append(new_list)
-        print([[points2.index(e) for e in pts] for pts in group_without_connection])
 
         for g in group_without_connection:
-            print(g)
             extremes = []
             for e in g:
                 successor = list(graph_points2[e])
@@ -356,12 +345,9 @@ class GiftWrap(Boxes, DessiaObject):
                     extremes.append(successor[1])
             first_point = extremes[0]
             last_point = extremes[1]
-            print('first_point', first_point)
-            print('last_point', last_point)
             path = nx.shortest_path(graph, source=first_point, target=last_point)
 
             length_path = len(path) - 2
-            print(len(path))
 
             if length_path == 2:
                 indice = 1
@@ -376,8 +362,6 @@ class GiftWrap(Boxes, DessiaObject):
                 # raise
                 indice = 1
                 for i, e in enumerate(g):
-                    print('e', e)
-                    print('path', path[indice])
                     graph.add_edges_from([(e, path[indice])])
 
             else:
@@ -391,7 +375,6 @@ class GiftWrap(Boxes, DessiaObject):
             if pt not in dict_pos:
                 dict_pos[pt] = np.array([pos_x, 0])
                 pos_x += 0.1
-                print('add point', pt)
         # dict_pos = nx.kamada_kawai_layout(graph)
         # nx.draw(graph, pos=dict_pos)
         return graph
@@ -996,7 +979,6 @@ class BoxesWrap(GiftWrap):
     def _analyze_boxe(self, adresse: Tuple[int, int, int], direction: vm.Vector3D, frame: vm.Frame3D):
         # add = self.define_adresses(box)
         if adresse in self.adresses:
-            print(self.adresses[adresse])
             all_indices = self.adresses[adresse]
             all_faces = []
             for (primitive_indice, face_indice) in all_indices:
