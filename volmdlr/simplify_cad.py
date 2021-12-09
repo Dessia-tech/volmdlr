@@ -127,14 +127,14 @@ class Boxes(DessiaObject):
 
     def smart_box_discretization(self):
         adresses = {}
-        for i, face in enumerate(self.volume_model.primitives[0].faces):
-            adds = self._search_all_bounding_box(face.bounding_box)
-
-            for add in adds:
-                if add in adresses:
-                    adresses[add].append(i)
-                else:
-                    adresses[add] = [i]
+        for j, primitive in enumerate(self.volume_model.primitives):
+            for i, face in enumerate(primitive.faces):
+                adds = self._search_all_bounding_box(face.bounding_box)
+                for add in adds:
+                    if add in adresses:
+                        adresses[add].append((j, i))
+                    else:
+                        adresses[add] = [(j, i)]
 
         return adresses
 
@@ -729,10 +729,10 @@ class BoxesWrap(GiftWrap):
         primitive_merge = primitives[0]
         for i, s in enumerate(primitives[1:]):
             print(i)
-            output = primitive_merge.union(s, tol=1e-10)
+            output = primitive_merge.union(s, tol=1e-6)
             print('number volume', len(output))
             primitive_merge = output[0]
-        return primitives
+        return primitive_merge
 
     def _define_order_edges(self, graph, polygons):
         all_edges = []
@@ -862,11 +862,8 @@ class BoxesWrap(GiftWrap):
         return vm.primitives3d.Block(frame)
 
     def _generate_inside_boxes(self):
-        print('ok')
         all_boxes = self._generate_boxes_one_direction(vm.X3D, False)
-        print('ok')
         all_boxes_outside = self._generate_boxes()
-        print('ok')
         all_boxes_inside = []
         for box in all_boxes:
             if box not in all_boxes_outside:
@@ -999,8 +996,11 @@ class BoxesWrap(GiftWrap):
     def _analyze_boxe(self, adresse: Tuple[int, int, int], direction: vm.Vector3D, frame: vm.Frame3D):
         # add = self.define_adresses(box)
         if adresse in self.adresses:
-            all_faces_indice = self.adresses[adresse]
-            all_faces = [self.volume_model.primitives[0].faces[i] for i in all_faces_indice]
+            print(self.adresses[adresse])
+            all_indices = self.adresses[adresse]
+            all_faces = []
+            for (primitive_indice, face_indice) in all_indices:
+                all_faces.append(self.volume_model.primitives[primitive_indice].faces[face_indice])
             box = vm.primitives3d.Block(frame)
 
             for face in all_faces:
