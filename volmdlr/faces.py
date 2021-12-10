@@ -2462,6 +2462,7 @@ class BSplineSurface3D(Surface3D):
 
         return displacement
     
+    
     def point2d_parametric_to_dimension(self, point2d: volmdlr.Point3D, points_x, points_y, xmin, xmax, ymin, ymax):
         ''' 
         convert a point2d from the parametric to the dimensioned frame
@@ -2643,6 +2644,7 @@ class BSplineSurface3D(Surface3D):
         
         return volmdlr.Point2D(X,Y) 
         
+    
     def point2d_with_dimension_to_3d(self, point2d, points_x, points_y, xmin, xmax, ymin, ymax):
         '''
         compute the point3d, on a Bspline surface, of a point2d define in the dimensioned frame
@@ -2667,6 +2669,7 @@ class BSplineSurface3D(Surface3D):
         
         return volmdlr.wires.Contour2D.from_points(point2d_dim)
         
+    
     def contour3d_to_2d_with_dimension(self, contour3d:volmdlr.wires.Contour3D, points_x, points_y): 
         '''
         compute the contou2d of a contour3d, on a Bspline surface, in the dimensioned frame  
@@ -2714,16 +2717,7 @@ class BSplineSurface3D(Surface3D):
    
         return self.contour2d_to_3d(contour01)
         
-    
-    def edge3d_to_2d_with_dimension(self, edge3d, points_x, points_y):
-        '''
-        compute the edge2d of a edge3d, on a Bspline surface, in the dimensioned frame  
-        '''
-
-        return volmdlr.edges.LineSegment2D(self.point3d_to_2d_with_dimension(edge3d.start, points_x, points_y, 0,1,0,1),
-                                           self.point3d_to_2d_with_dimension(edge3d.end, points_x, points_y, 0,1,0,1))
-    
-    
+  
     @classmethod 
     def from_geomdl_surface(cls, surface):
         ''' 
@@ -2922,6 +2916,40 @@ class BSplineSurface3D(Surface3D):
         return volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(points_3d,points_x,points_x,degree_u,degree_v)    
         
     
+    def intersection_with(self, other_bspline_surface3d):
+        '''
+        compute intersection points between two Bspline surfaces 
+        return u,v parameters for intersection points for both surfaces      
+        '''
+        
+        def f(X):
+            return (self.point2d_to_3d(volmdlr.Point2D(X[0],X[1])) - other_bspline_surface3d.point2d_to_3d(volmdlr.Point2D(X[2],X[3]))).norm()
+   
+        x = npy.linspace(0,1,10)
+        x_init=[]
+        for xi in x:
+            for yi in x:
+                x_init.append((xi,yi, xi, yi))
+                x_init.append((xi,yi, yi, xi))
+
+        u1, v1, u2, v2 = [], [], [], []
+        
+        for x0 in x_init: 
+            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
+            # print(z.cost)
+            if z.cost<1e-5:
+                solution = z.x
+                u1.append(solution[0])
+                v1.append(solution[1])
+                u2.append(solution[2])
+                v2.append(solution[3])
+        
+        # uv1 = [[min(u1),max(u1)],[min(v1),max(v1)]]
+        # uv2 = [[min(u2),max(u2)],[min(v2),max(v2)]]
+            
+        return ((u1,v1), (u2,v2)) #(uv1, uv2)
+    
+    
     def plane_intersection(self, plane3d):
         '''
         compute intersection points between a Bspline surface and a plane3d
@@ -2964,6 +2992,7 @@ class BSplineSurface3D(Surface3D):
         # return (u,v)
         return intersection_points
     
+    
     def error_with_point3d(self, point3d):
         '''
         compute the error/distance between the Bspline surface and a point3d
@@ -2980,6 +3009,7 @@ class BSplineSurface3D(Surface3D):
         
         return min(cost)
     
+    
     def error_with_edge3d(self, edge3d):
         ''' 
         compute the error/distance between the Bspline surface and an edge3d
@@ -2987,6 +3017,7 @@ class BSplineSurface3D(Surface3D):
         '''
         
         return (self.error_with_point3d(edge3d.start) + self.error_with_point3d(edge3d.end)) / 2
+
 
     def nearest_edges3d(self, contours3d, threshold: float):
         ''' 
@@ -3004,6 +3035,15 @@ class BSplineSurface3D(Surface3D):
 
         return nearest_primitives
       
+        
+    def edge3d_to_2d_with_dimension(self, edge3d, points_x, points_y):
+        '''
+        compute the edge2d of a edge3d, on a Bspline surface, in the dimensioned frame  
+        '''
+
+        return volmdlr.edges.LineSegment2D(self.point3d_to_2d_with_dimension(edge3d.start, points_x, points_y, 0,1,0,1),
+                                           self.point3d_to_2d_with_dimension(edge3d.end, points_x, points_y, 0,1,0,1))
+    
     
     def wire3d_to_2d(self, wire3d):
         ''' 
@@ -3033,45 +3073,6 @@ class BSplineSurface3D(Surface3D):
         
         return volmdlr.wires.Wire2D(edges2d)
 
-            
-    def intersection_with(self, other_bspline_surface3d):
-        '''
-        compute intersection points between two Bspline surfaces 
-        return u,v parameters for intersection points for both surfaces      
-        '''
-        
-        def f(X):
-            return (self.point2d_to_3d(volmdlr.Point2D(X[0],X[1])) - other_bspline_surface3d.point2d_to_3d(volmdlr.Point2D(X[2],X[3]))).norm()
-   
-        x = npy.linspace(0,1,10)
-        x_init=[]
-        for xi in x:
-            for yi in x:
-                x_init.append((xi,yi, xi, yi))
-                x_init.append((xi,yi, yi, xi))
-
-        u1, v1, u2, v2 = [], [], [], []
-        
-        for x0 in x_init: 
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            # print(z.cost)
-            if z.cost<1e-5:
-                solution = z.x
-                u1.append(solution[0])
-                v1.append(solution[1])
-                u2.append(solution[2])
-                v2.append(solution[3])
-        
-        # uv1 = [[min(u1),max(u1)],[min(v1),max(v1)]]
-        # uv2 = [[min(u2),max(u2)],[min(v2),max(v2)]]
-            
-        return ((u1,v1), (u2,v2)) #(uv1, uv2) # 
-    
-
-    
-    
-
-
  
     def split_surface_u(self, u: float):
         '''
@@ -3096,6 +3097,7 @@ class BSplineSurface3D(Surface3D):
         
         return surfaces
     
+    
     def split_surface_v(self, v: float):
         '''
         split the surface at the input parametric coordinate on the v-direction
@@ -3118,6 +3120,7 @@ class BSplineSurface3D(Surface3D):
             surfaces.append(volmdlr.faces.BSplineSurface3D.from_geomdl_surface(s))
         
         return surfaces    
+    
     
     def split_surface_with_bspline_curve(self, bspline_curve3d: volmdlr.edges.BSplineCurve3D):
         '''
