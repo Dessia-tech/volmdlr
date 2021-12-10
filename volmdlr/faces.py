@@ -32,25 +32,12 @@ def knots_vector_inv(knots_vector):
     ''' 
     compute knot elements and multiplicities based on the global knot vector
     '''
-<<<<<<< HEAD
     
     knots = list(set(knots_vector))
     multiplicities = []
     for knot in knots:
         multiplicities.append(knots_vector.count(knot))
         
-=======
-
-    knots= []
-    multiplicities=[]
-    i=0
-
-    while i <= (len(knots_vector)-(knots_vector.count(knots_vector[0]))):
-        knots.append(knots_vector[i])
-        multiplicities.append(knots_vector.count(knots_vector[i]))
-        i=i+(knots_vector.count(knots_vector[i]))
-
->>>>>>> origin/dev
     return (knots,multiplicities)
 
 class Surface2D(volmdlr.core.Primitive2D):
@@ -1259,11 +1246,8 @@ class CylindricalSurface3D(Surface3D):
         for j in range(0,len(points_2d)):
             points_3d.append(self.point2d_to_3d(points_2d[j]))
 
-<<<<<<< HEAD
-=======
         return points_3d
 
->>>>>>> origin/dev
 
 class ToroidalSurface3D(Surface3D):
     face_class = 'ToroidalFace3D'
@@ -1970,81 +1954,7 @@ class BSplineSurface3D(Surface3D):
             y = 1
         return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
-<<<<<<< HEAD
-    def point3d_to_2d(self, point3d: volmdlr.Point3D):
-       
-        # =============================================================================
-        # Solution 1 #
-        # =============================================================================
-        
-        def f(x):
-            return (point3d - self.point2d_to_3d(
-                volmdlr.Point2D(x[0], x[1]))).norm()
-        
-        x = npy.linspace(0,1,5)
-        x_init=[]
-        for xi in x:
-            for yi in x:
-                x_init.append((xi,yi))
-        
-        cost=[]
-        sol=[]
-            
-        for x0 in x_init: 
-        # for x0 in [(0.5, 0.5), (0.25, 0.25), (0.75,0.25), (0.25, 0.75), (0.75, 0.25), (0, 0), (0, 1), (1, 0), (1, 1)]:
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            cost.append(z.cost)
-            sol.append(z.x)
-        
-        # if min(cost) < 1e-5: 
-        #     solution=sol[cost.index(min(cost))]
-        #     return (volmdlr.Point2D(solution[0], solution[1]))
-        # else:
-        #     raise ValueError ('Error > 1e-5')
-        
-        solution=sol[cost.index(min(cost))]
-        return (volmdlr.Point2D(solution[0], solution[1]))
-        
-        
-        # =============================================================================
-        # Solution 2 #
-        # =============================================================================
-        
-        # def f(x):
-        #     return (point3d - self.point2d_to_3d(
-        #         volmdlr.Point2D(x[0], x[1]))).norm()
-        
-        # cost = math.inf
-        # for x0 in [(0.5, 0.5), (0.25, 0.25), (0.75, 0.25), (0.25, 0.75), (0.75,0.25), (0, 0), (0, 1), (1, 0), (1, 1)]: 
-        #     z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-        #     if z.cost < cost:
-        #         cost = z.cost
-        #         sol = z.x
-        #     if cost < 1e-12:
-        #         # print(cost)
-        #         return (volmdlr.Point2D(sol[0], sol[1]))
-        # # print(cost, sol)
-        # if cost > 1e-4:
-        #     # print(cost)
-        #     raise ValueError ('Error > 1e-4')
-        # else:
-        #     return (volmdlr.Point2D(sol[0], sol[1]))
-            
-        # =============================================================================
-        # Solution 3 #
-        # =============================================================================   
-        
-        # def f(x):
-        #     return (point3d - self.point2d_to_3d(
-        #         volmdlr.Point2D(x[0], x[1]))).norm()
 
-        # x0 = (0.5, 0.5)
-        # res = scp.optimize.minimize(f, x0=x0, bounds=[(0, 1), (0, 1)],
-        #                             tol=1e-7)
-        
-        # return volmdlr.Point2D(res.x[0], res.x[1])
-        
-=======
     def point3d_to_2d(self, point3d: volmdlr.Point3D, min_bound_x: float = 0.,
                       max_bound_x: float = 1., min_bound_y: float = 0.,
                       max_bound_y: float = 1.):
@@ -2079,7 +1989,7 @@ class BSplineSurface3D(Surface3D):
         solution = sol[cost.index(min(cost))]
 
         return (volmdlr.Point2D(*solution))
->>>>>>> origin/dev
+
 
     def linesegment2d_to_3d(self, linesegment2d):
         # TODO: this is a non exact method!
@@ -2347,7 +2257,6 @@ class BSplineSurface3D(Surface3D):
         Based on: Pungotra et al. Merging multiple B-spline surface patches in a virtual reality environment. 2010
         Link: http://dx.doi.org/10.1016/j.cad.2010.05.006 
         '''
-<<<<<<< HEAD
         
         # #Bspline surface parameters
         # u=[] #knot vector u direction 
@@ -2509,167 +2418,6 @@ class BSplineSurface3D(Surface3D):
         #                                 v_knots=knots_v)
     
         # return merged_surface     
-=======
-
-        #Bspline surface parameters
-        u=[] #knot vector u direction
-        v=[] #knot vector v direction
-        degree=[] #degree u & v directions
-        r=[] #nbr points u direction
-        s=[] #nbr points v direction
-        A=[] #blending matrix
-
-        P=[] #control points
-        M=[] #discretized points (x,y,z)
-        M_point3d=[] #discretized points vlmdlr Point3D
-
-
-        steps=1000
-        surfaces_to_be_merged=[self,other_bspline_surface3d]
-        n=0
-        for surface in surfaces_to_be_merged:
-
-            u.append(surface.knots_vector_u())
-            v.append(surface.knots_vector_v())
-            degree.append([surface.degree_u,surface.degree_v])
-            r.append(surface.nb_u)
-            s.append(surface.nb_v)
-
-            # if surface == self:
-            #     # find u,v parameters for supperposition points for the 1st surface 
-            #     uv_supperposition_parameters = self.intersection_with(other_bspline_surface3d)
-            #     if (uv_supperposition_parameters[0][0][1]-uv_supperposition_parameters[0][0][0]) < (uv_supperposition_parameters[0][1][1]-uv_supperposition_parameters[0][1][0]):
-            #         if uv_supperposition_parameters[0][1][0] < (1-uv_supperposition_parameters[0][1][0]):
-            #             ux = npy.linspace(uv_supperposition_parameters[0][1][0] ,0.99,steps)
-            #         else:
-            #             ux = npy.linspace(0,uv_supperposition_parameters[0][1][0],steps)
-            #         vx = npy.linspace(0,0.99,steps)
-            #     else: 
-            #         ux = npy.linspace(0,0.99,steps)
-            #         if uv_supperposition_parameters[0][1][1] < (1-uv_supperposition_parameters[0][1][1]):
-            #             vx = npy.linspace(uv_supperposition_parameters[0][1][1] ,0.99,steps)
-            #         else:
-            #             vx = npy.linspace(0,uv_supperposition_parameters[0][1][0],steps)
-            # else: 
-            #     ux = npy.linspace(0,0.99,steps)
-            #     vx = npy.linspace(0,0.99,steps)
-
-            ux = npy.linspace(0,0.99,steps)
-            vx = npy.linspace(0,0.99,steps)
-
-            A.append([surface.blending_matrix_u(ux), surface.blending_matrix_v(vx)])
-            P.append([surface.control_points_matrix(0),
-                      surface.control_points_matrix(1),
-                      surface.control_points_matrix(2)])
-
-            #Discretize the Bspline surface
-            M.append([(A[n][0].dot(P[n][0])).dot(A[n][1].transpose()),
-                      (A[n][0].dot(P[n][1])).dot(A[n][1].transpose()),
-                      (A[n][0].dot(P[n][2])).dot(A[n][1].transpose())])
-            M_points =[]
-            for i in range(0, len(M[n][0])):
-                M_0 = []
-                for j in range(0, len(M[n][0][0])):
-                    M_0.append(volmdlr.Point3D(M[n][0][i][j], M[n][1][i][j], M[n][2][i][j]))
-                M_points.append(M_0)
-            M_point3d.append(M_points)
-            n=n+1
-
-        #Concatenate discretized points of the two surfaces
-        M_merge = []
-        if merging_direction == 'u':
-            M_merge.append(npy.concatenate((M[0][0],M[1][0]),axis=1))
-            M_merge.append(npy.concatenate((M[0][1],M[1][1]),axis=1))
-            M_merge.append(npy.concatenate((M[0][2],M[1][2]),axis=1))
-
-            #Determine the revised number of control points in u,v (r,s) directions
-            r_merged=max(r[0],r[1])
-            d=max(degree[0][0],degree[1][0]) - min(degree[0][0],degree[1][0])
-            s_merged=s[0]+s[1]-1 +d #d is added here to ajust the nbr of ctrl points if the degree of the two intial surfaces is not equal. here the maximum degree is kept
-
-        elif merging_direction == 'v':
-            M_merge.append(npy.concatenate((M[0][0],M[1][0]),axis=0))
-            M_merge.append(npy.concatenate((M[0][1],M[1][1]),axis=0))
-            M_merge.append(npy.concatenate((M[0][2],M[1][2]),axis=0))
-
-            M_merge[0]=M_merge[0].transpose()
-            M_merge[1]=M_merge[1].transpose()
-            M_merge[2]=M_merge[2].transpose()
-
-            #Determine the revised number of control points in u,v (r,s) directions
-            s_merged=max(s[0],s[1])
-            d=max(degree[0][1],degree[1][1]) - min(degree[0][1],degree[1][1])
-            r_merged=r[0]+r[1]-1 +d #d is added here to ajust the nbr of ctrl points if the degree of the two intial surfaces is not equal. here the maximum degree is kept
-
-        degree_merge_u = max(degree[0][0],degree[1][0])
-        degree_merge_v = max(degree[0][1],degree[1][1])
-
-        #Determine the new knot vectors
-        u_merged = geomdl.knotvector.generate(degree_merge_u, r_merged)
-        v_merged = geomdl.knotvector.generate(degree_merge_v, s_merged)
-
-        m=len(M_merge[0])
-        n=len(M_merge[0][0]) #M_merge = m*n
-
-
-        (u_knots,u_multiplicities) = knots_vector_inv(u_merged)
-        (v_knots,v_multiplicities) = knots_vector_inv(v_merged)
-
-        control_points=[volmdlr.Point3D(0,0,0)] * (s_merged*r_merged)
-        merged_surface = volmdlr.faces.BSplineSurface3D(degree_merge_u,
-                                                        degree_merge_v,
-                                                        control_points,
-                                                        r_merged,
-                                                        s_merged,
-                                                        u_multiplicities,
-                                                        v_multiplicities,
-                                                        u_knots,
-                                                        v_knots)
-
-        #Revise the blending matrices
-        ux = npy.linspace(0,0.99,m)
-        Au_merged = merged_surface.blending_matrix_u(ux)
-
-        vx = npy.linspace(0,0.99,n)
-        Av_merged = merged_surface.blending_matrix_v(vx)
-
-        #Determine the new control points
-        mat_u = npy.linalg.pinv((Au_merged.transpose()).dot(Au_merged))
-        mat_v = npy.linalg.pinv((Av_merged.transpose()).dot(Av_merged))
-
-        P_merged=[]
-
-        P_merged.append([(mat_u.dot((((Au_merged.transpose()).dot(M_merge[0])).dot(Av_merged)))).dot(mat_v)])
-        P_merged.append([(mat_u.dot((((Au_merged.transpose()).dot(M_merge[1])).dot(Av_merged)))).dot(mat_v)])
-        P_merged.append([(mat_u.dot((((Au_merged.transpose()).dot(M_merge[2])).dot(Av_merged)))).dot(mat_v)])
-
-        P_points =[] #new control points (x,y,z)
-        for i in range(0, len(P_merged[0][0])):
-            P_0 = []
-            for j in range(0, len(P_merged[0][0][1])):
-                P_0.append(volmdlr.Point3D(P_merged[0][0][i][j], P_merged[1][0][i][j], P_merged[2][0][i][j]))
-            P_points.append(P_0) #new control points vlmdlr Point3D
-
-        #Compute the merged surface
-        control_points = []
-        for i in range(0,len(P_points)):
-            for j in range(0,len(P_points[0])):
-                control_points.append(P_points[i][j])
-
-        knots_u, multiplicities_u = knots_vector_inv(u_merged)
-        knots_v, multiplicities_v = knots_vector_inv(v_merged)
-
-
-        merged_surface = volmdlr.faces.BSplineSurface3D(degree_u=degree_merge_u,
-                                        degree_v=degree_merge_v,
-                                        control_points=control_points,
-                                        nb_u=r_merged,
-                                        nb_v=s_merged,
-                                        u_multiplicities=multiplicities_u,
-                                        v_multiplicities=multiplicities_v,
-                                        u_knots=knots_u,
-                                        v_knots=knots_v)
->>>>>>> origin/dev
 
         return merged_surface
 
@@ -2831,12 +2579,8 @@ class BSplineSurface3D(Surface3D):
 
         #System of nonlinear equations
         def non_linear_equations(X):
-<<<<<<< HEAD
             F = npy.empty(len(equation_points)+2)              
-=======
 
-            F = npy.empty(len(equation_points)+points_x+1)              
->>>>>>> origin/dev
             for i in range(0, len(equation_points)):
                 F[i] = abs((X[index_x[equation_points[i][0]]]**2 + X[index_x[equation_points[i][1]]]**2 + X[index_y[equation_points[i][0]]]**2 + X[index_y[equation_points[i][1]]]**2 - 2*X[index_x[equation_points[i][0]]]*X[index_x[equation_points[i][1]]] -2*X[index_y[equation_points[i][0]]]*X[index_y[equation_points[i][1]]] - D[i]) / D[i]) 
                 
@@ -2894,7 +2638,6 @@ class BSplineSurface3D(Surface3D):
             displacement[i][1]=points_2d_deformed[i][1]-points_2d[i][1]
 
         return displacement
-<<<<<<< HEAD
     
     
     def point2d_parametric_to_dimension(self, point2d: volmdlr.Point3D, points_x, points_y, xmin, xmax, ymin, ymax):
@@ -2902,17 +2645,6 @@ class BSplineSurface3D(Surface3D):
         convert a point2d from the parametric to the dimensioned frame
         '''
         
-=======
-
-    def point3d_to_2d_with_dimension(self, point3d: volmdlr.Point3D, points_x, points_y, xmin, xmax, ymin, ymax):
-        '''
-        compute the point2d of a point3d, on a Bspline surface, in the dimensioned frame  
-        '''
-
-        point2d = self.point3d_to_2d(point3d)
-        # points_2d = volmdlr.Point2D.grid2d(points_x, points_y, xmin, xmax, ymin, ymax)
-
->>>>>>> origin/dev
         if (points_x, points_y, xmin, xmax, ymin, ymax) in self._grids2d:
             points_2d = self._grids2d[points_x, points_y, xmin, xmax, ymin, ymax]
         else:
@@ -2987,17 +2719,11 @@ class BSplineSurface3D(Surface3D):
 
         return volmdlr.Point2D(point2d.x + npy.transpose(N).dot(dx),  point2d.y + npy.transpose(N).dot(dy))
 
-<<<<<<< HEAD
     
     def point3d_to_2d_with_dimension(self, point3d: volmdlr.Point3D, points_x, points_y, xmin, xmax, ymin, ymax):
-=======
-    def edge3d_to_2d_with_dimension(self, edge3d, points_x, points_y):
-
->>>>>>> origin/dev
         '''
         compute the point2d of a point3d, on a Bspline surface, in the dimensioned frame  
         '''
-<<<<<<< HEAD
         
         point2d = self.point3d_to_2d(point3d) 
         
@@ -3011,41 +2737,6 @@ class BSplineSurface3D(Surface3D):
         convert a point2d from the dimensioned to the parametric frame
         '''
                                                                              
-=======
-        for edge3d in edges3d:
-            edge3d = volmdlr.edges.LineSegment2D(self.point3d_to_2d_with_dimension(edge3d.start, points_x, points_y, 0,1,0,1),
-                                                 self.point3d_to_2d_with_dimension(edge3d.end, points_x, points_y, 0,1,0,1))
-        return edges3d
-
-
-
-    def contour3d_to_2d_with_dimension(self, contour3d:volmdlr.wires.Contour3D, points_x, points_y):
-
-        contour2d = self.contour3d_to_2d(contour3d)
-        xmin = contour2d.bounding_rectangle()[0]
-        xmax = contour2d.bounding_rectangle()[1]
-        ymin = contour2d.bounding_rectangle()[2]
-        ymax = contour2d.bounding_rectangle()[3]
-
-        new_start_points = []
-        for i in range(0,len(contour3d.primitives)):
-            point3d = contour3d.primitives[i].start
-            new_start_points.append(self.point3d_to_2d_with_dimension(point3d, points_x, points_y, xmin, xmax, ymin, ymax))
-            if type(contour3d.primitives[i]) == volmdlr.edges.Arc3D:
-                point3d = contour3d.primitives[i].interior
-                new_start_points.append(self.point3d_to_2d_with_dimension(point3d, points_x, points_y, xmin, xmax, ymin, ymax))
-
-        edges = []
-        for i in range(0,len(new_start_points)-1):
-            edges.append(volmdlr.edges.LineSegment2D(new_start_points[i], new_start_points[i+1]))
-        edges.append(volmdlr.edges.LineSegment2D(new_start_points[-1], new_start_points[0]))
-        contour2d = volmdlr.wires.Contour2D.contours_from_edges(edges)
-
-        return contour2d[0]
-
-    def point2d_with_dimension_to_3d(self, point2d, points_x, points_y, xmin, xmax, ymin, ymax):
-
->>>>>>> origin/dev
         if (points_x, points_y, xmin, xmax, ymin, ymax) in self._grids2d:
             points_2d = self._grids2d[points_x, points_y, xmin, xmax, ymin, ymax]
         else:
@@ -3127,19 +2818,11 @@ class BSplineSurface3D(Surface3D):
             Y=0
         elif Y>1:
             Y=1
-<<<<<<< HEAD
         
         return volmdlr.Point2D(X,Y) 
         
     
     def point2d_with_dimension_to_3d(self, point2d, points_x, points_y, xmin, xmax, ymin, ymax):
-=======
-
-        return self.point2d_to_3d(volmdlr.Point2D(X,Y))
-
-
-    def contour2d_with_dimension_to_3d(self, contour2d):
->>>>>>> origin/dev
         '''
         compute the point3d, on a Bspline surface, of a point2d define in the dimensioned frame
         '''
@@ -3153,7 +2836,6 @@ class BSplineSurface3D(Surface3D):
         ''' 
         convert a contour2d from the parametric to the dimensioned frame
         '''
-<<<<<<< HEAD
         
         xmin, xmax, ymin, ymax = 0, 1, 0, 1
         point2d_dim = []
@@ -3237,27 +2919,8 @@ class BSplineSurface3D(Surface3D):
                               v_knots=v_knots)
 
         return bspline_surface
-    
-    
-=======
 
-        for cle in self._grids2d.keys():
-            [points_x, points_y, xmin, xmax, ymin, ymax] = cle
 
-        new_start_points = []
-        for i in range(0,len(contour2d.primitives)):
-            point2d = contour2d.primitives[i].start
-            new_start_points.append(self.point2d_with_dimension_to_3d(point2d, points_x, points_y, xmin, xmax, ymin, ymax))
-
-        edges = []
-        for i in range(0,len(new_start_points)-1):
-            edges.append(volmdlr.edges.LineSegment3D(new_start_points[i], new_start_points[i+1]))
-
-        edges.append(volmdlr.edges.LineSegment3D(new_start_points[-1], new_start_points[0]))
-
-        return volmdlr.wires.Contour3D(edges)
-
->>>>>>> origin/dev
     @classmethod
     def points_fitting_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v):
         '''
@@ -3289,7 +2952,6 @@ class BSplineSurface3D(Surface3D):
         surface=geomdl.fitting.interpolate_surface(points,size_u,size_v,degree_u,degree_v)
     
         return volmdlr.faces.BSplineSurface3D.from_geomdl_surface(surface)   
-<<<<<<< HEAD
     
     
     @classmethod
@@ -3323,9 +2985,6 @@ class BSplineSurface3D(Surface3D):
         # Keyword arguments
         num_cpts_u = kwargs.get('ctrlpts_size_u', size_u - 1)  # number of datapts, r + 1 > number of ctrlpts, n + 1
         num_cpts_v = kwargs.get('ctrlpts_size_v', size_v - 1)  # number of datapts, s + 1 > number of ctrlpts, m + 1
-=======
-
->>>>>>> origin/dev
 
         points=[]
         for i in range(0,len(points_3d)):
@@ -3509,12 +3168,8 @@ class BSplineSurface3D(Surface3D):
         
         # return (u,v)
         return intersection_points
-<<<<<<< HEAD
-    
-    
-=======
 
->>>>>>> origin/dev
+
     def error_with_point3d(self, point3d):
         '''
         compute the error/distance between the Bspline surface and a point3d
@@ -3530,12 +3185,8 @@ class BSplineSurface3D(Surface3D):
             cost.append(z.cost)
 
         return min(cost)
-<<<<<<< HEAD
-    
-    
-=======
 
->>>>>>> origin/dev
+
     def error_with_edge3d(self, edge3d):
         ''' 
         compute the error/distance between the Bspline surface and an edge3d
@@ -3560,40 +3211,18 @@ class BSplineSurface3D(Surface3D):
             nearest_primitives.append(volmdlr.wires.Wire3D(nearest))
 
         return nearest_primitives
-<<<<<<< HEAD
-      
-=======
 
-
-    def wire3d_to_2d(self, wires3d):
-        ''' 
->>>>>>> origin/dev
         
     def edge3d_to_2d_with_dimension(self, edge3d, points_x, points_y):
         '''
         compute the edge2d of a edge3d, on a Bspline surface, in the dimensioned frame  
         '''
 
-<<<<<<< HEAD
         return volmdlr.edges.LineSegment2D(self.point3d_to_2d_with_dimension(edge3d.start, points_x, points_y, 0,1,0,1),
                                            self.point3d_to_2d_with_dimension(edge3d.end, points_x, points_y, 0,1,0,1))
     
     
     def wire3d_to_2d(self, wire3d):
-=======
-        wires2d = []
-        for wire3d in wires3d:
-            edges2d = []
-            for edge in wire3d.primitives:
-                edges2d.append(volmdlr.edges.LineSegment2D(self.point3d_to_2d(edge.start),
-                                                           self.point3d_to_2d(edge.end)))
-            wires2d.append(volmdlr.wires.Wire2D(edges2d))
-
-        return wires2d
-
-
-    def wire3d_to_2d_with_dimension(self, wires3d):
->>>>>>> origin/dev
         ''' 
         compute the 2d of a wire3d, on a Bspline surface
         '''
@@ -3613,38 +3242,17 @@ class BSplineSurface3D(Surface3D):
 
         for cle in self._grids2d.keys():
             [points_x, points_y, xmin, xmax, ymin, ymax] = cle
-<<<<<<< HEAD
         
         edges2d = []
         for edge in wire3d.primitives:
             edges2d.append(volmdlr.edges.LineSegment2D(self.point3d_to_2d_with_dimension(edge.start, points_x, points_y, xmin, xmax, ymin, ymax),
                                                       self.point3d_to_2d_with_dimension(edge.end, points_x, points_y, xmin, xmax, ymin, ymax)))
-=======
-
-        wires2d = []
-        for wire3d in wires3d:
-            wire2d = []
-            for edge in wire3d.primitives:
-                wire2d.append(volmdlr.edges.LineSegment2D(self.point3d_to_2d_with_dimension(edge.start, points_x, points_y, xmin, xmax, ymin, ymax),
-                                                          self.point3d_to_2d_with_dimension(edge.end, points_x, points_y, xmin, xmax, ymin, ymax)))
-            wires2d.append(volmdlr.wires.Wire2D(wire2d))
-
-        return wires2d
-
-
-    def intersection_with(self, other_bspline_surface3d):
-        '''
-        compute intersection points between two Bspline surfaces 
-        return u,v parameters for intersection points for both surfaces
-        [[u1_min,u1_max],[v1_min,v1_max]] & [[u2_min,u2_max],[v2_min,v2_max]]
->>>>>>> origin/dev
         
         return volmdlr.wires.Wire2D(edges2d)
 
  
     def split_surface_u(self, u: float):
         '''
-<<<<<<< HEAD
         split the surface at the input parametric coordinate on the u-direction
 
         Parameters
@@ -3658,117 +3266,16 @@ class BSplineSurface3D(Surface3D):
             Two splitted surfaces
 
         '''
-=======
-
-        def f(X):
-            return (self.point2d_to_3d(volmdlr.Point2D(X[0],X[1])) - other_bspline_surface3d.point2d_to_3d(volmdlr.Point2D(X[2],X[3]))).norm()
-
-        x = npy.linspace(0,1,10)
-        x_init=[]
-        for xi in x:
-            for yi in x:
-                x_init.append((xi,yi, xi, yi))
-                x_init.append((xi,yi, yi, xi))
-
-        u1, v1, u2, v2 = [], [], [], []
-
-        for x0 in x_init:
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            # print(z.cost)
-            if z.cost<1e-5:
-                solution = z.x
-                u1.append(solution[0])
-                v1.append(solution[1])
-                u2.append(solution[2])
-                v2.append(solution[3])
-
-
-        uv1 = [[min(u1),max(u1)],[min(v1),max(v1)]]
-        uv2 = [[min(u2),max(u2)],[min(v2),max(v2)]]
-
-        return (uv1, uv2)
-
-    @classmethod
-    def from_adjacent_bspline_surfaces(cls, surfaces, degree_u, degree_v):
-        '''  '''
-
-        points_x, points_y  = 50, 50
-
-        if len(surfaces) == 1:
-
-            points_3d = surfaces[0].grid3d(points_x, points_y, 0, 1, 0, 1)
-
-            return volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(points_3d,points_x,points_x,degree_u,degree_v)
-
-        elif len(surfaces) > 1:
-            points_3d = []
-            for surface in surfaces:
-                xmin, xmax, ymin, ymax = 0, 1, 0, 1
-                points_3d.append(surface.grid3d(points_x, points_y, xmin, xmax, ymin, ymax))
-
-            points_3d_ordred = []
-            if points_3d[0][points_x-1].point_distance(points_3d[0][points_x]) < points_3d[0][points_x-1].point_distance(points_3d[1][0]):
-                for i in range(0,len(faces)):
-                    points_3d_ordred.extend(points_3d[i])
-            else:
-                for j in range(0,len(points_3d[0]),points_x):
-                    for i in range(0,len(faces)):
-                        points_3d_ordred.extend(points_3d[i][j:j+points_x])
-
-    @classmethod
-    def from_geomdl_surface(cls, surface):
-        u_knots = list(sorted(set(surface.knotvector_u)))
-        v_knots = list(sorted(set(surface.knotvector_v)))
-        u_multiplicities = [surface.knotvector_u.count(k) for k in u_knots]
-        v_multiplicities = [surface.knotvector_v.count(k) for k in v_knots]
-        crtl_points = [volmdlr.Point3D(*p) for p in surface.ctrlpts]
-        return cls(surface.degree_u, surface.degree_v,
-                   crtl_points, surface.ctrlpts_size_u, surface.ctrlpts_size_v,
-                     u_multiplicities, v_multiplicities, u_knots, v_knots,
-                     weights=None, name='')
-
-    @classmethod
-    def from_pointgrid(cls, grid:List[volmdlr.Point3D], size_u:int, size_v:int, degree_u:int, degree_v:int):
-        grid_geomdl = [(p.x, p.y, p.z) for p in grid]
-        geomdl_surface = interpolate_surface(grid_geomdl, size_u, size_v, degree_u, degree_v)
-        return cls.from_geomdl_surface(geomdl_surface)
-        
-        
-        return cls.points_fitting_into_bspline_surface(points_3d_ordred,points_x,points_x*len(faces),degree_u,degree_v)
-    
-    @classmethod 
-    def from_geomdl_surface(cls, surface):
->>>>>>> origin/dev
         
         surfaces_geo = geomdl.operations.split_surface_u(self.surface, u)
         surfaces = []
         for s in surfaces_geo:
             surfaces.append(volmdlr.faces.BSplineSurface3D.from_geomdl_surface(s))
         
-<<<<<<< HEAD
         return surfaces
     
     
     def split_surface_v(self, v: float):
-=======
-        (u_knots,u_multiplicities) = knots_vector_inv((surface.knotvector_u))
-        (v_knots,v_multiplicities) = knots_vector_inv((surface.knotvector_v))
-    
-        bspline_surface = cls(degree_u=surface.degree_u,
-                              degree_v=surface.degree_v,
-                              control_points=control_points,
-                              nb_u=surface.ctrlpts_size_u,
-                              nb_v=surface.ctrlpts_size_v,
-                              u_multiplicities=u_multiplicities,
-                              v_multiplicities=v_multiplicities,
-                              u_knots=u_knots,
-                              v_knots=v_knots)
-
-        return bspline_surface
-
-    @classmethod
-    def points_approximate_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v, **kwargs):
->>>>>>> origin/dev
         '''
         split the surface at the input parametric coordinate on the v-direction
 
@@ -3779,7 +3286,6 @@ class BSplineSurface3D(Surface3D):
 
         Returns
         -------
-<<<<<<< HEAD
         surfaces : list
             Two splitted surfaces
 
@@ -3871,35 +3377,6 @@ class BSplineSurface3D(Surface3D):
         return surfaces
         
 
-=======
-        B-spline surface
-    
-        ''' 
-        # Keyword arguments
-        num_cpts_u = kwargs.get('ctrlpts_size_u', size_u - 1)  # number of datapts, r + 1 > number of ctrlpts, n + 1
-        num_cpts_v = kwargs.get('ctrlpts_size_v', size_v - 1)  # number of datapts, s + 1 > number of ctrlpts, m + 1
-
-        points=[]
-        for i in range(0,len(points_3d)):
-            points.append((points_3d[i].x,points_3d[i].y,points_3d[i].z))
-        
-        surface = geomdl.fitting.approximate_surface(points, size_u, size_v, degree_u, degree_v, ctrlpts_size_u = num_cpts_u, num_cpts_v = num_cpts_v)
-
-        return volmdlr.faces.BSplineSurface3D.from_geomdl_surface(surface) 
-
-
-    def normal_from_point2d(self, point2d):
-        """ 
-        evaluates the normal vector of the bspline surface at the input
-        parameter values (u,v).
-        return: a tuple containing "point" and "vector" pairs
-        """
-        
-        return geomdl.operations.normal(self.surface, params=(point2d.x,
-                                                              point2d.y))
-    
-     
->>>>>>> origin/dev
 class BezierSurface3D(BSplineSurface3D):
 
     def __init__(self, degree_u: int, degree_v: int,
@@ -5878,7 +5355,6 @@ class BSplineFace3D(Face3D):
                                       volmdlr.Point2D(v_max, v)))
         return lines_x, lines_y
 
-<<<<<<< HEAD
     
     def pair_with(self, other_bspline_face3d):
         '''
@@ -6105,8 +5581,6 @@ class BSplineFace3D(Face3D):
                 
         return merged_surface
 
-=======
->>>>>>> origin/dev
 
 class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     _standalone_in_db = True
