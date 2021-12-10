@@ -2554,37 +2554,6 @@ class BSplineSurface3D(Surface3D):
         return point2d_with_dimension
     
     
-    def edge3d_to_2d_with_dimension(self, edge3d, points_x, points_y):
-        '''
-        compute the edge2d of a edge3d, on a Bspline surface, in the dimensioned frame  
-        '''
-
-        return volmdlr.edges.LineSegment2D(self.point3d_to_2d_with_dimension(edge3d.start, points_x, points_y, 0,1,0,1),
-                                           self.point3d_to_2d_with_dimension(edge3d.end, points_x, points_y, 0,1,0,1))
-
-    def contour2d_parametric_to_dimension(self, contour2d:volmdlr.wires.Contour2D, points_x, points_y):
-        ''' 
-        convert a contour2d from the parametric to the dimensioned frame
-        '''
-        
-        xmin, xmax, ymin, ymax = 0, 1, 0, 1
-        point2d_dim = []
-        for primitive in contour2d.primitives:
-            point2d_dim.append(self.point2d_parametric_to_dimension(primitive.start, points_x, points_y, xmin, xmax, ymin, ymax))
-            if type(primitive) == volmdlr.edges.Arc2D:
-                point2d_dim.append(self.point2d_parametric_to_dimension(primitive.interior, points_x, points_y, xmin, xmax, ymin, ymax))
-        
-        return volmdlr.wires.Contour2D.from_points(point2d_dim)
-        
-    def contour3d_to_2d_with_dimension(self, contour3d:volmdlr.wires.Contour3D, points_x, points_y): 
-        '''
-        compute the contou2d of a contour3d, on a Bspline surface, in the dimensioned frame  
-        '''
-        
-        contour2d_01 = self.contour3d_to_2d(contour3d)
-        
-        return self.contour2d_parametric_to_dimension(contour2d_01, points_x, points_y)
-                   
     def point2d_with_dimension_to_parametric_frame(self, point2d, points_x, points_y, xmin, xmax, ymin, ymax):
         ''' 
         convert a point2d from the dimensioned to the parametric frame
@@ -2683,6 +2652,31 @@ class BSplineSurface3D(Surface3D):
         
         return self.point2d_to_3d(point2d_01)
     
+
+    def contour2d_parametric_to_dimension(self, contour2d:volmdlr.wires.Contour2D, points_x, points_y):
+        ''' 
+        convert a contour2d from the parametric to the dimensioned frame
+        '''
+        
+        xmin, xmax, ymin, ymax = 0, 1, 0, 1
+        point2d_dim = []
+        for primitive in contour2d.primitives:
+            point2d_dim.append(self.point2d_parametric_to_dimension(primitive.start, points_x, points_y, xmin, xmax, ymin, ymax))
+            if type(primitive) == volmdlr.edges.Arc2D:
+                point2d_dim.append(self.point2d_parametric_to_dimension(primitive.interior, points_x, points_y, xmin, xmax, ymin, ymax))
+        
+        return volmdlr.wires.Contour2D.from_points(point2d_dim)
+        
+    def contour3d_to_2d_with_dimension(self, contour3d:volmdlr.wires.Contour3D, points_x, points_y): 
+        '''
+        compute the contou2d of a contour3d, on a Bspline surface, in the dimensioned frame  
+        '''
+        
+        contour2d_01 = self.contour3d_to_2d(contour3d)
+        
+        return self.contour2d_parametric_to_dimension(contour2d_01, points_x, points_y)
+                   
+
     def contour2d_with_dimension_to_parametric_frame(self, contour2d):
         ''' 
         convert a contour2d from the dimensioned to the parametric frame
@@ -2720,8 +2714,18 @@ class BSplineSurface3D(Surface3D):
    
         return self.contour2d_to_3d(contour01)
         
+    
+    def edge3d_to_2d_with_dimension(self, edge3d, points_x, points_y):
+        '''
+        compute the edge2d of a edge3d, on a Bspline surface, in the dimensioned frame  
+        '''
+
+        return volmdlr.edges.LineSegment2D(self.point3d_to_2d_with_dimension(edge3d.start, points_x, points_y, 0,1,0,1),
+                                           self.point3d_to_2d_with_dimension(edge3d.end, points_x, points_y, 0,1,0,1))
+    
+    
     @classmethod
-    def points_fitting_into_bspline_surface(cls, points_3d, size_u,size_v,degree_u,degree_v):
+    def points_fitting_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v):
         '''
         Bspline Surface interpolation through 3d points
         
