@@ -165,13 +165,6 @@ class Wire:
         return self.extract_primitives(point1, split_primitives[0], point2, split_primitives[1], inside)
 
 
-    def to_bspline(self, discretization_parameter, degree):
-        
-        discretized_points = self.discretization_points(discretization_parameter)  
-        bspline_curve = volmdlr.edges.BSplineCurve3D.from_points_interpolation(discretized_points, degree)
-        
-        return bspline_curve 
-    
     def point_belongs(self, point):
         '''
         find out if a point is on the wire or not. If it belongs, we return the primitive's index
@@ -634,6 +627,15 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
         return faces
     
     
+    def to_bspline(self, discretization_parameter, degree):
+        '''
+        convert a wire3d to a bspline curve3d 
+        '''
+        
+        discretized_points = self.discretization_points(discretization_parameter)  
+        bspline_curve = volmdlr.edges.BSplineCurve3D.from_points_interpolation(discretized_points, degree)
+        
+        return bspline_curve
 
     # def copy(self):
     #     primitives_copy = []
