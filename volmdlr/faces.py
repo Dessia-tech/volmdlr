@@ -34,6 +34,7 @@ def knots_vector_inv(knots_vector):
     '''
     
     knots = list(set(knots_vector))
+    knots.sort()
     multiplicities = []
     for knot in knots:
         multiplicities.append(knots_vector.count(knot))
