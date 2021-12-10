@@ -2756,25 +2756,6 @@ class BSplineSurface3D(Surface3D):
     
         return volmdlr.faces.BSplineSurface3D.from_geomdl_surface(surface)   
     
-        # control_points=[]
-        # for i in range(0,len(surface.ctrlpts)):
-        #     control_points.append(volmdlr.Point3D(surface.ctrlpts[i][0],surface.ctrlpts[i][1],surface.ctrlpts[i][2]))
-        
-        # (u_knots,u_multiplicities) = knots_vector_inv((surface.knotvector_u))
-        # (v_knots,v_multiplicities) = knots_vector_inv((surface.knotvector_v))
-    
-        # bspline_surface = cls(degree_u=surface.degree_u,
-        #                       degree_v=surface.degree_v,
-        #                       control_points=control_points,
-        #                       nb_u=surface.ctrlpts_size_u,
-        #                       nb_v=surface.ctrlpts_size_v,
-        #                       u_multiplicities=u_multiplicities,
-        #                       v_multiplicities=v_multiplicities,
-        #                       u_knots=u_knots,
-        #                       v_knots=v_knots)
-        
-        # return bspline_surface 
-    
 
     @classmethod
     def from_cylindrical_surfaces(cls, faces, degree_u,degree_v, direction):
