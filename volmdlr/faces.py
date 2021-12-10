@@ -2724,6 +2724,32 @@ class BSplineSurface3D(Surface3D):
                                            self.point3d_to_2d_with_dimension(edge3d.end, points_x, points_y, 0,1,0,1))
     
     
+    @classmethod 
+    def from_geomdl_surface(cls, surface):
+        ''' 
+        create a volmdlr's BSpline_Surface3D from a geomdl's one 
+        '''
+        
+        control_points=[]
+        for i in range(0,len(surface.ctrlpts)):
+            control_points.append(volmdlr.Point3D(surface.ctrlpts[i][0],surface.ctrlpts[i][1],surface.ctrlpts[i][2]))
+        
+        (u_knots,u_multiplicities) = knots_vector_inv((surface.knotvector_u))
+        (v_knots,v_multiplicities) = knots_vector_inv((surface.knotvector_v))
+    
+        bspline_surface = cls(degree_u=surface.degree_u,
+                              degree_v=surface.degree_v,
+                              control_points=control_points,
+                              nb_u=surface.ctrlpts_size_u,
+                              nb_v=surface.ctrlpts_size_v,
+                              u_multiplicities=u_multiplicities,
+                              v_multiplicities=v_multiplicities,
+                              u_knots=u_knots,
+                              v_knots=v_knots)
+
+        return bspline_surface
+    
+    
     @classmethod
     def points_fitting_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v):
         '''
@@ -2755,6 +2781,47 @@ class BSplineSurface3D(Surface3D):
         surface=geomdl.fitting.interpolate_surface(points,size_u,size_v,degree_u,degree_v)
     
         return volmdlr.faces.BSplineSurface3D.from_geomdl_surface(surface)   
+    
+    
+    @classmethod
+    def points_approximate_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v, **kwargs):
+        '''
+        Bspline Surface approximate through 3d points
+        
+        Parameters
+        ----------
+        points_3d : volmdlr.Point3D
+            data points 
+        size_u : int
+            number of data points on the u-direction.
+        size_v : int
+            number of data points on the v-direction.
+        degree_u : int
+            degree of the output surface for the u-direction.
+        degree_v : int
+            degree of the output surface for the v-direction.
+            
+        Keyword Arguments:
+            * ``ctrlpts_size_u``: number of control points on the u-direction. *Default: size_u - 1*
+            * ``ctrlpts_size_v``: number of control points on the v-direction. *Default: size_v - 1*
+    
+        Returns
+        -------
+        B-spline surface: volmdlr.faces.BSplineSurface3D
+    
+        ''' 
+        
+        # Keyword arguments
+        num_cpts_u = kwargs.get('ctrlpts_size_u', size_u - 1)  # number of datapts, r + 1 > number of ctrlpts, n + 1
+        num_cpts_v = kwargs.get('ctrlpts_size_v', size_v - 1)  # number of datapts, s + 1 > number of ctrlpts, m + 1
+
+        points=[]
+        for i in range(0,len(points_3d)):
+            points.append((points_3d[i].x,points_3d[i].y,points_3d[i].z))
+        
+        surface = geomdl.fitting.approximate_surface(points, size_u, size_v, degree_u, degree_v, ctrlpts_size_u = num_cpts_u, num_cpts_v = num_cpts_v)
+
+        return volmdlr.faces.BSplineSurface3D.from_geomdl_surface(surface) 
     
     
     @classmethod
@@ -3000,71 +3067,10 @@ class BSplineSurface3D(Surface3D):
             
         return ((u1,v1), (u2,v2)) #(uv1, uv2) # 
     
-    @classmethod 
-    def from_geomdl_surface(cls, surface):
-        ''' 
-        create a volmdlr's BSpline_Surface3D from a geomdl's one 
-        '''
-        
-        control_points=[]
-        for i in range(0,len(surface.ctrlpts)):
-            control_points.append(volmdlr.Point3D(surface.ctrlpts[i][0],surface.ctrlpts[i][1],surface.ctrlpts[i][2]))
-        
-        (u_knots,u_multiplicities) = knots_vector_inv((surface.knotvector_u))
-        (v_knots,v_multiplicities) = knots_vector_inv((surface.knotvector_v))
-    
-        bspline_surface = cls(degree_u=surface.degree_u,
-                              degree_v=surface.degree_v,
-                              control_points=control_points,
-                              nb_u=surface.ctrlpts_size_u,
-                              nb_v=surface.ctrlpts_size_v,
-                              u_multiplicities=u_multiplicities,
-                              v_multiplicities=v_multiplicities,
-                              u_knots=u_knots,
-                              v_knots=v_knots)
 
-        return bspline_surface
     
     
-    @classmethod
-    def points_approximate_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v, **kwargs):
-        '''
-        Bspline Surface approximate through 3d points
-        
-        Parameters
-        ----------
-        points_3d : volmdlr.Point3D
-            data points 
-        size_u : int
-            number of data points on the u-direction.
-        size_v : int
-            number of data points on the v-direction.
-        degree_u : int
-            degree of the output surface for the u-direction.
-        degree_v : int
-            degree of the output surface for the v-direction.
-            
-        Keyword Arguments:
-            * ``ctrlpts_size_u``: number of control points on the u-direction. *Default: size_u - 1*
-            * ``ctrlpts_size_v``: number of control points on the v-direction. *Default: size_v - 1*
-    
-        Returns
-        -------
-        B-spline surface: volmdlr.faces.BSplineSurface3D
-    
-        ''' 
-        
-        # Keyword arguments
-        num_cpts_u = kwargs.get('ctrlpts_size_u', size_u - 1)  # number of datapts, r + 1 > number of ctrlpts, n + 1
-        num_cpts_v = kwargs.get('ctrlpts_size_v', size_v - 1)  # number of datapts, s + 1 > number of ctrlpts, m + 1
 
-        points=[]
-        for i in range(0,len(points_3d)):
-            points.append((points_3d[i].x,points_3d[i].y,points_3d[i].z))
-        
-        surface = geomdl.fitting.approximate_surface(points, size_u, size_v, degree_u, degree_v, ctrlpts_size_u = num_cpts_u, num_cpts_v = num_cpts_v)
-
-        return volmdlr.faces.BSplineSurface3D.from_geomdl_surface(surface) 
 
  
     def split_surface_u(self, u: float):
