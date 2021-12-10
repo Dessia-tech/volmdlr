@@ -2756,7 +2756,7 @@ class BSplineSurface3D(Surface3D):
     
         return volmdlr.faces.BSplineSurface3D.from_geomdl_surface(surface)   
     
-
+    
     @classmethod
     def from_cylindrical_surfaces(cls, faces, degree_u,degree_v, direction):
         ''' faces: List[volmdlr.faces.CylindricalFace3D] '''
@@ -2824,7 +2824,37 @@ class BSplineSurface3D(Surface3D):
                             
                 return cls.points_fitting_into_bspline_surface(points_3d_ordred,points_x*len(faces),points_x,degree_u,degree_v)    
 
-
+    
+    @classmethod
+    def from_cylindrical_face(cls, cylindrical_face, degree_u, degree_v):
+        ''' 
+        define a bspline surface from a cylindrical face
+        
+        Parameters
+        ----------
+        cylindrical_face : volmdlr.faces.CylindricalFace3D
+            face 3d
+        degree_u : int
+            degree of the output surface for the u-direction.
+        degree_v : int
+            degree of the output surface for the v-direction.
+    
+        Returns
+        -------
+        B-spline surface
+        
+        '''
+        
+        points_x, points_y  = 50, 50
+        points_3d = cylindrical_face.surface3d.grid3d(points_x, points_y, 
+                                                      cylindrical_face.surface2d.outer_contour.bounding_rectangle()[0],
+                                                      cylindrical_face.surface2d.outer_contour.bounding_rectangle()[1],
+                                                      cylindrical_face.surface2d.outer_contour.bounding_rectangle()[2],
+                                                      cylindrical_face.surface2d.outer_contour.bounding_rectangle()[3])
+            
+        return volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(points_3d,points_x,points_x,degree_u,degree_v)    
+        
+    
     def plane_intersection(self, plane3d):
         '''
         compute intersection points between a Bspline surface and a plane3d
