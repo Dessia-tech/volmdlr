@@ -2943,8 +2943,8 @@ class BSplineSurface3D(Surface3D):
         # x_init = volmdlr.Point2D.grid2d(20, 20, 0, 1, 0, 1)
                 
         intersection_points = []
-        solutions = []
-        u, v =[],  []
+        # solutions = []
+        # u, v =[],  []
         
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
