@@ -710,12 +710,12 @@ class BoxesWrap(GiftWrap):
                                                                   contour, [], propagation_step * propagation_dir))
 
         primitive_merge = primitives[0]
-        for i, s in enumerate(primitives[1:]):
-            print(i)
-            output = primitive_merge.union(s, tol=1e-6)
-            print('number volume', len(output))
-            primitive_merge = output[0]
-        return primitive_merge
+        # for i, s in enumerate(primitives[1:]):
+        #     print(i)
+        #     output = primitive_merge.union(s, tol=1e-6)
+        #     print('number volume', len(output))
+        #     primitive_merge = output[0]
+        return primitive_merge, primitives
 
     def _define_order_edges(self, graph, polygons):
         all_edges = []
