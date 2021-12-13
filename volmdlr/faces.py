@@ -4041,64 +4041,34 @@ class Triangle3D(PlaneFace3D):
         
         t_poly2d = volmdlr.wires.ClosedPolygon2D(pts2d)
 
-        xmin, xmax = min(pt.x for pt in pts2d), max(pt.x for pt in pts2d)
-        ymin, ymax = min(pt.y for pt in pts2d), max(pt.y for pt in pts2d)
+        sub_triangles2d = [t_poly2d]
+        for k in range(0, 10):
+            triangles2d = []
+            for t, subtri in enumerate(sub_triangles2d) :
+                ls_length = [ls.length() for ls in subtri.line_segments]
+                ls_max = max(ls_length)
+                
+                if ls_max>resolution:
+                    pos_ls_max = ls_length.index(ls_max)
+                    taller = subtri.line_segments[pos_ls_max]
+                    p1, p2 = taller.start, taller.end
+                    p3 = list(set(subtri.points) - set([p1, p2]))[0]
+                    
+                    pt_mid = (p1 + p2)/2
+                    new_triangles2d = [volmdlr.wires.ClosedPolygon2D([p1, pt_mid, p3]),
+                                       volmdlr.wires.ClosedPolygon2D([p2, pt_mid, p3])]
 
-        nx, ny = int(((xmax-xmin)/resolution)+2), int(((ymax-ymin)/resolution)+2)
-        points_box = []
-        for i in range(nx) :
-            x = xmin + i*resolution
-            if x > xmax :
-                x=xmax
-            for j in range(ny) :
-                y = ymin + j*resolution
-                if y > ymax :
-                    y=ymax
-                points_box.append(volmdlr.Point2D(x,y))
+                    triangles2d.extend(new_triangles2d)
+                else :
+                    triangles2d.append(subtri)
+             
+            if len(sub_triangles2d) == len(triangles2d):
+                break
+            sub_triangles2d = triangles2d
 
-        triangles2d = [t_poly2d.copy()]
-        
-        for pt in points_box :
-            if pt in pts2d :
-                next
-            
-            elif t_poly2d.point_belongs(pt) or t_poly2d.point_over_contour(pt):
-                for t , tri in enumerate(triangles2d) :
-                    create = False
-                    for ls in tri.line_segments :
-                        if ls.point_belongs(pt):
-                            p1, p2 = ls.start, ls.end
-                            p3 = list(set(tri.points) - set([p1, p2]))[0]
-                            new_triangles2d = [volmdlr.wires.ClosedPolygon2D([p1, pt, p3]),
-                                               volmdlr.wires.ClosedPolygon2D([p2, pt, p3])]
-                            del triangles2d[t]
-                            triangles2d.extend(new_triangles2d)
-                            create = True
-                            break
-                    if create :
-                        break
-                    else :
-                        if tri.point_belongs(pt) :
-                            p1, p2, p3 = tri.points
-                            new_triangles2d = [volmdlr.wires.ClosedPolygon2D([p1, pt, p3]),
-                                               volmdlr.wires.ClosedPolygon2D([p2, pt, p3]),
-                                               volmdlr.wires.ClosedPolygon2D([p2, pt, p1])]
-                            del triangles2d[t]
-                            triangles2d.extend(new_triangles2d)
-                            break
-        
         triangles3d = [Triangle3D(tri.points[0].to_3d(frame.origin, frame.u, frame.v),
                                   tri.points[1].to_3d(frame.origin, frame.u, frame.v),
-                                  tri.points[2].to_3d(frame.origin, frame.u, frame.v)) for tri in triangles2d]
-        
-        # ax1 = t_poly2d.plot()
-        # ax2 = t_poly2d.plot()
-        # for tri in triangles2d :
-        #     tri.plot(ax=ax2, color='b')
-        #     for pt in tri.points :
-        #         pt.plot(ax=ax1, color='r')
-        #         pt.plot(ax=ax2, color='r')
-                
+                                  tri.points[2].to_3d(frame.origin, frame.u, frame.v)) for tri in sub_triangles2d]
         
         return triangles3d
 

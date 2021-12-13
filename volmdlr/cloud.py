@@ -221,7 +221,6 @@ class PointCloud3D(dc.DessiaObject):
         
         new_position_plane = [origin_f-offset] + positions_plane[1:-1] + [origin_l+offset]
         # new_position_plane = [origin_f-offset] + positions_plane + [origin_l+offset]
-        
         polyconvexe = [vmw.ClosedPolygon2D.points_convex_hull(poly.points) for poly in polygons2D]
         # for poly, polyc in zip(polygons2D, polyconvexe):
         #     ax = poly.plot()
@@ -229,9 +228,6 @@ class PointCloud3D(dc.DessiaObject):
         
         # new_poly = [poly.offset(offset) for poly in polygons2D]
         new_poly = [poly.offset(offset) for poly in polyconvexe]
-        
-        
-        # polys = [polyconvexe[0]] + new_poly + [polyconvexe[-1]]
         
         return new_position_plane, new_poly
     
