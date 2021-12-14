@@ -271,8 +271,8 @@ class Step:
         delete = ['CARTESIAN_POINT', 'DIRECTION']
         if graph is None:
             new_graph = self.create_graph()
-
-        new_graph = graph.copy()
+        else:
+            new_graph = graph.copy()
 
         labels = {}
         for id_nb, function in self.functions.items():
@@ -553,7 +553,7 @@ class Step:
         # edges = list(
         #     nx.algorithms.traversal.edge_bfs(self.graph, "#0"))[::-1]
 
-        # self.draw_graph(self.graph, reduced=True, save=True)
+        # self.draw_graph(self.graph, reduced=True)
 
         times = {}
 
