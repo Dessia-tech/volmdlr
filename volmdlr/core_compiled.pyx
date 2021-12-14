@@ -385,7 +385,7 @@ class Vector2D(Vector):
         input_points = sorted(points, key=lambda pt: (pt.x, pt.y))
         new_points = [points[0]]
         for i, point in enumerate(input_points[1:]):
-            if not point.is_close(input_points[i]):
+            if not point.is_close(new_points[-1]):
                 new_points.append(point)
         return new_points
 
@@ -940,7 +940,7 @@ class Vector3D(Vector):
         input_points = sorted(points, key=lambda pt: (pt.x, pt.y, pt.z))
         new_points = [points[0]]
         for i, point in enumerate(input_points[1:]):
-            if not point.is_close(input_points[i]):
+            if not point.is_close(new_points[-1]):
                 new_points.append(point)
         return new_points
 
