@@ -3883,6 +3883,8 @@ class Triangle3D(PlaneFace3D):
         self._utd_surface3d = False
         self._utd_surface2d = False
         self.bounding_box = self._bounding_box()
+        
+        dc.DessiaObject.__init__(self, name=name)
 
         # Don't use inheritence for performance: class method fakes face3D behavior
         # Face3D.__init__(self,
@@ -3917,10 +3919,17 @@ class Triangle3D(PlaneFace3D):
         return self._surface2d
 
     def to_dict(self):
-        return {'object_class': 'volmdlr.faces.Triangle3D',
-                'point1': self.point1.to_dict(),
-                'point2': self.point2.to_dict(),
-                'point3': self.point3.to_dict()}
+        dict_ = dc.DessiaObject.base_dict(self)
+        dict_['point1'] = self.point1.to_dict()
+        dict_['point2'] = self.point2.to_dict()
+        dict_['point3'] = self.point3.to_dict()
+        dict_['name'] = self.name
+        dict_['object_class'] = 'volmdlr.faces.Triangle3D'
+        return dict_
+        # return {'object_class': 'volmdlr.faces.Triangle3D',
+        #         'point1': self.point1.to_dict(),
+        #         'point2': self.point2.to_dict(),
+        #         'point3': self.point3.to_dict()}
 
     @classmethod
     def dict_to_object(cls, dict_):
