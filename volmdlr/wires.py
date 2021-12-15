@@ -2438,6 +2438,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             polygon_points.remove((p1, p2))
             if len(polygon_points) == 0:
                 finished = True
+                
+        if points[0] == points[-1] :
+            return cls(points[:-1])
 
         return cls(points)
 
