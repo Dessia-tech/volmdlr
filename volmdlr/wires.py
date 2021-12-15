@@ -1773,8 +1773,6 @@ class Contour2D(Contour, Wire2D):
             if edge1.point_belongs(edge2.start) and \
                     edge2.start not in list_p:
                 list_p.append(edge2.start)
-                # edges_index.append(contour2d.primitives.index(edge2))
-                # edges_index.sort()
             elif edge2.point_belongs(edge1.start) and \
                     edge1.start not in list_p:
                 list_p.append(edge1.start)
@@ -1784,31 +1782,40 @@ class Contour2D(Contour, Wire2D):
             elif edge2.point_belongs(edge1.end) and \
                     edge1.end not in list_p:
                 list_p.append(edge1.end)
-
-        print('list_p:', list_p)
-        # point1 = contour2d.primitives[edges_index[0]].start
-        # point2 = contour2d.primitives[edges_index[-1]].start
-        point1 = list_p[0]
-        point2 = list_p[-1]
         ax = self.plot()
         contour2d.plot(ax=ax, color='r')
-        point1.plot(ax=ax, color='b')
-        point2.plot(ax=ax, color='y')
-        print('(point1, point2):', (point1, point2))
-
+        point1 = list_p[0]
+        point2 = list_p[-1]
         shared_primitives_1 = self.extract_without_primitives(point1,
                                                               point2,
                                                               False)
+
+        valid = True
+        for prim1 in shared_primitives_1:
+            if contour2d.primitive_over_contour(prim1):
+                valid = False
+                break
+        if not valid:
+            shared_primitives_1 = self.extract_without_primitives(point1,
+                                                                  point2)
+
         shared_primitives_2 = contour2d.extract_without_primitives(point1,
                                                                    point2,
                                                                    False)
+        valid = True
+        for prim2 in shared_primitives_2:
+            if self.primitive_over_contour(prim2):
+                valid = False
+                break
+        if not valid:
+            shared_primitives_2 = contour2d.extract_without_primitives(point1,
+                                                                  point2)
+
         merged_contour = volmdlr.wires.Contour2D(shared_primitives_1 \
                                                  + shared_primitives_2)
         merged_contour.order_contour()
+        merged_contour.plot()
         return merged_contour
-            # shared_primitives_1 = self.extract_without_primitives(point1, point2)
-            # shared_primitives_2 = contour2d.extract_without_primitives(point1,
-            #                                                            point2)
 
       
 class ClosedPolygon:
