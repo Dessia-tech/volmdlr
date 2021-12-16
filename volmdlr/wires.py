@@ -177,14 +177,11 @@ class Wire:
         find out if a point is on the wire or not. If it belongs, we return the primitive's index
         '''
         
-        belongs = []
-        for primitive in self.primitives:
-            belongs.append(primitive.point_belongs(point))
-        
-        if True not in belongs:
-            return False
-        else:
-            return belongs.index(True)
+        for i, primitive in enumerate(self.primitives):
+            belongs = primitive.point_belongs(point)
+            if belongs:
+                return i
+        return False
 
 
     def abscissa(self, point):
