@@ -1960,38 +1960,44 @@ class BSplineSurface3D(Surface3D):
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D, min_bound_x: float = 0.,
                       max_bound_x: float = 1., min_bound_y: float = 0.,
-                      max_bound_y: float = 1.):
+                      max_bound_y: float = 1., tol=1e-9):
         def f(x):
             p3d = self.point2d_to_3d(volmdlr.Point2D(x[0], x[1]))
             return point3d.point_distance(p3d)
 
-        cost = []
-        sol = []
+        results = []
+
         delta_bound_x = max_bound_x - min_bound_x
         delta_bound_y = max_bound_y - min_bound_y
-        x0s = [(min_bound_x+delta_bound_x/10, min_bound_y+delta_bound_y/10),
+        x0s = [((min_bound_x+max_bound_x)/2, (min_bound_y+max_bound_y)/2),
+               (min_bound_x+delta_bound_x/10, min_bound_y+delta_bound_y/10),
                (min_bound_x+delta_bound_x/10, max_bound_y-delta_bound_y/10),
                (max_bound_x-delta_bound_x/10, min_bound_y+delta_bound_y/10),
-               (max_bound_x-delta_bound_x/10, max_bound_y-delta_bound_y/10),
-               ((min_bound_x+max_bound_x)/2, (min_bound_y+max_bound_y)/2)]
+               (max_bound_x-delta_bound_x/10, max_bound_y-delta_bound_y/10)]
         for x0 in x0s:
             z = scp.optimize.least_squares(f, x0=x0, bounds=([min_bound_x,
                                                               min_bound_y],
                                                              [max_bound_x,
-                                                              max_bound_y]))
-            cost.append(z.cost)
-            sol.append(z.x)
+                                                              max_bound_y]),
+                                           ftol=tol/10,
+                                           xtol=tol/10,
+                                           # loss='soft_l1'
+                                           )
+            # z.cost represent the value of the cost function at the solution
+            if z.cost < tol:
+                return (volmdlr.Point2D(*z.x))
 
             res = scp.optimize.minimize(f, x0=npy.array(x0),
                                         bounds=[(min_bound_x, max_bound_x),
                                                 (min_bound_y, max_bound_y)],
-                                        tol=1e-9)
-            cost.append(res.fun)
-            sol.append(res.x)
+                                        tol=tol)
+            # res.fun represent the value of the objective function
+            if res.fun < tol:
+                return (volmdlr.Point2D(*res.x))
 
-        solution = sol[cost.index(min(cost))]
-
-        return (volmdlr.Point2D(*solution))
+            results.append((z.x, z.cost))
+            results.append((res.x, res.fun))
+        return (volmdlr.Point2D(*min(results, key=lambda r: r[1])[0]))
 
     def linesegment2d_to_3d(self, linesegment2d):
         # TODO: this is a non exact method!
@@ -3567,9 +3573,13 @@ class PlaneFace3D(Face3D):
     #     return repaired_points, polygon2D
 
     @classmethod
-    def dict_to_object(cls, dict_):
-        plane3d = Plane3D.dict_to_object(dict_['surface3d'])
-        surface2d = Surface2D.dict_to_object(dict_['surface2d'])
+    def dict_to_object(cls, dict_, global_dict=None, pointers_memo=None):
+        plane3d = Plane3D.dict_to_object(dict_['surface3d'],
+                                         global_dict=global_dict,
+                                         pointers_memo=pointers_memo)
+        surface2d = Surface2D.dict_to_object(dict_['surface2d'],
+                                             global_dict=global_dict,
+                                             pointers_memo=pointers_memo)
         return cls(plane3d, surface2d, dict_['name'])
 
     def copy(self):
@@ -3914,6 +3924,11 @@ class Triangle3D(PlaneFace3D):
             self._utd_surface2d = True
         return self._surface2d
 
+    def to_dict(self):
+        return {'object_class': 'volmdlr.faces.Triangle3D',
+                'point1': self.point1.to_dict(),
+                'point2': self.point2.to_dict(),
+                'point3': self.point3.to_dict()}
 
     @classmethod
     def dict_to_object(cls, dict_):
@@ -5996,6 +6011,7 @@ class ClosedShell3D(OpenShell3D):
         '''
         if self.is_disjoint_from(shell2, tol):
             return [self, shell2]
+
         if self.is_inside_shell(shell2, resolution = 0.01):
             return [shell2]
         else:
@@ -6041,19 +6057,14 @@ class ClosedShell3D(OpenShell3D):
 
         intersecting_combinations = self.dict_intersecting_combinations(face_combinations, tol)
 
-        if len(intersecting_combinations) == 0:
-            return [self, shell2]
-
         intersecting_faces1, intersecting_faces2 = self.get_intersecting_faces(intersecting_combinations)
         intersecting_faces = intersecting_faces1 + intersecting_faces2
+        faces = self.get_non_intersecting_faces(shell2, intersecting_faces) + shell2.get_non_intersecting_faces(self, intersecting_faces)
+        if len(faces) == len(self.faces + shell2.faces) and not intersecting_faces:
+            return [self, shell2]
 
         new_valid_faces = self.new_valid_faces(shell2, intersecting_faces,
                                                intersecting_combinations)
-
-
-        faces = self.get_non_intersecting_faces(shell2, intersecting_faces) + shell2.get_non_intersecting_faces(self, intersecting_faces)
-        # intersecting_contour = self.two_shells_intersecting_contour(shell2,
-        #                                                             intersecting_combinations)
         faces += new_valid_faces
 
         return [ClosedShell3D(faces)]
@@ -6095,6 +6106,9 @@ class ClosedShell3D(OpenShell3D):
         face_combinations = self.intersecting_faces_combinations(shell2, tol)
 
         intersecting_combinations = self.dict_intersecting_combinations(face_combinations, tol)
+
+        if len(intersecting_combinations) == 0:
+            return [self, shell2]
 
         intersecting_faces1, intersecting_faces2 = self.get_intersecting_faces(
             intersecting_combinations)
