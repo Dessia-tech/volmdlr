@@ -980,16 +980,8 @@ class LineSegment2D(LineSegment):
         discretize a LineSegment2D to have "n" points (including start and end points)
         '''
         
-        points = []
-        step = self.length()/(n-1)
-        abscissa = 0
-        while abscissa < self.length():
-            points.append(self.point_at_abscissa(abscissa))
-            abscissa = abscissa + step
-        if points[-1] != self.end:
-            points.append(self.end)
-        
-        return points
+        return [self.point_at_abscissa(i * self.length() / (n-1)) for i in range(n)]
+
 
 class Arc2D(Edge):
     """
