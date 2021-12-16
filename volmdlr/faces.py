@@ -3318,6 +3318,11 @@ class BSplineSurface3D(Surface3D):
         
         surfaces = []
         bspline_curve2d = self.bsplinecurve3d_to_2d(bspline_curve3d)
+        # if type(bspline_curve2d) == list:
+        #     points = [bspline_curve2d[0].start]
+        #     for edge in bspline_curve2d:
+        #         points.append(edge.end)
+        #     bspline_curve2d = vme.BSplineCurve2D.from_points_approximation(points, 2, ctrlpts_size = 5)
         contour = self.rectangular_cut(0,1,0,1).surface2d.outer_contour
         contours = contour.cut_by_bspline_curve(bspline_curve2d)
         
