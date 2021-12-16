@@ -517,6 +517,7 @@ class Step:
         self.graph.add_node("#0")
         frame_mapping_nodes = []
         shell_nodes = []
+        # sr_nodes = []
         not_shell_nodes = []
         for node in self.graph.nodes:
             if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP':
@@ -527,7 +528,7 @@ class Step:
                 shell_nodes.append(node)
             # if node != '#0' and self.functions[node].name == 'SHAPE_REPRESENTATION':
             #     # Really a shell node ?
-            #     shell_nodes.append(node)
+            #     sr_nodes.append(node)
             if node != '#0' and self.functions[node].name == 'BREP_WITH_VOIDS':
                 shell_nodes.append(node)
                 not_shell_nodes.append(int(self.functions[node].arg[1][1:]))
@@ -546,20 +547,22 @@ class Step:
         for node in shell_nodes + frame_mapping_nodes:
             self.graph.add_edge('#0', node)
 
-        edges = list(
-            nx.algorithms.traversal.breadth_first_search.bfs_edges(
-                self.graph, "#0"))[::-1]
+        # self.draw_graph(self.graph, reduced=True, save=True)
 
-        # edges = list(
-        #     nx.algorithms.traversal.edge_bfs(self.graph, "#0"))[::-1]
-
-        # self.draw_graph(self.graph, reduced=True)
+        nodes = []
+        i = 1
+        new_nodes = True
+        while new_nodes:
+            new_nodes = list(nx.descendants_at_distance(
+                self.graph, '#0', i))[::-1]
+            nodes.extend(new_nodes)
+            i += 1
 
         times = {}
-
         if no_bug_mode:
-            for edge_nb, edge in enumerate(edges):
-                instanciate_ids = [edge[1]]
+            for node in nodes[::-1]:
+                # instanciate_ids = [edge[1]]
+                instanciate_ids = [node]
                 error = True
                 while error:
                     try:
@@ -583,8 +586,8 @@ class Step:
                         # depth in the right order, leading to error
                         instanciate_ids.append(key.args[0])
         else:
-            for edge_nb, edge in enumerate(edges):
-                instanciate_id = edge[1]
+            for instanciate_id in nodes[::-1]:
+                # instanciate_id = edge[1]
                 t = time.time()
                 volmdlr_object = self.instanciate(
                     self.functions[instanciate_id].name,
