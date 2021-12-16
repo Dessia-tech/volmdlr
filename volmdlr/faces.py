@@ -2117,12 +2117,12 @@ class BSplineSurface3D(Surface3D):
             p2_sup = self.point3d_to_2d(bspline_curve3d.points[-1],
                                         min_bound_x=1-x_perio,
                                         min_bound_y=1-y_perio)
-            if self.x_periodicity:
-                p1.x -= p1_sup.x-x_perio
+            if self.x_periodicity and p1.point_distance(p1_sup) > 1e-5:
+                p1.x -= p1_sup.x - x_perio
                 p2.x -= p2_sup.x - x_perio
-            if self.y_periodicity:
-                p1.y -= p1_sup.y-y_perio
-                p2.y -= p2_sup.y-y_perio
+            if self.y_periodicity and p1.point_distance(p1_sup) > 1e-5:
+                p1.y -= p1_sup.y - y_perio
+                p2.y -= p2_sup.y - y_perio
             linesegments = [vme.LineSegment2D(p1, p2)]
             # How to check if end of surface overlaps start or the opposite ?
         else:
