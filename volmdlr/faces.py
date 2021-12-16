@@ -5559,7 +5559,7 @@ class BSplineFace3D(Face3D):
             rv = intersection_results[i][1][:]
             points = []
             
-            for i in range(0, len(ru)):
+            for k in range(0, len(ru)):
                 j = ru.index(min(ru))
                 points.append(volmdlr.Point2D(ru[j], rv[j]))
                 ru[j] = math.inf     
