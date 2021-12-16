@@ -2139,8 +2139,10 @@ class BSplineSurface3D(Surface3D):
                         # max_bound_x=self.x_periodicity,
                         # max_bound_y=self.y_periodicity
                     ) for i in range(11)]
-                linesegments = [vme.LineSegment2D(p1, p2)
-                                for p1, p2 in zip(points[:-1], points[1:])]
+                # linesegments = [vme.LineSegment2D(p1, p2)
+                #                 for p1, p2 in zip(points[:-1], points[1:])]
+                linesegments = [vme.BSplineCurve2D.from_points_interpolation(
+                    points, max(self.degree_u, self.degree_v))]
             elif 1e-6 < lth <= 1e-5:
                 linesegments = [vme.LineSegment2D(
                     self.point3d_to_2d(bspline_curve3d.start),
