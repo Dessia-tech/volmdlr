@@ -3142,20 +3142,13 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         x_init=[]
         for xi in x:
             x_init.append(xi)
-        
-        cost=[]
-        sol=[]
             
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            cost.append(z.cost)
-            sol.append(z.x)
-                
-        if min(cost) < 1e-10: 
-            return True
-        else: 
-            return False
-        
+            if z.cost < 1e-10: 
+                return True
+        return False
+
     
     def global_minimum_curvature(self, nb_eval: int = 21):
         check = [i/(nb_eval-1) for i in range(nb_eval)]
