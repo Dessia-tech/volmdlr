@@ -2914,22 +2914,12 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         bspline_curve = self.cut_before(parameter1)
         new_param2 = bspline_curve.point3d_to_parameter(point2)
         trimmed_bspline_cruve = bspline_curve.cut_after(new_param2)
-
-        # ax = self.trim_between_evaluations(parameter1, parameter2).plot()
-        # point1.plot(ax=ax)
-        # point2.plot(ax=ax)
-        # self.start.plot(ax=ax, color='b')
-        # self.end.plot(ax=ax, color='r')
-        # volmdlr.Point3D(*self.curve.evaluate_single(0.25)).plot(ax=ax, color='g')
-        # print(parameter1, parameter2)
-        # self.save_to_file('/home/axel/Bureau/bsplinecurve')
-        # return self.trim_between_evaluations(parameter1, parameter2)
         return trimmed_bspline_cruve
 
     def trim_between_evaluations(self, parameter1: float, parameter2: float):
-        print('Use BSplineCurve3D.trim indstead of trim_between_evaluation')
+        print('Use BSplineCurve3D.trim instead of trim_between_evaluation')
         parameter1, parameter2 = min([parameter1, parameter2]), \
-                               max([parameter1, parameter2])
+            max([parameter1, parameter2])
 
         if math.isclose(parameter1, 0, abs_tol=1e-7) \
                 and math.isclose(parameter2, 1, abs_tol=1e-7):
