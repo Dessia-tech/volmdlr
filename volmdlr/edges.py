@@ -3724,9 +3724,9 @@ class Arc3D(Edge):
         x_init=[]
         for xi in x:
             x_init.append(xi)
-            
+        length_ = self.length()  
         for x0 in x_init: 
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,self.length()]))
+            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,length_]))
             if z.cost < 1e-10: 
                 return True
         return False
