@@ -3157,6 +3157,32 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             radius.append(self.minimum_curvature(u))
         return radius
 
+    @classmethod
+    def from_points_approximation(cls, points, degree, **kwargs):
+        '''
+        Bspline Curve approximation through 3d points using least squares method
+        It is better to specify the number of control points
+        
+        Parameters
+        ----------
+        points : volmdlr.Point3D
+            data points 
+        degree: int
+            degree of the output parametric curve
+            
+        Keyword Arguments:
+            * ``centripetal``: activates centripetal parametrization method. *Default: False*
+            * ``ctrlpts_size``: number of control points. *Default: len(points) - 1*
+                
+        Returns
+        -------
+        BSplineCurve3D
+    
+        ''' 
+        
+        curve = fitting.approximate_curve([(p.x, p.y, p.z) for p in points], degree, **kwargs)
+        return cls.from_geomdl_curve(curve)
+    
       
 class BezierCurve3D(BSplineCurve3D):
 
