@@ -3103,7 +3103,7 @@ class BSplineSurface3D(Surface3D):
         def f(X):
             return (self.point2d_to_3d(volmdlr.Point2D(X[0],X[1])) - other_bspline_surface3d.point2d_to_3d(volmdlr.Point2D(X[2],X[3]))).norm()
    
-        x = npy.linspace(0,1,10)
+        x = npy.linspace(0,1,50)
         x_init=[]
         for xi in x:
             for yi in x:
@@ -3324,7 +3324,7 @@ class BSplineSurface3D(Surface3D):
         #     bspline_curve2d = vme.BSplineCurve2D.from_points_approximation(points, 2, ctrlpts_size = 5)
         contour = self.rectangular_cut(0,1,0,1).surface2d.outer_contour
         contours = contour.cut_by_bspline_curve(bspline_curve2d)
-        
+
         du, dv = bspline_curve2d.end - bspline_curve2d.start
         resolution = 8
         
