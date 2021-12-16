@@ -3108,7 +3108,6 @@ class BSplineSurface3D(Surface3D):
         for xi in x:
             for yi in x:
                 x_init.append((xi,yi, xi, yi))
-                x_init.append((xi,yi, yi, xi))
 
         u1, v1, u2, v2 = [], [], [], []
         
