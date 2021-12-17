@@ -557,6 +557,10 @@ class Surface3D(dc.DessiaObject):
                 primitive3d.__class__.__name__.lower())
             if hasattr(self, method_name):
                 primitives = getattr(self, method_name)(primitive3d)
+
+                if primitives is None:
+                    continue
+
                 if last_primitive:
                     delta_x1 = abs(primitives[0].start.x
                                    - last_primitive.end.x)
@@ -1948,13 +1952,13 @@ class BSplineSurface3D(Surface3D):
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         x, y = point2d
-        if -1e-6 < x < 0:
+        if -1e-4 < x < 0:
             x = 0.
-        elif 1 < x < 1+1e-6:
+        elif 1 < x < 1+1e-4:
             x = 1
-        if -1e-6 < y < 0:
+        if -1e-4 < y < 0:
             y = 0
-        elif 1 < y < 1+1e-6:
+        elif 1 < y < 1+1e-4:
             y = 1
         return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
@@ -2117,25 +2121,30 @@ class BSplineSurface3D(Surface3D):
             p2 = self.point3d_to_2d(bspline_curve3d.points[-1],
                                     max_bound_x=x_perio,
                                     max_bound_y=y_perio)
-            p1_sup = self.point3d_to_2d(bspline_curve3d.points[0],
-                                        min_bound_x=1-x_perio,
-                                        min_bound_y=1-y_perio)
-            p2_sup = self.point3d_to_2d(bspline_curve3d.points[-1],
-                                        min_bound_x=1-x_perio,
-                                        min_bound_y=1-y_perio)
-            if self.x_periodicity:
-                p1.x -= p1_sup.x-x_perio
-                p2.x -= p2_sup.x - x_perio
-            if self.y_periodicity:
-                p1.y -= p1_sup.y-y_perio
-                p2.y -= p2_sup.y-y_perio
-            linesegments = [vme.LineSegment2D(p1, p2)]
+
+            if p1 == p2:
+                print('BSplineCruve3D skipped because it is too small')
+                linesegments = None
+            else:
+                p1_sup = self.point3d_to_2d(bspline_curve3d.points[0],
+                                            min_bound_x=1-x_perio,
+                                            min_bound_y=1-y_perio)
+                p2_sup = self.point3d_to_2d(bspline_curve3d.points[-1],
+                                            min_bound_x=1-x_perio,
+                                            min_bound_y=1-y_perio)
+                if self.x_periodicity and p1.point_distance(p1_sup) > 1e-5:
+                    p1.x -= p1_sup.x - x_perio
+                    p2.x -= p2_sup.x - x_perio
+                if self.y_periodicity and p1.point_distance(p1_sup) > 1e-5:
+                    p1.y -= p1_sup.y - y_perio
+                    p2.y -= p2_sup.y - y_perio
+                linesegments = [vme.LineSegment2D(p1, p2)]
             # How to check if end of surface overlaps start or the opposite ?
         else:
             lth = bspline_curve3d.length()
             if lth > 1e-5:
                 points = [self.point3d_to_2d(
-                        bspline_curve3d.point_at_abscissa(i / 10 * lth),
+                        bspline_curve3d.point_at_abscissa(i / 10 * lth)
                         # max_bound_x=self.x_periodicity,
                         # max_bound_y=self.y_periodicity
                     ) for i in range(11)]

@@ -271,8 +271,8 @@ class Step:
         delete = ['CARTESIAN_POINT', 'DIRECTION']
         if graph is None:
             new_graph = self.create_graph()
-
-        new_graph = graph.copy()
+        else:
+            new_graph = graph.copy()
 
         labels = {}
         for id_nb, function in self.functions.items():
