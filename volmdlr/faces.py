@@ -4051,7 +4051,8 @@ class Triangle3D(PlaneFace3D):
         t_poly2d = volmdlr.wires.ClosedPolygon2D(pts2d)
 
         sub_triangles2d = [t_poly2d]
-        for k in range(0, 10):
+        done = False
+        while not done :
             triangles2d = []
             for t, subtri in enumerate(sub_triangles2d) :
                 ls_length = [ls.length() for ls in subtri.line_segments]
@@ -4072,6 +4073,7 @@ class Triangle3D(PlaneFace3D):
                     triangles2d.append(subtri)
              
             if len(sub_triangles2d) == len(triangles2d):
+                done = True
                 break
             sub_triangles2d = triangles2d
 
