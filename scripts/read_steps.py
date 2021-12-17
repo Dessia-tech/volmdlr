@@ -11,7 +11,8 @@ for step_file in [
     'cone2.step',
     'cylinder.step',
     'block.step',
-
+    # '4_bspline_faces.step',
+    # '2_bspline_faces.step'
     # 'STEP_test1.stp',
     # 'iso4162M16x55.step',
     # 'aircraft_engine.step'
