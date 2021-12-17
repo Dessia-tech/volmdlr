@@ -70,64 +70,103 @@ class Stl(dc.DessiaObject):
         return all_points
 
     @classmethod
-    def from_file(cls, filename:str, distance_multiplier=0.001):
-        if is_binary(filename):       
-            with open(filename, 'rb') as file:
-                stream = KaitaiStream(file)
-                name = stream.read_bytes(80).decode('utf8')
-                # print(name)
-                num_triangles = stream.read_u4le()
-                # print(num_triangles)
-                
-                triangles = [None] * num_triangles
-                invalid_triangles = []
-                for i in range(num_triangles):
-                    if i % 5000 == 0:
-                        print('reading stl',
-                              round(i/num_triangles*100, 2), '%')
-                    normal = vm.Vector3D(stream.read_f4le(),
-                                         stream.read_f4le(),
-                                         stream.read_f4le())
-                    p1 = vm.Point3D(distance_multiplier*stream.read_f4le(),
-                                    distance_multiplier*stream.read_f4le(),
-                                    distance_multiplier*stream.read_f4le())
-                    p2 = vm.Point3D(distance_multiplier*stream.read_f4le(),
-                                    distance_multiplier*stream.read_f4le(), 
-                                    distance_multiplier*stream.read_f4le())
-                    p3 = vm.Point3D(distance_multiplier*stream.read_f4le(),
-                                    distance_multiplier*stream.read_f4le(),
-                                    distance_multiplier*stream.read_f4le())
-                    try:
-                        triangles[i] = vmf.Triangle3D(p1, p2, p3)
-                    except ZeroDivisionError:
-                        invalid_triangles.append(i)
-                        
-                    stream.read_u2le()
-                    # print(abr)
+    def from_file(cls, filename:str = None, file_stl: BytesIO = None, distance_multiplier=0.001):
+        if filename:
+            if is_binary(filename):       
+                with open(filename, 'rb') as file:
+                    stream = KaitaiStream(file)
+                    name = stream.read_bytes(80).decode('utf8')
+                    # print(name)
+                    num_triangles = stream.read_u4le()
+                    # print(num_triangles)
+                    
+                    triangles = [None] * num_triangles
+                    invalid_triangles = []
+                    for i in range(num_triangles):
+                        if i % 5000 == 0:
+                            print('reading stl',
+                                  round(i/num_triangles*100, 2), '%')
+                        normal = vm.Vector3D(stream.read_f4le(),
+                                             stream.read_f4le(),
+                                             stream.read_f4le())
+                        p1 = vm.Point3D(distance_multiplier*stream.read_f4le(),
+                                        distance_multiplier*stream.read_f4le(),
+                                        distance_multiplier*stream.read_f4le())
+                        p2 = vm.Point3D(distance_multiplier*stream.read_f4le(),
+                                        distance_multiplier*stream.read_f4le(), 
+                                        distance_multiplier*stream.read_f4le())
+                        p3 = vm.Point3D(distance_multiplier*stream.read_f4le(),
+                                        distance_multiplier*stream.read_f4le(),
+                                        distance_multiplier*stream.read_f4le())
+                        try:
+                            triangles[i] = vmf.Triangle3D(p1, p2, p3)
+                        except ZeroDivisionError:
+                            invalid_triangles.append(i)
+                            
+                        stream.read_u2le()
+                        # print(abr)
+                if invalid_triangles :
+                    # print('invalid_triangles number: ', len(invalid_triangles))
+                    for i in invalid_triangles[::-1] :
+                        del triangles[i]
+            else:
+                with open(filename, 'r') as file:
+                    header = file.readline()
+                    name = header[6:]
+                    triangles = []
+                    points = []
+                    for line in file.readlines():
+                        if 'vertex' in line:
+                            line = line.replace('vertex', '')
+                            line = line.lstrip(' ')
+                            x, y, z = line.split(' ')
+                            points.append(vm.Point3D(distance_multiplier*float(x), 
+                                                     distance_multiplier*float(y), 
+                                                     distance_multiplier*float(z)))
+                        if 'endfacet' in line:
+                            try: 
+                                triangles.append(vmf.Triangle3D(*points))
+                            except ZeroDivisionError:
+                                pass
+                            points = []
+        else:
+            stream = KaitaiStream(file_stl)
+            name = stream.read_bytes(80).decode('utf8')
+            # print(name)
+            num_triangles = stream.read_u4le()
+            # print(num_triangles)
+            
+            triangles = [None] * num_triangles
+            invalid_triangles = []
+            for i in range(num_triangles):
+                if i % 5000 == 0:
+                    print('reading stl',
+                          round(i/num_triangles*100, 2), '%')
+                normal = vm.Vector3D(stream.read_f4le(),
+                                     stream.read_f4le(),
+                                     stream.read_f4le())
+                p1 = vm.Point3D(distance_multiplier*stream.read_f4le(),
+                                distance_multiplier*stream.read_f4le(),
+                                distance_multiplier*stream.read_f4le())
+                p2 = vm.Point3D(distance_multiplier*stream.read_f4le(),
+                                distance_multiplier*stream.read_f4le(), 
+                                distance_multiplier*stream.read_f4le())
+                p3 = vm.Point3D(distance_multiplier*stream.read_f4le(),
+                                distance_multiplier*stream.read_f4le(),
+                                distance_multiplier*stream.read_f4le())
+                try:
+                    triangles[i] = vmf.Triangle3D(p1, p2, p3)
+                except ZeroDivisionError:
+                    invalid_triangles.append(i)
+                    
+                stream.read_u2le()
+                # print(abr)
+            file_stl.close()
             if invalid_triangles :
                 # print('invalid_triangles number: ', len(invalid_triangles))
                 for i in invalid_triangles[::-1] :
                     del triangles[i]
-        else:
-            with open(filename, 'r') as file:
-                header = file.readline()
-                name = header[6:]
-                triangles = []
-                points = []
-                for line in file.readlines():
-                    if 'vertex' in line:
-                        line = line.replace('vertex', '')
-                        line = line.lstrip(' ')
-                        x, y, z = line.split(' ')
-                        points.append(vm.Point3D(distance_multiplier*float(x), 
-                                                 distance_multiplier*float(y), 
-                                                 distance_multiplier*float(z)))
-                    if 'endfacet' in line:
-                        try: 
-                            triangles.append(vmf.Triangle3D(*points))
-                        except ZeroDivisionError:
-                            pass
-                        points = []
+
         
         return cls(triangles, name=name)
     
