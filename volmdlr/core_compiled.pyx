@@ -379,8 +379,15 @@ class Vector2D(Vector):
 
     @classmethod
     def remove_duplicate(cls, points):
-        dict_ = {p.approx_hash() : p for p in points}
-        return list(dict_.values())
+        """
+        Don't keep the input list order
+        """
+        input_points = sorted(points, key=lambda pt: (pt.x, pt.y))
+        new_points = [points[0]]
+        for i, point in enumerate(input_points[1:]):
+            if not point.is_close(new_points[-1]):
+                new_points.append(point)
+        return new_points
 
     def norm(self):
         """
@@ -927,13 +934,15 @@ class Vector3D(Vector):
         
     @classmethod
     def remove_duplicate(cls, points):
-        dict_ = {p.approx_hash() : p for p in points}
-        return list(dict_.values())
-
-    def to_dict(self):
-        return {'object_class':'volmdlr.Vector3D',
-                'x': self.x, 'y': self.y, 'z': self.z,
-                'name': self.name}
+        """
+        Don't keep the input list order
+        """
+        input_points = sorted(points, key=lambda pt: (pt.x, pt.y, pt.z))
+        new_points = [points[0]]
+        for i, point in enumerate(input_points[1:]):
+            if not point.is_close(new_points[-1]):
+                new_points.append(point)
+        return new_points
 
     @classmethod
     def dict_to_object(cls, dict_):

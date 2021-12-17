@@ -3883,6 +3883,8 @@ class Triangle3D(PlaneFace3D):
         self._utd_surface3d = False
         self._utd_surface2d = False
         self.bounding_box = self._bounding_box()
+        
+        dc.DessiaObject.__init__(self, name=name)
 
         # Don't use inheritence for performance: class method fakes face3D behavior
         # Face3D.__init__(self,
@@ -3917,10 +3919,17 @@ class Triangle3D(PlaneFace3D):
         return self._surface2d
 
     def to_dict(self):
-        return {'object_class': 'volmdlr.faces.Triangle3D',
-                'point1': self.point1.to_dict(),
-                'point2': self.point2.to_dict(),
-                'point3': self.point3.to_dict()}
+        dict_ = dc.DessiaObject.base_dict(self)
+        dict_['point1'] = self.point1.to_dict()
+        dict_['point2'] = self.point2.to_dict()
+        dict_['point3'] = self.point3.to_dict()
+        dict_['name'] = self.name
+        dict_['object_class'] = 'volmdlr.faces.Triangle3D'
+        return dict_
+        # return {'object_class': 'volmdlr.faces.Triangle3D',
+        #         'point1': self.point1.to_dict(),
+        #         'point2': self.point2.to_dict(),
+        #         'point3': self.point3.to_dict()}
 
     @classmethod
     def dict_to_object(cls, dict_):
@@ -4007,6 +4016,7 @@ class Triangle3D(PlaneFace3D):
     def subdescription(self, resolution = 0.01) :
         frame = self.surface3d.frame
         pts2d = [pt.to_2d(frame.origin, frame.u, frame.v) for pt in self.points]
+        
         t_poly2d = volmdlr.wires.ClosedPolygon2D(pts2d)
 
         xmin, xmax = min(pt.x for pt in pts2d), max(pt.x for pt in pts2d)
@@ -4018,22 +4028,60 @@ class Triangle3D(PlaneFace3D):
             x = xmin + i*resolution
             if x > xmax :
                 x=xmax
-            if x == xmin :
-                x = xmin + 0.01*resolution
             for j in range(ny) :
                 y = ymin + j*resolution
                 if y > ymax :
                     y=ymax
-                if y == ymin :
-                    y = ymin + 0.01*resolution
                 points_box.append(volmdlr.Point2D(x,y))
 
-        points = self.points
+        points = [pt.copy() for pt in self.points]
+        
         for pt in points_box :
             if t_poly2d.point_belongs(pt):
                 points.append(pt.to_3d(frame.origin, frame.u, frame.v))
+            elif t_poly2d.point_over_contour(pt):  
+                points.append(pt.to_3d(frame.origin, frame.u, frame.v))
+                
+        return volmdlr.Vector3D.remove_duplicate(points)
+    
+    def subdescription_to_triangles(self, resolution = 0.01) :
+        frame = self.surface3d.frame
+        pts2d = [pt.to_2d(frame.origin, frame.u, frame.v) for pt in self.points]
+        
+        t_poly2d = volmdlr.wires.ClosedPolygon2D(pts2d)
 
-        return points
+        sub_triangles2d = [t_poly2d]
+        done = False
+        while not done :
+            triangles2d = []
+            for t, subtri in enumerate(sub_triangles2d) :
+                ls_length = [ls.length() for ls in subtri.line_segments]
+                ls_max = max(ls_length)
+                
+                if ls_max>resolution:
+                    pos_ls_max = ls_length.index(ls_max)
+                    taller = subtri.line_segments[pos_ls_max]
+                    p1, p2 = taller.start, taller.end
+                    p3 = list(set(subtri.points) - set([p1, p2]))[0]
+                    
+                    pt_mid = (p1 + p2)/2
+                    new_triangles2d = [volmdlr.wires.ClosedPolygon2D([p1, pt_mid, p3]),
+                                       volmdlr.wires.ClosedPolygon2D([p2, pt_mid, p3])]
+
+                    triangles2d.extend(new_triangles2d)
+                else :
+                    triangles2d.append(subtri)
+             
+            if len(sub_triangles2d) == len(triangles2d):
+                done = True
+                break
+            sub_triangles2d = triangles2d
+
+        triangles3d = [Triangle3D(tri.points[0].to_3d(frame.origin, frame.u, frame.v),
+                                  tri.points[1].to_3d(frame.origin, frame.u, frame.v),
+                                  tri.points[2].to_3d(frame.origin, frame.u, frame.v)) for tri in sub_triangles2d]
+        
+        return triangles3d
 
     def middle(self):
         return (self.point1+self.point2+self.point3)/3

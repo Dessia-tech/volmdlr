@@ -132,14 +132,13 @@ class PointCloud3D(dc.DessiaObject):
             if n != resolution-1:
                 poly2 = polygon3d[n+1]
 
-
                 poly2_simplified = poly2.simplify(0.01, 0.03)
 
                 if 1 - poly2_simplified.to_2d(position_plane[n] * normal, vec1,
                                               vec2).area() / poly2.to_2d(
                         position_plane[n] * normal, vec1, vec2).area() > 0.3:
                     poly2_simplified = poly2
-
+                    
                 faces.extend(poly1_simplified.sewing3(poly2_simplified,
                                                       vec1, vec2))
                 # for trio in coords:
@@ -224,8 +223,8 @@ class PointCloud3D(dc.DessiaObject):
         origin_f, origin_l = positions_plane[0], positions_plane[-1]
         
         new_position_plane = [origin_f-offset] + positions_plane[1:-1] + [origin_l+offset]
-        
-        new_poly = [poly.offset(offset) for poly in polygons2D]
+        polyconvexe = [vmw.ClosedPolygon2D.points_convex_hull(poly.points) for poly in polygons2D]
+        new_poly = [poly.offset(offset) for poly in polyconvexe]
         
         return new_position_plane, new_poly
     
