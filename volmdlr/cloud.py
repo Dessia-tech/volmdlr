@@ -123,7 +123,6 @@ class PointCloud3D(dc.DessiaObject):
 
             if n == resolution-1 or n == 0:
                 plane3d = vmf.Plane3D.from_plane_vectors(position_plane[n]*normal, vec1, vec2)
-                surf2d = vmf.Surface2D(polygon2d[n],[])
                 surf2d = vmf.Surface2D(poly1_simplified.to_2d(position_plane[n]*normal, vec1, vec2),[])
 
                 faces.append(vmf.PlaneFace3D(plane3d, surf2d))
@@ -137,7 +136,12 @@ class PointCloud3D(dc.DessiaObject):
                                               vec2).area() / poly2.to_2d(
                         position_plane[n] * normal, vec1, vec2).area() > 0.3:
                     poly2_simplified = poly2
-
+                new_faces = poly1_simplified.sewing3(poly2_simplified,
+                                                     vec1, vec2)
+                # if not poly1_simplified.check_sewing(poly2_simplified, new_faces):
+                #     print('p1 3d points :', poly1_simplified.points)
+                #     print('p2 3d points :', poly2_simplified.points)
+                #     vm.core.VolumeModel(new_faces).babylonjs()
                 faces.extend(poly1_simplified.sewing3(poly2_simplified,
                                                       vec1, vec2))
                 # for trio in coords:
