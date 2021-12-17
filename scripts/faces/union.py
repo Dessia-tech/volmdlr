@@ -31,8 +31,8 @@ new_poly_13 = new_poly_12.translation(0.05*vm.Z3D)
 
 new_poly_14 = new_poly_13.translation(0.2*vm.Z3D).rotation(vm.O3D, vm.Z3D, math.pi/4)
 
-points_triangles_1 = new_poly_11.sewing(new_poly_12, vm.X3D, vm.Y3D) + new_poly_12.sewing(new_poly_13, vm.X3D, vm.Y3D) + new_poly_13.sewing(new_poly_14, vm.X3D, vm.Y3D)
-faces1 = [vmf.Triangle3D(trio[0], trio[1], trio[2]) for trio in points_triangles_1]
+faces1 = new_poly_11.sewing(new_poly_12, vm.X3D, vm.Y3D) + new_poly_12.sewing(new_poly_13, vm.X3D, vm.Y3D) + new_poly_13.sewing(new_poly_14, vm.X3D, vm.Y3D)
+# faces1 = [vmf.Triangle3D(trio[0], trio[1], trio[2]) for trio in points_triangles_1]
 
 plane3d_1 = vmf.Plane3D.from_plane_vectors(-0.2*vm.Z3D, vm.X3D, vm.Y3D)
 surf2d_1 = vmf.Surface2D(new_poly_11.to_2d(vm.O3D, vm.X3D, vm.Y3D),[])
@@ -57,9 +57,9 @@ new_poly_21 = vmw.ClosedPolygon3D(points_poly_2)
 new_poly_22 = new_poly_21.translation(0.1*vm.Y3D).rotation(vm.O3D, vm.Y3D, math.pi/2)
 new_poly_23 = new_poly_22.translation(0.05*vm.Y3D)
 new_poly_24 = new_poly_23.translation(0.2*vm.Y3D).rotation(vm.O3D, vm.Y3D, math.pi/4)
-points_triangles_2 = new_poly_21.sewing(new_poly_22, vm.X3D, vm.Z3D) + new_poly_23.sewing(new_poly_22, vm.X3D, vm.Z3D) + new_poly_23.sewing(new_poly_24, vm.X3D, vm.Z3D)
+faces2 = new_poly_21.sewing(new_poly_22, vm.X3D, vm.Z3D) + new_poly_23.sewing(new_poly_22, vm.X3D, vm.Z3D) + new_poly_23.sewing(new_poly_24, vm.X3D, vm.Z3D)
 
-faces2 = [vmf.Triangle3D(trio[0], trio[1], trio[2]) for trio in points_triangles_2]
+# faces2 = [vmf.Triangle3D(trio[0], trio[1], trio[2]) for trio in points_triangles_2]
 
 plane3d_3 = vmf.Plane3D.from_plane_vectors(0.05*vm.Y3D, vm.Z3D, vm.X3D)
 surf2d_3 = vmf.Surface2D(new_poly_21.to_2d(vm.O3D, vm.Z3D, vm.X3D),[])
