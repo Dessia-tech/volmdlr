@@ -377,6 +377,9 @@ class Vector2D(Vector):
                 'x': self.x, 'y': self.y,
                 'name': self.name}
 
+    def copy(self, deep=True, memo=None):
+        return self.__class__(self.x, self.y)
+
     @classmethod
     def remove_duplicate(cls, points):
         dict_ = {p.approx_hash() : p for p in points}
