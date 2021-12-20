@@ -2728,7 +2728,7 @@ class BSplineSurface3D(Surface3D):
         
         point2d = self.point3d_to_2d(point3d) 
         
-        point2d_with_dimension = self.point2d_parametric_to_dimension(point2d)
+        point2d_with_dimension = self.point2d_parametric_to_dimension(point2d, points_x, points_y, xmin, xmax, ymin, ymax)
 
         return point2d_with_dimension
     
