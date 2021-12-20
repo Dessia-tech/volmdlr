@@ -6,6 +6,7 @@
 from binaryornot.check import is_binary
 import kaitaistruct
 from kaitaistruct import KaitaiStruct, KaitaiStream, BytesIO
+from typing import BinaryIO
 
 import struct
 import dessia_common as dc
@@ -70,7 +71,7 @@ class Stl(dc.DessiaObject):
         return all_points
 
     @classmethod
-    def from_file(cls, filename:str = None, file_stl: BytesIO = None, distance_multiplier=0.001):
+    def from_file(cls, filename:str = None, file_stl: BinaryIO = None, distance_multiplier=0.001):
         if filename:
             if is_binary(filename):       
                 with open(filename, 'rb') as file:
