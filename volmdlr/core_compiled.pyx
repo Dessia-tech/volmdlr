@@ -371,6 +371,11 @@ class Vector2D(Vector):
         
     def approx_hash(self):
         return round(1e6*(self.x+self.y))
+    
+    def to_dict(self):
+        return {'object_class':'volmdlr.Vector2D',
+                'x': self.x, 'y': self.y,
+                'name': self.name}
 
     @classmethod
     def remove_duplicate(cls, points):
@@ -380,7 +385,7 @@ class Vector2D(Vector):
         input_points = sorted(points, key=lambda pt: (pt.x, pt.y))
         new_points = [points[0]]
         for i, point in enumerate(input_points[1:]):
-            if not point.is_close(input_points[i]):
+            if not point.is_close(new_points[-1]):
                 new_points.append(point)
         return new_points
 
@@ -565,6 +570,11 @@ class Point2D(Vector2D):
             raise ZeroDivisionError
         return Point2D(self.x / value,
                        self.y / value)
+
+    def to_dict(self):
+        return {'object_class':'volmdlr.Point2D',
+                'x': self.x, 'y': self.y,
+                'name': self.name}
 
     def to_3d(self, plane_origin, vx, vy):
         return Point3D(plane_origin.x + vx.x*self.x + vy.x*self.y,
@@ -930,7 +940,7 @@ class Vector3D(Vector):
         input_points = sorted(points, key=lambda pt: (pt.x, pt.y, pt.z))
         new_points = [points[0]]
         for i, point in enumerate(input_points[1:]):
-            if not point.is_close(input_points[i]):
+            if not point.is_close(new_points[-1]):
                 new_points.append(point)
         return new_points
 
@@ -1205,6 +1215,12 @@ class Point3D(Vector3D):
 
     def copy(self):
         return Point3D(self.x, self.y, self.z)
+
+    def to_dict(self):
+        return {'object_class':'volmdlr.Point3D',
+                'x': self.x, 'y': self.y, 'z': self.z,
+                'name': self.name}
+
 
     @classmethod
     def dict_to_object(cls, dict_):

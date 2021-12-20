@@ -1,5 +1,5 @@
 Tutorial
-=====
+========
 
 This guide can help you using tools developed with the Volume Modeler Volmdlr.
 
@@ -15,17 +15,17 @@ VolumeModel
 -----------
 A model is set instanciating a VolumeModel:
 
-.. autoclass:: volmdlr.VolumeModel
+.. autoclass:: volmdlr.core.VolumeModel
 
 Prior to that, primitives have to be instanciated. See :ref:`primitives-label`.
 
-FreeCAD binding (Optional)
----------------
+BabylonJS rendering
+-------------------
 
-Once a VolumeModel is instanciated, one can call the FreeCADExport method:
+Once a VolumeModel is instanciated, one can show it in a browser with the babylonjs method:
 
-.. autoclass:: volmdlr.VolumeModel
-  :members: FreeCADExport
+.. autoclass:: volmdlr.core.VolumeModel
+  :members: babylonjs
 
 Sweep
 -----

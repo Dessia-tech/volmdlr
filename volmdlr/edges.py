@@ -487,6 +487,15 @@ class BSplineCurve2D(Edge):
             adim_abs = 0.
         return volmdlr.Point2D(*self.curve.evaluate_single(adim_abs))
 
+    def tangent(self, position: float = 0.0):
+        point, tangent = operations.tangent(self.curve, position,
+                                            normalize=True)
+        tangent = volmdlr.Point2D(tangent[0], tangent[1])
+        return tangent
+
+    def middle_point(self):
+        return self.point_at_abscissa(0.5)
+
     def abscissa(self, point2d):
         l = self.length()
         res = scp.optimize.minimize_scalar(
@@ -2835,6 +2844,14 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             #            vmpt = Point3D((point[1], point[2], point[3]))
             distances.append(pt1.point_distance(point))
         return min(distances)
+
+    def point_belongs(self, point):
+        polygon_points = self.polygon_points()
+        for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
+            line = LineSegment3D(p1, p2)
+            if line.point_belongs(point):
+                return True
+        return False
 
     def rotation(self, center, axis, angle, copy=True):
         new_control_points = [p.rotation(center, axis, angle, True) for p in

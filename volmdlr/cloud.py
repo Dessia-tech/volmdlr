@@ -82,7 +82,7 @@ class PointCloud3D(dc.DessiaObject):
             if poly is not None :
                 areas[n] = poly.area()
         avg_area = sum(areas)/len(areas)        
-        
+
         polygon2d, polygon3d = [], []
         banned = []
         for n, poly in enumerate(initial_polygon2d):
@@ -94,32 +94,52 @@ class PointCloud3D(dc.DessiaObject):
                 new_polygon = poly.to_3d(position_plane[n]*normal, vec1, vec2)
                 polygon3d.append(new_polygon)
         [position_plane.pop(k) for k in banned[::-1]]
+
+        return self.generate_shell(polygon3d, normal, vec1, vec2)
+
+    @classmethod
+    def generate_shell(cls, polygon3d: List[vm.wires.ClosedPolygon3D],
+                       normal: vm.Vector3D, vec1: vm.Vector3D, vec2: vm.Vector3D):
+        position_plane = [p.points[0].dot(normal) for p in polygon3d]
+        resolution = len(polygon3d)
+
         faces = []
         
         for n in range(resolution):
             # print('sewing polygon', round(n/resolution*100, 2), '%')
             poly1 = polygon3d[n]
 
-            poly1 = poly1.simplify(0.01, 0.05)
+            poly1_simplified = poly1.simplify(0.01, 0.03)
+
+            if 1 - poly1_simplified.to_2d(position_plane[n] * normal, vec1,
+                                         vec2).area() / poly1.to_2d(position_plane[n] * normal, vec1, vec2).area() > 0.3:
+                poly1_simplified = poly1
+            # print('original area :', poly1.to_2d(position_plane[n]*normal, vec1, vec2).area())
+            # print('simplified area :', poly1_simplified.to_2d(position_plane[n]*normal, vec1, vec2).area())
+
+            # if poly1_siimplified.area()
             # ax = poly1.plot()
+            # poly1_simplified.plot(ax=ax, color= 'r')
 
             if n == resolution-1 or n == 0:
                 plane3d = vmf.Plane3D.from_plane_vectors(position_plane[n]*normal, vec1, vec2)
-                surf2d = vmf.Surface2D(polygon2d[n],[])
-                surf2d = vmf.Surface2D(poly1.to_2d(position_plane[n]*normal, vec1, vec2),[])
+                surf2d = vmf.Surface2D(poly1_simplified.to_2d(position_plane[n]*normal, vec1, vec2),[])
+
                 faces.append(vmf.PlaneFace3D(plane3d, surf2d))
             if n != resolution-1:
                 poly2 = polygon3d[n+1]
 
-                # poly2.plot(ax=ax, color='r')
-                poly2 = poly2.simplify(0.01, 0.05)
-                # try:
-                #     coords = poly1.sewing(poly2, vec1, vec2)
-                # except IndexError:
-                coords = poly1.sewing(poly2, vec1, vec2)
-                # coords = poly1.sewing3(poly2)
-                for trio in coords:
-                    faces.append(vmf.Triangle3D(*trio))
+                poly2_simplified = poly2.simplify(0.01, 0.03)
+
+                if 1 - poly2_simplified.to_2d(position_plane[n] * normal, vec1,
+                                              vec2).area() / poly2.to_2d(
+                        position_plane[n] * normal, vec1, vec2).area() > 0.3:
+                    poly2_simplified = poly2
+                    
+                faces.extend(poly1_simplified.sewing3(poly2_simplified,
+                                                      vec1, vec2))
+                # for trio in coords:
+                #     faces.append(vmf.Triangle3D(*trio))
         return vmf.ClosedShell3D(faces)
     
     # def alpha_shape(self, alpha:float, number_point_samples:int):
@@ -200,14 +220,7 @@ class PointCloud3D(dc.DessiaObject):
         origin_f, origin_l = positions_plane[0], positions_plane[-1]
         
         new_position_plane = [origin_f-offset] + positions_plane[1:-1] + [origin_l+offset]
-        # new_position_plane = [origin_f-offset] + positions_plane + [origin_l+offset]
-        
         polyconvexe = [vmw.ClosedPolygon2D.points_convex_hull(poly.points) for poly in polygons2D]
-        # for poly, polyc in zip(polygons2D, polyconvexe):
-        #     ax = poly.plot()
-        #     polyc.plot(ax=ax, color='r')
-        
-        # new_poly = [poly.offset(offset) for poly in polygons2D]
         new_poly = [poly.offset(offset) for poly in polyconvexe]
         
         return new_position_plane, new_poly
@@ -227,8 +240,9 @@ class PointCloud2D(dc.DessiaObject):
     def to_polygon(self):
         if not self.points:
             return None
-        polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
-        # polygon = vmw.ClosedPolygon2D.concave_hull(self.points, -0.7, 0.00005)
+        # polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
+        polygon = vmw.ClosedPolygon2D.concave_hull(self.points, -0.3, 0.000005)
+        # polygon = vmw.ClosedPolygon2D.concave_hull(self.points, -0.2, 0.000005)
         # polygon = vmw.ClosedPolygon2D.convex_hull_points(self.points)
         if polygon is None or math.isclose(polygon.area(), 0, abs_tol = 1e-6) :
             return None
