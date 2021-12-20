@@ -363,11 +363,11 @@ class Vector2D(Vector):
         return self.is_close(other_vector)
 
     def is_close(self, other_vector, tol = 1e-6):
-        if other_vector.__class__.__name__ not in ['Vector2D', 'Point2D']:
-            return False
-        return math.isclose(self.x, other_vector.x, abs_tol=tol) \
-        and math.isclose(self.y, other_vector.y, abs_tol=tol)
-    
+        # if other_vector.__class__.__name__ not in ['Vector2D', 'Point2D']:
+        #     return False
+        # return math.isclose(self.x, other_vector.x, abs_tol=tol) \
+        # and math.isclose(self.y, other_vector.y, abs_tol=tol)
+        return math.isclose(self.point_distance(other_vector), 0, abs_tol=tol)
         
     def approx_hash(self):
         return round(1e6*(self.x+self.y))
@@ -411,9 +411,8 @@ class Vector2D(Vector):
     def cross(self, other_vector):
         return self.x*other_vector.y - self.y*other_vector.x
 
-    def point_distance(self, point2):
-        return (self-point2).norm()
-
+    def point_distance(self, other_vector):
+        return (self-other_vector).norm()
 
     def rotation(self, center, angle, copy=True):
         u = self - center
@@ -587,9 +586,8 @@ class Point2D(Vector2D):
         ax.plot([self.x], [self.y], color=color, alpha=alpha, marker='o')
         return ax
 
-    def point_distance(self, point2:'Point2D'):
-        return (self-point2).norm()
-
+    def point_distance(self, other_point:'Point2D'):
+        return (self-other_point).norm()
 
     @classmethod
     def grid2d(cls, points_x, points_y, xmin, xmax, ymin, ymax):
@@ -915,19 +913,20 @@ class Vector3D(Vector):
         
         return 0
     
-    def approx_hash(self):
-        return round(1e6*(self.x+self.y+self.z))
-
     def __eq__(self, other_vector:'Vector3D'):
         return self.is_close(other_vector)
 
-    def is_close(self, other_vector, tol = 1e-6):
-        if other_vector.__class__.__name__ not in ['Vector3D', 'Point3D']:
-            return False
-        return math.isclose(self.x, other_vector.x, abs_tol=tol) \
-        and math.isclose(self.y, other_vector.y, abs_tol=tol) \
-        and math.isclose(self.z, other_vector.z, abs_tol=tol)
-        
+    def is_close(self, other_vector, tol=1e-6):
+        # if other_vector.__class__.__name__ not in ['Vector3D', 'Point3D']:
+        #     return False
+        # return math.isclose(self.x, other_vector.x, abs_tol=tol) \
+        # and math.isclose(self.y, other_vector.y, abs_tol=tol) \
+        # and math.isclose(self.z, other_vector.z, abs_tol=tol)
+        return math.isclose(self.point_distance(other_vector), 0, abs_tol=tol)
+
+    def approx_hash(self):
+        return round(1e6*(self.x+self.y+self.z))
+
     @classmethod
     def remove_duplicate(cls, points):
         dict_ = {p.approx_hash() : p for p in points}
