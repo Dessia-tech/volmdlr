@@ -4258,20 +4258,15 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
     @staticmethod
     def validate_closing_point(closing_point_index, list_closing_point_indexes,
                                passed_by_zero_index, ratio_denom):
-        # print('ratio_denom :', ratio_denom)
         if closing_point_index == list_closing_point_indexes[-1]:
             return closing_point_index, [], passed_by_zero_index
         list_remove_closing_points = []
         ratio = (list_closing_point_indexes[-1] - closing_point_index) / ratio_denom
-        # print('ratio :', ratio)
         if closing_point_index < list_closing_point_indexes[-1]:
-            # print((list_closing_point_indexes[-1], closing_point_index))
             if len(list_closing_point_indexes) > 2 and \
                     list_closing_point_indexes[
                         -2] < closing_point_index < list_closing_point_indexes[-1] - 1:
                 list_remove_closing_points.append(list_closing_point_indexes[-1])
-                # print('passing here')
-                # list_closing_point_indexes[-1] = closing_point_index
 
             elif len(list_closing_point_indexes) > 3 and \
                     list_closing_point_indexes[
@@ -4279,21 +4274,17 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                 list_remove_closing_points.extend(
                     [list_closing_point_indexes[-1],
                      list_closing_point_indexes[-2]])
-                # print('passing here2')
-                # list_closing_point_indexes[-1] = closing_point_index
             elif closing_point_index in list_closing_point_indexes:
+
                 closing_point_index = list_closing_point_indexes[-1]
             elif math.isclose(ratio, 0, abs_tol=0.3):
+
                 closing_point_index = list_closing_point_indexes[-1]
             else:
                 if passed_by_zero_index:
                     ratio = (list_closing_point_indexes[
                                  0] - closing_point_index) / ratio_denom
                     if math.isclose(ratio, 1, abs_tol=0.3):
-                        # dict_closing_pairs[
-                        #     polygon1_3d.line_segments[i].start] = (
-                        #     list_closing_point_indexes[-1],
-                        #     list_closing_point_indexes[0])
                         closing_point_index = list_closing_point_indexes[0]
                 else:
                     if closing_point_index > list_closing_point_indexes[0]:
@@ -4306,7 +4297,15 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                         else:
                             closing_point_index = list_closing_point_indexes[-1]
                     else:
-                        passed_by_zero_index = True
+                        ratio1 = (closing_point_index -
+                                  list_closing_point_indexes[
+                                      -1]) / ratio_denom
+                        if math.isclose(ratio1, -1, abs_tol=0.4):
+                            passed_by_zero_index = True
+                        else:
+                            closing_point_index = list_closing_point_indexes[
+                                -1]
+
         elif closing_point_index in list_closing_point_indexes:
             closing_point_index = list_closing_point_indexes[-1]
         elif len(list_closing_point_indexes) > 2 and \
@@ -4321,7 +4320,6 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
             closing_point_index = list_closing_point_indexes[-1]
         elif math.isclose(ratio, -1, abs_tol=0.3):
             closing_point_index = list_closing_point_indexes[-1]
-
         return closing_point_index, list_remove_closing_points, passed_by_zero_index
 
     def sewing3(self, polygon2, x, y):
@@ -4364,13 +4362,21 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                         passed_by_zero_index, ratio_denom)
 
             if list_remove_closing_points:
-                dict_closing_pairs[list(dict_closing_pairs.keys())[-len(list_remove_closing_points)]] = (
-                    list_closing_point_indexes[
-                        -(len(list_remove_closing_points)+1)],
-                    closing_point_index)
-                if len(list_remove_closing_points) == 2:
-                    del dict_closing_pairs[
-                        list(dict_closing_pairs.keys())[-1]]
+                new_list_closing_point_indexes = list(dict.fromkeys(list_closing_point_indexes))
+                if len(list_remove_closing_points) == 2 and \
+                        list_remove_closing_points[0] != \
+                        list_remove_closing_points[-1]:
+                    dict_closing_pairs[list(dict_closing_pairs.keys())[-len(list_remove_closing_points)]] = (
+                        new_list_closing_point_indexes[
+                            -(len(list_remove_closing_points)+1)],
+                        closing_point_index)
+                    if len(list_remove_closing_points) == 2:
+                        del dict_closing_pairs[
+                            list(dict_closing_pairs.keys())[-1]]
+                else:
+                    dict_closing_pairs[list(dict_closing_pairs.keys())[
+                        -1]] = (new_list_closing_point_indexes[-2],
+                                closing_point_index)
                 for pt_index in list_remove_closing_points:
                     list_closing_point_indexes.remove(pt_index)
                 list_closing_point_indexes.append(closing_point_index)
