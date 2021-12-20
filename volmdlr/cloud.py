@@ -97,7 +97,7 @@ class PointCloud3D(dc.DessiaObject):
                 new_polygon = poly.to_3d(position_plane[n]*normal, vec1, vec2)
                 polygon3d.append(new_polygon)
         [position_plane.pop(k) for k in banned[::-1]]
-
+        
         return self.generate_shell(polygon3d, normal, vec1, vec2)
 
     @classmethod
@@ -109,7 +109,6 @@ class PointCloud3D(dc.DessiaObject):
         faces = []
         
         for n in range(resolution):
-            # print('sewing polygon', round(n/resolution*100, 2), '%')
             poly1 = polygon3d[n]
 
             poly1_simplified = poly1.simplify(0.01, 0.03)
@@ -117,12 +116,6 @@ class PointCloud3D(dc.DessiaObject):
             if 1 - poly1_simplified.to_2d(position_plane[n] * normal, vec1,
                                          vec2).area() / poly1.to_2d(position_plane[n] * normal, vec1, vec2).area() > 0.3:
                 poly1_simplified = poly1
-            # print('original area :', poly1.to_2d(position_plane[n]*normal, vec1, vec2).area())
-            # print('simplified area :', poly1_simplified.to_2d(position_plane[n]*normal, vec1, vec2).area())
-
-            # if poly1_siimplified.area()
-            # ax = poly1.plot()
-            # poly1_simplified.plot(ax=ax, color= 'r')
 
             if n == resolution-1 or n == 0:
                 plane3d = vmf.Plane3D.from_plane_vectors(position_plane[n]*normal, vec1, vec2)
@@ -233,6 +226,28 @@ class PointCloud3D(dc.DessiaObject):
         
         return new_position_plane, new_poly
     
+    def frame_mapping(self, frame, side, copy=True):
+        """
+        side = 'old' or 'new'
+        """
+        points_mapping = [pt.frame_mapping(frame, side, copy) for pt in self.points]
+        
+        if copy:
+            return self.__class__(points_mapping, self.name)
+        else:
+            self.points = points_mapping
+            self.bounding_box = self._bounding_box()
+            
+    def translation(self, offset, copy=True):
+        
+        new_points = [pt.translation(offset, True) for pt in self.points]
+
+        if copy:
+            return self.__class__(new_points, self.name)
+        else:
+            self.points = new_points
+            self.bounding_box = self._bounding_box()
+    
 class PointCloud2D(dc.DessiaObject):
     def __init__(self, points, name: str=''):
         self.points = points
@@ -252,7 +267,7 @@ class PointCloud2D(dc.DessiaObject):
         if convexe : 
             polygon = vmw.ClosedPolygon2D.convex_hull_points(self.points)
         else :
-            polygon = vmw.ClosedPolygon2D.concave_hull(self.points, -0.3, 0.000005)
+            polygon = vmw.ClosedPolygon2D.concave_hull(self.points, -0.2, 0.000005)
         
         if polygon is None or math.isclose(polygon.area(), 0, abs_tol = 1e-6) :
             return None
