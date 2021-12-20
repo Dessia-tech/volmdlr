@@ -3378,6 +3378,28 @@ class BSplineSurface3D(Surface3D):
 
         return surfaces
         
+    def point_belongs(self, point3d):
+        '''
+        check if a point3d belongs to the bspline_surface or not 
+        '''
+        
+        def f(x):
+            p3d = self.point2d_to_3d(volmdlr.Point2D(x[0], x[1]))
+            return point3d.point_distance(p3d)
+    
+        x = npy.linspace(0,1,5)
+        x_init=[]
+        for xi in x:
+            for yi in x:
+                x_init.append((xi,yi))
+            
+        for x0 in x_init: 
+            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
+            print(z.cost)
+            if z.cost < 1e-10: 
+                return True
+        return False
+
 
 class BezierSurface3D(BSplineSurface3D):
 
