@@ -1825,6 +1825,22 @@ class BSplineSurface3D(Surface3D):
         self._grids2d = {}
         self._grids2d_deformed = {}
 
+    @property
+    def x_periodicity(self):
+        p3d_x1 = self.point2d_to_3d(volmdlr.Point2D(1., 0.5))
+        p2d_x0 = self.point3d_to_2d(p3d_x1, 0., 0.5)
+        x_perio = 1 - p2d_x0.x if not math.isclose(p2d_x0.x, 1, abs_tol=1e-3) \
+            else None
+        return x_perio
+
+    @property
+    def y_periodicity(self):
+        p3d_y1 = self.point2d_to_3d(volmdlr.Point2D(0.5, 1))
+        p2d_y0 = self.point3d_to_2d(p3d_y1, 0., 0.5)
+        y_perio = 1 - p2d_y0.y if not math.isclose(p2d_y0.y, 1, abs_tol=1e-3) \
+            else None
+        return y_perio
+
     def control_points_matrix(self, coordinates):
         ''' 
         define control points like a matrix, for each coordinate: x:0, y:1, z:2 
@@ -1978,6 +1994,7 @@ class BSplineSurface3D(Surface3D):
                (min_bound_x+delta_bound_x/10, max_bound_y-delta_bound_y/10),
                (max_bound_x-delta_bound_x/10, min_bound_y+delta_bound_y/10),
                (max_bound_x-delta_bound_x/10, max_bound_y-delta_bound_y/10)]
+
         for x0 in x0s:
             z = scp.optimize.least_squares(f, x0=x0, bounds=([min_bound_x,
                                                               min_bound_y],
@@ -2484,10 +2501,10 @@ class BSplineSurface3D(Surface3D):
         bsplinesurface = cls(degree_u, degree_v, control_points, nb_u, nb_v,
                              u_multiplicities, v_multiplicities, u_knots,
                              v_knots, weight_data, name)
-        if u_closed:
-            bsplinesurface.x_periodicity = bsplinesurface.get_x_periodicity()
-        if v_closed:
-            bsplinesurface.y_periodicity = bsplinesurface.get_y_periodicity()
+        # if u_closed:
+        #     bsplinesurface.x_periodicity = bsplinesurface.get_x_periodicity()
+        # if v_closed:
+        #     bsplinesurface.y_periodicity = bsplinesurface.get_y_periodicity()
         return bsplinesurface
 
     def to_step(self, current_id):
@@ -2515,16 +2532,6 @@ class BSplineSurface3D(Surface3D):
                     tuple(self.u_multiplicities), tuple(self.v_multiplicities),
                     tuple(self.u_knots), tuple(self.v_knots))
         return content, [current_id]
-
-    def get_x_periodicity(self):
-        p3d_x1 = self.point2d_to_3d(volmdlr.Point2D(1., 0.5))
-        p2d_x0 = self.point3d_to_2d(p3d_x1, 0., 0.5)
-        return 1-p2d_x0.x
-
-    def get_y_periodicity(self):
-        p3d_y1 = self.point2d_to_3d(volmdlr.Point2D(0.5, 1))
-        p2d_y0 = self.point3d_to_2d(p3d_y1, 0., 0.5)
-        return 1-p2d_y0.y
 
     def grid3d(self, points_x, points_y, xmin, xmax, ymin, ymax):
         '''

@@ -6,11 +6,11 @@ import volmdlr.step
 import volmdlr.cloud as vmcd
 
 for step_file in [
-    # 'tore1.step',
-    # 'cone1.step',
-    # 'cone2.step',
-    # 'cylinder.step',
-    # 'block.step',
+    'tore1.step',
+    'cone1.step',
+    'cone2.step',
+    'cylinder.step',
+    'block.step',
     # '4_bspline_faces.step',
     '2_bspline_faces.stp'
     # 'STEP_test1.stp',
