@@ -1116,7 +1116,7 @@ class Vector3D(Vector):
         v.normalize()
         return v
 
-    def copy(self, memo=None):
+    def copy(self, deep=True, memo=None):
         return Vector3D(self.x, self.y, self.z)
 
     @classmethod
@@ -1204,7 +1204,7 @@ class Point3D(Vector3D):
                        self.y / value,
                        self.z / value)
 
-    def copy(self, memo=None):
+    def copy(self, deep=True, memo=None):
         return Point3D(self.x, self.y, self.z)
 
     def to_dict(self):
@@ -1434,7 +1434,7 @@ class Basis(DessiaObject):
         """
         0
 
-    def copy(self, memo=None):
+    def copy(self, deep=True, memo=None):
         return self.__class__(*self.vectors)
 
 
@@ -1521,7 +1521,7 @@ class Basis2D(Basis):
         self.u = new_u
         self.v = new_v
 
-    def copy(self, memo=None):
+    def copy(self, deep=True, memo=None):
         return Basis2D(self.u, self.v)
 
     def normalize(self):
@@ -1713,7 +1713,7 @@ class Basis3D(Basis):
         matrix = self.transfer_matrix()
         return matrix.vector_multiplication(point)
 
-    def copy(self, memo=None):
+    def copy(self, deep=True, memo=None):
         return Basis3D(self.u, self.v, self.w)
 
     def normalize(self):
@@ -1802,7 +1802,7 @@ class Frame2D(Basis2D):
         self.v.plot(origin=self.origin, ax=ax, color='g')
         ax.axis('equal')
 
-    def copy(self, memo=None):
+    def copy(self, deep=True, memo=None):
         return Frame2D(self.origin, self.u, self.v)
 
 
@@ -1921,7 +1921,7 @@ class Frame3D(Basis3D):
                            self.u, self.v, self.w, self.name)
         self.origin.translation(offset, copy=False)
 
-    def copy(self, memo=None):
+    def copy(self, deep=True, memo=None):
         return Frame3D(self.origin.copy(),
                        self.u.copy(), self.v.copy(), self.w.copy())
 

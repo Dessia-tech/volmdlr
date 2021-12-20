@@ -1263,7 +1263,7 @@ class VolumeModel(dc.DessiaObject):
                 primitives.frame_mapping(frame, side, copy=False)
             self.bounding_box = self._bounding_box()
 
-    def copy(self, memo=None):
+    def copy(self, deep=True, memo=None):
         new_primitives = [primitive.copy() for primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
 

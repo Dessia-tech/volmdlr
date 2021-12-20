@@ -327,7 +327,7 @@ class Block(volmdlr.faces.ClosedShell3D):
                 self.frame = new_frame
                 self.faces = self.shell_faces()
 
-    def copy(self, memo=None):
+    def copy(self, deep=True, memo=None):
         new_origin = self.frame.origin.copy()
         new_u = self.frame.u.copy()
         new_v = self.frame.v.copy()
@@ -847,7 +847,7 @@ class Cylinder(RevolvedProfile):
             self.position.rotation(center, axis, angle, copy=False)
             self.axis.rotation(volmdlr.O3D, axis, angle, copy=False)
 
-    def copy(self, memo=None):
+    def copy(self, deep=True, memo=None):
         new_position = self.position.copy()
         new_axis = self.axis.copy()
         return Cylinder(new_position, new_axis, self.radius, self.length,
@@ -1142,7 +1142,7 @@ class Sweep(volmdlr.faces.ClosedShell3D):
             for face in self.faces:
                 face.frame_mapping(frame, side, copy=False)
             
-    def copy(self, memo=None):
+    def copy(self, deep=True, memo=None):
         new_contour2d = self.contour2d.copy()
         new_wire3d = self.wire3d.copy()
         return Sweep(new_contour2d, new_wire3d, color=self.color,

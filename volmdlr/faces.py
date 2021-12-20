@@ -989,7 +989,7 @@ class Plane3D(Surface3D):
                 self.frame.v = new_vector2
                 self.frame.w = new_vector3
 
-    def copy(self, memo=None):
+    def copy(self, deep=True, memo=None):
         new_frame = self.frame.copy()
         return Plane3D(new_frame, self.name)
 
@@ -3533,7 +3533,7 @@ class Face3D(volmdlr.core.Primitive3D):
             self.surface3d.frame_mapping(frame, side, copy=False)
             self.bounding_box = self._bounding_box()
 
-    def copy(self, memo=None):
+    def copy(self, deep=True, memo=None):
         return self.__class__(self.surface3d.copy(), self.surface2d.copy(),
                               self.name)
 
@@ -3618,7 +3618,7 @@ class PlaneFace3D(Face3D):
                                              pointers_memo=pointers_memo)
         return cls(plane3d, surface2d, dict_['name'])
 
-    def copy(self, memo=None):
+    def copy(self, deep=True, memo=None):
         return PlaneFace3D(self.surface3d.copy(), self.surface2d.copy(),
                            self.name)
 
@@ -4009,7 +4009,7 @@ class Triangle3D(PlaneFace3D):
             self.point3.frame_mapping(frame, side, copy=False)
             self.bounding_box = self._bounding_box()
 
-    def copy(self, memo=None):
+    def copy(self, deep=True, memo=None):
         return Triangle3D(self.point1.copy(), self.point2.copy(), self.point3.copy(),
                            self.name)
 
@@ -4124,7 +4124,7 @@ class CylindricalFace3D(Face3D):
                         surface2d=surface2d,
                         name=name)
 
-    def copy(self, memo=None):
+    def copy(self, deep=True, memo=None):
         return CylindricalFace3D(self.surface3d.copy(), self.surface2d.copy(),
                            self.name)
 
@@ -4522,7 +4522,7 @@ class ToroidalFace3D(Face3D):
                         surface2d=surface2d,
                         name=name)
 
-    def copy(self, memo=None):
+    def copy(self, deep=True, memo=None):
         return ToroidalFace3D(self.surface3d.copy(), self.surface2d.copy(),
                               self.name)
 
@@ -5362,7 +5362,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 face.frame_mapping(frame, side, copy=False)
             self.bounding_box = self._bounding_box()
 
-    def copy(self, memo=None):
+    def copy(self, deep=True, memo=None):
         new_faces = [face.copy() for face in self.faces]
         return self.__class__(new_faces, color=self.color, alpha=self.alpha,
                               name=self.name)
@@ -5661,7 +5661,7 @@ class ClosedShell3D(OpenShell3D):
                 face.frame_mapping(frame, side, copy=False)
             self.bounding_box = self._bounding_box()
 
-    def copy(self, memo=None):
+    def copy(self, deep=True, memo=None):
         new_faces = [face.copy() for face in self.faces]
         return ClosedShell3D(new_faces, color=self.color, alpha=self.alpha,
                              name=self.name)
