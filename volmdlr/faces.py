@@ -3330,7 +3330,7 @@ class BSplineSurface3D(Surface3D):
         '''
         
         surfaces = []
-        bspline_curve2d = self.bsplinecurve3d_to_2d(bspline_curve3d)
+        bspline_curve2d = self.bsplinecurve3d_to_2d(bspline_curve3d)[0]
         # if type(bspline_curve2d) == list:
         #     points = [bspline_curve2d[0].start]
         #     for edge in bspline_curve2d:
@@ -3412,7 +3412,6 @@ class BSplineSurface3D(Surface3D):
             
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            print(z.cost)
             if z.cost < 1e-10: 
                 return True
         return False
