@@ -3430,8 +3430,7 @@ class BSplineSurface3D(Surface3D):
                 if i >= 50:
                     return True
         return False
-        
-    
+
 
 class BezierSurface3D(BSplineSurface3D):
 
