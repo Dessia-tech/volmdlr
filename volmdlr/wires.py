@@ -4358,17 +4358,22 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                         if math.isclose(ratio1, -1, abs_tol=0.45):
                             if ratio_denom - list_closing_point_indexes[-1] < 10:
                                 passed_by_zero_index = True
-                            else:
+                            elif ratio_denom - list_closing_point_indexes[
+                                -1] >= 5:
                                 closing_point_index = \
                                     list_closing_point_indexes[-1] + 5
+                            else:
+                                closing_point_index = ratio_denom - 2
                         else:
                             if list_closing_point_indexes.count(
                                     list_closing_point_indexes[-1]) < 5:
                                 closing_point_index = \
                                     list_closing_point_indexes[-1]
-                            else:
+                            elif ratio_denom - list_closing_point_indexes[-1] >= 5:
                                 closing_point_index =\
                                     list_closing_point_indexes[-1] + 5
+                            elif list_closing_point_indexes[-1] <= ratio_denom - 2:
+                                closing_point_index = ratio_denom - 2
 
         elif closing_point_index in list_closing_point_indexes:
             closing_point_index = list_closing_point_indexes[-1]
@@ -4385,7 +4390,10 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
         elif math.isclose(ratio, -1, abs_tol=0.3):
             closing_point_index = list_closing_point_indexes[-1]
         elif closing_point_index - list_closing_point_indexes[-1] > 5:
-            closing_point_index = list_closing_point_indexes[-1] + 4
+            if list_closing_point_indexes[-1] != ratio_denom-1 and\
+                    list_closing_point_indexes[-1] + 4 <= ratio_denom-1:
+                closing_point_index = list_closing_point_indexes[-1] + 4
+
         return closing_point_index, list_remove_closing_points, passed_by_zero_index
 
     def sewing3(self, polygon2, x, y):
