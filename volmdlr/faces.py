@@ -3103,7 +3103,7 @@ class BSplineSurface3D(Surface3D):
         def f(X):
             return (self.point2d_to_3d(volmdlr.Point2D(X[0],X[1])) - other_bspline_surface3d.point2d_to_3d(volmdlr.Point2D(X[2],X[3]))).norm()
    
-        x = npy.linspace(0,1,50)
+        x = npy.linspace(0,1,10)
         x_init=[]
         for xi in x:
             for yi in x:
@@ -3399,7 +3399,20 @@ class BSplineSurface3D(Surface3D):
             if z.cost < 1e-10: 
                 return True
         return False
-
+    
+    
+    def is_intersected_with(self, other_bspline_surface3d):
+        '''
+        check if the two surfaces are intersected or not
+        return True, when there are more 50points on the intersection zone     
+        '''
+        
+        intersection_results = self.intersection_with(other_bspline_surface3d)
+        if len(intersection_results[0][0]) >= 50:
+            return True
+        else: 
+            return False
+    
 
 class BezierSurface3D(BSplineSurface3D):
 
