@@ -2749,6 +2749,32 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
 
         return closing_point
 
+    def validate_sewing_polygons(self, polygon2_2d):
+        primitive1 = self.line_segments[0]
+        closing_point = self.get_closing_point(polygon2_2d,
+                                               primitive1)
+        if closing_point != volmdlr.O2D:
+            return True
+        return False
+
+    def get_valid_sewing_polygons(self, polygon2_2d):
+        for i, primitive1 in enumerate(self.line_segments):
+            closing_point = self.get_closing_point(polygon2_2d,
+                                                          primitive1)
+            if closing_point != volmdlr.O2D:
+                if i == 0:
+                    return self
+                new_polygon_primitives = \
+                    self.line_segments[self.line_segments.index(primitive1):] + \
+                    self.line_segments[:self.line_segments.index(primitive1)]
+                new_points = []
+                for prim in new_polygon_primitives:
+                    if prim.start not in new_points:
+                        new_points.append(prim.start)
+                    if prim.end not in new_points:
+                        new_points.append(prim.end)
+                return ClosedPolygon2D(new_points)
+
 
 class Triangle2D(ClosedPolygon2D):
 
@@ -3083,6 +3109,7 @@ class Contour3D(Contour, Wire3D):
         """
 
         Wire3D.__init__(self, primitives=primitives, name=name)
+        self._utd_edge_polygon = False
 
     def __hash__(self):
         return sum([hash(e) for e in self.primitives])
@@ -3094,6 +3121,23 @@ class Contour3D(Contour, Wire3D):
         for edge, other_edge in zip(self.primitives, other_.edges):
             equal = (equal and edge == other_edge)
         return equal
+
+    @property
+    def edge_polygon(self):
+        if not self._utd_edge_polygon:
+            self._edge_polygon = self._get_edge_polygon()
+            self._utd_edge_polygon = True
+        return self._edge_polygon
+
+    def _get_edge_polygon(self):
+        points = []
+        for edge in self.primitives:
+            if points:
+                if edge.start != points[-1]:
+                    points.append(edge.start)
+            else:
+                points.append(edge.start)
+        return ClosedPolygon3D(points)
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -4238,23 +4282,33 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
             return closing_point_index, [], passed_by_zero_index
         list_remove_closing_points = []
         ratio = (list_closing_point_indexes[-1] - closing_point_index) / ratio_denom
+        new_list_closing_point = list(dict.fromkeys(list_closing_point_indexes))
         if closing_point_index < list_closing_point_indexes[-1]:
             if len(list_closing_point_indexes) > 2 and \
                     list_closing_point_indexes[
                         -2] < closing_point_index < list_closing_point_indexes[-1] - 1:
                 list_remove_closing_points.append(list_closing_point_indexes[-1])
-
-            elif len(list_closing_point_indexes) > 3 and \
+            elif len(new_list_closing_point) > 3 and \
+                    new_list_closing_point[
+                        -3] < closing_point_index < new_list_closing_point[-1] - 3:
+                for idx in list_closing_point_indexes:
+                    if idx == new_list_closing_point[-1] or\
+                            idx == new_list_closing_point[-2]:
+                        list_remove_closing_points.append(idx)
+            elif len(list_closing_point_indexes) > 5 and \
                     list_closing_point_indexes[
-                        -3] < closing_point_index < list_closing_point_indexes[-1] - 3:
+                        -5] < closing_point_index < \
+                    list_closing_point_indexes[-1] - 5 and \
+                    list_closing_point_indexes[-5] != \
+                    list_closing_point_indexes[-6]:
                 list_remove_closing_points.extend(
                     [list_closing_point_indexes[-1],
-                     list_closing_point_indexes[-2]])
+                     list_closing_point_indexes[-2],
+                     list_closing_point_indexes[-3],
+                     list_closing_point_indexes[-4]])
             elif closing_point_index in list_closing_point_indexes:
-
                 closing_point_index = list_closing_point_indexes[-1]
             elif math.isclose(ratio, 0, abs_tol=0.3):
-
                 closing_point_index = list_closing_point_indexes[-1]
             else:
                 if passed_by_zero_index:
@@ -4267,7 +4321,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                         ratio1 = (closing_point_index -
                                   list_closing_point_indexes[
                                       0]) / ratio_denom
-                        if math.isclose(ratio1, 0, abs_tol=0.3):
+                        if math.isclose(ratio1, 0, abs_tol=0.3) and\
+                                math.isclose(ratio, 1, abs_tol=0.3):
                             passed_by_zero_index = True
                             closing_point_index = list_closing_point_indexes[0]
                         else:
@@ -4276,11 +4331,20 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                         ratio1 = (closing_point_index -
                                   list_closing_point_indexes[
                                       -1]) / ratio_denom
-                        if math.isclose(ratio1, -1, abs_tol=0.4):
-                            passed_by_zero_index = True
+                        if math.isclose(ratio1, -1, abs_tol=0.45):
+                            if ratio_denom - list_closing_point_indexes[-1] < 10:
+                                passed_by_zero_index = True
+                            else:
+                                closing_point_index = \
+                                    list_closing_point_indexes[-1] + 5
                         else:
-                            closing_point_index = list_closing_point_indexes[
-                                -1]
+                            if list_closing_point_indexes.count(
+                                    list_closing_point_indexes[-1]) < 5:
+                                closing_point_index = \
+                                    list_closing_point_indexes[-1]
+                            else:
+                                closing_point_index =\
+                                    list_closing_point_indexes[-1] + 5
 
         elif closing_point_index in list_closing_point_indexes:
             closing_point_index = list_closing_point_indexes[-1]
@@ -4296,6 +4360,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
             closing_point_index = list_closing_point_indexes[-1]
         elif math.isclose(ratio, -1, abs_tol=0.3):
             closing_point_index = list_closing_point_indexes[-1]
+        elif closing_point_index - list_closing_point_indexes[-1] > 5:
+            closing_point_index = list_closing_point_indexes[-1] + 4
         return closing_point_index, list_remove_closing_points, passed_by_zero_index
 
     def sewing3(self, polygon2, x, y):
@@ -4304,12 +4370,15 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
         polygon1_3d = self
         polygon2_3d = polygon2
         if polygon2_2d.area() < polygon1_2d.area():
-            polygon = polygon1_2d
-            polygon1_2d = polygon2_2d
-            polygon2_2d = polygon
+            polygon1_2d, polygon2_2d = polygon2_2d, polygon1_2d
             polygon1_3d = polygon2
             polygon2_3d = self
 
+        valid_polygon = polygon1_2d.validate_sewing_polygons(polygon2_2d)
+        if not valid_polygon:
+            polygon1_2d = polygon1_2d.get_valid_sewing_polygons(polygon2_2d)
+            polygon1_3d = polygon1_2d.to_3d(volmdlr.Point3D(0, 0,
+                                                            polygon1_3d.points[0].z), x, y)
         # ax=polygon1_2d.plot()
         # polygon2_2d.plot(ax=ax, color='r')
         dict_closing_pairs = {}
@@ -4320,12 +4389,16 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
         previous_closing_point_index = None
         for i, primitive1 in enumerate(polygon1_2d.line_segments):
             list_remove_closing_points = []
-            closing_point = polygon1_2d.get_closing_point(polygon2_2d, primitive1)
+
+            closing_point = polygon1_2d.get_closing_point(polygon2_2d,
+                                                          primitive1)
             if closing_point == volmdlr.O2D:
                 if previous_closing_point_index is not None:
                     closing_point_index = previous_closing_point_index
                 else:
-                    raise NotImplementedError('None of the normal lines intersect polygon2')
+                    raise NotImplementedError(
+                        'None of the normal lines intersect polygon2, '
+                        'certify projection plane given is correct')
             else:
                 closing_point_index = polygon2_2d.points.index(closing_point)
 
@@ -4339,33 +4412,31 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
 
             if list_remove_closing_points:
                 new_list_closing_point_indexes = list(dict.fromkeys(list_closing_point_indexes))
-                if len(list_remove_closing_points) == 2 and \
-                        list_remove_closing_points[0] != \
-                        list_remove_closing_points[-1]:
-                    dict_closing_pairs[list(dict_closing_pairs.keys())[-len(list_remove_closing_points)]] = (
-                        new_list_closing_point_indexes[
-                            -(len(list_remove_closing_points)+1)],
-                        closing_point_index)
-                    if len(list_remove_closing_points) == 2:
-                        del dict_closing_pairs[
-                            list(dict_closing_pairs.keys())[-1]]
-                else:
-                    dict_closing_pairs[list(dict_closing_pairs.keys())[
-                        -1]] = (new_list_closing_point_indexes[-2],
-                                closing_point_index)
-                for pt_index in list_remove_closing_points:
-                    list_closing_point_indexes.remove(pt_index)
-                list_closing_point_indexes.append(closing_point_index)
+                new_list_remove_closing_indexes = list(dict.fromkeys(list_remove_closing_points))
                 for n in range(len(list_remove_closing_points)):
                     new_face = volmdlr.faces.Triangle3D(
-                        triangles[-(n+1)].point1,
-                        triangles[-(n+1)].point2,
+                        triangles[-(n + 1)].point1,
+                        triangles[-(n + 1)].point2,
                         polygon2_3d.points[closing_point_index],
                         alpha=0.9,
                         color=(1, 0.1, 0.1))
-                    triangles.remove(triangles[-(n+1)])
-                    triangles.append(new_face)
+                    triangles[-(n + 1)] = new_face
+                number_common_closing_point = 0
+                for fc in triangles:
+                    if fc.point3 == polygon2_3d.points[closing_point_index]:
+                        number_common_closing_point += 1
+                for n in range(0,
+                               len(new_list_remove_closing_indexes) // 2 + 1):
+                    del dict_closing_pairs[
+                        list(dict_closing_pairs.keys())[-1]]
 
+                dict_closing_pairs[triangles[-number_common_closing_point].point1] = (
+                    new_list_closing_point_indexes[
+                        -(len(new_list_remove_closing_indexes) + 1)],
+                    closing_point_index)
+                for pt_index in list_remove_closing_points:
+                    list_closing_point_indexes.remove(pt_index)
+                list_closing_point_indexes.append(closing_point_index)
             elif closing_point_index != previous_closing_point_index:
                     dict_closing_pairs[polygon1_3d.line_segments[i].start] = (previous_closing_point_index, closing_point_index)
 
@@ -4399,9 +4470,12 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                         dict_closing_pairs[polygon1_3d.points[0]] = (
                             list(dict_closing_pairs.values())[-1][-1],
                             list(dict_closing_pairs.values())[0][0])
-        # print('list closing indexes :', list_closing_point_indexes)
-        # print('dict_closing_pairs :', dict_closing_pairs)
         triangles += polygon2_3d.close_sewing(dict_closing_pairs)
+
+        # print('list closing indexes :', list_closing_point_indexes)
+        # print('length polygon2 points: ', len(polygon2_3d.points))
+        # print('dict_closing_pairs :', dict_closing_pairs)
+
         # volum = volmdlr.core.VolumeModel(triangles)
         # volum.babylonjs()
         # print('p1 3d points :', self.points)
