@@ -3407,11 +3407,30 @@ class BSplineSurface3D(Surface3D):
         return True, when there are more 50points on the intersection zone     
         '''
         
-        intersection_results = self.intersection_with(other_bspline_surface3d)
-        if len(intersection_results[0][0]) >= 50:
-            return True
-        else: 
-            return False
+        # intersection_results = self.intersection_with(other_bspline_surface3d)
+        # if len(intersection_results[0][0]) >= 50:
+        #     return True
+        # else: 
+        #     return False
+        
+        def f(X):
+            return (self.point2d_to_3d(volmdlr.Point2D(X[0],X[1])) - other_bspline_surface3d.point2d_to_3d(volmdlr.Point2D(X[2],X[3]))).norm()
+   
+        x = npy.linspace(0,1,10)
+        x_init=[]
+        for xi in x:
+            for yi in x:
+                x_init.append((xi,yi, xi, yi))
+
+        i = 0
+        for x0 in x_init: 
+            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
+            if z.cost<1e-5:
+                i += 1
+                if i >= 50:
+                    return True
+        return False
+        
     
 
 class BezierSurface3D(BSplineSurface3D):
