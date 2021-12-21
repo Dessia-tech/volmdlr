@@ -32,3 +32,4 @@ contour = belt.outer_contour2d.plot_data()
 primitive_group = plot_data.PrimitiveGroup(primitives=[contour])
 plot_data.plot_canvas(plot_data_object=primitive_group, debug_mode=True)
 
+casing._check_platform()
