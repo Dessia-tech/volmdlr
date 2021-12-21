@@ -702,7 +702,7 @@ class Point2D(Vector2D):
                 grid.append(points)
                 points = []    
                     
-        elif direction == ['-x','+y']:
+        elif direction == ['+y','-x']:
             x = npy.linspace(xmax, xmin, points_x) 
             y = npy.linspace(ymin, ymax, points_y) 
             points_2d = [] 
@@ -731,23 +731,8 @@ class Point2D(Vector2D):
                     
                 grid.append(points)
                 points = []
-        
-        elif direction == ['+y','-x']:
-            x = npy.linspace(xmax, xmin, points_x) 
-            y = npy.linspace(ymin, ymax, points_y) 
-            points_2d = [] 
-            grid = []
-            points = []
 
-            for xi in x:
-                for yi in y:
-                    points_2d.append(cls(xi, yi))
-                    points.append(cls(xi, yi))
-                    
-                grid.append(points)
-                points = []
-                
-                
+        
         return (points_2d, grid)
         
 
