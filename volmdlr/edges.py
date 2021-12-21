@@ -2963,11 +2963,20 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         parameter2 = self.point3d_to_parameter(point2)
         if parameter1 is None or parameter2 is None:
             raise ValueError('Point not on BSplineCurve for trim method')
-        return self.trim_between_evaluations(parameter1, parameter2)
+
+        if parameter1 > parameter2:
+            parameter1, parameter2 = parameter2, parameter1
+            point1, point2 = point2, point1
+
+        bspline_curve = self.cut_before(parameter1)
+        new_param2 = bspline_curve.point3d_to_parameter(point2)
+        trimmed_bspline_cruve = bspline_curve.cut_after(new_param2)
+        return trimmed_bspline_cruve
 
     def trim_between_evaluations(self, parameter1: float, parameter2: float):
+        print('Use BSplineCurve3D.trim instead of trim_between_evaluation')
         parameter1, parameter2 = min([parameter1, parameter2]), \
-                               max([parameter1, parameter2])
+            max([parameter1, parameter2])
 
         if math.isclose(parameter1, 0, abs_tol=1e-7) \
                 and math.isclose(parameter2, 1, abs_tol=1e-7):
@@ -2987,12 +2996,16 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         if bspline_curve.weights is not None:
             raise NotImplementedError
 
+        # Que faire quand on rajoute un noeud au milieu ?
+        # plus simple de passer par cut_after cut_before
         new_ctrlpts = bspline_curve.control_points[bspline_curve.degree:
                                                    -bspline_curve.degree]
         new_multiplicities = bspline_curve.knot_multiplicities[1:-1]
+        # new_multiplicities = bspline_curve.knot_multiplicities[2:-5]
         new_multiplicities[-1] += 1
         new_multiplicities[0] += 1
         new_knots = bspline_curve.knots[1:-1]
+        # new_knots = bspline_curve.knots[2:-5]
         new_knots = standardize_knot_vector(new_knots)
 
         return BSplineCurve3D(degree=bspline_curve.degree,
