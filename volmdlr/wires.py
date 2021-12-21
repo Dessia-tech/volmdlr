@@ -2732,7 +2732,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                     if prim.end not in inter_points:
                         line_intersections[ls].append((prim.end, prim))
                         inter_points.append(prim.end)
-
+                elif prim.point_belongs(middle_point):
+                    line_intersections[ls].append((prim.middle_point(), prim))
+                    inter_points.append(prim.middle_point())
         if line_intersections[line_segment1]:
             # print('passing here, debug me')
             # inters_points = [intr_list[0] for intr_list in line_intersections[line_segment1]]
@@ -2748,6 +2750,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                             closing_point = intr_list[1].start
                         else:
                             closing_point = intr_list[1].end
+                elif intr_list[0] == middle_point:
+                    closing_point = intr_list[1].start
         else:
             # print('last passed here, sure of it ')
             distance = math.inf
@@ -2762,6 +2766,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                             closing_point = intr_list[1].start
                         else:
                             closing_point = intr_list[1].end
+                elif intr_list[0] == middle_point:
+                    closing_point = intr_list[1].start
         if ax is not None:
             middle_point.plot(ax=ax, color='r')
             line_segment1.plot(ax=ax, color='y')
