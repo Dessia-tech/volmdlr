@@ -68,10 +68,19 @@ class PointCloud3D(dc.DessiaObject):
         dist_between_plane = xyz_list[posmax]/(resolution-1)
         position_plane = [xyz_bbox[posmax][0] + n*dist_between_plane for n in range(resolution)]
         subcloud3d = [self.extract(normal, pos_plane-dist_between_plane/2, pos_plane+dist_between_plane/2) for pos_plane in position_plane]
+        
+        print('resolution', resolution)
+        print('nb subcloud', len(subcloud3d))
+        
+        ax = subcloud3d[0].plot()
+        subcloud3d[1].plot(ax=ax, color='r')
+        subcloud3d[2].plot(ax=ax, color='g')
+        subcloud3d[3].plot(ax=ax, color='b')
+        subcloud3d[4].plot(ax=ax, color='y')
+        
         vec1, vec2 = xyz_vect[posmax-2], xyz_vect[posmax-1]
         subcloud2d_tosimp = [subcloud3d[n].to_2d(position_plane[n]*normal, vec1, vec2) for n in range(resolution)]
         subcloud2d = [sub.simplify(resolution=5) for sub in subcloud2d_tosimp]
-        initial_polygon2d = [cloud2d.to_polygon() for cloud2d in subcloud2d]
         
         #Offsetting
         if offset != 0 :
@@ -97,6 +106,9 @@ class PointCloud3D(dc.DessiaObject):
                 new_polygon = poly.to_3d(position_plane[n]*normal, vec1, vec2)
                 polygon3d.append(new_polygon)
         [position_plane.pop(k) for k in banned[::-1]]
+        
+        for poly in polygon3d :
+            poly.plot(ax=ax)
 
         return self.generate_shell(polygon3d, normal, vec1, vec2)
 
@@ -196,10 +208,10 @@ class PointCloud3D(dc.DessiaObject):
         points = step.to_points()
         return cls(points)
     
-    def plot(self, ax = None):
+    def plot(self, ax = None, color='k'):
         ax = self.points[0].plot(ax = ax)
-        for point in self.points[1::1000]:
-            point.plot(ax = ax)
+        for point in self.points[1::100]:
+            point.plot(ax = ax, color = color)
             
         return ax
     
@@ -254,7 +266,7 @@ class PointCloud2D(dc.DessiaObject):
             polygon = vmw.ClosedPolygon2D.convex_hull_points(self.points)
         else :
             polygon = vmw.ClosedPolygon2D.concave_hull(self.points, -0.2, 0.000005)
-        
+            
         if polygon is None or math.isclose(polygon.area(), 0, abs_tol = 1e-6) :
             return None
         else : 
