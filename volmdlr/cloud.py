@@ -69,15 +69,6 @@ class PointCloud3D(dc.DessiaObject):
         position_plane = [xyz_bbox[posmax][0] + n*dist_between_plane for n in range(resolution)]
         subcloud3d = [self.extract(normal, pos_plane-dist_between_plane/2, pos_plane+dist_between_plane/2) for pos_plane in position_plane]
         
-        print('resolution', resolution)
-        print('nb subcloud', len(subcloud3d))
-        
-        ax = subcloud3d[0].plot()
-        subcloud3d[1].plot(ax=ax, color='r')
-        subcloud3d[2].plot(ax=ax, color='g')
-        subcloud3d[3].plot(ax=ax, color='b')
-        subcloud3d[4].plot(ax=ax, color='y')
-        
         vec1, vec2 = xyz_vect[posmax-2], xyz_vect[posmax-1]
         subcloud2d_tosimp = [subcloud3d[n].to_2d(position_plane[n]*normal, vec1, vec2) for n in range(resolution)]
         subcloud2d = [sub.simplify(resolution=5) for sub in subcloud2d_tosimp]
@@ -107,9 +98,6 @@ class PointCloud3D(dc.DessiaObject):
                 polygon3d.append(new_polygon)
         [position_plane.pop(k) for k in banned[::-1]]
         
-        for poly in polygon3d :
-            poly.plot(ax=ax)
-
         return self.generate_shell(polygon3d, normal, vec1, vec2)
 
     @classmethod
@@ -151,8 +139,7 @@ class PointCloud3D(dc.DessiaObject):
                                               vec2).area() / poly2.to_2d(
                         position_plane[n] * normal, vec1, vec2).area() > 0.3:
                     poly2_simplified = poly2
-                new_faces = poly1_simplified.sewing3(poly2_simplified,
-                                                     vec1, vec2)
+                    
                 # if not poly1_simplified.check_sewing(poly2_simplified, new_faces):
                 #     print('p1 3d points :', poly1_simplified.points)
                 #     print('p2 3d points :', poly2_simplified.points)
@@ -261,9 +248,9 @@ class PointCloud2D(dc.DessiaObject):
     def to_polygon(self, convexe = False):
         if not self.points:
             return None
-        # polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
+        # polygon = vmw.ClosedPolygon2D.convex_hull_points(self.points)
         if convexe : 
-            polygon = vmw.ClosedPolygon2D.convex_hull_points(self.points)
+            polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
         else :
             polygon = vmw.ClosedPolygon2D.concave_hull(self.points, -0.2, 0.000005)
             
