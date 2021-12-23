@@ -655,12 +655,12 @@ class Contour:
                     break
                 else:
                     for point in points:
-                        if point.is_close(line.start, tol=3e-6):
+                        if point.is_close(line.start, tol=5e-5):
                             line.start = point
                             contour.append(line)
                             edges.remove(line)
                             break
-                        elif point.is_close(line.end, tol=3e-6):
+                        elif point.is_close(line.end, tol=5e-5):
                             line.end = point
                             contour.append(line)
                             edges.remove(line)
@@ -1700,7 +1700,8 @@ class Contour2D(Contour, Wire2D):
             if len(contours) == 0:
                 finished = True
             counter += 1
-            if counter >= 100*len(list_contour) and contours[-1] == cutting_contour:
+            if counter >= 100 * len(list_contour):
+            # if counter >= 100*len(list_contour) and contours[-1] == cutting_contour:
                 # axx = self.plot(color='c')
                 # axc = cutting_contour.plot()
                 # # print('cutting_contour_points :', [(p.start, p.end) for p in cutting_contour.primitives])
@@ -1709,8 +1710,8 @@ class Contour2D(Contour, Wire2D):
                 # for ctr in list_contour:
                 #     # if ctr != list_contour[0]:
                 #     #     ctr.plot(ax=ax1, color = 'g')
-                #     # print('list_contour_points :', [(p.start, p.end) for p in
-                #     #                                 ctr.primitives])
+                #     print('list_contour_points :', [(p.start, p.end) for p in
+                #                                     ctr.primitives])
                 #     ctr.plot(ax=axc, color='r')
                 #     ctr.plot(ax=axx, color='r')
                 # base_contour.plot(ax=axc, color='b')
