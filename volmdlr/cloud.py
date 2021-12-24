@@ -135,7 +135,7 @@ class PointCloud3D(dc.DessiaObject):
                                               vec2).area() / poly2.to_2d(
                         position_plane[n] * normal, vec1, vec2).area() > 0.3:
                     poly2_simplified = poly2
-                    
+
                 faces.extend(poly1_simplified.sewing3(poly2_simplified,
                                                       vec1, vec2))
                 # for trio in coords:
