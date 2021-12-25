@@ -2754,7 +2754,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                             closing_point = intr_list[1].start
                         else:
                             closing_point = intr_list[1].end
-                elif intr_list[0] == middle_point:
+                elif intr_list[0] == middle_point and \
+                        primitive.length() == intr_list[1].length():
                     closing_point = intr_list[1].start
         else:
             # print('last passed here, sure of it ')
@@ -2770,7 +2771,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                             closing_point = intr_list[1].start
                         else:
                             closing_point = intr_list[1].end
-                elif intr_list[0] == middle_point:
+                elif intr_list[0] == middle_point and \
+                        primitive.length() == intr_list[1].length():
                     closing_point = intr_list[1].start
         if ax is not None:
             middle_point.plot(ax=ax, color='r')
