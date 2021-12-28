@@ -15,11 +15,9 @@ import numpy as npy
 files_path = ['bspline_surface_1.step', 'bspline_surface_2.step']
 bspline_faces = []
 
-# Chargement des fichiers step
 for file_path in files_path: 
     step_file = vms.Step(file_path)
     
-    # Extraction des primitives et faces
     model = step_file.to_volume_model()
     primitives = model.primitives
     
