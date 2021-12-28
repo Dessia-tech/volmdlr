@@ -63,7 +63,20 @@ for f in splitted_faces:
 # %% (3) BSpline-surface split - bspline_curve_split 
 # split the bspline_surface, into 2 surfaces, using a bspline curve
 
-bspline_curve3d = vm.edges.BSplineCurve3D.load_from_file('bspline_curve3d_interpolated.json')
+# %%% Bspline-curve definition
+
+points2d = [vm.Point2D(0, 0.1),
+            vm.Point2D(0.2, 0.3),
+            vm.Point2D(0.4, 0.4),
+            vm.Point2D(0.5, 0.6),
+            vm.Point2D(0.6, 0.7),
+            vm.Point2D(0.8, 0.8),
+            vm.Point2D(1,0.9)]
+
+bspline_curve3d = bspline_surface.bsplinecurve2d_to_3d(vm.edges.BSplineCurve2D.from_points_interpolation(points2d, 2))[0]
+
+# %%% Split surface
+
 splitted_surfaces = bspline_surface.split_surface_with_bspline_curve(bspline_curve3d)
 
 splitted_faces = []
