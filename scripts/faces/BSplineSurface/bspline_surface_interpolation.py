@@ -71,5 +71,5 @@ bspline_surface = vmf.BSplineSurface3D.points_fitting_into_bspline_surface(point
 
 # %% Display 
 
-bspline_face = bspline_surface.rectangular_cut(0, 1, 0, 1)
-bspline_face.babylonjs()
+# bspline_face = bspline_surface.rectangular_cut(0, 1, 0, 1)
+# bspline_face.babylonjs()
