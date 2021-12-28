@@ -5444,35 +5444,58 @@ class BSplineFace3D(Face3D):
         
         contour1 = self.outer_contour3d
         contour2 = other_bspline_face3d.outer_contour3d
-        contours_3d = [contour1, contour2]
-        for j in range(0,len(contours_3d)):
-            contours_3d_primitives = []
-            for k in range(0,len(contours_3d[j].primitives),10):
-                contours_3d_primitives.append(volmdlr.edges.LineSegment3D(contours_3d[j].primitives[k].start, contours_3d[j].primitives[k+9].end))
-            contours_3d[j]=volmdlr.wires.Contour3D(contours_3d_primitives) 
-
-        contour1 = contours_3d[0]
-        contour2 = contours_3d[1]
         
         contour1_2d = self.surface2d.outer_contour
         contour2_2d = other_bspline_face3d.surface2d.outer_contour
         
-        shared = contour1.shared_edges_between2contours(contour2)
+        points1 = []
+        for p1 in contour1.primitives:
+            points1.append(p1.start)
+        points2 = []
+        for p2 in contour2.primitives:
+            points2.append(p2.start)
 
-        if contour1.edges_order_with_adjacent_contour(contour2):
-            start1 = contour1_2d.primitives[shared[0][0]].start
-            end1 = contour1_2d.primitives[shared[-1][0]].end
-            
-            start2 = contour2_2d.primitives[shared[0][1]].start
-            end2 = contour2_2d.primitives[shared[-1][1]].end
+        dis, ind = [], []
+        for p in points1:
+            pt = p.nearest_point(points2)
+            ind.append(points2.index(pt))
+            dis.append(p.point_distance(pt))
+
+        dis_sorted = sorted(dis)
+
+        shared = []
+        for k, p1 in enumerate(contour1.primitives):
+            if ((p1.start == points1[dis.index(dis_sorted[0])] and p1.end == points1[dis.index(dis_sorted[1])])
+                or
+                (p1.end == points1[dis.index(dis_sorted[0])] and p1.start == points1[dis.index(dis_sorted[1])])):
+
+                shared.append(p1)
+                i = k
+
+        for k, p2 in enumerate(contour2.primitives):
+            if ((p2.start == points2[ind[dis.index(dis_sorted[0])]] and p2.end == points2[ind[dis.index(dis_sorted[1])]])
+                or
+                (p2.end == points2[ind[dis.index(dis_sorted[0])]] and p2.start == points2[ind[dis.index(dis_sorted[1])]])):
+
+                shared.append(p2)
+                j = k
+
+        points = [contour2.primitives[j].start, contour2.primitives[j].end]
+
+        if points.index(contour1.primitives[i].start.nearest_point(points)) == 1:
+            start1 = contour1_2d.primitives[i].start
+            end1 = contour1_2d.primitives[i].end
+
+            start2 = contour2_2d.primitives[j].end
+            end2 = contour2_2d.primitives[j].start
 
         else:
-            start1 = contour1_2d.primitives[shared[0][0]].start
-            end1 = contour1_2d.primitives[shared[-1][0]].end
-            
-            start2 = contour2_2d.primitives[shared[0][1]].end
-            end2 = contour2_2d.primitives[shared[-1][1]].start
-            
+            start1 = contour1_2d.primitives[i].start
+            end1 = contour1_2d.primitives[i].end
+
+            start2 = contour2_2d.primitives[j].start
+            end2 = contour2_2d.primitives[j].end
+
         du1 = abs((end1-start1)[0])
         dv1 = abs((end1-start1)[1])
 
@@ -5492,7 +5515,7 @@ class BSplineFace3D(Face3D):
         else:
             adjacent_direction2 = 'u'
             diff2 = (end2 - start2)[0]
-            
+  
         corresponding_directions = []
         if (diff1 > 0 and diff2 > 0) or (diff1 < 0 and diff2 < 0):
             corresponding_directions.append(('+' + adjacent_direction1, '+' + adjacent_direction2))
@@ -5550,8 +5573,8 @@ class BSplineFace3D(Face3D):
             elif (u1 == 1 and u2 == 0):
                corresponding_directions.append(('+u', '+u'))
                grid2d_direction = [['+y','+x'], ['+y','+x']]
-
-
+    
+    
         elif adjacent_direction1 == 'u' and adjacent_direction2 == 'v':
             v1 = nearest_start1[1]
             u2 = nearest_start2[0]
@@ -5563,8 +5586,8 @@ class BSplineFace3D(Face3D):
             elif (v1 == 0 and u2 == 1):
                 corresponding_directions.append(('+v', '+u'))
                 grid2d_direction = [['-x','-y'], ['-y','-x']]
-
-
+    
+    
             elif (v1 == 1 and u2 == 1):
                corresponding_directions.append(('+v', '-u'))
                grid2d_direction = [['+x','+y'], ['-y','-x']]
@@ -5590,13 +5613,13 @@ class BSplineFace3D(Face3D):
             elif (u1 == 0 and v2 == 0):  
                corresponding_directions.append(('+u', '-v'))
                grid2d_direction = [['+y','-x'], ['+x','+y']]
-               
-               
+
+
             elif (u1 == 1 and v2 == 1):
                corresponding_directions.append(('+u', '-v'))
                grid2d_direction = [['+y','+x'], ['+x','-y']]
+    
 
-        
         return (corresponding_directions, grid2d_direction)
 
     
