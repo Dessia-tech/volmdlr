@@ -5694,9 +5694,9 @@ class BSplineFace3D(Face3D):
         return (corresponding_directions, grid2d_direction)
 
     
-    def merge_two_adjacent_surfaces(self, other_bspline_face3d):
+    def merge_with(self, other_bspline_face3d):
         '''
-        merge two adjacent surfaces based on their faces 
+        merge two adjacent faces
 
         Parameters
         ----------
@@ -5704,47 +5704,14 @@ class BSplineFace3D(Face3D):
 
         Returns
         -------
-        merged_surface : volmdlr.faces.BSplineSurface3D
+        merged_face : volmdlr.faces.BSplineFace3D
 
         '''
-        
-        corresponding_directions, grid2d_direction = self.pair_with(other_bspline_face3d)
-        bsplines = [self.surface3d, other_bspline_face3d.surface3d]
-        center = [self.surface2d.outer_contour.center_of_mass(), other_bspline_face3d.surface2d.outer_contour.center_of_mass()]
-        intersection_results = bsplines[0].intersection_with(bsplines[1])
-        points3d = []
-        
-        for i in range(0, len(intersection_results)):
-            ru = intersection_results[i][0][:]
-            rv = intersection_results[i][1][:]
-            points = []
-            
-            for k in range(0, len(ru)):
-                j = ru.index(min(ru))
-                points.append(volmdlr.Point2D(ru[j], rv[j]))
-                ru[j] = math.inf     
-    
-            curve = volmdlr.edges.BSplineCurve2D.from_points_approximation(points, 2, ctrlpts_size = 10)
-            surfaces = bsplines[i].split_surface_with_bspline_curve(bsplines[i].bsplinecurve2d_to_3d(curve))
 
-            errors = []
-            for s in surfaces: 
-                errors.append(s.error_with_point3d(bsplines[i].point2d_to_3d(center[i])))
-        
-            bsplines_new = surfaces[errors.index(min(errors))]
-            
-            grid2d = volmdlr.Point2D.grid2d_with_direction(10, 10, 0, 1, 0, 1, grid2d_direction[i])[0]
-            grid3d = []
-            for p in grid2d: 
-                grid3d.append(bsplines_new.point2d_to_3d(p))
-            
-            points3d.extend(grid3d)
-        
-        size_u, size_v, degree_u, degree_v = 20, 10, max(bsplines[0].degree_u, bsplines[1].degree_u), max(bsplines[0].degree_v, bsplines[1].degree_v)
-        
-        merged_surface = volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(points3d, size_u, size_v, degree_u, degree_v)
-                
-        return merged_surface
+        merged_surface = self.surface3d.merge_with(other_bspline_face3d.surface3d)
+        merged_face = merged_surface.rectangular_cut(0,1,0,1)
+
+        return merged_face
 
 
 class OpenShell3D(volmdlr.core.CompositePrimitive3D):
