@@ -9,13 +9,27 @@
 
 import volmdlr as vm
 import volmdlr.faces as vmf
+import volmdlr.step as vms
 import numpy as npy
 
-# %% Cylindrical-surface/face 
+# %% Read Step file
 
-cylindrical_surface = vmf.CylindricalSurface3D.load_from_file('cylindrical_surface_1.json')
+file_path = 'cylindrical_surface_1.step'
 
-cylindrical_face = cylindrical_surface.rectangular_cut(10, 11, 0, 5)
+# Chargement des fichiers step
+step_file = vms.Step(file_path)
+
+# Extraction des primitives et faces
+model = step_file.to_volume_model()
+primitives = model.primitives
+
+faces = []
+for primitive in primitives:
+    faces.extend(primitive.faces)
+
+# %% Cylindrical face 
+
+cylindrical_face = faces[0]
 
 # %% Bspline-surface/face 
 
