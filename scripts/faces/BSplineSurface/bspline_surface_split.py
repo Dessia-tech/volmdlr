@@ -22,12 +22,14 @@ exec(open(script).read())
 u = 0.2
 splitted_surfaces = bspline_surface.split_surface_u(u)
 
+random_colors = []
 splitted_faces = []
 for i,s in enumerate(splitted_surfaces):
     splitted_faces.append(s.rectangular_cut(0,1,0,1))
-    splitted_faces[i].color = [list(npy.random.choice(range(255), size=1))[0] / 256, 
-                               list(npy.random.choice(range(255), size=1))[0] / 256, 
-                               list(npy.random.choice(range(255), size=1))[0] / 256]
+    random_colors.append([list(npy.random.choice(range(255), size=1))[0] / 256, 
+                          list(npy.random.choice(range(255), size=1))[0] / 256, 
+                          list(npy.random.choice(range(255), size=1))[0] / 256])
+    splitted_faces[i].color = random_colors[i]
     
 # %%% Display
 
@@ -36,7 +38,6 @@ for f in splitted_faces:
     f.plot(ax=ax, color=f.color)
 
 # vm.core.VolumeModel(splitted_faces).babylonjs()
-
 
 # %% (2) BSpline-surface split - v_split 
 # split the bspline_surface at the input parametric coordinate (v) on the v-direction, into 2 surfaces
@@ -47,9 +48,7 @@ splitted_surfaces = bspline_surface.split_surface_v(v)
 splitted_faces = []
 for i,s in enumerate(splitted_surfaces):
     splitted_faces.append(s.rectangular_cut(0,1,0,1))
-    splitted_faces[i].color = [list(npy.random.choice(range(255), size=1))[0] / 256, 
-                               list(npy.random.choice(range(255), size=1))[0] / 256, 
-                               list(npy.random.choice(range(255), size=1))[0] / 256]
+    splitted_faces[i].color = random_colors[i]
     
 # %%% Display
 
@@ -58,7 +57,6 @@ for f in splitted_faces:
     f.plot(ax=ax, color=f.color)
 
 # vm.core.VolumeModel(splitted_faces).babylonjs()
-
 
 # %% (3) BSpline-surface split - bspline_curve_split 
 # split the bspline_surface, into 2 surfaces, using a bspline curve
@@ -82,10 +80,8 @@ splitted_surfaces = bspline_surface.split_surface_with_bspline_curve(bspline_cur
 splitted_faces = []
 for i,s in enumerate(splitted_surfaces):
     splitted_faces.append(s.rectangular_cut(0,1,0,1))
-    splitted_faces[i].color = [list(npy.random.choice(range(255), size=1))[0] / 256, 
-                               list(npy.random.choice(range(255), size=1))[0] / 256, 
-                               list(npy.random.choice(range(255), size=1))[0] / 256]
-
+    splitted_faces[i].color = random_colors[i]
+    
 # %%% Display
 
 ax = bspline_surface.rectangular_cut(0, 1, 0, 1).plot()
