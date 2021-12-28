@@ -2269,7 +2269,7 @@ class BSplineSurface3D(Surface3D):
 
 
 
-    def merge_with(self, other_bspline_surface3d, merging_direction):
+    # def merge_with(self, other_bspline_surface3d, merging_direction):
         ''' 
         merge two Bspline surfaces along a merging direction (u ou v)
         Based on: Pungotra et al. Merging multiple B-spline surface patches in a virtual reality environment. 2010
@@ -3446,6 +3446,77 @@ class BSplineSurface3D(Surface3D):
                 if i >= 50:
                     return True
         return False
+
+
+    def merge_with(self, other_bspline_surface3d):
+        '''
+        merge two adjacent surfaces based on their faces
+
+        Parameters
+        ----------
+        other_bspline_face3d : volmdlr.faces.BSplineSurface3D
+
+        Returns
+        -------
+        merged_surface : volmdlr.faces.BSplineSurface3D
+
+        '''
+
+        bspline_face3d = self.rectangular_cut(0,1,0,1)
+        other_bspline_face3d = other_bspline_surface3d.rectangular_cut(0,1,0,1)
+
+        bsplines = [self, other_bspline_surface3d]
+        bsplines_new = bsplines
+
+        center = [bspline_face3d.surface2d.outer_contour.center_of_mass(), other_bspline_face3d.surface2d.outer_contour.center_of_mass()]
+
+        if self.is_intersected_with(other_bspline_surface3d):
+            # find pimitives to split with
+            contour1 = bspline_face3d.outer_contour3d
+            contour2 = other_bspline_face3d.outer_contour3d
+
+            distances = []
+            for p1 in contour1.primitives:
+                dis = []
+                for p2 in contour2.primitives:
+                    point1 = (p1.start + p1.end)/2
+                    point2 = (p2.start + p2.end)/2
+                    dis.append(point1.point_distance(point2))
+                distances.append(dis)
+
+            i = distances.index((min(distances)))
+            j = distances[i].index(min(distances[i]))
+
+            curves = [contour2.primitives[j], contour1.primitives[i]]
+
+            # split surface
+            for i, bspline in enumerate(bsplines):
+                surfaces = bspline.split_surface_with_bspline_curve(curves[i])
+
+                errors = []
+                for s in surfaces:
+                    errors.append(s.error_with_point3d(bsplines[i].point2d_to_3d(center[i])))
+
+                bsplines_new[i] = surfaces[errors.index(min(errors))]
+
+        corresponding_directions, grid2d_direction = bsplines_new[0].rectangular_cut(0,1,0,1).pair_with(bsplines_new[1].rectangular_cut(0,1,0,1))
+
+        # grid3d
+        points3d = []
+        for i, bspline in enumerate(bsplines_new):
+            grid2d = volmdlr.Point2D.grid2d_with_direction(10, 10, 0, 1, 0, 1, grid2d_direction[i])[0]
+            grid3d = []
+            for p in grid2d:
+                grid3d.append(bspline.point2d_to_3d(p))
+
+            points3d.extend(grid3d)
+
+        # fitting
+        size_u, size_v, degree_u, degree_v = 20, 10, max(bsplines[0].degree_u, bsplines[1].degree_u), max(bsplines[0].degree_v, bsplines[1].degree_v)
+
+        merged_surface = volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(points3d, size_u, size_v, degree_u, degree_v)
+
+        return  merged_surface
 
 
 class BezierSurface3D(BSplineSurface3D):
