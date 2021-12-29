@@ -2172,7 +2172,7 @@ class BSplineSurface3D(Surface3D):
         # return [vme.LineSegment2D(p1, p2)
         #         for p1, p2 in zip(points[:-1], points[1:])]
         return vme.BSplineCurve2D.from_points_interpolation(
-                    points, max(self.degree_u, self.degree_v))]
+                    points, max(self.degree_u, self.degree_v))
 
     def _bounding_box(self):
         return volmdlr.core.BoundingBox.from_points(self.control_points)
