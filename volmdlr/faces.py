@@ -2954,13 +2954,11 @@ class BSplineSurface3D(Surface3D):
 
         for p in points_dim:
             points.append(self.point2d_with_dimension_to_parametric_frame(p, points_x, points_y, xmin, xmax, ymin, ymax))
-
         bsplinecurve2d = volmdlr.edges.BSplineCurve2D(bsplinecurve2d.degree, points,
                                                       bsplinecurve2d.knot_multiplicities,
                                                       bsplinecurve2d.knots,
                                                       bsplinecurve2d.weights,
                                                       bsplinecurve2d.periodic)
-
         return bsplinecurve2d
 
 
@@ -3068,28 +3066,32 @@ class BSplineSurface3D(Surface3D):
         ''' 
         convert a contour2d from the dimensioned to the parametric frame
         '''
-        
-        for cle in self._grids2d.keys(): 
-            [points_x, points_y, xmin, xmax, ymin, ymax] = cle
-        
-        contour2d = contour2d.order_contour()
-        
-        new_start_points = []
-        for i in range(0,len(contour2d.primitives)):
-            point2d = contour2d.primitives[i].start       
-            new_start_points.append(self.point2d_with_dimension_to_parametric_frame(point2d, points_x, points_y, xmin, xmax, ymin, ymax))
-        
-        #Avoid to have primitives with start=end
-        start_points = []
-        for i in range(0, len(new_start_points)-1):
-            if new_start_points[i] != new_start_points[i+1]:
-                start_points.append(new_start_points[i])
-        if new_start_points[-1] != new_start_points[0]:
-            start_points.append(new_start_points[-1])
-        
-        contour01 = volmdlr.wires.Contour2D.from_points(start_points)
-        
-        return contour01
+
+        # TODO: check and avoid primitives with start=end
+        primitives2d = []
+
+        for primitive2d in contour2d.primitives:
+            method_name = '{}_with_dimension_to_parametric_frame'.format(
+                primitive2d.__class__.__name__.lower())
+
+            if hasattr(self, method_name):
+                primitives = getattr(self, method_name)(primitive2d)
+                if primitives:
+                    primitives2d.append(primitives)
+
+            else:
+                raise NotImplementedError(
+                    'Class {} does not implement {}'.format(self.__class__.__name__,
+                                                            method_name))
+        # #Avoid to have primitives with start=end
+        # start_points = []
+        # for i in range(0, len(new_start_points)-1):
+        #     if new_start_points[i] != new_start_points[i+1]:
+        #         start_points.append(new_start_points[i])
+        # if new_start_points[-1] != new_start_points[0]:
+        #     start_points.append(new_start_points[-1])
+
+        return volmdlr.wires.Contour2D(primitives2d)
         
     
     def contour2d_with_dimension_to_3d(self, contour2d):
