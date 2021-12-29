@@ -3423,9 +3423,17 @@ class BSplineSurface3D(Surface3D):
         compute the edge2d of a edge3d, on a Bspline surface, in the dimensioned frame  
         '''
 
-        return volmdlr.edges.LineSegment2D(self.point3d_to_2d_with_dimension(edge3d.start, points_x, points_y, 0,1,0,1),
-                                           self.point3d_to_2d_with_dimension(edge3d.end, points_x, points_y, 0,1,0,1))
-    
+        method_name = '{}_to_2d_with_dimension'.format(edge3d.__class__.__name__.lower())
+
+        if hasattr(self, method_name):
+            edge2d_dim = getattr(self, method_name)(edge3d, points_x, points_y)
+            if edge2d_dim:
+                return edge2d_dim
+        else:
+            raise NotImplementedError(
+                'Class {} does not implement {}'.format(self.__class__.__name__,
+                                                        method_name))
+
     
     def wire3d_to_2d(self, wire3d):
         ''' 
