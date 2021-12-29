@@ -2939,6 +2939,20 @@ class BSplineSurface3D(Surface3D):
         convert a bsplinecurve2d from the dimensioned to the parametric frame
         '''
 
+        points_dim = bsplinecurve2d.control_points
+        points = []
+        for cle in self._grids2d.keys():
+            [points_x, points_y, xmin, xmax, ymin, ymax] = cle
+
+        for p in points_dim:
+            points.append(self.point2d_with_dimension_to_parametric_frame(p, points_x, points_y, xmin, xmax, ymin, ymax))
+
+        bsplinecurve2d = volmdlr.edges.BSplineCurve2D(bsplinecurve2d.degree, points,
+                                                      bsplinecurve2d.knot_multiplicities,
+                                                      bsplinecurve2d.knots,
+                                                      bsplinecurve2d.weights,
+                                                      bsplinecurve2d.periodic)
+
         return bsplinecurve2d
 
 
