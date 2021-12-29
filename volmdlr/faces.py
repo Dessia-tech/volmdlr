@@ -2982,6 +2982,14 @@ class BSplineSurface3D(Surface3D):
         convert a arc2d from the parametric to the dimensioned frame
         '''
 
+        xmin, xmax, ymin, ymax = 0, 1, 0, 1
+
+        start = self.point2d_parametric_to_dimension(arc2d.start, points_x, points_y, xmin, xmax, ymin, ymax)
+        end = self.point2d_parametric_to_dimension(arc2d.end, points_x, points_y, xmin, xmax, ymin, ymax)
+        interior = self.point2d_parametric_to_dimension(arc2d.interior, points_x, points_y, xmin, xmax, ymin, ymax)
+
+        arc2d_with_dimension = volmdlr.edges.Arc2D(start, interior, end)
+
         return arc2d_with_dimension
 
 
