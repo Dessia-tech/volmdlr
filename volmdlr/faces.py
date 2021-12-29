@@ -2174,6 +2174,14 @@ class BSplineSurface3D(Surface3D):
         return vme.BSplineCurve2D.from_points_interpolation(
                     points, max(self.degree_u, self.degree_v))
 
+    def arc2d_to_3d(self, arc2d):
+        number_points = math.ceil(arc2d.angle * 7) + 1  # 7 points per radian
+        l = arc2d.length()
+        points = [self.point2d_to_3d(arc2d.point_at_abscissa(
+            i * l / (number_points - 1))) for i in range(number_points)]
+        return vme.BSplineCurve3D.from_points_interpolation(
+                    points, max(self.degree_u, self.degree_v))
+
     def _bounding_box(self):
         return volmdlr.core.BoundingBox.from_points(self.control_points)
 
