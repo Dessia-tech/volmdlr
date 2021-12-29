@@ -2887,6 +2887,12 @@ class BSplineSurface3D(Surface3D):
 
 
     def linesegment2d_with_dimension_to_3d(self, linesegment2d):
+        '''
+        compute the linesegment3d, on a Bspline surface, of a linesegment2d defined in the dimensioned frame
+        '''
+
+        linesegment2d_01 = self.linesegment2d_with_dimension_to_parametric_frame(linesegment2d)
+        linesegment3d = self.linesegment2d_to_3d(linesegment2d_01)
 
         return linesegment3d
 
