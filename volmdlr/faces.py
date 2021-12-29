@@ -2850,6 +2850,23 @@ class BSplineSurface3D(Surface3D):
         return self.point2d_to_3d(point2d_01)
     
 
+    def linesegment2d_parametric_to_dimension(self, linesegment2d, points_x, points_y):
+
+        return linesegment2d_with_dimension
+
+    def linesegment3d_to_2d_with_dimension(self, linesegment3d, points_x, points_y):
+
+        return linesegment2d_with_dimension
+
+    def linesegment2d_with_dimension_to_parametric_frame(self, linesegment2d):
+
+        return linesegment2d
+
+    def linesegment2d_with_dimension_to_3d(self, linesegment2d):
+
+        return linesegment3d
+
+
     def contour2d_parametric_to_dimension(self, contour2d:volmdlr.wires.Contour2D, points_x, points_y):
         ''' 
         convert a contour2d from the parametric to the dimensioned frame
