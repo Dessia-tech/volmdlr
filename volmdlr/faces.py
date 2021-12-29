@@ -3009,7 +3009,10 @@ class BSplineSurface3D(Surface3D):
         compute the  arc3d, on a Bspline surface, of a arc2d in the dimensioned frame
         '''
 
-        return arc3d
+        arc2d_01 = self.arc2d_with_dimension_to_parametric_frame(arc2d)
+        arc3d = self.arc2d_to_3d(arc2d_01)
+
+        return arc3d #it's a bsplinecurve3d
 
 
     def contour2d_parametric_to_dimension(self, contour2d:volmdlr.wires.Contour2D, points_x, points_y):
