@@ -2928,8 +2928,6 @@ class BSplineSurface3D(Surface3D):
                                                                      bsplinecurve2d.weights,
                                                                      bsplinecurve2d.periodic)
 
-        bsplinecurve2d_with_dimension = volmdlr.edges.BSplineCurve2D()
-
         return bsplinecurve2d_with_dimension
 
 
