@@ -3442,13 +3442,8 @@ class BSplineSurface3D(Surface3D):
 
         for cle in self._grids2d.keys():
             [points_x, points_y, xmin, xmax, ymin, ymax] = cle
-        
-        edges2d = []
-        for edge in wire3d.primitives:
-            edges2d.append(volmdlr.edges.LineSegment2D(self.point3d_to_2d_with_dimension(edge.start, points_x, points_y, xmin, xmax, ymin, ymax),
-                                                      self.point3d_to_2d_with_dimension(edge.end, points_x, points_y, xmin, xmax, ymin, ymax)))
-        
-        return volmdlr.wires.Wire2D(edges2d)
+
+        return self.contour3d_to_2d_with_dimension(wire3d, point_x, point_y)
 
  
     def split_surface_u(self, u: float):
