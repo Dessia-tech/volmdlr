@@ -2851,8 +2851,16 @@ class BSplineSurface3D(Surface3D):
     
 
     def linesegment2d_parametric_to_dimension(self, linesegment2d, points_x, points_y):
+        '''
+        convert a linesegment2d from the parametric to the dimensioned frame
+        '''
+
+        xmin, xmax, ymin, ymax = 0, 1, 0, 1
+
+        linesegment2d_with_dimension = volmdlr.edges.LineSegment2D(self.point2d_parametric_to_dimension(linesegment2d.start, points_x, points_y, xmin, xmax, ymin, ymax), self.point2d_parametric_to_dimension(linesegment2d.end, points_x, points_y, xmin, xmax, ymin, ymax))
 
         return linesegment2d_with_dimension
+
 
     def linesegment3d_to_2d_with_dimension(self, linesegment3d, points_x, points_y):
 
