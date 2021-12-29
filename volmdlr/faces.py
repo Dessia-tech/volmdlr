@@ -2967,6 +2967,38 @@ class BSplineSurface3D(Surface3D):
         return bsplinecurve3d
 
 
+    def arc2d_parametric_to_dimension(self, arc2d, points_x, points_y):
+        '''
+        convert a arc2d from the parametric to the dimensioned frame
+        '''
+
+        return arc2d_with_dimension
+
+
+    def arc3d_to_2d_with_dimension(self, arc3d, points_x, points_y):
+        '''
+        compute the arc2d of a arc3d, on a Bspline surface, in the dimensioned frame
+        '''
+
+        return arc2d_with_dimension
+
+
+    def arc2d_with_dimension_to_parametric_frame(self, arc2d):
+        '''
+        convert a arc2d from the dimensioned to the parametric frame
+        '''
+
+        return arc2d
+
+
+    def arc2d_with_dimension_to_3d(self, arc2d):
+        '''
+        compute the  arc3d, on a Bspline surface, of a arc2d in the dimensioned frame
+        '''
+
+        return arc3d
+
+
     def contour2d_parametric_to_dimension(self, contour2d:volmdlr.wires.Contour2D, points_x, points_y):
         ''' 
         convert a contour2d from the parametric to the dimensioned frame
