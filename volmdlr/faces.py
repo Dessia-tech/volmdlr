@@ -3431,13 +3431,8 @@ class BSplineSurface3D(Surface3D):
         ''' 
         compute the 2d of a wire3d, on a Bspline surface
         '''
-        
-        edges2d = []
-        for edge in wire3d.primitives:
-            edges2d.append(volmdlr.edges.LineSegment2D(self.point3d_to_2d(edge.start),
-                                                       self.point3d_to_2d(edge.end)))
-        
-        return volmdlr.wires.Wire2D(edges2d)
+
+        return self.contour3d_to_2d(wire3d)
  
     
     def wire3d_to_2d_with_dimension(self, wire3d):
