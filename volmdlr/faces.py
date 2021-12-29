@@ -3034,15 +3034,24 @@ class BSplineSurface3D(Surface3D):
         ''' 
         convert a contour2d from the parametric to the dimensioned frame
         '''
-        
-        xmin, xmax, ymin, ymax = 0, 1, 0, 1
-        point2d_dim = []
-        for primitive in contour2d.primitives:
-            point2d_dim.append(self.point2d_parametric_to_dimension(primitive.start, points_x, points_y, xmin, xmax, ymin, ymax))
-            if type(primitive) == volmdlr.edges.Arc2D:
-                point2d_dim.append(self.point2d_parametric_to_dimension(primitive.interior, points_x, points_y, xmin, xmax, ymin, ymax))
-        
-        return volmdlr.wires.Contour2D.from_points(point2d_dim)
+
+        primitives2d_dim = []
+
+        for primitive2d in contour2d.primitives:
+            method_name = '{}_parametric_to_dimension'.format(
+                primitive2d.__class__.__name__.lower())
+
+            if hasattr(self, method_name):
+                primitives = getattr(self, method_name)(primitive2d, points_x, points_y)
+                if primitives:
+                    primitives2d_dim.append(primitives)
+
+            else:
+                raise NotImplementedError(
+                    'Class {} does not implement {}'.format(self.__class__.__name__,
+                                                            method_name))
+
+        return volmdlr.wires.Contour2D(primitives2d_dim)
         
     
     def contour3d_to_2d_with_dimension(self, contour3d:volmdlr.wires.Contour3D, points_x, points_y): 
