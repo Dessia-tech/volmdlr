@@ -2947,6 +2947,9 @@ class BSplineSurface3D(Surface3D):
         compute the bsplinecurve3d, on a Bspline surface, of a bsplinecurve2d defined in the dimensioned frame
         '''
 
+        bsplinecurve2d_01 = self.bsplinecurve2d_with_dimension_to_parametric_frame(bsplinecurve2d)
+        bsplinecurve3d = self.bsplinecurve2d_to_3d(bsplinecurve2d_01)
+
         return bsplinecurve3d
 
 
