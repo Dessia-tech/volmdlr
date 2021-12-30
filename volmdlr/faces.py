@@ -2554,12 +2554,12 @@ class BSplineSurface3D(Surface3D):
                 p=p+1
 
         equation_points = [] #points combination to compute distances between 2D and 3D grid points
-        # for i in range(0,points_y): #row from (0,i)
-        #     for j in range(1,points_x):
-        #         equation_points.append(((0,i),(j,i)))
-        # for i in range(0,points_x): #column from (i,0)
-        #     for j in range(1,points_y):
-        #         equation_points.append(((i,0),(i,j)))
+        for i in range(0,points_y): #row from (0,i)
+            for j in range(1,points_x):
+                equation_points.append(((0,i),(j,i)))
+        for i in range(0,points_x): #column from (i,0)
+            for j in range(1,points_y):
+                equation_points.append(((i,0),(i,j)))
         for i in range(0,points_y): #row
             for j in range(0,points_x-1):
                 equation_points.append(((j,i),(j+1,i)))
@@ -2607,8 +2607,7 @@ class BSplineSurface3D(Surface3D):
 
         #System of nonlinear equations
         def non_linear_equations(X):
-            F = npy.empty(len(equation_points)+2)              
-
+            F = npy.empty(len(equation_points)+2)
             for i in range(0, len(equation_points)):
                 F[i] = abs((X[index_x[equation_points[i][0]]]**2 + X[index_x[equation_points[i][1]]]**2 + X[index_y[equation_points[i][0]]]**2 + X[index_y[equation_points[i][1]]]**2 - 2*X[index_x[equation_points[i][0]]]*X[index_x[equation_points[i][1]]] -2*X[index_y[equation_points[i][0]]]*X[index_y[equation_points[i][1]]] - D[i]) / D[i]) 
                 
@@ -2954,6 +2953,7 @@ class BSplineSurface3D(Surface3D):
 
         for p in points_dim:
             points.append(self.point2d_with_dimension_to_parametric_frame(p, points_x, points_y, xmin, xmax, ymin, ymax))
+
         bsplinecurve2d = volmdlr.edges.BSplineCurve2D(bsplinecurve2d.degree, points,
                                                       bsplinecurve2d.knot_multiplicities,
                                                       bsplinecurve2d.knots,
