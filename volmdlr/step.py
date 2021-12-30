@@ -104,6 +104,7 @@ class Step:
         for line in f:
             if self.stream:
                 line = line.decode()
+                line = line.replace("\r", "")
             line = line.replace(" ", "")
             line = line.replace("\n", "")
 
@@ -170,7 +171,8 @@ class Step:
             function = StepFunction(function_id, function_name, arguments)
             functions[function_id] = function
 
-        f.close()
+        if self.stepfile:
+            f.close()
 
         return functions, all_connections
 
