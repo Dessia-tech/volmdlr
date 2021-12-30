@@ -2171,8 +2171,8 @@ class BSplineSurface3D(Surface3D):
             i * l / (number_points - 1))) for i in range(number_points)]
         # return [vme.LineSegment2D(p1, p2)
         #         for p1, p2 in zip(points[:-1], points[1:])]
-        return vme.BSplineCurve2D.from_points_interpolation(
-                    points, max(self.degree_u, self.degree_v))
+        return [vme.BSplineCurve2D.from_points_interpolation(
+                    points, max(self.degree_u, self.degree_v))]
 
     def arc2d_to_3d(self, arc2d):
         number_points = math.ceil(arc2d.angle * 7) + 1  # 7 points per radian
