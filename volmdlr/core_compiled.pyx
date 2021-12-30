@@ -371,6 +371,11 @@ class Vector2D(Vector):
         
     def approx_hash(self):
         return round(1e6*(self.x+self.y))
+    
+    def to_dict(self):
+        return {'object_class':'volmdlr.Vector2D',
+                'x': self.x, 'y': self.y,
+                'name': self.name}
 
     @classmethod
     def remove_duplicate(cls, points):
@@ -559,6 +564,11 @@ class Point2D(Vector2D):
         return Point2D(self.x / value,
                        self.y / value)
 
+    def to_dict(self):
+        return {'object_class':'volmdlr.Point2D',
+                'x': self.x, 'y': self.y,
+                'name': self.name}
+
     def to_3d(self, plane_origin, vx, vy):
         return Point3D(plane_origin.x + vx.x*self.x + vy.x*self.y,
                        plane_origin.y + vx.y*self.x + vy.y*self.y,
@@ -578,6 +588,156 @@ class Point2D(Vector2D):
         return (self-point2).norm()
 
 
+    @classmethod
+    def grid2d(cls, points_x, points_y, xmin, xmax, ymin, ymax):
+        '''
+        generate 2d grid points with (xmin,xmax,points_x) limits and number of points in x, (ymin,ymax,points_y) limits and number of points in y
+        '''
+        
+        x = npy.linspace(xmin, xmax, points_x) 
+        y = npy.linspace(ymin, ymax, points_y) 
+        points_2d = [] 
+        
+        for yi in y:
+            for xi in x:
+                points_2d.append(cls(xi, yi)) 
+                
+        return points_2d
+
+    @classmethod
+    def grid2d_with_direction(cls, points_x, points_y, xmin, xmax, ymin, ymax, direction):
+        '''
+        generate 2d grid points with (xmin,xmax,points_x) limits and number of points in x, (ymin,ymax,points_y) limits and number of points in y
+        given a direction to order the generated points
+        direction can be: ['+x','+y'], ['-x','+y'], ['+y','+x'], ['-y','+x']
+                          ['+x','-y'], ['-x','-y'], ['-x','+y'], ['-y','-x']
+        '''
+        
+        if direction == ['+x','+y']:
+            x = npy.linspace(xmin, xmax, points_x) 
+            y = npy.linspace(ymin, ymax, points_y) 
+            points_2d = [] 
+            grid = []
+            points = []
+
+            for yi in y:
+                for xi in x:
+                    points_2d.append(cls(xi, yi))
+                    points.append(cls(xi, yi))
+                
+                grid.append(points)
+                points = []
+        
+        elif direction == ['-x','+y']:
+            x = npy.linspace(xmax, xmin, points_x) 
+            y = npy.linspace(ymin, ymax, points_y) 
+            points_2d = [] 
+            grid = []
+            points = []
+
+            for yi in y:
+                for xi in x:
+                    points_2d.append(cls(xi, yi))
+                    points.append(cls(xi, yi))
+
+                grid.append(points)
+                points = []
+                
+        elif direction == ['+y','+x']:
+            x = npy.linspace(xmin, xmax, points_x) 
+            y = npy.linspace(ymin, ymax, points_y) 
+            points_2d = [] 
+            grid = []
+            
+            for xi in x:
+                for yi in y:
+                    points_2d.append(cls(xi, yi))
+                    points.append(cls(xi, yi))
+        
+                grid.append(points)
+                points = []
+
+        elif direction == ['-y','+x']:
+            x = npy.linspace(xmin, xmax, points_x) 
+            y = npy.linspace(ymax, ymin, points_y) 
+            points_2d = [] 
+            grid = []
+            points = []
+
+            for xi in x:
+                for yi in y:
+                    points_2d.append(cls(xi, yi))
+                    points.append(cls(xi, yi))
+                    
+                grid.append(points)
+                points = []
+           
+        elif direction == ['+x','-y']:
+            x = npy.linspace(xmin, xmax, points_x) 
+            y = npy.linspace(ymax, ymin, points_y) 
+            points_2d = [] 
+            grid = []
+            points = []
+
+            for yi in y:
+                for xi in x:
+                    points_2d.append(cls(xi, yi))
+                    points.append(cls(xi, yi))
+                
+                grid.append(points)
+                points = []
+
+        elif direction == ['-x','-y']:
+            x = npy.linspace(xmax, xmin, points_x) 
+            y = npy.linspace(ymax, ymin, points_y) 
+            points_2d = [] 
+            grid = []
+            points = []
+
+            for yi in y:
+                for xi in x:
+                    points_2d.append(cls(xi, yi)) 
+                    points.append(cls(xi, yi))
+                    
+                grid.append(points)
+                points = []    
+                    
+        elif direction == ['-x','+y']:
+            x = npy.linspace(xmax, xmin, points_x) 
+            y = npy.linspace(ymin, ymax, points_y) 
+            points_2d = [] 
+            grid = []
+            points = []
+
+            for xi in x:
+                for yi in y:
+                    points_2d.append(cls(xi, yi)) 
+                    points.append(cls(xi, yi))
+                    
+                grid.append(points)
+                points = []
+
+        elif direction == ['-y','-x']:
+            x = npy.linspace(xmax, xmin, points_x) 
+            y = npy.linspace(ymax, ymin, points_y) 
+            points_2d = [] 
+            grid = []
+            points = []
+
+            for xi in x:
+                for yi in y:
+                    points_2d.append(cls(xi, yi))
+                    points.append(cls(xi, yi))
+                    
+                grid.append(points)
+                points = []
+
+        
+        return (points_2d, grid)
+        
+
+
+    
     @classmethod
     def line_intersection(cls, line1, line2, curvilinear_abscissa=False):
 #        point11, point12 = line1
@@ -770,6 +930,10 @@ class Vector3D(Vector):
         dict_ = {p.approx_hash() : p for p in points}
         return list(dict_.values())
 
+    def to_dict(self):
+        return {'object_class':'volmdlr.Vector3D',
+                'x': self.x, 'y': self.y, 'z': self.z,
+                'name': self.name}
 
     @classmethod
     def dict_to_object(cls, dict_):
@@ -1042,6 +1206,12 @@ class Point3D(Vector3D):
 
     def copy(self):
         return Point3D(self.x, self.y, self.z)
+
+    def to_dict(self):
+        return {'object_class':'volmdlr.Point3D',
+                'x': self.x, 'y': self.y, 'z': self.z,
+                'name': self.name}
+
 
     @classmethod
     def dict_to_object(cls, dict_):

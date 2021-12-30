@@ -1,34 +1,28 @@
 3D advanced primitives
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: volmdlr.primitives3D.OpenedRoundedLineSegments3D
-.. autoclass:: volmdlr.primitives3D.ClosedRoundedLineSegments3D
+.. autoclass:: volmdlr.primitives3d.OpenedRoundedLineSegments3D
+.. autoclass:: volmdlr.primitives3d.ClosedRoundedLineSegments3D
   :members:
 
-.. autoclass:: volmdlr.primitives3D.Cylinder
+.. autoclass:: volmdlr.primitives3d.Cylinder
   :members:
 
-.. autoclass:: volmdlr.primitives3D.HollowCylinder
+.. autoclass:: volmdlr.primitives3d.HollowCylinder
   :members:
 
-.. autoclass:: volmdlr.primitives3D.ExtrudedProfile
+.. autoclass:: volmdlr.primitives3d.ExtrudedProfile
   :members:
 
-.. autoclass:: volmdlr.primitives3D.Sphere
+.. autoclass:: volmdlr.primitives3d.Sphere
   :members:
 
-.. autoclass:: volmdlr.primitives3D.RevolvedProfile
+.. autoclass:: volmdlr.primitives3d.RevolvedProfile
   :members:
 
-.. autoclass:: volmdlr.primitives3D.HelicalExtrudedProfile
+.. autoclass:: volmdlr.primitives3d.HelicalExtrudedProfile
   :members:
 
-.. autoclass:: volmdlr.primitives3D.Sweep
-  :members:
-
-.. autoclass:: volmdlr.primitives3D.Cut
-  :members:
-
-.. autoclass:: volmdlr.primitives3D.Fuse
+.. autoclass:: volmdlr.primitives3d.Sweep
   :members:
 
