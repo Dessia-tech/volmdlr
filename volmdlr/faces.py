@@ -2165,7 +2165,7 @@ class BSplineSurface3D(Surface3D):
         return linesegments
 
     def arc3d_to_2d(self, arc3d):
-        number_points = math.ceil(arc3d.angle * 7) + 1  # 7 points per radian
+        number_points = math.ceil(arc3d.angle * 10) + 1  # 10 points per radian
         l = arc3d.length()
         points = [self.point3d_to_2d(arc3d.point_at_abscissa(
             i * l / (number_points - 1))) for i in range(number_points)]
