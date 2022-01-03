@@ -639,7 +639,7 @@ class Contour:
 
         return edges
 
-                
+    
     def is_sharing_primitives_with(self, contour2d):
         '''
         check is two contour are sharing primitives
