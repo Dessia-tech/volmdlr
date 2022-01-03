@@ -574,20 +574,6 @@ class Contour:
 
         return points
 
-    def shared_edges_between2contours(self, contour):
-        ''' extract shared edges index between two contours and return it in a tuple form (edge_ind_1, edge_ind_2)'''
-
-        edges_index=[]
-        for edge1, edge2 in itertools.product(self.primitives,contour.primitives):
-            if ((edge1.start == edge2.start and edge1.end == edge2.end)
-                or (edge1.start == edge2.end and edge2.start == edge1.end)
-                or (((edge1.start).point_distance(edge2.start) < 1e-4)
-                    and ((edge1.end).point_distance(edge2.end) < 1e-4))
-                or (((edge1.start).point_distance(edge2.end) < 1e-4)
-                    and ((edge1.end).point_distance(edge2.start) < 1e-4))):
-                edges_index.append((self.primitives.index(edge1),contour.primitives.index(edge2)))
-
-        return edges_index
 
     def shared_edges_by_contour(self, contour):
         ''' extract shared edges with an adjacent contour '''
