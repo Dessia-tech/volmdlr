@@ -574,39 +574,6 @@ class Contour:
 
         return points
 
-    def merged_contour_primitives(self,contour):
-        ''' merge two adjacent contours '''
-
-        merged_primitives = []
-        shared_edges_index_by_contour = self.shared_edges_by_contour(contour)
-        contours = [self, contour]
-        for j in range(0,len(contours)):
-            for i in range(0,len(contours[j].primitives)):
-                if i not in shared_edges_index_by_contour[j]:
-                    merged_primitives.append(contours[j].primitives[i])
-
-        contour_int = merged_primitives[:]
-        start, end = [], []
-        for primitive in contour_int:
-            start.append(primitive.start)
-            end.append(primitive.end)
-
-        merged_primitives_order = [contour_int[0]]
-
-        for i in range(0,len(contour_int)):
-            # i=i+1
-            # merged_primitives_order.append(contour_int[start.index(merged_primitives_order[i].end)])
-            distances=[]
-            for j in range(0,len(start)):
-                distances.append((merged_primitives_order[i].end).point_distance(start[j]))
-
-            merged_primitives_order.append(contour_int[distances.index(min(distances))])
-
-            # merged_primitives_order[i].plot(ax=ax, color='g')
-            if len(merged_primitives_order) == merged_primitives:
-                break
-
-        return merged_primitives_order
 
     @classmethod
     def contours_from_edges(cls, edges):
