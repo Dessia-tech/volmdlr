@@ -4062,6 +4062,11 @@ class Triangle3D(PlaneFace3D):
         return volmdlr.Vector3D.remove_duplicate(points)
     
     def subdescription_to_triangles(self, resolution = 0.01) :
+        """
+        It describes a triangle by multiple subtriangles with the resolution parameter 
+        as the max length of subtriangles
+        """
+        
         frame = self.surface3d.frame
         pts2d = [pt.to_2d(frame.origin, frame.u, frame.v) for pt in self.points]
         
