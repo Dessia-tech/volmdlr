@@ -302,6 +302,10 @@ class Vector(DessiaObject):
             n += 1
         point /= n
         return point
+    @classmethod
+    def remove_duplicate(cls, points):
+        dict_ = {p.approx_hash() : p for p in points}
+        return list(dict_.values())
 
 class Vector2D(Vector):
     def __init__(self, x:float, y:float, name=''):
@@ -377,19 +381,17 @@ class Vector2D(Vector):
                 'x': self.x, 'y': self.y,
                 'name': self.name}
 
-    @classmethod
-    def remove_duplicate(cls, points):
-        # """
-        # Don't keep the input list order
-        # """
-        # input_points = sorted(points, key=lambda pt: (pt.x, pt.y))
-        # new_points = [points[0]]
-        # for i, point in enumerate(input_points[1:]):
-        #     if not point.is_close(new_points[-1]):
-        #         new_points.append(point)
-        # return new_points
-        dict_ = {p.approx_hash() : p for p in points}
-        return list(dict_.values())
+    # @classmethod
+    # def remove_duplicate(cls, points):
+    #     """
+    #     Don't keep the input list order
+    #     """
+    #     input_points = sorted(points, key=lambda pt: (pt.x, pt.y))
+    #     new_points = [points[0]]
+    #     for i, point in enumerate(input_points[1:]):
+    #         if not point.is_close(new_points[-1]):
+    #             new_points.append(point)
+    #     return new_points
 
     def norm(self):
         """
@@ -934,19 +936,17 @@ class Vector3D(Vector):
         and math.isclose(self.y, other_vector.y, abs_tol=tol) \
         and math.isclose(self.z, other_vector.z, abs_tol=tol)
         
-    @classmethod
-    def remove_duplicate(cls, points):
-        """
-        Don't keep the input list order
-        """
-        # input_points = sorted(points, key=lambda pt: (pt.x, pt.y, pt.z))
-        # new_points = [points[0]]
-        # for i, point in enumerate(input_points[1:]):
-        #     if not point.is_close(new_points[-1]):
-        #         new_points.append(point)
-        # return new_points
-        dict_ = {p.approx_hash() : p for p in points}
-        return list(dict_.values())
+    # @classmethod
+    # def remove_duplicate(cls, points):
+    #     """
+    #     Don't keep the input list order
+    #     """
+    #     input_points = sorted(points, key=lambda pt: (pt.x, pt.y, pt.z))
+    #     new_points = [points[0]]
+    #     for i, point in enumerate(input_points[1:]):
+    #         if not point.is_close(new_points[-1]):
+    #             new_points.append(point)
+    #     return new_points
 
     @classmethod
     def dict_to_object(cls, dict_):
