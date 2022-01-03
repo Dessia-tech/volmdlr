@@ -788,10 +788,30 @@ class Contour:
             
     #     if len(set(edges_index))    
                 
+    def is_sharing_primitives_with(self, contour2d):
+        '''
+        check is two contour are sharing primitives
+        '''
 
-
-        
+        list_p = []
     
+        for edge1, edge2 in itertools.product(self.primitives, contour2d.primitives):
+            if edge1.point_belongs(edge2.start) and \
+                    edge2.start not in list_p:
+                list_p.append(edge2.start)
+            elif edge2.point_belongs(edge1.start) and \
+                    edge1.start not in list_p:
+                list_p.append(edge1.start)
+            elif edge1.point_belongs(edge2.end) and \
+                    edge2.end not in list_p:
+                list_p.append(edge2.end)
+            elif edge2.point_belongs(edge1.end) and \
+                    edge1.end not in list_p:
+                list_p.append(edge1.end)
+            if len(list_p) == 2:
+                return True
+        return False
+
 
 class Contour2D(Contour, Wire2D):
     """
