@@ -574,20 +574,6 @@ class Contour:
 
         return points
 
-
-    def shared_edges_by_contour(self, contour):
-        ''' extract shared edges with an adjacent contour '''
-        shared_edges_index = []
-        shared_edges = []
-        edges_index = self.shared_edges_between2contours(contour)
-        for i in range (0,2):
-            shared_edges = []
-            for j in range(0,len(edges_index)):
-                shared_edges.append(edges_index[j][i])
-            shared_edges_index.append(sorted(shared_edges))
-
-        return shared_edges_index
-
     def merged_contour_primitives(self,contour):
         ''' merge two adjacent contours '''
 
