@@ -639,18 +639,6 @@ class Contour:
 
         return edges
 
-    
-    # def shares_primitives_with(self, contour2d):
-        
-    #     edges_index=[]
-        
-    #     for edge1, edge2 in itertools.product(self.primitives,contour2d.primitives):
-    #         if edge1.point_belongs(edge2.start):
-                
-    #             edges_index.append(contour2d.primitives.index(edge2))
-    #             edges_index.sort()
-            
-    #     if len(set(edges_index))    
                 
     def is_sharing_primitives_with(self, contour2d):
         '''
