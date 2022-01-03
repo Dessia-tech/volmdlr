@@ -856,6 +856,55 @@ class Contour:
         return [shared_primitives_1, shared_primitives_2]
 
 
+    def merge_primitives_with(self, contour2d):
+        '''
+        extract not shared primitives between two adjacent contours, to be merged
+        '''
+
+        list_p = []
+
+        for edge1, edge2 in itertools.product(self.primitives,
+                                              contour2d.primitives):
+            if edge1.point_belongs(edge2.start) and \
+                    edge2.start not in list_p:
+                list_p.append(edge2.start)
+            elif edge2.point_belongs(edge1.start) and \
+                    edge1.start not in list_p:
+                list_p.append(edge1.start)
+            elif edge1.point_belongs(edge2.end) and \
+                    edge2.end not in list_p:
+                list_p.append(edge2.end)
+            elif edge2.point_belongs(edge1.end) and \
+                    edge1.end not in list_p:
+                list_p.append(edge1.end)
+
+        point1 = list_p[0]
+        point2 = list_p[-1]
+
+        merge_primitives_1 = self.extract_without_primitives(point1,
+                                                              point2,
+                                                              False)
+        if contour2d.point_belongs(merge_primitives_1[0].middle_point()) is True:
+            merge_primitives_1 = self.extract_without_primitives(point1,
+                                                              point2,
+                                                              True)
+
+        merge_primitives_2 = contour2d.extract_without_primitives(point1,
+                                                                   point2,
+                                                                   False)
+        if self.point_belongs(merge_primitives_2[0].middle_point()) is True:
+            merge_primitives_2 = contour2d.extract_without_primitives(point1,
+                                                              point2,
+                                                              True)
+        merge_primitives = []
+        merge_primitives.extend(merge_primitives_1)
+        merge_primitives.extend(merge_primitives_2)
+
+        return merge_primitives
+
+
+
+
 class Contour2D(Contour, Wire2D):
     """
     A collection of 2D primitives forming a closed wire2D
