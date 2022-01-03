@@ -812,6 +812,35 @@ class Contour:
                 return True
         return False
 
+    def shared_primitives_extremities(self, contour2d):
+        '''
+        extract shared primitives extremities between two adjacent contours
+        '''
+
+        list_p = []
+
+        for edge1, edge2 in itertools.product(self.primitives,
+                                              contour2d.primitives):
+            if edge1.point_belongs(edge2.start) and \
+                    edge2.start not in list_p:
+                list_p.append(edge2.start)
+            elif edge2.point_belongs(edge1.start) and \
+                    edge1.start not in list_p:
+                list_p.append(edge1.start)
+            elif edge1.point_belongs(edge2.end) and \
+                    edge2.end not in list_p:
+                list_p.append(edge2.end)
+            elif edge2.point_belongs(edge1.end) and \
+                    edge1.end not in list_p:
+                list_p.append(edge1.end)
+
+        if (len(list_p) >= 2):
+            return [list_p[0], list_p[-1]]
+        else:
+            raise ValueError(
+                    'The contours are not adjacent. They dont share primitives')
+
+
     def shared_primitives_with(self, contour2d):
         '''
         extract shared primitives between two adjacent contours
@@ -901,8 +930,6 @@ class Contour:
         merge_primitives.extend(merge_primitives_2)
 
         return merge_primitives
-
-
 
 
 class Contour2D(Contour, Wire2D):
