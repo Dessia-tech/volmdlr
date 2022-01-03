@@ -4079,7 +4079,10 @@ class Triangle3D(PlaneFace3D):
                     pos_ls_max = ls_length.index(ls_max)
                     taller = subtri.line_segments[pos_ls_max]
                     p1, p2 = taller.start, taller.end
-                    p3 = list(set(subtri.points) - set([p1, p2]))[0]
+                    # p3 = list(set(subtri.points) - set([p1, p2]))[0]
+                    for p3 in subtri.points:
+                        if p3 not in [p1, p2]:
+                            break
                     
                     pt_mid = (p1 + p2)/2
                     new_triangles2d = [volmdlr.wires.ClosedPolygon2D([p1, pt_mid, p3]),
