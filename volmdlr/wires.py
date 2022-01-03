@@ -846,25 +846,7 @@ class Contour:
         extract shared primitives between two adjacent contours
         '''
 
-        list_p = []
-
-        for edge1, edge2 in itertools.product(self.primitives,
-                                              contour2d.primitives):
-            if edge1.point_belongs(edge2.start) and \
-                    edge2.start not in list_p:
-                list_p.append(edge2.start)
-            elif edge2.point_belongs(edge1.start) and \
-                    edge1.start not in list_p:
-                list_p.append(edge1.start)
-            elif edge1.point_belongs(edge2.end) and \
-                    edge2.end not in list_p:
-                list_p.append(edge2.end)
-            elif edge2.point_belongs(edge1.end) and \
-                    edge1.end not in list_p:
-                list_p.append(edge1.end)
-
-        point1 = list_p[0]
-        point2 = list_p[-1]
+        point1, point2 = self.shared_primitives_extremities(contour2d)
 
         shared_primitives_1 = self.extract_without_primitives(point1,
                                                               point2,
@@ -890,25 +872,7 @@ class Contour:
         extract not shared primitives between two adjacent contours, to be merged
         '''
 
-        list_p = []
-
-        for edge1, edge2 in itertools.product(self.primitives,
-                                              contour2d.primitives):
-            if edge1.point_belongs(edge2.start) and \
-                    edge2.start not in list_p:
-                list_p.append(edge2.start)
-            elif edge2.point_belongs(edge1.start) and \
-                    edge1.start not in list_p:
-                list_p.append(edge1.start)
-            elif edge1.point_belongs(edge2.end) and \
-                    edge2.end not in list_p:
-                list_p.append(edge2.end)
-            elif edge2.point_belongs(edge1.end) and \
-                    edge1.end not in list_p:
-                list_p.append(edge1.end)
-
-        point1 = list_p[0]
-        point2 = list_p[-1]
+        point1, point2 = self.shared_primitives_extremities(contour2d)
 
         merge_primitives_1 = self.extract_without_primitives(point1,
                                                               point2,
