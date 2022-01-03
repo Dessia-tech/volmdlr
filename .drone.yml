@@ -17,6 +17,9 @@ steps:
   - coverage json
   - coverage report
   - python coverage.py
+  - pip install pylama
+  - cd ..
+  - python code_quality.py
 
 - name: upload to pypi
   image: plugins/pypi
