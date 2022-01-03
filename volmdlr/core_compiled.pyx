@@ -363,8 +363,8 @@ class Vector2D(Vector):
         return self.is_close(other_vector)
 
     def is_close(self, other_vector, tol = 1e-6):
-        # if other_vector.__class__.__name__ not in ['Vector2D', 'Point2D']:
-        #     return False
+        if other_vector.__class__.__name__ not in ['Vector2D', 'Point2D']:
+            return False
         # return math.isclose(self.x, other_vector.x, abs_tol=tol) \
         # and math.isclose(self.y, other_vector.y, abs_tol=tol)
         return math.isclose(self.point_distance(other_vector), 0, abs_tol=tol)
@@ -917,8 +917,8 @@ class Vector3D(Vector):
         return self.is_close(other_vector)
 
     def is_close(self, other_vector, tol=1e-6):
-        # if other_vector.__class__.__name__ not in ['Vector3D', 'Point3D']:
-        #     return False
+        if other_vector.__class__.__name__ not in ['Vector3D', 'Point3D']:
+            return False
         # return math.isclose(self.x, other_vector.x, abs_tol=tol) \
         # and math.isclose(self.y, other_vector.y, abs_tol=tol) \
         # and math.isclose(self.z, other_vector.z, abs_tol=tol)
