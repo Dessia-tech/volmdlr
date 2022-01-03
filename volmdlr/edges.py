@@ -598,10 +598,21 @@ class BSplineCurve2D(Edge):
         return crossings
 
     def point_belongs(self, point):
-        polygon_points = self.polygon_points()
-        for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
-            line = LineSegment2D(p1, p2)
-            if line.point_belongs(point):
+        '''
+        check if a point2d belongs to the bspline_curve or not
+        '''
+
+        def f(x):
+            return (point - volmdlr.Point2D(*self.curve.evaluate_single(x))).norm()
+
+        x = npy.linspace(0,1,5)
+        x_init=[]
+        for xi in x:
+            x_init.append(xi)
+
+        for x0 in x_init:
+            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
+            if z.cost < 1e-10:
                 return True
         return False
 
