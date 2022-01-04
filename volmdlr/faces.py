@@ -2999,9 +2999,7 @@ class BSplineSurface3D(Surface3D):
         num_cpts_u = kwargs.get('ctrlpts_size_u', size_u - 1)  # number of datapts, r + 1 > number of ctrlpts, n + 1
         num_cpts_v = kwargs.get('ctrlpts_size_v', size_v - 1)  # number of datapts, s + 1 > number of ctrlpts, m + 1
 
-        points=[]
-        for i in range(0,len(points_3d)):
-            points.append((points_3d[i].x,points_3d[i].y,points_3d[i].z))
+        points = [tuple([*pt]) for pt in points_3d]
         
         surface = geomdl.fitting.approximate_surface(points, size_u, size_v, degree_u, degree_v, ctrlpts_size_u = num_cpts_u, num_cpts_v = num_cpts_v)
 
