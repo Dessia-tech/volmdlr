@@ -3367,7 +3367,7 @@ class BSplineSurface3D(Surface3D):
                                           volmdlr.Point2D(v_max, v_max)))
                 lines = lines_y
  
-            pt0 = volmdlr.Point2D(0,0)
+            pt0 = volmdlr.O2D
             points=[]
             
             for l in lines:
