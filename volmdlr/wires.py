@@ -4398,9 +4398,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
             closing_point_index = list_closing_point_indexes[-1]
         elif math.isclose(ratio, -1, abs_tol=0.3):
             closing_point_index = list_closing_point_indexes[-1]
-        elif closing_point_index - list_closing_point_indexes[-1] > 5:
-            if list_closing_point_indexes[-1] != ratio_denom-1 and\
-                    list_closing_point_indexes[-1] + 4 <= ratio_denom-1:
+        elif closing_point_index - list_closing_point_indexes[-1] > 5 and \
+            list_closing_point_indexes[-1] + 4 <= ratio_denom-1:
                 closing_point_index = list_closing_point_indexes[-1] + 4
 
         return closing_point_index, list_remove_closing_points, passed_by_zero_index
