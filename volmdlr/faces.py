@@ -3120,16 +3120,18 @@ class BSplineSurface3D(Surface3D):
                 x_init.append((xi,yi, xi, yi))
 
         u1, v1, u2, v2 = [], [], [], []
-        
+        solutions = []
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
             # print(z.cost)
             if z.cost<1e-5:
                 solution = z.x
-                u1.append(solution[0])
-                v1.append(solution[1])
-                u2.append(solution[2])
-                v2.append(solution[3])
+                if solution not in solutions:
+                    solutions.append(solution)
+                    u1.append(solution[0])
+                    v1.append(solution[1])
+                    u2.append(solution[2])
+                    v2.append(solution[3])
         
         # uv1 = [[min(u1),max(u1)],[min(v1),max(v1)]]
         # uv2 = [[min(u2),max(u2)],[min(v2),max(v2)]]
