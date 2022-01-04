@@ -2891,12 +2891,7 @@ class BSplineSurface3D(Surface3D):
             new_start_points.append(self.point2d_with_dimension_to_parametric_frame(point2d, points_x, points_y, xmin, xmax, ymin, ymax))
         
         #Avoid to have primitives with start=end
-        start_points = []
-        for i in range(0, len(new_start_points)-1):
-            if new_start_points[i] != new_start_points[i+1]:
-                start_points.append(new_start_points[i])
-        if new_start_points[-1] != new_start_points[0]:
-            start_points.append(new_start_points[-1])
+        start_points = list(set(new_start_points))
         
         contour01 = volmdlr.wires.Contour2D.from_points(start_points)
         
@@ -3004,9 +2999,7 @@ class BSplineSurface3D(Surface3D):
         num_cpts_u = kwargs.get('ctrlpts_size_u', size_u - 1)  # number of datapts, r + 1 > number of ctrlpts, n + 1
         num_cpts_v = kwargs.get('ctrlpts_size_v', size_v - 1)  # number of datapts, s + 1 > number of ctrlpts, m + 1
 
-        points=[]
-        for i in range(0,len(points_3d)):
-            points.append((points_3d[i].x,points_3d[i].y,points_3d[i].z))
+        points = [tuple([*pt]) for pt in points_3d]
         
         surface = geomdl.fitting.approximate_surface(points, size_u, size_v, degree_u, degree_v, ctrlpts_size_u = num_cpts_u, num_cpts_v = num_cpts_v)
 
@@ -3104,9 +3097,9 @@ class BSplineSurface3D(Surface3D):
         points_x, points_y  = 50, 50
         points_3d = cylindrical_face.surface3d.grid3d(points_x, points_y, 
                                                       bounding_rectangle[0],
-                                                      bounding_rectangle()[1],
-                                                      bounding_rectangle()[2],
-                                                      bounding_rectangle()[3])
+                                                      bounding_rectangle[1],
+                                                      bounding_rectangle[2],
+                                                      bounding_rectangle[3])
             
         return volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(points_3d,points_x,points_x,degree_u,degree_v)    
         
@@ -3342,8 +3335,8 @@ class BSplineSurface3D(Surface3D):
         du, dv = bspline_curve2d.end - bspline_curve2d.start
         resolution = 8
         
-        for j in range(0, len(contours)): 
-            u_min, u_max, v_min, v_max = contours[j].bounding_rectangle()
+        for contour in contours:
+            u_min, u_max, v_min, v_max = contour.bounding_rectangle()
             if du>dv:
                 delta_u = u_max - u_min
                 nlines_x = int(delta_u * resolution)
@@ -3377,9 +3370,11 @@ class BSplineSurface3D(Surface3D):
             
             for l in lines:
                 inter = contours[j].line_intersections(l)
-                if inter != []:
+                if inter:
                     pt = [inter[0][0], inter[1][0]]
-                
+                else:
+                    raise NotImplementedError
+                   
                 pt = sorted(pt, key=lambda p: pt0.point_distance(p))
                 pt0 = pt[0]
                 edge = volmdlr.edges.LineSegment2D(pt[0], pt[1])

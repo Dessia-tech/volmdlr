@@ -394,7 +394,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         intersections = []
         for primitive in wire.primitives:
             a = self.linesegment_intersections(primitive)
-            if a != []:
+            if a:
                 intersections.append([a[0][0], a[0][1]])
                                
         return intersections
@@ -408,10 +408,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         intersections = self.wire_intersections(wire)
 
         n_inter = len(intersections)
-        if not intersections:
-            return [self]
-
-        if n_inter < 2:
+        if not intersections or n_inter < 2:
             return [self]
         elif n_inter % 2 == 0:
 
