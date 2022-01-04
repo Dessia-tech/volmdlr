@@ -1374,11 +1374,11 @@ class Contour2D(Contour, Wire2D):
             except ValueError:
                 index = initial_points.index((p2, p1))
             
-            if type(self.primitives[index]) == volmdlr.edges.LineSegment2D:
+            if isinstance(self.primitives[index], volmdlr.edges.LineSegment2D):
                 new_primitives.append(volmdlr.edges.LineSegment2D(p1, p2))
-            elif type(self.primitives[index]) == volmdlr.edges.Arc2D:
+            elif isinstance(self.primitives[index], volmdlr.edges.Arc2D):
                 new_primitives.append(volmdlr.edges.Arc2D(p1, self.primitives[index].interior, p2))
-            elif type(self.primitives[index]) == volmdlr.edges.BSplineCurve2D:
+            elif isinstance(self.primitives[index], volmdlr.edges.BSplineCurve2D):
                 if (p1, p2) == (self.primitives[index].start, self.primitives[index].end):
                     new_primitives.append(self.primitives[index])
                 else:
