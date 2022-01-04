@@ -3758,12 +3758,12 @@ class Arc3D(Edge):
         '''
         def f(x):
             return (point3d - self.point_at_abscissa(x)).norm()
-    
-        x = npy.linspace(0,self.length(),5)
+        length_ = self.length()  
+        x = npy.linspace(0, length_, 5)
         x_init=[]
         for xi in x:
             x_init.append(xi)
-        length_ = self.length()  
+
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,length_]))
             if z.cost < 1e-10: 
