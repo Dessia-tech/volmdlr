@@ -3335,8 +3335,8 @@ class BSplineSurface3D(Surface3D):
         du, dv = bspline_curve2d.end - bspline_curve2d.start
         resolution = 8
         
-        for j in range(0, len(contours)): 
-            u_min, u_max, v_min, v_max = contours[j].bounding_rectangle()
+        for contour in contours:
+            u_min, u_max, v_min, v_max = contour.bounding_rectangle()
             if du>dv:
                 delta_u = u_max - u_min
                 nlines_x = int(delta_u * resolution)
