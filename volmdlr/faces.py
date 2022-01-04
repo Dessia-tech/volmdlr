@@ -3371,7 +3371,7 @@ class BSplineSurface3D(Surface3D):
             points=[]
             
             for l in lines:
-                inter = contours[j].line_intersections(l)
+                inter = contour.line_intersections(l)
                 if inter:
                     pt = [inter[0][0], inter[1][0]]
                 else:
