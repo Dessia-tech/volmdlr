@@ -3097,9 +3097,9 @@ class BSplineSurface3D(Surface3D):
         points_x, points_y  = 50, 50
         points_3d = cylindrical_face.surface3d.grid3d(points_x, points_y, 
                                                       bounding_rectangle[0],
-                                                      bounding_rectangle()[1],
-                                                      bounding_rectangle()[2],
-                                                      bounding_rectangle()[3])
+                                                      bounding_rectangle[1],
+                                                      bounding_rectangle[2],
+                                                      bounding_rectangle[3])
             
         return volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(points_3d,points_x,points_x,degree_u,degree_v)    
         
