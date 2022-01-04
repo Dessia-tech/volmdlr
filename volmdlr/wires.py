@@ -1686,8 +1686,12 @@ class Contour2D(Contour, Wire2D):
 
         return list_valid_contours
 
-    def merge_contours(self, contour2d):
-        return volmdlr.wires.Contour2D(self.merged_contour_primitives(contour2d))
+    def merge_with(self, contour2d):
+        '''
+        merge two adjacent contours, sharing primitives, and returns one contour
+        '''
+
+        return volmdlr.wires.Contour2D(self.merge_primitives_with(contour2d))
 
       
 class ClosedPolygon:
