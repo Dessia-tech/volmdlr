@@ -3355,9 +3355,8 @@ class BSplineSurface3D(Surface3D):
             else:
                 delta_v = v_max - v_min
                 nlines_y = int(delta_v * resolution)
-                lines_y = []
-                lines_y.append(vme.Line2D(volmdlr.Point2D(v_min, v_min),
-                                              volmdlr.Point2D(v_max, v_min)))
+                lines_y = [vme.Line2D(volmdlr.Point2D(v_min, v_min),
+                                              volmdlr.Point2D(v_max, v_min))]
                 for i in range(nlines_y):
                     v = v_min + (i + 1) / (nlines_y + 1) * delta_v
                     lines_y.append(vme.Line2D(volmdlr.Point2D(v_min, v),
