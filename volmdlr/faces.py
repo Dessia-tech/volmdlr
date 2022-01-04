@@ -2891,12 +2891,7 @@ class BSplineSurface3D(Surface3D):
             new_start_points.append(self.point2d_with_dimension_to_parametric_frame(point2d, points_x, points_y, xmin, xmax, ymin, ymax))
         
         #Avoid to have primitives with start=end
-        start_points = []
-        for i in range(0, len(new_start_points)-1):
-            if new_start_points[i] != new_start_points[i+1]:
-                start_points.append(new_start_points[i])
-        if new_start_points[-1] != new_start_points[0]:
-            start_points.append(new_start_points[-1])
+        start_points = list(set(new_start_points))
         
         contour01 = volmdlr.wires.Contour2D.from_points(start_points)
         
