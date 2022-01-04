@@ -3370,9 +3370,11 @@ class BSplineSurface3D(Surface3D):
             
             for l in lines:
                 inter = contours[j].line_intersections(l)
-                if inter != []:
+                if inter:
                     pt = [inter[0][0], inter[1][0]]
-                
+                else:
+                    raise NotImplementedError
+                   
                 pt = sorted(pt, key=lambda p: pt0.point_distance(p))
                 pt0 = pt[0]
                 edge = volmdlr.edges.LineSegment2D(pt[0], pt[1])
