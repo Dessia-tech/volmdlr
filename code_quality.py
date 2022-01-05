@@ -20,9 +20,10 @@ my_redefined_options = {
     'skip': 'build/*,scripts',
 }
 # relative path of the directory in which pylama should check
-vm_path = '.'
-# vm_path = os.path.abspath('volmdlr')
+# vm_path = '.'
+vm_path = os.path.abspath('.')
 print(vm_path)
+print(os.listdir(vm_path))
 
 options = parse_options([vm_path], **my_redefined_options)
 errors = check_paths(vm_path, options)
