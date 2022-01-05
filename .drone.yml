@@ -8,6 +8,8 @@ steps:
   image: python:3.8
   commands:
   - pip install pylama
+  - ls
+  - pwd
   - ./code_quality.sh
 
 - name: install, build doc run scripts
