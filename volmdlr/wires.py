@@ -755,26 +755,37 @@ class Contour:
         extract not shared primitives between two adjacent contours, to be merged
         '''
 
-        point1, point2 = self.shared_primitives_extremities(contour2d)
-
-        merge_primitives_1 = self.extract_without_primitives(point1,
-                                                              point2,
-                                                              False)
-        if contour2d.point_belongs(merge_primitives_1[0].middle_point()) is True:
-            merge_primitives_1 = self.extract_without_primitives(point1,
-                                                              point2,
-                                                              True)
-
-        merge_primitives_2 = contour2d.extract_without_primitives(point1,
-                                                                   point2,
-                                                                   False)
-        if self.point_belongs(merge_primitives_2[0].middle_point()) is True:
-            merge_primitives_2 = contour2d.extract_without_primitives(point1,
-                                                              point2,
-                                                              True)
+        points = self.shared_primitives_extremities(contour2d)
         merge_primitives = []
-        merge_primitives.extend(merge_primitives_1)
-        merge_primitives.extend(merge_primitives_2)
+
+        for i in range(1, len(points)+1, 2):
+            if i == (len(points)-1):
+                point1, point2 = points[i], points[0]
+            else:
+                point1, point2 = points[i], points[i+1]
+
+            merge_primitives_prim = self.extract_without_primitives(point1,
+                                                                    point2,
+                                                                    False)
+            if contour2d.point_over_contour(merge_primitives_prim[0].middle_point()) is True:
+                merge_primitives_prim = self.extract_without_primitives(point1,
+                                                                        point2,
+                                                                        True)
+                merge_primitives.extend(merge_primitives_prim)
+            else:
+                merge_primitives.extend(merge_primitives_prim)
+
+
+            merge_primitives_prim = contour2d.extract_without_primitives(point1,
+                                                                         point2,
+                                                                         False)
+            if self.point_over_contour(merge_primitives_prim[0].middle_point()) is True:
+                merge_primitives_prim = contour2d.extract_without_primitives(point1,
+                                                                             point2,
+                                                                             True)
+                merge_primitives.extend(merge_primitives_prim)
+            else:
+                merge_primitives.extend(merge_primitives_prim)
 
         return merge_primitives
 
