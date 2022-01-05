@@ -720,23 +720,32 @@ class Contour:
         extract shared primitives between two adjacent contours
         '''
 
-        point1, point2 = self.shared_primitives_extremities(contour2d)
+        shared_primitives_1 = []
+        shared_primitives_2 = []
 
-        shared_primitives_1 = self.extract_without_primitives(point1,
-                                                              point2,
-                                                              False)
-        if contour2d.point_belongs(shared_primitives_1[0].middle_point()) is False:
-            shared_primitives_1 = self.extract_without_primitives(point1,
-                                                              point2,
-                                                              True)
+        points = self.shared_primitives_extremities(contour2d)
+        for i in range(0, len(points), 2):
+            point1, point2 = points[i], points[i+1]
 
-        shared_primitives_2 = contour2d.extract_without_primitives(point1,
-                                                                   point2,
-                                                                   False)
-        if self.point_belongs(shared_primitives_2[0].middle_point()) is False:
-            shared_primitives_2 = contour2d.extract_without_primitives(point1,
-                                                              point2,
-                                                              True)
+            shared_primitives_prim = self.extract_without_primitives(point1,
+                                                                     point2,
+                                                                     False)
+            if contour2d.point_over_contour(shared_primitives_prim[0].middle_point()) is False:
+                shared_primitives_1.extend(self.extract_without_primitives(point1,
+                                                                           point2,
+                                                                           True))
+            else:
+                shared_primitives_1.extend(shared_primitives_prim)
+    
+            shared_primitives_prim = contour2d.extract_without_primitives(point1,
+                                                                          point2,
+                                                                          False)
+            if self.point_over_contour(shared_primitives_prim[0].middle_point()) is False:
+                shared_primitives_2.extend(contour2d.extract_without_primitives(point1,
+                                                                                point2,
+                                                                                True))
+            else:
+                shared_primitives_2.extend(shared_primitives_prim)
 
         return [shared_primitives_1, shared_primitives_2]
 
