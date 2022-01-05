@@ -8,7 +8,7 @@ steps:
   image: python:3.8
   commands:
   - pip install pylama
-  - if [[ $(pylama -l radon volmdlr) ]]; then echo "Error in code quality check">&2; fi;
+  - ./code_quality.sh
 
 - name: install, build doc run scripts
   image: python:3.8
