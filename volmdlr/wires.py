@@ -1730,10 +1730,14 @@ class Contour2D(Contour, Wire2D):
 
     def merge_with(self, contour2d):
         '''
-        merge two adjacent contours, sharing primitives, and returns one contour
+        merge two adjacent contours, sharing primitives, and returns one outer contour and inner contours (if there are any)
         '''
 
-        return volmdlr.wires.Contour2D(self.merge_primitives_with(contour2d))
+        merged_primitives = self.merge_primitives_with(contour2d)
+        contours = volmdlr.wires.Contour2D.contours_from_edges(merged_primitives)
+        contours = sorted(contours, key=lambda contour: contour.area(), reverse=True)
+
+        return contours
 
       
 class ClosedPolygon:
