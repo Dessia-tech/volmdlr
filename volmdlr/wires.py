@@ -3361,10 +3361,14 @@ class Contour3D(Contour, Wire3D):
 
     def merge_with(self, contour3d):
         '''
-        merge two adjacent contours, sharing primitives, and returns one contour
+        merge two adjacent contours, sharing primitives, and returns one outer contour and inner contours (if there are any)
         '''
 
-        return volmdlr.wires.Contour3D(self.merge_primitives_with(contour3d))
+        merged_primitives = self.merge_primitives_with(contour3d)
+        contours = volmdlr.wires.Contour3D.contours_from_edges(merged_primitives)
+        contours = sorted(contours, key=lambda contour: contour.area(), reverse=True)
+
+        return contours
 
 class Circle3D(Contour3D):
     _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']
