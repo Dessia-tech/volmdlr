@@ -38,6 +38,9 @@ for error in errors:
             print('Code quality error on {} @ line {}: {} (max {}): {}'.format(
                 error.filename, error.lnum, radon_score, MAX_RADON_SCORE, error.message))
 
+# print('radon raised', radon_raised)
 if radon_raised:
     print(RADON_HELP_MESSAGE)
     raise RuntimeError('Radon error detected\n')
+else:
+    print('No radon error raised')
