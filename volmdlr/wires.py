@@ -668,30 +668,52 @@ class Contour:
         '''
         extract shared primitives extremities between two adjacent contours
         '''
-
-        list_p = []
+        edges1 = set()
+        # edges2 = set()
+        list_p = set()
 
         for edge1, edge2 in itertools.product(self.primitives,
                                               contour2d.primitives):
-            if edge1.point_belongs(edge2.start) and \
-                    edge2.start not in list_p:
-                list_p.append(edge2.start)
-            elif edge2.point_belongs(edge1.start) and \
-                    edge1.start not in list_p:
-                list_p.append(edge1.start)
-            elif edge1.point_belongs(edge2.end) and \
-                    edge2.end not in list_p:
-                list_p.append(edge2.end)
-            elif edge2.point_belongs(edge1.end) and \
-                    edge1.end not in list_p:
-                list_p.append(edge1.end)
+            if edge1.point_belongs(edge2.start):
+                list_p.add(edge2.start)
+                # edges2.add(edge2)
+                edges1.add(edge1)
+            elif edge2.point_belongs(edge1.start):
+                list_p.add(edge1.start)
+                edges1.add(edge1)
+                # edges2.add(edge2)
+            elif edge1.point_belongs(edge2.end):
+                list_p.add(edge2.end)
+                # edges2.add(edge2)
+                edges1.add(edge1)
+            elif edge2.point_belongs(edge1.end):
+                list_p.add(edge1.end)
+                edges1.add(edge1)
+                # edges2.add(edge2)
 
-        if (len(list_p) >= 2):
-            return [list_p[0], list_p[-1]]
-        else:
+        edges1 = list(edges1)
+        # edges2 = list(edges2)
+        list_p = list(list_p)
+
+        if (len(list_p) < 2):
             raise ValueError(
                     'The contours are not adjacent. They dont share primitives')
+        else:
+            contours1 = volmdlr.wires.Contour2D.contours_from_edges(edges1)
+            # contours2 = volmdlr.wires.Contour2D.contours_from_edges(edges2)
+            points = []
 
+            for contour in contours1:
+                primitives = contour.primitives
+                for i in range(0,len(primitives)):
+                    if primitives[i].start in list_p:
+                        points.append(primitives[i].start)
+                        break
+                for i in range(len(primitives)-1, -1, -1):
+                    if primitives[i].end in list_p:
+                        points.append(primitives[i].end)
+                        break
+            return points
 
     def shared_primitives_with(self, contour2d):
         '''
