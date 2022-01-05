@@ -8,7 +8,7 @@ Created on Mon Jan  3 22:50:39 2022
 
 # from radon.complexity import cc
 import os
-from pylama.main import check_path, parse_options
+from pylama.main import check_paths, parse_options
 
 MAX_RADON_SCORE = 20
 RADON_HELP_MESSAGE = 'Use radon (https://radon.readthedocs.io/en/latest/commandline.html) to get some help on this code quality error.'
@@ -22,13 +22,15 @@ my_redefined_options = {
 }
 # relative path of the directory in which pylama should check
 # vm_path = '.'
-vm_path = os.path.abspath('volmdlr')
+vm_path = os.getcwd()
 print(vm_path)
 print(os.listdir(vm_path))
 
-options = parse_options(**my_redefined_options)
+options = parse_options([vm_path], **my_redefined_options)
 print('options', options)
-errors = check_path(options=options)
+errors = list(check_paths('volmdlr', options=options))
+
+assert len(errors)
 
 radon_raised = False
 for error in errors:
