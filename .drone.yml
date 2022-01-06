@@ -7,9 +7,7 @@ steps:
 - name: check code complexity
   image: python:3.8
   commands:
-  - pip install pylama
-  - ls
-  - pwd
+  - pip install radon
   - ./code_quality.sh
 
 - name: install, build doc run scripts
