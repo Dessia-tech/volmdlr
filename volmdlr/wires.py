@@ -675,25 +675,52 @@ class Contour:
         for edge1, edge2 in itertools.product(self.primitives,
                                               contour2d.primitives):
             if edge1.point_belongs(edge2.start):
-                list_p.add(edge2.start)
+                # list_p.add(edge2.start)
+                # instead of point not in list_p (due to errors)
+                if list_p == []:
+                    list_p.append(edge2.start)
+                if list_p != [] and edge2.start.point_distance(edge2.start.nearest_point(list_p)) > 1e-4:
+                    list_p.append(edge2.start)
+
                 # edges2.add(edge2)
                 edges1.add(edge1)
+
             elif edge2.point_belongs(edge1.start):
-                list_p.add(edge1.start)
+                # list_p.add(edge1.start)
+                # instead of point not in list_p (due to errors)
+                if list_p == []:
+                    list_p.append(edge1.start)
+                if list_p != [] and edge1.start.point_distance(edge1.start.nearest_point(list_p)) > 1e-4:
+                    list_p.append(edge1.start)
+
                 edges1.add(edge1)
                 # edges2.add(edge2)
+
             elif edge1.point_belongs(edge2.end):
-                list_p.add(edge2.end)
+                # list_p.add(edge2.end)
+                # instead of point not in list_p (due to errors)
+                if list_p == []:
+                    list_p.append(edge2.end)
+                if list_p != [] and edge2.end.point_distance(edge2.end.nearest_point(list_p)) > 1e-4:
+                    list_p.append(edge2.end)
+
                 # edges2.add(edge2)
                 edges1.add(edge1)
+
+
             elif edge2.point_belongs(edge1.end):
-                list_p.add(edge1.end)
+                # list_p.add(edge1.end)
+                # instead of point not in list_p (due to errors)
+                if list_p == []:
+                    list_p.append(edge1.end)
+                if list_p != [] and edge1.end.point_distance(edge1.end.nearest_point(list_p)) > 1e-4:
+                    list_p.append(edge1.end)
+
                 edges1.add(edge1)
                 # edges2.add(edge2)
 
         edges1 = list(edges1)
         # edges2 = list(edges2)
-        list_p = list(list_p)
 
         if (len(list_p) < 2):
             raise ValueError(
