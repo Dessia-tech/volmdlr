@@ -789,10 +789,6 @@ class Contour:
     #     if len(set(edges_index))    
                 
 
-
-        
-    
-
 class Contour2D(Contour, Wire2D):
     """
     A collection of 2D primitives forming a closed wire2D
@@ -2807,10 +2803,11 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                     if prim.end not in new_points:
                         new_points.append(prim.end)
                 return ClosedPolygon2D(new_points)
+        raise NotImplementedError('make sure the two polygons '
+                                   'you are trying to sew are valid ones')
 
 
 class Triangle2D(ClosedPolygon2D):
-
     def __init__(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D,
                  point3: volmdlr.Point2D, name: str = ''):
         self.point1 = point1
