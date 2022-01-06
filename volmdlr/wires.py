@@ -725,6 +725,8 @@ class Contour:
         if (len(list_p) < 2):
             raise ValueError(
                     'The contours are not adjacent. They dont share primitives')
+        elif (len(list_p) == 2):
+            return list_p
         else:
             contours1 = volmdlr.wires.Contour2D.contours_from_edges(edges1)
             # contours2 = volmdlr.wires.Contour2D.contours_from_edges(edges2)
