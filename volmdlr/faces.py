@@ -4054,7 +4054,7 @@ class Triangle3D(PlaneFace3D):
                     y = ymin + 0.01*resolution
                 points_box.append(volmdlr.Point2D(x,y))
 
-        points = self.points
+        points = [pt.copy() for pt in self.points]
         for pt in points_box :
             if t_poly2d.point_belongs(pt):
                 points.append(pt.to_3d(frame.origin, frame.u, frame.v))
