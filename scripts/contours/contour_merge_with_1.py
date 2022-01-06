@@ -73,14 +73,19 @@ for i, plot_ in enumerate(to_plot):
     if i != 3: 
         contour1.plot(ax=axs[i])
         contour2.plot(ax=axs[i])
-    for p in plot_:
-        if isinstance(p, list):
-            for element in p:
-                element.plot(ax=axs[i], color=colors[i], width=3)
-        else:
-            if isinstance(p, volmdlr.edges.LineSegment2D):
-                p.plot(ax=axs[i], color=colors[i], width=3)
+        for p in plot_:
+            if isinstance(p, list):
+                for element in p:
+                    element.plot(ax=axs[i], color=colors[i], width=4)
             else:
-                p.plot(ax=axs[i], color=colors[i])
+                if isinstance(p, volmdlr.edges.LineSegment2D):
+                    p.plot(ax=axs[i], color=colors[i], width=4)
+                else:
+                    p.plot(ax=axs[i], color=colors[i])
+    else:
+        c = plot_[0][0]
+        for p in c.primitives:
+            p.plot(ax=axs[i], color=colors[i], width=3)
+
     axs[i].set_title(title[i])
     
