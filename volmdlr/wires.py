@@ -780,7 +780,7 @@ class Contour:
 
             return points
 
-    def shared_primitives_with(self, contour2d):
+    def shared_primitives_with(self, contour):
         '''
         extract shared primitives between two adjacent contours
         '''
@@ -788,25 +788,25 @@ class Contour:
         shared_primitives_1 = []
         shared_primitives_2 = []
 
-        points = self.shared_primitives_extremities(contour2d)
+        points = self.shared_primitives_extremities(contour)
         for i in range(0, len(points), 2):
             point1, point2 = points[i], points[i+1]
 
             shared_primitives_prim = self.extract_without_primitives(point1,
                                                                      point2,
                                                                      False)
-            if contour2d.point_over_contour(shared_primitives_prim[0].middle_point()) is False:
+            if contour.point_over_contour(shared_primitives_prim[0].middle_point()) is False:
                 shared_primitives_1.extend(self.extract_without_primitives(point1,
                                                                            point2,
                                                                            True))
             else:
                 shared_primitives_1.extend(shared_primitives_prim)
     
-            shared_primitives_prim = contour2d.extract_without_primitives(point1,
+            shared_primitives_prim = contour.extract_without_primitives(point1,
                                                                           point2,
                                                                           False)
             if self.point_over_contour(shared_primitives_prim[0].middle_point()) is False:
-                shared_primitives_2.extend(contour2d.extract_without_primitives(point1,
+                shared_primitives_2.extend(contour.extract_without_primitives(point1,
                                                                                 point2,
                                                                                 True))
             else:
