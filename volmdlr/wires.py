@@ -728,8 +728,12 @@ class Contour:
         elif (len(list_p) == 2):
             return list_p
         else:
-            contours1 = volmdlr.wires.Contour2D.contours_from_edges(edges1)
-            # contours2 = volmdlr.wires.Contour2D.contours_from_edges(edges2)
+            if isinstance(self, volmdlr.wires.Contour2D):
+                contours1 = volmdlr.wires.Contour2D.contours_from_edges(edges1)
+                # contours2 = volmdlr.wires.Contour2D.contours_from_edges(edges2)
+            elif isinstance(self, volmdlr.wires.Contour3D):
+                contours1 = volmdlr.wires.Contour3D.contours_from_edges(edges1)
+                # contours2 = volmdlr.wires.Contour3D.contours_from_edges(edges2)
             points = []
 
             for contour in contours1:
