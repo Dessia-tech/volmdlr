@@ -4,6 +4,12 @@ type: docker
 name: default
 
 steps:
+- name: check code complexity
+  image: python:3.8
+  commands:
+  - pip install radon
+  - ./code_quality.sh
+
 - name: install, build doc run scripts
   image: python:3.8
   commands:
@@ -54,4 +60,3 @@ steps:
     password:
       from_secret: email_password
     from: technical@dessia.tech
-    recipients: [ root@dessia.tech ]
