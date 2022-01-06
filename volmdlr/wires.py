@@ -670,7 +670,7 @@ class Contour:
         '''
         edges1 = set()
         # edges2 = set()
-        list_p = set()
+        list_p = []
 
         for edge1, edge2 in itertools.product(self.primitives,
                                               contour2d.primitives):
