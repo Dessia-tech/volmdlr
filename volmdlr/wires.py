@@ -815,12 +815,12 @@ class Contour:
         return [shared_primitives_1, shared_primitives_2]
 
 
-    def merge_primitives_with(self, contour2d):
+    def merge_primitives_with(self, contour):
         '''
         extract not shared primitives between two adjacent contours, to be merged
         '''
 
-        points = self.shared_primitives_extremities(contour2d)
+        points = self.shared_primitives_extremities(contour)
         merge_primitives = []
 
         for i in range(1, len(points)+1, 2):
@@ -832,7 +832,7 @@ class Contour:
             merge_primitives_prim = self.extract_without_primitives(point1,
                                                                     point2,
                                                                     False)
-            if contour2d.point_over_contour(merge_primitives_prim[0].middle_point()) is True:
+            if contour.point_over_contour(merge_primitives_prim[0].middle_point()) is True:
                 merge_primitives_prim = self.extract_without_primitives(point1,
                                                                         point2,
                                                                         True)
@@ -841,11 +841,11 @@ class Contour:
                 merge_primitives.extend(merge_primitives_prim)
 
 
-            merge_primitives_prim = contour2d.extract_without_primitives(point1,
+            merge_primitives_prim = contour.extract_without_primitives(point1,
                                                                          point2,
                                                                          False)
             if self.point_over_contour(merge_primitives_prim[0].middle_point()) is True:
-                merge_primitives_prim = contour2d.extract_without_primitives(point1,
+                merge_primitives_prim = contour.extract_without_primitives(point1,
                                                                              point2,
                                                                              True)
                 merge_primitives.extend(merge_primitives_prim)
