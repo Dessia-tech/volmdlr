@@ -769,6 +769,8 @@ class Contour:
                             br1=True
                         if br1:
                             break
+                    if br1:
+                        break
                     # if primitives[i].start in list_p:
                     #     points.append(primitives[i].start)
                         # break
@@ -780,6 +782,8 @@ class Contour:
                             br2=True
                         if br2:
                             break
+                    if br2:
+                        break
                     # if primitives[i].end in list_p:
                     #     points.append(primitives[i].end)
                         # break
