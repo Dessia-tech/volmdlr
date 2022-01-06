@@ -640,7 +640,7 @@ class Contour:
         return edges
 
     
-    def is_sharing_primitives_with(self, contour2d):
+    def is_sharing_primitives_with(self, contour):
         '''
         check is two contour are sharing primitives
         '''
@@ -648,7 +648,7 @@ class Contour:
         list_p = []
 
         for edge1, edge2 in itertools.product(self.primitives,
-                                              contour2d.primitives):
+                                              contour.primitives):
             if edge1.point_belongs(edge2.start):
                 # list_p.append(edge2.start)
                 # instead of point not in list_p (due to errors)
