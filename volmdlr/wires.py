@@ -739,13 +739,23 @@ class Contour:
             for contour in contours1:
                 primitives = contour.primitives
                 for i in range(0,len(primitives)):
-                    if primitives[i].start in list_p:
-                        points.append(primitives[i].start)
-                        break
+                    for p in list_p: #due to errors
+                        if p.point_distance(primitives[i].start) < 1e-4:
+                            points.append(primitives[i].start)
+                            break
+                    # if primitives[i].start in list_p:
+                    #     points.append(primitives[i].start)
+                        # break
+
                 for i in range(len(primitives)-1, -1, -1):
-                    if primitives[i].end in list_p:
-                        points.append(primitives[i].end)
-                        break
+                    for p in list_p: #due to errors
+                        if p.point_distance(primitives[i].end) < 1e-4:
+                            points.append(primitives[i].end)
+                            break
+                    # if primitives[i].end in list_p:
+                    #     points.append(primitives[i].end)
+                        # break
+
             return points
 
     def shared_primitives_with(self, contour2d):
