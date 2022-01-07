@@ -827,7 +827,8 @@ class Contour2D(Contour, Wire2D):
     @property
     def edge_polygon(self):
         if not self._utd_edge_polygon:
-            self._edge_polygon = self._get_edge_polygon()
+            # self._edge_polygon = self._get_edge_polygon()
+            self._edge_polygon = self.to_polygon(20)
             self._utd_edge_polygon = True
         return self._edge_polygon
 
@@ -1541,7 +1542,8 @@ class Contour2D(Contour, Wire2D):
         # print([(line.start, line.end) for line in self.primitives])
 
         for primitive in self.primitives:
-            polygon_points.extend(primitive.polygon_points()[:-1])
+            polygon_points.extend(
+                primitive.polygon_points(angle_resolution)[:-1])
         #     print('1: ', primitive.polygon_points())
         #     print('2 :', primitive.polygon_points()[:-1])
         # print(polygon_points)
@@ -2168,9 +2170,10 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             # if yes, otherwise the algorithm continues at WHILE
             for segment1 in segments:
                 for segment2 in segments:
-                    if segment1[0] != segment2[0] and segment1[1] != segment2[
-                        1] and segment1[0] != segment2[1] and segment1[1] != \
-                            segment2[0]:
+                    if segment1[0] != segment2[0] \
+                            and segment1[1] != segment2[1] \
+                            and segment1[0] != segment2[1] \
+                            and segment1[1] != segment2[0]:
 
                         line1 = volmdlr.edges.LineSegment2D(
                             self.points[segment1[0]],
@@ -2838,14 +2841,11 @@ class Circle2D(Contour2D):
         if self.__class__.__name__ != other_circle.__class__.__name__:
             return False
 
-        return math.isclose(self.center.x,
-                            other_circle.center.x, abs_tol=1e-06) \
-               and math.isclose(self.center.y,
-                                other_circle.center.y, abs_tol=1e-06) \
-               and math.isclose(self.radius, other_circle.radius,
-                                abs_tol=1e-06)
+        return self.center == other_circle.center \
+            and math.isclose(self.radius, other_circle.radius,
+                             abs_tol=1e-06)
 
-    def to_polygon(self, angle_resolution: float):
+    def to_polygon(self, angle_resolution: int):
         return ClosedPolygon2D(
             self.polygon_points(angle_resolution=angle_resolution))
 
@@ -2875,12 +2875,12 @@ class Circle2D(Contour2D):
     def line_intersections(self, line2d: volmdlr.edges.Line2D, tol=1e-9):
         # Duplicate from ffull arc
         Q = self.center
-        if line2d.points[0] == self.center:
-            P1 = line2d.points[1]
-            V = line2d.points[0] - line2d.points[1]
+        if line2d.start == self.center:
+            P1 = line2d.end
+            V = line2d.start - line2d.end
         else:
-            P1 = line2d.points[0]
-            V = line2d.points[1] - line2d.points[0]
+            P1 = line2d.start
+            V = line2d.end - line2d.start
         a = V.dot(V)
         b = 2 * V.dot(P1 - Q)
         c = P1.dot(P1) + Q.dot(Q) - 2 * P1.dot(Q) - self.radius ** 2
@@ -3005,12 +3005,18 @@ class Circle2D(Contour2D):
     def area(self):
         return math.pi * self.radius ** 2
 
+    def straight_line_area(self):
+        return self.area()
+
+    def straight_line_second_moment_area(self, point):
+        return self.second_moment_area(point)
+
     def second_moment_area(self, point):
         """
         Second moment area of part of disk
         """
         I = math.pi * self.radius ** 4 / 4
-        Ic = npy.array([[I, 0], [0, I]])
+        # Ic = npy.array([[I, 0], [0, I]])
         return volmdlr.geometry.huygens2d(I, I, 0, self.area(), self.center,
                                           point)
 

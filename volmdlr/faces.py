@@ -724,7 +724,7 @@ class Surface3D(dc.DessiaObject):
         """
         Is this right?
         """
-        control_points = [self.point3d_to_2d(p) \
+        control_points = [self.point3d_to_2d(p)
                           for p in bspline_curve3d.control_points]
         return [vme.BSplineCurve2D(
                     bspline_curve3d.degree,
@@ -738,7 +738,7 @@ class Surface3D(dc.DessiaObject):
         """
         Is this right?
         """
-        control_points = [self.point2d_to_3d(p) \
+        control_points = [self.point2d_to_3d(p)
                           for p in bspline_curve2d.control_points]
         return [vme.BSplineCurve3D(
                     bspline_curve2d.degree,
@@ -748,11 +748,8 @@ class Surface3D(dc.DessiaObject):
                     weights=bspline_curve2d.weights,
                     periodic=bspline_curve2d.periodic)]
 
-    
     def normal_from_point2d(self, point2d):
-        
         raise NotImplementedError('NotImplemented')
-        
         
     def normal_from_point3d(self, point3d):
         """ 
@@ -2079,6 +2076,11 @@ class BSplineSurface3D(Surface3D):
                 flag = False
                 break
 
+        x_perio = self.x_periodicity if self.x_periodicity is not None \
+            else 1.
+        y_perio = self.y_periodicity if self.y_periodicity is not None \
+            else 1.
+
         if self.x_periodicity and not self.y_periodicity \
                 and bspline_curve3d.periodic:
             p1 = self.point3d_to_2d(bspline_curve3d.points[0], min_bound_x=0.,
@@ -2128,10 +2130,6 @@ class BSplineSurface3D(Surface3D):
             raise NotImplementedError
 
         elif flag:
-            x_perio = self.x_periodicity if self.x_periodicity is not None\
-                else 1.
-            y_perio = self.y_periodicity if self.y_periodicity is not None\
-                else 1.
             p1 = self.point3d_to_2d(bspline_curve3d.points[0],
                                     max_bound_x=x_perio,
                                     max_bound_y=y_perio)
@@ -2149,26 +2147,43 @@ class BSplineSurface3D(Surface3D):
                 p2_sup = self.point3d_to_2d(bspline_curve3d.points[-1],
                                             min_bound_x=1-x_perio,
                                             min_bound_y=1-y_perio)
-                if self.x_periodicity and p1.point_distance(p1_sup) > 1e-5:
-                    p1.x -= p1_sup.x - x_perio
-                    p2.x -= p2_sup.x - x_perio
-                if self.y_periodicity and p1.point_distance(p1_sup) > 1e-5:
-                    p1.y -= p1_sup.y - y_perio
-                    p2.y -= p2_sup.y - y_perio
+                print('=', p1, p1_sup)
+                # if self.x_periodicity and p1.point_distance(p1_sup) > 1e-5:
+                #     print('ca caldé')
+                #     p1.x -= p1_sup.x - x_perio
+                #     p2.x -= p2_sup.x - x_perio
+                # if self.y_periodicity and p1.point_distance(p1_sup) > 1e-5:
+                #     p1.y -= p1_sup.y - y_perio
+                #     p2.y -= p2_sup.y - y_perio
                 linesegments = [vme.LineSegment2D(p1, p2)]
             # How to check if end of surface overlaps start or the opposite ?
+
         else:
             lth = bspline_curve3d.length()
             if lth > 1e-5:
                 points = [self.point3d_to_2d(
-                        bspline_curve3d.point_at_abscissa(i / 10 * lth)
-                        # max_bound_x=self.x_periodicity,
-                        # max_bound_y=self.y_periodicity
-                    ) for i in range(11)]
+                        bspline_curve3d.point_at_abscissa(i / 10 * lth),
+                        max_bound_x=x_perio,
+                        max_bound_y=y_perio) for i in range(11)]
+
+                p1_sup = self.point3d_to_2d(bspline_curve3d.points[0],
+                                            min_bound_x=1-x_perio,
+                                            min_bound_y=1-y_perio)
+                print('=', points[0], p1_sup)
+                # if self.x_periodicity and \
+                #         points[0].point_distance(p1_sup) > 1e-5:
+                #     points = [pt - volmdlr.Point2D(p1_sup.x - x_perio, 0)
+                #               for pt in points]
+                # if self.y_periodicity and \
+                #         points[0].point_distance(p1_sup) > 1e-5:
+                #     points = [pt - volmdlr.Point2D(0, p1_sup.y - y_perio)
+                #               for pt in points]
+
                 # linesegments = [vme.LineSegment2D(p1, p2)
                 #                 for p1, p2 in zip(points[:-1], points[1:])]
                 linesegments = [vme.BSplineCurve2D.from_points_interpolation(
                     points, max(self.degree_u, self.degree_v))]
+                print(points)
             elif 1e-6 < lth <= 1e-5:
                 linesegments = [vme.LineSegment2D(
                     self.point3d_to_2d(bspline_curve3d.start),
@@ -2177,9 +2192,9 @@ class BSplineSurface3D(Surface3D):
                 print('BSplineCruve3D skipped because it is too small')
                 linesegments = None
 
-        # print(bspline_curve3d.start, bspline_curve3d.end)
-        # print([(l.start, l.end) for l in linesegments])
-        # print()
+        print(bspline_curve3d.start, bspline_curve3d.end)
+        print([(l.start, l.end) for l in linesegments])
+        print()
         return linesegments
 
     def arc3d_to_2d(self, arc3d):

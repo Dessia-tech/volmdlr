@@ -94,7 +94,7 @@ class TriangularElement(volmdlr.wires.Triangle2D):
         
         self.area = self._area()
         
-        volmdlr.wires.Triangle2D.__init__(self,points=points, name='')
+        volmdlr.wires.Triangle2D.__init__(self, *points, name='')
         
     def _to_linear_elements(self):
         vec1 = volmdlr.Vector2D(self.points[1].x - self.points[0].x,
