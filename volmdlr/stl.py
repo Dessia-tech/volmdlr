@@ -263,6 +263,7 @@ class Stl(dc.DessiaObject):
             for point in value:
                 point_normal += point
             points_normals[key] = point_normal
+            point_normal.normalize()
             normals.append(point_normal)
         self.normals = normals
 
