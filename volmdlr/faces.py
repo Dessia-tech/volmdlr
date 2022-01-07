@@ -5925,7 +5925,7 @@ class ClosedShell3D(OpenShell3D):
         During calculation of shells union or subtraction, it returns a list of the new faces generated from the two shells intersection
         '''
         faces = []
-        list_coicident_faces = self.get_coincident_faces(shell2)
+        list_coincident_faces = self.get_coincident_faces(shell2)
         for k, face in enumerate(intersecting_faces):
             if closed_subtract:
                 intersection_method = False
@@ -5945,68 +5945,34 @@ class ClosedShell3D(OpenShell3D):
                 list_faces = [face]
             else:
                 list_faces = face.divide_face(list_cutting_contours, inside)
-
             for new_face in list_faces:
                 points_inside = []
                 for i in range(5):
                     points_inside.append(new_face.surface2d.random_point_inside())
-                points_inside = [point for point in points_inside if point != None]
-                if not points_inside:
-                    ax1 = face_contour2d.plot()
-                    print('bugging face, maybe area is too small. No points have been found inside face. See graph generated :', face_contour2d)
-                    face_intersecting_primitives2d = [prim for contour in list_cutting_contours for prim in contour.primitives]
-                    for prim in face_intersecting_primitives2d:
-                        prim.plot(ax=ax1, color='r')
-                        print((prim.start, prim.end))
+                points_inside = [point for point in points_inside if point is not None]
+                # if not points_inside:
+                #     ax1 = face_contour2d.plot()
+                #     print('bugging face, maybe area is too small. No points have been found inside face. See graph generated :', face_contour2d)
+                #     face_intersecting_primitives2d = [prim for contour in list_cutting_contours for prim in contour.primitives]
+                #     for prim in face_intersecting_primitives2d:
+                #         prim.plot(ax=ax1, color='r')
+                #         print((prim.start, prim.end))
                 is_inside = False
                 for point in points_inside:
                     point = face.surface3d.point2d_to_3d(point)
                     if shell_2.point_belongs(point):
                         is_inside = True
                 if not intersection_method:
-                    if not is_inside:
-                        if new_face not in faces:
-                            valid = True
-                            for fc in faces:
-                                if fc.face_inside(new_face):
-                                    if new_face.surface2d.outer_contour.area() == fc.surface2d.outer_contour.area():
-                                        centroide = new_face.surface2d.outer_contour.center_of_mass()
-                                        normal1 = new_face.surface3d.point2d_to_3d(centroide) - 0.01*new_face.surface3d.frame.w
-                                        normal2 = new_face.surface3d.point2d_to_3d(centroide) + 0.01*new_face.surface3d.frame.w
-                                        if (self.point_belongs(normal1) and
-                                            shell2.point_belongs(normal2)) or \
-                                                (shell2.point_belongs(normal1) and
-                                                 self.point_belongs(normal2)):
-                                            valid = False
-                                            faces.remove(fc)
-                                            break
-                                        else:
-                                            valid = False
-                                    else:
-                                        valid = False
-                            if valid:
-                                for coin_f1, coin_f2 in list_coicident_faces:
-                                    if coin_f1.face_inside(new_face) and \
-                                            new_face.surface2d.outer_contour.area() == coin_f1.surface2d.outer_contour.area():
-                                        valid = False
-                                    elif coin_f2.face_inside(new_face) and \
-                                            new_face.surface2d.outer_contour.area() == coin_f2.surface2d.outer_contour.area():
-                                        valid = False
-                            if valid:
-                                faces.append(new_face)
+                    if self.validate_new_face(new_face, faces,
+                                              shell2, is_inside,
+                                              list_coincident_faces):
+                        faces.append(new_face)
                 else:
-                    if is_inside:
-                        if new_face not in faces:
-                            faces.append(new_face)
-                    else:
-                        for coin_f1, coin_f2 in list_coicident_faces:
-                            if coin_f1.face_inside(new_face) and coin_f2.face_inside(new_face):
-                                valid = True
-                                for fc in faces:
-                                    if fc.face_inside(new_face) or new_face.face_inside(fc):
-                                        valid = False
-                                if valid:
-                                    faces.append(new_face)
+                    if self.validate_new_face_intersection_method(new_face,
+                                                                  faces,
+                                                                  is_inside,
+                                                                  list_coincident_faces):
+                        faces.append(new_face)
         valid_faces = []
         for i, fc1 in enumerate(faces):
             valid_face = True
@@ -6017,6 +5983,61 @@ class ClosedShell3D(OpenShell3D):
             if valid_face and fc1 not in valid_faces:
                 valid_faces.append(fc1)
         return valid_faces
+
+    @staticmethod
+    def validate_new_face_intersection_method(new_face, faces, is_inside,
+                                              list_coincident_faces):
+        if is_inside:
+            if new_face not in faces:
+                return True
+        else:
+            for coin_f1, coin_f2 in list_coincident_faces:
+                if coin_f1.face_inside(new_face) and coin_f2.face_inside(
+                        new_face):
+                    valid = True
+                    for fc in faces:
+                        if fc.face_inside(new_face) or new_face.face_inside(
+                                fc):
+                            valid = False
+                    if valid:
+                        return True
+        return False
+
+    def validate_new_face(self, new_face, faces, shell2,
+                          is_inside, list_coincident_faces):
+        if not is_inside:
+            if new_face not in faces:
+                valid = True
+                for fc in faces:
+                    if fc.face_inside(new_face):
+                        if new_face.surface2d.outer_contour.area() == fc.surface2d.outer_contour.area():
+                            centroide = new_face.surface2d.outer_contour.center_of_mass()
+                            normal1 = new_face.surface3d.point2d_to_3d(
+                                centroide) - 0.01 * new_face.surface3d.frame.w
+                            normal2 = new_face.surface3d.point2d_to_3d(
+                                centroide) + 0.01 * new_face.surface3d.frame.w
+                            if (self.point_belongs(normal1) and
+                                shell2.point_belongs(normal2)) or \
+                                    (shell2.point_belongs(normal1) and
+                                     self.point_belongs(normal2)):
+                                valid = False
+                                faces.remove(fc)
+                                break
+                            else:
+                                valid = False
+                        else:
+                            valid = False
+                if valid:
+                    for coin_f1, coin_f2 in list_coincident_faces:
+                        if coin_f1.face_inside(new_face) and \
+                                new_face.surface2d.outer_contour.area() == coin_f1.surface2d.outer_contour.area():
+                            valid = False
+                        elif coin_f2.face_inside(new_face) and \
+                                new_face.surface2d.outer_contour.area() == coin_f2.surface2d.outer_contour.area():
+                            valid = False
+                if valid:
+                    return True
+        return False
 
     def validate_union_subtraction_operation(self, shell2, tol):
         '''
