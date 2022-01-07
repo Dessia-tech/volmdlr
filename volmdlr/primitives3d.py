@@ -24,16 +24,17 @@ npy.seterr(divide='raise')
 
 class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
                                 volmdlr.primitives.RoundedLineSegments):
-    _non_serializable_attributes = []
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['name']
     _generic_eq = True
     
+    line_class = volmdlr.edges.LineSegment3D
+    arc_class = volmdlr.edges.Arc3D
+    
     def __init__(self, points: List[volmdlr.Point3D], radius: Dict[str, float],
                  adapt_radius: bool = False, name: str = ''):
         primitives = volmdlr.primitives.RoundedLineSegments.__init__(
-            self, points, radius, volmdlr.edges.LineSegment3D,
-            volmdlr.edges.Arc3D, closed=False, adapt_radius=adapt_radius,
+            self, points, radius, closed=False, adapt_radius=adapt_radius,
             name='')
 
         volmdlr.wires.Wire3D.__init__(self, primitives, name)
