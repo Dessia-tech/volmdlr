@@ -1955,11 +1955,12 @@ class BSplineSurface3D(Surface3D):
         if -1e-4 < x < 0:
             x = 0.
         elif 1 < x < 1+1e-4:
-            x = 1
-        if -1e-4 < y < 0:
-            y = 0
+            x = 1.
+        # if -1e-4 < y < 0:
+        if y < 0:
+            y = 0.
         elif 1 < y < 1+1e-4:
-            y = 1
+            y = 1.
         return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D, min_bound_x: float = 0.,
@@ -3342,7 +3343,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
-        contours = [object_dict[int(arguments[1][0][1:])]]
+        # contours = [object_dict[int(arguments[1][0][1:])]]
+        contours = [object_dict[int(arg[1:])] for arg in arguments[1]]
 
         # Detecting inner and outer contours
         name = arguments[0][1:-1]
@@ -3460,6 +3462,7 @@ class Face3D(volmdlr.core.Primitive3D):
             surfaces = self.surface2d.split_by_lines(lines_y)
         else:
             surfaces = [self.surface2d]
+
         mesh2d = surfaces[0].triangulation()
         for subsurface in surfaces[1:]:
             # mesh2d += subsurface.triangulation()
@@ -3535,6 +3538,8 @@ class Face3D(volmdlr.core.Primitive3D):
         if not ax:
             ax = plt.figure().add_subplot(111, projection='3d')
         self.outer_contour3d.plot(ax=ax, color=color, alpha=alpha)
+        [c. plot(ax=ax, color=color, alpha=alpha)
+         for c in self.inner_contours3d]
         return ax
 
 
