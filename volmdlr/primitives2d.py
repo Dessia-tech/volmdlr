@@ -18,11 +18,11 @@ import matplotlib.pyplot as plt
 
 class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
     closed = False
-
+    line_class = volmdlr.edges.LineSegment2D
+    arc_class = volmdlr.edges.Arc2D
+    
     def __init__(self, points, radius, adapt_radius=False, name=''):
         primitives = RoundedLineSegments.__init__(self, points, radius,
-                                                  volmdlr.edges.LineSegment2D,
-                                                  volmdlr.edges.Arc2D,
                                                   closed=False,
                                                   adapt_radius=adapt_radius,
                                                   name='')
@@ -405,8 +405,6 @@ class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
     closed = True
     def __init__(self, points, radius, adapt_radius=False, name=''):
         primitives = RoundedLineSegments.__init__(self, points, radius,
-                                                  volmdlr.edges.LineSegment2D,
-                                                  volmdlr.edges.Arc2D,
                                                   closed=True,
                                                   adapt_radius=adapt_radius, name='')
 

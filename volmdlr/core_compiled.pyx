@@ -302,6 +302,11 @@ class Vector(DessiaObject):
             n += 1
         point /= n
         return point
+    
+    @classmethod
+    def remove_duplicate(cls, points):
+        dict_ = {p.approx_hash() : p for p in points}
+        return list(dict_.values())
 
 class Vector2D(Vector):
     def __init__(self, x:float, y:float, name=''):
@@ -943,6 +948,11 @@ class Vector3D(Vector):
             if not point.is_close(new_points[-1]):
                 new_points.append(point)
         return new_points
+
+    def to_dict(self):
+        return {'object_class':'volmdlr.Vector3D',
+                'x': self.x, 'y': self.y, 'z': self.z,
+                'name': self.name}
 
     @classmethod
     def dict_to_object(cls, dict_):
