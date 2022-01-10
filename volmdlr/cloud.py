@@ -249,12 +249,9 @@ class PointCloud2D(dc.DessiaObject):
     def to_polygon(self, convexe = False):
         if not self.points:
             return None
-<<<<<<< HEAD
         # polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
         polygon = vmw.ClosedPolygon2D.concave_hull(self.points, -0.3, 0.000005)
         # polygon = vmw.ClosedPolygon2D.concave_hull(self.points, -0.2, 0.000005)
-=======
->>>>>>> dev
         # polygon = vmw.ClosedPolygon2D.convex_hull_points(self.points)
         if convexe : 
             polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
