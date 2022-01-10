@@ -5,10 +5,19 @@ name: default
 
 steps:
 - name: check code complexity
-  image: python:3.8
+  image: python:3.9
   commands:
   - pip install radon
   - ./code_quality.sh
+
+- name: check pep8 formatting
+  image: python:3.9
+  when:
+    branch: master
+  commands:
+    - git fetch --tags
+    - pip3 install -U pip autopep8
+    - bash pre-push
 
 - name: install, build doc run scripts
   image: python:3.8
