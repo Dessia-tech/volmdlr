@@ -2043,11 +2043,15 @@ class LineSegment3D(LineSegment):
                 self.end - self.start) / self.length()
 
     def point_belongs(self, point, abs_tol=1e-7):
-        distance = self.start.point_distance(point) + self.end.point_distance(
-            point)
-        if math.isclose(distance, self.length(), abs_tol=abs_tol):
+        # distance = self.start.point_distance(point) + self.end.point_distance(point)
+        # if math.isclose(distance, self.length(), abs_tol=abs_tol):
+        #     return True
+        # return False
+
+        if self.point_distance(point) < abs_tol:
             return True
-        return False
+        else:
+            return False
 
     def normal_vector(self, abscissa=0.):
         return None
