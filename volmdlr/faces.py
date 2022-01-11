@@ -1952,13 +1952,13 @@ class BSplineSurface3D(Surface3D):
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         x, y = point2d
-        if -1e-4 < x < 0:
+        if -1e-3 < x < 0:
             x = 0.
-        elif 1 < x < 1+1e-4:
+        elif 1 < x < 1+1e-3:
             x = 1
-        if -1e-4 < y < 0:
+        if -1e-3 < y < 0:
             y = 0
-        elif 1 < y < 1+1e-4:
+        elif 1 < y < 1+1e-3:
             y = 1
         return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
@@ -3934,10 +3934,17 @@ class Triangle3D(PlaneFace3D):
         return self._surface2d
 
     def to_dict(self):
-        return {'object_class': 'volmdlr.faces.Triangle3D',
-                'point1': self.point1.to_dict(),
-                'point2': self.point2.to_dict(),
-                'point3': self.point3.to_dict()}
+        dict_ = dc.DessiaObject.base_dict(self)
+        dict_['point1'] = self.point1.to_dict()
+        dict_['point2'] = self.point2.to_dict()
+        dict_['point3'] = self.point3.to_dict()
+        return dict_
+
+    # def to_dict(self):
+    #     return {'object_class': 'volmdlr.faces.Triangle3D',
+    #             'point1': self.point1.to_dict(),
+    #             'point2': self.point2.to_dict(),
+    #             'point3': self.point3.to_dict()}
 
     @classmethod
     def dict_to_object(cls, dict_):
