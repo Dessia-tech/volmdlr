@@ -663,11 +663,11 @@ class BSplineCurve2D(Edge):
                               weights=self.weights,
                               periodic=self.periodic)
 
-    def point_belongs(self, point):
+    def point_belongs(self, point, abs_tol=1e-7):
         polygon_points = self.polygon_points()
         for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
             line = LineSegment2D(p1, p2)
-            if line.point_belongs(point):
+            if line.point_belongs(point, abs_tol=abs_tol):
                 return True
         return False
 
@@ -730,10 +730,10 @@ class LineSegment2D(LineSegment):
     def point_at_abscissa(self, curvilinear_abscissa):
         return self.start + self.unit_direction_vector() * curvilinear_abscissa
 
-    def point_belongs(self, point):
+    def point_belongs(self, point, abs_tol=1e-7):
         distance = self.start.point_distance(point) + self.end.point_distance(
             point)
-        if math.isclose(distance, self.length(), abs_tol=1e-7):
+        if math.isclose(distance, self.length(), abs_tol=abs_tol):
             return True
         return False
 
@@ -2042,10 +2042,10 @@ class LineSegment3D(LineSegment):
         return self.start + curvilinear_abscissa * (
                 self.end - self.start) / self.length()
 
-    def point_belongs(self, point):
+    def point_belongs(self, point, abs_tol=1e-7):
         distance = self.start.point_distance(point) + self.end.point_distance(
             point)
-        if math.isclose(distance, self.length(), abs_tol=1e-7):
+        if math.isclose(distance, self.length(), abs_tol=abs_tol):
             return True
         return False
 
@@ -2918,11 +2918,11 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             distances.append(pt1.point_distance(point))
         return min(distances)
 
-    def point_belongs(self, point):
+    def point_belongs(self, point, abs_tol=1e-7):
         polygon_points = self.polygon_points()
         for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
             line = LineSegment3D(p1, p2)
-            if line.point_belongs(point):
+            if line.point_belongs(point, abs_tol=abs_tol):
                 return True
         return False
 
