@@ -664,10 +664,10 @@ class LineSegment2D(LineSegment):
     def point_at_abscissa(self, curvilinear_abscissa):
         return self.start + self.unit_direction_vector() * curvilinear_abscissa
 
-    def point_belongs(self, point):
+    def point_belongs(self, point, abs_tol=1e-7):
         distance = self.start.point_distance(point) + self.end.point_distance(
             point)
-        if math.isclose(distance, self.length(), abs_tol=1e-7):
+        if math.isclose(distance, self.length(), abs_tol=abs_tol):
             return True
         return False
 
