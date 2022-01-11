@@ -196,6 +196,23 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         return [Surface2D(oc, []) for oc in splitted_outer_contours]
 
+    def line_crossings(self, line: 'volmdlr.edges.Line2D'):
+        """
+        Returns a list of crossings with in the form of a tuple (point,
+        primitive) of the wire primitives intersecting with the line
+        """
+        intersection_points = []
+        for primitive in self.outer_contour.primitives:
+            for p in primitive.line_crossings(line):
+                if (p, primitive) not in intersection_points:
+                    intersection_points.append((p, primitive))
+        for inner_contour in self.inner_contours:
+            for primitive in inner_contour.primitives:
+                for p in primitive.line_crossings(line):
+                    if (p, primitive) not in intersection_points:
+                        intersection_points.append((p, primitive))
+        return sorted(intersection_points, key=lambda ip: line.abscissa(ip[0]))
+
     def split_at_centers(self):
         """
         Split in n slices
