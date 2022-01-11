@@ -597,11 +597,11 @@ class BSplineCurve2D(Edge):
             crossings.extend(l.line_crossings(line2d))
         return crossings
 
-    def point_belongs(self, point):
+    def point_belongs(self, point, abs_tol=1e-7):
         polygon_points = self.polygon_points()
         for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
             line = LineSegment2D(p1, p2)
-            if line.point_belongs(point):
+            if line.point_belongs(point, abs_tol=abs_tol):
                 return True
         return False
 
