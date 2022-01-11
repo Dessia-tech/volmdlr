@@ -129,7 +129,7 @@ def manifold_solid_brep(arguments, object_dict):
     return object_dict[arguments[1]]
 
 
-def brep_with_void(arguments, object_dict):
+def brep_with_voids(arguments, object_dict):
     return object_dict[arguments[1]]
 
 
