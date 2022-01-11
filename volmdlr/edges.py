@@ -3649,6 +3649,12 @@ class Arc3D(Edge):
             start_id, end_id, curve_id)
         return content, [current_id]
 
+    def point_distance(self, point):
+
+       points = self.polygon_points()
+
+        return point.point_distance(point.nearest_point(points))
+
 
 class FullArc3D(Edge):
     """
