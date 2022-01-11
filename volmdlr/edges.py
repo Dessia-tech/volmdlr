@@ -3651,9 +3651,9 @@ class Arc3D(Edge):
 
     def point_distance(self, point):
 
-       points = self.polygon_points()
+       points = self.polygon_points(angle_resolution=100)
 
-        return point.point_distance(point.nearest_point(points))
+       return point.point_distance(point.nearest_point(points))
 
 
 class FullArc3D(Edge):
