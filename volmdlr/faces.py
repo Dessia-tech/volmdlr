@@ -196,6 +196,17 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         return [Surface2D(oc, []) for oc in splitted_outer_contours]
 
+    def cut_by_line2(self, line: vme.Line2D):
+
+        intersection_data = self.line_crossings(line)
+
+        splitted_outer_contours = self.outer_contour.cut_by_line(line)
+        splitted_inner_contours_table = []
+        for inner_contour in self.inner_contours:
+            splitted_inner_contours = inner_contour.cut_by_line(line)
+
+        return
+
     def line_crossings(self, line: 'volmdlr.edges.Line2D'):
         """
         Returns a list of crossings with in the form of a tuple (point,

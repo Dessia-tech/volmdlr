@@ -1365,7 +1365,6 @@ class Contour2D(Contour, Wire2D):
         """
         # if len(self.primitives) <=4:
         #     self = self.discretized_contour(2)
-        # TODO: there are some copy/paste in this function but refactoring is not trivial
         intersections = self.line_crossings(line)
         n_inter = len(intersections)
         if not intersections:
