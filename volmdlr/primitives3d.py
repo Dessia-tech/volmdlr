@@ -1212,7 +1212,11 @@ class Sphere(RevolvedProfile):
         else:
             self.center.frame_mapping(frame, side, copy)
             
-    def to_pointcloud3d_skin(self, resolution:float = 1e-3):
+    def to_point_skin(self, resolution:float = 1e-3):
+        if resolution > 2*self.radius :
+            return []
+        
+        
         theta = resolution/self.radius
         
         nb_floor = int(math.pi/theta) + 1
@@ -1250,7 +1254,7 @@ class Sphere(RevolvedProfile):
         
         return skin_points
     
-    def to_pointcloud3d_in(self, resolution:float = 1e-3):
+    def to_point_in(self, resolution:float = 1e-3):
         in_points = [self.center]
         nb_spheres = int(self.radius/resolution)
         if nb_spheres == 0:
@@ -1263,7 +1267,7 @@ class Sphere(RevolvedProfile):
         
         for srad in spheres_radius:
             in_sphere = Sphere(self.center, srad)
-            in_points.extend(in_sphere.to_pointcloud3d_skin(resolution = resolution)) 
+            in_points.extend(in_sphere.to_point_skin(resolution = resolution)) 
         
         
         return in_points
