@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import io
 
 import volmdlr as vm
 import volmdlr.step
@@ -22,9 +23,14 @@ for step_file in [
     model = step.to_volume_model()
     assert len(model.primitives) > 0.
     model.to_step(step_file+'_reexport')
-
     model.babylonjs()
-    
+
+    file_io = io.FileIO('step/' + step_file, 'r')
+    step = volmdlr.step.Step(stream=file_io)
+    model = step.to_volume_model()
+    assert len(model.primitives) > 0.
+    model.to_step(step_file + '_reexport')
+
 model2 = model.copy()
 
 assert model == model2
