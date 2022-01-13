@@ -3232,10 +3232,10 @@ class BSplineSurface3D(Surface3D):
     
     
     @classmethod
-    def from_cylindrical_surfaces(cls, faces, degree_u,degree_v, direction):
+    def from_cylindrical_surfaces(cls, faces, degree_u, degree_v):
         ''' faces: List[volmdlr.faces.CylindricalFace3D] '''
 
-        points_x, points_y  = 50, 50
+        points_x, points_y  = 10, 10
 
         if len(faces) == 1:
 
@@ -3248,9 +3248,10 @@ class BSplineSurface3D(Surface3D):
             return volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(points_3d,points_x,points_x,degree_u,degree_v)
 
         elif len(faces) > 1:
-            points_3d = []
+            bspline_surfaces = []
+            direction = faces[0].adjacent_direction(faces[1])
 
-            if direction == 'x':
+            if direction == 'y':
                 ymin = faces[0].surface2d.outer_contour.bounding_rectangle()[2]
                 ymax = faces[0].surface2d.outer_contour.bounding_rectangle()[3]
                 for face in faces:
@@ -3260,21 +3261,10 @@ class BSplineSurface3D(Surface3D):
                     xmin = face.surface2d.outer_contour.bounding_rectangle()[0]
                     xmax = face.surface2d.outer_contour.bounding_rectangle()[1]
 
-                    points_3d.append(face.surface3d.grid3d(points_x, points_y, xmin, xmax, ymin, ymax))
+                    points_3d = face.surface3d.grid3d(points_x, points_y, xmin, xmax, ymin, ymax)
+                    bspline_surfaces.append(cls.points_fitting_into_bspline_surface(points_3d,points_x,points_y,degree_u,degree_v))
 
-                points_3d_ordred = []
-                if points_3d[0][points_x-1].point_distance(points_3d[0][points_x]) < points_3d[0][points_x-1].point_distance(points_3d[1][0]):
-                    for i in range(0,len(faces)):
-                        points_3d_ordred.extend(points_3d[i])
-                else:
-                    for j in range(0,len(points_3d[0]),points_x):
-                        for i in range(0,len(faces)):
-                            points_3d_ordred.extend(points_3d[i][j:j+points_x])
-
-                return cls.points_fitting_into_bspline_surface(points_3d_ordred,points_x,points_x*len(faces),degree_u,degree_v)
-
-
-            elif direction == 'y':
+            elif direction == 'x':
                 xmin = faces[0].surface2d.outer_contour.bounding_rectangle()[0]
                 xmax = faces[0].surface2d.outer_contour.bounding_rectangle()[1]
                 for face in faces:
@@ -3284,19 +3274,17 @@ class BSplineSurface3D(Surface3D):
                     ymin = face.surface2d.outer_contour.bounding_rectangle()[2]
                     ymax = face.surface2d.outer_contour.bounding_rectangle()[3]
 
-                    points_3d.append(face.surface3d.grid3d(points_x, points_y, xmin, xmax, ymin, ymax))
+                    points_3d = face.surface3d.grid3d(points_x, points_y, xmin, xmax, ymin, ymax)
+                    bspline_surfaces.append(cls.points_fitting_into_bspline_surface(points_3d,points_x,points_y,degree_u,degree_v))
+            
+            to_be_merged = bspline_surfaces[0]
+            for i in range(0, len(bspline_surfaces)-1):
+                merged = to_be_merged.merge_with(bspline_surfaces[i+1])
+                to_be_merged = merged
 
-                points_3d_ordred = []
-                if points_3d[0][points_x-1].point_distance(points_3d[0][points_x]) < points_3d[0][points_x-1].point_distance(points_3d[1][0]):
-                    for i in range(0,len(faces)):
-                        points_3d_ordred.extend(points_3d[i])
+            bspline_surface = to_be_merged
 
-                else:
-                    for j in range(0,len(points_3d[0]),points_x):
-                        for i in range(0,len(faces)):
-                            points_3d_ordred.extend(points_3d[i][j:j+points_x])
-
-                return cls.points_fitting_into_bspline_surface(points_3d_ordred,points_x*len(faces),points_x,degree_u,degree_v)
+            return bspline_surface
 
     
     @classmethod
@@ -5002,7 +4990,7 @@ class CylindricalFace3D(Face3D):
         point2_2d = self.surface3d.point3d_to_2d(point2)
 
         x, y = point1_2d - point2_2d
-        if x>y:
+        if abs(x)>abs(y):
             return 'x'
         else:
             return 'y'
