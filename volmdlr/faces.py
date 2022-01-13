@@ -1828,7 +1828,7 @@ class BSplineSurface3D(Surface3D):
         p2d_x0 = self.point3d_to_2d(p3d_x1, 0., 0.5)
         x_perio = 1 - p2d_x0.x if not math.isclose(p2d_x0.x, 1, abs_tol=1e-3) \
             else None
-        return x_perio
+        return None #x_perio
 
     @property
     def y_periodicity(self):
@@ -1836,7 +1836,7 @@ class BSplineSurface3D(Surface3D):
         p2d_y0 = self.point3d_to_2d(p3d_y1, 0., 0.5)
         y_perio = 1 - p2d_y0.y if not math.isclose(p2d_y0.y, 1, abs_tol=1e-3) \
             else None
-        return y_perio
+        return None #y_perio
 
     def control_points_matrix(self, coordinates):
         ''' 
