@@ -897,7 +897,7 @@ class Contour:
 
         for edge1, edge2 in itertools.product(self.primitives,
                                               contour.primitives):
-            if edge1.point_belongs(edge2.start):
+            if edge1.point_belongs(edge2.start, 1e-5):
                 # list_p.append(edge2.start)
                 # instead of point not in list_p (due to errors)
                 if list_p == []:
@@ -905,7 +905,7 @@ class Contour:
                 if list_p != [] and edge2.start.point_distance(edge2.start.nearest_point(list_p)) > 1e-4:
                     list_p.append(edge2.start)
 
-            elif edge2.point_belongs(edge1.start):
+            elif edge2.point_belongs(edge1.start, 1e-5):
                 # list_p.append(edge1.start)
                 # instead of point not in list_p (due to errors)
                 if list_p == []:
@@ -913,7 +913,7 @@ class Contour:
                 if list_p != [] and edge1.start.point_distance(edge1.start.nearest_point(list_p)) > 1e-4:
                     list_p.append(edge1.start)
 
-            elif edge1.point_belongs(edge2.end):
+            elif edge1.point_belongs(edge2.end, 1e-5):
                 # list_p.append(edge2.end)
                 # instead of point not in list_p (due to errors)
                 if list_p == []:
@@ -921,7 +921,7 @@ class Contour:
                 if list_p != [] and edge2.end.point_distance(edge2.end.nearest_point(list_p)) > 1e-4:
                     list_p.append(edge2.end)
 
-            elif edge2.point_belongs(edge1.end):
+            elif edge2.point_belongs(edge1.end, 1e-5):
                 # list_p.append(edge1.end)
                 # instead of point not in list_p (due to errors)
                 if list_p == []:
@@ -929,7 +929,7 @@ class Contour:
                 if list_p != [] and edge1.end.point_distance(edge1.end.nearest_point(list_p)) > 1e-4:
                     list_p.append(edge1.end)
 
-            if len(list_p) == 2:
+            if len(list_p) >= 2:
                 return True
 
         return False
