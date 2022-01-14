@@ -1964,6 +1964,10 @@ class Contour2D(Contour, Wire2D):
         intersecting_points = []
         for primitive1 in self.primitives:
             for primitive2 in contour2d.primitives:
+                ax=self.plot()
+                contour2d.plot(ax=ax)
+                primitive1.plot(ax=ax, color='r')
+                primitive2.plot(ax=ax, color='b')
                 line_intersection = primitive1.linesegment_intersections(
                     primitive2)
                 if line_intersection:
