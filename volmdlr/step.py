@@ -264,7 +264,7 @@ class Step:
 
         for line in f:
             if self.stream:
-                line = line.decode()
+                line = line.decode("ISO-8859-1")
                 line = line.replace("\r", "")
             line = line.replace(" ", "")
             line = line.replace("\n", "")
