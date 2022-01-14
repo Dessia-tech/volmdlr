@@ -3471,7 +3471,7 @@ class BSplineSurface3D(Surface3D):
             [points_x, points_y, xmin, xmax, ymin, ymax] = cle
 
         contour = self.contour3d_to_2d_with_dimension(wire3d, points_x, points_y)
-
+        print('new')
         return volmdlr.wires.Wire2D(contour.primitives)
 
  

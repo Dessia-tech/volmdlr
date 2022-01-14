@@ -681,6 +681,17 @@ class BSplineCurve2D(Edge):
                 distance = dist
         return distance
 
+    def linesegment_intersections(self, linesegment: 'LineSegment2D'):
+        """
+
+        """
+        # point = volmdlr.Point2D.line_intersection(self, linesegment)
+        point = self.line_intersections(linesegment.to_line())
+        if linesegment.point_belongs(point):
+            return point
+        else:
+            return None
+
 
 class BezierCurve2D(BSplineCurve2D):
 
