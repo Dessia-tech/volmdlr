@@ -1217,7 +1217,7 @@ class Sphere(RevolvedProfile):
             return []
         
         
-        theta = resolution/self.radius
+        theta = 2*math.asin(resolution/(2*self.radius))
         
         nb_floor = int(math.pi/theta) + 1
         rota_theta = [n*theta for n in range(nb_floor)]
