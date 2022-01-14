@@ -3470,7 +3470,9 @@ class BSplineSurface3D(Surface3D):
         for cle in self._grids2d.keys():
             [points_x, points_y, xmin, xmax, ymin, ymax] = cle
 
-        return self.contour3d_to_2d_with_dimension(wire3d, points_x, points_y)
+        contour = self.contour3d_to_2d_with_dimension(wire3d, points_x, points_y)
+
+        return volmdlr.wires.Wire2D(contour.primitives)
 
  
     def split_surface_u(self, u: float):
