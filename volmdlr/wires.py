@@ -2478,6 +2478,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         return ax
 
     def triangulation(self):
+        """
+        Note: triangles have been inverted for a better rendering in babylonjs
+        """
         # ear clipping
         points = self.points[:]
         initial_point_to_index = {p: i for i, p in enumerate(self.points)}
@@ -2543,8 +2546,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                         # print('ear!')
 
                         triangles.append((initial_point_to_index[p1],
-                                          initial_point_to_index[p2],
-                                          initial_point_to_index[p3]))
+                                          initial_point_to_index[p3],
+                                          initial_point_to_index[p2]))
                         remaining_points.remove(p2)
                         # ax.text(*points[initial_point_to_index[p2]], str(number_remaining_points))
                         number_remaining_points -= 1
@@ -2581,8 +2584,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         if len(remaining_points) == 3:
             p1, p2, p3 = remaining_points
             triangles.append((initial_point_to_index[p1],
-                              initial_point_to_index[p2],
-                              initial_point_to_index[p3]))
+                              initial_point_to_index[p3],
+                              initial_point_to_index[p2]))
 
         return vmd.DisplayMesh2D(points, triangles)
 
