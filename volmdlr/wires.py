@@ -790,7 +790,6 @@ class Contour:
                     warnings.warn('There may exist a problem with this'
                                   ' contour, it seems it cannot be reordered.'
                                   ' Please, verify its points')
-                    # self.plot()
                     raise NotImplementedError
             #     finished = True
             # counter += 1
@@ -865,7 +864,7 @@ class Contour:
     
 
     @classmethod
-    def contours_from_edges(cls, edges):
+    def contours_from_edges(cls, edges, tol=5e-5):
         list_contours = []
         finished = False
         contour = []
@@ -884,12 +883,12 @@ class Contour:
                 else:
                     for point in points:
 
-                        if point.is_close(line.start, tol= 3e-4): #Previously tol=5e-5
+                        if point.is_close(line.start, tol=tol): #Previously tol=5e-5
                             line.start = point
                             contour.append(line)
                             edges.remove(line)
                             break
-                        elif point.is_close(line.end, tol= 3e-4): #Previously tol=5e-5
+                        elif point.is_close(line.end, tol=tol): #Previously tol=5e-5
                             line.end = point
                             contour.append(line)
                             edges.remove(line)
