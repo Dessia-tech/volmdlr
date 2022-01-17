@@ -989,7 +989,7 @@ class Plane3D(Surface3D):
                 self.frame.v = new_vector2
                 self.frame.w = new_vector3
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         new_frame = self.frame.copy()
         return Plane3D(new_frame, self.name)
 
@@ -1825,6 +1825,22 @@ class BSplineSurface3D(Surface3D):
         self._grids2d = {}
         self._grids2d_deformed = {}
 
+    @property
+    def x_periodicity(self):
+        p3d_x1 = self.point2d_to_3d(volmdlr.Point2D(1., 0.5))
+        p2d_x0 = self.point3d_to_2d(p3d_x1, 0., 0.5)
+        x_perio = 1 - p2d_x0.x if not math.isclose(p2d_x0.x, 1, abs_tol=1e-3) \
+            else None
+        return x_perio
+
+    @property
+    def y_periodicity(self):
+        p3d_y1 = self.point2d_to_3d(volmdlr.Point2D(0.5, 1))
+        p2d_y0 = self.point3d_to_2d(p3d_y1, 0., 0.5)
+        y_perio = 1 - p2d_y0.y if not math.isclose(p2d_y0.y, 1, abs_tol=1e-3) \
+            else None
+        return y_perio
+
     def control_points_matrix(self, coordinates):
         ''' 
         define control points like a matrix, for each coordinate: x:0, y:1, z:2 
@@ -1978,6 +1994,7 @@ class BSplineSurface3D(Surface3D):
                (min_bound_x+delta_bound_x/10, max_bound_y-delta_bound_y/10),
                (max_bound_x-delta_bound_x/10, min_bound_y+delta_bound_y/10),
                (max_bound_x-delta_bound_x/10, max_bound_y-delta_bound_y/10)]
+
         for x0 in x0s:
             z = scp.optimize.least_squares(f, x0=x0, bounds=([min_bound_x,
                                                               min_bound_y],
@@ -2484,21 +2501,37 @@ class BSplineSurface3D(Surface3D):
         bsplinesurface = cls(degree_u, degree_v, control_points, nb_u, nb_v,
                              u_multiplicities, v_multiplicities, u_knots,
                              v_knots, weight_data, name)
-        if u_closed:
-            bsplinesurface.x_periodicity = bsplinesurface.get_x_periodicity()
-        if v_closed:
-            bsplinesurface.y_periodicity = bsplinesurface.get_y_periodicity()
+        # if u_closed:
+        #     bsplinesurface.x_periodicity = bsplinesurface.get_x_periodicity()
+        # if v_closed:
+        #     bsplinesurface.y_periodicity = bsplinesurface.get_y_periodicity()
         return bsplinesurface
 
-    def get_x_periodicity(self):
-        p3d_x1 = self.point2d_to_3d(volmdlr.Point2D(1., 0.5))
-        p2d_x0 = self.point3d_to_2d(p3d_x1, 0., 0.5)
-        return 1-p2d_x0.x
+    def to_step(self, current_id):
+        content = ''
+        point_matrix_ids = '('
+        for points in self.control_points_table:
+            point_ids = '('
+            for point in points:
+                point_content, point_id = point.to_step(current_id)
+                content += point_content
+                point_ids += '#{},'.format(point_id)
+                current_id = point_id + 1
+            point_ids = point_ids[:-1]
+            point_ids += '),'
+            point_matrix_ids += point_ids
+        point_matrix_ids = point_matrix_ids[:-1]
+        point_matrix_ids += ')'
 
-    def get_y_periodicity(self):
-        p3d_y1 = self.point2d_to_3d(volmdlr.Point2D(0.5, 1))
-        p2d_y0 = self.point3d_to_2d(p3d_y1, 0., 0.5)
-        return 1-p2d_y0.y
+        u_close = '.T.' if self.x_periodicity else '.F.'
+        v_close = '.T.' if self.y_periodicity else '.F.'
+
+        content += "#{} = B_SPLINE_SURFACE_WITH_KNOTS('{}',{},{},{},.UNSPECIFIED.,{},{},.F.,{},{},{},{},.UNSPECIFIED.);\n" \
+            .format(current_id, self.name, self.degree_u, self.degree_v,
+                    point_matrix_ids, u_close, v_close,
+                    tuple(self.u_multiplicities), tuple(self.v_multiplicities),
+                    tuple(self.u_knots), tuple(self.v_knots))
+        return content, [current_id]
 
     def grid3d(self, points_x, points_y, xmin, xmax, ymin, ymax):
         '''
@@ -3507,8 +3540,9 @@ class Face3D(volmdlr.core.Primitive3D):
             self.surface3d.frame_mapping(frame, side, copy=False)
             self.bounding_box = self._bounding_box()
 
-    def copy(self):
-        return Face3D(self.surface3d.copy(), self.surface2d.copy(), self.name)
+    def copy(self, deep=True, memo=None):
+        return self.__class__(self.surface3d.copy(), self.surface2d.copy(),
+                              self.name)
 
     def line_intersections(self,
                                   line: vme.Line3D,
@@ -3591,7 +3625,7 @@ class PlaneFace3D(Face3D):
                                              pointers_memo=pointers_memo)
         return cls(plane3d, surface2d, dict_['name'])
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         return PlaneFace3D(self.surface3d.copy(), self.surface2d.copy(),
                            self.name)
 
@@ -3989,7 +4023,7 @@ class Triangle3D(PlaneFace3D):
             self.point3.frame_mapping(frame, side, copy=False)
             self.bounding_box = self._bounding_box()
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         return Triangle3D(self.point1.copy(), self.point2.copy(), self.point3.copy(),
                            self.name)
 
@@ -4104,7 +4138,7 @@ class CylindricalFace3D(Face3D):
                         surface2d=surface2d,
                         name=name)
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         return CylindricalFace3D(self.surface3d.copy(), self.surface2d.copy(),
                            self.name)
 
@@ -4502,7 +4536,7 @@ class ToroidalFace3D(Face3D):
                         surface2d=surface2d,
                         name=name)
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         return ToroidalFace3D(self.surface3d.copy(), self.surface2d.copy(),
                               self.name)
 
@@ -5342,7 +5376,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 face.frame_mapping(frame, side, copy=False)
             self.bounding_box = self._bounding_box()
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         new_faces = [face.copy() for face in self.faces]
         return self.__class__(new_faces, color=self.color, alpha=self.alpha,
                               name=self.name)
@@ -5641,7 +5675,7 @@ class ClosedShell3D(OpenShell3D):
                 face.frame_mapping(frame, side, copy=False)
             self.bounding_box = self._bounding_box()
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         new_faces = [face.copy() for face in self.faces]
         return ClosedShell3D(new_faces, color=self.color, alpha=self.alpha,
                              name=self.name)
