@@ -6,20 +6,20 @@
 # """
 
 # import matplotlib.pyplot as plt
-# import volmdlr.core_compiled 
-# import volmdlr
-# import volmdlr.core
+# import volmdlr.core_compiled
+import volmdlr as vm
+import volmdlr.wires as vmw
+import volmdlr.edges as vme
 # from volmdlr.core_compiled import Matrix33
 
 # from itertools import combinations
 # import numpy as npy
-# import volmdlr.edges 
-# import volmdlr.wires 
+# import volmdlr.wires
 # import volmdlr.faces 
 # from volmdlr.core_compiled import Matrix33
 # import math
-# from dessia_common import DessiaObject
-# from typing import TypeVar, List, Tuple,Dict
+from dessia_common import DessiaObject
+from typing import TypeVar, List, Tuple, Dict
 # import matplotlib
 # import random
 # from itertools import product 
@@ -32,8 +32,8 @@
 #                    (1.0, 0.0, 0.0)]}
 # blue_red = LinearSegmentedColormap('BLueRed', cdict)
 
-# class FlatElementError(Exception):
-#     pass
+class FlatElementError(Exception):
+    pass
 
 # def find_duplicate_linear_element(linear_elements1, linear_elements2):
 #     duplicates = []
@@ -43,17 +43,19 @@
 #     return duplicates
 
 
-# class LinearElement(volmdlr.edges.LineSegment2D):
-#     _standalone_in_db = False
-#     _non_serializable_attributes = []
-#     _non_eq_attributes = ['name']
-#     _non_hash_attributes = ['name']
-#     _generic_eq = True
-#     def __init__(self, start:volmdlr.Point2D,end:volmdlr.Point2D, interior_normal:volmdlr.Vector2D,name=''):
-#         self.points=[start, end]
-#         self.interior_normal = interior_normal
+class LinearElement(vme.LineSegment2D):
+    _standalone_in_db = False
+    _non_serializable_attributes = []
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['name']
+    _generic_eq = True
+
+    def __init__(self, start: vm.Point2D, end: vm.Point2D,
+                 interior_normal: vm.Vector2D, name: str = ''):
+        self.points = [start, end]
+        self.interior_normal = interior_normal
         
-#         volmdlr.edges.LineSegment2D.__init__(self,start=start,end=end,name=name)
+        vme.LineSegment2D.__init__(self, start=start, end=end, name=name)
         
 #     def __hash__(self):
 #         return self.start.__hash__() + self.end.__hash__()
@@ -78,66 +80,65 @@
 #         return ax
 
 
-# class TriangularElement(volmdlr.wires.Triangle2D):
-#     _standalone_in_db = False
-#     _non_serializable_attributes = []
-#     _non_eq_attributes = ['name']
-#     _non_hash_attributes = ['name']
-#     _generic_eq = True
+class TriangularElement(vmw.Triangle2D):
+    _standalone_in_db = False
+    _non_serializable_attributes = []
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['name']
+    _generic_eq = True
 
-#     def __init__(self, points):
-#         self.points = points
-#         self.linear_elements = self._to_linear_elements()
-#         self.form_functions = self._form_functions()
+    def __init__(self, points):
+        self.points = points
+        self.linear_elements = self._to_linear_elements()
+        self.form_functions = self._form_functions()
         
-#         self.center = (self.points[0]+self.points[1]+self.points[2])/3
+        self.center = (self.points[0]+self.points[1]+self.points[2])/3
         
-#         self.area = self._area()
+        self.area = self._area()
         
-#         volmdlr.wires.Triangle2D.__init__(self,points=points, name='')
+        vmw.Triangle2D.__init__(self, *points)
         
-#     def _to_linear_elements(self):
-#         vec1 = volmdlr.Vector2D(self.points[1].x - self.points[0].x,
-#                                 self.points[1].y - self.points[0].y)
-#         vec2 = volmdlr.Vector2D(self.points[2].x - self.points[1].x,
-#                                 self.points[2].y - self.points[1].y)
-#         vec3 = volmdlr.Vector2D(self.points[0].x - self.points[2].x,
-#                                 self.points[0].y - self.points[2].y)
-#         normal1 = volmdlr.Vector2D(-vec1.y, vec1.x)
-#         normal2 = volmdlr.Vector2D(-vec2.y, vec2.x)
-#         normal3 = volmdlr.Vector2D(-vec3.y, vec3.x)
-#         normal1.normalize()
-#         normal2.normalize()
-#         normal3.normalize()
-#         if normal1.dot(vec2) < 0:
-#             normal1 = - normal1
-#         if normal2.dot(vec3) < 0:
-#             normal2 = - normal2
-#         if normal3.dot(vec1) < 0:
-#             normal3 = - normal3
-#         linear_element_1 = LinearElement(self.points[0], self.points[1],
-#                                          normal1)
-#         linear_element_2 = LinearElement(self.points[1], self.points[2],
-#                                          normal2)
-#         linear_element_3 = LinearElement(self.points[2], self.points[0],
-#                                          normal3)
-#         return [linear_element_1, linear_element_2, linear_element_3]
+    def _to_linear_elements(self):
+        vec1 = vm.Vector2D(self.points[1].x - self.points[0].x,
+                           self.points[1].y - self.points[0].y)
+        vec2 = vm.Vector2D(self.points[2].x - self.points[1].x,
+                           self.points[2].y - self.points[1].y)
+        vec3 = vm.Vector2D(self.points[0].x - self.points[2].x,
+                           self.points[0].y - self.points[2].y)
+        normal1 = vm.Vector2D(-vec1.y, vec1.x)
+        normal2 = vm.Vector2D(-vec2.y, vec2.x)
+        normal3 = vm.Vector2D(-vec3.y, vec3.x)
+        normal1.normalize()
+        normal2.normalize()
+        normal3.normalize()
+        if normal1.dot(vec2) < 0:
+            normal1 = - normal1
+        if normal2.dot(vec3) < 0:
+            normal2 = - normal2
+        if normal3.dot(vec1) < 0:
+            normal3 = - normal3
+        linear_element_1 = LinearElement(self.points[0], self.points[1],
+                                         normal1)
+        linear_element_2 = LinearElement(self.points[1], self.points[2],
+                                         normal2)
+        linear_element_3 = LinearElement(self.points[2], self.points[0],
+                                         normal3)
+        return [linear_element_1, linear_element_2, linear_element_3]
     
-#     def _form_functions(self):
-#         a = Matrix33(1, self.points[0].x, self.points[0].y,
-#                      1, self.points[1].x, self.points[1].y,
-#                      1, self.points[2].x, self.points[2].y)
-#         try:
-#             inv_a = a.inverse()
-#         except ValueError:
-#             self.plot()
-#             print('buggy element area', self.area)
-#             raise FlatElementError('form function bug')
-#         x1 = inv_a.vector_multiplication(volmdlr.X3D)
-#         x2 = inv_a.vector_multiplication(volmdlr.Y3D)
-#         x3 = inv_a.vector_multiplication(volmdlr.Z3D)
-       
-#         return x1, x2, x3
+    def _form_functions(self):
+        a = Matrix33(1, self.points[0].x, self.points[0].y,
+                     1, self.points[1].x, self.points[1].y,
+                     1, self.points[2].x, self.points[2].y)
+        try:
+            inv_a = a.inverse()
+        except ValueError:
+            self.plot()
+            print('buggy element area', self.area)
+            raise FlatElementError('form function bug')
+        x1 = inv_a.vector_multiplication(vm.X3D)
+        x2 = inv_a.vector_multiplication(vm.Y3D)
+        x3 = inv_a.vector_multiplication(vm.Z3D)
+        return x1, x2, x3
 
 #     # def _quadratic_form_functions(self):
 #     #     a = [[1, self.points[0][0], self.points[0][1],self.points[0][0]**2,self.points[0][0]*self.points[0][1],self.points[0][1]**2],
@@ -229,18 +230,18 @@
 #         return volmdlr.wires.ClosedPolygon2D(points)
        
 
-# class ElementsGroup(DessiaObject):
-#     _standalone_in_db = False
-#     _non_serializable_attributes = []
-#     _non_eq_attributes = ['name']
-#     _non_hash_attributes = ['name']
-#     _generic_eq = True
+class ElementsGroup(DessiaObject):
+    _standalone_in_db = False
+    _non_serializable_attributes = []
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['name']
+    _generic_eq = True
 
-#     def __init__(self, elements:List[TriangularElement], name:str):
-#         self.elements = elements
-#         self.name = name
+    def __init__(self, elements: List[TriangularElement], name: str):
+        self.elements = elements
+        self.name = name
 
-#         DessiaObject.__init__(self, name=name)
+        DessiaObject.__init__(self, name=name)
 
 #     def point_to_element(self, point):
 #         for element in self.elements:
@@ -273,19 +274,19 @@
 #         return ax
         
 
-# class Mesh(DessiaObject):
-#     _standalone_in_db = True
-#     _non_serializable_attributes = ['node_to_index']
-#     _non_eq_attributes = ['name']
-#     _non_hash_attributes = ['name']
-#     _generic_eq = True
+class Mesh(DessiaObject):
+    _standalone_in_db = True
+    _non_serializable_attributes = ['node_to_index']
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['name']
+    _generic_eq = True
 
-#     def __init__(self, elements_groups: List[ElementsGroup]):
-#         self.elements_groups = elements_groups
-#         self.nodes = self._set_nodes_number()
-#         self.node_to_index = {self.nodes[i]: i for i in range(len(self.nodes))}
+    def __init__(self, elements_groups: List[ElementsGroup]):
+        self.elements_groups = elements_groups
+        self.nodes = self._set_nodes_number()
+        self.node_to_index = {self.nodes[i]: i for i in range(len(self.nodes))}
         
-#         DessiaObject.__init__(self, name='')
+        DessiaObject.__init__(self, name='')
 
 #     def __add__(self, other_mesh):
 #         new_nodes = self.nodes[:]
