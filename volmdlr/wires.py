@@ -2149,7 +2149,16 @@ class Contour2D(Contour, Wire2D):
                 new_primitives.append(p)
         
         return Contour2D(new_primitives)
-    
+
+
+    def rotation(self, center, angle, copy=True):
+        if copy:
+            return Contour2D(
+                [p.rotation(center, angle, copy=True) for p in self.primitives])
+        else:
+            for p in self.primitives:
+                p.rotation(center, angle, copy=False)
+
         
 class ClosedPolygon:
 
