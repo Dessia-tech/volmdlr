@@ -865,7 +865,7 @@ class Contour:
             for p1, p2 in zip(points[:-1], points[1:]):
                 edges.append(volmdlr.edges.LineSegment2D(p1, p2))
 
-        return 
+        return edges
 
     
     def edges_order_with_adjacent_contour(self, contour):
@@ -1098,7 +1098,6 @@ class Contour:
             else:
                 merge_primitives.extend(merge_primitives_prim)
 
-
             merge_primitives_prim = contour.extract_without_primitives(point1,
                                                                          point2,
                                                                          False)
@@ -1267,7 +1266,9 @@ class Contour2D(Contour, Wire2D):
         return Contour3D(p3d)
 
     def point_belongs(self, point):
-        if self.edge_polygon.point_belongs(point):
+        # if self.edge_polygon.point_belongs(point):
+        #     return True
+        if self.discretized_contour(n=10).point_belongs(point):
             return True
         # TODO: This is incomplete!!!
         return False
@@ -1471,6 +1472,7 @@ class Contour2D(Contour, Wire2D):
             p = volmdlr.Point2D.random(xmin, xmax, ymin, ymax)
             if self.point_belongs(p):
                 return p
+        raise ValueError('Could not find a point inside')
 
     # def line_intersections(self, line:Line2D) -> List[Tuple[volmdlr.Point2D, Primitive2D]]:
     #     """
@@ -1523,31 +1525,44 @@ class Contour2D(Contour, Wire2D):
     #     print('primitives points :', [(prim[0], prim[1]) for prim in self.primitives])
 
     def order_contour(self):
-        
+
         if len(self.primitives) < 2:
             return self
-        
-        initial_points = []
-        for p in self.primitives:
-            initial_points.append((p.start, p.end))
-        
-        new_primitives = []
-        points = self.ordering_contour()
-        for p1, p2 in points:
-            try:
-                index = initial_points.index((p1, p2))
-            except ValueError:
-                index = initial_points.index((p2, p1))
-            
-            if isinstance(self.primitives[index], volmdlr.edges.LineSegment2D):
-                new_primitives.append(volmdlr.edges.LineSegment2D(p1, p2))
-            elif isinstance(self.primitives[index], volmdlr.edges.Arc2D):
-                new_primitives.append(volmdlr.edges.Arc2D(p1, self.primitives[index].interior, p2))
-            elif isinstance(self.primitives[index], volmdlr.edges.BSplineCurve2D):
-                if (p1, p2) == (self.primitives[index].start, self.primitives[index].end):
-                    new_primitives.append(self.primitives[index])
-                else:
-                    new_primitives.append(self.primitives[index].reverse())
+
+        else:
+            initial_primitives = self.primitives[:]
+            initial_points = []
+            for p in self.primitives:
+                initial_points.append((p.start, p.end))
+            new_primitives = []
+            points = self.ordering_contour()
+
+            for p1, p2 in points:
+                try:
+                    index = initial_points.index((p1, p2))
+                except ValueError:
+                    index = initial_points.index((p2, p1))
+
+                if isinstance(initial_primitives[index],
+                              volmdlr.edges.LineSegment2D):
+                    new_primitives.append(volmdlr.edges.LineSegment2D(p1, p2))
+                elif isinstance(initial_primitives[index],
+                                volmdlr.edges.Arc2D):
+                    new_primitives.append(
+                        volmdlr.edges.Arc2D(p1,
+                                            initial_primitives[index].interior,
+                                            p2))
+                elif isinstance(initial_primitives[index],
+                                volmdlr.edges.BSplineCurve2D):
+                    if (p1, p2) == (initial_primitives[index].start,
+                                    initial_primitives[index].end):
+                        new_primitives.append(initial_primitives[index])
+                    else:
+                        new_primitives.append(
+                            initial_primitives[index].reverse())
+
+                initial_primitives.pop(index)
+                initial_points.pop(index)
 
         self.primitives = new_primitives
 
@@ -2036,8 +2051,10 @@ class Contour2D(Contour, Wire2D):
         """
             
         contour = volmdlr.wires.Contour2D((self.discretized_primitives(n))) 
-        
-        return contour.order_contour()
+        ordered_contour = contour.order_contour()
+        polygon = ClosedPolygon2D(points=[p.start for p
+                                          in ordered_contour.primitives])
+        return polygon
     
     @classmethod
     def from_bounding_rectangle(cls, xmin, xmax, ymin, ymax):
@@ -3310,6 +3327,21 @@ class Circle2D(Contour2D):
                     P1 + t2 * V]
         else:
             return []
+
+    def cut_by_line(self, line: volmdlr.edges.Line2D):
+        intersection_points = self.line_intersections(line)
+        if not intersection_points:
+            return [self]
+        elif len(intersection_points) == 1:
+            raise NotImplementedError
+        elif len(intersection_points) == 2:
+            linesegment = volmdlr.edges.LineSegment2D(*intersection_points)
+            arc1, arc2 = self.split(*intersection_points)
+            contour1 = Contour2D([arc1, linesegment.copy()])
+            contour2 = Contour2D([arc2, linesegment.copy()])
+            return [contour1, contour2]
+        else:
+            raise ValueError
 
     def circle_intersections(self, circle: 'volmdlr.wires.Circle2D'):
         x0, y0 = self.center

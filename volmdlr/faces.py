@@ -185,7 +185,7 @@ class Surface2D(volmdlr.core.Primitive2D):
                                     volmdlr.Point2D(xi, 1)))
         return self.split_by_lines(lines)
 
-    def cut_by_line(self, line: vme.Line2D):
+    def cut_by_line2(self, line: vme.Line2D):
         """
         This method makes inner contour disappear for now
         """
@@ -193,16 +193,40 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         return [Surface2D(oc, []) for oc in splitted_outer_contours]
 
-    def cut_by_line2(self, line: vme.Line2D):
+    def cut_by_line(self, line: vme.Line2D):
 
-        intersection_data = self.line_crossings(line)
+        # intersection_data = self.line_crossings(line)
 
+        surfaces = []
         splitted_outer_contours = self.outer_contour.cut_by_line(line)
         splitted_inner_contours_table = []
         for inner_contour in self.inner_contours:
             splitted_inner_contours = inner_contour.cut_by_line(line)
+            splitted_inner_contours_table.append(splitted_inner_contours)
+            
+        # First part of the external contour
+        for outer_split in splitted_outer_contours:
+            inner_contours = []
+            for splitted_inner_contours in splitted_inner_contours_table:
+                for inner_split in splitted_inner_contours:
+                    inner_split.order_contour()
+                    point = inner_split.random_point_inside()
+                    if outer_split.point_belongs(point):
+                        inner_contours.append(inner_split)
 
-        return
+            if inner_contours:
+                merged_contours = outer_split.merge_with(inner_contours[0])
+                for inner_contour in inner_contours:
+                    new_merged_contours = merged_contours[0].merge_with(
+                        inner_contour)
+                    merged_contours[0] = new_merged_contours[0]
+                    merged_contours.extend(new_merged_contours[1:])
+                surfaces.append(Surface2D(merged_contours[0],
+                                          merged_contours[1:]))
+            else:
+                surfaces.append(Surface2D(outer_split, []))
+
+        return surfaces
 
     def line_crossings(self, line: 'volmdlr.edges.Line2D'):
         """
