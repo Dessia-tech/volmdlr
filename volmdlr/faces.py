@@ -5492,6 +5492,10 @@ class BSplineFace3D(Face3D):
         return (corresponding_directions, grid2d_direction)
 
     def extremities(self, other_bspline_face3d):
+        '''
+        find points extremities for nearest edges of two faces
+        '''
+
         contour1 = self.outer_contour3d
         contour2 = other_bspline_face3d.outer_contour3d
 
@@ -5517,6 +5521,10 @@ class BSplineFace3D(Face3D):
         return start1, end1, start2, end2
 
     def adjacent_direction(self, other_bspline_face3d):
+        '''
+        find directions (u or v) between two faces, in the nearest edges between them
+        '''
+
         start1, end1, start2, end2 = self.extremities(other_bspline_face3d)
 
         du1 = abs((end1-start1)[0])
@@ -5542,6 +5550,10 @@ class BSplineFace3D(Face3D):
         return adjacent_direction1, diff1, adjacent_direction2, diff2
 
     def corresponding_directions_grids(self, other_bspline_face3d):
+        '''
+        find directions to be used in generating grid2d respecting the two faces corresponding
+        '''
+
         adjacent_direction1, diff1, adjacent_direction2, diff2 = self.adjacent_direction(other_bspline_face3d)
         start1, end1, start2, end2 = self.extremities(other_bspline_face3d)
 
