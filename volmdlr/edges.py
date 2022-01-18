@@ -1431,6 +1431,9 @@ class FullArc2D(Edge):
         dict_['is_trigo'] = self.is_trigo
         return dict_
     
+    def copy(self, deep=True, memo=None):
+        return FullArc2D(self.center.copy(), self.start.copy())
+    
     @classmethod
     def dict_to_object(cls, dict_):
         center = volmdlr.Point2D.dict_to_object(dict_['center'])

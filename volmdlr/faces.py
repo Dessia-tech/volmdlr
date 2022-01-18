@@ -5584,14 +5584,16 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             bbox = primitive.bounding_box
 
     def triangulation(self):
-        mesh = vmd.DisplayMesh3D([], [])
+        # mesh = vmd.DisplayMesh3D([], [])
+        meshes = []
         for i, face in enumerate(self.faces):
             try:
                 face_mesh = face.triangulation()
-                mesh.merge_mesh(face_mesh)
+                meshes.append(face_mesh)
+                # mesh.merge_mesh(face_mesh)
             except NotImplementedError:
                 print('Warning: a face has been skipped in rendering')
-        return mesh
+        return vmd.DisplayMesh3D.merge_meshes(meshes)
 
     def babylon_script(self, name='primitive_mesh'):
         s = 'var {} = new BABYLON.Mesh("{}", scene);\n'.format(name, name)

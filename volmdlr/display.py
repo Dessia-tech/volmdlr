@@ -99,8 +99,8 @@ class DisplayMesh(dc.DessiaObject):
         # point_index
         # t1 = time.time()
         for point in other_mesh.points:
-            if not point in self._point_index:
-                self._point_index[point] = ip
+            if not point in self.point_index:
+                self.point_index[point] = ip
                 ip += 1
                 self.points.append(point)
 
