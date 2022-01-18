@@ -3491,15 +3491,20 @@ class Face3D(volmdlr.core.Primitive3D):
             surfaces = self.surface2d.split_by_lines(lines_y)
         else:
             surfaces = [self.surface2d]
-        mesh2d = surfaces[0].triangulation()
-        for subsurface in surfaces[1:]:
-            # mesh2d += subsurface.triangulation()
-            mesh2d.merge_mesh(subsurface.triangulation())
+            
+        # mesh2d = surfaces[0].triangulation()
+        # print('ls', len(surfaces))
+        # for subsurface in surfaces[1:]:
+        #     # mesh2d += subsurface.triangulation()
+        #     mesh2d.merge_mesh(subsurface.triangulation())
 
+        meshes = [s.triangulation() for s in surfaces]
+        mesh2d = vmd.DisplayMesh2D.merge_meshes(meshes)
         return vmd.DisplayMesh3D(
             [vmd.Node3D(*self.surface3d.point2d_to_3d(p)) for p in
-             mesh2d.points],
+              mesh2d.points],
             mesh2d.triangles)
+
 
     def plot2d(self, ax=None, color='k', alpha=1):
         if ax is None:
@@ -5249,7 +5254,7 @@ class BSplineFace3D(Face3D):
     def _bounding_box(self):
         return self.surface3d._bounding_box()
 
-    def triangulation_lines(self, resolution=50):
+    def triangulation_lines(self, resolution=25):
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle()
 
         delta_u = u_max - u_min
