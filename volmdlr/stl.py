@@ -162,7 +162,7 @@ class Stl(dc.DessiaObject):
                     
                 stream.read_u2le()
                 # print(abr)
-            file_stl.close()
+            # file_stl.close()
             if invalid_triangles :
                 # print('invalid_triangles number: ', len(invalid_triangles))
                 for i in invalid_triangles[::-1] :
