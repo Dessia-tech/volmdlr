@@ -19,7 +19,7 @@ class RoundedLineSegments:
                  closed: bool = False, adapt_radius: bool = False, name: str = ''):
 
         self.points = points
-        self.radius = {int(k):v for k, v in radius.items()}
+        self.radius = {int(k): v for k, v in radius.items()}
         self.closed = closed
         self.adapt_radius = adapt_radius
         self.name = name
@@ -33,7 +33,7 @@ class RoundedLineSegments:
         side = 'old' or 'new'
         """
         if copy:
-            return self.__class__([p.frame_mapping(frame, side, copy=True) \
+            return self.__class__([p.frame_mapping(frame, side, copy=True)
                                    for p in self.points], radius=self.radius,
                                   adapt_radius=self.adapt_radius,
                                   name=self.name)
@@ -164,9 +164,9 @@ class RoundedLineSegments:
             for ipoint, r in self.radius.items():
                 ps, pi, pe, _, _ = self.arc_features(ipoint)
                 arcs[ipoint] = self.arc_class(ps, pi, pe)
-                
+
         return self.primitives_from_arcs(arcs)
-    
+
     def primitives_from_arcs(self, arcs):
         primitives = []
         # Creating lines

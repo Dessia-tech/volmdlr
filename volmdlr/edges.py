@@ -514,13 +514,13 @@ class BSplineCurve2D(Edge):
 
         res = scp.optimize.least_squares(
             lambda u: (point2d - self.point_at_abscissa(u)).norm(),
-            x0=npy.array(l/2),
+            x0=npy.array(l / 2),
             bounds=([0], [l]),
             # ftol=tol / 10,
             # xtol=tol / 10,
             # loss='soft_l1'
-            )
-        
+        )
+
         if res.cost > 1e-4:
             print('distance =', res.cost)
             ax = self.plot()
@@ -577,7 +577,7 @@ class BSplineCurve2D(Edge):
 
     def rotation(self, center, angle, copy=True):
         if copy:
-            control_points = [p.rotation(center, angle, copy=True) \
+            control_points = [p.rotation(center, angle, copy=True)
                               for p in self.control_points]
             return BSplineCurve2D(self.degree, control_points,
                                   self.knot_multiplicities, self.knots,
@@ -588,7 +588,7 @@ class BSplineCurve2D(Edge):
 
     def translation(self, offset, copy=True):
         if copy:
-            control_points = [p.translation(offset, copy=True) \
+            control_points = [p.translation(offset, copy=True)
                               for p in self.control_points]
             return BSplineCurve2D(self.degree, control_points,
                                   self.knot_multiplicities, self.knots,
@@ -752,7 +752,7 @@ class LineSegment2D(LineSegment):
         touching linesegments does not intersect
         """
         point = volmdlr.Point2D.line_intersection(self, linesegment)
-        if point: # and (point != self.start) and (point != self.end): # TODO: May be these commented conditions should be used for linesegment_crossings
+        if point:  # and (point != self.start) and (point != self.end): # TODO: May be these commented conditions should be used for linesegment_crossings
             point_projection1, _ = self.point_projection(point)
             if point_projection1 is None:
                 return []
@@ -928,10 +928,10 @@ class LineSegment2D(LineSegment):
     def infinite_primitive(self, offset):
         n = self.normal_vector()
         offset_point_1 = self.start + offset * \
-                         n
+            n
 
         offset_point_2 = self.end + offset * \
-                         n
+            n
 
         return Line2D(offset_point_1, offset_point_2)
 
@@ -1386,7 +1386,7 @@ class Arc2D(Edge):
         #                         min(densities) * self.angle * self.radius)
         number_points = math.ceil(self.angle * angle_resolution)
         l = self.length()
-        return [self.point_at_abscissa(i * l / number_points) \
+        return [self.point_at_abscissa(i * l / number_points)
                 for i in range(number_points + 1)]
 
     def infinite_primitive(self, offset):
@@ -1430,10 +1430,10 @@ class FullArc2D(Edge):
         dict_['angle'] = self.angle
         dict_['is_trigo'] = self.is_trigo
         return dict_
-    
+
     def copy(self, deep=True, memo=None):
         return FullArc2D(self.center.copy(), self.start.copy())
-    
+
     @classmethod
     def dict_to_object(cls, dict_):
         center = volmdlr.Point2D.dict_to_object(dict_['center'])
@@ -1447,7 +1447,7 @@ class FullArc2D(Edge):
         if self.__class__.__name__ != other_arc.__class__.__name__:
             return False
         return (self.center == other_arc.center) \
-               and (self.start_end == other_arc.start_end)
+            and (self.start_end == other_arc.start_end)
 
     def bounding_rectangle(self):
 
@@ -1485,7 +1485,7 @@ class FullArc2D(Edge):
     def polygon_points(self, angle_resolution=10):
         number_points = math.ceil(self.angle * angle_resolution)
         l = self.length()
-        return [self.point_at_abscissa(i * l / number_points) \
+        return [self.point_at_abscissa(i * l / number_points)
                 for i in range(number_points + 1)]
 
     def polygonization(self):
@@ -1585,7 +1585,8 @@ class ArcEllipse2D(Edge):
         interior_new, center_new = frame.new_coordinates(
             self.interior), frame.new_coordinates(self.center)
 
-        #### from : https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
+        # from :
+        # https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
         def theta_A_B(s, i, e,
                       c):  # theta=angle d'inclinaison ellipse par rapport à horizontal(sens horaire),A=demi grd axe, B=demi petit axe
             xs, ys, xi, yi, xe, ye = s[0] - c[0], s[1] - c[1], i[0] - c[0], i[
@@ -2152,13 +2153,13 @@ class LineSegment3D(LineSegment):
     #     return None
     def linesegment_intersection(self, linesegment):
         intersection = self.intersection(linesegment)
-        if intersection != None:
+        if intersection is not None:
             if intersection == self.start or intersection == self.end:
                 return intersection
             else:
                 if self.point_belongs(
-                        intersection) and linesegment.point_belongs(
-                    intersection):
+                            intersection) and linesegment.point_belongs(
+                        intersection):
                     return intersection
                 else:
                     return None
@@ -2636,8 +2637,8 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         of the BSplineCruve) and the cumulative distance.
         """
         points3d = []
-        ts = [start_parameter + i/resolution * (end_parameter - start_parameter)
-              for i in range(resolution+1)]
+        ts = [start_parameter + i / resolution * (end_parameter - start_parameter)
+              for i in range(resolution + 1)]
         points = self.curve.evaluate_list(ts)
         for pt in points:
             points3d.append(volmdlr.Point3D(*pt))
@@ -2647,7 +2648,7 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         for lineseg in linesegments:
             distances.append(lineseg.length() + distances[-1])
 
-        return [(ts[i], distances[i]) for i in range(resolution+1)]
+        return [(ts[i], distances[i]) for i in range(resolution + 1)]
 
     def point_at_abscissa(self, curvilinear_abscissa, resolution=1000):
         """
@@ -2663,12 +2664,12 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         if 0 < curvilinear_abscissa < self.length():
             for i, (t, dist) in enumerate(lut):
                 if curvilinear_abscissa < dist:
-                    t1 = lut[i-1][0]
+                    t1 = lut[i - 1][0]
                     t2 = t
                     # dist1 = lut[i-1][1]
                     # dist2 = dist
                     return volmdlr.Point3D(
-                        *self.curve.evaluate_single((t1+t2)/2))
+                        *self.curve.evaluate_single((t1 + t2) / 2))
         else:
             raise ValueError('Curvilinear abscissa is bigger than length,'
                              ' or negative')
@@ -2685,7 +2686,6 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         return tangent
 
     def binormal(self, position: float = 0.0):
-        
         " The binormal vector is the cross product of unit tangent and unit normal vectors "
 
         point, binormal = operations.binormal(self.curve, position,
@@ -3119,13 +3119,13 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
                    knot_multiplicities=knot_multiplicities)
 
     def global_minimum_curvature(self, nb_eval: int = 21):
-        check = [i/(nb_eval-1) for i in range(nb_eval)]
+        check = [i / (nb_eval - 1) for i in range(nb_eval)]
         radius = []
-        for u in check :
+        for u in check:
             radius.append(self.minimum_curvature(u))
         return radius
 
-      
+
 class BezierCurve3D(BSplineCurve3D):
 
     def __init__(self, degree: int, control_points: List[volmdlr.Point3D],
@@ -3731,7 +3731,7 @@ class FullArc3D(Edge):
                                                  self.normal,
                                                  volmdlr.TWO_PI / (
                                                          npoints - 1) * i
-                                                 ) \
+                                                 )
                              for i in range(npoints)]
         return polygon_points_3D
 
@@ -3765,7 +3765,7 @@ class FullArc3D(Edge):
         # p2_content, p2_id = p2.to_step(p1_id+1, vertex=True)
         # p3_content, p3_id = p3.to_step(p2_id+1, vertex=True)
         # p4_content, p4_id = p4.to_step(p3_id+1, vertex=True)
-        # content += p1_content + p2_content + p3_content + p4_content 
+        # content += p1_content + p2_content + p3_content + p4_content
 
         # arc1_id = p4_id + 1
         # content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(arc1_id, self.name,
@@ -3873,7 +3873,8 @@ class ArcEllipse3D(Edge):
         interior_new, center_new = frame.new_coordinates(
             self.interior), frame.new_coordinates(self.center)
 
-        #### from : https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
+        # from :
+        # https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
         def theta_A_B(s, i, e,
                       c):  # theta=angle d'inclinaison ellipse par rapport à horizontal(sens horaire),A=demi grd axe, B=demi petit axe
             xs, ys, xi, yi, xe, ye = s[0] - c[0], s[1] - c[1], i[0] - c[0], i[

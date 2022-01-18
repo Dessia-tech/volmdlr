@@ -20,7 +20,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
     closed = False
     line_class = volmdlr.edges.LineSegment2D
     arc_class = volmdlr.edges.Arc2D
-    
+
     def __init__(self, points, radius, adapt_radius=False, name=''):
         primitives = RoundedLineSegments.__init__(self, points, radius,
                                                   closed=False,
@@ -52,7 +52,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
             pti = self.points[ipoint]
             pt2 = self.points[ipoint + 1]
 
-        ## TODO: change to point_distance ------> done
+        # TODO: change to point_distance ------> done
         point_distance1 = (pt1 - pti).norm()
         point_distance2 = (pt2 - pti).norm()
         point_distance3 = (pt1 - pt2).norm()
@@ -81,7 +81,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
     def rotation(self, center, angle, copy=True):
         if copy:
-            return self.__class__([p.rotation(center, angle, copy=True) \
+            return self.__class__([p.rotation(center, angle, copy=True)
                                    for p in self.points],
                                   self.radius,
                                   adapt_radius=self.adapt_radius,
@@ -158,7 +158,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
             alpha = math.acos(normal_vector1.dot(normal_vector2))
 
             offset_point = self.points[i] + offset / math.cos(alpha / 2) * \
-                           offset_vectors[i - (not self.closed)]
+                offset_vectors[i - (not self.closed)]
             offset_points.append(offset_point)
 
         if not self.closed:
@@ -326,12 +326,12 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
             # call function considering the line before, because the latter and
             # the first offset segment are parallel
             return self.offset_lines([line_indexes[0] - 1] + line_indexes,
-                                    offset)
+                                     offset)
         if math.isclose(dot2, 0, abs_tol=1e-9):
             # call function considering the line after, because the latter and
             # the last offset segment are parallel
             return self.offset_lines(line_indexes + [line_indexes[-1] + 1],
-                                    offset)
+                                     offset)
 
         distance_dir1 = offset / dot1
         distance_dir2 = offset / dot2
@@ -339,9 +339,9 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         if len(line_indexes) > 1:
             intersection = volmdlr.Point2D.line_intersection(
                 volmdlr.edges.Line2D(self.points[line_indexes[0]],
-                               self.points[line_indexes[0]] + dir_vec_1),
+                                     self.points[line_indexes[0]] + dir_vec_1),
                 volmdlr.edges.Line2D(self.points[line_indexes[-1] + 1],
-                               self.points[line_indexes[-1] + 1] + dir_vec_2))
+                                     self.points[line_indexes[-1] + 1] + dir_vec_2))
             vec1 = intersection.point_distance(
                 self.points[line_indexes[0]]) * dir_vec_1
             vec2 = intersection.point_distance(
@@ -393,22 +393,23 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         return rls2D
 
 
-    
 class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
                                   volmdlr.wires.Contour2D):
     """
-    :param points: Points used to draw the wire 
+    :param points: Points used to draw the wire
     :type points: List of Point2D
     :param radius: Radius used to connect different parts of the wire
     :type radius: {position1(n): float which is the radius linked the n-1 and n+1 points, position2(n+1):...}
     """
     closed = True
+
     def __init__(self, points, radius, adapt_radius=False, name=''):
         primitives = RoundedLineSegments.__init__(self, points, radius,
                                                   closed=True,
                                                   adapt_radius=adapt_radius, name='')
 
         volmdlr.wires.Contour2D.__init__(self, primitives, name)
+
 
 class Measure2D(volmdlr.edges.LineSegment2D):
     def __init__(self, point1, point2, label='', unit='mm', type_='distance'):
@@ -439,14 +440,14 @@ class Measure2D(volmdlr.edges.LineSegment2D):
 
         if self.type_ == 'distance':
             arrow = matplotlib.patches.FancyArrowPatch((x1, y1), (x2, y2),
-                                    arrowstyle='<|-|>,head_length=10,head_width=5',
-                                    shrinkA=0, shrinkB=0,
-                                    color='k')
+                                                       arrowstyle='<|-|>,head_length=10,head_width=5',
+                                                       shrinkA=0, shrinkB=0,
+                                                       color='k')
         elif self.type_ == 'radius':
             arrow = matplotlib.patches.FancyArrowPatch((x1, y1), (x2, y2),
-                                    arrowstyle='-|>,head_length=10,head_width=5',
-                                    shrinkA=0, shrinkB=0,
-                                    color='k')
+                                                       arrowstyle='-|>,head_length=10,head_width=5',
+                                                       shrinkA=0, shrinkB=0,
+                                                       color='k')
 
         ax.add_patch(arrow)
         if x2 - x1 == 0.:
@@ -454,5 +455,3 @@ class Measure2D(volmdlr.edges.LineSegment2D):
         else:
             theta = math.degrees(math.atan((y2 - y1) / (x2 - x1)))
         ax.text(xm, ym, label, va='bottom', ha='center', rotation=theta)
-
-
