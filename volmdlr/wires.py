@@ -883,12 +883,12 @@ class Contour:
                 else:
                     for point in points:
 
-                        if point.is_close(line.start, tol=tol): #Previously tol=5e-5
+                        if point.is_close(line.start, tol=tol):
                             line.start = point
                             contour.append(line)
                             edges.remove(line)
                             break
-                        elif point.is_close(line.end, tol=tol): #Previously tol=5e-5
+                        elif point.is_close(line.end, tol=tol):
                             line.end = point
                             contour.append(line)
                             edges.remove(line)
