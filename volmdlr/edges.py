@@ -1423,6 +1423,19 @@ class FullArc2D(Edge):
         Edge.__init__(self, start_end, start_end,
                       name=name)  # !!! this is dangerous
 
+    def to_dict(self, memo=None, use_pointers=False):
+        dict_ = self.base_dict()
+        dict_['center'] = self.center.to_dict()
+        dict_['radius'] = self.radius
+        dict_['angle'] = self.angle
+        dict_['is_trigo'] = self.is_trigo
+        return dict_
+    
+    @classmethod
+    def dict_to_object(cls, dict_):
+        center = volmdlr.Point2D.dict_to_object(dict_['center'])
+        return cls(center, dict_['radius'], dict_['angle'], dict_['is_trigo'], name=dict_['name'])
+
     def __hash__(self):
         return hash(self.radius)
         # return hash(self.center) + 5*hash(self.start)

@@ -87,6 +87,7 @@ class DisplayMesh(dc.DessiaObject):
             self.triangles.append((self._point_index[p1],
                                    self._point_index[p2],
                                    self._point_index[p3]))
+        
         # t3 = time.time()
         # print('t', t2-t1, t3-t2)
         # self._point_index = new_point_index

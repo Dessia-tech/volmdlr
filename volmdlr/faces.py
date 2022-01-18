@@ -785,8 +785,6 @@ class Plane3D(Surface3D):
         # improve the object structure ?
         dict_ = dc.DessiaObject.base_dict(self)
         dict_['frame'] = self.frame.to_dict()
-        dict_['name'] = self.name
-        dict_['object_class'] = 'volmdlr.faces.Plane3D'
         return dict_
 
     @classmethod
@@ -3974,12 +3972,6 @@ class Triangle3D(PlaneFace3D):
         dict_['point3'] = self.point3.to_dict()
         return dict_
 
-    # def to_dict(self):
-    #     return {'object_class': 'volmdlr.faces.Triangle3D',
-    #             'point1': self.point1.to_dict(),
-    #             'point2': self.point2.to_dict(),
-    #             'point3': self.point3.to_dict()}
-
     @classmethod
     def dict_to_object(cls, dict_):
         point1 = volmdlr.Point3D.dict_to_object(dict_['point1'])
@@ -4127,14 +4119,14 @@ class CylindricalFace3D(Face3D):
     min_y_density = 1
 
     def __init__(self,
-                 cylindricalsurface3d: CylindricalSurface3D,
+                 surface3d: CylindricalSurface3D,
                  surface2d: Surface2D,
                  name: str = ''):
 
-        self.radius = cylindricalsurface3d.radius
-        self.center = cylindricalsurface3d.frame.origin
-        self.normal = cylindricalsurface3d.frame.w
-        Face3D.__init__(self, surface3d=cylindricalsurface3d,
+        self.radius = surface3d.radius
+        self.center = surface3d.frame.origin
+        self.normal = surface3d.frame.w
+        Face3D.__init__(self, surface3d=surface3d,
                         surface2d=surface2d,
                         name=name)
 
@@ -4512,14 +4504,14 @@ class ToroidalFace3D(Face3D):
     min_x_density = 5
     min_y_density = 1
 
-    def __init__(self, toroidalsurface3d: ToroidalSurface3D,
+    def __init__(self, surface3d: ToroidalSurface3D,
                  surface2d: Surface2D,
                  name: str = ''):
 
         # self.toroidalsurface3d = toroidalsurface3d
 
-        self.center = toroidalsurface3d.frame.origin
-        self.normal = toroidalsurface3d.frame.w
+        self.center = surface3d.frame.origin
+        self.normal = surface3d.frame.w
 
         theta_min, theta_max, phi_min, phi_max = surface2d.outer_contour.bounding_rectangle()
 
@@ -4532,7 +4524,7 @@ class ToroidalFace3D(Face3D):
         #               for c in [outer_contour2d]+inners_contours2d]
 
         Face3D.__init__(self,
-                        surface3d=toroidalsurface3d,
+                        surface3d=surface3d,
                         surface2d=surface2d,
                         name=name)
 
@@ -5043,12 +5035,12 @@ class ConicalFace3D(Face3D):
     min_x_density = 5
     min_y_density = 1
 
-    def __init__(self, conicalsurface3d: ConicalSurface3D,
+    def __init__(self, surface3d: ConicalSurface3D,
                  surface2d: Surface2D,
                  name: str = ''):
 
         Face3D.__init__(self,
-                        surface3d=conicalsurface3d,
+                        surface3d=surface3d,
                         surface2d=surface2d,
                         name=name)
 
@@ -5174,11 +5166,11 @@ class SphericalFace3D(Face3D):
     min_x_density = 5
     min_y_density = 5
 
-    def __init__(self, spherical_surface3d: SphericalSurface3D,
+    def __init__(self, surface3d: SphericalSurface3D,
                  surface2d: Surface2D,
                  name: str = ''):
         Face3D.__init__(self,
-                        surface3d=spherical_surface3d,
+                        surface3d=surface3d,
                         surface2d=surface2d,
                         name=name)
 
@@ -5214,11 +5206,11 @@ class RuledFace3D(Face3D):
     min_y_density = 1
 
     def __init__(self,
-                 ruledsurface3d: RuledSurface3D,
+                 surface3d: RuledSurface3D,
                  surface2d: Surface2D,
                  name: str = '',
                  color=None):
-        Face3D.__init__(self, surface3d=ruledsurface3d,
+        Face3D.__init__(self, surface3d=surface3d,
                         surface2d=surface2d,
                         name=name)
 
@@ -5246,11 +5238,11 @@ class RuledFace3D(Face3D):
 
 
 class BSplineFace3D(Face3D):
-    def __init__(self, bspline_surface: BSplineSurface3D,
+    def __init__(self, surface3d: BSplineSurface3D,
                  surface2d: Surface2D,
                  name: str = ''):
         Face3D.__init__(self,
-                        surface3d=bspline_surface,
+                        surface3d=surface3d,
                         surface2d=surface2d,
                         name=name)
 
