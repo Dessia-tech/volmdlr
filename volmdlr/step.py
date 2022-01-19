@@ -14,7 +14,7 @@ import volmdlr.edges
 import volmdlr.wires
 import volmdlr.faces
 import plot_data.graph
-from typing import BinaryIO
+from typing import BinaryIO, List
 
 # import webbrowser
 # from jinja2 import Environment, PackageLoader, select_autoescape
@@ -243,29 +243,36 @@ class StepFunction:
 
 
 class Step:
-    def __init__(self, stepfile: str = None, stream: BinaryIO = None):
-        self.stepfile = stepfile
-        self.stream = stream
-        self.functions, self.all_connections = self.read_functions()
-        if stepfile is None and stream is None:
-            raise KeyError('choose between stepfile or stream')
+    def __init__(self, lines: List[str], name: str = ''):
+        self.lines = lines
+        self.functions, self.all_connections = self.read_lines()
         self.upd_graph = False
 
-    def read_functions(self):
-        if self.stepfile:
-            f = open(self.stepfile, "r", encoding="ISO-8859-1")
-        elif self.stream:
-            f = self.stream
+    @classmethod
+    def stream(cls, file: BinaryIO = None):
+        lines = []
+        for line in file:
+            line = line.decode("ISO-8859-1")
+            line = line.replace("\r", "")
+            lines.append(line)
+        return cls(lines)
 
+    @classmethod
+    def stepfile(cls, path: str = None):
+        stream = open(path, "r", encoding="ISO-8859-1")
+        lines = []
+        for line in stream:
+            lines.append(line)
+        stream.close()
+        return cls(lines)
+
+    def read_lines(self):
         all_connections = []
 
         previous_line = ""
         functions = {}
 
-        for line in f:
-            if self.stream:
-                line = line.decode("ISO-8859-1")
-                line = line.replace("\r", "")
+        for line in self.lines:
             line = line.replace(" ", "")
             line = line.replace("\n", "")
 
@@ -331,9 +338,6 @@ class Step:
 
             function = StepFunction(function_id, function_name, arguments)
             functions[function_id] = function
-
-        if self.stepfile:
-            f.close()
 
         return functions, all_connections
 
