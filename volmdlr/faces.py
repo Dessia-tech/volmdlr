@@ -3918,7 +3918,7 @@ class PlaneFace3D(Face3D):
         return False
 
     @staticmethod
-    def merge_faces(list_coincident_faces: List[PlaneFace3D]):
+    def merge_faces(list_coincident_faces: List[Face3D]):
         valid_coicident_faces = list_coincident_faces[:]
         list_new_faces = []
         merge_finished = False
