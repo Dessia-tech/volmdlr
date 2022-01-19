@@ -148,9 +148,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         points = [vmd.Node2D(*t['vertices'][i, :]) for i in
                   range(np)]
 
-        return vmd.DisplayMesh2D(points, triangles=triangles,
-                                             edges=None)
-        return vmd.DisplayMesh2D([], [])
+        return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
 
     def split_by_lines(self, lines):
         cutted_surfaces = []
@@ -676,6 +674,7 @@ class Surface3D(dc.DessiaObject):
                         ax2 = contour3d.plot()
                         primitive3d.plot(ax=ax2, color='r')
                         last_primitive3d.plot(ax=ax2, color='b')
+                        self.plot(ax=ax2)
 
                         ax = last_primitive.plot(color='b', plot_points=True)
                         # primitives[0].plot(ax=ax, color='r', plot_points=True)
@@ -1878,17 +1877,21 @@ class BSplineSurface3D(Surface3D):
     def x_periodicity(self):
         p3d_x1 = self.point2d_to_3d(volmdlr.Point2D(1., 0.5))
         p2d_x0 = self.point3d_to_2d(p3d_x1, 0., 0.5)
-        x_perio = 1 - p2d_x0.x if not math.isclose(p2d_x0.x, 1, abs_tol=1e-3) \
-            else None
-        return x_perio
+        if self.point2d_to_3d(p2d_x0) == p3d_x1 and \
+                not math.isclose(p2d_x0.x, 1, abs_tol=1e-3):
+            return 1 - p2d_x0.x
+        else:
+            return None
 
     @property
     def y_periodicity(self):
         p3d_y1 = self.point2d_to_3d(volmdlr.Point2D(0.5, 1))
         p2d_y0 = self.point3d_to_2d(p3d_y1, 0., 0.5)
-        y_perio = 1 - p2d_y0.y if not math.isclose(p2d_y0.y, 1, abs_tol=1e-3) \
-            else None
-        return y_perio
+        if self.point2d_to_3d(p2d_y0) == p3d_y1 and \
+                not math.isclose(p2d_y0.y, 1, abs_tol=1e-3):
+            return 1 - p2d_y0.y
+        else:
+            return None
 
     def control_points_matrix(self, coordinates):
         ''' 
