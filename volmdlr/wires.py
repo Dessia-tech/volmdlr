@@ -425,7 +425,7 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
             faces.extend(primitive.extrusion(extrusion_vector))
         return faces
 
-    # def copy(self):
+    # def copy(self, deep=True, memo=None):
     #     primitives_copy = []
     #     for primitive in self.primitives:
     #         primitives_copy.append(primitive.copy())
@@ -566,7 +566,7 @@ class Contour:
                     finished = True
                     warnings.warn('There may exist a problem with this'
                                   ' contour, it seems it cannot be reordered.'
-                                  'Please, verify it points')
+                                  ' Please, verify its points')
                     # self.plot()
                     raise NotImplementedError
             #     finished = True
@@ -1050,7 +1050,7 @@ class Contour2D(Contour, Wire2D):
                                    surface_style=surface_style,
                                    name=self.name)
 
-    # def copy(self):
+    # def copy(self, deep=True, memo=None):
     #     primitives_copy = []
     #     for primitive in self.primitives:
     #         primitives_copy.append(primitive.copy())
@@ -1816,7 +1816,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
 
         Contour2D.__init__(self, self.line_segments, name)
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         points = [p.copy() for p in self.points]
         return ClosedPolygon2D(points, self.name)
 
@@ -3064,7 +3064,7 @@ class Circle2D(Contour2D):
                                   edge_style=edge_style,
                                   surface_style=surface_style)
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         return Circle2D(self.center.copy(), self.radius)
 
     def point_at_abscissa(self, curvilinear_abscissa):
@@ -3332,7 +3332,7 @@ class Contour3D(Contour, Wire3D):
             for point in self.tessel_points:
                 point.frame_mapping(frame, side, copy=False)
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         new_edges = [edge.copy() for edge in self.primitives]
         if self.point_inside_contour is not None:
             new_point_inside_contour = self.point_inside_contour.copy()
@@ -3840,7 +3840,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                 lines.append(volmdlr.edges.LineSegment3D(p1, p2))
         return lines
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         points = [p.copy() for p in self.points]
         return ClosedPolygon2D(points, self.name)
 

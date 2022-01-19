@@ -498,21 +498,37 @@ class BSplineCurve2D(Edge):
 
     def abscissa(self, point2d):
         l = self.length()
-        res = scp.optimize.minimize_scalar(
-            # f,
+        # res = scp.optimize.minimize_scalar(
+        #     # f,
+        #     lambda u: (point2d - self.point_at_abscissa(u)).norm(),
+        #     method='bounded',
+        #     bounds=(0., l),
+        #     options={'maxiter': 10000}
+        # )
+
+        # res = scp.optimize.minimize(
+        #     lambda u: (point2d - self.point_at_abscissa(u)).norm(),
+        #     x0=npy.array(l/2),
+        #     bounds=[(0, l)]
+        # )
+
+        res = scp.optimize.least_squares(
             lambda u: (point2d - self.point_at_abscissa(u)).norm(),
-            method='bounded',
-            bounds=(0., l)
-        )
-        if res.fun > 1e-4:
-            # print(res.fun)
+            x0=npy.array(l/2),
+            bounds=([0], [l]),
+            # ftol=tol / 10,
+            # xtol=tol / 10,
+            # loss='soft_l1'
+            )
+        
+        if res.cost > 1e-4:
+            print('distance =', res.cost)
             ax = self.plot()
             point2d.plot(ax=ax)
             best_point = self.point_at_abscissa(res.x)
             best_point.plot(ax=ax, color='r')
             raise ValueError('abscissa not found')
-
-        return res.x
+        return res.x[0]
 
     def split(self, point2d):
         adim_abscissa = self.abscissa(point2d) / self.length()
@@ -1343,7 +1359,7 @@ class Arc2D(Edge):
                                anticlockwise=anticlockwise,
                                name=self.name)
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         return Arc2D(self.start.copy(),
                      self.interior.copy(),
                      self.end.copy())
@@ -1823,7 +1839,7 @@ class Line3D(Line):
             raise ValueError('Point not on curve')
         return Line3D(point1, point2)
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         return Line3D(*[p.copy() for p in self.points])
 
     @classmethod
@@ -2178,7 +2194,7 @@ class LineSegment3D(LineSegment):
                 Edge.frame_mapping(self, frame, side, copy=False)
                 self.bounding_box = self._bounding_box()
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         return LineSegment3D(self.start.copy(), self.end.copy())
 
     def plot(self, ax=None, color='k', alpha=1,
@@ -3359,7 +3375,7 @@ class Arc3D(Edge):
         return '{} = Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n' \
             .format(name, xs, ys, zs, xi, yi, zi, xe, ye, ze)
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         return Arc3D(self.start.copy(), self.interior.copy(), self.end.copy())
 
     def frame_mapping(self, frame, side, copy=True):

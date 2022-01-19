@@ -17,7 +17,7 @@ steps:
   commands:
     - git fetch --tags
     - pip3 install -U pip autopep8
-    - bash pre-push
+    - bash code_pep8.sh
 
 - name: install, build doc run scripts
   image: python:3.8

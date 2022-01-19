@@ -13,7 +13,7 @@ for step_file in [
     'cylinder.step',
     'block.step',
     # '4_bspline_faces.step',
-    # '2_bspline_faces.step'
+    '2_bspline_faces.stp'
     # 'STEP_test1.stp',
     # 'iso4162M16x55.step',
     # 'aircraft_engine.step'
