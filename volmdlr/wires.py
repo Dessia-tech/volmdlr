@@ -639,6 +639,12 @@ class Contour:
 
         return edges
 
+    def shares_primitives(self, contour):
+        """checks if two contour share primitives"""
+        for prim1 in self.primitives:
+            if contour.primitive_over_contour(prim1):
+                return True
+        return False
     
     def is_sharing_primitives_with(self, contour):
         '''
