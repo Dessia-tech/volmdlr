@@ -14,6 +14,7 @@ import volmdlr.edges
 import volmdlr.wires
 import volmdlr.faces
 import plot_data.graph
+from typing import TypeVar, List, Tuple, Dict, BinaryIO
 
 import webbrowser
 
@@ -79,22 +80,36 @@ class StepFunction:
 
 
 class Step:
-    def __init__(self, stepfile):
-        self.stepfile = stepfile
-
-        self.functions, self.all_connections = self.read_functions()
-
+    def __init__(self, lines: List[str], name: str = ''):
+        self.lines = lines
+        self.functions, self.all_connections = self.read_lines()
         self.upd_graph = False
 
-    def read_functions(self):
-        f = open(self.stepfile, "r", encoding="ISO-8859-1")
+    @classmethod
+    def stream(cls, file: BinaryIO = None):
+        lines = []
+        for line in file:
+            line = line.decode("ISO-8859-1")
+            line = line.replace("\r", "")
+            lines.append(line)
+        return cls(lines)
 
+    @classmethod
+    def stepfile(cls, path: str = None):
+        stream = open(path, "r", encoding="ISO-8859-1")
+        lines = []
+        for line in stream:
+            lines.append(line)
+        stream.close()
+        return cls(lines)
+
+    def read_lines(self):
         all_connections = []
 
         previous_line = ""
         functions = {}
 
-        for line in f:
+        for line in self.lines:
             line = line.replace(" ", "")
             line = line.replace("\n", "")
 
@@ -160,7 +175,6 @@ class Step:
             function = StepFunction(function_id, function_name, arguments)
             functions[function_id] = function
 
-        f.close()
 
         return functions, all_connections
 
