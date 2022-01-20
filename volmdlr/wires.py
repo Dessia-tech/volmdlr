@@ -3848,13 +3848,6 @@ class Contour3D(Contour, Wire3D):
         return contours
 
     
-    def merge_contours(self, contour3d):
-        ''' merge two adjacent contours, and return a list of contours (outer, and inner) '''
-
-        primitives = self.merged_contour_primitives(contour3d)
-        
-        return volmdlr.wires.Contour3D.contours_from_edges(primitives, tol= 3e-4)
-    
     @classmethod
     def from_points(cls, points: List[volmdlr.Point3D]):
         '''
