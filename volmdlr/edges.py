@@ -1429,6 +1429,7 @@ class FullArc2D(Edge):
         dict_['radius'] = self.radius
         dict_['angle'] = self.angle
         dict_['is_trigo'] = self.is_trigo
+        dict_['start_end'] = self.start.to_dict()
         return dict_
     
     def copy(self, deep=True, memo=None):
@@ -1437,7 +1438,9 @@ class FullArc2D(Edge):
     @classmethod
     def dict_to_object(cls, dict_):
         center = volmdlr.Point2D.dict_to_object(dict_['center'])
-        return cls(center, dict_['radius'], dict_['angle'], dict_['is_trigo'], name=dict_['name'])
+        start_end = volmdlr.Point2D.dict_to_object(dict_['start_end'])
+        
+        return cls(center, start_end, dict_['is_trigo'], name=dict_['name'])
 
     def __hash__(self):
         return hash(self.radius)

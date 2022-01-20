@@ -25,6 +25,8 @@ for step_file in [
 
     model.babylonjs()
     
-    model2 = model.copy()
+    # model2 = model.copy()
     
-    assert model == model2
+    # assert model == model2
+
+    model._check_platform()
