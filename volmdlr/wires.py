@@ -1077,6 +1077,7 @@ class Contour:
 
         return merge_primitives  
 
+
     def merge_with(self, contour):
         '''
         merge two adjacent contours, sharing primitives, and returns one outer contour and inner contours (if there are any)
@@ -2068,18 +2069,6 @@ class Contour2D(Contour, Wire2D):
         return list_valid_contours
 
 
-    def merge_with(self, contour2d):
-        '''
-        merge two adjacent contours, sharing primitives, and returns one outer contour and inner contours (if there are any)
-        '''
-
-        merged_primitives = self.merge_primitives_with(contour2d)
-        contours = volmdlr.wires.Contour2D.contours_from_edges(merged_primitives)
-        contours = sorted(contours, key=lambda contour: contour.area(), reverse=True)
-
-        return contours
-
-        
     def discretized_contour(self, n: float):
         """ 
         discretize each contour's primitive and return a new contour with teses discretized primitives
@@ -3845,18 +3834,6 @@ class Contour3D(Contour, Wire3D):
         if dict_intersecting_points:
             return dict_intersecting_points
         return None
-
-
-    def merge_with(self, contour3d):
-        '''
-        merge two adjacent contours, sharing primitives, and returns one outer contour and inner contours (if there are any)
-        '''
-
-        merged_primitives = self.merge_primitives_with(contour3d)
-        contours = volmdlr.wires.Contour3D.contours_from_edges(merged_primitives)
-        contours = sorted(contours, key=lambda contour: contour.area(), reverse=True)
-
-        return contours
 
     
     @classmethod
