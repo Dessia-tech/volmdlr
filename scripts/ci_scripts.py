@@ -17,7 +17,9 @@ scripts = [
             'cloud/sewing_two_polygons.py',
             'read_steps.py',
             'cloud/sewing_stl.py',
-            'primitives/sphere_to_point.py'
+            'primitives/sphere_to_point.py',
+            'contours/contour_merge_with_1.py',
+            'contours/contour_merge_with_2.py'
             ]
 #  'cyl_cyl.py', 'cyl_pf.py',
 # 'ls3D_ls3D.py', 'sweep_sweep.py', 'tore_cyl.py','tore_pf.py'
