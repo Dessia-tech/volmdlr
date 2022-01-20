@@ -1281,7 +1281,7 @@ class Contour2D(Contour, Wire2D):
             if prim.end not in points_contour2:
                 points_contour2.append(prim.end)
         for point in points_contour2:
-            if not self.point_belongs(point) and not self.point_over_contour(point):
+            if not self.point_belongs(point, abs_tol=1e-7) and not self.point_over_contour(point, abs_tol=1e-7):
                 return False
         return True
 
