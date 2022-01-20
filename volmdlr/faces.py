@@ -3346,7 +3346,7 @@ class Face3D(volmdlr.core.Primitive3D):
             return False
         point2d = self.surface3d.point3d_to_2d(point)
         if self.surface2d.outer_contour.point_belongs(point2d) or \
-                self.surface2d.outer_contour.point_over_contour(point2d):
+                self.surface2d.outer_contour.point_over_contour(point2d, tol=1e-7):
             return True
         return False
 
@@ -3772,7 +3772,7 @@ class PlaneFace3D(Face3D):
         linesegment = vme.LineSegment3D(edge.start, edge.end)
         for surface3d_inter in self.surface3d.linesegment_intersections(linesegment):
             point2d = self.surface3d.point3d_to_2d(surface3d_inter)
-            if self.surface2d.point_belongs(point2d) or self.surface2d.outer_contour.point_over_contour(point2d):
+            if self.surface2d.point_belongs(point2d) or self.surface2d.outer_contour.point_over_contour(point2d, tol=1e-7):
                 if surface3d_inter not in intersections:
                     intersections.append(surface3d_inter)
 
@@ -3857,7 +3857,7 @@ class PlaneFace3D(Face3D):
                 primitive2 = dict_intersecting_combinations[intersecting_combination].primitives[0]
                 primitive2_2d = volmdlr.edges.LineSegment2D(self.surface3d.point3d_to_2d(primitive2.start), self.surface3d.point3d_to_2d(primitive2.end))
 
-                if not self.surface2d.outer_contour.primitive_over_contour(primitive2_2d):
+                if not self.surface2d.outer_contour.primitive_over_contour(primitive2_2d, tol=1e-7):
                     face_intersecting_primitives2d.append(primitive2_2d)
 
         if not face_intersecting_primitives2d:
