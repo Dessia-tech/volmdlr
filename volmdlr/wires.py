@@ -903,66 +903,67 @@ class Contour:
         '''
         extract shared primitives extremities between two adjacent contours
         '''
-        edges1 = set()
-        # edges2 = set()
-        list_p = []
 
-        for edge1, edge2 in itertools.product(self.primitives,
-                                              contour.primitives):
-            if edge1.point_belongs(edge2.start):
-                # list_p.add(edge2.start)
-                # instead of point not in list_p (due to errors)
-                if list_p == []:
-                    list_p.append(edge2.start)
-                if list_p != [] and edge2.start.point_distance(edge2.start.nearest_point(list_p)) > 1e-4:
-                    list_p.append(edge2.start)
+        def possible_shared_primitives(self, contour):
 
-                # edges2.add(edge2)
-                edges1.add(edge1)
+            edges1 = set()
+            # edges2 = set()
+            list_p = []
+    
+            for edge1, edge2 in itertools.product(self.primitives,
+                                                  contour.primitives):
+                if edge1.point_belongs(edge2.start):
+                    # list_p.add(edge2.start)
+                    # instead of point not in list_p (due to errors)
+                    if list_p == []:
+                        list_p.append(edge2.start)
+                    if list_p != [] and edge2.start.point_distance(edge2.start.nearest_point(list_p)) > 1e-4:
+                        list_p.append(edge2.start)
+    
+                    # edges2.add(edge2)
+                    edges1.add(edge1)
+    
+                elif edge2.point_belongs(edge1.start):
+                    # list_p.add(edge1.start)
+                    # instead of point not in list_p (due to errors)
+                    if list_p == []:
+                        list_p.append(edge1.start)
+                    if list_p != [] and edge1.start.point_distance(edge1.start.nearest_point(list_p)) > 1e-4:
+                        list_p.append(edge1.start)
+    
+                    edges1.add(edge1)
+                    # edges2.add(edge2)
+    
+                elif edge1.point_belongs(edge2.end):
+                    # list_p.add(edge2.end)
+                    # instead of point not in list_p (due to errors)
+                    if list_p == []:
+                        list_p.append(edge2.end)
+                    if list_p != [] and edge2.end.point_distance(edge2.end.nearest_point(list_p)) > 1e-4:
+                        list_p.append(edge2.end)
+    
+                    # edges2.add(edge2)
+                    edges1.add(edge1)
+    
+                elif edge2.point_belongs(edge1.end):
+                    # list_p.add(edge1.end)
+                    # instead of point not in list_p (due to errors)
+                    if list_p == []:
+                        list_p.append(edge1.end)
+                    if list_p != [] and edge1.end.point_distance(edge1.end.nearest_point(list_p)) > 1e-4:
+                        list_p.append(edge1.end)
+    
+                    edges1.add(edge1)
+                    # edges2.add(edge2)
+    
+            edges1 = list(edges1)
+            # edges2 = list(edges2)
 
-            elif edge2.point_belongs(edge1.start):
-                # list_p.add(edge1.start)
-                # instead of point not in list_p (due to errors)
-                if list_p == []:
-                    list_p.append(edge1.start)
-                if list_p != [] and edge1.start.point_distance(edge1.start.nearest_point(list_p)) > 1e-4:
-                    list_p.append(edge1.start)
+            return edges1, list_p
 
-                edges1.add(edge1)
-                # edges2.add(edge2)
+        def order_extremities_points(self, contour):
 
-            elif edge1.point_belongs(edge2.end):
-                # list_p.add(edge2.end)
-                # instead of point not in list_p (due to errors)
-                if list_p == []:
-                    list_p.append(edge2.end)
-                if list_p != [] and edge2.end.point_distance(edge2.end.nearest_point(list_p)) > 1e-4:
-                    list_p.append(edge2.end)
-
-                # edges2.add(edge2)
-                edges1.add(edge1)
-
-
-            elif edge2.point_belongs(edge1.end):
-                # list_p.add(edge1.end)
-                # instead of point not in list_p (due to errors)
-                if list_p == []:
-                    list_p.append(edge1.end)
-                if list_p != [] and edge1.end.point_distance(edge1.end.nearest_point(list_p)) > 1e-4:
-                    list_p.append(edge1.end)
-
-                edges1.add(edge1)
-                # edges2.add(edge2)
-
-        edges1 = list(edges1)
-        # edges2 = list(edges2)
-
-        if (len(list_p) < 2):
-            raise ValueError(
-                    'The contours are not adjacent. They dont share primitives')
-        elif (len(list_p) == 2):
-            return list_p
-        else:
+            edges1, list_p = possible_shared_primitives(self, contour)
             if isinstance(self, volmdlr.wires.Contour2D):
                 contours1 = volmdlr.wires.Contour2D.contours_from_edges(edges1)
                 # contours2 = volmdlr.wires.Contour2D.contours_from_edges(edges2)
@@ -1002,6 +1003,17 @@ class Contour:
                         # break
 
             return points
+
+        edges1, list_p = possible_shared_primitives(self, contour)
+        if (len(list_p) < 2):
+            raise ValueError(
+                    'The contours are not adjacent. They dont share primitives')
+        elif (len(list_p) == 2):
+            return list_p
+        else:
+            points = order_extremities_points(self, contour)
+            return points
+
 
     def shared_primitives_with(self, contour):
         '''
