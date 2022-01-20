@@ -1301,7 +1301,7 @@ class Contour2D(Contour, Wire2D):
         xmin, xmax, ymin, ymax = self.bounding_rectangle()
         for i in range(2000):
             p = volmdlr.Point2D.random(xmin, xmax, ymin, ymax)
-            if self.point_belongs(p):
+            if self.point_belongs(p, abs_tol=1e-7):
                 return p
 
     # def line_intersections(self, line:Line2D) -> List[Tuple[volmdlr.Point2D, Primitive2D]]:
