@@ -615,12 +615,13 @@ class Point2D(Vector2D):
                           ['+x','-y'], ['-x','-y'], ['-x','+y'], ['-y','-x']
         '''
         
+        points_2d = [] 
+        grid = []
+        points = []
+        
         if direction == ['+x','+y']:
             x = npy.linspace(xmin, xmax, points_x) 
             y = npy.linspace(ymin, ymax, points_y) 
-            points_2d = [] 
-            grid = []
-            points = []
 
             for yi in y:
                 for xi in x:
@@ -633,9 +634,6 @@ class Point2D(Vector2D):
         elif direction == ['-x','+y']:
             x = npy.linspace(xmax, xmin, points_x) 
             y = npy.linspace(ymin, ymax, points_y) 
-            points_2d = [] 
-            grid = []
-            points = []
 
             for yi in y:
                 for xi in x:
@@ -648,8 +646,6 @@ class Point2D(Vector2D):
         elif direction == ['+y','+x']:
             x = npy.linspace(xmin, xmax, points_x) 
             y = npy.linspace(ymin, ymax, points_y) 
-            points_2d = [] 
-            grid = []
             
             for xi in x:
                 for yi in y:
@@ -662,9 +658,6 @@ class Point2D(Vector2D):
         elif direction == ['-y','+x']:
             x = npy.linspace(xmin, xmax, points_x) 
             y = npy.linspace(ymax, ymin, points_y) 
-            points_2d = [] 
-            grid = []
-            points = []
 
             for xi in x:
                 for yi in y:
@@ -677,9 +670,6 @@ class Point2D(Vector2D):
         elif direction == ['+x','-y']:
             x = npy.linspace(xmin, xmax, points_x) 
             y = npy.linspace(ymax, ymin, points_y) 
-            points_2d = [] 
-            grid = []
-            points = []
 
             for yi in y:
                 for xi in x:
@@ -692,9 +682,6 @@ class Point2D(Vector2D):
         elif direction == ['-x','-y']:
             x = npy.linspace(xmax, xmin, points_x) 
             y = npy.linspace(ymax, ymin, points_y) 
-            points_2d = [] 
-            grid = []
-            points = []
 
             for yi in y:
                 for xi in x:
@@ -704,12 +691,9 @@ class Point2D(Vector2D):
                 grid.append(points)
                 points = []    
                     
-        elif direction == ['-x','+y']:
+        elif direction == ['+y','-x']:
             x = npy.linspace(xmax, xmin, points_x) 
             y = npy.linspace(ymin, ymax, points_y) 
-            points_2d = [] 
-            grid = []
-            points = []
 
             for xi in x:
                 for yi in y:
@@ -722,9 +706,6 @@ class Point2D(Vector2D):
         elif direction == ['-y','-x']:
             x = npy.linspace(xmax, xmin, points_x) 
             y = npy.linspace(ymax, ymin, points_y) 
-            points_2d = [] 
-            grid = []
-            points = []
 
             for xi in x:
                 for yi in y:
@@ -734,12 +715,9 @@ class Point2D(Vector2D):
                 grid.append(points)
                 points = []
 
-        
         return (points_2d, grid)
         
 
-
-    
     @classmethod
     def line_intersection(cls, line1, line2, curvilinear_abscissa=False):
 #        point11, point12 = line1
