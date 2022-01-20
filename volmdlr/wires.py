@@ -172,13 +172,13 @@ class Wire:
         return self.extract_primitives(point1, split_primitives[0], point2,
                                        split_primitives[1], inside)
 
-    def point_belongs(self, point):
+    def point_belongs(self, point, abs_tol=1e-7):
         '''
         find out if a point is on the wire or not. If it belongs, we return the primitive's index
         '''
         
         for i, primitive in enumerate(self.primitives):
-            belongs = primitive.point_belongs(point)
+            belongs = primitive.point_belongs(point, abs_tol=1e-7)
             if belongs:
                 return i
         return False
