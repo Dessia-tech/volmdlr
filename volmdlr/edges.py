@@ -612,6 +612,56 @@ class BSplineCurve2D(Edge):
             l = LineSegment2D(p1, p2)
             crossings.extend(l.line_crossings(line2d))
         return crossings
+    
+    @classmethod
+    def from_points_approximation(cls, points, degree, **kwargs):
+        '''
+        Bspline Curve approximation through 2d points using least squares method
+        It is better to specify the number of control points
+        
+        Parameters
+        ----------
+        points : volmdlr.Point2D
+            data points 
+        degree: int
+            degree of the output parametric curve
+            
+        Keyword Arguments:
+            * ``centripetal``: activates centripetal parametrization method. *Default: False*
+            * ``ctrlpts_size``: number of control points. *Default: len(points) - 1*
+                
+        Returns
+        -------
+        BSplineCurve2D
+    
+        ''' 
+        curve = fitting.approximate_curve([(p.x, p.y) for p in points], degree, **kwargs)
+        return cls.from_geomdl_curve(curve)
+
+    def to_wire(self, n: int):
+        '''
+        convert a bspline curve to a wire2d defined with 'n' line_segments 
+        '''
+        
+        u = npy.linspace(0, 1, num=n+1).tolist()
+        points = []
+        for u0 in u:
+            p = self.curve.evaluate_single(u0)
+            points.append(volmdlr.Point2D(p[0], p[1]))
+
+        return volmdlr.wires.Wire2D.from_points(points)
+    
+    def reverse(self):
+        ''' 
+        reverse the bspline's direction by reversing its start and end points
+        '''
+        
+        return self.__class__(degree=self.degree,
+                              control_points=self.control_points[::-1],
+                              knot_multiplicities=self.knot_multiplicities[::-1],
+                              knots=self.knots[::-1],
+                              weights=self.weights,
+                              periodic=self.periodic)
 
     def point_belongs(self, point):
         polygon_points = self.polygon_points()
@@ -940,6 +990,13 @@ class LineSegment2D(LineSegment):
     #         return LineSegment2D(infinite_primitive.point1,intersection)
     #     else :
     #         return LineSegment2D(intersection,infinite_primitive.point2)
+
+    def discretization_points(self, n: int):
+        ''' 
+        discretize a LineSegment2D to have "n" points (including start and end points)
+        '''
+        
+        return [self.point_at_abscissa(i * self.length() / (n-1)) for i in range(n)]
 
 
 class Arc2D(Edge):
@@ -3097,11 +3154,31 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
     def from_geomdl_curve(cls, curve):
         knots = list(sorted(set(curve.knotvector)))
         knot_multiplicities = [curve.knotvector.count(k) for k in knots]
+
         return cls(degree=curve.degree,
                    control_points=curve.ctrlpts,
                    knots=knots,
                    knot_multiplicities=knot_multiplicities)
 
+    def point_belongs(self, point3d):
+        '''
+        check if a point3d belongs to the bspline_curve or not 
+        '''
+        def f(x):
+            return (point3d - volmdlr.Point3D(*self.curve.evaluate_single(x))).norm()
+
+        x = npy.linspace(0,1,5)
+        x_init=[]
+        for xi in x:
+            x_init.append(xi)
+            
+        for x0 in x_init: 
+            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
+            if z.cost < 1e-10: 
+                return True
+        return False
+
+    
     def global_minimum_curvature(self, nb_eval: int = 21):
         check = [i/(nb_eval-1) for i in range(nb_eval)]
         radius = []
@@ -3109,6 +3186,32 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             radius.append(self.minimum_curvature(u))
         return radius
 
+    @classmethod
+    def from_points_approximation(cls, points, degree, **kwargs):
+        '''
+        Bspline Curve approximation through 3d points using least squares method
+        It is better to specify the number of control points
+        
+        Parameters
+        ----------
+        points : volmdlr.Point3D
+            data points 
+        degree: int
+            degree of the output parametric curve
+            
+        Keyword Arguments:
+            * ``centripetal``: activates centripetal parametrization method. *Default: False*
+            * ``ctrlpts_size``: number of control points. *Default: len(points) - 1*
+                
+        Returns
+        -------
+        BSplineCurve3D
+    
+        ''' 
+        
+        curve = fitting.approximate_curve([(p.x, p.y, p.z) for p in points], degree, **kwargs)
+        return cls.from_geomdl_curve(curve)
+    
       
 class BezierCurve3D(BSplineCurve3D):
 
@@ -3664,6 +3767,24 @@ class Arc3D(Edge):
             current_id, self.name,
             start_id, end_id, curve_id)
         return content, [current_id]
+
+    def point_belongs(self, point3d):
+        '''
+        check if a point3d belongs to the arc_3d or not 
+        '''
+        def f(x):
+            return (point3d - self.point_at_abscissa(x)).norm()
+        length_ = self.length()  
+        x = npy.linspace(0, length_, 5)
+        x_init=[]
+        for xi in x:
+            x_init.append(xi)
+
+        for x0 in x_init: 
+            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,length_]))
+            if z.cost < 1e-10: 
+                return True
+        return False
 
 
 class FullArc3D(Edge):
