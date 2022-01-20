@@ -13,7 +13,9 @@ import volmdlr
 
 
 class RoundedLineSegments:
-    def __init__(self, points: List[volmdlr.Point3D], radius: Dict[str, float], line_class: str, arc_class: str,
+    _non_serializable_attributes = ['line_class', 'arc_class']
+
+    def __init__(self, points: List[volmdlr.Point3D], radius: Dict[str, float],
                  closed: bool = False, adapt_radius: bool = False, name: str = ''):
 
         self.points = points
@@ -22,7 +24,7 @@ class RoundedLineSegments:
         self.adapt_radius = adapt_radius
         self.name = name
         self.npoints = len(points)
-        primitives = self._primitives(line_class, arc_class)
+        primitives = self._primitives()
 
         return primitives
 
@@ -39,7 +41,7 @@ class RoundedLineSegments:
             for p in self.points:
                 p.frame_mapping(frame, side, copy=False)
 
-    def _primitives(self, line_class, arc_class):
+    def _primitives(self):
         alpha = {}
         dist = {}
         lines_length = {}
@@ -47,7 +49,6 @@ class RoundedLineSegments:
         rounded_points_indices = [int(i) for i in sorted(self.radius.keys())]
         groups = []
         arcs = {}
-        primitives = []
 
         if self.radius != {}:
             group = [rounded_points_indices[0]]
@@ -162,8 +163,12 @@ class RoundedLineSegments:
             # Creating arcs
             for ipoint, r in self.radius.items():
                 ps, pi, pe, _, _ = self.arc_features(ipoint)
-                arcs[ipoint] = arc_class(ps, pi, pe)
-
+                arcs[ipoint] = self.arc_class(ps, pi, pe)
+                
+        return self.primitives_from_arcs(arcs)
+    
+    def primitives_from_arcs(self, arcs):
+        primitives = []
         # Creating lines
         for iline in range(self.npoints - 1):
             if iline in self.radius:
@@ -172,18 +177,18 @@ class RoundedLineSegments:
                 if iline + 1 in self.radius:
                     arc2 = arcs[iline + 1]
                     if arc1.end != arc2.start:
-                        primitives.append(line_class(arc1.end, arc2.start))
+                        primitives.append(self.line_class(arc1.end, arc2.start))
                 else:
                     if arc1.end != self.points[iline + 1]:
-                        primitives.append(line_class(arc1.end, self.points[iline + 1]))
+                        primitives.append(self.line_class(arc1.end, self.points[iline + 1]))
             else:
                 p1 = self.points[iline]
                 if iline + 1 in self.radius:
                     arc2 = arcs[iline + 1]
                     if p1 != arc2.start:
-                        primitives.append(line_class(p1, arc2.start))
+                        primitives.append(self.line_class(p1, arc2.start))
                 else:
-                    primitives.append(line_class(p1, self.points[iline + 1]))
+                    primitives.append(self.line_class(p1, self.points[iline + 1]))
 
         if self.closed:
             if self.npoints - 1 in self.radius:
@@ -192,16 +197,16 @@ class RoundedLineSegments:
                 if 0 in self.radius:
                     arc2 = arcs[0]
                     if arc1.end != arc2.start:
-                        primitives.append(line_class(arc1.end, arc2.start))
+                        primitives.append(self.line_class(arc1.end, arc2.start))
                 else:
-                    primitives.append(line_class(arc1.end, self.points[iline + 1]))
+                    primitives.append(self.line_class(arc1.end, self.points[iline + 1]))
             else:
                 p1 = self.points[self.npoints - 1]
                 if 0 in self.radius:
                     arc2 = arcs[0]
                     if p1 != arc2.start:
-                        primitives.append(line_class(p1, arc2.start))
+                        primitives.append(self.line_class(p1, arc2.start))
                 else:
-                    primitives.append(line_class(p1, self.points[0]))
+                    primitives.append(self.line_class(p1, self.points[0]))
 
         return primitives

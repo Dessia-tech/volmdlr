@@ -302,6 +302,11 @@ class Vector(DessiaObject):
             n += 1
         point /= n
         return point
+    
+    @classmethod
+    def remove_duplicate(cls, points):
+        dict_ = {p.approx_hash() : p for p in points}
+        return list(dict_.values())
 
 class Vector2D(Vector):
     def __init__(self, x:float, y:float, name=''):
@@ -377,13 +382,9 @@ class Vector2D(Vector):
                 'x': self.x, 'y': self.y,
                 'name': self.name}
 
+
     def copy(self, deep=True, memo=None):
         return self.__class__(self.x, self.y)
-
-    @classmethod
-    def remove_duplicate(cls, points):
-        dict_ = {p.approx_hash() : p for p in points}
-        return list(dict_.values())
 
     def norm(self):
         """
@@ -926,11 +927,6 @@ class Vector3D(Vector):
 
     def approx_hash(self):
         return round(1e6*(self.x+self.y+self.z))
-
-    @classmethod
-    def remove_duplicate(cls, points):
-        dict_ = {p.approx_hash() : p for p in points}
-        return list(dict_.values())
 
     def to_dict(self):
         return {'object_class':'volmdlr.Vector3D',
