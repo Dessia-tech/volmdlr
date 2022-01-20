@@ -1316,8 +1316,8 @@ class VolumeModel(dc.DessiaObject):
         for primitive in self.primitives:
             primitive.plot(ax)
         if equal_aspect:
-            ax.set_aspect('equal')
-
+            # ax.set_aspect('equal')
+            ax.set_aspect('auto')
         ax.margins(0.1)
         return ax
 

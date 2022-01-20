@@ -575,6 +575,9 @@ class BSplineCurve2D(Edge):
         l = self.length()
         return [self.point_at_abscissa(i * l / n) for i in range(n + 1)]
 
+    def discretise(self, n=15):
+        return self.polygon_points(n)
+
     def rotation(self, center, angle, copy=True):
         if copy:
             control_points = [p.rotation(center, angle, copy=True) \

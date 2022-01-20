@@ -109,7 +109,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         outer_polygon = self.outer_contour.to_polygon(angle_resolution=10)
 
-        if not self.inner_contours:# No holes
+        if not self.inner_contours:  # No holes
             return outer_polygon.triangulation()
         points = [vmd.Node2D(*p) for p in outer_polygon.points]
         vertices = [(p.x, p.y) for p in points]
@@ -213,14 +213,11 @@ class Surface2D(volmdlr.core.Primitive2D):
                         inner_contours.append(inner_split)
 
             if inner_contours:
-                merged_contours = outer_split.merge_with(inner_contours[0])
-                for inner_contour in inner_contours:
-                    new_merged_contours = merged_contours[0].merge_with(
-                        inner_contour)
-                    merged_contours[0] = new_merged_contours[0]
-                    merged_contours.extend(new_merged_contours[1:])
-                surfaces.append(Surface2D(merged_contours[0],
-                                          merged_contours[1:]))
+                surface2d = self.from_contours(outer_split, inner_contours)
+                surfaces.append(surface2d)
+                # ax = self.plot()
+                # line.plot(ax=ax)
+                # surface2d.plot(ax=ax, color='r')
             else:
                 surfaces.append(Surface2D(outer_split, []))
 
@@ -533,6 +530,28 @@ class Surface2D(volmdlr.core.Primitive2D):
 
     def bounding_rectangle(self):
         return self.outer_contour.bounding_rectangle()
+
+    @classmethod
+    def from_contours(cls, outer_contour, inner_contours):
+        surface2d_inner_contours = []
+        surface2d_outer_contour = outer_contour
+        for inner_contour in inner_contours:
+            try:
+                # inner_contour will be merge with outer_contour
+                surface2d_outer_contour.shared_primitives_extremities(
+                    inner_contour)
+                merged_contours = surface2d_outer_contour.merge_with(
+                    inner_contour)
+                if len(merged_contours) >= 2:
+                    raise NotImplementedError
+                surface2d_outer_contour = merged_contours[0]
+            except ValueError:
+                # inner_contour will be added to the inner contours of the
+                # Surface2D
+                surface2d_inner_contours.append(inner_contour)
+        return cls(surface2d_outer_contour, surface2d_inner_contours)
+
+
 
     def plot(self, ax=None, color='k', alpha=1, equal_aspect=False):
 
@@ -2216,14 +2235,19 @@ class BSplineSurface3D(Surface3D):
             lth = bspline_curve3d.length()
             if lth > 1e-5:
                 points = [self.point3d_to_2d(
-                        bspline_curve3d.point_at_abscissa(i / 10 * lth)
-                        # max_bound_x=self.x_periodicity,
-                        # max_bound_y=self.y_periodicity
+                        bspline_curve3d.point_at_abscissa(i / 10 * lth),
+                        max_bound_x=x_perio,
+                        max_bound_y=y_perio
                     ) for i in range(11)]
                 # linesegments = [vme.LineSegment2D(p1, p2)
                 #                 for p1, p2 in zip(points[:-1], points[1:])]
                 linesegments = [vme.BSplineCurve2D.from_points_interpolation(
-                    points, max(self.degree_u, self.degree_v))]
+                    points, min(self.degree_u, self.degree_v))]
+                bs = vme.BSplineCurve2D.from_points_interpolation(
+                    points, min(self.degree_u, self.degree_v))
+                ax = bs.plot()
+                [p.plot(ax=ax) for p in points]
+                print(points)
             elif 1e-6 < lth <= 1e-5:
                 linesegments = [vme.LineSegment2D(
                     self.point3d_to_2d(bspline_curve3d.start),
