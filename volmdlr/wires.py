@@ -1098,8 +1098,8 @@ class Contour2D(Contour, Wire2D):
 
         return Contour3D(p3d)
 
-    def point_belongs(self, point):
-        if self.edge_polygon.point_belongs(point):
+    def point_belongs(self, point, abs_tol=1e-7):
+        if self.edge_polygon.point_belongs(point, abs_tol=1e-7):
             return True
         # TODO: This is incomplete!!!
         return False
