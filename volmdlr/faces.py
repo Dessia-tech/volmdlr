@@ -3961,6 +3961,38 @@ class PlaneFace3D(Face3D):
 
         return list_new_faces
 
+    @staticmethod
+    def validate_new_face_intersection_method(new_face, faces, is_inside,
+                                              list_coincident_faces):
+        if is_inside:
+            if new_face not in faces:
+                return True
+        else:
+            for coin_f1, coin_f2 in list_coincident_faces:
+                if coin_f1.face_inside(new_face) and coin_f2.face_inside(
+                        new_face):
+                    valid = True
+                    for fc in faces:
+                        if fc.face_inside(new_face) or new_face.face_inside(
+                                fc):
+                            valid = False
+                    if valid:
+                        return True
+        return False
+
+    @staticmethod
+    def select_valid_faces(list_faces):
+        valid_faces = []
+        for i, fc1 in enumerate(list_faces):
+            valid_face = True
+            for j, fc2 in enumerate(list_faces):
+                if i != j:
+                    if fc2.face_inside(fc1):
+                        valid_face = False
+            if valid_face and fc1 not in valid_faces:
+                valid_faces.append(fc1)
+        return valid_faces
+
 
 class Triangle3D(PlaneFace3D):
     """
@@ -6002,11 +6034,14 @@ class ClosedShell3D(OpenShell3D):
 
             :returns: intersecting contour for two intersecting shells
         '''
-        if dict_intersecting_combinations == None:
+        if dict_intersecting_combinations is None:
             face_combinations = self.intersecting_faces_combinations(shell2)
-            dict_intersecting_combinations = self.dict_intersecting_combinations(face_combinations)
+            dict_intersecting_combinations = \
+                self.dict_intersecting_combinations(face_combinations)
         intersecting_lines = list(dict_intersecting_combinations.values())
-        intersecting_contour = volmdlr.wires.Contour3D([wire.primitives[0] for wire in intersecting_lines])
+        intersecting_contour = \
+            volmdlr.wires.Contour3D([wire.primitives[0] for
+                                     wire in intersecting_lines])
         return intersecting_contour
 
     def new_valid_faces(self, shell2, intersecting_faces,
@@ -6029,7 +6064,6 @@ class ClosedShell3D(OpenShell3D):
             else:
                 inside = False
                 shell_2 = shell2
-            face_contour2d = face.surface2d.outer_contour
 
             list_cutting_contours = face.get_face_cutting_contours(intersecting_combinations)
             if not list_cutting_contours:
@@ -6041,13 +6075,6 @@ class ClosedShell3D(OpenShell3D):
                 for i in range(5):
                     points_inside.append(new_face.surface2d.random_point_inside())
                 points_inside = [point for point in points_inside if point is not None]
-                # if not points_inside:
-                #     ax1 = face_contour2d.plot()
-                #     print('bugging face, maybe area is too small. No points have been found inside face. See graph generated :', face_contour2d)
-                #     face_intersecting_primitives2d = [prim for contour in list_cutting_contours for prim in contour.primitives]
-                #     for prim in face_intersecting_primitives2d:
-                #         prim.plot(ax=ax1, color='r')
-                #         print((prim.start, prim.end))
                 is_inside = False
                 for point in points_inside:
                     point = face.surface3d.point2d_to_3d(point)
@@ -6059,40 +6086,11 @@ class ClosedShell3D(OpenShell3D):
                                               list_coincident_faces):
                         faces.append(new_face)
                 else:
-                    if self.validate_new_face_intersection_method(new_face,
-                                                                  faces,
-                                                                  is_inside,
-                                                                  list_coincident_faces):
+                    if PlaneFace3D.validate_new_face_intersection_method(
+                            new_face, faces, is_inside, list_coincident_faces):
                         faces.append(new_face)
-        valid_faces = []
-        for i, fc1 in enumerate(faces):
-            valid_face = True
-            for j, fc2 in enumerate(faces):
-                if i != j:
-                    if fc2.face_inside(fc1):
-                        valid_face = False
-            if valid_face and fc1 not in valid_faces:
-                valid_faces.append(fc1)
+        valid_faces = PlaneFace3D.select_valid_faces(faces)
         return valid_faces
-
-    @staticmethod
-    def validate_new_face_intersection_method(new_face, faces, is_inside,
-                                              list_coincident_faces):
-        if is_inside:
-            if new_face not in faces:
-                return True
-        else:
-            for coin_f1, coin_f2 in list_coincident_faces:
-                if coin_f1.face_inside(new_face) and coin_f2.face_inside(
-                        new_face):
-                    valid = True
-                    for fc in faces:
-                        if fc.face_inside(new_face) or new_face.face_inside(
-                                fc):
-                            valid = False
-                    if valid:
-                        return True
-        return False
 
     def validate_new_face(self, new_face, faces, shell2,
                           is_inside, list_coincident_faces):
