@@ -1090,18 +1090,6 @@ class Contour:
         return merge_primitives  
 
 
-    def merge_with(self, contour):
-        '''
-        merge two adjacent contours, sharing primitives, and returns one outer contour and inner contours (if there are any)
-        '''
-
-        merged_primitives = self.merge_primitives_with(contour)
-        contours = volmdlr.wires.Contour.contours_from_edges(merged_primitives, tol=3e-4)
-        # contours = sorted(contours, key=lambda contour: contour.area(), reverse=True)
-    
-        return contours
-
-
     def edges_order_with_adjacent_contour(self, contour):
         """
         check if the shared edges between two adjacent contours are traversed with two different directions along each contour
@@ -2146,7 +2134,18 @@ class Contour2D(Contour, Wire2D):
                 new_primitives.append(p)
         
         return Contour2D(new_primitives)
+
+    def merge_with(self, contour2d):
+        '''
+        merge two adjacent contours, sharing primitives, and returns one outer contour and inner contours (if there are any)
+        '''
+
+        merged_primitives = self.merge_primitives_with(contour2d)
+        contours = volmdlr.wires.Contour2D.contours_from_edges(merged_primitives, tol=3e-4)
+        contours = sorted(contours, key=lambda contour: contour.area(), reverse=True)
     
+        return contours
+
         
 class ClosedPolygon:
 
@@ -3878,6 +3877,17 @@ class Contour3D(Contour, Wire3D):
                 new_primitives.append(p)
         
         return Contour3D(new_primitives)
+
+    def merge_with(self, contour3d):
+        '''
+        merge two adjacent contours, sharing primitives, and returns one outer contour and inner contours (if there are any)
+        '''
+
+        merged_primitives = self.merge_primitives_with(contour3d)
+        contours = volmdlr.wires.Contour3D.contours_from_edges(merged_primitives, tol=3e-4)
+        # contours = sorted(contours, key=lambda contour: contour.area(), reverse=True)
+
+        return contours
 
 
 class Circle3D(Contour3D):
