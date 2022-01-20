@@ -1076,8 +1076,19 @@ class Contour:
                 merge_primitives.extend(merge_primitives_prim)
 
         return merge_primitives  
-                
+
+    def merge_with(self, contour):
+        '''
+        merge two adjacent contours, sharing primitives, and returns one outer contour and inner contours (if there are any)
+        '''
+
+        merged_primitives = self.merge_primitives_with(contour)
+        contours = volmdlr.wires.Contour.contours_from_edges(merged_primitives, tol=3e-4)
+        # contours = sorted(contours, key=lambda contour: contour.area(), reverse=True)
     
+        return contours
+
+
     def edges_order_with_adjacent_contour(self, contour):
         """
         check if the shared edges between two adjacent contours are traversed with two different directions along each contour
