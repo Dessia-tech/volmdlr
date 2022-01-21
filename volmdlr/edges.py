@@ -1480,6 +1480,24 @@ class Arc2D(Edge):
         interior = self.middle_point().rotation(self.center, math.pi)
         return Arc2D(self.start, interior, self.end)
 
+    def point_belongs(self, point2d, abs_tol=1e-10):
+        '''
+        check if a point2d belongs to the arc_2d or not 
+        '''
+        def f(x):
+            return (point2d - self.point_at_abscissa(x)).norm()
+        length_ = self.length()  
+        x = npy.linspace(0, length_, 5)
+        x_init=[]
+        for xi in x:
+            x_init.append(xi)
+
+        for x0 in x_init: 
+            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,length_]))
+            if z.cost < abs_tol: 
+                return True
+        return False
+
 
 class FullArc2D(Edge):
     """
