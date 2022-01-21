@@ -2070,16 +2070,6 @@ class Contour2D(Contour, Wire2D):
 
         return list_valid_contours
 
-<<<<<<< HEAD
-=======
-    def merge_contours(self, contour2d):
-        ''' merge two adjacent contours, and return a list of contours (outer, and inner) '''
-        
-        primitives = self.merged_contour_primitives(contour2d)
-        
-        return volmdlr.wires.Contour2D.contours_from_edges(primitives, tol= 3e-4)
-
->>>>>>> dev
         
     def discretized_contour(self, n: float):
         """ 
@@ -3871,17 +3861,7 @@ class Contour3D(Contour, Wire3D):
             return dict_intersecting_points
         return None
 
-    
-<<<<<<< HEAD
-=======
-    def merge_contours(self, contour3d):
-        ''' merge two adjacent contours, and return a list of contours (outer, and inner) '''
 
-        primitives = self.merged_contour_primitives(contour3d)
-        
-        return volmdlr.wires.Contour3D.contours_from_edges(primitives, tol= 3e-4)
-    
->>>>>>> dev
     @classmethod
     def from_points(cls, points: List[volmdlr.Point3D]):
         '''
