@@ -912,7 +912,7 @@ class Contour:
     
             for edge1, edge2 in itertools.product(self.primitives,
                                                   contour.primitives):
-                if edge1.point_belongs(edge2.start):
+                if edge1.point_belongs(edge2.start, 1e-5):
                     # list_p.add(edge2.start)
                     # instead of point not in list_p (due to errors)
                     if list_p == []:
@@ -923,7 +923,7 @@ class Contour:
                     # edges2.add(edge2)
                     edges1.add(edge1)
     
-                elif edge2.point_belongs(edge1.start):
+                elif edge2.point_belongs(edge1.start, 1e-5):
                     # list_p.add(edge1.start)
                     # instead of point not in list_p (due to errors)
                     if list_p == []:
@@ -934,7 +934,7 @@ class Contour:
                     edges1.add(edge1)
                     # edges2.add(edge2)
     
-                elif edge1.point_belongs(edge2.end):
+                elif edge1.point_belongs(edge2.end, 1e-5):
                     # list_p.add(edge2.end)
                     # instead of point not in list_p (due to errors)
                     if list_p == []:
@@ -945,7 +945,7 @@ class Contour:
                     # edges2.add(edge2)
                     edges1.add(edge1)
     
-                elif edge2.point_belongs(edge1.end):
+                elif edge2.point_belongs(edge1.end, 1e-5):
                     # list_p.add(edge1.end)
                     # instead of point not in list_p (due to errors)
                     if list_p == []:
