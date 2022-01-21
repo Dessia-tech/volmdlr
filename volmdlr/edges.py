@@ -3178,7 +3178,7 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
                    knots=knots,
                    knot_multiplicities=knot_multiplicities)
 
-    def point_belongs(self, point3d):
+    def point_belongs(self, point3d, abs_tol=1e-10):
         '''
         check if a point3d belongs to the bspline_curve or not 
         '''
@@ -3192,7 +3192,7 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            if z.cost < 1e-10: 
+            if z.cost < abs_tol: 
                 return True
         return False
 
