@@ -3488,23 +3488,64 @@ class BSplineSurface3D(Surface3D):
 
         corresponding_directions, grid2d_direction = bsplines_new[0].rectangular_cut(0,1,0,1).pair_with(bsplines_new[1].rectangular_cut(0,1,0,1))
 
+        if bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d):
+            def xy_limits(grid2d_direction):
+                xmin, xmax, ymin, ymax = [], [], [], []
+                i = 0
+                if grid2d_direction[i][1] == '+y':
+                    xmin.append(0)
+                    xmax.append(1)
+                    ymin.append(0)
+                    ymax.append(0.95)
+                elif grid2d_direction[i][1] == '+x':
+                    xmin.append(0)
+                    xmax.append(0.95)
+                    ymin.append(0)
+                    ymax.append(1)
+                elif grid2d_direction[i][1] == '-x':
+                    xmin.append(0.05)
+                    xmax.append(1)
+                    ymin.append(0)
+                    ymax.append(1)
+                elif grid2d_direction[i][1] == '-y':
+                    xmin.append(0)
+                    xmax.append(1)
+                    ymin.append(0.05)
+                    ymax.append(1)
+
+                xmin.append(0)
+                xmax.append(1)
+                ymin.append(0)
+                ymax.append(1)
+
+                return xmin, xmax, ymin, ymax
+
+            xmin, xmax, ymin, ymax = xy_limits(grid2d_direction)
+
+        else:
+            xmin, xmax, ymin, ymax = [], [], [], []
+            for i in range(0, len(bsplines_new)):
+                xmin.append(0)
+                xmax.append(1)
+                ymin.append(0)
+                ymax.append(1)
+
         # grid3d
         points3d = []
         for i, bspline in enumerate(bsplines_new):
-            grid2d = volmdlr.Point2D.grid2d_with_direction(10, 10, 0, 1, 0, 1, grid2d_direction[i])[0]
+            grid2d = volmdlr.Point2D.grid2d_with_direction(50, 50, xmin[i], xmax[i], ymin[i], ymax[i], grid2d_direction[i])[0]
             grid3d = []
             for p in grid2d:
                 grid3d.append(bspline.point2d_to_3d(p))
 
             points3d.extend(grid3d)
 
-        # fitting
-        size_u, size_v, degree_u, degree_v = 20, 10, max(bsplines[0].degree_u, bsplines[1].degree_u), max(bsplines[0].degree_v, bsplines[1].degree_v)
+            # fitting
+        size_u, size_v, degree_u, degree_v = 100, 50, max(bsplines[0].degree_u, bsplines[1].degree_u), max(bsplines[0].degree_v, bsplines[1].degree_v)
 
         merged_surface = volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(points3d, size_u, size_v, degree_u, degree_v)
 
         return  merged_surface
-
 
 class BezierSurface3D(BSplineSurface3D):
 
