@@ -399,6 +399,17 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
         volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
                                              alpha=alpha, name=name)
 
+    def copy(self, deep=True, memo=None):
+        return self.__class__(plane_origin=self.plane_origin.copy(),
+                              x=self.x.copy(),
+                              y=self.y.copy(),
+                              outer_contour2d=self.outer_contour2d.copy(),
+                              inner_contours2d=[c.copy() for c in self.inner_contours2d],
+                              extrusion_vector=self.extrusion_vector.copy(),
+                              color=self.color,
+                              alpha=self.alpha,
+                              name=self.name)
+
     def shell_faces(self):
         lower_plane = volmdlr.faces.Plane3D.from_plane_vectors(
             self.plane_origin, self.x, self.y)
