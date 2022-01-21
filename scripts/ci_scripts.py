@@ -16,7 +16,16 @@ scripts = [
             'faces/blocks_set_operations.py',
             'cloud/sewing_two_polygons.py',
             'read_steps.py',
-            'cloud/sewing_stl.py'
+            'cloud/sewing_stl.py',
+            'faces/BSplineSurface/bspline_curves.py',
+            'faces/BSplineSurface/bspline_curves_point_belongs.py',
+            'faces/BSplineSurface/bspline_surface_interpolation.py',
+            'faces/BSplineSurface/bspline_surface_merge.py',
+            'faces/BSplineSurface/bspline_surface_split.py',
+            'faces/BSplineSurface/bspline_surface_to_2d.py',
+            'faces/BSplineSurface/from_cylindrical_to_bspline_surface.py',
+            'faces/BSplineSurface/bspline_surface_definition.py',
+            'faces/BSplineSurface/bspline_surfaces_grid3d.py'
             ]
 #  'cyl_cyl.py', 'cyl_pf.py',
 # 'ls3D_ls3D.py', 'sweep_sweep.py', 'tore_cyl.py','tore_pf.py'
