@@ -182,6 +182,6 @@ bspline_surface = vm.faces.BSplineSurface3D(degree_u = degree_u,
 
 # bspline_surface.plot()
 
-# bspline_face = bspline_surface.rectangular_cut(0, 1, 0, 1)
+bspline_face = bspline_surface.rectangular_cut(0, 1, 0, 1)
 # bspline_face.babylonjs()
 
