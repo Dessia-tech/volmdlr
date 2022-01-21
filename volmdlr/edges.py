@@ -1462,6 +1462,12 @@ class Arc2D(Edge):
         interior = self.middle_point().rotation(self.center, math.pi)
         return Arc2D(self.start, interior, self.end)
 
+    def point_distance(self, point):
+
+       points = self.polygon_points(angle_resolution=100)
+
+       return point.point_distance(point.nearest_point(points))
+
 
 class FullArc2D(Edge):
     """
@@ -3793,6 +3799,12 @@ class Arc3D(Edge):
             current_id, self.name,
             start_id, end_id, curve_id)
         return content, [current_id]
+
+    def point_distance(self, point):
+
+       points = self.polygon_points(angle_resolution=100)
+
+       return point.point_distance(point.nearest_point(points))
 
     def point_belongs(self, point3d):
         '''
