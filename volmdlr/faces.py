@@ -781,8 +781,6 @@ class Plane3D(Surface3D):
         # improve the object structure ?
         dict_ = dc.DessiaObject.base_dict(self)
         dict_['frame'] = self.frame.to_dict()
-        dict_['name'] = self.name
-        dict_['object_class'] = 'volmdlr.faces.Plane3D'
         return dict_
 
     @classmethod
@@ -3682,15 +3680,20 @@ class Face3D(volmdlr.core.Primitive3D):
             surfaces = self.surface2d.split_by_lines(lines_y)
         else:
             surfaces = [self.surface2d]
-        mesh2d = surfaces[0].triangulation()
-        for subsurface in surfaces[1:]:
-            # mesh2d += subsurface.triangulation()
-            mesh2d.merge_mesh(subsurface.triangulation())
+            
+        # mesh2d = surfaces[0].triangulation()
+        # print('ls', len(surfaces))
+        # for subsurface in surfaces[1:]:
+        #     # mesh2d += subsurface.triangulation()
+        #     mesh2d.merge_mesh(subsurface.triangulation())
 
+        meshes = [s.triangulation() for s in surfaces]
+        mesh2d = vmd.DisplayMesh2D.merge_meshes(meshes)
         return vmd.DisplayMesh3D(
             [vmd.Node3D(*self.surface3d.point2d_to_3d(p)) for p in
-             mesh2d.points],
+              mesh2d.points],
             mesh2d.triangles)
+
 
     def plot2d(self, ax=None, color='k', alpha=1):
         if ax is None:
@@ -4163,12 +4166,6 @@ class Triangle3D(PlaneFace3D):
         dict_['point3'] = self.point3.to_dict()
         return dict_
 
-    # def to_dict(self):
-    #     return {'object_class': 'volmdlr.faces.Triangle3D',
-    #             'point1': self.point1.to_dict(),
-    #             'point2': self.point2.to_dict(),
-    #             'point3': self.point3.to_dict()}
-
     @classmethod
     def dict_to_object(cls, dict_):
         point1 = volmdlr.Point3D.dict_to_object(dict_['point1'])
@@ -4316,14 +4313,14 @@ class CylindricalFace3D(Face3D):
     min_y_density = 1
 
     def __init__(self,
-                 cylindricalsurface3d: CylindricalSurface3D,
+                 surface3d: CylindricalSurface3D,
                  surface2d: Surface2D,
                  name: str = ''):
 
-        self.radius = cylindricalsurface3d.radius
-        self.center = cylindricalsurface3d.frame.origin
-        self.normal = cylindricalsurface3d.frame.w
-        Face3D.__init__(self, surface3d=cylindricalsurface3d,
+        self.radius = surface3d.radius
+        self.center = surface3d.frame.origin
+        self.normal = surface3d.frame.w
+        Face3D.__init__(self, surface3d=surface3d,
                         surface2d=surface2d,
                         name=name)
 
@@ -4701,14 +4698,14 @@ class ToroidalFace3D(Face3D):
     min_x_density = 5
     min_y_density = 1
 
-    def __init__(self, toroidalsurface3d: ToroidalSurface3D,
+    def __init__(self, surface3d: ToroidalSurface3D,
                  surface2d: Surface2D,
                  name: str = ''):
 
         # self.toroidalsurface3d = toroidalsurface3d
 
-        self.center = toroidalsurface3d.frame.origin
-        self.normal = toroidalsurface3d.frame.w
+        self.center = surface3d.frame.origin
+        self.normal = surface3d.frame.w
 
         theta_min, theta_max, phi_min, phi_max = surface2d.outer_contour.bounding_rectangle()
 
@@ -4721,7 +4718,7 @@ class ToroidalFace3D(Face3D):
         #               for c in [outer_contour2d]+inners_contours2d]
 
         Face3D.__init__(self,
-                        surface3d=toroidalsurface3d,
+                        surface3d=surface3d,
                         surface2d=surface2d,
                         name=name)
 
@@ -5232,12 +5229,12 @@ class ConicalFace3D(Face3D):
     min_x_density = 5
     min_y_density = 1
 
-    def __init__(self, conicalsurface3d: ConicalSurface3D,
+    def __init__(self, surface3d: ConicalSurface3D,
                  surface2d: Surface2D,
                  name: str = ''):
 
         Face3D.__init__(self,
-                        surface3d=conicalsurface3d,
+                        surface3d=surface3d,
                         surface2d=surface2d,
                         name=name)
 
@@ -5363,11 +5360,11 @@ class SphericalFace3D(Face3D):
     min_x_density = 5
     min_y_density = 5
 
-    def __init__(self, spherical_surface3d: SphericalSurface3D,
+    def __init__(self, surface3d: SphericalSurface3D,
                  surface2d: Surface2D,
                  name: str = ''):
         Face3D.__init__(self,
-                        surface3d=spherical_surface3d,
+                        surface3d=surface3d,
                         surface2d=surface2d,
                         name=name)
 
@@ -5403,11 +5400,11 @@ class RuledFace3D(Face3D):
     min_y_density = 1
 
     def __init__(self,
-                 ruledsurface3d: RuledSurface3D,
+                 surface3d: RuledSurface3D,
                  surface2d: Surface2D,
                  name: str = '',
                  color=None):
-        Face3D.__init__(self, surface3d=ruledsurface3d,
+        Face3D.__init__(self, surface3d=surface3d,
                         surface2d=surface2d,
                         name=name)
 
@@ -5435,18 +5432,18 @@ class RuledFace3D(Face3D):
 
 
 class BSplineFace3D(Face3D):
-    def __init__(self, bspline_surface: BSplineSurface3D,
+    def __init__(self, surface3d: BSplineSurface3D,
                  surface2d: Surface2D,
                  name: str = ''):
         Face3D.__init__(self,
-                        surface3d=bspline_surface,
+                        surface3d=surface3d,
                         surface2d=surface2d,
                         name=name)
 
     def _bounding_box(self):
         return self.surface3d._bounding_box()
 
-    def triangulation_lines(self, resolution=50):
+    def triangulation_lines(self, resolution=25):
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle()
 
         delta_u = u_max - u_min
@@ -5751,16 +5748,16 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         self.alpha = alpha
         self.bounding_box = self._bounding_box()
 
-    def __hash__(self):
-        return sum([hash(f) for f in self.faces])
+    # def __hash__(self):
+    #     return sum([hash(f) for f in self.faces])
 
-    def __eq__(self, other_):
-        if self.__class__ != other_.__class__:
-            return False
-        equal = True
-        for face, other_face in zip(self.faces, other_.faces):
-            equal = (equal and face == other_face)
-        return equal
+    # def __eq__(self, other_):
+    #     if self.__class__ != other_.__class__:
+    #         return False
+    #     equal = True
+    #     for face, other_face in zip(self.faces, other_.faces):
+    #         equal = (equal and face == other_face)
+    #     return equal
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -6042,14 +6039,16 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             bbox = primitive.bounding_box
 
     def triangulation(self):
-        mesh = vmd.DisplayMesh3D([], [])
+        # mesh = vmd.DisplayMesh3D([], [])
+        meshes = []
         for i, face in enumerate(self.faces):
             try:
                 face_mesh = face.triangulation()
-                mesh.merge_mesh(face_mesh)
+                meshes.append(face_mesh)
+                # mesh.merge_mesh(face_mesh)
             except NotImplementedError:
                 print('Warning: a face has been skipped in rendering')
-        return mesh
+        return vmd.DisplayMesh3D.merge_meshes(meshes)
 
     def babylon_script(self, name='primitive_mesh'):
         s = 'var {} = new BABYLON.Mesh("{}", scene);\n'.format(name, name)
@@ -6132,7 +6131,7 @@ class ClosedShell3D(OpenShell3D):
 
     def copy(self, deep=True, memo=None):
         new_faces = [face.copy() for face in self.faces]
-        return ClosedShell3D(new_faces, color=self.color, alpha=self.alpha,
+        return self.__class__(new_faces, color=self.color, alpha=self.alpha,
                              name=self.name)
 
     def face_on_shell(self, face):
