@@ -3,26 +3,27 @@
 """
 
 """
-import scipy.optimize
-from packaging import version
+
+from typing import List
 import math
+
+from packaging import version
 import numpy as npy
 import scipy as scp
+import scipy.optimize
 
 from geomdl import utilities, BSpline, fitting, operations
-
 from geomdl.operations import length_curve, split_curve
 
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import __version__ as _mpl_version
 import matplotlib.pyplot as plt
 import matplotlib.patches
-from typing import List
 
 import dessia_common as dc
+import plot_data.core as plot_data
 import volmdlr.core
 import volmdlr.geometry
-import plot_data.core as plot_data
 
 
 def standardize_knot_vector(knot_vector):
@@ -186,7 +187,7 @@ class LineSegment(Edge):
         return self.unit_direction_vector().normal_vector()
 
     def point_projection(self, point):
-        p1, p2 = self.points
+        p1, p2 = self.start, self.end
         u = p2 - p1
         norm_u = u.norm()
         t = (point - p1).dot(u) / norm_u ** 2

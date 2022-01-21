@@ -1,44 +1,27 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Script checking offset and Curvilinear absissa of roundedline2D
+Module containing wires & contours
 """
 
+import warnings
+import itertools
 import math
+from statistics import mean
 from typing import List
 import numpy as npy
+from scipy.spatial import Delaunay, ConvexHull
 import matplotlib.pyplot as plt
 import matplotlib.patches
 from mpl_toolkits.mplot3d import Axes3D
-from typing import List
-import networkx as nx
+import plot_data.core as plot_data
 
 import volmdlr
+from volmdlr.core_compiled import polygon_point_belongs
 import volmdlr.core
 import volmdlr.edges
 import volmdlr.display as vmd
 
-import volmdlr.geometry as vmgeo
-
-# import volmdlr.plot_data
-from volmdlr.core_compiled import (
-    LineSegment2DPointDistance,
-    polygon_point_belongs, Matrix22
-)
-
-import itertools
-from typing import List, Tuple, Dict, Union
-from scipy.spatial import Delaunay, ConvexHull
-import plot_data.core as plot_data
-
-# import cv2
-import numpy as np
-from statistics import mean
-import warnings
-
-
-# from shapely.geometry import Polygon as shapely_polygon
-# from shapely.algorithms import polylabel
 
 
 def bounding_rectangle_adjacent_contours(contours: List):
@@ -426,7 +409,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
             sorted_inter_index_dict[n_inter] = sorted_inter_index_dict[0]
 
             # Side 1: opposite side of begining of contour
-            remaining_transitions1 = [i for i in range(n_inter // 2)]
+            
+            remaining_transitions1 = list(range(n_inter // 2))
             enclosing_transitions = {}
             while len(remaining_transitions1) > 0:
                 nb_max_enclosed_transitions = -1
@@ -487,7 +471,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
             # Side 2: start of contour to first intersect (i=0) and  i odd to i+1 even
             intersections.append(intersections[0])
 
-            remaining_transitions2 = [i for i in range(n_inter // 2)]
+            remaining_transitions2 = list(range(n_inter // 2))
             while len(remaining_transitions2) > 0:
                 nb_max_enclosed_transitions = -1
                 enclosed_transitions = {}
@@ -1481,7 +1465,7 @@ class Contour2D(Contour, Wire2D):
             sorted_inter_index_dict[n_inter] = sorted_inter_index_dict[0]
 
             # Side 1: opposite side of begining of contour
-            remaining_transitions1 = [i for i in range(n_inter // 2)]
+            remaining_transitions1 = list(range(n_inter // 2))
             enclosing_transitions = {}
             while len(remaining_transitions1) > 0:
                 nb_max_enclosed_transitions = -1
@@ -1539,7 +1523,7 @@ class Contour2D(Contour, Wire2D):
             # Side 2: start of contour to first intersect (i=0) and  i odd to i+1 even
             intersections.append(intersections[0])
 
-            remaining_transitions2 = [i for i in range(n_inter // 2)]
+            remaining_transitions2 = list(range(n_inter // 2))
             while len(remaining_transitions2) > 0:
                 nb_max_enclosed_transitions = -1
                 enclosed_transitions = {}
@@ -2244,29 +2228,12 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         angle = 0.
         for ls1, ls2 in zip(self.line_segments,
                             self.line_segments[1:] + [self.line_segments[0]]):
-            l1 = ls1.to_line()
-            # print('bugging lines:', (ls1[0], ls1[1]), (ls2[0], ls2[1]))
             u = ls2.unit_direction_vector()
             x = u.dot(ls1.unit_direction_vector())
             y = u.dot(ls1.normal_vector())
             angle += math.atan2(y, x)
         return angle > 0
 
-    # def min_length(self):
-    #     L = []
-
-    #     for k in range(len(self.line_segments)):
-    #         L.append(self.line_segments[k].length())
-
-    #     return min(L)
-
-    # def max_length(self):
-    #     L = []
-
-    #     for k in range(len(self.line_segments)):
-    #         L.append(self.line_segments[k].length())
-
-    #     return max(L)
 
     def delaunay_triangulation(self):
         points = self.points
@@ -2281,13 +2248,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         tri = Delaunay(delaunay)
 
         for simplice in delaunay[tri.simplices]:
-            triangle = Triangle2D(
-                [volmdlr.Point2D(simplice[0]), volmdlr.Point2D(simplice[1]),
-                 volmdlr.Point2D(simplice[2])])
-            # triangle = Triangle2D(
-            #     [volmdlr.Point2D(simplice[0][0], simplice[0][1]), 
-            #      volmdlr.Point2D(simplice[1][0], simplice[1][1]),
-            #      volmdlr.Point2D(simplice[2][0], simplice[2][1])])
+            triangle = Triangle2D(volmdlr.Point2D(simplice[0]),
+                                  volmdlr.Point2D(simplice[1]),
+                                  volmdlr.Point2D(simplice[2]))
             delaunay_triangles.append(triangle)
 
         return delaunay_triangles
@@ -2679,7 +2642,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         Uses the scipy method ConvexHull to calculate the convex hull from
         a cloud of points
         """
-        numpy_points = np.array([(p.x, p.y) for p in points])
+        numpy_points = npy.array([(p.x, p.y) for p in points])
         hull = ConvexHull(numpy_points)
         polygon_points = []
         for simplex in hull.simplices:

@@ -159,7 +159,7 @@ class DisplayMesh3D(DisplayMesh):
         """
         positions = []
         for p in self.points:
-            positions.extend([k for k in round(p, 6)])
+            positions.extend(list(round(p, 6)))
 
         flatten_indices = []
         for i in self.triangles:
