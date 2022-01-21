@@ -1807,6 +1807,13 @@ class Line3D(Line):
 
         return self.direction_vector().is_colinear_to(v)
 
+    def point_distance(self, point):
+        vector1 = point - self.start
+        vector1.to_vector()
+        vector2 = self.end - self.start
+        vector2.to_vector()
+        return vector1.cross(vector2).norm() / vector2.norm()
+
     def plot(self, ax=None, color='k', alpha=1, dashed=True):
         if ax is None:
             ax = Axes3D(plt.figure())
@@ -2056,17 +2063,17 @@ class LineSegment3D(LineSegment):
         return None
 
     def middle_point(self):
-        l = self.length()
-        return self.point_at_abscissa(0.5 * l)
+        return self.point_at_abscissa(0.5 * self.length())
 
     def point_distance(self, point):
         vector1 = point - self.start
         vector1.to_vector()
-        vector2 = point - self.end
+        vector2 = self.end - self.start
         vector2.to_vector()
-        vector3 = self.end - self.start
-        vector3.to_vector()
-        return vector1.cross(vector2).norm() / vector3.norm()
+        proj_dist = vector1.cross(vector2).norm() / vector2.norm()
+        distance_start = self.start.point_distance(point)
+        distance_end = self.end.point_distance(point)
+        return min(proj_dist, distance_start, distance_end)
 
     def plane_projection2d(self, center, x, y):
         return LineSegment2D(self.start.plane_projection2d(center, x, y),
