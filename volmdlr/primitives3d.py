@@ -328,7 +328,7 @@ class Block(volmdlr.faces.ClosedShell3D):
                 self.frame = new_frame
                 self.faces = self.shell_faces()
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         new_origin = self.frame.origin.copy()
         new_u = self.frame.u.copy()
         new_v = self.frame.v.copy()
@@ -400,6 +400,17 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
         volmdlr.faces.ClosedShell3D.__init__(self, faces, color=color,
                                              alpha=alpha, name=name)
+
+    def copy(self, deep=True, memo=None):
+        return self.__class__(plane_origin=self.plane_origin.copy(),
+                              x=self.x.copy(),
+                              y=self.y.copy(),
+                              outer_contour2d=self.outer_contour2d.copy(),
+                              inner_contours2d=[c.copy() for c in self.inner_contours2d],
+                              extrusion_vector=self.extrusion_vector.copy(),
+                              color=self.color,
+                              alpha=self.alpha,
+                              name=self.name)
 
     def shell_faces(self):
         lower_plane = volmdlr.faces.Plane3D.from_plane_vectors(
@@ -848,7 +859,7 @@ class Cylinder(RevolvedProfile):
             self.position.rotation(center, axis, angle, copy=False)
             self.axis.rotation(volmdlr.O3D, axis, angle, copy=False)
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         new_position = self.position.copy()
         new_axis = self.axis.copy()
         return Cylinder(new_position, new_axis, self.radius, self.length,
@@ -1143,7 +1154,7 @@ class Sweep(volmdlr.faces.ClosedShell3D):
             for face in self.faces:
                 face.frame_mapping(frame, side, copy=False)
             
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         new_contour2d = self.contour2d.copy()
         new_wire3d = self.wire3d.copy()
         return Sweep(new_contour2d, new_wire3d, color=self.color,
@@ -1211,6 +1222,66 @@ class Sphere(RevolvedProfile):
                           self.radius)
         else:
             self.center.frame_mapping(frame, side, copy)
+            
+    def to_point_skin(self, resolution:float = 1e-3):
+        if resolution > 2*self.radius :
+            return []
+        
+        
+        theta = 2*math.asin(resolution/(2*self.radius))
+        
+        nb_floor = int(math.pi/theta) + 1
+        rota_theta = [n*theta for n in range(nb_floor)]
+        
+        p1 = self.center + volmdlr.X3D*self.radius
+        rota_axis = volmdlr.Y3D
+        
+        skin_points = []        
+        
+        for t in rota_theta :
+            pt_floor_init = p1.rotation(self.center, rota_axis, t)
+            
+            if math.isclose(t, 0, abs_tol = 1e-6) or math.isclose(t, math.pi, abs_tol = 1e-6):
+                skin_points.append(pt_floor_init)
+           
+            else :
+                center_floor = volmdlr.Point3D(volmdlr.X3D.dot(pt_floor_init),
+                                               self.center.y,
+                                               self.center.z)
+                
+                r_floor = center_floor.point_distance(pt_floor_init)
+                theta_floor = resolution/r_floor
+                
+                nb_points_floor = int(2*math.pi/theta_floor) + 1
+                rota_theta_floor = [n*theta_floor for n in range(nb_points_floor)]
+                
+                if (2*math.pi - rota_theta_floor[-1])/theta_floor <= 0.1:
+                    rota_theta_floor.pop()
+                
+                
+                for tf in rota_theta_floor :
+                    pt_floor = pt_floor_init.rotation(center_floor, volmdlr.X3D, tf)
+                    skin_points.append(pt_floor)
+        
+        return skin_points
+    
+    def to_point_in(self, resolution:float = 1e-3):
+        in_points = [self.center]
+        nb_spheres = int(self.radius/resolution)
+        if nb_spheres == 0:
+            return in_points
+        
+        spheres_radius = [n*resolution for n in range(1,nb_spheres+1)]
+        
+        if (self.radius - spheres_radius[-1])/resolution <= 0.1:
+            spheres_radius.pop()
+        
+        for srad in spheres_radius:
+            in_sphere = Sphere(self.center, srad)
+            in_points.extend(in_sphere.to_point_skin(resolution = resolution)) 
+        
+        
+        return in_points
 
 
 class Measure3D(volmdlr.edges.Line3D):
