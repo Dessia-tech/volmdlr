@@ -681,7 +681,7 @@ class BSplineCurve2D(Edge):
                 distance = dist
         return distance
 
-    def point_belongs(self, point2d):
+    def point_belongs(self, point2d, abs_tol=1e-10):
         '''
         check if a point2d belongs to the bspline_curve or not 
         '''
@@ -695,7 +695,7 @@ class BSplineCurve2D(Edge):
             
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            if z.cost < 1e-10: 
+            if z.cost < abs_tol: 
                 return True
         return False
 
