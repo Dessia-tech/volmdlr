@@ -6003,8 +6003,7 @@ class BSplineFace3D(Face3D):
 
         return (corresponding_directions, grid2d_direction)
 
-    def merge_two_adjacent_surfaces(self, other_bspline_face3d):
->>>>>>> dev
+    def merge_with(self, other_bspline_face3d):
         '''
         merge two adjacent faces
 
