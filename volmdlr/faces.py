@@ -4714,6 +4714,30 @@ class CylindricalFace3D(Face3D):
         else:
             return NotImplementedError
 
+    def adjacent_direction(self, other_face3d):
+        '''
+        find out in which direction the faces are adjacent
+        Parameters
+        ----------
+        other_face3d : volmdlr.faces.CylindricalFace3D
+        Returns
+        -------
+        adjacent_direction
+        '''
+
+        contour1 = self.outer_contour3d
+        contour2 = other_face3d.outer_contour3d
+
+        point1, point2 = contour1.shared_primitives_extremities(contour2)
+        point1_2d = self.surface3d.point3d_to_2d(point1)
+        point2_2d = self.surface3d.point3d_to_2d(point2)
+
+        x, y = point1_2d - point2_2d
+        if abs(x)>abs(y):
+            return 'x'
+        else:
+            return 'y'
+
 
 class ToroidalFace3D(Face3D):
     """
