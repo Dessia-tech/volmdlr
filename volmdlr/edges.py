@@ -1480,6 +1480,25 @@ class FullArc2D(Edge):
         Edge.__init__(self, start_end, start_end,
                       name=name)  # !!! this is dangerous
 
+    def to_dict(self, memo=None, use_pointers=False):
+        dict_ = self.base_dict()
+        dict_['center'] = self.center.to_dict()
+        dict_['radius'] = self.radius
+        dict_['angle'] = self.angle
+        dict_['is_trigo'] = self.is_trigo
+        dict_['start_end'] = self.start.to_dict()
+        return dict_
+    
+    def copy(self, deep=True, memo=None):
+        return FullArc2D(self.center.copy(), self.start.copy())
+    
+    @classmethod
+    def dict_to_object(cls, dict_):
+        center = volmdlr.Point2D.dict_to_object(dict_['center'])
+        start_end = volmdlr.Point2D.dict_to_object(dict_['start_end'])
+        
+        return cls(center, start_end, dict_['is_trigo'], name=dict_['name'])
+
     def __hash__(self):
         return hash(self.radius)
         # return hash(self.center) + 5*hash(self.start)
