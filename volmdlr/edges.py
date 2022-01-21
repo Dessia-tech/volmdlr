@@ -681,6 +681,24 @@ class BSplineCurve2D(Edge):
                 distance = dist
         return distance
 
+    def point_belongs(self, point2d):
+        '''
+        check if a point2d belongs to the bspline_curve or not 
+        '''
+        def f(x):
+            return (point3d - volmdlr.Point2D(*self.curve.evaluate_single(x))).norm()
+
+        x = npy.linspace(0,1,5)
+        x_init=[]
+        for xi in x:
+            x_init.append(xi)
+            
+        for x0 in x_init: 
+            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
+            if z.cost < 1e-10: 
+                return True
+        return False
+
 
 class BezierCurve2D(BSplineCurve2D):
 
