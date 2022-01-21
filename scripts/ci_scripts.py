@@ -16,7 +16,8 @@ scripts = [
             'faces/blocks_set_operations.py',
             'cloud/sewing_two_polygons.py',
             'read_steps.py',
-            'cloud/sewing_stl.py'
+            'cloud/sewing_stl.py',
+            'primitives/sphere_to_point.py'
             ]
 #  'cyl_cyl.py', 'cyl_pf.py',
 # 'ls3D_ls3D.py', 'sweep_sweep.py', 'tore_cyl.py','tore_pf.py'

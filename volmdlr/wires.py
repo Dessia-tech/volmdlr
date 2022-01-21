@@ -790,7 +790,6 @@ class Contour:
                     warnings.warn('There may exist a problem with this'
                                   ' contour, it seems it cannot be reordered.'
                                   ' Please, verify its points')
-                    # self.plot()
                     raise NotImplementedError
             #     finished = True
             # counter += 1
@@ -799,7 +798,7 @@ class Contour:
 
 
     @classmethod
-    def contours_from_edges(cls, edges):
+    def contours_from_edges(cls, edges, tol=5e-5):
         list_contours = []
         finished = False
         contour = []
@@ -818,12 +817,12 @@ class Contour:
                 else:
                     for point in points:
 
-                        if point.is_close(line.start, tol= 3e-4): #Previously tol=5e-5
+                        if point.is_close(line.start, tol=tol):
                             line.start = point
                             contour.append(line)
                             edges.remove(line)
                             break
-                        elif point.is_close(line.end, tol= 3e-4): #Previously tol=5e-5
+                        elif point.is_close(line.end, tol=tol):
                             line.end = point
                             contour.append(line)
                             edges.remove(line)
@@ -2071,6 +2070,16 @@ class Contour2D(Contour, Wire2D):
 
         return list_valid_contours
 
+<<<<<<< HEAD
+=======
+    def merge_contours(self, contour2d):
+        ''' merge two adjacent contours, and return a list of contours (outer, and inner) '''
+        
+        primitives = self.merged_contour_primitives(contour2d)
+        
+        return volmdlr.wires.Contour2D.contours_from_edges(primitives, tol= 3e-4)
+
+>>>>>>> dev
         
     def discretized_contour(self, n: float):
         """ 
@@ -2906,6 +2915,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         return ax
 
     def triangulation(self):
+        """
+        Note: triangles have been inverted for a better rendering in babylonjs
+        """
         # ear clipping
         points = self.points[:]
         initial_point_to_index = {p: i for i, p in enumerate(self.points)}
@@ -2971,8 +2983,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                         # print('ear!')
 
                         triangles.append((initial_point_to_index[p1],
-                                          initial_point_to_index[p2],
-                                          initial_point_to_index[p3]))
+                                          initial_point_to_index[p3],
+                                          initial_point_to_index[p2]))
                         remaining_points.remove(p2)
                         # ax.text(*points[initial_point_to_index[p2]], str(number_remaining_points))
                         number_remaining_points -= 1
@@ -3009,8 +3021,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         if len(remaining_points) == 3:
             p1, p2, p3 = remaining_points
             triangles.append((initial_point_to_index[p1],
-                              initial_point_to_index[p2],
-                              initial_point_to_index[p3]))
+                              initial_point_to_index[p3],
+                              initial_point_to_index[p2]))
 
         return vmd.DisplayMesh2D(points, triangles)
 
@@ -3860,6 +3872,16 @@ class Contour3D(Contour, Wire3D):
         return None
 
     
+<<<<<<< HEAD
+=======
+    def merge_contours(self, contour3d):
+        ''' merge two adjacent contours, and return a list of contours (outer, and inner) '''
+
+        primitives = self.merged_contour_primitives(contour3d)
+        
+        return volmdlr.wires.Contour3D.contours_from_edges(primitives, tol= 3e-4)
+    
+>>>>>>> dev
     @classmethod
     def from_points(cls, points: List[volmdlr.Point3D]):
         '''
