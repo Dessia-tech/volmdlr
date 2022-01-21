@@ -5748,16 +5748,16 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         self.alpha = alpha
         self.bounding_box = self._bounding_box()
 
-    def __hash__(self):
-        return sum([hash(f) for f in self.faces])
+    # def __hash__(self):
+    #     return sum([hash(f) for f in self.faces])
 
-    def __eq__(self, other_):
-        if self.__class__ != other_.__class__:
-            return False
-        equal = True
-        for face, other_face in zip(self.faces, other_.faces):
-            equal = (equal and face == other_face)
-        return equal
+    # def __eq__(self, other_):
+    #     if self.__class__ != other_.__class__:
+    #         return False
+    #     equal = True
+    #     for face, other_face in zip(self.faces, other_.faces):
+    #         equal = (equal and face == other_face)
+    #     return equal
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -6131,7 +6131,7 @@ class ClosedShell3D(OpenShell3D):
 
     def copy(self, deep=True, memo=None):
         new_faces = [face.copy() for face in self.faces]
-        return ClosedShell3D(new_faces, color=self.color, alpha=self.alpha,
+        return self.__class__(new_faces, color=self.color, alpha=self.alpha,
                              name=self.name)
 
     def face_on_shell(self, face):
