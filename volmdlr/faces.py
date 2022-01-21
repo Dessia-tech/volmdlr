@@ -3440,7 +3440,9 @@ class BSplineSurface3D(Surface3D):
         compute the 2d of a wire3d, on a Bspline surface
         '''
 
-        return self.contour3d_to_2d(wire3d)
+        contour = self.contour3d_to_2d(wire3d)
+
+        return volmdlr.wires.Wire2D(contour.primitives)
  
     
     def wire3d_to_2d_with_dimension(self, wire3d):
