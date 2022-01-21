@@ -2,7 +2,7 @@ from pylint.lint import Run
 
 MIN_NOTE = 4.7
 
-MAX_ERROR_BY_TYPE = {'cyclic-import': 4,
+MAX_ERROR_BY_TYPE = {'cyclic-import': 6,
                      'too-many-lines': 3,
                      'bare-except': 0,
                      'no-else-return': 184,
@@ -38,7 +38,7 @@ MAX_ERROR_BY_TYPE = {'cyclic-import': 4,
                      'too-many-branches': 30,
                      'consider-merging-isinstance': 6,
                      'too-many-instance-attributes': 10,
-                     'unused-argument': 54,
+                     'unused-argument': 76,
                      'undefined-loop-variable': 10,
                      'consider-using-with': 3,
                      'use-maxsplit-arg': 1,
