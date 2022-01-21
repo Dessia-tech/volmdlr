@@ -87,6 +87,7 @@ class Edge(dc.DessiaObject):
 
     @classmethod
     def from_step(cls, arguments, object_dict):
+        print('!!!!', arguments)
         obj = object_dict[arguments[3]]
         p1 = object_dict[arguments[1]]
         p2 = object_dict[arguments[2]]
@@ -97,6 +98,13 @@ class Edge(dc.DessiaObject):
             if hasattr(obj, 'trim'):
                 if obj.__class__.__name__ == 'Circle3D':
                     p1, p2 = p2, p1
+
+                ax = obj.plot()
+                obj.trim(p1, p2).plot(ax=ax, color='r')
+                p1.plot(ax=ax, color='g')
+                p2.plot(ax=ax, color='b')
+
+
                 return obj.trim(p1, p2)
 
             else:
@@ -2929,8 +2937,9 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
 
         bspline_curve = self.cut_before(parameter1)
         new_param2 = bspline_curve.point3d_to_parameter(point2)
-        trimmed_bspline_cruve = bspline_curve.cut_after(new_param2)
-        return trimmed_bspline_cruve
+        trimmed_bspline_curve = bspline_curve.cut_after(new_param2)
+
+        return trimmed_bspline_curve
 
     def trim_between_evaluations(self, parameter1: float, parameter2: float):
         print('Use BSplineCurve3D.trim instead of trim_between_evaluation')
