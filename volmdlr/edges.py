@@ -3786,7 +3786,7 @@ class Arc3D(Edge):
             start_id, end_id, curve_id)
         return content, [current_id]
 
-    def point_belongs(self, point3d):
+    def point_belongs(self, point3d, abs_tol=1e-10):
         '''
         check if a point3d belongs to the arc_3d or not 
         '''
@@ -3800,7 +3800,7 @@ class Arc3D(Edge):
 
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,length_]))
-            if z.cost < 1e-10: 
+            if z.cost < abs_tol: 
                 return True
         return False
 
