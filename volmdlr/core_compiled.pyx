@@ -818,7 +818,15 @@ class Point2D(Vector2D):
         distances = []
         for p in points:
             distances.append(self.point_distance(p))               
-        return points[distances.index(min(distances))] 
+        return points[distances.index(min(distances))]
+
+    @classmethod
+    def axial_symmetry(cls, line):
+        line_slope = (line.end.y - line.start.y) / (line.end.x - line.start.x)
+        line_origin = line.start.y - line_slope * line.start.x
+        x = 1 / (1 + line_slope**2) * (-(1 - line_slope**2)*self.x + 2*line_slope*self.y + 2*line_origin)
+        y = 1 / (1 + line_slope**2) * (2*line_slope*self.x + (1 - line_slope**2)*self.y - 2*line_slope*line_origin)
+        return cls(x, y)
 
 O2D = Point2D(0, 0)
 

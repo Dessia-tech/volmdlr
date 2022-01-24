@@ -24,6 +24,7 @@ from typing import TypeVar, List, Tuple, Dict
 # import random
 # from itertools import product 
 # from matplotlib.colors import LinearSegmentedColormap
+
 # cdict = {'red':  [(0.0, 0.0, 0.0),
 #                    (1.0, 1.0, 1.0)],
 #          'green': [(0.0, 0.0, 0.0),
@@ -126,9 +127,9 @@ class TriangularElement(vmw.Triangle2D):
         return [linear_element_1, linear_element_2, linear_element_3]
     
     def _form_functions(self):
-        a = Matrix33(1, self.points[0].x, self.points[0].y,
-                     1, self.points[1].x, self.points[1].y,
-                     1, self.points[2].x, self.points[2].y)
+        a = vm.Matrix33(1, self.points[0].x, self.points[0].y,
+                        1, self.points[1].x, self.points[1].y,
+                        1, self.points[2].x, self.points[2].y)
         try:
             inv_a = a.inverse()
         except ValueError:
@@ -161,10 +162,10 @@ class TriangularElement(vmw.Triangle2D):
         
 #     #     return x1, x2, x3
 
-#     def _area(self):
-#         u = self.points[1] - self.points[0]
-#         v = self.points[2] - self.points[0]
-#         return abs(u.cross(v)) / 2
+    def _area(self):
+        u = self.points[1] - self.points[0]
+        v = self.points[2] - self.points[0]
+        return abs(u.cross(v)) / 2
 
 #     def point_belongs(self, point):
 #         polygon = volmdlr.wires.ClosedPolygon2D(self.points)

@@ -10,6 +10,10 @@ import math
 import volmdlr as vm
 import volmdlr.primitives2d as primitives2d
 import volmdlr.primitives3d as primitives3d
+a = [1, 2]
+b = 2
+if not b in a:
+    print('oui')
 
 
 # Ajout commentaire juste pour tester
