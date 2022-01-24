@@ -41,6 +41,7 @@ surface2 = vm.faces.BSplineSurface3D.points_fitting_into_bspline_surface(grid2, 
 face2 = surface2.rectangular_cut(0, 1, 0, 1)
 
 shell = vmf.OpenShell3D([face1, face2])
+shell._check_platform()
 shell.babylonjs()
 # ax = surface.plot()
 # for p in grid:
