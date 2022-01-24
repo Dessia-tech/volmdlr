@@ -1465,7 +1465,7 @@ class Contour2D(Contour, Wire2D):
         return self.grid_triangulation(number_points_x=20,
                                        number_points_y=20)
 
-    def to_polygon(self, angle_resolution):
+    def to_polygon(self):
 
         polygon_points = []
         # print([(line.start, line.end) for line in self.primitives])
@@ -1987,8 +1987,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             for p in self.points:
                 p.translation(offset, copy=False)
 
-    def polygon_distance(self,
-                         polygon: 'volmdlr.wires.ClosedPolygon2D'):
+    def polygon_distance(self, polygon: 'volmdlr.wires.ClosedPolygon2D'):
         p = self.points[0]
         d = []
         for point in polygon.points:
