@@ -853,51 +853,38 @@ class Contour:
         return edges
 
     
-    def is_sharing_primitives_with(self, contour):
+    def is_sharing_primitives_with(self, contour, all_points = False):
         '''
-        check is two contour are sharing primitives
+        check if two contour are sharing primitives
+        "all_points" is by default False. Turn it True if you need to get points and edges used to find out shared primitives
         '''
 
         list_p = []
+        edges1 = set()
+        # edges2 = set()
 
         for edge1, edge2 in itertools.product(self.primitives,
                                               contour.primitives):
-            if edge1.point_belongs(edge2.start, 1e-5):
-                # list_p.append(edge2.start)
-                # instead of point not in list_p (due to errors)
-                if list_p == []:
-                    list_p.append(edge2.start)
-                if list_p != [] and edge2.start.point_distance(edge2.start.nearest_point(list_p)) > 1e-4:
-                    list_p.append(edge2.start)
+            edges = [edge1, edge2, edge1]
+            for edge1, edge2 in zip(edges, edges[1:]):
+                for point in [edge2.start, edge2.end]:
+                    if edge1.point_belongs(point, 1e-5):
+                        # list_p.append(point)
+                        # instead of point not in list_p (due to errors)
+                        if list_p == []:
+                            list_p.append(point)
+                        if list_p != [] and point.point_distance(point.nearest_point(list_p)) > 1e-4:
+                            list_p.append(point)
 
-            elif edge2.point_belongs(edge1.start, 1e-5):
-                # list_p.append(edge1.start)
-                # instead of point not in list_p (due to errors)
-                if list_p == []:
-                    list_p.append(edge1.start)
-                if list_p != [] and edge1.start.point_distance(edge1.start.nearest_point(list_p)) > 1e-4:
-                    list_p.append(edge1.start)
+                        # edges2.add(edge2)
+                        edges1.add(edge1)
 
-            elif edge1.point_belongs(edge2.end, 1e-5):
-                # list_p.append(edge2.end)
-                # instead of point not in list_p (due to errors)
-                if list_p == []:
-                    list_p.append(edge2.end)
-                if list_p != [] and edge2.end.point_distance(edge2.end.nearest_point(list_p)) > 1e-4:
-                    list_p.append(edge2.end)
-
-            elif edge2.point_belongs(edge1.end, 1e-5):
-                # list_p.append(edge1.end)
-                # instead of point not in list_p (due to errors)
-                if list_p == []:
-                    list_p.append(edge1.end)
-                if list_p != [] and edge1.end.point_distance(edge1.end.nearest_point(list_p)) > 1e-4:
-                    list_p.append(edge1.end)
-
-            if len(list_p) == 2:
-                return True
-
-        return False
+                    if len(list_p) == 2 and all_points == False:
+                        return True
+        if len(list_p) < 2:
+            return False
+        elif len(list_p) > 2 and all_points == True:
+            return edges1, list_p
 
     def shared_primitives_extremities(self, contour):
         '''
@@ -909,7 +896,7 @@ class Contour:
             edges1 = set()
             # edges2 = set()
             list_p = []
-    
+
             for edge1, edge2 in itertools.product(self.primitives,
                                                   contour.primitives):
                 if edge1.point_belongs(edge2.start, 1e-5):
@@ -955,7 +942,7 @@ class Contour:
     
                     edges1.add(edge1)
                     # edges2.add(edge2)
-    
+
             edges1 = list(edges1)
             # edges2 = list(edges2)
 
