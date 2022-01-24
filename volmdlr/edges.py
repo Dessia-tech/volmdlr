@@ -1480,10 +1480,17 @@ class Arc2D(Edge):
         interior = self.middle_point().rotation(self.center, math.pi)
         return Arc2D(self.start, interior, self.end)
 
+    def point_distance(self, point):
+
+       points = self.polygon_points(angle_resolution=100)
+
+       return point.point_distance(point.nearest_point(points))
+
     def point_belongs(self, point2d, abs_tol=1e-10):
         '''
         check if a point2d belongs to the arc_2d or not 
         '''
+
         def f(x):
             return (point2d - self.point_at_abscissa(x)).norm()
         length_ = self.length()  
@@ -1491,7 +1498,7 @@ class Arc2D(Edge):
         x_init=[]
         for xi in x:
             x_init.append(xi)
-
+    
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,length_]))
             if z.cost < abs_tol: 
@@ -3830,7 +3837,17 @@ class Arc3D(Edge):
             start_id, end_id, curve_id)
         return content, [current_id]
 
+<<<<<<< HEAD
     def point_belongs(self, point3d, abs_tol=1e-10):
+=======
+    def point_distance(self, point):
+
+       points = self.polygon_points(angle_resolution=100)
+
+       return point.point_distance(point.nearest_point(points))
+
+    def point_belongs(self, point3d):
+>>>>>>> dev
         '''
         check if a point3d belongs to the arc_3d or not 
         '''
