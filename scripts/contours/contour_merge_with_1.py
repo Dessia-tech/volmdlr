@@ -10,6 +10,9 @@
 import volmdlr as vm
 import volmdlr.wires
 import matplotlib.pyplot as plt
+import time
+
+time_before = time.time()
 
 # %% Contours2d
 
@@ -27,6 +30,7 @@ to_plot, title, colors = [], [], []
 # %% is_sharing_primitives_with
 
 is_sharing = contour1.is_sharing_primitives_with(contour2)
+# is_sharing = contour1.shares_primitives(contour2)
 if is_sharing:
     print('Contour1 is sharing primitives with Contour2')
 else:
@@ -88,4 +92,7 @@ for i, plot_ in enumerate(to_plot):
             p.plot(ax=axs[i], color=colors[i], width=3)
 
     axs[i].set_title(title[i])
+
+time_after = time.time()
+print('run time in seconds:', (time_after - time_before))
     

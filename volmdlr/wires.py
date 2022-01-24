@@ -858,7 +858,7 @@ class Contour:
     def shares_primitives(self, contour):
         """checks if two contour share primitives"""
         for prim1 in self.primitives:
-            if contour.primitive_over_contour(prim1):
+            if contour.primitive_over_contour(prim1, 1e-7):
                 return True
         return False
     
@@ -908,48 +908,73 @@ class Contour:
 
         return False
 
-    def shared_primitives_extremities(self, contour):
-        '''
-        extract shared primitives extremities between two adjacent contours
-        '''
+    def get_shared_primitives_extremities(self, contour):
         edges1 = set()
         list_p = []
 
         for edge1, edge2 in itertools.product(self.primitives,
                                               contour.primitives):
-            if edge1.point_belongs(edge2.start):
-                if not list_p:
-                    list_p.append(edge2.start)
-                if list_p != [] and edge2.start.point_distance(edge2.start.nearest_point(list_p)) > 1e-4:
-                    list_p.append(edge2.start)
 
+            if edge1.point_belongs(edge2.start):
+                if edge2.start not in list_p:
+                    list_p.append(edge2.start)
                 edges1.add(edge1)
 
             elif edge2.point_belongs(edge1.start):
-                if not list_p:
+                if edge1.start not in list_p:
                     list_p.append(edge1.start)
-                if list_p != [] and edge1.start.point_distance(edge1.start.nearest_point(list_p)) > 1e-4:
-                    list_p.append(edge1.start)
-
                 edges1.add(edge1)
 
             elif edge1.point_belongs(edge2.end):
-                if not list_p:
+                if edge2.end not in list_p:
                     list_p.append(edge2.end)
-                if list_p != [] and edge2.end.point_distance(edge2.end.nearest_point(list_p)) > 1e-4:
-                    list_p.append(edge2.end)
-
                 edges1.add(edge1)
 
             elif edge2.point_belongs(edge1.end):
-                if not list_p:
+                if edge1.end not in list_p:
                     list_p.append(edge1.end)
-                if list_p != [] and edge1.end.point_distance(edge1.end.nearest_point(list_p)) > 1e-4:
-                    list_p.append(edge1.end)
-
                 edges1.add(edge1)
 
         edges1 = list(edges1)
+
+        return list_p, edges1
+
+    def validate_shared_primitives_extremities(self, list_points, edges):
+        if isinstance(self, volmdlr.wires.Contour2D):
+            contours1 = volmdlr.wires.Contour2D.contours_from_edges(edges)
+        elif isinstance(self, volmdlr.wires.Contour3D):
+            contours1 = volmdlr.wires.Contour3D.contours_from_edges(edges)
+        points = []
+
+        for c in contours1:
+            primitives = c.primitives
+            br1 = False
+            br2 = False
+            for prim in primitives:
+                for p in list_points:
+                    if p.point_distance(prim.start) < 1e-4:
+                        points.append(prim.start)
+                        br1 = True
+                        break
+                if br1:
+                    break
+
+            for prim in primitives[::-1]:
+                for p in list_points:
+                    if p.point_distance(
+                            prim.end) < 1e-4 and p not in points:
+                        points.append(prim.end)
+                        br2 = True
+                        break
+                if br2:
+                    break
+        return points
+
+    def shared_primitives_extremities(self, contour):
+        '''
+        extract shared primitives extremities between two adjacent contours
+        '''
+        list_p, edges1 = self.get_shared_primitives_extremities(contour)
 
         if len(list_p) < 2:
             raise ValueError(
@@ -957,45 +982,27 @@ class Contour:
         elif len(list_p) == 2:
             return list_p
         else:
-            if isinstance(self, volmdlr.wires.Contour2D):
-                contours1 = volmdlr.wires.Contour2D.contours_from_edges(edges1)
-                # contours2 = volmdlr.wires.Contour2D.contours_from_edges(edges2)
-            elif isinstance(self, volmdlr.wires.Contour3D):
-                contours1 = volmdlr.wires.Contour3D.contours_from_edges(edges1)
-                # contours2 = volmdlr.wires.Contour3D.contours_from_edges(edges2)
-            points = []
-
-            for c in contours1:
-                primitives = c.primitives
-                br1 = False
-                br2 = False
-                for i in range(0,len(primitives)):
-                    for p in list_p: #due to errors
-                        if p.point_distance(primitives[i].start) < 1e-4:
-                            points.append(primitives[i].start)
-                            br1=True
-                        if br1:
-                            break
-                    if br1:
-                        break
-                    # if primitives[i].start in list_p:
-                    #     points.append(primitives[i].start)
-                        # break
-
-                for i in range(len(primitives)-1, -1, -1):
-                    for p in list_p: #due to errors
-                        if p.point_distance(primitives[i].end) < 1e-4:
-                            points.append(primitives[i].end)
-                            br2=True
-                        if br2:
-                            break
-                    if br2:
-                        break
-                    # if primitives[i].end in list_p:
-                    #     points.append(primitives[i].end)
-                        # break
+            points = self.validate_shared_primitives_extremities(
+                list_p, edges1)
 
             return points
+
+    def get_merging_primitives(self, contour, point1, point2,
+                               shared_primitives=False):
+        merge_primitives_prim = self.extract_without_primitives(point1,
+                                                                point2,
+                                                                False)
+        if contour.point_over_contour(
+                merge_primitives_prim[0].middle_point()) is not shared_primitives:
+            merge_primitives_prim = self.extract_without_primitives(point1,
+                                                                    point2,
+                                                                    True)
+        return merge_primitives_prim
+
+    def get_shared_pritimitives(self, contour, point1, point2,
+                                shared_primitives):
+        return self.get_merging_primitives(contour, point1, point2,
+                                           shared_primitives)
 
     def shared_primitives_with(self, contour):
         '''
@@ -1008,26 +1015,10 @@ class Contour:
         points = self.shared_primitives_extremities(contour)
         for i in range(0, len(points), 2):
             point1, point2 = points[i], points[i+1]
-
-            shared_primitives_prim = self.extract_without_primitives(point1,
-                                                                     point2,
-                                                                     False)
-            if contour.point_over_contour(shared_primitives_prim[0].middle_point()) is False:
-                shared_primitives_1.extend(self.extract_without_primitives(point1,
-                                                                           point2,
-                                                                           True))
-            else:
-                shared_primitives_1.extend(shared_primitives_prim)
-    
-            shared_primitives_prim = contour.extract_without_primitives(point1,
-                                                                          point2,
-                                                                          False)
-            if self.point_over_contour(shared_primitives_prim[0].middle_point()) is False:
-                shared_primitives_2.extend(contour.extract_without_primitives(point1,
-                                                                                point2,
-                                                                                True))
-            else:
-                shared_primitives_2.extend(shared_primitives_prim)
+            shared_primitives_1.extend(self.get_shared_pritimitives(
+                contour, point1, point2, True))
+            shared_primitives_2.extend(contour.get_shared_pritimitives(
+                self, point1, point2, True))
 
         return [shared_primitives_1, shared_primitives_2]
 
@@ -1037,6 +1028,7 @@ class Contour:
         '''
 
         points = self.shared_primitives_extremities(contour)
+        # print('points:', points)
         merge_primitives = []
 
         for i in range(1, len(points)+1, 2):
@@ -1044,32 +1036,14 @@ class Contour:
                 point1, point2 = points[i], points[0]
             else:
                 point1, point2 = points[i], points[i+1]
-
-            merge_primitives_prim = self.extract_without_primitives(point1,
-                                                                    point2,
-                                                                    False)
-            if contour.point_over_contour(merge_primitives_prim[0].middle_point()) is True:
-                merge_primitives_prim = self.extract_without_primitives(point1,
-                                                                        point2,
-                                                                        True)
-                merge_primitives.extend(merge_primitives_prim)
-            else:
-                merge_primitives.extend(merge_primitives_prim)
-
-
-            merge_primitives_prim = contour.extract_without_primitives(point1,
-                                                                         point2,
-                                                                         False)
-            if self.point_over_contour(merge_primitives_prim[0].middle_point()) is True:
-                merge_primitives_prim = contour.extract_without_primitives(point1,
-                                                                             point2,
-                                                                             True)
-                merge_primitives.extend(merge_primitives_prim)
-            else:
-                merge_primitives.extend(merge_primitives_prim)
+            merge_primitives.extend(self.get_merging_primitives(contour,
+                                                                point1, point2))
+            merge_primitives.extend(contour.get_merging_primitives(self,
+                                                                   point1,
+                                                                   point2))
 
         return merge_primitives
-    
+
     def edges_order_with_adjacent_contour(self, contour):
         """
         check if the shared edges between two adjacent contours are traversed with two different directions along each contour
@@ -1966,6 +1940,26 @@ class Contour2D(Contour, Wire2D):
                 break
         return intersecting_points
 
+    @classmethod
+    def merge_wires_primitives(cls,
+                               primitives_wire1: List[
+                                   volmdlr.core.Primitive2D],
+                               primitives_wire2: List[
+                                   volmdlr.core.Primitive2D]):
+        if primitives_wire1[0].start == \
+                primitives_wire2[0].start:
+            contour = cls(primitives_wire2)
+            contour.invert_contour()
+            primitives = contour.primitives + \
+                         primitives_wire1
+        elif primitives_wire1[0].start == \
+                primitives_wire2[-1].end:
+            primitives = primitives_wire2 + \
+                         primitives_wire1
+        contour = cls(primitives)
+        contour.order_contour()
+        return contour
+
     def divide(self, contours, inside):
         new_base_contours = [self]
         finished = False
@@ -1983,43 +1977,16 @@ class Contour2D(Contour, Wire2D):
                         point1) and base_contour.point_over_contour(point2):
                     cutting_points = [point1, point2]
                 if cutting_points:
-                    extracted_outerpoints_contour1 = \
-                        volmdlr.wires.Contour2D.extract_contours(base_contour,
-                                                                 cutting_points[0],
-                                                                 cutting_points[1],
-                                                                 inside)[0]
-                    extracted_innerpoints_contour1 = \
-                        volmdlr.wires.Contour2D.extract_contours(base_contour,
-                                                                 cutting_points[0],
-                                                                 cutting_points[1],
-                                                                 not inside)[0]
-                    primitives1 = extracted_outerpoints_contour1.primitives + cutting_contour.primitives
-                    primitives2 = extracted_innerpoints_contour1.primitives + cutting_contour.primitives
-                    if extracted_outerpoints_contour1.primitives[0].start == \
-                            cutting_contour.primitives[0].start:
-                        cutting_contour_new = cutting_contour.invert_contour(
-                            copy=True)
-                        primitives1 = cutting_contour_new.primitives + \
-                                      extracted_outerpoints_contour1.primitives
-                    elif extracted_outerpoints_contour1.primitives[0].start == \
-                            cutting_contour.primitives[-1].end:
-                        primitives1 = cutting_contour.primitives + \
-                                      extracted_outerpoints_contour1.primitives
-
-                    if extracted_innerpoints_contour1.primitives[0].start == \
-                            cutting_contour.primitives[0].start:
-                        cutting_contour_new = \
-                            cutting_contour.invert_contour(copy=True)
-                        primitives2 = cutting_contour_new.primitives + \
-                                      extracted_innerpoints_contour1.primitives
-                    elif extracted_innerpoints_contour1.primitives[
-                            0].start == cutting_contour.primitives[-1].end:
-                            primitives2 = cutting_contour.primitives + extracted_innerpoints_contour1.primitives
-                    contour1 = volmdlr.wires.Contour2D(primitives1)
-                    contour1.order_contour()
-                    contour2 = volmdlr.wires.Contour2D(primitives2)
-                    contour2.order_contour()
-
+                    extracted_outerpoints_primitives = \
+                        base_contour.extract_without_primitives(
+                            cutting_points[0], cutting_points[1], inside)
+                    extracted_innerpoints_primitives = \
+                        base_contour.extract_without_primitives(
+                            cutting_points[0], cutting_points[1], not inside)
+                    contour1 = Contour2D.merge_wires_primitives(
+                        extracted_outerpoints_primitives, cutting_contour.primitives)
+                    contour2 = Contour2D.merge_wires_primitives(
+                        extracted_innerpoints_primitives, cutting_contour.primitives)
                     new_base_contours.remove(base_contour)
                     for cntr in [contour1, contour2]:
                         valid_contour = True
@@ -4768,97 +4735,126 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
         return True
 
     @staticmethod
+    def is_sewing_forward(closing_point_index, list_closing_point_indexes) -> bool:
+        if closing_point_index < list_closing_point_indexes[-1]:
+            return False
+        return True
+
+    @staticmethod
+    def sewing_closing_points_to_remove(closing_point_index,
+                                        list_closing_point_indexes,
+                                        new_list_closing_point):
+        list_remove_closing_points = []
+        if len(list_closing_point_indexes) > 2 and \
+                list_closing_point_indexes[
+                    -2] < closing_point_index < \
+                list_closing_point_indexes[-1] - 1:
+            list_remove_closing_points.append(list_closing_point_indexes[-1])
+        elif len(new_list_closing_point) > 3 and \
+                new_list_closing_point[-3] < closing_point_index < \
+                new_list_closing_point[-1] - 3:
+            for index in list_closing_point_indexes:
+                if index == new_list_closing_point[-1] or \
+                        index == new_list_closing_point[-2]:
+                    list_remove_closing_points.append(index)
+        elif len(list_closing_point_indexes) > 5 and \
+                list_closing_point_indexes[
+                    -5] < closing_point_index < \
+                list_closing_point_indexes[-1] - 5 and \
+                list_closing_point_indexes[-5] != \
+                list_closing_point_indexes[-6]:
+            list_remove_closing_points.extend(
+                [list_closing_point_indexes[-1],
+                 list_closing_point_indexes[-2],
+                 list_closing_point_indexes[-3],
+                 list_closing_point_indexes[-4]])
+        return list_remove_closing_points
+
+    @staticmethod
+    def sewing_closing_point_past_origin(closing_point_index,
+                                         list_closing_point_indexes,
+                                         passed_by_zero_index,
+                                         ratios_denominator):
+        last_new_point_index_ratio = (
+            list_closing_point_indexes[-1] -
+            closing_point_index) / ratios_denominator
+        if passed_by_zero_index:
+            first_to_new_point_index_ratio = \
+                (list_closing_point_indexes[0] -
+                 closing_point_index) / ratios_denominator
+            if math.isclose(first_to_new_point_index_ratio, 1, abs_tol=0.3):
+                closing_point_index = list_closing_point_indexes[0]
+        else:
+            if closing_point_index > list_closing_point_indexes[0]:
+                new_to_first_point_index_ratio = \
+                    (closing_point_index -
+                     list_closing_point_indexes[0]) / ratios_denominator
+                if math.isclose(
+                        new_to_first_point_index_ratio, 0, abs_tol=0.3) and \
+                        math.isclose(last_new_point_index_ratio, 1,
+                                     abs_tol=0.3):
+                    passed_by_zero_index = True
+                    closing_point_index = list_closing_point_indexes[0]
+                else:
+                    closing_point_index = list_closing_point_indexes[-1]
+            else:
+                new_to_last_point_index_ratio = \
+                    (closing_point_index -
+                     list_closing_point_indexes[-1]) / ratios_denominator
+                if math.isclose(new_to_last_point_index_ratio,
+                                -1, abs_tol=0.45):
+                    if ratios_denominator - list_closing_point_indexes[-1] < 10:
+                        passed_by_zero_index = True
+                elif list_closing_point_indexes.count(
+                        list_closing_point_indexes[-1]) < 5:
+                    closing_point_index = \
+                        list_closing_point_indexes[-1]
+                elif ratios_denominator - list_closing_point_indexes[-1] >= 5:
+                    closing_point_index = \
+                        list_closing_point_indexes[-1] + 5
+                elif list_closing_point_indexes[-1] <= ratios_denominator - 2:
+                    closing_point_index = ratios_denominator - 2
+        return closing_point_index, passed_by_zero_index
+
+    @staticmethod
     def validate_closing_point(closing_point_index, list_closing_point_indexes,
-                               passed_by_zero_index, ratio_denom):
+                               passed_by_zero_index, ratios_denominator):
         if closing_point_index == list_closing_point_indexes[-1]:
             return closing_point_index, [], passed_by_zero_index
         list_remove_closing_points = []
-        ratio = (list_closing_point_indexes[-1] - closing_point_index) / ratio_denom
+        last_new_point_index_ratio = (list_closing_point_indexes[-1] - closing_point_index) / ratios_denominator
         new_list_closing_point = list(dict.fromkeys(list_closing_point_indexes))
-        if closing_point_index < list_closing_point_indexes[-1]:
-            if len(list_closing_point_indexes) > 2 and \
-                    list_closing_point_indexes[
-                        -2] < closing_point_index < list_closing_point_indexes[-1] - 1:
-                list_remove_closing_points.append(list_closing_point_indexes[-1])
-            elif len(new_list_closing_point) > 3 and \
-                    new_list_closing_point[
-                        -3] < closing_point_index < new_list_closing_point[-1] - 3:
-                for idx in list_closing_point_indexes:
-                    if idx == new_list_closing_point[-1] or\
-                            idx == new_list_closing_point[-2]:
-                        list_remove_closing_points.append(idx)
-            elif len(list_closing_point_indexes) > 5 and \
-                    list_closing_point_indexes[
-                        -5] < closing_point_index < \
-                    list_closing_point_indexes[-1] - 5 and \
-                    list_closing_point_indexes[-5] != \
-                    list_closing_point_indexes[-6]:
-                list_remove_closing_points.extend(
-                    [list_closing_point_indexes[-1],
-                     list_closing_point_indexes[-2],
-                     list_closing_point_indexes[-3],
-                     list_closing_point_indexes[-4]])
-            elif closing_point_index in list_closing_point_indexes:
-                closing_point_index = list_closing_point_indexes[-1]
-            elif math.isclose(ratio, 0, abs_tol=0.3):
+        if not ClosedPolygon3D.is_sewing_forward(closing_point_index,
+                                                 list_closing_point_indexes):
+            list_remove_closing_points = \
+                ClosedPolygon3D.sewing_closing_points_to_remove(
+                    closing_point_index, list_closing_point_indexes,
+                    new_list_closing_point)
+            if list_remove_closing_points:
+                return closing_point_index, list_remove_closing_points, passed_by_zero_index
+
+            elif closing_point_index in list_closing_point_indexes or \
+                    math.isclose(last_new_point_index_ratio, 0, abs_tol=0.3):
                 closing_point_index = list_closing_point_indexes[-1]
             else:
-                if passed_by_zero_index:
-                    ratio = (list_closing_point_indexes[
-                                 0] - closing_point_index) / ratio_denom
-                    if math.isclose(ratio, 1, abs_tol=0.3):
-                        closing_point_index = list_closing_point_indexes[0]
-                else:
-                    if closing_point_index > list_closing_point_indexes[0]:
-                        ratio1 = (closing_point_index -
-                                  list_closing_point_indexes[
-                                      0]) / ratio_denom
-                        if math.isclose(ratio1, 0, abs_tol=0.3) and\
-                                math.isclose(ratio, 1, abs_tol=0.3):
-                            passed_by_zero_index = True
-                            closing_point_index = list_closing_point_indexes[0]
-                        else:
-                            closing_point_index = list_closing_point_indexes[-1]
-                    else:
-                        ratio1 = (closing_point_index -
-                                  list_closing_point_indexes[
-                                      -1]) / ratio_denom
-                        if math.isclose(ratio1, -1, abs_tol=0.45):
-                            if ratio_denom - list_closing_point_indexes[-1] < 10:
-                                passed_by_zero_index = True
-                            elif ratio_denom - list_closing_point_indexes[
-                                -1] >= 5:
-                                closing_point_index = \
-                                    list_closing_point_indexes[-1] + 5
-                            else:
-                                closing_point_index = ratio_denom - 2
-                        else:
-                            if list_closing_point_indexes.count(
-                                    list_closing_point_indexes[-1]) < 5:
-                                closing_point_index = \
-                                    list_closing_point_indexes[-1]
-                            elif ratio_denom - list_closing_point_indexes[-1] >= 5:
-                                closing_point_index =\
-                                    list_closing_point_indexes[-1] + 5
-                            elif list_closing_point_indexes[-1] <= ratio_denom - 2:
-                                closing_point_index = ratio_denom - 2
+                closing_point_index, passed_by_zero_index = \
+                    ClosedPolygon3D.sewing_closing_point_past_origin(
+                        closing_point_index, list_closing_point_indexes,
+                        passed_by_zero_index, ratios_denominator)
+        else:
+            if closing_point_index in list_closing_point_indexes or \
+                    (len(list_closing_point_indexes) > 2 and
+                     list_closing_point_indexes[0] < closing_point_index <
+                     list_closing_point_indexes[-1]) or \
+                    (passed_by_zero_index and closing_point_index >
+                     list_closing_point_indexes[0]) or \
+                    (list_closing_point_indexes[0] == 0 and
+                     math.isclose(last_new_point_index_ratio, -1, abs_tol=0.3)) or \
+                    math.isclose(last_new_point_index_ratio, -1, abs_tol=0.3):
 
-        elif closing_point_index in list_closing_point_indexes:
-            closing_point_index = list_closing_point_indexes[-1]
-        elif len(list_closing_point_indexes) > 2 and \
-                list_closing_point_indexes[0] < closing_point_index < \
-                list_closing_point_indexes[-1]:
-            closing_point_index = list_closing_point_indexes[-1]
-        elif passed_by_zero_index and closing_point_index > \
-                list_closing_point_indexes[0]:
-            closing_point_index = list_closing_point_indexes[-1]
-        elif list_closing_point_indexes[0] == 0 and math.isclose(ratio, -1,
-                                                                 abs_tol=0.3):
-            closing_point_index = list_closing_point_indexes[-1]
-        elif math.isclose(ratio, -1, abs_tol=0.3):
-            closing_point_index = list_closing_point_indexes[-1]
-        elif closing_point_index - list_closing_point_indexes[-1] > 5 and \
-            list_closing_point_indexes[-1] + 4 <= ratio_denom-1:
+                closing_point_index = list_closing_point_indexes[-1]
+            elif closing_point_index - list_closing_point_indexes[-1] > 5 and \
+                    list_closing_point_indexes[-1] + 4 <= ratios_denominator-1:
                 closing_point_index = list_closing_point_indexes[-1] + 4
 
         return closing_point_index, list_remove_closing_points, passed_by_zero_index
@@ -4884,7 +4880,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
         triangles = []
         list_closing_point_indexes = []
         passed_by_zero_index = False
-        ratio_denom = len(polygon2_2d.points)
+        ratios_denominator = len(polygon2_2d.points)
         previous_closing_point_index = None
         for i, primitive1 in enumerate(polygon1_2d.line_segments):
             list_remove_closing_points = []
@@ -4907,7 +4903,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                 closing_point_index, list_remove_closing_points,\
                     passed_by_zero_index = self.validate_closing_point(
                         closing_point_index, list_closing_point_indexes,
-                        passed_by_zero_index, ratio_denom)
+                        passed_by_zero_index, ratios_denominator)
 
             if list_remove_closing_points:
                 new_list_closing_point_indexes = list(dict.fromkeys(list_closing_point_indexes))
