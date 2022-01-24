@@ -5825,21 +5825,28 @@ class BSplineFace3D(Face3D):
     
             shared = []
             for k, p1 in enumerate(contour1.primitives):
-                if ((p1.start == points1[dis.index(dis_sorted[0])] and p1.end == points1[dis.index(dis_sorted[1])])
+                if dis_sorted[0] == dis_sorted[1]:
+                    indices = npy.where(np.array(dis) == dis_sorted[0])[0]
+                    index1 = indices[0]
+                    index2 = indices[1]
+                else:                   
+                    index1 = dis.index(dis_sorted[0])
+                    index2 = dis.index(dis_sorted[1])
+                if ((p1.start == points1[index1] and p1.end == points1[index2])
                     or
-                    (p1.end == points1[dis.index(dis_sorted[0])] and p1.start == points1[dis.index(dis_sorted[1])])):
+                    (p1.end == points1[index1] and p1.start == points1[index2])):
     
                     shared.append(p1)
                     i = k
     
             for k, p2 in enumerate(contour2.primitives):
-                if ((p2.start == points2[ind[dis.index(dis_sorted[0])]] and p2.end == points2[ind[dis.index(dis_sorted[1])]])
+                if ((p2.start == points2[ind[index1]] and p2.end == points2[ind[index2]])
                     or
-                    (p2.end == points2[ind[dis.index(dis_sorted[0])]] and p2.start == points2[ind[dis.index(dis_sorted[1])]])):
+                    (p2.end == points2[ind[index1]] and p2.start == points2[ind[index2]])):
     
                     shared.append(p2)
                     j = k
-    
+
             points = [contour2.primitives[j].start, contour2.primitives[j].end]
     
             if points.index(contour1.primitives[i].start.nearest_point(points)) == 1:
