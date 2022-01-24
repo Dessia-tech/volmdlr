@@ -3837,17 +3837,13 @@ class Arc3D(Edge):
             start_id, end_id, curve_id)
         return content, [current_id]
 
-<<<<<<< HEAD
-    def point_belongs(self, point3d, abs_tol=1e-10):
-=======
     def point_distance(self, point):
 
        points = self.polygon_points(angle_resolution=100)
 
        return point.point_distance(point.nearest_point(points))
 
-    def point_belongs(self, point3d):
->>>>>>> dev
+    def point_belongs(self, point3d, abs_tol=1e-10):
         '''
         check if a point3d belongs to the arc_3d or not 
         '''
