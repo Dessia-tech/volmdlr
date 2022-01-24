@@ -549,7 +549,7 @@ class Surface3D(dc.DessiaObject):
         primitives2d = []
         last_primitive = None
 
-        should_study_periodicity = self.x_periodicity or self.y_periodicity
+        # should_study_periodicity = self.x_periodicity or self.y_periodicity
         for primitive3d in contour3d.primitives:
             method_name = '{}_to_2d'.format(
                 primitive3d.__class__.__name__.lower())
@@ -1684,7 +1684,7 @@ class SphericalSurface3D(Surface3D):
         return [vme.Arc3D(start, interior, end)]
 
     def plot(self, ax=None, color='grey', alpha=0.5):
-        points = []
+        # points = []
         for i in range(20):
             theta = i / 20. * volmdlr.TWO_PI
             t_points = []
@@ -1810,7 +1810,7 @@ class BSplineSurface3D(Surface3D):
         surface.knotvector_u = knot_vector_u
         surface.knotvector_v = knot_vector_v
         surface.delta = 0.05
-        surface_points = surface.evalpts
+        # surface_points = surface.evalpts
 
         self.surface = surface
         # self.points = [volmdlr.Point3D(*p) for p in surface_points]
