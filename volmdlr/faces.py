@@ -4531,62 +4531,48 @@ class CylindricalFace3D(Face3D):
 
         if not (self.surface2d.outer_contour.point_belongs(pt1_2d)):
             # Find the closest one
-            # TO DO : calculate distance between polygon and point : polygon.point_distance()
             
-            # points_contours1 = self.contours2d[0].tessel_points
-
-            # poly1 = volmdlr.ClosedPolygon2D(points_contours1)
             poly1 = self.surface2d.outer_contour.to_polygon()
             d1, new_pt1_2d = poly1.point_border_distance(pt1_2d,
                                                          return_other_point=True)
-            pt1 = volmdlr.Point3D(r1 * math.cos(new_pt1_2d.vector[0]),
-                                  r1 * math.sin(new_pt1_2d.vector[0]),
-                                  new_pt1_2d.vector[1])
+            pt1 = volmdlr.Point3D(r1 * math.cos(new_pt1_2d[0]),
+                                  r1 * math.sin(new_pt1_2d[0]),
+                                  new_pt1_2d[1])
             p1 = frame1.old_coordinates(pt1)
 
         if not (other_cyl.surface2d.outer_contour.point_belongs(pt2_2d)):
             # Find the closest one
-            # TO DO : calculate distance between polygon and point : polygon.point_distance()
             
-            # points_contours2 = other_cyl.contours2d[0].tessel_points
-
-            # poly2 = volmdlr.ClosedPolygon2D(points_contours2)
             poly2 = other_cyl.surface2d.outer_contour.to_polygon()
             d2, new_pt2_2d = poly2.point_border_distance(pt2_2d,
                                                          return_other_point=True)
-            pt2 = volmdlr.Point3D(r2 * math.cos(new_pt2_2d.vector[0]),
-                                  r2 * math.sin(new_pt2_2d.vector[0]),
-                                  new_pt2_2d.vector[1])
+            pt2 = volmdlr.Point3D(r2 * math.cos(new_pt2_2d[0]),
+                                  r2 * math.sin(new_pt2_2d[0]),
+                                  new_pt2_2d[1])
             p2 = frame2.old_coordinates(pt2)
 
         return p1, p2
 
-    def minimum_distance_points_plane(self,
-                                      planeface):  # Planeface with contour2D
-        #### ADD THE FACT THAT PLANEFACE.CONTOURS : [0] = contours totale, le reste = trous
+    def minimum_distance_points_plane(self, planeface):
+        #Doesn't take in to account hole
+        
         r = self.radius
-        min_h1, min_theta1, max_h1, max_theta1 = self.minimum_maximum(
-            self.contours2d[0], r)
+        min_h1, min_theta1, max_h1, max_theta1 = self.minimum_maximum()
 
         n1 = self.normal
-        u1 = self.cylindricalsurface3d.frame.u
-        v1 = self.cylindricalsurface3d.frame.v
+        u1 = self.surface3d.frame.u
+        v1 = self.surface3d.frame.v
         frame1 = volmdlr.Frame3D(self.center, u1, v1, n1)
-        # st1 = volmdlr.Point3D((r*math.cos(min_theta1), r*math.sin(min_theta1), min_h1))
-        # start1 = frame1.old_coordinates(st1)
 
-        poly2d = planeface.polygon2D
+        poly2d = planeface.surface2d.outer_contour.to_polygon()
         pfpoints = poly2d.points
-        xmin, ymin = min([pt[0] for pt in pfpoints]), min(
-            [pt[1] for pt in pfpoints])
-        xmax, ymax = max([pt[0] for pt in pfpoints]), max(
-            [pt[1] for pt in pfpoints])
-        origin, vx, vy = planeface.plane.origin, planeface.plane.vectors[0], \
-                         planeface.plane.vectors[1]
-        pf1_2d, pf2_2d = volmdlr.Point2D((xmin, ymin)), volmdlr.Point2D(
-            (xmin, ymax))
-        pf3_2d, pf4_2d = volmdlr.Point2D((xmax, ymin)), volmdlr.Point2D(
-            (xmax, ymax))
+        xmin, ymin = min([pt.x for pt in pfpoints]), min([pt.y for pt in pfpoints])
+        xmax, ymax = max([pt.x for pt in pfpoints]), max([pt.y for pt in pfpoints])
+        origin = planeface.surface3d.frame.origin
+        vx, vy = planeface.surface3d.frame.u, planeface.surface3d.frame.v
+                         
+        pf1_2d, pf2_2d = volmdlr.Point2D(xmin, ymin), volmdlr.Point2D(xmin, ymax)
+        pf3_2d, pf4_2d = volmdlr.Point2D(xmax, ymin), volmdlr.Point2D(xmax, ymax)
         pf1, pf2 = pf1_2d.to_3d(origin, vx, vy), pf2_2d.to_3d(origin, vx, vy)
         pf3, _ = pf3_2d.to_3d(origin, vx, vy), pf4_2d.to_3d(origin, vx, vy)
 
@@ -4632,31 +4618,30 @@ class CylindricalFace3D(Face3D):
         res1 = scp.optimize.least_squares(distance_squared, x01,
                                           bounds=minimax)
 
-        pt1 = volmdlr.Point3D(
-            (r * math.cos(res1.x[1]), r * math.sin(res1.x[1]), res1.x[0]))
+        pt1 = volmdlr.Point3D(r * math.cos(res1.x[1]), r * math.sin(res1.x[1]), res1.x[0])
         p1 = frame1.old_coordinates(pt1)
         p2 = pf1 + res1.x[2] * u + res1.x[3] * v
-        pt1_2d = volmdlr.Point2D((res1.x[1], res1.x[0]))
+        pt1_2d = volmdlr.Point2D(res1.x[1], res1.x[0])
         pt2_2d = p2.to_2d(pf1, u, v)
 
-        if not (self.contours2d[0].point_belongs(pt1_2d)):
+        if not (self.surface2d.outer_contour.point_belongs(pt1_2d)):
             # Find the closest one
-            points_contours1 = self.contours2d[0].tessel_points
 
-            poly1 = volmdlr.ClosedPolygon2D(points_contours1)
-            d1, new_pt1_2d = poly1.PointBorderDistance(pt1_2d,
-                                                       return_other_point=True)
-            pt1 = volmdlr.Point3D((r * math.cos(new_pt1_2d.vector[0]),
-                                   r * math.sin(new_pt1_2d.vector[0]),
-                                   new_pt1_2d.vector[1]))
+            poly1 = self.surface2d.outer_contour.to_polygon()
+            d1, new_pt1_2d = poly1.point_border_distance(pt1_2d,
+                                                         return_other_point=True)
+            pt1 = volmdlr.Point3D(r * math.cos(new_pt1_2d[0]),
+                                  r * math.sin(new_pt1_2d[0]),
+                                  new_pt1_2d[1])
             p1 = frame1.old_coordinates(pt1)
 
-        if not (planeface.contours[0].point_belongs(pt2_2d)):
+        if not (planeface.surface2d.outer_contour.point_belongs(pt2_2d)):
             # Find the closest one
-            d2, new_pt2_2d = planeface.polygon2D.PointBorderDistance(pt2_2d,
-                                                                     return_other_point=True)
-
-            p2 = new_pt2_2d.to_3d(pf1, u, v)
+            poly2 = planeface.surface2d.outer_contour.to_polygon()
+            d2, new_pt2_2d = poly2.point_border_distance(pt2_2d,
+                                                         return_other_point=True)
+            pt2 = volmdlr.Point2D(new_pt2_2d[0], new_pt2_2d[1])
+            p2 = pt2.to_3d(pf1, u, v)
 
         return p1, p2
 

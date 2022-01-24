@@ -541,6 +541,7 @@ class Step:
         shell_nodes = []
         # sr_nodes = []
         not_shell_nodes = []
+        
         for node in self.graph.nodes:
             if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP':
                 frame_mapping_nodes.append(node)
@@ -608,6 +609,7 @@ class Step:
                         # depth in the right order, leading to error
                         instanciate_ids.append(key.args[0])
         else:
+            # for instanciate_id in nodes[::-1]:
             for instanciate_id in nodes[::-1]:
                 # instanciate_id = edge[1]
                 t = time.time()
