@@ -1,6 +1,6 @@
 from pylint.lint import Run
 
-MIN_NOTE = 4.7
+MIN_NOTE = 5.2
 
 MAX_ERROR_BY_TYPE = {'cyclic-import': 6,
                      'too-many-lines': 3,
@@ -16,7 +16,7 @@ MAX_ERROR_BY_TYPE = {'cyclic-import': 6,
                      'too-many-arguments': 64,
                      'undefined-variable': 3,
                      'function-redefined': 4,
-                     'attribute-defined-outside-init': 8,
+                     'attribute-defined-outside-init': 9,
                      'simplifiable-if-expression': 3,
                      'redefined-builtin': 3,
                      'unnecessary-comprehension': 0,
@@ -38,7 +38,7 @@ MAX_ERROR_BY_TYPE = {'cyclic-import': 6,
                      'too-many-branches': 30,
                      'consider-merging-isinstance': 6,
                      'too-many-instance-attributes': 10,
-                     'unused-argument': 76,
+                     'unused-argument': 80,
                      'undefined-loop-variable': 10,
                      'consider-using-with': 3,
                      'use-maxsplit-arg': 1,

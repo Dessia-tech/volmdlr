@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import volmdlr as vm
+# import volmdlr as vm
 import volmdlr.step
 import volmdlr.cloud as vmcd
 
