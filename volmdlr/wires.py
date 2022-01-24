@@ -1159,102 +1159,6 @@ class Contour2D(Contour, Wire2D):
                 points.append(edge.start)
         return ClosedPolygon2D(points)
 
-    # def _primitives_analysis(self):
-    #     """
-    #     An internal arc is an arc that has his interior point inside the polygon
-    #     """
-    #     arcs = []
-    #     internal_arcs = []
-    #     external_arcs = []
-    #     points_polygon = []
-    #     points_straight_line_contour = []
-    #     for primitive in self.primitives:
-    #         # TODO: change this!!!
-    #         if primitive.__class__.__name__ == 'LineSegment2D':
-    #             points_polygon.append(primitive.start)
-    #             points_straight_line_contour.append(primitive.start)
-    #             points_straight_line_contour.append(primitive.end)
-    #         elif primitive.__class__.__name__ == 'Arc2D':
-    #             points_polygon.append(primitive.start)
-    #             points_polygon.append(primitive.center)
-    #
-    #             # points_polygon.append(primitive.end)
-    #             arcs.append(primitive)
-    #         elif primitive.__class__.__name__ == 'Circle2D':
-    #             raise ValueError(
-    #                 'Circle2D primitives should not be inserted in a contour, as a circle is already a contour. Use directcly the circle')
-    #             # return None
-    #         elif primitive.__class__.__name__ == 'OpenedRoundedLineSegments2D':
-    #             for prim in primitive.primitives:
-    #                 if prim.__class__.__name__ == 'LineSegment2D':
-    #                     points_polygon.extend(prim.points)
-    #                     points_straight_line_contour.extend(prim.points)
-    #                 elif prim.__class__.__name__ == 'Arc2D':
-    #                     #                points_polygon.append(primitive.center)
-    #                     points_polygon.append(prim.start)
-    #                     points_polygon.append(prim.end)
-    #                     arcs.append(prim)
-    #         elif primitive.__class__.__name__ == 'BSplineCurve2D':
-    #             points_polygon.extend(primitive.polygon_points()[:-1])
-    #             points_straight_line_contour.extend(primitive.polygon_points()[:-1])
-    #         else:
-    #             raise NotImplementedError(
-    #                 'primitive of type {} is not handled'.format(primitive))
-    #
-    #     # points_polygon = list(set(points_polygon))
-    #     polygon = ClosedPolygon2D(points_polygon)
-    #     points_straight_line_contour = list(set(points_straight_line_contour))
-    #     straight_line_contour_polygon = ClosedPolygon2D(
-    #         points_straight_line_contour)
-    #
-    #     for arc in arcs:
-    #         if polygon.point_belongs(arc.interior):
-    #             internal_arcs.append(arc)
-    #         else:
-    #             external_arcs.append(arc)
-    #
-    #     return internal_arcs, external_arcs, polygon, straight_line_contour_polygon
-    #
-    # def _get_internal_arcs(self):
-    #     if not self._utd_analysis:
-    #         (self._internal_arcs, self._external_arcs,
-    #          self._polygon,
-    #          self._straight_line_contour_polygon) = self._primitives_analysis()
-    #         self._utd_analysis = True
-    #     return self._internal_arcs
-    #
-    # internal_arcs = property(_get_internal_arcs)
-    #
-    # def _get_external_arcs(self):
-    #     if not self._utd_analysis:
-    #         (self._internal_arcs, self._external_arcs,
-    #          self._polygon,
-    #          self._straight_line_contour_polygon) = self._primitives_analysis()
-    #         self._utd_analysis = True
-    #     return self._external_arcs
-    #
-    # external_arcs = property(_get_external_arcs)
-    #
-    # def _get_polygon(self):
-    #     if not self._utd_analysis:
-    #         (self._internal_arcs, self._external_arcs,
-    #          self._polygon,
-    #          self._straight_line_contour_polygon) = self._primitives_analysis()
-    #         self._utd_analysis = True
-    #     return self._polygon
-    #
-    # polygon = property(_get_polygon)
-    #
-    # def _get_straight_line_contour_polygon(self):
-    #     if not self._utd_analysis:
-    #         (self._internal_arcs, self._external_arcs,
-    #          self._polygon,
-    #          self._straight_line_contour_polygon) = self._primitives_analysis()
-    #         self._utd_analysis = True
-    #     return self._straight_line_contour_polygon
-    #
-    # straight_line_contour_polygon = property(
-    #     _get_straight_line_contour_polygon)
 
     def to_3d(self, plane_origin, x, y):
         p3d = []
@@ -1315,12 +1219,6 @@ class Contour2D(Contour, Wire2D):
         ymax = max([p[1] for p in points])
         return (volmdlr.Point2D(xmin, ymin), volmdlr.Point2D(xmax, ymax))
 
-    # def To3D(self, plane_origin, x, y, name=None):
-    #     if name is None:
-    #         name = '3D of {}'.format(self.name)
-    #     primitives3D = [p.To3D(plane_origin, x, y) for p in self.primitives]
-    #     return Contour3D(primitives=primitives3D, name=name)
-
     def area(self):
         area = self.edge_polygon.area()
         if self.edge_polygon.is_trigo():
@@ -1371,67 +1269,6 @@ class Contour2D(Contour, Wire2D):
                                    surface_style=surface_style,
                                    name=self.name)
 
-    # def copy(self, deep=True, memo=None):
-    #     primitives_copy = []
-    #     for primitive in self.primitives:
-    #         primitives_copy.append(primitive.copy())
-    #     return Contour2D(primitives_copy)
-
-    # def average_center_point(self):
-    #     nb = len(self.tessel_points)
-    #     x = npy.sum([p[0] for p in self.tessel_points]) / nb
-    #     y = npy.sum([p[1] for p in self.tessel_points]) / nb
-    #     return volmdlr.Point2D(x, y)
-
-    # def clean_points(self):
-    #     """
-    #     This method is copy from Contour3D, if changes are done there or here,
-    #     please change both method
-    #     Be aware about primitives = 2D, edges = 3D
-    #     """
-    #     if hasattr(self.primitives[0], 'endpoints'):
-    #         points = self.primitives[0].endpoints[:]
-    #     else:
-    #         points = self.primitives[0].tessellation_points()
-    #     for primitive in self.primitives[1:]:
-    #         if hasattr(primitive, 'endpoints'):
-    #             points_to_add = primitive.endpoints[:]
-    #         else:
-    #             points_to_add = primitive.tessellation_points()
-    #         if points[0] == points[
-    #             -1]:  # Dans le cas où le (dernier) edge relie deux fois le même point
-    #             points.extend(points_to_add[::-1])
-    #
-    #         elif points_to_add[0] == points[-1]:
-    #             points.extend(points_to_add[1:])
-    #         elif points_to_add[-1] == points[-1]:
-    #             points.extend(points_to_add[-2::-1])
-    #         elif points_to_add[0] == points[0]:
-    #             points = points[::-1]
-    #             points.extend(points_to_add[1:])
-    #         elif points_to_add[-1] == points[0]:
-    #             points = points[::-1]
-    #             points.extend(points_to_add[-2::-1])
-    #         else:
-    #             d1, d2 = (points_to_add[0] - points[0]).norm(), (
-    #                         points_to_add[0] - points[-1]).norm()
-    #             d3, d4 = (points_to_add[-1] - points[0]).norm(), (
-    #                         points_to_add[-1] - points[-1]).norm()
-    #             if math.isclose(d2, 0, abs_tol=1e-3):
-    #                 points.extend(points_to_add[1:])
-    #             elif math.isclose(d4, 0, abs_tol=1e-3):
-    #                 points.extend(points_to_add[-2::-1])
-    #             elif math.isclose(d1, 0, abs_tol=1e-3):
-    #                 points = points[::-1]
-    #                 points.extend(points_to_add[1:])
-    #             elif math.isclose(d3, 0, abs_tol=1e-3):
-    #                 points = points[::-1]
-    #                 points.extend(points_to_add[-2::-1])
-    #
-    #     if len(points) > 1:
-    #         if points[0] == points[-1]:
-    #             points.pop()
-    #     return points
 
     def is_inside_contour(self, contour2):
         """
@@ -1469,55 +1306,6 @@ class Contour2D(Contour, Wire2D):
             if self.point_belongs(p):
                 return p
 
-    # def line_intersections(self, line:Line2D) -> List[Tuple[volmdlr.Point2D, Primitive2D]]:
-    #     """
-    #     Returns a list of points and lines of intersection with the contour
-    #     """
-    #     intersection_points = Wire2D.line_intersections(self, line)
-    #     if not intersection_points:
-    #         return []
-    #     elif len(intersection_points) == 2:
-    #         return [LineSegment2D(*intersection_points)]
-    #     else:
-    #         raise NotImplementedError('Non convex contour not supported yet')
-
-    # @classmethod
-    # def add_points_on_contour(cls, contour, points: List[volmdlr.Point3D]):
-    #     for primitive in contour.primitives:
-    #         if not isinstance(primitive, volmdlr.edges.LineSegment2D):
-    #             raise KeyError('primitives must be define with only LineSegment2D')
-
-    #     primitives = [p for p in contour.primitives]
-    #     for point in points:
-    #         dist_min = math.inf
-    #         for primitive in primitives:
-    #             dist = primitive.point_distance(point)
-    #             if dist < dist_min:
-    #                 dist_min = dist
-    #                 prim_opt = primitive
-    #         if dist_min > 1e-15:
-    #             continue
-    #         new_primitives = []
-    #         for primitive in primitives:
-    #             if prim_opt.start != point and prim_opt.end != point and primitive == prim_opt:
-    #                 new_primitives.append(volmdlr.edges.LineSegment2D(prim_opt.start, point))
-    #                 new_primitives.append(volmdlr.edges.LineSegment2D(prim_opt.end, point))
-    #             elif primitive != prim_opt:
-    #                 new_primitives.append(primitive)
-    #         primitives = new_primitives
-    #     return cls(primitives)
-
-    # def order_contour(self):
-    #     pt_start = self.primitives[0].start
-    #     graph = nx.Graph()
-    #     for p in self.primitives:
-    #         graph.add_edges_from([(p.start, p.end)])
-    #     pts = list(nx.dfs_edges(graph, pt_start))
-    #     print('points ordered :', pts)
-    #     lns = [volmdlr.edges.LineSegment2D(p[0], p[1]) for p in pts]
-    #     lns.append(volmdlr.edges.LineSegment2D(pts[-1][-1], pts[0][0]))
-    #     self.primitives = lns
-    #     print('primitives points :', [(prim[0], prim[1]) for prim in self.primitives])
 
     def order_contour(self):
         
@@ -1550,35 +1338,6 @@ class Contour2D(Contour, Wire2D):
 
         return self
 
-    # @classmethod
-    # def extract_contours(cls, contour, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
-    #     update_contour = volmdlr.wires.Contour2D.add_points_on_contour(contour, [point1, point2])
-    #     graph = nx.Graph()
-    #     for primitive in update_contour.primitives:
-    #         graph.add_edges_from([(primitive.start, primitive.end)])
-    #     if point1 in graph.nodes() and point2 in graph.nodes():
-    #         all_path = list(nx.all_simple_paths(graph, point1, point2))
-    #         contours = []
-    #         for path in all_path:
-    #             primitives = []
-    #             for p1, p2 in zip(path[0: -1], path[1:]):
-    #                 primitives.append(volmdlr.edges.LineSegment2D(p1, p2))
-    #             contours.append(cls(primitives))
-    #         if len(all_path) == 1:  # open contour
-    #             contour_short = contours[0]
-    #             new_primitives = []
-    #             for primitive in update_contour.primitives:
-    #                 check = True
-    #                 for inside_prim in contour_short.primitives:
-    #                     if (primitive.start == inside_prim.start and primitive.end == inside_prim.end) or (
-    #                             primitive.start == inside_prim.end and primitive.end == inside_prim.start):
-    #                         check = False
-    #                 if check:
-    #                     new_primitives.append(primitive)
-    #             contours.append(cls(new_primitives))
-    #         return contours
-    #     else:
-    #         return None
 
     @classmethod
     def extract_contours(cls, contour, point1: volmdlr.Point3D,
@@ -1618,7 +1377,7 @@ class Contour2D(Contour, Wire2D):
 
     def cut_by_line(self, line: volmdlr.edges.Line2D) -> List['Contour2D']:
         """
-        Cut a contours
+        Cut a contour by a line. Return a list of contours of the result
         """
         # if len(self.primitives) <=4:
         #     self = self.discretized_contour(2)
@@ -2601,17 +2360,6 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
 
         return False, None, None
 
-    # def plot_data(self, marker=None, color='black', stroke_width=1, opacity=1):
-    #     data = []
-    #     for nd in self.points:
-    #         data.append({'x': nd.vector[0], 'y': nd.vector[1]})
-    #     return {'type': 'wire',
-    #             'data': data,
-    #             'color': color,
-    #             'size': stroke_width,
-    #             'dash': None,
-    #             'marker': marker,
-    #             'opacity': opacity}
     @classmethod
     def points_convex_hull(cls, points):
         if len(points) < 3:
@@ -3174,7 +2922,6 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         else:
             # print('last passed here, sure of it ')
             distance = math.inf
-            distance1 = math.inf
             for intr_list in line_intersections[line_segment2]:
                 if intr_list[1] not in self.line_segments:
                     dist = intr_list[0].point_distance(line_segment1.start)
