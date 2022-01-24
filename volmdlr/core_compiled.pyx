@@ -821,8 +821,8 @@ class Point2D(Vector2D):
         return points[distances.index(min(distances))]
 
     def axial_symmetry(self, line):
-        line_slope = (line.end.y - line.start.y) / (line.end.x - line.start.x)
-        line_origin = line.start.y - line_slope * line.start.x
+        line_slope = (line.point2.y - line.point1.y) / (line.point2.x - line.point1.x)
+        line_origin = line.point1.y - line_slope * line.point1.x
         x = 1 / (1 + line_slope**2) * (-(1 - line_slope**2)*self.x + 2*line_slope*self.y + 2*line_origin)
         y = 1 / (1 + line_slope**2) * (2*line_slope*self.x + (1 - line_slope**2)*self.y - 2*line_slope*line_origin)
         return Point2D(x, y)
