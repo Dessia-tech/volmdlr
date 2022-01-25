@@ -687,7 +687,7 @@ class BSplineCurve2D(Edge):
         check if a point2d belongs to the bspline_curve or not 
         '''
         def f(x):
-            return (point3d - volmdlr.Point2D(*self.curve.evaluate_single(x))).norm()
+            return (point2d - volmdlr.Point2D(*self.curve.evaluate_single(x))).norm()
 
         x = npy.linspace(0,1,5)
         x_init=[]
