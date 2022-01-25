@@ -1115,30 +1115,30 @@ class Arc2D(Edge):
     #             for i in range(number_points + 1)]
 
 
-    def point_belongs(self, point2d: volmdlr.Point2D,
-                      tol: float = 1e-9) -> bool:
-        """
-        Computes if the point belongs to the pizza slice drawn by the arc and its center
-        """
-        radius = self.center.point_distance(point2d)
-        if radius > self.radius + tol:
-            return False
+    # def point_belongs(self, point2d: volmdlr.Point2D,
+    #                   tol: float = 1e-9) -> bool:
+    #     """
+    #     Computes if the point belongs to the pizza slice drawn by the arc and its center
+    #     """
+    #     radius = self.center.point_distance(point2d)
+    #     if radius > self.radius + tol:
+    #         return False
 
-        theta_tol = tol / radius * self.radius
-        p = point2d - self.center
-        u = self.start - self.center
-        u.normalize()
-        if self.is_trigo:
-            v = u.normal_vector()
-        else:
-            v = -u.normal_vector()
+    #     theta_tol = tol / radius * self.radius
+    #     p = point2d - self.center
+    #     u = self.start - self.center
+    #     u.normalize()
+    #     if self.is_trigo:
+    #         v = u.normal_vector()
+    #     else:
+    #         v = -u.normal_vector()
 
-        x, y = p.dot(u), p.dot(v)
-        theta = math.atan2(y, x)
-        if theta < -theta_tol or theta > self.angle + theta_tol:
-            return False
+    #     x, y = p.dot(u), p.dot(v)
+    #     theta = math.atan2(y, x)
+    #     if theta < -theta_tol or theta > self.angle + theta_tol:
+    #         return False
 
-        return True
+    #     return True
 
     def point_distance(self, point):
         vector_start = self.start - self.center
