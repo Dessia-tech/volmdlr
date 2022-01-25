@@ -658,13 +658,13 @@ class BSplineCurve2D(Edge):
                               weights=self.weights,
                               periodic=self.periodic)
 
-    def point_belongs(self, point):
-        polygon_points = self.polygon_points()
-        for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
-            line = LineSegment2D(p1, p2)
-            if line.point_belongs(point):
-                return True
-        return False
+    # def point_belongs(self, point, abs_tol=1e-7):
+    #     polygon_points = self.polygon_points()
+    #     for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
+    #         line = LineSegment2D(p1, p2)
+    #         if line.point_belongs(point, abs_tol=abs_tol):
+    #             return True
+    #     return False
 
     def point_distance(self, point):
         distance = math.inf
@@ -675,6 +675,24 @@ class BSplineCurve2D(Edge):
             if dist < distance:
                 distance = dist
         return distance
+
+    def point_belongs(self, point2d, abs_tol=1e-10):
+        '''
+        check if a point2d belongs to the bspline_curve or not 
+        '''
+        def f(x):
+            return (point2d - volmdlr.Point2D(*self.curve.evaluate_single(x))).norm()
+
+        x = npy.linspace(0,1,5)
+        x_init=[]
+        for xi in x:
+            x_init.append(xi)
+            
+        for x0 in x_init: 
+            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
+            if z.cost < abs_tol: 
+                return True
+        return False
 
 
 class BezierCurve2D(BSplineCurve2D):
@@ -725,10 +743,10 @@ class LineSegment2D(LineSegment):
     def point_at_abscissa(self, curvilinear_abscissa):
         return self.start + self.unit_direction_vector() * curvilinear_abscissa
 
-    def point_belongs(self, point):
+    def point_belongs(self, point, abs_tol=1e-7):
         distance = self.start.point_distance(point) + self.end.point_distance(
             point)
-        if math.isclose(distance, self.length(), abs_tol=1e-7):
+        if math.isclose(distance, self.length(), abs_tol=abs_tol):
             return True
         return False
 
@@ -1091,30 +1109,30 @@ class Arc2D(Edge):
     #             for i in range(number_points + 1)]
 
 
-    def point_belongs(self, point2d: volmdlr.Point2D,
-                      tol: float = 1e-9) -> bool:
-        """
-        Computes if the point belongs to the pizza slice drawn by the arc and its center
-        """
-        radius = self.center.point_distance(point2d)
-        if radius > self.radius + tol:
-            return False
+    # def point_belongs(self, point2d: volmdlr.Point2D,
+    #                   tol: float = 1e-9) -> bool:
+    #     """
+    #     Computes if the point belongs to the pizza slice drawn by the arc and its center
+    #     """
+    #     radius = self.center.point_distance(point2d)
+    #     if radius > self.radius + tol:
+    #         return False
 
-        theta_tol = tol / radius * self.radius
-        p = point2d - self.center
-        u = self.start - self.center
-        u.normalize()
-        if self.is_trigo:
-            v = u.normal_vector()
-        else:
-            v = -u.normal_vector()
+    #     theta_tol = tol / radius * self.radius
+    #     p = point2d - self.center
+    #     u = self.start - self.center
+    #     u.normalize()
+    #     if self.is_trigo:
+    #         v = u.normal_vector()
+    #     else:
+    #         v = -u.normal_vector()
 
-        x, y = p.dot(u), p.dot(v)
-        theta = math.atan2(y, x)
-        if theta < -theta_tol or theta > self.angle + theta_tol:
-            return False
+    #     x, y = p.dot(u), p.dot(v)
+    #     theta = math.atan2(y, x)
+    #     if theta < -theta_tol or theta > self.angle + theta_tol:
+    #         return False
 
-        return True
+    #     return True
 
     def point_distance(self, point):
         vector_start = self.start - self.center
@@ -1465,6 +1483,25 @@ class Arc2D(Edge):
         return Arc2D(self.start, interior, self.end)
 
 
+
+    def point_belongs(self, point2d, abs_tol=1e-10):
+        '''
+        check if a point2d belongs to the arc_2d or not 
+        '''
+
+        def f(x):
+            return (point2d - self.point_at_abscissa(x)).norm()
+        length_ = self.length()  
+        x = npy.linspace(0, length_, 5)
+        x_init=[]
+        for xi in x:
+            x_init.append(xi)
+    
+        for x0 in x_init: 
+            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,length_]))
+            if z.cost < abs_tol: 
+                return True
+        return False
 
 
 class FullArc2D(Edge):
@@ -2071,10 +2108,10 @@ class LineSegment3D(LineSegment):
         return self.start + curvilinear_abscissa * (
                 self.end - self.start) / self.length()
 
-    def point_belongs(self, point):
+    def point_belongs(self, point, abs_tol=1e-7):
         distance = self.start.point_distance(point) + self.end.point_distance(
             point)
-        if math.isclose(distance, self.length(), abs_tol=1e-7):
+        if math.isclose(distance, self.length(), abs_tol=abs_tol):
             return True
         return False
 
@@ -2844,6 +2881,7 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             distances.append(pt1.point_distance(point))
         return min(distances)
 
+
     # def point_belongs(self, point):
     #     polygon_points = self.polygon_points()
     #     for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
@@ -2852,7 +2890,7 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
     #             return True
     #     return False
 
-    def point_belongs(self, point3d):
+    def point_belongs(self, point3d, abs_tol=1e-10):
         '''
         check if a point3d belongs to the bspline_curve or not 
         '''
@@ -2866,7 +2904,7 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            if z.cost < 1e-10: 
+            if z.cost < abs_tol: 
                 return True
         return False
 
@@ -3104,7 +3142,6 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
                    knot_multiplicities=knot_multiplicities)
 
 
-    
     def global_minimum_curvature(self, nb_eval: int = 21):
         check = [i/(nb_eval-1) for i in range(nb_eval)]
         radius = []
@@ -3698,7 +3735,7 @@ class Arc3D(Edge):
         points = self.polygon_points(angle_resolution=100)
         return point.point_distance(point.nearest_point(points))
 
-    def point_belongs(self, point3d):
+    def point_belongs(self, point3d, abs_tol=1e-10):
         '''
         check if a point3d belongs to the arc_3d or not 
         '''
@@ -3712,7 +3749,7 @@ class Arc3D(Edge):
 
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,length_]))
-            if z.cost < 1e-10: 
+            if z.cost < abs_tol: 
                 return True
         return False
 
