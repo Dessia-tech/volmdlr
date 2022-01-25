@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import io
 
-import volmdlr as vm
+# import volmdlr as vm
 import volmdlr.step
 import volmdlr.cloud as vmcd
 
