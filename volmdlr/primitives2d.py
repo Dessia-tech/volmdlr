@@ -4,16 +4,14 @@
 
 """
 
-from typing import List
 import math
-import numpy as npy
+
 import matplotlib.patches
+
 import volmdlr
-# from volmdlr.core_compiled import polygon_point_belongs
-from volmdlr.primitives import RoundedLineSegments
 import volmdlr.edges
 import volmdlr.wires
-import matplotlib.pyplot as plt
+from volmdlr.primitives import RoundedLineSegments
 
 
 class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
@@ -423,10 +421,10 @@ class Measure2D(volmdlr.edges.LineSegment2D):
         self.type_ = type_
 
     def plot(self, ax, ndigits=6):
-        x1, y1 = self.points[0]
-        x2, y2 = self.points[1]
-        xm, ym = 0.5 * (self.points[0] + self.points[1])
-        distance = self.points[1].point_distance(self.points[0])
+        x1, y1 = self.start
+        x2, y2 = self.end
+        xm, ym = 0.5 * (self.start + self.end)
+        distance = self.end.point_distance(self.start)
 
         if self.label != '':
             label = '{}: '.format(self.label)

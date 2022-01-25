@@ -4,12 +4,11 @@
 
 
 """
+
+import math
 from typing import Tuple
 from numpy import dot, cross, array, zeros, random
-import volmdlr as vm
-import math
 from scipy.linalg import norm
-
 
 
 def euler_angles_to_transfer_matrix(psi, theta, phi):
