@@ -1120,8 +1120,8 @@ class Contour2D(Contour, Wire2D):
             else:
                 new_start = primitive.start.axial_symmetry(line)
                 new_end = primitive.end.axial_symmetry(line)
-                new_primitives.append(primitive.__clas__(new_start, new_end))
-        return self.__class__(primitives)
+                new_primitives.append(primitive.__class__(new_start, new_end))
+        return self.__class__(new_primitives)
 
     def is_inside_contour(self, contour2):
         """

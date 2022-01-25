@@ -188,21 +188,12 @@ class TriangularElement(vmw.Triangle2D):
 #             for pt in self.points:
 #                 pt.translation(offset, copy=False)
                 
-#     def axial_symmetry(self, line, copy=True):
-#         p1, p2 = line.points
-#         symmetric_points = []
-#         for point in self.points:
-#             u = p2 - p1
-#             t = (point-p1).dot(u) / u.norm()**2
-#             projection = p1 + t * u
-#             symmetric_point = volmdlr.Point2D(*(2 * projection - point))
-#             symmetric_points.append(symmetric_point)
-#         if copy: 
-#             return TriangularElement(symmetric_points)
-#         else:
-#             for i, point in enumerate(self.points):
-#                 point = symmetric_points[i]
-   
+    def axial_symmetry(self, line):
+        new_points = []
+        for point in self.points:
+            new_points.append(point.axial_symmetry(line))
+        return self.__class__(new_points)
+
 #     def plot(self, ax=None, color='k', width=None,
 #              plot_points=False, fill=False):
 #         if ax is None:
@@ -309,14 +300,15 @@ class Mesh(DessiaObject):
 #                                         new_nodes_index[p3]))
 #         return self.__class__(new_elements_groups)
 
-#     def _set_nodes_number(self):
-#         nodes = set()
-#         for elements_group in self.elements_groups:
-#             for element in elements_group.elements:
-#                 nodes.add(element.points[0])
-#                 nodes.add(element.points[1])
-#                 nodes.add(element.points[2])
-#         return tuple(nodes)
+    def _set_nodes_number(self):
+        nodes = set()
+        for elements_group in self.elements_groups:
+            for element in elements_group.elements:
+                nodes.add(element.points[0])
+                nodes.add(element.points[1])
+                nodes.add(element.points[2])
+        print(tuple(nodes))
+        return tuple(nodes)
 
 #     def point_to_element(self, point):
 #         for element_group in self.elements_groups:
