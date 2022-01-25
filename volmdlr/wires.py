@@ -161,7 +161,7 @@ class Wire:
         '''
         
         for i, primitive in enumerate(self.primitives):
-            belongs = primitive.point_belongs(point, abs_tol=1e-7)
+            belongs = primitive.point_belongs(point, abs_tol=abs_tol)
             if belongs:
                 return i
         return False
