@@ -369,9 +369,9 @@ class Vector2D(Vector):
     def is_close(self, other_vector, tol = 1e-6):
         if other_vector.__class__.__name__ not in ['Vector2D', 'Point2D']:
             return False
-        return math.isclose(self.x, other_vector.x, abs_tol=tol) \
-        and math.isclose(self.y, other_vector.y, abs_tol=tol)
-    
+        # return math.isclose(self.x, other_vector.x, abs_tol=tol) \
+        # and math.isclose(self.y, other_vector.y, abs_tol=tol)
+        return math.isclose(self.point_distance(other_vector), 0, abs_tol=tol)
         
     def approx_hash(self):
         return round(1e6*(self.x+self.y))
@@ -381,17 +381,9 @@ class Vector2D(Vector):
                 'x': self.x, 'y': self.y,
                 'name': self.name}
 
-    # @classmethod
-    # def remove_duplicate(cls, points):
-    #     """
-    #     Don't keep the input list order
-    #     """
-    #     input_points = sorted(points, key=lambda pt: (pt.x, pt.y))
-    #     new_points = [points[0]]
-    #     for i, point in enumerate(input_points[1:]):
-    #         if not point.is_close(new_points[-1]):
-    #             new_points.append(point)
-    #     return new_points
+
+    def copy(self, deep=True, memo=None):
+        return self.__class__(self.x, self.y)
 
     def norm(self):
         """
@@ -419,9 +411,8 @@ class Vector2D(Vector):
     def cross(self, other_vector):
         return self.x*other_vector.y - self.y*other_vector.x
 
-    def point_distance(self, point2):
-        return (self-point2).norm()
-
+    def point_distance(self, other_vector):
+        return (self-other_vector).norm()
 
     def rotation(self, center, angle, copy=True):
         u = self - center
@@ -595,9 +586,8 @@ class Point2D(Vector2D):
         ax.plot([self.x], [self.y], color=color, alpha=alpha, marker='o')
         return ax
 
-    def point_distance(self, point2:'Point2D'):
-        return (self-point2).norm()
-
+    def point_distance(self, other_point:'Point2D'):
+        return (self-other_point).norm()
 
     @classmethod
     def grid2d(cls, points_x, points_y, xmin, xmax, ymin, ymax):
@@ -624,12 +614,13 @@ class Point2D(Vector2D):
                           ['+x','-y'], ['-x','-y'], ['-x','+y'], ['-y','-x']
         '''
         
+        points_2d = [] 
+        grid = []
+        points = []
+        
         if direction == ['+x','+y']:
             x = npy.linspace(xmin, xmax, points_x) 
             y = npy.linspace(ymin, ymax, points_y) 
-            points_2d = [] 
-            grid = []
-            points = []
 
             for yi in y:
                 for xi in x:
@@ -642,9 +633,6 @@ class Point2D(Vector2D):
         elif direction == ['-x','+y']:
             x = npy.linspace(xmax, xmin, points_x) 
             y = npy.linspace(ymin, ymax, points_y) 
-            points_2d = [] 
-            grid = []
-            points = []
 
             for yi in y:
                 for xi in x:
@@ -657,8 +645,6 @@ class Point2D(Vector2D):
         elif direction == ['+y','+x']:
             x = npy.linspace(xmin, xmax, points_x) 
             y = npy.linspace(ymin, ymax, points_y) 
-            points_2d = [] 
-            grid = []
             
             for xi in x:
                 for yi in y:
@@ -671,9 +657,6 @@ class Point2D(Vector2D):
         elif direction == ['-y','+x']:
             x = npy.linspace(xmin, xmax, points_x) 
             y = npy.linspace(ymax, ymin, points_y) 
-            points_2d = [] 
-            grid = []
-            points = []
 
             for xi in x:
                 for yi in y:
@@ -686,9 +669,6 @@ class Point2D(Vector2D):
         elif direction == ['+x','-y']:
             x = npy.linspace(xmin, xmax, points_x) 
             y = npy.linspace(ymax, ymin, points_y) 
-            points_2d = [] 
-            grid = []
-            points = []
 
             for yi in y:
                 for xi in x:
@@ -701,9 +681,6 @@ class Point2D(Vector2D):
         elif direction == ['-x','-y']:
             x = npy.linspace(xmax, xmin, points_x) 
             y = npy.linspace(ymax, ymin, points_y) 
-            points_2d = [] 
-            grid = []
-            points = []
 
             for yi in y:
                 for xi in x:
@@ -713,12 +690,9 @@ class Point2D(Vector2D):
                 grid.append(points)
                 points = []    
                     
-        elif direction == ['-x','+y']:
+        elif direction == ['+y','-x']:
             x = npy.linspace(xmax, xmin, points_x) 
             y = npy.linspace(ymin, ymax, points_y) 
-            points_2d = [] 
-            grid = []
-            points = []
 
             for xi in x:
                 for yi in y:
@@ -731,9 +705,6 @@ class Point2D(Vector2D):
         elif direction == ['-y','-x']:
             x = npy.linspace(xmax, xmin, points_x) 
             y = npy.linspace(ymax, ymin, points_y) 
-            points_2d = [] 
-            grid = []
-            points = []
 
             for xi in x:
                 for yi in y:
@@ -743,12 +714,9 @@ class Point2D(Vector2D):
                 grid.append(points)
                 points = []
 
-        
         return (points_2d, grid)
         
 
-
-    
     @classmethod
     def line_intersection(cls, line1, line2, curvilinear_abscissa=False):
 #        point11, point12 = line1
@@ -923,30 +891,24 @@ class Vector3D(Vector):
         
         return 0
     
-    def approx_hash(self):
-        return round(1e6*(self.x+self.y+self.z))
-
     def __eq__(self, other_vector:'Vector3D'):
         return self.is_close(other_vector)
 
-    def is_close(self, other_vector, tol = 1e-6):
+    def is_close(self, other_vector, tol=1e-6):
         if other_vector.__class__.__name__ not in ['Vector3D', 'Point3D']:
             return False
-        return math.isclose(self.x, other_vector.x, abs_tol=tol) \
-        and math.isclose(self.y, other_vector.y, abs_tol=tol) \
-        and math.isclose(self.z, other_vector.z, abs_tol=tol)
-        
-    # @classmethod
-    # def remove_duplicate(cls, points):
-    #     """
-    #     Don't keep the input list order
-    #     """
-    #     input_points = sorted(points, key=lambda pt: (pt.x, pt.y, pt.z))
-    #     new_points = [points[0]]
-    #     for i, point in enumerate(input_points[1:]):
-    #         if not point.is_close(new_points[-1]):
-    #             new_points.append(point)
-    #     return new_points
+        # return math.isclose(self.x, other_vector.x, abs_tol=tol) \
+        # and math.isclose(self.y, other_vector.y, abs_tol=tol) \
+        # and math.isclose(self.z, other_vector.z, abs_tol=tol)
+        return math.isclose(self.point_distance(other_vector), 0, abs_tol=tol)
+
+    def approx_hash(self):
+        return round(1e6*(self.x+self.y+self.z))
+
+    def to_dict(self):
+        return {'object_class':'volmdlr.Vector3D',
+                'x': self.x, 'y': self.y, 'z': self.z,
+                'name': self.name}
 
     @classmethod
     def dict_to_object(cls, dict_):
@@ -1129,7 +1091,7 @@ class Vector3D(Vector):
         v.normalize()
         return v
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         return Vector3D(self.x, self.y, self.z)
 
     @classmethod
@@ -1217,7 +1179,7 @@ class Point3D(Vector3D):
                        self.y / value,
                        self.z / value)
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         return Point3D(self.x, self.y, self.z)
 
     def to_dict(self):
@@ -1447,7 +1409,7 @@ class Basis(DessiaObject):
         """
         0
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         return self.__class__(*self.vectors)
 
 
@@ -1534,7 +1496,7 @@ class Basis2D(Basis):
         self.u = new_u
         self.v = new_v
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         return Basis2D(self.u, self.v)
 
     def normalize(self):
@@ -1726,7 +1688,7 @@ class Basis3D(Basis):
         matrix = self.transfer_matrix()
         return matrix.vector_multiplication(point)
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         return Basis3D(self.u, self.v, self.w)
 
     def normalize(self):
@@ -1815,7 +1777,7 @@ class Frame2D(Basis2D):
         self.v.plot(origin=self.origin, ax=ax, color='g')
         ax.axis('equal')
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         return Frame2D(self.origin, self.u, self.v)
 
 
@@ -1934,7 +1896,7 @@ class Frame3D(Basis3D):
                            self.u, self.v, self.w, self.name)
         self.origin.translation(offset, copy=False)
 
-    def copy(self):
+    def copy(self, deep=True, memo=None):
         return Frame3D(self.origin.copy(),
                        self.u.copy(), self.v.copy(), self.w.copy())
 
