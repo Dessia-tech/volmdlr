@@ -916,8 +916,9 @@ class Plane3D(Surface3D):
             z0 = (c1 * d1 - b1 * d2) / (b1 * c2 - c1 * b2)
             point1 = volmdlr.Point3D((0, y0, z0))
 
-        point2 = point1 + line_direction
-        return volmdlr.Line3D(point1, point2)
+        # point2 = point1 + line_direction
+        # return volmdlr.Line3D(point1, point2)
+        return volmdlr.Line3D(point1, point1 + line_direction)
 
     def is_coincident(self, plane2):
         """
