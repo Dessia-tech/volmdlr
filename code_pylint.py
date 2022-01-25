@@ -4,7 +4,7 @@ MIN_NOTE = 5.03
 
 MAX_ERROR_BY_TYPE = {
                      'no-member': 185,
-                     'no-else-return': 172,
+                     'no-else-return': 178,
                      'consider-using-f-string': 167,
                      'inconsistent-return-statements': 108,
                      'unused-variable': 95,
