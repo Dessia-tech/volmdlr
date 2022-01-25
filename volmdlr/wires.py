@@ -155,13 +155,13 @@ class Wire:
         return self.extract_primitives(point1, split_primitives[0], point2,
                                        split_primitives[1], inside)
 
-    def point_belongs(self, point):
+    def point_belongs(self, point, abs_tol=1e-7):
         '''
         find out if a point is on the wire or not. If it belongs, we return the primitive's index
         '''
         
         for i, primitive in enumerate(self.primitives):
-            belongs = primitive.point_belongs(point)
+            belongs = primitive.point_belongs(point, abs_tol=abs_tol)
             if belongs:
                 return i
         return False
@@ -992,10 +992,10 @@ class Contour2D(Contour, Wire2D):
         # TODO: This is incomplete!!!
         return False
 
-    def point_over_contour(self, point):
+    def point_over_contour(self, point, abs_tol=1e-7):
         belongs = False
         for primitive in self.primitives:
-            if primitive.point_belongs(point):
+            if primitive.point_belongs(point, abs_tol):
                 belongs = True
         return belongs
 
@@ -1102,7 +1102,7 @@ class Contour2D(Contour, Wire2D):
             if prim.end not in points_contour2:
                 points_contour2.append(prim.end)
         for point in points_contour2:
-            if not self.point_belongs(point) and not self.point_over_contour(point):
+            if not self.point_belongs(point) and not self.point_over_contour(point, abs_tol=1e-7):
                 return False
         return True
 
