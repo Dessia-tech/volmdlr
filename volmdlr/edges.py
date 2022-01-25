@@ -3,26 +3,27 @@
 """
 
 """
-import scipy.optimize
-from packaging import version
+
+from typing import List
 import math
+
+from packaging import version
 import numpy as npy
 import scipy as scp
+import scipy.optimize
 
 from geomdl import utilities, BSpline, fitting, operations
-
 from geomdl.operations import length_curve, split_curve
 
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import __version__ as _mpl_version
 import matplotlib.pyplot as plt
 import matplotlib.patches
-from typing import List
 
 import dessia_common as dc
+import plot_data.core as plot_data
 import volmdlr.core
 import volmdlr.geometry
-import plot_data.core as plot_data
 
 
 def standardize_knot_vector(knot_vector):
@@ -186,7 +187,7 @@ class LineSegment(Edge):
         return self.unit_direction_vector().normal_vector()
 
     def point_projection(self, point):
-        p1, p2 = self.points
+        p1, p2 = self.start, self.end
         u = p2 - p1
         norm_u = u.norm()
         t = (point - p1).dot(u) / norm_u ** 2
@@ -543,7 +544,7 @@ class BSplineCurve2D(Edge):
         return cls.from_geomdl_curve(curve)
 
     def straight_line_area(self):
-        l = self.length()
+        # l = self.length()
         points = self.polygon_points()
         polygon = volmdlr.wires.ClosedPolygon2D(points)
 
@@ -956,8 +957,8 @@ class LineSegment2D(LineSegment):
                 circle2 = None
         return circle1, circle2
 
-    def polygon_points(self, angle_resolution=0):
-        return [self.start, self.end]
+    # def polygon_points(self, angle_resolution=0):
+    #     return [self.start, self.end]
 
     def polygon_points(self, min_x_density=None, min_y_density=None):
         n = 0  # Number of points to insert between start and end
@@ -1081,6 +1082,21 @@ class Arc2D(Edge):
             i / (number_points_tesselation - 1) * l) for i in
             range(number_points_tesselation)]
 
+    # def polygon_points(self, angle_resolution=10):
+
+    #     # densities = []
+    #     # for d in [min_x_density, min_y_density]:
+    #     #     if d:
+    #     #         densities.append(d)
+    #     # if densities:
+    #     #     number_points = max(number_points,
+    #     #                         min(densities) * self.angle * self.radius)
+    #     number_points = math.ceil(self.angle * angle_resolution)
+    #     l = self.length()
+    #     return [self.point_at_abscissa(i * l / number_points) \
+    #             for i in range(number_points + 1)]
+
+
     def point_belongs(self, point2d: volmdlr.Point2D,
                       tol: float = 1e-9) -> bool:
         """
@@ -1120,6 +1136,12 @@ class Arc2D(Edge):
         else:
             return min(LineSegment2D(point, self.start).length(),
                        LineSegment2D(point, self.end).length())
+
+    # def point_distance(self, point):
+
+    #    points = self.polygon_points(angle_resolution=100)
+
+    #    return point.point_distance(point.nearest_point(points))
 
     def to_circle(self):
         return volmdlr.wires.Circle2D(self.center, self.radius)
@@ -1280,7 +1302,7 @@ class Arc2D(Edge):
         a = p.point_distance(self.start)
         h = p.point_distance(self.center)
         triangle_area = h * a
-        alpha = abs(self.angle)
+        # alpha = abs(self.angle)
         triangle_cog = self.center + 2 / 3. * h * u
         if self.angle < math.pi:
             cog = (
@@ -1373,7 +1395,7 @@ class Arc2D(Edge):
                 math.sin(2 * angle2) - math.sin(2 * angle1)))
         Ixy = self.radius ** 4 / 8 * (
                 math.cos(angle1) ** 2 - math.cos(angle2) ** 2)
-        Ic = npy.array([[Ix, Ixy], [Ixy, Iy]])
+        # Ic = npy.array([[Ix, Ixy], [Ixy, Iy]])
 
         # Must be computed at center, so huygens related to center
         return volmdlr.geometry.huygens2d(Ix, Iy, Ixy, self.area(),
@@ -1432,20 +1454,6 @@ class Arc2D(Edge):
                       self.end)
                 ]
 
-    def polygon_points(self, angle_resolution=10):
-
-        # densities = []
-        # for d in [min_x_density, min_y_density]:
-        #     if d:
-        #         densities.append(d)
-        # if densities:
-        #     number_points = max(number_points,
-        #                         min(densities) * self.angle * self.radius)
-        number_points = math.ceil(self.angle * angle_resolution)
-        l = self.length()
-        return [self.point_at_abscissa(i * l / number_points) \
-                for i in range(number_points + 1)]
-
     def infinite_primitive(self, offset):
 
         if not self.is_trigo:
@@ -1462,11 +1470,7 @@ class Arc2D(Edge):
         interior = self.middle_point().rotation(self.center, math.pi)
         return Arc2D(self.start, interior, self.end)
 
-    def point_distance(self, point):
 
-       points = self.polygon_points(angle_resolution=100)
-
-       return point.point_distance(point.nearest_point(points))
 
 
 class FullArc2D(Edge):
@@ -1718,7 +1722,7 @@ class ArcEllipse2D(Edge):
             self.angle = clockwise_path
 
         if self.start == self.end or self.angle == 0:
-            self.angle = volmdlr.volmdlr.TWO_PI
+            self.angle = volmdlr.TWO_PI
 
         if self.is_trigo:  # sens trigo
             self.offset_angle = angle1
@@ -2950,13 +2954,32 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             distances.append(pt1.point_distance(point))
         return min(distances)
 
-    def point_belongs(self, point):
-        polygon_points = self.polygon_points()
-        for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
-            line = LineSegment3D(p1, p2)
-            if line.point_belongs(point):
+    # def point_belongs(self, point):
+    #     polygon_points = self.polygon_points()
+    #     for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
+    #         line = LineSegment3D(p1, p2)
+    #         if line.point_belongs(point):
+    #             return True
+    #     return False
+
+    def point_belongs(self, point3d):
+        '''
+        check if a point3d belongs to the bspline_curve or not 
+        '''
+        def f(x):
+            return (point3d - volmdlr.Point3D(*self.curve.evaluate_single(x))).norm()
+
+        x = npy.linspace(0,1,5)
+        x_init=[]
+        for xi in x:
+            x_init.append(xi)
+            
+        for x0 in x_init: 
+            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
+            if z.cost < 1e-10: 
                 return True
         return False
+
 
     def rotation(self, center, axis, angle, copy=True):
         new_control_points = [p.rotation(center, axis, angle, True) for p in
@@ -3192,23 +3215,6 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
                    knots=knots,
                    knot_multiplicities=knot_multiplicities)
 
-    def point_belongs(self, point3d):
-        '''
-        check if a point3d belongs to the bspline_curve or not 
-        '''
-        def f(x):
-            return (point3d - volmdlr.Point3D(*self.curve.evaluate_single(x))).norm()
-
-        x = npy.linspace(0,1,5)
-        x_init=[]
-        for xi in x:
-            x_init.append(xi)
-            
-        for x0 in x_init: 
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            if z.cost < 1e-10: 
-                return True
-        return False
 
     
     def global_minimum_curvature(self, nb_eval: int = 21):
@@ -3290,7 +3296,7 @@ class Arc3D(Edge):
         start_gen = start
         int_gen = start_gen.rotation(axis_point, axis, angle / 2, copy=True)
         end_gen = start_gen.rotation(axis_point, axis, angle, copy=True)
-        if angle == volmdlr.volmdlr.TWO_PI:
+        if angle == volmdlr.TWO_PI:
             line = Line3D(axis_point, axis_point + axis)
             center, _ = line.point_projection(start)
             radius = center.point_distance(start)
