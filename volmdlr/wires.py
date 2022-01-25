@@ -1122,7 +1122,7 @@ class Contour2D(Contour, Wire2D):
         xmin, xmax, ymin, ymax = self.bounding_rectangle()
         for i in range(2000):
             p = volmdlr.Point2D.random(xmin, xmax, ymin, ymax)
-            if self.point_belongs(p, abs_tol=1e-7):
+            if self.point_belongs(p):
                 return p
 
 
