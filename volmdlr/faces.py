@@ -5574,7 +5574,7 @@ class BSplineFace3D(Face3D):
         nearest_start2 = start2.nearest_point(borders_points)
         # nearest_end2 = end2.nearest_point(borders_points)
         
-        def adjacent_direction_uu(adjacent_direction1, adjacent_direction2, nearest_start1, nearest_start2):
+        def adjacent_direction_uu(nearest_start1, nearest_start2):
             # if adjacent_direction1 == 'u' and adjacent_direction2 == 'u':
             v1 = nearest_start1[1] 
             v2 = nearest_start2[1]
@@ -5597,7 +5597,7 @@ class BSplineFace3D(Face3D):
     
             return corresponding_directions, grid2d_direction
                              
-        def adjacent_direction_vv(adjacent_direction1, adjacent_direction2, nearest_start1, nearest_start2):  
+        def adjacent_direction_vv(nearest_start1, nearest_start2):
             # elif adjacent_direction1 == 'v' and adjacent_direction2 == 'v':
             u1 = nearest_start1[0]
             u2 = nearest_start2[0]
@@ -5620,7 +5620,7 @@ class BSplineFace3D(Face3D):
     
             return corresponding_directions, grid2d_direction
     
-        def adjacent_direction_uv(adjacent_direction1, adjacent_direction2, nearest_start1, nearest_start2): 
+        def adjacent_direction_uv(nearest_start1, nearest_start2):
             # elif adjacent_direction1 == 'u' and adjacent_direction2 == 'v':
             v1 = nearest_start1[1]
             u2 = nearest_start2[0]
@@ -5643,7 +5643,7 @@ class BSplineFace3D(Face3D):
     
             return corresponding_directions, grid2d_direction
     
-        def adjacent_direction_vu(adjacent_direction1, adjacent_direction2, nearest_start1, nearest_start2):         
+        def adjacent_direction_vu(nearest_start1, nearest_start2):
             # elif adjacent_direction1 == 'v' and adjacent_direction2 == 'u':
             u1 = nearest_start1[0]
             v2 = nearest_start2[1]
@@ -5668,13 +5668,13 @@ class BSplineFace3D(Face3D):
             return corresponding_directions, grid2d_direction
     
         if adjacent_direction1 == 'u' and adjacent_direction2 == 'u':
-             corresponding_directions, grid2d_direction = adjacent_direction_uu(adjacent_direction1, adjacent_direction2, nearest_start1, nearest_start2)
+             corresponding_directions, grid2d_direction = adjacent_direction_uu(nearest_start1, nearest_start2)
         elif adjacent_direction1 == 'v' and adjacent_direction2 == 'v':
-            corresponding_directions, grid2d_direction = adjacent_direction_vv(adjacent_direction1, adjacent_direction2, nearest_start1, nearest_start2)
+            corresponding_directions, grid2d_direction = adjacent_direction_vv(nearest_start1, nearest_start2)
         elif adjacent_direction1 == 'u' and adjacent_direction2 == 'v':  
-            corresponding_directions, grid2d_direction = adjacent_direction_uv(adjacent_direction1, adjacent_direction2, nearest_start1, nearest_start2)
+            corresponding_directions, grid2d_direction = adjacent_direction_uv(nearest_start1, nearest_start2)
         elif adjacent_direction1 == 'v' and adjacent_direction2 == 'u':  
-            corresponding_directions, grid2d_direction = adjacent_direction_vu(adjacent_direction1, adjacent_direction2, nearest_start1, nearest_start2)
+            corresponding_directions, grid2d_direction = adjacent_direction_vu(nearest_start1, nearest_start2)
         
         return corresponding_directions, grid2d_direction
 
