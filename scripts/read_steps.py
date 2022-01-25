@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import io
-
+import os
 # import volmdlr as vm
 import volmdlr.step
-import volmdlr.cloud as vmcd
+# import volmdlr.cloud as vmcd
 
 for step_file in [
     'tore1.step',
@@ -14,15 +14,16 @@ for step_file in [
     'block.step',
     # '2_bspline_faces.stp'# Uncomment when bug of delta fixed!
   ]:
-    print('filename: ', step_file)
-    step = volmdlr.step.Step.stepfile(path='step/'+step_file)
+    print('Reading step file: ', step_file)
+    filepath = os.path.join('step', step_file)
+    step = volmdlr.step.Step.from_file(filepath=filepath)
     model = step.to_volume_model()
     assert len(model.primitives) > 0.
     model.to_step(step_file+'_reexport')
     model.babylonjs()
 
-    file_io = io.FileIO('step/' + step_file, 'r')
-    step = volmdlr.step.Step.stream(file=file_io)
+    file_io = io.FileIO(filepath, 'r')
+    step = volmdlr.step.Step.from_stream(stream=file_io)
     model = step.to_volume_model()
     assert len(model.primitives) > 0.
     model.to_step(step_file + '_reexport')

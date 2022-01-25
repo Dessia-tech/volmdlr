@@ -14,6 +14,9 @@ import scipy as scp
 import scipy.optimize as opt
 
 import matplotlib.pyplot as plt
+import matplotlib.tri as plt_tri
+from pygeodesic import geodesic
+
 import networkx as nx
 
 from geomdl import BSpline
@@ -303,10 +306,9 @@ class Surface2D(volmdlr.core.Primitive2D):
             else:
                 raise NotImplementedError(
                     'Non convex contour not supported yet')
-
-                raise NotImplementedError(
-                    '{} intersections not supported yet'.format(
-                        len(intersections)))
+                # raise NotImplementedError(
+                #     '{} intersections not supported yet'.format(
+                #         len(intersections)))
 
         return all_contours
 
@@ -2610,8 +2612,6 @@ class BSplineSurface3D(Surface3D):
         #     D.append((points_3d[index_points[equation_points[i][0]]].point_distance(points_3d[index_points[equation_points[i][1]]]))**2)
 
         # Geodesic distance
-        import matplotlib.tri as tri
-        import pygeodesic.geodesic as geodesic
 
         xx=[]
         for p in points_2d:
@@ -2620,7 +2620,7 @@ class BSplineSurface3D(Surface3D):
         for p in points_2d:
             yy.append(p.y)
 
-        triang = tri.Triangulation(xx, yy)
+        triang = plt_tri.Triangulation(xx, yy)
         faces = triang.triangles
         points = npy.empty([len(points_3d),3])
         for i in range(0,len(points_3d)):
@@ -4258,18 +4258,14 @@ class Triangle3D(PlaneFace3D):
         xmin, xmax = min(pt.x for pt in pts2d), max(pt.x for pt in pts2d)
         ymin, ymax = min(pt.y for pt in pts2d), max(pt.y for pt in pts2d)
 
-        nx, ny = int(((xmax-xmin)/resolution)+2), int(((ymax-ymin)/resolution)+2)
+        nbx, nby = int(((xmax-xmin)/resolution)+2), int(((ymax-ymin)/resolution)+2)
         points_box = []
-        for i in range(nx) :
-            x = xmin + i*resolution
-            if x > xmax :
-                x=xmax
+        for i in range(nbx):
+            x = min(xmin + i*resolution, xmax)
             if x == xmin :
                 x = xmin + 0.01*resolution
-            for j in range(ny) :
-                y = ymin + j*resolution
-                if y > ymax :
-                    y=ymax
+            for j in range(nby):
+                y = min(ymin + j*resolution, ymax)
                 if y == ymin :
                     y = ymin + 0.01*resolution
                 points_box.append(volmdlr.Point2D(x,y))
@@ -4377,10 +4373,14 @@ class CylindricalFace3D(Face3D):
                                     volmdlr.Point2D(theta, zmax)))
         return lines, []
 
-    def range_closest(list_point, radius, frame):
-        points_set = volmdlr.delete_double_point(list_point)
+    def range_closest(self, list_points):
+        """
+        This method has be edited as it was really bad coded:
+            * parameter removed, use of self data instead
+        """
+        points_set = volmdlr.delete_double_point(list_points)
         points_set3D = CylindricalFace3D.points2d_to3d(None, [points_set],
-                                                       radius, frame)
+                                                       self.radius, self.surface3d.frame)
 
         points_3dint = [points_set3D[0]]
         points_2dint = [points_set[0]]
@@ -4406,15 +4406,6 @@ class CylindricalFace3D(Face3D):
             points_set3D[pos] = None
 
         return points_2dint
-
-    # def frame_mapping(self, frame, side, copy=True):
-    #     if copy:
-    #         new_cylindricalsurface3d = CylindricalSurface3D.frame_mapping(
-    #             frame, side, copy)
-    #         return CylindricalFace3D(self.contours2d, new_cylindricalsurface3d,
-    #                                  points=self.points, name=self.name)
-    #     else:
-    #         self.cylindricalsurface3d.frame_mapping(frame, side, copy=False)
 
     def minimum_maximum(self, contour2d, radius):
         points = contour2d.tessel_points
@@ -5668,7 +5659,7 @@ class BSplineFace3D(Face3D):
             return corresponding_directions, grid2d_direction
     
         if adjacent_direction1 == 'u' and adjacent_direction2 == 'u':
-             corresponding_directions, grid2d_direction = adjacent_direction_uu(adjacent_direction1, adjacent_direction2, nearest_start1, nearest_start2)
+            corresponding_directions, grid2d_direction = adjacent_direction_uu(adjacent_direction1, adjacent_direction2, nearest_start1, nearest_start2)
         elif adjacent_direction1 == 'v' and adjacent_direction2 == 'v':
             corresponding_directions, grid2d_direction = adjacent_direction_vv(adjacent_direction1, adjacent_direction2, nearest_start1, nearest_start2)
         elif adjacent_direction1 == 'u' and adjacent_direction2 == 'v':  
@@ -5734,7 +5725,7 @@ class BSplineFace3D(Face3D):
 class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     _standalone_in_db = True
     _non_serializable_attributes = ['bounding_box']
-    _non_eq_attributes = ['name', 'color', 'alpha' 'bounding_box']
+    _non_eq_attributes = ['name', 'color', 'alpha', 'bounding_box']
     _non_hash_attributes = []
     STEP_FUNCTION = 'OPEN_SHELL'
 
@@ -6053,7 +6044,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         return vmd.DisplayMesh3D.merge_meshes(meshes)
 
     def babylon_script(self, name='primitive_mesh'):
-        s = 'var {} = new BABYLON.Mesh("{}", scene);\n'.format(name, name)
+        s = f'var {name} = new BABYLON.Mesh("{name}", scene);\n'
 
         mesh = self.babylon_meshes()[0]
 
@@ -6095,7 +6086,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 class ClosedShell3D(OpenShell3D):
     _standalone_in_db = True
     _non_serializable_attributes = ['bounding_box']
-    _non_eq_attributes = ['name', 'color', 'alpha' 'bounding_box']
+    _non_eq_attributes = ['name', 'color', 'alpha', 'bounding_box']
     STEP_FUNCTION = 'CLOSED_SHELL'
 
     def rotation(self, center, axis, angle, copy=True):
@@ -6401,7 +6392,7 @@ class ClosedShell3D(OpenShell3D):
 
             :returns: intersecting contour for two intersecting shells
         '''
-        if dict_intersecting_combinations == None:
+        if dict_intersecting_combinations is None:
             face_combinations = self.intersecting_faces_combinations(shell2)
             dict_intersecting_combinations = self.dict_intersecting_combinations(face_combinations)
         intersecting_lines = list(dict_intersecting_combinations.values())

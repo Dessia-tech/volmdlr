@@ -20,12 +20,12 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
     arc_class = volmdlr.edges.Arc2D
     
     def __init__(self, points, radius, adapt_radius=False, name=''):
-        primitives = RoundedLineSegments.__init__(self, points, radius,
-                                                  closed=False,
-                                                  adapt_radius=adapt_radius,
-                                                  name='')
+        RoundedLineSegments.__init__(self, points, radius,
+                                     closed=False,
+                                     adapt_radius=adapt_radius,
+                                     name='')
 
-        volmdlr.wires.Wire2D.__init__(self, primitives, name)
+        volmdlr.wires.Wire2D.__init__(self, self._primitives(), name)
 
     def polygon_points(self, angle_resolution=5):
         points = []
@@ -84,21 +84,19 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
                                   self.radius,
                                   adapt_radius=self.adapt_radius,
                                   name=self.name)
-        else:
-            self.__init__(
-                [p.rotation(center, angle, copy=True) for p in self.points],
-                self.radius,
-                adapt_radius=self.adapt_radius, name=self.name)
+        self.__init__(
+            [p.rotation(center, angle, copy=True) for p in self.points],
+            self.radius,
+            adapt_radius=self.adapt_radius, name=self.name)
 
     def translation(self, offset, copy=True):
         if copy:
             return self.__class__(
                 [p.translation(offset, copy=True) for p in self.points],
                 self.radius, adapt_radius=self.adapt_radius, name=self.name)
-        else:
-            self.__init__(
-                [p.translation(offset, copy=True) for p in self.points],
-                self.radius, adapt_radius=self.adapt_radius, name=self.name)
+        self.__init__(
+            [p.translation(offset, copy=True) for p in self.points],
+            self.radius, adapt_radius=self.adapt_radius, name=self.name)
 
     def offset(self, offset):
         nb = len(self.points)

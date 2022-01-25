@@ -5,16 +5,16 @@
 """
 
 import time
+from typing import BinaryIO, List
 import matplotlib.pyplot as plt
 import networkx as nx
+import plot_data.graph
 import volmdlr
 import volmdlr.core
 import volmdlr.primitives3d
 import volmdlr.edges
 import volmdlr.wires
 import volmdlr.faces
-import plot_data.graph
-from typing import BinaryIO, List
 
 # import webbrowser
 # from jinja2 import Environment, PackageLoader, select_autoescape
@@ -246,24 +246,31 @@ class Step:
     def __init__(self, lines: List[str], name: str = ''):
         self.lines = lines
         self.functions, self.all_connections = self.read_lines()
-        self.upd_graph = False
+        self._utd_graph = False
+        self._graph = None
+
+    @property
+    def graph(self):
+        if not self._utd_graph:
+            self._graph = self.create_graph()
+            self._utd_graph = True
+        return self._graph
 
     @classmethod
-    def stream(cls, file: BinaryIO = None):
+    def from_stream(cls, stream: BinaryIO = None):
         lines = []
-        for line in file:
+        for line in stream:
             line = line.decode("ISO-8859-1")
             line = line.replace("\r", "")
             lines.append(line)
         return cls(lines)
 
     @classmethod
-    def stepfile(cls, path: str = None):
-        stream = open(path, "r", encoding="ISO-8859-1")
-        lines = []
-        for line in stream:
-            lines.append(line)
-        stream.close()
+    def from_file(cls, filepath: str = None):
+        with open(filepath, "r", encoding="ISO-8859-1") as file:
+            lines = []
+            for line in file:
+                lines.append(line)
         return cls(lines)
 
     def read_lines(self):
@@ -544,8 +551,6 @@ class Step:
         instanciated and the totatl time of all the instanciations of this
         given class.
         """
-        if not self.upd_graph:
-            self.graph = self.create_graph()
 
         object_dict = {}
 
@@ -557,9 +562,7 @@ class Step:
         for node in self.graph.nodes:
             if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP':
                 frame_mapping_nodes.append(node)
-            if node != '#0' and (self.functions[node].name == "CLOSED_SHELL"
-                                 or
-                                 self.functions[node].name == "OPEN_SHELL"):
+            if node != '#0' and (self.functions[node].name in ["CLOSED_SHELL", "OPEN_SHELL"]):
                 shell_nodes.append(node)
             # if node != '#0' and self.functions[node].name == 'SHAPE_REPRESENTATION':
             #     # Really a shell node ?
@@ -674,14 +677,11 @@ class Step:
         return points3d[1:]
 
     def plot_data(self):
-        if not self.upd_graph:
-            self.graph = self.create_graph()
         graph = self.graph.copy()
 
         graph.remove_nodes_from([stepfunction.id for stepfunction
                                  in self.functions.values()
-                                 if stepfunction.name == 'CARTESIAN_POINT'
-                                 or stepfunction.name == 'DIRECTION'])
+                                 if stepfunction.name in ['CARTESIAN_POINT', 'DIRECTION']])
         return [plot_data.graph.NetworkxGraph(graph=graph)]
 
 

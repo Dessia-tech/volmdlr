@@ -101,8 +101,7 @@ class Edge(dc.DessiaObject):
                 return obj.trim(p1, p2)
 
             else:
-                raise NotImplementedError(
-                    'Unsupported: {}'.format(object_dict[arguments[3]]))
+                raise NotImplementedError(f'Unsupported: {object_dict[arguments[3]]}')
 
 
 class Line(dc.DessiaObject):
@@ -167,8 +166,7 @@ class LineSegment(Edge):
         length = u.norm()
         t = (point - self.start).dot(u) / length
         if t < -1e-9 or t > length + 1e-9:
-            raise ValueError(
-                'Point is not on linesegment: abscissa={}'.format(t))
+            raise ValueError(f'Point is not on linesegment: abscissa={t}')
         return t
 
     def unit_direction_vector(self, abscissa=0.):
@@ -481,11 +479,7 @@ class BSplineCurve2D(Edge):
 
     def point_at_abscissa(self, curvilinear_abscissa):
         l = self.length()
-        adim_abs = curvilinear_abscissa / l
-        if adim_abs > 1:
-            adim_abs = 1
-        if adim_abs < 0:
-            adim_abs = 0.
+        adim_abs = max(min(curvilinear_abscissa / l, 1.), 0.)
         return volmdlr.Point2D(*self.curve.evaluate_single(adim_abs))
 
     def tangent(self, position: float = 0.0):
@@ -2027,8 +2021,7 @@ class Line3D(Line):
             vector=True)
         current_id = u_id + 1
         content = p1_content + u_content
-        content += "#{} = LINE('{}',#{},#{});\n".format(current_id, self.name,
-                                                        p1_id, u_id)
+        content += f"#{current_id} = LINE('{self.name}',#{p1_id},#{u_id});\n"
         return content, current_id
 
 
@@ -2182,63 +2175,18 @@ class LineSegment3D(LineSegment):
 
         return None
 
-    # def line_intersection2(self, linesegment2):
-    #     x1 = self.start.x
-    #     y1 = self.start.y
-    #     z1 = self.start.z
-    #     x2 = self.end.x
-    #     y2 = self.end.y
-    #     z2 = self.end.z
-    #     x3 = linesegment2.start.x
-    #     y3 = linesegment2.start.y
-    #     z3 = linesegment2.start.z
-    #     x4 = linesegment2.end.x
-    #     y4 = linesegment2.end.y
-    #     z4 = linesegment2.end.z
 
-    #     #z1 - z3 = [-z2, z4]
-
-    #     A = npy.array([[-x2, x4], [-y2, y4]])
-    #     B = npy.array([x1 - x3, y1 - y3])
-    #     # solution
-    #     solution = npy.linalg.inv(A).dot(B)
-    #     print('solution :', solution)
-
-    #     alpha = float(solution[0])
-    #     beta = float(solution[1])
-    #     print('final result :', z1 - z3 == alpha * (-z2) + beta * z4)
-
-    #     if z1 - z3 == alpha * (-z2) + beta * z4:
-    #         x = x1 + alpha * x2
-    #         y = y1 + alpha * y2
-    #         z = z1 + alpha * z2
-    #         return volmdlr.Point3D(x, y, z)
-    #     else:
-    #         return None
-
-    # def linesegment_intersection(self, linesegment2):
-    #     intersection = self.line_intersection2(linesegment2)
-    #     print('intersection :', intersection)
-    #     if intersection != None:
-    #         print('disance start to intersection point :', self.start.point_distance(intersection))
-    #         print('length :', self.length())
-    #         if self.start.point_distance(intersection) < self.length() :
-    #             return intersection
-    #         else:
-    #             return None
-    #     return None
     def linesegment_intersection(self, linesegment):
         intersection = self.intersection(linesegment)
-        if intersection != None:
-            if intersection == self.start or intersection == self.end:
+        if intersection is not None:
+            if intersection in [self.start, self.end]:
                 return intersection
-            else:
-                if self.point_belongs(
-                        intersection) and linesegment.point_belongs(
-                    intersection):
-                    return intersection
-                else:
-                    return None
+
+            if self.point_belongs(
+                    intersection) and linesegment.point_belongs(
+                intersection):
+                return intersection
+            return None
         return None
 
     def rotation(self, center, axis, angle, copy=True):
@@ -2246,9 +2194,9 @@ class LineSegment3D(LineSegment):
             return LineSegment3D(
                 *[p.rotation(center, axis, angle, copy=True) for p in
                   self.points])
-        else:
-            Edge.rotation(self, center, axis, angle, copy=False)
-            self.bounding_box = self._bounding_box()
+
+        Edge.rotation(self, center, axis, angle, copy=False)
+        self.bounding_box = self._bounding_box()
 
     def __contains__(self, point):
 
@@ -2257,16 +2205,16 @@ class LineSegment3D(LineSegment):
         test = point.rotation(point1, axis, math.pi)
         if test == point:
             return True
-        else:
-            return False
+        
+        return False
 
     def translation(self, offset, copy=True):
         if copy:
             return LineSegment3D(
                 *[p.translation(offset, copy=True) for p in self.points])
-        else:
-            Edge.translation(self, offset, copy=False)
-            self.bounding_box = self._bounding_box()
+
+        Edge.translation(self, offset, copy=False)
+        self.bounding_box = self._bounding_box()
 
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -2342,7 +2290,7 @@ class LineSegment3D(LineSegment):
 
     def babylon_script(self, color=(1, 1, 1), name='line', type_='line',
                        parent=None):
-        if type_ == 'line' or type_ == 'dashed':
+        if type_ in ['line', 'dashed']:
             s = 'var myPoints = [];\n'
             s += 'var point1 = new BABYLON.Vector3({},{},{});\n'.format(
                 *self.start)
@@ -2783,64 +2731,6 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
                                       tol=1e-9)
         return res.x[0]
 
-        # found = False
-        # start_norm_eva = 0
-        # end_parameter = 1
-        # max_count = 100
-        # count = 0
-        # t_res = None
-        #
-        # if point == self.start:
-        #     return 0
-        # elif point == self.end:
-        #     return 1
-        #
-        # while not found and count < max_count:
-        #
-        #     ts = [start_norm_eva + i / resolution * (
-        #                 end_parameter - start_norm_eva)
-        #           for i in range(resolution + 1)]
-        #
-        #     target_distances = []
-        #     for t in ts:
-        #         curve_point = volmdlr.Point3D(*self.curve.evaluate_single(t))
-        #         if curve_point == point:
-        #             found = True
-        #             t_res = t
-        #
-        #             break
-        #         else:
-        #             target_distances.append(curve_point.point_distance(point))
-        #
-        #     if found:
-        #         break
-        #
-        #     min_i = 0
-        #     min_distance = target_distances[0]
-        #     for i, target_distance in enumerate(target_distances[1:]):
-        #         if target_distance < min_distance:
-        #             min_distance = target_distance
-        #             min_i = i
-        #
-        #     if 0 < min_i < len(target_distances):
-        #         start_norm_eva = ts[min_i-1]
-        #         end_parameter = ts[min_i+1]
-        #     elif min_i == 0:
-        #         start_norm_eva = 0
-        #         end_parameter = ts[1]
-        #     else:
-        #         start_norm_eva = ts[-2]
-        #         end_parameter = 1
-        #
-        #     count += 1
-        #
-        # if t_res is None:
-        #     ax = self.plot()
-        #     point.plot(ax=ax, color='r')
-        #     print(point.point_distance(self.start), point.point_distance(self.end))
-        #     raise ValueError('Point3D not found on BSplineCurve3D')
-        #
-        # return t_res
 
     def point_on_curve(self, point: volmdlr.Point3D):
         # TODO: complete ?
@@ -3149,9 +3039,7 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             abscissa = abscissa2 - 0.001 * l
 
         else:
-            abscissa2 = abscissa + 0.001 * l
-            if abscissa2 > l:
-                abscissa2 = l
+            abscissa2 = min(abscissa + 0.001 * l, l)
 
         tangent = self.point_at_abscissa(abscissa2) - self.point_at_abscissa(
             abscissa)
@@ -3807,10 +3695,8 @@ class Arc3D(Edge):
         return content, [current_id]
 
     def point_distance(self, point):
-
-       points = self.polygon_points(angle_resolution=100)
-
-       return point.point_distance(point.nearest_point(points))
+        points = self.polygon_points(angle_resolution=100)
+        return point.point_distance(point.nearest_point(points))
 
     def point_belongs(self, point3d):
         '''
@@ -3937,10 +3823,7 @@ class FullArc3D(Edge):
         #                                                             circle_id)
 
         edge_curve = p1_id + 1
-        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(
-            edge_curve, self.name,
-            p1_id, p1_id,
-            curve_id)
+        content += f"#{edge_curve} = EDGE_CURVE('{self.name}',#{p1_id},#{p1_id},#{curve_id},.T.);\n"
         curve_id += 1
 
         # return content, [arc1_id, arc2_id, arc3_id, arc4_id]
