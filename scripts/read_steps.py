@@ -15,14 +15,14 @@ for step_file in [
     # '2_bspline_faces.stp'# Uncomment when bug of delta fixed!
   ]:
     print('filename: ', step_file)
-    step = volmdlr.step.Step('step/'+step_file)
+    step = volmdlr.step.Step.stepfile(path='step/'+step_file)
     model = step.to_volume_model()
     assert len(model.primitives) > 0.
     model.to_step(step_file+'_reexport')
     model.babylonjs()
 
     file_io = io.FileIO('step/' + step_file, 'r')
-    step = volmdlr.step.Step(stream=file_io)
+    step = volmdlr.step.Step.stream(file=file_io)
     model = step.to_volume_model()
     assert len(model.primitives) > 0.
     model.to_step(step_file + '_reexport')
