@@ -752,7 +752,6 @@ class Contour:
         """
         list_point_pairs = [(prim.start, prim.end) for prim in self.primitives]
         length_list_points = len(list_point_pairs)
-        # print('fisrt list point pairs :', list_point_pairs)
         points = [list_point_pairs[0]]
         list_point_pairs.remove(
             (list_point_pairs[0][0], list_point_pairs[0][1]))
@@ -780,6 +779,8 @@ class Contour:
             counter1 += 1
             if counter1 >= 100*length_list_points:
                 self.plot()
+                # print('list_point_pairs :', list_point_pairs)
+                # print('points :', points)
                 raise NotImplementedError
             if len(list_point_pairs) == 1:
                 # print('list_point_pairs :', list_point_pairs)
@@ -795,7 +796,6 @@ class Contour:
             # counter += 1
 
         return points
-
 
     @classmethod
     def contours_from_edges(cls, edges, tol=5e-5):
@@ -1730,9 +1730,9 @@ class Contour2D(Contour, Wire2D):
                 else:
                     point1, point2 = contour2d.primitives[0].start, \
                                      contour2d.primitives[-1].end
-                    if primitive1.point_belongs(point1):
+                    if primitive1.point_belongs(point1) and point1 not in intersecting_points:
                         intersecting_points.append(point1)
-                    if primitive1.point_belongs(point2):
+                    if primitive1.point_belongs(point2) and point2 not in intersecting_points:
                         intersecting_points.append(point2)
             if len(intersecting_points) == 2:
                 break
