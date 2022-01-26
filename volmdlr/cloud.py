@@ -4,23 +4,18 @@
 """
 
 import math
-import numpy as npy
-# import open3d
+from typing import List
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
+import dessia_common as dc
 import volmdlr as vm
 import volmdlr.core
 import volmdlr.wires as vmw
 import volmdlr.faces as vmf
 import volmdlr.step as vstep
 import volmdlr.stl as vmstl
-import volmdlr.edges as vme
-import dessia_common as dc
 
-import volmdlr.primitives3d as p3d
-from typing import List
 
 class PointCloud3D(dc.DessiaObject):
     def __init__(self, points, name: str=''):
@@ -124,7 +119,7 @@ class PointCloud3D(dc.DessiaObject):
             # ax = poly1.plot()
             # poly1_simplified.plot(ax=ax, color= 'r')
 
-            if n == resolution-1 or n == 0:
+            if n in (resolution-1, 0):
                 plane3d = vmf.Plane3D.from_plane_vectors(position_plane[n]*normal, vec1, vec2)
                 surf2d = vmf.Surface2D(poly1_simplified.to_2d(position_plane[n]*normal, vec1, vec2),[])
 
