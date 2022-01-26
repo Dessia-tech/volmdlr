@@ -382,18 +382,6 @@ class Vector2D(Vector):
                 'x': self.x, 'y': self.y,
                 'name': self.name}
 
-    @classmethod
-    def remove_duplicate(cls, points):
-        """
-        Don't keep the input list order
-        """
-        input_points = sorted(points, key=lambda pt: (pt.x, pt.y))
-        new_points = [points[0]]
-        for i, point in enumerate(input_points[1:]):
-            if not point.is_close(new_points[-1]):
-                new_points.append(point)
-        return new_points
-
     def copy(self, deep=True, memo=None):
         return self.__class__(self.x, self.y)
 
@@ -914,18 +902,6 @@ class Vector3D(Vector):
         # and math.isclose(self.z, other_vector.z, abs_tol=tol)
         return math.isclose(self.point_distance(other_vector), 0, abs_tol=tol)
         
-    @classmethod
-    def remove_duplicate(cls, points):
-        """
-        Don't keep the input list order
-        """
-        input_points = sorted(points, key=lambda pt: (pt.x, pt.y, pt.z))
-        new_points = [points[0]]
-        for i, point in enumerate(input_points[1:]):
-            if not point.is_close(new_points[-1]):
-                new_points.append(point)
-        return new_points
-
     def approx_hash(self):
         return round(1e6*(self.x+self.y+self.z))
 
