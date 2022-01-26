@@ -117,12 +117,12 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
     _generic_eq = True
     
     def __init__(self, points, radius, adapt_radius=False, name=''):
-        primitives = volmdlr.primitives.RoundedLineSegments.__init__(
-            self, points, radius, 'volmdlr.edges.LineSegment3D',
-            'volmdlr.edges.Arc3D', closed=True, adapt_radius=adapt_radius,
-            name='')
+        volmdlr.primitives.RoundedLineSegments.__init__(
+                self, points, radius, 'volmdlr.edges.LineSegment3D',
+                'volmdlr.edges.Arc3D', closed=True, adapt_radius=adapt_radius,
+                name='')
 
-        volmdlr.wires.Wire3D.__init__(self, primitives, name)
+        volmdlr.wires.Wire3D.__init__(self, self._primitives(), name)
 
 
 class Block(volmdlr.faces.ClosedShell3D):

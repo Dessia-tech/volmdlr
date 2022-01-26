@@ -400,11 +400,11 @@ class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
     """
     closed = True
     def __init__(self, points, radius, adapt_radius=False, name=''):
-        primitives = RoundedLineSegments.__init__(self, points, radius,
-                                                  closed=True,
-                                                  adapt_radius=adapt_radius, name='')
+        RoundedLineSegments.__init__(self, points, radius,
+                                     closed=True,
+                                     adapt_radius=adapt_radius, name='')
 
-        volmdlr.wires.Contour2D.__init__(self, primitives, name)
+        volmdlr.wires.Contour2D.__init__(self, self._primitives(), name)
 
 class Measure2D(volmdlr.edges.LineSegment2D):
     def __init__(self, point1, point2, label='', unit='mm', type_='distance'):
