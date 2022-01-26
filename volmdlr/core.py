@@ -18,6 +18,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import dessia_common as dc
 import volmdlr
 import volmdlr.templates
+import volmdlr.stl as vmstl
 
 npy.seterr(divide='raise')
         
@@ -1181,7 +1182,6 @@ class VolumeModel(dc.DessiaObject):
         mesh = self.primitives[0].triangulation()
         for primitive in self.primitives[1:]:
             mesh.merge_mesh(primitive.triangulation())
-        import volmdlr.stl as vmstl
         stl = vmstl.Stl.from_display_mesh(mesh)
         stl.save_to_binary_file(filepath)
         

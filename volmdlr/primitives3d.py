@@ -426,15 +426,15 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
         return [lower_face]+[upper_face]+lateral_faces
 
-    def plot(self, ax=None):
-        if ax is None:
-            fig, ax = plt.subplots()
-            ax.set_aspect('equal')
-        for contour in [self.outer_contour2d]+self.inner_contours2d:
-            for primitive in contour.primitives:
-                primitive.plot(ax)
-        ax.margins(0.1)
-        return ax
+    # def plot(self, ax=None, color:str='k', alpha:float=1):
+    #     if ax is None:
+    #         fig, ax = plt.subplots()
+    #         ax.set_aspect('equal')
+    #     for contour in [self.outer_contour2d]+self.inner_contours2d:
+    #         for primitive in contour.primitives:
+    #             primitive.plot(ax)
+    #     ax.margins(0.1)
+    #     return ax
 
     def FreeCADExport(self, ip):
         name = 'primitive'+str(ip)
@@ -584,11 +584,6 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
             
         return faces
 
-    def plot(self, ax=None):
-        # if ax is None:
-        #     fig, ax = plt.subplots()
-        # for contour in self.contours3d:
-        ax = self.contour3d.plot(ax)
 
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive'+str(ip)

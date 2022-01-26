@@ -6074,7 +6074,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 *self.color)
         return s
 
-    def plot(self, ax=None, equal_aspect=True, color='k', alpha=1):
+    def plot(self, ax=None, color:str='k', alpha:float=1):
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
 
