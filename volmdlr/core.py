@@ -4,26 +4,25 @@
 
 """
 
+import os
+import tempfile
+from datetime import datetime
 import math
+import subprocess
+import webbrowser
 import numpy as npy
 
-
 npy.seterr(divide='raise')
-from datetime import datetime
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
+import dessia_common as dc
 import volmdlr
 import volmdlr.templates
 
         
-import dessia_common as dc
 
-import webbrowser
-import os
-import tempfile
-import subprocess
 
 # TODO: put voldmlr metadata in this freecad header
 STEP_HEADER = '''ISO-10303-21;
@@ -69,7 +68,7 @@ def set_to_list(step_set):
     char_list = step_set.split(',')
     char_list[0] = char_list[0][1:]
     char_list[-1] = char_list[-1][:-1]
-    return [elem for elem in char_list]
+    return list(char_list)
 
 
 def delete_node_and_predecessors(graph, node):
@@ -351,6 +350,9 @@ def step_ids_to_str(ids):
 class CompositePrimitive(dc.DessiaObject):
     def __init__(self, name=''):
         self.name = name
+        self._primitives_to_index = None
+        self._utd_primitives_to_index = False
+        self.basis_primitives = []
 
         dc.DessiaObject.__init__(self, name=name)
         
@@ -696,14 +698,14 @@ class BoundingBox(dc.DessiaObject):
                     self.zmax - self.zmin)
 
     def bbox_intersection(self, bbox2):
-        return (self.xmin < bbox2.xmax and self.xmax > bbox2.xmin \
+        return self.xmin < bbox2.xmax and self.xmax > bbox2.xmin \
                 and self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
-                and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin)
+                and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin
 
     def is_inside_bbox(self, bbox2):
-        return ((self.xmin >= bbox2.xmin - 1e-6) and (self.xmax <= bbox2.xmax + 1e-6)\
+        return (self.xmin >= bbox2.xmin - 1e-6) and (self.xmax <= bbox2.xmax + 1e-6)\
                 and (self.ymin >=bbox2.ymin - 1e-6) and (self.ymax <= bbox2.ymax + 1e-6) \
-                and (self.zmin >= bbox2.zmin - 1e-6) and (self.zmax <= bbox2.zmax + 1e-6))
+                and (self.zmin >= bbox2.zmin - 1e-6) and (self.zmax <= bbox2.zmax + 1e-6)
 
     def intersection_volume(self, bbox2):
         if not self.bbox_intersection(bbox2):

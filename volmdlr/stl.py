@@ -8,13 +8,16 @@ import kaitaistruct
 from kaitaistruct import KaitaiStruct, KaitaiStream, BytesIO
 from typing import BinaryIO
 
+from typing import List
 import struct
+from binaryornot.check import is_binary
+
+from kaitaistruct import KaitaiStream
+
 import dessia_common as dc
 import volmdlr as vm
-import volmdlr.wires as vmw
 import volmdlr.faces as vmf
 
-from typing import List
 
 
 class Stl(dc.DessiaObject):
@@ -45,7 +48,7 @@ class Stl(dc.DessiaObject):
         if is_binary(filename):       
             with open(filename, 'rb') as file:
                 stream = KaitaiStream(file)
-                name = stream.read_bytes(80).decode('utf8')
+                _ = stream.read_bytes(80).decode('utf8')
                 num_triangles = stream.read_u4le()
                 
                 all_points = []
@@ -53,7 +56,8 @@ class Stl(dc.DessiaObject):
                     if i % 5000 == 0:
                         print('reading stl',
                               round(i/num_triangles*100, 2), '%')
-                    normal = vm.Vector3D(stream.read_f4le(),
+                    # First is normal, unused
+                    _ = vm.Vector3D(stream.read_f4le(),
                                          stream.read_f4le(),
                                          stream.read_f4le())
                     p1 = vm.Point3D(distance_multiplier*stream.read_f4le(),
@@ -167,7 +171,6 @@ class Stl(dc.DessiaObject):
                 # print('invalid_triangles number: ', len(invalid_triangles))
                 for i in invalid_triangles[::-1] :
                     del triangles[i]
-
         return cls(triangles, name=name)
     
     @classmethod
