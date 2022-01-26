@@ -49,8 +49,8 @@ MAX_ERROR_BY_TYPE = {
                      'use-maxsplit-arg': 1,
                      'wildcard-import': 1,
                      'cell-var-from-loop': 1,
+                     'import-outside-toplevel': 1,
                      # No tolerance errors
-                     'import-outside-toplevel': 0,
                      'unexpected-special-method-signature': 0,
                      'bare-except': 0,
                      'function-redefined': 0,

@@ -8,7 +8,6 @@ import math
 import dessia_common as dc
 import volmdlr.edges
 # import volmdlr.faces as vmf
-import volmdlr.stl as vmstl
 
 class Node2D(volmdlr.Point2D):
     def __hash__(self):
@@ -192,5 +191,10 @@ class DisplayMesh3D(DisplayMesh):
         return positions, flatten_indices
     
     def to_stl(self):
-        stl = vmstl.Stl.from_display_mesh(self)
+        '''
+        Exports to STL
+        '''
+        # TODO: remove this in the future
+        import volmdlr.stl
+        stl = volmdlr.stl.Stl.from_display_mesh(self)
         return stl
