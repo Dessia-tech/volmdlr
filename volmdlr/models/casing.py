@@ -5,10 +5,8 @@
 """
 
 import volmdlr as vm
-import volmdlr.primitives2d as primitives2d
-import volmdlr.primitives3d as primitives3d
-import matplotlib.pyplot as plt
-import plot_data
+from volmdlr import primitives2d
+from volmdlr import primitives3d
 
 thickness = 0.005
 height = 0.080

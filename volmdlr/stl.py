@@ -15,7 +15,6 @@ import volmdlr as vm
 import volmdlr.faces as vmf
 
 
-
 class Stl(dc.DessiaObject):
     """STL files are used to represent simple 3D models, defined using
     triangular 3D faces.
