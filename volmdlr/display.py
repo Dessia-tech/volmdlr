@@ -195,6 +195,6 @@ class DisplayMesh3D(DisplayMesh):
         Exports to STL
         '''
         # TODO: remove this in the future
-        import volmdlr.stl
-        stl = volmdlr.stl.Stl.from_display_mesh(self)
+        import volmdlr.stl as vmstl
+        stl = vmstl.Stl.from_display_mesh(self)
         return stl
