@@ -4991,16 +4991,17 @@ class CylindricalFace3D(Face3D):
 
         contour1 = self.outer_contour3d
         contour2 = other_face3d.outer_contour3d
-
         point1, point2 = contour1.shared_primitives_extremities(contour2)
-        point1_2d = self.surface3d.point3d_to_2d(point1)
-        point2_2d = self.surface3d.point3d_to_2d(point2)
 
-        x, y = point1_2d - point2_2d
-        if abs(x)>abs(y):
+        coord = point1 - point2
+        coord = [abs(coord.x), abs(coord.y), abs(coord.z)]
+
+        if coord.index(max(coord)) == 0:
             return 'x'
-        else:
+        elif coord.index(max(coord)) == 1:
             return 'y'
+        else:
+            return 'z'
 
 
 class ToroidalFace3D(Face3D):
