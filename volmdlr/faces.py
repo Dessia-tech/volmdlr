@@ -3255,7 +3255,7 @@ class BSplineSurface3D(Surface3D):
             bspline_surfaces = []
             direction = faces[0].adjacent_direction(faces[1])
 
-            if direction == 'y':
+            if direction == 'x':
                 ymin = faces[0].surface2d.outer_contour.bounding_rectangle()[2]
                 ymax = faces[0].surface2d.outer_contour.bounding_rectangle()[3]
                 for face in faces:
@@ -3268,7 +3268,7 @@ class BSplineSurface3D(Surface3D):
                     points_3d = face.surface3d.grid3d(points_x, points_y, xmin, xmax, ymin, ymax)
                     bspline_surfaces.append(cls.points_fitting_into_bspline_surface(points_3d,points_x,points_y,degree_u,degree_v))
 
-            elif direction == 'x':
+            elif direction == 'y':
                 xmin = faces[0].surface2d.outer_contour.bounding_rectangle()[0]
                 xmax = faces[0].surface2d.outer_contour.bounding_rectangle()[1]
                 for face in faces:
