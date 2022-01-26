@@ -4168,8 +4168,6 @@ class Triangle3D(PlaneFace3D):
         dict_['point1'] = self.point1.to_dict()
         dict_['point2'] = self.point2.to_dict()
         dict_['point3'] = self.point3.to_dict()
-        dict_['name'] = self.name
-        dict_['object_class'] = 'volmdlr.faces.Triangle3D'
         return dict_
 
     @classmethod
