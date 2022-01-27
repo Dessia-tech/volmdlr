@@ -6000,9 +6000,12 @@ class BSplineFace3D(Face3D):
     
     
                 elif (u1 == 1 and v2 == 1):
-                   corresponding_directions.append(('+u', '-v'))
-                   grid2d_direction = [['+y','+x'], ['+x','-y']]
-    
+                    if corresponding_directions == [('+v', '-u')]:
+                        grid2d_direction = [['+y','+x'], ['-x','-y']]
+                    else:
+                        grid2d_direction = [['+y','+x'], ['+x','-y']]
+                    corresponding_directions.append(('+u', '-v'))
+
             return corresponding_directions, grid2d_direction
 
         corresponding_directions, grid2d_direction = corresponding_directions_grids(contour1, contour2, contour1_2d, contour2_2d)
