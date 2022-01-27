@@ -6027,6 +6027,30 @@ class BSplineFace3D(Face3D):
 
         return merged_face
 
+    def adjacent_direction(self, other_face3d):
+        '''
+        find out in which direction the faces are adjacent
+
+        Parameters
+        ----------
+        other_face3d : volmdlr.faces.BSplineFace3D
+        Returns
+        -------
+        adjacent_direction
+        '''
+
+        contour1 = self.outer_contour3d
+        contour2 = other_face3d.outer_contour3d
+        point1, point2 = contour1.shared_primitives_extremities(contour2)
+
+        coord = point1 - point2
+        coord = [abs(coord.x), abs(coord.y)]
+
+        if coord.index(max(coord)) == 0:
+            return 'x'
+        else:
+            return 'y'
+
 
 class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     _standalone_in_db = True
