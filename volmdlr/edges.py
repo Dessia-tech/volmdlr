@@ -20,8 +20,8 @@ from matplotlib import __version__ as _mpl_version
 import matplotlib.pyplot as plt
 import matplotlib.patches
 
-import dessia_common as dc
 import plot_data.core as plot_data
+import dessia_common as dc
 import volmdlr.core
 import volmdlr.geometry
 

@@ -3824,7 +3824,7 @@ class Ellipse3D(Contour3D):
             self.normal = new_normal
             self.major_dir = new_major_dir
 
-    def plot(self, ax=None, color='k', aplha=1, edge_details=False):
+    def plot(self, ax=None, color='k', alpha=1, edge_details=False):
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
