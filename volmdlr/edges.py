@@ -3278,7 +3278,7 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             # loss='soft_l1'
             )
 
-        if res.cost > 1e-4:
+        if res.cost > 1e-1:
             print('distance =', res.cost)
             ax = self.plot()
             point3d.plot(ax=ax)
