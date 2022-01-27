@@ -3255,8 +3255,11 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         
         curve = fitting.approximate_curve([(p.x, p.y, p.z) for p in points], degree, **kwargs)
         return cls.from_geomdl_curve(curve)
-    
-      
+
+    def middle_point(self):
+        return self.point_at_abscissa(0.5)
+
+
 class BezierCurve3D(BSplineCurve3D):
 
     def __init__(self, degree: int, control_points: List[volmdlr.Point3D],
