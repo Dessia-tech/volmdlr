@@ -547,11 +547,60 @@ class Surface3D(dc.DessiaObject):
                       surface2d=surface2d,
                       name=name)
 
+    def repair_primitives_periodicity(self, primitives, last_primitive):
+        delta_x1 = abs(primitives[0].start.x
+                       - last_primitive.end.x)
+        delta_x2 = abs(primitives[-1].end.x
+                       - last_primitive.end.x)
+        delta_y1 = abs(primitives[0].start.y
+                       - last_primitive.end.y)
+        delta_y2 = abs(primitives[-1].end.y
+                       - last_primitive.end.y)
+
+        if self.x_periodicity \
+                and not (math.isclose(delta_x1, 0,
+                                      abs_tol=5e-5)
+                         or math.isclose(delta_x2, 0,
+                                         abs_tol=5e-5)):
+            delta_x1 = delta_x1 % self.x_periodicity
+            delta_x2 = delta_x2 % self.x_periodicity
+            if math.isclose(delta_x1, self.x_periodicity,
+                            abs_tol=1e-4):
+                delta_x1 = 0.
+            if math.isclose(delta_x2, self.x_periodicity,
+                            abs_tol=1e-4):
+                delta_x2 = 0.
+            for prim in primitives:
+                prim.start.x = abs(self.x_periodicity
+                                   - prim.start.x)
+                prim.end.x = abs(self.x_periodicity
+                                 - prim.end.x)
+
+        if self.y_periodicity \
+                and not (math.isclose(delta_y1, 0,
+                                      abs_tol=5e-5)
+                         or math.isclose(delta_y2, 0,
+                                         abs_tol=5e-5)):
+            delta_y1 = delta_y1 % self.y_periodicity
+            delta_y2 = delta_y2 % self.y_periodicity
+            if math.isclose(delta_y1, self.y_periodicity,
+                            abs_tol=1e-4):
+                delta_y1 = 0.
+            if math.isclose(delta_y2, self.y_periodicity,
+                            abs_tol=1e-4):
+                delta_y2 = 0.
+            for prim in primitives:
+                prim.start.y = abs(self.y_periodicity
+                                   - prim.start.y)
+                prim.end.y = abs(self.y_periodicity
+                                 - prim.end.y)
+
+        return primitives, delta_x1, delta_x2, delta_y1, delta_y2
+
     def contour3d_to_2d(self, contour3d):
         primitives2d = []
         last_primitive = None
 
-        # should_study_periodicity = self.x_periodicity or self.y_periodicity
         for primitive3d in contour3d.primitives:
             method_name = '{}_to_2d'.format(
                 primitive3d.__class__.__name__.lower())
@@ -562,66 +611,21 @@ class Surface3D(dc.DessiaObject):
                     continue
 
                 if last_primitive:
-                    delta_x1 = abs(primitives[0].start.x
-                                   - last_primitive.end.x)
-                    delta_x2 = abs(primitives[-1].end.x
-                                   - last_primitive.end.x)
-                    delta_y1 = abs(primitives[0].start.y
-                                   - last_primitive.end.y)
-                    delta_y2 = abs(primitives[-1].end.y
-                                   - last_primitive.end.y)
+                    primitives, delta_x1, delta_x2, delta_y1, delta_y2 = \
+                        self.repair_primitives_periodicity(primitives,
+                                                           last_primitive)
 
                     dist1 = primitive3d.start.point_distance(
                         last_primitive3d.end)
                     dist2 = primitive3d.end.point_distance(
                         last_primitive3d.end)
-                    if self.x_periodicity \
-                            and not (math.isclose(delta_x1, 0,
-                                                  abs_tol=5e-5)
-                                     or math.isclose(delta_x2, 0,
-                                                     abs_tol=5e-5)):
-                        delta_x1 = delta_x1 % self.x_periodicity
-                        delta_x2 = delta_x2 % self.x_periodicity
-                        if math.isclose(delta_x1, self.x_periodicity,
-                                        abs_tol=1e-4):
-                            delta_x1 = 0.
-                        if math.isclose(delta_x2, self.x_periodicity,
-                                        abs_tol=1e-4):
-                            delta_x2 = 0.
-                        for prim in primitives:
-                            prim.start.x = abs(self.x_periodicity
-                                               - prim.start.x)
-                            prim.end.x = abs(self.x_periodicity
-                                             - prim.end.x)
-
-                    if self.y_periodicity \
-                            and not (math.isclose(delta_y1, 0,
-                                                  abs_tol=5e-5)
-                                     or math.isclose(delta_y2, 0,
-                                                     abs_tol=5e-5)):
-                        delta_y1 = delta_y1 % self.y_periodicity
-                        delta_y2 = delta_y2 % self.y_periodicity
-                        if math.isclose(delta_y1, self.y_periodicity,
-                                        abs_tol=1e-4):
-                            delta_y1 = 0.
-                        if math.isclose(delta_y2, self.y_periodicity,
-                                        abs_tol=1e-4):
-                            delta_y2 = 0.
-                        for prim in primitives:
-                            prim.start.y = abs(self.y_periodicity
-                                               - prim.start.y)
-                            prim.end.y = abs(self.y_periodicity
-                                             - prim.end.y)
-
-                    end_match = False
                     if (math.isclose(delta_x1, 0., abs_tol=1e-3)
                             and math.isclose(delta_y1, 0., abs_tol=1e-3)
                             and math.isclose(dist1, 0, abs_tol=5e-5)):
-                        end_match = True
+                        pass
                     elif (math.isclose(delta_x2, 0., abs_tol=1e-3)
                             and math.isclose(delta_y2, 0., abs_tol=1e-3)
                             and math.isclose(dist2, 0, abs_tol=5e-5)):
-                        end_match = True
                         primitives = [p.reverse() for p in primitives[::-1]]
                     else:
                         ax2 = contour3d.plot()
@@ -647,42 +651,6 @@ class Surface3D(dc.DessiaObject):
                             'delta2={}, {}, {}'.format(
                                 delta_x1, delta_y1, dist1,
                                 delta_x2, delta_y2, dist2))
-
-                    # if not end_match and should_study_periodicity:
-                    #     # Study if translating does the trick
-                    #     if self.x_periodicity:
-                    #         math.isclose(abs(delta_x1), self.x_periodicity,
-                    #                      abs_tol=1e-4)
-                    #
-                    # if not :
-                    #     # TODO: lower abs tol, but need to have more precise points?
-                    #     if math.isclose(abs(delta_x1), self.x_periodicity, abs_tol=1e-4):
-                    #         # primitives = [p.translation(-delta_x*volmdlr.X2D)\
-                    #         #               for p in primitives[:]]
-                    #         primitives[0].start.translation(
-                    #             -delta_x * volmdlr.X2D, copy=False)
-                    #     elif math.isclose(abs(delta_x2), self.x_periodicity, abs_tol=1e-4):
-                    #     else:
-                    #         print('sn', self.__class__.__name__)
-                    #         print('lp', len(primitives))
-                    #         contour3d.plot(edge_details=True)
-                    #         ax = last_primitive.plot(color='b')
-                    #         primitives[0].plot(ax=ax ,color='r')
-                    #         for p in primitives[1:]:
-                    #             print(p)
-                    #             p.plot(ax=ax, color='r', ends=True)
-                    #         raise ValueError('Primitives not following each other in contour: deltax={}'.format(delta_x))
-                    #
-                    # delta_y = primitives[0].start.y - last_primitive.end.y
-                    # if not math.isclose(delta_y, 0., abs_tol=1e-4):
-                    #     if abs(delta_y) == self.y_periodicity:
-                    #         # primitives = [p.translation(-delta_y*volmdlr.Y2D)\
-                    #         #               for p in primitives[:]]
-                    #         primitives[0].start.translation(
-                    #             -delta_y*volmdlr.Y2D, copy=False)
-                    #     else:
-                    #         contour3d.plot()
-                    #         raise ValueError('Primitives not following each other in contour: deltay={}'.format(delta_y))
 
                 if primitives:
                     last_primitive = primitives[-1]
