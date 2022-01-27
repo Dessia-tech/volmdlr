@@ -3266,6 +3266,27 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         return [BSplineCurve3D.from_geomdl_curve(curve1),
                 BSplineCurve3D.from_geomdl_curve(curve2)]
 
+    def abscissa(self, point3d):
+        l = self.length()
+
+        res = scp.optimize.least_squares(
+            lambda u: (point3d - self.point_at_abscissa(u)).norm(),
+            x0=npy.array(l/2),
+            bounds=([0], [l]),
+            # ftol=tol / 10,
+            # xtol=tol / 10,
+            # loss='soft_l1'
+            )
+
+        if res.cost > 1e-4:
+            print('distance =', res.cost)
+            ax = self.plot()
+            point3d.plot(ax=ax)
+            best_point = self.point_at_abscissa(res.x)
+            best_point.plot(ax=ax, color='r')
+            raise ValueError('abscissa not found')
+        return res.x[0]
+
 
 class BezierCurve3D(BSplineCurve3D):
 
