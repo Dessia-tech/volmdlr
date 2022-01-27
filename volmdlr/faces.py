@@ -5920,10 +5920,13 @@ class BSplineFace3D(Face3D):
                    corresponding_directions.append(('+v', '-v'))
                    grid2d_direction = [['+x','-y'], ['+x','+y']]
                 
-                elif (v1 == 1 and v2 == 1): 
+                elif (v1 == 1 and v2 == 1):
+                    if corresponding_directions == [('+u', '-u')]:
+                        grid2d_direction = [['+x','+y'], ['-x','-y']]
+                    else:
+                        grid2d_direction = [['+x','+y'], ['+x','-y']]
                     corresponding_directions.append(('+v', '-v'))
-                    grid2d_direction = [['+x','+y'], ['-x','-y']] #['+x','+y'], ['+x','-y']
-                
+
                 
                 elif (v1 == 1 and v2 == 0):
                    corresponding_directions.append(('+v', '+v'))
