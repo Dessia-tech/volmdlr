@@ -1459,7 +1459,7 @@ class Contour2D(Contour, Wire2D):
                 #         primitives.append(r[1])
                 
                 contour = Contour2D(primitives)
-                contour.order_contour()
+                # contour.order_contour()
                 contours.append(contour)
 
             # Side 2: start of contour to first intersect (i=0) and  i odd to i+1 even
@@ -1519,7 +1519,7 @@ class Contour2D(Contour, Wire2D):
                 
 
                 contour = Contour2D(primitives)
-                contour.order_contour()
+                # contour.order_contour()
                 contours.append(contour)
 
             return contours
