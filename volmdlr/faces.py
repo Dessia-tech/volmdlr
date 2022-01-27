@@ -1377,9 +1377,9 @@ class ToroidalSurface3D(Surface3D):
             theta2 += volmdlr.TWO_PI
 
         p1 = volmdlr.Point2D(theta1, phi1)
-        p2 = volmdlr.Point2D(theta1, phi2)
+        p2 = volmdlr.Point2D(theta2, phi1)
         p3 = volmdlr.Point2D(theta2, phi2)
-        p4 = volmdlr.Point2D(theta2, phi1)
+        p4 = volmdlr.Point2D(theta1, phi2)
         outer_contour = volmdlr.wires.ClosedPolygon2D([p1, p2, p3, p4])
         return ToroidalFace3D(self,
                               Surface2D(outer_contour, []),
@@ -1708,9 +1708,9 @@ class SphericalSurface3D(Surface3D):
             theta2 += volmdlr.TWO_PI
 
         p1 = volmdlr.Point2D(theta1, phi1)
-        p2 = volmdlr.Point2D(theta1, phi2)
+        p2 = volmdlr.Point2D(theta2, phi1)
         p3 = volmdlr.Point2D(theta2, phi2)
-        p4 = volmdlr.Point2D(theta2, phi1)
+        p4 = volmdlr.Point2D(theta1, phi2)
         outer_contour = volmdlr.wires.ClosedPolygon2D([p1, p2, p3, p4])
         return SphericalFace3D(self,
                                Surface2D(outer_contour, []),
@@ -3610,22 +3610,13 @@ class Face3D(volmdlr.core.Primitive3D):
         if len(subsurfaces2d) > 1:
             content = ''
             face_ids = []
-            for subsurface2d in subsurfaces2d:
+            for i, subsurface2d in enumerate(subsurfaces2d):
                 face = self.__class__(self.surface3d, subsurface2d)
-                # try:
-
                 face_content, face_id = face.to_step_without_splitting(
                     current_id)
                 face_ids.append(face_id[0])
                 content += face_content
                 current_id = face_id[0] + 1
-                # except NotImplementedError:
-                #     print('Warning: a face of class {} has not been exported due to NotImplementedError'.format(
-                #         face.__class__.__name__))
-                # except AttributeError:
-                #     print(
-                #         'Warning: a face of class {} has not been exported due to AttributeError'.format(
-                #          face.__class__.__name__))
             return content, face_ids
         else:
             return self.to_step_without_splitting(current_id)
@@ -3639,7 +3630,7 @@ class Face3D(volmdlr.core.Primitive3D):
         # surface_id=surface3d_id)
         content += outer_contour_content
         content += "#{} = FACE_BOUND('{}',#{},.T.);\n".format(
-            outer_contour_id + 1, self.name, outer_contour_id)
+                outer_contour_id + 1, self.name, outer_contour_id)
         contours_ids = [outer_contour_id + 1]
         current_id = outer_contour_id + 2
         for inner_contour3d in self.inner_contours3d:
@@ -3759,10 +3750,14 @@ class Face3D(volmdlr.core.Primitive3D):
 
         return intersections
 
-    def plot(self, ax=None, color='k', alpha=1):
+    def plot(self, ax=None, color='k', alpha=1, edge_details=False):
         if not ax:
             ax = plt.figure().add_subplot(111, projection='3d')
-        self.outer_contour3d.plot(ax=ax, color=color, alpha=alpha)
+        self.outer_contour3d.plot(ax=ax, color=color, alpha=alpha,
+                                  edge_details=edge_details)
+        [contour3d.plot(ax=ax, color=color, alpha=alpha,
+                        edge_details=edge_details)
+         for contour3d in self.inner_contours3d]
         return ax
 
 

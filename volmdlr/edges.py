@@ -2294,8 +2294,9 @@ class LineSegment3D(LineSegment):
         if edge_direction:
             x, y, z = self.point_at_abscissa(0.5 * self.length())
             u, v, w = 0.05 * self.direction_vector()
-            ax.quiver(x, y, z, u, v, w, length=0.15 * self.length(),
-                      pivot='tip')
+            ax.quiver(x, y, z, u, v, w, length=self.length()/100,
+                      arrow_length_ratio=5, normalize=True,
+                      pivot='tip', color=color)
         return ax
 
     def plot2d(self, x_3D, y_3D, ax=None, color='k', width=None):
@@ -3407,9 +3408,9 @@ class Arc3D(Edge):
         if edge_direction:
             x, y, z = self.point_at_abscissa(0.5 * self.length())
             u, v, w = 0.05 * self.unit_direction_vector(0.5 * self.length())
-            ax.quiver(x, y, z, u, v, w, length=0.1,
-                      arrow_length_ratio=0.01, normalize=True)
-
+            ax.quiver(x, y, z, u, v, w, length=self.length()/100,
+                      arrow_length_ratio=5, normalize=True,
+                      pivot='tip', color=color)
         return ax
 
     def plot2d(self, center=volmdlr.O3D,
