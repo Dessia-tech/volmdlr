@@ -3753,7 +3753,6 @@ class Face3D(volmdlr.core.Primitive3D):
     def plot(self, ax=None, color='k', alpha=1, edge_details=False):
         if not ax:
             ax = plt.figure().add_subplot(111, projection='3d')
-        print(self.outer_contour3d)
         self.outer_contour3d.plot(ax=ax, color=color, alpha=alpha,
                                   edge_details=edge_details)
         [contour3d.plot(ax=ax, color=color, alpha=alpha,
