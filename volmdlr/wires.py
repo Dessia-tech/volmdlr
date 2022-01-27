@@ -763,7 +763,7 @@ class Contour:
             counter1 += 1
             if counter1 >= 100*length_list_points:
                 self.plot()
-                raise NotImplementedError
+                raise NotImplementedError('coutner1 = {0} ; length_list_points = {1}'.format(counter1, length_list_points))
             if len(list_point_pairs) == 1:
                 # print('list_point_pairs :', list_point_pairs)
                 # print('points :', points)
