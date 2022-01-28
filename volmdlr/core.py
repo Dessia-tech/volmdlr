@@ -565,8 +565,6 @@ class CompositePrimitive3D(Primitive3D):
     #         self._utd_primitives_to_index = True
     #     return self._primitives_to_index[primitive]
 
-
-
     # def update_basis_primitives(self):
     #     # TODO: This is a copy/paste from CompositePrimitive2D, in the future make a Common abstract class
     #     basis_primitives = []
@@ -584,20 +582,11 @@ class CompositePrimitive3D(Primitive3D):
     # #     primitives2d = [p.to_2d(plane_origin, x, y) for p in self.primitives]
     # #     return CompositePrimitive2D(primitives2d, name)
 
-    def plot(self, ax=None, equal_aspect=True, color='k', alpha=1):
+    def plot(self, ax=None, color='k', alpha=1, edge_details=False):
         if ax is None:
-            fig = plt.figure()
-            ax = Axes3D(fig)
-        else:
-            fig = None
-        # if equal_aspect:
-        #     ax.set_aspect('equal')
-
+            fig, ax = plt.subplots()
         for primitive in self.primitives:
             primitive.plot(ax=ax, color=color, alpha=alpha)
-
-
-
         return ax
 
 

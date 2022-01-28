@@ -3520,7 +3520,7 @@ class Circle3D(Contour3D):
         else:
             self.frame = new_frame
 
-    def plot(self, ax=None, color='k', alpha=1.):
+    def plot(self, ax=None, color='k', alpha=1., edge_details=False):
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
@@ -3827,7 +3827,7 @@ class Ellipse3D(Contour3D):
             self.normal = new_normal
             self.major_dir = new_major_dir
 
-    def plot(self, ax=None, color='k'):
+    def plot(self, ax=None, color='k', alpha=1, edge_details=False):
         if ax is None:
             fig = plt.figure()
             ax = Axes3D(fig)
@@ -3889,9 +3889,10 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
             equal = (equal and point == other_point)
         return equal
 
-    def plot(self, ax=None, color='k', alpha=1):
+    def plot(self, ax=None, color='k', alpha=1, edge_details=False):
         for line_segment in self.line_segments:
-            ax = line_segment.plot(ax=ax, color=color, alpha=alpha)
+            ax = line_segment.plot(ax=ax, color=color, alpha=alpha,
+                                   edge_ends=True, edge_direction=True)
         return ax
 
     def rotation(self, center, axis, angle, copy=True):
