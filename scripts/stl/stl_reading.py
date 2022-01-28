@@ -24,11 +24,13 @@ path = os.getcwd()
 for stl_file in [
                 # 'a320.stl',
                 # 'a320_ENGINE_RIGHT.stl',
-                'a320_FAN_RIGHT.stl',
+                # 'a320_FAN_RIGHT.stl',
                 # 'a320_RIGHT_WING.stl',
                 # 'a320_RUDDER.stl',
                 # 'a320_STABILO_RIGHT.stl',
-                # 'KDW1404-1101_sw0001.STL'
+                # 'KDW1404-1101_sw0001.STL',
+                # 'moteur.stl',
+                'HR18 STL S3621 Piece tournante.stl'
                   ]:
     # print('start')
     # volum = volmdlr.core.VolumeModel(cloud_faces)
