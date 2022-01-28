@@ -1842,7 +1842,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
 
     def copy(self, deep=True, memo=None):
         points = [p.copy() for p in self.points]
-        return ClosedPolygon2D(points, self.name)
+        return self.__class__(points, self.name)
 
     def __hash__(self):
         return sum([hash(p) for p in self.points])
@@ -1944,7 +1944,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
 
     def rotation(self, center, angle, copy=True):
         if copy:
-            return ClosedPolygon2D(
+            return self.__class__(
                 [p.rotation(center, angle, copy=True) for p in self.points])
         else:
             for p in self.points:
@@ -1981,7 +1981,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
 
     def translation(self, offset, copy=True):
         if copy:
-            return ClosedPolygon2D(
+            return self.__class__(
                 [p.translation(offset, copy=True) for p in self.points])
         else:
             for p in self.points:
@@ -2904,12 +2904,20 @@ class Circle2D(Contour2D):
     def line_intersections(self, line2d: volmdlr.edges.Line2D, tol=1e-9):
         # Duplicate from ffull arc
         Q = self.center
-        if line2d.points[0] == self.center:
-            P1 = line2d.points[1]
-            V = line2d.points[0] - line2d.points[1]
-        else:
-            P1 = line2d.points[0]
-            V = line2d.points[1] - line2d.points[0]
+        try:
+            if line2d.start == self.center:
+                P1 = line2d.end
+                V = line2d.start - line2d.end
+            else:
+                P1 = line2d.start
+                V = line2d.end - line2d.start
+        except AttributeError:
+            if line2d.point1 == self.center:
+                P1 = line2d.point2
+                V = line2d.point1 - line2d.point2
+            else:
+                P1 = line2d.point1
+                V = line2d.point2 - line2d.point1
         a = V.dot(V)
         b = 2 * V.dot(P1 - Q)
         c = P1.dot(P1) + Q.dot(Q) - 2 * P1.dot(Q) - self.radius ** 2
