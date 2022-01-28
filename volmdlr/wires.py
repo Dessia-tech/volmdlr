@@ -1175,10 +1175,10 @@ class Contour2D(Contour, Wire2D):
         # TODO: This is incomplete!!!
         return False
 
-    def point_over_contour(self, point):
+    def point_over_contour(self, point, abs_tol=1e-7):
         belongs = False
         for primitive in self.primitives:
-            if primitive.point_belongs(point):
+            if primitive.point_belongs(point, abs_tol):
                 belongs = True
         return belongs
 

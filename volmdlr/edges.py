@@ -3218,6 +3218,7 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
+            print(z.cost)
             if z.cost < abs_tol: 
                 return True
         return False
