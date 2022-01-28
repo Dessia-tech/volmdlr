@@ -53,6 +53,9 @@ def bounding_rectangle_adjacent_contours(contours: List):
     return xmin, xmax, ymin, ymax
 
 class Wire:
+    _non_data_hash_attributes = ['basis_primitives']
+    _non_serializable_attributes = ['primitive_to_index',
+                                    'basis_primitives']
 
     def length(self):
         length = 0.
