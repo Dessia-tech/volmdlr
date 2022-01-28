@@ -1395,13 +1395,14 @@ class Contour2D(Contour, Wire2D):
                 volmdlr.edges.Arc2D(sp22.start, interior, sp12.end))
 
         return Contour2D(primitives)
-
+    
     def contour_from_pattern(self):
+        #TODO: Delete this function?
         pattern = self.get_pattern()
         pattern_rotations = []
         # pattern_rotations.append(self)
         for k in range(1, 13):
-            new_pattern = pattern.Rotation(self.CenterOfMass(),
+            new_pattern = pattern.rotation(self.center_of_mass(),
                                            k * math.pi / 6)
             pattern_rotations.append(new_pattern)
 

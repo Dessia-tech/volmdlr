@@ -6512,8 +6512,7 @@ class ClosedShell3D(OpenShell3D):
                                 valid = False
                                 faces.remove(fc)
                                 break
-                            else:
-                                valid = False
+                            valid = False
                         else:
                             valid = False
                 if valid:

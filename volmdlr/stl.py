@@ -3,16 +3,18 @@
 """
 
 """
-from binaryornot.check import is_binary
-import kaitaistruct
-from kaitaistruct import KaitaiStruct, KaitaiStream, BytesIO
+# from binaryornot.check import is_binary
 from typing import BinaryIO
-
 from typing import List
 import struct
+# import kaitaistruct
+from kaitaistruct import KaitaiStruct, KaitaiStream, BytesIO
+
+
+
 from binaryornot.check import is_binary
 
-from kaitaistruct import KaitaiStream
+# from kaitaistruct import KaitaiStream
 
 import dessia_common as dc
 import volmdlr as vm
@@ -90,7 +92,7 @@ class Stl(dc.DessiaObject):
                         if i % 5000 == 0:
                             print('reading stl',
                                   round(i/num_triangles*100, 2), '%')
-                        normal = vm.Vector3D(stream.read_f4le(),
+                        _ = vm.Vector3D(stream.read_f4le(),
                                              stream.read_f4le(),
                                              stream.read_f4le())
                         p1 = vm.Point3D(distance_multiplier*stream.read_f4le(),
@@ -129,7 +131,7 @@ class Stl(dc.DessiaObject):
                                                      distance_multiplier*float(z)))
                         if 'endfacet' in line:
                             try: 
-                                triangles.append(vmf.Triangle3D(*points))
+                                triangles.append(vmf.Triangle3D(points[0], points[1], points[2]))
                             except ZeroDivisionError:
                                 pass
                             points = []
@@ -146,7 +148,7 @@ class Stl(dc.DessiaObject):
                 if i % 5000 == 0:
                     print('reading stl',
                           round(i/num_triangles*100, 2), '%')
-                normal = vm.Vector3D(stream.read_f4le(),
+                _ = vm.Vector3D(stream.read_f4le(),
                                      stream.read_f4le(),
                                      stream.read_f4le())
                 p1 = vm.Point3D(distance_multiplier*stream.read_f4le(),
@@ -187,7 +189,7 @@ class Stl(dc.DessiaObject):
                     if i % 5000 == 0:
                         print('reading stl', round(i/num_triangles*100, 2),
                               '%')
-                    normal = vm.Vector3D(stream.read_f4le(),
+                    _ = vm.Vector3D(stream.read_f4le(),
                                          stream.read_f4le(),
                                          stream.read_f4le())
                     # print(n)
