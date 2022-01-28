@@ -1267,8 +1267,8 @@ class Contour2D(Contour, Wire2D):
             new_primitives.append(volmdlr.edges.LineSegment2D(prim.end, prim.start))
         if copy:
             return Contour2D(new_primitives)
-
         self.primitives = new_primitives
+        return None
 
     def random_point_inside(self):
         xmin, xmax, ymin, ymax = self.bounding_rectangle()
@@ -1277,11 +1277,8 @@ class Contour2D(Contour, Wire2D):
             if self.point_belongs(p):
                 return p
 
-
     def order_contour(self):
-        if self.is_ordered():
-            return self
-        if len(self.primitives) < 2:
+        if self.is_ordered() or len(self.primitives) < 2:
             return self
         
         initial_points = []
