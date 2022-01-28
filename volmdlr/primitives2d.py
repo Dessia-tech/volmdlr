@@ -4,16 +4,14 @@
 
 """
 
-from typing import List
 import math
-import numpy as npy
+
 import matplotlib.patches
+
 import volmdlr
-# from volmdlr.core_compiled import polygon_point_belongs
-from volmdlr.primitives import RoundedLineSegments
 import volmdlr.edges
 import volmdlr.wires
-import matplotlib.pyplot as plt
+from volmdlr.primitives import RoundedLineSegments
 
 
 class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
@@ -22,12 +20,12 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
     arc_class = volmdlr.edges.Arc2D
     
     def __init__(self, points, radius, adapt_radius=False, name=''):
-        primitives = RoundedLineSegments.__init__(self, points, radius,
-                                                  closed=False,
-                                                  adapt_radius=adapt_radius,
-                                                  name='')
+        RoundedLineSegments.__init__(self, points, radius,
+                                     closed=False,
+                                     adapt_radius=adapt_radius,
+                                     name='')
 
-        volmdlr.wires.Wire2D.__init__(self, primitives, name)
+        volmdlr.wires.Wire2D.__init__(self, self._primitives(), name)
 
     def polygon_points(self, angle_resolution=5):
         points = []
@@ -86,21 +84,19 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
                                   self.radius,
                                   adapt_radius=self.adapt_radius,
                                   name=self.name)
-        else:
-            self.__init__(
-                [p.rotation(center, angle, copy=True) for p in self.points],
-                self.radius,
-                adapt_radius=self.adapt_radius, name=self.name)
+        self.__init__(
+            [p.rotation(center, angle, copy=True) for p in self.points],
+            self.radius,
+            adapt_radius=self.adapt_radius, name=self.name)
 
     def translation(self, offset, copy=True):
         if copy:
             return self.__class__(
                 [p.translation(offset, copy=True) for p in self.points],
                 self.radius, adapt_radius=self.adapt_radius, name=self.name)
-        else:
-            self.__init__(
-                [p.translation(offset, copy=True) for p in self.points],
-                self.radius, adapt_radius=self.adapt_radius, name=self.name)
+        self.__init__(
+            [p.translation(offset, copy=True) for p in self.points],
+            self.radius, adapt_radius=self.adapt_radius, name=self.name)
 
     def offset(self, offset):
         nb = len(self.points)
@@ -404,11 +400,11 @@ class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
     """
     closed = True
     def __init__(self, points, radius, adapt_radius=False, name=''):
-        primitives = RoundedLineSegments.__init__(self, points, radius,
-                                                  closed=True,
-                                                  adapt_radius=adapt_radius, name='')
+        RoundedLineSegments.__init__(self, points, radius,
+                                     closed=True,
+                                     adapt_radius=adapt_radius, name='')
 
-        volmdlr.wires.Contour2D.__init__(self, primitives, name)
+        volmdlr.wires.Contour2D.__init__(self, self._primitives(), name)
 
 class Measure2D(volmdlr.edges.LineSegment2D):
     def __init__(self, point1, point2, label='', unit='mm', type_='distance'):
@@ -423,10 +419,10 @@ class Measure2D(volmdlr.edges.LineSegment2D):
         self.type_ = type_
 
     def plot(self, ax, ndigits=6):
-        x1, y1 = self.points[0]
-        x2, y2 = self.points[1]
-        xm, ym = 0.5 * (self.points[0] + self.points[1])
-        distance = self.points[1].point_distance(self.points[0])
+        x1, y1 = self.start
+        x2, y2 = self.end
+        xm, ym = 0.5 * (self.start + self.end)
+        distance = self.end.point_distance(self.start)
 
         if self.label != '':
             label = '{}: '.format(self.label)

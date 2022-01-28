@@ -4,11 +4,11 @@
 Common abstract primitives
 """
 
-from scipy.optimize import linprog
 import math
-from numpy import zeros
-import dessia_common as dc
 from typing import Dict, List
+from numpy import zeros
+from scipy.optimize import linprog
+# import dessia_common as dc
 import volmdlr
 
 
@@ -24,9 +24,7 @@ class RoundedLineSegments:
         self.adapt_radius = adapt_radius
         self.name = name
         self.npoints = len(points)
-        primitives = self._primitives()
 
-        return primitives
 
     def frame_mapping(self, frame, side, copy=True):
         """
