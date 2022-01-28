@@ -3,17 +3,16 @@
 """
 
 """
-from binaryornot.check import is_binary
-import kaitaistruct
-from kaitaistruct import KaitaiStruct, KaitaiStream, BytesIO
-
-import struct
-import dessia_common as dc
-import volmdlr as vm
-import volmdlr.wires as vmw
-import volmdlr.faces as vmf
 
 from typing import List
+import struct
+from binaryornot.check import is_binary
+
+from kaitaistruct import KaitaiStream
+
+import dessia_common as dc
+import volmdlr as vm
+import volmdlr.faces as vmf
 
 
 class Stl(dc.DessiaObject):
@@ -44,7 +43,7 @@ class Stl(dc.DessiaObject):
         if is_binary(filename):       
             with open(filename, 'rb') as file:
                 stream = KaitaiStream(file)
-                name = stream.read_bytes(80).decode('utf8')
+                _ = stream.read_bytes(80).decode('utf8')
                 num_triangles = stream.read_u4le()
                 
                 all_points = []
@@ -52,7 +51,8 @@ class Stl(dc.DessiaObject):
                     if i % 5000 == 0:
                         print('reading stl',
                               round(i/num_triangles*100, 2), '%')
-                    normal = vm.Vector3D(stream.read_f4le(),
+                    # First is normal, unused
+                    _ = vm.Vector3D(stream.read_f4le(),
                                          stream.read_f4le(),
                                          stream.read_f4le())
                     p1 = vm.Point3D(distance_multiplier*stream.read_f4le(),
@@ -85,7 +85,8 @@ class Stl(dc.DessiaObject):
                     if i % 5000 == 0:
                         print('reading stl',
                               round(i/num_triangles*100, 2), '%')
-                    normal = vm.Vector3D(stream.read_f4le(),
+                    # First is normal, unused
+                    _ = vm.Vector3D(stream.read_f4le(),
                                          stream.read_f4le(),
                                          stream.read_f4le())
                     p1 = vm.Point3D(distance_multiplier*stream.read_f4le(),
@@ -124,7 +125,9 @@ class Stl(dc.DessiaObject):
                                                  distance_multiplier*float(z)))
                     if 'endfacet' in line:
                         try: 
-                            triangles.append(vmf.Triangle3D(*points))
+                            triangles.append(vmf.Triangle3D(points[0],
+                                                            points[1],
+                                                            points[2]))
                         except ZeroDivisionError:
                             pass
                         points = []
