@@ -13,6 +13,8 @@ import numpy as npy
 import scipy as scp
 import scipy.optimize as opt
 
+from itertools import product
+
 import matplotlib.pyplot as plt
 import matplotlib.tri as plt_tri
 from pygeodesic import geodesic
@@ -3503,7 +3505,7 @@ class Face3D(volmdlr.core.Primitive3D):
             return False
         point2d = self.surface3d.point3d_to_2d(point)
         if self.surface2d.outer_contour.point_belongs(point2d) or \
-                self.surface2d.outer_contour.point_over_contour(point2d, tol=1e-7):
+                self.surface2d.outer_contour.point_over_contour(point2d, abs_tol=1e-7):
             return True
         return False
 
@@ -3929,7 +3931,7 @@ class PlaneFace3D(Face3D):
         linesegment = vme.LineSegment3D(edge.start, edge.end)
         for surface3d_inter in self.surface3d.linesegment_intersections(linesegment):
             point2d = self.surface3d.point3d_to_2d(surface3d_inter)
-            if self.surface2d.point_belongs(point2d) or self.surface2d.outer_contour.point_over_contour(point2d, tol=1e-7):
+            if self.surface2d.point_belongs(point2d) or self.surface2d.outer_contour.point_over_contour(point2d, abs_tol=1e-7):
                 if surface3d_inter not in intersections:
                     intersections.append(surface3d_inter)
 
