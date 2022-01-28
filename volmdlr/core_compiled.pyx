@@ -376,7 +376,7 @@ class Vector2D(Vector):
     def approx_hash(self):
         return round(1e6*(self.x+self.y))
     
-    def to_dict(self):
+    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
         return {'object_class':'volmdlr.Vector2D',
                 'x': self.x, 'y': self.y,
                 'name': self.name}
@@ -566,7 +566,7 @@ class Point2D(Vector2D):
         return Point2D(self.x / value,
                        self.y / value)
 
-    def to_dict(self):
+    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
         return {'object_class':'volmdlr.Point2D',
                 'x': self.x, 'y': self.y,
                 'name': self.name}
@@ -905,7 +905,7 @@ class Vector3D(Vector):
     def approx_hash(self):
         return round(1e6*(self.x+self.y+self.z))
 
-    def to_dict(self):
+    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
         return {'object_class':'volmdlr.Vector3D',
                 'x': self.x, 'y': self.y, 'z': self.z,
                 'name': self.name}
@@ -1182,7 +1182,7 @@ class Point3D(Vector3D):
     def copy(self, deep=True, memo=None):
         return Point3D(self.x, self.y, self.z)
 
-    def to_dict(self):
+    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
         return {'object_class':'volmdlr.Point3D',
                 'x': self.x, 'y': self.y, 'z': self.z,
                 'name': self.name}

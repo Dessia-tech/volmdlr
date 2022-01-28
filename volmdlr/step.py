@@ -355,7 +355,7 @@ class Step:
                 not_implemented.append(fun.name)
         return list(set(not_implemented))
 
-    def create_graph(self, draw=False, html=False):
+    def create_graph(self):
 
         G = nx.Graph()
         F = nx.DiGraph()
