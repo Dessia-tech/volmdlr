@@ -2261,7 +2261,7 @@ class BSplineSurface3D(Surface3D):
 
 
 
-    def merge_with(self, other_bspline_surface3d, merging_direction):
+    # def merge_with(self, other_bspline_surface3d, merging_direction):
         ''' 
         merge two Bspline surfaces along a merging direction (u ou v)
         Based on: Pungotra et al. Merging multiple B-spline surface patches in a virtual reality environment. 2010
@@ -2429,7 +2429,7 @@ class BSplineSurface3D(Surface3D):
     
         # return merged_surface     
 
-        return merged_surface
+        # return merged_surface
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -3729,6 +3729,10 @@ class Face3D(volmdlr.core.Primitive3D):
                         edge_details=edge_details)
          for contour3d in self.inner_contours3d]
         return ax
+
+    def random_point_inside(self):
+        point_inside2d = self.surface2d.random_point_inside()
+        return self.surface3d.point2d_to_3d(point_inside2d)
 
 
 class PlaneFace3D(Face3D):
@@ -6159,6 +6163,13 @@ class ClosedShell3D(OpenShell3D):
                 return True
         return False
 
+    def is_face_inside(self, face: Face3D):
+        for point in face.outer_contour3d.discretization_points(0.01):
+            if not self.point_belongs(point) and \
+                    not self.point_in_shell_face(point):
+                return False
+        return True
+
     def shell_intersection(self, shell2: 'OpenShell3D', resolution: float):
         """
         Return None if disjointed
@@ -6277,22 +6288,9 @@ class ClosedShell3D(OpenShell3D):
         bbox2 = shell2.bounding_box
         if not bbox1.is_inside_bbox(bbox2):
             return False
-
-        points = []
         for face in self.faces:
-            points.extend(
-                face.outer_contour3d.discretization_points(resolution))
-        for point in points:
-            if not shell2.point_belongs(point):
+            if not shell2.is_face_inside(face):
                 return False
-
-        # Check if any faces are intersecting
-        for face1 in self.faces:
-            for face2 in shell2.faces:
-                intersection = face1.face_intersections(face2)
-                if intersection:
-                    return False
-
         return True
 
     def is_disjoint_from(self, shell2, tol=1e-8):
@@ -6442,7 +6440,6 @@ class ClosedShell3D(OpenShell3D):
             else:
                 inside = False
                 shell_2 = shell2
-            face_contour2d = face.surface2d.outer_contour
 
             list_cutting_contours = face.get_face_cutting_contours(intersecting_combinations)
             if not list_cutting_contours:
@@ -6450,22 +6447,7 @@ class ClosedShell3D(OpenShell3D):
             else:
                 list_faces = face.divide_face(list_cutting_contours, inside)
             for new_face in list_faces:
-                points_inside = []
-                for i in range(5):
-                    points_inside.append(new_face.surface2d.random_point_inside())
-                points_inside = [point for point in points_inside if point is not None]
-                # if not points_inside:
-                #     ax1 = face_contour2d.plot()
-                #     print('bugging face, maybe area is too small. No points have been found inside face. See graph generated :', face_contour2d)
-                #     face_intersecting_primitives2d = [prim for contour in list_cutting_contours for prim in contour.primitives]
-                #     for prim in face_intersecting_primitives2d:
-                #         prim.plot(ax=ax1, color='r')
-                #         print((prim.start, prim.end))
-                is_inside = False
-                for point in points_inside:
-                    point = face.surface3d.point2d_to_3d(point)
-                    if shell_2.point_belongs(point):
-                        is_inside = True
+                is_inside = shell_2.point_belongs(new_face.random_point_inside())
                 if not intersection_method:
                     if self.validate_new_face(new_face, faces,
                                               shell2, is_inside,
@@ -6543,7 +6525,7 @@ class ClosedShell3D(OpenShell3D):
                     return True
         return False
 
-    def validate_union_subtraction_operation(self, shell2, tol):
+    def validate_set_operation(self, shell2, tol):
         '''
         Verifies if two shells are valid for union or subtractions operations, 
         that is, if they are disjointed or if one is totaly inside the other
@@ -6552,37 +6534,10 @@ class ClosedShell3D(OpenShell3D):
         '''
         if self.is_disjoint_from(shell2, tol):
             return [self, shell2]
-
         if self.is_inside_shell(shell2, resolution = 0.01):
             return [shell2]
-        else:
-            valid = True
-            points = []
-            for face in self.faces:
-                points.extend(
-                    face.outer_contour3d.discretization_points(0.01))
-            for point in points:
-                if not shell2.point_belongs(
-                        point) and not shell2.point_in_shell_face(point):
-                    valid = False
-                    break
-            if valid:
-                return [shell2]
-
         if shell2.is_inside_shell(self, resolution = 0.01):
             return [self]
-        else:
-            valid = True
-            points = []
-            for face in shell2.faces:
-                points.extend(
-                    face.outer_contour3d.discretization_points(0.01))
-            for point in points:
-                if not self.point_belongs(
-                        point) and not self.point_in_shell_face(point):
-                    return []
-            if valid:
-                return [self]
         return []
 
     def union(self, shell2, tol=1e-8):
@@ -6591,10 +6546,10 @@ class ClosedShell3D(OpenShell3D):
             a new united ClosedShell3D object
         '''
 
-        validate_union_subtraction_operation = \
-            self.validate_union_subtraction_operation(shell2, tol)
-        if validate_union_subtraction_operation:
-            return validate_union_subtraction_operation
+        validate_set_operation = \
+            self.validate_set_operation(shell2, tol)
+        if validate_set_operation:
+            return validate_set_operation
 
         face_combinations = self.intersecting_faces_combinations(shell2, tol)
 
@@ -6660,9 +6615,9 @@ class ClosedShell3D(OpenShell3D):
         '''
             Given Two closed shells, it returns a new subtracted OpenShell3D object 
         '''
-        validate_union_subtraction_operation = self.validate_union_subtraction_operation(shell2, tol)
-        if validate_union_subtraction_operation:
-            return validate_union_subtraction_operation
+        validate_set_operation = self.validate_set_operation(shell2, tol)
+        if validate_set_operation:
+            return validate_set_operation
 
         face_combinations = self.intersecting_faces_combinations(shell2, tol)
 
@@ -6686,9 +6641,9 @@ class ClosedShell3D(OpenShell3D):
         '''
             Given Two closed shells, it returns a new subtracted ClosedShell3D object
         '''
-        validate_union_subtraction_operation = self.validate_union_subtraction_operation(shell2, tol)
-        if validate_union_subtraction_operation:
-            return validate_union_subtraction_operation
+        validate_set_operation = self.validate_set_operation(shell2, tol)
+        if validate_set_operation:
+            return validate_set_operation
 
         face_combinations = self.intersecting_faces_combinations(shell2, tol)
 
@@ -6731,10 +6686,10 @@ class ClosedShell3D(OpenShell3D):
         Given two ClosedShell3D, it returns the new objet resulting
          from the intersection of the two
         """
-        validate_union_subtraction_operation = self.validate_union_subtraction_operation(
+        validate_set_operation = self.validate_set_operation(
             shell2, tol)
-        if validate_union_subtraction_operation:
-            return validate_union_subtraction_operation
+        if validate_set_operation:
+            return validate_set_operation
 
         face_combinations = self.intersecting_faces_combinations(shell2, tol)
 

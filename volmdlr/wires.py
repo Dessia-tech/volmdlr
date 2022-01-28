@@ -967,7 +967,7 @@ class Contour:
 
                 for i in range(len(primitives)-1, -1, -1):
                     for p in list_p: #due to errors
-                        if p.point_distance(primitives[i].end) < 1e-4:
+                        if p.point_distance(primitives[i].end) < 1e-4 and p not in points:
                             points.append(primitives[i].end)
                             br2=True
                         if br2:
@@ -977,7 +977,6 @@ class Contour:
                     # if primitives[i].end in list_p:
                     #     points.append(primitives[i].end)
                         # break
-
             return points
 
     def shared_primitives_with(self, contour):
@@ -1020,6 +1019,7 @@ class Contour:
         '''
 
         points = self.shared_primitives_extremities(contour)
+
         merge_primitives = []
 
         for i in range(1, len(points)+1, 2):
@@ -1261,14 +1261,18 @@ class Contour2D(Contour, Wire2D):
             ymax = max(ymax, ymax_edge)
         return xmin, xmax, ymin, ymax
 
-    def invert_contour(self, copy=False):
+    def inverted_primitives(self):
         new_primitives = []
         for prim in self.primitives[::-1]:
-            new_primitives.append(volmdlr.edges.LineSegment2D(prim.end, prim.start))
-        if copy:
-            return Contour2D(new_primitives)
-        self.primitives = new_primitives
-        return None
+            new_primitives.append(
+                volmdlr.edges.LineSegment2D(prim.end, prim.start))
+        return new_primitives
+
+    def invert(self):
+        return Contour2D(self.inverted_primitives())
+
+    def invert_inplace(self):
+        self.primitives = self.inverted_primitives()
 
     def random_point_inside(self):
         xmin, xmax, ymin, ymax = self.bounding_rectangle()
@@ -1735,8 +1739,7 @@ class Contour2D(Contour, Wire2D):
                     primitives2 = extracted_innerpoints_contour1.primitives + cutting_contour.primitives
                     if extracted_outerpoints_contour1.primitives[0].start == \
                             cutting_contour.primitives[0].start:
-                        cutting_contour_new = cutting_contour.invert_contour(
-                            copy=True)
+                        cutting_contour_new = cutting_contour.invert()
                         primitives1 = cutting_contour_new.primitives + \
                                       extracted_outerpoints_contour1.primitives
                     elif extracted_outerpoints_contour1.primitives[0].start == \
@@ -1747,7 +1750,7 @@ class Contour2D(Contour, Wire2D):
                     if extracted_innerpoints_contour1.primitives[0].start == \
                             cutting_contour.primitives[0].start:
                         cutting_contour_new = \
-                            cutting_contour.invert_contour(copy=True)
+                            cutting_contour.invert()
                         primitives2 = cutting_contour_new.primitives + \
                                       extracted_innerpoints_contour1.primitives
                     elif extracted_innerpoints_contour1.primitives[
