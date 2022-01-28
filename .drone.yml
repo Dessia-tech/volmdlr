@@ -7,8 +7,9 @@ steps:
 - name: check code complexity
   image: python:3.9
   commands:
-  - pip install radon
+  - pip install radon pylint
   - ./code_quality.sh
+  - python code_pylint.py
 
 - name: check pep8 formatting
   image: python:3.9
@@ -17,7 +18,7 @@ steps:
   commands:
     - git fetch --tags
     - pip3 install -U pip autopep8
-    - bash pre-push
+    - bash code_pep8.sh
 
 - name: install, build doc run scripts
   image: python:3.8
