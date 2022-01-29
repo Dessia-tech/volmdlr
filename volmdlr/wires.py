@@ -726,7 +726,6 @@ class Contour:
                 primitive = primitive1.split(point2)[0]
                 primitives.append(primitive)
             else:
-                print('spliting here')
                 primitives.append(primitive2)
 
         return primitives
@@ -1019,7 +1018,6 @@ class Contour:
         '''
 
         points = self.shared_primitives_extremities(contour)
-
         merge_primitives = []
 
         for i in range(1, len(points)+1, 2):
@@ -1232,7 +1230,7 @@ class Contour2D(Contour, Wire2D):
                                    name=self.name)
 
 
-    def is_inside_contour(self, contour2):
+    def is_inside(self, contour2):
         """
         verifies if a contour is inside another contour perimiter,
         including the edges
@@ -1244,6 +1242,7 @@ class Contour2D(Contour, Wire2D):
                 points_contour2.append(prim.start)
             if prim.end not in points_contour2:
                 points_contour2.append(prim.end)
+            points_contour2.append(prim.middle_point())
         for point in points_contour2:
             if not self.point_belongs(point) and not self.point_over_contour(point, abs_tol=1e-7):
                 return False
@@ -1856,15 +1855,23 @@ class Contour2D(Contour, Wire2D):
         return Contour2D(new_primitives)
       
     def merge_with(self, contour2d):
-      '''
-      merge two adjacent contours, sharing primitives, and returns one outer contour and inner contours (if there are any)
-      '''
+        '''
+        merge two adjacent contours, sharing primitives, and returns one outer contour and inner contours (if there are any)
+        '''
 
-      merged_primitives = self.merge_primitives_with(contour2d)
-      contours = volmdlr.wires.Contour2D.contours_from_edges(merged_primitives)
-      contours = sorted(contours, key=lambda contour: contour.area(), reverse=True)
+        if self.is_inside(contour2d):
+            ax = self.plot()
+            contour2d.plot(ax=ax, color='r')
+            return [self]
+        elif contour2d.is_inside(self):
+            ax = self.plot()
+            contour2d.plot(ax=ax, color='r')
+            return [contour2d]
+        merged_primitives = self.merge_primitives_with(contour2d)
+        contours = volmdlr.wires.Contour2D.contours_from_edges(merged_primitives)
+        contours = sorted(contours, key=lambda contour: contour.area(), reverse=True)
 
-      return contours
+        return contours
     
         
 class ClosedPolygon:
