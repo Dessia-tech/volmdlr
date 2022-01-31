@@ -13,7 +13,7 @@ import volmdlr
 
 
 class RoundedLineSegments:
-    _non_serializable_attributes = ['line_class', 'arc_class']
+    _non_serializable_attributes = ['line_class', 'arc_class', 'basis_primitives', 'primitives']
 
     def __init__(self, points: List[volmdlr.Point3D], radius: Dict[str, float],
                  closed: bool = False, adapt_radius: bool = False, name: str = ''):
