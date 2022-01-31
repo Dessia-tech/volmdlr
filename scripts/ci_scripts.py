@@ -26,7 +26,7 @@ scripts = [
             # Steps
             'read_steps.py',
             # Stl
-            'stl/stl_reading.py',
+            'stl_reading.py',
             # Distance
             'distance/arc3D_arc3D.py','distance/arc3D_ls3D.py',
             # Showcases
