@@ -750,10 +750,10 @@ class Plane3D(Surface3D):
         return (self.frame.origin == other_plane.frame.origin and
                 self.frame.w.is_colinear_to(other_plane.frame.w))
 
-    def to_dict(self):
+    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
         # improve the object structure ?
         dict_ = dc.DessiaObject.base_dict(self)
-        dict_['frame'] = self.frame.to_dict()
+        dict_['frame'] = self.frame.to_dict(use_pointers=use_pointers, memo=memo, path=path+'/frame')
         return dict_
 
     @classmethod
@@ -4126,11 +4126,11 @@ class Triangle3D(PlaneFace3D):
             self._utd_surface2d = True
         return self._surface2d
 
-    def to_dict(self):
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
         dict_ = dc.DessiaObject.base_dict(self)
-        dict_['point1'] = self.point1.to_dict()
-        dict_['point2'] = self.point2.to_dict()
-        dict_['point3'] = self.point3.to_dict()
+        dict_['point1'] = self.point1.to_dict(use_pointers=False)
+        dict_['point2'] = self.point2.to_dict(use_pointers=False)
+        dict_['point3'] = self.point3.to_dict(use_pointers=False)
         return dict_
 
     @classmethod
@@ -4140,8 +4140,15 @@ class Triangle3D(PlaneFace3D):
         point3 = volmdlr.Point3D.dict_to_object(dict_['point3'])
         return cls(point1, point2, point3, dict_['name'])
 
-    def area(self):
-        # Formula explained here: https://www.triangle-calculator.com/?what=vc
+    def area(self) -> float:
+        """
+        
+        :return: area triangle
+        :rtype: float
+
+        Formula explained here: https://www.triangle-calculator.com/?what=vc
+
+        """
         a = self.point1.point_distance(self.point2)
         b = self.point2.point_distance(self.point3)
         c = self.point3.point_distance(self.point1)
@@ -4149,7 +4156,7 @@ class Triangle3D(PlaneFace3D):
         semi_perimeter = (a + b + c)/2
 
         try :
-        #Area with Heron's formula
+            #Area with Heron's formula
             area = math.sqrt(semi_perimeter*(semi_perimeter-a)*(semi_perimeter-b)*(semi_perimeter-c))
         except ValueError :
             area = 0
