@@ -302,7 +302,6 @@ class Vector(DessiaObject):
             n += 1
         point /= n
         return point
-    
     @classmethod
     def remove_duplicate(cls, points):
         dict_ = {p.approx_hash() : p for p in points}
@@ -381,6 +380,7 @@ class Vector2D(Vector):
         return {'object_class':'volmdlr.Vector2D',
                 'x': self.x, 'y': self.y,
                 'name': self.name}
+
 
     def copy(self, deep=True, memo=None):
         return self.__class__(self.x, self.y)
@@ -901,7 +901,7 @@ class Vector3D(Vector):
         # and math.isclose(self.y, other_vector.y, abs_tol=tol) \
         # and math.isclose(self.z, other_vector.z, abs_tol=tol)
         return math.isclose(self.point_distance(other_vector), 0, abs_tol=tol)
-        
+
     def approx_hash(self):
         return round(1e6*(self.x+self.y+self.z))
 

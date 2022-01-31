@@ -27,4 +27,9 @@ ax = tri.plot(color='r')
 for tritri in subtriangles :
     tritri.plot(ax=ax)
 tri.plot(ax=ax, color='r')
-    
+
+
+subdescription = tri.subdescription(resolution = 1e-2)
+ax = tri.plot(color='r')
+for pt in subdescription :
+    pt.plot(ax=ax)
