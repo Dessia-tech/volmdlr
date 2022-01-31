@@ -270,16 +270,18 @@ class PointCloud2D(dc.DessiaObject):
         else : 
             return polygon
         
+    def bounding_rectangle(self):
+        x_list, y_list = [pt.x for pt in self.points], [pt.y for pt in self.points]
+        return min(x_list), max(x_list), min(y_list), max(y_list)
+        
     def simplify(self, resolution = 5):
         if not self.points : 
             return PointCloud2D(self.points, name=self.name + '_none')
         
-        x_list, y_list = [pt.x for pt in self.points], [pt.y for pt in self.points]
-        xmin, xmax = min(x_list), max(x_list)
-        ymin, ymax = min(y_list), max(y_list)
+        xy_extr = list(self.bounding_rectangle()) #xmin, xmax, ymin, ymax
         
-        x_slide = [xmin + n*(xmax-xmin)/(resolution-1) for n in range(resolution)]
-        y_slide = [ymin + n*(ymax-ymin)/(resolution-1) for n in range(resolution)]
+        x_slide = [xy_extr[0] + n*(xy_extr[1]-xy_extr[0])/(resolution-1) for n in range(resolution)]
+        y_slide = [xy_extr[2] + n*(xy_extr[3]-xy_extr[2])/(resolution-1) for n in range(resolution)]
         
         points = []
         for x1, x2 in zip(x_slide, x_slide[1:]+[x_slide[0]]) :
