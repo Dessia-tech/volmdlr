@@ -82,6 +82,11 @@ class PointCloud3D(dc.DessiaObject):
                 
         return polygon3d
     
+    def to_subcloud2d(self, pos_normal, vec1, vec2):
+        subcloud2d_tosimp = self.to_2d(pos_normal, vec1, vec2)
+        subcloud2d = subcloud2d_tosimp.simplify(resolution=5)
+        return subcloud2d
+    
     def to_shell(self, resolution: int = 10, normal = None, offset: float = 0):
         if normal is None :
             posmax, normal, vec1, vec2 = self.determine_extrusion_vector()
@@ -95,9 +100,7 @@ class PointCloud3D(dc.DessiaObject):
         dist_between_plane, position_plane = self.position_plane(posmax = posmax, 
                                                                  resolution = resolution)
         subcloud3d = [self.extract(normal, pos_plane-dist_between_plane/2, pos_plane+dist_between_plane/2) for pos_plane in position_plane]
-        
-        subcloud2d_tosimp = [subcloud3d[n].to_2d(position_plane[n]*normal, vec1, vec2) for n in range(resolution)]
-        subcloud2d = [sub.simplify(resolution=5) for sub in subcloud2d_tosimp]
+        subcloud2d = [subcloud3d[n].to_subcloud2d(position_plane[n]*normal, vec1, vec2) for n in range(resolution)]
         
         #Offsetting
         if offset != 0 :
