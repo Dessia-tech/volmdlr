@@ -1812,6 +1812,9 @@ class ClosedPolygon:
         if distance < min_distance:
             points.remove(points[-1])
 
+        if volmdlr.wires.ClosedPolygon2D(points).area() == 0.0:
+            return self
+
         return self.__class__(points)
 
 

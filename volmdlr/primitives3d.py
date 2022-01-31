@@ -1115,6 +1115,46 @@ class Sweep(volmdlr.faces.ClosedShell3D):
                         wire_primitive.center,
                         wire_primitive.normal,
                         volmdlr.TWO_PI))
+                    
+            elif wire_primitive.__class__ is volmdlr.edges.BSplineCurve3D or \
+                wire_primitive.__class__ is volmdlr.edges.BezierCurve3D:
+
+                tangents = []
+                for k, pt in enumerate(wire_primitive.points) :
+                    position = k/(len(wire_primitive.points)-1)
+                    tangents.append(wire_primitive.tangent(position))
+                    
+                circles = []
+                for pt, tan in zip(wire_primitive.points, tangents):
+                    circles.append(volmdlr.wires.Circle3D.from_center_normal(center = pt,
+                                                                             normal = tan,
+                                                                             radius = self.contour2d.radius))
+                    
+                polys = [volmdlr.wires.ClosedPolygon3D(c.tessellation_points()) for c in circles]
+                
+                size_v, size_u = len(polys[0].points)+1, len(polys)
+                degree_u, degree_v = 3, 3
+                    
+                points_3d = []
+                for poly in polys :
+                    points_3d.extend(poly.points)
+                    points_3d.append(poly.points[0])
+                
+                bezier_surface3d = volmdlr.faces.BezierSurface3D(degree_u, 
+                                                                 degree_v,
+                                                                 points_3d,
+                                                                 size_u,
+                                                                 size_v)
+                
+                outer_contour = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.X2D),
+                                               volmdlr.edges.LineSegment2D(volmdlr.X2D, volmdlr.X2D + volmdlr.Y2D),
+                                               volmdlr.edges.LineSegment2D(volmdlr.X2D + volmdlr.Y2D, volmdlr.Y2D),
+                                               volmdlr.edges.LineSegment2D(volmdlr.Y2D, volmdlr.O2D)])
+                surf2d = volmdlr.faces.Surface2D(outer_contour, [])
+                
+                bsface3d = volmdlr.faces.BSplineFace3D(bezier_surface3d, surf2d)
+                faces.append(bsface3d)    
+                
             else:
                 raise NotImplementedError(
                     'Unimplemented primitive for sweep: {}'
