@@ -62,8 +62,8 @@ class PointCloud3D(dc.DessiaObject):
         
         return dist_between_plane, position_plane
     
-    
-    def check_area_polygon(self, initial_polygon2d, position_plane,
+    @staticmethod
+    def check_area_polygon(initial_polygon2d, position_plane,
                            normal, vec1, vec2):
         areas = [0]*len(initial_polygon2d)
         for n, poly in enumerate(initial_polygon2d):
@@ -232,7 +232,8 @@ class PointCloud3D(dc.DessiaObject):
             
         return extended_points
     
-    def offset_to_shell(self, positions_plane: List[vmf.Plane3D], 
+    @staticmethod
+    def offset_to_shell(positions_plane: List[vmf.Plane3D], 
                         polygons2D: List[vmw.ClosedPolygon2D], offset: float):
         
         origin_f, origin_l = positions_plane[0], positions_plane[-1]
