@@ -161,16 +161,40 @@ class Wire:
         """
         split_primitives = []
         primitives = self.primitives
-        for point in [point1, point2]:
-            dist_min = math.inf
+        # for point in [point1, point2]:
+        #     dist_min = math.inf
+        #     for primitive in primitives:
+        #         dist = primitive.point_distance(point)
+        #         if dist < dist_min:
+        #             dist_min = dist
+        #             prim_opt = primitive
+        #     split_primitives.append(prim_opt)
+        # return self.extract_primitives(point1, split_primitives[0], point2,
+        #                                split_primitives[1], inside)
+
+        for i, point in enumerate([point1, point2]):
+            dist = []
             for primitive in primitives:
-                dist = primitive.point_distance(point)
-                if dist < dist_min:
-                    dist_min = dist
-                    prim_opt = primitive
-            split_primitives.append(prim_opt)
+                dist.append(primitive.point_distance(point))
+            dist_sorted = sorted(dist)
+
+            if abs(dist_sorted[0] - dist_sorted[1]) == 0:
+                indices = npy.where(npy.array(dist) == dist_sorted[0])[0]
+            elif 0 < abs(dist_sorted[0] - dist_sorted[1]) < 1e-10:
+                indices = [dist.index(dist_sorted[0]), dist.index(dist_sorted[1])]
+            else:
+                indices = dist.index(dist_sorted[0])
+            if isinstance(indices, int):
+                split_primitives.append(primitives[indices])
+            else:
+                if i == 0:
+                    split_primitives.append(primitives[indices[0]])
+                else:
+                    split_primitives.append(primitives[indices[1]])
+
         return self.extract_primitives(point1, split_primitives[0], point2,
                                        split_primitives[1], inside)
+
 
     def point_belongs(self, point):
         '''
