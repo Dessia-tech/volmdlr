@@ -251,7 +251,7 @@ class PointCloud2D(dc.DessiaObject):
         
     def plot(self, ax=None, color='k'):
         if ax is None :
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
         for pt in self.points :
             pt.plot(ax=ax, color=color)
         return ax
