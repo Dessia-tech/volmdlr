@@ -5,8 +5,8 @@ import volmdlr.cloud
 """
 """
 
-import volmdlr.stl as vmstl
-import volmdlr.cloud
+# import volmdlr.stl as vmstl
+# import volmdlr.cloud
 import volmdlr.core
 # import volmdlr as vm
 # import volmdlr.wires as vmw
@@ -15,23 +15,16 @@ import volmdlr.core
 # import matplotlib.pyplot as plt
 
 import os
-import numpy as np
-from scipy.spatial import ConvexHull
+# import numpy as np
+# from scipy.spatial import ConvexHull
 shells = []
 path = os.getcwd()
 
 
 for stl_file in [
-                # 'a320.stl',
-                # 'a320_ENGINE_RIGHT.stl',
-                # 'a320_FAN_RIGHT.stl',
-                # 'a320_RIGHT_WING.stl',
-                # 'a320_RUDDER.stl',
-                # 'a320_STABILO_RIGHT.stl',
-                # 'KDW1404-1101_sw0001.STL',
-                # 'moteur.stl',
-                'HR18 STL S3621 Piece tournante.stl'
+                'simple.stl',
                   ]:
+    stl_path = os.path.join('stl', stl_file)
     # print('start')
     # volum = volmdlr.core.VolumeModel(cloud_faces)
     # print('saving file' + stl_file)
@@ -40,10 +33,11 @@ for stl_file in [
     # faces.extend(cloud_faces)
     # print()
 
-    stl = vmstl.Stl.from_file(stl_file)
-    # shell = stl.to_closed_shell()
+    stl = vmstl.Stl.from_file(stl_path)
+    shell = stl.to_closed_shell()
+    assert len(shell.faces)
     # shell.babylonjs()
-    # shells.append(shell)
+    shells.append(shell)
     # stl.extract_points()
 
     # cloud = volmdlr.cloud.PointCloud3D.from_stl(path + "/" + stl_file)
@@ -54,14 +48,14 @@ for stl_file in [
     pointcloud3d = volmdlr.cloud.PointCloud3D(list_points)
     # polygons2d = pointcloud3d.to_shell()
     # pointcloud3d.plot()
-    shell = pointcloud3d.to_shell(resolution=15)
-    shell.alpha = 0.6
-    shell.color = (1, 0.1, 0.1)
-    shells.append(shell)
+    shell2 = pointcloud3d.to_shell(resolution=15)
+    shell2.alpha = 0.6
+    shell2.color = (1, 0.1, 0.1)
+    shells.append(shell2)
 
 
-# volum = volmdlr.core.VolumeModel(shells)
-# volum.babylonjs()
+volume_model = volmdlr.core.VolumeModel(shells)
+volume_model.babylonjs()
 
 
 
