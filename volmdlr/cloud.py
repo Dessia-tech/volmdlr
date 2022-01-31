@@ -42,29 +42,45 @@ class PointCloud3D(dc.DessiaObject):
             if dist_to_plane > umin and dist_to_plane < umax :
                 extracted_points.append(points)
         return PointCloud3D(extracted_points)
-        
-    
-    def to_shell(self, resolution: int = 10, normal = None, offset: float = 0):
-        #normal has to be a fondamental vector : X3D, Y3D or Z3D
+     
+    def determine_extrusion_vector(self):
         bbox = self._bounding_box()
         xyz_bbox = [[bbox.xmin, bbox.xmax], [bbox.ymin,bbox.ymax], [bbox.zmin,bbox.zmax]]
         xyz_list = [l[1]-l[0] for l in xyz_bbox]
         absxyz_list, xyz_vect = [abs(length) for length in xyz_list], [vm.X3D, vm.Y3D, vm.Z3D]
+        posmax = xyz_list.index(max(absxyz_list))
+        normal = xyz_vect[posmax]
+        vec1, vec2 = xyz_vect[posmax-2], xyz_vect[posmax-1]
+        
+        return posmax, normal, vec1, vec2
+        
+    
+    def to_shell(self, resolution: int = 10, normal = None, offset: float = 0):
+        # normal has to be a fondamental vector : X3D, Y3D or Z3D
+        bbox = self._bounding_box()
+        xyz_bbox = [[bbox.xmin, bbox.xmax], [bbox.ymin,bbox.ymax], [bbox.zmin,bbox.zmax]]
+        # xyz_list = [l[1]-l[0] for l in xyz_bbox]
+        # absxyz_list, xyz_vect = [abs(length) for length in xyz_list], [vm.X3D, vm.Y3D, vm.Z3D]
 
         if normal is None :
-            posmax = xyz_list.index(max(absxyz_list))
-            normal = xyz_vect[posmax]
+            # posmax = xyz_list.index(max(absxyz_list))
+            # normal = xyz_vect[posmax]
+            posmax, normal, vec1, vec2 = self.determine_extrusion_vector()
             
         else :
             posmax = 0
-            for n, vect in enumerate(xyz_vect):
+            for n, vect in enumerate([vm.X3D, vm.Y3D, vm.Z3D]):
                 if vect == normal :
                     posmax = n
-        dist_between_plane = xyz_list[posmax]/(resolution-1)
+            vec1, vec2 = [vm.X3D, vm.Y3D, vm.Z3D][posmax-2], [vm.X3D, vm.Y3D, vm.Z3D][posmax-1]
+            
+        # dist_between_plane = xyz_list[posmax]/(resolution-1)
+        # position_plane = [xyz_bbox[posmax][0] + n*dist_between_plane for n in range(resolution)]
+        
+        dist_between_plane = (xyz_bbox[posmax][1]-xyz_bbox[posmax][0])/(resolution-1)
         position_plane = [xyz_bbox[posmax][0] + n*dist_between_plane for n in range(resolution)]
         subcloud3d = [self.extract(normal, pos_plane-dist_between_plane/2, pos_plane+dist_between_plane/2) for pos_plane in position_plane]
         
-        vec1, vec2 = xyz_vect[posmax-2], xyz_vect[posmax-1]
         subcloud2d_tosimp = [subcloud3d[n].to_2d(position_plane[n]*normal, vec1, vec2) for n in range(resolution)]
         subcloud2d = [sub.simplify(resolution=5) for sub in subcloud2d_tosimp]
         
