@@ -760,18 +760,18 @@ class Contour:
         counter1 = 0
         while not finished:
             for p1, p2 in list_point_pairs:
-                if p1.point_distance(p2) < 10e-5: #p1 == p2:
+                if p1.point_distance(p2) < 10e-4: #p1 == p2:
                     list_point_pairs.remove((p1, p2))
-                elif p1.point_distance(points[-1][-1]) < 10e-3: #p1 == points[-1][-1]:
+                elif p1.point_distance(points[-1][-1]) < 10e-4: #p1 == points[-1][-1]:
                     points.append((p1, p2))
                     list_point_pairs.remove((p1, p2))
-                elif p2.point_distance(points[-1][-1]) < 10e-3: #p2 == points[-1][-1]:
+                elif p2.point_distance(points[-1][-1]) < 10e-4: #p2 == points[-1][-1]:
                     points.append((p2, p1))
                     list_point_pairs.remove((p1, p2))
-                elif p1.point_distance( points[0][0]) < 10e-3: #p1 == points[0][0]:
+                elif p1.point_distance( points[0][0]) < 10e-4: #p1 == points[0][0]:
                     points = [(p2, p1)] + points
                     list_point_pairs.remove((p1, p2))
-                elif p2.point_distance(points[0][0]) < 10e-3: #p2 == points[0][0]:
+                elif p2.point_distance(points[0][0]) < 10e-4: #p2 == points[0][0]:
                     points = [(p1, p2)] + points
                     list_point_pairs.remove((p1, p2))
             if len(list_point_pairs) == 0:
