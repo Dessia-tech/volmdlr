@@ -302,7 +302,6 @@ class Vector(DessiaObject):
             n += 1
         point /= n
         return point
-    
     @classmethod
     def remove_duplicate(cls, points):
         dict_ = {p.approx_hash() : p for p in points}

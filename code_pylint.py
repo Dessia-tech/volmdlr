@@ -1,6 +1,6 @@
 from pylint.lint import Run
 
-MIN_NOTE = 5.03
+MIN_NOTE = 5.12
 
 MAX_ERROR_BY_TYPE = {
                      'no-member': 185,
@@ -9,7 +9,7 @@ MAX_ERROR_BY_TYPE = {
                      'inconsistent-return-statements': 108,
                      'unused-variable': 95,
                      'arguments-differ': 90,
-                     'too-many-locals': 89,
+                     'too-many-locals': 88,
                      'unused-argument': 70,
                      'too-many-arguments': 64,
                      'consider-using-enumerate': 30,
