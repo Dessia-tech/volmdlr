@@ -107,7 +107,7 @@ def shell_base_surface_model(arguments, object_dict):
 
 def item_defined_transformation(arguments, object_dict):
     # Frame3D
-    volmdlr_object1 = object_dict[arguments[2]]
+    # volmdlr_object1 = object_dict[arguments[2]]
     volmdlr_object2 = object_dict[arguments[3]]
     # TODO : how to frame map properly from these two Frame3D ?
     # return volmdlr_object2 - volmdlr_object1
@@ -248,6 +248,7 @@ class Step:
         self.functions, self.all_connections = self.read_lines()
         self._utd_graph = False
         self._graph = None
+        self.name = name
 
     @property
     def graph(self):

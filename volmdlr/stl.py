@@ -142,10 +142,10 @@ class Stl(dc.DessiaObject):
     def from_file(cls, filename:str = None, distance_multiplier:float=0.001):
         if is_binary(filename):       
             with open(filename, 'rb') as file:
-                return cls.from_binary_stream(file)
+                return cls.from_binary_stream(file, distance_multiplier=distance_multiplier)
 
         with open(filename, 'r', errors='ignore') as file:
-            cls.from_binary_stream(file)
+            return cls.from_text_stream(file, distance_multiplier=distance_multiplier)
                 
 
     # Commented because seemed invalid
