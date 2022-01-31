@@ -2123,6 +2123,11 @@ class BSplineSurface3D(Surface3D):
                 flag = False
                 break
 
+        x_perio = self.x_periodicity if self.x_periodicity is not None \
+            else 1.
+        y_perio = self.y_periodicity if self.y_periodicity is not None \
+            else 1.
+
         if self.x_periodicity and not self.y_periodicity \
                 and bspline_curve3d.periodic:
             p1 = self.point3d_to_2d(bspline_curve3d.points[0], min_bound_x=0.,
@@ -2172,10 +2177,6 @@ class BSplineSurface3D(Surface3D):
             raise NotImplementedError
 
         elif flag:
-            x_perio = self.x_periodicity if self.x_periodicity is not None\
-                else 1.
-            y_perio = self.y_periodicity if self.y_periodicity is not None\
-                else 1.
             p1 = self.point3d_to_2d(bspline_curve3d.points[0],
                                     max_bound_x=x_perio,
                                     max_bound_y=y_perio)
@@ -2215,9 +2216,9 @@ class BSplineSurface3D(Surface3D):
                     points, min(self.degree_u, self.degree_v))]
                 bs = vme.BSplineCurve2D.from_points_interpolation(
                     points, min(self.degree_u, self.degree_v))
-                ax = bs.plot()
-                [p.plot(ax=ax) for p in points]
-                print(points)
+                # ax = bs.plot()
+                # [p.plot(ax=ax) for p in points]
+                # print(points)
             elif 1e-6 < lth <= 1e-5:
                 linesegments = [vme.LineSegment2D(
                     self.point3d_to_2d(bspline_curve3d.start),
