@@ -2887,6 +2887,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             line_segment1.plot(ax=ax, color='y')
             line_segment2.plot(ax=ax, color='b')
             closing_point.plot(ax=ax)
+            raise NotImplementedError('There should not be a plot inside this method')
 
         return closing_point
 

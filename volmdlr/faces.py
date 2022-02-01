@@ -105,11 +105,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         return point_inside_outer_contour
 
-
-
-
     def triangulation(self, min_x_density=None, min_y_density=None):
-
         if self.area() == 0.:
             return vmd.DisplayMesh2D([], triangles=[])
 
@@ -198,9 +194,9 @@ class Surface2D(volmdlr.core.Primitive2D):
         return [Surface2D(oc, []) for oc in splitted_outer_contours]
 
     def cut_by_line(self, line: vme.Line2D):
-
         # intersection_data = self.line_crossings(line)
-
+        # self.save_to_file('/home/axel/Bureau/surface2d')
+        # raise ValueError
         surfaces = []
         splitted_outer_contours = self.outer_contour.cut_by_line(line)
         splitted_inner_contours_table = []
@@ -219,6 +215,9 @@ class Surface2D(volmdlr.core.Primitive2D):
                         inner_contours.append(inner_split)
 
             if inner_contours:
+                ax = outer_split.plot(color='r', plot_points=True)
+                [c.plot(ax=ax, color='b', plot_points=True) for c in inner_contours]
+                line.plot(ax=ax)
                 surface2d = self.from_contours(outer_split, inner_contours)
                 surfaces.append(surface2d)
                 # ax = self.plot()
@@ -543,8 +542,8 @@ class Surface2D(volmdlr.core.Primitive2D):
         for inner_contour in inner_contours:
             try:
                 # inner_contour will be merge with outer_contour
-                surface2d_outer_contour.shared_primitives_extremities(
-                    inner_contour)
+                # surface2d_outer_contour.shared_primitives_extremities(
+                #     inner_contour)
                 merged_contours = surface2d_outer_contour.merge_with(
                     inner_contour)
                 if len(merged_contours) >= 2:
@@ -555,8 +554,6 @@ class Surface2D(volmdlr.core.Primitive2D):
                 # Surface2D
                 surface2d_inner_contours.append(inner_contour)
         return cls(surface2d_outer_contour, surface2d_inner_contours)
-
-
 
     def plot(self, ax=None, color='k', alpha=1, equal_aspect=False):
 
@@ -3964,7 +3961,6 @@ class Face3D(volmdlr.core.Primitive3D):
         return [], []
 
     def triangulation(self):
-
         lines_x, lines_y = self.triangulation_lines()
         if lines_x and lines_y:
             surfaces = []
@@ -3990,10 +3986,8 @@ class Face3D(volmdlr.core.Primitive3D):
         meshes = [s.triangulation() for s in surfaces]
         mesh2d = vmd.DisplayMesh2D.merge_meshes(meshes)
         return vmd.DisplayMesh3D(
-            [vmd.Node3D(*self.surface3d.point2d_to_3d(p)) for p in
-              mesh2d.points],
-            mesh2d.triangles)
-
+            [vmd.Node3D(*self.surface3d.point2d_to_3d(p))
+             for p in mesh2d.points], mesh2d.triangles)
 
     def plot2d(self, ax=None, color='k', alpha=1):
         if ax is None:
@@ -6309,12 +6303,12 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         # mesh = vmd.DisplayMesh3D([], [])
         meshes = []
         for i, face in enumerate(self.faces):
-            try:
-                face_mesh = face.triangulation()
-                meshes.append(face_mesh)
-                # mesh.merge_mesh(face_mesh)
-            except NotImplementedError:
-                print('Warning: a face has been skipped in rendering')
+            # try:
+            face_mesh = face.triangulation()
+            meshes.append(face_mesh)
+            # mesh.merge_mesh(face_mesh)
+            # except NotImplementedError:
+            #     print('Warning: a face has been skipped in rendering')
         return vmd.DisplayMesh3D.merge_meshes(meshes)
 
     def babylon_script(self, name='primitive_mesh'):
@@ -6347,7 +6341,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 *self.color)
         return s
 
-    def plot(self, ax=None, color:str='k', alpha:float=1):
+    def plot(self, ax=None, color: str = 'k', alpha: float = 1):
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
 
