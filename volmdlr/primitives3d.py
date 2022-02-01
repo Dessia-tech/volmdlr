@@ -614,7 +614,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         p1_2D = p1.To2D(self.axis_point, self.x, self.y)
         p2_3D = self.axis_point+volmdlr.Point3D(self.axis.vector)
         p2_2D = p2_3D.To2D(self.plane_origin, self.x, self.y)
-        axis_2D = volmdlr.Line2D(p1_2D, p2_2D)
+        axis_2D = volmdlr.edges.Line2D(p1_2D, p2_2D)
         com = self.contour2d.center_of_mass()
         if com is not False:
             rg = axis_2D.point_distance(com)
@@ -792,7 +792,7 @@ class Cylinder(RevolvedProfile):
         l4 = volmdlr.edges.LineSegment2D(p4, p1)
         extruded_profile = RevolvedProfile(
             self.position, self.axis, normal_vector1,
-            volmdlr.Contour2D([l1, l2, l3, l4]),
+            volmdlr.wires.Contour2D([l1, l2, l3, l4]),
             self.position, self.axis, name=self.name)
         return extruded_profile.babylon_script(name=name)
 
@@ -981,7 +981,7 @@ class HollowCylinder(Cylinder):
         l4 = volmdlr.edges.LineSegment2D(p4, p1)
         extruded_profile = RevolvedProfile(self.position,
                                            self.axis, normal_vector1,
-                                           volmdlr.Contour2D([l1, l2, l3, l4]),
+                                           volmdlr.wires.Contour2D([l1, l2, l3, l4]),
                                            self.position, self.axis,
                                            name=self.name)
         return extruded_profile.babylon_script(name=name)
@@ -1203,10 +1203,7 @@ class Sphere(RevolvedProfile):
         
         contour = volmdlr.wires.Contour2D([
             volmdlr.edges.Arc2D(s, i, e), volmdlr.edges.LineSegment2D(s, e)])
-        # fig, ax = plt.subplots()
-        # c.plot(ax=ax)
         
-        # contour = volmdlr.Contour2D([c])
         axis = volmdlr.X3D
         y = axis.random_unit_normal_vector()
         RevolvedProfile.__init__(self, center, axis, y, contour, center, axis,
@@ -1226,8 +1223,8 @@ class Sphere(RevolvedProfile):
         p1 = volmdlr.Point2D((-self.radius, 0))
         p2 = volmdlr.Point2D((0, self.radius))
         p3 = volmdlr.Point2D((self.radius, 0))
-        line = volmdlr.LineSegment2D(p1, p3)
-        arc = volmdlr.Arc2D(p1, p2, p3)
+        line = volmdlr.edges.LineSegment2D(p1, p3)
+        arc = volmdlr.edges.Arc2D(p1, p2, p3)
         extruded_profile = RevolvedProfile(
             self.position, volmdlr.X3D, volmdlr.Y3D,
             volmdlr.Contour2D([line, arc]), self.position, volmdlr.X3D,
