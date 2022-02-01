@@ -6,7 +6,9 @@ Common primitives 3D
 
 import math
 
+from typing import Tuple, List, Dict
 import numpy as npy
+import matplotlib.pyplot as plt
 
 import volmdlr
 import volmdlr.core
@@ -14,10 +16,8 @@ import volmdlr.primitives
 import volmdlr.faces
 import volmdlr.edges
 import volmdlr.wires
-from typing import Tuple, List, Dict
 
 # import dessia_common.typings as dct
-import matplotlib.pyplot as plt
 
 npy.seterr(divide='raise')
 
@@ -33,11 +33,11 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
     
     def __init__(self, points: List[volmdlr.Point3D], radius: Dict[str, float],
                  adapt_radius: bool = False, name: str = ''):
-        primitives = volmdlr.primitives.RoundedLineSegments.__init__(
+        volmdlr.primitives.RoundedLineSegments.__init__(
             self, points, radius, closed=False, adapt_radius=adapt_radius,
             name='')
 
-        volmdlr.wires.Wire3D.__init__(self, primitives, name)
+        volmdlr.wires.Wire3D.__init__(self, self._primitives(), name)
 
     def arc_features(self, ipoint):
         radius = self.radius[ipoint]
@@ -117,12 +117,12 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
     _generic_eq = True
     
     def __init__(self, points, radius, adapt_radius=False, name=''):
-        primitives = volmdlr.primitives.RoundedLineSegments.__init__(
-            self, points, radius, 'volmdlr.edges.LineSegment3D',
-            'volmdlr.edges.Arc3D', closed=True, adapt_radius=adapt_radius,
-            name='')
+        volmdlr.primitives.RoundedLineSegments.__init__(
+                self, points, radius, 'volmdlr.edges.LineSegment3D',
+                'volmdlr.edges.Arc3D', closed=True, adapt_radius=adapt_radius,
+                name='')
 
-        volmdlr.wires.Wire3D.__init__(self, primitives, name)
+        volmdlr.wires.Wire3D.__init__(self, self._primitives(), name)
 
 
 class Block(volmdlr.faces.ClosedShell3D):
@@ -309,9 +309,8 @@ class Block(volmdlr.faces.ClosedShell3D):
             if copy:
                 return Block(new_frame, color=self.color,
                              alpha=self.alpha, name=self.name)
-            else:
-                self.frame = new_frame
-                self.faces = self.shell_faces()
+            self.frame = new_frame
+            self.faces = self.shell_faces()
 
         if side == 'old':
             new_origin = frame.old_coordinates(self.frame.origin)
@@ -322,9 +321,8 @@ class Block(volmdlr.faces.ClosedShell3D):
             if copy:
                 return Block(new_frame, color=self.color,
                              alpha=self.alpha, name=self.name)
-            else:
-                self.frame = new_frame
-                self.faces = self.shell_faces()
+            self.frame = new_frame
+            self.faces = self.shell_faces()
 
     def copy(self, deep=True, memo=None):
         new_origin = self.frame.origin.copy()
@@ -428,15 +426,15 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
         return [lower_face]+[upper_face]+lateral_faces
 
-    def plot(self, ax=None):
-        if ax is None:
-            fig, ax = plt.subplots()
-            ax.set_aspect('equal')
-        for contour in [self.outer_contour2d]+self.inner_contours2d:
-            for primitive in contour.primitives:
-                primitive.plot(ax)
-        ax.margins(0.1)
-        return ax
+    # def plot(self, ax=None, color:str='k', alpha:float=1):
+    #     if ax is None:
+    #         fig, ax = plt.subplots()
+    #         ax.set_aspect('equal')
+    #     for contour in [self.outer_contour2d]+self.inner_contours2d:
+    #         for primitive in contour.primitives:
+    #             primitive.plot(ax)
+    #     ax.margins(0.1)
+    #     return ax
 
     def FreeCADExport(self, ip):
         name = 'primitive'+str(ip)
@@ -502,14 +500,12 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
                 self.plane_origin.frame_mapping(frame, side, copy),
                 x, y, self.outer_contour2d, self.inner_contours2d,
                 extrusion_vector)
-        else:
-            self.plane_origin.frame_mapping(frame, side, copy)
-            self.__init__(self.plane_origin, x, y, self.outer_contour2d,
-                          self.inner_contours2d, extrusion_vector)
+        self.plane_origin.frame_mapping(frame, side, copy)
+        self.__init__(self.plane_origin, x, y, self.outer_contour2d,
+                      self.inner_contours2d, extrusion_vector)
 
     def translation(self, offset: volmdlr.Vector3D, copy=True):
         if copy:
-
             return self.__class__(
                 plane_origin=self.plane_origin.translation(offset, copy=True),
                 x=self.x, y=self.y,
@@ -517,8 +513,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
                 inner_contours2d=self.inner_contours2d,
                 extrusion_vector=self.extrusion_vector,
                 color=self.color, alpha=self.alpha)
-        else:
-            self.plane_origin.translation(offset, copy=False)
+        self.plane_origin.translation(offset, copy=False)
 
     def rotation(self, center, axis, angle, copy=True):
         if copy:
@@ -534,11 +529,10 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
                                                                 axis, angle,
                                                                 copy=True),
                 color=self.color, alpha=self.alpha)
-        else:
-            self.plane_origin.rotation(center, axis, angle, copy=False)
-            self.x.rotation(volmdlr.O3D, axis, angle, copy=False)
-            self.y.rotation(volmdlr.O3D, axis, angle, copy=False)
-            self.extrusion_vector.rotation(volmdlr.O3D, axis, angle, copy=False)
+        self.plane_origin.rotation(center, axis, angle, copy=False)
+        self.x.rotation(volmdlr.O3D, axis, angle, copy=False)
+        self.y.rotation(volmdlr.O3D, axis, angle, copy=False)
+        self.extrusion_vector.rotation(volmdlr.O3D, axis, angle, copy=False)
 
 
 class RevolvedProfile(volmdlr.faces.ClosedShell3D):
@@ -590,11 +584,6 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
             
         return faces
 
-    def plot(self, ax=None):
-        # if ax is None:
-        #     fig, ax = plt.subplots()
-        # for contour in self.contours3d:
-        ax = self.contour3d.plot(ax)
 
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive'+str(ip)
@@ -747,24 +736,24 @@ class Cylinder(RevolvedProfile):
         dy2 = (pointA[1]-pointB[1])**2
         dz2 = (pointA[2]-pointB[2])**2
 
-        kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
-        ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
-        kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
+        # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
+        # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
+        # kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
 
         if pointA[0] > pointB[0]:
             pointA, pointB = pointB, pointA
-        xmin = pointA[0] - kx * radius
-        xmax = pointB[0] + kx * radius
+        xmin = pointA[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        xmax = pointB[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
 
         if pointA[1] > pointB[1]:
             pointA, pointB = pointB, pointA
-        ymin = pointA[1] - ky * radius
-        ymax = pointB[1] + ky * radius
+        ymin = pointA[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        ymax = pointB[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
 
         if pointA[2] > pointB[2]:
             pointA, pointB = pointB, pointA
-        zmin = pointA[2] - kz * radius
-        zmax = pointB[2] + kz * radius
+        zmin = pointA[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
+        zmax = pointB[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
@@ -895,22 +884,22 @@ class Cone(RevolvedProfile):
         dy2 = (pointA[1]-pointB[1])**2
         dz2 = (pointA[2]-pointB[2])**2
 
-        kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
-        ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
-        kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
+        # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
+        # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
+        # kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
 
-        x_bound = (pointA[0] - kx * self.radius,
-                   pointA[0] + kx * self.radius, pointB[0])
+        x_bound = (pointA[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
+                   pointA[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius, pointB[0])
         xmin = min(x_bound)
         xmax = max(x_bound)
 
-        y_bound = (pointA[1] - ky * self.radius,
-                   pointA[1] + ky * self.radius, pointB[1])
+        y_bound = (pointA[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
+                   pointA[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius, pointB[1])
         ymin = min(y_bound)
         ymax = max(y_bound)
 
-        z_bound = (pointA[2] - kz * self.radius,
-                   pointA[2] + kz * self.radius, pointB[2])
+        z_bound = (pointA[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
+                   pointA[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * self.radius, pointB[2])
         zmin = min(z_bound)
         zmax = max(z_bound)
 
@@ -1126,6 +1115,46 @@ class Sweep(volmdlr.faces.ClosedShell3D):
                         wire_primitive.center,
                         wire_primitive.normal,
                         volmdlr.TWO_PI))
+                    
+            elif wire_primitive.__class__ is volmdlr.edges.BSplineCurve3D or \
+                wire_primitive.__class__ is volmdlr.edges.BezierCurve3D:
+
+                tangents = []
+                for k, pt in enumerate(wire_primitive.points) :
+                    position = k/(len(wire_primitive.points)-1)
+                    tangents.append(wire_primitive.tangent(position))
+                    
+                circles = []
+                for pt, tan in zip(wire_primitive.points, tangents):
+                    circles.append(volmdlr.wires.Circle3D.from_center_normal(center = pt,
+                                                                             normal = tan,
+                                                                             radius = self.contour2d.radius))
+                    
+                polys = [volmdlr.wires.ClosedPolygon3D(c.tessellation_points()) for c in circles]
+                
+                size_v, size_u = len(polys[0].points)+1, len(polys)
+                degree_u, degree_v = 3, 3
+                    
+                points_3d = []
+                for poly in polys :
+                    points_3d.extend(poly.points)
+                    points_3d.append(poly.points[0])
+                
+                bezier_surface3d = volmdlr.faces.BezierSurface3D(degree_u, 
+                                                                 degree_v,
+                                                                 points_3d,
+                                                                 size_u,
+                                                                 size_v)
+                
+                outer_contour = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.X2D),
+                                               volmdlr.edges.LineSegment2D(volmdlr.X2D, volmdlr.X2D + volmdlr.Y2D),
+                                               volmdlr.edges.LineSegment2D(volmdlr.X2D + volmdlr.Y2D, volmdlr.Y2D),
+                                               volmdlr.edges.LineSegment2D(volmdlr.Y2D, volmdlr.O2D)])
+                surf2d = volmdlr.faces.Surface2D(outer_contour, [])
+                
+                bsface3d = volmdlr.faces.BSplineFace3D(bezier_surface3d, surf2d)
+                faces.append(bsface3d)    
+                
             else:
                 raise NotImplementedError(
                     'Unimplemented primitive for sweep: {}'
