@@ -6628,9 +6628,9 @@ class ClosedShell3D(OpenShell3D):
     def is_face_between_shells(self, shell2, face):
         centroide = face.surface2d.outer_contour.center_of_mass()
         normal1 = face.surface3d.point2d_to_3d(
-            centroide) - 0.01 * face.surface3d.frame.w
+            centroide) - 0.001 * face.surface3d.frame.w
         normal2 = face.surface3d.point2d_to_3d(
-            centroide) + 0.01 * face.surface3d.frame.w
+            centroide) + 0.001 * face.surface3d.frame.w
         if (self.point_belongs(normal1) and
             shell2.point_belongs(normal2)) or \
                 (shell2.point_belongs(normal1) and
