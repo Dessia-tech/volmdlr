@@ -869,11 +869,11 @@ class Contour:
                         except KeyError:
                             edges1.add(edge2)
 
-                    if len(list_p) == 2 and all_points == False:
+                    if len(list_p) == 2 and all_points is False:
                         return True
         if len(list_p) < 2:
             return False
-        elif len(list_p) >= 2 and all_points == True:
+        elif len(list_p) >= 2 and all_points is True:
             return (edges1, list_p)
 
     def shared_primitives_extremities(self, contour):
