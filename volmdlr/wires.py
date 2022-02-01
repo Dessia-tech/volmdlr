@@ -53,6 +53,9 @@ def bounding_rectangle_adjacent_contours(contours: List):
     return xmin, xmax, ymin, ymax
 
 class Wire:
+    _non_data_hash_attributes = ['basis_primitives']
+    _non_serializable_attributes = ['primitive_to_index',
+                                    'basis_primitives']
 
     def length(self):
         length = 0.
@@ -1940,6 +1943,9 @@ class ClosedPolygon:
         distance = points[0].point_distance(points[-1])
         if distance < min_distance:
             points.remove(points[-1])
+
+        if volmdlr.wires.ClosedPolygon2D(points).area() == 0.0:
+            return self
 
         return self.__class__(points)
 

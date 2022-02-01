@@ -752,10 +752,10 @@ class Plane3D(Surface3D):
         return (self.frame.origin == other_plane.frame.origin and
                 self.frame.w.is_colinear_to(other_plane.frame.w))
 
-    def to_dict(self):
+    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
         # improve the object structure ?
         dict_ = dc.DessiaObject.base_dict(self)
-        dict_['frame'] = self.frame.to_dict()
+        dict_['frame'] = self.frame.to_dict(use_pointers=use_pointers, memo=memo, path=path+'/frame')
         return dict_
 
     @classmethod
@@ -4176,6 +4176,8 @@ class Triangle3D(PlaneFace3D):
         self._utd_surface3d = False
         self._utd_surface2d = False
         self.bounding_box = self._bounding_box()
+        
+        dc.DessiaObject.__init__(self, name=name)
 
         # Don't use inheritence for performance: class method fakes face3D behavior
         # Face3D.__init__(self,
@@ -4209,12 +4211,13 @@ class Triangle3D(PlaneFace3D):
             self._utd_surface2d = True
         return self._surface2d
 
-    def to_dict(self):
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
         dict_ = dc.DessiaObject.base_dict(self)
         dict_['point1'] = self.point1.to_dict()
         dict_['point2'] = self.point2.to_dict()
         dict_['point3'] = self.point3.to_dict()
         dict_['name'] = self.name
+
         return dict_
 
     @classmethod
@@ -4224,8 +4227,15 @@ class Triangle3D(PlaneFace3D):
         point3 = volmdlr.Point3D.dict_to_object(dict_['point3'])
         return cls(point1, point2, point3, dict_['name'])
 
-    def area(self):
-        # Formula explained here: https://www.triangle-calculator.com/?what=vc
+    def area(self) -> float:
+        """
+        
+        :return: area triangle
+        :rtype: float
+
+        Formula explained here: https://www.triangle-calculator.com/?what=vc
+
+        """
         a = self.point1.point_distance(self.point2)
         b = self.point2.point_distance(self.point3)
         c = self.point3.point_distance(self.point1)
@@ -4233,7 +4243,7 @@ class Triangle3D(PlaneFace3D):
         semi_perimeter = (a + b + c)/2
 
         try :
-        #Area with Heron's formula
+            #Area with Heron's formula
             area = math.sqrt(semi_perimeter*(semi_perimeter-a)*(semi_perimeter-b)*(semi_perimeter-c))
         except ValueError :
             area = 0
@@ -4302,6 +4312,7 @@ class Triangle3D(PlaneFace3D):
     def subdescription(self, resolution = 0.01) :
         frame = self.surface3d.frame
         pts2d = [pt.to_2d(frame.origin, frame.u, frame.v) for pt in self.points]
+        
         t_poly2d = volmdlr.wires.ClosedPolygon2D(pts2d)
 
         xmin, xmax = min(pt.x for pt in pts2d), max(pt.x for pt in pts2d)
@@ -4318,13 +4329,59 @@ class Triangle3D(PlaneFace3D):
                 if y == ymin :
                     y = ymin + 0.01*resolution
                 points_box.append(volmdlr.Point2D(x,y))
-
+                
         points = [pt.copy() for pt in self.points]
         for pt in points_box :
             if t_poly2d.point_belongs(pt):
                 points.append(pt.to_3d(frame.origin, frame.u, frame.v))
+            elif t_poly2d.point_over_contour(pt):  
+                points.append(pt.to_3d(frame.origin, frame.u, frame.v))
+                
+        return volmdlr.Vector3D.remove_duplicate(points)
+    
+    def subdescription_to_triangles(self, resolution = 0.01) :
+        """
+        It describes a triangle by multiple subtriangles with the resolution parameter 
+        as the max length of subtriangles
+        """
+        
+        frame = self.surface3d.frame
+        pts2d = [pt.to_2d(frame.origin, frame.u, frame.v) for pt in self.points]
+        
+        t_poly2d = volmdlr.wires.ClosedPolygon2D(pts2d)
 
-        return points
+        sub_triangles2d = [t_poly2d]
+        done = False
+        while not done :
+            triangles2d = []
+            for t, subtri in enumerate(sub_triangles2d) :
+                ls_length = [ls.length() for ls in subtri.line_segments]
+                ls_max = max(ls_length)
+                
+                if ls_max>resolution:
+                    pos_ls_max = ls_length.index(ls_max)
+                    taller = subtri.line_segments[pos_ls_max]
+                    p1, p2 = taller.start, taller.end
+                    p3 = list(set(subtri.points) - set([p1, p2]))[0]
+                    
+                    pt_mid = (p1 + p2)/2
+                    new_triangles2d = [volmdlr.wires.ClosedPolygon2D([p1, pt_mid, p3]),
+                                       volmdlr.wires.ClosedPolygon2D([p2, pt_mid, p3])]
+
+                    triangles2d.extend(new_triangles2d)
+                else :
+                    triangles2d.append(subtri)
+             
+            if len(sub_triangles2d) == len(triangles2d):
+                done = True
+                break
+            sub_triangles2d = triangles2d
+
+        triangles3d = [Triangle3D(tri.points[0].to_3d(frame.origin, frame.u, frame.v),
+                                  tri.points[1].to_3d(frame.origin, frame.u, frame.v),
+                                  tri.points[2].to_3d(frame.origin, frame.u, frame.v)) for tri in sub_triangles2d]
+        
+        return triangles3d
 
     def middle(self):
         return (self.point1+self.point2+self.point3)/3
