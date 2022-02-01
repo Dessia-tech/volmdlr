@@ -25,6 +25,8 @@ scripts = [
             'cloud/sewing_stl.py',
             # Steps
             'read_steps.py',
+            # Stl
+            'stl_reading.py',
             # Distance
             'distance/arc3D_arc3D.py','distance/arc3D_ls3D.py',
             # Showcases

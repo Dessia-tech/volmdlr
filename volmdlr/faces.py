@@ -4265,7 +4265,7 @@ class Triangle3D(PlaneFace3D):
                 if y == ymin :
                     y = ymin + 0.01*resolution
                 points_box.append(volmdlr.Point2D(x,y))
-                
+
         points = [pt.copy() for pt in self.points]
         for pt in points_box :
             if t_poly2d.point_belongs(pt):
@@ -4277,8 +4277,8 @@ class Triangle3D(PlaneFace3D):
     
     def subdescription_to_triangles(self, resolution = 0.01) :
         """
-        It describes a triangle by multiple subtriangles with the resolution parameter 
-        as the max length of subtriangles
+        This function will return a list of Triangle3D with resolution as max
+        length of subtriangles side 
         """
         
         frame = self.surface3d.frame
@@ -6547,8 +6547,7 @@ class ClosedShell3D(OpenShell3D):
                                 valid = False
                                 faces.remove(fc)
                                 break
-                            else:
-                                valid = False
+                            valid = False
                         else:
                             valid = False
                 if valid:
