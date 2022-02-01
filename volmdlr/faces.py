@@ -7,13 +7,13 @@
 from typing import List, Tuple
 import math
 
+from itertools import product
+
 import triangle
 import numpy as npy
 
 import scipy as scp
 import scipy.optimize as opt
-
-from itertools import product
 
 import matplotlib.pyplot as plt
 import matplotlib.tri as plt_tri
@@ -2262,11 +2262,11 @@ class BSplineSurface3D(Surface3D):
 
 
     # def merge_with(self, other_bspline_surface3d, merging_direction):
-        ''' 
-        merge two Bspline surfaces along a merging direction (u ou v)
-        Based on: Pungotra et al. Merging multiple B-spline surface patches in a virtual reality environment. 2010
-        Link: http://dx.doi.org/10.1016/j.cad.2010.05.006 
-        '''
+    #     '''
+    #     merge two Bspline surfaces along a merging direction (u ou v)
+    #     Based on: Pungotra et al. Merging multiple B-spline surface patches in a virtual reality environment. 2010
+    #     Link: http://dx.doi.org/10.1016/j.cad.2010.05.006
+    #     '''
         
         # #Bspline surface parameters
         # u=[] #knot vector u direction 
@@ -3440,7 +3440,7 @@ class BSplineSurface3D(Surface3D):
                 x_init.append((xi,yi, xi, yi))
 
         i = 0
-        for x0 in x_init: 
+        for x0 in x_init:
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
             if z.cost<1e-5:
                 i += 1
