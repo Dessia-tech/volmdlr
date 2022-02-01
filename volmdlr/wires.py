@@ -854,7 +854,7 @@ class Contour:
             edges = [edge1, edge2, edge1]
             for edge1, edge2 in zip(edges, edges[1:]):
                 for point in [edge2.start, edge2.end]:
-                    if edge1.point_belongs(point):
+                    if edge1.point_belongs(point, 1e-5):
                         # list_p.append(point)
                         # instead of point not in list_p (due to errors)
                         if list_p == []:
