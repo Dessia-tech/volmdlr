@@ -863,7 +863,11 @@ class Contour:
                             list_p.append(point)
 
                         # edges2.add(edge2)
-                        edges1.add(edge1)
+                        try:
+                            index = self.primitive_to_index(edge1)
+                            edges1.add(edge1)
+                        except KeyError:
+                            edges1.add(edge2)
 
                     if len(list_p) == 2 and all_points == False:
                         return True
