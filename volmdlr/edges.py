@@ -3177,7 +3177,7 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         return cls.from_geomdl_curve(curve)
     
     def middle_point(self):
-        return self.point_at_abscissa(0.5)
+        return self.point_at_abscissa(self.length()/2)
 
 
 class BezierCurve3D(BSplineCurve3D):
