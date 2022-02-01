@@ -2863,7 +2863,7 @@ class BSplineSurface3D(Surface3D):
         point2d_dim = []
         for primitive in contour2d.primitives:
             point2d_dim.append(self.point2d_parametric_to_dimension(primitive.start, points_x, points_y, xmin, xmax, ymin, ymax))
-            if type(primitive) == volmdlr.edges.Arc2D:
+            if isinstance(primitive, volmdlr.edges.Arc2D):
                 point2d_dim.append(self.point2d_parametric_to_dimension(primitive.interior, points_x, points_y, xmin, xmax, ymin, ymax))
         
         return volmdlr.wires.Contour2D.from_points(point2d_dim)

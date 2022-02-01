@@ -3,14 +3,14 @@ from pylint.lint import Run
 MIN_NOTE = 5.12
 
 MAX_ERROR_BY_TYPE = {
-                     'invalid-name': 1925,
-                     'no-member': 138,
-                     'no-else-return': 178,
+                     'invalid-name': 1650,
+                     'no-else-return': 169,
                      'consider-using-f-string': 167,
+                     'no-member': 138,
                      'inconsistent-return-statements': 108,
                      'unused-variable': 86,
                      'arguments-differ': 85,
-                     'too-many-locals': 88,
+                     'too-many-locals': 82,
                      'unused-argument': 70,
                      'too-many-arguments': 64,
                      'consider-using-enumerate': 30,
@@ -37,6 +37,7 @@ MAX_ERROR_BY_TYPE = {
                      'simplifiable-if-expression': 3,
                      'redefined-builtin': 3,
                      'broad-except': 3,
+                     'too-many-boolean-expressions': 3,
                      'too-many-lines': 3,
                      'redundant-keyword-arg': 3,
                      'no-value-for-parameter': 2,
@@ -51,7 +52,9 @@ MAX_ERROR_BY_TYPE = {
                      'wildcard-import': 1,
                      'cell-var-from-loop': 1,
                      'import-outside-toplevel': 1,
+                     'unsubscriptable-object': 1,
                      # No tolerance errors
+                     'unidiomatic-typecheck': 0,
                      'unexpected-special-method-signature': 0,
                      'bare-except': 0,
                      'function-redefined': 0,
@@ -109,7 +112,7 @@ for error_type, number_errors in results.linter.stats.by_msg.items():
             print('\nFix some {} errors: {}/{}'.format(error_type,
                                                      number_errors,
                                                      MAX_ERROR_BY_TYPE[error_type]))
-            for message in extract_messages_by_type(error_type):
+            for message in extract_messages_by_type(error_type)[:100]:
                 print('{} line {}: {}'.format(message.path, message.line, message.msg))
             print('')
         elif number_errors < MAX_ERROR_BY_TYPE[error_type]:
