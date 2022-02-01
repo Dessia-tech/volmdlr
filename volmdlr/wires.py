@@ -940,7 +940,7 @@ class Contour:
             shared_primitives_prim = self.extract_without_primitives(point1,
                                                                      point2,
                                                                      False)
-            if contour.point_over_contour(shared_primitives_prim[0].point_at_abscissa(0.2)) is False:
+            if contour.point_over_contour(shared_primitives_prim[0].point_at_abscissa(0.2), 1e-4) is False:
                 shared_primitives_1.extend(self.extract_without_primitives(point1,
                                                                            point2,
                                                                            True))
@@ -950,7 +950,7 @@ class Contour:
             shared_primitives_prim = contour.extract_without_primitives(point1,
                                                                           point2,
                                                                           False)
-            if self.point_over_contour(shared_primitives_prim[0].point_at_abscissa(0.2)) is False:
+            if self.point_over_contour(shared_primitives_prim[0].point_at_abscissa(0.2), 1e-4) is False:
                 shared_primitives_2.extend(contour.extract_without_primitives(point1,
                                                                                 point2,
                                                                                 True))
@@ -977,7 +977,7 @@ class Contour:
             merge_primitives_prim = self.extract_without_primitives(point1,
                                                                     point2,
                                                                     False)
-            if contour.point_over_contour(merge_primitives_prim[0].point_at_abscissa(0.2)) is True:
+            if contour.point_over_contour(merge_primitives_prim[0].point_at_abscissa(0.2), 1e-4) is True:
                 merge_primitives_prim = self.extract_without_primitives(point1,
                                                                         point2,
                                                                         True)
@@ -989,7 +989,7 @@ class Contour:
             merge_primitives_prim = contour.extract_without_primitives(point1,
                                                                          point2,
                                                                          False)
-            if self.point_over_contour(merge_primitives_prim[0].point_at_abscissa(0.2)) is True:
+            if self.point_over_contour(merge_primitives_prim[0].point_at_abscissa(0.2), 1e-4) is True:
                 merge_primitives_prim = contour.extract_without_primitives(point1,
                                                                              point2,
                                                                              True)
