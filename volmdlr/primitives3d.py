@@ -342,7 +342,7 @@ class Block(volmdlr.faces.ClosedShell3D):
 
         return lines
 
-    def plot2D(self, x3D, y3D, ax=None):
+    def plot2d(self, x3D, y3D, ax=None):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -351,7 +351,7 @@ class Block(volmdlr.faces.ClosedShell3D):
 
         for edge3D in self.edges():
             # edge2D = edge3D.PlaneProjection2D()
-            edge3D.plot2D(x3D, y3D, ax)
+            edge3D.plot2d(x3D, y3D, ax)
 
         return fig, ax
 
@@ -1227,7 +1227,7 @@ class Sphere(RevolvedProfile):
         arc = volmdlr.edges.Arc2D(p1, p2, p3)
         extruded_profile = RevolvedProfile(
             self.position, volmdlr.X3D, volmdlr.Y3D,
-            volmdlr.Contour2D([line, arc]), self.position, volmdlr.X3D,
+            volmdlr.wires.Contour2D([line, arc]), self.position, volmdlr.X3D,
             name=self.name)
         return extruded_profile.babylon_script(name=name)
 

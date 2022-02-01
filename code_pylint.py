@@ -3,23 +3,24 @@ from pylint.lint import Run
 MIN_NOTE = 5.12
 
 MAX_ERROR_BY_TYPE = {
-                     'no-member': 66,
+                     'invalid-name': 1925,
+                     'no-member': 138,
                      'no-else-return': 178,
                      'consider-using-f-string': 167,
                      'inconsistent-return-statements': 108,
-                     'unused-variable': 95,
-                     'arguments-differ': 27,
+                     'unused-variable': 86,
+                     'arguments-differ': 85,
                      'too-many-locals': 88,
                      'unused-argument': 70,
                      'too-many-arguments': 64,
                      'consider-using-enumerate': 30,
                      'too-many-branches': 29,
                      'too-many-statements': 27,
-                     'super-init-not-called': 20,
+                     'super-init-not-called': 26,
                      'abstract-method': 18,
                      'duplicate-code': 16,
                      'no-self-use': 16,
-                     'arguments-renamed': 2,
+                     'arguments-renamed': 11,
                      'too-many-public-methods': 12,
                      'too-many-instance-attributes': 10,
                      'undefined-loop-variable': 10,
@@ -105,11 +106,12 @@ for error_type, number_errors in results.linter.stats.by_msg.items():
     if error_type in MAX_ERROR_BY_TYPE:
         if number_errors > MAX_ERROR_BY_TYPE[error_type]:
             error_detected = True
-            print('Fix some {} errors: {}/{}'.format(error_type,
+            print('\nFix some {} errors: {}/{}'.format(error_type,
                                                      number_errors,
                                                      MAX_ERROR_BY_TYPE[error_type]))
             for message in extract_messages_by_type(error_type):
                 print('{} line {}: {}'.format(message.path, message.line, message.msg))
+            print('')
         elif number_errors < MAX_ERROR_BY_TYPE[error_type]:
             print('You can lower number of {} to {} (actual {})'.format(
                 error_type, number_errors, MAX_ERROR_BY_TYPE[error_type]))

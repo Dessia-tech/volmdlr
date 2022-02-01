@@ -57,8 +57,8 @@ class Wire:
     _non_serializable_attributes = ['primitive_to_index',
                                     'basis_primitives']
 
-    def __init__(self):
-        raise TypeError ('It cannot be instantiated directly, see Wire2D or Wire3D') 
+    # def __init__(self):
+    #     raise TypeError ('It cannot be instantiated directly, see Wire2D, Wire3D, Contour2D or Contour3D') 
         
     def length(self):
         length = 0.
@@ -646,8 +646,8 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
 
 class Contour(Wire):
     
-    def __init__(self):
-        raise TypeError ('It cannot be instantiated directly, see Contour2D or Contour3D') 
+    # def __init__(self):
+    #     Wire.__init__(self)        
         
     def extract_primitives(self, point1, primitive1, point2, primitive2, inside:bool = True):
         """
