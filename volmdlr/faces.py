@@ -4087,6 +4087,7 @@ class PlaneFace3D(Face3D):
     def merge_faces(list_coincident_faces: List[Face3D]):
         valid_coicident_faces = list_coincident_faces[:]
         list_new_faces = []
+        list_inner_contours = []
         merge_finished = False
         face0 = valid_coicident_faces[0]
         merged_contour = face0.outer_contour3d.to_2d(
@@ -4095,23 +4096,30 @@ class PlaneFace3D(Face3D):
             face0.surface3d.frame.v)
         valid_coicident_faces.remove(face0)
         while not merge_finished:
-            valid = False
+            adjacent_faces = False
+            list_inner_contours = []
             for face in valid_coicident_faces:
-                valid = False
+                adjacent_faces = False
                 contour = face.outer_contour3d.to_2d(
                     face0.surface3d.frame.origin,
                     face0.surface3d.frame.u,
                     face0.surface3d.frame.v)
                 if contour.shares_primitives(merged_contour):
-                    merged_contour = merged_contour.merge_with(
-                        contour)[0]
+                    merged_contour_results = merged_contour.merge_with(
+                        contour)
+                    merged_contour = merged_contour_results[0]
+                    merged_inner_contours = merged_contour_results[1:]
+                    list_inner_contours.extend(merged_inner_contours)
+                    list_inner_contours.extend(face.surface2d.inner_contours)
                     valid_coicident_faces.remove(face)
-                    valid = True
+                    adjacent_faces = True
                     break
-            if not valid and valid_coicident_faces:
+            if not adjacent_faces and valid_coicident_faces:
                 list_new_faces.append(
                     PlaneFace3D(face0.surface3d,
-                                Surface2D(merged_contour.copy(), [])))
+                                Surface2D(merged_contour.copy(),
+                                          face0.surface2d.inner_contours +
+                                          list_inner_contours)))
                 merged_contour = \
                     valid_coicident_faces[0].outer_contour3d.to_2d(
                         face0.surface3d.frame.origin,
@@ -4121,9 +4129,12 @@ class PlaneFace3D(Face3D):
 
             if not valid_coicident_faces:
                 merge_finished = True
+
         list_new_faces.append(
             PlaneFace3D(face0.surface3d,
-                        Surface2D(merged_contour, [])))
+                        Surface2D(merged_contour,
+                                  face0.surface2d.inner_contours +
+                                  list_inner_contours)))
 
         return list_new_faces
 
@@ -6520,7 +6531,7 @@ class ClosedShell3D(OpenShell3D):
                            intersecting_combinations):
         faces = []
         list_coincident_faces = self.get_coincident_faces(shell2)
-        for k, face in enumerate(intersecting_faces):
+        for face in intersecting_faces:
             contour_extract_inside, reference_shell = \
                 self.reference_shell(shell2, face)
             new_faces = face.set_operations_new_faces(
@@ -6560,9 +6571,9 @@ class ClosedShell3D(OpenShell3D):
     def is_face_between_shells(self, shell2, face):
         centroide = face.surface2d.outer_contour.center_of_mass()
         normal1 = face.surface3d.point2d_to_3d(
-            centroide) - 0.001 * face.surface3d.frame.w
+            centroide) - 0.01 * face.surface3d.frame.w
         normal2 = face.surface3d.point2d_to_3d(
-            centroide) + 0.001 * face.surface3d.frame.w
+            centroide) + 0.01 * face.surface3d.frame.w
         if (self.point_belongs(normal1) and
             shell2.point_belongs(normal2)) or \
                 (shell2.point_belongs(normal1) and
@@ -6627,30 +6638,36 @@ class ClosedShell3D(OpenShell3D):
         new_shell.merge_union_faces()
         return [new_shell]
 
+    @staticmethod
+    def get_faces_to_be_merged(union_faces):
+        coincident_planes_faces = []
+        valid_coicident_faces = []
+        for i, face1 in enumerate(union_faces):
+            for j, face2 in enumerate(union_faces):
+                if j != i and \
+                        face1.surface3d.is_coincident(face2.surface3d):
+                    if face1 not in coincident_planes_faces:
+                        coincident_planes_faces.append(face1)
+                    coincident_planes_faces.append(face2)
+            if coincident_planes_faces:
+                for f1, f2 in \
+                        product(coincident_planes_faces, repeat=2):
+                    if f1 != f2 and f1.is_adjacent(f2):
+                        if f1 not in valid_coicident_faces:
+                            valid_coicident_faces.append(f1)
+                        if f2 not in valid_coicident_faces:
+                            valid_coicident_faces.append(f2)
+                break
+        return valid_coicident_faces
+
     def merge_union_faces(self):
         union_faces = self.faces
         finished = False
         list_new_faces = []
         count = 0
         while not finished:
-            coincident_planes_faces = []
-            valid_coicident_faces = []
-            for i, face1 in enumerate(union_faces):
-                for j, face2 in enumerate(union_faces):
-                    if j != i and \
-                            face1.surface3d.is_coincident(face2.surface3d):
-                        if face1 not in coincident_planes_faces:
-                            coincident_planes_faces.append(face1)
-                        coincident_planes_faces.append(face2)
-                if coincident_planes_faces:
-                    for f1, f2 in \
-                            product(coincident_planes_faces, repeat=2):
-                        if f1 != f2 and f1.is_adjacent(f2):
-                            if f1 not in valid_coicident_faces:
-                                valid_coicident_faces.append(f1)
-                            if f2 not in valid_coicident_faces:
-                                valid_coicident_faces.append(f2)
-                    break
+            valid_coicident_faces = ClosedShell3D.get_faces_to_be_merged(
+                union_faces)
             list_valid_coincident_faces = valid_coicident_faces[:]
 
             if valid_coicident_faces:

@@ -1860,12 +1860,8 @@ class Contour2D(Contour, Wire2D):
         '''
 
         if self.is_inside(contour2d):
-            ax = self.plot()
-            contour2d.plot(ax=ax, color='r')
             return [self]
         elif contour2d.is_inside(self):
-            ax = self.plot()
-            contour2d.plot(ax=ax, color='r')
             return [contour2d]
         merged_primitives = self.merge_primitives_with(contour2d)
         contours = volmdlr.wires.Contour2D.contours_from_edges(merged_primitives)
@@ -3571,15 +3567,15 @@ class Contour3D(Contour, Wire3D):
         return Contour3D(new_primitives)
       
     def merge_with(self, contour3d):
-      '''
-      merge two adjacent contours, sharing primitives, and returns one outer contour and inner contours (if there are any)
-      '''
+        '''
+        merge two adjacent contours, sharing primitives, and returns one outer contour and inner contours (if there are any)
+        '''
 
-      merged_primitives = self.merge_primitives_with(contour3d)
-      contours = volmdlr.wires.Contour3D.contours_from_edges(merged_primitives)
-      contours = sorted(contours, key=lambda contour: contour.area(), reverse=True)
+        merged_primitives = self.merge_primitives_with(contour3d)
+        contours = volmdlr.wires.Contour3D.contours_from_edges(merged_primitives)
+        contours = sorted(contours, key=lambda contour: contour.area(), reverse=True)
 
-      return contours
+        return contours
 
 class Circle3D(Contour3D):
     _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']
