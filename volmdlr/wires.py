@@ -882,7 +882,7 @@ class Contour:
         '''
 
         results = self.is_sharing_primitives_with(contour, all_points = True)
-        if results == False:
+        if results is False:
             raise ValueError(
                     'The contours are not adjacent. They dont share primitives')
         elif (len(results[1]) == 2):
