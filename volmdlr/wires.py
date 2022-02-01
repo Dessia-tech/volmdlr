@@ -1757,7 +1757,8 @@ class Contour2D(Contour, Wire2D):
                                       extracted_innerpoints_contour1.primitives
                     elif extracted_innerpoints_contour1.primitives[
                             0].start == cutting_contour.primitives[-1].end:
-                            primitives2 = cutting_contour.primitives + extracted_innerpoints_contour1.primitives
+                        primitives2 = cutting_contour.primitives + \
+                                      extracted_innerpoints_contour1.primitives
                     contour1 = volmdlr.wires.Contour2D(primitives1)
                     contour1.order_contour()
                     contour2 = volmdlr.wires.Contour2D(primitives2)
