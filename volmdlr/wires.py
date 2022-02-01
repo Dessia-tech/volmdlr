@@ -1014,7 +1014,9 @@ class Contour:
         contour1 = self
         contour2 = contour
         
-        shared_tuple = contour1.shared_edges_between2contours(contour2)
+        # shared_tuple = contour1.shared_edges_between2contours(contour2)
+        shared_tuple = contour1.shared_primitives_with(contour2)
+        # [shared_primitives_1, shared_primitives_2] = contour1.shared_primitives_with(contour2)
 
         p1_start = contour1.primitives[shared_tuple[0][0]].start
         p2_start = contour2.primitives[shared_tuple[0][1]].start
