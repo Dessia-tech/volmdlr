@@ -234,7 +234,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                                             infinite_primitives[1:]):
 
             i = infinite_primitives.index(primitive_1)
-            k = infinite_primitives.index(primitive_2)
+            # k = infinite_primitives.index(primitive_2)
 
             primitive_name = primitive_1.__class__.__name__.lower().replace(
                 '2d', '')
