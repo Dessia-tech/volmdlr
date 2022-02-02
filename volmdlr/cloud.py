@@ -15,6 +15,7 @@ import volmdlr.wires as vmw
 import volmdlr.faces as vmf
 import volmdlr.step as vstep
 import volmdlr.stl as vmstl
+import volmdlr.primitives3d as p3d
 
 
 class PointCloud3D(dc.DessiaObject):
@@ -216,7 +217,7 @@ class PointCloud3D(dc.DessiaObject):
         #it works if distance_extended >= 0
         spheres, extended_points = [], []
         for pt in self.points :
-            extended_zone = vm.p3d.Sphere(pt, distance_extended)
+            extended_zone = p3d.Sphere(pt, distance_extended)
             sphere_primitive = extended_zone.shell_faces[0]
             
             spheres.append(vmf.ClosedShell3D([sphere_primitive]))
