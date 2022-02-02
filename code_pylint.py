@@ -3,7 +3,7 @@ from pylint.lint import Run
 MIN_NOTE = 5.12
 
 MAX_ERROR_BY_TYPE = {
-                     'invalid-name': 1650,
+                     'invalid-name': 1500,
                      'no-else-return': 169,
                      'consider-using-f-string': 167,
                      'no-member': 138,
