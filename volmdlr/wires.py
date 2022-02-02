@@ -900,8 +900,8 @@ class Contour(Wire):
                 # contours2 = volmdlr.wires.Contour3D.contours_from_edges(edges2)
             points = []
 
-            for c in contours1:
-                primitives = c.primitives
+            for contour_i in contours1:
+                primitives = contour_i.primitives
                 br1 = False
                 br2 = False
                 for i in range(0,len(primitives)):
