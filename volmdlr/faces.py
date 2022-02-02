@@ -1,6 +1,5 @@
-
 """
-
+Surfaces & faces
 """
 
 
@@ -14,8 +13,8 @@ import scipy as scp
 import scipy.optimize as opt
 
 import matplotlib.pyplot as plt
-import matplotlib.tri as plt_tri
-from pygeodesic import geodesic
+# import matplotlib.tri as plt_tri
+# from pygeodesic import geodesic
 
 import networkx as nx
 
@@ -729,6 +728,29 @@ class Surface3D(dc.DessiaObject):
         """
         
         return (self.normal_from_point2d(self.point3d_to_2d(point3d)))[1]
+    
+    
+    def geodesic_distance_from_points2d(self, point1_2d:volmdlr.Point2D, point2_2d:volmdlr.Point2D, number_points:int=50):
+        """
+        Approximation of geodesic distance via linesegments length sum in 3D
+        """
+        # points = [point1_2d]
+        current_point3d = self.point2d_to_3d(point1_2d)
+        distance = 0.
+        for i in range(number_points):
+            next_point3d = self.point2d_to_3d(point1_2d + (i+1)/(number_points)*(point2_2d - point1_2d))
+            distance += next_point3d.point_distance(current_point3d)
+            current_point3d = next_point3d
+        return distance
+            
+        
+    def geodesic_distance(self, point1_3d:volmdlr.Point3D, point2_3d:volmdlr.Point3D):
+        """
+        Approximation of geodesic distance between 2 3D points supposed to be on the surface
+        """
+        point1_2d = self.point3d_to_2d(point1_3d)
+        point2_2d = self.point3d_to_2d(point2_3d)
+        return self.geodesic_distance_from_points2d(point1_2d, point2_2d)
     
  
 class Plane3D(Surface3D):
@@ -2506,7 +2528,8 @@ class BSplineSurface3D(Surface3D):
                     tuple(self.u_multiplicities), tuple(self.v_multiplicities),
                     tuple(self.u_knots), tuple(self.v_knots))
         return content, [current_id]
-
+        
+        
     def grid3d(self, points_x, points_y, xmin, xmax, ymin, ymax):
         '''
         generate 3d grid points of a Bspline surface, based on a 2d grid points parameters
@@ -2581,23 +2604,23 @@ class BSplineSurface3D(Surface3D):
 
         # Geodesic distance
 
-        xx=[]
-        for p in points_2d:
-            xx.append(p.x)
-        yy=[]
-        for p in points_2d:
-            yy.append(p.y)
+        # xx=[]
+        # for p in points_2d:
+        #     xx.append(p.x)
+        # yy=[]
+        # for p in points_2d:
+        #     yy.append(p.y)
 
-        triang = plt_tri.Triangulation(xx, yy)
-        faces = triang.triangles
-        points = npy.empty([len(points_3d),3])
-        for i in range(0,len(points_3d)):
-            points[i] = npy.array([points_3d[i].x,points_3d[i].y,points_3d[i].z])
+        # triang = plt_tri.Triangulation(xx, yy)
+        # faces = triang.triangles
+        # points = npy.empty([len(points_3d),3])
+        # for i in range(0,len(points_3d)):
+        #     points[i] = npy.array([points_3d[i].x,points_3d[i].y,points_3d[i].z])
 
-        geoalg = geodesic.PyGeodesicAlgorithmExact(points, faces)
-        D=[] # geodesic distances between 3D grid points (based on points combination [equation_points])
+        # geoalg = geodesic.PyGeodesicAlgorithmExact(points, faces)
+        D = [] # geodesic distances between 3D grid points (based on points combination [equation_points])
         for i in range(0, len(equation_points)):
-            D.append((geoalg.geodesicDistance(index_points[equation_points[i][0]], index_points[equation_points[i][1]])[0])**2)
+            D.append((self.geodesic_distance(points_3d[index_points[equation_points[i][0]]], points_3d[index_points[equation_points[i][1]]])))
 
         #System of nonlinear equations
         def non_linear_equations(X):
