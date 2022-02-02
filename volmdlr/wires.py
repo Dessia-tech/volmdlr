@@ -874,8 +874,6 @@ class Contour(Wire):
 
                     if len(list_p) == 2 and all_points is False:
                         return True
-                    else:
-                        continue
         if len(list_p) < 2:
             return False
         elif len(list_p) >= 2 and all_points is True:
