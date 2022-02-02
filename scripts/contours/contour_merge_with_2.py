@@ -35,12 +35,12 @@ for i in range(0, 2):
         if (i == 0 and j == 0):
             for p in contour1.primitives:
                 p.plot(ax=axs[i][j], color='b', width=4)
-            axs[i][j].set_title('contour1-shared_primitives_extremities')
+            axs[i][j].set_title('shared primitives extremities (contour1)')
 
         if (i == 1 and j == 0):
             for p in contour2.primitives:
                 p.plot(ax=axs[i][j], color='m', width=4)
-            axs[i][j].set_title('contour2-shared_primitives_extremities')
+            axs[i][j].set_title('shared primitives extremities (contour2)')
 
 
 # %% is_sharing_primitives_with
@@ -60,14 +60,14 @@ j=0
 for i in range(0, 2):
     for p in shared_primitives_extremities:
         p.plot(ax=axs[i][j])
-    axs[i][j].set_title('shared_primitives_extremities')
+    axs[i][j].set_title('shared primitives extremities')
 
 
 # %% shared_primitives_with
 
 shared_primitives = contour1.shared_primitives_with(contour2)
 
-title = ['contour1-shared_primitives_extremities', 'contour2-shared_primitives_extremities']
+title = ['shared primitives extremities  (contour1)', 'shared primitives extremities  (contour2)']
 
 j=j+1
 for i in range(0, 2):
@@ -81,7 +81,7 @@ for i in range(0, 2):
 
 merged_primitives = contour1.merge_primitives_with(contour2)
 
-title = ['contour1-primitives_to_be_merged', 'contour2-primitives_to_be_merged']
+title = ['primitives to be merged  (contour1)', 'primitives to be merged  (contour2)']
 
 j=j+1
 for i in range(0, 2):
@@ -98,7 +98,7 @@ for i in range(0, 2):
 
 merged_contour = contour1.merge_with(contour2)
 
-title = ['merged_contour_outer', 'merged_contour_inner']
+title = ['merged contour "outer"', 'merged contour "inner"']
 colors = ['b', 'm']
 
 j=j+1

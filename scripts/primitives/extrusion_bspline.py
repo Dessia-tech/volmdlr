@@ -23,59 +23,9 @@ points = [vm.Point3D(-0.51883, -0.39865, 0.5391699999999999),
 bezier = vme.BezierCurve3D(degree = 3, control_points = points)
 
 ax = bezier.plot()
-for pt in points :
-    pt.plot(ax=ax)
-    
-tangents = []
-for k, pt in enumerate(bezier.points) :
-    position = k/(len(bezier.points)-1)
-    tangents.append(bezier.tangent(position))
-    
-circles = []
-for pt, tan in zip(bezier.points, tangents):
-    circles.append(vmw.Circle3D.from_center_normal(center = pt,
-                                                   normal = tan,
-                                                   radius = 10e-3))
-
-polys = [vmw.ClosedPolygon3D(c.tessellation_points()) for c in circles]
-
-for p in polys :
-    p.plot(ax=ax, color='r')
-    
-points_3d = []
-for poly in polys :
-    points_3d.extend(poly.points)
-    points_3d.append(poly.points[0])
-    
-size_v = len(polys[0].points)+1
-size_u = len(polys)
-degree_u = 3
-degree_v = 3
-    
-bezier_surface3d = vmf.BezierSurface3D(degree_u, 
-                                       degree_v,
-                                       points_3d,
-                                       size_u,
-                                       size_v)
-
-outer_contour = vmw.Contour2D([vme.LineSegment2D(vm.O2D, vm.X2D),
-                               vme.LineSegment2D(vm.X2D, vm.X2D + vm.Y2D),
-                               vme.LineSegment2D(vm.X2D + vm.Y2D, vm.Y2D),
-                               vme.LineSegment2D(vm.Y2D, vm.O2D)])
-surf2d = vmf.Surface2D(outer_contour, [])
-
-bsface3d = vmf.BSplineFace3D(bezier_surface3d, surf2d)
 
 
-sphere1 = p3d.Sphere(points[0], 5e-3)
-sphere2 = p3d.Sphere(points[-1], 5e-3)
-sphere1.color = (0,250,0)
-sphere2.color = (0,250,0)
-
-# bsface3d.babylonjs()
-
-vol = vm.core.VolumeModel([sphere1, sphere2, bsface3d])
-vol.babylonjs()
-
-ax = bsface3d.plot()
-bezier.plot(ax=ax, color='r')
+circle = vmw.Circle2D(vm.Point2D(0,0), 5e-3)
+primi_wire = vmw.Wire3D([bezier])
+sweepy = p3d.Sweep(circle, primi_wire)
+sweepy.babylonjs()
