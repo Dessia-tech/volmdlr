@@ -7,12 +7,13 @@ Script checking offset and Curvilinear absissa of roundedline2D
 import plot_data
 from volmdlr.models import casing
 
+
+casing._check_platform()
+
 bottom, sides, belt = casing.primitives
 
 ax = belt.outer_contour2d.plot()
 # outer_contour.plot(a)
-
-
 
 ax = belt.outer_contour3d.plot()
 l = belt.outer_contour3d.length()
@@ -32,4 +33,4 @@ contour = belt.outer_contour2d.plot_data()
 primitive_group = plot_data.PrimitiveGroup(primitives=[contour])
 plot_data.plot_canvas(plot_data_object=primitive_group, debug_mode=True)
 
-casing._check_platform()
+
