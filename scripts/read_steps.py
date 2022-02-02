@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
-import volmdlr as vm
+import io
+import os
+# import volmdlr as vm
 import volmdlr.step
-import volmdlr.cloud as vmcd
+# import volmdlr.cloud as vmcd
 
 for step_file in [
     'tore1.step',
@@ -11,20 +12,25 @@ for step_file in [
     'cone2.step',
     'cylinder.step',
     'block.step',
-    # '4_bspline_faces.step',
-    # '2_bspline_faces.step'
-    # 'STEP_test1.stp',
-    # 'iso4162M16x55.step',
-    # 'aircraft_engine.step'
+    # '2_bspline_faces.stp'# Uncomment when bug of delta fixed!
   ]:
-    print('filename: ', step_file)
-    step = volmdlr.step.Step('step/'+step_file)
+    print('Reading step file: ', step_file)
+    filepath = os.path.join('step', step_file)
+    step = volmdlr.step.Step.from_file(filepath=filepath)
     model = step.to_volume_model()
     assert len(model.primitives) > 0.
     model.to_step(step_file+'_reexport')
-
     model.babylonjs()
-    
-model2 = model.copy()
 
-assert model == model2
+    file_io = io.FileIO(filepath, 'r')
+    step = volmdlr.step.Step.from_stream(stream=file_io)
+    model = step.to_volume_model()
+    assert len(model.primitives) > 0.
+    model.to_step(step_file + '_reexport')
+
+    model2 = model.copy()
+    
+    # model2 = model.copy()
+    # assert model == model2
+
+    model._check_platform()

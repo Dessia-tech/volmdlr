@@ -5,15 +5,16 @@
 """
 
 import time
+from typing import BinaryIO, List
 import matplotlib.pyplot as plt
 import networkx as nx
+import plot_data.graph
 import volmdlr
 import volmdlr.core
 import volmdlr.primitives3d
 import volmdlr.edges
 import volmdlr.wires
 import volmdlr.faces
-import plot_data.graph
 
 # import webbrowser
 # from jinja2 import Environment, PackageLoader, select_autoescape
@@ -51,6 +52,167 @@ def step_split_arguments(function_arg):
     return arguments
 
 
+def vertex_point(arguments, object_dict):
+    return object_dict[arguments[1]]
+
+
+def oriented_edge(arguments, object_dict):
+    return object_dict[arguments[3]]
+
+
+def face_outer_bound(arguments, object_dict):
+    return object_dict[arguments[1]]
+
+
+def face_bound(arguments, object_dict):
+    return object_dict[arguments[1]]
+
+
+def surface_curve(arguments, object_dict):
+    return object_dict[arguments[1]]
+
+
+def seam_curve(arguments, object_dict):
+    return object_dict[arguments[1]]
+
+
+def trimmed_curve(arguments, object_dict):
+    curve = object_dict[arguments[1]]
+    point1 = object_dict[int(arguments[2][0][1:])]
+    point2 = object_dict[int(arguments[3][0][1:])]
+    return curve.trim(point1=point1, point2=point2)
+
+
+def vertex_loop(arguments, object_dict):
+    return object_dict[arguments[1]]
+
+
+def pcurve(arguments, object_dict):
+    # Pas besoin de mettre PCURVE ici s'il n'est pas dans STEP_TO_VOLMDLR
+    return object_dict[arguments[1]]
+
+
+def geometric_curve_set(arguments, object_dict):
+    sub_objects = []
+    for argument in arguments[1]:
+        sub_obj = object_dict[int(argument[1:])]
+        sub_objects.append(sub_obj)
+    return sub_objects
+
+
+def shell_base_surface_model(arguments, object_dict):
+    # Shell3D
+    return object_dict[int(arguments[1][0][1:])]
+
+
+def item_defined_transformation(arguments, object_dict):
+    # Frame3D
+    # volmdlr_object1 = object_dict[arguments[2]]
+    volmdlr_object2 = object_dict[arguments[3]]
+    # TODO : how to frame map properly from these two Frame3D ?
+    # return volmdlr_object2 - volmdlr_object1
+    return volmdlr_object2
+
+
+def manifold_surface_shape_representation(arguments, object_dict):
+    # Shell3D
+    shells = []
+    for arg in arguments[1]:
+        if isinstance(object_dict[int(arg[1:])],
+                      volmdlr.faces.OpenShell3D):
+            shell = object_dict[int(arg[1:])]
+            shells.append(shell)
+    return shells
+
+
+def manifold_solid_brep(arguments, object_dict):
+    return object_dict[arguments[1]]
+
+
+def brep_with_voids(arguments, object_dict):
+    return object_dict[arguments[1]]
+
+
+def shape_representation(arguments, object_dict):
+    # does it have the extra argument comming from
+    # SHAPE_REPRESENTATION_RELATIONSHIP ? In this cas return
+    # them
+    if len(arguments) == 4:
+        shells = object_dict[int(arguments[3])]
+        return shells
+    else:
+        shells = []
+        # frames = []
+        for arg in arguments[1]:
+            if int(arg[1:]) in object_dict and \
+                    isinstance(object_dict[int(arg[1:])], list) and \
+                    len(object_dict[int(arg[1:])]) == 1:
+                shells.append(*object_dict[int(arg[1:])])
+            elif int(arg[1:]) in object_dict and \
+                    isinstance(object_dict[int(arg[1:])],
+                               volmdlr.faces.OpenShell3D):
+                shells.append(object_dict[int(arg[1:])])
+            elif int(arg[1:]) in object_dict and \
+                    isinstance(object_dict[int(arg[1:])],
+                               volmdlr.Frame3D):
+                # TODO: Is there something to read here ?
+                pass
+            elif int(arg[1:]) in object_dict and \
+                    isinstance(object_dict[int(arg[1:])],
+                               volmdlr.edges.Arc3D):
+                shells.append(object_dict[int(arg[1:])])
+            elif int(arg[1:]) in object_dict and \
+                    isinstance(object_dict[int(arg[1:])],
+                               volmdlr.edges.BSplineCurve3D):
+                shells.append(object_dict[int(arg[1:])])
+            else:
+                pass
+        return shells
+
+
+def advanced_brep_shape_representation(arguments, object_dict):
+    shells = []
+    for arg in arguments[1]:
+        if isinstance(object_dict[int(arg[1:])],
+                      volmdlr.faces.OpenShell3D):
+            shells.append(object_dict[int(arg[1:])])
+    return shells
+
+
+def representation_relationship_representation_relationship_with_transformation_shape_representation_relationship(arguments, object_dict):
+    if arguments[2] in object_dict:
+        if isinstance(object_dict[arguments[2]], list):
+            for shell3d in object_dict[arguments[2]]:
+                frame3d = object_dict[arguments[4]]
+                shell3d.frame_mapping(frame3d, 'old', copy=False)
+                # return shell3d
+            return None
+        else:
+            shell3d = object_dict[arguments[2]]
+            frame3d = object_dict[arguments[4]]
+            shell3d.frame_mapping(frame3d, 'old', copy=False)
+            # return shell3d
+            return None
+    else:
+        return None
+
+
+def bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_representation_item_rational_b_spline_curve_representation_item(arguments, object_dict):
+    modified_arguments = [''] + arguments
+    if modified_arguments[-1] == "''":
+        modified_arguments.pop()
+    return STEP_TO_VOLMDLR[name].from_step(
+        modified_arguments, object_dict)
+
+
+def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_representation_item_rational_b_spline_surface_representation_item_surface(arguments, object_dict):
+    modified_arguments = [''] + arguments
+    if modified_arguments[-1] == "''":
+        modified_arguments.pop()
+    return STEP_TO_VOLMDLR[name].from_step(
+        modified_arguments, object_dict)
+
+
 class StepFunction:
     def __init__(self, function_id, function_name, function_arg):
         self.id = function_id
@@ -81,22 +243,44 @@ class StepFunction:
 
 
 class Step:
-    def __init__(self, stepfile):
-        self.stepfile = stepfile
+    def __init__(self, lines: List[str], name: str = ''):
+        self.lines = lines
+        self.functions, self.all_connections = self.read_lines()
+        self._utd_graph = False
+        self._graph = None
+        self.name = name
 
-        self.functions, self.all_connections = self.read_functions()
+    @property
+    def graph(self):
+        if not self._utd_graph:
+            self._graph = self.create_graph()
+            self._utd_graph = True
+        return self._graph
 
-        self.upd_graph = False
+    @classmethod
+    def from_stream(cls, stream: BinaryIO = None):
+        lines = []
+        for line in stream:
+            line = line.decode("ISO-8859-1")
+            line = line.replace("\r", "")
+            lines.append(line)
+        return cls(lines)
 
-    def read_functions(self):
-        f = open(self.stepfile, "r", encoding="ISO-8859-1")
+    @classmethod
+    def from_file(cls, filepath: str = None):
+        with open(filepath, "r", encoding="ISO-8859-1") as file:
+            lines = []
+            for line in file:
+                lines.append(line)
+        return cls(lines)
 
+    def read_lines(self):
         all_connections = []
 
         previous_line = ""
         functions = {}
 
-        for line in f:
+        for line in self.lines:
             line = line.replace(" ", "")
             line = line.replace("\n", "")
 
@@ -163,8 +347,6 @@ class Step:
             function = StepFunction(function_id, function_name, arguments)
             functions[function_id] = function
 
-        f.close()
-
         return functions, all_connections
 
     def not_implemented(self):
@@ -174,7 +356,7 @@ class Step:
                 not_implemented.append(fun.name)
         return list(set(not_implemented))
 
-    def create_graph(self, draw=False, html=False):
+    def create_graph(self):
 
         G = nx.Graph()
         F = nx.DiGraph()
@@ -325,9 +507,9 @@ class Step:
 
     def parse_arguments(self, arguments):
         for i, arg in enumerate(arguments):
-            if type(arg) == str and arg[0] == '#':
+            if isinstance(arg, str) and arg[0] == '#':
                 arguments[i] = int(arg[1:])
-            elif type(arg) == str and arg[0:2] == '(#':
+            elif isinstance(arg, str) and arg[0:2] == '(#':
                 argument = []
                 arg_id = ""
                 for char in arg[1:-1]:
@@ -345,150 +527,11 @@ class Step:
         """
         self.parse_arguments(arguments)
 
-        if name == 'VERTEX_POINT':
-            volmdlr_object = object_dict[arguments[1]]
-
-        elif name == 'ORIENTED_EDGE':
-            # arguments[4] is the orientation, not taken into account
-            volmdlr_object = object_dict[arguments[3]]
-
-        elif name == 'FACE_OUTER_BOUND':
-            volmdlr_object = object_dict[arguments[1]]
-
-        elif name == 'FACE_BOUND':
-            volmdlr_object = object_dict[arguments[1]]
-
-        elif name == 'SURFACE_CURVE':
-            volmdlr_object = object_dict[arguments[1]]
-
-        elif name == 'SEAM_CURVE':
-            volmdlr_object = object_dict[arguments[1]]
-
-        elif name == 'TRIMMED_CURVE':
-            curve = object_dict[arguments[1]]
-            point1 = object_dict[int(arguments[2][0][1:])]
-            point2 = object_dict[int(arguments[3][0][1:])]
-            volmdlr_object = curve.trim(point1=point1, point2=point2)
-
-        # elif name == 'EDGE_CURVE':
-        #     object_dict[instanciate_id] = object_dict[arguments[3]]
-
-        elif name == 'VERTEX_LOOP':
-            volmdlr_object = object_dict[arguments[1]]
-
-        elif name == 'PCURVE':
-            # TODO : Pas besoin de mettre PCURVE ici s'il n'est pas dans STEP_TO_VOLMDLR
-            volmdlr_object = object_dict[arguments[1]]
-
-        elif name == 'GEOMETRIC_CURVE_SET':
-            sub_objects = []
-            for arg in arguments[1]:
-                sub_obj = object_dict[int(arg[1:])]
-                sub_objects.append(sub_obj)
-            volmdlr_object = sub_objects
-
-        elif name == 'SHELL_BASED_SURFACE_MODEL':
-            volmdlr_object = object_dict[int(arguments[1][0][1:])]
-            # Shell3D
-
-        elif name == 'ITEM_DEFINED_TRANSFORMATION':
-            volmdlr_object1 = object_dict[arguments[2]]
-            volmdlr_object2 = object_dict[arguments[3]]
-            # TODO : how to frame map properly from these two Frame3D ?
-            # volmdlr_object = volmdlr_object2 - volmdlr_object1
-            volmdlr_object = volmdlr_object2
-            # Frame3D
-
-        elif name == 'MANIFOLD_SURFACE_SHAPE_REPRESENTATION':
-            shells = []
-            for arg in arguments[1]:
-                if isinstance(object_dict[int(arg[1:])],
-                              volmdlr.faces.OpenShell3D):
-                    shell = object_dict[int(arg[1:])]
-                    shells.append(shell)
-            volmdlr_object = shells
-            # Shell3D
-
-        elif name == 'MANIFOLD_SOLID_BREP':
-            volmdlr_object = object_dict[arguments[1]]
-
-        elif name == 'BREP_WITH_VOIDS':
-            volmdlr_object = object_dict[arguments[1]]
-
-        elif name == 'SHAPE_REPRESENTATION':
-            # does it have the extra argument comming from
-            # SHAPE_REPRESENTATION_RELATIONSHIP ? In this cas return
-            # them
-            if len(arguments) == 4:
-                shells = object_dict[int(arguments[3])]
-                volmdlr_object = shells
-            else:
-                shells = []
-                # frames = []
-                for arg in arguments[1]:
-                    if int(arg[1:]) in object_dict and \
-                            isinstance(object_dict[int(arg[1:])], list) and \
-                            len(object_dict[int(arg[1:])]) == 1:
-                        shells.append(*object_dict[int(arg[1:])])
-                    elif int(arg[1:]) in object_dict and \
-                            isinstance(object_dict[int(arg[1:])],
-                                       volmdlr.faces.OpenShell3D):
-                        shells.append(object_dict[int(arg[1:])])
-                    elif int(arg[1:]) in object_dict and \
-                            isinstance(object_dict[int(arg[1:])],
-                                       volmdlr.Frame3D):
-                        # TODO: Is there something to read here ?
-                        pass
-                    elif int(arg[1:]) in object_dict and \
-                            isinstance(object_dict[int(arg[1:])],
-                                       volmdlr.edges.Arc3D):
-                        shells.append(object_dict[int(arg[1:])])
-                    elif int(arg[1:]) in object_dict and \
-                            isinstance(object_dict[int(arg[1:])],
-                                       volmdlr.edges.BSplineCurve3D):
-                        shells.append(object_dict[int(arg[1:])])
-                    else:
-                        pass
-                volmdlr_object = shells
-
-        elif name == 'ADVANCED_BREP_SHAPE_REPRESENTATION':
-            shells = []
-            for arg in arguments[1]:
-                if isinstance(object_dict[int(arg[1:])],
-                              volmdlr.faces.OpenShell3D):
-                    shells.append(object_dict[int(arg[1:])])
-            volmdlr_object = shells
-
-        elif name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP':
-            if arguments[2] in object_dict:
-                if type(object_dict[arguments[2]]) is list:
-                    for shell3d in object_dict[arguments[2]]:
-                        frame3d = object_dict[arguments[4]]
-                        shell3d.frame_mapping(frame3d, 'old', copy=False)
-                        # volmdlr_object = shell3d
-                    volmdlr_object = None
-                else:
-                    shell3d = object_dict[arguments[2]]
-                    frame3d = object_dict[arguments[4]]
-                    shell3d.frame_mapping(frame3d, 'old', copy=False)
-                    # volmdlr_object = shell3d
-                    volmdlr_object = None
-            else:
-                volmdlr_object = None
-
-        elif name == 'BOUNDED_CURVE, B_SPLINE_CURVE, B_SPLINE_CURVE_WITH_KNOTS, CURVE, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_CURVE, REPRESENTATION_ITEM':
-            modified_arguments = ['']+arguments
-            if modified_arguments[-1] == "''":
-                modified_arguments.pop()
-            volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
-                modified_arguments, object_dict)
-            
-        elif name == 'BOUNDED_SURFACE, B_SPLINE_SURFACE, B_SPLINE_SURFACE_WITH_KNOTS, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM, SURFACE':
-            modified_arguments = ['']+arguments
-            if modified_arguments[-1] == "''":
-                modified_arguments.pop()
-            volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
-                modified_arguments, object_dict)
+        fun_name = name.replace(', ', '_')
+        fun_name = fun_name.lower()
+        if hasattr(volmdlr.step, fun_name):
+            volmdlr_object = getattr(volmdlr.step, fun_name)(arguments,
+                                                             object_dict)
 
         elif name in STEP_TO_VOLMDLR and hasattr(
                 STEP_TO_VOLMDLR[name], "from_step"):
@@ -509,8 +552,6 @@ class Step:
         instanciated and the totatl time of all the instanciations of this
         given class.
         """
-        if not self.upd_graph:
-            self.graph = self.create_graph()
 
         object_dict = {}
 
@@ -522,9 +563,7 @@ class Step:
         for node in self.graph.nodes:
             if node != '#0' and self.functions[node].name == 'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP':
                 frame_mapping_nodes.append(node)
-            if node != '#0' and (self.functions[node].name == "CLOSED_SHELL"
-                                 or
-                                 self.functions[node].name == "OPEN_SHELL"):
+            if node != '#0' and (self.functions[node].name in ["CLOSED_SHELL", "OPEN_SHELL"]):
                 shell_nodes.append(node)
             # if node != '#0' and self.functions[node].name == 'SHAPE_REPRESENTATION':
             #     # Really a shell node ?
@@ -639,14 +678,11 @@ class Step:
         return points3d[1:]
 
     def plot_data(self):
-        if not self.upd_graph:
-            self.graph = self.create_graph()
         graph = self.graph.copy()
 
         graph.remove_nodes_from([stepfunction.id for stepfunction
                                  in self.functions.values()
-                                 if stepfunction.name == 'CARTESIAN_POINT'
-                                 or stepfunction.name == 'DIRECTION'])
+                                 if stepfunction.name in ['CARTESIAN_POINT', 'DIRECTION']])
         return [plot_data.graph.NetworkxGraph(graph=graph)]
 
 
