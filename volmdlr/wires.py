@@ -776,6 +776,7 @@ class Contour(Wire):
                 finished = True
             counter1 += 1
             if counter1 >= 100*length_list_points:
+                self.plot()
                 raise NotImplementedError
             if len(list_point_pairs) == 1:
                 counter += 1
@@ -865,7 +866,7 @@ class Contour(Wire):
             edges = [edge_1, edge_2, edge_1]
             for edge1, edge2 in zip(edges, edges[1:]):
                 for point in [edge2.start, edge2.end]:
-                    if edge1.point_belongs(point, 1e-5):
+                    if edge1.point_belongs(point, 1e-6):
                         # list_p.append(point)
                         # instead of point not in list_p (due to errors)
                         if list_p == []:
@@ -1017,8 +1018,6 @@ class Contour(Wire):
         '''
         points = []
         primitives = self.primitives
-        # br1 = False
-        # br2 = False
         for i in range(0,len(primitives)):
             pts=[]
             for p in list_p: #due to errors
@@ -1026,14 +1025,10 @@ class Contour(Wire):
                     pts.append(p)
             if len(pts) == 1:
                 points.append(pts[0])
-                # br1=True
                 break
             elif len(pts) >1:
                 points.append(primitives[i].start.nearest_point(pts))
-                # br1=True
                 break
-            # if br1:
-                # break
 
         for i in range(len(primitives)-1, -1, -1):
             pts=[]
@@ -1041,15 +1036,14 @@ class Contour(Wire):
                 if primitives[i].point_belongs(p):
                     pts.append(p)
             if len(pts) == 1:
-                points.append(pts[0])
-                # br2=True
-                break
+                if pts[0] not in points:
+                    points.append(pts[0])
+                    break
             elif len(pts) >1:
-                points.append(primitives[i].end.nearest_point(pts))
-                # br2=True
-                break
-            # if br2:
-                # break
+                point = primitives[i].end.nearest_point(pts)
+                if point not in points:
+                    points.append(point)
+                    break
         return points
 
 
