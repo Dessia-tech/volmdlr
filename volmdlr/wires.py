@@ -171,7 +171,7 @@ class Wire:
 
         shared = list(set(indices[0]) & set(indices[1]))
         ind = []
-        if shared is []:
+        if shared == []:
             ind.append(indices[0][0])
             if len(indices[1])==2:
                 ind.append(indices[1][1])
