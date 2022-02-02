@@ -57,6 +57,9 @@ class Wire:
     _non_serializable_attributes = ['primitive_to_index',
                                     'basis_primitives']
 
+    # def __init__(self):
+    #     raise TypeError ('It cannot be instantiated directly, see Wire2D, Wire3D, Contour2D or Contour3D') 
+        
     def length(self):
         length = 0.
         for primitive in self.primitives:
@@ -641,10 +644,10 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
 
 # TODO: define an edge as an opened polygon and allow to compute area from this reference
 
-class Contour:
+class Contour(Wire):
     
-    def __init__(self):
-        raise TypeError ('It cannot be instantiated') 
+    # def __init__(self):
+    #     Wire.__init__(self)        
         
     def extract_primitives(self, point1, primitive1, point2, primitive2, inside:bool = True):
         """

@@ -3,7 +3,7 @@ import os
 
 scripts = [
             # Edges
-            'edges/arcs2D.py', 'edges/arcs3D.py',
+            'edges/arcs2D.py', 'edges/arcs3D.py', 'edges/bspline.py',
             # Wires
             'wires/roundedlines.py','wires/polygon2D.py',
             'wires/triangle2D.py',
@@ -14,6 +14,7 @@ scripts = [
             'primitives/revolved_profile.py', 'edges/areas_moment_cog_check.py',
             'primitives/block3d.py',
             'primitives/sphere_to_point.py',
+            'primitives/cone.py',
             # Faces
             'faces/triangle3d.py',
             'faces/bspline.py',
