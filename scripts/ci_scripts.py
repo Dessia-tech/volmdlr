@@ -3,7 +3,7 @@ import os
 
 scripts = [
             # Edges
-            'edges/arcs2D.py', 'edges/arcs3D.py', 'edges/bspline.py'
+            'edges/arcs2D.py', 'edges/arcs3D.py', 'edges/bspline.py',
             # Wires
             'wires/roundedlines.py','wires/polygon2D.py',
             'wires/triangle2D.py',
