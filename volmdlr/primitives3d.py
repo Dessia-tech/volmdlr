@@ -267,7 +267,7 @@ class Block(volmdlr.faces.ClosedShell3D):
         self.faces = self.shell_faces()
 
     def cut_by_orthogonal_plane(self, plane_3d: volmdlr.faces.Plane3D):
-        bb = self.bounding_box
+        bouding_box = self.bounding_box
         if plane_3d.frame.w.dot(volmdlr.Vector3D(1, 0, 0)) == 1:
             pass
         elif plane_3d.frame.w.dot(volmdlr.Vector3D(0, 1, 0)) == 1:
@@ -279,9 +279,9 @@ class Block(volmdlr.faces.ClosedShell3D):
 
         dir1 = plane_3d.frame.u
         dir2 = plane_3d.frame.v
-        center2d = volmdlr.Point2D(bb.center.dot(dir1), bb.center.dot(dir2))
-        point_min = volmdlr.Point3D(bb.xmin, bb.ymin, bb.zmin)
-        point_max = volmdlr.Point3D(bb.xmax, bb.ymax, bb.zmax)
+        center2d = volmdlr.Point2D(bouding_box.center.dot(dir1), bouding_box.center.dot(dir2))
+        point_min = volmdlr.Point3D(bouding_box.xmin, bouding_box.ymin, bouding_box.zmin)
+        point_max = volmdlr.Point3D(bouding_box.xmax, bouding_box.ymax, bouding_box.zmax)
         points = [-center2d + volmdlr.Point2D(point_min.dot(dir1),
                                               point_min.dot(dir2)),
                   -center2d + volmdlr.Point2D(point_min.dot(dir1),
@@ -333,16 +333,16 @@ class Block(volmdlr.faces.ClosedShell3D):
         return Block(new_frame, color=self.color,
                      alpha=self.alpha, name=self.name)
 
-    def plot_data(self, x3D, y3D, marker=None, color='black', stroke_width=1,
+    def plot_data(self, x3d, y3d, marker=None, color='black', stroke_width=1,
                   dash=False, opacity=1, arrow=False):
         lines = []
         for edge3D in self.edges():
-            lines.append(edge3D.plot_data(x3D, y3D, marker, color,
+            lines.append(edge3D.plot_data(x3d, y3d, marker, color,
                                           stroke_width, dash, opacity, arrow))
 
         return lines
 
-    def plot2d(self, x3D, y3D, ax=None):
+    def plot2d(self, x3d, y3d, ax=None):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -351,7 +351,7 @@ class Block(volmdlr.faces.ClosedShell3D):
 
         for edge3D in self.edges():
             # edge2D = edge3D.PlaneProjection2D()
-            edge3D.plot2d(x3D, y3D, ax)
+            edge3D.plot2d(x3d, y3d, ax=ax)
 
         return fig, ax
 
