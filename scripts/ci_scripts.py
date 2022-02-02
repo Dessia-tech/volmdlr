@@ -25,7 +25,7 @@ scripts = [
             'cloud/sewing_two_polygons.py',
             'cloud/sewing_stl.py',
             # Contours
-            'contours/contour_split.py',
+            # 'contours/contour_split.py',
             'contours/contour_merge_with_1.py',
             'contours/contour_merge_with_2.py'
             # Steps
