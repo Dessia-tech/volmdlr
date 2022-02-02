@@ -2557,7 +2557,7 @@ class BSplineSurface3D(Surface3D):
         '''
 
         points_2d = volmdlr.Point2D.grid2d(points_x, points_y, xmin, xmax, ymin, ymax)
-        # points_3d = self.grid3d(points_x, points_y, xmin, xmax, ymin, ymax)
+        points_3d = self.grid3d(points_x, points_y, xmin, xmax, ymin, ymax)
 
         # Parameters
         index_x = {} #grid point position(i,j), x coordinates position in X(unknown variable)
@@ -2620,7 +2620,7 @@ class BSplineSurface3D(Surface3D):
         # geoalg = geodesic.PyGeodesicAlgorithmExact(points, faces)
         D = [] # geodesic distances between 3D grid points (based on points combination [equation_points])
         for i in range(0, len(equation_points)):
-            D.append((self.geodesic_distance(index_points[equation_points[i][0]], index_points[equation_points[i][1]])[0])**2)
+            D.append((self.geodesic_distance(points_3d[index_points[equation_points[i][0]]], points_3d[index_points[equation_points[i][1]]])))
 
         #System of nonlinear equations
         def non_linear_equations(X):
