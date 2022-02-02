@@ -27,7 +27,7 @@ scripts = [
             # Contours
             # 'contours/contour_split.py',
             'contours/contour_merge_with_1.py',
-            'contours/contour_merge_with_2.py'
+            'contours/contour_merge_with_2.py',
             # Steps
             'read_steps.py',
             # Stl
@@ -36,7 +36,7 @@ scripts = [
             'distance/arc3D_arc3D.py','distance/arc3D_ls3D.py',
             # Showcases
             'showcases/simple_shapes.py',
-            'showcases/casing.py',
+            'showcases/casing.py'
 
             ]
 #  'cyl_cyl.py', 'cyl_pf.py',
