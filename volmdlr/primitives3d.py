@@ -905,6 +905,30 @@ class Cone(RevolvedProfile):
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
+    def translation(self, offset: volmdlr.Vector3D, copy=True):
+        if not copy:
+            raise NotImplementedError('Copy=False is not supported for this primitive.'
+                                      ' It will be soon removed for other primitives')
+
+        return self.__class__(position=self.position.translation(offset),
+                              axis=self.axis,
+                              radius=self.radius,
+                              length=self.length,
+                              color=self.color,
+                              alpha=self.alpha)
+
+    def rotation(self, center, axis, angle, copy=True):
+        if not copy:
+            raise NotImplementedError('Copy=False is not supported for this primitive.'
+                                      ' It will be soon removed for other primitives')
+
+        return self.__class__(position=self.position.rotation(center, axis, angle),
+                              axis=self.axis.rotation(center, axis, angle),
+                              radius=self.radius,
+                              length=self.length,
+                              color=self.color,
+                              alpha=self.alpha)
+
     def volume(self):
         return self.length * math.pi * self.radius**2 / 3
 
