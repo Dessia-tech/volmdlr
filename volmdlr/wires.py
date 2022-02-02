@@ -904,8 +904,8 @@ class Contour(Wire):
 
             for contour_i in contours1:
                 primitives = contour_i.primitives
-                br1 = False
-                br2 = False
+                # br1 = False
+                # br2 = False
                 for i in range(0,len(primitives)):
                     pts=[]
                     for p in list_p: #due to errors
@@ -913,12 +913,14 @@ class Contour(Wire):
                             pts.append(p)
                     if len(pts) == 1:
                         points.append(pts[0])
-                        br1=True
+                        # br1=True
+                        break
                     elif len(pts) >1:
                         points.append(primitives[i].start.nearest_point(pts))
-                        br1=True
-                    if br1:
+                        # br1=True
                         break
+                    # if br1:
+                        # break
 
                 for i in range(len(primitives)-1, -1, -1):
                     pts=[]
@@ -927,12 +929,14 @@ class Contour(Wire):
                             pts.append(p)
                     if len(pts) == 1:
                         points.append(pts[0])
-                        br2=True
+                        # br2=True
+                        break
                     elif len(pts) >1:
                         points.append(primitives[i].end.nearest_point(pts))
-                        br2=True
-                    if br2:
+                        # br2=True
                         break
+                    # if br2:
+                        # break
 
             return points
 
