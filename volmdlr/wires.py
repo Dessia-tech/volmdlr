@@ -398,7 +398,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         n_inter = len(intersections)
         if not intersections or n_inter < 2:
             return [self]
-        elif n_inter % 2 == 0:
+        if n_inter % 2 == 0:
 
             contours = []
             # primitives_split = [primitive.split(point) \
