@@ -903,40 +903,41 @@ class Contour(Wire):
             points = []
 
             for contour_i in contours1:
-                primitives = contour_i.primitives
-                # br1 = False
-                # br2 = False
-                for i in range(0,len(primitives)):
-                    pts=[]
-                    for p in list_p: #due to errors
-                        if primitives[i].point_belongs(p):
-                            pts.append(p)
-                    if len(pts) == 1:
-                        points.append(pts[0])
-                        # br1=True
-                        break
-                    elif len(pts) >1:
-                        points.append(primitives[i].start.nearest_point(pts))
-                        # br1=True
-                        break
-                    # if br1:
-                        # break
+                points.extend(contour_i.extremities_points(list_p))
+                # primitives = contour_i.primitives
+                # # br1 = False
+                # # br2 = False
+                # for i in range(0,len(primitives)):
+                #     pts=[]
+                #     for p in list_p: #due to errors
+                #         if primitives[i].point_belongs(p):
+                #             pts.append(p)
+                #     if len(pts) == 1:
+                #         points.append(pts[0])
+                #         # br1=True
+                #         break
+                #     elif len(pts) >1:
+                #         points.append(primitives[i].start.nearest_point(pts))
+                #         # br1=True
+                #         break
+                #     # if br1:
+                #         # break
 
-                for i in range(len(primitives)-1, -1, -1):
-                    pts=[]
-                    for p in list_p: #due to errors
-                        if primitives[i].point_belongs(p):
-                            pts.append(p)
-                    if len(pts) == 1:
-                        points.append(pts[0])
-                        # br2=True
-                        break
-                    elif len(pts) >1:
-                        points.append(primitives[i].end.nearest_point(pts))
-                        # br2=True
-                        break
-                    # if br2:
-                        # break
+                # for i in range(len(primitives)-1, -1, -1):
+                #     pts=[]
+                #     for p in list_p: #due to errors
+                #         if primitives[i].point_belongs(p):
+                #             pts.append(p)
+                #     if len(pts) == 1:
+                #         points.append(pts[0])
+                #         # br2=True
+                #         break
+                #     elif len(pts) >1:
+                #         points.append(primitives[i].end.nearest_point(pts))
+                #         # br2=True
+                #         break
+                #     # if br2:
+                #         # break
 
             return points
 
