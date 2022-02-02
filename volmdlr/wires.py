@@ -878,6 +878,8 @@ class Contour(Wire):
             return False
         if len(list_p) >= 2 and all_points is True:
             return (edges1, list_p)
+        else:
+            return False
 
     def shared_primitives_extremities(self, contour):
         '''
