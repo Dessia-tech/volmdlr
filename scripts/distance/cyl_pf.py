@@ -18,15 +18,12 @@ import random
 import math
 
 rmin, rmax = 10, 100
-posmin, posmax = -50, 50
-x1, y1, z1 = random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100
+mini, maxi = -0.5,0.5
 
 r1 = random.randrange(rmin, rmax, 1)/1000
-c1 = volmdlr.Point3D(x1,y1,z1)
+c1 = volmdlr.Point3D.random(mini, maxi, mini, maxi, mini, maxi)
 
-x3, y3, z3 = random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100
-
-n1 = volmdlr.Vector3D(x3,y3,z3)
+n1 = volmdlr.Vector3D.random(mini, maxi, mini, maxi, mini, maxi)
 n1.normalize() #Normalize the normal if it is not the case
 plane1 = vmf.Plane3D.from_normal(c1, n1)
 

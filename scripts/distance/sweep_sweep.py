@@ -24,26 +24,30 @@ circle1 = vmw.Circle2D(volmdlr.Point2D(0,0), radius_circle1)
 circle2 = vmw.Circle2D(volmdlr.Point2D(0,0), radius_circle2)
 # contour2 = vmw.Contour2D([c2])
 
-mini, maxi = -1, 1
-pts1 = []
-for k in range (nb_point1):
-    a1, a2, a3 = random.randint(mini, maxi), random.randint(mini, maxi), random.randint(mini, maxi)
-    c1, c2, c3 = random.randrange(0,100,1), random.randrange(0,100,1), random.randrange(0,100,1)
-    pts1.append(volmdlr.Point3D(a1*c1/100, a2*c2/100, a3*c3/100))
+mini, maxi = -1e-1, 1e-1
+# pts1 = []
+# for k in range (nb_point1):
+#     a1, a2, a3 = random.randint(mini, maxi), random.randint(mini, maxi), random.randint(mini, maxi)
+#     c1, c2, c3 = random.randrange(0,100,1), random.randrange(0,100,1), random.randrange(0,100,1)
+#     pts1.append(volmdlr.Point3D(a1*c1/100, a2*c2/100, a3*c3/100))
+    
+pts1 = [volmdlr.Point3D.random(mini, maxi, mini, maxi, mini, maxi) for k in range (nb_point1)]
 
 radius1 = {1: 0.03, 2: 0.03, 3: 0.07, 4: 0.03}#, 5: 0.07, 6: 0.02, 7: 0.03, 8: 0.04}
-rl1 = primitives3D.OpenRoundedLineSegments3D(pts1, radius1, adapt_radius=False, name='wire1')
+rl1 = primitives3D.OpenRoundedLineSegments3D(pts1, radius1, adapt_radius=True, name='wire1')
 sweep1 = primitives3D.Sweep(circle1, rl1, name = 'pipe1')
 
 
-pts2 = []
-for k in range (nb_point2):
-    a1, a2, a3 = random.randint(mini, maxi), random.randint(mini, maxi), random.randint(mini, maxi)
-    c1, c2, c3 = random.randrange(0,100,1), random.randrange(0,100,1), random.randrange(0,100,1)
-    pts2.append(volmdlr.Point3D(a1*c1/100, a2*c2/100, a3*c3/100))
+# pts2 = []
+# for k in range (nb_point2):
+#     a1, a2, a3 = random.randint(mini, maxi), random.randint(mini, maxi), random.randint(mini, maxi)
+#     c1, c2, c3 = random.randrange(0,100,1), random.randrange(0,100,1), random.randrange(0,100,1)
+#     pts2.append(volmdlr.Point3D(a1*c1/100, a2*c2/100, a3*c3/100))
+    
+pts2 = [volmdlr.Point3D.random(mini, maxi, mini, maxi, mini, maxi) for k in range (nb_point2)]
 
 radius2 = {1: 0.03, 2: 0.05, 3: 0.06}#, 4: 0.02, 5: 0.01, 6: 0.03}
-rl2 = primitives3D.OpenRoundedLineSegments3D(pts2, radius2, adapt_radius=False, name='wire2')
+rl2 = primitives3D.OpenRoundedLineSegments3D(pts2, radius2, adapt_radius=True, name='wire2')
 sweep2 = primitives3D.Sweep(circle2, rl2, name = 'pipe2')
 
 fig = plt.figure()

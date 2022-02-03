@@ -15,28 +15,23 @@ import random
 import math
 
 rmin, rmax = 100, 1000
-posmin, posmax = -50, 50
-x1, y1, z1 = random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100
-x2, y2, z2 = random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100
-
+mini, maxi = -0.5, 0.5
 
 R1 = random.randrange(rmin, rmax, 1)/1000 #Radius of the generative arc3D
 r1, r2 = random.randrange(rmin/10, rmax/10, 1)/1000, random.randrange(rmin/2, rmax/2, 1)/1000 #Radius of the arc3d generated
 
-c1, c2 = volmdlr.Point3D(x1,y1,z1), volmdlr.Point3D(x2,y2,z2) #Choose the coordinate of the center
+c1 = volmdlr.Point3D.random(mini, maxi, mini, maxi, mini, maxi) #Choose the coordinate of the center
+c2 = volmdlr.Point3D.random(mini, maxi, mini, maxi, mini, maxi) #Choose the coordinate of the center
 
-x3, y3, z3 = random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100
-x4, y4, z4 = random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100
+n1 = volmdlr.Vector3D.random(mini, maxi, mini, maxi, mini, maxi) #Choose the coordinate of the center
+n2 = volmdlr.Vector3D.random(mini, maxi, mini, maxi, mini, maxi) #Choose the coordinate of the center
 
-n1, n2 = volmdlr.Vector3D(x3,y3,z3), volmdlr.Vector3D(x4,y4,z4) #Choose the normal
 n1.normalize() #Normalize the normal if it is not the case
 n2.normalize()
 plane1, plane2 = vmf.Plane3D.from_normal(c1, n1), vmf.Plane3D.from_normal(c2, n2) #Create a plane to give us two others vector
 
-frame1 = volmdlr.Frame3D(c1, plane1.frame.u, plane1.frame.v, n1) #Frame in the center of the Tore
-frame2 = volmdlr.Frame3D(c2, plane2.frame.u, plane2.frame.v, n2)
-toresurface1 = vmf.ToroidalSurface3D(frame1, R1, r1) 
-cylsurface2 = vmf.CylindricalSurface3D(frame2, r2)
+toresurface1 = vmf.ToroidalSurface3D(plane1.frame, R1, r1) 
+cylsurface2 = vmf.CylindricalSurface3D(plane2.frame, r2)
 
 
 angle_min, angle_max = 0, 2*3.14*100
@@ -62,6 +57,8 @@ surface2d_1 = vmf.Surface2D(outer_contour = vmw.Contour2D(edges),
 hmin, hmax = -50, 50
 
 h2 = random.randrange(hmin, hmax, 5)/100 #Height of cylinder
+if h2 == 0 :
+    h2 = 1/100
 angle_cyl = random.randrange(angle_min, angle_max, 20)/100
 
 center2d2 = c2.to_2d(c2, plane2.frame.u, plane2.frame.v)
@@ -78,7 +75,7 @@ toroidalface1 = vmf.ToroidalFace3D(toresurface1, surface2d_1)
 cyl2 = vmf.CylindricalFace3D(cylsurface2, surface2d_2)
 
 distance, p1, p2 = toroidalface1.minimum_distance(cyl2, return_points=True)
-print(distance)
+print('distance ', distance)
 
 # fig = plt.figure()
 # ax = fig.add_subplot(111, projection='3d')
@@ -91,10 +88,10 @@ print(distance)
 
 # LS = volmdlr.LineSegment3D(p1, p2)
 
-spheres = [p3d.Sphere(p1, 5e-3, color = (250,0,0)), 
+spheres = [p3d.Sphere(p1, 5e-3, color = (250,0,0)),
            p3d.Sphere(p2, 5e-3, color = (0,0,250))]
 
-vol = volmdlr.VolumeModel([toroidalface1,cyl2] + spheres)
-vol.babylonjs()()
+vol = volmdlr.core.VolumeModel([toroidalface1,cyl2] + spheres)
+vol.babylonjs()
 # m = volmdlr.VolumeModel([shell])
 # m.babylonjs()

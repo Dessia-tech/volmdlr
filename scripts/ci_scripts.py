@@ -34,6 +34,9 @@ scripts = [
             'stl_reading.py',
             # Distance
             'distance/arc3D_arc3D.py','distance/arc3D_ls3D.py',
+            'distance/ls3D_ls3D.py', 'distance/cyl_cyl.py',
+            'distance/cyl_pf.py','distance/tore_cyl.py',
+            'distance/tore_pf.py', 'distance/tore_tore.py',
             # Showcases
             'showcases/simple_shapes.py',
             'showcases/casing.py'

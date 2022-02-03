@@ -16,11 +16,11 @@ import random
 ### Cas random
 mini, maxi = -5, 5
 
-pt1 = volmdlr.Point3D(random.randint(mini, maxi),random.randint(mini, maxi),random.randint(mini, maxi))
-pt2 = volmdlr.Point3D(random.randint(mini, maxi),random.randint(mini, maxi),random.randint(mini, maxi))
+pt1 = volmdlr.Point3D.random(mini, maxi, mini, maxi, mini, maxi)
+pt2 = volmdlr.Point3D.random(mini, maxi, mini, maxi, mini, maxi)
 ptmid = ( pt1 + pt2 )/2
-pt3 = volmdlr.Point3D(random.randint(mini, maxi),random.randint(mini, maxi),random.randint(mini, maxi))
-pt4 = volmdlr.Point3D(random.randint(mini, maxi),random.randint(mini, maxi),random.randint(mini, maxi))
+pt3 = volmdlr.Point3D.random(mini, maxi, mini, maxi, mini, maxi)
+pt4 = volmdlr.Point3D.random(mini, maxi, mini, maxi, mini, maxi)
 ptmid2 = (pt3 + pt4)/2
 
 LS1 = vme.LineSegment3D(pt1, pt2)

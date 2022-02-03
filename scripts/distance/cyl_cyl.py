@@ -17,24 +17,21 @@ import math
 
 #### Cyl Cyl
 rmin, rmax = 10, 100
-posmin, posmax = -50, 50
-x1, y1, z1 = random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100
-x2, y2, z2 = random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100
+mini, maxi = -0.5, 0.5
 
 r1, r2 = random.randrange(rmin, rmax, 1)/1000, random.randrange(rmin, rmax, 1)/1000 #Choose the radius
-c1, c2 = volmdlr.Point3D(x1,y1,z1), volmdlr.Point3D(x2,y2,z2) #Choose the coordinate of the center
-x3, y3, z3 = random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100
-x4, y4, z4 = random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100
+c1 = volmdlr.Point3D.random(mini, maxi, mini, maxi, mini, maxi) #Choose the coordinate of the center
+c2 = volmdlr.Point3D.random(mini, maxi, mini, maxi, mini, maxi) #Choose the coordinate of the center
 
-n1, n2 = volmdlr.Vector3D(x3,y3,z3), volmdlr.Vector3D(x4,y4,z4) #Choose the normal
+n1 = volmdlr.Vector3D.random(mini, maxi, mini, maxi, mini, maxi) #Choose the coordinate of the center
+n2 = volmdlr.Vector3D.random(mini, maxi, mini, maxi, mini, maxi) #Choose the coordinate of the center
+
 n1.normalize() #Normalize the normal if it is not the case
 n2.normalize()
 plane1, plane2 = vmf.Plane3D.from_normal(c1, n1), vmf.Plane3D.from_normal(c2, n2) #Create a plane to give us two others vector
 
-frame1 = volmdlr.Frame3D(c1, plane1.frame.u, plane1.frame.v, n1) #Frame in the center of the cylinder
-frame2 = volmdlr.Frame3D(c2, plane2.frame.u, plane2.frame.v, n2)
-cylsurface1 = vmf.CylindricalSurface3D(frame1, r1) 
-cylsurface2 = vmf.CylindricalSurface3D(frame2, r2)
+cylsurface1 = vmf.CylindricalSurface3D(plane1.frame, r1) 
+cylsurface2 = vmf.CylindricalSurface3D(plane2.frame, r2)
 
 hmin, hmax = 1, 100
 
