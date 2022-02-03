@@ -735,13 +735,12 @@ class Contour(Wire):
 
         return primitives
 
-    def ordering_contour(self):
+    def ordering_contour(self, tol=1e-6):
         """
         returns the points of the contour ordered
         """
         list_point_pairs = [(prim.start, prim.end) for prim in self.primitives]
         length_list_points = len(list_point_pairs)
-        # print('fisrt list point pairs :', list_point_pairs)
         points = [list_point_pairs[0]]
         list_point_pairs.remove(
             (list_point_pairs[0][0], list_point_pairs[0][1]))
@@ -750,18 +749,18 @@ class Contour(Wire):
         counter1 = 0
         while not finished:
             for p1, p2 in list_point_pairs:
-                if p1.point_distance(p2) < 10e-5: #p1 == p2:
+                if p1.point_distance(p2) < tol:
                     list_point_pairs.remove((p1, p2))
-                elif p1.point_distance(points[-1][-1]) < 10e-5: #p1 == points[-1][-1]:
+                elif p1.point_distance(points[-1][-1]) < tol:
                     points.append((p1, p2))
                     list_point_pairs.remove((p1, p2))
-                elif p2.point_distance(points[-1][-1]) < 10e-5: #p2 == points[-1][-1]:
+                elif p2.point_distance(points[-1][-1]) < tol:
                     points.append((p2, p1))
                     list_point_pairs.remove((p1, p2))
-                elif p1.point_distance( points[0][0]) < 10e-5: #p1 == points[0][0]:
+                elif p1.point_distance(points[0][0]) < tol:
                     points = [(p2, p1)] + points
                     list_point_pairs.remove((p1, p2))
-                elif p2.point_distance(points[0][0]) < 10e-5: #p2 == points[0][0]:
+                elif p2.point_distance(points[0][0]) < tol:
                     points = [(p1, p2)] + points
                     list_point_pairs.remove((p1, p2))
             if len(list_point_pairs) == 0:
