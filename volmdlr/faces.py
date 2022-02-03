@@ -622,7 +622,7 @@ class Surface3D(dc.DessiaObject):
                         ax2 = contour3d.plot()
                         primitive3d.plot(ax=ax2, color='r')
                         last_primitive3d.plot(ax=ax2, color='b')
-                        self.plot(ax=ax2)
+                        # self.plot(ax=ax2)
 
                         ax = last_primitive.plot(color='b', plot_points=True)
                         # primitives[0].plot(ax=ax, color='r', plot_points=True)
@@ -3693,21 +3693,21 @@ class BSplineSurface3D(Surface3D):
                     xmin.append(0)
                     xmax.append(1)
                     ymin.append(0)
-                    ymax.append(0.95)
+                    ymax.append(0.99)
                 elif grid2d_direction[i][1] == '+x':
                     xmin.append(0)
-                    xmax.append(0.95)
+                    xmax.append(0.99)
                     ymin.append(0)
                     ymax.append(1)
                 elif grid2d_direction[i][1] == '-x':
-                    xmin.append(0.1)
+                    xmin.append(0.01)
                     xmax.append(1)
                     ymin.append(0)
                     ymax.append(1)
                 elif grid2d_direction[i][1] == '-y':
                     xmin.append(0)
                     xmax.append(1)
-                    ymin.append(0.1)
+                    ymin.append(0.01)
                     ymax.append(1)
 
                 xmin.append(0)
