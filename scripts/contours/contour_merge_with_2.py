@@ -63,6 +63,7 @@ for i in range(0, 2):
     axs[i][j].set_title('shared primitives extremities')
 
 
+
 # %% shared_primitives_with
 
 shared_primitives = contour1.shared_primitives_with(contour2)
