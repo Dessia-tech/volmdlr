@@ -361,7 +361,7 @@ babylon_unpacker_body_template = Template(
       window.addEventListener("resize", function () {
          engine.resize();
       });
-
+      
       scene.debugLayer.show();
 
    </script>
