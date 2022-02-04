@@ -4152,7 +4152,6 @@ class PlaneFace3D(Face3D):
 
             if not valid_coicident_faces:
                 merge_finished = True
-
         list_new_faces.append(
             PlaneFace3D(face0.surface3d,
                         Surface2D(merged_contour,
@@ -6523,9 +6522,12 @@ class ClosedShell3D(OpenShell3D):
         '''
         if dict_intersecting_combinations is None:
             face_combinations = self.intersecting_faces_combinations(shell2)
-            dict_intersecting_combinations = self.dict_intersecting_combinations(face_combinations)
+            dict_intersecting_combinations = \
+                self.dict_intersecting_combinations(face_combinations)
         intersecting_lines = list(dict_intersecting_combinations.values())
-        intersecting_contour = volmdlr.wires.Contour3D([wire.primitives[0] for wire in intersecting_lines])
+        intersecting_contour = \
+            volmdlr.wires.Contour3D([wire.primitives[0] for
+                                     wire in intersecting_lines])
         return intersecting_contour
 
     def reference_shell(self, shell2, face):
@@ -6699,6 +6701,7 @@ class ClosedShell3D(OpenShell3D):
             Given Two closed shells, it returns
             a new united ClosedShell3D object
         '''
+
         validate_set_operation = \
             self.validate_set_operation(shell2, tol)
         if validate_set_operation:

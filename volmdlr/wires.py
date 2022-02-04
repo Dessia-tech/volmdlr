@@ -775,7 +775,6 @@ class Contour(Wire):
                 finished = True
             counter1 += 1
             if counter1 >= 100*length_list_points:
-                self.plot()
                 raise NotImplementedError
             if len(list_point_pairs) == 1:
                 counter += 1
@@ -849,7 +848,7 @@ class Contour(Wire):
             if contour.primitive_over_contour(prim1):
                 return True
         return False
-    
+
     def is_sharing_primitives_with(self, contour, all_points = False):
         '''
         check if two contour are sharing primitives
@@ -1045,7 +1044,7 @@ class Contour(Wire):
                     break
         return points
 
-
+      
 class Contour2D(Contour, Wire2D):
     """
     A collection of 2D primitives forming a closed wire2D
@@ -3514,7 +3513,7 @@ class Contour3D(Contour, Wire3D):
         if dict_intersecting_points:
             return dict_intersecting_points
         return None
-
+      
     @classmethod
     def from_points(cls, points: List[volmdlr.Point3D]):
         '''
@@ -3555,7 +3554,6 @@ class Contour3D(Contour, Wire3D):
         # contours = sorted(contours, key=lambda contour: contour.area(), reverse=True)
 
         return contours
-      
 
 class Circle3D(Contour3D):
     _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']
