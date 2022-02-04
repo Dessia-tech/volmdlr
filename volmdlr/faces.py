@@ -6668,6 +6668,8 @@ class ClosedShell3D(OpenShell3D):
 
     def set_operations_exterior_face(self, new_face, valid_faces,
                                      inside_reference_shell, shell2):
+        if new_face.area() < 1e-8:
+            return False
         if new_face not in valid_faces and not inside_reference_shell:
             for fc in valid_faces:
                 if self.is_face_between_shells(shell2, new_face) or\
