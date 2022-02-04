@@ -34,6 +34,3 @@ for step_file in [
     # assert model == model2
 
 #     model._check_platform()
-
-step = volmdlr.step.Step('C:\\Users\\Mack\\Downloads\\boite de vitesse DB45 HR18DD.stp')
-model = step.to_volume_model()
