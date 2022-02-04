@@ -1,17 +1,22 @@
 
 import os
+import matplotlib.pyplot as plt
 
 scripts = [
             # Edges
-            'edges/arcs2D.py', 'edges/arcs3D.py', 'edges/bspline.py',
+            'edges/arcs2D.py',
+            'edges/arcs3D.py',
+            'edges/bspline.py',
+            'edges/areas_moment_cog_check.py',
             # Wires
-            'wires/roundedlines.py','wires/polygon2D.py',
+            'wires/roundedlines.py',
+            'wires/polygon2D.py',
             'wires/triangle2D.py',
             'demo2D.py',
             # Primitives
             'primitives/extrusion.py', 
             'primitives/sweep.py',
-            'primitives/revolved_profile.py', 'edges/areas_moment_cog_check.py',
+            'primitives/revolved_profile.py',
             'primitives/block3d.py',
             'primitives/sphere_to_point.py',
             'primitives/cone.py',
@@ -33,7 +38,8 @@ scripts = [
             # Stl
             'stl_reading.py',
             # Distance
-            'distance/arc3D_arc3D.py','distance/arc3D_ls3D.py',
+            'distance/arc3D_arc3D.py',
+            'distance/arc3D_ls3D.py',
             # Showcases
             'showcases/simple_shapes.py',
             'showcases/casing.py'
@@ -45,5 +51,7 @@ scripts = [
 
 for script_name in scripts:
     print('\n## Executing script {}'.format(script_name))
+    plt.show()
+    a = input('ok')
 
     exec(open(script_name).read())
