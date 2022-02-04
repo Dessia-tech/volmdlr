@@ -267,7 +267,7 @@ class Block(volmdlr.faces.ClosedShell3D):
         self.faces = self.shell_faces()
 
     def cut_by_orthogonal_plane(self, plane_3d: volmdlr.faces.Plane3D):
-        bb = self.bounding_box
+        bouding_box = self.bounding_box
         if plane_3d.frame.w.dot(volmdlr.Vector3D(1, 0, 0)) == 1:
             pass
         elif plane_3d.frame.w.dot(volmdlr.Vector3D(0, 1, 0)) == 1:
@@ -279,9 +279,9 @@ class Block(volmdlr.faces.ClosedShell3D):
 
         dir1 = plane_3d.frame.u
         dir2 = plane_3d.frame.v
-        center2d = volmdlr.Point2D(bb.center.dot(dir1), bb.center.dot(dir2))
-        point_min = volmdlr.Point3D(bb.xmin, bb.ymin, bb.zmin)
-        point_max = volmdlr.Point3D(bb.xmax, bb.ymax, bb.zmax)
+        center2d = volmdlr.Point2D(bouding_box.center.dot(dir1), bouding_box.center.dot(dir2))
+        point_min = volmdlr.Point3D(bouding_box.xmin, bouding_box.ymin, bouding_box.zmin)
+        point_max = volmdlr.Point3D(bouding_box.xmax, bouding_box.ymax, bouding_box.zmax)
         points = [-center2d + volmdlr.Point2D(point_min.dot(dir1),
                                               point_min.dot(dir2)),
                   -center2d + volmdlr.Point2D(point_min.dot(dir1),
@@ -333,16 +333,16 @@ class Block(volmdlr.faces.ClosedShell3D):
         return Block(new_frame, color=self.color,
                      alpha=self.alpha, name=self.name)
 
-    def plot_data(self, x3D, y3D, marker=None, color='black', stroke_width=1,
+    def plot_data(self, x3d, y3d, marker=None, color='black', stroke_width=1,
                   dash=False, opacity=1, arrow=False):
         lines = []
         for edge3D in self.edges():
-            lines.append(edge3D.plot_data(x3D, y3D, marker, color,
+            lines.append(edge3D.plot_data(x3d, y3d, marker, color,
                                           stroke_width, dash, opacity, arrow))
 
         return lines
 
-    def plot2D(self, x3D, y3D, ax=None):
+    def plot2d(self, x3d, y3d, ax=None):
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
@@ -351,7 +351,7 @@ class Block(volmdlr.faces.ClosedShell3D):
 
         for edge3D in self.edges():
             # edge2D = edge3D.PlaneProjection2D()
-            edge3D.plot2D(x3D, y3D, ax)
+            edge3D.plot2d(x3d, y3d, ax=ax)
 
         return fig, ax
 
@@ -614,7 +614,7 @@ class RevolvedProfile(volmdlr.faces.ClosedShell3D):
         p1_2D = p1.To2D(self.axis_point, self.x, self.y)
         p2_3D = self.axis_point+volmdlr.Point3D(self.axis.vector)
         p2_2D = p2_3D.To2D(self.plane_origin, self.x, self.y)
-        axis_2D = volmdlr.Line2D(p1_2D, p2_2D)
+        axis_2D = volmdlr.edges.Line2D(p1_2D, p2_2D)
         com = self.contour2d.center_of_mass()
         if com is not False:
             rg = axis_2D.point_distance(com)
@@ -736,24 +736,24 @@ class Cylinder(RevolvedProfile):
         dy2 = (pointA[1]-pointB[1])**2
         dz2 = (pointA[2]-pointB[2])**2
 
-        kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
-        ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
-        kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
+        # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
+        # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
+        # kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
 
         if pointA[0] > pointB[0]:
             pointA, pointB = pointB, pointA
-        xmin = pointA[0] - kx * radius
-        xmax = pointB[0] + kx * radius
+        xmin = pointA[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        xmax = pointB[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
 
         if pointA[1] > pointB[1]:
             pointA, pointB = pointB, pointA
-        ymin = pointA[1] - ky * radius
-        ymax = pointB[1] + ky * radius
+        ymin = pointA[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
+        ymax = pointB[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
 
         if pointA[2] > pointB[2]:
             pointA, pointB = pointB, pointA
-        zmin = pointA[2] - kz * radius
-        zmax = pointB[2] + kz * radius
+        zmin = pointA[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
+        zmax = pointB[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * radius
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
@@ -792,7 +792,7 @@ class Cylinder(RevolvedProfile):
         l4 = volmdlr.edges.LineSegment2D(p4, p1)
         extruded_profile = RevolvedProfile(
             self.position, self.axis, normal_vector1,
-            volmdlr.Contour2D([l1, l2, l3, l4]),
+            volmdlr.wires.Contour2D([l1, l2, l3, l4]),
             self.position, self.axis, name=self.name)
         return extruded_profile.babylon_script(name=name)
 
@@ -884,26 +884,50 @@ class Cone(RevolvedProfile):
         dy2 = (pointA[1]-pointB[1])**2
         dz2 = (pointA[2]-pointB[2])**2
 
-        kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
-        ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
-        kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
+        # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
+        # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
+        # kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
 
-        x_bound = (pointA[0] - kx * self.radius,
-                   pointA[0] + kx * self.radius, pointB[0])
+        x_bound = (pointA[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
+                   pointA[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius, pointB[0])
         xmin = min(x_bound)
         xmax = max(x_bound)
 
-        y_bound = (pointA[1] - ky * self.radius,
-                   pointA[1] + ky * self.radius, pointB[1])
+        y_bound = (pointA[1] - (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
+                   pointA[1] + (((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius, pointB[1])
         ymin = min(y_bound)
         ymax = max(y_bound)
 
-        z_bound = (pointA[2] - kz * self.radius,
-                   pointA[2] + kz * self.radius, pointB[2])
+        z_bound = (pointA[2] - (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
+                   pointA[2] + (((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5) * self.radius, pointB[2])
         zmin = min(z_bound)
         zmax = max(z_bound)
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+
+    def translation(self, offset: volmdlr.Vector3D, copy=True):
+        if not copy:
+            raise NotImplementedError('Copy=False is not supported for this primitive.'
+                                      ' It will be soon removed for other primitives')
+
+        return self.__class__(position=self.position.translation(offset),
+                              axis=self.axis,
+                              radius=self.radius,
+                              length=self.length,
+                              color=self.color,
+                              alpha=self.alpha)
+
+    def rotation(self, center, axis, angle, copy=True):
+        if not copy:
+            raise NotImplementedError('Copy=False is not supported for this primitive.'
+                                      ' It will be soon removed for other primitives')
+
+        return self.__class__(position=self.position.rotation(center, axis, angle),
+                              axis=self.axis.rotation(center, axis, angle),
+                              radius=self.radius,
+                              length=self.length,
+                              color=self.color,
+                              alpha=self.alpha)
 
     def volume(self):
         return self.length * math.pi * self.radius**2 / 3
@@ -981,7 +1005,7 @@ class HollowCylinder(Cylinder):
         l4 = volmdlr.edges.LineSegment2D(p4, p1)
         extruded_profile = RevolvedProfile(self.position,
                                            self.axis, normal_vector1,
-                                           volmdlr.Contour2D([l1, l2, l3, l4]),
+                                           volmdlr.wires.Contour2D([l1, l2, l3, l4]),
                                            self.position, self.axis,
                                            name=self.name)
         return extruded_profile.babylon_script(name=name)
@@ -1203,10 +1227,7 @@ class Sphere(RevolvedProfile):
         
         contour = volmdlr.wires.Contour2D([
             volmdlr.edges.Arc2D(s, i, e), volmdlr.edges.LineSegment2D(s, e)])
-        # fig, ax = plt.subplots()
-        # c.plot(ax=ax)
         
-        # contour = volmdlr.Contour2D([c])
         axis = volmdlr.X3D
         y = axis.random_unit_normal_vector()
         RevolvedProfile.__init__(self, center, axis, y, contour, center, axis,
@@ -1226,11 +1247,11 @@ class Sphere(RevolvedProfile):
         p1 = volmdlr.Point2D((-self.radius, 0))
         p2 = volmdlr.Point2D((0, self.radius))
         p3 = volmdlr.Point2D((self.radius, 0))
-        line = volmdlr.LineSegment2D(p1, p3)
-        arc = volmdlr.Arc2D(p1, p2, p3)
+        line = volmdlr.edges.LineSegment2D(p1, p3)
+        arc = volmdlr.edges.Arc2D(p1, p2, p3)
         extruded_profile = RevolvedProfile(
             self.position, volmdlr.X3D, volmdlr.Y3D,
-            volmdlr.Contour2D([line, arc]), self.position, volmdlr.X3D,
+            volmdlr.wires.Contour2D([line, arc]), self.position, volmdlr.X3D,
             name=self.name)
         return extruded_profile.babylon_script(name=name)
 

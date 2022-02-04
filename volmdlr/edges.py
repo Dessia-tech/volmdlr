@@ -22,6 +22,7 @@ import matplotlib.patches
 
 import plot_data.core as plot_data
 import dessia_common as dc
+import volmdlr.core_compiled
 import volmdlr.core
 import volmdlr.geometry
 
@@ -3176,7 +3177,17 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         curve = fitting.approximate_curve([(p.x, p.y, p.z) for p in points], degree, **kwargs)
         return cls.from_geomdl_curve(curve)
     
-      
+    def middle_point(self):
+        return self.point_at_abscissa(self.length()/2)
+
+    def split(self, point3d):
+        adim_abscissa = self.abscissa(point3d) / self.length()
+        curve1, curve2 = split_curve(self.curve, adim_abscissa)
+
+        return [BSplineCurve3D.from_geomdl_curve(curve1),
+                BSplineCurve3D.from_geomdl_curve(curve2)]
+
+
 class BezierCurve3D(BSplineCurve3D):
 
     def __init__(self, degree: int, control_points: List[volmdlr.Point3D],
@@ -3753,6 +3764,10 @@ class Arc3D(Edge):
             if z.cost < abs_tol: 
                 return True
         return False
+
+    def middle_point(self):
+        l = self.length()
+        return self.point_at_abscissa(0.5 * l)
 
 
 class FullArc3D(Edge):

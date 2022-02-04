@@ -127,8 +127,6 @@ setup(name='volmdlr',
                         'plot_data>=0.8.5',
                         'kaitaistruct',
                         'binaryornot',
-                        'pygeodesic'
-                        # 'open3d'
                         ],
       classifiers=['Topic :: Scientific/Engineering','Development Status :: 3 - Alpha'],
       ext_modules = cythonize(["volmdlr/core_compiled.pyx"]))
