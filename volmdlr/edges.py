@@ -3155,29 +3155,6 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
                    knots=knots,
                    knot_multiplicities=knot_multiplicities)
 
-<<<<<<< HEAD
-    def point_belongs(self, point3d, abs_tol=1e-10):
-        '''
-        check if a point3d belongs to the bspline_curve or not 
-        '''
-        def f(x):
-            return (point3d - volmdlr.Point3D(*self.curve.evaluate_single(x))).norm()
-
-        x = npy.linspace(0,1,5)
-        x_init=[]
-        for xi in x:
-            x_init.append(xi)
-            
-        for x0 in x_init: 
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            if z.cost < abs_tol: 
-                return True
-        return False
-
-    
-=======
-
->>>>>>> dev
     def global_minimum_curvature(self, nb_eval: int = 21):
         check = [i/(nb_eval-1) for i in range(nb_eval)]
         radius = []
@@ -3210,11 +3187,7 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         
         curve = fitting.approximate_curve([(p.x, p.y, p.z) for p in points], degree, **kwargs)
         return cls.from_geomdl_curve(curve)
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> dev
     def middle_point(self):
         return self.point_at_abscissa(self.length()/2)
 
@@ -3225,7 +3198,6 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         return [BSplineCurve3D.from_geomdl_curve(curve1),
                 BSplineCurve3D.from_geomdl_curve(curve2)]
 
-<<<<<<< HEAD
     def abscissa(self, point3d):
         l = self.length()
 
@@ -3247,8 +3219,6 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             raise ValueError('abscissa not found')
         return res.x[0]
 
-=======
->>>>>>> dev
 
 class BezierCurve3D(BSplineCurve3D):
 
@@ -3809,13 +3779,7 @@ class Arc3D(Edge):
         points = self.polygon_points(angle_resolution=100)
         return point.point_distance(point.nearest_point(points))
 
-<<<<<<< HEAD
-       points = self.polygon_points(angle_resolution=100)
 
-       return point.point_distance(point.nearest_point(points))
-
-=======
->>>>>>> dev
     def point_belongs(self, point3d, abs_tol=1e-10):
         '''
         check if a point3d belongs to the arc_3d or not 
@@ -3830,22 +3794,13 @@ class Arc3D(Edge):
 
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,length_]))
-<<<<<<< HEAD
             if z.cost < abs_tol:
-=======
-            if z.cost < abs_tol: 
->>>>>>> dev
                 return True
         return False
 
     def middle_point(self):
-<<<<<<< HEAD
         return self.point_at_abscissa(self.length()/2)
-=======
-        l = self.length()
-        return self.point_at_abscissa(0.5 * l)
 
->>>>>>> dev
 
 class FullArc3D(Edge):
     """
