@@ -9,7 +9,7 @@ Created on Tue Sep 11 15:16:33 2018
 import volmdlr as vm
 import volmdlr.primitives3d as primitives3d
 import volmdlr.wires as wires
-import numpy as npy
+# import numpy as npy
 import random
 import matplotlib.pyplot as plt
 p1 = vm.Point3D(0, 0, 0)

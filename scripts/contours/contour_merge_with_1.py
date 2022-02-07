@@ -38,7 +38,7 @@ else:
 shared_primitives_extremities = contour1.shared_primitives_extremities(contour2)
 
 to_plot.append(shared_primitives_extremities)
-title.append('shared_primitives_extremities')
+title.append('shared primitives extremities')
 colors.append('k')
 
 # %% shared_primitives_with
@@ -46,7 +46,7 @@ colors.append('k')
 shared_primitives = contour1.shared_primitives_with(contour2)
 
 to_plot.append(shared_primitives)
-title.append('shared_primitives')
+title.append('shared primitives')
 colors.append('r')
 
 # %% merge_primitives_with
@@ -54,7 +54,7 @@ colors.append('r')
 merged_primitives = contour1.merge_primitives_with(contour2)
 
 to_plot.append(merged_primitives)
-title.append('primitives_to_be_merged')
+title.append('primitives to be merged')
 colors.append('g')
 
 # %% merge_with
@@ -62,7 +62,7 @@ colors.append('g')
 merged_contour = contour1.merge_with(contour2)
 
 to_plot.append([merged_contour])
-title.append('merged_contour')
+title.append('merged contour')
 colors.append('b')
 
 # %% Display
