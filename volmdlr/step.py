@@ -7,16 +7,16 @@
 import time
 from typing import BinaryIO, List
 
-import dessia_common.graph
 import matplotlib.pyplot as plt
 import networkx as nx
 import plot_data.graph
+
 import volmdlr
 import volmdlr.core
-import volmdlr.primitives3d
 import volmdlr.edges
-import volmdlr.wires
 import volmdlr.faces
+import volmdlr.primitives3d
+import volmdlr.wires
 
 # import webbrowser
 # from jinja2 import Environment, PackageLoader, select_autoescape
