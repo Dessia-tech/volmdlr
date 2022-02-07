@@ -6,6 +6,8 @@
 
 import time
 from typing import BinaryIO, List
+
+import dessia_common.graph
 import matplotlib.pyplot as plt
 import networkx as nx
 import plot_data.graph
@@ -544,7 +546,7 @@ class Step:
                                                                     arguments))
         return volmdlr_object
 
-    def to_volume_model(self, no_bug_mode=False, show_times=False):
+    def to_volume_model(self, show_times=False):
         """
         no_bug_mode=True loops on instanciate method's KeyErrors until all
         the KeyErrors can be instanciated.
@@ -597,54 +599,39 @@ class Step:
             nodes.extend(new_nodes)
             i += 1
 
+        # nodes = dessia_common.graph.explore_tree_from_leaves(self.graph)
+
         times = {}
-        if no_bug_mode:
-            for node in nodes[::-1]:
-                # instanciate_ids = [edge[1]]
-                instanciate_ids = [node]
-                error = True
-                while error:
-                    try:
-                        for instanciate_id in instanciate_ids[::-1]:
-                            t = time.time()
-                            volmdlr_object = self.instanciate(
-                                self.functions[instanciate_id].name,
-                                self.functions[instanciate_id].arg[:],
-                                object_dict)
-                            t = time.time() - t
-                            object_dict[instanciate_id] = volmdlr_object
-                            if show_times:
-                                if volmdlr_object.__class__ not in times:
-                                    times[volmdlr_object.__class__] = [1, t]
-                                else:
-                                    times[volmdlr_object.__class__][0] += 1
-                                    times[volmdlr_object.__class__][1] += t
-                        error = False
-                    except KeyError as key:
-                        # Sometimes the bfs search don't instanciate the nodes of a
-                        # depth in the right order, leading to error
-                        instanciate_ids.append(key.args[0])
-        else:
-            for instanciate_id in nodes[::-1]:
-                # instanciate_id = edge[1]
-                t = time.time()
-                volmdlr_object = self.instanciate(
-                    self.functions[instanciate_id].name,
-                    self.functions[instanciate_id].arg[:],
-                    object_dict)
-                t = time.time() - t
-                object_dict[instanciate_id] = volmdlr_object
-                if show_times:
-                    if volmdlr_object.__class__ not in times:
-                        times[volmdlr_object.__class__] = [1, t]
-                    else:
-                        times[volmdlr_object.__class__][0] += 1
-                        times[volmdlr_object.__class__][1] += t
+        for node in nodes[::-1]:
+            # instanciate_ids = [edge[1]]
+            instanciate_ids = [node]
+            error = True
+            while error:
+                try:
+                    for instanciate_id in instanciate_ids[::-1]:
+                        t = time.time()
+                        volmdlr_object = self.instanciate(
+                            self.functions[instanciate_id].name,
+                            self.functions[instanciate_id].arg[:],
+                            object_dict)
+                        t = time.time() - t
+                        object_dict[instanciate_id] = volmdlr_object
+                        if show_times:
+                            if volmdlr_object.__class__ not in times:
+                                times[volmdlr_object.__class__] = [1, t]
+                            else:
+                                times[volmdlr_object.__class__][0] += 1
+                                times[volmdlr_object.__class__][1] += t
+                    error = False
+                except KeyError as key:
+                    # Sometimes the bfs search don't instanciate the nodes of a
+                    # depth in the right order, leading to error
+                    instanciate_ids.append(key.args[0])
 
         if show_times:
             print()
             for key, value in times.items():
-                print('|', key, ': ', value)
+                print(f'| {key} : {value}')
             print()
 
         shells = []
