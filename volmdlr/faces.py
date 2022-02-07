@@ -2741,7 +2741,8 @@ class BSplineSurface3D(Surface3D):
                                       points_2d[index_points[finite_elements_points[i][3]]])))
 
         for k in range(0, len(finite_elements_points)):
-            if (finite_elements[k].point_belongs(point2d)
+            if (volmdlr.wires.Contour2D(finite_elements[k].primitives).point_belongs(point2d) #finite_elements[k].point_belongs(point2d)
+                or volmdlr.wires.Contour2D(finite_elements[k].primitives).point_over_contour(point2d)
                 or ((points_2d[index_points[finite_elements_points[k][0]]][0] < point2d.x < points_2d[index_points[finite_elements_points[k][1]]][0])
                     and point2d.y == points_2d[index_points[finite_elements_points[k][0]]][1])
                 or ((points_2d[index_points[finite_elements_points[k][1]]][1] < point2d.y < points_2d[index_points[finite_elements_points[k][2]]][1])
