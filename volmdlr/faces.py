@@ -3523,15 +3523,6 @@ class Face3D(volmdlr.core.Primitive3D):
 
         return self.surface2d.point_belongs(point2d)
 
-    def point_belongs2(self, point):
-        if not self.surface3d.point_on_plane(point):
-            return False
-        point2d = self.surface3d.point3d_to_2d(point)
-        if self.surface2d.outer_contour.point_belongs(point2d) or \
-                self.surface2d.outer_contour.point_over_contour(point2d, abs_tol=1e-7):
-            return True
-        return False
-
     @property
     def outer_contour3d(self):
         """
@@ -6272,8 +6263,9 @@ class ClosedShell3D(OpenShell3D):
 
     def is_face_inside(self, face: Face3D):
         for point in face.outer_contour3d.discretization_points(0.01):
-            if not self.point_belongs(point) and \
-                    not self.point_in_shell_face(point):
+            point_inside_shell = self.point_belongs(point)
+            point_in_shells_faces = self.point_in_shell_face(point)
+            if (not point_inside_shell) and (not point_in_shells_faces):
                 return False
         return True
 
@@ -6380,8 +6372,12 @@ class ClosedShell3D(OpenShell3D):
         return tests[0]
 
     def point_in_shell_face(self, point:volmdlr.Point3D):
+
         for face in self.faces:
-            if face.point_belongs2(point):
+            point2d = face.surface3d.point3d_to_2d(point)
+            if face.point_belongs(point) or \
+                    face.surface2d.outer_contour.point_over_contour(
+                        point2d, abs_tol=1e-7):
                 return True
         return False
 
