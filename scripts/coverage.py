@@ -8,8 +8,8 @@ Created on Wed Sep 29 14:35:47 2021
 
 import json
 
-MIN_FILE_COVERAGE = 26.5
-MIN_MODULE_COVERAGE = 40.
+MIN_FILE_COVERAGE = 44.6
+MIN_MODULE_COVERAGE = 50.0
 
 untracked_modules = ['volmdlr/templates.py',
                      'volmdlr/code_aster.py',
@@ -18,7 +18,7 @@ untracked_modules = ['volmdlr/templates.py',
                      'models/__init__.py',
                      'workflows/__init__.py',
                      'workflows/core.py',
-                     'volmdlr/cloud.py']
+                     ]
 
 print('untracked modules:', untracked_modules)
 

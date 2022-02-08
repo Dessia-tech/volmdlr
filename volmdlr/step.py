@@ -107,7 +107,7 @@ def shell_base_surface_model(arguments, object_dict):
 
 def item_defined_transformation(arguments, object_dict):
     # Frame3D
-    volmdlr_object1 = object_dict[arguments[2]]
+    # volmdlr_object1 = object_dict[arguments[2]]
     volmdlr_object2 = object_dict[arguments[3]]
     # TODO : how to frame map properly from these two Frame3D ?
     # return volmdlr_object2 - volmdlr_object1
@@ -181,7 +181,7 @@ def advanced_brep_shape_representation(arguments, object_dict):
 
 def representation_relationship_representation_relationship_with_transformation_shape_representation_relationship(arguments, object_dict):
     if arguments[2] in object_dict:
-        if type(object_dict[arguments[2]]) is list:
+        if isinstance(object_dict[arguments[2]], list):
             for shell3d in object_dict[arguments[2]]:
                 frame3d = object_dict[arguments[4]]
                 shell3d.frame_mapping(frame3d, 'old', copy=False)
@@ -248,6 +248,7 @@ class Step:
         self.functions, self.all_connections = self.read_lines()
         self._utd_graph = False
         self._graph = None
+        self.name = name
 
     @property
     def graph(self):
@@ -355,7 +356,7 @@ class Step:
                 not_implemented.append(fun.name)
         return list(set(not_implemented))
 
-    def create_graph(self, draw=False, html=False):
+    def create_graph(self):
 
         G = nx.Graph()
         F = nx.DiGraph()
@@ -506,9 +507,9 @@ class Step:
 
     def parse_arguments(self, arguments):
         for i, arg in enumerate(arguments):
-            if type(arg) == str and arg[0] == '#':
+            if isinstance(arg, str) and arg[0] == '#':
                 arguments[i] = int(arg[1:])
-            elif type(arg) == str and arg[0:2] == '(#':
+            elif isinstance(arg, str) and arg[0:2] == '(#':
                 argument = []
                 arg_id = ""
                 for char in arg[1:-1]:
