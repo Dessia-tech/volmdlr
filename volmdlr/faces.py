@@ -182,10 +182,10 @@ class Surface2D(volmdlr.core.Primitive2D):
         """
         Split in n slices
         """
-        xmin, xmax, ymin, ymax = self.outer_contour.bounding_rectangle()
+        bounding_rectangle = self.outer_contour.bounding_rectangle()
         lines = []
         for i in range(n - 1):
-            xi = xmin + (i + 1) * (xmax - xmin) / n
+            xi = bounding_rectangle[0] + (i + 1) * (bounding_rectangle[1] - bounding_rectangle[0]) / n
             lines.append(vme.Line2D(volmdlr.Point2D(xi, 0),
                                     volmdlr.Point2D(xi, 1)))
         return self.split_by_lines(lines)
