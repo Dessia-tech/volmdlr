@@ -2810,8 +2810,8 @@ class BSplineSurface3D(Surface3D):
 
         points_dim = bsplinecurve2d.control_points
         points = []
-        for cle in self._grids2d.keys():
-            [points_x, points_y, xmin, xmax, ymin, ymax] = cle
+        for key in self._grids2d:
+            [points_x, points_y, xmin, xmax, ymin, ymax] = key
 
         for p in points_dim:
             points.append(self.point2d_with_dimension_to_parametric_frame(p, points_x, points_y, xmin, xmax, ymin, ymax))
