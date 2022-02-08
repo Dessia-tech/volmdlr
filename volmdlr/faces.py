@@ -6045,7 +6045,7 @@ class BSplineFace3D(Face3D):
         merged_surface = self.surface3d.merge_with(other_bspline_face3d.surface3d)
         merged_face = merged_surface.rectangular_cut(0,1,0,1)
 
-        return 
+        return merged_face
 
 
 class OpenShell3D(volmdlr.core.CompositePrimitive3D):
