@@ -3301,6 +3301,8 @@ class BSplineSurface3D(Surface3D):
             edge2d_dim = getattr(self, method_name)(edge3d, points_x, points_y)
             if edge2d_dim:
                 return edge2d_dim
+            else:
+                raise NotImplementedError
         else:
             raise NotImplementedError(
                 'Class {} does not implement {}'.format(self.__class__.__name__,
