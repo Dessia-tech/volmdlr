@@ -2746,8 +2746,8 @@ class BSplineSurface3D(Surface3D):
         convert a linesegment2d from the dimensioned to the parametric frame
         '''
 
-        for cle in self._grids2d.keys():
-            [points_x, points_y, xmin, xmax, ymin, ymax] = cle
+        for key in self._grids2d:
+            [points_x, points_y, xmin, xmax, ymin, ymax] = key
 
         try:
             linesegment2d = volmdlr.edges.LineSegment2D(self.point2d_with_dimension_to_parametric_frame(linesegment2d.start, points_x, points_y, xmin, xmax, ymin, ymax), self.point2d_with_dimension_to_parametric_frame(linesegment2d.end, points_x, points_y, xmin, xmax, ymin, ymax))
