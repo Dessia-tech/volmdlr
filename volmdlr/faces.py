@@ -2775,7 +2775,7 @@ class BSplineSurface3D(Surface3D):
 
         xmin, xmax, ymin, ymax = 0, 1, 0, 1
         # check if bsplinecurve2d is in a list
-        if type(bsplinecurve2d) == list:
+        if isinstance(bsplinecurve2d, list):
             bsplinecurve2d = bsplinecurve2d[0]
         points = bsplinecurve2d.control_points
         points_dim = []
