@@ -1,6 +1,6 @@
 from pylint.lint import Run
 
-MIN_NOTE = 5.12
+MIN_NOTE = 6.1
 
 MAX_ERROR_BY_TYPE = {
                      'invalid-name': 1195,
