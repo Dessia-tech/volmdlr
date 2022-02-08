@@ -5687,7 +5687,30 @@ class BSplineFace3D(Face3D):
 
         return adjacent_direction1, diff1, adjacent_direction2, diff2
 
-    
+    def adjacent_direction_xy(self, other_face3d):
+        '''
+        find out in which direction the faces are adjacent
+        Parameters
+        ----------
+        other_face3d : volmdlr.faces.BSplineFace3D
+
+        Returns
+        -------
+        adjacent_direction
+        '''
+
+        contour1 = self.outer_contour3d
+        contour2 = other_face3d.outer_contour3d
+        point1, point2 = contour1.shared_primitives_extremities(contour2)
+
+        coord = point1 - point2
+        coord = [abs(coord.x), abs(coord.y)]
+
+        if coord.index(max(coord)) == 0:
+            return 'x'
+        else:
+            return 'y'
+
     def merge_with(self, other_bspline_face3d):
         '''
         merge two adjacent faces
