@@ -261,8 +261,8 @@ class Surface2D(volmdlr.core.Primitive2D):
                     [self.outer_contour.primitives.index(intersections[2][1]),
                      self.outer_contour.primitives.index(intersections[3][1])])
 
-                sp11, sp12 = intersections[2][1].split(intersections[2][0])
-                sp21, sp22 = intersections[3][1].split(intersections[3][0])
+                # sp11, sp12 = intersections[2][1].split(intersections[2][0])
+                # sp21, sp22 = intersections[3][1].split(intersections[3][0])
                 sp33, sp34 = intersections[6][1].split(intersections[6][0])
                 sp44, sp43 = intersections[7][1].split(intersections[7][0])
 
