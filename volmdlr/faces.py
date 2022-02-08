@@ -2946,7 +2946,8 @@ class BSplineSurface3D(Surface3D):
             return bspline_surface
 
     @classmethod
-    def from_cylindrical_face(cls, cylindrical_face, degree_u, degree_v):
+    def from_cylindrical_face(cls, cylindrical_face, degree_u, degree_v,
+                              points_x: int = 50, points_y: int = 50):
         ''' 
         define a bspline surface from a cylindrical face
         
@@ -2958,14 +2959,17 @@ class BSplineSurface3D(Surface3D):
             degree of the output surface for the u-direction.
         degree_v : int
             degree of the output surface for the v-direction.
-    
+        points_x : int
+            number of points in x-direction
+        points_y : int
+            number of points in y-direction
+
         Returns
         -------
         B-spline surface
         
         '''
         bounding_rectangle = cylindrical_face.surface2d.outer_contour.bounding_rectangle()
-        points_x, points_y  = 50, 50
         points_3d = cylindrical_face.surface3d.grid3d(points_x, points_y, 
                                                       bounding_rectangle[0],
                                                       bounding_rectangle[1],
