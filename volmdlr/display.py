@@ -3,14 +3,11 @@
 """
 
 """
-import time# only for debu
 from typing import List, Tuple
 import math
-import matplotlib.pyplot as plt
 import dessia_common as dc
 import volmdlr.edges
 # import volmdlr.faces as vmf
-# import volmdlr.stl as vmstl
 
 class Node2D(volmdlr.Point2D):
     def __hash__(self):
@@ -193,3 +190,11 @@ class DisplayMesh3D(DisplayMesh):
             flatten_indices.extend(i)
         return positions, flatten_indices
     
+    def to_stl(self):
+        '''
+        Exports to STL
+        '''
+        # TODO: remove this in the future
+        import volmdlr.stl as vmstl
+        stl = vmstl.Stl.from_display_mesh(self)
+        return stl

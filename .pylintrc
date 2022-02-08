@@ -130,7 +130,7 @@ ignore-docstrings=yes
 ignore-imports=no
 
 # Minimum lines number of a similarity.
-min-similarity-lines=4
+min-similarity-lines=5
 
 
 [TYPECHECK]
@@ -351,11 +351,12 @@ function-naming-style=snake_case
 #function-rgx=
 
 # Good variable names which should always be accepted, separated by a comma.
-good-names=i,
-           j,
-           k,
-           ex,
-           Run,
+good-names=i,j,k,n,i1,i2,
+	   x,y,z,dx,dy,dz,lx,ly,lz,
+	   x1,y1,z1,x2,y2,z2,xi,yi,
+           p1,p2,pi,pj,u1,u2,v1,v2,
+           Ix,Iy,Ixy,
+           ax,
            _
 
 # Good variable names regexes, separated by a comma. If names match any regex,
