@@ -5806,6 +5806,7 @@ class BSplineFace3D(Face3D):
     def adjacent_direction_xy(self, other_face3d):
         '''
         find out in which direction the faces are adjacent
+
         Parameters
         ----------
         other_face3d : volmdlr.faces.BSplineFace3D
