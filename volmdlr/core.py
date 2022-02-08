@@ -860,13 +860,19 @@ class VolumeModel(dc.DessiaObject):
             equ = equ and p1 == p2
         return equ
 
-    def volume(self):
+    def volume(self) -> float:
+        """
+        Return the sum of volumes of the primitives
+        """
         volume = 0
         for primitive in self.primitives:
             volume += primitive.volume()
         return volume
 
     def rotation(self, center, axis, angle, copy=True):
+        """
+        Rotate the whole model around a center and an axis of a given angle
+        """
         if copy:
             new_primitives = [
                 primitive.rotation(center, axis, angle, copy=True) for
@@ -901,10 +907,16 @@ class VolumeModel(dc.DessiaObject):
             self.bounding_box = self._bounding_box()
 
     def copy(self, deep=True, memo=None):
+        """
+        Specific copy
+        """
         new_primitives = [primitive.copy() for primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
 
-    def _bounding_box(self):
+    def _bounding_box(self) -> BoundingBox:
+        """
+        Computes the bounding box of the model
+        """
         bboxes = []
         points = []
         for primitive in self.primitives:
@@ -1175,6 +1187,13 @@ class VolumeModel(dc.DessiaObject):
             mesh.merge_mesh(primitive.triangulation())
         stl = mesh.to_stl()
         return stl
+    
+    def to_stl(self, filepath:str):
+        if not filepath.endswith('.stl'):
+            filepath += '.stl'
+        with open(filepath, 'wb') as file:
+            self.to_stl_stream(file)
+        
     
     def to_stl_stream(self, stream:dcf.BinaryFile):
         stl = self.to_stl_model()
