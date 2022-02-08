@@ -2880,13 +2880,7 @@ class BSplineSurface3D(Surface3D):
 
         if len(faces) == 1:
 
-            points_3d = faces[0].surface3d.grid3d(points_x, points_y,
-                                                  faces[0].surface2d.outer_contour.bounding_rectangle()[0],
-                                                  faces[0].surface2d.outer_contour.bounding_rectangle()[1],
-                                                  faces[0].surface2d.outer_contour.bounding_rectangle()[2],
-                                                  faces[0].surface2d.outer_contour.bounding_rectangle()[3])
-
-            return volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(points_3d,points_x,points_x,degree_u,degree_v)
+            return volmdlr.faces.BSplineSurface3D.from_cylindrical_face(faces[0], degree_u, degree_v)
 
         elif len(faces) > 1:
             bspline_surfaces = []
