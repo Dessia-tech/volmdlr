@@ -2905,7 +2905,7 @@ class BSplineSurface3D(Surface3D):
             bspline_surfaces = []
             direction = cylindrical_faces[0].adjacent_direction(cylindrical_faces[1])
 
-            if direction == 'y':
+            if direction == 'x':
                 bounding_rectangle_0 = cylindrical_faces[0].surface2d.outer_contour.bounding_rectangle()
                 ymin = bounding_rectangle_0[2]
                 ymax = bounding_rectangle_0[3]
@@ -2921,7 +2921,7 @@ class BSplineSurface3D(Surface3D):
                                                       ymin, ymax)
                     bspline_surfaces.append(cls.points_fitting_into_bspline_surface(points_3d,points_x,points_y,degree_u,degree_v))
 
-            elif direction == 'x':
+            elif direction == 'y':
                 bounding_rectangle_0 = cylindrical_faces[0].surface2d.outer_contour.bounding_rectangle()
                 xmin = bounding_rectangle_0[0]
                 xmax = bounding_rectangle_0[1]
