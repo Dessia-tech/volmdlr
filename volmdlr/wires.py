@@ -912,7 +912,6 @@ class Contour(Wire):
 
                         # edges2.add(edge2)
                         try:
-                            index = self.primitive_to_index(edge1)
                             edges1.add(edge1)
                         except KeyError:
                             edges1.add(edge2)
@@ -1370,17 +1369,12 @@ class Contour2D(Contour, Wire2D):
         points_intersections = [point for point, prim in intersections]
         sorted_points = line.sort_points_along_line(points_intersections)
         list_contours = []
-        intersections_sorted = []
-        for point1 in sorted_points:
-            for point2, prim in intersections:
-                if point1 == point2:
-                    intersections_sorted.append((point2, prim))
         contour_to_cut = self
         cutting_points_counter = 0
         while cutting_points_counter != len(sorted_points):
 
-            point1, prim1 = intersections_sorted[cutting_points_counter]
-            point2, prim2 = intersections_sorted[cutting_points_counter + 1]
+            point1 = sorted_points[cutting_points_counter]
+            point2 = sorted_points[cutting_points_counter + 1]
             closing_line = volmdlr.edges.LineSegment2D(point1, point2)
             closing_contour = Contour2D([closing_line])
             contour1, contour2 = contour_to_cut.get_divided_contours(point1,
