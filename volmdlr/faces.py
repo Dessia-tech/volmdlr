@@ -5595,8 +5595,8 @@ class BSplineFace3D(Face3D):
             v2 = nearest_start2[1]
 
             if (v1 == 0 and v2 == 0):
-               corresponding_directions.append(('+v', '-v'))
-               grid2d_direction = [['+x','-y'], ['+x','+y']]
+                corresponding_directions.append(('+v', '-v'))
+                grid2d_direction = [['+x','-y'], ['+x','+y']]
 
             elif (v1 == 1 and v2 == 1):
                 if corresponding_directions == [('+u', '-u')]:
@@ -5607,13 +5607,13 @@ class BSplineFace3D(Face3D):
 
 
             elif (v1 == 1 and v2 == 0):
-               corresponding_directions.append(('+v', '+v'))
-               grid2d_direction = [['+x','+y'], ['+x','+y']]
+                corresponding_directions.append(('+v', '+v'))
+                grid2d_direction = [['+x','+y'], ['+x','+y']]
 
 
             elif (v1 == 0 and v2 == 1):
-               corresponding_directions.append(('+v', '+v'))
-               grid2d_direction = [['+x','-y'], ['+x','-y']]
+                corresponding_directions.append(('+v', '+v'))
+                grid2d_direction = [['+x','-y'], ['+x','-y']]
 
             return corresponding_directions, grid2d_direction
 
@@ -5623,20 +5623,20 @@ class BSplineFace3D(Face3D):
             u2 = nearest_start2[0]
 
             if (u1 == 0 and u2 == 0):
-               corresponding_directions.append(('+u', '-v'))
-               grid2d_direction = [['-y','-x'], ['-y','+x']]
+                corresponding_directions.append(('+u', '-v'))
+                grid2d_direction = [['-y','-x'], ['-y','+x']]
             
             elif (u1 == 1 and u2 == 1):
                 corresponding_directions.append(('+u', '-v'))
                 grid2d_direction = [['+y','+x'], ['+y','-x']]
 
             elif (u1 == 0 and u2 == 1):
-               corresponding_directions.append(('+u', '+u'))
-               grid2d_direction = [['+y','-x'], ['+y','-x']]
+                corresponding_directions.append(('+u', '+u'))
+                grid2d_direction = [['+y','-x'], ['+y','-x']]
 
             elif (u1 == 1 and u2 == 0):
-               corresponding_directions.append(('+u', '+u'))
-               grid2d_direction = [['+y','+x'], ['+y','+x']]
+                corresponding_directions.append(('+u', '+u'))
+                grid2d_direction = [['+y','+x'], ['+y','+x']]
 
             return corresponding_directions, grid2d_direction
 
@@ -5646,8 +5646,8 @@ class BSplineFace3D(Face3D):
             u2 = nearest_start2[0]
             
             if (v1 == 1 and u2 == 0):
-               corresponding_directions.append(('+v', '+u'))
-               grid2d_direction = [['+x','+y'], ['+y','+x']]
+                corresponding_directions.append(('+v', '+u'))
+                grid2d_direction = [['+x','+y'], ['+y','+x']]
               
             elif (v1 == 0 and u2 == 1):
                 corresponding_directions.append(('+v', '+u'))
@@ -5655,12 +5655,12 @@ class BSplineFace3D(Face3D):
 
 
             elif (v1 == 1 and u2 == 1):
-               corresponding_directions.append(('+v', '-u'))
-               grid2d_direction = [['+x','+y'], ['-y','-x']]
+                corresponding_directions.append(('+v', '-u'))
+                grid2d_direction = [['+x','+y'], ['-y','-x']]
                
             elif (v1 == 0 and u2 == 0):
-               corresponding_directions.append(('+v', '-u'))
-               grid2d_direction = [['-x','-y'], ['-y','+x']]
+                corresponding_directions.append(('+v', '-u'))
+                grid2d_direction = [['-x','-y'], ['-y','+x']]
             
             return corresponding_directions, grid2d_direction
 
@@ -5670,17 +5670,17 @@ class BSplineFace3D(Face3D):
             v2 = nearest_start2[1]
 
             if (u1 == 1 and v2 == 0):
-               corresponding_directions.append(('+u', '+v'))
-               grid2d_direction = [['+y','+x'], ['+x','+y']]
+                corresponding_directions.append(('+u', '+v'))
+                grid2d_direction = [['+y','+x'], ['+x','+y']]
 
             elif (u1 == 0 and v2 == 1):
-               corresponding_directions.append(('+u', '+v'))
-               grid2d_direction = [['-y','-x'], ['+x','-y']]
+                corresponding_directions.append(('+u', '+v'))
+                grid2d_direction = [['-y','-x'], ['+x','-y']]
 
 
             elif (u1 == 0 and v2 == 0):  
-               corresponding_directions.append(('+u', '-v'))
-               grid2d_direction = [['+y','-x'], ['+x','+y']]
+                corresponding_directions.append(('+u', '-v'))
+                grid2d_direction = [['+y','-x'], ['+x','+y']]
 
 
             elif (u1 == 1 and v2 == 1):
