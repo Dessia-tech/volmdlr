@@ -5774,7 +5774,8 @@ class BSplineFace3D(Face3D):
         '''
         
         adjacent_direction1, diff1, adjacent_direction2, diff2 = self.adjacent_direction(other_bspline_face3d)
-        start1, end1, start2, end2 = self.extremities(other_bspline_face3d)
+        extremities_points = self.extremities(other_bspline_face3d)
+        start1, start2 = extremities_points[0], extremities_points[2]
 
         corresponding_directions = []
         if (diff1 > 0 and diff2 > 0) or (diff1 < 0 and diff2 < 0):
