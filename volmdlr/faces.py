@@ -3324,8 +3324,9 @@ class BSplineSurface3D(Surface3D):
         compute the 2d of a wire3d, on a Bspline surface, in the dimensioned frame
         '''
 
-        for cle in self._grids2d.keys():
-            [points_x, points_y, xmin, xmax, ymin, ymax] = cle
+        for key in self._grids2d:
+            points_x = key[0]
+            points_y = key[1]
 
         contour = self.contour3d_to_2d_with_dimension(wire3d, points_x, points_y)
 
