@@ -202,7 +202,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         """
         Split in n slices
         """
-        xmin, xmax, ymin, ymax = self.outer_contour.bounding_rectangle()
+        # xmin, xmax, ymin, ymax = self.outer_contour.bounding_rectangle()
 
         cutted_contours = []
         iteration_contours = []
