@@ -2461,7 +2461,7 @@ class BSplineSurface3D(Surface3D):
         # geoalg = geodesic.PyGeodesicAlgorithmExact(points, faces)
         D = [] # geodesic distances between 3D grid points (based on points combination [equation_points])
         for i in range(0, len(equation_points)):
-            D.append((self.geodesic_distance(points_3d[index_points[equation_points[i][0]]], points_3d[index_points[equation_points[i][1]]])))
+            D.append((self.geodesic_distance(points_3d[index_points[equation_points[i][0]]], points_3d[index_points[equation_points[i][1]]]))**2)
 
         #System of nonlinear equations
         def non_linear_equations(X):
