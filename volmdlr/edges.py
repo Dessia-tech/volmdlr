@@ -457,10 +457,9 @@ class Line2D(Line):
         for point in points:
             distances_to_reference_point[point] = \
                 most_distant_point.point_distance(point)
-        distances_to_reference_point = {k: v for k, v in
-                                        sorted(
-                                            distances_to_reference_point.items(),
-                                            key=lambda item: item[1])}
+        distances_to_reference_point = dict(
+            sorted(distances_to_reference_point.items(),
+                   key=lambda item: item[1]))
         list_points.extend(list(distances_to_reference_point.keys()))
         return list_points
 
