@@ -3305,10 +3305,11 @@ class BSplineSurface3D(Surface3D):
                 raise NotImplementedError
         else:
             raise NotImplementedError(
-                'Class {} does not implement {}'.format(self.__class__.__name__,
-                                                        method_name))
+                # 'Class {} does not implement {}'.format(self.__class__.__name__,
+                #                                         method_name))
+                f'Class {self.__class__.__name__} does not implement {method_name}')
 
-    
+
     def wire3d_to_2d(self, wire3d):
         ''' 
         compute the 2d of a wire3d, on a Bspline surface
