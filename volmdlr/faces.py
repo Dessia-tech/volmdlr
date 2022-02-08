@@ -2876,42 +2876,46 @@ class BSplineSurface3D(Surface3D):
     def from_cylindrical_surfaces(cls, faces, degree_u, degree_v):
         ''' faces: List[volmdlr.faces.CylindricalFace3D] '''
 
-        points_x, points_y  = 10, 10
-
         if len(faces) == 1:
 
             return volmdlr.faces.BSplineSurface3D.from_cylindrical_face(faces[0], degree_u, degree_v)
 
         elif len(faces) > 1:
+            points_x, points_y  = 10, 10
             bspline_surfaces = []
             direction = faces[0].adjacent_direction(faces[1])
 
             if direction == 'y':
-                ymin = faces[0].surface2d.outer_contour.bounding_rectangle()[2]
-                ymax = faces[0].surface2d.outer_contour.bounding_rectangle()[3]
+                bounding_rectangle_0 = faces[0].surface2d.outer_contour.bounding_rectangle()
+                ymin = bounding_rectangle_0[2]
+                ymax = bounding_rectangle_0[3]
                 for face in faces:
-                    ymin = min(ymin, face.surface2d.outer_contour.bounding_rectangle()[2])
-                    ymax = max(ymax, face.surface2d.outer_contour.bounding_rectangle()[3])
+                    bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle()
+                    ymin = min(ymin, bounding_rectangle[2])
+                    ymax = max(ymax, bounding_rectangle[3])
                 for face in faces:
-                    xmin = face.surface2d.outer_contour.bounding_rectangle()[0]
-                    xmax = face.surface2d.outer_contour.bounding_rectangle()[1]
+                    bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle()
 
-                    points_3d = face.surface3d.grid3d(points_x, points_y, xmin, xmax, ymin, ymax)
+                    points_3d = face.surface3d.grid3d(points_x, points_y,
+                                                      bounding_rectangle[0], bounding_rectangle[1],
+                                                      ymin, ymax)
                     bspline_surfaces.append(cls.points_fitting_into_bspline_surface(points_3d,points_x,points_y,degree_u,degree_v))
 
             elif direction == 'x':
-                xmin = faces[0].surface2d.outer_contour.bounding_rectangle()[0]
-                xmax = faces[0].surface2d.outer_contour.bounding_rectangle()[1]
+                bounding_rectangle_0 = faces[0].surface2d.outer_contour.bounding_rectangle()
+                xmin = bounding_rectangle_0[0]
+                xmax = bounding_rectangle_0[1]
                 for face in faces:
-                    xmin = min(xmin, face.surface2d.outer_contour.bounding_rectangle()[0])
-                    xmax = max(xmax, face.surface2d.outer_contour.bounding_rectangle()[1])
+                    bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle()
+                    xmin = min(xmin, bounding_rectangle[0])
+                    xmax = max(xmax, bounding_rectangle[1])
                 for face in faces:
-                    ymin = face.surface2d.outer_contour.bounding_rectangle()[2]
-                    ymax = face.surface2d.outer_contour.bounding_rectangle()[3]
+                    bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle()
 
-                    points_3d = face.surface3d.grid3d(points_x, points_y, xmin, xmax, ymin, ymax)
+                    points_3d = face.surface3d.grid3d(points_x, points_y, xmin, xmax,
+                                                      bounding_rectangle[2], bounding_rectangle[3])
                     bspline_surfaces.append(cls.points_fitting_into_bspline_surface(points_3d,points_x,points_y,degree_u,degree_v))
-            
+
             to_be_merged = bspline_surfaces[0]
             for i in range(0, len(bspline_surfaces)-1):
                 merged = to_be_merged.merge_with(bspline_surfaces[i+1])
