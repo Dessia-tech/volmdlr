@@ -3092,7 +3092,7 @@ class BSplineSurface3D(Surface3D):
 
             return volmdlr.faces.BSplineSurface3D.from_cylindrical_face(cylindrical_faces[0], degree_u, degree_v, 50, 50)
 
-        elif len(cylindrical_faces) > 1:
+        if len(cylindrical_faces) > 1:
             bspline_surfaces = []
             direction = cylindrical_faces[0].adjacent_direction(cylindrical_faces[1])
 
