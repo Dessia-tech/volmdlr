@@ -3295,7 +3295,8 @@ class BSplineSurface3D(Surface3D):
         compute the edge2d of a edge3d, on a Bspline surface, in the dimensioned frame  
         '''
 
-        method_name = '{}_to_2d_with_dimension'.format(edge3d.__class__.__name__.lower())
+        # method_name = '{}_to_2d_with_dimension'.format(edge3d.__class__.__name__.lower())
+        method_name = f'{edge3d.__class__.__name__.lower()}_to_2d_with_dimension'
 
         if hasattr(self, method_name):
             edge2d_dim = getattr(self, method_name)(edge3d, points_x, points_y)
