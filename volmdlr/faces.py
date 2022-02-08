@@ -4643,15 +4643,15 @@ class CylindricalFace3D(Face3D):
         adjacent_direction
         '''
 
+
         contour1 = self.outer_contour3d
         contour2 = other_face3d.outer_contour3d
-
         point1, point2 = contour1.shared_primitives_extremities(contour2)
-        point1_2d = self.surface3d.point3d_to_2d(point1)
-        point2_2d = self.surface3d.point3d_to_2d(point2)
 
-        x, y = point1_2d - point2_2d
-        if abs(x)>abs(y):
+        coord = point1 - point2
+        coord = [abs(coord.x), abs(coord.y)]
+
+        if coord.index(max(coord)) == 0:
             return 'x'
         else:
             return 'y'
