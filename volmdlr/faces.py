@@ -2898,8 +2898,9 @@ class BSplineSurface3D(Surface3D):
         primitives2d_dim = []
 
         for primitive2d in contour2d.primitives:
-            method_name = '{}_parametric_to_dimension'.format(
-                primitive2d.__class__.__name__.lower())
+            # method_name = '{}_parametric_to_dimension'.format(
+            #     primitive2d.__class__.__name__.lower())
+            method_name = f'{primitive2d.__class__.__name__.lower()}_parametric_to_dimension'
 
             if hasattr(self, method_name):
                 primitives = getattr(self, method_name)(primitive2d, points_x, points_y)
@@ -2908,8 +2909,7 @@ class BSplineSurface3D(Surface3D):
 
             else:
                 raise NotImplementedError(
-                    'Class {} does not implement {}'.format(self.__class__.__name__,
-                                                            method_name))
+                    f'Class {self.__class__.__name__} does not implement {method_name}')
 
         return volmdlr.wires.Contour2D(primitives2d_dim)
         
@@ -2933,8 +2933,7 @@ class BSplineSurface3D(Surface3D):
         primitives2d = []
 
         for primitive2d in contour2d.primitives:
-            method_name = '{}_with_dimension_to_parametric_frame'.format(
-                primitive2d.__class__.__name__.lower())
+            method_name = f'{primitive2d.__class__.__name__.lower()}_with_dimension_to_parametric_frame'
 
             if hasattr(self, method_name):
                 primitives = getattr(self, method_name)(primitive2d)
@@ -2943,8 +2942,10 @@ class BSplineSurface3D(Surface3D):
 
             else:
                 raise NotImplementedError(
-                    'Class {} does not implement {}'.format(self.__class__.__name__,
-                                                            method_name))
+                    # 'Class {} does not implement {}'.format(self.__class__.__name__,
+                    #                                         method_name))
+                    f'Class {self.__class__.__name__} does not implement {method_name}')
+
         # #Avoid to have primitives with start=end
         # start_points = []
         # for i in range(0, len(new_start_points)-1):
