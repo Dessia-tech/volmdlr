@@ -2873,27 +2873,47 @@ class BSplineSurface3D(Surface3D):
     
     
     @classmethod
-    def from_cylindrical_surfaces(cls, faces, degree_u, degree_v):
-        ''' faces: List[volmdlr.faces.CylindricalFace3D] '''
+    def from_cylindrical_faces(cls, cylindrical_faces, degree_u, degree_v,
+                               points_x: int = 10, points_y: int = 10):
+        '''
+        define a bspline surface from a list of cylindrical faces
 
-        if len(faces) == 1:
+        Parameters
+        ----------
+        cylindrical_faces : List[volmdlr.faces.CylindricalFace3D]
+            faces 3d
+        degree_u : int
+            degree of the output surface for the u-direction
+        degree_v : int
+            degree of the output surface for the v-direction
+        points_x : int
+            number of points in x-direction
+        points_y : int
+            number of points in y-direction
 
-            return volmdlr.faces.BSplineSurface3D.from_cylindrical_face(faces[0], degree_u, degree_v)
+        Returns
+        -------
+        B-spline surface
 
-        elif len(faces) > 1:
-            points_x, points_y  = 10, 10
+        '''
+
+        if len(cylindrical_faces) == 1:
+
+            return volmdlr.faces.BSplineSurface3D.from_cylindrical_face(cylindrical_faces[0], degree_u, degree_v)
+
+        elif len(cylindrical_faces) > 1:
             bspline_surfaces = []
-            direction = faces[0].adjacent_direction(faces[1])
+            direction = cylindrical_faces[0].adjacent_direction(cylindrical_faces[1])
 
             if direction == 'y':
-                bounding_rectangle_0 = faces[0].surface2d.outer_contour.bounding_rectangle()
+                bounding_rectangle_0 = cylindrical_faces[0].surface2d.outer_contour.bounding_rectangle()
                 ymin = bounding_rectangle_0[2]
                 ymax = bounding_rectangle_0[3]
-                for face in faces:
+                for face in cylindrical_faces:
                     bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle()
                     ymin = min(ymin, bounding_rectangle[2])
                     ymax = max(ymax, bounding_rectangle[3])
-                for face in faces:
+                for face in cylindrical_faces:
                     bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle()
 
                     points_3d = face.surface3d.grid3d(points_x, points_y,
@@ -2902,14 +2922,14 @@ class BSplineSurface3D(Surface3D):
                     bspline_surfaces.append(cls.points_fitting_into_bspline_surface(points_3d,points_x,points_y,degree_u,degree_v))
 
             elif direction == 'x':
-                bounding_rectangle_0 = faces[0].surface2d.outer_contour.bounding_rectangle()
+                bounding_rectangle_0 = cylindrical_faces[0].surface2d.outer_contour.bounding_rectangle()
                 xmin = bounding_rectangle_0[0]
                 xmax = bounding_rectangle_0[1]
-                for face in faces:
+                for face in cylindrical_faces:
                     bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle()
                     xmin = min(xmin, bounding_rectangle[0])
                     xmax = max(xmax, bounding_rectangle[1])
-                for face in faces:
+                for face in cylindrical_faces:
                     bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle()
 
                     points_3d = face.surface3d.grid3d(points_x, points_y, xmin, xmax,
