@@ -912,6 +912,7 @@ class Contour(Wire):
 
                         # edges2.add(edge2)
                         try:
+                            self.primitive_to_index(edge1)
                             edges1.add(edge1)
                         except KeyError:
                             edges1.add(edge2)
