@@ -3424,6 +3424,43 @@ class BSplineSurface3D(Surface3D):
 
         return  merged_surface
 
+    def xy_limits(self, other_bspline_surface3d):
+        '''
+        compute x, y limits to define grid2d
+        '''
+
+        grid2d_direction = (self.rectangular_cut(0,1,0,1).pair_with(other_bspline_surface3d.rectangular_cut(0,1,0,1)))[1]
+
+        xmin, xmax, ymin, ymax = [], [], [], []
+        if grid2d_direction[0][1] == '+y':
+            xmin.append(0)
+            xmax.append(1)
+            ymin.append(0)
+            ymax.append(0.99)
+        elif grid2d_direction[0][1] == '+x':
+            xmin.append(0)
+            xmax.append(0.99)
+            ymin.append(0)
+            ymax.append(1)
+        elif grid2d_direction[0][1] == '-x':
+            xmin.append(0.01)
+            xmax.append(1)
+            ymin.append(0)
+            ymax.append(1)
+        elif grid2d_direction[0][1] == '-y':
+            xmin.append(0)
+            xmax.append(1)
+            ymin.append(0.01)
+            ymax.append(1)
+
+        xmin.append(0)
+        xmax.append(1)
+        ymin.append(0)
+        ymax.append(1)
+
+        return xmin, xmax, ymin, ymax
+
+
 class BezierSurface3D(BSplineSurface3D):
 
     def __init__(self, degree_u: int, degree_v: int,
