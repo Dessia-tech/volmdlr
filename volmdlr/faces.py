@@ -3333,41 +3333,11 @@ class BSplineSurface3D(Surface3D):
         bsplines_new = bsplines
 
         center = [bspline_face3d.surface2d.outer_contour.center_of_mass(), other_bspline_face3d.surface2d.outer_contour.center_of_mass()]
-        grid2d_direction = (bsplines_new[0].rectangular_cut(0,1,0,1).pair_with(bsplines_new[1].rectangular_cut(0,1,0,1)))[1]
+        grid2d_direction = (bspline_face3d.pair_with(other_bspline_face3d))[1]
 
         if bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d):
-            def xy_limits(grid2d_direction):
-                xmin, xmax, ymin, ymax = [], [], [], []
-                i = 0
-                if grid2d_direction[i][1] == '+y':
-                    xmin.append(0)
-                    xmax.append(1)
-                    ymin.append(0)
-                    ymax.append(0.99)
-                elif grid2d_direction[i][1] == '+x':
-                    xmin.append(0)
-                    xmax.append(0.99)
-                    ymin.append(0)
-                    ymax.append(1)
-                elif grid2d_direction[i][1] == '-x':
-                    xmin.append(0.01)
-                    xmax.append(1)
-                    ymin.append(0)
-                    ymax.append(1)
-                elif grid2d_direction[i][1] == '-y':
-                    xmin.append(0)
-                    xmax.append(1)
-                    ymin.append(0.01)
-                    ymax.append(1)
 
-                xmin.append(0)
-                xmax.append(1)
-                ymin.append(0)
-                ymax.append(1)
-
-                return xmin, xmax, ymin, ymax
-
-            xmin, xmax, ymin, ymax = xy_limits(grid2d_direction)
+            xmin, xmax, ymin, ymax = self.xy_limits(other_bspline_surface3d)
 
         elif self.is_intersected_with(other_bspline_surface3d):
             # find pimitives to split with
@@ -3398,12 +3368,7 @@ class BSplineSurface3D(Surface3D):
 
                 bsplines_new[i] = surfaces[errors.index(min(errors))]
 
-            xmin, xmax, ymin, ymax = [], [], [], []
-            for i in range(0, len(bsplines_new)):
-                xmin.append(0)
-                xmax.append(1)
-                ymin.append(0)
-                ymax.append(1)
+            xmin, xmax, ymin, ymax = [0]*len(bsplines_new), [1]*len(bsplines_new), [0]*len(bsplines_new), [1]*len(bsplines_new)
 
             grid2d_direction = (bsplines_new[0].rectangular_cut(0,1,0,1).pair_with(bsplines_new[1].rectangular_cut(0,1,0,1)))[1]
 
