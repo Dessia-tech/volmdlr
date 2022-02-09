@@ -1817,22 +1817,22 @@ class BSplineSurface3D(Surface3D):
 
     @property
     def x_periodicity(self):
-        p3d_x1 = self.point2d_to_3d(volmdlr.Point2D(1., 0.5))
-        p2d_x0 = self.point3d_to_2d(p3d_x1, 0., 0.5)
-        if self.point2d_to_3d(p2d_x0) == p3d_x1 and \
-                not math.isclose(p2d_x0.x, 1, abs_tol=1e-3):
-            return 1 - p2d_x0.x
-        else:
+        # p3d_x1 = self.point2d_to_3d(volmdlr.Point2D(1., 0.5))
+        # p2d_x0 = self.point3d_to_2d(p3d_x1, 0., 0.5)
+        # if self.point2d_to_3d(p2d_x0) == p3d_x1 and \
+        #         not math.isclose(p2d_x0.x, 1, abs_tol=1e-3):
+        #     return 1 - p2d_x0.x
+        # else:
             return None
 
     @property
     def y_periodicity(self):
-        p3d_y1 = self.point2d_to_3d(volmdlr.Point2D(0.5, 1))
-        p2d_y0 = self.point3d_to_2d(p3d_y1, 0., 0.5)
-        if self.point2d_to_3d(p2d_y0) == p3d_y1 and \
-                not math.isclose(p2d_y0.y, 1, abs_tol=1e-3):
-            return 1 - p2d_y0.y
-        else:
+        # p3d_y1 = self.point2d_to_3d(volmdlr.Point2D(0.5, 1))
+        # p2d_y0 = self.point3d_to_2d(p3d_y1, 0., 0.5)
+        # if self.point2d_to_3d(p2d_y0) == p3d_y1 and \
+        #         not math.isclose(p2d_y0.y, 1, abs_tol=1e-3):
+        #     return 1 - p2d_y0.y
+        # else:
             return None
 
     def control_points_matrix(self, coordinates):
@@ -1973,47 +1973,73 @@ class BSplineSurface3D(Surface3D):
         return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
 
-    def point3d_to_2d(self, point3d: volmdlr.Point3D, min_bound_x: float = 0.,
-                      max_bound_x: float = 1., min_bound_y: float = 0.,
-                      max_bound_y: float = 1., tol=1e-9):
+    def point3d_to_2d(self, point3d):
         def f(x):
-            p3d = self.point2d_to_3d(volmdlr.Point2D(x[0], x[1]))
-            return point3d.point_distance(p3d)
+            return (point3d - self.point2d_to_3d(
+                volmdlr.Point2D(x[0], x[1]))).norm()
+        
+        x = npy.linspace(0,1,5)
+        x_init=[]
+        for xi in x:
+            for yi in x:
+                x_init.append((xi,yi))
+        
+        cost=[]
+        sol=[]
+            
+        for x0 in x_init: 
+        # for x0 in [(0.5, 0.5), (0.25, 0.25), (0.75,0.25), (0.25, 0.75), (0.75, 0.25), (0, 0), (0, 1), (1, 0), (1, 1)]:
+            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
+            cost.append(z.cost)
+            sol.append(z.x)
+        # print(min(cost))
+        # if min(cost) < 1e-3: 
+        solution=sol[cost.index(min(cost))]
+        return (volmdlr.Point2D(solution[0], solution[1]))
+        # else:
+            # raise ValueError ('Error > 1e-3')
 
-        results = []
+    # def point3d_to_2d(self, point3d: volmdlr.Point3D, min_bound_x: float = 0.,
+    #                   max_bound_x: float = 1., min_bound_y: float = 0.,
+    #                   max_bound_y: float = 1., tol=1e-9):
+    #     def f(x):
+    #         p3d = self.point2d_to_3d(volmdlr.Point2D(x[0], x[1]))
+    #         return point3d.point_distance(p3d)
 
-        delta_bound_x = max_bound_x - min_bound_x
-        delta_bound_y = max_bound_y - min_bound_y
-        x0s = [((min_bound_x+max_bound_x)/2, (min_bound_y+max_bound_y)/2),
-               (min_bound_x+delta_bound_x/10, min_bound_y+delta_bound_y/10),
-               (min_bound_x+delta_bound_x/10, max_bound_y-delta_bound_y/10),
-               (max_bound_x-delta_bound_x/10, min_bound_y+delta_bound_y/10),
-               (max_bound_x-delta_bound_x/10, max_bound_y-delta_bound_y/10)]
+    #     results = []
 
-        for x0 in x0s:
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([min_bound_x,
-                                                              min_bound_y],
-                                                             [max_bound_x,
-                                                              max_bound_y]),
-                                           ftol=tol/10,
-                                           xtol=tol/10,
-                                           # loss='soft_l1'
-                                           )
-            # z.cost represent the value of the cost function at the solution
-            if z.cost < tol:
-                return volmdlr.Point2D(*z.x)
+    #     delta_bound_x = max_bound_x - min_bound_x
+    #     delta_bound_y = max_bound_y - min_bound_y
+    #     x0s = [((min_bound_x+max_bound_x)/2, (min_bound_y+max_bound_y)/2),
+    #            (min_bound_x+delta_bound_x/10, min_bound_y+delta_bound_y/10),
+    #            (min_bound_x+delta_bound_x/10, max_bound_y-delta_bound_y/10),
+    #            (max_bound_x-delta_bound_x/10, min_bound_y+delta_bound_y/10),
+    #            (max_bound_x-delta_bound_x/10, max_bound_y-delta_bound_y/10)]
 
-            res = scp.optimize.minimize(f, x0=npy.array(x0),
-                                        bounds=[(min_bound_x, max_bound_x),
-                                                (min_bound_y, max_bound_y)],
-                                        tol=tol)
-            # res.fun represent the value of the objective function
-            if res.fun < tol:
-                return volmdlr.Point2D(*res.x)
+    #     for x0 in x0s:
+    #         z = scp.optimize.least_squares(f, x0=x0, bounds=([min_bound_x,
+    #                                                           min_bound_y],
+    #                                                          [max_bound_x,
+    #                                                           max_bound_y]),
+    #                                        ftol=tol/10,
+    #                                        xtol=tol/10,
+    #                                        # loss='soft_l1'
+    #                                        )
+    #         # z.cost represent the value of the cost function at the solution
+    #         if z.cost < tol:
+    #             return volmdlr.Point2D(*z.x)
 
-            results.append((z.x, z.cost))
-            results.append((res.x, res.fun))
-        return (volmdlr.Point2D(*min(results, key=lambda r: r[1])[0]))
+    #         res = scp.optimize.minimize(f, x0=npy.array(x0),
+    #                                     bounds=[(min_bound_x, max_bound_x),
+    #                                             (min_bound_y, max_bound_y)],
+    #                                     tol=tol)
+    #         # res.fun represent the value of the objective function
+    #         if res.fun < tol:
+    #             return volmdlr.Point2D(*res.x)
+
+    #         results.append((z.x, z.cost))
+    #         results.append((res.x, res.fun))
+    #     return (volmdlr.Point2D(*min(results, key=lambda r: r[1])[0]))
 
 
     def linesegment2d_to_3d(self, linesegment2d):
