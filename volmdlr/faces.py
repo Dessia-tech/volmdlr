@@ -2861,7 +2861,7 @@ class BSplineSurface3D(Surface3D):
         
         surface = approximate_surface(points, size_u, size_v, degree_u, degree_v, ctrlpts_size_u = num_cpts_u, num_cpts_v = num_cpts_v)
 
-        return volmdlr.faces.BSplineSurface3D.from_geomdl_surface(surface) 
+        return cls.from_geomdl_surface(surface)
     
     
     @classmethod
