@@ -5717,12 +5717,8 @@ class BSplineFace3D(Face3D):
         contour1_2d = self.surface2d.outer_contour
         contour2_2d = other_bspline_face3d.surface2d.outer_contour
 
-        points1 = []
-        for p1 in contour1.primitives:
-            points1.append(p1.start)
-        points2 = []
-        for p2 in contour2.primitives:
-            points2.append(p2.start)
+        points1 = [p.start for p in contour1.primitives]
+        points2 = [p.start for p in contour2.primitives]
 
         dis, ind = [], []
         for p in points1:
