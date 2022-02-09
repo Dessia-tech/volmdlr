@@ -2970,7 +2970,7 @@ class BSplineSurface3D(Surface3D):
                                                       bounding_rectangle[2],
                                                       bounding_rectangle[3])
             
-        return volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(points_3d,points_x,points_x,degree_u,degree_v)    
+        return cls.points_fitting_into_bspline_surface(points_3d,points_x,points_x,degree_u,degree_v)
         
     
     def intersection_with(self, other_bspline_surface3d):
