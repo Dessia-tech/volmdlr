@@ -2822,7 +2822,7 @@ class BSplineSurface3D(Surface3D):
 
         surface = interpolate_surface(points,size_u,size_v,degree_u,degree_v)
     
-        return volmdlr.faces.BSplineSurface3D.from_geomdl_surface(surface)   
+        return cls.from_geomdl_surface(surface)
     
     
     @classmethod
