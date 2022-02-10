@@ -171,19 +171,38 @@ class LineSegment(Edge):
         return t
 
     def unit_direction_vector(self, abscissa=0.):
-        u = self.end - self.start
-        u.normalize()
+        """
 
-        return u
+        :param abscissa: defines where in the line_segement the unit
+         direction vector is to be calculated
+        :return: The unit direction vector of the LineSegement
+        """
+        direction_vector = self.direction_vector()
+        direction_vector.normalize()
+        return direction_vector
 
-    def direction_vector(self, s=0):
-        '''
-        '''
-        return self.unit_direction_vector()
-        # return self.end - self.start
+    def direction_vector(self, s=0.):
+        """
+        :param s:
+        :return: The direction vector of the LineSegement
+        """
+        return self.end - self.start
 
     def normal_vector(self, abscissa=0.):
-        return self.unit_direction_vector().normal_vector()
+        """
+        :param abscissa: defines where in the line_segement
+        normal vector is to be calculated
+        :return: The normal vector of the LineSegement
+        """
+        return self.direction_vector(abscissa).normal_vector()
+
+    def unit_normal_vector(self, abscissa=0.):
+        """
+        :param abscissa: defines where in the line_segement
+        unit normal vector is to be calculated
+        :return: The unit normal vector of the LineSegement
+        """
+        return self.unit_direction_vector(abscissa).normal_vector()
 
     def point_projection(self, point):
         p1, p2 = self.start, self.end
@@ -488,6 +507,44 @@ class BSplineCurve2D(Edge):
                                             normalize=True)
         tangent = volmdlr.Point2D(tangent[0], tangent[1])
         return tangent
+
+    def direction_vector(self, abcissa: float = 0.0):
+        """
+        :param abcissa: defines where in the BSplineCurve2D the
+        direction vector is to be calculated
+        :return: The direection vector vector of the BSplineCurve2D
+        """
+        return self.tangent(abcissa)
+
+    def unit_direction_vector(self, abcissa: float = 0.0):
+        """
+        :param abcissa: defines where in the BSplineCurve2D the
+        unit direction vector is to be calculated
+        :return: The unit direction vector of the BSplineCurve2D
+        """
+        direction_vector = self.direction_vector(abcissa)
+        direction_vector.normalize()
+        return direction_vector
+
+    def normal_vector(self, abcissa: float = 0.0):
+        """
+        :param abcissa: defines where in the BSplineCurve2D the
+        normal vector is to be calculated
+        :return: The normal vector of the BSplineCurve2D
+        """
+        tangent_vector = self.tangent(abcissa)
+        normal_vector = tangent_vector.normal_vector()
+        return normal_vector
+
+    def unit_normal_vector(self, abcissa: float = 0.0):
+        """
+        :param abcissa: defines where in the BSplineCurve2D the
+        unit normal vector is to be calculated
+        :return: The unit normal vector of the BSplineCurve2D
+        """
+        normal_vector = self.normal_vector(abcissa)
+        normal_vector.normalize()
+        return normal_vector
 
     def middle_point(self):
         return self.point_at_abscissa(0.5)
@@ -1205,16 +1262,45 @@ class Arc2D(Edge):
         return self.radius * theta
 
     def direction_vector(self, abscissa: float):
+        """
+        :param abscissa: defines where in the Arc2D the
+        direction vector is to be calculated
+        :return: The direction vector of the Arc2D
+        """
         return -self.normal_vector(abscissa=abscissa).normal_vector()
 
+    def unit_direction_vector(self, abscissa: float):
+        """
+        :param abscissa: defines where in the Arc2D the
+        unit direction vector is to be calculated
+        :return: The unit direction vector of the Arc2D
+        """
+        direction_vector = self.direction_vector(abscissa)
+        direction_vector.normalize()
+        return direction_vector
+
     def normal_vector(self, abscissa: float):
+        """
+        :param abscissa: defines where in the Arc2D the
+        normal vector is to be calculated
+        :return: The normal vector of the Arc2D
+        """
         point = self.point_at_abscissa(abscissa)
         if self.is_trigo:
-            u = self.center - point
+            normal_vector = self.center - point
         else:
-            u = point - self.center
-        u.normalize()
-        return u
+            normal_vector = point - self.center
+        return normal_vector
+
+    def unit_normal_vector(self, abscissa: float):
+        """
+        :param abscissa: defines where in the Arc2D the
+        unit normal vector is to be calculated
+        :return: The unit normal vector of the Arc2D
+        """
+        normal_vector = self.normal_vector(abscissa)
+        normal_vector.normalize()
+        return normal_vector
 
     def middle_point(self):
         l = self.length()

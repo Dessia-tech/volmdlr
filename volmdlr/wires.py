@@ -2791,7 +2791,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         closing_point = volmdlr.O2D
         middle_point = primitive.middle_point()
 
-        normal_vector = primitive.normal_vector()
+        normal_vector = primitive.unit_normal_vector()
         line_segment1 = volmdlr.edges.LineSegment2D(
             middle_point - normal_vector, middle_point)
         line_segment2 = volmdlr.edges.LineSegment2D(middle_point,
