@@ -1359,9 +1359,13 @@ class Contour2D(Contour, Wire2D):
         return c_opti
 
     def cut_by_line(self,
-                     line: volmdlr.edges.Line2D) -> List['Contour2D']:
+                    line: volmdlr.edges.Line2D) -> List['Contour2D']:
+        """
+        :param line: The line used to cut the contour
+        :return: A list of resulting contours
+        """
         intersections = self.line_crossings(line)
-        if not intersections:
+        if not intersections or len(intersections) < 2:
             return [self]
         if len(intersections) % 2 != 0:
             raise NotImplementedError(
