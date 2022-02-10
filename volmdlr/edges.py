@@ -691,7 +691,7 @@ class BSplineCurve2D(Edge):
             
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            if z.cost < abs_tol: 
+            if z.fun < abs_tol:
                 return True
         return False
 

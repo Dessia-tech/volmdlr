@@ -2011,20 +2011,20 @@ class BSplineSurface3D(Surface3D):
     #     delta_bound_x = max_bound_x - min_bound_x
     #     delta_bound_y = max_bound_y - min_bound_y
     #     x0s = [((min_bound_x+max_bound_x)/2, (min_bound_y+max_bound_y)/2),
-    #            (min_bound_x+delta_bound_x/10, min_bound_y+delta_bound_y/10),
-    #            (min_bound_x+delta_bound_x/10, max_bound_y-delta_bound_y/10),
-    #            (max_bound_x-delta_bound_x/10, min_bound_y+delta_bound_y/10),
-    #            (max_bound_x-delta_bound_x/10, max_bound_y-delta_bound_y/10)]
+    #             (min_bound_x+delta_bound_x/10, min_bound_y+delta_bound_y/10),
+    #             (min_bound_x+delta_bound_x/10, max_bound_y-delta_bound_y/10),
+    #             (max_bound_x-delta_bound_x/10, min_bound_y+delta_bound_y/10),
+    #             (max_bound_x-delta_bound_x/10, max_bound_y-delta_bound_y/10)]
 
     #     for x0 in x0s:
     #         z = scp.optimize.least_squares(f, x0=x0, bounds=([min_bound_x,
     #                                                           min_bound_y],
-    #                                                          [max_bound_x,
+    #                                                           [max_bound_x,
     #                                                           max_bound_y]),
-    #                                        ftol=tol/10,
-    #                                        xtol=tol/10,
-    #                                        # loss='soft_l1'
-    #                                        )
+    #                                         ftol=tol/10,
+    #                                         xtol=tol/10,
+    #                                         # loss='soft_l1'
+    #                                         )
     #         # z.cost represent the value of the cost function at the solution
     #         if z.cost < tol:
     #             return volmdlr.Point2D(*z.x)
@@ -2083,12 +2083,12 @@ class BSplineSurface3D(Surface3D):
         """
         x_perio = self.x_periodicity if self.x_periodicity is not None else 1.
         y_perio = self.y_periodicity if self.y_periodicity is not None else 1.
-        return [vme.LineSegment2D(self.point3d_to_2d(linesegment3d.start,
-                                                     max_bound_x=x_perio,
-                                                     max_bound_y=y_perio),
-                                  self.point3d_to_2d(linesegment3d.end,
-                                                     max_bound_x=x_perio,
-                                                     max_bound_y=y_perio))]
+        return [vme.LineSegment2D(self.point3d_to_2d(linesegment3d.start),#,
+                                                     # max_bound_x=x_perio,
+                                                     # max_bound_y=y_perio),
+                                  self.point3d_to_2d(linesegment3d.end))]#,
+                                                     # max_bound_x=x_perio,
+                                                     # max_bound_y=y_perio))]
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         # TODO: enhance this, it is a non exact method!
