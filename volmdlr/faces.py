@@ -5591,7 +5591,8 @@ class BSplineFace3D(Face3D):
 
     def adjacent_direction_uu(self, other_bspline_face3d, corresponding_directions):
 
-        start1, end1, start2, end2 = self.extremities(other_bspline_face3d)
+        extremities = self.extremities(other_bspline_face3d)
+        start1, start2 = extremities[0], extremities[2]
         borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0), 
                           volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)]
 
@@ -5629,7 +5630,8 @@ class BSplineFace3D(Face3D):
 
     def adjacent_direction_vv(self, other_bspline_face3d, corresponding_directions):
 
-        start1, end1, start2, end2 = self.extremities(other_bspline_face3d)
+        extremities = self.extremities(other_bspline_face3d)
+        start1, start2 = extremities[0], extremities[2]
         borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0), 
                           volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)]
 
@@ -5662,7 +5664,8 @@ class BSplineFace3D(Face3D):
 
     def adjacent_direction_uv(self, other_bspline_face3d, corresponding_directions):
 
-        start1, end1, start2, end2 = self.extremities(other_bspline_face3d)
+        extremities = self.extremities(other_bspline_face3d)
+        start1, start2 = extremities[0], extremities[2]
         borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0), 
                           volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)]
 
@@ -5696,7 +5699,8 @@ class BSplineFace3D(Face3D):
 
     def adjacent_direction_vu(self, other_bspline_face3d, corresponding_directions):
 
-        start1, end1, start2, end2 = self.extremities(other_bspline_face3d)
+        extremities = self.extremities(other_bspline_face3d)
+        start1, start2 = extremities[0], extremities[2]
         borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0), 
                           volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)]
 
