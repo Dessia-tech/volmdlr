@@ -508,7 +508,7 @@ class BSplineCurve2D(Edge):
         tangent = volmdlr.Point2D(tangent[0], tangent[1])
         return tangent
 
-    def direction_vector(self, abscissa: float = 0.0):
+    def direction_vector(self, abscissa: float):
         """
         :param abscissa: defines where in the BSplineCurve2D the
         direction vector is to be calculated
@@ -516,7 +516,7 @@ class BSplineCurve2D(Edge):
         """
         return self.tangent(abscissa)
 
-    def unit_direction_vector(self, abscissa: float = 0.0):
+    def unit_direction_vector(self, abscissa: float):
         """
         :param abscissa: defines where in the BSplineCurve2D the
         unit direction vector is to be calculated
@@ -526,7 +526,7 @@ class BSplineCurve2D(Edge):
         direction_vector.normalize()
         return direction_vector
 
-    def normal_vector(self, abscissa: float = 0.0):
+    def normal_vector(self, abscissa: float):
         """
         :param abscissa: defines where in the BSplineCurve2D the
         normal vector is to be calculated
@@ -536,7 +536,7 @@ class BSplineCurve2D(Edge):
         normal_vector = tangent_vector.normal_vector()
         return normal_vector
 
-    def unit_normal_vector(self, abscissa: float = 0.0):
+    def unit_normal_vector(self, abscissa: float):
         """
         :param abscissa: defines where in the BSplineCurve2D the
         unit normal vector is to be calculated
