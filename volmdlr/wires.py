@@ -387,7 +387,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
             if intersections and intersections[0] not in intersection_points:
                 point1 = primitive.start + primitive.unit_direction_vector(
                     0.5)
-                point2 = self.crossing_point_start_end(intersections, primitive)
+                point2 = self.crossing_start_end_point(intersections, primitive)
                 if point2 is None:
                     intersection_points.append(intersections[0])
                     intersection_points_primitives.append((intersections[0],
