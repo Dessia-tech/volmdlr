@@ -1990,7 +1990,7 @@ class BSplineSurface3D(Surface3D):
         for x0 in x_init: 
         # for x0 in [(0.5, 0.5), (0.25, 0.25), (0.75,0.25), (0.25, 0.75), (0.75, 0.25), (0, 0), (0, 1), (1, 0), (1, 1)]:
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            cost.append(z.cost)
+            cost.append(z.fun)
             sol.append(z.x)
         # print(min(cost))
         # if min(cost) < 1e-3: 
@@ -2026,7 +2026,7 @@ class BSplineSurface3D(Surface3D):
     #                                         # loss='soft_l1'
     #                                         )
     #         # z.cost represent the value of the cost function at the solution
-    #         if z.cost < tol:
+    #         if z.fun < tol:
     #             return volmdlr.Point2D(*z.x)
 
     #         res = scp.optimize.minimize(f, x0=npy.array(x0),
@@ -2037,7 +2037,7 @@ class BSplineSurface3D(Surface3D):
     #         if res.fun < tol:
     #             return volmdlr.Point2D(*res.x)
 
-    #         results.append((z.x, z.cost))
+    #         results.append((z.x, z.fun))
     #         results.append((res.x, res.fun))
     #     return (volmdlr.Point2D(*min(results, key=lambda r: r[1])[0]))
 
@@ -3362,7 +3362,7 @@ class BSplineSurface3D(Surface3D):
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
             # print(z.cost)
-            if z.cost<1e-5:
+            if z.fun<1e-5:
                 solution = z.x
                 if solution not in solutions:
                     solutions.append(solution)
@@ -3403,7 +3403,7 @@ class BSplineSurface3D(Surface3D):
         
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            if z.cost<1e-20:
+            if z.fun<1e-20:
             #     cost.append(z.cost)
             # # print(z.cost)
             # if z.cost<1e-20:
@@ -3432,7 +3432,7 @@ class BSplineSurface3D(Surface3D):
 
         for x0 in [(0, 0), (0, 1), (1, 0), (1, 1), (0.5, 0.5)]:
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            cost.append(z.cost)
+            cost.append(z.fun)
 
         return min(cost)
 
@@ -3647,7 +3647,7 @@ class BSplineSurface3D(Surface3D):
             
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            if z.cost < 1e-10: 
+            if z.fun < 1e-10: 
                 return True
         return False
     
@@ -3676,7 +3676,7 @@ class BSplineSurface3D(Surface3D):
         i = 0
         for x0 in x_init:
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            if z.cost<1e-5:
+            if z.fun<1e-5:
                 i += 1
                 if i >= 50:
                     return True
