@@ -508,41 +508,41 @@ class BSplineCurve2D(Edge):
         tangent = volmdlr.Point2D(tangent[0], tangent[1])
         return tangent
 
-    def direction_vector(self, abcissa: float = 0.0):
+    def direction_vector(self, abscissa: float = 0.0):
         """
-        :param abcissa: defines where in the BSplineCurve2D the
+        :param abscissa: defines where in the BSplineCurve2D the
         direction vector is to be calculated
         :return: The direection vector vector of the BSplineCurve2D
         """
-        return self.tangent(abcissa)
+        return self.tangent(abscissa)
 
-    def unit_direction_vector(self, abcissa: float = 0.0):
+    def unit_direction_vector(self, abscissa: float = 0.0):
         """
-        :param abcissa: defines where in the BSplineCurve2D the
+        :param abscissa: defines where in the BSplineCurve2D the
         unit direction vector is to be calculated
         :return: The unit direction vector of the BSplineCurve2D
         """
-        direction_vector = self.direction_vector(abcissa)
+        direction_vector = self.direction_vector(abscissa)
         direction_vector.normalize()
         return direction_vector
 
-    def normal_vector(self, abcissa: float = 0.0):
+    def normal_vector(self, abscissa: float = 0.0):
         """
-        :param abcissa: defines where in the BSplineCurve2D the
+        :param abscissa: defines where in the BSplineCurve2D the
         normal vector is to be calculated
         :return: The normal vector of the BSplineCurve2D
         """
-        tangent_vector = self.tangent(abcissa)
+        tangent_vector = self.tangent(abscissa)
         normal_vector = tangent_vector.normal_vector()
         return normal_vector
 
-    def unit_normal_vector(self, abcissa: float = 0.0):
+    def unit_normal_vector(self, abscissa: float = 0.0):
         """
-        :param abcissa: defines where in the BSplineCurve2D the
+        :param abscissa: defines where in the BSplineCurve2D the
         unit normal vector is to be calculated
         :return: The unit normal vector of the BSplineCurve2D
         """
-        normal_vector = self.normal_vector(abcissa)
+        normal_vector = self.normal_vector(abscissa)
         normal_vector.normalize()
         return normal_vector
 
