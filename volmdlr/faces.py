@@ -5870,7 +5870,10 @@ class BSplineFace3D(Face3D):
         '''
 
         merged_surface = self.surface3d.merge_with(other_bspline_face3d.surface3d)
-        merged_face = merged_surface.rectangular_cut(0,1,0,1)
+        contours = self.outer_contour3d.merge_with(other_bspline_face3d.outer_contour3d)
+        contours.extend(self.inner_contours3d)
+        contours.extend(other_bspline_face3d.inner_contours3d)
+        merged_face = merged_surface.face_from_contours3d(contours)
 
         return merged_face
 
