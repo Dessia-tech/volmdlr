@@ -353,6 +353,25 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                 intersection_points.append((p, primitive))
         return intersection_points
 
+    def crossing_start_end_point(self, intersections, primitive):
+        """
+        :param intersections: intersections results
+         for primitive line intersections
+        :param primitive: intersecting primitive
+        :return: None if intersection not a start or
+        end point of a contours primitives, or a volmdlr.Point2D if it is.
+        """
+        primitive_index = self.primitives.index(primitive)
+        point2 = None
+        if intersections[0] == primitive.start:
+            point2 = primitive.start + \
+                     self.primitives[primitive_index - 1].unit_direction_vector(0.5)
+        elif intersections[0] == primitive.end and \
+                primitive != self.primitives[-1]:
+            point2 = primitive.end + \
+                     self.primitives[primitive_index + 1].unit_direction_vector(0.5)
+        return point2
+
     def line_crossings(self, line: volmdlr.edges.Line2D):
         """
         Calculates valid crossing intersections of a wire and an infinit line
@@ -363,44 +382,22 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         """
         intersection_points = []
         intersection_points_primitives = []
-        for i, primitive in enumerate(self.primitives):
+        for primitive in self.primitives:
             intersections = primitive.line_intersections(line)
-
             if intersections and intersections[0] not in intersection_points:
-                # valid_primitive_intersection = False
-                # if intersections[0] not in intersection_points:
-                #     valid_primitive_intersection = True
-                # else:
-                #     for point, prim in intersection_points_primitives:
-                #         if intersections[0] == point and prim.start != primitive.end and prim.end != primitive.start:
-                #             valid_primitive_intersection = True
-                # if valid_primitive_intersection:
-                if intersections[0] == primitive.start:
-                    current_primitive_vector = primitive.unit_direction_vector(
-                        0.0)
-                    previous_primitive_vector = \
-                        self.primitives[i - 1].unit_direction_vector(1.0)
-                    if not line.is_between_vectors(previous_primitive_vector,
-                                                   current_primitive_vector):
-                        intersection_points.append(intersections[0])
-                        intersection_points_primitives.append((intersections[0],
-                                                               primitive))
-                elif intersections[0] == primitive.end and\
-                        primitive != self.primitives[-1]:
-                    current_primitive_vector = primitive.unit_direction_vector(
-                        1.0)
-                    next_primitive_vector = \
-                        self.primitives[i+1].unit_direction_vector(0.0)
-                    if not line.is_between_vectors(current_primitive_vector,
-                                                   next_primitive_vector):
-                        intersection_points.append(intersections[0])
-                        intersection_points_primitives.append(
-                            (intersections[0],
-                             primitive))
-                else:
+                point1 = primitive.start + primitive.unit_direction_vector(
+                    0.5)
+                point2 = self.crossing_point_start_end(intersections, primitive)
+                if point2 is None:
                     intersection_points.append(intersections[0])
                     intersection_points_primitives.append((intersections[0],
                                                            primitive))
+                elif not line.is_between_points(point1, point2):
+                    intersection_points.append(intersections[0])
+                    intersection_points_primitives.append(
+                        (intersections[0],
+                         primitive))
+
         return intersection_points_primitives
 
     def wire_intersections(self, wire):

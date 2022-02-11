@@ -156,26 +156,20 @@ class Line(dc.DessiaObject):
         return [self.__class__(self.point1, split_point),
                 self.__class__(split_point, self.point2)]
 
-    def is_between_vectors(self, vector1:volmdlr.Vector2D,
-                           vector2: volmdlr.Vector2D):
+    def is_between_points(self, point1: volmdlr.Point2D,
+                          point2: volmdlr.Point2D):
         """
-        Verifies if a line is between two other vectors
-        :param vector1: first vector
-        :type vector1: volmdlr.Vector2D
-        :param vector2: second vector
-        :type vector2: volmdlr.Vector2D
-        returns True is line is between the two given vectors or False if not
+        Verifies if a line is between two points
+        :param point1: first point
+        :type point1: volmdlr.Point2D
+        :param point2: second point
+        :type point2: volmdlr.Point2D
+        returns True is line is between the two given points or False if not
         """
-
-        line_vector = self.unit_direction_vector()
-        line_vector = line_vector.to_vector()
-        cross_vector1_line = vector1.cross(line_vector)
-        cross_line_vector2 = line_vector.cross(vector2)
-        if (cross_vector1_line > 0 and cross_line_vector2 > 0) or \
-                (cross_vector1_line < 0 and cross_line_vector2 < 0):
+        line_segment = LineSegment2D(point1, point2)
+        if line_segment.line_intersections(self):
             return True
         return False
-
 
 class LineSegment(Edge):
     """
@@ -509,8 +503,8 @@ class BSplineCurve2D(Edge):
         tangent = volmdlr.Point2D(tangent[0], tangent[1])
         return tangent
 
-    def unit_direction_vector(self, abcissa: float = 0.0):
-        return self.tangent(abcissa)
+    def unit_direction_vector(self, abscissa: float):
+        return self.tangent(abscissa)
 
     def middle_point(self):
         return self.point_at_abscissa(0.5)
