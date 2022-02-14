@@ -2966,8 +2966,8 @@ class BSplineSurface3D(Surface3D):
         contour01 = self.contour2d_with_dimension_to_parametric_frame(contour2d)
    
         return self.contour2d_to_3d(contour01)
-        
-  
+
+
     @classmethod 
     def from_geomdl_surface(cls, surface):
         ''' 
