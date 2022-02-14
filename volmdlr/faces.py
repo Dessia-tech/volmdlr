@@ -95,13 +95,15 @@ class Surface2D(volmdlr.core.Primitive2D):
              returns a random point inside surface2d. Considers if it has holes 
         '''
         valid_point = False
+        point_inside_outer_contour = None
         while not valid_point:
             point_inside_outer_contour = self.outer_contour.random_point_inside()
             inside_inner_contour = False
             for inner_contour in self.inner_contours:
                 if inner_contour.point_belongs(point_inside_outer_contour):
                     inside_inner_contour = True
-            if not inside_inner_contour:
+            if not inside_inner_contour and\
+                    point_inside_outer_contour is not None:
                 valid_point = True
 
         return point_inside_outer_contour
