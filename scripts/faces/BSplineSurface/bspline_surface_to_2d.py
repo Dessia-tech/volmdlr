@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 file_path = 'bspline_surface_2.step'
 
-step_file = vms.Step(file_path)
+step_file = vms.Step.from_file(file_path)
 
 model = step_file.to_volume_model()
 primitives = model.primitives
