@@ -5,8 +5,8 @@ import volmdlr.cloud
 """
 """
 
-import volmdlr.stl as vmstl
-import volmdlr.cloud
+# import volmdlr.stl as vmstl
+# import volmdlr.cloud
 import volmdlr.core
 # import volmdlr as vm
 # import volmdlr.wires as vmw
@@ -15,21 +15,17 @@ import volmdlr.core
 # import matplotlib.pyplot as plt
 
 import os
-import numpy as np
-from scipy.spatial import ConvexHull
+# import numpy as np
+# from scipy.spatial import ConvexHull
 shells = []
 path = os.getcwd()
 
 
 for stl_file in [
-                # 'a320.stl',
-                # 'a320_ENGINE_RIGHT.stl',
-                'a320_FAN_RIGHT.stl',
-                # 'a320_RIGHT_WING.stl',
-                # 'a320_RUDDER.stl',
-                # 'a320_STABILO_RIGHT.stl',
-                # 'KDW1404-1101_sw0001.STL'
+                'simple.stl',
+                'cube_ascii.stl'
                   ]:
+    stl_path = os.path.join('stl', stl_file)
     # print('start')
     # volum = volmdlr.core.VolumeModel(cloud_faces)
     # print('saving file' + stl_file)
@@ -38,10 +34,12 @@ for stl_file in [
     # faces.extend(cloud_faces)
     # print()
 
-    stl = vmstl.Stl.from_file(stl_file)
-    # shell = stl.to_closed_shell()
+    stl = vmstl.Stl.from_file(stl_path)
+    shell = stl.to_closed_shell()
+    shell.alpha = 0.3
+    assert len(shell.faces)
     # shell.babylonjs()
-    # shells.append(shell)
+    shells.append(shell)
     # stl.extract_points()
 
     # cloud = volmdlr.cloud.PointCloud3D.from_stl(path + "/" + stl_file)
@@ -49,17 +47,18 @@ for stl_file in [
     # cloud_faces.babylonjs()
     # list_points = vmstl.Stl.from_file_points(stl_file)
     list_points = stl.extract_points_BIS()
-    pointcloud3d = volmdlr.cloud.PointCloud3D(list_points)
-    # polygons2d = pointcloud3d.to_shell()
-    # pointcloud3d.plot()
-    shell = pointcloud3d.to_shell(resolution=15)
-    shell.alpha = 0.6
-    shell.color = (1, 0.1, 0.1)
-    shells.append(shell)
+    if len(list_points) > 1:
+        pointcloud3d = volmdlr.cloud.PointCloud3D(list_points)
+        # polygons2d = pointcloud3d.to_shell()
+        # pointcloud3d.plot()
+        shell2 = pointcloud3d.to_shell(resolution=15)
+        shell2.alpha = 0.6
+        shell2.color = (1, 0.1, 0.1)
+        shells.append(shell2)
 
 
-# volum = volmdlr.core.VolumeModel(shells)
-# volum.babylonjs()
+volume_model = volmdlr.core.VolumeModel(shells)
+volume_model.babylonjs()
 
 
 

@@ -22,6 +22,12 @@ for z in [0, 0.1, 0.2, 0.3]:
 size_u, size_v, degree_u, degree_v = 4, 4, 2, 2
 surface1 = vm.faces.BSplineSurface3D.points_fitting_into_bspline_surface(grid1, size_u, size_v, degree_u, degree_v)
 # surface1 = vmf.BSplineSurface3D.from_pointgrid(grid1, 4, 4, 2, 2)
+
+p1 = surface1.point2d_to_3d(vm.Point2D(0, 0))
+p2 = surface1.point2d_to_3d(vm.Point2D(0.5, 0.5))
+
+assert p1.point_distance(p2) < surface1.geodesic_distance(p1, p2)
+
 face1 = surface1.rectangular_cut(0, 1, 0, 1)
 
 
