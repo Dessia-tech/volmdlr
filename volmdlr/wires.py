@@ -874,7 +874,7 @@ class Contour(Wire):
 
                         # edges2.add(edge2)
                         try:
-                            index = self.primitive_to_index(edge1)
+                            self.primitive_to_index(edge1)
                             edges1.add(edge1)
                         except KeyError:
                             edges1.add(edge2)
@@ -1598,9 +1598,10 @@ class Contour2D(Contour, Wire2D):
         """
         Use a n by m grid to triangulize the contour
         """
-        xmin, xmax, ymin, ymax = self.bounding_rectangle()
-        dx = xmax - xmin
-        dy = ymax - ymin
+        bounding_rectangle = self.bounding_rectangle()
+        # xmin, xmax, ymin, ymax = self.bounding_rectangle()
+        dx = bounding_rectangle[1] - bounding_rectangle[0] #xmax - xmin
+        dy = bounding_rectangle[3] - bounding_rectangle[2] #ymax - ymin
         if number_points_x is None:
             n = max(math.ceil(x_density * dx), min_points_x)
         else:
@@ -1610,8 +1611,8 @@ class Contour2D(Contour, Wire2D):
         else:
             m = number_points_y
 
-        x = [xmin + i * dx / n for i in range(n + 1)]
-        y = [ymin + i * dy / m for i in range(m + 1)]
+        x = [bounding_rectangle[0] + i * dx / n for i in range(n + 1)]
+        y = [bounding_rectangle[2] + i * dy / m for i in range(m + 1)]
 
         point_index = {}
         ip = 0
@@ -3878,27 +3879,36 @@ class Ellipse3D(Contour3D):
         return tessellation_points_3d
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
-        minor_dir = self.normal.cross(self.major_dir)
+        # minor_dir = self.normal.cross(self.major_dir)
+        # frame = volmdlr.Frame3D(self.center, self.major_dir,
+        #                         minor_dir, self.normal)
         frame = volmdlr.Frame3D(self.center, self.major_dir,
-                                minor_dir, self.normal)
+                                self.normal.cross(self.major_dir), self.normal)
+
         # Positionnement des points dans leur frame
         p1_new, p2_new = frame.new_coordinates(
             point1), frame.new_coordinates(point2)
+
         # Angle pour le p1
-        u1, u2 = p1_new.x / self.major_axis, p1_new.y / self.minor_axis
-        theta1 = volmdlr.core.sin_cos_angle(u1, u2)
+        # u1, u2 = p1_new.x / self.major_axis, p1_new.y / self.minor_axis
+        # theta1 = volmdlr.core.sin_cos_angle(u1, u2)
+        theta1 = volmdlr.core.sin_cos_angle(p1_new.x / self.major_axis, p1_new.y / self.minor_axis)
+
         # Angle pour le p2
-        u3, u4 = p2_new.x / self.major_axis, p2_new.y / self.minor_axis
-        theta2 = volmdlr.core.sin_cos_angle(u3, u4)
+        # u3, u4 = p2_new.x / self.major_axis, p2_new.y / self.minor_axis
+        # theta2 = volmdlr.core.sin_cos_angle(u3, u4)
+        theta2 = volmdlr.core.sin_cos_angle(p2_new.x / self.major_axis, p2_new.y / self.minor_axis)
 
         if theta1 > theta2:  # sens trigo
             angle = math.pi + (theta1 + theta2) / 2
         else:
             angle = (theta1 + theta2) / 2
 
-        p_3 = volmdlr.Point3D(self.major_axis * math.cos(angle),
-                              self.minor_axis * math.sin(angle), 0)
-        p3 = frame.old_coordinates(p_3)
+        # p_3 = volmdlr.Point3D(self.major_axis * math.cos(angle),
+        #                       self.minor_axis * math.sin(angle), 0)
+        # p3 = frame.old_coordinates(p_3)
+        p3 = frame.old_coordinates(volmdlr.Point3D(self.major_axis * math.cos(angle),
+                                                   self.minor_axis * math.sin(angle), 0))
 
         return volmdlr.edges.ArcEllipse3D(point1, p3, point2, self.center,
                                           self.major_dir)
