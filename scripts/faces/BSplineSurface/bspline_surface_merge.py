@@ -29,8 +29,8 @@ for file_path in files_path:
     
 # %% Merge faces/surfaces 
 
-merged_face = bspline_faces[0].merge_with(bspline_faces[1])
-bspline_faces.append(merged_face)
+merged_surface = bspline_faces[0].surface3d.merge_with(bspline_faces[1].surface3d)
+bspline_faces.append(merged_surface.rectangular_cut(0,1,0,1))
 
 
 # %% Display
