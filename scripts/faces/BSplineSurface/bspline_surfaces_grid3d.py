@@ -16,7 +16,7 @@ files_path = ['bspline_surface_1.step', 'bspline_surface_2.step']
 bspline_faces = []
 
 for file_path in files_path: 
-    step_file = vms.Step(file_path)
+    step_file = vms.Step.from_file(file_path)
     
     model = step_file.to_volume_model()
     primitives = model.primitives
