@@ -4,23 +4,19 @@
 """
 
 import math
-import numpy as npy
-# import open3d
+from typing import List
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
+import dessia_common as dc
 import volmdlr as vm
 import volmdlr.core
 import volmdlr.wires as vmw
 import volmdlr.faces as vmf
 import volmdlr.step as vstep
 import volmdlr.stl as vmstl
-import volmdlr.edges as vme
-import dessia_common as dc
-
 import volmdlr.primitives3d as p3d
-from typing import List
+
 
 class PointCloud3D(dc.DessiaObject):
     def __init__(self, points, name: str=''):
@@ -47,36 +43,29 @@ class PointCloud3D(dc.DessiaObject):
             if dist_to_plane > umin and dist_to_plane < umax :
                 extracted_points.append(points)
         return PointCloud3D(extracted_points)
-        
-    
-    def to_shell(self, resolution: int = 10, normal = None, offset: float = 0):
-        #normal has to be a fondamental vector : X3D, Y3D or Z3D
+     
+    def determine_extrusion_vector(self):
         bbox = self._bounding_box()
         xyz_bbox = [[bbox.xmin, bbox.xmax], [bbox.ymin,bbox.ymax], [bbox.zmin,bbox.zmax]]
         xyz_list = [l[1]-l[0] for l in xyz_bbox]
         absxyz_list, xyz_vect = [abs(length) for length in xyz_list], [vm.X3D, vm.Y3D, vm.Z3D]
-
-        if normal is None :
-            posmax = xyz_list.index(max(absxyz_list))
-            normal = xyz_vect[posmax]
-            
-        else :
-            posmax = 0
-            for n, vect in enumerate(xyz_vect):
-                if vect == normal :
-                    posmax = n
-        dist_between_plane = xyz_list[posmax]/(resolution-1)
-        position_plane = [xyz_bbox[posmax][0] + n*dist_between_plane for n in range(resolution)]
-        subcloud3d = [self.extract(normal, pos_plane-dist_between_plane/2, pos_plane+dist_between_plane/2) for pos_plane in position_plane]
+        posmax = xyz_list.index(max(absxyz_list))
+        normal = xyz_vect[posmax]
         vec1, vec2 = xyz_vect[posmax-2], xyz_vect[posmax-1]
-        subcloud2d_tosimp = [subcloud3d[n].to_2d(position_plane[n]*normal, vec1, vec2) for n in range(resolution)]
-        subcloud2d = [sub.simplify(resolution=5) for sub in subcloud2d_tosimp]
-        initial_polygon2d = [cloud2d.to_polygon() for cloud2d in subcloud2d]
         
-        #Offsetting
-        if offset != 0 :
-            position_plane, initial_polygon2d = self.offset_to_shell(position_plane, initial_polygon2d, offset)
+        return posmax, normal, vec1, vec2
+    
+    def position_plane(self, posmax, resolution):
+        bbox = self._bounding_box()
+        xyz_bbox = [[bbox.xmin, bbox.xmax], [bbox.ymin,bbox.ymax], [bbox.zmin,bbox.zmax]]
+        dist_between_plane = (xyz_bbox[posmax][1]-xyz_bbox[posmax][0])/(resolution-1)
+        position_plane = [xyz_bbox[posmax][0] + n*dist_between_plane for n in range(resolution)]
         
+        return dist_between_plane, position_plane
+    
+    @staticmethod
+    def check_area_polygon(initial_polygon2d, position_plane,
+                           normal, vec1, vec2):
         areas = [0]*len(initial_polygon2d)
         for n, poly in enumerate(initial_polygon2d):
             if poly is not None :
@@ -84,17 +73,48 @@ class PointCloud3D(dc.DessiaObject):
         avg_area = sum(areas)/len(areas)        
 
         polygon2d, polygon3d = [], []
-        banned = []
         for n, poly in enumerate(initial_polygon2d):
-            if poly is None or (poly.area()<avg_area/10 and (n not in [0,len(initial_polygon2d)-1])):
-                resolution -= 1
-                banned.append(n)
+            if (poly is None or (poly.area()<avg_area/10) and (n not in [0,len(initial_polygon2d)-1])):
+                continue
             else :
                 polygon2d.append(poly)
                 new_polygon = poly.to_3d(position_plane[n]*normal, vec1, vec2)
                 polygon3d.append(new_polygon)
-        [position_plane.pop(k) for k in banned[::-1]]
-
+                
+        return polygon3d
+    
+    def to_subcloud2d(self, pos_normal, vec1, vec2):
+        subcloud2d_tosimp = self.to_2d(pos_normal, vec1, vec2)
+        subcloud2d = subcloud2d_tosimp.simplify(resolution=5)
+        return subcloud2d
+    
+    def to_shell(self, resolution: int = 10, normal = None, offset: float = 0):
+        if normal is None :
+            posmax, normal, vec1, vec2 = self.determine_extrusion_vector()
+        else :
+            posmax = 0
+            for n, vect in enumerate([vm.X3D, vm.Y3D, vm.Z3D]):
+                if vect == normal :
+                    posmax = n
+            vec1, vec2 = [vm.X3D, vm.Y3D, vm.Z3D][posmax-2], [vm.X3D, vm.Y3D, vm.Z3D][posmax-1]
+            
+        dist_between_plane, position_plane = self.position_plane(posmax = posmax, 
+                                                                 resolution = resolution)
+        subcloud3d = [self.extract(normal, pos_plane-dist_between_plane/2, pos_plane+dist_between_plane/2) for pos_plane in position_plane]
+        subcloud2d = [subcloud3d[n].to_subcloud2d(position_plane[n]*normal, vec1, vec2) for n in range(resolution)]
+        
+        #Offsetting
+        if offset != 0 :
+            initial_polygon2d = [cloud2d.to_polygon(convexe=True) for cloud2d in subcloud2d]
+            position_plane, initial_polygon2d = self.offset_to_shell(position_plane, initial_polygon2d, offset)
+        else :
+            initial_polygon2d = [cloud2d.to_polygon() for cloud2d in subcloud2d]
+        
+        polygon3d = self.check_area_polygon(initial_polygon2d = initial_polygon2d,
+                                            position_plane = position_plane, 
+                                            normal = normal, 
+                                            vec1 = vec1, vec2 = vec2)
+        
         return self.generate_shell(polygon3d, normal, vec1, vec2)
 
     @classmethod
@@ -121,7 +141,7 @@ class PointCloud3D(dc.DessiaObject):
             # ax = poly1.plot()
             # poly1_simplified.plot(ax=ax, color= 'r')
 
-            if n == resolution-1 or n == 0:
+            if n in (resolution-1, 0):
                 plane3d = vmf.Plane3D.from_plane_vectors(position_plane[n]*normal, vec1, vec2)
                 surf2d = vmf.Surface2D(poly1_simplified.to_2d(position_plane[n]*normal, vec1, vec2),[])
 
@@ -129,19 +149,12 @@ class PointCloud3D(dc.DessiaObject):
             if n != resolution-1:
                 poly2 = polygon3d[n+1]
 
-
                 poly2_simplified = poly2.simplify(0.01, 0.03)
 
                 if 1 - poly2_simplified.to_2d(position_plane[n] * normal, vec1,
                                               vec2).area() / poly2.to_2d(
                         position_plane[n] * normal, vec1, vec2).area() > 0.3:
                     poly2_simplified = poly2
-                new_faces = poly1_simplified.sewing3(poly2_simplified,
-                                                     vec1, vec2)
-                # if not poly1_simplified.check_sewing(poly2_simplified, new_faces):
-                #     print('p1 3d points :', poly1_simplified.points)
-                #     print('p2 3d points :', poly2_simplified.points)
-                #     vm.core.VolumeModel(new_faces).babylonjs()
                 faces.extend(poly1_simplified.sewing3(poly2_simplified,
                                                       vec1, vec2))
                 # for trio in coords:
@@ -193,10 +206,10 @@ class PointCloud3D(dc.DessiaObject):
         points = step.to_points()
         return cls(points)
     
-    def plot(self, ax = None):
+    def plot(self, ax = None, color='k'):
         ax = self.points[0].plot(ax = ax)
-        for point in self.points[1::1000]:
-            point.plot(ax = ax)
+        for point in self.points[1::100]:
+            point.plot(ax = ax, color = color)
             
         return ax
     
@@ -204,7 +217,7 @@ class PointCloud3D(dc.DessiaObject):
         #it works if distance_extended >= 0
         spheres, extended_points = [], []
         for pt in self.points :
-            extended_zone = vm.p3d.Sphere(pt, distance_extended)
+            extended_zone = p3d.Sphere(pt, distance_extended)
             sphere_primitive = extended_zone.shell_faces[0]
             
             spheres.append(vmf.ClosedShell3D([sphere_primitive]))
@@ -220,14 +233,15 @@ class PointCloud3D(dc.DessiaObject):
             
         return extended_points
     
-    def offset_to_shell(self, positions_plane: List[vmf.Plane3D], 
+    @staticmethod
+    def offset_to_shell(positions_plane: List[vmf.Plane3D], 
                         polygons2D: List[vmw.ClosedPolygon2D], offset: float):
         
         origin_f, origin_l = positions_plane[0], positions_plane[-1]
         
         new_position_plane = [origin_f-offset] + positions_plane[1:-1] + [origin_l+offset]
-        
-        new_poly = [poly.offset(offset) for poly in polygons2D]
+        polyconvexe = [vmw.ClosedPolygon2D.points_convex_hull(poly.points) for poly in polygons2D]
+        new_poly = [poly.offset(offset) for poly in polyconvexe]
         
         return new_position_plane, new_poly
     
@@ -238,32 +252,37 @@ class PointCloud2D(dc.DessiaObject):
         
     def plot(self, ax=None, color='k'):
         if ax is None :
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
         for pt in self.points :
             pt.plot(ax=ax, color=color)
         return ax
     
-    def to_polygon(self):
+    def to_polygon(self, convexe = False):
         if not self.points:
             return None
-        # polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
-        polygon = vmw.ClosedPolygon2D.concave_hull(self.points, -0.3, 0.000005)
         # polygon = vmw.ClosedPolygon2D.convex_hull_points(self.points)
+        if convexe : 
+            polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
+        else :
+            polygon = vmw.ClosedPolygon2D.concave_hull(self.points, -0.2, 0.000005)
+            
         if polygon is None or math.isclose(polygon.area(), 0, abs_tol = 1e-6) :
             return None
         else : 
             return polygon
         
+    def bounding_rectangle(self):
+        x_list, y_list = [pt.x for pt in self.points], [pt.y for pt in self.points]
+        return min(x_list), max(x_list), min(y_list), max(y_list)
+        
     def simplify(self, resolution = 5):
         if not self.points : 
             return PointCloud2D(self.points, name=self.name + '_none')
         
-        x_list, y_list = [pt.x for pt in self.points], [pt.y for pt in self.points]
-        xmin, xmax = min(x_list), max(x_list)
-        ymin, ymax = min(y_list), max(y_list)
+        xy_extr = list(self.bounding_rectangle()) #xmin, xmax, ymin, ymax
         
-        x_slide = [xmin + n*(xmax-xmin)/(resolution-1) for n in range(resolution)]
-        y_slide = [ymin + n*(ymax-ymin)/(resolution-1) for n in range(resolution)]
+        x_slide = [xy_extr[0] + n*(xy_extr[1]-xy_extr[0])/(resolution-1) for n in range(resolution)]
+        y_slide = [xy_extr[2] + n*(xy_extr[3]-xy_extr[2])/(resolution-1) for n in range(resolution)]
         
         points = []
         for x1, x2 in zip(x_slide, x_slide[1:]+[x_slide[0]]) :

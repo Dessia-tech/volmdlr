@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Sep 11 23:39:42 2020
-
-@author: Pierrem
 """
-import math
+
 import volmdlr as vm
 import volmdlr.step as vm_step
 import volmdlr.primitives3d as primitives3d
@@ -93,8 +90,8 @@ box_red = primitives3d.Block(
                vm.Vector3D(0, 0.1, 0), vm.Vector3D(0, 0, 0.1)),
     color=(0.2, 1, 0.4), alpha=0.6)
 
-for i in range(30):
-    print('----NEW STEP----', box_red.is_inside_shell(box, resolution))
+for i in range(1):
+    # print('----NEW STEP----', box_red.is_inside_shell(box, resolution))
     print('distance_to_shell', box.distance_to_shell(box_red, resolution))
     # print('shell_intersection', box.shell_intersection(box_red, resolution))
     print('volume', box_red.bounding_box.volume(), box.bounding_box.volume())

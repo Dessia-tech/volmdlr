@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Feb 28 14:08:23 2017
-
-@author: steven
+Code aster binding
 """
-import numpy as npy
 import os
+import numpy as npy
 
 
 class CylinderNodeGroup:
@@ -126,9 +124,8 @@ class LimitedPlaneNodeGroup:
             for nd_group in self.list_node_group:
                 export.append(nd_group.CodeAsterExport())
             return export
-        else:
-            for nd_group in self.list_node_group:
-                nd_group.CodeAsterExport(a)
+        for nd_group in self.list_node_group:
+            nd_group.CodeAsterExport(a)
                 
 class Mesh:
     def __init__(self, name, file_name_CAD, file_name_mesh=None, 
@@ -147,8 +144,7 @@ class Mesh:
 {} = LIRE_MAILLAGE(FORMAT = "ASTER",); \n \n'''.format(self.name)
         if a is None:
             return char
-        else:
-            a.write(char)
+        a.write(char)
             
     def GenereMesh(self):
         a = open(self.name + '.geo', 'w')
@@ -188,8 +184,7 @@ class Material:
                 self.mesh.name, self.name + '_1')
         if a is None:
             return char
-        else:
-            a.write(char)
+        a.write(char)
         
 class Model:
     def __init__(self, name, mesh):
@@ -203,12 +198,11 @@ class Model:
                            self.name, self.mesh.name)
         if a is None:
             return char
-        else:
-            a.write(char)
+        a.write(char)
     
                 
 class BoundaryCondition:
-    def __init__(self, name, group, modele, displacement=None, load=None):
+    def __init__(self, name, group, modele, displacement=None):
         self.name = name
         self.group = group
         self.displacement = displacement
@@ -225,8 +219,7 @@ class BoundaryCondition:
                    self.name, self.modele.name, self.group.name, char_ddl)
         if a is None:
             return char
-        else:
-            a.write(char)
+        a.write(char)
             
 class MecaStat:
     def __init__(self, name, modele, material, boundary):
@@ -244,8 +237,7 @@ class MecaStat:
                 self.material.name, char_bound)
         if a is None:
             return char
-        else:
-            a.write(char)
+        a.write(char)
             
 class ResultAnalysis:
     def __init__(self, simulation, typ, group_no):
@@ -270,8 +262,7 @@ IMPR_TABLE(TABLE = {}, UNITE = 4); \n \n'''.format(self.simulation.name,
         self.simulation.name, self.typ, self.group_no.name, self.simulation.name + '_1')
         if a is None:
             return char
-        else:
-            a.write(char)
+        a.write(char)
         
 
 #IMPR_RESU(FORMAT='GMSH',

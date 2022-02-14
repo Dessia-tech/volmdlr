@@ -1,7 +1,7 @@
 
 import os
-import pkg_resources
 from string import Template
+import pkg_resources
 
 
 babylon_unpacker_cdn_header = '''
@@ -361,7 +361,7 @@ babylon_unpacker_body_template = Template(
       window.addEventListener("resize", function () {
          engine.resize();
       });
-
+      
       scene.debugLayer.show();
 
    </script>

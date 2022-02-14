@@ -4,12 +4,11 @@
 
 
 """
+
+import math
 from typing import Tuple
 from numpy import dot, cross, array, zeros, random
-import volmdlr as vm
-import math
 from scipy.linalg import norm
-
 
 
 def euler_angles_to_transfer_matrix(psi, theta, phi):
@@ -24,10 +23,10 @@ def euler_angles_to_transfer_matrix(psi, theta, phi):
     stheta=math.sin(theta)
     cphi=math.cos(phi)
     sphi=math.sin(phi)
-    P=array([[cphi*cpsi-sphi*ctheta*spsi,-spsi*cphi-cpsi*ctheta*sphi,stheta*sphi],
+    matrix = array([[cphi*cpsi-sphi*ctheta*spsi,-spsi*cphi-cpsi*ctheta*sphi,stheta*sphi],
              [cpsi*sphi+spsi*ctheta*cphi,-sphi*spsi+cphi*ctheta*cpsi,-stheta*cphi],
              [spsi*stheta,cpsi*stheta,ctheta]])
-    return P
+    return matrix
     
 
 def transfer_matrix_to_euler_angles(R):
@@ -75,14 +74,13 @@ def cos_image(x1:float, x2:float)->Tuple[float, float]:
     nb_interval = interval_max - interval_min
     if nb_interval>= 2:
         return -1, 1
-    elif nb_interval == 1.:
+    
+    if nb_interval == 1.:
         if abs(interval_min) % 2 == 0.:
             # Decreasing
             return -1, max(math.cos(x1), math.cos(x2))
-        else:
-            return min(math.cos(x1), math.cos(x2)), 1
-    else:
-        return sorted((math.cos(x1), math.cos(x2)))
+        return min(math.cos(x1), math.cos(x2)), 1
+    return sorted((math.cos(x1), math.cos(x2)))
 
 def sin_image(x1:float, x2:float)->Tuple[float, float]:
     x1 = x1 - 0.5 * math.pi
