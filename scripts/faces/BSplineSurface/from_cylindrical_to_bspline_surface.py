@@ -17,7 +17,8 @@ import numpy as npy
 file_path = 'cylindrical_surface_1.step'
 
 # Chargement des fichiers step
-step_file = vms.Step(file_path)
+# step_file = vms.Step(file_path)
+step_file = vms.Step.from_file(file_path)
 
 # Extraction des primitives et faces
 model = step_file.to_volume_model()
@@ -34,7 +35,8 @@ cylindrical_face = faces[0]
 # %% Bspline-surface/face 
 
 degree_u, degree_v = 3, 3
-bspline_surface = vmf.BSplineSurface3D.from_cylindrical_face(cylindrical_face, degree_u, degree_v)
+
+bspline_surface = vmf.BSplineSurface3D.from_cylindrical_face(cylindrical_face, degree_u, degree_v, points_x=50, points_y=50)
 
 bspline_face = bspline_surface.rectangular_cut(0, 1, 0, 1)
 
