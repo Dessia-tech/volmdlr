@@ -30,6 +30,7 @@ scripts = [
             'faces/bspline_bark.py',
             'faces/union.py',
             'faces/blocks_set_operations.py',
+            'faces_with_inner_contours.py',
             # Cloud
             'cloud/sewing_two_polygons.py',
             'cloud/sewing_stl.py',
