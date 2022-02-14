@@ -575,7 +575,7 @@ class BSplineCurve2D(Edge):
 
     def rotation(self, center, angle, copy=True):
         if copy:
-            control_points = [p.rotation(center, angle, copy=True) \
+            control_points = [p.rotation(center, angle, copy=True)
                               for p in self.control_points]
             return BSplineCurve2D(self.degree, control_points,
                                   self.knot_multiplicities, self.knots,
@@ -586,7 +586,7 @@ class BSplineCurve2D(Edge):
 
     def translation(self, offset, copy=True):
         if copy:
-            control_points = [p.translation(offset, copy=True) \
+            control_points = [p.translation(offset, copy=True)
                               for p in self.control_points]
             return BSplineCurve2D(self.degree, control_points,
                                   self.knot_multiplicities, self.knots,
@@ -596,7 +596,7 @@ class BSplineCurve2D(Edge):
                 p.translation(offset, copy=False)
 
     def line_intersections(self, line2d: Line2D):
-        polygon_points = self.polygon_points()
+        polygon_points = self.polygon_points(n=50)
         intersections = []
         for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
             l = LineSegment2D(p1, p2)
@@ -604,7 +604,7 @@ class BSplineCurve2D(Edge):
         return intersections
 
     def line_crossings(self, line2d: Line2D):
-        polygon_points = self.polygon_points()
+        polygon_points = self.polygon_points(n=50)
         crossings = []
         for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
             l = LineSegment2D(p1, p2)
