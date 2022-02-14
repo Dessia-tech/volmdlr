@@ -95,13 +95,15 @@ class Surface2D(volmdlr.core.Primitive2D):
              returns a random point inside surface2d. Considers if it has holes 
         '''
         valid_point = False
+        point_inside_outer_contour = None
         while not valid_point:
             point_inside_outer_contour = self.outer_contour.random_point_inside()
             inside_inner_contour = False
             for inner_contour in self.inner_contours:
                 if inner_contour.point_belongs(point_inside_outer_contour):
                     inside_inner_contour = True
-            if not inside_inner_contour:
+            if not inside_inner_contour and\
+                    point_inside_outer_contour is not None:
                 valid_point = True
 
         return point_inside_outer_contour
@@ -2001,7 +2003,7 @@ class BSplineSurface3D(Surface3D):
                                            # loss='soft_l1'
                                            )
             # z.cost represent the value of the cost function at the solution
-            if z.cost < tol:
+            if z.fun < tol:
                 return volmdlr.Point2D(*z.x)
 
             res = scp.optimize.minimize(f, x0=npy.array(x0),
@@ -2012,7 +2014,7 @@ class BSplineSurface3D(Surface3D):
             if res.fun < tol:
                 return volmdlr.Point2D(*res.x)
 
-            results.append((z.x, z.cost))
+            results.append((z.x, z.fun))
             results.append((res.x, res.fun))
         return (volmdlr.Point2D(*min(results, key=lambda r: r[1])[0]))
 
@@ -3022,7 +3024,7 @@ class BSplineSurface3D(Surface3D):
 
         surface = interpolate_surface(points,size_u,size_v,degree_u,degree_v)
     
-        return volmdlr.faces.BSplineSurface3D.from_geomdl_surface(surface)   
+        return cls.from_geomdl_surface(surface)
     
     
     @classmethod
@@ -3061,7 +3063,7 @@ class BSplineSurface3D(Surface3D):
         
         surface = approximate_surface(points, size_u, size_v, degree_u, degree_v, ctrlpts_size_u = num_cpts_u, num_cpts_v = num_cpts_v)
 
-        return volmdlr.faces.BSplineSurface3D.from_geomdl_surface(surface) 
+        return cls.from_geomdl_surface(surface)
     
     
     @classmethod
@@ -3091,7 +3093,7 @@ class BSplineSurface3D(Surface3D):
 
         if len(cylindrical_faces) == 1:
 
-            return volmdlr.faces.BSplineSurface3D.from_cylindrical_face(cylindrical_faces[0], degree_u, degree_v, 50, 50)
+            return cls.from_cylindrical_face(cylindrical_faces[0], degree_u, degree_v, 50, 50)
 
         if len(cylindrical_faces) > 1:
             bspline_surfaces = []
@@ -3170,7 +3172,7 @@ class BSplineSurface3D(Surface3D):
                                                       bounding_rectangle[2],
                                                       bounding_rectangle[3])
             
-        return volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(points_3d,points_x,points_x,degree_u,degree_v)    
+        return cls.points_fitting_into_bspline_surface(points_3d,points_x,points_x,degree_u,degree_v)
         
     
     def intersection_with(self, other_bspline_surface3d):
@@ -3193,7 +3195,7 @@ class BSplineSurface3D(Surface3D):
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
             # print(z.cost)
-            if z.cost<1e-5:
+            if z.fun<1e-5:
                 solution = z.x
                 if solution not in solutions:
                     solutions.append(solution)
@@ -3234,7 +3236,7 @@ class BSplineSurface3D(Surface3D):
         
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            if z.cost<1e-20:
+            if z.fun<1e-20:
             #     cost.append(z.cost)
             # # print(z.cost)
             # if z.cost<1e-20:
@@ -3263,7 +3265,7 @@ class BSplineSurface3D(Surface3D):
 
         for x0 in [(0, 0), (0, 1), (1, 0), (1, 1), (0.5, 0.5)]:
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            cost.append(z.cost)
+            cost.append(z.fun)
 
         return min(cost)
 
@@ -3483,7 +3485,7 @@ class BSplineSurface3D(Surface3D):
             
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            if z.cost < 1e-10: 
+            if z.fun < 1e-10: 
                 return True
         return False
     
@@ -3512,7 +3514,7 @@ class BSplineSurface3D(Surface3D):
         i = 0
         for x0 in x_init:
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            if z.cost<1e-5:
+            if z.fun<1e-5:
                 i += 1
                 if i >= 50:
                     return True
@@ -3540,41 +3542,11 @@ class BSplineSurface3D(Surface3D):
         bsplines_new = bsplines
 
         center = [bspline_face3d.surface2d.outer_contour.center_of_mass(), other_bspline_face3d.surface2d.outer_contour.center_of_mass()]
-        grid2d_direction = (bsplines_new[0].rectangular_cut(0,1,0,1).pair_with(bsplines_new[1].rectangular_cut(0,1,0,1)))[1]
+        grid2d_direction = (bspline_face3d.pair_with(other_bspline_face3d))[1]
 
         if bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d):
-            def xy_limits(grid2d_direction):
-                xmin, xmax, ymin, ymax = [], [], [], []
-                i = 0
-                if grid2d_direction[i][1] == '+y':
-                    xmin.append(0)
-                    xmax.append(1)
-                    ymin.append(0)
-                    ymax.append(0.99)
-                elif grid2d_direction[i][1] == '+x':
-                    xmin.append(0)
-                    xmax.append(0.99)
-                    ymin.append(0)
-                    ymax.append(1)
-                elif grid2d_direction[i][1] == '-x':
-                    xmin.append(0.01)
-                    xmax.append(1)
-                    ymin.append(0)
-                    ymax.append(1)
-                elif grid2d_direction[i][1] == '-y':
-                    xmin.append(0)
-                    xmax.append(1)
-                    ymin.append(0.01)
-                    ymax.append(1)
 
-                xmin.append(0)
-                xmax.append(1)
-                ymin.append(0)
-                ymax.append(1)
-
-                return xmin, xmax, ymin, ymax
-
-            xmin, xmax, ymin, ymax = xy_limits(grid2d_direction)
+            xmin, xmax, ymin, ymax = self.xy_limits(other_bspline_surface3d)
 
         elif self.is_intersected_with(other_bspline_surface3d):
             # find pimitives to split with
@@ -3605,12 +3577,7 @@ class BSplineSurface3D(Surface3D):
 
                 bsplines_new[i] = surfaces[errors.index(min(errors))]
 
-            xmin, xmax, ymin, ymax = [], [], [], []
-            for i in range(0, len(bsplines_new)):
-                xmin.append(0)
-                xmax.append(1)
-                ymin.append(0)
-                ymax.append(1)
+            xmin, xmax, ymin, ymax = [0]*len(bsplines_new), [1]*len(bsplines_new), [0]*len(bsplines_new), [1]*len(bsplines_new)
 
             grid2d_direction = (bsplines_new[0].rectangular_cut(0,1,0,1).pair_with(bsplines_new[1].rectangular_cut(0,1,0,1)))[1]
 
@@ -3630,6 +3597,43 @@ class BSplineSurface3D(Surface3D):
         merged_surface = volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(points3d, size_u, size_v, degree_u, degree_v)
 
         return  merged_surface
+
+    def xy_limits(self, other_bspline_surface3d):
+        '''
+        compute x, y limits to define grid2d
+        '''
+
+        grid2d_direction = (self.rectangular_cut(0,1,0,1).pair_with(other_bspline_surface3d.rectangular_cut(0,1,0,1)))[1]
+
+        xmin, xmax, ymin, ymax = [], [], [], []
+        if grid2d_direction[0][1] == '+y':
+            xmin.append(0)
+            xmax.append(1)
+            ymin.append(0)
+            ymax.append(0.99)
+        elif grid2d_direction[0][1] == '+x':
+            xmin.append(0)
+            xmax.append(0.99)
+            ymin.append(0)
+            ymax.append(1)
+        elif grid2d_direction[0][1] == '-x':
+            xmin.append(0.01)
+            xmax.append(1)
+            ymin.append(0)
+            ymax.append(1)
+        elif grid2d_direction[0][1] == '-y':
+            xmin.append(0)
+            xmax.append(1)
+            ymin.append(0.01)
+            ymax.append(1)
+
+        xmin.append(0)
+        xmax.append(1)
+        ymin.append(0)
+        ymax.append(1)
+
+        return xmin, xmax, ymin, ymax
+
 
 class BezierSurface3D(BSplineSurface3D):
 
@@ -5775,17 +5779,29 @@ class BSplineFace3D(Face3D):
         corresponding_direction
         grid2d_direction
         '''
-        
-        adjacent_direction1, diff1, adjacent_direction2, diff2 = self.adjacent_direction(other_bspline_face3d)
-        extremities_points = self.extremities(other_bspline_face3d)
-        start1, start2 = extremities_points[0], extremities_points[2]
 
+        adjacent_direction1, diff1, adjacent_direction2, diff2 = self.adjacent_direction(other_bspline_face3d)
         corresponding_directions = []
         if (diff1 > 0 and diff2 > 0) or (diff1 < 0 and diff2 < 0):
             corresponding_directions.append(('+' + adjacent_direction1, '+' + adjacent_direction2))
         else:
             corresponding_directions.append(('+' + adjacent_direction1, '-' + adjacent_direction2))
 
+        if adjacent_direction1 == 'u' and adjacent_direction2 == 'u':
+            corresponding_directions, grid2d_direction = self.adjacent_direction_uu(other_bspline_face3d, corresponding_directions)
+        elif adjacent_direction1 == 'v' and adjacent_direction2 == 'v':
+            corresponding_directions, grid2d_direction = self.adjacent_direction_vv(other_bspline_face3d, corresponding_directions)
+        elif adjacent_direction1 == 'u' and adjacent_direction2 == 'v':
+            corresponding_directions, grid2d_direction = self.adjacent_direction_uv(other_bspline_face3d, corresponding_directions)
+        elif adjacent_direction1 == 'v' and adjacent_direction2 == 'u':
+            corresponding_directions, grid2d_direction = self.adjacent_direction_vu(other_bspline_face3d, corresponding_directions)
+
+        return corresponding_directions, grid2d_direction
+
+    def adjacent_direction_uu(self, other_bspline_face3d, corresponding_directions):
+
+        extremities = self.extremities(other_bspline_face3d)
+        start1, start2 = extremities[0], extremities[2]
         borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0), 
                           volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)]
 
@@ -5795,121 +5811,137 @@ class BSplineFace3D(Face3D):
         nearest_start2 = start2.nearest_point(borders_points)
         # nearest_end2 = end2.nearest_point(borders_points)
 
-        # =============================================================================
+        v1 = nearest_start1[1] 
+        v2 = nearest_start2[1]
 
-        def adjacent_direction_uu(nearest_start1, nearest_start2):
-        # if adjacent_direction1 == 'u' and adjacent_direction2 == 'u':
-            v1 = nearest_start1[1] 
-            v2 = nearest_start2[1]
+        if (v1 == 0 and v2 == 0):
+            corresponding_directions.append(('+v', '-v'))
+            grid2d_direction = [['+x','-y'], ['+x','+y']]
 
-            if (v1 == 0 and v2 == 0):
-                corresponding_directions.append(('+v', '-v'))
-                grid2d_direction = [['+x','-y'], ['+x','+y']]
-
-            elif (v1 == 1 and v2 == 1):
-                if corresponding_directions == [('+u', '-u')]:
-                    grid2d_direction = [['+x','+y'], ['-x','-y']]
-                else:
-                    grid2d_direction = [['+x','+y'], ['+x','-y']]
-                corresponding_directions.append(('+v', '-v'))
+        elif (v1 == 1 and v2 == 1):
+            if corresponding_directions == [('+u', '-u')]:
+                grid2d_direction = [['+x','+y'], ['-x','-y']]
+            else:
+                grid2d_direction = [['+x','+y'], ['+x','-y']]
+            corresponding_directions.append(('+v', '-v'))
 
 
-            elif (v1 == 1 and v2 == 0):
-                corresponding_directions.append(('+v', '+v'))
-                grid2d_direction = [['+x','+y'], ['+x','+y']]
+        elif (v1 == 1 and v2 == 0):
+            corresponding_directions.append(('+v', '+v'))
+            grid2d_direction = [['+x','+y'], ['+x','+y']]
 
 
-            elif (v1 == 0 and v2 == 1):
-                corresponding_directions.append(('+v', '+v'))
-                grid2d_direction = [['+x','-y'], ['+x','-y']]
+        elif (v1 == 0 and v2 == 1):
+            corresponding_directions.append(('+v', '+v'))
+            grid2d_direction = [['+x','-y'], ['+x','-y']]
 
-            return corresponding_directions, grid2d_direction
+        return corresponding_directions, grid2d_direction
 
-        def adjacent_direction_vv(nearest_start1, nearest_start2):
-        # elif adjacent_direction1 == 'v' and adjacent_direction2 == 'v':
-            u1 = nearest_start1[0]
-            u2 = nearest_start2[0]
+    def adjacent_direction_vv(self, other_bspline_face3d, corresponding_directions):
 
-            if (u1 == 0 and u2 == 0):
-                corresponding_directions.append(('+u', '-v'))
-                grid2d_direction = [['-y','-x'], ['-y','+x']]
-            
-            elif (u1 == 1 and u2 == 1):
-                corresponding_directions.append(('+u', '-v'))
-                grid2d_direction = [['+y','+x'], ['+y','-x']]
+        extremities = self.extremities(other_bspline_face3d)
+        start1, start2 = extremities[0], extremities[2]
+        borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0), 
+                          volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)]
 
-            elif (u1 == 0 and u2 == 1):
-                corresponding_directions.append(('+u', '+u'))
-                grid2d_direction = [['+y','-x'], ['+y','-x']]
+        # TODO: compute nearest_point in 'bounding_box points' instead of borders_points
+        nearest_start1 = start1.nearest_point(borders_points)
+        # nearest_end1 = end1.nearest_point(borders_points)
+        nearest_start2 = start2.nearest_point(borders_points)
+        # nearest_end2 = end2.nearest_point(borders_points)
 
-            elif (u1 == 1 and u2 == 0):
-                corresponding_directions.append(('+u', '+u'))
-                grid2d_direction = [['+y','+x'], ['+y','+x']]
+        u1 = nearest_start1[0]
+        u2 = nearest_start2[0]
 
-            return corresponding_directions, grid2d_direction
+        if (u1 == 0 and u2 == 0):
+            corresponding_directions.append(('+u', '-v'))
+            grid2d_direction = [['-y','-x'], ['-y','+x']]
+        
+        elif (u1 == 1 and u2 == 1):
+            corresponding_directions.append(('+u', '-v'))
+            grid2d_direction = [['+y','+x'], ['+y','-x']]
 
-        def adjacent_direction_uv(nearest_start1, nearest_start2):
-        # elif adjacent_direction1 == 'u' and adjacent_direction2 == 'v':
-            v1 = nearest_start1[1]
-            u2 = nearest_start2[0]
-            
-            if (v1 == 1 and u2 == 0):
-                corresponding_directions.append(('+v', '+u'))
-                grid2d_direction = [['+x','+y'], ['+y','+x']]
-              
-            elif (v1 == 0 and u2 == 1):
-                corresponding_directions.append(('+v', '+u'))
-                grid2d_direction = [['-x','-y'], ['-y','-x']]
+        elif (u1 == 0 and u2 == 1):
+            corresponding_directions.append(('+u', '+u'))
+            grid2d_direction = [['+y','-x'], ['+y','-x']]
 
+        elif (u1 == 1 and u2 == 0):
+            corresponding_directions.append(('+u', '+u'))
+            grid2d_direction = [['+y','+x'], ['+y','+x']]
 
-            elif (v1 == 1 and u2 == 1):
-                corresponding_directions.append(('+v', '-u'))
-                grid2d_direction = [['+x','+y'], ['-y','-x']]
-               
-            elif (v1 == 0 and u2 == 0):
-                corresponding_directions.append(('+v', '-u'))
-                grid2d_direction = [['-x','-y'], ['-y','+x']]
-            
-            return corresponding_directions, grid2d_direction
+        return corresponding_directions, grid2d_direction
 
-        def adjacent_direction_vu(nearest_start1, nearest_start2):
-        # elif adjacent_direction1 == 'v' and adjacent_direction2 == 'u':
-            u1 = nearest_start1[0]
-            v2 = nearest_start2[1]
+    def adjacent_direction_uv(self, other_bspline_face3d, corresponding_directions):
 
-            if (u1 == 1 and v2 == 0):
-                corresponding_directions.append(('+u', '+v'))
-                grid2d_direction = [['+y','+x'], ['+x','+y']]
+        extremities = self.extremities(other_bspline_face3d)
+        start1, start2 = extremities[0], extremities[2]
+        borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0), 
+                          volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)]
 
-            elif (u1 == 0 and v2 == 1):
-                corresponding_directions.append(('+u', '+v'))
-                grid2d_direction = [['-y','-x'], ['+x','-y']]
+        # TODO: compute nearest_point in 'bounding_box points' instead of borders_points
+        nearest_start1 = start1.nearest_point(borders_points)
+        # nearest_end1 = end1.nearest_point(borders_points)
+        nearest_start2 = start2.nearest_point(borders_points)
+        # nearest_end2 = end2.nearest_point(borders_points)
+
+        v1 = nearest_start1[1]
+        u2 = nearest_start2[0]
+
+        if (v1 == 1 and u2 == 0):
+            corresponding_directions.append(('+v', '+u'))
+            grid2d_direction = [['+x','+y'], ['+y','+x']]
+    
+        elif (v1 == 0 and u2 == 1):
+            corresponding_directions.append(('+v', '+u'))
+            grid2d_direction = [['-x','-y'], ['-y','-x']]
 
 
-            elif (u1 == 0 and v2 == 0):  
-                corresponding_directions.append(('+u', '-v'))
-                grid2d_direction = [['+y','-x'], ['+x','+y']]
+        elif (v1 == 1 and u2 == 1):
+            corresponding_directions.append(('+v', '-u'))
+            grid2d_direction = [['+x','+y'], ['-y','-x']]
+           
+        elif (v1 == 0 and u2 == 0):
+            corresponding_directions.append(('+v', '-u'))
+            grid2d_direction = [['-x','-y'], ['-y','+x']]
+        
+        return corresponding_directions, grid2d_direction
+
+    def adjacent_direction_vu(self, other_bspline_face3d, corresponding_directions):
+
+        extremities = self.extremities(other_bspline_face3d)
+        start1, start2 = extremities[0], extremities[2]
+        borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0), 
+                          volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)]
+
+        # TODO: compute nearest_point in 'bounding_box points' instead of borders_points
+        nearest_start1 = start1.nearest_point(borders_points)
+        # nearest_end1 = end1.nearest_point(borders_points)
+        nearest_start2 = start2.nearest_point(borders_points)
+        # nearest_end2 = end2.nearest_point(borders_points)
+
+        u1 = nearest_start1[0]
+        v2 = nearest_start2[1]
+
+        if (u1 == 1 and v2 == 0):
+            corresponding_directions.append(('+u', '+v'))
+            grid2d_direction = [['+y','+x'], ['+x','+y']]
+
+        elif (u1 == 0 and v2 == 1):
+            corresponding_directions.append(('+u', '+v'))
+            grid2d_direction = [['-y','-x'], ['+x','-y']]
 
 
-            elif (u1 == 1 and v2 == 1):
-                if corresponding_directions == [('+v', '-u')]:
-                    grid2d_direction = [['+y','+x'], ['-x','-y']]
-                else:
-                    grid2d_direction = [['+y','+x'], ['+x','-y']]
-                corresponding_directions.append(('+u', '-v'))
+        elif (u1 == 0 and v2 == 0):  
+            corresponding_directions.append(('+u', '-v'))
+            grid2d_direction = [['+y','-x'], ['+x','+y']]
 
-            return corresponding_directions, grid2d_direction
 
-        # =============================================================================
-
-        if adjacent_direction1 == 'u' and adjacent_direction2 == 'u':
-            corresponding_directions, grid2d_direction = adjacent_direction_uu(nearest_start1, nearest_start2)
-        elif adjacent_direction1 == 'v' and adjacent_direction2 == 'v':
-            corresponding_directions, grid2d_direction = adjacent_direction_vv(nearest_start1, nearest_start2)
-        elif adjacent_direction1 == 'u' and adjacent_direction2 == 'v':  
-            corresponding_directions, grid2d_direction = adjacent_direction_uv(nearest_start1, nearest_start2)
-        elif adjacent_direction1 == 'v' and adjacent_direction2 == 'u':  
-            corresponding_directions, grid2d_direction = adjacent_direction_vu(nearest_start1, nearest_start2)
+        elif (u1 == 1 and v2 == 1):
+            if corresponding_directions == [('+v', '-u')]:
+                grid2d_direction = [['+y','+x'], ['-x','-y']]
+            else:
+                grid2d_direction = [['+y','+x'], ['+x','-y']]
+            corresponding_directions.append(('+u', '-v'))
 
         return corresponding_directions, grid2d_direction
 
@@ -5923,12 +5955,8 @@ class BSplineFace3D(Face3D):
         contour1_2d = self.surface2d.outer_contour
         contour2_2d = other_bspline_face3d.surface2d.outer_contour
 
-        points1 = []
-        for p1 in contour1.primitives:
-            points1.append(p1.start)
-        points2 = []
-        for p2 in contour2.primitives:
-            points2.append(p2.start)
+        points1 = [p.start for p in contour1.primitives]
+        points2 = [p.start for p in contour2.primitives]
 
         dis, ind = [], []
         for p in points1:
@@ -5980,7 +6008,6 @@ class BSplineFace3D(Face3D):
 
         return start1, end1, start2, end2
 
-    # =============================================================================
 
     def adjacent_direction(self, other_bspline_face3d):
         '''
@@ -6046,7 +6073,10 @@ class BSplineFace3D(Face3D):
         '''
 
         merged_surface = self.surface3d.merge_with(other_bspline_face3d.surface3d)
-        merged_face = merged_surface.rectangular_cut(0,1,0,1)
+        contours = self.outer_contour3d.merge_with(other_bspline_face3d.outer_contour3d)
+        contours.extend(self.inner_contours3d)
+        contours.extend(other_bspline_face3d.inner_contours3d)
+        merged_face = merged_surface.face_from_contours3d(contours)
 
         return merged_face
 
