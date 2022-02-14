@@ -17,7 +17,7 @@ scripts = [
             'wires/polygon2D.py',
             'wires/triangle2D.py',
             # Primitives
-            'primitives/extrusion.py', 
+            'primitives/extrusion.py',
             'primitives/sweep.py',
             'primitives/revolved_profile.py',
             'primitives/block3d.py',
@@ -34,7 +34,7 @@ scripts = [
             'cloud/sewing_two_polygons.py',
             'cloud/sewing_stl.py',
             # Contours
-            # 'contours/contour_split.py',
+            'contours/contour_split.py',
             'contours/contour_merge_with_1.py',
             'contours/contour_merge_with_2.py',
             # Steps

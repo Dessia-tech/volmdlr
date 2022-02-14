@@ -47,4 +47,27 @@ for c in split_contours2:
     c.plot(ax=ax3, color='g')
 ax3.set_title('{} splitted contours'.format(len(split_contours2)))
 
+line_seg1 = edges.LineSegment2D(vm.Point2D(-0.5, -0.2), vm.O2D)
+line_seg2 = edges.LineSegment2D(vm.O2D, vm.Point2D(0.3, 1))
+line_seg3 = edges.LineSegment2D(vm.Point2D(0.3, 1), vm.Point2D(1, 1))
+line_seg4 = edges.LineSegment2D(vm.Point2D(1, 1), vm.Point2D(1, -0.5))
+line_seg5 = edges.LineSegment2D(vm.Point2D(1, -0.5), vm.Point2D(-0.5, -0.2))
 
+contour = wires.Contour2D([line_seg1, line_seg2, line_seg3, line_seg4, line_seg5])
+ax = contour.plot()
+
+line1 = edges.Line2D(vm.Point2D(-0.5, 1), vm.O2D)
+line1.plot(ax=ax, color='r')
+
+cute_wire_line1 = contour.cut_by_line(line1)
+for c in cute_wire_line1:
+    c.plot()
+assert len(cute_wire_line1) == 2
+
+line2 = edges.Line2D(vm.Point2D(-0.5, -0.5), vm.O2D)
+line2.plot(ax=ax, color='b')
+
+cute_wire_line2 = contour.cut_by_line(line2)
+for c in cute_wire_line2:
+    c.plot()
+assert len(cute_wire_line2) == 2
