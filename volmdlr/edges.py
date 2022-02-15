@@ -507,7 +507,7 @@ class BSplineCurve2D(Edge):
         return self.tangent(abscissa)
 
     def middle_point(self):
-        return self.point_at_abscissa(0.5)
+        return self.point_at_abscissa(self.length()*0.5)
 
     def abscissa(self, point2d):
         l = self.length()
@@ -611,7 +611,7 @@ class BSplineCurve2D(Edge):
                 p.translation(offset, copy=False)
 
     def line_intersections(self, line2d: Line2D):
-        polygon_points = self.polygon_points()
+        polygon_points = self.polygon_points(50)
         intersections = []
         for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
             l = LineSegment2D(p1, p2)
@@ -619,7 +619,7 @@ class BSplineCurve2D(Edge):
         return intersections
 
     def line_crossings(self, line2d: Line2D):
-        polygon_points = self.polygon_points()
+        polygon_points = self.polygon_points(50)
         crossings = []
         for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
             l = LineSegment2D(p1, p2)

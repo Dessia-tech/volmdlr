@@ -353,8 +353,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                 intersection_points.append((p, primitive))
         return intersection_points
 
-    def crossing_start_end_point(self, intersections, primitive):
+    def is_start_end_crossings_valid(self, line, intersections, primitive):
         """
+        :param line: crossing line
         :param intersections: intersections results
          for primitive line intersections
         :param primitive: intersecting primitive
@@ -362,15 +363,39 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         end point of a contours primitives, or a volmdlr.Point2D if it is.
         """
         primitive_index = self.primitives.index(primitive)
-        point2 = None
+        point1, point2 = None, None
         if intersections[0] == primitive.start:
-            point2 = primitive.start + \
-                     self.primitives[primitive_index - 1].unit_direction_vector(0.5)
+            point1 = primitive.point_at_abscissa(primitive.length() * 0.01)
+            point2 = self.primitives[primitive_index - 1].point_at_abscissa(
+                self.primitives[primitive_index - 1].length() * .99
+            )
+
+            # point2 = primitive.start + \
+            #          self.primitives[primitive_index - 1].unit_direction_vector(0.5)
         elif intersections[0] == primitive.end and \
                 primitive != self.primitives[-1]:
-            point2 = primitive.end + \
-                     self.primitives[primitive_index + 1].unit_direction_vector(0.5)
-        return point2
+            point1 = primitive.point_at_abscissa(primitive.length() * 0.99)
+            point2 = self.primitives[primitive_index + 1].point_at_abscissa(
+                self.primitives[primitive_index + 1].length() * .01)
+
+            # point2 = primitive.end + \
+            #          self.primitives[primitive_index + 1].unit_direction_vector(0.5)
+        if point1 is not None and point2 is not None:
+            return line.is_between_points(point1, point2)
+        return False
+
+    @staticmethod
+    def is_crossing_start_end_point(intersections, primitive):
+        """
+        :param intersections: intersections results
+         for primitive line intersections
+        :param primitive: intersecting primitive
+        :return: False if intersection not a start or
+        end point of a contours primitives, or True if it is.
+        """
+        if intersections[0] == primitive.start or intersections[0] == primitive.end:
+            return True
+        return False
 
     def line_crossings(self, line: volmdlr.edges.Line2D):
         """
@@ -385,14 +410,26 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         for primitive in self.primitives:
             intersections = primitive.line_intersections(line)
             if intersections and intersections[0] not in intersection_points:
-                point1 = primitive.start + primitive.unit_direction_vector(
-                    0.5)
-                point2 = self.crossing_start_end_point(intersections, primitive)
-                if point2 is None:
+                # point1 = primitive.start + primitive.unit_direction_vector(
+                #     0.5)
+                # point2 = self.crossing_start_end_point(intersections, primitive)
+                # if point2 is None:
+                #     intersection_points.append(intersections[0])
+                #     intersection_points_primitives.append((intersections[0],
+                #                                            primitive))
+                # elif not line.is_between_points(point1, point2):
+                #     intersection_points.append(intersections[0])
+                #     intersection_points_primitives.append(
+                #         (intersections[0],
+                #          primitive))
+                if not self.is_crossing_start_end_point(intersections,
+                                                        primitive):
                     intersection_points.append(intersections[0])
-                    intersection_points_primitives.append((intersections[0],
-                                                           primitive))
-                elif not line.is_between_points(point1, point2):
+                    intersection_points_primitives.append(
+                        (intersections[0],
+                         primitive))
+                elif self.is_start_end_crossings_valid(line, intersections,
+                                                       primitive):
                     intersection_points.append(intersections[0])
                     intersection_points_primitives.append(
                         (intersections[0],
