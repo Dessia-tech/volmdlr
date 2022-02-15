@@ -431,6 +431,32 @@ class Line2D(Line):
     def cut_between_two_points(self, point1, point2):
         return LineSegment2D(point1, point2)
 
+    def sort_points_along_line(self, points: List[volmdlr.Point2D]) -> List[
+        volmdlr.Point2D]:
+        most_distant_point = None
+        farthest_distance = 0
+        for i, point1 in enumerate(points):
+            distances = []
+            points_to_search = points[:i - 1] + points[i:]
+            for point2 in points_to_search:
+                distances.append(point1.point_distance(point2))
+            max_point_distance = max(distances)
+            farthest_point = points_to_search[
+                distances.index(max_point_distance)]
+            if max_point_distance > farthest_distance:
+                most_distant_point = farthest_point
+        list_points = [most_distant_point]
+        points.remove(most_distant_point)
+        distances_to_reference_point = {}
+        for point in points:
+            distances_to_reference_point[point] = \
+                most_distant_point.point_distance(point)
+        distances_to_reference_point = dict(
+            sorted(distances_to_reference_point.items(),
+                   key=lambda item: item[1]))
+        list_points.extend(list(distances_to_reference_point.keys()))
+        return list_points
+
 
 class BSplineCurve2D(Edge):
     _non_serializable_attributes = ['curve']
@@ -534,7 +560,7 @@ class BSplineCurve2D(Edge):
             # loss='soft_l1'
             )
         
-        if res.cost > 1e-4:
+        if res.fun > 1e-4:
             print('distance =', res.cost)
             ax = self.plot()
             point2d.plot(ax=ax)
@@ -708,7 +734,7 @@ class BSplineCurve2D(Edge):
             
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            if z.cost < abs_tol: 
+            if z.fun < abs_tol: 
                 return True
         return False
 
@@ -1517,7 +1543,7 @@ class Arc2D(Edge):
     
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,length_]))
-            if z.cost < abs_tol: 
+            if z.fun < abs_tol: 
                 return True
         return False
 
@@ -2923,7 +2949,7 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-            if z.cost < abs_tol: 
+            if z.fun < abs_tol: 
                 return True
         return False
 
@@ -3778,7 +3804,7 @@ class Arc3D(Edge):
 
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,length_]))
-            if z.cost < abs_tol: 
+            if z.fun < abs_tol: 
                 return True
         return False
 
