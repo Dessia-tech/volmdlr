@@ -909,7 +909,7 @@ class VolumeModel(dc.DessiaObject):
             self.bounding_box = self._bounding_box()
 
     def copy(self, deep=True, memo=None):
-        new_primitives = [primitive.copy() for primitive in self.primitives]
+        new_primitives = [primitive.copy(deep=deep, memo=memo) for primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
 
     def _bounding_box(self):

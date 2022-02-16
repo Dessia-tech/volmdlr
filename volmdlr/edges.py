@@ -784,7 +784,7 @@ class LineSegment2D(LineSegment):
             return False
         return self.start == other_object.start and self.end == other_object.end
 
-    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         return {'object_class': 'volmdlr.edges.LineSegment2D',
                 'name': self.name,
                 'start': self.start.to_dict(),
@@ -1507,7 +1507,7 @@ class Arc2D(Edge):
                                anticlockwise=anticlockwise,
                                name=self.name)
 
-    def copy(self, deep=True, memo=None):
+    def copy(self, *args, **kwargs):
         return Arc2D(self.start.copy(),
                      self.interior.copy(),
                      self.end.copy())
@@ -1587,7 +1587,7 @@ class FullArc2D(Edge):
         dict_['start_end'] = self.start.to_dict(use_pointers=use_pointers, memo=memo, path=path+'/start_end')
         return dict_
     
-    def copy(self, deep=True, memo=None):
+    def copy(self, *args, **kwargs):
         return FullArc2D(self.center.copy(), self.start.copy())
     
     @classmethod
@@ -2020,7 +2020,7 @@ class Line3D(Line):
             raise ValueError('Point not on curve')
         return Line3D(point1, point2)
 
-    def copy(self, deep=True, memo=None):
+    def copy(self, *args, **kwargs):
         return Line3D(*[p.copy() for p in self.points])
 
     @classmethod
@@ -2158,7 +2158,7 @@ class LineSegment3D(LineSegment):
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
-    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         return {'object_class': 'volmdlr.edges.LineSegment3D',
                 'name': self.name,
                 'start': self.start.to_dict(),
@@ -2336,7 +2336,7 @@ class LineSegment3D(LineSegment):
                 Edge.frame_mapping(self, frame, side, copy=False)
                 self.bounding_box = self._bounding_box()
 
-    def copy(self, deep=True, memo=None):
+    def copy(self, *args, **kwargs):
         return LineSegment3D(self.start.copy(), self.end.copy())
 
     def plot(self, ax=None, color='k', alpha=1,
@@ -3516,7 +3516,7 @@ class Arc3D(Edge):
         return '{} = Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n' \
             .format(name, xs, ys, zs, xi, yi, zi, xe, ye, ze)
 
-    def copy(self, deep=True, memo=None):
+    def copy(self, *args, **kwargs):
         return Arc3D(self.start.copy(), self.interior.copy(), self.end.copy())
 
     def frame_mapping(self, frame, side, copy=True):
@@ -4171,7 +4171,8 @@ class ArcEllipse3D(Edge):
         ax.plot(x, y, z, 'k')
         return ax
 
-    def plot2d(self, x3d, y3D, ax, color='k'):
+    def plot2d(self, x3d:volmdlr.Vector3D=volmdlr.X3D, y3d:volmdlr.Vector3D=volmdlr.Y3D,
+               ax=None, color='k'):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -4184,12 +4185,12 @@ class ArcEllipse3D(Edge):
         y = []
         for i in range(30):
             p = self.point_at_abscissa(i / (29.) * l)
-            xi, yi = p.plane_projection2d(volmdlr.X3D, volmdlr.Y3D)
+            xi, yi = p.plane_projection2d(x3d, y3d)
             x.append(xi)
             y.append(yi)
         ax.plot(x, y, color=color)
-
         return ax
+    
 
     def FreeCADExport(self, name, ndigits=6):
         xs, ys, zs = round(1000 * self.start, ndigits).vector
