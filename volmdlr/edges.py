@@ -740,11 +740,7 @@ class BSplineCurve2D(Edge):
             
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-<<<<<<< HEAD
-            if z.fun < abs_tol:
-=======
             if z.fun < abs_tol: 
->>>>>>> dev
                 return True
         return False
 
@@ -3847,11 +3843,7 @@ class Arc3D(Edge):
 
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,length_]))
-<<<<<<< HEAD
-            if z.fun < abs_tol:
-=======
             if z.fun < abs_tol: 
->>>>>>> dev
                 return True
         return False
 
