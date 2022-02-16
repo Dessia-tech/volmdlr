@@ -763,7 +763,7 @@ class LineSegment2D(LineSegment):
     Define a line segment limited by two points
     """
 
-    def __init__(self, start, end, *, name=''):
+    def __init__(self, start:volmdlr.Point2D, end:volmdlr.Point2D, *, name:str=''):
         if start == end:
             raise NotImplementedError
         Edge.__init__(self, start, end, name=name)
@@ -783,6 +783,13 @@ class LineSegment2D(LineSegment):
         if self.__class__.__name__ != other_object.__class__.__name__:
             return False
         return self.start == other_object.start and self.end == other_object.end
+
+    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
+        return {'object_class': 'volmdlr.edges.LineSegment2D',
+                'name': self.name,
+                'start': self.start.to_dict(),
+                'end': self.end.to_dict()
+                } 
 
     def length(self):
         return self.end.point_distance(self.start)
@@ -2150,6 +2157,13 @@ class LineSegment3D(LineSegment):
         zmax = max(self.start.z, self.end.z)
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+
+    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
+        return {'object_class': 'volmdlr.edges.LineSegment3D',
+                'name': self.name,
+                'start': self.start.to_dict(),
+                'end': self.end.to_dict()
+                }
 
     def length(self):
         return self.end.point_distance(self.start)

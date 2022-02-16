@@ -1446,6 +1446,12 @@ class Basis2D(Basis):
 
     vectors = property(_get_vectors)
 
+    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):        
+        return {'object_class': 'volmdlr.core.Basis2D',
+                'name': self.name,
+                'u': self.u.to_dict(),
+                'v': self.v.to_dict()
+                }
 
     def to_frame(self, origin:Point3D) -> 'Frame3D':
         return Frame2D(origin, self.u, self.v)
@@ -1576,6 +1582,14 @@ class Basis3D(Basis):
 
     def _get_vectors(self):
         return (self.u, self.v, self.w)
+
+    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
+        return {'object_class': 'volmdlr.core.Basis3D',
+                'name': self.name,
+                'u': self.u.to_dict(),
+                'v': self.v.to_dict(),
+                'w': self.w.to_dict()
+                }
 
     vectors = property(_get_vectors)
 
@@ -1744,6 +1758,14 @@ class Frame2D(Basis2D):
                        Vector2D(M[:, 0]),
                        Vector2D(M[:, 1]))
 
+    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
+        return {'object_class': 'volmdlr.core.Frame2D',
+                'name': self.name,
+                'origin': self.origin.to_dict(),
+                'u': self.u.to_dict(),
+                'v': self.v.to_dict()
+                }
+
     def basis(self):
         return Basis2D(self.u, self.v)
 
@@ -1863,6 +1885,15 @@ class Frame3D(Basis3D):
         to be equalized at a given tolerance
         """
         return 0
+
+    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
+        return {'object_class': 'volmdlr.core.Frame3D',
+                'name': self.name,
+                'origin': self.origin.to_dict(),
+                'u': self.u.to_dict(),
+                'v': self.v.to_dict(),
+                'w': self.w.to_dict()
+                }
 
     def basis(self):
         return Basis3D(self.u, self.v, self.w)
