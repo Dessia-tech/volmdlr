@@ -123,15 +123,15 @@ class Line(dc.DessiaObject):
         else:
             raise IndexError
 
-    def unit_direction_vector(self, abscissa=0.):
+    def unit_direction_vector(self, *args, **kwargs):
         u = self.direction_vector()
         u.normalize()
         return u
 
-    def direction_vector(self, abscissa=0.):
+    def direction_vector(self, *args, **kwargs):
         return self.point2 - self.point1
 
-    def normal_vector(self, abscissa=0.):
+    def normal_vector(self, *args, **kwargs):
         return self.direction_vector().normal_vector()
 
     def unit_normal_vector(self, abscissa=0.):
@@ -196,13 +196,13 @@ class LineSegment(Edge):
 
         return u
 
-    def direction_vector(self, s=0):
+    def direction_vector(self, *args, **kwargs):
         '''
         '''
         return self.unit_direction_vector()
         # return self.end - self.start
 
-    def normal_vector(self, abscissa=0.):
+    def normal_vector(self, *args, **kwargs):
         return self.unit_direction_vector().normal_vector()
 
     def point_projection(self, point):
@@ -3487,9 +3487,10 @@ class Arc3D(Edge):
                       pivot='tip', color=color)
         return ax
 
-    def plot2d(self, center=volmdlr.O3D,
-               x3d=volmdlr.X3D, y3D=volmdlr.Y3D,
+    def plot2d(self, center:volmdlr.Point3D=volmdlr.O3D,
+               x3d:volmdlr.Vector3D=volmdlr.X3D, y3d:volmdlr.Vector3D=volmdlr.Y3D,
                ax=None, color='k'):
+        
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -3502,7 +3503,7 @@ class Arc3D(Edge):
         y = []
         for i in range(30):
             p = self.point_at_abscissa(i / (29.) * l)
-            xi, yi = p.plane_projection2d(center, volmdlr.X3D, volmdlr.Y3D)
+            xi, yi = p.plane_projection2d(center, x3d, y3d)
             x.append(xi)
             y.append(yi)
         ax.plot(x, y, color=color)
