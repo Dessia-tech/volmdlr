@@ -3599,6 +3599,9 @@ class BSplineSurface3D(Surface3D):
 
             grid2d_direction = (bsplines_new[0].rectangular_cut(0,1,0,1).pair_with(bsplines_new[1].rectangular_cut(0,1,0,1)))[1]
 
+        else:
+            xmin, xmax, ymin, ymax = [0]*len(bsplines_new), [1]*len(bsplines_new), [0]*len(bsplines_new), [1]*len(bsplines_new)
+
         # grid3d
         points3d = []
         for i, bspline in enumerate(bsplines_new):
