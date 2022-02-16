@@ -376,7 +376,7 @@ class Vector2D(Vector):
     def approx_hash(self):
         return round(1e6*(self.x+self.y))
     
-    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         return {'object_class':'volmdlr.Vector2D',
                 'x': self.x, 'y': self.y,
                 'name': self.name}
@@ -566,7 +566,7 @@ class Point2D(Vector2D):
         return Point2D(self.x / value,
                        self.y / value)
 
-    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         return {'object_class':'volmdlr.Point2D',
                 'x': self.x, 'y': self.y,
                 'name': self.name}
@@ -905,7 +905,7 @@ class Vector3D(Vector):
     def approx_hash(self):
         return round(1e6*(self.x+self.y+self.z))
 
-    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         return {'object_class':'volmdlr.Vector3D',
                 'x': self.x, 'y': self.y, 'z': self.z,
                 'name': self.name}
@@ -1182,7 +1182,7 @@ class Point3D(Vector3D):
     def copy(self, deep=True, memo=None):
         return Point3D(self.x, self.y, self.z)
 
-    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         return {'object_class':'volmdlr.Point3D',
                 'x': self.x, 'y': self.y, 'z': self.z,
                 'name': self.name}
@@ -1446,7 +1446,7 @@ class Basis2D(Basis):
 
     vectors = property(_get_vectors)
 
-    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):        
+    def to_dict(self, *args, **kwargs):        
         return {'object_class': 'volmdlr.core.Basis2D',
                 'name': self.name,
                 'u': self.u.to_dict(),
@@ -1583,7 +1583,7 @@ class Basis3D(Basis):
     def _get_vectors(self):
         return (self.u, self.v, self.w)
 
-    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         return {'object_class': 'volmdlr.core.Basis3D',
                 'name': self.name,
                 'u': self.u.to_dict(),
@@ -1758,7 +1758,7 @@ class Frame2D(Basis2D):
                        Vector2D(M[:, 0]),
                        Vector2D(M[:, 1]))
 
-    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         return {'object_class': 'volmdlr.core.Frame2D',
                 'name': self.name,
                 'origin': self.origin.to_dict(),
@@ -1886,7 +1886,7 @@ class Frame3D(Basis3D):
         """
         return 0
 
-    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         return {'object_class': 'volmdlr.core.Frame3D',
                 'name': self.name,
                 'origin': self.origin.to_dict(),
