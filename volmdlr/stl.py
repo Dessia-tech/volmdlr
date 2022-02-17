@@ -284,7 +284,7 @@ class Stl(dc.DessiaObject):
             points_normals[key] = point_normal
             try :
                 point_normal.normalize()
-            except ZeroDivisionError: 
+            except ZeroDivisionError:
                 point_normal = value[0]
                 points_normals[key] = point_normal
                 point_normal.normalize()
