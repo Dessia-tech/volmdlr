@@ -9,7 +9,7 @@ MAX_ERROR_BY_TYPE = {
                      'no-member': 138,
                      'inconsistent-return-statements': 108,
                      'unused-variable': 86,
-                     'arguments-differ': 85,
+                     'arguments-differ': 87,
                      'too-many-locals': 82,
                      'unused-argument': 70,
                      'too-many-arguments': 64,

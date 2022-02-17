@@ -4321,7 +4321,7 @@ class Triangle3D(PlaneFace3D):
         done = False
         while not done :
             triangles2d = []
-            for t, subtri in enumerate(sub_triangles2d) :
+            for subtri in sub_triangles2d :
                 ls_length = [ls.length() for ls in subtri.line_segments]
                 ls_max = max(ls_length)
                 
@@ -4607,7 +4607,7 @@ class CylindricalFace3D(Face3D):
             # Find the closest one
             
             poly1 = self.surface2d.outer_contour.to_polygon()
-            d1, new_pt1_2d = poly1.point_border_distance(pt1_2d,
+            _, new_pt1_2d = poly1.point_border_distance(pt1_2d,
                                                          return_other_point=True)
             pt1 = volmdlr.Point3D(r1 * math.cos(new_pt1_2d[0]),
                                   r1 * math.sin(new_pt1_2d[0]),
@@ -4618,7 +4618,7 @@ class CylindricalFace3D(Face3D):
             # Find the closest one
             
             poly2 = other_cyl.surface2d.outer_contour.to_polygon()
-            d2, new_pt2_2d = poly2.point_border_distance(pt2_2d,
+            _, new_pt2_2d = poly2.point_border_distance(pt2_2d,
                                                          return_other_point=True)
             pt2 = volmdlr.Point3D(r2 * math.cos(new_pt2_2d[0]),
                                   r2 * math.sin(new_pt2_2d[0]),
@@ -4702,7 +4702,7 @@ class CylindricalFace3D(Face3D):
             # Find the closest one
 
             poly1 = self.surface2d.outer_contour.to_polygon()
-            d1, new_pt1_2d = poly1.point_border_distance(pt1_2d,
+            _, new_pt1_2d = poly1.point_border_distance(pt1_2d,
                                                          return_other_point=True)
             pt1 = volmdlr.Point3D(r * math.cos(new_pt1_2d[0]),
                                   r * math.sin(new_pt1_2d[0]),
@@ -4712,7 +4712,7 @@ class CylindricalFace3D(Face3D):
         if not (planeface.surface2d.outer_contour.point_belongs(pt2_2d)):
             # Find the closest one
             poly2 = planeface.surface2d.outer_contour.to_polygon()
-            d2, new_pt2_2d = poly2.point_border_distance(pt2_2d,
+            _, new_pt2_2d = poly2.point_border_distance(pt2_2d,
                                                          return_other_point=True)
             pt2 = volmdlr.Point2D(new_pt2_2d[0], new_pt2_2d[1])
             p2 = pt2.to_3d(pf1, u, v)
@@ -4999,7 +4999,7 @@ class ToroidalFace3D(Face3D):
             # Find the closest one
 
             poly1 = self.surface2d.outer_contour.to_polygon()
-            d1, new_pt1_2d = poly1.point_border_distance(pt1_2d,
+            _, new_pt1_2d = poly1.point_border_distance(pt1_2d,
                                                         return_other_point=True)
 
             p1 = self.surface3d.point2d_to_3d(volmdlr.Point2D(new_pt1_2d[0],
@@ -5009,7 +5009,7 @@ class ToroidalFace3D(Face3D):
             # Find the closest one
 
             poly2 = other_tore.surface2d.outer_contour.to_polygon()
-            d2, new_pt2_2d = poly2.point_border_distance(pt2_2d,
+            _, new_pt2_2d = poly2.point_border_distance(pt2_2d,
                                                         return_other_point=True)
 
             p2 = other_tore.surface3d.point2d_to_3d(volmdlr.Point2D(new_pt2_2d[0],
@@ -5034,7 +5034,7 @@ class ToroidalFace3D(Face3D):
         n2 = self.normal
         u2 = self.surface3d.frame.u
         v2 = self.surface3d.frame.v
-        frame2 = volmdlr.Frame3D(self.center, u2, v2, n2)
+        # frame2 = volmdlr.Frame3D(self.center, u2, v2, n2)
         # start2 = self.points2d_to3d([[min_theta2, min_phi2]], R2, r2, frame2)
 
         w = self.center - cyl.center
@@ -5139,7 +5139,7 @@ class ToroidalFace3D(Face3D):
         if not self.surface2d.outer_contour.point_belongs(pt2_2d):
             # Find the closest one
             poly2 = self.surface2d.outer_contour.to_polygon()
-            d2, new_pt2_2d = poly2.point_border_distance(pt2_2d,
+            _, new_pt2_2d = poly2.point_border_distance(pt2_2d,
                                                         return_other_point=True)
             
             p2 = self.surface3d.point2d_to_3d(volmdlr.Point2D(new_pt2_2d[0],
@@ -5148,7 +5148,7 @@ class ToroidalFace3D(Face3D):
         if not cyl.surface2d.outer_contour.point_belongs(pt1_2d):
             # Find the closest one
             poly1 = cyl.surface2d.outer_contour.to_polygon()
-            d1, new_pt1_2d = poly1.point_border_distance(pt1_2d,
+            _, new_pt1_2d = poly1.point_border_distance(pt1_2d,
                                                         return_other_point=True)
 
             pt1 = volmdlr.Point3D(r * math.cos(new_pt1_2d[0]),
@@ -5183,7 +5183,7 @@ class ToroidalFace3D(Face3D):
         n1 = self.normal
         u1 = self.surface3d.frame.u
         v1 = self.surface3d.frame.v
-        frame1 = volmdlr.Frame3D(self.center, u1, v1, n1)
+        # frame1 = volmdlr.Frame3D(self.center, u1, v1, n1)
         # start1 = self.points2d_to3d([[min_theta1, min_phi1]], R1, r1, frame1)
 
         w = self.center - pf1
@@ -5246,7 +5246,7 @@ class ToroidalFace3D(Face3D):
         if not self.surface2d.outer_contour.point_belongs(pt1_2d):
             # Find the closest one
             poly1 = self.surface2d.outer_contour.to_polygon()
-            d1, new_pt1_2d = poly1.point_border_distance(pt1_2d,
+            _, new_pt1_2d = poly1.point_border_distance(pt1_2d,
                                                          return_other_point=True)
 
             p1 = self.surface3d.point2d_to_3d(volmdlr.Point2D(new_pt1_2d[0],
@@ -5255,7 +5255,7 @@ class ToroidalFace3D(Face3D):
         if not planeface.surface2d.outer_contour.point_belongs(pt2_2d):
             # Find the closest one
             poly2 = planeface.surface2d.outer_contour.to_polygon()
-            d2, new_pt2_2d = poly2.point_border_distance(pt2_2d,
+            _, new_pt2_2d = poly2.point_border_distance(pt2_2d,
                                                          return_other_point=True)
 
             p2 = volmdlr.Point2D(new_pt2_2d[0],new_pt2_2d[1]).to_3d(pf1, u, v)
