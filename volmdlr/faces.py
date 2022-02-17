@@ -2558,6 +2558,16 @@ class BSplineSurface3D(Surface3D):
         ''' 
         convert a point2d from the parametric to the dimensioned frame
         '''
+
+        #Check if the 0<point2d.x<1 and 0<point2d.y<1
+        if point2d.x<0:
+           point2d.x=0
+        elif point2d.x>1:
+            point2d.x=1
+        if point2d.y<0:
+            point2d.y=0
+        elif point2d.y>1:
+            point2d.y=1
         
         if (points_x, points_y, xmin, xmax, ymin, ymax) in self._grids2d:
             points_2d = self._grids2d[points_x, points_y, xmin, xmax, ymin, ymax]
