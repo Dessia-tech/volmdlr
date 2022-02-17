@@ -384,6 +384,15 @@ class Vector2D(Vector):
             dict_['name']: self.name
         return dict_
 
+    @classmethod
+    def dict_to_object(cls, dict_):
+        if 'name' in dict_:
+            name = dict_['name']
+        else:
+            name = ''
+            
+        return Vector2D(dict_['x'], dict_['y'], name)
+
     def copy(self, deep=True, memo=None):
         return self.__class__(self.x, self.y)
 
@@ -576,6 +585,14 @@ class Point2D(Vector2D):
             dict_['name']: self.name
         return dict_
 
+    @classmethod
+    def dict_to_object(cls, dict_):
+        if 'name' in dict_:
+            name = dict_['name']
+        else:
+            name = ''
+            
+        return Point2D(dict_['x'], dict_['y'], name)
 
     def to_3d(self, plane_origin, vx, vy):
         return Point3D(plane_origin.x + vx.x*self.x + vy.x*self.y,
@@ -922,7 +939,12 @@ class Vector3D(Vector):
 
     @classmethod
     def dict_to_object(cls, dict_):
-        return Vector3D(dict_['x'], dict_['y'], dict_['z'], dict_['name'])
+        if 'name' in dict_:
+            name = dict_['name']
+        else:
+            name = ''
+            
+        return Vector3D(dict_['x'], dict_['y'], dict_['z'], name)
 
 
     def dot(self, other_vector):
@@ -1204,7 +1226,12 @@ class Point3D(Vector3D):
 
     @classmethod
     def dict_to_object(cls, dict_):
-        return Point3D(dict_['x'], dict_['y'], dict_['z'], dict_['name'])
+        if 'name' in dict_:
+            name = dict_['name']
+        else:
+            name = ''
+            
+        return Point3D(dict_['x'], dict_['y'], dict_['z'], name)
 
     def plot(self, ax=None, color='k', alpha=1, marker='o'):
 
