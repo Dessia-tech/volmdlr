@@ -2727,9 +2727,11 @@ class BSplineSurface3D(Surface3D):
 
         xmin, xmax, ymin, ymax = 0, 1, 0, 1
 
-        linesegment2d_with_dimension = volmdlr.edges.LineSegment2D(self.point2d_parametric_to_dimension(linesegment2d.start, points_x, points_y, xmin, xmax, ymin, ymax), self.point2d_parametric_to_dimension(linesegment2d.end, points_x, points_y, xmin, xmax, ymin, ymax))
+        points = linesegment2d.discretization_points(20)
+        points_dim = [self.point2d_parametric_to_dimension(p, points_x, points_y, xmin, xmax, ymin, ymax) for p in range(points)]
 
-        return linesegment2d_with_dimension
+        return [vme.BSplineCurve2D.from_points_interpolation(
+                points_dim, max(self.degree_u, self.degree_v))]
 
 
     def linesegment3d_to_2d_with_dimension(self, linesegment3d, points_x, points_y):
