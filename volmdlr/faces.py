@@ -2858,8 +2858,8 @@ class BSplineSurface3D(Surface3D):
         compute the arc2d of a arc3d, on a Bspline surface, in the dimensioned frame
         '''
 
-        arc2d = self.arc3d_to_2d(arc3d)[0] #it's a bsplinecurve2d
-        arc2d_with_dimension = self.bsplinecurve2d_parametric_to_dimension(arc2d, points_x, points_y)
+        bsplinecurve2d = self.arc3d_to_2d(arc3d)[0] #it's a bsplinecurve2d
+        arc2d_with_dimension = self.bsplinecurve2d_parametric_to_dimension(bsplinecurve2d, points_x, points_y)
 
         return arc2d_with_dimension #it's a bsplinecurve2d-dimension
 
