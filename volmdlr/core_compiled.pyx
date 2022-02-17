@@ -377,10 +377,12 @@ class Vector2D(Vector):
         return round(1e6*(self.x+self.y))
     
     def to_dict(self, *args, **kwargs):
-        return {'object_class':'volmdlr.Vector2D',
-                'x': self.x, 'y': self.y,
-                'name': self.name}
-
+        dict_ = {'object_class':'volmdlr.Vector2D',
+                'x': round(self.x, 6),
+                'y': round(self.y, 6)}
+        if self.name:
+            dict_['name']: self.name
+        return dict_
 
     def copy(self, deep=True, memo=None):
         return self.__class__(self.x, self.y)
@@ -567,9 +569,13 @@ class Point2D(Vector2D):
                        self.y / value)
 
     def to_dict(self, *args, **kwargs):
-        return {'object_class':'volmdlr.Point2D',
-                'x': self.x, 'y': self.y,
-                'name': self.name}
+        dict_ = {'object_class':'volmdlr.Point2D',
+                'x': round(self.x, 6),
+                'y': round(self.y, 6)}
+        if self.name:
+            dict_['name']: self.name
+        return dict_
+
 
     def to_3d(self, plane_origin, vx, vy):
         return Point3D(plane_origin.x + vx.x*self.x + vy.x*self.y,
@@ -904,11 +910,15 @@ class Vector3D(Vector):
 
     def approx_hash(self):
         return round(1e6*(self.x+self.y+self.z))
-
+    
     def to_dict(self, *args, **kwargs):
-        return {'object_class':'volmdlr.Vector3D',
-                'x': self.x, 'y': self.y, 'z': self.z,
-                'name': self.name}
+        dict_ = {'object_class':'volmdlr.Vector3D',
+                'x': round(self.x, 6),
+                'y': round(self.y, 6),
+                'z': round(self.z, 6)}
+        if self.name:
+            dict_['name']: self.name
+        return dict_
 
     @classmethod
     def dict_to_object(cls, dict_):
@@ -1183,9 +1193,13 @@ class Point3D(Vector3D):
         return Point3D(self.x, self.y, self.z)
 
     def to_dict(self, *args, **kwargs):
-        return {'object_class':'volmdlr.Point3D',
-                'x': self.x, 'y': self.y, 'z': self.z,
-                'name': self.name}
+        dict_ = {'object_class':'volmdlr.Point3D',
+                'x': round(self.x, 6),
+                'y': round(self.y, 6),
+                'z': round(self.z, 6)}
+        if self.name:
+            dict_['name']: self.name
+        return dict_
 
 
     @classmethod
