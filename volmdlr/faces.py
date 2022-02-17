@@ -2536,7 +2536,7 @@ class BSplineSurface3D(Surface3D):
 
         #Check if the 0<point2d.x<1 and 0<point2d.y<1
         if point2d.x<0:
-           point2d.x=0
+            point2d.x=0
         elif point2d.x>1:
             point2d.x=1
         if point2d.y<0:
