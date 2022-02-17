@@ -1179,13 +1179,13 @@ class Contour2D(Contour, Wire2D):
                     hasattr(prim, 'tangent'):
                 vector1 = prim.tangent(0.5)
             else:
-                vector1 = prim.unit_direction_vector()
+                vector1 = prim.unit_direction_vector(0.5)
 
             if not hasattr(primitive, 'unit_direction_vector') and \
                     hasattr(primitive, 'tangent'):
                 vector2 = primitive.tangent(0.5)
             else:
-                vector2 = primitive.unit_direction_vector()
+                vector2 = primitive.unit_direction_vector(0.5)
             if vector1.is_colinear_to(vector2):
                 mid_point = primitive.middle_point()
                 if self.point_over_contour(mid_point, tol):
@@ -1392,6 +1392,7 @@ class Contour2D(Contour, Wire2D):
             raise NotImplementedError(
                 '{} intersections not supported yet'.format(
                     len(intersections)))
+
         points_intersections = [point for point, prim in intersections]
         sorted_points = line.sort_points_along_line(points_intersections)
         list_contours = []

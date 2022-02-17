@@ -562,6 +562,7 @@ class BSplineCurve2D(Edge):
         
         if res.fun > 1e-4:
             print('distance =', res.cost)
+            print('res.fun:', res.fun)
             ax = self.plot()
             point2d.plot(ax=ax)
             best_point = self.point_at_abscissa(res.x)
@@ -582,11 +583,21 @@ class BSplineCurve2D(Edge):
         return cls.from_geomdl_curve(curve)
 
     def straight_line_area(self):
-        # l = self.length()
-        points = self.polygon_points()
-        polygon = volmdlr.wires.ClosedPolygon2D(points)
+        points = self.polygon_points(100)
+        x = [point.x for point in points]
+        y = [point.y for point in points]
+        x1 = [x[-1]] + x[0:-1]
+        y1 = [y[-1]] + y[0:-1]
+        return 0.5 * abs(sum([i * j for i, j in zip(x, y1)])
+                         - sum([i * j for i, j in zip(y, x1)]))
 
-        return polygon.area()
+    def straight_line_center_of_mass(self):
+        polygon_points = self.polygon_points(100)
+        cog = volmdlr.O2D
+        for point in polygon_points:
+            cog += point
+        cog = cog / len(polygon_points)
+        return cog
 
     def plot(self, ax=None, color='k', alpha=1, plot_points=False):
         if ax is None:
@@ -637,12 +648,30 @@ class BSplineCurve2D(Edge):
                 p.translation(offset, copy=False)
 
     def line_intersections(self, line2d: Line2D):
-        polygon_points = self.polygon_points(50)
-        intersections = []
+        polygon_points = self.polygon_points(200)
+        list_intersections = []
+        length = self.length()
+        initial_abscissa = 0
         for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
-            l = LineSegment2D(p1, p2)
-            intersections.extend(l.line_intersections(line2d))
-        return intersections
+            linesegment = LineSegment2D(p1, p2)
+            intersections = linesegment.line_intersections(line2d)
+            initial_abscissa += linesegment.length()
+            if intersections:
+                if initial_abscissa < length * 0.1:
+                    list_abcissas = [initial_abscissa * n for n in
+                                     npy.linspace(0, 1, 100)]
+                else:
+                    list_abcissas = [initial_abscissa * n for n in
+                                     npy.linspace(0.9, 1, 100)]
+                distance = npy.inf
+                for abscissa in list_abcissas:
+                    point_in_curve = self.point_at_abscissa(abscissa)
+                    dist = point_in_curve.point_distance(intersections[0])
+                    if dist < distance:
+                        distance = dist
+                        intersection = point_in_curve
+                list_intersections.append(intersection)
+        return list_intersections
 
     def line_crossings(self, line2d: Line2D):
         polygon_points = self.polygon_points(50)
