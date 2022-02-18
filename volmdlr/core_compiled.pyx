@@ -363,7 +363,7 @@ class Vector2D(Vector):
         """
         return 0
 
-    def __eq__(self, other_vector):
+    def _data_eq__(self, other_vector):
         return self.is_close(other_vector)
 
     def is_close(self, other_vector, tol = 1e-6):
@@ -914,7 +914,7 @@ class Vector3D(Vector):
         
         return 0
     
-    def __eq__(self, other_vector:'Vector3D'):
+    def _data_eq__(self, other_vector:'Vector3D'):
         return self.is_close(other_vector)
 
     def is_close(self, other_vector, tol=1e-6):
@@ -1466,7 +1466,7 @@ class Basis2D(Basis):
         self.v = v
         self.name = name
 
-    def __eq__(self, other_basis):
+    def _data_eq__(self, other_basis):
         if other_basis.__class__.__name__ != self.__class__.__name__:
             return False
         all_equal = all([other_vector == vector\
@@ -1573,7 +1573,7 @@ class Basis3D(Basis):
         self.w = w
         self.name = name
 
-    def __eq__(self, other_basis):
+    def _data_eq__(self, other_basis):
         if other_basis.__class__.__name__ != self.__class__.__name__:
             return False
 
@@ -1872,7 +1872,7 @@ class Frame3D(Basis3D):
         """
         return 0
 
-    def __eq__(self, other_frame):
+    def _data_eq__(self, other_frame):
         if other_frame.__class__.__name__ != self.__class__.__name__:
             return False
 
