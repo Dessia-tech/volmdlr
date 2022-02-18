@@ -2883,13 +2883,14 @@ class BSplineSurface3D(Surface3D):
 
         [points_x, points_y, xmin, xmax, ymin, ymax] = self._grids2d[0]
 
-        start = self.point2d_with_dimension_to_parametric_frame(arc2d.start, points_x, points_y, xmin, xmax, ymin, ymax)
-        interior = self.point2d_with_dimension_to_parametric_frame(arc2d.interior, points_x, points_y, xmin, xmax, ymin, ymax)
-        end = self.point2d_with_dimension_to_parametric_frame(arc2d.end, points_x, points_y, xmin, xmax, ymin, ymax)
+        number_points = math.ceil(arc2d.angle * 7) + 1
+        l = arc2d.length()
 
-        arc2d = volmdlr.edges.Arc2D(start, interior, end)
+        points = [self.point2d_with_dimension_to_parametric_frame(arc2d.point_at_abscissa(
+                i * l / (number_points - 1)), points_x, points_y, xmin, xmax, ymin, ymax) for i in range(number_points)]
 
-        return arc2d
+        return vme.BSplineCurve2D.from_points_interpolation(
+                    points, max(self.degree_u, self.degree_v))
 
 
     def arc2d_with_dimension_to_3d(self, arc2d):
