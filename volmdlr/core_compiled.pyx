@@ -378,8 +378,8 @@ class Vector2D(Vector):
     
     def to_dict(self, *args, **kwargs):
         dict_ = {'object_class':'volmdlr.Vector2D',
-                'x': round(self.x, 6),
-                'y': round(self.y, 6)}
+                'x': round(self.x, 7),
+                'y': round(self.y, 7)}
         if self.name:
             dict_['name']: self.name
         return dict_
@@ -579,8 +579,8 @@ class Point2D(Vector2D):
 
     def to_dict(self, *args, **kwargs):
         dict_ = {'object_class':'volmdlr.Point2D',
-                'x': round(self.x, 6),
-                'y': round(self.y, 6)}
+                'x': round(self.x, 7),
+                'y': round(self.y, 7)}
         if self.name:
             dict_['name']: self.name
         return dict_
@@ -930,9 +930,9 @@ class Vector3D(Vector):
     
     def to_dict(self, *args, **kwargs):
         dict_ = {'object_class':'volmdlr.Vector3D',
-                'x': round(self.x, 6),
-                'y': round(self.y, 6),
-                'z': round(self.z, 6)}
+                'x': round(self.x, 7),
+                'y': round(self.y, 7),
+                'z': round(self.z, 7)}
         if self.name:
             dict_['name']: self.name
         return dict_
@@ -1216,9 +1216,9 @@ class Point3D(Vector3D):
 
     def to_dict(self, *args, **kwargs):
         dict_ = {'object_class':'volmdlr.Point3D',
-                'x': round(self.x, 6),
-                'y': round(self.y, 6),
-                'z': round(self.z, 6)}
+                'x': round(self.x, 7),
+                'y': round(self.y, 7),
+                'z': round(self.z, 7)}
         if self.name:
             dict_['name']: self.name
         return dict_
@@ -1488,7 +1488,7 @@ class Basis2D(Basis):
     vectors = property(_get_vectors)
 
     def to_dict(self, *args, **kwargs):        
-        return {'object_class': 'volmdlr.core.Basis2D',
+        return {'object_class': 'volmdlr.Basis2D',
                 'name': self.name,
                 'u': self.u.to_dict(),
                 'v': self.v.to_dict()
@@ -1625,7 +1625,7 @@ class Basis3D(Basis):
         return (self.u, self.v, self.w)
 
     def to_dict(self, *args, **kwargs):
-        return {'object_class': 'volmdlr.core.Basis3D',
+        return {'object_class': 'volmdlr.Basis3D',
                 'name': self.name,
                 'u': self.u.to_dict(),
                 'v': self.v.to_dict(),
@@ -1800,7 +1800,7 @@ class Frame2D(Basis2D):
                        Vector2D(M[:, 1]))
 
     def to_dict(self, *args, **kwargs):
-        return {'object_class': 'volmdlr.core.Frame2D',
+        return {'object_class': 'volmdlr.Frame2D',
                 'name': self.name,
                 'origin': self.origin.to_dict(),
                 'u': self.u.to_dict(),
@@ -1928,7 +1928,7 @@ class Frame3D(Basis3D):
         return 0
 
     def to_dict(self, *args, **kwargs):
-        return {'object_class': 'volmdlr.core.Frame3D',
+        return {'object_class': 'volmdlr.Frame3D',
                 'name': self.name,
                 'origin': self.origin.to_dict(),
                 'u': self.u.to_dict(),
