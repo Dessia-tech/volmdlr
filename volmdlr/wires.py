@@ -353,6 +353,50 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                 intersection_points.append((p, primitive))
         return intersection_points
 
+    def is_start_end_crossings_valid(self, line, intersections, primitive):
+        """
+        :param line: crossing line
+        :param intersections: intersections results
+         for primitive line intersections
+        :param primitive: intersecting primitive
+        :return: None if intersection not a start or
+        end point of a contours primitives, or a volmdlr.Point2D if it is.
+        """
+        primitive_index = self.primitives.index(primitive)
+        point1, point2 = None, None
+        if intersections[0] == primitive.start:
+            point1 = primitive.point_at_abscissa(primitive.length() * 0.01)
+            point2 = self.primitives[primitive_index - 1].point_at_abscissa(
+                self.primitives[primitive_index - 1].length() * .99
+            )
+
+            # point2 = primitive.start + \
+            #          self.primitives[primitive_index - 1].unit_direction_vector(0.5)
+        elif intersections[0] == primitive.end and \
+                primitive != self.primitives[-1]:
+            point1 = primitive.point_at_abscissa(primitive.length() * 0.99)
+            point2 = self.primitives[primitive_index + 1].point_at_abscissa(
+                self.primitives[primitive_index + 1].length() * .01)
+
+            # point2 = primitive.end + \
+            #          self.primitives[primitive_index + 1].unit_direction_vector(0.5)
+        if point1 is not None and point2 is not None:
+            return line.is_between_points(point1, point2)
+        return False
+
+    @staticmethod
+    def is_crossing_start_end_point(intersections, primitive):
+        """
+        :param intersections: intersections results
+         for primitive line intersections
+        :param primitive: intersecting primitive
+        :return: False if intersection not a start or
+        end point of a contours primitives, or True if it is.
+        """
+        if intersections[0] == primitive.start or intersections[0] == primitive.end:
+            return True
+        return False
+
     def line_crossings(self, line: volmdlr.edges.Line2D):
         """
         Calculates valid crossing intersections of a wire and an infinit line
@@ -363,44 +407,21 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         """
         intersection_points = []
         intersection_points_primitives = []
-        for i, primitive in enumerate(self.primitives):
+        for primitive in self.primitives:
             intersections = primitive.line_intersections(line)
-
             if intersections and intersections[0] not in intersection_points:
-                # valid_primitive_intersection = False
-                # if intersections[0] not in intersection_points:
-                #     valid_primitive_intersection = True
-                # else:
-                #     for point, prim in intersection_points_primitives:
-                #         if intersections[0] == point and prim.start != primitive.end and prim.end != primitive.start:
-                #             valid_primitive_intersection = True
-                # if valid_primitive_intersection:
-                if intersections[0] == primitive.start:
-                    current_primitive_vector = primitive.unit_direction_vector(
-                        0.0)
-                    previous_primitive_vector = \
-                        self.primitives[i - 1].unit_direction_vector(1.0)
-                    if not line.is_between_vectors(previous_primitive_vector,
-                                                   current_primitive_vector):
-                        intersection_points.append(intersections[0])
-                        intersection_points_primitives.append((intersections[0],
-                                                               primitive))
-                elif intersections[0] == primitive.end and\
-                        primitive != self.primitives[-1]:
-                    current_primitive_vector = primitive.unit_direction_vector(
-                        1.0)
-                    next_primitive_vector = \
-                        self.primitives[i+1].unit_direction_vector(0.0)
-                    if not line.is_between_vectors(current_primitive_vector,
-                                                   next_primitive_vector):
-                        intersection_points.append(intersections[0])
-                        intersection_points_primitives.append(
-                            (intersections[0],
-                             primitive))
-                else:
+                if not self.is_crossing_start_end_point(intersections,
+                                                        primitive):
                     intersection_points.append(intersections[0])
-                    intersection_points_primitives.append((intersections[0],
-                                                           primitive))
+                    intersection_points_primitives.append(
+                        (intersections[0],
+                         primitive))
+                elif self.is_start_end_crossings_valid(line, intersections,
+                                                       primitive):
+                    intersection_points.append(intersections[0])
+                    intersection_points_primitives.append(
+                        (intersections[0],
+                         primitive))
         return intersection_points_primitives
 
     def wire_intersections(self, wire):
@@ -1158,13 +1179,13 @@ class Contour2D(Contour, Wire2D):
                     hasattr(prim, 'tangent'):
                 vector1 = prim.tangent(0.5)
             else:
-                vector1 = prim.unit_direction_vector()
+                vector1 = prim.unit_direction_vector(0.5)
 
             if not hasattr(primitive, 'unit_direction_vector') and \
                     hasattr(primitive, 'tangent'):
                 vector2 = primitive.tangent(0.5)
             else:
-                vector2 = primitive.unit_direction_vector()
+                vector2 = primitive.unit_direction_vector(0.5)
             if vector1.is_colinear_to(vector2):
                 mid_point = primitive.middle_point()
                 if self.point_over_contour(mid_point, tol):
@@ -1371,6 +1392,7 @@ class Contour2D(Contour, Wire2D):
             raise NotImplementedError(
                 '{} intersections not supported yet'.format(
                     len(intersections)))
+
         points_intersections = [point for point, prim in intersections]
         sorted_points = line.sort_points_along_line(points_intersections)
         list_contours = []
@@ -1398,7 +1420,6 @@ class Contour2D(Contour, Wire2D):
             else:
                 list_contours.extend([contour1, contour2])
             cutting_points_counter += 2
-
         return list_contours
 
     def get_pattern(self):
@@ -1860,7 +1881,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
 
         Contour2D.__init__(self, self.line_segments, name)
 
-    def copy(self, deep=True, memo=None):
+    def copy(self, *args, **kwargs):
         points = [p.copy() for p in self.points]
         return ClosedPolygon2D(points, self.name)
 
@@ -3077,7 +3098,7 @@ class Circle2D(Contour2D):
                                   edge_style=edge_style,
                                   surface_style=surface_style)
 
-    def copy(self, deep=True, memo=None):
+    def copy(self, *args, **kwargs):
         return Circle2D(self.center.copy(), self.radius)
 
     def point_at_abscissa(self, curvilinear_abscissa):
@@ -3367,7 +3388,7 @@ class Contour3D(Contour, Wire3D):
                 point.frame_mapping(frame, side, copy=False)
 
     def copy(self, deep=True, memo=None):
-        new_edges = [edge.copy() for edge in self.primitives]
+        new_edges = [edge.copy(deep=deep, memo=memo) for edge in self.primitives]
         if self.point_inside_contour is not None:
             new_point_inside_contour = self.point_inside_contour.copy()
         else:
@@ -3921,7 +3942,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                 lines.append(volmdlr.edges.LineSegment3D(p1, p2))
         return lines
 
-    def copy(self, deep=True, memo=None):
+    def copy(self, *args, **kwargs):
         points = [p.copy() for p in self.points]
         return ClosedPolygon2D(points, self.name)
 
