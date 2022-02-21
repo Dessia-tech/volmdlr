@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 import dessia_common as dc
+import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
 # import volmdlr.stl as vmstl
@@ -832,6 +833,7 @@ class VolumeModel(dc.DessiaObject):
                           'faces']
     _non_hash_attributes = ['name', 'shells', 'bounding_box', 'contours',
                           'faces']
+    _dessia_methods = ['to_stl_model']
     """
     :param groups: A list of two element tuple. The first element is a string naming the group and the second element is a list of primitives of the group
     """
@@ -868,13 +870,19 @@ class VolumeModel(dc.DessiaObject):
             equ = equ and p1 == p2
         return equ
 
-    def volume(self):
+    def volume(self) -> float:
+        """
+        Return the sum of volumes of the primitives
+        """
         volume = 0
         for primitive in self.primitives:
             volume += primitive.volume()
         return volume
 
     def rotation(self, center, axis, angle, copy=True):
+        """
+        Rotate the whole model around a center and an axis of a given angle
+        """
         if copy:
             new_primitives = [
                 primitive.rotation(center, axis, angle, copy=True) for
@@ -909,10 +917,16 @@ class VolumeModel(dc.DessiaObject):
             self.bounding_box = self._bounding_box()
 
     def copy(self, deep=True, memo=None):
+        """
+        Specific copy
+        """
         new_primitives = [primitive.copy(deep=deep, memo=memo) for primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
 
-    def _bounding_box(self):
+    def _bounding_box(self) -> BoundingBox:
+        """
+        Computes the bounding box of the model
+        """
         bboxes = []
         points = []
         for primitive in self.primitives:
@@ -1177,23 +1191,34 @@ class VolumeModel(dc.DessiaObject):
             return filename
 
 
-    def to_stl(self, filepath):
+    def to_stl_model(self):
         mesh = self.primitives[0].triangulation()
         for primitive in self.primitives[1:]:
             mesh.merge_mesh(primitive.triangulation())
         stl = mesh.to_stl()
-        stl.save_to_binary_file(filepath)
+        return stl
+    
+    def to_stl(self, filepath:str):
+        if not filepath.endswith('.stl'):
+            filepath += '.stl'
+        with open(filepath, 'wb') as file:
+            self.to_stl_stream(file)
         
     
-    def to_step(self, filepath):
+    def to_stl_stream(self, stream:dcf.BinaryFile):
+        stl = self.to_stl_model()
+        stl.save_to_stream(stream)
+        return stream
         
+    def to_step(self, filepath:str):
+        if not (filepath.endswith('.step') or filepath.endswith('.stp')):
+            filepath += '.step'
+        with open(filepath, 'w') as file:
+            self.to_step_stream(file)
         
-        if isinstance(filepath, str):
-            if not (filepath.endswith('.step') or filepath.endswith('.stp')):
-                filepath += '.step'
-            file = open(filepath, 'w')
-        else:
-            file = filepath
+
+        
+    def to_step_stream(self, stream:dcf.StringFile):
         
         step_content = STEP_HEADER.format(name=self.name,
                                           filename='',
@@ -1286,9 +1311,8 @@ class VolumeModel(dc.DessiaObject):
 
         step_content += STEP_FOOTER
         
-        file.write(step_content)
-        if isinstance(filepath, str):
-            file.close()
+        stream.write(step_content)
+
 
 class MovingVolumeModel(VolumeModel):
     def __init__(self, primitives, step_frames, name=''):
