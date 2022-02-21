@@ -602,9 +602,10 @@ class BoundingBox(dc.DessiaObject):
         self.ymax = ymax
         self.zmin = zmin
         self.zmax = zmax
+        self.name = name
         
         self.center = volmdlr.Point3D(0.5*(xmin+xmax),0.5*(ymin+ymax),0.5*(zmin+zmax))
-        self.name = name
+
 
     def __hash__(self):
         return sum([hash(p) for p in self.points])
@@ -617,8 +618,17 @@ class BoundingBox(dc.DessiaObject):
                            min(self.zmin, other_bbox.zmin),
                            max(self.zmax, other_bbox.zmax))
 
-    # def __iter__(self):
-    #     return [self.xmin, self.xmax, self.ymin, self.ymax, self.zmin, self.zmax]
+    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
+        return {'object_class': 'volmdlr.edges.BoundingBox',
+                'name': self.name,
+                'xmin': self.xmin,
+                'xmax': self.xmax,
+                'ymin': self.ymin,
+                'ymax': self.ymax,
+                'zmin': self.zmin,
+                'zmax': self.zmax,
+                } 
+
 
     @property
     def points(self):
@@ -899,7 +909,7 @@ class VolumeModel(dc.DessiaObject):
             self.bounding_box = self._bounding_box()
 
     def copy(self, deep=True, memo=None):
-        new_primitives = [primitive.copy() for primitive in self.primitives]
+        new_primitives = [primitive.copy(deep=deep, memo=memo) for primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
 
     def _bounding_box(self):
