@@ -123,15 +123,15 @@ class Line(dc.DessiaObject):
         else:
             raise IndexError
 
-    def unit_direction_vector(self, abscissa=0.):
+    def unit_direction_vector(self, *args, **kwargs):
         u = self.direction_vector()
         u.normalize()
         return u
 
-    def direction_vector(self, abscissa=0.):
+    def direction_vector(self, *args, **kwargs):
         return self.point2 - self.point1
 
-    def normal_vector(self, abscissa=0.):
+    def normal_vector(self, *args, **kwargs):
         return self.direction_vector().normal_vector()
 
     def unit_normal_vector(self, abscissa=0.):
@@ -156,26 +156,20 @@ class Line(dc.DessiaObject):
         return [self.__class__(self.point1, split_point),
                 self.__class__(split_point, self.point2)]
 
-    def is_between_vectors(self, vector1:volmdlr.Vector2D,
-                           vector2: volmdlr.Vector2D):
+    def is_between_points(self, point1: volmdlr.Point2D,
+                          point2: volmdlr.Point2D):
         """
-        Verifies if a line is between two other vectors
-        :param vector1: first vector
-        :type vector1: volmdlr.Vector2D
-        :param vector2: second vector
-        :type vector2: volmdlr.Vector2D
-        returns True is line is between the two given vectors or False if not
+        Verifies if a line is between two points
+        :param point1: first point
+        :type point1: volmdlr.Point2D
+        :param point2: second point
+        :type point2: volmdlr.Point2D
+        returns True is line is between the two given points or False if not
         """
-
-        line_vector = self.unit_direction_vector()
-        line_vector = line_vector.to_vector()
-        cross_vector1_line = vector1.cross(line_vector)
-        cross_line_vector2 = line_vector.cross(vector2)
-        if (cross_vector1_line > 0 and cross_line_vector2 > 0) or \
-                (cross_vector1_line < 0 and cross_line_vector2 < 0):
+        line_segment = LineSegment2D(point1, point2)
+        if line_segment.line_intersections(self):
             return True
         return False
-
 
 class LineSegment(Edge):
     """
@@ -196,13 +190,13 @@ class LineSegment(Edge):
 
         return u
 
-    def direction_vector(self, s=0):
+    def direction_vector(self, *args, **kwargs):
         '''
         '''
         return self.unit_direction_vector()
         # return self.end - self.start
 
-    def normal_vector(self, abscissa=0.):
+    def normal_vector(self, *args, **kwargs):
         return self.unit_direction_vector().normal_vector()
 
     def point_projection(self, point):
@@ -535,11 +529,11 @@ class BSplineCurve2D(Edge):
         tangent = volmdlr.Point2D(tangent[0], tangent[1])
         return tangent
 
-    def unit_direction_vector(self, abcissa: float = 0.0):
-        return self.tangent(abcissa)
+    def unit_direction_vector(self, abscissa: float):
+        return self.tangent(abscissa)
 
     def middle_point(self):
-        return self.point_at_abscissa(0.5)
+        return self.point_at_abscissa(self.length()*0.5)
 
     def abscissa(self, point2d):
         l = self.length()
@@ -568,6 +562,7 @@ class BSplineCurve2D(Edge):
         
         if res.fun > 1e-4:
             print('distance =', res.cost)
+            print('res.fun:', res.fun)
             ax = self.plot()
             point2d.plot(ax=ax)
             best_point = self.point_at_abscissa(res.x)
@@ -588,11 +583,21 @@ class BSplineCurve2D(Edge):
         return cls.from_geomdl_curve(curve)
 
     def straight_line_area(self):
-        # l = self.length()
-        points = self.polygon_points()
-        polygon = volmdlr.wires.ClosedPolygon2D(points)
+        points = self.polygon_points(100)
+        x = [point.x for point in points]
+        y = [point.y for point in points]
+        x1 = [x[-1]] + x[0:-1]
+        y1 = [y[-1]] + y[0:-1]
+        return 0.5 * abs(sum([i * j for i, j in zip(x, y1)])
+                         - sum([i * j for i, j in zip(y, x1)]))
 
-        return polygon.area()
+    def straight_line_center_of_mass(self):
+        polygon_points = self.polygon_points(100)
+        cog = volmdlr.O2D
+        for point in polygon_points:
+            cog += point
+        cog = cog / len(polygon_points)
+        return cog
 
     def plot(self, ax=None, color='k', alpha=1, plot_points=False):
         if ax is None:
@@ -643,15 +648,33 @@ class BSplineCurve2D(Edge):
                 p.translation(offset, copy=False)
 
     def line_intersections(self, line2d: Line2D):
-        polygon_points = self.polygon_points()
-        intersections = []
+        polygon_points = self.polygon_points(200)
+        list_intersections = []
+        length = self.length()
+        initial_abscissa = 0
         for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
-            l = LineSegment2D(p1, p2)
-            intersections.extend(l.line_intersections(line2d))
-        return intersections
+            linesegment = LineSegment2D(p1, p2)
+            intersections = linesegment.line_intersections(line2d)
+            initial_abscissa += linesegment.length()
+            if intersections:
+                if initial_abscissa < length * 0.1:
+                    list_abcissas = [initial_abscissa * n for n in
+                                     npy.linspace(0, 1, 100)]
+                else:
+                    list_abcissas = [initial_abscissa * n for n in
+                                     npy.linspace(0.9, 1, 100)]
+                distance = npy.inf
+                for abscissa in list_abcissas:
+                    point_in_curve = self.point_at_abscissa(abscissa)
+                    dist = point_in_curve.point_distance(intersections[0])
+                    if dist < distance:
+                        distance = dist
+                        intersection = point_in_curve
+                list_intersections.append(intersection)
+        return list_intersections
 
     def line_crossings(self, line2d: Line2D):
-        polygon_points = self.polygon_points()
+        polygon_points = self.polygon_points(50)
         crossings = []
         for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
             l = LineSegment2D(p1, p2)
@@ -763,7 +786,7 @@ class LineSegment2D(LineSegment):
     Define a line segment limited by two points
     """
 
-    def __init__(self, start, end, *, name=''):
+    def __init__(self, start:volmdlr.Point2D, end:volmdlr.Point2D, *, name:str=''):
         if start == end:
             raise NotImplementedError
         Edge.__init__(self, start, end, name=name)
@@ -783,6 +806,13 @@ class LineSegment2D(LineSegment):
         if self.__class__.__name__ != other_object.__class__.__name__:
             return False
         return self.start == other_object.start and self.end == other_object.end
+
+    def to_dict(self, *args, **kwargs):
+        return {'object_class': 'volmdlr.edges.LineSegment2D',
+                'name': self.name,
+                'start': self.start.to_dict(),
+                'end': self.end.to_dict()
+                } 
 
     def length(self):
         return self.end.point_distance(self.start)
@@ -1500,7 +1530,7 @@ class Arc2D(Edge):
                                anticlockwise=anticlockwise,
                                name=self.name)
 
-    def copy(self, deep=True, memo=None):
+    def copy(self, *args, **kwargs):
         return Arc2D(self.start.copy(),
                      self.interior.copy(),
                      self.end.copy())
@@ -1580,7 +1610,7 @@ class FullArc2D(Edge):
         dict_['start_end'] = self.start.to_dict(use_pointers=use_pointers, memo=memo, path=path+'/start_end')
         return dict_
     
-    def copy(self, deep=True, memo=None):
+    def copy(self, *args, **kwargs):
         return FullArc2D(self.center.copy(), self.start.copy())
     
     @classmethod
@@ -2013,7 +2043,7 @@ class Line3D(Line):
             raise ValueError('Point not on curve')
         return Line3D(point1, point2)
 
-    def copy(self, deep=True, memo=None):
+    def copy(self, *args, **kwargs):
         return Line3D(*[p.copy() for p in self.points])
 
     @classmethod
@@ -2150,6 +2180,13 @@ class LineSegment3D(LineSegment):
         zmax = max(self.start.z, self.end.z)
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+
+    def to_dict(self, *args, **kwargs):
+        return {'object_class': 'volmdlr.edges.LineSegment3D',
+                'name': self.name,
+                'start': self.start.to_dict(),
+                'end': self.end.to_dict()
+                }
 
     def length(self):
         return self.end.point_distance(self.start)
@@ -2322,7 +2359,7 @@ class LineSegment3D(LineSegment):
                 Edge.frame_mapping(self, frame, side, copy=False)
                 self.bounding_box = self._bounding_box()
 
-    def copy(self, deep=True, memo=None):
+    def copy(self, *args, **kwargs):
         return LineSegment3D(self.start.copy(), self.end.copy())
 
     def plot(self, ax=None, color='k', alpha=1,
@@ -3473,9 +3510,10 @@ class Arc3D(Edge):
                       pivot='tip', color=color)
         return ax
 
-    def plot2d(self, center=volmdlr.O3D,
-               x3d=volmdlr.X3D, y3D=volmdlr.Y3D,
+    def plot2d(self, center:volmdlr.Point3D=volmdlr.O3D,
+               x3d:volmdlr.Vector3D=volmdlr.X3D, y3d:volmdlr.Vector3D=volmdlr.Y3D,
                ax=None, color='k'):
+        
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -3488,7 +3526,7 @@ class Arc3D(Edge):
         y = []
         for i in range(30):
             p = self.point_at_abscissa(i / (29.) * l)
-            xi, yi = p.plane_projection2d(center, volmdlr.X3D, volmdlr.Y3D)
+            xi, yi = p.plane_projection2d(center, x3d, y3d)
             x.append(xi)
             y.append(yi)
         ax.plot(x, y, color=color)
@@ -3502,7 +3540,7 @@ class Arc3D(Edge):
         return '{} = Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n' \
             .format(name, xs, ys, zs, xi, yi, zi, xe, ye, ze)
 
-    def copy(self, deep=True, memo=None):
+    def copy(self, *args, **kwargs):
         return Arc3D(self.start.copy(), self.interior.copy(), self.end.copy())
 
     def frame_mapping(self, frame, side, copy=True):
@@ -4157,7 +4195,8 @@ class ArcEllipse3D(Edge):
         ax.plot(x, y, z, 'k')
         return ax
 
-    def plot2d(self, x3d, y3D, ax, color='k'):
+    def plot2d(self, x3d:volmdlr.Vector3D=volmdlr.X3D, y3d:volmdlr.Vector3D=volmdlr.Y3D,
+               ax=None, color='k'):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -4170,12 +4209,12 @@ class ArcEllipse3D(Edge):
         y = []
         for i in range(30):
             p = self.point_at_abscissa(i / (29.) * l)
-            xi, yi = p.plane_projection2d(volmdlr.X3D, volmdlr.Y3D)
+            xi, yi = p.plane_projection2d(x3d, y3d)
             x.append(xi)
             y.append(yi)
         ax.plot(x, y, color=color)
-
         return ax
+    
 
     def FreeCADExport(self, name, ndigits=6):
         xs, ys, zs = round(1000 * self.start, ndigits).vector
