@@ -7,6 +7,7 @@ Created on Tue Oct  9 10:50:18 2018
 """
 
 import math
+import numpy as np
 import volmdlr as vm
 import volmdlr.primitives2d as primitives2d
 import volmdlr.primitives3d as primitives3d
@@ -68,16 +69,18 @@ ax3 = rl2D_c2.plot()
 cut_line.plot(ax=ax3, color='red')
 com.plot(color='b', ax=ax3)
 
-cutted_contour1, cutted_contour2  = rl2D_c2.cut_by_line(cut_line)
+cutted_contours = rl2D_c2.cut_by_line(cut_line)
+list_centers_of_mass = [contour.center_of_mass() for contour in cutted_contours]
 
-# for c in cutted_contours:
-com1 = cutted_contour1.center_of_mass()
-com2 = cutted_contour2.center_of_mass()
-
-u1 = cut_line.point_projection(com1)[0] - com1
+u1 = cut_line.point_projection(
+    list_centers_of_mass[0])[0] - list_centers_of_mass[0]
 u1.normalize()
-cutted_contour1.translation(-0.05*u1).plot(ax=ax3, color='g')
-cutted_contour2.translation(+0.05*u1).plot(ax=ax3, color='blue')
+sign = -1
+for contour in cutted_contours:
+    r, g, b = np.random.random(), np.random.random(), np.random.random()
+    color = (r, g, b)
+    contour.translation(sign*0.05*u1).plot(ax=ax3, color=color)
+    sign *= -1
 
 # assert math.isclose(cutted_contours[0].area()+cutted_contours[1].area(),
 #                     rl2D_c2.area(), abs_tol=1e-12)
