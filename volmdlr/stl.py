@@ -194,7 +194,7 @@ class Stl(dc.DessiaObject):
             self.to_stream(file, distance_multiplier=distance_multiplier)
             
             
-    def to_stream(self, stream, distance_multiplier=1000):
+    def save_to_stream(self, stream, distance_multiplier=1000):
         stream.seek(0)
         
         BINARY_HEADER ="80sI"
