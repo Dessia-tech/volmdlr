@@ -9,12 +9,15 @@
 
 import volmdlr as vm
 import numpy as npy
+from volmdlr.models import bspline_face
 
 #%%  BSpline-surface definition 
 
-script = 'bspline_surface_definition.py'
-print('\n## Executing script {}'.format(script))
-exec(open(script).read())
+# script = 'bspline_surface_definition.py'
+# print('\n## Executing script {}'.format(script))
+# exec(open(script).read())
+
+bspline_surface = bspline_face.surface3d
 
 #%% (1) BSpline-surface split - u_split 
 # split the bspline_surface at the input parametric coordinate (u) on the u-direction, into 2 surfaces

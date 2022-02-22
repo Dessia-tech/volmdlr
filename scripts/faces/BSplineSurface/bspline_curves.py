@@ -9,12 +9,15 @@
 
 import volmdlr as vm
 import matplotlib.patches as mpatches
+from volmdlr.models import bspline_face
 
 #%%  BSpline-surface definition 
 
-script = 'bspline_surface_definition.py'
-print('\n## Executing script {}'.format(script))
-exec(open(script).read())
+# script = 'bspline_surface_definition.py'
+# print('\n## Executing script {}'.format(script))
+# exec(open(script).read())
+
+bspline_surface = bspline_face.surface3d
 
 # %% BSpline-curve 2D definition
 
