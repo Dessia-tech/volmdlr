@@ -65,5 +65,5 @@ scripts = [
 
 for script_name in scripts:
     print('\n## Executing script {}'.format(script_name))
-
-    exec(open(script_name).read())
+    with open(script_name) as script:
+        exec(script.read())
