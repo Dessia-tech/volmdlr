@@ -64,6 +64,10 @@ scripts = [
 # 'tore_tore.py'
 
 for script_name in scripts:
+    print(script_name)
+
+for script_name in scripts:
     print('\n## Executing script {}'.format(script_name))
     with open(script_name) as script:
         exec(script.read())
+        # pass
