@@ -12,7 +12,7 @@ import volmdlr.step as vms
 
 # %% Read Step file
 
-files_path = ['../scripts/faces/BSplineSurface/bspline_surface_1.step', '../scripts/faces/BSplineSurface/bspline_surface_2.step']
+files_path = ['bspline_surface_1.step', 'bspline_surface_2.step']
 bspline_faces = []
 
 for file_path in files_path: 
