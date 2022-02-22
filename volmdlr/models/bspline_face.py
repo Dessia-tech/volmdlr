@@ -7,9 +7,9 @@
 
 # %% Librairies
 
+import geomdl
 import volmdlr as vm
 import volmdlr.faces as vmf
-import geomdl
 
 # %% Control points
 
