@@ -1,4 +1,4 @@
-
+import os
 
 scripts = [
             # Core.py
@@ -57,15 +57,15 @@ scripts = [
             # Showcases
             'showcases/simple_shapes.py',
             'showcases/casing.py'
-
             ]
-#  'cyl_cyl.py', 'cyl_pf.py',
-# 'ls3D_ls3D.py', 'sweep_sweep.py', 'tore_cyl.py','tore_pf.py'
-# 'tore_tore.py'
 
+# Testing if all scripts exists before launching them
 for script_name in scripts:
-    print(script_name)
+    if not os.path.isfile(script_name):
+        raise FileNotFoundError(f'Script {script_name} does not exists in CI scripts')
+        print(script_name)
 
+# Executing scripts
 for script_name in scripts:
     print('\n## Executing script {}'.format(script_name))
     with open(script_name) as script:
