@@ -1,4 +1,5 @@
 import os
+import time
 
 scripts = [
             # Core.py
@@ -63,11 +64,16 @@ scripts = [
 for script_name in scripts:
     if not os.path.isfile(script_name):
         raise FileNotFoundError(f'Script {script_name} does not exists in CI scripts')
-        print(script_name)
 
+print('Executing scripts for CI:')
+total_time = time.time()
 # Executing scripts
 for script_name in scripts:
-    print('\n## Executing script {}'.format(script_name))
-    with open(script_name) as script:
+    t = time.time()
+    with open(script_name, 'r', encoding='utf-8') as script:
         exec(script.read())
-        # pass
+    t = time.time() - t
+    print(f'\t-> script{script_name} executed in {round(t, 3)} seconds ')
+    
+total_time = time.time() - total_time
+print(f'Total time for CI scripts: {total_time}')
