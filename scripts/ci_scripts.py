@@ -49,9 +49,9 @@ scripts = [
             'contours/contour_merge_with_2.py',
             'contours/cut_by_line.py',
             # Steps
-            'read_steps.py',
+            'step/read_steps.py',
             # Stl
-            'stl_reading.py',
+            'stl/read_stls.py',
             # Distance
             'distance/arc3D_arc3D.py',
             'distance/arc3D_ls3D.py',
@@ -71,6 +71,7 @@ total_time = time.time()
 top_level_dir = os.getcwd()
 times = {}
 for script_name in scripts:
+    print(f'\t* {script_name}')
     # Reset dir
     os.chdir(top_level_dir)
     # Change cwd
@@ -88,7 +89,7 @@ for script_name in scripts:
 
 print('Computation times:')
 for script_name, t in sorted(times.items(), key=lambda x:x[1]):
-    print(f'\t-> script{script_name}: {round(t, 3)} seconds ')
+    print(f'* script {script_name}: {round(t, 3)} seconds ')
     
 total_time = time.time() - total_time
 print(f'Total time for CI scripts: {total_time}')
