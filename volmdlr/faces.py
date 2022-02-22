@@ -3317,13 +3317,25 @@ class BSplineSurface3D(Surface3D):
         compute the nearest edges of a contour3d to a Bspline_surface3d based on a threshold 
         '''
 
-        nearest = []
-        for primitive in contour3d.primitives:
-            if self.error_with_edge3d(primitive) <= threshold:
-                nearest.append(primitive)
-        nearest_primitives = volmdlr.wires.Wire3D(nearest)
+        # nearest = []
+        # for primitive in contour3d.primitives:
+        #     if self.error_with_edge3d(primitive) <= threshold:
+        #         nearest.append(primitive)
+        # nearest_primitives = volmdlr.wires.Wire3D(nearest)
 
-        return nearest_primitives
+        # return nearest_primitives
+
+        nearest, errors = [], []
+        primitives = contour3d.primitives
+        for primitive in contour3d.primitives:
+            errors.append(self.error_with_edge3d(primitive))
+        # if len(contour3d.primitives == 4):
+        return primitives[errors.index(min(errors))]
+        #     if self.error_with_edge3d(primitive) <= threshold:
+        #         nearest.append(primitive)
+        # nearest_primitives = volmdlr.wires.Wire3D(nearest)
+
+        # return nearest_primitives
 
         
     def edge3d_to_2d_with_dimension(self, edge3d, points_x, points_y):
