@@ -34,7 +34,6 @@ import volmdlr.display as vmd
 import volmdlr.geometry
 
 
-
 def knots_vector_inv(knots_vector):
     ''' 
     compute knot elements and multiplicities based on the global knot vector
@@ -2416,12 +2415,12 @@ class BSplineSurface3D(Surface3D):
                 p=p+1
 
         equation_points = [] #points combination to compute distances between 2D and 3D grid points
-        # for i in range(0,points_y): #row from (0,i)
-        #     for j in range(1,points_x):
-        #         equation_points.append(((0,i),(j,i)))
-        # for i in range(0,points_x): #column from (i,0)
-        #     for j in range(1,points_y):
-        #         equation_points.append(((i,0),(i,j)))
+        for i in range(0,points_y): #row from (0,i)
+            for j in range(1,points_x):
+                equation_points.append(((0,i),(j,i)))
+        for i in range(0,points_x): #column from (i,0)
+            for j in range(1,points_y):
+                equation_points.append(((i,0),(i,j)))
         for i in range(0,points_y): #row
             for j in range(0,points_x-1):
                 equation_points.append(((j,i),(j+1,i)))
@@ -2441,12 +2440,11 @@ class BSplineSurface3D(Surface3D):
                 equation_points.append(((i,j-1),(i,j+1)))
 
         # Euclidean distance
-        # D=[] # distances between 3D grid points (based on points combination [equation_points])
-        # for i in range(0, len(equation_points)):
-        #     D.append((points_3d[index_points[equation_points[i][0]]].point_distance(points_3d[index_points[equation_points[i][1]]]))**2)
+        D=[] # distances between 3D grid points (based on points combination [equation_points])
+        for i in range(0, len(equation_points)):
+            D.append((points_3d[index_points[equation_points[i][0]]].point_distance(points_3d[index_points[equation_points[i][1]]]))**2)
 
         # Geodesic distance
-
         # xx=[]
         # for p in points_2d:
         #     xx.append(p.x)
@@ -2461,9 +2459,9 @@ class BSplineSurface3D(Surface3D):
         #     points[i] = npy.array([points_3d[i].x,points_3d[i].y,points_3d[i].z])
 
         # geoalg = geodesic.PyGeodesicAlgorithmExact(points, faces)
-        D = [] # geodesic distances between 3D grid points (based on points combination [equation_points])
-        for i in range(0, len(equation_points)):
-            D.append((self.geodesic_distance(points_3d[index_points[equation_points[i][0]]], points_3d[index_points[equation_points[i][1]]]))**2)
+        # D = [] # geodesic distances between 3D grid points (based on points combination [equation_points])
+        # for i in range(0, len(equation_points)):
+        #     D.append((self.geodesic_distance(points_3d[index_points[equation_points[i][0]]], points_3d[index_points[equation_points[i][1]]]))**2)
 
         #System of nonlinear equations
         def non_linear_equations(X):
