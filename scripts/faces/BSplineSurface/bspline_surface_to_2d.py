@@ -39,7 +39,7 @@ contour2d = bspline_surface.contour3d_to_2d(contour3d)
 
 # %%% Dimensionned frame
 
-contour2d_dim = bspline_surface.contour3d_to_2d_with_dimension(contour3d, 10, 10)
+contour2d_dim = bspline_surface.contour2d_parametric_to_dimension(contour2d, 10, 10)
 
 # %%% Display
 
@@ -49,4 +49,3 @@ contour2d_dim.plot(ax=ax2)
 
 ax1.set_title('Parametric frame')
 ax2.set_title('Dimensionned frame')
-
