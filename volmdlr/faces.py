@@ -3317,27 +3317,15 @@ class BSplineSurface3D(Surface3D):
         compute the nearest edges of a contour3d to a Bspline_surface3d based on a threshold 
         '''
 
-        # nearest = []
-        # for primitive in contour3d.primitives:
-        #     if self.error_with_edge3d(primitive) <= threshold:
-        #         nearest.append(primitive)
-        # nearest_primitives = volmdlr.wires.Wire3D(nearest)
-
-        # return nearest_primitives
-
-        nearest, errors = [], []
-        primitives = contour3d.primitives
+        nearest = []
         for primitive in contour3d.primitives:
-            errors.append(self.error_with_edge3d(primitive))
-        # if len(contour3d.primitives == 4):
-        return primitives[errors.index(min(errors))]
-        #     if self.error_with_edge3d(primitive) <= threshold:
-        #         nearest.append(primitive)
-        # nearest_primitives = volmdlr.wires.Wire3D(nearest)
+            if self.error_with_edge3d(primitive) <= threshold:
+                nearest.append(primitive)
+        nearest_primitives = volmdlr.wires.Wire3D(nearest)
 
-        # return nearest_primitives
+        return nearest_primitives
 
-        
+
     def edge3d_to_2d_with_dimension(self, edge3d, points_x, points_y):
         '''
         compute the edge2d of a edge3d, on a Bspline surface, in the dimensioned frame  
@@ -3627,7 +3615,7 @@ class BSplineSurface3D(Surface3D):
         # grid3d
         points3d = []
         for i, bspline in enumerate(bsplines_new):
-            grid2d = volmdlr.Point2D.grid2d_with_direction(50, 50, xmin[i], xmax[i], ymin[i], ymax[i], grid2d_direction[i])[0]
+            grid2d = volmdlr.Point2D.grid2d_with_direction(100, 100, xmin[i], xmax[i], ymin[i], ymax[i], grid2d_direction[i])[0]
             grid3d = []
             for p in grid2d:
                 grid3d.append(bspline.point2d_to_3d(p))
@@ -3635,7 +3623,7 @@ class BSplineSurface3D(Surface3D):
             points3d.extend(grid3d)
 
             # fitting
-        size_u, size_v, degree_u, degree_v = 100, 50, max(bsplines[0].degree_u, bsplines[1].degree_u), max(bsplines[0].degree_v, bsplines[1].degree_v)
+        size_u, size_v, degree_u, degree_v = 200, 100, max(bsplines[0].degree_u, bsplines[1].degree_u), max(bsplines[0].degree_v, bsplines[1].degree_v)
 
         merged_surface = volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(points3d, size_u, size_v, degree_u, degree_v)
 
