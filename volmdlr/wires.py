@@ -834,6 +834,9 @@ class Contour(Wire):
                 finished = True
             counter1 += 1
             if counter1 >= 100*length_list_points:
+                self.plot()
+                print('contour_points:',
+                      [(prim.start, prim.end) for prim in self.primitives])
                 raise NotImplementedError
             if len(list_point_pairs) == 1:
                 counter += 1
@@ -841,51 +844,125 @@ class Contour(Wire):
                     warnings.warn('There may exist a problem with this'
                                   ' contour, it seems it cannot be reordered.'
                                   ' Please, verify its points')
+                    ax=self.plot()
+                    print('contour_points:',
+                          [(prim.start, prim.end) for prim in self.primitives])
+                    print('list_point_pairs:', list_point_pairs)
+                    for pair_point in list_point_pairs:
+                        pair_point[0].plot(ax=ax)
+                        pair_point[1].plot(ax=ax)
+                    for pair_point in points:
+                        pair_point[0].plot(ax=ax, color='r')
+                        pair_point[1].plot(ax=ax, color='r')
                     raise NotImplementedError
 
         return points
 
+    @staticmethod
+    def validate_contour_primitives(contour_primitives):
+        points = [p for prim in contour_primitives for p in prim]
+        list_groups_primitives = []
+        for primitive in contour_primitives:
+            for primitive_point in [primitive.start, primitive.end]:
+                if points.count(primitive_point) == 3:
+                    if [primitive] not in list_groups_primitives:
+                        list_groups_primitives.append([primitive])
+
+        groups_primitives =\
+            [group_prim[0] for group_prim in list_groups_primitives]
+        contour_primitives =\
+            [prim for prim in contour_primitives if prim not in groups_primitives]
+
+        finished = False
+        while not finished:
+            for primitive in contour_primitives:
+                for group in list_groups_primitives:
+                    group_points = [p for prim in group for p in prim]
+                    if primitive.start in group_points or \
+                            primitive.end in group_points:
+                        group.append(primitive)
+                        contour_primitives.remove(primitive)
+                        break
+                if not contour_primitives:
+                    finished = True
+        list_groups_lengths = []
+        for group in list_groups_primitives:
+            length = 0
+            for prim in group:
+                length += prim.length()
+            list_groups_lengths.append(length)
+        list_groups_primitives.remove(
+            list_groups_primitives[list_groups_lengths.index(
+                min(list_groups_lengths))])
+        contour_primitives = list_groups_primitives[0] + list_groups_primitives[1]
+
+        print('passing through')
+        print('list_groups_primitives:', list_groups_primitives)
+        # raise NotImplementedError
+        return contour_primitives
+
     @classmethod
     def contours_from_edges(cls, edges, tol=5e-5):
+        # def clean_edges(list_edges):
+        #     points = [p for prim in contour_primitives for p in prim]
         list_contours = []
         finished = False
-        contour = []
+        contour_primitives = []
+        possible_branch_contour_primitives = []
         while not finished:
             len1 = len(edges)
             for line in edges:
-                points = [p for prim in contour for p in prim]
-                if not contour:
-                    contour.append(line)
+                points = [p for prim in contour_primitives for p in prim]
+                if not contour_primitives:
+                    contour_primitives.append(line)
                     edges.remove(line)
                     break
-                elif line.start in points or line.end in points:
-                    contour.append(line)
+                # for line_segment_point in [line.start, line.end]:
+                #     if line_segment_point in points:
+                #         if points.count(line_segment_point) > 1:
+                #             possible_branch_contour_primitives.append(line)
+                #             edges.remove(line)
+                #             break
+                #         else:
+                #             contour_primitives.append(line)
+                #             edges.remove(line)
+                #             break
+                if (line.start in points or line.end in points) and\
+                        line not in contour_primitives:
+                    contour_primitives.append(line)
                     edges.remove(line)
                     break
-                else:
-                    for point in points:
+                # else:
+                for point in points:
+                    if point.is_close(line.start, tol=tol) and\
+                            line not in contour_primitives:
+                        line.start = point
+                        contour_primitives.append(line)
+                        edges.remove(line)
+                        break
+                    elif point.is_close(line.end, tol=tol) and\
+                            line not in contour_primitives:
+                        line.end = point
+                        contour_primitives.append(line)
+                        edges.remove(line)
+                        break
 
-                        if point.is_close(line.start, tol=tol):
-                            line.start = point
-                            contour.append(line)
-                            edges.remove(line)
-                            break
-                        elif point.is_close(line.end, tol=tol):
-                            line.end = point
-                            contour.append(line)
-                            edges.remove(line)
-                            break
-
-            if len(edges) != 0 and len(edges) == len1 and len(contour) != 0:
-                contour_n = cls(contour[:])
+            if len(edges) != 0 and len(edges) == len1 and len(contour_primitives) != 0:
+                contour_primitives = Contour2D.validate_contour_primitives(
+                    contour_primitives)
+                contour_n = cls(contour_primitives[:])
+                #validate_contour
                 contour_n.order_contour()
                 list_contours.append(contour_n)
-                contour = []
-            elif len(edges) == 0 and len(contour) != 0:
-                contour_n = cls(contour[:])
+                contour_primitives = []
+            elif len(edges) == 0 and len(contour_primitives) != 0:
+                contour_primitives = Contour2D.validate_contour_primitives(
+                    contour_primitives)
+                contour_n = cls(contour_primitives[:])
                 contour_n.order_contour()
                 list_contours.append(contour_n)
                 finished = True
+
         return list_contours
 
     def discretized_primitives(self, n: float):
