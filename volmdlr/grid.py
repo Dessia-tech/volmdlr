@@ -19,11 +19,11 @@ class Grid2D(DessiaObject):
                  direction: List[str],
                  name: str = ''):
         self.list_points = list_points
-        direction = direction
+        self.direction = direction
         DessiaObject.__init__(self, name=name)
 
     @classmethod
-    def from_properties(cls, x_limits, y_limits, points_nbr, direction):
+    def from_properties(cls, x_limits, y_limits, points_nbr, direction=['+x', '+y']):
         """
         Define Grid2d based on the given properties
 
