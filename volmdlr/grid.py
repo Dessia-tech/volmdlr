@@ -227,3 +227,26 @@ class Grid2D(DessiaObject):
             points_y = len(self.list_points[0])
         
         return (points_x, points_y)
+
+    def find_direction_index(self, direction_axis: str):
+        """
+        find the index of a given direction_axis
+
+        Parameters
+        ----------
+        direction_axis : str
+            'x' OR 'y'
+
+        Returns
+        -------
+        index : int
+
+        """
+
+        try:
+            index = self.direction.index('+'+direction_axis)
+        except ValueError:
+            index = self.direction.index('-'+direction_axis)
+
+        return index
+
