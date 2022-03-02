@@ -1720,8 +1720,7 @@ class Contour2D(Contour, Wire2D):
             for i in range(0, len(closing_wire)):
                 if closing_wire[i]==[]:
                     continue
-                else:
-                    closing_wire_prim.append(closing_wire[i])
+                closing_wire_prim.append(closing_wire[i])
             closing_contour = Contour2D(closing_wire_prim)
 
             contour1, contour2 = contour_to_cut.get_divided_contours(point1,
