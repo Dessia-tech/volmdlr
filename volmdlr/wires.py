@@ -1696,7 +1696,7 @@ class Contour2D(Contour, Wire2D):
 
         """
 
-        intersections = self.wire_crossings(wire) #crossings OR intersections
+        intersections = self.wire_crossings(wire) #crossings OR intersections (?)
         if not intersections or len(intersections) < 2:
             return [self]
         if len(intersections) % 2 != 0:
@@ -1715,9 +1715,6 @@ class Contour2D(Contour, Wire2D):
 
             closing_wire = wire.extract_without_primitives(point1, point2, True)
             closing_contour = Contour2D(closing_wire)
-
-            # closing_line = volmdlr.edges.LineSegment2D(point1, point2)
-            # closing_contour = Contour2D([closing_line])
 
             contour1, contour2 = contour_to_cut.get_divided_contours(point1,
                                                                      point2,
