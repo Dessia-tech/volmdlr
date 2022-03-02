@@ -441,13 +441,19 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         intersections : List[(volmdlr.Point2D, volmdlr.Primitive2D)]
 
         '''
-        
-        intersections = []
+
+        intersections, intersections_points = [], []
         for primitive in wire.primitives:
             a = self.linesegment_intersections(primitive)
             if a:
-                intersections.append([a[0][0], a[0][1]])
-                               
+                if intersections_points:
+                    if a[0][0] not in intersections_points:
+                        intersections.append([a[0][0], a[0][1]])
+                        intersections_points.append(a[0][0])
+                else:
+                    intersections.append([a[0][0], a[0][1]])
+                    intersections_points.append(a[0][0])
+
         return intersections
 
     def cut_by_wire(self, wire):
