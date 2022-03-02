@@ -1861,8 +1861,7 @@ class Contour2D(Contour, Wire2D):
             return [self]
         if len(intersections) % 2 != 0:
             raise NotImplementedError(
-                '{} intersections not supported yet'.format(
-                    len(intersections)))
+                f'{len(intersections)} intersections not supported yet')
 
         points_intersections = [point for point, prim in intersections]
         sorted_points = wire.sort_points_along_wire(points_intersections)
