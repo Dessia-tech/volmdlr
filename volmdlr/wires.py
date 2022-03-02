@@ -834,9 +834,6 @@ class Contour(Wire):
                 finished = True
             counter1 += 1
             if counter1 >= 100*length_list_points:
-                self.plot()
-                print('contour_points:',
-                      [(prim.start, prim.end) for prim in self.primitives])
                 raise NotImplementedError
             if len(list_point_pairs) == 1:
                 counter += 1
@@ -844,22 +841,12 @@ class Contour(Wire):
                     warnings.warn('There may exist a problem with this'
                                   ' contour, it seems it cannot be reordered.'
                                   ' Please, verify its points')
-                    ax=self.plot()
-                    print('contour_points:',
-                          [(prim.start, prim.end) for prim in self.primitives])
-                    print('list_point_pairs:', list_point_pairs)
-                    for pair_point in list_point_pairs:
-                        pair_point[0].plot(ax=ax)
-                        pair_point[1].plot(ax=ax)
-                    for pair_point in points:
-                        pair_point[0].plot(ax=ax, color='r')
-                        pair_point[1].plot(ax=ax, color='r')
                     raise NotImplementedError
 
         return points
 
     @staticmethod
-    def validate_contour_primitives(contour_primitives):
+    def identify_primitives_groups(contour_primitives):
         points = [p for prim in contour_primitives for p in prim]
         list_groups_primitives = []
         for primitive in contour_primitives:
@@ -867,12 +854,10 @@ class Contour(Wire):
                 if points.count(primitive_point) == 3:
                     if [primitive] not in list_groups_primitives:
                         list_groups_primitives.append([primitive])
+        return list_groups_primitives
 
-        groups_primitives =\
-            [group_prim[0] for group_prim in list_groups_primitives]
-        contour_primitives =\
-            [prim for prim in contour_primitives if prim not in groups_primitives]
-
+    @staticmethod
+    def regroup_primitives(contour_primitives, list_groups_primitives):
         finished = False
         while not finished:
             for primitive in contour_primitives:
@@ -885,21 +870,48 @@ class Contour(Wire):
                         break
                 if not contour_primitives:
                     finished = True
-        list_groups_lengths = []
+        return list_groups_primitives
+
+    @staticmethod
+    def delete_smallest_primitives_groups(list_groups_primitives):
+        dict_groups_lengths = {}
         for group in list_groups_primitives:
             length = 0
             for prim in group:
                 length += prim.length()
-            list_groups_lengths.append(length)
-        list_groups_primitives.remove(
-            list_groups_primitives[list_groups_lengths.index(
-                min(list_groups_lengths))])
-        contour_primitives = list_groups_primitives[0] + list_groups_primitives[1]
+            dict_groups_lengths[length] = group
+        print('dict_groups_lengths:', list(dict_groups_lengths.keys()))
+        dict_groups_lengths = dict(sorted(dict_groups_lengths.items(),
+                                          key=lambda item: item[0]))
+        longest = list(dict_groups_lengths.keys())[-1]
+        new_groups_primitives = []
+        for key, value in dict_groups_lengths.items():
+            if key / longest > 0.003:
+                print('key, longest:', (key, longest))
+                new_groups_primitives.append(value)
+        return new_groups_primitives
 
-        print('passing through')
-        print('list_groups_primitives:', list_groups_primitives)
-        # raise NotImplementedError
-        return contour_primitives
+    @staticmethod
+    def validate_contour_primitives(contour_primitives):
+        list_groups_primitives = Contour.identify_primitives_groups(
+            contour_primitives)
+        if not list_groups_primitives:
+            return contour_primitives
+
+        groups_primitives =\
+            [group_prim[0] for group_prim in list_groups_primitives]
+        contour_primitives =\
+            [prim for prim in contour_primitives if prim not in groups_primitives]
+
+        list_groups_primitives = Contour.regroup_primitives(
+            contour_primitives, list_groups_primitives)
+        new_primitives_groups = Contour.delete_smallest_primitives_groups(
+            list_groups_primitives)
+        new_primitives_contour = []
+        for group in new_primitives_groups:
+            new_primitives_contour.extend(group)
+
+        return new_primitives_contour
 
     @classmethod
     def contours_from_edges(cls, edges, tol=5e-5):

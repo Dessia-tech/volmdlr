@@ -4270,7 +4270,7 @@ class PlaneFace3D(Face3D):
             self.surface3d.frame.origin,
             self.surface3d.frame.u,
             self.surface3d.frame.v)
-        if contour1.shares_primitives(contour2):
+        if contour1.is_sharing_primitives_with(contour2, False):
             return True
         return False
 
@@ -4295,7 +4295,7 @@ class PlaneFace3D(Face3D):
                     face0.surface3d.frame.origin,
                     face0.surface3d.frame.u,
                     face0.surface3d.frame.v)
-                if contour.shares_primitives(merged_contour):
+                if contour.is_sharing_primitives_with(merged_contour, False):
                     merged_contour_results = merged_contour.merge_with(
                         contour)
                     merged_contour = merged_contour_results[0]
