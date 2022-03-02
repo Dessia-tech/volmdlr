@@ -1793,7 +1793,64 @@ class Contour2D(Contour, Wire2D):
 
         return contours
 
-        
+    def cut_by_wire(self, wire: volmdlr.wires.Wire2D):
+        """
+        cut a contour2d with a wire2d and return a list of contours2d
+
+        Parameters
+        ----------
+        wire : volmdlr.wires.Wire2D
+
+        Returns
+        -------
+        contours2d : list[volmdlr.wires.Contour2D]
+
+        """
+
+        intersections = self.wire_intersections(wire) #crossings
+        if not intersections or len(intersections) < 2:
+            return [self]
+        if len(intersections) % 2 != 0:
+            raise NotImplementedError(
+                '{} intersections not supported yet'.format(
+                    len(intersections)))
+
+        points_intersections = [point for point, prim in intersections]
+        sorted_points = wire.sort_points_along_wire(points_intersections)
+        list_contours = []
+        contour_to_cut = self
+        cutting_points_counter = 0
+        while cutting_points_counter != len(sorted_points):
+
+            point1 = sorted_points[cutting_points_counter]
+            point2 = sorted_points[cutting_points_counter + 1]
+
+            closing_wire = wire.extract_without_primitives(point1, point2, True)
+            closing_contour = Contour2D(closing_wire)
+
+            # closing_line = volmdlr.edges.LineSegment2D(point1, point2)
+            # closing_contour = Contour2D([closing_line])
+
+            contour1, contour2 = contour_to_cut.get_divided_contours(point1,
+                                                                     point2,
+                                                                     closing_contour,
+                                                                     True)
+            if sorted_points.index(point1) + 2 < len(sorted_points) - 1:
+                if contour1.point_over_contour(
+                        sorted_points[sorted_points.index(point1) + 2]):
+                    contour_to_cut = contour1
+                    list_contours.append(contour2)
+                elif contour2.point_over_contour(
+                        sorted_points[sorted_points.index(point1) + 2]):
+                    contour_to_cut = contour2
+                    list_contours.append(contour1)
+            else:
+                list_contours.extend([contour1, contour2])
+            cutting_points_counter += 2
+
+        return list_contours
+
+
 class ClosedPolygon:
 
     def length(self):
