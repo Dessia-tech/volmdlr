@@ -148,3 +148,38 @@ class Grid2D(DessiaObject):
                 points = []
 
         return cls(list_points=grid2d, direction=direction)
+
+    # @property
+    # def x_limits(self):
+    #     """
+    #     find the limits (min, max) of points along x_direction_axis
+    #     """
+
+    #     x_limits = (self.list_points[0][0].x, self.list_points[-1][-1].x)
+    #     x_min, x_max = min(x_limits), max(x_limits)
+
+    #     return (x_min, x_max)
+
+    # @property
+    # def y_limits(self):
+    #     """
+    #     find the limits (min, max) of points along y_direction_axis
+    #     """
+
+    #     y_limits = (self.list_points[0][0].y, self.list_points[-1][-1].y)
+    #     y_min, y_max = min(y_limits), max(y_limits)
+
+    #     return (y_min, y_max)
+
+    @property
+    def limits_xy(self):
+        """
+        find the limits (min, max) of points along x & y direction_axis
+        """
+
+        x_limits = (self.list_points[0][0].x, self.list_points[-1][-1].x)
+        x_min, x_max = min(x_limits), max(x_limits)
+        y_limits = (self.list_points[0][0].y, self.list_points[-1][-1].y)
+        y_min, y_max = min(y_limits), max(y_limits)
+
+        return ((x_min, x_max), (y_min, y_max))
