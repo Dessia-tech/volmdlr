@@ -250,3 +250,23 @@ class Grid2D(DessiaObject):
 
         return index
 
+    def grid_pattern(self):
+        """
+        define a list of quadrilateral polygons defined based on Grid2d points
+
+        Returns
+        -------
+        quadrilateral_polygons : list[volmdlr.wires.ClosedPolygon2D]
+
+        """
+
+        quadrilateral_polygons = []
+        length_1, length_2 = len(self.list_points[0]), len(self.list_points)
+        for i in range(0, length_1-1):
+            for j in range(0, length_2-1):
+                quadrilateral_polygons.append(volmdlr.wires.ClosedPolygon2D((self.list_points[i][j],
+                                                                             self.list_points[i+1][j],
+                                                                             self.list_points[i+1][j+1],
+                                                                             self.list_points[i][j+1])))
+
+        return quadrilateral_polygons
