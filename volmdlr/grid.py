@@ -183,3 +183,47 @@ class Grid2D(DessiaObject):
         y_min, y_max = min(y_limits), max(y_limits)
 
         return ((x_min, x_max), (y_min, y_max))
+
+    # @property
+    # def points_x(self):
+    #     """
+    #     find how many points there are along x_direction_axis
+    #     """
+
+    #     index = self.find_direction_index(direction_axis = 'x')        
+    #     if index == 0:
+    #         points_x = len(self.list_points[0])
+    #     else:
+    #         points_x = len(self.list_points)
+
+    #     return points_x
+
+    # @property        
+    # def points_y(self):
+    #     """
+    #     find how many points there are along y_direction_axis 
+    #     """
+
+    #     index = self.find_direction_index(direction_axis = 'y')      
+    #     if index == 0:
+    #         points_y = len(self.list_points[0])
+    #     else:
+    #         points_y = len(self.list_points)
+
+    #     return points_y
+
+    @property
+    def points_xy(self):
+        """
+        find how many points there are along x & y direction_axis
+        """
+        
+        index = self.find_direction_index(direction_axis = 'x')        
+        if index == 0:
+            points_x = len(self.list_points[0])
+            points_y = len(self.list_points)
+        else:
+            points_x = len(self.list_points)
+            points_y = len(self.list_points[0])
+        
+        return (points_x, points_y)
