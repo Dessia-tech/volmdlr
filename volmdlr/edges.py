@@ -228,8 +228,13 @@ class LineSegment(Edge):
         return projection, t * norm_u
 
     def split(self, split_point):
-        return [self.__class__(self.start, split_point),
-                self.__class__(split_point, self.end)]
+        if split_point == self.start:
+            return [[], self]
+        elif split_point == self.end:
+            return [self, []]
+        else:
+            return [self.__class__(self.start, split_point),
+                    self.__class__(split_point, self.end)]
 
 
 class Line2D(Line):
