@@ -155,10 +155,13 @@ class PointCloud3D(dc.DessiaObject):
                                               vec2).area() / poly2.to_2d(
                         position_plane[n] * normal, vec1, vec2).area() > 0.3:
                     poly2_simplified = poly2
-                faces.extend(poly1_simplified.sewing3(poly2_simplified,
-                                                      vec1, vec2))
-                # for trio in coords:
-                #     faces.append(vmf.Triangle3D(*trio))
+                list_triangles_points = poly1_simplified.sewing3(poly2_simplified,
+                                                      vec1, vec2)
+                list_faces = [vmf.Triangle3D(*triangle_points,alpha=0.9,
+                                             color=(1, 0.1, 0.1))
+                              for triangle_points in list_triangles_points]
+
+                faces.extend(list_faces)
         return vmf.ClosedShell3D(faces)
     
     # def alpha_shape(self, alpha:float, number_point_samples:int):
