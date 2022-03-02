@@ -635,6 +635,34 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                 crossings_points.append(result)
         return crossings_points
 
+    def wire_crossings(self, wire):
+        '''
+        compute crossings between two wire2d
+
+        Parameters
+        ----------
+        wire : volmdlr.wires.Wire2D
+
+        Returns
+        -------
+        intersections : List[(volmdlr.Point2D, volmdlr.Primitive2D)]
+
+        '''
+
+        crossings, crossings_points = [], []
+        for primitive in wire.primitives:
+            a = self.linesegment_crossings(primitive)
+            if a:
+                if crossings_points:
+                    if a[0][0] not in crossings_points:
+                        crossings.append([a[0][0], a[0][1]])
+                        crossings_points.append(a[0][0])
+                else:
+                    crossings.append([a[0][0], a[0][1]])
+                    crossings_points.append(a[0][0])
+
+        return crossings
+
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
     """
