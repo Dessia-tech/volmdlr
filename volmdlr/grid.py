@@ -5,11 +5,12 @@
 Module containing grid and relative objects
 """
 
-import volmdlr
-import volmdlr.wires
+from typing import List
 import numpy as npy
 from dessia_common import DessiaObject
-from typing import List
+import volmdlr
+import volmdlr.wires
+
 
 
 
