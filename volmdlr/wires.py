@@ -880,14 +880,12 @@ class Contour(Wire):
             for prim in group:
                 length += prim.length()
             dict_groups_lengths[length] = group
-        print('dict_groups_lengths:', list(dict_groups_lengths.keys()))
         dict_groups_lengths = dict(sorted(dict_groups_lengths.items(),
                                           key=lambda item: item[0]))
         longest = list(dict_groups_lengths.keys())[-1]
         new_groups_primitives = []
         for key, value in dict_groups_lengths.items():
             if key / longest > 0.003:
-                print('key, longest:', (key, longest))
                 new_groups_primitives.append(value)
         return new_groups_primitives
 
