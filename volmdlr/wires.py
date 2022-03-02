@@ -651,7 +651,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
 
         Returns
         -------
-        intersections : List[(volmdlr.Point2D, volmdlr.Primitive2D)]
+        crossings : List[(volmdlr.Point2D, volmdlr.Primitive2D)]
 
         '''
 
@@ -1842,7 +1842,7 @@ class Contour2D(Contour, Wire2D):
 
         return contours
 
-    def cut_by_wire(self, wire: volmdlr.wires.Wire2D):
+    def cut_by_wire(self, wire: Wire2D):
         """
         cut a contour2d with a wire2d and return a list of contours2d
 
@@ -1856,7 +1856,7 @@ class Contour2D(Contour, Wire2D):
 
         """
 
-        intersections = self.wire_intersections(wire) #crossings
+        intersections = self.wire_crossings(wire) #crossings OR intersections
         if not intersections or len(intersections) < 2:
             return [self]
         if len(intersections) % 2 != 0:
