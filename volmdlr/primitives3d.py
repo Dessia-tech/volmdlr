@@ -128,7 +128,7 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
 class Block(volmdlr.faces.ClosedShell3D):
     _standalone_in_db = True
     _generic_eq = True
-    _non_serializable_attributes = ['size']
+    _non_serializable_attributes = ['size', 'bounding_box', 'faces', 'contours', 'plane', 'points', 'polygon2D']
     _non_eq_attributes = ['name', 'color', 'alpha', 'size', 'bounding_box',
                           'faces', 'contours', 'plane', 'points', 'polygon2D']
     _non_hash_attributes = []
