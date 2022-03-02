@@ -506,6 +506,67 @@ class Surface2D(volmdlr.core.Primitive2D):
         ax.margins(0.1)
         return ax
 
+    def triangularisation_2(self, x_density, y_density):
+        """
+        """
+
+        bounding_rectangle = self.outer_contour.bounding_rectangle()
+        dx = (bounding_rectangle[1] - bounding_rectangle[0])*0.1
+        dy = (bounding_rectangle[3] - bounding_rectangle[2])*0.1
+
+        grid2d = volmdlr.grid.Grid2D.from_properties(x_limits=(bounding_rectangle[0]-dx,
+                                                               bounding_rectangle[1]+dx),
+                                                     y_limits=(bounding_rectangle[2]-dy,
+                                                               bounding_rectangle[3]+dy),
+                                                     points_nbr=(x_density+1,y_density+1),
+                                                     direction=['+x','+y'])
+        patterns = grid2d.grid_pattern()
+        mesh_elements= []
+
+        for element in patterns:
+            pts = element.contour_intersections(self.outer_contour)
+            pts2_inners = []
+            for inner_contour in self.inner_contours:
+                pts2_inners.append(element.contour_intersections(inner_contour))
+
+            concatenation = []
+            for pt in pts2_inners:
+                concatenation = concatenation + pt
+
+            if not pts and self.outer_contour.is_inside(element) and not concatenation:
+                inside = set()
+                for inner_contour in self.inner_contours:
+                    inside.add(inner_contour.is_inside(element))
+                if True not in list(inside):
+                    mesh_elements.append(element)
+
+            if len(pts)>=2:
+                primitives = self.outer_contour.extract_without_primitives(pts[0], pts[1], inside=True)
+                if not element.is_inside(volmdlr.wires.Wire2D(primitives)):
+                    primitives = self.outer_contour.extract_without_primitives(pts[0], pts[1], inside=False)
+
+                wire = volmdlr.wires.Wire2D(primitives)
+                contours = volmdlr.wires.Contour2D(element.primitives).cut_by_wire(wire)
+                for c in contours:
+                    if self.outer_contour.is_inside(c):
+                        mesh_elements.append(c)
+                        break
+
+            for pts2 in pts2_inners:
+                if len(pts2)>=2:
+                    primitives = inner_contour.extract_without_primitives(pts2[0], pts2[1], inside=True)
+                    if not element.is_inside(volmdlr.wires.Wire2D(primitives)):
+                        primitives = inner_contour.extract_without_primitives(pts2[0], pts2[1], inside=False)
+
+                    wire = volmdlr.wires.Wire2D(primitives)
+                    contours = volmdlr.wires.Contour2D(element.primitives).cut_by_wire(wire)
+                    for c in contours:
+                        if not inner_contour.is_inside(c):
+                            mesh_elements.append(c)
+                            break
+
+        return mesh_elements
+
 
 class Surface3D(dc.DessiaObject):
     x_periodicity = None
