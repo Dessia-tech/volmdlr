@@ -5,24 +5,25 @@
 Module containing grid and relative objects
 """
 
-import volmdlr as vm
+import volmdlr
 import volmdlr.wires
 import numpy as npy
 from dessia_common import DessiaObject
+from typing import List
 
 
 
 class Grid2D(DessiaObject):
     
-    def __init__(self, list_points: list[list[volmdlr.vm.Point2D]],
-                 direction: list[str] = ['+x','+y'],
+    def __init__(self, list_points: List[List[volmdlr.Point2D]],
+                 direction: List[str],
                  name: str = ''):
         self.list_points = list_points
         direction = direction
         DessiaObject.__init__(self, name=name)
 
     @classmethod
-    def from_properties(x_limits, y_limits, points_nbr, direction):
+    def from_properties(cls, x_limits, y_limits, points_nbr, direction):
         """
         Define Grid2d based on the given properties
 
@@ -57,8 +58,8 @@ class Grid2D(DessiaObject):
 
             for yi in y:
                 for xi in x:
-                    # points_2d.append(vm.Point2D(xi, yi))
-                    points.append(vm.Point2D(xi, yi))
+                    # points_2d.append(volmdlr.Point2D(xi, yi))
+                    points.append(volmdlr.Point2D(xi, yi))
                 
                 grid2d.append(points)
                 points = []
@@ -69,8 +70,8 @@ class Grid2D(DessiaObject):
 
             for yi in y:
                 for xi in x:
-                    # points_2d.append(vm.Point2D(xi, yi))
-                    points.append(vm.Point2D(xi, yi))
+                    # points_2d.append(volmdlr.Point2D(xi, yi))
+                    points.append(volmdlr.Point2D(xi, yi))
 
                 grid2d.append(points)
                 points = []
@@ -81,8 +82,8 @@ class Grid2D(DessiaObject):
             
             for xi in x:
                 for yi in y:
-                    # points_2d.append(vm.Point2D(xi, yi))
-                    points.append(vm.Point2D(xi, yi))
+                    # points_2d.append(volmdlr.Point2D(xi, yi))
+                    points.append(volmdlr.Point2D(xi, yi))
         
                 grid2d.append(points)
                 points = []
@@ -93,8 +94,8 @@ class Grid2D(DessiaObject):
 
             for xi in x:
                 for yi in y:
-                    # points_2d.append(vm.Point2D(xi, yi))
-                    points.append(vm.Point2D(xi, yi))
+                    # points_2d.append(volmdlr.Point2D(xi, yi))
+                    points.append(volmdlr.Point2D(xi, yi))
                     
                 grid2d.append(points)
                 points = []
@@ -105,8 +106,8 @@ class Grid2D(DessiaObject):
 
             for yi in y:
                 for xi in x:
-                    # points_2d.append(vm.Point2D(xi, yi))
-                    points.append(vm.Point2D(xi, yi))
+                    # points_2d.append(volmdlr.Point2D(xi, yi))
+                    points.append(volmdlr.Point2D(xi, yi))
                 
                 grid2d.append(points)
                 points = []
@@ -117,8 +118,8 @@ class Grid2D(DessiaObject):
 
             for yi in y:
                 for xi in x:
-                    # points_2d.append(vm.Point2D(xi, yi)) 
-                    points.append(vm.Point2D(xi, yi))
+                    # points_2d.append(volmdlr.Point2D(xi, yi)) 
+                    points.append(volmdlr.Point2D(xi, yi))
                     
                 grid2d.append(points)
                 points = []    
@@ -129,8 +130,8 @@ class Grid2D(DessiaObject):
 
             for xi in x:
                 for yi in y:
-                    # points_2d.append(vm.Point2D(xi, yi)) 
-                    points.append(vm.Point2D(xi, yi))
+                    # points_2d.append(volmdlr.Point2D(xi, yi)) 
+                    points.append(volmdlr.Point2D(xi, yi))
                     
                 grid2d.append(points)
                 points = []
@@ -141,8 +142,8 @@ class Grid2D(DessiaObject):
 
             for xi in x:
                 for yi in y:
-                    # points_2d.append(vm.Point2D(xi, yi))
-                    points.append(vm.Point2D(xi, yi))
+                    # points_2d.append(volmdlr.Point2D(xi, yi))
+                    points.append(volmdlr.Point2D(xi, yi))
                     
                 grid2d.append(points)
                 points = []
