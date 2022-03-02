@@ -185,7 +185,11 @@ class Wire:
             length += primitive.length()
 
         return length
-    
+
+    def sort_points_along_wire(self, points):
+
+        return sorted(points, key=lambda point: self.abscissa(point))
+
 
 class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
     """
