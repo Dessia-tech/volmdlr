@@ -621,8 +621,19 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
             edges.append(volmdlr.edges.LineSegment2D(points[i], points[i+1]))       
         
         return cls(edges)        
-        
 
+    def linesegment_crossings(self,
+                                  linesegment: 'volmdlr.edges.LineSegment2D'):
+        """
+        Returns a list of crossings in ther form of a tuple (point,
+        primitive) of the wire primitives intersecting with the line
+        """
+        results = self.line_crossings(linesegment.to_line())
+        crossings_points = []
+        for result in results:
+            if linesegment.point_belongs(result[0]):
+                crossings_points.append(result)
+        return crossings_points
 
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
