@@ -9,7 +9,7 @@ Created on Thu Mar 3 2022
 # %% Librairies
 
 import volmdlr as vm
-import volmdlr.faces
+# import volmdlr.faces
 
 # %% Control points
 
