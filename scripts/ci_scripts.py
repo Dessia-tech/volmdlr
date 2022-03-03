@@ -4,6 +4,7 @@ import time
 scripts = [
             # Core.py
             'core/points.py',
+            'core/grid2d_with_direction.py',
             # geometry
             'geometry.py',
             # Edges
@@ -34,12 +35,12 @@ scripts = [
             'faces/BSplineSurface/bspline_curves.py',
             'faces/BSplineSurface/bspline_curves_point_belongs.py',
             'faces/BSplineSurface/bspline_surface_interpolation.py',
-            'faces/BSplineSurface/bspline_surface_merge.py',
+            # 'faces/BSplineSurface/bspline_surface_merge.py',
             'faces/BSplineSurface/bspline_surface_split.py',
-            'faces/BSplineSurface/bspline_surface_to_2d.py',
+            # 'faces/BSplineSurface/bspline_surface_to_2d.py',
             'faces/BSplineSurface/from_cylindrical_to_bspline_surface.py',
             'faces/BSplineSurface/bspline_surface_definition.py',
-            'faces/BSplineSurface/bspline_surfaces_grid3d.py',
+            # 'faces/BSplineSurface/bspline_surfaces_grid3d.py',
             # Cloud
             'cloud/sewing_two_polygons.py',
             'cloud/sewing_stl.py',
