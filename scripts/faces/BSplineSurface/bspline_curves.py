@@ -9,7 +9,7 @@
 
 import volmdlr as vm
 import matplotlib.patches as mpatches
-from volmdlr.models import bspline_face
+from volmdlr.models import bspline_surfaces
 
 #%%  BSpline-surface definition 
 
@@ -17,7 +17,7 @@ from volmdlr.models import bspline_face
 # print('\n## Executing script {}'.format(script))
 # exec(open(script).read())
 
-bspline_surface = bspline_face.surface3d
+bspline_surface = bspline_surfaces.bspline_surface_1
 
 # %% BSpline-curve 2D definition
 
@@ -39,7 +39,7 @@ bspline_curve2d_interpolated = vm.edges.BSplineCurve2D.from_points_interpolation
 
 # %%% Display
 
-ax = bspline_face.surface2d.plot()
+ax = bspline_surfaces.bspline_face_1.surface2d.plot()
 for p in points2d: 
     p.plot(ax=ax, color ='k')
     
@@ -59,7 +59,7 @@ bspline_curve3d_interpolated.color = 'r'
 
 # %%% Display
 
-ax = bspline_face.plot()
+ax = bspline_surfaces.bspline_face_1.plot()
 bspline_curve3d_approximated.plot(ax=ax, color=bspline_curve3d_approximated.color)
 bspline_curve3d_interpolated.plot(ax=ax, color=bspline_curve3d_interpolated.color)
 
