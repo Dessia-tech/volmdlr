@@ -3612,11 +3612,13 @@ class BSplineSurface3D(Surface3D):
         else:
             xmin, xmax, ymin, ymax = [0]*len(bsplines_new), [1]*len(bsplines_new), [0]*len(bsplines_new), [1]*len(bsplines_new)
         print(xmin, xmax, ymin, ymax)
+        nb = 10
+
         # grid3d
         # ax3=self.rectangular_cut(0,1,0,1).plot()
         points3d = []
         for i, bspline in enumerate(bsplines_new):
-            grid2d = volmdlr.Point2D.grid2d_with_direction(20, 20, xmin[i], xmax[i], ymin[i], ymax[i], grid2d_direction[i])[0]
+            grid2d = volmdlr.Point2D.grid2d_with_direction(nb, nb, 0,1,0,1, grid2d_direction[i])[0]  #xmin[i], xmax[i], ymin[i], ymax[i]
             grid3d = []
             random_color = list(npy.random.choice(range(255), size=3))
             random_color = (random_color[0] / 256, random_color[1] / 256,
@@ -3627,11 +3629,18 @@ class BSplineSurface3D(Surface3D):
             #     p.plot(ax3, color=random_color)
             # for p in grid3d[0:100]:
             #     p.plot(ax3, color=random_color)
+            if i==0:
+                points3d.extend(grid3d[0:nb*nb-nb])
+            else:
+                points3d.extend(grid3d)
+        # ax=bspline.rectangular_cut(0,1,0,1).plot()
+        # for p in points3d:
+        #     p.plot(ax, 'b')
 
             points3d.extend(grid3d)
 
             # fitting
-        size_u, size_v, degree_u, degree_v = 40, 20, max(bsplines[0].degree_u, bsplines[1].degree_u), max(bsplines[0].degree_v, bsplines[1].degree_v)
+        size_u, size_v, degree_u, degree_v = (nb*2)-1,nb, 3, 3 #max(bsplines[0].degree_u, bsplines[1].degree_u), max(bsplines[0].degree_v, bsplines[1].degree_v)
 
         merged_surface = volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(points3d, size_u, size_v, degree_u, degree_v)
 
