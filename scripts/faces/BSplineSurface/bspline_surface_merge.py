@@ -9,7 +9,7 @@
 
 # import volmdlr.step as vms
 import numpy as npy
-from volmdlr.models import bspline_surface_1, bspline_surface_2
+from volmdlr.models import bspline_surfaces
 
 # %% Read Step file
 
@@ -28,12 +28,12 @@ from volmdlr.models import bspline_surface_1, bspline_surface_2
     
 #     bspline_faces.append(faces[0])
 
-bspline_faces = [bspline_surface_1.bspline_surface_1.rectangular_cut(0,1,0,1),
-                 bspline_surface_2.bspline_surface_2.rectangular_cut(0,1,0,1)]
+bspline_faces = [bspline_surfaces.bspline_surface_1.rectangular_cut(0,1,0,1),
+                 bspline_surfaces.bspline_surface_2.rectangular_cut(0,1,0,1)]
 
 # %% Merge faces/surfaces 
 
-merged_surface = bspline_surface_1.bspline_surface_1.merge_with(bspline_surface_2.bspline_surface_2)
+merged_surface = bspline_surfaces.bspline_surface_1.merge_with(bspline_surfaces.bspline_surface_2)
 bspline_faces.append(merged_surface.rectangular_cut(0,1,0,1))
 
 

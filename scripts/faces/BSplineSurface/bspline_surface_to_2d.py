@@ -9,7 +9,7 @@
 
 # import volmdlr.step as vms
 import matplotlib.pyplot as plt
-from volmdlr.models import bspline_surface_2
+from volmdlr.models import bspline_surfaces
 
 # %% Read Step file
 
@@ -26,9 +26,9 @@ from volmdlr.models import bspline_surface_2
 
 # %% Bspline face/surface/contour
 
-bspline_face = bspline_surface_2.bspline_surface_2.rectangular_cut(0, 1, 0, 1)
+bspline_face = bspline_surfaces.bspline_surface_2.rectangular_cut(0, 1, 0, 1)
 
-bspline_surface = bspline_surface_2.bspline_surface_2
+bspline_surface = bspline_surfaces.bspline_surface_2
 
 contour3d = bspline_face.outer_contour3d
 

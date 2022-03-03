@@ -9,7 +9,7 @@
 
 import volmdlr as vm
 # import volmdlr.step as vms
-from volmdlr.models import bspline_surface_1, bspline_surface_2
+from volmdlr.models import bspline_surfaces
 
 # %% Read Step file
 
@@ -28,13 +28,13 @@ from volmdlr.models import bspline_surface_1, bspline_surface_2
     
 #     bspline_faces.append(faces[0])
 
-bspline_faces = [bspline_surface_1.bspline_surface_1.rectangular_cut(0,1,0,1),
-                 bspline_surface_2.bspline_surface_2.rectangular_cut(0,1,0,1)]
+bspline_faces = [bspline_surfaces.bspline_surface_1.rectangular_cut(0,1,0,1),
+                 bspline_surfaces.bspline_surface_2.rectangular_cut(0,1,0,1)]
 
 
 # %% Bspline surfaces
 
-bspline_surfaces = [bspline_surface_1.bspline_surface_1, bspline_surface_2.bspline_surface_2]
+bspline_surfaces = [bspline_surfaces.bspline_surface_1, bspline_surfaces.bspline_surface_2]
 
 
 # %% Grdi3d initial
