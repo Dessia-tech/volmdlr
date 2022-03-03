@@ -3637,7 +3637,7 @@ class BSplineSurface3D(Surface3D):
         # for p in points3d:
         #     p.plot(ax, 'b')
 
-            points3d.extend(grid3d)
+            # points3d.extend(grid3d)
 
             # fitting
         size_u, size_v, degree_u, degree_v = (nb*2)-1,nb, 3, 3 #max(bsplines[0].degree_u, bsplines[1].degree_u), max(bsplines[0].degree_v, bsplines[1].degree_v)
