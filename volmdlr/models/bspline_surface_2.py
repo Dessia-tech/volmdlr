@@ -1127,4 +1127,3 @@ bspline_surface_2 = vm.faces.BSplineSurface3D(degree_u = degree_u,
                                               u_knots = u_knots,
                                               v_knots = v_knots)
 
-

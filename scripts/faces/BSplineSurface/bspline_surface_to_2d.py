@@ -7,27 +7,28 @@
 
 # %% Librairies
 
-import volmdlr.step as vms
+# import volmdlr.step as vms
 import matplotlib.pyplot as plt
+from volmdlr.models import bspline_surface_2
 
 # %% Read Step file
 
-file_path = 'bspline_surface_2.step'
+# file_path = 'bspline_surface_2.step'
 
-step_file = vms.Step.from_file(file_path)
+# step_file = vms.Step.from_file(file_path)
 
-model = step_file.to_volume_model()
-primitives = model.primitives
+# model = step_file.to_volume_model()
+# primitives = model.primitives
 
-faces = []
-for primitive in primitives:
-    faces.extend(primitive.faces)
+# faces = []
+# for primitive in primitives:
+#     faces.extend(primitive.faces)
 
 # %% Bspline face/surface/contour
 
-bspline_face = faces[0]
+bspline_face = bspline_surface_2.bspline_surface_2.rectangular_cut(0, 1, 0, 1)
 
-bspline_surface = bspline_face.surface3d
+bspline_surface = bspline_surface_2.bspline_surface_2
 
 contour3d = bspline_face.outer_contour3d
 
@@ -39,7 +40,7 @@ contour2d = bspline_surface.contour3d_to_2d(contour3d)
 
 # %%% Dimensionned frame
 
-# contour2d_dim = bspline_surface.contour2d_parametric_to_dimension(contour2d, 10, 10)
+contour2d_dim = bspline_surface.contour2d_parametric_to_dimension(contour2d, 10, 10)
 
 # %%% Display
 
