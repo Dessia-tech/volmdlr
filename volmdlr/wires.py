@@ -498,6 +498,8 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         crossings, crossings_points = [], []
         for primitive in wire.primitives:
             a = self.linesegment_crossings(primitive)
+            if len(wire.primitives) == 1:
+                return a
             if a:
                 if crossings_points:
                     if a[0][0] not in crossings_points:
