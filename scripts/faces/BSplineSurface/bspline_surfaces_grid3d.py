@@ -8,29 +8,33 @@
 # %% Librairies
 
 import volmdlr as vm
-import volmdlr.step as vms
+# import volmdlr.step as vms
+from volmdlr.models import bspline_surface_1, bspline_surface_2
 
 # %% Read Step file
 
-files_path = ['bspline_surface_1.step', 'bspline_surface_2.step']
-bspline_faces = []
+# files_path = ['bspline_surface_1.step', 'bspline_surface_2.step']
+# bspline_faces = []
 
-for file_path in files_path: 
-    step_file = vms.Step.from_file(file_path)
+# for file_path in files_path: 
+#     step_file = vms.Step.from_file(file_path)
     
-    model = step_file.to_volume_model()
-    primitives = model.primitives
+#     model = step_file.to_volume_model()
+#     primitives = model.primitives
     
-    faces = []
-    for primitive in primitives:
-        faces.extend(primitive.faces)
+#     faces = []
+#     for primitive in primitives:
+#         faces.extend(primitive.faces)
     
-    bspline_faces.append(faces[0])
+#     bspline_faces.append(faces[0])
+
+bspline_faces = [bspline_surface_1.bspline_surface_1.rectangular_cut(0,1,0,1),
+                 bspline_surface_2.bspline_surface_2.rectangular_cut(0,1,0,1)]
 
 
 # %% Bspline surfaces
 
-bspline_surfaces = [bspline_faces[0].surface3d, bspline_faces[1].surface3d]
+bspline_surfaces = [bspline_surface_1.bspline_surface_1, bspline_surface_2.bspline_surface_2]
 
 
 # %% Grdi3d initial
