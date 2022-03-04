@@ -1181,7 +1181,7 @@ class Contour2D(Contour, Wire2D):
         for edge in self.primitives:
 
             if points:
-                if edge.start != points[-1]:
+                if edge.start not in points: #if edge.start != points[-1]:
                     points.append(edge.start)
             else:
                 points.append(edge.start)
