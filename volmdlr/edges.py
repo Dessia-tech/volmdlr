@@ -1679,6 +1679,13 @@ class Arc2D(Edge):
                 return True
         return False
 
+    def to_wire(self, angle_resolution: float = 10.):
+        '''
+        convert an arc to a wire2d defined with line_segments
+        '''
+
+        return volmdlr.wires.Wire2D.from_points(self.polygon_points(n))
+
 
 class FullArc2D(Edge):
     """
