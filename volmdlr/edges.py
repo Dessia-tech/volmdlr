@@ -1684,7 +1684,7 @@ class Arc2D(Edge):
         convert an arc to a wire2d defined with line_segments
         '''
 
-        return volmdlr.wires.Wire2D.from_points(self.polygon_points(n))
+        return volmdlr.wires.Wire2D.from_points(self.polygon_points(angle_resolution))
 
 
 class FullArc2D(Edge):
