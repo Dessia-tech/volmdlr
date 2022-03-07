@@ -954,7 +954,6 @@ class Contour(Wire):
                 contour_primitives = Contour2D.validate_contour_primitives(
                     contour_primitives)
                 contour_n = cls(contour_primitives[:])
-                #validate_contour
                 contour_n.order_contour()
                 list_contours.append(contour_n)
                 contour_primitives = []
