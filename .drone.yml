@@ -13,8 +13,6 @@ steps:
 
 - name: check pep8 formatting
   image: python:3.9
-  when:
-    branch: master
   commands:
     - git fetch --tags
     - pip3 install -U pip autopep8
