@@ -40,6 +40,9 @@ class Stl(dc.DessiaObject):
     There are two versions of the format (text and binary), this spec
     describes binary version.
     """
+    
+    _dessia_methods = ['from_text_stream', 'from_text_stream', 'to_closed_shell', 'to_open_shell']
+    
     def __init__(self, triangles: List[vmf.Triangle3D], name: str = ''):
         self.triangles = triangles
         self.name = name
@@ -117,12 +120,12 @@ class Stl(dc.DessiaObject):
         return cls(triangles, name=name)
         
     @classmethod
-    def from_text_stream(cls, file:io.StringIO, distance_multiplier:float=0.001):
-        header = file.readline()
+    def from_text_stream(cls, stream:io.StringIO, distance_multiplier:float=0.001):
+        header = stream.readline()
         name = header[6:]
         triangles = []
         points = []
-        for line in file.readlines():
+        for line in stream.readlines():
             if 'vertex' in line:
                 line = line.replace('vertex', '')
                 line = line.lstrip(' ')
@@ -183,33 +186,38 @@ class Stl(dc.DessiaObject):
     #     return all_points
 
     def save_to_binary_file(self, filepath, distance_multiplier=1000):
-        BINARY_HEADER ="80sI"
-        BINARY_FACET = "12fH"
         if not filepath.endswith('.stl'):
             filepath += '.stl'
             print('Adding .stl extension: ', filepath)
-
+            
         with open(filepath, 'wb') as file:
-            file.seek(0)
-            # counter = 0
-            file.write(struct.pack(BINARY_HEADER, self.name.encode('utf8'),
-                                   len(self.triangles)))
-            # counter += 1
-            for triangle in self.triangles:
-                data = [
-                    0., 0., 0.,
-                    distance_multiplier*triangle.point1.x,
-                    distance_multiplier*triangle.point1.y,
-                    distance_multiplier*triangle.point1.z,
-                    distance_multiplier*triangle.point2.x,
-                    distance_multiplier*triangle.point2.y,
-                    distance_multiplier*triangle.point2.z,
-                    distance_multiplier*triangle.point3.x,
-                    distance_multiplier*triangle.point3.y,
-                    distance_multiplier*triangle.point3.z,
-                    0]
-                file.write(struct.pack(BINARY_FACET, *data))
-            file.close()
+            self.to_stream(file, distance_multiplier=distance_multiplier)
+            
+            
+    def save_to_stream(self, stream, distance_multiplier=1000):
+        stream.seek(0)
+        
+        BINARY_HEADER ="80sI"
+        BINARY_FACET = "12fH"
+
+        # counter = 0
+        stream.write(struct.pack(BINARY_HEADER, self.name.encode('utf8'),
+                                 len(self.triangles)))
+        # counter += 1
+        for triangle in self.triangles:
+            data = [
+                0., 0., 0.,
+                distance_multiplier*triangle.point1.x,
+                distance_multiplier*triangle.point1.y,
+                distance_multiplier*triangle.point1.z,
+                distance_multiplier*triangle.point2.x,
+                distance_multiplier*triangle.point2.y,
+                distance_multiplier*triangle.point2.z,
+                distance_multiplier*triangle.point3.x,
+                distance_multiplier*triangle.point3.y,
+                distance_multiplier*triangle.point3.z,
+                0]
+        stream.write(struct.pack(BINARY_FACET, *data))
             
     def to_closed_shell(self):
         return vmf.ClosedShell3D(self.triangles, name=self.name)

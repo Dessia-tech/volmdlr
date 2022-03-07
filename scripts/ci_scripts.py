@@ -37,6 +37,8 @@ scripts = [
             'contours/contour_split.py',
             'contours/contour_merge_with_1.py',
             'contours/contour_merge_with_2.py',
+            'contours/cut_by_line.py',
+            'contours/contour_cut_by_wire.py',
             # Steps
             'read_steps.py',
             # Stl
