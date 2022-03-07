@@ -549,9 +549,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
             if not isinstance(primitive, volmdlr.edges.LineSegment2D):
                 wires.append(primitive.to_wire(10))
             else:
-                wires.append(volmdlr.wire.Wire2D([primitive]))
+                wires.append(Wire2D([primitive]))
 
-        return volmdlr.wire.Wire2D.from_wires(wires)
+        return Wire2D.from_wires(wires)
 
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
