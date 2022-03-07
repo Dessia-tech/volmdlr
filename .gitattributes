@@ -1,3 +1,6 @@
 *.step filter=lfs diff=lfs merge=lfs -text
 *.stp filter=lfs diff=lfs merge=lfs -text
 *.stl filter=lfs diff=lfs merge=lfs
+.step filter=lfs diff=lfs merge=lfs -text
+.stp filter=lfs diff=lfs merge=lfs -text
+.stl filter=lfs diff=lfs merge=lfs -text

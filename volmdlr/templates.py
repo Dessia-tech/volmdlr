@@ -1,7 +1,7 @@
 
 import os
-import pkg_resources
 from string import Template
+import pkg_resources
 
 
 babylon_unpacker_cdn_header = '''
@@ -68,7 +68,7 @@ babylon_unpacker_embedded_header += '''
 
 
 babylon_unpacker_body_template = Template(
-'''
+    '''
 <body>
    <canvas id="renderCanvas"></canvas>
    <script type="text/javascript">
@@ -172,16 +172,16 @@ babylon_unpacker_body_template = Template(
 
         showAxis(1);
 
-        
+
         var meshes = [];
         for (let mesh_data of babylon_data['meshes']){
                 var mesh = new BABYLON.Mesh(mesh_data['name'], scene);
                 meshes.push(mesh);
-        
+
                 var normals = [];
                 var vertexData = new BABYLON.VertexData();
                 BABYLON.VertexData.ComputeNormals(mesh_data['positions'], mesh_data['indices'], normals);
-        
+
                 vertexData.positions = mesh_data['positions'];
                 vertexData.indices = mesh_data['indices'];
                 vertexData.normals = normals;
@@ -200,14 +200,14 @@ babylon_unpacker_body_template = Template(
                                                         mesh_data['color'][1],
                                                         mesh_data['color'][2]);
                 mat.alpha = mesh_data['alpha'];
-                        
+
                 }
-        
+
         var list_lines = [];
         for (let line_data of babylon_data['lines']){
                 var path = [];
                 for (let point of line_data['points']){
-                        
+
                         var x = point[0];
                         var y = point[1];
                         var z = point[2];
@@ -223,10 +223,10 @@ babylon_unpacker_body_template = Template(
                                                         line_data['color'][2])
                 list_lines.push(lines)
                 }
-        
+
 
         if (babylon_data['steps']){
-          
+
 
 
           var n_primitives = babylon_data['meshes'].length;
