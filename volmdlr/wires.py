@@ -831,6 +831,7 @@ class Contour(Wire):
                     points = [(p1, p2)] + points
                     list_point_pairs.remove((p1, p2))
             if len(list_point_pairs) == 0:
+                self.plot()
                 finished = True
             counter1 += 1
             if counter1 >= 100*length_list_points:
@@ -4398,6 +4399,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                                  0] - closing_point_index) / ratio_denom
                     if math.isclose(ratio, 1, abs_tol=0.3):
                         closing_point_index = list_closing_point_indexes[0]
+                    else:
+                        closing_point_index = list_closing_point_indexes[-1]
                 else:
                     if closing_point_index > list_closing_point_indexes[0]:
                         ratio1 = (closing_point_index -
