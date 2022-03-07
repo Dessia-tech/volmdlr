@@ -23,7 +23,6 @@ import volmdlr.edges
 import volmdlr.display as vmd
 
 
-
 def bounding_rectangle_adjacent_contours(contours: List):
     '''
     compute the bounding_box of a list of adjacent contours2d
@@ -41,7 +40,7 @@ def bounding_rectangle_adjacent_contours(contours: List):
 
     '''
     xmin, xmax, ymin, ymax = contours[0].bounding_rectangle()
-    
+
     for i in range(1, len(contours)):
         xmin_contour, xmax_contour, ymin_contour, ymax_contour = contours[i].bounding_rectangle()
         xmin = min(xmin, xmin_contour)
@@ -49,8 +48,8 @@ def bounding_rectangle_adjacent_contours(contours: List):
         ymin = min(ymin, ymin_contour)
         ymax = max(ymax, ymax_contour)
 
-
     return xmin, xmax, ymin, ymax
+
 
 class Wire:
     _non_data_hash_attributes = ['basis_primitives']
@@ -58,8 +57,8 @@ class Wire:
                                     'basis_primitives']
 
     # def __init__(self):
-    #     raise TypeError ('It cannot be instantiated directly, see Wire2D, Wire3D, Contour2D or Contour3D') 
-        
+    #     raise TypeError ('It cannot be instantiated directly, see Wire2D, Wire3D, Contour2D or Contour3D')
+
     def length(self):
         length = 0.
         for primitive in self.primitives:
@@ -67,12 +66,12 @@ class Wire:
         return length
 
     def discretization_points(self, resolution: float):
-        ''' 
-        resolution: distance between two discretized points 
+        '''
+        resolution: distance between two discretized points
         '''
 
         length = self.length()
-        n = int(length / resolution)+1
+        n = int(length / resolution) + 1
         return [self.point_at_abscissa(i / n * length) for i in
                 range(n + 1)]
 
@@ -107,8 +106,8 @@ class Wire:
                 pass
             elif ip1 == ip2:  # primitive1 == primitive2
                 if point1.point_distance(
-                        primitive1.start) < point2.point_distance(
-                    primitive1.start):
+                            primitive1.start) < point2.point_distance(
+                        primitive1.start):
                     pass
                 else:
                     primitive1, primitive2 = primitive2, primitive1
@@ -122,8 +121,8 @@ class Wire:
                 pass
             elif ip1 == ip2:  # primitive1 == primitive2
                 if point1.point_distance(
-                        primitive1.start) > point2.point_distance(
-                    primitive1.start):
+                            primitive1.start) > point2.point_distance(
+                        primitive1.start):
                     pass
                 else:
                     primitive1, primitive2 = primitive2, primitive1
@@ -165,27 +164,26 @@ class Wire:
         '''
         find out if a point is on the wire or not. If it belongs, we return the primitive's index
         '''
-        
+
         for i, primitive in enumerate(self.primitives):
             belongs = primitive.point_belongs(point, abs_tol=abs_tol)
             if belongs:
                 return i
         return False
 
-
     def abscissa(self, point):
-        ''' 
+        '''
         compute the curvilinear abscisse of a point on a wire
         '''
-        
+
         index = self.point_belongs(point)
-   
+
         length = self.primitives[index].abscissa(point)
         for primitive in self.primitives[0:index]:
             length += primitive.length()
 
         return length
-    
+
 
 class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
     """
@@ -257,7 +255,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                 else:
                     end = self.primitives[i].end
                     if intersections[0].point_distance(end) > intersections[
-                        1].point_distance(end):
+                            1].point_distance(end):
                         intersections.reverse()
                     offset_intersections.append(intersections[0])
 
@@ -269,7 +267,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                 else:
                     end = self.primitives[i].end
                     if intersections[0].point_distance(end) > intersections[
-                        1].point_distance(end):
+                            1].point_distance(end):
                         intersections.reverse()
                     offset_intersections.append(intersections[0])
 
@@ -426,7 +424,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
 
     def wire_intersections(self, wire):
         '''
-        compute intersections between two wire2d. 
+        compute intersections between two wire2d.
 
         Parameters
         ----------
@@ -437,21 +435,21 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         intersections : List[(volmdlr.Point2D, volmdlr.Primitive2D)]
 
         '''
-        
+
         intersections = []
         for primitive in wire.primitives:
             a = self.linesegment_intersections(primitive)
             if a:
                 intersections.append([a[0][0], a[0][1]])
-                               
+
         return intersections
 
     def cut_by_wire(self, wire):
-        ''' 
+        '''
         cut a wire2d (contour2d) with a wire2d
-        ''' 
+        '''
         # TODO: To be checked: it is an adapted version of 'cut_by_line'
-                
+
         intersections = self.wire_intersections(wire)
 
         n_inter = len(intersections)
@@ -462,7 +460,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
             contours = []
             # primitives_split = [primitive.split(point) \
             #                     for point, primitive in intersections]
-            x = [(ip, wire.abscissa(point)) \
+            x = [(ip, wire.abscissa(point))
                  for ip, (point, _) in enumerate(intersections)]
             # intersection_to_primitives_index = {
             #     i: self.primitives.index(primitive) \
@@ -473,7 +471,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
             sorted_inter_index_dict[n_inter] = sorted_inter_index_dict[0]
 
             # Side 1: opposite side of begining of contour
-            
+
             remaining_transitions1 = list(range(n_inter // 2))
             # enclosing_transitions = {}
             while len(remaining_transitions1) > 0:
@@ -508,13 +506,13 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                         volmdlr.edges.LineSegment2D(last_point, point1))
                     primitives.extend(
                         self.extract_primitives(point1, primitive1, point2,
-                                                primitive2,inside=True))
+                                                primitive2, inside=True))
                     last_point = point2
                     remaining_transitions1.remove(transition)
 
                 primitives.append(
                     volmdlr.edges.LineSegment2D(last_point, point_start))
-                
+
                 # points = (volmdlr.edges.LineSegment2D(last_point, point_start)).discretise(5)
                 # line_segment=volmdlr.edges.LineSegment2D(last_point, point_start)
                 # for p in points[1:-1]:
@@ -523,10 +521,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                 #     line_segment = r[1]
                 #     if p == points[-2]:
                 #         primitives.append(r[1])
-                
+
                 # primitives.extend(
                 #         wire.extract_with_points(last_point, point_start ,inside=True))
-                
 
                 contour = Contour2D(primitives)
                 # contour = contour.order_contour()
@@ -549,11 +546,11 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                         if i1 < i2:
                             enclosed_transitions[it] = [i // 2 for i in
                                                         sorted_inter_index[
-                                                        i2 - 1:i1:-2]]
+                                                            i2 - 1:i1:-2]]
                         else:
                             enclosed_transitions[it] = [i // 2 for i in
                                                         sorted_inter_index[
-                                                        i2 + 1:i1:2]]
+                                                            i2 + 1:i1:2]]
 
                 remaining_transitions2.remove(best_transition)
                 point_start, primitive1 = intersections[
@@ -569,13 +566,13 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                         volmdlr.edges.LineSegment2D(last_point, point1))
                     primitives.extend(
                         self.extract_primitives(point1, primitive1, point2,
-                                                primitive2, inside= False))
+                                                primitive2, inside=False))
                     last_point = point2
                     remaining_transitions2.remove(transition)
 
                 primitives.append(
                     volmdlr.edges.LineSegment2D(last_point, point_start))
-                
+
                 # points = (volmdlr.edges.LineSegment2D(last_point, point_start)).discretise(5)
                 # line_segment=volmdlr.edges.LineSegment2D(last_point, point_start)
                 # for p in points[1:-1]:
@@ -584,10 +581,10 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                 #     line_segment = r[1]
                 #     if p == points[-2]:
                 #         primitives.append(r[1])
-                
+
                 # primitives.extend(
                 #         wire.extract_with_points(last_point, point_start ,inside=True))
-                
+
                 contour = Contour2D(primitives)
                 # contour = contour.order_contour()
                 contours.append(contour)
@@ -605,20 +602,17 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         raise NotImplementedError(
             '{} intersections not supported yet'.format(len(intersections)))
 
-
     @classmethod
     def from_points(cls, points: List[volmdlr.Point2D]):
-        ''' 
+        '''
         define a wire based on points2d with line_segments2d
         '''
-        
-        edges = []
-        for i in range(0, len(points)-1):
-            edges.append(volmdlr.edges.LineSegment2D(points[i], points[i+1]))       
-        
-        return cls(edges)        
-        
 
+        edges = []
+        for i in range(0, len(points) - 1):
+            edges.append(volmdlr.edges.LineSegment2D(points[i], points[i + 1]))
+
+        return cls(edges)
 
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
@@ -684,16 +678,15 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
         for primitive in self.primitives:
             faces.extend(primitive.extrusion(extrusion_vector))
         return faces
-    
-    
+
     def to_bspline(self, discretization_parameter, degree):
         '''
-        convert a wire3d to a bspline curve3d 
+        convert a wire3d to a bspline curve3d
         '''
-        
-        discretized_points = self.discretization_points(discretization_parameter)  
+
+        discretized_points = self.discretization_points(discretization_parameter)
         bspline_curve = volmdlr.edges.BSplineCurve3D.from_points_interpolation(discretized_points, degree)
-        
+
         return bspline_curve
 
     # def copy(self, deep=True, memo=None):
@@ -706,11 +699,11 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
 # TODO: define an edge as an opened polygon and allow to compute area from this reference
 
 class Contour(Wire):
-    
+
     # def __init__(self):
-    #     Wire.__init__(self)        
-        
-    def extract_primitives(self, point1, primitive1, point2, primitive2, inside:bool = True):
+    #     Wire.__init__(self)
+
+    def extract_primitives(self, point1, primitive1, point2, primitive2, inside: bool = True):
         """
         inside: extracted contour is between the two points if True and outside these points if False
         """
@@ -722,8 +715,8 @@ class Contour(Wire):
                 pass
             elif ip1 == ip2:  # primitive1 == primitive2
                 if point1.point_distance(
-                        primitive1.start) < point2.point_distance(
-                    primitive1.start):
+                            primitive1.start) < point2.point_distance(
+                        primitive1.start):
                     pass
                 else:
                     primitive1, primitive2 = primitive2, primitive1
@@ -737,8 +730,8 @@ class Contour(Wire):
                 pass
             elif ip1 == ip2:  # primitive1 == primitive2
                 if point1.point_distance(
-                        primitive1.start) > point2.point_distance(
-                    primitive1.start):
+                            primitive1.start) > point2.point_distance(
+                        primitive1.start):
                     pass
                 else:
                     primitive1, primitive2 = primitive2, primitive1
@@ -833,7 +826,7 @@ class Contour(Wire):
             if len(list_point_pairs) == 0:
                 finished = True
             counter1 += 1
-            if counter1 >= 100*length_list_points:
+            if counter1 >= 100 * length_list_points:
                 raise NotImplementedError
             if len(list_point_pairs) == 1:
                 counter += 1
@@ -980,10 +973,10 @@ class Contour(Wire):
         return list_contours
 
     def discretized_primitives(self, n: float):
-        """ 
+        """
         discretize each contour's primitive and return a list of discretized primitives
         """
-        
+
         edges = []
         for primitive in self.primitives:
             points = primitive.discretise(n)
@@ -999,7 +992,7 @@ class Contour(Wire):
                 return True
         return False
 
-    def is_sharing_primitives_with(self, contour, all_points = False):
+    def is_sharing_primitives_with(self, contour, all_points=False):
         '''
         check if two contour are sharing primitives
         "all_points" is by default False. Turn it True if you need to get points and edges used to find out shared primitives
@@ -1010,7 +1003,7 @@ class Contour(Wire):
         # edges2 = set()
 
         for edge_1, edge_2 in itertools.product(self.primitives,
-                                              contour.primitives):
+                                                contour.primitives):
             edges = [edge_1, edge_2, edge_1]
             for edge1, edge2 in zip(edges, edges[1:]):
                 for point in [edge2.start, edge2.end]:
@@ -1043,7 +1036,7 @@ class Contour(Wire):
         extract shared primitives extremities between two adjacent contours
         '''
 
-        results = self.is_sharing_primitives_with(contour, all_points = True)
+        results = self.is_sharing_primitives_with(contour, all_points=True)
         if results is False:
             raise ValueError(
                     'The contours are not adjacent. They dont share primitives')
@@ -1074,7 +1067,7 @@ class Contour(Wire):
 
         points = self.shared_primitives_extremities(contour)
         for i in range(0, len(points), 2):
-            point1, point2 = points[i], points[i+1]
+            point1, point2 = points[i], points[i + 1]
 
             shared_primitives_prim = self.extract_without_primitives(point1,
                                                                      point2,
@@ -1085,19 +1078,18 @@ class Contour(Wire):
                                                                            True))
             else:
                 shared_primitives_1.extend(shared_primitives_prim)
-    
+
             shared_primitives_prim = contour.extract_without_primitives(point1,
-                                                                          point2,
-                                                                          False)
+                                                                        point2,
+                                                                        False)
             if self.point_over_contour(shared_primitives_prim[0].middle_point(), 1e-4) is False:
                 shared_primitives_2.extend(contour.extract_without_primitives(point1,
-                                                                                point2,
-                                                                                True))
+                                                                              point2,
+                                                                              True))
             else:
                 shared_primitives_2.extend(shared_primitives_prim)
 
         return [shared_primitives_1, shared_primitives_2]
-
 
     def merge_primitives_with(self, contour):
         '''
@@ -1107,11 +1099,11 @@ class Contour(Wire):
         points = self.shared_primitives_extremities(contour)
         merge_primitives = []
 
-        for i in range(1, len(points)+1, 2):
-            if i == (len(points)-1):
+        for i in range(1, len(points) + 1, 2):
+            if i == (len(points) - 1):
                 point1, point2 = points[i], points[0]
             else:
-                point1, point2 = points[i], points[i+1]
+                point1, point2 = points[i], points[i + 1]
 
             merge_primitives_prim = self.extract_without_primitives(point1,
                                                                     point2,
@@ -1124,29 +1116,27 @@ class Contour(Wire):
             else:
                 merge_primitives.extend(merge_primitives_prim)
 
-
             merge_primitives_prim = contour.extract_without_primitives(point1,
-                                                                         point2,
-                                                                         False)
+                                                                       point2,
+                                                                       False)
             if self.point_over_contour(merge_primitives_prim[0].middle_point(), 1e-4) is True:
                 merge_primitives_prim = contour.extract_without_primitives(point1,
-                                                                             point2,
-                                                                             True)
+                                                                           point2,
+                                                                           True)
                 merge_primitives.extend(merge_primitives_prim)
             else:
                 merge_primitives.extend(merge_primitives_prim)
 
-        return merge_primitives  
-
+        return merge_primitives
 
     def edges_order_with_adjacent_contour(self, contour):
         """
         check if the shared edges between two adjacent contours are traversed with two different directions along each contour
         """
-        
+
         contour1 = self
         contour2 = contour
-        
+
         # shared_tuple = contour1.shared_edges_between2contours(contour2)
         shared_tuple = contour1.shared_primitives_with(contour2)
         # [shared_primitives_1, shared_primitives_2] = contour1.shared_primitives_with(contour2)
@@ -1166,35 +1156,35 @@ class Contour(Wire):
         '''
         points = []
         primitives = self.primitives
-        for i in range(0,len(primitives)):
-            pts=[]
-            for p in list_p: #due to errors
+        for i in range(0, len(primitives)):
+            pts = []
+            for p in list_p:  # due to errors
                 if primitives[i].point_belongs(p):
                     pts.append(p)
             if len(pts) == 1:
                 points.append(pts[0])
                 break
-            elif len(pts) >1:
+            elif len(pts) > 1:
                 points.append(primitives[i].start.nearest_point(pts))
                 break
 
-        for i in range(len(primitives)-1, -1, -1):
-            pts=[]
-            for p in list_p: #due to errors
+        for i in range(len(primitives) - 1, -1, -1):
+            pts = []
+            for p in list_p:  # due to errors
                 if primitives[i].point_belongs(p):
                     pts.append(p)
             if len(pts) == 1:
                 if pts[0] not in points:
                     points.append(pts[0])
                     break
-            elif len(pts) >1:
+            elif len(pts) > 1:
                 point = primitives[i].end.nearest_point(pts)
                 if point not in points:
                     points.append(point)
                     break
         return points
 
-      
+
 class Contour2D(Contour, Wire2D):
     """
     A collection of 2D primitives forming a closed wire2D
@@ -1352,7 +1342,6 @@ class Contour2D(Contour, Wire2D):
                                    surface_style=surface_style,
                                    name=self.name)
 
-
     def is_inside(self, contour2):
         """
         verifies if a contour is inside another contour perimiter,
@@ -1370,7 +1359,6 @@ class Contour2D(Contour, Wire2D):
             if not self.point_belongs(point) and not self.point_over_contour(point, abs_tol=1e-7):
                 return False
         return True
-
 
     def bounding_rectangle(self):
         xmin, xmax, ymin, ymax = self.primitives[0].bounding_rectangle()
@@ -1406,11 +1394,11 @@ class Contour2D(Contour, Wire2D):
     def order_contour(self):
         if self.is_ordered() or len(self.primitives) < 2:
             return self
-        
+
         initial_points = []
         for p in self.primitives:
             initial_points.append((p.start, p.end))
-        
+
         new_primitives = []
         points = self.ordering_contour()
         for p1, p2 in points:
@@ -1418,7 +1406,7 @@ class Contour2D(Contour, Wire2D):
                 index = initial_points.index((p1, p2))
             except ValueError:
                 index = initial_points.index((p2, p1))
-            
+
             if isinstance(self.primitives[index], volmdlr.edges.LineSegment2D):
                 new_primitives.append(volmdlr.edges.LineSegment2D(p1, p2))
             elif isinstance(self.primitives[index], volmdlr.edges.Arc2D):
@@ -1432,7 +1420,6 @@ class Contour2D(Contour, Wire2D):
         self.primitives = new_primitives
 
         return self
-
 
     @classmethod
     def extract_contours(cls, contour, point1: volmdlr.Point3D,
@@ -1514,12 +1501,12 @@ class Contour2D(Contour, Wire2D):
         return list_contours
 
     def get_pattern(self):
-        """ A pattern is portion of the contour from which the contour can be 
+        """ A pattern is portion of the contour from which the contour can be
         reconstructed by rotations of this portion"""
         xmin, xmax, ymin, ymax = self.bounding_rectangle()
 
-        # ax=plt.subplot() 
-        # line = Line2D(Point2D([xi, 0]),Point2D([xi,1])) 
+        # ax=plt.subplot()
+        # line = Line2D(Point2D([xi, 0]),Point2D([xi,1]))
         line = volmdlr.edges.Line2D(volmdlr.Point2D([0, -0.17]),
                                     volmdlr.Point2D([0, 0.17]))
         line_2 = line.Rotation(self.center_of_mass(), 0.26)
@@ -1552,9 +1539,9 @@ class Contour2D(Contour, Wire2D):
                 volmdlr.edges.Arc2D(sp22.start, interior, sp12.end))
 
         return Contour2D(primitives)
-    
+
     def contour_from_pattern(self):
-        #TODO: Delete this function?
+        # TODO: Delete this function?
         pattern = self.get_pattern()
         pattern_rotations = []
         # pattern_rotations.append(self)
@@ -1629,8 +1616,8 @@ class Contour2D(Contour, Wire2D):
         """
         bounding_rectangle = self.bounding_rectangle()
         # xmin, xmax, ymin, ymax = self.bounding_rectangle()
-        dx = bounding_rectangle[1] - bounding_rectangle[0] #xmax - xmin
-        dy = bounding_rectangle[3] - bounding_rectangle[2] #ymax - ymin
+        dx = bounding_rectangle[1] - bounding_rectangle[0]  # xmax - xmin
+        dy = bounding_rectangle[3] - bounding_rectangle[2]  # ymax - ymin
         if number_points_x is None:
             n = max(math.ceil(x_density * dx), min_points_x)
         else:
@@ -1673,7 +1660,7 @@ class Contour2D(Contour, Wire2D):
 
                 elif len(points_in) == 3:
                     triangles.append([point_index[p] for p in points_in])
-        
+
         return vmd.DisplayMesh2D(points, triangles)
 
     # def extract_contours(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D):
@@ -1732,7 +1719,7 @@ class Contour2D(Contour, Wire2D):
                 closing_contour.primitives[0].start:
             cutting_contour_new = closing_contour.invert()
             primitives1 = cutting_contour_new.primitives + \
-                          extracted_outerpoints_contour1.primitives
+                extracted_outerpoints_contour1.primitives
         elif extracted_outerpoints_contour1.primitives[0].start == \
                 closing_contour.primitives[-1].end:
             primitives1 = closing_contour.primitives + \
@@ -1743,9 +1730,9 @@ class Contour2D(Contour, Wire2D):
             cutting_contour_new = \
                 closing_contour.invert()
             primitives2 = cutting_contour_new.primitives + \
-                          extracted_innerpoints_contour1.primitives
+                extracted_innerpoints_contour1.primitives
         elif extracted_innerpoints_contour1.primitives[
-            0].start == closing_contour.primitives[-1].end:
+                0].start == closing_contour.primitives[-1].end:
             primitives2 = closing_contour.primitives + \
                           extracted_innerpoints_contour1.primitives
         contour1 = volmdlr.wires.Contour2D(primitives1)
@@ -1805,27 +1792,27 @@ class Contour2D(Contour, Wire2D):
         return list_valid_contours
 
     def discretized_contour(self, n: float):
-        """ 
+        """
         discretize each contour's primitive and return a new contour with teses discretized primitives
         """
-            
-        contour = volmdlr.wires.Contour2D((self.discretized_primitives(n))) 
-        
+
+        contour = volmdlr.wires.Contour2D((self.discretized_primitives(n)))
+
         return contour.order_contour()
-    
+
     @classmethod
     def from_bounding_rectangle(cls, xmin, xmax, ymin, ymax):
-        """ 
+        """
         create a contour2d with bounding_box parameters, using linesegments2d
         """
-        
-        edge0=volmdlr.edges.LineSegment2D(volmdlr.Point2D(xmin, ymin), volmdlr.Point2D(xmax, ymin))
-        edge1=volmdlr.edges.LineSegment2D(volmdlr.Point2D(xmax, ymin), volmdlr.Point2D(xmax, ymax))
-        edge2=volmdlr.edges.LineSegment2D(volmdlr.Point2D(xmax, ymax), volmdlr.Point2D(xmin, ymax))
-        edge3=volmdlr.edges.LineSegment2D(volmdlr.Point2D(xmin, ymax), volmdlr.Point2D(xmin, ymin))
-        
+
+        edge0 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(xmin, ymin), volmdlr.Point2D(xmax, ymin))
+        edge1 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(xmax, ymin), volmdlr.Point2D(xmax, ymax))
+        edge2 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(xmax, ymax), volmdlr.Point2D(xmin, ymax))
+        edge3 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(xmin, ymax), volmdlr.Point2D(xmin, ymin))
+
         edges = [edge0, edge1, edge2, edge3]
-        
+
         return volmdlr.wires.Contour2D(edges)
 
     @classmethod
@@ -1833,42 +1820,42 @@ class Contour2D(Contour, Wire2D):
         '''
         create a contour2d from points with line_segments2D
         '''
-        
-        if len(points)<3:
+
+        if len(points) < 3:
             raise ValueError('contour is defined at least with three points')
         else:
             edges = []
-            for i in range(0, len(points)-1):
-                edges.append(volmdlr.edges.LineSegment2D(points[i], points[i+1]))
-            
+            for i in range(0, len(points) - 1):
+                edges.append(volmdlr.edges.LineSegment2D(points[i], points[i + 1]))
+
             edges.append(volmdlr.edges.LineSegment2D(points[-1], points[0]))
-            
+
             contour = cls(edges)
-            
+
             return contour
-    
+
     def cut_by_bspline_curve(self, bspline_curve2d: volmdlr.edges.BSplineCurve2D):
         '''
         cut a contou2d with bspline_curve2d to define two different contours
         '''
-        # TODO: BsplineCurve is descretized and defined with a wire. To be improved! 
+        # TODO: BsplineCurve is descretized and defined with a wire. To be improved!
 
         contours = self.cut_by_wire(bspline_curve2d.to_wire(20))
-        
+
         return contours
-     
+
     def clean_primitives(self):
-        ''' 
+        '''
         delete primitives with start=end, and return a new contour
         '''
-        
+
         new_primitives = []
         for p in self.primitives:
             if p.start != p.end:
                 new_primitives.append(p)
-        
+
         return Contour2D(new_primitives)
-      
+
     def merge_with(self, contour2d):
         '''
         merge two adjacent contours, sharing primitives, and returns one outer contour and inner contours (if there are any)
@@ -1884,7 +1871,7 @@ class Contour2D(Contour, Wire2D):
 
         return contours
 
-        
+
 class ClosedPolygon:
 
     def length(self):
@@ -2141,7 +2128,6 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             angle += math.atan2(y, x)
         return angle > 0
 
-
     def delaunay_triangulation(self):
         points = self.points
         new_points = []
@@ -2214,7 +2200,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             alpha = math.acos(normal_vector1.dot(normal_vector2))
 
             offset_point = self.points[i] + offset / math.cos(alpha / 2) * \
-                           (-offset_vectors[i])
+                (-offset_vectors[i])
 
             # ax=self.plot()
             # offset_point.plot(ax=ax, color='g')
@@ -2371,11 +2357,11 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                 next_point = remaining_points[posmin_theta]
 
                 vec_next_point = next_point - barycenter
-                total_angle += (2*math.pi - volmdlr.core.clockwise_angle(initial_vector, vec_next_point))
+                total_angle += (2 * math.pi - volmdlr.core.clockwise_angle(initial_vector, vec_next_point))
 
-                if total_angle > 2*math.pi :
+                if total_angle > 2 * math.pi:
                     break
-                else :
+                else:
                     initial_vector = vec_next_point
 
                 hull.append(next_point)
@@ -2390,14 +2376,14 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
     def concave_hull(cls, points, concavity, scale_factor):
         """
         Calculates the concave hull from a cloud of points, i.e., it Unites all points under the smallest possible area.
-        
+
         :param points: list of points corresponding to the cloud of points
         :type points: class: 'volmdlr.Point2D'
         :param concavity: Sets how sharp the concave angles can be. It goes from -1 (not concave at all. in fact,
-                          the hull will be left convex) up to +1 (very sharp angles can occur. Setting concavity to +1 might 
+                          the hull will be left convex) up to +1 (very sharp angles can occur. Setting concavity to +1 might
                           result in 0º angles!) concavity is defined as the cosine of the concave angles.
         :type concavity: float
-        :param scale_factor: Sets how big is the area where concavities are going to be searched. 
+        :param scale_factor: Sets how big is the area where concavities are going to be searched.
                              The bigger, the more sharp the angles can be. Setting it to a very high value might affect the performance of the program.
                              This value should be relative to how close to each other the points to be connected are.
         :type scale_factor: float
@@ -2425,9 +2411,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                         point_x_rel_pos = int(point.x / scale_factor)
                         point_y_rel_pos = int(point.y / scale_factor)
                         if point_x_rel_pos >= boundary[
-                            0] and point_x_rel_pos <= boundary[
-                            1] and point_y_rel_pos >= boundary[
-                            2] and point_y_rel_pos <= boundary[3]:
+                                0] and point_x_rel_pos <= boundary[
+                                1] and point_y_rel_pos >= boundary[
+                                2] and point_y_rel_pos <= boundary[3]:
                             nearby_points.append(point)
 
                 scale_factor *= 4 / 3
@@ -2461,7 +2447,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                                                             end=line.end)
                     if not (line_colides_with_hull(line=new_lineA,
                                                    concave_hull=hull_concave_edges) and line_colides_with_hull(
-                        line=new_lineB, concave_hull=hull_concave_edges)):
+                            line=new_lineB, concave_hull=hull_concave_edges)):
                         ok_middle_points.append(middle_point)
                         list_cossines.append(cos)
             if len(ok_middle_points) > 0:
@@ -2559,8 +2545,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             polygon_points.remove((p1, p2))
             if len(polygon_points) == 0:
                 finished = True
-                
-        if points[0] == points[-1] :
+
+        if points[0] == points[-1]:
             return cls(points[:-1])
 
         return cls(points)
@@ -2653,7 +2639,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                             break
 
                 if not intersect:
-                # if not current_polygon.linesegment_intersections(line_segment):
+                    # if not current_polygon.linesegment_intersections(line_segment):
                     # May be an ear
                     # print('ear?')
                     # if current_polygon.point_belongs(line_segment.middle_point()):
@@ -2662,7 +2648,6 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                     #     line_segment.middle_point().plot(color='r', ax=ax)
                     # print(current_polygon.point_belongs(
                     #         line_segment.middle_point()))
-
 
                     if current_polygon.point_belongs(
                             line_segment.middle_point()):
@@ -2685,9 +2670,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                     found_flat_ear = False
                     for p1, p2, p3 in zip(remaining_points,
                                           remaining_points[
-                                          1:] + remaining_points[0:1],
+                                              1:] + remaining_points[0:1],
                                           remaining_points[
-                                          2:] + remaining_points[0:2]):
+                                              2:] + remaining_points[0:2]):
                         triangle = Triangle2D(p1, p2, p3)
                         if triangle.area() == 0:
                             remaining_points.remove(p2)
@@ -2695,7 +2680,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                             break
 
                     if not found_flat_ear:
-                        # remaining_polygon.plot(point_numbering=True, plot_points=True)     
+                        # remaining_polygon.plot(point_numbering=True, plot_points=True)
                         # vmd.DisplayMesh2D(points, triangles).plot()
                         # print(remaining_points)
                         # raise ValueError('There are no ear in the polygon, it seems malformed')
@@ -3021,12 +3006,12 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
 
         for i, primitive1 in enumerate(self.line_segments):
             closing_point = self.get_closing_point(polygon2_2d,
-                                                          primitive1)
+                                                   primitive1)
             if closing_point != volmdlr.O2D:
                 return primitive1
 
         raise NotImplementedError('make sure the two polygons '
-                                   'you are trying to sew are valid ones')
+                                  'you are trying to sew are valid ones')
 
     def is_convex(self):
         for prim1, prim2 in zip(self.line_segments, self.line_segments[1:] + [self.line_segments[0]]):
@@ -3109,10 +3094,10 @@ class Circle2D(Contour2D):
 
         return math.isclose(self.center.x,
                             other_circle.center.x, abs_tol=1e-06) \
-               and math.isclose(self.center.y,
-                                other_circle.center.y, abs_tol=1e-06) \
-               and math.isclose(self.radius, other_circle.radius,
-                                abs_tol=1e-06)
+            and math.isclose(self.center.y,
+                             other_circle.center.y, abs_tol=1e-06) \
+            and math.isclose(self.radius, other_circle.radius,
+                             abs_tol=1e-06)
 
     def to_polygon(self, angle_resolution: float):
         return ClosedPolygon2D(
@@ -3204,7 +3189,7 @@ class Circle2D(Contour2D):
 
         for inter in self.circle_intersections(circle):
             try:
-                arc2d.abscissa(inter)# I guess it is a test?
+                arc2d.abscissa(inter)  # I guess it is a test?
                 intersections.append(inter)
             except ValueError:
                 pass
@@ -3539,7 +3524,7 @@ class Contour3D(Contour, Wire3D):
         initial_points = []
         for p in self.primitives:
             initial_points.append((p.start, p.end))
-        
+
         new_primitives = []
         if self.is_ordered():
             return self
@@ -3549,7 +3534,7 @@ class Contour3D(Contour, Wire3D):
                 index = initial_points.index((p1, p2))
             except ValueError:
                 index = initial_points.index((p2, p1))
-            
+
             if isinstance(self.primitives[index], volmdlr.edges.LineSegment3D):
                 new_primitives.append(volmdlr.edges.LineSegment3D(p1, p2))
             elif isinstance(self.primitives[index], volmdlr.edges.Arc3D):
@@ -3559,7 +3544,7 @@ class Contour3D(Contour, Wire3D):
                     new_primitives.append(self.primitives[index])
                 else:
                     new_primitives.append(self.primitives[index].reverse())
- 
+
         self.primitives = new_primitives
 
         return self
@@ -3631,13 +3616,12 @@ class Contour3D(Contour, Wire3D):
         return Contour2D(primitives=primitives2d)
 
     def _bounding_box(self):
-
         """
         Flawed method, to be enforced by overloading
         """
         n = 50
         l = self.length()
-        points = [self.point_at_abscissa(i / n * l) \
+        points = [self.point_at_abscissa(i / n * l)
                   for i in range(n)]
         return volmdlr.core.BoundingBox.from_points(points)
 
@@ -3660,37 +3644,38 @@ class Contour3D(Contour, Wire3D):
         if dict_intersecting_points:
             return dict_intersecting_points
         return None
-      
+
     @classmethod
     def from_points(cls, points: List[volmdlr.Point3D]):
         '''
-        create a contour3d from points with line_segments3D  
+        create a contour3d from points with line_segments3D
         '''
-        
-        if len(points)<3:
+
+        if len(points) < 3:
             raise ValueError('contour is defined at least with three points')
         else:
             edges = []
-            for i in range(0, len(points)-1):
-                edges.append(volmdlr.edges.LineSegment3D(points[i], points[i+1]))
-            
+            for i in range(0, len(points) - 1):
+                edges.append(volmdlr.edges.LineSegment3D(points[i], points[i + 1]))
+
             edges.append(volmdlr.edges.LineSegment3D(points[len(points)], points[0]))
-            
+
             contour = cls(edges)
-            
+
             return contour
-    
+
     def clean_primitives(self):
-        ''' 
+        '''
         delete primitives with start=end, and return a new contour
         '''
-        
+
         new_primitives = []
         for p in self.primitives:
             if p.start != p.end:
                 new_primitives.append(p)
-        
+
         return Contour3D(new_primitives)
+
     def merge_with(self, contour3d):
         '''
         merge two adjacent contours, sharing primitives, and returns one outer contour and inner contours (if there are any)
@@ -3701,6 +3686,7 @@ class Contour3D(Contour, Wire3D):
         # contours = sorted(contours, key=lambda contour: contour.area(), reverse=True)
 
         return contours
+
 
 class Circle3D(Contour3D):
     _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']
@@ -3963,7 +3949,7 @@ class Circle3D(Contour3D):
 
     def point_on_circle(self, point: volmdlr.Point3D):
         distance = point.point_distance(self.center)
-        vec = volmdlr.Vector3D(*point-self.center)
+        vec = volmdlr.Vector3D(*point - self.center)
         dot = self.normal.dot(vec)
         if math.isclose(distance, self.radius, abs_tol=1e-6)\
                 and math.isclose(dot, 0, abs_tol=5e-6):
@@ -4189,16 +4175,16 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                                     other_poly3d.average_center_point()
 
         self_poly2d, other_poly2d = self.to_2d(self_center, x, y), \
-                                    other_poly3d.to_2d(other_center, x, y)
+            other_poly3d.to_2d(other_center, x, y)
         self_center2d, other_center2d = self_poly2d.center_of_mass(), \
-                                        other_poly2d.center_of_mass()
+            other_poly2d.center_of_mass()
         self_poly2d.translation(-self_center2d, copy=False)
         other_poly2d.translation(-other_center2d, copy=False)
 
         bbox_self2d, bbox_other2d = self_poly2d.bounding_rectangle(), \
-                                    other_poly2d.bounding_rectangle()
+            other_poly2d.bounding_rectangle()
         position = [abs(value) for value in bbox_self2d] \
-                   + [abs(value) for value in bbox_other2d]
+            + [abs(value) for value in bbox_other2d]
         max_scale = 2 * max(position)
 
         lines = [volmdlr.edges.LineSegment2D(volmdlr.O2D, max_scale * (
@@ -4226,12 +4212,12 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
         new_other_poly2d.translation(other_center2d, copy=False)
 
         new_poly1, new_poly2 = new_self_poly2d.to_3d(self_center, x, y), \
-                               new_other_poly2d.to_3d(other_center, x, y)
+            new_other_poly2d.to_3d(other_center, x, y)
 
         triangles = []
         for point1, point2, other_point in zip(new_poly1.points,
                                                new_poly1.points[
-                                               1:] + new_poly1.points[:1],
+                                                   1:] + new_poly1.points[:1],
                                                new_poly2.points):
             triangles.append([point1, point2, other_point])
 
@@ -4252,7 +4238,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
         sure it is being projected in the right plane
         """
         center1, center2 = self.average_center_point(), polygon2.average_center_point()
-        center1_, center2_ = volmdlr.Point3D(center1.x, center1.y,0), volmdlr.Point3D(center2.x,center2.y, 0)
+        center1_, center2_ = volmdlr.Point3D(center1.x, center1.y, 0), volmdlr.Point3D(center2.x, center2.y, 0)
         new_polygon1, new_polygon2 = self.translation(-center1_), polygon2.translation(-center2_)
         new_center1, new_center2 = new_polygon1.average_center_point(), new_polygon2.average_center_point()
 
@@ -4269,7 +4255,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
             if i != 0:
                 mean_point2d = 0.5 * (
                         new_polygon1_2d_points[i] + new_polygon1_2d_points[
-                    i - 1])
+                            i - 1])
                 closing_point = new_polygon2_2d.line_intersecting_closing_point(
                     mean_point2d)
                 closing_point_index = new_polygon2_2d.points.index(
@@ -4417,7 +4403,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                             if ratio_denom - list_closing_point_indexes[-1] < 10:
                                 passed_by_zero_index = True
                             elif ratio_denom - list_closing_point_indexes[
-                                -1] >= 5:
+                                    -1] >= 5:
                                 closing_point_index = \
                                     list_closing_point_indexes[-1] + 5
                             else:
@@ -4580,6 +4566,5 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
         if polygon1_2d.is_convex() and polygon2_2d.is_convex():
             return self.convex_sewing(polygon2, x, y)
         return self.concave_sewing(polygon2, x, y)
-
 
 

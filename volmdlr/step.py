@@ -181,7 +181,8 @@ def advanced_brep_shape_representation(arguments, object_dict):
     return shells
 
 
-def representation_relationship_representation_relationship_with_transformation_shape_representation_relationship(arguments, object_dict):
+def representation_relationship_representation_relationship_with_transformation_shape_representation_relationship(
+        arguments, object_dict):
     if arguments[2] in object_dict:
         if isinstance(object_dict[arguments[2]], list):
             for shell3d in object_dict[arguments[2]]:
@@ -199,7 +200,8 @@ def representation_relationship_representation_relationship_with_transformation_
         return None
 
 
-def bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_representation_item_rational_b_spline_curve_representation_item(arguments, object_dict):
+def bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_representation_item_rational_b_spline_curve_representation_item(
+        arguments, object_dict):
     modified_arguments = [''] + arguments
     if modified_arguments[-1] == "''":
         modified_arguments.pop()
@@ -207,7 +209,8 @@ def bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_repre
         modified_arguments, object_dict)
 
 
-def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_representation_item_rational_b_spline_surface_representation_item_surface(arguments, object_dict):
+def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_representation_item_rational_b_spline_surface_representation_item_surface(
+        arguments, object_dict):
     modified_arguments = [''] + arguments
     if modified_arguments[-1] == "''":
         modified_arguments.pop()
@@ -523,7 +526,7 @@ class Step:
                     arg_id += char
                 argument.append(arg_id)
                 arguments[i] = argument
-        
+
     def instanciate(self, name, arguments, object_dict):
         """
         """
@@ -660,7 +663,7 @@ class Step:
                     volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
                         arguments, object_dict)
                     points3d.append(volmdlr_object)
-                    
+
         # remove first point because it refers to origin
         return points3d[1:]
 
@@ -726,8 +729,8 @@ STEP_TO_VOLMDLR = {
     'QUASI_UNIFORM_SURFACE': volmdlr.faces.BSplineSurface3D,
     'RECTANGULAR_COMPOSITE_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACES
     'CURVE_BOUNDED_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACE
-    
-    #added on 12/08/2021 by Mack in order to read BsplinePipe
+
+    # added on 12/08/2021 by Mack in order to read BsplinePipe
     'BOUNDED_SURFACE, B_SPLINE_SURFACE, B_SPLINE_SURFACE_WITH_KNOTS, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM, SURFACE': volmdlr.faces.BSplineSurface3D,
 
     # TOPOLOGICAL ENTITIES
