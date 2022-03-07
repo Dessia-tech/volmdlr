@@ -208,6 +208,18 @@ class Wire:
 
         return sorted(points, key=lambda point: self.abscissa(point))
 
+    @classmethod
+    def from_wires(cls, wires):
+        '''
+        define a wire from successive wires
+        '''
+
+        primitives = []
+        for wire in wires:
+            primitives.extend(wire.primitives)
+
+        return cls(primitives)
+
 
 class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
     """
