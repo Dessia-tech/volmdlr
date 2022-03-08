@@ -31,14 +31,19 @@ It is simple to understand and operate.
 With it, you can easily create 3D models.
 Check the exemples to see what you can do with this library.
 
-<img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/casing.jpg" width="41%" />
-<img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/casing_contours.png" width="57%" />
-<i>VOC dataset example of instance segmentation.</i>
+<img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/casing.jpg" width="42%" />
+<img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/casing_contours.png" width="57%" /><br/>
+<i>A casing is defined by a 2D contour formed with the primitive RoundedLineSegment2D. This contour is offset by the casing width.</i><br/>
 
-<img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/sweep1.jpg" width="46%" />
-<img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/sweepMPLPlot.jpg" width="52%" />
-<img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/polygon.jpg" width="52%" />
+<img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/sweep1.jpg" width="47%" />
+<img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/sweepMPLPlot.jpg" width="52%" /><br/>
+<i>A Sweep is pipes, created with Circle2D/Arc2D which is contained in a Contour2D. You have to create the neutral fiber, i.e., the pipe’s road, with the primitive RoundedLineSegment3D.</i><br/>
 
+<img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/polygon.jpg" width="47%" /><br/>
+<i>A polygon is defined out of points. Random points are sampled and the tested whether they are inside or outside the polygon. They are plotted with the Matplotlib binding MPLPlot with custom styles:
+- red if they are outside,
+- blue if they are inside
+</i>
 ## Features
 
 - [x] Generate 2D and 3D geometries from python
@@ -46,6 +51,11 @@ Check the exemples to see what you can do with this library.
 - [x] Primitives provide computational tasks : distances, belonging, union, intersections, etc.
 - [x] STEP/STL imports and exports
 - [x] Geometries display in your web browser with [babylon.js](https://www.babylonjs.com/)
+
+## Requirements
+
+Before using Volmdlr, be sure to have a C/C++ compiler (not necessary on Linux).  
+N.B : With Windows you have to download one and allow it to read Python’s code.
 
 ## Installation
 
