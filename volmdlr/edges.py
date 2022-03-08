@@ -3091,17 +3091,10 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         x_init = []
         for xi in x:
             x_init.append(xi)
-<<<<<<< HEAD
             
         for x0 in x_init: 
             z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
             if z.cost < abs_tol:
-=======
-
-        for x0 in x_init:
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0, 1]))
-            if z.fun < abs_tol:
->>>>>>> dev
                 return True
         return False
 
