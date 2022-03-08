@@ -233,6 +233,9 @@ class Wire:
         order wire's primitives
         '''
 
+        if self.is_ordered(tol=tol):
+            return self
+
         new_primitives = [self.primitives[0]]
         if isinstance(self, Wire2D):
             new_wire = Wire2D([self.primitives[0]])
