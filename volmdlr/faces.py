@@ -1967,36 +1967,6 @@ class BSplineSurface3D(Surface3D):
             y = 1
         return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
-<<<<<<< HEAD
-
-    # def point3d_to_2d(self, point3d):
-    #     def f(x):
-    #         return (point3d - self.point2d_to_3d(
-    #             volmdlr.Point2D(x[0], x[1]))).norm()
-        
-    #     x = npy.linspace(0,1,5)
-    #     x_init=[]
-    #     for xi in x:
-    #         for yi in x:
-    #             x_init.append((xi,yi))
-        
-    #     cost=[]
-    #     sol=[]
-            
-    #     for x0 in x_init: 
-    #     # for x0 in [(0.5, 0.5), (0.25, 0.25), (0.75,0.25), (0.25, 0.75), (0.75, 0.25), (0, 0), (0, 1), (1, 0), (1, 1)]:
-    #         z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
-    #         cost.append(z.fun)
-    #         sol.append(z.x)
-    #     # print(min(cost))
-    #     # if min(cost) < 1e-3: 
-    #     solution=sol[cost.index(min(cost))]
-    #     return (volmdlr.Point2D(solution[0], solution[1]))
-    #     # else:
-    #         # raise ValueError ('Error > 1e-3')
-
-=======
->>>>>>> dev
     def point3d_to_2d(self, point3d: volmdlr.Point3D, min_bound_x: float = 0.,
                       max_bound_x: float = 1., min_bound_y: float = 0.,
                       max_bound_y: float = 1., tol=1e-9):
@@ -2008,36 +1978,21 @@ class BSplineSurface3D(Surface3D):
 
         delta_bound_x = max_bound_x - min_bound_x
         delta_bound_y = max_bound_y - min_bound_y
-<<<<<<< HEAD
-        x0s = [((min_bound_x+max_bound_x)/2, (min_bound_y+max_bound_y)/2),
-                (min_bound_x+delta_bound_x/10, min_bound_y+delta_bound_y/10),
-                (min_bound_x+delta_bound_x/10, max_bound_y-delta_bound_y/10),
-                (max_bound_x-delta_bound_x/10, min_bound_y+delta_bound_y/10),
-                (max_bound_x-delta_bound_x/10, max_bound_y-delta_bound_y/10)]
-=======
         x0s = [((min_bound_x + max_bound_x) / 2, (min_bound_y + max_bound_y) / 2),
                (min_bound_x + delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
                (min_bound_x + delta_bound_x / 10, max_bound_y - delta_bound_y / 10),
                (max_bound_x - delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
                (max_bound_x - delta_bound_x / 10, max_bound_y - delta_bound_y / 10)]
->>>>>>> dev
 
         for x0 in x0s:
             z = scp.optimize.least_squares(f, x0=x0, bounds=([min_bound_x,
                                                               min_bound_y],
                                                               [max_bound_x,
                                                               max_bound_y]),
-<<<<<<< HEAD
-                                            ftol=tol/10,
-                                            xtol=tol/10,
-                                            # loss='soft_l1'
-                                            )
-=======
                                            ftol=tol / 10,
                                            xtol=tol / 10,
                                            # loss='soft_l1'
                                            )
->>>>>>> dev
             # z.cost represent the value of the cost function at the solution
             if z.fun < tol:
                 return volmdlr.Point2D(*z.x)
@@ -2965,12 +2920,8 @@ class BSplineSurface3D(Surface3D):
 
         return volmdlr.wires.Contour2D(primitives2d_dim)
 
-<<<<<<< HEAD
 
-    def contour3d_to_2d_with_dimension(self, contour3d:volmdlr.wires.Contour3D, points_x, points_y): 
-=======
     def contour3d_to_2d_with_dimension(self, contour3d: volmdlr.wires.Contour3D, points_x, points_y):
->>>>>>> dev
         '''
         compute the contou2d of a contour3d, on a Bspline surface, in the dimensioned frame
         '''
@@ -3006,10 +2957,7 @@ class BSplineSurface3D(Surface3D):
 
         return volmdlr.wires.Contour2D(primitives2d)
 
-<<<<<<< HEAD
-    
-=======
->>>>>>> dev
+
     def contour2d_with_dimension_to_3d(self, contour2d):
         '''
         compute the contour3d, on a Bspline surface, of a contour2d define in the dimensioned frame
@@ -3341,10 +3289,7 @@ class BSplineSurface3D(Surface3D):
 
         return nearest_primitives
 
-<<<<<<< HEAD
 
-=======
->>>>>>> dev
     def edge3d_to_2d_with_dimension(self, edge3d, points_x, points_y):
         '''
         compute the edge2d of a edge3d, on a Bspline surface, in the dimensioned frame
@@ -3644,12 +3589,7 @@ class BSplineSurface3D(Surface3D):
         # ax3=self.rectangular_cut(0,1,0,1).plot()
         points3d = []
         for i, bspline in enumerate(bsplines_new):
-<<<<<<< HEAD
             grid2d = volmdlr.Point2D.grid2d_with_direction(nb, nb, 0,1,0,1, grid2d_direction[i])[0]  #xmin[i], xmax[i], ymin[i], ymax[i]
-=======
-            grid2d = volmdlr.Point2D.grid2d_with_direction(
-                50, 50, xmin[i], xmax[i], ymin[i], ymax[i], grid2d_direction[i])[0]
->>>>>>> dev
             grid3d = []
             random_color = list(npy.random.choice(range(255), size=3))
             random_color = (random_color[0] / 256, random_color[1] / 256,
@@ -3671,13 +3611,7 @@ class BSplineSurface3D(Surface3D):
             # points3d.extend(grid3d)
 
             # fitting
-<<<<<<< HEAD
         size_u, size_v, degree_u, degree_v = (nb*2)-1,nb, 3, 3 #max(bsplines[0].degree_u, bsplines[1].degree_u), max(bsplines[0].degree_v, bsplines[1].degree_v)
-=======
-        size_u, size_v, degree_u, degree_v = 100, 50, max(
-            bsplines[0].degree_u, bsplines[1].degree_u), max(
-            bsplines[0].degree_v, bsplines[1].degree_v)
->>>>>>> dev
 
         merged_surface = volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(
             points3d, size_u, size_v, degree_u, degree_v)
