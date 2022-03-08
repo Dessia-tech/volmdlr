@@ -269,6 +269,15 @@ class Wire:
 
         return self
 
+    def is_followed_by(self, wire_2, tol=1e-6):
+        '''
+        check if the wire is followed by wire_2
+        '''
+
+        if self.primitives[-1].end.point_distane(wire_2.primitives[0].start) < tol:
+            return True
+        else:
+            return False
 
 class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
     """
