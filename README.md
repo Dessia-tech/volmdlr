@@ -16,7 +16,9 @@
 </div>
 
 <div align="center">
+  <a href="#description"><b>Description</b></a> |
   <a href="#features"><b>Features</b></a> |
+  <a href="#requirements"><b>Requirements</b></a> |
   <a href="#installation"><b>Installation</b></a> |
   <a href="https://github.com/Dessia-tech/volmdlr/tree/master/scripts"><b>Usage</b></a> |
   <a href="https://documentation.dessia.tech/volmdlr/"><b>Documentation</b></a> |
