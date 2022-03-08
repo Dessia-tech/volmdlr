@@ -46,6 +46,10 @@ Check the exemples to see what you can do with this library.
 - red if they are outside,
 - blue if they are inside
 </i>
+
+<img src="https://raw.githubusercontent.com/Dessia-tech/volmdlr/master/doc/source/images/bspline_surface_split.jpg" width="47%" /><br/>
+<i>A 3D B-spline surface splitted by a 3D B-spline curve.</i>
+
 ## Features
 
 - [x] Generate 2D and 3D geometries from python
