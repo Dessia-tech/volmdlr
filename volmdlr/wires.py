@@ -230,6 +230,33 @@ class Wire:
             new_primitives.append(prim.reverse())
         return new_primitives
 
+    def order_wire(self, tol=1e-6):
+        '''
+        order wire's primitives
+        '''
+
+        new_primitives = [self.primitives[0]]
+        if isinstance(self, Wire2D):
+            new_wire = Wire2D(self.primitives[0])
+            dimension = 2
+        elif isinstance(self, Wire3D):
+            new_wire = Wire3D(self.primitives[0])
+
+        for i, primitive in self.primitives[1:]:
+            if new_wire.primitives[0].start.point_distance(primitive.start) < tol:
+                new_primitives.insert(primitive.reverse(),0)
+            elif new_wire.primitives[-1].end.point_distance(primitive.start) < tol:
+                new_primitives.append(primitive)
+            elif new_wire.primitives[0].start.point_distance(primitive.end) < tol:
+                new_primitives.insert(primitive,0)
+            elif new_wire.primitives[-1].end.point_distance(primitive.end) < tol:
+                new_primitives.append(primitive.reverse())
+
+            if dimension == 2:
+                new_wire = Wire2D(new_primitives)
+            else:
+                new_wire = Wire3D(new_primitives)
+
 
 class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
     """
