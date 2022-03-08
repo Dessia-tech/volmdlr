@@ -1684,11 +1684,11 @@ class FullArc2D(Edge):
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
         dict_ = self.base_dict()
-        dict_['center'] = self.center.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/center')
+        dict_['center'] = self.center.to_dict()
         dict_['radius'] = self.radius
         dict_['angle'] = self.angle
         dict_['is_trigo'] = self.is_trigo
-        dict_['start_end'] = self.start.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/start_end')
+        dict_['start_end'] = self.start.to_dict()
         return dict_
 
     def copy(self, *args, **kwargs):

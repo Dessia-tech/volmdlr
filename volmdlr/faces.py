@@ -771,7 +771,7 @@ class Plane3D(Surface3D):
     def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
         # improve the object structure ?
         dict_ = dc.DessiaObject.base_dict(self)
-        dict_['frame'] = self.frame.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/frame')
+        dict_['frame'] = self.frame.to_dict()
         return dict_
 
     @classmethod
