@@ -277,6 +277,18 @@ class Wire:
         else:
             return False
 
+    def is_ordered(self, tol=1e-6):
+        '''
+        check if the wire's primitives are ordered or not
+        '''
+
+        for primitive_1, primitive_2 in zip(self.primitives, self.primitives[1:]):
+            if primitive_1.point_distance(primitive_2) < tol:
+                continue
+            else:
+                return False
+        return True
+
 
 class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
     """
@@ -1128,10 +1140,7 @@ class Contour(Wire):
                     break
         return points
 
-<<<<<<< HEAD
-=======
 
->>>>>>> dev
 class Contour2D(Contour, Wire2D):
     """
     A collection of 2D primitives forming a closed wire2D
