@@ -290,7 +290,7 @@ class Wire:
         '''
 
         for primitive_1, primitive_2 in zip(self.primitives, self.primitives[1:]):
-            if primitive_1.start.point_distance(primitive_2.end) < tol:
+            if primitive_1.end.point_distance(primitive_2.start) < tol:
                 continue
             else:
                 return False
