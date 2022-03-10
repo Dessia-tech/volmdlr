@@ -279,7 +279,7 @@ class Wire:
         check if the wire is followed by wire_2
         '''
 
-        if self.primitives[-1].end.point_distane(wire_2.primitives[0].start) < tol:
+        if self.primitives[-1].end.point_distance(wire_2.primitives[0].start) < tol:
             return True
         else:
             return False
