@@ -216,7 +216,11 @@ class Wire:
         for wire in wires:
             primitives.extend(wire.primitives)
 
-        return cls(primitives)
+        wire = cls(primitives)
+
+        if not wire.is_ordered():
+            return wire.order_wire()
+        return wire
 
     def inverted_primitives(self):
         '''
