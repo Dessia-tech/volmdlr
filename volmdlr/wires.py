@@ -139,6 +139,14 @@ class Wire:
             prim = primitive2.split(point2)[0]
             if prim:
                 primitives.append(prim)
+
+        elif ip1 == ip2:
+            prim = primitive1.split(point1)[1]
+            if prim:
+                prim = prim.split(point2)[0]
+                if prim:
+                    primitives.append(prim)
+
         else:
             prim = primitive2.split(point2)[1]
             if prim:
