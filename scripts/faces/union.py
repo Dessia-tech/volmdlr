@@ -5,11 +5,14 @@ Created on Mon Jun 28 11:34:09 2021
 
 @author: dasilva
 """
+import time
 import volmdlr as vm
 import volmdlr.wires as vmw
 import volmdlr.faces as vmf
 
 import math
+
+time_before = time.time()
 
 number_points = 50
 
@@ -115,3 +118,10 @@ for shell in [new_box, subtract_to_closed_shell]:
     shell[0].color = (1, 0.1, 0.1)
     shell[0].alpha = 0.6
     vm.core.VolumeModel(shell).babylonjs()
+
+time_after = time.time()
+
+if (time_after-time_before) < 60:
+    print('run time in seconds:', (time_after-time_before))
+else:
+    print('run time in minutes:', (time_after-time_before) / 60)

@@ -4216,13 +4216,15 @@ class PlaneFace3D(Face3D):
                         primitive2.start), self.surface3d.point3d_to_2d(
                         primitive2.end))
 
-                if not self.surface2d.outer_contour.primitive_over_contour(primitive2_2d, tol=1e-7):
+                if not self.surface2d.outer_contour.primitive_over_contour(
+                        primitive2_2d, tol=1e-7):
                     face_intersecting_primitives2d.append(primitive2_2d)
 
         if not face_intersecting_primitives2d:
             return []
 
-        list_cutting_contours = volmdlr.wires.Contour2D.contours_from_edges(face_intersecting_primitives2d[:])
+        list_cutting_contours = volmdlr.wires.Contour2D.contours_from_edges(
+            face_intersecting_primitives2d[:])
 
         return list_cutting_contours
 
@@ -6669,10 +6671,8 @@ class ClosedShell3D(OpenShell3D):
         face_combinations = []
         for face1 in self.faces:
             for face2 in shell2.faces:
-                if (volmdlr.faces.ClosedShell3D([face1]).bounding_box.bbox_intersection(volmdlr.faces.ClosedShell3D([face2]).bounding_box) or
-                        volmdlr.faces.ClosedShell3D(
-                            [face1]).bounding_box.distance_to_bbox(
-                            volmdlr.faces.ClosedShell3D([face2]).bounding_box) <= tol) and \
+                if (face1._bounding_box().bbox_intersection(face2._bounding_box()) or
+                        face1._bounding_box().distance_to_bbox(face2._bounding_box()) <= tol) and \
                         (face1, face2) not in list_coicident_faces:
                     face_combinations.append((face1, face2))
 
@@ -6952,7 +6952,6 @@ class ClosedShell3D(OpenShell3D):
             self.validate_set_operation(shell2, tol)
         if validate_set_operation:
             return validate_set_operation
-
         face_combinations = self.intersecting_faces_combinations(shell2, tol)
 
         intersecting_combinations = \
