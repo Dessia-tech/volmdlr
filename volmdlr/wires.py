@@ -3022,7 +3022,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             if self.is_trigo():
                 if angle < math.pi and angle != 0:
                     return False
-            elif angle > math.pi and angle != 2*math.pi:
+            elif angle > math.pi and angle != 2 * math.pi:
                 return False
         return True
 
