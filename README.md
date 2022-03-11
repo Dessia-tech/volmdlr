@@ -19,7 +19,8 @@
   <a href="#description"><b>Description</b></a> |
   <a href="#features"><b>Features</b></a> |
   <a href="#requirements"><b>Requirements</b></a> |
-  <a href="#installation"><b>Installation</b></a> |
+  <a href="#user-installation"><b>User Installation</b></a> |
+  <a href="#dev-installation"><b>Dev Installation</b></a> |
   <a href="https://github.com/Dessia-tech/volmdlr/tree/master/scripts"><b>Usage</b></a> |
   <a href="https://documentation.dessia.tech/volmdlr/"><b>Documentation</b></a> |
   <a href="#licence"><b>Licence</b></a> |
@@ -58,17 +59,31 @@ Check the exemples to see what you can do with this library.
 - [x] STEP/STL imports and exports
 - [x] Geometries display in your web browser with [babylon.js](https://www.babylonjs.com/)
 
-## Requirements
-
-Before using Volmdlr, be sure to have a C/C++ compiler (not necessary on Linux).  
-N.B : With Windows you have to download one and allow it to read Python’s code.
-
-## Installation
+## User Installation
 
 ```bash
 pip install volmdlr
 # or
 pip3 install volmdlr
+```
+
+## Dev Installation
+
+Before using Volmdlr, be sure to have a C/C++ compiler (not necessary on Linux).  
+N.B : With Windows you have to download one and allow it to read Python’s code.
+
+First, [clone](https://docs.github.com/en/get-started/getting-started-with-git/about-remote-repositories) the package.
+Then, enter the newly created volmdlr repository.
+Finally, develop the setup.py file, and you are good to go !
+
+```bash
+git clone https://github.com/Dessia-tech/volmdlr.git
+
+cd volmdlr
+
+python3 setup.py develop --user
+# or whatever version you are using :
+python3.x setup.py develop --user
 ```
 
 ## Usage
