@@ -1153,7 +1153,15 @@ class Contour2D(Contour, Wire2D):
     def point_belongs(self, point):
         # if self.edge_polygon.point_belongs(point):
         #     return True
-        if self.discretized_contour(n=10).point_belongs(point):
+        # print()
+        # print(self.discretized_contour(n=10), self.discretized_contour(n=10).primitives)
+        # if self.discretized_contour(n=10).point_belongs(point):
+        contour = self.discretized_contour(10)
+        closed_polygon = ClosedPolygon2D([p.start for p in contour.primitives])
+        if closed_polygon.point_belongs(point):
+            # ax = self.edge_polygon.plot()
+            # self.plot(ax=ax, color='r')
+            # point.plot(ax=ax)
             return True
         # TODO: This is incomplete!!!
         return False
@@ -1856,10 +1864,10 @@ class Contour2D(Contour, Wire2D):
         merge two adjacent contours, sharing primitives, and returns one outer contour and inner contours (if there are any)
         '''
 
-        if self.is_inside(contour2d):
-            return [self]
-        elif contour2d.is_inside(self):
-            return [contour2d]
+        # if self.is_inside(contour2d):
+        #     return [self]
+        # elif contour2d.is_inside(self):
+        #     return [contour2d]
         merged_primitives = self.merge_primitives_with(contour2d)
         contours = volmdlr.wires.Contour2D.contours_from_edges(merged_primitives)
         contours = sorted(contours, key=lambda contour: contour.area(), reverse=True)

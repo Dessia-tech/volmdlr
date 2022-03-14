@@ -217,10 +217,11 @@ class Surface2D(volmdlr.core.Primitive2D):
                         inner_contours.append(inner_split)
 
             if inner_contours:
-                ax = outer_split.plot(color='r', plot_points=True)
-                [c.plot(ax=ax, color='b', plot_points=True) for c in inner_contours]
-                line.plot(ax=ax)
+                # ax = outer_split.plot(color='r', plot_points=True)
+                # [c.plot(ax=ax, color='b', plot_points=True) for c in inner_contours]
+                # line.plot(ax=ax)
                 surface2d = self.from_contours(outer_split, inner_contours)
+                # surface2d.plot(color='y')
                 surfaces.append(surface2d)
                 # ax = self.plot()
                 # line.plot(ax=ax)
