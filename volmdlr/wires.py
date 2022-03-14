@@ -1928,7 +1928,7 @@ class Contour2D(Contour, Wire2D):
             if distance < min_distance:
                 min_distance = distance
                 index = i
-        return self.primitives[i]
+        return self.primitives[index]
 
 
 class ClosedPolygon:
