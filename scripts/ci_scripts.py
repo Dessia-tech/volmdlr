@@ -58,7 +58,8 @@ scripts = [
             'distance/arc3D_ls3D.py',
             # Showcases
             'showcases/simple_shapes.py',
-            'showcases/casing.py'
+            'showcases/casing.py',
+            'grid.py'
             ]
 
 # Testing if all scripts exists before launching them
