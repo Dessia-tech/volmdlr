@@ -254,7 +254,7 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         iteration_contours2 = []
 
-        sc = self.cut_by_line2(cut_line)
+        sc = self.cut_by_line(cut_line)
 
         iteration_contours2.extend(sc)
 
