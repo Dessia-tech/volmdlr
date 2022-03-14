@@ -655,7 +655,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         extend a wire by adding a linesegment connecting the given point to nearest wire's extremities
         '''
 
-        distances = [self.start.point_distance(point), self.end.point_distance(point)]
+        distances = [self.primitives[0].start.point_distance(point), self.primitives[-1].end.point_distance(point)]
         if distances.index(min(distances)) == 0:
             primitives = [volmdlr.edges.LineSegment2D(point, self.start)]
             primitives.append(self.primitives)
