@@ -57,9 +57,18 @@ c5 = primitives2D.ClosedRoundedLineSegments2D(points2, {})
 
 
 profile=primitives3D.ExtrudedProfile(vm.O3D, vm.Y3D, vm.Z3D, c1, [], vm.X3D*0.40, name = 'extrusion')
-profile1=primitives3D.ExtrudedProfile(vm.O3D, vm.Y3D, vm.Z3D, c2, [], -vm.X3D*0.015, name = 'extrusion2')
-profile2=primitives3D.ExtrudedProfile(vm.O3D, vm.Y3D, vm.Z3D, c3, [], -vm.X3D*0.015, name = 'extrusion3')
-profile3=primitives3D.ExtrudedProfile(vm.O3D, vm.Y3D, vm.Z3D, c4, [], -vm.X3D*0.015, name = 'extrusion4')
+profile1=primitives3D.Cylinder(position = vm.Point3D(-0.0075, 0.14, 0.25), axis = vm.X3D, 
+                               radius = 0.02, length = 0.015,
+                               name = 'profile1')
+
+profile2=primitives3D.Cylinder(position = vm.Point3D(-0.0075, 0.19, 0.25), axis = vm.X3D, 
+                               radius = 0.02, length = 0.015,
+                               name = 'profile2')
+
+profile3=primitives3D.Cylinder(position = vm.Point3D(-0.0075, 0.15, 0.08), axis = vm.X3D, 
+                               radius = 0.08, length = 0.015,
+                               name = 'profile3')
+
 
 
 y = vm.X3D.random_unit_normal_vector()
@@ -68,7 +77,6 @@ profile4=primitives3D.RevolvedProfile(vm.Z3D*0.08-0.015*vm.Y3D, vm.X3D, z, c5, v
 profile5=primitives3D.RevolvedProfile(vm.Z3D*0.22+0.035*vm.Y3D, vm.X3D, z, c5, vm.Z3D*0.22+0.035*vm.Y3D , vm.X3D)
 
 c = vm.wires.Circle2D(vm.Point2D(0,0), 0.008)
-contour = vm.wires.Contour2D([c])
 pt0 = vm.Point3D(0.01, 0.04, 0.16)
 pt1 = vm.Point3D(0.03, 0, 0.2)
 pt2 = vm.Point3D(0.45, 0.01, 0.1)
@@ -77,7 +85,7 @@ pt4 = vm.Point3D(0.3, 0.04, -0.02)
 pts = [pt0, pt1, pt2, pt3, pt4]
 radius = {1: 0.03, 2: 0.01, 3: 0.07}
 rl = primitives3D.OpenRoundedLineSegments3D(pts, radius, adapt_radius=True, name='wire')
-sweep = primitives3D.Sweep(contour, rl, name = 'pipe')
+sweep = primitives3D.Sweep(c, rl, name = 'pipe')
 
 
 pt10 = vm.Point3D(0.02, 0.22, 0.25)
@@ -87,7 +95,8 @@ pt13 = vm.Point3D(0.40, 0.17, 0.13)
 pts1 = [pt10, pt11, pt12, pt13]
 radius1 = {1: 0.01, 2: 0.05}
 rl1 = primitives3D.OpenRoundedLineSegments3D(pts1, radius1, adapt_radius=True, name='wire1')
-sweep1 = primitives3D.Sweep(contour, rl1, name = 'pipe1')
+sweep1 = primitives3D.Sweep(contour2d = c, 
+                            wire3d = rl1, name = 'pipe1')
 
 
 

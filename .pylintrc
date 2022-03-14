@@ -22,7 +22,7 @@ ignore-patterns=
 
 # Use multiple processes to speed up Pylint. Specifying 0 will auto-detect the
 # number of processors available to use.
-jobs=0
+jobs=1
 
 # Control the amount of potential inferred values when inferring a single
 # object. This can help the performance when dealing with large functions or
@@ -280,7 +280,7 @@ dummy-variables-rgx=_+$|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?$)|dummy|^ignored_|^unused_
 
 # Argument names that match this expression will be ignored. Default to name
 # with leading underscore.
-ignored-argument-names=_.*|^ignored_|^unused_
+ignored-argument-names=_.*|^ignored_|^unused_|arg|args|kwargs
 
 # Tells whether we should check for unused import in __init__ files.
 init-import=no
@@ -351,11 +351,12 @@ function-naming-style=snake_case
 #function-rgx=
 
 # Good variable names which should always be accepted, separated by a comma.
-good-names=i,
-           j,
-           k,
-           ex,
-           Run,
+good-names=i,j,k,n,i1,i2,
+	   x,y,z,dx,dy,dz,lx,ly,lz,
+	   x1,y1,z1,x2,y2,z2,xi,yi,
+           p1,p2,pi,pj,u1,u2,v1,v2,
+           Ix,Iy,Ixy,
+           ax,
            _
 
 # Good variable names regexes, separated by a comma. If names match any regex,

@@ -6,15 +6,17 @@
 
 import time
 from typing import BinaryIO, List
+
 import matplotlib.pyplot as plt
 import networkx as nx
 import plot_data.graph
+
 import volmdlr
 import volmdlr.core
-import volmdlr.primitives3d
 import volmdlr.edges
-import volmdlr.wires
 import volmdlr.faces
+import volmdlr.primitives3d
+import volmdlr.wires
 
 # import webbrowser
 # from jinja2 import Environment, PackageLoader, select_autoescape
@@ -107,7 +109,7 @@ def shell_base_surface_model(arguments, object_dict):
 
 def item_defined_transformation(arguments, object_dict):
     # Frame3D
-    volmdlr_object1 = object_dict[arguments[2]]
+    # volmdlr_object1 = object_dict[arguments[2]]
     volmdlr_object2 = object_dict[arguments[3]]
     # TODO : how to frame map properly from these two Frame3D ?
     # return volmdlr_object2 - volmdlr_object1
@@ -179,9 +181,10 @@ def advanced_brep_shape_representation(arguments, object_dict):
     return shells
 
 
-def representation_relationship_representation_relationship_with_transformation_shape_representation_relationship(arguments, object_dict):
+def representation_relationship_representation_relationship_with_transformation_shape_representation_relationship(
+        arguments, object_dict):
     if arguments[2] in object_dict:
-        if type(object_dict[arguments[2]]) is list:
+        if isinstance(object_dict[arguments[2]], list):
             for shell3d in object_dict[arguments[2]]:
                 frame3d = object_dict[arguments[4]]
                 shell3d.frame_mapping(frame3d, 'old', copy=False)
@@ -197,7 +200,8 @@ def representation_relationship_representation_relationship_with_transformation_
         return None
 
 
-def bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_representation_item_rational_b_spline_curve_representation_item(arguments, object_dict):
+def bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_representation_item_rational_b_spline_curve_representation_item(
+        arguments, object_dict):
     modified_arguments = [''] + arguments
     if modified_arguments[-1] == "''":
         modified_arguments.pop()
@@ -205,7 +209,8 @@ def bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_repre
         modified_arguments, object_dict)
 
 
-def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_representation_item_rational_b_spline_surface_representation_item_surface(arguments, object_dict):
+def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_representation_item_rational_b_spline_surface_representation_item_surface(
+        arguments, object_dict):
     modified_arguments = [''] + arguments
     if modified_arguments[-1] == "''":
         modified_arguments.pop()
@@ -248,6 +253,7 @@ class Step:
         self.functions, self.all_connections = self.read_lines()
         self._utd_graph = False
         self._graph = None
+        self.name = name
 
     @property
     def graph(self):
@@ -506,9 +512,9 @@ class Step:
 
     def parse_arguments(self, arguments):
         for i, arg in enumerate(arguments):
-            if type(arg) == str and arg[0] == '#':
+            if isinstance(arg, str) and arg[0] == '#':
                 arguments[i] = int(arg[1:])
-            elif type(arg) == str and arg[0:2] == '(#':
+            elif isinstance(arg, str) and arg[0:2] == '(#':
                 argument = []
                 arg_id = ""
                 for char in arg[1:-1]:
@@ -520,7 +526,7 @@ class Step:
                     arg_id += char
                 argument.append(arg_id)
                 arguments[i] = argument
-        
+
     def instanciate(self, name, arguments, object_dict):
         """
         """
@@ -543,7 +549,7 @@ class Step:
                                                                     arguments))
         return volmdlr_object
 
-    def to_volume_model(self, no_bug_mode=False, show_times=False):
+    def to_volume_model(self, show_times=False):
         """
         no_bug_mode=True loops on instanciate method's KeyErrors until all
         the KeyErrors can be instanciated.
@@ -596,54 +602,39 @@ class Step:
             nodes.extend(new_nodes)
             i += 1
 
+        # nodes = dessia_common.graph.explore_tree_from_leaves(self.graph)
+
         times = {}
-        if no_bug_mode:
-            for node in nodes[::-1]:
-                # instanciate_ids = [edge[1]]
-                instanciate_ids = [node]
-                error = True
-                while error:
-                    try:
-                        for instanciate_id in instanciate_ids[::-1]:
-                            t = time.time()
-                            volmdlr_object = self.instanciate(
-                                self.functions[instanciate_id].name,
-                                self.functions[instanciate_id].arg[:],
-                                object_dict)
-                            t = time.time() - t
-                            object_dict[instanciate_id] = volmdlr_object
-                            if show_times:
-                                if volmdlr_object.__class__ not in times:
-                                    times[volmdlr_object.__class__] = [1, t]
-                                else:
-                                    times[volmdlr_object.__class__][0] += 1
-                                    times[volmdlr_object.__class__][1] += t
-                        error = False
-                    except KeyError as key:
-                        # Sometimes the bfs search don't instanciate the nodes of a
-                        # depth in the right order, leading to error
-                        instanciate_ids.append(key.args[0])
-        else:
-            for instanciate_id in nodes[::-1]:
-                # instanciate_id = edge[1]
-                t = time.time()
-                volmdlr_object = self.instanciate(
-                    self.functions[instanciate_id].name,
-                    self.functions[instanciate_id].arg[:],
-                    object_dict)
-                t = time.time() - t
-                object_dict[instanciate_id] = volmdlr_object
-                if show_times:
-                    if volmdlr_object.__class__ not in times:
-                        times[volmdlr_object.__class__] = [1, t]
-                    else:
-                        times[volmdlr_object.__class__][0] += 1
-                        times[volmdlr_object.__class__][1] += t
+        for node in nodes[::-1]:
+            # instanciate_ids = [edge[1]]
+            instanciate_ids = [node]
+            error = True
+            while error:
+                try:
+                    for instanciate_id in instanciate_ids[::-1]:
+                        t = time.time()
+                        volmdlr_object = self.instanciate(
+                            self.functions[instanciate_id].name,
+                            self.functions[instanciate_id].arg[:],
+                            object_dict)
+                        t = time.time() - t
+                        object_dict[instanciate_id] = volmdlr_object
+                        if show_times:
+                            if volmdlr_object.__class__ not in times:
+                                times[volmdlr_object.__class__] = [1, t]
+                            else:
+                                times[volmdlr_object.__class__][0] += 1
+                                times[volmdlr_object.__class__][1] += t
+                    error = False
+                except KeyError as key:
+                    # Sometimes the bfs search don't instanciate the nodes of a
+                    # depth in the right order, leading to error
+                    instanciate_ids.append(key.args[0])
 
         if show_times:
             print()
             for key, value in times.items():
-                print('|', key, ': ', value)
+                print(f'| {key} : {value}')
             print()
 
         shells = []
@@ -672,7 +663,7 @@ class Step:
                     volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
                         arguments, object_dict)
                     points3d.append(volmdlr_object)
-                    
+
         # remove first point because it refers to origin
         return points3d[1:]
 
@@ -738,8 +729,8 @@ STEP_TO_VOLMDLR = {
     'QUASI_UNIFORM_SURFACE': volmdlr.faces.BSplineSurface3D,
     'RECTANGULAR_COMPOSITE_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACES
     'CURVE_BOUNDED_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACE
-    
-    #added on 12/08/2021 by Mack in order to read BsplinePipe
+
+    # added on 12/08/2021 by Mack in order to read BsplinePipe
     'BOUNDED_SURFACE, B_SPLINE_SURFACE, B_SPLINE_SURFACE_WITH_KNOTS, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM, SURFACE': volmdlr.faces.BSplineSurface3D,
 
     # TOPOLOGICAL ENTITIES

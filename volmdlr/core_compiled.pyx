@@ -302,7 +302,6 @@ class Vector(DessiaObject):
             n += 1
         point /= n
         return point
-    
     @classmethod
     def remove_duplicate(cls, points):
         dict_ = {p.approx_hash() : p for p in points}
@@ -377,7 +376,7 @@ class Vector2D(Vector):
     def approx_hash(self):
         return round(1e6*(self.x+self.y))
     
-    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         return {'object_class':'volmdlr.Vector2D',
                 'x': self.x, 'y': self.y,
                 'name': self.name}
@@ -567,7 +566,7 @@ class Point2D(Vector2D):
         return Point2D(self.x / value,
                        self.y / value)
 
-    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         return {'object_class':'volmdlr.Point2D',
                 'x': self.x, 'y': self.y,
                 'name': self.name}
@@ -906,7 +905,7 @@ class Vector3D(Vector):
     def approx_hash(self):
         return round(1e6*(self.x+self.y+self.z))
 
-    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         return {'object_class':'volmdlr.Vector3D',
                 'x': self.x, 'y': self.y, 'z': self.z,
                 'name': self.name}
@@ -1183,7 +1182,7 @@ class Point3D(Vector3D):
     def copy(self, deep=True, memo=None):
         return Point3D(self.x, self.y, self.z)
 
-    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
+    def to_dict(self, *args, **kwargs):
         return {'object_class':'volmdlr.Point3D',
                 'x': self.x, 'y': self.y, 'z': self.z,
                 'name': self.name}
@@ -1447,6 +1446,12 @@ class Basis2D(Basis):
 
     vectors = property(_get_vectors)
 
+    def to_dict(self, *args, **kwargs):        
+        return {'object_class': 'volmdlr.Basis2D',
+                'name': self.name,
+                'u': self.u.to_dict(),
+                'v': self.v.to_dict()
+                }
 
     def to_frame(self, origin:Point3D) -> 'Frame3D':
         return Frame2D(origin, self.u, self.v)
@@ -1577,6 +1582,14 @@ class Basis3D(Basis):
 
     def _get_vectors(self):
         return (self.u, self.v, self.w)
+
+    def to_dict(self, *args, **kwargs):
+        return {'object_class': 'volmdlr.Basis3D',
+                'name': self.name,
+                'u': self.u.to_dict(),
+                'v': self.v.to_dict(),
+                'w': self.w.to_dict()
+                }
 
     vectors = property(_get_vectors)
 
@@ -1745,6 +1758,14 @@ class Frame2D(Basis2D):
                        Vector2D(M[:, 0]),
                        Vector2D(M[:, 1]))
 
+    def to_dict(self, *args, **kwargs):
+        return {'object_class': 'volmdlr.Frame2D',
+                'name': self.name,
+                'origin': self.origin.to_dict(),
+                'u': self.u.to_dict(),
+                'v': self.v.to_dict()
+                }
+
     def basis(self):
         return Basis2D(self.u, self.v)
 
@@ -1864,6 +1885,15 @@ class Frame3D(Basis3D):
         to be equalized at a given tolerance
         """
         return 0
+
+    def to_dict(self, *args, **kwargs):
+        return {'object_class': 'volmdlr.Frame3D',
+                'name': self.name,
+                'origin': self.origin.to_dict(),
+                'u': self.u.to_dict(),
+                'v': self.v.to_dict(),
+                'w': self.w.to_dict()
+                }
 
     def basis(self):
         return Basis3D(self.u, self.v, self.w)
