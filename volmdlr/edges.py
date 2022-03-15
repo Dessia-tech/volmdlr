@@ -1831,21 +1831,24 @@ class FullArc2D(Arc2D):
 
         return FullArc3D(center, start, z)
 
-    def rotation(self, center, angle, copy=True):
-        if copy:
-            new_center = self._center.rotation(center, angle, True)
-            new_start_end = self.start.rotation(center, angle, True)
-            return FullArc2D(new_center, new_start_end)
+    def rotation(self, center, angle):
+        new_center = self._center.rotation(center, angle, True)
+        new_start_end = self.start.rotation(center, angle, True)
+        return FullArc2D(new_center, new_start_end)
+
+
+    def rotation_inplace(self, center, angle):
         self._center.rotation(center, angle, False)
         self.start.rotation(center, angle, False)
         self.interior.rotation(center, angle, False)
         self.end.rotation(center, angle, False)
 
     def translation(self, offset, copy=True):
-        if copy:
-            new_center = self._center.translation(offset, copy=True)
-            new_start_end = self.start.translation(offset, copy=True)
-            return FullArc2D(new_center, new_start_end)
+        new_center = self._center.translation(offset, copy=True)
+        new_start_end = self.start.translation(offset, copy=True)
+        return FullArc2D(new_center, new_start_end)
+
+    def translation_inplce(self, offset):
         self._center.translation(offset, copy=False)
         self.start.translation(offset, copy=False)
         self.end.translation(offset, copy=False)
@@ -1855,11 +1858,12 @@ class FullArc2D(Arc2D):
         """
         side = 'old' or 'new'
         """
-        if copy:
-            return FullArc2D(*[p.frame_mapping(frame, side, copy=True) for p in
-                           [self._center, self.start]])
+        return FullArc2D(*[p.frame_mapping(frame, side, copy=True) for p in
+                       [self._center, self.start]])
+
+    def frame_mapping_inplace(self, frame, side):
         [p.frame_mapping(frame, side, copy=True) for p in
-                    [self._center, self.start, self.end, self.interior]]
+         [self._center, self.start, self.end, self.interior]]
 
     def polygonization(self):
         # def polygon_points(self, points_per_radian=10):
@@ -4234,25 +4238,28 @@ class FullArc3D(Arc3D):
 
         return ax
 
-    def rotation(self, rot_center, axis, angle, copy=True):
-        if copy:
-            new_start_end = self.start.rotation(rot_center, axis, angle, True)
-            new_center = self._center.rotation(rot_center, axis, angle, True)
-            new_normal = self._normal.rotation(rot_center, axis, angle, True)
-            return FullArc3D(new_center, new_start_end,
-                             new_normal, name=self.name)
+    def rotation(self, rot_center, axis, angle):
+        new_start_end = self.start.rotation(rot_center, axis, angle, True)
+        new_center = self._center.rotation(rot_center, axis, angle, True)
+        new_normal = self._normal.rotation(rot_center, axis, angle, True)
+        return FullArc3D(new_center, new_start_end,
+                         new_normal, name=self.name)
+
+    def rotation_inplace(self, rot_center, axis, angle):
         self.start.rotation(rot_center, axis, angle, False)
         self.end.rotation(rot_center, axis, angle, False)
         self._center.rotation(rot_center, axis, angle, False)
         self.interior.rotation(rot_center, axis, angle, False)
 
-    def translation(self, offset, copy=True):
-        if copy:
-            new_start_end = self.start.translation(offset, True)
-            new_center = self._center.translation(offset, True)
-            new_normal = self._normal.translation(offset, True)
-            return FullArc3D(new_center, new_start_end,
-                             new_normal, name=self.name)
+    def translation(self, offset):
+        new_start_end = self.start.translation(offset, True)
+        new_center = self._center.translation(offset, True)
+        new_normal = self._normal.translation(offset, True)
+        return FullArc3D(new_center, new_start_end,
+                         new_normal, name=self.name)
+
+
+    def translation_inplace(self, offset):
         self.start.translation(offset, False)
         self.end.translation(offset, False)
         self._center.translation(offset, False)
