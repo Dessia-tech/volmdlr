@@ -3038,8 +3038,18 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         tangent = volmdlr.Vector3D(*tangent)
         return tangent
 
-    def direction_vector(self, abscissa: float):
-        return self.tangent(abscissa)
+    def direction_vector(self, abscissa=0.):
+        l = self.length()
+        if abscissa >= l:
+            abscissa2 = l
+            abscissa = abscissa2 - 0.001 * l
+
+        else:
+            abscissa2 = min(abscissa + 0.001 * l, l)
+
+        tangent = self.point_at_abscissa(abscissa2) - self.point_at_abscissa(
+            abscissa)
+        return tangent
 
     def unit_direction_vector(self, abscissa):
         direction_vector = self.direction_vector(abscissa)
@@ -3363,23 +3373,6 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
 
     def polygon_points(self):
         return self.points
-
-    # def unit_direction_vector(self, abscissa=0.):
-    #     l = self.length()
-    #     if abscissa >= l:
-    #         abscissa2 = l
-    #         abscissa = abscissa2 - 0.001 * l
-    #
-    #     else:
-    #         abscissa2 = min(abscissa + 0.001 * l, l)
-    #
-    #     tangent = self.point_at_abscissa(abscissa2) - self.point_at_abscissa(
-    #         abscissa)
-    #     tangent.normalize()
-    #     return tangent
-
-    # def unit_normal_vector(self, abscissa):
-    #     return None
 
     def curvature(self, u: float, point_in_curve: bool = False):
         # u should be in the interval [0,1]
