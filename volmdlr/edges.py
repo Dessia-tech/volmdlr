@@ -1312,9 +1312,6 @@ class Arc2D(Arc):
                  interior: volmdlr.Point2D,
                  end: volmdlr.Point2D,
                  name: str = ''):
-        self.start = start
-        self.end = end
-        self.interior = interior
         self._utd_center = False
         self._utd_is_trigo = False
         self._utd_angle = False
@@ -1323,6 +1320,7 @@ class Arc2D(Arc):
         self._angle = None
         self._utd_clockwise_and_trigowise_paths = False
         self._clockwise_and_trigowise_paths = None
+        Arc.__init__(self, start=start, end=end, interior=interior, name=name)
         start_to_center = start - self.center
         end_to_center = end - self.center
         angle1 = math.atan2(start_to_center.y, start_to_center.x)
@@ -1333,7 +1331,6 @@ class Arc2D(Arc):
         else:
             self.angle1 = angle2
             self.angle2 = angle1
-        Arc.__init__(self, start=start, end=end, interior=interior, name=name)
 
     @property
     def center(self):
@@ -1795,6 +1792,7 @@ class FullArc2D(Arc2D):
         dict_['angle'] = self.angle
         dict_['is_trigo'] = self.is_trigo
         dict_['start_end'] = self.start.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/start_end')
+        dict_['name'] = self.name
         return dict_
 
     def copy(self, *args, **kwargs):
@@ -1805,7 +1803,7 @@ class FullArc2D(Arc2D):
         center = volmdlr.Point2D.dict_to_object(dict_['center'])
         start_end = volmdlr.Point2D.dict_to_object(dict_['start_end'])
 
-        return cls(center, start_end, dict_['is_trigo'], name=dict_['name'])
+        return cls(center, start_end, name=dict_['name'])
 
     def __hash__(self):
         return hash(self.radius)
@@ -3503,9 +3501,6 @@ class Arc3D(Arc):
         """
 
         """
-        self.start = start
-        self.end = end
-        self.interior = interior
         self._utd_normal = False
         self._utd_center = False
         self._utd_frame = False
