@@ -1189,11 +1189,12 @@ class Arc(Edge):
                  name: str = ''):
         Edge.__init__(self, start=start, end=end, name=name)
         self.interior = interior
-        self.radius = (start - self.center).norm()
         self._utd_clockwise_and_trigowise_paths = False
+        self._clockwise_and_trigowise_paths = None
         self._center = None
         self._is_trigo = None
         self._angle = None
+        self.radius = (start - self.center).norm()
 
     @property
     def center(self):
@@ -1318,8 +1319,6 @@ class Arc2D(Arc):
         self._utd_center = False
         self._utd_is_trigo = False
         self._utd_angle = False
-        self._utd_clockwise_and_trigowise_paths = False
-        self._clockwise_and_trigowise_paths = None
         Arc.__init__(self, start=start, end=end, interior=interior, name=name)
         start_to_center = start - self.center
         end_to_center = end - self.center
@@ -3511,8 +3510,8 @@ class Arc3D(Arc):
         # self._center = None
         # self._is_trigo = None
         # self._angle = None
-        self._utd_clockwise_and_trigowise_paths = False
-        self._clockwise_and_trigowise_paths = None
+        # self._utd_clockwise_and_trigowise_paths = False
+
         Arc.__init__(self, start=start, end=end, interior=interior, name=name)
         self.bounding_box = self._bounding_box()
 

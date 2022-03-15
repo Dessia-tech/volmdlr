@@ -24,7 +24,7 @@ MAX_ERROR_BY_TYPE = {
                      'arguments-renamed': 11,
                      'non-parent-init-called': 13,
                      'too-many-public-methods': 12,
-                     'too-many-instance-attributes': 10,
+                     'too-many-instance-attributes': 11,
                      'undefined-loop-variable': 10,
                      'unused-import': 9,
                      'unspecified-encoding': 9,
