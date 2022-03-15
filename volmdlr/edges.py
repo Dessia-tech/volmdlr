@@ -1318,7 +1318,11 @@ class Arc2D(Arc):
         self._utd_center = False
         self._utd_is_trigo = False
         self._utd_angle = False
+        self._center = None
+        self._is_trigo = None
+        self._angle = None
         self._utd_clockwise_and_trigowise_paths = False
+        self._clockwise_and_trigowise_paths = None
         start_to_center = start - self.center
         end_to_center = end - self.center
         angle1 = math.atan2(start_to_center.y, start_to_center.x)
@@ -3507,7 +3511,13 @@ class Arc3D(Arc):
         self._utd_frame = False
         self._utd_is_trigo = False
         self._utd_angle = False
+        self._normal = None
+        self._frame = None
+        self._center = None
+        self._is_trigo = None
+        self._angle = None
         self._utd_clockwise_and_trigowise_paths = False
+        self._clockwise_and_trigowise_paths = None
         Arc.__init__(self, start=start, end=end, interior=interior, name=name)
         self.bounding_box = self._bounding_box()
 
