@@ -1191,6 +1191,9 @@ class Arc(Edge):
         self.interior = interior
         self.radius = (start - self.center).norm()
         self._utd_clockwise_and_trigowise_paths = False
+        self._center = None
+        self._is_trigo = None
+        self._angle = None
 
     @property
     def center(self):
@@ -1315,9 +1318,6 @@ class Arc2D(Arc):
         self._utd_center = False
         self._utd_is_trigo = False
         self._utd_angle = False
-        self._center = None
-        self._is_trigo = None
-        self._angle = None
         self._utd_clockwise_and_trigowise_paths = False
         self._clockwise_and_trigowise_paths = None
         Arc.__init__(self, start=start, end=end, interior=interior, name=name)
@@ -3508,9 +3508,9 @@ class Arc3D(Arc):
         self._utd_angle = False
         self._normal = None
         self._frame = None
-        self._center = None
-        self._is_trigo = None
-        self._angle = None
+        # self._center = None
+        # self._is_trigo = None
+        # self._angle = None
         self._utd_clockwise_and_trigowise_paths = False
         self._clockwise_and_trigowise_paths = None
         Arc.__init__(self, start=start, end=end, interior=interior, name=name)
