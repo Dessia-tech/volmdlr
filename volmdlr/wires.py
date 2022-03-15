@@ -661,7 +661,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
             primitives.extend(self.primitives)
         else:
             primitives = self.primitives
-            primitives.extend(volmdlr.edges.LineSegment2D(self.primitives[-1].end, point))
+            primitives.append(volmdlr.edges.LineSegment2D(self.primitives[-1].end, point))
 
         return Wire2D(primitives)
 
