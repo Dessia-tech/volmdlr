@@ -1185,12 +1185,11 @@ class LineSegment2D(LineSegment):
 class Arc(Edge):
     def __init__(self, start,
                  end,
-                 radius,
                  interior,
                  name: str = ''):
         Edge.__init__(self, start=start, end=end, name=name)
-        self.radius = radius
         self.interior = interior
+        self.radius = (start - self.center).norm()
         self._utd_clockwise_and_trigowise_paths = False
 
     @property
@@ -1321,7 +1320,6 @@ class Arc2D(Arc):
         self._utd_angle = False
         self._utd_clockwise_and_trigowise_paths = False
         start_to_center = start - self.center
-        self.radius = start_to_center.norm()
         end_to_center = end - self.center
         angle1 = math.atan2(start_to_center.y, start_to_center.x)
         angle2 = math.atan2(end_to_center.y, end_to_center.x)
@@ -1331,8 +1329,7 @@ class Arc2D(Arc):
         else:
             self.angle1 = angle2
             self.angle2 = angle1
-        Arc.__init__(self, start=start, end=end, radius=self.radius,
-                     interior=interior, name=name)
+        Arc.__init__(self, start=start, end=end, interior=interior, name=name)
 
     @property
     def center(self):
@@ -3496,9 +3493,7 @@ class Arc3D(Arc):
         self._utd_is_trigo = False
         self._utd_angle = False
         self._utd_clockwise_and_trigowise_paths = False
-        self.radius = (self.center - start).norm()
-        Arc.__init__(self, start=start, end=end, radius=self.radius,
-                     interior=interior, name=name)
+        Arc.__init__(self, start=start, end=end, interior=interior, name=name)
         self.bounding_box = self._bounding_box()
 
     def _bounding_box(self):
