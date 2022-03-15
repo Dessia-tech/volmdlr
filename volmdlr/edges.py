@@ -1837,7 +1837,6 @@ class FullArc2D(Arc2D):
         new_start_end = self.start.rotation(center, angle, True)
         return FullArc2D(new_center, new_start_end)
 
-
     def rotation_inplace(self, center, angle):
         self._center.rotation(center, angle, False)
         self.start.rotation(center, angle, False)
@@ -1860,7 +1859,7 @@ class FullArc2D(Arc2D):
         side = 'old' or 'new'
         """
         return FullArc2D(*[p.frame_mapping(frame, side, copy=True) for p in
-                       [self._center, self.start]])
+                           [self._center, self.start]])
 
     def frame_mapping_inplace(self, frame, side):
         [p.frame_mapping(frame, side, copy=True) for p in
@@ -4118,7 +4117,7 @@ class FullArc3D(Arc3D):
         self.radius = center.point_distance(start_end)
         interior = start_end.rotation(self.center, self.normal, math.pi)
         Arc3D.__init__(self, start=start_end, end=start_end,
-                       interior=interior,name=name)  # !!! this is dangerous
+                       interior=interior, name=name)  # !!! this is dangerous
 
     def __hash__(self):
         return hash(self.center) + 5 * hash(self.start_end)
@@ -4261,7 +4260,6 @@ class FullArc3D(Arc3D):
         new_normal = self._normal.translation(offset, True)
         return FullArc3D(new_center, new_start_end,
                          new_normal, name=self.name)
-
 
     def translation_inplace(self, offset):
         self.start.translation(offset, False)
