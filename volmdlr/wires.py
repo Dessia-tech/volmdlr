@@ -1921,10 +1921,10 @@ class Contour2D(Contour, Wire2D):
         return list_contours
 
     def nearest_primitive_to(self, point):
-        min_distance = self.primitives[0].point_distance(point)
+        min_distance = self.primitives[0].middle_point().point_distance(point)
         index = 0
         for i, primitive in enumerate(self.primitives[1:]):
-            distance = primitive.point_distance(point)
+            distance = primitive.middle_point().point_distance(point)
             if distance < min_distance:
                 min_distance = distance
                 index = i
