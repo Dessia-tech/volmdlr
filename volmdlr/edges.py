@@ -2097,6 +2097,18 @@ class ArcEllipse2D(Edge):
         plt.plot(x, y, color=color, alpha=alpha)
         return ax
 
+    def normal_vector(self, abscissa):
+        raise NotImplementedError
+
+    def unit_normal_vector(self, abscissa):
+        raise NotImplementedError
+
+    def direction_vector(self, abscissa):
+        raise NotImplementedError
+
+    def unit_direction_vector(self, abscissa):
+        raise NotImplementedError
+
 
 class Line3D(Line):
     _non_eq_attributes = ['name', 'basis_primitives', 'bounding_box']
@@ -3020,19 +3032,25 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         normal = volmdlr.Point3D(normal[0], normal[1], normal[2])
         return normal
 
-    def tangent(self, position: float = 0.0):
-        point, tangent = operations.tangent(self.curve, position,
-                                            normalize=True)
-        tangent = volmdlr.Point3D(tangent[0], tangent[1], tangent[2])
+    def tangent(self, abscissa: float):
+        point, tangent = operations.tangent(self.curve, abscissa,
+                                            normalize=False)
+        tangent = volmdlr.Vector3D(*tangent)
         return tangent
 
-    def binormal(self, position: float = 0.0):
-        " The binormal vector is the cross product of unit tangent and unit normal vectors "
+    def direction_vector(self, abscissa: float):
+        return self.tangent(abscissa)
 
-        point, binormal = operations.binormal(self.curve, position,
-                                              normalize=True)
-        binormal = volmdlr.Point3D(binormal[0], binormal[1], binormal[2])
-        return binormal
+    def unit_direction_vector(self, abscissa):
+        direction_vector = self.direction_vector(abscissa)
+        direction_vector.normalize()
+        return direction_vector
+
+    def normal_vector(self, abscissa):
+        return None
+
+    def unit_normal_vector(self, abscissa):
+        return None
 
     def point3d_to_parameter(self, point: volmdlr.Point3D):
         """
@@ -3346,22 +3364,22 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
     def polygon_points(self):
         return self.points
 
-    def unit_direction_vector(self, abscissa=0.):
-        l = self.length()
-        if abscissa >= l:
-            abscissa2 = l
-            abscissa = abscissa2 - 0.001 * l
+    # def unit_direction_vector(self, abscissa=0.):
+    #     l = self.length()
+    #     if abscissa >= l:
+    #         abscissa2 = l
+    #         abscissa = abscissa2 - 0.001 * l
+    #
+    #     else:
+    #         abscissa2 = min(abscissa + 0.001 * l, l)
+    #
+    #     tangent = self.point_at_abscissa(abscissa2) - self.point_at_abscissa(
+    #         abscissa)
+    #     tangent.normalize()
+    #     return tangent
 
-        else:
-            abscissa2 = min(abscissa + 0.001 * l, l)
-
-        tangent = self.point_at_abscissa(abscissa2) - self.point_at_abscissa(
-            abscissa)
-        tangent.normalize()
-        return tangent
-
-    def unit_normal_vector(self, abscissa):
-        return None
+    # def unit_normal_vector(self, abscissa):
+    #     return None
 
     def curvature(self, u: float, point_in_curve: bool = False):
         # u should be in the interval [0,1]
@@ -4408,6 +4426,18 @@ class ArcEllipse3D(Edge):
     def length(self):
         return self.angle * math.sqrt(
             (self.Gradius ** 2 + self.Sradius ** 2) / 2)
+
+    def normal_vector(self, abscissa):
+        raise NotImplementedError
+
+    def unit_normal_vector(self, abscissa):
+        raise NotImplementedError
+
+    def direction_vector(self, abscissa):
+        raise NotImplementedError
+
+    def unit_direction_vector(self, abscissa):
+        raise NotImplementedError
 
     def reverse(self):
         return self.__class__(self.end.copy(),
