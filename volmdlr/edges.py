@@ -1191,10 +1191,7 @@ class Arc(Edge):
         self.interior = interior
         self._utd_clockwise_and_trigowise_paths = False
         self._clockwise_and_trigowise_paths = None
-        self._center = None
-        self._is_trigo = None
-        self._angle = None
-        self.radius = (start - self.center).norm()
+        self._radius = None
 
     @property
     def center(self):
@@ -1225,6 +1222,12 @@ class Arc(Edge):
         return NotImplementedError(
             'the property method is_trigo must be overloaded by subclassing'
             'class if not a given parameter')
+
+    @property
+    def radius(self):
+        if not self._radius:
+            self._radius = (self.start - self.center).norm()
+        return self._radius
 
     def length(self):
         """
@@ -1319,6 +1322,9 @@ class Arc2D(Arc):
         self._utd_center = False
         self._utd_is_trigo = False
         self._utd_angle = False
+        self._center = None
+        self._is_trigo = None
+        self._angle = None
         Arc.__init__(self, start=start, end=end, interior=interior, name=name)
         start_to_center = start - self.center
         end_to_center = end - self.center
@@ -1766,8 +1772,7 @@ class FullArc2D(Arc2D):
 
     def __init__(self, center: volmdlr.Point2D, start_end: volmdlr.Point2D,
                  name: str = ''):
-        self._center = center
-        self.radius = center.point_distance(start_end)
+        self.__center = center
         interior = start_end.rotation(center, math.pi)
         Arc2D.__init__(self, start=start_end, interior=interior,
                        end=start_end, name=name)  # !!! this is dangerous
@@ -1778,7 +1783,7 @@ class FullArc2D(Arc2D):
 
     @property
     def center(self):
-        return self._center
+        return self.__center
 
     @property
     def angle(self):
@@ -3506,15 +3511,25 @@ class Arc3D(Arc):
         self._utd_angle = False
         self._normal = None
         self._frame = None
-        # self._center = None
-        # self._is_trigo = None
-        # self._angle = None
+        self._center = None
+        self._is_trigo = None
+        self._angle = None
         # self._utd_clockwise_and_trigowise_paths = False
-
         Arc.__init__(self, start=start, end=end, interior=interior, name=name)
-        self.bounding_box = self._bounding_box()
+        self._bbox = None
+        # self.bounding_box = self._bounding_box()
 
-    def _bounding_box(self):
+    @property
+    def bounding_box(self):
+        if not self._bbox:
+            self._bbox = self.get_bounding_box()
+        return self._bbox
+
+    @bounding_box.setter
+    def bounding_box(self, new_bounding_box):
+        self._bbox = new_bounding_box
+
+    def get_bounding_box(self):
         # TODO: implement exact calculation
         points = self.polygon_points()
         xmin = min([p.x for p in points])
@@ -3713,6 +3728,8 @@ class Arc3D(Arc):
             self.start.rotation(rot_center, axis, angle, False)
             self.interior.rotation(rot_center, axis, angle, False)
             self.end.rotation(rot_center, axis, angle, False)
+            new_bounding_box = self.get_bounding_box()
+            self.bounding_box = new_bounding_box
             [p.rotation(rot_center, axis, angle, False) for p in
              self.primitives]
 
@@ -3727,6 +3744,8 @@ class Arc3D(Arc):
             self.start.translation(offset, False)
             self.interior.translation(offset, False)
             self.end.translation(offset, False)
+            new_bounding_box = self.get_bounding_box()
+            self.bounding_box = new_bounding_box
             [p.translation(offset, False) for p in self.primitives]
 
     def plot(self, ax=None, color='k', alpha=1,
@@ -4112,10 +4131,9 @@ class FullArc3D(Arc3D):
     def __init__(self, center: volmdlr.Point3D, start_end: volmdlr.Point3D,
                  normal: volmdlr.Vector3D,
                  name: str = ''):
-        self._center = center
-        self._normal = normal
-        self.radius = center.point_distance(start_end)
-        interior = start_end.rotation(self.center, self.normal, math.pi)
+        self.__center = center
+        self.__normal = normal
+        interior = start_end.rotation(center, normal, math.pi)
         Arc3D.__init__(self, start=start_end, end=start_end,
                        interior=interior, name=name)  # !!! this is dangerous
 
@@ -4128,7 +4146,7 @@ class FullArc3D(Arc3D):
 
     @property
     def center(self):
-        return self._center
+        return self.__center
 
     @property
     def angle(self):
@@ -4136,7 +4154,7 @@ class FullArc3D(Arc3D):
 
     @property
     def normal(self):
-        return self._normal
+        return self.__normal
 
     @property
     def is_trigo(self):
