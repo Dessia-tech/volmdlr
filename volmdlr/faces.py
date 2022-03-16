@@ -3672,7 +3672,7 @@ class Face3D(volmdlr.core.Primitive3D):
                  name: str = ''):
         self.surface3d = surface3d
         self.surface2d = surface2d
-        self.bounding_box = self._bounding_box()
+        # self.bounding_box = self._bounding_box()
 
         volmdlr.core.Primitive3D.__init__(self, name=name)
 
@@ -3712,7 +3712,8 @@ class Face3D(volmdlr.core.Primitive3D):
         return [self.surface3d.contour2d_to_3d(c) for c in
                 self.surface2d.inner_contours]
 
-    def _bounding_box(self):
+    @property
+    def bounding_box(self):
         """
         this error is raised to enforce overloading of this method
         """
@@ -3737,6 +3738,15 @@ class Face3D(volmdlr.core.Primitive3D):
         else:
             raise NotImplementedError(
                 'Not implemented :face_from_contours3d in {}'.format(surface))
+
+    def area(self):
+        """
+        Calculates the face's area
+        :return: face's area
+        """
+        raise NotImplementedError(
+            'area method must be overloaded by {}'.format(
+                self.__class__.__name__))
 
     def to_step(self, current_id):
         xmin, xmax, ymin, ymax = self.surface2d.bounding_rectangle()
@@ -3940,10 +3950,13 @@ class PlaneFace3D(Face3D):
                  name: str = ''):
         # if not isinstance(outer_contour2d, volmdlr.Contour2D):
         #     raise ValueError('Not a contour2D: {}'.format(outer_contour2d))
+        self._utd_bbox = False
+        self._bbox = None
         Face3D.__init__(self,
                         surface3d=surface3d,
                         surface2d=surface2d,
                         name=name)
+
 
     # @classmethod
     # def _repair_points_and_polygon2d(cls, points, plane):
@@ -3982,10 +3995,20 @@ class PlaneFace3D(Face3D):
         return PlaneFace3D(self.surface3d.copy(), self.surface2d.copy(),
                            self.name)
 
-    def _bounding_box(self):
+    # def bounding_box(self):
+    #     if not self._utd_bbox:
+    #         self._bbox = self._bounding_box()
+    #         self._utd_bbox = True
+    #     return self._bbox
+
+    @property
+    def bounding_box(self):
         """
         """
-        return self.outer_contour3d._bounding_box()
+        if not self._utd_bbox:
+            self._bbox = self.outer_contour3d._bounding_box()
+            self._utd_bbox = True
+        return self._bbox
 
     def face_inside(self, face2):
         """
@@ -4369,7 +4392,9 @@ class Triangle3D(PlaneFace3D):
 
         self._utd_surface3d = False
         self._utd_surface2d = False
-        self.bounding_box = self._bounding_box()
+        self._utd_bbox = False
+        self._bbox = None
+        # self.bounding_box = self._bounding_box()
 
         dc.DessiaObject.__init__(self, name=name)
 
@@ -4378,9 +4403,14 @@ class Triangle3D(PlaneFace3D):
         #                 surface3d=plane3d,
         #                 surface2d=surface2d,
         #                 name=name)
-
-    def _bounding_box(self):
-        return volmdlr.core.BoundingBox.from_points([self.point1, self.point2, self.point3])
+    @property
+    def bounding_box(self):
+        if not self._utd_bbox:
+            self._bbox = volmdlr.core.BoundingBox.from_points([self.point1,
+                                                               self.point2,
+                                                               self.point3])
+            self._utd_bbox = True
+        return self._bbox
 
     @property
     def surface3d(self):
@@ -6112,7 +6142,9 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         else:
             self.color = color
         self.alpha = alpha
-        self.bounding_box = self._bounding_box()
+        self._utd_bbox = False
+        self._bbox = None
+        # self.bounding_box = self._bounding_box()
 
     # def __hash__(self):
     #     return sum([hash(f) for f in self.faces])
@@ -6231,16 +6263,17 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         return abs(volume)
 
-    def _bounding_box(self):
+    @property
+    def bounding_box(self):
         """
         Returns the boundary box
         """
-        bbox = self.faces[0]._bounding_box()
-
-        for face in self.faces[1:]:
-            bbox += face._bounding_box()
-
-        return bbox
+        if not self._utd_bbox:
+            bbox = self.faces[0].bounding_box
+            for face in self.faces[1:]:
+                bbox += face.bounding_box
+            self._bbox = bbox
+        return self._bbox
 
     def cut_by_plane(self, plane_3d: Plane3D):
         graph = nx.Graph()
@@ -6671,8 +6704,10 @@ class ClosedShell3D(OpenShell3D):
         face_combinations = []
         for face1 in self.faces:
             for face2 in shell2.faces:
-                if (face1._bounding_box().bbox_intersection(face2._bounding_box()) or
-                        face1._bounding_box().distance_to_bbox(face2._bounding_box()) <= tol) and \
+                if (face1.bounding_box.bbox_intersection(
+                        face2.bounding_box) or
+                        face1.bounding_box.distance_to_bbox(
+                            face2.bounding_box) <= tol) and \
                         (face1, face2) not in list_coicident_faces:
                     face_combinations.append((face1, face2))
 
