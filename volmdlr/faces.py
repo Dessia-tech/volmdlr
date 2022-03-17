@@ -574,6 +574,15 @@ class Surface2D(volmdlr.core.Primitive2D):
                     break
         return mesh_element
 
+    def update_mesh_elements(self, mesh_elements, x_density, y_density):
+        mesh_elements_to_add = []
+        for inner_contour in self.inner_contours:
+            for element in mesh_elements:
+                points = element.contour_intersections(inner_contour)
+                if not points and element.is_inside(inner_contour):
+                    mesh_elements_to_add.append(Surface2D(element, [inner_contour]).triangularisation_2(x_density, y_density))
+        return mesh_elements_to_add
+
 
 class Surface3D(dc.DessiaObject):
     x_periodicity = None
