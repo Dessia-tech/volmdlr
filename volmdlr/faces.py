@@ -517,7 +517,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         patterns = grid2d.grid_pattern()
         mesh_elements= []
 
-        for element in patterns:
+        for k,element in enumerate(patterns):
             pts = element.contour_intersections(self.outer_contour)
             pts2_inners, concatenation = [], []
             for inner_contour in self.inner_contours:
@@ -544,8 +544,11 @@ class Surface2D(volmdlr.core.Primitive2D):
 
             else:
                 if len(pts)>=2:
-                    mesh_elements.append(Surface2D.get_extracted_contour_for_mesh(self.outer_contour,
-                                                                                  element, pts, inside=True))
+                    pts = element.sort_points_along_wire(pts)
+                    contour = element
+                    for i in range(0, len(pts)-1):
+                        contour = Surface2D.get_extracted_contour_for_mesh(self.outer_contour, contour, [pts[i], pts[i+1]], inside=True)
+                    mesh_elements.append(contour)
 
                 for i, pts2 in enumerate(pts2_inners):
                     if len(pts2)>=2:
@@ -562,11 +565,11 @@ class Surface2D(volmdlr.core.Primitive2D):
         contours = element.cut_by_wire(wire)
         for c in contours:
             if inside:
-                if contour.is_inside(c):
+                if contour.point_belongs(c.center_of_mass()):
                     mesh_element = c
                     break
             else:
-                if not contour.is_inside(c):
+                if not contour.point_belongs(c.center_of_mass()):
                     mesh_element = c
                     break
         return mesh_element
