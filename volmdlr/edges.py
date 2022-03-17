@@ -229,9 +229,9 @@ class LineSegment(Edge):
 
     def split(self, split_point):
         if split_point == self.start:
-            return [[], self]
+            return [None, self.copy()]
         elif split_point == self.end:
-            return [self, []]
+            return [self.copy(), None]
         else:
             return [self.__class__(self.start, split_point),
                     self.__class__(split_point, self.end)]
