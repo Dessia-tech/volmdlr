@@ -535,7 +535,8 @@ class Surface2D(volmdlr.core.Primitive2D):
                     mesh_elements.append(element)
 
             if pts and concatenation:
-                if len(pts)>=2:
+                if len(set(pts))>=2:
+                    pts=list(set(pts))
                     contour = Surface2D.get_extracted_contour_for_mesh(self.outer_contour, element, pts, inside=True)
                 for i, pts2 in enumerate(pts2_inners):
                     if len(pts2)>=2:
@@ -543,7 +544,8 @@ class Surface2D(volmdlr.core.Primitive2D):
                 mesh_elements.append(contour)
 
             else:
-                if len(pts)>=2:
+                if len(set(pts))>=2:
+                    pts=list(set(pts))
                     pts = element.sort_points_along_wire(pts)
                     contour = element
                     for i in range(0, len(pts)-1):
@@ -563,16 +565,29 @@ class Surface2D(volmdlr.core.Primitive2D):
             primitives = contour.extract_without_primitives(points[0], points[1], inside=False)
         wire = volmdlr.wires.Wire2D(primitives)
         contours = element.cut_by_wire(wire)
-        for c in contours:
-            if inside:
-                if contour.point_belongs(c.center_of_mass()):
-                    mesh_element = c
-                    break
-            else:
-                if not contour.point_belongs(c.center_of_mass()):
-                    mesh_element = c
-                    break
-        return mesh_element
+        try:
+            for c in contours:
+                if inside:
+                    if contour.is_inside(c): #point_belongs(c.center_of_mass()):
+                        mesh_element = c
+                        break
+                else:
+                    if not contour.is_inside(c): #point_belongs(c.center_of_mass()):
+                        mesh_element = c
+                        break
+            return mesh_element
+        except NameError:
+            for c in contours:
+                if inside:
+                    if contour.point_belongs(c.center_of_mass()):
+                        mesh_element = c
+                        break
+                else:
+                    if not contour.point_belongs(c.center_of_mass()):
+                        mesh_element = c
+                        break
+            return mesh_element
+
 
     def update_mesh_elements(self, mesh_elements, x_density, y_density):
         mesh_elements_to_add = []
@@ -588,7 +603,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         """
 
         mesh_elements = self.triangularisation_contours(x_density, y_density)
-        mesh_elements.extend(self.update_mesh_elements(mesh_elements, x_density=5, y_density=5))
+        # mesh_elements.extend(self.update_mesh_elements(mesh_elements, x_density=5, y_density=5))
 
         return mesh_elements
 
