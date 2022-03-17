@@ -539,14 +539,23 @@ class Surface2D(volmdlr.core.Primitive2D):
                 if is_outside:
                     mesh_elements.append(element)
 
-            if len(pts)>=2:
-                mesh_elements.append(Surface2D.get_extracted_contour_for_mesh(self.outer_contour,
-                                                                              element, pts, inside=True))
+            if pts and concatenation:
+                if len(pts)>=2:
+                    contour = Surface2D.get_extracted_contour_for_mesh(self.outer_contour, element, pts, inside=True)
+                for i, pts2 in enumerate(pts2_inners):
+                    if len(pts2)>=2:
+                        contour = Surface2D.get_extracted_contour_for_mesh(self.inner_contours[i], contour, pts2, inside=False)
+                mesh_elements.append(contour)
 
-            for i, pts2 in enumerate(pts2_inners):
-                if len(pts2)>=2:
-                    mesh_elements.append(Surface2D.get_extracted_contour_for_mesh(self.inner_contours[i],
-                                                                                  element, pts2, inside=False))
+            else:
+                if len(pts)>=2:
+                    mesh_elements.append(Surface2D.get_extracted_contour_for_mesh(self.outer_contour,
+                                                                                  element, pts, inside=True))
+
+                for i, pts2 in enumerate(pts2_inners):
+                    if len(pts2)>=2:
+                        mesh_elements.append(Surface2D.get_extracted_contour_for_mesh(self.inner_contours[i],
+                                                                                      element, pts2, inside=False))
         return mesh_elements
 
     @staticmethod
