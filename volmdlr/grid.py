@@ -12,10 +12,8 @@ import volmdlr
 import volmdlr.wires
 
 
-
-
 class Grid2D(DessiaObject):
-    
+
     def __init__(self, list_points: List[List[volmdlr.Point2D]],
                  direction: List[str],
                  name: str = ''):
@@ -24,7 +22,8 @@ class Grid2D(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
     @classmethod
-    def from_properties(cls, x_limits, y_limits, points_nbr, direction=['+x', '+y']):
+    def from_properties(cls, x_limits, y_limits, points_nbr,
+                        direction=['+x', '+y']):
         """
         Define Grid2d based on the given properties
 
@@ -53,7 +52,7 @@ class Grid2D(DessiaObject):
         grid2d = []
         points = []
 
-        if direction == ['+x','+y']:
+        if direction == ['+x', '+y']:
             x = npy.linspace(xmin, xmax, points_x)
             y = npy.linspace(ymin, ymax, points_y)
 
@@ -61,13 +60,13 @@ class Grid2D(DessiaObject):
                 for xi in x:
                     # points_2d.append(volmdlr.Point2D(xi, yi))
                     points.append(volmdlr.Point2D(xi, yi))
-                
+
                 grid2d.append(points)
                 points = []
-        
-        elif direction == ['-x','+y']:
-            x = npy.linspace(xmax, xmin, points_x) 
-            y = npy.linspace(ymin, ymax, points_y) 
+
+        elif direction == ['-x', '+y']:
+            x = npy.linspace(xmax, xmin, points_x)
+            y = npy.linspace(ymin, ymax, points_y)
 
             for yi in y:
                 for xi in x:
@@ -76,76 +75,76 @@ class Grid2D(DessiaObject):
 
                 grid2d.append(points)
                 points = []
-                
-        elif direction == ['+y','+x']:
-            x = npy.linspace(xmin, xmax, points_x) 
-            y = npy.linspace(ymin, ymax, points_y) 
-            
-            for xi in x:
-                for yi in y:
-                    # points_2d.append(volmdlr.Point2D(xi, yi))
-                    points.append(volmdlr.Point2D(xi, yi))
-        
-                grid2d.append(points)
-                points = []
 
-        elif direction == ['-y','+x']:
-            x = npy.linspace(xmin, xmax, points_x) 
-            y = npy.linspace(ymax, ymin, points_y) 
+        elif direction == ['+y', '+x']:
+            x = npy.linspace(xmin, xmax, points_x)
+            y = npy.linspace(ymin, ymax, points_y)
 
             for xi in x:
                 for yi in y:
                     # points_2d.append(volmdlr.Point2D(xi, yi))
                     points.append(volmdlr.Point2D(xi, yi))
-                    
+
                 grid2d.append(points)
                 points = []
-           
-        elif direction == ['+x','-y']:
-            x = npy.linspace(xmin, xmax, points_x) 
-            y = npy.linspace(ymax, ymin, points_y) 
+
+        elif direction == ['-y', '+x']:
+            x = npy.linspace(xmin, xmax, points_x)
+            y = npy.linspace(ymax, ymin, points_y)
+
+            for xi in x:
+                for yi in y:
+                    # points_2d.append(volmdlr.Point2D(xi, yi))
+                    points.append(volmdlr.Point2D(xi, yi))
+
+                grid2d.append(points)
+                points = []
+
+        elif direction == ['+x', '-y']:
+            x = npy.linspace(xmin, xmax, points_x)
+            y = npy.linspace(ymax, ymin, points_y)
 
             for yi in y:
                 for xi in x:
                     # points_2d.append(volmdlr.Point2D(xi, yi))
                     points.append(volmdlr.Point2D(xi, yi))
-                
+
                 grid2d.append(points)
                 points = []
 
-        elif direction == ['-x','-y']:
-            x = npy.linspace(xmax, xmin, points_x) 
-            y = npy.linspace(ymax, ymin, points_y) 
+        elif direction == ['-x', '-y']:
+            x = npy.linspace(xmax, xmin, points_x)
+            y = npy.linspace(ymax, ymin, points_y)
 
             for yi in y:
                 for xi in x:
-                    # points_2d.append(volmdlr.Point2D(xi, yi)) 
+                    # points_2d.append(volmdlr.Point2D(xi, yi))
                     points.append(volmdlr.Point2D(xi, yi))
-                    
-                grid2d.append(points)
-                points = []    
-                    
-        elif direction == ['+y','-x']:
-            x = npy.linspace(xmax, xmin, points_x) 
-            y = npy.linspace(ymin, ymax, points_y) 
 
-            for xi in x:
-                for yi in y:
-                    # points_2d.append(volmdlr.Point2D(xi, yi)) 
-                    points.append(volmdlr.Point2D(xi, yi))
-                    
                 grid2d.append(points)
                 points = []
 
-        elif direction == ['-y','-x']:
-            x = npy.linspace(xmax, xmin, points_x) 
-            y = npy.linspace(ymax, ymin, points_y) 
+        elif direction == ['+y', '-x']:
+            x = npy.linspace(xmax, xmin, points_x)
+            y = npy.linspace(ymin, ymax, points_y)
 
             for xi in x:
                 for yi in y:
                     # points_2d.append(volmdlr.Point2D(xi, yi))
                     points.append(volmdlr.Point2D(xi, yi))
-                    
+
+                grid2d.append(points)
+                points = []
+
+        elif direction == ['-y', '-x']:
+            x = npy.linspace(xmax, xmin, points_x)
+            y = npy.linspace(ymax, ymin, points_y)
+
+            for xi in x:
+                for yi in y:
+                    # points_2d.append(volmdlr.Point2D(xi, yi))
+                    points.append(volmdlr.Point2D(xi, yi))
+
                 grid2d.append(points)
                 points = []
 
@@ -192,7 +191,7 @@ class Grid2D(DessiaObject):
     #     find how many points there are along x_direction_axis
     #     """
 
-    #     index = self.find_direction_index(direction_axis = 'x')        
+    #     index = self.find_direction_index(direction_axis = 'x')
     #     if index == 0:
     #         points_x = len(self.list_points[0])
     #     else:
@@ -200,13 +199,13 @@ class Grid2D(DessiaObject):
 
     #     return points_x
 
-    # @property        
+    # @property
     # def points_y(self):
     #     """
-    #     find how many points there are along y_direction_axis 
+    #     find how many points there are along y_direction_axis
     #     """
 
-    #     index = self.find_direction_index(direction_axis = 'y')      
+    #     index = self.find_direction_index(direction_axis = 'y')
     #     if index == 0:
     #         points_y = len(self.list_points[0])
     #     else:
@@ -219,15 +218,15 @@ class Grid2D(DessiaObject):
         """
         find how many points there are along x & y direction_axis
         """
-        
-        index = self.find_direction_index(direction_axis = 'x')        
+
+        index = self.find_direction_index(direction_axis='x')
         if index == 0:
             points_x = len(self.list_points[0])
             points_y = len(self.list_points)
         else:
             points_x = len(self.list_points)
             points_y = len(self.list_points[0])
-        
+
         return (points_x, points_y)
 
     def find_direction_index(self, direction_axis: str):
@@ -246,9 +245,9 @@ class Grid2D(DessiaObject):
         """
 
         try:
-            index = self.direction.index('+'+direction_axis)
+            index = self.direction.index('+' + direction_axis)
         except ValueError:
-            index = self.direction.index('-'+direction_axis)
+            index = self.direction.index('-' + direction_axis)
 
         return index
 
@@ -264,11 +263,12 @@ class Grid2D(DessiaObject):
 
         quadrilateral_polygons = []
         length_1, length_2 = len(self.list_points[0]), len(self.list_points)
-        for i in range(0, length_1-1):
-            for j in range(0, length_2-1):
-                quadrilateral_polygons.append(volmdlr.wires.ClosedPolygon2D((self.list_points[i][j],
-                                                                             self.list_points[i+1][j],
-                                                                             self.list_points[i+1][j+1],
-                                                                             self.list_points[i][j+1])))
+        for i in range(0, length_1 - 1):
+            for j in range(0, length_2 - 1):
+                quadrilateral_polygons.append(volmdlr.wires.ClosedPolygon2D(
+                    (self.list_points[i][j],
+                     self.list_points[i + 1][j],
+                     self.list_points[i + 1][j + 1],
+                     self.list_points[i][j + 1])))
 
         return quadrilateral_polygons
