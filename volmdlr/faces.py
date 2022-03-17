@@ -33,6 +33,7 @@ import volmdlr.wires
 import volmdlr.display as vmd
 import volmdlr.geometry
 import volmdlr.grid
+from functools import reduce
 
 
 
@@ -530,9 +531,7 @@ class Surface2D(volmdlr.core.Primitive2D):
             for inner_contour in self.inner_contours:
                 pts2_inners.append(element.contour_intersections(inner_contour))
 
-            concatenation = []
-            for pt in pts2_inners:
-                concatenation = concatenation + pt
+            concatenation = reduce(lambda x, y: x.extend(y), pts2_inners)
 
             if not pts and self.outer_contour.is_inside(element) and not concatenation:
                 is_outside = True
@@ -546,31 +545,11 @@ class Surface2D(volmdlr.core.Primitive2D):
             if len(pts)>=2:
                 mesh_elements.append(Surface2D.get_extracted_contour_for_mesh(self.outer_contour,
                                                                               element, pts, inside=True))
-                # primitives = self.outer_contour.extract_without_primitives(pts[0], pts[1], inside=True)
-                # if not element.is_inside(volmdlr.wires.Wire2D(primitives)):
-                #     primitives = self.outer_contour.extract_without_primitives(pts[0], pts[1], inside=False)
-
-                # wire = volmdlr.wires.Wire2D(primitives)
-                # contours = element.cut_by_wire(wire)
-                # for c in contours:
-                #     if self.outer_contour.is_inside(c):
-                #         mesh_elements.append(c)
-                #         break
 
             for i, pts2 in enumerate(pts2_inners):
                 if len(pts2)>=2:
                     mesh_elements.append(Surface2D.get_extracted_contour_for_mesh(self.inner_contours[i],
                                                                                   element, pts2, inside=False))
-                    # primitives = inner_contour.extract_without_primitives(pts2[0], pts2[1], inside=True)
-                    # if not element.is_inside(volmdlr.wires.Wire2D(primitives)):
-                    #     primitives = inner_contour.extract_without_primitives(pts2[0], pts2[1], inside=False)
-
-                    # wire = volmdlr.wires.Wire2D(primitives)
-                    # contours = element.cut_by_wire(wire)
-                    # for c in contours:
-                    #     if not inner_contour.is_inside(c):
-                    #         mesh_elements.append(c)
-                    #         break
         return mesh_elements
 
     @staticmethod
