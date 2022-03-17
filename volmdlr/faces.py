@@ -503,7 +503,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         ax.margins(0.1)
         return ax
 
-    def triangularisation_2(self, x_density, y_density):
+    def triangularisation_contours(self, x_density, y_density):
         """
         """
 
@@ -580,8 +580,17 @@ class Surface2D(volmdlr.core.Primitive2D):
             for element in mesh_elements:
                 points = element.contour_intersections(inner_contour)
                 if not points and element.is_inside(inner_contour):
-                    mesh_elements_to_add.append(Surface2D(element, [inner_contour]).triangularisation_2(x_density, y_density))
+                    mesh_elements_to_add.append(Surface2D(element, [inner_contour]).triangularisation_contours(x_density, y_density))
         return mesh_elements_to_add
+
+    def triangularisation_2(self, x_density, y_density):
+        """
+        """
+
+        mesh_elements = self.triangularisation_contours(x_density, y_density)
+        mesh_elements.extend(self.update_mesh_elements(mesh_elements, x_density=5, y_density=5))
+
+        return mesh_elements
 
 
 class Surface3D(dc.DessiaObject):
