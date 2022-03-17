@@ -458,13 +458,13 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         '''
 
         edges = []
-        for i in range(0, len(points)-1):
-            edges.append(volmdlr.edges.LineSegment2D(points[i], points[i+1]))       
-        
-        return cls(edges)        
+        for i in range(0, len(points) - 1):
+            edges.append(volmdlr.edges.LineSegment2D(points[i], points[i + 1]))
+
+        return cls(edges)
 
     def linesegment_crossings(self,
-                                  linesegment: 'volmdlr.edges.LineSegment2D'):
+                              linesegment: 'volmdlr.edges.LineSegment2D'):
         """
         Returns a list of crossings in ther form of a tuple (point,
         primitive) of the wire primitives intersecting with the line
@@ -1680,7 +1680,7 @@ class Contour2D(Contour, Wire2D):
 
         """
 
-        intersections = self.wire_crossings(wire) #crossings OR intersections (?)
+        intersections = self.wire_crossings(wire)  # crossings OR intersections (?)
         if not intersections or len(intersections) < 2:
             return [self]
         if len(intersections) % 2 != 0:
