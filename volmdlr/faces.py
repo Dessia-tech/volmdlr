@@ -3718,7 +3718,19 @@ class Face3D(volmdlr.core.Primitive3D):
         this error is raised to enforce overloading of this method
         """
         raise NotImplementedError(
-            '_bounding_box method must be overloaded by {}'.format(
+            'bounding_box method must be overloaded by {}'.format(
+                self.__class__.__name__))
+
+    @bounding_box.setter
+    def bounding_box(self, new_bounfing_box):
+        """Sets the bounding box to a new value"""
+        raise NotImplementedError(
+            'bounding_box setter method must be overloaded by {}'.format(
+                self.__class__.__name__))
+
+    def get_bounding_box(self):
+        raise NotImplementedError(
+            'get_bounding_box method must be overloaded by {}'.format(
                 self.__class__.__name__))
 
     @classmethod
@@ -3869,7 +3881,8 @@ class Face3D(volmdlr.core.Primitive3D):
         else:
             self.surface3d.rotation(center=center, axis=axis,
                                     angle=angle, copy=False)
-            self.bounding_box = self._bounding_box()
+            new_bounding_box = self.get_bounding_box()
+            self.bounding_box = new_bounding_box
 
     def translation(self, offset, copy=True):
         if copy:
@@ -3878,7 +3891,8 @@ class Face3D(volmdlr.core.Primitive3D):
             return self.__class__(new_surface3d, self.surface2d)
         else:
             self.surface3d.translation(offset=offset, copy=False)
-            self.bounding_box = self._bounding_box()
+            new_bounding_box = self.get_bounding_box()
+            self.bounding_box = new_bounding_box
 
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -3890,7 +3904,8 @@ class Face3D(volmdlr.core.Primitive3D):
                                   self.name)
         else:
             self.surface3d.frame_mapping(frame, side, copy=False)
-            self.bounding_box = self._bounding_box()
+            new_bounding_box = self.get_bounding_box()
+            self.bounding_box = new_bounding_box
 
     def copy(self, deep=True, memo=None):
         return self.__class__(self.surface3d.copy(), self.surface2d.copy(),
@@ -3950,13 +3965,11 @@ class PlaneFace3D(Face3D):
                  name: str = ''):
         # if not isinstance(outer_contour2d, volmdlr.Contour2D):
         #     raise ValueError('Not a contour2D: {}'.format(outer_contour2d))
-        self._utd_bbox = False
         self._bbox = None
         Face3D.__init__(self,
                         surface3d=surface3d,
                         surface2d=surface2d,
                         name=name)
-
 
     # @classmethod
     # def _repair_points_and_polygon2d(cls, points, plane):
@@ -4005,10 +4018,16 @@ class PlaneFace3D(Face3D):
     def bounding_box(self):
         """
         """
-        if not self._utd_bbox:
-            self._bbox = self.outer_contour3d._bounding_box()
-            self._utd_bbox = True
+        if not self._bbox:
+            self._bbox = self.get_bounding_box()
         return self._bbox
+
+    @bounding_box.setter
+    def bounding_box(self, new_bounding_box):
+        self._bbox = new_bounding_box
+
+    def get_bounding_box(self):
+        return self.outer_contour3d._bounding_box()
 
     def face_inside(self, face2):
         """
@@ -6142,7 +6161,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         else:
             self.color = color
         self.alpha = alpha
-        self._utd_bbox = False
         self._bbox = None
         # self.bounding_box = self._bounding_box()
 
@@ -6201,7 +6219,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         else:
             for face in self.faces:
                 face.rotation(center, axis, angle, copy=False)
-            self.bounding_box = self._bounding_box()
+            new_bounding_box = self.get_bounding_box()
+            self.bounding_box = new_bounding_box
 
     def translation(self, offset, copy=True):
         if copy:
@@ -6211,7 +6230,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         else:
             for face in self.faces:
                 face.translation(offset, copy=False)
-            self.bounding_box = self._bounding_box()
+            new_bounding_box = self.get_bounding_box()
+            self.bounding_box = new_bounding_box
 
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -6224,7 +6244,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         else:
             for face in self.faces:
                 face.frame_mapping(frame, side, copy=False)
-            self.bounding_box = self._bounding_box()
+            new_bounding_box = self.get_bounding_box()
+            self.bounding_box = new_bounding_box
 
     def copy(self, deep=True, memo=None):
         new_faces = [face.copy() for face in self.faces]
@@ -6268,12 +6289,19 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         """
         Returns the boundary box
         """
-        if not self._utd_bbox:
-            bbox = self.faces[0].bounding_box
-            for face in self.faces[1:]:
-                bbox += face.bounding_box
-            self._bbox = bbox
+        if not self._bbox:
+            self._bbox = self.get_bounding_box()
         return self._bbox
+
+    @bounding_box.setter
+    def bounding_box(self, new_bounding_box):
+        self._bbox = new_bounding_box
+
+    def get_bounding_box(self):
+        bbox = self.faces[0].bounding_box
+        for face in self.faces[1:]:
+            bbox += face.bounding_box
+        return bbox
 
     def cut_by_plane(self, plane_3d: Plane3D):
         graph = nx.Graph()
@@ -6507,7 +6535,8 @@ class ClosedShell3D(OpenShell3D):
         else:
             for face in self.faces:
                 face.rotation(center, axis, angle, copy=False)
-            self.bounding_box = self._bounding_box()
+            new_bounding_box = self.get_bounding_box()
+            self.bounding_box = new_bounding_box
 
     def translation(self, offset, copy=True):
         if copy:
@@ -6517,7 +6546,8 @@ class ClosedShell3D(OpenShell3D):
         else:
             for face in self.faces:
                 face.translation(offset, copy=False)
-            self.bounding_box = self._bounding_box()
+            new_bounding_box = self.get_bounding_box()
+            self.bounding_box = new_bounding_box
 
     def frame_mapping(self, frame, side, copy=True):
         """
@@ -6530,7 +6560,8 @@ class ClosedShell3D(OpenShell3D):
         else:
             for face in self.faces:
                 face.frame_mapping(frame, side, copy=False)
-            self.bounding_box = self._bounding_box()
+            new_bounding_box = self.get_bounding_box()
+            self.bounding_box = new_bounding_box
 
     def copy(self, deep=True, memo=None):
         new_faces = [face.copy() for face in self.faces]
@@ -6761,19 +6792,22 @@ class ClosedShell3D(OpenShell3D):
         for face in self.faces:
             if (face not in intersecting_faces) and (face not in non_intersecting_faces):
                 if not intersection_method:
-                    if not ClosedShell3D([face]).is_inside_shell(shell2,
-                                                                 resolution=0.01):
+                    if not face.bounding_box.is_inside_bbox(
+                            shell2.bounding_box) or \
+                            not shell2.is_face_inside(face):
                         coincident_plane = False
                         for face2 in shell2.faces:
                             if face.surface3d.is_coincident(face2.surface3d) and \
-                                    ClosedShell3D([face]).bounding_box.is_inside_bbox(
-                                    ClosedShell3D([face2]).bounding_box):
+                                    face.bounding_box.is_inside_bbox(
+                                    face2.bounding_box):
                                 coincident_plane = True
                                 break
                         if not coincident_plane:
                             non_intersecting_faces.append(face)
                 else:
-                    if ClosedShell3D([face]).is_inside_shell(shell2, resolution=0.01):
+                    if face.bounding_box.is_inside_bbox(
+                            shell2.bounding_box) and \
+                            shell2.is_face_inside(face):
                         non_intersecting_faces.append(face)
 
         return non_intersecting_faces
@@ -6822,27 +6856,30 @@ class ClosedShell3D(OpenShell3D):
 
     def set_operations_valid_exterior_faces(self, new_faces: List[Face3D],
                                             valid_faces: List[Face3D],
+                                            list_coincident_faces:List[Face3D],
                                             shell2, reference_shell):
         for new_face in new_faces:
             inside_reference_shell = reference_shell.point_belongs(
                 new_face.random_point_inside())
             if self.set_operations_exterior_face(new_face, valid_faces,
                                                  inside_reference_shell,
+                                                 list_coincident_faces,
                                                  shell2):
                 valid_faces.append(new_face)
         return valid_faces
 
     def union_faces(self, shell2, intersecting_faces,
-                    intersecting_combinations):
+                    intersecting_combinations, list_coincident_faces):
         faces = []
-        # list_coincident_faces = self.get_coincident_faces(shell2)
-        for k, face in enumerate(intersecting_faces):
+        print('list_coincident_faces:', list_coincident_faces)
+        for face in intersecting_faces:
             contour_extract_inside, reference_shell = \
                 self.reference_shell(shell2, face)
             new_faces = face.set_operations_new_faces(
                 intersecting_combinations, contour_extract_inside)
             faces = self.set_operations_valid_exterior_faces(
-                new_faces, faces, shell2, reference_shell)
+                new_faces, faces, list_coincident_faces,
+                shell2, reference_shell)
         return faces
 
     def get_subtraction_valid_faces(self, new_faces, valid_faces,
@@ -6860,6 +6897,7 @@ class ClosedShell3D(OpenShell3D):
                     faces.append(new_face)
             elif self.set_operations_exterior_face(new_face, faces,
                                                    inside_reference_shell,
+                                                   list_coincident_faces,
                                                    shell2):
                 faces.append(new_face)
         return faces
@@ -6950,12 +6988,17 @@ class ClosedShell3D(OpenShell3D):
         return False
 
     def set_operations_exterior_face(self, new_face, valid_faces,
-                                     inside_reference_shell, shell2):
+                                     inside_reference_shell,
+                                     list_coincident_faces, shell2):
         if new_face.area() < 1e-8:
             return False
         if new_face not in valid_faces and not inside_reference_shell:
             for fc in valid_faces:
-                if self.is_face_between_shells(shell2, new_face) or\
+                if not list_coincident_faces:
+                    if fc.face_inside(new_face) and\
+                            new_face.area() == fc.area():
+                        return False
+                elif self.is_face_between_shells(shell2, new_face) or\
                         (fc.face_inside(new_face) and
                          new_face.area() == fc.area()):
                     return False
@@ -7001,11 +7044,15 @@ class ClosedShell3D(OpenShell3D):
         if len(faces) == \
                 len(self.faces + shell2.faces) and not intersecting_faces:
             return [self, shell2]
+        list_coincident_faces = self.get_coincident_faces(shell2)
         new_valid_faces = self.union_faces(shell2, intersecting_faces,
-                                           intersecting_combinations)
+                                           intersecting_combinations,
+                                           list_coincident_faces)
         faces += new_valid_faces
         new_shell = ClosedShell3D(faces)
-        new_shell.merge_union_faces()
+        if list_coincident_faces:
+            new_shell.merge_union_faces()
+            print('passing hereeeee')
         return [new_shell]
 
     @staticmethod
@@ -7070,8 +7117,10 @@ class ClosedShell3D(OpenShell3D):
         intersecting_faces, _ = self.get_intersecting_faces(intersecting_combinations)
 
         faces = self.get_non_intersecting_faces(shell2, intersecting_faces)
+        list_coincident_faces = self.get_coincident_faces(shell2)
         new_valid_faces = self.union_faces(shell2, intersecting_faces,
-                                           intersecting_combinations)
+                                           intersecting_combinations,
+                                           list_coincident_faces)
         faces += new_valid_faces
 
         return [OpenShell3D(faces)]
