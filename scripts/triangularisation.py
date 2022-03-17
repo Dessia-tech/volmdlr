@@ -24,10 +24,12 @@ contour = vm.wires.Contour2D(vm.wires.ClosedPolygon2D(p).primitives)
 
 pts = vm.wires.Circle2D(vm.O2D, radius=0.05).tessellation_points(resolution=40)
 inner_contour = vm.wires.ClosedPolygon2D(pts)
+pts2 = vm.wires.Circle2D(vm.Point2D(-0.13, 0.15), radius=0.02).tessellation_points(resolution=40)
+inner_contour = [vm.wires.ClosedPolygon2D(pts), vm.wires.ClosedPolygon2D(pts2)]
 
 # %% 1/ Surface2D + inners
 
-surface = volmdlr.faces.Surface2D(outer_contour=contour, inner_contours=[inner_contour])
+surface = volmdlr.faces.Surface2D(outer_contour=contour, inner_contours=inner_contour)
 
 # %%% Triangularisation
 
