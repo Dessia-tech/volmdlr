@@ -31,7 +31,7 @@ surface = volmdlr.faces.Surface2D(outer_contour=contour, inner_contours=[inner_c
 
 # %%% Triangularisation
 
-x_density, y_density = 3,3
+x_density, y_density = 5, 5
 
 triangularisation = surface.triangularisation_2(x_density, y_density)
 

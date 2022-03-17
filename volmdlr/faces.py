@@ -535,10 +535,12 @@ class Surface2D(volmdlr.core.Primitive2D):
                 concatenation = concatenation + pt
 
             if not pts and self.outer_contour.is_inside(element) and not concatenation:
-                inside = set()
+                is_outside = True
                 for inner_contour in self.inner_contours:
-                    inside.add(inner_contour.is_inside(element))
-                if True not in list(inside):
+                    if inner_contour.is_inside(element):
+                        is_outside = False
+                        break
+                if is_outside:
                     mesh_elements.append(element)
 
             if len(pts)>=2:
@@ -547,7 +549,7 @@ class Surface2D(volmdlr.core.Primitive2D):
                     primitives = self.outer_contour.extract_without_primitives(pts[0], pts[1], inside=False)
 
                 wire = volmdlr.wires.Wire2D(primitives)
-                contours = volmdlr.wires.Contour2D(element.primitives).cut_by_wire(wire)
+                contours = element.cut_by_wire(wire)
                 for c in contours:
                     if self.outer_contour.is_inside(c):
                         mesh_elements.append(c)
@@ -560,12 +562,11 @@ class Surface2D(volmdlr.core.Primitive2D):
                         primitives = inner_contour.extract_without_primitives(pts2[0], pts2[1], inside=False)
 
                     wire = volmdlr.wires.Wire2D(primitives)
-                    contours = volmdlr.wires.Contour2D(element.primitives).cut_by_wire(wire)
+                    contours = element.cut_by_wire(wire)
                     for c in contours:
                         if not inner_contour.is_inside(c):
                             mesh_elements.append(c)
                             break
-
         return mesh_elements
 
 
