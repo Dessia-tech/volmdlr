@@ -181,7 +181,7 @@ class LineSegment(Edge):
         u = self.end - self.start
         length = u.norm()
         t = (point - self.start).dot(u) / length
-        if t < -1e-9 or t > length + 1e-9:
+        if t < -1e-6 or t > length + 1e-6:
             raise ValueError(f'Point is not on linesegment: abscissa={t}')
         return t
 
