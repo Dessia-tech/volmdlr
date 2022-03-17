@@ -36,6 +36,7 @@ steps:
   image: python:3.8
   commands:
   - git fetch --tags
+  - pip install Cython
   - python setup.py sdist
 
 - name: upload to pypi
