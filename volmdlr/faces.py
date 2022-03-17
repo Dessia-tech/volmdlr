@@ -516,22 +516,19 @@ class Surface2D(volmdlr.core.Primitive2D):
         dx = (bounding_rectangle[1] - bounding_rectangle[0])*0.1
         dy = (bounding_rectangle[3] - bounding_rectangle[2])*0.1
 
-        grid2d = volmdlr.grid.Grid2D.from_properties(x_limits=(bounding_rectangle[0]-dx,
-                                                               bounding_rectangle[1]+dx),
-                                                     y_limits=(bounding_rectangle[2]-dy,
-                                                               bounding_rectangle[3]+dy),
-                                                     points_nbr=(x_density+1,y_density+1),
-                                                     direction=['+x','+y'])
+        grid2d = volmdlr.grid.Grid2D.from_properties(x_limits=(bounding_rectangle[0]-dx, bounding_rectangle[1]+dx),
+                                                     y_limits=(bounding_rectangle[2]-dy, bounding_rectangle[3]+dy),
+                                                     points_nbr=(x_density+1,y_density+1), direction=['+x','+y'])
         patterns = grid2d.grid_pattern()
         mesh_elements= []
 
         for element in patterns:
             pts = element.contour_intersections(self.outer_contour)
-            pts2_inners = []
+            pts2_inners, concatenation = [], []
             for inner_contour in self.inner_contours:
-                pts2_inners.append(element.contour_intersections(inner_contour))
-
-            concatenation = reduce(lambda x, y: x.extend(y), pts2_inners)
+                points = element.contour_intersections(inner_contour)
+                pts2_inners.append(points)
+                concatenation.extend(points)
 
             if not pts and self.outer_contour.is_inside(element) and not concatenation:
                 is_outside = True
