@@ -569,6 +569,24 @@ class Surface2D(volmdlr.core.Primitive2D):
                             break
         return mesh_elements
 
+    @staticmethod
+    def get_extracted_contour_for_mesh(contour, element, points, inside):
+        primitives = contour.extract_without_primitives(points[0], points[1], inside=True)
+        if not element.is_inside(volmdlr.wires.Wire2D(primitives)):
+            primitives = contour.extract_without_primitives(points[0], points[1], inside=False)
+        wire = volmdlr.wires.Wire2D(primitives)
+        contours = element.cut_by_wire(wire)
+        for c in contours:
+            if inside:
+                if contour.is_inside(c):
+                    mesh_element = c
+                    break
+            else:
+                if not contour.is_inside(c):
+                    mesh_element = c
+                    break
+        return mesh_element
+
 
 class Surface3D(dc.DessiaObject):
     x_periodicity = None
