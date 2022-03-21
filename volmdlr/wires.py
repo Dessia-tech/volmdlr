@@ -1125,6 +1125,20 @@ class Contour2D(Contour, Wire2D):
     #         equal = (equal and prim1 == prim2)
     #     return equal
 
+    def __eq__(self, other_):
+        if other_.__class__.__name__ != self.__class__.__name__:
+            return False
+        if len(self.primitives) != len(other_.primitives):
+            return False
+        equal = 0
+        for prim1 in self.primitives:
+            for prim2 in other_.primitives:
+                if (prim1 == prim2 or prim1.reverse() == prim2
+                    or prim2.reverse() == prim1 or prim1.reverse() == prim2.reverse()):
+                    equal +=1
+        if equal == len(self.primitives) and equal ==len(other_.primitives):
+            return True
+
     @property
     def edge_polygon(self):
         if not self._utd_edge_polygon:
