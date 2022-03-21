@@ -1215,6 +1215,9 @@ class Contour2D(Contour, Wire2D):
         if equal == len(self.primitives) and equal ==len(other_.primitives):
             return True
 
+    def __hash__(self):
+        return sum([hash(e) for e in self.primitives])
+
     @property
     def edge_polygon(self):
         if not self._utd_edge_polygon:
