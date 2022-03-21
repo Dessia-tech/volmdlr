@@ -3173,12 +3173,18 @@ class Contour3D(Contour, Wire3D):
         return sum([hash(e) for e in self.primitives])
 
     def __eq__(self, other_):
-        if self.__class__.__name__ != other_.__class__.__name__:
+        if other_.__class__.__name__ != self.__class__.__name__:
             return False
-        equal = True
-        for edge, other_edge in zip(self.primitives, other_.edges):
-            equal = (equal and edge == other_edge)
-        return equal
+        if len(self.primitives) != len(other_.primitives):
+            return False
+        equal = 0
+        for prim1 in self.primitives:
+            for prim2 in other_.primitives:
+                if (prim1 == prim2 or prim1.reverse() == prim2
+                    or prim2.reverse() == prim1 or prim1.reverse() == prim2.reverse()):
+                    equal +=1
+        if equal == len(self.primitives) and equal ==len(other_.primitives):
+            return True
 
     @property
     def edge_polygon(self):
