@@ -673,6 +673,21 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                 min_distance = distance
         return min_distance
 
+    def nearest_primitive_to(self, point):
+        # min_distance = self.primitives[0].middle_point().point_distance(point)
+        # index = 0
+        # for i, primitive in enumerate(self.primitives[1:]):
+        #     distance = primitive.middle_point().point_distance(point)
+        #     if distance < min_distance:
+        #         min_distance = distance
+        #         index = i
+        # return self.primitives[index]
+
+        primitives = self.primitives
+        primitives_sorted = sorted(primitives, key=lambda primitive: primitive.point_distance(point))
+
+        return primitives_sorted[0]
+
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
     """
