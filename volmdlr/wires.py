@@ -1134,9 +1134,9 @@ class Contour2D(Contour, Wire2D):
         for prim1 in self.primitives:
             for prim2 in other_.primitives:
                 if (prim1 == prim2 or prim1.reverse() == prim2
-                    or prim2.reverse() == prim1 or prim1.reverse() == prim2.reverse()):
-                    equal +=1
-        if equal == len(self.primitives) and equal ==len(other_.primitives):
+                        or prim2.reverse() == prim1 or prim1.reverse() == prim2.reverse()):
+                    equal += 1
+        if equal == len(self.primitives) and equal == len(other_.primitives):
             return True
         return False
 
@@ -3182,9 +3182,9 @@ class Contour3D(Contour, Wire3D):
         for prim1 in self.primitives:
             for prim2 in other_.primitives:
                 if (prim1 == prim2 or prim1.reverse() == prim2
-                    or prim2.reverse() == prim1 or prim1.reverse() == prim2.reverse()):
-                    equal +=1
-        if equal == len(self.primitives) and equal ==len(other_.primitives):
+                        or prim2.reverse() == prim1 or prim1.reverse() == prim2.reverse()):
+                    equal += 1
+        if equal == len(self.primitives) and equal == len(other_.primitives):
             return True
         return False
 
