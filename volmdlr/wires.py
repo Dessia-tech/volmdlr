@@ -1138,6 +1138,7 @@ class Contour2D(Contour, Wire2D):
                     equal +=1
         if equal == len(self.primitives) and equal ==len(other_.primitives):
             return True
+        return False
 
     @property
     def edge_polygon(self):
@@ -3185,6 +3186,7 @@ class Contour3D(Contour, Wire3D):
                     equal +=1
         if equal == len(self.primitives) and equal ==len(other_.primitives):
             return True
+        return False
 
     @property
     def edge_polygon(self):
