@@ -132,13 +132,29 @@ class Wire:
                 point1, point2 = point2, point1
 
         if ip1 < ip2:
-            primitives.append(primitive1.split(point1)[1])
+            prim = primitive1.split(point1)[1]
+            if prim:
+                primitives.append(prim)
             primitives.extend(self.primitives[ip1 + 1:ip2])
-            primitives.append(primitive2.split(point2)[0])
+            prim = primitive2.split(point2)[0]
+            if prim:
+                primitives.append(prim)
+
+        elif ip1 == ip2:
+            prim = primitive1.split(point1)[1]
+            if prim:
+                prim = prim.split(point2)[0]
+                if prim:
+                    primitives.append(prim)
+
         else:
-            primitives.append(primitive2.split(point2)[1])
+            prim = primitive2.split(point2)[1]
+            if prim:
+                primitives.append(prim)
             primitives.extend(self.primitives[ip2 + 1:ip1])
-            primitives.append(primitive2.split(point2)[0])
+            prim = primitive2.split(point2)[0]
+            if prim:
+                primitives.append(prim)
 
         return primitives
 
@@ -216,7 +232,11 @@ class Wire:
         for wire in wires:
             primitives.extend(wire.primitives)
 
-        return cls(primitives)
+        wire = cls(primitives)
+
+        if not wire.is_ordered():
+            return wire.order_wire()
+        return wire
 
     def inverted_primitives(self):
         '''
@@ -275,7 +295,7 @@ class Wire:
         check if the wire is followed by wire_2
         '''
 
-        if self.primitives[-1].end.point_distane(wire_2.primitives[0].start) < tol:
+        if self.primitives[-1].end.point_distance(wire_2.primitives[0].start) < tol:
             return True
         else:
             return False
@@ -286,7 +306,7 @@ class Wire:
         '''
 
         for primitive_1, primitive_2 in zip(self.primitives, self.primitives[1:]):
-            if primitive_1.point_distance(primitive_2) < tol:
+            if primitive_1.end.point_distance(primitive_2.start) < tol:
                 continue
             else:
                 return False
@@ -600,15 +620,16 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
 
         crossings, crossings_points = [], []
         for primitive in wire.primitives:
-            a = self.linesegment_crossings(primitive)
-            if a:
-                if crossings_points:
-                    if a[0][0] not in crossings_points:
-                        crossings.append([a[0][0], a[0][1]])
-                        crossings_points.append(a[0][0])
-                else:
-                    crossings.append([a[0][0], a[0][1]])
-                    crossings_points.append(a[0][0])
+            a_points = self.linesegment_crossings(primitive)
+            for a in a_points:
+                if a:
+                    if crossings_points:
+                        if a[0] not in crossings_points:
+                            crossings.append([a[0], a[1]])
+                            crossings_points.append(a[0])
+                    else:
+                        crossings.append([a[0], a[1]])
+                        crossings_points.append(a[0])
 
         return crossings
 
@@ -628,6 +649,45 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
 
     def invert(self):
         return Wire2D(self.inverted_primitives())
+
+    def extend(self, point):
+        '''
+        extend a wire by adding a linesegment connecting the given point to nearest wire's extremities
+        '''
+
+        distances = [self.primitives[0].start.point_distance(point), self.primitives[-1].end.point_distance(point)]
+        if distances.index(min(distances)) == 0:
+            primitives = [volmdlr.edges.LineSegment2D(point, self.primitives[0].start)]
+            primitives.extend(self.primitives)
+        else:
+            primitives = self.primitives
+            primitives.append(volmdlr.edges.LineSegment2D(self.primitives[-1].end, point))
+
+        return Wire2D(primitives)
+
+    def point_distance(self, point):
+        min_distance = self.primitives[0].point_distance(point)
+        for primitive in self.primitives[1:]:
+            distance = primitive.point_distance(point)
+            if distance < min_distance:
+                min_distance = distance
+        return min_distance
+
+    def nearest_primitive_to(self, point):
+        # min_distance = self.primitives[0].middle_point().point_distance(point)
+        # index = 0
+        # for i, primitive in enumerate(self.primitives[1:]):
+        #     distance = primitive.middle_point().point_distance(point)
+        #     if distance < min_distance:
+        #         min_distance = distance
+        #         index = i
+        # return self.primitives[index]
+
+        primitives = self.primitives
+        primitives_sorted = sorted(primitives, key=lambda primitive: primitive.point_distance(point))
+
+        return primitives_sorted[0]
+
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
     """
@@ -1165,15 +1225,22 @@ class Contour2D(Contour, Wire2D):
         Wire2D.__init__(self, primitives, name)
         self._utd_edge_polygon = False
 
-    # def __eq__(self, other_):
-    #     if other_.__class__.__name__ != self.__class__.__name__:
-    #         return False
-    #     if len(self.primitives) != len(other_.primitives):
-    #         return False
-    #     equal = True
-    #     for prim1, prim2 in zip(self.primitives, other_.primitives):
-    #         equal = (equal and prim1 == prim2)
-    #     return equal
+    def __eq__(self, other_):
+        if other_.__class__.__name__ != self.__class__.__name__:
+            return False
+        if len(self.primitives) != len(other_.primitives):
+            return False
+        equal = 0
+        for prim1 in self.primitives:
+            for prim2 in other_.primitives:
+                if (prim1 == prim2 or prim1.reverse() == prim2
+                    or prim2.reverse() == prim1 or prim1.reverse() == prim2.reverse()):
+                    equal +=1
+        if equal == len(self.primitives) and equal ==len(other_.primitives):
+            return True
+
+    def __hash__(self):
+        return sum([hash(e) for e in self.primitives])
 
     @property
     def edge_polygon(self):
@@ -1883,6 +1950,21 @@ class Contour2D(Contour, Wire2D):
             cutting_points_counter += 2
 
         return list_contours
+
+    def nearest_primitive_to(self, point):
+        # min_distance = self.primitives[0].middle_point().point_distance(point)
+        # index = 0
+        # for i, primitive in enumerate(self.primitives[1:]):
+        #     distance = primitive.middle_point().point_distance(point)
+        #     if distance < min_distance:
+        #         min_distance = distance
+        #         index = i
+        # return self.primitives[index]
+
+        primitives = self.primitives
+        primitives_sorted = sorted(primitives, key=lambda primitive: primitive.point_distance(point))
+
+        return primitives_sorted[0]
 
 
 class ClosedPolygon:
@@ -3266,7 +3348,7 @@ class Contour3D(Contour, Wire3D):
         if self.__class__.__name__ != other_.__class__.__name__:
             return False
         equal = True
-        for edge, other_edge in zip(self.primitives, other_.edges):
+        for edge, other_edge in zip(self.primitives, other_.primitives):
             equal = (equal and edge == other_edge)
         return equal
 

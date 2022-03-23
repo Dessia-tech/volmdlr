@@ -181,7 +181,7 @@ class LineSegment(Edge):
         u = self.end - self.start
         length = u.norm()
         t = (point - self.start).dot(u) / length
-        if t < -1e-9 or t > length + 1e-9:
+        if t < -1e-6 or t > length + 1e-6:
             raise ValueError(f'Point is not on linesegment: abscissa={t}')
         return t
 
@@ -230,9 +230,9 @@ class LineSegment(Edge):
 
     def split(self, split_point):
         if split_point == self.start:
-            return [[], self]
+            return [None, self]
         elif split_point == self.end:
-            return [self, []]
+            return [self, None]
         else:
             return [self.__class__(self.start, split_point),
                     self.__class__(split_point, self.end)]
@@ -1158,6 +1158,10 @@ class LineSegment2D(LineSegment):
 
         points = self.discretise(n)
         return volmdlr.wires.Wire2D.from_points(points)
+
+    def nearest_point_to(self, point):
+        points = self.discretization_points(500)
+        return point.nearest_point(points)
 
 
 class Arc2D(Edge):
