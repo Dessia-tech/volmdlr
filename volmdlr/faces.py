@@ -4337,6 +4337,7 @@ class PlaneFace3D(Face3D):
             list_inner_contours = []
             for face in valid_coicident_faces:
                 adjacent_faces = False
+                face_inside = False
                 contour = face.outer_contour3d.to_2d(
                     face0.surface3d.frame.origin,
                     face0.surface3d.frame.u,
@@ -4351,7 +4352,11 @@ class PlaneFace3D(Face3D):
                     valid_coicident_faces.remove(face)
                     adjacent_faces = True
                     break
-            if not adjacent_faces and valid_coicident_faces:
+                if merged_contour.is_inside(contour):
+                    valid_coicident_faces.remove(face)
+                    face_inside = True
+                    break
+            if not adjacent_faces and not face_inside and valid_coicident_faces:
                 list_new_faces.append(
                     PlaneFace3D(face0.surface3d,
                                 Surface2D(merged_contour.copy(),
@@ -4371,7 +4376,6 @@ class PlaneFace3D(Face3D):
                         Surface2D(merged_contour,
                                   face0.surface2d.inner_contours +
                                   list_inner_contours)))
-
         return list_new_faces
 
     def set_operations_new_faces(self, intersecting_combinations,
@@ -6531,7 +6535,8 @@ class ClosedShell3D(OpenShell3D):
         if copy:
             new_faces = [face.rotation(center, axis, angle, copy=True) for face
                          in self.faces]
-            return ClosedShell3D(new_faces, color=self.color, alpha=self.alpha, name=self.name)
+            return ClosedShell3D(new_faces, color=self.color,
+                                 alpha=self.alpha, name=self.name)
         else:
             for face in self.faces:
                 face.rotation(center, axis, angle, copy=False)
@@ -6722,7 +6727,8 @@ class ClosedShell3D(OpenShell3D):
             return False
         return disjoint
 
-    def intersecting_faces_combinations(self, shell2, tol=1e-8):
+    def intersecting_faces_combinations(self, shell2,
+                                        list_coincident_faces, tol=1e-8):
         '''
             :param shell2: ClosedShell3D
             for two closed shells, it calculates and return a list of face
@@ -6731,7 +6737,7 @@ class ClosedShell3D(OpenShell3D):
             there is no combination for those
             :param tol: Corresponde to the tolerance to consider two faces as intersecting faces
         '''
-        list_coicident_faces = self.get_coincident_faces(shell2)
+        # list_coicident_faces = self.get_coincident_faces(shell2)
         face_combinations = []
         for face1 in self.faces:
             for face2 in shell2.faces:
@@ -6739,7 +6745,7 @@ class ClosedShell3D(OpenShell3D):
                         face2.bounding_box) or
                         face1.bounding_box.distance_to_bbox(
                             face2.bounding_box) <= tol) and \
-                        (face1, face2) not in list_coicident_faces:
+                        (face1, face2) not in list_coincident_faces:
                     face_combinations.append((face1, face2))
 
         return face_combinations
@@ -6812,6 +6818,16 @@ class ClosedShell3D(OpenShell3D):
 
         return non_intersecting_faces
 
+    def get_coincident_and_adjacent_faces(self, shell2):
+        coincident_and_adjacent_faces = []
+        for face1 in self.faces:
+            for face2 in shell2.faces:
+                if face1.surface3d.is_coincident(face2.surface3d) and\
+                        face1.is_adjacent(face2):
+                    coincident_and_adjacent_faces.append((face1, face2))
+
+        return coincident_and_adjacent_faces
+
     def get_coincident_faces(self, shell2):
         """
         Finds all pairs of faces that are coincidents faces, that is,
@@ -6827,7 +6843,9 @@ class ClosedShell3D(OpenShell3D):
 
         return list_coincident_faces
 
-    def two_shells_intersecting_contour(self, shell2, dict_intersecting_combinations=None):
+    def two_shells_intersecting_contour(self, shell2,
+                                        list_coincident_faces: List[Face3D],
+                                        dict_intersecting_combinations=None):
         '''
             :param shell2: ClosedShell3D
             :param dict_intersecting_combinations: dictionary containing as keys the combination of intersecting faces
@@ -6836,7 +6854,8 @@ class ClosedShell3D(OpenShell3D):
             :returns: intersecting contour for two intersecting shells
         '''
         if dict_intersecting_combinations is None:
-            face_combinations = self.intersecting_faces_combinations(shell2)
+            face_combinations = self.intersecting_faces_combinations(
+                shell2, list_coincident_faces)
             dict_intersecting_combinations = \
                 self.dict_intersecting_combinations(face_combinations)
         intersecting_lines = list(dict_intersecting_combinations.values())
@@ -6856,35 +6875,40 @@ class ClosedShell3D(OpenShell3D):
 
     def set_operations_valid_exterior_faces(self, new_faces: List[Face3D],
                                             valid_faces: List[Face3D],
-                                            list_coincident_faces:List[Face3D],
+                                            # list_coincident_faces: List[Face3D],
                                             shell2, reference_shell):
         for new_face in new_faces:
             inside_reference_shell = reference_shell.point_belongs(
                 new_face.random_point_inside())
             if self.set_operations_exterior_face(new_face, valid_faces,
                                                  inside_reference_shell,
-                                                 list_coincident_faces,
+                                                 # list_coincident_faces,
                                                  shell2):
                 valid_faces.append(new_face)
         return valid_faces
 
     def union_faces(self, shell2, intersecting_faces,
-                    intersecting_combinations, list_coincident_faces):
+                    intersecting_combinations,
+                    # list_coincident_faces
+                    ):
         faces = []
-        print('list_coincident_faces:', list_coincident_faces)
-        for face in intersecting_faces:
+        # print('list_coincident_faces:', list_coincident_faces)
+        # print('len(intersecting_faces):', len(intersecting_faces))
+        for i, face in enumerate(intersecting_faces):
+            # print('i+1:', i + 1)
             contour_extract_inside, reference_shell = \
                 self.reference_shell(shell2, face)
             new_faces = face.set_operations_new_faces(
                 intersecting_combinations, contour_extract_inside)
             faces = self.set_operations_valid_exterior_faces(
-                new_faces, faces, list_coincident_faces,
+                new_faces, faces,
+                # list_coincident_faces,
                 shell2, reference_shell)
         return faces
 
     def get_subtraction_valid_faces(self, new_faces, valid_faces,
                                     reference_shell,
-                                    list_coincident_faces,
+                                    # list_coincident_faces,
                                     shell2, keep_interior_faces):
         faces = []
         for new_face in new_faces:
@@ -6893,19 +6917,22 @@ class ClosedShell3D(OpenShell3D):
             if keep_interior_faces:
                 if self.set_operations_interior_face(new_face, valid_faces,
                                                      inside_reference_shell,
-                                                     list_coincident_faces):
+                                                     # list_coincident_faces
+                                                     ):
                     faces.append(new_face)
             elif self.set_operations_exterior_face(new_face, faces,
                                                    inside_reference_shell,
-                                                   list_coincident_faces,
+                                                   # list_coincident_faces,
                                                    shell2):
                 faces.append(new_face)
         return faces
 
     def subtraction_faces(self, shell2, intersecting_faces,
-                          intersecting_combinations):
+                          intersecting_combinations,
+                          # list_coincident_faces
+                          ):
         faces = []
-        list_coincident_faces = self.get_coincident_faces(shell2)
+        # list_coincident_faces = self.get_coincident_faces(shell2)
         for k, face in enumerate(intersecting_faces):
             keep_interior_faces = False
             if face in shell2.faces:
@@ -6916,34 +6943,42 @@ class ClosedShell3D(OpenShell3D):
                 intersecting_combinations, contour_extract_inside)
             faces.extend(self.get_subtraction_valid_faces(
                 new_faces, faces, reference_shell,
-                list_coincident_faces, shell2, keep_interior_faces))
+                # list_coincident_faces,
+                shell2, keep_interior_faces))
 
         return faces
 
     def valid_intersection_faces(self, new_faces, valid_faces,
-                                 reference_shell, list_coincident_faces):
+                                 reference_shell,
+                                 # list_coincident_faces
+                                 ):
         faces = []
         for new_face in new_faces:
             inside_reference_shell = reference_shell.point_belongs(
                 new_face.random_point_inside())
             if self.set_operations_interior_face(new_face, valid_faces,
                                                  inside_reference_shell,
-                                                 list_coincident_faces):
+                                                 # list_coincident_faces
+                                                 ):
                 faces.append(new_face)
 
         return faces
 
     def intersection_faces(self, shell2, intersecting_faces,
-                           intersecting_combinations):
+                           intersecting_combinations,
+                           # list_coincident_faces
+                           ):
         faces = []
-        list_coincident_faces = self.get_coincident_faces(shell2)
+        # list_coincident_faces = self.get_coincident_faces(shell2)
         for face in intersecting_faces:
             contour_extract_inside, reference_shell = \
                 self.reference_shell(shell2, face)
             new_faces = face.set_operations_new_faces(
                 intersecting_combinations, contour_extract_inside)
             faces.extend(self.valid_intersection_faces(
-                new_faces, faces, reference_shell, list_coincident_faces))
+                new_faces, faces, reference_shell,
+                # list_coincident_faces
+            ))
 
         valid_faces = []
         for i, fc1 in enumerate(faces):
@@ -6958,20 +6993,20 @@ class ClosedShell3D(OpenShell3D):
 
     @staticmethod
     def set_operations_interior_face(new_face, faces, inside_reference_shell,
-                                     list_coincident_faces):
-        if inside_reference_shell:
-            if new_face not in faces:
-                return True
-        for coin_f1, coin_f2 in list_coincident_faces:
-            if coin_f1.face_inside(new_face) and coin_f2.face_inside(
-                    new_face):
-                valid = True
-                for fc in faces:
-                    if fc.face_inside(new_face) or new_face.face_inside(
-                            fc):
-                        valid = False
-                if valid:
-                    return True
+                                     # list_coincident_faces
+                                     ):
+        if inside_reference_shell and new_face not in faces:
+            return True
+        # for coin_f1, coin_f2 in list_coincident_faces:
+        #     if coin_f1.face_inside(new_face) and coin_f2.face_inside(
+        #             new_face):
+        #         valid = True
+        #         for fc in faces:
+        #             if fc.face_inside(new_face) or new_face.face_inside(
+        #                     fc):
+        #                 valid = False
+        #         if valid:
+        #             return True
         return False
 
     def is_face_between_shells(self, shell2, face):
@@ -6989,19 +7024,22 @@ class ClosedShell3D(OpenShell3D):
 
     def set_operations_exterior_face(self, new_face, valid_faces,
                                      inside_reference_shell,
-                                     list_coincident_faces, shell2):
+                                     # list_coincident_faces,
+                                     shell2):
         if new_face.area() < 1e-8:
             return False
         if new_face not in valid_faces and not inside_reference_shell:
-            for fc in valid_faces:
-                if not list_coincident_faces:
-                    if fc.face_inside(new_face) and\
-                            new_face.area() == fc.area():
-                        return False
-                elif self.is_face_between_shells(shell2, new_face) or\
-                        (fc.face_inside(new_face) and
-                         new_face.area() == fc.area()):
-                    return False
+            if self.is_face_between_shells(shell2, new_face):
+                return False
+            # for fc in valid_faces:
+            #     # if not list_coincident_faces:
+            #     #     if fc.face_inside(new_face) and\
+            #     #             new_face.area() == fc.area():
+            #     #         return False
+            #     if self.is_face_between_shells(shell2, new_face) or\
+            #             (fc.face_inside(new_face) and
+            #              new_face.area() == fc.area()):
+            #         return False
             return True
         return False
 
@@ -7020,6 +7058,19 @@ class ClosedShell3D(OpenShell3D):
             return [self]
         return []
 
+    def is_clean(self):
+        """
+        Verifies if closed shell\'s faces are clean or
+        if it is needed to be cleaned
+        :return: True if clean and False Otherwise
+        """
+        for face1, face2 in product(self.faces, repeat=2):
+            if face1 != face2 and\
+                    face1.surface3d.is_coincident(face2.surface3d) and\
+                    face1.is_adjacent(face2):
+                return False
+        return True
+
     def union(self, shell2, tol=1e-8):
         '''
             Given Two closed shells, it returns
@@ -7030,7 +7081,9 @@ class ClosedShell3D(OpenShell3D):
             self.validate_set_operation(shell2, tol)
         if validate_set_operation:
             return validate_set_operation
-        face_combinations = self.intersecting_faces_combinations(shell2, tol)
+        list_coincident_faces = self.get_coincident_faces(shell2)
+        face_combinations = self.intersecting_faces_combinations(
+            shell2, list_coincident_faces, tol)
 
         intersecting_combinations = \
             self.dict_intersecting_combinations(face_combinations, tol)
@@ -7044,21 +7097,24 @@ class ClosedShell3D(OpenShell3D):
         if len(faces) == \
                 len(self.faces + shell2.faces) and not intersecting_faces:
             return [self, shell2]
-        list_coincident_faces = self.get_coincident_faces(shell2)
+        # list_coincident_faces = self.get_coincident_faces(shell2)
         new_valid_faces = self.union_faces(shell2, intersecting_faces,
                                            intersecting_combinations,
-                                           list_coincident_faces)
+                                           # list_coincident_faces
+                                           )
+
         faces += new_valid_faces
         new_shell = ClosedShell3D(faces)
-        if list_coincident_faces:
-            new_shell.merge_union_faces()
-            print('passing hereeeee')
+        # if coincident_and_adjacent_faces:
+        #     new_shell.merge_union_faces()
+        #     print('passing hereeeee')
         return [new_shell]
 
     @staticmethod
     def get_faces_to_be_merged(union_faces):
         coincident_planes_faces = []
         valid_coicident_faces = []
+        not_adjacent_not_valid_coincident_faces = []
         for i, face1 in enumerate(union_faces):
             for j, face2 in enumerate(union_faces):
                 if j != i and \
@@ -7069,13 +7125,34 @@ class ClosedShell3D(OpenShell3D):
             if coincident_planes_faces:
                 for f1, f2 in \
                         product(coincident_planes_faces, repeat=2):
-                    if f1 != f2 and f1.is_adjacent(f2):
-                        if f1 not in valid_coicident_faces:
-                            valid_coicident_faces.append(f1)
-                        if f2 not in valid_coicident_faces:
-                            valid_coicident_faces.append(f2)
+                    if f1 != f2:
+                        if f1.is_adjacent(f2):
+                            if f1 not in valid_coicident_faces:
+                                valid_coicident_faces.append(f1)
+                            if f2 not in valid_coicident_faces:
+                                valid_coicident_faces.append(f2)
+                        else:
+                            if f1.face_inside(f2):
+                                not_adjacent_not_valid_coincident_faces.append(f2)
+                            elif f2.face_inside(f1):
+                                not_adjacent_not_valid_coincident_faces.append(f1)
                 break
-        return valid_coicident_faces
+        return valid_coicident_faces, not_adjacent_not_valid_coincident_faces
+
+    @staticmethod
+    def clean_union_faces(union_faces, list_new_faces):
+        list_remove_faces = []
+        if union_faces:
+            for face1 in union_faces:
+                for face2 in list_new_faces:
+                    if face1.face_inside(face2):
+                        list_remove_faces.append(face2)
+                    elif face2.face_inside(face1):
+                        list_remove_faces.append(face1)
+        list_new_faces += union_faces
+        for face in list_remove_faces:
+            list_new_faces.remove(face)
+        return list_new_faces
 
     def merge_union_faces(self):
         union_faces = self.faces
@@ -7083,20 +7160,33 @@ class ClosedShell3D(OpenShell3D):
         list_new_faces = []
         count = 0
         while not finished:
-            valid_coicident_faces = ClosedShell3D.get_faces_to_be_merged(
-                union_faces)
+            valid_coicident_faces, not_adjacent_not_valid_coincident_faces =\
+                ClosedShell3D.get_faces_to_be_merged(union_faces)
             list_valid_coincident_faces = valid_coicident_faces[:]
-
+            # print('len(valid_coicident_faces):', len(valid_coicident_faces))
             if valid_coicident_faces:
                 list_new_faces += PlaneFace3D.merge_faces(valid_coicident_faces)
-            if list_valid_coincident_faces:
                 for face in list_valid_coincident_faces:
                     union_faces.remove(face)
             count += 1
             if count >= len(self.faces) and not list_valid_coincident_faces:
                 finished = True
-
-        list_new_faces += union_faces
+        # print('union_faces:', len(union_faces))
+        # ax=union_faces[0].plot()
+        # union_faces[1].plot(ax=ax, color='r')
+        list_new_faces = self.clean_union_faces(union_faces, list_new_faces)
+        # list_remove_faces = []
+        # if union_faces:
+        #     for face1 in union_faces:
+        #         for face2 in list_new_faces:
+        #             if face1.face_inside(face2):
+        #                 list_remove_faces.append(face2)
+        #             elif face2.face_inside(face1):
+        #                 list_remove_faces.append(face1)
+        #
+        # list_new_faces += union_faces
+        # for face in list_remove_faces:
+        #     list_new_faces.remove(face)
         self.faces = list_new_faces
 
     def subtract(self, shell2, tol=1e-8):
@@ -7107,7 +7197,9 @@ class ClosedShell3D(OpenShell3D):
         if validate_set_operation:
             return validate_set_operation
 
-        face_combinations = self.intersecting_faces_combinations(shell2, tol)
+        list_coincident_faces = self.get_coincident_faces(shell2)
+        face_combinations = self.intersecting_faces_combinations(
+            shell2, list_coincident_faces, tol)
 
         intersecting_combinations = self.dict_intersecting_combinations(face_combinations, tol)
 
@@ -7117,23 +7209,33 @@ class ClosedShell3D(OpenShell3D):
         intersecting_faces, _ = self.get_intersecting_faces(intersecting_combinations)
 
         faces = self.get_non_intersecting_faces(shell2, intersecting_faces)
-        list_coincident_faces = self.get_coincident_faces(shell2)
+        # list_coincident_faces = self.get_coincident_faces(shell2)
         new_valid_faces = self.union_faces(shell2, intersecting_faces,
                                            intersecting_combinations,
-                                           list_coincident_faces)
+                                           # list_coincident_faces
+                                           )
         faces += new_valid_faces
-
+        # new_shell = ClosedShell3D(faces)
+        # if list_coincident_faces:
+        #     new_shell.merge_union_faces()
+        #     print('passing hereeeee -- subtraction 0')
         return [OpenShell3D(faces)]
 
     def subtract_to_closed_shell(self, shell2, tol=1e-8):
-        '''
-            Given Two closed shells, it returns a new subtracted ClosedShell3D object
-        '''
+        """
+        Given Two closed shells, it returns a new subtracted ClosedShell3D object
+        :param shell2:
+        :param tol:
+        :return:
+        """
+
         validate_set_operation = self.validate_set_operation(shell2, tol)
         if validate_set_operation:
             return validate_set_operation
 
-        face_combinations = self.intersecting_faces_combinations(shell2, tol)
+        list_coincident_faces = self.get_coincident_faces(shell2)
+        face_combinations = self.intersecting_faces_combinations(
+            shell2, list_coincident_faces, tol)
 
         intersecting_combinations = self.dict_intersecting_combinations(face_combinations, tol)
 
@@ -7147,11 +7249,22 @@ class ClosedShell3D(OpenShell3D):
         faces = self.get_non_intersecting_faces(shell2, intersecting_faces)
         faces += shell2.get_non_intersecting_faces(self, intersecting_faces,
                                                    intersection_method=True)
-        new_valid_faces = self.subtraction_faces(shell2, intersecting_faces,
-                                                 intersecting_combinations)
-        faces += new_valid_faces
+        # list_coincident_faces = self.get_coincident_faces(shell2)
 
-        return [ClosedShell3D(faces)]
+        new_valid_faces = self.subtraction_faces(shell2, intersecting_faces,
+                                                 intersecting_combinations,
+                                                 # list_coincident_faces
+                                                 )
+        # coincident_and_adjacent_faces =\
+        #     self.get_coincident_and_adjacent_faces(shell2)
+        # print('coincident_and_adjacent_faces:', len(coincident_and_adjacent_faces))
+        faces += new_valid_faces
+        new_shell = ClosedShell3D(faces)
+        # if coincident_and_adjacent_faces:
+        #     new_shell.merge_union_faces()
+        #     print('passing hereeeee -- subtraction')
+        return [new_shell]
+        # return [ClosedShell3D(faces)]
 
     def intersection(self, shell2, tol=1e-8):
         """
@@ -7163,7 +7276,9 @@ class ClosedShell3D(OpenShell3D):
         if validate_set_operation:
             return validate_set_operation
 
-        face_combinations = self.intersecting_faces_combinations(shell2, tol)
+        list_coincident_faces = self.get_coincident_faces(shell2)
+        face_combinations = self.intersecting_faces_combinations(
+            shell2, list_coincident_faces, tol)
 
         intersecting_combinations = self.dict_intersecting_combinations(
             face_combinations, tol)
@@ -7174,12 +7289,19 @@ class ClosedShell3D(OpenShell3D):
         intersecting_faces1, intersecting_faces2 = self.get_intersecting_faces(
             intersecting_combinations)
         intersecting_faces = intersecting_faces1 + intersecting_faces2
+        # list_coincident_faces = self.get_coincident_faces(shell2)
         faces = self.intersection_faces(shell2, intersecting_faces,
-                                        intersecting_combinations)
+                                        intersecting_combinations,
+                                        # list_coincident_faces
+                                        )
         faces += self.get_non_intersecting_faces(shell2,
                                                  intersecting_faces,
                                                  intersection_method=True) + shell2.get_non_intersecting_faces(self,
                                                                                                                intersecting_faces,
                                                                                                                intersection_method=True)
 
-        return [ClosedShell3D(faces)]
+        new_shell = ClosedShell3D(faces)
+        # if list_coincident_faces:
+        #     new_shell.merge_union_faces()
+        #     print('passing hereeeee -- intersection')
+        return [new_shell]

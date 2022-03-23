@@ -896,6 +896,13 @@ class Contour(Wire):
 
         groups_primitives =\
             [group_prim[0] for group_prim in list_groups_primitives]
+
+        if len(contour_primitives) == len(list_groups_primitives):
+            list_lengths = [prim.length() for prim in contour_primitives]
+            index = list_lengths.index(min(list_lengths))
+            contour_primitives.remove(contour_primitives[index])
+            return contour_primitives
+
         contour_primitives =\
             [prim for prim in contour_primitives if prim not in groups_primitives]
 
@@ -1024,10 +1031,43 @@ class Contour(Wire):
                             edges1.add(edge2)
 
                     if len(list_p) == 2 and all_points is False:
+                        vec1_2 = volmdlr.edges.LineSegment2D(list_p[0],
+                                                             list_p[1])
+                        middle_point = vec1_2.middle_point()
+                        normal = vec1_2.normal_vector()
+                        point1 = middle_point + normal * 0.00001
+                        point2 = middle_point - normal * 0.00001
+                        if (self.point_belongs(
+                                point1) and contour.point_belongs(
+                                point1)) or \
+                                (not self.point_belongs(
+                                    point1) and not contour.point_belongs(
+                                    point1)) or (self.point_belongs(
+                                point1) and self.point_belongs(
+                                point2)) or (contour.point_belongs(
+                                point1) and contour.point_belongs(
+                                point2)):
+                            return False
                         return True
         if len(list_p) < 2:
             return False
         if len(list_p) >= 2 and all_points is True:
+            if len(list_p) == 2:
+                vec1_2 = volmdlr.edges.LineSegment2D(list_p[0],
+                                                     list_p[1])
+                middle_point = vec1_2.middle_point()
+                normal = vec1_2.normal_vector()
+                point1 = middle_point + normal * 0.00001
+                point2 = middle_point - normal * 0.00001
+                if (self.point_belongs(point1) and
+                    contour.point_belongs(point1)) or\
+                        (not self.point_belongs(point1) and
+                         not contour.point_belongs(point1)) or\
+                        (self.point_belongs(point1) and
+                         self.point_belongs(point2)) or\
+                        (contour.point_belongs(point1) and
+                         contour.point_belongs(point2)):
+                    return False
             return (edges1, list_p)
         else:
             return False
@@ -1779,14 +1819,19 @@ class Contour2D(Contour, Wire2D):
                         if valid_contour and cntr.area() != 0.0:
                             list_valid_contours.append(cntr)
                         else:
-
                             new_base_contours.append(cntr)
                     contours.remove(cutting_contour)
                     break
             if len(contours) == 0:
                 finished = True
+            if len(contours) == 1 and not new_base_contours:
+                finished = True
             counter += 1
             if counter >= 100 * len(list_contour):
+                # print('new_base_contours:', len(new_base_contours))
+                # print('len(contours):', len(contours))
+                # ax=contours[0].plot()
+                # base_contour.plot(ax=ax, color='b')
                 warnings.warn('There probably exists an open contour (two wires that could not be connected)')
                 finished = True
 
