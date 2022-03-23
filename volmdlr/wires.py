@@ -923,7 +923,6 @@ class Contour(Wire):
         list_contours = []
         finished = False
         contour_primitives = []
-        possible_branch_contour_primitives = []
         while not finished:
             len1 = len(edges)
             for line in edges:
@@ -932,22 +931,12 @@ class Contour(Wire):
                     contour_primitives.append(line)
                     edges.remove(line)
                     break
-                # for line_segment_point in [line.start, line.end]:
-                #     if line_segment_point in points:
-                #         if points.count(line_segment_point) > 1:
-                #             possible_branch_contour_primitives.append(line)
-                #             edges.remove(line)
-                #             break
-                #         else:
-                #             contour_primitives.append(line)
-                #             edges.remove(line)
-                #             break
+
                 if (line.start in points or line.end in points) and\
                         line not in contour_primitives:
                     contour_primitives.append(line)
                     edges.remove(line)
                     break
-                # else:
                 for point in points:
                     if point.is_close(line.start, tol=tol) and\
                             line not in contour_primitives:
@@ -966,7 +955,6 @@ class Contour(Wire):
                 contour_primitives = Contour2D.validate_contour_primitives(
                     contour_primitives)
                 contour_n = cls(contour_primitives[:])
-                # validate_contour
                 contour_n.order_contour()
                 list_contours.append(contour_n)
                 contour_primitives = []
@@ -1000,6 +988,22 @@ class Contour(Wire):
                 return True
         return False
 
+    def is_superposing(self, contour2, intersecting_points):
+        vec1_2 = volmdlr.edges.LineSegment2D(intersecting_points[0],
+                                             intersecting_points[1])
+        middle_point = vec1_2.middle_point()
+        normal = vec1_2.normal_vector()
+        point1 = middle_point + normal * 0.00001
+        point2 = middle_point - normal * 0.00001
+        if (self.point_belongs(point1) and contour2.point_belongs(point1)) or\
+                (not self.point_belongs(point1) and
+                 not contour2.point_belongs(point1)) or\
+                (self.point_belongs(point1) and self.point_belongs(point2)) or\
+                (contour2.point_belongs(point1) and
+                 contour2.point_belongs(point2)):
+            return True
+        return False
+
     def is_sharing_primitives_with(self, contour, all_points=False):
         '''
         check if two contour are sharing primitives
@@ -1031,43 +1035,14 @@ class Contour(Wire):
                             edges1.add(edge2)
 
                     if len(list_p) == 2 and all_points is False:
-                        vec1_2 = volmdlr.edges.LineSegment2D(list_p[0],
-                                                             list_p[1])
-                        middle_point = vec1_2.middle_point()
-                        normal = vec1_2.normal_vector()
-                        point1 = middle_point + normal * 0.00001
-                        point2 = middle_point - normal * 0.00001
-                        if (self.point_belongs(
-                                point1) and contour.point_belongs(
-                                point1)) or \
-                                (not self.point_belongs(
-                                    point1) and not contour.point_belongs(
-                                    point1)) or (self.point_belongs(
-                                point1) and self.point_belongs(
-                                point2)) or (contour.point_belongs(
-                                point1) and contour.point_belongs(
-                                point2)):
+                        if self.is_superposing(contour, list_p):
                             return False
                         return True
         if len(list_p) < 2:
             return False
         if len(list_p) >= 2 and all_points is True:
-            if len(list_p) == 2:
-                vec1_2 = volmdlr.edges.LineSegment2D(list_p[0],
-                                                     list_p[1])
-                middle_point = vec1_2.middle_point()
-                normal = vec1_2.normal_vector()
-                point1 = middle_point + normal * 0.00001
-                point2 = middle_point - normal * 0.00001
-                if (self.point_belongs(point1) and
-                    contour.point_belongs(point1)) or\
-                        (not self.point_belongs(point1) and
-                         not contour.point_belongs(point1)) or\
-                        (self.point_belongs(point1) and
-                         self.point_belongs(point2)) or\
-                        (contour.point_belongs(point1) and
-                         contour.point_belongs(point2)):
-                    return False
+            if len(list_p) == 2 and self.is_superposing(contour, list_p):
+                return False
             return (edges1, list_p)
         else:
             return False
