@@ -843,19 +843,22 @@ class Contour(Wire):
 
         return points
 
-    @staticmethod
-    def identify_primitives_groups(contour_primitives):
-        points = [p for prim in contour_primitives for p in prim]
+    def identify_primitives_groups(self):
+        points = [p for prim in self.primitives for p in prim]
         list_groups_primitives = []
-        for primitive in contour_primitives:
+        for primitive in self.primitives:
             for primitive_point in [primitive.start, primitive.end]:
                 if points.count(primitive_point) == 3:
                     if [primitive] not in list_groups_primitives:
                         list_groups_primitives.append([primitive])
         return list_groups_primitives
 
-    @staticmethod
-    def regroup_primitives(contour_primitives, list_groups_primitives):
+    def regroup_primitives(self, list_groups_primitives):
+        groups_primitives =\
+            [group_prim[0] for group_prim in list_groups_primitives]
+        contour_primitives =\
+            [prim for prim in self.primitives if
+             prim not in groups_primitives]
         finished = False
         while not finished:
             for primitive in contour_primitives:
@@ -887,36 +890,25 @@ class Contour(Wire):
                 new_groups_primitives.append(value)
         return new_groups_primitives
 
-    @staticmethod
-    def validate_contour_primitives(contour_primitives):
-        list_groups_primitives = Contour.identify_primitives_groups(
-            contour_primitives)
+    def validate_contour_primitives(self):
+        list_groups_primitives = self.identify_primitives_groups()
         if not list_groups_primitives:
-            return contour_primitives
+            return
 
-        groups_primitives =\
-            [group_prim[0] for group_prim in list_groups_primitives]
-        contour_primitives =\
-            [prim for prim in contour_primitives if prim not in groups_primitives]
-
-        list_groups_primitives = Contour.regroup_primitives(
-            contour_primitives, list_groups_primitives)
+        list_groups_primitives = self.regroup_primitives(list_groups_primitives)
         new_primitives_groups = Contour.delete_smallest_primitives_groups(
             list_groups_primitives)
         new_primitives_contour = []
         for group in new_primitives_groups:
             new_primitives_contour.extend(group)
 
-        return new_primitives_contour
+        self.primitives = new_primitives_contour
 
     @classmethod
     def contours_from_edges(cls, edges, tol=5e-5):
-        # def clean_edges(list_edges):
-        #     points = [p for prim in contour_primitives for p in prim]
         list_contours = []
         finished = False
         contour_primitives = []
-        possible_branch_contour_primitives = []
         while not finished:
             len1 = len(edges)
             for line in edges:
@@ -925,22 +917,11 @@ class Contour(Wire):
                     contour_primitives.append(line)
                     edges.remove(line)
                     break
-                # for line_segment_point in [line.start, line.end]:
-                #     if line_segment_point in points:
-                #         if points.count(line_segment_point) > 1:
-                #             possible_branch_contour_primitives.append(line)
-                #             edges.remove(line)
-                #             break
-                #         else:
-                #             contour_primitives.append(line)
-                #             edges.remove(line)
-                #             break
                 if (line.start in points or line.end in points) and\
                         line not in contour_primitives:
                     contour_primitives.append(line)
                     edges.remove(line)
                     break
-                # else:
                 for point in points:
                     if point.is_close(line.start, tol=tol) and\
                             line not in contour_primitives:
@@ -956,17 +937,14 @@ class Contour(Wire):
                         break
 
             if len(edges) != 0 and len(edges) == len1 and len(contour_primitives) != 0:
-                contour_primitives = Contour2D.validate_contour_primitives(
-                    contour_primitives)
                 contour_n = cls(contour_primitives[:])
-                # validate_contour
+                contour_n.validate_contour_primitives()
                 contour_n.order_contour()
                 list_contours.append(contour_n)
                 contour_primitives = []
             elif len(edges) == 0 and len(contour_primitives) != 0:
-                contour_primitives = Contour2D.validate_contour_primitives(
-                    contour_primitives)
                 contour_n = cls(contour_primitives[:])
+                contour_n.validate_contour_primitives()
                 contour_n.order_contour()
                 list_contours.append(contour_n)
                 finished = True
