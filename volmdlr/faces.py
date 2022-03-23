@@ -3718,20 +3718,20 @@ class Face3D(volmdlr.core.Primitive3D):
         this error is raised to enforce overloading of this method
         """
         raise NotImplementedError(
-            'bounding_box method must be overloaded by {}'.format(
-                self.__class__.__name__))
+            f"bounding_box method must be"
+            f"overloaded by {self.__class__.__name__}")
 
     @bounding_box.setter
     def bounding_box(self, new_bounfing_box):
         """Sets the bounding box to a new value"""
         raise NotImplementedError(
-            'bounding_box setter method must be overloaded by {}'.format(
-                self.__class__.__name__))
+            f"bounding_box setter method must be"
+            f"overloaded by {self.__class__.__name__}")
 
     def get_bounding_box(self):
         raise NotImplementedError(
-            'get_bounding_box method must be overloaded by {}'.format(
-                self.__class__.__name__))
+            f"self.__class__.__name__"
+            f"overloaded by {self.__class__.__name__}")
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -3751,14 +3751,13 @@ class Face3D(volmdlr.core.Primitive3D):
             raise NotImplementedError(
                 'Not implemented :face_from_contours3d in {}'.format(surface))
 
-    def area(self):
-        """
-        Calculates the face's area
-        :return: face's area
-        """
-        raise NotImplementedError(
-            'area method must be overloaded by {}'.format(
-                self.__class__.__name__))
+    # def area(self):
+    #     """
+    #     Calculates the face's area
+    #     :return: face's area
+    #     """
+    #     raise NotImplementedError(
+    #         f'area method must be overloaded by {self.__class__.__name__}')
 
     def to_step(self, current_id):
         xmin, xmax, ymin, ymax = self.surface2d.bounding_rectangle()
@@ -4412,7 +4411,6 @@ class Triangle3D(PlaneFace3D):
 
         self._utd_surface3d = False
         self._utd_surface2d = False
-        self._utd_bbox = False
         self._bbox = None
         # self.bounding_box = self._bounding_box()
 
@@ -4425,12 +4423,18 @@ class Triangle3D(PlaneFace3D):
         #                 name=name)
     @property
     def bounding_box(self):
-        if not self._utd_bbox:
-            self._bbox = volmdlr.core.BoundingBox.from_points([self.point1,
-                                                               self.point2,
-                                                               self.point3])
-            self._utd_bbox = True
+        if not self._bbox:
+            self._bbox = self.get_bounding_box()
         return self._bbox
+
+    @bounding_box.setter
+    def bounding_box(self, new_bouding_box):
+        self._bbox = new_bouding_box
+
+    def get_bounding_box(self):
+        return volmdlr.core.BoundingBox.from_points([self.point1,
+                                                     self.point2,
+                                                     self.point3])
 
     @property
     def surface3d(self):
@@ -4671,12 +4675,23 @@ class CylindricalFace3D(Face3D):
         Face3D.__init__(self, surface3d=surface3d,
                         surface2d=surface2d,
                         name=name)
+        self._bbox = None
 
     def copy(self, deep=True, memo=None):
         return CylindricalFace3D(self.surface3d.copy(), self.surface2d.copy(),
                                  self.name)
 
-    def _bounding_box(self):
+    @property
+    def bounding_box(self):
+        if not self._bbox:
+            self._bbox = self.get_bounding_box()
+        return self._bbox
+
+    @bounding_box.setter
+    def bounding_box(self, new_bouding_box):
+        self._bbox = new_bouding_box
+
+    def get_bounding_box(self):
         theta_min, theta_max, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle()
 
         lower_center = self.surface3d.frame.origin + zmin * self.surface3d.frame.w
@@ -5087,6 +5102,7 @@ class ToroidalFace3D(Face3D):
                         surface3d=surface3d,
                         surface2d=surface2d,
                         name=name)
+        self._bbox = None
 
     def copy(self, deep=True, memo=None):
         return ToroidalFace3D(self.surface3d.copy(), self.surface2d.copy(),
@@ -5110,7 +5126,17 @@ class ToroidalFace3D(Face3D):
         points.append(line.points[1])
         return points
 
-    def _bounding_box(self):
+    @property
+    def bounding_box(self):
+        if not self._bbox:
+            self._bbox = self.get_bounding_box()
+        return self._bbox
+
+    @bounding_box.setter
+    def bounding_box(self, new_bouding_box):
+        self._bbox = new_bouding_box
+
+    def get_bounding_box(self):
         return self.surface3d._bounding_box()
 
     def triangulation_lines(self, angle_resolution=5):
@@ -5608,8 +5634,19 @@ class ConicalFace3D(Face3D):
                         surface3d=surface3d,
                         surface2d=surface2d,
                         name=name)
+        self._bbox = None
 
-    def _bounding_box(self):
+    @property
+    def bounding_box(self):
+        if not self._bbox:
+            self._bbox = self.get_bounding_box()
+        return self._bbox
+
+    @bounding_box.setter
+    def bounding_box(self, new_bouding_box):
+        self._bbox = new_bouding_box
+
+    def get_bounding_box(self):
         theta_min, theta_max, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle()
 
         xp = (volmdlr.X3D.dot(self.surface3d.frame.u) * self.surface3d.frame.u
@@ -5738,8 +5775,19 @@ class SphericalFace3D(Face3D):
                         surface3d=surface3d,
                         surface2d=surface2d,
                         name=name)
+        self._bbox = None
 
-    def _bounding_box(self):
+    @property
+    def bounding_box(self):
+        if not self._bbox:
+            self._bbox = self.get_bounding_box()
+        return self._bbox
+
+    @bounding_box.setter
+    def bounding_box(self, new_bouding_box):
+        self._bbox = new_bouding_box
+
+    def get_bounding_box(self):
         # To be enhanced
         return self.surface3d._bounding_box()
 
@@ -5778,8 +5826,19 @@ class RuledFace3D(Face3D):
         Face3D.__init__(self, surface3d=surface3d,
                         surface2d=surface2d,
                         name=name)
+        self._bbox = None
 
-    def _bounding_box(self):
+    @property
+    def bounding_box(self):
+        if not self._bbox:
+            self._bbox = self.get_bounding_box()
+        return self._bbox
+
+    @bounding_box.setter
+    def bounding_box(self, new_bouding_box):
+        self._bbox = new_bouding_box
+
+    def get_bounding_box(self):
         # To be enhance by restricting wires to cut
         # xmin, xmax, ymin, ymax = self.surface2d.outer_contour.bounding_rectangle()
         points = [self.surface3d.point2d_to_3d(volmdlr.Point2D(i / 30, 0.)) for
@@ -5810,8 +5869,19 @@ class BSplineFace3D(Face3D):
                         surface3d=surface3d,
                         surface2d=surface2d,
                         name=name)
+        self._bbox = None
 
-    def _bounding_box(self):
+    @property
+    def bounding_box(self):
+        if not self._bbox:
+            self._bbox = self.get_bounding_box()
+        return self._bbox
+
+    @bounding_box.setter
+    def bounding_box(self, new_bounding_box):
+        self._bbox = new_bounding_box
+
+    def get_bounding_box(self):
         return self.surface3d._bounding_box()
 
     def triangulation_lines(self, resolution=25):
