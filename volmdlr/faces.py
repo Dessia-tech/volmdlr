@@ -3722,7 +3722,7 @@ class Face3D(volmdlr.core.Primitive3D):
             f"overloaded by {self.__class__.__name__}")
 
     @bounding_box.setter
-    def bounding_box(self, new_bounfing_box):
+    def bounding_box(self, new_bounding_box):
         """Sets the bounding box to a new value"""
         raise NotImplementedError(
             f"bounding_box setter method must be"
@@ -4006,12 +4006,6 @@ class PlaneFace3D(Face3D):
     def copy(self, deep=True, memo=None):
         return PlaneFace3D(self.surface3d.copy(), self.surface2d.copy(),
                            self.name)
-
-    # def bounding_box(self):
-    #     if not self._utd_bbox:
-    #         self._bbox = self._bounding_box()
-    #         self._utd_bbox = True
-    #     return self._bbox
 
     @property
     def bounding_box(self):
