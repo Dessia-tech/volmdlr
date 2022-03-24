@@ -3164,6 +3164,8 @@ class Contour3D(Contour, Wire3D):
         equal = True
         for primitive, other_primitive in zip(self.primitives, other_.primitives):
             equal = (equal and primitive == other_primitive)
+            if not equal:
+                return False
         return equal
 
     @property
