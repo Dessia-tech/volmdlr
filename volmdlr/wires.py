@@ -1132,11 +1132,17 @@ class Contour2D(Contour, Wire2D):
             return False
         equal = 0
         for prim1 in self.primitives:
+            reverse1 = prim1.reverse()
+            found = False
             for prim2 in other_.primitives:
-                if (prim1 == prim2 or prim1.reverse() == prim2
-                        or prim2.reverse() == prim1 or prim1.reverse() == prim2.reverse()):
+                reverse2 = prim2.reverse()
+                if (prim1 == prim2 or reverse1 == prim2
+                        or reverse2 == prim1 or reverse1 == reverse2):
                     equal += 1
-        if equal == len(self.primitives) and equal == len(other_.primitives):
+                    found = True
+            if not found:
+                return False
+        if equal == len(self.primitives):
             return True
         return False
 
