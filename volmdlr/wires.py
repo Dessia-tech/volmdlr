@@ -2843,8 +2843,13 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                 dist = intr_list[0].point_distance(line_segment.start)
                 if dist > distance:
                     distance = dist
-                    closing_point = self.choose_closing_point(intr_list[0],
-                                                              intr_list[1])
+                    closing_point = (intr_list[1].start if
+                                     intr_list[0].point_distance(
+                                         intr_list[1].start) <
+                                     intr_list[0].point_distance(
+                                         intr_list[1].end) else
+                                     intr_list[1].end)
+
             elif intr_list[0] == middle_point and \
                     polygon_primitive.length() == intr_list[1].length():
                 closing_point = intr_list[1].start
@@ -2867,8 +2872,13 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                 dist = intr_list[0].point_distance(line_segment.start)
                 if dist < distance:
                     distance = dist
-                    closing_point = self.choose_closing_point(intr_list[0],
-                                                              intr_list[1])
+                    closing_point = (intr_list[1].start if
+                                     intr_list[0].point_distance(
+                                         intr_list[1].start) <
+                                     intr_list[0].point_distance(
+                                         intr_list[1].end) else
+                                     intr_list[1].end)
+
             elif intr_list[0] == middle_point and \
                     polygon_primitive.length() == intr_list[1].length():
                 closing_point = intr_list[1].start
@@ -2892,20 +2902,6 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         if target_prim in self.line_segments:
             return True
         return False
-
-    @staticmethod
-    def choose_closing_point(intersection_point, primitive):
-        """
-        Given an intersection point, The methods verifies if
-        closing points start or end, whichever the closest one
-        :param intersection_point:
-        :param primitive:
-        :return: closing point
-        """
-        if intersection_point.point_distance(primitive.start) < \
-                intersection_point.point_distance(primitive.end):
-            return primitive.start
-        return primitive.end
 
     def get_closing_point(self, polygon2_2d, primitive, ax=None):
         """Gets sewing closing points for given primitive points"""
@@ -3004,17 +3000,37 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                 polygon2_2d, primitive1, line_segment1, line_segment2)
             if len(possible_closing_points[line_segment1]) == 1 and\
                     possible_closing_points[line_segment1][0][1] in polygon2_2d.line_segments:
-                closing_point = self.choose_closing_point(
-                    possible_closing_points[line_segment1][0][0],
-                    possible_closing_points[line_segment1][0][1])
+                closing_point = (possible_closing_points[
+                                     line_segment1][0][1].start if
+                                 possible_closing_points[
+                                     line_segment1][0][0].point_distance(
+                                     possible_closing_points[
+                                         line_segment1][0][1].start) <
+                                 possible_closing_points[
+                                     line_segment1][0][0].point_distance(
+                                     possible_closing_points[
+                                         line_segment1][0][1].end) else
+                                 possible_closing_points[
+                                     line_segment1][0][1].end)
+
                 if polygon2_2d.points.index(closing_point) >= len(polygon2_2d.points) * 2 / 4:
                     return primitive1
 
             if len(possible_closing_points[line_segment2]) == 1 and\
                     possible_closing_points[line_segment2][0][1] in polygon2_2d.line_segments:
-                closing_point = self.choose_closing_point(
-                    possible_closing_points[line_segment2][0][0],
-                    possible_closing_points[line_segment2][0][1])
+                closing_point = (possible_closing_points[
+                                     line_segment2][0][1].start if
+                                 possible_closing_points[
+                                     line_segment2][0][0].point_distance(
+                                     possible_closing_points[
+                                         line_segment2][0][1].start) <
+                                 possible_closing_points[
+                                     line_segment2][0][0].point_distance(
+                                     possible_closing_points[
+                                         line_segment2][0][1].end) else
+                                 possible_closing_points[
+                                     line_segment2][0][1].end)
+
                 if polygon2_2d.points.index(closing_point) >= len(polygon2_2d.points) * 2 / 4:
                     return primitive1
 
@@ -4374,24 +4390,33 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
     def clean_sewing_closing_pairs_dictionary(dict_closing_pairs,
                                               closing_point_index,
                                               passed_by_zero_index):
-        previous_closing_point_index = list(dict_closing_pairs.values())[-1][1]
-        for n in range(len(dict_closing_pairs)):
-            last_dict_value = list(dict_closing_pairs.values())[-1][1]
+        """
+        Cleans the dictionnary containing the sewing closing pairs informations
+        in case it needs to be recalculated due to changing closing points
+        """
+        dict_closing_pairs_values = list(dict_closing_pairs.values())
+        dict_closing_pairs_keys = list(dict_closing_pairs.keys())
+        previous_closing_point_index = dict_closing_pairs_values[-1][1]
+        last_dict_value = previous_closing_point_index
+        for i, key in enumerate(dict_closing_pairs_keys[::-1]):
             if (not passed_by_zero_index and
-                last_dict_value > closing_point_index) or\
+                last_dict_value > closing_point_index) or \
                     (passed_by_zero_index and
                      0 <= last_dict_value <= previous_closing_point_index and
                      last_dict_value > closing_point_index):
-                lower_bounddary_closing_point = \
-                            list(dict_closing_pairs.keys())[-1]
-                del dict_closing_pairs[
-                    list(dict_closing_pairs.keys())[-1]]
+                lower_bounddary_closing_point = key
+                del dict_closing_pairs[key]
+                if not dict_closing_pairs:
+                    break
+                last_dict_value = dict_closing_pairs_values[-i - 2][1]
 
         return dict_closing_pairs, lower_bounddary_closing_point
 
     @staticmethod
-    def validate_concave_closing_point(closing_point_index, list_closing_point_indexes,
-                                       passed_by_zero_index, ratio_denom, polygons_points_ratio):
+    def validate_concave_closing_point(closing_point_index,
+                                       list_closing_point_indexes,
+                                       passed_by_zero_index,
+                                       ratio_denom, polygons_points_ratio):
         if closing_point_index == list_closing_point_indexes[-1]:
             return closing_point_index, [], passed_by_zero_index
 
