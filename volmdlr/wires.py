@@ -3162,8 +3162,8 @@ class Contour3D(Contour, Wire3D):
         if self.__class__.__name__ != other_.__class__.__name__:
             return False
         equal = True
-        for edge, other_edge in zip(self.primitives, other_.primitives):
-            equal = (equal and edge == other_edge)
+        for primitive, other_primitive in zip(self.primitives, other_.primitives):
+            equal = (equal and primitive == other_primitive)
         return equal
 
     @property
