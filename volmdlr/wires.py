@@ -2968,17 +2968,17 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                         closing_point =\
                             self.select_farthest_sewing_closing_point(
                                 line_segment1, primitive,
-                            possible_sewing_closing_points_in_linesegment[
-                                line_segment1])
+                                possible_sewing_closing_points_in_linesegment[
+                                    line_segment1])
                     else:
                         closing_point =\
                             self.select_closest_sewing_closing_point(
                                 line_segment1, primitive,
-                            possible_sewing_closing_points_in_linesegment[
-                                line_segment1])
+                                possible_sewing_closing_points_in_linesegment[
+                                    line_segment1])
 
                 elif possible_sewing_closing_points_in_linesegment[
-                    line_segment2]:
+                        line_segment2]:
                     closing_point = self.select_closest_sewing_closing_point(
                         line_segment2, primitive,
                         possible_sewing_closing_points_in_linesegment[
