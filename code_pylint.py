@@ -29,7 +29,7 @@ MAX_ERROR_BY_TYPE = {
                      'unused-import': 9,
                      'unspecified-encoding': 9,
                      'too-many-nested-blocks': 9,
-                     'attribute-defined-outside-init': 7,
+                     'attribute-defined-outside-init': 8,
                      'too-many-return-statements': 6,
                      'consider-merging-isinstance': 6,
                      'cyclic-import': 6,
