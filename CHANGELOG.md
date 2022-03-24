@@ -5,33 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v0.2.10]
+## Unrealeased
 
-#### New Features
+## v0.3.0
+
+### New Features
+* Bspline with dimensions
+* cut_by_line for Surface2D
+* Bspline merge
+
+### Fixed
+* Various Steps improvement
+* Bspline periodicity in step reading
+* sewing improvements
+* Substraction of shells
+
+## v0.2.10
+
+### New Features
 
 * union of shells (only with planeface for the moment 
 * Sewing of polygon3D
 * Concav hull of PointCloud2D
 
-## [v0.2.9]
+## v0.2.9
 
-#### New Features
+### New Features
 
 * support STL import & export
 * point cloud2D & cloud3D
 
-## [v0.2.8]
+## v0.2.8
 
-#### New Features
+### New Features
 
 * support stringIO in step save
 
-#### Fixes
+### Fixes
 
 * depack of point2D
 * to_vector2D
 
-#### Performance improvements
+### Performance improvements
 
 * better bounding box for cylindrical face
 
@@ -40,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * direction vector of linesegments are now normalized
 
-#### New Features
+### New Features
 
 * straight line area for BsplineCurve2D
 * split of circleby start end
@@ -57,7 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * difference between intersections and crossings
 * plot_data version set to 0.3.8 or above
 
-#### Fixes
+### Fixes
 
 * support of mixed vector point in to step
 * remove debug mode babylonjs
@@ -90,7 +105,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * reading steps, but artefact on faces
 * Correcting arc from_step
 
-#### Performance improvements
+### Performance improvements
 
 * LineSegment2D.points is non serializable attribute
 * ClosedPolygon2D.line_segment is non_serializable_attributes
@@ -100,7 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * (edges): put data argument back into Arc2D.plot_data()
 * (edges): redefined Arc2D.plot_data()
 
-## [v0.2.6]
+## v0.2.6
 
 ### Changed
 - debugs on frame 2D 
@@ -108,24 +123,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Optimized
 - babylon data generation speed up
 
-## [v0.2.5]
+## v0.2.5
 
 ### Added
 - translation and rotation for various primitives
+
 ### Changed
 - Frame3D rotation takes also into account origin
 - following plot_data v0.5.3
 
-## [v0.2.4]
+## v0.2.4
 ### Added
 - handle spherical surfaces
 - positionning of parts in STEP reading
 
-## [v0.2.1]
+## v0.2.1
 ### Added
 - step export
 
-## [v0.2]
+## v0.2
 
 ### Changed
 - modules *2D or *3D renamed in *2d, *3d
@@ -136,7 +152,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MPLPlot changed to plot()
 - plot now returns only ax instead of fig, ax 
 
-## [v0.1.11]
+## v0.1.11
 
 ### Added 
 - Calculate the distance between LineSegment3D/LS3D, Arc3D/LS3D, Arc3D/Arc3D and between CylindricalFace3D too.
