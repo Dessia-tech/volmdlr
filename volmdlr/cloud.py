@@ -76,7 +76,13 @@ class PointCloud3D(dc.DessiaObject):
         for n, poly in enumerate(initial_polygon2d):
             if (poly is None or (poly.area() < avg_area / 10) and (n not in [0, len(initial_polygon2d) - 1])):
                 continue
+            elif poly.area() < avg_area / 10:
+                new_poly = vmw.ClosedPolygon2D.concave_hull(poly.points, -1, 0.000005)
+                new_polygon = new_poly.to_3d(position_plane[n] * normal, vec1,
+                                             vec2)
+                polygon3d.append(new_polygon)
             else:
+
                 polygon2d.append(poly)
                 new_polygon = poly.to_3d(position_plane[n] * normal, vec1, vec2)
                 polygon3d.append(new_polygon)
@@ -117,7 +123,6 @@ class PointCloud3D(dc.DessiaObject):
             position_plane, initial_polygon2d = self.offset_to_shell(position_plane, initial_polygon2d, offset)
         else:
             initial_polygon2d = [cloud2d.to_polygon() for cloud2d in subcloud2d]
-
         polygon3d = self.check_area_polygon(initial_polygon2d=initial_polygon2d,
                                             position_plane=position_plane,
                                             normal=normal,
@@ -163,10 +168,12 @@ class PointCloud3D(dc.DessiaObject):
                                               vec2).area() / poly2.to_2d(
                         position_plane[n] * normal, vec1, vec2).area() > 0.3:
                     poly2_simplified = poly2
-                faces.extend(poly1_simplified.sewing3(poly2_simplified,
-                                                      vec1, vec2))
-                # for trio in coords:
-                #     faces.append(vmf.Triangle3D(*trio))
+                list_triangles_points = poly1_simplified.sewing(poly2_simplified,
+                                                                vec1, vec2)
+                list_faces = [vmf.Triangle3D(*triangle_points, alpha=0.9,
+                                             color=(1, 0.1, 0.1))
+                              for triangle_points in list_triangles_points]
+                faces.extend(list_faces)
         return vmf.ClosedShell3D(faces)
 
     # def alpha_shape(self, alpha:float, number_point_samples:int):
