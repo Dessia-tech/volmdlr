@@ -536,6 +536,20 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                         crossings_points.append(a[0])
         return crossings
 
+    def to_wire_with_linesegments(self):
+        '''
+        convert a wire with different primitives to a wire with just linesegments
+        '''
+
+        wires = []
+        for primitive in self.primitives:
+            if not isinstance(primitive, volmdlr.edges.LineSegment2D):
+                wires.append(primitive.to_wire(10))
+            else:
+                wires.append(Wire2D([primitive]))
+
+        return Wire2D.from_wires(wires)
+
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
     """
