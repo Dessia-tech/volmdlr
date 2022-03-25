@@ -737,7 +737,7 @@ class Contour(Wire):
         :param contour_primitives:
         :return: A list of all lists representing a branch of the contour
         """
-        points = [p for prim in contour_primitives for p in prim]
+        points = [p for prim in self.primitives for p in prim]
         list_groups_primitives = []
         for primitive in self.primitives:
             for primitive_point in [primitive.start, primitive.end]:
