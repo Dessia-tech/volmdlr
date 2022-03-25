@@ -731,6 +731,13 @@ class Contour(Wire):
 
     @staticmethod
     def identify_primitives_groups(contour_primitives):
+        """
+        For a contour with invalid primitives (for example: three
+        primitives meeting at one point), it identifies each branch and separates
+        the fisrt primitive of each branch in a diferent list
+        :param contour_primitives:
+        :return: A list of all lists representing a branch of the contour
+        """
         points = [p for prim in contour_primitives for p in prim]
         list_groups_primitives = []
         for primitive in contour_primitives:
@@ -742,6 +749,14 @@ class Contour(Wire):
 
     @staticmethod
     def regroup_primitives(contour_primitives, list_groups_primitives):
+        """
+        Having the list of primitives_groups, This method is responsable
+        for realocating all the remaining primitives
+        in these diferent primitives_groups
+        :param contour_primitives:
+        :param list_groups_primitives:
+        :return: list of groups primitives complete
+        """
         finished = False
         while not finished:
             for primitive in contour_primitives:
@@ -758,6 +773,12 @@ class Contour(Wire):
 
     @staticmethod
     def delete_smallest_primitives_groups(list_groups_primitives):
+        """
+        Deletes the smallest branch in the list of the groups_primitives,
+        leaving only the groups of primitives that could make a valid contour
+        :param list_groups_primitives:
+        :return: valid groups_primitives
+        """
         dict_groups_lengths = {}
         for group in list_groups_primitives:
             length = 0
@@ -775,6 +796,13 @@ class Contour(Wire):
 
     @staticmethod
     def validate_contour_primitives(contour_primitives):
+        """
+        Verifies if the contour\'s are valid, that is, if there are not three
+        primitives meeting at the same point. If not valid, it treats it deletes
+        not valid primitives
+        :param contour_primitives:
+        :return:
+        """
         list_groups_primitives = Contour.identify_primitives_groups(
             contour_primitives)
         if not list_groups_primitives:
@@ -809,6 +837,7 @@ class Contour(Wire):
         list_contours = []
         finished = False
         contour_primitives = []
+
         while not finished:
             len1 = len(edges)
             for line in edges:
@@ -823,6 +852,7 @@ class Contour(Wire):
                     contour_primitives.append(line)
                     edges.remove(line)
                     break
+
                 for point in points:
                     if point.is_close(line.start, tol=tol) and\
                             line not in contour_primitives:
