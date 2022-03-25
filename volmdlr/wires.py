@@ -568,6 +568,14 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
 
         return Wire2D(primitives)
 
+    def point_distance(self, point):
+        min_distance = self.primitives[0].point_distance(point)
+        for primitive in self.primitives[1:]:
+            distance = primitive.point_distance(point)
+            if distance < min_distance:
+                min_distance = distance
+        return min_distance
+
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
     """
