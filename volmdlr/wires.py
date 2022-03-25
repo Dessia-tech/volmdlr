@@ -539,6 +539,15 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                         crossings_points.append(a[0])
         return crossings
 
+    def order_wire(self, tol=1e-6):
+        '''
+        return an ordered wire
+        '''
+
+        self.primitives = self.order_primitives(tol=tol)
+
+        return self
+
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
     """
