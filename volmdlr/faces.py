@@ -4510,7 +4510,7 @@ class Triangle3D(PlaneFace3D):
             self.point1.frame_mapping(frame, side, copy=False)
             self.point2.frame_mapping(frame, side, copy=False)
             self.point3.frame_mapping(frame, side, copy=False)
-            self.bounding_box = self._bounding_box()
+            # self.bounding_box = self._bounding_box()
 
     def copy(self, deep=True, memo=None):
         return Triangle3D(self.point1.copy(), self.point2.copy(), self.point3.copy(),
