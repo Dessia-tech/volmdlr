@@ -553,6 +553,21 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
     def invert(self):
         return Wire2D(self.inverted_primitives())
 
+    def extend(self, point):
+        '''
+        extend a wire by adding a linesegment connecting the given point to nearest wire's extremities
+        '''
+
+        distances = [self.primitives[0].start.point_distance(point), self.primitives[-1].end.point_distance(point)]
+        if distances.index(min(distances)) == 0:
+            primitives = [volmdlr.edges.LineSegment2D(point, self.primitives[0].start)]
+            primitives.extend(self.primitives)
+        else:
+            primitives = self.primitives
+            primitives.append(volmdlr.edges.LineSegment2D(self.primitives[-1].end, point))
+
+        return Wire2D(primitives)
+
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
     """
