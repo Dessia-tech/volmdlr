@@ -550,6 +550,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
 
         return Wire2D.from_wires(wires)
 
+    def invert(self):
+        return Wire2D(self.inverted_primitives())
+
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
     """
