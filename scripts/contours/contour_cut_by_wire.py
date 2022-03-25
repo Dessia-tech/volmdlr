@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 p = [vm.Point2D(-0.3, -0.2), vm.Point2D(0.3, -0.2),
       vm.Point2D(0.2, 0.2), vm.Point2D(0, 0.3), vm.Point2D(-0.2, 0.2)]
 
-contour = vm.wires.Contour2D(vm.wires.ClosedPolygon2D(p).primitives)
+contour = vm.wires.ClosedPolygon2D(p)
 
 # %% Wire2d
 
