@@ -1222,7 +1222,8 @@ class Arc2D(Edge):
 
     def polygon_points(self, angle_resolution: float = 10.):
         number_points_tesselation = math.ceil(
-            angle_resolution * abs(self.angle) / 2 / math.pi)
+            angle_resolution * abs(self.angle))
+
         number_points_tesselation = max(number_points_tesselation, 5)
         l = self.length()
         return [self.point_at_abscissa(
@@ -3841,7 +3842,7 @@ class Arc3D(Edge):
 
             surface = volmdlr.faces.SphericalSurface3D(
                 volmdlr.Frame3D(self.center, u, v, axis), self.radius)
-            surface.plot()
+
             return [surface.rectangular_cut(0, angle,
                                             arc2d.angle1, arc2d.angle2)]
 
