@@ -780,12 +780,14 @@ class Contour(Wire):
         list_groups_primitives = self.identify_primitives_groups()
         if not list_groups_primitives:
             return
-          
+
+        contour_primitives = self.primitives[:]
         if len(contour_primitives) == len(list_groups_primitives):
             list_lengths = [prim.length() for prim in contour_primitives]
             index = list_lengths.index(min(list_lengths))
             contour_primitives.remove(contour_primitives[index])
             self.primitives = contour_primitives
+            return
 
         list_groups_primitives = self.regroup_primitives(list_groups_primitives)
         new_primitives_groups = Contour.delete_smallest_primitives_groups(
