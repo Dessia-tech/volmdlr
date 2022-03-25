@@ -204,6 +204,16 @@ class Wire:
             return wire.order_wire()
         return wire
 
+    def inverted_primitives(self):
+        '''
+        invert wire's primitives
+        '''
+
+        new_primitives = []
+        for prim in self.primitives[::-1]:
+            new_primitives.append(prim.reverse())
+        return new_primitives
+
 
 class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
     """
