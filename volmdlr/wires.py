@@ -198,13 +198,13 @@ class Wire:
                 return False
         return True
 
-    def order_primitives(self, tol=1e-6):
+    def order_wire(self, tol=1e-6):
         '''
         order wire's primitives
         '''
 
         if self.is_ordered(tol=tol):
-            return self.primitives
+            return self
 
         new_primitives = [self.primitives[0]]
         primitives = self.primitives[1:]
@@ -225,7 +225,9 @@ class Wire:
                     new_primitives.append(primitive.reverse())
                     primitives.remove(primitive)
 
-        return new_primitives
+        self.primitives = new_primitives
+
+        return self
 
 
 class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
@@ -538,15 +540,6 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                         crossings.append([a[0], a[1]])
                         crossings_points.append(a[0])
         return crossings
-
-    def order_wire(self, tol=1e-6):
-        '''
-        return an ordered wire
-        '''
-
-        self.primitives = self.order_primitives(tol=tol)
-
-        return self
 
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
