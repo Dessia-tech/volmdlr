@@ -3779,6 +3779,29 @@ class Contour3D(Contour, Wire3D):
 
         return contours
 
+    def primitive_over_contour(self, primitive):
+        '''
+        copied from Contour2D
+        '''
+        for prim in self.primitives:
+            if not hasattr(prim, 'unit_direction_vector') and \
+                    hasattr(prim, 'tangent'):
+                vector1 = prim.tangent(0.5)
+            else:
+                vector1 = prim.unit_direction_vector(abscissa=0.)
+
+            if not hasattr(primitive, 'unit_direction_vector') and \
+                    hasattr(primitive, 'tangent'):
+                vector2 = primitive.tangent(0.5)
+            else:
+                vector2 = primitive.unit_direction_vector(abscissa=0.)
+
+            if vector1.is_colinear_to(vector2):
+                mid_point = primitive.middle_point()
+                if self.point_over_contour(mid_point):
+                    return True
+        return False
+
 
 class Circle3D(Contour3D):
     _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']
