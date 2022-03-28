@@ -80,6 +80,8 @@ class Stl(dc.DessiaObject):
 
     @classmethod
     def from_binary_stream(cls, stream: io.BytesIO, distance_multiplier: float = 0.001):
+        stream.seek(0)
+        
         stream = KaitaiStream(stream)
         name = stream.read_bytes(80).decode('utf8')
         # print(name)
@@ -119,6 +121,8 @@ class Stl(dc.DessiaObject):
 
     @classmethod
     def from_text_stream(cls, stream: io.StringIO, distance_multiplier: float = 0.001):
+        stream.seek(0)
+        
         header = stream.readline()
         name = header[6:]
         triangles = []
