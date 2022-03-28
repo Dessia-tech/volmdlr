@@ -1793,10 +1793,11 @@ class Contour2D(Contour, Wire2D):
         merge two adjacent contours, sharing primitives, and returns one outer contour and inner contours (if there are any)
         '''
 
-        if self.is_inside(contour2d):
+        if self.is_inside(contour2d) and not self.is_sharing_primitives_with(contour2d):
             return [self]
-        elif contour2d.is_inside(self):
+        elif contour2d.is_inside(self) and not self.is_sharing_primitives_with(contour2d):
             return [contour2d]
+
         merged_primitives = self.merge_primitives_with(contour2d)
         contours = volmdlr.wires.Contour2D.contours_from_edges(merged_primitives)
         contours = sorted(contours, key=lambda contour: contour.area(), reverse=True)
