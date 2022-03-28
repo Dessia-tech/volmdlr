@@ -1130,6 +1130,9 @@ class Contour2D(Contour, Wire2D):
         Wire2D.__init__(self, primitives, name)
         self._utd_edge_polygon = False
 
+    def __hash__(self):
+        return sum([hash(e) for e in self.primitives])
+
     # def __eq__(self, other_):
     #     if other_.__class__.__name__ != self.__class__.__name__:
     #         return False
