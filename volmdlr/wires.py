@@ -212,11 +212,13 @@ class Wire:
 
         index = self.point_belongs(point)
 
-        length = self.primitives[index].abscissa(point)
-        for primitive in self.primitives[0:index]:
-            length += primitive.length()
+        if index:
+            length = self.primitives[index].abscissa(point)
+            for primitive in self.primitives[0:index]:
+                length += primitive.length()
+            return length
 
-        return length
+        raise ValueError('Point is not on wire')
 
     def sort_points_along_wire(self, points):
 
