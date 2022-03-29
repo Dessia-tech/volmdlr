@@ -1853,18 +1853,18 @@ class FullArc2D(Arc2D):
         self.interior.rotation(center, angle, False)
         self.end.rotation(center, angle, False)
 
-    def translation(self, offset, copy=True):
+    def translation(self, offset):
         new_center = self._center.translation(offset, copy=True)
         new_start_end = self.start.translation(offset, copy=True)
         return FullArc2D(new_center, new_start_end)
 
-    def translation_inplce(self, offset):
+    def translation_inplace(self, offset):
         self._center.translation(offset, copy=False)
         self.start.translation(offset, copy=False)
         self.end.translation(offset, copy=False)
         self.interior.translation(offset, copy=False)
 
-    def frame_mapping(self, frame, side, copy=True):
+    def frame_mapping(self, frame, side):
         """
         side = 'old' or 'new'
         """
