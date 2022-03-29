@@ -210,9 +210,9 @@ class Wire:
 
         new_primitives = [ordered_wire.primitives[0]]
         primitives = ordered_wire.primitives[1:]
-        length_primitives = len(primitives)+1
+        length_primitives = len(primitives) + 1
 
-        while len(new_primitives)<length_primitives:
+        while len(new_primitives) < length_primitives:
             for primitive in primitives:
                 if new_primitives[0].start.point_distance(primitive.start) < tol:
                     new_primitives.insert(0, primitive.reverse())
