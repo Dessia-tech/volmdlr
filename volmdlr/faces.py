@@ -4528,7 +4528,6 @@ class Triangle3D(PlaneFace3D):
         new_point2 = self.point2.translation(offset, True)
         new_point3 = self.point3.translation(offset, True)
 
-
         if copy:
             new_triangle = Triangle3D(new_point1, new_point2, new_point3,
                                       self.alpha, self.color, self.name)
