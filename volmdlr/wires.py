@@ -168,7 +168,7 @@ class Wire:
         for i, primitive in enumerate(self.primitives):
             belongs = primitive.point_belongs(point, abs_tol=abs_tol)
             if belongs:
-                return i
+                return True
         return False
 
     def abscissa(self, point):
