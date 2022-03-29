@@ -610,7 +610,6 @@ class Contour(Wire):
             return True
         return False
 
-
     def extract_primitives(self, point1, primitive1, point2, primitive2, inside: bool = True):
         """
         inside: extracted contour is between the two points if True and outside these points if False
