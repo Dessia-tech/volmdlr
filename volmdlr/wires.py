@@ -204,10 +204,12 @@ class Wire:
         '''
 
         if self.is_ordered(tol=tol):
-            return self
+            return self.copy()
 
-        new_primitives = [self.primitives[0]]
-        primitives = self.primitives[1:]
+        ordered_wire = self.copy()
+
+        new_primitives = [ordered_wire.primitives[0]]
+        primitives = ordered_wire.primitives[1:]
         length_primitives = len(primitives)+1
 
         while len(new_primitives)<length_primitives:
@@ -225,9 +227,9 @@ class Wire:
                     new_primitives.append(primitive.reverse())
                     primitives.remove(primitive)
 
-        self.primitives = new_primitives
+        ordered_wire.primitives = new_primitives
 
-        return self
+        return ordered_wire
 
 
 class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
