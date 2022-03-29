@@ -176,13 +176,16 @@ class Wire:
         compute the curvilinear abscisse of a point on a wire
         '''
 
-        index = self.point_belongs(point)
+        if self.point_belongs(point, 1e-6):
+            length = 0
+            for primitive in self.primitives:
+                if primitive.point_belongs(point, 1e-6):
+                    length += primitive.abscissa(point)
+                    break
+                length += primitive.length()
+            return length
 
-        length = self.primitives[index].abscissa(point)
-        for primitive in self.primitives[0:index]:
-            length += primitive.length()
-
-        return length
+        raise ValueError('Point is not on wire')
 
     def sort_points_along_wire(self, points):
 
