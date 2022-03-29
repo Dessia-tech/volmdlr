@@ -210,7 +210,7 @@ class Wire:
         compute the curvilinear abscisse of a point on a wire
         '''
 
-        index = self.point_belongs(point)
+        index = self.point_belongs(point, tol=1e-6)
 
         if index:
             length = self.primitives[index].abscissa(point)
