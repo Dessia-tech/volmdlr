@@ -2302,15 +2302,11 @@ class LineSegment3D(LineSegment):
                 self.end - self.start) / self.length()
 
     def point_belongs(self, point, abs_tol=1e-7):
-        distance = self.start.point_distance(point) + self.end.point_distance(point)
+        distance = self.start.point_distance(point) + self.end.point_distance(
+            point)
         if math.isclose(distance, self.length(), abs_tol=abs_tol):
             return True
         return False
-
-        # if self.point_distance(point) < abs_tol:
-        #     return True
-        # else:
-        #     return False
 
     def normal_vector(self, abscissa=0.):
         return None
@@ -3095,9 +3091,9 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         x_init = []
         for xi in x:
             x_init.append(xi)
-            
-        for x0 in x_init: 
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
+
+        for x0 in x_init:
+            z = scp.optimize.least_squares(f, x0=x0, bounds=([0, 1]))
             if z.cost < abs_tol:
                 return True
         return False
@@ -3958,7 +3954,6 @@ class Arc3D(Edge):
     def point_distance(self, point):
         points = self.polygon_points(angle_resolution=100)
         return point.point_distance(point.nearest_point(points))
-
 
     def point_belongs(self, point3d, abs_tol=1e-10):
         '''
