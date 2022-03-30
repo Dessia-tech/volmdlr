@@ -231,9 +231,10 @@ class LineSegment(Edge):
         direction_vector.normalize()
         return direction_vector
 
-    def direction_vector(self, s=0.):
+    def direction_vector(self, abscissa=0.):
         """
-        :param s:
+        :param abscissa: defines where in the line_segement
+        direction vector is to be calculated
         :return: The direction vector of the LineSegement
         """
         return self.end - self.start
