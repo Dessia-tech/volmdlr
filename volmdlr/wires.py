@@ -256,41 +256,32 @@ class Wire:
         '''
 
         if self.is_ordered(tol=tol):
-            return self
+            return self.copy()
 
-        new_primitives = [self.primitives[0]]
-        if isinstance(self, Wire2D):
-            new_wire = Wire2D([self.primitives[0]])
-            dimension = 2
-        elif isinstance(self, Wire3D):
-            new_wire = Wire3D([self.primitives[0]])
-            dimension = 3
+        ordered_wire = self.copy()
 
-        primitives = self.primitives[1:]
+        new_primitives = [ordered_wire.primitives[0]]
+        primitives = ordered_wire.primitives[1:]
         length_primitives = len(primitives) + 1
+
         while len(new_primitives) < length_primitives:
             for primitive in primitives:
-                if new_wire.primitives[0].start.point_distance(primitive.start) < tol:
+                if new_primitives[0].start.point_distance(primitive.start) < tol:
                     new_primitives.insert(0, primitive.reverse())
                     primitives.remove(primitive)
-                elif new_wire.primitives[-1].end.point_distance(primitive.start) < tol:
+                elif new_primitives[-1].end.point_distance(primitive.start) < tol:
                     new_primitives.append(primitive)
                     primitives.remove(primitive)
-                elif new_wire.primitives[0].start.point_distance(primitive.end) < tol:
+                elif new_primitives[0].start.point_distance(primitive.end) < tol:
                     new_primitives.insert(0, primitive)
                     primitives.remove(primitive)
-                elif new_wire.primitives[-1].end.point_distance(primitive.end) < tol:
+                elif new_primitives[-1].end.point_distance(primitive.end) < tol:
                     new_primitives.append(primitive.reverse())
                     primitives.remove(primitive)
 
-                if dimension == 2:
-                    new_wire = Wire2D(new_primitives)
-                else:
-                    new_wire = Wire3D(new_primitives)
+        ordered_wire.primitives = new_primitives
 
-        self.primitives = new_primitives
-
-        return self
+        return ordered_wire
 
     def is_followed_by(self, wire_2, tol=1e-6):
         '''
