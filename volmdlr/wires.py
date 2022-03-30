@@ -147,18 +147,35 @@ class Wire:
         inside: extracted contour is between the two points if True and outside
         these points if False
         """
-        split_primitives = []
+
         primitives = self.primitives
-        for point in [point1, point2]:
-            dist_min = math.inf
-            for primitive in primitives:
-                dist = primitive.point_distance(point)
-                if dist < dist_min:
-                    dist_min = dist
-                    prim_opt = primitive
-            split_primitives.append(prim_opt)
-        return self.extract_primitives(point1, split_primitives[0], point2,
-                                       split_primitives[1], inside)
+        indices = []
+        for i, point in enumerate([point1, point2]):
+            ind = []
+            for p, primitive in enumerate(primitives):
+                if primitive.point_belongs(point, 1e-5):
+                    ind.append(p)
+            indices.append(ind)
+
+        shared = list(set(indices[0]) & set(indices[1]))
+        ind = []
+        if shared == []:
+            ind.append(indices[0][0])
+            if len(indices[1]) == 2:
+                ind.append(indices[1][1])
+            else:
+                ind.append(indices[1][0])
+        else:
+            for indice in indices:
+                if len(indice) == 1:
+                    ind.append(indice[0])
+                else:
+                    for i in indice:
+                        if i != shared[0]:
+                            ind.append(i)
+
+        return self.extract_primitives(point1, primitives[ind[0]], point2,
+                                       primitives[ind[1]], inside)
 
     def point_belongs(self, point, abs_tol=1e-7):
         '''
