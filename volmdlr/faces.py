@@ -4510,7 +4510,8 @@ class Triangle3D(PlaneFace3D):
             self.point1.frame_mapping(frame, side, copy=False)
             self.point2.frame_mapping(frame, side, copy=False)
             self.point3.frame_mapping(frame, side, copy=False)
-            self.bounding_box = self._bounding_box()
+            new_bounding_box = self.get_bounding_box()
+            self.bounding_box = new_bounding_box
 
     def copy(self, deep=True, memo=None):
         return Triangle3D(self.point1.copy(), self.point2.copy(), self.point3.copy(),
@@ -4527,20 +4528,21 @@ class Triangle3D(PlaneFace3D):
         new_point2 = self.point2.translation(offset, True)
         new_point3 = self.point3.translation(offset, True)
 
-        new_triangle = Triangle3D(new_point1, new_point2, new_point3,
-                                  self.alpha, self.color, self.name)
         if copy:
+            new_triangle = Triangle3D(new_point1, new_point2, new_point3,
+                                      self.alpha, self.color, self.name)
             return new_triangle
         else:
             self.point1 = new_point1
             self.point2 = new_point2
             self.point3 = new_point3
+            new_bounding_box = self.get_bounding_box()
+            self.bounding_box = new_bounding_box
 
     def rotation(self, center, axis, angle, copy=True):
         new_point1 = self.point1.rotation(center, axis, angle, copy=True)
         new_point2 = self.point2.rotation(center, axis, angle, copy=True)
         new_point3 = self.point3.rotation(center, axis, angle, copy=True)
-
         new_triangle = Triangle3D(new_point1, new_point2, new_point3,
                                   self.alpha, self.color, self.name)
         if copy:
@@ -4549,6 +4551,8 @@ class Triangle3D(PlaneFace3D):
             self.point1 = new_point1
             self.point2 = new_point2
             self.point3 = new_point3
+            new_bounding_box = self.get_bounding_box()
+            self.bounding_box = new_bounding_box
 
     def subdescription(self, resolution=0.01):
         frame = self.surface3d.frame
