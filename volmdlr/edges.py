@@ -1159,6 +1159,14 @@ class LineSegment2D(LineSegment):
         points = self.discretise(n)
         return volmdlr.wires.Wire2D.from_points(points)
 
+    def nearest_point_to(self, point):
+        '''
+        find out the nearest point on the linesegment to point
+        '''
+
+        points = self.discretization_points(500)
+        return point.nearest_point(points)
+
 
 class Arc2D(Edge):
     """
