@@ -1136,14 +1136,14 @@ class Contour(Wire):
                             edges1.add(edge2)
 
                     if len(list_p) == 2 and all_points is False:
-                        if self.is_superposing(contour, list_p):
-                            return False
+                        # if self.is_superposing(contour, list_p):
+                        #     return False
                         return True
         if len(list_p) < 2:
             return False
         if len(list_p) >= 2 and all_points is True:
-            if len(list_p) == 2 and self.is_superposing(contour, list_p):
-                return False
+            # if len(list_p) == 2 and self.is_superposing(contour, list_p):
+            #     return False
             return (edges1, list_p)
         else:
             return False
