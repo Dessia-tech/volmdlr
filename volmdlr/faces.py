@@ -2284,7 +2284,6 @@ class BSplineSurface3D(Surface3D):
             ax = p.plot(ax=ax)
         return ax
 
-
     @classmethod
     def from_step(cls, arguments, object_dict):
         name = arguments[0][1:-1]
@@ -2920,7 +2919,6 @@ class BSplineSurface3D(Surface3D):
 
         return volmdlr.wires.Contour2D(primitives2d_dim)
 
-
     def contour3d_to_2d_with_dimension(self, contour3d: volmdlr.wires.Contour3D, points_x, points_y):
         '''
         compute the contou2d of a contour3d, on a Bspline surface, in the dimensioned frame
@@ -2956,7 +2954,6 @@ class BSplineSurface3D(Surface3D):
         # start_points = list(set(new_start_points))
 
         return volmdlr.wires.Contour2D(primitives2d)
-
 
     def contour2d_with_dimension_to_3d(self, contour2d):
         '''
@@ -3288,7 +3285,6 @@ class BSplineSurface3D(Surface3D):
         nearest_primitives = volmdlr.wires.Wire3D(nearest)
 
         return nearest_primitives
-
 
     def edge3d_to_2d_with_dimension(self, edge3d, points_x, points_y):
         '''
