@@ -19,7 +19,7 @@ MAX_ERROR_BY_TYPE = {
                      'super-init-not-called': 26,
                      'no-name-in-module': 24,
                      'abstract-method': 18,
-                     'duplicate-code': 16,
+                     'duplicate-code': 18,
                      'no-self-use': 16,
                      'arguments-renamed': 11,
                      'non-parent-init-called': 13,
