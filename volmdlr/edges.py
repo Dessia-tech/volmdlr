@@ -1151,6 +1151,14 @@ class LineSegment2D(LineSegment):
 
         return [self.point_at_abscissa(i * self.length() / (n - 1)) for i in range(n)]
 
+    def to_wire(self, n: int):
+        '''
+        convert a linesegment2d to a wire2d defined with 'n' line_segments
+        '''
+
+        points = self.discretise(n)
+        return volmdlr.wires.Wire2D.from_points(points)
+
 
 class Arc2D(Edge):
     """
