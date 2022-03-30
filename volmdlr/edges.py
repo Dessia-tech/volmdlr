@@ -3981,8 +3981,7 @@ class Arc3D(Edge):
         return False
 
     def middle_point(self):
-        l = self.length()
-        return self.point_at_abscissa(0.5 * l)
+        return self.point_at_abscissa(self.length()/2)
 
 
 class FullArc3D(Edge):
