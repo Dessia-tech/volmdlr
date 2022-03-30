@@ -3590,7 +3590,7 @@ class BSplineSurface3D(Surface3D):
                 grid3d.append(bspline.point2d_to_3d(p))
 
             if (bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d)
-                or self.is_intersected_with(other_bspline_surface3d)):
+                    or self.is_intersected_with(other_bspline_surface3d)):
                 if i == 0:
                     points3d.extend(grid3d[0:nb * nb - nb])
                 else:
