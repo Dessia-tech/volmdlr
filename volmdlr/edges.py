@@ -3378,12 +3378,12 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
 
         res = scp.optimize.least_squares(
             lambda u: (point3d - self.point_at_abscissa(u)).norm(),
-            x0=npy.array(l/2),
+            x0=npy.array(l / 2),
             bounds=([0], [l]),
             # ftol=tol / 10,
             # xtol=tol / 10,
             # loss='soft_l1'
-            )
+        )
 
         if res.fun > 1e-1:
             print('distance =', res.cost)
@@ -3974,7 +3974,7 @@ class Arc3D(Edge):
         return False
 
     def middle_point(self):
-        return self.point_at_abscissa(self.length()/2)
+        return self.point_at_abscissa(self.length() / 2)
 
 
 class FullArc3D(Edge):

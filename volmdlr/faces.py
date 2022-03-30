@@ -3590,16 +3590,16 @@ class BSplineSurface3D(Surface3D):
                 grid3d.append(bspline.point2d_to_3d(p))
 
             if (bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d)
-                or self.is_intersected_with(other_bspline_surface3d)):
+                    or self.is_intersected_with(other_bspline_surface3d)):
                 if i == 0:
-                    points3d.extend(grid3d[0:nb*nb-nb])
+                    points3d.extend(grid3d[0:nb * nb - nb])
                 else:
                     points3d.extend(grid3d)
             else:
                 points3d.extend(grid3d)
 
         # fitting
-        size_u, size_v, degree_u, degree_v = (nb*2)-1,nb, 3, 3
+        size_u, size_v, degree_u, degree_v = (nb * 2) - 1, nb, 3, 3
 
         merged_surface = volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(
             points3d, size_u, size_v, degree_u, degree_v)
