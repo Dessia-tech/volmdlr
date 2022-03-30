@@ -3535,7 +3535,8 @@ class BSplineSurface3D(Surface3D):
 
         if bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d):
 
-            xmin, xmax, ymin, ymax = self.xy_limits(other_bspline_surface3d)
+            # xmin, xmax, ymin, ymax = self.xy_limits(other_bspline_surface3d)
+            pass
 
         elif self.is_intersected_with(other_bspline_surface3d):
             # find pimitives to split with
@@ -3566,8 +3567,8 @@ class BSplineSurface3D(Surface3D):
 
                 bsplines_new[i] = surfaces[errors.index(min(errors))]
 
-            xmin, xmax, ymin, ymax = [0] * len(bsplines_new), [1] * len(bsplines_new), [0] * \
-                len(bsplines_new), [1] * len(bsplines_new)
+            # xmin, xmax, ymin, ymax = [0] * len(bsplines_new), [1] * len(bsplines_new), [0] * \
+            #     len(bsplines_new), [1] * len(bsplines_new)
 
             grid2d_direction = (
                 bsplines_new[0].rectangular_cut(
@@ -3575,39 +3576,30 @@ class BSplineSurface3D(Surface3D):
                     bsplines_new[1].rectangular_cut(
                         0, 1, 0, 1)))[1]
 
-        else:
-            xmin, xmax, ymin, ymax = [0] * len(bsplines_new), [1] * len(bsplines_new), [0] * \
-                                               len(bsplines_new), [1] * len(bsplines_new)
-
-        nb = 10
+        # else:
+        #     xmin, xmax, ymin, ymax = [0] * len(bsplines_new), [1] * len(bsplines_new), [0] * \
+        #                                        len(bsplines_new), [1] * len(bsplines_new)
 
         # grid3d
-        # ax3=self.rectangular_cut(0,1,0,1).plot()
+        nb = 10
         points3d = []
         for i, bspline in enumerate(bsplines_new):
-            grid2d = volmdlr.Point2D.grid2d_with_direction(nb, nb, 0,1,0,1, grid2d_direction[i])[0]  #xmin[i], xmax[i], ymin[i], ymax[i]
+            grid2d = volmdlr.Point2D.grid2d_with_direction(nb, nb, 0, 1, 0, 1, grid2d_direction[i])[0]
             grid3d = []
-            random_color = list(npy.random.choice(range(255), size=3))
-            random_color = (random_color[0] / 256, random_color[1] / 256,
-                            random_color[2] / 256)
             for p in grid2d:
                 grid3d.append(bspline.point2d_to_3d(p))
-            # for p in grid3d[9900:]:
-            #     p.plot(ax3, color=random_color)
-            # for p in grid3d[0:100]:
-            #     p.plot(ax3, color=random_color)
-            if i==0:
-                points3d.extend(grid3d[0:nb*nb-nb])
+
+            if (bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d)
+                or self.is_intersected_with(other_bspline_surface3d)):
+                if i == 0:
+                    points3d.extend(grid3d[0:nb*nb-nb])
+                else:
+                    points3d.extend(grid3d)
             else:
                 points3d.extend(grid3d)
-        # ax=bspline.rectangular_cut(0,1,0,1).plot()
-        # for p in points3d:
-        #     p.plot(ax, 'b')
 
-            # points3d.extend(grid3d)
-
-            # fitting
-        size_u, size_v, degree_u, degree_v = (nb*2)-1,nb, 3, 3 #max(bsplines[0].degree_u, bsplines[1].degree_u), max(bsplines[0].degree_v, bsplines[1].degree_v)
+        # fitting
+        size_u, size_v, degree_u, degree_v = (nb*2)-1,nb, 3, 3
 
         merged_surface = volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(
             points3d, size_u, size_v, degree_u, degree_v)
