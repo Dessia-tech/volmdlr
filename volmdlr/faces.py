@@ -2951,12 +2951,7 @@ class BSplineSurface3D(Surface3D):
                     f'Class {self.__class__.__name__} does not implement {method_name}')
 
         # #Avoid to have primitives with start=end
-        # start_points = []
-        # for i in range(0, len(new_start_points)-1):
-        #     if new_start_points[i] != new_start_points[i+1]:
-        #         start_points.append(new_start_points[i])
-        # if new_start_points[-1] != new_start_points[0]:
-        #     start_points.append(new_start_points[-1])
+        # start_points = list(set(new_start_points))
 
         return volmdlr.wires.Contour2D(primitives2d)
 
