@@ -629,7 +629,7 @@ class Surface3D(dc.DessiaObject):
                         ax2 = contour3d.plot()
                         primitive3d.plot(ax=ax2, color='r')
                         last_primitive3d.plot(ax=ax2, color='b')
-                        # self.plot(ax=ax2)
+                        self.plot(ax=ax2)
 
                         ax = last_primitive.plot(color='b', plot_points=True)
                         # primitives[0].plot(ax=ax, color='r', plot_points=True)
@@ -1987,7 +1987,7 @@ class BSplineSurface3D(Surface3D):
         for x0 in x0s:
             z = scp.optimize.least_squares(f, x0=x0, bounds=([min_bound_x,
                                                               min_bound_y],
-                                                              [max_bound_x,
+                                                             [max_bound_x,
                                                               max_bound_y]),
                                            ftol=tol / 10,
                                            xtol=tol / 10,
@@ -2051,11 +2051,11 @@ class BSplineSurface3D(Surface3D):
         x_perio = self.x_periodicity if self.x_periodicity is not None else 1.
         y_perio = self.y_periodicity if self.y_periodicity is not None else 1.
         return [vme.LineSegment2D(self.point3d_to_2d(linesegment3d.start,
-                                                      max_bound_x=x_perio,
-                                                      max_bound_y=y_perio),
+                                                     max_bound_x=x_perio,
+                                                     max_bound_y=y_perio),
                                   self.point3d_to_2d(linesegment3d.end,
-                                                      max_bound_x=x_perio,
-                                                      max_bound_y=y_perio))]
+                                                     max_bound_x=x_perio,
+                                                     max_bound_y=y_perio))]
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         # TODO: enhance this, it is a non exact method!
@@ -6183,9 +6183,11 @@ class BSplineFace3D(Face3D):
     def adjacent_direction_xy(self, other_face3d):
         '''
         find out in which direction the faces are adjacent
+
         Parameters
         ----------
         other_face3d : volmdlr.faces.BSplineFace3D
+
         Returns
         -------
         adjacent_direction
@@ -6203,13 +6205,14 @@ class BSplineFace3D(Face3D):
         else:
             return 'y'
 
-
     def merge_with(self, other_bspline_face3d):
         '''
         merge two adjacent faces
+
         Parameters
         ----------
         other_bspline_face3d : volmdlr.faces.BSplineFace3D
+
         Returns
         -------
         merged_face : volmdlr.faces.BSplineFace3D
