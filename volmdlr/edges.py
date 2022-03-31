@@ -2302,15 +2302,11 @@ class LineSegment3D(LineSegment):
                 self.end - self.start) / self.length()
 
     def point_belongs(self, point, abs_tol=1e-7):
-        distance = self.start.point_distance(point) + self.end.point_distance(point)
+        distance = self.start.point_distance(point) + self.end.point_distance(
+            point)
         if math.isclose(distance, self.length(), abs_tol=abs_tol):
             return True
         return False
-
-        # if self.point_distance(point) < abs_tol:
-        #     return True
-        # else:
-        #     return False
 
     def normal_vector(self, abscissa=0.):
         return None
@@ -3095,9 +3091,9 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         x_init = []
         for xi in x:
             x_init.append(xi)
-            
-        for x0 in x_init: 
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,1]))
+
+        for x0 in x_init:
+            z = scp.optimize.least_squares(f, x0=x0, bounds=([0, 1]))
             if z.cost < abs_tol:
                 return True
         return False
@@ -3382,12 +3378,12 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
 
         res = scp.optimize.least_squares(
             lambda u: (point3d - self.point_at_abscissa(u)).norm(),
-            x0=npy.array(l/2),
+            x0=npy.array(l / 2),
             bounds=([0], [l]),
             # ftol=tol / 10,
             # xtol=tol / 10,
             # loss='soft_l1'
-            )
+        )
 
         if res.fun > 1e-1:
             print('distance =', res.cost)
@@ -3959,7 +3955,6 @@ class Arc3D(Edge):
         points = self.polygon_points(angle_resolution=100)
         return point.point_distance(point.nearest_point(points))
 
-
     def point_belongs(self, point3d, abs_tol=1e-10):
         '''
         check if a point3d belongs to the arc_3d or not
@@ -3979,7 +3974,7 @@ class Arc3D(Edge):
         return False
 
     def middle_point(self):
-        return self.point_at_abscissa(self.length()/2)
+        return self.point_at_abscissa(self.length() / 2)
 
 
 class FullArc3D(Edge):

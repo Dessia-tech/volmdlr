@@ -629,7 +629,7 @@ class Surface3D(dc.DessiaObject):
                         ax2 = contour3d.plot()
                         primitive3d.plot(ax=ax2, color='r')
                         last_primitive3d.plot(ax=ax2, color='b')
-                        # self.plot(ax=ax2)
+                        self.plot(ax=ax2)
 
                         ax = last_primitive.plot(color='b', plot_points=True)
                         # primitives[0].plot(ax=ax, color='r', plot_points=True)
@@ -1987,7 +1987,7 @@ class BSplineSurface3D(Surface3D):
         for x0 in x0s:
             z = scp.optimize.least_squares(f, x0=x0, bounds=([min_bound_x,
                                                               min_bound_y],
-                                                              [max_bound_x,
+                                                             [max_bound_x,
                                                               max_bound_y]),
                                            ftol=tol / 10,
                                            xtol=tol / 10,
@@ -2051,11 +2051,11 @@ class BSplineSurface3D(Surface3D):
         x_perio = self.x_periodicity if self.x_periodicity is not None else 1.
         y_perio = self.y_periodicity if self.y_periodicity is not None else 1.
         return [vme.LineSegment2D(self.point3d_to_2d(linesegment3d.start,
-                                                      max_bound_x=x_perio,
-                                                      max_bound_y=y_perio),
+                                                     max_bound_x=x_perio,
+                                                     max_bound_y=y_perio),
                                   self.point3d_to_2d(linesegment3d.end,
-                                                      max_bound_x=x_perio,
-                                                      max_bound_y=y_perio))]
+                                                     max_bound_x=x_perio,
+                                                     max_bound_y=y_perio))]
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         # TODO: enhance this, it is a non exact method!
@@ -2283,7 +2283,6 @@ class BSplineSurface3D(Surface3D):
         for p in self.control_points:
             ax = p.plot(ax=ax)
         return ax
-
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -2920,7 +2919,6 @@ class BSplineSurface3D(Surface3D):
 
         return volmdlr.wires.Contour2D(primitives2d_dim)
 
-
     def contour3d_to_2d_with_dimension(self, contour3d: volmdlr.wires.Contour3D, points_x, points_y):
         '''
         compute the contou2d of a contour3d, on a Bspline surface, in the dimensioned frame
@@ -2956,7 +2954,6 @@ class BSplineSurface3D(Surface3D):
         # start_points = list(set(new_start_points))
 
         return volmdlr.wires.Contour2D(primitives2d)
-
 
     def contour2d_with_dimension_to_3d(self, contour2d):
         '''
@@ -3289,7 +3286,6 @@ class BSplineSurface3D(Surface3D):
 
         return nearest_primitives
 
-
     def edge3d_to_2d_with_dimension(self, edge3d, points_x, points_y):
         '''
         compute the edge2d of a edge3d, on a Bspline surface, in the dimensioned frame
@@ -3539,7 +3535,8 @@ class BSplineSurface3D(Surface3D):
 
         if bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d):
 
-            xmin, xmax, ymin, ymax = self.xy_limits(other_bspline_surface3d)
+            # xmin, xmax, ymin, ymax = self.xy_limits(other_bspline_surface3d)
+            pass
 
         elif self.is_intersected_with(other_bspline_surface3d):
             # find pimitives to split with
@@ -3570,8 +3567,8 @@ class BSplineSurface3D(Surface3D):
 
                 bsplines_new[i] = surfaces[errors.index(min(errors))]
 
-            xmin, xmax, ymin, ymax = [0] * len(bsplines_new), [1] * len(bsplines_new), [0] * \
-                len(bsplines_new), [1] * len(bsplines_new)
+            # xmin, xmax, ymin, ymax = [0] * len(bsplines_new), [1] * len(bsplines_new), [0] * \
+            #     len(bsplines_new), [1] * len(bsplines_new)
 
             grid2d_direction = (
                 bsplines_new[0].rectangular_cut(
@@ -3579,39 +3576,30 @@ class BSplineSurface3D(Surface3D):
                     bsplines_new[1].rectangular_cut(
                         0, 1, 0, 1)))[1]
 
-        else:
-            xmin, xmax, ymin, ymax = [0] * len(bsplines_new), [1] * len(bsplines_new), [0] * \
-                                               len(bsplines_new), [1] * len(bsplines_new)
-
-        nb = 10
+        # else:
+        #     xmin, xmax, ymin, ymax = [0] * len(bsplines_new), [1] * len(bsplines_new), [0] * \
+        #                                        len(bsplines_new), [1] * len(bsplines_new)
 
         # grid3d
-        # ax3=self.rectangular_cut(0,1,0,1).plot()
+        nb = 10
         points3d = []
         for i, bspline in enumerate(bsplines_new):
-            grid2d = volmdlr.Point2D.grid2d_with_direction(nb, nb, 0,1,0,1, grid2d_direction[i])[0]  #xmin[i], xmax[i], ymin[i], ymax[i]
+            grid2d = volmdlr.Point2D.grid2d_with_direction(nb, nb, 0, 1, 0, 1, grid2d_direction[i])[0]
             grid3d = []
-            random_color = list(npy.random.choice(range(255), size=3))
-            random_color = (random_color[0] / 256, random_color[1] / 256,
-                            random_color[2] / 256)
             for p in grid2d:
                 grid3d.append(bspline.point2d_to_3d(p))
-            # for p in grid3d[9900:]:
-            #     p.plot(ax3, color=random_color)
-            # for p in grid3d[0:100]:
-            #     p.plot(ax3, color=random_color)
-            if i==0:
-                points3d.extend(grid3d[0:nb*nb-nb])
+
+            if (bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d)
+                    or self.is_intersected_with(other_bspline_surface3d)):
+                if i == 0:
+                    points3d.extend(grid3d[0:nb * nb - nb])
+                else:
+                    points3d.extend(grid3d)
             else:
                 points3d.extend(grid3d)
-        # ax=bspline.rectangular_cut(0,1,0,1).plot()
-        # for p in points3d:
-        #     p.plot(ax, 'b')
 
-            # points3d.extend(grid3d)
-
-            # fitting
-        size_u, size_v, degree_u, degree_v = (nb*2)-1,nb, 3, 3 #max(bsplines[0].degree_u, bsplines[1].degree_u), max(bsplines[0].degree_v, bsplines[1].degree_v)
+        # fitting
+        size_u, size_v, degree_u, degree_v = (nb * 2) - 1, nb, 3, 3
 
         merged_surface = volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(
             points3d, size_u, size_v, degree_u, degree_v)
@@ -6183,9 +6171,11 @@ class BSplineFace3D(Face3D):
     def adjacent_direction_xy(self, other_face3d):
         '''
         find out in which direction the faces are adjacent
+
         Parameters
         ----------
         other_face3d : volmdlr.faces.BSplineFace3D
+
         Returns
         -------
         adjacent_direction
@@ -6203,13 +6193,14 @@ class BSplineFace3D(Face3D):
         else:
             return 'y'
 
-
     def merge_with(self, other_bspline_face3d):
         '''
         merge two adjacent faces
+
         Parameters
         ----------
         other_bspline_face3d : volmdlr.faces.BSplineFace3D
+
         Returns
         -------
         merged_face : volmdlr.faces.BSplineFace3D
