@@ -930,6 +930,36 @@ class Contour(Wire):
             return True
         return False
 
+    def is_sharing_primitives_with(self, contour):
+        '''
+        check if two contours are sharing primitives
+        '''
+
+        if self.is_overlapping(contour):
+            return False
+        if self.is_superposing(contour):
+            raise ValueError('The contours are superposing')
+            return False
+
+        list_p = []
+        for edge_1, edge_2 in itertools.product(self.primitives,
+                                                contour.primitives):
+            edges = [edge_1, edge_2, edge_1]
+            for edge1, edge2 in zip(edges, edges[1:]):
+                for point in [edge2.start, edge2.end]:
+                    if edge1.point_belongs(point, 1e-6):
+                        # list_p.append(point)
+                        # instead of point not in list_p (due to errors)
+                        if list_p == []:
+                            list_p.append(point)
+                        if list_p != [] and point.point_distance(point.nearest_point(list_p)) > 1e-4:
+                            list_p.append(point)
+
+                    if len(list_p) == 2:
+                        return True
+
+        return False
+
     def is_sharing_primitives_with(self, contour, all_points=False):
         '''
         check if two contour are sharing primitives
