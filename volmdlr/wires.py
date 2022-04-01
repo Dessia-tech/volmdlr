@@ -2402,9 +2402,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         tri = Delaunay(delaunay)
 
         for simplice in delaunay[tri.simplices]:
-            triangle = Triangle2D(volmdlr.Point2D(*simplice[0]),
-                                  volmdlr.Point2D(*simplice[1]),
-                                  volmdlr.Point2D(*simplice[2]))
+            triangle = Triangle2D(volmdlr.Point2D(simplice[0]),
+                                  volmdlr.Point2D(simplice[1]),
+                                  volmdlr.Point2D(simplice[2]))
             delaunay_triangles.append(triangle)
 
         return delaunay_triangles
