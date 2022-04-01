@@ -1039,6 +1039,7 @@ class Contour(Wire):
         extract not shared primitives between two adjacent contours, to be merged
         '''
 
+        [shared_primitives_1, shared_primitives_2] = self.shared_primitives_with(contour)
         points = self.shared_primitives_extremities(contour)
         merge_primitives = []
 
@@ -1055,9 +1056,9 @@ class Contour(Wire):
                 merge_primitives_prim = self.extract_without_primitives(point1,
                                                                         point2,
                                                                         True)
-                merge_primitives.extend(merge_primitives_prim)
-            else:
-                merge_primitives.extend(merge_primitives_prim)
+            for p in merge_primitives_prim:
+                if p not in shared_primitives_1:
+                    merge_primitives.append(p)
 
             merge_primitives_prim = contour.extract_without_primitives(point1,
                                                                        point2,
@@ -1066,9 +1067,9 @@ class Contour(Wire):
                 merge_primitives_prim = contour.extract_without_primitives(point1,
                                                                            point2,
                                                                            True)
-                merge_primitives.extend(merge_primitives_prim)
-            else:
-                merge_primitives.extend(merge_primitives_prim)
+            for p in merge_primitives_prim:
+                if p not in shared_primitives_2:
+                    merge_primitives.append(p)
 
         return merge_primitives
 
