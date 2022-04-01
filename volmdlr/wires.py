@@ -1660,9 +1660,9 @@ class Contour2D(Contour, Wire2D):
                 else:
                     point1, point2 = contour2d.primitives[0].start, \
                                      contour2d.primitives[-1].end
-                    if primitive1.point_belongs(point1):
+                    if point1 not in intersecting_points and primitive1.point_belongs(point1):
                         intersecting_points.append(point1)
-                    if primitive1.point_belongs(point2):
+                    if point2 not in intersecting_points and primitive1.point_belongs(point2):
                         intersecting_points.append(point2)
             if len(intersecting_points) == 2:
                 break
