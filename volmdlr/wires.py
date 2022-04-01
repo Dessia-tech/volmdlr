@@ -896,21 +896,16 @@ class Contour(Wire):
                 return True
         return False
 
-    def is_superposing(self, contour2, intersecting_points):
-        vec1_2 = volmdlr.edges.LineSegment2D(intersecting_points[0],
-                                             intersecting_points[1])
-        middle_point = vec1_2.middle_point()
-        normal = vec1_2.normal_vector()
-        point1 = middle_point + normal * 0.00001
-        point2 = middle_point - normal * 0.00001
-        if (self.point_belongs(point1) and contour2.point_belongs(point1)) or\
-                (not self.point_belongs(point1) and
-                 not contour2.point_belongs(point1)) or\
-                (self.point_belongs(point1) and self.point_belongs(point2)) or\
-                (contour2.point_belongs(point1) and
-                 contour2.point_belongs(point2)):
-            return True
-        return False
+    def is_superposing(self, contour2):
+        '''
+        check if the contours are superposing (one on the other without
+        necessarily having an absolute equality)
+        '''
+
+        for primitive_2 in contour2.primitives:
+            if not self.primitive_over_contour(primitive_2):
+                return False
+        return True
 
     def is_overlapping(self, contour2, intersecting_points=None):
         '''
