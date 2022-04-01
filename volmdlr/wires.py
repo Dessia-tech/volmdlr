@@ -559,14 +559,20 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
 
         intersections, intersections_points = [], []
         for primitive in wire.primitives:
-            a_points = self.linesegment_intersections(primitive)
-            if a_points:
-                for a in a_points:
-                    if a[0] not in intersections_points:
-                        intersections.append([a[0], a[1]])
-                        intersections_points.append(a[0])
+            method_name = f'{primitive.__class__.__name__.lower()[0:-2]}_intersections'
 
-        return intersections
+            if hasattr(self, method_name):
+                a_points = getattr(self, method_name)(primitive)
+                # a_points = self.linesegment_intersections(primitive)
+                if a_points:
+                    for a in a_points:
+                        if a[0] not in intersections_points:
+                            intersections.append([a[0], a[1]])
+                            intersections_points.append(a[0])
+                    return intersections
+            else:
+                raise NotImplementedError(
+                    f'Class {self.__class__.__name__} does not implement {method_name}')
 
     @classmethod
     def from_points(cls, points: List[volmdlr.Point2D]):
