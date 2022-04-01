@@ -1008,26 +1008,41 @@ class Contour(Wire):
         extract shared primitives extremities between two adjacent contours
         '''
 
-        results = self.is_sharing_primitives_with(contour, all_points=True)
-        if results is False:
-            raise ValueError(
-                    'The contours are not adjacent. They dont share primitives')
-        elif len(results[1]) == 2:
-            return results[1]
-        else:
-            edges1, list_p = results
-            if isinstance(self, volmdlr.wires.Contour2D):
-                contours1 = volmdlr.wires.Contour2D.contours_from_edges(edges1)
-                # contours2 = volmdlr.wires.Contour2D.contours_from_edges(edges2)
-            elif isinstance(self, volmdlr.wires.Contour3D):
-                contours1 = volmdlr.wires.Contour3D.contours_from_edges(edges1)
-                # contours2 = volmdlr.wires.Contour3D.contours_from_edges(edges2)
-            points = []
+        if self.is_overlapping(contour):
+            raise ValueError('The contours are overlapping')
+        if self.is_superposing(contour):
+            raise ValueError('The contours are superposing')
 
-            for contour_i in contours1:
-                points.extend(contour_i.extremities_points(list_p))
+        list_p, edges1 = [], set()
+        for edge_1, edge_2 in itertools.product(self.primitives,
+                                                contour.primitives):
+            edges = [edge_1, edge_2, edge_1]
+            for edge1, edge2 in zip(edges, edges[1:]):
+                for point in [edge2.start, edge2.end]:
+                    if edge1.point_belongs(point, 1e-6):
+                        if list_p == []:
+                            list_p.append(point)
+                        if list_p != [] and point.point_distance(point.nearest_point(list_p)) > 1e-4:
+                            list_p.append(point)
 
-            return points
+                        try:
+                            self.primitive_to_index(edge1)
+                            edges1.add(edge1)
+                        except KeyError:
+                            edges1.add(edge2)
+
+        if len(list_p) < 2:
+            raise ValueError('The contours are not adjacent')
+
+        if len(list_p) == 2:
+            return list_p
+
+        contours = self.__class__.contours_from_edges(edges1)
+        points = []
+        for contour_i in contours:
+            points.extend(contour_i.extremities_points(list_p))
+
+        return points
 
     def shared_primitives_with(self, contour):
         '''
