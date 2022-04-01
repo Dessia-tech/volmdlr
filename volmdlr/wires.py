@@ -594,21 +594,10 @@ class Contour(Wire):
             return False
         if len(self.primitives) != len(other_.primitives):
             return False
-        equal = 0
-        for prim1 in self.primitives:
-            reverse1 = prim1.reverse()
-            found = False
-            for prim2 in other_.primitives:
-                reverse2 = prim2.reverse()
-                if (prim1 == prim2 or reverse1 == prim2
-                        or reverse2 == prim1 or reverse1 == reverse2):
-                    equal += 1
-                    found = True
-            if not found:
+        for prim1, prim2 in zip(self.primitives, other_.primitives):
+            if prim1 != prim2:
                 return False
-        if equal == len(self.primitives):
-            return True
-        return False
+        return True
 
     def extract_primitives(self, point1, primitive1, point2, primitive2, inside: bool = True):
         """
