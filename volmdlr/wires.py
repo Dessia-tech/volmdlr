@@ -696,7 +696,9 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         linesegments = bsplinecurve.to_wire(10).primitives
         crossings_points = []
         for linesegment in linesegments:
-            crossings_points.append(self.linesegment_crossings(linesegment))
+            crossings_linesegment = self.linesegment_crossings(linesegment)
+            if crossings_linesegment != []:
+                crossings_points.extend(crossings_linesegment)
         return crossings_points
 
     def bsplinecurve_intersections(self,
@@ -707,10 +709,12 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         """
 
         linesegments = bsplinecurve.to_wire(10).primitives
-        crossings_points = []
+        intersections_points = []
         for linesegment in linesegments:
-            crossings_points.append(self.linesegment_intersections(linesegment))
-        return crossings_points
+            intersections_linesegments = self.linesegment_intersections(linesegment)
+            if intersections_linesegments != []:
+                intersections_points.extend(intersections_linesegments)
+        return intersections_points
 
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
@@ -2402,9 +2406,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         tri = Delaunay(delaunay)
 
         for simplice in delaunay[tri.simplices]:
-            triangle = Triangle2D(volmdlr.Point2D(*simplice[0]),
-                                  volmdlr.Point2D(*simplice[1]),
-                                  volmdlr.Point2D(*simplice[2]))
+            triangle = Triangle2D(volmdlr.Point2D(simplice[0]),
+                                  volmdlr.Point2D(simplice[1]),
+                                  volmdlr.Point2D(simplice[2]))
             delaunay_triangles.append(triangle)
 
         return delaunay_triangles
