@@ -209,10 +209,10 @@ class Wire:
         compute the curvilinear abscisse of a point on a wire
         '''
 
-        if self.point_belongs(point, 1e-6):
+        if self.point_belongs(point, 1e-5):
             length = 0
             for primitive in self.primitives:
-                if primitive.point_belongs(point, 1e-6):
+                if primitive.point_belongs(point, 1e-5):
                     length += primitive.abscissa(point)
                     break
                 length += primitive.length()
