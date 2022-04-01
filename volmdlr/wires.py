@@ -960,49 +960,6 @@ class Contour(Wire):
 
         return False
 
-    def is_sharing_primitives_with(self, contour, all_points=False):
-        '''
-        check if two contour are sharing primitives
-        "all_points" is by default False. Turn it True if you need to get points and edges used to find out shared primitives
-        '''
-
-        list_p = []
-        edges1 = set()
-        # edges2 = set()
-
-        for edge_1, edge_2 in itertools.product(self.primitives,
-                                                contour.primitives):
-            edges = [edge_1, edge_2, edge_1]
-            for edge1, edge2 in zip(edges, edges[1:]):
-                for point in [edge2.start, edge2.end]:
-                    if edge1.point_belongs(point, 1e-6):
-                        # list_p.append(point)
-                        # instead of point not in list_p (due to errors)
-                        if list_p == []:
-                            list_p.append(point)
-                        if list_p != [] and point.point_distance(point.nearest_point(list_p)) > 1e-4:
-                            list_p.append(point)
-
-                        # edges2.add(edge2)
-                        try:
-                            self.primitive_to_index(edge1)
-                            edges1.add(edge1)
-                        except KeyError:
-                            edges1.add(edge2)
-
-                    if len(list_p) == 2 and all_points is False:
-                        if self.is_superposing(contour, list_p):
-                            return False
-                        return True
-        if len(list_p) < 2:
-            return False
-        if len(list_p) >= 2 and all_points is True:
-            if len(list_p) == 2 and self.is_superposing(contour, list_p):
-                return False
-            return (edges1, list_p)
-        else:
-            return False
-
     def shared_primitives_extremities(self, contour):
         '''
         extract shared primitives extremities between two adjacent contours
