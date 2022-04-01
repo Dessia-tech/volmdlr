@@ -721,11 +721,12 @@ class Contour(Wire):
                     warnings.warn('There may exist a problem with this'
                                   ' contour, it seems it cannot be reordered.'
                                   ' Please, verify its points')
-                    ax = self.plot()
-                    for point_pair in list_point_pairs:
-                        point_pair[0].plot(ax=ax, color='r')
-                        point_pair[1].plot(ax=ax, color='r')
-                    raise NotImplementedError
+                    finished = True
+                    # ax = self.plot()
+                    #                     # for point_pair in list_point_pairs:
+                    #                     #     point_pair[0].plot(ax=ax, color='r')
+                    #                     #     point_pair[1].plot(ax=ax, color='r')
+                    # raise NotImplementedError
 
         return points
 
