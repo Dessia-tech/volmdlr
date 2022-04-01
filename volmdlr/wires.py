@@ -685,6 +685,19 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
             crossings_points.append(self.linesegment_crossings(linesegment))
         return crossings_points
 
+    def bsplinecurve_intersections(self,
+                                   bsplinecurve: 'volmdlr.edges.BSplineCurve2D'):
+        """
+        Returns a list of intersections in ther form of a tuple (point,
+        primitive) of the wire primitives intersections with the bsplinecurve
+        """
+
+        linesegments = bsplinecurve.to_wire(10).primitives
+        crossings_points = []
+        for linesegment in linesegments:
+            crossings_points.append(self.linesegment_intersections(linesegment))
+        return crossings_points
+
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
     """
