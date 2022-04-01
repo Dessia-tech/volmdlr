@@ -589,7 +589,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         results = self.line_crossings(linesegment.to_line())
         crossings_points = []
         for result in results:
-            if linesegment.point_belongs(result[0]):
+            if linesegment.point_belongs(result[0], 1e-5):
                 crossings_points.append(result)
         return crossings_points
 
