@@ -935,10 +935,9 @@ class Contour(Wire):
         check if two contours are sharing primitives
         '''
 
-        if self.is_overlapping(contour):
-            return False
         if self.is_superposing(contour):
-            raise ValueError('The contours are superposing')
+            return False
+        elif self.is_overlapping(contour):
             return False
 
         list_p = []
