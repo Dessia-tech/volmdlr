@@ -676,7 +676,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                               bsplinecurve: 'volmdlr.edges.BSplineCurve2D'):
         """
         Returns a list of crossings in ther form of a tuple (point,
-        primitive) of the wire primitives intersecting with the bsplinecurve
+        primitive) of the wire primitives crossings with the bsplinecurve
         """
 
         linesegments = bsplinecurve.to_wire(10).primitives
