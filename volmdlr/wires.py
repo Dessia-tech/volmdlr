@@ -609,13 +609,21 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
 
         crossings, crossings_points = [], []
         for primitive in wire.primitives:
-            a_points = self.linesegment_crossings(primitive)
-            if a_points:
-                for a in a_points:
-                    if a[0] not in crossings_points:
-                        crossings.append([a[0], a[1]])
-                        crossings_points.append(a[0])
-        return crossings
+            method_name = f'{primitive.__class__.__name__.lower()[0:-2]}_crossings'
+
+            if hasattr(self, method_name):
+                a_points = getattr(self, method_name)(primitive)
+                # a_points = self.linesegment_crossings(primitive)
+                if a_points:
+                    for a in a_points:
+                        if a[0] not in crossings_points:
+                            crossings.append([a[0], a[1]])
+                            crossings_points.append(a[0])
+                    return crossings
+
+            else:
+                raise NotImplementedError(
+                    f'Class {self.__class__.__name__} does not implement {method_name}')
 
     def to_wire_with_linesegments(self):
         '''
