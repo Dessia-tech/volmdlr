@@ -569,10 +569,11 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                         if a[0] not in intersections_points:
                             intersections.append([a[0], a[1]])
                             intersections_points.append(a[0])
-                    return intersections
             else:
                 raise NotImplementedError(
                     f'Class {self.__class__.__name__} does not implement {method_name}')
+
+        return intersections
 
     @classmethod
     def from_points(cls, points: List[volmdlr.Point2D]):
