@@ -141,6 +141,10 @@ class Wire:
                 primitives.append(prim)
 
         elif ip1 == ip2:
+            ax=self.plot()
+            primitive1.plot(ax, 'b')
+            point1.plot(ax)
+            print(primitive1.point_belongs(point1, 1e-4))
             prim = primitive1.split(point1)[1]
             if prim:
                 prim = prim.split(point2)[0]
