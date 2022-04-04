@@ -898,7 +898,7 @@ class Contour(Wire):
                 return False
         return True
 
-    def ordering_contour(self, tol=1e-6):
+    def ordering_contour(self, tol=1e-4):
         """
         returns the points of the contour ordered
         """
