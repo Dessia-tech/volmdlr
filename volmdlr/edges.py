@@ -854,6 +854,21 @@ class BSplineCurve2D(Edge):
                 intersections_points.append(result)
         return intersections_points
 
+    @classmethod
+    def from_bsplines(cls, bsplines, discretization_points = 10):
+        wire = volmdlr.wires.Wire2D(bsplines)
+        ordered_wire = wire.order_wire()
+
+        points, degree = [], []
+        for i, primitive in enumerate(ordered_wire.primitives):
+            degree.append(primitive.degree)
+            if i == 0:
+                points.extend(primitive.polygon_points(discretization_points))
+            else:
+                points.extend(primitive.polygon_points(discretization_points)[1::])
+
+        return cls.from_points_interpolation(points, min(degree))
+
 
 class BezierCurve2D(BSplineCurve2D):
 
