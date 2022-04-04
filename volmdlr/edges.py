@@ -831,6 +831,21 @@ class BSplineCurve2D(Edge):
         points = self.polygon_points(500)
         return point.nearest_point(points)
 
+    def merge_with(self, bspline_curve):
+        '''
+        merge successives bspline_curves to define a new one
+        '''
+
+        wire = volmdlr.wires.Wire2D([self, bspline_curve])
+        ordered_wire = wire.order_wire()
+
+        points, n = [], 10
+        for primitive in ordered_wire.primitives:
+            points.extend(primitive.polygon_points(n))
+        points.pop(n+1)
+
+        return volmdlr.edges.BSplineCurve2D.from_points_interpolation(points, min(self.degree, bspline_curve.degree))
+
 
 class BezierCurve2D(BSplineCurve2D):
 
