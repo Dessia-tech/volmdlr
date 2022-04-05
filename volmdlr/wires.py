@@ -173,7 +173,7 @@ class Wire:
         for i, point in enumerate([point1, point2]):
             ind = []
             for p, primitive in enumerate(primitives):
-                if primitive.point_belongs(point, 1e-5):
+                if primitive.point_belongs(point, 1e-3):
                     ind.append(p)
             indices.append(ind)
 
