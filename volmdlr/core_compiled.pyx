@@ -241,7 +241,7 @@ cdef (double, (double, double, double)) CLineSegment3DPointDistance((double, dou
     ppx, ppy, ppz = Csub3D(point[0], point[1], point[2], p1[0], p1[1], p1[2])
     t = max(0, min(1, CVector3DDot(ppx, ppy, ppz, ux, uy, uz) / CVector3Dnorm(ux, uy, uz)**2))
     vx, vy, vz = Cmul3D(ux, uy, uz, t)
-    projection = Cadd3D(p1[0], p1[1], p[2], vx, vy, vz)
+    projection = Cadd3D(p1[0], p1[1], p1[2], vx, vy, vz)
     ppx, ppy, ppz = projection[0]-point[0], projection[1]-point[1], projection[2]-point[2]
     return CVector3Dnorm(ppx, ppy, ppz), projection
 

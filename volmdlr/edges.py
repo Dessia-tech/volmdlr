@@ -2443,7 +2443,7 @@ class LineSegment3D(LineSegment):
     #     return distance_and_point
 
     def point_distance(self, point):
-        distance, point = volmdlr.core_compiled.LineSegment2DPointDistance(
+        distance, point = volmdlr.core_compiled.LineSegment3DPointDistance(
             [(self.start.x, self.start.y, self.start.z),
              (self.end.x, self.end.y, self.end.z)],
             (point.x, point.y))
