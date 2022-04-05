@@ -173,7 +173,7 @@ class Wire:
         for i, point in enumerate([point1, point2]):
             ind = []
             for p, primitive in enumerate(primitives):
-                if primitive.point_belongs(point, 1e-3):
+                if primitive.point_belongs(point, 1e-2):
                     ind.append(p)
             indices.append(ind)
 
@@ -197,7 +197,7 @@ class Wire:
         return self.extract_primitives(point1, primitives[ind[0]], point2,
                                        primitives[ind[1]], inside)
 
-    def point_belongs(self, point, abs_tol=1e-7):
+    def point_belongs(self, point, abs_tol=1e-2):
         '''
         find out if a point is on the wire or not
         '''
@@ -213,10 +213,10 @@ class Wire:
         compute the curvilinear abscisse of a point on a wire
         '''
 
-        if self.point_belongs(point, 1e-3):
+        if self.point_belongs(point, 1e-2):
             length = 0
             for primitive in self.primitives:
-                if primitive.point_belongs(point, 1e-3):
+                if primitive.point_belongs(point, 1e-2):
                     length += primitive.abscissa(point)
                     break
                 length += primitive.length()
