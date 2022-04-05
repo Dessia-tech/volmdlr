@@ -631,11 +631,16 @@ class BSplineCurve2D(Edge):
         return res.x[0]
 
     def split(self, point2d):
-        adim_abscissa = self.abscissa(point2d) / self.length()
-        curve1, curve2 = split_curve(self.curve, adim_abscissa)
+        if point2d == self.start:
+            return [None, self.copy()]
+        elif point2d == self.end:
+            return [self.copy(), None]
+        else:
+            adim_abscissa = self.abscissa(point2d) / self.length()
+            curve1, curve2 = split_curve(self.curve, adim_abscissa)
 
-        return [BSplineCurve2D.from_geomdl_curve(curve1),
-                BSplineCurve2D.from_geomdl_curve(curve2)]
+            return [BSplineCurve2D.from_geomdl_curve(curve1),
+                    BSplineCurve2D.from_geomdl_curve(curve2)]
 
     @classmethod
     def from_points_interpolation(cls, points, degree):
