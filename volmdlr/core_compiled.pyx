@@ -220,12 +220,11 @@ def polygon_point_belongs(point, points):
 
 cdef (double, (double, double)) CLineSegment2DPointDistance((double, double) p1, (double, double) p2, (double, double) point):
     cdef double t
-    cdef (double, double) u, projection
 
-    u = (p2[0] - p1[0], p2[1] - p1[1])
+    ux, uy = Csub2D(p2[0], p2[1], p1[0], p1[1])
     ppx, ppy = Csub2D(point[0], point[1], p1[0], p1[1])
-    t = max(0, min(1, CVector2DDot(ppx, ppy, u[0], u[1]) / CVector2Dnorm(u[0], u[1])**2))
-    vx, vy  = Cmul2D(u[0], u[1], t)
+    t = max(0, min(1, CVector2DDot(ppx, ppy, ux, uy) / CVector2Dnorm(ux, uy)**2))
+    vx, vy = Cmul2D(ux, uy, t)
     projection = Cadd2D(p1[0], p1[1], vx, vy)
     ppx, ppy = projection[0]-point[0], projection[1]-point[1]
     return CVector2Dnorm(ppx, ppy), projection
@@ -233,6 +232,21 @@ cdef (double, (double, double)) CLineSegment2DPointDistance((double, double) p1,
 def LineSegment2DPointDistance(points, point):
     return CLineSegment2DPointDistance(tuple(points[0]), tuple(points[1]), tuple(point))
 
+# =============================================================================
+
+cdef (double, (double, double, double)) CLineSegment3DPointDistance((double, double, double) p1, (double, double, double) p2, (double, double, double) point):
+    cdef double t
+
+    ux, uy, uz = Csub3D(p2[0], p2[1], p2[2], p1[0], p1[1], p1[2])
+    ppx, ppy, ppz = Csub3D(point[0], point[1], point[2], p1[0], p1[1], p1[2])
+    t = max(0, min(1, CVector3DDot(ppx, ppy, ppz, ux, uy, uz) / CVector3Dnorm(ux, uy, uz)**2))
+    vx, vy, vz = Cmul3D(ux, uy, uz, t)
+    projection = Cadd3D(p1[0], p1[1], p[2], vx, vy, vz)
+    ppx, ppy, ppz = projection[0]-point[0], projection[1]-point[1], projection[2]-point[2]
+    return CVector3Dnorm(ppx, ppy, ppz), projection
+
+def LineSegment3DPointDistance(points, point):
+    return CLineSegment3DPointDistance(tuple(points[0]), tuple(points[1]), tuple(point))
 
 # =============================================================================
 #  Points, Vectors
