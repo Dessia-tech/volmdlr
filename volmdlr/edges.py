@@ -631,9 +631,9 @@ class BSplineCurve2D(Edge):
         return res.x[0]
 
     def split(self, point2d):
-        if point2d == self.start:
+        if point2d.point_distance(self.start) < 1e-5:
             return [None, self.copy()]
-        elif point2d == self.end:
+        elif point2d.point_distance(self.end) < 1e-5:
             return [self.copy(), None]
         else:
             adim_abscissa = self.abscissa(point2d) / self.length()
