@@ -620,7 +620,7 @@ class BSplineCurve2D(Edge):
             # loss='soft_l1'
         )
 
-        if res.fun > 1e-3:
+        if res.fun > 1e-2:
             print('distance =', res.cost)
             print('res.fun:', res.fun)
             ax = self.plot()
