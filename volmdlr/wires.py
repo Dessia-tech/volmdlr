@@ -141,6 +141,10 @@ class Wire:
                 primitives.append(prim)
 
         elif ip1 == ip2:
+            # ax=self.plot()
+            # primitive1.plot(ax, 'b')
+            # point1.plot(ax)
+            # print(primitive1.point_belongs(point1, 1e-4))
             prim = primitive1.split(point1)[1]
             if prim:
                 prim = prim.split(point2)[0]
@@ -193,7 +197,7 @@ class Wire:
         return self.extract_primitives(point1, primitives[ind[0]], point2,
                                        primitives[ind[1]], inside)
 
-    def point_belongs(self, point, abs_tol=1e-7):
+    def point_belongs(self, point, abs_tol=1e-2):
         '''
         find out if a point is on the wire or not
         '''
@@ -209,10 +213,10 @@ class Wire:
         compute the curvilinear abscisse of a point on a wire
         '''
 
-        if self.point_belongs(point, 1e-5):
+        if self.point_belongs(point, 1e-2):
             length = 0
             for primitive in self.primitives:
-                if primitive.point_belongs(point, 1e-5):
+                if primitive.point_belongs(point, 1e-2):
                     length += primitive.abscissa(point)
                     break
                 length += primitive.length()
@@ -694,7 +698,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         primitive) of the wire primitives crossings with the bsplinecurve
         """
 
-        linesegments = bsplinecurve.to_wire(10).primitives
+        linesegments = bsplinecurve.to_wire(2).primitives
         crossings_points = []
         for linesegment in linesegments:
             crossings_linesegment = self.linesegment_crossings(linesegment)
@@ -709,7 +713,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         primitive) of the wire primitives intersections with the bsplinecurve
         """
 
-        linesegments = bsplinecurve.to_wire(10).primitives
+        linesegments = bsplinecurve.to_wire(2).primitives
         intersections_points = []
         for linesegment in linesegments:
             intersections_linesegments = self.linesegment_intersections(linesegment)
@@ -898,7 +902,7 @@ class Contour(Wire):
                 return False
         return True
 
-    def ordering_contour(self, tol=1e-6):
+    def ordering_contour(self, tol=1e-3):
         """
         returns the points of the contour ordered
         """
@@ -1134,21 +1138,32 @@ class Contour(Wire):
                 return True
         return False
 
-    def is_superposing(self, contour2, intersecting_points):
-        vec1_2 = volmdlr.edges.LineSegment2D(intersecting_points[0],
-                                             intersecting_points[1])
-        middle_point = vec1_2.middle_point()
-        normal = vec1_2.normal_vector()
-        point1 = middle_point + normal * 0.00001
-        point2 = middle_point - normal * 0.00001
-        if (self.point_belongs(point1) and contour2.point_belongs(point1)) or\
-                (not self.point_belongs(point1) and
-                 not contour2.point_belongs(point1)) or\
-                (self.point_belongs(point1) and self.point_belongs(point2)) or\
-                (contour2.point_belongs(point1) and
-                 contour2.point_belongs(point2)):
-            return True
-        return False
+    # def is_superposing(self, contour2, intersecting_points):
+    #     vec1_2 = volmdlr.edges.LineSegment2D(intersecting_points[0],
+    #                                          intersecting_points[1])
+    #     middle_point = vec1_2.middle_point()
+    #     normal = vec1_2.normal_vector()
+    #     point1 = middle_point + normal * 0.00001
+    #     point2 = middle_point - normal * 0.00001
+    #     if (self.point_belongs(point1) and contour2.point_belongs(point1)) or\
+    #             (not self.point_belongs(point1) and
+    #              not contour2.point_belongs(point1)) or\
+    #             (self.point_belongs(point1) and self.point_belongs(point2)) or\
+    #             (contour2.point_belongs(point1) and
+    #              contour2.point_belongs(point2)):
+    #         return True
+    #     return False
+
+    def is_superposing(self, contour2):
+        '''
+        check if the contours are superposing (one on the other without
+        necessarily having an absolute equality)
+        '''
+
+        for primitive_2 in contour2.primitives:
+            if not self.primitive_over_contour(primitive_2):
+                return False
+        return True
 
     def is_sharing_primitives_with(self, contour, all_points=False):
         '''

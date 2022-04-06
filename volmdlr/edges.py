@@ -620,7 +620,7 @@ class BSplineCurve2D(Edge):
             # loss='soft_l1'
         )
 
-        if res.fun > 1e-4:
+        if res.fun > 1e-2:
             print('distance =', res.cost)
             print('res.fun:', res.fun)
             ax = self.plot()
@@ -631,11 +631,16 @@ class BSplineCurve2D(Edge):
         return res.x[0]
 
     def split(self, point2d):
-        adim_abscissa = self.abscissa(point2d) / self.length()
-        curve1, curve2 = split_curve(self.curve, adim_abscissa)
+        if point2d.point_distance(self.start) < 1e-5:
+            return [None, self.copy()]
+        elif point2d.point_distance(self.end) < 1e-5:
+            return [self.copy(), None]
+        else:
+            adim_abscissa = self.abscissa(point2d) / self.length()
+            curve1, curve2 = split_curve(self.curve, adim_abscissa)
 
-        return [BSplineCurve2D.from_geomdl_curve(curve1),
-                BSplineCurve2D.from_geomdl_curve(curve2)]
+            return [BSplineCurve2D.from_geomdl_curve(curve1),
+                    BSplineCurve2D.from_geomdl_curve(curve2)]
 
     @classmethod
     def from_points_interpolation(cls, points, degree):
@@ -853,6 +858,21 @@ class BSplineCurve2D(Edge):
             if linesegment.point_belongs(result, 1e-5):
                 intersections_points.append(result)
         return intersections_points
+
+    @classmethod
+    def from_bsplines(cls, bsplines, discretization_points = 10):
+        wire = volmdlr.wires.Wire2D(bsplines)
+        ordered_wire = wire.order_wire()
+
+        points, degree = [], []
+        for i, primitive in enumerate(ordered_wire.primitives):
+            degree.append(primitive.degree)
+            if i == 0:
+                points.extend(primitive.polygon_points(discretization_points))
+            else:
+                points.extend(primitive.polygon_points(discretization_points)[1::])
+
+        return cls.from_points_interpolation(points, min(degree))
 
 
 class BezierCurve2D(BSplineCurve2D):
