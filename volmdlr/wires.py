@@ -1159,7 +1159,8 @@ class Contour(Wire):
         check if the contours are superposing (one on the other without
         necessarily having an absolute equality)
         '''
-
+        if self.area() != contour2.area():
+            return False
         for primitive_2 in contour2.primitives:
             if not self.primitive_over_contour(primitive_2):
                 return False
