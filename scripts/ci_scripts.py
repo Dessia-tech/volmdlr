@@ -49,6 +49,7 @@ scripts = [
             'contours/contour_merge_with_1.py',
             'contours/contour_merge_with_2.py',
             'contours/cut_by_line.py',
+            'contours/contour_cut_by_wire.py',
             # Steps
             'step/read_steps.py',
             # Stl
@@ -58,7 +59,8 @@ scripts = [
             'distance/arc3D_ls3D.py',
             # Showcases
             'showcases/simple_shapes.py',
-            'showcases/casing.py'
+            'showcases/casing.py',
+            'grid.py'
             ]
 
 # Testing if all scripts exists before launching them
