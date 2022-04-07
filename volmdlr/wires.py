@@ -197,7 +197,7 @@ class Wire:
         return self.extract_primitives(point1, primitives[ind[0]], point2,
                                        primitives[ind[1]], inside)
 
-    def point_belongs(self, point, abs_tol=1e-2):
+    def point_belongs(self, point, abs_tol=1e-5):
         '''
         find out if a point is on the wire or not
         '''
@@ -213,10 +213,10 @@ class Wire:
         compute the curvilinear abscisse of a point on a wire
         '''
 
-        if self.point_belongs(point, 1e-2):
+        if self.point_belongs(point, 1e-5):
             length = 0
             for primitive in self.primitives:
-                if primitive.point_belongs(point, 1e-2):
+                if primitive.point_belongs(point, 1e-5):
                     length += primitive.abscissa(point)
                     break
                 length += primitive.length()
@@ -531,7 +531,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         intersection_points = []
         intersection_points_primitives = []
         for primitive in self.primitives:
-            intersections = primitive.line_intersections(line)
+            intersections = primitive.line_intersections(line) #intersections/crossings
             if intersections and intersections[0] not in intersection_points:
                 if not self.is_crossing_start_end_point(intersections,
                                                         primitive):
@@ -600,7 +600,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         results = self.line_crossings(linesegment.to_line())
         crossings_points = []
         for result in results:
-            if linesegment.point_belongs(result[0], 1e-5):
+            if linesegment.point_belongs(result[0], 1e-6):
                 crossings_points.append(result)
         return crossings_points
 
@@ -698,7 +698,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         primitive) of the wire primitives crossings with the bsplinecurve
         """
 
-        linesegments = bsplinecurve.to_wire(2).primitives
+        linesegments = bsplinecurve.to_wire(25).primitives
         crossings_points = []
         for linesegment in linesegments:
             crossings_linesegment = self.linesegment_crossings(linesegment)
@@ -713,7 +713,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         primitive) of the wire primitives intersections with the bsplinecurve
         """
 
-        linesegments = bsplinecurve.to_wire(2).primitives
+        linesegments = bsplinecurve.to_wire(10).primitives
         intersections_points = []
         for linesegment in linesegments:
             intersections_linesegments = self.linesegment_intersections(linesegment)
@@ -2096,13 +2096,39 @@ class Contour2D(Contour, Wire2D):
         """
 
         intersections = self.wire_crossings(wire)  # crossings OR intersections (?)
-        if not intersections or len(intersections) < 2:
+        if len(intersections)==0:
             return [self]
-        if len(intersections) % 2 != 0:
+        
+        points_intersections = [point for point, prim in intersections]
+        points_intersections_new = [points_intersections[0]]
+        for point in points_intersections[1::]:
+            not_in = {False}
+            for point_new in points_intersections_new:
+                check = point_new.point_distance(point)<1e-1
+                not_in.add(check)
+            # print(not_in)
+            if not_in == {False}:
+                points_intersections_new.append(point)
+        points_intersections = points_intersections_new
+        # print('-', points_intersections_new)
+        print(len(points_intersections))
+        if len(points_intersections)>2:
+            print(points_intersections)
+        # or intersections[0][0].point_distance(intersections[1][0])<1e-5
+        
+        if not intersections or len(points_intersections) < 2:
+            return [self]
+        if len(points_intersections) % 2 != 0:
+            # # points_intersections = [point for point, prim in intersections]
+            # ax=self.plot()
+            # for p in points_intersections:
+            #     p.plot(ax)
+            #     print(p)
+            # wire.plot(ax, 'b')
             raise NotImplementedError(
                 f'{len(intersections)} intersections not supported yet')
 
-        points_intersections = [point for point, prim in intersections]
+        # points_intersections = [point for point, prim in intersections]
         sorted_points = wire.sort_points_along_wire(points_intersections)
         list_contours = []
         contour_to_cut = self

@@ -181,7 +181,7 @@ class LineSegment(Edge):
         u = self.end - self.start
         length = u.norm()
         t = (point - self.start).dot(u) / length
-        if t < -1e-6 or t > length + 1e-6:
+        if t < -1e-5 or t > length + 1e-5:
             raise ValueError(f'Point is not on linesegment: abscissa={t}')
         return t
 
@@ -855,7 +855,7 @@ class BSplineCurve2D(Edge):
         results = self.line_intersections(linesegment.to_line())
         intersections_points = []
         for result in results:
-            if linesegment.point_belongs(result, 1e-5):
+            if linesegment.point_belongs(result, 1e-6):
                 intersections_points.append(result)
         return intersections_points
 
