@@ -166,6 +166,8 @@ class Line(dc.DessiaObject):
         :type point2: volmdlr.Point2D
         returns True is line is between the two given points or False if not
         """
+        if point1 == point2:
+            return False
         line_segment = LineSegment2D(point1, point2)
         if line_segment.line_intersections(self):
             return True
@@ -517,6 +519,7 @@ class BSplineCurve2D(Edge):
         curve.knotvector = knot_vector
 
         self.curve = curve
+        self._length = None
         start = self.point_at_abscissa(0.)
         end = self.point_at_abscissa(self.length())
 
@@ -541,7 +544,9 @@ class BSplineCurve2D(Edge):
                 min(points_y), max(points_y))
 
     def length(self):
-        return length_curve(self.curve)
+        if not self._length:
+            self._length = length_curve(self.curve)
+        return self._length
 
     def point_at_abscissa(self, curvilinear_abscissa):
         l = self.length()
@@ -797,7 +802,7 @@ class BSplineCurve2D(Edge):
                               periodic=self.periodic)
 
     # def point_belongs(self, point, abs_tol=1e-7):
-    #     polygon_points = self.polygon_points()
+    #     polygon_points = self.polygon_points(100)
     #     for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
     #         line = LineSegment2D(p1, p2)
     #         if line.point_belongs(point, abs_tol=abs_tol):
@@ -814,7 +819,7 @@ class BSplineCurve2D(Edge):
                 distance = dist
         return distance
 
-    def point_belongs(self, point2d, abs_tol=1e-10):
+    def point_belongs(self, point2d, abs_tol=1e-6):
         '''
         check if a point2d belongs to the bspline_curve or not
         '''
