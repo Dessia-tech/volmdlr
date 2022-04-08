@@ -2978,28 +2978,26 @@ class BSplineSurface3D(Surface3D):
 
         return bsplinecurve3d
 
-    def arc2d_parametric_to_dimension(self, arc2d, points_x, points_y):
+    def arc2d_parametric_to_dimension(self, arc2d, grid2d: volmdlr.grid.Grid2D):
         '''
         convert a arc2d from the parametric to the dimensioned frame
         '''
 
-        xmin, xmax, ymin, ymax = 0, 1, 0, 1
-
         number_points = math.ceil(arc2d.angle * 7) + 1
         l = arc2d.length()
         points = [self.point2d_parametric_to_dimension(arc2d.point_at_abscissa(
-            i * l / (number_points - 1)), points_x, points_y, xmin, xmax, ymin, ymax) for i in range(number_points)]
+            i * l / (number_points - 1)), grid2d) for i in range(number_points)]
 
         return vme.BSplineCurve2D.from_points_interpolation(
                     points, max(self.degree_u, self.degree_v))
 
-    def arc3d_to_2d_with_dimension(self, arc3d, points_x, points_y):
+    def arc3d_to_2d_with_dimension(self, arc3d, grid2d: volmdlr.grid.Grid2D):
         '''
         compute the arc2d of a arc3d, on a Bspline surface, in the dimensioned frame
         '''
 
         bsplinecurve2d = self.arc3d_to_2d(arc3d)[0]  # it's a bsplinecurve2d
-        arc2d_with_dimension = self.bsplinecurve2d_parametric_to_dimension(bsplinecurve2d, points_x, points_y)
+        arc2d_with_dimension = self.bsplinecurve2d_parametric_to_dimension(bsplinecurve2d, grid2d)
 
         return arc2d_with_dimension  # it's a bsplinecurve2d-dimension
 
@@ -3008,13 +3006,11 @@ class BSplineSurface3D(Surface3D):
         convert a arc2d from the dimensioned to the parametric frame
         '''
 
-        [points_x, points_y, xmin, xmax, ymin, ymax] = self._grids2d[0]
-
         number_points = math.ceil(arc2d.angle * 7) + 1
         l = arc2d.length()
 
         points = [self.point2d_with_dimension_to_parametric_frame(arc2d.point_at_abscissa(
-                i * l / (number_points - 1)), points_x, points_y, xmin, xmax, ymin, ymax) for i in range(number_points)]
+                i * l / (number_points - 1)), self._grids2d) for i in range(number_points)]
 
         return vme.BSplineCurve2D.from_points_interpolation(
                     points, max(self.degree_u, self.degree_v))
