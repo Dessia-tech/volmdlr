@@ -2870,34 +2870,26 @@ class BSplineSurface3D(Surface3D):
 
         return self.point2d_to_3d(point2d_01)
 
-    def linesegment2d_parametric_to_dimension(self, linesegment2d, points_x, points_y):
+    def linesegment2d_parametric_to_dimension(self, linesegment2d, grid2d: volmdlr.grid.Grid2D):
         '''
         convert a linesegment2d from the parametric to the dimensioned frame
         '''
 
-        xmin, xmax, ymin, ymax = 0, 1, 0, 1
-
         points = linesegment2d.discretization_points(20)
         points_dim = [
             self.point2d_parametric_to_dimension(
-                p,
-                points_x,
-                points_y,
-                xmin,
-                xmax,
-                ymin,
-                ymax) for p in points]
+                p, grid2d) for p in points]
 
         return vme.BSplineCurve2D.from_points_interpolation(
                 points_dim, max(self.degree_u, self.degree_v))
 
-    def linesegment3d_to_2d_with_dimension(self, linesegment3d, points_x, points_y):
+    def linesegment3d_to_2d_with_dimension(self, linesegment3d, grid2d: volmdlr.grid.Grid2D):
         '''
         compute the linesegment2d of a linesegment3d, on a Bspline surface, in the dimensioned frame
         '''
 
         linesegment2d = self.linesegment3d_to_2d(linesegment3d)
-        bsplinecurve2d_with_dimension = self.linesegment2d_parametric_to_dimension(linesegment2d, points_x, points_y)
+        bsplinecurve2d_with_dimension = self.linesegment2d_parametric_to_dimension(linesegment2d, grid2d)
 
         return bsplinecurve2d_with_dimension
 
@@ -2906,13 +2898,10 @@ class BSplineSurface3D(Surface3D):
         convert a linesegment2d from the dimensioned to the parametric frame
         '''
 
-        [points_x, points_y, xmin, xmax, ymin, ymax] = self._grids2d[0]
-
         try:
             linesegment2d = volmdlr.edges.LineSegment2D(
-                self.point2d_with_dimension_to_parametric_frame(
-                    linesegment2d.start, points_x, points_y, xmin, xmax, ymin, ymax), self.point2d_with_dimension_to_parametric_frame(
-                    linesegment2d.end, points_x, points_y, xmin, xmax, ymin, ymax))
+                self.point2d_with_dimension_to_parametric_frame(linesegment2d.start, self._grids2d),
+                self.point2d_with_dimension_to_parametric_frame(linesegment2d.end, self._grids2d))
         except NotImplementedError:
             return None
 
