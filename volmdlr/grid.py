@@ -272,3 +272,20 @@ class Grid2D(DessiaObject):
                      self.lists_points[i][j + 1])))
 
         return quadrilateral_polygons
+
+    @property
+    def points(self):
+        """
+        return all the points in lists_points in just one list
+
+        Returns
+        -------
+        points: list[volmdlr.Point2D]
+
+        """
+
+        points = []
+        for list_point in self.lists_points:
+            points.extend(list_point)
+        return points
+
