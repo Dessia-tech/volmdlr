@@ -32,6 +32,7 @@ import volmdlr.edges as vme
 import volmdlr.wires
 import volmdlr.display as vmd
 import volmdlr.geometry
+import volmdlr.grid
 
 
 def knots_vector_inv(knots_vector):
