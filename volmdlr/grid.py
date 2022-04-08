@@ -14,10 +14,10 @@ import volmdlr.wires
 
 class Grid2D(DessiaObject):
 
-    def __init__(self, list_points: List[List[volmdlr.Point2D]],
+    def __init__(self, lists_points: List[List[volmdlr.Point2D]],
                  direction: List[str],
                  name: str = ''):
-        self.list_points = list_points
+        self.lists_points = lists_points
         self.direction = direction
         DessiaObject.__init__(self, name=name)
 
@@ -148,7 +148,7 @@ class Grid2D(DessiaObject):
                 grid2d.append(points)
                 points = []
 
-        return cls(list_points=grid2d, direction=direction)
+        return cls(lists_points=grid2d, direction=direction)
 
     # @property
     # def x_limits(self):
@@ -156,7 +156,7 @@ class Grid2D(DessiaObject):
     #     find the limits (min, max) of points along x_direction_axis
     #     """
 
-    #     x_limits = (self.list_points[0][0].x, self.list_points[-1][-1].x)
+    #     x_limits = (self.lists_points[0][0].x, self.lists_points[-1][-1].x)
     #     x_min, x_max = min(x_limits), max(x_limits)
 
     #     return (x_min, x_max)
@@ -167,7 +167,7 @@ class Grid2D(DessiaObject):
     #     find the limits (min, max) of points along y_direction_axis
     #     """
 
-    #     y_limits = (self.list_points[0][0].y, self.list_points[-1][-1].y)
+    #     y_limits = (self.lists_points[0][0].y, self.lists_points[-1][-1].y)
     #     y_min, y_max = min(y_limits), max(y_limits)
 
     #     return (y_min, y_max)
@@ -178,9 +178,9 @@ class Grid2D(DessiaObject):
         find the limits (min, max) of points along x & y direction_axis
         """
 
-        x_limits = (self.list_points[0][0].x, self.list_points[-1][-1].x)
+        x_limits = (self.lists_points[0][0].x, self.lists_points[-1][-1].x)
         x_min, x_max = min(x_limits), max(x_limits)
-        y_limits = (self.list_points[0][0].y, self.list_points[-1][-1].y)
+        y_limits = (self.lists_points[0][0].y, self.lists_points[-1][-1].y)
         y_min, y_max = min(y_limits), max(y_limits)
 
         return ((x_min, x_max), (y_min, y_max))
@@ -193,9 +193,9 @@ class Grid2D(DessiaObject):
 
     #     index = self.find_direction_index(direction_axis = 'x')
     #     if index == 0:
-    #         points_x = len(self.list_points[0])
+    #         points_x = len(self.lists_points[0])
     #     else:
-    #         points_x = len(self.list_points)
+    #         points_x = len(self.lists_points)
 
     #     return points_x
 
@@ -207,9 +207,9 @@ class Grid2D(DessiaObject):
 
     #     index = self.find_direction_index(direction_axis = 'y')
     #     if index == 0:
-    #         points_y = len(self.list_points[0])
+    #         points_y = len(self.lists_points[0])
     #     else:
-    #         points_y = len(self.list_points)
+    #         points_y = len(self.lists_points)
 
     #     return points_y
 
@@ -221,11 +221,11 @@ class Grid2D(DessiaObject):
 
         index = self.find_direction_index(direction_axis='x')
         if index == 0:
-            points_x = len(self.list_points[0])
-            points_y = len(self.list_points)
+            points_x = len(self.lists_points[0])
+            points_y = len(self.lists_points)
         else:
-            points_x = len(self.list_points)
-            points_y = len(self.list_points[0])
+            points_x = len(self.lists_points)
+            points_y = len(self.lists_points[0])
 
         return (points_x, points_y)
 
@@ -262,13 +262,13 @@ class Grid2D(DessiaObject):
         """
 
         quadrilateral_polygons = []
-        length_1, length_2 = len(self.list_points[0]), len(self.list_points)
+        length_1, length_2 = len(self.lists_points[0]), len(self.lists_points)
         for i in range(0, length_1 - 1):
             for j in range(0, length_2 - 1):
                 quadrilateral_polygons.append(volmdlr.wires.ClosedPolygon2D(
-                    (self.list_points[i][j],
-                     self.list_points[i + 1][j],
-                     self.list_points[i + 1][j + 1],
-                     self.list_points[i][j + 1])))
+                    (self.lists_points[i][j],
+                     self.lists_points[i + 1][j],
+                     self.lists_points[i + 1][j + 1],
+                     self.lists_points[i][j + 1])))
 
         return quadrilateral_polygons
