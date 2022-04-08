@@ -24,7 +24,7 @@ scripts = [
             'primitives/revolved_profile.py',
             'primitives/block3d.py',
             'primitives/sphere_to_point.py',
-            'primitives/cone.py',
+            # 'primitives/cone.py',
             'primitives/cylinders.py',
             # Faces
             'faces/triangle3d.py',
