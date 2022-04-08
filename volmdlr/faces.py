@@ -1225,18 +1225,13 @@ class CylindricalSurface3D(Surface3D):
         else:
             self.frame.rotation(center, axis, angle, copy=False)
 
-    def grid3d(self, points_x, points_y, xmin, xmax, ymin, ymax):
+    def grid3d(self, grid2d: volmdlr.grid.Grid2D):
         '''
-        generate 3d grid points of a Cylindrical surface, based on a 2d grid points parameters
-        (xmin,xmax,points_x) limits and number of points in x,
-        (ymin,ymax,points_y) limits and number of points in y
+        generate 3d grid points of a Cylindrical surface, based on a Grid2D
         '''
 
-        points_2d = volmdlr.Point2D.grid2d(points_x, points_y, xmin, xmax, ymin, ymax)
-
-        points_3d = []
-        for j in range(0, len(points_2d)):
-            points_3d.append(self.point2d_to_3d(points_2d[j]))
+        points_2d = grid2d.points
+        points_3d = [self.point2d_to_3d(point2d) for point2d in points_2d]
 
         return points_3d
 
