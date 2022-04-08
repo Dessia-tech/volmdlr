@@ -2370,16 +2370,16 @@ class BSplineSurface3D(Surface3D):
 
         return points_3d
 
-    def grid2d_deformed(self, points_x, points_y, xmin, xmax, ymin, ymax):
+    def grid2d_deformed(self, grid2d: volmdlr.grid.Grid2D):
         '''
-        dimension and deform a 2d grid points based on a Bspline surface
-        (xmin,xmax,points_x) limits and number of points in x,
-        (ymin,ymax,points_y) limits and number of points in y
-
+        dimension and deform a Grid2D points based on a Bspline surface
         '''
 
-        points_2d = volmdlr.Point2D.grid2d(points_x, points_y, xmin, xmax, ymin, ymax)
-        points_3d = self.grid3d(points_x, points_y, xmin, xmax, ymin, ymax)
+        points_2d = grid2d.points
+        points_3d = self.grid3d(grid2d)
+
+        (xmin, xmax), (ymin, ymax) = grid2d.limits_xy
+        points_x, points_y = grid2d.points_xy
 
         # Parameters
         index_x = {}  # grid point position(i,j), x coordinates position in X(unknown variable)
@@ -2486,9 +2486,133 @@ class BSplineSurface3D(Surface3D):
         for i in range(0, len(z.x), 2):
             points_2d_deformed.append(volmdlr.Point2D(z.x[i], z.x[i + 1]))
 
-        self._grids2d_deformed = ([points_x, points_y, xmin, xmax, ymin, ymax], points_2d_deformed)
+        grid2d_deformed = volmdlr.grid.Grid2D.from_points(points=points_2d_deformed,
+                                                          points_dim_1=points_x,
+                                                          direction=grid2d.direction)
+
+        self._grids2d_deformed = grid2d_deformed
 
         return points_2d_deformed
+
+    # def grid2d_deformed(self, points_x, points_y, xmin, xmax, ymin, ymax):
+    #     '''
+    #     dimension and deform a 2d grid points based on a Bspline surface
+    #     (xmin,xmax,points_x) limits and number of points in x,
+    #     (ymin,ymax,points_y) limits and number of points in y
+
+    #     '''
+
+    #     points_2d = volmdlr.Point2D.grid2d(points_x, points_y, xmin, xmax, ymin, ymax)
+    #     points_3d = self.grid3d(points_x, points_y, xmin, xmax, ymin, ymax)
+
+    #     # Parameters
+    #     index_x = {}  # grid point position(i,j), x coordinates position in X(unknown variable)
+    #     index_y = {}  # grid point position(i,j), y coordinates position in X(unknown variable)
+    #     index_points = {}  # grid point position(j,i), point position in points_2d (or points_3d)
+    #     k, p = 0, 0
+    #     for i in range(0, points_x):
+    #         for j in range(0, points_y):
+    #             index_x.update({(j, i): k})
+    #             index_y.update({(j, i): k + 1})
+    #             index_points.update({(j, i): p})
+    #             k = k + 2
+    #             p = p + 1
+
+    #     equation_points = []  # points combination to compute distances between 2D and 3D grid points
+    #     # for i in range(0,points_y): #row from (0,i)
+    #     #     for j in range(1,points_x):
+    #     #         equation_points.append(((0,i),(j,i)))
+    #     # for i in range(0,points_x): #column from (i,0)
+    #     #     for j in range(1,points_y):
+    #     #         equation_points.append(((i,0),(i,j)))
+    #     for i in range(0, points_y):  # row
+    #         for j in range(0, points_x - 1):
+    #             equation_points.append(((j, i), (j + 1, i)))
+    #     for i in range(0, points_x):  # column
+    #         for j in range(0, points_x - 1):
+    #             equation_points.append(((i, j), (i, j + 1)))
+    #     for i in range(0, points_y - 1):  # diagonal
+    #         for j in range(0, points_x - 1):
+    #             equation_points.append(((j, i), (j + 1, i + 1)))
+
+    #     for i in range(0, points_y):  # row 2segments (before.point.after)
+    #         for j in range(1, points_x - 1):
+    #             equation_points.append(((j - 1, i), (j + 1, i)))
+
+    #     for i in range(0, points_x):  # column 2segments (before.point.after)
+    #         for j in range(1, points_y - 1):
+    #             equation_points.append(((i, j - 1), (i, j + 1)))
+
+    #     # Euclidean distance
+    #     # D=[] # distances between 3D grid points (based on points combination [equation_points])
+    #     # for i in range(0, len(equation_points)):
+    #     #     D.append((points_3d[index_points[equation_points[i][0]]].point_distance(points_3d[index_points[equation_points[i][1]]]))**2)
+
+    #     # Geodesic distance
+    #     # xx=[]
+    #     # for p in points_2d:
+    #     #     xx.append(p.x)
+    #     # yy=[]
+    #     # for p in points_2d:
+    #     #     yy.append(p.y)
+
+    #     # triang = plt_tri.Triangulation(xx, yy)
+    #     # faces = triang.triangles
+    #     # points = npy.empty([len(points_3d),3])
+    #     # for i in range(0,len(points_3d)):
+    #     #     points[i] = npy.array([points_3d[i].x,points_3d[i].y,points_3d[i].z])
+
+    #     # geoalg = geodesic.PyGeodesicAlgorithmExact(points, faces)
+    #     D = []  # geodesic distances between 3D grid points (based on points combination [equation_points])
+    #     for i in range(0, len(equation_points)):
+    #         D.append((self.geodesic_distance(
+    #             points_3d[index_points[equation_points[i][0]]], points_3d[index_points[equation_points[i][1]]]))**2)
+
+    #     # System of nonlinear equations
+    #     def non_linear_equations(X):
+    #         F = npy.empty(len(equation_points) + 2)
+    #         for i in range(0, len(equation_points)):
+    #             F[i] = abs((X[index_x[equation_points[i][0]]]**2 +
+    #                         X[index_x[equation_points[i][1]]]**2 +
+    #                         X[index_y[equation_points[i][0]]]**2 +
+    #                         X[index_y[equation_points[i][1]]]**2 -
+    #                         2 *
+    #                         X[index_x[equation_points[i][0]]] *
+    #                         X[index_x[equation_points[i][1]]] -
+    #                         2 *
+    #                         X[index_y[equation_points[i][0]]] *
+    #                         X[index_y[equation_points[i][1]]] -
+    #                         D[i]) /
+    #                        D[i])
+
+    #         F[i + 1] = X[0] * 1000
+    #         F[i + 2] = X[1] * 1000
+    #         # i=i+2
+    #         # # F[i+3] = X[(len(points_2d)-points_x)*2]
+    #         # l= 3
+    #         # for f in range(1, points_x):
+    #         #     F[i+f] = X[l]*1000
+    #         #     l = l+2
+    #         ## F[i+3] = X[3]*1000
+    #         ## F[i+4] = X[5]*1000
+    #         ## F[i+4] = X[points_x*2]*1000
+
+    #         return F
+
+    #     # Solution with "least_squares"
+    #     x_init = []  # initial guess (2D grid points)
+    #     for i in range(0, len(points_2d)):
+    #         x_init.append(points_2d[i][0])
+    #         x_init.append(points_2d[i][1])
+    #     z = opt.least_squares(non_linear_equations, x_init)
+
+    #     points_2d_deformed = []  # deformed 2d grid points
+    #     for i in range(0, len(z.x), 2):
+    #         points_2d_deformed.append(volmdlr.Point2D(z.x[i], z.x[i + 1]))
+
+    #     self._grids2d_deformed = ([points_x, points_y, xmin, xmax, ymin, ymax], points_2d_deformed)
+
+    #     return points_2d_deformed
 
     def grid2d_deformation(self, points_x, points_y, xmin, xmax, ymin, ymax):
         '''
