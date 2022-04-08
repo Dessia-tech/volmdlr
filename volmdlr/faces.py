@@ -748,6 +748,25 @@ class Surface3D(dc.DessiaObject):
         point2_2d = self.point3d_to_2d(point2_3d)
         return self.geodesic_distance_from_points2d(point1_2d, point2_2d)
 
+    def frame_mapping_parameters(self, frame, side):
+        basis = frame.basis()
+        if side == 'new':
+            new_origin = frame.new_coordinates(self.frame.origin)
+            new_u = basis.new_coordinates(self.frame.u)
+            new_v = basis.new_coordinates(self.frame.v)
+            new_w = basis.new_coordinates(self.frame.w)
+            new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
+        elif side == 'old':
+            new_origin = frame.old_coordinates(self.frame.origin)
+            new_u = basis.old_coordinates(self.frame.u)
+            new_v = basis.old_coordinates(self.frame.v)
+            new_w = basis.old_coordinates(self.frame.w)
+            new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
+        else:
+            raise ValueError(f'side value not valid, please specify'
+                             f'a correct value: \'old\' or \'new\'')
+        return new_frame
+
 
 class Plane3D(Surface3D):
     face_class = 'PlaneFace3D'
@@ -917,62 +936,62 @@ class Plane3D(Surface3D):
                 return True
         return False
 
-    def rotation(self, center, axis, angle, copy=True):
-        # center_frame = self.frame.origin.copy()
-        # center_frame.rotation(center, axis, angle, copy=False)
-        if copy:
-            new_frame = self.frame.rotation(center=center, axis=axis,
-                                            angle=angle, copy=True)
-            # new_frame.origin = center_frame
-            return Plane3D(new_frame)
-        else:
-            self.frame.rotation(center=center, axis=axis, angle=angle, copy=False)
-            # self.frame.origin = center_frame
-
-    def translation(self, offset, copy=True):
-        if copy:
-            new_frame = self.frame.translation(offset, True)
-            return Plane3D(new_frame)
-        else:
-            self.frame.translation(offset, False)
-
-    def frame_mapping(self, frame, side, copy=True):
+    def rotation(self, center, axis, angle):
         """
+        Plane3D rotation
+        :param center: rotation center
+        :param axis: rotation axis
+        :param angle: angle rotation
+        :return: a new rotated Plane3D
+        """
+        new_frame = self.frame.rotation(center=center, axis=axis, angle=angle)
+        return Plane3D(new_frame)
+
+    def rotation_inplace(self, center, axis, angle):
+        """
+        Line2D rotation. Object is updated inplace
+        :param center: rotation center
+        :param axis: rotation axis
+        :param angle: rotation angle
+        """
+        self.frame.rotation_inplace(center=center, axis=axis, angle=angle)
+
+    def translation(self, offset: volmdlr.Vector3D):
+        """
+        Plane3D translation
+        :param offset: translation vector
+        :return: A new translated Plane3D
+        """
+        new_frame = self.frame.translation(offset)
+        return Plane3D(new_frame)
+
+    def translation_inplace(self, offset: volmdlr.Vector3D):
+        """
+        Plane3D translation. Object is updated inplace
+        :param offset: translation vector
+        """
+        self.frame.translation_inplace(offset)
+
+    def frame_mapping(self, frame, side):
+        """
+        Changes frame_mapping and return a new Frame3D
         side = 'old' or 'new'
         """
-        if side == 'old':
-            new_origin = frame.old_coordinates(self.frame.origin)
-            new_vector1 = frame.basis().old_coordinates(self.frame.u)
-            new_vector2 = frame.basis().old_coordinates(self.frame.v)
-            new_vector3 = frame.basis().old_coordinates(self.frame.w)
-            if copy:
-                return Plane3D(
-                    volmdlr.Frame3D(new_origin, new_vector1, new_vector2,
-                                    new_vector3), self.name)
-            else:
-                # self.origin = new_origin
-                # self.vectors = [new_vector1, new_vector2]
-                # self.normal = frame.Basis().old_coordinates(self.normal)
-                # self.normal.normalize()
-                self.frame.origin = new_origin
-                self.frame.u = new_vector1
-                self.frame.v = new_vector2
-                self.frame.w = new_vector3
+        new_frame =\
+            self.frame_mapping_parameters(frame, side)
+        return Plane3D(new_frame, self.name)
 
-        if side == 'new':
-            new_origin = frame.new_coordinates(self.frame.origin)
-            new_vector1 = frame.basis().new_coordinates(self.frame.u)
-            new_vector2 = frame.basis().new_coordinates(self.frame.v)
-            new_vector3 = frame.basis().new_coordinates(self.frame.w)
-            if copy:
-                return Plane3D(
-                    volmdlr.Frame3D(new_origin, new_vector1, new_vector2,
-                                    new_vector3), self.name)
-            else:
-                self.frame.origin = new_origin
-                self.frame.u = new_vector1
-                self.frame.v = new_vector2
-                self.frame.w = new_vector3
+    def frame_mapping_inplace(self, frame, side):
+        """
+        Changes frame_mapping and the object is updated inplace
+        side = 'old' or 'new'
+        """
+        new_frame = \
+            self.frame_mapping_parameters(frame, side)
+        self.frame.origin = new_frame.origin
+        self.frame.u = new_frame.u
+        self.frame.v = new_frame.v
+        self.frame.w = new_frame.w
 
     def copy(self, deep=True, memo=None):
         new_frame = self.frame.copy()
@@ -1170,31 +1189,22 @@ class CylindricalSurface3D(Surface3D):
                     round(1000 * self.radius, 3))
         return content, [current_id]
 
-    def frame_mapping(self, frame, side, copy=True):
-        basis = frame.basis()
-        if side == 'new':
-            new_origin = frame.new_coordinates(self.frame.origin)
-            new_u = basis.new_coordinates(self.frame.u)
-            new_v = basis.new_coordinates(self.frame.v)
-            new_w = basis.new_coordinates(self.frame.w)
-            new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
-            if copy:
-                return CylindricalSurface3D(new_frame, self.radius,
-                                            name=self.name)
-            else:
-                self.frame = new_frame
+    def frame_mapping(self, frame, side):
+        """
+        Changes frame_mapping and return a new CylindricalSurface3D
+        side = 'old' or 'new'
+        """
+        new_frame = self.frame_mapping_parameters(frame, side)
+        return CylindricalSurface3D(new_frame, self.radius,
+                                    name=self.name)
 
-        if side == 'old':
-            new_origin = frame.old_coordinates(self.frame.origin)
-            new_u = basis.old_coordinates(self.frame.u)
-            new_v = basis.old_coordinates(self.frame.v)
-            new_w = basis.old_coordinates(self.frame.w)
-            new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
-            if copy:
-                return CylindricalSurface3D(new_frame, self.radius,
-                                            name=self.name)
-            else:
-                self.frame = new_frame
+    def frame_mapping_inplace(self, frame, side):
+        """
+        Changes frame_mapping and the object is updated inplace
+        side = 'old' or 'new'
+        """
+        new_frame = self.frame_mapping_parameters(frame, side)
+        self.frame = new_frame
 
     def rectangular_cut(self, theta1: float, theta2: float,
                         z1: float, z2: float, name: str = ''):
@@ -1210,20 +1220,41 @@ class CylindricalSurface3D(Surface3D):
         surface2d = Surface2D(outer_contour, [])
         return volmdlr.faces.CylindricalFace3D(self, surface2d, name)
 
-    def translation(self, offset: volmdlr.Vector3D, copy=True):
-        if copy:
-            return self.__class__(self.frame.translation(offset, copy=True),
-                                  self.radius)
-        else:
-            self.frame.translation(offset, copy=False)
+    def rotation(self, center, axis, angle):
+        """
+        CylindricalFace3D rotation
+        :param center: rotation center
+        :param axis: rotation axis
+        :param angle: angle rotation
+        :return: a new rotated Plane3D
+        """
+        new_frame = self.frame.rotation(center=center, axis=axis,
+                                        angle=angle, copy=True)
+        return CylindricalFace3D(new_frame, self.radius)
 
-    def rotation(self, center, axis, angle, copy=True):
-        if copy:
-            new_frame = self.frame.rotation(center=center, axis=axis,
-                                            angle=angle, copy=True)
-            return self.__class__(new_frame, self.radius)
-        else:
-            self.frame.rotation(center, axis, angle, copy=False)
+    def rotation_inplace(self, center, axis, angle):
+        """
+        CylindricalFace3D rotation. Object is updated inplace
+        :param center: rotation center
+        :param axis: rotation axis
+        :param angle: rotation angle
+        """
+        self.frame.rotation_inplace(center, axis, angle)
+
+    def translation(self, offset: volmdlr.Vector3D):
+        """
+        CylindricalFace3D translation
+        :param offset: translation vector
+        :return: A new translated CylindricalFace3D
+        """
+        return CylindricalFace3D(self.frame.translation(offset), self.radius)
+
+    def translation_inplace(self, offset: volmdlr.Vector3D):
+        """
+        CylindricalFace3D translation. Object is updated inplace
+        :param offset: translation vector
+        """
+        self.frame.translation_inplace(offset)
 
     def grid3d(self, points_x, points_y, xmin, xmax, ymin, ymax):
         '''
@@ -1324,33 +1355,21 @@ class ToroidalSurface3D(Surface3D):
                     round(1000 * self.r, 3))
         return content, [current_id]
 
-    def frame_mapping(self, frame, side, copy=True):
-        basis = frame.Basis()
-        if side == 'new':
-            new_origin = frame.new_coordinates(self.frame.origin)
-            new_u = basis.new_coordinates(self.frame.u)
-            new_v = basis.new_coordinates(self.frame.v)
-            new_w = basis.new_coordinates(self.frame.w)
-            new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
-            if copy:
-                return ToroidalSurface3D(new_frame,
-                                         self.R, self.r,
-                                         name=self.name)
-            else:
-                self.frame = new_frame
+    def frame_mapping(self, frame, side):
+        """
+        Changes frame_mapping and return a new ToroidalSurface3D
+        side = 'old' or 'new'
+        """
+        new_frame = self.frame_mapping_parameters(frame, side)
+        return ToroidalSurface3D(new_frame, self.R, self.r, name=self.name)
 
-        if side == 'old':
-            new_origin = frame.old_coordinates(self.frame.origin)
-            new_u = basis.old_coordinates(self.frame.u)
-            new_v = basis.old_coordinates(self.frame.v)
-            new_w = basis.old_coordinates(self.frame.w)
-            new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
-            if copy:
-                return ToroidalSurface3D(new_frame,
-                                         self.R, self.r,
-                                         name=self.name)
-            else:
-                self.frame = new_frame
+    def frame_mapping_inplace(self, frame, side):
+        """
+        Changes frame_mapping and the object is updated inplace
+        side = 'old' or 'new'
+        """
+        new_frame = self.frame_mapping_parameters(frame, side)
+        self.frame = new_frame
 
     def rectangular_cut(self, theta1, theta2, phi1, phi2, name=''):
         if phi1 == phi2:
@@ -1431,13 +1450,42 @@ class ToroidalSurface3D(Surface3D):
         else:
             self.frame.translation(offset, copy=False)
 
-    def rotation(self, center, axis, angle, copy=True):
-        if copy:
-            new_frame = self.frame.rotation(center=center, axis=axis,
-                                            angle=angle, copy=True)
-            return self.__class__(new_frame, self.R, self.r)
-        else:
-            self.frame.rotation(center, axis, angle, copy=False)
+    def translation(self, offset: volmdlr.Vector3D):
+        """
+        ToroidalSurface3D translation
+        :param offset: translation vector
+        :return: A new translated ToroidalSurface3D
+        """
+        return ToroidalSurface3D(self.frame.translation(
+            offset), self.R, self.r)
+
+    def translation_inplace(self, offset: volmdlr.Vector3D):
+        """
+        ToroidalSurface3D translation. Object is updated inplace
+        :param offset: translation vector
+        """
+        self.frame.translation_inplace(offset)
+
+    def rotation(self, center, axis, angle):
+        """
+        ToroidalSurface3D rotation
+        :param center: rotation center
+        :param axis: rotation axis
+        :param angle: angle rotation
+        :return: a new rotated ToroidalSurface3D
+        """
+        new_frame = self.frame.rotation(center=center, axis=axis,
+                                        angle=angle)
+        return self.__class__(new_frame, self.R, self.r)
+
+    def rotation_inplace(self, center, axis, angle):
+        """
+        ToroidalSurface3D rotation. Object is updated inplace
+        :param center: rotation center
+        :param axis: rotation axis
+        :param angle: rotation angle
+        """
+        self.frame.rotation_inplace(center, axis, angle)
 
 
 class ConicalSurface3D(Surface3D):
