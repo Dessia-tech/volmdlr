@@ -2653,7 +2653,7 @@ class BSplineSurface3D(Surface3D):
 
         return displacement
 
-    def point2d_parametric_to_dimension(self, point2d: volmdlr.Point3D, points_x, points_y, xmin, xmax, ymin, ymax):
+    def point2d_parametric_to_dimension(self, point2d: volmdlr.Point3D, grid2d: volmdlr.grid.Grid2D):
         '''
         convert a point2d from the parametric to the dimensioned frame
         '''
@@ -2668,17 +2668,30 @@ class BSplineSurface3D(Surface3D):
         elif point2d.y > 1:
             point2d.y = 1
 
-        if [points_x, points_y, xmin, xmax, ymin, ymax] in self._grids2d:
-            points_2d = self._grids2d[1]
+        if self._grids2d == grid2d:
+            points_2d = self._grids2d
         else:
-            points_2d = volmdlr.Point2D.grid2d(points_x, points_y, xmin, xmax, ymin, ymax)
-            self._grids2d = ([points_x, points_y, xmin, xmax, ymin, ymax], points_2d)
+            points_2d = grid2d.points
+            self._grids2d = grid2d
 
-        if [points_x, points_y, xmin, xmax, ymin, ymax] in self._displacements:
-            displacement = self._displacements[1]
+        if self._displacements:
+            displacement = self._displacements
         else:
-            displacement = self.grid2d_deformation(points_x, points_y, xmin, xmax, ymin, ymax)
-            self._displacements = ([points_x, points_y, xmin, xmax, ymin, ymax], displacement)
+            displacement = self.grid2d_deformation(grid2d)
+
+        points_x, points_y = grid2d.points_xy
+
+        # if [points_x, points_y, xmin, xmax, ymin, ymax] in self._grids2d:
+        #     points_2d = self._grids2d[1]
+        # else:
+        #     points_2d = volmdlr.Point2D.grid2d(points_x, points_y, xmin, xmax, ymin, ymax)
+        #     self._grids2d = ([points_x, points_y, xmin, xmax, ymin, ymax], points_2d)
+
+        # if [points_x, points_y, xmin, xmax, ymin, ymax] in self._displacements:
+        #     displacement = self._displacements[1]
+        # else:
+        #     displacement = self.grid2d_deformation(points_x, points_y, xmin, xmax, ymin, ymax)
+        #     self._displacements = ([points_x, points_y, xmin, xmax, ymin, ymax], displacement)
 
         # Parameters
         index_points = {}  # grid point position(j,i), point position in points_2d (or points_3d)
