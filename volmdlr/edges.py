@@ -1416,6 +1416,7 @@ class Arc2D(Arc):
 
     points = property(_get_points)
 
+
     def point_distance(self, point):
         vector_start = self.start - self.center
         vector_point = point - self.center
@@ -4044,7 +4045,7 @@ class Arc3D(Arc):
 
             surface = volmdlr.faces.SphericalSurface3D(
                 volmdlr.Frame3D(self.center, u, v, axis), self.radius)
-            surface.plot()
+
             return [surface.rectangular_cut(0, angle,
                                             arc2d.angle1, arc2d.angle2)]
 
