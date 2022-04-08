@@ -2755,15 +2755,14 @@ class BSplineSurface3D(Surface3D):
 
         return volmdlr.Point2D(point2d.x + npy.transpose(N).dot(dx), point2d.y + npy.transpose(N).dot(dy))
 
-    def point3d_to_2d_with_dimension(self, point3d: volmdlr.Point3D, points_x, points_y, xmin, xmax, ymin, ymax):
+    def point3d_to_2d_with_dimension(self, point3d: volmdlr.Point3D, grid2d: volmdlr.grid.Grid2D):
         '''
         compute the point2d of a point3d, on a Bspline surface, in the dimensioned frame
         '''
 
         point2d = self.point3d_to_2d(point3d)
 
-        point2d_with_dimension = self.point2d_parametric_to_dimension(
-            point2d, points_x, points_y, xmin, xmax, ymin, ymax)
+        point2d_with_dimension = self.point2d_parametric_to_dimension(point2d, grid2d)
 
         return point2d_with_dimension
 
