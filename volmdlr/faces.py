@@ -3422,7 +3422,7 @@ class BSplineSurface3D(Surface3D):
 
         return nearest_primitives
 
-    def edge3d_to_2d_with_dimension(self, edge3d, points_x, points_y):
+    def edge3d_to_2d_with_dimension(self, edge3d, grid2d: volmdlr.grid.Grid2D):
         '''
         compute the edge2d of a edge3d, on a Bspline surface, in the dimensioned frame
         '''
@@ -3431,7 +3431,7 @@ class BSplineSurface3D(Surface3D):
         method_name = f'{edge3d.__class__.__name__.lower()}_to_2d_with_dimension'
 
         if hasattr(self, method_name):
-            edge2d_dim = getattr(self, method_name)(edge3d, points_x, points_y)
+            edge2d_dim = getattr(self, method_name)(edge3d, grid2d)
             if edge2d_dim:
                 return edge2d_dim
             else:
@@ -3458,8 +3458,9 @@ class BSplineSurface3D(Surface3D):
 
         points_x = self._grids2d[0][0]
         points_y = self._grids2d[0][1]
+        (points_x, points_y) = self._grids2d.points_xy
 
-        contour = self.contour3d_to_2d_with_dimension(wire3d, points_x, points_y)
+        contour = self.contour3d_to_2d_with_dimension(wire3d, self._grids2d)
 
         return volmdlr.wires.Wire2D(contour.primitives)
 
