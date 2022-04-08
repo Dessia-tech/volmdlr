@@ -306,3 +306,23 @@ class Grid2D(DessiaObject):
 
         return cls(lists_points, direction)
 
+    def displacement_compared_to(self, initial_grid2d):
+        """
+        compute the deformation/displacement (dx,dy) of a grid2d based on an another grid2d
+
+        Parameters
+        ----------
+        grid2d : Grid2D
+
+        """
+
+        points_2d = initial_grid2d.points
+        points_2d_deformed = self.points
+
+        displacement = npy.ones(shape=(len(points_2d), 2))  #Grid2D points displacement
+        for i in range(0, len(displacement)):
+            displacement[i][0] = points_2d_deformed[i][0] - points_2d[i][0]
+            displacement[i][1] = points_2d_deformed[i][1] - points_2d[i][1]
+
+        return displacement
+
