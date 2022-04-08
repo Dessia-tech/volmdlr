@@ -2766,22 +2766,31 @@ class BSplineSurface3D(Surface3D):
 
         return point2d_with_dimension
 
-    def point2d_with_dimension_to_parametric_frame(self, point2d, points_x, points_y, xmin, xmax, ymin, ymax):
+    def point2d_with_dimension_to_parametric_frame(self, point2d, grid2d: volmdlr.grid.Grid2D):
         '''
         convert a point2d from the dimensioned to the parametric frame
         '''
 
-        if [points_x, points_y, xmin, xmax, ymin, ymax] in self._grids2d:
-            points_2d = self._grids2d[1]
-        else:
-            points_2d = volmdlr.Point2D.grid2d(points_x, points_y, xmin, xmax, ymin, ymax)
-            self._grids2d = ([points_x, points_y, xmin, xmax, ymin, ymax], points_2d)
+        if self._grids2d != grid2d:
+            self._grids2d = grid2d
+        if not self._grids2d_deformed:
+            self.grid2d_deformed(grid2d)
 
-        if [points_x, points_y, xmin, xmax, ymin, ymax] in self._grids2d_deformed:
-            points_2d_deformed = self._grids2d_deformed[1]
-        else:
-            points_2d_deformed = self.grid2d_deformed(points_x, points_y, xmin, xmax, ymin, ymax)
-            self._grids2d_deformed = ([points_x, points_y, xmin, xmax, ymin, ymax], points_2d_deformed)
+        points_2d = grid2d.points
+        points_2d_deformed = self._grids2d_deformed.points
+        points_x, points_y = grid2d.points_xy
+
+        # if [points_x, points_y, xmin, xmax, ymin, ymax] in self._grids2d:
+        #     points_2d = self._grids2d[1]
+        # else:
+        #     points_2d = volmdlr.Point2D.grid2d(points_x, points_y, xmin, xmax, ymin, ymax)
+        #     self._grids2d = ([points_x, points_y, xmin, xmax, ymin, ymax], points_2d)
+
+        # if [points_x, points_y, xmin, xmax, ymin, ymax] in self._grids2d_deformed:
+        #     points_2d_deformed = self._grids2d_deformed[1]
+        # else:
+        #     points_2d_deformed = self.grid2d_deformed(points_x, points_y, xmin, xmax, ymin, ymax)
+        #     self._grids2d_deformed = ([points_x, points_y, xmin, xmax, ymin, ymax], points_2d_deformed)
 
         # Parameters
         index_points = {}  # grid point position(j,i), point position in points_2d (or points_3d)
