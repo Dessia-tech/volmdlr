@@ -1803,9 +1803,9 @@ class BSplineSurface3D(Surface3D):
         volmdlr.core.Primitive3D.__init__(self, name=name)
 
         # Hidden Attributes
-        self._displacements = ()
-        self._grids2d = ()
-        self._grids2d_deformed = ()
+        self._displacements = None
+        self._grids2d = None
+        self._grids2d_deformed = None
 
     @property
     def x_periodicity(self):
