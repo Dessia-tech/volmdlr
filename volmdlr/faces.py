@@ -2670,12 +2670,12 @@ class BSplineSurface3D(Surface3D):
             point2d.y = 1
 
         if self._grids2d == grid2d:
-            points_2d = self._grids2d
+            points_2d = self._grids2d.points
         else:
             points_2d = grid2d.points
             self._grids2d = grid2d
 
-        if self._displacements:
+        if self._displacements is not None:
             displacement = self._displacements
         else:
             displacement = self.grid2d_deformation(grid2d)
