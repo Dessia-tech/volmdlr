@@ -3025,7 +3025,8 @@ class BSplineSurface3D(Surface3D):
 
         return arc3d  # it's a bsplinecurve3d
 
-    def contour2d_parametric_to_dimension(self, contour2d: volmdlr.wires.Contour2D, points_x, points_y):
+    def contour2d_parametric_to_dimension(self, contour2d: volmdlr.wires.Contour2D,
+                                          grid2d: volmdlr.grid.Grid2D):
         '''
         convert a contour2d from the parametric to the dimensioned frame
         '''
@@ -3038,7 +3039,7 @@ class BSplineSurface3D(Surface3D):
             method_name = f'{primitive2d.__class__.__name__.lower()}_parametric_to_dimension'
 
             if hasattr(self, method_name):
-                primitives = getattr(self, method_name)(primitive2d, points_x, points_y)
+                primitives = getattr(self, method_name)(primitive2d, grid2d)
                 if primitives:
                     primitives2d_dim.append(primitives)
 
@@ -3048,14 +3049,15 @@ class BSplineSurface3D(Surface3D):
 
         return volmdlr.wires.Contour2D(primitives2d_dim)
 
-    def contour3d_to_2d_with_dimension(self, contour3d: volmdlr.wires.Contour3D, points_x, points_y):
+    def contour3d_to_2d_with_dimension(self, contour3d: volmdlr.wires.Contour3D,
+                                       grid2d: volmdlr.grid.Grid2D):
         '''
         compute the contou2d of a contour3d, on a Bspline surface, in the dimensioned frame
         '''
 
         contour2d_01 = self.contour3d_to_2d(contour3d)
 
-        return self.contour2d_parametric_to_dimension(contour2d_01, points_x, points_y)
+        return self.contour2d_parametric_to_dimension(contour2d_01, grid2d)
 
     def contour2d_with_dimension_to_parametric_frame(self, contour2d):
         '''
