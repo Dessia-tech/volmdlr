@@ -3716,12 +3716,15 @@ class BSplineSurface3D(Surface3D):
         # grid3d
         points3d = []
         for i, bspline in enumerate(bsplines_new):
-            grid2d = volmdlr.Point2D.grid2d_with_direction(
-                50, 50, xmin[i], xmax[i], ymin[i], ymax[i], grid2d_direction[i])[0]
-            grid3d = []
-            for p in grid2d:
-                grid3d.append(bspline.point2d_to_3d(p))
+            grid2d = volmdlr.grid.Grid2D.from_properties((xmin[i], xmax[i]), (ymin[i], ymax[i]),
+                                                         (50, 50), direction=grid2d_direction[i])
+            # grid2d = volmdlr.Point2D.grid2d_with_direction(
+            #     50, 50, xmin[i], xmax[i], ymin[i], ymax[i], grid2d_direction[i])[0]
+            # grid3d = []
+            # for p in grid2d:
+            #     grid3d.append(bspline.point2d_to_3d(p))
 
+            grid3d = bspline.grid3d(grid2d)
             points3d.extend(grid3d)
 
             # fitting
