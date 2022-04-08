@@ -2917,12 +2917,11 @@ class BSplineSurface3D(Surface3D):
 
         return linesegment3d
 
-    def bsplinecurve2d_parametric_to_dimension(self, bsplinecurve2d, points_x, points_y):
+    def bsplinecurve2d_parametric_to_dimension(self, bsplinecurve2d, grid2d: volmdlr.grid.Grid2D):
         '''
         convert a bsplinecurve2d from the parametric to the dimensioned frame
         '''
 
-        xmin, xmax, ymin, ymax = 0, 1, 0, 1
         # check if bsplinecurve2d is in a list
         if isinstance(bsplinecurve2d, list):
             bsplinecurve2d = bsplinecurve2d[0]
@@ -2930,7 +2929,7 @@ class BSplineSurface3D(Surface3D):
         points_dim = []
 
         for p in points:
-            points_dim.append(self.point2d_parametric_to_dimension(p, points_x, points_y, xmin, xmax, ymin, ymax))
+            points_dim.append(self.point2d_parametric_to_dimension(p, grid2d))
 
         bsplinecurve2d_with_dimension = volmdlr.edges.BSplineCurve2D(bsplinecurve2d.degree, points_dim,
                                                                      bsplinecurve2d.knot_multiplicities,
@@ -2940,14 +2939,14 @@ class BSplineSurface3D(Surface3D):
 
         return bsplinecurve2d_with_dimension
 
-    def bsplinecurve3d_to_2d_with_dimension(self, bsplinecurve3d, points_x, points_y):
+    def bsplinecurve3d_to_2d_with_dimension(self, bsplinecurve3d, grid2d: volmdlr.grid.Grid2D):
         '''
         compute the bsplinecurve2d of a bsplinecurve3d, on a Bspline surface, in the dimensioned frame
         '''
 
         bsplinecurve2d_01 = self.bsplinecurve3d_to_2d(bsplinecurve3d)
         bsplinecurve2d_with_dimension = self.bsplinecurve2d_parametric_to_dimension(
-            bsplinecurve2d_01, points_x, points_y)
+            bsplinecurve2d_01, grid2d)
 
         return bsplinecurve2d_with_dimension
 
@@ -2958,12 +2957,9 @@ class BSplineSurface3D(Surface3D):
 
         points_dim = bsplinecurve2d.control_points
         points = []
-        [points_x, points_y, xmin, xmax, ymin, ymax] = self._grids2d[0]
-
         for p in points_dim:
             points.append(
-                self.point2d_with_dimension_to_parametric_frame(
-                    p, points_x, points_y, xmin, xmax, ymin, ymax))
+                self.point2d_with_dimension_to_parametric_frame(p, self._grids2d))
 
         bsplinecurve2d = volmdlr.edges.BSplineCurve2D(bsplinecurve2d.degree, points,
                                                       bsplinecurve2d.knot_multiplicities,
