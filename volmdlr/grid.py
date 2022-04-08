@@ -289,3 +289,20 @@ class Grid2D(DessiaObject):
             points.extend(list_point)
         return points
 
+    @classmethod
+    def from_points(cls, points, points_dim_1, direction):
+        """
+        define a Grid2D given a list of points, number of points along the 1st dimension, and a direction
+
+        Parameters
+        ----------
+        points : list[volmdlr.Point2D]
+        points_dim1 : int
+        direction : List[str]
+
+        """
+
+        lists_points = [points[i:i+points_dim_1] for i in range(0, len(points), points_dim_1)]
+
+        return cls(lists_points, direction)
+
