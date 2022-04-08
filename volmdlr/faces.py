@@ -2614,29 +2614,44 @@ class BSplineSurface3D(Surface3D):
 
     #     return points_2d_deformed
 
-    def grid2d_deformation(self, points_x, points_y, xmin, xmax, ymin, ymax):
+    # def grid2d_deformation(self, points_x, points_y, xmin, xmax, ymin, ymax):
+    #     '''
+    #     compute the deformation/displacement (dx/dy) of a 2d grid points based on a Bspline surface with:
+    #     (xmin,xmax,points_x) limits and number of points in x,
+    #     (ymin,ymax,points_y) limits and number of points in y
+
+    #     '''
+
+    #     points_2d = volmdlr.Point2D.grid2d(points_x, points_y, xmin, xmax, ymin, ymax)
+
+    #     if [points_x, points_y, xmin, xmax, ymin, ymax] in self._grids2d_deformed:
+    #         points_2d_deformed = self._grids2d_deformed[1]
+    #     else:
+    #         points_2d_deformed = self.grid2d_deformed(points_x, points_y, xmin, xmax, ymin, ymax)
+    #         self._grids2d_deformed = ([points_x, points_y, xmin, xmax, ymin, ymax], points_2d_deformed)
+
+    #     # Displacement,Deformation dx/dy
+    #     displacement = npy.ones(shape=(len(points_2d), 2))  # 2D grid points displacement
+    #     for i in range(0, len(displacement)):
+    #         displacement[i][0] = points_2d_deformed[i][0] - points_2d[i][0]
+    #         displacement[i][1] = points_2d_deformed[i][1] - points_2d[i][1]
+
+    #     self._displacements = ([points_x, points_y, xmin, xmax, ymin, ymax], displacement)
+
+    #     return displacement
+
+    def grid2d_deformation(self, grid2d: volmdlr.grid.Grid2D):
         '''
-        compute the deformation/displacement (dx/dy) of a 2d grid points based on a Bspline surface with:
-        (xmin,xmax,points_x) limits and number of points in x,
-        (ymin,ymax,points_y) limits and number of points in y
-
+        compute the deformation/displacement (dx/dy) of a Grid2D based on a Bspline surface
         '''
 
-        points_2d = volmdlr.Point2D.grid2d(points_x, points_y, xmin, xmax, ymin, ymax)
+        points_2d = grid2d.points
 
-        if [points_x, points_y, xmin, xmax, ymin, ymax] in self._grids2d_deformed:
-            points_2d_deformed = self._grids2d_deformed[1]
-        else:
-            points_2d_deformed = self.grid2d_deformed(points_x, points_y, xmin, xmax, ymin, ymax)
-            self._grids2d_deformed = ([points_x, points_y, xmin, xmax, ymin, ymax], points_2d_deformed)
+        if not self._grids2d_deformed:
+            points_2d_deformed = self.grid2d_deformed(grid2d)
 
-        # Displacement,Deformation dx/dy
-        displacement = npy.ones(shape=(len(points_2d), 2))  # 2D grid points displacement
-        for i in range(0, len(displacement)):
-            displacement[i][0] = points_2d_deformed[i][0] - points_2d[i][0]
-            displacement[i][1] = points_2d_deformed[i][1] - points_2d[i][1]
-
-        self._displacements = ([points_x, points_y, xmin, xmax, ymin, ymax], displacement)
+        displacement = self._grids2d_deformed.displacement_compared_to(grid2d)
+        self._displacements = displacement
 
         return displacement
 
