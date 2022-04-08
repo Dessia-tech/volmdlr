@@ -2645,10 +2645,8 @@ class BSplineSurface3D(Surface3D):
         compute the deformation/displacement (dx/dy) of a Grid2D based on a Bspline surface
         '''
 
-        points_2d = grid2d.points
-
         if not self._grids2d_deformed:
-            points_2d_deformed = self.grid2d_deformed(grid2d)
+            self.grid2d_deformed(grid2d)
 
         displacement = self._grids2d_deformed.displacement_compared_to(grid2d)
         self._displacements = displacement
