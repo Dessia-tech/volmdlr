@@ -28,8 +28,8 @@ scripts = [
             'primitives/cylinders.py',
             # Faces
             'faces/triangle3d.py',
-            'faces/bspline.py',
-            'faces/bspline_bark.py',
+            # 'faces/bspline.py',
+            # 'faces/bspline_bark.py',
             'faces/union.py',
             'faces/blocks_set_operations.py',
             'faces/BSplineSurface/bspline_curves.py',
