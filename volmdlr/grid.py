@@ -34,7 +34,7 @@ class Grid2D(DessiaObject):
         points_2d = initial_grid2d.points
         points_2d_deformed = self.points
 
-        displacement = npy.ones(shape=(len(points_2d), 2))  #Grid2D points displacement
+        displacement = npy.ones(shape=(len(points_2d), 2))  # Grid2D points displacement
         for i in range(0, len(displacement)):
             displacement[i][0] = points_2d_deformed[i][0] - points_2d[i][0]
             displacement[i][1] = points_2d_deformed[i][1] - points_2d[i][1]
@@ -76,7 +76,7 @@ class Grid2D(DessiaObject):
 
         """
 
-        lists_points = [points[i:i+points_dim_1] for i in range(0, len(points), points_dim_1)]
+        lists_points = [points[i:i + points_dim_1] for i in range(0, len(points), points_dim_1)]
 
         return cls(lists_points, direction)
 
