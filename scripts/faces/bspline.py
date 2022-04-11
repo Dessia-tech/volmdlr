@@ -33,7 +33,7 @@ surface = vmf.BSplineSurface3D(degree_u=2,
 face = surface.rectangular_cut(0, 1, 0, 1)
 face._check_platform()
 
-# face.babylonjs()
+face.babylonjs()
                  # degree=2,
                  #               control_points=points2d,
                  #               knot_multiplicities=[1, 2, 2, 1],
