@@ -2112,7 +2112,7 @@ class Contour2D(Contour, Wire2D):
         for point in points_intersections[1::]:
             not_in = {False}
             for point_new in points_intersections_new:
-                check = point_new.point_distance(point)<1e-1
+                check = point_new.point_distance(point)<0.2 #1e-1
                 if check:
                     if wire.point_distance(point_new) > wire.point_distance(point):
                         points_intersections_new[points_intersections_new.index(point_new)]=point
