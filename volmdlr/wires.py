@@ -2106,13 +2106,16 @@ class Contour2D(Contour, Wire2D):
         intersections = self.wire_crossings(wire)  # crossings OR intersections (?)
         if len(intersections)==0:
             return [self]
-        
+
         points_intersections = [point for point, prim in intersections]
         points_intersections_new = [points_intersections[0]]
         for point in points_intersections[1::]:
             not_in = {False}
             for point_new in points_intersections_new:
                 check = point_new.point_distance(point)<1e-1
+                if check:
+                    if wire.point_distance(point_new) > wire.point_distance(point):
+                        points_intersections_new[points_intersections_new.index(point_new)]=point
                 not_in.add(check)
             # print(not_in)
             if not_in == {False}:
