@@ -1416,7 +1416,6 @@ class Arc2D(Arc):
 
     points = property(_get_points)
 
-
     def point_distance(self, point):
         vector_start = self.start - self.center
         vector_point = point - self.center
