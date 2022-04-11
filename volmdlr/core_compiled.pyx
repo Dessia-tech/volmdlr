@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+gr#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #cython: language_level=3
 """
@@ -589,132 +589,132 @@ class Point2D(Vector2D):
     def point_distance(self, other_point:'Point2D'):
         return (self-other_point).norm()
 
-    @classmethod
-    def grid2d(cls, points_x, points_y, xmin, xmax, ymin, ymax):
-        '''
-        generate 2d grid points with (xmin,xmax,points_x) limits and number of points in x, (ymin,ymax,points_y) limits and number of points in y
-        '''
+    # @classmethod
+    # def grid2d(cls, points_x, points_y, xmin, xmax, ymin, ymax):
+    #     '''
+    #     generate 2d grid points with (xmin,xmax,points_x) limits and number of points in x, (ymin,ymax,points_y) limits and number of points in y
+    #     '''
         
-        x = npy.linspace(xmin, xmax, points_x) 
-        y = npy.linspace(ymin, ymax, points_y) 
-        points_2d = [] 
+    #     x = npy.linspace(xmin, xmax, points_x) 
+    #     y = npy.linspace(ymin, ymax, points_y) 
+    #     points_2d = [] 
         
-        for yi in y:
-            for xi in x:
-                points_2d.append(cls(xi, yi)) 
+    #     for yi in y:
+    #         for xi in x:
+    #             points_2d.append(cls(xi, yi)) 
                 
-        return points_2d
+    #     return points_2d
 
-    @classmethod
-    def grid2d_with_direction(cls, points_x, points_y, xmin, xmax, ymin, ymax, direction):
-        '''
-        generate 2d grid points with (xmin,xmax,points_x) limits and number of points in x, (ymin,ymax,points_y) limits and number of points in y
-        given a direction to order the generated points
-        direction can be: ['+x','+y'], ['-x','+y'], ['+y','+x'], ['-y','+x']
-                          ['+x','-y'], ['-x','-y'], ['-x','+y'], ['-y','-x']
-        '''
+    # @classmethod
+    # def grid2d_with_direction(cls, points_x, points_y, xmin, xmax, ymin, ymax, direction):
+    #     '''
+    #     generate 2d grid points with (xmin,xmax,points_x) limits and number of points in x, (ymin,ymax,points_y) limits and number of points in y
+    #     given a direction to order the generated points
+    #     direction can be: ['+x','+y'], ['-x','+y'], ['+y','+x'], ['-y','+x']
+    #                       ['+x','-y'], ['-x','-y'], ['-x','+y'], ['-y','-x']
+    #     '''
         
-        points_2d = [] 
-        grid = []
-        points = []
+    #     points_2d = [] 
+    #     grid = []
+    #     points = []
         
-        if direction == ['+x','+y']:
-            x = npy.linspace(xmin, xmax, points_x) 
-            y = npy.linspace(ymin, ymax, points_y) 
+    #     if direction == ['+x','+y']:
+    #         x = npy.linspace(xmin, xmax, points_x) 
+    #         y = npy.linspace(ymin, ymax, points_y) 
 
-            for yi in y:
-                for xi in x:
-                    points_2d.append(cls(xi, yi))
-                    points.append(cls(xi, yi))
+    #         for yi in y:
+    #             for xi in x:
+    #                 points_2d.append(cls(xi, yi))
+    #                 points.append(cls(xi, yi))
                 
-                grid.append(points)
-                points = []
+    #             grid.append(points)
+    #             points = []
         
-        elif direction == ['-x','+y']:
-            x = npy.linspace(xmax, xmin, points_x) 
-            y = npy.linspace(ymin, ymax, points_y) 
+    #     elif direction == ['-x','+y']:
+    #         x = npy.linspace(xmax, xmin, points_x) 
+    #         y = npy.linspace(ymin, ymax, points_y) 
 
-            for yi in y:
-                for xi in x:
-                    points_2d.append(cls(xi, yi))
-                    points.append(cls(xi, yi))
+    #         for yi in y:
+    #             for xi in x:
+    #                 points_2d.append(cls(xi, yi))
+    #                 points.append(cls(xi, yi))
 
-                grid.append(points)
-                points = []
+    #             grid.append(points)
+    #             points = []
                 
-        elif direction == ['+y','+x']:
-            x = npy.linspace(xmin, xmax, points_x) 
-            y = npy.linspace(ymin, ymax, points_y) 
+    #     elif direction == ['+y','+x']:
+    #         x = npy.linspace(xmin, xmax, points_x) 
+    #         y = npy.linspace(ymin, ymax, points_y) 
             
-            for xi in x:
-                for yi in y:
-                    points_2d.append(cls(xi, yi))
-                    points.append(cls(xi, yi))
+    #         for xi in x:
+    #             for yi in y:
+    #                 points_2d.append(cls(xi, yi))
+    #                 points.append(cls(xi, yi))
         
-                grid.append(points)
-                points = []
+    #             grid.append(points)
+    #             points = []
 
-        elif direction == ['-y','+x']:
-            x = npy.linspace(xmin, xmax, points_x) 
-            y = npy.linspace(ymax, ymin, points_y) 
+    #     elif direction == ['-y','+x']:
+    #         x = npy.linspace(xmin, xmax, points_x) 
+    #         y = npy.linspace(ymax, ymin, points_y) 
 
-            for xi in x:
-                for yi in y:
-                    points_2d.append(cls(xi, yi))
-                    points.append(cls(xi, yi))
+    #         for xi in x:
+    #             for yi in y:
+    #                 points_2d.append(cls(xi, yi))
+    #                 points.append(cls(xi, yi))
                     
-                grid.append(points)
-                points = []
+    #             grid.append(points)
+    #             points = []
            
-        elif direction == ['+x','-y']:
-            x = npy.linspace(xmin, xmax, points_x) 
-            y = npy.linspace(ymax, ymin, points_y) 
+    #     elif direction == ['+x','-y']:
+    #         x = npy.linspace(xmin, xmax, points_x) 
+    #         y = npy.linspace(ymax, ymin, points_y) 
 
-            for yi in y:
-                for xi in x:
-                    points_2d.append(cls(xi, yi))
-                    points.append(cls(xi, yi))
+    #         for yi in y:
+    #             for xi in x:
+    #                 points_2d.append(cls(xi, yi))
+    #                 points.append(cls(xi, yi))
                 
-                grid.append(points)
-                points = []
+    #             grid.append(points)
+    #             points = []
 
-        elif direction == ['-x','-y']:
-            x = npy.linspace(xmax, xmin, points_x) 
-            y = npy.linspace(ymax, ymin, points_y) 
+    #     elif direction == ['-x','-y']:
+    #         x = npy.linspace(xmax, xmin, points_x) 
+    #         y = npy.linspace(ymax, ymin, points_y) 
 
-            for yi in y:
-                for xi in x:
-                    points_2d.append(cls(xi, yi)) 
-                    points.append(cls(xi, yi))
+    #         for yi in y:
+    #             for xi in x:
+    #                 points_2d.append(cls(xi, yi)) 
+    #                 points.append(cls(xi, yi))
                     
-                grid.append(points)
-                points = []    
+    #             grid.append(points)
+    #             points = []    
                     
-        elif direction == ['+y','-x']:
-            x = npy.linspace(xmax, xmin, points_x) 
-            y = npy.linspace(ymin, ymax, points_y) 
+    #     elif direction == ['+y','-x']:
+    #         x = npy.linspace(xmax, xmin, points_x) 
+    #         y = npy.linspace(ymin, ymax, points_y) 
 
-            for xi in x:
-                for yi in y:
-                    points_2d.append(cls(xi, yi)) 
-                    points.append(cls(xi, yi))
+    #         for xi in x:
+    #             for yi in y:
+    #                 points_2d.append(cls(xi, yi)) 
+    #                 points.append(cls(xi, yi))
                     
-                grid.append(points)
-                points = []
+    #             grid.append(points)
+    #             points = []
 
-        elif direction == ['-y','-x']:
-            x = npy.linspace(xmax, xmin, points_x) 
-            y = npy.linspace(ymax, ymin, points_y) 
+    #     elif direction == ['-y','-x']:
+    #         x = npy.linspace(xmax, xmin, points_x) 
+    #         y = npy.linspace(ymax, ymin, points_y) 
 
-            for xi in x:
-                for yi in y:
-                    points_2d.append(cls(xi, yi))
-                    points.append(cls(xi, yi))
+    #         for xi in x:
+    #             for yi in y:
+    #                 points_2d.append(cls(xi, yi))
+    #                 points.append(cls(xi, yi))
                     
-                grid.append(points)
-                points = []
+    #             grid.append(points)
+    #             points = []
 
-        return (points_2d, grid)
+    #     return (points_2d, grid)
         
 
     @classmethod
