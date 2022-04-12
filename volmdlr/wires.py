@@ -721,6 +721,24 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                 intersections_points.extend(intersections_linesegments)
         return intersections_points
 
+    def point_over_wire(self, point, abs_tol=1e-6):
+        belongs = False
+        for primitive in self.primitives:
+            if primitive.point_belongs(point, abs_tol):
+                belongs = True
+        return belongs
+
+    def primitive_over_wire(self, primitive, tol: float = 1e-6):
+        for prim in self.primitives:
+
+            vector1 = prim.unit_direction_vector(0.5)
+            vector2 = primitive.unit_direction_vector(0.5)
+
+            if vector1.is_colinear_to(vector2):
+                mid_point = primitive.middle_point()
+                if self.point_over_wire(mid_point, tol):
+                    return True
+        return False
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
     """
@@ -1461,30 +1479,10 @@ class Contour2D(Contour, Wire2D):
         return False
 
     def point_over_contour(self, point, abs_tol=1e-6):
-        belongs = False
-        for primitive in self.primitives:
-            if primitive.point_belongs(point, abs_tol):
-                belongs = True
-        return belongs
+        return self.point_over_wire(point, abs_tol)
 
     def primitive_over_contour(self, primitive, tol: float = 1e-6):
-        for prim in self.primitives:
-            if not hasattr(prim, 'unit_direction_vector') and \
-                    hasattr(prim, 'tangent'):
-                vector1 = prim.tangent(0.5)
-            else:
-                vector1 = prim.unit_direction_vector(0.5)
-
-            if not hasattr(primitive, 'unit_direction_vector') and \
-                    hasattr(primitive, 'tangent'):
-                vector2 = primitive.tangent(0.5)
-            else:
-                vector2 = primitive.unit_direction_vector(0.5)
-            if vector1.is_colinear_to(vector2):
-                mid_point = primitive.middle_point()
-                if self.point_over_contour(mid_point, tol):
-                    return True
-        return False
+        return self.primitive_over_wire(primitive, tol)
 
     def point_distance(self, point):
         min_distance = self.primitives[0].point_distance(point)
