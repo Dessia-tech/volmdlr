@@ -20,7 +20,7 @@ where one modifies the object inplace and the other creates a new object. Delete
 * Grid of point class
 
 ### New features
- 
+ * BSpline3D extrusion
 
 ## Midterm (6 months)
 ### New features
