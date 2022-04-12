@@ -4513,7 +4513,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                         if closing_point_index < ratio_denom / 4:
                             passed_by_zero_index = True
                         elif ratio_denom - list_closing_point_indexes[
-                                -1] >= 5:
+                                -1] >= 6:
                             closing_point_index = \
                                 list_closing_point_indexes[-1] + 5
                         else:
