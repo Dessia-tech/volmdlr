@@ -6904,7 +6904,9 @@ class ClosedShell3D(OpenShell3D):
         for face1 in self.faces:
             for face2 in shell2.faces:
                 if face1.surface3d.is_coincident(face2.surface3d):
-                    list_coincident_faces.append((face1, face2))
+                    if len(face1.surface2d.outer_contour.contour_intersections(
+                            face2.surface2d.outer_contour)) >= 2:
+                        list_coincident_faces.append((face1, face2))
 
         return list_coincident_faces
 
@@ -6940,21 +6942,21 @@ class ClosedShell3D(OpenShell3D):
 
     def set_operations_valid_exterior_faces(self, new_faces: List[Face3D],
                                             valid_faces: List[Face3D],
-                                            # list_coincident_faces: List[Face3D],
+                                            list_coincident_faces: List[Face3D],
                                             shell2, reference_shell):
         for new_face in new_faces:
             inside_reference_shell = reference_shell.point_belongs(
                 new_face.random_point_inside())
             if self.set_operations_exterior_face(new_face, valid_faces,
                                                  inside_reference_shell,
-                                                 # list_coincident_faces,
+                                                 list_coincident_faces,
                                                  shell2):
                 valid_faces.append(new_face)
         return valid_faces
 
     def union_faces(self, shell2, intersecting_faces,
                     intersecting_combinations,
-                    # list_coincident_faces
+                    list_coincident_faces
                     ):
         faces = []
         for face in intersecting_faces:
@@ -6964,7 +6966,7 @@ class ClosedShell3D(OpenShell3D):
                 intersecting_combinations, contour_extract_inside)
             faces = self.set_operations_valid_exterior_faces(
                 new_faces, faces,
-                # list_coincident_faces,
+                list_coincident_faces,
                 shell2, reference_shell)
         return faces
 
@@ -6984,7 +6986,7 @@ class ClosedShell3D(OpenShell3D):
                     faces.append(new_face)
             elif self.set_operations_exterior_face(new_face, faces,
                                                    inside_reference_shell,
-                                                   # list_coincident_faces,
+                                                   [],
                                                    shell2):
                 faces.append(new_face)
         return faces
@@ -7060,27 +7062,37 @@ class ClosedShell3D(OpenShell3D):
         return False
 
     def is_face_between_shells(self, shell2, face):
-        centroide = face.surface2d.outer_contour.center_of_mass()
-        normal1 = face.surface3d.point2d_to_3d(
-            centroide) - 0.001 * face.surface3d.frame.w
-        normal2 = face.surface3d.point2d_to_3d(
-            centroide) + 0.001 * face.surface3d.frame.w
-        if (self.point_belongs(normal1) and
-            shell2.point_belongs(normal2)) or \
-                (shell2.point_belongs(normal1) and
-                 self.point_belongs(normal2)):
-            return True
+        if face.surface2d.inner_contours:
+            normal_0 = face.surface2d.outer_contour.primitives[0].normal_vector()
+            middle_point_0 = face.surface2d.outer_contour.primitives[0].middle_point()
+            point1 = middle_point_0 + 0.0001 * normal_0
+            point2 = middle_point_0 - 0.0001 * normal_0
+            points = [point1, point2]
+        else:
+            points = [face.surface2d.outer_contour.center_of_mass()]
+
+        for point in points:
+            point3d = face.surface3d.point2d_to_3d(point)
+            if face.point_belongs(point3d):
+                normal1 = point3d - 0.00001 * face.surface3d.frame.w
+                normal2 = point3d + 0.00001 * face.surface3d.frame.w
+                if (self.point_belongs(normal1) and
+                    shell2.point_belongs(normal2)) or \
+                        (shell2.point_belongs(normal1) and
+                         self.point_belongs(normal2)):
+                    return True
         return False
 
     def set_operations_exterior_face(self, new_face, valid_faces,
                                      inside_reference_shell,
-                                     # list_coincident_faces,
+                                     list_coincident_faces,
                                      shell2):
         if new_face.area() < 1e-8:
             return False
         if new_face not in valid_faces and not inside_reference_shell:
-            if self.is_face_between_shells(shell2, new_face):
-                return False
+            if list_coincident_faces:
+                if self.is_face_between_shells(shell2, new_face):
+                    return False
             return True
         return False
 
@@ -7141,7 +7153,7 @@ class ClosedShell3D(OpenShell3D):
         # list_coincident_faces = self.get_coincident_faces(shell2)
         new_valid_faces = self.union_faces(shell2, intersecting_faces,
                                            intersecting_combinations,
-                                           # list_coincident_faces
+                                           list_coincident_faces
                                            )
 
         faces += new_valid_faces
@@ -7238,7 +7250,7 @@ class ClosedShell3D(OpenShell3D):
         faces = self.get_non_intersecting_faces(shell2, intersecting_faces)
         new_valid_faces = self.union_faces(shell2, intersecting_faces,
                                            intersecting_combinations,
-                                           # list_coincident_faces
+                                           list_coincident_faces
                                            )
         faces += new_valid_faces
         return [OpenShell3D(faces)]
