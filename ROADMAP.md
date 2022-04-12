@@ -17,9 +17,10 @@ where one modifies the object inplace and the other creates a new object. Delete
 * replace normalize() methodes by to_normal(). The object should no more be modified inplace.
 * edges: CompositePrimitive Inheritance (use UML graphs)
 * duplicated methods
+* Grid of point class
 
 ### New features
- * Grid of point class
+ 
 
 ## Midterm (6 months)
 ### New features
