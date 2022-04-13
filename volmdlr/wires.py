@@ -3422,7 +3422,7 @@ class Circle2D(Contour2D):
 
         for i in range(n):
             points.append(self.center + self.radius * vector)
-            vector.rotation(center=volmdlr.Point2D(0, 0), angle=2 * math.pi / n)
+            vector.rotation(center=volmdlr.Point2D(0, 0), angle=2 * math.pi / n, copy=False)
             vector.normalize()
 
         return points
