@@ -2504,7 +2504,7 @@ class LineSegment3D(LineSegment):
         self.points = [start, end]
         LineSegment.__init__(self, start=start, end=end, name=name)
 
-        self.self._bbox = None
+        self._bbox = None
 
     @property
     def bounding_box(self):
