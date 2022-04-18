@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * various fixes in cuts of wires and contours
 * Fix of missing face in Union
 * following dessia_common v0.7.0
+* Wire3D babylonjs
 
 ## v0.3.0
 
