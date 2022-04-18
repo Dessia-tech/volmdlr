@@ -499,12 +499,12 @@ class CompositePrimitive2D(Primitive2D):
         return plot_data
 
 
-class Primitive3D(CompositePrimitive):
+class Primitive3D(dc.PhysicalObject, CompositePrimitive):
     def __init__(self, color=None, alpha=1, name=''):
         self.color = color
         self.alpha = alpha
 
-        dc.DessiaObject.__init__(self, name=name)
+        dc.PhysicalObject.__init__(self, name=name)
 
     def volmdlr_primitives(self):
         return [self]
