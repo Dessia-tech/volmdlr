@@ -3486,6 +3486,9 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         return [BSplineCurve3D.from_geomdl_curve(curve1),
                 BSplineCurve3D.from_geomdl_curve(curve2)]
 
+    def triangulation(self):
+        return None
+
 
 class BezierCurve3D(BSplineCurve3D):
 
@@ -4127,6 +4130,9 @@ class Arc3D(Arc):
                 return True
         return False
 
+    def triangulation(self):
+        return None
+
 
 class FullArc3D(Arc3D):
     """
@@ -4523,3 +4529,6 @@ class ArcEllipse3D(Edge):
         xe, ye, ze = round(1000 * self.end, ndigits).vector
         return '{} = Part.Arc(fc.Vector({},{},{}),fc.Vector({},{},{}),fc.Vector({},{},{}))\n'.format(
             name, xs, ys, zs, xi, yi, zi, xe, ye, ze)
+
+    def triangulation(self):
+        return None
