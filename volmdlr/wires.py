@@ -1295,6 +1295,9 @@ class Contour(Wire):
                     return True
         return False
 
+    def point_over_contour(self, point, abs_tol=1e-6):
+        return self.point_over_wire(point, abs_tol)
+
 
 class Contour2D(Contour, Wire2D):
     """
