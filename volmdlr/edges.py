@@ -850,6 +850,14 @@ class BSplineCurve2D(Edge):
 
         return volmdlr.edges.BSplineCurve2D.from_points_interpolation(points, min(self.degree, bspline_curve.degree))
 
+    def linesegment_intersections(self, linesegment):
+        results = self.line_intersections(linesegment.to_line())
+        intersections_points = []
+        for result in results:
+            if linesegment.point_belongs(result, 1e-6):
+                intersections_points.append(result)
+        return intersections_points
+
 
 class BezierCurve2D(BSplineCurve2D):
 
