@@ -1364,12 +1364,12 @@ class Contour2D(Contour, Wire2D):
         # TODO: This is incomplete!!!
         return False
 
-    def point_over_contour(self, point, abs_tol=1e-6):
-        belongs = False
-        for primitive in self.primitives:
-            if primitive.point_belongs(point, abs_tol):
-                belongs = True
-        return belongs
+    # def point_over_contour(self, point, abs_tol=1e-6):
+    #     belongs = False
+    #     for primitive in self.primitives:
+    #         if primitive.point_belongs(point, abs_tol):
+    #             belongs = True
+    #     return belongs
 
     # def primitive_over_contour(self, primitive, tol: float = 1e-6):
     #     for prim in self.primitives:
@@ -3795,12 +3795,12 @@ class Contour3D(Contour, Wire3D):
 
         return self
 
-    def point_over_contour(self, point, abs_tol=1e-7):
-        belongs = False
-        for primitive in self.primitives:
-            if primitive.point_belongs(point, abs_tol):
-                belongs = True
-        return belongs
+    # def point_over_contour(self, point, abs_tol=1e-7):
+    #     belongs = False
+    #     for primitive in self.primitives:
+    #         if primitive.point_belongs(point, abs_tol):
+    #             belongs = True
+    #     return belongs
 
     def frame_mapping(self, frame, side, copy=True):
         """
