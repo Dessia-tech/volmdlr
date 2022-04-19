@@ -827,6 +827,14 @@ class BSplineCurve2D(Edge):
                 return True
         return False
 
+    def nearest_point_to(self, point):
+        '''
+        find out the nearest point on the linesegment to point
+        '''
+
+        points = self.polygon_points(500)
+        return point.nearest_point(points)
+
 
 class BezierCurve2D(BSplineCurve2D):
 
