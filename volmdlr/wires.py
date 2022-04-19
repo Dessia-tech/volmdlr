@@ -165,9 +165,8 @@ class Wire:
         find out if a point is on the wire or not. If it belongs, we return the primitive's index
         '''
 
-        for i, primitive in enumerate(self.primitives):
-            belongs = primitive.point_belongs(point, abs_tol=abs_tol)
-            if belongs:
+        for primitive in self.primitives:
+            if primitive.point_belongs(point, abs_tol):
                 return True
         return False
 
