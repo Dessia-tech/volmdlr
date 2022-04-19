@@ -260,12 +260,10 @@ class Wire:
         '''
 
         if self.is_ordered(tol=tol):
-            return self.copy()
+            return self.__class__(self.primitives[:])
 
-        ordered_wire = self.copy()
-
-        new_primitives = [ordered_wire.primitives[0]]
-        primitives = ordered_wire.primitives[1:]
+        new_primitives = [self.primitives[0]]
+        primitives = self.primitives[1:]
         length_primitives = len(primitives) + 1
 
         while len(new_primitives) < length_primitives:
@@ -283,9 +281,7 @@ class Wire:
                     new_primitives.append(primitive.reverse())
                     primitives.remove(primitive)
 
-        ordered_wire.primitives = new_primitives
-
-        return ordered_wire
+        return self.__class__(new_primitives)
 
     def is_followed_by(self, wire_2, tol=1e-6):
         '''
