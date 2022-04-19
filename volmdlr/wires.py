@@ -266,6 +266,13 @@ class Wire:
         else:
             return False
 
+    def point_over_wire(self, point, abs_tol=1e-6):
+        belongs = False
+        for primitive in self.primitives:
+            if primitive.point_belongs(point, abs_tol):
+                belongs = True
+        return belongs
+
 
 class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
     """
