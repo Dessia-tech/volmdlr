@@ -1277,23 +1277,7 @@ class Contour(Wire):
         return points
 
     def primitive_over_contour(self, primitive, tol: float = 1e-6):
-        for prim in self.primitives:
-            if not hasattr(prim, 'unit_direction_vector') and \
-                    hasattr(prim, 'tangent'):
-                vector1 = prim.tangent(0.5)
-            else:
-                vector1 = prim.unit_direction_vector(0.5)
-
-            if not hasattr(primitive, 'unit_direction_vector') and \
-                    hasattr(primitive, 'tangent'):
-                vector2 = primitive.tangent(0.5)
-            else:
-                vector2 = primitive.unit_direction_vector(0.5)
-            if vector1.is_colinear_to(vector2):
-                mid_point = primitive.middle_point()
-                if self.point_over_contour(mid_point, tol):
-                    return True
-        return False
+        return self.primitive_over_wire(primitive, tol)
 
     def point_over_contour(self, point, abs_tol=1e-6):
         return self.point_over_wire(point, abs_tol)
