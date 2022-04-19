@@ -923,7 +923,7 @@ class Contour(Wire):
 
         edges = []
         for primitive in self.primitives:
-            points = primitive.discretise(n)
+            points = primitive.discretization_points(n)
             for p1, p2 in zip(points[:-1], points[1:]):
                 edges.append(volmdlr.edges.LineSegment2D(p1, p2))
 
@@ -1273,7 +1273,7 @@ class Contour2D(Contour, Wire2D):
         points = self.edge_polygon.points[:]
         for primitive in self.primitives:
             if hasattr(primitive, 'polygon_points'):
-                points.extend(primitive.polygon_points())
+                points.extend(primitive.discretization_points(15))
         xmin = min([p[0] for p in points])
         xmax = max([p[0] for p in points])
         ymin = min([p[1] for p in points])
@@ -1587,10 +1587,7 @@ class Contour2D(Contour, Wire2D):
         # print([(line.start, line.end) for line in self.primitives])
 
         for primitive in self.primitives:
-            polygon_points.extend(primitive.polygon_points()[:-1])
-        #     print('1: ', primitive.polygon_points())
-        #     print('2 :', primitive.polygon_points()[:-1])
-        # print(polygon_points)
+            polygon_points.extend(primitive.discretization_points(15)[:-1])
         return ClosedPolygon2D(polygon_points)
 
     def grid_triangulation(self, x_density: float = None,
@@ -1788,7 +1785,6 @@ class Contour2D(Contour, Wire2D):
         """
         discretize each contour's primitive and return a new contour with teses discretized primitives
         """
-
         contour = volmdlr.wires.Contour2D((self.discretized_primitives(n)))
 
         return contour.order_contour()
@@ -3205,7 +3201,7 @@ class Circle2D(Contour2D):
 
     def to_polygon(self, angle_resolution: float):
         return ClosedPolygon2D(
-            self.polygon_points(angle_resolution=angle_resolution))
+            self.dicretization_points(angle_resolution=angle_resolution))
 
     def tessellation_points(self, resolution=40):
         return [(self.center
@@ -3416,28 +3412,34 @@ class Circle2D(Contour2D):
                 volmdlr.edges.Arc2D(split_start, interior_point2,
                                     split_end)]
 
-    def discretise(self, n: float):
-        # BUGGED: returns method
-        circle_to_nodes = {}
-        nodes = []
-        if n * self.length() < 1:
-            circle_to_nodes[self] = self.border_points
-        else:
-            n0 = int(math.ceil(n * self.length()))
-            l0 = self.length() / n0
+    # def discretise(self, n: float):
+    #     # BUGGED: returns method
+    #     circle_to_nodes = {}
+    #     nodes = []
+    #     if n * self.length() < 1:
+    #         circle_to_nodes[self] = self.border_points
+    #     else:
+    #         n0 = int(math.ceil(n * self.length()))
+    #         l0 = self.length() / n0
+    #
+    #         for k in range(n0):
+    #             node = self.point_at_abscissa(k * l0)
+    #
+    #             nodes.append(node)
+    #
+    #         circle_to_nodes[self] = nodes
+    #
+    #     return circle_to_nodes[self]
 
-            for k in range(n0):
-                node = self.point_at_abscissa(k * l0)
-
-                nodes.append(node)
-
-            circle_to_nodes[self] = nodes
-
-        return circle_to_nodes[self]
-
-    def polygon_points(self, angle_resolution=10):
-        return volmdlr.edges.Arc2D.polygon_points(
+    def dicretization_points(self, angle_resolution=10):
+        return volmdlr.edges.Arc2D.discretization_points(
             self, angle_resolution=angle_resolution)
+
+    def polygon_points(self, discretization_resolution: int):
+        warnings.warn(f'polygon_points is deprecated,'
+                      f'please use discretization_points instead',
+                      DeprecationWarning)
+        return self.discretization_points(discretization_resolution)
 
 
 class Contour3D(Contour, Wire3D):

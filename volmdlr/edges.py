@@ -7,6 +7,7 @@
 from typing import List
 import math
 
+import warnings
 from packaging import version
 import numpy as npy
 import scipy as scp
@@ -25,6 +26,7 @@ import dessia_common as dc
 import volmdlr.core_compiled
 import volmdlr.core
 import volmdlr.geometry
+
 
 
 def standardize_knot_vector(knot_vector):
@@ -71,21 +73,35 @@ class Edge(dc.DessiaObject):
         else:
             raise IndexError
 
-    def polygon_points(self, min_x_density=None, min_y_density=None):
-        n = 0  # Number of points to insert between start and end
-        if min_x_density:
-            dx = abs(self.start[0] - self.end[0])
-            n = max(n, math.floor(dx * min_x_density))
-        if min_y_density:
-            dy = abs(self.start[1] - self.end[1])
-            n = max(n, math.floor(dy * min_y_density))
+    def discretization_points(self, discretization_resolution: int=10):
+        """
+        discretize a Edge to have "n" points (including start and end points)
+        :return:
+        """
+        return [self.point_at_abscissa(i * self.length() / (discretization_resolution - 1)) for i in
+                range(discretization_resolution)]
 
-        if n:
-            l = self.length()
-            return [self.point_at_abscissa(i * l / (n + 1)) for i in
-                    range(n + 2)]
-        else:
-            return [self.start, self.end]
+    def polygon_points(self, discretization_resolution: int):
+        warnings.warn(f'polygon_points is deprecated,'
+                      f'please use discretization_points instead',
+                      DeprecationWarning)
+        return self.discretization_points(discretization_resolution)
+
+    # def polygon_points(self, min_x_density=None, min_y_density=None):
+    #     n = 0  # Number of points to insert between start and end
+    #     if min_x_density:
+    #         dx = abs(self.start[0] - self.end[0])
+    #         n = max(n, math.floor(dx * min_x_density))
+    #     if min_y_density:
+    #         dy = abs(self.start[1] - self.end[1])
+    #         n = max(n, math.floor(dy * min_y_density))
+    #
+    #     if n:
+    #         l = self.length()
+    #         return [self.point_at_abscissa(i * l / (n + 1)) for i in
+    #                 range(n + 2)]
+    #     else:
+    #         return [self.start, self.end]
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -569,7 +585,7 @@ class BSplineCurve2D(Edge):
                               )
 
     def bounding_rectangle(self):
-        points = self.polygon_points()
+        points = self.discretization_points()
         points_x = [p.x for p in points]
         points_y = [p.y for p in points]
 
@@ -679,7 +695,7 @@ class BSplineCurve2D(Edge):
         return cls.from_geomdl_curve(curve)
 
     def straight_line_area(self):
-        points = self.polygon_points(100)
+        points = self.discretization_points(100)
         x = [point.x for point in points]
         y = [point.y for point in points]
         x1 = [x[-1]] + x[0:-1]
@@ -688,7 +704,7 @@ class BSplineCurve2D(Edge):
                          - sum([i * j for i, j in zip(y, x1)]))
 
     def straight_line_center_of_mass(self):
-        polygon_points = self.polygon_points(100)
+        polygon_points = self.discretization_points(100)
         cog = volmdlr.O2D
         for point in polygon_points:
             cog += point
@@ -717,9 +733,16 @@ class BSplineCurve2D(Edge):
                               self.knot_multiplicities, self.knots,
                               self.weights, self.periodic)
 
-    def polygon_points(self, n=15):
+    def discretization_points(self, discretization_resolution: int = 15):
         l = self.length()
-        return [self.point_at_abscissa(i * l / n) for i in range(n + 1)]
+        return [self.point_at_abscissa(i * l / discretization_resolution)
+                for i in range(discretization_resolution + 1)]
+
+    def polygon_points(self, discretization_resolution: int):
+        warnings.warn(f'polygon_points is deprecated,'
+                      f'please use discretization_points instead',
+                      DeprecationWarning)
+        return self.discretization_points(discretization_resolution)
 
     def rotation(self, center, angle, copy=True):
         if copy:
@@ -744,7 +767,7 @@ class BSplineCurve2D(Edge):
                 p.translation(offset, copy=False)
 
     def line_intersections(self, line2d: Line2D):
-        polygon_points = self.polygon_points(200)
+        polygon_points = self.discretization_points(200)
         list_intersections = []
         length = self.length()
         initial_abscissa = 0
@@ -770,7 +793,7 @@ class BSplineCurve2D(Edge):
         return list_intersections
 
     def line_crossings(self, line2d: Line2D):
-        polygon_points = self.polygon_points(50)
+        polygon_points = self.discretization_points(50)
         crossings = []
         for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
             l = LineSegment2D(p1, p2)
@@ -837,7 +860,7 @@ class BSplineCurve2D(Edge):
 
     def point_distance(self, point):
         distance = math.inf
-        polygon_points = self.polygon_points(n=20)
+        polygon_points = self.discretization_points(n=20)
         for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
             line = LineSegment2D(p1, p2)
             dist = line.point_distance(point)
@@ -1020,29 +1043,29 @@ class LineSegment2D(LineSegment):
         else:
             return self.linesegment_intersections(linesegment)
 
-    def discretise(self, n: float):
-        segment_to_nodes = {}
-
-        nodes = []
-        if n * self.length() < 1:
-            segment_to_nodes[self] = [self.start, self.end]
-        else:
-            n0 = int(math.ceil(n * self.length()))
-            l0 = self.length() / n0
-
-            for k in range(n0):
-                node = self.point_at_abscissa(k * l0)
-                nodes.append(node)
-
-            if self.end not in nodes:
-                nodes.append(self.end)
-
-            if self.start not in nodes:
-                nodes.insert(0, self.start)
-
-            segment_to_nodes[self] = nodes
-
-        return segment_to_nodes[self]
+    # def discretise(self, n: float):
+    #     segment_to_nodes = {}
+    #
+    #     nodes = []
+    #     if n * self.length() < 1:
+    #         segment_to_nodes[self] = [self.start, self.end]
+    #     else:
+    #         n0 = int(math.ceil(n * self.length()))
+    #         l0 = self.length() / n0
+    #
+    #         for k in range(n0):
+    #             node = self.point_at_abscissa(k * l0)
+    #             nodes.append(node)
+    #
+    #         if self.end not in nodes:
+    #             nodes.append(self.end)
+    #
+    #         if self.start not in nodes:
+    #             nodes.insert(0, self.start)
+    #
+    #         segment_to_nodes[self] = nodes
+    #
+    #     return segment_to_nodes[self]
 
     def plot(self, ax=None, color='k', alpha=1, arrow=False, width=None,
              plot_points=False):
@@ -1148,21 +1171,21 @@ class LineSegment2D(LineSegment):
     # def polygon_points(self, angle_resolution=0):
     #     return [self.start, self.end]
 
-    def polygon_points(self, min_x_density=None, min_y_density=None):
-        n = 0  # Number of points to insert between start and end
-        if min_x_density:
-            dx = abs(self.start[0] - self.end[0])
-            n = max(n, math.floor(dx * min_x_density))
-        if min_y_density:
-            dy = abs(self.start[1] - self.end[1])
-            n = max(n, math.floor(dy * min_y_density))
-
-        if n:
-            l = self.length()
-            return [self.point_at_abscissa(i * l / (n + 1)) for i in
-                    range(n + 2)]
-        else:
-            return [self.start, self.end]
+    # def polygon_points(self, min_x_density=None, min_y_density=None):
+    #     n = 0  # Number of points to insert between start and end
+    #     if min_x_density:
+    #         dx = abs(self.start[0] - self.end[0])
+    #         n = max(n, math.floor(dx * min_x_density))
+    #     if min_y_density:
+    #         dy = abs(self.start[1] - self.end[1])
+    #         n = max(n, math.floor(dy * min_y_density))
+    #
+    #     if n:
+    #         l = self.length()
+    #         return [self.point_at_abscissa(i * l / (n + 1)) for i in
+    #                 range(n + 2)]
+    #     else:
+    #         return [self.start, self.end]
 
     def infinite_primitive(self, offset):
         n = self.normal_vector()
@@ -1180,12 +1203,22 @@ class LineSegment2D(LineSegment):
     #     else :
     #         return LineSegment2D(intersection,infinite_primitive.point2)
 
-    def discretization_points(self, n: int):
-        '''
+    def discretization_points(self, discretization_resolution: int=15):
+        """
         discretize a LineSegment2D to have "n" points (including start and end points)
-        '''
+        :param discretization_resolution: number of points to discretize
+        :return: discretization_points
+        """
 
-        return [self.point_at_abscissa(i * self.length() / (n - 1)) for i in range(n)]
+        return [self.point_at_abscissa(
+            i * self.length() / (discretization_resolution - 1))
+            for i in range(discretization_resolution)]
+
+    def polygon_points(self, discretization_resolution: int):
+        warnings.warn(f'polygon_points is deprecated,'
+                      f'please use discretization_points instead',
+                      DeprecationWarning)
+        return self.discretization_points(discretization_resolution)
 
 
 class Arc(Edge):
@@ -1284,34 +1317,40 @@ class Arc(Edge):
     def middle_point(self):
         return self.point_at_abscissa(0.5 * self.length())
 
-    def polygon_points(self, angle_resolution=40):
+    def discretization_points(self, angle_resolution=40):
         number_points = math.ceil(self.angle * angle_resolution) + 2
         l = self.length()
         return [self.point_at_abscissa(i * l / number_points)
                 for i in range(number_points)]
 
-    def discretise(self, n: float):
+    def polygon_points(self, discretization_resolution: int):
+        warnings.warn(f'polygon_points is deprecated,'
+                      f'please use discretization_points instead',
+                      DeprecationWarning)
+        return self.discretization_points(discretization_resolution)
 
-        arc_to_nodes = {}
-        nodes = []
-        if n * self.length() < 1:
-            arc_to_nodes[self] = [self.start, self.end]
-        else:
-            n0 = int(math.ceil(n * self.length()))
-            l0 = self.length() / n0
-
-            for k in range(n0):
-                node = self.point_at_abscissa(k * l0)
-
-                nodes.append(node)
-            nodes.insert(len(nodes), self.end)
-
-            arc_to_nodes[self] = nodes
-
-        return arc_to_nodes[self]
+    # def discretise(self, n: float):
+    #
+    #     arc_to_nodes = {}
+    #     nodes = []
+    #     if n * self.length() < 1:
+    #         arc_to_nodes[self] = [self.start, self.end]
+    #     else:
+    #         n0 = int(math.ceil(n * self.length()))
+    #         l0 = self.length() / n0
+    #
+    #         for k in range(n0):
+    #             node = self.point_at_abscissa(k * l0)
+    #
+    #             nodes.append(node)
+    #         nodes.insert(len(nodes), self.end)
+    #
+    #         arc_to_nodes[self] = nodes
+    #
+    #     return arc_to_nodes[self]
 
     def point_distance(self, point):
-        points = self.polygon_points(angle_resolution=100)
+        points = self.discretization_points(angle_resolution=100)
         return point.point_distance(point.nearest_point(points))
 
 
@@ -1704,7 +1743,7 @@ class Arc2D(Arc):
     def plot_data(self, edge_style: plot_data.EdgeStyle = None,
                   anticlockwise: bool = None):
 
-        list_node = self.polygon_points()
+        list_node = self.discretization_points()
         data = []
         for nd in list_node:
             data.append({'x': nd.x, 'y': nd.y})
@@ -1886,7 +1925,7 @@ class FullArc2D(Arc2D):
         #     number_points = max(number_points,
         #                         min(densities) * self.angle * self.radius)
 
-        return volmdlr.wires.ClosedPolygon2D(self.polygon_points())
+        return volmdlr.wires.ClosedPolygon2D(self.discretization_points(15))
 
     def plot(self, ax=None, color='k', alpha=1, plot_points=False,
              linestyle='-', linewidth=1):
@@ -2049,11 +2088,11 @@ class ArcEllipse2D(Edge):
             self.offset_angle = angle2
 
     def _get_points(self):
-        return self.polygon_points()
+        return self.discretization_points()
 
     points = property(_get_points)
 
-    def polygon_points(self, angle_resolution=40):
+    def discretization_points(self, angle_resolution=40):
         number_points_tesselation = math.ceil(
             angle_resolution * abs(0.5 * self.angle / math.pi))
 
@@ -2072,6 +2111,13 @@ class ArcEllipse2D(Edge):
             global_points.append(frame2d.old_coordinates(pt))
 
         return global_points
+
+    def polygon_points(self, discretization_resolution: int):
+        warnings.warn(f'polygon_points is deprecated,'
+                      f'please use discretization_points instead',
+                      DeprecationWarning)
+        return self.discretization_points(discretization_resolution)
+
 
     def to_3d(self, plane_origin, x, y):
         ps = self.start.to_3d(plane_origin, x, y)
@@ -2105,7 +2151,7 @@ class ArcEllipse2D(Edge):
 
         x = []
         y = []
-        for px, py in self.polygon_points():
+        for px, py in self.discretization_points():
             x.append(px)
             y.append(py)
 
@@ -3386,8 +3432,14 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
                               self.knot_multiplicities, self.knots,
                               self.weights, self.periodic, self.name)
 
-    def polygon_points(self):
+    def discretization_points(self):
         return self.points
+
+    def polygon_points(self):
+        warnings.warn(f'polygon_points is deprecated,'
+                      f'please use discretization_points instead',
+                      DeprecationWarning)
+        return self.discretization_points()
 
     def curvature(self, u: float, point_in_curve: bool = False):
         # u should be in the interval [0,1]
@@ -3537,7 +3589,7 @@ class Arc3D(Arc):
 
     def get_bounding_box(self):
         # TODO: implement exact calculation
-        points = self.polygon_points()
+        points = self.discretization_points()
         xmin = min([p.x for p in points])
         xmax = max([p.x for p in points])
         ymin = min([p.y for p in points])
@@ -3771,7 +3823,7 @@ class Arc3D(Arc):
         x = []
         y = []
         z = []
-        for px, py, pz in self.polygon_points():
+        for px, py, pz in self.discretization_points():
             x.append(px)
             y.append(py)
             z.append(pz)
@@ -4242,7 +4294,7 @@ class FullArc3D(Arc3D):
         x = []
         y = []
         z = []
-        for px, py, pz in self.polygon_points():
+        for px, py, pz in self.discretization_points():
             x.append(px)
             y.append(py)
             z.append(pz)
@@ -4410,15 +4462,10 @@ class ArcEllipse3D(Edge):
             self.offset_angle = angle2
 
         volmdlr.core.CompositePrimitive3D.__init__(self,
-                                                   primitives=self.polygon_points(),
+                                                   primitives=self.discretization_points(),
                                                    name=name)
 
-    def _get_points(self):
-        return self.polygon_points()
-
-    points = property(_get_points)
-
-    def polygon_points(self, resolution_for_ellipse=40):
+    def discretization_points(self, resolution_for_ellipse=40):
         number_points_tesselation = math.ceil(
             resolution_for_ellipse * abs(0.5 * self.angle / math.pi))
 
@@ -4438,6 +4485,17 @@ class ArcEllipse3D(Edge):
             global_points.append(frame3d.old_coordinates(pt))
 
         return global_points
+
+    def polygon_points(self, discretization_resolution: int):
+        warnings.warn(f'polygon_points is deprecated,'
+                      f'please use discretization_points instead',
+                      DeprecationWarning)
+        return self.discretization_points(discretization_resolution)
+
+    def _get_points(self):
+        return self.discretization_points()
+
+    points = property(_get_points)
 
     def to_2d(self, plane_origin, x, y):
         ps = self.start.to_2d(plane_origin, x, y)
@@ -4489,7 +4547,7 @@ class ArcEllipse3D(Edge):
         x = []
         y = []
         z = []
-        for px, py, pz in self.polygon_points():
+        for px, py, pz in self.discretization_points():
             x.append(px)
             y.append(py)
             z.append(pz)

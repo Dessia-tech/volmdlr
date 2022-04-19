@@ -5,7 +5,7 @@
 """
 
 import math
-
+import warnings
 import matplotlib.patches
 
 import volmdlr
@@ -27,11 +27,17 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
         volmdlr.wires.Wire2D.__init__(self, self._primitives(), name)
 
-    def polygon_points(self, angle_resolution=5):
+    def discretization_points(self, discretization_resolution=5):
         points = []
         for primitive in self.primitives:
-            points.extend(primitive.polygon_points())
+            points.extend(primitive.discretization_points())
         return points
+
+    def polygon_points(self, discretization_resolution: int):
+        warnings.warn(f'polygon_points is deprecated,'
+                      f'please use discretization_points instead',
+                      DeprecationWarning)
+        return self.discretization_points(discretization_resolution)
 
     def arc_features(self, ipoint):
         radius = self.radius[ipoint]
