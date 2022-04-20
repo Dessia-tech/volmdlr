@@ -28,7 +28,6 @@ import volmdlr.core
 import volmdlr.geometry
 
 
-
 def standardize_knot_vector(knot_vector):
     u0 = knot_vector[0]
     u1 = knot_vector[-1]
@@ -73,7 +72,7 @@ class Edge(dc.DessiaObject):
         else:
             raise IndexError
 
-    def discretization_points(self, discretization_resolution: int=10):
+    def discretization_points(self, discretization_resolution: int = 10):
         """
         discretize a Edge to have "n" points (including start and end points)
         :return:
@@ -1203,7 +1202,7 @@ class LineSegment2D(LineSegment):
     #     else :
     #         return LineSegment2D(intersection,infinite_primitive.point2)
 
-    def discretization_points(self, discretization_resolution: int=0):
+    def discretization_points(self, discretization_resolution: int = 0):
         """
         discretize a LineSegment2D to have "n" points (including start and end points)
         :param discretization_resolution: number of points to discretize
@@ -2119,7 +2118,6 @@ class ArcEllipse2D(Edge):
                 please use discretization_points instead',
                       DeprecationWarning)
         return self.discretization_points(discretization_resolution)
-
 
     def to_3d(self, plane_origin, x, y):
         ps = self.start.to_3d(plane_origin, x, y)
