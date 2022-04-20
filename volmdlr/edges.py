@@ -1203,12 +1203,14 @@ class LineSegment2D(LineSegment):
     #     else :
     #         return LineSegment2D(intersection,infinite_primitive.point2)
 
-    def discretization_points(self, discretization_resolution: int=15):
+    def discretization_points(self, discretization_resolution: int=0):
         """
         discretize a LineSegment2D to have "n" points (including start and end points)
         :param discretization_resolution: number of points to discretize
         :return: discretization_points
         """
+        if discretization_resolution == 0:
+            return [self.start, self.end]
 
         return [self.point_at_abscissa(
             i * self.length() / (discretization_resolution - 1))
