@@ -1319,8 +1319,8 @@ class Arc(Edge):
     def middle_point(self):
         return self.point_at_abscissa(0.5 * self.length())
 
-    def discretization_points(self, angle_resolution=40):
-        number_points = math.ceil(self.angle * angle_resolution) + 2
+    def discretization_points(self, discretization_resolution=40):
+        number_points = math.ceil(self.angle * discretization_resolution) + 2
         l = self.length()
         return [self.point_at_abscissa(i * l / number_points)
                 for i in range(number_points)]
@@ -2094,9 +2094,9 @@ class ArcEllipse2D(Edge):
 
     points = property(_get_points)
 
-    def discretization_points(self, angle_resolution=40):
+    def discretization_points(self, discretization_resolution=40):
         number_points_tesselation = math.ceil(
-            angle_resolution * abs(0.5 * self.angle / math.pi))
+            discretization_resolution * abs(0.5 * self.angle / math.pi))
 
         frame2d = volmdlr.Frame2D(self.center, self.major_dir, self.minor_dir)
 
@@ -4463,9 +4463,9 @@ class ArcEllipse3D(Edge):
                                                    primitives=self.discretization_points(),
                                                    name=name)
 
-    def discretization_points(self, resolution_for_ellipse=40):
+    def discretization_points(self, discretization_resolution=40):
         number_points_tesselation = math.ceil(
-            resolution_for_ellipse * abs(0.5 * self.angle / math.pi))
+            discretization_resolution * abs(0.5 * self.angle / math.pi))
 
         frame3d = volmdlr.Frame3D(self.center, self.major_dir,
                                   self.minor_dir, self.normal)
