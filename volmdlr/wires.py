@@ -3861,9 +3861,9 @@ class Circle3D(Contour3D):
         return '{} = Part.Circle(fc.Vector({},{},{}),fc.Vector({},{},{}),{})\n'.format(
             name, xc, yc, zc, xn, yn, zn, 1000 * self.radius)
 
-    def rotation(self, rot_center, axis, angle, copy=True):
-        new_center = self.center.rotation(rot_center, axis, angle, True)
-        new_normal = self.normal.rotation(rot_center, axis, angle, True)
+    def rotation(self, center, axis, angle, copy=True):
+        new_center = self.center.rotation(center, axis, angle, True)
+        new_normal = self.normal.rotation(center, axis, angle, True)
         if copy:
             return Circle3D(new_center, self.radius, new_normal, self.name)
         else:
@@ -4175,10 +4175,10 @@ class Ellipse3D(Contour3D):
         return '{} = Part.Ellipse(fc.Vector({},{},{}), fc.Vector({},{},{}), fc.Vector({},{},{}))\n'.format(
             name, xmaj, ymaj, zmaj, xmin, ymin, zmin, xc, yc, zc)
 
-    def rotation(self, rot_center, axis, angle, copy=True):
-        new_center = self.center.rotation(rot_center, axis, angle, True)
-        new_normal = self.normal.rotation(rot_center, axis, angle, True)
-        new_major_dir = self.major_dir.rotation(rot_center, axis, angle, True)
+    def rotation(self, center, axis, angle, copy=True):
+        new_center = self.center.rotation(center, axis, angle, True)
+        new_normal = self.normal.rotation(center, axis, angle, True)
+        new_major_dir = self.major_dir.rotation(center, axis, angle, True)
         if copy:
             return Ellipse3D(self.major_axis, self.minor_axis, new_center,
                              new_normal, new_major_dir, self.name)
