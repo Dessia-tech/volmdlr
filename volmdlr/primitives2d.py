@@ -34,8 +34,8 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         return points
 
     def polygon_points(self, discretization_resolution: int):
-        warnings.warn(f'polygon_points is deprecated,'
-                      f'please use discretization_points instead',
+        warnings.warn('polygon_points is deprecated,\
+                please use discretization_points instead',
                       DeprecationWarning)
         return self.discretization_points(discretization_resolution)
 

@@ -3436,8 +3436,8 @@ class Circle2D(Contour2D):
             self, angle_resolution=angle_resolution)
 
     def polygon_points(self, discretization_resolution: int):
-        warnings.warn(f'polygon_points is deprecated,'
-                      f'please use discretization_points instead',
+        warnings.warn('polygon_points is deprecated,\
+                please use discretization_points instead',
                       DeprecationWarning)
         return self.discretization_points(discretization_resolution)
 

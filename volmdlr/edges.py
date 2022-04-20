@@ -82,8 +82,8 @@ class Edge(dc.DessiaObject):
                 range(discretization_resolution)]
 
     def polygon_points(self, discretization_resolution: int):
-        warnings.warn(f'polygon_points is deprecated,'
-                      f'please use discretization_points instead',
+        warnings.warn('polygon_points is deprecated,\
+        please use discretization_points instead',
                       DeprecationWarning)
         return self.discretization_points(discretization_resolution)
 
@@ -739,8 +739,8 @@ class BSplineCurve2D(Edge):
                 for i in range(discretization_resolution + 1)]
 
     def polygon_points(self, discretization_resolution: int):
-        warnings.warn(f'polygon_points is deprecated,'
-                      f'please use discretization_points instead',
+        warnings.warn('polygon_points is deprecated,\
+                please use discretization_points instead',
                       DeprecationWarning)
         return self.discretization_points(discretization_resolution)
 
@@ -1215,8 +1215,8 @@ class LineSegment2D(LineSegment):
             for i in range(discretization_resolution)]
 
     def polygon_points(self, discretization_resolution: int):
-        warnings.warn(f'polygon_points is deprecated,'
-                      f'please use discretization_points instead',
+        warnings.warn('polygon_points is deprecated,\
+        please use discretization_points instead',
                       DeprecationWarning)
         return self.discretization_points(discretization_resolution)
 
@@ -1324,8 +1324,8 @@ class Arc(Edge):
                 for i in range(number_points)]
 
     def polygon_points(self, discretization_resolution: int):
-        warnings.warn(f'polygon_points is deprecated,'
-                      f'please use discretization_points instead',
+        warnings.warn('polygon_points is deprecated,\
+        please use discretization_points instead',
                       DeprecationWarning)
         return self.discretization_points(discretization_resolution)
 
@@ -2113,8 +2113,8 @@ class ArcEllipse2D(Edge):
         return global_points
 
     def polygon_points(self, discretization_resolution: int):
-        warnings.warn(f'polygon_points is deprecated,'
-                      f'please use discretization_points instead',
+        warnings.warn('polygon_points is deprecated,\
+                please use discretization_points instead',
                       DeprecationWarning)
         return self.discretization_points(discretization_resolution)
 
@@ -3136,10 +3136,6 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
                                       tol=1e-9)
         return res.x[0]
 
-    def point_on_curve(self, point: volmdlr.Point3D):
-        # TODO: complete ?
-        pass
-
     def FreeCADExport(self, ip, ndigits=3):
         name = 'primitive{}'.format(ip)
         points = '['
@@ -3436,8 +3432,8 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         return self.points
 
     def polygon_points(self):
-        warnings.warn(f'polygon_points is deprecated,'
-                      f'please use discretization_points instead',
+        warnings.warn('polygon_points is deprecated,\
+        please use discretization_points instead',
                       DeprecationWarning)
         return self.discretization_points()
 
@@ -4487,8 +4483,8 @@ class ArcEllipse3D(Edge):
         return global_points
 
     def polygon_points(self, discretization_resolution: int):
-        warnings.warn(f'polygon_points is deprecated,'
-                      f'please use discretization_points instead',
+        warnings.warn('polygon_points is deprecated,\
+        please use discretization_points instead',
                       DeprecationWarning)
         return self.discretization_points(discretization_resolution)
 
