@@ -509,7 +509,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         else:
             inner_contours = []
 
-        return self.__class__.(outer_contour, inner_contours)
+        return self.__class__(outer_contour, inner_contours)
 
 
 class Surface3D(dc.DessiaObject):
