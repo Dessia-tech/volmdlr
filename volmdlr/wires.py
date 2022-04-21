@@ -539,6 +539,20 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                         crossings_points.append(a[0])
         return crossings
 
+    def axial_symmetry(self, line):
+        '''
+        finds out the symmetric wire2d according to a line
+        '''
+
+        primitives_symmetry  = []
+        for primitive in self.primitives:
+            try:
+                primitive_symmetry = primitive.axial_symmetry(line)
+            except NotImplementedError:
+                raise (f'Class {self.__class__.__name__} does not implement symmetry method')
+
+        return self.__class__(primitives=primitives_symmetry)
+
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
     """
