@@ -2598,11 +2598,6 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         points.pop(-1)
 
         # the first point is the one with the lowest x value
-
-        # i_min = points.index(min(map(lambda point: point.x, points)))
-        # i_min = points.index(points.sort(key=lambda point: point.x)[0])
-        # print(i_min)
-
         i_min = 0
         min_x = points[0].x
         for i, point in enumerate(points):
@@ -2610,14 +2605,12 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                 min_x = point.x
                 i_min = i
 
-        if i_min != 1:
+        points = points[i_min:] + points[:i_min]
+
+        # we make sure that the points are ordered in the trigonometric direction
+        if points[0].y < points[1].y:
             points.reverse()
 
-        if points[0] == points[-1]:
-            print('a')
-            return cls(points[:-1])
-
-        print('b')
         return cls(points)
 
     def to_3d(self, plane_origin, x, y):
