@@ -266,6 +266,7 @@ class Wire:
             return False
 
     def point_over_wire(self, point, abs_tol=1e-6):
+
         return self.point_belongs(point, abs_tol)
 
     def primitive_over_wire(self, primitive, tol: float = 1e-6):
