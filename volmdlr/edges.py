@@ -863,6 +863,20 @@ class BSplineCurve2D(Edge):
                 return True
         return False
 
+    def axial_symmetry(self, line):
+        '''
+        finds out the symmetric bsplinecurve2d according to a line
+        '''
+
+        points_symmetry = [point.axial_symmetry(line) for point in self.control_points]
+
+        return self.__class__(degree=self.degree,
+                              control_points=points_symmetry,
+                              knot_multiplicities=self.knot_multiplicities[::-1],
+                              knots=self.knots[::-1],
+                              weights=self.weights,
+                              periodic=self.periodic)
+
 
 class BezierCurve2D(BSplineCurve2D):
 
@@ -1192,7 +1206,7 @@ class LineSegment2D(LineSegment):
         finds out the symmetric linesegment2d according to a line
         '''
 
-        points_symmetry = [point.symmetry(line) for point in [self.start, self.end]]
+        points_symmetry = [point.axial_symmetry(line) for point in [self.start, self.end]]
 
         return self.__class__(points_symmetry[0], points_symmetry[1])
 
