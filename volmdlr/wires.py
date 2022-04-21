@@ -544,7 +544,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         finds out the symmetric wire2d according to a line
         '''
 
-        primitives_symmetry  = []
+        primitives_symmetry = []
         for primitive in self.primitives:
             try:
                 primitives_symmetry.append(primitive.axial_symmetry(line))
