@@ -1792,6 +1792,17 @@ class Arc2D(Arc):
                 return True
         return False
 
+    def axial_symmetry(self, line):
+        '''
+        finds out the symmetric arc2d according to a line
+        '''
+
+        points_symmetry = [point.axial_symmetry(line) for point in [self.start, self.interior, self.end]]
+
+        return self.__class__(start=points_symmetry[0],
+                              interior=points_symmetry[1],
+                              end=points_symmetry[2])
+
 
 class FullArc2D(Arc2D):
     """
