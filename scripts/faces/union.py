@@ -28,8 +28,6 @@ points_poly_11 = [poly_1.point_at_abscissa(k*length_poly_11/(number_points)) for
 
 new_poly_11 = vmw.ClosedPolygon3D(points_poly_11)
 
-new_poly_11.plot()
-
 new_poly_12 = new_poly_11.translation(0.3*vm.Z3D).rotation(vm.O3D, vm.Z3D, math.pi/2)
 
 new_poly_13 = new_poly_12.translation(0.05*vm.Z3D)
