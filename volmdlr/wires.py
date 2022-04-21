@@ -549,7 +549,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
             try:
                 primitives_symmetry.append(primitive.axial_symmetry(line))
             except NotImplementedError:
-                raise (f'Class {self.__class__.__name__} does not implement symmetry method')
+                print(f'Class {self.__class__.__name__} does not implement symmetry method')
 
         return self.__class__(primitives=primitives_symmetry)
 
