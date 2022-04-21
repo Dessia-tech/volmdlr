@@ -54,8 +54,8 @@ cdef double CVector2DDot(double u1, double u2,
 cdef double CVector2Dnorm(double u1, double u2):
     return (u1*u1 + u2*u2)**0.5
 
-#def Vector2Dnorm(vector):
-#    return CVector2Dnorm(vector.x, vector.y)
+def Vector2Dnorm(vector):
+   return CVector2Dnorm(vector.x, vector.y)
 
 # =============================================================================
 
@@ -821,14 +821,24 @@ class Point2D(Vector2D):
         return points[distances.index(min(distances))]
 
     def axial_symmetry(self, line):
-        if line.point2.x - line.point1.x != 0:
-            line_slope = (line.point2.y - line.point1.y) / (line.point2.x - line.point1.x)
-            line_origin = line.point1.y - line_slope * line.point1.x
-            x = 1 / (1 + line_slope**2) * (-(1 - line_slope**2)*self.x + 2*line_slope*self.y + 2*line_origin)
-            y = 1 / (1 + line_slope**2) * (2*line_slope*self.x + (1 - line_slope**2)*self.y - 2*line_slope*line_origin)
-            return Point2D(x, y)
-        else:
-            return Point2D(2*line.point1.x - self.x, self.y)
+        '''finds out the symmetric point according to a line'''
+        point_projection = line.point_projection(self)[0]
+        point_symmetry = point_projection + (point_projection - self)
+        return point_symmetry
+        # if line.point2.x - line.point1.x != 0:
+        #     # line_slope = (line.point2.y - line.point1.y) / (line.point2.x - line.point1.x)
+        #     # line_origin = line.point1.y - line_slope * line.point1.x
+        #     # x = 1 / (1 + line_slope**2) * (-(1 - line_slope**2)*self.x + 2*line_slope*self.y + 2*line_origin)
+        #     # y = 1 / (1 + line_slope**2) * (2*line_slope*self.x + (1 - line_slope**2)*self.y - 2*line_slope*line_origin)
+        #     dx = line.point2.x - line.point1.x
+        #     dy = line.point2.y - line.point1.y
+        #     a = (dx * dx - dy * dy) / (dx * dx + dy * dy)
+        #     b = 2 * dx * dy / (dx * dx + dy * dy)
+        #     x = round(a * (self.x - line.point1.x) + b * (self.y - line.point1.y) + line.point1.x)
+        #     y = round(b * (self.x - line.point1.x) - a * (self.y - line.point1.y) + line.point1.y)
+        #     return Point2D(x, y)
+        # else:
+        #     return Point2D(2*line.point1.x - self.x, self.y)
 
 O2D = Point2D(0, 0)
 

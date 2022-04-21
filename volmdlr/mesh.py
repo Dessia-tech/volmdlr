@@ -5,7 +5,7 @@
 # @author: Gasmi
 # """
 
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 # import volmdlr.core_compiled
 import volmdlr as vm
 import volmdlr.wires as vmw
@@ -92,7 +92,7 @@ class TriangularElement(vmw.Triangle2D):
         self.points = points
         self.linear_elements = self._to_linear_elements()
         self.form_functions = self._form_functions()
-        
+        self.line_segments = self._line_segments()
         self.center = (self.points[0]+self.points[1]+self.points[2])/3
         
         self.area = self._area()
@@ -235,11 +235,12 @@ class ElementsGroup(DessiaObject):
 
         DessiaObject.__init__(self, name=name)
 
-#     def point_to_element(self, point):
-#         for element in self.elements:
-#             if element.point_belongs(point):
-#                 return element
-#         return None
+
+    def point_to_element(self, point):
+        for element in self.elements:
+            if element.point_belongs(point):
+                return element
+        return None
 
 #     def rotation(self, center, angle, copy=True):
 #         if copy:
@@ -257,13 +258,13 @@ class ElementsGroup(DessiaObject):
 #             for elem in self.elements:
 #                 elem.translation(offset, copy=False)
                 
-#     def plot(self, ax=None, color='k', fill=False):
-#         if ax is None:
-#             fig, ax = plt.subplots()
-#             ax.set_aspect('equal')
-#         for element in self.elements:
-#             element.plot(ax=ax, color=color, fill=fill)
-#         return ax
+    def plot(self, ax=None, color='k', fill=False):
+        if ax is None:
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
+        for element in self.elements:
+            element.plot(ax=ax, color=color, fill=fill)
+        return ax
         
 
 class Mesh(DessiaObject):
@@ -309,12 +310,12 @@ class Mesh(DessiaObject):
                 nodes.add(element.points[2])
         return tuple(nodes)
 
-#     def point_to_element(self, point):
-#         for element_group in self.elements_groups:
-#             element = element_group.point_to_element(point)
-#             if element is not None:
-#                 return element
-#         return None
+    def point_to_element(self, point):
+        for element_group in self.elements_groups:
+            element = element_group.point_to_element(point)
+            if element is not None:
+                return element
+        return None
     
 #     def set_node_displacement_index(self):
 #         indexes = {}
@@ -340,13 +341,13 @@ class Mesh(DessiaObject):
 #                                elements_group2)] = duplicate_linear_elements
 #         return boundary_dict
    
-#     def plot(self, ax=None):
-#         if ax is None:
-#             fig, ax = plt.subplots()
-#             ax.set_aspect('equal')
-#         for elements_group in self.elements_groups:
-#             elements_group.plot(ax=ax)
-#         return ax
+    def plot(self, ax=None):
+        if ax is None:
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
+        for elements_group in self.elements_groups:
+            elements_group.plot(ax=ax)
+        return ax
     
 #     def plot_data(self, pos=0, quote=True, constructor=True, direction=1):
 #         plot_datas = []
