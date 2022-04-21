@@ -1721,7 +1721,6 @@ class Arc2D(Arc):
 
         return volmdlr.edges.Arc3D(ps, pi, pe, name=self.name)
 
-
     def rotation(self, center, angle):
         """
         Arc2D rotation
@@ -2668,7 +2667,7 @@ class LineSegment3D(LineSegment):
         return None
 
     def rotation(self, center: volmdlr.Point3D,
-                 axis: volmdlr.Vector3D,  angle: float):
+                 axis: volmdlr.Vector3D, angle: float):
         """
         LineSegment3D rotation
         :param center: rotation center
@@ -2680,7 +2679,7 @@ class LineSegment3D(LineSegment):
             *[point.rotation(center, axis, angle) for point in self.points])
 
     def rotation_inplace(self, center: volmdlr.Point3D,
-                         axis: volmdlr.Vector3D,  angle: float):
+                         axis: volmdlr.Vector3D, angle: float):
         """
         Line2D rotation. Object is updated inplace
         :param center: rotation center

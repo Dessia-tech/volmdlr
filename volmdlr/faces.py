@@ -4013,7 +4013,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return self.__class__(new_surface, self.surface2d)
 
     def rotation_inplace(self, center: volmdlr.Point3D,
-                 axis: volmdlr.Vector3D, angle: float):
+                         axis: volmdlr.Vector3D, angle: float):
         """
         Face3D rotation. Object is updated inplace
         :param center: rotation center
