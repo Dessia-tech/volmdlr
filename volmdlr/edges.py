@@ -1187,6 +1187,15 @@ class LineSegment2D(LineSegment):
 
         return [self.point_at_abscissa(i * self.length() / (n - 1)) for i in range(n)]
 
+    def axial_symmetry(self, line):
+        '''
+        finds out the symmetric linesegment2d according to a line
+        '''
+
+        points_symmetry = [point.symmetry(line) for point in [self.start, self.end]]
+
+        return self.__class__(points_symmetry[0], points_symmetry[1])
+
 
 class Arc(Edge):
     def __init__(self, start,
