@@ -830,12 +830,6 @@ class Point2D(Vector2D):
         #     # line_origin = line.point1.y - line_slope * line.point1.x
         #     # x = 1 / (1 + line_slope**2) * (-(1 - line_slope**2)*self.x + 2*line_slope*self.y + 2*line_origin)
         #     # y = 1 / (1 + line_slope**2) * (2*line_slope*self.x + (1 - line_slope**2)*self.y - 2*line_slope*line_origin)
-        #     dx = line.point2.x - line.point1.x
-        #     dy = line.point2.y - line.point1.y
-        #     a = (dx * dx - dy * dy) / (dx * dx + dy * dy)
-        #     b = 2 * dx * dy / (dx * dx + dy * dy)
-        #     x = round(a * (self.x - line.point1.x) + b * (self.y - line.point1.y) + line.point1.x)
-        #     y = round(b * (self.x - line.point1.x) - a * (self.y - line.point1.y) + line.point1.y)
         #     return Point2D(x, y)
         # else:
         #     return Point2D(2*line.point1.x - self.x, self.y)

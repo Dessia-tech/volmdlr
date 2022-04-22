@@ -1087,24 +1087,24 @@ class Contour2D(Contour, Wire2D):
                                    surface_style=surface_style,
                                    name=self.name)
 
-    # def axial_symmetry(self, line):
-    #     new_primitives = []
-    #     for primitive in self.primitives:
-    #         if isinstance(primitive, Circle2D):
-    #             new_center = primitive.center.axial_symmetry(line)
-    #             new_primitives.append(Circle2D(new_center, primitive.radius))
-    #         elif isinstance(primitive, volmdlr.edges.Arc2D):
-    #             new_start = primitive.start.axial_symmetry(line)
-    #             new_interior = primitive.interior.axial_symmetry(line)
-    #             new_end = primitive.end.axial_symmetry(line)
-    #             new_primitives.append(volmdlr.edges.Arc2D(new_start,
-    #                                                       new_interior,
-    #                                                       new_end))
-    #         else:
-    #             new_start = primitive.start.axial_symmetry(line)
-    #             new_end = primitive.end.axial_symmetry(line)
-    #             new_primitives.append(primitive.__class__(new_start, new_end))
-    #     return self.__class__(new_primitives)
+    def axial_symmetry(self, line):
+        new_primitives = []
+        for primitive in self.primitives:
+            if isinstance(primitive, Circle2D):
+                new_center = primitive.center.axial_symmetry(line)
+                new_primitives.append(Circle2D(new_center, primitive.radius))
+            elif isinstance(primitive, volmdlr.edges.Arc2D):
+                new_start = primitive.start.axial_symmetry(line)
+                new_interior = primitive.interior.axial_symmetry(line)
+                new_end = primitive.end.axial_symmetry(line)
+                new_primitives.append(volmdlr.edges.Arc2D(new_start,
+                                                          new_interior,
+                                                          new_end))
+            else:
+                new_start = primitive.start.axial_symmetry(line)
+                new_end = primitive.end.axial_symmetry(line)
+                new_primitives.append(primitive.__class__(new_start, new_end))
+        return self.__class__(new_primitives)
 
     def is_inside_contour(self, contour2):
         """
