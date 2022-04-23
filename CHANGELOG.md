@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unrealeased
 ### Fixed
 * Remove Copy param from movement of primitives and add inplace methods
+*improvements to union operations
 
 ## v0.4.0
 ### Fixed

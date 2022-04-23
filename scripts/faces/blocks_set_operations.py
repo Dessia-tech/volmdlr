@@ -56,3 +56,27 @@ for new_box in [union_box, subtraction_box, subtraction_closedbox, intersection_
         shell.color = (1, 0.1, 0.1)
         shell.alpha = 0.6
     vm.core.VolumeModel(new_box + [shell1, shell2]).babylonjs()
+
+
+block1 = primitives3D.Block(frame=vm.Frame3D(origin=vm.Point3D(0.2, 0.6, 0.2),
+                                                  u=vm.Point3D(0.4, 0, 0),
+                                                  v=vm.Point3D(0, 1.2, 0),
+                                                  w=vm.Point3D(0, 0, 0.4)),
+                            color=(1, 0.2, 0.1), alpha=0.6)
+block2 = primitives3D.Block(frame=vm.Frame3D(origin=vm.Point3D(0.8+0.4, 0.45 + 0.15 , 0.1),
+                                                  u=vm.Point3D(1.6, 0, 0),
+                                                  v=vm.Point3D(0, 0.9, 0),
+                                                  w=vm.Point3D(0, 0, 0.2)),
+                            color=(0.2, 0.2, 0.2), alpha=0.6)
+
+block3 = primitives3D.Block(frame=vm.Frame3D(origin=vm.Point3D(0.8+0.4, 0.45 + 0.15 , 0.05),
+                                                  u=vm.Point3D(1.6, 0, 0),
+                                                  v=vm.Point3D(0, 0.9, 0),
+                                                  w=vm.Point3D(0, 0, 0.2)),
+                            color=(0.2, 0.2, 0.2), alpha=0.6)
+
+for battery_layout_max_enclosing_box in [block1.union(block2)[0], block1.union(block3)[0]]:
+    battery_layout_max_enclosing_box.merge_faces()
+    battery_layout_max_enclosing_box.color = (1, 0.2, 0.2)
+    battery_layout_max_enclosing_box.alpha = 0.6
+    battery_layout_max_enclosing_box.babylonjs()
