@@ -318,11 +318,11 @@ class Block(volmdlr.faces.ClosedShell3D):
 
     def cut_by_orthogonal_plane(self, plane_3d: volmdlr.faces.Plane3D):
         bouding_box = self.bounding_box
-        if plane_3d.frame.w.dot(volmdlr.Vector3D(1, 0, 0)) == 1:
+        if plane_3d.frame.w.dot(volmdlr.Vector3D(1, 0, 0)) == 0:
             pass
-        elif plane_3d.frame.w.dot(volmdlr.Vector3D(0, 1, 0)) == 1:
+        elif plane_3d.frame.w.dot(volmdlr.Vector3D(0, 1, 0)) == 0:
             pass
-        elif plane_3d.frame.w.dot(volmdlr.Vector3D(0, 0, 1)) == 1:
+        elif plane_3d.frame.w.dot(volmdlr.Vector3D(0, 0, 1)) == 0:
             pass
         else:
             raise KeyError('plane is not orthogonal either with x, y or z')
@@ -332,13 +332,13 @@ class Block(volmdlr.faces.ClosedShell3D):
         center2d = volmdlr.Point2D(bouding_box.center.dot(dir1), bouding_box.center.dot(dir2))
         point_min = volmdlr.Point3D(bouding_box.xmin, bouding_box.ymin, bouding_box.zmin)
         point_max = volmdlr.Point3D(bouding_box.xmax, bouding_box.ymax, bouding_box.zmax)
-        points = [-center2d + volmdlr.Point2D(point_min.dot(dir1),
+        points = [volmdlr.Point2D(point_min.dot(dir1),
                                               point_min.dot(dir2)),
-                  -center2d + volmdlr.Point2D(point_min.dot(dir1),
+                  volmdlr.Point2D(point_min.dot(dir1),
                                               point_max.dot(dir2)),
-                  -center2d + volmdlr.Point2D(point_max.dot(dir1),
+                  volmdlr.Point2D(point_max.dot(dir1),
                                               point_max.dot(dir2)),
-                  -center2d + volmdlr.Point2D(point_max.dot(dir1),
+                  volmdlr.Point2D(point_max.dot(dir1),
                                               point_min.dot(dir2))]
         contour_2d = volmdlr.faces.Surface2D(
             volmdlr.wires.ClosedPolygon2D(points), [])

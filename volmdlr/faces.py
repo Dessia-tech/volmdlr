@@ -6606,17 +6606,18 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         frame_block.u = 1.1 * frame_block.u
         frame_block.v = 1.1 * frame_block.v
         frame_block.w = 1.1 * frame_block.w
-
+        block = volmdlr.primitives3d.Block(frame_block,
+                                           color=(0.1, 0.2, 0.2),
+                                           alpha=0.6)
+        face_3d = block.cut_by_orthogonal_plane(plane_3d)
         for face in self.faces:
-            block = volmdlr.primitives3d.Block(frame_block)
-            face_3d = block.cut_by_orthogonal_plane(plane_3d)
             inters = face.face_intersections(face_3d)
             if inters:
-                graph.add_edges_from([(inters[0].primitives[0].start, inters[0].primitives[0].start)])
-                intersections.append([inters[0].primitives[0].start, inters[0].primitives[0].start])
+                graph.add_edges_from([(inters[0].primitives[0].start,
+                                       inters[0].primitives[0].end)])
+                intersections.append([inters[0].primitives[0].start,
+                                      inters[0].primitives[0].end])
         pts = list(nx.dfs_edges(graph, intersections[0][0]))
-        # print(pts)
-        # print(intersections)
         points = []
         u = plane_3d.frame.u
         v = plane_3d.frame.v
@@ -6625,10 +6626,12 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 points.append(pt1)
             if pt2 not in points:
                 points.append(pt2)
-        center_2d = volmdlr.Point2D(plane_3d.frame.origin.dot(u), plane_3d.frame.origin.dot(v))
-        points_2d = [volmdlr.Point2D(p.dot(u), p.dot(v)) - center_2d for p in points]
-        contour_2d = volmdlr.faces.Surface2D(volmdlr.wires.ClosedPolygon2D(points_2d), [])
-
+        center_2d = volmdlr.Point2D(plane_3d.frame.origin.dot(u),
+                                    plane_3d.frame.origin.dot(v))
+        points_2d = [volmdlr.Point2D(p.dot(u), p.dot(v)) - center_2d
+                     for p in points]
+        contour_2d = volmdlr.faces.Surface2D(
+            volmdlr.wires.ClosedPolygon2D(points_2d), [])
         return volmdlr.faces.PlaneFace3D(plane_3d, contour_2d)
 
     def linesegment_intersections(self,
