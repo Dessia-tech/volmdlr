@@ -4415,6 +4415,22 @@ class Triangle3D(PlaneFace3D):
         #                 surface3d=plane3d,
         #                 surface2d=surface2d,
         #                 name=name)
+
+    def _data_hash(self):
+        """
+        Using point approx hash to speed up
+        """
+        return self.point1.approx_hash() + self.point2.approx_hash() + self.point3.approx_hash()
+
+    def _data_eq(self, other_):
+        if other_.__class__.__name__ != self.__class__.__name__:
+            return False
+        self_set = set([self.point1, self.point2, self.point3])
+        other_set = set([other_.point1, other_.point2, other_.point3])
+        if self_set != other_set:
+            return False
+        return True
+
     @property
     def bounding_box(self):
         if not self._bbox:
@@ -6233,16 +6249,17 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         self._bbox = None
         # self.bounding_box = self._bounding_box()
 
-    # def __hash__(self):
-    #     return sum([hash(f) for f in self.faces])
+    def _data_hash(self):
+        return sum([f._data_hash() for f in self.faces])
 
-    # def __eq__(self, other_):
-    #     if self.__class__ != other_.__class__:
-    #         return False
-    #     equal = True
-    #     for face, other_face in zip(self.faces, other_.faces):
-    #         equal = (equal and face == other_face)
-    #     return equal
+    def _data_eq(self, other_):
+        if other_.__class__.__name__ != self.__class__.__name__:
+            return False
+        for face1, face2 in zip(self.faces, other_.faces):
+            if not face1._data_eq(other_):
+                return False
+
+        return True
 
     @classmethod
     def from_step(cls, arguments, object_dict):
