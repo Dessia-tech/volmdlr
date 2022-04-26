@@ -21,6 +21,7 @@ from volmdlr.core_compiled import polygon_point_belongs
 import volmdlr.core
 import volmdlr.edges
 import volmdlr.display as vmd
+import scipy as scp
 
 
 def bounding_rectangle_adjacent_contours(contours: List):
@@ -1946,6 +1947,69 @@ class Contour2D(Contour, Wire2D):
             cutting_points_counter += 2
 
         return list_contours
+
+    def get_symmetric_line(self):
+        '''
+        finds out the line that passes through the contour2d and divides it into identical halves
+        '''
+
+        def minimize_areas(x, contour2d):
+
+            line = volmdlr.edges.Line2D(volmdlr.Point2D(x[0], x[1]), volmdlr.Point2D(x[2], x[3]))
+
+            try:
+                contours = contour2d.cut_by_line(line)
+                if len(contours) == 2:
+                    c_symmetry_0 = contours[0].axial_symmetry(line)
+                    c_symmetry_1 = contours[1].axial_symmetry(line)
+
+                    # if c_symmetry_0.is_superposing(contours[1]) and c_symmetry_1.is_superposing(contours[0]):           
+                    if c_symmetry_0.__eq__(contours[1]) and c_symmetry_1.__eq__(contours[0]):
+                        return abs((contours[0].area()*c_symmetry_1.area()) * (contours[1].area()*c_symmetry_0.area()))
+                    else:
+                        return abs((contours[0].area()*c_symmetry_1.area()) * (contours[1].area()*c_symmetry_0.area())) #math.inf
+
+            except NotImplementedError or IndexError:
+                pass
+
+            return math.inf
+
+        line = volmdlr.edges.Line2D(self.center_of_mass(), self.random_point_inside())
+        n=10
+        error = math.inf
+        angle = 3.14159/n
+
+        for i in range(n):
+            ax=self.plot()
+            line.plot(ax, 'b')
+            x_0 = [line.point1.x, line.point1.y, line.point2.x, line.point2.y]
+            sol = scp.optimize.minimize(minimize_areas, x0=x_0,
+                                        args=(self))
+            if sol.fun < error:
+                solution = sol.x
+                error = sol.fun
+                x = solution
+                l = volmdlr.edges.Line2D(volmdlr.Point2D(x[0], x[1]), volmdlr.Point2D(x[2], x[3]))
+                l.plot(ax, 'g')
+            print(error)
+
+            line = line.rotation(self.center_of_mass(), angle)
+
+        # =============================================================================
+
+        # x_init = [[contour2d.center_of_mass().x, contour2d.center_of_mass().y,
+        #            contour2d.center_of_mass().x, contour2d.center_of_mass().y+5],
+        #           [contour2d.center_of_mass().x, contour2d.center_of_mass().y,
+        #            contour2d.center_of_mass().x+5, contour2d.center_of_mass().y+5]]
+
+        # error = math.inf
+
+        # for x_0 in x_init:
+        #     sol = scp.optimize.minimize(minimize_areas, x0=x_0,
+        #                                 args=(contour2d))
+        #     if sol.fun < error:
+        #         solution = sol.x
+        #         error = sol.fun
 
 
 class ClosedPolygon:
