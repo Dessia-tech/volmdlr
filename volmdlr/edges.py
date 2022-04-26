@@ -4044,7 +4044,7 @@ class Arc3D(Arc):
 
             surface = volmdlr.faces.SphericalSurface3D(
                 volmdlr.Frame3D(self.center, u, v, axis), self.radius)
-            surface.plot()
+
             return [surface.rectangular_cut(0, angle,
                                             arc2d.angle1, arc2d.angle2)]
 
