@@ -553,6 +553,18 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
 
         return self.__class__(primitives=primitives_symmetry)
 
+    def is_symmetric(self, wire2d, line):
+        '''
+        checks if the two wires2d are symmetric or not according to line
+        '''
+
+        c_symmetry_0 = self.symmetry(line)
+        c_symmetry_1 = wire2d.symmetry(line)
+
+        if wire2d.is_superposing(c_symmetry_0) and self.is_superposing(c_symmetry_1):
+            return True
+        return False
+
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
     """
