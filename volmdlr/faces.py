@@ -7035,7 +7035,9 @@ class ClosedShell3D(OpenShell3D):
         for face1 in self.faces:
             for face2 in shell2.faces:
                 if face1.surface3d.is_coincident(face2.surface3d):
-                    list_coincident_faces.append((face1, face2))
+                    if len(face1.surface2d.outer_contour.contour_intersections(
+                            face2.surface2d.outer_contour)) >= 2:
+                        list_coincident_faces.append((face1, face2))
 
         return list_coincident_faces
 
@@ -7191,16 +7193,20 @@ class ClosedShell3D(OpenShell3D):
         return False
 
     def is_face_between_shells(self, shell2, face):
-        normal_0 = face.surface2d.outer_contour.primitives[0].normal_vector()
-        middle_point_0 = face.surface2d.outer_contour.primitives[0].middle_point()
-        centroide = face.surface2d.outer_contour.center_of_mass()
-        point1 = middle_point_0 + 0.0001 * normal_0
-        point2 = middle_point_0 - 0.0001 * normal_0
-        for point in [centroide, point1, point2]:
+        if face.surface2d.inner_contours:
+            normal_0 = face.surface2d.outer_contour.primitives[0].normal_vector()
+            middle_point_0 = face.surface2d.outer_contour.primitives[0].middle_point()
+            point1 = middle_point_0 + 0.0001 * normal_0
+            point2 = middle_point_0 - 0.0001 * normal_0
+            points = [point1, point2]
+        else:
+            points = [face.surface2d.outer_contour.center_of_mass()]
+
+        for point in points:
             point3d = face.surface3d.point2d_to_3d(point)
             if face.point_belongs(point3d):
-                normal1 = point3d - 0.001 * face.surface3d.frame.w
-                normal2 = point3d + 0.001 * face.surface3d.frame.w
+                normal1 = point3d - 0.00001 * face.surface3d.frame.w
+                normal2 = point3d + 0.00001 * face.surface3d.frame.w
                 if (self.point_belongs(normal1) and
                     shell2.point_belongs(normal2)) or \
                         (shell2.point_belongs(normal1) and
@@ -7217,7 +7223,6 @@ class ClosedShell3D(OpenShell3D):
         if new_face not in valid_faces and not inside_reference_shell:
             if list_coincident_faces:
                 if self.is_face_between_shells(shell2, new_face):
-                    new_face.plot()
                     return False
             return True
         return False
