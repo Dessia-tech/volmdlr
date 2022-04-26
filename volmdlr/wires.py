@@ -270,6 +270,7 @@ class Wire:
         return self.point_belongs(point, abs_tol)
 
     def primitive_over_wire(self, primitive, tol: float = 1e-6):
+
         for prim in self.primitives:
             if not hasattr(prim, 'unit_direction_vector') and \
                     hasattr(prim, 'tangent'):
