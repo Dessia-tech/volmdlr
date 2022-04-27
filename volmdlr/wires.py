@@ -1980,17 +1980,27 @@ class Contour2D(Contour, Wire2D):
                 if len(contours) == 2:
                     c_symmetry_0 = contours[0].axial_symmetry(line)
                     c_symmetry_1 = contours[1].axial_symmetry(line)
+                    # ax=contour2d.plot()
+                    # contours[0].plot(ax, 'b')
+                    # contours[1].plot(ax, 'r')
 
-                    # if c_symmetry_0.is_superposing(contours[1]) and c_symmetry_1.is_superposing(contours[0]):           
-                    if c_symmetry_0.__eq__(contours[1]) and c_symmetry_1.__eq__(contours[0]):
-                        return abs((contours[0].area()*c_symmetry_1.area()) * (contours[1].area()*c_symmetry_0.area()))
+                    if c_symmetry_0.is_superposing(contours[1]) and c_symmetry_1.is_superposing(contours[0]):
+                        print('True')
+                        return abs((contours[0].area()-c_symmetry_1.area()) * (contours[1].area()-c_symmetry_0.area()))
                     else:
-                        return abs((contours[0].area()*c_symmetry_1.area()) * (contours[1].area()*c_symmetry_0.area())) #math.inf
+                        return math.inf
 
             except NotImplementedError or IndexError:
-                pass
+                return math.inf
+                # pass
 
             return math.inf
+
+        x, y =self.center_of_mass()
+        xmin, xmax = x-0.5, x+0.5
+        ymin, ymax = y-0.5, y+0.5
+        point1 = volmdlr.Point2D.random(xmin, xmax, ymin, ymax)
+
 
         line = volmdlr.edges.Line2D(self.center_of_mass(), self.random_point_inside())
         n=10
@@ -2003,13 +2013,17 @@ class Contour2D(Contour, Wire2D):
             x_0 = [line.point1.x, line.point1.y, line.point2.x, line.point2.y]
             sol = scp.optimize.minimize(minimize_areas, x0=x_0,
                                         args=(self))
+            x = sol.x
+            l = volmdlr.edges.Line2D(volmdlr.Point2D(x[0], x[1]), volmdlr.Point2D(x[2], x[3]))
+            l.plot(ax, 'g')
+
             if sol.fun < error:
                 solution = sol.x
                 error = sol.fun
                 x = solution
                 l = volmdlr.edges.Line2D(volmdlr.Point2D(x[0], x[1]), volmdlr.Point2D(x[2], x[3]))
-                l.plot(ax, 'g')
-            print(error)
+                # l.plot(ax, 'g')
+            print(sol.fun)
 
             line = line.rotation(self.center_of_mass(), angle)
 
