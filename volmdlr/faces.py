@@ -6256,7 +6256,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         if other_.__class__.__name__ != self.__class__.__name__:
             return False
         for face1, face2 in zip(self.faces, other_.faces):
-            if not face1._data_eq(other_):
+            if not face1._data_eq(face2):
                 return False
 
         return True
