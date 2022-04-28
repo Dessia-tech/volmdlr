@@ -204,6 +204,45 @@ class Wire:
 
         return sorted(points, key=lambda point: self.abscissa(point))
 
+    def is_ordered(self, tol=1e-6):
+        '''
+        check if the wire's primitives are ordered or not
+        '''
+
+        for primitive_1, primitive_2 in zip(self.primitives, self.primitives[1:]):
+            if primitive_1.end.point_distance(primitive_2.start) > tol:
+                return False
+        return True
+
+    def order_wire(self, tol=1e-6):
+        '''
+        order wire's primitives
+        '''
+
+        if self.is_ordered(tol=tol):
+            return self.__class__(self.primitives[:])
+
+        new_primitives = [self.primitives[0]]
+        primitives = self.primitives[1:]
+        length_primitives = len(primitives) + 1
+
+        while len(new_primitives) < length_primitives:
+            for primitive in primitives:
+                if new_primitives[0].start.point_distance(primitive.start) < tol:
+                    new_primitives.insert(0, primitive.reverse())
+                    primitives.remove(primitive)
+                elif new_primitives[-1].end.point_distance(primitive.start) < tol:
+                    new_primitives.append(primitive)
+                    primitives.remove(primitive)
+                elif new_primitives[0].start.point_distance(primitive.end) < tol:
+                    new_primitives.insert(0, primitive)
+                    primitives.remove(primitive)
+                elif new_primitives[-1].end.point_distance(primitive.end) < tol:
+                    new_primitives.append(primitive.reverse())
+                    primitives.remove(primitive)
+
+        return self.__class__(new_primitives)
+
 
 class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
     """
@@ -737,11 +776,12 @@ class Contour(Wire):
                     warnings.warn('There may exist a problem with this'
                                   ' contour, it seems it cannot be reordered.'
                                   ' Please, verify its points')
-                    ax = self.plot()
-                    for point_pair in list_point_pairs:
-                        point_pair[0].plot(ax=ax, color='r')
-                        point_pair[1].plot(ax=ax, color='r')
-                    raise NotImplementedError
+                    finished = True
+                    # ax = self.plot()
+                    #                     # for point_pair in list_point_pairs:
+                    #                     #     point_pair[0].plot(ax=ax, color='r')
+                    #                     #     point_pair[1].plot(ax=ax, color='r')
+                    # raise NotImplementedError
 
         return points
 
@@ -912,7 +952,25 @@ class Contour(Wire):
                 return True
         return False
 
-    def is_superposing(self, contour2, intersecting_points):
+    def is_superposing(self, contour2):
+        '''
+        check if the contours are superposing (one on the other without
+        necessarily having an absolute equality)
+        '''
+
+        for primitive_2 in contour2.primitives:
+            if not self.primitive_over_contour(primitive_2):
+                return False
+        return True
+
+    def is_overlapping(self, contour2, intersecting_points=None):
+        '''
+        check if the contours are overlapping (a part of one is on the other)
+        '''
+
+        if not intersecting_points:
+            intersecting_points = self.contour_intersections(contour2)
+
         vec1_2 = volmdlr.edges.LineSegment2D(intersecting_points[0],
                                              intersecting_points[1])
         middle_point = vec1_2.middle_point()
@@ -959,13 +1017,13 @@ class Contour(Wire):
                             edges1.add(edge2)
 
                     if len(list_p) == 2 and all_points is False:
-                        if self.is_superposing(contour, list_p):
+                        if self.is_overlapping(contour, list_p):
                             return False
                         return True
         if len(list_p) < 2:
             return False
         if len(list_p) >= 2 and all_points is True:
-            if len(list_p) == 2 and self.is_superposing(contour, list_p):
+            if len(list_p) == 2 and self.is_overlapping(contour, list_p):
                 return False
             return (edges1, list_p)
         else:
