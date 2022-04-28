@@ -1098,7 +1098,8 @@ class Contour(Wire):
     def is_sharing_primitives_with(self, contour, all_points=False):
         '''
         check if two contour are sharing primitives
-        "all_points" is by default False. Turn it True if you need to get points and edges used to find out shared primitives
+        "all_points" is by default False. Turn it True if you need to get
+        points and edges used to find out shared primitives
         '''
 
         list_p = []
