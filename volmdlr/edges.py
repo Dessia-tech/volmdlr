@@ -882,7 +882,7 @@ class BSplineCurve2D(Edge):
         points, n = [], 10
         for primitive in ordered_wire.primitives:
             points.extend(primitive.polygon_points(n))
-        points.pop(n+1)
+        points.pop(n + 1)
 
         return volmdlr.edges.BSplineCurve2D.from_points_interpolation(points, min(self.degree, bspline_curve.degree))
 
@@ -895,7 +895,7 @@ class BSplineCurve2D(Edge):
         return intersections_points
 
     @classmethod
-    def from_bsplines(cls, bsplines, discretization_points = 10):
+    def from_bsplines(cls, bsplines, discretization_points=10):
         '''
         define a bspline_curve using a list of bsplines
         '''
