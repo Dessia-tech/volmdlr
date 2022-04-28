@@ -11,6 +11,8 @@ from statistics import mean
 from typing import List
 import numpy as npy
 from scipy.spatial import Delaunay, ConvexHull
+import scipy as scp
+
 import matplotlib.pyplot as plt
 import matplotlib.patches
 from mpl_toolkits.mplot3d import Axes3D
@@ -21,7 +23,6 @@ from volmdlr.core_compiled import polygon_point_belongs
 import volmdlr.core
 import volmdlr.edges
 import volmdlr.display as vmd
-import scipy as scp
 
 
 def bounding_rectangle_adjacent_contours(contours: List):
