@@ -3,7 +3,7 @@ Surfaces & faces
 """
 
 
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Any
 import math
 
 from itertools import product
@@ -3991,13 +3991,15 @@ class PlaneFace3D(Face3D):
     #     return repaired_points, polygon2D
 
     @classmethod
-    def dict_to_object(cls, dict_, global_dict=None, pointers_memo=None):
+    def dict_to_object(cls, dict_, global_dict=None, pointers_memo: Dict[str, Any] = None, path: str = '#'):
         plane3d = Plane3D.dict_to_object(dict_['surface3d'],
                                          global_dict=global_dict,
-                                         pointers_memo=pointers_memo)
+                                         pointers_memo=pointers_memo,
+                                         path=f'{path}/surface3d')
         surface2d = Surface2D.dict_to_object(dict_['surface2d'],
                                              global_dict=global_dict,
-                                             pointers_memo=pointers_memo)
+                                             pointers_memo=pointers_memo,
+                                             path=f'{path}/surface2d')
         return cls(plane3d, surface2d, dict_['name'])
 
     def area(self):
@@ -4479,7 +4481,7 @@ class Triangle3D(PlaneFace3D):
         return dict_
 
     @classmethod
-    def dict_to_object(cls, dict_):
+    def dict_to_object(cls, dict_, global_dict=None, pointers_memo: Dict[str, Any] = None, path: str = '#'):
         point1 = volmdlr.Point3D.dict_to_object(dict_['point1'])
         point2 = volmdlr.Point3D.dict_to_object(dict_['point2'])
         point3 = volmdlr.Point3D.dict_to_object(dict_['point3'])
