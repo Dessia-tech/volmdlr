@@ -333,13 +333,13 @@ class Block(volmdlr.faces.ClosedShell3D):
         point_min = volmdlr.Point3D(bouding_box.xmin, bouding_box.ymin, bouding_box.zmin)
         point_max = volmdlr.Point3D(bouding_box.xmax, bouding_box.ymax, bouding_box.zmax)
         points = [volmdlr.Point2D(point_min.dot(dir1),
-                                              point_min.dot(dir2)),
+                                  point_min.dot(dir2)),
                   volmdlr.Point2D(point_min.dot(dir1),
-                                              point_max.dot(dir2)),
+                                  point_max.dot(dir2)),
                   volmdlr.Point2D(point_max.dot(dir1),
-                                              point_max.dot(dir2)),
+                                  point_max.dot(dir2)),
                   volmdlr.Point2D(point_max.dot(dir1),
-                                              point_min.dot(dir2))]
+                                  point_min.dot(dir2))]
         contour_2d = volmdlr.faces.Surface2D(
             volmdlr.wires.ClosedPolygon2D(points), [])
 

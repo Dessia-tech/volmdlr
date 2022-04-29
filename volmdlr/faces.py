@@ -6610,6 +6610,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                                            color=(0.1, 0.2, 0.2),
                                            alpha=0.6)
         face_3d = block.cut_by_orthogonal_plane(plane_3d)
+
+
         for face in self.faces:
             inters = face.face_intersections(face_3d)
             if inters:
@@ -6617,6 +6619,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                                        inters[0].primitives[0].end)])
                 intersections.append([inters[0].primitives[0].start,
                                       inters[0].primitives[0].end])
+
         pts = list(nx.dfs_edges(graph, intersections[0][0]))
         points = []
         u = plane_3d.frame.u

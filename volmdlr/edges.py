@@ -2504,6 +2504,7 @@ class LineSegment3D(LineSegment):
         LineSegment.__init__(self, start=start, end=end, name=name)
 
         self._bbox = None
+        self._length = None
 
     @property
     def bounding_box(self):
@@ -2543,6 +2544,11 @@ class LineSegment3D(LineSegment):
                 }
 
     def length(self):
+        if not self._length:
+            self._length = self.get_length()
+        return self._length
+
+    def get_length(self):
         return self.end.point_distance(self.start)
 
     def point_at_abscissa(self, curvilinear_abscissa):

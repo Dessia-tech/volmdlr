@@ -142,16 +142,23 @@ cdef (double, double, double) C_vector3D_rotation(double vx, double vy, double v
 
     rv3_x, rv3_y, rv3_z = CVector3D_cross(axis_x, axis_y, axis_z,
                                            ux, uy, uz)
-
-    return (rv1_x + rv2_x + rv3_x*sin_angle + center_x,
-            rv1_y + rv2_y + rv3_y*sin_angle + center_y,
-            rv1_z + rv2_z + rv3_z*sin_angle + center_z)
+    x, y, z = (rv1_x + rv2_x + rv3_x * sin_angle + center_x,
+               rv1_y + rv2_y + rv3_y * sin_angle + center_y,
+               rv1_z + rv2_z + rv3_z * sin_angle + center_z)
+    point_coordinates = []
+    for coordinate in (x, y, z):
+        if math.isclose(0, coordinate, abs_tol=1e-6):
+            new_c = 0.0
+            point_coordinates.append(new_c)
+        else:
+            point_coordinates.append(coordinate)
+    return (point_coordinates[0], point_coordinates[1], point_coordinates[2])
 
 def vector3D_rotation(vector, center, axis, angle):
-        return C_vector3D_rotation(vector.x, vector.y, vector.z,
-                                   center.x, center.y, center.z,
-                                   axis.x, axis.y, axis.z,
-                                   angle)
+    return C_vector3D_rotation(vector.x, vector.y, vector.z,
+                               center.x, center.y, center.z,
+                               axis.x, axis.y, axis.z,
+                               angle)
 
 
 
