@@ -1987,7 +1987,8 @@ class Contour2D(Contour, Wire2D):
 
                     if c_symmetry_0.is_superposing(contours[1]) and c_symmetry_1.is_superposing(contours[0]):
                         print('True')
-                        return abs((contours[0].area()-c_symmetry_1.area()) * (contours[1].area()-c_symmetry_0.area()))
+                        return abs((contours[0].area() - c_symmetry_1.area())
+                                   * (contours[1].area() - c_symmetry_0.area()))
                     else:
                         return math.inf
 
@@ -1997,19 +1998,18 @@ class Contour2D(Contour, Wire2D):
 
             return math.inf
 
-        x, y =self.center_of_mass()
-        xmin, xmax = x-0.5, x+0.5
-        ymin, ymax = y-0.5, y+0.5
+        x, y = self.center_of_mass()
+        xmin, xmax = x - 0.5, x + 0.5
+        ymin, ymax = y - 0.5, y + 0.5
         point1 = volmdlr.Point2D.random(xmin, xmax, ymin, ymax)
 
-
         line = volmdlr.edges.Line2D(self.center_of_mass(), self.random_point_inside())
-        n=10
+        n = 10
         error = math.inf
-        angle = 3.14159/n
+        angle = 3.14159 / n
 
         for i in range(n):
-            ax=self.plot()
+            ax = self.plot()
             line.plot(ax, 'b')
             x_0 = [line.point1.x, line.point1.y, line.point2.x, line.point2.y]
             sol = scp.optimize.minimize(minimize_areas, x0=x_0,
