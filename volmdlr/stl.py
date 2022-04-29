@@ -307,9 +307,8 @@ class Stl(dc.DessiaObject):
             if triangles.area() < 1e-12:
                 invalid_triangles.append(it)
                 print(it, triangles.area())
-        
+
         triangles = self.triangles[:]
         for invalid_triangle_index in invalid_triangles[::-1]:
             triangles.pop(invalid_triangle_index)
         return Stl(triangles)
-    
