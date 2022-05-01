@@ -9,13 +9,16 @@ Cython functions
 # from __future__ import annotations
 from typing import TypeVar, List, Tuple, Text
 import math
-from dessia_common import DessiaObject
-import matplotlib.pyplot as plt
-from matplotlib.patches import FancyArrow, FancyArrowPatch
 import warnings
 import random
+
 import numpy as npy
 from mpl_toolkits.mplot3d import proj3d
+import matplotlib.pyplot as plt
+from matplotlib.patches import FancyArrow, FancyArrowPatch
+
+from dessia_common import DessiaObject
+import plot_data
 
 # =============================================================================
 
@@ -794,13 +797,14 @@ class Point2D(Vector2D):
 
     def plot_data(self, marker=None, color='black', size=1,
                   opacity=1, arrow=False, stroke_width=None):
-        return {'type' : 'point',
-                'data' : [self.x, self.y],
-                'color' : color,
-                'marker' : marker,
-                'size' : size,
-                'opacity' : opacity
-                }
+        # return {'type' : 'point',
+        #         'data' : [self.x, self.y],
+        #         'color' : color,
+        #         'marker' : marker,
+        #         'size' : size,
+        #         'opacity' : opacity
+        #         }
+        return plot_data.Point2D(self.x, self.y)
 
     @classmethod
     def middle_point(cls, point1, point2):
