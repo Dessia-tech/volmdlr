@@ -817,7 +817,7 @@ class BoundingBox(dc.DessiaObject):
         return s
 
 
-class VolumeModel(dc.DessiaObject):
+class VolumeModel(dc.PhysicalObject):
     _standalone_in_db = True
     _eq_is_data_eq = True
     _non_serializable_attributes = ['shells', 'bounding_box']
@@ -1302,6 +1302,8 @@ class VolumeModel(dc.DessiaObject):
 
         stream.write(step_content)
 
+    def volmdlr_volume_model(self):
+        return [self]
 
 class MovingVolumeModel(VolumeModel):
     def __init__(self, primitives, step_frames, name=''):
