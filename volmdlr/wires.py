@@ -4406,6 +4406,8 @@ class Ellipse3D(Contour3D):
 
 
 class ClosedPolygon3D(Contour3D, ClosedPolygon):
+    _non_serializable_attributes = ['line_segments', 'primitives']
+    _non_eq_attributes = ['line_segments', 'primitives']
 
     def __init__(self, points: List[volmdlr.Point3D], name: str = ''):
         self.points = points
@@ -4423,7 +4425,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
 
     def copy(self, *args, **kwargs):
         points = [p.copy() for p in self.points]
-        return ClosedPolygon2D(points, self.name)
+        return ClosedPolygon3D(points, self.name)
 
     def __hash__(self):
         return sum([hash(p) for p in self.points])
