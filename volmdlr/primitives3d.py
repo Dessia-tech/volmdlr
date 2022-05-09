@@ -329,7 +329,6 @@ class Block(volmdlr.faces.ClosedShell3D):
 
         dir1 = plane_3d.frame.u
         dir2 = plane_3d.frame.v
-        center2d = volmdlr.Point2D(bouding_box.center.dot(dir1), bouding_box.center.dot(dir2))
         point_min = volmdlr.Point3D(bouding_box.xmin, bouding_box.ymin, bouding_box.zmin)
         point_max = volmdlr.Point3D(bouding_box.xmax, bouding_box.ymax, bouding_box.zmax)
         points = [volmdlr.Point2D(point_min.dot(dir1),
