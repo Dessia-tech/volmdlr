@@ -2595,9 +2595,6 @@ class LineSegment3D(LineSegment):
     def linesegment_intersection(self, linesegment):
         intersection = self.intersection(linesegment)
         if intersection is not None:
-            if intersection in [self.start, self.end]:
-                return intersection
-
             if self.point_belongs(
                         intersection) and linesegment.point_belongs(
                     intersection):
