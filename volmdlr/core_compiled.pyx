@@ -7,7 +7,7 @@ Cython functions
 
 """
 # from __future__ import annotations
-from typing import TypeVar, List, Tuple, Text
+from typing import TypeVar, List, Tuple, Text, Any, Dict
 import math
 from dessia_common import DessiaObject
 import matplotlib.pyplot as plt
@@ -911,8 +911,8 @@ class Vector3D(Vector):
                 'name': self.name}
 
     @classmethod
-    def dict_to_object(cls, dict_):
-        return Vector3D(dict_['x'], dict_['y'], dict_['z'], dict_['name'])
+    def dict_to_object(cls, dict_, global_dict=None, pointers_memo: Dict[str, Any] = None, path: str = '#'):
+        return Vector3D(dict_['x'], dict_['y'], dict_['z'], dict_.get('name', ''))
 
     def dot(self, other_vector):
         return CVector3DDot(self.x, self.y, self.z,
@@ -1181,8 +1181,8 @@ class Point3D(Vector3D):
                 'name': self.name}
 
     @classmethod
-    def dict_to_object(cls, dict_):
-        return Point3D(dict_['x'], dict_['y'], dict_['z'], dict_['name'])
+    def dict_to_object(cls, dict_, global_dict=None, pointers_memo: Dict[str, Any] = None, path: str = '#'):
+        return Point3D(dict_['x'], dict_['y'], dict_['z'], dict_.get('name', ''))
 
     def plot(self, ax=None, color='k', alpha=1, marker='o'):
 
