@@ -3002,8 +3002,9 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
 
         points_ids = []
         content = ''
+        point_id = current_id
         for point in self.points:
-            point_content, point_id = point.to_step(current_id,
+            point_content, point_id = point.to_step(point_id,
                                                     vertex=True)
             content += point_content
             points_ids.append(point_id)
@@ -3016,8 +3017,7 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
                                                          self.degree,
                                                          volmdlr.core.step_ids_to_str(
                                                              points_ids),
-                                                         volmdlr.core.step_ids_to_str(
-                                                             self.knot_multiplicities),
+                                                         tuple(self.knot_multiplicities),
                                                          tuple(self.knots)
                                                          )
 
