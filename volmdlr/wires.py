@@ -855,7 +855,7 @@ class Contour(Wire):
                         contour_primitives.append(line)
                         edges.remove(line)
                         break
-                    elif point.is_close(line.end, tol=tol) and\
+                    if point.is_close(line.end, tol=tol) and\
                             line not in contour_primitives:
                         line.end = point
                         contour_primitives.append(line)
