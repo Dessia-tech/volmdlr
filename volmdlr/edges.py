@@ -3003,28 +3003,34 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         points_ids = []
         content = ''
         point_id = current_id
-        for point in self.points:
+        for point in self.control_points:
             point_content, point_id = point.to_step(point_id,
-                                                    vertex=True)
+                                                    vertex=False)
             content += point_content
             points_ids.append(point_id)
+            point_id += 1
 
-        curve_id = point_id + 1
+        curve_id = point_id
         content += "#{} = B_SPLINE_CURVE_WITH_KNOTS('{}',{},({})," \
-                   ".UNSPECIFIED.,.F.,.F.,({}),{}," \
-                   ".PIECEWISE_BEZIER_KNOTS.);\n".format(curve_id,
-                                                         self.name,
-                                                         self.degree,
-                                                         volmdlr.core.step_ids_to_str(
-                                                             points_ids),
-                                                         tuple(self.knot_multiplicities),
-                                                         tuple(self.knots)
-                                                         )
+                   ".UNSPECIFIED.,.F.,.F.,{},{}," \
+                   ".UNSPECIFIED.);\n".format(
+            curve_id, self.name, self.degree,
+            volmdlr.core.step_ids_to_str(points_ids),
+            tuple(self.knot_multiplicities),
+            tuple(self.knots))
 
         if surface_id:
             content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(
-                curve_id + 1, curve_id, surface_id)
-            curve_id += 1
+                curve_id + 1, curve_id, curve_id + 2)
+            content += "#{} = PCURVE('',#{},#{});\n".format(
+                curve_id + 2, surface_id, curve_id + 3)
+            content += "#{} = DEFINITIONAL_REPRESENTATION('',(#{}),#{});\n".format(
+                curve_id + 3, curve_id + 4, curve_id + 5)
+            content += "#{} = B_SPLINE_CURVE_WITH_KNOTS('{}',{},({})," \
+                       ".UNSPECIFIED.,.F.,.F.,{},{}," \
+                       ".UNSPECIFIED.);\n".format(curve_id+4)
+            content += "#{} = ( GEOMETRIC_REPRESENTATION_CONTEXT(2) PARAMETRIC_REPRESENTATION_CONTEXT() REPRESENTATION_CONTEXT('2D SPACE','') );\n".format(curve_id+5)
+            curve_id += 5
 
         current_id = curve_id + 1
         start_content, start_id = self.start.to_step(current_id, vertex=True)
@@ -3307,9 +3313,9 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
     def from_geomdl_curve(cls, curve):
         knots = list(sorted(set(curve.knotvector)))
         knot_multiplicities = [curve.knotvector.count(k) for k in knots]
-
         return cls(degree=curve.degree,
-                   control_points=curve.ctrlpts,
+                   control_points=[volmdlr.Point3D(*pts)
+                                   for pts in curve.ctrlpts],
                    knots=knots,
                    knot_multiplicities=knot_multiplicities)
 

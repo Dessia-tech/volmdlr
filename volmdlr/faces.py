@@ -3607,9 +3607,10 @@ class Face3D(volmdlr.core.Primitive3D):
         content, surface3d_ids = self.surface3d.to_step(current_id)
         current_id = max(surface3d_ids) + 1
 
+        if len(surface3d_ids) != 1:
+            raise NotImplementedError('What to do with more than 1 id ? with 0 id ?')
         outer_contour_content, outer_contour_id = self.outer_contour3d.to_step(
-            current_id)
-        # surface_id=surface3d_id)
+            current_id, surface_id=surface3d_ids[0])
         content += outer_contour_content
         content += "#{} = FACE_BOUND('{}',#{},.T.);\n".format(
                 outer_contour_id + 1, self.name, outer_contour_id)

@@ -3592,11 +3592,11 @@ class Contour3D(Contour, Wire3D):
         return cls(edges, name=name)
 
     def to_step(self, current_id, surface_id=None):
-
         content = ''
         edge_ids = []
         for primitive in self.primitives:
-            primitive_content, primitive_ids = primitive.to_step(current_id)
+            primitive_content, primitive_ids = primitive.to_step(current_id,
+                                                                 surface_id)
             content += primitive_content
             current_id = primitive_ids[-1] + 1
             for primitive_id in primitive_ids:
