@@ -3535,7 +3535,6 @@ class BSplineSurface3D(Surface3D):
 
         if bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d):
 
-            # xmin, xmax, ymin, ymax = self.xy_limits(other_bspline_surface3d)
             pass
 
         elif self.is_intersected_with(other_bspline_surface3d):
@@ -3567,18 +3566,11 @@ class BSplineSurface3D(Surface3D):
 
                 bsplines_new[i] = surfaces[errors.index(min(errors))]
 
-            # xmin, xmax, ymin, ymax = [0] * len(bsplines_new), [1] * len(bsplines_new), [0] * \
-            #     len(bsplines_new), [1] * len(bsplines_new)
-
             grid2d_direction = (
                 bsplines_new[0].rectangular_cut(
                     0, 1, 0, 1).pair_with(
                     bsplines_new[1].rectangular_cut(
                         0, 1, 0, 1)))[1]
-
-        # else:
-        #     xmin, xmax, ymin, ymax = [0] * len(bsplines_new), [1] * len(bsplines_new), [0] * \
-        #                                        len(bsplines_new), [1] * len(bsplines_new)
 
         # grid3d
         nb = 10
