@@ -2007,7 +2007,7 @@ class BSplineSurface3D(Surface3D):
 
             results.append((z.x, z.fun))
             results.append((res.x, res.fun))
-        return (volmdlr.Point2D(*min(results, key=lambda r: r[1])[0]))
+        return volmdlr.Point2D(*min(results, key=lambda r: r[1])[0])
 
     def linesegment2d_to_3d(self, linesegment2d):
         # TODO: this is a non exact method!
