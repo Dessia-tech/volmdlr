@@ -4,11 +4,10 @@ import volmdlr.wires as vmw
 import volmdlr.faces as vmf
 import volmdlr.primitives3d as p3d
 
-sphere = vmf.SphericalSurface3D(vm.Frame3D(vm.O3D, vm.X3D, vm.Y3D, vm.Z3D), 0.3)
-sphere.plot()
-# sphere.babylonjs()
+sphere_surface = vmf.SphericalSurface3D(vm.Frame3D(vm.O3D, vm.X3D, vm.Y3D, vm.Z3D), 0.3)
+sphere_surface.plot()
 
-face = sphere.rectangular_cut(0, 2.5, 0, 0.5)
+face = sphere_surface.rectangular_cut(0, 2.5, 0, 0.5)
 face.babylonjs()
 face.plot()
 
@@ -23,3 +22,7 @@ contour = vmw.Contour2D([arc, line])
 sphere_revolution = p3d.RevolvedProfile(vm.X3D, vm.X3D, vm.Y3D, contour,
                                         vm.X3D, vm.Y3D, angle=1.3)
 sphere_revolution.babylonjs()
+
+
+sphere = p3d.Sphere(vm.O3D, 0.06)
+sphere.babylonjs()
