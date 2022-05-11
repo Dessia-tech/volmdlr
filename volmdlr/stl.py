@@ -217,7 +217,7 @@ class Stl(dc.DessiaObject):
                 distance_multiplier * triangle.point3.y,
                 distance_multiplier * triangle.point3.z,
                 0]
-        stream.write(struct.pack(BINARY_FACET, *data))
+            stream.write(struct.pack(BINARY_FACET, *data))
 
     def to_closed_shell(self):
         return vmf.ClosedShell3D(self.triangles, name=self.name)
@@ -300,3 +300,15 @@ class Stl(dc.DessiaObject):
         self.normals = normals
 
         return points_normals
+
+    def clean_flat_triangles(self) -> 'Stl':
+        invalid_triangles = []
+        for it, triangles in enumerate(self.triangles):
+            if triangles.area() < 1e-12:
+                invalid_triangles.append(it)
+                print(it, triangles.area())
+
+        triangles = self.triangles[:]
+        for invalid_triangle_index in invalid_triangles[::-1]:
+            triangles.pop(invalid_triangle_index)
+        return Stl(triangles)
