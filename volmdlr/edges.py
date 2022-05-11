@@ -2155,11 +2155,8 @@ class Line3D(Line):
 
     def point_belongs(self, point3d):
         if point3d == self.point1:
-            v = point3d - self.point2
-        else:
-            v = point3d - self.point1
-
-        return self.direction_vector().is_colinear_to(v)
+            return True
+        return self.direction_vector().is_colinear_to(point3d - self.point1)
 
     def point_distance(self, point):
         vector1 = point - self.start
