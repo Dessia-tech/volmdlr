@@ -3585,7 +3585,7 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             best_point.plot(ax=ax, color='r')
             raise ValueError('abscissa not found')
         return res.x[0]
-      
+
 
 class BezierCurve3D(BSplineCurve3D):
 
