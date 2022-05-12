@@ -773,6 +773,16 @@ class Contour(Wire):
     # def __init__(self):
     #     Wire.__init__(self)
 
+    def __eq__(self, other_):
+        if other_.__class__.__name__ != self.__class__.__name__:
+            return False
+        if len(self.primitives) != len(other_.primitives):
+            return False
+        for prim1, prim2 in zip(self.primitives, other_.primitives):
+            if prim1 != prim2:
+                return False
+        return True
+
     def extract_primitives(self, point1, primitive1, point2, primitive2, inside: bool = True):
         """
         inside: extracted contour is between the two points if True and outside these points if False
@@ -1352,27 +1362,6 @@ class Contour2D(Contour, Wire2D):
     #     for prim1, prim2 in zip(self.primitives, other_.primitives):
     #         equal = (equal and prim1 == prim2)
     #     return equal
-
-    def __eq__(self, other_):
-        if other_.__class__.__name__ != self.__class__.__name__:
-            return False
-        if len(self.primitives) != len(other_.primitives):
-            return False
-        equal = 0
-        for prim1 in self.primitives:
-            reverse1 = prim1.reverse()
-            found = False
-            for prim2 in other_.primitives:
-                reverse2 = prim2.reverse()
-                if (prim1 == prim2 or reverse1 == prim2
-                        or reverse2 == prim1 or reverse1 == reverse2):
-                    equal += 1
-                    found = True
-            if not found:
-                return False
-        if equal == len(self.primitives):
-            return True
-        return False
 
     @property
     def edge_polygon(self):
@@ -3630,27 +3619,6 @@ class Contour3D(Contour, Wire3D):
 
     def __hash__(self):
         return sum([hash(e) for e in self.primitives])
-
-    def __eq__(self, other_):
-        if other_.__class__.__name__ != self.__class__.__name__:
-            return False
-        if len(self.primitives) != len(other_.primitives):
-            return False
-        equal = 0
-        for prim1 in self.primitives:
-            reverse1 = prim1.reverse()
-            found = False
-            for prim2 in other_.primitives:
-                reverse2 = prim2.reverse()
-                if (prim1 == prim2 or reverse1 == prim2
-                        or reverse2 == prim1 or reverse1 == reverse2):
-                    equal += 1
-                    found = True
-            if not found:
-                return False
-        if equal == len(self.primitives):
-            return True
-        return False
 
     @property
     def edge_polygon(self):
