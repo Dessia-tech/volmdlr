@@ -1066,7 +1066,7 @@ class Sweep(volmdlr.faces.ClosedShell3D):
     Sweep a 2D contour along a Wire3D
     """
     _non_serializable_attributes = ['faces']
-    
+
     def __init__(self, contour2d: List[volmdlr.wires.Contour2D],
                  wire3d: volmdlr.wires.Wire3D, *,
                  color: Tuple[float, float, float] = None, alpha: float = 1,
@@ -1212,18 +1212,17 @@ class Sweep(volmdlr.faces.ClosedShell3D):
 
 class Sphere(volmdlr.faces.ClosedShell3D):
     _non_serializable_attributes = ['faces']
-    
+
     def __init__(self, center, radius,
                  color: Tuple[float, float, float] = None, alpha: float = 1.,
                  name: str = ''):
         self.center = center
         self.radius = radius
         self.position = center
-        
+
         face = volmdlr.faces.SphericalSurface3D(volmdlr.Frame3D(self.center, volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D),
                                                 self.radius).rectangular_cut(0, volmdlr.TWO_PI, 0, volmdlr.TWO_PI)
         volmdlr.faces.ClosedShell3D.__init__(self, faces=[face], color=color, alpha=alpha, name=name)
-        
 
         # # Revolved Profile for complete sphere
         # s = volmdlr.Point2D(-self.radius, 0.01 * self.radius)
