@@ -1121,12 +1121,6 @@ class Contour(Wire):
         check if two contours are sharing primitives
         '''
 
-        if isinstance(self, Contour2D):
-            if self.is_superposing(contour):
-                return False
-            elif self.is_overlapping(contour):
-                return False
-
         list_p = []
         for edge_1, edge_2 in itertools.product(self.primitives,
                                                 contour.primitives):
