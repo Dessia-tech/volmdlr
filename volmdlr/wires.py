@@ -1144,10 +1144,9 @@ class Contour(Wire):
         extract shared primitives extremities between two adjacent contours
         '''
 
-        if self.is_overlapping(contour):
-            raise ValueError('The contours are overlapping')
         if self.is_superposing(contour):
-            raise ValueError('The contours are superposing')
+            print('The contours are superposing')
+            return []
 
         list_p, edges1 = [], set()
         for edge_1, edge_2 in itertools.product(self.primitives,
@@ -1168,7 +1167,8 @@ class Contour(Wire):
                             edges1.add(edge2)
 
         if len(list_p) < 2:
-            raise ValueError('The contours are not adjacent')
+            print('The contours are not adjacent')
+            return []
 
         if len(list_p) == 2:
             return list_p
