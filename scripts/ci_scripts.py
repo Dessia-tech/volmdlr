@@ -17,6 +17,7 @@ scripts = [
             # Wires
             'wires/roundedlines.py',
             'wires/polygon2D.py',
+            'wires/polygon3d.py',
             'wires/triangle2D.py',
             # Primitives
             'primitives/extrusion.py',
