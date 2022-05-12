@@ -1185,10 +1185,17 @@ class Contour(Wire):
         extract shared primitives between two adjacent contours
         '''
 
-        shared_primitives_1 = []
-        shared_primitives_2 = []
+        if self.is_superposing(contour):
+            print('The contours are superposing')
+            return [self.primitives, contour.primitives]
 
         points = self.shared_primitives_extremities(contour)
+
+        if points == []:
+            return [[], []]
+
+        shared_primitives_1, shared_primitives_2 = [], []
+
         for i in range(0, len(points), 2):
             point1, point2 = points[i], points[i + 1]
 
