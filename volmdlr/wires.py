@@ -1074,13 +1074,6 @@ class Contour(Wire):
 
         return edges
 
-    def shares_primitives(self, contour):
-        """checks if two contour share primitives"""
-        for prim1 in self.primitives:
-            if contour.primitive_over_contour(prim1):
-                return True
-        return False
-
     def is_superposing(self, contour2):
         '''
         check if the contours are superposing (one on the other without
