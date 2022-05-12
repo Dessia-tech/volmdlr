@@ -4,7 +4,7 @@
 
 """
 
-from typing import List
+from typing import List, Dict, Any
 import math
 
 from packaging import version
@@ -863,6 +863,56 @@ class BSplineCurve2D(Edge):
                 return True
         return False
 
+    def nearest_point_to(self, point):
+        '''
+        find out the nearest point on the linesegment to point
+        '''
+
+        points = self.polygon_points(500)
+        return point.nearest_point(points)
+
+    def merge_with(self, bspline_curve):
+        '''
+        merge successives bspline_curves to define a new one
+        '''
+
+        wire = volmdlr.wires.Wire2D([self, bspline_curve])
+        ordered_wire = wire.order_wire()
+
+        points, n = [], 10
+        for primitive in ordered_wire.primitives:
+            points.extend(primitive.polygon_points(n))
+        points.pop(n + 1)
+
+        return volmdlr.edges.BSplineCurve2D.from_points_interpolation(points, min(self.degree, bspline_curve.degree))
+
+    def linesegment_intersections(self, linesegment):
+        results = self.line_intersections(linesegment.to_line())
+        intersections_points = []
+        for result in results:
+            if linesegment.point_belongs(result, 1e-6):
+                intersections_points.append(result)
+        return intersections_points
+
+    @classmethod
+    def from_bsplines(cls, bsplines, discretization_points=10):
+        '''
+        define a bspline_curve using a list of bsplines
+        '''
+
+        wire = volmdlr.wires.Wire2D(bsplines)
+        ordered_wire = wire.order_wire()
+
+        points, degree = [], []
+        for i, primitive in enumerate(ordered_wire.primitives):
+            degree.append(primitive.degree)
+            if i == 0:
+                points.extend(primitive.polygon_points(discretization_points))
+            else:
+                points.extend(primitive.polygon_points(discretization_points)[1::])
+
+        return cls.from_points_interpolation(points, min(degree))
+
 
 class BezierCurve2D(BSplineCurve2D):
 
@@ -1180,6 +1230,22 @@ class LineSegment2D(LineSegment):
         '''
 
         return [self.point_at_abscissa(i * self.length() / (n - 1)) for i in range(n)]
+
+    def to_wire(self, n: int):
+        '''
+        convert a linesegment2d to a wire2d defined with 'n' line_segments
+        '''
+
+        points = self.discretise(n)
+        return volmdlr.wires.Wire2D.from_points(points)
+
+    def nearest_point_to(self, point):
+        '''
+        find out the nearest point on the linesegment to point
+        '''
+
+        points = self.discretization_points(500)
+        return point.nearest_point(points)
 
 
 class Arc(Edge):
@@ -1763,6 +1829,13 @@ class Arc2D(Arc):
                 return True
         return False
 
+    def to_wire(self, angle_resolution: float = 10.):
+        '''
+        convert an arc to a wire2d defined with line_segments
+        '''
+
+        return volmdlr.wires.Wire2D.from_points(self.polygon_points(angle_resolution))
+
 
 class FullArc2D(Arc2D):
     """
@@ -1803,7 +1876,7 @@ class FullArc2D(Arc2D):
         return FullArc2D(self.center.copy(), self.start.copy())
 
     @classmethod
-    def dict_to_object(cls, dict_):
+    def dict_to_object(cls, dict_, global_dict=None, pointers_memo: Dict[str, Any] = None, path: str = '#'):
         center = volmdlr.Point2D.dict_to_object(dict_['center'])
         start_end = volmdlr.Point2D.dict_to_object(dict_['start_end'])
 
@@ -3476,6 +3549,30 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         return [BSplineCurve3D.from_geomdl_curve(curve1),
                 BSplineCurve3D.from_geomdl_curve(curve2)]
 
+    def abscissa(self, point3d):
+        '''
+        copied from BSplineCurve2D
+        '''
+        l = self.length()
+
+        res = scp.optimize.least_squares(
+            lambda u: (point3d - self.point_at_abscissa(u)).norm(),
+            x0=npy.array(l / 2),
+            bounds=([0], [l]),
+            # ftol=tol / 10,
+            # xtol=tol / 10,
+            # loss='soft_l1'
+        )
+
+        if res.fun > 1e-1:
+            print('distance =', res.cost)
+            ax = self.plot()
+            point3d.plot(ax=ax)
+            best_point = self.point_at_abscissa(res.x)
+            best_point.plot(ax=ax, color='r')
+            raise ValueError('abscissa not found')
+        return res.x[0]
+
 
 class BezierCurve3D(BSplineCurve3D):
 
@@ -4116,6 +4213,9 @@ class Arc3D(Arc):
             if z.fun < abs_tol:
                 return True
         return False
+
+    def middle_point(self):
+        return self.point_at_abscissa(self.length() / 2)
 
 
 class FullArc3D(Arc3D):
