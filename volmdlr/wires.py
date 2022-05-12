@@ -1138,7 +1138,7 @@ class Contour(Wire):
         '''
 
         if self.is_superposing(contour):
-            print('The contours are superposing')
+            warnings.warn('The contours are superposing')
             return []
 
         list_p, edges1 = [], set()
@@ -1160,7 +1160,7 @@ class Contour(Wire):
                             edges1.add(edge2)
 
         if len(list_p) < 2:
-            print('The contours are not adjacent')
+            warnings.warn('The contours are not adjacent')
             return []
 
         if len(list_p) == 2:
@@ -1179,7 +1179,7 @@ class Contour(Wire):
         '''
 
         if self.is_superposing(contour):
-            print('The contours are superposing')
+            warnings.warn('The contours are superposing')
             return [self.primitives, contour.primitives]
 
         points = self.shared_primitives_extremities(contour)
@@ -1220,7 +1220,7 @@ class Contour(Wire):
         '''
 
         if self.is_superposing(contour):
-            print('The contours are superposing')
+            warnings.warn('The contours are superposing')
             return self.primitives
 
         points = self.shared_primitives_extremities(contour)
