@@ -3591,12 +3591,22 @@ class Contour3D(Contour, Wire3D):
             edges.append(last_edge)
         return cls(edges, name=name)
 
-    def to_step(self, current_id, surface_id=None):
+    def to_step(self, current_id, surface_id=None, surface3d=None):
         content = ''
         edge_ids = []
         for primitive in self.primitives:
-            primitive_content, primitive_ids = primitive.to_step(current_id,
-                                                                 surface_id)
+            print(primitive.__class__.__name__)
+            if primitive.__class__.__name__ == 'BSplineCurve3D':
+                method_name = f'{primitive.__class__.__name__.lower()}_to_2d'
+                curve2d = getattr(self, method_name)(primitive)[0]
+                if curve2d.__class__.__name__ == 'LineSegment3D':
+                    curve2d = curve2d.to_bspline_curve()
+                primitive_content, primitive_ids = primitive.to_step(
+                    current_id, surface_id, curve2d)
+            else:
+                primitive_content, primitive_ids = primitive.to_step(
+                    current_id,
+                    surface_id)
             content += primitive_content
             current_id = primitive_ids[-1] + 1
             for primitive_id in primitive_ids:

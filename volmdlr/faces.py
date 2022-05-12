@@ -1960,8 +1960,8 @@ class BSplineSurface3D(Surface3D):
                 #                 for p1, p2 in zip(points[:-1], points[1:])]
                 linesegments = [vme.BSplineCurve2D.from_points_interpolation(
                     points, min(self.degree_u, self.degree_v))]
-                bs = vme.BSplineCurve2D.from_points_interpolation(
-                    points, min(self.degree_u, self.degree_v))
+                # bs = vme.BSplineCurve2D.from_points_interpolation(
+                #     points, min(self.degree_u, self.degree_v))
                 # ax = bs.plot()
                 # [p.plot(ax=ax) for p in points]
                 # print(points)
@@ -3610,7 +3610,7 @@ class Face3D(volmdlr.core.Primitive3D):
         if len(surface3d_ids) != 1:
             raise NotImplementedError('What to do with more than 1 id ? with 0 id ?')
         outer_contour_content, outer_contour_id = self.outer_contour3d.to_step(
-            current_id, surface_id=surface3d_ids[0])
+            current_id, surface_id=surface3d_ids[0], surface3d=self.surface3d)
         content += outer_contour_content
         content += "#{} = FACE_BOUND('{}',#{},.T.);\n".format(
                 outer_contour_id + 1, self.name, outer_contour_id)

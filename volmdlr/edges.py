@@ -676,6 +676,26 @@ class BSplineCurve2D(Edge):
                               self.knot_multiplicities, self.knots,
                               self.weights, self.periodic)
 
+    def to_step(self, current_id):
+        points_ids = []
+        content = ''
+        point_id = current_id
+        for point in self.control_points:
+            point_content, point_id = point.to_step(point_id,
+                                                    vertex=False)
+            content += point_content
+            points_ids.append(point_id)
+            point_id += 1
+
+        content += "#{} = B_SPLINE_CURVE_WITH_KNOTS('{}',{},({})," \
+                   ".UNSPECIFIED.,.F.,.F.,{},{}," \
+                   ".UNSPECIFIED.);\n".format(
+                        current_id, self.name, self.degree,
+                        volmdlr.core.step_ids_to_str(points_ids),
+                        tuple(self.knot_multiplicities),
+                        tuple(self.knots))
+        return content, current_id+1
+
     def polygon_points(self, n=15):
         l = self.length()
         return [self.point_at_abscissa(i * l / n) for i in range(n + 1)]
@@ -2539,6 +2559,17 @@ class LineSegment3D(LineSegment):
         p2D = [p.to_2d(plane_origin, x1, x2) for p in (self.start, self.end)]
         return LineSegment2D(*p2D, name=self.name)
 
+    def to_bspline_curve(self, resolution=10):
+        """
+        Convert a LineSegment3D to a BSplineCurve3D
+        """
+        degree = 1
+        points = [self.point_at_abscissa(abscissa/self.length())
+                  for abscissa in range(resolution+1)]
+        bspline_curve = BSplineCurve3D.from_points_interpolation(points,
+                                                                 degree)
+        return bspline_curve
+
     def reverse(self):
         return LineSegment3D(self.end.copy(), self.start.copy())
 
@@ -2998,7 +3029,7 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         return cls(degree, points, knot_multiplicities, knots, weight_data,
                    closed_curve, name)
 
-    def to_step(self, current_id, surface_id=None):
+    def to_step(self, current_id, surface_id=None, curve2d=None):
 
         points_ids = []
         content = ''
@@ -3026,9 +3057,9 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
                 curve_id + 2, surface_id, curve_id + 3)
             content += "#{} = DEFINITIONAL_REPRESENTATION('',(#{}),#{});\n".format(
                 curve_id + 3, curve_id + 4, curve_id + 5)
-            content += "#{} = B_SPLINE_CURVE_WITH_KNOTS('{}',{},({})," \
-                       ".UNSPECIFIED.,.F.,.F.,{},{}," \
-                       ".UNSPECIFIED.);\n".format(curve_id+4)
+            # 2D parametric curve
+            curve2d_content, _ = curve2d.to_step(curve_id + 4)
+            content += curve2d_content
             content += "#{} = ( GEOMETRIC_REPRESENTATION_CONTEXT(2) PARAMETRIC_REPRESENTATION_CONTEXT() REPRESENTATION_CONTEXT('2D SPACE','') );\n".format(curve_id+5)
             curve_id += 5
 
