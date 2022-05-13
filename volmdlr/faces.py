@@ -3,7 +3,7 @@ Surfaces & faces
 """
 
 
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Any
 import math
 
 from itertools import product
@@ -2020,7 +2020,7 @@ class BSplineSurface3D(Surface3D):
 
             results.append((z.x, z.fun))
             results.append((res.x, res.fun))
-        return (volmdlr.Point2D(*min(results, key=lambda r: r[1])[0]))
+        return volmdlr.Point2D(*min(results, key=lambda r: r[1])[0])
 
     def linesegment2d_to_3d(self, linesegment2d):
         # TODO: this is a non exact method!
@@ -2964,12 +2964,7 @@ class BSplineSurface3D(Surface3D):
                     f'Class {self.__class__.__name__} does not implement {method_name}')
 
         # #Avoid to have primitives with start=end
-        # start_points = []
-        # for i in range(0, len(new_start_points)-1):
-        #     if new_start_points[i] != new_start_points[i+1]:
-        #         start_points.append(new_start_points[i])
-        # if new_start_points[-1] != new_start_points[0]:
-        #     start_points.append(new_start_points[-1])
+        # start_points = list(set(new_start_points))
 
         return volmdlr.wires.Contour2D(primitives2d)
 
@@ -3551,11 +3546,7 @@ class BSplineSurface3D(Surface3D):
                   other_bspline_face3d.surface2d.outer_contour.center_of_mass()]
         grid2d_direction = (bspline_face3d.pair_with(other_bspline_face3d))[1]
 
-        if bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d):
-
-            xmin, xmax, ymin, ymax = self.xy_limits(other_bspline_surface3d)
-
-        elif self.is_intersected_with(other_bspline_surface3d):
+        if self.is_intersected_with(other_bspline_surface3d):
             # find pimitives to split with
             contour1 = bspline_face3d.outer_contour3d
             contour2 = other_bspline_face3d.outer_contour3d
@@ -3584,34 +3575,32 @@ class BSplineSurface3D(Surface3D):
 
                 bsplines_new[i] = surfaces[errors.index(min(errors))]
 
-            xmin, xmax, ymin, ymax = [0] * len(bsplines_new), [1] * len(bsplines_new), [0] * \
-                len(bsplines_new), [1] * len(bsplines_new)
-
             grid2d_direction = (
                 bsplines_new[0].rectangular_cut(
                     0, 1, 0, 1).pair_with(
                     bsplines_new[1].rectangular_cut(
                         0, 1, 0, 1)))[1]
 
-        else:
-            xmin, xmax, ymin, ymax = [0] * len(bsplines_new), [1] * len(bsplines_new), [0] * \
-                                               len(bsplines_new), [1] * len(bsplines_new)
-
         # grid3d
+        nb = 10
         points3d = []
         for i, bspline in enumerate(bsplines_new):
-            grid2d = volmdlr.Point2D.grid2d_with_direction(
-                50, 50, xmin[i], xmax[i], ymin[i], ymax[i], grid2d_direction[i])[0]
+            grid2d = volmdlr.Point2D.grid2d_with_direction(nb, nb, 0, 1, 0, 1, grid2d_direction[i])[0]
             grid3d = []
             for p in grid2d:
                 grid3d.append(bspline.point2d_to_3d(p))
 
-            points3d.extend(grid3d)
+            if (bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d)
+                    or self.is_intersected_with(other_bspline_surface3d)):
+                if i == 0:
+                    points3d.extend(grid3d[0:nb * nb - nb])
+                else:
+                    points3d.extend(grid3d)
+            else:
+                points3d.extend(grid3d)
 
-            # fitting
-        size_u, size_v, degree_u, degree_v = 100, 50, max(
-            bsplines[0].degree_u, bsplines[1].degree_u), max(
-            bsplines[0].degree_v, bsplines[1].degree_v)
+        # fitting
+        size_u, size_v, degree_u, degree_v = (nb * 2) - 1, nb, 3, 3
 
         merged_surface = volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(
             points3d, size_u, size_v, degree_u, degree_v)
@@ -4004,13 +3993,15 @@ class PlaneFace3D(Face3D):
     #     return repaired_points, polygon2D
 
     @classmethod
-    def dict_to_object(cls, dict_, global_dict=None, pointers_memo=None):
+    def dict_to_object(cls, dict_, global_dict=None, pointers_memo: Dict[str, Any] = None, path: str = '#'):
         plane3d = Plane3D.dict_to_object(dict_['surface3d'],
                                          global_dict=global_dict,
-                                         pointers_memo=pointers_memo)
+                                         pointers_memo=pointers_memo,
+                                         path=f'{path}/surface3d')
         surface2d = Surface2D.dict_to_object(dict_['surface2d'],
                                              global_dict=global_dict,
-                                             pointers_memo=pointers_memo)
+                                             pointers_memo=pointers_memo,
+                                             path=f'{path}/surface2d')
         return cls(plane3d, surface2d, dict_['name'])
 
     def area(self):
@@ -4319,7 +4310,7 @@ class PlaneFace3D(Face3D):
             self.surface3d.frame.origin,
             self.surface3d.frame.u,
             self.surface3d.frame.v)
-        if contour1.is_sharing_primitives_with(contour2, False):
+        if contour1.is_sharing_primitives_with(contour2):
             return True
         return False
 
@@ -4345,7 +4336,7 @@ class PlaneFace3D(Face3D):
                     face0.surface3d.frame.origin,
                     face0.surface3d.frame.u,
                     face0.surface3d.frame.v)
-                if contour.is_sharing_primitives_with(merged_contour, False):
+                if contour.is_sharing_primitives_with(merged_contour):
                     merged_contour_results = merged_contour.merge_with(
                         contour)
                     merged_contour = merged_contour_results[0]
@@ -4428,6 +4419,22 @@ class Triangle3D(PlaneFace3D):
         #                 surface3d=plane3d,
         #                 surface2d=surface2d,
         #                 name=name)
+
+    def _data_hash(self):
+        """
+        Using point approx hash to speed up
+        """
+        return self.point1.approx_hash() + self.point2.approx_hash() + self.point3.approx_hash()
+
+    def _data_eq(self, other_):
+        if other_.__class__.__name__ != self.__class__.__name__:
+            return False
+        self_set = set([self.point1, self.point2, self.point3])
+        other_set = set([other_.point1, other_.point2, other_.point3])
+        if self_set != other_set:
+            return False
+        return True
+
     @property
     def bounding_box(self):
         if not self._bbox:
@@ -4476,7 +4483,7 @@ class Triangle3D(PlaneFace3D):
         return dict_
 
     @classmethod
-    def dict_to_object(cls, dict_):
+    def dict_to_object(cls, dict_, global_dict=None, pointers_memo: Dict[str, Any] = None, path: str = '#'):
         point1 = volmdlr.Point3D.dict_to_object(dict_['point1'])
         point2 = volmdlr.Point3D.dict_to_object(dict_['point2'])
         point3 = volmdlr.Point3D.dict_to_object(dict_['point3'])
@@ -5921,6 +5928,7 @@ class BSplineFace3D(Face3D):
         Parameters
         ----------
         other_bspline_face3d : volmdlr.faces.BSplineFace3D
+
         Returns
         -------
         corresponding_direction
@@ -6095,6 +6103,7 @@ class BSplineFace3D(Face3D):
         '''
         find points extremities for nearest edges of two faces
         '''
+
         contour1 = self.outer_contour3d
         contour2 = other_bspline_face3d.outer_contour3d
 
@@ -6186,9 +6195,11 @@ class BSplineFace3D(Face3D):
     def adjacent_direction_xy(self, other_face3d):
         '''
         find out in which direction the faces are adjacent
+
         Parameters
         ----------
         other_face3d : volmdlr.faces.BSplineFace3D
+
         Returns
         -------
         adjacent_direction
@@ -6209,9 +6220,11 @@ class BSplineFace3D(Face3D):
     def merge_with(self, other_bspline_face3d):
         '''
         merge two adjacent faces
+
         Parameters
         ----------
         other_bspline_face3d : volmdlr.faces.BSplineFace3D
+
         Returns
         -------
         merged_face : volmdlr.faces.BSplineFace3D
@@ -6246,16 +6259,17 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         self._bbox = None
         # self.bounding_box = self._bounding_box()
 
-    # def __hash__(self):
-    #     return sum([hash(f) for f in self.faces])
+    def _data_hash(self):
+        return sum([f._data_hash() for f in self.faces])
 
-    # def __eq__(self, other_):
-    #     if self.__class__ != other_.__class__:
-    #         return False
-    #     equal = True
-    #     for face, other_face in zip(self.faces, other_.faces):
-    #         equal = (equal and face == other_face)
-    #     return equal
+    def _data_eq(self, other_):
+        if other_.__class__.__name__ != self.__class__.__name__:
+            return False
+        for face1, face2 in zip(self.faces, other_.faces):
+            if not face1._data_eq(face2):
+                return False
+
+        return True
 
     @classmethod
     def from_step(cls, arguments, object_dict):
