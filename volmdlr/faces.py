@@ -2007,7 +2007,7 @@ class BSplineSurface3D(Surface3D):
 
             results.append((z.x, z.fun))
             results.append((res.x, res.fun))
-        return (volmdlr.Point2D(*min(results, key=lambda r: r[1])[0]))
+        return volmdlr.Point2D(*min(results, key=lambda r: r[1])[0])
 
     def linesegment2d_to_3d(self, linesegment2d):
         # TODO: this is a non exact method!
@@ -2951,12 +2951,7 @@ class BSplineSurface3D(Surface3D):
                     f'Class {self.__class__.__name__} does not implement {method_name}')
 
         # #Avoid to have primitives with start=end
-        # start_points = []
-        # for i in range(0, len(new_start_points)-1):
-        #     if new_start_points[i] != new_start_points[i+1]:
-        #         start_points.append(new_start_points[i])
-        # if new_start_points[-1] != new_start_points[0]:
-        #     start_points.append(new_start_points[-1])
+        # start_points = list(set(new_start_points))
 
         return volmdlr.wires.Contour2D(primitives2d)
 
@@ -3538,11 +3533,7 @@ class BSplineSurface3D(Surface3D):
                   other_bspline_face3d.surface2d.outer_contour.center_of_mass()]
         grid2d_direction = (bspline_face3d.pair_with(other_bspline_face3d))[1]
 
-        if bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d):
-
-            xmin, xmax, ymin, ymax = self.xy_limits(other_bspline_surface3d)
-
-        elif self.is_intersected_with(other_bspline_surface3d):
+        if self.is_intersected_with(other_bspline_surface3d):
             # find pimitives to split with
             contour1 = bspline_face3d.outer_contour3d
             contour2 = other_bspline_face3d.outer_contour3d
@@ -3571,34 +3562,32 @@ class BSplineSurface3D(Surface3D):
 
                 bsplines_new[i] = surfaces[errors.index(min(errors))]
 
-            xmin, xmax, ymin, ymax = [0] * len(bsplines_new), [1] * len(bsplines_new), [0] * \
-                len(bsplines_new), [1] * len(bsplines_new)
-
             grid2d_direction = (
                 bsplines_new[0].rectangular_cut(
                     0, 1, 0, 1).pair_with(
                     bsplines_new[1].rectangular_cut(
                         0, 1, 0, 1)))[1]
 
-        else:
-            xmin, xmax, ymin, ymax = [0] * len(bsplines_new), [1] * len(bsplines_new), [0] * \
-                                               len(bsplines_new), [1] * len(bsplines_new)
-
         # grid3d
+        nb = 10
         points3d = []
         for i, bspline in enumerate(bsplines_new):
-            grid2d = volmdlr.Point2D.grid2d_with_direction(
-                50, 50, xmin[i], xmax[i], ymin[i], ymax[i], grid2d_direction[i])[0]
+            grid2d = volmdlr.Point2D.grid2d_with_direction(nb, nb, 0, 1, 0, 1, grid2d_direction[i])[0]
             grid3d = []
             for p in grid2d:
                 grid3d.append(bspline.point2d_to_3d(p))
 
-            points3d.extend(grid3d)
+            if (bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d)
+                    or self.is_intersected_with(other_bspline_surface3d)):
+                if i == 0:
+                    points3d.extend(grid3d[0:nb * nb - nb])
+                else:
+                    points3d.extend(grid3d)
+            else:
+                points3d.extend(grid3d)
 
-            # fitting
-        size_u, size_v, degree_u, degree_v = 100, 50, max(
-            bsplines[0].degree_u, bsplines[1].degree_u), max(
-            bsplines[0].degree_v, bsplines[1].degree_v)
+        # fitting
+        size_u, size_v, degree_u, degree_v = (nb * 2) - 1, nb, 3, 3
 
         merged_surface = volmdlr.faces.BSplineSurface3D.points_fitting_into_bspline_surface(
             points3d, size_u, size_v, degree_u, degree_v)
@@ -5926,6 +5915,7 @@ class BSplineFace3D(Face3D):
         Parameters
         ----------
         other_bspline_face3d : volmdlr.faces.BSplineFace3D
+
         Returns
         -------
         corresponding_direction
@@ -6100,6 +6090,7 @@ class BSplineFace3D(Face3D):
         '''
         find points extremities for nearest edges of two faces
         '''
+
         contour1 = self.outer_contour3d
         contour2 = other_bspline_face3d.outer_contour3d
 
@@ -6191,9 +6182,11 @@ class BSplineFace3D(Face3D):
     def adjacent_direction_xy(self, other_face3d):
         '''
         find out in which direction the faces are adjacent
+
         Parameters
         ----------
         other_face3d : volmdlr.faces.BSplineFace3D
+
         Returns
         -------
         adjacent_direction
@@ -6214,9 +6207,11 @@ class BSplineFace3D(Face3D):
     def merge_with(self, other_bspline_face3d):
         '''
         merge two adjacent faces
+
         Parameters
         ----------
         other_bspline_face3d : volmdlr.faces.BSplineFace3D
+
         Returns
         -------
         merged_face : volmdlr.faces.BSplineFace3D
