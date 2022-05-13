@@ -1101,13 +1101,6 @@ class Contour(Wire):
 
         return edges
 
-    def shares_primitives(self, contour):
-        """checks if two contour share primitives"""
-        for prim1 in self.primitives:
-            if contour.primitive_over_contour(prim1):
-                return True
-        return False
-
     def is_superposing(self, contour2):
         '''
         check if the contours are superposing (one on the other without
@@ -1126,7 +1119,8 @@ class Contour(Wire):
 
         if not intersecting_points:
             intersecting_points = self.contour_intersections(contour2)
-
+        if len(intersecting_points) < 2:
+            return False
         vec1_2 = volmdlr.edges.LineSegment2D(intersecting_points[0],
                                              intersecting_points[1])
         middle_point = vec1_2.middle_point()
@@ -1142,17 +1136,12 @@ class Contour(Wire):
             return True
         return False
 
-    def is_sharing_primitives_with(self, contour, all_points=False):
+    def is_sharing_primitives_with(self, contour):
         '''
-        check if two contour are sharing primitives
-        "all_points" is by default False. Turn it True if you need to get
-        points and edges used to find out shared primitives
+        check if two contours are sharing primitives
         '''
 
         list_p = []
-        edges1 = set()
-        # edges2 = set()
-
         for edge_1, edge_2 in itertools.product(self.primitives,
                                                 contour.primitives):
             edges = [edge_1, edge_2, edge_1]
@@ -1166,61 +1155,67 @@ class Contour(Wire):
                         if list_p != [] and point.point_distance(point.nearest_point(list_p)) > 1e-4:
                             list_p.append(point)
 
-                        # edges2.add(edge2)
-                        try:
-                            self.primitive_to_index(edge1)
-                            edges1.add(edge1)
-                        except KeyError:
-                            edges1.add(edge2)
-
-                    if len(list_p) == 2 and all_points is False:
-                        if self.is_overlapping(contour, list_p):
-                            return False
+                    if len(list_p) == 2:
                         return True
-        if len(list_p) < 2:
-            return False
-        if len(list_p) >= 2 and all_points is True:
-            if len(list_p) == 2 and self.is_overlapping(contour, list_p):
-                return False
-            return (edges1, list_p)
-        else:
-            return False
+        return False
 
     def shared_primitives_extremities(self, contour):
         '''
         extract shared primitives extremities between two adjacent contours
         '''
 
-        results = self.is_sharing_primitives_with(contour, all_points=True)
-        if results is False:
-            raise ValueError(
-                    'The contours are not adjacent. They dont share primitives')
-        elif len(results[1]) == 2:
-            return results[1]
-        else:
-            edges1, list_p = results
-            if isinstance(self, volmdlr.wires.Contour2D):
-                contours1 = volmdlr.wires.Contour2D.contours_from_edges(edges1)
-                # contours2 = volmdlr.wires.Contour2D.contours_from_edges(edges2)
-            elif isinstance(self, volmdlr.wires.Contour3D):
-                contours1 = volmdlr.wires.Contour3D.contours_from_edges(edges1)
-                # contours2 = volmdlr.wires.Contour3D.contours_from_edges(edges2)
-            points = []
+        if self.is_superposing(contour):
+            warnings.warn('The contours are superposing')
+            return []
 
-            for contour_i in contours1:
-                points.extend(contour_i.extremities_points(list_p))
+        list_p, edges1 = [], set()
+        for edge_1, edge_2 in itertools.product(self.primitives,
+                                                contour.primitives):
+            edges = [edge_1, edge_2, edge_1]
+            for edge1, edge2 in zip(edges, edges[1:]):
+                for point in [edge2.start, edge2.end]:
+                    if edge1.point_belongs(point, 1e-6):
+                        if list_p == []:
+                            list_p.append(point)
+                        if list_p != [] and point.point_distance(point.nearest_point(list_p)) > 1e-4:
+                            list_p.append(point)
 
-            return points
+                        try:
+                            self.primitive_to_index(edge1)
+                            edges1.add(edge1)
+                        except KeyError:
+                            edges1.add(edge2)
+
+        if len(list_p) < 2:
+            warnings.warn('The contours are not adjacent')
+            return []
+
+        if len(list_p) == 2:
+            return list_p
+
+        contours = self.__class__.contours_from_edges(edges1)
+        points = []
+        for contour_i in contours:
+            points.extend(contour_i.extremities_points(list_p))
+
+        return points
 
     def shared_primitives_with(self, contour):
         '''
         extract shared primitives between two adjacent contours
         '''
 
-        shared_primitives_1 = []
-        shared_primitives_2 = []
+        if self.is_superposing(contour):
+            warnings.warn('The contours are superposing')
+            return [self.primitives, contour.primitives]
 
         points = self.shared_primitives_extremities(contour)
+
+        if points == []:
+            return [[], []]
+
+        shared_primitives_1, shared_primitives_2 = [], []
+
         for i in range(0, len(points), 2):
             point1, point2 = points[i], points[i + 1]
 
@@ -1251,7 +1246,15 @@ class Contour(Wire):
         extract not shared primitives between two adjacent contours, to be merged
         '''
 
+        if self.is_superposing(contour):
+            warnings.warn('The contours are superposing')
+            return self.primitives
+
         points = self.shared_primitives_extremities(contour)
+        if points == []:
+            return []
+
+        [shared_primitives_1, shared_primitives_2] = self.shared_primitives_with(contour)
         merge_primitives = []
 
         for i in range(1, len(points) + 1, 2):
@@ -1267,9 +1270,9 @@ class Contour(Wire):
                 merge_primitives_prim = self.extract_without_primitives(point1,
                                                                         point2,
                                                                         True)
-                merge_primitives.extend(merge_primitives_prim)
-            else:
-                merge_primitives.extend(merge_primitives_prim)
+            for p in merge_primitives_prim:
+                if p not in shared_primitives_1:
+                    merge_primitives.append(p)
 
             merge_primitives_prim = contour.extract_without_primitives(point1,
                                                                        point2,
@@ -1278,9 +1281,9 @@ class Contour(Wire):
                 merge_primitives_prim = contour.extract_without_primitives(point1,
                                                                            point2,
                                                                            True)
-                merge_primitives.extend(merge_primitives_prim)
-            else:
-                merge_primitives.extend(merge_primitives_prim)
+            for p in merge_primitives_prim:
+                if p not in shared_primitives_2:
+                    merge_primitives.append(p)
 
         return merge_primitives
 
@@ -2036,6 +2039,8 @@ class Contour2D(Contour, Wire2D):
             return [contour2d]
 
         merged_primitives = self.merge_primitives_with(contour2d)
+        if merged_primitives == []:
+            return []
         contours = volmdlr.wires.Contour2D.contours_from_edges(merged_primitives)
         contours = sorted(contours, key=lambda contour: contour.area(), reverse=True)
 
@@ -3954,9 +3959,10 @@ class Contour3D(Contour, Wire3D):
         '''
 
         merged_primitives = self.merge_primitives_with(contour3d)
+        if merged_primitives == []:
+            return []
         contours = volmdlr.wires.Contour3D.contours_from_edges(merged_primitives, tol=3e-4)
         # contours = sorted(contours, key=lambda contour: contour.area(), reverse=True)
-
         return contours
 
     # def primitive_over_contour(self, primitive):
