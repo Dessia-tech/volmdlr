@@ -2804,8 +2804,21 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             if len(polygon_points) == 0:
                 finished = True
 
-        if points[0] == points[-1]:
-            return cls(points[:-1])
+        points.pop(-1)
+
+        # the first point is the one with the lowest x value
+        i_min = 0
+        min_x = points[0].x
+        for i, point in enumerate(points):
+            if point.x < min_x:
+                min_x = point.x
+                i_min = i
+
+        points = points[i_min:] + points[:i_min]
+
+        # we make sure that the points are ordered in the trigonometric direction
+        if points[0].y < points[1].y:
+            points.reverse()
 
         return cls(points)
 
@@ -3625,24 +3638,16 @@ class Circle2D(Contour2D):
                 volmdlr.edges.Arc2D(split_start, interior_point2,
                                     split_end)]
 
-    def discretise(self, n: float):
-        # BUGGED: returns method
-        circle_to_nodes = {}
-        nodes = []
-        if n * self.length() < 1:
-            circle_to_nodes[self] = self.border_points
-        else:
-            n0 = int(math.ceil(n * self.length()))
-            l0 = self.length() / n0
+    def discretise(self, n: float) -> List[volmdlr.Point2D]:
+        points = []
+        vector = volmdlr.Vector2D(0, 1)
 
-            for k in range(n0):
-                node = self.point_at_abscissa(k * l0)
+        for i in range(n):
+            points.append(self.center + self.radius * vector)
+            vector.rotation(center=volmdlr.Point2D(0, 0), angle=2 * math.pi / n, copy=False)
+            vector.normalize()
 
-                nodes.append(node)
-
-            circle_to_nodes[self] = nodes
-
-        return circle_to_nodes[self]
+        return points
 
     def polygon_points(self, angle_resolution=10):
         return volmdlr.edges.Arc2D.polygon_points(
