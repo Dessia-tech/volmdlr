@@ -35,7 +35,7 @@ fig, axs = plt.subplots(1, 2)
 titles = ['Grid2d', 'Patterns']
 
 for i, ax in enumerate(axs):
-    for points in grid2d.list_points:
+    for points in grid2d.lists_points:
         for point in points:
             point.plot(ax=ax)
     ax.set_title(titles[i])
