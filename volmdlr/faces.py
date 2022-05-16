@@ -7385,7 +7385,7 @@ class ClosedShell3D(OpenShell3D):
                 return False
         return True
 
-    def union(self, shell2: 'ClosedShell3D' , tol: float=1e-8):
+    def union(self, shell2: 'ClosedShell3D', tol: float = 1e-8):
         '''
             Given Two closed shells, it returns
             a new united ClosedShell3D object
