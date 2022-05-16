@@ -708,6 +708,17 @@ class Point2D(Vector2D):
         return points[distances.index(min(distances))]
 
 
+    def axial_symmetry(self, line):
+        '''
+        finds out the symmetric point according to a line
+        '''
+
+        point_projection = line.point_projection(self)[0]
+        point_symmetry = point_projection + (point_projection - self)
+
+        return point_symmetry
+
+
 O2D = Point2D(0, 0)
 
 

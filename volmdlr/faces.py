@@ -502,6 +502,19 @@ class Surface2D(volmdlr.core.Primitive2D):
         ax.margins(0.1)
         return ax
 
+    def axial_symmetry(self, line):
+        '''
+        finds out the symmetric surface2d according to a line
+        '''
+
+        outer_contour = self.outer_contour.axial_symmetry(line)
+        inner_contours = []
+        if self.inner_contours != []:
+            inner_contours = [contour.axial_symmetry(line) for contour in self.inner_contours]
+
+        return self.__class__(outer_contour=outer_contour,
+                              inner_contours=inner_contours)
+
 
 class Surface3D(dc.DessiaObject):
     x_periodicity = None
