@@ -414,25 +414,25 @@ class Vector2D(Vector):
     def point_distance(self, other_vector):
         return (self-other_vector).norm()
 
-    def rotation_parameters(self, center, angle):
+    def rotation_parameters(self, center: Point2D, angle: float):
         """Calculates the parameters to be used in rotation methods"""
         u = self - center
         v2x = math.cos(angle) * u[0] - math.sin(angle) * u[1] + center[0]
         v2y = math.sin(angle) * u[0] + math.cos(angle) * u[1] + center[1]
         return v2x, v2y
 
-    def rotation(self, center, angle):
+    def rotation(self, center: Point2D, angle: float):
         """Rotates the vector and returns a new rotated vector"""
         v2x, v2y = self.rotation_parameters(center, angle)
         return self.__class__(v2x, v2y)
 
-    def rotation_inplace(self, center, angle):
+    def rotation_inplace(self, center: Point2D, angle: float):
         """Rotates the vector and changes its values inplace"""
         v2x, v2y = self.rotation_parameters(center, angle)
         self.x = v2x
         self.y = v2y
 
-    def translation(self, offset):
+    def translation(self, offset: float):
         """
         Translates the vector and returns a new translated vector
         :param offset: an other Vector2D
@@ -448,7 +448,7 @@ class Vector2D(Vector):
         self.x = v2x
         self.y = v2y
 
-    def frame_mapping(self, frame, side):
+    def frame_mapping(self, frame: Frame2D, side: str):
         """
         Changes vector frame_mapping and return a new vector
         side = 'old' or 'new'
@@ -460,7 +460,7 @@ class Vector2D(Vector):
         return new_vector
 
 
-    def frame_mapping_inplace(self, frame, side):
+    def frame_mapping_inplace(self, frame: Frame3D, side: str):
         """
         Changes vector frame_mapping in place
         side = 'old' or 'new'
@@ -968,7 +968,7 @@ class Vector3D(Vector):
         vector2 = vector3D_rotation(self, center, axis, angle)
         return self.__class__(*vector2)
 
-    def rotation_inplace(self, center, axis, angle: float):
+    def rotation_inplace(self, center: Point3D, axis: 'Vector3D', angle: float):
         """Rotation of angle around axis.
         The vector parameters are changed inplace
         Used Rodrigues Formula:
@@ -1057,7 +1057,7 @@ class Vector3D(Vector):
         self.y += offset[1]
         self.z += offset[2]
 
-    def frame_mapping(self, frame, side):
+    def frame_mapping(self, frame: Frame3D, side: str):
         """
         Changes vector frame_mapping and return a new vector
         side = 'old' or 'new'
@@ -1068,7 +1068,7 @@ class Vector3D(Vector):
             new_vector = frame.new_coordinates(self)
         return new_vector
 
-    def frame_mapping_inplace(self, frame, side):
+    def frame_mapping_inplace(self, frame: Frame3D, side: str):
         """
         Changes vector frame_mapping in place
         side = 'old' or 'new'
@@ -1525,7 +1525,7 @@ class Basis2D(Basis):
     #     return Point2D(matrix[0][0]*vector.x + matrix[0][1]*vector.y,
     #                    matrix[1][0]*vector.x + matrix[1][1]*vector.y)
 
-    def rotation(self, angle:float):
+    def rotation(self, angle: float):
         """Rotates the base and returns a new rotated one"""
         center = O2D
         new_u = self.u.rotation(center, angle)

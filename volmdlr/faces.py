@@ -917,7 +917,7 @@ class Plane3D(Surface3D):
                 return True
         return False
 
-    def rotation(self, center, axis, angle):
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         Plane3D rotation
         :param center: rotation center
@@ -928,9 +928,9 @@ class Plane3D(Surface3D):
         new_frame = self.frame.rotation(center=center, axis=axis, angle=angle)
         return Plane3D(new_frame)
 
-    def rotation_inplace(self, center, axis, angle):
+    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
-        Line2D rotation. Object is updated inplace
+        Plane3D rotation. Object is updated inplace
         :param center: rotation center
         :param axis: rotation axis
         :param angle: rotation angle
@@ -953,22 +953,20 @@ class Plane3D(Surface3D):
         """
         self.frame.translation_inplace(offset)
 
-    def frame_mapping(self, frame, side):
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new Frame3D
         side = 'old' or 'new'
         """
-        new_frame =\
-            self.frame_mapping_parameters(frame, side)
+        new_frame = self.frame_mapping_parameters(frame, side)
         return Plane3D(new_frame, self.name)
 
-    def frame_mapping_inplace(self, frame, side):
+    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and the object is updated inplace
         side = 'old' or 'new'
         """
-        new_frame = \
-            self.frame_mapping_parameters(frame, side)
+        new_frame = self.frame_mapping_parameters(frame, side)
         self.frame.origin = new_frame.origin
         self.frame.u = new_frame.u
         self.frame.v = new_frame.v
@@ -1170,7 +1168,7 @@ class CylindricalSurface3D(Surface3D):
                     round(1000 * self.radius, 3))
         return content, [current_id]
 
-    def frame_mapping_parameters(self, frame, side):
+    def frame_mapping_parameters(self, frame: volmdlr.Frame3D, side: str):
         basis = frame.basis()
         if side == 'new':
             new_origin = frame.new_coordinates(self.frame.origin)
@@ -1189,7 +1187,7 @@ class CylindricalSurface3D(Surface3D):
                              f'a correct value: \'old\' or \'new\'')
         return new_frame
 
-    def frame_mapping(self, frame, side):
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new CylindricalSurface3D
         side = 'old' or 'new'
@@ -1198,7 +1196,7 @@ class CylindricalSurface3D(Surface3D):
         return CylindricalSurface3D(new_frame, self.radius,
                                     name=self.name)
 
-    def frame_mapping_inplace(self, frame, side):
+    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and the object is updated inplace
         side = 'old' or 'new'
@@ -1220,7 +1218,7 @@ class CylindricalSurface3D(Surface3D):
         surface2d = Surface2D(outer_contour, [])
         return volmdlr.faces.CylindricalFace3D(self, surface2d, name)
 
-    def rotation(self, center, axis, angle):
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         CylindricalFace3D rotation
         :param center: rotation center
@@ -1232,7 +1230,7 @@ class CylindricalSurface3D(Surface3D):
                                         angle=angle)
         return CylindricalFace3D(new_frame, self.radius)
 
-    def rotation_inplace(self, center, axis, angle):
+    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         CylindricalFace3D rotation. Object is updated inplace
         :param center: rotation center
@@ -1355,7 +1353,7 @@ class ToroidalSurface3D(Surface3D):
                     round(1000 * self.r, 3))
         return content, [current_id]
 
-    def frame_mapping_parameters(self, frame, side):
+    def frame_mapping_parameters(self, frame: volmdlr.Frame3D, side: str):
         basis = frame.basis()
         if side == 'new':
             new_origin = frame.new_coordinates(self.frame.origin)
@@ -1374,7 +1372,7 @@ class ToroidalSurface3D(Surface3D):
                              f'a correct value: \'old\' or \'new\'')
         return new_frame
 
-    def frame_mapping(self, frame, side):
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new ToroidalSurface3D
         side = 'old' or 'new'
@@ -1382,7 +1380,7 @@ class ToroidalSurface3D(Surface3D):
         new_frame = self.frame_mapping_parameters(frame, side)
         return ToroidalSurface3D(new_frame, self.R, self.r, name=self.name)
 
-    def frame_mapping_inplace(self, frame, side):
+    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and the object is updated inplace
         side = 'old' or 'new'
@@ -1477,7 +1475,7 @@ class ToroidalSurface3D(Surface3D):
         """
         self.frame.translation_inplace(offset)
 
-    def rotation(self, center, axis, angle):
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         ToroidalSurface3D rotation
         :param center: rotation center
@@ -1489,7 +1487,7 @@ class ToroidalSurface3D(Surface3D):
                                         angle=angle)
         return self.__class__(new_frame, self.R, self.r)
 
-    def rotation_inplace(self, center, axis, angle):
+    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         ToroidalSurface3D rotation. Object is updated inplace
         :param center: rotation center
@@ -1539,7 +1537,7 @@ class ConicalSurface3D(Surface3D):
                     round(self.semi_angle, 3))
         return content, [current_id]
 
-    def frame_mapping_parameters(self, frame, side):
+    def frame_mapping_parameters(self, frame: volmdlr.Frame3D, side: str):
         basis = frame.basis()
         if side == 'new':
             new_origin = frame.new_coordinates(self.frame.origin)
@@ -1558,7 +1556,7 @@ class ConicalSurface3D(Surface3D):
                              f'a correct value: \'old\' or \'new\'')
         return new_frame
 
-    def frame_mapping(self, frame, side):
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new ConicalSurface3D
         side = 'old' or 'new'
@@ -1566,7 +1564,7 @@ class ConicalSurface3D(Surface3D):
         new_frame = self.frame_mapping_parameters(frame, side)
         return ConicalSurface3D(new_frame, self.semi_angle, name=self.name)
 
-    def frame_mapping_inplace(self, frame, side):
+    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and the object is updated inplace
         side = 'old' or 'new'
@@ -2381,7 +2379,7 @@ class BSplineSurface3D(Surface3D):
         self.control_points = new_bsplinesurface3d.control_points
         self.surface = new_bsplinesurface3d.surface
 
-    def frame_mapping(self, frame, side):
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new BSplineSurface3D
         side = 'old' or 'new'
@@ -2397,7 +2395,7 @@ class BSplineSurface3D(Surface3D):
                                                 self.weights, self.name)
         return new_bsplinesurface3d
 
-    def frame_mapping_inplace(self, frame, side):
+    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and the object is updated inplace
         side = 'old' or 'new'
@@ -4042,7 +4040,7 @@ class Face3D(volmdlr.core.Primitive3D):
         new_bounding_box = self.get_bounding_box()
         self.bounding_box = new_bounding_box
 
-    def frame_mapping(self, frame, side):
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new Face3D
         side = 'old' or 'new'
@@ -4051,7 +4049,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return self.__class__(new_surface, self.surface2d.copy(),
                               self.name)
 
-    def frame_mapping_inplace(self, frame, side):
+    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and the object is updated inplace
         side = 'old' or 'new'
@@ -7387,7 +7385,7 @@ class ClosedShell3D(OpenShell3D):
                 return False
         return True
 
-    def union(self, shell2, tol=1e-8):
+    def union(self, shell2: 'ClosedShell3D' , tol: float=1e-8):
         '''
             Given Two closed shells, it returns
             a new united ClosedShell3D object
