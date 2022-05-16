@@ -3679,8 +3679,8 @@ class Circle2D(Contour2D):
         finds out the symmetric circle2d according to a line
         '''
 
-        return self.__class__(center = self.center.axial_symmetry(line),
-                              radius = self.radius)
+        return self.__class__(center=self.center.axial_symmetry(line),
+                              radius=self.radius)
 
 
 class Contour3D(Contour, Wire3D):
