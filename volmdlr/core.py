@@ -526,6 +526,8 @@ class Primitive3D(dc.PhysicalObject, CompositePrimitive):
                        for line in self.primitives[1:]]
         elif hasattr(self, 'curve'):
             points = self.curve.evalpts
+        elif hasattr(self, 'polygon_points'):
+            points = self.polygon_points(50)
         return points
 
     def babylon_lines(self, points=None):

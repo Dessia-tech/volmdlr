@@ -32,6 +32,7 @@ import volmdlr.edges as vme
 import volmdlr.wires
 import volmdlr.display as vmd
 import volmdlr.geometry
+import volmdlr.grid
 
 
 def knots_vector_inv(knots_vector):
@@ -986,8 +987,8 @@ class Plane3D(Surface3D):
             fig = ax.figure
 
         self.frame.origin.plot(ax)
-        self.frame.u.plot(ax, starting_point=self.frame.origin, color='r')
-        self.frame.v.plot(ax, starting_point=self.frame.origin, color='g')
+        self.frame.u.plot(ax, color='r')
+        self.frame.v.plot(ax, color='g')
         return ax
 
     def babylon_script(self):
@@ -1225,18 +1226,13 @@ class CylindricalSurface3D(Surface3D):
         else:
             self.frame.rotation(center, axis, angle, copy=False)
 
-    def grid3d(self, points_x, points_y, xmin, xmax, ymin, ymax):
+    def grid3d(self, grid2d: volmdlr.grid.Grid2D):
         '''
-        generate 3d grid points of a Cylindrical surface, based on a 2d grid points parameters
-        (xmin,xmax,points_x) limits and number of points in x,
-        (ymin,ymax,points_y) limits and number of points in y
+        generate 3d grid points of a Cylindrical surface, based on a Grid2D
         '''
 
-        points_2d = volmdlr.Point2D.grid2d(points_x, points_y, xmin, xmax, ymin, ymax)
-
-        points_3d = []
-        for j in range(0, len(points_2d)):
-            points_3d.append(self.point2d_to_3d(points_2d[j]))
+        points_2d = grid2d.points
+        points_3d = [self.point2d_to_3d(point2d) for point2d in points_2d]
 
         return points_3d
 
@@ -1807,9 +1803,9 @@ class BSplineSurface3D(Surface3D):
         volmdlr.core.Primitive3D.__init__(self, name=name)
 
         # Hidden Attributes
-        self._displacements = ()
-        self._grids2d = ()
-        self._grids2d_deformed = ()
+        self._displacements = None
+        self._grids2d = None
+        self._grids2d_deformed = None
 
     @property
     def x_periodicity(self):
@@ -2362,33 +2358,29 @@ class BSplineSurface3D(Surface3D):
                     tuple(self.u_knots), tuple(self.v_knots))
         return content, [current_id]
 
-    def grid3d(self, points_x, points_y, xmin, xmax, ymin, ymax):
+    def grid3d(self, grid2d: volmdlr.grid.Grid2D):
         '''
-        generate 3d grid points of a Bspline surface, based on a 2d grid points parameters
-        (xmin,xmax,points_x) limits and number of points in x,
-        (ymin,ymax,points_y) limits and number of points in y
+        generate 3d grid points of a Bspline surface, based on a Grid2D
         '''
 
-        points_2d = volmdlr.Point2D.grid2d(points_x, points_y, xmin, xmax, ymin, ymax)
         if not self._grids2d:
-            self._grids2d = ([points_x, points_y, xmin, xmax, ymin, ymax], points_2d)
+            self._grids2d = grid2d
 
-        points_3d = []
-        for j in range(0, len(points_2d)):
-            points_3d.append(self.point2d_to_3d(points_2d[j]))
+        points_2d = grid2d.points
+        points_3d = [self.point2d_to_3d(point2d) for point2d in points_2d]
 
         return points_3d
 
-    def grid2d_deformed(self, points_x, points_y, xmin, xmax, ymin, ymax):
+    def grid2d_deformed(self, grid2d: volmdlr.grid.Grid2D):
         '''
-        dimension and deform a 2d grid points based on a Bspline surface
-        (xmin,xmax,points_x) limits and number of points in x,
-        (ymin,ymax,points_y) limits and number of points in y
-
+        dimension and deform a Grid2D points based on a Bspline surface
         '''
 
-        points_2d = volmdlr.Point2D.grid2d(points_x, points_y, xmin, xmax, ymin, ymax)
-        points_3d = self.grid3d(points_x, points_y, xmin, xmax, ymin, ymax)
+        points_2d = grid2d.points
+        points_3d = self.grid3d(grid2d)
+
+        (xmin, xmax), (ymin, ymax) = grid2d.limits_xy
+        points_x, points_y = grid2d.points_xy
 
         # Parameters
         index_x = {}  # grid point position(i,j), x coordinates position in X(unknown variable)
@@ -2495,37 +2487,28 @@ class BSplineSurface3D(Surface3D):
         for i in range(0, len(z.x), 2):
             points_2d_deformed.append(volmdlr.Point2D(z.x[i], z.x[i + 1]))
 
-        self._grids2d_deformed = ([points_x, points_y, xmin, xmax, ymin, ymax], points_2d_deformed)
+        grid2d_deformed = volmdlr.grid.Grid2D.from_points(points=points_2d_deformed,
+                                                          points_dim_1=points_x,
+                                                          direction=grid2d.direction)
+
+        self._grids2d_deformed = grid2d_deformed
 
         return points_2d_deformed
 
-    def grid2d_deformation(self, points_x, points_y, xmin, xmax, ymin, ymax):
+    def grid2d_deformation(self, grid2d: volmdlr.grid.Grid2D):
         '''
-        compute the deformation/displacement (dx/dy) of a 2d grid points based on a Bspline surface with:
-        (xmin,xmax,points_x) limits and number of points in x,
-        (ymin,ymax,points_y) limits and number of points in y
-
+        compute the deformation/displacement (dx/dy) of a Grid2D based on a Bspline surface
         '''
 
-        points_2d = volmdlr.Point2D.grid2d(points_x, points_y, xmin, xmax, ymin, ymax)
+        if not self._grids2d_deformed:
+            self.grid2d_deformed(grid2d)
 
-        if [points_x, points_y, xmin, xmax, ymin, ymax] in self._grids2d_deformed:
-            points_2d_deformed = self._grids2d_deformed[1]
-        else:
-            points_2d_deformed = self.grid2d_deformed(points_x, points_y, xmin, xmax, ymin, ymax)
-            self._grids2d_deformed = ([points_x, points_y, xmin, xmax, ymin, ymax], points_2d_deformed)
-
-        # Displacement,Deformation dx/dy
-        displacement = npy.ones(shape=(len(points_2d), 2))  # 2D grid points displacement
-        for i in range(0, len(displacement)):
-            displacement[i][0] = points_2d_deformed[i][0] - points_2d[i][0]
-            displacement[i][1] = points_2d_deformed[i][1] - points_2d[i][1]
-
-        self._displacements = ([points_x, points_y, xmin, xmax, ymin, ymax], displacement)
+        displacement = self._grids2d_deformed.displacement_compared_to(grid2d)
+        self._displacements = displacement
 
         return displacement
 
-    def point2d_parametric_to_dimension(self, point2d: volmdlr.Point3D, points_x, points_y, xmin, xmax, ymin, ymax):
+    def point2d_parametric_to_dimension(self, point2d: volmdlr.Point3D, grid2d: volmdlr.grid.Grid2D):
         '''
         convert a point2d from the parametric to the dimensioned frame
         '''
@@ -2540,17 +2523,18 @@ class BSplineSurface3D(Surface3D):
         elif point2d.y > 1:
             point2d.y = 1
 
-        if [points_x, points_y, xmin, xmax, ymin, ymax] in self._grids2d:
-            points_2d = self._grids2d[1]
+        if self._grids2d == grid2d:
+            points_2d = self._grids2d.points
         else:
-            points_2d = volmdlr.Point2D.grid2d(points_x, points_y, xmin, xmax, ymin, ymax)
-            self._grids2d = ([points_x, points_y, xmin, xmax, ymin, ymax], points_2d)
+            points_2d = grid2d.points
+            self._grids2d = grid2d
 
-        if [points_x, points_y, xmin, xmax, ymin, ymax] in self._displacements:
-            displacement = self._displacements[1]
+        if self._displacements is not None:
+            displacement = self._displacements
         else:
-            displacement = self.grid2d_deformation(points_x, points_y, xmin, xmax, ymin, ymax)
-            self._displacements = ([points_x, points_y, xmin, xmax, ymin, ymax], displacement)
+            displacement = self.grid2d_deformation(grid2d)
+
+        points_x, points_y = grid2d.points_xy
 
         # Parameters
         index_points = {}  # grid point position(j,i), point position in points_2d (or points_3d)
@@ -2614,34 +2598,30 @@ class BSplineSurface3D(Surface3D):
 
         return volmdlr.Point2D(point2d.x + npy.transpose(N).dot(dx), point2d.y + npy.transpose(N).dot(dy))
 
-    def point3d_to_2d_with_dimension(self, point3d: volmdlr.Point3D, points_x, points_y, xmin, xmax, ymin, ymax):
+    def point3d_to_2d_with_dimension(self, point3d: volmdlr.Point3D, grid2d: volmdlr.grid.Grid2D):
         '''
         compute the point2d of a point3d, on a Bspline surface, in the dimensioned frame
         '''
 
         point2d = self.point3d_to_2d(point3d)
 
-        point2d_with_dimension = self.point2d_parametric_to_dimension(
-            point2d, points_x, points_y, xmin, xmax, ymin, ymax)
+        point2d_with_dimension = self.point2d_parametric_to_dimension(point2d, grid2d)
 
         return point2d_with_dimension
 
-    def point2d_with_dimension_to_parametric_frame(self, point2d, points_x, points_y, xmin, xmax, ymin, ymax):
+    def point2d_with_dimension_to_parametric_frame(self, point2d, grid2d: volmdlr.grid.Grid2D):
         '''
         convert a point2d from the dimensioned to the parametric frame
         '''
 
-        if [points_x, points_y, xmin, xmax, ymin, ymax] in self._grids2d:
-            points_2d = self._grids2d[1]
-        else:
-            points_2d = volmdlr.Point2D.grid2d(points_x, points_y, xmin, xmax, ymin, ymax)
-            self._grids2d = ([points_x, points_y, xmin, xmax, ymin, ymax], points_2d)
+        if self._grids2d != grid2d:
+            self._grids2d = grid2d
+        if not self._grids2d_deformed:
+            self.grid2d_deformed(grid2d)
 
-        if [points_x, points_y, xmin, xmax, ymin, ymax] in self._grids2d_deformed:
-            points_2d_deformed = self._grids2d_deformed[1]
-        else:
-            points_2d_deformed = self.grid2d_deformed(points_x, points_y, xmin, xmax, ymin, ymax)
-            self._grids2d_deformed = ([points_x, points_y, xmin, xmax, ymin, ymax], points_2d_deformed)
+        points_2d = grid2d.points
+        points_2d_deformed = self._grids2d_deformed.points
+        points_x, points_y = grid2d.points_xy
 
         # Parameters
         index_points = {}  # grid point position(j,i), point position in points_2d (or points_3d)
@@ -2712,44 +2692,35 @@ class BSplineSurface3D(Surface3D):
 
         return volmdlr.Point2D(X, Y)
 
-    def point2d_with_dimension_to_3d(self, point2d, points_x, points_y, xmin, xmax, ymin, ymax):
+    def point2d_with_dimension_to_3d(self, point2d, grid2d: volmdlr.grid.Grid2D):
         '''
         compute the point3d, on a Bspline surface, of a point2d define in the dimensioned frame
         '''
 
-        point2d_01 = self.point2d_with_dimension_to_parametric_frame(
-            point2d, points_x, points_y, xmin, xmax, ymin, ymax)
+        point2d_01 = self.point2d_with_dimension_to_parametric_frame(point2d, grid2d)
 
         return self.point2d_to_3d(point2d_01)
 
-    def linesegment2d_parametric_to_dimension(self, linesegment2d, points_x, points_y):
+    def linesegment2d_parametric_to_dimension(self, linesegment2d, grid2d: volmdlr.grid.Grid2D):
         '''
         convert a linesegment2d from the parametric to the dimensioned frame
         '''
 
-        xmin, xmax, ymin, ymax = 0, 1, 0, 1
-
         points = linesegment2d.discretization_points(20)
         points_dim = [
             self.point2d_parametric_to_dimension(
-                p,
-                points_x,
-                points_y,
-                xmin,
-                xmax,
-                ymin,
-                ymax) for p in points]
+                p, grid2d) for p in points]
 
         return vme.BSplineCurve2D.from_points_interpolation(
                 points_dim, max(self.degree_u, self.degree_v))
 
-    def linesegment3d_to_2d_with_dimension(self, linesegment3d, points_x, points_y):
+    def linesegment3d_to_2d_with_dimension(self, linesegment3d, grid2d: volmdlr.grid.Grid2D):
         '''
         compute the linesegment2d of a linesegment3d, on a Bspline surface, in the dimensioned frame
         '''
 
         linesegment2d = self.linesegment3d_to_2d(linesegment3d)
-        bsplinecurve2d_with_dimension = self.linesegment2d_parametric_to_dimension(linesegment2d, points_x, points_y)
+        bsplinecurve2d_with_dimension = self.linesegment2d_parametric_to_dimension(linesegment2d, grid2d)
 
         return bsplinecurve2d_with_dimension
 
@@ -2758,13 +2729,10 @@ class BSplineSurface3D(Surface3D):
         convert a linesegment2d from the dimensioned to the parametric frame
         '''
 
-        [points_x, points_y, xmin, xmax, ymin, ymax] = self._grids2d[0]
-
         try:
             linesegment2d = volmdlr.edges.LineSegment2D(
-                self.point2d_with_dimension_to_parametric_frame(
-                    linesegment2d.start, points_x, points_y, xmin, xmax, ymin, ymax), self.point2d_with_dimension_to_parametric_frame(
-                    linesegment2d.end, points_x, points_y, xmin, xmax, ymin, ymax))
+                self.point2d_with_dimension_to_parametric_frame(linesegment2d.start, self._grids2d),
+                self.point2d_with_dimension_to_parametric_frame(linesegment2d.end, self._grids2d))
         except NotImplementedError:
             return None
 
@@ -2780,12 +2748,11 @@ class BSplineSurface3D(Surface3D):
 
         return linesegment3d
 
-    def bsplinecurve2d_parametric_to_dimension(self, bsplinecurve2d, points_x, points_y):
+    def bsplinecurve2d_parametric_to_dimension(self, bsplinecurve2d, grid2d: volmdlr.grid.Grid2D):
         '''
         convert a bsplinecurve2d from the parametric to the dimensioned frame
         '''
 
-        xmin, xmax, ymin, ymax = 0, 1, 0, 1
         # check if bsplinecurve2d is in a list
         if isinstance(bsplinecurve2d, list):
             bsplinecurve2d = bsplinecurve2d[0]
@@ -2793,7 +2760,7 @@ class BSplineSurface3D(Surface3D):
         points_dim = []
 
         for p in points:
-            points_dim.append(self.point2d_parametric_to_dimension(p, points_x, points_y, xmin, xmax, ymin, ymax))
+            points_dim.append(self.point2d_parametric_to_dimension(p, grid2d))
 
         bsplinecurve2d_with_dimension = volmdlr.edges.BSplineCurve2D(bsplinecurve2d.degree, points_dim,
                                                                      bsplinecurve2d.knot_multiplicities,
@@ -2803,14 +2770,14 @@ class BSplineSurface3D(Surface3D):
 
         return bsplinecurve2d_with_dimension
 
-    def bsplinecurve3d_to_2d_with_dimension(self, bsplinecurve3d, points_x, points_y):
+    def bsplinecurve3d_to_2d_with_dimension(self, bsplinecurve3d, grid2d: volmdlr.grid.Grid2D):
         '''
         compute the bsplinecurve2d of a bsplinecurve3d, on a Bspline surface, in the dimensioned frame
         '''
 
         bsplinecurve2d_01 = self.bsplinecurve3d_to_2d(bsplinecurve3d)
         bsplinecurve2d_with_dimension = self.bsplinecurve2d_parametric_to_dimension(
-            bsplinecurve2d_01, points_x, points_y)
+            bsplinecurve2d_01, grid2d)
 
         return bsplinecurve2d_with_dimension
 
@@ -2821,12 +2788,9 @@ class BSplineSurface3D(Surface3D):
 
         points_dim = bsplinecurve2d.control_points
         points = []
-        [points_x, points_y, xmin, xmax, ymin, ymax] = self._grids2d[0]
-
         for p in points_dim:
             points.append(
-                self.point2d_with_dimension_to_parametric_frame(
-                    p, points_x, points_y, xmin, xmax, ymin, ymax))
+                self.point2d_with_dimension_to_parametric_frame(p, self._grids2d))
 
         bsplinecurve2d = volmdlr.edges.BSplineCurve2D(bsplinecurve2d.degree, points,
                                                       bsplinecurve2d.knot_multiplicities,
@@ -2845,28 +2809,26 @@ class BSplineSurface3D(Surface3D):
 
         return bsplinecurve3d
 
-    def arc2d_parametric_to_dimension(self, arc2d, points_x, points_y):
+    def arc2d_parametric_to_dimension(self, arc2d, grid2d: volmdlr.grid.Grid2D):
         '''
         convert a arc2d from the parametric to the dimensioned frame
         '''
 
-        xmin, xmax, ymin, ymax = 0, 1, 0, 1
-
         number_points = math.ceil(arc2d.angle * 7) + 1
         l = arc2d.length()
         points = [self.point2d_parametric_to_dimension(arc2d.point_at_abscissa(
-            i * l / (number_points - 1)), points_x, points_y, xmin, xmax, ymin, ymax) for i in range(number_points)]
+            i * l / (number_points - 1)), grid2d) for i in range(number_points)]
 
         return vme.BSplineCurve2D.from_points_interpolation(
                     points, max(self.degree_u, self.degree_v))
 
-    def arc3d_to_2d_with_dimension(self, arc3d, points_x, points_y):
+    def arc3d_to_2d_with_dimension(self, arc3d, grid2d: volmdlr.grid.Grid2D):
         '''
         compute the arc2d of a arc3d, on a Bspline surface, in the dimensioned frame
         '''
 
         bsplinecurve2d = self.arc3d_to_2d(arc3d)[0]  # it's a bsplinecurve2d
-        arc2d_with_dimension = self.bsplinecurve2d_parametric_to_dimension(bsplinecurve2d, points_x, points_y)
+        arc2d_with_dimension = self.bsplinecurve2d_parametric_to_dimension(bsplinecurve2d, grid2d)
 
         return arc2d_with_dimension  # it's a bsplinecurve2d-dimension
 
@@ -2875,13 +2837,11 @@ class BSplineSurface3D(Surface3D):
         convert a arc2d from the dimensioned to the parametric frame
         '''
 
-        [points_x, points_y, xmin, xmax, ymin, ymax] = self._grids2d[0]
-
         number_points = math.ceil(arc2d.angle * 7) + 1
         l = arc2d.length()
 
         points = [self.point2d_with_dimension_to_parametric_frame(arc2d.point_at_abscissa(
-                i * l / (number_points - 1)), points_x, points_y, xmin, xmax, ymin, ymax) for i in range(number_points)]
+                i * l / (number_points - 1)), self._grids2d) for i in range(number_points)]
 
         return vme.BSplineCurve2D.from_points_interpolation(
                     points, max(self.degree_u, self.degree_v))
@@ -2896,7 +2856,8 @@ class BSplineSurface3D(Surface3D):
 
         return arc3d  # it's a bsplinecurve3d
 
-    def contour2d_parametric_to_dimension(self, contour2d: volmdlr.wires.Contour2D, points_x, points_y):
+    def contour2d_parametric_to_dimension(self, contour2d: volmdlr.wires.Contour2D,
+                                          grid2d: volmdlr.grid.Grid2D):
         '''
         convert a contour2d from the parametric to the dimensioned frame
         '''
@@ -2909,7 +2870,7 @@ class BSplineSurface3D(Surface3D):
             method_name = f'{primitive2d.__class__.__name__.lower()}_parametric_to_dimension'
 
             if hasattr(self, method_name):
-                primitives = getattr(self, method_name)(primitive2d, points_x, points_y)
+                primitives = getattr(self, method_name)(primitive2d, grid2d)
                 if primitives:
                     primitives2d_dim.append(primitives)
 
@@ -2919,14 +2880,15 @@ class BSplineSurface3D(Surface3D):
 
         return volmdlr.wires.Contour2D(primitives2d_dim)
 
-    def contour3d_to_2d_with_dimension(self, contour3d: volmdlr.wires.Contour3D, points_x, points_y):
+    def contour3d_to_2d_with_dimension(self, contour3d: volmdlr.wires.Contour3D,
+                                       grid2d: volmdlr.grid.Grid2D):
         '''
         compute the contou2d of a contour3d, on a Bspline surface, in the dimensioned frame
         '''
 
         contour2d_01 = self.contour3d_to_2d(contour3d)
 
-        return self.contour2d_parametric_to_dimension(contour2d_01, points_x, points_y)
+        return self.contour2d_parametric_to_dimension(contour2d_01, grid2d)
 
     def contour2d_with_dimension_to_parametric_frame(self, contour2d):
         '''
@@ -3138,8 +3100,7 @@ class BSplineSurface3D(Surface3D):
             return bspline_surface
 
     @classmethod
-    # points_x: int = 50, points_y: int = 50):
-    def from_cylindrical_face(cls, cylindrical_face, degree_u, degree_v, **kwargs):
+    def from_cylindrical_face(cls, cylindrical_face, degree_u, degree_v, **kwargs):  # points_x: int = 50, points_y: int = 50
         '''
         define a bspline surface from a cylindrical face
 
@@ -3165,11 +3126,11 @@ class BSplineSurface3D(Surface3D):
         points_x = kwargs['points_x']
         points_y = kwargs['points_y']
         bounding_rectangle = cylindrical_face.surface2d.outer_contour.bounding_rectangle()
-        points_3d = cylindrical_face.surface3d.grid3d(points_x, points_y,
-                                                      bounding_rectangle[0],
-                                                      bounding_rectangle[1],
-                                                      bounding_rectangle[2],
-                                                      bounding_rectangle[3])
+        points_3d = cylindrical_face.surface3d.grid3d(volmdlr.grid.Grid2D.from_properties(x_limits=(bounding_rectangle[0],
+                                                                                                    bounding_rectangle[1]),
+                                                                                          y_limits=(bounding_rectangle[2],
+                                                                                                    bounding_rectangle[3]),
+                                                                                          points_nbr=(points_x, points_y)))
 
         return cls.points_fitting_into_bspline_surface(points_3d, points_x, points_x, degree_u, degree_v)
 
@@ -3286,7 +3247,7 @@ class BSplineSurface3D(Surface3D):
 
         return nearest_primitives
 
-    def edge3d_to_2d_with_dimension(self, edge3d, points_x, points_y):
+    def edge3d_to_2d_with_dimension(self, edge3d, grid2d: volmdlr.grid.Grid2D):
         '''
         compute the edge2d of a edge3d, on a Bspline surface, in the dimensioned frame
         '''
@@ -3295,7 +3256,7 @@ class BSplineSurface3D(Surface3D):
         method_name = f'{edge3d.__class__.__name__.lower()}_to_2d_with_dimension'
 
         if hasattr(self, method_name):
-            edge2d_dim = getattr(self, method_name)(edge3d, points_x, points_y)
+            edge2d_dim = getattr(self, method_name)(edge3d, grid2d)
             if edge2d_dim:
                 return edge2d_dim
             else:
@@ -3320,10 +3281,7 @@ class BSplineSurface3D(Surface3D):
         compute the 2d of a wire3d, on a Bspline surface, in the dimensioned frame
         '''
 
-        points_x = self._grids2d[0][0]
-        points_y = self._grids2d[0][1]
-
-        contour = self.contour3d_to_2d_with_dimension(wire3d, points_x, points_y)
+        contour = self.contour3d_to_2d_with_dimension(wire3d, self._grids2d)
 
         return volmdlr.wires.Wire2D(contour.primitives)
 
@@ -3572,10 +3530,10 @@ class BSplineSurface3D(Surface3D):
         nb = 10
         points3d = []
         for i, bspline in enumerate(bsplines_new):
-            grid2d = volmdlr.Point2D.grid2d_with_direction(nb, nb, 0, 1, 0, 1, grid2d_direction[i])[0]
-            grid3d = []
-            for p in grid2d:
-                grid3d.append(bspline.point2d_to_3d(p))
+            grid3d = self.grid3d(volmdlr.grid.Grid2D.from_properties(x_limits=(0, 1),
+                                                                     y_limits=(0, 1),
+                                                                     points_nbr=(nb, nb),
+                                                                     direction=grid2d_direction[i]))
 
             if (bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d)
                     or self.is_intersected_with(other_bspline_surface3d)):
@@ -4155,7 +4113,18 @@ class PlaneFace3D(Face3D):
                     point2d) or self.surface2d.outer_contour.point_over_contour(point2d, abs_tol=1e-7):
                 if surface3d_inter not in intersections:
                     intersections.append(surface3d_inter)
-
+        if not intersections:
+            for point in [edge.start, edge.end]:
+                if self.point_belongs(point) or\
+                        self.outer_contour3d.point_over_contour(
+                            point, abs_tol=1e-7):
+                    if point not in intersections:
+                        intersections.append(point)
+            for prim in self.outer_contour3d.primitives:
+                intersection = prim.linesegment_intersection(edge)
+                if intersection is not None:
+                    if intersection not in intersections:
+                        intersections.append(intersection)
         return intersections
 
     def face_intersections(self, face2, tol=1e-8) -> List[volmdlr.wires.Wire3D]:
@@ -4174,13 +4143,15 @@ class PlaneFace3D(Face3D):
         for edge2 in face2.outer_contour3d.primitives:
             intersection_points = self.edge_intersections(edge2)
             if intersection_points:
-                intersections.extend(intersection_points)
+                for point in intersection_points:
+                    if point not in intersections:
+                        intersections.append(point)
         for edge1 in self.outer_contour3d.primitives:
             intersection_points = face2.edge_intersections(edge1)
             if intersection_points:
-                for pt in intersection_points:
-                    if pt not in intersections:
-                        intersections.append(pt)
+                for point in intersection_points:
+                    if point not in intersections:
+                        intersections.append(point)
         if len(intersections) > 1:
             if intersections[0] == intersections[1]:
                 return []
@@ -4190,7 +4161,6 @@ class PlaneFace3D(Face3D):
             if self.outer_contour3d.point_over_contour(mid_point) and\
                     face2.outer_contour3d.point_over_contour(mid_point):
                 return []
-
             intersections = [volmdlr.wires.Wire3D([primitive])]
             return intersections
         return []
@@ -4297,7 +4267,7 @@ class PlaneFace3D(Face3D):
             self.surface3d.frame.origin,
             self.surface3d.frame.u,
             self.surface3d.frame.v)
-        if contour1.is_sharing_primitives_with(contour2, False):
+        if contour1.is_sharing_primitives_with(contour2):
             return True
         return False
 
@@ -4323,7 +4293,7 @@ class PlaneFace3D(Face3D):
                     face0.surface3d.frame.origin,
                     face0.surface3d.frame.u,
                     face0.surface3d.frame.v)
-                if contour.is_sharing_primitives_with(merged_contour, False):
+                if contour.is_sharing_primitives_with(merged_contour):
                     merged_contour_results = merged_contour.merge_with(
                         contour)
                     merged_contour = merged_contour_results[0]
@@ -6834,7 +6804,6 @@ class ClosedShell3D(OpenShell3D):
         '''
             :param intersecting_faces_combinations: list of face combinations (list = [(face_shell1, face_shell2),...]) for intersecting faces.
             :type intersecting_faces_combinations: list of face objects combinaitons
-
             returns a dictionary containing as keys the combination of intersecting faces
             and as the values the resulting primitive from the two intersecting faces.
             It is done so it is not needed to calculate the same intersecting primitive twice.
@@ -6918,8 +6887,16 @@ class ClosedShell3D(OpenShell3D):
         for face1 in self.faces:
             for face2 in shell2.faces:
                 if face1.surface3d.is_coincident(face2.surface3d):
-                    if len(face1.surface2d.outer_contour.contour_intersections(
-                            face2.surface2d.outer_contour)) >= 2:
+                    contour1 = face1.outer_contour3d.to_2d(
+                        face1.surface3d.frame.origin,
+                        face1.surface3d.frame.u,
+                        face1.surface3d.frame.v)
+                    contour2 = face2.outer_contour3d.to_2d(
+                        face1.surface3d.frame.origin,
+                        face1.surface3d.frame.u,
+                        face1.surface3d.frame.v)
+                    inters = contour1.contour_intersections(contour2)
+                    if len(inters) >= 2:
                         list_coincident_faces.append((face1, face2))
 
         return list_coincident_faces
@@ -7151,10 +7128,8 @@ class ClosedShell3D(OpenShell3D):
         list_coincident_faces = self.get_coincident_faces(shell2)
         face_combinations = self.intersecting_faces_combinations(
             shell2, list_coincident_faces, tol)
-
         intersecting_combinations = \
             self.dict_intersecting_combinations(face_combinations, tol)
-
         intersecting_faces1, intersecting_faces2 = \
             self.get_intersecting_faces(intersecting_combinations)
         intersecting_faces = intersecting_faces1 + intersecting_faces2
@@ -7164,7 +7139,6 @@ class ClosedShell3D(OpenShell3D):
         if len(faces) == \
                 len(self.faces + shell2.faces) and not intersecting_faces:
             return [self, shell2]
-        # list_coincident_faces = self.get_coincident_faces(shell2)
         new_valid_faces = self.union_faces(shell2, intersecting_faces,
                                            intersecting_combinations,
                                            list_coincident_faces
@@ -7172,9 +7146,6 @@ class ClosedShell3D(OpenShell3D):
 
         faces += new_valid_faces
         new_shell = ClosedShell3D(faces)
-        # if coincident_and_adjacent_faces:
-        #     new_shell.merge_union_faces()
-        #     print('passing hereeeee')
         return [new_shell]
 
     @staticmethod
