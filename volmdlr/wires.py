@@ -3674,6 +3674,14 @@ class Circle2D(Contour2D):
         return volmdlr.edges.Arc2D.polygon_points(
             self, angle_resolution=angle_resolution)
 
+    def axial_symmetry(self, line):
+        '''
+        finds out the symmetric circle2d according to a line
+        '''
+
+        return self.__class__(center = self.center.axial_symmetry(line),
+                              radius = self.radius)
+
 
 class Contour3D(Contour, Wire3D):
     _non_serializable_attributes = ['points']
