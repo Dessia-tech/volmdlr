@@ -913,6 +913,20 @@ class BSplineCurve2D(Edge):
 
         return cls.from_points_interpolation(points, min(degree))
 
+    def axial_symmetry(self, line):
+        '''
+        finds out the symmetric bsplinecurve2d according to a line
+        '''
+
+        points_symmetry = [point.axial_symmetry(line) for point in self.control_points]
+
+        return self.__class__(degree=self.degree,
+                              control_points=points_symmetry,
+                              knot_multiplicities=self.knot_multiplicities[::-1],
+                              knots=self.knots[::-1],
+                              weights=self.weights,
+                              periodic=self.periodic)
+
 
 class BezierCurve2D(BSplineCurve2D):
 
@@ -1252,6 +1266,15 @@ class LineSegment2D(LineSegment):
 
         points = self.discretization_points(500)
         return point.nearest_point(points)
+
+    def axial_symmetry(self, line):
+        '''
+        finds out the symmetric linesegment2d according to a line
+        '''
+
+        points_symmetry = [point.axial_symmetry(line) for point in [self.start, self.end]]
+
+        return self.__class__(points_symmetry[0], points_symmetry[1])
 
 
 class Arc(Edge):
@@ -1841,6 +1864,17 @@ class Arc2D(Arc):
         '''
 
         return volmdlr.wires.Wire2D.from_points(self.polygon_points(angle_resolution))
+
+    def axial_symmetry(self, line):
+        '''
+        finds out the symmetric arc2d according to a line
+        '''
+
+        points_symmetry = [point.axial_symmetry(line) for point in [self.start, self.interior, self.end]]
+
+        return self.__class__(start=points_symmetry[0],
+                              interior=points_symmetry[1],
+                              end=points_symmetry[2])
 
 
 class FullArc2D(Arc2D):
