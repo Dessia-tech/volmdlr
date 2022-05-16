@@ -810,6 +810,9 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
     #         primitives_copy.append(primitive.copy())
     #     return Wire3D(primitives_copy)
 
+    def triangulation(self):
+        return None
+
 
 # TODO: define an edge as an opened polygon and allow to compute area from this reference
 
