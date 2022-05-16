@@ -3351,6 +3351,15 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                 return False
         return True
 
+    def axial_symmetry(self, line):
+        '''
+        finds out the symmetric closed_polygon2d according to a line
+        '''
+
+        axial_points = [point.axial_symmetry(line) for point in self.points]
+
+        return self.__class__(points=axial_points)
+
 
 class Triangle2D(ClosedPolygon2D):
     def __init__(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D,
