@@ -3405,6 +3405,18 @@ class Triangle2D(ClosedPolygon2D):
         except ZeroDivisionError:
             return 1000000.
 
+    def axial_symmetry(self, line):
+        '''
+        finds out the symmetric triangle2d according to a line
+        '''
+
+        [point1, point2, point3] = [point.axial_symmetry(line)
+                                    for point in [self.point1,
+                                                  self.point2,
+                                                  self.point3]]
+
+        return self.__class__(point1, point2, point3)
+
 
 class Circle2D(Contour2D):
     _non_serializable_attributes = ['internal_arcs', 'external_arcs',
