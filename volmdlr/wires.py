@@ -3595,10 +3595,9 @@ class Contour3D(Contour, Wire3D):
         content = ''
         edge_ids = []
         for primitive in self.primitives:
-            print(primitive.__class__.__name__)
             if primitive.__class__.__name__ == 'BSplineCurve3D':
                 method_name = f'{primitive.__class__.__name__.lower()}_to_2d'
-                curve2d = getattr(self, method_name)(primitive)[0]
+                curve2d = getattr(surface3d, method_name)(primitive)[0]
                 if curve2d.__class__.__name__ == 'LineSegment3D':
                     curve2d = curve2d.to_bspline_curve()
                 primitive_content, primitive_ids = primitive.to_step(

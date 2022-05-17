@@ -690,11 +690,11 @@ class BSplineCurve2D(Edge):
         content += "#{} = B_SPLINE_CURVE_WITH_KNOTS('{}',{},({})," \
                    ".UNSPECIFIED.,.F.,.F.,{},{}," \
                    ".UNSPECIFIED.);\n".format(
-                        current_id, self.name, self.degree,
+                        point_id, self.name, self.degree,
                         volmdlr.core.step_ids_to_str(points_ids),
                         tuple(self.knot_multiplicities),
                         tuple(self.knots))
-        return content, current_id+1
+        return content, point_id+1
 
     def polygon_points(self, n=15):
         l = self.length()
@@ -2815,10 +2815,11 @@ class LineSegment3D(LineSegment):
         line = self.to_line()
         content, line_id = line.to_step(current_id)
 
-        if surface_id:
-            content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(
-                line_id + 1, line_id, surface_id)
-            line_id += 1
+        # if surface_id:
+        #     print()
+        #     content += "#{} = SURFACE_CURVE('',#{},(#{}),.PCURVE_S1.);\n".format(
+        #         line_id + 1, line_id, surface_id)
+        #     line_id += 1
 
         current_id = line_id + 1
         start_content, start_id = self.start.to_step(current_id, vertex=True)
@@ -3055,23 +3056,32 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
                 curve_id + 1, curve_id, curve_id + 2)
             content += "#{} = PCURVE('',#{},#{});\n".format(
                 curve_id + 2, surface_id, curve_id + 3)
-            content += "#{} = DEFINITIONAL_REPRESENTATION('',(#{}),#{});\n".format(
-                curve_id + 3, curve_id + 4, curve_id + 5)
-            # 2D parametric curve
-            curve2d_content, _ = curve2d.to_step(curve_id + 4)
-            content += curve2d_content
-            content += "#{} = ( GEOMETRIC_REPRESENTATION_CONTEXT(2) PARAMETRIC_REPRESENTATION_CONTEXT() REPRESENTATION_CONTEXT('2D SPACE','') );\n".format(curve_id+5)
-            curve_id += 5
 
-        current_id = curve_id + 1
+            # 2D parametric curve
+            curve2d_content, curve2d_id = curve2d.to_step(curve_id + 5)
+
+            content += "#{} = DEFINITIONAL_REPRESENTATION('',(#{}),#{});\n".format(
+                curve_id + 3, curve2d_id - 1, curve_id + 4)
+            content += "#{} = ( GEOMETRIC_REPRESENTATION_CONTEXT(2) PARAMETRIC_REPRESENTATION_CONTEXT() REPRESENTATION_CONTEXT('2D SPACE','') );\n".format(curve_id + 4)
+
+            content += curve2d_content
+            current_id = curve2d_id
+        else:
+            current_id = curve_id + 1
+
         start_content, start_id = self.start.to_step(current_id, vertex=True)
         current_id = start_id + 1
         end_content, end_id = self.end.to_step(current_id + 1, vertex=True)
         content += start_content + end_content
         current_id = end_id + 1
-        content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(
-            current_id, self.name,
-            start_id, end_id, curve_id)
+        if surface_id:
+            content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(
+                current_id, self.name,
+                start_id, end_id, curve_id + 1)
+        else:
+            content += "#{} = EDGE_CURVE('{}',#{},#{},#{},.T.);\n".format(
+                current_id, self.name,
+                start_id, end_id, curve_id)
         return content, [current_id]
 
     @classmethod

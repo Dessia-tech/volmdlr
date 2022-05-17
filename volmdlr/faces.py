@@ -6064,18 +6064,51 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                                                         volmdlr.core.step_ids_to_str(
                                                             face_ids))
         manifold_id = shell_id + 1
-        step_content += "#{} = MANIFOLD_SOLID_BREP('{}',#{});\n".format(
-            manifold_id,
-            self.name,
-            shell_id)
+        # step_content += "#{} = MANIFOLD_SOLID_BREP('{}',#{});\n".format(
+        #     manifold_id, self.name, shell_id)
+        step_content += "#{} = SHELL_BASED_SURFACE_MODEL('{}',(#{}));\n".format(
+            manifold_id, self.name, shell_id)
 
         frame_content, frame_id = volmdlr.OXYZ.to_step(manifold_id + 1)
         step_content += frame_content
         brep_id = frame_id + 1
-        step_content += "#{} = ADVANCED_BREP_SHAPE_REPRESENTATION('',(#{},#{}),#7);\n".format(
+        # step_content += "#{} = ADVANCED_BREP_SHAPE_REPRESENTATION('',(#{},#{}),#7);\n".format(
+        #     brep_id, frame_id, manifold_id)
+        step_content += "#{} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION('',(#{},#{}),#7);\n".format(
             brep_id, frame_id, manifold_id)
 
         return step_content, brep_id
+
+    def to_step_face_ids(self, current_id):
+        step_content = ''
+        face_ids = []
+        for face in self.faces:
+            face_content, face_sub_ids = face.to_step(current_id)
+            step_content += face_content
+            face_ids.extend(face_sub_ids)
+            current_id = max(face_sub_ids) + 1
+
+        shell_id = current_id
+        step_content += "#{} = {}('{}',({}));\n".format(current_id,
+                                                        self.STEP_FUNCTION,
+                                                        self.name,
+                                                        volmdlr.core.step_ids_to_str(
+                                                            face_ids))
+        manifold_id = shell_id + 1
+        # step_content += "#{} = MANIFOLD_SOLID_BREP('{}',#{});\n".format(
+        #     manifold_id, self.name, shell_id)
+        step_content += "#{} = SHELL_BASED_SURFACE_MODEL('{}',(#{}));\n".format(
+            manifold_id, self.name, shell_id)
+
+        frame_content, frame_id = volmdlr.OXYZ.to_step(manifold_id + 1)
+        step_content += frame_content
+        brep_id = frame_id + 1
+        # step_content += "#{} = ADVANCED_BREP_SHAPE_REPRESENTATION('',(#{},#{}),#7);\n".format(
+        #     brep_id, frame_id, manifold_id)
+        step_content += "#{} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION('',(#{},#{}),#7);\n".format(
+            brep_id, frame_id, manifold_id)
+
+        return step_content, brep_id, face_ids
 
     def rotation(self, center, axis, angle, copy=True):
         if copy:
