@@ -11,6 +11,8 @@ from statistics import mean
 from typing import List
 import numpy as npy
 from scipy.spatial import Delaunay, ConvexHull
+import scipy as scp
+
 import matplotlib.pyplot as plt
 import matplotlib.patches
 from mpl_toolkits.mplot3d import Axes3D
@@ -701,6 +703,32 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
 
         return primitives_sorted[0]
 
+    def axial_symmetry(self, line):
+        '''
+        finds out the symmetric wire2d according to a line
+        '''
+
+        primitives_symmetry = []
+        for primitive in self.primitives:
+            try:
+                primitives_symmetry.append(primitive.axial_symmetry(line))
+            except NotImplementedError:
+                print(f'Class {self.__class__.__name__} does not implement symmetry method')
+
+        return self.__class__(primitives=primitives_symmetry)
+
+    def is_symmetric(self, wire2d, line):
+        '''
+        checks if the two wires2d are symmetric or not according to line
+        '''
+
+        c_symmetry_0 = self.symmetry(line)
+        c_symmetry_1 = wire2d.symmetry(line)
+
+        if wire2d.is_superposing(c_symmetry_0) and self.is_superposing(c_symmetry_1):
+            return True
+        return False
+
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
     """
@@ -781,6 +809,9 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
     #     for primitive in self.primitives:
     #         primitives_copy.append(primitive.copy())
     #     return Wire3D(primitives_copy)
+
+    def triangulation(self):
+        return None
 
 
 # TODO: define an edge as an opened polygon and allow to compute area from this reference
@@ -2776,8 +2807,21 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             if len(polygon_points) == 0:
                 finished = True
 
-        if points[0] == points[-1]:
-            return cls(points[:-1])
+        points.pop(-1)
+
+        # the first point is the one with the lowest x value
+        i_min = 0
+        min_x = points[0].x
+        for i, point in enumerate(points):
+            if point.x < min_x:
+                min_x = point.x
+                i_min = i
+
+        points = points[i_min:] + points[:i_min]
+
+        # we make sure that the points are ordered in the trigonometric direction
+        if points[0].y < points[1].y:
+            points.reverse()
 
         return cls(points)
 
@@ -3310,6 +3354,15 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                 return False
         return True
 
+    def axial_symmetry(self, line):
+        '''
+        finds out the symmetric closed_polygon2d according to a line
+        '''
+
+        axial_points = [point.axial_symmetry(line) for point in self.points]
+
+        return self.__class__(points=axial_points)
+
 
 class Triangle2D(ClosedPolygon2D):
     def __init__(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D,
@@ -3354,6 +3407,18 @@ class Triangle2D(ClosedPolygon2D):
             return 0.125 * a * b * c / (s - a) / (s - b) / (s - c)
         except ZeroDivisionError:
             return 1000000.
+
+    def axial_symmetry(self, line):
+        '''
+        finds out the symmetric triangle2d according to a line
+        '''
+
+        [point1, point2, point3] = [point.axial_symmetry(line)
+                                    for point in [self.point1,
+                                                  self.point2,
+                                                  self.point3]]
+
+        return self.__class__(point1, point2, point3)
 
 
 class Circle2D(Contour2D):
@@ -3597,28 +3662,28 @@ class Circle2D(Contour2D):
                 volmdlr.edges.Arc2D(split_start, interior_point2,
                                     split_end)]
 
-    def discretise(self, n: float):
-        # BUGGED: returns method
-        circle_to_nodes = {}
-        nodes = []
-        if n * self.length() < 1:
-            circle_to_nodes[self] = self.border_points
-        else:
-            n0 = int(math.ceil(n * self.length()))
-            l0 = self.length() / n0
+    def discretise(self, n: float) -> List[volmdlr.Point2D]:
+        points = []
+        vector = volmdlr.Vector2D(0, 1)
 
-            for k in range(n0):
-                node = self.point_at_abscissa(k * l0)
+        for i in range(n):
+            points.append(self.center + self.radius * vector)
+            vector.rotation(center=volmdlr.Point2D(0, 0), angle=2 * math.pi / n, copy=False)
+            vector.normalize()
 
-                nodes.append(node)
-
-            circle_to_nodes[self] = nodes
-
-        return circle_to_nodes[self]
+        return points
 
     def polygon_points(self, angle_resolution=10):
         return volmdlr.edges.Arc2D.polygon_points(
             self, angle_resolution=angle_resolution)
+
+    def axial_symmetry(self, line):
+        '''
+        finds out the symmetric circle2d according to a line
+        '''
+
+        return self.__class__(center=self.center.axial_symmetry(line),
+                              radius=self.radius)
 
 
 class Contour3D(Contour, Wire3D):
