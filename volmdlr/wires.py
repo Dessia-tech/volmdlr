@@ -1097,7 +1097,7 @@ class Contour(Wire):
                         contour_primitives.append(line)
                         edges.remove(line)
                         break
-                    elif point.is_close(line.end, tol=tol) and\
+                    if point.is_close(line.end, tol=tol) and\
                             line not in contour_primitives:
                         line.end = point
                         contour_primitives.append(line)
@@ -4803,7 +4803,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                         if closing_point_index < ratio_denom / 4:
                             passed_by_zero_index = True
                         elif ratio_denom - list_closing_point_indexes[
-                                -1] >= 5:
+                                -1] >= 6:
                             closing_point_index = \
                                 list_closing_point_indexes[-1] + 5
                         else:
