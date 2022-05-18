@@ -1,25 +1,28 @@
 from pylint.lint import Run
 
-MIN_NOTE = 5.03
+MIN_NOTE = 6.1
 
 MAX_ERROR_BY_TYPE = {
-                     'no-member': 185,
-                     'no-else-return': 178,
+                     'invalid-name': 1195,
+                     'no-else-return': 169,
                      'consider-using-f-string': 167,
+                     'no-member': 138,
                      'inconsistent-return-statements': 108,
-                     'unused-variable': 95,
-                     'arguments-differ': 90,
-                     'too-many-locals': 89,
-                     'unused-argument': 72,
+                     'unused-variable': 86,
+                     'arguments-differ': 85,
+                     'too-many-locals': 82,
+                     'unused-argument': 70,
                      'too-many-arguments': 64,
                      'consider-using-enumerate': 30,
-                     'too-many-branches': 30,
-                     'too-many-statements': 28,
-                     'super-init-not-called': 28,
+                     'too-many-branches': 29,
+                     'too-many-statements': 27,
+                     'super-init-not-called': 26,
+                     'no-name-in-module': 24,
                      'abstract-method': 18,
                      'duplicate-code': 16,
                      'no-self-use': 16,
-                     'arguments-renamed': 14,
+                     'arguments-renamed': 11,
+                     'non-parent-init-called': 13,
                      'too-many-public-methods': 12,
                      'too-many-instance-attributes': 10,
                      'undefined-loop-variable': 10,
@@ -32,10 +35,12 @@ MAX_ERROR_BY_TYPE = {
                      'cyclic-import': 6,
                      'consider-iterating-dictionary': 4,
                      'raise-missing-from': 4,
+                     'no-else-continue': 4,
                      'undefined-variable': 3,
                      'simplifiable-if-expression': 3,
                      'redefined-builtin': 3,
                      'broad-except': 3,
+                     'too-many-boolean-expressions': 3,
                      'too-many-lines': 3,
                      'redundant-keyword-arg': 3,
                      'no-value-for-parameter': 2,
@@ -50,7 +55,9 @@ MAX_ERROR_BY_TYPE = {
                      'wildcard-import': 1,
                      'cell-var-from-loop': 1,
                      'import-outside-toplevel': 1,
+                     'unsubscriptable-object': 1,
                      # No tolerance errors
+                     'unidiomatic-typecheck': 0,
                      'unexpected-special-method-signature': 0,
                      'bare-except': 0,
                      'function-redefined': 0,
@@ -105,11 +112,12 @@ for error_type, number_errors in results.linter.stats.by_msg.items():
     if error_type in MAX_ERROR_BY_TYPE:
         if number_errors > MAX_ERROR_BY_TYPE[error_type]:
             error_detected = True
-            print('Fix some {} errors: {}/{}'.format(error_type,
+            print('\nFix some {} errors: {}/{}'.format(error_type,
                                                      number_errors,
                                                      MAX_ERROR_BY_TYPE[error_type]))
-            for message in extract_messages_by_type(error_type):
+            for message in extract_messages_by_type(error_type)[:100]:
                 print('{} line {}: {}'.format(message.path, message.line, message.msg))
+            print('')
         elif number_errors < MAX_ERROR_BY_TYPE[error_type]:
             print('You can lower number of {} to {} (actual {})'.format(
                 error_type, number_errors, MAX_ERROR_BY_TYPE[error_type]))
