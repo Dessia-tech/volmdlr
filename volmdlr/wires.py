@@ -2132,7 +2132,7 @@ class Contour2D(Contour, Wire2D):
         return list_contours
 
 
-class ClosedPolygon:
+class ClosedPolygonMixin:
 
     def length(self):
         list_ = []
@@ -2207,8 +2207,18 @@ class ClosedPolygon:
 
         return self.__class__(points)
 
+    @property
+    def line_segments(self):
+        if not self._line_segments:
+            self._line_segments = self.get_line_segments()
+        return self._line_segments
 
-class ClosedPolygon2D(Contour2D, ClosedPolygon):
+    def get_line_segments(self):
+        raise NotImplementedError(
+            f"get_line_segments method must be overloaded by {self.__class__.__name__}")
+
+
+class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
     _non_serializable_attributes = ['line_segments', 'primitives',
                                     'basis_primitives']
 
@@ -2217,12 +2227,6 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
         self._line_segments = None
 
         Contour2D.__init__(self, self.line_segments, name)
-
-    @property
-    def line_segments(self):
-        if not self._line_segments:
-            self._line_segments = self.get_line_segments()
-        return self._line_segments
 
     def copy(self, *args, **kwargs):
         points = [p.copy() for p in self.points]
@@ -4586,7 +4590,7 @@ class Ellipse3D(Contour3D):
                    arguments[0][1:-1])
 
 
-class ClosedPolygon3D(Contour3D, ClosedPolygon):
+class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
     _non_serializable_attributes = ['line_segments', 'primitives']
     _non_eq_attributes = ['line_segments', 'primitives']
 
@@ -4595,12 +4599,6 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
         self._line_segments = None
 
         Contour3D.__init__(self, self.line_segments, name)
-
-    @property
-    def line_segments(self):
-        if not self._line_segments:
-            self._line_segments = self.get_line_segments()
-        return self._line_segments
 
     def get_line_segments(self):
         lines = []
