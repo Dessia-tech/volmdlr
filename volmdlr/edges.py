@@ -72,14 +72,22 @@ class Edge(dc.DessiaObject):
         else:
             raise IndexError
 
+    def length(self):
+        raise NotImplementedError(
+            f"length method must be overloaded by {self.__class__.__name__}")
+
+    def point_at_abscissa(self, curvilinear_abscissa):
+        raise NotImplementedError(
+            f"point_at_abscissa method must be overloaded by {self.__class__.__name__}")
+
     def discretization_points(self, discretization_resolution: int = 10):
         """
         discretize a Edge to have "n" points (including start and end points)
         :return:
         """
         length = self.length()
-        return [self.point_at_abscissa(i * length / (discretization_resolution - 1)) for i in
-                range(discretization_resolution)]
+        return [self.point_at_abscissa(i * length / discretization_resolution) for i in
+                range(discretization_resolution + 1)]
 
     def polygon_points(self, discretization_resolution: int):
         warnings.warn('polygon_points is deprecated,\
@@ -580,13 +588,13 @@ class BSplineCurve2D(Edge):
         return length_curve(self.curve)
 
     def point_at_abscissa(self, curvilinear_abscissa):
-        l = self.length()
-        adim_abs = max(min(curvilinear_abscissa / l, 1.), 0.)
+        length = self.length()
+        adim_abs = max(min(curvilinear_abscissa / length, 1.), 0.)
         return volmdlr.Point2D(*self.curve.evaluate_single(adim_abs))
 
     def tangent(self, position: float = 0.0):
-        point, tangent = operations.tangent(self.curve, position,
-                                            normalize=True)
+        _, tangent = operations.tangent(self.curve, position,
+                                        normalize=True)
         tangent = volmdlr.Point2D(tangent[0], tangent[1])
         return tangent
 
@@ -822,14 +830,6 @@ class BSplineCurve2D(Edge):
                               knots=self.knots[::-1],
                               weights=self.weights,
                               periodic=self.periodic)
-
-    # def point_belongs(self, point, abs_tol=1e-7):
-    #     polygon_points = self.polygon_points()
-    #     for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
-    #         line = LineSegment2D(p1, p2)
-    #         if line.point_belongs(point, abs_tol=abs_tol):
-    #             return True
-    #     return False
 
     def point_distance(self, point):
         distance = math.inf
@@ -1177,12 +1177,6 @@ class LineSegment2D(LineSegment):
 
         return Line2D(offset_point_1, offset_point_2)
 
-    # def border_primitive(self,infinite_primitive:volmdlr.core.Primitive2D,intersection,position):
-    #     if position == 0 :
-    #         return LineSegment2D(infinite_primitive.point1,intersection)
-    #     else :
-    #         return LineSegment2D(intersection,infinite_primitive.point2)
-
     def discretization_points(self, discretization_resolution: int = 0):
         """
         discretize a LineSegment2D to have "n" points (including start and end points)
@@ -1326,26 +1320,6 @@ class Arc(Edge):
         please use discretization_points instead',
                       DeprecationWarning)
         return self.discretization_points(discretization_resolution)
-
-    # def discretise(self, n: float):
-    #
-    #     arc_to_nodes = {}
-    #     nodes = []
-    #     if n * self.length() < 1:
-    #         arc_to_nodes[self] = [self.start, self.end]
-    #     else:
-    #         n0 = int(math.ceil(n * self.length()))
-    #         l0 = self.length() / n0
-    #
-    #         for k in range(n0):
-    #             node = self.point_at_abscissa(k * l0)
-    #
-    #             nodes.append(node)
-    #         nodes.insert(len(nodes), self.end)
-    #
-    #         arc_to_nodes[self] = nodes
-    #
-    #     return arc_to_nodes[self]
 
     def point_distance(self, point):
         points = self.discretization_points(angle_resolution=100)
@@ -1921,15 +1895,6 @@ class FullArc2D(Arc2D):
          [self._center, self.start, self.end, self.interior]]
 
     def polygonization(self):
-        # def polygon_points(self, points_per_radian=10):
-        # densities = []
-        # for d in [min_x_density, min_y_density]:
-        #     if d:
-        #         densities.append(d)
-        # if densities:
-        #     number_points = max(number_points,
-        #                         min(densities) * self.angle * self.radius)
-
         return volmdlr.wires.ClosedPolygon2D(self.discretization_points(15))
 
     def plot(self, ax=None, color='k', alpha=1, plot_points=False,
