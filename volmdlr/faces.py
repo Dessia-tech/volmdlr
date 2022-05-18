@@ -762,6 +762,25 @@ class Surface3D(dc.DessiaObject):
         point2_2d = self.point3d_to_2d(point2_3d)
         return self.geodesic_distance_from_points2d(point1_2d, point2_2d)
 
+    def frame_mapping_parameters(self, frame: volmdlr.Frame3D, side: str):
+        basis = frame.basis()
+        if side == 'new':
+            new_origin = frame.new_coordinates(self.frame.origin)
+            new_u = basis.new_coordinates(self.frame.u)
+            new_v = basis.new_coordinates(self.frame.v)
+            new_w = basis.new_coordinates(self.frame.w)
+            new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
+        elif side == 'old':
+            new_origin = frame.old_coordinates(self.frame.origin)
+            new_u = basis.old_coordinates(self.frame.u)
+            new_v = basis.old_coordinates(self.frame.v)
+            new_w = basis.old_coordinates(self.frame.w)
+            new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
+        else:
+            raise ValueError(f'side value not valid, please specify'
+                             f'a correct value: \'old\' or \'new\'')
+        return new_frame
+
 
 class Plane3D(Surface3D):
     face_class = 'PlaneFace3D'
@@ -1182,25 +1201,6 @@ class CylindricalSurface3D(Surface3D):
                     round(1000 * self.radius, 3))
         return content, [current_id]
 
-    def frame_mapping_parameters(self, frame: volmdlr.Frame3D, side: str):
-        basis = frame.basis()
-        if side == 'new':
-            new_origin = frame.new_coordinates(self.frame.origin)
-            new_u = basis.new_coordinates(self.frame.u)
-            new_v = basis.new_coordinates(self.frame.v)
-            new_w = basis.new_coordinates(self.frame.w)
-            new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
-        elif side == 'old':
-            new_origin = frame.old_coordinates(self.frame.origin)
-            new_u = basis.old_coordinates(self.frame.u)
-            new_v = basis.old_coordinates(self.frame.v)
-            new_w = basis.old_coordinates(self.frame.w)
-            new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
-        else:
-            raise ValueError(f'side value not valid, please specify'
-                             f'a correct value: \'old\' or \'new\'')
-        return new_frame
-
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new CylindricalSurface3D
@@ -1361,25 +1361,6 @@ class ToroidalSurface3D(Surface3D):
                     round(1000 * self.R, 3),
                     round(1000 * self.r, 3))
         return content, [current_id]
-
-    def frame_mapping_parameters(self, frame: volmdlr.Frame3D, side: str):
-        basis = frame.basis()
-        if side == 'new':
-            new_origin = frame.new_coordinates(self.frame.origin)
-            new_u = basis.new_coordinates(self.frame.u)
-            new_v = basis.new_coordinates(self.frame.v)
-            new_w = basis.new_coordinates(self.frame.w)
-            new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
-        elif side == 'old':
-            new_origin = frame.old_coordinates(self.frame.origin)
-            new_u = basis.old_coordinates(self.frame.u)
-            new_v = basis.old_coordinates(self.frame.v)
-            new_w = basis.old_coordinates(self.frame.w)
-            new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
-        else:
-            raise ValueError(f'side value not valid, please specify'
-                             f'a correct value: \'old\' or \'new\'')
-        return new_frame
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -1545,25 +1526,6 @@ class ConicalSurface3D(Surface3D):
                     0.,
                     round(self.semi_angle, 3))
         return content, [current_id]
-
-    def frame_mapping_parameters(self, frame: volmdlr.Frame3D, side: str):
-        basis = frame.basis()
-        if side == 'new':
-            new_origin = frame.new_coordinates(self.frame.origin)
-            new_u = basis.new_coordinates(self.frame.u)
-            new_v = basis.new_coordinates(self.frame.v)
-            new_w = basis.new_coordinates(self.frame.w)
-            new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
-        elif side == 'old':
-            new_origin = frame.old_coordinates(self.frame.origin)
-            new_u = basis.old_coordinates(self.frame.u)
-            new_v = basis.old_coordinates(self.frame.v)
-            new_w = basis.old_coordinates(self.frame.w)
-            new_frame = volmdlr.Frame3D(new_origin, new_u, new_v, new_w)
-        else:
-            raise ValueError(f'side value not valid, please specify'
-                             f'a correct value: \'old\' or \'new\'')
-        return new_frame
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
