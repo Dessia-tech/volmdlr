@@ -3627,7 +3627,7 @@ class Circle2D(Contour2D):
 
     def dicretization_points(self, angle_resolution=10):
         return volmdlr.edges.Arc2D.discretization_points(
-            self, angle_resolution=angle_resolution)
+            self, discretization_resolution=angle_resolution)
 
     def polygon_points(self, discretization_resolution: int):
         warnings.warn('polygon_points is deprecated,\
