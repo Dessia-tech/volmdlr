@@ -24,6 +24,7 @@ import plot_data.core as plot_data
 import dessia_common as dc
 import volmdlr.core
 import volmdlr.geometry
+import volmdlr.wires
 
 
 def standardize_knot_vector(knot_vector):
@@ -1488,20 +1489,33 @@ class Arc2D(Edge):
         '''
         check if a point2d belongs to the arc_2d or not 
         '''
-
-        def f(x):
-            return (point2d - self.point_at_abscissa(x)).norm()
-        length_ = self.length()  
-        x = npy.linspace(0, length_, 5)
-        x_init=[]
-        for xi in x:
-            x_init.append(xi)
-    
-        for x0 in x_init: 
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0,length_]))
-            if z.cost < abs_tol: 
+        vector_start = self.start - self.center
+        vector_end = self.end - self.center
+        vector_point = point2d - self.center
+        r1 = vector_start.norm()
+        cp = vector_point.norm()
+        # r1 = (((self.start.x - self.center.x)**2) + (vector_start.y**2))**0.5
+        # cp = (((point2d.x - self.center.x)**2) + ((point2d.y - self.center.y)**2))**0.5
+        if math.isclose(cp, r1, abs_tol=abs_tol):
+            arc_angle = volmdlr.core.clockwise_angle(vector_start, vector_end)
+            point_angle = volmdlr.core.clockwise_angle(vector_start, vector_point)
+            if point_angle <= arc_angle:
                 return True
         return False
+
+        # def f(x):
+        #     return (point2d - self.point_at_abscissa(x)).norm()
+        # length_ = self.length()
+        # x = npy.linspace(0, length_, 5)
+        # x_init=[]
+        # for xi in x:
+        #     x_init.append(xi)
+        #
+        # for x0 in x_init:
+        #     z = scp.optimize.least_squares(f, x0=x0, bounds=([0,length_]))
+        #     if z.cost < abs_tol:
+        #         return True
+        # return False
 
 
 class FullArc2D(Edge):
