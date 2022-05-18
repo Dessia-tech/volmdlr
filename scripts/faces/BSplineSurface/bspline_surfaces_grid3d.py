@@ -10,6 +10,7 @@
 import volmdlr as vm
 # import volmdlr.step as vms
 from volmdlr.models import bspline_surfaces
+import volmdlr.grid
 
 # %% Read Step file
 
@@ -40,14 +41,11 @@ bspline_surfaces = [bspline_surfaces.bspline_surface_1, bspline_surfaces.bspline
 # %% Grdi3d initial
 
 points_x, points_y, xmin, xmax, ymin, ymax = 5, 5, 0, 1, 0, 1
+grid2d = volmdlr.grid.Grid2D.from_properties((xmin, xmax), (ymin, ymax), (points_x, points_y))
 
 points3d = []
 for i, bspline in enumerate(bspline_surfaces):
-    grid2d = vm.Point2D.grid2d(points_x, points_y, xmin, xmax, ymin, ymax)
-    grid3d = []
-    for p in grid2d:
-        grid3d.append(bspline.point2d_to_3d(p))
-
+    grid3d = bspline.grid3d(grid2d)
     points3d.append(grid3d)
 
 
@@ -72,11 +70,9 @@ points_x, points_y, xmin, xmax, ymin, ymax = 5, 5, 0, 1, 0, 1
 
 points3d = []
 for i, bspline in enumerate(bspline_surfaces):
-    grid2d = vm.Point2D.grid2d_with_direction(points_x, points_y, xmin, xmax, ymin, ymax, grid2d_direction[i])[0]
-    grid3d = []
-    for p in grid2d:
-        grid3d.append(bspline.point2d_to_3d(p))
-
+    grid2d = volmdlr.grid.Grid2D.from_properties((xmin, xmax), (ymin, ymax),
+                                                 (points_x, points_y), grid2d_direction[i])
+    grid3d = bspline.grid3d(grid2d)
     points3d.append(grid3d)
 
 
