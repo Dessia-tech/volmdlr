@@ -413,35 +413,60 @@ class CompositePrimitive2D(Primitive2D):
 
     #     self.basis_primitives = basis_primitives
 
-    def rotation(self, center, angle, copy=True):
-        if copy:
-            return self.__class__([p.rotation(center, angle, copy=True)
-                                   for p in self.primitives])
-        else:
-            for p in self.primitives:
-                p.rotation(center, angle, copy=False)
-            self.update_basis_primitives()
-
-    def translation(self, offset, copy=True):
-        if copy:
-            return self.__class__([p.translation(offset, copy=True)
-                                   for p in self.primitives])
-        else:
-            for p in self.primitives:
-                p.translation(offset, copy=False)
-            self.update_basis_primitives()
-
-    def frame_mapping(self, frame, side, copy=True):
+    def rotation(self, center: volmdlr.Point3D, angle: float):
         """
+        CompositePrimitive2D rotation
+        :param center: rotation center
+        :param angle: angle rotation
+        :return: a new rotated CompositePrimitive2D
+        """
+        return self.__class__([point.rotation(center, angle)
+                               for point in self.primitives])
+
+    def rotation_inplace(self, center: volmdlr.Point3D, angle: float):
+        """
+        CompositePrimitive2D rotation. Object is updated inplace
+        :param center: rotation center
+        :param angle: rotation angle
+        """
+        for point in self.primitives:
+            point.rotation_inplace(center, angle)
+        self.update_basis_primitives()
+
+    def translation(self, offset: volmdlr.Vector2D):
+        """
+        CompositePrimitive2D translation
+        :param offset: translation vector
+        :return: A new translated CompositePrimitive2D
+        """
+        return self.__class__([point.translation(offset)
+                               for point in self.primitives])
+
+    def translation_inplace(self, offset: volmdlr.Vector2D):
+        """
+        CompositePrimitive2D translation. Object is updated inplace
+        :param offset: translation vector
+        """
+        for point in self.primitives:
+            point.translation_inplace(offset)
+        self.update_basis_primitives()
+
+    def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
+        """
+        Changes frame_mapping and return a new CompositePrimitive2D
         side = 'old' or 'new'
         """
-        if copy:
-            return self.__class__([p.frame_mapping(frame, side, copy=True)
-                                   for p in self.primitives])
-        else:
-            for p in self.primitives:
-                p.frame_mapping(frame, side, copy=False)
-            self.update_basis_primitives()
+        return self.__class__([point.frame_mapping(frame, side)
+                               for point in self.primitives])
+
+    def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
+        """
+        Changes frame_mapping and the object is updated inplace
+        side = 'old' or 'new'
+        """
+        for point in self.primitives:
+            point.frame_mapping_inplace(frame, side)
+        self.update_basis_primitives()
 
     def plot(self, ax=None, color='k', alpha=1,
              plot_points=False, equal_aspect=True):
@@ -873,42 +898,68 @@ class VolumeModel(dc.DessiaObject):
             volume += primitive.volume()
         return volume
 
-    def rotation(self, center, axis, angle, copy=True):
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
+                 angle: float):
         """
-        Rotate the whole model around a center and an axis of a given angle
+        VolumeModel rotation
+        :param center: rotation center
+        :param axis: rotation axis
+        :param angle: angle rotation
+        :return: a new rotated VolumeModel
         """
-        if copy:
-            new_primitives = [
-                primitive.rotation(center, axis, angle, copy=True) for
-                primitive in self.primitives]
-            return VolumeModel(new_primitives, self.name)
-        else:
-            for primitive in self.primitives:
-                primitive.rotation(center, axis, angle, copy=False)
-            self.bounding_box = self._bounding_box()
+        new_primitives = [
+            primitive.rotation(center, axis, angle) for
+            primitive in self.primitives]
+        return VolumeModel(new_primitives, self.name)
 
-    def translation(self, offset, copy=True):
-        if copy:
-            new_primitives = [primitive.translation(offset, copy=True) for
-                              primitive in self.primitives]
-            return VolumeModel(new_primitives, self.name)
-        else:
-            for primitives in self.primitives:
-                primitives.translation(offset, copy=False)
-            self.bounding_box = self._bounding_box()
-
-    def frame_mapping(self, frame, side, copy=True):
+    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
+                         angle: float):
         """
+        VolumeModel rotation. Object is updated inplace
+        :param center: rotation center
+        :param axis: rotation axis
+        :param angle: rotation angle
+        """
+        for primitive in self.primitives:
+            primitive.rotation_inplace(center, axis, angle)
+        self.bounding_box = self._bounding_box()
+
+    def translation(self, offset: volmdlr.Vector3D):
+        """
+        VolumeModel translation
+        :param offset: translation vector
+        :return: A new translated VolumeModel
+        """
+        new_primitives = [primitive.translation(offset) for
+                          primitive in self.primitives]
+        return VolumeModel(new_primitives, self.name)
+
+    def translation_inplace(self, offset: volmdlr.Vector3D):
+        """
+        VolumeModel translation. Object is updated inplace
+        :param offset: translation vector
+        """
+        for primitives in self.primitives:
+            primitives.translation_inplace(offset)
+        self.bounding_box = self._bounding_box()
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and return a new VolumeModel
         side = 'old' or 'new'
         """
-        if copy:
-            new_primitives = [primitive.frame_mapping(frame, side, copy=True)
-                              for primitive in self.primitives]
-            return VolumeModel(new_primitives, self.name)
-        else:
-            for primitives in self.primitives:
-                primitives.frame_mapping(frame, side, copy=False)
-            self.bounding_box = self._bounding_box()
+        new_primitives = [primitive.frame_mapping(frame, side)
+                          for primitive in self.primitives]
+        return VolumeModel(new_primitives, self.name)
+
+    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and the object is updated inplace
+        side = 'old' or 'new'
+        """
+        for primitives in self.primitives:
+            primitives.frame_mapping_inplace(frame, side)
+        self.bounding_box = self._bounding_box()
 
     def copy(self, deep=True, memo=None):
         """
@@ -1324,7 +1375,7 @@ class MovingVolumeModel(VolumeModel):
         primitives = []
         for primitive, frame in zip(self.primitives, self.step_frames[istep]):
             primitives.append(
-                primitive.frame_mapping(frame, side='old', copy=True))
+                primitive.frame_mapping(frame, side='old'))
         return VolumeModel(primitives)
 
     # def babylon_script(self, use_cdn=True, debug=False):
