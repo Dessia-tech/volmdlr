@@ -1605,7 +1605,7 @@ class Basis3D(Basis):
         new_w = self.w.z_rotation(angle)
         return Basis3D(new_u, new_v, new_w, self.name)
 
-    def x_rotation_inplace(self, angle: float):
+    def z_rotation_inplace(self, angle: float):
         """
         Basis Rotation around the Z axis and a its
         parameters are changed inplace
