@@ -4193,7 +4193,6 @@ class Circle3D(Contour3D):
         return Circle3D(self.frame.rotation(center, axis, angle),
                         self.radius, self.name)
 
-
     def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         Circle3D rotation. Object is updated inplace
