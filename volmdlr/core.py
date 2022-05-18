@@ -1123,7 +1123,6 @@ class VolumeModel(dc.DessiaObject):
         return output
 
     # def babylon_script(self, use_cdn=True, debug=False):
-    #
     #     # env = Environment(loader=PackageLoader('volmdlr', 'templates'),
     #     #                   autoescape=select_autoescape(['html', 'xml']))
     #     #
