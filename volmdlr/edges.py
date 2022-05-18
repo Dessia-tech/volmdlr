@@ -25,7 +25,7 @@ import dessia_common as dc
 import volmdlr.core_compiled
 import volmdlr.core
 import volmdlr.geometry
-import volmdlr.wires
+# import volmdlr.wires
 
 
 def standardize_knot_vector(knot_vector):
@@ -1245,31 +1245,6 @@ class Arc2D(Edge):
     #     return [self.point_at_abscissa(i * l / number_points) \
     #             for i in range(number_points + 1)]
 
-    # def point_belongs(self, point2d: volmdlr.Point2D,
-    #                   tol: float = 1e-9) -> bool:
-    #     """
-    #     Computes if the point belongs to the pizza slice drawn by the arc and its center
-    #     """
-    #     radius = self.center.point_distance(point2d)
-    #     if radius > self.radius + tol:
-    #         return False
-
-    #     theta_tol = tol / radius * self.radius
-    #     p = point2d - self.center
-    #     u = self.start - self.center
-    #     u.normalize()
-    #     if self.is_trigo:
-    #         v = u.normal_vector()
-    #     else:
-    #         v = -u.normal_vector()
-
-    #     x, y = p.dot(u), p.dot(v)
-    #     theta = math.atan2(y, x)
-    #     if theta < -theta_tol or theta > self.angle + theta_tol:
-    #         return False
-
-    #     return True
-
     def point_distance(self, point):
         vector_start = self.start - self.center
         vector_point = point - self.center
@@ -1285,22 +1260,55 @@ class Arc2D(Edge):
             return min(LineSegment2D(point, self.start).length(),
                        LineSegment2D(point, self.end).length())
 
-    # def point_distance(self, point):
+    def point_belongs(self, point2d, abs_tol=1e-10):
+        """
+        check if a Point2D belongs to the Arc2D
+        """
+        vector_start = self.start - self.center
+        vector_end = self.end - self.center
+        vector_point = point2d - self.center
+        r1 = vector_start.norm()
+        cp = vector_point.norm()
+        if math.isclose(cp, r1, abs_tol=abs_tol):
+            if (self.start.x < self.end.x) and (self.start.y < self.end.y):
+                arc_angle = - volmdlr.core.clockwise_angle(vector_start,
+                                                           vector_end)
+                print('arc_angle', arc_angle)
+                point_angle = - volmdlr.core.clockwise_angle(vector_start,
+                                                             vector_point)
+            else:
+                arc_angle = volmdlr.core.clockwise_angle(vector_start,
+                                                         vector_end)
+                print('arc_angle', arc_angle)
+                point_angle = volmdlr.core.clockwise_angle(vector_start,
+                                                           vector_point)
+            if point_angle <= arc_angle:
+                return True
+        return False
 
-    #    points = self.polygon_points(angle_resolution=100)
-
-    #    return point.point_distance(point.nearest_point(points))
-
-    def to_circle(self):
-        return volmdlr.wires.Circle2D(self.center, self.radius)
+    def to_full_arc_2d(self):
+        return FullArc2D(center=self.center,
+                         start_end=self.point_at_abscissa(0),
+                         is_trigo=True,
+                         name=self.name)
 
     def line_intersections(self, line2d: Line2D):
-        circle = self.to_circle()
-        circle_intersection_points = circle.line_intersections(line2d)
+        full_arc_2d = self.to_full_arc_2d()
+        fa2d_intersection_points = full_arc_2d.line_intersections(line2d)
+        intersection_points = []
+        for pt in fa2d_intersection_points:
+            if self.point_belongs(pt):
+                intersection_points.append(pt)
+        return intersection_points
+
+    def linesegment_intersections(self, linesegment2d: LineSegment2D):
+        full_arc_2d = self.to_full_arc_2d()
+        fa2d_intersection_points = full_arc_2d.linesegment_intersections(
+            linesegment2d)
 
         # print(circle_intersection_points)
         intersection_points = []
-        for pt in circle_intersection_points:
+        for pt in fa2d_intersection_points:
             if self.point_belongs(pt):
                 intersection_points.append(pt)
         return intersection_points
@@ -1647,38 +1655,6 @@ class Arc2D(Edge):
         interior = self.middle_point().rotation(self.center, math.pi)
         return Arc2D(self.start, interior, self.end)
 
-    def point_belongs(self, point2d, abs_tol=1e-10):
-        '''
-        check if a point2d belongs to the arc_2d or not
-        '''
-        vector_start = self.start - self.center
-        vector_end = self.end - self.center
-        vector_point = point2d - self.center
-        r1 = vector_start.norm()
-        cp = vector_point.norm()
-        # r1 = (((self.start.x - self.center.x)**2) + (vector_start.y**2))**0.5
-        # cp = (((point2d.x - self.center.x)**2) + ((point2d.y - self.center.y)**2))**0.5
-        if math.isclose(cp, r1, abs_tol=abs_tol):
-            arc_angle = volmdlr.core.clockwise_angle(vector_start, vector_end)
-            point_angle = volmdlr.core.clockwise_angle(vector_start, vector_point)
-            if point_angle <= arc_angle:
-                return True
-        return False
-
-        # def f(x):
-        #     return (point2d - self.point_at_abscissa(x)).norm()
-        # length_ = self.length()
-        # x = npy.linspace(0, length_, 5)
-        # x_init=[]
-        # for xi in x:
-        #     x_init.append(xi)
-        #
-        # for x0 in x_init:
-        #     z = scp.optimize.least_squares(f, x0=x0, bounds=([0,length_]))
-        #     if z.cost < abs_tol:
-        #         return True
-        # return False
-
 
 class FullArc2D(Edge):
     """
@@ -1815,14 +1791,21 @@ class FullArc2D(Edge):
         return arc
 
     def line_intersections(self, line2d: Line2D, tol=1e-9):
-        # Duplicate from circle
         Q = self.center
-        if line2d.points[0] == self.center:
-            P1 = line2d.points[1]
-            V = line2d.points[0] - line2d.points[1]
-        else:
-            P1 = line2d.points[0]
-            V = line2d.points[1] - line2d.points[0]
+        try:
+            if line2d.start == self.center:
+                P1 = line2d.end
+                V = line2d.start - line2d.end
+            else:
+                P1 = line2d.start
+                V = line2d.end - line2d.start
+        except AttributeError:
+            if line2d.point1 == self.center:
+                P1 = line2d.point2
+                V = line2d.point1 - line2d.point2
+            else:
+                P1 = line2d.point1
+                V = line2d.point2 - line2d.point1
         a = V.dot(V)
         b = 2 * V.dot(P1 - Q)
         c = P1.dot(P1) + Q.dot(Q) - 2 * P1.dot(Q) - self.radius ** 2
@@ -1838,6 +1821,45 @@ class FullArc2D(Edge):
             t2 = (-b - sqrt_disc) / (2 * a)
             return [P1 + t1 * V,
                     P1 + t2 * V]
+        else:
+            return []
+
+    def linesegment_intersections(self, linesegment2d: LineSegment2D,
+                                  tol=1e-9):
+        Q = self.center
+        try:
+            if linesegment2d.start == self.center:
+                P1 = linesegment2d.end
+                V = linesegment2d.start - linesegment2d.end
+            else:
+                P1 = linesegment2d.start
+                V = linesegment2d.end - linesegment2d.start
+        except AttributeError:
+            if linesegment2d.point1 == self.center:
+                P1 = linesegment2d.point2
+                V = linesegment2d.point1 - linesegment2d.point2
+            else:
+                P1 = linesegment2d.point1
+                V = linesegment2d.point2 - linesegment2d.point1
+        a = V.dot(V)
+        b = 2 * V.dot(P1 - Q)
+        c = P1.dot(P1) + Q.dot(Q) - 2 * P1.dot(Q) - self.radius ** 2
+
+        disc = b ** 2 - 4 * a * c
+        if math.isclose(disc, 0., abs_tol=tol):
+            t1 = -b / (2 * a)
+            points = [P1 + t1 * V]
+            if linesegment2d.point_belongs(points[0]):
+                return points
+            return []
+
+        elif disc > 0:
+            sqrt_disc = math.sqrt(disc)
+            t1 = (-b + sqrt_disc) / (2 * a)
+            t2 = (-b - sqrt_disc) / (2 * a)
+            points = [P1 + t1 * V, P1 + t2 * V]
+            valid_points = [pt for pt in points if linesegment2d.point_belongs(pt)]
+            return valid_points
         else:
             return []
 

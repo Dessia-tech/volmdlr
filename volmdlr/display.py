@@ -6,7 +6,9 @@
 from typing import List, Tuple
 import math
 import dessia_common as dc
-import volmdlr.edges
+import volmdlr
+# import volmdlr.edges
+# from volmdlr.edges import LineSegment2D, LineSegment3D
 # import volmdlr.faces as vmf
 
 
@@ -139,26 +141,27 @@ class DisplayMesh(dc.DessiaObject):
 
         return self.__class__(new_points, new_triangles)
 
-    def plot(self, ax=None, numbering=False):
-        for ip, point in enumerate(self.points):
-            ax = point.plot(ax=ax)
-            if numbering:
-                ax.text(*point, 'node {}'.format(ip + 1),
-                        ha='center', va='center')
-
-        for i1, i2, i3 in self.triangles:
-            self._linesegment_class(self.points[i1], self.points[i2]).plot(
-                ax=ax)
-            self._linesegment_class(self.points[i2], self.points[i3]).plot(
-                ax=ax)
-            self._linesegment_class(self.points[i1], self.points[i3]).plot(
-                ax=ax)
-
-        return ax
+    # def plot(self, ax=None, numbering=False):
+    #     for ip, point in enumerate(self.points):
+    #         ax = point.plot(ax=ax)
+    #         if numbering:
+    #             ax.text(*point, 'node {}'.format(ip + 1),
+    #                     ha='center', va='center')
+    #
+    #     for i1, i2, i3 in self.triangles:
+    #         self._linesegment_class(self.points[i1], self.points[i2]).plot(
+    #             ax=ax)
+    #         self._linesegment_class(self.points[i2], self.points[i3]).plot(
+    #             ax=ax)
+    #         self._linesegment_class(self.points[i1], self.points[i3]).plot(
+    #             ax=ax)
+    #
+    #     return ax
 
 
 class DisplayMesh2D(DisplayMesh):
-    _linesegment_class = volmdlr.edges.LineSegment2D
+    # _linesegment_class = 'volmdlr.edges.LineSegment2D'
+    # _linesegment_class = LineSegment2D
     _point_class = volmdlr.Point2D
 
     def __init__(self, points: List[volmdlr.Point2D],
@@ -169,7 +172,8 @@ class DisplayMesh2D(DisplayMesh):
 
 
 class DisplayMesh3D(DisplayMesh):
-    _linesegment_class = volmdlr.edges.LineSegment3D
+    # _linesegment_class = 'volmdlr.edges.LineSegment3D'
+    # _linesegment_class = LineSegment3D
     _point_class = volmdlr.Point3D
 
     def __init__(self, points: List[volmdlr.Point3D],

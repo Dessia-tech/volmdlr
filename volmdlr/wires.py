@@ -2919,6 +2919,10 @@ class Circle2D(Contour2D):
             and math.isclose(self.radius, other_circle.radius,
                              abs_tol=1e-06)
 
+    @classmethod
+    def from_arc(cls, arc: volmdlr.edges.Arc2D):
+        return cls(arc.center, arc.radius, arc.name+' to circle')
+
     def to_polygon(self, angle_resolution: float):
         return ClosedPolygon2D(
             self.polygon_points(angle_resolution=angle_resolution))
@@ -2947,39 +2951,10 @@ class Circle2D(Contour2D):
         return xmin, xmax, ymin, ymax
 
     def line_intersections(self, line2d: volmdlr.edges.Line2D, tol=1e-9):
-        # Duplicate from ffull arc
-        Q = self.center
-        try:
-            if line2d.start == self.center:
-                P1 = line2d.end
-                V = line2d.start - line2d.end
-            else:
-                P1 = line2d.start
-                V = line2d.end - line2d.start
-        except AttributeError:
-            if line2d.point1 == self.center:
-                P1 = line2d.point2
-                V = line2d.point1 - line2d.point2
-            else:
-                P1 = line2d.point1
-                V = line2d.point2 - line2d.point1
-        a = V.dot(V)
-        b = 2 * V.dot(P1 - Q)
-        c = P1.dot(P1) + Q.dot(Q) - 2 * P1.dot(Q) - self.radius ** 2
-
-        disc = b ** 2 - 4 * a * c
-        if math.isclose(disc, 0., abs_tol=tol):
-            t1 = -b / (2 * a)
-            return [P1 + t1 * V]
-
-        elif disc > 0:
-            sqrt_disc = math.sqrt(disc)
-            t1 = (-b + sqrt_disc) / (2 * a)
-            t2 = (-b - sqrt_disc) / (2 * a)
-            return [P1 + t1 * V,
-                    P1 + t2 * V]
-        else:
-            return []
+        full_arc_2d = volmdlr.edges.FullArc2D(
+            center=self.center, start_end=self.point_at_abscissa(0),
+            is_trigo=True, name=self.name)
+        return full_arc_2d.line_intersections(line2d, tol)
 
     def circle_intersections(self, circle: 'volmdlr.wires.Circle2D'):
         x0, y0 = self.center
