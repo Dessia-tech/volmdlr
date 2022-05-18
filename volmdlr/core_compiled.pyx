@@ -418,47 +418,62 @@ class Vector2D(Vector):
     def point_distance(self, other_vector):
         return (self - other_vector).norm()
 
-    def rotation(self, center, angle, copy=True):
+    def rotation_parameters(self, center: 'Point2D', angle: float):
+        """Calculates the parameters to be used in rotation methods"""
         u = self - center
         v2x = math.cos(angle) * u[0] - math.sin(angle) * u[1] + center[0]
         v2y = math.sin(angle) * u[0] + math.cos(angle) * u[1] + center[1]
-        if copy:
-            return self.__class__(v2x, v2y)
-        else:
-            self.x = v2x
-            self.y = v2y
+        return v2x, v2y
 
-    def translation(self, offset, copy=True):
+    def rotation(self, center: 'Point2D', angle: float):
+        """Rotates the vector and returns a new rotated vector"""
+        v2x, v2y = self.rotation_parameters(center, angle)
+        return self.__class__(v2x, v2y)
+
+    def rotation_inplace(self, center: 'Point2D', angle: float):
+        """Rotates the vector and changes its values inplace"""
+        v2x, v2y = self.rotation_parameters(center, angle)
+        self.x = v2x
+        self.y = v2y
+
+    def translation(self, offset: 'Vector2D'):
         """
+        Translates the vector and returns a new translated vector
         :param offset: an other Vector2D
         """
         v2x = self.x + offset[0]
         v2y = self.y + offset[1]
-        if copy:
-            return self.__class__(v2x, v2y)
-        else:
-            self.x = v2x
-            self.y = v2y
+        return self.__class__(v2x, v2y)
 
-    def frame_mapping(self, frame, side, copy=True):
+    def translation_inplace(self, offset: 'Vector2D'):
+        """Translates the vector and changes its values inplace"""
+        v2x = self.x + offset[0]
+        v2y = self.y + offset[1]
+        self.x = v2x
+        self.y = v2y
+
+    def frame_mapping(self, frame: 'Frame2D', side: str):
         """
+        Changes vector frame_mapping and return a new vector
         side = 'old' or 'new'
         """
         if side == 'old':
             new_vector = frame.old_coordinates(self)
-            if copy:
-                return new_vector
-            else:
-                self.x = new_vector.x
-                self.y = new_vector.y
-
         if side == 'new':
             new_vector = frame.new_coordinates(self)
-            if copy:
-                return new_vector
-            else:
-                self.x = new_vector.x
-                self.y = new_vector.y
+        return new_vector
+
+    def frame_mapping_inplace(self, frame: 'Frame2D', side: str):
+        """
+        Changes vector frame_mapping in place
+        side = 'old' or 'new'
+        """
+        if side == 'old':
+            new_vector = frame.old_coordinates(self)
+        if side == 'new':
+            new_vector = frame.new_coordinates(self)
+        self.x = new_vector.x
+        self.y = new_vector.y
 
     def to_3d(self, plane_origin, vx, vy):
         return Vector3D(plane_origin.x + vx.x * self.x + vy.x * self.y,
@@ -692,6 +707,17 @@ class Point2D(Vector2D):
         return points[distances.index(min(distances))]
 
 
+    def axial_symmetry(self, line):
+        '''
+        finds out the symmetric point according to a line
+        '''
+
+        point_projection = line.point_projection(self)[0]
+        point_symmetry = point_projection + (point_projection - self)
+
+        return point_symmetry
+
+
 O2D = Point2D(0, 0)
 
 
@@ -815,105 +841,131 @@ class Vector3D(Vector):
     def point_distance(self, point2: 'Vector3D') -> float:
         return (self - point2).norm()
 
-    def rotation(self, center: 'Point3D', axis: 'Vector3D', angle: float,
-                 copy: bool = True):
+    def rotation(self, center: 'Point3D', axis: 'Vector3D', angle: float):
+
         """
-        rotation of angle around axis.
+        Rotation of angle around axis. Returns a new rotated vector
         Used Rodrigues Formula:
             https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
         """
-#        u = self - center
-#        vector2 = (math.cos(angle)*u
-#                   + (1-math.cos(angle))*(u.Dot(axis))*axis
-#                   + math.sin(angle)*axis.cross(u)
-#                   + center)
         vector2 = vector3D_rotation(self, center, axis, angle)
+        return self.__class__(*vector2)
 
-        if copy:
-            return self.__class__(*vector2)
-            # return Point3D(vector2)
-        else:
-            self.x = vector2[0]
-            self.y = vector2[1]
-            self.z = vector2[2]
+    def rotation_inplace(self, center: 'Point3D', axis: 'Vector3D', angle: float):
+        """Rotation of angle around axis.
+        The vector parameters are changed inplace
+        Used Rodrigues Formula:
+            https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula"""
+        vector2 = vector3D_rotation(self, center, axis, angle)
+        self.x = vector2[0]
+        self.y = vector2[1]
+        self.z = vector2[2]
 
-    def x_rotation(self, angle: float, copy: bool = True):
+    @staticmethod
+    def axis_rotation_parameters(axis1_value, axis2_value, angle):
+
         """
-        rotation of angle around X axis.
-        """
-        cos_angle = math.cos(angle)
-        sin_angle = math.sin(angle)
-
-        y1 = cos_angle * self.y + sin_angle * self.z
-        z1 = -sin_angle * self.y + cos_angle * self.z
-
-        if copy:
-            return Point3D(self.x, y1, z1)
-        else:
-            self.y = y1
-            self.z = z1
-
-    def y_rotation(self, angle: float, copy: bool = True):
-        """
-        rotation of angle around Y axis.
+        Calcules new axis1 and axis2 new values
+        after vector rotation
         """
         cos_angle = math.cos(angle)
         sin_angle = math.sin(angle)
 
-        z1 = cos_angle * self.z + sin_angle * self.x
-        x1 = -sin_angle * self.z + cos_angle * self.x
+        axis1 = cos_angle * axis1_value + sin_angle * axis2_value
+        axis2 = -sin_angle * axis1_value + cos_angle * axis2_value
+        return axis1, axis2
 
-        if copy:
-            return Point3D(x1, self.y, z1)
-        else:
-            self.x = x1
-            self.z = z1
-
-    def z_rotation(self, angle: float, copy: bool = True):
+    def x_rotation(self, angle:float):
         """
-        rotation of angle around Z axis.
+        rotation of angle around X axis and returns a new vector as a result
         """
-        cos_angle = math.cos(angle)
-        sin_angle = math.sin(angle)
+        y1, z1 = self.axis_rotation_parameters(self.y, self.z, angle)
 
-        x1 = cos_angle * self.x + sin_angle * self.y
-        y1 = -sin_angle * self.x + cos_angle * self.y
+        return Point3D(self.x, y1, z1)
 
-        if copy:
-            return Point3D(x1, y1, self.z)
-        else:
-            self.x = x1
-            self.y = y1
-
-    def translation(self, offset, copy=True):
-        if copy:
-            return self + offset
-        else:
-            self.x += offset[0]
-            self.y += offset[1]
-            self.z += offset[2]
-
-    def frame_mapping(self, frame, side, copy=True):
+    def x_rotation_inplace(self, angle: float):
         """
+        Rotation of angle around X axis and
+        changes the vector parameters inplace
+        """
+        y1, z1 = self.axis_rotation_parameters(self.y, self.z, angle)
+        self.y = y1
+        self.z = z1
+
+    def y_rotation(self, angle:float):
+        """
+        rotation of angle around Y axis and
+        returns a new vector as result.
+        """
+        z1, x1 = self.axis_rotation_parameters(self.z, self.x, angle)
+        return Point3D(x1, self.y, z1)
+
+    def y_rotation_inplace(self, angle):
+        """
+        Rotation of vector around the Y axis and
+        changes its parameters inplace
+        """
+        z1, x1 = self.axis_rotation_parameters(self.z, self.x, angle)
+        self.x = x1
+        self.z = z1
+
+    def z_rotation(self, angle:float):
+        """
+        rrotation of angle around Z axis and
+        returns a new vector as result.
+        """
+        x1, y1 = self.axis_rotation_parameters(self.x, self.y, angle)
+        return Point3D(x1, y1, self.z)
+
+    def z_rotation_inplace(self, angle: float):
+        """Rotation of vector around the Z axis and
+        changes its parameters inplace"""
+        x1, y1 = self.axis_rotation_parameters(self.x, self.y, angle)
+        self.x = x1
+        self.y = y1
+
+
+    def translation(self, offset):
+        """
+        Translates the vector and returns a new translated vector
+        :param offset: an other Vector3D
+        """
+        return self + offset
+
+    def translation_inplace(self, offset):
+        """
+        Translates the vector and changes its values inplace
+        :param offset: an other Vector3D
+        """
+        self.x += offset[0]
+        self.y += offset[1]
+        self.z += offset[2]
+
+    def frame_mapping(self, frame: 'Frame3D', side: str):
+        """
+        Changes vector frame_mapping and return a new vector
         side = 'old' or 'new'
         """
         if side == 'old':
             new_vector = frame.old_coordinates(self)
-            if copy:
-                return new_vector
-            else:
-                self.x = new_vector.x
-                self.y = new_vector.y
-                self.z = new_vector.z
 
         if side == 'new':
             new_vector = frame.new_coordinates(self)
-            if copy:
-                return new_vector
-            else:
-                self.x = new_vector.x
-                self.y = new_vector.y
-                self.z = new_vector.z
+        return new_vector
+
+    def frame_mapping_inplace(self, frame: 'Frame3D', side: str):
+        """
+        Changes vector frame_mapping in place
+        side = 'old' or 'new'
+        """
+        if side == 'old':
+            new_vector = frame.old_coordinates(self)
+
+        if side == 'new':
+            new_vector = frame.new_coordinates(self)
+        self.x = new_vector.x
+        self.y = new_vector.y
+        self.z = new_vector.z
 
     def plane_projection3d(self, plane_origin, x, y):
         z = x.cross(y)
@@ -1353,13 +1405,19 @@ class Basis2D(Basis):
     #     return Point2D(matrix[0][0]*vector.x + matrix[0][1]*vector.y,
     #                    matrix[1][0]*vector.x + matrix[1][1]*vector.y)
 
-    def rotation(self, angle: float, copy=True):
-        center = O2D
-        new_u = self.u.rotation(center, angle, True)
-        new_v = self.v.rotation(center, angle, True)
+    def rotation(self, angle: float):
+        """Rotates the base and returns a new rotated one"""
 
-        if copy:
-            return Basis2D(new_u, new_v)
+        center = O2D
+        new_u = self.u.rotation(center, angle)
+        new_v = self.v.rotation(center, angle)
+        return Basis2D(new_u, new_v)
+
+    def roation_inplace(self, angle: float):
+        """Rotates the base and changes its parameters inplace"""
+        center = O2D
+        new_u = self.u.rotation(center, angle)
+        new_v = self.v.rotation(center, angle)
         self.u = new_u
         self.v = new_v
 
@@ -1471,56 +1529,120 @@ class Basis3D(Basis):
     def to_frame(self, origin):
         return Frame3D(origin, self.u, self.v, self.w)
 
-    def rotation(self, axis: Vector3D, angle: float, copy: bool = True):
+    def rotation(self, axis:Vector3D, angle:float):
+        """Rotates the Basis and return new Basis as a result"""
+
         center = O3D
-        new_u = self.u.rotation(center, axis, angle, True)
-        new_v = self.v.rotation(center, axis, angle, True)
-        new_w = self.w.rotation(center, axis, angle, True)
+        new_u = self.u.rotation(center, axis, angle)
+        new_v = self.v.rotation(center, axis, angle)
+        new_w = self.w.rotation(center, axis, angle)
 
-        if copy:
-            return Basis3D(new_u, new_v, new_w, self.name)
-        else:
-            self.u = new_u
-            self.v = new_v
-            self.w = new_w
+        return Basis3D(new_u, new_v, new_w, self.name)
 
-    def x_rotation(self, angle: float, copy: bool = True):
-        new_u = self.u.x_rotation(angle, True)
-        new_v = self.v.x_rotation(angle, True)
-        new_w = self.w.x_rotation(angle, True)
+    def rotation_inplace(self, axis: Vector3D, angle: float):
+        """Rotates the basis and changes is parameters inplace"""
+        center = O3D
+        new_u = self.u.rotation(center, axis, angle)
+        new_v = self.v.rotation(center, axis, angle)
+        new_w = self.w.rotation(center, axis, angle)
 
-        if copy:
-            return Basis3D(new_u, new_v, new_w, self.name)
-        else:
-            self.u = new_u
-            self.v = new_v
-            self.w = new_w
 
-    def y_rotation(self, angle: float, copy: bool = True):
-        new_u = self.u.y_rotation(angle, True)
-        new_v = self.v.y_rotation(angle, True)
-        new_w = self.w.y_rotation(angle, True)
+        self.u = new_u
+        self.v = new_v
+        self.w = new_w
 
-        if copy:
-            return Basis3D(new_u, new_v, new_w, self.name)
-        else:
-            self.u = new_u
-            self.v = new_v
-            self.w = new_w
+    def x_rotation(self, angle:float):
+        """
+        Basis Rotation around the X axis and a new
+        Basis is returned as results
+        :param angle: rotation angle
+        """
+        new_u = self.u.x_rotation(angle)
+        new_v = self.v.x_rotation(angle)
+        new_w = self.w.x_rotation(angle)
+        return Basis3D(new_u, new_v, new_w, self.name)
 
-    def z_rotation(self, angle: float, copy: bool = True):
-        new_u = self.u.z_rotation(angle, True)
-        new_v = self.v.z_rotation(angle, True)
-        new_w = self.w.z_rotation(angle, True)
 
-        if copy:
-            return Basis3D(new_u, new_v, new_w, self.name)
-        else:
-            self.u = new_u
-            self.v = new_v
-            self.w = new_w
+    def x_rotation_inplace(self, angle: float):
+        """
+        Basis Rotation around the X axis and its
+        parameters are changed inplace
+        :param angle: rotation angle
+        """
+        self.u = self.u.x_rotation(angle)
+        self.v = self.v.x_rotation(angle)
+        self.w = self.w.x_rotation(angle)
 
-    def Eulerrotation(self, angles: Tuple[float, float, float], copy: bool = True):
+    def y_rotation(self, angle:float):
+        """
+        Basis Rotation around the Y axis and a new
+        Basis is returned as results
+        :param angle: rotation angle
+        """
+        new_u = self.u.y_rotation(angle)
+        new_v = self.v.y_rotation(angle)
+        new_w = self.w.y_rotation(angle)
+        return Basis3D(new_u, new_v, new_w, self.name)
+
+    def y_rotation_inplace(self, angle):
+        """
+        Basis Rotation around the Y axis and its
+        parameters are changed inplace
+        :param angle: rotation angle
+        """
+        self.u = self.u.y_rotation(angle)
+        self.v = self.v.y_rotation(angle)
+        self.w = self.w.y_rotation(angle)
+
+    def z_rotation(self, angle:float):
+        """
+        Basis Rotation around the Z axis and a new
+        Basis is returned as results
+        :param angle: rotation angle
+        """
+        new_u = self.u.z_rotation(angle)
+        new_v = self.v.z_rotation(angle)
+        new_w = self.w.z_rotation(angle)
+        return Basis3D(new_u, new_v, new_w, self.name)
+
+    def x_rotation_inplace(self, angle: float):
+        """
+        Basis Rotation around the Z axis and a its
+        parameters are changed inplace
+        :param angle: rotation angle
+        """
+        self.u = self.u.z_rotation(angle)
+        self.v = self.v.z_rotation(angle)
+        self.w = self.w.z_rotation(angle)
+
+    # def Eulerrotation(self, angles:Tuple[float, float, float], copy:bool=True):
+    #     psi, theta, phi = angles
+    #     center = O3D
+    #
+    #     vect_u = self.u.copy()
+    #     vect_v = self.v.copy()
+    #     vect_w = self.w.copy()
+    #
+    #     # rotation around w
+    #     vect_u.rotation(center, vect_w, psi, False)
+    #     vect_v.rotation(center, vect_w, psi, False)
+    #
+    #     # rotation around v
+    #     vect_v.rotation(center, vect_u, theta, False)
+    #     vect_w.rotation(center, vect_u, theta, False)
+    #
+    #     # rotation around w
+    #     vect_u.rotation(center, vect_w, phi, False)
+    #     vect_v.rotation(center, vect_w, phi, False)
+    #
+    #     if copy:
+    #         return Basis3D(vect_u, vect_v, vect_w)
+    #     self.u = vect_u
+    #     self.v = vect_v
+    #     self.w = vect_w
+
+    def euler_rotation_parameters(self, angles: Tuple[float, float, float]):
+
         psi, theta, phi = angles
         center = O3D
 
@@ -1529,19 +1651,34 @@ class Basis3D(Basis):
         vect_w = self.w.copy()
 
         # rotation around w
-        vect_u.rotation(center, vect_w, psi, False)
-        vect_v.rotation(center, vect_w, psi, False)
+        vect_u.rotation_inplace(center, vect_w, psi)
+        vect_v.rotation_inplace(center, vect_w, psi)
 
         # rotation around v
-        vect_v.rotation(center, vect_u, theta, False)
-        vect_w.rotation(center, vect_u, theta, False)
+        vect_v.rotation_inplace(center, vect_u, theta)
+        vect_w.rotation_inplace(center, vect_u, theta)
 
         # rotation around w
-        vect_u.rotation(center, vect_w, phi, False)
-        vect_v.rotation(center, vect_w, phi, False)
+        vect_u.rotation_inplace(center, vect_w, phi)
+        vect_v.rotation_inplace(center, vect_w, phi)
+        return vect_u, vect_v, vect_w
 
-        if copy:
-            return Basis3D(vect_u, vect_v, vect_w)
+    def euler_rotation(self, angles:Tuple[float, float, float]):
+        """
+        Basis rotation using euler rotation and
+        returns a new basis as a result
+        :param angles: psi, theta, phi
+        """
+        vect_u, vect_v, vect_w = self.euler_rotation_parameters(angles)
+        return Basis3D(vect_u, vect_v, vect_w)
+
+    def euler_rotation_inplace(self, angles: Tuple[float, float, float]):
+        """
+        Basis rotation using euler rotation and
+        its parameters are changed inplace
+        :param angles: psi, theta, phi
+        """
+        vect_u, vect_v, vect_w = self.euler_rotation_parameters(angles)
         self.u = vect_u
         self.v = vect_v
         self.w = vect_w
@@ -1635,17 +1772,38 @@ class Frame2D(Basis2D):
     def old_coordinates(self, vector):
         return Basis2D.old_coordinates(self, vector) + self.origin
 
-    def translation(self, vector, copy=True):
-        new_origin = self.origin.translation(vector, True)
-        if copy:
-            return Frame2D(new_origin, self.u, self.v)
-        self.origin = new_origin
+    def translation(self, vector):
+        """
+        Frame Translation
+        :param vector: translation vector
+        :return: a new translated Frame
+        """
+        new_origin = self.origin.translation(vector)
+        return Frame2D(new_origin, self.u, self.v)
 
-    def rotation(self, angle, copy=True):
-        new_base = Basis2D.rotation(self, angle, True)
-        if copy:
-            new_frame = Frame2D(self.origin, new_base.u, new_base.v)
-            return new_frame
+    def translation_inplace(self, vector):
+        """
+        Frame Translation. Object updated inplace
+        :param vector: translation vector
+        """
+        self.origin = self.origin.translation(vector)
+
+    def rotation(self, angle):
+        """
+        Frame rotation
+        :param angle: rotation angle
+        :return: New rotated Frame
+        """
+        new_base = Basis2D.rotation(self, angle)
+        new_frame = Frame2D(self.origin, new_base.u, new_base.v)
+        return new_frame
+
+    def rotation_inplace(self, angle: float):
+        """
+        Frame rotation. Object updated inplace
+        :param angle: rotation angle
+        """
+        new_base = Basis2D.rotation(self, angle)
         self.u = new_base.u
         self.v = new_base.v
 
@@ -1763,26 +1921,44 @@ class Frame3D(Basis3D):
         """ You have to give coordinates in the local landmark """
         return Basis3D.old_coordinates(self, vector) + self.origin
 
-    def rotation(self, center, axis, angle, copy=True):
+    def rotation(self, center: Point3D, axis: Vector3D, angle: float):
         """
-        Rotate the center as a point and vectors as directions (calling Basis)
+        Rotate the center as a point and vectors as directions
+        (calling Basis), and returns a new Frame
         """
-        new_base = Basis3D.rotation(self, axis, angle, copy=True)
-        new_origin = self.origin.rotation(center, axis, angle, copy=True)
-        if copy:
-            return Frame3D(new_origin,
-                           new_base.u, new_base.v, new_base.w,
-                           self.name)
+        new_base = Basis3D.rotation(self, axis, angle)
+        new_origin = self.origin.rotation(center, axis, angle)
+        return Frame3D(new_origin,
+                       new_base.u, new_base.v, new_base.w,
+                       self.name)
+
+    def rotation_inplace(self, center: Point3D,  axis: Vector3D, angle: float):
+        """
+        Rotate the center as a point and vectors as directions (calling Basis).
+        Object is updated inplace
+        """
+        new_base = Basis3D.rotation(self, axis, angle)
+        new_origin = self.origin.rotation(center, axis, angle)
         self.origin = new_origin
         self.u = new_base.u
         self.v = new_base.v
         self.w = new_base.w
 
-    def translation(self, offset, copy=True):
-        if copy:
-            return Frame3D(self.origin.translation(offset, copy=True),
-                           self.u, self.v, self.w, self.name)
-        self.origin.translation(offset, copy=False)
+    def translation(self, offset):
+        """
+        Frame translation
+        :param offset: translation vector
+        :return: new translated frame
+        """
+        return Frame3D(self.origin.translation(offset),
+                       self.u, self.v, self.w, self.name)
+
+    def translation_inplace(self, offset: Vector3D):
+        """
+        Frame translation. Object is updated is inplace
+        :param offset: translation vector
+        """
+        self.origin.translation_inplace(offset)
 
     def copy(self, deep=True, memo=None):
         return Frame3D(self.origin.copy(),
