@@ -191,9 +191,9 @@ class Wire:
                     for i in indice:
                         if i != shared[0]:
                             ind.append(i)
-
-        return self.extract_primitives(point1, primitives[ind[0]], point2,
-                                       primitives[ind[1]], inside)
+        new_primitives = self.extract_primitives(point1, primitives[ind[0]], point2,
+                                                 primitives[ind[1]], inside)
+        return new_primitives
 
     def point_belongs(self, point, abs_tol=1e-7):
         '''

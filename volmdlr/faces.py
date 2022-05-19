@@ -1,8 +1,7 @@
 """
 Surfaces & faces
 """
-
-
+import warnings
 from typing import List, Tuple, Dict, Any
 import math
 
@@ -159,12 +158,13 @@ class Surface2D(volmdlr.core.Primitive2D):
     def split_by_lines(self, lines):
         cutted_surfaces = []
         iteration_surfaces = self.cut_by_line(lines[0])
-
         for line in lines[1:]:
             iteration_surfaces2 = []
             for surface in iteration_surfaces:
-                line_cutted_surfaces = surface.cut_by_line(line)
-
+                try:
+                    line_cutted_surfaces = surface.cut_by_line(line)
+                except IndexError:
+                    warnings.warn('line in Surface2D.cut_by_line has been skiped')
                 llcs = len(line_cutted_surfaces)
 
                 if llcs == 1:
