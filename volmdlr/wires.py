@@ -171,7 +171,7 @@ class Wire:
         for i, point in enumerate([point1, point2]):
             ind = []
             for p, primitive in enumerate(primitives):
-                if primitive.point_belongs(point, 1e-5):
+                if primitive.point_belongs(point, 1e-6):
                     ind.append(p)
             indices.append(ind)
 
@@ -760,25 +760,23 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
 
         return s
 
-    def frame_mapping(self, frame, side, copy=True):
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and return a new Wire3D
+        side = 'old' or 'new'
+        """
         new_wire = []
-        if side == 'new':
-            if copy:
-                for primitive in self.primitives:
-                    new_wire.append(primitive.frame_mapping(frame, side, copy))
-                return Wire3D(new_wire)
-            else:
-                for primitive in self.primitives:
-                    primitive.frame_mapping(frame, side, copy=False)
+        for primitive in self.primitives:
+            new_wire.append(primitive.frame_mapping(frame, side))
+        return Wire3D(new_wire)
 
-        if side == 'old':
-            if copy:
-                for primitive in self.primitives:
-                    new_wire.append(primitive.frame_mapping(frame, side, copy))
-                return Wire3D(new_wire)
-            else:
-                for primitive in self.primitives:
-                    primitive.frame_mapping(frame, side, copy=False)
+    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and the object is updated inplace
+        side = 'old' or 'new'
+        """
+        for primitive in self.primitives:
+            primitive.frame_mapping_inplace(frame, side)
 
     def minimum_distance(self, wire2):
         distance = []
@@ -2322,13 +2320,24 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
                     lines.append(volmdlr.edges.LineSegment2D(p1, p2))
         return lines
 
-    def rotation(self, center, angle, copy=True):
-        if copy:
-            return ClosedPolygon2D(
-                [p.rotation(center, angle, copy=True) for p in self.points])
-        else:
-            for p in self.points:
-                p.rotation(center, angle, copy=False)
+    def rotation(self, center: volmdlr.Point2D, angle: float):
+        """
+        ClosedPolygon2D rotation
+        :param center: rotation center
+        :param angle: angle rotation
+        :return: a new rotated ClosedPolygon2D
+        """
+        return ClosedPolygon2D(
+            [point.rotation(center, angle) for point in self.points])
+
+    def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
+        """
+        Line2D rotation. Object is updated inplace
+        :param center: rotation center
+        :param angle: rotation angle
+        """
+        for point in self.points:
+            point.rotation_inplace(center, angle)
 
     # @classmethod
     # def polygon_from_segments(cls, list_point_pairs):
@@ -2359,13 +2368,22 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
     #     # print('points : ', points)
     #     return cls(points)
 
-    def translation(self, offset, copy=True):
-        if copy:
-            return ClosedPolygon2D(
-                [p.translation(offset, copy=True) for p in self.points])
-        else:
-            for p in self.points:
-                p.translation(offset, copy=False)
+    def translation(self, offset: volmdlr.Vector2D):
+        """
+        ClosedPolygon2D translation
+        :param offset: translation vector
+        :return: A new translated ClosedPolygon2D
+        """
+        return ClosedPolygon2D(
+            [point.translation(offset) for point in self.points])
+
+    def translation_inplace(self, offset: volmdlr.Vector2D):
+        """
+        ClosedPolygon2D translation. Object is updated inplace
+        :param offset: translation vector
+        """
+        for point in self.points:
+            point.translation_inplace(offset)
 
     def polygon_distance(self,
                          polygon: 'volmdlr.wires.ClosedPolygon2D'):
@@ -3575,36 +3593,63 @@ class Circle2D(Contour2D):
         return Circle3D(volmdlr.Frame3D(center3d, x, y, normal),
                         self.radius, self.name)
 
-    def rotation(self, center, angle, copy=True):
-        if copy:
-            return Circle2D(self.center.rotation(center, angle, copy=True),
-                            self.radius)
-        else:
-            self.center.rotation(center, angle, copy=False)
-
-    def translation(self, offset, copy=True):
-        if copy:
-            return Circle2D(self.center.translation(offset, copy=True),
-                            self.radius)
-        else:
-            self.center.translation(offset, copy=False)
-
-    def frame_mapping(self, frame, side, copy=True):
+    def rotation(self, center: volmdlr.Point2D, angle: float):
         """
+        Circle2D rotation
+        :param center: rotation center
+        :param angle: angle rotation
+        :return: a new rotated Circle2D
+        """
+        return Circle2D(self.center.rotation(center, angle), self.radius)
+
+    def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
+        """
+        Circle2D rotation. Object is updated inplace
+        :param center: rotation center
+        :param angle: rotation angle
+        """
+        self.center.rotation_inplace(center, angle)
+
+    def translation(self, offset: volmdlr.Vector2D):
+        """
+        Circle2D translation
+        :param offset: translation vector
+        :return: A new translated Circle2D
+        """
+        return Circle2D(self.center.translation(offset), self.radius)
+
+    def translation_inplace(self, offset: volmdlr.Vector3D):
+        """
+        Circle2D translation. Object is updated inplace
+        :param offset: translation vector
+        """
+        self.center.translation_inplace(offset)
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and return a new Circle2D
         side = 'old' or 'new'
         """
         if side == 'old':
-            if copy:
-                return Circle2D(frame.old_coordinates(self.center),
-                                self.radius)
-            else:
-                self.center = frame.old_coordinates(self.center)
-        if side == 'new':
-            if copy:
-                return Circle2D(frame.new_coordinates(self.center),
-                                self.radius)
-            else:
-                self.points = frame.new_coordinates(self.center)
+            return Circle2D(frame.old_coordinates(self.center),
+                            self.radius)
+        elif side == 'new':
+            return Circle2D(frame.new_coordinates(self.center),
+                            self.radius)
+        else:
+            raise ValueError('Side should be \'new\' \'old\'')
+
+    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and the object is updated inplace
+        side = 'old' or 'new'
+        """
+        if side == 'old':
+            self.center = frame.old_coordinates(self.center)
+        elif side == 'new':
+            self.center = frame.new_coordinates(self.center)
+        else:
+            raise ValueError('Side should be \'new\' \'old\'')
 
     def area(self):
         return math.pi * self.radius ** 2
@@ -3832,29 +3877,47 @@ class Contour3D(Contour, Wire3D):
 
         return volmdlr.Point3D(x, y, z)
 
-    def rotation(self, center, axis, angle, copy=True):
-        if copy:
-            new_edges = [edge.rotation(center, axis, angle, copy=True) for edge
-                         in self.primitives]
-            # new_points = [p.rotation(center, axis, copy=True) for p in self.points]
-            return Contour3D(new_edges, None, self.name)
-        else:
-            for edge in self.primitives:
-                edge.rotation(center, axis, angle, copy=False)
-            for point in self.tessel_points:
-                point.rotation(center, axis, angle, copy=False)
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
+                 angle: float):
+        """
+        Contour3D rotation
+        :param center: rotation center
+        :param axis: rotation axis
+        :param angle: angle rotation
+        :return: a new rotated Contour3D
+        """
+        new_edges = [edge.rotation(center, axis, angle) for edge
+                     in self.primitives]
+        return Contour3D(new_edges, self.name)
 
-    def translation(self, offset, copy=True):
-        if copy:
-            new_edges = [edge.translation(offset, copy=True) for edge in
-                         self.primitives]
-            # new_points = [p.translation(offset, copy=True) for p in self.points]
-            return Contour3D(new_edges, self.name)
-        else:
-            for edge in self.primitives:
-                edge.translation(offset, copy=False)
-            for point in self.tessel_points:
-                point.translation(offset, copy=False)
+    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
+                         angle: float):
+        """
+        Contour3D rotation. Object is updated inplace
+        :param center: rotation center
+        :param axis: rotation axis
+        :param angle: rotation angle
+        """
+        for edge in self.primitives:
+            edge.rotation_inplace(center, axis, angle)
+
+    def translation(self, offset: volmdlr.Vector3D):
+        """
+        Contour3D translation
+        :param offset: translation vector
+        :return: A new translated Contour3D
+        """
+        new_edges = [edge.translation(offset) for edge in
+                     self.primitives]
+        return Contour3D(new_edges, self.name)
+
+    def translation_inplace(self, offset: volmdlr.Vector3D):
+        """
+        Contour3D translation. Object is updated inplace
+        :param offset: translation vector
+        """
+        for edge in self.primitives:
+            edge.translation_inplace(offset)
 
     def order_contour(self):
         # new_primitives = []
@@ -3898,20 +3961,22 @@ class Contour3D(Contour, Wire3D):
     #             belongs = True
     #     return belongs
 
-    def frame_mapping(self, frame, side, copy=True):
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
+        Changes frame_mapping and return a new Contour3D
         side = 'old' or 'new'
         """
-        if copy:
-            new_edges = [edge.frame_mapping(frame, side, copy=True) for edge in
-                         self.primitives]
-            # new_points = [p.frame_mapping(frame, side, copy=True) for p in self.points]
-            return Contour3D(new_edges, None, self.name)
-        else:
-            for edge in self.primitives:
-                edge.frame_mapping(frame, side, copy=False)
-            for point in self.tessel_points:
-                point.frame_mapping(frame, side, copy=False)
+        new_edges = [edge.frame_mapping(frame, side) for edge in
+                     self.primitives]
+        return Contour3D(new_edges, self.name)
+
+    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and the object is updated inplace
+        side = 'old' or 'new'
+        """
+        for edge in self.primitives:
+            edge.frame_mapping_inplace(frame, side)
 
     def copy(self, deep=True, memo=None):
         new_edges = [edge.copy(deep=deep, memo=memo) for edge in self.primitives]
@@ -4108,27 +4173,42 @@ class Circle3D(Contour3D):
         return '{} = Part.Circle(fc.Vector({},{},{}),fc.Vector({},{},{}),{})\n'.format(
             name, xc, yc, zc, xn, yn, zn, 1000 * self.radius)
 
-    def rotation(self, rot_center, axis, angle, copy=True):
-        new_center = self.center.rotation(rot_center, axis, angle, True)
-        new_normal = self.normal.rotation(rot_center, axis, angle, True)
-        if copy:
-            return Circle3D(new_center, self.radius, new_normal, self.name)
-        else:
-            self.center = new_center
-            self.normal = new_normal
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
+                 angle: float):
+        """
+        Circle3D rotation
+        :param center: rotation center
+        :param axis: rotation axis
+        :param angle: angle rotation
+        :return: a new rotated Circle3D
+        """
+        return Circle3D(self.frame.rotation(center, axis, angle),
+                        self.radius, self.name)
 
-    def translation(self, offset, copy=True):
-        # new_frame = self.center.translation(offset, True)
-        new_frame = self.frame.translation(offset, True)
+    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
+                         angle: float):
+        """
+        Circle3D rotation. Object is updated inplace
+        :param center: rotation center
+        :param axis: rotation axis
+        :param angle: rotation angle
+        """
+        self.frame.rotation_inplace(center, axis, angle)
 
-        if copy:
+    def translation(self, offset: volmdlr.Vector3D):
+        """
+        Circle3D translation
+        :param offset: translation vector
+        :return: A new translated Circle3D
+        """
+        return Circle3D(self.frame.translation(offset), self.radius, self.name)
 
-            # return Circle3D(new_frame, self.radius, self.frame,
-            #                 self.name)
-            return Circle3D(new_frame, self.radius, self.name)
-
-        else:
-            self.frame = new_frame
+    def translation_inplace(self, offset: volmdlr.Vector3D):
+        """
+        Circle3D translation. Object is updated inplace
+        :param offset: translation vector
+        """
+        self.frame.translation_inplace(offset)
 
     def plot(self, ax=None, color='k', alpha=1., edge_details=False):
         if ax is None:
@@ -4156,8 +4236,7 @@ class Circle3D(Contour3D):
         """
         start = self.frame.origin + self.radius * self.frame.u
         return start.rotation(self.frame.origin, self.frame.w,
-                              curvilinear_abscissa / self.radius,
-                              copy=True)
+                              curvilinear_abscissa / self.radius)
 
     @classmethod
     def from_step(cls, arguments, object_dict):
@@ -4422,29 +4501,53 @@ class Ellipse3D(Contour3D):
         return '{} = Part.Ellipse(fc.Vector({},{},{}), fc.Vector({},{},{}), fc.Vector({},{},{}))\n'.format(
             name, xmaj, ymaj, zmaj, xmin, ymin, zmin, xc, yc, zc)
 
-    def rotation(self, rot_center, axis, angle, copy=True):
-        new_center = self.center.rotation(rot_center, axis, angle, True)
-        new_normal = self.normal.rotation(rot_center, axis, angle, True)
-        new_major_dir = self.major_dir.rotation(rot_center, axis, angle, True)
-        if copy:
-            return Ellipse3D(self.major_axis, self.minor_axis, new_center,
-                             new_normal, new_major_dir, self.name)
-        else:
-            self.center = new_center
-            self.normal = new_normal
-            self.major_dir = new_major_dir
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
+                 angle: float):
+        """
+        Ellipse3D rotation
+        :param center: rotation center
+        :param axis: rotation axis
+        :param angle: angle rotation
+        :return: a new rotated Ellipse3D
+        """
+        new_center = self.center.rotation(center, axis, angle)
+        new_normal = self.normal.rotation(center, axis, angle)
+        new_major_dir = self.major_dir.rotation(center, axis, angle)
+        return Ellipse3D(self.major_axis, self.minor_axis, new_center,
+                         new_normal, new_major_dir, self.name)
 
-    def translation(self, offset, copy=True):
-        new_center = self.center.translation(offset, True)
-        new_normal = self.normal.translation(offset, True)
-        new_major_dir = self.major_dir.translation(offset, True)
-        if copy:
-            return Ellipse3D(self.major_axis, self.minor_axis, new_center,
-                             new_normal, new_major_dir, self.name)
-        else:
-            self.center = new_center
-            self.normal = new_normal
-            self.major_dir = new_major_dir
+    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
+                         angle: float):
+        """
+        Ellipse3D rotation. Object is updated inplace
+        :param center: rotation center
+        :param axis: rotation axis
+        :param angle: rotation angle
+        """
+        self.center.rotation_inplace(center, axis, angle)
+        self.normal.rotation_inplace(center, axis, angle)
+        self.major_dir.rotation_inplace(center, axis, angle)
+
+    def translation(self, offset: volmdlr.Vector3D):
+        """
+        Ellipse3D translation
+        :param offset: translation vector
+        :return: A new translated Ellipse3D
+        """
+        new_center = self.center.translation(offset)
+        new_normal = self.normal.translation(offset)
+        new_major_dir = self.major_dir.translation(offset)
+        return Ellipse3D(self.major_axis, self.minor_axis, new_center,
+                         new_normal, new_major_dir, self.name)
+
+    def translation_inplace(self, offset: volmdlr.Vector3D):
+        """
+        Ellipse3D translation. Object is updated inplace
+        :param offset: translation vector
+        """
+        self.center.translation_inplace(offset)
+        self.normal.translation_inplace(offset)
+        self.major_dir.translation_inplace(offset)
 
     def plot(self, ax=None, color='k', alpha=1, edge_details=False):
         if ax is None:
@@ -4516,23 +4619,47 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
                                    edge_ends=True, edge_direction=True)
         return ax
 
-    def rotation(self, center, axis, angle, copy=True):
-        if copy:
-            return ClosedPolygon3D(
-                [p.rotation(center, axis, angle, copy=True) for p in
-                 self.points])
-        else:
-            for p in self.points:
-                p.rotation(center, axis, angle, copy=False)
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
+                 angle: float):
+        """
+        ClosedPolygon3D rotation
+        :param center: rotation center
+        :param axis: rotation axis
+        :param angle: angle rotation
+        :return: a new rotated ClosedPolygon3D
+        """
+        return ClosedPolygon3D(
+            [point.rotation(center, axis, angle) for point in
+             self.points])
 
-    def translation(self, offset, copy=True):
-        if copy:
-            new_points = [point.translation(offset, copy=True) for point in
-                          self.points]
-            return ClosedPolygon3D(new_points, self.name)
-        else:
-            for point in self.points:
-                point.translation(offset, copy=False)
+    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
+                         angle: float):
+        """
+        ClosedPolygon3D rotation. Object is updated inplace
+        :param center: rotation center
+        :param axis: rotation axis
+        :param angle: rotation angle
+        """
+        for point in self.points:
+            point.rotation_inplace(center, axis, angle)
+
+    def translation(self, offset: volmdlr.Vector3D):
+        """
+        ClosedPolygon3D translation
+        :param offset: translation vector
+        :return: A new translated ClosedPolygon3D
+        """
+        new_points = [point.translation(offset) for point in
+                      self.points]
+        return ClosedPolygon3D(new_points, self.name)
+
+    def translation_inplace(self, offset: volmdlr.Vector3D):
+        """
+        ClosedPolygon3D translation. Object is updated inplace
+        :param offset: translation vector
+        """
+        for point in self.points:
+            point.translation_inplace(offset)
 
     def to_2d(self, plane_origin, x, y):
         points2d = [point.to_2d(plane_origin, x, y) for point in self.points]
@@ -4546,8 +4673,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
             other_poly3d.to_2d(other_center, x, y)
         self_center2d, other_center2d = self_poly2d.center_of_mass(), \
             other_poly2d.center_of_mass()
-        self_poly2d.translation(-self_center2d, copy=False)
-        other_poly2d.translation(-other_center2d, copy=False)
+        self_poly2d.translation_inplace(-self_center2d)
+        other_poly2d.translation_inplace(-other_center2d)
 
         bbox_self2d, bbox_other2d = self_poly2d.bounding_rectangle(), \
             other_poly2d.bounding_rectangle()
@@ -4576,8 +4703,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygon):
 
         new_self_poly2d, new_other_poly2d = ClosedPolygon2D(
             self_new_points), ClosedPolygon2D(other_new_points)
-        new_self_poly2d.translation(self_center2d, copy=False)
-        new_other_poly2d.translation(other_center2d, copy=False)
+        new_self_poly2d.translation_inplace(self_center2d)
+        new_other_poly2d.translation_inplace(other_center2d)
 
         new_poly1, new_poly2 = new_self_poly2d.to_3d(self_center, x, y), \
             new_other_poly2d.to_3d(other_center, x, y)
