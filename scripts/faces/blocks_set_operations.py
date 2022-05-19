@@ -18,7 +18,7 @@ box_red.color = (0.4, 0.1, 0.1)
 box_red.name = 'box_red'
 
 box_green = box_red.frame_mapping(vm.Frame3D(vm.Point3D(-0.4, 0, -0.1), vm.Vector3D(1, 0, 0),
-                          vm.Vector3D(0, 1, 0), vm.Vector3D(0, 0, 1)), 'new', copy=True)
+                          vm.Vector3D(0, 1, 0), vm.Vector3D(0, 0, 1)), 'new')
 
 box_green.color = (0.1, 1, 0.1)
 box_green.name = 'box_green'
@@ -29,12 +29,12 @@ shell1.alpha = 0.6
 vm.core.VolumeModel([shell1]).babylonjs()
 #
 box_blue = box.frame_mapping(vm.Frame3D(vm.Point3D(0.1, 0, 0), vm.Vector3D(1, 0, 0),
-                          vm.Vector3D(0, 1, 0), vm.Vector3D(0, 0, 1)), 'old', copy=True)
+                          vm.Vector3D(0, 1, 0), vm.Vector3D(0, 0, 1)), 'old')
 box_blue.color = (0.1, 0.1, 1)
 box_blue.name = 'box_blue'
 
 box_blue2 = box.frame_mapping(vm.Frame3D(vm.Point3D(0.3, 0, 0), vm.Vector3D(1, 0, 0),
-                          vm.Vector3D(0, 1.8, 0), vm.Vector3D(0, 0, 1)), 'old', copy=True)
+                          vm.Vector3D(0, 1.8, 0), vm.Vector3D(0, 0, 1)), 'old')
 box_blue2.color = (0.1, 0.1, 1)
 box_blue2.name = 'box_blue2'
 shell2 = box_blue.union(box_blue2)[0]
