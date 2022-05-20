@@ -3166,9 +3166,12 @@ class BSplineSurface3D(Surface3D):
                 for face in cylindrical_faces:
                     bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle()
 
-                    points_3d = face.surface3d.grid3d(points_x, points_y,
-                                                      bounding_rectangle[0], bounding_rectangle[1],
-                                                      ymin, ymax)
+                    points_3d = face.surface3d.grid3d(
+                        volmdlr.grid.Grid2D.from_properties(
+                            x_limits=(bounding_rectangle[0],bounding_rectangle[1]),
+                            y_limits=(ymin, ymax),
+                            points_nbr=(points_x, points_y)))
+
                     bspline_surfaces.append(
                         cls.points_fitting_into_bspline_surface(
                             points_3d, points_x, points_y, degree_u, degree_v))
@@ -3184,8 +3187,12 @@ class BSplineSurface3D(Surface3D):
                 for face in cylindrical_faces:
                     bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle()
 
-                    points_3d = face.surface3d.grid3d(points_x, points_y, xmin, xmax,
-                                                      bounding_rectangle[2], bounding_rectangle[3])
+                    points_3d = face.surface3d.grid3d(
+                        volmdlr.grid.Grid2D.from_properties(
+                            x_limits=(xmin, xmax),
+                            y_limits=(bounding_rectangle[2], bounding_rectangle[3]),
+                            points_nbr=(points_x, points_y)))
+
                     bspline_surfaces.append(
                         cls.points_fitting_into_bspline_surface(
                             points_3d, points_x, points_y, degree_u, degree_v))
