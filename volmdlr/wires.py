@@ -2132,7 +2132,7 @@ class Contour2D(Contour, Wire2D):
         return list_contours
 
 
-class ClosedPolygon:
+class ClosedPolygonMixin:
 
     def length(self):
         list_ = []
@@ -2207,14 +2207,24 @@ class ClosedPolygon:
 
         return self.__class__(points)
 
+    @property
+    def line_segments(self):
+        if not self._line_segments:
+            self._line_segments = self.get_line_segments()
+        return self._line_segments
 
-class ClosedPolygon2D(Contour2D, ClosedPolygon):
+    def get_line_segments(self):
+        raise NotImplementedError(
+            f"get_line_segments method must be overloaded by {self.__class__.__name__}")
+
+
+class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
     _non_serializable_attributes = ['line_segments', 'primitives',
                                     'basis_primitives']
 
     def __init__(self, points: List[volmdlr.Point2D], name: str = ''):
         self.points = points
-        self.line_segments = self._line_segments()
+        self._line_segments = None
 
         Contour2D.__init__(self, self.line_segments, name)
 
@@ -2311,7 +2321,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygon):
             Ixy = - Ixy
         return Ix / 12., Iy / 12., Ixy / 24.
 
-    def _line_segments(self):
+    def get_line_segments(self):
         lines = []
         if len(self.points) > 1:
             for p1, p2 in zip(self.points,
@@ -4580,17 +4590,17 @@ class Ellipse3D(Contour3D):
                    arguments[0][1:-1])
 
 
-class ClosedPolygon3D(Contour3D, ClosedPolygon):
+class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
     _non_serializable_attributes = ['line_segments', 'primitives']
     _non_eq_attributes = ['line_segments', 'primitives']
 
     def __init__(self, points: List[volmdlr.Point3D], name: str = ''):
         self.points = points
-        self.line_segments = self._line_segments()
+        self._line_segments = None
 
         Contour3D.__init__(self, self.line_segments, name)
 
-    def _line_segments(self):
+    def get_line_segments(self):
         lines = []
         if len(self.points) > 1:
             for p1, p2 in zip(self.points,
