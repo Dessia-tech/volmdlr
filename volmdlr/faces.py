@@ -3168,7 +3168,7 @@ class BSplineSurface3D(Surface3D):
 
                     points_3d = face.surface3d.grid3d(
                         volmdlr.grid.Grid2D.from_properties(
-                            x_limits=(bounding_rectangle[0],bounding_rectangle[1]),
+                            x_limits=(bounding_rectangle[0], bounding_rectangle[1]),
                             y_limits=(ymin, ymax),
                             points_nbr=(points_x, points_y)))
 
