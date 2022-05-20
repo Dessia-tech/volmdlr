@@ -168,18 +168,12 @@ class Wire:
 
         primitives = self.primitives
         indices = []
+
         for i, point in enumerate([point1, point2]):
             ind = []
             for p, primitive in enumerate(primitives):
                 if primitive.point_belongs(point, 1e-6):
                     ind.append(p)
-            if len(ind) >= 2:
-                if not all(point in [primitives[index].start, primitives[index].end] for index in ind):
-                    indx = []
-                    for index in ind:
-                        if primitives[index].point_belongs(point, 1e-8):
-                            indx.append(index)
-                    ind = indx
             indices.append(ind)
 
         shared = list(set(indices[0]) & set(indices[1]))
