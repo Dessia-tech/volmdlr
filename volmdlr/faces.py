@@ -4299,9 +4299,6 @@ class PlaneFace3D(Face3D):
         elif self.surface2d.inner_contours:
             intersections.extend(face2.face_intersections_inner_contours(self))
         face2_intersections = face2.face_intersections_outer_contour(self)
-        for point in face2_intersections:
-            if point not in intersections:
-                intersections.append(point)
         self_face_intersections = self.face_intersections_outer_contour(face2)
         for point in self_face_intersections + face2_intersections:
             if point not in intersections:
@@ -4313,25 +4310,16 @@ class PlaneFace3D(Face3D):
             if intersections[0] == intersections[1]:
                 return []
             if self.surface2d.inner_contours:
-                intersection_primitives =\
+                intersection_primitives = \
                     self.validate_inner_contour_intersections(intersections)
             elif face2.surface2d.inner_contours:
-                intersection_primitives =\
+                intersection_primitives = \
                     face2.validate_inner_contour_intersections(intersections)
             else:
                 intersection_primitives = [volmdlr.edges.LineSegment3D(
                     intersections[0], intersections[1])]
-
-            new_primitives = []
-            for primitive in intersection_primitives:
-                mid_point = primitive.middle_point()
-                if not (self.outer_contour3d.point_over_contour(mid_point) and
-                        face2.outer_contour3d.point_over_contour(mid_point)):
-                    new_primitives.append(primitive)
-            if not new_primitives:
-                return []
             intersection_wires = [volmdlr.wires.Wire3D([primitive])
-                                  for primitive in new_primitives]
+                                  for primitive in intersection_primitives]
             return intersection_wires
         return []
 
@@ -4343,12 +4331,10 @@ class PlaneFace3D(Face3D):
 
         bbox1 = self.bounding_box
         bbox2 = face2.bounding_box
-        if not bbox1.bbox_intersection(bbox2) and\
+        if not bbox1.bbox_intersection(bbox2) and \
                 bbox1.distance_to_bbox(bbox2) >= tol:
             return []
-
         intersections = self.get_face_intersections(face2)
-
         valid_intersections = self.validate_face_intersections(face2, intersections)
         return valid_intersections
 
@@ -4536,13 +4522,11 @@ class PlaneFace3D(Face3D):
             for face in valid_coicident_faces:
                 adjacent_faces = False
                 face_inside = False
-                contour = face.outer_contour3d.to_2d(
-                    face0.surface3d.frame.origin,
-                    face0.surface3d.frame.u,
-                    face0.surface3d.frame.v)
+                contour = face.outer_contour3d.to_2d(face0.surface3d.frame.origin,
+                                                     face0.surface3d.frame.u,
+                                                     face0.surface3d.frame.v)
                 if contour.is_sharing_primitives_with(merged_contour):
-                    merged_contour_results = merged_contour.merge_with(
-                        contour)
+                    merged_contour_results = merged_contour.union(contour)
                     merged_contour = merged_contour_results[0]
                     merged_inner_contours = merged_contour_results[1:]
                     list_inner_contours.extend(merged_inner_contours)
@@ -7129,10 +7113,22 @@ class ClosedShell3D(OpenShell3D):
             for face2 in shell2.faces:
                 if (face1.bounding_box.bbox_intersection(
                         face2.bounding_box) or
-                        face1.bounding_box.distance_to_bbox(
-                            face2.bounding_box) <= tol) and \
+                    face1.bounding_box.distance_to_bbox(
+                        face2.bounding_box) <= tol) and \
                         (face1, face2) not in list_coincident_faces:
-                    face_combinations.append((face1, face2))
+                    edge_intersections = []
+                    for prim1 in face1.outer_contour3d.primitives:
+                        edge_intersections = face2.edge_intersections(prim1)
+                        if edge_intersections:
+                            break
+                    if not edge_intersections:
+                        for prim2 in face2.outer_contour3d.primitives:
+                            edge_intersections = face1.edge_intersections(prim2)
+                            if edge_intersections:
+                                break
+                    if edge_intersections:
+                        face_combinations.append((face1, face2))
+                    # face_combinations.append((face1, face2))
 
         return face_combinations
 
@@ -7462,25 +7458,18 @@ class ClosedShell3D(OpenShell3D):
         if validate_set_operation:
             return validate_set_operation
         list_coincident_faces = self.get_coincident_faces(shell2)
-
-        face_combinations = self.intersecting_faces_combinations(
-            shell2, list_coincident_faces, tol)
-        intersecting_combinations = \
-            self.dict_intersecting_combinations(face_combinations, tol)
-        intersecting_faces1, intersecting_faces2 = \
-            self.get_intersecting_faces(intersecting_combinations)
+        face_combinations = self.intersecting_faces_combinations(shell2, list_coincident_faces, tol)
+        intersecting_combinations = self.dict_intersecting_combinations(face_combinations, tol)
+        intersecting_faces1, intersecting_faces2 = self.get_intersecting_faces(intersecting_combinations)
         intersecting_faces = intersecting_faces1 + intersecting_faces2
-        faces = self.get_non_intersecting_faces(
-            shell2, intersecting_faces) + shell2.get_non_intersecting_faces(
-            self, intersecting_faces)
-        if len(faces) == \
-                len(self.faces + shell2.faces) and not intersecting_faces:
+        faces = self.get_non_intersecting_faces(shell2, intersecting_faces) + \
+                shell2.get_non_intersecting_faces(self, intersecting_faces)
+        if len(faces) == len(self.faces + shell2.faces) and not intersecting_faces:
             return [self, shell2]
         new_valid_faces = self.union_faces(shell2, intersecting_faces,
                                            intersecting_combinations,
                                            list_coincident_faces
                                            )
-
         faces += new_valid_faces
         new_shell = ClosedShell3D(faces)
         return [new_shell]
@@ -7535,7 +7524,7 @@ class ClosedShell3D(OpenShell3D):
         list_new_faces = []
         count = 0
         while not finished:
-            valid_coicident_faces, not_adjacent_not_valid_coincident_faces =\
+            valid_coicident_faces, not_adjacent_not_valid_coincident_faces = \
                 ClosedShell3D.get_faces_to_be_merged(union_faces)
             list_valid_coincident_faces = valid_coicident_faces[:]
             if valid_coicident_faces:
@@ -7543,7 +7532,7 @@ class ClosedShell3D(OpenShell3D):
                 for face in list_valid_coincident_faces:
                     union_faces.remove(face)
             count += 1
-            if count >= len(self.faces) and not list_valid_coincident_faces:
+            if (count >= len(self.faces) and not list_valid_coincident_faces) or not list_valid_coincident_faces:
                 finished = True
 
         list_new_faces = self.clean_faces(union_faces, list_new_faces)
