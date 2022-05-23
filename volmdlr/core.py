@@ -538,10 +538,11 @@ class Primitive3D(dc.PhysicalObject, CompositePrimitive):
         return [babylon_mesh]
 
     def babylon_points(self):
+        points = []
         if hasattr(self, 'primitives'):
-            points = [[primitives[0].start.x,
-                       primitives[0].start.y,
-                       primitives[0].start.z]]
+            points = [[self.primitives[0].start.x,
+                       self.primitives[0].start.y,
+                       self.primitives[0].start.z]]
             for primitive in self.primitives:
                 if hasattr(primitive, 'curve'):
                     points.extend(primitive.curve.evalpts)
