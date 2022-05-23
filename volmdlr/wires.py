@@ -1185,12 +1185,12 @@ class Contour(Wire):
 
                     if len(list_p) == 2:
                         if isinstance(self, Contour2D):
-                            linesegment = volmdlr.edges.LineSegment2D(*list_p)
+                            linesegment = volmdlr.edges.LineSegment2D(list_p[0], list_p[1])
                         else:
-                            linesegment = volmdlr.edges.LineSegment3D(*list_p)
+                            linesegment = volmdlr.edges.LineSegment3D(list_p[0], list_p[1])
                         if self.primitive_over_contour(linesegment) and \
                                     contour.primitive_over_contour(linesegment):
-                                return True
+                            return True
                         return False
         return False
 
