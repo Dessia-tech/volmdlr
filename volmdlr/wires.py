@@ -2104,7 +2104,6 @@ class Contour2D(Contour, Wire2D):
 
         return self.merge_with(contour2)
 
-
     def cut_by_wire(self, wire: Wire2D):
         """
         cut a contour2d with a wire2d and return a list of contours2d
