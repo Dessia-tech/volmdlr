@@ -168,6 +168,7 @@ class Wire:
 
         primitives = self.primitives
         indices = []
+
         for i, point in enumerate([point1, point2]):
             ind = []
             for p, primitive in enumerate(primitives):
