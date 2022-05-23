@@ -573,6 +573,7 @@ class BSplineCurve2D(Edge):
         curve.knotvector = knot_vector
 
         self.curve = curve
+        self._length = None
         start = self.point_at_abscissa(0.)
         end = self.point_at_abscissa(self.length())
 
@@ -597,7 +598,9 @@ class BSplineCurve2D(Edge):
                 min(points_y), max(points_y))
 
     def length(self):
-        return length_curve(self.curve)
+        if not self._length:
+            self._length = length_curve(self.curve)
+        return self._length
 
     def point_at_abscissa(self, curvilinear_abscissa):
         l = self.length()
