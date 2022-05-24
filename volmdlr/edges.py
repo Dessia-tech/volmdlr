@@ -274,7 +274,7 @@ class LineSegment(Edge):
                     self.__class__(split_point, self.end)]
 
 
-class BSplineCurve(Edge):
+class BSplineCurve():
     _non_serializable_attributes = ['curve']
 
     def reverse(self):
@@ -712,7 +712,7 @@ class Line2D(Line):
         return list_points
 
 
-class BSplineCurve2D(BSplineCurve):
+class BSplineCurve2D(Edge, BSplineCurve):
     _non_serializable_attributes = ['curve']
 
     def __init__(self,
@@ -3211,7 +3211,7 @@ class LineSegment3D(LineSegment):
         return content, [current_id]
 
 
-class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
+class BSplineCurve3D(Edge, BSplineCurve, volmdlr.core.Primitive3D):
     _non_serializable_attributes = ['curve']
 
     def __init__(self, degree: int, control_points: List[volmdlr.Point3D],
