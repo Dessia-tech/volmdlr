@@ -278,6 +278,19 @@ class BSplineCurve(Edge):
     _non_serializable_attributes = ['curve']
 
 
+    def reverse(self):
+        '''
+        reverse the bspline's direction by reversing its start and end points
+        '''
+
+        return self.__class__(degree=self.degree,
+                              control_points=self.control_points[::-1],
+                              knot_multiplicities=self.knot_multiplicities[::-1],
+                              knots=self.knots[::-1],
+                              weights=self.weights,
+                              periodic=self.periodic)
+
+
 class Line2D(Line):
     """
     Define an infinite line given by two points.
@@ -858,18 +871,6 @@ class BSplineCurve2D(BSplineCurve):
             points.append(volmdlr.Point2D(p[0], p[1]))
 
         return volmdlr.wires.Wire2D.from_points(points)
-
-    def reverse(self):
-        '''
-        reverse the bspline's direction by reversing its start and end points
-        '''
-
-        return self.__class__(degree=self.degree,
-                              control_points=self.control_points[::-1],
-                              knot_multiplicities=self.knot_multiplicities[::-1],
-                              knots=self.knots[::-1],
-                              weights=self.weights,
-                              periodic=self.periodic)
 
     # def point_belongs(self, point, abs_tol=1e-7):
     #     polygon_points = self.polygon_points()
@@ -3257,15 +3258,6 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
         return volmdlr.core.BoundingBox(bbox[0][0], bbox[1][0],
                                         bbox[0][1], bbox[1][1],
                                         bbox[0][2], bbox[1][2])
-
-    def reverse(self):
-        return self.__class__(degree=self.degree,
-                              control_points=self.control_points[::-1],
-                              knot_multiplicities=self.knot_multiplicities[
-                                                  ::-1],
-                              knots=self.knots[::-1],
-                              weights=self.weights,
-                              periodic=self.periodic)
 
     def length(self):
         """
