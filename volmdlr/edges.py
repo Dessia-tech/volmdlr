@@ -201,6 +201,10 @@ class Line(dc.DessiaObject):
         :type point2: volmdlr.Point2D
         returns True is line is between the two given points or False if not
         """
+
+        if point1 == point2:
+            return False
+
         line_segment = LineSegment2D(point1, point2)
         if line_segment.line_intersections(self):
             return True
