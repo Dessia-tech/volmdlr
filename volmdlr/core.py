@@ -538,17 +538,17 @@ class Primitive3D(dc.PhysicalObject, CompositePrimitive):
         return [babylon_mesh]
 
     def babylon_points(self):
-
         points = []
         if hasattr(self, 'primitives'):
             points = [[self.primitives[0].start.x,
                        self.primitives[0].start.y,
-                       self.primitives[0].start.z],
-                      [self.primitives[0].end.x,
-                       self.primitives[0].end.y,
-                       self.primitives[0].end.z]]
-            points += [[line.end.x, line.end.y, line.end.z]
-                       for line in self.primitives[1:]]
+                       self.primitives[0].start.z]]
+            for primitive in self.primitives:
+                if hasattr(primitive, 'curve'):
+                    points.extend(primitive.curve.evalpts)
+                else:
+                    points.append([primitive.end.x, primitive.end.y,
+                                   primitive.end.z])
         elif hasattr(self, 'curve'):
             points = self.curve.evalpts
         elif hasattr(self, 'polygon_points'):
@@ -609,7 +609,8 @@ class CompositePrimitive3D(Primitive3D):
 
     def plot(self, ax=None, color='k', alpha=1, edge_details=False):
         if ax is None:
-            fig, ax = plt.subplots()
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
         for primitive in self.primitives:
             primitive.plot(ax=ax, color=color, alpha=alpha)
         return ax
@@ -1167,8 +1168,6 @@ class VolumeModel(dc.DessiaObject):
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
                 meshes.extend(primitive.babylon_meshes())
-            if hasattr(primitive, 'babylon_lines'):
-                lines.extend(primitive.babylon_lines())
             if hasattr(primitive, 'babylon_curves'):
                 lines.append(primitive.babylon_curves())
         bbox = self._bounding_box()
