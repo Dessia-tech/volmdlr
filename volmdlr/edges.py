@@ -317,6 +317,9 @@ class BSplineCurve(Edge):
         direction_vector.normalize()
         return direction_vector
 
+    def middle_point(self):
+        return self.point_at_abscissa(self.length() * 0.5)
+
 
 class Line2D(Line):
     """
@@ -668,9 +671,6 @@ class BSplineCurve2D(BSplineCurve):
         normal_vector = self.normal_vector(abscissa)
         normal_vector.normalize()
         return normal_vector
-
-    def middle_point(self):
-        return self.point_at_abscissa(self.length() * 0.5)
 
     def abscissa(self, point2d):
         l = self.length()
@@ -3759,9 +3759,6 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
 
         curve = fitting.approximate_curve([(p.x, p.y, p.z) for p in points], degree, **kwargs)
         return cls.from_geomdl_curve(curve)
-
-    def middle_point(self):
-        return self.point_at_abscissa(self.length() / 2)
 
     def split(self, point3d):
         adim_abscissa = self.abscissa(point3d) / self.length()
