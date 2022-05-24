@@ -353,6 +353,18 @@ class BSplineCurve(Edge):
             return [self.__class__.from_geomdl_curve(curve1),
                     self.__class__.from_geomdl_curve(curve2)]
 
+    def translation(self, offset: volmdlr.Vector):
+        """
+        BSplineCurve translation
+        :param offset: translation vector
+        :return: A new translated BSplineCurve
+        """
+        control_points = [point.translation(offset)
+                          for point in self.control_points]
+        return self.__class__(self.degree, control_points,
+                              self.knot_multiplicities, self.knots,
+                              self.weights, self.periodic)
+
 
 class Line2D(Line):
     """
@@ -774,18 +786,6 @@ class BSplineCurve2D(BSplineCurve):
         """
         for point in self.control_points:
             point.rotation_inplace(center, angle)
-
-    def translation(self, offset: volmdlr.Vector2D):
-        """
-        BSplineCurve2D translation
-        :param offset: translation vector
-        :return: A new translated BSplineCurve2D
-        """
-        control_points = [point.translation(offset)
-                          for point in self.control_points]
-        return BSplineCurve2D(self.degree, control_points,
-                              self.knot_multiplicities, self.knots,
-                              self.weights, self.periodic)
 
     def translation_inplace(self, offset: volmdlr.Vector2D):
         """
@@ -3512,19 +3512,6 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
         self.control_points = new_control_points
         self.curve = new_bsplinecurve3d.curve
         self.points = new_bsplinecurve3d.points
-
-    def translation(self, offset: volmdlr.Vector3D):
-        """
-        BSplineCurve3D translation
-        :param offset: translation vector
-        :return: A new translated BSplineCurve3D
-        """
-        new_control_points = [p.translation(offset) for p in
-                              self.control_points]
-        return BSplineCurve3D(self.degree, new_control_points,
-                              self.knot_multiplicities,
-                              self.knots, self.weights,
-                              self.periodic, self.name)
 
     def translation_inplace(self, offset: volmdlr.Vector3D):
         """
