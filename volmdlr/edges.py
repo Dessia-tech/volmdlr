@@ -277,7 +277,6 @@ class LineSegment(Edge):
 class BSplineCurve(Edge):
     _non_serializable_attributes = ['curve']
 
-
     def reverse(self):
         '''
         reverse the bspline's direction by reversing its start and end points
@@ -371,6 +370,7 @@ class BSplineCurve(Edge):
         '''
 
         point_dimension = f'Point{self.__class__.__name__[-2::]}'
+
         def f(x):
             return (point - getattr(volmdlr, point_dimension)(*self.curve.evaluate_single(x))).norm()
 
