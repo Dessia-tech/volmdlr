@@ -303,6 +303,10 @@ class BSplineCurve(Edge):
                    knots=knots,
                    knot_multiplicities=knot_multiplicities)
 
+    def length(self):
+        return length_curve(self.curve)
+
+
 class Line2D(Line):
     """
     Define an infinite line given by two points.
@@ -614,9 +618,6 @@ class BSplineCurve2D(BSplineCurve):
 
         return (min(points_x), max(points_x),
                 min(points_y), max(points_y))
-
-    def length(self):
-        return length_curve(self.curve)
 
     def point_at_abscissa(self, curvilinear_abscissa):
         l = self.length()
@@ -3260,16 +3261,6 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
         return volmdlr.core.BoundingBox(bbox[0][0], bbox[1][0],
                                         bbox[0][1], bbox[1][1],
                                         bbox[0][2], bbox[1][2])
-
-    def length(self):
-        """
-
-        """
-        # length = 0
-        # for k in range(0, len(self.points) - 1):
-        #     length += (self.points[k] - self.points[k + 1]).norm()
-        # return length
-        return length_curve(self.curve)
 
     def look_up_table(self, resolution=20, start_parameter: float = 0,
                       end_parameter: float = 1):
