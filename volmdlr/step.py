@@ -268,7 +268,7 @@ class Step:
         stream.seek(0)
         lines = []
         for line in stream:
-            # line = line.decode("ISO-8859-1")
+            line = line.decode("ISO-8859-1")
             line = line.replace("\r", "")
             lines.append(line)
         return cls(lines)
