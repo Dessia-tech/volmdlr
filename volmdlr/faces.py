@@ -4397,7 +4397,7 @@ class PlaneFace3D(Face3D):
         for intersecting_combination in dict_intersecting_combinations.keys():
             if self in intersecting_combination:
                 for intersection_wire in dict_intersecting_combinations[
-                    intersecting_combination]:
+                        intersecting_combination]:
                     primitive2 = intersection_wire.primitives[0]
                     primitive2_2d = volmdlr.edges.LineSegment2D(
                         self.surface3d.point3d_to_2d(
@@ -5190,7 +5190,7 @@ class CylindricalFace3D(Face3D):
         xmax, ymax = max([pt[0] for pt in pfpoints]), max(
             [pt[1] for pt in pfpoints])
         origin, vx, vy = planeface.plane.origin, planeface.plane.vectors[0], \
-                         planeface.plane.vectors[1]
+            planeface.plane.vectors[1]
         pf1_2d, pf2_2d = volmdlr.Point2D((xmin, ymin)), volmdlr.Point2D(
             (xmin, ymax))
         pf3_2d, pf4_2d = volmdlr.Point2D((xmax, ymin)), volmdlr.Point2D(
@@ -7483,7 +7483,7 @@ class ClosedShell3D(OpenShell3D):
         intersecting_faces1, intersecting_faces2 = self.get_intersecting_faces(intersecting_combinations)
         intersecting_faces = intersecting_faces1 + intersecting_faces2
         faces = self.get_non_intersecting_faces(shell2, intersecting_faces) + \
-                shell2.get_non_intersecting_faces(self, intersecting_faces)
+            shell2.get_non_intersecting_faces(self, intersecting_faces)
         if len(faces) == len(self.faces + shell2.faces) and not intersecting_faces:
             return [self, shell2]
         new_valid_faces = self.union_faces(shell2, intersecting_faces,
