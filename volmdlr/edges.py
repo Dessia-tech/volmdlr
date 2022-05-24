@@ -352,10 +352,10 @@ class BSplineCurve():
             return [self.__class__.from_geomdl_curve(curve1),
                     self.__class__.from_geomdl_curve(curve2)]
 
-    def translation(self, offset: volmdlr.Vector):
+    def translation(self, offset):
         """
         BSplineCurve translation
-        :param offset: translation vector
+        :param offset: translation vector (volmdlr.Vector2D/ volmdlr.Vector3D)
         :return: A new translated BSplineCurve
         """
         control_points = [point.translation(offset)
