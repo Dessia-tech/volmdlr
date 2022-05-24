@@ -1158,11 +1158,9 @@ class Contour(Wire):
         point1 = middle_point + normal * 0.00001
         point2 = middle_point - normal * 0.00001
         if (self.point_belongs(point1) and contour2.point_belongs(point1)) or\
-                (not self.point_belongs(point1) and
-                 not contour2.point_belongs(point1)) or\
+                (not self.point_belongs(point1) and not contour2.point_belongs(point1)) or\
                 (self.point_belongs(point1) and self.point_belongs(point2)) or\
-                (contour2.point_belongs(point1) and
-                 contour2.point_belongs(point2)):
+                (contour2.point_belongs(point1) and contour2.point_belongs(point2)):
             return True
         return False
 
@@ -1186,7 +1184,14 @@ class Contour(Wire):
                             list_p.append(point)
 
                     if len(list_p) == 2:
-                        return True
+                        if isinstance(self, Contour2D):
+                            linesegment = volmdlr.edges.LineSegment2D(list_p[0], list_p[1])
+                        else:
+                            linesegment = volmdlr.edges.LineSegment3D(list_p[0], list_p[1])
+                        if self.primitive_over_contour(linesegment) and \
+                                contour.primitive_over_contour(linesegment):
+                            return True
+                        return False
         return False
 
     def shared_primitives_extremities(self, contour):
@@ -1205,7 +1210,7 @@ class Contour(Wire):
             for edge1, edge2 in zip(edges, edges[1:]):
                 for point in [edge2.start, edge2.end]:
                     if edge1.point_belongs(point, 1e-6):
-                        if list_p == []:
+                        if not list_p:
                             list_p.append(point)
                         if list_p != [] and point.point_distance(point.nearest_point(list_p)) > 1e-4:
                             list_p.append(point)
@@ -2075,6 +2080,35 @@ class Contour2D(Contour, Wire2D):
         contours = sorted(contours, key=lambda contour: contour.area(), reverse=True)
 
         return contours
+
+    def union(self, contour2: 'Contour2D'):
+        """
+        Union two contours, if they adjacent, or overlap somehow
+        """
+        if self.is_inside(contour2):
+            return [self]
+        if contour2.is_inside(self):
+            return [contour2]
+        contours_intersections = self.contour_intersections(contour2)
+        if not self.is_sharing_primitives_with(contour2) and contours_intersections:
+            resulting_primitives = []
+            primitives1_inside = self.extract_with_points(contours_intersections[0], contours_intersections[1], True)
+            primitives1_outside = self.extract_with_points(contours_intersections[0], contours_intersections[1], False)
+            primitives2_inside = contour2.extract_with_points(contours_intersections[0],
+                                                              contours_intersections[1], True)
+            primitives2_outside = contour2.extract_with_points(contours_intersections[0],
+                                                               contours_intersections[1], False)
+            if contour2.point_belongs(primitives1_inside[0].middle_point()):
+                resulting_primitives.extend(primitives1_outside)
+            else:
+                resulting_primitives.extend(primitives1_inside)
+            if self.point_belongs(primitives2_inside[0].middle_point()):
+                resulting_primitives.extend(primitives2_outside)
+            else:
+                resulting_primitives.extend(primitives2_inside)
+            return [Contour2D(resulting_primitives).order_contour()]
+
+        return self.merge_with(contour2)
 
     def cut_by_wire(self, wire: Wire2D):
         """
