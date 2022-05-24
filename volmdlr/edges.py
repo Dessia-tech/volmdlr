@@ -306,6 +306,17 @@ class BSplineCurve(Edge):
     def length(self):
         return length_curve(self.curve)
 
+    def unit_direction_vector(self, abscissa: float):
+        """
+        :param abscissa: defines where in the BSplineCurve the
+        unit direction vector is to be calculated
+        :return: The unit direction vector of the BSplineCurve
+        """
+
+        direction_vector = self.direction_vector(abscissa)
+        direction_vector.normalize()
+        return direction_vector
+
 
 class Line2D(Line):
     """
@@ -637,16 +648,6 @@ class BSplineCurve2D(BSplineCurve):
         :return: The direection vector vector of the BSplineCurve2D
         """
         return self.tangent(abscissa)
-
-    def unit_direction_vector(self, abscissa: float):
-        """
-        :param abscissa: defines where in the BSplineCurve2D the
-        unit direction vector is to be calculated
-        :return: The unit direction vector of the BSplineCurve2D
-        """
-        direction_vector = self.direction_vector(abscissa)
-        direction_vector.normalize()
-        return direction_vector
 
     def normal_vector(self, abscissa: float):
         """
@@ -3329,11 +3330,6 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
         tangent = self.point_at_abscissa(abscissa2) - self.point_at_abscissa(
             abscissa)
         return tangent
-
-    def unit_direction_vector(self, abscissa):
-        direction_vector = self.direction_vector(abscissa)
-        direction_vector.normalize()
-        return direction_vector
 
     def normal_vector(self, abscissa):
         return None
