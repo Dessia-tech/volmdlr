@@ -401,6 +401,25 @@ class BSplineCurve(Edge):
 
         return self.__class__.from_points_interpolation(points, min(self.degree, bspline_curve.degree))
 
+    @classmethod
+    def from_bsplines(cls, bsplines, discretization_points=10):
+        '''
+        define a bspline_curve using a list of bsplines
+        '''
+        point_dimension = f'Wire{cls.__class__.__name__[-2::]}'
+        wire = getattr(volmdlr.wires, point_dimension)(bsplines)
+        ordered_wire = wire.order_wire()
+
+        points, degree = [], []
+        for i, primitive in enumerate(ordered_wire.primitives):
+            degree.append(primitive.degree)
+            if i == 0:
+                points.extend(primitive.polygon_points(discretization_points))
+            else:
+                points.extend(primitive.polygon_points(discretization_points)[1::])
+
+        return cls.from_points_interpolation(points, min(degree))
+
 
 class Line2D(Line):
     """
@@ -936,25 +955,6 @@ class BSplineCurve2D(BSplineCurve):
             if linesegment.point_belongs(result, 1e-6):
                 intersections_points.append(result)
         return intersections_points
-
-    @classmethod
-    def from_bsplines(cls, bsplines, discretization_points=10):
-        '''
-        define a bspline_curve using a list of bsplines
-        '''
-
-        wire = volmdlr.wires.Wire2D(bsplines)
-        ordered_wire = wire.order_wire()
-
-        points, degree = [], []
-        for i, primitive in enumerate(ordered_wire.primitives):
-            degree.append(primitive.degree)
-            if i == 0:
-                points.extend(primitive.polygon_points(discretization_points))
-            else:
-                points.extend(primitive.polygon_points(discretization_points)[1::])
-
-        return cls.from_points_interpolation(points, min(degree))
 
     def axial_symmetry(self, line):
         '''
