@@ -385,6 +385,22 @@ class BSplineCurve(Edge):
                 return True
         return False
 
+    def merge_with(self, bspline_curve):
+        '''
+        merge successives bspline_curves to define a new one
+        '''
+
+        point_dimension = f'Wire{self.__class__.__name__[-2::]}'
+        wire = getattr(volmdlr.wires, point_dimension)(bspline_curve)
+        ordered_wire = wire.order_wire()
+
+        points, n = [], 10
+        for primitive in ordered_wire.primitives:
+            points.extend(primitive.polygon_points(n))
+        points.pop(n + 1)
+
+        return self.__class__.from_points_interpolation(points, min(self.degree, bspline_curve.degree))
+
 
 class Line2D(Line):
     """
@@ -912,21 +928,6 @@ class BSplineCurve2D(BSplineCurve):
 
         points = self.polygon_points(500)
         return point.nearest_point(points)
-
-    def merge_with(self, bspline_curve):
-        '''
-        merge successives bspline_curves to define a new one
-        '''
-
-        wire = volmdlr.wires.Wire2D([self, bspline_curve])
-        ordered_wire = wire.order_wire()
-
-        points, n = [], 10
-        for primitive in ordered_wire.primitives:
-            points.extend(primitive.polygon_points(n))
-        points.pop(n + 1)
-
-        return volmdlr.edges.BSplineCurve2D.from_points_interpolation(points, min(self.degree, bspline_curve.degree))
 
     def linesegment_intersections(self, linesegment):
         results = self.line_intersections(linesegment.to_line())
