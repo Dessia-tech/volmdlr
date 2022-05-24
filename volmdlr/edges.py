@@ -320,6 +320,27 @@ class BSplineCurve(Edge):
     def middle_point(self):
         return self.point_at_abscissa(self.length() * 0.5)
 
+    def abscissa(self, point, tol=1e-4):
+        l = self.length()
+        res = scp.optimize.least_squares(
+            lambda u: (point - self.point_at_abscissa(u)).norm(),
+            x0=npy.array(l / 2),
+            bounds=([0], [l]),
+            # ftol=tol / 10,
+            # xtol=tol / 10,
+            # loss='soft_l1'
+        )
+
+        if res.fun > tol:
+            print('distance =', res.cost)
+            print('res.fun:', res.fun)
+            ax = self.plot()
+            point.plot(ax=ax)
+            best_point = self.point_at_abscissa(res.x)
+            best_point.plot(ax=ax, color='r')
+            raise ValueError('abscissa not found')
+        return res.x[0]
+
 
 class Line2D(Line):
     """
@@ -671,41 +692,6 @@ class BSplineCurve2D(BSplineCurve):
         normal_vector = self.normal_vector(abscissa)
         normal_vector.normalize()
         return normal_vector
-
-    def abscissa(self, point2d):
-        l = self.length()
-        # res = scp.optimize.minimize_scalar(
-        #     # f,
-        #     lambda u: (point2d - self.point_at_abscissa(u)).norm(),
-        #     method='bounded',
-        #     bounds=(0., l),
-        #     options={'maxiter': 10000}
-        # )
-
-        # res = scp.optimize.minimize(
-        #     lambda u: (point2d - self.point_at_abscissa(u)).norm(),
-        #     x0=npy.array(l/2),
-        #     bounds=[(0, l)]
-        # )
-
-        res = scp.optimize.least_squares(
-            lambda u: (point2d - self.point_at_abscissa(u)).norm(),
-            x0=npy.array(l / 2),
-            bounds=([0], [l]),
-            # ftol=tol / 10,
-            # xtol=tol / 10,
-            # loss='soft_l1'
-        )
-
-        if res.fun > 1e-4:
-            print('distance =', res.cost)
-            print('res.fun:', res.fun)
-            ax = self.plot()
-            point2d.plot(ax=ax)
-            best_point = self.point_at_abscissa(res.x)
-            best_point.plot(ax=ax, color='r')
-            raise ValueError('abscissa not found')
-        return res.x[0]
 
     def split(self, point2d):
         adim_abscissa = self.abscissa(point2d) / self.length()
@@ -3769,30 +3755,6 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
 
     def triangulation(self):
         return None
-
-    def abscissa(self, point3d):
-        '''
-        copied from BSplineCurve2D
-        '''
-        l = self.length()
-
-        res = scp.optimize.least_squares(
-            lambda u: (point3d - self.point_at_abscissa(u)).norm(),
-            x0=npy.array(l / 2),
-            bounds=([0], [l]),
-            # ftol=tol / 10,
-            # xtol=tol / 10,
-            # loss='soft_l1'
-        )
-
-        if res.fun > 1e-1:
-            print('distance =', res.cost)
-            ax = self.plot()
-            point3d.plot(ax=ax)
-            best_point = self.point_at_abscissa(res.x)
-            best_point.plot(ax=ax, color='r')
-            raise ValueError('abscissa not found')
-        return res.x[0]
 
 
 class BezierCurve3D(BSplineCurve3D):
