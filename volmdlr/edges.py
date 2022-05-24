@@ -365,6 +365,26 @@ class BSplineCurve(Edge):
                               self.knot_multiplicities, self.knots,
                               self.weights, self.periodic)
 
+    def point_belongs(self, point, abs_tol=1e-10):
+        '''
+        check if a point belongs to the bspline_curve or not
+        '''
+
+        point_dimension = f'Point{self.__class__.__name__[-2::]}'
+        def f(x):
+            return (point - getattr(volmdlr, point_dimension)(*self.curve.evaluate_single(x))).norm()
+
+        x = npy.linspace(0, 1, 5)
+        x_init = []
+        for xi in x:
+            x_init.append(xi)
+
+        for x0 in x_init:
+            z = scp.optimize.least_squares(f, x0=x0, bounds=([0, 1]))
+            if z.fun < abs_tol:
+                return True
+        return False
+
 
 class Line2D(Line):
     """
@@ -884,24 +904,6 @@ class BSplineCurve2D(BSplineCurve):
             if dist < distance:
                 distance = dist
         return distance
-
-    def point_belongs(self, point2d, abs_tol=1e-10):
-        '''
-        check if a point2d belongs to the bspline_curve or not
-        '''
-        def f(x):
-            return (point2d - volmdlr.Point2D(*self.curve.evaluate_single(x))).norm()
-
-        x = npy.linspace(0, 1, 5)
-        x_init = []
-        for xi in x:
-            x_init.append(xi)
-
-        for x0 in x_init:
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0, 1]))
-            if z.fun < abs_tol:
-                return True
-        return False
 
     def nearest_point_to(self, point):
         '''
@@ -3460,24 +3462,6 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
     #         if line.point_belongs(point):
     #             return True
     #     return False
-
-    def point_belongs(self, point3d, abs_tol=1e-10):
-        '''
-        check if a point3d belongs to the bspline_curve or not
-        '''
-        def f(x):
-            return (point3d - volmdlr.Point3D(*self.curve.evaluate_single(x))).norm()
-
-        x = npy.linspace(0, 1, 5)
-        x_init = []
-        for xi in x:
-            x_init.append(xi)
-
-        for x0 in x_init:
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0, 1]))
-            if z.fun < abs_tol:
-                return True
-        return False
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
