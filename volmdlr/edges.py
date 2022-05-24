@@ -369,7 +369,7 @@ class BSplineCurve():
         check if a point belongs to the bspline_curve or not
         '''
 
-        point_dimension = f'Point{self.__name__[-2::]}'
+        point_dimension = f'Point{self.__class__.__name__[-2::]}'
 
         def f(x):
             return (point - getattr(volmdlr, point_dimension)(*self.curve.evaluate_single(x))).norm()
@@ -390,7 +390,7 @@ class BSplineCurve():
         merge successives bspline_curves to define a new one
         '''
 
-        point_dimension = f'Wire{self.__name__[-2::]}'
+        point_dimension = f'Wire{self.__class__.__name__[-2::]}'
         wire = getattr(volmdlr.wires, point_dimension)(bspline_curve)
         ordered_wire = wire.order_wire()
 
