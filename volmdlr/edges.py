@@ -298,8 +298,7 @@ class BSplineCurve():
         knot_multiplicities = [curve.knotvector.count(k) for k in knots]
 
         return cls(degree=curve.degree,
-                   control_points=[getattr(volmdlr, point_dimension)(
-                       p[0], p[1]) for p in curve.ctrlpts],
+                   control_points=[getattr(volmdlr, point_dimension)(*p) for p in curve.ctrlpts],
                    knots=knots,
                    knot_multiplicities=knot_multiplicities)
 
