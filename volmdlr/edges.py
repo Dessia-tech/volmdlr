@@ -292,7 +292,8 @@ class BSplineCurve():
     @classmethod
     def from_geomdl_curve(cls, curve):
 
-        point_dimension = f'Point{cls.__class__.__name__[-2::]}'
+        point_dimension = f'Point{cls.__name__[-2::]}'
+
         knots = list(sorted(set(curve.knotvector)))
         knot_multiplicities = [curve.knotvector.count(k) for k in knots]
 
@@ -369,7 +370,7 @@ class BSplineCurve():
         check if a point belongs to the bspline_curve or not
         '''
 
-        point_dimension = f'Point{self.__class__.__name__[-2::]}'
+        point_dimension = f'Point{self.__name__[-2::]}'
 
         def f(x):
             return (point - getattr(volmdlr, point_dimension)(*self.curve.evaluate_single(x))).norm()
@@ -390,7 +391,7 @@ class BSplineCurve():
         merge successives bspline_curves to define a new one
         '''
 
-        point_dimension = f'Wire{self.__class__.__name__[-2::]}'
+        point_dimension = f'Wire{self.__name__[-2::]}'
         wire = getattr(volmdlr.wires, point_dimension)(bspline_curve)
         ordered_wire = wire.order_wire()
 
@@ -406,7 +407,7 @@ class BSplineCurve():
         '''
         define a bspline_curve using a list of bsplines
         '''
-        point_dimension = f'Wire{cls.__class__.__name__[-2::]}'
+        point_dimension = f'Wire{cls.__name__[-2::]}'
         wire = getattr(volmdlr.wires, point_dimension)(bsplines)
         ordered_wire = wire.order_wire()
 
