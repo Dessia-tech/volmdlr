@@ -1263,7 +1263,7 @@ class LineSegment2D(LineSegment):
 
         return Line2D(offset_point_1, offset_point_2)
 
-    def discretization_points(self, discretization_resolution: int = 0):
+    def discretization_points(self, discretization_resolution: int = 10):
         """
         discretize a LineSegment2D to have "n" points (including start and end points)
         :param discretization_resolution: number of points to discretize
