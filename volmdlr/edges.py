@@ -290,6 +290,18 @@ class BSplineCurve(Edge):
                               weights=self.weights,
                               periodic=self.periodic)
 
+    @classmethod
+    def from_geomdl_curve(cls, curve):
+
+        point_dimension = f'Point{cls.__class__.__name__[-2::]}'
+        knots = list(sorted(set(curve.knotvector)))
+        knot_multiplicities = [curve.knotvector.count(k) for k in knots]
+
+        return cls(degree=curve.degree,
+                   control_points=[getattr(volmdlr, point_dimension)(
+                       p[0], p[1]) for p in curve.ctrlpts],
+                   knots=knots,
+                   knot_multiplicities=knot_multiplicities)
 
 class Line2D(Line):
     """
@@ -594,16 +606,6 @@ class BSplineCurve2D(BSplineCurve):
         end = self.point_at_abscissa(self.length())
 
         Edge.__init__(self, start, end, name=name)
-
-    @classmethod
-    def from_geomdl_curve(cls, curve):
-        knots = list(sorted(set(curve.knotvector)))
-        knot_multiplicities = [curve.knotvector.count(k) for k in knots]
-        return BSplineCurve2D(degree=curve.degree,
-                              control_points=[volmdlr.Point2D(p[0], p[1]) for p in curve.ctrlpts],
-                              knots=knots,
-                              knot_multiplicities=knot_multiplicities
-                              )
 
     def bounding_rectangle(self):
         points = self.polygon_points()
@@ -3737,16 +3739,6 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
             return 1 / maximum_curvarture, point
         maximum_curvarture = self.maximum_curvature(point_in_curve)
         return 1 / maximum_curvarture
-
-    @classmethod
-    def from_geomdl_curve(cls, curve):
-        knots = list(sorted(set(curve.knotvector)))
-        knot_multiplicities = [curve.knotvector.count(k) for k in knots]
-
-        return cls(degree=curve.degree,
-                   control_points=curve.ctrlpts,
-                   knots=knots,
-                   knot_multiplicities=knot_multiplicities)
 
     def global_minimum_curvature(self, nb_eval: int = 21):
         check = [i / (nb_eval - 1) for i in range(nb_eval)]
