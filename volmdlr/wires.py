@@ -1158,11 +1158,9 @@ class Contour(Wire):
         point1 = middle_point + normal * 0.00001
         point2 = middle_point - normal * 0.00001
         if (self.point_belongs(point1) and contour2.point_belongs(point1)) or\
-                (not self.point_belongs(point1) and
-                 not contour2.point_belongs(point1)) or\
+                (not self.point_belongs(point1) and not contour2.point_belongs(point1)) or\
                 (self.point_belongs(point1) and self.point_belongs(point2)) or\
-                (contour2.point_belongs(point1) and
-                 contour2.point_belongs(point2)):
+                (contour2.point_belongs(point1) and contour2.point_belongs(point2)):
             return True
         return False
 
@@ -1186,7 +1184,14 @@ class Contour(Wire):
                             list_p.append(point)
 
                     if len(list_p) == 2:
-                        return True
+                        if isinstance(self, Contour2D):
+                            linesegment = volmdlr.edges.LineSegment2D(list_p[0], list_p[1])
+                        else:
+                            linesegment = volmdlr.edges.LineSegment3D(list_p[0], list_p[1])
+                        if self.primitive_over_contour(linesegment) and \
+                                contour.primitive_over_contour(linesegment):
+                            return True
+                        return False
         return False
 
     def shared_primitives_extremities(self, contour):
@@ -1205,7 +1210,7 @@ class Contour(Wire):
             for edge1, edge2 in zip(edges, edges[1:]):
                 for point in [edge2.start, edge2.end]:
                     if edge1.point_belongs(point, 1e-6):
-                        if list_p == []:
+                        if not list_p:
                             list_p.append(point)
                         if list_p != [] and point.point_distance(point.nearest_point(list_p)) > 1e-4:
                             list_p.append(point)
