@@ -274,6 +274,10 @@ class LineSegment(Edge):
                     self.__class__(split_point, self.end)]
 
 
+class BSplineCurve(Edge):
+    _non_serializable_attributes = ['curve']
+
+
 class Line2D(Line):
     """
     Define an infinite line given by two points.
@@ -539,7 +543,7 @@ class Line2D(Line):
         return list_points
 
 
-class BSplineCurve2D(Edge):
+class BSplineCurve2D(BSplineCurve):
     _non_serializable_attributes = ['curve']
 
     def __init__(self,
@@ -3207,7 +3211,7 @@ class LineSegment3D(LineSegment):
         return content, [current_id]
 
 
-class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
+class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
     _non_serializable_attributes = ['curve']
 
     def __init__(self, degree: int, control_points: List[volmdlr.Point3D],
