@@ -1189,7 +1189,7 @@ class Contour(Wire):
                         else:
                             linesegment = volmdlr.edges.LineSegment3D(list_p[0], list_p[1])
                         if self.primitive_over_contour(linesegment) and \
-                                    contour.primitive_over_contour(linesegment):
+                                contour.primitive_over_contour(linesegment):
                             return True
                         return False
         return False
