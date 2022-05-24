@@ -341,6 +341,18 @@ class BSplineCurve(Edge):
             raise ValueError('abscissa not found')
         return res.x[0]
 
+    def split(self, point, tol=1e-5):
+        if point.point_distance(self.start) < tol:
+            return [None, self.copy()]
+        elif point.point_distance(self.end) < tol:
+            return [self.copy(), None]
+        else:
+            adim_abscissa = self.abscissa(point) / self.length()
+            curve1, curve2 = split_curve(self.curve, adim_abscissa)
+
+            return [self.__class__.from_geomdl_curve(curve1),
+                    self.__class__.from_geomdl_curve(curve2)]
+
 
 class Line2D(Line):
     """
@@ -692,13 +704,6 @@ class BSplineCurve2D(BSplineCurve):
         normal_vector = self.normal_vector(abscissa)
         normal_vector.normalize()
         return normal_vector
-
-    def split(self, point2d):
-        adim_abscissa = self.abscissa(point2d) / self.length()
-        curve1, curve2 = split_curve(self.curve, adim_abscissa)
-
-        return [BSplineCurve2D.from_geomdl_curve(curve1),
-                BSplineCurve2D.from_geomdl_curve(curve2)]
 
     @classmethod
     def from_points_interpolation(cls, points, degree):
@@ -3745,13 +3750,6 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
 
         curve = fitting.approximate_curve([(p.x, p.y, p.z) for p in points], degree, **kwargs)
         return cls.from_geomdl_curve(curve)
-
-    def split(self, point3d):
-        adim_abscissa = self.abscissa(point3d) / self.length()
-        curve1, curve2 = split_curve(self.curve, adim_abscissa)
-
-        return [BSplineCurve3D.from_geomdl_curve(curve1),
-                BSplineCurve3D.from_geomdl_curve(curve2)]
 
     def triangulation(self):
         return None
