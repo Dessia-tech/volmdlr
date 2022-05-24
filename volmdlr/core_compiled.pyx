@@ -717,6 +717,13 @@ class Point2D(Vector2D):
 
         return point_symmetry
 
+    def coordinates(self):
+        '''
+        gets x,y coordinates of a point2d
+        '''
+
+        return (self.x, self.y)
+
 
 O2D = Point2D(0, 0)
 
@@ -1166,6 +1173,13 @@ class Point3D(Vector3D):
         for p in points:
             distances.append(self.point_distance(p))
         return points[distances.index(min(distances))]
+
+    def coordinates(self):
+        '''
+        gets x,y,z coordinates of a point3d
+        '''
+
+        return (self.x, self.y, self.z)
 
 
 O3D = Point3D(0, 0, 0)
