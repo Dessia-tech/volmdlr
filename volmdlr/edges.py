@@ -201,8 +201,10 @@ class Line(dc.DessiaObject):
         :type point2: volmdlr.Point2D
         returns True is line is between the two given points or False if not
         """
+
         if point1 == point2:
             return False
+
         line_segment = LineSegment2D(point1, point2)
         if line_segment.line_intersections(self):
             return True
@@ -1036,7 +1038,8 @@ class LineSegment2D(LineSegment):
     def point_belongs(self, point, abs_tol=1e-6):
         distance = self.start.point_distance(point) + self.end.point_distance(
             point)
-        if math.isclose(distance, self.length(), abs_tol=abs_tol):
+        if math.isclose(distance, self.length(), abs_tol=abs_tol) and\
+                math.isclose(self.point_distance(point), 0.0, abs_tol=abs_tol):
             return True
         return False
 

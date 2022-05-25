@@ -525,6 +525,12 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         return self.__class__(outer_contour, inner_contours)
 
+    def rotation_inplace(self, center, angle):
+
+        new_surface2d = self.rotation(center, angle)
+        self.outer_contour = new_surface2d.outer_contour
+        self.inner_contours = new_surface2d.inner_contours
+
 
 class Surface3D(dc.DessiaObject):
     x_periodicity = None
@@ -3178,7 +3184,7 @@ class BSplineSurface3D(Surface3D):
 
                     points_3d = face.surface3d.grid3d(
                         volmdlr.grid.Grid2D.from_properties(
-                            x_limits=(bounding_rectangle[0],bounding_rectangle[1]),
+                            x_limits=(bounding_rectangle[0], bounding_rectangle[1]),
                             y_limits=(ymin, ymax),
                             points_nbr=(points_x, points_y)))
 
@@ -3202,7 +3208,7 @@ class BSplineSurface3D(Surface3D):
                             x_limits=(xmin, xmax),
                             y_limits=(bounding_rectangle[2], bounding_rectangle[3]),
                             points_nbr=(points_x, points_y)))
-                    
+
                     bspline_surfaces.append(
                         cls.points_fitting_into_bspline_surface(
                             points_3d, points_x, points_y, degree_u, degree_v))
