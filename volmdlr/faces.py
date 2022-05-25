@@ -515,6 +515,22 @@ class Surface2D(volmdlr.core.Primitive2D):
         return self.__class__(outer_contour=outer_contour,
                               inner_contours=inner_contours)
 
+    def rotation(self, center, angle):
+
+        outer_contour = self.outer_contour.rotation(center, angle)
+        if self.inner_contours != []:
+            inner_contours = [contour.rotation(center, angle) for contour in self.inner_contours]
+        else:
+            inner_contours = []
+
+        return self.__class__(outer_contour, inner_contours)
+
+    def rotation_inplace(self, center, angle):
+
+        new_surface2d = self.rotation(center, angle)
+        self.outer_contour = new_surface2d.outer_contour
+        self.inner_contours = new_surface2d.inner_contours
+
 
 class Surface3D(dc.DessiaObject):
     x_periodicity = None
