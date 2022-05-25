@@ -303,7 +303,9 @@ class BSplineCurve():
                    knot_multiplicities=knot_multiplicities)
 
     def length(self):
-        return length_curve(self.curve)
+        if not self._length:
+            self._length = length_curve(self.curve)
+        return self._length
 
     def unit_direction_vector(self, abscissa: float):
         """
@@ -746,6 +748,7 @@ class BSplineCurve2D(Edge, BSplineCurve):
         curve.knotvector = knot_vector
 
         self.curve = curve
+        self._length = None
         start = self.point_at_abscissa(0.)
         end = self.point_at_abscissa(self.length())
 
@@ -3248,6 +3251,7 @@ class BSplineCurve3D(Edge, BSplineCurve, volmdlr.core.Primitive3D):
         curve_points = curve.evalpts
 
         self.curve = curve
+        self._length = None
         self.bounding_box = self._bounding_box()
         self.points = [volmdlr.Point3D(p[0], p[1], p[2]) for p in curve_points]
         Edge.__init__(self, start=self.points[0], end=self.points[-1])
