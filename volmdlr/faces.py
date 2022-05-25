@@ -514,6 +514,22 @@ class Surface2D(volmdlr.core.Primitive2D):
         return self.__class__(outer_contour=outer_contour,
                               inner_contours=inner_contours)
 
+    def rotation(self, center, angle):
+
+        outer_contour = self.outer_contour.rotation(center, angle)
+        if self.inner_contours != []:
+            inner_contours = [contour.rotation(center, angle) for contour in self.inner_contours]
+        else:
+            inner_contours = []
+
+        return self.__class__(outer_contour, inner_contours)
+
+    def rotation_inplace(self, center, angle):
+
+        new_surface2d = self.rotation(center, angle)
+        self.outer_contour = new_surface2d.outer_contour
+        self.inner_contours = new_surface2d.inner_contours
+
 
 class Surface3D(dc.DessiaObject):
     x_periodicity = None
@@ -3185,9 +3201,12 @@ class BSplineSurface3D(Surface3D):
                 for face in cylindrical_faces:
                     bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle()
 
-                    points_3d = face.surface3d.grid3d(points_x, points_y,
-                                                      bounding_rectangle[0], bounding_rectangle[1],
-                                                      ymin, ymax)
+                    points_3d = face.surface3d.grid3d(
+                        volmdlr.grid.Grid2D.from_properties(
+                            x_limits=(bounding_rectangle[0], bounding_rectangle[1]),
+                            y_limits=(ymin, ymax),
+                            points_nbr=(points_x, points_y)))
+
                     bspline_surfaces.append(
                         cls.points_fitting_into_bspline_surface(
                             points_3d, points_x, points_y, degree_u, degree_v))
@@ -3203,8 +3222,12 @@ class BSplineSurface3D(Surface3D):
                 for face in cylindrical_faces:
                     bounding_rectangle = face.surface2d.outer_contour.bounding_rectangle()
 
-                    points_3d = face.surface3d.grid3d(points_x, points_y, xmin, xmax,
-                                                      bounding_rectangle[2], bounding_rectangle[3])
+                    points_3d = face.surface3d.grid3d(
+                        volmdlr.grid.Grid2D.from_properties(
+                            x_limits=(xmin, xmax),
+                            y_limits=(bounding_rectangle[2], bounding_rectangle[3]),
+                            points_nbr=(points_x, points_y)))
+
                     bspline_surfaces.append(
                         cls.points_fitting_into_bspline_surface(
                             points_3d, points_x, points_y, degree_u, degree_v))
@@ -3652,10 +3675,10 @@ class BSplineSurface3D(Surface3D):
         nb = 10
         points3d = []
         for i, bspline in enumerate(bsplines_new):
-            grid3d = self.grid3d(volmdlr.grid.Grid2D.from_properties(x_limits=(0, 1),
-                                                                     y_limits=(0, 1),
-                                                                     points_nbr=(nb, nb),
-                                                                     direction=grid2d_direction[i]))
+            grid3d = bspline.grid3d(volmdlr.grid.Grid2D.from_properties(x_limits=(0, 1),
+                                                                        y_limits=(0, 1),
+                                                                        points_nbr=(nb, nb),
+                                                                        direction=grid2d_direction[i]))
 
             if (bspline_face3d.outer_contour3d.is_sharing_primitives_with(other_bspline_face3d.outer_contour3d)
                     or self.is_intersected_with(other_bspline_surface3d)):
