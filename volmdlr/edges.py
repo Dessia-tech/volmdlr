@@ -201,6 +201,10 @@ class Line(dc.DessiaObject):
         :type point2: volmdlr.Point2D
         returns True is line is between the two given points or False if not
         """
+
+        if point1 == point2:
+            return False
+
         line_segment = LineSegment2D(point1, point2)
         if line_segment.line_intersections(self):
             return True
@@ -687,11 +691,16 @@ class BSplineCurve2D(Edge):
         return res.x[0]
 
     def split(self, point2d):
-        adim_abscissa = self.abscissa(point2d) / self.length()
-        curve1, curve2 = split_curve(self.curve, adim_abscissa)
+        if point2d.point_distance(self.start) < 1e-5:
+            return [None, self.copy()]
+        elif point2d.point_distance(self.end) < 1e-5:
+            return [self.copy(), None]
+        else:
+            adim_abscissa = self.abscissa(point2d) / self.length()
+            curve1, curve2 = split_curve(self.curve, adim_abscissa)
 
-        return [BSplineCurve2D.from_geomdl_curve(curve1),
-                BSplineCurve2D.from_geomdl_curve(curve2)]
+            return [BSplineCurve2D.from_geomdl_curve(curve1),
+                    BSplineCurve2D.from_geomdl_curve(curve2)]
 
     @classmethod
     def from_points_interpolation(cls, points, degree):
@@ -1026,7 +1035,8 @@ class LineSegment2D(LineSegment):
     def point_belongs(self, point, abs_tol=1e-6):
         distance = self.start.point_distance(point) + self.end.point_distance(
             point)
-        if math.isclose(distance, self.length(), abs_tol=abs_tol):
+        if math.isclose(distance, self.length(), abs_tol=abs_tol) and\
+                math.isclose(self.point_distance(point), 0.0, abs_tol=abs_tol):
             return True
         return False
 
