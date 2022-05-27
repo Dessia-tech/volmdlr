@@ -2221,43 +2221,53 @@ class Contour2D(Contour, Wire2D):
 
         """
 
-        intersections = self.wire_crossings(wire)  # crossings OR intersections (?)
-        if len(intersections)==0:
-            return [self]
+        # intersections = self.wire_crossings(wire)  # crossings OR intersections (?)
+        # if len(intersections)==0:
+        #     return [self]
 
-        points_intersections = [point for point, prim in intersections]
-        points_intersections_new = [points_intersections[0]]
-        for point in points_intersections[1::]:
-            not_in = {False}
-            for point_new in points_intersections_new:
-                check = point_new.point_distance(point)<0.2 #1e-1
-                if check:
-                    if wire.point_distance(point_new) > wire.point_distance(point):
-                        points_intersections_new[points_intersections_new.index(point_new)]=point
-                not_in.add(check)
-            # print(not_in)
-            if not_in == {False}:
-                points_intersections_new.append(point)
-        points_intersections = points_intersections_new
-        # print('-', points_intersections_new)
-        print(len(points_intersections))
-        if len(points_intersections)>2:
-            print(points_intersections)
-        # or intersections[0][0].point_distance(intersections[1][0])<1e-5
-        
-        if not intersections or len(points_intersections) < 2:
+        # points_intersections = [point for point, prim in intersections]
+        # points_intersections_new = [points_intersections[0]]
+        # for point in points_intersections[1::]:
+        #     not_in = {False}
+        #     for point_new in points_intersections_new:
+        #         check = point_new.point_distance(point)<0.2 #1e-1
+        #         if check:
+        #             if wire.point_distance(point_new) > wire.point_distance(point):
+        #                 points_intersections_new[points_intersections_new.index(point_new)]=point
+        #         not_in.add(check)
+        #     # print(not_in)
+        #     if not_in == {False}:
+        #         points_intersections_new.append(point)
+        # points_intersections = points_intersections_new
+        # # print('-', points_intersections_new)
+        # print(len(points_intersections))
+        # if len(points_intersections)>2:
+        #     print(points_intersections)
+        # # or intersections[0][0].point_distance(intersections[1][0])<1e-5
+
+        # if not intersections or len(points_intersections) < 2:
+        #     return [self]
+        # if len(points_intersections) % 2 != 0:
+        #     # # points_intersections = [point for point, prim in intersections]
+        #     # ax=self.plot()
+        #     # for p in points_intersections:
+        #     #     p.plot(ax)
+        #     #     print(p)
+        #     # wire.plot(ax, 'b')
+        #     raise NotImplementedError(
+        #         f'{len(intersections)} intersections not supported yet')
+
+        # # points_intersections = [point for point, prim in intersections]
+
+        intersections = self.wire_crossings(wire)  # crossings OR intersections (?)
+        if not intersections or len(intersections) < 2:
             return [self]
-        if len(points_intersections) % 2 != 0:
-            # # points_intersections = [point for point, prim in intersections]
-            # ax=self.plot()
-            # for p in points_intersections:
-            #     p.plot(ax)
-            #     print(p)
-            # wire.plot(ax, 'b')
+        if len(intersections) % 2 != 0:
             raise NotImplementedError(
                 f'{len(intersections)} intersections not supported yet')
 
-        # points_intersections = [point for point, prim in intersections]
+        points_intersections = [point for point, prim in intersections]
+
         sorted_points = wire.sort_points_along_wire(points_intersections)
         list_contours = []
         contour_to_cut = self
