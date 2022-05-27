@@ -6,7 +6,7 @@
 
 import time
 from typing import List
-from dessia_common.files import BinaryFile
+from dessia_common.files import BinaryFile, StringFile
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -274,8 +274,8 @@ class Step:
         return cls(lines)
 
     @classmethod
-    def from_file(cls, filepath: str = None):
-        with open(filepath, "r", encoding="ISO-8859-1") as file:
+    def from_file(cls, string_file: StringFile = None):
+        with open(string_file.filename, "r", encoding="ISO-8859-1") as file:
             lines = []
             for line in file:
                 lines.append(line)
