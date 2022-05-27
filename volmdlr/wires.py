@@ -143,7 +143,6 @@ class Wire:
                 primitives.append(prim)
 
         elif ip1 == ip2:
-
             prim = primitive1.split(point1)[1]
             if prim:
                 prim = prim.split(point2)[0]
@@ -174,7 +173,6 @@ class Wire:
             ind = []
             for p, primitive in enumerate(primitives):
                 if primitive.point_belongs(point, 1e-5): #dev: 1e-6
-
                     ind.append(p)
             indices.append(ind)
 
@@ -234,9 +232,7 @@ class Wire:
         '''
 
         for primitive_1, primitive_2 in zip(self.primitives, self.primitives[1:]):
-            if primitive_1.end.point_distance(primitive_2.start) < tol:
-                continue
-            else:
+            if primitive_1.end.point_distance(primitive_2.start) > tol:
                 return False
         return True
 
@@ -1209,7 +1205,7 @@ class Contour(Wire):
             for p1, p2 in zip(points[:-1], points[1:]):
                 edges.append(volmdlr.edges.LineSegment2D(p1, p2))
 
-        return
+        return edges
 
     def is_superposing(self, contour2):
         '''
@@ -1229,7 +1225,6 @@ class Contour(Wire):
 
         if not intersecting_points:
             intersecting_points = self.contour_intersections(contour2)
-
         if len(intersecting_points) < 2:
             return False
 
@@ -1387,7 +1382,6 @@ class Contour(Wire):
                 merge_primitives_prim = self.extract_without_primitives(point1,
                                                                         point2,
                                                                         True)
-
             for p in merge_primitives_prim:
                 if p not in shared_primitives_1:
                     merge_primitives.append(p)
@@ -1399,7 +1393,6 @@ class Contour(Wire):
                 merge_primitives_prim = contour.extract_without_primitives(point1,
                                                                            point2,
                                                                            True)
-
             for p in merge_primitives_prim:
                 if p not in shared_primitives_2:
                     merge_primitives.append(p)
@@ -1989,10 +1982,9 @@ class Contour2D(Contour, Wire2D):
                 else:
                     point1, point2 = contour2d.primitives[0].start, \
                                      contour2d.primitives[-1].end
-
-                    if primitive1.point_belongs(point1) and point1 not in intersecting_points:
+                    if point1 not in intersecting_points and primitive1.point_belongs(point1):
                         intersecting_points.append(point1)
-                    if primitive1.point_belongs(point2) and point2 not in intersecting_points:
+                    if point2 not in intersecting_points and primitive1.point_belongs(point2):
                         intersecting_points.append(point2)
             if len(intersecting_points) == 2:
                 break

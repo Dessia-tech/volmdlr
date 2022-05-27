@@ -880,7 +880,7 @@ class BSplineCurve2D(Edge):
                               periodic=self.periodic)
 
     # def point_belongs(self, point, abs_tol=1e-7):
-    #     polygon_points = self.polygon_points(100)
+    #     polygon_points = self.polygon_points()
     #     for p1, p2 in zip(polygon_points[:-1], polygon_points[1:]):
     #         line = LineSegment2D(p1, p2)
     #         if line.point_belongs(point, abs_tol=abs_tol):
@@ -3807,11 +3807,13 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         return [BSplineCurve3D.from_geomdl_curve(curve1),
                 BSplineCurve3D.from_geomdl_curve(curve2)]
 
+    def triangulation(self):
+        return None
+
     def abscissa(self, point3d):
         '''
         copied from BSplineCurve2D
         '''
-
         l = self.length()
 
         res = scp.optimize.least_squares(
@@ -3831,9 +3833,6 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             best_point.plot(ax=ax, color='r')
             raise ValueError('abscissa not found')
         return res.x[0]
-
-    def triangulation(self):
-        return None
 
 
 class BezierCurve3D(BSplineCurve3D):
