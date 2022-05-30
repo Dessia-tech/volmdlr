@@ -201,6 +201,10 @@ class Line(dc.DessiaObject):
         :type point2: volmdlr.Point2D
         returns True is line is between the two given points or False if not
         """
+
+        if point1 == point2:
+            return False
+
         line_segment = LineSegment2D(point1, point2)
         if line_segment.line_intersections(self):
             return True
@@ -687,11 +691,16 @@ class BSplineCurve2D(Edge):
         return res.x[0]
 
     def split(self, point2d):
-        adim_abscissa = self.abscissa(point2d) / self.length()
-        curve1, curve2 = split_curve(self.curve, adim_abscissa)
+        if point2d.point_distance(self.start) < 1e-5:
+            return [None, self.copy()]
+        elif point2d.point_distance(self.end) < 1e-5:
+            return [self.copy(), None]
+        else:
+            adim_abscissa = self.abscissa(point2d) / self.length()
+            curve1, curve2 = split_curve(self.curve, adim_abscissa)
 
-        return [BSplineCurve2D.from_geomdl_curve(curve1),
-                BSplineCurve2D.from_geomdl_curve(curve2)]
+            return [BSplineCurve2D.from_geomdl_curve(curve1),
+                    BSplineCurve2D.from_geomdl_curve(curve2)]
 
     @classmethod
     def from_points_interpolation(cls, points, degree):
@@ -1048,17 +1057,11 @@ class LineSegment2D(LineSegment):
         """
         Computes the distance of a point to segment of line
         """
-        if self.start == self.end:
-            if return_other_point:
-                return 0, point
-
-            return 0
         distance, point = volmdlr.core_compiled.LineSegment2DPointDistance(
             [(self.start.x, self.start.y), (self.end.x, self.end.y)],
             (point.x, point.y))
         if return_other_point:
-            return distance, point
-
+            return distance, volmdlr.Point2D(*point)
         return distance
 
     def point_projection(self, point):
@@ -2366,11 +2369,8 @@ class Line3D(Line):
 
     def point_belongs(self, point3d):
         if point3d == self.point1:
-            v = point3d - self.point2
-        else:
-            v = point3d - self.point1
-
-        return self.direction_vector().is_colinear_to(v)
+            return True
+        return self.direction_vector().is_colinear_to(point3d - self.point1)
 
     def point_distance(self, point):
         vector1 = point - self.start
@@ -2608,6 +2608,8 @@ class LineSegment3D(LineSegment):
 
     def __init__(self, start: volmdlr.Point3D, end: volmdlr.Point3D,
                  name: str = ''):
+        if start == end:
+            raise NotImplementedError
         self.points = [start, end]
         LineSegment.__init__(self, start=start, end=end, name=name)
 
@@ -2674,14 +2676,11 @@ class LineSegment3D(LineSegment):
         return self.point_at_abscissa(0.5 * self.length())
 
     def point_distance(self, point):
-        vector1 = point - self.start
-        vector1.to_vector()
-        vector2 = self.end - self.start
-        vector2.to_vector()
-        proj_dist = vector1.cross(vector2).norm() / vector2.norm()
-        distance_start = self.start.point_distance(point)
-        distance_end = self.end.point_distance(point)
-        return min(proj_dist, distance_start, distance_end)
+        distance, point = volmdlr.core_compiled.LineSegment3DPointDistance(
+            [(self.start.x, self.start.y, self.start.z),
+             (self.end.x, self.end.y, self.end.z)],
+            (point.x, point.y, point.z))
+        return distance, volmdlr.Point3D(*point)
 
     def plane_projection2d(self, center, x, y):
         return LineSegment2D(self.start.plane_projection2d(center, x, y),

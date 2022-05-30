@@ -1404,6 +1404,7 @@ class Contour2D(Contour, Wire2D):
                  name: str = ''):
         Wire2D.__init__(self, primitives, name)
         self._utd_edge_polygon = False
+        self._bounding_rectangle = None
 
     def __hash__(self):
         return sum([hash(e) for e in self.primitives])
@@ -1563,6 +1564,11 @@ class Contour2D(Contour, Wire2D):
         return True
 
     def bounding_rectangle(self):
+        if not self._bounding_rectangle:
+            self._bounding_rectangle = self.get_bouding_rectangle()
+        return self._bounding_rectangle
+
+    def get_bouding_rectangle(self):
         xmin, xmax, ymin, ymax = self.primitives[0].bounding_rectangle()
         for edge in self.primitives[1:]:
             xmin_edge, xmax_edge, ymin_edge, ymax_edge = \
