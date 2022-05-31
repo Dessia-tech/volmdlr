@@ -6682,6 +6682,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                     intersection_primitives.extend(intersection_wire.primitives)
         contours3d = volmdlr.wires.Contour3D.contours_from_edges(
             intersection_primitives[:])
+        if not contours3d:
+            return []
         contours2d = [contour.to_2d(plane_3d.frame.origin,
                                     plane_3d.frame.u,
                                     plane_3d.frame.v) for contour in contours3d]
