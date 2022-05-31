@@ -4939,67 +4939,86 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         return dict_closing_pairs, lower_bounddary_closing_point
 
     @staticmethod
+    def is_sewing_forward(closing_point_index, list_closing_point_indexes) -> bool:
+        if closing_point_index < list_closing_point_indexes[-1]:
+            return False
+        return True
+
+    @staticmethod
+    def sewing_closing_points_to_remove(closing_point_index, list_closing_point_indexes, passed_by_zero_index):
+        list_remove_closing_points = []
+        for idx in list_closing_point_indexes[::-1]:
+            if not passed_by_zero_index:
+                if idx > closing_point_index:
+                    list_remove_closing_points.append(idx)
+                else:
+                    break
+            else:
+                if 0 < idx <= list_closing_point_indexes[-1] and \
+                        idx > closing_point_index:
+                    list_remove_closing_points.append(idx)
+                else:
+                    break
+        return list_remove_closing_points
+
+    @staticmethod
+    def sewing_closing_point_past_point0(closing_point_index, list_closing_point_indexes,
+                                         passed_by_zero_index, ratio_denominator):
+        last_to_new_point_index_ratio = (list_closing_point_indexes[-1] -
+                                         closing_point_index) / ratio_denominator
+        if passed_by_zero_index:
+            ratio = (list_closing_point_indexes[0] - closing_point_index) / ratio_denominator
+            if math.isclose(ratio, 1, abs_tol=0.3):
+                closing_point_index = list_closing_point_indexes[0]
+            else:
+                closing_point_index = list_closing_point_indexes[-1]
+        else:
+            if closing_point_index > list_closing_point_indexes[0]:
+                ratio1 = (closing_point_index -
+                          list_closing_point_indexes[0]) / ratio_denominator
+                if math.isclose(ratio1, 0, abs_tol=0.3) and \
+                        math.isclose(last_to_new_point_index_ratio, 1, abs_tol=0.3):
+                    passed_by_zero_index = True
+                    closing_point_index = list_closing_point_indexes[0]
+                else:
+                    closing_point_index = list_closing_point_indexes[-1]
+            else:
+                if closing_point_index < ratio_denominator / 4:
+                    passed_by_zero_index = True
+                elif ratio_denominator - list_closing_point_indexes[-1] >= 6:
+                    closing_point_index = list_closing_point_indexes[-1] + 5
+                else:
+                    closing_point_index = list_closing_point_indexes[-1]
+        return closing_point_index, passed_by_zero_index
+
+    @staticmethod
     def validate_concave_closing_point(closing_point_index,
                                        list_closing_point_indexes,
                                        passed_by_zero_index,
-                                       ratio_denom, polygons_points_ratio):
+                                       ratio_denominator, polygons_points_ratio):
         if closing_point_index == list_closing_point_indexes[-1]:
             return closing_point_index, [], passed_by_zero_index
 
         list_remove_closing_points = []
-        ratio = (list_closing_point_indexes[-1] - closing_point_index) / ratio_denom
-        if list_closing_point_indexes[-1] > closing_point_index:
+        ratio = (list_closing_point_indexes[-1] - closing_point_index) / ratio_denominator
+        if not ClosedPolygon3D.is_sewing_forward(closing_point_index, list_closing_point_indexes):
             if closing_point_index > list_closing_point_indexes[-1] - 10 and\
                     closing_point_index != list_closing_point_indexes[-1] - 1:
                 if closing_point_index - 1 in list_closing_point_indexes and\
                         closing_point_index + 1 in list_closing_point_indexes:
                     closing_point_index = list_closing_point_indexes[-1]
                     return closing_point_index, list_remove_closing_points, passed_by_zero_index
-                for idx in list_closing_point_indexes[::-1]:
-                    if not passed_by_zero_index:
-                        if idx > closing_point_index:
-                            list_remove_closing_points.append(idx)
-                        else:
-                            break
-                    else:
-                        if 0 < idx <= list_closing_point_indexes[-1] and\
-                                idx > closing_point_index:
-                            list_remove_closing_points.append(idx)
-                        else:
-                            break
+
+                list_remove_closing_points = ClosedPolygon3D.sewing_closing_points_to_remove(
+                    closing_point_index, list_closing_point_indexes, passed_by_zero_index)
+
             elif closing_point_index in list_closing_point_indexes:
                 closing_point_index = list_closing_point_indexes[-1]
             elif math.isclose(ratio, 0, abs_tol=0.3):
                 closing_point_index = list_closing_point_indexes[-1]
             else:
-                if passed_by_zero_index:
-                    ratio = (list_closing_point_indexes[
-                                 0] - closing_point_index) / ratio_denom
-                    if math.isclose(ratio, 1, abs_tol=0.3):
-                        closing_point_index = list_closing_point_indexes[0]
-                    else:
-                        closing_point_index = list_closing_point_indexes[-1]
-                else:
-                    if closing_point_index > list_closing_point_indexes[0]:
-                        ratio1 = (closing_point_index -
-                                  list_closing_point_indexes[
-                                      0]) / ratio_denom
-                        if math.isclose(ratio1, 0, abs_tol=0.3) and\
-                                math.isclose(ratio, 1, abs_tol=0.3):
-                            passed_by_zero_index = True
-                            closing_point_index = list_closing_point_indexes[0]
-                        else:
-                            closing_point_index = list_closing_point_indexes[-1]
-                    else:
-                        if closing_point_index < ratio_denom / 4:
-                            passed_by_zero_index = True
-                        elif ratio_denom - list_closing_point_indexes[
-                                -1] >= 6:
-                            closing_point_index = \
-                                list_closing_point_indexes[-1] + 5
-                        else:
-                            closing_point_index = \
-                                list_closing_point_indexes[-1]
+                closing_point_index, passed_by_zero_index = ClosedPolygon3D.sewing_closing_point_past_point0(
+                    closing_point_index, list_closing_point_indexes, passed_by_zero_index, ratio_denominator)
 
         elif closing_point_index in list_closing_point_indexes:
             closing_point_index = list_closing_point_indexes[-1]
@@ -5016,7 +5035,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         elif math.isclose(ratio, -1, abs_tol=0.3):
             closing_point_index = list_closing_point_indexes[-1]
         elif closing_point_index - list_closing_point_indexes[-1] > 5 and \
-            list_closing_point_indexes[-1] + 4 <= ratio_denom - 1 and\
+            list_closing_point_indexes[-1] + 4 <= ratio_denominator - 1 and\
                 polygons_points_ratio > 0.95:
             closing_point_index = list_closing_point_indexes[-1] + 4
 
