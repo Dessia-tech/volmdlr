@@ -2951,8 +2951,10 @@ class LineSegment3D(LineSegment):
         return s
 
     def to_2d(self, plane_origin, x1, x2):
-        p2D = [p.to_2d(plane_origin, x1, x2) for p in (self.start, self.end)]
-        return LineSegment2D(*p2D, name=self.name)
+        p2d = [p.to_2d(plane_origin, x1, x2) for p in (self.start, self.end)]
+        if p2d[0] == p2d[1]:
+            return None
+        return LineSegment2D(*p2d, name=self.name)
 
     def reverse(self):
         return LineSegment3D(self.end.copy(), self.start.copy())

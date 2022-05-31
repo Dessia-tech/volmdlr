@@ -86,7 +86,6 @@ class Surface2D(volmdlr.core.Primitive2D):
         for inner_contour in self.inner_contours:
             if inner_contour.point_belongs(point2d):
                 return False
-
         return True
 
     def random_point_inside(self):
@@ -529,6 +528,26 @@ class Surface2D(volmdlr.core.Primitive2D):
         new_surface2d = self.rotation(center, angle)
         self.outer_contour = new_surface2d.outer_contour
         self.inner_contours = new_surface2d.inner_contours
+
+    def translation(self, offset: volmdlr.Vector2D):
+        outer_contour = self.outer_contour.translation(offset)
+        inner_contours = [contour.translation(offset) for contour in self.inner_contours]
+        return self.__class__(outer_contour, inner_contours)
+
+    def translation_inplace(self, offset: volmdlr.Vector2D):
+        new_contour = self.translation(offset)
+        self.outer_contour = new_contour.outer_contour
+        self.inner_contours = new_contour.inner_contours
+
+    def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
+        outer_contour = self.outer_contour.frame_mapping(frame, side)
+        inner_contours = [contour.frame_mapping(frame, side) for contour in self.inner_contours]
+        return self.__class__(outer_contour, inner_contours)
+
+    def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
+        new_contour = self.frame_mapping(frame, side)
+        self.outer_contour = new_contour.outer_contour
+        self.inner_contours = new_contour.inner_contours
 
 
 class Surface3D(dc.DessiaObject):
@@ -4011,8 +4030,8 @@ class Face3D(volmdlr.core.Primitive3D):
         Changes frame_mapping and return a new Face3D
         side = 'old' or 'new'
         """
-        new_surface = self.surface3d.frame_mapping(frame, side)
-        return self.__class__(new_surface, self.surface2d.copy(),
+        new_surface3d = self.surface3d.frame_mapping(frame, side)
+        return self.__class__(new_surface3d, self.surface2d.copy(),
                               self.name)
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
@@ -4159,7 +4178,7 @@ class PlaneFace3D(Face3D):
 
     def linesegment3d_inside(self, linesegement3d: volmdlr.edges.LineSegment3D):
         length = linesegement3d.length()
-        points = [linesegement3d.point_at_abscissa(length * n / 10) for n in range(1, 9)]
+        points = [linesegement3d.point_at_abscissa(length * n / 20) for n in range(1, 19)]
         for point in points:
             if not self.point_belongs(point):
                 return False
@@ -6650,13 +6669,12 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         Does not consider holes
         """
         volume = 0
-        for i, face in enumerate(self.faces):
+        for face in self.faces:
             display3d = face.triangulation()
-            points_3D, triangles_indexes = display3d.points, display3d.triangles
-            for triangle_index in triangles_indexes:
-                point1 = points_3D[triangle_index[0]]
-                point2 = points_3D[triangle_index[1]]
-                point3 = points_3D[triangle_index[2]]
+            for triangle_index in display3d.triangles:
+                point1 = display3d.points[triangle_index[0]]
+                point2 = display3d.points[triangle_index[1]]
+                point3 = display3d.points[triangle_index[2]]
 
                 v321 = point3[0] * point2[1] * point1[2]
                 v231 = point2[0] * point3[1] * point1[2]
@@ -6664,8 +6682,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 v132 = point1[0] * point3[1] * point2[2]
                 v213 = point2[0] * point1[1] * point3[2]
                 v123 = point1[0] * point2[1] * point3[2]
-                volume_tetraedre = 1 / 6 * (
-                        -v321 + v231 + v312 - v132 - v213 + v123)
+                volume_tetraedre = 1 / 6 * (-v321 + v231 + v312 - v132 - v213 + v123)
 
                 volume += volume_tetraedre
 
@@ -7109,7 +7126,7 @@ class ClosedShell3D(OpenShell3D):
 
         for face in self.faces:
             point2d = face.surface3d.point3d_to_2d(point)
-            if face.point_belongs(point) or \
+            if (face.surface3d.point_on_plane(point) and face.point_belongs(point)) or \
                     face.surface2d.outer_contour.point_over_contour(
                         point2d, abs_tol=1e-7):
                 return True
@@ -7342,8 +7359,7 @@ class ClosedShell3D(OpenShell3D):
                                     shell2, keep_interior_faces):
         faces = []
         for new_face in new_faces:
-            inside_reference_shell = reference_shell.point_belongs(
-                new_face.random_point_inside())
+            inside_reference_shell = reference_shell.point_belongs(new_face.random_point_inside())
             if keep_interior_faces:
                 if self.set_operations_interior_face(new_face, valid_faces,
                                                      inside_reference_shell,
@@ -7520,31 +7536,15 @@ class ClosedShell3D(OpenShell3D):
     @staticmethod
     def get_faces_to_be_merged(union_faces):
         coincident_planes_faces = []
-        valid_coicident_faces = []
-        not_adjacent_not_valid_coincident_faces = []
         for i, face1 in enumerate(union_faces):
             for j, face2 in enumerate(union_faces):
-                if j != i and \
-                        face1.surface3d.is_coincident(face2.surface3d):
+                if j != i and face1.surface3d.is_coincident(face2.surface3d):
                     if face1 not in coincident_planes_faces:
                         coincident_planes_faces.append(face1)
                     coincident_planes_faces.append(face2)
             if coincident_planes_faces:
-                for f1, f2 in \
-                        product(coincident_planes_faces, repeat=2):
-                    if f1 != f2:
-                        if f1.is_adjacent(f2):
-                            if f1 not in valid_coicident_faces:
-                                valid_coicident_faces.append(f1)
-                            if f2 not in valid_coicident_faces:
-                                valid_coicident_faces.append(f2)
-                        else:
-                            if f1.face_inside(f2):
-                                not_adjacent_not_valid_coincident_faces.append(f2)
-                            elif f2.face_inside(f1):
-                                not_adjacent_not_valid_coincident_faces.append(f1)
                 break
-        return valid_coicident_faces, not_adjacent_not_valid_coincident_faces
+        return coincident_planes_faces
 
     @staticmethod
     def clean_faces(union_faces, list_new_faces):
@@ -7567,15 +7567,15 @@ class ClosedShell3D(OpenShell3D):
         list_new_faces = []
         count = 0
         while not finished:
-            valid_coicident_faces, not_adjacent_not_valid_coincident_faces = \
+            valid_coicident_faces = \
                 ClosedShell3D.get_faces_to_be_merged(union_faces)
             list_valid_coincident_faces = valid_coicident_faces[:]
             if valid_coicident_faces:
                 list_new_faces += PlaneFace3D.merge_faces(valid_coicident_faces)
-                for face in list_valid_coincident_faces:
-                    union_faces.remove(face)
+            for face in list_valid_coincident_faces:
+                union_faces.remove(face)
             count += 1
-            if (count >= len(self.faces) and not list_valid_coincident_faces) or not list_valid_coincident_faces:
+            if (count >= len(self.faces) and not list_valid_coincident_faces):
                 finished = True
 
         list_new_faces = self.clean_faces(union_faces, list_new_faces)

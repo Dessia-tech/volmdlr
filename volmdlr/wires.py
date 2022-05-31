@@ -1070,6 +1070,8 @@ class Contour(Wire):
 
     @classmethod
     def contours_from_edges(cls, edges, tol=5e-5):
+        if not edges:
+            return []
         list_contours = []
         finished = False
         contour_primitives = []
@@ -2435,6 +2437,13 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         """
         for point in self.points:
             point.translation_inplace(offset)
+
+    def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
+        return self.__class__([point.frame_mapping(frame, side) for point in self.points])
+
+    def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
+        for point in self.points:
+            point.frame_mapping_inplace(frame, side)
 
     def polygon_distance(self,
                          polygon: 'volmdlr.wires.ClosedPolygon2D'):
@@ -4070,7 +4079,11 @@ class Contour3D(Contour, Wire3D):
     def to_2d(self, plane_origin, x, y):
         z = x.cross(y)
         plane3d = volmdlr.faces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
-        primitives2d = [plane3d.point3d_to_2d(p) for p in self.primitives]
+        primitives2d = []
+        for primitive in self.primitives:
+            primitive2d = plane3d.point3d_to_2d(primitive)
+            if primitive2d is not None:
+                primitives2d.append(primitive2d)
         return Contour2D(primitives=primitives2d)
 
     def _bounding_box(self):

@@ -456,16 +456,16 @@ class CompositePrimitive2D(Primitive2D):
         Changes frame_mapping and return a new CompositePrimitive2D
         side = 'old' or 'new'
         """
-        return self.__class__([point.frame_mapping(frame, side)
-                               for point in self.primitives])
+        return self.__class__([primitive.frame_mapping(frame, side)
+                               for primitive in self.primitives])
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
         """
         Changes frame_mapping and the object is updated inplace
         side = 'old' or 'new'
         """
-        for point in self.primitives:
-            point.frame_mapping_inplace(frame, side)
+        for primitive in self.primitives:
+            primitive.frame_mapping_inplace(frame, side)
         self.update_basis_primitives()
 
     def plot(self, ax=None, color='k', alpha=1,
