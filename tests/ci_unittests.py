@@ -3,7 +3,8 @@ import time
 
 unittests = [
     # faces
-    'faces/test_closedshell3d.py'
+    'faces/test_closedshell3d.py',
+    'faces/test_planeface3d.py'
 ]
 
 # Testing if all unittests exists before launching them
