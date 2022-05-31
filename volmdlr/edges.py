@@ -2181,8 +2181,8 @@ class FullArc2D(Arc2D):
             t2 = (-b - sqrt_disc) / (2 * a)
             return [pt1 + t1 * vec,
                     pt1 + t2 * vec]
-        else:
-            return []
+
+        return []
 
     def linesegment_intersections(self, linesegment2d: LineSegment2D,
                                   tol=1e-9):
@@ -2221,8 +2221,8 @@ class FullArc2D(Arc2D):
             valid_points = [pt for pt in points if
                             linesegment2d.point_belongs(pt)]
             return valid_points
-        else:
-            return []
+
+        return []
 
 
 class ArcEllipse2D(Edge):
