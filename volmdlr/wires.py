@@ -172,7 +172,7 @@ class Wire:
         for i, point in enumerate([point1, point2]):
             ind = []
             for p, primitive in enumerate(primitives):
-                if primitive.point_belongs(point, 1e-5): #dev: 1e-6
+                if primitive.point_belongs(point, 1e-5):  # dev: 1e-6
                     ind.append(p)
             indices.append(ind)
 
@@ -196,7 +196,7 @@ class Wire:
         return self.extract_primitives(point1, primitives[ind[0]], point2,
                                        primitives[ind[1]], inside)
 
-    def point_belongs(self, point, abs_tol=1e-5): #dev: 1e-7
+    def point_belongs(self, point, abs_tol=1e-5):  # dev: 1e-7
         '''
         find out if a point is on the wire or not
         '''
@@ -211,10 +211,10 @@ class Wire:
         compute the curvilinear abscisse of a point on a wire
         '''
 
-        if self.point_belongs(point, 1e-5): #dev: 1e-6
+        if self.point_belongs(point, 1e-5):  # dev: 1e-6
             length = 0
             for primitive in self.primitives:
-                if primitive.point_belongs(point, 1e-5): #dev: 1e-6
+                if primitive.point_belongs(point, 1e-5):  # dev: 1e-6
                     length += primitive.abscissa(point)
                     break
                 length += primitive.length()
@@ -551,7 +551,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         intersection_points = []
         intersection_points_primitives = []
         for primitive in self.primitives:
-            intersections = primitive.line_intersections(line) #intersections/crossings
+            intersections = primitive.line_intersections(line)  # intersections/crossings
             if intersections and intersections[0] not in intersection_points:
                 if not self.is_crossing_start_end_point(intersections,
                                                         primitive):
@@ -746,7 +746,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         return False
 
     def bsplinecurve_crossings(self,
-                              bsplinecurve: 'volmdlr.edges.BSplineCurve2D'):
+                               bsplinecurve: 'volmdlr.edges.BSplineCurve2D'):
         """
         Returns a list of crossings in ther form of a tuple (point,
         primitive) of the wire primitives crossings with the bsplinecurve
@@ -793,6 +793,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
                 if self.point_over_wire(mid_point, tol):
                     return True
         return False
+
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
     """
