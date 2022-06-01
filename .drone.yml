@@ -27,8 +27,7 @@ steps:
   - cd doc
   - make html
   - cd ..
-  - ls
-  - coverage run --source volmdlr -m unittest discover
+  - coverage run -m unittest discover
   - cd scripts
   - coverage run --source volmdlr -a ci_scripts.py
   - coverage json
