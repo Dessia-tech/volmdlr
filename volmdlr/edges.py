@@ -461,6 +461,19 @@ class BSplineCurve():
 
         return tangent
 
+    @classmethod
+    def from_points_interpolation(cls, points, degree, periodic=False):
+
+        curve = fitting.interpolate_curve([point.coordinates() for point in points],
+                                          degree)
+
+        bsplinecurve = cls.from_geomdl_curve(curve)
+        if not periodic:
+            return bsplinecurve
+        else:
+            bsplinecurve.periodic = True
+            return bsplinecurve
+
 
 class Line2D(Line):
     """
@@ -807,11 +820,6 @@ class BSplineCurve2D(Edge, BSplineCurve):
         normal_vector = self.normal_vector(abscissa)
         normal_vector.normalize()
         return normal_vector
-
-    @classmethod
-    def from_points_interpolation(cls, points, degree):
-        curve = fitting.interpolate_curve([(p.x, p.y) for p in points], degree)
-        return cls.from_geomdl_curve(curve)
 
     def straight_line_area(self):
         points = self.polygon_points(100)
@@ -3443,17 +3451,6 @@ class BSplineCurve3D(Edge, BSplineCurve, volmdlr.core.Primitive3D):
             current_id, self.name,
             start_id, end_id, curve_id)
         return content, [current_id]
-
-    @classmethod
-    def from_points_interpolation(cls, points, degree, periodic=False):
-        curve = fitting.interpolate_curve([(p.x, p.y, p.z) for p in points],
-                                          degree)
-        bsplinecurve3d = cls.from_geomdl_curve(curve)
-        if not periodic:
-            return bsplinecurve3d
-        else:
-            bsplinecurve3d.periodic = True
-            return bsplinecurve3d
 
     def point_distance(self, pt1):
         distances = []
