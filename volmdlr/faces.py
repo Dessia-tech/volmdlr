@@ -2318,7 +2318,8 @@ class BSplineSurface3D(Surface3D):
                 name, points, self.u_multiplicities, self.v_multiplicities,
                 self.degree_u, self.degree_v, self.u_knots, self.v_knots)
         else:
-            script += '{}.buildFromPolesMultsKnots({},{},{},udegree={},vdegree={},uknots={},vknots={},weights={})\n'.format(
+            script +=\
+                '{}.buildFromPolesMultsKnots({},{},{},udegree={},vdegree={},uknots={},vknots={},weights={})\n'.format(
                 name, points, self.u_multiplicities, self.v_multiplicities,
                 self.degree_u, self.degree_v, self.u_knots, self.v_knots,
                 self.weights)
@@ -4957,7 +4958,7 @@ class CylindricalFace3D(Face3D):
     :type points: List of volmdlr.Point2D
 
     :Example:
-        >>> contours2d is rectangular and will create a classic cylinder with x= 2*pi*radius, y=h
+        contours2d is rectangular and will create a classic cylinder with x= 2*pi*radius, y=h
     """
     min_x_density = 5
     min_y_density = 1
