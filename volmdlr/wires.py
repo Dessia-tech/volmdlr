@@ -3531,6 +3531,10 @@ class Circle2D(Contour2D):
         return ClosedPolygon2D(
             self.polygon_points(angle_resolution=angle_resolution))
 
+    @classmethod
+    def from_arc(cls, arc: volmdlr.edges.Arc2D):
+        return cls(arc.center, arc.radius, arc.name + ' to circle')
+
     def tessellation_points(self, resolution=40):
         return [(self.center
                  + self.radius * math.cos(teta) * volmdlr.X2D
@@ -3555,31 +3559,17 @@ class Circle2D(Contour2D):
         return xmin, xmax, ymin, ymax
 
     def line_intersections(self, line2d: volmdlr.edges.Line2D, tol=1e-9):
-        # Duplicate from ffull arc
-        Q = self.center
-        if line2d.points[0] == self.center:
-            P1 = line2d.points[1]
-            V = line2d.points[0] - line2d.points[1]
-        else:
-            P1 = line2d.points[0]
-            V = line2d.points[1] - line2d.points[0]
-        a = V.dot(V)
-        b = 2 * V.dot(P1 - Q)
-        c = P1.dot(P1) + Q.dot(Q) - 2 * P1.dot(Q) - self.radius ** 2
+        full_arc_2d = volmdlr.edges.FullArc2D(
+            center=self.center, start_end=self.point_at_abscissa(0),
+            name=self.name)
+        return full_arc_2d.line_intersections(line2d, tol)
 
-        disc = b ** 2 - 4 * a * c
-        if math.isclose(disc, 0., abs_tol=tol):
-            t1 = -b / (2 * a)
-            return [P1 + t1 * V]
-
-        elif disc > 0:
-            sqrt_disc = math.sqrt(disc)
-            t1 = (-b + sqrt_disc) / (2 * a)
-            t2 = (-b - sqrt_disc) / (2 * a)
-            return [P1 + t1 * V,
-                    P1 + t2 * V]
-        else:
-            return []
+    def linesegment_intersections(self, lineseg2d: volmdlr.edges.LineSegment2D,
+                                  tol=1e-9):
+        full_arc_2d = volmdlr.edges.FullArc2D(
+            center=self.center, start_end=self.point_at_abscissa(0),
+            name=self.name)
+        return full_arc_2d.linesegment_intersections(lineseg2d, tol)
 
     def circle_intersections(self, circle: 'volmdlr.wires.Circle2D'):
         x0, y0 = self.center
