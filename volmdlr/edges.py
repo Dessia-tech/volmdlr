@@ -1070,17 +1070,11 @@ class LineSegment2D(LineSegment):
         """
         Computes the distance of a point to segment of line
         """
-        if self.start == self.end:
-            if return_other_point:
-                return 0, point
-
-            return 0
         distance, point = volmdlr.core_compiled.LineSegment2DPointDistance(
             [(self.start.x, self.start.y), (self.end.x, self.end.y)],
             (point.x, point.y))
         if return_other_point:
-            return distance, point
-
+            return distance, volmdlr.Point2D(*point)
         return distance
 
     def point_projection(self, point):
@@ -2388,11 +2382,8 @@ class Line3D(Line):
 
     def point_belongs(self, point3d):
         if point3d == self.point1:
-            v = point3d - self.point2
-        else:
-            v = point3d - self.point1
-
-        return self.direction_vector().is_colinear_to(v)
+            return True
+        return self.direction_vector().is_colinear_to(point3d - self.point1)
 
     def point_distance(self, point):
         vector1 = point - self.start
@@ -2630,6 +2621,8 @@ class LineSegment3D(LineSegment):
 
     def __init__(self, start: volmdlr.Point3D, end: volmdlr.Point3D,
                  name: str = ''):
+        if start == end:
+            raise NotImplementedError
         self.points = [start, end]
         LineSegment.__init__(self, start=start, end=end, name=name)
 
@@ -2696,14 +2689,11 @@ class LineSegment3D(LineSegment):
         return self.point_at_abscissa(0.5 * self.length())
 
     def point_distance(self, point):
-        vector1 = point - self.start
-        vector1.to_vector()
-        vector2 = self.end - self.start
-        vector2.to_vector()
-        proj_dist = vector1.cross(vector2).norm() / vector2.norm()
-        distance_start = self.start.point_distance(point)
-        distance_end = self.end.point_distance(point)
-        return min(proj_dist, distance_start, distance_end)
+        distance, point = volmdlr.core_compiled.LineSegment3DPointDistance(
+            [(self.start.x, self.start.y, self.start.z),
+             (self.end.x, self.end.y, self.end.z)],
+            (point.x, point.y, point.z))
+        return distance, volmdlr.Point3D(*point)
 
     def plane_projection2d(self, center, x, y):
         return LineSegment2D(self.start.plane_projection2d(center, x, y),
