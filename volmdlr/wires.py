@@ -3921,9 +3921,9 @@ class Contour3D(Contour, Wire3D):
 
     def average_center_point(self):
         nb = len(self.points)
-        x = npy.sum(point[0] for point in self.points) / nb
-        y = npy.sum(point[1] for point in self.points) / nb
-        z = npy.sum(point[2] for point in self.points) / nb
+        x = sum(point[0] for point in self.points) / nb
+        y = sum(point[1] for point in self.points) / nb
+        z = sum(point[2] for point in self.points) / nb
 
         return volmdlr.Point3D(x, y, z)
 
