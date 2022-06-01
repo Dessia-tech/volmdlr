@@ -633,7 +633,7 @@ class BoundingBox(dc.DessiaObject):
         self.center = volmdlr.Point3D(0.5 * (xmin + xmax), 0.5 * (ymin + ymax), 0.5 * (zmin + zmax))
 
     def __hash__(self):
-        return sum([hash(p) for p in self.points])
+        return sum(hash(point) for point in self.points)
 
     def __add__(self, other_bbox):
         return BoundingBox(min(self.xmin, other_bbox.xmin),
@@ -702,12 +702,12 @@ class BoundingBox(dc.DessiaObject):
     def from_points(cls, points):
         # if len(points) == 0:
         #     return (0, 0, 0, 0, 0, 0)
-        xmin = min([pt.x for pt in points])
-        xmax = max([pt.x for pt in points])
-        ymin = min([pt.y for pt in points])
-        ymax = max([pt.y for pt in points])
-        zmin = min([pt.z for pt in points])
-        zmax = max([pt.z for pt in points])
+        xmin = min(pt.x for pt in points)
+        xmax = max(pt.x for pt in points)
+        ymin = min(pt.y for pt in points)
+        ymax = max(pt.y for pt in points)
+        zmin = min(pt.z for pt in points)
+        zmax = max(pt.z for pt in points)
         return cls(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def to_frame(self):
@@ -871,7 +871,7 @@ class VolumeModel(dc.DessiaObject):
         #     self.bounding_box = BoundingBox(-1, 1, -1, 1, -1, 1)
 
     def __hash__(self):
-        return sum([hash(p) for p in self.primitives])
+        return sum(hash(point) for point in self.primitives)
 
     # def _extract_shells(self):
     #     shells = []
@@ -982,19 +982,19 @@ class VolumeModel(dc.DessiaObject):
                 if primitive.__class__.__name__ == 'volmdlr.Point3D':
                     points.append(primitive)
         if bboxes:
-            xmin = min([box.xmin for box in bboxes])
-            xmax = max([box.xmax for box in bboxes])
-            ymin = min([box.ymin for box in bboxes])
-            ymax = max([box.ymax for box in bboxes])
-            zmin = min([box.zmin for box in bboxes])
-            zmax = max([box.zmax for box in bboxes])
+            xmin = min(box.xmin for box in bboxes)
+            xmax = max(box.xmax for box in bboxes)
+            ymin = min(box.ymin for box in bboxes)
+            ymax = max(box.ymax for box in bboxes)
+            zmin = min(box.zmin for box in bboxes)
+            zmax = max(box.zmax for box in bboxes)
         elif points:
-            xmin = min([p[0] for p in points])
-            xmax = max([p[0] for p in points])
-            ymin = min([p[1] for p in points])
-            ymax = max([p[1] for p in points])
-            zmin = min([p[2] for p in points])
-            zmax = max([p[2] for p in points])
+            xmin = min(p[0] for p in points)
+            xmax = max(p[0] for p in points)
+            ymin = min(p[1] for p in points)
+            ymax = max(p[1] for p in points)
+            zmin = min(p[2] for p in points)
+            zmax = max(p[2] for p in points)
         else:
             # raise ValueError('Bounding box cant be determined')
             return BoundingBox(-1, 1, -1, 1, 1 - 1, 1)
