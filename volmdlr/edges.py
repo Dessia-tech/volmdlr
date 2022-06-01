@@ -452,6 +452,15 @@ class BSplineCurve():
         curve = fitting.approximate_curve([point.coordinates() for point in points], degree, **kwargs)
         return cls.from_geomdl_curve(curve)
 
+    def tangent(self, position: float = 0.0):
+        point, tangent = operations.tangent(self.curve, position,
+                                            normalize=True)
+
+        dimension = f'Vector{self.__name__[-2::]}'
+        tangent = getattr(volmdlr, dimension)(*tangent)
+
+        return tangent
+
 
 class Line2D(Line):
     """
@@ -770,12 +779,6 @@ class BSplineCurve2D(Edge, BSplineCurve):
         l = self.length()
         adim_abs = max(min(curvilinear_abscissa / l, 1.), 0.)
         return volmdlr.Point2D(*self.curve.evaluate_single(adim_abs))
-
-    def tangent(self, position: float = 0.0):
-        point, tangent = operations.tangent(self.curve, position,
-                                            normalize=True)
-        tangent = volmdlr.Point2D(tangent[0], tangent[1])
-        return tangent
 
     def direction_vector(self, abscissa: float):
         """
@@ -3314,12 +3317,6 @@ class BSplineCurve3D(Edge, BSplineCurve, volmdlr.core.Primitive3D):
         point, normal = operations.normal(self.curve, position, normalize=True)
         normal = volmdlr.Point3D(normal[0], normal[1], normal[2])
         return normal
-
-    def tangent(self, abscissa: float):
-        point, tangent = operations.tangent(self.curve, abscissa,
-                                            normalize=False)
-        tangent = volmdlr.Vector3D(*tangent)
-        return tangent
 
     def direction_vector(self, abscissa=0.):
         l = self.length()
