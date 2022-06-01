@@ -28,6 +28,7 @@ steps:
   - make html
   - cd ../scripts
   - coverage run --source volmdlr ci_scripts.py
+  - coverage run --source volmdlr -a -m unittest discover
   - coverage json
   - coverage report
   - python coverage.py
