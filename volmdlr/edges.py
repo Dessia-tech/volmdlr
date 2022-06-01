@@ -449,7 +449,7 @@ class BSplineCurve():
 
         '''
 
-        curve = fitting.approximate_curve([point.coordinates() for point in points], degree, **kwargs)
+        curve = fitting.approximate_curve([[*point] for point in points], degree, **kwargs)
         return cls.from_geomdl_curve(curve)
 
     def tangent(self, position: float = 0.0):
@@ -464,8 +464,7 @@ class BSplineCurve():
     @classmethod
     def from_points_interpolation(cls, points, degree, periodic=False):
 
-        curve = fitting.interpolate_curve([point.coordinates() for point in points],
-                                          degree)
+        curve = fitting.interpolate_curve([[*point] for point in points], degree)
 
         bsplinecurve = cls.from_geomdl_curve(curve)
         if not periodic:
