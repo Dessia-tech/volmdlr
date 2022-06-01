@@ -26,7 +26,7 @@ steps:
   - python setup.py install
   - cd doc
   - make html
-  - coverage run --source volmdlr -m unittest discover
+  - coverage run -m unittest discover
   - cd ../scripts
   - coverage run --source volmdlr -a ci_scripts.py
   - coverage json
