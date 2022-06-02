@@ -805,10 +805,10 @@ class BSplineCurve2D(BSplineCurve):
         self.periodic = periodic
         self.name = name
 
-        BSplineCurve.__init__(self, self.control_points,
-                              self.degree,
-                              self.knots,
+        BSplineCurve.__init__(self, self.degree,
+                              self.control_points,
                               self.knot_multiplicities,
+                              self.knots,
                               self.weights,
                               self.periodic,
                               self.name)
@@ -3340,16 +3340,16 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
         self.periodic = periodic
         self.name = name
 
-        self.bounding_box = self._bounding_box()
-
-        BSplineCurve.__init__(self, self.control_points,
-                              self.degree,
-                              self.knots,
+        BSplineCurve.__init__(self, self.degree,
+                              self.control_points,
                               self.knot_multiplicities,
+                              self.knots,
                               self.weights,
                               self.periodic,
                               self.name)
         volmdlr.core.Primitive3D.__init__(self, name=name)
+
+        self.bounding_box = self._bounding_box()
 
     def _bounding_box(self):
         bbox = self.curve.bbox
