@@ -63,7 +63,6 @@ class Surface2D(volmdlr.core.Primitive2D):
     def area(self):
         return self.outer_contour.area() - sum(contour.area() for contour in self.inner_contours)
 
-
     def second_moment_area(self, point: volmdlr.Point2D):
         Ix, Iy, Ixy = self.outer_contour.second_moment_area(point)
         for contour in self.inner_contours:
@@ -6537,7 +6536,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def _data_hash(self):
         return sum(face._data_hash() for face in self.faces)
-
 
     def _data_eq(self, other_):
         if other_.__class__.__name__ != self.__class__.__name__:

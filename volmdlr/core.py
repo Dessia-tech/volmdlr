@@ -635,7 +635,6 @@ class BoundingBox(dc.DessiaObject):
     def __hash__(self):
         return sum(hash(point) for point in self.points)
 
-
     def __add__(self, other_bbox):
         return BoundingBox(min(self.xmin, other_bbox.xmin),
                            max(self.xmax, other_bbox.xmax),
@@ -873,7 +872,6 @@ class VolumeModel(dc.DessiaObject):
 
     def __hash__(self):
         return sum(hash(point) for point in self.primitives)
-
 
     # def _extract_shells(self):
     #     shells = []
