@@ -1407,7 +1407,7 @@ class Contour2D(Contour, Wire2D):
         self._bounding_rectangle = None
 
     def __hash__(self):
-        return sum([hash(e) for e in self.primitives])
+        return sum(hash(e) for e in self.primitives)
 
     # def __eq__(self, other_):
     #     if other_.__class__.__name__ != self.__class__.__name__:
@@ -1489,10 +1489,10 @@ class Contour2D(Contour, Wire2D):
         for primitive in self.primitives:
             if hasattr(primitive, 'polygon_points'):
                 points.extend(primitive.polygon_points())
-        xmin = min([p[0] for p in points])
-        xmax = max([p[0] for p in points])
-        ymin = min([p[1] for p in points])
-        ymax = max([p[1] for p in points])
+        xmin = min(p[0] for p in points)
+        xmax = max(p[0] for p in points)
+        ymin = min(p[1] for p in points)
+        ymax = max(p[1] for p in points)
         return (volmdlr.Point2D(xmin, ymin), volmdlr.Point2D(xmax, ymax))
 
     def area(self):
@@ -2274,7 +2274,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         return ClosedPolygon2D(points, self.name)
 
     def __hash__(self):
-        return sum([hash(p) for p in self.points])
+        return sum(hash(p) for p in self.points)
 
     def __eq__(self, other_):
         if not isinstance(other_, self.__class__):
@@ -2294,8 +2294,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         x1 = [x[-1]] + x[0:-1]
         y1 = [y[-1]] + y[0:-1]
-        return 0.5 * abs(sum([i * j for i, j in zip(x, y1)])
-                         - sum([i * j for i, j in zip(y, x1)]))
+        return 0.5 * abs(sum(i * j for i, j in zip(x, y1))
+                         - sum(i * j for i, j in zip(y, x1)))
         # return 0.5 * npy.abs(
         #     npy.dot(x, npy.roll(y, 1)) - npy.dot(y, npy.roll(x, 1)))
 
@@ -3792,7 +3792,7 @@ class Contour3D(Contour, Wire3D):
         self._utd_bounding_box = False
 
     def __hash__(self):
-        return sum([hash(e) for e in self.primitives])
+        return sum(hash(e) for e in self.primitives)
 
     @property
     def edge_polygon(self):
@@ -4652,7 +4652,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         return ClosedPolygon3D(points, self.name)
 
     def __hash__(self):
-        return sum([hash(p) for p in self.points])
+        return sum(hash(p) for p in self.points)
 
     def __eq__(self, other_):
         if not isinstance(other_, self.__class__):
