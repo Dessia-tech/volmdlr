@@ -522,6 +522,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
     def area(self):
         areas = self.outer_contour2d.area()
         areas -= sum([contour.area() for contour in self.inner_contours2d])
+
         # sic=list(npy.argsort(areas))[::-1]# sorted indices of contours
         # area=areas[sic[0]]
 

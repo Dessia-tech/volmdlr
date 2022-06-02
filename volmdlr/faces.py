@@ -63,6 +63,7 @@ class Surface2D(volmdlr.core.Primitive2D):
     def area(self):
         return self.outer_contour.area() - sum(contour.area() for contour in self.inner_contours)
 
+
     def second_moment_area(self, point: volmdlr.Point2D):
         Ix, Iy, Ixy = self.outer_contour.second_moment_area(point)
         for contour in self.inner_contours:
@@ -5071,9 +5072,9 @@ class CylindricalFace3D(Face3D):
 
     def minimum_maximum(self, contour2d, radius):
         points = contour2d.tessel_points
-
         min_h, min_theta = min(pt[1] for pt in points), min(pt[0] for pt in points)
         max_h, max_theta = max(pt[1] for pt in points), max(pt[0] for pt in points)
+
         return min_h, min_theta, max_h, max_theta
 
     def minimum_distance_points_cyl(self, other_cyl):
@@ -5226,6 +5227,7 @@ class CylindricalFace3D(Face3D):
         pfpoints = poly2d.points
         xmin, ymin = min(pt[0] for pt in pfpoints), min(pt[1] for pt in pfpoints)
         xmax, ymax = max(pt[0] for pt in pfpoints), max(pt[1] for pt in pfpoints)
+
         origin, vx, vy = planeface.plane.origin, planeface.plane.vectors[0], \
             planeface.plane.vectors[1]
         pf1_2d, pf2_2d = volmdlr.Point2D((xmin, ymin)), volmdlr.Point2D(
@@ -6535,6 +6537,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def _data_hash(self):
         return sum(face._data_hash() for face in self.faces)
+
 
     def _data_eq(self, other_):
         if other_.__class__.__name__ != self.__class__.__name__:
