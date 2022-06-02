@@ -81,6 +81,20 @@ for shell in new_box:
 #     face.color = 
 vm.core.VolumeModel(new_box).babylonjs()
 
+orange_box = box.frame_mapping(vm.Frame3D(vm.Point3D(0, 0.1, 0.2),
+                                          vm.Vector3D(1.5, 0, 0),
+                                          vm.Vector3D(0, 2, 0),
+                                          vm.Vector3D(0, 0, 0.5)), 'old')
+orange_box.color = (255/255, 127/255, 80/255)
+orange_box.alpha = 0.6
+vm.core.VolumeModel([new_box[0], orange_box]).babylonjs()
+
+redbox_union_orangebox = new_box[0].union(orange_box)
+for shell in redbox_union_orangebox:
+    shell.color = (1, 0.1, 0.1)
+    shell.alpha = 0.6
+vm.core.VolumeModel(redbox_union_orangebox).babylonjs()
+
 box = primitives3d.Block(
     vm.Frame3D(vm.Point3D(0, 0, 0), vm.Vector3D(0.3, 0, 0),
                vm.Vector3D(0, 0.3, 0), vm.Vector3D(0, 0, 0.3)),

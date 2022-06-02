@@ -1070,6 +1070,8 @@ class Contour(Wire):
 
     @classmethod
     def contours_from_edges(cls, edges, tol=5e-5):
+        if not edges:
+            return []
         list_contours = []
         finished = False
         contour_primitives = []
@@ -2435,6 +2437,13 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         """
         for point in self.points:
             point.translation_inplace(offset)
+
+    def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
+        return self.__class__([point.frame_mapping(frame, side) for point in self.points])
+
+    def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
+        for point in self.points:
+            point.frame_mapping_inplace(frame, side)
 
     def polygon_distance(self,
                          polygon: 'volmdlr.wires.ClosedPolygon2D'):
@@ -3913,9 +3922,9 @@ class Contour3D(Contour, Wire3D):
 
     def average_center_point(self):
         nb = len(self.points)
-        x = npy.sum([p[0] for p in self.points]) / nb
-        y = npy.sum([p[1] for p in self.points]) / nb
-        z = npy.sum([p[2] for p in self.points]) / nb
+        x = sum(point[0] for point in self.points) / nb
+        y = sum(point[1] for point in self.points) / nb
+        z = sum(point[2] for point in self.points) / nb
 
         return volmdlr.Point3D(x, y, z)
 
@@ -4061,7 +4070,11 @@ class Contour3D(Contour, Wire3D):
     def to_2d(self, plane_origin, x, y):
         z = x.cross(y)
         plane3d = volmdlr.faces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
-        primitives2d = [plane3d.point3d_to_2d(p) for p in self.primitives]
+        primitives2d = []
+        for primitive in self.primitives:
+            primitive2d = plane3d.point3d_to_2d(primitive)
+            if primitive2d is not None:
+                primitives2d.append(primitive2d)
         return Contour2D(primitives=primitives2d)
 
     def _bounding_box(self):
@@ -4648,11 +4661,11 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         return lines
 
     def copy(self, *args, **kwargs):
-        points = [p.copy() for p in self.points]
+        points = [point.copy() for point in self.points]
         return ClosedPolygon3D(points, self.name)
 
     def __hash__(self):
-        return sum(hash(p) for p in self.points)
+        return sum(hash(point) for point in self.points)
 
     def __eq__(self, other_):
         if not isinstance(other_, self.__class__):
