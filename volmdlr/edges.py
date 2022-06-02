@@ -3008,8 +3008,10 @@ class LineSegment3D(LineSegment):
         return s
 
     def to_2d(self, plane_origin, x1, x2):
-        p2D = [p.to_2d(plane_origin, x1, x2) for p in (self.start, self.end)]
-        return LineSegment2D(*p2D, name=self.name)
+        p2d = [p.to_2d(plane_origin, x1, x2) for p in (self.start, self.end)]
+        if p2d[0] == p2d[1]:
+            return None
+        return LineSegment2D(*p2d, name=self.name)
 
     def reverse(self):
         return LineSegment3D(self.end.copy(), self.start.copy())
@@ -3940,12 +3942,13 @@ class Arc3D(Arc):
     def get_bounding_box(self):
         # TODO: implement exact calculation
         points = self.polygon_points()
-        xmin = min(p.x for p in points)
-        xmax = max(p.x for p in points)
-        ymin = min(p.y for p in points)
-        ymax = max(p.y for p in points)
-        zmin = min(p.z for p in points)
-        zmax = max(p.z for p in points)
+        xmin = min(point.x for point in points)
+        xmax = max(point.x for point in points)
+        ymin = min(point.y for point in points)
+        ymax = max(point.y for point in points)
+        zmin = min(point.z for point in points)
+        zmax = max(point.z for point in points)
+
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     @classmethod
