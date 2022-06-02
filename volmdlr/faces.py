@@ -244,7 +244,7 @@ class Surface2D(volmdlr.core.Primitive2D):
             all_contours.extend([self])
         if len(intersections) < 4:
             return [self]
-        elif len(intersections) >= 4:
+        if len(intersections) >= 4:
             if isinstance(intersections[0][0], volmdlr.Point2D) and \
                     isinstance(intersections[1][0], volmdlr.Point2D):
                 ip1, ip2 = sorted(
