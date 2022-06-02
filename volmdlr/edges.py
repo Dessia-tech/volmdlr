@@ -288,7 +288,7 @@ class BSplineCurve(Edge):
                  knots: List[float],
                  weights: List[float] = None,
                  periodic: bool = False,
-                 name: str =''):
+                 name: str = ''):
 
         self.control_points = control_points
         self.degree = degree
@@ -305,7 +305,7 @@ class BSplineCurve(Edge):
             P = [[*point] for point in control_points]
             curve.ctrlpts = P
         else:
-            Pw = [[*point*weights[i], weights[i]] for i, point in enumerate(control_points)]
+            Pw = [[*point * weights[i], weights[i]] for i, point in enumerate(control_points)]
             curve.ctrlptsw = Pw
 
         knot_vector = []
@@ -321,11 +321,10 @@ class BSplineCurve(Edge):
                                f'Point{self.__class__.__name__[-2::]}')(*p)
                        for p in curve_points]
 
-        start = self.points[0] #self.point_at_abscissa(0.)
-        end = self.points[-1] #self.point_at_abscissa(self.length())
+        start = self.points[0]  # self.point_at_abscissa(0.)
+        end = self.points[-1]  # self.point_at_abscissa(self.length())
 
         Edge.__init__(self, start, end, name=name)
-
 
     def reverse(self):
         '''
@@ -795,7 +794,7 @@ class BSplineCurve2D(BSplineCurve):
                  knots: List[float],
                  weights: List[float] = None,
                  periodic: bool = False,
-                 name: str =''):
+                 name: str = ''):
 
         self.control_points = control_points
         self.degree = degree
@@ -3330,7 +3329,7 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
                  knots: List[float],
                  weights: List[float] = None,
                  periodic: bool = False,
-                 name: str =''):
+                 name: str = ''):
 
         self.control_points = control_points
         self.degree = degree
