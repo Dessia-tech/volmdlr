@@ -278,8 +278,54 @@ class LineSegment(Edge):
                     self.__class__(split_point, self.end)]
 
 
-class BSplineCurve():
+class BSplineCurve(Edge):
     _non_serializable_attributes = ['curve']
+
+    def __init__(self,
+                 degree: int,
+                 control_points,
+                 knot_multiplicities: List[int],
+                 knots: List[float],
+                 weights: List[float] = None,
+                 periodic: bool = False,
+                 name: str =''):
+
+        self.control_points = control_points
+        self.degree = degree
+        knots = standardize_knot_vector(knots)
+        self.knots = knots
+        self.knot_multiplicities = knot_multiplicities
+        self.weights = weights
+        self.periodic = periodic
+        self.name = name
+
+        curve = BSpline.Curve()
+        curve.degree = degree
+        if weights is None:
+            P = [[*point] for point in control_points]
+            curve.ctrlpts = P
+        else:
+            Pw = [[*point*weights[i], weights[i]] for i, point in enumerate(control_points)]
+            curve.ctrlptsw = Pw
+
+        knot_vector = []
+        for i, knot in enumerate(knots):
+            knot_vector.extend([knot] * knot_multiplicities[i])
+        curve.knotvector = knot_vector
+        curve.delta = 0.01
+        curve_points = curve.evalpts
+        self.curve = curve
+
+        self._length = None
+        self.points = [getattr(volmdlr,
+                               f'Point{self.__class__.__name__[-2::]}')(*p)
+                       for p in curve_points]
+
+        start = self.points[0] #self.point_at_abscissa(0.)
+        end = self.points[-1] #self.point_at_abscissa(self.length())
+
+        Edge.__init__(self, start, end, name=name)
+
 
     def reverse(self):
         '''
@@ -739,7 +785,7 @@ class Line2D(Line):
         return list_points
 
 
-class BSplineCurve2D(Edge, BSplineCurve):
+class BSplineCurve2D(BSplineCurve):
     _non_serializable_attributes = ['curve']
 
     def __init__(self,
@@ -747,7 +793,10 @@ class BSplineCurve2D(Edge, BSplineCurve):
                  control_points: List[volmdlr.Point2D],
                  knot_multiplicities: List[int],
                  knots: List[float],
-                 weights=None, periodic=False, name=''):
+                 weights: List[float] = None,
+                 periodic: bool = False,
+                 name: str =''):
+
         self.control_points = control_points
         self.degree = degree
         knots = standardize_knot_vector(knots)
@@ -755,29 +804,15 @@ class BSplineCurve2D(Edge, BSplineCurve):
         self.knot_multiplicities = knot_multiplicities
         self.weights = weights
         self.periodic = periodic
+        self.name = name
 
-        curve = BSpline.Curve()
-        curve.degree = degree
-        if weights is None:
-            P = [(control_points[i][0], control_points[i][1]) for i in
-                 range(len(control_points))]
-            curve.ctrlpts = P
-        else:
-            Pw = [(control_points[i][0] * weights[i],
-                   control_points[i][1] * weights[i], weights[i]) for i in
-                  range(len(control_points))]
-            curve.ctrlptsw = Pw
-        knot_vector = []
-        for i, knot in enumerate(knots):
-            knot_vector.extend([knot] * knot_multiplicities[i])
-        curve.knotvector = knot_vector
-
-        self.curve = curve
-        self._length = None
-        start = self.point_at_abscissa(0.)
-        end = self.point_at_abscissa(self.length())
-
-        Edge.__init__(self, start, end, name=name)
+        BSplineCurve.__init__(self, self.control_points,
+                              self.degree,
+                              self.knots,
+                              self.knot_multiplicities,
+                              self.weights,
+                              self.periodic,
+                              self.name)
 
     def bounding_rectangle(self):
         points = self.polygon_points()
@@ -3285,14 +3320,18 @@ class LineSegment3D(LineSegment):
         return content, [current_id]
 
 
-class BSplineCurve3D(Edge, BSplineCurve, volmdlr.core.Primitive3D):
+class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
     _non_serializable_attributes = ['curve']
 
-    def __init__(self, degree: int, control_points: List[volmdlr.Point3D],
-                 knot_multiplicities: List[int], knots: List[float],
-                 weights: List[float] = None, periodic: bool = False,
-                 name: str = ''):
-        volmdlr.core.Primitive3D.__init__(self, name=name)
+    def __init__(self,
+                 degree: int,
+                 control_points: List[volmdlr.Point3D],
+                 knot_multiplicities: List[int],
+                 knots: List[float],
+                 weights: List[float] = None,
+                 periodic: bool = False,
+                 name: str =''):
+
         self.control_points = control_points
         self.degree = degree
         knots = standardize_knot_vector(knots)
@@ -3302,30 +3341,16 @@ class BSplineCurve3D(Edge, BSplineCurve, volmdlr.core.Primitive3D):
         self.periodic = periodic
         self.name = name
 
-        curve = BSpline.Curve()
-        curve.degree = degree
-        if weights is None:
-            P = [(control_points[i][0], control_points[i][1],
-                  control_points[i][2]) for i in range(len(control_points))]
-            curve.ctrlpts = P
-        else:
-            Pw = [(control_points[i][0] * weights[i],
-                   control_points[i][1] * weights[i],
-                   control_points[i][2] * weights[i], weights[i]) for i in
-                  range(len(control_points))]
-            curve.ctrlptsw = Pw
-        knot_vector = []
-        for i, knot in enumerate(knots):
-            knot_vector.extend([knot] * knot_multiplicities[i])
-        curve.knotvector = knot_vector
-        curve.delta = 0.01
-        curve_points = curve.evalpts
-
-        self.curve = curve
-        self._length = None
         self.bounding_box = self._bounding_box()
-        self.points = [volmdlr.Point3D(p[0], p[1], p[2]) for p in curve_points]
-        Edge.__init__(self, start=self.points[0], end=self.points[-1])
+
+        BSplineCurve.__init__(self, self.control_points,
+                              self.degree,
+                              self.knots,
+                              self.knot_multiplicities,
+                              self.weights,
+                              self.periodic,
+                              self.name)
+        volmdlr.core.Primitive3D.__init__(self, name=name)
 
     def _bounding_box(self):
         bbox = self.curve.bbox
