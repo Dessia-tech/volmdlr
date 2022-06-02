@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * various fixes in cuts of wires and contours
 * Fix of missing face in Union
 * following dessia_common v0.7.0
+* Contour3D.bounding_box (use _utd_bounding_box to be defined as a property)
+* BSplineSurface3D.grid2d_deformed (add more constraints to compute surface deformation)
 
 
 ## v0.3.0
