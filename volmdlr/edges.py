@@ -713,8 +713,8 @@ class BSplineCurve2D(Edge):
         y = [point.y for point in points]
         x1 = [x[-1]] + x[0:-1]
         y1 = [y[-1]] + y[0:-1]
-        return 0.5 * abs(sum([i * j for i, j in zip(x, y1)])
-                         - sum([i * j for i, j in zip(y, x1)]))
+        return 0.5 * abs(sum(i * j for i, j in zip(x, y1))
+                         - sum(i * j for i, j in zip(y, x1)))
 
     def straight_line_center_of_mass(self):
         polygon_points = self.polygon_points(100)
@@ -3940,12 +3940,12 @@ class Arc3D(Arc):
     def get_bounding_box(self):
         # TODO: implement exact calculation
         points = self.polygon_points()
-        xmin = min([p.x for p in points])
-        xmax = max([p.x for p in points])
-        ymin = min([p.y for p in points])
-        ymax = max([p.y for p in points])
-        zmin = min([p.z for p in points])
-        zmax = max([p.z for p in points])
+        xmin = min(p.x for p in points)
+        xmax = max(p.x for p in points)
+        ymin = min(p.y for p in points)
+        ymax = max(p.y for p in points)
+        zmin = min(p.z for p in points)
+        zmax = max(p.z for p in points)
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     @classmethod
