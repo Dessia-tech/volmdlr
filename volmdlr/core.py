@@ -456,16 +456,16 @@ class CompositePrimitive2D(Primitive2D):
         Changes frame_mapping and return a new CompositePrimitive2D
         side = 'old' or 'new'
         """
-        return self.__class__([point.frame_mapping(frame, side)
-                               for point in self.primitives])
+        return self.__class__([primitive.frame_mapping(frame, side)
+                               for primitive in self.primitives])
 
     def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
         """
         Changes frame_mapping and the object is updated inplace
         side = 'old' or 'new'
         """
-        for point in self.primitives:
-            point.frame_mapping_inplace(frame, side)
+        for primitive in self.primitives:
+            primitive.frame_mapping_inplace(frame, side)
         self.update_basis_primitives()
 
     def plot(self, ax=None, color='k', alpha=1,
@@ -633,7 +633,7 @@ class BoundingBox(dc.DessiaObject):
         self.center = volmdlr.Point3D(0.5 * (xmin + xmax), 0.5 * (ymin + ymax), 0.5 * (zmin + zmax))
 
     def __hash__(self):
-        return sum(hash(p) for p in self.points)
+        return sum(hash(point) for point in self.points)
 
     def __add__(self, other_bbox):
         return BoundingBox(min(self.xmin, other_bbox.xmin),
@@ -871,7 +871,7 @@ class VolumeModel(dc.DessiaObject):
         #     self.bounding_box = BoundingBox(-1, 1, -1, 1, -1, 1)
 
     def __hash__(self):
-        return sum(hash(p) for p in self.primitives)
+        return sum(hash(point) for point in self.primitives)
 
     # def _extract_shells(self):
     #     shells = []
