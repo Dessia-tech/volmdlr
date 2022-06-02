@@ -3789,6 +3789,7 @@ class Contour3D(Contour, Wire3D):
 
         Wire3D.__init__(self, primitives=primitives, name=name)
         self._utd_edge_polygon = False
+        self._utd_bounding_box = False
 
     def __hash__(self):
         return sum([hash(e) for e in self.primitives])
@@ -4072,6 +4073,13 @@ class Contour3D(Contour, Wire3D):
         points = [self.point_at_abscissa(i / n * l)
                   for i in range(n)]
         return volmdlr.core.BoundingBox.from_points(points)
+
+    @property
+    def bounding_box(self):
+        if not self._utd_bounding_box:
+            self._bbox = self._bounding_box()
+            self._utd_bounding_box = True
+        return self._bbox
 
     @classmethod
     def extract_contours(cls, contour, point1: volmdlr.Point3D,
