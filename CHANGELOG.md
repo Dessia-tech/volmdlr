@@ -37,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Consider different types of primitives in Wire.wire_intersections/wire_crossings
 
 
-#### Refactorings
+### Refactorings
 
 * Define __eq__ in Contour (to be used for both 2D and 3D)
 * Use Grid2D object in different BSplineSurface3D methods (especially: to_2d_with_dimension)

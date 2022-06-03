@@ -13,7 +13,7 @@ import webbrowser
 import numpy as npy
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+# from mpl_toolkits.mplot3d import Axes3D
 
 import dessia_common as dc
 import dessia_common.files as dcf
