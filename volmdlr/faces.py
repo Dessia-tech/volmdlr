@@ -822,6 +822,7 @@ class Plane3D(Surface3D):
         """
         self.frame = frame
         self.name = name
+        Surface3D.__init__(self, name=name)
 
     def __hash__(self):
         return hash(self.frame)
