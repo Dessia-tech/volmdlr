@@ -804,13 +804,13 @@ class BSplineCurve2D(BSplineCurve):
                  periodic: bool = False,
                  name: str = ''):
 
-        BSplineCurve.__init__(self, self.degree,
-                              self.control_points,
-                              self.knot_multiplicities,
-                              self.knots,
-                              self.weights,
-                              self.periodic,
-                              self.name)
+        BSplineCurve.__init__(self, degree,
+                              control_points,
+                              knot_multiplicities,
+                              knots,
+                              weights,
+                              periodic,
+                              name)
 
     def bounding_rectangle(self):
         points = self.polygon_points()
@@ -3324,13 +3324,13 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
                  periodic: bool = False,
                  name: str = ''):
 
-        BSplineCurve.__init__(self, self.degree,
-                              self.control_points,
-                              self.knot_multiplicities,
-                              self.knots,
-                              self.weights,
-                              self.periodic,
-                              self.name)
+        BSplineCurve.__init__(self, degree,
+                              control_points,
+                              knot_multiplicities,
+                              knots,
+                              weights,
+                              periodic,
+                              name)
         volmdlr.core.Primitive3D.__init__(self, name=name)
 
         self.bounding_box = self._bounding_box()
