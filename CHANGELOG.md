@@ -7,11 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unrealeased
 
+*improvements to union operations
+
+### Fixed
+* Remove Copy param from movement of primitives and add inplace methods
+
+
+
+* improvements to union operations
+
+### Fixed
+Remove Copy param from movement of primitives and add inplace methods
+* Wire3D babylonjs
+
+
 ## v0.4.0
 ### Fixed
 * various fixes in cuts of wires and contours
 * Fix of missing face in Union
 * following dessia_common v0.7.0
+
 
 ## v0.3.0
 

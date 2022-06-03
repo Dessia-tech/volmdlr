@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 import dessia_common as dc
 import volmdlr as vm
-import volmdlr.core
+# import volmdlr.core
 import volmdlr.wires as vmw
 import volmdlr.faces as vmf
 import volmdlr.step as vstep
