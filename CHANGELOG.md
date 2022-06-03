@@ -25,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Contour2D.contour_intersections (check if the point is not already in the lis)
 * Line.is_between_points (consider point1==point2)
 * BSplineCurve2D.split (consider point==start/end)
+* Contour3D.bounding_box (use _utd_bounding_box to be defined as a property)
+* BSplineSurface3D.grid2d_deformed (add more constraints to compute surface deformation)
+
 
 
 ### Performance improvements
@@ -39,10 +42,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Refactorings
 
+
 * Define __eq__ in Contour (to be used for both 2D and 3D)
 * Use Grid2D object in different BSplineSurface3D methods (especially: to_2d_with_dimension)
 * Define a Parent class 'Bsplinecurve' to mutulize Bsplinecurve2D/3D methods
-
 
 
 ## v0.4.0
