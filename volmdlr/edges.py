@@ -415,6 +415,14 @@ class BSplineCurve(Edge):
                               self.knot_multiplicities, self.knots,
                               self.weights, self.periodic)
 
+    def translation_inplace(self, offset):
+        """
+        BSplineCurve translation. Object is updated inplace
+        :param offset: translation vector (volmdlr.Vector2D/ volmdlr.Vector3D)
+        """
+        for point in self.control_points:
+            point.translation_inplace(offset)
+
     def point_belongs(self, point, abs_tol=1e-10):
         '''
         check if a point belongs to the bspline_curve or not
@@ -918,14 +926,6 @@ class BSplineCurve2D(BSplineCurve):
         """
         for point in self.control_points:
             point.rotation_inplace(center, angle)
-
-    def translation_inplace(self, offset: volmdlr.Vector2D):
-        """
-        BSplineCurve2D translation. Object is updated inplace
-        :param offset: translation vector
-        """
-        for point in self.control_points:
-            point.translation_inplace(offset)
 
     def line_intersections(self, line2d: Line2D):
         polygon_points = self.polygon_points(200)
@@ -3579,21 +3579,6 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
                                             self.knots, self.weights,
                                             self.periodic, self.name)
 
-        self.control_points = new_control_points
-        self.curve = new_bsplinecurve3d.curve
-        self.points = new_bsplinecurve3d.points
-
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        BSplineCurve3D translation. Object is updated inplace
-        :param offset: translation vector
-        """
-        new_control_points = [p.translation(offset) for p in
-                              self.control_points]
-        new_bsplinecurve3d = BSplineCurve3D(self.degree, new_control_points,
-                                            self.knot_multiplicities,
-                                            self.knots, self.weights,
-                                            self.periodic, self.name)
         self.control_points = new_control_points
         self.curve = new_bsplinecurve3d.curve
         self.points = new_bsplinecurve3d.points
