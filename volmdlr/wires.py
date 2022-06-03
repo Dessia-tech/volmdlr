@@ -1070,6 +1070,8 @@ class Contour(Wire):
 
     @classmethod
     def contours_from_edges(cls, edges, tol=5e-5):
+        if not edges:
+            return []
         list_contours = []
         finished = False
         contour_primitives = []
@@ -1407,7 +1409,7 @@ class Contour2D(Contour, Wire2D):
         self._bounding_rectangle = None
 
     def __hash__(self):
-        return sum([hash(e) for e in self.primitives])
+        return sum(hash(e) for e in self.primitives)
 
     # def __eq__(self, other_):
     #     if other_.__class__.__name__ != self.__class__.__name__:
@@ -1488,11 +1490,11 @@ class Contour2D(Contour, Wire2D):
         points = self.edge_polygon.points[:]
         for primitive in self.primitives:
             if hasattr(primitive, 'polygon_points'):
-                points.extend(primitive.discretization_points(15))
-        xmin = min([p[0] for p in points])
-        xmax = max([p[0] for p in points])
-        ymin = min([p[1] for p in points])
-        ymax = max([p[1] for p in points])
+                points.extend(primitive.polygon_points())
+        xmin = min(p[0] for p in points)
+        xmax = max(p[0] for p in points)
+        ymin = min(p[1] for p in points)
+        ymax = max(p[1] for p in points)
         return (volmdlr.Point2D(xmin, ymin), volmdlr.Point2D(xmax, ymax))
 
     def area(self):
@@ -2269,7 +2271,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         return ClosedPolygon2D(points, self.name)
 
     def __hash__(self):
-        return sum([hash(p) for p in self.points])
+        return sum(hash(p) for p in self.points)
 
     def __eq__(self, other_):
         if not isinstance(other_, self.__class__):
@@ -2289,8 +2291,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         x1 = [x[-1]] + x[0:-1]
         y1 = [y[-1]] + y[0:-1]
-        return 0.5 * abs(sum([i * j for i, j in zip(x, y1)])
-                         - sum([i * j for i, j in zip(y, x1)]))
+        return 0.5 * abs(sum(i * j for i, j in zip(x, y1))
+                         - sum(i * j for i, j in zip(y, x1)))
         # return 0.5 * npy.abs(
         #     npy.dot(x, npy.roll(y, 1)) - npy.dot(y, npy.roll(x, 1)))
 
@@ -2430,6 +2432,13 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         """
         for point in self.points:
             point.translation_inplace(offset)
+
+    def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
+        return self.__class__([point.frame_mapping(frame, side) for point in self.points])
+
+    def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
+        for point in self.points:
+            point.frame_mapping_inplace(frame, side)
 
     def polygon_distance(self,
                          polygon: 'volmdlr.wires.ClosedPolygon2D'):
@@ -3517,6 +3526,10 @@ class Circle2D(volmdlr.edges.ArcMixin, Contour2D):
         return ClosedPolygon2D(
             self.discretization_points(discretization_resolution=angle_resolution))
 
+    @classmethod
+    def from_arc(cls, arc: volmdlr.edges.Arc2D):
+        return cls(arc.center, arc.radius, arc.name + ' to circle')
+
     def tessellation_points(self, resolution=40):
         return [(self.center
                  + self.radius * math.cos(teta) * volmdlr.X2D
@@ -3541,31 +3554,17 @@ class Circle2D(volmdlr.edges.ArcMixin, Contour2D):
         return xmin, xmax, ymin, ymax
 
     def line_intersections(self, line2d: volmdlr.edges.Line2D, tol=1e-9):
-        # Duplicate from ffull arc
-        Q = self.center
-        if line2d.points[0] == self.center:
-            P1 = line2d.points[1]
-            V = line2d.points[0] - line2d.points[1]
-        else:
-            P1 = line2d.points[0]
-            V = line2d.points[1] - line2d.points[0]
-        a = V.dot(V)
-        b = 2 * V.dot(P1 - Q)
-        c = P1.dot(P1) + Q.dot(Q) - 2 * P1.dot(Q) - self.radius ** 2
+        full_arc_2d = volmdlr.edges.FullArc2D(
+            center=self.center, start_end=self.point_at_abscissa(0),
+            name=self.name)
+        return full_arc_2d.line_intersections(line2d, tol)
 
-        disc = b ** 2 - 4 * a * c
-        if math.isclose(disc, 0., abs_tol=tol):
-            t1 = -b / (2 * a)
-            return [P1 + t1 * V]
-
-        elif disc > 0:
-            sqrt_disc = math.sqrt(disc)
-            t1 = (-b + sqrt_disc) / (2 * a)
-            t2 = (-b - sqrt_disc) / (2 * a)
-            return [P1 + t1 * V,
-                    P1 + t2 * V]
-        else:
-            return []
+    def linesegment_intersections(self, lineseg2d: volmdlr.edges.LineSegment2D,
+                                  tol=1e-9):
+        full_arc_2d = volmdlr.edges.FullArc2D(
+            center=self.center, start_end=self.point_at_abscissa(0),
+            name=self.name)
+        return full_arc_2d.linesegment_intersections(lineseg2d, tol)
 
     def circle_intersections(self, circle: 'volmdlr.wires.Circle2D'):
         x0, y0 = self.center
@@ -3798,9 +3797,10 @@ class Contour3D(Contour, Wire3D):
 
         Wire3D.__init__(self, primitives=primitives, name=name)
         self._utd_edge_polygon = False
+        self._utd_bounding_box = False
 
     def __hash__(self):
-        return sum([hash(e) for e in self.primitives])
+        return sum(hash(e) for e in self.primitives)
 
     @property
     def edge_polygon(self):
@@ -3921,9 +3921,9 @@ class Contour3D(Contour, Wire3D):
 
     def average_center_point(self):
         nb = len(self.points)
-        x = npy.sum([p[0] for p in self.points]) / nb
-        y = npy.sum([p[1] for p in self.points]) / nb
-        z = npy.sum([p[2] for p in self.points]) / nb
+        x = sum(point[0] for point in self.points) / nb
+        y = sum(point[1] for point in self.points) / nb
+        z = sum(point[2] for point in self.points) / nb
 
         return volmdlr.Point3D(x, y, z)
 
@@ -4069,7 +4069,11 @@ class Contour3D(Contour, Wire3D):
     def to_2d(self, plane_origin, x, y):
         z = x.cross(y)
         plane3d = volmdlr.faces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
-        primitives2d = [plane3d.point3d_to_2d(p) for p in self.primitives]
+        primitives2d = []
+        for primitive in self.primitives:
+            primitive2d = plane3d.point3d_to_2d(primitive)
+            if primitive2d is not None:
+                primitives2d.append(primitive2d)
         return Contour2D(primitives=primitives2d)
 
     def _bounding_box(self):
@@ -4081,6 +4085,13 @@ class Contour3D(Contour, Wire3D):
         points = [self.point_at_abscissa(i / n * l)
                   for i in range(n)]
         return volmdlr.core.BoundingBox.from_points(points)
+
+    @property
+    def bounding_box(self):
+        if not self._utd_bounding_box:
+            self._bbox = self._bounding_box()
+            self._utd_bounding_box = True
+        return self._bbox
 
     @classmethod
     def extract_contours(cls, contour, point1: volmdlr.Point3D,
@@ -4645,11 +4656,11 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         return lines
 
     def copy(self, *args, **kwargs):
-        points = [p.copy() for p in self.points]
+        points = [point.copy() for point in self.points]
         return ClosedPolygon3D(points, self.name)
 
     def __hash__(self):
-        return sum([hash(p) for p in self.points])
+        return sum(hash(point) for point in self.points)
 
     def __eq__(self, other_):
         if not isinstance(other_, self.__class__):
