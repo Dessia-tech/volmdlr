@@ -61,15 +61,15 @@ class Edge(dc.DessiaObject):
     def __init__(self, start, end, name=''):
         self.start = start
         self.end = end
+        self._length = None
         dc.DessiaObject.__init__(self, name=name)
 
     def __getitem__(self, key):
         if key == 0:
             return self.start
-        elif key == 1:
+        if key == 1:
             return self.end
-        else:
-            raise IndexError
+        raise IndexError
 
     def polygon_points(self, min_x_density=None, min_y_density=None):
         n = 0  # Number of points to insert between start and end
@@ -138,6 +138,19 @@ class Edge(dc.DessiaObject):
         """
         raise NotImplementedError('the unit_direction_vector method must be'
                                   'overloaded by subclassing class')
+
+    def length(self):
+        """
+        Calculates the edge length
+        :return: edges\' length
+        """
+        raise NotImplementedError(f'length method not implememented by {self.__class__}')
+
+    def point_at_abscissa(self, abscissa):
+        """
+        Calcultes the point at given abscissa
+        """
+        raise NotImplementedError(f'point_at_absciss method not implememented by {self.__class__}')
 
 
 class Line(dc.DessiaObject):
@@ -215,6 +228,10 @@ class LineSegment(Edge):
     """
     Abstract class
     """
+    def length(self):
+        if not self._length:
+            self._length = self.end.point_distance(self.start)
+        return self._length
 
     def abscissa(self, point):
         u = self.end - self.start
@@ -998,7 +1015,7 @@ class LineSegment2D(LineSegment):
     def __init__(self, start: volmdlr.Point2D, end: volmdlr.Point2D, *, name: str = ''):
         if start == end:
             raise NotImplementedError
-        Edge.__init__(self, start, end, name=name)
+        LineSegment.__init__(self, start, end, name=name)
 
     def __hash__(self):
         return self._data_hash()
@@ -1022,9 +1039,6 @@ class LineSegment2D(LineSegment):
                 'start': self.start.to_dict(),
                 'end': self.end.to_dict()
                 }
-
-    def length(self):
-        return self.end.point_distance(self.start)
 
     def middle_point(self):
         return 0.5 * (self.start + self.end)
@@ -2679,7 +2693,6 @@ class LineSegment3D(LineSegment):
             raise NotImplementedError
         self.points = [start, end]
         LineSegment.__init__(self, start=start, end=end, name=name)
-
         self._bbox = None
 
     @property
@@ -2718,9 +2731,6 @@ class LineSegment3D(LineSegment):
                 'start': self.start.to_dict(),
                 'end': self.end.to_dict()
                 }
-
-    def length(self):
-        return self.end.point_distance(self.start)
 
     def point_at_abscissa(self, curvilinear_abscissa):
         return self.start + curvilinear_abscissa * (
