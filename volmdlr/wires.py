@@ -3485,7 +3485,7 @@ class Triangle2D(ClosedPolygon2D):
         return self.__class__(point1, point2, point3)
 
 
-class Circle2D(Contour2D):
+class Circle2D(volmdlr.edges.ArcMixin, Contour2D):
     _non_serializable_attributes = ['internal_arcs', 'external_arcs',
                                     'polygon', 'straight_line_contour_polygon',
                                     'primitives', 'basis_primitives']
@@ -3515,7 +3515,7 @@ class Circle2D(Contour2D):
 
     def to_polygon(self, angle_resolution: float):
         return ClosedPolygon2D(
-            self.dicretization_points(angle_resolution=angle_resolution))
+            self.discretization_points(discretization_resolution=angle_resolution))
 
     def tessellation_points(self, resolution=40):
         return [(self.center
@@ -3771,16 +3771,6 @@ class Circle2D(Contour2D):
     #         circle_to_nodes[self] = nodes
     #
     #     return circle_to_nodes[self]
-
-    def dicretization_points(self, angle_resolution=10):
-        return volmdlr.edges.Arc2D.discretization_points(
-            self, discretization_resolution=angle_resolution)
-
-    def polygon_points(self, discretization_resolution: int):
-        warnings.warn('polygon_points is deprecated,\
-                please use discretization_points instead',
-                      DeprecationWarning)
-        return self.discretization_points(discretization_resolution)
 
     def axial_symmetry(self, line):
         '''
