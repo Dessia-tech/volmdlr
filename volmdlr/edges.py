@@ -804,15 +804,6 @@ class BSplineCurve2D(BSplineCurve):
                  periodic: bool = False,
                  name: str = ''):
 
-        self.control_points = control_points
-        self.degree = degree
-        knots = standardize_knot_vector(knots)
-        self.knots = knots
-        self.knot_multiplicities = knot_multiplicities
-        self.weights = weights
-        self.periodic = periodic
-        self.name = name
-
         BSplineCurve.__init__(self, self.degree,
                               self.control_points,
                               self.knot_multiplicities,
@@ -3332,15 +3323,6 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
                  weights: List[float] = None,
                  periodic: bool = False,
                  name: str = ''):
-
-        self.control_points = control_points
-        self.degree = degree
-        knots = standardize_knot_vector(knots)
-        self.knots = knots
-        self.knot_multiplicities = knot_multiplicities
-        self.weights = weights
-        self.periodic = periodic
-        self.name = name
 
         BSplineCurve.__init__(self, self.degree,
                               self.control_points,
