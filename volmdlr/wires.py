@@ -11,7 +11,6 @@ from statistics import mean
 from typing import List
 import numpy as npy
 from scipy.spatial import Delaunay, ConvexHull
-import scipy as scp
 
 import matplotlib.pyplot as plt
 import matplotlib.patches
@@ -583,12 +582,19 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
 
         intersections, intersections_points = [], []
         for primitive in wire.primitives:
-            a_points = self.linesegment_intersections(primitive)
-            if a_points:
-                for a in a_points:
-                    if a[0] not in intersections_points:
-                        intersections.append([a[0], a[1]])
-                        intersections_points.append(a[0])
+            method_name = f'{primitive.__class__.__name__.lower()[0:-2]}_intersections'
+
+            if hasattr(self, method_name):
+                a_points = getattr(self, method_name)(primitive)
+                # a_points = self.linesegment_intersections(primitive)
+                if a_points:
+                    for a in a_points:
+                        if a[0] not in intersections_points:
+                            intersections.append([a[0], a[1]])
+                            intersections_points.append(a[0])
+            else:
+                raise NotImplementedError(
+                    f'Class {self.__class__.__name__} does not implement {method_name}')
 
         return intersections
 
@@ -633,12 +639,20 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
 
         crossings, crossings_points = [], []
         for primitive in wire.primitives:
-            a_points = self.linesegment_crossings(primitive)
-            if a_points:
-                for a in a_points:
-                    if a[0] not in crossings_points:
-                        crossings.append([a[0], a[1]])
-                        crossings_points.append(a[0])
+            method_name = f'{primitive.__class__.__name__.lower()[0:-2]}_crossings'
+
+            if hasattr(self, method_name):
+                a_points = getattr(self, method_name)(primitive)
+                # a_points = self.linesegment_crossings(primitive)
+                if a_points:
+                    for a in a_points:
+                        if a[0] not in crossings_points:
+                            crossings.append([a[0], a[1]])
+                            crossings_points.append(a[0])
+            else:
+                raise NotImplementedError(
+                    f'Class {self.__class__.__name__} does not implement {method_name}')
+
         return crossings
 
     def to_wire_with_linesegments(self):
@@ -729,6 +743,36 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         if wire2d.is_superposing(c_symmetry_0) and self.is_superposing(c_symmetry_1):
             return True
         return False
+
+    def bsplinecurve_crossings(self,
+                               bsplinecurve: 'volmdlr.edges.BSplineCurve2D'):
+        """
+        Returns a list of crossings in ther form of a tuple (point,
+        primitive) of the wire primitives crossings with the bsplinecurve
+        """
+
+        linesegments = bsplinecurve.to_wire(25).primitives
+        crossings_points = []
+        for linesegment in linesegments:
+            crossings_linesegment = self.linesegment_crossings(linesegment)
+            if crossings_linesegment != []:
+                crossings_points.extend(crossings_linesegment)
+        return crossings_points
+
+    def bsplinecurve_intersections(self,
+                                   bsplinecurve: 'volmdlr.edges.BSplineCurve2D'):
+        """
+        Returns a list of intersections in ther form of a tuple (point,
+        primitive) of the wire primitives intersections with the bsplinecurve
+        """
+
+        linesegments = bsplinecurve.to_wire(25).primitives
+        intersections_points = []
+        for linesegment in linesegments:
+            intersections_linesegments = self.linesegment_intersections(linesegment)
+            if intersections_linesegments != []:
+                intersections_points.extend(intersections_linesegments)
+        return intersections_points
 
 
 class Wire3D(volmdlr.core.CompositePrimitive3D, Wire):
