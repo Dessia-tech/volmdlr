@@ -721,8 +721,8 @@ class BSplineCurve2D(Edge):
         y = [point.y for point in points]
         x1 = [x[-1]] + x[0:-1]
         y1 = [y[-1]] + y[0:-1]
-        return 0.5 * abs(sum([i * j for i, j in zip(x, y1)])
-                         - sum([i * j for i, j in zip(y, x1)]))
+        return 0.5 * abs(sum(i * j for i, j in zip(x, y1))
+                         - sum(i * j for i, j in zip(y, x1)))
 
     def straight_line_center_of_mass(self):
         polygon_points = self.discretization_points(100)
@@ -1541,16 +1541,55 @@ class Arc2D(Arc):
             return min(LineSegment2D(point, self.start).length(),
                        LineSegment2D(point, self.end).length())
 
-    def to_circle(self):
-        return volmdlr.wires.Circle2D(self.center, self.radius)
+    def point_belongs(self, point2d, abs_tol=1e-10):
+        """
+        check if a Point2D belongs to the Arc2D
+        """
+        vector_start = self.start - self.center
+        vector_end = self.end - self.center
+        vector_point = point2d - self.center
+        r1 = vector_start.norm()
+        cp = vector_point.norm()
+        if math.isclose(cp, r1, abs_tol=abs_tol):
+            if (self.start.x < self.end.x) and (self.start.y < self.end.y):
+                arc_angle = - volmdlr.core.clockwise_angle(vector_start,
+                                                           vector_end)
+                point_angle = - volmdlr.core.clockwise_angle(vector_start,
+                                                             vector_point)
+            else:
+                arc_angle = volmdlr.core.clockwise_angle(vector_start,
+                                                         vector_end)
+                point_angle = volmdlr.core.clockwise_angle(vector_start,
+                                                           vector_point)
+            if point_angle <= arc_angle:
+                return True
+        return False
+
+    # def to_circle(self):
+    #     return volmdlr.wires.Circle2D(self.center, self.radius)
+
+    def to_full_arc_2d(self):
+        return FullArc2D(center=self.center,
+                         start_end=self.point_at_abscissa(0),
+                         name=self.name)
 
     def line_intersections(self, line2d: Line2D):
-        circle = self.to_circle()
-        circle_intersection_points = circle.line_intersections(line2d)
-
-        # print(circle_intersection_points)
+        # circle = self.to_circle()
+        # circle_intersection_points = circle.line_intersections(line2d)
+        full_arc_2d = self.to_full_arc_2d()
+        fa2d_intersection_points = full_arc_2d.line_intersections(line2d)
         intersection_points = []
-        for pt in circle_intersection_points:
+        for pt in fa2d_intersection_points:
+            if self.point_belongs(pt):
+                intersection_points.append(pt)
+        return intersection_points
+
+    def linesegment_intersections(self, linesegment2d: LineSegment2D):
+        full_arc_2d = self.to_full_arc_2d()
+        fa2d_intersection_points = full_arc_2d.linesegment_intersections(
+            linesegment2d)
+        intersection_points = []
+        for pt in fa2d_intersection_points:
             if self.point_belongs(pt):
                 intersection_points.append(pt)
         return intersection_points
@@ -1887,25 +1926,6 @@ class Arc2D(Arc):
         interior = self.middle_point().rotation(self.center, math.pi)
         return Arc2D(self.start, interior, self.end)
 
-    def point_belongs(self, point2d, abs_tol=1e-10):
-        '''
-        check if a point2d belongs to the arc_2d or not
-        '''
-
-        def f(x):
-            return (point2d - self.point_at_abscissa(x)).norm()
-        length_ = self.length()
-        x = npy.linspace(0, length_, 5)
-        x_init = []
-        for xi in x:
-            x_init.append(xi)
-
-        for x0 in x_init:
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0, length_]))
-            if z.fun < abs_tol:
-                return True
-        return False
-
     def to_wire(self, angle_resolution: float = 10.):
         '''
         convert an arc to a wire2d defined with line_segments
@@ -2072,31 +2092,78 @@ class FullArc2D(Arc2D):
         return arc
 
     def line_intersections(self, line2d: Line2D, tol=1e-9):
-        # Duplicate from circle
-        Q = self.center
-        if line2d.points[0] == self.center:
-            P1 = line2d.points[1]
-            V = line2d.points[0] - line2d.points[1]
-        else:
-            P1 = line2d.points[0]
-            V = line2d.points[1] - line2d.points[0]
-        a = V.dot(V)
-        b = 2 * V.dot(P1 - Q)
-        c = P1.dot(P1) + Q.dot(Q) - 2 * P1.dot(Q) - self.radius ** 2
+        try:
+            if line2d.start == self.center:
+                pt1 = line2d.end
+                vec = line2d.start - line2d.end
+            else:
+                pt1 = line2d.start
+                vec = line2d.end - line2d.start
+        except AttributeError:
+            if line2d.point1 == self.center:
+                pt1 = line2d.point2
+                vec = line2d.point1 - line2d.point2
+            else:
+                pt1 = line2d.point1
+                vec = line2d.point2 - line2d.point1
+        a = vec.dot(vec)
+        b = 2 * vec.dot(pt1 - self.center)
+        c = pt1.dot(pt1) + self.center.dot(self.center) \
+            - 2 * pt1.dot(self.center) - self.radius ** 2
 
         disc = b ** 2 - 4 * a * c
         if math.isclose(disc, 0., abs_tol=tol):
             t1 = -b / (2 * a)
-            return [P1 + t1 * V]
+            return [pt1 + t1 * vec]
 
         elif disc > 0:
             sqrt_disc = math.sqrt(disc)
             t1 = (-b + sqrt_disc) / (2 * a)
             t2 = (-b - sqrt_disc) / (2 * a)
-            return [P1 + t1 * V,
-                    P1 + t2 * V]
-        else:
+            return [pt1 + t1 * vec,
+                    pt1 + t2 * vec]
+
+        return []
+
+    def linesegment_intersections(self, linesegment2d: LineSegment2D,
+                                  tol=1e-9):
+        try:
+            if linesegment2d.start == self.center:
+                pt1 = linesegment2d.end
+                vec = linesegment2d.start - linesegment2d.end
+            else:
+                pt1 = linesegment2d.start
+                vec = linesegment2d.end - linesegment2d.start
+        except AttributeError:
+            if linesegment2d.point1 == self.center:
+                pt1 = linesegment2d.point2
+                vec = linesegment2d.point1 - linesegment2d.point2
+            else:
+                pt1 = linesegment2d.point1
+                vec = linesegment2d.point2 - linesegment2d.point1
+        a = vec.dot(vec)
+        b = 2 * vec.dot(pt1 - self.center)
+        c = pt1.dot(pt1) + self.center.dot(self.center) \
+            - 2 * pt1.dot(self.center) - self.radius ** 2
+
+        disc = b ** 2 - 4 * a * c
+        if math.isclose(disc, 0., abs_tol=tol):
+            t1 = -b / (2 * a)
+            points = [pt1 + t1 * vec]
+            if linesegment2d.point_belongs(points[0]):
+                return points
             return []
+
+        elif disc > 0:
+            sqrt_disc = math.sqrt(disc)
+            t1 = (-b + sqrt_disc) / (2 * a)
+            t2 = (-b - sqrt_disc) / (2 * a)
+            points = [pt1 + t1 * vec, pt1 + t2 * vec]
+            valid_points = [pt for pt in points if
+                            linesegment2d.point_belongs(pt)]
+            return valid_points
+
+        return []
 
 
 class ArcEllipse2D(Edge):
@@ -2885,8 +2952,10 @@ class LineSegment3D(LineSegment):
         return s
 
     def to_2d(self, plane_origin, x1, x2):
-        p2D = [p.to_2d(plane_origin, x1, x2) for p in (self.start, self.end)]
-        return LineSegment2D(*p2D, name=self.name)
+        p2d = [p.to_2d(plane_origin, x1, x2) for p in (self.start, self.end)]
+        if p2d[0] == p2d[1]:
+            return None
+        return LineSegment2D(*p2d, name=self.name)
 
     def reverse(self):
         return LineSegment3D(self.end.copy(), self.start.copy())
@@ -3818,13 +3887,15 @@ class Arc3D(Arc):
 
     def get_bounding_box(self):
         # TODO: implement exact calculation
-        points = self.discretization_points()
-        xmin = min([p.x for p in points])
-        xmax = max([p.x for p in points])
-        ymin = min([p.y for p in points])
-        ymax = max([p.y for p in points])
-        zmin = min([p.z for p in points])
-        zmax = max([p.z for p in points])
+
+        points = self.polygon_points()
+        xmin = min(point.x for point in points)
+        xmax = max(point.x for point in points)
+        ymin = min(point.y for point in points)
+        ymax = max(point.y for point in points)
+        zmin = min(point.z for point in points)
+        zmax = max(point.z for point in points)
+
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     @classmethod
