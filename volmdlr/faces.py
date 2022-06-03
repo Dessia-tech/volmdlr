@@ -4090,9 +4090,9 @@ class PlaneFace3D(Face3D):
     _standalone_in_db = False
     _generic_eq = True
     _non_serializable_attributes = ['bounding_box', 'polygon2D']
-    _non_eq_attributes = ['name', 'bounding_box', 'outer_contour3d',
+    _non_data_eq_attributes = ['name', 'bounding_box', 'outer_contour3d',
                           'inner_contours3d']
-    _non_hash_attributes = []
+    _non_data_hash_attributes = []
 
     def __init__(self, surface3d: Plane3D, surface2d: Surface2D,
                  name: str = ''):
@@ -4642,9 +4642,9 @@ class Triangle3D(PlaneFace3D):
 
     # _generic_eq = True
     # _non_serializable_attributes = ['bounding_box', 'polygon2D']
-    # _non_eq_attributes = ['name', 'bounding_box', 'outer_contour3d',
+    # _non_data_eq_attributes = ['name', 'bounding_box', 'outer_contour3d',
     #                       'inner_contours3d']
-    # _non_hash_attributes = []
+    # _non_data_hash_attributes = []
 
     def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
                  point3: volmdlr.Point3D, alpha=1, color=None, name: str = ''):
@@ -6516,8 +6516,8 @@ class BSplineFace3D(Face3D):
 class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     _standalone_in_db = True
     _non_serializable_attributes = ['bounding_box']
-    _non_eq_attributes = ['name', 'color', 'alpha', 'bounding_box']
-    _non_hash_attributes = []
+    _non_data_eq_attributes = ['name', 'color', 'alpha', 'bounding_box']
+    _non_data_hash_attributes = []
     STEP_FUNCTION = 'OPEN_SHELL'
 
     def __init__(self, faces: List[Face3D],
@@ -6532,6 +6532,9 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         self.alpha = alpha
         self._bbox = None
         # self.bounding_box = self._bounding_box()
+        volmdlr.core.CompositePrimitive3D.__init__(self,
+                                                   primitives=faces,
+                                                   name=name)
 
     def _data_hash(self):
         return sum(face._data_hash() for face in self.faces)
@@ -6919,7 +6922,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 class ClosedShell3D(OpenShell3D):
     _standalone_in_db = True
     _non_serializable_attributes = ['bounding_box']
-    _non_eq_attributes = ['name', 'color', 'alpha', 'bounding_box']
+    _non_data_eq_attributes = ['name', 'color', 'alpha', 'bounding_box']
     STEP_FUNCTION = 'CLOSED_SHELL'
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,

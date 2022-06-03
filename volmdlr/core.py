@@ -20,6 +20,7 @@ import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
 # import volmdlr.stl as vmstl
+from typing import List
 
 npy.seterr(divide='raise')
 
@@ -387,7 +388,7 @@ class CompositePrimitive2D(Primitive2D):
     """
     _non_serializable_attributes = ['name', '_utd_primitives_to_index',
                                     '_primitives_to_index']
-    _non_hash_attributes = ['name', '_utd_primitives_to_index',
+    _non_data_hash_attributes = ['name', '_utd_primitives_to_index',
                             '_primitives_to_index']
 
     def __init__(self, primitives, name=''):
@@ -572,13 +573,13 @@ class CompositePrimitive3D(Primitive3D):
     _standalone_in_db = True
     _eq_is_data_eq = True
     _non_serializable_attributes = ['basis_primitives']
-    _non_eq_attributes = ['name', 'basis_primitives']
-    _non_hash_attributes = []
+    _non_data_eq_attributes = ['name', 'basis_primitives']
+    _non_data_hash_attributes = []
     """
     A collection of simple primitives3D
     """
 
-    def __init__(self, primitives, name=''):
+    def __init__(self, primitives: List[Primitive3D], name: str = ''):
         self.primitives = primitives
 
         Primitive3D.__init__(self, name=name)
@@ -849,16 +850,16 @@ class VolumeModel(dc.DessiaObject):
     _standalone_in_db = True
     _eq_is_data_eq = True
     _non_serializable_attributes = ['shells', 'bounding_box']
-    _non_eq_attributes = ['name', 'shells', 'bounding_box', 'contours',
-                          'faces']
-    _non_hash_attributes = ['name', 'shells', 'bounding_box', 'contours',
-                            'faces']
+    _non_data_eq_attributes = ['name', 'shells', 'bounding_box', 'contours',
+                               'faces']
+    _non_data_hash_attributes = ['name', 'shells', 'bounding_box', 'contours',
+                                 'faces']
     _dessia_methods = ['to_stl_model']
     """
     :param groups: A list of two element tuple. The first element is a string naming the group and the second element is a list of primitives of the group
     """
 
-    def __init__(self, primitives, name=''):
+    def __init__(self, primitives: List[Primitive3D], name: str = ''):
         self.primitives = primitives
         self.name = name
         self.shells = []
@@ -869,6 +870,7 @@ class VolumeModel(dc.DessiaObject):
         self.bounding_box = self._bounding_box()
         # else:
         #     self.bounding_box = BoundingBox(-1, 1, -1, 1, -1, 1)
+        dc.DessiaObject.__init__(self, name=name)
 
     def __hash__(self):
         return sum(hash(point) for point in self.primitives)
