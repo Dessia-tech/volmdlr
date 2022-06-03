@@ -2694,9 +2694,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
     def points_convex_hull(cls, points):
         if len(points) < 3:
             return
-        
+
         points_hull = [pt.copy() for pt in points]
-        
+
         ymax, pos_ymax = volmdlr.core.max_pos([pt.y for pt in points_hull])
         point_start = points_hull[pos_ymax]
         hull = [point_start]
@@ -2778,7 +2778,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
 
         def get_nearby_points(line, points, scale_factor):
             points_hull = [pt.copy() for pt in points]
-            
+
             # print('i enter here')
             nearby_points = []
             line_midpoint = 0.5 * (line.start + line.end)
@@ -2912,9 +2912,9 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         Uses the scipy method ConvexHull to calculate the convex hull from
         a cloud of points
         """
-        
+
         points_hull = [pt.copy() for pt in points]
-        
+
         numpy_points = npy.array([(p.x, p.y) for p in points_hull])
         hull = ConvexHull(numpy_points)
         polygon_points = []
