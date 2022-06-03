@@ -11,7 +11,6 @@ from statistics import mean
 from typing import List
 import numpy as npy
 from scipy.spatial import Delaunay, ConvexHull
-import scipy as scp
 
 import matplotlib.pyplot as plt
 import matplotlib.patches
