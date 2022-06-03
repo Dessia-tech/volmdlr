@@ -5,11 +5,11 @@
 """
 # from binaryornot.check import is_binary
 import io
-from typing import BinaryIO
+# from typing import BinaryIO
 from typing import List
 import struct
 # import kaitaistruct
-from kaitaistruct import KaitaiStruct, KaitaiStream, BytesIO
+from kaitaistruct import KaitaiStream
 
 
 from binaryornot.check import is_binary
