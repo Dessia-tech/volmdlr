@@ -3773,9 +3773,9 @@ class Circle2D(volmdlr.edges.ArcMixin, Contour2D):
     #     return circle_to_nodes[self]
 
     def axial_symmetry(self, line):
-        '''
+        """
         finds out the symmetric circle2d according to a line
-        '''
+        """
 
         return self.__class__(center=self.center.axial_symmetry(line),
                               radius=self.radius)
