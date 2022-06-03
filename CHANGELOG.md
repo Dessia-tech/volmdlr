@@ -13,9 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Remove Copy param from movement of primitives and add inplace methods
 
 
+
 * improvements to union operations
 
 ### Fixed
+Remove Copy param from movement of primitives and add inplace methods
 * Wire3D babylonjs
 * Contour3D.bounding_box (use _utd_bounding_box to be defined as a property)
 * BSplineSurface3D.grid2d_deformed (add more constraints to compute surface deformation)
