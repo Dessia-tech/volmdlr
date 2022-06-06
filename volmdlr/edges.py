@@ -228,6 +228,7 @@ class LineSegment(Edge):
     """
     Abstract class
     """
+
     def length(self):
         if not self._length:
             self._length = self.end.point_distance(self.start)
@@ -620,9 +621,9 @@ class BSplineCurve2D(Edge):
     def length(self):
         return length_curve(self.curve)
 
-    def point_at_abscissa(self, abscissa ):
+    def point_at_abscissa(self, abscissa):
         l = self.length()
-        adim_abs = max(min(abscissa  / l, 1.), 0.)
+        adim_abs = max(min(abscissa / l, 1.), 0.)
         return volmdlr.Point2D(*self.curve.evaluate_single(adim_abs))
 
     def tangent(self, position: float = 0.0):
@@ -1043,7 +1044,7 @@ class LineSegment2D(LineSegment):
     def middle_point(self):
         return 0.5 * (self.start + self.end)
 
-    def point_at_abscissa(self, abscissa ):
+    def point_at_abscissa(self, abscissa):
         return self.start + self.unit_direction_vector() * abscissa
 
     def point_belongs(self, point, abs_tol=1e-6):
@@ -1421,13 +1422,13 @@ class Arc(Edge):
         """
         return self.radius * abs(self.angle)
 
-    def point_at_abscissa(self, abscissa ):
+    def point_at_abscissa(self, abscissa):
         if self.is_trigo:
             return self.start.rotation(self.center,
-                                       abscissa  / self.radius)
+                                       abscissa / self.radius)
         else:
             return self.start.rotation(self.center,
-                                       -abscissa  / self.radius)
+                                       -abscissa / self.radius)
 
     @staticmethod
     def get_clockwise_and_trigowise_paths(radius_1, radius_2, radius_i):
@@ -2444,7 +2445,7 @@ class Line3D(Line):
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
-    def point_at_abscissa(self, abscissa ):
+    def point_at_abscissa(self, abscissa):
         return self.point1 + (
                 self.point2 - self.point1) * abscissa
 
@@ -2732,8 +2733,8 @@ class LineSegment3D(LineSegment):
                 'end': self.end.to_dict()
                 }
 
-    def point_at_abscissa(self, abscissa ):
-        return self.start + abscissa  * (
+    def point_at_abscissa(self, abscissa):
+        return self.start + abscissa * (
                 self.end - self.start) / self.length()
 
     def point_belongs(self, point, abs_tol=1e-7):
@@ -3371,20 +3372,20 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
 
         return [(ts[i], distances[i]) for i in range(resolution + 1)]
 
-    def point_at_abscissa(self, abscissa , resolution=1000):
+    def point_at_abscissa(self, abscissa, resolution=1000):
         """
         Returns the vm.Point3D at a given curvilinear abscissa.
         This is an approximation. Resolution parameter can increased
         for more accurate result.
         """
-        if abscissa  == 0:
+        if abscissa == 0:
             return self.start
-        elif abscissa  == self.length():
+        elif abscissa == self.length():
             return self.end
         lut = self.look_up_table(resolution=resolution)
-        if 0 < abscissa  < self.length():
+        if 0 < abscissa < self.length():
             for i, (t, dist) in enumerate(lut):
-                if abscissa  < dist:
+                if abscissa < dist:
                     t1 = lut[i - 1][0]
                     t2 = t
                     # dist1 = lut[i-1][1]
@@ -4112,9 +4113,9 @@ class Arc3D(Arc):
                               self.interior.copy(),
                               self.start.copy())
 
-    def point_at_abscissa(self, abscissa ):
+    def point_at_abscissa(self, abscissa):
         return self.start.rotation(self.center, self.normal,
-                                   abscissa  / self.radius)
+                                   abscissa / self.radius)
 
     def normal_vector(self, abscissa):
         theta = abscissa / self.radius
