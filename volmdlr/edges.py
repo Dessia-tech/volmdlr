@@ -1311,22 +1311,7 @@ class LineSegment2D(LineSegment):
 
         return self.__class__(points_symmetry[0], points_symmetry[1])
 
-
-class ArcMixin:
-    def discretization_points(self, discretization_resolution=40):
-        number_points = math.ceil(self.angle * discretization_resolution) + 2
-        length = self.length()
-        return [self.point_at_abscissa(i * length / number_points)
-                for i in range(number_points)]
-
-    def polygon_points(self, discretization_resolution: int):
-        warnings.warn('polygon_points is deprecated,\
-        please use discretization_points instead',
-                      DeprecationWarning)
-        return self.discretization_points(discretization_resolution)
-
-
-class Arc(ArcMixin, Edge):
+class Arc(Edge):
     def __init__(self, start,
                  end,
                  interior,
@@ -1423,6 +1408,18 @@ class Arc(ArcMixin, Edge):
     def point_distance(self, point):
         points = self.discretization_points(angle_resolution=100)
         return point.point_distance(point.nearest_point(points))
+
+    def discretization_points(self, discretization_resolution=40):
+        number_points = math.ceil(self.angle * discretization_resolution) + 2
+        length = self.length()
+        return [self.point_at_abscissa(i * length / number_points)
+                for i in range(number_points)]
+
+    def polygon_points(self, discretization_resolution: int):
+        warnings.warn('polygon_points is deprecated,\
+        please use discretization_points instead',
+                      DeprecationWarning)
+        return self.discretization_points(discretization_resolution)
 
 
 class Arc2D(Arc):

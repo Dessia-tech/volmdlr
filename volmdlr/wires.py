@@ -3538,7 +3538,7 @@ class Triangle2D(ClosedPolygon2D):
         return self.__class__(point1, point2, point3)
 
 
-class Circle2D(volmdlr.edges.ArcMixin, Contour2D):
+class Circle2D(Contour2D):
     _non_serializable_attributes = ['internal_arcs', 'external_arcs',
                                     'polygon', 'straight_line_contour_polygon',
                                     'primitives', 'basis_primitives']
@@ -3822,6 +3822,18 @@ class Circle2D(volmdlr.edges.ArcMixin, Contour2D):
 
         return self.__class__(center=self.center.axial_symmetry(line),
                               radius=self.radius)
+
+    def discretization_points(self, discretization_resolution=40):
+        number_points = math.ceil(self.angle * discretization_resolution) + 2
+        length = self.length()
+        return [self.point_at_abscissa(i * length / number_points)
+                for i in range(number_points)]
+
+    def polygon_points(self, discretization_resolution: int):
+        warnings.warn('polygon_points is deprecated,\
+        please use discretization_points instead',
+                      DeprecationWarning)
+        return self.discretization_points(discretization_resolution)
 
 
 class Contour3D(Contour, Wire3D):
