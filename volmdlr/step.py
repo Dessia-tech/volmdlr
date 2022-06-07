@@ -264,6 +264,7 @@ class Step:
 
     @classmethod
     def from_stream(cls, stream: BinaryIO = None):
+        stream.seek(0)
         lines = []
         for line in stream:
             line = line.decode("ISO-8859-1")
