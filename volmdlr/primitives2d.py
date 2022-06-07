@@ -27,7 +27,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
         volmdlr.wires.Wire2D.__init__(self, self._primitives(), name)
 
-    def discretization_points(self, discretization_resolution=5):
+    def discretization_points(self, resolution=5):
         points = []
         for primitive in self.primitives:
             points.extend(primitive.discretization_points())

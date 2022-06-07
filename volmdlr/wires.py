@@ -3568,7 +3568,7 @@ class Circle2D(Contour2D):
 
     def to_polygon(self, angle_resolution: float):
         return ClosedPolygon2D(
-            self.discretization_points(discretization_resolution=angle_resolution))
+            self.discretization_points(resolution=angle_resolution))
 
     @classmethod
     def from_arc(cls, arc: volmdlr.edges.Arc2D):
@@ -3823,8 +3823,8 @@ class Circle2D(Contour2D):
         return self.__class__(center=self.center.axial_symmetry(line),
                               radius=self.radius)
 
-    def discretization_points(self, discretization_resolution=40):
-        number_points = math.ceil(self.angle * discretization_resolution) + 2
+    def discretization_points(self, resolution=40):
+        number_points = math.ceil(self.angle * resolution) + 2
         length = self.length()
         return [self.point_at_abscissa(i * length / number_points)
                 for i in range(number_points)]
