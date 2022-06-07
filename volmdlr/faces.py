@@ -646,10 +646,24 @@ class Surface2D(volmdlr.core.Primitive2D):
         """
         """
 
-        mesh_elements = self.triangularisation_contours(x_density, y_density)
+        mesh_contours = self.triangularisation_contours(x_density, y_density)
         # mesh_elements.extend(self.update_mesh_elements(mesh_elements, x_density=5, y_density=5))
 
-        return mesh_elements
+        meshes_polygon = [element.to_polygon(angle_resolution=10).triangulation() for element in mesh_contours]
+
+        points, triangles = [], []
+        for mesh in meshes_polygon:
+            for p in mesh.points:
+                if p not in points:
+                    points.append(p)
+            for triangle_mesh in mesh.triangles:
+                triangle_new = (points.index(mesh.points[triangle_mesh[0]]),
+                                points.index(mesh.points[triangle_mesh[1]]),
+                                points.index(mesh.points[triangle_mesh[2]]))
+                triangles.append(triangle_new)
+
+        return vmd.DisplayMesh2D(points=points, triangles=triangles)
+
 
 class Surface3D(dc.DessiaObject):
     x_periodicity = None
