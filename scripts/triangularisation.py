@@ -31,13 +31,11 @@ surface = volmdlr.faces.Surface2D(outer_contour=contour, inner_contours=[inner_c
 
 # %%% Triangularisation
 
-x_density, y_density = 11,11
+x_density, y_density = 25,25
 
 triangularisation = surface.triangularisation_2(x_density, y_density)
 
-ax =surface.plot()
-for element in triangularisation:
-    element.plot(ax, 'b')
+triangularisation.plot()
 
 # %% 2/ Surface2D + not inners
 
@@ -47,6 +45,4 @@ surface = volmdlr.faces.Surface2D(outer_contour=contour, inner_contours=[])
 
 triangularisation = surface.triangularisation_2(x_density, y_density)
 
-ax=triangularisation[0].plot()
-for element in triangularisation:
-    element.plot(ax, 'b')
+triangularisation.plot()
