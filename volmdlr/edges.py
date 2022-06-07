@@ -1311,6 +1311,7 @@ class LineSegment2D(LineSegment):
 
         return self.__class__(points_symmetry[0], points_symmetry[1])
 
+
 class Arc(Edge):
     def __init__(self, start,
                  end,
