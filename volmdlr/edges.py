@@ -61,15 +61,15 @@ class Edge(dc.DessiaObject):
     def __init__(self, start, end, name=''):
         self.start = start
         self.end = end
+        self._length = None
         dc.DessiaObject.__init__(self, name=name)
 
     def __getitem__(self, key):
         if key == 0:
             return self.start
-        elif key == 1:
+        if key == 1:
             return self.end
-        else:
-            raise IndexError
+        raise IndexError
 
     def polygon_points(self, min_x_density=None, min_y_density=None):
         n = 0  # Number of points to insert between start and end
@@ -138,6 +138,19 @@ class Edge(dc.DessiaObject):
         """
         raise NotImplementedError('the unit_direction_vector method must be'
                                   'overloaded by subclassing class')
+
+    def length(self):
+        """
+        Calculates the edge length
+        :return: edges\' length
+        """
+        raise NotImplementedError(f'length method not implememented by {self.__class__}')
+
+    def point_at_abscissa(self, abscissa):
+        """
+        Calcultes the point at given abscissa
+        """
+        raise NotImplementedError(f'point_at_absciss method not implememented by {self.__class__}')
 
 
 class Line(dc.DessiaObject):
@@ -215,6 +228,11 @@ class LineSegment(Edge):
     """
     Abstract class
     """
+
+    def length(self):
+        if not self._length:
+            self._length = self.end.point_distance(self.start)
+        return self._length
 
     def abscissa(self, point):
         u = self.end - self.start
@@ -820,9 +838,9 @@ class BSplineCurve2D(BSplineCurve):
         return (min(points_x), max(points_x),
                 min(points_y), max(points_y))
 
-    def point_at_abscissa(self, curvilinear_abscissa):
+    def point_at_abscissa(self, abscissa):
         l = self.length()
-        adim_abs = max(min(curvilinear_abscissa / l, 1.), 0.)
+        adim_abs = max(min(abscissa / l, 1.), 0.)
         return volmdlr.Point2D(*self.curve.evaluate_single(adim_abs))
 
     def direction_vector(self, abscissa: float):
@@ -1035,7 +1053,7 @@ class LineSegment2D(LineSegment):
     def __init__(self, start: volmdlr.Point2D, end: volmdlr.Point2D, *, name: str = ''):
         if start == end:
             raise NotImplementedError
-        Edge.__init__(self, start, end, name=name)
+        LineSegment.__init__(self, start, end, name=name)
 
     def __hash__(self):
         return self._data_hash()
@@ -1060,14 +1078,11 @@ class LineSegment2D(LineSegment):
                 'end': self.end.to_dict()
                 }
 
-    def length(self):
-        return self.end.point_distance(self.start)
-
     def middle_point(self):
         return 0.5 * (self.start + self.end)
 
-    def point_at_abscissa(self, curvilinear_abscissa):
-        return self.start + self.unit_direction_vector() * curvilinear_abscissa
+    def point_at_abscissa(self, abscissa):
+        return self.start + self.unit_direction_vector() * abscissa
 
     def point_belongs(self, point, abs_tol=1e-6):
         distance = self.start.point_distance(point) + self.end.point_distance(
@@ -1444,13 +1459,13 @@ class Arc(Edge):
         """
         return self.radius * abs(self.angle)
 
-    def point_at_abscissa(self, curvilinear_abscissa):
+    def point_at_abscissa(self, abscissa):
         if self.is_trigo:
             return self.start.rotation(self.center,
-                                       curvilinear_abscissa / self.radius)
+                                       abscissa / self.radius)
         else:
             return self.start.rotation(self.center,
-                                       -curvilinear_abscissa / self.radius)
+                                       -abscissa / self.radius)
 
     @staticmethod
     def get_clockwise_and_trigowise_paths(radius_1, radius_2, radius_i):
@@ -2467,9 +2482,9 @@ class Line3D(Line):
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
-    def point_at_abscissa(self, curvilinear_abscissa):
+    def point_at_abscissa(self, abscissa):
         return self.point1 + (
-                self.point2 - self.point1) * curvilinear_abscissa
+                self.point2 - self.point1) * abscissa
 
     def point_belongs(self, point3d):
         if point3d == self.point1:
@@ -2716,7 +2731,6 @@ class LineSegment3D(LineSegment):
             raise NotImplementedError
         self.points = [start, end]
         LineSegment.__init__(self, start=start, end=end, name=name)
-
         self._bbox = None
 
     @property
@@ -2756,11 +2770,8 @@ class LineSegment3D(LineSegment):
                 'end': self.end.to_dict()
                 }
 
-    def length(self):
-        return self.end.point_distance(self.start)
-
-    def point_at_abscissa(self, curvilinear_abscissa):
-        return self.start + curvilinear_abscissa * (
+    def point_at_abscissa(self, abscissa):
+        return self.start + abscissa * (
                 self.end - self.start) / self.length()
 
     def point_belongs(self, point, abs_tol=1e-7):
@@ -3361,20 +3372,20 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
 
         return [(ts[i], distances[i]) for i in range(resolution + 1)]
 
-    def point_at_abscissa(self, curvilinear_abscissa, resolution=1000):
+    def point_at_abscissa(self, abscissa, resolution=1000):
         """
         Returns the vm.Point3D at a given curvilinear abscissa.
         This is an approximation. Resolution parameter can increased
         for more accurate result.
         """
-        if curvilinear_abscissa == 0:
+        if abscissa == 0:
             return self.start
-        elif curvilinear_abscissa == self.length():
+        elif abscissa == self.length():
             return self.end
         lut = self.look_up_table(resolution=resolution)
-        if 0 < curvilinear_abscissa < self.length():
+        if 0 < abscissa < self.length():
             for i, (t, dist) in enumerate(lut):
-                if curvilinear_abscissa < dist:
+                if abscissa < dist:
                     t1 = lut[i - 1][0]
                     t2 = t
                     # dist1 = lut[i-1][1]
@@ -3964,9 +3975,9 @@ class Arc3D(Arc):
                               self.interior.copy(),
                               self.start.copy())
 
-    def point_at_abscissa(self, curvilinear_abscissa):
+    def point_at_abscissa(self, abscissa):
         return self.start.rotation(self.center, self.normal,
-                                   curvilinear_abscissa / self.radius)
+                                   abscissa / self.radius)
 
     def normal_vector(self, abscissa):
         theta = abscissa / self.radius
