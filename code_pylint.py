@@ -23,7 +23,7 @@ MAX_ERROR_BY_TYPE = {
                      'no-self-use': 16,
                      'arguments-renamed': 11,
                      'non-parent-init-called': 13,
-                     'too-many-public-methods': 13,
+                     'too-many-public-methods': 15,
                      'too-many-instance-attributes': 11,
                      'undefined-loop-variable': 10,
                      'unused-import': 9,

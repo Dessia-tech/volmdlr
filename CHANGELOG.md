@@ -7,11 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unrealeased
 
+
+### New Features
+
+* Contour: is_overlapping, is_supperposing
+* Point, Edges and Wires: axial_symmetry
+* Surface2D: rotation, rotation_inplace
+* Wire2D: bsplinecurve_crossings,  bsplinecurve_intersections
+
+
+### Fixed
+
+* Wire3D.babylonjs
+* BSplineSurface3D.merge_with (consider overlapping, intersecting surfaces)
+* Wire.extract_primitives (consider point1 & point2 belong to the same primitive)
+* Wire.extract_without_primitives (consider the primitives’ order to choose the primitives)
+* Contour.shared_primitives_with (consider contours sharing a lot of primitives groups)
+* Contour2D.contour_intersections (check if the point is not already in the lis)
+* Line.is_between_points (consider point1==point2)
+* BSplineCurve2D.split (consider point==start/end)
+* Contour3D.bounding_box (use _utd_bounding_box to be defined as a property)
+* BSplineSurface3D.grid2d_deformed (add more constraints to compute surface deformation)
+
+
+### Performance improvements
+
+* Remove Copy param from movement of primitives and add inplace methods
+* Improve union operations
+* Return the same result type (a boolean) in Contour.is_sharing_primitives_with
+* Add hidden attribute _bounding_rectangle for Contour2D
+* Add hidden attribute _length for BSplineCurve2D/3D
+* Consider different types of primitives in Wire.wire_intersections/wire_crossings
+
+
+### Refactorings
+
+* Define _eq_ in Contour (to be used for both 2D and 3D)
+* Use Grid2D object in different BSplineSurface3D methods (especially: to_2d_with_dimension)
+
+
+
 ## v0.4.0
 ### Fixed
 * various fixes in cuts of wires and contours
 * Fix of missing face in Union
 * following dessia_common v0.7.0
+
 
 ## v0.3.0
 
