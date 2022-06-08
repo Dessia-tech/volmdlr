@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
+* 
+
+
+### Fixed
+
+* 
+
+
+### Performance improvements
+
+* Add hidden attribute _length for Edge
+
+
+### Refactorings
+
+* Define length in LineSegment (to be used for both 2D and 3D)
+* Define a Parent class 'Bsplinecurve' to mutulize Bsplinecurve2D/3D methods
+
+
+
+## Unrealeased
+
+### New Features
+
 * Contour: is_overlapping, is_supperposing
 * Point, Edges and Wires: axial_symmetry
 * Surface2D: rotation, rotation_inplace
@@ -29,7 +53,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * BSplineSurface3D.grid2d_deformed (add more constraints to compute surface deformation)
 
 
-
 ### Performance improvements
 
 * Remove Copy param from movement of primitives and add inplace methods
@@ -42,10 +65,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Refactorings
 
-
-* Define __eq__ in Contour (to be used for both 2D and 3D)
+* Define _eq_ in Contour (to be used for both 2D and 3D)
 * Use Grid2D object in different BSplineSurface3D methods (especially: to_2d_with_dimension)
-* Define a Parent class 'Bsplinecurve' to mutulize Bsplinecurve2D/3D methods
+
 
 
 ## v0.4.0
