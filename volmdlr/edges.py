@@ -73,12 +73,17 @@ class Edge(dc.DessiaObject):
         raise IndexError
 
     def length(self):
-        raise NotImplementedError(
-            f"length method must be overloaded by {self.__class__.__name__}")
+        """
+        Calculates the edge length
+        :return: edges\' length
+        """
+        raise NotImplementedError(f'length method not implememented by {self.__class__.__name__}')
 
-    def point_at_abscissa(self, curvilinear_abscissa):
-        raise NotImplementedError(
-            f"point_at_abscissa method must be overloaded by {self.__class__.__name__}")
+    def point_at_abscissa(self, abscissa):
+        """
+        Calcultes the point at given abscissa
+        """
+        raise NotImplementedError(f'point_at_absciss method not implememented by {self.__class__.__name__}')
 
     def discretization_points(self, discretization_resolution: int = 10):
         """
@@ -146,19 +151,6 @@ class Edge(dc.DessiaObject):
         """
         raise NotImplementedError('the unit_direction_vector method must be'
                                   'overloaded by subclassing class')
-
-    def length(self):
-        """
-        Calculates the edge length
-        :return: edges\' length
-        """
-        raise NotImplementedError(f'length method not implememented by {self.__class__}')
-
-    def point_at_abscissa(self, abscissa):
-        """
-        Calcultes the point at given abscissa
-        """
-        raise NotImplementedError(f'point_at_absciss method not implememented by {self.__class__}')
 
 
 class Line(dc.DessiaObject):
