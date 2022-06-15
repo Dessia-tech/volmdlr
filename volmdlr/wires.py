@@ -84,11 +84,9 @@ class Wire:
                 return primitive.point_at_abscissa(
                     curvilinear_abscissa - length)
             length += primitive_length
-
-        if curvilinear_abscissa < length + 1e-9:
-            return self.primitives[-1].end
-        raise ValueError(
-            'abscissa over length: {}>{}'.format(curvilinear_abscissa, length))
+        if math.isclose(curvilinear_abscissa, length, abs_tol=1e-6):
+            return primitive.point_at_abscissa(primitive_length)
+        raise ValueError('abscissa out of contour length')
 
     def extract_primitives(self, point1, primitive1, point2, primitive2,
                            inside: bool = True):
@@ -4080,26 +4078,6 @@ class Contour3D(Contour, Wire3D):
         else:
             new_point_inside_contour = None
         return Contour3D(new_edges, new_point_inside_contour, self.name)
-
-    def length(self):
-        # TODO: this is duplicated code from Wire3D!
-        length = 0.
-        for edge in self.primitives:
-            length += edge.length()
-        return length
-
-    def point_at_abscissa(self, curvilinear_abscissa):
-        # TODO: this is duplicated code from Wire3D!
-        length = 0.
-        for primitive in self.primitives:
-            primitive_length = primitive.length()
-            if length + primitive_length > curvilinear_abscissa:
-                return primitive.point_at_abscissa(
-                    curvilinear_abscissa - length)
-            length += primitive_length
-        if math.isclose(curvilinear_abscissa, length, abs_tol=1e-6):
-            return primitive.point_at_abscissa(primitive_length)
-        raise ValueError('abscissa out of contour length')
 
     def plot(self, ax=None, color='k', alpha=1, edge_details=False):
         if ax is None:
