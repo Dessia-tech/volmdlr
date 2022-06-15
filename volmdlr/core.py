@@ -4,23 +4,24 @@
 
 """
 
-import os
-import tempfile
-from datetime import datetime
 import math
+import os
 import subprocess
+import tempfile
 import webbrowser
-import numpy as npy
+from datetime import datetime
+# import volmdlr.stl as vmstl
+from typing import List
 
 import matplotlib.pyplot as plt
-# from mpl_toolkits.mplot3d import Axes3D
+import numpy as npy
 
 import dessia_common as dc
 import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
-# import volmdlr.stl as vmstl
-from typing import List
+
+# from mpl_toolkits.mplot3d import Axes3D
 
 npy.seterr(divide='raise')
 
