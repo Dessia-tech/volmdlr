@@ -1440,7 +1440,7 @@ class Contour(Wire):
         :rtype: str
         '''
 
-        return 'Line Loop('+str(tag)+') = {'+str(primitives_tags)[1:-1]+'};'
+        return 'Line Loop(' + str(tag) + ') = {' + str(primitives_tags)[1:-1] + '};'
 
 
 class Contour2D(Contour, Wire2D):

@@ -310,7 +310,7 @@ class LineSegment(Edge):
         :rtype: str
         '''
 
-        return 'Line('+str(tag)+') = {'+str(start_point_tag)+', '+str(end_point_tag)+'};'
+        return 'Line(' + str(tag) + ') = {' + str(start_point_tag) + ', ' + str(end_point_tag) + '};'
 
 
 class Line2D(Line):
