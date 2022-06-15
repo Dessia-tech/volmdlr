@@ -1427,6 +1427,21 @@ class Contour(Wire):
     def point_over_contour(self, point, abs_tol=1e-6):
         return self.point_over_wire(point, abs_tol)
 
+    def get_geo_lines(self, tag: int, primitives_tags: List[int]):
+        '''
+        gets the lines that define a Contour in a .geo file
+
+        :param tag: The contour index
+        :type tag: int
+        :param primitives_tags: The contour' primitives index
+        :type primitives_tags: List[int]
+
+        :return: A line
+        :rtype: str
+        '''
+
+        return 'Line Loop('+str(tag)+') = {'+str(primitives_tags)[1:-1]+'};'
+
 
 class Contour2D(Contour, Wire2D):
     """
