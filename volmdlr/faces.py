@@ -5,7 +5,7 @@ Surfaces & faces
 from typing import List, Tuple, Dict, Any
 import math
 
-from itertools import product, combinations
+from itertools import product, combinations, chain
 
 import triangle
 import numpy as npy
@@ -4078,6 +4078,68 @@ class Face3D(volmdlr.core.Primitive3D):
     def random_point_inside(self):
         point_inside2d = self.surface2d.random_point_inside()
         return self.surface3d.point2d_to_3d(point_inside2d)
+
+    def get_geo_lines(self, mesh_size_list = None):
+        '''
+        gets the lines that define a Face3D in a .geo file
+        '''
+
+        lines = []
+        line_surface = []
+        lines_tags = [] #points_tags = []
+        point_account, line_account, line_loop_account = 0, 0, 1
+        for c, contour in enumerate(list(chain(*[[self.outer_contour3d], self.inner_contours3d]))):
+
+            if isinstance(contour, volmdlr.wires.Circle2D):
+                # point=[contour.radius, contour.center.y, 0]
+                # lines.append('Point('+str(point_account+1)+') = {'+str(point)[1:-1]+', '+str(mesh_size)+'};')
+
+                # point = [*contour.center, 0]
+                # lines.append('Point('+str(point_account+2)+') = {'+str(point)[1:-1]+', '+str(mesh_size)+'};')
+
+                # point=[-contour.radius, contour.center.y, 0]
+                # lines.append('Point('+str(point_account+3)+') = {'+str(point)[1:-1]+', '+str(mesh_size)+'};')
+
+                # lines.append('Circle('+str(line_account+1)+') = {'+str(point_account+1)+','+str(point_account+2)+','+str(point_account+3)+'};')
+                # lines.append('Circle('+str(line_account+2)+') = {'+str(point_account+3)+','+str(point_account+2)+','+str(point_account+1)+'};')
+
+                # lines_tags.extend([line_account+1, line_account+2])
+
+                # lines.append('Line Loop('+str(line_loop_account+1)+') = {'+str(lines_tags)[1:-1]+'};')
+
+                # line_surface.append(line_loop_account+1)
+
+                # lines_tags = []
+                # point_account, line_account, line_loop_account = point_account+3, line_account+2, line_loop_account+1
+
+                pass
+
+            elif isinstance(contour, (volmdlr.wires.Contour3D, volmdlr.wires.ClosedPolygon3D)):
+                if type(contour) == volmdlr.wires.Contour3D:
+                    contour = contour.to_polygon(1)
+                for i, point in enumerate(contour.points):
+                    lines.append(point.get_geo_lines(tag=point_account+i+1,
+                                                     mesh_size=1))#mesh_size_list[c][i]
+
+                    # lines.append('Point('+str(point_account+i+1)+') = {'+str([*point])[1:-1]+', '+str(mesh_size)+'};')
+
+                for p, primitive in enumerate(contour.primitives):
+                    if p != len(contour.primitives)-1:
+                        lines.append(primitive.get_geo_lines(tag=line_account+p+1,
+                                                             start_point_tag=point_account+p+1,
+                                                             end_point_tag=point_account+p+2))
+                    else:
+                        lines.append(primitive.get_geo_lines(tag=line_account+p+1,
+                                                             start_point_tag=point_account+p+1,
+                                                             end_point_tag=point_account+1))
+                    lines_tags.append(line_account+p+1)
+
+                lines.append('Line Loop('+str(c+1)+') = {'+str(lines_tags)[1:-1]+'};')
+                line_surface.append(line_loop_account)
+                point_account, line_account, line_loop_account = point_account+i+1, line_account+p+1, line_loop_account+1
+                lines_tags = []
+
+        lines.append('Plane Surface('+str(1)+') = {'+str(line_surface)[1:-1]+'};')
 
 
 class PlaneFace3D(Face3D):
