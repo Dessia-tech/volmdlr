@@ -4092,7 +4092,7 @@ class PlaneFace3D(Face3D):
     _generic_eq = True
     _non_serializable_attributes = ['bounding_box', 'polygon2D']
     _non_data_eq_attributes = ['name', 'bounding_box', 'outer_contour3d',
-                          'inner_contours3d']
+                               'inner_contours3d']
     _non_data_hash_attributes = []
 
     def __init__(self, surface3d: Plane3D, surface2d: Surface2D,

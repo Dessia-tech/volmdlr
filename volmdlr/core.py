@@ -390,7 +390,7 @@ class CompositePrimitive2D(Primitive2D):
     _non_serializable_attributes = ['name', '_utd_primitives_to_index',
                                     '_primitives_to_index']
     _non_data_hash_attributes = ['name', '_utd_primitives_to_index',
-                            '_primitives_to_index']
+                                 '_primitives_to_index']
 
     def __init__(self, primitives, name=''):
         Primitive2D.__init__(self, name)
