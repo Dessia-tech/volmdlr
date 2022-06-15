@@ -6979,6 +6979,78 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         return ax
 
+    def get_geo_lines(self, mesh_size_list=None):
+        '''
+        gets the lines that define an OpenShell3D in a .geo file
+        '''
+
+        faces = self.faces
+        primitives = []
+        points = set()
+        for face in faces:
+            for c, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
+                if isinstance(contour, volmdlr.wires.Circle2D):
+                    points.add(volmdlr.Point3D(contour.radius, contour.center.y, 0))
+                    points.add(volmdlr.Point3D(contour.center.x, contour.center.y, 0))
+                    points.add(volmdlr.Point3D(-contour.radius, contour.center.y, 0))
+
+                else:
+                    for p, primitive in enumerate(contour.primitives):
+                        if isinstance(primitive, volmdlr.edges.LineSegment):
+                            points.add(primitive.start)
+                            points.add(primitive.end)
+                        if ((primitive not in primitives)
+                            and (primitive.reverse() not in primitives)):
+                            primitives.append(primitive)
+
+        indices_check = len(primitives)*[None]
+
+        points = list(points)
+        lines = []
+        for p, point in enumerate(points):
+            lines.append(point.get_geo_lines(tag=p+1, mesh_size=1))
+
+        line_account = 1
+        line_surface = []
+        lines_tags = []  # points_tags = []
+        line_loop_account = 1
+
+        for face in faces:
+            line_surface = []
+            for c, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
+                lines_tags = []
+                if isinstance(contour, volmdlr.wires.Circle2D):
+                    pass
+                else:
+                    for p, primitive in enumerate(contour.primitives):
+                        if isinstance(primitive, volmdlr.edges.LineSegment):
+                            try:
+                                index = primitives.index(primitive)
+                            except ValueError:
+                                index = primitives.index(primitive.reverse())
+                            if indices_check[index]:
+                                lines_tags.append(indices_check[index])
+                            else:
+                                start_point_tag = points.index(primitive.start)+1
+                                end_point_tag = points.index(primitive.end)+1
+                                lines.append(primitive.get_geo_lines(tag=line_account,
+                                                                     start_point_tag=start_point_tag,
+                                                                     end_point_tag=end_point_tag))
+
+                                lines_tags.append(line_account)
+                                indices_check[index] = line_account
+                                line_account += 1
+
+                    lines.append('Line Loop(' + str(line_loop_account) + ') = {' + str(lines_tags)[1:-1] + '};')
+                    line_surface.append(line_loop_account)
+                    line_loop_account += 1
+                    lines_tags = []
+
+                    lines.append('Plane Surface(' + str(1) + ') = {' + str(line_surface)[1:-1] + '};')
+            line_surface = []
+
+        return lines
+
 
 class ClosedShell3D(OpenShell3D):
     _standalone_in_db = True
