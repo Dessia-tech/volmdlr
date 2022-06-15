@@ -719,7 +719,6 @@ class Point2D(Vector2D):
             distances.append(self.point_distance(p))
         return points[distances.index(min(distances))]
 
-
     def axial_symmetry(self, line):
         '''
         finds out the symmetric point according to a line
@@ -729,6 +728,21 @@ class Point2D(Vector2D):
         point_symmetry = point_projection + (point_projection - self)
 
         return point_symmetry
+
+    def get_geo_lines(self, tag: int, mesh_size: float = 1):
+        '''
+        gets the lines that define a Point2D in a .geo file
+
+        :param tag: The point index
+        :type tag: int
+        :param mesh_size: The target mesh size close to the point, defaults to 1
+        :type mesh_size: float, optional
+
+        :return: A line
+        :rtype: str
+        '''
+
+        return 'Point('+str(tag)+') = {'+str([*self, 0])[1:-1]+', '+str(mesh_size)+'};'
 
 
 O2D = Point2D(0, 0)
@@ -1179,6 +1193,21 @@ class Point3D(Vector3D):
         for p in points:
             distances.append(self.point_distance(p))
         return points[distances.index(min(distances))]
+
+    def get_geo_lines(self, tag: int, mesh_size: float = 1):
+        '''
+        gets the lines that define a Point3D in a .geo file
+
+        :param tag: The point index
+        :type tag: int
+        :param mesh_size: The target mesh size close to the point, defaults to 1
+        :type mesh_size: float, optional
+
+        :return: A line
+        :rtype: str
+        '''
+
+        return 'Point('+str(tag)+') = {'+str([*self])[1:-1]+', '+str(mesh_size)+'};'
 
 
 O3D = Point3D(0, 0, 0)
