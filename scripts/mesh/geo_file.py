@@ -6,12 +6,12 @@ Created on Wed Jun 15 2022
 @author: s.bendjebla
 """
 
-import numpy as npy
 import volmdlr as vm
 import volmdlr.edges as edges
 import volmdlr.wires as wires
 import volmdlr.primitives3d as primitives3d
 import volmdlr.primitives2d as primitives2d
+import gmsh
 
 # %% Extrusion
 
@@ -50,4 +50,16 @@ with open('face_geo.geo', 'w') as f:
     for line in lines:
         f.write(line)
         f.write('\n')
+
+# %% gmsh file generation
+
+gmsh.initialize()
+gmsh.open("face_geo.geo")
+
+gmsh.model.geo.synchronize()
+gmsh.model.mesh.generate(2)
+
+gmsh.write("face_geo.msh")
+
+gmsh.finalize()
 
