@@ -4141,6 +4141,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
         lines.append('Plane Surface('+str(1)+') = {'+str(line_surface)[1:-1]+'};')
 
+        return lines
+
 
 class PlaneFace3D(Face3D):
     """
