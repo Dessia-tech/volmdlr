@@ -7000,15 +7000,15 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                             points.add(primitive.start)
                             points.add(primitive.end)
                         if ((primitive not in primitives)
-                            and (primitive.reverse() not in primitives)):
+                                and (primitive.reverse() not in primitives)):
                             primitives.append(primitive)
 
-        indices_check = len(primitives)*[None]
+        indices_check = len(primitives) * [None]
 
         points = list(points)
         lines = []
         for p, point in enumerate(points):
-            lines.append(point.get_geo_lines(tag=p+1, mesh_size=1))
+            lines.append(point.get_geo_lines(tag=p + 1, mesh_size=1))
 
         line_account = 1
         line_surface = []
@@ -7031,8 +7031,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                             if indices_check[index]:
                                 lines_tags.append(indices_check[index])
                             else:
-                                start_point_tag = points.index(primitive.start)+1
-                                end_point_tag = points.index(primitive.end)+1
+                                start_point_tag = points.index(primitive.start) + 1
+                                end_point_tag = points.index(primitive.end) + 1
                                 lines.append(primitive.get_geo_lines(tag=line_account,
                                                                      start_point_tag=start_point_tag,
                                                                      end_point_tag=end_point_tag))
