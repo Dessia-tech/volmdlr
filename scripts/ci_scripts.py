@@ -3,7 +3,8 @@ import time
 
 scripts = [
             # Mesh
-            'mesh/geo_file.py',
+            # 'mesh/geo_file.py',
+            'mesh/geo_file_2.py',
             # # Core.py
             # 'core/points.py',
             # 'core/grid2d_with_direction.py',
