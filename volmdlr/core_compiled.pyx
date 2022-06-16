@@ -579,7 +579,7 @@ Y2D = Vector2D(0, 1)
 
 
 class Point2D(Vector2D):
-    def __init__(self, x: float, y: float, name: Text = ''):
+    def __init__(self, x: float, y: float, name: str = ''):
         Vector2D.__init__(self, x=x, y=y, name=name)
 
     def __add__(self, other_vector):
@@ -736,7 +736,7 @@ O2D = Point2D(0, 0)
 
 class Vector3D(Vector):
 
-    def __init__(self, x: float, y: float, z: float, name: Text = ''):
+    def __init__(self, x: float, y: float, z: float, name: str = ''):
         self.x = x
         self.y = y
         self.z = z
@@ -1084,7 +1084,7 @@ Z3D = Vector3D(0, 0, 1)
 class Point3D(Vector3D):
     _standalone_in_db = False
 
-    def __init__(self, x: float, y: float, z: float, name: Text = ''):
+    def __init__(self, x: float, y: float, z: float, name: str = ''):
         Vector3D.__init__(self, x, y, z, name)
 
     def __add__(self, other_vector):
@@ -1347,7 +1347,7 @@ class Basis2D(Basis):
     :param v:Vector2D: second vector of the basis
     """
 
-    def __init__(self, u: Vector2D, v: Vector2D, name: Text = ''):
+    def __init__(self, u: Vector2D, v: Vector2D, name: str = ''):
         self.u = u
         self.v = v
         self.name = name
@@ -1459,7 +1459,7 @@ class Basis3D(Basis):
     _standalone_in_db = False
 
     # TODO: create a Basis and Frame class to mutualize between 2D and 2D
-    def __init__(self, u: Vector3D, v: Vector3D, w: Vector3D, name: Text = ''):
+    def __init__(self, u: Vector3D, v: Vector3D, w: Vector3D, name: str = ''):
         self.u = u
         self.v = v
         self.w = w
@@ -1732,7 +1732,7 @@ class Frame2D(Basis2D):
     :param v:Vector2D: second vector of the basis
     """
 
-    def __init__(self, origin: Point2D, u: Vector2D, v: Vector2D, name: Text = ''):
+    def __init__(self, origin: Point2D, u: Vector2D, v: Vector2D, name: str = ''):
         self.origin = origin
         Basis2D.__init__(self, u, v, name=name)
 
@@ -1845,7 +1845,7 @@ class Frame3D(Basis3D):
     :param w:Vector3D: third vector of the basis
     """
 
-    def __init__(self, origin: Point3D, u: Vector3D, v: Vector3D, w: Vector3D, name: Text = ''):
+    def __init__(self, origin: Point3D, u: Vector3D, v: Vector3D, w: Vector3D, name: str = ''):
         self.origin = origin
         Basis3D.__init__(self, u, v, w)
         self.name = name
@@ -1922,6 +1922,12 @@ class Frame3D(Basis3D):
                 'v': self.v.to_dict(),
                 'w': self.w.to_dict()
                 }
+
+    # @classmethod
+    # def dict_to_object(cls, dict_, global_dict=None,
+    #                    pointers_memo: Dict[str, Any] = None, path: str = '#'):
+    #     return Frame3D(dict_['x'], dict_['y'], dict_['z'],
+    #                     dict_.get('name', ''))
 
     def basis(self):
         return Basis3D(self.u, self.v, self.w)

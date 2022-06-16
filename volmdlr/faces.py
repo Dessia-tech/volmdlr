@@ -833,11 +833,11 @@ class Plane3D(Surface3D):
         return (self.frame.origin == other_plane.frame.origin and
                 self.frame.w.is_colinear_to(other_plane.frame.w))
 
-    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
-        # improve the object structure ?
-        dict_ = dc.DessiaObject.base_dict(self)
-        dict_['frame'] = self.frame.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/frame')
-        return dict_
+    # def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
+    #     # improve the object structure ?
+    #     dict_ = dc.DessiaObject.base_dict(self)
+    #     dict_['frame'] = self.frame.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/frame')
+    #     return dict_
 
     @classmethod
     def from_step(cls, arguments, object_dict):
