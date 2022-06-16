@@ -4115,7 +4115,7 @@ class Face3D(volmdlr.core.Primitive3D):
                 pass
 
             elif isinstance(contour, (volmdlr.wires.Contour3D, volmdlr.wires.ClosedPolygon3D)):
-                if isinstance(contour, volmdlr.wires.Contour3D):
+                if not isinstance(contour, volmdlr.wires.ClosedPolygon3D):
                     contour = contour.to_polygon(1)
                 for i, point in enumerate(contour.points):
                     lines.append(point.get_geo_lines(tag=point_account + i + 1,
