@@ -1353,6 +1353,27 @@ class VolumeModel(dc.DessiaObject):
 
         stream.write(step_content)
 
+    def to_geo(self, file_name: str, mesh_size_list=None):
+        '''
+        gets the .geo file for the VolumeModel
+        '''
+
+        lines = []
+        volume = 0
+        for primitive in self.primitives:
+            if isinstance(primitive, volmdlr.faces.ClosedShell3D):
+                volume += 1
+                lines.extend(primitive.get_geo_lines(mesh_size_list))
+                surface_loop = ((lines[-1].split('('))[1].split(')')[0])
+                lines.append('Volume(' + str(volume) + ') = {' + surface_loop + '};')
+            elif isinstance(primitive, volmdlr.faces.OpenShell3D):
+                lines.extend(primitive.get_geo_lines(mesh_size_list))
+
+        with open(file_name+'.geo', 'w') as f:
+            for line in lines:
+                f.write(line)
+                f.write('\n')
+
 
 class MovingVolumeModel(VolumeModel):
     def __init__(self, primitives, step_frames, name=''):
