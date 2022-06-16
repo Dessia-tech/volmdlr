@@ -7012,6 +7012,12 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                         if isinstance(primitive, volmdlr.edges.LineSegment):
                             points.add(primitive.start)
                             points.add(primitive.end)
+
+                        if isinstance(primitive, volmdlr.edges.Arc):
+                            points.add(primitive.start)
+                            points.add(primitive.center)
+                            points.add(primitive.end)
+
                         if ((primitive not in primitives)
                                 and (primitive.reverse() not in primitives)):
                             primitives.append(primitive)
@@ -7036,34 +7042,43 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                     pass
                 else:
                     for p, primitive in enumerate(contour.primitives):
-                        if isinstance(primitive, volmdlr.edges.LineSegment):
-                            try:
-                                index = primitives.index(primitive)
+                        
+                        try:
+                            index = primitives.index(primitive)
+                            if isinstance(primitive, volmdlr.edges.LineSegment):
                                 start_point_tag = points.index(primitive.start) + 1
                                 end_point_tag = points.index(primitive.end) + 1
                                 lines.append(primitive.get_geo_lines(tag=line_account,
                                                                      start_point_tag=start_point_tag,
                                                                      end_point_tag=end_point_tag))
+                            elif isinstance(primitive, volmdlr.edges.Arc):
+                                start_point_tag = points.index(primitive.start) + 1
+                                center_point_tag = points.index(primitive.center) + 1
+                                end_point_tag = points.index(primitive.end) + 1
+                                lines.append(primitive.get_geo_lines(tag=line_account,
+                                                                     start_point_tag=start_point_tag,
+                                                                     center_point_tag=center_point_tag,
+                                                                     end_point_tag=end_point_tag))
 
-                                lines_tags.append(line_account)
-                                indices_check[index] = line_account
-                                line_account += 1
+                            lines_tags.append(line_account)
+                            indices_check[index] = line_account
+                            line_account += 1
 
-                            # if indices_check[index]:
-                            #     lines_tags.append(-indices_check[index])
-                            # else:
-                            except ValueError:
-                                index = primitives.index(primitive.reverse())
-                                lines_tags.append(-indices_check[index])
+                        # if indices_check[index]:
+                        #     lines_tags.append(-indices_check[index])
+                        # else:
+                        except ValueError:
+                            index = primitives.index(primitive.reverse())
+                            lines_tags.append(-indices_check[index])
 
-                                # start_point_tag = points.index(primitive.start) + 1
-                                # end_point_tag = points.index(primitive.end) + 1
-                                # lines.append(primitive.get_geo_lines(tag=line_account,
-                                #                                      start_point_tag=start_point_tag,
-                                #                                      end_point_tag=end_point_tag))
-                                # lines_tags.append(line_account)
-                                # indices_check[index] = line_account
-                                # line_account += 1
+                            # start_point_tag = points.index(primitive.start) + 1
+                            # end_point_tag = points.index(primitive.end) + 1
+                            # lines.append(primitive.get_geo_lines(tag=line_account,
+                            #                                      start_point_tag=start_point_tag,
+                            #                                      end_point_tag=end_point_tag))
+                            # lines_tags.append(line_account)
+                            # indices_check[index] = line_account
+                            # line_account += 1
 
                     lines.append('Line Loop(' + str(line_loop_account) + ') = {' + str(lines_tags)[1:-1] + '};')
                     line_surface.append(line_loop_account)
