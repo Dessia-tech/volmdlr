@@ -64,3 +64,18 @@ class Gmsh(DessiaObject):
                    nodes,
                    elements)
 
+    @staticmethod
+    def from_file_mesh_format(lines):
+        """
+        gets mesh format data from .msh file
+        """
+
+        mesh_format = {}
+        mesh_format['version_number'] = float(lines[0][0])
+        if int(lines[0][1]) == 0:
+            mesh_format['file_type'] = (int(lines[0][1]), 'ASCII')
+        else:
+            mesh_format['file_type'] = (int(lines[0][1]), 'Binary')
+        mesh_format['data_size'] = int(lines[0][2])
+
+        return mesh_format
