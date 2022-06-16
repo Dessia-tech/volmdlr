@@ -1373,6 +1373,7 @@ class VolumeModel(dc.DessiaObject):
             for line in lines:
                 f.write(line)
                 f.write('\n')
+        f.close()
 
 
 class MovingVolumeModel(VolumeModel):
