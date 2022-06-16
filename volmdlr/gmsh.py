@@ -255,3 +255,25 @@ class Gmsh(DessiaObject):
         nodes['all_nodes'] = nodes_points
 
         return nodes
+
+    @staticmethod
+    def read_file(file_path: str):
+        """
+        gets lines from a .msh file
+        """
+
+        f = open(file_path, "r")
+        lines = []
+        data = {}
+        while(True):
+            line = f.readline().strip()
+            if not line:
+                break
+            if line[0] == '$':
+                data_type = line[1::]
+                line = f.readline().strip()
+                while line[0:4] != '$End':
+                    lines.append(line)
+                    line = f.readline().strip()
+                data[data_type] = lines
+                lines = []
