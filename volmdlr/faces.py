@@ -7015,7 +7015,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         lines_tags = []  # points_tags = []
         line_loop_account = 1
 
-        for face in faces:
+        for f, face in enumerate(faces):
             line_surface = []
             for c, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
                 lines_tags = []
@@ -7046,8 +7046,11 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                     line_loop_account += 1
                     lines_tags = []
 
-                    lines.append('Plane Surface(' + str(1) + ') = {' + str(line_surface)[1:-1] + '};')
+                    lines.append('Plane Surface(' + str(f+1) + ') = {' + str(line_surface)[1:-1] + '};')
+
             line_surface = []
+
+        lines.append('Surface Loop(' + str(1) + ') = {' + str(list(range(1,len(faces)+1)))[1:-1] + '};')
 
         return lines
 
