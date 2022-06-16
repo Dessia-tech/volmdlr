@@ -28,12 +28,16 @@ model.to_geo('model')
 
 # %% gmsh file generation
 
-gmsh.initialize()
-gmsh.open("model.geo")
+# gmsh.initialize()
+# gmsh.open("model.geo")
 
-gmsh.model.geo.synchronize()
-gmsh.model.mesh.generate(2)
+# gmsh.model.geo.synchronize()
+# gmsh.model.mesh.generate(2)
 
-gmsh.write("model.msh")
+# gmsh.write("model.msh")
 
-gmsh.finalize()
+# gmsh.finalize()
+
+# %% DIRECT: gmsh file generation
+
+model.to_msh('model_msh')
