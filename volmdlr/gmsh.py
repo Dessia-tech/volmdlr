@@ -169,3 +169,51 @@ class Gmsh(DessiaObject):
         mesh_format['data_size'] = int(lines[0][2])
 
         return mesh_format
+
+    @staticmethod
+    def from_file_nodes(lines):
+        """
+        gets mesh nodes from .msh file
+        """
+
+        nodes = {}
+        nodes_points = []
+        step = 1
+        while True:
+            line = lines[step].split()
+            num_nodes_in_block = int(line[3])
+            if num_nodes_in_block:
+                entity_dim = line[0]
+                # nodes['nodes_dim_'+ entity_dim] = []
+                try:
+                    nodes['nodes_dim_'+ entity_dim]
+                except KeyError:
+                    nodes['nodes_dim_'+ entity_dim] = []
+
+                step = step + num_nodes_in_block+1
+                points = []
+                for i in range(step, step+num_nodes_in_block):
+                    line = lines[i].split()
+                    points.append(volmdlr.Point3D(float(line[0]),
+                                                  float(line[1]),
+                                                  float(line[2])))
+
+                    # nodes['nodes_dim_'+ entity_dim].append(
+                    #     volmdlr.Point3D(float(line[0]),
+                    #                     float(line[1]),
+                    #                     float(line[2])))
+                    # nodes_points.append(volmdlr.Point3D(float(line[0]),
+                    #                                     float(line[1]),
+                    #                                     float(line[2])))
+
+                nodes['nodes_dim_'+ entity_dim].append(points)
+                nodes_points.extend(points)
+
+                step = step+num_nodes_in_block
+
+            if len(nodes_points) == int(lines[0].split()[1]):
+                break
+
+        nodes['all_nodes'] = nodes_points
+
+        return nodes
