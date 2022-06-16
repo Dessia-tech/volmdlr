@@ -5430,6 +5430,13 @@ class CylindricalFace3D(Face3D):
         else:
             return 'y'
 
+    def get_geo_lines(self, tag: int, line_loop_tag: List[int]):
+        '''
+        gets the lines that define a CylindricalFace3D in a .geo file
+        '''
+
+        return 'Surface(' + str(tag) + ') = {' + str(line_loop_tag)[1:-1] + '};'
+
 
 class ToroidalFace3D(Face3D):
     """
