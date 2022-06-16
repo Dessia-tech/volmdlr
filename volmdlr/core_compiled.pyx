@@ -1923,11 +1923,11 @@ class Frame3D(Basis3D):
                 'w': self.w.to_dict()
                 }
 
-    # @classmethod
-    # def dict_to_object(cls, dict_, global_dict=None,
-    #                    pointers_memo: Dict[str, Any] = None, path: str = '#'):
-    #     return Frame3D(dict_['x'], dict_['y'], dict_['z'],
-    #                     dict_.get('name', ''))
+    @classmethod
+    def dict_to_object(cls, dict_, global_dict=None,
+                       pointers_memo: Dict[str, Any] = None, path: str = '#'):
+        return Frame3D(dict_['origin'], dict_['u'], dict_['v'], dict_['w'],
+                        dict_.get('name', ''))
 
     def basis(self):
         return Basis3D(self.u, self.v, self.w)
