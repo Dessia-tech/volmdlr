@@ -7026,19 +7026,31 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                         if isinstance(primitive, volmdlr.edges.LineSegment):
                             try:
                                 index = primitives.index(primitive)
-                            except ValueError:
-                                index = primitives.index(primitive.reverse())
-                            if indices_check[index]:
-                                lines_tags.append(-indices_check[index])
-                            else:
                                 start_point_tag = points.index(primitive.start) + 1
                                 end_point_tag = points.index(primitive.end) + 1
                                 lines.append(primitive.get_geo_lines(tag=line_account,
                                                                      start_point_tag=start_point_tag,
                                                                      end_point_tag=end_point_tag))
+
                                 lines_tags.append(line_account)
                                 indices_check[index] = line_account
                                 line_account += 1
+
+                            # if indices_check[index]:
+                            #     lines_tags.append(-indices_check[index])
+                            # else:
+                            except ValueError:
+                                index = primitives.index(primitive.reverse())
+                                lines_tags.append(-indices_check[index])
+
+                                # start_point_tag = points.index(primitive.start) + 1
+                                # end_point_tag = points.index(primitive.end) + 1
+                                # lines.append(primitive.get_geo_lines(tag=line_account,
+                                #                                      start_point_tag=start_point_tag,
+                                #                                      end_point_tag=end_point_tag))
+                                # lines_tags.append(line_account)
+                                # indices_check[index] = line_account
+                                # line_account += 1
 
                     lines.append('Line Loop(' + str(line_loop_account) + ') = {' + str(lines_tags)[1:-1] + '};')
                     line_surface.append(line_loop_account)
