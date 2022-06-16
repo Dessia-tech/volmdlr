@@ -1369,7 +1369,7 @@ class VolumeModel(dc.DessiaObject):
             elif isinstance(primitive, volmdlr.faces.OpenShell3D):
                 lines.extend(primitive.get_geo_lines(mesh_size_list))
 
-        with open(file_name+'.geo', 'w') as f:
+        with open(file_name + '.geo', 'w') as f:
             for line in lines:
                 f.write(line)
                 f.write('\n')

@@ -7057,11 +7057,11 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                     line_loop_account += 1
                     lines_tags = []
 
-                    lines.append('Plane Surface(' + str(f+1) + ') = {' + str(line_surface)[1:-1] + '};')
+                    lines.append('Plane Surface(' + str(f + 1) + ') = {' + str(line_surface)[1:-1] + '};')
 
             line_surface = []
 
-        lines.append('Surface Loop(' + str(1) + ') = {' + str(list(range(1,len(faces)+1)))[1:-1] + '};')
+        lines.append('Surface Loop(' + str(1) + ') = {' + str(list(range(1, len(faces) + 1)))[1:-1] + '};')
 
         return lines
 
