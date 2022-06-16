@@ -7042,8 +7042,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                     pass
                 else:
                     for p, primitive in enumerate(contour.primitives):
-                        
                         try:
+
                             index = primitives.index(primitive)
                             if isinstance(primitive, volmdlr.edges.LineSegment):
                                 start_point_tag = points.index(primitive.start) + 1

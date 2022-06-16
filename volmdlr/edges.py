@@ -1509,6 +1509,25 @@ class Arc(Edge):
         points = self.polygon_points(angle_resolution=100)
         return point.point_distance(point.nearest_point(points))
 
+    def get_geo_lines(self, tag: int, start_point_tag: int, center_point_tag: int, end_point_tag: int):
+        '''
+        gets the lines that define an Arc in a .geo file
+
+        :param tag: The linesegment index
+        :type tag: int
+        :param start_point_tag: The linesegment' start point index
+        :type start_point_tag: int
+        :param center_point_tag: The linesegment' center point index
+        :type center_point_tag: int
+        :param end_point_tag: The linesegment' end point index
+        :type end_point_tag: int
+
+        :return: A line
+        :rtype: str
+        '''
+
+        return 'Circle(' + str(tag) + ') = {' + str(start_point_tag) + ', ' + str(center_point_tag) + ', ' + str(end_point_tag) + '};'
+
 
 class Arc2D(Arc):
     """
