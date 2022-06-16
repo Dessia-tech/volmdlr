@@ -1926,8 +1926,11 @@ class Frame3D(Basis3D):
     @classmethod
     def dict_to_object(cls, dict_, global_dict=None,
                        pointers_memo: Dict[str, Any] = None, path: str = '#'):
-        return Frame3D(dict_['origin'], dict_['u'], dict_['v'], dict_['w'],
-                        dict_.get('name', ''))
+        return Frame3D(Point3D.dict_to_object(dict_['origin']),
+                       Vector3D.dict_to_object(dict_['u']),
+                       Vector3D.dict_to_object(dict_['v']),
+                       Vector3D.dict_to_object(dict_['w']),
+                       dict_.get('name', ''))
 
     def basis(self):
         return Basis3D(self.u, self.v, self.w)
