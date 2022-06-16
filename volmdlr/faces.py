@@ -4705,6 +4705,13 @@ class PlaneFace3D(Face3D):
             return [self]
         return self.divide_face(list_cutting_contours, contour_extract_inside)
 
+    def get_geo_lines(self, tag: int, line_loop_tag: List[int]):
+        '''
+        gets the lines that define a PlaneFace3D in a .geo file
+        '''
+
+        return 'Plane Surface(' + str(tag) + ') = {' + str(line_loop_tag)[1:-1] + '};'
+
 
 class Triangle3D(PlaneFace3D):
     """
