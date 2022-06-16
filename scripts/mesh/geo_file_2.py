@@ -26,8 +26,21 @@ outer_profile = vm.wires.Contour2D.from_points(points)
 profile=primitives3d.ExtrudedProfile(vm.O3D, vm.Y3D, vm.Z3D, outer_profile, [], vm.X3D*0.1, name = 'extrusion')
 
 model=vm.core.VolumeModel([profile])
+
 model.to_geo('model')
-# model.babylonjs()
+
+# %% gmsh file generation
+
+gmsh.initialize()
+gmsh.open("model.geo")
+
+gmsh.model.geo.synchronize()
+gmsh.model.mesh.generate(2)
+
+gmsh.write("model.msh")
+
+gmsh.finalize()
+
 
 # %% .geo file lines
 
