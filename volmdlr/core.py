@@ -855,7 +855,7 @@ class VolumeModel(dc.DessiaObject):
                             'faces']
     _dessia_methods = ['to_stl_model']
     """
-    
+
     """
 
     def __init__(self, primitives, name=''):
