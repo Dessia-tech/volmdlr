@@ -7099,7 +7099,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                     line_loop_account += 1
                     lines_tags = []
 
-                    lines.append(face.get_geo_file((f + 1), line_surface))
+                    lines.append(face.get_geo_lines((f + 1), line_surface))
                         # 'Plane Surface(' + str(f + 1) + ') = {' + str(line_surface)[1:-1] + '};')
 
             line_surface = []
