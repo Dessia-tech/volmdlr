@@ -7029,14 +7029,13 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                             except ValueError:
                                 index = primitives.index(primitive.reverse())
                             if indices_check[index]:
-                                lines_tags.append(indices_check[index])
+                                lines_tags.append(-indices_check[index])
                             else:
                                 start_point_tag = points.index(primitive.start) + 1
                                 end_point_tag = points.index(primitive.end) + 1
                                 lines.append(primitive.get_geo_lines(tag=line_account,
                                                                      start_point_tag=start_point_tag,
                                                                      end_point_tag=end_point_tag))
-
                                 lines_tags.append(line_account)
                                 indices_check[index] = line_account
                                 line_account += 1
