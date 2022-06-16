@@ -277,3 +277,29 @@ class Gmsh(DessiaObject):
                     line = f.readline().strip()
                 data[data_type] = lines
                 lines = []
+
+    def define_mesh(gmsh: Gmsh):
+        """
+        defines a mesh from a .msh file
+        """
+
+        nodes = self.nodes
+        points = nodes['all_nodes']
+        elements = self.elements
+
+        triangles_elements = elements['elements_type_2']
+        triangles_mesh, element_groups = [], []
+        for triangles in triangles_elements:
+            for triangle in triangles:
+                if points[0].__class__.__name__[-2::] == '3D':
+                    triangular_element = volmdlr.mesh.TriangularElement3D([points[triangle[0]],
+                                                                           points[triangle[1]],
+                                                                           points[triangle[2]]])
+                else:
+                    triangular_element = volmdlr.mesh.TriangularElement2D([points[triangle[0]],
+                                                                           points[triangle[1]]])
+                triangles_mesh.append(triangular_element)
+
+            element_groups.append(volmdlr.mesh.ElementsGroup(triangles_mesh, name=''))
+
+        return volmdlr.mesh.Mesh(element_groups)
