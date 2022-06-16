@@ -45,3 +45,22 @@ class Gmsh(DessiaObject):
         self.name = name
 
         DessiaObject.__init__(self, name=name)
+
+    def from_file(cls, file_path: str):
+        """
+        defines a gmsh object from .msh file
+        """
+
+        file_data = Gmsh.read_file(file_path)
+        mesh_format = Gmsh.from_file_mesh_format(file_data['MeshFormat'])
+        physical_name = Gmsh.from_file_physical_name(file_data['PhysicalName'])
+        entities = Gmsh.from_file_entities(file_data['Entities'])
+        nodes = Gmsh.from_file_nodes(file_data['Nodes'])
+        elements = Gmsh.from_file_elements(file_data['Elements'])
+
+        return cls(mesh_format,
+                   physical_name,
+                   entities,
+                   nodes,
+                   elements)
+
