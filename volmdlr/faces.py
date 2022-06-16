@@ -4084,9 +4084,7 @@ class Face3D(volmdlr.core.Primitive3D):
         gets the lines that define a Face3D in a .geo file
         '''
 
-        lines = []
-        line_surface = []
-        lines_tags = []  # points_tags = []
+        lines, line_surface, lines_tags = [], [], []
         point_account, line_account, line_loop_account = 0, 0, 1
         for c, contour in enumerate(list(chain(*[[self.outer_contour3d], self.inner_contours3d]))):
 
@@ -4119,9 +4117,7 @@ class Face3D(volmdlr.core.Primitive3D):
                     contour = contour.to_polygon(1)
                 for i, point in enumerate(contour.points):
                     lines.append(point.get_geo_lines(tag=point_account + i + 1,
-                                                     mesh_size=1))  # mesh_size_list[c][i]
-
-                    # lines.append('Point('+str(point_account+i+1)+') = {'+str([*point])[1:-1]+', '+str(mesh_size)+'};')
+                                                     mesh_size=1))
 
                 for p, primitive in enumerate(contour.primitives):
                     if p != len(contour.primitives) - 1:
@@ -7011,10 +7007,9 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         gets the lines that define an OpenShell3D in a .geo file
         '''
 
-        faces = self.faces
         primitives = []
         points = set()
-        for face in faces:
+        for face in self.faces:
             for c, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
                 if isinstance(contour, volmdlr.wires.Circle2D):
                     points.add(volmdlr.Point3D(contour.radius, contour.center.y, 0))
@@ -7038,17 +7033,14 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         indices_check = len(primitives) * [None]
 
+        line_account, line_loop_account = 1, 1
+        lines, line_surface, lines_tags = [], [], []
+
         points = list(points)
-        lines = []
         for p, point in enumerate(points):
             lines.append(point.get_geo_lines(tag=p + 1, mesh_size=1))
 
-        line_account = 1
-        line_surface = []
-        lines_tags = []  # points_tags = []
-        line_loop_account = 1
-
-        for f, face in enumerate(faces):
+        for f, face in enumerate(self.faces):
             line_surface = []
             for c, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
                 lines_tags = []
@@ -7078,35 +7070,21 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                             indices_check[index] = line_account
                             line_account += 1
 
-                        # if indices_check[index]:
-                        #     lines_tags.append(-indices_check[index])
-                        # else:
                         except ValueError:
                             index = primitives.index(primitive.reverse())
                             lines_tags.append(-indices_check[index])
 
-                            # start_point_tag = points.index(primitive.start) + 1
-                            # end_point_tag = points.index(primitive.end) + 1
-                            # lines.append(primitive.get_geo_lines(tag=line_account,
-                            #                                      start_point_tag=start_point_tag,
-                            #                                      end_point_tag=end_point_tag))
-                            # lines_tags.append(line_account)
-                            # indices_check[index] = line_account
-                            # line_account += 1
-
                     lines.append(contour.get_geo_lines(line_loop_account, lines_tags))
-                    # lines.append('Line Loop(' + str(line_loop_account) +
-                    #              ') = {' + str(lines_tags)[1:-1] + '};')  # Contour (!))
+
                     line_surface.append(line_loop_account)
                     line_loop_account += 1
                     lines_tags = []
 
                     lines.append(face.get_geo_lines((f + 1), line_surface))
-                    # 'Plane Surface(' + str(f + 1) + ') = {' + str(line_surface)[1:-1] + '};')
 
             line_surface = []
 
-        lines.append('Surface Loop(' + str(1) + ') = {' + str(list(range(1, len(faces) + 1)))[1:-1] + '};')
+        lines.append('Surface Loop(' + str(1) + ') = {' + str(list(range(1, len(self.faces) + 1)))[1:-1] + '};')
 
         return lines
 
