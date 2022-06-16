@@ -65,6 +65,44 @@ class Gmsh(DessiaObject):
                    elements)
 
     @staticmethod
+    def from_file_elements(lines):
+        """
+        gets elements data from .msh file
+        """
+
+        elements = {}
+        elements_types, elements_type = [], []
+        step = 1
+        while True:
+            line = lines[step].split()
+            num_elements_in_block = int(line[3])
+            if num_elements_in_block:
+                element_type = line[2]
+                try:
+                    elements['elements_type_'+ element_type]
+                except KeyError:
+                    elements_types.append(elements_type)
+                    elements['elements_type_'+ element_type] = []
+                    elements_type = []
+
+                step = step +1
+                elements_list = []
+                for i in range(step, step+num_elements_in_block):
+                    line = lines[i].split()
+                    element = [int(index)-1 for index in line[1::]]
+                    # elements['elements_type_'+ element_type].append(element)
+                    elements_list.append(element)
+                    elements_type.append(element)
+                elements['elements_type_'+ element_type].append(elements_list)
+
+            step = i+1 #num_nodes_in_block
+
+            if step == len(lines):
+                break
+
+        return elements
+
+    @staticmethod
     def from_file_entities(lines):
         """
         gets entities data from .msh file
