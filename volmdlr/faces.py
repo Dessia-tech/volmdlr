@@ -7087,12 +7087,13 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                             # indices_check[index] = line_account
                             # line_account += 1
 
-                    lines.append('Line Loop(' + str(line_loop_account) + ') = {' + str(lines_tags)[1:-1] + '};')
+                    lines.append('Line Loop(' + str(line_loop_account) + ') = {' + str(lines_tags)[1:-1] + '};') #Contour (!))
                     line_surface.append(line_loop_account)
                     line_loop_account += 1
                     lines_tags = []
 
-                    lines.append('Plane Surface(' + str(f + 1) + ') = {' + str(line_surface)[1:-1] + '};')
+                    lines.append(face.get_geo_file((f + 1), line_surface))
+                        # 'Plane Surface(' + str(f + 1) + ') = {' + str(line_surface)[1:-1] + '};')
 
             line_surface = []
 
