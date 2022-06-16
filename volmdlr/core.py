@@ -855,7 +855,7 @@ class VolumeModel(dc.DessiaObject):
                             'faces']
     _dessia_methods = ['to_stl_model']
     """
-    :param groups: A list of two element tuple. The first element is a string naming the group and the second element is a list of primitives of the group
+    
     """
 
     def __init__(self, primitives, name=''):
