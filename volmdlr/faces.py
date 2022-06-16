@@ -4143,6 +4143,19 @@ class Face3D(volmdlr.core.Primitive3D):
 
         return lines
 
+    def to_geo(self, file_name: str, mesh_size_list=None):
+        '''
+        gets the .geo file for the Face3D
+        '''
+
+        lines = self.get_geo_lines(mesh_size_list)
+
+        with open(file_name + '.geo', 'w', encoding="utf-8") as f:
+            for line in lines:
+                f.write(line)
+                f.write('\n')
+        f.close()
+
 
 class PlaneFace3D(Face3D):
     """
