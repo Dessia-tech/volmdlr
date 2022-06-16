@@ -46,6 +46,7 @@ class Gmsh(DessiaObject):
 
         DessiaObject.__init__(self, name=name)
 
+    @classmethod
     def from_file(cls, file_path: str):
         """
         defines a gmsh object from .msh file
