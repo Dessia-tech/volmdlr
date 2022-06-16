@@ -65,6 +65,96 @@ class Gmsh(DessiaObject):
                    elements)
 
     @staticmethod
+    def from_file_entities(lines):
+        """
+        gets entities data from .msh file
+        """
+
+        entities = [int(lines[0].split()[0]), int(lines[0].split()[1]),
+                    int(lines[0].split()[2]), int(lines[0].split()[3])]
+
+        points_data = []
+        for i in range(1, entities[0]+1):
+            line = lines[i].split()
+            points = {}
+            points['pointTag'] = int(line[0])
+            points['X'] = float(line[1])
+            points['Y'] = float(line[2])
+            points['Z'] = float(line[3])
+            points['numPhysicalTags'] = int(line[4])
+            if points['numPhysicalTags']:
+                points['physicalTag'] = int(line[5])
+            points_data.append(points)
+
+        curves_data = []
+        for i in range(entities[0]+1, entities[0]+entities[1]+1):
+            line = lines[i].split()
+            curves = {}
+            curves['curveTag'] = int(line[0])
+            curves['minX'] = float(line[1])
+            curves['minY'] = float(line[2])
+            curves['minZ'] = float(line[3])
+            curves['maxX'] = float(line[4])
+            curves['maxY'] = float(line[5])
+            curves['maxZ'] = float(line[6])
+            curves['numPhysicalTags'] = int(line[7])
+            if curves['numPhysicalTags']:
+                curves['physicalTag'] = int(line[8])
+                curves['numBoundingPoints'] = int(line[9])
+                curves['pointTag'] = [float(l) for l in line[10::]]
+            else:
+                curves['numBoundingPoints'] = int(line[8])
+                curves['pointTag'] = [float(l) for l in line[9::]]
+            curves_data.append(curves)
+
+        surfaces_data = []
+        for i in range(entities[0]+entities[1]+1, entities[0]+entities[1]+entities[2]+1):
+            line = lines[i].split()
+            surfaces = {}
+            surfaces['surfaceTag'] = int(line[0])
+            surfaces['minX'] = float(line[1])
+            surfaces['minY'] = float(line[2])
+            surfaces['minZ'] = float(line[3])
+            surfaces['maxX'] = float(line[4])
+            surfaces['maxY'] = float(line[5])
+            surfaces['maxZ'] = float(line[6])
+            surfaces['numPhysicalTags'] = int(line[7])
+            if surfaces['numPhysicalTags']:
+                surfaces['physicalTag'] = int(line[8])
+                surfaces['numBoundingCurves'] = int(line[9])
+                surfaces['curveTag'] = [float(l) for l in line[10::]]
+            else:
+                surfaces['numBoundingCurves'] = float(line[8])
+                surfaces['curveTag'] = [float(l) for l in line[9::]]
+            surfaces_data.append(surfaces)
+
+        volumes_data = []
+        for i in range(entities[0]+entities[1]+entities[2]+1, len(lines)):
+            line = lines[i].split()
+            volumes = {}
+            volumes['volumeTag'] = int(line[0])
+            volumes['minX'] = float(line[1])
+            volumes['minY'] = float(line[2])
+            volumes['minZ'] = float(line[3])
+            volumes['maxX'] = float(line[4])
+            volumes['maxY'] = float(line[5])
+            volumes['maxZ'] = float(line[6])
+            volumes['numPhysicalTags'] = int(line[7])
+            if volumes['numPhysicalTags']:
+                volumes['physicalTag'] = int(line[8])
+                volumes['numBoundngSurfaces'] = int(line[9])
+                volumes['surfaceTag'] = [float(l) for l in line[10::]]
+            else:
+                volumes['numBoundngSurfaces'] = float(line[8])
+                volumes['surfaceTag'] = [float(l) for l in line[9::]]
+            volumes_data.append(volumes)
+
+        return {'points': points_data,
+                'curves': curves_data,
+                'surfaces': surfaces_data,
+                'volumes': volumes_data}
+
+    @staticmethod
     def from_file_mesh_format(lines):
         """
         gets mesh format data from .msh file
