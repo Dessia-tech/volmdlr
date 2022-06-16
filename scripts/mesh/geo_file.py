@@ -33,33 +33,23 @@ l2 = edges.LineSegment2D(p7, p8)
 l3 = edges.LineSegment2D(p8, p6)
 c2 = wires.Contour2D([l1, l2, l3])
 
-
 profile=primitives3d.ExtrudedProfile(vm.O3D, vm.Y3D, vm.Z3D, outer_profile, [c2], vm.X3D*0.1, name = 'extrusion')
 
 model=vm.core.VolumeModel([profile])
 
-# model.babylonjs()
-
 # %% .geo file lines
 
 face = profile.faces[3]
-
-lines = face.get_geo_lines()
-
-with open('face_geo.geo', 'w') as f:
-    for line in lines:
-        f.write(line)
-        f.write('\n')
+face.to_geo('face')
 
 # %% gmsh file generation
 
 gmsh.initialize()
-gmsh.open("face_geo.geo")
+gmsh.open("face.geo")
 
 gmsh.model.geo.synchronize()
 gmsh.model.mesh.generate(2)
 
-gmsh.write("face_geo.msh")
+gmsh.write("face.msh")
 
 gmsh.finalize()
-
