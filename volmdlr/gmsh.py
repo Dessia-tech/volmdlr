@@ -278,7 +278,7 @@ class Gmsh(DessiaObject):
                 data[data_type] = lines
                 lines = []
 
-    def define_mesh(gmsh: Gmsh):
+    def define_mesh(self):
         """
         defines a mesh from a .msh file
         """
