@@ -1526,7 +1526,8 @@ class Arc(Edge):
         :rtype: str
         '''
 
-        return 'Circle(' + str(tag) + ') = {' + str(start_point_tag) + ', ' + str(center_point_tag) + ', ' + str(end_point_tag) + '};'
+        return 'Circle(' + str(tag) + ') = {' + str(start_point_tag) + ', ' + \
+            str(center_point_tag) + ', ' + str(end_point_tag) + '};'
 
 
 class Arc2D(Arc):
