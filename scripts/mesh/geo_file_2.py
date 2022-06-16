@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jun 15 2022
+Created on Thu Jun 16 2022
 
 @author: s.bendjebla
 """
@@ -9,17 +9,20 @@ Created on Wed Jun 15 2022
 import volmdlr
 import volmdlr as vm
 import volmdlr.primitives3d as primitives3d
+import volmdlr.edges
 import gmsh
 
 # %% Extrusion
 
-points = [vm.Point2D(0, 0),
-          vm.Point2D(0.1, 0.),
-          vm.Point2D(0.1, 0.2),
-          vm.Point2D(0.03, 0.15),
-          vm.Point2D(0.,0.21)]
+edges = [volmdlr.edges.LineSegment2D(vm.Point2D(0, 0), vm.Point2D(0.1, 0.)),
+         volmdlr.edges.LineSegment2D(vm.Point2D(0.1, 0.), vm.Point2D(0.1, 0.2)),
+         volmdlr.edges.Arc2D(start=vm.Point2D(0.1, 0.2),
+                             end=vm.Point2D(0.,0.2),
+                             interior=vm.Point2D(0.05,0.25)),
+         volmdlr.edges.LineSegment2D(vm.Point2D(0.,0.2), vm.Point2D(0, 0))]
 
-outer_profile = vm.wires.Contour2D.from_points(points)
+outer_profile = vm.wires.Contour2D(edges)
+
 
 profile=primitives3d.ExtrudedProfile(vm.O3D, vm.Y3D, vm.Z3D, outer_profile, [], vm.X3D*0.1, name = 'extrusion')
 
