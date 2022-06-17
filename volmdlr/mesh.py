@@ -98,9 +98,9 @@ class TriangularElement(vmw.Triangle):
         # self.line_segments = self._line_segments()
         self.center = (self.points[0]+self.points[1]+self.points[2])/3
         
-        self.area = self._area()
+        # self.area = self._area()
         
-        vmw.Triangle.__init__(self, *points)
+        # vmw.Triangle.__init__(self, points)
         
     # def _to_linear_elements(self):
     #     vec1 = vm.Vector2D(self.points[1].x - self.points[0].x,
@@ -225,7 +225,7 @@ class TriangularElement(vmw.Triangle):
 #         return volmdlr.wires.ClosedPolygon2D(points)
 
 
-class TriangularElement2D(TriangularElement):
+class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
@@ -240,8 +240,8 @@ class TriangularElement2D(TriangularElement):
         self.center = (self.points[0]+self.points[1]+self.points[2])/3
 
         self.area = self._area()
-
-        vmw.Triangle.__init__(self, *points)
+        self._line_segments = None
+        vmw.Triangle.__init__(self, points)
 
     def _to_linear_elements(self):
         vec1 = vm.Vector2D(self.points[1].x - self.points[0].x,
@@ -366,7 +366,7 @@ class TriangularElement2D(TriangularElement):
 #         return volmdlr.wires.ClosedPolygon2D(points)
 
 
-class TriangularElement3D(TriangularElement):
+class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
@@ -375,14 +375,14 @@ class TriangularElement3D(TriangularElement):
 
     def __init__(self, points):
         self.points = points
-        self.linear_elements = self._to_linear_elements()
-        self.form_functions = self._form_functions()
-        self.line_segments = self._line_segments()
+        # self.linear_elements = self._to_linear_elements()
+        # self.form_functions = self._form_functions()
+        # self.line_segments = self.line_segments
         self.center = (self.points[0]+self.points[1]+self.points[2])/3
 
-        self.area = self._area()
-
-        TriangularElement.__init__(self, *points)
+        # self.area = self._area()
+        self._line_segments = None
+        TriangularElement.__init__(self, points)
 
 
     def _to_linear_elements(self):
@@ -549,7 +549,7 @@ class ElementsGroup(DessiaObject):
             fig, ax = plt.subplots()
             ax.set_aspect('equal')
         for element in self.elements:
-            element.plot(ax=ax, color=color, fill=fill)
+            element.plot(ax=ax, color=color) #fill=fill
         return ax
 
 class Mesh(DessiaObject):
@@ -628,8 +628,11 @@ class Mesh(DessiaObject):
    
     def plot(self, ax=None):
         if ax is None:
-            fig, ax = plt.subplots()
-            ax.set_aspect('equal')
+            if self.elements_groups[0].elements[0].__class__.__name__[-2::] == '2D':
+                fig, ax = plt.subplots()
+                ax.set_aspect('equal')
+            else:
+                ax = plt.figure().add_subplot(projection='3d')
         for elements_group in self.elements_groups:
             elements_group.plot(ax=ax)
         return ax
