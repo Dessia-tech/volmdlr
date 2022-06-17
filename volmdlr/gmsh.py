@@ -16,10 +16,10 @@ class Gmsh(DessiaObject):
     _generic_eq = True
 
     def __init__(self,
-                 mesh_format,
-                 nodes,
-                 elements,
-                 entities,
+                 mesh_format: dict,
+                 nodes: dict,
+                 elements: dict,
+                 entities: dict,
                  physical_name = None,
                  partitioned_entities = None,
                  periodic = None,
@@ -60,9 +60,9 @@ class Gmsh(DessiaObject):
         elements = Gmsh.from_file_elements(file_data['Elements'])
 
         return cls(mesh_format=mesh_format,
-                   entities=entities,
-                   nodes=nodes,
-                   elements=elements)
+                    entities=entities,
+                    nodes=nodes,
+                    elements=elements)
 
     @staticmethod
     def from_file_elements(lines):
