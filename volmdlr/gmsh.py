@@ -288,9 +288,9 @@ class Gmsh(DessiaObject):
         defines a mesh from a .msh file
         """
 
-        nodes = self.nodes
+        nodes = self.nodes[0]
         points = nodes['all_nodes']
-        elements = self.elements
+        elements = self.elements[0]
 
         triangles_elements = elements['elements_type_2']
         triangles_mesh, element_groups = [], []
