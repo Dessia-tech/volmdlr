@@ -265,7 +265,7 @@ class Gmsh(DessiaObject):
         gets lines from a .msh file
         """
 
-        f = open(file_path, "r")
+        f = open(file_path, "r", encoding="utf-8")
         lines = []
         data = {}
         while True:
