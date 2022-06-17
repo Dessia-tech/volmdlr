@@ -5,6 +5,8 @@
 # @author: Gasmi
 # """
 
+from dessia_common import DessiaObject
+from typing import TypeVar, List, Tuple, Dict
 
 import matplotlib.pyplot as plt
 # import volmdlr.core_compiled
@@ -19,8 +21,6 @@ import volmdlr.edges as vme
 # import volmdlr.faces
 # from volmdlr.core_compiled import Matrix33
 # import math
-from dessia_common import DessiaObject
-from typing import TypeVar, List, Tuple, Dict
 # import matplotlib
 # import random
 # from itertools import product
