@@ -249,6 +249,9 @@ class Gmsh(DessiaObject):
 
                 step = step+num_nodes_in_block
 
+            else:
+                step += 1
+
             if len(nodes_points) == int(lines[0].split()[1]):
                 break
 
