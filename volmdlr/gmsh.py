@@ -268,7 +268,7 @@ class Gmsh(DessiaObject):
         f = open(file_path, "r")
         lines = []
         data = {}
-        while(True):
+        while True:
             line = f.readline().strip()
             if not line:
                 break
