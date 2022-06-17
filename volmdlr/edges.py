@@ -3938,6 +3938,23 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             raise ValueError('abscissa not found')
         return res.x[0]
 
+    def get_geo_lines(self, tag: int, control_points_tags: List[int]):
+        '''
+        gets the lines that define a BsplineCurve in a .geo file
+
+        :param tag: The BsplineCurve index
+        :type tag: int
+        :param start_point_tag: The linesegment' start point index
+        :type start_point_tag: int
+        :param end_point_tag: The linesegment' end point index
+        :type end_point_tag: int
+
+        :return: A line
+        :rtype: str
+        '''
+
+        return 'BSpline(' + str(tag) + ') = {' + str(control_points_tags)[1:-1] + '};'
+
 
 class BezierCurve3D(BSplineCurve3D):
 
