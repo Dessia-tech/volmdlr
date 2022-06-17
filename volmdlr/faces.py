@@ -7027,6 +7027,10 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                             points.add(primitive.center)
                             points.add(primitive.end)
 
+                        if isinstance(primitive, volmdlr.edges.BSplineCurve3D):
+                            for point in primitive.control_points:
+                                points.add(point)
+
                         if ((primitive not in primitives)
                                 and (primitive.reverse() not in primitives)):
                             primitives.append(primitive)
