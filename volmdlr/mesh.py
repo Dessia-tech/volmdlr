@@ -5,8 +5,8 @@
 # @author: Gasmi
 # """
 
-from dessia_common import DessiaObject
 from typing import TypeVar, List, Tuple, Dict
+from dessia_common import DessiaObject
 
 import matplotlib.pyplot as plt
 # import volmdlr.core_compiled
