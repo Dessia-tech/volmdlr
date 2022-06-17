@@ -199,12 +199,12 @@ class Gmsh(DessiaObject):
         """
 
         mesh_format = {}
-        mesh_format['version_number'] = float(lines[0][0])
-        if int(lines[0][1]) == 0:
-            mesh_format['file_type'] = (int(lines[0][1]), 'ASCII')
+        mesh_format['version_number'] = float(lines[0].split()[0])
+        if int(lines[0].split()[1]) == 0:
+            mesh_format['file_type'] = (int(lines[0].split()[1]), 'ASCII')
         else:
-            mesh_format['file_type'] = (int(lines[0][1]), 'Binary')
-        mesh_format['data_size'] = int(lines[0][2])
+            mesh_format['file_type'] = (int(lines[0].split()[1]), 'Binary')
+        mesh_format['data_size'] = int(lines[0].split()[2])
 
         return mesh_format
 
