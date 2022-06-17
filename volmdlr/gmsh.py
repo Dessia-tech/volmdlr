@@ -17,18 +17,18 @@ class Gmsh(DessiaObject):
 
     def __init__(self,
                  mesh_format,
-                 physical_name,
-                 entities,
-                 partitioned_entities,
                  nodes,
                  elements,
-                 periodic,
-                 ghost_elements,
-                 parametrizations,
-                 node_data,
-                 element_data,
-                 element_node_data,
-                 name: str):
+                 entities,
+                 physical_name = None,
+                 partitioned_entities = None,
+                 periodic = None,
+                 ghost_elements = None,
+                 parametrizations = None,
+                 node_data = None,
+                 element_data = None,
+                 element_node_data = None,
+                 name: str = ''):
 
         self.mesh_format = mesh_format
         self.physical_name = physical_name,
