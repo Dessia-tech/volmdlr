@@ -6526,7 +6526,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                  color: Tuple[float, float, float] = None,
                  alpha: float = 1., name: str = ''):
         self.faces = faces
-        self.name = name
         if not color:
             self.color = (0.8, 0.8, 0.8)
         else:
