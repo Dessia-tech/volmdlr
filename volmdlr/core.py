@@ -1309,7 +1309,7 @@ class VolumeModel(dc.PhysicalObject):
                 draughting_id)
             color_id = draughting_id + 1
             primitive_color = (1, 1, 1)
-            if hasattr(primitive, 'color'):
+            if hasattr(primitive, 'color') and primitive.color is not None:
                 primitive_color = primitive.color
             step_content += "#{} = COLOUR_RGB('',{}, {}, {});\n".format(
                 color_id,
@@ -1359,6 +1359,7 @@ class VolumeModel(dc.PhysicalObject):
 
     def volmdlr_volume_model(self):
         return [self]
+
 
 class MovingVolumeModel(VolumeModel):
     def __init__(self, primitives, step_frames, name=''):
