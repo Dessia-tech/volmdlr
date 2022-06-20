@@ -830,8 +830,9 @@ class Plane3D(Surface3D):
     def __eq__(self, other_plane):
         if other_plane.__class__.__name__ != self.__class__.__name__:
             return False
-        return (self.frame.origin == other_plane.frame.origin and
-                self.frame.w.is_colinear_to(other_plane.frame.w))
+        return self.frame == other_plane.frame
+        # return (self.frame.origin == other_plane.frame.origin and
+        #         self.frame.w.is_colinear_to(other_plane.frame.w))
 
     # def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
     #     # improve the object structure ?
@@ -4125,17 +4126,17 @@ class PlaneFace3D(Face3D):
     #         polygon2D = volmdlr.ClosedPolygon2D(polygon_points)
     #     return repaired_points, polygon2D
 
-    @classmethod
-    def dict_to_object(cls, dict_, global_dict=None, pointers_memo: Dict[str, Any] = None, path: str = '#'):
-        plane3d = Plane3D.dict_to_object(dict_['surface3d'],
-                                         global_dict=global_dict,
-                                         pointers_memo=pointers_memo,
-                                         path=f'{path}/surface3d')
-        surface2d = Surface2D.dict_to_object(dict_['surface2d'],
-                                             global_dict=global_dict,
-                                             pointers_memo=pointers_memo,
-                                             path=f'{path}/surface2d')
-        return cls(plane3d, surface2d, dict_['name'])
+    # @classmethod
+    # def dict_to_object(cls, dict_, global_dict=None, pointers_memo: Dict[str, Any] = None, path: str = '#'):
+    #     plane3d = Plane3D.dict_to_object(dict_['surface3d'],
+    #                                      global_dict=global_dict,
+    #                                      pointers_memo=pointers_memo,
+    #                                      path=f'{path}/surface3d')
+    #     surface2d = Surface2D.dict_to_object(dict_['surface2d'],
+    #                                          global_dict=global_dict,
+    #                                          pointers_memo=pointers_memo,
+    #                                          path=f'{path}/surface2d')
+    #     return cls(plane3d, surface2d, dict_['name'])
 
     def area(self):
         return self.surface2d.outer_contour.area()
