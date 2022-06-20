@@ -6524,7 +6524,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                  color: Tuple[float, float, float] = None,
                  alpha: float = 1., name: str = ''):
         self.faces = faces
-        self.name = name
         if not color:
             self.color = (0.8, 0.8, 0.8)
         else:
@@ -6532,6 +6531,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         self.alpha = alpha
         self._bbox = None
         # self.bounding_box = self._bounding_box()
+        volmdlr.core.CompositePrimitive3D.__init__(self, primitives=faces,
+                                                   name=name)
 
     def _data_hash(self):
         return sum(face._data_hash() for face in self.faces)
