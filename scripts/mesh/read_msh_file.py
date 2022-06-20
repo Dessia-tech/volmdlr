@@ -6,6 +6,7 @@ Created on Thu Jun 16 2022
 @author: s.bendjebla
 """
 
+import volmdlr
 import volmdlr.gmsh
 
 # %%

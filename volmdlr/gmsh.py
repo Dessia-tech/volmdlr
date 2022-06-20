@@ -20,7 +20,7 @@ class Gmsh(DessiaObject):
                  nodes: dict,
                  elements: dict,
                  entities: dict,
-                 physical_name = None,
+                 physical_names = None,
                  partitioned_entities = None,
                  periodic = None,
                  ghost_elements = None,
@@ -31,7 +31,7 @@ class Gmsh(DessiaObject):
                  name: str = ''):
 
         self.mesh_format = mesh_format
-        self.physical_name = physical_name,
+        self.physical_names = physical_names,
         self.entities = entities,
         self.nodes = nodes,
         self.elements = elements,
@@ -54,7 +54,7 @@ class Gmsh(DessiaObject):
 
         file_data = Gmsh.read_file(file_path)
         mesh_format = Gmsh.from_file_mesh_format(file_data['MeshFormat'])
-        # physical_name = Gmsh.from_file_physical_name(file_data['PhysicalName'])
+        physical_names = Gmsh.from_file_physical_names(file_data['PhysicalNames'])
         entities = Gmsh.from_file_entities(file_data['Entities'])
         nodes = Gmsh.from_file_nodes(file_data['Nodes'])
         elements = Gmsh.from_file_elements(file_data['Elements'])
@@ -62,7 +62,8 @@ class Gmsh(DessiaObject):
         return cls(mesh_format=mesh_format,
                     entities=entities,
                     nodes=nodes,
-                    elements=elements)
+                    elements=elements,
+                    physical_names=physical_names)
 
     @staticmethod
     def from_file_elements(lines):
@@ -258,6 +259,25 @@ class Gmsh(DessiaObject):
         nodes['all_nodes'] = nodes_points
 
         return nodes
+
+    @staticmethod
+    def from_file_physical_names(lines):
+        """
+        gets mesh physical_names from .msh file
+        """
+
+        physical_names = {}
+        for i in range(1, int(lines[0].split()[0])+1):
+            physical_dim = (lines[i].split()[0])
+            try:
+                physical_names['physical_dim_'+ physical_dim]
+            except KeyError:
+                physical_names['physical_dim_'+ physical_dim] = []
+
+            physical_names['physical_dim_'+ physical_dim].append({'physicalTag': int(lines[1][0]),
+                                                                  'Name': lines[i][5:-1]})
+
+        return physical_names
 
     @staticmethod
     def read_file(file_path: str):
