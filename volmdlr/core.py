@@ -415,7 +415,7 @@ class CompositePrimitive2D(Primitive2D):
 
     #     self.basis_primitives = basis_primitives
 
-    def rotation(self, center: volmdlr.Point3D, angle: float):
+    def rotation(self, center: volmdlr.Point2D, angle: float):
         """
         CompositePrimitive2D rotation
         :param center: rotation center
@@ -425,7 +425,7 @@ class CompositePrimitive2D(Primitive2D):
         return self.__class__([point.rotation(center, angle)
                                for point in self.primitives])
 
-    def rotation_inplace(self, center: volmdlr.Point3D, angle: float):
+    def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
         """
         CompositePrimitive2D rotation. Object is updated inplace
         :param center: rotation center
