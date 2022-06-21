@@ -508,6 +508,25 @@ class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
 #         return volmdlr.wires.ClosedPolygon2D(points)
 
 
+class TetrahedronElement(DessiaObject):
+    _standalone_in_db = False
+    _non_serializable_attributes = []
+    _non_eq_attributes = ['name']
+    _non_hash_attributes = ['name']
+    _generic_eq = True
+
+    def __init__(self, points, name: str = ''):
+        self.points = points
+        # self.linear_elements = self._to_linear_elements()
+        # self.form_functions = self._form_functions()
+        # self.line_segments = self._line_segments()
+        self.center = (self.points[0]+self.points[1]+self.points[2]+self.points[3])/4
+
+        self.area = self._area()
+        self._line_segments = None
+        DessiaObject.__init__(self, name=name)
+
+
 class ElementsGroup(DessiaObject):
     _standalone_in_db = False
     _non_serializable_attributes = []
