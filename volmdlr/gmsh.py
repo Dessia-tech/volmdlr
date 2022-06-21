@@ -71,6 +71,9 @@ class Gmsh(DessiaObject):
         gets elements data from .msh file
         """
 
+        if not lines:
+            return {}
+
         elements = {}
         elements_types, elements_type = [], []
         step = 1
@@ -120,6 +123,9 @@ class Gmsh(DessiaObject):
         gets mesh element_data from .msh file
         """
 
+        if not lines:
+            return {}
+
         element_data = {}
 
         return element_data
@@ -141,6 +147,9 @@ class Gmsh(DessiaObject):
         gets mesh element_node_data from .msh file
         """
 
+        if not lines:
+            return {}
+
         element_node_data = {}
 
         return element_node_data
@@ -150,6 +159,9 @@ class Gmsh(DessiaObject):
         """
         gets entities data from .msh file
         """
+
+        if not lines:
+            return {}
 
         entities = [int(lines[0].split()[0]), int(lines[0].split()[1]),
                     int(lines[0].split()[2]), int(lines[0].split()[3])]
@@ -248,6 +260,9 @@ class Gmsh(DessiaObject):
         gets mesh ghost_elements from .msh file
         """
 
+        if not lines:
+            return {}
+
         ghost_elements = {}
 
         return ghost_elements
@@ -265,6 +280,9 @@ class Gmsh(DessiaObject):
         """
         gets mesh interpolation_scheme from .msh file
         """
+
+        if not lines:
+            return {}
 
         interpolation_scheme = {}
 
@@ -291,6 +309,9 @@ class Gmsh(DessiaObject):
         """
         gets mesh nodes from .msh file
         """
+
+        if not lines:
+            return {}
 
         nodes = {}
         nodes_points = []
@@ -354,6 +375,9 @@ class Gmsh(DessiaObject):
         gets mesh node_data from .msh file
         """
 
+        if not lines:
+            return {}
+
         node_data = {}
 
         return node_data
@@ -380,6 +404,9 @@ class Gmsh(DessiaObject):
         """
         gets mesh parametrizations from .msh file
         """
+
+        if not lines:
+            return {}
 
         parametrizations = {}
 
@@ -426,6 +453,9 @@ class Gmsh(DessiaObject):
         gets mesh partitioned_entities from .msh file
         """
 
+        if not lines:
+            return {}
+
         partitioned_entities = {}
 
         return partitioned_entities
@@ -446,6 +476,9 @@ class Gmsh(DessiaObject):
         gets mesh periodic from .msh file
         """
 
+        if not lines:
+            return {}
+
         periodic = {}
 
         return periodic
@@ -455,6 +488,9 @@ class Gmsh(DessiaObject):
         """
         gets mesh physical_names from .msh file
         """
+
+        if not lines:
+            return {}
 
         physical_names = {}
         for i in range(1, int(lines[0].split()[0])+1):
@@ -475,9 +511,22 @@ class Gmsh(DessiaObject):
         gets lines from a .msh file
         """
 
+        data = {'MeshFormat': [],
+                'PhysicalNames': [],
+                'Entities': [],
+                'PartitionedEntities': [],
+                'Nodes': [],
+                'Elements': [],
+                'Periodic': [],
+                'GhostElements': [],
+                'Parametrizations': [],
+                'NodeData': [],
+                'ElementData': [],
+                'ElementNodeData': [],
+                'InterpolationScheme': []}
+
         f = open(file_path, "r", encoding="utf-8")
         lines = []
-        data = {}
         while True:
             line = f.readline().strip()
             if not line:
