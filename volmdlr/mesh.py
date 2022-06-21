@@ -94,7 +94,7 @@ class TriangularElement(vmw.Triangle):
     def __init__(self, points):
         self.points = points
         # self.linear_elements = self._to_linear_elements()
-        self.form_functions = self._form_functions()
+        # self.form_functions = self._form_functions()
         # self.line_segments = self._line_segments()
         self.center = (self.points[0]+self.points[1]+self.points[2])/3
         
@@ -521,11 +521,12 @@ class TetrahedronElement(DessiaObject):
         # self.form_functions = self._form_functions()
         # self.line_segments = self._line_segments()
         self.center = (self.points[0]+self.points[1]+self.points[2]+self.points[3])/4
+        self.triangular_elements = self._triangular_elements()
 
         # self.area = self._area()
         DessiaObject.__init__(self, name=name)
 
-    def get_triangular_elements(self):
+    def _triangular_elements(self):
 
         indices_combinations = [x for x in combinations(list(range(len(self.points))), r=3)]
         triangular_elements = []
@@ -542,6 +543,8 @@ class TetrahedronElement(DessiaObject):
             ax = plt.figure().add_subplot(projection='3d')
         for point in self.points:
             point.plot(ax=ax)
+        for triangle in self.triangular_elements:
+            triangle.plot(ax=ax)
         return ax
 
 
