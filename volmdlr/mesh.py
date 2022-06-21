@@ -94,11 +94,11 @@ class TriangularElement(vmw.Triangle):
     def __init__(self, points):
         self.points = points
         # self.linear_elements = self._to_linear_elements()
-        # self.form_functions = self._form_functions()
+        self.form_functions = self._form_functions()
         # self.line_segments = self._line_segments()
         self.center = (self.points[0]+self.points[1]+self.points[2])/3
         
-        # self.area = self._area()
+        self.area = self._area()
         
         # vmw.Triangle.__init__(self, points)
         
@@ -129,20 +129,20 @@ class TriangularElement(vmw.Triangle):
     #                                      normal3)
     #     return [linear_element_1, linear_element_2, linear_element_3]
     
-    # def _form_functions(self):
-    #     a = vm.Matrix33(1, self.points[0].x, self.points[0].y,
-    #                     1, self.points[1].x, self.points[1].y,
-    #                     1, self.points[2].x, self.points[2].y)
-    #     try:
-    #         inv_a = a.inverse()
-    #     except ValueError:
-    #         self.plot()
-    #         print('buggy element area', self.area)
-    #         raise FlatElementError('form function bug')
-    #     x1 = inv_a.vector_multiplication(vm.X3D)
-    #     x2 = inv_a.vector_multiplication(vm.Y3D)
-    #     x3 = inv_a.vector_multiplication(vm.Z3D)
-    #     return x1, x2, x3
+    def _form_functions(self):
+        a = vm.Matrix33(1, self.points[0].x, self.points[0].y,
+                        1, self.points[1].x, self.points[1].y,
+                        1, self.points[2].x, self.points[2].y)
+        try:
+            inv_a = a.inverse()
+        except ValueError:
+            self.plot()
+            print('buggy element area', self.area)
+            raise FlatElementError('form function bug')
+        x1 = inv_a.vector_multiplication(vm.X3D)
+        x2 = inv_a.vector_multiplication(vm.Y3D)
+        x3 = inv_a.vector_multiplication(vm.Z3D)
+        return x1, x2, x3
 
 #     # def _quadratic_form_functions(self):
 #     #     a = [[1, self.points[0][0], self.points[0][1],self.points[0][0]**2,self.points[0][0]*self.points[0][1],self.points[0][1]**2],
@@ -197,28 +197,28 @@ class TriangularElement(vmw.Triangle):
             new_points.append(point.axial_symmetry(line))
         return self.__class__(new_points)
 
-#     def plot(self, ax=None, color='k', width=None,
-#              plot_points=False, fill=False):
-#         if ax is None:
-#             fig, ax = plt.subplots()
-#             ax.set_aspect('equal')
+    def plot(self, ax=None, color='k', width=None,
+              plot_points=False, fill=False):
+        if ax is None:
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
 
-#         if fill:
-#             x = [p[0] for p in self.points]
-#             y = [p[1] for p in self.points]
-#             plt.fill(x, y, facecolor=color, edgecolor="k")
-#             return ax
+        if fill:
+            x = [p[0] for p in self.points]
+            y = [p[1] for p in self.points]
+            plt.fill(x, y, facecolor=color, edgecolor="k")
+            return ax
 
-#         for p1, p2 in zip(self.points, self.points[1:]+[self.points[0]]):
-#             if width is None:
-#                 width = 1
-#             if plot_points:
-#                 ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color,
-#                         marker='o', linewidth=width)
-#             else:
-#                 ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color,
-#                         linewidth=width)
-#         return ax
+        for p1, p2 in zip(self.points, self.points[1:]+[self.points[0]]):
+            if width is None:
+                width = 1
+            if plot_points:
+                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color,
+                        marker='o', linewidth=width)
+            else:
+                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color,
+                        linewidth=width)
+        return ax
 
 #     def triangle_to_polygon(self):
 #         points = self.points
