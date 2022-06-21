@@ -608,3 +608,28 @@ class Gmsh(DessiaObject):
         element_groups = [volmdlr.mesh.ElementsGroup(tetrahedrons_mesh, name='')]
 
         return volmdlr.mesh.Mesh(element_groups)
+
+    def define_triangular_element_mesh(self):
+        """
+        defines a mesh with TriangularElement from a .msh file
+        """
+
+        nodes = self.nodes[0]
+        points = nodes['all_nodes']
+        elements = self.elements[0]
+
+        triangles_elements = elements['elements_type_2']
+        triangles_mesh, element_groups = [], []
+        for triangles in triangles_elements:
+            for triangle in triangles:
+                if points[0].__class__.__name__[-2::] == '3D':
+                    triangles_mesh.append(volmdlr.mesh.TriangularElement3D([points[triangle[0]],
+                                                                            points[triangle[1]],
+                                                                            points[triangle[2]]]))
+                else:
+                    triangles_mesh.append(volmdlr.mesh.TriangularElement2D([points[triangle[0]],
+                                                                            points[triangle[1]]]))
+
+        element_groups = [volmdlr.mesh.ElementsGroup(triangles_mesh, name='')]
+
+        return volmdlr.mesh.Mesh(element_groups)
