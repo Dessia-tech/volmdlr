@@ -7,7 +7,7 @@
 
 from typing import TypeVar, List, Tuple, Dict
 from dessia_common import DessiaObject
-
+from itertools import combinations
 import matplotlib.pyplot as plt
 # import volmdlr.core_compiled
 import volmdlr as vm
@@ -98,7 +98,7 @@ class TriangularElement(vmw.Triangle):
         # self.line_segments = self._line_segments()
         self.center = (self.points[0]+self.points[1]+self.points[2])/3
         
-        self.area = self._area()
+        # self.area = self._area()
         
         # vmw.Triangle.__init__(self, points)
         
@@ -524,6 +524,18 @@ class TetrahedronElement(DessiaObject):
 
         # self.area = self._area()
         DessiaObject.__init__(self, name=name)
+
+    def get_triangular_elements(self):
+
+        indices_combinations = [x for x in combinations(list(range(len(self.points))), r=3)]
+        triangular_elements = []
+
+        for indices in indices_combinations:
+            triangular_elements.append(TriangularElement3D([self.points[indices[0]],
+                                                            self.points[indices[1]],
+                                                            self.points[indices[2]]]))
+
+        return triangular_elements
 
     def plot(self, ax=None, color='k'):
         if ax is None:
