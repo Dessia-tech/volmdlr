@@ -586,25 +586,3 @@ class Gmsh(DessiaObject):
             element_groups.append(volmdlr.mesh.ElementsGroup(triangles_mesh, name=''))
 
         return volmdlr.mesh.Mesh(element_groups)
-
-    def define_tetrahedron_element_mesh(self):
-        """
-        defines a mesh with TetrahedronElement from a .msh file
-        """
-
-        nodes = self.nodes[0]
-        points = nodes['all_nodes']
-        elements = self.elements[0]
-
-        tetrahedron_elements = elements['elements_type_4']
-        tetrahedrons_mesh = []
-        for tetrahedrons in tetrahedron_elements:
-            for tetrahedron in tetrahedrons:
-                tetrahedrons_mesh.append(volmdlr.mesh.TetrahedronElement([points[tetrahedron[0]],
-                                                                          points[tetrahedron[1]],
-                                                                          points[tetrahedron[2]],
-                                                                          points[tetrahedron[3]]]))
-
-        element_groups = [volmdlr.mesh.ElementsGroup(tetrahedrons_mesh, name='')]
-
-        return volmdlr.mesh.Mesh(element_groups)
