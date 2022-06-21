@@ -522,9 +522,15 @@ class TetrahedronElement(DessiaObject):
         # self.line_segments = self._line_segments()
         self.center = (self.points[0]+self.points[1]+self.points[2]+self.points[3])/4
 
-        self.area = self._area()
-        self._line_segments = None
+        # self.area = self._area()
         DessiaObject.__init__(self, name=name)
+
+    def plot(self, ax=None, color='k'):
+        if ax is None:
+            ax = plt.figure().add_subplot(projection='3d')
+        for point in self.points:
+            point.plot(ax=ax)
+        return ax
 
 
 class ElementsGroup(DessiaObject):

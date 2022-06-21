@@ -10,7 +10,7 @@ import volmdlr
 import volmdlr.gmsh
 
 # %%
-file_path = 'model.msh'
+file_path = '/home/bendjebla/Python/DessIA/volmdlr/scripts/step/block.msh'
 
 gmsh = volmdlr.gmsh.Gmsh.from_file(file_path)
 
