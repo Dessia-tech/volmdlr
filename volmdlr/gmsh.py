@@ -28,6 +28,7 @@ class Gmsh(DessiaObject):
                  node_data = None,
                  element_data = None,
                  element_node_data = None,
+                 interpolation_scheme = None,
                  name: str = ''):
 
         self.mesh_format = mesh_format
@@ -42,6 +43,7 @@ class Gmsh(DessiaObject):
         self.node_data = node_data,
         self.element_data = element_data,
         self.element_node_data = element_node_data,
+        self.interpolation_scheme = interpolation_scheme,
         self.name = name
 
         DessiaObject.__init__(self, name=name)
@@ -58,6 +60,14 @@ class Gmsh(DessiaObject):
         entities = Gmsh.from_file_entities(file_data['Entities'])
         nodes = Gmsh.from_file_nodes(file_data['Nodes'])
         elements = Gmsh.from_file_elements(file_data['Elements'])
+        partitioned_entities = Gmsh.from_file_partitioned_entities(file_data['PartitionedEntities'])
+        periodic = Gmsh.from_file_periodic(file_data['Periodic'])
+        ghost_elements = Gmsh.from_file_ghost_elements(file_data['GhostElements'])
+        parametrizations = Gmsh.from_file_parametrizations(file_data['Parametrizations'])
+        node_data = Gmsh.from_file_node_data(file_data['NodeData'])
+        element_data = Gmsh.from_file_element_data(file_data['ElementData'])
+        element_node_data = Gmsh.from_file_element_node_data(file_data['ElementNodeData'])
+        interpolation_scheme = Gmsh.from_file_interpolation_scheme(file_data['InterpolationScheme'])
 
         return cls(mesh_format=mesh_format,
                     entities=entities,
