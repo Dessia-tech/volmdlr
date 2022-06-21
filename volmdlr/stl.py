@@ -5,11 +5,11 @@
 """
 # from binaryornot.check import is_binary
 import io
-from typing import BinaryIO
+# from typing import BinaryIO
 from typing import List
 import struct
 # import kaitaistruct
-from kaitaistruct import KaitaiStruct, KaitaiStream, BytesIO
+from kaitaistruct import KaitaiStream
 
 
 from binaryornot.check import is_binary
@@ -80,6 +80,8 @@ class Stl(dc.DessiaObject):
 
     @classmethod
     def from_binary_stream(cls, stream: io.BytesIO, distance_multiplier: float = 0.001):
+        stream.seek(0)
+
         stream = KaitaiStream(stream)
         name = stream.read_bytes(80).decode('utf8')
         # print(name)
@@ -119,6 +121,8 @@ class Stl(dc.DessiaObject):
 
     @classmethod
     def from_text_stream(cls, stream: io.StringIO, distance_multiplier: float = 0.001):
+        stream.seek(0)
+
         header = stream.readline()
         name = header[6:]
         triangles = []
@@ -213,7 +217,7 @@ class Stl(dc.DessiaObject):
                 distance_multiplier * triangle.point3.y,
                 distance_multiplier * triangle.point3.z,
                 0]
-        stream.write(struct.pack(BINARY_FACET, *data))
+            stream.write(struct.pack(BINARY_FACET, *data))
 
     def to_closed_shell(self):
         return vmf.ClosedShell3D(self.triangles, name=self.name)
@@ -296,3 +300,15 @@ class Stl(dc.DessiaObject):
         self.normals = normals
 
         return points_normals
+
+    def clean_flat_triangles(self) -> 'Stl':
+        invalid_triangles = []
+        for it, triangles in enumerate(self.triangles):
+            if triangles.area() < 1e-12:
+                invalid_triangles.append(it)
+                print(it, triangles.area())
+
+        triangles = self.triangles[:]
+        for invalid_triangle_index in invalid_triangles[::-1]:
+            triangles.pop(invalid_triangle_index)
+        return Stl(triangles)

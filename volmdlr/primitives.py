@@ -25,18 +25,23 @@ class RoundedLineSegments:
         self.name = name
         self.npoints = len(points)
 
-    def frame_mapping(self, frame, side, copy=True):
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
+        Changes frame_mapping and return a new RoundedLineSegments
         side = 'old' or 'new'
         """
-        if copy:
-            return self.__class__([p.frame_mapping(frame, side, copy=True)
-                                   for p in self.points], radius=self.radius,
-                                  adapt_radius=self.adapt_radius,
-                                  name=self.name)
-        else:
-            for p in self.points:
-                p.frame_mapping(frame, side, copy=False)
+        return self.__class__([point.frame_mapping(frame, side)
+                               for point in self.points], radius=self.radius,
+                              adapt_radius=self.adapt_radius,
+                              name=self.name)
+
+    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and the object is updated inplace
+        side = 'old' or 'new'
+        """
+        for point in self.points:
+            point.frame_mapping_inplace(frame, side)
 
     def _primitives(self):
         alpha = {}

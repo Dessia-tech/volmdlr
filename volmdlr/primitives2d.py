@@ -77,26 +77,45 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
         return p3, pm, p4, point_distance, alpha
 
-    def rotation(self, center, angle, copy=True):
-        if copy:
-            return self.__class__([p.rotation(center, angle, copy=True)
-                                   for p in self.points],
-                                  self.radius,
-                                  adapt_radius=self.adapt_radius,
-                                  name=self.name)
-        self.__init__(
-            [p.rotation(center, angle, copy=True) for p in self.points],
-            self.radius,
-            adapt_radius=self.adapt_radius, name=self.name)
+    def rotation(self, center: volmdlr.Point2D, angle: float):
+        """
+        OpenedRoundedLineSegments2D rotation
+        :param center: rotation center
+        :param angle: angle rotation
+        :return: a new rotationed OpenedRoundedLineSegments2D
+        """
+        return self.__class__([point.rotation(center, angle)
+                               for point in self.points],
+                              self.radius,
+                              adapt_radius=self.adapt_radius,
+                              name=self.name)
 
-    def translation(self, offset, copy=True):
-        if copy:
-            return self.__class__(
-                [p.translation(offset, copy=True) for p in self.points],
-                self.radius, adapt_radius=self.adapt_radius, name=self.name)
-        self.__init__(
-            [p.translation(offset, copy=True) for p in self.points],
+    def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
+        """
+        OpenedRoundedLineSegments2D rotation. Object is updated inplace
+        :param center: rotation center
+        :param angle: rotation angle
+        """
+        for point in self.points:
+            point.rotation_inplace(center, angle)
+
+    def translation(self, offset: volmdlr.Vector2D):
+        """
+        OpenedRoundedLineSegments2D translation
+        :param offset: translation vector
+        :return: A new translated OpenedRoundedLineSegments2D
+        """
+        return self.__class__(
+            [point.translation(offset) for point in self.points],
             self.radius, adapt_radius=self.adapt_radius, name=self.name)
+
+    def translation_inplace(self, offset: volmdlr.Vector2D):
+        """
+        OpenedRoundedLineSegments2D translation. Object is updated inplace
+        :param offset: translation vector
+        """
+        for point in self.points:
+            point.rotation_inplace(offset)
 
     def offset(self, offset):
         nb = len(self.points)
