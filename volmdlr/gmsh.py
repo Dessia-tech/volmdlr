@@ -103,6 +103,48 @@ class Gmsh(DessiaObject):
 
         return elements
 
+    # $ElementData
+    #   numStringTags(ASCII int)
+    #   stringTag(string) ...
+    #   numRealTags(ASCII int)
+    #   realTag(ASCII double) ...
+    #   numIntegerTags(ASCII int)
+    #   integerTag(ASCII int) ...
+    #   elementTag(int) value(double) ...
+    #   ...
+    # $EndElementData
+
+    @staticmethod
+    def from_file_element_data(lines):
+        """
+        gets mesh element_data from .msh file
+        """
+
+        element_data = {}
+
+        return element_data
+
+    # $ElementNodeData
+    #   numStringTags(ASCII int)
+    #   stringTag(string) ...
+    #   numRealTags(ASCII int)
+    #   realTag(ASCII double) ...
+    #   numIntegerTags(ASCII int)
+    #   integerTag(ASCII int) ...
+    #   elementTag(int) numNodesPerElement(int) value(double) ...
+    #   ...
+    # $EndElementNodeData
+
+    @staticmethod
+    def from_file_element_node_data(lines):
+        """
+        gets mesh element_node_data from .msh file
+        """
+
+        element_node_data = {}
+
+        return element_node_data
+
     @staticmethod
     def from_file_entities(lines):
         """
@@ -193,6 +235,41 @@ class Gmsh(DessiaObject):
                 'surfaces': surfaces_data,
                 'volumes': volumes_data}
 
+    # $GhostElements
+    #   numGhostElements(size_t)
+    #   elementTag(size_t) partitionTag(int)
+    #     numGhostPartitions(size_t) ghostPartitionTag(int) ...
+    #   ...
+    # $EndGhostElements
+
+    @staticmethod
+    def from_file_ghost_elements(lines):
+        """
+        gets mesh ghost_elements from .msh file
+        """
+
+        ghost_elements = {}
+
+        return ghost_elements
+
+    # $InterpolationScheme
+    #   name(string)
+    #   numElementTopologies(ASCII int)
+    #   elementTopology
+    #   numInterpolationMatrices(ASCII int)
+    #   numRows(ASCII int) numColumns(ASCII int) value(ASCII double) ...
+    # $EndInterpolationScheme
+
+    @staticmethod
+    def from_file_interpolation_scheme(lines):
+        """
+        gets mesh interpolation_scheme from .msh file
+        """
+
+        interpolation_scheme = {}
+
+        return interpolation_scheme
+
     @staticmethod
     def from_file_mesh_format(lines):
         """
@@ -259,6 +336,119 @@ class Gmsh(DessiaObject):
         nodes['all_nodes'] = nodes_points
 
         return nodes
+
+    # $NodeData
+    #   numStringTags(ASCII int)
+    #   stringTag(string) ...
+    #   numRealTags(ASCII int)
+    #   realTag(ASCII double) ...
+    #   numIntegerTags(ASCII int)
+    #   integerTag(ASCII int) ...
+    #   nodeTag(int) value(double) ...
+    #   ...
+    # $EndNodeData
+
+    @staticmethod
+    def from_file_node_data(lines):
+        """
+        gets mesh node_data from .msh file
+        """
+
+        node_data = {}
+
+        return node_data
+
+    # $Parametrizations
+    #   numCurveParam(size_t) numSurfaceParam(size_t)
+    #   curveTag(int) numNodes(size_t)
+    #     nodeX(double) nodeY(double) nodeZ(double) nodeU(double)
+    #     ...
+    #   ...
+    #   surfaceTag(int) numNodes(size_t) numTriangles(size_t)
+    #     nodeX(double) nodeY(double) nodeZ(double)
+    #       nodeU(double) nodeV(double)
+    #       curvMaxX(double) curvMaxY(double) curvMaxZ(double)
+    #       curvMinX(double) curvMinY(double) curvMinZ(double)
+    #     ...
+    #     nodeIndex1(int) nodeIndex2(int) nodeIndex3(int)
+    #     ...
+    #   ...
+    # $EndParametrizations
+
+    @staticmethod
+    def from_file_parametrizations(lines):
+        """
+        gets mesh parametrizations from .msh file
+        """
+
+        parametrizations = {}
+
+        return parametrizations
+
+    # $PartitionedEntities
+    #   numPartitions(size_t)
+    #   numGhostEntities(size_t)
+    #     ghostEntityTag(int) partition(int)
+    #     ...
+    #   numPoints(size_t) numCurves(size_t)
+    #     numSurfaces(size_t) numVolumes(size_t)
+    #   pointTag(int) parentDim(int) parentTag(int)
+    #     numPartitions(size_t) partitionTag(int) ...
+    #     X(double) Y(double) Z(double)
+    #     numPhysicalTags(size_t) physicalTag(int) ...
+    #   ...
+    #   curveTag(int) parentDim(int) parentTag(int)
+    #     numPartitions(size_t) partitionTag(int) ...
+    #     minX(double) minY(double) minZ(double)
+    #     maxX(double) maxY(double) maxZ(double)
+    #     numPhysicalTags(size_t) physicalTag(int) ...
+    #     numBoundingPoints(size_t) pointTag(int) ...
+    #   ...
+    #   surfaceTag(int) parentDim(int) parentTag(int)
+    #     numPartitions(size_t) partitionTag(int) ...
+    #     minX(double) minY(double) minZ(double)
+    #     maxX(double) maxY(double) maxZ(double)
+    #     numPhysicalTags(size_t) physicalTag(int) ...
+    #     numBoundingCurves(size_t) curveTag(int) ...
+    #   ...
+    #   volumeTag(int) parentDim(int) parentTag(int)
+    #     numPartitions(size_t) partitionTag(int) ...
+    #     minX(double) minY(double) minZ(double)
+    #     maxX(double) maxY(double) maxZ(double)
+    #     numPhysicalTags(size_t) physicalTag(int) ...
+    #     numBoundingSurfaces(size_t) surfaceTag(int) ...
+    #   ...
+    # $EndPartitionedEntities
+
+    @staticmethod
+    def from_file_partitioned_entities(lines):
+        """
+        gets mesh partitioned_entities from .msh file
+        """
+
+        partitioned_entities = {}
+
+        return partitioned_entities
+
+    # $Periodic
+    #   numPeriodicLinks(size_t)
+    #   entityDim(int) entityTag(int) entityTagMaster(int)
+    #   numAffine(size_t) value(double) ...
+    #   numCorrespondingNodes(size_t)
+    #     nodeTag(size_t) nodeTagMaster(size_t)
+    #     ...
+    #   ...
+    # $EndPeriodic
+
+    @staticmethod
+    def from_file_periodic(lines):
+        """
+        gets mesh periodic from .msh file
+        """
+
+        periodic = {}
+
+        return periodic
 
     @staticmethod
     def from_file_physical_names(lines):
