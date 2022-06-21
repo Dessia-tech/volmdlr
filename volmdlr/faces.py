@@ -184,9 +184,6 @@ class Surface2D(volmdlr.core.Primitive2D):
         return self.split_by_lines(lines)
 
     def cut_by_line(self, line: vme.Line2D):
-        # intersection_data = self.line_crossings(line)
-        # self.save_to_file('/home/axel/Bureau/surface2d')
-        # raise ValueError
         surfaces = []
         splitted_outer_contours = self.outer_contour.cut_by_line(line)
         splitted_inner_contours_table = []
@@ -205,18 +202,10 @@ class Surface2D(volmdlr.core.Primitive2D):
                         inner_contours.append(inner_split)
 
             if inner_contours:
-                # ax = outer_split.plot(color='r', plot_points=True)
-                # [c.plot(ax=ax, color='b', plot_points=True) for c in inner_contours]
-                # line.plot(ax=ax)
                 surface2d = self.from_contours(outer_split, inner_contours)
-                # surface2d.plot(color='y')
                 surfaces.append(surface2d)
-                # ax = self.plot()
-                # line.plot(ax=ax)
-                # surface2d.plot(ax=ax, color='r')
             else:
                 surfaces.append(Surface2D(outer_split, []))
-
         return surfaces
 
     def line_crossings(self, line: 'volmdlr.edges.Line2D'):
@@ -530,16 +519,15 @@ class Surface2D(volmdlr.core.Primitive2D):
         surface2d_inner_contours = []
         surface2d_outer_contour = outer_contour
         for inner_contour in inner_contours:
-            try:
-                # inner_contour will be merge with outer_contour
-                # surface2d_outer_contour.shared_primitives_extremities(
-                #     inner_contour)
+            if surface2d_outer_contour.shared_primitives_extremities(
+                    inner_contour):
+                # inner_contour will be merged with outer_contour
                 merged_contours = surface2d_outer_contour.merge_with(
                     inner_contour)
                 if len(merged_contours) >= 2:
                     raise NotImplementedError
                 surface2d_outer_contour = merged_contours[0]
-            except ValueError:
+            else:
                 # inner_contour will be added to the inner contours of the
                 # Surface2D
                 surface2d_inner_contours.append(inner_contour)
@@ -4024,6 +4012,9 @@ class Face3D(volmdlr.core.Primitive3D):
             surfaces = []
             for surface in self.surface2d.split_by_lines(lines_x):
                 surfaces.extend(surface.split_by_lines(lines_y))
+                # for surface in surface.split_by_lines(lines_y):
+                #     ax = self.surface2d.plot()
+                #     surface.plot(ax=ax, color='r')
 
         elif lines_x:
             # try:

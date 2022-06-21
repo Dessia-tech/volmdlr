@@ -2763,7 +2763,7 @@ class LineSegment3D(LineSegment):
         #     return True
         # return False
 
-        if self.point_distance(point) < abs_tol:
+        if self.point_distance(point)[0] < abs_tol:
             return True
         else:
             return False

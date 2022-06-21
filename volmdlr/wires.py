@@ -549,19 +549,20 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, Wire):
         intersection_points_primitives = []
         for primitive in self.primitives:
             intersections = primitive.line_intersections(line)
-            if intersections and intersections[0] not in intersection_points:
-                if not self.is_crossing_start_end_point(intersections,
-                                                        primitive):
-                    intersection_points.append(intersections[0])
-                    intersection_points_primitives.append(
-                        (intersections[0],
-                         primitive))
-                elif self.is_start_end_crossings_valid(line, intersections,
-                                                       primitive):
-                    intersection_points.append(intersections[0])
-                    intersection_points_primitives.append(
-                        (intersections[0],
-                         primitive))
+            for intersection in intersections:
+                if intersection not in intersection_points:
+                    if not self.is_crossing_start_end_point(intersections,
+                                                            primitive):
+                        intersection_points.append(intersection)
+                        intersection_points_primitives.append(
+                            (intersection,
+                             primitive))
+                    elif self.is_start_end_crossings_valid(line, intersections,
+                                                           primitive):
+                        intersection_points.append(intersection)
+                        intersection_points_primitives.append(
+                            (intersection,
+                             primitive))
         return intersection_points_primitives
 
     def wire_intersections(self, wire):
@@ -1169,7 +1170,16 @@ class Contour(Wire):
 
         edges = []
         for primitive in self.primitives:
-            points = primitive.discretise(n)
+            if hasattr(primitive, 'discretise'):
+                points = primitive.discretise(n)
+                warnings.warn('Use discretisation_points method instead of discretise')
+            elif hasattr(primitive, 'polygon_points'):
+                points = primitive.polygon_points(n)
+                warnings.warn('Use discretisation_points method instead of polygon_points')
+            elif hasattr(primitive, 'discretisation_points'):
+                points = primitive.discretisation_points(n)
+            else:
+                raise NotImplementedError(f'Class {primitive} is missing a discretisation_points method')
             for p1, p2 in zip(points[:-1], points[1:]):
                 edges.append(volmdlr.edges.LineSegment2D(p1, p2))
 
@@ -1813,6 +1823,11 @@ class Contour2D(Contour, Wire2D):
         if not intersections or len(intersections) < 2:
             return [self]
         if len(intersections) % 2 != 0:
+            ax = self.plot()
+            line.plot(ax=ax)
+            [i[0].plot(ax=ax) for i in intersections]
+            self.save_to_file('/home/axel/Bureau/contour2d')
+            line.save_to_file('/home/axel/Bureau/line2d')
             raise NotImplementedError(
                 '{} intersections not supported yet'.format(
                     len(intersections)))
