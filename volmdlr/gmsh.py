@@ -526,7 +526,7 @@ class Gmsh(DessiaObject):
                 'InterpolationScheme': []}
 
         f = open(file_path, "r", encoding="utf-8")
-        lines = []
+        # lines = []
         while True:
             line = f.readline().strip()
             if not line:
@@ -535,10 +535,11 @@ class Gmsh(DessiaObject):
                 data_type = line[1::]
                 line = f.readline().strip()
                 while line[0:4] != '$End':
-                    lines.append(line)
+                    # lines.append(line)
+                    data[data_type].append(line)
                     line = f.readline().strip()
-                data[data_type] = lines
-                lines = []
+                # data[data_type] = lines
+                # lines = []
 
         return data
 
