@@ -73,7 +73,15 @@ class Gmsh(DessiaObject):
                     entities=entities,
                     nodes=nodes,
                     elements=elements,
-                    physical_names=physical_names)
+                    physical_names=physical_names,
+                    partitioned_entities=partitioned_entities,
+                    periodic=periodic,
+                    ghost_elements=ghost_elements,
+                    parametrizations=parametrizations,
+                    node_data=node_data,
+                    element_data=element_data,
+                    element_node_data=element_node_data,
+                    interpolation_scheme=interpolation_scheme)
 
     @staticmethod
     def from_file_elements(lines):
