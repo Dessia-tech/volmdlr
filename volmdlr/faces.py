@@ -6517,8 +6517,9 @@ class BSplineFace3D(Face3D):
 
 class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     _standalone_in_db = True
-    _non_serializable_attributes = ['bounding_box']
-    _non_data_eq_attributes = ['name', 'color', 'alpha', 'bounding_box']
+    _non_serializable_attributes = ['primitives', 'bounding_box']
+    _non_data_eq_attributes = ['name', 'color', 'alpha', 'primtives',
+                               'bounding_box']
     _non_data_hash_attributes = []
     STEP_FUNCTION = 'OPEN_SHELL'
 
