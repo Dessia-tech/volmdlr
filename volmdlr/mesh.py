@@ -9,6 +9,7 @@ from typing import TypeVar, List, Tuple, Dict
 from dessia_common import DessiaObject
 from itertools import combinations
 import matplotlib.pyplot as plt
+import numpy as npy
 # import volmdlr.core_compiled
 import volmdlr as vm
 import volmdlr.wires as vmw
@@ -234,14 +235,14 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
 
     def __init__(self, points):
         self.points = points
-        self.linear_elements = self._to_linear_elements()
-        self.form_functions = self._form_functions()
-        self.line_segments = self._line_segments()
+        # self.linear_elements = self._to_linear_elements()
+        # self.form_functions = self._form_functions()
+        # self.line_segments = self._line_segments()
         self.center = (self.points[0]+self.points[1]+self.points[2])/3
 
         self.area = self._area()
         self._line_segments = None
-        vmw.Triangle.__init__(self, points)
+        # vmw.Triangle.__init__(self, points)
 
     def _to_linear_elements(self):
         vec1 = vm.Vector2D(self.points[1].x - self.points[0].x,
@@ -365,6 +366,30 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
 #         points = self.points
 #         return volmdlr.wires.ClosedPolygon2D(points)
 
+    def rigidity_matrix(self):
+
+        matrix = []
+        delta, x, y = [], [], []
+
+        for (i,j) in [(1,2), (2,0), (0,1)]:
+            delta.append(self.points[i].x*self.points[j].y - self.points[j].x*self.points[i].y)
+            y.append(self.points[i].y-self.points[j].y)
+        for (i,j) in [(2,1), (0,2), (1,0)]:
+            x.append(self.points[i].x-self.points[j].x)
+
+        data = []
+        for (i,j) in [(1,2), (2,0), (0,1)]:
+            data.append(self.points[i].y-self.points[j].y)
+        for (i,j) in [(2,1), (0,2), (1,0)]:
+            data.append(self.points[i].x-self.points[j].x)
+        
+        A = (self.points[0].x-self.points[2].x)*(self.points[1].y-self.points[0].y) - (self.points[1].x-self.points[0].x)*(self.points[0].y-self.points[2].y)
+        B = (1/A) * npy.array(data).reshape(2,3)
+        
+        matrix = (A/2) * npy.matmul(B.transpose(), B)
+        
+        return matrix
+        
 
 class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
     _standalone_in_db = False
