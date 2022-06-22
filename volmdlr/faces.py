@@ -6923,8 +6923,9 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
 class ClosedShell3D(OpenShell3D):
     _standalone_in_db = True
-    _non_serializable_attributes = ['bounding_box']
-    _non_data_eq_attributes = ['name', 'color', 'alpha', 'bounding_box']
+    _non_serializable_attributes = ['primitives', 'bounding_box']
+    _non_data_eq_attributes = ['name', 'color', 'alpha', 'primitives',
+                               'bounding_box']
     STEP_FUNCTION = 'CLOSED_SHELL'
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
