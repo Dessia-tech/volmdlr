@@ -3491,6 +3491,7 @@ class Triangle(ClosedPolygonMixin):
         self.point2 = point2
         self.point3 = point3
         self.name = name
+        self._line_segments = None
 
 
 class Triangle2D(Triangle):

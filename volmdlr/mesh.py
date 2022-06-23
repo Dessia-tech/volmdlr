@@ -94,41 +94,43 @@ class TriangularElement(vmw.Triangle):
 
     def __init__(self, points):
         self.points = points
-        # self.linear_elements = self._to_linear_elements()
-        # self.form_functions = self._form_functions()
-        # self.line_segments = self._line_segments()
+        self.linear_elements = self._to_linear_elements()
+        self.form_functions = self._form_functions()
+        self.line_segments = self.line_segments()
         self.center = (self.points[0]+self.points[1]+self.points[2])/3
         
-        # self.area = self._area()
+        self._line_segments = None
+
+        self.area = self._area()
         
-        # vmw.Triangle.__init__(self, points)
+        vmw.Triangle.__init__(self, points)
         
-    # def _to_linear_elements(self):
-    #     vec1 = vm.Vector2D(self.points[1].x - self.points[0].x,
-    #                        self.points[1].y - self.points[0].y)
-    #     vec2 = vm.Vector2D(self.points[2].x - self.points[1].x,
-    #                        self.points[2].y - self.points[1].y)
-    #     vec3 = vm.Vector2D(self.points[0].x - self.points[2].x,
-    #                        self.points[0].y - self.points[2].y)
-    #     normal1 = vm.Vector2D(-vec1.y, vec1.x)
-    #     normal2 = vm.Vector2D(-vec2.y, vec2.x)
-    #     normal3 = vm.Vector2D(-vec3.y, vec3.x)
-    #     normal1.normalize()
-    #     normal2.normalize()
-    #     normal3.normalize()
-    #     if normal1.dot(vec2) < 0:
-    #         normal1 = - normal1
-    #     if normal2.dot(vec3) < 0:
-    #         normal2 = - normal2
-    #     if normal3.dot(vec1) < 0:
-    #         normal3 = - normal3
-    #     linear_element_1 = LinearElement(self.points[0], self.points[1],
-    #                                      normal1)
-    #     linear_element_2 = LinearElement(self.points[1], self.points[2],
-    #                                      normal2)
-    #     linear_element_3 = LinearElement(self.points[2], self.points[0],
-    #                                      normal3)
-    #     return [linear_element_1, linear_element_2, linear_element_3]
+    def _to_linear_elements(self):
+        vec1 = vm.Vector2D(self.points[1].x - self.points[0].x,
+                            self.points[1].y - self.points[0].y)
+        vec2 = vm.Vector2D(self.points[2].x - self.points[1].x,
+                            self.points[2].y - self.points[1].y)
+        vec3 = vm.Vector2D(self.points[0].x - self.points[2].x,
+                            self.points[0].y - self.points[2].y)
+        normal1 = vm.Vector2D(-vec1.y, vec1.x)
+        normal2 = vm.Vector2D(-vec2.y, vec2.x)
+        normal3 = vm.Vector2D(-vec3.y, vec3.x)
+        normal1.normalize()
+        normal2.normalize()
+        normal3.normalize()
+        if normal1.dot(vec2) < 0:
+            normal1 = - normal1
+        if normal2.dot(vec3) < 0:
+            normal2 = - normal2
+        if normal3.dot(vec1) < 0:
+            normal3 = - normal3
+        linear_element_1 = LinearElement(self.points[0], self.points[1],
+                                          normal1)
+        linear_element_2 = LinearElement(self.points[1], self.points[2],
+                                          normal2)
+        linear_element_3 = LinearElement(self.points[2], self.points[0],
+                                          normal3)
+        return [linear_element_1, linear_element_2, linear_element_3]
     
     def _form_functions(self):
         a = vm.Matrix33(1, self.points[0].x, self.points[0].y,
@@ -235,13 +237,14 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
 
     def __init__(self, points):
         self.points = points
-        # self.linear_elements = self._to_linear_elements()
-        # self.form_functions = self._form_functions()
-        # self.line_segments = self._line_segments()
+        self.linear_elements = self._to_linear_elements()
+        self.form_functions = self._form_functions()
+        # self._line_segments = None
+
+        # self.line_segments = self.get_line_segments()
         self.center = (self.points[0]+self.points[1]+self.points[2])/3
 
         self.area = self._area()
-        self._line_segments = None
         # vmw.Triangle.__init__(self, points)
 
     def _to_linear_elements(self):
