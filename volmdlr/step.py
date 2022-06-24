@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import plot_data.graph
 
+import dessia_common as dc
+
 import volmdlr
 import volmdlr.core
 import volmdlr.edges
@@ -247,7 +249,8 @@ class StepFunction:
         self.arg = arguments
 
 
-class Step:
+class Step(dc.DessiaObject):
+
     def __init__(self, lines: List[str], name: str = ''):
         self.lines = lines
         self.functions, self.all_connections = self.read_lines()
