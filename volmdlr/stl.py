@@ -83,8 +83,12 @@ class Stl(dc.DessiaObject):
         stream.seek(0)
 
         stream = KaitaiStream(stream)
-        name = stream.read_bytes(80).decode('utf8')
-        # print(name)
+        name_slice = stream.read_bytes(80)
+        try:
+            name = name_slice.decode('utf-8')
+        except UnicodeDecodeError:
+            name = name_slice.decode('latin-1')
+
         num_triangles = stream.read_u4le()
         # print(num_triangles)
 

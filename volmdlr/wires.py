@@ -2692,17 +2692,20 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
     def points_convex_hull(cls, points):
         if len(points) < 3:
             return
-        ymax, pos_ymax = volmdlr.core.max_pos([pt.y for pt in points])
-        point_start = points[pos_ymax]
+
+        points_hull = [pt.copy() for pt in points]
+
+        ymax, pos_ymax = volmdlr.core.max_pos([pt.y for pt in points_hull])
+        point_start = points_hull[pos_ymax]
         hull = [point_start]
 
-        barycenter = points[0]
-        for pt in points[1:]:
+        barycenter = points_hull[0]
+        for pt in points_hull[1:]:
             barycenter += pt
-        barycenter = barycenter / (len(points))
+        barycenter = barycenter / (len(points_hull))
         # second point of hull
         theta = []
-        remaining_points = points
+        remaining_points = points_hull
         del remaining_points[pos_ymax]
 
         vec1 = point_start - barycenter
@@ -2772,6 +2775,8 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         """
 
         def get_nearby_points(line, points, scale_factor):
+            points_hull = [pt.copy() for pt in points]
+
             # print('i enter here')
             nearby_points = []
             line_midpoint = 0.5 * (line.start + line.end)
@@ -2785,7 +2790,7 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
             boundary = [int(bounding / scale_factor) for bounding in
                         bounding_box]
             while tries < n and len(nearby_points) == 0:
-                for point in points:
+                for point in points_hull:
                     if not ((
                                     point.x == line.start.x and point.y == line.start.y) or (
                                     point.x == line.end.x and point.y == line.end.y)):
@@ -2905,45 +2910,48 @@ class ClosedPolygon2D(Contour2D, ClosedPolygonMixin):
         Uses the scipy method ConvexHull to calculate the convex hull from
         a cloud of points
         """
-        numpy_points = npy.array([(p.x, p.y) for p in points])
+
+        points_hull = [pt.copy() for pt in points]
+
+        numpy_points = npy.array([(p.x, p.y) for p in points_hull])
         hull = ConvexHull(numpy_points)
         polygon_points = []
         for simplex in hull.simplices:
-            polygon_points.append((points[simplex[0]], points[simplex[1]]))
+            polygon_points.append((points_hull[simplex[0]], points_hull[simplex[1]]))
 
-        points = [polygon_points[0][0], polygon_points[0][1]]
+        points_hull = [polygon_points[0][0], polygon_points[0][1]]
         polygon_points.remove((polygon_points[0][0], polygon_points[0][1]))
         finished = False
 
         while not finished:
             for p1, p2 in polygon_points:
-                if p1 == points[-1]:
-                    points.append(p2)
+                if p1 == points_hull[-1]:
+                    points_hull.append(p2)
                     break
-                elif p2 == points[-1]:
-                    points.append(p1)
+                elif p2 == points_hull[-1]:
+                    points_hull.append(p1)
                     break
             polygon_points.remove((p1, p2))
             if len(polygon_points) == 0:
                 finished = True
 
-        points.pop(-1)
+        points_hull.pop(-1)
 
         # the first point is the one with the lowest x value
         i_min = 0
-        min_x = points[0].x
-        for i, point in enumerate(points):
+        min_x = points_hull[0].x
+        for i, point in enumerate(points_hull):
             if point.x < min_x:
                 min_x = point.x
                 i_min = i
 
-        points = points[i_min:] + points[:i_min]
+        points_hull = points_hull[i_min:] + points_hull[:i_min]
 
         # we make sure that the points are ordered in the trigonometric direction
-        if points[0].y < points[1].y:
-            points.reverse()
+        if points_hull[0].y < points_hull[1].y:
+            points_hull.reverse()
 
-        return cls(points)
+        return cls(points_hull)
 
     def to_3d(self, plane_origin, x, y):
         points3d = [point.to_3d(plane_origin, x, y) for point in self.points]

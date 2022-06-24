@@ -296,6 +296,255 @@ class LineSegment(Edge):
                     self.__class__(split_point, self.end)]
 
 
+class BSplineCurve(Edge):
+    _non_serializable_attributes = ['curve']
+
+    def __init__(self,
+                 degree: int,
+                 control_points,
+                 knot_multiplicities: List[int],
+                 knots: List[float],
+                 weights: List[float] = None,
+                 periodic: bool = False,
+                 name: str = ''):
+
+        self.control_points = control_points
+        self.degree = degree
+        knots = standardize_knot_vector(knots)
+        self.knots = knots
+        self.knot_multiplicities = knot_multiplicities
+        self.weights = weights
+        self.periodic = periodic
+        self.name = name
+
+        curve = BSpline.Curve()
+        curve.degree = degree
+        if weights is None:
+            P = [[*point] for point in control_points]
+            curve.ctrlpts = P
+        else:
+            Pw = [[*point * weights[i], weights[i]] for i, point in enumerate(control_points)]
+            curve.ctrlptsw = Pw
+
+        knot_vector = []
+        for i, knot in enumerate(knots):
+            knot_vector.extend([knot] * knot_multiplicities[i])
+        curve.knotvector = knot_vector
+        curve.delta = 0.01
+        curve_points = curve.evalpts
+        self.curve = curve
+
+        self._length = None
+        self.points = [getattr(volmdlr,
+                               f'Point{self.__class__.__name__[-2::]}')(*p)
+                       for p in curve_points]
+
+        start = self.points[0]  # self.point_at_abscissa(0.)
+        end = self.points[-1]  # self.point_at_abscissa(self.length())
+
+        Edge.__init__(self, start, end, name=name)
+
+    def reverse(self):
+        '''
+        reverse the bspline's direction by reversing its start and end points
+        '''
+
+        return self.__class__(degree=self.degree,
+                              control_points=self.control_points[::-1],
+                              knot_multiplicities=self.knot_multiplicities[::-1],
+                              knots=self.knots[::-1],
+                              weights=self.weights,
+                              periodic=self.periodic)
+
+    @classmethod
+    def from_geomdl_curve(cls, curve):
+
+        point_dimension = f'Point{cls.__name__[-2::]}'
+
+        knots = list(sorted(set(curve.knotvector)))
+        knot_multiplicities = [curve.knotvector.count(k) for k in knots]
+
+        return cls(degree=curve.degree,
+                   control_points=[getattr(volmdlr, point_dimension)(*p) for p in curve.ctrlpts],
+                   knots=knots,
+                   knot_multiplicities=knot_multiplicities)
+
+    def length(self):
+        if not self._length:
+            self._length = length_curve(self.curve)
+        return self._length
+
+    def unit_direction_vector(self, abscissa: float):
+        """
+        :param abscissa: defines where in the BSplineCurve the
+        unit direction vector is to be calculated
+        :return: The unit direction vector of the BSplineCurve
+        """
+
+        direction_vector = self.direction_vector(abscissa)
+        direction_vector.normalize()
+        return direction_vector
+
+    def middle_point(self):
+        return self.point_at_abscissa(self.length() * 0.5)
+
+    def abscissa(self, point, tol=1e-4):
+        l = self.length()
+        res = scp.optimize.least_squares(
+            lambda u: (point - self.point_at_abscissa(u)).norm(),
+            x0=npy.array(l / 2),
+            bounds=([0], [l]),
+            # ftol=tol / 10,
+            # xtol=tol / 10,
+            # loss='soft_l1'
+        )
+
+        if res.fun > tol:
+            print('distance =', res.cost)
+            print('res.fun:', res.fun)
+            ax = self.plot()
+            point.plot(ax=ax)
+            best_point = self.point_at_abscissa(res.x)
+            best_point.plot(ax=ax, color='r')
+            raise ValueError('abscissa not found')
+        return res.x[0]
+
+    def split(self, point, tol=1e-5):
+        if point.point_distance(self.start) < tol:
+            return [None, self.copy()]
+        elif point.point_distance(self.end) < tol:
+            return [self.copy(), None]
+        else:
+            adim_abscissa = self.abscissa(point) / self.length()
+            curve1, curve2 = split_curve(self.curve, adim_abscissa)
+
+            return [self.__class__.from_geomdl_curve(curve1),
+                    self.__class__.from_geomdl_curve(curve2)]
+
+    def translation(self, offset):
+        """
+        BSplineCurve translation
+        :param offset: translation vector (volmdlr.Vector2D/ volmdlr.Vector3D)
+        :return: A new translated BSplineCurve
+        """
+        control_points = [point.translation(offset)
+                          for point in self.control_points]
+        return self.__class__(self.degree, control_points,
+                              self.knot_multiplicities, self.knots,
+                              self.weights, self.periodic)
+
+    def translation_inplace(self, offset):
+        """
+        BSplineCurve translation. Object is updated inplace
+        :param offset: translation vector (volmdlr.Vector2D/ volmdlr.Vector3D)
+        """
+        for point in self.control_points:
+            point.translation_inplace(offset)
+
+    def point_belongs(self, point, abs_tol=1e-10):
+        '''
+        check if a point belongs to the bspline_curve or not
+        '''
+
+        point_dimension = f'Point{self.__class__.__name__[-2::]}'
+
+        def f(x):
+            return (point - getattr(volmdlr, point_dimension)(*self.curve.evaluate_single(x))).norm()
+
+        x = npy.linspace(0, 1, 5)
+        x_init = []
+        for xi in x:
+            x_init.append(xi)
+
+        for x0 in x_init:
+            z = scp.optimize.least_squares(f, x0=x0, bounds=([0, 1]))
+            if z.fun < abs_tol:
+                return True
+        return False
+
+    def merge_with(self, bspline_curve):
+        '''
+        merge successives bspline_curves to define a new one
+        '''
+
+        point_dimension = f'Wire{self.__class__.__name__[-2::]}'
+        wire = getattr(volmdlr.wires, point_dimension)(bspline_curve)
+        ordered_wire = wire.order_wire()
+
+        points, n = [], 10
+        for primitive in ordered_wire.primitives:
+            points.extend(primitive.polygon_points(n))
+        points.pop(n + 1)
+
+        return self.__class__.from_points_interpolation(points, min(self.degree, bspline_curve.degree))
+
+    @classmethod
+    def from_bsplines(cls, bsplines, discretization_points=10):
+        '''
+        define a bspline_curve using a list of bsplines
+        '''
+        point_dimension = f'Wire{cls.__name__[-2::]}'
+        wire = getattr(volmdlr.wires, point_dimension)(bsplines)
+        ordered_wire = wire.order_wire()
+
+        points, degree = [], []
+        for i, primitive in enumerate(ordered_wire.primitives):
+            degree.append(primitive.degree)
+            if i == 0:
+                points.extend(primitive.polygon_points(discretization_points))
+            else:
+                points.extend(primitive.polygon_points(discretization_points)[1::])
+
+        return cls.from_points_interpolation(points, min(degree))
+
+    @classmethod
+    def from_points_approximation(cls, points, degree, **kwargs):
+        '''
+        Bspline Curve approximation through points using least squares method
+        It is better to specify the number of control points
+
+        Parameters
+        ----------
+        points : volmdlr.Point
+            data points
+        degree: int
+            degree of the output parametric curve
+
+        Keyword Arguments:
+            * ``centripetal``: activates centripetal parametrization method. *Default: False*
+            * ``ctrlpts_size``: number of control points. *Default: len(points) - 1*
+
+        Returns
+        -------
+        BSplineCurve
+
+        '''
+
+        curve = fitting.approximate_curve([[*point] for point in points], degree, **kwargs)
+        return cls.from_geomdl_curve(curve)
+
+    def tangent(self, position: float = 0.0):
+        point, tangent = operations.tangent(self.curve, position,
+                                            normalize=True)
+
+        dimension = f'Vector{self.__class__.__name__[-2::]}'
+        tangent = getattr(volmdlr, dimension)(*tangent)
+
+        return tangent
+
+    @classmethod
+    def from_points_interpolation(cls, points, degree, periodic=False):
+
+        curve = fitting.interpolate_curve([[*point] for point in points], degree)
+
+        bsplinecurve = cls.from_geomdl_curve(curve)
+        if not periodic:
+            return bsplinecurve
+        else:
+            bsplinecurve.periodic = True
+            return bsplinecurve
+
+
 class Line2D(Line):
     """
     Define an infinite line given by two points.
@@ -561,7 +810,7 @@ class Line2D(Line):
         return list_points
 
 
-class BSplineCurve2D(Edge):
+class BSplineCurve2D(BSplineCurve):
     _non_serializable_attributes = ['curve']
 
     def __init__(self,
@@ -569,46 +818,17 @@ class BSplineCurve2D(Edge):
                  control_points: List[volmdlr.Point2D],
                  knot_multiplicities: List[int],
                  knots: List[float],
-                 weights=None, periodic=False, name=''):
-        self.control_points = control_points
-        self.degree = degree
-        knots = standardize_knot_vector(knots)
-        self.knots = knots
-        self.knot_multiplicities = knot_multiplicities
-        self.weights = weights
-        self.periodic = periodic
+                 weights: List[float] = None,
+                 periodic: bool = False,
+                 name: str = ''):
 
-        curve = BSpline.Curve()
-        curve.degree = degree
-        if weights is None:
-            P = [(control_points[i][0], control_points[i][1]) for i in
-                 range(len(control_points))]
-            curve.ctrlpts = P
-        else:
-            Pw = [(control_points[i][0] * weights[i],
-                   control_points[i][1] * weights[i], weights[i]) for i in
-                  range(len(control_points))]
-            curve.ctrlptsw = Pw
-        knot_vector = []
-        for i, knot in enumerate(knots):
-            knot_vector.extend([knot] * knot_multiplicities[i])
-        curve.knotvector = knot_vector
-
-        self.curve = curve
-        start = self.point_at_abscissa(0.)
-        end = self.point_at_abscissa(self.length())
-
-        Edge.__init__(self, start, end, name=name)
-
-    @classmethod
-    def from_geomdl_curve(cls, curve):
-        knots = list(sorted(set(curve.knotvector)))
-        knot_multiplicities = [curve.knotvector.count(k) for k in knots]
-        return BSplineCurve2D(degree=curve.degree,
-                              control_points=[volmdlr.Point2D(p[0], p[1]) for p in curve.ctrlpts],
-                              knots=knots,
-                              knot_multiplicities=knot_multiplicities
-                              )
+        BSplineCurve.__init__(self, degree,
+                              control_points,
+                              knot_multiplicities,
+                              knots,
+                              weights,
+                              periodic,
+                              name)
 
     def bounding_rectangle(self):
         points = self.polygon_points()
@@ -618,19 +838,10 @@ class BSplineCurve2D(Edge):
         return (min(points_x), max(points_x),
                 min(points_y), max(points_y))
 
-    def length(self):
-        return length_curve(self.curve)
-
     def point_at_abscissa(self, abscissa):
         l = self.length()
         adim_abs = max(min(abscissa / l, 1.), 0.)
         return volmdlr.Point2D(*self.curve.evaluate_single(adim_abs))
-
-    def tangent(self, position: float = 0.0):
-        point, tangent = operations.tangent(self.curve, position,
-                                            normalize=True)
-        tangent = volmdlr.Point2D(tangent[0], tangent[1])
-        return tangent
 
     def direction_vector(self, abscissa: float):
         """
@@ -639,16 +850,6 @@ class BSplineCurve2D(Edge):
         :return: The direection vector vector of the BSplineCurve2D
         """
         return self.tangent(abscissa)
-
-    def unit_direction_vector(self, abscissa: float):
-        """
-        :param abscissa: defines where in the BSplineCurve2D the
-        unit direction vector is to be calculated
-        :return: The unit direction vector of the BSplineCurve2D
-        """
-        direction_vector = self.direction_vector(abscissa)
-        direction_vector.normalize()
-        return direction_vector
 
     def normal_vector(self, abscissa: float):
         """
@@ -669,61 +870,6 @@ class BSplineCurve2D(Edge):
         normal_vector = self.normal_vector(abscissa)
         normal_vector.normalize()
         return normal_vector
-
-    def middle_point(self):
-        return self.point_at_abscissa(self.length() * 0.5)
-
-    def abscissa(self, point2d):
-        l = self.length()
-        # res = scp.optimize.minimize_scalar(
-        #     # f,
-        #     lambda u: (point2d - self.point_at_abscissa(u)).norm(),
-        #     method='bounded',
-        #     bounds=(0., l),
-        #     options={'maxiter': 10000}
-        # )
-
-        # res = scp.optimize.minimize(
-        #     lambda u: (point2d - self.point_at_abscissa(u)).norm(),
-        #     x0=npy.array(l/2),
-        #     bounds=[(0, l)]
-        # )
-
-        res = scp.optimize.least_squares(
-            lambda u: (point2d - self.point_at_abscissa(u)).norm(),
-            x0=npy.array(l / 2),
-            bounds=([0], [l]),
-            # ftol=tol / 10,
-            # xtol=tol / 10,
-            # loss='soft_l1'
-        )
-
-        if res.fun > 1e-4:
-            print('distance =', res.cost)
-            print('res.fun:', res.fun)
-            ax = self.plot()
-            point2d.plot(ax=ax)
-            best_point = self.point_at_abscissa(res.x)
-            best_point.plot(ax=ax, color='r')
-            raise ValueError('abscissa not found')
-        return res.x[0]
-
-    def split(self, point2d):
-        if point2d.point_distance(self.start) < 1e-5:
-            return [None, self.copy()]
-        elif point2d.point_distance(self.end) < 1e-5:
-            return [self.copy(), None]
-        else:
-            adim_abscissa = self.abscissa(point2d) / self.length()
-            curve1, curve2 = split_curve(self.curve, adim_abscissa)
-
-            return [BSplineCurve2D.from_geomdl_curve(curve1),
-                    BSplineCurve2D.from_geomdl_curve(curve2)]
-
-    @classmethod
-    def from_points_interpolation(cls, points, degree):
-        curve = fitting.interpolate_curve([(p.x, p.y) for p in points], degree)
-        return cls.from_geomdl_curve(curve)
 
     def straight_line_area(self):
         points = self.polygon_points(100)
@@ -790,26 +936,6 @@ class BSplineCurve2D(Edge):
         for point in self.control_points:
             point.rotation_inplace(center, angle)
 
-    def translation(self, offset: volmdlr.Vector2D):
-        """
-        BSplineCurve2D translation
-        :param offset: translation vector
-        :return: A new translated BSplineCurve2D
-        """
-        control_points = [point.translation(offset)
-                          for point in self.control_points]
-        return BSplineCurve2D(self.degree, control_points,
-                              self.knot_multiplicities, self.knots,
-                              self.weights, self.periodic)
-
-    def translation_inplace(self, offset: volmdlr.Vector2D):
-        """
-        BSplineCurve2D translation. Object is updated inplace
-        :param offset: translation vector
-        """
-        for point in self.control_points:
-            point.translation_inplace(offset)
-
     def line_intersections(self, line2d: Line2D):
         polygon_points = self.polygon_points(200)
         list_intersections = []
@@ -844,31 +970,6 @@ class BSplineCurve2D(Edge):
             crossings.extend(l.line_crossings(line2d))
         return crossings
 
-    @classmethod
-    def from_points_approximation(cls, points, degree, **kwargs):
-        '''
-        Bspline Curve approximation through 2d points using least squares method
-        It is better to specify the number of control points
-
-        Parameters
-        ----------
-        points : volmdlr.Point2D
-            data points
-        degree: int
-            degree of the output parametric curve
-
-        Keyword Arguments:
-            * ``centripetal``: activates centripetal parametrization method. *Default: False*
-            * ``ctrlpts_size``: number of control points. *Default: len(points) - 1*
-
-        Returns
-        -------
-        BSplineCurve2D
-
-        '''
-        curve = fitting.approximate_curve([(p.x, p.y) for p in points], degree, **kwargs)
-        return cls.from_geomdl_curve(curve)
-
     def to_wire(self, n: int):
         '''
         convert a bspline curve to a wire2d defined with 'n' line_segments
@@ -881,18 +982,6 @@ class BSplineCurve2D(Edge):
             points.append(volmdlr.Point2D(p[0], p[1]))
 
         return volmdlr.wires.Wire2D.from_points(points)
-
-    def reverse(self):
-        '''
-        reverse the bspline's direction by reversing its start and end points
-        '''
-
-        return self.__class__(degree=self.degree,
-                              control_points=self.control_points[::-1],
-                              knot_multiplicities=self.knot_multiplicities[::-1],
-                              knots=self.knots[::-1],
-                              weights=self.weights,
-                              periodic=self.periodic)
 
     # def point_belongs(self, point, abs_tol=1e-7):
     #     polygon_points = self.polygon_points()
@@ -912,24 +1001,6 @@ class BSplineCurve2D(Edge):
                 distance = dist
         return distance
 
-    def point_belongs(self, point2d, abs_tol=1e-10):
-        '''
-        check if a point2d belongs to the bspline_curve or not
-        '''
-        def f(x):
-            return (point2d - volmdlr.Point2D(*self.curve.evaluate_single(x))).norm()
-
-        x = npy.linspace(0, 1, 5)
-        x_init = []
-        for xi in x:
-            x_init.append(xi)
-
-        for x0 in x_init:
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0, 1]))
-            if z.fun < abs_tol:
-                return True
-        return False
-
     def nearest_point_to(self, point):
         '''
         find out the nearest point on the linesegment to point
@@ -938,21 +1009,6 @@ class BSplineCurve2D(Edge):
         points = self.polygon_points(500)
         return point.nearest_point(points)
 
-    def merge_with(self, bspline_curve):
-        '''
-        merge successives bspline_curves to define a new one
-        '''
-
-        wire = volmdlr.wires.Wire2D([self, bspline_curve])
-        ordered_wire = wire.order_wire()
-
-        points, n = [], 10
-        for primitive in ordered_wire.primitives:
-            points.extend(primitive.polygon_points(n))
-        points.pop(n + 1)
-
-        return volmdlr.edges.BSplineCurve2D.from_points_interpolation(points, min(self.degree, bspline_curve.degree))
-
     def linesegment_intersections(self, linesegment):
         results = self.line_intersections(linesegment.to_line())
         intersections_points = []
@@ -960,25 +1016,6 @@ class BSplineCurve2D(Edge):
             if linesegment.point_belongs(result, 1e-6):
                 intersections_points.append(result)
         return intersections_points
-
-    @classmethod
-    def from_bsplines(cls, bsplines, discretization_points=10):
-        '''
-        define a bspline_curve using a list of bsplines
-        '''
-
-        wire = volmdlr.wires.Wire2D(bsplines)
-        ordered_wire = wire.order_wire()
-
-        points, degree = [], []
-        for i, primitive in enumerate(ordered_wire.primitives):
-            degree.append(primitive.degree)
-            if i == 0:
-                points.extend(primitive.polygon_points(discretization_points))
-            else:
-                points.extend(primitive.polygon_points(discretization_points)[1::])
-
-        return cls.from_points_interpolation(points, min(degree))
 
     def axial_symmetry(self, line):
         '''
@@ -3286,71 +3323,34 @@ class LineSegment3D(LineSegment):
         return content, [current_id]
 
 
-class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
+class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
     _non_serializable_attributes = ['curve']
 
-    def __init__(self, degree: int, control_points: List[volmdlr.Point3D],
-                 knot_multiplicities: List[int], knots: List[float],
-                 weights: List[float] = None, periodic: bool = False,
+    def __init__(self,
+                 degree: int,
+                 control_points: List[volmdlr.Point3D],
+                 knot_multiplicities: List[int],
+                 knots: List[float],
+                 weights: List[float] = None,
+                 periodic: bool = False,
                  name: str = ''):
+
+        BSplineCurve.__init__(self, degree,
+                              control_points,
+                              knot_multiplicities,
+                              knots,
+                              weights,
+                              periodic,
+                              name)
         volmdlr.core.Primitive3D.__init__(self, name=name)
-        self.control_points = control_points
-        self.degree = degree
-        knots = standardize_knot_vector(knots)
-        self.knots = knots
-        self.knot_multiplicities = knot_multiplicities
-        self.weights = weights
-        self.periodic = periodic
-        self.name = name
 
-        curve = BSpline.Curve()
-        curve.degree = degree
-        if weights is None:
-            P = [(control_points[i][0], control_points[i][1],
-                  control_points[i][2]) for i in range(len(control_points))]
-            curve.ctrlpts = P
-        else:
-            Pw = [(control_points[i][0] * weights[i],
-                   control_points[i][1] * weights[i],
-                   control_points[i][2] * weights[i], weights[i]) for i in
-                  range(len(control_points))]
-            curve.ctrlptsw = Pw
-        knot_vector = []
-        for i, knot in enumerate(knots):
-            knot_vector.extend([knot] * knot_multiplicities[i])
-        curve.knotvector = knot_vector
-        curve.delta = 0.01
-        curve_points = curve.evalpts
-
-        self.curve = curve
         self.bounding_box = self._bounding_box()
-        self.points = [volmdlr.Point3D(p[0], p[1], p[2]) for p in curve_points]
-        Edge.__init__(self, start=self.points[0], end=self.points[-1])
 
     def _bounding_box(self):
         bbox = self.curve.bbox
         return volmdlr.core.BoundingBox(bbox[0][0], bbox[1][0],
                                         bbox[0][1], bbox[1][1],
                                         bbox[0][2], bbox[1][2])
-
-    def reverse(self):
-        return self.__class__(degree=self.degree,
-                              control_points=self.control_points[::-1],
-                              knot_multiplicities=self.knot_multiplicities[
-                                                  ::-1],
-                              knots=self.knots[::-1],
-                              weights=self.weights,
-                              periodic=self.periodic)
-
-    def length(self):
-        """
-
-        """
-        # length = 0
-        # for k in range(0, len(self.points) - 1):
-        #     length += (self.points[k] - self.points[k + 1]).norm()
-        # return length
-        return length_curve(self.curve)
 
     def look_up_table(self, resolution=20, start_parameter: float = 0,
                       end_parameter: float = 1):
@@ -3401,12 +3401,6 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         normal = volmdlr.Point3D(normal[0], normal[1], normal[2])
         return normal
 
-    def tangent(self, abscissa: float):
-        point, tangent = operations.tangent(self.curve, abscissa,
-                                            normalize=False)
-        tangent = volmdlr.Vector3D(*tangent)
-        return tangent
-
     def direction_vector(self, abscissa=0.):
         l = self.length()
         if abscissa >= l:
@@ -3419,11 +3413,6 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         tangent = self.point_at_abscissa(abscissa2) - self.point_at_abscissa(
             abscissa)
         return tangent
-
-    def unit_direction_vector(self, abscissa):
-        direction_vector = self.direction_vector(abscissa)
-        direction_vector.normalize()
-        return direction_vector
 
     def normal_vector(self, abscissa):
         return None
@@ -3538,17 +3527,6 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             start_id, end_id, curve_id)
         return content, [current_id]
 
-    @classmethod
-    def from_points_interpolation(cls, points, degree, periodic=False):
-        curve = fitting.interpolate_curve([(p.x, p.y, p.z) for p in points],
-                                          degree)
-        bsplinecurve3d = cls.from_geomdl_curve(curve)
-        if not periodic:
-            return bsplinecurve3d
-        else:
-            bsplinecurve3d.periodic = True
-            return bsplinecurve3d
-
     def point_distance(self, pt1):
         distances = []
         for point in self.points:
@@ -3563,24 +3541,6 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
     #         if line.point_belongs(point):
     #             return True
     #     return False
-
-    def point_belongs(self, point3d, abs_tol=1e-10):
-        '''
-        check if a point3d belongs to the bspline_curve or not
-        '''
-        def f(x):
-            return (point3d - volmdlr.Point3D(*self.curve.evaluate_single(x))).norm()
-
-        x = npy.linspace(0, 1, 5)
-        x_init = []
-        for xi in x:
-            x_init.append(xi)
-
-        for x0 in x_init:
-            z = scp.optimize.least_squares(f, x0=x0, bounds=([0, 1]))
-            if z.fun < abs_tol:
-                return True
-        return False
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
@@ -3612,34 +3572,6 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
                                             self.knots, self.weights,
                                             self.periodic, self.name)
 
-        self.control_points = new_control_points
-        self.curve = new_bsplinecurve3d.curve
-        self.points = new_bsplinecurve3d.points
-
-    def translation(self, offset: volmdlr.Vector3D):
-        """
-        BSplineCurve3D translation
-        :param offset: translation vector
-        :return: A new translated BSplineCurve3D
-        """
-        new_control_points = [p.translation(offset) for p in
-                              self.control_points]
-        return BSplineCurve3D(self.degree, new_control_points,
-                              self.knot_multiplicities,
-                              self.knots, self.weights,
-                              self.periodic, self.name)
-
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        BSplineCurve3D translation. Object is updated inplace
-        :param offset: translation vector
-        """
-        new_control_points = [p.translation(offset) for p in
-                              self.control_points]
-        new_bsplinecurve3d = BSplineCurve3D(self.degree, new_control_points,
-                                            self.knot_multiplicities,
-                                            self.knots, self.weights,
-                                            self.periodic, self.name)
         self.control_points = new_control_points
         self.curve = new_bsplinecurve3d.curve
         self.points = new_bsplinecurve3d.points
@@ -3821,16 +3753,6 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
         maximum_curvarture = self.maximum_curvature(point_in_curve)
         return 1 / maximum_curvarture
 
-    @classmethod
-    def from_geomdl_curve(cls, curve):
-        knots = list(sorted(set(curve.knotvector)))
-        knot_multiplicities = [curve.knotvector.count(k) for k in knots]
-
-        return cls(degree=curve.degree,
-                   control_points=curve.ctrlpts,
-                   knots=knots,
-                   knot_multiplicities=knot_multiplicities)
-
     def global_minimum_curvature(self, nb_eval: int = 21):
         check = [i / (nb_eval - 1) for i in range(nb_eval)]
         radius = []
@@ -3838,68 +3760,8 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
             radius.append(self.minimum_curvature(u))
         return radius
 
-    @classmethod
-    def from_points_approximation(cls, points, degree, **kwargs):
-        '''
-        Bspline Curve approximation through 3d points using least squares method
-        It is better to specify the number of control points
-
-        Parameters
-        ----------
-        points : volmdlr.Point3D
-            data points
-        degree: int
-            degree of the output parametric curve
-
-        Keyword Arguments:
-            * ``centripetal``: activates centripetal parametrization method. *Default: False*
-            * ``ctrlpts_size``: number of control points. *Default: len(points) - 1*
-
-        Returns
-        -------
-        BSplineCurve3D
-
-        '''
-
-        curve = fitting.approximate_curve([(p.x, p.y, p.z) for p in points], degree, **kwargs)
-        return cls.from_geomdl_curve(curve)
-
-    def middle_point(self):
-        return self.point_at_abscissa(self.length() / 2)
-
-    def split(self, point3d):
-        adim_abscissa = self.abscissa(point3d) / self.length()
-        curve1, curve2 = split_curve(self.curve, adim_abscissa)
-
-        return [BSplineCurve3D.from_geomdl_curve(curve1),
-                BSplineCurve3D.from_geomdl_curve(curve2)]
-
     def triangulation(self):
         return None
-
-    def abscissa(self, point3d):
-        '''
-        copied from BSplineCurve2D
-        '''
-        l = self.length()
-
-        res = scp.optimize.least_squares(
-            lambda u: (point3d - self.point_at_abscissa(u)).norm(),
-            x0=npy.array(l / 2),
-            bounds=([0], [l]),
-            # ftol=tol / 10,
-            # xtol=tol / 10,
-            # loss='soft_l1'
-        )
-
-        if res.fun > 1e-1:
-            print('distance =', res.cost)
-            ax = self.plot()
-            point3d.plot(ax=ax)
-            best_point = self.point_at_abscissa(res.x)
-            best_point.plot(ax=ax, color='r')
-            raise ValueError('abscissa not found')
-        return res.x[0]
 
 
 class BezierCurve3D(BSplineCurve3D):
