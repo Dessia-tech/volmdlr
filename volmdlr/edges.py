@@ -2761,8 +2761,10 @@ class LineSegment3D(LineSegment):
         return distance, volmdlr.Point3D(*point)
 
     def plane_projection2d(self, center, x, y):
-        return LineSegment2D(self.start.plane_projection2d(center, x, y),
-                             self.end.plane_projection2d(center, x, y))
+        start, end = self.start.plane_projection2d(center, x, y), self.end.plane_projection2d(center, x, y)
+        if start != end:
+            return LineSegment2D(start, end)
+        return None
 
     def intersection(self, segment2):
         x1 = self.start.x
