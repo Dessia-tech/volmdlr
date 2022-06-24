@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unrealeased
 
+### New Features
+
+* 
+
+
+### Fixed
+
+* 
+
+
+### Performance improvements
+
+* Add hidden attribute _length for Edge
+
+
+### Refactorings
+
+* Define length in LineSegment (to be used for both 2D and 3D)
+* Delete diplicated methods (length and point_at_abscissa) from Contour3D (inherit from Wire)
+* Define a Parent class 'Bsplinecurve' to mutulize Bsplinecurve2D/3D methods
+
+
+
+## Unrealeased
 
 ### New Features
 

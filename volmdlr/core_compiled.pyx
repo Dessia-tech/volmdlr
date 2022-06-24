@@ -730,6 +730,13 @@ class Point2D(Vector2D):
 
         return point_symmetry
 
+    def coordinates(self):
+        '''
+        gets x,y coordinates of a point2d
+        '''
+
+        return (self.x, self.y)
+
 
 O2D = Point2D(0, 0)
 
@@ -1179,6 +1186,13 @@ class Point3D(Vector3D):
         for p in points:
             distances.append(self.point_distance(p))
         return points[distances.index(min(distances))]
+
+    def coordinates(self):
+        '''
+        gets x,y,z coordinates of a point3d
+        '''
+
+        return (self.x, self.y, self.z)
 
 
 O3D = Point3D(0, 0, 0)
@@ -1922,6 +1936,15 @@ class Frame3D(Basis3D):
                 'v': self.v.to_dict(),
                 'w': self.w.to_dict()
                 }
+
+    # @classmethod
+    # def dict_to_object(cls, dict_, global_dict=None,
+    #                    pointers_memo: Dict[str, Any] = None, path: str = '#'):
+    #     return Frame3D(Point3D.dict_to_object(dict_['origin']),
+    #                    Vector3D.dict_to_object(dict_['u']),
+    #                    Vector3D.dict_to_object(dict_['v']),
+    #                    Vector3D.dict_to_object(dict_['w']),
+    #                    dict_.get('name', ''))
 
     def basis(self):
         return Basis3D(self.u, self.v, self.w)
