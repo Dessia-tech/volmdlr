@@ -851,7 +851,7 @@ class BSplineCurve2D(BSplineCurve):
         l = self.length()
         adim_abs = max(min(abscissa / l, 1.), 0.)
         return volmdlr.Point2D(*self.curve.evaluate_single(adim_abs))
-      
+
     def direction_vector(self, abscissa: float):
         """
         :param abscissa: defines where in the BSplineCurve2D the
