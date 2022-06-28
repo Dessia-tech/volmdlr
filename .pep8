@@ -1,0 +1,11 @@
+[pycodestyle]
+max_line_length = 120
+ignore = E402, E722, E126, E731
+recursive = true
+aggressive = 1
+
+# config file used by autopep, which enhance pycodestyle
+# see config options at :
+# see https://pypi.org/project/autopep8/#features
+# https://pycodestyle.pycqa.org/en/latest/intro.html#error-codes
+# interesting codes : E501, W6

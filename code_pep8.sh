@@ -1,7 +1,7 @@
 #!/bin/bash
 # check pep8 formatting for all files
 
-PEP8_CMD_TO_RUN='python3 -m autopep8 -i tests volmdlr/*.py'
+PEP8_CMD_TO_RUN='python3 -m autopep8 -i volmdlr/*.py'
 
 DETECTED_CHANGES=$(python3 -m autopep8 -d volmdlr/*.py)
 if [[ -n "$DETECTED_CHANGES" ]]
