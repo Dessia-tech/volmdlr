@@ -3807,13 +3807,13 @@ class Circle2D(Contour2D):
                 volmdlr.edges.Arc2D(split_start, interior_point2,
                                     split_end)]
 
-    def discretise(self, n: float) -> List[volmdlr.Point2D]:
+    def discretise(self, n: int) -> List[volmdlr.Point2D]:
         points = []
         vector = volmdlr.Vector2D(0, 1)
 
         for i in range(n):
             points.append(self.center + self.radius * vector)
-            vector.rotation(center=volmdlr.Point2D(0, 0), angle=2 * math.pi / n, copy=False)
+            vector.rotation_inplace(center=volmdlr.Point2D(0, 0), angle=2 * math.pi / n)
             vector.normalize()
 
         return points
