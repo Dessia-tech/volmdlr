@@ -1169,7 +1169,7 @@ class Contour(Wire):
 
         edges = []
         for primitive in self.primitives:
-            points = primitive.discretise(n)
+            points = primitive.discretization_points(n)
             for p1, p2 in zip(points[:-1], points[1:]):
                 edges.append(volmdlr.edges.LineSegment2D(p1, p2))
 
@@ -1531,8 +1531,8 @@ class Contour2D(Contour, Wire2D):
     def bounding_points(self):
         points = self.edge_polygon.points[:]
         for primitive in self.primitives:
-            if hasattr(primitive, 'polygon_points'):
-                points.extend(primitive.polygon_points())
+            if hasattr(primitive, 'discretization_points'):
+                points.extend(primitive.discretization_points())
         xmin = min(p[0] for p in points)
         xmax = max(p[0] for p in points)
         ymin = min(p[1] for p in points)
@@ -1709,8 +1709,7 @@ class Contour2D(Contour, Wire2D):
                     dist_min = p0.point_distance(p1)
         return c_opti
 
-    def cut_by_line(self,
-                    line: volmdlr.edges.Line2D) -> List['Contour2D']:
+    def cut_by_line(self, line: volmdlr.edges.Line2D) -> List['Contour2D']:
         """
         :param line: The line used to cut the contour
         :return: A list of resulting contours
@@ -1851,10 +1850,7 @@ class Contour2D(Contour, Wire2D):
         # print([(line.start, line.end) for line in self.primitives])
 
         for primitive in self.primitives:
-            polygon_points.extend(primitive.polygon_points()[:-1])
-        #     print('1: ', primitive.polygon_points())
-        #     print('2 :', primitive.polygon_points()[:-1])
-        # print(polygon_points)
+            polygon_points.extend(primitive.discretization_points(0)[:-1])
         return ClosedPolygon2D(polygon_points)
 
     def grid_triangulation(self, x_density: float = None,
@@ -2052,7 +2048,6 @@ class Contour2D(Contour, Wire2D):
         """
         discretize each contour's primitive and return a new contour with teses discretized primitives
         """
-
         contour = volmdlr.wires.Contour2D((self.discretized_primitives(n)))
 
         return contour.order_contour()
@@ -3579,7 +3574,7 @@ class Circle2D(Contour2D):
 
     def to_polygon(self, angle_resolution: float):
         return ClosedPolygon2D(
-            self.polygon_points(angle_resolution=angle_resolution))
+            self.discretization_points(resolution=angle_resolution))
 
     @classmethod
     def from_arc(cls, arc: volmdlr.edges.Arc2D):
@@ -3807,28 +3802,44 @@ class Circle2D(Contour2D):
                 volmdlr.edges.Arc2D(split_start, interior_point2,
                                     split_end)]
 
-    def discretise(self, n: float) -> List[volmdlr.Point2D]:
-        points = []
-        vector = volmdlr.Vector2D(0, 1)
-
-        for i in range(n):
-            points.append(self.center + self.radius * vector)
-            vector.rotation(center=volmdlr.Point2D(0, 0), angle=2 * math.pi / n, copy=False)
-            vector.normalize()
-
-        return points
-
-    def polygon_points(self, angle_resolution=10):
-        return volmdlr.edges.Arc2D.polygon_points(
-            self, angle_resolution=angle_resolution)
+    # def discretise(self, n: float):
+    #     # BUGGED: returns method
+    #     circle_to_nodes = {}
+    #     nodes = []
+    #     if n * self.length() < 1:
+    #         circle_to_nodes[self] = self.border_points
+    #     else:
+    #         n0 = int(math.ceil(n * self.length()))
+    #         l0 = self.length() / n0
+    #
+    #         for k in range(n0):
+    #             node = self.point_at_abscissa(k * l0)
+    #
+    #             nodes.append(node)
+    #
+    #         circle_to_nodes[self] = nodes
+    #
+    #     return circle_to_nodes[self]
 
     def axial_symmetry(self, line):
-        '''
+        """
         finds out the symmetric circle2d according to a line
-        '''
+        """
 
         return self.__class__(center=self.center.axial_symmetry(line),
                               radius=self.radius)
+
+    def discretization_points(self, resolution=40):
+        number_points = math.ceil(self.angle * resolution) + 2
+        length = self.length()
+        return [self.point_at_abscissa(i * length / number_points)
+                for i in range(number_points)]
+
+    def polygon_points(self, discretization_resolution: int):
+        warnings.warn('polygon_points is deprecated,\
+        please use discretization_points instead',
+                      DeprecationWarning)
+        return self.discretization_points(discretization_resolution)
 
 
 class Contour3D(Contour, Wire3D):
@@ -4265,8 +4276,7 @@ class Circle3D(Contour3D):
         return '{} = Part.Circle(fc.Vector({},{},{}),fc.Vector({},{},{}),{})\n'.format(
             name, xc, yc, zc, xn, yn, zn, 1000 * self.radius)
 
-    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                 angle: float):
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         Circle3D rotation
         :param center: rotation center
@@ -4277,8 +4287,7 @@ class Circle3D(Contour3D):
         return Circle3D(self.frame.rotation(center, axis, angle),
                         self.radius, self.name)
 
-    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                         angle: float):
+    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         Circle3D rotation. Object is updated inplace
         :param center: rotation center
@@ -4593,8 +4602,7 @@ class Ellipse3D(Contour3D):
         return '{} = Part.Ellipse(fc.Vector({},{},{}), fc.Vector({},{},{}), fc.Vector({},{},{}))\n'.format(
             name, xmaj, ymaj, zmaj, xmin, ymin, zmin, xc, yc, zc)
 
-    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                 angle: float):
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         Ellipse3D rotation
         :param center: rotation center
@@ -4608,8 +4616,7 @@ class Ellipse3D(Contour3D):
         return Ellipse3D(self.major_axis, self.minor_axis, new_center,
                          new_normal, new_major_dir, self.name)
 
-    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                         angle: float):
+    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         Ellipse3D rotation. Object is updated inplace
         :param center: rotation center
