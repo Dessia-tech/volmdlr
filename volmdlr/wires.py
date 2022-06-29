@@ -3802,25 +3802,6 @@ class Circle2D(Contour2D):
                 volmdlr.edges.Arc2D(split_start, interior_point2,
                                     split_end)]
 
-    # def discretise(self, n: float):
-    #     # BUGGED: returns method
-    #     circle_to_nodes = {}
-    #     nodes = []
-    #     if n * self.length() < 1:
-    #         circle_to_nodes[self] = self.border_points
-    #     else:
-    #         n0 = int(math.ceil(n * self.length()))
-    #         l0 = self.length() / n0
-    #
-    #         for k in range(n0):
-    #             node = self.point_at_abscissa(k * l0)
-    #
-    #             nodes.append(node)
-    #
-    #         circle_to_nodes[self] = nodes
-    #
-    #     return circle_to_nodes[self]
-
     def axial_symmetry(self, line):
         """
         finds out the symmetric circle2d according to a line
