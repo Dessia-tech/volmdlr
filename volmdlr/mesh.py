@@ -549,9 +549,9 @@ class TetrahedralElement(DessiaObject):
         # self.form_functions = self._form_functions()
         # self.line_segments = self._line_segments()
         self.center = (self.points[0]+self.points[1]+self.points[2]+self.points[3])/4
-        self.triangular_elements = self._triangular_elements()
+        # self.triangular_elements = self._triangular_elements()
 
-        # self.area = self._area()
+        self.volume = self._volume()
         DessiaObject.__init__(self, name=name)
 
     def _triangular_elements(self):
@@ -574,6 +574,14 @@ class TetrahedralElement(DessiaObject):
         for triangle in self.triangular_elements:
             triangle.plot(ax=ax)
         return ax
+
+    def _volume(self):
+
+        data = []
+        for i in range(3):
+            data.extend([*self.points[i+1] - self.points[0]])
+
+        return 1/6 * (npy.linalg.det(npy.array(data).reshape(3,3)))
 
 
 class ElementsGroup(DessiaObject):
