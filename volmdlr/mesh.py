@@ -583,6 +583,57 @@ class TetrahedralElement(DessiaObject):
 
         return abs(1/6 * (npy.linalg.det(npy.array(data).reshape(3,3))))
 
+    def _form_functions(self):
+        # coeff = [1, -1, 1, 1]
+        # alpha = []
+        # for i in range(4):
+        #     data = []
+        #     for c in range(4):
+        #         if c != i:
+        #             data.extend([self.points[c].x, self.points[c].y, self.points[c].z])
+        #     alpha.append(coeff[i] * (npy.linalg.det(npy.array(data).reshape(3,3))))
+        # gamma = []
+        # for i in range(4):
+        #     data = []
+        #     for c in range(4):
+        #         if c != i:
+        #             data.extend([1, self.points[c].x, self.points[c].z])
+        #     gamma.append(coeff[i] * (npy.linalg.det(npy.array(data).reshape(3,3))))
+
+        # coeff = [-1, 1, -1, 1]
+        # betha = []
+        # for i in range(4):
+        #     data = []
+        #     for c in range(4):
+        #         if c != i:
+        #             data.extend([1, self.points[c].y, self.points[c].z])
+        #     betha.append(coeff[i] * (npy.linalg.det(npy.array(data).reshape(3,3))))
+        # delta = []
+        # for i in range(4):
+        #     data = []
+        #     for c in range(4):
+        #         if c != i:
+        #             data.extend([1, self.points[c].x, self.points[c].y])
+        #     delta.append(coeff[i] * (npy.linalg.det(npy.array(data).reshape(3,3))))
+
+        coeff = [1, -1, 1, -1]
+        N = []
+        for i in range(4):
+            data_alpha, data_gamma, data_betha, data_delta = [], [], [], []
+            for c in range(4):
+                if c != i:
+                    data_alpha.extend([self.points[c].x, self.points[c].y, self.points[c].z])
+                    data_gamma.extend([1, self.points[c].x, self.points[c].z])
+                    data_betha.extend([1, self.points[c].y, self.points[c].z])
+                    data_delta.extend([1, self.points[c].x, self.points[c].y])
+
+            N.append([(coeff[i] * (npy.linalg.det(npy.array(data_alpha).reshape(3,3)))),
+                  ((-1)* coeff[i] * (npy.linalg.det(npy.array(data_betha).reshape(3,3)))),
+                  (coeff[i] * (npy.linalg.det(npy.array(data_gamma).reshape(3,3)))),
+                  ((-1)* coeff[i] * (npy.linalg.det(npy.array(data_delta).reshape(3,3))))])
+
+        return N[0], N[1], N[2], N[3]
+
 
 class ElementsGroup(DessiaObject):
     _standalone_in_db = False
