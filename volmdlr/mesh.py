@@ -666,9 +666,11 @@ class Mesh(DessiaObject):
         nodes = set()
         for elements_group in self.elements_groups:
             for element in elements_group.elements:
-                nodes.add(element.points[0])
-                nodes.add(element.points[1])
-                nodes.add(element.points[2])
+                for point in element.points:
+                    nodes.add(point)
+                # nodes.add(element.points[0])
+                # nodes.add(element.points[1])
+                # nodes.add(element.points[2])
         return tuple(nodes)
 
     def point_to_element(self, point):
