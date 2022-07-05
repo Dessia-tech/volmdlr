@@ -581,7 +581,7 @@ class TetrahedralElement(DessiaObject):
         for i in range(3):
             data.extend([*self.points[i+1] - self.points[0]])
 
-        return 1/6 * (npy.linalg.det(npy.array(data).reshape(3,3)))
+        return abs(1/6 * (npy.linalg.det(npy.array(data).reshape(3,3))))
 
 
 class ElementsGroup(DessiaObject):
