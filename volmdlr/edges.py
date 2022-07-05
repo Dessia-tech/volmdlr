@@ -2294,14 +2294,11 @@ class LineSegment3D(LineSegment):
         return self.point_at_abscissa(0.5 * self.length())
 
     def point_distance(self, point):
-        vector1 = point - self.start
-        vector1.to_vector()
-        vector2 = self.end - self.start
-        vector2.to_vector()
-        proj_dist = vector1.cross(vector2).norm() / vector2.norm()
-        distance_start = self.start.point_distance(point)
-        distance_end = self.end.point_distance(point)
-        return min(proj_dist, distance_start, distance_end)
+        distance, point = volmdlr.core_compiled.LineSegment3DPointDistance(
+            [(self.start.x, self.start.y, self.start.z),
+             (self.end.x, self.end.y, self.end.z)],
+            (point.x, point.y, point.z))
+        return distance, volmdlr.Point3D(*point)
 
     def plane_projection2d(self, center, x, y):
         return LineSegment2D(self.start.plane_projection2d(center, x, y),
