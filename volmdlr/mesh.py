@@ -591,7 +591,7 @@ class ElementsGroup(DessiaObject):
     _non_hash_attributes = ['name']
     _generic_eq = True
 
-    def __init__(self, elements: List[TriangularElement], name: str):
+    def __init__(self, elements, name: str):
         self.elements = elements
         self.name = name
 
