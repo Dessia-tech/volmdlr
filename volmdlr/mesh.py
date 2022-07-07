@@ -406,7 +406,7 @@ class QuadrilateralElement2D(vmw.ClosedPolygon2D):
         # self.linear_elements = self._to_linear_elements()
         # self.form_functions = self._form_functions()
         # self.line_segments = self.line_segments
-        self.center = self.center()
+        self.center = self.center_of_mass()
 
         self.area = self.area()
         self._line_segments = None
