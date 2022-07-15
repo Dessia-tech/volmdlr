@@ -4149,7 +4149,7 @@ class Contour3D(Contour, Wire3D):
             for i in range(0, len(points) - 1):
                 edges.append(volmdlr.edges.LineSegment3D(points[i], points[i + 1]))
 
-            edges.append(volmdlr.edges.LineSegment3D(points[len(points)], points[0]))
+            edges.append(volmdlr.edges.LineSegment3D(points[-1], points[0]))
 
             contour = cls(edges)
 
