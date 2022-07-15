@@ -94,16 +94,16 @@ class TriangularElement(vmw.Triangle):
 
     def __init__(self, points):
         self.points = points
-        self.linear_elements = self._to_linear_elements()
-        self.form_functions = self._form_functions()
-        self.line_segments = self.line_segments()
+        # self.linear_elements = self._to_linear_elements()
+        # self.form_functions = self._form_functions()
+        # self.line_segments = self.line_segments()
         self.center = (self.points[0]+self.points[1]+self.points[2])/3
         
         self._line_segments = None
 
-        self.area = self._area()
+        # self.area = self._area()
         
-        vmw.Triangle.__init__(self, points)
+        # vmw.Triangle.__init__(self, points)
         
     def _to_linear_elements(self):
         vec1 = vm.Vector2D(self.points[1].x - self.points[0].x,
