@@ -372,7 +372,13 @@ class Gmsh(DessiaObject):
             if len(nodes_points) == int(lines[0].split()[1]):
                 break
 
-        nodes['all_nodes'] = nodes_points
+        if Gmsh.check_2d(nodes_points):
+            for key, value in nodes.items():
+                values = []
+                for points in value:
+                    values.append(Gmsh.to_2d(points))
+            nodes[key] = values
+            nodes['all_nodes'] = Gmsh.to_2d(nodes_points)
 
         return nodes
 
@@ -628,8 +634,22 @@ class Gmsh(DessiaObject):
                                                                             points[triangle[2]]]))
                 else:
                     triangles_mesh.append(volmdlr.mesh.TriangularElement2D([points[triangle[0]],
-                                                                            points[triangle[1]]]))
+                                                                            points[triangle[1]],
+                                                                            points[triangle[2]]]))
 
         element_groups = [volmdlr.mesh.ElementsGroup(triangles_mesh, name='')]
 
         return volmdlr.mesh.Mesh(element_groups)
+
+    @staticmethod
+    def check_2d(list_nodes):
+        for node in list_nodes:
+            if node[2] != 0:
+                print(node)
+                return False
+        return True
+
+    @staticmethod
+    def to_2d(list_nodes):
+        return [volmdlr.Point2D(node[0], node[1]) for
+                      node in list_nodes]
