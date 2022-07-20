@@ -3689,7 +3689,6 @@ class Contour3D(Contour, Wire3D):
                                                         deltay1, deltay2,
                                                         deltaz1, deltaz2))
         # Making things right for first 2 primitives
-
         if index == 0:
             edges = [raw_edges[0], raw_edges[1]]
         elif index == 1:
@@ -4245,9 +4244,10 @@ class Circle3D(Contour3D):
         distance = point.point_distance(self.center)
         vec = volmdlr.Vector3D(*point - self.center)
         dot = self.normal.dot(vec)
-        if math.isclose(distance, self.radius, abs_tol=1e-6)\
-                and math.isclose(dot, 0, abs_tol=5e-6):
+        if math.isclose(distance, self.radius, abs_tol=1e-4)\
+                and math.isclose(dot, 0, abs_tol=5e-5):
             return True
+        print(distance-self.radius, dot)
         return False
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):

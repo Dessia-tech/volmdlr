@@ -54,6 +54,10 @@ def step_split_arguments(function_arg):
     return arguments
 
 
+def axis1_placement(arguments, object_dict):
+    return object_dict[arguments[1]], object_dict[arguments[2]]
+
+
 def vertex_point(arguments, object_dict):
     return object_dict[arguments[1]]
 
@@ -85,6 +89,22 @@ def trimmed_curve(arguments, object_dict):
     return curve.trim(point1=point1, point2=point2)
 
 
+def surface_of_revolution(arguments, object_dict):
+    swept_curve = object_dict[arguments[1]]
+    location, axis = object_dict[arguments[2]]
+    print(swept_curve)
+    print(isinstance(swept_curve, volmdlr.edges.Line3D))
+    if isinstance(swept_curve, volmdlr.edges.Line3D):
+        linesegment = volmdlr.edges.LineSegment3D(swept_curve.point1,
+                                                  swept_curve.point2,
+                                                  swept_curve.name)
+        return linesegment.revolution(axis_point=location,
+                                      axis=axis,
+                                      angle=volmdlr.TWO_PI)[0]
+    else:
+        raise NotImplementedError
+
+
 def vertex_loop(arguments, object_dict):
     return object_dict[arguments[1]]
 
@@ -100,6 +120,13 @@ def geometric_curve_set(arguments, object_dict):
         sub_obj = object_dict[int(argument[1:])]
         sub_objects.append(sub_obj)
     return sub_objects
+
+
+def degenerate_toroidal_surface(arguments, object_dict):
+    if arguments[4] == '.T.':
+        arguments[2], arguments[3] = arguments[3], arguments[2]
+    return volmdlr.faces.ToroidalSurface3D.from_step(arguments,
+                                                     object_dict)
 
 
 def shell_base_surface_model(arguments, object_dict):

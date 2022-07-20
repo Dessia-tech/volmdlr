@@ -3408,23 +3408,31 @@ class BSplineCurve3D(Edge, volmdlr.core.Primitive3D):
                               name=bspline_curve.name)
 
     def cut_before(self, parameter: float):
-        # if parameter == 0:
         if math.isclose(parameter, 0, abs_tol=1e-6):
             return self
-        # elif parameter == 1:
         elif math.isclose(parameter, 1, abs_tol=1e-6):
             raise ValueError('Nothing will be left from the BSplineCurve3D')
-        curves = operations.split_curve(self.curve, parameter)
+
+        try:
+            curves = operations.split_curve(self.curve, parameter)
+        except ValueError:
+            pt = volmdlr.Point3D(*self.curve.evaluate_single(parameter))
+            print(f'Small BSplineCurve3D transformed into a LineSegment3D, parameter={parameter}')
+            return LineSegment3D(pt, self.end)
         return self.from_geomdl_curve(curves[1])
 
     def cut_after(self, parameter: float):
-        # if parameter == 0.:
         if math.isclose(parameter, 0, abs_tol=1e-6):
             raise ValueError('Nothing will be left from the BSplineCurve3D')
-        # elif parameter == 1.:
         elif math.isclose(parameter, 1, abs_tol=1e-6):
             return self
-        curves = operations.split_curve(self.curve, parameter)
+
+        try:
+            curves = operations.split_curve(self.curve, parameter)
+        except ValueError:
+            pt = volmdlr.Point3D(*self.curve.evaluate_single(parameter))
+            print(f'Small BSplineCurve3D transformed into a LineSegment3D, parameter={parameter}')
+            return LineSegment3D(self.start, pt)
         return self.from_geomdl_curve(curves[0])
 
     def insert_knot(self, knot: float, num: int = 1):
