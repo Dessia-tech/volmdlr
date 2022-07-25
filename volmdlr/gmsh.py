@@ -379,6 +379,8 @@ class Gmsh(DessiaObject):
                     values.append(Gmsh.to_2d(points))
             nodes[key] = values
             nodes['all_nodes'] = Gmsh.to_2d(nodes_points)
+        else:
+            nodes['all_nodes'] = nodes_points
 
         return nodes
 
@@ -606,7 +608,7 @@ class Gmsh(DessiaObject):
         tetrahedrons_mesh = []
         for tetrahedrons in tetrahedron_elements:
             for tetrahedron in tetrahedrons:
-                tetrahedrons_mesh.append(volmdlr.mesh.TetrahedronElement([points[tetrahedron[0]],
+                tetrahedrons_mesh.append(volmdlr.mesh.TetrahedralElement([points[tetrahedron[0]],
                                                                           points[tetrahedron[1]],
                                                                           points[tetrahedron[2]],
                                                                           points[tetrahedron[3]]]))
@@ -645,7 +647,6 @@ class Gmsh(DessiaObject):
     def check_2d(list_nodes):
         for node in list_nodes:
             if node[2] != 0:
-                print(node)
                 return False
         return True
 
