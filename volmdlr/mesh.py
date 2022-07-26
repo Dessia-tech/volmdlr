@@ -230,29 +230,6 @@ class TriangularElement(vmw.Triangle):
             new_points.append(point.axial_symmetry(line))
         return self.__class__(new_points)
 
-    def plot(self, ax=None, color='k', width=None,
-              plot_points=False, fill=False):
-        if ax is None:
-            fig, ax = plt.subplots()
-            ax.set_aspect('equal')
-
-        if fill:
-            x = [p[0] for p in self.points]
-            y = [p[1] for p in self.points]
-            plt.fill(x, y, facecolor=color, edgecolor="k")
-            return ax
-
-        for p1, p2 in zip(self.points, self.points[1:]+[self.points[0]]):
-            if width is None:
-                width = 1
-            if plot_points:
-                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color,
-                        marker='o', linewidth=width)
-            else:
-                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color,
-                        linewidth=width)
-        return ax
-
 #     def triangle_to_polygon(self):
 #         points = self.points
 #         return volmdlr.wires.ClosedPolygon2D(points)
@@ -398,6 +375,29 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
 #     def triangle_to_polygon(self):
 #         points = self.points
 #         return volmdlr.wires.ClosedPolygon2D(points)
+
+    def plot(self, ax=None, color='k', width=None,
+              plot_points=False, fill=False):
+        if ax is None:
+            fig, ax = plt.subplots()
+            ax.set_aspect('equal')
+
+        if fill:
+            x = [p[0] for p in self.points]
+            y = [p[1] for p in self.points]
+            plt.fill(x, y, facecolor=color, edgecolor="k")
+            return ax
+
+        for p1, p2 in zip(self.points, self.points[1:]+[self.points[0]]):
+            if width is None:
+                width = 1
+            if plot_points:
+                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color,
+                        marker='o', linewidth=width)
+            else:
+                ax.plot([p1.x, p2.x], [p1.y, p2.y], color=color,
+                        linewidth=width)
+        return ax
 
     def rigidity_matrix(self):
 
