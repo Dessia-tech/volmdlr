@@ -1501,6 +1501,9 @@ class Arc2D(Arc):
     def to_circle(self):
         return volmdlr.wires.Circle2D(self.center, self.radius)
 
+    def to_full_arc_2d(self):
+        return FullArc2D(self.center, self.start, self.name)
+
     def line_intersections(self, line2d: Line2D):
         full_arc_2d = self.to_full_arc_2d()
         fa2d_intersection_points = full_arc_2d.line_intersections(line2d)
