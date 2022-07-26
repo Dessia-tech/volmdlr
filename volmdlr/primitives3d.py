@@ -128,7 +128,7 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
 class Block(volmdlr.faces.ClosedShell3D):
     _standalone_in_db = True
     _generic_eq = True
-    _non_serializable_attributes = ['size']
+    _non_serializable_attributes = ['size', 'bounding_box', 'faces', 'contours', 'plane', 'points', 'polygon2D']
     _non_eq_attributes = ['name', 'color', 'alpha', 'size', 'bounding_box',
                           'faces', 'contours', 'plane', 'points', 'polygon2D']
     _non_hash_attributes = []
@@ -467,7 +467,7 @@ class ExtrudedProfile(volmdlr.faces.ClosedShell3D):
 
     def area(self):
         areas = self.outer_contour2d.area()
-        areas -= sum([c.area() for c in self.inner_contours2d])
+        areas -= sum(c.area() for c in self.inner_contours2d)
         # sic=list(npy.argsort(areas))[::-1]# sorted indices of contours
         # area=areas[sic[0]]
 
