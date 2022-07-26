@@ -585,7 +585,7 @@ class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
 #         return volmdlr.wires.ClosedPolygon2D(points)
 
 
-class TetrahedralElement(DessiaObject):
+class TetrahedralElement(TriangularElement, vmw.ClosedPolygon3D):
     _standalone_in_db = False
     _non_serializable_attributes = []
     _non_eq_attributes = ['name']
