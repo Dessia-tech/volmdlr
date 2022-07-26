@@ -349,9 +349,9 @@ class Gmsh(DessiaObject):
                 points = []
                 for i in range(step, step+num_nodes_in_block):
                     line = lines[i].split()
-                    points.append(volmdlr.Point3D(float(line[0]),
-                                                  float(line[1]),
-                                                  float(line[2])))
+                    points.append(volmdlr.mesh.Node3D(float(line[0]),
+                                                      float(line[1]),
+                                                      float(line[2])))
 
                     # nodes['nodes_dim_'+ entity_dim].append(
                     #     volmdlr.Point3D(float(line[0]),
@@ -652,5 +652,5 @@ class Gmsh(DessiaObject):
 
     @staticmethod
     def to_2d(list_nodes):
-        return [volmdlr.Point2D(node[0], node[1]) for
+        return [volmdlr.mesh.Node2D(node[0], node[1]) for
                       node in list_nodes]
