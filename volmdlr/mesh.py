@@ -598,7 +598,7 @@ class TetrahedralElement(DessiaObject):
         self.form_functions = self._form_functions()
         # self.line_segments = self._line_segments()
         self.center = (self.points[0]+self.points[1]+self.points[2]+self.points[3])/4
-        # self.triangular_elements = self._triangular_elements()
+        self.triangular_elements = self._triangular_elements()
 
         self.volume = self._volume()
         DessiaObject.__init__(self, name=name)
