@@ -5,25 +5,26 @@
 """
 
 import math
-import numpy as npy
-
-
-npy.seterr(divide='raise')
+import os
+import subprocess
+import tempfile
+import webbrowser
 from datetime import datetime
+# import volmdlr.stl as vmstl
+from typing import List
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+import numpy as npy
 
+import dessia_common as dc
+import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
 
-        
-import dessia_common as dc
+# from mpl_toolkits.mplot3d import Axes3D
 
-import webbrowser
-import os
-import tempfile
-import subprocess
+npy.seterr(divide='raise')
+
 
 # TODO: put voldmlr metadata in this freecad header
 STEP_HEADER = '''ISO-10303-21;
@@ -46,6 +47,7 @@ STEP_FOOTER = '''ENDSEC;
 END-ISO-10303-21;
 '''
 
+
 def find_and_replace(string, find, replace):
     """
     Finds a string in a string and replace it
@@ -64,12 +66,11 @@ def find_and_replace(string, find, replace):
     return string
 
 
-
 def set_to_list(step_set):
     char_list = step_set.split(',')
     char_list[0] = char_list[0][1:]
     char_list[-1] = char_list[-1][:-1]
-    return [elem for elem in char_list]
+    return list(char_list)
 
 
 def delete_node_and_predecessors(graph, node):
@@ -311,12 +312,11 @@ def clockwise_interior_from_circle3d(start, end, circle):
     if theta3 > volmdlr.TWO_PI:
         theta3 -= volmdlr.TWO_PI
 
-    interior2d = volmdlr.Point2D(circle.radius*math.cos(theta3),
-                                 circle.radius*math.sin(theta3))
+    interior2d = volmdlr.Point2D(circle.radius * math.cos(theta3),
+                                 circle.radius * math.sin(theta3))
     interior3d = interior2d.to_3d(plane_origin=circle.frame.origin,
                                   vx=circle.frame.u, vy=circle.frame.v)
     return interior3d
-
 
 
 def offset_angle(trigo, angle_start, angle_end):
@@ -345,21 +345,26 @@ def angle_principal_measure(angle, min_angle=-math.pi):
 
     return angle
 
+
 def step_ids_to_str(ids):
     return ','.join(['#{}'.format(i) for i in ids])
+
 
 class CompositePrimitive(dc.DessiaObject):
     def __init__(self, name=''):
         self.name = name
+        self._primitives_to_index = None
+        self._utd_primitives_to_index = False
+        self.basis_primitives = []
 
         dc.DessiaObject.__init__(self, name=name)
-        
+
     def primitive_to_index(self, primitive):
         if not self._utd_primitives_to_index:
             self._primitives_to_index = {p: ip for ip, p in enumerate(self.primitives)}
             self._utd_primitives_to_index = True
         return self._primitives_to_index[primitive]
-    
+
     def update_basis_primitives(self):
         basis_primitives = []
         for primitive in self.primitives:
@@ -369,6 +374,7 @@ class CompositePrimitive(dc.DessiaObject):
                 basis_primitives.append(primitive)
 
         self.basis_primitives = basis_primitives
+
 
 class Primitive2D(CompositePrimitive):
     def __init__(self, name=''):
@@ -382,9 +388,9 @@ class CompositePrimitive2D(Primitive2D):
     A collection of simple primitives
     """
     _non_serializable_attributes = ['name', '_utd_primitives_to_index',
-                                    '_primitives_to_index']   
-    _non_hash_attributes = ['name', '_utd_primitives_to_index',
-                            '_primitives_to_index']
+                                    '_primitives_to_index']
+    _non_data_hash_attributes = ['name', '_utd_primitives_to_index',
+                                 '_primitives_to_index']
 
     def __init__(self, primitives, name=''):
         Primitive2D.__init__(self, name)
@@ -393,15 +399,12 @@ class CompositePrimitive2D(Primitive2D):
 
         self._utd_primitives_to_index = False
 
-
     # def primitive_to_index(self, primitive):
     #     if not self._utd_primitives_to_index:
     #         self._primitives_to_index = {p: ip for ip, p in enumerate(self.primitives)}
     #         self._utd_primitives_to_index = True
     #     return self._primitives_to_index[primitive]
-        
-    
-    
+
     # def update_basis_primitives(self):
     #     basis_primitives = []
     #     for primitive in self.primitives:
@@ -411,38 +414,61 @@ class CompositePrimitive2D(Primitive2D):
     #             basis_primitives.append(primitive)
 
     #     self.basis_primitives = basis_primitives
-        
 
-    def rotation(self, center, angle, copy=True):
-        if copy:
-            return self.__class__([p.rotation(center, angle, copy=True) \
-                                   for p in self.primitives])
-        else:
-            for p in self.primitives:
-                p.rotation(center, angle, copy=False)
-            self.update_basis_primitives()
-
-    def translation(self, offset, copy=True):
-        if copy:
-            return self.__class__([p.translation(offset, copy=True) \
-                                   for p in self.primitives])
-        else:
-            for p in self.primitives:
-                p.translation(offset, copy=False)
-            self.update_basis_primitives()
-
-    def frame_mapping(self, frame, side, copy=True):
+    def rotation(self, center: volmdlr.Point2D, angle: float):
         """
+        CompositePrimitive2D rotation
+        :param center: rotation center
+        :param angle: angle rotation
+        :return: a new rotated CompositePrimitive2D
+        """
+        return self.__class__([point.rotation(center, angle)
+                               for point in self.primitives])
+
+    def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
+        """
+        CompositePrimitive2D rotation. Object is updated inplace
+        :param center: rotation center
+        :param angle: rotation angle
+        """
+        for point in self.primitives:
+            point.rotation_inplace(center, angle)
+        self.update_basis_primitives()
+
+    def translation(self, offset: volmdlr.Vector2D):
+        """
+        CompositePrimitive2D translation
+        :param offset: translation vector
+        :return: A new translated CompositePrimitive2D
+        """
+        return self.__class__([point.translation(offset)
+                               for point in self.primitives])
+
+    def translation_inplace(self, offset: volmdlr.Vector2D):
+        """
+        CompositePrimitive2D translation. Object is updated inplace
+        :param offset: translation vector
+        """
+        for point in self.primitives:
+            point.translation_inplace(offset)
+        self.update_basis_primitives()
+
+    def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
+        """
+        Changes frame_mapping and return a new CompositePrimitive2D
         side = 'old' or 'new'
         """
-        if copy:
-            return self.__class__([p.frame_mapping(frame, side, copy=True) \
-                                   for p in self.primitives])
-        else:
-            for p in self.primitives:
-                p.frame_mapping(frame, side, copy=False)
-            self.update_basis_primitives()
+        return self.__class__([primitive.frame_mapping(frame, side)
+                               for primitive in self.primitives])
 
+    def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
+        """
+        Changes frame_mapping and the object is updated inplace
+        side = 'old' or 'new'
+        """
+        for primitive in self.primitives:
+            primitive.frame_mapping_inplace(frame, side)
+        self.update_basis_primitives()
 
     def plot(self, ax=None, color='k', alpha=1,
              plot_points=False, equal_aspect=True):
@@ -454,7 +480,7 @@ class CompositePrimitive2D(Primitive2D):
             ax.set_aspect('equal')
 
         for element in self.primitives:
-            element.plot(ax=ax, color=color) #, plot_points=plot_points)
+            element.plot(ax=ax, color=color, alpha=alpha)  # , plot_points=plot_points)
 
         ax.margins(0.1)
         plt.show()
@@ -475,34 +501,35 @@ class CompositePrimitive2D(Primitive2D):
         return plot_data
 
 
-
-class Primitive3D(CompositePrimitive):
+class Primitive3D(dc.PhysicalObject, CompositePrimitive):
     def __init__(self, color=None, alpha=1, name=''):
         self.color = color
         self.alpha = alpha
 
-        dc.DessiaObject.__init__(self, name=name)
+        dc.PhysicalObject.__init__(self, name=name)
 
     def volmdlr_primitives(self):
         return [self]
-    
+
     def babylon_param(self):
         babylon_param = {'alpha': self.alpha,
-                          'name': self.name,
-                          }
+                         'name': self.name,
+                         }
         if self.color is None:
             babylon_param['color'] = [0.8, 0.8, 0.8]
         else:
             babylon_param['color'] = list(self.color)
-            
+
         return babylon_param
-    
+
     def triangulation(self):
-        return None
-    
+        raise NotImplementedError(
+            'triangulation method should be implemented on class {}'.format(
+                self.__class__.__name__))
+
     def babylon_meshes(self):
         mesh = self.triangulation()
-        if mesh == None:
+        if mesh is None:
             return []
         positions, indices = mesh.to_babylon()
 
@@ -511,21 +538,24 @@ class Primitive3D(CompositePrimitive):
                         }
         babylon_mesh.update(self.babylon_param())
         return [babylon_mesh]
-    
+
     def babylon_points(self):
-         
         points = []
-        if hasattr(self, 'primitives'):
+        if hasattr(self, 'primitives') and \
+                hasattr(self.primitives[0], 'start'):
             points = [[self.primitives[0].start.x,
                        self.primitives[0].start.y,
-                       self.primitives[0].start.z],
-                      [self.primitives[0].end.x,
-                       self.primitives[0].end.y,
-                       self.primitives[0].end.z]]
-            points += [[line.end.x, line.end.y, line.end.z]
-                       for line in self.primitives[1:]]
+                       self.primitives[0].start.z]]
+            for primitive in self.primitives:
+                if hasattr(primitive, 'curve'):
+                    points.extend(primitive.curve.evalpts)
+                else:
+                    points.append([primitive.end.x, primitive.end.y,
+                                   primitive.end.z])
         elif hasattr(self, 'curve'):
             points = self.curve.evalpts
+        elif hasattr(self, 'polygon_points'):
+            points = self.polygon_points(50)
         return points
 
     def babylon_lines(self, points=None):
@@ -534,7 +564,7 @@ class Primitive3D(CompositePrimitive):
         babylon_lines = {'points': points}
         babylon_lines.update(self.babylon_param())
         return [babylon_lines]
-    
+
     def babylon_curves(self):
         points = self.babylon_points()
         babylon_curves = self.babylon_lines(points)[0]
@@ -545,25 +575,23 @@ class CompositePrimitive3D(Primitive3D):
     _standalone_in_db = True
     _eq_is_data_eq = True
     _non_serializable_attributes = ['basis_primitives']
-    _non_eq_attributes = ['name', 'basis_primitives']
-    _non_hash_attributes = []
+    _non_data_eq_attributes = ['name', 'basis_primitives']
+    _non_data_hash_attributes = []
     """
     A collection of simple primitives3D
     """
 
-    def __init__(self, primitives, name=''):
+    def __init__(self, primitives: List[Primitive3D], name: str = ''):
         self.primitives = primitives
 
         Primitive3D.__init__(self, name=name)
         self._utd_primitives_to_index = False
-        
+
     # def primitive_to_index(self, primitive):
     #     if not self._utd_primitives_to_index:
     #         self._primitives_to_index = {p: ip for ip, p in enumerate(self.primitives)}
     #         self._utd_primitives_to_index = True
     #     return self._primitives_to_index[primitive]
-
-
 
     # def update_basis_primitives(self):
     #     # TODO: This is a copy/paste from CompositePrimitive2D, in the future make a Common abstract class
@@ -582,20 +610,12 @@ class CompositePrimitive3D(Primitive3D):
     # #     primitives2d = [p.to_2d(plane_origin, x, y) for p in self.primitives]
     # #     return CompositePrimitive2D(primitives2d, name)
 
-    def plot(self, ax=None, equal_aspect=True, color='k', alpha=1):
+    def plot(self, ax=None, color='k', alpha=1, edge_details=False):
         if ax is None:
             fig = plt.figure()
-            ax = Axes3D(fig)
-        else:
-            fig = None
-        # if equal_aspect:
-        #     ax.set_aspect('equal')
-
+            ax = fig.add_subplot(111, projection='3d')
         for primitive in self.primitives:
             primitive.plot(ax=ax, color=color, alpha=alpha)
-
-
-
         return ax
 
 
@@ -611,12 +631,12 @@ class BoundingBox(dc.DessiaObject):
         self.ymax = ymax
         self.zmin = zmin
         self.zmax = zmax
-        
-        self.center = volmdlr.Point3D(0.5*(xmin+xmax),0.5*(ymin+ymax),0.5*(zmin+zmax))
         self.name = name
 
+        self.center = volmdlr.Point3D(0.5 * (xmin + xmax), 0.5 * (ymin + ymax), 0.5 * (zmin + zmax))
+
     def __hash__(self):
-        return sum([hash(p) for p in self.points])
+        return sum(hash(point) for point in self.points)
 
     def __add__(self, other_bbox):
         return BoundingBox(min(self.xmin, other_bbox.xmin),
@@ -626,18 +646,26 @@ class BoundingBox(dc.DessiaObject):
                            min(self.zmin, other_bbox.zmin),
                            max(self.zmax, other_bbox.zmax))
 
-    def __iter__(self):
-        return [self.xmin, self.xmax, self.ymin, self.ymax, self.zmin, self.zmax]
+    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#'):
+        return {'object_class': 'volmdlr.edges.BoundingBox',
+                'name': self.name,
+                'xmin': self.xmin,
+                'xmax': self.xmax,
+                'ymin': self.ymin,
+                'ymax': self.ymax,
+                'zmin': self.zmin,
+                'zmax': self.zmax,
+                }
 
     @property
     def points(self):
-        return [volmdlr.Point3D(self.xmin, self.ymin, self.zmin), \
-                volmdlr.Point3D(self.xmax, self.ymin, self.zmin), \
-                volmdlr.Point3D(self.xmax, self.ymax, self.zmin), \
-                volmdlr.Point3D(self.xmin, self.ymax, self.zmin), \
-                volmdlr.Point3D(self.xmin, self.ymin, self.zmax), \
-                volmdlr.Point3D(self.xmax, self.ymin, self.zmax), \
-                volmdlr.Point3D(self.xmax, self.ymax, self.zmax), \
+        return [volmdlr.Point3D(self.xmin, self.ymin, self.zmin),
+                volmdlr.Point3D(self.xmax, self.ymin, self.zmin),
+                volmdlr.Point3D(self.xmax, self.ymax, self.zmin),
+                volmdlr.Point3D(self.xmin, self.ymax, self.zmin),
+                volmdlr.Point3D(self.xmin, self.ymin, self.zmax),
+                volmdlr.Point3D(self.xmax, self.ymin, self.zmax),
+                volmdlr.Point3D(self.xmax, self.ymax, self.zmax),
                 volmdlr.Point3D(self.xmin, self.ymax, self.zmax)]
 
     def plot(self, ax=None, color=''):
@@ -677,12 +705,12 @@ class BoundingBox(dc.DessiaObject):
     def from_points(cls, points):
         # if len(points) == 0:
         #     return (0, 0, 0, 0, 0, 0)
-        xmin = min([pt.x for pt in points])
-        xmax = max([pt.x for pt in points])
-        ymin = min([pt.y for pt in points])
-        ymax = max([pt.y for pt in points])
-        zmin = min([pt.z for pt in points])
-        zmax = max([pt.z for pt in points])
+        xmin = min(pt.x for pt in points)
+        xmax = max(pt.x for pt in points)
+        ymin = min(pt.y for pt in points)
+        ymax = max(pt.y for pt in points)
+        zmin = min(pt.z for pt in points)
+        zmax = max(pt.z for pt in points)
         return cls(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def to_frame(self):
@@ -696,14 +724,14 @@ class BoundingBox(dc.DessiaObject):
                     self.zmax - self.zmin)
 
     def bbox_intersection(self, bbox2):
-        return (self.xmin < bbox2.xmax and self.xmax > bbox2.xmin \
+        return self.xmin < bbox2.xmax and self.xmax > bbox2.xmin \
                 and self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
-                and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin)
+                and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin
 
     def is_inside_bbox(self, bbox2):
-        return ((self.xmin >= bbox2.xmin - 1e-6) and (self.xmax <= bbox2.xmax + 1e-6)\
-                and (self.ymin >=bbox2.ymin - 1e-6) and (self.ymax <= bbox2.ymax + 1e-6) \
-                and (self.zmin >= bbox2.zmin - 1e-6) and (self.zmax <= bbox2.zmax + 1e-6))
+        return (self.xmin >= bbox2.xmin - 1e-6) and (self.xmax <= bbox2.xmax + 1e-6)\
+                and (self.ymin >= bbox2.ymin - 1e-6) and (self.ymax <= bbox2.ymax + 1e-6) \
+                and (self.zmin >= bbox2.zmin - 1e-6) and (self.zmax <= bbox2.zmax + 1e-6)
 
     def intersection_volume(self, bbox2):
         if not self.bbox_intersection(bbox2):
@@ -747,21 +775,15 @@ class BoundingBox(dc.DessiaObject):
 
         if permute_bbox2.xmin < permute_bbox1.xmin:
             permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
-        dx = permute_bbox2.xmin - permute_bbox1.xmax
-        if dx < 0:
-            dx = 0
+        dx = max(permute_bbox2.xmin - permute_bbox1.xmax, 0)
 
         if permute_bbox2.ymin < permute_bbox1.ymin:
             permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
-        dy = permute_bbox2.ymin - permute_bbox1.ymax
-        if dy < 0:
-            dy = 0
+        dy = max(permute_bbox2.ymin - permute_bbox1.ymax, 0)
 
         if permute_bbox2.zmin < permute_bbox1.zmin:
             permute_bbox1, permute_bbox2 = permute_bbox2, permute_bbox1
-        dz = permute_bbox2.zmin - permute_bbox1.zmax
-        if dz < 0:
-            dz = 0
+        dz = max(permute_bbox2.zmin - permute_bbox1.zmax, 0)
 
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
@@ -798,357 +820,6 @@ class BoundingBox(dc.DessiaObject):
                 dz = 0
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
-    # def distance_between_two_points_on_bbox(self, point1, point2):
-    #
-    #     if math.isclose(point1[0], self.xmin, abs_tol=1e-8):
-    #         face_point1 = 5
-    #     elif math.isclose(point1[0], self.xmax, abs_tol=1e-8):
-    #         face_point1 = 3
-    #     elif math.isclose(point1[1], self.ymin, abs_tol=1e-8):
-    #         face_point1 = 4
-    #     elif math.isclose(point1[1], self.ymax, abs_tol=1e-8):
-    #         face_point1 = 2
-    #     elif math.isclose(point1[2], self.zmin, abs_tol=1e-8):
-    #         face_point1 = 6
-    #     elif math.isclose(point1[2], self.zmax, abs_tol=1e-8):
-    #         face_point1 = 1
-    #     else:
-    #         raise NotImplementedError
-    #
-    #     if math.isclose(point2[0], self.xmin, abs_tol=1e-8):
-    #         face_point2 = 5
-    #     elif math.isclose(point2[0], self.xmax, abs_tol=1e-8):
-    #         face_point2 = 3
-    #     elif math.isclose(point2[1], self.ymin, abs_tol=1e-8):
-    #         face_point2 = 4
-    #     elif math.isclose(point2[1], self.ymax, abs_tol=1e-8):
-    #         face_point2 = 2
-    #     elif math.isclose(point2[2], self.zmin, abs_tol=1e-8):
-    #         face_point2 = 6
-    #     elif math.isclose(point2[2], self.zmax, abs_tol=1e-8):
-    #         face_point2 = 1
-    #     else:
-    #         raise NotImplementedError
-    #
-    #     point1_copy = point1.copy()
-    #     point2_copy = point2.copy()
-    #     if face_point1 > face_point2:
-    #         point1, point2 = point2, point1
-    #         face_point1, face_point2 = face_point2, face_point1
-    #
-    #     # The points are on the same face
-    #     if face_point1 == face_point2:
-    #         return point1.point_distance(point2)
-    #
-    #     deltax = self.xmax - self.xmin
-    #     deltay = self.ymax - self.ymin
-    #     deltaz = self.zmax - self.zmin
-    #
-    #     point1_2d_coordinate_dict = {1: volmdlr.Point2D((point1[
-    #                                                  0] - self.xmin - deltax / 2,
-    #                                              point1[
-    #                                                  1] - self.ymin - deltay / 2)),
-    #                                  2: volmdlr.Point2D((point1[
-    #                                                  2] - self.zmin - deltaz / 2,
-    #                                              point1[
-    #                                                  0] - self.xmin - deltax / 2)),
-    #                                  3: volmdlr.Point2D((point1[
-    #                                                  1] - self.ymin - deltay / 2,
-    #                                              point1[
-    #                                                  2] - self.zmin - deltaz / 2)),
-    #                                  4: volmdlr.Point2D((point1[
-    #                                                  0] - self.xmin - deltax / 2,
-    #                                              point1[
-    #                                                  2] - self.zmin - deltaz / 2)),
-    #                                  5: volmdlr.Point2D((point1[
-    #                                                  2] - self.zmin - deltaz / 2,
-    #                                              point1[
-    #                                                  1] - self.ymin - deltay / 2)),
-    #                                  6: volmdlr.Point2D((point1[
-    #                                                  1] - self.ymin - deltay / 2,
-    #                                              point1[
-    #                                                  0] - self.xmin - deltax / 2))}
-    #
-    #     point2_2d_coordinate_dict = {1: volmdlr.Point2D((point2[
-    #                                                  0] - self.xmin - deltax / 2,
-    #                                              point2[
-    #                                                  1] - self.ymin - deltay / 2)),
-    #                                  2: volmdlr.Point2D((point2[
-    #                                                  2] - self.zmin - deltaz / 2,
-    #                                              point2[
-    #                                                  0] - self.xmin - deltax / 2)),
-    #                                  3: volmdlr.Point2D((point2[
-    #                                                  1] - self.ymin - deltay / 2,
-    #                                              point2[
-    #                                                  2] - self.zmin - deltaz / 2)),
-    #                                  4: volmdlr.Point2D((point2[
-    #                                                  0] - self.xmin - deltax / 2,
-    #                                              point2[
-    #                                                  2] - self.zmin - deltaz / 2)),
-    #                                  5: volmdlr.Point2D((point2[
-    #                                                  2] - self.zmin - deltaz / 2,
-    #                                              point2[
-    #                                                  1] - self.ymin - deltay / 2)),
-    #                                  6: volmdlr.Point2D((point2[
-    #                                                  1] - self.ymin - deltay / 2,
-    #                                              point2[
-    #                                                  0] - self.xmin - deltax / 2))}
-    #
-    #     vertex_2d_coordinate_dict = {1: [volmdlr.Point2D((
-    #                                              self.xmin - self.xmin - deltax / 2,
-    #                                              self.ymin - self.ymin - deltay / 2)),
-    #                                      volmdlr.Point2D((
-    #                                              self.xmin - self.xmin - deltax / 2,
-    #                                              self.ymax - self.ymin - deltay / 2)),
-    #                                      volmdlr.Point2D((
-    #                                              self.xmax - self.xmin - deltax / 2,
-    #                                              self.ymax - self.ymin - deltay / 2)),
-    #                                      volmdlr.Point2D((
-    #                                              self.xmax - self.xmin - deltax / 2,
-    #                                              self.ymin - self.ymin - deltay / 2))],
-    #                                  2: [volmdlr.Point2D((
-    #                                              self.zmin - self.zmin - deltaz / 2,
-    #                                              self.xmin - self.xmin - deltax / 2)),
-    #                                      volmdlr.Point2D((
-    #                                              self.zmin - self.zmin - deltaz / 2,
-    #                                              self.xmax - self.xmin - deltax / 2)),
-    #                                      volmdlr.Point2D((
-    #                                              self.zmax - self.zmin - deltaz / 2,
-    #                                              self.xmax - self.xmin - deltax / 2)),
-    #                                      volmdlr.Point2D((
-    #                                              self.zmax - self.zmin - deltaz / 2,
-    #                                              self.xmin - self.xmin - deltax / 2))],
-    #                                  3: [volmdlr.Point2D((
-    #                                              self.ymin - self.ymin - deltay / 2,
-    #                                              self.zmin - self.zmin - deltaz / 2)),
-    #                                      volmdlr.Point2D((
-    #                                              self.ymin - self.ymin - deltay / 2,
-    #                                              self.zmax - self.zmin - deltaz / 2)),
-    #                                      volmdlr.Point2D((
-    #                                              self.ymax - self.ymin - deltay / 2,
-    #                                              self.zmax - self.zmin - deltaz / 2)),
-    #                                      volmdlr.Point2D((
-    #                                              self.ymax - self.ymin - deltay / 2,
-    #                                              self.zmin - self.zmin - deltaz / 2))],
-    #                                  4: [volmdlr.Point2D((
-    #                                              self.xmin - self.xmin - deltax / 2,
-    #                                              self.zmin - self.zmin - deltaz / 2)),
-    #                                      volmdlr.Point2D((
-    #                                              self.xmin - self.xmin - deltax / 2,
-    #                                              self.zmax - self.zmin - deltaz / 2)),
-    #                                      volmdlr.Point2D((
-    #                                              self.xmax - self.xmin - deltax / 2,
-    #                                              self.zmax - self.zmin - deltaz / 2)),
-    #                                      volmdlr.Point2D((
-    #                                              self.xmax - self.xmin - deltax / 2,
-    #                                              self.zmin - self.zmin - deltaz / 2))],
-    #                                  5: [volmdlr.Point2D((
-    #                                              self.zmin - self.zmin - deltaz / 2,
-    #                                              self.ymin - self.ymin - deltay / 2)),
-    #                                      volmdlr.Point2D((
-    #                                              self.zmin - self.zmin - deltaz / 2,
-    #                                              self.ymax - self.ymin - deltay / 2)),
-    #                                      volmdlr.Point2D((
-    #                                              self.zmax - self.zmin - deltaz / 2,
-    #                                              self.ymax - self.ymin - deltay / 2)),
-    #                                      volmdlr.Point2D((
-    #                                              self.zmax - self.zmin - deltaz / 2,
-    #                                              self.ymin - self.ymin - deltay / 2))],
-    #                                  6: [volmdlr.Point2D((
-    #                                              self.ymin - self.ymin - deltay / 2,
-    #                                              self.xmin - self.xmin - deltax / 2)),
-    #                                      volmdlr.Point2D((
-    #                                              self.ymin - self.ymin - deltay / 2,
-    #                                              self.xmax - self.xmin - deltax / 2)),
-    #                                      volmdlr.Point2D((
-    #                                              self.ymax - self.ymin - deltay / 2,
-    #                                              self.xmax - self.xmin - deltax / 2)),
-    #                                      volmdlr.Point2D((
-    #                                              self.ymax - self.ymin - deltay / 2,
-    #                                              self.xmin - self.xmin - deltax / 2))], }
-    #
-    #     vertex_to_3d_dict = {1: (2, self.zmax, 0, 1),
-    #                          2: (1, self.ymax, 2, 0),
-    #                          3: (0, self.xmax, 1, 2),
-    #                          4: (1, self.ymin, 0, 2),
-    #                          5: (0, self.xmin, 2, 1),
-    #                          6: (2, self.zmin, 1, 0)}
-    #
-    #     offset_dict = {0: self.xmin + deltax / 2,
-    #                    1: self.ymin + deltay / 2,
-    #                    2: self.zmin + deltaz / 2}
-    #
-    #     opposite_face_dict = {1: 6, 2: 4, 3: 5, 4: 2, 5: 3, 6: 1}
-    #
-    #     combination_dict = {
-    #         (1, 2): volmdlr.Frame2D(volmdlr.Point2D(0, deltay / 2 + deltaz / 2),
-    #                         volmdlr.Vector2D(0, -1), volmdlr.Vector2D(1, 0)),
-    #         (2, 1): volmdlr.Frame2D(volmdlr.Point2D(deltay / 2 + deltaz / 2, 0),
-    #                         volmdlr.Vector2D(0, 1), volmdlr.Vector2D(-1, 0)),
-    #         (1, 3): volmdlr.Frame2D(volmdlr.Point2D(deltax / 2 + deltaz / 2, 0),
-    #                         volmdlr.Vector2D(0, 1), volmdlr.Vector2D(-1, 0)),
-    #         (3, 1): volmdlr.Frame2D(volmdlr.Point2D(0, deltax / 2 + deltaz / 2),
-    #                         volmdlr.Vector2D(0, -1), volmdlr.Vector2D(1, 0)),
-    #         (1, 4): volmdlr.Frame2D(volmdlr.Point2D(0, -deltay / 2 - deltaz / 2),
-    #                         volmdlr.Vector2D(1, 0), volmdlr.Vector2D(0, 1)),
-    #         (4, 1): volmdlr.Frame2D(volmdlr.Point2D(-deltay / 2 - deltaz / 2, 0),
-    #                         volmdlr.Vector2D(1, 0), volmdlr.Vector2D(0, 1)),
-    #         (1, 5): volmdlr.Frame2D(volmdlr.Point2D(-deltax / 2 - deltaz / 2, 0),
-    #                         volmdlr.Vector2D(1, 0), volmdlr.Vector2D(0, 1)),
-    #         (5, 1): volmdlr.Frame2D(volmdlr.Point2D(0, -deltax / 2 - deltaz / 2),
-    #                         volmdlr.Vector2D(1, 0), volmdlr.Vector2D(0, 1)),
-    #         (2, 3): volmdlr.Frame2D(volmdlr.Point2D(0, deltax / 2 + deltay / 2),
-    #                         volmdlr.Vector2D(0, -1), volmdlr.Vector2D(1, 0)),
-    #         (3, 2): volmdlr.Frame2D(volmdlr.Point2D(deltax / 2 + deltay / 2, 0),
-    #                         volmdlr.Vector2D(0, 1), volmdlr.Vector2D(-1, 0)),
-    #         (2, 5): volmdlr.Frame2D(volmdlr.Point2D(0, -deltax / 2 - deltay / 2),
-    #                         volmdlr.Vector2D(1, 0), volmdlr.Vector2D(0, 1)),
-    #         (5, 2): volmdlr.Frame2D(volmdlr.Point2D(-deltax / 2 - deltay / 2, 0),
-    #                         volmdlr.Vector2D(1, 0), volmdlr.Vector2D(0, 1)),
-    #         (2, 6): volmdlr.Frame2D(volmdlr.Point2D(-deltaz / 2 - deltay / 2, 0),
-    #                         volmdlr.Vector2D(1, 0), volmdlr.Vector2D(0, 1)),
-    #         (6, 2): volmdlr.Frame2D(volmdlr.Point2D(0, -deltaz / 2 - deltay / 2),
-    #                         volmdlr.Vector2D(1, 0), volmdlr.Vector2D(0, 1)),
-    #         (3, 4): volmdlr.Frame2D(volmdlr.Point2D(-deltay / 2 - deltax / 2, 0),
-    #                         volmdlr.Vector2D(1, 0), volmdlr.Vector2D(0, 1)),
-    #         (4, 3): volmdlr.Frame2D(volmdlr.Point2D(0, -deltay / 2 - deltax / 2),
-    #                         volmdlr.Vector2D(1, 0), volmdlr.Vector2D(0, 1)),
-    #         (3, 6): volmdlr.Frame2D(volmdlr.Point2D(0, -deltaz / 2 - deltax / 2),
-    #                         volmdlr.Vector2D(1, 0), volmdlr.Vector2D(0, 1)),
-    #         (6, 3): volmdlr.Frame2D(volmdlr.Point2D(-deltaz / 2 - deltax / 2, 0),
-    #                         volmdlr.Vector2D(1, 0), volmdlr.Vector2D(0, 1)),
-    #         (4, 5): volmdlr.Frame2D(volmdlr.Point2D(-deltax / 2 - deltay / 2, 0),
-    #                         volmdlr.Vector2D(0, 1), volmdlr.Vector2D(-1, 0)),
-    #         (5, 4): volmdlr.Frame2D(volmdlr.Point2D(0, -deltax / 2 - deltay / 2),
-    #                         volmdlr.Vector2D(0, -1), volmdlr.Vector2D(1, 0)),
-    #         (4, 6): volmdlr.Frame2D(volmdlr.Point2D(0, -deltaz / 2 - deltay / 2),
-    #                         volmdlr.Vector2D(0, -1), volmdlr.Vector2D(1, 0)),
-    #         (6, 4): volmdlr.Frame2D(volmdlr.Point2D(-deltaz / 2 - deltay / 2, 0),
-    #                         volmdlr.Vector2D(0, 1), volmdlr.Vector2D(-1, 0)),
-    #         (5, 6): volmdlr.Frame2D(volmdlr.Point2D(-deltaz / 2 - deltax / 2, 0),
-    #                         volmdlr.Vector2D(0, 1), volmdlr.Vector2D(-1, 0)),
-    #         (6, 5): volmdlr.Frame2D(volmdlr.Point2D(0, -deltaz / 2 - deltax / 2),
-    #                         volmdlr.Vector2D(0, -1), volmdlr.Vector2D(1, 0))
-    #     }
-    #
-    #     point1_2d = point1_2d_coordinate_dict[face_point1]
-    #     point2_2d = point2_2d_coordinate_dict[face_point2]
-    #
-    #     # The points are on adjacent faces
-    #     if opposite_face_dict[face_point1] != face_point2:
-    #         frame = combination_dict[(face_point1, face_point2)]
-    #         net_point2 = frame.OldCoordinates(point2_2d)
-    #
-    #         # Computes the 3D intersection between the net_line and the edges of the face_point1
-    #         net_line = edges.LineSegment2D(point1_2d, net_point2)
-    #         vertex_points = vertex_2d_coordinate_dict[face_point1]
-    #         edge_lines = [edges.LineSegment2D(p1, p2) for p1, p2 in
-    #                       zip(vertex_points,
-    #                           vertex_points[1:] + [vertex_points[0]])]
-    #         for line in edge_lines:
-    #             edge_intersection_point, a, b = volmdlr.Point2D.LinesIntersection(
-    #                 net_line, line, curvilinear_abscissa=True)
-    #             if edge_intersection_point is not None \
-    #                     and a > 0 and a < 1 and b > 0 and b < 1:
-    #                 break
-    #         offset_indice, offset, indice1, indice2 = vertex_to_3d_dict[
-    #             face_point1]
-    #         disordered_coordinate = [
-    #             (indice1, edge_intersection_point[0] + offset_dict[indice1]),
-    #             (indice2, edge_intersection_point[1] + offset_dict[indice2]),
-    #             (offset_indice, offset)]
-    #         disordered_coordinate = sorted(disordered_coordinate,
-    #                                        key=lambda a: a[0])
-    #         intersection_point_3d = volmdlr.Point3D(
-    #             tuple([p[1] for p in disordered_coordinate]))
-    #
-    #         mesures = [Measure3D(point1_copy, intersection_point_3d),
-    #                    Measure3D(intersection_point_3d, point2_copy)]
-    #
-    #         return mesures
-    #
-    #     # The points are on opposite faces
-    #     else:
-    #         net_points2_and_frame = []
-    #
-    #         faces_number = [1, 2, 3, 4, 5, 6]
-    #         faces_number.remove(face_point1)
-    #         faces_number.remove(face_point2)
-    #         pathes = []
-    #         for face_nb in faces_number:
-    #             path = [(face_point1, face_nb), (face_nb, face_point2)]
-    #             pathes.append(path)
-    #
-    #         for path in pathes:
-    #             frame1 = combination_dict[(path[0][0], path[0][1])]
-    #             frame2 = combination_dict[(path[1][0], path[1][1])]
-    #             frame = frame1 + frame2
-    #             net_points2_and_frame.append(
-    #                 (volmdlr.Point2D(frame.OldCoordinates(point2_2d).vector), frame))
-    #         net_point2, frame = min(net_points2_and_frame,
-    #                                 key=lambda pt: pt[0].point_distance(
-    #                                     point1_2d))
-    #         net_line = LineSegment2D(point1_2d, net_point2)
-    #
-    #         # Computes the 3D intersection between the net_line and the edges of the face_point1
-    #         vertex_points = vertex_2d_coordinate_dict[face_point1]
-    #         edge_lines = [LineSegment2D(p1, p2) for p1, p2 in
-    #                       zip(vertex_points,
-    #                           vertex_points[1:] + [vertex_points[0]])]
-    #         for line in edge_lines:
-    #             edge_intersection_point1, a, b = Point2D.LinesIntersection(
-    #                 net_line, line, curvilinear_abscissa=True)
-    #             if edge_intersection_point1 is not None \
-    #                     and a > 0 and a < 1 and b > 0 and b < 1:
-    #                 break
-    #         offset_indice, offset, indice1, indice2 = vertex_to_3d_dict[
-    #             face_point1]
-    #         disordered_coordinate = [
-    #             (indice1, edge_intersection_point1[0] + offset_dict[indice1]),
-    #             (indice2, edge_intersection_point1[1] + offset_dict[indice2]),
-    #             (offset_indice, offset)]
-    #         disordered_coordinate = sorted(disordered_coordinate,
-    #                                        key=lambda a: a[0])
-    #         intersection_point1_3d = volmdlr.Point3D(
-    #             tuple([p[1] for p in disordered_coordinate]))
-    #
-    #         # Computes the 3D intersection between the net_line and the edges of the face_point2
-    #         vertex_points = [frame.OldCoordinates(p) for p in
-    #                          vertex_2d_coordinate_dict[face_point2]]
-    #         edge_lines = [LineSegment2D(p1, p2) for p1, p2 in
-    #                       zip(vertex_points,
-    #                           vertex_points[1:] + [vertex_points[0]])]
-    #         for line in edge_lines:
-    #             edge_intersection_point2, a, b = volmdlr.Point2D.LinesIntersection(
-    #                 net_line, line, curvilinear_abscissa=True)
-    #             if edge_intersection_point2 is not None \
-    #                     and a > 0 and a < 1 and b > 0 and b < 1:
-    #                 break
-    #         edge_intersection_point2 = volmdlr.Point2D(
-    #             frame.new_coordinates(edge_intersection_point2))
-    #         offset_indice, offset, indice1, indice2 = vertex_to_3d_dict[
-    #             face_point2]
-    #         disordered_coordinate = [
-    #             (indice1, edge_intersection_point2[0] + offset_dict[indice1]),
-    #             (indice2, edge_intersection_point2[1] + offset_dict[indice2]),
-    #             (offset_indice, offset)]
-    #         disordered_coordinate = sorted(disordered_coordinate,
-    #                                        key=lambda a: a[0])
-    #         intersection_point2_3d = volmdlr.Point3D(
-    #             tuple([p[1] for p in disordered_coordinate]))
-    #
-    #         if point1 == point1_copy:
-    #             mesures = [Measure3D(point1, intersection_point1_3d),
-    #                        Measure3D(intersection_point1_3d,
-    #                                  intersection_point2_3d),
-    #                        Measure3D(intersection_point2_3d, point2)]
-    #         else:
-    #             mesures = [Measure3D(point2, intersection_point2_3d),
-    #                        Measure3D(intersection_point2_3d,
-    #                                  intersection_point1_3d),
-    #                        Measure3D(intersection_point1_3d, point1)]
-    #         return mesures
-
     def babylon_script(self):
         height = self.ymax - self.ymin
         width = self.xmax - self.xmin
@@ -1177,21 +848,20 @@ class BoundingBox(dc.DessiaObject):
         return s
 
 
-
-
-class VolumeModel(dc.DessiaObject):
+class VolumeModel(dc.PhysicalObject):
     _standalone_in_db = True
     _eq_is_data_eq = True
     _non_serializable_attributes = ['shells', 'bounding_box']
-    _non_eq_attributes = ['name', 'shells', 'bounding_box', 'contours',
-                          'faces']
-    _non_hash_attributes = ['name', 'shells', 'bounding_box', 'contours',
-                          'faces']
-    """
-    :param groups: A list of two element tuple. The first element is a string naming the group and the second element is a list of primitives of the group
+    _non_data_eq_attributes = ['name', 'shells', 'bounding_box', 'contours',
+                               'faces']
+    _non_data_hash_attributes = ['name', 'shells', 'bounding_box', 'contours',
+                                 'faces']
+    _dessia_methods = ['to_stl_model']
     """
 
-    def __init__(self, primitives, name=''):
+    """
+
+    def __init__(self, primitives: List[Primitive3D], name: str = ''):
         self.primitives = primitives
         self.name = name
         self.shells = []
@@ -1202,9 +872,10 @@ class VolumeModel(dc.DessiaObject):
         self.bounding_box = self._bounding_box()
         # else:
         #     self.bounding_box = BoundingBox(-1, 1, -1, 1, -1, 1)
+        dc.DessiaObject.__init__(self, name=name)
 
     def __hash__(self):
-        return sum([hash(p) for p in self.primitives])
+        return sum(hash(point) for point in self.primitives)
 
     # def _extract_shells(self):
     #     shells = []
@@ -1223,51 +894,89 @@ class VolumeModel(dc.DessiaObject):
             equ = equ and p1 == p2
         return equ
 
-    def volume(self):
+    def volume(self) -> float:
+        """
+        Return the sum of volumes of the primitives
+        """
         volume = 0
         for primitive in self.primitives:
             volume += primitive.volume()
         return volume
 
-    def rotation(self, center, axis, angle, copy=True):
-        if copy:
-            new_primitives = [
-                primitive.rotation(center, axis, angle, copy=True) for
-                primitive in self.primitives]
-            return VolumeModel(new_primitives, self.name)
-        else:
-            for primitive in self.primitives:
-                primitive.rotation(center, axis, angle, copy=False)
-            self.bounding_box = self._bounding_box()
-
-    def translation(self, offset, copy=True):
-        if copy:
-            new_primitives = [primitive.translation(offset, copy=True) for
-                              primitive in self.primitives]
-            return VolumeModel(new_primitives, self.name)
-        else:
-            for primitives in self.primitives:
-                primitives.translation(offset, copy=False)
-            self.bounding_box = self._bounding_box()
-
-    def frame_mapping(self, frame, side, copy=True):
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
+                 angle: float):
         """
-        side = 'old' or 'new'
+        VolumeModel rotation
+        :param center: rotation center
+        :param axis: rotation axis
+        :param angle: angle rotation
+        :return: a new rotated VolumeModel
         """
-        if copy:
-            new_primitives = [primitive.frame_mapping(frame, side, copy=True)
-                              for primitive in self.primitives]
-            return VolumeModel(new_primitives, self.name)
-        else:
-            for primitives in self.primitives:
-                primitives.frame_mapping(frame, side, copy=False)
-            self.bounding_box = self._bounding_box()
-
-    def copy(self):
-        new_primitives = [primitive.copy() for primitive in self.primitives]
+        new_primitives = [
+            primitive.rotation(center, axis, angle) for
+            primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
 
-    def _bounding_box(self):
+    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
+                         angle: float):
+        """
+        VolumeModel rotation. Object is updated inplace
+        :param center: rotation center
+        :param axis: rotation axis
+        :param angle: rotation angle
+        """
+        for primitive in self.primitives:
+            primitive.rotation_inplace(center, axis, angle)
+        self.bounding_box = self._bounding_box()
+
+    def translation(self, offset: volmdlr.Vector3D):
+        """
+        VolumeModel translation
+        :param offset: translation vector
+        :return: A new translated VolumeModel
+        """
+        new_primitives = [primitive.translation(offset) for
+                          primitive in self.primitives]
+        return VolumeModel(new_primitives, self.name)
+
+    def translation_inplace(self, offset: volmdlr.Vector3D):
+        """
+        VolumeModel translation. Object is updated inplace
+        :param offset: translation vector
+        """
+        for primitives in self.primitives:
+            primitives.translation_inplace(offset)
+        self.bounding_box = self._bounding_box()
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and return a new VolumeModel
+        side = 'old' or 'new'
+        """
+        new_primitives = [primitive.frame_mapping(frame, side)
+                          for primitive in self.primitives]
+        return VolumeModel(new_primitives, self.name)
+
+    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and the object is updated inplace
+        side = 'old' or 'new'
+        """
+        for primitives in self.primitives:
+            primitives.frame_mapping_inplace(frame, side)
+        self.bounding_box = self._bounding_box()
+
+    def copy(self, deep=True, memo=None):
+        """
+        Specific copy
+        """
+        new_primitives = [primitive.copy(deep=deep, memo=memo) for primitive in self.primitives]
+        return VolumeModel(new_primitives, self.name)
+
+    def _bounding_box(self) -> BoundingBox:
+        """
+        Computes the bounding box of the model
+        """
         bboxes = []
         points = []
         for primitive in self.primitives:
@@ -1277,19 +986,19 @@ class VolumeModel(dc.DessiaObject):
                 if primitive.__class__.__name__ == 'volmdlr.Point3D':
                     points.append(primitive)
         if bboxes:
-            xmin = min([box.xmin for box in bboxes])
-            xmax = max([box.xmax for box in bboxes])
-            ymin = min([box.ymin for box in bboxes])
-            ymax = max([box.ymax for box in bboxes])
-            zmin = min([box.zmin for box in bboxes])
-            zmax = max([box.zmax for box in bboxes])
+            xmin = min(box.xmin for box in bboxes)
+            xmax = max(box.xmax for box in bboxes)
+            ymin = min(box.ymin for box in bboxes)
+            ymax = max(box.ymax for box in bboxes)
+            zmin = min(box.zmin for box in bboxes)
+            zmax = max(box.zmax for box in bboxes)
         elif points:
-            xmin = min([p[0] for p in points])
-            xmax = max([p[0] for p in points])
-            ymin = min([p[1] for p in points])
-            ymax = max([p[1] for p in points])
-            zmin = min([p[2] for p in points])
-            zmax = max([p[2] for p in points])
+            xmin = min(p[0] for p in points)
+            xmax = max(p[0] for p in points)
+            ymin = min(p[1] for p in points)
+            ymax = max(p[1] for p in points)
+            zmin = min(p[2] for p in points)
+            zmax = max(p[2] for p in points)
         else:
             # raise ValueError('Bounding box cant be determined')
             return BoundingBox(-1, 1, -1, 1, 1 - 1, 1)
@@ -1322,10 +1031,10 @@ class VolumeModel(dc.DessiaObject):
         return ax
 
     def freecad_script(self, fcstd_filepath,
-                      freecad_lib_path='/usr/lib/freecad/lib',
-                      export_types=('fcstd',),
-                      save_to='',
-                      tolerance=0.0001):
+                       freecad_lib_path='/usr/lib/freecad/lib',
+                       export_types=('fcstd',),
+                       save_to='',
+                       tolerance=0.0001):
         """
         Generate python a FreeCAD definition of model
         :param fcstd_filename: a filename without extension to give the name at the fcstd part written in python code
@@ -1366,8 +1075,7 @@ class VolumeModel(dc.DessiaObject):
                     #         ip)
                     # else:
                     s += "shapeobj.Shape = primitive{}\n".format(ip)
-                    s += 'part.addObject(shapeobj)\n\n'.format(ip,
-                                                               primitive.name)
+                    s += 'part.addObject(shapeobj)\n\n'
             # --------------------DEBUG-------------------
         #                else:
         #                    raise NotImplementedError
@@ -1388,10 +1096,10 @@ class VolumeModel(dc.DessiaObject):
         return s
 
     def freecad_export(self, fcstd_filepath,
-                      python_path='python3',
-                      freecad_lib_path='/usr/lib/freecad/lib',
-                      export_types=('fcstd',),
-                      tolerance=0.0001):
+                       python_path='python3',
+                       freecad_lib_path='/usr/lib/freecad/lib',
+                       export_types=('fcstd',),
+                       tolerance=0.0001):
         """
         Export model to .fcstd FreeCAD standard
 
@@ -1406,9 +1114,9 @@ class VolumeModel(dc.DessiaObject):
         """
         fcstd_filepath = os.path.abspath(fcstd_filepath)
         s = self.freecad_script(fcstd_filepath,
-                               freecad_lib_path=freecad_lib_path,
-                               export_types=export_types,
-                               tolerance=tolerance)
+                                freecad_lib_path=freecad_lib_path,
+                                export_types=export_types,
+                                tolerance=tolerance)
         with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as f:
             f.write(bytes(s, 'utf8'))
 
@@ -1420,7 +1128,6 @@ class VolumeModel(dc.DessiaObject):
         return output
 
     # def babylon_script(self, use_cdn=True, debug=False):
-    #
     #     # env = Environment(loader=PackageLoader('volmdlr', 'templates'),
     #     #                   autoescape=select_autoescape(['html', 'xml']))
     #     #
@@ -1465,9 +1172,7 @@ class VolumeModel(dc.DessiaObject):
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
                 meshes.extend(primitive.babylon_meshes())
-            if hasattr(primitive, 'babylon_lines'):
-                lines.extend(primitive.babylon_lines())
-            if hasattr(primitive,'babylon_curves'):
+            if hasattr(primitive, 'babylon_curves'):
                 lines.append(primitive.babylon_curves())
         bbox = self._bounding_box()
         center = bbox.center
@@ -1479,12 +1184,12 @@ class VolumeModel(dc.DessiaObject):
                         'lines': lines,
                         'max_length': max_length,
                         'center': list(center)}
-        
+
         return babylon_data
 
     @classmethod
     def babylonjs_script(cls, babylon_data, use_cdn=True,
-                                    debug=False):
+                         debug=False):
         if use_cdn:
             script = volmdlr.templates.babylon_unpacker_cdn_header  # .substitute(name=page_name)
         else:
@@ -1497,7 +1202,7 @@ class VolumeModel(dc.DessiaObject):
     def babylonjs(self, page_name=None, use_cdn=True, debug=False):
         babylon_data = self.babylon_data()
         script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
-                                                  debug=debug)
+                                       debug=debug)
         if page_name is None:
             with tempfile.NamedTemporaryFile(suffix=".html",
                                              delete=False) as file:
@@ -1508,50 +1213,55 @@ class VolumeModel(dc.DessiaObject):
                 page_name += '.html'
             with open(page_name, 'w') as file:
                 file.write(script)
-                            
+
         webbrowser.open('file://' + os.path.realpath(page_name))
 
         return page_name
-
 
     def save_babylonjs_to_file(self, filename: str = None,
                                use_cdn=True, debug=False):
         babylon_data = self.babylon_data()
         script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
-                                                  debug=debug)
+                                       debug=debug)
         if filename is None:
             with tempfile.NamedTemporaryFile(suffix=".html",
                                              delete=False) as file:
                 file.write(bytes(script, 'utf8'))
                 return file.name
-            
+
         if not filename.endswith('.html'):
             filename += '.html'
-            
+
             with open(filename, 'w') as file:
                 file.write(script)
             return filename
 
-
-    def to_stl(self, filepath):
+    def to_stl_model(self):
         mesh = self.primitives[0].triangulation()
         for primitive in self.primitives[1:]:
             mesh.merge_mesh(primitive.triangulation())
-        import volmdlr.stl as vmstl
-        stl = vmstl.Stl.from_display_mesh(mesh)
-        stl.save_to_binary_file(filepath)
-        
-    
-    def to_step(self, filepath):
-        
-        
-        if isinstance(filepath, str):
-            if not (filepath.endswith('.step') or filepath.endswith('.stp')):
-                filepath += '.step'
-            file = open(filepath, 'w')
-        else:
-            file = filepath
-        
+        stl = mesh.to_stl()
+        return stl
+
+    def to_stl(self, filepath: str):
+        if not filepath.endswith('.stl'):
+            filepath += '.stl'
+        with open(filepath, 'wb') as file:
+            self.to_stl_stream(file)
+
+    def to_stl_stream(self, stream: dcf.BinaryFile):
+        stl = self.to_stl_model()
+        stl.save_to_stream(stream)
+        return stream
+
+    def to_step(self, filepath: str):
+        if not (filepath.endswith('.step') or filepath.endswith('.stp')):
+            filepath += '.step'
+        with open(filepath, 'w') as file:
+            self.to_step_stream(file)
+
+    def to_step_stream(self, stream: dcf.StringFile):
+
         step_content = STEP_HEADER.format(name=self.name,
                                           filename='',
                                           timestamp=datetime.now().isoformat(),
@@ -1575,29 +1285,31 @@ class VolumeModel(dc.DessiaObject):
                                                                           primitive.name,
                                                                           product_context_id)
             product_definition_formation_id = product_id + 1
-            step_content += "#{} = PRODUCT_DEFINITION_FORMATION('','',#{});\n".format(product_definition_formation_id, product_id)
+            step_content += "#{} = PRODUCT_DEFINITION_FORMATION('','',#{});\n".format(
+                product_definition_formation_id, product_id)
             product_definition_id = product_definition_formation_id + 1
             step_content += "#{} = PRODUCT_DEFINITION('design','',#{},#{});\n".format(product_definition_id,
-                                                                                    product_definition_formation_id,
-                                                                                    product_definition_context_id)
+                                                                                      product_definition_formation_id,
+                                                                                      product_definition_context_id)
             product_definition_shape_id = product_definition_id + 1
-            step_content += "#{} = PRODUCT_DEFINITION_SHAPE('','',#{});\n".format(product_definition_shape_id, product_definition_id)
+            step_content += "#{} = PRODUCT_DEFINITION_SHAPE('','',#{});\n".format(
+                product_definition_shape_id, product_definition_id)
             shape_definition_repr_id = product_definition_shape_id + 1
             step_content += "#{} = SHAPE_DEFINITION_REPRESENTATION(#{},#{});\n".format(shape_definition_repr_id,
-                                                                                      product_definition_shape_id,
-                                                                                      primitive_id
-                                                                                      )
+                                                                                       product_definition_shape_id,
+                                                                                       primitive_id
+                                                                                       )
             product_related_category = shape_definition_repr_id + 1
             step_content += "#{} = PRODUCT_RELATED_PRODUCT_CATEGORY('part',$,(#{}));\n".format(
                 product_related_category,
                 product_id
-                )
+            )
             draughting_id = product_related_category + 1
             step_content += "#{} = DRAUGHTING_PRE_DEFINED_CURVE_FONT('continuous');\n".format(
                 draughting_id)
             color_id = draughting_id + 1
             primitive_color = (1, 1, 1)
-            if hasattr(primitive, 'color'):
+            if hasattr(primitive, 'color') and primitive.color is not None:
                 primitive_color = primitive.color
             step_content += "#{} = COLOUR_RGB('',{}, {}, {});\n".format(
                 color_id,
@@ -1642,10 +1354,12 @@ class VolumeModel(dc.DessiaObject):
             current_id = styled_item_id + 1
 
         step_content += STEP_FOOTER
-        
-        file.write(step_content)
-        if isinstance(filepath, str):
-            file.close()
+
+        stream.write(step_content)
+
+    def volmdlr_volume_model(self):
+        return [self]
+
 
 class MovingVolumeModel(VolumeModel):
     def __init__(self, primitives, step_frames, name=''):
@@ -1666,7 +1380,7 @@ class MovingVolumeModel(VolumeModel):
         primitives = []
         for primitive, frame in zip(self.primitives, self.step_frames[istep]):
             primitives.append(
-                primitive.frame_mapping(frame, side='old', copy=True))
+                primitive.frame_mapping(frame, side='old'))
         return VolumeModel(primitives)
 
     # def babylon_script(self, use_cdn=True, debug=False):

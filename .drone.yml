@@ -4,6 +4,20 @@ type: docker
 name: default
 
 steps:
+- name: check code complexity
+  image: python:3.9
+  commands:
+  - pip install radon pylint
+  - ./code_quality.sh
+  - python code_pylint.py
+
+- name: check pep8 formatting
+  image: python:3.9
+  commands:
+    - git fetch --tags
+    - pip3 install -U pip autopep8
+    - bash code_pep8.sh
+
 - name: install, build doc run scripts
   image: python:3.8
   commands:
@@ -12,11 +26,22 @@ steps:
   - python setup.py install
   - cd doc
   - make html
+  - cd ../tests
+  - coverage run --source volmdlr -m unittest discover
   - cd ../scripts
   - coverage run --source volmdlr ci_scripts.py
+  - cd ..
+  - coverage combine scripts/.coverage tests/.coverage
   - coverage json
   - coverage report
   - python coverage.py
+
+- name: generate sdist
+  image: python:3.8
+  commands:
+  - git fetch --tags
+  - pip install Cython
+  - python setup.py sdist
 
 - name: upload to pypi
   image: plugins/pypi
@@ -54,4 +79,3 @@ steps:
     password:
       from_secret: email_password
     from: technical@dessia.tech
-    recipients: [ root@dessia.tech ]

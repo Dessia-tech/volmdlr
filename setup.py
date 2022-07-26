@@ -60,7 +60,7 @@ def version_from_git_describe(version):
             split_versions.extend(['0', '0'])
         split_versions[-1] = str(int(split_versions[-1])+1)
         split_versions = '.'.join(split_versions)
-        return '{}.dev{}'.format(split_versions, number_commits_ahead)
+        return '{}.dev{}+{}'.format(split_versions, number_commits_ahead, commit_hash)
     else:
         if suffix is not None:
             split_versions.append(suffix)
@@ -69,10 +69,10 @@ def version_from_git_describe(version):
     
 # Just testing if get_version works well
 assert version_from_git_describe('v0.1.7.post2') == '0.1.7.post2'
-assert version_from_git_describe('v0.0.1-25-gaf0bf53') == '0.0.2.dev25'
-assert version_from_git_describe('v0.1-15-zsdgaz') == '0.1.1.dev15'
+assert version_from_git_describe('v0.0.1-25-gaf0bf53') == '0.0.2.dev25+gaf0bf53'
+assert version_from_git_describe('v0.1-15-zsdgaz') == '0.1.1.dev15+zsdgaz'
 assert version_from_git_describe('v1') == '1'
-assert version_from_git_describe('v1-3-aqsfjbo') == '1.0.1.dev3'
+assert version_from_git_describe('v1-3-aqsfjbo') == '1.0.1.dev3+aqsfjbo'
     
 def get_version():
     # Return the version if it has been injected into the file by git-archive
@@ -106,6 +106,7 @@ setup(name='volmdlr',
 #      setup_requires=['setuptools_scm'],
       description=' A volume modeler computation-oriented. Include rendering bindings.',
       long_description=readme(),
+      long_description_content_type='text/markdown',
       keywords='volume, modeler, CAD',
       url='https://github.com/Dessia-tech/volmdlr',
       author='DessiA Technologies',
@@ -115,7 +116,7 @@ setup(name='volmdlr',
       package_dir={},
       include_package_data = True,
       install_requires=['packaging',
-                        'dessia_common>=0.3.9',
+                        'dessia_common>=0.7.0',
                         'Cython',
                         'numpy',
                         'matplotlib',
@@ -124,10 +125,9 @@ setup(name='volmdlr',
                         'jsonschema',
                         'networkx',
                         'triangle',
-                        'plot_data>=0.6.0',
+                        'plot_data>=0.8.5',
                         'kaitaistruct',
                         'binaryornot',
-                        # 'open3d'
                         ],
       classifiers=['Topic :: Scientific/Engineering','Development Status :: 3 - Alpha'],
       ext_modules = cythonize(["volmdlr/core_compiled.pyx"]))
