@@ -614,8 +614,11 @@ class Gmsh(DessiaObject):
                                                                           points[tetrahedron[3]]]))
 
         element_groups = [volmdlr.mesh.ElementsGroup(tetrahedrons_mesh, name='')]
+        mesh = volmdlr.mesh.Mesh(element_groups)
+        mesh.nodes = points
+        mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
 
-        return volmdlr.mesh.Mesh(element_groups)
+        return mesh
 
     def define_triangular_element_mesh(self):
         """
@@ -640,8 +643,11 @@ class Gmsh(DessiaObject):
                                                                             points[triangle[2]]]))
 
         element_groups = [volmdlr.mesh.ElementsGroup(triangles_mesh, name='')]
+        mesh = volmdlr.mesh.Mesh(element_groups)
+        mesh.nodes = points
+        mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
 
-        return volmdlr.mesh.Mesh(element_groups)
+        return mesh
 
     @staticmethod
     def check_2d(list_nodes):
