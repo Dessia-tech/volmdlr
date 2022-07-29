@@ -815,6 +815,19 @@ class Mesh(DessiaObject):
             elements_group.plot(ax=ax)
         return ax
 
+    def bounding_rectangle(self):
+        nodes = self.nodes
+        x, y = [], []
+        for n in nodes:
+            x.append(n.x)
+            y.append(n.y)
+        return min(x), max(x), min(y), max(y)
+
+        if len([*nodes[0]]) == 3:
+            z = [n.z for n in nodes]
+            return min(x), max(x), min(y), max(y), min(z), max(z)
+
+
 #     def plot_data(self, pos=0, quote=True, constructor=True, direction=1):
 #         plot_datas = []
 #         for element_group in self.elements_groups:
