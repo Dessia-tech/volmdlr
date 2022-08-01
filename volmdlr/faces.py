@@ -4378,6 +4378,10 @@ class PlaneFace3D(Face3D):
                 intersection_primitives = self.validate_inner_contour_intersections(intersections)
             elif face2.surface2d.inner_contours:
                 intersection_primitives = face2.validate_inner_contour_intersections(intersections)
+            elif len(intersections) > 2:
+                intersection_primitives = self.validate_inner_contour_intersections(intersections)
+                if not intersections:
+                    raise NotImplementedError
             else:
                 intersection_primitives = [volmdlr.edges.LineSegment3D(
                     intersections[0], intersections[1])]
