@@ -7084,7 +7084,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                     line_loop_account += 1
                     lines_tags = []
 
-                    lines.append(face.get_geo_lines((f + 1), line_surface))
+            lines.append(face.get_geo_lines((f + 1), line_surface))
 
             line_surface = []
 
