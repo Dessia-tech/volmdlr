@@ -3202,7 +3202,7 @@ class BSplineSurface3D(Surface3D):
         '''
 
         if len(cylindrical_faces) == 1:
-            return cls.from_cylindrical_face(cylindrical_faces[0], degree_u, degree_v, 50, 50)
+            return cls.from_cylindrical_face(cylindrical_faces[0], degree_u, degree_v, points_x=50, points_y=50)
 
         if len(cylindrical_faces) > 1:
             bspline_surfaces = []
