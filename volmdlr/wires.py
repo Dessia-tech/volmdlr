@@ -4217,6 +4217,18 @@ class Contour3D(Contour, Wire3D):
     #                 return True
     #     return False
 
+    def to_polygon(self, angle_resolution):
+
+        polygon_points = []
+        # print([(line.start, line.end) for line in self.primitives])
+
+        for primitive in self.primitives:
+            polygon_points.extend(primitive.polygon_points()[:-1])
+        #     print('1: ', primitive.polygon_points())
+        #     print('2 :', primitive.polygon_points()[:-1])
+        # print(polygon_points)
+        return ClosedPolygon3D(polygon_points)
+
 
 class Circle3D(Contour3D):
     _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']
