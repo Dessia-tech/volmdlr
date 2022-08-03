@@ -7042,7 +7042,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         points = list(points)
         for p, point in enumerate(points):
-            lines.append(point.get_geo_lines(tag=p + 1, mesh_size=1))
+            lines.append(point.get_geo_lines(tag=p + 1, mesh_size=0.2))
 
         for f, face in enumerate(self.faces):
             line_surface = []
