@@ -3921,7 +3921,7 @@ class Circle2D(Contour2D):
 
 
 class Contour3D(Contour, Wire3D):
-    _non_serializable_attributes = ['points']
+    _non_serializable_attributes = ['points', 'point_inside_contour']
     _non_eq_attributes = ['name']
     _non_hash_attributes = ['points', 'name']
     _generic_eq = True
