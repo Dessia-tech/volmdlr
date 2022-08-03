@@ -4401,6 +4401,8 @@ class PlaneFace3D(Face3D):
         if not bbox1.bbox_intersection(bbox2) and \
                 bbox1.distance_to_bbox(bbox2) >= tol:
             return []
+        if self.face_inside(face2) or face2.face_inside(self):
+            return []
         intersections = self.get_face_intersections(face2)
         valid_intersections = self.validate_face_intersections(face2, intersections)
         return valid_intersections
@@ -6792,8 +6794,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         if min_dist is not None:
             p1, p2 = min_dist
             return p1.point_distance(p2)
-        else:
-            return None
+        return 0
 
     def minimum_distance_point(self,
                                point: volmdlr.Point3D) -> volmdlr.Point3D:
