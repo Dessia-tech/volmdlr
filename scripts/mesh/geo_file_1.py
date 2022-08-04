@@ -24,7 +24,7 @@ outer_profile = vm.wires.Contour2D.from_points(points)
 profile=primitives3d.ExtrudedProfile(vm.O3D, vm.Y3D, vm.Z3D, outer_profile, [], vm.X3D*0.1, name = 'extrusion')
 
 model=vm.core.VolumeModel([profile])
-model.to_geo('model')
+model.to_geo('model_1_geo')
 
 # %% gmsh file generation
 
@@ -40,4 +40,4 @@ model.to_geo('model')
 
 # %% DIRECT: gmsh file generation
 
-model.to_msh('model_msh')
+model.to_msh('model_1_msh', 1)

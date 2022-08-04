@@ -28,7 +28,7 @@ profile=primitives3d.ExtrudedProfile(vm.O3D, vm.Y3D, vm.Z3D, outer_profile, [], 
 
 model=vm.core.VolumeModel([profile])
 
-model.to_geo('model')
+model.to_geo('model_2_geo')
 
 # %% gmsh file generation
 
@@ -44,4 +44,4 @@ model.to_geo('model')
 
 # %% DIRECT: gmsh file generation
 
-model.to_msh('model_msh')
+model.to_msh('model_2_msh', 2)
