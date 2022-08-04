@@ -7002,7 +7002,12 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         return ax
 
-    def get_geo_lines(self, mesh_size_list=None):
+    def get_geo_lines(self, update_data = {'point_account':0,
+                                           'line_account':0,
+                                           'line_loop_account':0,
+                                           'surface_account':0,
+                                           'surface_loop_account':0},
+                      mesh_size_list=None):
         '''
         gets the lines that define an OpenShell3D in a .geo file
         '''
@@ -7037,12 +7042,14 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         indices_check = len(primitives) * [None]
 
-        line_account, line_loop_account = 1, 1
+        point_account = update_data['point_account']
+        line_account, line_loop_account = update_data['line_account']+1, update_data['line_loop_account']
         lines, line_surface, lines_tags = [], [], []
 
         points = list(points)
         for p, point in enumerate(points):
-            lines.append(point.get_geo_lines(tag=p + 1, mesh_size=0.2))
+            lines.append(point.get_geo_lines(tag=p + point_account + 1,
+                                             mesh_size=0.2))
 
         for f, face in enumerate(self.faces):
             line_surface = []
@@ -7052,23 +7059,25 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                     pass
                 else:
                     for p, primitive in enumerate(contour.primitives):
-                        try:
 
+                        try:
+                            # line_account += 1
+                            # print(line_account)
                             index = primitives.index(primitive)
                             if isinstance(primitive, volmdlr.edges.LineSegment):
                                 start_point_tag = points.index(primitive.start) + 1
                                 end_point_tag = points.index(primitive.end) + 1
                                 lines.append(primitive.get_geo_lines(tag=line_account,
-                                                                     start_point_tag=start_point_tag,
-                                                                     end_point_tag=end_point_tag))
+                                                                     start_point_tag=start_point_tag+point_account,
+                                                                     end_point_tag=end_point_tag+point_account))
                             elif isinstance(primitive, volmdlr.edges.Arc):
                                 start_point_tag = points.index(primitive.start) + 1
                                 center_point_tag = points.index(primitive.center) + 1
                                 end_point_tag = points.index(primitive.end) + 1
                                 lines.append(primitive.get_geo_lines(tag=line_account,
-                                                                     start_point_tag=start_point_tag,
-                                                                     center_point_tag=center_point_tag,
-                                                                     end_point_tag=end_point_tag))
+                                                                     start_point_tag=start_point_tag+point_account,
+                                                                     center_point_tag=center_point_tag+point_account,
+                                                                     end_point_tag=end_point_tag+point_account))
 
                             lines_tags.append(line_account)
                             indices_check[index] = line_account
@@ -7078,19 +7087,27 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                             index = primitives.index(primitive.reverse())
                             lines_tags.append(-indices_check[index])
 
-                    lines.append(contour.get_geo_lines(line_loop_account, lines_tags))
+                    lines.append(contour.get_geo_lines(line_loop_account+1, lines_tags))
 
-                    line_surface.append(line_loop_account)
+                    line_surface.append(line_loop_account+1)
                     line_loop_account += 1
                     lines_tags = []
 
-            lines.append(face.get_geo_lines((f + 1), line_surface))
+            lines.append(face.get_geo_lines((f + 1 + update_data['surface_account']),
+                                            line_surface))
 
             line_surface = []
 
-        lines.append('Surface Loop(' + str(1) + ') = {' + str(list(range(1, len(self.faces) + 1)))[1:-1] + '};')
+        lines.append('Surface Loop(' + str(1 + update_data['surface_loop_account']) + ') = {' + str(list(range(update_data['surface_account']+1,
+                                                                                                               update_data['surface_account'] + len(self.faces) + 1)))[1:-1] + '};')
 
-        return lines
+        update_data['point_account'] += len(points)
+        update_data['line_account'] += line_account-1
+        update_data['line_loop_account'] += line_loop_account
+        update_data['surface_account'] += len(self.faces)
+        update_data['surface_loop_account'] += 1
+
+        return lines, update_data
 
 
 class ClosedShell3D(OpenShell3D):

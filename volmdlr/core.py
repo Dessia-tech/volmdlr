@@ -1359,17 +1359,24 @@ class VolumeModel(dc.DessiaObject):
         '''
         gets the .geo file for the VolumeModel
         '''
-
+        update_data = {'point_account':0,
+                       'line_account':0,
+                       'line_loop_account':0,
+                       'surface_account':0,
+                       'surface_loop_account':0}
         lines = []
         volume = 0
         for primitive in self.primitives:
             if isinstance(primitive, volmdlr.faces.ClosedShell3D):
                 volume += 1
-                lines.extend(primitive.get_geo_lines(mesh_size_list))
+                lines_primitives, update_data = primitive.get_geo_lines(update_data,
+                                                                        mesh_size_list)
+                lines.extend(lines_primitives)
                 surface_loop = ((lines[-1].split('('))[1].split(')')[0])
                 lines.append('Volume(' + str(volume) + ') = {' + surface_loop + '};')
             elif isinstance(primitive, volmdlr.faces.OpenShell3D):
-                lines.extend(primitive.get_geo_lines(mesh_size_list))
+                lines.extend(primitive.get_geo_lines(update_data,
+                                                     mesh_size_list))
 
         with open(file_name + '.geo', 'w', encoding="utf-8") as f:
             for line in lines:
