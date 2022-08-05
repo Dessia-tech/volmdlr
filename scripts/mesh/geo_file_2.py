@@ -28,7 +28,7 @@ profile=primitives3d.ExtrudedProfile(vm.O3D, vm.Y3D, vm.Z3D, outer_profile, [], 
 
 model=vm.core.VolumeModel([profile])
 
-model.to_geo('model_2_geo')
+model.to_geo('model_2_geo', point_mesh_size=0.5)
 
 # %% gmsh file generation
 
