@@ -6540,7 +6540,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         self._bbox = None
         # self.bounding_box = self._bounding_box()
         volmdlr.core.CompositePrimitive3D.__init__(self,
-                                                   primitives=faces,
+                                                   primitives=faces, color=color, alpha=alpha,
                                                    name=name)
 
     def _data_hash(self):
