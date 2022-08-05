@@ -2046,7 +2046,8 @@ class BSplineSurface3D(Surface3D):
         elif 1 < y < 1 + 1e-3:
             y = 1
         print(self.surface)
-        return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
+        a, b, c = self.surface.evaluate_single((x, y))
+        return volmdlr.Point3D(a, b, c)
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D, min_bound_x: float = 0.,
                       max_bound_x: float = 1., min_bound_y: float = 0.,
