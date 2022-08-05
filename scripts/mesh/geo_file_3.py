@@ -110,7 +110,7 @@ model = volmdlr.core.VolumeModel.dict_to_object(dict_obj)
 
 # %% geo file generation
 
-model.to_geo('model_two_closed_shell')
+model.to_geo('model_two_closed_shell', point_mesh_size = 0.5)
 
 # %% gmsh file generation
 

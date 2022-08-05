@@ -1355,7 +1355,7 @@ class VolumeModel(dc.DessiaObject):
 
         stream.write(step_content)
 
-    def to_geo(self, file_name: str, mesh_size_list=None):
+    def to_geo(self, file_name: str, point_mesh_size: float = 1):
         '''
         gets the .geo file for the VolumeModel
         '''
@@ -1370,13 +1370,13 @@ class VolumeModel(dc.DessiaObject):
             if isinstance(primitive, volmdlr.faces.ClosedShell3D):
                 volume += 1
                 lines_primitives, update_data = primitive.get_geo_lines(update_data,
-                                                                        mesh_size_list)
+                                                                        point_mesh_size)
                 lines.extend(lines_primitives)
                 surface_loop = ((lines[-1].split('('))[1].split(')')[0])
                 lines.append('Volume(' + str(volume) + ') = {' + surface_loop + '};')
             elif isinstance(primitive, volmdlr.faces.OpenShell3D):
                 lines.extend(primitive.get_geo_lines(update_data,
-                                                     mesh_size_list))
+                                                     point_mesh_size))
 
         with open(file_name + '.geo', 'w', encoding="utf-8") as f:
             for line in lines:

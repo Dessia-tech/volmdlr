@@ -7007,7 +7007,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                                            'line_loop_account':0,
                                            'surface_account':0,
                                            'surface_loop_account':0},
-                      mesh_size_list=None):
+                      point_mesh_size: float =1):
         '''
         gets the lines that define an OpenShell3D in a .geo file
         '''
@@ -7049,7 +7049,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         points = list(points)
         for p, point in enumerate(points):
             lines.append(point.get_geo_lines(tag=p + point_account + 1,
-                                             mesh_size=0.2))
+                                             point_mesh_size=point_mesh_size))
 
         for f, face in enumerate(self.faces):
             line_surface = []
