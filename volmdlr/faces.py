@@ -1826,6 +1826,7 @@ class RuledSurface3D(Surface3D):
 
 
 class BSplineSurface3D(Surface3D):
+    _standalone_in_db = True
     face_class = 'BSplineFace3D'
     _non_serializable_attributes = ['surface']
 
