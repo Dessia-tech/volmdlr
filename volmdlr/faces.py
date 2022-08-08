@@ -4686,9 +4686,10 @@ class Triangle3D(PlaneFace3D):
     def _data_eq(self, other_):
         if other_.__class__.__name__ != self.__class__.__name__:
             return False
-        self_set = set([self.point1, self.point2, self.point3])
-        other_set = set([other_.point1, other_.point2, other_.point3])
-        if self_set != other_set:
+        # self_set = set([self.point1, self.point2, self.point3])
+        # other_set = set([other_.point1, other_.point2, other_.point3])
+        # if self_set != other_set:
+        if self.point1 != other_.point1 or self.point2 != other_.point2 or self.point3 != other_.point3:
             return False
         return True
 
