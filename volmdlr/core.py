@@ -581,10 +581,10 @@ class CompositePrimitive3D(Primitive3D):
     A collection of simple primitives3D
     """
 
-    def __init__(self, primitives: List[Primitive3D], name: str = ''):
+    def __init__(self, primitives: List[Primitive3D], color=None, alpha=1, name: str = ''):
         self.primitives = primitives
 
-        Primitive3D.__init__(self, name=name)
+        Primitive3D.__init__(self, color=color, alpha=alpha, name=name)
         self._utd_primitives_to_index = False
 
     # def primitive_to_index(self, primitive):
