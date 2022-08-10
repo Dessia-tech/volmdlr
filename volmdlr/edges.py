@@ -90,6 +90,8 @@ class Edge(dc.DessiaObject):
         discretize a Edge to have "n" points (including start and end points)
         :return:
         """
+        if discretization_resolution == 0:
+            return [self.start, self.end]
         length = self.length()
         return [self.point_at_abscissa(i * length / discretization_resolution) for i in
                 range(discretization_resolution + 1)]
@@ -3317,15 +3319,17 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
         ts = [start_parameter + i / resolution * (end_parameter - start_parameter)
               for i in range(resolution + 1)]
         points = self.curve.evaluate_list(ts)
-        for pt in points:
-            points3d.append(volmdlr.Point3D(*pt))
-        linesegments = [volmdlr.edges.LineSegment3D(p1, p2)
-                        for p1, p2 in zip(points3d[:-1], points3d[1:])]
-        distances = [0]
-        for lineseg in linesegments:
-            distances.append(lineseg.length() + distances[-1])
+        for point in points:
+            points3d.append(volmdlr.Point3D(*point))
 
-        return [(ts[i], distances[i]) for i in range(resolution + 1)]
+        distances = [0]
+        sol = [(ts[0], distances[0])]
+        for i, (point1, point2) in enumerate(zip(points3d[:-1], points3d[1:])):
+            if point1 != point2:
+                linesegment = volmdlr.edges.LineSegment3D(point1, point2)
+                distances.append(linesegment.length() + distances[-1])
+                sol.append((ts[i + 1], distances[i + 1]))
+        return sol
 
     def point_at_abscissa(self, abscissa, resolution=1000):
         """
@@ -3333,9 +3337,9 @@ class BSplineCurve3D(BSplineCurve, volmdlr.core.Primitive3D):
         This is an approximation. Resolution parameter can increased
         for more accurate result.
         """
-        if abscissa == 0:
+        if math.isclose(abscissa, 0, abs_tol=1e-6):
             return self.start
-        elif abscissa == self.length():
+        elif math.isclose(abscissa, self.length(), abs_tol=1e-6):
             return self.end
         lut = self.look_up_table(resolution=resolution)
         if 0 < abscissa < self.length():
