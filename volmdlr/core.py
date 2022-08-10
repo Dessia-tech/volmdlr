@@ -1355,7 +1355,10 @@ class VolumeModel(dc.DessiaObject):
 
         stream.write(step_content)
 
-    def to_geo(self, file_name: str, point_mesh_size: float = 1):
+    def to_geo(self, file_name: str,
+               point_mesh_size: float = 1,
+               characteristic_length_min: float = None,
+               characteristic_length_max: float = None):
         '''
         gets the .geo file for the VolumeModel
         '''
@@ -1364,6 +1367,12 @@ class VolumeModel(dc.DessiaObject):
                        'line_loop_account':0,
                        'surface_account':0,
                        'surface_loop_account':0}
+        if not characteristic_length_min:
+            print('yes')
+            characteristic_length_min = point_mesh_size
+        if not characteristic_length_max:
+            characteristic_length_max = 1.5*characteristic_length_min
+
         lines = []
         volume = 0
         for primitive in self.primitives:
@@ -1375,8 +1384,12 @@ class VolumeModel(dc.DessiaObject):
                 surface_loop = ((lines[-1].split('('))[1].split(')')[0])
                 lines.append('Volume(' + str(volume) + ') = {' + surface_loop + '};')
             elif isinstance(primitive, volmdlr.faces.OpenShell3D):
-                lines.extend(primitive.get_geo_lines(update_data,
-                                                     point_mesh_size))
+                lines.extend(primitive.get_geo_lines(update_data, point_mesh_size))
+
+        lines.append('Mesh.CharacteristicLengthExtendFromBoundary = 0;')
+        lines.append('Mesh.CharacteristicLengthMin = ' + str(characteristic_length_min) + ';')
+        lines.append('Mesh.CharacteristicLengthMax = ' + str(characteristic_length_max) + ';')
+        lines.append('Coherence;')
 
         with open(file_name + '.geo', 'w', encoding="utf-8") as f:
             for line in lines:
